@@ -6,6 +6,7 @@ import { QuoteService } from '../commercial/QuoteService';
 import { ActionService } from '../crm/ActionService';
 import { ClientContactService } from '../crm/ClientContactService';
 import { CrmService } from '../crm/CrmService';
+import { ProjectResourceService } from '../projects/ProjectResourceService';
 import { ProjectService } from '../projects/ProjectService';
 import type { WorkspacePaths } from '../workspace';
 import type { DatabaseAdapter } from './DatabaseAdapter';
@@ -23,6 +24,7 @@ export class DatabaseService {
   readonly catalog: CatalogService;
   readonly quotes: QuoteService;
   readonly projects: ProjectService;
+  readonly projectResources: ProjectResourceService;
 
   constructor(private readonly workspace: WorkspacePaths) {
     this.existedBeforeOpen = existsSync(workspace.databaseFile);
@@ -33,6 +35,7 @@ export class DatabaseService {
     this.catalog = new CatalogService(this.database);
     this.quotes = new QuoteService(this.database, this.crm);
     this.projects = new ProjectService(this.database, this.workspace);
+    this.projectResources = new ProjectResourceService(this.database, this.workspace);
   }
 
   async initialize(): Promise<void> {
