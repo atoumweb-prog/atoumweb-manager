@@ -6,6 +6,7 @@ import {
   PROJECT_PREREQUISITE_STATUSES,
   PROJECT_STATUSES,
   type ProjectCommercialMode,
+  type ProjectCompletionReview,
   type ProjectDetail,
   type ProjectNode,
   type ProjectNodeStatus,
@@ -16,6 +17,7 @@ import {
   type ProjectTemplateSummary,
   type ProjectTemplateVersion,
 } from '../../shared/projects';
+import { ProjectCompletionReviewPanel } from './ProjectCompletionReviewPanel';
 import { ProjectResourcesTab } from './ProjectResourcesTab';
 import { ProjectTechnicalLibraryTab } from './ProjectTechnicalLibraryTab';
 import { ProjectTimeTab } from './ProjectTimeTab';
@@ -101,6 +103,8 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
   const [commercialMode, setCommercialMode] = useState<ProjectCommercialMode>('normal');
   const [saving, setSaving] = useState(false);
   const [detailTab, setDetailTab] = useState<'summary' | 'plan' | 'prerequisites' | 'resources' | 'technical' | 'time' | 'commercial'>('summary');
+  const [completionReview, setCompletionReview] = useState<ProjectCompletionReview | null>(null);
+  const [completionBusy, setCompletionBusy] = useState(false);
 
   const [newNodeName, setNewNodeName] = useState('');
   const [newNodeType, setNewNodeType] = useState<'lot' | 'module' | 'task' | 'checklist'>('task');
@@ -156,6 +160,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
   async function openProject(id: string): Promise<void> {
     try {
       setSelectedId(id);
+      setCompletionReview(null);
       setDetail(await window.atoumweb.projects.projects.get(id));
       setDetailTab('summary');
     } catch (error) {
@@ -209,13 +214,38 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
 
   async function changeProjectStatus(status: ProjectStatus): Promise<void> {
     if (!detail) return;
+    if (status === 'completed' && detail.status !== 'completed') {
+      try {
+        setCompletionReview(await window.atoumweb.projects.projects.completionReview(detail.id));
+      } catch (error) {
+        onMessage(error instanceof Error ? error.message : 'Impossible de vérifier la fin du projet.');
+      }
+      return;
+    }
     try {
+      setCompletionReview(null);
       const updated = await window.atoumweb.projects.projects.changeStatus(detail.id, status);
       setDetail(updated);
       await refresh();
       onMessage(`Statut du projet : ${PROJECT_STATUS_LABELS[status]}.`);
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de changer le statut.');
+    }
+  }
+
+  async function confirmProjectCompletion(): Promise<void> {
+    if (!detail) return;
+    setCompletionBusy(true);
+    try {
+      const updated = await window.atoumweb.projects.projects.changeStatus(detail.id, 'completed');
+      setDetail(updated);
+      setCompletionReview(null);
+      await refresh();
+      onMessage('Projet terminé. Les avertissements de clôture restent non bloquants par conception.');
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible de terminer le projet.');
+    } finally {
+      setCompletionBusy(false);
     }
   }
 
@@ -335,9 +365,11 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
 
           {detail && (
             <aside className="panel project-detail-panel">
-              <div className="detail-panel-heading"><div><span className="eyebrow">{detail.number}</span><h2>{detail.name}</h2><p className="muted">{detail.clientLabel}</p></div><button className="close-detail" type="button" onClick={() => { setDetail(null); setSelectedId(null); }}>×</button></div>
+              <div className="detail-panel-heading"><div><span className="eyebrow">{detail.number}</span><h2>{detail.name}</h2><p className="muted">{detail.clientLabel}</p></div><button className="close-detail" type="button" onClick={() => { setCompletionReview(null); setDetail(null); setSelectedId(null); }}>×</button></div>
               <div className="project-detail-status"><select value={detail.status} onChange={(event) => void changeProjectStatus(event.target.value as ProjectStatus)}>{PROJECT_STATUSES.map((status) => <option key={status} value={status}>{PROJECT_STATUS_LABELS[status]}</option>)}</select><span>{detail.progressPercent} %</span></div>
               <div className="project-main-progress"><i><b style={{ width: `${detail.progressPercent}%` }} /></i></div>
+
+              {completionReview && <ProjectCompletionReviewPanel review={completionReview} busy={completionBusy} onConfirm={confirmProjectCompletion} onCancel={() => setCompletionReview(null)} />}
 
               <div className="project-tabs">
                 <button className={detailTab === 'summary' ? 'active' : ''} type="button" onClick={() => setDetailTab('summary')}>Résumé</button>
