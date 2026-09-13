@@ -7,6 +7,16 @@ import type {
   WorkspaceChangeResult,
 } from '../shared/contracts';
 import { isThemeName } from '../shared/contracts';
+import type {
+  ClientFilters,
+  ClientInput,
+  ClientStatus,
+  ContactInput,
+  OrganizationInput,
+  ProspectFilters,
+  ProspectInput,
+  ProspectStage,
+} from '../shared/crm';
 import type { DatabaseService } from './database/DatabaseService';
 import { scheduleDatabaseRestore } from './restore';
 import { saveWorkspaceRoot, type WorkspacePaths } from './workspace';
@@ -102,4 +112,44 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   });
 
   ipcMain.handle('database:health', () => database.health());
+
+  ipcMain.handle('crm:organizations:create', (_event, input: OrganizationInput) =>
+    database.crm.createOrganization(input));
+  ipcMain.handle('crm:organizations:update', (_event, id: string, input: OrganizationInput) =>
+    database.crm.updateOrganization(id, input));
+
+  ipcMain.handle('crm:contacts:create', (_event, input: ContactInput) =>
+    database.crm.createContact(input));
+  ipcMain.handle('crm:contacts:update', (_event, id: string, input: ContactInput) =>
+    database.crm.updateContact(id, input));
+
+  ipcMain.handle('crm:prospects:list', (_event, filters?: ProspectFilters) =>
+    database.crm.listProspects(filters));
+  ipcMain.handle('crm:prospects:create', (_event, input: ProspectInput) =>
+    database.crm.createProspect(input));
+  ipcMain.handle('crm:prospects:update', (_event, id: string, input: ProspectInput) =>
+    database.crm.updateProspect(id, input));
+  ipcMain.handle('crm:prospects:change-stage', (_event, id: string, stage: ProspectStage, lostReason?: string | null) =>
+    database.crm.changeProspectStage(id, stage, lostReason));
+  ipcMain.handle('crm:prospects:set-next-action', (_event, id: string, at: string | null, text: string | null) =>
+    database.crm.setProspectNextAction(id, at, text));
+  ipcMain.handle('crm:prospects:convert-to-client', (_event, id: string) =>
+    database.crm.convertProspectToClient(id));
+
+  ipcMain.handle('crm:clients:list', (_event, filters?: ClientFilters) =>
+    database.crm.listClients(filters));
+  ipcMain.handle('crm:clients:create', (_event, input: ClientInput) =>
+    database.crm.createClient(input));
+  ipcMain.handle('crm:clients:update', (_event, id: string, input: ClientInput) =>
+    database.crm.updateClient(id, input));
+  ipcMain.handle('crm:clients:archive', (_event, id: string) =>
+    database.crm.archiveClient(id));
+  ipcMain.handle('crm:clients:reactivate', (_event, id: string, status: Exclude<ClientStatus, 'archived'>) =>
+    database.crm.reactivateClient(id, status));
+
+  ipcMain.handle('crm:activity:list', (_event, entityType: string, entityId: string) =>
+    database.crm.listActivity(entityType, entityId));
+  ipcMain.handle('crm:search:global', (_event, query: string) =>
+    database.crm.globalSearch(query));
+  ipcMain.handle('crm:search:rebuild', () => database.crm.rebuildSearchIndex());
 }
