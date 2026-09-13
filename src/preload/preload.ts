@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { AtoumWebApi, ThemeName } from '../shared/contracts';
 import type {
+  ClientContactRole,
   ClientFilters,
   ClientInput,
   ClientStatus,
@@ -54,6 +55,11 @@ const api: AtoumWebApi = {
       archive: (id: string) => ipcRenderer.invoke('crm:clients:archive', id),
       reactivate: (id: string, status: Exclude<ClientStatus, 'archived'>) =>
         ipcRenderer.invoke('crm:clients:reactivate', id, status),
+      listContacts: (id: string) => ipcRenderer.invoke('crm:clients:list-contacts', id),
+      addContact: (id: string, input: ContactInput, role: ClientContactRole, makePrimary?: boolean) =>
+        ipcRenderer.invoke('crm:clients:add-contact', id, input, role, makePrimary),
+      setPrimaryContact: (id: string, contactId: string) =>
+        ipcRenderer.invoke('crm:clients:set-primary-contact', id, contactId),
     },
     activity: {
       list: (entityType: string, entityId: string) => ipcRenderer.invoke('crm:activity:list', entityType, entityId),
