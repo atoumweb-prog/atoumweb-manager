@@ -126,7 +126,9 @@ PR : #60 (brouillon, empilée au-dessus de Phase 2)
 - [x] projet interne AtoumWeb sans client externe
 - [x] progression calculée depuis les tâches obligatoires
 - [x] prévention des boucles parent/enfant
+- [x] déplacement/réordonnancement transactionnel des nœuds Projet
 - [x] arborescence physique Ressources créée automatiquement
+- [x] checklist d’avertissement non bloquante avant passage `Terminé`
 
 ### Interface Projets
 
@@ -138,12 +140,13 @@ PR : #60 (brouillon, empilée au-dessus de Phase 2)
 - [x] publication / nouvelle version de modèle
 - [x] Résumé
 - [x] Plan / Tâches
+- [x] déplacement de parent + ordre ↑/↓ dans le plan
 - [x] Prérequis
 - [x] Ressources
 - [x] Bibliothèque technique projet
 - [x] Temps
 - [x] Commercial
-- [x] recherche globale des Projets
+- [x] recherche globale Projet / tâches / Ressources / Bibliothèque
 - [x] Dashboard alimenté par les projets actifs
 
 ### Migration 8 — Ressources projet
@@ -162,9 +165,9 @@ PR : #60 (brouillon, empilée au-dessus de Phase 2)
 - [x] relocalisation/restauration d’une ressource
 - [x] ouverture fichier / dossier depuis Electron
 - [x] interface Ressources raccordée à la fiche Projet
+- [x] indexation dans la recherche globale
 - [x] tests Ressources écrits
 - [ ] galerie miniature images/médias
-- [ ] recherche globale des Ressources
 
 ### Migration 9 — Bibliothèque technique projet
 
@@ -180,10 +183,12 @@ PR : #60 (brouillon, empilée au-dessus de Phase 2)
 - [x] archivage
 - [x] aucun code exécuté automatiquement
 - [x] interface Bibliothèque dans la fiche Projet
-- [x] tests versioning / stable / ressources écrits
+- [x] `Préparer pour réutilisation` génère un paquet projet sans généralisation automatique
+- [x] recherche globale des éléments techniques
+- [x] tests versioning / stable / ressources / réutilisation écrits
 - [x] schéma déjà extensible à `scope=atoumweb` pour la future Phase 6 sans modifier les projets clients
 - [ ] coloration syntaxique avancée / Monaco plus tard
-- [ ] recherche globale des éléments techniques
+- [ ] captures/aperçus avancés plus tard
 
 ### Migration 10 — Timer & sessions de temps
 
@@ -197,31 +202,36 @@ PR : #60 (brouillon, empilée au-dessus de Phase 2)
 - [x] démarrer / pause / reprendre / arrêter
 - [x] durée réelle calculée depuis timestamps et pauses
 - [x] session active conservée après navigation et fermeture de l’application
-- [x] détection d’une session encore ouverte au redémarrage
+- [x] heartbeat du chrono pour mémoriser le dernier point connu
+- [x] détection d’une session oubliée après fermeture/redémarrage
+- [x] reprise sans compter l’interruption
+- [x] arrêt au dernier point connu
 - [x] saisie manuelle
+- [x] correction d’une session historique terminée
+- [x] protection des pauses existantes pendant une correction
+- [x] changement d’activité transactionnel : terminer l’ancienne + démarrer la nouvelle au même instant
 - [x] synthèse temps total / facturable / non facturable
-- [x] filtres Aujourd’hui / Semaine / Mois / Projet / Catégorie
+- [x] filtres Aujourd’hui / Semaine / Mois / Client / Projet / Catégorie / Facturable
 - [x] vrai timer global dans le header
 - [x] page `Gestion des temps`
 - [x] onglet Temps dans la fiche Projet
+- [x] temps estimé vs réel + écart dans Projet
 - [x] raccourcis Projet/Tâche → timer global prérempli
 - [x] Dashboard : temps du mois dérivé des sessions
-- [x] tests Timer/pause/reprise/saisie manuelle écrits
-- [ ] édition/correction d’une session historique
-- [ ] comportement configurable lors du démarrage d’une nouvelle activité alors qu’un timer existe déjà
+- [x] tests Timer/pause/reprise/redémarrage/correction/changement d’activité écrits
+- [x] doublon d’enregistrement IPC Timer supprimé
 
 ### Reste Phase 3 avant validation finale
 
-- [ ] checklist non bloquante avant `Terminé`
-- [ ] déplacement/réordonnancement plus ergonomique des nœuds
-- [ ] recherche globale Ressources + Bibliothèque projet
+- [ ] réorganisation/duplication plus complète des nœuds dans les **modèles** de projets
 - [ ] galerie miniature images/médias
+- [ ] ergonomie avancée Bibliothèque (copie/agrandissement/coloration)
 - [ ] validation du cas de référence Cazor
 - [ ] validation locale Windows migrations 6 → 10
 - [ ] `npm run typecheck`
 - [ ] `npm test`
 - [ ] test visuel complet trois thèmes
-- [ ] mise à jour finale documentation Phase 3
+- [ ] mise à jour finale documentation Phase 3 après validation
 
 ## CI GitHub
 
@@ -261,6 +271,6 @@ La validation réelle continue donc d’être effectuée localement sur Windows.
 
 ## Travail en cours
 
-**Phase 3 — finalisation Projets & Production.**
+**Phase 3 — fermeture des derniers écarts fonctionnels avant validation Windows.**
 
 Prochaine validation Windows après stabilisation de la branche : migration vers 10 migrations, `npm run typecheck`, `npm test`, puis parcours Projet / Ressources / Bibliothèque / Timer / Gestion des temps.
