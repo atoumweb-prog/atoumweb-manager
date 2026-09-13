@@ -6,6 +6,7 @@ import './crm.css';
 import './crm-extras.css';
 import './prospect-detail.css';
 import './client-detail.css';
+import './search-extra.css';
 
 const rootElement = document.getElementById('root');
 
