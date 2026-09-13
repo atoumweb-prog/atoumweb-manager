@@ -192,7 +192,7 @@ const api: AtoumWebApi = {
   },
   operations: {
     requests: {
-      list: (filters?: ProspectFilters) => ipcRenderer.invoke('operations:requests:list', filters),
+      list: (filters?: ServiceRequestFilters) => ipcRenderer.invoke('operations:requests:list', filters),
       get: (id: string) => ipcRenderer.invoke('operations:requests:get', id),
       create: (input: ServiceRequestInput) => ipcRenderer.invoke('operations:requests:create', input),
       update: (id: string, input: Partial<ServiceRequestInput>) => ipcRenderer.invoke('operations:requests:update', id, input),
