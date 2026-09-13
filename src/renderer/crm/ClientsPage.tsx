@@ -98,6 +98,12 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
     setContacts(nextContacts);
   }
 
+  async function refreshAll(): Promise<void> {
+    await refresh();
+    if (selectedId) await refreshSelectedClientData(selectedId);
+    onMessage('Liste clients actualisée.');
+  }
+
   useEffect(() => {
     void refresh();
   }, []);
@@ -271,6 +277,7 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
       <div className="module-toolbar client-toolbar">
         <div><strong>{filtered.length}</strong><span> client{filtered.length > 1 ? 's' : ''}</span></div>
         <div className="toolbar-controls">
+          <button className="secondary-button" type="button" disabled={loading} onClick={() => void refreshAll()}>{loading ? 'Actualisation…' : '↻ Actualiser'}</button>
           <input className="inline-search" placeholder="Rechercher un client…" value={query} onChange={(e) => setQuery(e.target.value)} />
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | ClientStatus)}>
             <option value="all">Tous les statuts</option>
