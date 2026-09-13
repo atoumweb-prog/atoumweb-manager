@@ -3,9 +3,11 @@
 ## Prérequis
 
 - Windows 10/11
-- Node.js 24 LTS
+- Node.js **20.19 ou supérieur**
 - npm fourni avec Node.js
 - Git
+
+> Node 20.19.3, déjà installé sur le poste AtoumWeb, convient pour installer, vérifier, tester et packager ce socle. Electron embarque sa propre version de Node pour l’exécution de l’application.
 
 ## Premier démarrage
 
@@ -27,7 +29,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gate0-windows.ps1
 
 Le script vérifie notamment :
 
-- Node.js 24 minimum ;
+- Node.js 20.19 minimum ;
 - npm et Git disponibles ;
 - branche `foundation/electron-react-sqlite` ;
 - `npm install` ou `npm ci` ;
