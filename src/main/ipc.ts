@@ -1,4 +1,4 @@
-import { app, dialog, ipcMain } from 'electron';
+import { app, dialog, ipcMain, shell } from 'electron';
 import type {
   CatalogFilters,
   CatalogItemInput,
@@ -37,6 +37,9 @@ import type {
   ProjectNodeInput,
   ProjectPrerequisiteInput,
   ProjectPrerequisiteStatus,
+  ProjectResourceFolder,
+  ProjectResourceRole,
+  ProjectResourceStatus,
   ProjectStatus,
   ProjectTemplateInput,
   ProjectTemplateNodeInput,
@@ -129,25 +132,14 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
 
     const crmResults = database.crm.globalSearch(normalized);
     const catalogResults: SearchResult[] = database.catalog.list({ search: normalized }).slice(0, 6).map((item) => ({
-      entityType: 'catalog',
-      entityId: item.id,
-      title: item.name,
-      subtitle: `${item.type === 'offer' ? 'Offre' : 'Service'}${item.category ? ` · ${item.category}` : ''}`,
-      status: item.status,
+      entityType: 'catalog', entityId: item.id, title: item.name,
+      subtitle: `${item.type === 'offer' ? 'Offre' : 'Service'}${item.category ? ` · ${item.category}` : ''}`, status: item.status,
     }));
     const quoteResults: SearchResult[] = database.quotes.list({ search: normalized }).slice(0, 6).map((quote) => ({
-      entityType: 'quote',
-      entityId: quote.id,
-      title: `${quote.number} · ${quote.subject}`,
-      subtitle: quote.ownerLabel,
-      status: quote.status,
+      entityType: 'quote', entityId: quote.id, title: `${quote.number} · ${quote.subject}`, subtitle: quote.ownerLabel, status: quote.status,
     }));
     const projectResults: SearchResult[] = database.projects.listProjects({ search: normalized }).slice(0, 6).map((project) => ({
-      entityType: 'project',
-      entityId: project.id,
-      title: `${project.number} · ${project.name}`,
-      subtitle: project.clientLabel,
-      status: project.status,
+      entityType: 'project', entityId: project.id, title: `${project.number} · ${project.name}`, subtitle: project.clientLabel, status: project.status,
     }));
 
     return [...crmResults, ...catalogResults, ...quoteResults, ...projectResults].slice(0, 20);
@@ -197,4 +189,38 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('projects:update-node', (_event, nodeId: string, input: Partial<ProjectNodeInput>) => database.projects.updateProjectNode(nodeId, input));
   ipcMain.handle('projects:add-prerequisite', (_event, projectId: string, input: ProjectPrerequisiteInput) => database.projects.addPrerequisite(projectId, input));
   ipcMain.handle('projects:update-prerequisite-status', (_event, id: string, status: ProjectPrerequisiteStatus) => database.projects.updatePrerequisiteStatus(id, status));
+
+  ipcMain.handle('projects:resources:list', (_event, projectId: string) => database.projectResources.list(projectId));
+  ipcMain.handle('projects:resources:import-files', async (_event, projectId: string, folder: ProjectResourceFolder, contentRole: ProjectResourceRole = 'other') => {
+    const defaultPath = database.projectResources.projectResourceRoot(projectId);
+    const selection = await dialog.showOpenDialog({
+      title: 'Ajouter des fichiers au projet',
+      defaultPath,
+      properties: ['openFile', 'multiSelections'],
+    });
+    if (selection.canceled || selection.filePaths.length === 0) return database.projectResources.list(projectId);
+    return database.projectResources.importFilePaths(projectId, selection.filePaths, folder, contentRole);
+  });
+  ipcMain.handle('projects:resources:update-status', (_event, id: string, status: ProjectResourceStatus) => database.projectResources.updateStatus(id, status));
+  ipcMain.handle('projects:resources:update-role', (_event, id: string, role: ProjectResourceRole) => database.projectResources.updateRole(id, role));
+  ipcMain.handle('projects:resources:link-node', (_event, id: string, nodeId: string) => database.projectResources.linkToNode(id, nodeId));
+  ipcMain.handle('projects:resources:unlink-node', (_event, id: string, nodeId: string) => database.projectResources.unlinkFromNode(id, nodeId));
+  ipcMain.handle('projects:resources:open-file', async (_event, id: string) => {
+    const error = await shell.openPath(database.projectResources.absolutePath(id));
+    return { ok: !error, error: error || null };
+  });
+  ipcMain.handle('projects:resources:open-folder', async (_event, projectId: string) => {
+    const error = await shell.openPath(database.projectResources.projectResourceRoot(projectId));
+    return { ok: !error, error: error || null };
+  });
+  ipcMain.handle('projects:resources:relocalize', async (_event, id: string) => {
+    const resource = database.projectResources.get(id);
+    const selection = await dialog.showOpenDialog({
+      title: `Relocaliser ${resource.fileName}`,
+      defaultPath: workspace.root,
+      properties: ['openFile'],
+    });
+    if (selection.canceled || selection.filePaths.length === 0) return null;
+    return database.projectResources.relocalize(id, selection.filePaths[0]);
+  });
 }
