@@ -6,6 +6,8 @@ import type {
   ClientInput,
   ClientStatus,
   ContactInput,
+  CrmActionFilters,
+  CrmActionInput,
   OrganizationInput,
   ProspectFilters,
   ProspectInput,
@@ -60,6 +62,13 @@ const api: AtoumWebApi = {
         ipcRenderer.invoke('crm:clients:add-contact', id, input, role, makePrimary),
       setPrimaryContact: (id: string, contactId: string) =>
         ipcRenderer.invoke('crm:clients:set-primary-contact', id, contactId),
+    },
+    actions: {
+      list: (filters?: CrmActionFilters) => ipcRenderer.invoke('crm:actions:list', filters),
+      create: (input: CrmActionInput) => ipcRenderer.invoke('crm:actions:create', input),
+      complete: (id: string) => ipcRenderer.invoke('crm:actions:complete', id),
+      cancel: (id: string) => ipcRenderer.invoke('crm:actions:cancel', id),
+      reopen: (id: string) => ipcRenderer.invoke('crm:actions:reopen', id),
     },
     activity: {
       list: (entityType: string, entityId: string) => ipcRenderer.invoke('crm:activity:list', entityType, entityId),
