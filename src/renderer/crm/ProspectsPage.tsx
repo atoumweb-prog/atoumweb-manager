@@ -3,6 +3,7 @@ import {
   PROSPECT_SOURCES,
   PROSPECT_STAGES,
   PROSPECT_TEMPERATURES,
+  type ActivityEvent,
   type ProspectSource,
   type ProspectStage,
   type ProspectSummary,
@@ -69,11 +70,13 @@ const EMPTY_DRAFT: ProspectDraft = {
 
 export function ProspectsPage({ onMessage }: { onMessage: (message: string) => void }) {
   const [prospects, setProspects] = useState<ProspectSummary[]>([]);
+  const [activity, setActivity] = useState<ActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [draft, setDraft] = useState<ProspectDraft>(EMPTY_DRAFT);
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   async function refresh(): Promise<void> {
     setLoading(true);
@@ -88,6 +91,14 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
     void refresh();
   }, []);
 
+  useEffect(() => {
+    if (!selectedId) {
+      setActivity([]);
+      return;
+    }
+    void window.atoumweb.crm.activity.list('prospect', selectedId).then(setActivity);
+  }, [selectedId, prospects]);
+
   const byStage = useMemo(() => {
     const map = new Map<ProspectStage, ProspectSummary[]>();
     PROSPECT_STAGES.forEach((stage) => map.set(stage, []));
@@ -97,6 +108,8 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
     });
     return map;
   }, [prospects]);
+
+  const selected = prospects.find((prospect) => prospect.id === selectedId) ?? null;
 
   async function submitProspect(event: React.FormEvent): Promise<void> {
     event.preventDefault();
@@ -138,7 +151,7 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
         throw new Error('La valeur estimée est invalide.');
       }
 
-      await window.atoumweb.crm.prospects.create({
+      const prospect = await window.atoumweb.crm.prospects.create({
         organizationId,
         contactId,
         stage: 'new',
@@ -153,6 +166,7 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
       setDraft(EMPTY_DRAFT);
       setShowForm(false);
       await refresh();
+      setSelectedId(prospect.id);
       onMessage('Prospect créé.');
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Impossible de créer le prospect.');
@@ -170,18 +184,42 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
     }
     await window.atoumweb.crm.prospects.changeStage(prospect.id, stage, lostReason);
     await refresh();
+    onMessage(`Prospect déplacé vers « ${STAGE_LABELS[stage]} ».`);
+  }
+
+  function defaultFollowUpText(prospect: ProspectSummary): string {
+    return prospect.nextActionText?.trim() || 'Relancer le prospect';
   }
 
   async function scheduleFollowUp(prospect: ProspectSummary, days: number): Promise<void> {
-    const action = prospect.nextActionText?.trim()
-      || window.prompt('Action à prévoir ?', 'Relancer le prospect')?.trim()
-      || 'Relancer le prospect';
+    const action = window.prompt('Action à prévoir ?', defaultFollowUpText(prospect))?.trim();
+    if (!action) return;
     const date = new Date();
     date.setDate(date.getDate() + days);
     date.setHours(9, 0, 0, 0);
     await window.atoumweb.crm.prospects.setNextAction(prospect.id, date.toISOString(), action);
     await refresh();
     onMessage(`Prochaine action programmée dans ${days} jour${days > 1 ? 's' : ''}.`);
+  }
+
+  async function scheduleCustomFollowUp(prospect: ProspectSummary): Promise<void> {
+    const today = new Date().toISOString().slice(0, 10);
+    const dateText = window.prompt('Date de la prochaine action (AAAA-MM-JJ)', today)?.trim();
+    if (!dateText) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateText)) {
+      onMessage('Date invalide. Utilise le format AAAA-MM-JJ.');
+      return;
+    }
+    const parsed = new Date(`${dateText}T09:00:00`);
+    if (Number.isNaN(parsed.getTime())) {
+      onMessage('Date invalide.');
+      return;
+    }
+    const action = window.prompt('Action à prévoir ?', defaultFollowUpText(prospect))?.trim();
+    if (!action) return;
+    await window.atoumweb.crm.prospects.setNextAction(prospect.id, parsed.toISOString(), action);
+    await refresh();
+    onMessage('Prochaine action personnalisée enregistrée.');
   }
 
   async function clearFollowUp(prospect: ProspectSummary): Promise<void> {
@@ -232,46 +270,104 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
       )}
 
       {loading ? <div className="panel"><p className="muted">Chargement des prospects…</p></div> : (
-        <div className="kanban-board">
-          {PROSPECT_STAGES.map((stage) => (
-            <section className="kanban-column" key={stage}>
-              <header><strong>{STAGE_LABELS[stage]}</strong><span>{byStage.get(stage)?.length ?? 0}</span></header>
-              <div className="kanban-cards">
-                {(byStage.get(stage) ?? []).map((prospect) => (
-                  <article className="prospect-card" key={prospect.id}>
-                    <div className="prospect-card-head">
-                      <strong>{prospect.displayName}</strong>
-                      <span className={`temperature temperature-${prospect.temperature ?? 'warm'}`}>{TEMPERATURE_LABELS[prospect.temperature ?? 'warm']}</span>
-                    </div>
-                    {prospect.secondaryLabel && <small>{prospect.secondaryLabel}</small>}
-                    <p>{prospect.primaryNeed || 'Besoin à préciser'}</p>
-                    <div className="prospect-meta">
-                      <span>{prospect.estimatedValueCents != null ? `${(prospect.estimatedValueCents / 100).toLocaleString('fr-FR')} €` : 'Valeur non estimée'}</span>
-                      <span className={prospect.nextActionAt && new Date(prospect.nextActionAt) < new Date() ? 'overdue' : ''}>
-                        {prospect.nextActionAt ? `${prospect.nextActionText || 'Action'} · ${new Date(prospect.nextActionAt).toLocaleDateString('fr-FR')}` : 'Aucune relance'}
-                      </span>
-                    </div>
-                    <div className="quick-followups">
-                      <button type="button" onClick={() => void scheduleFollowUp(prospect, 1)}>Demain</button>
-                      <button type="button" onClick={() => void scheduleFollowUp(prospect, 3)}>+3 j</button>
-                      <button type="button" onClick={() => void scheduleFollowUp(prospect, 7)}>+7 j</button>
-                      <button type="button" onClick={() => void scheduleFollowUp(prospect, 30)}>+30 j</button>
-                      {prospect.nextActionAt && <button type="button" onClick={() => void clearFollowUp(prospect)}>×</button>}
-                    </div>
-                    <select aria-label="Étape du prospect" value={prospect.stage} onChange={(e) => void changeStage(prospect, e.target.value as ProspectStage)}>
-                      {PROSPECT_STAGES.map((item) => <option key={item} value={item}>{STAGE_LABELS[item]}</option>)}
-                    </select>
-                    {!prospect.clientAccountId && prospect.stage !== 'lost' && (
-                      <button className="secondary-button compact-button" type="button" onClick={() => void convert(prospect)}>Transformer en client</button>
-                    )}
-                  </article>
-                ))}
-                {(byStage.get(stage)?.length ?? 0) === 0 && <div className="kanban-empty">Aucun prospect</div>}
+        <div className={selected ? 'prospects-layout with-detail' : 'prospects-layout'}>
+          <div className="kanban-board">
+            {PROSPECT_STAGES.map((stage) => (
+              <section className="kanban-column" key={stage}>
+                <header><strong>{STAGE_LABELS[stage]}</strong><span>{byStage.get(stage)?.length ?? 0}</span></header>
+                <div className="kanban-cards">
+                  {(byStage.get(stage) ?? []).map((prospect) => (
+                    <article
+                      className={`prospect-card ${selectedId === prospect.id ? 'selected-prospect' : ''}`}
+                      key={prospect.id}
+                      onClick={() => setSelectedId(prospect.id)}
+                    >
+                      <div className="prospect-card-head">
+                        <strong>{prospect.displayName}</strong>
+                        <span className={`temperature temperature-${prospect.temperature ?? 'warm'}`}>{TEMPERATURE_LABELS[prospect.temperature ?? 'warm']}</span>
+                      </div>
+                      {prospect.secondaryLabel && <small>{prospect.secondaryLabel}</small>}
+                      <p>{prospect.primaryNeed || 'Besoin à préciser'}</p>
+                      <div className="prospect-meta">
+                        <span>{prospect.estimatedValueCents != null ? `${(prospect.estimatedValueCents / 100).toLocaleString('fr-FR')} €` : 'Valeur non estimée'}</span>
+                        <span className={prospect.nextActionAt && new Date(prospect.nextActionAt) < new Date() ? 'overdue' : ''}>
+                          {prospect.nextActionAt ? `${prospect.nextActionText || 'Action'} · ${new Date(prospect.nextActionAt).toLocaleDateString('fr-FR')}` : 'Aucune relance'}
+                        </span>
+                      </div>
+                      <div className="quick-followups" onClick={(event) => event.stopPropagation()}>
+                        <button type="button" onClick={() => void scheduleFollowUp(prospect, 1)}>Demain</button>
+                        <button type="button" onClick={() => void scheduleFollowUp(prospect, 3)}>+3 j</button>
+                        <button type="button" onClick={() => void scheduleFollowUp(prospect, 7)}>+7 j</button>
+                        <button type="button" onClick={() => void scheduleFollowUp(prospect, 30)}>+30 j</button>
+                        <button type="button" onClick={() => void scheduleCustomFollowUp(prospect)}>Date…</button>
+                        {prospect.nextActionAt && <button type="button" onClick={() => void clearFollowUp(prospect)}>×</button>}
+                      </div>
+                      <select aria-label="Étape du prospect" value={prospect.stage} onClick={(event) => event.stopPropagation()} onChange={(e) => void changeStage(prospect, e.target.value as ProspectStage)}>
+                        {PROSPECT_STAGES.map((item) => <option key={item} value={item}>{STAGE_LABELS[item]}</option>)}
+                      </select>
+                      {!prospect.clientAccountId && prospect.stage !== 'lost' && (
+                        <button className="secondary-button compact-button" type="button" onClick={(event) => { event.stopPropagation(); void convert(prospect); }}>Transformer en client</button>
+                      )}
+                    </article>
+                  ))}
+                  {(byStage.get(stage)?.length ?? 0) === 0 && <div className="kanban-empty">Aucun prospect</div>}
+                </div>
+              </section>
+            ))}
+          </div>
+
+          {selected && (
+            <aside className="panel prospect-detail-panel">
+              <div className="detail-panel-heading">
+                <div>
+                  <span className="eyebrow">Fiche prospect</span>
+                  <h2>{selected.displayName}</h2>
+                </div>
+                <button className="close-detail" type="button" onClick={() => setSelectedId(null)}>×</button>
               </div>
-            </section>
-          ))}
+
+              <div className="detail-badges">
+                <span className={`temperature temperature-${selected.temperature ?? 'warm'}`}>{TEMPERATURE_LABELS[selected.temperature ?? 'warm']}</span>
+                <span className="status-pill">{STAGE_LABELS[selected.stage ?? 'new']}</span>
+                {selected.source && <span className="status-pill">{SOURCE_LABELS[selected.source]}</span>}
+              </div>
+
+              <div className="summary-list">
+                <SummaryLine label="Contact" value={selected.secondaryLabel || 'Non renseigné'} />
+                <SummaryLine label="Besoin" value={selected.primaryNeed || 'À préciser'} />
+                <SummaryLine label="Besoin secondaire" value={selected.secondaryNeed || '—'} />
+                <SummaryLine label="Valeur estimée" value={selected.estimatedValueCents != null ? `${(selected.estimatedValueCents / 100).toLocaleString('fr-FR')} €` : 'Non estimée'} />
+                <SummaryLine label="Probabilité" value={selected.probabilityPercent != null ? `${selected.probabilityPercent} %` : 'Non renseignée'} />
+                <SummaryLine label="Prochaine action" value={selected.nextActionAt ? `${selected.nextActionText || 'Action'} · ${new Date(selected.nextActionAt).toLocaleDateString('fr-FR')}` : 'Aucune'} />
+                <SummaryLine label="Créé le" value={new Date(selected.createdAt).toLocaleDateString('fr-FR')} />
+              </div>
+
+              {selected.notes && <div className="client-notes"><strong>Notes</strong><p>{selected.notes}</p></div>}
+              {selected.lostReason && <div className="client-notes"><strong>Raison de perte</strong><p>{selected.lostReason}</p></div>}
+
+              <div className="detail-actions">
+                <button className="secondary-button" type="button" onClick={() => void scheduleCustomFollowUp(selected)}>Programmer une action</button>
+                {!selected.clientAccountId && selected.stage !== 'lost' && <button className="primary-button" type="button" onClick={() => void convert(selected)}>Transformer en client</button>}
+              </div>
+
+              <div className="activity-preview">
+                <strong>Historique</strong>
+                {activity.slice(0, 8).map((event) => (
+                  <div className="activity-item" key={event.id}>
+                    <span className="activity-dot" />
+                    <div><p>{event.summary}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div>
+                  </div>
+                ))}
+                {activity.length === 0 && <p className="muted">Aucune activité enregistrée.</p>}
+              </div>
+            </aside>
+          )}
         </div>
       )}
     </div>
   );
+}
+
+function SummaryLine({ label, value }: { label: string; value: string }) {
+  return <div className="summary-line"><span>{label}</span><strong>{value}</strong></div>;
 }
