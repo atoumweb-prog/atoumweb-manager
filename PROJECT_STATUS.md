@@ -9,7 +9,7 @@
 - **Branche stable** : `main`
 - **Branche actuelle** : `foundation/electron-react-sqlite`
 - **PR actuelle** : #3 — Fondation V1 (brouillon)
-- **Statut** : Gate 0 automatique Windows validé ; application lancée et validée visuellement ; sauvegarde manuelle SQLite validée ; restauration réelle encore à tester avant fusion.
+- **Statut** : Gate 0 automatique Windows validé ; application lancée et validée visuellement ; sauvegarde manuelle SQLite validée ; restauration réelle à retester après correction du redémarrage en mode développement.
 - **Principe directeur** : une donnée métier possède une source unique ; les autres écrans la référencent sans duplication.
 
 ## Références
@@ -53,13 +53,26 @@ Validé le 13/09/2026 sur Windows :
 - [x] thèmes AtoumWeb / Noir / Blanc
 - [x] Réglages et workspace réel affichés
 - [x] sauvegarde manuelle SQLite réelle
-- [ ] restauration test avec sauvegarde `pre-restore`
+- [ ] restauration test avec sauvegarde `pre-restore` après correction dev-mode
 - [ ] versionner/pousser `package-lock.json`
 - [ ] fusion PR #3
 
 Sauvegarde manuelle validée le 13/09/2026 dans :
 
 `C:\Users\carlo\Documents\AtoumWeb Manager\backups\manual\atoumweb-manager-2026-09-13T10-22-49-861Z.sqlite`
+
+### Incident restauration en mode développement
+
+Premier test réel : la restauration a bien déclenché un relaunch Electron, mais la fenêtre redémarrée est restée vide sous `npm start`.
+
+Cause identifiée : en développement, `app.relaunch()` sort du contexte normal Electron Forge/Vite et la nouvelle fenêtre ne retrouve pas correctement le renderer de développement.
+
+Correction appliquée :
+
+- en version packagée/installée, redémarrage automatique conservé ;
+- en mode développement, la restauration est seulement programmée ;
+- l’interface demande de fermer AtoumWeb Manager puis de relancer `npm start` manuellement ;
+- au démarrage suivant, la restauration est appliquée avant l’ouverture de SQLite et une sauvegarde `pre-restore` est créée.
 
 Le fichier local `gate0-output.txt` est ignoré par Git et ne doit pas être versionné.
 
@@ -98,7 +111,7 @@ Le fichier local `gate0-output.txt` est ignoré par Git et ne doit pas être ver
 
 ## Ordre de développement
 
-1. **Gate 0** : valider restauration + lockfile puis fusion PR #3 / issue #2.
+1. **Gate 0** : retester restauration + lockfile puis fusion PR #3 / issue #2.
 2. Phase 1 : #5 → #6/#7/#8 → #9.
 3. Phase 2 : #11 → #12 → #13/#14 → #15.
 4. Phase 3 : #17 → #18 → #19/#20 → #21/#22 → #23.
@@ -109,16 +122,17 @@ Le fichier local `gate0-output.txt` est ignoré par Git et ne doit pas être ver
 
 ## Travail en cours
 
-**Priorité immédiate : tester une restauration réelle de la sauvegarde manuelle, vérifier la création de `pre-restore`, puis pousser le `package-lock.json`.**
+**Priorité immédiate : repartir proprement après l’écran vide, récupérer le correctif, relancer l’application et retester la restauration en mode développement.**
 
 ## Prochaine action concrète
 
-Dans Réglages → Sécurité :
-
-1. cliquer `Restaurer une sauvegarde` ;
-2. sélectionner la sauvegarde manuelle créée juste avant ;
-3. laisser l’application redémarrer ;
-4. vérifier que l’application s’ouvre normalement et que SQLite reste opérationnel ;
-5. vérifier qu’un fichier de sécurité a été créé dans `backups/pre-restore/`.
+1. fermer la fenêtre Electron vide ;
+2. arrêter `npm start` avec `Ctrl+C` dans PowerShell ;
+3. `git pull origin foundation/electron-react-sqlite` ;
+4. `npm start` ;
+5. vérifier que l’application s’ouvre normalement ;
+6. refaire `Restaurer une sauvegarde` ;
+7. en mode développement, fermer l’application lorsque le message l’indique puis relancer `npm start` ;
+8. vérifier que SQLite reste opérationnel et qu’un fichier existe dans `backups/pre-restore/`.
 
 Une fois validé, pousser `package-lock.json`, finaliser la PR #3 et passer à la Phase 1.
