@@ -98,6 +98,7 @@ export const PHASE_4_MIGRATIONS = [
       CREATE INDEX IF NOT EXISTS idx_interventions_hour_pack
         ON interventions(hour_pack_id, created_at DESC);
 
+      ALTER TABLE time_sessions ADD COLUMN intervention_id TEXT REFERENCES interventions(id) ON DELETE SET NULL;
       CREATE INDEX IF NOT EXISTS idx_time_sessions_intervention
         ON time_sessions(intervention_id, started_at DESC);
     `,
