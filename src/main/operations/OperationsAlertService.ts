@@ -44,7 +44,7 @@ export class OperationsAlertService {
     const thresholds = this.thresholds();
     const alerts: OperationsAlert[] = [];
 
-    for (const row of this.maintenanceRows()) {
+    for (const row of this.currentMaintenanceRows()) {
       if (!row.period_id) {
         alerts.push({
           id: `maintenance-due:${row.subscription_id}`,
@@ -60,23 +60,6 @@ export class OperationsAlertService {
           dueAt: today,
         });
         continue;
-      }
-
-      if (row.period_end && row.period_end < today && row.period_status !== 'closed') {
-        alerts.push({
-          id: `maintenance-overdue:${row.period_id}`,
-          kind: 'maintenance_overdue',
-          severity: 'critical',
-          title: 'Maintenance en retard de clôture',
-          detail: `Période ${row.period_start} → ${row.period_end} non clôturée.`,
-          clientAccountId: row.client_account_id,
-          clientLabel: row.client_label,
-          projectId: row.project_id,
-          projectLabel: row.project_label,
-          maintenanceSubscriptionId: row.subscription_id,
-          maintenancePeriodId: row.period_id,
-          dueAt: row.period_end,
-        });
       }
 
       if (Number(row.unresolved_overages) > 0) {
@@ -112,6 +95,23 @@ export class OperationsAlertService {
       }
     }
 
+    for (const row of this.overdueMaintenanceRows(today)) {
+      alerts.push({
+        id: `maintenance-overdue:${row.period_id}`,
+        kind: 'maintenance_overdue',
+        severity: 'critical',
+        title: 'Maintenance en retard de clôture',
+        detail: `Période ${row.period_start} → ${row.period_end} non clôturée.`,
+        clientAccountId: row.client_account_id,
+        clientLabel: row.client_label,
+        projectId: row.project_id,
+        projectLabel: row.project_label,
+        maintenanceSubscriptionId: row.subscription_id,
+        maintenancePeriodId: row.period_id,
+        dueAt: row.period_end,
+      });
+    }
+
     for (const row of this.packRows()) {
       const balance = Number(row.balance_seconds);
       const purchased = Math.max(1, Number(row.purchased_seconds));
@@ -123,7 +123,7 @@ export class OperationsAlertService {
           kind: 'hour_pack_negative',
           severity: 'critical',
           title: 'Pack d’heures en solde négatif',
-          detail: `${this.duration(Math.abs(balance))} dépassée(s) sur « ${row.name} ».\`,
+          detail: `${this.duration(Math.abs(balance))} dépassée(s) sur « ${row.name} ».`,
           clientAccountId: row.client_account_id,
           clientLabel: row.client_label,
           projectId: row.project_id,
@@ -151,7 +151,7 @@ export class OperationsAlertService {
           kind: 'hour_pack_low',
           severity: 'warning',
           title: 'Pack d’heures presque épuisé',
-          detail: `${this.duration(balance)} restantes (${percent} %) sur « ${row.name} ».\`,
+          detail: `${this.duration(balance)} restantes (${percent} %) sur « ${row.name} ».`,
           clientAccountId: row.client_account_id,
           clientLabel: row.client_label,
           projectId: row.project_id,
@@ -208,7 +208,7 @@ export class OperationsAlertService {
     }
   }
 
-  private maintenanceRows(): MaintenanceAlertRow[] {
+  private currentMaintenanceRows(): MaintenanceAlertRow[] {
     const today = new Date().toISOString().slice(0, 10);
     return this.database.all<MaintenanceAlertRow>(
       `SELECT ms.id AS subscription_id,ms.client_account_id,ms.project_id,
@@ -216,19 +216,7 @@ export class OperationsAlertService {
         p.name AS project_label,
         mp.id AS period_id,mp.period_start,mp.period_end,mp.status AS period_status,mp.included_interventions,
         COALESCE((SELECT COUNT(*) FROM interventions i WHERE i.maintenance_period_id=mp.id AND i.status NOT IN ('cancelled','archived')),0) AS intervention_count,
-        COALESCE((
-          SELECT COUNT(*)
-          FROM interventions i
-          WHERE i.maintenance_period_id=mp.id
-            AND i.status NOT IN ('cancelled','archived')
-            AND i.id NOT IN (SELECT mod.intervention_id FROM maintenance_overage_decisions mod WHERE mod.period_id=mp.id)
-            AND i.id IN (
-              SELECT ix.id FROM interventions ix
-              WHERE ix.maintenance_period_id=mp.id AND ix.status NOT IN ('cancelled','archived')
-              ORDER BY ix.created_at,ix.id
-              LIMIT -1 OFFSET CASE WHEN mp.included_interventions > 0 THEN mp.included_interventions ELSE 999999999 END
-            )
-        ),0) AS unresolved_overages
+        ${this.unresolvedOverageSql()} AS unresolved_overages
        FROM maintenance_subscriptions ms
        JOIN client_accounts ca ON ca.id=ms.client_account_id
        LEFT JOIN organizations o ON o.id=ca.organization_id
@@ -242,6 +230,42 @@ export class OperationsAlertService {
        WHERE ms.status='active' AND ms.start_date<=? AND (ms.end_date IS NULL OR ms.end_date>=?)`,
       [today, today, today, today],
     );
+  }
+
+  private overdueMaintenanceRows(today: string): MaintenanceAlertRow[] {
+    return this.database.all<MaintenanceAlertRow>(
+      `SELECT ms.id AS subscription_id,ms.client_account_id,ms.project_id,
+        COALESCE(o.name,trim(c.first_name || ' ' || c.last_name),'Client') AS client_label,
+        p.name AS project_label,
+        mp.id AS period_id,mp.period_start,mp.period_end,mp.status AS period_status,mp.included_interventions,
+        COALESCE((SELECT COUNT(*) FROM interventions i WHERE i.maintenance_period_id=mp.id AND i.status NOT IN ('cancelled','archived')),0) AS intervention_count,
+        ${this.unresolvedOverageSql()} AS unresolved_overages
+       FROM maintenance_periods mp
+       JOIN maintenance_subscriptions ms ON ms.id=mp.subscription_id
+       JOIN client_accounts ca ON ca.id=ms.client_account_id
+       LEFT JOIN organizations o ON o.id=ca.organization_id
+       LEFT JOIN contacts c ON c.id=ca.primary_contact_id
+       LEFT JOIN projects p ON p.id=ms.project_id
+       WHERE mp.period_end<? AND mp.status<>'closed' AND ms.status<>'archived'
+       ORDER BY mp.period_end`,
+      [today],
+    );
+  }
+
+  private unresolvedOverageSql(): string {
+    return `COALESCE((
+      SELECT COUNT(*)
+      FROM interventions i
+      WHERE i.maintenance_period_id=mp.id
+        AND i.status NOT IN ('cancelled','archived')
+        AND i.id NOT IN (SELECT mod.intervention_id FROM maintenance_overage_decisions mod WHERE mod.period_id=mp.id)
+        AND i.id IN (
+          SELECT ix.id FROM interventions ix
+          WHERE ix.maintenance_period_id=mp.id AND ix.status NOT IN ('cancelled','archived')
+          ORDER BY ix.created_at,ix.id
+          LIMIT -1 OFFSET CASE WHEN mp.included_interventions > 0 THEN mp.included_interventions ELSE 999999999 END
+        )
+    ),0)`;
   }
 
   private packRows(): PackAlertRow[] {
