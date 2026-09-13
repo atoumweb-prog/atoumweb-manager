@@ -39,6 +39,7 @@ import type {
   ProjectTemplateNodeInput,
   TransformQuoteToProjectInput,
 } from '../shared/projects';
+import type { ManualTimeSessionInput, StartTimeSessionInput, TimeSessionFilters } from '../shared/time';
 
 const api: AtoumWebApi = {
   app: { getBootstrap: () => ipcRenderer.invoke('app:get-bootstrap') },
@@ -159,6 +160,16 @@ const api: AtoumWebApi = {
       unlinkResource: (versionId: string, resourceId: string) => ipcRenderer.invoke('projects:technical:unlink-resource', versionId, resourceId),
       archive: (itemId: string) => ipcRenderer.invoke('projects:technical:archive', itemId),
     },
+  },
+  time: {
+    active: () => ipcRenderer.invoke('time:active'),
+    start: (input: StartTimeSessionInput) => ipcRenderer.invoke('time:start', input),
+    pause: (id: string) => ipcRenderer.invoke('time:pause', id),
+    resume: (id: string) => ipcRenderer.invoke('time:resume', id),
+    stop: (id: string) => ipcRenderer.invoke('time:stop', id),
+    addManual: (input: ManualTimeSessionInput) => ipcRenderer.invoke('time:add-manual', input),
+    list: (filters?: TimeSessionFilters) => ipcRenderer.invoke('time:list', filters),
+    summary: (filters?: TimeSessionFilters) => ipcRenderer.invoke('time:summary', filters),
   },
 };
 
