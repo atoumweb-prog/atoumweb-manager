@@ -11,6 +11,8 @@ import {
   type CatalogItemSummary,
   type CatalogVersion,
   type CatalogVersionInput,
+  type OfferComponent,
+  type OfferComponentInput,
 } from '../../shared/commercial';
 
 const nowIso = (): string => new Date().toISOString();
@@ -67,6 +69,32 @@ interface VersionRow extends Record<string, unknown> {
   internal_advice: string | null;
   published_at: string | null;
   created_at: string;
+}
+
+interface OfferComponentRow extends Record<string, unknown> {
+  id: string;
+  offer_version_id: string;
+  service_version_id: string;
+  service_item_id: string;
+  service_name: string;
+  service_version_number: number;
+  price_mode: CatalogVersion['priceMode'];
+  price_cents: number | null;
+  is_optional: number;
+  quantity_milli: number;
+  sort_order: number;
+}
+
+interface ItemIdentityRow extends Record<string, unknown> {
+  id: string;
+  item_type: CatalogItemSummary['type'];
+}
+
+interface VersionIdentityRow extends Record<string, unknown> {
+  id: string;
+  item_id: string;
+  item_type: CatalogItemSummary['type'];
+  status: CatalogVersion['status'];
 }
 
 export class CatalogService {
@@ -176,16 +204,37 @@ export class CatalogService {
   }
 
   createVersion(itemId: string, input: CatalogVersionInput): CatalogVersion {
-    this.assertItem(itemId);
+    const item = this.assertItem(itemId);
     this.validateVersion(input);
-    const row = this.database.get<{ next_version: number }>(
-      'SELECT COALESCE(MAX(version_number), 0) + 1 AS next_version FROM catalog_versions WHERE item_id=?',
+    const previous = this.database.get<{ id: string; version_number: number }>(
+      'SELECT id, version_number FROM catalog_versions WHERE item_id=? ORDER BY version_number DESC LIMIT 1',
       [itemId],
     );
-    const version = this.insertVersion(itemId, Number(row?.next_version ?? 1), input, nowIso());
-    this.database.run('UPDATE catalog_items SET updated_at=? WHERE id=?', [nowIso(), itemId]);
-    this.writeActivity(itemId, 'catalog_version_created', `Nouvelle version brouillon v${version.versionNumber}`);
-    return version;
+    const nextVersion = Number(previous?.version_number ?? 0) + 1;
+    const now = nowIso();
+
+    this.database.exec('BEGIN IMMEDIATE;');
+    try {
+      const version = this.insertVersion(itemId, nextVersion, input, now);
+      if (item.item_type === 'offer' && previous) {
+        const previousComponents = this.listOfferComponents(previous.id);
+        for (const component of previousComponents) {
+          this.database.run(
+            `INSERT INTO offer_components (
+              id, offer_version_id, service_version_id, is_optional, quantity_milli, sort_order, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [randomUUID(), version.id, component.serviceVersionId, component.isOptional ? 1 : 0, component.quantityMilli, component.sortOrder, now],
+          );
+        }
+      }
+      this.database.run('UPDATE catalog_items SET updated_at=? WHERE id=?', [now, itemId]);
+      this.writeActivity(itemId, 'catalog_version_created', `Nouvelle version brouillon v${version.versionNumber}`);
+      this.database.exec('COMMIT;');
+      return version;
+    } catch (error) {
+      this.database.exec('ROLLBACK;');
+      throw error;
+    }
   }
 
   publishVersion(versionId: string): CatalogVersion {
@@ -230,6 +279,96 @@ export class CatalogService {
     this.database.run('UPDATE catalog_items SET visible_public=?, updated_at=? WHERE id=?', [visible ? 1 : 0, nowIso(), itemId]);
     this.writeActivity(itemId, 'catalog_visibility_changed', visible ? 'Visible sur le site public' : 'Masqué du site public');
     return this.list().find((item) => item.id === itemId) as CatalogItemSummary;
+  }
+
+  listOfferComponents(offerVersionId: string): OfferComponent[] {
+    const version = this.assertOfferVersion(offerVersionId);
+    if (version.item_type !== 'offer') throw new Error('Cette version n’est pas une Offre.');
+    return this.database.all<OfferComponentRow>(
+      `SELECT
+        c.id,
+        c.offer_version_id,
+        c.service_version_id,
+        i.id AS service_item_id,
+        i.name AS service_name,
+        v.version_number AS service_version_number,
+        v.price_mode,
+        v.price_cents,
+        c.is_optional,
+        c.quantity_milli,
+        c.sort_order
+       FROM offer_components c
+       JOIN catalog_versions v ON v.id=c.service_version_id
+       JOIN catalog_items i ON i.id=v.item_id
+       WHERE c.offer_version_id=?
+       ORDER BY c.sort_order, i.name COLLATE NOCASE`,
+      [offerVersionId],
+    ).map((row) => ({
+      id: row.id,
+      offerVersionId: row.offer_version_id,
+      serviceVersionId: row.service_version_id,
+      serviceItemId: row.service_item_id,
+      serviceName: row.service_name,
+      serviceVersionNumber: Number(row.service_version_number),
+      priceMode: row.price_mode,
+      priceCents: row.price_cents,
+      isOptional: Boolean(row.is_optional),
+      quantityMilli: Number(row.quantity_milli),
+      sortOrder: Number(row.sort_order),
+    }));
+  }
+
+  setOfferComponents(offerVersionId: string, components: OfferComponentInput[]): OfferComponent[] {
+    const offerVersion = this.assertOfferVersion(offerVersionId);
+    if (offerVersion.status !== 'draft') {
+      throw new Error('La composition d’une Offre publiée est figée. Crée une nouvelle version pour la modifier.');
+    }
+
+    const seen = new Set<string>();
+    const normalized = components.map((component, index) => {
+      const serviceVersionId = clean(component.serviceVersionId);
+      if (!serviceVersionId) throw new Error('Version de Service invalide.');
+      if (seen.has(serviceVersionId)) throw new Error('Un même Service ne peut apparaître qu’une fois dans une Offre.');
+      seen.add(serviceVersionId);
+      const quantityMilli = component.quantityMilli ?? 1000;
+      if (!Number.isInteger(quantityMilli) || quantityMilli <= 0) throw new Error('Quantité de Service invalide.');
+      const service = this.database.get<VersionIdentityRow>(
+        `SELECT v.id, v.item_id, i.item_type, v.status
+         FROM catalog_versions v JOIN catalog_items i ON i.id=v.item_id
+         WHERE v.id=?`,
+        [serviceVersionId],
+      );
+      if (!service || service.item_type !== 'service') throw new Error('La composition d’une Offre ne peut contenir que des Services.');
+      if (service.status !== 'published') throw new Error('Publie le Service avant de l’ajouter à une Offre.');
+      return {
+        serviceVersionId,
+        isOptional: Boolean(component.isOptional),
+        quantityMilli,
+        sortOrder: component.sortOrder ?? index * 10,
+      };
+    });
+
+    const now = nowIso();
+    this.database.exec('BEGIN IMMEDIATE;');
+    try {
+      this.database.run('DELETE FROM offer_components WHERE offer_version_id=?', [offerVersionId]);
+      for (const component of normalized) {
+        this.database.run(
+          `INSERT INTO offer_components (
+            id, offer_version_id, service_version_id, is_optional, quantity_milli, sort_order, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [randomUUID(), offerVersionId, component.serviceVersionId, component.isOptional ? 1 : 0, component.quantityMilli, component.sortOrder, now],
+        );
+      }
+      this.database.run('UPDATE catalog_items SET updated_at=? WHERE id=?', [now, offerVersion.item_id]);
+      this.writeActivity(offerVersion.item_id, 'offer_composition_updated', `Composition de l’Offre mise à jour (${normalized.length} service${normalized.length > 1 ? 's' : ''})`);
+      this.database.exec('COMMIT;');
+    } catch (error) {
+      this.database.exec('ROLLBACK;');
+      throw error;
+    }
+
+    return this.listOfferComponents(offerVersionId);
   }
 
   private insertVersion(itemId: string, versionNumber: number, input: CatalogVersionInput, createdAt: string): CatalogVersion {
@@ -281,10 +420,22 @@ export class CatalogService {
     }
   }
 
-  private assertItem(id: string): void {
-    if (!this.database.get<{ id: string }>('SELECT id FROM catalog_items WHERE id=?', [id])) {
-      throw new Error('Élément du catalogue introuvable.');
-    }
+  private assertItem(id: string): ItemIdentityRow {
+    const item = this.database.get<ItemIdentityRow>('SELECT id, item_type FROM catalog_items WHERE id=?', [id]);
+    if (!item) throw new Error('Élément du catalogue introuvable.');
+    return item;
+  }
+
+  private assertOfferVersion(id: string): VersionIdentityRow {
+    const version = this.database.get<VersionIdentityRow>(
+      `SELECT v.id, v.item_id, i.item_type, v.status
+       FROM catalog_versions v JOIN catalog_items i ON i.id=v.item_id
+       WHERE v.id=?`,
+      [id],
+    );
+    if (!version) throw new Error('Version du catalogue introuvable.');
+    if (version.item_type !== 'offer') throw new Error('Cette version n’est pas une Offre.');
+    return version;
   }
 
   private getVersion(id: string): CatalogVersion {
