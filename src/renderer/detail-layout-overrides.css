@@ -2,7 +2,8 @@
  * Mise en page des fiches CRM validée pendant les tests Windows :
  * - Prospect et Client restent toujours à droite de leur vue principale ;
  * - la fiche réduit sa largeur avec la fenêtre au lieu de passer dessous ;
- * - la fiche possède son propre défilement vertical quand la hauteur manque.
+ * - la fiche possède son propre défilement vertical quand la hauteur manque ;
+ * - sans fiche ouverte, la liste Clients reprend toute la largeur disponible.
  *
  * Ce fichier est chargé en dernier afin de neutraliser les anciens breakpoints
  * qui faisaient basculer les panneaux sous le contenu.
@@ -14,10 +15,16 @@
   min-width: 0;
 }
 
+/* Clients suit la même logique que Prospects : plein écran sans fiche,
+ * deux colonnes uniquement lorsqu'une fiche client est réellement ouverte. */
 .clients-layout {
-  grid-template-columns: minmax(0, 1fr) clamp(300px, 29vw, 440px) !important;
+  grid-template-columns: minmax(0, 1fr) !important;
   align-items: start !important;
   min-width: 0;
+}
+
+.clients-layout:has(.client-summary-panel) {
+  grid-template-columns: minmax(0, 1fr) clamp(300px, 29vw, 440px) !important;
 }
 
 .prospect-detail-panel,
@@ -48,7 +55,7 @@
     grid-template-columns: minmax(0, 1fr) minmax(280px, 34%) !important;
   }
 
-  .clients-layout {
+  .clients-layout:has(.client-summary-panel) {
     grid-template-columns: minmax(0, 1fr) minmax(285px, 34%) !important;
   }
 }
