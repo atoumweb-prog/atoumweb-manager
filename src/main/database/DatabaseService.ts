@@ -13,6 +13,7 @@ import { ProjectReuseExportService } from '../projects/ProjectReuseExportService
 import { ProjectSearchService } from '../projects/ProjectSearchService';
 import { ProjectService } from '../projects/ProjectService';
 import { ProjectTechnicalLibraryService } from '../projects/ProjectTechnicalLibraryService';
+import { TimeCorrectionService } from '../time/TimeCorrectionService';
 import { TimeService } from '../time/TimeService';
 import type { WorkspacePaths } from '../workspace';
 import type { DatabaseAdapter } from './DatabaseAdapter';
@@ -37,6 +38,7 @@ export class DatabaseService {
   readonly projectSearch: ProjectSearchService;
   readonly projectTechnicalLibrary: ProjectTechnicalLibraryService;
   readonly time: TimeService;
+  readonly timeCorrections: TimeCorrectionService;
 
   constructor(private readonly workspace: WorkspacePaths) {
     this.existedBeforeOpen = existsSync(workspace.databaseFile);
@@ -54,6 +56,7 @@ export class DatabaseService {
     this.projectSearch = new ProjectSearchService(this.database);
     this.projectTechnicalLibrary = new ProjectTechnicalLibraryService(this.database);
     this.time = new TimeService(this.database);
+    this.timeCorrections = new TimeCorrectionService(this.database, this.time);
   }
 
   async initialize(): Promise<void> {
