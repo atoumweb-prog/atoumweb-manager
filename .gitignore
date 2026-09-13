@@ -4,6 +4,7 @@ out/
 dist/
 coverage/
 *.log
+gate0-output.txt
 .DS_Store
 Thumbs.db
 .env
