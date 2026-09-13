@@ -6,6 +6,7 @@ import { QuotesPage } from './commercial/QuotesPage';
 import { ClientsPage } from './crm/ClientsPage';
 import { GlobalSearch } from './crm/GlobalSearch';
 import { ProspectsPage } from './crm/ProspectsPage';
+import { ProjectsPage } from './projects/ProjectsPage';
 
 const NAV_ITEMS = [
   'Accueil',
@@ -63,6 +64,7 @@ function App() {
   const [theme, setTheme] = useState<ThemeName>('atoumweb');
   const [message, setMessage] = useState<string | null>(null);
   const [loadingError, setLoadingError] = useState<string | null>(null);
+  const [projectSearchTarget, setProjectSearchTarget] = useState<string | null>(null);
 
   useEffect(() => {
     window.atoumweb.app.getBootstrap()
@@ -113,6 +115,10 @@ function App() {
       case 'prospect': setActivePage('Prospects'); break;
       case 'catalog': setActivePage('Offres & Tarifs'); break;
       case 'quote': setActivePage('Devis'); break;
+      case 'project':
+        setProjectSearchTarget(result.entityId);
+        setActivePage('Projets');
+        break;
       case 'client':
       case 'organization':
       case 'contact':
@@ -154,8 +160,9 @@ function App() {
           {activePage === 'Clients' && <ClientsPage onMessage={setMessage} />}
           {activePage === 'Offres & Tarifs' && <CatalogPage onMessage={setMessage} />}
           {activePage === 'Devis' && <QuotesPage onMessage={setMessage} />}
+          {activePage === 'Projets' && <ProjectsPage onMessage={setMessage} initialProjectId={projectSearchTarget} />}
           {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} onThemeChange={updateTheme} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
-          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
+          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
         </section>
       </main>
     </div>
@@ -165,11 +172,17 @@ function App() {
 function Dashboard({ bootstrap }: { bootstrap: BootstrapState }) {
   const [prospectCount, setProspectCount] = useState<number | null>(null);
   const [clientCount, setClientCount] = useState<number | null>(null);
+  const [projectCount, setProjectCount] = useState<number | null>(null);
 
   useEffect(() => {
-    void Promise.all([window.atoumweb.crm.prospects.list(), window.atoumweb.crm.clients.list()]).then(([prospects, clients]) => {
+    void Promise.all([
+      window.atoumweb.crm.prospects.list(),
+      window.atoumweb.crm.clients.list(),
+      window.atoumweb.projects.projects.list(),
+    ]).then(([prospects, clients, projects]) => {
       setProspectCount(prospects.filter((prospect) => prospect.stage !== 'won' && prospect.stage !== 'lost').length);
       setClientCount(clients.length);
+      setProjectCount(projects.filter((project) => !['completed', 'archived'].includes(project.status)).length);
     });
   }, []);
 
@@ -177,14 +190,14 @@ function Dashboard({ bootstrap }: { bootstrap: BootstrapState }) {
     <>
       <div className="kpi-grid">
         <KpiCard label="Prospects actifs" value={prospectCount == null ? '…' : String(prospectCount)} detail="Pipeline commercial" />
-        <KpiCard label="Projets en cours" value="0" detail={`${clientCount ?? 0} client${clientCount === 1 ? '' : 's'} enregistré${clientCount === 1 ? '' : 's'}`} />
+        <KpiCard label="Projets en cours" value={projectCount == null ? '…' : String(projectCount)} detail={`${clientCount ?? 0} client${clientCount === 1 ? '' : 's'} enregistré${clientCount === 1 ? '' : 's'}`} />
         <KpiCard label="CA encaissé ce mois" value="0 €" detail="Suivi Abby à venir" />
-        <KpiCard label="Temps travaillé ce mois" value="0 h" detail="Timer prêt à être raccordé" />
+        <KpiCard label="Temps travaillé ce mois" value="0 h" detail="Timer bientôt raccordé aux projets" />
       </div>
       <div className="dashboard-grid">
-        <article className="panel panel-large"><div className="panel-title"><div><span className="eyebrow">Fondation</span><h2>Socle CRM en cours</h2></div><span className="success-badge">Phase 1</span></div><div className="foundation-list"><FoundationRow label="Workspace local" value={bootstrap.workspacePath} /><FoundationRow label="Base SQLite" value={bootstrap.databasePath} /><FoundationRow label="CRM" value="Organisations · Contacts · Prospects · Clients" /><FoundationRow label="Recherche" value="Index local multi-entités" /></div></article>
-        <article className="panel"><span className="eyebrow">Aujourd’hui</span><h2>{prospectCount ? `${prospectCount} prospect${prospectCount > 1 ? 's' : ''} actif${prospectCount > 1 ? 's' : ''}` : 'Rien à traiter'}</h2><p className="muted">Les prochaines actions et retards seront enrichis pendant la Phase 1.</p></article>
-        <article className="panel"><span className="eyebrow">Phase 1</span><h2>CRM opérationnel</h2><p className="muted">Créer un prospect, le faire avancer dans le pipeline puis le transformer en client sans ressaisie.</p></article>
+        <article className="panel panel-large"><div className="panel-title"><div><span className="eyebrow">Socle métier</span><h2>CRM + Commercial + Projets</h2></div><span className="success-badge">Phase 3</span></div><div className="foundation-list"><FoundationRow label="Workspace local" value={bootstrap.workspacePath} /><FoundationRow label="Base SQLite" value={bootstrap.databasePath} /><FoundationRow label="CRM" value="Organisations · Contacts · Prospects · Clients" /><FoundationRow label="Commercial" value="Catalogue · Devis · Snapshots" /><FoundationRow label="Production" value="Projets · Modèles · Plans · Ressources" /></div></article>
+        <article className="panel"><span className="eyebrow">Aujourd’hui</span><h2>{prospectCount ? `${prospectCount} prospect${prospectCount > 1 ? 's' : ''} actif${prospectCount > 1 ? 's' : ''}` : 'Pipeline à jour'}</h2><p className="muted">Les tâches projet et le timer alimenteront ensuite cette vue Aujourd’hui.</p></article>
+        <article className="panel"><span className="eyebrow">Production</span><h2>{projectCount ?? 0} projet{projectCount === 1 ? '' : 's'} actif{projectCount === 1 ? '' : 's'}</h2><p className="muted">Les projets sont maintenant séparés des devis et conservent leur propre arbre de production.</p></article>
       </div>
     </>
   );
