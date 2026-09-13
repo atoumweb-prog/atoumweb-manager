@@ -15,6 +15,7 @@ import { ProjectService } from '../projects/ProjectService';
 import { ProjectTechnicalLibraryService } from '../projects/ProjectTechnicalLibraryService';
 import { TimeCorrectionService } from '../time/TimeCorrectionService';
 import { TimeService } from '../time/TimeService';
+import { TimeSwitchService } from '../time/TimeSwitchService';
 import type { WorkspacePaths } from '../workspace';
 import type { DatabaseAdapter } from './DatabaseAdapter';
 import { NodeSqliteAdapter } from './NodeSqliteAdapter';
@@ -39,6 +40,7 @@ export class DatabaseService {
   readonly projectTechnicalLibrary: ProjectTechnicalLibraryService;
   readonly time: TimeService;
   readonly timeCorrections: TimeCorrectionService;
+  readonly timeSwitches: TimeSwitchService;
 
   constructor(private readonly workspace: WorkspacePaths) {
     this.existedBeforeOpen = existsSync(workspace.databaseFile);
@@ -57,6 +59,7 @@ export class DatabaseService {
     this.projectTechnicalLibrary = new ProjectTechnicalLibraryService(this.database);
     this.time = new TimeService(this.database);
     this.timeCorrections = new TimeCorrectionService(this.database, this.time);
+    this.timeSwitches = new TimeSwitchService(this.database, this.time);
   }
 
   async initialize(): Promise<void> {
