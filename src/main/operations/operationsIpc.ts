@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron';
-import type { DatabaseService } from '../database/DatabaseService';
+import type { MaintenanceOverageDecisionInput } from '../../shared/maintenanceOverage';
 import type {
   HourPackFilters,
   HourPackInput,
@@ -19,6 +19,7 @@ import type {
   ServiceRequestStatus,
   TransformRequestToInterventionInput,
 } from '../../shared/operations';
+import type { DatabaseService } from '../database/DatabaseService';
 
 export function registerOperationsIpcHandlers(database: DatabaseService): void {
   ipcMain.handle('operations:requests:list', (_event, filters?: ServiceRequestFilters) => database.operations.listRequests(filters));
@@ -57,4 +58,7 @@ export function registerOperationsIpcHandlers(database: DatabaseService): void {
   ipcMain.handle('operations:hour-packs:add-movement', (_event, id: string, input: HourPackMovementInput) => database.hourPacks.addMovement(id, input));
   ipcMain.handle('operations:hour-packs:debit-intervention', (_event, packId: string, interventionId: string) => database.hourPacks.debitIntervention(packId, interventionId));
   ipcMain.handle('operations:hour-packs:reverse-movement', (_event, movementId: string, reason: string) => database.hourPacks.reverseMovement(movementId, reason));
+
+  ipcMain.handle('maintenance-overages:review', (_event, periodId: string) => database.maintenanceOverages.review(periodId));
+  ipcMain.handle('maintenance-overages:decide', (_event, periodId: string, input: MaintenanceOverageDecisionInput) => database.maintenanceOverages.decide(periodId, input));
 }
