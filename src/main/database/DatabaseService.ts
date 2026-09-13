@@ -6,6 +6,7 @@ import { QuoteService } from '../commercial/QuoteService';
 import { ActionService } from '../crm/ActionService';
 import { ClientContactService } from '../crm/ClientContactService';
 import { CrmService } from '../crm/CrmService';
+import { ProjectService } from '../projects/ProjectService';
 import type { WorkspacePaths } from '../workspace';
 import type { DatabaseAdapter } from './DatabaseAdapter';
 import { NodeSqliteAdapter } from './NodeSqliteAdapter';
@@ -21,6 +22,7 @@ export class DatabaseService {
   readonly actions: ActionService;
   readonly catalog: CatalogService;
   readonly quotes: QuoteService;
+  readonly projects: ProjectService;
 
   constructor(private readonly workspace: WorkspacePaths) {
     this.existedBeforeOpen = existsSync(workspace.databaseFile);
@@ -30,6 +32,7 @@ export class DatabaseService {
     this.actions = new ActionService(this.database);
     this.catalog = new CatalogService(this.database);
     this.quotes = new QuoteService(this.database, this.crm);
+    this.projects = new ProjectService(this.database, this.workspace);
   }
 
   async initialize(): Promise<void> {
@@ -69,43 +72,29 @@ export class DatabaseService {
       'SELECT value_json FROM settings WHERE key = ?',
       [key],
     );
-
     if (!row) return fallback;
-
-    try {
-      return JSON.parse(row.value_json) as T;
-    } catch {
-      return fallback;
-    }
+    try { return JSON.parse(row.value_json) as T; } catch { return fallback; }
   }
 
   setSetting(key: string, value: unknown): void {
     const now = new Date().toISOString();
     const valueJson = JSON.stringify(value);
-
     this.database.run(
       `INSERT INTO settings (key, value_json, updated_at)
        VALUES (?, ?, ?)
-       ON CONFLICT(key) DO UPDATE SET
-         value_json = excluded.value_json,
-         updated_at = excluded.updated_at`,
+       ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at`,
       [key, valueJson, now],
     );
   }
 
   health(): DatabaseHealth {
     const row = this.database.get<{ count: number }>('SELECT COUNT(*) AS count FROM schema_migrations');
-    return {
-      healthy: true,
-      migrationCount: Number(row?.count ?? 0),
-      databasePath: this.workspace.databaseFile,
-    };
+    return { healthy: true, migrationCount: Number(row?.count ?? 0), databasePath: this.workspace.databaseFile };
   }
 
   async createBackup(kind: BackupKind): Promise<string> {
     const directory = join(this.workspace.backupsDirectory, kind);
     mkdirSync(directory, { recursive: true });
-
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const destination = join(directory, `atoumweb-manager-${timestamp}.sqlite`);
     await this.database.backupTo(destination);
@@ -115,11 +104,9 @@ export class DatabaseService {
   private async createDailyBackupIfNeeded(): Promise<void> {
     const directory = join(this.workspace.backupsDirectory, 'automatic');
     mkdirSync(directory, { recursive: true });
-
     const day = new Date().toISOString().slice(0, 10);
     const destination = join(directory, `atoumweb-manager-${day}.sqlite`);
     if (existsSync(destination)) return;
-
     await this.database.backupTo(destination);
   }
 
