@@ -3,6 +3,7 @@ import { PHASE_2_MIGRATIONS } from './phase2Migrations';
 import { PHASE_3_MIGRATIONS } from './phase3Migrations';
 import { PHASE_4_MIGRATIONS } from './phase4Migrations';
 import { PHASE_4_OVERAGE_MIGRATIONS } from './phase4OverageMigration';
+import { PHASE_4_REPORT_MIGRATIONS } from './phase4ReportMigration';
 
 export interface Migration { id: number; name: string; sql: string; }
 
@@ -161,6 +162,7 @@ export const MIGRATIONS: Migration[] = [
   ...PHASE_3_MIGRATIONS,
   ...PHASE_4_MIGRATIONS,
   ...PHASE_4_OVERAGE_MIGRATIONS,
+  ...PHASE_4_REPORT_MIGRATIONS,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {
