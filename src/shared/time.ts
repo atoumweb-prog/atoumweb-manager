@@ -31,6 +31,8 @@ export interface ManualTimeSessionInput extends StartTimeSessionInput {
   endedAt: string;
 }
 
+export interface UpdateTimeSessionInput extends ManualTimeSessionInput {}
+
 export interface TimeSessionPause {
   id: string;
   sessionId: string;
@@ -87,6 +89,7 @@ export interface TimeApi {
   stop(id: string): Promise<TimeSession>;
   stopAtLastKnown(id: string): Promise<TimeSession>;
   addManual(input: ManualTimeSessionInput): Promise<TimeSession>;
+  update(id: string, input: UpdateTimeSessionInput): Promise<TimeSession>;
   list(filters?: TimeSessionFilters): Promise<TimeSession[]>;
   summary(filters?: TimeSessionFilters): Promise<TimeSummary>;
 }
