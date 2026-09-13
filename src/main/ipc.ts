@@ -31,6 +31,17 @@ import type {
   ProspectStage,
   SearchResult,
 } from '../shared/crm';
+import type {
+  InternalProjectInput,
+  ProjectFilters,
+  ProjectNodeInput,
+  ProjectPrerequisiteInput,
+  ProjectPrerequisiteStatus,
+  ProjectStatus,
+  ProjectTemplateInput,
+  ProjectTemplateNodeInput,
+  TransformQuoteToProjectInput,
+} from '../shared/projects';
 import { generateQuotePdf } from './commercial/quotePdf';
 import type { DatabaseService } from './database/DatabaseService';
 import { scheduleDatabaseRestore } from './restore';
@@ -45,7 +56,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
 
   ipcMain.handle('settings:set-theme', (_event, value: unknown): ThemeName => {
     if (!isThemeName(value)) throw new Error('Thème invalide.');
-    database.setSetting('theme', value); return value;
+    database.setSetting('theme', value);
+    return value;
   });
 
   ipcMain.handle('workspace:choose', async (): Promise<WorkspaceChangeResult> => {
@@ -56,7 +68,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   });
 
   ipcMain.handle('backups:create-manual', async (): Promise<BackupResult> => {
-    const path = await database.createBackup('manual'); return { path, createdAt: new Date().toISOString() };
+    const path = await database.createBackup('manual');
+    return { path, createdAt: new Date().toISOString() };
   });
 
   ipcMain.handle('backups:restore', async (): Promise<RestoreScheduleResult> => {
@@ -65,15 +78,22 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     const sourcePath = selection.filePaths[0];
     const packaged = app.isPackaged;
     const confirmation = await dialog.showMessageBox({
-      type: 'warning', buttons: [packaged ? 'Restaurer et redémarrer' : 'Programmer la restauration', 'Annuler'], defaultId: 1, cancelId: 1,
-      title: 'Confirmer la restauration', message: 'Restaurer cette sauvegarde ?',
+      type: 'warning',
+      buttons: [packaged ? 'Restaurer et redémarrer' : 'Programmer la restauration', 'Annuler'],
+      defaultId: 1,
+      cancelId: 1,
+      title: 'Confirmer la restauration',
+      message: 'Restaurer cette sauvegarde ?',
       detail: packaged
         ? 'La base actuelle sera d’abord sauvegardée automatiquement dans le dossier pre-restore, puis l’application redémarrera.'
         : 'La base actuelle sera d’abord sauvegardée automatiquement dans le dossier pre-restore au prochain démarrage. En mode développement, ferme ensuite AtoumWeb Manager puis relance « npm start » pour appliquer la restauration.',
     });
     if (confirmation.response !== 0) return { cancelled: true };
     scheduleDatabaseRestore(sourcePath);
-    if (packaged) { setTimeout(() => { app.relaunch(); app.exit(0); }, 150); return { cancelled: false, sourcePath, restartScheduled: true }; }
+    if (packaged) {
+      setTimeout(() => { app.relaunch(); app.exit(0); }, 150);
+      return { cancelled: false, sourcePath, restartScheduled: true };
+    }
     return { cancelled: false, sourcePath, restartScheduled: false };
   });
 
@@ -106,6 +126,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('crm:search:global', (_event, query: string): SearchResult[] => {
     const normalized = query.trim();
     if (normalized.length < 2) return [];
+
     const crmResults = database.crm.globalSearch(normalized);
     const catalogResults: SearchResult[] = database.catalog.list({ search: normalized }).slice(0, 6).map((item) => ({
       entityType: 'catalog',
@@ -121,7 +142,15 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
       subtitle: quote.ownerLabel,
       status: quote.status,
     }));
-    return [...crmResults, ...catalogResults, ...quoteResults].slice(0, 20);
+    const projectResults: SearchResult[] = database.projects.listProjects({ search: normalized }).slice(0, 6).map((project) => ({
+      entityType: 'project',
+      entityId: project.id,
+      title: `${project.number} · ${project.name}`,
+      subtitle: project.clientLabel,
+      status: project.status,
+    }));
+
+    return [...crmResults, ...catalogResults, ...quoteResults, ...projectResults].slice(0, 20);
   });
   ipcMain.handle('crm:search:rebuild', () => database.crm.rebuildSearchIndex());
 
@@ -150,4 +179,22 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('quotes:expire', (_event, id: string) => database.quotes.expire(id));
   ipcMain.handle('quotes:duplicate', (_event, id: string) => database.quotes.duplicate(id));
   ipcMain.handle('quotes:generate-pdf', async (_event, id: string) => generateQuotePdf(database.quotes.get(id), workspace));
+
+  ipcMain.handle('projects:templates:list', () => database.projects.listTemplates());
+  ipcMain.handle('projects:templates:get', (_event, id: string) => database.projects.getTemplate(id));
+  ipcMain.handle('projects:templates:create', (_event, input: ProjectTemplateInput) => database.projects.createTemplate(input));
+  ipcMain.handle('projects:templates:create-version', (_event, templateId: string, description?: string | null) => database.projects.createTemplateVersion(templateId, description));
+  ipcMain.handle('projects:templates:publish-version', (_event, versionId: string) => database.projects.publishTemplateVersion(versionId));
+  ipcMain.handle('projects:templates:add-node', (_event, versionId: string, input: ProjectTemplateNodeInput) => database.projects.addTemplateNode(versionId, input));
+  ipcMain.handle('projects:templates:remove-node', (_event, nodeId: string) => database.projects.removeTemplateNode(nodeId));
+
+  ipcMain.handle('projects:list', (_event, filters?: ProjectFilters) => database.projects.listProjects(filters));
+  ipcMain.handle('projects:get', (_event, id: string) => database.projects.getProject(id));
+  ipcMain.handle('projects:transform-quote', (_event, input: TransformQuoteToProjectInput) => database.projects.transformQuote(input));
+  ipcMain.handle('projects:create-internal', (_event, input: InternalProjectInput) => database.projects.createInternal(input));
+  ipcMain.handle('projects:change-status', (_event, id: string, status: ProjectStatus) => database.projects.changeProjectStatus(id, status));
+  ipcMain.handle('projects:add-node', (_event, projectId: string, input: ProjectNodeInput) => database.projects.addProjectNode(projectId, input));
+  ipcMain.handle('projects:update-node', (_event, nodeId: string, input: Partial<ProjectNodeInput>) => database.projects.updateProjectNode(nodeId, input));
+  ipcMain.handle('projects:add-prerequisite', (_event, projectId: string, input: ProjectPrerequisiteInput) => database.projects.addPrerequisite(projectId, input));
+  ipcMain.handle('projects:update-prerequisite-status', (_event, id: string, status: ProjectPrerequisiteStatus) => database.projects.updatePrerequisiteStatus(id, status));
 }
