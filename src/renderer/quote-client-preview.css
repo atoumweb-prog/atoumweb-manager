@@ -2,8 +2,13 @@
 .quote-preview-overlay { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 24px; background: rgba(8, 18, 27, .68); backdrop-filter: blur(4px); }
 .quote-client-preview { width: min(980px, 100%); max-height: calc(100dvh - 48px); overflow-y: auto; border-radius: 16px; background: #ece9e2; box-shadow: 0 24px 80px rgba(0, 0, 0, .32); }
 .quote-client-preview-toolbar { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #ddd6ca; background: rgba(248, 246, 241, .96); }
-.quote-client-preview-toolbar > div { display: grid; gap: 2px; }
+.quote-client-preview-toolbar > div:first-child { display: grid; gap: 2px; }
 .quote-client-preview-toolbar strong { color: #172330; font-size: 12px; }
+.quote-client-preview-actions { display: flex; gap: 8px; align-items: center; }
+.quote-pdf-result, .quote-pdf-error { display: grid; gap: 3px; margin: 12px 20px 0; padding: 10px 12px; border-radius: 9px; font-size: 9px; }
+.quote-pdf-result { color: #275f47; background: #e1f1e8; border: 1px solid #bdddc9; }
+.quote-pdf-result span { overflow-wrap: anywhere; }
+.quote-pdf-error { color: #963d43; background: #f8e8e8; border: 1px solid #edcaca; }
 .quote-document { width: min(820px, calc(100% - 40px)); margin: 20px auto 32px; padding: 44px 48px; background: white; color: #172330; box-shadow: 0 10px 35px rgba(28, 33, 37, .10); }
 .quote-document-header { display: flex; justify-content: space-between; gap: 32px; padding-bottom: 24px; border-bottom: 2px solid #b28b49; }
 .quote-document-header > div:first-child { display: grid; align-content: start; gap: 5px; }
@@ -42,4 +47,4 @@
 .quote-document-conditions strong, .quote-document-conditions p { margin: 0; font-size: 10px; line-height: 1.55; }
 .quote-document-footer { display: flex; justify-content: space-between; gap: 16px; margin-top: 36px; padding-top: 14px; border-top: 1px solid #ddd8d0; color: #7b8085; font-size: 9px; }
 .quote-document-footer strong { color: #9d7538; }
-@media (max-width: 760px) { .quote-preview-overlay { padding: 8px; } .quote-document { width: calc(100% - 18px); padding: 26px 20px; margin: 9px auto 18px; } .quote-document-header { display: grid; } .quote-document-meta { justify-items: start; text-align: left; } .quote-document-line-main { grid-template-columns: 1fr; } .quote-document-line-price { justify-items: start; } .quote-document-conditions > div { grid-template-columns: 1fr; gap: 4px; } }
+@media (max-width: 760px) { .quote-preview-overlay { padding: 8px; } .quote-client-preview-toolbar { align-items: flex-start; } .quote-client-preview-actions { flex-wrap: wrap; justify-content: flex-end; } .quote-document { width: calc(100% - 18px); padding: 26px 20px; margin: 9px auto 18px; } .quote-document-header { display: grid; } .quote-document-meta { justify-items: start; text-align: left; } .quote-document-line-main { grid-template-columns: 1fr; } .quote-document-line-price { justify-items: start; } .quote-document-conditions > div { grid-template-columns: 1fr; gap: 4px; } }
