@@ -1,203 +1,217 @@
 # AtoumWeb Manager — Suivi du projet
 
-> Fichier de référence partagé entre AtoumWeb, ChatGPT et Codex. Il doit être mis à jour à chaque étape importante du développement.
+> Source de vérité partagée entre AtoumWeb, ChatGPT et Codex. À mettre à jour à chaque étape significative.
 
 ## État général
 
-- **Projet** : AtoumWeb Manager
-- **Version cible actuelle** : V1
-- **Statut global** : Fondation implémentée — validation exécutable requise — Phases 1 CRM et 2 Commercial préparées
+- **Version cible** : V1
 - **Dépôt** : `atoumweb-prog/atoumweb-manager`
 - **Branche stable** : `main`
-- **Branche de travail actuelle** : `foundation/electron-react-sqlite`
-- **PR actuelle** : #3 — Fondation V1 — Electron, React, SQLite et shell AtoumWeb (brouillon)
-- **Principe** : une donnée possède une source unique ; les autres écrans la référencent sans duplication.
+- **Branche actuelle** : `foundation/electron-react-sqlite`
+- **PR actuelle** : #3 — Fondation V1 (brouillon)
+- **Statut** : fondation implémentée mais validation Windows requise ; Phases 1, 2 et 3 préparées en détail.
+- **Principe directeur** : une donnée métier possède une source unique ; les autres écrans la référencent sans duplication.
 
 ## Références
 
-- `docs/CAHIER_DES_CHARGES_FONCTIONNEL_V1.md` — fonctionnel
-- `docs/ARCHITECTURE.md` — architecture technique
-- `docs/DATA_MODEL_V1.md` — modèle de données cible V1
-- `docs/ROADMAP_V1.md` — ordre de développement
-- `docs/DEVELOPMENT.md` — démarrage local
-- `docs/PHASE_1_CRM.md` — Contacts / Prospects / Clients / Recherche
-- `docs/PHASE_1_CRM_ISSUES.md` — découpage Phase 1
-- `docs/PHASE_2_COMMERCIAL.md` — Offres & Tarifs + Devis
+- `docs/CAHIER_DES_CHARGES_FONCTIONNEL_V1.md`
+- `docs/ARCHITECTURE.md`
+- `docs/DATA_MODEL_V1.md`
+- `docs/ROADMAP_V1.md`
+- `docs/DEVELOPMENT.md`
+- `docs/PHASE_1_CRM.md`
+- `docs/PHASE_1_CRM_ISSUES.md`
+- `docs/PHASE_2_COMMERCIAL.md`
+- `docs/PHASE_3_PROJECTS.md`
 
 ## Phase 0 — Fondation
 
-- [x] Dépôt GitHub et documentation de référence
-- [x] Architecture technique et modèle de données
-- [x] Branche `foundation/electron-react-sqlite`
-- [x] Electron Forge + React + TypeScript
-- [x] Séparation `main / preload / renderer / shared`
-- [x] Sécurité Electron (`contextIsolation`, `nodeIntegration: false`, sandbox)
+### Réalisé
+
+- [x] Electron + React + TypeScript
+- [x] séparation sécurisée `main / preload / renderer / shared`
 - [x] SQLite via `node:sqlite` derrière `DatabaseAdapter`
-- [x] Migrations SQLite + première migration système
-- [x] Workspace local configurable
-- [x] Sauvegardes quotidienne / manuelle / pré-migration
-- [x] Restauration sécurisée avec copie `pre-restore`
-- [x] Shell V1 et trois thèmes
-- [x] Réglages minimum et retour au thème AtoumWeb
-- [x] Premiers tests et workflow CI
-- [ ] Générer/versionner `package-lock.json`
-- [ ] Valider `npm install`, typecheck, tests et `npm start` sur Windows
-- [ ] Valider packaging Windows
-- [ ] Finaliser/fusionner PR #3
+- [x] migrations SQLite
+- [x] workspace configurable
+- [x] sauvegarde quotidienne / manuelle / pré-migration
+- [x] restauration sécurisée avec sauvegarde `pre-restore`
+- [x] shell V1 et menu dans l’ordre validé
+- [x] thèmes AtoumWeb / Noir / Blanc
+- [x] Réglages minimum
+- [x] premiers tests et workflow CI
+- [x] PR #3 ouverte en brouillon
+
+### À valider
+
+- [ ] générer/versionner `package-lock.json`
+- [ ] `npm install`
+- [ ] `npm run typecheck`
+- [ ] `npm test`
+- [ ] `npm start`
+- [ ] sauvegarde/restauration réelle
+- [ ] trois thèmes
+- [ ] `npm run package`
+- [ ] fusion PR #3
+
+**Point ouvert** : les runs GitHub Actions observés n’ont obtenu aucun runner (`runner_id=0`, `steps=[]`). Ils n’ont donc exécuté aucune commande du projet.
 
 ## Phase 1 — Socle CRM — préparation terminée
 
-- [x] Organisations / Contacts comme identité commune
-- [x] Prospects et stages Kanban
-- [x] Température, source, budget, valeur, prochaine action
-- [x] Perdu avec raison
-- [x] Conversion Prospect → Client transactionnelle/idempotente
-- [x] Liste Clients + statuts Actif/Inactif/Archivé
-- [x] Fiche Client : Résumé / Contacts / Commercial / Historique
-- [x] Rôles contacts multiples
-- [x] Archivage/réactivation
-- [x] Journal d’activité Phase 1
-- [x] Recherche globale Prospect/Client/Organisation/Contact
-- [x] Tests et critères d’acceptation
-- [x] Issues #4 à #9 créées
-- [ ] Code Phase 1 après fusion de la fondation
+Référence : `docs/PHASE_1_CRM.md`
+
+Issues :
+
+- #4 parent — Socle CRM
+- #5 Migration CRM / repositories / journal
+- #6 Prospects / Kanban / prochaines actions
+- #7 Clients / conversion Prospect → Client
+- #8 Recherche globale réelle
+- #9 Validation Phase 1
+
+Décisions clés :
+
+- organisations/contacts = identité commune ;
+- Prospect et Client ne recopient jamais les coordonnées ;
+- conversion Prospect → Client transactionnelle et idempotente ;
+- statuts Client : Actif / Inactif / Archivé ;
+- archivage réversible ;
+- recherche globale basée sur un index dérivé reconstruisible ;
+- journal d’activité centralisé.
 
 ## Phase 2 — Commercial — préparation terminée
 
-- [x] Services et Offres distincts
-- [x] Catalogue versionné
-- [x] États item/version
-- [x] Modes de tarification
-- [x] Prix AtoumWeb + prix conseillé interne
-- [x] Assistant Devis en 6 étapes
-- [x] Lignes catalogue + lignes libres
-- [x] Snapshots de devis indépendants du catalogue futur
-- [x] Quantités déterministes via `quantity_milli`
-- [x] Remises : calcul séparé de la raison commerciale
-- [x] Valeur catalogue / remise / valeur contractuelle distinctes
-- [x] Numérotation `DEV-YYYY-001`
-- [x] Statuts Brouillon / Envoyé / Vu / Accepté / Refusé / Expiré / Annulé
-- [x] Acceptation prospect → client dans la même transaction
-- [x] Devis accepté figé
-- [x] Handoff « prêt à transformer en projet » sans faux projet provisoire
-- [x] Prévisualisation client + PDF prévue
-- [x] Issues #10 à #15 créées
-- [ ] Code Phase 2 après validation Phase 1
+Référence : `docs/PHASE_2_COMMERCIAL.md`
+
+Issues :
+
+- #10 parent — Commercial
+- #11 Catalogue Services / Offres versionné
+- #12 Moteur de devis / snapshots / calculs
+- #13 Devis guidé / prévisualisation / PDF
+- #14 Acceptation / conversion client / handoff Projet
+- #15 Validation Phase 2
+
+Décisions clés :
+
+- Service = prestation atomique ; Offre = composition de services ;
+- modifier un élément publié crée une nouvelle version ;
+- devis indépendant du catalogue futur grâce aux snapshots ;
+- valeur catalogue, remise et valeur contractuelle distinctes ;
+- devis accepté figé ;
+- acceptation Prospect → Client sans doublon ;
+- Phase 2 ne crée pas de projet provisoire ; elle marque le devis prêt pour Phase 3.
+
+## Phase 3 — Projets & Production — préparation terminée
+
+Référence : `docs/PHASE_3_PROJECTS.md`
+
+Issues :
+
+- #16 parent — Projets & Production
+- #17 Modèles de projets versionnés
+- #18 Transformation Devis → Projet
+- #19 Fiche Projet / arbre / prérequis
+- #20 Fichiers & Ressources projet
+- #21 Bibliothèque technique projet
+- #22 Timer global / sessions de temps
+- #23 Validation Phase 3
+
+Décisions clés :
+
+- un devis accepté ne peut produire qu’un seul projet ;
+- transformation Devis → Projet transactionnelle et idempotente ;
+- modèle projet versionné et figé au moment de la création ;
+- arbre `Lot → Module/Page → Tâche → Checklist` ;
+- progression calculée depuis les tâches obligatoires ;
+- temps réel issu uniquement de `time_sessions` ;
+- arborescence Ressources physique créée automatiquement sur disque ;
+- SQLite référence les fichiers sans les dupliquer ;
+- fichiers déplacés détectables et relocalisables ;
+- Bibliothèque projet = réel technique utilisé chez le client ;
+- aucune généralisation automatique vers Bibliothèque AtoumWeb ;
+- timer unique global raccordé à Client > Projet > Module > Tâche ;
+- pause/reprise persistées ;
+- session restée ouverte au redémarrage gérée explicitement ;
+- projet interne AtoumWeb autorisé sans client externe ;
+- fin de projet avec checklist d’avertissements non bloquants ;
+- Cazor Auto Passion sert de cas de validation de référence.
 
 ## Avancement par module
 
-| Module | Conception | Développement | Tests | Statut |
-|---|---|---|---|---|
-| Accueil / Dashboard | ✅ | 🟡 socle | ⬜ | Shell de fondation |
-| Recherche globale | ✅ | 🟡 shell | ⬜ | Phase 1 — #8 |
-| Prospects | ✅ | ⬜ | ⬜ | Phase 1 — #6 |
-| Clients | ✅ | ⬜ | ⬜ | Phase 1 — #7 |
-| Offres & Tarifs | ✅ | ⬜ | ⬜ | Phase 2 — #11 |
-| Devis | ✅ | ⬜ | ⬜ | Phase 2 — #12 à #15 |
-| Projets | ✅ | ⬜ | ⬜ | Prochaine phase à préparer |
-| Fichiers & Ressources projet | ✅ | ⬜ | ⬜ | À développer avec Projets |
-| Bibliothèque projet | ✅ | ⬜ | ⬜ | À développer |
-| Bibliothèque AtoumWeb | ✅ | ⬜ | ⬜ | À développer |
-| Timer global | ✅ | 🟡 shell | ⬜ | Widget visible, logique à raccorder |
-| Gestion des temps | ✅ | ⬜ | ⬜ | À développer |
-| Interventions & Maintenance | ✅ | ⬜ | ⬜ | À développer |
-| Packs d'heures | ✅ | ⬜ | ⬜ | À développer |
-| Facturation / suivi Abby | ✅ | ⬜ | ⬜ | À développer |
-| Dépenses AtoumWeb | ✅ | ⬜ | ⬜ | À développer |
-| Documents & Contrats | ✅ | ⬜ | ⬜ | PDF devis amorcé en Phase 2 |
-| Sauvegardes | ✅ | 🟡 fondation | ⬜ | DB locale implémentée |
-| Annuaire interne | ✅ | ⬜ | ⬜ | À développer |
-| Statistiques | ✅ | ⬜ | ⬜ | À développer |
-| Journal d'activité | ✅ | 🟡 schéma | ⬜ | Normalisation prévue #5 |
-| Réglages généraux | ✅ | 🟡 socle | ⬜ | Thème/workspace/DB présents |
-| Thèmes AtoumWeb / Noir / Blanc | ✅ | ✅ socle | ⬜ | Implémentés, validation requise |
+| Module | Conception | Développement | Statut |
+|---|---|---|---|
+| Accueil / Dashboard | ✅ | 🟡 | Socle présent |
+| Recherche globale | ✅ | 🟡 | Phase 1 #8 |
+| Prospects | ✅ | ⬜ | Phase 1 #6 |
+| Clients | ✅ | ⬜ | Phase 1 #7 |
+| Offres & Tarifs | ✅ | ⬜ | Phase 2 #11 |
+| Devis | ✅ | ⬜ | Phase 2 #12–#15 |
+| Projets | ✅ | ⬜ | Phase 3 #17–#19 |
+| Fichiers & Ressources | ✅ | ⬜ | Phase 3 #20 |
+| Bibliothèque projet | ✅ | ⬜ | Phase 3 #21 |
+| Timer global | ✅ | 🟡 shell | Phase 3 #22 |
+| Gestion des temps | ✅ | ⬜ | Première version Phase 3 #22 |
+| Interventions & Maintenance | ✅ | ⬜ | Prochaine phase |
+| Packs d’heures | ✅ | ⬜ | Prochaine phase |
+| Facturation / Abby | ✅ | ⬜ | À venir |
+| Dépenses | ✅ | ⬜ | À venir |
+| Documents & Contrats | ✅ | ⬜ | PDF devis amorcé Phase 2 |
+| Bibliothèque AtoumWeb | ✅ | ⬜ | À venir après Bibliothèque projet |
+| Sauvegardes | ✅ | 🟡 | Base CRM implémentée ; sauvegardes métier à venir |
+| Annuaire | ✅ | ⬜ | À venir |
+| Statistiques | ✅ | ⬜ | À venir |
+| Journal d’activité | ✅ | 🟡 | Normalisation Phase 1 #5 |
+| Réglages | ✅ | 🟡 | Socle présent |
+| Thèmes | ✅ | ✅ socle | Validation réelle requise |
 
-## Règles fonctionnelles à ne pas casser
+## Règles à ne jamais casser
 
 1. Une donnée métier possède une source unique.
-2. Les devis conservent leur snapshot ; le catalogue futur ne les modifie jamais.
-3. Les modèles de projets sont versionnés ; une nouvelle version ne modifie pas les anciens projets.
-4. Archivage réversible plutôt que suppression destructive.
-5. Un seul timer actif dans toute l’application.
-6. Valeur commerciale, montant facturé et montant encaissé restent distincts.
-7. Abby reste l’outil de facturation réglementaire en V1.
-8. Une maintenance mensuelle est une période, pas un nouveau projet.
-9. Bibliothèque projet = réel utilisé ; Bibliothèque AtoumWeb = version générique indépendante.
-10. Le code stocké n’est jamais exécuté automatiquement.
-11. Une sauvegarde serveur n’est pas une sauvegarde locale.
+2. Prospect et Client partagent organisations/contacts ; conversion sans copie.
+3. Les versions publiées du catalogue restent historiques.
+4. Les devis gardent leurs snapshots et deviennent immuables une fois acceptés.
+5. Un devis accepté ne crée qu’un seul projet.
+6. Les modèles projet sont versionnés ; les anciens projets ne changent jamais rétroactivement.
+7. Le temps réel provient uniquement des `time_sessions`.
+8. Un seul timer actif dans toute l’application.
+9. Valeur commerciale, montant facturé et montant encaissé sont distincts.
+10. Abby reste l’outil réglementaire de facturation en V1.
+11. Archivage réversible préféré à la suppression destructive.
 12. Ressources projet et documents client restent distincts.
-13. Les documents maîtres sont référencés, pas dupliqués.
-14. Recherche globale et journal d’activité sont transverses.
-15. Prospect et Client utilisent les mêmes `organizations` / `contacts`.
-16. Conversion Prospect → Client idempotente.
-17. Une version Catalogue publiée n’est pas modifiée rétroactivement.
-18. Un devis accepté est figé.
-19. Phase 2 ne crée pas de projet provisoire : la transformation complète est Phase 3.
+13. Les fichiers maîtres sont référencés, pas dupliqués.
+14. Les fichiers lourds restent hors SQLite.
+15. Bibliothèque projet = réel client ; Bibliothèque AtoumWeb = version indépendante réutilisable.
+16. Le code stocké n’est jamais exécuté automatiquement.
+17. Une sauvegarde serveur n’est pas une sauvegarde locale.
+18. Une maintenance périodique ne crée pas un nouveau projet chaque mois.
+19. Recherche globale et journal d’activité sont transverses.
 20. Trois thèmes : AtoumWeb par défaut, Noir, Blanc.
 
-## Architecture technique décidée
+## Architecture technique
 
 - Electron 44.x
 - React 19.3
 - TypeScript 5.9 strict
 - Electron Forge 7.11.2 + Vite 5.4.19
-- SQLite locale via `node:sqlite` derrière `DatabaseAdapter`
-- SQL + migrations versionnées sans ORM lourd
-- renderer isolé ; accès système uniquement via IPC typé
-- Monaco Editor prévu pour la bibliothèque technique
-- PDF via HTML + `webContents.printToPDF()`
+- SQLite locale via `node:sqlite`
+- SQL + migrations versionnées
+- IPC typé et renderer isolé
 - workspace local configurable
-- sauvegarde quotidienne, manuelle, pré-migration et pré-restauration
+- Monaco Editor prévu pour le code
+- PDF via HTML + `webContents.printToPDF()`
 
-## Parcours métier de référence
+## Parcours métier cible
 
 `Prospect → Devis → Client → Projet → Production → Livraison → Facturation → Maintenance → Statistiques`
 
-## Décisions du 13/09/2026
-
-### Conception V1
-
-- Tous les grands modules fonctionnels validés.
-- Recherche globale essentielle.
-- Bibliothèque projet et Bibliothèque AtoumWeb séparées.
-- Généralisation d’un module projet non automatique.
-- Sauvegardes avec emplacement réel.
-
-### Fondation
-
-- Application locale Electron/React/TypeScript + SQLite.
-- Shell, thèmes, workspace et sauvegarde/restauration implémentés sur la branche de fondation.
-- CI présente mais aucun runner GitHub n’a encore réellement exécuté les commandes (`runner_id=0`, `steps=[]`).
-
-### Phase 1 préparée
-
-- Identité partagée organisations/contacts.
-- Conversion Prospect → Client sans copie ni doublon.
-- Kanban, Clients, journal et recherche globale détaillés.
-- Issues #4 à #9.
-
-### Phase 2 préparée
-
-- Catalogue Services/Offres versionné.
-- Snapshot obligatoire des devis.
-- Ajustements commerciaux avec valeur catalogue conservée.
-- Acceptation prospect → client intégrée.
-- Devis accepté figé puis signalé « prêt à transformer en projet ».
-- Issues #10 à #15.
-
 ## Travail en cours
 
-**Valider la fondation exécutable. Les Phases 1 et 2 sont déjà préparées et prêtes à être confiées à Codex dans l’ordre prévu.**
+**Validation exécutable de la fondation. La préparation fonctionnelle/technique est déjà avancée jusqu’à la Phase 3 incluse.**
 
-## Blocages / points ouverts
+## Prochain ordre de développement
 
-- Les runs GitHub Actions observés n’ont obtenu aucun runner ; aucune commande npm n’a réellement été exécutée.
-- `package-lock.json` doit être produit par un `npm install` réel.
-
-## Prochaines actions
-
-1. Valider la fondation sur Windows/Codex.
-2. Finaliser et fusionner PR #3.
-3. Développer Phase 1 : #5 → #6/#7/#8 → #9.
-4. Développer Phase 2 : #11 → #12 → #13/#14 → #15.
-5. Préparer Phase 3 Projets : transformation d’un devis accepté, modèles versionnés, lots/modules/tâches, ressources et prérequis.
+1. Valider et fusionner la fondation PR #3.
+2. Phase 1 : #5 → #6/#7/#8 → #9.
+3. Phase 2 : #11 → #12 → #13/#14 → #15.
+4. Phase 3 : #17 → #18 → #19/#20 → #21/#22 → #23.
+5. Préparer puis développer Phase 4 : Interventions, Maintenance et Packs d’heures.
