@@ -2,6 +2,7 @@ import type { Intervention } from '../../shared/operations';
 import type { BillingHandoffService } from '../billing/BillingHandoffService';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import type { HourPackService } from './HourPackService';
+import type { MaintenanceOverageService } from './MaintenanceOverageService';
 import type { OperationsService } from './OperationsService';
 
 export class InterventionCompletionService {
@@ -10,6 +11,7 @@ export class InterventionCompletionService {
     private readonly operations: OperationsService,
     private readonly hourPacks: HourPackService,
     private readonly billing: BillingHandoffService,
+    private readonly maintenanceOverages: MaintenanceOverageService,
   ) {}
 
   complete(id: string): Intervention {
@@ -38,6 +40,7 @@ export class InterventionCompletionService {
     }
 
     if (intervention.status !== 'completed') intervention = this.operations.changeInterventionStatus(id, 'completed');
+    if (intervention.coverageMode === 'maintenance') this.maintenanceOverages.syncBillingForIntervention(id);
     this.billing.ensureForIntervention(id);
     return intervention;
   }
