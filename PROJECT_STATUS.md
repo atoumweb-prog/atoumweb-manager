@@ -7,78 +7,100 @@
 - **Version cible** : V1
 - **Dépôt** : `atoumweb-prog/atoumweb-manager`
 - **Branche stable** : `main`
-- **Branche actuelle** : `foundation/electron-react-sqlite`
-- **PR actuelle** : #3 — Fondation V1 (brouillon)
-- **Statut** : Gate 0 automatique Windows validé ; application lancée et validée visuellement ; sauvegarde manuelle SQLite validée ; restauration réelle à retester après correction du redémarrage en mode développement.
+- **Fondation** : `foundation/electron-react-sqlite` — PR #3
+- **Branche de travail actuelle** : `feature/phase-1-crm`
+- **Statut** : fondation validée sur Windows ; Phase 1 CRM en développement.
 - **Principe directeur** : une donnée métier possède une source unique ; les autres écrans la référencent sans duplication.
-
-## Références
-
-- `docs/CAHIER_DES_CHARGES_FONCTIONNEL_V1.md`
-- `docs/ARCHITECTURE.md`
-- `docs/DATA_MODEL_V1.md`
-- `docs/ROADMAP_V1.md`
-- `docs/DEVELOPMENT.md`
-- `docs/PHASE_1_CRM.md`
-- `docs/PHASE_2_COMMERCIAL.md`
-- `docs/PHASE_3_PROJECTS.md`
-- `docs/PHASE_4_OPERATIONS.md`
-- `docs/PHASE_5_ADMIN_FINANCE.md`
-- `docs/PHASE_6_REFERENTIALS_CONTINUITY.md`
-- `docs/PHASE_7_ANALYTICS_RELEASE.md`
-- `docs/CODEX_EXECUTION_PLAN.md`
 
 ## Phase 0 — Fondation
 
-Implémenté sur `foundation/electron-react-sqlite` : Electron + React + TypeScript, sécurité main/preload/renderer, SQLite/migrations, workspace, sauvegarde/restauration CRM, shell/menu V1, thèmes AtoumWeb/Noir/Blanc, premiers tests et CI.
+Validations réelles effectuées sous Windows le 13/09/2026 :
 
-### Gate 0 automatique Windows
-
-Validé le 13/09/2026 sur Windows :
-
-- [x] Node/npm/Git détectés
 - [x] `npm install`
 - [x] `npm run typecheck`
 - [x] `npm test`
-- [x] test SQLite exécuté avec le runtime Node intégré à Electron
 - [x] `npm run package`
-- [x] packaging x64 Win32 réussi
-- [x] `package-lock.json` généré localement
-
-### Validation réelle de l’application Windows
-
-- [x] `npm start`
-- [x] démarrage visuel de l’application
+- [x] démarrage réel Electron
 - [x] navigation principale
 - [x] thèmes AtoumWeb / Noir / Blanc
-- [x] Réglages et workspace réel affichés
-- [x] sauvegarde manuelle SQLite réelle
-- [ ] restauration test avec sauvegarde `pre-restore` après correction dev-mode
-- [ ] versionner/pousser `package-lock.json`
-- [ ] fusion PR #3
+- [x] workspace local
+- [x] sauvegarde manuelle SQLite
+- [x] restauration SQLite
+- [x] sauvegarde automatique `pre-restore` avant restauration
+- [x] correction du redémarrage de restauration en mode développement
+- [ ] versionner le `package-lock.json` généré localement
+- [ ] finaliser/fusionner PR #3 dans `main`
 
-Sauvegarde manuelle validée le 13/09/2026 dans :
+La restauration est volontairement différente selon l’environnement :
 
-`C:\Users\carlo\Documents\AtoumWeb Manager\backups\manual\atoumweb-manager-2026-09-13T10-22-49-861Z.sqlite`
+- **version packagée** : restauration + redémarrage automatique ;
+- **`npm start`** : restauration programmée, puis fermeture et relance manuelle pour conserver le contexte Electron Forge/Vite.
 
-### Incident restauration en mode développement
+## Phase 1 — Socle CRM
 
-Premier test réel : la restauration a bien déclenché un relaunch Electron, mais la fenêtre redémarrée est restée vide sous `npm start`.
+Branche : `feature/phase-1-crm`
 
-Cause identifiée : en développement, `app.relaunch()` sort du contexte normal Electron Forge/Vite et la nouvelle fenêtre ne retrouve pas correctement le renderer de développement.
+### Base de données
 
-Correction appliquée :
+- [x] migration `organizations`
+- [x] migration `contacts`
+- [x] migration `client_accounts`
+- [x] migration `client_contact_roles`
+- [x] migration `prospects`
+- [x] journal métier `activity_events`
+- [x] index dérivé `search_documents`
+- [x] contrainte d’identité Prospect/Client
+- [x] contact principal client unique
+- [x] unicité d’un client par organisation / particulier
+- [x] index métiers (stages, prochaines actions, relations)
 
-- en version packagée/installée, redémarrage automatique conservé ;
-- en mode développement, la restauration est seulement programmée ;
-- l’interface demande de fermer AtoumWeb Manager puis de relancer `npm start` manuellement ;
-- au démarrage suivant, la restauration est appliquée avant l’ouverture de SQLite et une sauvegarde `pre-restore` est créée.
+### Services métier / IPC
 
-Le fichier local `gate0-output.txt` est ignoré par Git et ne doit pas être versionné.
+- [x] Organisations : créer / modifier
+- [x] Contacts : créer / modifier
+- [x] Prospects : lister / créer / modifier
+- [x] changement de stage
+- [x] raison obligatoire si Perdu
+- [x] prochaine action + raccourcis J+1 / J+3 / J+7 / J+30
+- [x] conversion Prospect → Client transactionnelle et idempotente
+- [x] Clients : lister / créer / modifier
+- [x] archivage / réactivation
+- [x] journal d’activité centralisé
+- [x] recherche globale locale
+- [x] reconstruction complète de l’index de recherche
+- [x] API IPC typée ; aucun accès SQLite depuis le renderer
+
+### Interface
+
+- [x] Kanban Prospects réel
+- [x] formulaire Nouveau prospect
+- [x] température, source, besoin, valeur estimée, prochaine action
+- [x] changement de stage sans dépendre du drag-and-drop
+- [x] conversion vers Client depuis une carte Prospect
+- [x] tableau Clients réel
+- [x] formulaire Nouveau client
+- [x] filtres Clients
+- [x] archivage / réactivation
+- [x] fiche Résumé client latérale
+- [x] activité récente du client
+- [x] recherche globale avec résultats Clients / Prospects / Organisations / Contacts
+- [x] dashboard raccordé aux premiers compteurs CRM
+
+### Tests ajoutés
+
+- [x] migrations CRM
+- [x] création organisation/contact/prospect
+- [x] recherche
+- [x] perte avec raison obligatoire
+- [x] conversion idempotente
+- [x] archivage/réactivation
+- [x] validation budgets / probabilité
+- [ ] exécution réelle typecheck/tests de la branche Phase 1 sur Windows
+- [ ] validation visuelle Phase 1
 
 ## Phases V1 préparées
 
-- **Phase 1 — Socle CRM** : issues #4–#9
+- **Phase 1 — Socle CRM** : issues #4–#9 — développement en cours
 - **Phase 2 — Commercial** : #10–#15
 - **Phase 3 — Projets & Production** : #16–#23
 - **Phase 4 — Interventions, Maintenance & Packs** : #24–#31
@@ -86,53 +108,21 @@ Le fichier local `gate0-output.txt` est ignoré par Git et ne doit pas être ver
 - **Phase 6 — Référentiels & Continuité** : #40–#47
 - **Phase 7 — Statistiques & Stabilisation V1** : #48–#57
 
-## Décisions clés consolidées
+## Règles à ne pas casser
 
-1. Prospect et Client partagent les mêmes organisations/contacts ; aucune recopie d’identité.
-2. Catalogue, devis, modèles projet, documents et composants techniques sont versionnés/historisés.
-3. Un devis accepté ne produit qu’un seul projet ; transformations critiques idempotentes et transactionnelles.
-4. Le temps réel vient uniquement de `time_sessions` et un seul timer peut être actif.
-5. Valeur commerciale, valeur contractuelle, facturé, encaissé et dépenses restent distincts.
-6. Abby reste l’outil réglementaire de facturation en V1 ; AtoumWeb Manager prépare et suit.
-7. Les fichiers maîtres restent sur disque et sont référencés ; fichiers lourds hors SQLite.
-8. Bibliothèque projet = réel client ; Bibliothèque AtoumWeb = version générique indépendante.
-9. La généralisation client → composant générique n’est jamais automatique.
-10. Le code conservé dans la bibliothèque n’est jamais exécuté automatiquement.
-11. Sauvegarde serveur, locale et externe sont des emplacements distincts ; serveur ≠ local.
-12. Maintenance mensuelle = période d’un même service, jamais nouveau projet.
-13. Dépassement de forfait non bloquant mais toujours tracé.
-14. Packs d’heures calculés depuis des mouvements historisés.
-15. Documents finalisés immuables ; paiements réels dérivés de `payments`.
-16. Annuaire et CRM partagent organisations/contacts.
-17. Statistiques et recherche sont dérivées/reconstruisibles, jamais sources de vérité.
-18. Tous les exports Client excluent coûts, marge, prix conseillés et notes internes.
-19. Toutes les données doivent pouvoir être exportées/restaurées sans verrouillage propriétaire.
-20. Trois thèmes : AtoumWeb par défaut, Noir, Blanc.
-
-## Ordre de développement
-
-1. **Gate 0** : retester restauration + lockfile puis fusion PR #3 / issue #2.
-2. Phase 1 : #5 → #6/#7/#8 → #9.
-3. Phase 2 : #11 → #12 → #13/#14 → #15.
-4. Phase 3 : #17 → #18 → #19/#20 → #21/#22 → #23.
-5. Phase 4 : #25 → #26/#27 → #28/#29 → #30 → #31.
-6. Phase 5 : #33 → #34/#35 → #36/#37/#38 → #39.
-7. Phase 6 : #41 → #42/#43 → #44/#45/#46 → #47.
-8. Phase 7 : #49 → #50/#51/#52 → #53/#54 → #55 → #56 → #57.
+1. Prospect et Client partagent les mêmes Organisations/Contacts ; aucune recopie d’identité.
+2. Archivage plutôt que suppression destructive.
+3. Conversion Prospect → Client idempotente.
+4. Valeur commerciale, facturé, encaissé et dépenses restent distincts.
+5. Fichiers lourds hors SQLite ; la base stocke les références.
+6. Abby reste la source des factures réglementaires en V1.
+7. Bibliothèque projet et Bibliothèque AtoumWeb restent indépendantes.
+8. Une sauvegarde serveur n’est jamais considérée comme une sauvegarde locale.
+9. Statistiques et recherche sont dérivées/reconstruisibles.
+10. Tous les éléments historiques importants sont journalisés.
 
 ## Travail en cours
 
-**Priorité immédiate : repartir proprement après l’écran vide, récupérer le correctif, relancer l’application et retester la restauration en mode développement.**
+**Phase 1 CRM : fiabilisation de l’implémentation et préparation d’une PR brouillon.**
 
-## Prochaine action concrète
-
-1. fermer la fenêtre Electron vide ;
-2. arrêter `npm start` avec `Ctrl+C` dans PowerShell ;
-3. `git pull origin foundation/electron-react-sqlite` ;
-4. `npm start` ;
-5. vérifier que l’application s’ouvre normalement ;
-6. refaire `Restaurer une sauvegarde` ;
-7. en mode développement, fermer l’application lorsque le message l’indique puis relancer `npm start` ;
-8. vérifier que SQLite reste opérationnel et qu’un fichier existe dans `backups/pre-restore/`.
-
-Une fois validé, pousser `package-lock.json`, finaliser la PR #3 et passer à la Phase 1.
+Aucune validation n’est déclarée comme réussie tant que les commandes n’ont pas été réellement exécutées. La prochaine validation locale devra vérifier la migration de la base existante (avec sauvegarde `pre-migration`), le typecheck, les tests, la création d’un prospect, sa conversion en client et la recherche globale.
