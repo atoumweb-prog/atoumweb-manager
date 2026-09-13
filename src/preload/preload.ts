@@ -241,6 +241,9 @@ const api: AtoumWebApi = {
     review: (periodId: string) => ipcRenderer.invoke('maintenance-overages:review', periodId),
     decide: (periodId: string, input: MaintenanceOverageDecisionInput) => ipcRenderer.invoke('maintenance-overages:decide', periodId, input),
   },
+  operationsAlerts: {
+    get: () => ipcRenderer.invoke('operations-alerts:get'),
+  },
   time: {
     active: () => ipcRenderer.invoke('time:active'),
     start: (input: StartTimeSessionInput) => ipcRenderer.invoke('time:start', input),
