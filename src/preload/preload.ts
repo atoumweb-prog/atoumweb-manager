@@ -24,6 +24,10 @@ import type {
   ProspectStage,
 } from '../shared/crm';
 import type {
+  HourPackFilters,
+  HourPackInput,
+  HourPackMovementInput,
+  HourPackStatus,
   InterventionFilters,
   InterventionInput,
   InterventionStatus,
@@ -220,6 +224,15 @@ const api: AtoumWebApi = {
         changeStatus: (id: string, status: MaintenancePeriodStatus) => ipcRenderer.invoke('operations:maintenance:periods:change-status', id, status),
         updateCheck: (id: string, status: MaintenanceCheckStatus, notes?: string | null) => ipcRenderer.invoke('operations:maintenance:checks:update', id, status, notes),
       },
+    },
+    hourPacks: {
+      list: (filters?: HourPackFilters) => ipcRenderer.invoke('operations:hour-packs:list', filters),
+      get: (id: string) => ipcRenderer.invoke('operations:hour-packs:get', id),
+      create: (input: HourPackInput) => ipcRenderer.invoke('operations:hour-packs:create', input),
+      changeStatus: (id: string, status: HourPackStatus) => ipcRenderer.invoke('operations:hour-packs:change-status', id, status),
+      addMovement: (id: string, input: HourPackMovementInput) => ipcRenderer.invoke('operations:hour-packs:add-movement', id, input),
+      debitIntervention: (packId: string, interventionId: string) => ipcRenderer.invoke('operations:hour-packs:debit-intervention', packId, interventionId),
+      reverseMovement: (movementId: string, reason: string) => ipcRenderer.invoke('operations:hour-packs:reverse-movement', movementId, reason),
     },
   },
   time: {
