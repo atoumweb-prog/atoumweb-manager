@@ -122,6 +122,12 @@ function App() {
         setProjectSearchTarget(result.entityId);
         setActivePage('Projets');
         break;
+      case 'service_request':
+      case 'intervention':
+      case 'maintenance':
+      case 'hour_pack':
+        setActivePage('Interventions & Maintenance');
+        break;
       case 'client':
       case 'organization':
       case 'contact':
