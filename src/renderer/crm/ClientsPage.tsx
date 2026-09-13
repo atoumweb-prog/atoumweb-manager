@@ -7,12 +7,34 @@ const STATUS_LABELS: Record<ClientStatus, string> = {
   archived: 'Archivé',
 };
 
+interface ClientDraft {
+  company: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  notes: string;
+}
+
+const EMPTY_DRAFT: ClientDraft = {
+  company: '',
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  notes: '',
+};
+
 export function ClientsPage({ onMessage }: { onMessage: (message: string) => void }) {
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<'all' | ClientStatus>('all');
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [draft, setDraft] = useState<ClientDraft>(EMPTY_DRAFT);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   async function refresh(): Promise<void> {
     setLoading(true);
@@ -40,6 +62,58 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
 
   const selected = clients.find((client) => client.id === selectedId) ?? null;
 
+  async function submitClient(event: React.FormEvent): Promise<void> {
+    event.preventDefault();
+    setFormError(null);
+    if (!draft.company.trim() && (!draft.firstName.trim() || !draft.lastName.trim())) {
+      setFormError('Renseigne une société ou le prénom et le nom du contact.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      let organizationId: string | null = null;
+      let contactId: string | null = null;
+
+      if (draft.company.trim()) {
+        const organization = await window.atoumweb.crm.organizations.create({
+          name: draft.company.trim(),
+          email: !draft.firstName.trim() ? draft.email.trim() || null : null,
+          phone: !draft.firstName.trim() ? draft.phone.trim() || null : null,
+        });
+        organizationId = organization.id;
+      }
+
+      if (draft.firstName.trim() && draft.lastName.trim()) {
+        const contact = await window.atoumweb.crm.contacts.create({
+          organizationId,
+          firstName: draft.firstName.trim(),
+          lastName: draft.lastName.trim(),
+          email: draft.email.trim() || null,
+          phone: draft.phone.trim() || null,
+        });
+        contactId = contact.id;
+      }
+
+      const client = await window.atoumweb.crm.clients.create({
+        organizationId,
+        primaryContactId: contactId,
+        status: 'active',
+        notes: draft.notes.trim() || null,
+      });
+
+      setDraft(EMPTY_DRAFT);
+      setShowForm(false);
+      await refresh();
+      setSelectedId(client.id);
+      onMessage('Client créé.');
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Impossible de créer le client.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function archive(client: ClientSummary): Promise<void> {
     if (!window.confirm(`Archiver ${client.displayName} ?`)) return;
     await window.atoumweb.crm.clients.archive(client.id);
@@ -65,8 +139,29 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
             <option value="inactive">Inactifs</option>
             <option value="archived">Archivés</option>
           </select>
+          <button className="primary-button" type="button" onClick={() => setShowForm((value) => !value)}>
+            {showForm ? 'Fermer' : '+ Nouveau client'}
+          </button>
         </div>
       </div>
+
+      {showForm && (
+        <form className="panel crm-form" onSubmit={(event) => void submitClient(event)}>
+          <div className="panel-title">
+            <div><span className="eyebrow">Client</span><h2>Ajouter un client directement</h2></div>
+          </div>
+          <div className="form-grid">
+            <label>Société<input value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} /></label>
+            <label>Prénom<input value={draft.firstName} onChange={(e) => setDraft({ ...draft, firstName: e.target.value })} /></label>
+            <label>Nom<input value={draft.lastName} onChange={(e) => setDraft({ ...draft, lastName: e.target.value })} /></label>
+            <label>Email<input type="email" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} /></label>
+            <label>Téléphone<input value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} /></label>
+            <label>Notes<input value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} /></label>
+          </div>
+          {formError && <p className="form-error">{formError}</p>}
+          <div className="form-actions"><button className="primary-button" disabled={saving} type="submit">{saving ? 'Création…' : 'Créer le client'}</button></div>
+        </form>
+      )}
 
       {loading ? <div className="panel"><p className="muted">Chargement des clients…</p></div> : (
         <div className="clients-layout">
