@@ -9,7 +9,7 @@
 - **Branche stable** : `main`
 - **Branche actuelle** : `foundation/electron-react-sqlite`
 - **PR actuelle** : #3 — Fondation V1 (brouillon)
-- **Statut** : architecture et feuille de route V1 complètes ; Gate 0 automatique Windows validé ; validation visuelle de l’application encore requise.
+- **Statut** : Gate 0 automatique Windows validé ; application lancée et validée visuellement ; sauvegarde manuelle SQLite validée ; restauration réelle encore à tester avant fusion.
 - **Principe directeur** : une donnée métier possède une source unique ; les autres écrans la référencent sans duplication.
 
 ## Références
@@ -45,19 +45,23 @@ Validé le 13/09/2026 sur Windows :
 - [x] packaging x64 Win32 réussi
 - [x] `package-lock.json` généré localement
 
-### Reste à valider avant fusion PR #3
+### Validation réelle de l’application Windows
 
+- [x] `npm start`
+- [x] démarrage visuel de l’application
+- [x] navigation principale
+- [x] thèmes AtoumWeb / Noir / Blanc
+- [x] Réglages et workspace réel affichés
+- [x] sauvegarde manuelle SQLite réelle
+- [ ] restauration test avec sauvegarde `pre-restore`
 - [ ] versionner/pousser `package-lock.json`
-- [ ] `npm start`
-- [ ] vérifier visuellement le démarrage de l’application
-- [ ] vérifier navigation principale
-- [ ] vérifier thèmes AtoumWeb / Noir / Blanc
-- [ ] vérifier Réglages et workspace réel
-- [ ] vérifier sauvegarde manuelle réelle
-- [ ] vérifier restauration test avec sauvegarde `pre-restore`
 - [ ] fusion PR #3
 
-Le fichier local `gate0-output.txt` est maintenant ignoré par Git et ne doit pas être versionné.
+Sauvegarde manuelle validée le 13/09/2026 dans :
+
+`C:\Users\carlo\Documents\AtoumWeb Manager\backups\manual\atoumweb-manager-2026-09-13T10-22-49-861Z.sqlite`
+
+Le fichier local `gate0-output.txt` est ignoré par Git et ne doit pas être versionné.
 
 ## Phases V1 préparées
 
@@ -94,7 +98,7 @@ Le fichier local `gate0-output.txt` est maintenant ignoré par Git et ne doit pa
 
 ## Ordre de développement
 
-1. **Gate 0** : validation visuelle puis fusion PR #3 / issue #2.
+1. **Gate 0** : valider restauration + lockfile puis fusion PR #3 / issue #2.
 2. Phase 1 : #5 → #6/#7/#8 → #9.
 3. Phase 2 : #11 → #12 → #13/#14 → #15.
 4. Phase 3 : #17 → #18 → #19/#20 → #21/#22 → #23.
@@ -105,12 +109,16 @@ Le fichier local `gate0-output.txt` est maintenant ignoré par Git et ne doit pa
 
 ## Travail en cours
 
-**Priorité immédiate : lancer `npm start` et valider l’application visuellement sur Windows.**
+**Priorité immédiate : tester une restauration réelle de la sauvegarde manuelle, vérifier la création de `pre-restore`, puis pousser le `package-lock.json`.**
 
 ## Prochaine action concrète
 
-```powershell
-npm start
-```
+Dans Réglages → Sécurité :
 
-Puis vérifier l’ouverture d’AtoumWeb Manager, la navigation, les trois thèmes, les Réglages, le workspace et les sauvegardes/restaurations de test. Une fois validé, pousser `package-lock.json`, finaliser la PR #3 et passer à la Phase 1.
+1. cliquer `Restaurer une sauvegarde` ;
+2. sélectionner la sauvegarde manuelle créée juste avant ;
+3. laisser l’application redémarrer ;
+4. vérifier que l’application s’ouvre normalement et que SQLite reste opérationnel ;
+5. vérifier qu’un fichier de sécurité a été créé dans `backups/pre-restore/`.
+
+Une fois validé, pousser `package-lock.json`, finaliser la PR #3 et passer à la Phase 1.
