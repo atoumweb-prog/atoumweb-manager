@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { QuoteDetail, QuoteLine } from '../../shared/commercial';
 
 function money(cents: number): string {
@@ -19,13 +20,35 @@ function offerComponents(line: QuoteLine): Array<Record<string, unknown>> {
 }
 
 export function QuoteClientPreview({ quote, onClose }: { quote: QuoteDetail; onClose: () => void }) {
+  const [generating, setGenerating] = useState(false);
+  const [pdfPath, setPdfPath] = useState<string | null>(null);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
+  async function generatePdf(): Promise<void> {
+    setGenerating(true);
+    setPdfError(null);
+    try {
+      const result = await window.atoumweb.quotes.generatePdf(quote.id);
+      setPdfPath(result.path);
+    } catch (error) {
+      setPdfError(error instanceof Error ? error.message : 'Impossible de générer le PDF.');
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   return (
     <div className="quote-preview-overlay" role="dialog" aria-modal="true" aria-label={`Prévisualisation ${quote.number}`}>
       <div className="quote-client-preview">
         <div className="quote-client-preview-toolbar">
           <div><span className="eyebrow">Prévisualisation client</span><strong>{quote.number}</strong></div>
-          <button className="secondary-button" type="button" onClick={onClose}>Fermer</button>
+          <div className="quote-client-preview-actions">
+            <button className="primary-button" disabled={generating} type="button" onClick={() => void generatePdf()}>{generating ? 'Génération…' : 'Générer le PDF'}</button>
+            <button className="secondary-button" type="button" onClick={onClose}>Fermer</button>
+          </div>
         </div>
+        {pdfPath && <div className="quote-pdf-result"><strong>PDF créé</strong><span>{pdfPath}</span></div>}
+        {pdfError && <div className="quote-pdf-error">{pdfError}</div>}
 
         <article className="quote-document">
           <header className="quote-document-header">
@@ -74,10 +97,7 @@ export function QuoteClientPreview({ quote, onClose }: { quote: QuoteDetail; onC
             {quote.specialTerms && <div><span>Conditions particulières</span><p>{quote.specialTerms}</p></div>}
           </section>
 
-          <footer className="quote-document-footer">
-            <strong>AtoumWeb</strong>
-            <span>www.atoumweb.fr</span>
-          </footer>
+          <footer className="quote-document-footer"><strong>AtoumWeb</strong><span>www.atoumweb.fr</span></footer>
         </article>
       </div>
     </div>
