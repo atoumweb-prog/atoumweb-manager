@@ -11,57 +11,28 @@ export function GlobalSearch({ onOpen }: { onOpen: (result: SearchResult) => voi
   useEffect(() => {
     const normalized = query.trim();
     if (normalized.length < 2) {
-      setResults([]);
-      setOpen(false);
-      setActiveIndex(-1);
-      return;
+      setResults([]); setOpen(false); setActiveIndex(-1); return;
     }
-
     const current = ++requestId.current;
     const timer = window.setTimeout(() => {
       void window.atoumweb.crm.search.global(normalized).then((items) => {
         if (current !== requestId.current) return;
-        setResults(items);
-        setOpen(true);
-        setActiveIndex(items.length > 0 ? 0 : -1);
+        setResults(items); setOpen(true); setActiveIndex(items.length > 0 ? 0 : -1);
       });
     }, 180);
-
     return () => window.clearTimeout(timer);
   }, [query]);
 
   function choose(result: SearchResult): void {
-    onOpen(result);
-    setQuery('');
-    setOpen(false);
-    setActiveIndex(-1);
+    onOpen(result); setQuery(''); setOpen(false); setActiveIndex(-1);
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>): void {
-    if (event.key === 'Escape') {
-      setOpen(false);
-      setActiveIndex(-1);
-      return;
-    }
-
+    if (event.key === 'Escape') { setOpen(false); setActiveIndex(-1); return; }
     if (!open || results.length === 0) return;
-
-    if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      setActiveIndex((index) => (index + 1) % results.length);
-      return;
-    }
-
-    if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      setActiveIndex((index) => (index <= 0 ? results.length - 1 : index - 1));
-      return;
-    }
-
-    if (event.key === 'Enter' && activeIndex >= 0) {
-      event.preventDefault();
-      choose(results[activeIndex]);
-    }
+    if (event.key === 'ArrowDown') { event.preventDefault(); setActiveIndex((index) => (index + 1) % results.length); return; }
+    if (event.key === 'ArrowUp') { event.preventDefault(); setActiveIndex((index) => (index <= 0 ? results.length - 1 : index - 1)); return; }
+    if (event.key === 'Enter' && activeIndex >= 0) { event.preventDefault(); choose(results[activeIndex]); }
   }
 
   return (
@@ -75,7 +46,7 @@ export function GlobalSearch({ onOpen }: { onOpen: (result: SearchResult) => voi
         onFocus={() => results.length > 0 && setOpen(true)}
         onChange={(event) => setQuery(event.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Rechercher client, prospect, email, téléphone…"
+        placeholder="Rechercher client, prospect, offre, devis…"
         value={query}
       />
       {open && (
@@ -108,5 +79,7 @@ function entityLabel(type: SearchResult['entityType']): string {
     case 'prospect': return 'Prospect';
     case 'organization': return 'Société';
     case 'contact': return 'Contact';
+    case 'catalog': return 'Offre / Service';
+    case 'quote': return 'Devis';
   }
 }
