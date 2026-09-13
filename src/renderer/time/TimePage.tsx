@@ -76,6 +76,16 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
   const [manualEnd, setManualEnd] = useState(() => toLocalInput(new Date()));
   const [manualNote, setManualNote] = useState('');
 
+  const [editing, setEditing] = useState<TimeSession | null>(null);
+  const [editProjectId, setEditProjectId] = useState('');
+  const [editCategory, setEditCategory] = useState<TimeCategory>('production');
+  const [editActivity, setEditActivity] = useState('');
+  const [editBillable, setEditBillable] = useState(true);
+  const [editStart, setEditStart] = useState('');
+  const [editEnd, setEditEnd] = useState('');
+  const [editNote, setEditNote] = useState('');
+  const [editBusy, setEditBusy] = useState(false);
+
   const filters = useMemo<TimeSessionFilters>(() => {
     const range = periodRange(period);
     return {
@@ -135,6 +145,47 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
     }
   }
 
+  function openCorrection(session: TimeSession): void {
+    if (!session.endedAt) {
+      onMessage('Arrête le chrono avant de corriger cette session.');
+      return;
+    }
+    setEditing(session);
+    setEditProjectId(session.projectId ?? '');
+    setEditCategory(session.category);
+    setEditActivity(session.activityLabel ?? '');
+    setEditBillable(session.billable);
+    setEditStart(toLocalInput(new Date(session.startedAt)));
+    setEditEnd(toLocalInput(new Date(session.endedAt)));
+    setEditNote(session.note ?? '');
+    setManualOpen(false);
+  }
+
+  async function saveCorrection(): Promise<void> {
+    if (!editing) return;
+    setEditBusy(true);
+    try {
+      if (!editStart || !editEnd) throw new Error('Renseigne le début et la fin.');
+      const updated = await window.atoumweb.time.update(editing.id, {
+        projectId: editProjectId || null,
+        projectNodeId: editProjectId === (editing.projectId ?? '') ? editing.projectNodeId ?? null : null,
+        category: editCategory,
+        activityLabel: editActivity.trim() || null,
+        billable: editBillable,
+        startedAt: new Date(editStart).toISOString(),
+        endedAt: new Date(editEnd).toISOString(),
+        note: editNote.trim() || null,
+      });
+      setEditing(null);
+      window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
+      onMessage(`Session corrigée · ${secondsLabel(updated.durationSeconds)}.`);
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible de corriger cette session.');
+    } finally {
+      setEditBusy(false);
+    }
+  }
+
   return (
     <div className="time-page-stack">
       <div className="module-toolbar time-toolbar">
@@ -147,7 +198,7 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
           <select value={projectId} onChange={(event) => setProjectId(event.target.value)}><option value="">Tous les projets</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.number} · {project.name}</option>)}</select>
           <select value={category} onChange={(event) => setCategory(event.target.value as 'all' | TimeCategory)}><option value="all">Toutes les catégories</option>{TIME_CATEGORIES.map((value) => <option key={value} value={value}>{CATEGORY_LABELS[value]}</option>)}</select>
           <select value={billable} onChange={(event) => setBillable(event.target.value as typeof billable)}><option value="all">Facturable + non facturable</option><option value="yes">Facturable</option><option value="no">Non facturable</option></select>
-          <button className="primary-button" type="button" onClick={() => setManualOpen((value) => !value)}>+ Temps manuel</button>
+          <button className="primary-button" type="button" onClick={() => { setEditing(null); setManualOpen((value) => !value); }}>+ Temps manuel</button>
         </div>
       </div>
 
@@ -173,9 +224,26 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
         </section>
       )}
 
+      {editing && (
+        <section className="panel manual-time-panel time-correction-panel">
+          <div className="panel-title"><div><span className="eyebrow">Correction</span><h2>Corriger une session terminée</h2><p className="muted">Les pauses déjà enregistrées sont conservées. Si les nouveaux horaires excluent une pause, le Manager refusera la correction pour éviter un calcul faux.</p></div><button className="close-detail" type="button" onClick={() => setEditing(null)}>×</button></div>
+          <div className="manual-time-grid">
+            <label>Projet<select value={editProjectId} onChange={(event) => setEditProjectId(event.target.value)}><option value="">AtoumWeb · sans projet</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.number} · {project.name}</option>)}</select></label>
+            <label>Catégorie<select value={editCategory} onChange={(event) => setEditCategory(event.target.value as TimeCategory)}>{TIME_CATEGORIES.map((value) => <option key={value} value={value}>{CATEGORY_LABELS[value]}</option>)}</select></label>
+            <label>Début<input type="datetime-local" value={editStart} onChange={(event) => setEditStart(event.target.value)} /></label>
+            <label>Fin<input type="datetime-local" value={editEnd} onChange={(event) => setEditEnd(event.target.value)} /></label>
+            <label className="wide">Activité<input value={editActivity} onChange={(event) => setEditActivity(event.target.value)} /></label>
+            <label className="wide">Note<textarea value={editNote} onChange={(event) => setEditNote(event.target.value)} placeholder="Pourquoi cette correction ?" /></label>
+            <label className="time-checkbox"><input type="checkbox" checked={editBillable} onChange={(event) => setEditBillable(event.target.checked)} /> Facturable</label>
+          </div>
+          {editing.projectNodeLabel && <p className="time-correction-context">Tâche liée : <strong>{editing.projectNodeLabel}</strong>{editProjectId !== (editing.projectId ?? '') ? ' · la tâche sera retirée car le projet a changé.' : ' · elle sera conservée.'}</p>}
+          <div className="button-row"><button className="primary-button" type="button" disabled={editBusy} onClick={() => void saveCorrection()}>{editBusy ? 'Enregistrement…' : 'Enregistrer la correction'}</button><button className="secondary-button" type="button" disabled={editBusy} onClick={() => setEditing(null)}>Annuler</button></div>
+        </section>
+      )}
+
       <section className="panel time-list-panel">
         <table className="time-table">
-          <thead><tr><th>Date</th><th>Contexte</th><th>Catégorie</th><th>Durée</th><th>Facturable</th><th>Source</th></tr></thead>
+          <thead><tr><th>Date</th><th>Contexte</th><th>Catégorie</th><th>Durée</th><th>Facturable</th><th>Source</th><th>Actions</th></tr></thead>
           <tbody>
             {sessions.map((session) => (
               <tr key={session.id}>
@@ -185,9 +253,10 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
                 <td><strong>{secondsLabel(session.durationSeconds)}</strong></td>
                 <td>{session.billable ? 'Oui' : 'Non'}</td>
                 <td>{session.source === 'timer' ? 'Timer' : session.source === 'manual' ? 'Manuel' : 'Import'}</td>
+                <td>{session.endedAt ? <button className="text-button" type="button" onClick={() => openCorrection(session)}>Corriger</button> : <span className="muted">En cours</span>}</td>
               </tr>
             ))}
-            {sessions.length === 0 && <tr><td colSpan={6}><div className="empty-table">Aucune session sur cette période.</div></td></tr>}
+            {sessions.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucune session sur cette période.</div></td></tr>}
           </tbody>
         </table>
       </section>
