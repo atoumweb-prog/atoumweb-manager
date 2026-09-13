@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { MaintenanceReportData } from '../../shared/maintenanceReport';
+import './MaintenanceReportPanel.css';
 
 function duration(seconds: number): string {
   const minutes = Math.max(0, Math.round(seconds / 60));
@@ -50,8 +51,9 @@ export function MaintenanceReportPanel({ periodId, onMessage }: { periodId: stri
   return <section className="maintenance-report-box">
     <button className="maintenance-report-toggle" type="button" onClick={() => setOpen((value) => !value)}>
       <span><span className="eyebrow">Rapport client</span><strong>Rapport de maintenance de la période</strong></span>
-      <span>{open ? '−' : '+'}</span>
+      <span aria-hidden="true">{open ? '−' : '+'}</span>
     </button>
+    {open && !report && <p className="muted maintenance-report-loading">Préparation du rapport…</p>}
     {open && report && <div className="maintenance-report-content">
       <div className="maintenance-report-preview-head"><div><strong>{report.clientLabel}</strong><small>{report.planName}{report.projectLabel ? ` · ${report.projectLabel}` : ''}</small></div><div><strong>{report.periodStart} → {report.periodEnd}</strong><small>{report.interventionCount} intervention(s) · {duration(report.totalTimeSeconds)}</small></div></div>
       <div className="maintenance-report-fields">
