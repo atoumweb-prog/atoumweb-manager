@@ -17,6 +17,7 @@ import {
   type ProjectTemplateVersion,
 } from '../../shared/projects';
 import { ProjectResourcesTab } from './ProjectResourcesTab';
+import { ProjectTechnicalLibraryTab } from './ProjectTechnicalLibraryTab';
 
 const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
   to_prepare: 'À préparer',
@@ -98,7 +99,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
   const [targetDate, setTargetDate] = useState('');
   const [commercialMode, setCommercialMode] = useState<ProjectCommercialMode>('normal');
   const [saving, setSaving] = useState(false);
-  const [detailTab, setDetailTab] = useState<'summary' | 'plan' | 'prerequisites' | 'resources' | 'commercial'>('summary');
+  const [detailTab, setDetailTab] = useState<'summary' | 'plan' | 'prerequisites' | 'resources' | 'technical' | 'commercial'>('summary');
 
   const [newNodeName, setNewNodeName] = useState('');
   const [newNodeType, setNewNodeType] = useState<'lot' | 'module' | 'task' | 'checklist'>('task');
@@ -342,6 +343,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
                 <button className={detailTab === 'plan' ? 'active' : ''} type="button" onClick={() => setDetailTab('plan')}>Plan / Tâches</button>
                 <button className={detailTab === 'prerequisites' ? 'active' : ''} type="button" onClick={() => setDetailTab('prerequisites')}>Prérequis</button>
                 <button className={detailTab === 'resources' ? 'active' : ''} type="button" onClick={() => setDetailTab('resources')}>Ressources</button>
+                <button className={detailTab === 'technical' ? 'active' : ''} type="button" onClick={() => setDetailTab('technical')}>Bibliothèque</button>
                 <button className={detailTab === 'commercial' ? 'active' : ''} type="button" onClick={() => setDetailTab('commercial')}>Commercial</button>
               </div>
 
@@ -361,6 +363,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
                 </div>
               )}
               {detailTab === 'resources' && <ProjectResourcesTab projectId={detail.id} nodes={detail.nodes} resourceRootPath={detail.resourceRootPath} onMessage={onMessage} />}
+              {detailTab === 'technical' && <ProjectTechnicalLibraryTab projectId={detail.id} onMessage={onMessage} />}
               {detailTab === 'commercial' && <ProjectCommercialTab project={detail} />}
             </aside>
           )}
