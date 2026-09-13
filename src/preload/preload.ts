@@ -173,6 +173,7 @@ const api: AtoumWebApi = {
   time: {
     active: () => ipcRenderer.invoke('time:active'),
     start: (input: StartTimeSessionInput) => ipcRenderer.invoke('time:start', input),
+    switchTo: (input: StartTimeSessionInput) => ipcRenderer.invoke('time:switch', input),
     heartbeat: (id: string) => ipcRenderer.invoke('time:heartbeat', id),
     pause: (id: string) => ipcRenderer.invoke('time:pause', id),
     resume: (id: string) => ipcRenderer.invoke('time:resume', id),
