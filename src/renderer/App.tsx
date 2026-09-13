@@ -6,6 +6,7 @@ import { QuotesPage } from './commercial/QuotesPage';
 import { ClientsPage } from './crm/ClientsPage';
 import { GlobalSearch } from './crm/GlobalSearch';
 import { ProspectsPage } from './crm/ProspectsPage';
+import { OperationsPage } from './operations/OperationsPage';
 import { ProjectsPage } from './projects/ProjectsPage';
 import { GlobalTimer } from './time/GlobalTimer';
 import { TimePage } from './time/TimePage';
@@ -163,9 +164,10 @@ function App() {
           {activePage === 'Offres & Tarifs' && <CatalogPage onMessage={setMessage} />}
           {activePage === 'Devis' && <QuotesPage onMessage={setMessage} />}
           {activePage === 'Projets' && <ProjectsPage onMessage={setMessage} initialProjectId={projectSearchTarget} />}
+          {activePage === 'Interventions & Maintenance' && <OperationsPage onMessage={setMessage} />}
           {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}
           {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} onThemeChange={updateTheme} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
-          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Gestion des temps' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
+          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
         </section>
       </main>
     </div>
