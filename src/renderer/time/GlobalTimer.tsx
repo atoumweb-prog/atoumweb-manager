@@ -15,6 +15,14 @@ const CATEGORY_LABELS: Record<TimeCategory, string> = {
   other: 'Autre',
 };
 
+interface TimerContextEvent {
+  projectId?: string | null;
+  nodeId?: string | null;
+  activityLabel?: string | null;
+  category?: TimeCategory;
+  billable?: boolean;
+}
+
 function clock(seconds: number): string {
   const safe = Math.max(0, Math.floor(seconds));
   const hours = Math.floor(safe / 3600);
@@ -64,6 +72,29 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
     const interval = window.setInterval(() => setTick(Date.now()), 1000);
     return () => window.clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const refreshActive = () => void loadActive();
+    const prepareContext = (event: Event) => {
+      if (active) {
+        onMessage('Un timer est déjà actif. Arrête-le avant d’en démarrer un autre.');
+        return;
+      }
+      const context = (event as CustomEvent<TimerContextEvent>).detail ?? {};
+      setProjectId(context.projectId ?? '');
+      setNodeId(context.nodeId ?? '');
+      setActivityLabel(context.activityLabel ?? '');
+      if (context.category) setCategory(context.category);
+      if (typeof context.billable === 'boolean') setBillable(context.billable);
+      setOpen(true);
+    };
+    window.addEventListener('atoumweb:time-changed', refreshActive);
+    window.addEventListener('atoumweb:timer-context', prepareContext);
+    return () => {
+      window.removeEventListener('atoumweb:time-changed', refreshActive);
+      window.removeEventListener('atoumweb:timer-context', prepareContext);
+    };
+  }, [active]);
 
   useEffect(() => {
     if (!projectId) {
