@@ -1,5 +1,9 @@
 $ErrorActionPreference = 'Stop'
 
+# Keep Windows PowerShell output readable in Windows Terminal.
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+
 $logFile = Join-Path (Get-Location) 'gate0-output.txt'
 Start-Transcript -Path $logFile -Force | Out-Null
 
@@ -14,7 +18,7 @@ function Assert-Command([string]$commandName) {
 }
 
 try {
-    Write-Step 'Vérification des prérequis'
+    Write-Step 'Verification des prerequis'
     Assert-Command 'node'
     Assert-Command 'npm'
     Assert-Command 'git'
@@ -27,50 +31,51 @@ try {
     Write-Host "npm  : $npmVersion"
     Write-Host "Git  : $gitVersion"
 
-    $major = [int](($nodeVersion -replace '^v','').Split('.')[0])
-    if ($major -lt 24) {
-        throw "Node.js 24 LTS minimum requis pour cette branche. Version détectée : $nodeVersion"
+    $nodeSemver = [version]($nodeVersion -replace '^v','')
+    $minimumNode = [version]'20.19.0'
+    if ($nodeSemver -lt $minimumNode) {
+        throw "Node.js $minimumNode minimum requis pour cette branche. Version detectee : $nodeVersion"
     }
 
-    Write-Step 'Vérification de la branche Git'
+    Write-Step 'Verification de la branche Git'
     $branch = git branch --show-current
     Write-Host "Branche actuelle : $branch"
     if ($branch -ne 'foundation/electron-react-sqlite') {
         throw "Mauvaise branche. Attendue : foundation/electron-react-sqlite ; actuelle : $branch"
     }
 
-    Write-Step 'État Git avant validation'
+    Write-Step 'Etat Git avant validation'
     git status --short
 
-    Write-Step 'Installation des dépendances'
+    Write-Step 'Installation des dependances'
     if (Test-Path 'package-lock.json') {
         npm ci
     } else {
         npm install
     }
-    if ($LASTEXITCODE -ne 0) { throw 'npm install/ci a échoué.' }
+    if ($LASTEXITCODE -ne 0) { throw 'npm install/ci a echoue.' }
 
     Write-Step 'TypeScript'
     npm run typecheck
-    if ($LASTEXITCODE -ne 0) { throw 'Le typecheck a échoué.' }
+    if ($LASTEXITCODE -ne 0) { throw 'Le typecheck a echoue.' }
 
     Write-Step 'Tests Vitest'
     npm test
-    if ($LASTEXITCODE -ne 0) { throw 'Les tests ont échoué.' }
+    if ($LASTEXITCODE -ne 0) { throw 'Les tests ont echoue.' }
 
     Write-Step 'Packaging Electron'
     npm run package
-    if ($LASTEXITCODE -ne 0) { throw 'Le packaging a échoué.' }
+    if ($LASTEXITCODE -ne 0) { throw 'Le packaging a echoue.' }
 
-    Write-Step 'État Git après validation'
+    Write-Step 'Etat Git apres validation'
     git status --short
 
     Write-Host "`nGATE 0 AUTOMATIQUE : OK" -ForegroundColor Green
-    Write-Host "Le fichier package-lock.json a pu être créé. Ne pas le supprimer."
-    Write-Host "Étape suivante : lancer manuellement 'npm start' pour valider l'application visuellement."
+    Write-Host "Le fichier package-lock.json a pu etre cree. Ne pas le supprimer."
+    Write-Host "Etape suivante : lancer manuellement 'npm start' pour valider l'application visuellement."
 }
 catch {
-    Write-Host "`nGATE 0 AUTOMATIQUE : ÉCHEC" -ForegroundColor Red
+    Write-Host "`nGATE 0 AUTOMATIQUE : ECHEC" -ForegroundColor Red
     Write-Host $_.Exception.Message -ForegroundColor Red
     Write-Host "Copie ou envoie le fichier gate0-output.txt pour diagnostic."
     exit 1
