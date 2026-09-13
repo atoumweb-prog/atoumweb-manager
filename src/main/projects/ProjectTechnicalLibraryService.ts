@@ -245,9 +245,8 @@ export class ProjectTechnicalLibraryService {
 
   private writeActivity(projectId: string, action: string, summary: string): void {
     this.database.run(
-      `INSERT INTO activity_events (id,entity_type,entity_id,action,summary,project_id,created_at)
-       VALUES (?,?,?,?,?,?,?)`,
-      [randomUUID(), 'project', projectId, action, summary, projectId, nowIso()],
+      'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,NULL,?)',
+      ['project', projectId, action, summary, nowIso()],
     );
   }
 }
