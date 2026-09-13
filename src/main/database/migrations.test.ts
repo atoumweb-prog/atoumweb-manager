@@ -6,8 +6,8 @@ describe('migrations SQLite', () => {
   it('applique chaque migration une seule fois', () => {
     const database = new NodeSqliteAdapter(':memory:');
 
-    expect(getPendingMigrations(database)).toHaveLength(10);
-    expect(applyPendingMigrations(database)).toHaveLength(10);
+    expect(getPendingMigrations(database)).toHaveLength(11);
+    expect(applyPendingMigrations(database)).toHaveLength(11);
     expect(getPendingMigrations(database)).toHaveLength(0);
     expect(applyPendingMigrations(database)).toHaveLength(0);
 
@@ -40,6 +40,8 @@ describe('migrations SQLite', () => {
       'technical_item_assets',
       'time_sessions',
       'time_session_pauses',
+      'service_requests',
+      'interventions',
     ]) {
       const row = database.get<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
@@ -52,6 +54,11 @@ describe('migrations SQLite', () => {
       "SELECT name FROM pragma_table_info('quotes') WHERE name='project_id'",
     );
     expect(quoteProjectColumn?.name).toBe('project_id');
+
+    const timeInterventionColumn = database.get<{ name: string }>(
+      "SELECT name FROM pragma_table_info('time_sessions') WHERE name='intervention_id'",
+    );
+    expect(timeInterventionColumn?.name).toBe('intervention_id');
 
     database.close();
   });
