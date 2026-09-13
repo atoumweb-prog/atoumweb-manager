@@ -9,8 +9,8 @@
 - **Branche stable** : `main`
 - **Fondation** : `foundation/electron-react-sqlite` — PR #3
 - **Branche de travail actuelle** : `feature/phase-1-crm`
-- **PR Phase 1** : #58 — `Phase 1 CRM — Prospects, Clients et recherche globale` — brouillon, fusionnable, validation locale en cours
-- **Statut** : fondation validée sur Windows ; typecheck et tests Phase 1 validés localement ; validation visuelle et migration réelle à terminer.
+- **PR Phase 1** : #58 — `Phase 1 CRM — Prospects, Clients et recherche globale` — brouillon, validation locale en cours
+- **Statut** : fondation validée sur Windows ; typecheck/tests initiaux Phase 1 validés ; migration SQLite 4 appliquée ; UX Prospects/Clients en validation itérative.
 - **Principe directeur** : une donnée métier possède une source unique ; les autres écrans la référencent sans duplication.
 
 ## Phase 0 — Fondation
@@ -55,6 +55,8 @@ PR : #58 (brouillon)
 - [x] contact principal client unique
 - [x] unicité d’un client par organisation / particulier
 - [x] index métiers (stages, prochaines actions, relations)
+- [x] migration 4 `crm_actions` pour Actions / Relances multiples
+- [x] reprise automatique des anciennes prochaines actions vers `crm_actions`
 
 ### Services métier / IPC
 
@@ -63,7 +65,6 @@ PR : #58 (brouillon)
 - [x] Prospects : lister / créer / modifier
 - [x] changement de stage
 - [x] raison obligatoire si Perdu
-- [x] prochaine action + raccourcis J+1 / J+3 / J+7 / J+30 + date personnalisée
 - [x] conversion Prospect → Client transactionnelle et idempotente
 - [x] Clients : lister / créer / modifier
 - [x] archivage / réactivation
@@ -74,39 +75,55 @@ PR : #58 (brouillon)
 - [x] recherche globale locale
 - [x] reconstruction complète de l’index de recherche
 - [x] API IPC typée ; aucun accès SQLite depuis le renderer
+- [x] service Actions : lister / créer / terminer / annuler / rouvrir
+- [x] distinction métier `action` / `follow_up`
+- [x] plusieurs Actions/Relances ouvertes simultanément
+- [x] prochaine échéance dérivée automatiquement des actions ouvertes
+- [x] création d’une Relance Prospect → déplacement automatique vers `À relancer`
 
 ### Interface
 
 - [x] Kanban Prospects réel
 - [x] formulaire Nouveau prospect
-- [x] température, source, besoin, valeur estimée, prochaine action
-- [x] changement de stage sans dépendre du drag-and-drop
+- [x] température, source, besoin, valeur estimée
+- [x] changement de stage par sélection
+- [x] glisser-déposer entre étapes actives
+- [x] cartes Prospects empilées et ouverture au clic
 - [x] conversion vers Client depuis une carte Prospect
-- [x] raccourcis de relance J+1 / J+3 / J+7 / J+30 / date personnalisée
 - [x] fiche Prospect latérale détaillée
-- [x] historique Prospect
+- [x] panneau Prospect à droite, scrollable et conservé dans les fenêtres réduites
 - [x] tableau Clients réel
 - [x] formulaire Nouveau client
 - [x] filtres Clients
 - [x] archivage / réactivation
 - [x] fiche Client latérale
+- [x] comportement Client validé : pleine largeur sans fiche, fiche à droite uniquement lorsqu’un client est ouvert
 - [x] onglets Client Résumé / Contacts / Commercial / Historique interactifs
 - [x] ajout de contacts supplémentaires depuis la fiche Client
 - [x] choix du rôle de chaque contact
 - [x] changement du contact principal depuis la fiche Client
-- [x] programmation d’une prochaine action Client
 - [x] activité récente / historique Client
 - [x] recherche globale avec résultats Clients / Prospects / Organisations / Contacts
 - [x] navigation clavier recherche : ↑ / ↓ / Entrée / Échap
 - [x] dashboard raccordé aux premiers compteurs CRM
+- [x] vue dédiée Prospects `Pipeline / Historique`
+- [x] filtres Gagnés / Perdus + recherche dans l’historique Prospect
+- [x] Relances séparées visuellement des Actions
+- [x] raccourcis Relance Demain / +3 j / +7 j / +30 j / date personnalisée
+- [x] plusieurs Actions affichées les unes sous les autres dans la fiche
+- [x] terminer / annuler / rouvrir une Action ou Relance
+- [ ] revalidation Windows de la nouvelle interface Actions / Relances / Historique
 
 ### Reste fonctionnel Phase 1
 
 - [ ] deep-link précis depuis un résultat de recherche vers la fiche Client/Prospect sélectionnée
 - [ ] résolution relationnelle d’un résultat Organisation/Contact vers la bonne fiche Client/Prospect
 - [ ] enrichissement Commercial Client lorsque Projets/Facturation/Temps seront disponibles
+- [ ] raccorder ensuite le système Actions multiples à la fiche Client (l’ancien champ reste compatible pour l’instant)
 
-### Tests ajoutés et validés localement le 13/09/2026
+### Tests
+
+Validés localement avant la migration Actions :
 
 - [x] migrations CRM
 - [x] création organisation/contact/prospect
@@ -118,8 +135,29 @@ PR : #58 (brouillon)
 - [x] multi-contact client + changement de principal
 - [x] `npm run typecheck` — succès réel sous Windows
 - [x] `npm test` — 4 fichiers / 13 tests passés sous Electron 44.3.0 / Node 24.20.0
-- [ ] validation de la migration depuis une base Phase 0 existante
-- [ ] validation visuelle Phase 1
+
+Nouveaux tests ajoutés, à exécuter localement après récupération :
+
+- [ ] migration 4 + table `crm_actions`
+- [ ] plusieurs actions ouvertes sur un prospect
+- [ ] séparation Action / Relance
+- [ ] Relance → étape `À relancer`
+- [ ] calcul de la prochaine échéance
+- [ ] terminer puis rouvrir une action
+- [ ] nouveau `npm run typecheck`
+- [ ] nouveau `npm test`
+
+### Validation visuelle Windows du 13/09/2026
+
+- [x] SQLite affiche réellement **4 migrations** après mise à niveau
+- [x] pipeline sans gros défilement horizontal
+- [x] glisser-déposer des cartes
+- [x] pile de cartes compacte
+- [x] panneau Prospect à droite utilisable en fenêtre réduite
+- [x] panneau Client à droite utilisable en fenêtre réduite
+- [x] tableau Client reprend toute la largeur quand aucune fiche n’est ouverte
+- [ ] nouvelle vue Historique dédiée à tester
+- [ ] nouvelles Actions / Relances multiples à tester
 
 ### CI GitHub
 
@@ -149,9 +187,11 @@ Premier run : **non exploitable**. GitHub a terminé le job en échec avant tout
 8. Une sauvegarde serveur n’est jamais considérée comme une sauvegarde locale.
 9. Statistiques et recherche sont dérivées/reconstruisibles.
 10. Tous les éléments historiques importants sont journalisés.
+11. Une Relance et une Action sont deux objets distincts ; plusieurs peuvent coexister sur un même dossier.
+12. Les panneaux latéraux Prospect/Client restent à droite ; ils ne passent pas sous la vue principale.
 
 ## Travail en cours
 
-**Phase 1 CRM : typecheck + 13/13 tests validés réellement sous Windows.**
+**Phase 1 CRM : nouveau système Actions / Relances multiples et Historique Prospects dédié implémentés sur la branche.**
 
-Prochaine étape : lancer `npm start`, vérifier la sauvegarde `pre-migration`, le passage réel de SQLite à 3 migrations, puis tester visuellement la création d’un prospect, les relances, la conversion en client, les contacts multiples, l’archivage/réactivation et la recherche globale.
+Prochaine validation locale : `git pull`, `npm run typecheck`, `npm test`, puis test visuel des vues Pipeline / Historique et des Actions / Relances multiples.
