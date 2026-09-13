@@ -25,6 +25,7 @@ import type {
 } from '../shared/crm';
 import type {
   InternalProjectInput,
+  MoveProjectNodeInput,
   ProjectFilters,
   ProjectNodeInput,
   ProjectPrerequisiteInput,
@@ -137,6 +138,7 @@ const api: AtoumWebApi = {
       completionReview: (id: string) => ipcRenderer.invoke('projects:completion-review', id),
       addNode: (projectId: string, input: ProjectNodeInput) => ipcRenderer.invoke('projects:add-node', projectId, input),
       updateNode: (nodeId: string, input: Partial<ProjectNodeInput>) => ipcRenderer.invoke('projects:update-node', nodeId, input),
+      moveNode: (nodeId: string, input: MoveProjectNodeInput) => ipcRenderer.invoke('projects:move-node', nodeId, input),
       addPrerequisite: (projectId: string, input: ProjectPrerequisiteInput) => ipcRenderer.invoke('projects:add-prerequisite', projectId, input),
       updatePrerequisiteStatus: (id: string, status: ProjectPrerequisiteStatus) => ipcRenderer.invoke('projects:update-prerequisite-status', id, status),
     },
