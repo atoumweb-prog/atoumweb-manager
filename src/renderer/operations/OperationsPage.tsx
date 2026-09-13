@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { ClientSummary } from '../../shared/crm';
+import type { ClientSummary, SearchResult } from '../../shared/crm';
 import {
   INTERVENTION_COVERAGE_MODES,
   INTERVENTION_STATUSES,
@@ -23,6 +23,10 @@ import { MaintenancePanel } from './MaintenancePanel';
 import { OperationsAlertsPanel } from './OperationsAlertsPanel';
 
 type OperationsView = 'requests' | 'interventions' | 'maintenance' | 'packs';
+export type OperationsSearchTarget = {
+  entityType: Extract<SearchResult['entityType'], 'service_request' | 'intervention' | 'maintenance' | 'hour_pack'>;
+  entityId: string;
+};
 
 const REQUEST_STATUS_LABELS: Record<ServiceRequestStatus, string> = {
   new: 'Nouveau', to_qualify: 'À qualifier', waiting_client: 'En attente client', planned: 'Planifié', converted: 'Transformé', closed: 'Clos sans intervention', archived: 'Archivé',
@@ -52,7 +56,7 @@ function dateLabel(value?: string | null): string {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
 }
 
-export function OperationsPage({ onMessage }: { onMessage: (message: string) => void }) {
+export function OperationsPage({ onMessage, initialTarget }: { onMessage: (message: string) => void; initialTarget?: OperationsSearchTarget | null }) {
   const [view, setView] = useState<OperationsView>('requests');
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [interventions, setInterventions] = useState<Intervention[]>([]);
@@ -103,6 +107,34 @@ export function OperationsPage({ onMessage }: { onMessage: (message: string) => 
   }
 
   useEffect(() => { void refresh(); }, []);
+  useEffect(() => {
+    if (!initialTarget) return;
+    setQuery('');
+    setSelectedRequest(null);
+    setSelectedIntervention(null);
+
+    if (initialTarget.entityType === 'service_request') {
+      setView('requests');
+      setRequestStatus('all');
+      void window.atoumweb.operations.requests.get(initialTarget.entityId)
+        .then((request) => setSelectedRequest(request))
+        .catch((error: unknown) => onMessage(error instanceof Error ? error.message : 'Demande introuvable.'));
+      return;
+    }
+    if (initialTarget.entityType === 'intervention') {
+      setView('interventions');
+      setInterventionStatus('all');
+      void window.atoumweb.operations.interventions.get(initialTarget.entityId)
+        .then((intervention) => setSelectedIntervention(intervention))
+        .catch((error: unknown) => onMessage(error instanceof Error ? error.message : 'Intervention introuvable.'));
+      return;
+    }
+    if (initialTarget.entityType === 'maintenance') {
+      setView('maintenance');
+      return;
+    }
+    setView('packs');
+  }, [initialTarget?.entityType, initialTarget?.entityId]);
 
   const filteredRequests = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase('fr-FR');
@@ -208,8 +240,8 @@ export function OperationsPage({ onMessage }: { onMessage: (message: string) => 
       {loading ? <section className="panel"><p className="muted">Chargement…</p></section> : <div className={selectedIntervention ? 'operations-layout with-detail' : 'operations-layout'}><section className="panel operation-list-panel"><table className="operations-table"><thead><tr><th>Numéro</th><th>Client</th><th>Intervention</th><th>Prise en charge</th><th>Temps</th><th>Statut</th></tr></thead><tbody>{filteredInterventions.map((intervention) => <tr key={intervention.id} className={selectedIntervention?.id === intervention.id ? 'selected-row' : ''} onClick={() => { setSelectedIntervention(intervention); setSelectedRequest(null); }}><td><strong>{intervention.number}</strong></td><td><strong>{intervention.clientLabel}</strong><small>{intervention.projectLabel || 'Sans projet'}</small></td><td><strong>{intervention.subject}</strong><small>{INTERVENTION_TYPE_LABELS[intervention.type]}</small></td><td>{COVERAGE_LABELS[intervention.coverageMode]}</td><td>{duration(intervention.totalTimeSeconds)}</td><td>{INTERVENTION_STATUS_LABELS[intervention.status]}</td></tr>)}{filteredInterventions.length === 0 && <tr><td colSpan={6}><div className="empty-table">Aucune intervention dans cette vue.</div></td></tr>}</tbody></table></section>{selectedIntervention && <InterventionDetail intervention={selectedIntervention} onClose={() => setSelectedIntervention(null)} onStatus={changeInterventionStatus} onCoverage={changeCoverage} onTimer={startInterventionTimer} />}</div>}
     </>}
 
-    {view === 'maintenance' && <MaintenancePanel clients={clients} projects={projects} onMessage={onMessage} onInterventionCreated={(intervention) => { setSelectedRequest(null); setSelectedIntervention(intervention); setView('interventions'); void refresh(); }} />}
-    {view === 'packs' && <HourPacksPanel clients={clients} projects={projects} interventions={interventions} onMessage={onMessage} onOperationsChanged={refresh} />}
+    {view === 'maintenance' && <MaintenancePanel clients={clients} projects={projects} onMessage={onMessage} initialSubscriptionId={initialTarget?.entityType === 'maintenance' ? initialTarget.entityId : null} onInterventionCreated={(intervention) => { setSelectedRequest(null); setSelectedIntervention(intervention); setView('interventions'); void refresh(); }} />}
+    {view === 'packs' && <HourPacksPanel clients={clients} projects={projects} interventions={interventions} onMessage={onMessage} onOperationsChanged={refresh} initialPackId={initialTarget?.entityType === 'hour_pack' ? initialTarget.entityId : null} />}
   </div>;
 }
 
