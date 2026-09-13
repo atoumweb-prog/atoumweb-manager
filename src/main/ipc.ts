@@ -4,6 +4,9 @@ import type {
   CatalogItemInput,
   CatalogItemStatus,
   CatalogVersionInput,
+  QuoteFilters,
+  QuoteInput,
+  QuoteLineInput,
 } from '../shared/commercial';
 import type {
   BackupResult,
@@ -133,4 +136,19 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('catalog:publish-version', (_event, versionId: string) => database.catalog.publishVersion(versionId));
   ipcMain.handle('catalog:set-status', (_event, itemId: string, status: CatalogItemStatus) => database.catalog.setStatus(itemId, status));
   ipcMain.handle('catalog:set-visible-public', (_event, itemId: string, visible: boolean) => database.catalog.setVisiblePublic(itemId, visible));
+
+  ipcMain.handle('quotes:list', (_event, filters?: QuoteFilters) => database.quotes.list(filters));
+  ipcMain.handle('quotes:get', (_event, id: string) => database.quotes.get(id));
+  ipcMain.handle('quotes:create', (_event, input: QuoteInput) => database.quotes.create(input));
+  ipcMain.handle('quotes:add-catalog-line', (_event, quoteId: string, catalogVersionId: string, input?: Partial<QuoteLineInput>) => database.quotes.addCatalogLine(quoteId, catalogVersionId, input));
+  ipcMain.handle('quotes:add-custom-line', (_event, quoteId: string, input: QuoteLineInput) => database.quotes.addCustomLine(quoteId, input));
+  ipcMain.handle('quotes:update-line', (_event, lineId: string, input: QuoteLineInput) => database.quotes.updateLine(lineId, input));
+  ipcMain.handle('quotes:remove-line', (_event, lineId: string) => database.quotes.removeLine(lineId));
+  ipcMain.handle('quotes:update-conditions', (_event, quoteId: string, input: Partial<QuoteInput>) => database.quotes.updateConditions(quoteId, input));
+  ipcMain.handle('quotes:mark-sent', (_event, id: string) => database.quotes.markSent(id));
+  ipcMain.handle('quotes:mark-viewed', (_event, id: string) => database.quotes.markViewed(id));
+  ipcMain.handle('quotes:accept', (_event, id: string) => database.quotes.accept(id));
+  ipcMain.handle('quotes:refuse', (_event, id: string) => database.quotes.refuse(id));
+  ipcMain.handle('quotes:expire', (_event, id: string) => database.quotes.expire(id));
+  ipcMain.handle('quotes:duplicate', (_event, id: string) => database.quotes.duplicate(id));
 }
