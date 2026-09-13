@@ -77,6 +77,18 @@
 .maintenance-check small { color: var(--text-muted); font-size: 8px; line-height: 1.4; }
 .maintenance-check.check-done { background: color-mix(in srgb, #42a66c 8%, var(--surface)); }
 .maintenance-check.check-not_applicable { opacity: .72; }
+.maintenance-overage-box { display: grid; gap: 9px; padding: 10px; border: 1px solid rgb(214 69 69 / 26%); border-radius: 10px; background: rgb(214 69 69 / 5%); }
+.maintenance-overage-heading { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.maintenance-overage-heading > div { display: grid; gap: 3px; }
+.maintenance-overage-heading strong { font-size: 10px; }
+.maintenance-overage-box > p { margin: 0; font-size: 8px; line-height: 1.45; }
+.maintenance-overage-list { display: grid; gap: 8px; }
+.maintenance-overage-item { display: grid; gap: 7px; padding: 9px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); }
+.maintenance-overage-item-head > div { display: grid; gap: 2px; }
+.maintenance-overage-item-head strong { font-size: 9px; overflow-wrap: anywhere; }
+.maintenance-overage-item-head small { color: var(--text-muted); font-size: 8px; }
+.maintenance-overage-item > label { display: grid; gap: 4px; color: var(--text-muted); font-size: 8px; font-weight: 800; }
+.maintenance-overage-item .secondary-button { justify-self: start; }
 .hour-pack-history { display: grid; gap: 6px; }
 .hour-pack-history-title { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: center; }
 .hour-pack-movement { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
@@ -106,4 +118,5 @@
   .maintenance-check,
   .hour-pack-movement,
   .hour-pack-history-title { grid-template-columns: 1fr; }
+  .maintenance-overage-heading { display: grid; }
 }
