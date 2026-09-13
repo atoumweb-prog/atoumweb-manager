@@ -28,12 +28,14 @@ Le DOCX complet reste le document humain de référence hors dépôt si nécessa
 - [x] Ajouter `AGENTS.md`
 - [x] Ajouter ce fichier `PROJECT_STATUS.md`
 - [x] Ajouter le cahier des charges fonctionnel V1 en Markdown
+- [x] Ajouter un espace de décision pour l'architecture (`docs/ARCHITECTURE.md`)
+- [x] Préparer la première roadmap de développement (`docs/ROADMAP_V1.md`)
+- [x] Ajouter un modèle d'issue GitHub
+- [x] Créer la première issue de pilotage GitHub (#1)
 - [ ] Choisir et documenter l'architecture technique
 - [ ] Définir le modèle de données initial
 - [ ] Créer la structure de dossiers applicative
 - [ ] Définir la stratégie de sauvegarde de la base du CRM
-- [ ] Préparer la première roadmap de développement
-- [ ] Créer les premières issues GitHub
 
 ## Avancement par module
 
@@ -117,7 +119,10 @@ Lorsqu'un devis est accepté, le CRM doit pouvoir :
 
 - Dépôt privé créé : `atoumweb-prog/atoumweb-manager`.
 - Documentation de démarrage ajoutée sur `main`.
-- Le Markdown devient le format de référence lisible par Codex dans le dépôt.
+- Cahier des charges V1 ajouté en Markdown pour Codex.
+- `docs/ARCHITECTURE.md` créé pour documenter les choix techniques.
+- Roadmap V1 ajoutée.
+- Première issue de pilotage créée : **#1 — Phase 0 — Définir l’architecture technique et le modèle de données**.
 
 ## Travail en cours
 
@@ -132,5 +137,5 @@ Aucun blocage fonctionnel connu.
 1. Définir l'architecture technique de l'application.
 2. Définir le modèle de données initial.
 3. Définir l'arborescence du code source et du stockage utilisateur.
-4. Découper la V1 en jalons et issues.
+4. Définir la sauvegarde/restauration de la base du CRM.
 5. Créer le socle applicatif sur une branche dédiée.
