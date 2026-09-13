@@ -6,7 +6,7 @@
 
 - **Projet** : AtoumWeb Manager
 - **Version cible actuelle** : V1
-- **Statut global** : Fondation applicative implémentée sur branche dédiée — validation exécutable requise — Phase 1 CRM préparée
+- **Statut global** : Fondation implémentée — validation exécutable requise — Phases 1 CRM et 2 Commercial préparées
 - **Dépôt** : `atoumweb-prog/atoumweb-manager`
 - **Branche stable** : `main`
 - **Branche de travail actuelle** : `foundation/electron-react-sqlite`
@@ -16,78 +16,86 @@
 ## Références
 
 - `docs/CAHIER_DES_CHARGES_FONCTIONNEL_V1.md` — fonctionnel
-- `docs/ARCHITECTURE.md` — architecture technique décidée et alignée sur l'implémentation
+- `docs/ARCHITECTURE.md` — architecture technique
 - `docs/DATA_MODEL_V1.md` — modèle de données cible V1
 - `docs/ROADMAP_V1.md` — ordre de développement
-- `docs/DEVELOPMENT.md` — démarrage local et commandes de développement
-- `docs/PHASE_1_CRM.md` — spécification d’implémentation Contacts / Prospects / Clients / Recherche
-- `docs/PHASE_1_CRM_ISSUES.md` — découpage des chantiers Phase 1
+- `docs/DEVELOPMENT.md` — démarrage local
+- `docs/PHASE_1_CRM.md` — Contacts / Prospects / Clients / Recherche
+- `docs/PHASE_1_CRM_ISSUES.md` — découpage Phase 1
+- `docs/PHASE_2_COMMERCIAL.md` — Offres & Tarifs + Devis
 
-## Phase actuelle
+## Phase 0 — Fondation
 
-### Phase 0 — Fondation
+- [x] Dépôt GitHub et documentation de référence
+- [x] Architecture technique et modèle de données
+- [x] Branche `foundation/electron-react-sqlite`
+- [x] Electron Forge + React + TypeScript
+- [x] Séparation `main / preload / renderer / shared`
+- [x] Sécurité Electron (`contextIsolation`, `nodeIntegration: false`, sandbox)
+- [x] SQLite via `node:sqlite` derrière `DatabaseAdapter`
+- [x] Migrations SQLite + première migration système
+- [x] Workspace local configurable
+- [x] Sauvegardes quotidienne / manuelle / pré-migration
+- [x] Restauration sécurisée avec copie `pre-restore`
+- [x] Shell V1 et trois thèmes
+- [x] Réglages minimum et retour au thème AtoumWeb
+- [x] Premiers tests et workflow CI
+- [ ] Générer/versionner `package-lock.json`
+- [ ] Valider `npm install`, typecheck, tests et `npm start` sur Windows
+- [ ] Valider packaging Windows
+- [ ] Finaliser/fusionner PR #3
 
-- [x] Créer le dépôt GitHub `atoumweb-manager`
-- [x] Ajouter la documentation de référence et `AGENTS.md`
-- [x] Définir et documenter l'architecture technique
-- [x] Définir le modèle de données initial
-- [x] Créer la branche `foundation/electron-react-sqlite`
-- [x] Initialiser Electron Forge + React + TypeScript
-- [x] Créer l'arborescence `main / preload / renderer / shared`
-- [x] Isoler le renderer du système (`contextIsolation`, `nodeIntegration: false`, sandbox)
-- [x] Ajouter la couche SQLite via `node:sqlite`
-- [x] Ajouter une abstraction `DatabaseAdapter`
-- [x] Ajouter le moteur de migrations SQLite
-- [x] Ajouter la première migration système (`settings`, `activity_log`)
-- [x] Ajouter le workspace local configurable
-- [x] Ajouter les sauvegardes quotidiennes et manuelles
-- [x] Ajouter une sauvegarde automatique avant migration
-- [x] Ajouter une restauration sécurisée avec copie `pre-restore`
-- [x] Ajouter le shell de navigation V1 dans le bon ordre
-- [x] Ajouter les thèmes AtoumWeb / Noir / Blanc
-- [x] Ajouter un écran Réglages minimal (thème, workspace, sauvegarde/restauration)
-- [x] Ajouter les premiers tests unitaires/migrations
-- [x] Ajouter un workflow CI GitHub
-- [ ] Générer et versionner `package-lock.json`
-- [ ] Valider `npm install`, `npm run typecheck`, `npm test` et `npm start` sur un runner/PC Windows
-- [ ] Valider le packaging Windows
-- [ ] Finaliser puis fusionner la PR de fondation
+## Phase 1 — Socle CRM — préparation terminée
 
-### Phase 1 — Socle CRM — préparation
+- [x] Organisations / Contacts comme identité commune
+- [x] Prospects et stages Kanban
+- [x] Température, source, budget, valeur, prochaine action
+- [x] Perdu avec raison
+- [x] Conversion Prospect → Client transactionnelle/idempotente
+- [x] Liste Clients + statuts Actif/Inactif/Archivé
+- [x] Fiche Client : Résumé / Contacts / Commercial / Historique
+- [x] Rôles contacts multiples
+- [x] Archivage/réactivation
+- [x] Journal d’activité Phase 1
+- [x] Recherche globale Prospect/Client/Organisation/Contact
+- [x] Tests et critères d’acceptation
+- [x] Issues #4 à #9 créées
+- [ ] Code Phase 1 après fusion de la fondation
 
-- [x] Définir précisément Organisations / Contacts / Prospects / Clients
-- [x] Fixer les stages Prospect par défaut
-- [x] Fixer les températures et sources Prospect
-- [x] Définir la prochaine action et ses raccourcis
-- [x] Définir le passage Gagné / Perdu
-- [x] Définir la conversion Prospect → Client sans duplication
-- [x] Définir la liste Clients
-- [x] Définir les premiers onglets de la fiche Client
-- [x] Définir archivage/réactivation Client
-- [x] Définir les rôles multiples de contacts client
-- [x] Définir la première recherche globale réelle
-- [x] Définir le journal d’activité Phase 1
-- [x] Définir les tests et critères d’acceptation
-- [x] Créer l’issue parente #4
-- [x] Créer #5 — Migration CRM / repositories / journal
-- [x] Créer #6 — Prospects / Kanban
-- [x] Créer #7 — Clients / conversion
-- [x] Créer #8 — Recherche globale
-- [x] Créer #9 — Validation Phase 1
-- [ ] Démarrer le code Phase 1 uniquement après validation/fusion de la fondation
+## Phase 2 — Commercial — préparation terminée
+
+- [x] Services et Offres distincts
+- [x] Catalogue versionné
+- [x] États item/version
+- [x] Modes de tarification
+- [x] Prix AtoumWeb + prix conseillé interne
+- [x] Assistant Devis en 6 étapes
+- [x] Lignes catalogue + lignes libres
+- [x] Snapshots de devis indépendants du catalogue futur
+- [x] Quantités déterministes via `quantity_milli`
+- [x] Remises : calcul séparé de la raison commerciale
+- [x] Valeur catalogue / remise / valeur contractuelle distinctes
+- [x] Numérotation `DEV-YYYY-001`
+- [x] Statuts Brouillon / Envoyé / Vu / Accepté / Refusé / Expiré / Annulé
+- [x] Acceptation prospect → client dans la même transaction
+- [x] Devis accepté figé
+- [x] Handoff « prêt à transformer en projet » sans faux projet provisoire
+- [x] Prévisualisation client + PDF prévue
+- [x] Issues #10 à #15 créées
+- [ ] Code Phase 2 après validation Phase 1
 
 ## Avancement par module
 
 | Module | Conception | Développement | Tests | Statut |
 |---|---|---|---|---|
 | Accueil / Dashboard | ✅ | 🟡 socle | ⬜ | Shell de fondation |
-| Recherche globale | ✅ | 🟡 shell | ⬜ | Phase 1 préparée — #8 |
-| Prospects | ✅ | ⬜ | ⬜ | Phase 1 préparée — #6 |
-| Clients | ✅ | ⬜ | ⬜ | Phase 1 préparée — #7 |
-| Offres & Tarifs | ✅ | ⬜ | ⬜ | À préparer en Phase 2 |
-| Devis | ✅ | ⬜ | ⬜ | À préparer en Phase 2 |
-| Projets | ✅ | ⬜ | ⬜ | À développer après Commercial |
-| Fichiers & Ressources projet | ✅ | ⬜ | ⬜ | À développer |
+| Recherche globale | ✅ | 🟡 shell | ⬜ | Phase 1 — #8 |
+| Prospects | ✅ | ⬜ | ⬜ | Phase 1 — #6 |
+| Clients | ✅ | ⬜ | ⬜ | Phase 1 — #7 |
+| Offres & Tarifs | ✅ | ⬜ | ⬜ | Phase 2 — #11 |
+| Devis | ✅ | ⬜ | ⬜ | Phase 2 — #12 à #15 |
+| Projets | ✅ | ⬜ | ⬜ | Prochaine phase à préparer |
+| Fichiers & Ressources projet | ✅ | ⬜ | ⬜ | À développer avec Projets |
 | Bibliothèque projet | ✅ | ⬜ | ⬜ | À développer |
 | Bibliothèque AtoumWeb | ✅ | ⬜ | ⬜ | À développer |
 | Timer global | ✅ | 🟡 shell | ⬜ | Widget visible, logique à raccorder |
@@ -96,36 +104,36 @@
 | Packs d'heures | ✅ | ⬜ | ⬜ | À développer |
 | Facturation / suivi Abby | ✅ | ⬜ | ⬜ | À développer |
 | Dépenses AtoumWeb | ✅ | ⬜ | ⬜ | À développer |
-| Documents & Contrats | ✅ | ⬜ | ⬜ | À développer |
-| Sauvegardes | ✅ | 🟡 fondation | ⬜ | DB locale : création/restauration implémentées |
+| Documents & Contrats | ✅ | ⬜ | ⬜ | PDF devis amorcé en Phase 2 |
+| Sauvegardes | ✅ | 🟡 fondation | ⬜ | DB locale implémentée |
 | Annuaire interne | ✅ | ⬜ | ⬜ | À développer |
 | Statistiques | ✅ | ⬜ | ⬜ | À développer |
-| Journal d'activité | ✅ | 🟡 schéma | ⬜ | Phase 1 détaillée — #5 |
+| Journal d'activité | ✅ | 🟡 schéma | ⬜ | Normalisation prévue #5 |
 | Réglages généraux | ✅ | 🟡 socle | ⬜ | Thème/workspace/DB présents |
-| Thèmes AtoumWeb / Noir / Blanc | ✅ | ✅ socle | ⬜ | Sélection et persistance implémentées |
+| Thèmes AtoumWeb / Noir / Blanc | ✅ | ✅ socle | ⬜ | Implémentés, validation requise |
 
 ## Règles fonctionnelles à ne pas casser
 
-1. **Source unique des données** : pas de duplication simplement parce qu'une information doit être visible à plusieurs endroits.
-2. **Devis figés** : un devis conserve prix, contenu et conditions au moment de sa création.
-3. **Modèles de projets versionnés** : une évolution d'un modèle ne modifie jamais les anciens projets.
-4. **Archivage réversible** : les clients archivés peuvent être réactivés ; éviter les suppressions destructives.
-5. **Timer unique** : un seul timer actif à la fois, persistant pendant la navigation.
-6. **Valeurs distinctes** : séparer valeur commerciale, montant facturé et montant encaissé.
-7. **Abby** : le CRM prépare et suit, mais Abby reste la source des factures réglementaires en V1.
-8. **Maintenance** : périodes d'un même service ; ne pas créer un nouveau projet chaque mois.
-9. **Bibliothèque projet** : conserver fidèlement ce qui est réellement utilisé sur le projet.
-10. **Bibliothèque AtoumWeb** : modules génériques préparés volontairement à partir d'exports projet ; aucune généralisation automatique.
-11. **Code visualisable sans exécution** : afficher/éditer/versionner le code sans l'exécuter dans le CRM.
-12. **Sauvegardes avec emplacement réel** : serveur/hébergeur, PC local, disque externe ou autre ; ne jamais considérer locale une sauvegarde uniquement présente sur le serveur.
-13. **Ressources et documents séparés** : projet = production ; client = relation commerciale/contractuelle.
-14. **Documents liés sans duplication** : un fichier maître peut être visible depuis plusieurs écrans via des références.
-15. **Recherche globale essentielle** : clients, prospects, projets, documents, interventions, bibliothèque et fichiers.
-16. **Journal d'activité centralisé** : les timelines Client/Projet affichent des vues filtrées du même journal.
-17. **Réglages par défaut** : ordre logique établi dans le cahier des charges, avec retour aux valeurs par défaut sans toucher aux données métier.
-18. **Trois thèmes** : AtoumWeb par défaut, Noir, Blanc.
-19. **Identité CRM commune** : un prospect et un client référencent les mêmes `organizations` / `contacts`; la conversion ne recopie jamais l’identité.
-20. **Conversion idempotente** : relancer une conversion Prospect → Client ne peut jamais créer un deuxième client.
+1. Une donnée métier possède une source unique.
+2. Les devis conservent leur snapshot ; le catalogue futur ne les modifie jamais.
+3. Les modèles de projets sont versionnés ; une nouvelle version ne modifie pas les anciens projets.
+4. Archivage réversible plutôt que suppression destructive.
+5. Un seul timer actif dans toute l’application.
+6. Valeur commerciale, montant facturé et montant encaissé restent distincts.
+7. Abby reste l’outil de facturation réglementaire en V1.
+8. Une maintenance mensuelle est une période, pas un nouveau projet.
+9. Bibliothèque projet = réel utilisé ; Bibliothèque AtoumWeb = version générique indépendante.
+10. Le code stocké n’est jamais exécuté automatiquement.
+11. Une sauvegarde serveur n’est pas une sauvegarde locale.
+12. Ressources projet et documents client restent distincts.
+13. Les documents maîtres sont référencés, pas dupliqués.
+14. Recherche globale et journal d’activité sont transverses.
+15. Prospect et Client utilisent les mêmes `organizations` / `contacts`.
+16. Conversion Prospect → Client idempotente.
+17. Une version Catalogue publiée n’est pas modifiée rétroactivement.
+18. Un devis accepté est figé.
+19. Phase 2 ne crée pas de projet provisoire : la transformation complète est Phase 3.
+20. Trois thèmes : AtoumWeb par défaut, Noir, Blanc.
 
 ## Architecture technique décidée
 
@@ -133,69 +141,63 @@
 - React 19.3
 - TypeScript 5.9 strict
 - Electron Forge 7.11.2 + Vite 5.4.19
-- SQLite locale via `node:sqlite`, encapsulé derrière `DatabaseAdapter`
-- SQL et migrations versionnées sans ORM lourd pour la V1
-- renderer isolé ; fichiers/base/PDF dans le main process via IPC typé
-- Monaco Editor prévu pour visualiser/éditer le code sans l'exécuter
-- PDF prévu via rendu HTML + `webContents.printToPDF()`
-- workspace local configurable, par défaut dans Documents
+- SQLite locale via `node:sqlite` derrière `DatabaseAdapter`
+- SQL + migrations versionnées sans ORM lourd
+- renderer isolé ; accès système uniquement via IPC typé
+- Monaco Editor prévu pour la bibliothèque technique
+- PDF via HTML + `webContents.printToPDF()`
+- workspace local configurable
 - sauvegarde quotidienne, manuelle, pré-migration et pré-restauration
 
 ## Parcours métier de référence
 
 `Prospect → Devis → Client → Projet → Production → Livraison → Facturation → Maintenance → Statistiques`
 
-## Décisions
+## Décisions du 13/09/2026
 
-### 2026-09-13 — Conception V1 validée
+### Conception V1
 
-- Tous les grands modules fonctionnels sont validés.
-- Trois thèmes : **AtoumWeb** (défaut), **Noir**, **Blanc**.
-- Recherche globale ajoutée comme fonction transverse essentielle.
-- Bibliothèque technique divisée en **Bibliothèque projet** et **Bibliothèque AtoumWeb**.
-- Les modules réutilisables AtoumWeb sont préparés à partir d'exports fournis avec assistance, et non généralisés automatiquement par le CRM.
-- Les sauvegardes enregistrent leur emplacement réel.
+- Tous les grands modules fonctionnels validés.
+- Recherche globale essentielle.
+- Bibliothèque projet et Bibliothèque AtoumWeb séparées.
+- Généralisation d’un module projet non automatique.
+- Sauvegardes avec emplacement réel.
 
-### 2026-09-13 — Architecture et modèle de données
+### Fondation
 
-- Application Windows locale Electron + React + TypeScript.
-- SQLite locale, fichiers lourds hors base et référencés.
-- Modèle V1 documenté dans `docs/DATA_MODEL_V1.md`.
-- Journal d'activité centralisé et recherche reconstruisible.
+- Application locale Electron/React/TypeScript + SQLite.
+- Shell, thèmes, workspace et sauvegarde/restauration implémentés sur la branche de fondation.
+- CI présente mais aucun runner GitHub n’a encore réellement exécuté les commandes (`runner_id=0`, `steps=[]`).
 
-### 2026-09-13 — Première fondation applicative
+### Phase 1 préparée
 
-- Electron/React/Vite configurés sur `foundation/electron-react-sqlite`.
-- Backend local SQLite + migrations + workspace ajouté.
-- IPC sécurisé et preload minimal ajoutés.
-- Shell de navigation et trois thèmes ajoutés.
-- Sauvegarde quotidienne/manuelle/pré-migration et restauration avec sauvegarde `pre-restore` ajoutées.
-- Pile de build conservatrice retenue : Forge 7.11.2 + Vite 5.4.19 + TypeScript 5.9.2.
-- Workflow CI ajouté mais les exécutions GitHub observées n'ont pas obtenu de runner (aucune étape exécutée) ; validation réelle toujours requise sur runner/PC Windows.
+- Identité partagée organisations/contacts.
+- Conversion Prospect → Client sans copie ni doublon.
+- Kanban, Clients, journal et recherche globale détaillés.
+- Issues #4 à #9.
 
-### 2026-09-13 — Phase 1 CRM préparée
+### Phase 2 préparée
 
-- Contacts conservés comme identité partagée et non comme module de menu séparé.
-- Prospect et Client utilisent les mêmes organisations/contacts.
-- Conversion Prospect → Client définie transactionnelle et idempotente.
-- Kanban, prochaine action, perte, archivage/réactivation et rôles contacts détaillés.
-- Recherche globale réelle définie pour Prospect / Client / Organisation / Contact.
-- Découpage GitHub créé : #4 à #9.
+- Catalogue Services/Offres versionné.
+- Snapshot obligatoire des devis.
+- Ajustements commerciaux avec valeur catalogue conservée.
+- Acceptation prospect → client intégrée.
+- Devis accepté figé puis signalé « prêt à transformer en projet ».
+- Issues #10 à #15.
 
 ## Travail en cours
 
-**Validation exécutable de la fondation. La Phase 1 est prête à démarrer immédiatement après fusion de la PR #3.**
+**Valider la fondation exécutable. Les Phases 1 et 2 sont déjà préparées et prêtes à être confiées à Codex dans l’ordre prévu.**
 
 ## Blocages / points ouverts
 
-- Les runs GitHub Actions observés se terminent avant l'exécution des étapes (`runner_id=0`, `steps=[]`). Ce n'est pas un échec de compilation démontré.
-- `package-lock.json` devra être généré par un `npm install` effectif puis versionné.
+- Les runs GitHub Actions observés n’ont obtenu aucun runner ; aucune commande npm n’a réellement été exécutée.
+- `package-lock.json` doit être produit par un `npm install` réel.
 
 ## Prochaines actions
 
-1. Valider l'installation et les tests sur Windows/Codex avec accès npm.
-2. Générer `package-lock.json`.
-3. Corriger les éventuelles erreurs révélées par typecheck/tests/démarrage.
-4. Valider la PR de fondation.
-5. Démarrer #5 puis #6/#7/#8 selon les dépendances décrites dans `docs/PHASE_1_CRM.md`.
-6. Préparer en parallèle la Phase 2 Commercial : Offres & Tarifs + Devis.
+1. Valider la fondation sur Windows/Codex.
+2. Finaliser et fusionner PR #3.
+3. Développer Phase 1 : #5 → #6/#7/#8 → #9.
+4. Développer Phase 2 : #11 → #12 → #13/#14 → #15.
+5. Préparer Phase 3 Projets : transformation d’un devis accepté, modèles versionnés, lots/modules/tâches, ressources et prérequis.
