@@ -46,6 +46,27 @@ export interface CatalogVersion extends CatalogVersionInput {
   createdAt: string;
 }
 
+export interface OfferComponentInput {
+  serviceVersionId: string;
+  isOptional?: boolean;
+  quantityMilli?: number;
+  sortOrder?: number;
+}
+
+export interface OfferComponent {
+  id: string;
+  offerVersionId: string;
+  serviceVersionId: string;
+  serviceItemId: string;
+  serviceName: string;
+  serviceVersionNumber: number;
+  priceMode: PriceMode;
+  priceCents?: number | null;
+  isOptional: boolean;
+  quantityMilli: number;
+  sortOrder: number;
+}
+
 export interface CatalogItemSummary {
   id: string;
   type: CatalogItemType;
@@ -80,6 +101,8 @@ export interface CatalogApi {
   publishVersion(versionId: string): Promise<CatalogVersion>;
   setStatus(itemId: string, status: CatalogItemStatus): Promise<CatalogItemSummary>;
   setVisiblePublic(itemId: string, visible: boolean): Promise<CatalogItemSummary>;
+  listOfferComponents(offerVersionId: string): Promise<OfferComponent[]>;
+  setOfferComponents(offerVersionId: string, components: OfferComponentInput[]): Promise<OfferComponent[]>;
 }
 
 export interface QuoteInput {
