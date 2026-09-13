@@ -13,11 +13,37 @@
 git clone https://github.com/atoumweb-prog/atoumweb-manager.git
 cd atoumweb-manager
 git switch foundation/electron-react-sqlite
-npm install
-npm run typecheck
-npm test
+```
+
+## Validation automatique Gate 0
+
+Le script Windows `scripts/gate0-windows.ps1` vérifie les prérequis, installe les dépendances, lance le typecheck, les tests et le packaging Electron, puis écrit un journal `gate0-output.txt` à la racine du dépôt.
+
+Depuis PowerShell ouvert dans le dossier `atoumweb-manager` :
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\gate0-windows.ps1
+```
+
+Le script vérifie notamment :
+
+- Node.js 24 minimum ;
+- npm et Git disponibles ;
+- branche `foundation/electron-react-sqlite` ;
+- `npm install` ou `npm ci` ;
+- `npm run typecheck` ;
+- `npm test` ;
+- `npm run package`.
+
+S'il échoue, conserver `gate0-output.txt` : ce fichier sert au diagnostic.
+
+Après un Gate 0 automatique réussi, lancer séparément :
+
+```powershell
 npm start
 ```
+
+Puis vérifier visuellement : démarrage de l'application, navigation, thèmes AtoumWeb/Noir/Blanc, Réglages, création du workspace et sauvegarde/restauration de test.
 
 ## Commandes
 
