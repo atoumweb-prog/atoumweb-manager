@@ -6,6 +6,7 @@ import { QuoteService } from '../commercial/QuoteService';
 import { ActionService } from '../crm/ActionService';
 import { ClientContactService } from '../crm/ClientContactService';
 import { CrmService } from '../crm/CrmService';
+import { MaintenanceService } from '../operations/MaintenanceService';
 import { OperationsService } from '../operations/OperationsService';
 import { ProjectCompletionService } from '../projects/ProjectCompletionService';
 import { ProjectNodeArrangementService } from '../projects/ProjectNodeArrangementService';
@@ -40,6 +41,7 @@ export class DatabaseService {
   readonly projectSearch: ProjectSearchService;
   readonly projectTechnicalLibrary: ProjectTechnicalLibraryService;
   readonly operations: OperationsService;
+  readonly maintenance: MaintenanceService;
   readonly time: TimeService;
   readonly timeCorrections: TimeCorrectionService;
   readonly timeSwitches: TimeSwitchService;
@@ -60,6 +62,7 @@ export class DatabaseService {
     this.projectSearch = new ProjectSearchService(this.database);
     this.projectTechnicalLibrary = new ProjectTechnicalLibraryService(this.database);
     this.operations = new OperationsService(this.database);
+    this.maintenance = new MaintenanceService(this.database);
     this.time = new TimeService(this.database);
     this.timeCorrections = new TimeCorrectionService(this.database, this.time);
     this.timeSwitches = new TimeSwitchService(this.database, this.time);
