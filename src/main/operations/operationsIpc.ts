@@ -48,7 +48,15 @@ export function registerOperationsIpcHandlers(database: DatabaseService): void {
 
   ipcMain.handle('operations:maintenance:periods:list', (_event, subscriptionId: string) => database.maintenance.listPeriods(subscriptionId));
   ipcMain.handle('operations:maintenance:periods:ensure', (_event, subscriptionId: string, referenceDate?: string | null) => database.maintenance.ensurePeriod(subscriptionId, referenceDate));
-  ipcMain.handle('operations:maintenance:periods:change-status', (_event, id: string, status: MaintenancePeriodStatus) => database.maintenance.changePeriodStatus(id, status));
+  ipcMain.handle('operations:maintenance:periods:change-status', (_event, id: string, status: MaintenancePeriodStatus) => {
+    if (status === 'closed') {
+      const review = database.maintenanceOverages.review(id);
+      if (review.unresolvedCount > 0) {
+        throw new Error(`Décide du traitement des ${review.unresolvedCount} dépassement(s) avant de clôturer cette période.`);
+      }
+    }
+    return database.maintenance.changePeriodStatus(id, status);
+  });
   ipcMain.handle('operations:maintenance:checks:update', (_event, id: string, status: MaintenanceCheckStatus, notes?: string | null) => database.maintenance.updateCheck(id, status, notes));
 
   ipcMain.handle('operations:hour-packs:list', (_event, filters?: HourPackFilters) => database.hourPacks.list(filters));
