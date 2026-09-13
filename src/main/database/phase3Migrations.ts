@@ -184,4 +184,62 @@ export const PHASE_3_MIGRATIONS = [
         ON file_asset_links(project_node_id, created_at DESC);
     `,
   },
+  {
+    id: 9,
+    name: 'phase_3_project_technical_library',
+    sql: `
+      CREATE TABLE IF NOT EXISTS technical_items (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        scope TEXT NOT NULL DEFAULT 'project' CHECK (scope = 'project'),
+        category TEXT NOT NULL CHECK (category IN (
+          'header', 'footer', 'hero', 'page', 'section', 'css', 'javascript',
+          'php', 'acf', 'divi', 'woocommerce', 'plugin', 'config', 'note', 'other'
+        )),
+        name TEXT NOT NULL,
+        description TEXT,
+        tags_json TEXT NOT NULL DEFAULT '[]',
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        archived_at TEXT
+      ) STRICT;
+
+      CREATE INDEX IF NOT EXISTS idx_technical_items_project
+        ON technical_items(project_id, category, archived_at);
+      CREATE INDEX IF NOT EXISTS idx_technical_items_name
+        ON technical_items(name COLLATE NOCASE);
+
+      CREATE TABLE IF NOT EXISTS technical_item_versions (
+        id TEXT PRIMARY KEY,
+        technical_item_id TEXT NOT NULL REFERENCES technical_items(id) ON DELETE CASCADE,
+        version_number INTEGER NOT NULL CHECK (version_number > 0),
+        content_type TEXT NOT NULL DEFAULT 'text' CHECK (content_type IN ('code', 'json', 'text', 'reference')),
+        language TEXT,
+        content_text TEXT,
+        notes TEXT,
+        is_current INTEGER NOT NULL DEFAULT 0 CHECK (is_current IN (0, 1)),
+        is_stable INTEGER NOT NULL DEFAULT 0 CHECK (is_stable IN (0, 1)),
+        created_at TEXT NOT NULL,
+        UNIQUE (technical_item_id, version_number)
+      ) STRICT;
+
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_technical_item_one_current
+        ON technical_item_versions(technical_item_id)
+        WHERE is_current = 1;
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_technical_item_one_stable
+        ON technical_item_versions(technical_item_id)
+        WHERE is_stable = 1;
+
+      CREATE TABLE IF NOT EXISTS technical_item_assets (
+        id TEXT PRIMARY KEY,
+        technical_item_version_id TEXT NOT NULL REFERENCES technical_item_versions(id) ON DELETE CASCADE,
+        file_asset_id TEXT NOT NULL REFERENCES file_assets(id) ON DELETE CASCADE,
+        created_at TEXT NOT NULL,
+        UNIQUE (technical_item_version_id, file_asset_id)
+      ) STRICT;
+
+      CREATE INDEX IF NOT EXISTS idx_technical_item_assets_version
+        ON technical_item_assets(technical_item_version_id);
+    `,
+  },
 ];
