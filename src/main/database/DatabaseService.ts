@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DatabaseHealth } from '../../shared/contracts';
+import { ActionService } from '../crm/ActionService';
 import { ClientContactService } from '../crm/ClientContactService';
 import { CrmService } from '../crm/CrmService';
 import type { WorkspacePaths } from '../workspace';
@@ -15,12 +16,14 @@ export class DatabaseService {
   private readonly existedBeforeOpen: boolean;
   readonly crm: CrmService;
   readonly clientContacts: ClientContactService;
+  readonly actions: ActionService;
 
   constructor(private readonly workspace: WorkspacePaths) {
     this.existedBeforeOpen = existsSync(workspace.databaseFile);
     this.database = new NodeSqliteAdapter(workspace.databaseFile);
     this.crm = new CrmService(this.database);
     this.clientContacts = new ClientContactService(this.database, this.crm);
+    this.actions = new ActionService(this.database);
   }
 
   async initialize(): Promise<void> {
