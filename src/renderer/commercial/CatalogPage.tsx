@@ -6,6 +6,7 @@ import {
   type CatalogItemSummary,
   type CatalogItemType,
   type CatalogVersionInput,
+  type OfferComponent,
   type PriceMode,
 } from '../../shared/commercial';
 
@@ -30,10 +31,17 @@ interface CatalogDraft {
   name: string;
   category: string;
   description: string;
+  inclusionsText: string;
+  exclusionsText: string;
+  prerequisitesText: string;
   priceMode: PriceMode;
   priceEuros: string;
   recommendedEuros: string;
   depositPercent: string;
+  estimatedMinutes: string;
+  recommendedDelayDays: string;
+  contractType: string;
+  internalAdvice: string;
   visiblePublic: boolean;
 }
 
@@ -42,10 +50,17 @@ const EMPTY_DRAFT: CatalogDraft = {
   name: '',
   category: '',
   description: '',
+  inclusionsText: '',
+  exclusionsText: '',
+  prerequisitesText: '',
   priceMode: 'fixed',
   priceEuros: '',
   recommendedEuros: '',
   depositPercent: '30',
+  estimatedMinutes: '',
+  recommendedDelayDays: '',
+  contractType: '',
+  internalAdvice: '',
   visiblePublic: false,
 };
 
@@ -55,6 +70,17 @@ function eurosToCents(value: string): number | null {
   const parsed = Number(cleaned);
   if (!Number.isFinite(parsed) || parsed < 0) throw new Error('Montant invalide.');
   return Math.round(parsed * 100);
+}
+
+function optionalInteger(value: string, label: string): number | null {
+  if (!value.trim()) return null;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0) throw new Error(`${label} invalide.`);
+  return parsed;
+}
+
+function splitLines(value: string): string[] {
+  return value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
 }
 
 function formatPrice(item: CatalogItemSummary): string {
@@ -85,6 +111,30 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
   const [formError, setFormError] = useState<string | null>(null);
   const [versionMode, setVersionMode] = useState(false);
   const [versionDraft, setVersionDraft] = useState<CatalogDraft>(EMPTY_DRAFT);
+  const [offerComponents, setOfferComponents] = useState<OfferComponent[]>([]);
+  const [offerVersionId, setOfferVersionId] = useState<string | null>(null);
+  const [componentServiceVersionId, setComponentServiceVersionId] = useState('');
+  const [componentQuantity, setComponentQuantity] = useState('1');
+  const [componentOptional, setComponentOptional] = useState(false);
+
+  const publishedServices = useMemo(
+    () => items.filter((item) => item.type === 'service' && item.status === 'active' && item.currentVersion?.status === 'published'),
+    [items],
+  );
+
+  async function loadDetail(id: string): Promise<CatalogItemDetail> {
+    const nextDetail = await window.atoumweb.catalog.getItem(id);
+    setDetail(nextDetail);
+    if (nextDetail.type === 'offer') {
+      const target = nextDetail.versions.find((version) => version.status === 'draft') ?? nextDetail.currentVersion ?? null;
+      setOfferVersionId(target?.id ?? null);
+      setOfferComponents(target ? await window.atoumweb.catalog.listOfferComponents(target.id) : []);
+    } else {
+      setOfferVersionId(null);
+      setOfferComponents([]);
+    }
+    return nextDetail;
+  }
 
   async function refresh(): Promise<void> {
     setLoading(true);
@@ -93,7 +143,7 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
       setItems(next);
       if (selectedId) {
         const selected = next.find((item) => item.id === selectedId);
-        if (selected) setDetail(await window.atoumweb.catalog.getItem(selected.id));
+        if (selected) await loadDetail(selected.id);
         else { setSelectedId(null); setDetail(null); }
       }
     } finally {
@@ -118,7 +168,7 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
   async function openItem(id: string): Promise<void> {
     setSelectedId(id);
     setVersionMode(false);
-    setDetail(await window.atoumweb.catalog.getItem(id));
+    await loadDetail(id);
   }
 
   function buildVersion(input: CatalogDraft): CatalogVersionInput {
@@ -130,9 +180,13 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
       priceCents: input.priceMode === 'free' ? 0 : eurosToCents(input.priceEuros),
       recommendedPriceCents: eurosToCents(input.recommendedEuros),
       defaultDepositPercent: deposit,
-      inclusions: [],
-      exclusions: [],
-      prerequisites: [],
+      estimatedMinutes: optionalInteger(input.estimatedMinutes, 'Durée estimée'),
+      recommendedDelayDays: optionalInteger(input.recommendedDelayDays, 'Délai recommandé'),
+      contractType: input.contractType.trim() || null,
+      internalAdvice: input.internalAdvice.trim() || null,
+      inclusions: splitLines(input.inclusionsText),
+      exclusions: splitLines(input.exclusionsText),
+      prerequisites: splitLines(input.prerequisitesText),
     };
   }
 
@@ -171,10 +225,17 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
       name: detail.name,
       category: detail.category ?? '',
       description: current.description ?? '',
+      inclusionsText: (current.inclusions ?? []).join('\n'),
+      exclusionsText: (current.exclusions ?? []).join('\n'),
+      prerequisitesText: (current.prerequisites ?? []).join('\n'),
       priceMode: current.priceMode,
       priceEuros: current.priceCents == null ? '' : String(current.priceCents / 100),
       recommendedEuros: current.recommendedPriceCents == null ? '' : String(current.recommendedPriceCents / 100),
       depositPercent: current.defaultDepositPercent == null ? '' : String(current.defaultDepositPercent),
+      estimatedMinutes: current.estimatedMinutes == null ? '' : String(current.estimatedMinutes),
+      recommendedDelayDays: current.recommendedDelayDays == null ? '' : String(current.recommendedDelayDays),
+      contractType: current.contractType ?? '',
+      internalAdvice: current.internalAdvice ?? '',
       visiblePublic: detail.visiblePublic,
     });
     setVersionMode(true);
@@ -189,7 +250,7 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
       setVersionMode(false);
       await refresh();
       await openItem(detail.id);
-      onMessage(`Version v${version.versionNumber} créée en brouillon.`);
+      onMessage(`Version v${version.versionNumber} créée en brouillon.${detail.type === 'offer' ? ' Sa composition a été recopiée.' : ''}`);
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de créer la version.');
     } finally {
@@ -219,6 +280,61 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
     await refresh();
     await openItem(detail.id);
   }
+
+  async function addOfferComponent(): Promise<void> {
+    if (!offerVersionId || !componentServiceVersionId) return;
+    const quantity = Number(componentQuantity.replace(',', '.'));
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      onMessage('Quantité invalide.');
+      return;
+    }
+    try {
+      const next = await window.atoumweb.catalog.setOfferComponents(offerVersionId, [
+        ...offerComponents.map((component) => ({
+          serviceVersionId: component.serviceVersionId,
+          isOptional: component.isOptional,
+          quantityMilli: component.quantityMilli,
+          sortOrder: component.sortOrder,
+        })),
+        {
+          serviceVersionId: componentServiceVersionId,
+          isOptional: componentOptional,
+          quantityMilli: Math.round(quantity * 1000),
+          sortOrder: offerComponents.length * 10,
+        },
+      ]);
+      setOfferComponents(next);
+      setComponentServiceVersionId('');
+      setComponentQuantity('1');
+      setComponentOptional(false);
+      onMessage('Service ajouté à la composition de l’Offre.');
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible de modifier la composition.');
+    }
+  }
+
+  async function removeOfferComponent(componentId: string): Promise<void> {
+    if (!offerVersionId) return;
+    try {
+      const next = await window.atoumweb.catalog.setOfferComponents(
+        offerVersionId,
+        offerComponents.filter((component) => component.id !== componentId).map((component, index) => ({
+          serviceVersionId: component.serviceVersionId,
+          isOptional: component.isOptional,
+          quantityMilli: component.quantityMilli,
+          sortOrder: index * 10,
+        })),
+      );
+      setOfferComponents(next);
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible de modifier la composition.');
+    }
+  }
+
+  const offerCompositionVersion = detail?.type === 'offer'
+    ? detail.versions.find((version) => version.id === offerVersionId) ?? null
+    : null;
+  const offerCompositionEditable = offerCompositionVersion?.status === 'draft';
 
   return (
     <div className="catalog-stack">
@@ -255,15 +371,7 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
                 <tbody>
                   {filtered.map((item) => (
                     <tr key={item.id} className={selectedId === item.id ? 'selected-row' : ''} onClick={() => void openItem(item.id)}>
-                      <td>{item.category || '—'}</td>
-                      <td><strong>{item.name}</strong></td>
-                      <td><span className="status-pill">{item.type === 'offer' ? 'Offre' : 'Service'}</span></td>
-                      <td>{formatPrice(item)}</td>
-                      <td>{item.currentVersion?.recommendedPriceCents != null ? `${(item.currentVersion.recommendedPriceCents / 100).toLocaleString('fr-FR')} €` : '—'}</td>
-                      <td>{item.currentVersion ? PRICE_LABELS[item.currentVersion.priceMode] : '—'}</td>
-                      <td><span className={`catalog-status catalog-${item.status}`}>{STATUS_LABELS[item.status]}</span></td>
-                      <td>{item.visiblePublic ? 'Oui' : 'Non'}</td>
-                      <td>{item.currentVersion ? `v${item.currentVersion.versionNumber} · ${item.currentVersion.status}` : '—'}</td>
+                      <td>{item.category || '—'}</td><td><strong>{item.name}</strong></td><td><span className="status-pill">{item.type === 'offer' ? 'Offre' : 'Service'}</span></td><td>{formatPrice(item)}</td><td>{item.currentVersion?.recommendedPriceCents != null ? `${(item.currentVersion.recommendedPriceCents / 100).toLocaleString('fr-FR')} €` : '—'}</td><td>{item.currentVersion ? PRICE_LABELS[item.currentVersion.priceMode] : '—'}</td><td><span className={`catalog-status catalog-${item.status}`}>{STATUS_LABELS[item.status]}</span></td><td>{item.visiblePublic ? 'Oui' : 'Non'}</td><td>{item.currentVersion ? `v${item.currentVersion.versionNumber} · ${item.currentVersion.status}` : '—'}</td>
                     </tr>
                   ))}
                   {filtered.length === 0 && <tr><td colSpan={9}><div className="empty-table">Aucune offre ou service pour ces filtres.</div></td></tr>}
@@ -274,51 +382,46 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
 
           {detail && (
             <aside className="panel catalog-detail-panel">
-              <div className="detail-panel-heading">
-                <div><span className="eyebrow">{detail.type === 'offer' ? 'Offre' : 'Service'}</span><h2>{detail.name}</h2><p className="muted">{detail.category || 'Sans catégorie'}</p></div>
-                <button className="close-detail" type="button" onClick={() => { setSelectedId(null); setDetail(null); setVersionMode(false); }}>×</button>
-              </div>
-
-              <div className="detail-badges">
-                <span className={`catalog-status catalog-${detail.status}`}>{STATUS_LABELS[detail.status]}</span>
-                <span className="status-pill">{detail.visiblePublic ? 'Visible site' : 'Interne'}</span>
-                {detail.currentVersion && <span className="status-pill">v{detail.currentVersion.versionNumber} · {detail.currentVersion.status}</span>}
-              </div>
+              <div className="detail-panel-heading"><div><span className="eyebrow">{detail.type === 'offer' ? 'Offre' : 'Service'}</span><h2>{detail.name}</h2><p className="muted">{detail.category || 'Sans catégorie'}</p></div><button className="close-detail" type="button" onClick={() => { setSelectedId(null); setDetail(null); setVersionMode(false); }}>×</button></div>
+              <div className="detail-badges"><span className={`catalog-status catalog-${detail.status}`}>{STATUS_LABELS[detail.status]}</span><span className="status-pill">{detail.visiblePublic ? 'Visible site' : 'Interne'}</span>{detail.currentVersion && <span className="status-pill">v{detail.currentVersion.versionNumber} · {detail.currentVersion.status}</span>}</div>
 
               {detail.currentVersion ? (
                 <div className="catalog-current-version">
                   <Summary label="Tarif actuel" value={formatPrice(detail)} />
                   <Summary label="Prix conseillé" value={detail.currentVersion.recommendedPriceCents != null ? `${(detail.currentVersion.recommendedPriceCents / 100).toLocaleString('fr-FR')} €` : '—'} />
                   <Summary label="Acompte par défaut" value={detail.currentVersion.defaultDepositPercent != null ? `${detail.currentVersion.defaultDepositPercent} %` : '—'} />
+                  <Summary label="Durée estimée" value={detail.currentVersion.estimatedMinutes != null ? `${detail.currentVersion.estimatedMinutes} min` : '—'} />
+                  <Summary label="Délai recommandé" value={detail.currentVersion.recommendedDelayDays != null ? `${detail.currentVersion.recommendedDelayDays} jours` : '—'} />
+                  <Summary label="Contrat" value={detail.currentVersion.contractType || '—'} />
                   <Summary label="Description" value={detail.currentVersion.description || 'Non renseignée'} />
+                  <ListSummary label="Inclus" values={detail.currentVersion.inclusions ?? []} />
+                  <ListSummary label="Exclusions" values={detail.currentVersion.exclusions ?? []} />
+                  <ListSummary label="Prérequis" values={detail.currentVersion.prerequisites ?? []} />
+                  {detail.currentVersion.internalAdvice && <div className="catalog-internal-note"><strong>Conseil interne AtoumWeb</strong><p>{detail.currentVersion.internalAdvice}</p></div>}
                 </div>
               ) : <p className="muted">Aucune version.</p>}
 
-              <div className="catalog-detail-actions">
-                <button className="secondary-button" type="button" onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button>
-                <select value={detail.status} onChange={(e) => void updateStatus(e.target.value as CatalogItemStatus)}>
-                  <option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option>
-                </select>
-                <button className="primary-button" type="button" disabled={!detail.currentVersion} onClick={prepareNewVersion}>+ Nouvelle version</button>
-              </div>
+              <div className="catalog-detail-actions"><button className="secondary-button" type="button" onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select value={detail.status} onChange={(e) => void updateStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion} onClick={prepareNewVersion}>+ Nouvelle version</button></div>
 
-              {versionMode && (
-                <form className="catalog-version-editor" onSubmit={(event) => void createVersion(event)}>
-                  <strong>Nouvelle version</strong>
-                  <CatalogFields draft={versionDraft} onChange={setVersionDraft} />
-                  <div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => setVersionMode(false)}>Annuler</button><button className="primary-button" disabled={saving} type="submit">Créer v{(detail.versions[0]?.versionNumber ?? 0) + 1}</button></div>
-                </form>
+              {versionMode && <form className="catalog-version-editor" onSubmit={(event) => void createVersion(event)}><strong>Nouvelle version</strong><CatalogFields draft={versionDraft} onChange={setVersionDraft} /><div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => setVersionMode(false)}>Annuler</button><button className="primary-button" disabled={saving} type="submit">Créer v{(detail.versions[0]?.versionNumber ?? 0) + 1}</button></div></form>}
+
+              {detail.type === 'offer' && offerCompositionVersion && (
+                <section className="offer-composition">
+                  <div className="offer-composition-heading"><div><span className="eyebrow">Composition</span><strong>Services de l’Offre · v{offerCompositionVersion.versionNumber}</strong></div><span className="status-pill">{offerCompositionVersion.status}</span></div>
+                  {offerComponents.map((component) => <div className="offer-component-row" key={component.id}><div><strong>{component.serviceName}</strong><span>v{component.serviceVersionNumber} · {(component.quantityMilli / 1000).toLocaleString('fr-FR')} × · {component.isOptional ? 'Optionnel' : 'Inclus'}</span></div>{offerCompositionEditable && <button className="close-detail" type="button" onClick={() => void removeOfferComponent(component.id)}>×</button>}</div>)}
+                  {offerComponents.length === 0 && <p className="muted">Aucun Service dans cette Offre.</p>}
+                  {offerCompositionEditable ? (
+                    <div className="offer-component-editor">
+                      <select value={componentServiceVersionId} onChange={(e) => setComponentServiceVersionId(e.target.value)}><option value="">Ajouter un Service publié…</option>{publishedServices.filter((service) => !offerComponents.some((component) => component.serviceItemId === service.id)).map((service) => <option key={service.id} value={service.currentVersion!.id}>{service.name} · v{service.currentVersion!.versionNumber}</option>)}</select>
+                      <input inputMode="decimal" value={componentQuantity} onChange={(e) => setComponentQuantity(e.target.value)} aria-label="Quantité" />
+                      <label><input type="checkbox" checked={componentOptional} onChange={(e) => setComponentOptional(e.target.checked)} /> Optionnel</label>
+                      <button className="secondary-button" type="button" onClick={() => void addOfferComponent()}>Ajouter</button>
+                    </div>
+                  ) : <p className="muted">Composition figée. Crée une nouvelle version pour la modifier.</p>}
+                </section>
               )}
 
-              <div className="catalog-versions">
-                <strong>Historique des versions</strong>
-                {detail.versions.map((version) => (
-                  <div className="catalog-version-row" key={version.id}>
-                    <div><strong>v{version.versionNumber}</strong><span>{version.status}</span><small>{PRICE_LABELS[version.priceMode]} · {version.priceCents != null ? `${(version.priceCents / 100).toLocaleString('fr-FR')} €` : '—'}</small></div>
-                    {version.status === 'draft' && <button className="primary-button compact-button" type="button" onClick={() => void publish(version.id)}>Publier</button>}
-                  </div>
-                ))}
-              </div>
+              <div className="catalog-versions"><strong>Historique des versions</strong>{detail.versions.map((version) => <div className="catalog-version-row" key={version.id}><div><strong>v{version.versionNumber}</strong><span>{version.status}</span><small>{PRICE_LABELS[version.priceMode]} · {version.priceCents != null ? `${(version.priceCents / 100).toLocaleString('fr-FR')} €` : '—'}</small></div>{version.status === 'draft' && <button className="primary-button compact-button" type="button" onClick={() => void publish(version.id)}>Publier</button>}</div>)}</div>
             </aside>
           )}
         </div>
@@ -331,16 +434,19 @@ function CatalogFields({ draft, onChange, showIdentity = false }: { draft: Catal
   const priceDisabled = draft.priceMode === 'quote_only' || draft.priceMode === 'free';
   return (
     <div className="catalog-fields">
-      {showIdentity && <>
-        <label>Type<select value={draft.type} onChange={(e) => onChange({ ...draft, type: e.target.value as CatalogItemType })}><option value="service">Service</option><option value="offer">Offre</option></select></label>
-        <label>Nom<input value={draft.name} onChange={(e) => onChange({ ...draft, name: e.target.value })} placeholder="Ex. Site vitrine" /></label>
-        <label>Catégorie<input value={draft.category} onChange={(e) => onChange({ ...draft, category: e.target.value })} placeholder="Ex. Création de site" /></label>
-      </>}
+      {showIdentity && <><label>Type<select value={draft.type} onChange={(e) => onChange({ ...draft, type: e.target.value as CatalogItemType })}><option value="service">Service</option><option value="offer">Offre</option></select></label><label>Nom<input value={draft.name} onChange={(e) => onChange({ ...draft, name: e.target.value })} placeholder="Ex. Site vitrine" /></label><label>Catégorie<input value={draft.category} onChange={(e) => onChange({ ...draft, category: e.target.value })} placeholder="Ex. Création de site" /></label></>}
       <label>Mode tarifaire<select value={draft.priceMode} onChange={(e) => onChange({ ...draft, priceMode: e.target.value as PriceMode })}>{PRICE_MODES.map((mode) => <option key={mode} value={mode}>{PRICE_LABELS[mode]}</option>)}</select></label>
       <label>Prix AtoumWeb (€)<input disabled={priceDisabled} inputMode="decimal" value={priceDisabled ? '' : draft.priceEuros} onChange={(e) => onChange({ ...draft, priceEuros: e.target.value })} placeholder="699" /></label>
       <label>Prix conseillé (€)<input inputMode="decimal" value={draft.recommendedEuros} onChange={(e) => onChange({ ...draft, recommendedEuros: e.target.value })} /></label>
       <label>Acompte par défaut (%)<input inputMode="numeric" value={draft.depositPercent} onChange={(e) => onChange({ ...draft, depositPercent: e.target.value })} /></label>
+      <label>Durée estimée (min)<input inputMode="numeric" value={draft.estimatedMinutes} onChange={(e) => onChange({ ...draft, estimatedMinutes: e.target.value })} /></label>
+      <label>Délai recommandé (jours)<input inputMode="numeric" value={draft.recommendedDelayDays} onChange={(e) => onChange({ ...draft, recommendedDelayDays: e.target.value })} /></label>
+      <label>Type de contrat<input value={draft.contractType} onChange={(e) => onChange({ ...draft, contractType: e.target.value })} placeholder="Ex. Création de site" /></label>
       <label className="catalog-description">Description<textarea value={draft.description} onChange={(e) => onChange({ ...draft, description: e.target.value })} placeholder="Description de la prestation…" /></label>
+      <label>Inclus — 1 par ligne<textarea value={draft.inclusionsText} onChange={(e) => onChange({ ...draft, inclusionsText: e.target.value })} /></label>
+      <label>Exclusions — 1 par ligne<textarea value={draft.exclusionsText} onChange={(e) => onChange({ ...draft, exclusionsText: e.target.value })} /></label>
+      <label>Prérequis — 1 par ligne<textarea value={draft.prerequisitesText} onChange={(e) => onChange({ ...draft, prerequisitesText: e.target.value })} /></label>
+      <label className="catalog-description">Conseil interne AtoumWeb<textarea value={draft.internalAdvice} onChange={(e) => onChange({ ...draft, internalAdvice: e.target.value })} placeholder="Information interne, jamais affichée automatiquement au client." /></label>
       {showIdentity && <label className="catalog-public-check"><input type="checkbox" checked={draft.visiblePublic} onChange={(e) => onChange({ ...draft, visiblePublic: e.target.checked })} /> Visible sur le site public</label>}
     </div>
   );
@@ -348,4 +454,8 @@ function CatalogFields({ draft, onChange, showIdentity = false }: { draft: Catal
 
 function Summary({ label, value }: { label: string; value: string }) {
   return <div className="summary-line"><span>{label}</span><strong>{value}</strong></div>;
+}
+
+function ListSummary({ label, values }: { label: string; values: string[] }) {
+  return <div className="catalog-list-summary"><span>{label}</span>{values.length ? <ul>{values.map((value) => <li key={value}>{value}</li>)}</ul> : <strong>—</strong>}</div>;
 }
