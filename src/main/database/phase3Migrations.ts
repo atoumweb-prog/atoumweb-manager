@@ -65,6 +65,7 @@ export const PHASE_3_MIGRATIONS = [
         target_date TEXT,
         commercial_value_cents INTEGER NOT NULL DEFAULT 0 CHECK (commercial_value_cents >= 0),
         contract_value_cents INTEGER NOT NULL DEFAULT 0 CHECK (contract_value_cents >= 0),
+        resource_root_path TEXT,
         notes TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
