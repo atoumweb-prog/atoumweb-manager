@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { BootstrapState, ThemeName } from '../shared/contracts';
 
 const NAV_ITEMS = [
@@ -71,12 +71,6 @@ function App() {
       });
   }, []);
 
-  const visibleNavItems = useMemo(() => {
-    if (!searchTerm.trim()) return NAV_ITEMS;
-    const normalized = searchTerm.toLocaleLowerCase('fr-FR');
-    return NAV_ITEMS.filter((item) => item.toLocaleLowerCase('fr-FR').includes(normalized));
-  }, [searchTerm]);
-
   async function updateTheme(nextTheme: ThemeName): Promise<void> {
     const savedTheme = await window.atoumweb.settings.setTheme(nextTheme);
     setTheme(savedTheme);
@@ -90,7 +84,7 @@ function App() {
 
     setMessage(
       result.restartRequired
-        ? `Nouveau dossier enregistré : ${result.workspacePath}. Redémarre l’application pour l’utiliser.`
+        ? `Nouveau dossier enregistré : ${result.workspacePath}. Redémarre l’application pour l’utiliser. Les données de l’ancien workspace ne sont pas déplacées automatiquement.`
         : 'Le dossier de travail sélectionné est déjà actif.',
     );
   }
@@ -105,6 +99,11 @@ function App() {
     if (!result.cancelled && result.restartScheduled) {
       setMessage('Restauration programmée. L’application va redémarrer.');
     }
+  }
+
+  function submitFoundationSearch(): void {
+    if (!searchTerm.trim()) return;
+    setMessage(`Recherche « ${searchTerm.trim()} » : le champ global est prêt, le moteur multi-modules sera raccordé avec le socle CRM.`);
   }
 
   if (loadingError) {
@@ -141,7 +140,7 @@ function App() {
         </div>
 
         <nav className="navigation" aria-label="Navigation principale">
-          {visibleNavItems.map((item) => (
+          {NAV_ITEMS.map((item) => (
             <button
               key={item}
               className={`nav-item ${activePage === item ? 'active' : ''}`}
@@ -167,6 +166,9 @@ function App() {
             <input
               aria-label="Recherche globale"
               onChange={(event) => setSearchTerm(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') submitFoundationSearch();
+              }}
               placeholder="Rechercher dans AtoumWeb Manager…"
               value={searchTerm}
             />
@@ -288,6 +290,11 @@ function SettingsPage({
             <span className="eyebrow">Apparence</span>
             <h2>Thème de l’interface</h2>
           </div>
+          {theme !== 'atoumweb' && (
+            <button className="secondary-button" type="button" onClick={() => void onThemeChange('atoumweb')}>
+              Rétablir le thème par défaut
+            </button>
+          )}
         </div>
         <div className="theme-grid">
           {THEMES.map((item) => (
