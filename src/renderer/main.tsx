@@ -7,6 +7,7 @@ import './crm-extras.css';
 import './prospect-detail.css';
 import './client-detail.css';
 import './search-extra.css';
+import './detail-layout-overrides.css';
 
 const rootElement = document.getElementById('root');
 
