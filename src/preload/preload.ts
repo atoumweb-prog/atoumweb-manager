@@ -192,7 +192,7 @@ const api: AtoumWebApi = {
   },
   operations: {
     requests: {
-      list: (filters?: ServiceRequestFilters) => ipcRenderer.invoke('operations:requests:list', filters),
+      list: (filters?: ProspectFilters) => ipcRenderer.invoke('operations:requests:list', filters),
       get: (id: string) => ipcRenderer.invoke('operations:requests:get', id),
       create: (input: ServiceRequestInput) => ipcRenderer.invoke('operations:requests:create', input),
       update: (id: string, input: Partial<ServiceRequestInput>) => ipcRenderer.invoke('operations:requests:update', id, input),
@@ -240,6 +240,10 @@ const api: AtoumWebApi = {
   maintenanceOverages: {
     review: (periodId: string) => ipcRenderer.invoke('maintenance-overages:review', periodId),
     decide: (periodId: string, input: MaintenanceOverageDecisionInput) => ipcRenderer.invoke('maintenance-overages:decide', periodId, input),
+  },
+  maintenanceReports: {
+    get: (periodId) => ipcRenderer.invoke('maintenance-reports:get', periodId),
+    updateDraft: (periodId, input) => ipcRenderer.invoke('maintenance-reports:update-draft', periodId, input),
   },
   operationsAlerts: {
     get: () => ipcRenderer.invoke('operations-alerts:get'),
