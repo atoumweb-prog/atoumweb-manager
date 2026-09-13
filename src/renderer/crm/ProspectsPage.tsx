@@ -64,6 +64,17 @@ interface ProspectDraft {
   nextActionText: string;
 }
 
+interface ActionEditor {
+  prospectId: string;
+  date: string;
+  text: string;
+}
+
+interface LostEditor {
+  prospectId: string;
+  reason: string;
+}
+
 const EMPTY_DRAFT: ProspectDraft = {
   company: '',
   firstName: '',
@@ -78,6 +89,12 @@ const EMPTY_DRAFT: ProspectDraft = {
   nextActionText: '',
 };
 
+function dateInputValue(value?: string | null): string {
+  if (!value) return new Date().toISOString().slice(0, 10);
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? new Date().toISOString().slice(0, 10) : date.toISOString().slice(0, 10);
+}
+
 export function ProspectsPage({ onMessage }: { onMessage: (message: string) => void }) {
   const [prospects, setProspects] = useState<ProspectSummary[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
@@ -88,9 +105,12 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropStage, setDropStage] = useState<ProspectStage | null>(null);
   const [seeding, setSeeding] = useState(false);
+  const [actionEditor, setActionEditor] = useState<ActionEditor | null>(null);
+  const [lostEditor, setLostEditor] = useState<LostEditor | null>(null);
 
   async function refresh(): Promise<void> {
     setLoading(true);
@@ -141,6 +161,13 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
 
   const selected = prospects.find((prospect) => prospect.id === selectedId) ?? null;
 
+  function selectProspect(prospect: ProspectSummary): void {
+    setSelectedId(prospect.id);
+    setExpandedCardId((current) => current === prospect.id ? null : prospect.id);
+    setActionEditor(null);
+    setLostEditor(null);
+  }
+
   async function submitProspect(event: React.FormEvent): Promise<void> {
     event.preventDefault();
     setFormError(null);
@@ -177,9 +204,7 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
       const value = draft.estimatedValueEuros.trim()
         ? Math.round(Number(draft.estimatedValueEuros.replace(',', '.').replace(/\s*euros?$/i, '')) * 100)
         : null;
-      if (value != null && (!Number.isFinite(value) || value < 0)) {
-        throw new Error('La valeur estimée est invalide.');
-      }
+      if (value != null && (!Number.isFinite(value) || value < 0)) throw new Error('La valeur estimée est invalide.');
 
       const prospect = await window.atoumweb.crm.prospects.create({
         organizationId,
@@ -197,6 +222,7 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
       setShowForm(false);
       await refresh();
       setSelectedId(prospect.id);
+      setExpandedCardId(prospect.id);
       onMessage('Prospect créé.');
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Impossible de créer le prospect.');
@@ -208,6 +234,9 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
   async function convert(prospect: ProspectSummary): Promise<void> {
     const result = await window.atoumweb.crm.prospects.convertToClient(prospect.id);
     setSelectedId(null);
+    setExpandedCardId(null);
+    setActionEditor(null);
+    setLostEditor(null);
     await refresh();
     onMessage(result.createdClient ? 'Prospect transformé en nouveau client et retiré du pipeline.' : 'Prospect rattaché au client existant et retiré du pipeline.');
   }
@@ -218,21 +247,10 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
       onMessage('Ce prospect est déjà devenu client. Son statut se gère désormais dans Clients.');
       return;
     }
-    if (stage === 'won') {
-      await convert(prospect);
-      return;
-    }
-
-    let lostReason: string | null = null;
-    if (stage === 'lost') {
-      lostReason = window.prompt('Pourquoi ce prospect est-il perdu ?')?.trim() || null;
-      if (!lostReason) return;
-    }
-
-    await window.atoumweb.crm.prospects.changeStage(prospect.id, stage, lostReason);
-    if (stage === 'lost') setSelectedId(null);
+    if (!ACTIVE_STAGES.includes(stage)) return;
+    await window.atoumweb.crm.prospects.changeStage(prospect.id, stage);
     await refresh();
-    onMessage(stage === 'lost' ? 'Prospect classé perdu et retiré du pipeline actif.' : `Prospect déplacé vers « ${STAGE_LABELS[stage]} ».`);
+    onMessage(`Prospect déplacé vers « ${STAGE_LABELS[stage]} ».`);
   }
 
   async function handleDrop(stage: ProspectStage): Promise<void> {
@@ -247,41 +265,71 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
     return prospect.nextActionText?.trim() || 'Relancer le prospect';
   }
 
-  async function scheduleFollowUp(prospect: ProspectSummary, days: number): Promise<void> {
-    const action = window.prompt('Action à prévoir ?', defaultFollowUpText(prospect))?.trim();
-    if (!action) return;
+  async function schedulePreset(prospect: ProspectSummary, days: number): Promise<void> {
     const date = new Date();
     date.setDate(date.getDate() + days);
     date.setHours(9, 0, 0, 0);
-    await window.atoumweb.crm.prospects.setNextAction(prospect.id, date.toISOString(), action);
+    await window.atoumweb.crm.prospects.setNextAction(prospect.id, date.toISOString(), defaultFollowUpText(prospect));
     await refresh();
-    onMessage(`Prochaine action programmée dans ${days} jour${days > 1 ? 's' : ''}.`);
+    onMessage(`Relance programmée dans ${days} jour${days > 1 ? 's' : ''}.`);
   }
 
-  async function scheduleCustomFollowUp(prospect: ProspectSummary): Promise<void> {
-    const today = new Date().toISOString().slice(0, 10);
-    const dateText = window.prompt('Date de la prochaine action (AAAA-MM-JJ)', today)?.trim();
-    if (!dateText) return;
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateText)) {
-      onMessage('Date invalide. Utilise le format AAAA-MM-JJ.');
+  function openActionEditor(prospect: ProspectSummary): void {
+    setSelectedId(prospect.id);
+    setExpandedCardId(prospect.id);
+    setLostEditor(null);
+    setActionEditor({
+      prospectId: prospect.id,
+      date: dateInputValue(prospect.nextActionAt),
+      text: defaultFollowUpText(prospect),
+    });
+  }
+
+  async function saveAction(): Promise<void> {
+    if (!actionEditor) return;
+    const text = actionEditor.text.trim();
+    if (!actionEditor.date || !text) {
+      onMessage('Renseigne une date et une action.');
       return;
     }
-    const parsed = new Date(`${dateText}T09:00:00`);
+    const parsed = new Date(`${actionEditor.date}T09:00:00`);
     if (Number.isNaN(parsed.getTime())) {
       onMessage('Date invalide.');
       return;
     }
-    const action = window.prompt('Action à prévoir ?', defaultFollowUpText(prospect))?.trim();
-    if (!action) return;
-    await window.atoumweb.crm.prospects.setNextAction(prospect.id, parsed.toISOString(), action);
+    await window.atoumweb.crm.prospects.setNextAction(actionEditor.prospectId, parsed.toISOString(), text);
+    setActionEditor(null);
     await refresh();
-    onMessage('Prochaine action personnalisée enregistrée.');
+    onMessage('Prochaine action enregistrée.');
   }
 
   async function clearFollowUp(prospect: ProspectSummary): Promise<void> {
     await window.atoumweb.crm.prospects.setNextAction(prospect.id, null, null);
+    setActionEditor(null);
     await refresh();
     onMessage('Prochaine action retirée.');
+  }
+
+  function openLostEditor(prospect: ProspectSummary): void {
+    setSelectedId(prospect.id);
+    setExpandedCardId(prospect.id);
+    setActionEditor(null);
+    setLostEditor({ prospectId: prospect.id, reason: prospect.lostReason ?? '' });
+  }
+
+  async function confirmLost(): Promise<void> {
+    if (!lostEditor) return;
+    const reason = lostEditor.reason.trim();
+    if (!reason) {
+      onMessage('Indique la raison de la perte avant de valider.');
+      return;
+    }
+    await window.atoumweb.crm.prospects.changeStage(lostEditor.prospectId, 'lost', reason);
+    setLostEditor(null);
+    setSelectedId(null);
+    setExpandedCardId(null);
+    await refresh();
+    onMessage('Prospect classé perdu et retiré du pipeline actif.');
   }
 
   async function seedDevelopmentPipeline(): Promise<void> {
@@ -296,9 +344,7 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
     try {
       const suffix = Date.now().toString().slice(-6);
       for (const [index, stage] of missingStages.entries()) {
-        const organization = await window.atoumweb.crm.organizations.create({
-          name: `[DEV] ${STAGE_LABELS[stage]} ${suffix}-${index + 1}`,
-        });
+        const organization = await window.atoumweb.crm.organizations.create({ name: `[DEV] ${STAGE_LABELS[stage]} ${suffix}-${index + 1}` });
         const contact = await window.atoumweb.crm.contacts.create({
           organizationId: organization.id,
           firstName: 'Contact',
@@ -326,29 +372,18 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
   return (
     <div className="crm-stack">
       <div className="module-toolbar prospect-toolbar">
-        <div>
-          <strong>{activeProspects.length}</strong>
-          <span> prospect{activeProspects.length > 1 ? 's' : ''} actif{activeProspects.length > 1 ? 's' : ''}</span>
-        </div>
+        <div><strong>{activeProspects.length}</strong><span> prospect{activeProspects.length > 1 ? 's' : ''} actif{activeProspects.length > 1 ? 's' : ''}</span></div>
         <div className="toolbar-controls prospect-toolbar-actions">
           <button className="secondary-button" type="button" onClick={() => void refresh()}>↻ Actualiser</button>
-          <button className="secondary-button dev-button" type="button" disabled={seeding} onClick={() => void seedDevelopmentPipeline()}>
-            {seeding ? 'Création…' : 'DEV · Remplir le pipeline'}
-          </button>
-          <button className="secondary-button" type="button" onClick={() => setShowClosed((value) => !value)}>
-            {showClosed ? 'Masquer les clos' : `Historique (${closedProspects.length})`}
-          </button>
-          <button className="primary-button" type="button" onClick={() => setShowForm((value) => !value)}>
-            {showForm ? 'Fermer' : '+ Nouveau prospect'}
-          </button>
+          <button className="secondary-button dev-button" type="button" disabled={seeding} onClick={() => void seedDevelopmentPipeline()}>{seeding ? 'Création…' : 'DEV · Remplir le pipeline'}</button>
+          <button className="secondary-button" type="button" onClick={() => setShowClosed((value) => !value)}>{showClosed ? 'Masquer les clos' : `Historique (${closedProspects.length})`}</button>
+          <button className="primary-button" type="button" onClick={() => setShowForm((value) => !value)}>{showForm ? 'Fermer' : '+ Nouveau prospect'}</button>
         </div>
       </div>
 
       {showForm && (
         <form className="panel crm-form" onSubmit={(event) => void submitProspect(event)}>
-          <div className="panel-title">
-            <div><span className="eyebrow">Prospect</span><h2>Nouveau contact commercial</h2></div>
-          </div>
+          <div className="panel-title"><div><span className="eyebrow">Prospect</span><h2>Nouveau contact commercial</h2></div></div>
           <div className="form-grid">
             <label>Société<input value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} /></label>
             <label>Prénom<input value={draft.firstName} onChange={(e) => setDraft({ ...draft, firstName: e.target.value })} /></label>
@@ -369,19 +404,17 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
 
       {showClosed && (
         <section className="panel closed-prospects-panel">
-          <div className="panel-title">
-            <div><span className="eyebrow">Historique</span><h2>Prospects clos</h2></div>
-          </div>
+          <div className="panel-title"><div><span className="eyebrow">Historique</span><h2>Dossiers prospects clos</h2><p className="muted">Les clients gagnés et les prospects perdus quittent le pipeline actif mais restent ici pour l’historique.</p></div></div>
           <div className="closed-prospect-grid">
             {closedProspects.map((prospect) => (
-              <button className="closed-prospect-card" type="button" key={prospect.id} onClick={() => setSelectedId(prospect.id)}>
+              <button className="closed-prospect-card" type="button" key={prospect.id} onClick={() => { setSelectedId(prospect.id); setExpandedCardId(null); }}>
                 <strong>{prospect.displayName}</strong>
-                <span>{prospect.clientAccountId || prospect.stage === 'won' ? 'Gagné · Client' : 'Perdu'}</span>
+                <span>{prospect.clientAccountId || prospect.stage === 'won' ? 'Gagné · devenu client' : 'Perdu'}</span>
                 <small>{prospect.primaryNeed || 'Besoin non renseigné'}</small>
                 {prospect.lostReason && <small>Raison : {prospect.lostReason}</small>}
               </button>
             ))}
-            {closedProspects.length === 0 && <p className="muted">Aucun prospect clos.</p>}
+            {closedProspects.length === 0 && <p className="muted">Aucun dossier clos.</p>}
           </div>
         </section>
       )}
@@ -395,60 +428,57 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
                 key={stage}
                 onDragOver={(event) => event.preventDefault()}
                 onDragEnter={() => setDropStage(stage)}
-                onDragLeave={(event) => {
-                  if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropStage(null);
-                }}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  void handleDrop(stage);
-                }}
+                onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropStage(null); }}
+                onDrop={(event) => { event.preventDefault(); void handleDrop(stage); }}
               >
                 <header><strong>{STAGE_LABELS[stage]}</strong><span>{byStage.get(stage)?.length ?? 0}</span></header>
-                <div className="kanban-cards">
-                  {(byStage.get(stage) ?? []).map((prospect) => (
-                    <article
-                      className={`prospect-card ${selectedId === prospect.id ? 'selected-prospect' : ''} ${draggingId === prospect.id ? 'dragging' : ''}`}
-                      key={prospect.id}
-                      draggable
-                      onDragStart={(event) => {
-                        setDraggingId(prospect.id);
-                        event.dataTransfer.effectAllowed = 'move';
-                        event.dataTransfer.setData('text/plain', prospect.id);
-                      }}
-                      onDragEnd={() => {
-                        setDraggingId(null);
-                        setDropStage(null);
-                      }}
-                      onClick={() => setSelectedId(prospect.id)}
-                    >
-                      <div className="prospect-card-head">
-                        <strong>{prospect.displayName}</strong>
-                        <span className={`temperature temperature-${prospect.temperature ?? 'warm'}`}>{TEMPERATURE_LABELS[prospect.temperature ?? 'warm']}</span>
-                      </div>
-                      {prospect.secondaryLabel && <small>{prospect.secondaryLabel}</small>}
-                      <p>{prospect.primaryNeed || 'Besoin à préciser'}</p>
-                      <div className="prospect-meta">
-                        <span>{prospect.estimatedValueCents != null ? `${(prospect.estimatedValueCents / 100).toLocaleString('fr-FR')} €` : 'Valeur non estimée'}</span>
-                        <span className={prospect.nextActionAt && new Date(prospect.nextActionAt) < new Date() ? 'overdue' : ''}>
-                          {prospect.nextActionAt ? `${prospect.nextActionText || 'Action'} · ${new Date(prospect.nextActionAt).toLocaleDateString('fr-FR')}` : 'Aucune relance'}
-                        </span>
-                      </div>
-                      <div className="quick-followups" onClick={(event) => event.stopPropagation()}>
-                        <button type="button" onClick={() => void scheduleFollowUp(prospect, 1)}>Demain</button>
-                        <button type="button" onClick={() => void scheduleFollowUp(prospect, 3)}>+3 j</button>
-                        <button type="button" onClick={() => void scheduleFollowUp(prospect, 7)}>+7 j</button>
-                        <button type="button" onClick={() => void scheduleFollowUp(prospect, 30)}>+30 j</button>
-                        <button type="button" onClick={() => void scheduleCustomFollowUp(prospect)}>Date…</button>
-                        {prospect.nextActionAt && <button type="button" onClick={() => void clearFollowUp(prospect)}>×</button>}
-                      </div>
-                      <select aria-label="Étape du prospect" value={prospect.stage} onClick={(event) => event.stopPropagation()} onChange={(event) => void changeStage(prospect, event.target.value as ProspectStage)}>
-                        {ACTIVE_STAGES.map((item) => <option key={item} value={item}>{STAGE_LABELS[item]}</option>)}
-                        <option value="won">Gagné → Client</option>
-                        <option value="lost">Perdu</option>
-                      </select>
-                      <button className="secondary-button compact-button" type="button" onClick={(event) => { event.stopPropagation(); void convert(prospect); }}>Transformer en client</button>
-                    </article>
-                  ))}
+                <div className="kanban-cards stacked-cards">
+                  {(byStage.get(stage) ?? []).map((prospect) => {
+                    const expanded = expandedCardId === prospect.id;
+                    return (
+                      <article className={`prospect-card stacked-card ${expanded ? 'expanded-card' : 'collapsed-card'} ${selectedId === prospect.id ? 'selected-prospect' : ''} ${draggingId === prospect.id ? 'dragging' : ''}`} key={prospect.id}>
+                        <div
+                          className="prospect-card-head card-drag-handle"
+                          draggable
+                          onDragStart={(event) => {
+                            setDraggingId(prospect.id);
+                            event.dataTransfer.effectAllowed = 'move';
+                            event.dataTransfer.setData('text/plain', prospect.id);
+                          }}
+                          onDragEnd={() => { setDraggingId(null); setDropStage(null); }}
+                          onClick={() => selectProspect(prospect)}
+                          title="Cliquer pour ouvrir · Faire glisser pour déplacer"
+                        >
+                          <strong>{prospect.displayName}</strong>
+                          <span className={`temperature temperature-${prospect.temperature ?? 'warm'}`}>{TEMPERATURE_LABELS[prospect.temperature ?? 'warm']}</span>
+                        </div>
+
+                        <div className="prospect-card-body" onClick={() => setSelectedId(prospect.id)}>
+                          {prospect.secondaryLabel && <small>{prospect.secondaryLabel}</small>}
+                          <p>{prospect.primaryNeed || 'Besoin à préciser'}</p>
+                          <div className="prospect-meta">
+                            <span>{prospect.estimatedValueCents != null ? `${(prospect.estimatedValueCents / 100).toLocaleString('fr-FR')} €` : 'Valeur non estimée'}</span>
+                            <span className={prospect.nextActionAt && new Date(prospect.nextActionAt) < new Date() ? 'overdue' : ''}>{prospect.nextActionAt ? `${prospect.nextActionText || 'Action'} · ${new Date(prospect.nextActionAt).toLocaleDateString('fr-FR')}` : 'Aucune relance'}</span>
+                          </div>
+                          <div className="quick-followups" onClick={(event) => event.stopPropagation()}>
+                            <button type="button" onClick={() => void schedulePreset(prospect, 1)}>Demain</button>
+                            <button type="button" onClick={() => void schedulePreset(prospect, 3)}>+3 j</button>
+                            <button type="button" onClick={() => void schedulePreset(prospect, 7)}>+7 j</button>
+                            <button type="button" onClick={() => void schedulePreset(prospect, 30)}>+30 j</button>
+                            <button type="button" onClick={() => openActionEditor(prospect)}>Date / action…</button>
+                            {prospect.nextActionAt && <button type="button" onClick={() => void clearFollowUp(prospect)}>×</button>}
+                          </div>
+                          <select aria-label="Étape du prospect" value={prospect.stage} onClick={(event) => event.stopPropagation()} onChange={(event) => void changeStage(prospect, event.target.value as ProspectStage)}>
+                            {ACTIVE_STAGES.map((item) => <option key={item} value={item}>{STAGE_LABELS[item]}</option>)}
+                          </select>
+                          <div className="prospect-card-actions" onClick={(event) => event.stopPropagation()}>
+                            <button className="secondary-button compact-button" type="button" onClick={() => openLostEditor(prospect)}>Perdu</button>
+                            <button className="primary-button compact-button" type="button" onClick={() => void convert(prospect)}>Transformer en client</button>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
                   {(byStage.get(stage)?.length ?? 0) === 0 && <div className="kanban-empty">Déposer ici</div>}
                 </div>
               </section>
@@ -458,11 +488,8 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
           {selected && (
             <aside className="panel prospect-detail-panel">
               <div className="detail-panel-heading">
-                <div>
-                  <span className="eyebrow">Fiche prospect</span>
-                  <h2>{selected.displayName}</h2>
-                </div>
-                <button className="close-detail" type="button" onClick={() => setSelectedId(null)}>×</button>
+                <div><span className="eyebrow">Fiche prospect</span><h2>{selected.displayName}</h2></div>
+                <button className="close-detail" type="button" onClick={() => { setSelectedId(null); setExpandedCardId(null); setActionEditor(null); setLostEditor(null); }}>×</button>
               </div>
 
               <div className="detail-badges">
@@ -484,18 +511,36 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
               {selected.notes && <div className="client-notes"><strong>Notes</strong><p>{selected.notes}</p></div>}
               {selected.lostReason && <div className="client-notes"><strong>Raison de perte</strong><p>{selected.lostReason}</p></div>}
 
-              <div className="detail-actions">
-                {!selected.clientAccountId && selected.stage !== 'lost' && <button className="secondary-button" type="button" onClick={() => void scheduleCustomFollowUp(selected)}>Programmer une action</button>}
-                {!selected.clientAccountId && selected.stage !== 'lost' && <button className="primary-button" type="button" onClick={() => void convert(selected)}>Transformer en client</button>}
-              </div>
+              {actionEditor?.prospectId === selected.id && (
+                <div className="inline-editor">
+                  <strong>Programmer une action</strong>
+                  <label>Date<input type="date" value={actionEditor.date} onChange={(event) => setActionEditor({ ...actionEditor, date: event.target.value })} /></label>
+                  <label>Action<input value={actionEditor.text} onChange={(event) => setActionEditor({ ...actionEditor, text: event.target.value })} placeholder="Ex. rappeler le client" /></label>
+                  <div className="inline-editor-actions"><button className="secondary-button compact-button" type="button" onClick={() => setActionEditor(null)}>Annuler</button><button className="primary-button compact-button" type="button" onClick={() => void saveAction()}>Enregistrer</button></div>
+                </div>
+              )}
+
+              {lostEditor?.prospectId === selected.id && (
+                <div className="inline-editor danger-editor">
+                  <strong>Classer ce prospect comme perdu</strong>
+                  <p className="muted">Il quittera le pipeline actif mais restera dans Historique.</p>
+                  <label>Raison<textarea value={lostEditor.reason} onChange={(event) => setLostEditor({ ...lostEditor, reason: event.target.value })} placeholder="Ex. budget insuffisant, projet abandonné…" /></label>
+                  <div className="inline-editor-actions"><button className="secondary-button compact-button" type="button" onClick={() => setLostEditor(null)}>Annuler</button><button className="danger-button compact-button" type="button" onClick={() => void confirmLost()}>Confirmer Perdu</button></div>
+                </div>
+              )}
+
+              {!selected.clientAccountId && selected.stage !== 'lost' && (
+                <div className="detail-actions">
+                  <button className="secondary-button" type="button" onClick={() => openActionEditor(selected)}>Programmer une action</button>
+                  <button className="secondary-button danger-outline" type="button" onClick={() => openLostEditor(selected)}>Perdu</button>
+                  <button className="primary-button" type="button" onClick={() => void convert(selected)}>Transformer en client</button>
+                </div>
+              )}
 
               <div className="activity-preview">
                 <strong>Historique</strong>
                 {activity.slice(0, 10).map((event) => (
-                  <div className="activity-item" key={event.id}>
-                    <span className="activity-dot" />
-                    <div><p>{event.summary}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div>
-                  </div>
+                  <div className="activity-item" key={event.id}><span className="activity-dot" /><div><p>{event.summary}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div></div>
                 ))}
                 {activity.length === 0 && <p className="muted">Aucune activité enregistrée.</p>}
               </div>
