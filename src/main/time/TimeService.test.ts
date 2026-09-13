@@ -125,4 +125,53 @@ describe('TimeService', () => {
       endedAt: '2026-09-12T10:00:00.000Z',
     })).toThrow(/postérieure/i);
   });
+
+  it('fige une session ancienne au dernier point de vie et peut l’arrêter à cet instant', () => {
+    const session = time.start({ category: 'administrative', activityLabel: 'Travail avant fermeture' });
+    advance(30);
+    time.heartbeat(session.id);
+    advance(8 * 60);
+
+    const recovered = time.active();
+    expect(recovered?.durationSeconds).toBe(1800);
+
+    const stopped = time.stopAtLastKnown(session.id);
+    expect(stopped.endedAt).toBe('2026-09-13T10:30:00.000Z');
+    expect(stopped.durationSeconds).toBe(1800);
+    expect(time.active()).toBeNull();
+  });
+
+  it('reprend une session ancienne sans compter le temps où le Manager était fermé', () => {
+    const session = time.start({ category: 'development', activityLabel: 'Développement' });
+    advance(20);
+    time.heartbeat(session.id);
+    advance(120);
+
+    expect(time.active()?.durationSeconds).toBe(1200);
+
+    const resumed = time.recoverResume(session.id);
+    expect(resumed.paused).toBe(false);
+    expect(resumed.durationSeconds).toBe(1200);
+
+    advance(10);
+    const stopped = time.stop(session.id);
+    expect(stopped.durationSeconds).toBe(1800);
+  });
+
+  it('reprend aussi une session qui était déjà en pause avant la fermeture', () => {
+    const session = time.start({ category: 'production' });
+    advance(10);
+    time.pause(session.id);
+    advance(180);
+
+    expect(time.active()?.durationSeconds).toBe(600);
+    expect(time.active()?.paused).toBe(true);
+
+    const resumed = time.recoverResume(session.id);
+    expect(resumed.paused).toBe(false);
+    expect(resumed.durationSeconds).toBe(600);
+
+    advance(5);
+    expect(time.stop(session.id).durationSeconds).toBe(900);
+  });
 });
