@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ProjectNode } from '../../shared/projects';
 import type { TimeSession, TimeSummary } from '../../shared/time';
 
@@ -55,11 +55,24 @@ export function ProjectTimeTab({ projectId, nodes, onMessage }: {
   }
 
   const timedNodes = nodes.filter((node) => ['module', 'task', 'checklist'].includes(node.type) && node.status !== 'done');
+  const estimatedSeconds = useMemo(() => nodes
+    .filter((node) => ['task', 'checklist'].includes(node.type))
+    .reduce((total, node) => total + (node.estimatedMinutes ?? 0) * 60, 0), [nodes]);
+  const varianceSeconds = summary.totalSeconds - estimatedSeconds;
+  const varianceLabel = estimatedSeconds === 0
+    ? 'Pas d’estimation'
+    : varianceSeconds === 0
+      ? 'Conforme à l’estimation'
+      : varianceSeconds > 0
+        ? `+ ${duration(varianceSeconds)}`
+        : `− ${duration(Math.abs(varianceSeconds))}`;
 
   return (
     <div className="project-tab-content project-time-tab">
       <div className="project-time-summary">
+        <div><span>Temps estimé</span><strong>{estimatedSeconds ? duration(estimatedSeconds) : '—'}</strong></div>
         <div><span>Temps réel</span><strong>{duration(summary.totalSeconds)}</strong></div>
+        <div><span>Écart</span><strong>{varianceLabel}</strong></div>
         <div><span>Facturable</span><strong>{duration(summary.billableSeconds)}</strong></div>
         <div><span>Non facturable</span><strong>{duration(summary.nonBillableSeconds)}</strong></div>
       </div>
