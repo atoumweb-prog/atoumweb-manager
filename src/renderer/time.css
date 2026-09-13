@@ -257,6 +257,114 @@
   font-weight: 800;
 }
 
+.project-time-tab {
+  min-width: 0;
+}
+
+.project-time-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.project-time-summary > div {
+  display: grid;
+  gap: 3px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-soft);
+}
+
+.project-time-summary span,
+.project-time-start small,
+.project-time-tasks small,
+.project-time-history small {
+  color: var(--text-muted);
+  font-size: 8px;
+}
+
+.project-time-summary strong {
+  font-size: 12px;
+}
+
+.project-time-start {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+
+.project-time-start > div {
+  display: grid;
+  gap: 2px;
+}
+
+.project-time-start strong,
+.project-time-tasks > strong,
+.project-time-history > strong {
+  font-size: 10px;
+}
+
+.project-time-tasks,
+.project-time-history {
+  display: grid;
+  gap: 6px;
+}
+
+.project-time-tasks > button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.project-time-tasks > button:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: var(--accent-soft);
+}
+
+.project-time-tasks > button > span {
+  color: var(--accent);
+}
+
+.project-time-tasks > button > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.project-time-history > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.project-time-history > div > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.project-time-history > div > span {
+  flex: 0 0 auto;
+  font-size: 9px;
+  font-weight: 800;
+}
+
 @media (max-width: 1180px) {
   .global-timer {
     min-width: 230px;
@@ -266,7 +374,8 @@
     max-width: 210px;
   }
 
-  .time-kpi-grid {
+  .time-kpi-grid,
+  .project-time-summary {
     grid-template-columns: 1fr;
   }
 }
@@ -278,5 +387,9 @@
 
   .manual-time-grid .wide {
     grid-column: auto;
+  }
+
+  .project-time-start {
+    display: grid;
   }
 }
