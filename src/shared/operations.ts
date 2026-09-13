@@ -11,6 +11,8 @@ export const MAINTENANCE_PLAN_STATUSES = ['active', 'archived'] as const;
 export const MAINTENANCE_SUBSCRIPTION_STATUSES = ['active', 'suspended', 'ended', 'archived'] as const;
 export const MAINTENANCE_PERIOD_STATUSES = ['upcoming', 'open', 'to_do', 'in_progress', 'completed', 'closed'] as const;
 export const MAINTENANCE_CHECK_STATUSES = ['todo', 'done', 'not_applicable'] as const;
+export const HOUR_PACK_STATUSES = ['active', 'exhausted', 'expired', 'suspended', 'archived'] as const;
+export const HOUR_PACK_MOVEMENT_TYPES = ['initial_credit', 'intervention_debit', 'manual_correction', 'commercial_credit', 'reversal'] as const;
 
 export type ServiceRequestSource = (typeof SERVICE_REQUEST_SOURCES)[number];
 export type ServiceRequestPriority = (typeof SERVICE_REQUEST_PRIORITIES)[number];
@@ -25,6 +27,8 @@ export type MaintenancePlanStatus = (typeof MAINTENANCE_PLAN_STATUSES)[number];
 export type MaintenanceSubscriptionStatus = (typeof MAINTENANCE_SUBSCRIPTION_STATUSES)[number];
 export type MaintenancePeriodStatus = (typeof MAINTENANCE_PERIOD_STATUSES)[number];
 export type MaintenanceCheckStatus = (typeof MAINTENANCE_CHECK_STATUSES)[number];
+export type HourPackStatus = (typeof HOUR_PACK_STATUSES)[number];
+export type HourPackMovementType = (typeof HOUR_PACK_MOVEMENT_TYPES)[number];
 
 export interface ServiceRequestInput {
   clientAccountId: string;
@@ -225,6 +229,58 @@ export interface MaintenancePeriod {
   updatedAt: string;
 }
 
+export interface HourPackInput {
+  clientAccountId: string;
+  projectId?: string | null;
+  name: string;
+  purchasedSeconds: number;
+  contractPriceCents: number;
+  purchasedAt?: string | null;
+  expiresAt?: string | null;
+  notes?: string | null;
+}
+
+export interface HourPackMovement {
+  id: string;
+  packId: string;
+  interventionId?: string | null;
+  timeSessionId?: string | null;
+  reversalOfMovementId?: string | null;
+  type: HourPackMovementType;
+  secondsDelta: number;
+  reason: string;
+  sourceKey?: string | null;
+  createdAt: string;
+}
+
+export interface HourPack extends HourPackInput {
+  id: string;
+  clientLabel: string;
+  projectLabel?: string | null;
+  status: HourPackStatus;
+  balanceSeconds: number;
+  consumedSeconds: number;
+  movements: HourPackMovement[];
+  createdAt: string;
+  updatedAt: string;
+  archivedAt?: string | null;
+}
+
+export interface HourPackFilters {
+  clientAccountId?: string | null;
+  projectId?: string | null;
+  status?: HourPackStatus | null;
+  includeArchived?: boolean;
+}
+
+export interface HourPackMovementInput {
+  secondsDelta: number;
+  reason: string;
+  type?: Extract<HourPackMovementType, 'manual_correction' | 'commercial_credit'>;
+  interventionId?: string | null;
+  timeSessionId?: string | null;
+}
+
 export interface OperationsApi {
   requests: {
     list(filters?: ServiceRequestFilters): Promise<ServiceRequest[]>;
@@ -260,5 +316,14 @@ export interface OperationsApi {
       changeStatus(id: string, status: MaintenancePeriodStatus): Promise<MaintenancePeriod>;
       updateCheck(id: string, status: MaintenanceCheckStatus, notes?: string | null): Promise<MaintenancePeriod>;
     };
+  };
+  hourPacks: {
+    list(filters?: HourPackFilters): Promise<HourPack[]>;
+    get(id: string): Promise<HourPack>;
+    create(input: HourPackInput): Promise<HourPack>;
+    changeStatus(id: string, status: HourPackStatus): Promise<HourPack>;
+    addMovement(id: string, input: HourPackMovementInput): Promise<HourPack>;
+    debitIntervention(packId: string, interventionId: string): Promise<HourPack>;
+    reverseMovement(movementId: string, reason: string): Promise<HourPack>;
   };
 }
