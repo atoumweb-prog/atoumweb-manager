@@ -18,6 +18,7 @@ import {
   type ProjectTemplateVersion,
 } from '../../shared/projects';
 import { ProjectCompletionReviewPanel } from './ProjectCompletionReviewPanel';
+import { ProjectOperationsTab } from './ProjectOperationsTab';
 import { ProjectResourcesTab } from './ProjectResourcesTab';
 import { ProjectTechnicalLibraryTab } from './ProjectTechnicalLibraryTab';
 import { ProjectTimeTab } from './ProjectTimeTab';
@@ -102,7 +103,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
   const [targetDate, setTargetDate] = useState('');
   const [commercialMode, setCommercialMode] = useState<ProjectCommercialMode>('normal');
   const [saving, setSaving] = useState(false);
-  const [detailTab, setDetailTab] = useState<'summary' | 'plan' | 'prerequisites' | 'resources' | 'technical' | 'time' | 'commercial'>('summary');
+  const [detailTab, setDetailTab] = useState<'summary' | 'plan' | 'prerequisites' | 'resources' | 'technical' | 'operations' | 'time' | 'commercial'>('summary');
   const [completionReview, setCompletionReview] = useState<ProjectCompletionReview | null>(null);
   const [completionBusy, setCompletionBusy] = useState(false);
 
@@ -387,6 +388,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
                 <button className={detailTab === 'prerequisites' ? 'active' : ''} type="button" onClick={() => setDetailTab('prerequisites')}>Prérequis</button>
                 <button className={detailTab === 'resources' ? 'active' : ''} type="button" onClick={() => setDetailTab('resources')}>Ressources</button>
                 <button className={detailTab === 'technical' ? 'active' : ''} type="button" onClick={() => setDetailTab('technical')}>Bibliothèque</button>
+                <button className={detailTab === 'operations' ? 'active' : ''} type="button" onClick={() => setDetailTab('operations')}>Interventions</button>
                 <button className={detailTab === 'time' ? 'active' : ''} type="button" onClick={() => setDetailTab('time')}>Temps</button>
                 <button className={detailTab === 'commercial' ? 'active' : ''} type="button" onClick={() => setDetailTab('commercial')}>Commercial</button>
               </div>
@@ -408,6 +410,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
               )}
               {detailTab === 'resources' && <ProjectResourcesTab projectId={detail.id} nodes={detail.nodes} resourceRootPath={detail.resourceRootPath} onMessage={onMessage} />}
               {detailTab === 'technical' && <ProjectTechnicalLibraryTab projectId={detail.id} onMessage={onMessage} />}
+              {detailTab === 'operations' && <ProjectOperationsTab projectId={detail.id} onMessage={onMessage} />}
               {detailTab === 'time' && <ProjectTimeTab projectId={detail.id} nodes={detail.nodes} onMessage={onMessage} />}
               {detailTab === 'commercial' && <ProjectCommercialTab project={detail} />}
             </aside>
