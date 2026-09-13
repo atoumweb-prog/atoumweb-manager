@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron';
 import type { MaintenanceOverageDecisionInput } from '../../shared/maintenanceOverage';
+import type { MaintenanceReportDraftInput } from '../../shared/maintenanceReport';
 import type {
   HourPackFilters,
   HourPackInput,
@@ -69,5 +70,7 @@ export function registerOperationsIpcHandlers(database: DatabaseService): void {
 
   ipcMain.handle('maintenance-overages:review', (_event, periodId: string) => database.maintenanceOverages.review(periodId));
   ipcMain.handle('maintenance-overages:decide', (_event, periodId: string, input: MaintenanceOverageDecisionInput) => database.maintenanceOverages.decide(periodId, input));
+  ipcMain.handle('maintenance-reports:get', (_event, periodId: string) => database.maintenanceReports.get(periodId));
+  ipcMain.handle('maintenance-reports:update-draft', (_event, periodId: string, input: MaintenanceReportDraftInput) => database.maintenanceReports.updateDraft(periodId, input));
   ipcMain.handle('operations-alerts:get', () => database.operationsAlerts.get());
 }
