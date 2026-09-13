@@ -7,6 +7,8 @@ import { ClientsPage } from './crm/ClientsPage';
 import { GlobalSearch } from './crm/GlobalSearch';
 import { ProspectsPage } from './crm/ProspectsPage';
 import { ProjectsPage } from './projects/ProjectsPage';
+import { GlobalTimer } from './time/GlobalTimer';
+import { TimePage } from './time/TimePage';
 
 const NAV_ITEMS = [
   'Accueil',
@@ -148,7 +150,7 @@ function App() {
       <main className="main-area">
         <header className="topbar">
           <GlobalSearch onOpen={openSearchResult} />
-          <div className="timer-widget" title="Le timer global sera raccordé aux tâches et interventions."><div><span className="timer-label">Timer</span><strong>00:00:00</strong></div><span className="timer-context">Aucune activité</span><button type="button" disabled>▶</button></div>
+          <GlobalTimer onMessage={setMessage} />
         </header>
 
         <section className="content-area">
@@ -161,8 +163,9 @@ function App() {
           {activePage === 'Offres & Tarifs' && <CatalogPage onMessage={setMessage} />}
           {activePage === 'Devis' && <QuotesPage onMessage={setMessage} />}
           {activePage === 'Projets' && <ProjectsPage onMessage={setMessage} initialProjectId={projectSearchTarget} />}
+          {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}
           {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} onThemeChange={updateTheme} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
-          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
+          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Gestion des temps' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
         </section>
       </main>
     </div>
@@ -173,16 +176,22 @@ function Dashboard({ bootstrap }: { bootstrap: BootstrapState }) {
   const [prospectCount, setProspectCount] = useState<number | null>(null);
   const [clientCount, setClientCount] = useState<number | null>(null);
   const [projectCount, setProjectCount] = useState<number | null>(null);
+  const [monthTime, setMonthTime] = useState<number | null>(null);
 
   useEffect(() => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
     void Promise.all([
       window.atoumweb.crm.prospects.list(),
       window.atoumweb.crm.clients.list(),
       window.atoumweb.projects.projects.list(),
-    ]).then(([prospects, clients, projects]) => {
+      window.atoumweb.time.summary({ from: start.toISOString(), to: end.toISOString() }),
+    ]).then(([prospects, clients, projects, timeSummary]) => {
       setProspectCount(prospects.filter((prospect) => prospect.stage !== 'won' && prospect.stage !== 'lost').length);
       setClientCount(clients.length);
       setProjectCount(projects.filter((project) => !['completed', 'archived'].includes(project.status)).length);
+      setMonthTime(timeSummary.totalSeconds);
     });
   }, []);
 
@@ -192,15 +201,20 @@ function Dashboard({ bootstrap }: { bootstrap: BootstrapState }) {
         <KpiCard label="Prospects actifs" value={prospectCount == null ? '…' : String(prospectCount)} detail="Pipeline commercial" />
         <KpiCard label="Projets en cours" value={projectCount == null ? '…' : String(projectCount)} detail={`${clientCount ?? 0} client${clientCount === 1 ? '' : 's'} enregistré${clientCount === 1 ? '' : 's'}`} />
         <KpiCard label="CA encaissé ce mois" value="0 €" detail="Suivi Abby à venir" />
-        <KpiCard label="Temps travaillé ce mois" value="0 h" detail="Timer bientôt raccordé aux projets" />
+        <KpiCard label="Temps travaillé ce mois" value={monthTime == null ? '…' : formatDashboardTime(monthTime)} detail="Calculé depuis les sessions" />
       </div>
       <div className="dashboard-grid">
-        <article className="panel panel-large"><div className="panel-title"><div><span className="eyebrow">Socle métier</span><h2>CRM + Commercial + Projets</h2></div><span className="success-badge">Phase 3</span></div><div className="foundation-list"><FoundationRow label="Workspace local" value={bootstrap.workspacePath} /><FoundationRow label="Base SQLite" value={bootstrap.databasePath} /><FoundationRow label="CRM" value="Organisations · Contacts · Prospects · Clients" /><FoundationRow label="Commercial" value="Catalogue · Devis · Snapshots" /><FoundationRow label="Production" value="Projets · Modèles · Plans · Ressources" /></div></article>
-        <article className="panel"><span className="eyebrow">Aujourd’hui</span><h2>{prospectCount ? `${prospectCount} prospect${prospectCount > 1 ? 's' : ''} actif${prospectCount > 1 ? 's' : ''}` : 'Pipeline à jour'}</h2><p className="muted">Les tâches projet et le timer alimenteront ensuite cette vue Aujourd’hui.</p></article>
-        <article className="panel"><span className="eyebrow">Production</span><h2>{projectCount ?? 0} projet{projectCount === 1 ? '' : 's'} actif{projectCount === 1 ? '' : 's'}</h2><p className="muted">Les projets sont maintenant séparés des devis et conservent leur propre arbre de production.</p></article>
+        <article className="panel panel-large"><div className="panel-title"><div><span className="eyebrow">Socle métier</span><h2>CRM + Commercial + Projets</h2></div><span className="success-badge">Phase 3</span></div><div className="foundation-list"><FoundationRow label="Workspace local" value={bootstrap.workspacePath} /><FoundationRow label="Base SQLite" value={bootstrap.databasePath} /><FoundationRow label="CRM" value="Organisations · Contacts · Prospects · Clients" /><FoundationRow label="Commercial" value="Catalogue · Devis · Snapshots" /><FoundationRow label="Production" value="Projets · Modèles · Plans · Ressources · Temps" /></div></article>
+        <article className="panel"><span className="eyebrow">Aujourd’hui</span><h2>{prospectCount ? `${prospectCount} prospect${prospectCount > 1 ? 's' : ''} actif${prospectCount > 1 ? 's' : ''}` : 'Pipeline à jour'}</h2><p className="muted">Les actions commerciales et le travail projet alimentent progressivement cette vue.</p></article>
+        <article className="panel"><span className="eyebrow">Production</span><h2>{projectCount ?? 0} projet{projectCount === 1 ? '' : 's'} actif{projectCount === 1 ? '' : 's'}</h2><p className="muted">Le temps réel est maintenant issu exclusivement des sessions du timer et des saisies manuelles.</p></article>
       </div>
     </>
   );
+}
+
+function formatDashboardTime(seconds: number): string {
+  const hours = seconds / 3600;
+  return hours < 10 ? `${hours.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} h` : `${Math.round(hours)} h`;
 }
 
 function SettingsPage({ bootstrap, theme, onThemeChange, onChooseWorkspace, onCreateBackup, onRestoreBackup }: {
