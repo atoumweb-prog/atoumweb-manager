@@ -1,10 +1,25 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { ActivityEvent, ClientStatus, ClientSummary } from '../../shared/crm';
+import {
+  CLIENT_CONTACT_ROLES,
+  type ActivityEvent,
+  type ClientContactLink,
+  type ClientContactRole,
+  type ClientStatus,
+  type ClientSummary,
+} from '../../shared/crm';
 
 const STATUS_LABELS: Record<ClientStatus, string> = {
   active: 'Actif',
   inactive: 'Inactif',
   archived: 'Archivé',
+};
+
+const ROLE_LABELS: Record<ClientContactRole, string> = {
+  primary: 'Principal',
+  administrative: 'Administratif',
+  billing: 'Facturation',
+  technical: 'Technique',
+  other: 'Autre',
 };
 
 type ClientTab = 'summary' | 'contacts' | 'commercial' | 'history';
@@ -18,6 +33,16 @@ interface ClientDraft {
   notes: string;
 }
 
+interface ContactDraft {
+  firstName: string;
+  lastName: string;
+  jobTitle: string;
+  email: string;
+  phone: string;
+  role: ClientContactRole;
+  makePrimary: boolean;
+}
+
 const EMPTY_DRAFT: ClientDraft = {
   company: '',
   firstName: '',
@@ -27,9 +52,20 @@ const EMPTY_DRAFT: ClientDraft = {
   notes: '',
 };
 
+const EMPTY_CONTACT_DRAFT: ContactDraft = {
+  firstName: '',
+  lastName: '',
+  jobTitle: '',
+  email: '',
+  phone: '',
+  role: 'other',
+  makePrimary: false,
+};
+
 export function ClientsPage({ onMessage }: { onMessage: (message: string) => void }) {
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
+  const [contacts, setContacts] = useState<ClientContactLink[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<'all' | ClientStatus>('all');
   const [query, setQuery] = useState('');
@@ -39,6 +75,10 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
   const [draft, setDraft] = useState<ClientDraft>(EMPTY_DRAFT);
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [contactDraft, setContactDraft] = useState<ContactDraft>(EMPTY_CONTACT_DRAFT);
+  const [contactError, setContactError] = useState<string | null>(null);
+  const [contactSaving, setContactSaving] = useState(false);
 
   async function refresh(): Promise<void> {
     setLoading(true);
@@ -49,6 +89,15 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
     }
   }
 
+  async function refreshSelectedClientData(clientId: string): Promise<void> {
+    const [nextActivity, nextContacts] = await Promise.all([
+      window.atoumweb.crm.activity.list('client', clientId),
+      window.atoumweb.crm.clients.listContacts(clientId),
+    ]);
+    setActivity(nextActivity);
+    setContacts(nextContacts);
+  }
+
   useEffect(() => {
     void refresh();
   }, []);
@@ -56,9 +105,10 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
   useEffect(() => {
     if (!selectedId) {
       setActivity([]);
+      setContacts([]);
       return;
     }
-    void window.atoumweb.crm.activity.list('client', selectedId).then(setActivity);
+    void refreshSelectedClientData(selectedId);
   }, [selectedId, clients]);
 
   const filtered = useMemo(() => {
@@ -129,6 +179,7 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
   function openClient(id: string): void {
     setSelectedId(id);
     setActiveTab('summary');
+    setShowContactForm(false);
   }
 
   async function archive(client: ClientSummary): Promise<void> {
@@ -169,6 +220,50 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
     });
     await refresh();
     onMessage('Prochaine action client enregistrée.');
+  }
+
+  async function submitContact(event: React.FormEvent): Promise<void> {
+    event.preventDefault();
+    if (!selected) return;
+    setContactError(null);
+    if (!contactDraft.firstName.trim() || !contactDraft.lastName.trim()) {
+      setContactError('Le prénom et le nom sont requis.');
+      return;
+    }
+
+    setContactSaving(true);
+    try {
+      await window.atoumweb.crm.clients.addContact(
+        selected.id,
+        {
+          organizationId: selected.organizationId,
+          firstName: contactDraft.firstName.trim(),
+          lastName: contactDraft.lastName.trim(),
+          jobTitle: contactDraft.jobTitle.trim() || null,
+          email: contactDraft.email.trim() || null,
+          phone: contactDraft.phone.trim() || null,
+        },
+        contactDraft.role,
+        contactDraft.makePrimary,
+      );
+      setContactDraft(EMPTY_CONTACT_DRAFT);
+      setShowContactForm(false);
+      await refresh();
+      await refreshSelectedClientData(selected.id);
+      onMessage('Contact ajouté au client.');
+    } catch (error) {
+      setContactError(error instanceof Error ? error.message : 'Impossible d’ajouter le contact.');
+    } finally {
+      setContactSaving(false);
+    }
+  }
+
+  async function makePrimary(link: ClientContactLink): Promise<void> {
+    if (!selected || link.isPrimary) return;
+    await window.atoumweb.crm.clients.setPrimaryContact(selected.id, link.contactId);
+    await refresh();
+    await refreshSelectedClientData(selected.id);
+    onMessage(`${link.contact.firstName} ${link.contact.lastName} est maintenant le contact principal.`);
   }
 
   return (
@@ -267,11 +362,44 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
 
               {activeTab === 'contacts' && (
                 <div className="tab-content-stack">
-                  <div className="contact-card">
-                    <span className="avatar-initials">{initials(selected.contactName || selected.displayName)}</span>
-                    <div><strong>{selected.contactName || 'Contact principal non renseigné'}</strong><span>Principal</span><small>{selected.email || 'Email non renseigné'}{selected.phone ? ` · ${selected.phone}` : ''}</small></div>
+                  <div className="contact-tab-heading">
+                    <strong>{contacts.length} contact{contacts.length > 1 ? 's' : ''}</strong>
+                    <button className="secondary-button compact-button" type="button" onClick={() => setShowContactForm((value) => !value)}>
+                      {showContactForm ? 'Fermer' : '+ Ajouter'}
+                    </button>
                   </div>
-                  <p className="muted">La gestion de plusieurs contacts et rôles sera raccordée au modèle déjà prévu dans `client_contact_roles`.</p>
+
+                  {showContactForm && (
+                    <form className="contact-inline-form" onSubmit={(event) => void submitContact(event)}>
+                      <div className="contact-form-grid">
+                        <label>Prénom<input value={contactDraft.firstName} onChange={(e) => setContactDraft({ ...contactDraft, firstName: e.target.value })} /></label>
+                        <label>Nom<input value={contactDraft.lastName} onChange={(e) => setContactDraft({ ...contactDraft, lastName: e.target.value })} /></label>
+                        <label>Fonction<input value={contactDraft.jobTitle} onChange={(e) => setContactDraft({ ...contactDraft, jobTitle: e.target.value })} /></label>
+                        <label>Email<input type="email" value={contactDraft.email} onChange={(e) => setContactDraft({ ...contactDraft, email: e.target.value })} /></label>
+                        <label>Téléphone<input value={contactDraft.phone} onChange={(e) => setContactDraft({ ...contactDraft, phone: e.target.value })} /></label>
+                        <label>Rôle<select value={contactDraft.role} onChange={(e) => setContactDraft({ ...contactDraft, role: e.target.value as ClientContactRole })}>{CLIENT_CONTACT_ROLES.map((role) => <option key={role} value={role}>{ROLE_LABELS[role]}</option>)}</select></label>
+                      </div>
+                      <label className="primary-check"><input type="checkbox" checked={contactDraft.makePrimary} onChange={(e) => setContactDraft({ ...contactDraft, makePrimary: e.target.checked })} /> Définir comme contact principal</label>
+                      {contactError && <p className="form-error">{contactError}</p>}
+                      <div className="form-actions"><button className="primary-button compact-button" disabled={contactSaving} type="submit">{contactSaving ? 'Ajout…' : 'Ajouter le contact'}</button></div>
+                    </form>
+                  )}
+
+                  <div className="contact-cards-list">
+                    {contacts.map((link) => (
+                      <div className="contact-card" key={link.id}>
+                        <span className="avatar-initials">{initials(`${link.contact.firstName} ${link.contact.lastName}`)}</span>
+                        <div className="contact-card-main">
+                          <strong>{link.contact.firstName} {link.contact.lastName}</strong>
+                          <span>{ROLE_LABELS[link.role]}{link.isPrimary ? ' · Principal' : ''}</span>
+                          {link.contact.jobTitle && <small>{link.contact.jobTitle}</small>}
+                          <small>{link.contact.email || 'Email non renseigné'}{link.contact.phone ? ` · ${link.contact.phone}` : ''}</small>
+                        </div>
+                        {!link.isPrimary && <button className="link-button" type="button" onClick={() => void makePrimary(link)}>Définir principal</button>}
+                      </div>
+                    ))}
+                    {contacts.length === 0 && <p className="muted">Aucun contact rattaché à ce client.</p>}
+                  </div>
                 </div>
               )}
 
@@ -287,9 +415,7 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
                 </div>
               )}
 
-              {activeTab === 'history' && (
-                <ActivityList activity={activity} />
-              )}
+              {activeTab === 'history' && <ActivityList activity={activity} />}
             </aside>
           )}
         </div>
