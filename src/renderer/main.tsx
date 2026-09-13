@@ -10,6 +10,7 @@ import './search-extra.css';
 import './detail-layout-overrides.css';
 import './prospect-workflow.css';
 import './commercial.css';
+import './quote-line-editor.css';
 
 const rootElement = document.getElementById('root');
 
