@@ -1,3 +1,5 @@
+import type { CrmApi } from './crm';
+
 export const THEME_NAMES = ['atoumweb', 'noir', 'blanc'] as const;
 
 export type ThemeName = (typeof THEME_NAMES)[number];
@@ -54,4 +56,5 @@ export interface AtoumWebApi {
   database: {
     health(): Promise<DatabaseHealth>;
   };
+  crm: CrmApi;
 }
