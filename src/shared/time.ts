@@ -20,6 +20,7 @@ export type TimeSessionSource = (typeof TIME_SESSION_SOURCES)[number];
 export interface StartTimeSessionInput {
   projectId?: string | null;
   projectNodeId?: string | null;
+  interventionId?: string | null;
   category: TimeCategory;
   activityLabel?: string | null;
   billable?: boolean;
@@ -49,6 +50,9 @@ export interface TimeSession {
   projectNumber?: string | null;
   projectNodeId?: string | null;
   projectNodeLabel?: string | null;
+  interventionId?: string | null;
+  interventionNumber?: string | null;
+  interventionLabel?: string | null;
   category: TimeCategory;
   activityLabel?: string | null;
   startedAt: string;
@@ -68,6 +72,7 @@ export interface TimeSessionFilters {
   to?: string | null;
   clientAccountId?: string | null;
   projectId?: string | null;
+  interventionId?: string | null;
   category?: TimeCategory | null;
   billable?: boolean | null;
 }
