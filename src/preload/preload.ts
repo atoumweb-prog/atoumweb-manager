@@ -4,6 +4,7 @@ import type {
   CatalogItemInput,
   CatalogItemStatus,
   CatalogVersionInput,
+  OfferComponentInput,
   QuoteFilters,
   QuoteInput,
   QuoteLineInput,
@@ -80,6 +81,8 @@ const api: AtoumWebApi = {
     publishVersion: (versionId: string) => ipcRenderer.invoke('catalog:publish-version', versionId),
     setStatus: (itemId: string, status: CatalogItemStatus) => ipcRenderer.invoke('catalog:set-status', itemId, status),
     setVisiblePublic: (itemId: string, visible: boolean) => ipcRenderer.invoke('catalog:set-visible-public', itemId, visible),
+    listOfferComponents: (offerVersionId: string) => ipcRenderer.invoke('catalog:list-offer-components', offerVersionId),
+    setOfferComponents: (offerVersionId: string, components: OfferComponentInput[]) => ipcRenderer.invoke('catalog:set-offer-components', offerVersionId, components),
   },
   quotes: {
     list: (filters?: QuoteFilters) => ipcRenderer.invoke('quotes:list', filters),
