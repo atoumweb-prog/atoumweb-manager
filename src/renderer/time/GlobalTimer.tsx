@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ProjectDetail, ProjectSummary } from '../../shared/projects';
-import { TIME_CATEGORIES, type TimeCategory, type TimeSession } from '../../shared/time';
+import {
+  TIME_CATEGORIES,
+  TIME_RECOVERY_STALE_AFTER_SECONDS,
+  type TimeCategory,
+  type TimeSession,
+} from '../../shared/time';
 
 const CATEGORY_LABELS: Record<TimeCategory, string> = {
   production: 'Production',
@@ -31,8 +36,16 @@ function clock(seconds: number): string {
   return [hours, minutes, secs].map((value) => String(value).padStart(2, '0')).join(':');
 }
 
+function isStaleSession(session: TimeSession | null): boolean {
+  if (!session || session.endedAt || session.paused) return false;
+  const updatedAt = Date.parse(session.updatedAt);
+  if (Number.isNaN(updatedAt)) return false;
+  return Date.now() - updatedAt > TIME_RECOVERY_STALE_AFTER_SECONDS * 1000;
+}
+
 export function GlobalTimer({ onMessage }: { onMessage: (message: string) => void }) {
   const [active, setActive] = useState<TimeSession | null>(null);
+  const [recovery, setRecovery] = useState<TimeSession | null>(null);
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [projectDetail, setProjectDetail] = useState<ProjectDetail | null>(null);
   const [open, setOpen] = useState(false);
@@ -45,12 +58,21 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
   const [tick, setTick] = useState(Date.now());
   const [busy, setBusy] = useState(false);
 
+  function installActive(current: TimeSession | null, announce = false): void {
+    setActive(current);
+    setSnapshotAt(Date.now());
+    const needsRecovery = isStaleSession(current);
+    setRecovery(needsRecovery ? current : null);
+    if (announce && current) {
+      onMessage(needsRecovery
+        ? `Un chrono oublié a été retrouvé : ${contextLabel(current)}. Choisis comment le reprendre.`
+        : `Session de temps retrouvée : ${contextLabel(current)}.`);
+    }
+  }
+
   async function loadActive(showRecovery = false): Promise<void> {
     try {
-      const current = await window.atoumweb.time.active();
-      setActive(current);
-      setSnapshotAt(Date.now());
-      if (showRecovery && current) onMessage(`Session de temps retrouvée : ${contextLabel(current)}.`);
+      installActive(await window.atoumweb.time.active(), showRecovery);
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de charger le timer.');
     }
@@ -62,9 +84,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
       window.atoumweb.time.active(),
     ]).then(([nextProjects, current]) => {
       setProjects(nextProjects.filter((project) => !['completed', 'archived'].includes(project.status)));
-      setActive(current);
-      setSnapshotAt(Date.now());
-      if (current) onMessage(`Session de temps retrouvée : ${contextLabel(current)}.`);
+      installActive(current, true);
     }).catch((error: unknown) => onMessage(error instanceof Error ? error.message : 'Impossible d’initialiser le timer.'));
   }, []);
 
@@ -72,6 +92,21 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
     const interval = window.setInterval(() => setTick(Date.now()), 1000);
     return () => window.clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!active || active.paused || active.endedAt || recovery) return;
+    const heartbeat = async () => {
+      try {
+        const next = await window.atoumweb.time.heartbeat(active.id);
+        setActive(next);
+        setSnapshotAt(Date.now());
+      } catch (error) {
+        onMessage(error instanceof Error ? error.message : 'Impossible de sécuriser le chrono en cours.');
+      }
+    };
+    const interval = window.setInterval(() => { void heartbeat(); }, 30_000);
+    return () => window.clearInterval(interval);
+  }, [active?.id, active?.paused, active?.endedAt, recovery?.id]);
 
   useEffect(() => {
     const refreshActive = () => void loadActive();
@@ -112,9 +147,9 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
 
   const displayedSeconds = useMemo(() => {
     if (!active) return 0;
-    if (active.paused || active.endedAt) return active.durationSeconds;
+    if (active.paused || active.endedAt || recovery) return active.durationSeconds;
     return active.durationSeconds + Math.max(0, Math.floor((tick - snapshotAt) / 1000));
-  }, [active, snapshotAt, tick]);
+  }, [active, recovery, snapshotAt, tick]);
 
   async function start(): Promise<void> {
     setBusy(true);
@@ -126,8 +161,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
         activityLabel: activityLabel.trim() || null,
         billable,
       });
-      setActive(session);
-      setSnapshotAt(Date.now());
+      installActive(session);
       setOpen(false);
       window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
       onMessage(`Timer démarré : ${contextLabel(session)}.`);
@@ -140,14 +174,13 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
   }
 
   async function pauseOrResume(): Promise<void> {
-    if (!active) return;
+    if (!active || recovery) return;
     setBusy(true);
     try {
       const next = active.paused
         ? await window.atoumweb.time.resume(active.id)
         : await window.atoumweb.time.pause(active.id);
-      setActive(next);
-      setSnapshotAt(Date.now());
+      installActive(next);
       window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de modifier le timer.');
@@ -157,12 +190,11 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
   }
 
   async function stop(): Promise<void> {
-    if (!active) return;
+    if (!active || recovery) return;
     setBusy(true);
     try {
       const stopped = await window.atoumweb.time.stop(active.id);
-      setActive(null);
-      setSnapshotAt(Date.now());
+      installActive(null);
       window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
       onMessage(`Session terminée · ${clock(stopped.durationSeconds)}.`);
     } catch (error) {
@@ -172,20 +204,63 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
     }
   }
 
+  async function recoverAndResume(): Promise<void> {
+    if (!recovery) return;
+    setBusy(true);
+    try {
+      const resumed = await window.atoumweb.time.recoverResume(recovery.id);
+      installActive(resumed);
+      window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
+      onMessage('Chrono repris. Le temps où AtoumWeb Manager était fermé n’a pas été compté.');
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible de reprendre ce chrono.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function stopAtLastKnown(): Promise<void> {
+    if (!recovery) return;
+    setBusy(true);
+    try {
+      const stopped = await window.atoumweb.time.stopAtLastKnown(recovery.id);
+      installActive(null);
+      window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
+      onMessage(`Chrono arrêté au dernier point connu · ${clock(stopped.durationSeconds)}. Tu pourras corriger la session dans Gestion des temps.`);
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible d’arrêter ce chrono.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
-    <div className={`global-timer ${active ? 'running' : ''} ${active?.paused ? 'paused' : ''}`}>
+    <div className={`global-timer ${active ? 'running' : ''} ${active?.paused ? 'paused' : ''} ${recovery ? 'needs-recovery' : ''}`}>
       <button className="timer-main-button" type="button" onClick={() => !active && setOpen((value) => !value)} title={active ? contextLabel(active) : 'Démarrer une session de temps'}>
-        <span className="timer-label">Timer{active?.paused ? ' · Pause' : ''}</span>
+        <span className="timer-label">{recovery ? 'Timer · À vérifier' : `Timer${active?.paused ? ' · Pause' : ''}`}</span>
         <strong>{clock(displayedSeconds)}</strong>
         <span className="timer-context">{active ? contextLabel(active) : 'Aucune activité'}</span>
       </button>
 
       {active ? (
         <div className="timer-actions">
-          <button type="button" disabled={busy} onClick={() => void pauseOrResume()} title={active.paused ? 'Reprendre' : 'Mettre en pause'}>{active.paused ? '▶' : 'Ⅱ'}</button>
-          <button type="button" disabled={busy} onClick={() => void stop()} title="Arrêter">■</button>
+          <button type="button" disabled={busy || Boolean(recovery)} onClick={() => void pauseOrResume()} title={active.paused ? 'Reprendre' : 'Mettre en pause'}>{active.paused ? '▶' : 'Ⅱ'}</button>
+          <button type="button" disabled={busy || Boolean(recovery)} onClick={() => void stop()} title="Arrêter">■</button>
         </div>
       ) : <button className="timer-start-shortcut" type="button" onClick={() => setOpen((value) => !value)} title="Démarrer">▶</button>}
+
+      {recovery && (
+        <div className="timer-popover timer-recovery-popover" role="dialog" aria-label="Chrono à récupérer">
+          <div><span className="eyebrow">Chrono retrouvé</span><strong>AtoumWeb Manager a été interrompu pendant cette session.</strong></div>
+          <p>Le compteur est figé au dernier point connu. La période où l’application était fermée ne sera pas ajoutée automatiquement.</p>
+          <div className="timer-recovery-summary"><span>Activité</span><strong>{contextLabel(recovery)}</strong><span>Dernier point connu</span><strong>{new Date(recovery.updatedAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}</strong><span>Temps conservé</span><strong>{clock(recovery.durationSeconds)}</strong></div>
+          <div className="button-row">
+            <button className="primary-button" type="button" disabled={busy} onClick={() => void recoverAndResume()}>▶ Reprendre maintenant</button>
+            <button className="secondary-button" type="button" disabled={busy} onClick={() => void stopAtLastKnown()}>■ Arrêter au dernier point connu</button>
+          </div>
+          <small>Tu pourras toujours corriger ensuite les horaires dans Gestion des temps.</small>
+        </div>
+      )}
 
       {open && !active && (
         <div className="timer-popover">
