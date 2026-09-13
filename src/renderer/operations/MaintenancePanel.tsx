@@ -31,11 +31,12 @@ function hours(seconds: number): string {
   return `${value.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} h`;
 }
 
-export function MaintenancePanel({ clients, projects, onMessage, onInterventionCreated }: {
+export function MaintenancePanel({ clients, projects, onMessage, onInterventionCreated, initialSubscriptionId }: {
   clients: ClientSummary[];
   projects: ProjectSummary[];
   onMessage: (message: string) => void;
   onInterventionCreated: (intervention: Intervention) => void;
+  initialSubscriptionId?: string | null;
 }) {
   const [plans, setPlans] = useState<MaintenancePlan[]>([]);
   const [subscriptions, setSubscriptions] = useState<MaintenanceSubscription[]>([]);
@@ -87,6 +88,9 @@ export function MaintenancePanel({ clients, projects, onMessage, onInterventionC
 
   useEffect(() => { void refresh(); }, []);
   useEffect(() => { void loadPeriods(selectedSubscriptionId); }, [selectedSubscriptionId]);
+  useEffect(() => {
+    if (initialSubscriptionId) setSelectedSubscriptionId(initialSubscriptionId);
+  }, [initialSubscriptionId]);
 
   const selectedSubscription = subscriptions.find((item) => item.id === selectedSubscriptionId) ?? null;
   const selectedPeriod = periods.find((item) => item.id === selectedPeriodId) ?? null;
