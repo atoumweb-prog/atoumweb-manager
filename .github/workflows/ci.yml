@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, foundation/electron-react-sqlite]
+    branches: [main, foundation/electron-react-sqlite, feature/phase-1-crm]
   pull_request:
-    branches: [main]
+    branches: [main, foundation/electron-react-sqlite]
 
 jobs:
   quality:
