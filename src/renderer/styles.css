@@ -134,6 +134,7 @@ button { color: inherit; }
 .preview-noir { background: linear-gradient(90deg, #080a0d 0 30%, #11151a 30%); }
 .preview-blanc { background: linear-gradient(90deg, #ffffff 0 30%, #f7f8fa 30%); }
 .path-value { padding: 10px; border-radius: 9px; background: var(--surface-soft); border: 1px solid var(--border); color: var(--muted); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 10px; overflow-wrap: anywhere; }
+.button-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .primary-button, .secondary-button { border-radius: 9px; padding: 9px 12px; cursor: pointer; font-size: 11px; font-weight: 750; }
 .primary-button { border: 1px solid var(--accent-strong); background: var(--accent-strong); color: #fff; }
 .secondary-button { border: 1px solid var(--border); background: var(--surface-soft); color: var(--text); }
