@@ -1,5 +1,6 @@
 import type { CatalogApi, QuoteApi } from './commercial';
 import type { CrmApi } from './crm';
+import type { OperationsApi } from './operations';
 import type { ProjectsApi } from './projects';
 import type { TimeApi } from './time';
 
@@ -63,5 +64,6 @@ export interface AtoumWebApi {
   catalog: CatalogApi;
   quotes: QuoteApi;
   projects: ProjectsApi;
+  operations: OperationsApi;
   time: TimeApi;
 }
