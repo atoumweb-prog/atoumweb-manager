@@ -281,6 +281,16 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
     }
   }
 
+  async function moveProjectNode(node: ProjectNode, parentId: string | null, targetIndex: number): Promise<void> {
+    try {
+      const updated = await window.atoumweb.projects.projects.moveNode(node.id, { parentId, targetIndex });
+      setDetail(updated);
+      await refresh();
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible de déplacer cet élément du projet.');
+    }
+  }
+
   async function addPrerequisite(): Promise<void> {
     if (!detail || !newPrerequisite.trim()) return;
     try {
@@ -385,7 +395,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
               {detailTab === 'plan' && (
                 <div className="project-tab-content">
                   <div className="project-node-add"><strong>Ajouter au plan</strong><div className="project-node-add-grid"><input value={newNodeName} onChange={(event) => setNewNodeName(event.target.value)} placeholder="Nom de la tâche / module…" /><select value={newNodeType} onChange={(event) => setNewNodeType(event.target.value as typeof newNodeType)}><option value="lot">Lot</option><option value="module">Module / Page</option><option value="task">Tâche</option><option value="checklist">Checklist</option></select><select value={newNodeParentId} onChange={(event) => setNewNodeParentId(event.target.value)}><option value="">Racine du projet</option>{detail.nodes.map((node) => <option key={node.id} value={node.id}>{node.name}</option>)}</select><input type="number" min="0" value={newNodeMinutes} onChange={(event) => setNewNodeMinutes(event.target.value)} placeholder="Minutes estimées" /><label className="project-checkbox"><input type="checkbox" checked={newNodeRequired} onChange={(event) => setNewNodeRequired(event.target.checked)} /> Obligatoire</label><button className="secondary-button" type="button" onClick={() => void addProjectNode()}>Ajouter</button></div></div>
-                  <div className="project-tree">{renderProjectTree(detail.nodes, null, updateNodeStatus)}</div>
+                  <div className="project-tree">{renderProjectTree(detail.nodes, null, updateNodeStatus, moveProjectNode)}</div>
                   {detail.nodes.length === 0 && <p className="muted">Le plan est vide. Ajoute un lot, un module ou une tâche.</p>}
                 </div>
               )}
@@ -431,20 +441,70 @@ function ProjectCommercialTab({ project }: { project: ProjectDetail }) {
   );
 }
 
-function renderProjectTree(nodes: ProjectNode[], parentId: string | null, onStatus: (node: ProjectNode, status: ProjectNodeStatus) => Promise<void>, depth = 0) {
-  return nodes
+function descendantIds(nodes: ProjectNode[], nodeId: string): Set<string> {
+  const result = new Set<string>();
+  const queue = [nodeId];
+  while (queue.length > 0) {
+    const parent = queue.shift()!;
+    for (const candidate of nodes) {
+      if ((candidate.parentId ?? null) === parent && !result.has(candidate.id)) {
+        result.add(candidate.id);
+        queue.push(candidate.id);
+      }
+    }
+  }
+  return result;
+}
+
+function renderProjectTree(
+  nodes: ProjectNode[],
+  parentId: string | null,
+  onStatus: (node: ProjectNode, status: ProjectNodeStatus) => Promise<void>,
+  onMove: (node: ProjectNode, parentId: string | null, targetIndex: number) => Promise<void>,
+  depth = 0,
+) {
+  const siblings = nodes
     .filter((node) => (node.parentId ?? null) === parentId)
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map((node) => (
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+
+  return siblings.map((node, index) => {
+    const blockedParents = descendantIds(nodes, node.id);
+    blockedParents.add(node.id);
+    const parentOptions = nodes
+      .filter((candidate) => ['lot', 'module'].includes(candidate.type) && !blockedParents.has(candidate.id))
+      .sort((a, b) => a.name.localeCompare(b.name, 'fr-FR'));
+
+    return (
       <div key={node.id} className="project-tree-branch">
         <div className={`project-tree-node node-${node.type}`} style={{ marginLeft: `${depth * 14}px` }}>
           <span className="project-node-kind">{node.type === 'lot' ? 'LOT' : node.type === 'module' ? (node.displaySubtype === 'page' ? 'PAGE' : 'MODULE') : node.type === 'checklist' ? 'CHECK' : 'TÂCHE'}</span>
           <div className="project-node-name"><strong>{node.name}</strong><small>{node.estimatedMinutes ? duration(node.estimatedMinutes) : 'Sans estimation'}{node.required ? ' · obligatoire' : ' · optionnel'}</small></div>
-          <select value={node.status} onChange={(event) => void onStatus(node, event.target.value as ProjectNodeStatus)}>{PROJECT_NODE_STATUSES.map((status) => <option key={status} value={status}>{NODE_STATUS_LABELS[status]}</option>)}</select>
+          <div className="project-node-controls">
+            <select className="project-node-status" value={node.status} onChange={(event) => void onStatus(node, event.target.value as ProjectNodeStatus)}>{PROJECT_NODE_STATUSES.map((status) => <option key={status} value={status}>{NODE_STATUS_LABELS[status]}</option>)}</select>
+            <div className="project-node-arrange">
+              <button type="button" disabled={index === 0} title="Monter" onClick={() => void onMove(node, parentId, index - 1)}>↑</button>
+              <button type="button" disabled={index === siblings.length - 1} title="Descendre" onClick={() => void onMove(node, parentId, index + 1)}>↓</button>
+              <select
+                className="project-node-parent"
+                value={node.parentId ?? ''}
+                title="Déplacer dans un autre lot ou module"
+                onChange={(event) => {
+                  const nextParentId = event.target.value || null;
+                  if (nextParentId === (node.parentId ?? null)) return;
+                  const targetIndex = nodes.filter((candidate) => candidate.id !== node.id && (candidate.parentId ?? null) === nextParentId).length;
+                  void onMove(node, nextParentId, targetIndex);
+                }}
+              >
+                <option value="">Racine</option>
+                {parentOptions.map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name}</option>)}
+              </select>
+            </div>
+          </div>
         </div>
-        {renderProjectTree(nodes, node.id, onStatus, depth + 1)}
+        {renderProjectTree(nodes, node.id, onStatus, onMove, depth + 1)}
       </div>
-    ));
+    );
+  });
 }
 
 function ProjectTemplatesView({ templates, onBack, onRefresh, onMessage }: { templates: ProjectTemplateSummary[]; onBack: () => void; onRefresh: () => Promise<void>; onMessage: (message: string) => void }) {
