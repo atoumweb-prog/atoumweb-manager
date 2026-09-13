@@ -1,0 +1,50 @@
+.quote-preview-button { width: 100%; margin-top: 10px; }
+.quote-preview-overlay { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 24px; background: rgba(8, 18, 27, .68); backdrop-filter: blur(4px); }
+.quote-client-preview { width: min(980px, 100%); max-height: calc(100dvh - 48px); overflow-y: auto; border-radius: 16px; background: #ece9e2; box-shadow: 0 24px 80px rgba(0, 0, 0, .32); }
+.quote-client-preview-toolbar { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #ddd6ca; background: rgba(248, 246, 241, .96); }
+.quote-client-preview-toolbar > div:first-child { display: grid; gap: 2px; }
+.quote-client-preview-toolbar strong { color: #172330; font-size: 12px; }
+.quote-client-preview-actions { display: flex; gap: 8px; align-items: center; }
+.quote-pdf-result, .quote-pdf-error { display: grid; gap: 3px; margin: 12px 20px 0; padding: 10px 12px; border-radius: 9px; font-size: 9px; }
+.quote-pdf-result { color: #275f47; background: #e1f1e8; border: 1px solid #bdddc9; }
+.quote-pdf-result span { overflow-wrap: anywhere; }
+.quote-pdf-error { color: #963d43; background: #f8e8e8; border: 1px solid #edcaca; }
+.quote-document { width: min(820px, calc(100% - 40px)); margin: 20px auto 32px; padding: 44px 48px; background: white; color: #172330; box-shadow: 0 10px 35px rgba(28, 33, 37, .10); }
+.quote-document-header { display: flex; justify-content: space-between; gap: 32px; padding-bottom: 24px; border-bottom: 2px solid #b28b49; }
+.quote-document-header > div:first-child { display: grid; align-content: start; gap: 5px; }
+.quote-document-brand { color: #9d7538; font-size: 18px; font-weight: 900; letter-spacing: .08em; }
+.quote-document-header small { color: #6f747a; font-size: 10px; }
+.quote-document-meta { display: grid; justify-items: end; gap: 3px; text-align: right; }
+.quote-document-meta > strong { font-size: 22px; }
+.quote-document-meta > span { font-weight: 800; }
+.quote-document-recipient { display: grid; gap: 7px; padding: 28px 0 20px; }
+.quote-document-recipient > span { color: #85898e; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
+.quote-document-recipient > strong { font-size: 14px; }
+.quote-document-recipient h1 { margin: 8px 0 0; font-size: 24px; line-height: 1.2; }
+.quote-document-recipient p { max-width: 650px; margin: 0; color: #555c63; line-height: 1.6; }
+.quote-document-lines { display: grid; gap: 10px; }
+.quote-document-line { border: 1px solid #e4dfd6; border-radius: 10px; padding: 16px; }
+.quote-document-line-main { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 22px; }
+.quote-document-line-main > div:first-child { display: grid; gap: 7px; }
+.quote-document-line-main strong { font-size: 13px; }
+.quote-document-line-main p { margin: 0; color: #646a70; font-size: 10px; line-height: 1.55; }
+.quote-document-line-main ul { margin: 0; padding-left: 18px; color: #4e555c; font-size: 10px; line-height: 1.5; }
+.quote-document-line-price { display: grid; align-content: start; justify-items: end; gap: 3px; min-width: 110px; }
+.quote-document-line-price span { color: #7d8287; font-size: 9px; }
+.quote-document-line-price strong { color: #1d2935; font-size: 14px; white-space: nowrap; }
+.quote-document-offer, .quote-document-options { display: grid; gap: 4px; margin-top: 4px; padding-top: 8px; border-top: 1px dashed #ded8cd; }
+.quote-document-offer > span, .quote-document-options > span { color: #94703a; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.quote-document-options { opacity: .78; }
+.quote-document-total { width: min(360px, 100%); margin: 24px 0 24px auto; border-top: 2px solid #b28b49; }
+.quote-document-total > div { display: flex; justify-content: space-between; gap: 18px; padding: 9px 0; border-bottom: 1px solid #e5e0d8; }
+.quote-document-total span { color: #666c71; font-size: 10px; }
+.quote-document-total strong { font-size: 11px; }
+.quote-document-total > div:first-child strong { color: #9d7538; font-size: 17px; }
+.quote-document-conditions { display: grid; gap: 0; margin-top: 24px; padding-top: 20px; border-top: 1px solid #ddd8d0; }
+.quote-document-conditions h2 { margin: 0 0 10px; font-size: 15px; }
+.quote-document-conditions > div { display: grid; grid-template-columns: 150px 1fr; gap: 16px; padding: 8px 0; border-bottom: 1px solid #eeeae4; }
+.quote-document-conditions span { color: #777d82; font-size: 10px; }
+.quote-document-conditions strong, .quote-document-conditions p { margin: 0; font-size: 10px; line-height: 1.55; }
+.quote-document-footer { display: flex; justify-content: space-between; gap: 16px; margin-top: 36px; padding-top: 14px; border-top: 1px solid #ddd8d0; color: #7b8085; font-size: 9px; }
+.quote-document-footer strong { color: #9d7538; }
+@media (max-width: 760px) { .quote-preview-overlay { padding: 8px; } .quote-client-preview-toolbar { align-items: flex-start; } .quote-client-preview-actions { flex-wrap: wrap; justify-content: flex-end; } .quote-document { width: calc(100% - 18px); padding: 26px 20px; margin: 9px auto 18px; } .quote-document-header { display: grid; } .quote-document-meta { justify-items: start; text-align: left; } .quote-document-line-main { grid-template-columns: 1fr; } .quote-document-line-price { justify-items: start; } .quote-document-conditions > div { grid-template-columns: 1fr; gap: 4px; } }

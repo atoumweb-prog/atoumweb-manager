@@ -9,6 +9,9 @@ import './client-detail.css';
 import './search-extra.css';
 import './detail-layout-overrides.css';
 import './prospect-workflow.css';
+import './commercial.css';
+import './quote-line-editor.css';
+import './quote-client-preview.css';
 
 const rootElement = document.getElementById('root');
 

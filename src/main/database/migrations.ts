@@ -1,4 +1,5 @@
 import type { DatabaseAdapter } from './DatabaseAdapter';
+import { PHASE_2_MIGRATIONS } from './phase2Migrations';
 
 export interface Migration {
   id: number;
@@ -295,6 +296,7 @@ export const MIGRATIONS: Migration[] = [
       WHERE next_action_at IS NOT NULL OR NULLIF(trim(next_action_text), '') IS NOT NULL;
     `,
   },
+  ...PHASE_2_MIGRATIONS,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {

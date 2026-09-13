@@ -1,3 +1,4 @@
+import type { CatalogApi, QuoteApi } from './commercial';
 import type { CrmApi } from './crm';
 
 export const THEME_NAMES = ['atoumweb', 'noir', 'blanc'] as const;
@@ -57,4 +58,6 @@ export interface AtoumWebApi {
     health(): Promise<DatabaseHealth>;
   };
   crm: CrmApi;
+  catalog: CatalogApi;
+  quotes: QuoteApi;
 }
