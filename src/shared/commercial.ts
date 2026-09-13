@@ -187,6 +187,11 @@ export interface QuoteFilters {
   clientAccountId?: string | null;
 }
 
+export interface QuotePdfResult {
+  path: string;
+  fileName: string;
+}
+
 export interface QuoteApi {
   list(filters?: QuoteFilters): Promise<QuoteSummary[]>;
   get(id: string): Promise<QuoteDetail>;
@@ -202,4 +207,5 @@ export interface QuoteApi {
   refuse(id: string): Promise<QuoteDetail>;
   expire(id: string): Promise<QuoteDetail>;
   duplicate(id: string): Promise<QuoteDetail>;
+  generatePdf(id: string): Promise<QuotePdfResult>;
 }
