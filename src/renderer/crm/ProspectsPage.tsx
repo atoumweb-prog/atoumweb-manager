@@ -172,6 +172,24 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
     await refresh();
   }
 
+  async function scheduleFollowUp(prospect: ProspectSummary, days: number): Promise<void> {
+    const action = prospect.nextActionText?.trim()
+      || window.prompt('Action à prévoir ?', 'Relancer le prospect')?.trim()
+      || 'Relancer le prospect';
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    date.setHours(9, 0, 0, 0);
+    await window.atoumweb.crm.prospects.setNextAction(prospect.id, date.toISOString(), action);
+    await refresh();
+    onMessage(`Prochaine action programmée dans ${days} jour${days > 1 ? 's' : ''}.`);
+  }
+
+  async function clearFollowUp(prospect: ProspectSummary): Promise<void> {
+    await window.atoumweb.crm.prospects.setNextAction(prospect.id, null, null);
+    await refresh();
+    onMessage('Prochaine action retirée.');
+  }
+
   async function convert(prospect: ProspectSummary): Promise<void> {
     const result = await window.atoumweb.crm.prospects.convertToClient(prospect.id);
     await refresh();
@@ -230,8 +248,15 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
                     <div className="prospect-meta">
                       <span>{prospect.estimatedValueCents != null ? `${(prospect.estimatedValueCents / 100).toLocaleString('fr-FR')} €` : 'Valeur non estimée'}</span>
                       <span className={prospect.nextActionAt && new Date(prospect.nextActionAt) < new Date() ? 'overdue' : ''}>
-                        {prospect.nextActionAt ? `Action ${new Date(prospect.nextActionAt).toLocaleDateString('fr-FR')}` : 'Aucune relance'}
+                        {prospect.nextActionAt ? `${prospect.nextActionText || 'Action'} · ${new Date(prospect.nextActionAt).toLocaleDateString('fr-FR')}` : 'Aucune relance'}
                       </span>
+                    </div>
+                    <div className="quick-followups">
+                      <button type="button" onClick={() => void scheduleFollowUp(prospect, 1)}>Demain</button>
+                      <button type="button" onClick={() => void scheduleFollowUp(prospect, 3)}>+3 j</button>
+                      <button type="button" onClick={() => void scheduleFollowUp(prospect, 7)}>+7 j</button>
+                      <button type="button" onClick={() => void scheduleFollowUp(prospect, 30)}>+30 j</button>
+                      {prospect.nextActionAt && <button type="button" onClick={() => void clearFollowUp(prospect)}>×</button>}
                     </div>
                     <select aria-label="Étape du prospect" value={prospect.stage} onChange={(e) => void changeStage(prospect, e.target.value as ProspectStage)}>
                       {PROSPECT_STAGES.map((item) => <option key={item} value={item}>{STAGE_LABELS[item]}</option>)}
