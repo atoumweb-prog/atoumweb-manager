@@ -13,6 +13,8 @@ import type {
   ClientInput,
   ClientStatus,
   ContactInput,
+  CrmActionFilters,
+  CrmActionInput,
   OrganizationInput,
   ProspectFilters,
   ProspectInput,
@@ -153,6 +155,17 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     database.clientContacts.add(id, input, role, makePrimary));
   ipcMain.handle('crm:clients:set-primary-contact', (_event, id: string, contactId: string) =>
     database.clientContacts.setPrimary(id, contactId));
+
+  ipcMain.handle('crm:actions:list', (_event, filters?: CrmActionFilters) =>
+    database.actions.list(filters));
+  ipcMain.handle('crm:actions:create', (_event, input: CrmActionInput) =>
+    database.actions.create(input));
+  ipcMain.handle('crm:actions:complete', (_event, id: string) =>
+    database.actions.complete(id));
+  ipcMain.handle('crm:actions:cancel', (_event, id: string) =>
+    database.actions.cancel(id));
+  ipcMain.handle('crm:actions:reopen', (_event, id: string) =>
+    database.actions.reopen(id));
 
   ipcMain.handle('crm:activity:list', (_event, entityType: string, entityId: string) =>
     database.crm.listActivity(entityType, entityId));
