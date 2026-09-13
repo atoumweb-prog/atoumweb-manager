@@ -1,0 +1,61 @@
+/*
+ * Mise en page des fiches CRM validée pendant les tests Windows :
+ * - Prospect et Client restent toujours à droite de leur vue principale ;
+ * - la fiche réduit sa largeur avec la fenêtre au lieu de passer dessous ;
+ * - la fiche possède son propre défilement vertical quand la hauteur manque.
+ *
+ * Ce fichier est chargé en dernier afin de neutraliser les anciens breakpoints
+ * qui faisaient basculer les panneaux sous le contenu.
+ */
+
+.prospects-layout.with-detail {
+  grid-template-columns: minmax(0, 1fr) clamp(290px, 29vw, 440px) !important;
+  align-items: start !important;
+  min-width: 0;
+}
+
+.clients-layout {
+  grid-template-columns: minmax(0, 1fr) clamp(300px, 29vw, 440px) !important;
+  align-items: start !important;
+  min-width: 0;
+}
+
+.prospect-detail-panel,
+.client-summary-panel {
+  position: sticky !important;
+  top: 0 !important;
+  align-self: start !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  min-height: 0 !important;
+  max-height: clamp(320px, calc(100dvh - 420px), 720px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+/* La partie gauche peut se réduire ; les éléments larges gèrent leur propre scroll. */
+.prospects-layout.with-detail > .kanban-board,
+.clients-layout > .table-panel {
+  min-width: 0;
+}
+
+/* Quand la fenêtre devient étroite on réduit la fiche, sans la déplacer en dessous. */
+@media (max-width: 1180px) {
+  .prospects-layout.with-detail {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 34%) !important;
+  }
+
+  .clients-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(285px, 34%) !important;
+  }
+}
+
+@media (max-height: 760px) {
+  .prospect-detail-panel,
+  .client-summary-panel {
+    max-height: clamp(280px, calc(100dvh - 360px), 520px) !important;
+  }
+}
