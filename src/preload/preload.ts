@@ -1,5 +1,13 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { CatalogFilters, CatalogItemInput, CatalogItemStatus, CatalogVersionInput } from '../shared/commercial';
+import type {
+  CatalogFilters,
+  CatalogItemInput,
+  CatalogItemStatus,
+  CatalogVersionInput,
+  QuoteFilters,
+  QuoteInput,
+  QuoteLineInput,
+} from '../shared/commercial';
 import type { AtoumWebApi, ThemeName } from '../shared/contracts';
 import type {
   ClientContactRole,
@@ -72,6 +80,22 @@ const api: AtoumWebApi = {
     publishVersion: (versionId: string) => ipcRenderer.invoke('catalog:publish-version', versionId),
     setStatus: (itemId: string, status: CatalogItemStatus) => ipcRenderer.invoke('catalog:set-status', itemId, status),
     setVisiblePublic: (itemId: string, visible: boolean) => ipcRenderer.invoke('catalog:set-visible-public', itemId, visible),
+  },
+  quotes: {
+    list: (filters?: QuoteFilters) => ipcRenderer.invoke('quotes:list', filters),
+    get: (id: string) => ipcRenderer.invoke('quotes:get', id),
+    create: (input: QuoteInput) => ipcRenderer.invoke('quotes:create', input),
+    addCatalogLine: (quoteId: string, catalogVersionId: string, input?: Partial<QuoteLineInput>) => ipcRenderer.invoke('quotes:add-catalog-line', quoteId, catalogVersionId, input),
+    addCustomLine: (quoteId: string, input: QuoteLineInput) => ipcRenderer.invoke('quotes:add-custom-line', quoteId, input),
+    updateLine: (lineId: string, input: QuoteLineInput) => ipcRenderer.invoke('quotes:update-line', lineId, input),
+    removeLine: (lineId: string) => ipcRenderer.invoke('quotes:remove-line', lineId),
+    updateConditions: (quoteId: string, input: Partial<QuoteInput>) => ipcRenderer.invoke('quotes:update-conditions', quoteId, input),
+    markSent: (id: string) => ipcRenderer.invoke('quotes:mark-sent', id),
+    markViewed: (id: string) => ipcRenderer.invoke('quotes:mark-viewed', id),
+    accept: (id: string) => ipcRenderer.invoke('quotes:accept', id),
+    refuse: (id: string) => ipcRenderer.invoke('quotes:refuse', id),
+    expire: (id: string) => ipcRenderer.invoke('quotes:expire', id),
+    duplicate: (id: string) => ipcRenderer.invoke('quotes:duplicate', id),
   },
 };
 
