@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
 import type { BootstrapState, ThemeName } from '../shared/contracts';
+import type { SearchResult } from '../shared/crm';
+import { ClientsPage } from './crm/ClientsPage';
+import { GlobalSearch } from './crm/GlobalSearch';
+import { ProspectsPage } from './crm/ProspectsPage';
 
 const NAV_ITEMS = [
   'Accueil',
@@ -55,7 +59,6 @@ function App() {
   const [bootstrap, setBootstrap] = useState<BootstrapState | null>(null);
   const [activePage, setActivePage] = useState<PageName>('Accueil');
   const [theme, setTheme] = useState<ThemeName>('atoumweb');
-  const [searchTerm, setSearchTerm] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [loadingError, setLoadingError] = useState<string | null>(null);
 
@@ -105,9 +108,15 @@ function App() {
     );
   }
 
-  function submitFoundationSearch(): void {
-    if (!searchTerm.trim()) return;
-    setMessage(`Recherche « ${searchTerm.trim()} » : le champ global est prêt, le moteur multi-modules sera raccordé avec le socle CRM.`);
+  function openSearchResult(result: SearchResult): void {
+    if (result.entityType === 'client') {
+      setActivePage('Clients');
+    } else if (result.entityType === 'prospect') {
+      setActivePage('Prospects');
+    } else {
+      setActivePage('Clients');
+    }
+    setMessage(`${result.title} trouvé dans la recherche globale.`);
   }
 
   if (loadingError) {
@@ -165,18 +174,7 @@ function App() {
 
       <main className="main-area">
         <header className="topbar">
-          <div className="global-search">
-            <span aria-hidden="true">⌕</span>
-            <input
-              aria-label="Recherche globale"
-              onChange={(event) => setSearchTerm(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') submitFoundationSearch();
-              }}
-              placeholder="Rechercher dans AtoumWeb Manager…"
-              value={searchTerm}
-            />
-          </div>
+          <GlobalSearch onOpen={openSearchResult} />
 
           <div className="timer-widget" title="Le timer global sera raccordé aux tâches et interventions.">
             <div>
@@ -197,7 +195,7 @@ function App() {
             </div>
             <div className="database-chip">
               <span className="health-dot" />
-              SQLite · {bootstrap.database.migrationCount} migration
+              SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}
             </div>
           </div>
 
@@ -209,6 +207,8 @@ function App() {
           )}
 
           {activePage === 'Accueil' && <Dashboard bootstrap={bootstrap} />}
+          {activePage === 'Prospects' && <ProspectsPage onMessage={setMessage} />}
+          {activePage === 'Clients' && <ClientsPage onMessage={setMessage} />}
           {activePage === 'Réglages' && (
             <SettingsPage
               bootstrap={bootstrap}
@@ -219,7 +219,7 @@ function App() {
               onRestoreBackup={restoreBackup}
             />
           )}
-          {activePage !== 'Accueil' && activePage !== 'Réglages' && (
+          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Réglages' && (
             <ModulePlaceholder page={activePage} />
           )}
         </section>
@@ -229,11 +229,24 @@ function App() {
 }
 
 function Dashboard({ bootstrap }: { bootstrap: BootstrapState }) {
+  const [prospectCount, setProspectCount] = useState<number | null>(null);
+  const [clientCount, setClientCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    void Promise.all([
+      window.atoumweb.crm.prospects.list(),
+      window.atoumweb.crm.clients.list(),
+    ]).then(([prospects, clients]) => {
+      setProspectCount(prospects.filter((prospect) => prospect.stage !== 'won' && prospect.stage !== 'lost').length);
+      setClientCount(clients.length);
+    });
+  }, []);
+
   return (
     <>
       <div className="kpi-grid">
-        <KpiCard label="Prospects actifs" value="0" detail="Aucune donnée pour l’instant" />
-        <KpiCard label="Projets en cours" value="0" detail="Socle technique en construction" />
+        <KpiCard label="Prospects actifs" value={prospectCount == null ? '…' : String(prospectCount)} detail="Pipeline commercial" />
+        <KpiCard label="Projets en cours" value="0" detail={`${clientCount ?? 0} client${clientCount === 1 ? '' : 's'} enregistré${clientCount === 1 ? '' : 's'}`} />
         <KpiCard label="CA encaissé ce mois" value="0 €" detail="Suivi Abby à venir" />
         <KpiCard label="Temps travaillé ce mois" value="0 h" detail="Timer prêt à être raccordé" />
       </div>
@@ -243,28 +256,28 @@ function Dashboard({ bootstrap }: { bootstrap: BootstrapState }) {
           <div className="panel-title">
             <div>
               <span className="eyebrow">Fondation</span>
-              <h2>Socle V1 actif</h2>
+              <h2>Socle CRM en cours</h2>
             </div>
-            <span className="success-badge">Prêt</span>
+            <span className="success-badge">Phase 1</span>
           </div>
           <div className="foundation-list">
             <FoundationRow label="Workspace local" value={bootstrap.workspacePath} />
             <FoundationRow label="Base SQLite" value={bootstrap.databasePath} />
-            <FoundationRow label="Sécurité Electron" value="Preload isolé · Node désactivé dans l’interface" />
-            <FoundationRow label="Sauvegarde" value="Quotidienne + manuelle + restauration sécurisée" />
+            <FoundationRow label="CRM" value="Organisations · Contacts · Prospects · Clients" />
+            <FoundationRow label="Recherche" value="Index local multi-entités" />
           </div>
         </article>
 
         <article className="panel">
           <span className="eyebrow">Aujourd’hui</span>
-          <h2>Rien à traiter</h2>
-          <p className="muted">Les prospects, tâches, maintenances et échéances apparaîtront ici.</p>
+          <h2>{prospectCount ? `${prospectCount} prospect${prospectCount > 1 ? 's' : ''} actif${prospectCount > 1 ? 's' : ''}` : 'Rien à traiter'}</h2>
+          <p className="muted">Les prochaines actions et retards seront enrichis pendant la Phase 1.</p>
         </article>
 
         <article className="panel">
-          <span className="eyebrow">Prochaine étape</span>
-          <h2>Socle CRM</h2>
-          <p className="muted">Premières entités : contacts, prospects et clients, puis recherche globale réelle.</p>
+          <span className="eyebrow">Phase 1</span>
+          <h2>CRM opérationnel</h2>
+          <p className="muted">Créer un prospect, le faire avancer dans le pipeline puis le transformer en client sans ressaisie.</p>
         </article>
       </div>
     </>
