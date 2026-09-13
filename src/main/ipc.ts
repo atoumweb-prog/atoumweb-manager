@@ -133,6 +133,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('crm:search:global', (_event, query: string): SearchResult[] => {
     const normalized = query.trim();
     if (normalized.length < 2) return [];
+    const needle = normalized.toLocaleLowerCase('fr-FR');
 
     const crmResults = database.crm.globalSearch(normalized);
     const catalogResults: SearchResult[] = database.catalog.list({ search: normalized }).slice(0, 6).map((item) => ({
@@ -143,8 +144,37 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
       entityType: 'quote', entityId: quote.id, title: `${quote.number} · ${quote.subject}`, subtitle: quote.ownerLabel, status: quote.status,
     }));
     const projectResults = database.projectSearch.search(normalized, 12);
+    const requestResults: SearchResult[] = database.operations.listRequests({ search: normalized }).slice(0, 6).map((request) => ({
+      entityType: 'service_request', entityId: request.id, title: request.subject,
+      subtitle: `${request.clientLabel}${request.projectLabel ? ` · ${request.projectLabel}` : ''}`, status: request.status,
+    }));
+    const interventionResults: SearchResult[] = database.operations.listInterventions({ search: normalized }).slice(0, 8).map((intervention) => ({
+      entityType: 'intervention', entityId: intervention.id, title: `${intervention.number} · ${intervention.subject}`,
+      subtitle: `${intervention.clientLabel}${intervention.projectLabel ? ` · ${intervention.projectLabel}` : ''}`, status: intervention.status,
+    }));
+    const maintenanceResults: SearchResult[] = database.maintenance.listSubscriptions().filter((subscription) =>
+      [subscription.planName, subscription.clientLabel, subscription.projectLabel ?? ''].some((value) => value.toLocaleLowerCase('fr-FR').includes(needle)),
+    ).slice(0, 6).map((subscription) => ({
+      entityType: 'maintenance', entityId: subscription.id, title: subscription.planName,
+      subtitle: `${subscription.clientLabel}${subscription.projectLabel ? ` · ${subscription.projectLabel}` : ''}`, status: subscription.status,
+    }));
+    const hourPackResults: SearchResult[] = database.hourPacks.list().filter((pack) =>
+      [pack.name, pack.clientLabel, pack.projectLabel ?? ''].some((value) => value.toLocaleLowerCase('fr-FR').includes(needle)),
+    ).slice(0, 6).map((pack) => ({
+      entityType: 'hour_pack', entityId: pack.id, title: pack.name,
+      subtitle: `${pack.clientLabel}${pack.projectLabel ? ` · ${pack.projectLabel}` : ''}`, status: pack.status,
+    }));
 
-    return [...crmResults, ...catalogResults, ...quoteResults, ...projectResults].slice(0, 24);
+    return [
+      ...crmResults,
+      ...catalogResults,
+      ...quoteResults,
+      ...projectResults,
+      ...interventionResults,
+      ...requestResults,
+      ...maintenanceResults,
+      ...hourPackResults,
+    ].slice(0, 30);
   });
   ipcMain.handle('crm:search:rebuild', () => database.crm.rebuildSearchIndex());
 
