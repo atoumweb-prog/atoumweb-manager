@@ -96,9 +96,13 @@ function App() {
 
   async function restoreBackup(): Promise<void> {
     const result = await window.atoumweb.backups.restore();
-    if (!result.cancelled && result.restartScheduled) {
-      setMessage('Restauration programmée. L’application va redémarrer.');
-    }
+    if (result.cancelled) return;
+
+    setMessage(
+      result.restartScheduled
+        ? 'Restauration programmée. L’application va redémarrer.'
+        : 'Restauration programmée. En mode développement, ferme AtoumWeb Manager puis relance « npm start » pour appliquer la restauration.',
+    );
   }
 
   function submitFoundationSearch(): void {
