@@ -8,6 +8,7 @@ import './prospect-detail.css';
 import './client-detail.css';
 import './search-extra.css';
 import './detail-layout-overrides.css';
+import './prospect-workflow.css';
 
 const rootElement = document.getElementById('root');
 
