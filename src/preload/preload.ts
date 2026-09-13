@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import type { CatalogFilters, CatalogItemInput, CatalogItemStatus, CatalogVersionInput } from '../shared/commercial';
 import type { AtoumWebApi, ThemeName } from '../shared/contracts';
 import type {
   ClientContactRole,
@@ -15,22 +16,14 @@ import type {
 } from '../shared/crm';
 
 const api: AtoumWebApi = {
-  app: {
-    getBootstrap: () => ipcRenderer.invoke('app:get-bootstrap'),
-  },
-  settings: {
-    setTheme: (theme: ThemeName) => ipcRenderer.invoke('settings:set-theme', theme),
-  },
-  workspace: {
-    choose: () => ipcRenderer.invoke('workspace:choose'),
-  },
+  app: { getBootstrap: () => ipcRenderer.invoke('app:get-bootstrap') },
+  settings: { setTheme: (theme: ThemeName) => ipcRenderer.invoke('settings:set-theme', theme) },
+  workspace: { choose: () => ipcRenderer.invoke('workspace:choose') },
   backups: {
     createManual: () => ipcRenderer.invoke('backups:create-manual'),
     restore: () => ipcRenderer.invoke('backups:restore'),
   },
-  database: {
-    health: () => ipcRenderer.invoke('database:health'),
-  },
+  database: { health: () => ipcRenderer.invoke('database:health') },
   crm: {
     organizations: {
       create: (input: OrganizationInput) => ipcRenderer.invoke('crm:organizations:create', input),
@@ -44,10 +37,8 @@ const api: AtoumWebApi = {
       list: (filters?: ProspectFilters) => ipcRenderer.invoke('crm:prospects:list', filters),
       create: (input: ProspectInput) => ipcRenderer.invoke('crm:prospects:create', input),
       update: (id: string, input: ProspectInput) => ipcRenderer.invoke('crm:prospects:update', id, input),
-      changeStage: (id: string, stage: ProspectStage, lostReason?: string | null) =>
-        ipcRenderer.invoke('crm:prospects:change-stage', id, stage, lostReason),
-      setNextAction: (id: string, at: string | null, text: string | null) =>
-        ipcRenderer.invoke('crm:prospects:set-next-action', id, at, text),
+      changeStage: (id: string, stage: ProspectStage, lostReason?: string | null) => ipcRenderer.invoke('crm:prospects:change-stage', id, stage, lostReason),
+      setNextAction: (id: string, at: string | null, text: string | null) => ipcRenderer.invoke('crm:prospects:set-next-action', id, at, text),
       convertToClient: (id: string) => ipcRenderer.invoke('crm:prospects:convert-to-client', id),
     },
     clients: {
@@ -55,13 +46,10 @@ const api: AtoumWebApi = {
       create: (input: ClientInput) => ipcRenderer.invoke('crm:clients:create', input),
       update: (id: string, input: ClientInput) => ipcRenderer.invoke('crm:clients:update', id, input),
       archive: (id: string) => ipcRenderer.invoke('crm:clients:archive', id),
-      reactivate: (id: string, status: Exclude<ClientStatus, 'archived'>) =>
-        ipcRenderer.invoke('crm:clients:reactivate', id, status),
+      reactivate: (id: string, status: Exclude<ClientStatus, 'archived'>) => ipcRenderer.invoke('crm:clients:reactivate', id, status),
       listContacts: (id: string) => ipcRenderer.invoke('crm:clients:list-contacts', id),
-      addContact: (id: string, input: ContactInput, role: ClientContactRole, makePrimary?: boolean) =>
-        ipcRenderer.invoke('crm:clients:add-contact', id, input, role, makePrimary),
-      setPrimaryContact: (id: string, contactId: string) =>
-        ipcRenderer.invoke('crm:clients:set-primary-contact', id, contactId),
+      addContact: (id: string, input: ContactInput, role: ClientContactRole, makePrimary?: boolean) => ipcRenderer.invoke('crm:clients:add-contact', id, input, role, makePrimary),
+      setPrimaryContact: (id: string, contactId: string) => ipcRenderer.invoke('crm:clients:set-primary-contact', id, contactId),
     },
     actions: {
       list: (filters?: CrmActionFilters) => ipcRenderer.invoke('crm:actions:list', filters),
@@ -70,13 +58,20 @@ const api: AtoumWebApi = {
       cancel: (id: string) => ipcRenderer.invoke('crm:actions:cancel', id),
       reopen: (id: string) => ipcRenderer.invoke('crm:actions:reopen', id),
     },
-    activity: {
-      list: (entityType: string, entityId: string) => ipcRenderer.invoke('crm:activity:list', entityType, entityId),
-    },
+    activity: { list: (entityType: string, entityId: string) => ipcRenderer.invoke('crm:activity:list', entityType, entityId) },
     search: {
       global: (query: string) => ipcRenderer.invoke('crm:search:global', query),
       rebuild: () => ipcRenderer.invoke('crm:search:rebuild'),
     },
+  },
+  catalog: {
+    list: (filters?: CatalogFilters) => ipcRenderer.invoke('catalog:list', filters),
+    getItem: (id: string) => ipcRenderer.invoke('catalog:get-item', id),
+    create: (input: CatalogItemInput, firstVersion: CatalogVersionInput) => ipcRenderer.invoke('catalog:create', input, firstVersion),
+    createVersion: (itemId: string, input: CatalogVersionInput) => ipcRenderer.invoke('catalog:create-version', itemId, input),
+    publishVersion: (versionId: string) => ipcRenderer.invoke('catalog:publish-version', versionId),
+    setStatus: (itemId: string, status: CatalogItemStatus) => ipcRenderer.invoke('catalog:set-status', itemId, status),
+    setVisiblePublic: (itemId: string, visible: boolean) => ipcRenderer.invoke('catalog:set-visible-public', itemId, visible),
   },
 };
 
