@@ -24,6 +24,15 @@ import type {
   ProspectStage,
 } from '../shared/crm';
 import type {
+  InterventionFilters,
+  InterventionInput,
+  InterventionStatus,
+  ServiceRequestFilters,
+  ServiceRequestInput,
+  ServiceRequestStatus,
+  TransformRequestToInterventionInput,
+} from '../shared/operations';
+import type {
   InternalProjectInput,
   MoveProjectNodeInput,
   ProjectFilters,
@@ -168,6 +177,24 @@ const api: AtoumWebApi = {
       unlinkResource: (versionId: string, resourceId: string) => ipcRenderer.invoke('projects:technical:unlink-resource', versionId, resourceId),
       prepareForReuse: (itemId: string, versionId?: string | null) => ipcRenderer.invoke('projects:technical:prepare-reuse', itemId, versionId),
       archive: (itemId: string) => ipcRenderer.invoke('projects:technical:archive', itemId),
+    },
+  },
+  operations: {
+    requests: {
+      list: (filters?: ServiceRequestFilters) => ipcRenderer.invoke('operations:requests:list', filters),
+      get: (id: string) => ipcRenderer.invoke('operations:requests:get', id),
+      create: (input: ServiceRequestInput) => ipcRenderer.invoke('operations:requests:create', input),
+      update: (id: string, input: Partial<ServiceRequestInput>) => ipcRenderer.invoke('operations:requests:update', id, input),
+      changeStatus: (id: string, status: ServiceRequestStatus) => ipcRenderer.invoke('operations:requests:change-status', id, status),
+      closeWithoutIntervention: (id: string, reason?: string | null) => ipcRenderer.invoke('operations:requests:close', id, reason),
+      transform: (input: TransformRequestToInterventionInput) => ipcRenderer.invoke('operations:requests:transform', input),
+    },
+    interventions: {
+      list: (filters?: InterventionFilters) => ipcRenderer.invoke('operations:interventions:list', filters),
+      get: (id: string) => ipcRenderer.invoke('operations:interventions:get', id),
+      create: (input: InterventionInput) => ipcRenderer.invoke('operations:interventions:create', input),
+      update: (id: string, input: Partial<InterventionInput>) => ipcRenderer.invoke('operations:interventions:update', id, input),
+      changeStatus: (id: string, status: InterventionStatus) => ipcRenderer.invoke('operations:interventions:change-status', id, status),
     },
   },
   time: {
