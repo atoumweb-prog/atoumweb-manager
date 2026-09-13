@@ -208,6 +208,19 @@ export const MIGRATIONS: Migration[] = [
         ON search_documents(search_text COLLATE NOCASE);
     `,
   },
+  {
+    id: 3,
+    name: 'phase_1_unique_client_identity',
+    sql: `
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_client_accounts_unique_organization
+        ON client_accounts(organization_id)
+        WHERE organization_id IS NOT NULL;
+
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_client_accounts_unique_individual
+        ON client_accounts(primary_contact_id)
+        WHERE organization_id IS NULL AND primary_contact_id IS NOT NULL;
+    `,
+  },
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {
