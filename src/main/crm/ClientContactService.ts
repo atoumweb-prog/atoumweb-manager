@@ -74,6 +74,8 @@ export class ClientContactService {
     if (!firstName || !lastName) throw new Error('Le prénom et le nom sont requis.');
     assertEmail(input.email);
 
+    const primary = makePrimary || role === 'primary';
+    const storedRole: ClientContactRole = primary ? 'primary' : role;
     const linkId = randomUUID();
     const contactId = randomUUID();
     const now = nowIso();
@@ -92,17 +94,22 @@ export class ClientContactService {
         ],
       );
 
-      if (makePrimary) {
-        this.database.run('UPDATE client_contact_roles SET is_primary=0 WHERE client_account_id=?', [clientId]);
+      if (primary) {
+        this.database.run(
+          `UPDATE client_contact_roles
+           SET is_primary=0, role=CASE WHEN role='primary' THEN 'other' ELSE role END
+           WHERE client_account_id=?`,
+          [clientId],
+        );
       }
 
       this.database.run(
         `INSERT INTO client_contact_roles (id, client_account_id, contact_id, role, is_primary, created_at)
          VALUES (?, ?, ?, ?, ?, ?)`,
-        [linkId, clientId, contactId, role, makePrimary ? 1 : 0, now],
+        [linkId, clientId, contactId, storedRole, primary ? 1 : 0, now],
       );
 
-      if (makePrimary) {
+      if (primary) {
         this.database.run(
           'UPDATE client_accounts SET primary_contact_id=?, updated_at=? WHERE id=?',
           [contactId, now, clientId],
@@ -116,7 +123,7 @@ export class ClientContactService {
         ) VALUES (?, 'client', ?, 'contact_added', ?, ?, ?, ?, ?, ?)`,
         [
           randomUUID(), clientId, `Contact ajouté : ${firstName} ${lastName}`,
-          JSON.stringify({ role, makePrimary }), clientId, organizationId, contactId, now,
+          JSON.stringify({ role: storedRole, makePrimary: primary }), clientId, organizationId, contactId, now,
         ],
       );
 
@@ -145,8 +152,13 @@ export class ClientContactService {
     const now = nowIso();
     this.database.exec('BEGIN IMMEDIATE;');
     try {
-      this.database.run('UPDATE client_contact_roles SET is_primary=0 WHERE client_account_id=?', [clientId]);
-      this.database.run('UPDATE client_contact_roles SET is_primary=1 WHERE id=?', [link.id]);
+      this.database.run(
+        `UPDATE client_contact_roles
+         SET is_primary=0, role=CASE WHEN role='primary' THEN 'other' ELSE role END
+         WHERE client_account_id=?`,
+        [clientId],
+      );
+      this.database.run(`UPDATE client_contact_roles SET is_primary=1, role='primary' WHERE id=?`, [link.id]);
       this.database.run(
         'UPDATE client_accounts SET primary_contact_id=?, updated_at=? WHERE id=?',
         [contactId, now, clientId],
