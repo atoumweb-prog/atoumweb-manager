@@ -41,6 +41,8 @@ import type {
   ProjectResourceRole,
   ProjectResourceStatus,
   ProjectStatus,
+  ProjectTechnicalItemInput,
+  ProjectTechnicalVersionInput,
   ProjectTemplateInput,
   ProjectTemplateNodeInput,
   TransformQuoteToProjectInput,
@@ -223,4 +225,13 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     if (selection.canceled || selection.filePaths.length === 0) return null;
     return database.projectResources.relocalize(id, selection.filePaths[0]);
   });
+
+  ipcMain.handle('projects:technical:list', (_event, projectId: string, search?: string | null) => database.projectTechnicalLibrary.list(projectId, search));
+  ipcMain.handle('projects:technical:get', (_event, id: string) => database.projectTechnicalLibrary.get(id));
+  ipcMain.handle('projects:technical:create', (_event, projectId: string, item: ProjectTechnicalItemInput, version: ProjectTechnicalVersionInput) => database.projectTechnicalLibrary.create(projectId, item, version));
+  ipcMain.handle('projects:technical:create-version', (_event, itemId: string, version: ProjectTechnicalVersionInput) => database.projectTechnicalLibrary.createVersion(itemId, version));
+  ipcMain.handle('projects:technical:mark-stable', (_event, versionId: string) => database.projectTechnicalLibrary.markStable(versionId));
+  ipcMain.handle('projects:technical:link-resource', (_event, versionId: string, resourceId: string) => database.projectTechnicalLibrary.linkResource(versionId, resourceId));
+  ipcMain.handle('projects:technical:unlink-resource', (_event, versionId: string, resourceId: string) => database.projectTechnicalLibrary.unlinkResource(versionId, resourceId));
+  ipcMain.handle('projects:technical:archive', (_event, itemId: string) => database.projectTechnicalLibrary.archive(itemId));
 }
