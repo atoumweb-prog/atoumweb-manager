@@ -134,6 +134,7 @@ const api: AtoumWebApi = {
       transformQuote: (input: TransformQuoteToProjectInput) => ipcRenderer.invoke('projects:transform-quote', input),
       createInternal: (input: InternalProjectInput) => ipcRenderer.invoke('projects:create-internal', input),
       changeStatus: (id: string, status: ProjectStatus) => ipcRenderer.invoke('projects:change-status', id, status),
+      completionReview: (id: string) => ipcRenderer.invoke('projects:completion-review', id),
       addNode: (projectId: string, input: ProjectNodeInput) => ipcRenderer.invoke('projects:add-node', projectId, input),
       updateNode: (nodeId: string, input: Partial<ProjectNodeInput>) => ipcRenderer.invoke('projects:update-node', nodeId, input),
       addPrerequisite: (projectId: string, input: ProjectPrerequisiteInput) => ipcRenderer.invoke('projects:add-prerequisite', projectId, input),
