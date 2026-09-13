@@ -1,29 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { CatalogItemSummary, QuoteDetail, QuoteLineInput, QuoteStatus, QuoteSummary } from '../../shared/commercial';
 import type { ClientSummary, ProspectSummary } from '../../shared/crm';
+import { QuoteClientPreview } from './QuoteClientPreview';
 import { QuoteLineEditor } from './QuoteLineEditor';
 
 const STATUS_LABELS: Record<QuoteStatus, string> = {
-  draft: 'Brouillon',
-  sent: 'Envoyé',
-  viewed: 'Vu',
-  accepted: 'Accepté',
-  refused: 'Refusé',
-  expired: 'Expiré',
-  cancelled: 'Annulé',
+  draft: 'Brouillon', sent: 'Envoyé', viewed: 'Vu', accepted: 'Accepté', refused: 'Refusé', expired: 'Expiré', cancelled: 'Annulé',
 };
 
 interface WizardDraft {
-  ownerKind: 'prospect' | 'client';
-  ownerId: string;
-  subject: string;
-  needSummary: string;
-  catalogVersionId: string;
-  customLabel: string;
-  customPriceEuros: string;
-  validityDays: string;
-  depositPercent: string;
-  estimatedDelay: string;
+  ownerKind: 'prospect' | 'client'; ownerId: string; subject: string; needSummary: string; catalogVersionId: string; customLabel: string; customPriceEuros: string; validityDays: string; depositPercent: string; estimatedDelay: string;
 }
 
 const EMPTY_WIZARD: WizardDraft = {
@@ -61,15 +47,13 @@ export function QuotesPage({ onMessage }: { onMessage: (message: string) => void
   const [customLabel, setCustomLabel] = useState('');
   const [customPrice, setCustomPrice] = useState('');
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   async function refresh(): Promise<void> {
     setLoading(true);
     try {
       const [nextQuotes, nextProspects, nextClients, nextCatalog] = await Promise.all([
-        window.atoumweb.quotes.list(),
-        window.atoumweb.crm.prospects.list(),
-        window.atoumweb.crm.clients.list(),
-        window.atoumweb.catalog.list({ status: 'active' }),
+        window.atoumweb.quotes.list(), window.atoumweb.crm.prospects.list(), window.atoumweb.crm.clients.list(), window.atoumweb.catalog.list({ status: 'active' }),
       ]);
       setQuotes(nextQuotes);
       setProspects(nextProspects.filter((prospect) => !prospect.clientAccountId && prospect.stage !== 'won' && prospect.stage !== 'lost'));
@@ -95,9 +79,7 @@ export function QuotesPage({ onMessage }: { onMessage: (message: string) => void
     : clients.map((client) => ({ id: client.id, label: client.displayName }));
 
   async function openQuote(id: string): Promise<void> {
-    setSelectedId(id);
-    setEditingLineId(null);
-    setDetail(await window.atoumweb.quotes.get(id));
+    setSelectedId(id); setEditingLineId(null); setPreviewOpen(false); setDetail(await window.atoumweb.quotes.get(id));
   }
 
   function validateStep(step: number): boolean {
@@ -105,23 +87,18 @@ export function QuotesPage({ onMessage }: { onMessage: (message: string) => void
     if (step === 1 && !wizard.ownerId) { setWizardError('Choisis un Prospect ou un Client.'); return false; }
     if (step === 2 && !wizard.subject.trim()) { setWizardError('Renseigne l’objet du devis.'); return false; }
     if (step === 5) {
-      const validity = Number(wizard.validityDays);
-      const deposit = Number(wizard.depositPercent);
+      const validity = Number(wizard.validityDays); const deposit = Number(wizard.depositPercent);
       if (!Number.isInteger(validity) || validity <= 0) { setWizardError('Validité invalide.'); return false; }
       if (!Number.isInteger(deposit) || deposit < 0 || deposit > 100) { setWizardError('Acompte invalide.'); return false; }
     }
     return true;
   }
 
-  function nextWizard(): void {
-    if (!validateStep(wizardStep)) return;
-    setWizardStep((step) => Math.min(6, step + 1));
-  }
+  function nextWizard(): void { if (validateStep(wizardStep)) setWizardStep((step) => Math.min(6, step + 1)); }
 
   async function createQuote(): Promise<void> {
     if (!validateStep(5) || !wizard.ownerId || !wizard.subject.trim()) return;
-    setSaving(true);
-    setWizardError(null);
+    setSaving(true); setWizardError(null);
     try {
       let created = await window.atoumweb.quotes.create({
         prospectId: wizard.ownerKind === 'prospect' ? wizard.ownerId : null,
@@ -131,43 +108,30 @@ export function QuotesPage({ onMessage }: { onMessage: (message: string) => void
       });
       if (wizard.catalogVersionId) created = await window.atoumweb.quotes.addCatalogLine(created.id, wizard.catalogVersionId);
       const customCents = eurosToCents(wizard.customPriceEuros);
-      if (wizard.customLabel.trim() && customCents != null) {
-        created = await window.atoumweb.quotes.addCustomLine(created.id, { label: wizard.customLabel.trim(), proposedUnitPriceCents: customCents, catalogUnitPriceCents: customCents });
-      }
-      setWizard(EMPTY_WIZARD); setWizardStep(1); setShowWizard(false);
-      await refresh(); await openQuote(created.id); onMessage(`Devis ${created.number} créé.`);
+      if (wizard.customLabel.trim() && customCents != null) created = await window.atoumweb.quotes.addCustomLine(created.id, { label: wizard.customLabel.trim(), proposedUnitPriceCents: customCents, catalogUnitPriceCents: customCents });
+      setWizard(EMPTY_WIZARD); setWizardStep(1); setShowWizard(false); await refresh(); await openQuote(created.id); onMessage(`Devis ${created.number} créé.`);
     } catch (error) { setWizardError(error instanceof Error ? error.message : 'Impossible de créer le devis.'); }
     finally { setSaving(false); }
   }
 
   async function addCatalogLine(): Promise<void> {
     if (!detail || !catalogToAdd) return;
-    try {
-      const next = await window.atoumweb.quotes.addCatalogLine(detail.id, catalogToAdd);
-      setCatalogToAdd(''); setDetail(next); await refresh();
-      onMessage('Prestation catalogue ajoutée au devis avec snapshot figé.');
-    } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible d’ajouter la prestation.'); }
+    try { const next = await window.atoumweb.quotes.addCatalogLine(detail.id, catalogToAdd); setCatalogToAdd(''); setDetail(next); await refresh(); onMessage('Prestation catalogue ajoutée au devis avec snapshot figé.'); }
+    catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible d’ajouter la prestation.'); }
   }
 
   async function addCustomLine(): Promise<void> {
     if (!detail || !customLabel.trim()) return;
     try {
-      const cents = eurosToCents(customPrice);
-      if (cents == null) throw new Error('Renseigne un prix.');
+      const cents = eurosToCents(customPrice); if (cents == null) throw new Error('Renseigne un prix.');
       const next = await window.atoumweb.quotes.addCustomLine(detail.id, { label: customLabel.trim(), proposedUnitPriceCents: cents, catalogUnitPriceCents: cents });
       setCustomLabel(''); setCustomPrice(''); setDetail(next); await refresh();
     } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible d’ajouter la ligne.'); }
   }
 
   async function saveLine(lineId: string, input: QuoteLineInput): Promise<void> {
-    try {
-      const next = await window.atoumweb.quotes.updateLine(lineId, input);
-      setDetail(next); setEditingLineId(null); await refresh();
-      onMessage('Ligne du devis mise à jour. Les totaux ont été recalculés.');
-    } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible de modifier la ligne.');
-      throw error;
-    }
+    try { const next = await window.atoumweb.quotes.updateLine(lineId, input); setDetail(next); setEditingLineId(null); await refresh(); onMessage('Ligne du devis mise à jour. Les totaux ont été recalculés.'); }
+    catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de modifier la ligne.'); throw error; }
   }
 
   async function removeLine(id: string): Promise<void> {
@@ -186,8 +150,7 @@ export function QuotesPage({ onMessage }: { onMessage: (message: string) => void
       else if (action === 'refused') next = await window.atoumweb.quotes.refuse(detail.id);
       else if (action === 'expired') next = await window.atoumweb.quotes.expire(detail.id);
       else next = await window.atoumweb.quotes.duplicate(detail.id);
-      await refresh(); await openQuote(next.id);
-      onMessage(action === 'accepted' ? 'Devis accepté : prêt à transformer en projet.' : `Devis ${next.number} mis à jour.`);
+      await refresh(); await openQuote(next.id); onMessage(action === 'accepted' ? 'Devis accepté : prêt à transformer en projet.' : `Devis ${next.number} mis à jour.`);
     } catch (error) { onMessage(error instanceof Error ? error.message : 'Action impossible.'); }
   }
 
@@ -206,13 +169,14 @@ export function QuotesPage({ onMessage }: { onMessage: (message: string) => void
 
       {loading ? <div className="panel"><p className="muted">Chargement des devis…</p></div> : <div className={detail ? 'quotes-layout with-detail' : 'quotes-layout'}><div className="panel quote-list-panel"><table className="quote-table"><thead><tr><th>Numéro</th><th>Destinataire</th><th>Objet</th><th>Statut</th><th>Valeur</th><th>Acompte</th><th>Créé le</th></tr></thead><tbody>{filtered.map((quote) => <tr key={quote.id} className={selectedId === quote.id ? 'selected-row' : ''} onClick={() => void openQuote(quote.id)}><td><strong>{quote.number}</strong></td><td>{quote.ownerLabel}</td><td>{quote.subject}</td><td><span className={`quote-status quote-${quote.status}`}>{STATUS_LABELS[quote.status]}</span></td><td>{money(quote.contractValueCents)}</td><td>{money(quote.depositCents)}</td><td>{new Date(quote.createdAt).toLocaleDateString('fr-FR')}</td></tr>)}{filtered.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucun devis.</div></td></tr>}</tbody></table></div>
 
-        {detail && <aside className="panel quote-detail-panel"><div className="detail-panel-heading"><div><span className="eyebrow">{detail.number}</span><h2>{detail.subject}</h2><p className="muted">{detail.ownerLabel}</p></div><button className="close-detail" type="button" onClick={() => { setDetail(null); setSelectedId(null); setEditingLineId(null); }}>×</button></div><div className="detail-badges"><span className={`quote-status quote-${detail.status}`}>{STATUS_LABELS[detail.status]}</span>{detail.projectReadyAt && <span className="status-pill">Prêt pour Projet</span>}</div>
+        {detail && <aside className="panel quote-detail-panel"><div className="detail-panel-heading"><div><span className="eyebrow">{detail.number}</span><h2>{detail.subject}</h2><p className="muted">{detail.ownerLabel}</p></div><button className="close-detail" type="button" onClick={() => { setDetail(null); setSelectedId(null); setEditingLineId(null); setPreviewOpen(false); }}>×</button></div><div className="detail-badges"><span className={`quote-status quote-${detail.status}`}>{STATUS_LABELS[detail.status]}</span>{detail.projectReadyAt && <span className="status-pill">Prêt pour Projet</span>}</div><button className="secondary-button quote-preview-button" type="button" onClick={() => setPreviewOpen(true)}>Prévisualiser côté client</button>
           <div className="quote-lines"><strong>Lignes du devis</strong>{detail.lines.map((line) => <div className="quote-line-block" key={line.id}><div className="quote-line"><div><strong>{line.label}</strong><small>{line.source === 'catalog' ? 'Catalogue · snapshot figé' : 'Ligne libre'} · {(line.quantityMilli ?? 1000) / 1000} ×{line.adjustmentMode && line.adjustmentMode !== 'none' ? ` · ${line.adjustmentMode}` : ''}</small></div><span>{money(line.contractLineValueCents)}</span>{detail.status === 'draft' && <div className="quote-line-actions"><button type="button" title="Modifier" onClick={() => setEditingLineId(editingLineId === line.id ? null : line.id)}>✎</button><button type="button" title="Supprimer" onClick={() => void removeLine(line.id)}>×</button></div>}</div>{detail.status === 'draft' && editingLineId === line.id && <QuoteLineEditor line={line} onCancel={() => setEditingLineId(null)} onSave={(input) => saveLine(line.id, input)} />}</div>)}{detail.lines.length === 0 && <p className="muted">Aucune ligne pour le moment.</p>}</div>
           {detail.status === 'draft' && <><div className="quote-add-line"><strong>Ajouter depuis le catalogue</strong><select value={catalogToAdd} onChange={(e) => setCatalogToAdd(e.target.value)}><option value="">Choisir…</option>{catalog.map((item) => <option key={item.id} value={item.currentVersion!.id}>{item.name}</option>)}</select><button className="secondary-button" type="button" onClick={() => void addCatalogLine()}>Ajouter</button></div><div className="quote-add-line"><strong>Ligne libre</strong><input value={customLabel} onChange={(e) => setCustomLabel(e.target.value)} placeholder="Libellé" /><input inputMode="decimal" value={customPrice} onChange={(e) => setCustomPrice(e.target.value)} placeholder="Prix €" /><button className="secondary-button" type="button" onClick={() => void addCustomLine()}>Ajouter</button></div></>}
           <div className="quote-totals"><div><span>Valeur catalogue</span><strong>{money(detail.catalogValueCents)}</strong></div><div><span>Remises</span><strong>- {money(detail.discountValueCents)}</strong></div><div className="quote-total-main"><span>Total contractuel</span><strong>{money(detail.contractValueCents)}</strong></div><div><span>Acompte {detail.depositPercent ?? 0} %</span><strong>{money(detail.depositCents)}</strong></div><div><span>Solde</span><strong>{money(detail.balanceCents)}</strong></div></div>
           <div className="quote-status-actions">{detail.status === 'draft' && <button className="primary-button" type="button" onClick={() => void transition('sent')}>Marquer envoyé</button>}{detail.status === 'sent' && <><button className="secondary-button" type="button" onClick={() => void transition('viewed')}>Marquer vu</button><button className="primary-button" type="button" onClick={() => void transition('accepted')}>Accepter</button><button className="secondary-button danger-outline" type="button" onClick={() => void transition('refused')}>Refuser</button><button className="secondary-button" type="button" onClick={() => void transition('expired')}>Expirer</button></>}{detail.status === 'viewed' && <><button className="primary-button" type="button" onClick={() => void transition('accepted')}>Accepter</button><button className="secondary-button danger-outline" type="button" onClick={() => void transition('refused')}>Refuser</button><button className="secondary-button" type="button" onClick={() => void transition('expired')}>Expirer</button></>}{['refused', 'expired', 'cancelled'].includes(detail.status) && <button className="primary-button" type="button" onClick={() => void transition('duplicate')}>Dupliquer en nouveau devis</button>}</div>
         </aside>}
       </div>}
+      {detail && previewOpen && <QuoteClientPreview quote={detail} onClose={() => setPreviewOpen(false)} />}
     </div>
   );
 }
