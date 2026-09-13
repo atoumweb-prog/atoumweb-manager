@@ -24,12 +24,18 @@ export const PROSPECT_SOURCES = [
 ] as const;
 export const CLIENT_STATUSES = ['active', 'inactive', 'archived'] as const;
 export const CLIENT_CONTACT_ROLES = ['primary', 'administrative', 'billing', 'technical', 'other'] as const;
+export const CRM_ACTION_TYPES = ['action', 'follow_up'] as const;
+export const CRM_ACTION_STATUSES = ['open', 'done', 'cancelled'] as const;
+export const CRM_ACTION_OWNER_TYPES = ['prospect', 'client'] as const;
 
 export type ProspectStage = (typeof PROSPECT_STAGES)[number];
 export type ProspectTemperature = (typeof PROSPECT_TEMPERATURES)[number];
 export type ProspectSource = (typeof PROSPECT_SOURCES)[number];
 export type ClientStatus = (typeof CLIENT_STATUSES)[number];
 export type ClientContactRole = (typeof CLIENT_CONTACT_ROLES)[number];
+export type CrmActionType = (typeof CRM_ACTION_TYPES)[number];
+export type CrmActionStatus = (typeof CRM_ACTION_STATUSES)[number];
+export type CrmActionOwnerType = (typeof CRM_ACTION_OWNER_TYPES)[number];
 
 export interface OrganizationInput {
   name: string;
@@ -146,6 +152,30 @@ export interface ClientFilters {
   search?: string | null;
 }
 
+export interface CrmActionInput {
+  ownerType: CrmActionOwnerType;
+  ownerId: string;
+  type: CrmActionType;
+  title: string;
+  dueAt?: string | null;
+  notes?: string | null;
+}
+
+export interface CrmAction extends CrmActionInput {
+  id: string;
+  status: CrmActionStatus;
+  completedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CrmActionFilters {
+  ownerType?: CrmActionOwnerType | null;
+  ownerId?: string | null;
+  type?: CrmActionType | null;
+  status?: CrmActionStatus | null;
+}
+
 export interface ActivityEvent {
   id: string;
   entityType: string;
@@ -196,6 +226,13 @@ export interface CrmApi {
     listContacts(id: string): Promise<ClientContactLink[]>;
     addContact(id: string, input: ContactInput, role: ClientContactRole, makePrimary?: boolean): Promise<ClientContactLink>;
     setPrimaryContact(id: string, contactId: string): Promise<void>;
+  };
+  actions: {
+    list(filters?: CrmActionFilters): Promise<CrmAction[]>;
+    create(input: CrmActionInput): Promise<CrmAction>;
+    complete(id: string): Promise<CrmAction>;
+    cancel(id: string): Promise<CrmAction>;
+    reopen(id: string): Promise<CrmAction>;
   };
   activity: {
     list(entityType: string, entityId: string): Promise<ActivityEvent[]>;
