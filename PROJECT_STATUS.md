@@ -9,7 +9,8 @@
 - **Branche stable** : `main`
 - **Fondation** : `foundation/electron-react-sqlite` — PR #3
 - **Branche de travail actuelle** : `feature/phase-1-crm`
-- **Statut** : fondation validée sur Windows ; Phase 1 CRM en développement.
+- **PR Phase 1** : #58 — `Phase 1 CRM — Prospects, Clients et recherche globale` — brouillon, fusionnable, non validée localement
+- **Statut** : fondation validée sur Windows ; Phase 1 CRM implémentée en première passe et en attente de validation réelle.
 - **Principe directeur** : une donnée métier possède une source unique ; les autres écrans la référencent sans duplication.
 
 ## Phase 0 — Fondation
@@ -38,7 +39,8 @@ La restauration est volontairement différente selon l’environnement :
 
 ## Phase 1 — Socle CRM
 
-Branche : `feature/phase-1-crm`
+Branche : `feature/phase-1-crm`  
+PR : #58 (brouillon)
 
 ### Base de données
 
@@ -77,6 +79,7 @@ Branche : `feature/phase-1-crm`
 - [x] température, source, besoin, valeur estimée, prochaine action
 - [x] changement de stage sans dépendre du drag-and-drop
 - [x] conversion vers Client depuis une carte Prospect
+- [x] raccourcis de relance J+1 / J+3 / J+7 / J+30
 - [x] tableau Clients réel
 - [x] formulaire Nouveau client
 - [x] filtres Clients
@@ -96,6 +99,7 @@ Branche : `feature/phase-1-crm`
 - [x] archivage/réactivation
 - [x] validation budgets / probabilité
 - [ ] exécution réelle typecheck/tests de la branche Phase 1 sur Windows
+- [ ] validation de la migration depuis une base Phase 0 existante
 - [ ] validation visuelle Phase 1
 
 ## Phases V1 préparées
@@ -123,6 +127,6 @@ Branche : `feature/phase-1-crm`
 
 ## Travail en cours
 
-**Phase 1 CRM : fiabilisation de l’implémentation et préparation d’une PR brouillon.**
+**Phase 1 CRM : première passe fonctionnelle terminée sur la branche ; PR #58 ouverte en brouillon.**
 
-Aucune validation n’est déclarée comme réussie tant que les commandes n’ont pas été réellement exécutées. La prochaine validation locale devra vérifier la migration de la base existante (avec sauvegarde `pre-migration`), le typecheck, les tests, la création d’un prospect, sa conversion en client et la recherche globale.
+Aucune validation n’est déclarée comme réussie tant que les commandes n’ont pas été réellement exécutées. La prochaine validation locale devra vérifier la sauvegarde `pre-migration`, le passage à 3 migrations, le typecheck, les tests, la création d’un prospect, les raccourcis de relance, sa conversion en client, l’archivage/réactivation et la recherche globale.
