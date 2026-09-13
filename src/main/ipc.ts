@@ -86,10 +86,17 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     }
 
     scheduleDatabaseRestore(sourcePath);
-    app.relaunch();
-    app.quit();
 
-    return { cancelled: false, sourcePath, restartScheduled: true };
+    if (app.isPackaged) {
+      setTimeout(() => {
+        app.relaunch();
+        app.exit(0);
+      }, 150);
+
+      return { cancelled: false, sourcePath, restartScheduled: true };
+    }
+
+    return { cancelled: false, sourcePath, restartScheduled: false };
   });
 
   ipcMain.handle('database:health', () => database.health());
