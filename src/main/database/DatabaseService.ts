@@ -11,6 +11,7 @@ import { HourPackService } from '../operations/HourPackService';
 import { InterventionCompletionService } from '../operations/InterventionCompletionService';
 import { MaintenanceOverageService } from '../operations/MaintenanceOverageService';
 import { MaintenanceService } from '../operations/MaintenanceService';
+import { OperationsAlertService } from '../operations/OperationsAlertService';
 import { OperationsService } from '../operations/OperationsService';
 import { ProjectCompletionService } from '../projects/ProjectCompletionService';
 import { ProjectNodeArrangementService } from '../projects/ProjectNodeArrangementService';
@@ -49,6 +50,7 @@ export class DatabaseService {
   readonly hourPacks: HourPackService;
   readonly billingHandoff: BillingHandoffService;
   readonly maintenanceOverages: MaintenanceOverageService;
+  readonly operationsAlerts: OperationsAlertService;
   readonly interventionCompletion: InterventionCompletionService;
   readonly time: TimeService;
   readonly timeCorrections: TimeCorrectionService;
@@ -74,6 +76,7 @@ export class DatabaseService {
     this.hourPacks = new HourPackService(this.database);
     this.billingHandoff = new BillingHandoffService(this.database);
     this.maintenanceOverages = new MaintenanceOverageService(this.database, this.billingHandoff);
+    this.operationsAlerts = new OperationsAlertService(this.database);
     this.interventionCompletion = new InterventionCompletionService(this.database, this.operations, this.hourPacks, this.billingHandoff, this.maintenanceOverages);
     this.time = new TimeService(this.database);
     this.timeCorrections = new TimeCorrectionService(this.database, this.time);
