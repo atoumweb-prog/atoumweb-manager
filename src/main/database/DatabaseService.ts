@@ -8,6 +8,7 @@ import { ClientContactService } from '../crm/ClientContactService';
 import { CrmService } from '../crm/CrmService';
 import { ProjectResourceService } from '../projects/ProjectResourceService';
 import { ProjectService } from '../projects/ProjectService';
+import { ProjectTechnicalLibraryService } from '../projects/ProjectTechnicalLibraryService';
 import type { WorkspacePaths } from '../workspace';
 import type { DatabaseAdapter } from './DatabaseAdapter';
 import { NodeSqliteAdapter } from './NodeSqliteAdapter';
@@ -25,6 +26,7 @@ export class DatabaseService {
   readonly quotes: QuoteService;
   readonly projects: ProjectService;
   readonly projectResources: ProjectResourceService;
+  readonly projectTechnicalLibrary: ProjectTechnicalLibraryService;
 
   constructor(private readonly workspace: WorkspacePaths) {
     this.existedBeforeOpen = existsSync(workspace.databaseFile);
@@ -36,6 +38,7 @@ export class DatabaseService {
     this.quotes = new QuoteService(this.database, this.crm);
     this.projects = new ProjectService(this.database, this.workspace);
     this.projectResources = new ProjectResourceService(this.database, this.workspace);
+    this.projectTechnicalLibrary = new ProjectTechnicalLibraryService(this.database);
   }
 
   async initialize(): Promise<void> {
