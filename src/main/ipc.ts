@@ -70,15 +70,17 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     }
 
     const sourcePath = selection.filePaths[0];
+    const packaged = app.isPackaged;
     const confirmation = await dialog.showMessageBox({
       type: 'warning',
-      buttons: ['Restaurer et redémarrer', 'Annuler'],
+      buttons: [packaged ? 'Restaurer et redémarrer' : 'Programmer la restauration', 'Annuler'],
       defaultId: 1,
       cancelId: 1,
       title: 'Confirmer la restauration',
       message: 'Restaurer cette sauvegarde ?',
-      detail:
-        'La base actuelle sera d’abord sauvegardée automatiquement dans le dossier pre-restore, puis l’application redémarrera.',
+      detail: packaged
+        ? 'La base actuelle sera d’abord sauvegardée automatiquement dans le dossier pre-restore, puis l’application redémarrera.'
+        : 'La base actuelle sera d’abord sauvegardée automatiquement dans le dossier pre-restore au prochain démarrage. En mode développement, ferme ensuite AtoumWeb Manager puis relance « npm start » pour appliquer la restauration.',
     });
 
     if (confirmation.response !== 0) {
@@ -87,7 +89,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
 
     scheduleDatabaseRestore(sourcePath);
 
-    if (app.isPackaged) {
+    if (packaged) {
       setTimeout(() => {
         app.relaunch();
         app.exit(0);
