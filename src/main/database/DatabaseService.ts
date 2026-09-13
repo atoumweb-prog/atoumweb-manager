@@ -1,12 +1,14 @@
 import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DatabaseHealth } from '../../shared/contracts';
+import { BillingHandoffService } from '../billing/BillingHandoffService';
 import { CatalogService } from '../commercial/CatalogService';
 import { QuoteService } from '../commercial/QuoteService';
 import { ActionService } from '../crm/ActionService';
 import { ClientContactService } from '../crm/ClientContactService';
 import { CrmService } from '../crm/CrmService';
 import { HourPackService } from '../operations/HourPackService';
+import { InterventionCompletionService } from '../operations/InterventionCompletionService';
 import { MaintenanceService } from '../operations/MaintenanceService';
 import { OperationsService } from '../operations/OperationsService';
 import { ProjectCompletionService } from '../projects/ProjectCompletionService';
@@ -44,6 +46,8 @@ export class DatabaseService {
   readonly operations: OperationsService;
   readonly maintenance: MaintenanceService;
   readonly hourPacks: HourPackService;
+  readonly billingHandoff: BillingHandoffService;
+  readonly interventionCompletion: InterventionCompletionService;
   readonly time: TimeService;
   readonly timeCorrections: TimeCorrectionService;
   readonly timeSwitches: TimeSwitchService;
@@ -66,6 +70,8 @@ export class DatabaseService {
     this.operations = new OperationsService(this.database);
     this.maintenance = new MaintenanceService(this.database);
     this.hourPacks = new HourPackService(this.database);
+    this.billingHandoff = new BillingHandoffService(this.database);
+    this.interventionCompletion = new InterventionCompletionService(this.database, this.operations, this.hourPacks, this.billingHandoff);
     this.time = new TimeService(this.database);
     this.timeCorrections = new TimeCorrectionService(this.database, this.time);
     this.timeSwitches = new TimeSwitchService(this.database, this.time);
