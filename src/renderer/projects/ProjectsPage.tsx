@@ -16,6 +16,7 @@ import {
   type ProjectTemplateSummary,
   type ProjectTemplateVersion,
 } from '../../shared/projects';
+import { ProjectResourcesTab } from './ProjectResourcesTab';
 
 const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
   to_prepare: 'À préparer',
@@ -359,9 +360,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
                   {detail.prerequisites.length === 0 && <p className="muted">Aucun prérequis enregistré.</p>}
                 </div>
               )}
-              {detailTab === 'resources' && (
-                <div className="project-tab-content project-resources-tab"><span className="eyebrow">Dossier réel</span><strong>Ressources projet</strong><p className="project-path">{detail.resourceRootPath || 'Chemin non disponible'}</p><div className="resource-folder-list"><span>01 Identité</span><span>02 Textes</span><span>03 Images & médias</span><span>04 Documents projet</span><span>05 Technique - Sources - Exports</span><span>06 Livrables</span><span>07 Archives</span></div><p className="muted">Les fichiers restent sur le disque. Le CRM stockera uniquement leurs références et métadonnées dans l’étape Ressources.</p></div>
-              )}
+              {detailTab === 'resources' && <ProjectResourcesTab projectId={detail.id} nodes={detail.nodes} resourceRootPath={detail.resourceRootPath} onMessage={onMessage} />}
               {detailTab === 'commercial' && <ProjectCommercialTab project={detail} />}
             </aside>
           )}
