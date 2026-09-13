@@ -297,6 +297,7 @@ export interface OperationsApi {
     create(input: InterventionInput): Promise<Intervention>;
     update(id: string, input: Partial<InterventionInput>): Promise<Intervention>;
     changeStatus(id: string, status: InterventionStatus): Promise<Intervention>;
+    complete(id: string): Promise<Intervention>;
   };
   maintenance: {
     plans: {
