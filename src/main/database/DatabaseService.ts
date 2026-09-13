@@ -6,6 +6,7 @@ import { QuoteService } from '../commercial/QuoteService';
 import { ActionService } from '../crm/ActionService';
 import { ClientContactService } from '../crm/ClientContactService';
 import { CrmService } from '../crm/CrmService';
+import { ProjectCompletionService } from '../projects/ProjectCompletionService';
 import { ProjectResourceService } from '../projects/ProjectResourceService';
 import { ProjectService } from '../projects/ProjectService';
 import { ProjectTechnicalLibraryService } from '../projects/ProjectTechnicalLibraryService';
@@ -26,6 +27,7 @@ export class DatabaseService {
   readonly catalog: CatalogService;
   readonly quotes: QuoteService;
   readonly projects: ProjectService;
+  readonly projectCompletion: ProjectCompletionService;
   readonly projectResources: ProjectResourceService;
   readonly projectTechnicalLibrary: ProjectTechnicalLibraryService;
   readonly time: TimeService;
@@ -39,6 +41,7 @@ export class DatabaseService {
     this.catalog = new CatalogService(this.database);
     this.quotes = new QuoteService(this.database, this.crm);
     this.projects = new ProjectService(this.database, this.workspace);
+    this.projectCompletion = new ProjectCompletionService(this.database);
     this.projectResources = new ProjectResourceService(this.database, this.workspace);
     this.projectTechnicalLibrary = new ProjectTechnicalLibraryService(this.database);
     this.time = new TimeService(this.database);
