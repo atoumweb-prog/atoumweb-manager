@@ -1,0 +1,161 @@
+.maintenance-report-box {
+  display: grid;
+  gap: 9px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent-soft) 35%, var(--surface));
+  overflow: hidden;
+}
+
+.maintenance-report-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.maintenance-report-toggle > span:first-child {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.maintenance-report-toggle strong {
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.maintenance-report-toggle > span:last-child {
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.maintenance-report-loading {
+  margin: 0;
+  padding: 0 10px 10px;
+  font-size: 8px;
+}
+
+.maintenance-report-content {
+  display: grid;
+  gap: 10px;
+  padding: 0 10px 10px;
+}
+
+.maintenance-report-preview-head {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.maintenance-report-preview-head > div {
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+}
+
+.maintenance-report-preview-head strong {
+  font-size: 9px;
+  overflow-wrap: anywhere;
+}
+
+.maintenance-report-preview-head small {
+  color: var(--text-muted);
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.maintenance-report-fields {
+  display: grid;
+  gap: 7px;
+}
+
+.maintenance-report-fields label {
+  display: grid;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.maintenance-report-fields textarea {
+  min-height: 70px;
+  resize: vertical;
+}
+
+.maintenance-report-section {
+  display: grid;
+  gap: 6px;
+  padding-top: 3px;
+}
+
+.maintenance-report-section > strong {
+  font-size: 9px;
+}
+
+.maintenance-report-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.maintenance-report-line span {
+  font-size: 8px;
+  overflow-wrap: anywhere;
+}
+
+.maintenance-report-line small {
+  color: var(--text-muted);
+  font-size: 7px;
+  white-space: nowrap;
+}
+
+.maintenance-report-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.maintenance-report-stats > span {
+  display: grid;
+  gap: 2px;
+  padding: 7px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  font-size: 7px;
+}
+
+.maintenance-report-stats strong {
+  color: var(--text);
+  font-size: 10px;
+}
+
+.maintenance-report-note {
+  align-self: center;
+  font-size: 7px;
+  line-height: 1.4;
+}
+
+@media (max-width: 620px) {
+  .maintenance-report-preview-head,
+  .maintenance-report-stats,
+  .maintenance-report-line {
+    grid-template-columns: 1fr;
+  }
+}
