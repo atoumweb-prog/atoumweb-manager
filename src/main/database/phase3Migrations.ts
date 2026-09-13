@@ -190,8 +190,8 @@ export const PHASE_3_MIGRATIONS = [
     sql: `
       CREATE TABLE IF NOT EXISTS technical_items (
         id TEXT PRIMARY KEY,
-        project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-        scope TEXT NOT NULL DEFAULT 'project' CHECK (scope = 'project'),
+        project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+        scope TEXT NOT NULL DEFAULT 'project' CHECK (scope IN ('project', 'atoumweb')),
         category TEXT NOT NULL CHECK (category IN (
           'header', 'footer', 'hero', 'page', 'section', 'css', 'javascript',
           'php', 'acf', 'divi', 'woocommerce', 'plugin', 'config', 'note', 'other'
@@ -201,11 +201,17 @@ export const PHASE_3_MIGRATIONS = [
         tags_json TEXT NOT NULL DEFAULT '[]',
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
-        archived_at TEXT
+        archived_at TEXT,
+        CHECK (
+          (scope='project' AND project_id IS NOT NULL)
+          OR (scope='atoumweb' AND project_id IS NULL)
+        )
       ) STRICT;
 
       CREATE INDEX IF NOT EXISTS idx_technical_items_project
         ON technical_items(project_id, category, archived_at);
+      CREATE INDEX IF NOT EXISTS idx_technical_items_scope
+        ON technical_items(scope, category, archived_at);
       CREATE INDEX IF NOT EXISTS idx_technical_items_name
         ON technical_items(name COLLATE NOCASE);
 
