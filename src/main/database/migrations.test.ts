@@ -6,8 +6,8 @@ describe('migrations SQLite', () => {
   it('applique chaque migration une seule fois', () => {
     const database = new NodeSqliteAdapter(':memory:');
 
-    expect(getPendingMigrations(database)).toHaveLength(2);
-    expect(applyPendingMigrations(database)).toHaveLength(2);
+    expect(getPendingMigrations(database)).toHaveLength(3);
+    expect(applyPendingMigrations(database)).toHaveLength(3);
     expect(getPendingMigrations(database)).toHaveLength(0);
     expect(applyPendingMigrations(database)).toHaveLength(0);
 
