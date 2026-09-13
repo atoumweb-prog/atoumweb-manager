@@ -14,6 +14,7 @@ import './quote-line-editor.css';
 import './quote-client-preview.css';
 import './projects.css';
 import './project-resources.css';
+import './project-technical-library.css';
 
 const rootElement = document.getElementById('root');
 
