@@ -1,3 +1,8 @@
+.content-area {
+  container-type: inline-size;
+  container-name: maincontent;
+}
+
 .quick-followups {
   display: flex;
   flex-wrap: wrap;
