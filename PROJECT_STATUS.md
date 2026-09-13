@@ -67,6 +67,9 @@ PR : #58 (brouillon)
 - [x] conversion Prospect → Client transactionnelle et idempotente
 - [x] Clients : lister / créer / modifier
 - [x] archivage / réactivation
+- [x] plusieurs contacts par client
+- [x] rôles Principal / Administratif / Facturation / Technique / Autre
+- [x] changement de contact principal avec unicité garantie
 - [x] journal d’activité centralisé
 - [x] recherche globale locale
 - [x] reconstruction complète de l’index de recherche
@@ -88,6 +91,9 @@ PR : #58 (brouillon)
 - [x] archivage / réactivation
 - [x] fiche Client latérale
 - [x] onglets Client Résumé / Contacts / Commercial / Historique interactifs
+- [x] ajout de contacts supplémentaires depuis la fiche Client
+- [x] choix du rôle de chaque contact
+- [x] changement du contact principal depuis la fiche Client
 - [x] programmation d’une prochaine action Client
 - [x] activité récente / historique Client
 - [x] recherche globale avec résultats Clients / Prospects / Organisations / Contacts
@@ -95,7 +101,6 @@ PR : #58 (brouillon)
 
 ### Reste fonctionnel Phase 1
 
-- [ ] gestion UI complète de plusieurs contacts et rôles Client
 - [ ] deep-link précis depuis recherche globale vers une fiche Organisation/Contact
 - [ ] navigation clavier complète dans les résultats de recherche
 - [ ] enrichissement Commercial Client lorsque Projets/Facturation/Temps seront disponibles
@@ -109,6 +114,7 @@ PR : #58 (brouillon)
 - [x] conversion idempotente
 - [x] archivage/réactivation
 - [x] validation budgets / probabilité
+- [x] multi-contact client + changement de principal
 - [ ] exécution réelle typecheck/tests de la branche Phase 1 sur Windows
 - [ ] validation de la migration depuis une base Phase 0 existante
 - [ ] validation visuelle Phase 1
@@ -140,4 +146,4 @@ PR : #58 (brouillon)
 
 **Phase 1 CRM : première passe fonctionnelle avancée terminée sur la branche ; PR #58 ouverte en brouillon.**
 
-Aucune validation n’est déclarée comme réussie tant que les commandes n’ont pas été réellement exécutées. La prochaine validation locale devra vérifier la sauvegarde `pre-migration`, le passage à 3 migrations, le typecheck, les tests, la création d’un prospect, les raccourcis de relance, sa conversion en client, les fiches Prospect/Client, l’archivage/réactivation et la recherche globale.
+Aucune validation n’est déclarée comme réussie tant que les commandes n’ont pas été réellement exécutées. La prochaine validation locale devra vérifier la sauvegarde `pre-migration`, le passage à 3 migrations, le typecheck, les tests, la création d’un prospect, les raccourcis de relance, sa conversion en client, les fiches Prospect/Client, les contacts multiples, l’archivage/réactivation et la recherche globale.
