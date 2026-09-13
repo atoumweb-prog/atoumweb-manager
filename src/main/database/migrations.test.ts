@@ -6,8 +6,8 @@ describe('migrations SQLite', () => {
   it('applique chaque migration une seule fois', () => {
     const database = new NodeSqliteAdapter(':memory:');
 
-    expect(getPendingMigrations(database)).toHaveLength(9);
-    expect(applyPendingMigrations(database)).toHaveLength(9);
+    expect(getPendingMigrations(database)).toHaveLength(10);
+    expect(applyPendingMigrations(database)).toHaveLength(10);
     expect(getPendingMigrations(database)).toHaveLength(0);
     expect(applyPendingMigrations(database)).toHaveLength(0);
 
@@ -38,6 +38,8 @@ describe('migrations SQLite', () => {
       'technical_items',
       'technical_item_versions',
       'technical_item_assets',
+      'time_sessions',
+      'time_session_pauses',
     ]) {
       const row = database.get<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
