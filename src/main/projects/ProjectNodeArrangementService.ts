@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import type { MoveProjectNodeInput, ProjectDetail } from '../../shared/projects';
 import type { ProjectService } from './ProjectService';
@@ -41,13 +40,13 @@ export class ProjectNodeArrangementService {
       this.database.run('UPDATE project_nodes SET parent_id=?, updated_at=? WHERE id=?', [targetParentId, now, nodeId]);
       this.resequence(targetSiblings, now);
       if (oldParentId !== targetParentId) {
-        const oldSiblings = this.siblings(node.project_id, oldParentId).filter((item) => item.id !== nodeId);
+        const oldSiblings = this.siblings(node.project_id, oldParentId);
         this.resequence(oldSiblings, now);
       }
       this.database.run(
-        `INSERT INTO activity_events (id,entity_type,entity_id,action,summary,project_id,created_at)
-         VALUES (?,?,?,?,?,?,?)`,
-        [randomUUID(), 'project', node.project_id, 'project_node_moved', `Organisation modifiée : ${node.name}`, node.project_id, now],
+        `INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at)
+         VALUES ('project',?,'project_node_moved',?,NULL,?)`,
+        [node.project_id, `Organisation modifiée : ${node.name}`, now],
       );
       this.database.exec('COMMIT;');
     } catch (error) {
