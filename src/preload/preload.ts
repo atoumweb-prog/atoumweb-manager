@@ -168,9 +168,12 @@ const api: AtoumWebApi = {
   time: {
     active: () => ipcRenderer.invoke('time:active'),
     start: (input: StartTimeSessionInput) => ipcRenderer.invoke('time:start', input),
+    heartbeat: (id: string) => ipcRenderer.invoke('time:heartbeat', id),
     pause: (id: string) => ipcRenderer.invoke('time:pause', id),
     resume: (id: string) => ipcRenderer.invoke('time:resume', id),
+    recoverResume: (id: string) => ipcRenderer.invoke('time:recover-resume', id),
     stop: (id: string) => ipcRenderer.invoke('time:stop', id),
+    stopAtLastKnown: (id: string) => ipcRenderer.invoke('time:stop-last-known', id),
     addManual: (input: ManualTimeSessionInput) => ipcRenderer.invoke('time:add-manual', input),
     list: (filters?: TimeSessionFilters) => ipcRenderer.invoke('time:list', filters),
     summary: (filters?: TimeSessionFilters) => ipcRenderer.invoke('time:summary', filters),
