@@ -4,6 +4,7 @@ import App from './App';
 import './styles.css';
 import './crm.css';
 import './crm-extras.css';
+import './prospect-detail.css';
 
 const rootElement = document.getElementById('root');
 
