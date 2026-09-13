@@ -14,6 +14,17 @@ export const PHASE_4_OVERAGE_MIGRATIONS = [
         WHERE mp.id = maintenance_subscriptions.plan_id
       ), 'none');
 
+      CREATE TRIGGER IF NOT EXISTS trg_maintenance_subscription_carryover_snapshot
+      AFTER INSERT ON maintenance_subscriptions
+      WHEN NEW.plan_id IS NOT NULL
+      BEGIN
+        UPDATE maintenance_subscriptions
+        SET carryover_mode_snapshot = COALESCE((
+          SELECT mp.carryover_mode FROM maintenance_plans mp WHERE mp.id = NEW.plan_id
+        ), 'none')
+        WHERE id = NEW.id;
+      END;
+
       CREATE TABLE IF NOT EXISTS maintenance_overage_decisions (
         id TEXT PRIMARY KEY,
         period_id TEXT NOT NULL REFERENCES maintenance_periods(id) ON DELETE CASCADE,
