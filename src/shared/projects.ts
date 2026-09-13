@@ -5,6 +5,9 @@ export const PROJECT_COMMERCIAL_MODES = ['normal', 'discounted', 'free', 'partne
 export const PROJECT_NODE_TYPES = ['lot', 'module', 'task', 'checklist'] as const;
 export const PROJECT_NODE_STATUSES = ['todo', 'in_progress', 'waiting_client', 'blocked', 'to_validate', 'done'] as const;
 export const PROJECT_PREREQUISITE_STATUSES = ['to_request', 'requested', 'received', 'incomplete', 'validated', 'not_applicable'] as const;
+export const PROJECT_RESOURCE_FOLDERS = ['identity', 'texts', 'media', 'documents', 'technical', 'deliverables', 'archives'] as const;
+export const PROJECT_RESOURCE_STATUSES = ['received', 'to_process', 'in_progress', 'validated', 'obsolete'] as const;
+export const PROJECT_RESOURCE_ROLES = ['client_provided', 'atoumweb_rewrite', 'final_validated', 'other'] as const;
 
 export type ProjectTemplateStatus = (typeof PROJECT_TEMPLATE_STATUSES)[number];
 export type ProjectTemplateVersionStatus = (typeof PROJECT_TEMPLATE_VERSION_STATUSES)[number];
@@ -13,6 +16,9 @@ export type ProjectCommercialMode = (typeof PROJECT_COMMERCIAL_MODES)[number];
 export type ProjectNodeType = (typeof PROJECT_NODE_TYPES)[number];
 export type ProjectNodeStatus = (typeof PROJECT_NODE_STATUSES)[number];
 export type ProjectPrerequisiteStatus = (typeof PROJECT_PREREQUISITE_STATUSES)[number];
+export type ProjectResourceFolder = (typeof PROJECT_RESOURCE_FOLDERS)[number];
+export type ProjectResourceStatus = (typeof PROJECT_RESOURCE_STATUSES)[number];
+export type ProjectResourceRole = (typeof PROJECT_RESOURCE_ROLES)[number];
 
 export interface ProjectTemplateInput {
   name: string;
@@ -178,6 +184,29 @@ export interface InternalProjectInput {
   notes?: string | null;
 }
 
+export interface ProjectResource {
+  id: string;
+  projectId: string;
+  clientAccountId?: string | null;
+  relativePath: string;
+  fileName: string;
+  folder: ProjectResourceFolder;
+  status: ProjectResourceStatus;
+  contentRole: ProjectResourceRole;
+  mimeType?: string | null;
+  sizeBytes?: number | null;
+  checksumSha256?: string | null;
+  missing: boolean;
+  linkedNodeIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProjectResourceOpenResult {
+  ok: boolean;
+  error?: string | null;
+}
+
 export interface ProjectsApi {
   templates: {
     list(): Promise<ProjectTemplateSummary[]>;
@@ -198,5 +227,16 @@ export interface ProjectsApi {
     updateNode(nodeId: string, input: Partial<ProjectNodeInput>): Promise<ProjectDetail>;
     addPrerequisite(projectId: string, input: ProjectPrerequisiteInput): Promise<ProjectDetail>;
     updatePrerequisiteStatus(id: string, status: ProjectPrerequisiteStatus): Promise<ProjectDetail>;
+  };
+  resources: {
+    list(projectId: string): Promise<ProjectResource[]>;
+    importFiles(projectId: string, folder: ProjectResourceFolder, contentRole?: ProjectResourceRole): Promise<ProjectResource[]>;
+    updateStatus(id: string, status: ProjectResourceStatus): Promise<ProjectResource>;
+    updateRole(id: string, role: ProjectResourceRole): Promise<ProjectResource>;
+    linkToNode(id: string, nodeId: string): Promise<ProjectResource>;
+    unlinkFromNode(id: string, nodeId: string): Promise<ProjectResource>;
+    openFile(id: string): Promise<ProjectResourceOpenResult>;
+    openFolder(projectId: string): Promise<ProjectResourceOpenResult>;
+    relocalize(id: string): Promise<ProjectResource | null>;
   };
 }
