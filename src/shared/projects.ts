@@ -254,6 +254,16 @@ export interface ProjectTechnicalItemDetail extends ProjectTechnicalItemSummary 
   versions: ProjectTechnicalVersion[];
 }
 
+export interface ProjectTechnicalReuseExportResult {
+  projectId: string;
+  itemId: string;
+  versionId: string;
+  versionNumber: number;
+  path: string;
+  resourceId: string;
+  createdAt: string;
+}
+
 export interface ProjectCompletionItem {
   key: ProjectCompletionKey;
   label: string;
@@ -312,6 +322,7 @@ export interface ProjectsApi {
     markStable(versionId: string): Promise<ProjectTechnicalItemDetail>;
     linkResource(versionId: string, resourceId: string): Promise<ProjectTechnicalItemDetail>;
     unlinkResource(versionId: string, resourceId: string): Promise<ProjectTechnicalItemDetail>;
+    prepareForReuse(itemId: string, versionId?: string | null): Promise<ProjectTechnicalReuseExportResult>;
     archive(itemId: string): Promise<ProjectTechnicalItemDetail>;
   };
 }
