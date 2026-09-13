@@ -6,9 +6,10 @@
 
 - **Projet** : AtoumWeb Manager
 - **Version cible actuelle** : V1
-- **Statut global** : Conception fonctionnelle, architecture technique et modèle de données validés — socle applicatif à créer
+- **Statut global** : Fondation applicative en cours — premier socle Electron/React/SQLite implémenté sur branche dédiée
 - **Dépôt** : `atoumweb-prog/atoumweb-manager`
 - **Branche stable** : `main`
+- **Branche de travail actuelle** : `foundation/electron-react-sqlite`
 - **Principe** : une donnée possède une source unique ; les autres écrans la référencent sans duplication.
 
 ## Références
@@ -17,34 +18,44 @@
 - `docs/ARCHITECTURE.md` — architecture technique décidée
 - `docs/DATA_MODEL_V1.md` — modèle de données cible V1
 - `docs/ROADMAP_V1.md` — ordre de développement
+- `docs/DEVELOPMENT.md` — démarrage local et commandes de développement
 
 ## Phase actuelle
 
 ### Phase 0 — Fondation
 
 - [x] Créer le dépôt GitHub `atoumweb-manager`
-- [x] Ajouter le README
-- [x] Ajouter `AGENTS.md`
-- [x] Ajouter ce fichier `PROJECT_STATUS.md`
-- [x] Ajouter le cahier des charges fonctionnel V1 en Markdown
+- [x] Ajouter la documentation de référence et `AGENTS.md`
 - [x] Définir et documenter l'architecture technique
 - [x] Définir le modèle de données initial
-- [x] Définir la stratégie de stockage utilisateur
-- [x] Définir la stratégie de sauvegarde/restauration de la base du CRM
-- [x] Préparer la roadmap V1
-- [x] Ajouter un modèle d'issue GitHub
-- [x] Créer l'issue de pilotage #1
-- [ ] Créer le socle Electron / React / TypeScript
-- [ ] Créer l'arborescence de code
-- [ ] Ajouter le moteur de migrations SQLite
-- [ ] Ajouter les premiers tests et la CI GitHub
+- [x] Créer la branche `foundation/electron-react-sqlite`
+- [x] Initialiser Electron Forge + React + TypeScript
+- [x] Créer l'arborescence `main / preload / renderer / shared`
+- [x] Isoler le renderer du système (`contextIsolation`, `nodeIntegration: false`, sandbox)
+- [x] Ajouter la couche SQLite via `node:sqlite`
+- [x] Ajouter une abstraction `DatabaseAdapter`
+- [x] Ajouter le moteur de migrations SQLite
+- [x] Ajouter la première migration système (`settings`, `activity_log`)
+- [x] Ajouter le workspace local configurable
+- [x] Ajouter les sauvegardes quotidiennes et manuelles
+- [x] Ajouter une sauvegarde automatique avant migration
+- [x] Ajouter une restauration sécurisée avec copie `pre-restore`
+- [x] Ajouter le shell de navigation V1 dans le bon ordre
+- [x] Ajouter les thèmes AtoumWeb / Noir / Blanc
+- [x] Ajouter un écran Réglages minimal (thème, workspace, sauvegarde/restauration)
+- [x] Ajouter les premiers tests unitaires/migrations
+- [x] Ajouter un workflow CI GitHub
+- [ ] Générer et versionner `package-lock.json`
+- [ ] Valider `npm install`, `npm run typecheck`, `npm test` et `npm start` sur un runner/PC Windows
+- [ ] Valider le packaging Windows
+- [ ] Finaliser puis fusionner la PR de fondation
 
 ## Avancement par module
 
 | Module | Conception | Développement | Tests | Statut |
 |---|---|---|---|---|
-| Accueil / Dashboard | ✅ | ⬜ | ⬜ | À développer |
-| Recherche globale | ✅ | ⬜ | ⬜ | À développer |
+| Accueil / Dashboard | ✅ | 🟡 socle | ⬜ | Shell de fondation |
+| Recherche globale | ✅ | 🟡 shell | ⬜ | Champ présent, moteur à développer |
 | Prospects | ✅ | ⬜ | ⬜ | À développer |
 | Clients | ✅ | ⬜ | ⬜ | À développer |
 | Offres & Tarifs | ✅ | ⬜ | ⬜ | À développer |
@@ -53,19 +64,19 @@
 | Fichiers & Ressources projet | ✅ | ⬜ | ⬜ | À développer |
 | Bibliothèque projet | ✅ | ⬜ | ⬜ | À développer |
 | Bibliothèque AtoumWeb | ✅ | ⬜ | ⬜ | À développer |
-| Timer global | ✅ | ⬜ | ⬜ | À développer |
+| Timer global | ✅ | 🟡 shell | ⬜ | Widget visible, logique à raccorder |
 | Gestion des temps | ✅ | ⬜ | ⬜ | À développer |
 | Interventions & Maintenance | ✅ | ⬜ | ⬜ | À développer |
 | Packs d'heures | ✅ | ⬜ | ⬜ | À développer |
 | Facturation / suivi Abby | ✅ | ⬜ | ⬜ | À développer |
 | Dépenses AtoumWeb | ✅ | ⬜ | ⬜ | À développer |
 | Documents & Contrats | ✅ | ⬜ | ⬜ | À développer |
-| Sauvegardes | ✅ | ⬜ | ⬜ | À développer |
+| Sauvegardes | ✅ | 🟡 fondation | ⬜ | DB locale : création/restauration implémentées |
 | Annuaire interne | ✅ | ⬜ | ⬜ | À développer |
 | Statistiques | ✅ | ⬜ | ⬜ | À développer |
-| Journal d'activité | ✅ | ⬜ | ⬜ | À développer |
-| Réglages généraux | ✅ | ⬜ | ⬜ | À développer |
-| Thèmes AtoumWeb / Noir / Blanc | ✅ | ⬜ | ⬜ | À développer |
+| Journal d'activité | ✅ | 🟡 schéma | ⬜ | Table initiale créée |
+| Réglages généraux | ✅ | 🟡 socle | ⬜ | Thème/workspace/DB présents |
+| Thèmes AtoumWeb / Noir / Blanc | ✅ | ✅ socle | ⬜ | Sélection et persistance implémentées |
 
 ## Règles fonctionnelles à ne pas casser
 
@@ -93,31 +104,18 @@
 - Electron 44.x
 - React 19.3
 - TypeScript strict
-- Electron Forge, template Webpack + TypeScript
-- SQLite locale via `node:sqlite`, encapsulé derrière une couche repository/adapter
+- Electron Forge 7 + Vite 5
+- SQLite locale via `node:sqlite`, encapsulé derrière `DatabaseAdapter`
 - SQL et migrations versionnées sans ORM lourd pour la V1
-- renderer isolé du système ; fichiers/base/PDF dans le main process via IPC typé
-- Monaco Editor pour visualiser/éditer le code sans l'exécuter
-- PDF via rendu HTML + `webContents.printToPDF()`
+- renderer isolé ; fichiers/base/PDF dans le main process via IPC typé
+- Monaco Editor prévu pour visualiser/éditer le code sans l'exécuter
+- PDF prévu via rendu HTML + `webContents.printToPDF()`
 - workspace local configurable, par défaut dans Documents
-- sauvegarde quotidienne de la base + sauvegarde avant migration
+- sauvegarde quotidienne, manuelle, pré-migration et pré-restauration
 
 ## Parcours métier de référence
 
 `Prospect → Devis → Client → Projet → Production → Livraison → Facturation → Maintenance → Statistiques`
-
-Lorsqu'un devis est accepté, le CRM doit pouvoir :
-
-- créer ou rattacher le client ;
-- créer le projet ;
-- appliquer la bonne version du modèle de projet ;
-- ajouter les options/prestations du devis ;
-- générer lots, modules, tâches et prérequis ;
-- créer l'arborescence Fichiers & Ressources ;
-- initialiser la Bibliothèque projet ;
-- relier devis et contrat ;
-- préparer les éléments à facturer ;
-- rendre le projet disponible dans le timer et la gestion des temps.
 
 ## Décisions
 
@@ -125,42 +123,41 @@ Lorsqu'un devis est accepté, le CRM doit pouvoir :
 
 - Tous les grands modules fonctionnels sont validés.
 - Trois thèmes : **AtoumWeb** (défaut), **Noir**, **Blanc**.
-- Bouton de retour aux réglages par défaut, sans suppression de données métier.
 - Recherche globale ajoutée comme fonction transverse essentielle.
 - Bibliothèque technique divisée en **Bibliothèque projet** et **Bibliothèque AtoumWeb**.
-- Les modules réutilisables AtoumWeb sont préparés à partir d'exports fournis (JSON/Divi/code) avec assistance, et non généralisés automatiquement par le CRM.
-- Les sauvegardes doivent enregistrer leur emplacement réel ; une copie sur serveur n'est pas une copie locale.
+- Les modules réutilisables AtoumWeb sont préparés à partir d'exports fournis avec assistance, et non généralisés automatiquement par le CRM.
+- Les sauvegardes enregistrent leur emplacement réel.
 
-### 2026-09-13 — Dépôt GitHub initialisé
-
-- Dépôt privé créé : `atoumweb-prog/atoumweb-manager`.
-- Documentation de démarrage ajoutée sur `main`.
-- Cahier des charges V1 ajouté en Markdown pour Codex.
-- Roadmap et modèle d'issue ajoutés.
-
-### 2026-09-13 — Architecture et modèle de données décidés
+### 2026-09-13 — Architecture et modèle de données
 
 - Application Windows locale Electron + React + TypeScript.
-- SQLite locale, fichiers lourds conservés hors base et référencés.
-- Modèle de données V1 documenté dans `docs/DATA_MODEL_V1.md`.
-- Recherche globale basée sur un index dérivé reconstruisible.
-- Journal d'activité centralisé append-only.
-- Sauvegarde/restauration de la base prévue dès le socle.
+- SQLite locale, fichiers lourds hors base et référencés.
+- Modèle V1 documenté dans `docs/DATA_MODEL_V1.md`.
+- Journal d'activité centralisé et recherche reconstruisible.
+
+### 2026-09-13 — Première fondation applicative
+
+- Electron/React/Vite configurés sur `foundation/electron-react-sqlite`.
+- Backend local SQLite + migrations + workspace ajouté.
+- IPC sécurisé et preload minimal ajoutés.
+- Shell de navigation et trois thèmes ajoutés.
+- Sauvegarde quotidienne/manuelle/pré-migration et restauration avec sauvegarde `pre-restore` ajoutées.
+- Pile de build conservatrice retenue : Forge 7.11.2 + Vite 5.4.19 + TypeScript 5.9.2.
+- Workflow CI ajouté mais les exécutions GitHub observées n'ont pas obtenu de runner (aucune étape exécutée) ; validation réelle toujours requise sur runner/PC Windows.
 
 ## Travail en cours
 
-**Préparation du socle applicatif et des premières migrations SQLite.**
+**Validation exécutable de la fondation puis première PR vers `main`.**
 
-## Blocages
+## Blocages / points ouverts
 
-Aucun blocage fonctionnel connu.
+- Les runs GitHub Actions observés se terminent avant l'exécution des étapes (runner absent). Ce n'est pas un échec de compilation démontré.
+- `package-lock.json` devra être généré par un `npm install` effectif puis versionné.
 
 ## Prochaines actions
 
-1. Créer une branche de fondation.
-2. Initialiser Electron Forge + React + TypeScript.
-3. Créer l'arborescence `main / preload / renderer / shared`.
-4. Ajouter SQLite et le moteur de migrations.
-5. Ajouter les réglages de workspace et la sauvegarde DB.
-6. Ajouter les trois thèmes et le shell de navigation.
-7. Ajouter les premiers tests et la CI GitHub.
+1. Valider l'installation et les tests sur Windows/Codex avec accès npm.
+2. Générer `package-lock.json`.
+3. Corriger les éventuelles erreurs révélées par typecheck/tests/démarrage.
+4. Valider la PR de fondation.
+5. Démarrer le socle CRM : contacts, prospects, clients et recherche globale réelle.
