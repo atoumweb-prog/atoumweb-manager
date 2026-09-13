@@ -221,6 +221,80 @@ export const MIGRATIONS: Migration[] = [
         WHERE organization_id IS NULL AND primary_contact_id IS NOT NULL;
     `,
   },
+  {
+    id: 4,
+    name: 'phase_1_crm_actions_followups',
+    sql: `
+      CREATE TABLE IF NOT EXISTS crm_actions (
+        id TEXT PRIMARY KEY,
+        owner_type TEXT NOT NULL CHECK (owner_type IN ('prospect', 'client')),
+        prospect_id TEXT REFERENCES prospects(id) ON DELETE CASCADE,
+        client_account_id TEXT REFERENCES client_accounts(id) ON DELETE CASCADE,
+        action_type TEXT NOT NULL CHECK (action_type IN ('action', 'follow_up')),
+        title TEXT NOT NULL,
+        due_at TEXT,
+        notes TEXT,
+        status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'done', 'cancelled')),
+        completed_at TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        CHECK (
+          (owner_type = 'prospect' AND prospect_id IS NOT NULL AND client_account_id IS NULL)
+          OR
+          (owner_type = 'client' AND client_account_id IS NOT NULL AND prospect_id IS NULL)
+        )
+      ) STRICT;
+
+      CREATE INDEX IF NOT EXISTS idx_crm_actions_prospect
+        ON crm_actions(prospect_id, status, due_at);
+      CREATE INDEX IF NOT EXISTS idx_crm_actions_client
+        ON crm_actions(client_account_id, status, due_at);
+      CREATE INDEX IF NOT EXISTS idx_crm_actions_due
+        ON crm_actions(status, due_at);
+      CREATE INDEX IF NOT EXISTS idx_crm_actions_type
+        ON crm_actions(action_type, status);
+
+      INSERT OR IGNORE INTO crm_actions (
+        id, owner_type, prospect_id, client_account_id, action_type, title,
+        due_at, notes, status, completed_at, created_at, updated_at
+      )
+      SELECT
+        'legacy-prospect-' || id,
+        'prospect',
+        id,
+        NULL,
+        CASE WHEN stage = 'follow_up' THEN 'follow_up' ELSE 'action' END,
+        COALESCE(NULLIF(trim(next_action_text), ''), 'Action à effectuer'),
+        next_action_at,
+        NULL,
+        'open',
+        NULL,
+        created_at,
+        updated_at
+      FROM prospects
+      WHERE next_action_at IS NOT NULL OR NULLIF(trim(next_action_text), '') IS NOT NULL;
+
+      INSERT OR IGNORE INTO crm_actions (
+        id, owner_type, prospect_id, client_account_id, action_type, title,
+        due_at, notes, status, completed_at, created_at, updated_at
+      )
+      SELECT
+        'legacy-client-' || id,
+        'client',
+        NULL,
+        id,
+        'action',
+        COALESCE(NULLIF(trim(next_action_text), ''), 'Action à effectuer'),
+        next_action_at,
+        NULL,
+        'open',
+        NULL,
+        created_at,
+        updated_at
+      FROM client_accounts
+      WHERE next_action_at IS NOT NULL OR NULLIF(trim(next_action_text), '') IS NOT NULL;
+    `,
+  },
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {
