@@ -1,6 +1,7 @@
 import type { CatalogApi, QuoteApi } from './commercial';
 import type { CrmApi } from './crm';
 import type { ProjectsApi } from './projects';
+import type { TimeApi } from './time';
 
 export const THEME_NAMES = ['atoumweb', 'noir', 'blanc'] as const;
 
@@ -62,4 +63,5 @@ export interface AtoumWebApi {
   catalog: CatalogApi;
   quotes: QuoteApi;
   projects: ProjectsApi;
+  time: TimeApi;
 }
