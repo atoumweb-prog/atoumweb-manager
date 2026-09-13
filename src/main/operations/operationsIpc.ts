@@ -34,6 +34,7 @@ export function registerOperationsIpcHandlers(database: DatabaseService): void {
   ipcMain.handle('operations:interventions:create', (_event, input: InterventionInput) => database.operations.createIntervention(input));
   ipcMain.handle('operations:interventions:update', (_event, id: string, input: Partial<InterventionInput>) => database.operations.updateIntervention(id, input));
   ipcMain.handle('operations:interventions:change-status', (_event, id: string, status: InterventionStatus) => database.operations.changeInterventionStatus(id, status));
+  ipcMain.handle('operations:interventions:complete', (_event, id: string) => database.interventionCompletion.complete(id));
 
   ipcMain.handle('operations:maintenance:plans:list', (_event, includeArchived?: boolean) => database.maintenance.listPlans(includeArchived));
   ipcMain.handle('operations:maintenance:plans:create', (_event, input: MaintenancePlanInput) => database.maintenance.createPlan(input));
