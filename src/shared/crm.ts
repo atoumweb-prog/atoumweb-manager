@@ -72,6 +72,15 @@ export interface Contact extends ContactInput {
   archivedAt?: string | null;
 }
 
+export interface ClientContactLink {
+  id: string;
+  clientAccountId: string;
+  contactId: string;
+  role: ClientContactRole;
+  isPrimary: boolean;
+  contact: Contact;
+}
+
 export interface ProspectInput {
   organizationId?: string | null;
   contactId?: string | null;
@@ -184,6 +193,9 @@ export interface CrmApi {
     update(id: string, input: ClientInput): Promise<ClientSummary>;
     archive(id: string): Promise<ClientSummary>;
     reactivate(id: string, status: Exclude<ClientStatus, 'archived'>): Promise<ClientSummary>;
+    listContacts(id: string): Promise<ClientContactLink[]>;
+    addContact(id: string, input: ContactInput, role: ClientContactRole, makePrimary?: boolean): Promise<ClientContactLink>;
+    setPrimaryContact(id: string, contactId: string): Promise<void>;
   };
   activity: {
     list(entityType: string, entityId: string): Promise<ActivityEvent[]>;
