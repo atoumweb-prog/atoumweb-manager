@@ -1,0 +1,27 @@
+.content-area {
+  container-type: inline-size;
+  container-name: maincontent;
+}
+
+.quick-followups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.quick-followups button {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 4px 6px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.quick-followups button:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}

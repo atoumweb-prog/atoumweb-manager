@@ -6,15 +6,18 @@ describe('migrations SQLite', () => {
   it('applique chaque migration une seule fois', () => {
     const database = new NodeSqliteAdapter(':memory:');
 
-    expect(getPendingMigrations(database)).toHaveLength(1);
-    expect(applyPendingMigrations(database)).toHaveLength(1);
+    expect(getPendingMigrations(database)).toHaveLength(4);
+    expect(applyPendingMigrations(database)).toHaveLength(4);
     expect(getPendingMigrations(database)).toHaveLength(0);
     expect(applyPendingMigrations(database)).toHaveLength(0);
 
-    const settingsTable = database.get<{ name: string }>(
-      "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'settings'",
-    );
-    expect(settingsTable?.name).toBe('settings');
+    for (const table of ['settings', 'organizations', 'contacts', 'client_accounts', 'prospects', 'activity_events', 'search_documents', 'crm_actions']) {
+      const row = database.get<{ name: string }>(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+        [table],
+      );
+      expect(row?.name).toBe(table);
+    }
 
     database.close();
   });
