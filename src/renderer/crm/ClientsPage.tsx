@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { ClientStatus, ClientSummary } from '../../shared/crm';
+import type { ActivityEvent, ClientStatus, ClientSummary } from '../../shared/crm';
 
 const STATUS_LABELS: Record<ClientStatus, string> = {
   active: 'Actif',
@@ -27,6 +27,7 @@ const EMPTY_DRAFT: ClientDraft = {
 
 export function ClientsPage({ onMessage }: { onMessage: (message: string) => void }) {
   const [clients, setClients] = useState<ClientSummary[]>([]);
+  const [activity, setActivity] = useState<ActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<'all' | ClientStatus>('all');
   const [query, setQuery] = useState('');
@@ -48,6 +49,14 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
   useEffect(() => {
     void refresh();
   }, []);
+
+  useEffect(() => {
+    if (!selectedId) {
+      setActivity([]);
+      return;
+    }
+    void window.atoumweb.crm.activity.list('client', selectedId).then(setActivity);
+  }, [selectedId, clients]);
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase('fr-FR');
@@ -203,7 +212,16 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
               </div>
               {selected.notes && <div className="client-notes"><strong>Notes</strong><p>{selected.notes}</p></div>}
               <div className="client-tabs-preview"><span className="active">Résumé</span><span>Contacts</span><span>Commercial</span><span>Historique</span></div>
-              <p className="muted">Les onglets détaillés seront enrichis au fil de la Phase 1.</p>
+              <div className="activity-preview">
+                <strong>Activité récente</strong>
+                {activity.slice(0, 5).map((event) => (
+                  <div className="activity-item" key={event.id}>
+                    <span className="activity-dot" />
+                    <div><p>{event.summary}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div>
+                  </div>
+                ))}
+                {activity.length === 0 && <p className="muted">Aucune activité enregistrée.</p>}
+              </div>
             </aside>
           )}
         </div>
