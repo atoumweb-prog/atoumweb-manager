@@ -16,6 +16,7 @@ import {
 } from '../../shared/operations';
 import type { ProjectSummary } from '../../shared/projects';
 import { MaintenanceOveragePanel } from './MaintenanceOveragePanel';
+import { MaintenanceReportPanel } from './MaintenanceReportPanel';
 
 const FREQUENCY_LABELS: Record<MaintenanceFrequency, string> = { monthly: 'Mensuelle', quarterly: 'Trimestrielle', yearly: 'Annuelle' };
 const SUBSCRIPTION_LABELS: Record<MaintenanceSubscriptionStatus, string> = { active: 'Active', suspended: 'Suspendue', ended: 'Terminée', archived: 'Archivée' };
@@ -230,6 +231,7 @@ export function MaintenancePanel({ clients, projects, onMessage, onInterventionC
           <label>État de la période<select value={selectedPeriod.status} onChange={(event) => void changePeriodStatus(event.target.value as MaintenancePeriodStatus)}>{MAINTENANCE_PERIOD_STATUSES.map((status) => <option key={status} value={status}>{PERIOD_LABELS[status]}</option>)}</select></label>
           <button className="primary-button" type="button" disabled={selectedPeriod.status === 'closed'} onClick={() => void createMaintenanceIntervention()}>+ Intervention de maintenance</button>
           <div className="maintenance-checklist"><strong>Checklist</strong>{selectedPeriod.checks.map((check) => <div key={check.id} className={`maintenance-check check-${check.status}`}><div><strong>{check.label}</strong>{check.description && <small>{check.description}</small>}</div><select value={check.status} disabled={selectedPeriod.status === 'closed'} onChange={(event) => void changeCheck(check.id, event.target.value as MaintenanceCheckStatus)}>{MAINTENANCE_CHECK_STATUSES.map((status) => <option key={status} value={status}>{CHECK_LABELS[status]}</option>)}</select></div>)}</div>
+          <MaintenanceReportPanel periodId={selectedPeriod.id} onMessage={onMessage} />
         </div>}
       </aside>}
     </div>
