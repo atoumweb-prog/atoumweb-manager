@@ -22,12 +22,13 @@ function dateLabel(value: string): string {
   return new Date(value).toLocaleDateString('fr-FR');
 }
 
-export function HourPacksPanel({ clients, projects, interventions, onMessage, onOperationsChanged }: {
+export function HourPacksPanel({ clients, projects, interventions, onMessage, onOperationsChanged, initialPackId }: {
   clients: ClientSummary[];
   projects: ProjectSummary[];
   interventions: Intervention[];
   onMessage: (message: string) => void;
   onOperationsChanged: () => Promise<void>;
+  initialPackId?: string | null;
 }) {
   const [packs, setPacks] = useState<HourPack[]>([]);
   const [selectedId, setSelectedId] = useState('');
@@ -58,6 +59,9 @@ export function HourPacksPanel({ clients, projects, interventions, onMessage, on
   }
 
   useEffect(() => { void refresh(); }, []);
+  useEffect(() => {
+    if (initialPackId) setSelectedId(initialPackId);
+  }, [initialPackId]);
 
   const selected = packs.find((pack) => pack.id === selectedId) ?? null;
   const clientProjects = projects.filter((project) => project.clientAccountId === clientId && project.status !== 'archived');
