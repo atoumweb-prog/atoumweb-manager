@@ -47,6 +47,7 @@ import type {
   ProjectTemplateNodeInput,
   TransformQuoteToProjectInput,
 } from '../shared/projects';
+import type { ManualTimeSessionInput, StartTimeSessionInput, TimeSessionFilters } from '../shared/time';
 import { generateQuotePdf } from './commercial/quotePdf';
 import type { DatabaseService } from './database/DatabaseService';
 import { scheduleDatabaseRestore } from './restore';
@@ -187,6 +188,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('projects:transform-quote', (_event, input: TransformQuoteToProjectInput) => database.projects.transformQuote(input));
   ipcMain.handle('projects:create-internal', (_event, input: InternalProjectInput) => database.projects.createInternal(input));
   ipcMain.handle('projects:change-status', (_event, id: string, status: ProjectStatus) => database.projects.changeProjectStatus(id, status));
+  ipcMain.handle('projects:completion-review', (_event, id: string) => database.projectCompletion.review(id));
   ipcMain.handle('projects:add-node', (_event, projectId: string, input: ProjectNodeInput) => database.projects.addProjectNode(projectId, input));
   ipcMain.handle('projects:update-node', (_event, nodeId: string, input: Partial<ProjectNodeInput>) => database.projects.updateProjectNode(nodeId, input));
   ipcMain.handle('projects:add-prerequisite', (_event, projectId: string, input: ProjectPrerequisiteInput) => database.projects.addPrerequisite(projectId, input));
@@ -234,4 +236,13 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('projects:technical:link-resource', (_event, versionId: string, resourceId: string) => database.projectTechnicalLibrary.linkResource(versionId, resourceId));
   ipcMain.handle('projects:technical:unlink-resource', (_event, versionId: string, resourceId: string) => database.projectTechnicalLibrary.unlinkResource(versionId, resourceId));
   ipcMain.handle('projects:technical:archive', (_event, itemId: string) => database.projectTechnicalLibrary.archive(itemId));
+
+  ipcMain.handle('time:active', () => database.time.active());
+  ipcMain.handle('time:start', (_event, input: StartTimeSessionInput) => database.time.start(input));
+  ipcMain.handle('time:pause', (_event, id: string) => database.time.pause(id));
+  ipcMain.handle('time:resume', (_event, id: string) => database.time.resume(id));
+  ipcMain.handle('time:stop', (_event, id: string) => database.time.stop(id));
+  ipcMain.handle('time:add-manual', (_event, input: ManualTimeSessionInput) => database.time.addManual(input));
+  ipcMain.handle('time:list', (_event, filters?: TimeSessionFilters) => database.time.list(filters));
+  ipcMain.handle('time:summary', (_event, filters?: TimeSessionFilters) => database.time.summary(filters));
 }
