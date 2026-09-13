@@ -26,9 +26,9 @@ function createProspect() {
   return crm.createProspect({ organizationId: organization.id, primaryNeed: 'Site vitrine' });
 }
 
-function createPublishedService(priceCents = 10000) {
+function createPublishedService(priceCents = 10000, name = 'Service test') {
   const item = catalog.create(
-    { type: 'service', name: 'Service test', category: 'Tests' },
+    { type: 'service', name, category: 'Tests' },
     { priceMode: 'fixed', priceCents, description: 'Version initiale' },
   );
   catalog.publishVersion(item.versions[0].id);
@@ -60,6 +60,41 @@ describe('QuoteService', () => {
     expect(stored.snapshot?.versionNumber).toBe(1);
     expect(catalog.getItem(service.id).currentVersion?.priceCents).toBe(15000);
     expect(withLine.contractValueCents).toBe(10000);
+  });
+
+  it('fige aussi la composition exacte d’une Offre dans le snapshot du devis', () => {
+    const prospect = createProspect();
+    const page = createPublishedService(9900, 'Page supplémentaire');
+    const seo = createPublishedService(14900, 'Réglage SEO');
+    const offer = catalog.create(
+      { type: 'offer', name: 'Site vitrine', category: 'Création de site' },
+      { priceMode: 'fixed', priceCents: 69900, description: 'Pack initial' },
+    );
+    const firstOfferVersion = offer.versions[0];
+    catalog.setOfferComponents(firstOfferVersion.id, [
+      { serviceVersionId: page.currentVersion!.id, quantityMilli: 5000 },
+      { serviceVersionId: seo.currentVersion!.id, isOptional: true },
+    ]);
+    catalog.publishVersion(firstOfferVersion.id);
+
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Offre figée' });
+    quotes.addCatalogLine(quote.id, firstOfferVersion.id);
+
+    const secondOfferVersion = catalog.createVersion(offer.id, { priceMode: 'fixed', priceCents: 74900, description: 'Pack suivant' });
+    catalog.setOfferComponents(secondOfferVersion.id, [
+      { serviceVersionId: page.currentVersion!.id, quantityMilli: 7000 },
+    ]);
+    catalog.publishVersion(secondOfferVersion.id);
+
+    const stored = quotes.get(quote.id).lines[0];
+    const components = stored.snapshot?.offerComponents as Array<Record<string, unknown>>;
+    expect(stored.snapshot?.versionNumber).toBe(1);
+    expect(components).toHaveLength(2);
+    expect(components[0].serviceName).toBe('Page supplémentaire');
+    expect(components[0].quantityMilli).toBe(5000);
+    expect(components[1].serviceName).toBe('Réglage SEO');
+    expect(components[1].isOptional).toBe(true);
+    expect(catalog.listOfferComponents(secondOfferVersion.id)).toHaveLength(1);
   });
 
   it('calcule quantité 1,5 et remise en pourcentage sans flottants', () => {
