@@ -5,6 +5,7 @@ import './styles.css';
 import './crm.css';
 import './crm-extras.css';
 import './prospect-detail.css';
+import './client-detail.css';
 
 const rootElement = document.getElementById('root');
 
