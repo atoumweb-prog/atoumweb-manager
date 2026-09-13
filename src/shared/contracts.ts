@@ -1,0 +1,50 @@
+export const THEME_NAMES = ['atoumweb', 'noir', 'blanc'] as const;
+
+export type ThemeName = (typeof THEME_NAMES)[number];
+
+export function isThemeName(value: unknown): value is ThemeName {
+  return typeof value === 'string' && THEME_NAMES.includes(value as ThemeName);
+}
+
+export interface DatabaseHealth {
+  healthy: boolean;
+  migrationCount: number;
+  databasePath: string;
+}
+
+export interface BootstrapState {
+  appVersion: string;
+  workspacePath: string;
+  databasePath: string;
+  theme: ThemeName;
+  database: DatabaseHealth;
+}
+
+export interface WorkspaceChangeResult {
+  cancelled: boolean;
+  workspacePath?: string;
+  restartRequired?: boolean;
+}
+
+export interface BackupResult {
+  path: string;
+  createdAt: string;
+}
+
+export interface AtoumWebApi {
+  app: {
+    getBootstrap(): Promise<BootstrapState>;
+  };
+  settings: {
+    setTheme(theme: ThemeName): Promise<ThemeName>;
+  };
+  workspace: {
+    choose(): Promise<WorkspaceChangeResult>;
+  };
+  backups: {
+    createManual(): Promise<BackupResult>;
+  };
+  database: {
+    health(): Promise<DatabaseHealth>;
+  };
+}
