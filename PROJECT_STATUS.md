@@ -6,7 +6,7 @@
 
 - **Projet** : AtoumWeb Manager
 - **Version cible actuelle** : V1
-- **Statut global** : Fondation applicative en cours — premier socle Electron/React/SQLite implémenté sur branche dédiée
+- **Statut global** : Fondation applicative implémentée sur branche dédiée — validation exécutable et PR en préparation
 - **Dépôt** : `atoumweb-prog/atoumweb-manager`
 - **Branche stable** : `main`
 - **Branche de travail actuelle** : `foundation/electron-react-sqlite`
@@ -15,7 +15,7 @@
 ## Références
 
 - `docs/CAHIER_DES_CHARGES_FONCTIONNEL_V1.md` — fonctionnel
-- `docs/ARCHITECTURE.md` — architecture technique décidée
+- `docs/ARCHITECTURE.md` — architecture technique décidée et alignée sur l'implémentation
 - `docs/DATA_MODEL_V1.md` — modèle de données cible V1
 - `docs/ROADMAP_V1.md` — ordre de développement
 - `docs/DEVELOPMENT.md` — démarrage local et commandes de développement
@@ -103,8 +103,8 @@
 
 - Electron 44.x
 - React 19.3
-- TypeScript strict
-- Electron Forge 7 + Vite 5
+- TypeScript 5.9 strict
+- Electron Forge 7.11.2 + Vite 5.4.19
 - SQLite locale via `node:sqlite`, encapsulé derrière `DatabaseAdapter`
 - SQL et migrations versionnées sans ORM lourd pour la V1
 - renderer isolé ; fichiers/base/PDF dans le main process via IPC typé
@@ -151,7 +151,7 @@
 
 ## Blocages / points ouverts
 
-- Les runs GitHub Actions observés se terminent avant l'exécution des étapes (runner absent). Ce n'est pas un échec de compilation démontré.
+- Les runs GitHub Actions observés se terminent avant l'exécution des étapes (`runner_id=0`, `steps=[]`). Ce n'est pas un échec de compilation démontré.
 - `package-lock.json` devra être généré par un `npm install` effectif puis versionné.
 
 ## Prochaines actions
