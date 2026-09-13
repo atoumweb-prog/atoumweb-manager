@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { DatabaseService } from './database/DatabaseService';
 import { registerIpcHandlers } from './ipc';
 import { applyPendingDatabaseRestore } from './restore';
-import { registerTimeIpcHandlers } from './time/timeIpc';
+import { registerTimeCorrectionIpcHandler } from './time/timeIpc';
 import { resolveWorkspace } from './workspace';
 
 let mainWindow: BrowserWindow | null = null;
@@ -55,7 +55,7 @@ async function bootstrap(): Promise<void> {
   database = new DatabaseService(workspace);
   await database.initialize();
   registerIpcHandlers(database, workspace);
-  registerTimeIpcHandlers(database);
+  registerTimeCorrectionIpcHandler(database);
   createMainWindow();
 }
 
