@@ -4,6 +4,12 @@ import type {
   InterventionFilters,
   InterventionInput,
   InterventionStatus,
+  MaintenanceCheckStatus,
+  MaintenancePeriodStatus,
+  MaintenancePlanInput,
+  MaintenanceSubscriptionFilters,
+  MaintenanceSubscriptionInput,
+  MaintenanceSubscriptionStatus,
   ServiceRequestFilters,
   ServiceRequestInput,
   ServiceRequestStatus,
@@ -24,4 +30,18 @@ export function registerOperationsIpcHandlers(database: DatabaseService): void {
   ipcMain.handle('operations:interventions:create', (_event, input: InterventionInput) => database.operations.createIntervention(input));
   ipcMain.handle('operations:interventions:update', (_event, id: string, input: Partial<InterventionInput>) => database.operations.updateIntervention(id, input));
   ipcMain.handle('operations:interventions:change-status', (_event, id: string, status: InterventionStatus) => database.operations.changeInterventionStatus(id, status));
+
+  ipcMain.handle('operations:maintenance:plans:list', (_event, includeArchived?: boolean) => database.maintenance.listPlans(includeArchived));
+  ipcMain.handle('operations:maintenance:plans:create', (_event, input: MaintenancePlanInput) => database.maintenance.createPlan(input));
+  ipcMain.handle('operations:maintenance:plans:update', (_event, id: string, input: Partial<MaintenancePlanInput>) => database.maintenance.updatePlan(id, input));
+  ipcMain.handle('operations:maintenance:plans:archive', (_event, id: string) => database.maintenance.archivePlan(id));
+
+  ipcMain.handle('operations:maintenance:subscriptions:list', (_event, filters?: MaintenanceSubscriptionFilters) => database.maintenance.listSubscriptions(filters));
+  ipcMain.handle('operations:maintenance:subscriptions:create', (_event, input: MaintenanceSubscriptionInput) => database.maintenance.createSubscription(input));
+  ipcMain.handle('operations:maintenance:subscriptions:change-status', (_event, id: string, status: MaintenanceSubscriptionStatus) => database.maintenance.changeSubscriptionStatus(id, status));
+
+  ipcMain.handle('operations:maintenance:periods:list', (_event, subscriptionId: string) => database.maintenance.listPeriods(subscriptionId));
+  ipcMain.handle('operations:maintenance:periods:ensure', (_event, subscriptionId: string, referenceDate?: string | null) => database.maintenance.ensurePeriod(subscriptionId, referenceDate));
+  ipcMain.handle('operations:maintenance:periods:change-status', (_event, id: string, status: MaintenancePeriodStatus) => database.maintenance.changePeriodStatus(id, status));
+  ipcMain.handle('operations:maintenance:checks:update', (_event, id: string, status: MaintenanceCheckStatus, notes?: string | null) => database.maintenance.updateCheck(id, status, notes));
 }
