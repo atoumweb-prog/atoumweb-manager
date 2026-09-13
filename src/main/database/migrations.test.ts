@@ -6,8 +6,8 @@ describe('migrations SQLite', () => {
   it('applique chaque migration une seule fois', () => {
     const database = new NodeSqliteAdapter(':memory:');
 
-    expect(getPendingMigrations(database)).toHaveLength(6);
-    expect(applyPendingMigrations(database)).toHaveLength(6);
+    expect(getPendingMigrations(database)).toHaveLength(10);
+    expect(applyPendingMigrations(database)).toHaveLength(10);
     expect(getPendingMigrations(database)).toHaveLength(0);
     expect(applyPendingMigrations(database)).toHaveLength(0);
 
@@ -26,6 +26,20 @@ describe('migrations SQLite', () => {
       'number_sequences',
       'quotes',
       'quote_lines',
+      'project_templates',
+      'project_template_versions',
+      'project_template_nodes',
+      'projects',
+      'project_nodes',
+      'project_services',
+      'project_prerequisites',
+      'file_assets',
+      'file_asset_links',
+      'technical_items',
+      'technical_item_versions',
+      'technical_item_assets',
+      'time_sessions',
+      'time_session_pauses',
     ]) {
       const row = database.get<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
@@ -33,6 +47,11 @@ describe('migrations SQLite', () => {
       );
       expect(row?.name).toBe(table);
     }
+
+    const quoteProjectColumn = database.get<{ name: string }>(
+      "SELECT name FROM pragma_table_info('quotes') WHERE name='project_id'",
+    );
+    expect(quoteProjectColumn?.name).toBe('project_id');
 
     database.close();
   });

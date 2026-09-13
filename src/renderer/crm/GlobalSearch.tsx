@@ -46,7 +46,7 @@ export function GlobalSearch({ onOpen }: { onOpen: (result: SearchResult) => voi
         onFocus={() => results.length > 0 && setOpen(true)}
         onChange={(event) => setQuery(event.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Rechercher client, prospect, offre, devis…"
+        placeholder="Rechercher client, prospect, offre, devis, projet…"
         value={query}
       />
       {open && (
@@ -81,5 +81,6 @@ function entityLabel(type: SearchResult['entityType']): string {
     case 'contact': return 'Contact';
     case 'catalog': return 'Offre / Service';
     case 'quote': return 'Devis';
+    case 'project': return 'Projet';
   }
 }

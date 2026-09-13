@@ -1,0 +1,111 @@
+.project-completion-review {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent-soft) 52%, var(--surface));
+}
+
+.project-completion-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.project-completion-heading > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.project-completion-heading strong {
+  font-size: 13px;
+}
+
+.project-completion-heading small,
+.project-completion-note {
+  color: var(--text-muted);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.project-completion-note {
+  margin: 0;
+}
+
+.project-completion-items {
+  display: grid;
+  gap: 6px;
+}
+
+.project-completion-item {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+}
+
+.project-completion-item.state-warning {
+  border-color: color-mix(in srgb, #c66 58%, var(--border));
+}
+
+.project-completion-item.state-check {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+
+.project-completion-icon {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.project-completion-item.state-ok .project-completion-icon {
+  color: #4f9a67;
+}
+
+.project-completion-item.state-warning .project-completion-icon {
+  color: #bd5555;
+}
+
+.project-completion-item.state-check .project-completion-icon {
+  color: var(--accent);
+}
+
+.project-completion-item > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.project-completion-item strong {
+  font-size: 10px;
+}
+
+.project-completion-item small {
+  color: var(--text-muted);
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.project-completion-source {
+  color: var(--text-muted);
+  font-size: 8px;
+  white-space: nowrap;
+}
+
+.project-completion-actions {
+  margin-top: 2px;
+  flex-wrap: wrap;
+}

@@ -12,6 +12,7 @@ export interface WorkspacePaths {
   databaseFile: string;
   backupsDirectory: string;
   clientsDirectory: string;
+  internalDirectory: string;
   exportsDirectory: string;
 }
 
@@ -31,6 +32,7 @@ export function createWorkspacePaths(root: string): WorkspacePaths {
     databaseFile: join(dataDirectory, 'atoumweb-manager.sqlite'),
     backupsDirectory: join(normalizedRoot, 'backups'),
     clientsDirectory: join(normalizedRoot, 'clients'),
+    internalDirectory: join(normalizedRoot, 'projets-internes'),
     exportsDirectory: join(normalizedRoot, 'exports'),
   };
 }
@@ -43,6 +45,7 @@ export function ensureWorkspace(root: string): WorkspacePaths {
     paths.dataDirectory,
     paths.backupsDirectory,
     paths.clientsDirectory,
+    paths.internalDirectory,
     paths.exportsDirectory,
   ].forEach((directory) => mkdirSync(directory, { recursive: true }));
 

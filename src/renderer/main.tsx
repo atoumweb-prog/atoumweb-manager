@@ -12,6 +12,12 @@ import './prospect-workflow.css';
 import './commercial.css';
 import './quote-line-editor.css';
 import './quote-client-preview.css';
+import './projects.css';
+import './project-resources.css';
+import './project-technical-library.css';
+import './project-completion.css';
+import './time.css';
+import './time-recovery.css';
 
 const rootElement = document.getElementById('root');
 

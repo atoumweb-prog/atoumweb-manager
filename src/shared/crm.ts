@@ -55,7 +55,7 @@ export interface CrmActionFilters { ownerType?: CrmActionOwnerType | null; owner
 export interface ActivityEvent { id: string; entityType: string; entityId: string; action: string; summary: string; metadata?: Record<string, unknown> | null; createdAt: string; }
 
 export interface SearchResult {
-  entityType: 'prospect' | 'client' | 'organization' | 'contact' | 'catalog' | 'quote';
+  entityType: 'prospect' | 'client' | 'organization' | 'contact' | 'catalog' | 'quote' | 'project';
   entityId: string;
   title: string;
   subtitle?: string | null;

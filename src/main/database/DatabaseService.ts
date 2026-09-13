@@ -6,6 +6,16 @@ import { QuoteService } from '../commercial/QuoteService';
 import { ActionService } from '../crm/ActionService';
 import { ClientContactService } from '../crm/ClientContactService';
 import { CrmService } from '../crm/CrmService';
+import { ProjectCompletionService } from '../projects/ProjectCompletionService';
+import { ProjectNodeArrangementService } from '../projects/ProjectNodeArrangementService';
+import { ProjectResourceService } from '../projects/ProjectResourceService';
+import { ProjectReuseExportService } from '../projects/ProjectReuseExportService';
+import { ProjectSearchService } from '../projects/ProjectSearchService';
+import { ProjectService } from '../projects/ProjectService';
+import { ProjectTechnicalLibraryService } from '../projects/ProjectTechnicalLibraryService';
+import { TimeCorrectionService } from '../time/TimeCorrectionService';
+import { TimeService } from '../time/TimeService';
+import { TimeSwitchService } from '../time/TimeSwitchService';
 import type { WorkspacePaths } from '../workspace';
 import type { DatabaseAdapter } from './DatabaseAdapter';
 import { NodeSqliteAdapter } from './NodeSqliteAdapter';
@@ -21,6 +31,16 @@ export class DatabaseService {
   readonly actions: ActionService;
   readonly catalog: CatalogService;
   readonly quotes: QuoteService;
+  readonly projects: ProjectService;
+  readonly projectCompletion: ProjectCompletionService;
+  readonly projectNodes: ProjectNodeArrangementService;
+  readonly projectResources: ProjectResourceService;
+  readonly projectReuseExport: ProjectReuseExportService;
+  readonly projectSearch: ProjectSearchService;
+  readonly projectTechnicalLibrary: ProjectTechnicalLibraryService;
+  readonly time: TimeService;
+  readonly timeCorrections: TimeCorrectionService;
+  readonly timeSwitches: TimeSwitchService;
 
   constructor(private readonly workspace: WorkspacePaths) {
     this.existedBeforeOpen = existsSync(workspace.databaseFile);
@@ -30,6 +50,16 @@ export class DatabaseService {
     this.actions = new ActionService(this.database);
     this.catalog = new CatalogService(this.database);
     this.quotes = new QuoteService(this.database, this.crm);
+    this.projects = new ProjectService(this.database, this.workspace);
+    this.projectCompletion = new ProjectCompletionService(this.database);
+    this.projectNodes = new ProjectNodeArrangementService(this.database, this.projects);
+    this.projectResources = new ProjectResourceService(this.database, this.workspace);
+    this.projectReuseExport = new ProjectReuseExportService(this.database, this.workspace);
+    this.projectSearch = new ProjectSearchService(this.database);
+    this.projectTechnicalLibrary = new ProjectTechnicalLibraryService(this.database);
+    this.time = new TimeService(this.database);
+    this.timeCorrections = new TimeCorrectionService(this.database, this.time);
+    this.timeSwitches = new TimeSwitchService(this.database, this.time);
   }
 
   async initialize(): Promise<void> {
@@ -69,43 +99,29 @@ export class DatabaseService {
       'SELECT value_json FROM settings WHERE key = ?',
       [key],
     );
-
     if (!row) return fallback;
-
-    try {
-      return JSON.parse(row.value_json) as T;
-    } catch {
-      return fallback;
-    }
+    try { return JSON.parse(row.value_json) as T; } catch { return fallback; }
   }
 
   setSetting(key: string, value: unknown): void {
     const now = new Date().toISOString();
     const valueJson = JSON.stringify(value);
-
     this.database.run(
       `INSERT INTO settings (key, value_json, updated_at)
        VALUES (?, ?, ?)
-       ON CONFLICT(key) DO UPDATE SET
-         value_json = excluded.value_json,
-         updated_at = excluded.updated_at`,
+       ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at`,
       [key, valueJson, now],
     );
   }
 
   health(): DatabaseHealth {
     const row = this.database.get<{ count: number }>('SELECT COUNT(*) AS count FROM schema_migrations');
-    return {
-      healthy: true,
-      migrationCount: Number(row?.count ?? 0),
-      databasePath: this.workspace.databaseFile,
-    };
+    return { healthy: true, migrationCount: Number(row?.count ?? 0), databasePath: this.workspace.databaseFile };
   }
 
   async createBackup(kind: BackupKind): Promise<string> {
     const directory = join(this.workspace.backupsDirectory, kind);
     mkdirSync(directory, { recursive: true });
-
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const destination = join(directory, `atoumweb-manager-${timestamp}.sqlite`);
     await this.database.backupTo(destination);
@@ -115,11 +131,9 @@ export class DatabaseService {
   private async createDailyBackupIfNeeded(): Promise<void> {
     const directory = join(this.workspace.backupsDirectory, 'automatic');
     mkdirSync(directory, { recursive: true });
-
     const day = new Date().toISOString().slice(0, 10);
     const destination = join(directory, `atoumweb-manager-${day}.sqlite`);
     if (existsSync(destination)) return;
-
     await this.database.backupTo(destination);
   }
 

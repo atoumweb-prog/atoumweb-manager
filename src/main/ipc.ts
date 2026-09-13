@@ -1,4 +1,4 @@
-import { app, dialog, ipcMain } from 'electron';
+import { app, dialog, ipcMain, shell } from 'electron';
 import type {
   CatalogFilters,
   CatalogItemInput,
@@ -31,6 +31,24 @@ import type {
   ProspectStage,
   SearchResult,
 } from '../shared/crm';
+import type {
+  InternalProjectInput,
+  MoveProjectNodeInput,
+  ProjectFilters,
+  ProjectNodeInput,
+  ProjectPrerequisiteInput,
+  ProjectPrerequisiteStatus,
+  ProjectResourceFolder,
+  ProjectResourceRole,
+  ProjectResourceStatus,
+  ProjectStatus,
+  ProjectTechnicalItemInput,
+  ProjectTechnicalVersionInput,
+  ProjectTemplateInput,
+  ProjectTemplateNodeInput,
+  TransformQuoteToProjectInput,
+} from '../shared/projects';
+import type { ManualTimeSessionInput, StartTimeSessionInput, TimeSessionFilters } from '../shared/time';
 import { generateQuotePdf } from './commercial/quotePdf';
 import type { DatabaseService } from './database/DatabaseService';
 import { scheduleDatabaseRestore } from './restore';
@@ -45,7 +63,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
 
   ipcMain.handle('settings:set-theme', (_event, value: unknown): ThemeName => {
     if (!isThemeName(value)) throw new Error('Thème invalide.');
-    database.setSetting('theme', value); return value;
+    database.setSetting('theme', value);
+    return value;
   });
 
   ipcMain.handle('workspace:choose', async (): Promise<WorkspaceChangeResult> => {
@@ -56,7 +75,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   });
 
   ipcMain.handle('backups:create-manual', async (): Promise<BackupResult> => {
-    const path = await database.createBackup('manual'); return { path, createdAt: new Date().toISOString() };
+    const path = await database.createBackup('manual');
+    return { path, createdAt: new Date().toISOString() };
   });
 
   ipcMain.handle('backups:restore', async (): Promise<RestoreScheduleResult> => {
@@ -65,15 +85,22 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     const sourcePath = selection.filePaths[0];
     const packaged = app.isPackaged;
     const confirmation = await dialog.showMessageBox({
-      type: 'warning', buttons: [packaged ? 'Restaurer et redémarrer' : 'Programmer la restauration', 'Annuler'], defaultId: 1, cancelId: 1,
-      title: 'Confirmer la restauration', message: 'Restaurer cette sauvegarde ?',
+      type: 'warning',
+      buttons: [packaged ? 'Restaurer et redémarrer' : 'Programmer la restauration', 'Annuler'],
+      defaultId: 1,
+      cancelId: 1,
+      title: 'Confirmer la restauration',
+      message: 'Restaurer cette sauvegarde ?',
       detail: packaged
         ? 'La base actuelle sera d’abord sauvegardée automatiquement dans le dossier pre-restore, puis l’application redémarrera.'
         : 'La base actuelle sera d’abord sauvegardée automatiquement dans le dossier pre-restore au prochain démarrage. En mode développement, ferme ensuite AtoumWeb Manager puis relance « npm start » pour appliquer la restauration.',
     });
     if (confirmation.response !== 0) return { cancelled: true };
     scheduleDatabaseRestore(sourcePath);
-    if (packaged) { setTimeout(() => { app.relaunch(); app.exit(0); }, 150); return { cancelled: false, sourcePath, restartScheduled: true }; }
+    if (packaged) {
+      setTimeout(() => { app.relaunch(); app.exit(0); }, 150);
+      return { cancelled: false, sourcePath, restartScheduled: true };
+    }
     return { cancelled: false, sourcePath, restartScheduled: false };
   });
 
@@ -106,22 +133,18 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('crm:search:global', (_event, query: string): SearchResult[] => {
     const normalized = query.trim();
     if (normalized.length < 2) return [];
+
     const crmResults = database.crm.globalSearch(normalized);
     const catalogResults: SearchResult[] = database.catalog.list({ search: normalized }).slice(0, 6).map((item) => ({
-      entityType: 'catalog',
-      entityId: item.id,
-      title: item.name,
-      subtitle: `${item.type === 'offer' ? 'Offre' : 'Service'}${item.category ? ` · ${item.category}` : ''}`,
-      status: item.status,
+      entityType: 'catalog', entityId: item.id, title: item.name,
+      subtitle: `${item.type === 'offer' ? 'Offre' : 'Service'}${item.category ? ` · ${item.category}` : ''}`, status: item.status,
     }));
     const quoteResults: SearchResult[] = database.quotes.list({ search: normalized }).slice(0, 6).map((quote) => ({
-      entityType: 'quote',
-      entityId: quote.id,
-      title: `${quote.number} · ${quote.subject}`,
-      subtitle: quote.ownerLabel,
-      status: quote.status,
+      entityType: 'quote', entityId: quote.id, title: `${quote.number} · ${quote.subject}`, subtitle: quote.ownerLabel, status: quote.status,
     }));
-    return [...crmResults, ...catalogResults, ...quoteResults].slice(0, 20);
+    const projectResults = database.projectSearch.search(normalized, 12);
+
+    return [...crmResults, ...catalogResults, ...quoteResults, ...projectResults].slice(0, 24);
   });
   ipcMain.handle('crm:search:rebuild', () => database.crm.rebuildSearchIndex());
 
@@ -150,4 +173,80 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('quotes:expire', (_event, id: string) => database.quotes.expire(id));
   ipcMain.handle('quotes:duplicate', (_event, id: string) => database.quotes.duplicate(id));
   ipcMain.handle('quotes:generate-pdf', async (_event, id: string) => generateQuotePdf(database.quotes.get(id), workspace));
+
+  ipcMain.handle('projects:templates:list', () => database.projects.listTemplates());
+  ipcMain.handle('projects:templates:get', (_event, id: string) => database.projects.getTemplate(id));
+  ipcMain.handle('projects:templates:create', (_event, input: ProjectTemplateInput) => database.projects.createTemplate(input));
+  ipcMain.handle('projects:templates:create-version', (_event, templateId: string, description?: string | null) => database.projects.createTemplateVersion(templateId, description));
+  ipcMain.handle('projects:templates:publish-version', (_event, versionId: string) => database.projects.publishTemplateVersion(versionId));
+  ipcMain.handle('projects:templates:add-node', (_event, versionId: string, input: ProjectTemplateNodeInput) => database.projects.addTemplateNode(versionId, input));
+  ipcMain.handle('projects:templates:remove-node', (_event, nodeId: string) => database.projects.removeTemplateNode(nodeId));
+
+  ipcMain.handle('projects:list', (_event, filters?: ProjectFilters) => database.projects.listProjects(filters));
+  ipcMain.handle('projects:get', (_event, id: string) => database.projects.getProject(id));
+  ipcMain.handle('projects:transform-quote', (_event, input: TransformQuoteToProjectInput) => database.projects.transformQuote(input));
+  ipcMain.handle('projects:create-internal', (_event, input: InternalProjectInput) => database.projects.createInternal(input));
+  ipcMain.handle('projects:change-status', (_event, id: string, status: ProjectStatus) => database.projects.changeProjectStatus(id, status));
+  ipcMain.handle('projects:completion-review', (_event, id: string) => database.projectCompletion.review(id));
+  ipcMain.handle('projects:add-node', (_event, projectId: string, input: ProjectNodeInput) => database.projects.addProjectNode(projectId, input));
+  ipcMain.handle('projects:update-node', (_event, nodeId: string, input: Partial<ProjectNodeInput>) => database.projects.updateProjectNode(nodeId, input));
+  ipcMain.handle('projects:move-node', (_event, nodeId: string, input: MoveProjectNodeInput) => database.projectNodes.move(nodeId, input));
+  ipcMain.handle('projects:add-prerequisite', (_event, projectId: string, input: ProjectPrerequisiteInput) => database.projects.addPrerequisite(projectId, input));
+  ipcMain.handle('projects:update-prerequisite-status', (_event, id: string, status: ProjectPrerequisiteStatus) => database.projects.updatePrerequisiteStatus(id, status));
+
+  ipcMain.handle('projects:resources:list', (_event, projectId: string) => database.projectResources.list(projectId));
+  ipcMain.handle('projects:resources:import-files', async (_event, projectId: string, folder: ProjectResourceFolder, contentRole: ProjectResourceRole = 'other') => {
+    const defaultPath = database.projectResources.projectResourceRoot(projectId);
+    const selection = await dialog.showOpenDialog({
+      title: 'Ajouter des fichiers au projet',
+      defaultPath,
+      properties: ['openFile', 'multiSelections'],
+    });
+    if (selection.canceled || selection.filePaths.length === 0) return database.projectResources.list(projectId);
+    return database.projectResources.importFilePaths(projectId, selection.filePaths, folder, contentRole);
+  });
+  ipcMain.handle('projects:resources:update-status', (_event, id: string, status: ProjectResourceStatus) => database.projectResources.updateStatus(id, status));
+  ipcMain.handle('projects:resources:update-role', (_event, id: string, role: ProjectResourceRole) => database.projectResources.updateRole(id, role));
+  ipcMain.handle('projects:resources:link-node', (_event, id: string, nodeId: string) => database.projectResources.linkToNode(id, nodeId));
+  ipcMain.handle('projects:resources:unlink-node', (_event, id: string, nodeId: string) => database.projectResources.unlinkFromNode(id, nodeId));
+  ipcMain.handle('projects:resources:open-file', async (_event, id: string) => {
+    const error = await shell.openPath(database.projectResources.absolutePath(id));
+    return { ok: !error, error: error || null };
+  });
+  ipcMain.handle('projects:resources:open-folder', async (_event, projectId: string) => {
+    const error = await shell.openPath(database.projectResources.projectResourceRoot(projectId));
+    return { ok: !error, error: error || null };
+  });
+  ipcMain.handle('projects:resources:relocalize', async (_event, id: string) => {
+    const resource = database.projectResources.get(id);
+    const selection = await dialog.showOpenDialog({
+      title: `Relocaliser ${resource.fileName}`,
+      defaultPath: workspace.root,
+      properties: ['openFile'],
+    });
+    if (selection.canceled || selection.filePaths.length === 0) return null;
+    return database.projectResources.relocalize(id, selection.filePaths[0]);
+  });
+
+  ipcMain.handle('projects:technical:list', (_event, projectId: string, search?: string | null) => database.projectTechnicalLibrary.list(projectId, search));
+  ipcMain.handle('projects:technical:get', (_event, id: string) => database.projectTechnicalLibrary.get(id));
+  ipcMain.handle('projects:technical:create', (_event, projectId: string, item: ProjectTechnicalItemInput, version: ProjectTechnicalVersionInput) => database.projectTechnicalLibrary.create(projectId, item, version));
+  ipcMain.handle('projects:technical:create-version', (_event, itemId: string, version: ProjectTechnicalVersionInput) => database.projectTechnicalLibrary.createVersion(itemId, version));
+  ipcMain.handle('projects:technical:mark-stable', (_event, versionId: string) => database.projectTechnicalLibrary.markStable(versionId));
+  ipcMain.handle('projects:technical:link-resource', (_event, versionId: string, resourceId: string) => database.projectTechnicalLibrary.linkResource(versionId, resourceId));
+  ipcMain.handle('projects:technical:unlink-resource', (_event, versionId: string, resourceId: string) => database.projectTechnicalLibrary.unlinkResource(versionId, resourceId));
+  ipcMain.handle('projects:technical:prepare-reuse', (_event, itemId: string, versionId?: string | null) => database.projectReuseExport.prepare(itemId, versionId));
+  ipcMain.handle('projects:technical:archive', (_event, itemId: string) => database.projectTechnicalLibrary.archive(itemId));
+
+  ipcMain.handle('time:active', () => database.time.active());
+  ipcMain.handle('time:start', (_event, input: StartTimeSessionInput) => database.time.start(input));
+  ipcMain.handle('time:heartbeat', (_event, id: string) => database.time.heartbeat(id));
+  ipcMain.handle('time:pause', (_event, id: string) => database.time.pause(id));
+  ipcMain.handle('time:resume', (_event, id: string) => database.time.resume(id));
+  ipcMain.handle('time:recover-resume', (_event, id: string) => database.time.recoverResume(id));
+  ipcMain.handle('time:stop', (_event, id: string) => database.time.stop(id));
+  ipcMain.handle('time:stop-last-known', (_event, id: string) => database.time.stopAtLastKnown(id));
+  ipcMain.handle('time:add-manual', (_event, input: ManualTimeSessionInput) => database.time.addManual(input));
+  ipcMain.handle('time:list', (_event, filters?: TimeSessionFilters) => database.time.list(filters));
+  ipcMain.handle('time:summary', (_event, filters?: TimeSessionFilters) => database.time.summary(filters));
 }

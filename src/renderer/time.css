@@ -1,0 +1,395 @@
+.global-timer {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  min-width: 270px;
+  max-width: 390px;
+  min-height: 54px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 5%);
+}
+
+.global-timer.running {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+}
+
+.global-timer.paused {
+  opacity: .9;
+}
+
+.timer-main-button {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 2px 9px;
+  min-width: 0;
+  flex: 1;
+  padding: 8px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.global-timer.running .timer-main-button {
+  cursor: default;
+}
+
+.timer-main-button strong {
+  justify-self: end;
+  font-variant-numeric: tabular-nums;
+  font-size: 15px;
+  letter-spacing: .03em;
+}
+
+.timer-label {
+  color: var(--accent);
+  font-size: 8px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.timer-context {
+  grid-column: 1 / -1;
+  display: block;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: 8px;
+}
+
+.timer-actions {
+  display: flex;
+  border-left: 1px solid var(--border);
+}
+
+.timer-actions button,
+.timer-start-shortcut {
+  width: 38px;
+  border: 0;
+  border-left: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.timer-actions button:first-child {
+  border-left: 0;
+}
+
+.timer-actions button:hover,
+.timer-start-shortcut:hover {
+  background: var(--surface-soft);
+  color: var(--accent);
+}
+
+.timer-actions button:disabled {
+  opacity: .45;
+  cursor: wait;
+}
+
+.timer-popover {
+  position: absolute;
+  z-index: 80;
+  top: calc(100% + 8px);
+  right: 0;
+  display: grid;
+  gap: 8px;
+  width: min(360px, 80vw);
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 18px 50px rgb(0 0 0 / 18%);
+}
+
+.timer-popover > div:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.timer-popover > div:first-child strong {
+  font-size: 13px;
+}
+
+.timer-popover label,
+.manual-time-grid label {
+  display: grid;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.timer-popover input,
+.timer-popover select,
+.manual-time-grid input,
+.manual-time-grid select,
+.manual-time-grid textarea {
+  width: 100%;
+  min-width: 0;
+}
+
+.timer-billable,
+.time-checkbox {
+  display: flex !important;
+  grid-template-columns: none !important;
+  align-items: center;
+  gap: 7px !important;
+}
+
+.timer-billable input,
+.time-checkbox input {
+  width: auto;
+}
+
+.time-page-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.time-toolbar {
+  gap: 10px;
+}
+
+.time-period-tabs {
+  display: flex;
+  gap: 5px;
+}
+
+.time-period-tabs button {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.time-period-tabs button.active {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.time-filters {
+  flex-wrap: wrap;
+}
+
+.time-filters select {
+  min-width: 135px;
+}
+
+.time-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.manual-time-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.manual-time-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.manual-time-grid .wide {
+  grid-column: 1 / -1;
+}
+
+.manual-time-grid textarea {
+  min-height: 65px;
+  resize: vertical;
+}
+
+.time-list-panel {
+  overflow-x: auto;
+}
+
+.time-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+
+.time-table th,
+.time-table td {
+  padding: 9px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+  font-size: 9px;
+}
+
+.time-table th {
+  color: var(--text-muted);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.time-table td > strong,
+.time-table td > small {
+  display: block;
+}
+
+.time-table td > small {
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 8px;
+}
+
+.time-live {
+  color: var(--accent) !important;
+  font-weight: 800;
+}
+
+.project-time-tab {
+  min-width: 0;
+}
+
+.project-time-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.project-time-summary > div {
+  display: grid;
+  gap: 3px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-soft);
+}
+
+.project-time-summary span,
+.project-time-start small,
+.project-time-tasks small,
+.project-time-history small {
+  color: var(--text-muted);
+  font-size: 8px;
+}
+
+.project-time-summary strong {
+  font-size: 12px;
+}
+
+.project-time-start {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+
+.project-time-start > div {
+  display: grid;
+  gap: 2px;
+}
+
+.project-time-start strong,
+.project-time-tasks > strong,
+.project-time-history > strong {
+  font-size: 10px;
+}
+
+.project-time-tasks,
+.project-time-history {
+  display: grid;
+  gap: 6px;
+}
+
+.project-time-tasks > button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.project-time-tasks > button:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: var(--accent-soft);
+}
+
+.project-time-tasks > button > span {
+  color: var(--accent);
+}
+
+.project-time-tasks > button > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.project-time-history > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.project-time-history > div > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.project-time-history > div > span {
+  flex: 0 0 auto;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+@media (max-width: 1180px) {
+  .global-timer {
+    min-width: 230px;
+  }
+
+  .timer-context {
+    max-width: 210px;
+  }
+
+  .time-kpi-grid,
+  .project-time-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .manual-time-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .manual-time-grid .wide {
+    grid-column: auto;
+  }
+
+  .project-time-start {
+    display: grid;
+  }
+}
