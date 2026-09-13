@@ -23,6 +23,17 @@ import type {
   ProspectInput,
   ProspectStage,
 } from '../shared/crm';
+import type {
+  InternalProjectInput,
+  ProjectFilters,
+  ProjectNodeInput,
+  ProjectPrerequisiteInput,
+  ProjectPrerequisiteStatus,
+  ProjectStatus,
+  ProjectTemplateInput,
+  ProjectTemplateNodeInput,
+  TransformQuoteToProjectInput,
+} from '../shared/projects';
 
 const api: AtoumWebApi = {
   app: { getBootstrap: () => ipcRenderer.invoke('app:get-bootstrap') },
@@ -100,6 +111,28 @@ const api: AtoumWebApi = {
     expire: (id: string) => ipcRenderer.invoke('quotes:expire', id),
     duplicate: (id: string) => ipcRenderer.invoke('quotes:duplicate', id),
     generatePdf: (id: string) => ipcRenderer.invoke('quotes:generate-pdf', id),
+  },
+  projects: {
+    templates: {
+      list: () => ipcRenderer.invoke('projects:templates:list'),
+      get: (id: string) => ipcRenderer.invoke('projects:templates:get', id),
+      create: (input: ProjectTemplateInput) => ipcRenderer.invoke('projects:templates:create', input),
+      createVersion: (templateId: string, description?: string | null) => ipcRenderer.invoke('projects:templates:create-version', templateId, description),
+      publishVersion: (versionId: string) => ipcRenderer.invoke('projects:templates:publish-version', versionId),
+      addNode: (versionId: string, input: ProjectTemplateNodeInput) => ipcRenderer.invoke('projects:templates:add-node', versionId, input),
+      removeNode: (nodeId: string) => ipcRenderer.invoke('projects:templates:remove-node', nodeId),
+    },
+    projects: {
+      list: (filters?: ProjectFilters) => ipcRenderer.invoke('projects:list', filters),
+      get: (id: string) => ipcRenderer.invoke('projects:get', id),
+      transformQuote: (input: TransformQuoteToProjectInput) => ipcRenderer.invoke('projects:transform-quote', input),
+      createInternal: (input: InternalProjectInput) => ipcRenderer.invoke('projects:create-internal', input),
+      changeStatus: (id: string, status: ProjectStatus) => ipcRenderer.invoke('projects:change-status', id, status),
+      addNode: (projectId: string, input: ProjectNodeInput) => ipcRenderer.invoke('projects:add-node', projectId, input),
+      updateNode: (nodeId: string, input: Partial<ProjectNodeInput>) => ipcRenderer.invoke('projects:update-node', nodeId, input),
+      addPrerequisite: (projectId: string, input: ProjectPrerequisiteInput) => ipcRenderer.invoke('projects:add-prerequisite', projectId, input),
+      updatePrerequisiteStatus: (id: string, status: ProjectPrerequisiteStatus) => ipcRenderer.invoke('projects:update-prerequisite-status', id, status),
+    },
   },
 };
 
