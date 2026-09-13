@@ -6,10 +6,11 @@
 
 - **Projet** : AtoumWeb Manager
 - **Version cible actuelle** : V1
-- **Statut global** : Fondation applicative implémentée sur branche dédiée — validation exécutable et PR en préparation
+- **Statut global** : Fondation applicative implémentée sur branche dédiée — validation exécutable requise — Phase 1 CRM préparée
 - **Dépôt** : `atoumweb-prog/atoumweb-manager`
 - **Branche stable** : `main`
 - **Branche de travail actuelle** : `foundation/electron-react-sqlite`
+- **PR actuelle** : #3 — Fondation V1 — Electron, React, SQLite et shell AtoumWeb (brouillon)
 - **Principe** : une donnée possède une source unique ; les autres écrans la référencent sans duplication.
 
 ## Références
@@ -19,6 +20,8 @@
 - `docs/DATA_MODEL_V1.md` — modèle de données cible V1
 - `docs/ROADMAP_V1.md` — ordre de développement
 - `docs/DEVELOPMENT.md` — démarrage local et commandes de développement
+- `docs/PHASE_1_CRM.md` — spécification d’implémentation Contacts / Prospects / Clients / Recherche
+- `docs/PHASE_1_CRM_ISSUES.md` — découpage des chantiers Phase 1
 
 ## Phase actuelle
 
@@ -50,17 +53,40 @@
 - [ ] Valider le packaging Windows
 - [ ] Finaliser puis fusionner la PR de fondation
 
+### Phase 1 — Socle CRM — préparation
+
+- [x] Définir précisément Organisations / Contacts / Prospects / Clients
+- [x] Fixer les stages Prospect par défaut
+- [x] Fixer les températures et sources Prospect
+- [x] Définir la prochaine action et ses raccourcis
+- [x] Définir le passage Gagné / Perdu
+- [x] Définir la conversion Prospect → Client sans duplication
+- [x] Définir la liste Clients
+- [x] Définir les premiers onglets de la fiche Client
+- [x] Définir archivage/réactivation Client
+- [x] Définir les rôles multiples de contacts client
+- [x] Définir la première recherche globale réelle
+- [x] Définir le journal d’activité Phase 1
+- [x] Définir les tests et critères d’acceptation
+- [x] Créer l’issue parente #4
+- [x] Créer #5 — Migration CRM / repositories / journal
+- [x] Créer #6 — Prospects / Kanban
+- [x] Créer #7 — Clients / conversion
+- [x] Créer #8 — Recherche globale
+- [x] Créer #9 — Validation Phase 1
+- [ ] Démarrer le code Phase 1 uniquement après validation/fusion de la fondation
+
 ## Avancement par module
 
 | Module | Conception | Développement | Tests | Statut |
 |---|---|---|---|---|
 | Accueil / Dashboard | ✅ | 🟡 socle | ⬜ | Shell de fondation |
-| Recherche globale | ✅ | 🟡 shell | ⬜ | Champ présent, moteur à développer |
-| Prospects | ✅ | ⬜ | ⬜ | À développer |
-| Clients | ✅ | ⬜ | ⬜ | À développer |
-| Offres & Tarifs | ✅ | ⬜ | ⬜ | À développer |
-| Devis | ✅ | ⬜ | ⬜ | À développer |
-| Projets | ✅ | ⬜ | ⬜ | À développer |
+| Recherche globale | ✅ | 🟡 shell | ⬜ | Phase 1 préparée — #8 |
+| Prospects | ✅ | ⬜ | ⬜ | Phase 1 préparée — #6 |
+| Clients | ✅ | ⬜ | ⬜ | Phase 1 préparée — #7 |
+| Offres & Tarifs | ✅ | ⬜ | ⬜ | À préparer en Phase 2 |
+| Devis | ✅ | ⬜ | ⬜ | À préparer en Phase 2 |
+| Projets | ✅ | ⬜ | ⬜ | À développer après Commercial |
 | Fichiers & Ressources projet | ✅ | ⬜ | ⬜ | À développer |
 | Bibliothèque projet | ✅ | ⬜ | ⬜ | À développer |
 | Bibliothèque AtoumWeb | ✅ | ⬜ | ⬜ | À développer |
@@ -74,7 +100,7 @@
 | Sauvegardes | ✅ | 🟡 fondation | ⬜ | DB locale : création/restauration implémentées |
 | Annuaire interne | ✅ | ⬜ | ⬜ | À développer |
 | Statistiques | ✅ | ⬜ | ⬜ | À développer |
-| Journal d'activité | ✅ | 🟡 schéma | ⬜ | Table initiale créée |
+| Journal d'activité | ✅ | 🟡 schéma | ⬜ | Phase 1 détaillée — #5 |
 | Réglages généraux | ✅ | 🟡 socle | ⬜ | Thème/workspace/DB présents |
 | Thèmes AtoumWeb / Noir / Blanc | ✅ | ✅ socle | ⬜ | Sélection et persistance implémentées |
 
@@ -98,6 +124,8 @@
 16. **Journal d'activité centralisé** : les timelines Client/Projet affichent des vues filtrées du même journal.
 17. **Réglages par défaut** : ordre logique établi dans le cahier des charges, avec retour aux valeurs par défaut sans toucher aux données métier.
 18. **Trois thèmes** : AtoumWeb par défaut, Noir, Blanc.
+19. **Identité CRM commune** : un prospect et un client référencent les mêmes `organizations` / `contacts`; la conversion ne recopie jamais l’identité.
+20. **Conversion idempotente** : relancer une conversion Prospect → Client ne peut jamais créer un deuxième client.
 
 ## Architecture technique décidée
 
@@ -145,9 +173,18 @@
 - Pile de build conservatrice retenue : Forge 7.11.2 + Vite 5.4.19 + TypeScript 5.9.2.
 - Workflow CI ajouté mais les exécutions GitHub observées n'ont pas obtenu de runner (aucune étape exécutée) ; validation réelle toujours requise sur runner/PC Windows.
 
+### 2026-09-13 — Phase 1 CRM préparée
+
+- Contacts conservés comme identité partagée et non comme module de menu séparé.
+- Prospect et Client utilisent les mêmes organisations/contacts.
+- Conversion Prospect → Client définie transactionnelle et idempotente.
+- Kanban, prochaine action, perte, archivage/réactivation et rôles contacts détaillés.
+- Recherche globale réelle définie pour Prospect / Client / Organisation / Contact.
+- Découpage GitHub créé : #4 à #9.
+
 ## Travail en cours
 
-**Validation exécutable de la fondation puis première PR vers `main`.**
+**Validation exécutable de la fondation. La Phase 1 est prête à démarrer immédiatement après fusion de la PR #3.**
 
 ## Blocages / points ouverts
 
@@ -160,4 +197,5 @@
 2. Générer `package-lock.json`.
 3. Corriger les éventuelles erreurs révélées par typecheck/tests/démarrage.
 4. Valider la PR de fondation.
-5. Démarrer le socle CRM : contacts, prospects, clients et recherche globale réelle.
+5. Démarrer #5 puis #6/#7/#8 selon les dépendances décrites dans `docs/PHASE_1_CRM.md`.
+6. Préparer en parallèle la Phase 2 Commercial : Offres & Tarifs + Devis.
