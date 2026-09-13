@@ -8,6 +8,7 @@ import type {
 } from '../shared/contracts';
 import { isThemeName } from '../shared/contracts';
 import type {
+  ClientContactRole,
   ClientFilters,
   ClientInput,
   ClientStatus,
@@ -146,6 +147,12 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     database.crm.archiveClient(id));
   ipcMain.handle('crm:clients:reactivate', (_event, id: string, status: Exclude<ClientStatus, 'archived'>) =>
     database.crm.reactivateClient(id, status));
+  ipcMain.handle('crm:clients:list-contacts', (_event, id: string) =>
+    database.clientContacts.list(id));
+  ipcMain.handle('crm:clients:add-contact', (_event, id: string, input: ContactInput, role: ClientContactRole, makePrimary?: boolean) =>
+    database.clientContacts.add(id, input, role, makePrimary));
+  ipcMain.handle('crm:clients:set-primary-contact', (_event, id: string, contactId: string) =>
+    database.clientContacts.setPrimary(id, contactId));
 
   ipcMain.handle('crm:activity:list', (_event, entityType: string, entityId: string) =>
     database.crm.listActivity(entityType, entityId));
