@@ -59,6 +59,7 @@ function toLocalInput(date: Date): string {
 
 export function TimePage({ onMessage }: { onMessage: (message: string) => void }) {
   const [period, setPeriod] = useState<Period>('today');
+  const [clientId, setClientId] = useState('');
   const [projectId, setProjectId] = useState('');
   const [category, setCategory] = useState<'all' | TimeCategory>('all');
   const [billable, setBillable] = useState<'all' | 'yes' | 'no'>('all');
@@ -86,15 +87,29 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
   const [editNote, setEditNote] = useState('');
   const [editBusy, setEditBusy] = useState(false);
 
+  const clientOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const project of projects) {
+      if (project.clientAccountId) map.set(project.clientAccountId, project.clientLabel);
+    }
+    return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1], 'fr-FR'));
+  }, [projects]);
+
+  const filteredProjects = useMemo(
+    () => clientId ? projects.filter((project) => project.clientAccountId === clientId) : projects,
+    [projects, clientId],
+  );
+
   const filters = useMemo<TimeSessionFilters>(() => {
     const range = periodRange(period);
     return {
       ...range,
+      clientAccountId: clientId || null,
       projectId: projectId || null,
       category: category === 'all' ? null : category,
       billable: billable === 'all' ? null : billable === 'yes',
     };
-  }, [period, projectId, category, billable]);
+  }, [period, clientId, projectId, category, billable]);
 
   async function refresh(): Promise<void> {
     try {
@@ -195,7 +210,12 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
           <button className={period === 'month' ? 'active' : ''} type="button" onClick={() => setPeriod('month')}>Ce mois</button>
         </div>
         <div className="toolbar-controls time-filters">
-          <select value={projectId} onChange={(event) => setProjectId(event.target.value)}><option value="">Tous les projets</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.number} · {project.name}</option>)}</select>
+          <select value={clientId} onChange={(event) => {
+            const next = event.target.value;
+            setClientId(next);
+            if (projectId && next && !projects.some((project) => project.id === projectId && project.clientAccountId === next)) setProjectId('');
+          }}><option value="">Tous les clients</option>{clientOptions.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select>
+          <select value={projectId} onChange={(event) => setProjectId(event.target.value)}><option value="">Tous les projets</option>{filteredProjects.map((project) => <option key={project.id} value={project.id}>{project.number} · {project.name}</option>)}</select>
           <select value={category} onChange={(event) => setCategory(event.target.value as 'all' | TimeCategory)}><option value="all">Toutes les catégories</option>{TIME_CATEGORIES.map((value) => <option key={value} value={value}>{CATEGORY_LABELS[value]}</option>)}</select>
           <select value={billable} onChange={(event) => setBillable(event.target.value as typeof billable)}><option value="all">Facturable + non facturable</option><option value="yes">Facturable</option><option value="no">Non facturable</option></select>
           <button className="primary-button" type="button" onClick={() => { setEditing(null); setManualOpen((value) => !value); }}>+ Temps manuel</button>
