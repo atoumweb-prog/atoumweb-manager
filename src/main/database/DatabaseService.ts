@@ -2,6 +2,7 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DatabaseHealth } from '../../shared/contracts';
 import { CatalogService } from '../commercial/CatalogService';
+import { QuoteService } from '../commercial/QuoteService';
 import { ActionService } from '../crm/ActionService';
 import { ClientContactService } from '../crm/ClientContactService';
 import { CrmService } from '../crm/CrmService';
@@ -19,6 +20,7 @@ export class DatabaseService {
   readonly clientContacts: ClientContactService;
   readonly actions: ActionService;
   readonly catalog: CatalogService;
+  readonly quotes: QuoteService;
 
   constructor(private readonly workspace: WorkspacePaths) {
     this.existedBeforeOpen = existsSync(workspace.databaseFile);
@@ -27,6 +29,7 @@ export class DatabaseService {
     this.clientContacts = new ClientContactService(this.database, this.crm);
     this.actions = new ActionService(this.database);
     this.catalog = new CatalogService(this.database);
+    this.quotes = new QuoteService(this.database, this.crm);
   }
 
   async initialize(): Promise<void> {
