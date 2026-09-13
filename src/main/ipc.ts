@@ -141,11 +141,9 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     const quoteResults: SearchResult[] = database.quotes.list({ search: normalized }).slice(0, 6).map((quote) => ({
       entityType: 'quote', entityId: quote.id, title: `${quote.number} · ${quote.subject}`, subtitle: quote.ownerLabel, status: quote.status,
     }));
-    const projectResults: SearchResult[] = database.projects.listProjects({ search: normalized }).slice(0, 6).map((project) => ({
-      entityType: 'project', entityId: project.id, title: `${project.number} · ${project.name}`, subtitle: project.clientLabel, status: project.status,
-    }));
+    const projectResults = database.projectSearch.search(normalized, 12);
 
-    return [...crmResults, ...catalogResults, ...quoteResults, ...projectResults].slice(0, 20);
+    return [...crmResults, ...catalogResults, ...quoteResults, ...projectResults].slice(0, 24);
   });
   ipcMain.handle('crm:search:rebuild', () => database.crm.rebuildSearchIndex());
 
