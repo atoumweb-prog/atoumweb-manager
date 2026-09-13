@@ -99,6 +99,7 @@ const api: AtoumWebApi = {
     refuse: (id: string) => ipcRenderer.invoke('quotes:refuse', id),
     expire: (id: string) => ipcRenderer.invoke('quotes:expire', id),
     duplicate: (id: string) => ipcRenderer.invoke('quotes:duplicate', id),
+    generatePdf: (id: string) => ipcRenderer.invoke('quotes:generate-pdf', id),
   },
 };
 
