@@ -94,6 +94,11 @@ export interface ProjectNodeInput {
   timeCategory?: string | null;
 }
 
+export interface MoveProjectNodeInput {
+  parentId?: string | null;
+  targetIndex: number;
+}
+
 export interface ProjectNode extends ProjectNodeInput {
   id: string;
   projectId: string;
@@ -300,6 +305,7 @@ export interface ProjectsApi {
     completionReview(id: string): Promise<ProjectCompletionReview>;
     addNode(projectId: string, input: ProjectNodeInput): Promise<ProjectDetail>;
     updateNode(nodeId: string, input: Partial<ProjectNodeInput>): Promise<ProjectDetail>;
+    moveNode(nodeId: string, input: MoveProjectNodeInput): Promise<ProjectDetail>;
     addPrerequisite(projectId: string, input: ProjectPrerequisiteInput): Promise<ProjectDetail>;
     updatePrerequisiteStatus(id: string, status: ProjectPrerequisiteStatus): Promise<ProjectDetail>;
   };
