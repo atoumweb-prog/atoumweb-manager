@@ -2,6 +2,7 @@ import type { CatalogApi, QuoteApi } from './commercial';
 import type { CrmApi } from './crm';
 import type { MaintenanceOverageApi } from './maintenanceOverage';
 import type { OperationsApi } from './operations';
+import type { OperationsAlertsApi } from './operationsAlerts';
 import type { ProjectsApi } from './projects';
 import type { TimeApi } from './time';
 
@@ -67,5 +68,6 @@ export interface AtoumWebApi {
   projects: ProjectsApi;
   operations: OperationsApi;
   maintenanceOverages: MaintenanceOverageApi;
+  operationsAlerts: OperationsAlertsApi;
   time: TimeApi;
 }
