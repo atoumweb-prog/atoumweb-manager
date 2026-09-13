@@ -143,4 +143,45 @@ export const PHASE_3_MIGRATIONS = [
         WHERE project_id IS NOT NULL;
     `,
   },
+  {
+    id: 8,
+    name: 'phase_3_project_resources',
+    sql: `
+      CREATE TABLE IF NOT EXISTS file_assets (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        client_account_id TEXT REFERENCES client_accounts(id),
+        relative_path TEXT NOT NULL,
+        original_name TEXT NOT NULL,
+        resource_folder TEXT NOT NULL CHECK (resource_folder IN ('identity', 'texts', 'media', 'documents', 'technical', 'deliverables', 'archives')),
+        resource_status TEXT NOT NULL DEFAULT 'received' CHECK (resource_status IN ('received', 'to_process', 'in_progress', 'validated', 'obsolete')),
+        content_role TEXT NOT NULL DEFAULT 'other' CHECK (content_role IN ('client_provided', 'atoumweb_rewrite', 'final_validated', 'other')),
+        mime_type TEXT,
+        size_bytes INTEGER CHECK (size_bytes IS NULL OR size_bytes >= 0),
+        checksum_sha256 TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        missing_at TEXT,
+        UNIQUE (project_id, relative_path)
+      ) STRICT;
+
+      CREATE INDEX IF NOT EXISTS idx_file_assets_project
+        ON file_assets(project_id, resource_folder, resource_status);
+      CREATE INDEX IF NOT EXISTS idx_file_assets_client
+        ON file_assets(client_account_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_file_assets_checksum
+        ON file_assets(checksum_sha256);
+
+      CREATE TABLE IF NOT EXISTS file_asset_links (
+        id TEXT PRIMARY KEY,
+        file_asset_id TEXT NOT NULL REFERENCES file_assets(id) ON DELETE CASCADE,
+        project_node_id TEXT NOT NULL REFERENCES project_nodes(id) ON DELETE CASCADE,
+        created_at TEXT NOT NULL,
+        UNIQUE (file_asset_id, project_node_id)
+      ) STRICT;
+
+      CREATE INDEX IF NOT EXISTS idx_file_asset_links_node
+        ON file_asset_links(project_node_id, created_at DESC);
+    `,
+  },
 ];
