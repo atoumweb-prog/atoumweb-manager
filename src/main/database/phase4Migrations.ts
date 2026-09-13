@@ -302,4 +302,37 @@ export const PHASE_4_MIGRATIONS = [
         WHERE reversal_of_movement_id IS NOT NULL;
     `,
   },
+  {
+    id: 14,
+    name: 'phase_4_billing_handoff',
+    sql: `
+      CREATE TABLE IF NOT EXISTS billing_items (
+        id TEXT PRIMARY KEY,
+        client_account_id TEXT NOT NULL REFERENCES client_accounts(id),
+        project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
+        source_type TEXT NOT NULL CHECK (source_type IN (
+          'quote_deposit','project_balance','intervention','maintenance_overage','hour_pack','subscription','other'
+        )),
+        source_id TEXT NOT NULL,
+        source_key TEXT NOT NULL UNIQUE,
+        description TEXT NOT NULL,
+        expected_amount_cents INTEGER NOT NULL DEFAULT 0 CHECK (expected_amount_cents >= 0),
+        theoretical_value_cents INTEGER NOT NULL DEFAULT 0 CHECK (theoretical_value_cents >= 0),
+        due_at TEXT,
+        status TEXT NOT NULL DEFAULT 'planned' CHECK (status IN ('planned','ready','invoiced','cancelled','offered')),
+        notes TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      ) STRICT;
+
+      CREATE INDEX IF NOT EXISTS idx_billing_items_client
+        ON billing_items(client_account_id, status, due_at);
+      CREATE INDEX IF NOT EXISTS idx_billing_items_project
+        ON billing_items(project_id, status, due_at);
+      CREATE INDEX IF NOT EXISTS idx_billing_items_source
+        ON billing_items(source_type, source_id);
+      CREATE INDEX IF NOT EXISTS idx_billing_items_status
+        ON billing_items(status, due_at, created_at DESC);
+    `,
+  },
 ];
