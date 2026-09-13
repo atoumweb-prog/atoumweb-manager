@@ -1,6 +1,7 @@
 import type { DatabaseAdapter } from './DatabaseAdapter';
 import { PHASE_2_MIGRATIONS } from './phase2Migrations';
 import { PHASE_3_MIGRATIONS } from './phase3Migrations';
+import { PHASE_4_MIGRATIONS } from './phase4Migrations';
 
 export interface Migration { id: number; name: string; sql: string; }
 
@@ -157,6 +158,7 @@ export const MIGRATIONS: Migration[] = [
   },
   ...PHASE_2_MIGRATIONS,
   ...PHASE_3_MIGRATIONS,
+  ...PHASE_4_MIGRATIONS,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {
