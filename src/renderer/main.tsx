@@ -13,6 +13,7 @@ import './commercial.css';
 import './quote-line-editor.css';
 import './quote-client-preview.css';
 import './projects.css';
+import './project-resources.css';
 
 const rootElement = document.getElementById('root');
 
