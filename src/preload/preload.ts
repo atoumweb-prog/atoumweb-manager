@@ -205,6 +205,7 @@ const api: AtoumWebApi = {
       create: (input: InterventionInput) => ipcRenderer.invoke('operations:interventions:create', input),
       update: (id: string, input: Partial<InterventionInput>) => ipcRenderer.invoke('operations:interventions:update', id, input),
       changeStatus: (id: string, status: InterventionStatus) => ipcRenderer.invoke('operations:interventions:change-status', id, status),
+      complete: (id: string) => ipcRenderer.invoke('operations:interventions:complete', id),
     },
     maintenance: {
       plans: {
