@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { BootstrapState, ThemeName } from '../shared/contracts';
 import type { SearchResult } from '../shared/crm';
 import { CatalogPage } from './commercial/CatalogPage';
+import { QuotesPage } from './commercial/QuotesPage';
 import { ClientsPage } from './crm/ClientsPage';
 import { GlobalSearch } from './crm/GlobalSearch';
 import { ProspectsPage } from './crm/ProspectsPage';
@@ -211,6 +212,7 @@ function App() {
           {activePage === 'Prospects' && <ProspectsPage onMessage={setMessage} />}
           {activePage === 'Clients' && <ClientsPage onMessage={setMessage} />}
           {activePage === 'Offres & Tarifs' && <CatalogPage onMessage={setMessage} />}
+          {activePage === 'Devis' && <QuotesPage onMessage={setMessage} />}
           {activePage === 'Réglages' && (
             <SettingsPage
               bootstrap={bootstrap}
@@ -221,7 +223,7 @@ function App() {
               onRestoreBackup={restoreBackup}
             />
           )}
-          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Réglages' && (
+          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Réglages' && (
             <ModulePlaceholder page={activePage} />
           )}
         </section>
