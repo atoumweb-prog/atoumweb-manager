@@ -91,6 +91,22 @@ interface CatalogSnapshotRow extends Record<string, unknown> {
   contract_type: string | null;
 }
 
+interface OfferComponentSnapshotRow extends Record<string, unknown> {
+  service_version_id: string;
+  service_item_id: string;
+  service_name: string;
+  service_version_number: number;
+  description: string | null;
+  inclusions_json: string;
+  exclusions_json: string;
+  prerequisites_json: string;
+  price_mode: string;
+  price_cents: number | null;
+  is_optional: number;
+  quantity_milli: number;
+  sort_order: number;
+}
+
 export class QuoteService {
   constructor(
     private readonly database: DatabaseAdapter,
@@ -199,6 +215,45 @@ export class QuoteService {
     const proposed = input.proposedUnitPriceCents ?? source.price_cents;
     if (proposed == null && source.price_mode !== 'free') throw new Error('Renseigne un prix proposé pour cette prestation sur devis.');
 
+    const offerComponents = source.item_type === 'offer'
+      ? this.database.all<OfferComponentSnapshotRow>(
+        `SELECT
+          sv.id AS service_version_id,
+          si.id AS service_item_id,
+          si.name AS service_name,
+          sv.version_number AS service_version_number,
+          sv.description,
+          sv.inclusions_json,
+          sv.exclusions_json,
+          sv.prerequisites_json,
+          sv.price_mode,
+          sv.price_cents,
+          oc.is_optional,
+          oc.quantity_milli,
+          oc.sort_order
+         FROM offer_components oc
+         JOIN catalog_versions sv ON sv.id=oc.service_version_id
+         JOIN catalog_items si ON si.id=sv.item_id
+         WHERE oc.offer_version_id=?
+         ORDER BY oc.sort_order, si.name COLLATE NOCASE`,
+        [catalogVersionId],
+      ).map((component) => ({
+        serviceItemId: component.service_item_id,
+        serviceVersionId: component.service_version_id,
+        serviceName: component.service_name,
+        serviceVersionNumber: Number(component.service_version_number),
+        description: component.description,
+        inclusions: this.parseJsonList(component.inclusions_json),
+        exclusions: this.parseJsonList(component.exclusions_json),
+        prerequisites: this.parseJsonList(component.prerequisites_json),
+        priceMode: component.price_mode,
+        priceCents: component.price_cents,
+        isOptional: Boolean(component.is_optional),
+        quantityMilli: Number(component.quantity_milli),
+        sortOrder: Number(component.sort_order),
+      }))
+      : [];
+
     const snapshot = {
       itemId: source.item_id,
       itemName: source.item_name,
@@ -213,6 +268,7 @@ export class QuoteService {
       priceCents: source.price_cents,
       defaultDepositPercent: source.default_deposit_percent,
       contractType: source.contract_type,
+      offerComponents,
     };
 
     this.insertLine(quoteId, 'catalog', {
