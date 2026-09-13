@@ -8,6 +8,7 @@ import { ClientContactService } from '../crm/ClientContactService';
 import { CrmService } from '../crm/CrmService';
 import { ProjectCompletionService } from '../projects/ProjectCompletionService';
 import { ProjectResourceService } from '../projects/ProjectResourceService';
+import { ProjectReuseExportService } from '../projects/ProjectReuseExportService';
 import { ProjectSearchService } from '../projects/ProjectSearchService';
 import { ProjectService } from '../projects/ProjectService';
 import { ProjectTechnicalLibraryService } from '../projects/ProjectTechnicalLibraryService';
@@ -30,6 +31,7 @@ export class DatabaseService {
   readonly projects: ProjectService;
   readonly projectCompletion: ProjectCompletionService;
   readonly projectResources: ProjectResourceService;
+  readonly projectReuseExport: ProjectReuseExportService;
   readonly projectSearch: ProjectSearchService;
   readonly projectTechnicalLibrary: ProjectTechnicalLibraryService;
   readonly time: TimeService;
@@ -45,6 +47,7 @@ export class DatabaseService {
     this.projects = new ProjectService(this.database, this.workspace);
     this.projectCompletion = new ProjectCompletionService(this.database);
     this.projectResources = new ProjectResourceService(this.database, this.workspace);
+    this.projectReuseExport = new ProjectReuseExportService(this.database, this.workspace);
     this.projectSearch = new ProjectSearchService(this.database);
     this.projectTechnicalLibrary = new ProjectTechnicalLibraryService(this.database);
     this.time = new TimeService(this.database);
