@@ -7,6 +7,8 @@ const STATUS_LABELS: Record<ClientStatus, string> = {
   archived: 'Archivé',
 };
 
+type ClientTab = 'summary' | 'contacts' | 'commercial' | 'history';
+
 interface ClientDraft {
   company: string;
   firstName: string;
@@ -32,6 +34,7 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
   const [statusFilter, setStatusFilter] = useState<'all' | ClientStatus>('all');
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<ClientTab>('summary');
   const [showForm, setShowForm] = useState(false);
   const [draft, setDraft] = useState<ClientDraft>(EMPTY_DRAFT);
   const [formError, setFormError] = useState<string | null>(null);
@@ -114,13 +117,18 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
       setDraft(EMPTY_DRAFT);
       setShowForm(false);
       await refresh();
-      setSelectedId(client.id);
+      openClient(client.id);
       onMessage('Client créé.');
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Impossible de créer le client.');
     } finally {
       setSaving(false);
     }
+  }
+
+  function openClient(id: string): void {
+    setSelectedId(id);
+    setActiveTab('summary');
   }
 
   async function archive(client: ClientSummary): Promise<void> {
@@ -134,6 +142,33 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
     await window.atoumweb.crm.clients.reactivate(client.id, 'active');
     await refresh();
     onMessage('Client réactivé.');
+  }
+
+  async function scheduleAction(client: ClientSummary): Promise<void> {
+    const today = new Date().toISOString().slice(0, 10);
+    const dateText = window.prompt('Date de la prochaine action (AAAA-MM-JJ)', today)?.trim();
+    if (!dateText) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateText)) {
+      onMessage('Date invalide. Utilise le format AAAA-MM-JJ.');
+      return;
+    }
+    const action = window.prompt('Action à prévoir ?', client.nextActionText || 'Recontacter le client')?.trim();
+    if (!action) return;
+    const date = new Date(`${dateText}T09:00:00`);
+    if (Number.isNaN(date.getTime())) {
+      onMessage('Date invalide.');
+      return;
+    }
+    await window.atoumweb.crm.clients.update(client.id, {
+      organizationId: client.organizationId,
+      primaryContactId: client.primaryContactId,
+      status: client.status,
+      notes: client.notes,
+      nextActionAt: date.toISOString(),
+      nextActionText: action,
+    });
+    await refresh();
+    onMessage('Prochaine action client enregistrée.');
   }
 
   return (
@@ -180,7 +215,7 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
                 <thead><tr><th>Client</th><th>Statut</th><th>Contact principal</th><th>Coordonnées</th><th>Prochaine action</th><th /></tr></thead>
                 <tbody>
                   {filtered.map((client) => (
-                    <tr key={client.id} className={selectedId === client.id ? 'selected-row' : ''} onClick={() => setSelectedId(client.id)}>
+                    <tr key={client.id} className={selectedId === client.id ? 'selected-row' : ''} onClick={() => openClient(client.id)}>
                       <td><div className="client-name-cell"><span className="avatar-initials">{initials(client.displayName)}</span><div><strong>{client.displayName}</strong><small>Client depuis {new Date(client.becameClientAt).toLocaleDateString('fr-FR')}</small></div></div></td>
                       <td><span className={`client-status status-${client.status}`}>{STATUS_LABELS[client.status ?? 'active']}</span></td>
                       <td>{client.contactName || '—'}</td>
@@ -201,27 +236,60 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
 
           {selected && (
             <aside className="panel client-summary-panel">
-              <span className="eyebrow">Fiche client</span>
-              <div className="client-summary-head"><span className="avatar-large">{initials(selected.displayName)}</span><div><h2>{selected.displayName}</h2><span className={`client-status status-${selected.status}`}>{STATUS_LABELS[selected.status ?? 'active']}</span></div></div>
-              <div className="summary-list">
-                <SummaryLine label="Contact principal" value={selected.contactName || 'Non renseigné'} />
-                <SummaryLine label="Email" value={selected.email || 'Non renseigné'} />
-                <SummaryLine label="Téléphone" value={selected.phone || 'Non renseigné'} />
-                <SummaryLine label="Prochaine action" value={selected.nextActionText || 'Aucune'} />
-                <SummaryLine label="Depuis" value={new Date(selected.becameClientAt).toLocaleDateString('fr-FR')} />
+              <div className="detail-panel-heading">
+                <div>
+                  <span className="eyebrow">Fiche client</span>
+                  <div className="client-summary-head"><span className="avatar-large">{initials(selected.displayName)}</span><div><h2>{selected.displayName}</h2><span className={`client-status status-${selected.status}`}>{STATUS_LABELS[selected.status ?? 'active']}</span></div></div>
+                </div>
+                <button className="close-detail" type="button" onClick={() => setSelectedId(null)}>×</button>
               </div>
-              {selected.notes && <div className="client-notes"><strong>Notes</strong><p>{selected.notes}</p></div>}
-              <div className="client-tabs-preview"><span className="active">Résumé</span><span>Contacts</span><span>Commercial</span><span>Historique</span></div>
-              <div className="activity-preview">
-                <strong>Activité récente</strong>
-                {activity.slice(0, 5).map((event) => (
-                  <div className="activity-item" key={event.id}>
-                    <span className="activity-dot" />
-                    <div><p>{event.summary}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div>
+
+              <div className="client-tabs-preview client-tabs-buttons">
+                <button className={activeTab === 'summary' ? 'active' : ''} type="button" onClick={() => setActiveTab('summary')}>Résumé</button>
+                <button className={activeTab === 'contacts' ? 'active' : ''} type="button" onClick={() => setActiveTab('contacts')}>Contacts</button>
+                <button className={activeTab === 'commercial' ? 'active' : ''} type="button" onClick={() => setActiveTab('commercial')}>Commercial</button>
+                <button className={activeTab === 'history' ? 'active' : ''} type="button" onClick={() => setActiveTab('history')}>Historique</button>
+              </div>
+
+              {activeTab === 'summary' && (
+                <>
+                  <div className="summary-list">
+                    <SummaryLine label="Contact principal" value={selected.contactName || 'Non renseigné'} />
+                    <SummaryLine label="Email" value={selected.email || 'Non renseigné'} />
+                    <SummaryLine label="Téléphone" value={selected.phone || 'Non renseigné'} />
+                    <SummaryLine label="Prochaine action" value={selected.nextActionAt ? `${selected.nextActionText || 'Action'} · ${new Date(selected.nextActionAt).toLocaleDateString('fr-FR')}` : 'Aucune'} />
+                    <SummaryLine label="Depuis" value={new Date(selected.becameClientAt).toLocaleDateString('fr-FR')} />
                   </div>
-                ))}
-                {activity.length === 0 && <p className="muted">Aucune activité enregistrée.</p>}
-              </div>
+                  {selected.notes && <div className="client-notes"><strong>Notes</strong><p>{selected.notes}</p></div>}
+                  <div className="detail-actions"><button className="secondary-button" type="button" onClick={() => void scheduleAction(selected)}>Programmer une action</button></div>
+                </>
+              )}
+
+              {activeTab === 'contacts' && (
+                <div className="tab-content-stack">
+                  <div className="contact-card">
+                    <span className="avatar-initials">{initials(selected.contactName || selected.displayName)}</span>
+                    <div><strong>{selected.contactName || 'Contact principal non renseigné'}</strong><span>Principal</span><small>{selected.email || 'Email non renseigné'}{selected.phone ? ` · ${selected.phone}` : ''}</small></div>
+                  </div>
+                  <p className="muted">La gestion de plusieurs contacts et rôles sera raccordée au modèle déjà prévu dans `client_contact_roles`.</p>
+                </div>
+              )}
+
+              {activeTab === 'commercial' && (
+                <div className="tab-content-stack">
+                  <div className="commercial-kpis">
+                    <MiniKpi label="Projets actifs" value="0" />
+                    <MiniKpi label="Services actifs" value="0" />
+                    <MiniKpi label="CA encaissé" value="0 €" />
+                    <MiniKpi label="Temps cumulé" value="0 h" />
+                  </div>
+                  <p className="muted">Ces valeurs seront calculées depuis Projets, Facturation et Gestion des temps. Elles ne sont pas stockées en double dans la fiche Client.</p>
+                </div>
+              )}
+
+              {activeTab === 'history' && (
+                <ActivityList activity={activity} />
+              )}
             </aside>
           )}
         </div>
@@ -236,4 +304,23 @@ function initials(name: string): string {
 
 function SummaryLine({ label, value }: { label: string; value: string }) {
   return <div className="summary-line"><span>{label}</span><strong>{value}</strong></div>;
+}
+
+function MiniKpi({ label, value }: { label: string; value: string }) {
+  return <div className="mini-kpi"><span>{label}</span><strong>{value}</strong></div>;
+}
+
+function ActivityList({ activity }: { activity: ActivityEvent[] }) {
+  return (
+    <div className="activity-preview activity-full">
+      <strong>Historique du client</strong>
+      {activity.map((event) => (
+        <div className="activity-item" key={event.id}>
+          <span className="activity-dot" />
+          <div><p>{event.summary}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div>
+        </div>
+      ))}
+      {activity.length === 0 && <p className="muted">Aucune activité enregistrée.</p>}
+    </div>
+  );
 }
