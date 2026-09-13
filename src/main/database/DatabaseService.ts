@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DatabaseHealth } from '../../shared/contracts';
+import { CrmService } from '../crm/CrmService';
 import type { WorkspacePaths } from '../workspace';
 import type { DatabaseAdapter } from './DatabaseAdapter';
 import { NodeSqliteAdapter } from './NodeSqliteAdapter';
@@ -11,10 +12,12 @@ export type BackupKind = 'automatic' | 'manual' | 'pre-migration';
 export class DatabaseService {
   private readonly database: DatabaseAdapter;
   private readonly existedBeforeOpen: boolean;
+  readonly crm: CrmService;
 
   constructor(private readonly workspace: WorkspacePaths) {
     this.existedBeforeOpen = existsSync(workspace.databaseFile);
     this.database = new NodeSqliteAdapter(workspace.databaseFile);
+    this.crm = new CrmService(this.database);
   }
 
   async initialize(): Promise<void> {
@@ -27,6 +30,7 @@ export class DatabaseService {
 
     applyPendingMigrations(this.database);
     this.seedDefaults();
+    this.crm.rebuildSearchIndex();
     await this.createDailyBackupIfNeeded();
   }
 
