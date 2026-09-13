@@ -6,36 +6,38 @@
 
 - **Projet** : AtoumWeb Manager
 - **Version cible actuelle** : V1
-- **Statut global** : Conception fonctionnelle validée — dépôt GitHub initialisé — architecture technique à définir
+- **Statut global** : Conception fonctionnelle, architecture technique et modèle de données validés — socle applicatif à créer
 - **Dépôt** : `atoumweb-prog/atoumweb-manager`
 - **Branche stable** : `main`
 - **Principe** : une donnée possède une source unique ; les autres écrans la référencent sans duplication.
 
-## Référence fonctionnelle
+## Références
 
-Document principal pour Codex :
-
-- `docs/CAHIER_DES_CHARGES_FONCTIONNEL_V1.md`
-
-Le DOCX complet reste le document humain de référence hors dépôt si nécessaire.
+- `docs/CAHIER_DES_CHARGES_FONCTIONNEL_V1.md` — fonctionnel
+- `docs/ARCHITECTURE.md` — architecture technique décidée
+- `docs/DATA_MODEL_V1.md` — modèle de données cible V1
+- `docs/ROADMAP_V1.md` — ordre de développement
 
 ## Phase actuelle
 
-### Phase 0 — Initialisation du projet
+### Phase 0 — Fondation
 
 - [x] Créer le dépôt GitHub `atoumweb-manager`
 - [x] Ajouter le README
 - [x] Ajouter `AGENTS.md`
 - [x] Ajouter ce fichier `PROJECT_STATUS.md`
 - [x] Ajouter le cahier des charges fonctionnel V1 en Markdown
-- [x] Ajouter un espace de décision pour l'architecture (`docs/ARCHITECTURE.md`)
-- [x] Préparer la première roadmap de développement (`docs/ROADMAP_V1.md`)
+- [x] Définir et documenter l'architecture technique
+- [x] Définir le modèle de données initial
+- [x] Définir la stratégie de stockage utilisateur
+- [x] Définir la stratégie de sauvegarde/restauration de la base du CRM
+- [x] Préparer la roadmap V1
 - [x] Ajouter un modèle d'issue GitHub
-- [x] Créer la première issue de pilotage GitHub (#1)
-- [ ] Choisir et documenter l'architecture technique
-- [ ] Définir le modèle de données initial
-- [ ] Créer la structure de dossiers applicative
-- [ ] Définir la stratégie de sauvegarde de la base du CRM
+- [x] Créer l'issue de pilotage #1
+- [ ] Créer le socle Electron / React / TypeScript
+- [ ] Créer l'arborescence de code
+- [ ] Ajouter le moteur de migrations SQLite
+- [ ] Ajouter les premiers tests et la CI GitHub
 
 ## Avancement par module
 
@@ -86,6 +88,20 @@ Le DOCX complet reste le document humain de référence hors dépôt si nécessa
 17. **Réglages par défaut** : ordre logique établi dans le cahier des charges, avec retour aux valeurs par défaut sans toucher aux données métier.
 18. **Trois thèmes** : AtoumWeb par défaut, Noir, Blanc.
 
+## Architecture technique décidée
+
+- Electron 44.x
+- React 19.3
+- TypeScript strict
+- Electron Forge, template Webpack + TypeScript
+- SQLite locale via `node:sqlite`, encapsulé derrière une couche repository/adapter
+- SQL et migrations versionnées sans ORM lourd pour la V1
+- renderer isolé du système ; fichiers/base/PDF dans le main process via IPC typé
+- Monaco Editor pour visualiser/éditer le code sans l'exécuter
+- PDF via rendu HTML + `webContents.printToPDF()`
+- workspace local configurable, par défaut dans Documents
+- sauvegarde quotidienne de la base + sauvegarde avant migration
+
 ## Parcours métier de référence
 
 `Prospect → Devis → Client → Projet → Production → Livraison → Facturation → Maintenance → Statistiques`
@@ -120,13 +136,20 @@ Lorsqu'un devis est accepté, le CRM doit pouvoir :
 - Dépôt privé créé : `atoumweb-prog/atoumweb-manager`.
 - Documentation de démarrage ajoutée sur `main`.
 - Cahier des charges V1 ajouté en Markdown pour Codex.
-- `docs/ARCHITECTURE.md` créé pour documenter les choix techniques.
-- Roadmap V1 ajoutée.
-- Première issue de pilotage créée : **#1 — Phase 0 — Définir l’architecture technique et le modèle de données**.
+- Roadmap et modèle d'issue ajoutés.
+
+### 2026-09-13 — Architecture et modèle de données décidés
+
+- Application Windows locale Electron + React + TypeScript.
+- SQLite locale, fichiers lourds conservés hors base et référencés.
+- Modèle de données V1 documenté dans `docs/DATA_MODEL_V1.md`.
+- Recherche globale basée sur un index dérivé reconstruisible.
+- Journal d'activité centralisé append-only.
+- Sauvegarde/restauration de la base prévue dès le socle.
 
 ## Travail en cours
 
-**Architecture technique et modèle de données à préparer avant le premier développement applicatif.**
+**Préparation du socle applicatif et des premières migrations SQLite.**
 
 ## Blocages
 
@@ -134,8 +157,10 @@ Aucun blocage fonctionnel connu.
 
 ## Prochaines actions
 
-1. Définir l'architecture technique de l'application.
-2. Définir le modèle de données initial.
-3. Définir l'arborescence du code source et du stockage utilisateur.
-4. Définir la sauvegarde/restauration de la base du CRM.
-5. Créer le socle applicatif sur une branche dédiée.
+1. Créer une branche de fondation.
+2. Initialiser Electron Forge + React + TypeScript.
+3. Créer l'arborescence `main / preload / renderer / shared`.
+4. Ajouter SQLite et le moteur de migrations.
+5. Ajouter les réglages de workspace et la sauvegarde DB.
+6. Ajouter les trois thèmes et le shell de navigation.
+7. Ajouter les premiers tests et la CI GitHub.
