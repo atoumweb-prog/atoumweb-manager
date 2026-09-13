@@ -9,7 +9,7 @@
 - **Branche stable** : `main`
 - **Branche actuelle** : `foundation/electron-react-sqlite`
 - **PR actuelle** : #3 — Fondation V1 (brouillon)
-- **Statut** : architecture et feuille de route V1 complètes ; fondation implémentée mais validation Windows encore requise.
+- **Statut** : architecture et feuille de route V1 complètes ; Gate 0 automatique Windows validé ; validation visuelle de l’application encore requise.
 - **Principe directeur** : une donnée métier possède une source unique ; les autres écrans la référencent sans duplication.
 
 ## Références
@@ -32,19 +32,32 @@
 
 Implémenté sur `foundation/electron-react-sqlite` : Electron + React + TypeScript, sécurité main/preload/renderer, SQLite/migrations, workspace, sauvegarde/restauration CRM, shell/menu V1, thèmes AtoumWeb/Noir/Blanc, premiers tests et CI.
 
-À valider avant fusion PR #3 :
+### Gate 0 automatique Windows
 
-- [ ] générer/versionner `package-lock.json`
-- [ ] `npm install`
-- [ ] `npm run typecheck`
-- [ ] `npm test`
+Validé le 13/09/2026 sur Windows :
+
+- [x] Node/npm/Git détectés
+- [x] `npm install`
+- [x] `npm run typecheck`
+- [x] `npm test`
+- [x] test SQLite exécuté avec le runtime Node intégré à Electron
+- [x] `npm run package`
+- [x] packaging x64 Win32 réussi
+- [x] `package-lock.json` généré localement
+
+### Reste à valider avant fusion PR #3
+
+- [ ] versionner/pousser `package-lock.json`
 - [ ] `npm start`
-- [ ] sauvegarde/restauration réelle
-- [ ] trois thèmes
-- [ ] `npm run package`
+- [ ] vérifier visuellement le démarrage de l’application
+- [ ] vérifier navigation principale
+- [ ] vérifier thèmes AtoumWeb / Noir / Blanc
+- [ ] vérifier Réglages et workspace réel
+- [ ] vérifier sauvegarde manuelle réelle
+- [ ] vérifier restauration test avec sauvegarde `pre-restore`
 - [ ] fusion PR #3
 
-**Point ouvert** : les runs GitHub Actions observés n’ont pas obtenu de runner (`runner_id=0`, `steps=[]`).
+Le fichier local `gate0-output.txt` est maintenant ignoré par Git et ne doit pas être versionné.
 
 ## Phases V1 préparées
 
@@ -81,7 +94,7 @@ Implémenté sur `foundation/electron-react-sqlite` : Electron + React + TypeScr
 
 ## Ordre de développement
 
-1. **Gate 0** : valider/fusionner la fondation PR #3 / issue #2.
+1. **Gate 0** : validation visuelle puis fusion PR #3 / issue #2.
 2. Phase 1 : #5 → #6/#7/#8 → #9.
 3. Phase 2 : #11 → #12 → #13/#14 → #15.
 4. Phase 3 : #17 → #18 → #19/#20 → #21/#22 → #23.
@@ -92,17 +105,12 @@ Implémenté sur `foundation/electron-react-sqlite` : Electron + React + TypeScr
 
 ## Travail en cours
 
-**Priorité immédiate : Gate 0. Ne pas démarrer le code de la Phase 1 avant validation réelle de la fondation sur Windows.**
+**Priorité immédiate : lancer `npm start` et valider l’application visuellement sur Windows.**
 
 ## Prochaine action concrète
 
-Faire exécuter sur Windows/Codex :
-
-```bash
-npm install
-npm run typecheck
-npm test
+```powershell
 npm start
 ```
 
-Puis corriger les éventuels problèmes, valider `npm run package`, mettre à jour ce fichier et finaliser la PR #3.
+Puis vérifier l’ouverture d’AtoumWeb Manager, la navigation, les trois thèmes, les Réglages, le workspace et les sauvegardes/restaurations de test. Une fois validé, pousser `package-lock.json`, finaliser la PR #3 et passer à la Phase 1.
