@@ -6,7 +6,7 @@ import { QuotesPage } from './commercial/QuotesPage';
 import { ClientsPage } from './crm/ClientsPage';
 import { GlobalSearch } from './crm/GlobalSearch';
 import { ProspectsPage } from './crm/ProspectsPage';
-import { OperationsPage } from './operations/OperationsPage';
+import { OperationsPage, type OperationsSearchTarget } from './operations/OperationsPage';
 import { ProjectsPage } from './projects/ProjectsPage';
 import { GlobalTimer } from './time/GlobalTimer';
 import { TimePage } from './time/TimePage';
@@ -68,6 +68,7 @@ function App() {
   const [message, setMessage] = useState<string | null>(null);
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [projectSearchTarget, setProjectSearchTarget] = useState<string | null>(null);
+  const [operationsSearchTarget, setOperationsSearchTarget] = useState<OperationsSearchTarget | null>(null);
 
   useEffect(() => {
     window.atoumweb.app.getBootstrap()
@@ -113,6 +114,12 @@ function App() {
     );
   }
 
+  function navigate(page: PageName): void {
+    if (page === 'Interventions & Maintenance') setOperationsSearchTarget(null);
+    if (page === 'Projets') setProjectSearchTarget(null);
+    setActivePage(page);
+  }
+
   function openSearchResult(result: SearchResult): void {
     switch (result.entityType) {
       case 'prospect': setActivePage('Prospects'); break;
@@ -126,6 +133,7 @@ function App() {
       case 'intervention':
       case 'maintenance':
       case 'hour_pack':
+        setOperationsSearchTarget({ entityType: result.entityType, entityId: result.entityId });
         setActivePage('Interventions & Maintenance');
         break;
       case 'client':
@@ -149,7 +157,7 @@ function App() {
       <aside className="sidebar">
         <div className="brand-block"><div className="brand-mark">AW</div><div><strong>AtoumWeb</strong><span>Manager</span></div></div>
         <nav className="navigation" aria-label="Navigation principale">
-          {NAV_ITEMS.map((item) => <button key={item} className={`nav-item ${activePage === item ? 'active' : ''}`} onClick={() => setActivePage(item)} type="button"><span className="nav-dot" /><span>{item}</span></button>)}
+          {NAV_ITEMS.map((item) => <button key={item} className={`nav-item ${activePage === item ? 'active' : ''}`} onClick={() => navigate(item)} type="button"><span className="nav-dot" /><span>{item}</span></button>)}
         </nav>
         <div className="sidebar-footer"><span>V{bootstrap.appVersion}</span><span className="status-pill">Local</span></div>
       </aside>
@@ -170,7 +178,7 @@ function App() {
           {activePage === 'Offres & Tarifs' && <CatalogPage onMessage={setMessage} />}
           {activePage === 'Devis' && <QuotesPage onMessage={setMessage} />}
           {activePage === 'Projets' && <ProjectsPage onMessage={setMessage} initialProjectId={projectSearchTarget} />}
-          {activePage === 'Interventions & Maintenance' && <OperationsPage onMessage={setMessage} />}
+          {activePage === 'Interventions & Maintenance' && <OperationsPage onMessage={setMessage} initialTarget={operationsSearchTarget} />}
           {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}
           {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} onThemeChange={updateTheme} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
           {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
