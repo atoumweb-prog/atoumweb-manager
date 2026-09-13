@@ -10,6 +10,7 @@ import { CrmService } from '../crm/CrmService';
 import { HourPackService } from '../operations/HourPackService';
 import { InterventionCompletionService } from '../operations/InterventionCompletionService';
 import { MaintenanceOverageService } from '../operations/MaintenanceOverageService';
+import { MaintenanceReportService } from '../operations/MaintenanceReportService';
 import { MaintenanceService } from '../operations/MaintenanceService';
 import { OperationsAlertService } from '../operations/OperationsAlertService';
 import { OperationsService } from '../operations/OperationsService';
@@ -50,6 +51,7 @@ export class DatabaseService {
   readonly hourPacks: HourPackService;
   readonly billingHandoff: BillingHandoffService;
   readonly maintenanceOverages: MaintenanceOverageService;
+  readonly maintenanceReports: MaintenanceReportService;
   readonly operationsAlerts: OperationsAlertService;
   readonly interventionCompletion: InterventionCompletionService;
   readonly time: TimeService;
@@ -76,6 +78,7 @@ export class DatabaseService {
     this.hourPacks = new HourPackService(this.database);
     this.billingHandoff = new BillingHandoffService(this.database);
     this.maintenanceOverages = new MaintenanceOverageService(this.database, this.billingHandoff);
+    this.maintenanceReports = new MaintenanceReportService(this.database);
     this.operationsAlerts = new OperationsAlertService(this.database);
     this.interventionCompletion = new InterventionCompletionService(this.database, this.operations, this.hourPacks, this.billingHandoff, this.maintenanceOverages);
     this.time = new TimeService(this.database);
