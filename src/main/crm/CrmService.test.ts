@@ -65,6 +65,27 @@ describe('CrmService', () => {
     expect(crm.listProspects({ stage: 'won' })).toHaveLength(1);
   });
 
+  it('rattache deux prospects de la même organisation au même client', () => {
+    const organization = crm.createOrganization({ name: 'Société Unique' });
+    const firstProspect = crm.createProspect({ organizationId: organization.id, primaryNeed: 'Site vitrine' });
+    const secondProspect = crm.createProspect({ organizationId: organization.id, primaryNeed: 'Maintenance' });
+
+    const first = crm.convertProspectToClient(firstProspect.id);
+    const second = crm.convertProspectToClient(secondProspect.id);
+
+    expect(first.clientId).toBe(second.clientId);
+    expect(second.createdClient).toBe(false);
+    expect(crm.listClients()).toHaveLength(1);
+  });
+
+  it('empêche la création directe de deux clients pour la même organisation', () => {
+    const organization = crm.createOrganization({ name: 'Client sans doublon' });
+    crm.createClient({ organizationId: organization.id });
+
+    expect(() => crm.createClient({ organizationId: organization.id })).toThrow();
+    expect(crm.listClients()).toHaveLength(1);
+  });
+
   it('archive puis réactive un client sans perdre son historique', () => {
     const contact = crm.createContact({ firstName: 'Anne', lastName: 'Martin', email: 'anne@example.test' });
     const client = crm.createClient({ primaryContactId: contact.id });
@@ -78,6 +99,37 @@ describe('CrmService', () => {
     expect(active.status).toBe('active');
     expect(active.archivedAt).toBeNull();
     expect(crm.listActivity('client', client.id).length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('programme puis retire une prochaine action et journalise les changements', () => {
+    const contact = crm.createContact({ firstName: 'Lucie', lastName: 'Bernard' });
+    const prospect = crm.createProspect({ contactId: contact.id });
+    const nextDate = '2026-09-20T09:00:00.000Z';
+
+    const scheduled = crm.setProspectNextAction(prospect.id, nextDate, 'Rappeler pour le devis');
+    expect(scheduled.nextActionAt).toBe(nextDate);
+    expect(scheduled.nextActionText).toBe('Rappeler pour le devis');
+
+    const cleared = crm.setProspectNextAction(prospect.id, null, null);
+    expect(cleared.nextActionAt).toBeNull();
+    expect(cleared.nextActionText).toBeNull();
+
+    const events = crm.listActivity('prospect', prospect.id);
+    expect(events.filter((event) => event.action === 'next_action_changed')).toHaveLength(2);
+  });
+
+  it('reconstruit la recherche depuis les données maîtres après modification', () => {
+    const organization = crm.createOrganization({ name: 'Ancien Nom', city: 'Dijon' });
+    expect(crm.globalSearch('ancien')).toHaveLength(1);
+
+    crm.updateOrganization(organization.id, { name: 'Nouveau Nom', city: 'Beaune' });
+    expect(crm.globalSearch('ancien')).toHaveLength(0);
+    expect(crm.globalSearch('nouveau').some((result) => result.entityId === organization.id)).toBe(true);
+    expect(crm.globalSearch('beaune').some((result) => result.entityId === organization.id)).toBe(true);
+
+    const rebuilt = crm.rebuildSearchIndex();
+    expect(rebuilt.indexed).toBeGreaterThanOrEqual(1);
+    expect(crm.globalSearch('nouveau').some((result) => result.entityId === organization.id)).toBe(true);
   });
 
   it('valide les montants et probabilités prospect', () => {
