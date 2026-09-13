@@ -1,6 +1,11 @@
 .client-tabs-buttons { margin: 4px 0 14px; }
 .client-tabs-buttons button { border: 0; border-radius: 7px; padding: 6px 8px; background: var(--surface-soft); color: var(--muted); cursor: pointer; font-size: 8px; font-weight: 750; }
 .client-tabs-buttons button.active { color: var(--accent-strong); background: var(--accent-soft); }
+.client-status-control { display: grid; gap: 7px; margin-bottom: 14px; padding: 11px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); }
+.client-status-control label { display: grid; gap: 5px; color: var(--muted); font-size: 9px; font-weight: 750; }
+.client-status-control select { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 9px; background: var(--surface); color: var(--text); outline: none; }
+.client-status-control select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 13%, transparent); }
+.client-status-control p { margin: 0; font-size: 8px; line-height: 1.45; }
 .tab-content-stack { display: grid; gap: 12px; }
 .contact-tab-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .contact-tab-heading strong { font-size: 10px; }
