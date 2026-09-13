@@ -97,12 +97,13 @@ PR : #58 (brouillon)
 - [x] programmation d’une prochaine action Client
 - [x] activité récente / historique Client
 - [x] recherche globale avec résultats Clients / Prospects / Organisations / Contacts
+- [x] navigation clavier recherche : ↑ / ↓ / Entrée / Échap
 - [x] dashboard raccordé aux premiers compteurs CRM
 
 ### Reste fonctionnel Phase 1
 
-- [ ] deep-link précis depuis recherche globale vers une fiche Organisation/Contact
-- [ ] navigation clavier complète dans les résultats de recherche
+- [ ] deep-link précis depuis un résultat de recherche vers la fiche Client/Prospect sélectionnée
+- [ ] résolution relationnelle d’un résultat Organisation/Contact vers la bonne fiche Client/Prospect
 - [ ] enrichissement Commercial Client lorsque Projets/Facturation/Temps seront disponibles
 
 ### Tests ajoutés
@@ -118,6 +119,12 @@ PR : #58 (brouillon)
 - [ ] exécution réelle typecheck/tests de la branche Phase 1 sur Windows
 - [ ] validation de la migration depuis une base Phase 0 existante
 - [ ] validation visuelle Phase 1
+
+### CI GitHub
+
+Le workflow a été étendu à `feature/phase-1-crm` et aux PR vers la branche de fondation.
+
+Premier run : **non exploitable**. GitHub a terminé le job en échec avant toute étape, avec `runner_id: 0` et une liste d’étapes vide. Aucun checkout, `npm install`, typecheck ou test n’a été exécuté. Cela ne constitue donc pas un échec du code.
 
 ## Phases V1 préparées
 
