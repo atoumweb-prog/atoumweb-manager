@@ -29,6 +29,7 @@ import type {
   ProspectFilters,
   ProspectInput,
   ProspectStage,
+  SearchResult,
 } from '../shared/crm';
 import { generateQuotePdf } from './commercial/quotePdf';
 import type { DatabaseService } from './database/DatabaseService';
@@ -102,7 +103,26 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('crm:actions:cancel', (_event, id: string) => database.actions.cancel(id));
   ipcMain.handle('crm:actions:reopen', (_event, id: string) => database.actions.reopen(id));
   ipcMain.handle('crm:activity:list', (_event, entityType: string, entityId: string) => database.crm.listActivity(entityType, entityId));
-  ipcMain.handle('crm:search:global', (_event, query: string) => database.crm.globalSearch(query));
+  ipcMain.handle('crm:search:global', (_event, query: string): SearchResult[] => {
+    const normalized = query.trim();
+    if (normalized.length < 2) return [];
+    const crmResults = database.crm.globalSearch(normalized);
+    const catalogResults: SearchResult[] = database.catalog.list({ search: normalized }).slice(0, 6).map((item) => ({
+      entityType: 'catalog',
+      entityId: item.id,
+      title: item.name,
+      subtitle: `${item.type === 'offer' ? 'Offre' : 'Service'}${item.category ? ` · ${item.category}` : ''}`,
+      status: item.status,
+    }));
+    const quoteResults: SearchResult[] = database.quotes.list({ search: normalized }).slice(0, 6).map((quote) => ({
+      entityType: 'quote',
+      entityId: quote.id,
+      title: `${quote.number} · ${quote.subject}`,
+      subtitle: quote.ownerLabel,
+      status: quote.status,
+    }));
+    return [...crmResults, ...catalogResults, ...quoteResults].slice(0, 20);
+  });
   ipcMain.handle('crm:search:rebuild', () => database.crm.rebuildSearchIndex());
 
   ipcMain.handle('catalog:list', (_event, filters?: CatalogFilters) => database.catalog.list(filters));
