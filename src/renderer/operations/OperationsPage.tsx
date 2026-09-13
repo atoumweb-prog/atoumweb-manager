@@ -20,6 +20,7 @@ import type { ProjectSummary } from '../../shared/projects';
 import type { TimeCategory } from '../../shared/time';
 import { HourPacksPanel } from './HourPacksPanel';
 import { MaintenancePanel } from './MaintenancePanel';
+import { OperationsAlertsPanel } from './OperationsAlertsPanel';
 
 type OperationsView = 'requests' | 'interventions' | 'maintenance' | 'packs';
 
@@ -58,6 +59,7 @@ export function OperationsPage({ onMessage }: { onMessage: (message: string) => 
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [alertRefreshKey, setAlertRefreshKey] = useState(0);
   const [query, setQuery] = useState('');
   const [requestStatus, setRequestStatus] = useState<'all' | ServiceRequestStatus>('all');
   const [interventionStatus, setInterventionStatus] = useState<'all' | InterventionStatus>('all');
@@ -95,6 +97,7 @@ export function OperationsPage({ onMessage }: { onMessage: (message: string) => 
       setRequests(nextRequests); setInterventions(nextInterventions); setClients(nextClients); setProjects(nextProjects);
       if (selectedRequest) setSelectedRequest(nextRequests.find((item) => item.id === selectedRequest.id) ?? null);
       if (selectedIntervention) setSelectedIntervention(nextInterventions.find((item) => item.id === selectedIntervention.id) ?? null);
+      setAlertRefreshKey((value) => value + 1);
     } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de charger les opérations.'); }
     finally { setLoading(false); }
   }
@@ -185,6 +188,7 @@ export function OperationsPage({ onMessage }: { onMessage: (message: string) => 
   }
 
   return <div className="operations-stack">
+    <OperationsAlertsPanel refreshKey={alertRefreshKey} onNavigate={(target) => setView(target)} onMessage={onMessage} />
     <div className="operations-view-tabs">
       <button type="button" className={view === 'requests' ? 'active' : ''} onClick={() => setView('requests')}>Demandes <span>{requests.filter((item) => !['closed', 'converted', 'archived'].includes(item.status)).length}</span></button>
       <button type="button" className={view === 'interventions' ? 'active' : ''} onClick={() => setView('interventions')}>Interventions <span>{interventions.filter((item) => !['completed', 'cancelled', 'archived'].includes(item.status)).length}</span></button>
