@@ -46,6 +46,7 @@ function isStaleSession(session: TimeSession | null): boolean {
 export function GlobalTimer({ onMessage }: { onMessage: (message: string) => void }) {
   const [active, setActive] = useState<TimeSession | null>(null);
   const [recovery, setRecovery] = useState<TimeSession | null>(null);
+  const [pendingSwitch, setPendingSwitch] = useState<TimerContextEvent | null>(null);
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [projectDetail, setProjectDetail] = useState<ProjectDetail | null>(null);
   const [open, setOpen] = useState(false);
@@ -111,11 +112,16 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
   useEffect(() => {
     const refreshActive = () => void loadActive();
     const prepareContext = (event: Event) => {
+      const context = (event as CustomEvent<TimerContextEvent>).detail ?? {};
       if (active) {
-        onMessage('Un timer est déjà actif. Arrête-le avant d’en démarrer un autre.');
+        if (recovery) {
+          onMessage('Le chrono actuel doit d’abord être repris ou arrêté au dernier point connu.');
+          return;
+        }
+        setPendingSwitch(context);
+        setOpen(false);
         return;
       }
-      const context = (event as CustomEvent<TimerContextEvent>).detail ?? {};
       setProjectId(context.projectId ?? '');
       setNodeId(context.nodeId ?? '');
       setActivityLabel(context.activityLabel ?? '');
@@ -129,7 +135,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
       window.removeEventListener('atoumweb:time-changed', refreshActive);
       window.removeEventListener('atoumweb:timer-context', prepareContext);
     };
-  }, [active]);
+  }, [active, recovery]);
 
   useEffect(() => {
     if (!projectId) {
@@ -173,6 +179,29 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
     }
   }
 
+  async function confirmSwitch(): Promise<void> {
+    if (!pendingSwitch) return;
+    setBusy(true);
+    try {
+      const session = await window.atoumweb.time.switchTo({
+        projectId: pendingSwitch.projectId ?? null,
+        projectNodeId: pendingSwitch.nodeId ?? null,
+        category: pendingSwitch.category ?? 'production',
+        activityLabel: pendingSwitch.activityLabel?.trim() || null,
+        billable: pendingSwitch.billable ?? true,
+      });
+      installActive(session);
+      setPendingSwitch(null);
+      window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
+      onMessage(`Activité précédente terminée. Nouveau timer : ${contextLabel(session)}.`);
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible de changer d’activité.');
+      await loadActive();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function pauseOrResume(): Promise<void> {
     if (!active || recovery) return;
     setBusy(true);
@@ -195,6 +224,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
     try {
       const stopped = await window.atoumweb.time.stop(active.id);
       installActive(null);
+      setPendingSwitch(null);
       window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
       onMessage(`Session terminée · ${clock(stopped.durationSeconds)}.`);
     } catch (error) {
@@ -225,6 +255,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
     try {
       const stopped = await window.atoumweb.time.stopAtLastKnown(recovery.id);
       installActive(null);
+      setPendingSwitch(null);
       window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
       onMessage(`Chrono arrêté au dernier point connu · ${clock(stopped.durationSeconds)}. Tu pourras corriger la session dans Gestion des temps.`);
     } catch (error) {
@@ -233,6 +264,11 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
       setBusy(false);
     }
   }
+
+  const switchProject = pendingSwitch?.projectId ? projects.find((project) => project.id === pendingSwitch.projectId) : null;
+  const switchLabel = pendingSwitch?.activityLabel?.trim()
+    || (switchProject ? `${switchProject.number} · ${switchProject.name}` : null)
+    || (pendingSwitch?.category ? CATEGORY_LABELS[pendingSwitch.category] : 'Nouvelle activité');
 
   return (
     <div className={`global-timer ${active ? 'running' : ''} ${active?.paused ? 'paused' : ''} ${recovery ? 'needs-recovery' : ''}`}>
@@ -259,6 +295,15 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
             <button className="secondary-button" type="button" disabled={busy} onClick={() => void stopAtLastKnown()}>■ Arrêter au dernier point connu</button>
           </div>
           <small>Tu pourras toujours corriger ensuite les horaires dans Gestion des temps.</small>
+        </div>
+      )}
+
+      {pendingSwitch && active && !recovery && (
+        <div className="timer-popover timer-switch-popover" role="dialog" aria-label="Changer d’activité">
+          <div><span className="eyebrow">Changer d’activité</span><strong>Un chrono est déjà en cours.</strong></div>
+          <p>La session actuelle sera terminée à l’instant du changement, puis la nouvelle activité démarrera immédiatement.</p>
+          <div className="timer-switch-summary"><span>En cours</span><strong>{contextLabel(active)}</strong><span>Nouvelle activité</span><strong>{switchLabel}</strong></div>
+          <div className="button-row"><button className="primary-button" type="button" disabled={busy} onClick={() => void confirmSwitch()}>Terminer et démarrer</button><button className="secondary-button" type="button" disabled={busy} onClick={() => setPendingSwitch(null)}>Annuler</button></div>
         </div>
       )}
 
