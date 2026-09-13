@@ -43,6 +43,12 @@ interface ContactDraft {
   makePrimary: boolean;
 }
 
+interface ClientActionEditor {
+  clientId: string;
+  date: string;
+  text: string;
+}
+
 const EMPTY_DRAFT: ClientDraft = {
   company: '',
   firstName: '',
@@ -62,6 +68,12 @@ const EMPTY_CONTACT_DRAFT: ContactDraft = {
   makePrimary: false,
 };
 
+function dateInputValue(value?: string | null): string {
+  if (!value) return new Date().toISOString().slice(0, 10);
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? new Date().toISOString().slice(0, 10) : date.toISOString().slice(0, 10);
+}
+
 export function ClientsPage({ onMessage }: { onMessage: (message: string) => void }) {
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
@@ -79,6 +91,8 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
   const [contactDraft, setContactDraft] = useState<ContactDraft>(EMPTY_CONTACT_DRAFT);
   const [contactError, setContactError] = useState<string | null>(null);
   const [contactSaving, setContactSaving] = useState(false);
+  const [actionEditor, setActionEditor] = useState<ClientActionEditor | null>(null);
+  const [archiveCandidateId, setArchiveCandidateId] = useState<string | null>(null);
 
   async function refresh(): Promise<void> {
     setLoading(true);
@@ -186,32 +200,55 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
     setSelectedId(id);
     setActiveTab('summary');
     setShowContactForm(false);
+    setActionEditor(null);
+    setArchiveCandidateId(null);
   }
 
-  async function archive(client: ClientSummary): Promise<void> {
-    if (!window.confirm(`Archiver ${client.displayName} ?`)) return;
-    await window.atoumweb.crm.clients.archive(client.id);
-    await refresh();
-    onMessage('Client archivé.');
-  }
-
-  async function reactivate(client: ClientSummary): Promise<void> {
-    await window.atoumweb.crm.clients.reactivate(client.id, 'active');
-    await refresh();
-    onMessage('Client réactivé.');
-  }
-
-  async function scheduleAction(client: ClientSummary): Promise<void> {
-    const today = new Date().toISOString().slice(0, 10);
-    const dateText = window.prompt('Date de la prochaine action (AAAA-MM-JJ)', today)?.trim();
-    if (!dateText) return;
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateText)) {
-      onMessage('Date invalide. Utilise le format AAAA-MM-JJ.');
+  async function updateStatus(client: ClientSummary, status: ClientStatus): Promise<void> {
+    if (status === client.status) return;
+    if (status === 'archived') {
+      setArchiveCandidateId(client.id);
       return;
     }
-    const action = window.prompt('Action à prévoir ?', client.nextActionText || 'Recontacter le client')?.trim();
-    if (!action) return;
-    const date = new Date(`${dateText}T09:00:00`);
+    if (client.status === 'archived') {
+      await window.atoumweb.crm.clients.reactivate(client.id, status);
+    } else {
+      await window.atoumweb.crm.clients.update(client.id, {
+        organizationId: client.organizationId,
+        primaryContactId: client.primaryContactId,
+        status,
+        notes: client.notes,
+        nextActionAt: client.nextActionAt,
+        nextActionText: client.nextActionText,
+      });
+    }
+    await refresh();
+    onMessage(`Client passé ${status === 'active' ? 'actif' : 'inactif'}.`);
+  }
+
+  async function confirmArchive(client: ClientSummary): Promise<void> {
+    await window.atoumweb.crm.clients.archive(client.id);
+    setArchiveCandidateId(null);
+    await refresh();
+    onMessage('Client archivé. Son historique est conservé et il reste accessible avec le filtre Archivés.');
+  }
+
+  function openActionEditor(client: ClientSummary): void {
+    setActionEditor({
+      clientId: client.id,
+      date: dateInputValue(client.nextActionAt),
+      text: client.nextActionText?.trim() || 'Recontacter le client',
+    });
+  }
+
+  async function saveAction(client: ClientSummary): Promise<void> {
+    if (!actionEditor || actionEditor.clientId !== client.id) return;
+    const text = actionEditor.text.trim();
+    if (!actionEditor.date || !text) {
+      onMessage('Renseigne une date et une action.');
+      return;
+    }
+    const date = new Date(`${actionEditor.date}T09:00:00`);
     if (Number.isNaN(date.getTime())) {
       onMessage('Date invalide.');
       return;
@@ -222,10 +259,25 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
       status: client.status,
       notes: client.notes,
       nextActionAt: date.toISOString(),
-      nextActionText: action,
+      nextActionText: text,
     });
+    setActionEditor(null);
     await refresh();
     onMessage('Prochaine action client enregistrée.');
+  }
+
+  async function clearAction(client: ClientSummary): Promise<void> {
+    await window.atoumweb.crm.clients.update(client.id, {
+      organizationId: client.organizationId,
+      primaryContactId: client.primaryContactId,
+      status: client.status,
+      notes: client.notes,
+      nextActionAt: null,
+      nextActionText: null,
+    });
+    setActionEditor(null);
+    await refresh();
+    onMessage('Prochaine action client retirée.');
   }
 
   async function submitContact(event: React.FormEvent): Promise<void> {
@@ -285,17 +337,13 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
             <option value="inactive">Inactifs</option>
             <option value="archived">Archivés</option>
           </select>
-          <button className="primary-button" type="button" onClick={() => setShowForm((value) => !value)}>
-            {showForm ? 'Fermer' : '+ Nouveau client'}
-          </button>
+          <button className="primary-button" type="button" onClick={() => setShowForm((value) => !value)}>{showForm ? 'Fermer' : '+ Nouveau client'}</button>
         </div>
       </div>
 
       {showForm && (
         <form className="panel crm-form" onSubmit={(event) => void submitClient(event)}>
-          <div className="panel-title">
-            <div><span className="eyebrow">Client</span><h2>Ajouter un client directement</h2></div>
-          </div>
+          <div className="panel-title"><div><span className="eyebrow">Client</span><h2>Ajouter un client directement</h2></div></div>
           <div className="form-grid">
             <label>Société<input value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} /></label>
             <label>Prénom<input value={draft.firstName} onChange={(e) => setDraft({ ...draft, firstName: e.target.value })} /></label>
@@ -323,11 +371,7 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
                       <td>{client.contactName || '—'}</td>
                       <td><div className="contact-stack"><span>{client.email || '—'}</span><small>{client.phone || ''}</small></div></td>
                       <td>{client.nextActionAt ? <><strong>{client.nextActionText || 'Action prévue'}</strong><small>{new Date(client.nextActionAt).toLocaleDateString('fr-FR')}</small></> : <span className="muted">Aucune</span>}</td>
-                      <td onClick={(event) => event.stopPropagation()}>
-                        {client.status === 'archived'
-                          ? <button className="link-button" type="button" onClick={() => void reactivate(client)}>Réactiver</button>
-                          : <button className="link-button danger-link" type="button" onClick={() => void archive(client)}>Archiver</button>}
-                      </td>
+                      <td><button className="link-button" type="button" onClick={(event) => { event.stopPropagation(); openClient(client.id); }}>Gérer</button></td>
                     </tr>
                   ))}
                   {filtered.length === 0 && <tr><td colSpan={6}><div className="empty-table">Aucun client pour ce filtre.</div></td></tr>}
@@ -343,7 +387,7 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
                   <span className="eyebrow">Fiche client</span>
                   <div className="client-summary-head"><span className="avatar-large">{initials(selected.displayName)}</span><div><h2>{selected.displayName}</h2><span className={`client-status status-${selected.status}`}>{STATUS_LABELS[selected.status ?? 'active']}</span></div></div>
                 </div>
-                <button className="close-detail" type="button" onClick={() => setSelectedId(null)}>×</button>
+                <button className="close-detail" type="button" onClick={() => { setSelectedId(null); setActionEditor(null); setArchiveCandidateId(null); }}>×</button>
               </div>
 
               <div className="client-tabs-preview client-tabs-buttons">
@@ -355,6 +399,25 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
 
               {activeTab === 'summary' && (
                 <>
+                  <div className="client-status-control">
+                    <label>Statut du client
+                      <select value={selected.status} onChange={(event) => void updateStatus(selected, event.target.value as ClientStatus)}>
+                        <option value="active">Actif — relation en cours</option>
+                        <option value="inactive">Inactif — conservé, rien en cours</option>
+                        <option value="archived">Archivé — historique uniquement</option>
+                      </select>
+                    </label>
+                    <p className="muted">Ce statut est indépendant de l’ancien pipeline Prospect. Un prospect gagné devient Client actif, puis tu gères ici sa relation dans le temps.</p>
+                  </div>
+
+                  {archiveCandidateId === selected.id && (
+                    <div className="inline-editor danger-editor">
+                      <strong>Archiver ce client ?</strong>
+                      <p className="muted">Il ne sera pas supprimé. Contacts, historique et données seront conservés et accessibles avec le filtre « Archivés ».</p>
+                      <div className="inline-editor-actions"><button className="secondary-button compact-button" type="button" onClick={() => setArchiveCandidateId(null)}>Annuler</button><button className="danger-button compact-button" type="button" onClick={() => void confirmArchive(selected)}>Confirmer l’archivage</button></div>
+                    </div>
+                  )}
+
                   <div className="summary-list">
                     <SummaryLine label="Contact principal" value={selected.contactName || 'Non renseigné'} />
                     <SummaryLine label="Email" value={selected.email || 'Non renseigné'} />
@@ -363,18 +426,27 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
                     <SummaryLine label="Depuis" value={new Date(selected.becameClientAt).toLocaleDateString('fr-FR')} />
                   </div>
                   {selected.notes && <div className="client-notes"><strong>Notes</strong><p>{selected.notes}</p></div>}
-                  <div className="detail-actions"><button className="secondary-button" type="button" onClick={() => void scheduleAction(selected)}>Programmer une action</button></div>
+
+                  {actionEditor?.clientId === selected.id && (
+                    <div className="inline-editor">
+                      <strong>Programmer une action client</strong>
+                      <label>Date<input type="date" value={actionEditor.date} onChange={(event) => setActionEditor({ ...actionEditor, date: event.target.value })} /></label>
+                      <label>Action<input value={actionEditor.text} onChange={(event) => setActionEditor({ ...actionEditor, text: event.target.value })} placeholder="Ex. appeler pour faire le point" /></label>
+                      <div className="inline-editor-actions">
+                        {selected.nextActionAt && <button className="secondary-button compact-button" type="button" onClick={() => void clearAction(selected)}>Retirer l’action</button>}
+                        <button className="secondary-button compact-button" type="button" onClick={() => setActionEditor(null)}>Annuler</button>
+                        <button className="primary-button compact-button" type="button" onClick={() => void saveAction(selected)}>Enregistrer</button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="detail-actions"><button className="secondary-button" type="button" onClick={() => openActionEditor(selected)}>Programmer une action</button></div>
                 </>
               )}
 
               {activeTab === 'contacts' && (
                 <div className="tab-content-stack">
-                  <div className="contact-tab-heading">
-                    <strong>{contacts.length} contact{contacts.length > 1 ? 's' : ''}</strong>
-                    <button className="secondary-button compact-button" type="button" onClick={() => setShowContactForm((value) => !value)}>
-                      {showContactForm ? 'Fermer' : '+ Ajouter'}
-                    </button>
-                  </div>
+                  <div className="contact-tab-heading"><strong>{contacts.length} contact{contacts.length > 1 ? 's' : ''}</strong><button className="secondary-button compact-button" type="button" onClick={() => setShowContactForm((value) => !value)}>{showContactForm ? 'Fermer' : '+ Ajouter'}</button></div>
 
                   {showContactForm && (
                     <form className="contact-inline-form" onSubmit={(event) => void submitContact(event)}>
