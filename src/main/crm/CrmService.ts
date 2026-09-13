@@ -171,9 +171,11 @@ export class CrmService {
         id, name, legal_name, siret, email, phone, website, address_line1, address_line2,
         postal_code, city, country, industry, notes, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, name, clean(input.legalName), clean(input.siret), clean(input.email), clean(input.phone),
+      [
+        id, name, clean(input.legalName), clean(input.siret), clean(input.email), clean(input.phone),
         clean(input.website), clean(input.addressLine1), clean(input.addressLine2), clean(input.postalCode),
-        clean(input.city), clean(input.country), clean(input.industry), clean(input.notes), now, now],
+        clean(input.city), clean(input.country), clean(input.industry), clean(input.notes), now, now,
+      ],
     );
     this.activity({ entityType: 'organization', entityId: id, action: 'created', summary: `Organisation créée : ${name}`, organizationId: id });
     this.rebuildSearchIndex();
@@ -184,15 +186,16 @@ export class CrmService {
     const name = clean(input.name);
     if (!name) throw new Error('Le nom de l’organisation est requis.');
     assertEmail(input.email);
-    const now = nowIso();
     const result = this.database.run(
       `UPDATE organizations SET
         name=?, legal_name=?, siret=?, email=?, phone=?, website=?, address_line1=?, address_line2=?,
         postal_code=?, city=?, country=?, industry=?, notes=?, updated_at=?
        WHERE id=? AND archived_at IS NULL`,
-      [name, clean(input.legalName), clean(input.siret), clean(input.email), clean(input.phone), clean(input.website),
+      [
+        name, clean(input.legalName), clean(input.siret), clean(input.email), clean(input.phone), clean(input.website),
         clean(input.addressLine1), clean(input.addressLine2), clean(input.postalCode), clean(input.city), clean(input.country),
-        clean(input.industry), clean(input.notes), now, id],
+        clean(input.industry), clean(input.notes), nowIso(), id,
+      ],
     );
     if (Number(result.changes) !== 1) throw new Error('Organisation introuvable.');
     this.activity({ entityType: 'organization', entityId: id, action: 'updated', summary: `Organisation mise à jour : ${name}`, organizationId: id });
@@ -226,8 +229,10 @@ export class CrmService {
         id, organization_id, first_name, last_name, job_title, email, phone, preferred_channel,
         notes, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, clean(input.organizationId), firstName, lastName, clean(input.jobTitle), clean(input.email),
-        clean(input.phone), clean(input.preferredChannel), clean(input.notes), now, now],
+      [
+        id, clean(input.organizationId), firstName, lastName, clean(input.jobTitle), clean(input.email),
+        clean(input.phone), clean(input.preferredChannel), clean(input.notes), now, now,
+      ],
     );
     this.activity({ entityType: 'contact', entityId: id, action: 'created', summary: `Contact créé : ${firstName} ${lastName}`, contactId: id, organizationId: clean(input.organizationId) });
     this.rebuildSearchIndex();
@@ -242,8 +247,10 @@ export class CrmService {
     const result = this.database.run(
       `UPDATE contacts SET organization_id=?, first_name=?, last_name=?, job_title=?, email=?, phone=?,
        preferred_channel=?, notes=?, updated_at=? WHERE id=? AND archived_at IS NULL`,
-      [clean(input.organizationId), firstName, lastName, clean(input.jobTitle), clean(input.email), clean(input.phone),
-        clean(input.preferredChannel), clean(input.notes), nowIso(), id],
+      [
+        clean(input.organizationId), firstName, lastName, clean(input.jobTitle), clean(input.email), clean(input.phone),
+        clean(input.preferredChannel), clean(input.notes), nowIso(), id,
+      ],
     );
     if (Number(result.changes) !== 1) throw new Error('Contact introuvable.');
     this.activity({ entityType: 'contact', entityId: id, action: 'updated', summary: `Contact mis à jour : ${firstName} ${lastName}`, contactId: id, organizationId: clean(input.organizationId) });
@@ -255,11 +262,11 @@ export class CrmService {
     const row = this.database.get<Record<string, unknown>>('SELECT * FROM contacts WHERE id=?', [id]);
     if (!row) throw new Error('Contact introuvable.');
     return {
-      id: String(row.id), organizationId: row.organization_id as string | null, firstName: String(row.first_name),
-      lastName: String(row.last_name), jobTitle: row.job_title as string | null, email: row.email as string | null,
-      phone: row.phone as string | null, preferredChannel: row.preferred_channel as string | null,
-      notes: row.notes as string | null, createdAt: String(row.created_at), updatedAt: String(row.updated_at),
-      archivedAt: row.archived_at as string | null,
+      id: String(row.id), organizationId: row.organization_id as string | null,
+      firstName: String(row.first_name), lastName: String(row.last_name), jobTitle: row.job_title as string | null,
+      email: row.email as string | null, phone: row.phone as string | null,
+      preferredChannel: row.preferred_channel as string | null, notes: row.notes as string | null,
+      createdAt: String(row.created_at), updatedAt: String(row.updated_at), archivedAt: row.archived_at as string | null,
     };
   }
 
@@ -274,10 +281,12 @@ export class CrmService {
         secondary_need, budget_min_cents, budget_max_cents, estimated_value_cents, probability_percent,
         next_action_at, next_action_text, target_date, notes, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, clean(input.organizationId), clean(input.contactId), stage, input.temperature ?? 'warm', input.source ?? null,
+      [
+        id, clean(input.organizationId), clean(input.contactId), stage, input.temperature ?? 'warm', input.source ?? null,
         clean(input.sourceDetail), clean(input.primaryNeed), clean(input.secondaryNeed), input.budgetMinCents ?? null,
         input.budgetMaxCents ?? null, input.estimatedValueCents ?? null, input.probabilityPercent ?? null,
-        clean(input.nextActionAt), clean(input.nextActionText), clean(input.targetDate), clean(input.notes), now, now],
+        clean(input.nextActionAt), clean(input.nextActionText), clean(input.targetDate), clean(input.notes), now, now,
+      ],
     );
     this.activity({ entityType: 'prospect', entityId: id, action: 'created', summary: 'Prospect créé', prospectId: id, organizationId: clean(input.organizationId), contactId: clean(input.contactId) });
     this.indexProspect(id);
@@ -288,17 +297,21 @@ export class CrmService {
     assertProspectInput(input);
     const current = this.getProspect(id);
     const stage = input.stage ?? current.stage ?? 'new';
-    if (stage === 'lost' && !current.lostReason) throw new Error('Utilise le changement de statut Perdu afin de renseigner une raison.');
+    if (stage === 'lost' && !current.lostReason) {
+      throw new Error('Utilise le changement de statut Perdu afin de renseigner une raison.');
+    }
     const result = this.database.run(
       `UPDATE prospects SET organization_id=?, contact_id=?, stage=?, temperature=?, source=?, source_detail=?,
        primary_need=?, secondary_need=?, budget_min_cents=?, budget_max_cents=?, estimated_value_cents=?,
        probability_percent=?, next_action_at=?, next_action_text=?, target_date=?, notes=?, updated_at=?
        WHERE id=? AND archived_at IS NULL`,
-      [clean(input.organizationId), clean(input.contactId), stage, input.temperature ?? current.temperature ?? 'warm',
+      [
+        clean(input.organizationId), clean(input.contactId), stage, input.temperature ?? current.temperature ?? 'warm',
         input.source ?? null, clean(input.sourceDetail), clean(input.primaryNeed), clean(input.secondaryNeed),
         input.budgetMinCents ?? null, input.budgetMaxCents ?? null, input.estimatedValueCents ?? null,
         input.probabilityPercent ?? null, clean(input.nextActionAt), clean(input.nextActionText), clean(input.targetDate),
-        clean(input.notes), nowIso(), id],
+        clean(input.notes), nowIso(), id,
+      ],
     );
     if (Number(result.changes) !== 1) throw new Error('Prospect introuvable.');
     this.activity({ entityType: 'prospect', entityId: id, action: 'updated', summary: 'Prospect mis à jour', prospectId: id, organizationId: clean(input.organizationId), contactId: clean(input.contactId) });
@@ -313,18 +326,30 @@ export class CrmService {
     const now = nowIso();
     this.database.run(
       `UPDATE prospects SET stage=?, lost_reason=?, lost_at=?, won_at=?, updated_at=? WHERE id=? AND archived_at IS NULL`,
-      [stage, stage === 'lost' ? clean(lostReason) : null, stage === 'lost' ? now : null,
-        stage === 'won' ? (current.wonAt ?? now) : null, now, id],
+      [
+        stage, stage === 'lost' ? clean(lostReason) : null, stage === 'lost' ? now : null,
+        stage === 'won' ? (current.wonAt ?? now) : null, now, id,
+      ],
     );
-    this.activity({ entityType: 'prospect', entityId: id, action: 'stage_changed', summary: `Prospect déplacé vers ${stage}`, metadata: { from: current.stage, to: stage }, prospectId: id, organizationId: current.organizationId, contactId: current.contactId });
+    this.activity({
+      entityType: 'prospect', entityId: id, action: 'stage_changed', summary: `Prospect déplacé vers ${stage}`,
+      metadata: { from: current.stage, to: stage }, prospectId: id,
+      organizationId: current.organizationId, contactId: current.contactId,
+    });
     this.indexProspect(id);
     return this.getProspect(id);
   }
 
   setProspectNextAction(id: string, at: string | null, text: string | null): ProspectSummary {
     this.getProspect(id);
-    this.database.run('UPDATE prospects SET next_action_at=?, next_action_text=?, updated_at=? WHERE id=?', [clean(at), clean(text), nowIso(), id]);
-    this.activity({ entityType: 'prospect', entityId: id, action: 'next_action_changed', summary: clean(text) ? `Prochaine action : ${clean(text)}` : 'Prochaine action retirée', prospectId: id });
+    this.database.run(
+      'UPDATE prospects SET next_action_at=?, next_action_text=?, updated_at=? WHERE id=?',
+      [clean(at), clean(text), nowIso(), id],
+    );
+    this.activity({
+      entityType: 'prospect', entityId: id, action: 'next_action_changed',
+      summary: clean(text) ? `Prochaine action : ${clean(text)}` : 'Prochaine action retirée', prospectId: id,
+    });
     this.indexProspect(id);
     return this.getProspect(id);
   }
@@ -333,14 +358,18 @@ export class CrmService {
     const where: string[] = [];
     const params: SqlValue[] = [];
     if (!filters.includeArchived) where.push('p.archived_at IS NULL');
-    if (filters.stage) { where.push('p.stage=?'); params.push(filters.stage); }
+    if (filters.stage) {
+      where.push('p.stage=?');
+      params.push(filters.stage);
+    }
     if (clean(filters.search)) {
-      const q = `%${clean(filters.search)}%`;
-      where.push(`(o.name LIKE ? COLLATE NOCASE OR c.first_name LIKE ? COLLATE NOCASE OR c.last_name LIKE ? COLLATE NOCASE OR p.primary_need LIKE ? COLLATE NOCASE)`);
-      params.push(q, q, q, q);
+      const query = `%${clean(filters.search)}%`;
+      where.push('(o.name LIKE ? COLLATE NOCASE OR c.first_name LIKE ? COLLATE NOCASE OR c.last_name LIKE ? COLLATE NOCASE OR p.primary_need LIKE ? COLLATE NOCASE)');
+      params.push(query, query, query, query);
     }
     return this.database.all<ProspectRow>(
-      `${this.prospectSelect()} ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY p.updated_at DESC`, params,
+      `${this.prospectSelect()} ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY p.updated_at DESC`,
+      params,
     ).map((row) => this.mapProspect(row));
   }
 
@@ -360,15 +389,17 @@ export class CrmService {
 
   private mapProspect(row: ProspectRow): ProspectSummary {
     const contactName = [row.contact_first_name, row.contact_last_name].filter(Boolean).join(' ');
+    const displayName = (row.organization_name ?? contactName) || 'Prospect sans nom';
     return {
-      id: row.id, organizationId: row.organization_id, contactId: row.contact_id, clientAccountId: row.client_account_id,
-      stage: row.stage, temperature: row.temperature, source: row.source, sourceDetail: row.source_detail,
-      primaryNeed: row.primary_need, secondaryNeed: row.secondary_need, budgetMinCents: row.budget_min_cents,
+      id: row.id, organizationId: row.organization_id, contactId: row.contact_id,
+      clientAccountId: row.client_account_id, stage: row.stage, temperature: row.temperature,
+      source: row.source, sourceDetail: row.source_detail, primaryNeed: row.primary_need,
+      secondaryNeed: row.secondary_need, budgetMinCents: row.budget_min_cents,
       budgetMaxCents: row.budget_max_cents, estimatedValueCents: row.estimated_value_cents,
-      probabilityPercent: row.probability_percent, nextActionAt: row.next_action_at, nextActionText: row.next_action_text,
-      targetDate: row.target_date, lostReason: row.lost_reason, notes: row.notes, wonAt: row.won_at, lostAt: row.lost_at,
-      createdAt: row.created_at, updatedAt: row.updated_at, archivedAt: row.archived_at,
-      displayName: row.organization_name ?? contactName || 'Prospect sans nom',
+      probabilityPercent: row.probability_percent, nextActionAt: row.next_action_at,
+      nextActionText: row.next_action_text, targetDate: row.target_date, lostReason: row.lost_reason,
+      notes: row.notes, wonAt: row.won_at, lostAt: row.lost_at, createdAt: row.created_at,
+      updatedAt: row.updated_at, archivedAt: row.archived_at, displayName,
       secondaryLabel: row.organization_name && contactName ? contactName : row.contact_email,
     };
   }
@@ -382,8 +413,10 @@ export class CrmService {
         id, organization_id, primary_contact_id, status, became_client_at, next_action_at,
         next_action_text, notes, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, clean(input.organizationId), clean(input.primaryContactId), input.status ?? 'active', now,
-        clean(input.nextActionAt), clean(input.nextActionText), clean(input.notes), now, now],
+      [
+        id, clean(input.organizationId), clean(input.primaryContactId), input.status ?? 'active', now,
+        clean(input.nextActionAt), clean(input.nextActionText), clean(input.notes), now, now,
+      ],
     );
     if (clean(input.primaryContactId)) this.ensurePrimaryContactRole(id, clean(input.primaryContactId) as string);
     this.activity({ entityType: 'client', entityId: id, action: 'created', summary: 'Client créé', clientId: id, organizationId: clean(input.organizationId), contactId: clean(input.primaryContactId) });
@@ -397,8 +430,10 @@ export class CrmService {
     const result = this.database.run(
       `UPDATE client_accounts SET organization_id=?, primary_contact_id=?, status=?, next_action_at=?,
        next_action_text=?, notes=?, updated_at=? WHERE id=?`,
-      [clean(input.organizationId), clean(input.primaryContactId), status, clean(input.nextActionAt),
-        clean(input.nextActionText), clean(input.notes), nowIso(), id],
+      [
+        clean(input.organizationId), clean(input.primaryContactId), status, clean(input.nextActionAt),
+        clean(input.nextActionText), clean(input.notes), nowIso(), id,
+      ],
     );
     if (Number(result.changes) !== 1) throw new Error('Client introuvable.');
     if (clean(input.primaryContactId)) this.ensurePrimaryContactRole(id, clean(input.primaryContactId) as string);
@@ -435,13 +470,13 @@ export class CrmService {
       let existing: { id: string } | undefined;
       if (prospect.organizationId) {
         existing = this.database.get<{ id: string }>(
-          `SELECT id FROM client_accounts WHERE organization_id=? ORDER BY created_at LIMIT 1`,
+          'SELECT id FROM client_accounts WHERE organization_id=? ORDER BY created_at LIMIT 1',
           [prospect.organizationId],
         );
       }
       if (!existing && prospect.contactId) {
         existing = this.database.get<{ id: string }>(
-          `SELECT id FROM client_accounts WHERE primary_contact_id=? ORDER BY created_at LIMIT 1`,
+          'SELECT id FROM client_accounts WHERE primary_contact_id=? ORDER BY created_at LIMIT 1',
           [prospect.contactId],
         );
       }
@@ -459,7 +494,11 @@ export class CrmService {
         );
         if (prospect.contactId) this.ensurePrimaryContactRole(clientId, prospect.contactId);
         createdClient = true;
-        this.activity({ entityType: 'client', entityId: clientId, action: 'created_from_prospect', summary: `Client créé depuis le prospect ${prospect.displayName}`, clientId, prospectId, organizationId: prospect.organizationId, contactId: prospect.contactId });
+        this.activity({
+          entityType: 'client', entityId: clientId, action: 'created_from_prospect',
+          summary: `Client créé depuis le prospect ${prospect.displayName}`, clientId, prospectId,
+          organizationId: prospect.organizationId, contactId: prospect.contactId,
+        });
       }
 
       const now = nowIso();
@@ -467,7 +506,11 @@ export class CrmService {
         `UPDATE prospects SET stage='won', client_account_id=?, won_at=COALESCE(won_at, ?), updated_at=? WHERE id=?`,
         [clientId, now, now, prospectId],
       );
-      this.activity({ entityType: 'prospect', entityId: prospectId, action: 'converted_to_client', summary: `Prospect transformé en client : ${prospect.displayName}`, prospectId, clientId, organizationId: prospect.organizationId, contactId: prospect.contactId });
+      this.activity({
+        entityType: 'prospect', entityId: prospectId, action: 'converted_to_client',
+        summary: `Prospect transformé en client : ${prospect.displayName}`, prospectId, clientId,
+        organizationId: prospect.organizationId, contactId: prospect.contactId,
+      });
       this.indexProspect(prospectId);
       this.indexClient(clientId);
       return { prospectId, clientId, createdClient };
@@ -478,14 +521,18 @@ export class CrmService {
     const where: string[] = [];
     const params: SqlValue[] = [];
     if (!filters.includeArchived) where.push(`ca.status <> 'archived'`);
-    if (filters.status) { where.push('ca.status=?'); params.push(filters.status); }
+    if (filters.status) {
+      where.push('ca.status=?');
+      params.push(filters.status);
+    }
     if (clean(filters.search)) {
-      const q = `%${clean(filters.search)}%`;
-      where.push(`(o.name LIKE ? COLLATE NOCASE OR c.first_name LIKE ? COLLATE NOCASE OR c.last_name LIKE ? COLLATE NOCASE OR o.email LIKE ? COLLATE NOCASE OR c.email LIKE ? COLLATE NOCASE)`);
-      params.push(q, q, q, q, q);
+      const query = `%${clean(filters.search)}%`;
+      where.push('(o.name LIKE ? COLLATE NOCASE OR c.first_name LIKE ? COLLATE NOCASE OR c.last_name LIKE ? COLLATE NOCASE OR o.email LIKE ? COLLATE NOCASE OR c.email LIKE ? COLLATE NOCASE)');
+      params.push(query, query, query, query, query);
     }
     return this.database.all<ClientRow>(
-      `${this.clientSelect()} ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY ca.updated_at DESC`, params,
+      `${this.clientSelect()} ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY ca.updated_at DESC`,
+      params,
     ).map((row) => this.mapClient(row));
   }
 
@@ -506,21 +553,21 @@ export class CrmService {
 
   private mapClient(row: ClientRow): ClientSummary {
     const contactName = [row.contact_first_name, row.contact_last_name].filter(Boolean).join(' ');
+    const displayName = (row.organization_name ?? contactName) || 'Client sans nom';
     return {
       id: row.id, organizationId: row.organization_id, primaryContactId: row.primary_contact_id,
       status: row.status, becameClientAt: row.became_client_at, nextActionAt: row.next_action_at,
       nextActionText: row.next_action_text, notes: row.notes, createdAt: row.created_at,
-      updatedAt: row.updated_at, archivedAt: row.archived_at,
-      displayName: row.organization_name ?? contactName || 'Client sans nom',
-      contactName: contactName || null,
-      email: row.organization_email ?? row.contact_email,
+      updatedAt: row.updated_at, archivedAt: row.archived_at, displayName,
+      contactName: contactName || null, email: row.organization_email ?? row.contact_email,
       phone: row.organization_phone ?? row.contact_phone,
     };
   }
 
   private ensurePrimaryContactRole(clientId: string, contactId: string): void {
     const existing = this.database.get<{ id: string }>(
-      `SELECT id FROM client_contact_roles WHERE client_account_id=? AND is_primary=1`, [clientId],
+      'SELECT id FROM client_contact_roles WHERE client_account_id=? AND is_primary=1',
+      [clientId],
     );
     if (existing) {
       this.database.run(`UPDATE client_contact_roles SET contact_id=?, role='primary' WHERE id=?`, [contactId, existing.id]);
@@ -566,18 +613,21 @@ export class CrmService {
 
   rebuildSearchIndex(): { indexed: number } {
     this.database.run('DELETE FROM search_documents');
-    const organizations = this.database.all<Record<string, unknown>>('SELECT * FROM organizations WHERE archived_at IS NULL');
-    for (const row of organizations) this.indexOrganization(String(row.id));
-    const contacts = this.database.all<Record<string, unknown>>('SELECT * FROM contacts WHERE archived_at IS NULL');
-    for (const row of contacts) this.indexContact(String(row.id));
+    const organizations = this.database.all<Record<string, unknown>>('SELECT id FROM organizations WHERE archived_at IS NULL');
+    organizations.forEach((row) => this.indexOrganization(String(row.id)));
+    const contacts = this.database.all<Record<string, unknown>>('SELECT id FROM contacts WHERE archived_at IS NULL');
+    contacts.forEach((row) => this.indexContact(String(row.id)));
     const prospects = this.database.all<{ id: string }>('SELECT id FROM prospects WHERE archived_at IS NULL');
-    for (const row of prospects) this.indexProspect(row.id);
+    prospects.forEach((row) => this.indexProspect(row.id));
     const clients = this.database.all<{ id: string }>('SELECT id FROM client_accounts');
-    for (const row of clients) this.indexClient(row.id);
+    clients.forEach((row) => this.indexClient(row.id));
     return { indexed: organizations.length + contacts.length + prospects.length + clients.length };
   }
 
-  private upsertSearchDocument(entityType: SearchResult['entityType'], entityId: string, title: string, subtitle: string | null, status: string | null, parts: Array<string | null | undefined>): void {
+  private upsertSearchDocument(
+    entityType: SearchResult['entityType'], entityId: string, title: string, subtitle: string | null,
+    status: string | null, parts: Array<string | null | undefined>,
+  ): void {
     const searchText = parts.filter(Boolean).join(' ').toLocaleLowerCase('fr-FR');
     this.database.run(
       `INSERT INTO search_documents (id, entity_type, entity_id, title, subtitle, status, search_text, updated_at)
@@ -590,32 +640,46 @@ export class CrmService {
 
   private indexOrganization(id: string): void {
     const row = this.database.get<Record<string, unknown>>('SELECT * FROM organizations WHERE id=? AND archived_at IS NULL', [id]);
-    if (!row) { this.database.run(`DELETE FROM search_documents WHERE entity_type='organization' AND entity_id=?`, [id]); return; }
-    this.upsertSearchDocument('organization', id, String(row.name), row.city as string | null, null,
-      [String(row.name), row.legal_name as string | null, row.siret as string | null, row.email as string | null,
-        row.phone as string | null, row.city as string | null, row.industry as string | null]);
+    if (!row) {
+      this.database.run(`DELETE FROM search_documents WHERE entity_type='organization' AND entity_id=?`, [id]);
+      return;
+    }
+    this.upsertSearchDocument('organization', id, String(row.name), row.city as string | null, null, [
+      String(row.name), row.legal_name as string | null, row.siret as string | null, row.email as string | null,
+      row.phone as string | null, row.city as string | null, row.industry as string | null,
+    ]);
   }
 
   private indexContact(id: string): void {
     const row = this.database.get<Record<string, unknown>>(
       `SELECT c.*, o.name AS organization_name FROM contacts c LEFT JOIN organizations o ON o.id=c.organization_id
-       WHERE c.id=? AND c.archived_at IS NULL`, [id],
+       WHERE c.id=? AND c.archived_at IS NULL`,
+      [id],
     );
-    if (!row) { this.database.run(`DELETE FROM search_documents WHERE entity_type='contact' AND entity_id=?`, [id]); return; }
+    if (!row) {
+      this.database.run(`DELETE FROM search_documents WHERE entity_type='contact' AND entity_id=?`, [id]);
+      return;
+    }
     const title = `${row.first_name} ${row.last_name}`;
-    this.upsertSearchDocument('contact', id, title, row.organization_name as string | null, null,
-      [title, row.email as string | null, row.phone as string | null, row.job_title as string | null, row.organization_name as string | null]);
+    this.upsertSearchDocument('contact', id, title, row.organization_name as string | null, null, [
+      title, row.email as string | null, row.phone as string | null,
+      row.job_title as string | null, row.organization_name as string | null,
+    ]);
   }
 
   private indexProspect(id: string): void {
     const prospect = this.getProspect(id);
-    this.upsertSearchDocument('prospect', id, prospect.displayName, prospect.primaryNeed ?? prospect.secondaryLabel ?? null,
-      prospect.stage ?? null, [prospect.displayName, prospect.secondaryLabel, prospect.primaryNeed, prospect.secondaryNeed, prospect.notes]);
+    this.upsertSearchDocument(
+      'prospect', id, prospect.displayName, prospect.primaryNeed ?? prospect.secondaryLabel ?? null,
+      prospect.stage ?? null, [prospect.displayName, prospect.secondaryLabel, prospect.primaryNeed, prospect.secondaryNeed, prospect.notes],
+    );
   }
 
   private indexClient(id: string): void {
     const client = this.getClient(id);
-    this.upsertSearchDocument('client', id, client.displayName, client.contactName ?? client.email ?? null,
-      client.status ?? null, [client.displayName, client.contactName, client.email, client.phone, client.notes]);
+    this.upsertSearchDocument(
+      'client', id, client.displayName, client.contactName ?? client.email ?? null,
+      client.status ?? null, [client.displayName, client.contactName, client.email, client.phone, client.notes],
+    );
   }
 }
