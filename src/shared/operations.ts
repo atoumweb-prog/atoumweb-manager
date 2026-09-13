@@ -5,6 +5,12 @@ export const INTERVENTION_TYPES = ['correction', 'modification', 'addition', 'ma
 export const INTERVENTION_STATUSES = ['to_plan', 'planned', 'in_progress', 'waiting_client', 'blocked', 'to_validate', 'completed', 'cancelled', 'archived'] as const;
 export const INTERVENTION_COVERAGE_MODES = ['maintenance', 'hour_pack', 'out_of_scope', 'commercial_gesture', 'included_project', 'internal'] as const;
 export const INCIDENT_CRITICALITIES = ['normal', 'urgent', 'critical'] as const;
+export const MAINTENANCE_FREQUENCIES = ['monthly', 'quarterly', 'yearly'] as const;
+export const MAINTENANCE_CARRYOVER_MODES = ['none', 'next_period', 'custom'] as const;
+export const MAINTENANCE_PLAN_STATUSES = ['active', 'archived'] as const;
+export const MAINTENANCE_SUBSCRIPTION_STATUSES = ['active', 'suspended', 'ended', 'archived'] as const;
+export const MAINTENANCE_PERIOD_STATUSES = ['upcoming', 'open', 'to_do', 'in_progress', 'completed', 'closed'] as const;
+export const MAINTENANCE_CHECK_STATUSES = ['todo', 'done', 'not_applicable'] as const;
 
 export type ServiceRequestSource = (typeof SERVICE_REQUEST_SOURCES)[number];
 export type ServiceRequestPriority = (typeof SERVICE_REQUEST_PRIORITIES)[number];
@@ -13,6 +19,12 @@ export type InterventionType = (typeof INTERVENTION_TYPES)[number];
 export type InterventionStatus = (typeof INTERVENTION_STATUSES)[number];
 export type InterventionCoverageMode = (typeof INTERVENTION_COVERAGE_MODES)[number];
 export type IncidentCriticality = (typeof INCIDENT_CRITICALITIES)[number];
+export type MaintenanceFrequency = (typeof MAINTENANCE_FREQUENCIES)[number];
+export type MaintenanceCarryoverMode = (typeof MAINTENANCE_CARRYOVER_MODES)[number];
+export type MaintenancePlanStatus = (typeof MAINTENANCE_PLAN_STATUSES)[number];
+export type MaintenanceSubscriptionStatus = (typeof MAINTENANCE_SUBSCRIPTION_STATUSES)[number];
+export type MaintenancePeriodStatus = (typeof MAINTENANCE_PERIOD_STATUSES)[number];
+export type MaintenanceCheckStatus = (typeof MAINTENANCE_CHECK_STATUSES)[number];
 
 export interface ServiceRequestInput {
   clientAccountId: string;
@@ -56,6 +68,8 @@ export interface InterventionInput {
   projectId?: string | null;
   projectNodeId?: string | null;
   sourceRequestId?: string | null;
+  maintenancePeriodId?: string | null;
+  hourPackId?: string | null;
   type?: InterventionType;
   status?: InterventionStatus;
   coverageMode?: InterventionCoverageMode;
@@ -101,6 +115,8 @@ export interface InterventionFilters {
   status?: InterventionStatus | null;
   type?: InterventionType | null;
   coverageMode?: InterventionCoverageMode | null;
+  maintenancePeriodId?: string | null;
+  hourPackId?: string | null;
   includeArchived?: boolean;
 }
 
@@ -112,6 +128,101 @@ export interface TransformRequestToInterventionInput {
   scheduledAt?: string | null;
   theoreticalValueCents?: number;
   billableAmountCents?: number;
+}
+
+export interface MaintenancePlanInput {
+  name: string;
+  periodicPriceCents: number;
+  frequency?: MaintenanceFrequency;
+  includedInterventions?: number;
+  includedMinutes?: number | null;
+  carryoverMode?: MaintenanceCarryoverMode;
+  checklistTemplateId?: string | null;
+  notes?: string | null;
+}
+
+export interface MaintenancePlan extends MaintenancePlanInput {
+  id: string;
+  frequency: MaintenanceFrequency;
+  includedInterventions: number;
+  includedMinutes?: number | null;
+  carryoverMode: MaintenanceCarryoverMode;
+  status: MaintenancePlanStatus;
+  checklistTemplateName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt?: string | null;
+}
+
+export interface MaintenanceSubscriptionInput {
+  clientAccountId: string;
+  projectId?: string | null;
+  planId: string;
+  startDate: string;
+  endDate?: string | null;
+  contractPriceCents?: number | null;
+  notes?: string | null;
+}
+
+export interface MaintenanceSubscription extends MaintenanceSubscriptionInput {
+  id: string;
+  clientLabel: string;
+  projectLabel?: string | null;
+  planName: string;
+  frequency: MaintenanceFrequency;
+  includedInterventions: number;
+  includedMinutes?: number | null;
+  catalogPriceCents: number;
+  contractPriceCents: number;
+  status: MaintenanceSubscriptionStatus;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt?: string | null;
+}
+
+export interface MaintenanceSubscriptionFilters {
+  clientAccountId?: string | null;
+  projectId?: string | null;
+  status?: MaintenanceSubscriptionStatus | null;
+  includeArchived?: boolean;
+}
+
+export interface MaintenanceCheck {
+  id: string;
+  periodId: string;
+  templateItemId?: string | null;
+  label: string;
+  description?: string | null;
+  sortOrder: number;
+  required: boolean;
+  status: MaintenanceCheckStatus;
+  completedAt?: string | null;
+  notes?: string | null;
+}
+
+export interface MaintenancePeriodUsage {
+  interventionCount: number;
+  usedSeconds: number;
+  remainingInterventions: number | null;
+  remainingSeconds: number | null;
+  interventionsOverQuota: number;
+  secondsOverQuota: number;
+}
+
+export interface MaintenancePeriod {
+  id: string;
+  subscriptionId: string;
+  periodStart: string;
+  periodEnd: string;
+  includedInterventions: number;
+  includedMinutes?: number | null;
+  status: MaintenancePeriodStatus;
+  closedAt?: string | null;
+  notes?: string | null;
+  checks: MaintenanceCheck[];
+  usage: MaintenancePeriodUsage;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface OperationsApi {
@@ -130,5 +241,24 @@ export interface OperationsApi {
     create(input: InterventionInput): Promise<Intervention>;
     update(id: string, input: Partial<InterventionInput>): Promise<Intervention>;
     changeStatus(id: string, status: InterventionStatus): Promise<Intervention>;
+  };
+  maintenance: {
+    plans: {
+      list(includeArchived?: boolean): Promise<MaintenancePlan[]>;
+      create(input: MaintenancePlanInput): Promise<MaintenancePlan>;
+      update(id: string, input: Partial<MaintenancePlanInput>): Promise<MaintenancePlan>;
+      archive(id: string): Promise<MaintenancePlan>;
+    };
+    subscriptions: {
+      list(filters?: MaintenanceSubscriptionFilters): Promise<MaintenanceSubscription[]>;
+      create(input: MaintenanceSubscriptionInput): Promise<MaintenanceSubscription>;
+      changeStatus(id: string, status: MaintenanceSubscriptionStatus): Promise<MaintenanceSubscription>;
+    };
+    periods: {
+      list(subscriptionId: string): Promise<MaintenancePeriod[]>;
+      ensure(subscriptionId: string, referenceDate?: string | null): Promise<MaintenancePeriod>;
+      changeStatus(id: string, status: MaintenancePeriodStatus): Promise<MaintenancePeriod>;
+      updateCheck(id: string, status: MaintenanceCheckStatus, notes?: string | null): Promise<MaintenancePeriod>;
+    };
   };
 }
