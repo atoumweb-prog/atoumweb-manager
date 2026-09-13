@@ -1,0 +1,19 @@
+.prospects-layout { display: grid; gap: 16px; min-width: 0; }
+.prospects-layout.with-detail { grid-template-columns: minmax(0, 1fr) 340px; align-items: start; }
+.prospects-layout.with-detail .kanban-board { min-width: 0; }
+.prospect-card { cursor: pointer; }
+.prospect-card.selected-prospect { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent), 0 8px 20px color-mix(in srgb, #000 5%, transparent); }
+.quick-followups { display: flex; flex-wrap: wrap; gap: 5px; }
+.quick-followups button { border: 1px solid var(--border); border-radius: 7px; padding: 5px 6px; background: var(--surface-soft); color: var(--muted); cursor: pointer; font-size: 8px; font-weight: 700; }
+.quick-followups button:hover { border-color: var(--accent); color: var(--accent-strong); }
+.prospect-detail-panel { position: sticky; top: 0; max-height: calc(100vh - 150px); overflow-y: auto; }
+.detail-panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.detail-panel-heading h2 { margin: 5px 0 0; }
+.close-detail { width: 28px; height: 28px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-soft); color: var(--muted); cursor: pointer; }
+.detail-badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 16px; }
+.detail-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+
+@media (max-width: 1320px) {
+  .prospects-layout.with-detail { grid-template-columns: 1fr; }
+  .prospect-detail-panel { position: static; max-height: none; }
+}
