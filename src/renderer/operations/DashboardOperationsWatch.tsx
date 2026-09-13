@@ -31,7 +31,7 @@ export function DashboardOperationsWatch({ onOpen, onMessage }: {
   const visible = useMemo(() => alerts.slice(0, 5), [alerts]);
   const criticalCount = alerts.filter((alert) => alert.severity === 'critical').length;
 
-  return <article className="panel dashboard-operations-watch">
+  return <article className="panel panel-large dashboard-operations-watch">
     <div className="dashboard-watch-heading">
       <div>
         <span className="eyebrow">À surveiller</span>
