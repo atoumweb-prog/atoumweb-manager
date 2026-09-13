@@ -10,6 +10,8 @@ export const PROJECT_RESOURCE_STATUSES = ['received', 'to_process', 'in_progress
 export const PROJECT_RESOURCE_ROLES = ['client_provided', 'atoumweb_rewrite', 'final_validated', 'other'] as const;
 export const PROJECT_TECHNICAL_CATEGORIES = ['header', 'footer', 'hero', 'page', 'section', 'css', 'javascript', 'php', 'acf', 'divi', 'woocommerce', 'plugin', 'config', 'note', 'other'] as const;
 export const PROJECT_TECHNICAL_CONTENT_TYPES = ['code', 'json', 'text', 'reference'] as const;
+export const PROJECT_COMPLETION_STATES = ['ok', 'warning', 'check'] as const;
+export const PROJECT_COMPLETION_KEYS = ['required_tasks', 'prerequisites', 'final_backup', 'deliverables', 'balance', 'training', 'maintenance', 'technical_reuse'] as const;
 
 export type ProjectTemplateStatus = (typeof PROJECT_TEMPLATE_STATUSES)[number];
 export type ProjectTemplateVersionStatus = (typeof PROJECT_TEMPLATE_VERSION_STATUSES)[number];
@@ -23,6 +25,8 @@ export type ProjectResourceStatus = (typeof PROJECT_RESOURCE_STATUSES)[number];
 export type ProjectResourceRole = (typeof PROJECT_RESOURCE_ROLES)[number];
 export type ProjectTechnicalCategory = (typeof PROJECT_TECHNICAL_CATEGORIES)[number];
 export type ProjectTechnicalContentType = (typeof PROJECT_TECHNICAL_CONTENT_TYPES)[number];
+export type ProjectCompletionState = (typeof PROJECT_COMPLETION_STATES)[number];
+export type ProjectCompletionKey = (typeof PROJECT_COMPLETION_KEYS)[number];
 
 export interface ProjectTemplateInput {
   name: string;
@@ -250,6 +254,23 @@ export interface ProjectTechnicalItemDetail extends ProjectTechnicalItemSummary 
   versions: ProjectTechnicalVersion[];
 }
 
+export interface ProjectCompletionItem {
+  key: ProjectCompletionKey;
+  label: string;
+  state: ProjectCompletionState;
+  detail: string;
+  automatic: boolean;
+}
+
+export interface ProjectCompletionReview {
+  projectId: string;
+  canComplete: true;
+  warningCount: number;
+  checkCount: number;
+  items: ProjectCompletionItem[];
+  generatedAt: string;
+}
+
 export interface ProjectsApi {
   templates: {
     list(): Promise<ProjectTemplateSummary[]>;
@@ -266,6 +287,7 @@ export interface ProjectsApi {
     transformQuote(input: TransformQuoteToProjectInput): Promise<ProjectDetail>;
     createInternal(input: InternalProjectInput): Promise<ProjectDetail>;
     changeStatus(id: string, status: ProjectStatus): Promise<ProjectDetail>;
+    completionReview(id: string): Promise<ProjectCompletionReview>;
     addNode(projectId: string, input: ProjectNodeInput): Promise<ProjectDetail>;
     updateNode(nodeId: string, input: Partial<ProjectNodeInput>): Promise<ProjectDetail>;
     addPrerequisite(projectId: string, input: ProjectPrerequisiteInput): Promise<ProjectDetail>;
