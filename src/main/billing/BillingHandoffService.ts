@@ -103,6 +103,66 @@ export class BillingHandoffService {
     return this.get(id);
   }
 
+  syncMaintenanceOverage(decisionId: string): BillingItem | null {
+    const decision = this.database.get<{
+      id: string;
+      decision: string;
+      reason: string;
+      expected_amount_cents: number;
+      intervention_id: string;
+      intervention_number: string;
+      subject: string;
+      client_account_id: string;
+      project_id: string | null;
+      theoretical_value_cents: number;
+      intervention_status: string;
+    }>(
+      `SELECT mod.id,mod.decision,mod.reason,mod.expected_amount_cents,mod.intervention_id,
+        i.intervention_number,i.subject,i.client_account_id,i.project_id,i.theoretical_value_cents,i.status AS intervention_status
+       FROM maintenance_overage_decisions mod
+       JOIN interventions i ON i.id=mod.intervention_id
+       WHERE mod.id=?`,
+      [decisionId],
+    );
+    if (!decision) throw new Error('Décision de dépassement introuvable.');
+
+    const sourceKey = `maintenance_overage:${decision.id}`;
+    const existing = this.database.get<{ id: string }>('SELECT id FROM billing_items WHERE source_key=?', [sourceKey]);
+    const now = nowIso();
+
+    if (decision.decision !== 'bill_out_of_scope') {
+      if (existing) {
+        this.database.run("UPDATE billing_items SET status='cancelled',notes=?,updated_at=? WHERE id=?", [decision.reason, now, existing.id]);
+        return this.get(existing.id);
+      }
+      return null;
+    }
+
+    if (decision.intervention_status !== 'completed') return existing ? this.get(existing.id) : null;
+    const expected = Number(decision.expected_amount_cents);
+    if (expected <= 0) throw new Error('Indique un montant à facturer pour ce dépassement.');
+    const description = `Dépassement maintenance · ${decision.intervention_number} · ${decision.subject}`;
+    const theoretical = Math.max(expected, Number(decision.theoretical_value_cents));
+
+    if (existing) {
+      this.database.run(
+        "UPDATE billing_items SET description=?,expected_amount_cents=?,theoretical_value_cents=?,status='ready',notes=?,updated_at=? WHERE id=?",
+        [description, expected, theoretical, decision.reason, now, existing.id],
+      );
+      return this.get(existing.id);
+    }
+
+    const id = randomUUID();
+    this.database.run(
+      `INSERT INTO billing_items
+       (id,client_account_id,project_id,source_type,source_id,source_key,description,expected_amount_cents,theoretical_value_cents,status,notes,created_at,updated_at)
+       VALUES (?,?,?,'maintenance_overage',?,?,?,?,?,'ready',?,?,?)`,
+      [id, decision.client_account_id, decision.project_id, decision.id, sourceKey, description, expected, theoretical, decision.reason, now, now],
+    );
+    this.writeActivity('billing_item', id, 'billing_item_created', `${description} · ready`);
+    return this.get(id);
+  }
+
   get(id: string): BillingItem {
     const row = this.database.get<BillingItemRow>(`${this.select()} WHERE bi.id=?`, [id]);
     if (!row) throw new Error('Élément à facturer introuvable.');
