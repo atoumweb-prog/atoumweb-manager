@@ -159,6 +159,7 @@ const api: AtoumWebApi = {
       markStable: (versionId: string) => ipcRenderer.invoke('projects:technical:mark-stable', versionId),
       linkResource: (versionId: string, resourceId: string) => ipcRenderer.invoke('projects:technical:link-resource', versionId, resourceId),
       unlinkResource: (versionId: string, resourceId: string) => ipcRenderer.invoke('projects:technical:unlink-resource', versionId, resourceId),
+      prepareForReuse: (itemId: string, versionId?: string | null) => ipcRenderer.invoke('projects:technical:prepare-reuse', itemId, versionId),
       archive: (itemId: string) => ipcRenderer.invoke('projects:technical:archive', itemId),
     },
   },
