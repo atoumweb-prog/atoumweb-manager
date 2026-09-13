@@ -160,7 +160,7 @@ export class MaintenanceService {
 
   ensurePeriod(subscriptionId: string, referenceDate?: string | null): MaintenancePeriod {
     const subscription = this.getSubscription(subscriptionId);
-    if (subscription.status === 'archived' || subscription.status === 'ended') throw new Error('Cette souscription n’est plus active.');
+    if (subscription.status !== 'active') throw new Error('Seule une souscription active peut générer une nouvelle période.');
     const reference = referenceDate ? this.dateOnly(referenceDate, 'Date de période invalide.') : new Date().toISOString().slice(0, 10);
     const bounds = this.periodBounds(subscription, reference);
     const existing = this.database.get<{ id: string }>(
