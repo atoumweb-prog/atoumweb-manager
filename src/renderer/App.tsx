@@ -86,7 +86,6 @@ function App() {
   async function chooseWorkspace(): Promise<void> {
     const result = await window.atoumweb.workspace.choose();
     if (result.cancelled) return;
-
     setMessage(
       result.restartRequired
         ? `Nouveau dossier enregistré : ${result.workspacePath}. Redémarre l’application pour l’utiliser. Les données de l’ancien workspace ne sont pas déplacées automatiquement.`
@@ -102,7 +101,6 @@ function App() {
   async function restoreBackup(): Promise<void> {
     const result = await window.atoumweb.backups.restore();
     if (result.cancelled) return;
-
     setMessage(
       result.restartScheduled
         ? 'Restauration programmée. L’application va redémarrer.'
@@ -111,121 +109,53 @@ function App() {
   }
 
   function openSearchResult(result: SearchResult): void {
-    if (result.entityType === 'client') {
-      setActivePage('Clients');
-    } else if (result.entityType === 'prospect') {
-      setActivePage('Prospects');
-    } else {
-      setActivePage('Clients');
+    switch (result.entityType) {
+      case 'prospect': setActivePage('Prospects'); break;
+      case 'catalog': setActivePage('Offres & Tarifs'); break;
+      case 'quote': setActivePage('Devis'); break;
+      case 'client':
+      case 'organization':
+      case 'contact':
+      default: setActivePage('Clients'); break;
     }
     setMessage(`${result.title} trouvé dans la recherche globale.`);
   }
 
   if (loadingError) {
-    return (
-      <div className="fatal-screen">
-        <div className="fatal-card">
-          <span className="eyebrow">AtoumWeb Manager</span>
-          <h1>Le démarrage a échoué</h1>
-          <p>{loadingError}</p>
-        </div>
-      </div>
-    );
+    return <div className="fatal-screen"><div className="fatal-card"><span className="eyebrow">AtoumWeb Manager</span><h1>Le démarrage a échoué</h1><p>{loadingError}</p></div></div>;
   }
 
   if (!bootstrap) {
-    return (
-      <div className="splash-screen">
-        <div className="brand-mark">AW</div>
-        <strong>AtoumWeb Manager</strong>
-        <span>Initialisation du workspace et de la base locale…</span>
-      </div>
-    );
+    return <div className="splash-screen"><div className="brand-mark">AW</div><strong>AtoumWeb Manager</strong><span>Initialisation du workspace et de la base locale…</span></div>;
   }
 
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand-block">
-          <div className="brand-mark">AW</div>
-          <div>
-            <strong>AtoumWeb</strong>
-            <span>Manager</span>
-          </div>
-        </div>
-
+        <div className="brand-block"><div className="brand-mark">AW</div><div><strong>AtoumWeb</strong><span>Manager</span></div></div>
         <nav className="navigation" aria-label="Navigation principale">
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item}
-              className={`nav-item ${activePage === item ? 'active' : ''}`}
-              onClick={() => setActivePage(item)}
-              type="button"
-            >
-              <span className="nav-dot" />
-              <span>{item}</span>
-            </button>
-          ))}
+          {NAV_ITEMS.map((item) => <button key={item} className={`nav-item ${activePage === item ? 'active' : ''}`} onClick={() => setActivePage(item)} type="button"><span className="nav-dot" /><span>{item}</span></button>)}
         </nav>
-
-        <div className="sidebar-footer">
-          <span>V{bootstrap.appVersion}</span>
-          <span className="status-pill">Local</span>
-        </div>
+        <div className="sidebar-footer"><span>V{bootstrap.appVersion}</span><span className="status-pill">Local</span></div>
       </aside>
 
       <main className="main-area">
         <header className="topbar">
           <GlobalSearch onOpen={openSearchResult} />
-
-          <div className="timer-widget" title="Le timer global sera raccordé aux tâches et interventions.">
-            <div>
-              <span className="timer-label">Timer</span>
-              <strong>00:00:00</strong>
-            </div>
-            <span className="timer-context">Aucune activité</span>
-            <button type="button" disabled>▶</button>
-          </div>
+          <div className="timer-widget" title="Le timer global sera raccordé aux tâches et interventions."><div><span className="timer-label">Timer</span><strong>00:00:00</strong></div><span className="timer-context">Aucune activité</span><button type="button" disabled>▶</button></div>
         </header>
 
         <section className="content-area">
-          <div className="page-heading">
-            <div>
-              <span className="eyebrow">AtoumWeb Manager</span>
-              <h1>{activePage}</h1>
-              <p>{PAGE_HINTS[activePage]}</p>
-            </div>
-            <div className="database-chip">
-              <span className="health-dot" />
-              SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}
-            </div>
-          </div>
-
-          {message && (
-            <div className="notice" role="status">
-              <span>{message}</span>
-              <button type="button" onClick={() => setMessage(null)}>×</button>
-            </div>
-          )}
+          <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1>{activePage}</h1><p>{PAGE_HINTS[activePage]}</p></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>
+          {message && <div className="notice" role="status"><span>{message}</span><button type="button" onClick={() => setMessage(null)}>×</button></div>}
 
           {activePage === 'Accueil' && <Dashboard bootstrap={bootstrap} />}
           {activePage === 'Prospects' && <ProspectsPage onMessage={setMessage} />}
           {activePage === 'Clients' && <ClientsPage onMessage={setMessage} />}
           {activePage === 'Offres & Tarifs' && <CatalogPage onMessage={setMessage} />}
           {activePage === 'Devis' && <QuotesPage onMessage={setMessage} />}
-          {activePage === 'Réglages' && (
-            <SettingsPage
-              bootstrap={bootstrap}
-              theme={theme}
-              onThemeChange={updateTheme}
-              onChooseWorkspace={chooseWorkspace}
-              onCreateBackup={createManualBackup}
-              onRestoreBackup={restoreBackup}
-            />
-          )}
-          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Réglages' && (
-            <ModulePlaceholder page={activePage} />
-          )}
+          {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} onThemeChange={updateTheme} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
+          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
         </section>
       </main>
     </div>
@@ -237,10 +167,7 @@ function Dashboard({ bootstrap }: { bootstrap: BootstrapState }) {
   const [clientCount, setClientCount] = useState<number | null>(null);
 
   useEffect(() => {
-    void Promise.all([
-      window.atoumweb.crm.prospects.list(),
-      window.atoumweb.crm.clients.list(),
-    ]).then(([prospects, clients]) => {
+    void Promise.all([window.atoumweb.crm.prospects.list(), window.atoumweb.crm.clients.list()]).then(([prospects, clients]) => {
       setProspectCount(prospects.filter((prospect) => prospect.stage !== 'won' && prospect.stage !== 'lost').length);
       setClientCount(clients.length);
     });
@@ -254,142 +181,40 @@ function Dashboard({ bootstrap }: { bootstrap: BootstrapState }) {
         <KpiCard label="CA encaissé ce mois" value="0 €" detail="Suivi Abby à venir" />
         <KpiCard label="Temps travaillé ce mois" value="0 h" detail="Timer prêt à être raccordé" />
       </div>
-
       <div className="dashboard-grid">
-        <article className="panel panel-large">
-          <div className="panel-title">
-            <div>
-              <span className="eyebrow">Fondation</span>
-              <h2>Socle CRM en cours</h2>
-            </div>
-            <span className="success-badge">Phase 1</span>
-          </div>
-          <div className="foundation-list">
-            <FoundationRow label="Workspace local" value={bootstrap.workspacePath} />
-            <FoundationRow label="Base SQLite" value={bootstrap.databasePath} />
-            <FoundationRow label="CRM" value="Organisations · Contacts · Prospects · Clients" />
-            <FoundationRow label="Recherche" value="Index local multi-entités" />
-          </div>
-        </article>
-
-        <article className="panel">
-          <span className="eyebrow">Aujourd’hui</span>
-          <h2>{prospectCount ? `${prospectCount} prospect${prospectCount > 1 ? 's' : ''} actif${prospectCount > 1 ? 's' : ''}` : 'Rien à traiter'}</h2>
-          <p className="muted">Les prochaines actions et retards seront enrichis pendant la Phase 1.</p>
-        </article>
-
-        <article className="panel">
-          <span className="eyebrow">Phase 1</span>
-          <h2>CRM opérationnel</h2>
-          <p className="muted">Créer un prospect, le faire avancer dans le pipeline puis le transformer en client sans ressaisie.</p>
-        </article>
+        <article className="panel panel-large"><div className="panel-title"><div><span className="eyebrow">Fondation</span><h2>Socle CRM en cours</h2></div><span className="success-badge">Phase 1</span></div><div className="foundation-list"><FoundationRow label="Workspace local" value={bootstrap.workspacePath} /><FoundationRow label="Base SQLite" value={bootstrap.databasePath} /><FoundationRow label="CRM" value="Organisations · Contacts · Prospects · Clients" /><FoundationRow label="Recherche" value="Index local multi-entités" /></div></article>
+        <article className="panel"><span className="eyebrow">Aujourd’hui</span><h2>{prospectCount ? `${prospectCount} prospect${prospectCount > 1 ? 's' : ''} actif${prospectCount > 1 ? 's' : ''}` : 'Rien à traiter'}</h2><p className="muted">Les prochaines actions et retards seront enrichis pendant la Phase 1.</p></article>
+        <article className="panel"><span className="eyebrow">Phase 1</span><h2>CRM opérationnel</h2><p className="muted">Créer un prospect, le faire avancer dans le pipeline puis le transformer en client sans ressaisie.</p></article>
       </div>
     </>
   );
 }
 
-function SettingsPage({
-  bootstrap,
-  theme,
-  onThemeChange,
-  onChooseWorkspace,
-  onCreateBackup,
-  onRestoreBackup,
-}: {
-  bootstrap: BootstrapState;
-  theme: ThemeName;
-  onThemeChange: (theme: ThemeName) => Promise<void>;
-  onChooseWorkspace: () => Promise<void>;
-  onCreateBackup: () => Promise<void>;
-  onRestoreBackup: () => Promise<void>;
+function SettingsPage({ bootstrap, theme, onThemeChange, onChooseWorkspace, onCreateBackup, onRestoreBackup }: {
+  bootstrap: BootstrapState; theme: ThemeName; onThemeChange: (theme: ThemeName) => Promise<void>; onChooseWorkspace: () => Promise<void>; onCreateBackup: () => Promise<void>; onRestoreBackup: () => Promise<void>;
 }) {
   return (
     <div className="settings-grid">
       <article className="panel panel-large">
-        <div className="panel-title">
-          <div>
-            <span className="eyebrow">Apparence</span>
-            <h2>Thème de l’interface</h2>
-          </div>
-          {theme !== 'atoumweb' && (
-            <button className="secondary-button" type="button" onClick={() => void onThemeChange('atoumweb')}>
-              Rétablir le thème par défaut
-            </button>
-          )}
-        </div>
-        <div className="theme-grid">
-          {THEMES.map((item) => (
-            <button
-              className={`theme-card ${theme === item.id ? 'selected' : ''}`}
-              key={item.id}
-              onClick={() => void onThemeChange(item.id)}
-              type="button"
-            >
-              <span className={`theme-preview preview-${item.id}`}>
-                <i />
-                <b />
-              </span>
-              <strong>{item.label}</strong>
-              <span>{item.description}</span>
-            </button>
-          ))}
-        </div>
+        <div className="panel-title"><div><span className="eyebrow">Apparence</span><h2>Thème de l’interface</h2></div>{theme !== 'atoumweb' && <button className="secondary-button" type="button" onClick={() => void onThemeChange('atoumweb')}>Rétablir le thème par défaut</button>}</div>
+        <div className="theme-grid">{THEMES.map((item) => <button className={`theme-card ${theme === item.id ? 'selected' : ''}`} key={item.id} onClick={() => void onThemeChange(item.id)} type="button"><span className={`theme-preview preview-${item.id}`}><i /><b /></span><strong>{item.label}</strong><span>{item.description}</span></button>)}</div>
       </article>
-
-      <article className="panel">
-        <span className="eyebrow">Stockage</span>
-        <h2>Workspace local</h2>
-        <p className="path-value">{bootstrap.workspacePath}</p>
-        <button className="primary-button" type="button" onClick={() => void onChooseWorkspace()}>
-          Choisir un autre dossier
-        </button>
-      </article>
-
-      <article className="panel">
-        <span className="eyebrow">Sécurité</span>
-        <h2>Sauvegarde de la base</h2>
-        <p className="muted">Une sauvegarde automatique est créée chaque jour. Une copie de sécurité est aussi créée avant toute restauration.</p>
-        <div className="button-row">
-          <button className="secondary-button" type="button" onClick={() => void onCreateBackup()}>
-            Sauvegarder maintenant
-          </button>
-          <button className="secondary-button" type="button" onClick={() => void onRestoreBackup()}>
-            Restaurer une sauvegarde
-          </button>
-        </div>
-      </article>
+      <article className="panel"><span className="eyebrow">Stockage</span><h2>Workspace local</h2><p className="path-value">{bootstrap.workspacePath}</p><button className="primary-button" type="button" onClick={() => void onChooseWorkspace()}>Choisir un autre dossier</button></article>
+      <article className="panel"><span className="eyebrow">Sécurité</span><h2>Sauvegarde de la base</h2><p className="muted">Une sauvegarde automatique est créée chaque jour. Une copie de sécurité est aussi créée avant toute restauration.</p><div className="button-row"><button className="secondary-button" type="button" onClick={() => void onCreateBackup()}>Sauvegarder maintenant</button><button className="secondary-button" type="button" onClick={() => void onRestoreBackup()}>Restaurer une sauvegarde</button></div></article>
     </div>
   );
 }
 
 function ModulePlaceholder({ page }: { page: PageName }) {
-  return (
-    <article className="panel empty-module">
-      <span className="module-number">V1</span>
-      <h2>{page}</h2>
-      <p>{PAGE_HINTS[page]}</p>
-      <span className="status-pill">Conception validée · Développement à venir</span>
-    </article>
-  );
+  return <article className="panel empty-module"><span className="module-number">V1</span><h2>{page}</h2><p>{PAGE_HINTS[page]}</p><span className="status-pill">Conception validée · Développement à venir</span></article>;
 }
 
 function KpiCard({ label, value, detail }: { label: string; value: string; detail: string }) {
-  return (
-    <article className="kpi-card">
-      <span>{label}</span>
-      <strong>{value}</strong>
-      <small>{detail}</small>
-    </article>
-  );
+  return <article className="kpi-card"><span>{label}</span><strong>{value}</strong><small>{detail}</small></article>;
 }
 
 function FoundationRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="foundation-row">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
+  return <div className="foundation-row"><span>{label}</span><strong>{value}</strong></div>;
 }
 
 export default App;
