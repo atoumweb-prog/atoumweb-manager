@@ -10,7 +10,7 @@
 - **Fondation** : `foundation/electron-react-sqlite` — PR #3
 - **Branche de travail actuelle** : `feature/phase-1-crm`
 - **PR Phase 1** : #58 — `Phase 1 CRM — Prospects, Clients et recherche globale` — brouillon, fusionnable, non validée localement
-- **Statut** : fondation validée sur Windows ; Phase 1 CRM implémentée en première passe et en attente de validation réelle.
+- **Statut** : fondation validée sur Windows ; Phase 1 CRM implémentée en première passe avancée et en attente de validation réelle.
 - **Principe directeur** : une donnée métier possède une source unique ; les autres écrans la référencent sans duplication.
 
 ## Phase 0 — Fondation
@@ -63,7 +63,7 @@ PR : #58 (brouillon)
 - [x] Prospects : lister / créer / modifier
 - [x] changement de stage
 - [x] raison obligatoire si Perdu
-- [x] prochaine action + raccourcis J+1 / J+3 / J+7 / J+30
+- [x] prochaine action + raccourcis J+1 / J+3 / J+7 / J+30 + date personnalisée
 - [x] conversion Prospect → Client transactionnelle et idempotente
 - [x] Clients : lister / créer / modifier
 - [x] archivage / réactivation
@@ -79,15 +79,26 @@ PR : #58 (brouillon)
 - [x] température, source, besoin, valeur estimée, prochaine action
 - [x] changement de stage sans dépendre du drag-and-drop
 - [x] conversion vers Client depuis une carte Prospect
-- [x] raccourcis de relance J+1 / J+3 / J+7 / J+30
+- [x] raccourcis de relance J+1 / J+3 / J+7 / J+30 / date personnalisée
+- [x] fiche Prospect latérale détaillée
+- [x] historique Prospect
 - [x] tableau Clients réel
 - [x] formulaire Nouveau client
 - [x] filtres Clients
 - [x] archivage / réactivation
-- [x] fiche Résumé client latérale
-- [x] activité récente du client
+- [x] fiche Client latérale
+- [x] onglets Client Résumé / Contacts / Commercial / Historique interactifs
+- [x] programmation d’une prochaine action Client
+- [x] activité récente / historique Client
 - [x] recherche globale avec résultats Clients / Prospects / Organisations / Contacts
 - [x] dashboard raccordé aux premiers compteurs CRM
+
+### Reste fonctionnel Phase 1
+
+- [ ] gestion UI complète de plusieurs contacts et rôles Client
+- [ ] deep-link précis depuis recherche globale vers une fiche Organisation/Contact
+- [ ] navigation clavier complète dans les résultats de recherche
+- [ ] enrichissement Commercial Client lorsque Projets/Facturation/Temps seront disponibles
 
 ### Tests ajoutés
 
@@ -127,6 +138,6 @@ PR : #58 (brouillon)
 
 ## Travail en cours
 
-**Phase 1 CRM : première passe fonctionnelle terminée sur la branche ; PR #58 ouverte en brouillon.**
+**Phase 1 CRM : première passe fonctionnelle avancée terminée sur la branche ; PR #58 ouverte en brouillon.**
 
-Aucune validation n’est déclarée comme réussie tant que les commandes n’ont pas été réellement exécutées. La prochaine validation locale devra vérifier la sauvegarde `pre-migration`, le passage à 3 migrations, le typecheck, les tests, la création d’un prospect, les raccourcis de relance, sa conversion en client, l’archivage/réactivation et la recherche globale.
+Aucune validation n’est déclarée comme réussie tant que les commandes n’ont pas été réellement exécutées. La prochaine validation locale devra vérifier la sauvegarde `pre-migration`, le passage à 3 migrations, le typecheck, les tests, la création d’un prospect, les raccourcis de relance, sa conversion en client, les fiches Prospect/Client, l’archivage/réactivation et la recherche globale.
