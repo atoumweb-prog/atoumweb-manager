@@ -1,6 +1,10 @@
 import { ipcMain } from 'electron';
 import type { DatabaseService } from '../database/DatabaseService';
 import type {
+  HourPackFilters,
+  HourPackInput,
+  HourPackMovementInput,
+  HourPackStatus,
   InterventionFilters,
   InterventionInput,
   InterventionStatus,
@@ -44,4 +48,12 @@ export function registerOperationsIpcHandlers(database: DatabaseService): void {
   ipcMain.handle('operations:maintenance:periods:ensure', (_event, subscriptionId: string, referenceDate?: string | null) => database.maintenance.ensurePeriod(subscriptionId, referenceDate));
   ipcMain.handle('operations:maintenance:periods:change-status', (_event, id: string, status: MaintenancePeriodStatus) => database.maintenance.changePeriodStatus(id, status));
   ipcMain.handle('operations:maintenance:checks:update', (_event, id: string, status: MaintenanceCheckStatus, notes?: string | null) => database.maintenance.updateCheck(id, status, notes));
+
+  ipcMain.handle('operations:hour-packs:list', (_event, filters?: HourPackFilters) => database.hourPacks.list(filters));
+  ipcMain.handle('operations:hour-packs:get', (_event, id: string) => database.hourPacks.get(id));
+  ipcMain.handle('operations:hour-packs:create', (_event, input: HourPackInput) => database.hourPacks.create(input));
+  ipcMain.handle('operations:hour-packs:change-status', (_event, id: string, status: HourPackStatus) => database.hourPacks.changeStatus(id, status));
+  ipcMain.handle('operations:hour-packs:add-movement', (_event, id: string, input: HourPackMovementInput) => database.hourPacks.addMovement(id, input));
+  ipcMain.handle('operations:hour-packs:debit-intervention', (_event, packId: string, interventionId: string) => database.hourPacks.debitIntervention(packId, interventionId));
+  ipcMain.handle('operations:hour-packs:reverse-movement', (_event, movementId: string, reason: string) => database.hourPacks.reverseMovement(movementId, reason));
 }
