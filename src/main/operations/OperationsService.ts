@@ -54,6 +54,8 @@ interface InterventionRow extends Record<string, unknown> {
   project_id: string | null;
   project_node_id: string | null;
   source_request_id: string | null;
+  maintenance_period_id: string | null;
+  hour_pack_id: string | null;
   intervention_type: Intervention['type'];
   status: InterventionStatus;
   coverage_mode: Intervention['coverageMode'];
@@ -225,6 +227,8 @@ export class OperationsService {
     if (filters.coverageMode) { this.assertCoverageMode(filters.coverageMode); where.push('i.coverage_mode=?'); params.push(filters.coverageMode); }
     if (clean(filters.clientAccountId)) { where.push('i.client_account_id=?'); params.push(clean(filters.clientAccountId) as string); }
     if (clean(filters.projectId)) { where.push('i.project_id=?'); params.push(clean(filters.projectId) as string); }
+    if (clean(filters.maintenancePeriodId)) { where.push('i.maintenance_period_id=?'); params.push(clean(filters.maintenancePeriodId) as string); }
+    if (clean(filters.hourPackId)) { where.push('i.hour_pack_id=?'); params.push(clean(filters.hourPackId) as string); }
     const needle = clean(filters.search);
     if (needle) {
       where.push(`(lower(i.intervention_number) LIKE ? OR lower(i.subject) LIKE ? OR lower(COALESCE(i.description,'')) LIKE ? OR lower(COALESCE(o.name, trim(c.first_name || ' ' || c.last_name),'')) LIKE ? OR lower(COALESCE(p.name,'')) LIKE ?)`);
@@ -259,19 +263,22 @@ export class OperationsService {
     const status = input.status ?? 'to_plan';
     const coverage = input.coverageMode ?? 'out_of_scope';
     const priority = input.priority ?? 'normal';
+    const maintenancePeriodId = coverage === 'maintenance' ? clean(input.maintenancePeriodId) : null;
+    const hourPackId = coverage === 'hour_pack' ? clean(input.hourPackId) : null;
     this.assertInterventionType(type);
     this.assertInterventionStatus(status);
     this.assertCoverageMode(coverage);
     this.assertPriority(priority);
+    this.assertMaintenancePeriod(clientId, projectId, maintenancePeriodId);
     this.validateIncident(type, input);
     this.assertMoney(input.theoreticalValueCents ?? 0, 'Valeur théorique invalide.');
     this.assertMoney(input.billableAmountCents ?? 0, 'Montant facturable invalide.');
     const id = randomUUID(); const now = nowIso(); const number = this.nextInterventionNumber(new Date().getFullYear(), now);
     this.database.run(
       `INSERT INTO interventions
-       (id,intervention_number,client_account_id,project_id,project_node_id,source_request_id,intervention_type,status,coverage_mode,subject,description,priority,scheduled_at,started_at,completed_at,theoretical_value_cents,billable_amount_cents,notes,incident_criticality,incident_started_at,incident_resolved_at,downtime_minutes,incident_cause,incident_diagnosis,incident_solution,incident_follow_up,created_at,updated_at,archived_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [id, number, clientId, projectId, nodeId, clean(input.sourceRequestId), type, status, coverage, subject, clean(input.description), priority,
+       (id,intervention_number,client_account_id,project_id,project_node_id,source_request_id,maintenance_period_id,hour_pack_id,intervention_type,status,coverage_mode,subject,description,priority,scheduled_at,started_at,completed_at,theoretical_value_cents,billable_amount_cents,notes,incident_criticality,incident_started_at,incident_resolved_at,downtime_minutes,incident_cause,incident_diagnosis,incident_solution,incident_follow_up,created_at,updated_at,archived_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [id, number, clientId, projectId, nodeId, clean(input.sourceRequestId), maintenancePeriodId, hourPackId, type, status, coverage, subject, clean(input.description), priority,
         this.optionalDate(input.scheduledAt), status === 'in_progress' ? now : null, status === 'completed' ? now : null,
         input.theoreticalValueCents ?? 0, input.billableAmountCents ?? 0, clean(input.notes),
         type === 'incident' ? input.incidentCriticality ?? 'normal' : null, type === 'incident' ? this.optionalDate(input.incidentStartedAt) : null,
@@ -294,6 +301,12 @@ export class OperationsService {
     const type = input.type ?? current.type;
     const coverage = input.coverageMode ?? current.coverageMode;
     const priority = input.priority ?? current.priority;
+    const maintenancePeriodId = coverage === 'maintenance'
+      ? (input.maintenancePeriodId === undefined ? current.maintenancePeriodId ?? null : clean(input.maintenancePeriodId))
+      : null;
+    const hourPackId = coverage === 'hour_pack'
+      ? (input.hourPackId === undefined ? current.hourPackId ?? null : clean(input.hourPackId))
+      : null;
     const subject = clean(input.subject ?? current.subject);
     if (!subject) throw new Error('Sujet de l’intervention requis.');
     this.assertClientProject(clientId, projectId);
@@ -301,7 +314,8 @@ export class OperationsService {
     this.assertInterventionType(type);
     this.assertCoverageMode(coverage);
     this.assertPriority(priority);
-    const merged: InterventionInput = { ...current, ...input, clientAccountId: clientId, projectId, projectNodeId: nodeId, subject, type, coverageMode: coverage, priority };
+    this.assertMaintenancePeriod(clientId, projectId, maintenancePeriodId);
+    const merged: InterventionInput = { ...current, ...input, clientAccountId: clientId, projectId, projectNodeId: nodeId, subject, type, coverageMode: coverage, priority, maintenancePeriodId, hourPackId };
     this.validateIncident(type, merged);
     const theoretical = input.theoreticalValueCents ?? current.theoreticalValueCents ?? 0;
     const billableAmount = input.billableAmountCents ?? current.billableAmountCents ?? 0;
@@ -309,9 +323,9 @@ export class OperationsService {
     this.assertMoney(billableAmount, 'Montant facturable invalide.');
     const incident = type === 'incident';
     this.database.run(
-      `UPDATE interventions SET client_account_id=?,project_id=?,project_node_id=?,intervention_type=?,coverage_mode=?,subject=?,description=?,priority=?,scheduled_at=?,
+      `UPDATE interventions SET client_account_id=?,project_id=?,project_node_id=?,maintenance_period_id=?,hour_pack_id=?,intervention_type=?,coverage_mode=?,subject=?,description=?,priority=?,scheduled_at=?,
        theoretical_value_cents=?,billable_amount_cents=?,notes=?,incident_criticality=?,incident_started_at=?,incident_resolved_at=?,downtime_minutes=?,incident_cause=?,incident_diagnosis=?,incident_solution=?,incident_follow_up=?,updated_at=? WHERE id=?`,
-      [clientId, projectId, nodeId, type, coverage, subject,
+      [clientId, projectId, nodeId, maintenancePeriodId, hourPackId, type, coverage, subject,
         input.description === undefined ? current.description ?? null : clean(input.description), priority,
         input.scheduledAt === undefined ? current.scheduledAt ?? null : this.optionalDate(input.scheduledAt), theoretical, billableAmount,
         input.notes === undefined ? current.notes ?? null : clean(input.notes),
@@ -388,7 +402,8 @@ export class OperationsService {
   private mapIntervention(row: InterventionRow): Intervention {
     return {
       id: row.id, number: row.intervention_number, clientAccountId: row.client_account_id, projectId: row.project_id,
-      projectNodeId: row.project_node_id, sourceRequestId: row.source_request_id, type: row.intervention_type, status: row.status,
+      projectNodeId: row.project_node_id, sourceRequestId: row.source_request_id, maintenancePeriodId: row.maintenance_period_id,
+      hourPackId: row.hour_pack_id, type: row.intervention_type, status: row.status,
       coverageMode: row.coverage_mode, subject: row.subject, description: row.description, priority: row.priority,
       scheduledAt: row.scheduled_at, startedAt: row.started_at, completedAt: row.completed_at,
       theoreticalValueCents: Number(row.theoretical_value_cents), billableAmountCents: Number(row.billable_amount_cents), notes: row.notes,
@@ -414,6 +429,21 @@ export class OperationsService {
     if (!projectId) throw new Error('Choisis un projet avant une tâche/module.');
     const node = this.database.get<{ project_id: string }>('SELECT project_id FROM project_nodes WHERE id=?', [nodeId]);
     if (!node || node.project_id !== projectId) throw new Error('La tâche/module n’appartient pas au projet sélectionné.');
+  }
+
+  private assertMaintenancePeriod(clientId: string, projectId?: string | null, periodId?: string | null): void {
+    if (!periodId) return;
+    const period = this.database.get<{ client_account_id: string; project_id: string | null; status: string }>(
+      `SELECT ms.client_account_id,ms.project_id,mp.status
+       FROM maintenance_periods mp
+       JOIN maintenance_subscriptions ms ON ms.id=mp.subscription_id
+       WHERE mp.id=?`,
+      [periodId],
+    );
+    if (!period) throw new Error('Période de maintenance introuvable.');
+    if (period.client_account_id !== clientId) throw new Error('La période de maintenance appartient à un autre client.');
+    if (period.project_id && projectId !== period.project_id) throw new Error('L’intervention doit reprendre le projet de la souscription de maintenance.');
+    if (period.status === 'closed') throw new Error('Cette période de maintenance est clôturée.');
   }
 
   private validateIncident(type: Intervention['type'], input: Partial<InterventionInput>): void {
