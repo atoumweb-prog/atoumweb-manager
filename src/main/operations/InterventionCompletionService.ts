@@ -25,6 +25,10 @@ export class InterventionCompletionService {
 
     if (intervention.coverageMode === 'hour_pack') {
       if (!intervention.hourPackId) throw new Error('Choisis le pack d’heures avant de terminer cette intervention.');
+      const pack = this.hourPacks.get(intervention.hourPackId);
+      if (pack.clientAccountId !== intervention.clientAccountId) throw new Error('Le pack d’heures appartient à un autre client.');
+      if (pack.projectId && pack.projectId !== intervention.projectId) throw new Error('Le pack d’heures appartient à un autre projet.');
+      if (['archived', 'suspended', 'expired'].includes(pack.status)) throw new Error('Ce pack d’heures ne peut pas être utilisé dans son état actuel.');
       if (!['to_validate', 'completed'].includes(intervention.status)) {
         intervention = this.operations.changeInterventionStatus(id, 'to_validate');
       }
