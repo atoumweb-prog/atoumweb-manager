@@ -9,8 +9,8 @@
 - **Branche stable** : `main`
 - **Fondation** : `foundation/electron-react-sqlite` — PR #3
 - **Branche de travail actuelle** : `feature/phase-1-crm`
-- **PR Phase 1** : #58 — `Phase 1 CRM — Prospects, Clients et recherche globale` — brouillon, fusionnable, non validée localement
-- **Statut** : fondation validée sur Windows ; Phase 1 CRM implémentée en première passe avancée et en attente de validation réelle.
+- **PR Phase 1** : #58 — `Phase 1 CRM — Prospects, Clients et recherche globale` — brouillon, fusionnable, validation locale en cours
+- **Statut** : fondation validée sur Windows ; typecheck et tests Phase 1 validés localement ; validation visuelle et migration réelle à terminer.
 - **Principe directeur** : une donnée métier possède une source unique ; les autres écrans la référencent sans duplication.
 
 ## Phase 0 — Fondation
@@ -29,7 +29,7 @@ Validations réelles effectuées sous Windows le 13/09/2026 :
 - [x] restauration SQLite
 - [x] sauvegarde automatique `pre-restore` avant restauration
 - [x] correction du redémarrage de restauration en mode développement
-- [ ] versionner le `package-lock.json` généré localement
+- [x] versionner le `package-lock.json` généré localement
 - [ ] finaliser/fusionner PR #3 dans `main`
 
 La restauration est volontairement différente selon l’environnement :
@@ -106,7 +106,7 @@ PR : #58 (brouillon)
 - [ ] résolution relationnelle d’un résultat Organisation/Contact vers la bonne fiche Client/Prospect
 - [ ] enrichissement Commercial Client lorsque Projets/Facturation/Temps seront disponibles
 
-### Tests ajoutés
+### Tests ajoutés et validés localement le 13/09/2026
 
 - [x] migrations CRM
 - [x] création organisation/contact/prospect
@@ -116,7 +116,8 @@ PR : #58 (brouillon)
 - [x] archivage/réactivation
 - [x] validation budgets / probabilité
 - [x] multi-contact client + changement de principal
-- [ ] exécution réelle typecheck/tests de la branche Phase 1 sur Windows
+- [x] `npm run typecheck` — succès réel sous Windows
+- [x] `npm test` — 4 fichiers / 13 tests passés sous Electron 44.3.0 / Node 24.20.0
 - [ ] validation de la migration depuis une base Phase 0 existante
 - [ ] validation visuelle Phase 1
 
@@ -128,7 +129,7 @@ Premier run : **non exploitable**. GitHub a terminé le job en échec avant tout
 
 ## Phases V1 préparées
 
-- **Phase 1 — Socle CRM** : issues #4–#9 — développement en cours
+- **Phase 1 — Socle CRM** : issues #4–#9 — validation en cours
 - **Phase 2 — Commercial** : #10–#15
 - **Phase 3 — Projets & Production** : #16–#23
 - **Phase 4 — Interventions, Maintenance & Packs** : #24–#31
@@ -151,6 +152,6 @@ Premier run : **non exploitable**. GitHub a terminé le job en échec avant tout
 
 ## Travail en cours
 
-**Phase 1 CRM : première passe fonctionnelle avancée terminée sur la branche ; PR #58 ouverte en brouillon.**
+**Phase 1 CRM : typecheck + 13/13 tests validés réellement sous Windows.**
 
-Aucune validation n’est déclarée comme réussie tant que les commandes n’ont pas été réellement exécutées. La prochaine validation locale devra vérifier la sauvegarde `pre-migration`, le passage à 3 migrations, le typecheck, les tests, la création d’un prospect, les raccourcis de relance, sa conversion en client, les fiches Prospect/Client, les contacts multiples, l’archivage/réactivation et la recherche globale.
+Prochaine étape : lancer `npm start`, vérifier la sauvegarde `pre-migration`, le passage réel de SQLite à 3 migrations, puis tester visuellement la création d’un prospect, les relances, la conversion en client, les contacts multiples, l’archivage/réactivation et la recherche globale.
