@@ -2,6 +2,7 @@ import { app, BrowserWindow } from 'electron';
 import { join } from 'node:path';
 import { DatabaseService } from './database/DatabaseService';
 import { registerIpcHandlers } from './ipc';
+import { registerOperationsIpcHandlers } from './operations/operationsIpc';
 import { applyPendingDatabaseRestore } from './restore';
 import { registerTimeCorrectionIpcHandler } from './time/timeIpc';
 import { resolveWorkspace } from './workspace';
@@ -55,6 +56,7 @@ async function bootstrap(): Promise<void> {
   database = new DatabaseService(workspace);
   await database.initialize();
   registerIpcHandlers(database, workspace);
+  registerOperationsIpcHandlers(database);
   registerTimeCorrectionIpcHandler(database);
   createMainWindow();
 }
