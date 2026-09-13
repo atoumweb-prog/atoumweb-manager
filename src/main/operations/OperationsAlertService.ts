@@ -19,7 +19,6 @@ interface MaintenanceAlertRow extends Record<string, unknown> {
   period_status: string | null;
   included_interventions: number | null;
   intervention_count: number;
-  unresolved_overages: number;
 }
 
 interface PackAlertRow extends Record<string, unknown> {
@@ -62,13 +61,14 @@ export class OperationsAlertService {
         continue;
       }
 
-      if (Number(row.unresolved_overages) > 0) {
+      const unresolved = this.unresolvedOverageCount(row.period_id, Number(row.included_interventions ?? 0));
+      if (unresolved > 0) {
         alerts.push({
           id: `maintenance-overage:${row.period_id}`,
           kind: 'maintenance_overage_unresolved',
           severity: 'critical',
           title: 'Dépassement maintenance à décider',
-          detail: `${row.unresolved_overages} intervention(s) hors quota sans décision.`,
+          detail: `${unresolved} intervention(s) hors quota sans décision.`,
           clientAccountId: row.client_account_id,
           clientLabel: row.client_label,
           projectId: row.project_id,
@@ -215,8 +215,7 @@ export class OperationsAlertService {
         COALESCE(o.name,trim(c.first_name || ' ' || c.last_name),'Client') AS client_label,
         p.name AS project_label,
         mp.id AS period_id,mp.period_start,mp.period_end,mp.status AS period_status,mp.included_interventions,
-        COALESCE((SELECT COUNT(*) FROM interventions i WHERE i.maintenance_period_id=mp.id AND i.status NOT IN ('cancelled','archived')),0) AS intervention_count,
-        ${this.unresolvedOverageSql()} AS unresolved_overages
+        COALESCE((SELECT COUNT(*) FROM interventions i WHERE i.maintenance_period_id=mp.id AND i.status NOT IN ('cancelled','archived')),0) AS intervention_count
        FROM maintenance_subscriptions ms
        JOIN client_accounts ca ON ca.id=ms.client_account_id
        LEFT JOIN organizations o ON o.id=ca.organization_id
@@ -238,8 +237,7 @@ export class OperationsAlertService {
         COALESCE(o.name,trim(c.first_name || ' ' || c.last_name),'Client') AS client_label,
         p.name AS project_label,
         mp.id AS period_id,mp.period_start,mp.period_end,mp.status AS period_status,mp.included_interventions,
-        COALESCE((SELECT COUNT(*) FROM interventions i WHERE i.maintenance_period_id=mp.id AND i.status NOT IN ('cancelled','archived')),0) AS intervention_count,
-        ${this.unresolvedOverageSql()} AS unresolved_overages
+        COALESCE((SELECT COUNT(*) FROM interventions i WHERE i.maintenance_period_id=mp.id AND i.status NOT IN ('cancelled','archived')),0) AS intervention_count
        FROM maintenance_periods mp
        JOIN maintenance_subscriptions ms ON ms.id=mp.subscription_id
        JOIN client_accounts ca ON ca.id=ms.client_account_id
@@ -252,20 +250,21 @@ export class OperationsAlertService {
     );
   }
 
-  private unresolvedOverageSql(): string {
-    return `COALESCE((
-      SELECT COUNT(*)
-      FROM interventions i
-      WHERE i.maintenance_period_id=mp.id
-        AND i.status NOT IN ('cancelled','archived')
-        AND i.id NOT IN (SELECT mod.intervention_id FROM maintenance_overage_decisions mod WHERE mod.period_id=mp.id)
-        AND i.id IN (
-          SELECT ix.id FROM interventions ix
-          WHERE ix.maintenance_period_id=mp.id AND ix.status NOT IN ('cancelled','archived')
-          ORDER BY ix.created_at,ix.id
-          LIMIT -1 OFFSET CASE WHEN mp.included_interventions > 0 THEN mp.included_interventions ELSE 999999999 END
-        )
-    ),0)`;
+  private unresolvedOverageCount(periodId: string, quota: number): number {
+    if (quota <= 0) return 0;
+    const rows = this.database.all<{ id: string }>(
+      `SELECT id FROM interventions
+       WHERE maintenance_period_id=? AND status NOT IN ('cancelled','archived')
+       ORDER BY created_at,id`,
+      [periodId],
+    );
+    const overageIds = rows.slice(quota).map((row) => row.id);
+    if (!overageIds.length) return 0;
+    const decided = new Set(
+      this.database.all<{ intervention_id: string }>('SELECT intervention_id FROM maintenance_overage_decisions WHERE period_id=?', [periodId])
+        .map((row) => row.intervention_id),
+    );
+    return overageIds.filter((id) => !decided.has(id)).length;
   }
 
   private packRows(): PackAlertRow[] {
