@@ -6,8 +6,8 @@ describe('migrations SQLite', () => {
   it('applique chaque migration une seule fois', () => {
     const database = new NodeSqliteAdapter(':memory:');
 
-    expect(getPendingMigrations(database)).toHaveLength(11);
-    expect(applyPendingMigrations(database)).toHaveLength(11);
+    expect(getPendingMigrations(database)).toHaveLength(12);
+    expect(applyPendingMigrations(database)).toHaveLength(12);
     expect(getPendingMigrations(database)).toHaveLength(0);
     expect(applyPendingMigrations(database)).toHaveLength(0);
 
@@ -42,6 +42,12 @@ describe('migrations SQLite', () => {
       'time_session_pauses',
       'service_requests',
       'interventions',
+      'maintenance_checklist_templates',
+      'maintenance_checklist_template_items',
+      'maintenance_plans',
+      'maintenance_subscriptions',
+      'maintenance_periods',
+      'maintenance_checks',
     ]) {
       const row = database.get<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
@@ -59,6 +65,9 @@ describe('migrations SQLite', () => {
       "SELECT name FROM pragma_table_info('time_sessions') WHERE name='intervention_id'",
     );
     expect(timeInterventionColumn?.name).toBe('intervention_id');
+
+    const seededPlans = database.all<{ name: string }>('SELECT name FROM maintenance_plans ORDER BY periodic_price_cents');
+    expect(seededPlans.map((plan) => plan.name)).toEqual(['Maintenance 49 €/mois', 'Maintenance 99 €/mois']);
 
     database.close();
   });
