@@ -69,4 +69,5 @@ export function registerOperationsIpcHandlers(database: DatabaseService): void {
 
   ipcMain.handle('maintenance-overages:review', (_event, periodId: string) => database.maintenanceOverages.review(periodId));
   ipcMain.handle('maintenance-overages:decide', (_event, periodId: string, input: MaintenanceOverageDecisionInput) => database.maintenanceOverages.decide(periodId, input));
+  ipcMain.handle('operations-alerts:get', () => database.operationsAlerts.get());
 }
