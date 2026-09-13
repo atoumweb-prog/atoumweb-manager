@@ -248,4 +248,55 @@ export const PHASE_3_MIGRATIONS = [
         ON technical_item_assets(technical_item_version_id);
     `,
   },
+  {
+    id: 10,
+    name: 'phase_3_time_sessions',
+    sql: `
+      CREATE TABLE IF NOT EXISTS time_sessions (
+        id TEXT PRIMARY KEY,
+        client_account_id TEXT REFERENCES client_accounts(id),
+        project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
+        project_node_id TEXT REFERENCES project_nodes(id) ON DELETE SET NULL,
+        intervention_id TEXT,
+        category TEXT NOT NULL CHECK (category IN (
+          'production', 'development', 'design', 'meeting', 'support',
+          'client_correction', 'internal_correction', 'research_training', 'administrative', 'other'
+        )),
+        activity_label TEXT,
+        started_at TEXT NOT NULL,
+        ended_at TEXT,
+        billable INTEGER NOT NULL DEFAULT 1 CHECK (billable IN (0, 1)),
+        source TEXT NOT NULL DEFAULT 'timer' CHECK (source IN ('timer', 'manual', 'import')),
+        note TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        CHECK (ended_at IS NULL OR ended_at >= started_at)
+      ) STRICT;
+
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_time_sessions_one_active
+        ON time_sessions((1))
+        WHERE ended_at IS NULL;
+      CREATE INDEX IF NOT EXISTS idx_time_sessions_project
+        ON time_sessions(project_id, started_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_time_sessions_client
+        ON time_sessions(client_account_id, started_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_time_sessions_category
+        ON time_sessions(category, started_at DESC);
+
+      CREATE TABLE IF NOT EXISTS time_session_pauses (
+        id TEXT PRIMARY KEY,
+        time_session_id TEXT NOT NULL REFERENCES time_sessions(id) ON DELETE CASCADE,
+        started_at TEXT NOT NULL,
+        ended_at TEXT,
+        created_at TEXT NOT NULL,
+        CHECK (ended_at IS NULL OR ended_at >= started_at)
+      ) STRICT;
+
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_time_session_one_open_pause
+        ON time_session_pauses(time_session_id)
+        WHERE ended_at IS NULL;
+      CREATE INDEX IF NOT EXISTS idx_time_session_pauses_session
+        ON time_session_pauses(time_session_id, started_at);
+    `,
+  },
 ];
