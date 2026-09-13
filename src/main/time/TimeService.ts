@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import {
   TIME_CATEGORIES,
+  TIME_RECOVERY_STALE_AFTER_SECONDS,
   type ManualTimeSessionInput,
   type StartTimeSessionInput,
   type TimeCategory,
@@ -82,6 +83,14 @@ export class TimeService {
     return this.get(id);
   }
 
+  heartbeat(id: string): TimeSession {
+    const session = this.get(id);
+    if (session.endedAt) return session;
+    const now = this.nowIso();
+    this.database.run('UPDATE time_sessions SET updated_at=? WHERE id=? AND ended_at IS NULL', [now, id]);
+    return this.get(id);
+  }
+
   pause(id: string): TimeSession {
     const session = this.get(id);
     if (session.endedAt) throw new Error('Cette session est déjà terminée.');
@@ -109,6 +118,42 @@ export class TimeService {
     return this.get(id);
   }
 
+  recoverResume(id: string): TimeSession {
+    const row = this.database.get<{ started_at: string; ended_at: string | null; updated_at: string }>(
+      'SELECT started_at,ended_at,updated_at FROM time_sessions WHERE id=?',
+      [id],
+    );
+    if (!row) throw new Error('Session de temps introuvable.');
+    if (row.ended_at) return this.get(id);
+
+    const now = this.clock();
+    const startedMs = Date.parse(row.started_at);
+    const lastKnownMs = Math.max(startedMs, Date.parse(row.updated_at));
+    const nowMs = now.getTime();
+    const openPause = this.database.get<{ id: string; started_at: string }>(
+      'SELECT id,started_at FROM time_session_pauses WHERE time_session_id=? AND ended_at IS NULL',
+      [id],
+    );
+
+    this.database.exec('BEGIN IMMEDIATE;');
+    try {
+      if (openPause) {
+        this.database.run('UPDATE time_session_pauses SET ended_at=? WHERE id=?', [now.toISOString(), openPause.id]);
+      } else if (nowMs > lastKnownMs) {
+        this.database.run(
+          'INSERT INTO time_session_pauses (id,time_session_id,started_at,ended_at,created_at) VALUES (?,?,?,?,?)',
+          [randomUUID(), id, new Date(lastKnownMs).toISOString(), now.toISOString(), now.toISOString()],
+        );
+      }
+      this.database.run('UPDATE time_sessions SET updated_at=? WHERE id=?', [now.toISOString(), id]);
+      this.database.exec('COMMIT;');
+    } catch (error) {
+      this.database.exec('ROLLBACK;');
+      throw error;
+    }
+    return this.get(id);
+  }
+
   stop(id: string): TimeSession {
     const session = this.get(id);
     if (session.endedAt) return session;
@@ -120,6 +165,34 @@ export class TimeService {
         [now, id],
       );
       this.database.run('UPDATE time_sessions SET ended_at=?, updated_at=? WHERE id=?', [now, now, id]);
+      this.database.exec('COMMIT;');
+    } catch (error) {
+      this.database.exec('ROLLBACK;');
+      throw error;
+    }
+    return this.get(id);
+  }
+
+  stopAtLastKnown(id: string): TimeSession {
+    const row = this.database.get<{ started_at: string; ended_at: string | null; updated_at: string }>(
+      'SELECT started_at,ended_at,updated_at FROM time_sessions WHERE id=?',
+      [id],
+    );
+    if (!row) throw new Error('Session de temps introuvable.');
+    if (row.ended_at) return this.get(id);
+
+    const startedMs = Date.parse(row.started_at);
+    const lastKnownMs = Math.max(startedMs, Date.parse(row.updated_at));
+    const endedAt = new Date(lastKnownMs).toISOString();
+    const now = this.nowIso();
+
+    this.database.exec('BEGIN IMMEDIATE;');
+    try {
+      this.database.run(
+        'UPDATE time_session_pauses SET ended_at=? WHERE time_session_id=? AND ended_at IS NULL',
+        [endedAt, id],
+      );
+      this.database.run('UPDATE time_sessions SET ended_at=?, updated_at=? WHERE id=?', [endedAt, now, id]);
       this.database.exec('COMMIT;');
     } catch (error) {
       this.database.exec('ROLLBACK;');
@@ -239,8 +312,11 @@ export class TimeService {
       endedAt: pause.ended_at,
     }));
 
-    const endMs = row.ended_at ? Date.parse(row.ended_at) : this.clock().getTime();
-    const startMs = Date.parse(row.started_at);
+    const nowMs = this.clock().getTime();
+    const startedMs = Date.parse(row.started_at);
+    const lastKnownMs = Math.max(startedMs, Date.parse(row.updated_at));
+    const staleActive = !row.ended_at && nowMs - lastKnownMs > TIME_RECOVERY_STALE_AFTER_SECONDS * 1000;
+    const endMs = row.ended_at ? Date.parse(row.ended_at) : staleActive ? lastKnownMs : nowMs;
     const pausedMs = pauses.reduce((total, pause) => {
       const pauseStart = Date.parse(pause.startedAt);
       const pauseEnd = pause.endedAt ? Date.parse(pause.endedAt) : endMs;
@@ -265,7 +341,7 @@ export class TimeService {
       note: row.note,
       pauses,
       paused: pauses.some((pause) => !pause.endedAt),
-      durationSeconds: Math.max(0, Math.floor((endMs - startMs - pausedMs) / 1000)),
+      durationSeconds: Math.max(0, Math.floor((endMs - startedMs - pausedMs) / 1000)),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
