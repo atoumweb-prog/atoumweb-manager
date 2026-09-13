@@ -6,6 +6,7 @@ import { QuoteService } from '../commercial/QuoteService';
 import { ActionService } from '../crm/ActionService';
 import { ClientContactService } from '../crm/ClientContactService';
 import { CrmService } from '../crm/CrmService';
+import { HourPackService } from '../operations/HourPackService';
 import { MaintenanceService } from '../operations/MaintenanceService';
 import { OperationsService } from '../operations/OperationsService';
 import { ProjectCompletionService } from '../projects/ProjectCompletionService';
@@ -42,6 +43,7 @@ export class DatabaseService {
   readonly projectTechnicalLibrary: ProjectTechnicalLibraryService;
   readonly operations: OperationsService;
   readonly maintenance: MaintenanceService;
+  readonly hourPacks: HourPackService;
   readonly time: TimeService;
   readonly timeCorrections: TimeCorrectionService;
   readonly timeSwitches: TimeSwitchService;
@@ -63,6 +65,7 @@ export class DatabaseService {
     this.projectTechnicalLibrary = new ProjectTechnicalLibraryService(this.database);
     this.operations = new OperationsService(this.database);
     this.maintenance = new MaintenanceService(this.database);
+    this.hourPacks = new HourPackService(this.database);
     this.time = new TimeService(this.database);
     this.timeCorrections = new TimeCorrectionService(this.database, this.time);
     this.timeSwitches = new TimeSwitchService(this.database, this.time);
