@@ -27,6 +27,12 @@ import type {
   InterventionFilters,
   InterventionInput,
   InterventionStatus,
+  MaintenanceCheckStatus,
+  MaintenancePeriodStatus,
+  MaintenancePlanInput,
+  MaintenanceSubscriptionFilters,
+  MaintenanceSubscriptionInput,
+  MaintenanceSubscriptionStatus,
   ServiceRequestFilters,
   ServiceRequestInput,
   ServiceRequestStatus,
@@ -195,6 +201,25 @@ const api: AtoumWebApi = {
       create: (input: InterventionInput) => ipcRenderer.invoke('operations:interventions:create', input),
       update: (id: string, input: Partial<InterventionInput>) => ipcRenderer.invoke('operations:interventions:update', id, input),
       changeStatus: (id: string, status: InterventionStatus) => ipcRenderer.invoke('operations:interventions:change-status', id, status),
+    },
+    maintenance: {
+      plans: {
+        list: (includeArchived?: boolean) => ipcRenderer.invoke('operations:maintenance:plans:list', includeArchived),
+        create: (input: MaintenancePlanInput) => ipcRenderer.invoke('operations:maintenance:plans:create', input),
+        update: (id: string, input: Partial<MaintenancePlanInput>) => ipcRenderer.invoke('operations:maintenance:plans:update', id, input),
+        archive: (id: string) => ipcRenderer.invoke('operations:maintenance:plans:archive', id),
+      },
+      subscriptions: {
+        list: (filters?: MaintenanceSubscriptionFilters) => ipcRenderer.invoke('operations:maintenance:subscriptions:list', filters),
+        create: (input: MaintenanceSubscriptionInput) => ipcRenderer.invoke('operations:maintenance:subscriptions:create', input),
+        changeStatus: (id: string, status: MaintenanceSubscriptionStatus) => ipcRenderer.invoke('operations:maintenance:subscriptions:change-status', id, status),
+      },
+      periods: {
+        list: (subscriptionId: string) => ipcRenderer.invoke('operations:maintenance:periods:list', subscriptionId),
+        ensure: (subscriptionId: string, referenceDate?: string | null) => ipcRenderer.invoke('operations:maintenance:periods:ensure', subscriptionId, referenceDate),
+        changeStatus: (id: string, status: MaintenancePeriodStatus) => ipcRenderer.invoke('operations:maintenance:periods:change-status', id, status),
+        updateCheck: (id: string, status: MaintenanceCheckStatus, notes?: string | null) => ipcRenderer.invoke('operations:maintenance:checks:update', id, status, notes),
+      },
     },
   },
   time: {
