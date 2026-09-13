@@ -247,4 +247,59 @@ export const PHASE_4_MIGRATIONS = [
         ('seed-maintenance-99','Maintenance 99 €/mois',9900,'monthly',4,NULL,'none','seed-maintenance-wordpress','active','Référence initiale AtoumWeb, modifiable.',strftime('%Y-%m-%dT%H:%M:%fZ','now'),strftime('%Y-%m-%dT%H:%M:%fZ','now'));
     `,
   },
+  {
+    id: 13,
+    name: 'phase_4_hour_packs',
+    sql: `
+      CREATE TABLE IF NOT EXISTS hour_packs (
+        id TEXT PRIMARY KEY,
+        client_account_id TEXT NOT NULL REFERENCES client_accounts(id),
+        project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
+        name TEXT NOT NULL,
+        purchased_seconds INTEGER NOT NULL CHECK (purchased_seconds > 0),
+        contract_price_cents INTEGER NOT NULL DEFAULT 0 CHECK (contract_price_cents >= 0),
+        purchased_at TEXT NOT NULL,
+        expires_at TEXT,
+        status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','exhausted','expired','suspended','archived')),
+        notes TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        archived_at TEXT,
+        CHECK (expires_at IS NULL OR expires_at >= purchased_at)
+      ) STRICT;
+
+      CREATE INDEX IF NOT EXISTS idx_hour_packs_client
+        ON hour_packs(client_account_id, status, purchased_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_hour_packs_project
+        ON hour_packs(project_id, status, purchased_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_hour_packs_expiration
+        ON hour_packs(status, expires_at);
+
+      CREATE TABLE IF NOT EXISTS hour_pack_movements (
+        id TEXT PRIMARY KEY,
+        pack_id TEXT NOT NULL REFERENCES hour_packs(id) ON DELETE CASCADE,
+        intervention_id TEXT REFERENCES interventions(id) ON DELETE SET NULL,
+        time_session_id TEXT REFERENCES time_sessions(id) ON DELETE SET NULL,
+        reversal_of_movement_id TEXT REFERENCES hour_pack_movements(id) ON DELETE SET NULL,
+        movement_type TEXT NOT NULL CHECK (movement_type IN (
+          'initial_credit','intervention_debit','manual_correction','commercial_credit','reversal'
+        )),
+        seconds_delta INTEGER NOT NULL CHECK (seconds_delta <> 0),
+        reason TEXT NOT NULL,
+        source_key TEXT UNIQUE,
+        created_at TEXT NOT NULL
+      ) STRICT;
+
+      CREATE INDEX IF NOT EXISTS idx_hour_pack_movements_pack
+        ON hour_pack_movements(pack_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_hour_pack_movements_intervention
+        ON hour_pack_movements(intervention_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_hour_pack_movements_session
+        ON hour_pack_movements(time_session_id, created_at DESC);
+
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_hour_pack_one_reversal
+        ON hour_pack_movements(reversal_of_movement_id)
+        WHERE reversal_of_movement_id IS NOT NULL;
+    `,
+  },
 ];
