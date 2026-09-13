@@ -8,6 +8,8 @@ export const PROJECT_PREREQUISITE_STATUSES = ['to_request', 'requested', 'receiv
 export const PROJECT_RESOURCE_FOLDERS = ['identity', 'texts', 'media', 'documents', 'technical', 'deliverables', 'archives'] as const;
 export const PROJECT_RESOURCE_STATUSES = ['received', 'to_process', 'in_progress', 'validated', 'obsolete'] as const;
 export const PROJECT_RESOURCE_ROLES = ['client_provided', 'atoumweb_rewrite', 'final_validated', 'other'] as const;
+export const PROJECT_TECHNICAL_CATEGORIES = ['header', 'footer', 'hero', 'page', 'section', 'css', 'javascript', 'php', 'acf', 'divi', 'woocommerce', 'plugin', 'config', 'note', 'other'] as const;
+export const PROJECT_TECHNICAL_CONTENT_TYPES = ['code', 'json', 'text', 'reference'] as const;
 
 export type ProjectTemplateStatus = (typeof PROJECT_TEMPLATE_STATUSES)[number];
 export type ProjectTemplateVersionStatus = (typeof PROJECT_TEMPLATE_VERSION_STATUSES)[number];
@@ -19,6 +21,8 @@ export type ProjectPrerequisiteStatus = (typeof PROJECT_PREREQUISITE_STATUSES)[n
 export type ProjectResourceFolder = (typeof PROJECT_RESOURCE_FOLDERS)[number];
 export type ProjectResourceStatus = (typeof PROJECT_RESOURCE_STATUSES)[number];
 export type ProjectResourceRole = (typeof PROJECT_RESOURCE_ROLES)[number];
+export type ProjectTechnicalCategory = (typeof PROJECT_TECHNICAL_CATEGORIES)[number];
+export type ProjectTechnicalContentType = (typeof PROJECT_TECHNICAL_CONTENT_TYPES)[number];
 
 export interface ProjectTemplateInput {
   name: string;
@@ -207,6 +211,45 @@ export interface ProjectResourceOpenResult {
   error?: string | null;
 }
 
+export interface ProjectTechnicalItemInput {
+  category: ProjectTechnicalCategory;
+  name: string;
+  description?: string | null;
+  tags?: string[];
+}
+
+export interface ProjectTechnicalVersionInput {
+  contentType: ProjectTechnicalContentType;
+  language?: string | null;
+  contentText?: string | null;
+  notes?: string | null;
+}
+
+export interface ProjectTechnicalVersion extends ProjectTechnicalVersionInput {
+  id: string;
+  itemId: string;
+  versionNumber: number;
+  current: boolean;
+  stable: boolean;
+  linkedResourceIds: string[];
+  createdAt: string;
+}
+
+export interface ProjectTechnicalItemSummary extends ProjectTechnicalItemInput {
+  id: string;
+  projectId: string;
+  currentVersion?: ProjectTechnicalVersion | null;
+  stableVersion?: ProjectTechnicalVersion | null;
+  versionCount: number;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt?: string | null;
+}
+
+export interface ProjectTechnicalItemDetail extends ProjectTechnicalItemSummary {
+  versions: ProjectTechnicalVersion[];
+}
+
 export interface ProjectsApi {
   templates: {
     list(): Promise<ProjectTemplateSummary[]>;
@@ -238,5 +281,15 @@ export interface ProjectsApi {
     openFile(id: string): Promise<ProjectResourceOpenResult>;
     openFolder(projectId: string): Promise<ProjectResourceOpenResult>;
     relocalize(id: string): Promise<ProjectResource | null>;
+  };
+  technicalLibrary: {
+    list(projectId: string, search?: string | null): Promise<ProjectTechnicalItemSummary[]>;
+    get(id: string): Promise<ProjectTechnicalItemDetail>;
+    create(projectId: string, item: ProjectTechnicalItemInput, version: ProjectTechnicalVersionInput): Promise<ProjectTechnicalItemDetail>;
+    createVersion(itemId: string, version: ProjectTechnicalVersionInput): Promise<ProjectTechnicalItemDetail>;
+    markStable(versionId: string): Promise<ProjectTechnicalItemDetail>;
+    linkResource(versionId: string, resourceId: string): Promise<ProjectTechnicalItemDetail>;
+    unlinkResource(versionId: string, resourceId: string): Promise<ProjectTechnicalItemDetail>;
+    archive(itemId: string): Promise<ProjectTechnicalItemDetail>;
   };
 }
