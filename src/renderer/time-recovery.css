@@ -1,0 +1,51 @@
+.global-timer.needs-recovery {
+  border-color: color-mix(in srgb, var(--accent) 75%, var(--border));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent), 0 8px 24px rgb(0 0 0 / 7%);
+}
+
+.timer-recovery-popover {
+  width: min(440px, 86vw);
+}
+
+.timer-recovery-popover > p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.timer-recovery-summary {
+  display: grid !important;
+  grid-template-columns: minmax(110px, auto) minmax(0, 1fr);
+  gap: 6px 10px !important;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-soft);
+}
+
+.timer-recovery-summary span {
+  color: var(--text-muted);
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.timer-recovery-summary strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 10px !important;
+}
+
+.timer-recovery-popover > small {
+  color: var(--text-muted);
+  font-size: 8px;
+  line-height: 1.45;
+}
+
+@media (max-width: 620px) {
+  .timer-recovery-summary {
+    grid-template-columns: 1fr;
+  }
+}
