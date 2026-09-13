@@ -82,6 +82,7 @@ export interface TimeSummary {
 export interface TimeApi {
   active(): Promise<TimeSession | null>;
   start(input: StartTimeSessionInput): Promise<TimeSession>;
+  switchTo(input: StartTimeSessionInput): Promise<TimeSession>;
   heartbeat(id: string): Promise<TimeSession>;
   pause(id: string): Promise<TimeSession>;
   resume(id: string): Promise<TimeSession>;
