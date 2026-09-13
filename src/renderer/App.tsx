@@ -51,7 +51,7 @@ function applyTheme(theme: ThemeName): void {
   document.documentElement.dataset.theme = theme;
 }
 
-function App(): JSX.Element {
+function App() {
   const [bootstrap, setBootstrap] = useState<BootstrapState | null>(null);
   const [activePage, setActivePage] = useState<PageName>('Accueil');
   const [theme, setTheme] = useState<ThemeName>('atoumweb');
@@ -98,6 +98,13 @@ function App(): JSX.Element {
   async function createManualBackup(): Promise<void> {
     const result = await window.atoumweb.backups.createManual();
     setMessage(`Sauvegarde créée : ${result.path}`);
+  }
+
+  async function restoreBackup(): Promise<void> {
+    const result = await window.atoumweb.backups.restore();
+    if (!result.cancelled && result.restartScheduled) {
+      setMessage('Restauration programmée. L’application va redémarrer.');
+    }
   }
 
   if (loadingError) {
@@ -203,6 +210,7 @@ function App(): JSX.Element {
               onThemeChange={updateTheme}
               onChooseWorkspace={chooseWorkspace}
               onCreateBackup={createManualBackup}
+              onRestoreBackup={restoreBackup}
             />
           )}
           {activePage !== 'Accueil' && activePage !== 'Réglages' && (
@@ -214,7 +222,7 @@ function App(): JSX.Element {
   );
 }
 
-function Dashboard({ bootstrap }: { bootstrap: BootstrapState }): JSX.Element {
+function Dashboard({ bootstrap }: { bootstrap: BootstrapState }) {
   return (
     <>
       <div className="kpi-grid">
@@ -237,7 +245,7 @@ function Dashboard({ bootstrap }: { bootstrap: BootstrapState }): JSX.Element {
             <FoundationRow label="Workspace local" value={bootstrap.workspacePath} />
             <FoundationRow label="Base SQLite" value={bootstrap.databasePath} />
             <FoundationRow label="Sécurité Electron" value="Preload isolé · Node désactivé dans l’interface" />
-            <FoundationRow label="Sauvegarde" value="Automatique quotidienne + manuelle" />
+            <FoundationRow label="Sauvegarde" value="Quotidienne + manuelle + restauration sécurisée" />
           </div>
         </article>
 
@@ -263,13 +271,15 @@ function SettingsPage({
   onThemeChange,
   onChooseWorkspace,
   onCreateBackup,
+  onRestoreBackup,
 }: {
   bootstrap: BootstrapState;
   theme: ThemeName;
   onThemeChange: (theme: ThemeName) => Promise<void>;
   onChooseWorkspace: () => Promise<void>;
   onCreateBackup: () => Promise<void>;
-}): JSX.Element {
+  onRestoreBackup: () => Promise<void>;
+}) {
   return (
     <div className="settings-grid">
       <article className="panel panel-large">
@@ -310,16 +320,21 @@ function SettingsPage({
       <article className="panel">
         <span className="eyebrow">Sécurité</span>
         <h2>Sauvegarde de la base</h2>
-        <p className="muted">Une sauvegarde automatique est créée chaque jour au premier démarrage.</p>
-        <button className="secondary-button" type="button" onClick={() => void onCreateBackup()}>
-          Créer une sauvegarde maintenant
-        </button>
+        <p className="muted">Une sauvegarde automatique est créée chaque jour. Une copie de sécurité est aussi créée avant toute restauration.</p>
+        <div className="button-row">
+          <button className="secondary-button" type="button" onClick={() => void onCreateBackup()}>
+            Sauvegarder maintenant
+          </button>
+          <button className="secondary-button" type="button" onClick={() => void onRestoreBackup()}>
+            Restaurer une sauvegarde
+          </button>
+        </div>
       </article>
     </div>
   );
 }
 
-function ModulePlaceholder({ page }: { page: PageName }): JSX.Element {
+function ModulePlaceholder({ page }: { page: PageName }) {
   return (
     <article className="panel empty-module">
       <span className="module-number">V1</span>
@@ -330,7 +345,7 @@ function ModulePlaceholder({ page }: { page: PageName }): JSX.Element {
   );
 }
 
-function KpiCard({ label, value, detail }: { label: string; value: string; detail: string }): JSX.Element {
+function KpiCard({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
     <article className="kpi-card">
       <span>{label}</span>
@@ -340,7 +355,7 @@ function KpiCard({ label, value, detail }: { label: string; value: string; detai
   );
 }
 
-function FoundationRow({ label, value }: { label: string; value: string }): JSX.Element {
+function FoundationRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="foundation-row">
       <span>{label}</span>

@@ -13,6 +13,7 @@ const api: AtoumWebApi = {
   },
   backups: {
     createManual: () => ipcRenderer.invoke('backups:create-manual'),
+    restore: () => ipcRenderer.invoke('backups:restore'),
   },
   database: {
     health: () => ipcRenderer.invoke('database:health'),

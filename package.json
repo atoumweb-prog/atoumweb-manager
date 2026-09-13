@@ -3,6 +3,8 @@
   "productName": "AtoumWeb Manager",
   "version": "0.1.0",
   "description": "CRM et outil de gestion métier local pour AtoumWeb",
+  "author": "AtoumWeb",
+  "license": "UNLICENSED",
   "main": ".vite/build/main.js",
   "private": true,
   "scripts": {
@@ -25,10 +27,10 @@
     "@types/node": "^24.0.0",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
-    "@vitejs/plugin-react": "6.1.1",
+    "@vitejs/plugin-react": "4.7.0",
     "electron": "44.3.0",
-    "typescript": "7.0.2",
-    "vite": "8.2.2",
-    "vitest": "5.0.0"
+    "typescript": "5.9.2",
+    "vite": "5.4.19",
+    "vitest": "3.2.7"
   }
 }

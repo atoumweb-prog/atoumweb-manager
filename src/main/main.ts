@@ -2,6 +2,7 @@ import { app, BrowserWindow } from 'electron';
 import { join } from 'node:path';
 import { DatabaseService } from './database/DatabaseService';
 import { registerIpcHandlers } from './ipc';
+import { applyPendingDatabaseRestore } from './restore';
 import { resolveWorkspace } from './workspace';
 
 let mainWindow: BrowserWindow | null = null;
@@ -45,6 +46,11 @@ function createMainWindow(): void {
 
 async function bootstrap(): Promise<void> {
   const workspace = resolveWorkspace();
+  const restoreResult = await applyPendingDatabaseRestore(workspace);
+  if (restoreResult.restored) {
+    console.info('Base AtoumWeb Manager restaurée', restoreResult);
+  }
+
   database = new DatabaseService(workspace);
   await database.initialize();
   registerIpcHandlers(database, workspace);

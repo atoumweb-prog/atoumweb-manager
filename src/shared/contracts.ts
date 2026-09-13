@@ -31,6 +31,12 @@ export interface BackupResult {
   createdAt: string;
 }
 
+export interface RestoreScheduleResult {
+  cancelled: boolean;
+  sourcePath?: string;
+  restartScheduled?: boolean;
+}
+
 export interface AtoumWebApi {
   app: {
     getBootstrap(): Promise<BootstrapState>;
@@ -43,6 +49,7 @@ export interface AtoumWebApi {
   };
   backups: {
     createManual(): Promise<BackupResult>;
+    restore(): Promise<RestoreScheduleResult>;
   };
   database: {
     health(): Promise<DatabaseHealth>;
