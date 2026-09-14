@@ -15,7 +15,7 @@
 - **Phase 5** : différée volontairement ; les contrats ne sont pas encore suffisamment finalisés
 - **Phase 6 active** : `feature/phase-6-referentials` — PR #62 (brouillon, base Phase 4)
 - **Head Phase 4 à valider** : `186f95d5e5dc6223834c27e64d8dd5bc6f55721d`
-- **Migrations sur la branche Phase 6** : 19
+- **Migrations sur la branche Phase 6** : 20
 - **Principe directeur** : une donnée métier possède une source unique ; les autres écrans la référencent sans duplication.
 
 ## Phase 0 — Fondation
@@ -269,15 +269,15 @@ Les liens Phase 6 → Dépenses / Abonnements seront ajoutés ultérieurement lo
 
 Branche : `feature/phase-6-referentials`  
 PR : #62 (brouillon, base `feature/phase-4-operations`)  
-Parent : #40  
-Premier chantier : #41 — Bibliothèque AtoumWeb
+Parent : #40
 
-### Phase 6A — Bibliothèque AtoumWeb
+### Phase 6A — Bibliothèque AtoumWeb (#41)
 
 - [x] branche Phase 6 isolée du head Phase 4 à valider
 - [x] réutilisation de `technical_items` / `technical_item_versions` sans créer une seconde source de vérité
 - [x] migration 18 : statut de réutilisation + origine Bibliothèque projet facultative
 - [x] migration 19 : catégories dédiées Bibliothèque AtoumWeb
+- [x] migration 20 : captures / aperçus / sources / fichiers globaux liés à une version
 - [x] scope `atoumweb`
 - [x] statuts `ready` / `adapt` / `reference`
 - [x] catégories Headers / Footers / Heroes / Pages / Sections / Formulaires / Galeries / Carrousels / Navigation / CSS / JS / PHP / WooCommerce / ACF / Divi / App / Notes
@@ -288,14 +288,29 @@ Premier chantier : #41 — Bibliothèque AtoumWeb
 - [x] journal d’activité
 - [x] filtres recherche / catégorie / statut / archives
 - [x] service backend dédié `AtoumWebTechnicalLibraryService`
+- [x] service assets dédié `AtoumWebTechnicalAssetService`
+- [x] stockage physique global `bibliotheque-atoumweb/` indépendant des dossiers clients
+- [x] checksum anti-doublon + détection de fichier manquant
 - [x] API IPC / preload / renderer dédiée
 - [x] écran `Bibliothèque AtoumWeb` branché dans la navigation
 - [x] création de composant et de nouvelles versions depuis l’interface
-- [x] tests écrits sur versioning, stable, filtres et indépendance Projet ↔ AtoumWeb
-- [ ] captures / assets globaux indépendants des fichiers d’un projet client
-- [ ] intégration à la recherche globale du Manager
-- [ ] édition complète des métadonnées depuis l’interface
+- [x] édition complète des métadonnées depuis l’interface
+- [x] gestion des captures / aperçus / sources / fichiers par version
+- [x] recherche globale nom / description / tags / notes / contenu technique
+- [x] ouverture directe de la fiche Bibliothèque depuis la recherche globale
+- [x] reconstruction CRM limitée aux documents CRM afin de préserver les index des autres modules
+- [x] tests écrits sur versioning, stable, filtres, indépendance Projet ↔ AtoumWeb, recherche et assets
 - [ ] validation locale TypeScript / tests / Windows
+
+### Phase 6B — Préparer pour réutilisation (#42)
+
+- [x] socle Phase 3 existant : action `Préparer pour réutilisation`, choix version stable/courante, manifeste JSON, journal d’activité
+- [ ] transformer ce manifeste en vrai paquet de travail indépendant
+- [ ] copier code / JSON et fichiers sources réels dans le paquet
+- [ ] ajouter notes d’adaptation explicites
+- [ ] création volontaire d’un composant AtoumWeb depuis le paquet, jamais automatique
+- [ ] cas de référence Cazor Galerie véhicules → Galerie dynamique ACF
+- [ ] tests indépendance / origine du workflow complet
 
 ### Règles Phase 6 confirmées
 
@@ -303,11 +318,12 @@ Premier chantier : #41 — Bibliothèque AtoumWeb
 2. L’origine Projet est une traçabilité, jamais un lien de mise à jour automatique.
 3. Les catégories globales sont mappées vers le socle technique existant sans modifier le `CHECK` historique des éléments Projet.
 4. Aucun code de bibliothèque n’est exécuté automatiquement.
-5. Les futurs assets globaux ne devront pas dépendre physiquement des `file_assets` d’un projet client.
+5. Les assets globaux sont copiés dans `bibliotheque-atoumweb/` et ne dépendent jamais physiquement d’un `file_asset` client.
+6. La reconstruction d’un index spécialisé ne doit pas effacer les index des autres modules.
 
 ### Ordre de développement restant
 
-1. terminer #41 : assets/captures, recherche globale, métadonnées, validation ;
+1. validation locale #41 en même temps que la prochaine passe Windows ;
 2. #42 : Préparer pour réutilisation / import-export assisté ;
 3. #43 : Monaco / JSON / previews ;
 4. #44 : sauvegardes métier / emplacements / vérification ;
@@ -354,8 +370,6 @@ La validation réelle continue donc d’être effectuée localement sur Windows.
 
 ## Travail en cours
 
-**Phase 6A — Bibliothèque AtoumWeb (#41).**
+**Phase 6B — Préparer pour réutilisation (#42).**
 
-La Phase 4 est gelée sur `186f95d…` en attente de validation Windows. Les changements Phase 6 sont exclusivement développés sur PR #62.
-
-Prochaine action Phase 6 : terminer les assets/captures globaux indépendants des projets, intégrer la Bibliothèque à la recherche globale, compléter l’édition des métadonnées puis effectuer la validation locale TypeScript/tests/Windows.
+La Phase 4 reste gelée sur `186f95d…` en attente de validation Windows. La Phase 6A est fonctionnellement développée mais reste ouverte jusqu’aux vrais tests TypeScript/Windows. Les nouveaux développements continuent exclusivement sur PR #62.
