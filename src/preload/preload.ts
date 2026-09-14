@@ -1,5 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type {
+  BusinessBackupFilters,
+  BusinessBackupLocationInput,
+  BusinessBackupRecordInput,
+} from '../shared/businessBackups';
+import type {
   CatalogFilters,
   CatalogItemInput,
   CatalogItemStatus,
@@ -84,6 +89,17 @@ const api: AtoumWebApi = {
   backups: {
     createManual: () => ipcRenderer.invoke('backups:create-manual'),
     restore: () => ipcRenderer.invoke('backups:restore'),
+  },
+  businessBackups: {
+    list: (filters?: BusinessBackupFilters) => ipcRenderer.invoke('business-backups:list', filters),
+    get: (id: string) => ipcRenderer.invoke('business-backups:get', id),
+    create: (input: BusinessBackupRecordInput) => ipcRenderer.invoke('business-backups:create', input),
+    addLocation: (recordId: string, input: BusinessBackupLocationInput) => ipcRenderer.invoke('business-backups:add-location', recordId, input),
+    verifyLocation: (locationId: string) => ipcRenderer.invoke('business-backups:verify-location', locationId),
+    markStable: (recordId: string) => ipcRenderer.invoke('business-backups:mark-stable', recordId),
+    overview: (filters?: Pick<BusinessBackupFilters, 'clientAccountId' | 'projectId'>) => ipcRenderer.invoke('business-backups:overview', filters),
+    relocalize: (locationId: string) => ipcRenderer.invoke('business-backups:relocalize', locationId),
+    openLocation: (locationId: string) => ipcRenderer.invoke('business-backups:open-location', locationId),
   },
   database: { health: () => ipcRenderer.invoke('database:health') },
   crm: {
