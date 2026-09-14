@@ -106,6 +106,7 @@ export class DatabaseService {
     applyPendingMigrations(this.database);
     this.seedDefaults();
     this.crm.rebuildSearchIndex();
+    this.atoumWebTechnicalLibrary.rebuildSearchIndex();
     await this.createDailyBackupIfNeeded();
   }
 
