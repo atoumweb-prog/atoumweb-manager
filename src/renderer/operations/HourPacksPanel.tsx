@@ -7,6 +7,7 @@ import {
   type Intervention,
 } from '../../shared/operations';
 import type { ProjectSummary } from '../../shared/projects';
+import { HourPackShortfallPanel } from './HourPackShortfallPanel';
 
 const STATUS_LABELS: Record<HourPackStatus, string> = {
   active: 'Actif', exhausted: 'Épuisé', expired: 'Expiré', suspended: 'Suspendu', archived: 'Archivé',
@@ -137,6 +138,10 @@ export function HourPacksPanel({ clients, projects, interventions, onMessage, on
     } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible d’annuler ce mouvement.'); }
   }
 
+  async function refreshAfterShortfallDecision(): Promise<void> {
+    await Promise.all([refresh(), onOperationsChanged()]);
+  }
+
   return <div className="hour-packs-stack">
     <div className="module-toolbar operations-toolbar"><div><strong>{packs.filter((pack) => pack.status !== 'archived').length}</strong><span> pack(s)</span></div><div className="toolbar-controls"><button className="secondary-button" type="button" onClick={() => void refresh()}>↻ Actualiser</button><button className="primary-button" type="button" onClick={() => setCreateOpen((value) => !value)}>+ Pack</button></div></div>
 
@@ -154,6 +159,7 @@ export function HourPacksPanel({ clients, projects, interventions, onMessage, on
 
       {selected && <aside className="panel operation-detail-panel hour-pack-detail"><div className="detail-panel-heading"><div><span className="eyebrow">Pack d’heures</span><h2>{selected.name}</h2><p className="muted">{selected.clientLabel}{selected.projectLabel ? ` · ${selected.projectLabel}` : ''}</p></div><button className="close-detail" type="button" onClick={() => setSelectedId('')}>×</button></div>
         <div className="maintenance-usage-grid"><div><span>Acheté</span><strong>{hours(selected.purchasedSeconds)}</strong></div><div><span>Consommé</span><strong>{hours(selected.consumedSeconds)}</strong></div><div className={selected.balanceSeconds < 0 ? 'warning' : ''}><span>Solde</span><strong>{hours(selected.balanceSeconds)}</strong></div></div>
+        <HourPackShortfallPanel pack={selected} packs={packs} onChanged={refreshAfterShortfallDecision} onMessage={onMessage} />
         <label>Statut<select value={selected.status} onChange={(event) => void changeStatus(event.target.value as HourPackStatus)}>{HOUR_PACK_STATUSES.map((status) => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}</select></label>
         <div className="operation-action-box"><strong>Débiter une intervention terminée</strong><select value={interventionId} onChange={(event) => setInterventionId(event.target.value)}><option value="">Choisir…</option>{eligibleInterventions.map((intervention) => <option key={intervention.id} value={intervention.id}>{intervention.number} · {intervention.subject} · {hours(intervention.totalTimeSeconds)}</option>)}</select><button className="primary-button" type="button" disabled={!interventionId} onClick={() => void debitIntervention()}>Débiter le temps réel</button></div>
         <div className="operation-action-box subtle"><strong>Correction / crédit manuel</strong><select value={movementMode} onChange={(event) => setMovementMode(event.target.value as typeof movementMode)}><option value="manual_correction">Correction manuelle (+ ou -)</option><option value="commercial_credit">Crédit / geste commercial</option></select><input type="number" step="0.25" value={movementHours} onChange={(event) => setMovementHours(event.target.value)} placeholder="Heures, ex. -0,5 ou 1" /><input value={movementReason} onChange={(event) => setMovementReason(event.target.value)} placeholder="Motif obligatoire" /><button className="secondary-button" type="button" disabled={!movementHours || !movementReason.trim()} onClick={() => void addMovement()}>Ajouter le mouvement</button></div>
