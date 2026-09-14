@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { BootstrapState, ThemeName } from '../shared/contracts';
 import type { SearchResult } from '../shared/crm';
+import { BusinessBackupsPage } from './backups/BusinessBackupsPage';
 import { CatalogPage } from './commercial/CatalogPage';
 import { QuotesPage } from './commercial/QuotesPage';
 import { ClientsPage } from './crm/ClientsPage';
@@ -72,6 +73,7 @@ function App() {
   const [projectSearchTarget, setProjectSearchTarget] = useState<string | null>(null);
   const [operationsSearchTarget, setOperationsSearchTarget] = useState<OperationsSearchTarget | null>(null);
   const [librarySearchTarget, setLibrarySearchTarget] = useState<string | null>(null);
+  const [backupSearchTarget, setBackupSearchTarget] = useState<string | null>(null);
 
   useEffect(() => {
     window.atoumweb.app.getBootstrap()
@@ -121,6 +123,7 @@ function App() {
     if (page === 'Interventions & Maintenance') setOperationsSearchTarget(null);
     if (page === 'Projets') setProjectSearchTarget(null);
     if (page === 'Bibliothèque AtoumWeb') setLibrarySearchTarget(null);
+    if (page === 'Sauvegardes') setBackupSearchTarget(null);
     setActivePage(page);
   }
 
@@ -141,6 +144,10 @@ function App() {
       case 'atoumweb_library':
         setLibrarySearchTarget(result.entityId);
         setActivePage('Bibliothèque AtoumWeb');
+        break;
+      case 'backup_record':
+        setBackupSearchTarget(result.entityId);
+        setActivePage('Sauvegardes');
         break;
       case 'service_request':
       case 'intervention':
@@ -193,8 +200,9 @@ function App() {
           {activePage === 'Interventions & Maintenance' && <OperationsPage onMessage={setMessage} initialTarget={operationsSearchTarget} />}
           {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}
           {activePage === 'Bibliothèque AtoumWeb' && <AtoumWebLibraryPage onMessage={setMessage} initialItemId={librarySearchTarget} />}
+          {activePage === 'Sauvegardes' && <BusinessBackupsPage onMessage={setMessage} initialRecordId={backupSearchTarget} />}
           {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} onThemeChange={updateTheme} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
-          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
+          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Sauvegardes' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
         </section>
       </main>
     </div>
