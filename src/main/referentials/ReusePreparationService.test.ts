@@ -137,7 +137,8 @@ describe('ReusePreparationService', () => {
       { category: 'css', name: 'Hero client' },
       { contentType: 'code', language: 'css', contentText: '.hero { color: gold; }' },
     );
-    projectLibrary.markStable(item.currentVersion!.id);
+    const stabilized = projectLibrary.markStable(item.currentVersion!.id);
+    const stableVersion = stabilized.stableVersion!;
     const changed = projectLibrary.createVersion(item.id, {
       contentType: 'code',
       language: 'css',
@@ -147,20 +148,36 @@ describe('ReusePreparationService', () => {
     const sourceFile = join(workspaceRoot, 'capture-hero.png');
     writeFileSync(sourceFile, 'fake-image', 'utf8');
     const resource = resources.importFilePaths(project.id, [sourceFile], 'media')[0];
-    projectLibrary.linkResource(item.stableVersion!.id, resource.id);
+    projectLibrary.linkResource(stableVersion.id, resource.id);
     rmSync(resources.absolutePath(resource), { force: true });
 
     const preparation = reuse.prepareProjectItem({ itemId: item.id });
 
     expect(preparation.versionNumber).toBe(1);
-    expect(preparation.versionId).toBe(item.stableVersion!.id);
+    expect(preparation.versionId).toBe(stableVersion.id);
     expect(preparation.versionId).not.toBe(changed.currentVersion!.id);
     expect(preparation.copiedFiles[0].missing).toBe(true);
     expect(preparation.copiedFiles[0].copied).toBe(false);
     expect(existsSync(preparation.manifestPath)).toBe(true);
   });
 
-  it('refuse d’ouvrir comme paquet un chemin hors exports/reutilisation', () => {
+  it('refuse les chemins de paquet ou fichiers préparés hors exports/reutilisation', () => {
     expect(() => reuse.assertPackagePath(workspace.clientsDirectory)).toThrow(/paquet de réutilisation/i);
+
+    const project = projects.createInternal({ name: 'Projet sécurité paquet' });
+    const item = projectLibrary.create(
+      project.id,
+      { category: 'note', name: 'Note source' },
+      { contentType: 'text', contentText: 'Contenu client' },
+    );
+    const preparation = reuse.prepareProjectItem({ itemId: item.id });
+    const outsidePath = join(workspace.clientsDirectory, 'faux-manifest.json');
+    writeFileSync(outsidePath, '{}', 'utf8');
+
+    expect(() => reuse.createGlobal({
+      preparation: { ...preparation, manifestPath: outsidePath },
+      item: { category: 'note', name: 'Note globale', reuseStatus: 'reference' },
+      version: { contentType: 'text', contentText: 'Note globale' },
+    })).toThrow(/en dehors du dossier/i);
   });
 });
