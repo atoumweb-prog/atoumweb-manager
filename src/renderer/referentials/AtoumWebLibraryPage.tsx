@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import type {
   AtoumWebLibraryCategory,
   AtoumWebReuseStatus,
+  AtoumWebTechnicalAsset,
+  AtoumWebTechnicalAssetRole,
   AtoumWebTechnicalItemDetail,
   AtoumWebTechnicalItemSummary,
 } from '../../shared/referentials';
@@ -41,8 +43,16 @@ const CONTENT_TYPES: Array<{ id: ProjectTechnicalContentType; label: string }> =
   { id: 'reference', label: 'Référence' },
 ];
 
+const ASSET_ROLES: Array<{ id: AtoumWebTechnicalAssetRole; label: string }> = [
+  { id: 'screenshot', label: 'Capture' },
+  { id: 'preview', label: 'Aperçu' },
+  { id: 'source', label: 'Source / export' },
+  { id: 'attachment', label: 'Fichier lié' },
+];
+
 interface Props {
   onMessage: (message: string) => void;
+  initialItemId?: string | null;
 }
 
 interface CreationForm {
@@ -57,6 +67,15 @@ interface CreationForm {
   notes: string;
 }
 
+interface MetadataForm {
+  name: string;
+  category: AtoumWebLibraryCategory;
+  reuseStatus: AtoumWebReuseStatus;
+  description: string;
+  tags: string;
+  originTechnicalItemId: string;
+}
+
 const EMPTY_FORM: CreationForm = {
   name: '',
   category: 'section',
@@ -69,7 +88,18 @@ const EMPTY_FORM: CreationForm = {
   notes: '',
 };
 
-export function AtoumWebLibraryPage({ onMessage }: Props) {
+function metadataFromItem(item: AtoumWebTechnicalItemDetail): MetadataForm {
+  return {
+    name: item.name,
+    category: item.category,
+    reuseStatus: item.reuseStatus,
+    description: item.description ?? '',
+    tags: (item.tags ?? []).join(', '),
+    originTechnicalItemId: item.originTechnicalItemId ?? '',
+  };
+}
+
+export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   const [items, setItems] = useState<AtoumWebTechnicalItemSummary[]>([]);
   const [selected, setSelected] = useState<AtoumWebTechnicalItemDetail | null>(null);
   const [search, setSearch] = useState('');
@@ -77,9 +107,26 @@ export function AtoumWebLibraryPage({ onMessage }: Props) {
   const [reuseStatus, setReuseStatus] = useState<AtoumWebReuseStatus | ''>('');
   const [includeArchived, setIncludeArchived] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [editingMetadata, setEditingMetadata] = useState(false);
   const [form, setForm] = useState<CreationForm>(EMPTY_FORM);
+  const [metadataForm, setMetadataForm] = useState<MetadataForm | null>(null);
   const [versionForm, setVersionForm] = useState({ contentType: 'code' as ProjectTechnicalContentType, language: '', contentText: '', notes: '' });
+  const [assetVersionId, setAssetVersionId] = useState('');
+  const [assetRole, setAssetRole] = useState<AtoumWebTechnicalAssetRole>('screenshot');
+  const [assets, setAssets] = useState<AtoumWebTechnicalAsset[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  async function setOpenedItem(detail: AtoumWebTechnicalItemDetail): Promise<void> {
+    setSelected(detail);
+    setMetadataForm(metadataFromItem(detail));
+    const preferredVersion = detail.currentVersion?.id ?? detail.versions[0]?.id ?? '';
+    setAssetVersionId(preferredVersion);
+    if (preferredVersion) {
+      setAssets(await window.atoumweb.referentials.library.assets.list(preferredVersion));
+    } else {
+      setAssets([]);
+    }
+  }
 
   async function load(preferredId?: string | null): Promise<void> {
     try {
@@ -93,9 +140,12 @@ export function AtoumWebLibraryPage({ onMessage }: Props) {
       setItems(next);
       const nextId = preferredId ?? selected?.id;
       if (nextId && next.some((item) => item.id === nextId)) {
-        setSelected(await window.atoumweb.referentials.library.get(nextId));
+        await setOpenedItem(await window.atoumweb.referentials.library.get(nextId));
       } else if (selected && !next.some((item) => item.id === selected.id)) {
         setSelected(null);
+        setMetadataForm(null);
+        setAssets([]);
+        setAssetVersionId('');
       }
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Impossible de charger la Bibliothèque AtoumWeb.');
@@ -103,10 +153,10 @@ export function AtoumWebLibraryPage({ onMessage }: Props) {
   }
 
   useEffect(() => {
-    void load();
-    // Rechargement piloté par les filtres ; selected est volontairement exclu.
+    void load(initialItemId ?? null);
+    // Rechargement piloté par les filtres et le deep-link éventuel.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, category, reuseStatus, includeArchived]);
+  }, [search, category, reuseStatus, includeArchived, initialItemId]);
 
   const summary = useMemo(() => ({
     total: items.length,
@@ -118,7 +168,8 @@ export function AtoumWebLibraryPage({ onMessage }: Props) {
   async function openItem(id: string): Promise<void> {
     try {
       setError(null);
-      setSelected(await window.atoumweb.referentials.library.get(id));
+      setEditingMetadata(false);
+      await setOpenedItem(await window.atoumweb.referentials.library.get(id));
     } catch (openError) {
       setError(openError instanceof Error ? openError.message : 'Impossible d’ouvrir ce composant.');
     }
@@ -145,10 +196,31 @@ export function AtoumWebLibraryPage({ onMessage }: Props) {
       setCreating(false);
       setForm(EMPTY_FORM);
       await load(created.id);
-      setSelected(created);
+      await setOpenedItem(created);
       onMessage(`Composant « ${created.name} » ajouté à la Bibliothèque AtoumWeb.`);
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : 'Création impossible.');
+    }
+  }
+
+  async function saveMetadata(): Promise<void> {
+    if (!selected || !metadataForm) return;
+    try {
+      setError(null);
+      const changed = await window.atoumweb.referentials.library.update(selected.id, {
+        name: metadataForm.name,
+        category: metadataForm.category,
+        reuseStatus: metadataForm.reuseStatus,
+        description: metadataForm.description || null,
+        tags: metadataForm.tags.split(',').map((tag) => tag.trim()).filter(Boolean),
+        originTechnicalItemId: metadataForm.originTechnicalItemId || null,
+      });
+      setEditingMetadata(false);
+      await load(changed.id);
+      await setOpenedItem(changed);
+      onMessage(`Métadonnées de « ${changed.name} » mises à jour.`);
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'Mise à jour des métadonnées impossible.');
     }
   }
 
@@ -161,9 +233,9 @@ export function AtoumWebLibraryPage({ onMessage }: Props) {
         contentText: versionForm.contentText || null,
         notes: versionForm.notes || null,
       });
-      setSelected(changed);
       setVersionForm({ contentType: 'code', language: '', contentText: '', notes: '' });
       await load(changed.id);
+      await setOpenedItem(changed);
       onMessage(`Nouvelle version créée pour « ${changed.name} ».`);
     } catch (versionError) {
       setError(versionError instanceof Error ? versionError.message : 'Création de version impossible.');
@@ -174,8 +246,8 @@ export function AtoumWebLibraryPage({ onMessage }: Props) {
     if (!selected) return;
     try {
       const changed = await window.atoumweb.referentials.library.markStable(versionId);
-      setSelected(changed);
       await load(changed.id);
+      await setOpenedItem(changed);
       onMessage(`Version stable mise à jour pour « ${changed.name} ».`);
     } catch (stableError) {
       setError(stableError instanceof Error ? stableError.message : 'Impossible de marquer cette version stable.');
@@ -185,15 +257,48 @@ export function AtoumWebLibraryPage({ onMessage }: Props) {
   async function toggleArchive(): Promise<void> {
     if (!selected) return;
     try {
-      const changed = selected.archivedAt
+      const wasArchived = Boolean(selected.archivedAt);
+      const changed = wasArchived
         ? await window.atoumweb.referentials.library.reactivate(selected.id)
         : await window.atoumweb.referentials.library.archive(selected.id);
-      setSelected(changed);
       await load(changed.id);
-      onMessage(selected.archivedAt ? `« ${changed.name} » réactivé.` : `« ${changed.name} » archivé.`);
+      await setOpenedItem(changed);
+      onMessage(wasArchived ? `« ${changed.name} » réactivé.` : `« ${changed.name} » archivé.`);
     } catch (archiveError) {
       setError(archiveError instanceof Error ? archiveError.message : 'Action impossible.');
     }
+  }
+
+  async function changeAssetVersion(versionId: string): Promise<void> {
+    setAssetVersionId(versionId);
+    try {
+      setAssets(versionId ? await window.atoumweb.referentials.library.assets.list(versionId) : []);
+    } catch (assetError) {
+      setError(assetError instanceof Error ? assetError.message : 'Impossible de charger les fichiers liés.');
+    }
+  }
+
+  async function importAssets(): Promise<void> {
+    if (!assetVersionId) return;
+    try {
+      setError(null);
+      const next = await window.atoumweb.referentials.library.assets.importFiles(assetVersionId, assetRole);
+      setAssets(next);
+      onMessage(`${assetRoleLabel(assetRole)} ajouté à la Bibliothèque AtoumWeb.`);
+    } catch (assetError) {
+      setError(assetError instanceof Error ? assetError.message : 'Import du fichier impossible.');
+    }
+  }
+
+  async function openAsset(assetId: string): Promise<void> {
+    const result = await window.atoumweb.referentials.library.assets.openFile(assetId);
+    if (!result.ok) setError(result.error ?? 'Impossible d’ouvrir ce fichier.');
+  }
+
+  async function openAssetFolder(): Promise<void> {
+    if (!assetVersionId) return;
+    const result = await window.atoumweb.referentials.library.assets.openFolder(assetVersionId);
+    if (!result.ok) setError(result.error ?? 'Impossible d’ouvrir le dossier de cette version.');
   }
 
   return (
@@ -208,7 +313,7 @@ export function AtoumWebLibraryPage({ onMessage }: Props) {
       {error && <div className="notice aw-library-error"><span>{error}</span><button type="button" onClick={() => setError(null)}>×</button></div>}
 
       <article className="panel aw-library-toolbar">
-        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher un composant, une description ou un tag…" />
+        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher nom, tag, notes ou contenu technique…" />
         <select value={category} onChange={(event) => setCategory(event.target.value as AtoumWebLibraryCategory | '')}>
           <option value="">Toutes les catégories</option>
           {CATEGORIES.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}
@@ -236,18 +341,35 @@ export function AtoumWebLibraryPage({ onMessage }: Props) {
         </article>
 
         <article className="panel aw-library-detail">
-          {!selected && <div className="aw-library-empty"><span className="eyebrow">Phase 6A</span><h2>Sélectionne un composant</h2><p className="muted">Tu retrouveras ici ses versions, son statut de réutilisation et son historique technique.</p></div>}
+          {!selected && <div className="aw-library-empty"><span className="eyebrow">Phase 6A</span><h2>Sélectionne un composant</h2><p className="muted">Tu retrouveras ici ses métadonnées, versions, captures et fichiers techniques.</p></div>}
           {selected && <>
             <div className="panel-title">
               <div><span className="eyebrow">{categoryLabel(selected.category)} · {reuseStatusLabel(selected.reuseStatus)}</span><h2>{selected.name}</h2></div>
-              <button className="secondary-button" type="button" onClick={() => void toggleArchive()}>{selected.archivedAt ? 'Réactiver' : 'Archiver'}</button>
+              <div className="button-row">
+                {!selected.archivedAt && <button className="secondary-button" type="button" onClick={() => setEditingMetadata((value) => !value)}>{editingMetadata ? 'Annuler édition' : 'Modifier'}</button>}
+                <button className="secondary-button" type="button" onClick={() => void toggleArchive()}>{selected.archivedAt ? 'Réactiver' : 'Archiver'}</button>
+              </div>
             </div>
-            {selected.description && <p>{selected.description}</p>}
-            <div className="aw-library-tags">{selected.tags?.map((tag) => <span key={tag}>{tag}</span>)}</div>
-            {selected.originTechnicalItemId && <p className="muted">Origine conservée : composant de Bibliothèque projet {selected.originTechnicalItemId}</p>}
+
+            {editingMetadata && metadataForm ? <MetadataEditor form={metadataForm} setForm={setMetadataForm} onSave={saveMetadata} /> : <>
+              {selected.description && <p>{selected.description}</p>}
+              <div className="aw-library-tags">{selected.tags?.map((tag) => <span key={tag}>{tag}</span>)}</div>
+              {selected.originTechnicalItemId && <p className="muted">Origine conservée : composant de Bibliothèque projet {selected.originTechnicalItemId}</p>}
+            </>}
+
+            <div className="aw-library-assets">
+              <div className="aw-library-section-title"><div><span className="eyebrow">Fichiers indépendants</span><h3>Captures & assets</h3></div><button className="secondary-button" type="button" disabled={!assetVersionId} onClick={() => void openAssetFolder()}>Ouvrir le dossier</button></div>
+              <div className="aw-library-asset-toolbar">
+                <label>Version<select value={assetVersionId} onChange={(event) => void changeAssetVersion(event.target.value)}>{selected.versions.map((version) => <option key={version.id} value={version.id}>Version {version.versionNumber}{version.current ? ' · courante' : ''}{version.stable ? ' · stable' : ''}</option>)}</select></label>
+                <label>Type<select value={assetRole} onChange={(event) => setAssetRole(event.target.value as AtoumWebTechnicalAssetRole)}>{ASSET_ROLES.map((role) => <option key={role.id} value={role.id}>{role.label}</option>)}</select></label>
+                <button className="primary-button" type="button" disabled={!assetVersionId || Boolean(selected.archivedAt)} onClick={() => void importAssets()}>Ajouter des fichiers</button>
+              </div>
+              {assets.length === 0 ? <p className="muted">Aucun fichier lié à cette version.</p> : <div className="aw-library-asset-list">{assets.map((asset) => <button key={asset.id} type="button" className={`aw-library-asset ${asset.missing ? 'missing' : ''}`} onClick={() => void openAsset(asset.id)}><span>{assetRoleLabel(asset.role)}</span><strong>{asset.fileName}</strong><small>{formatBytes(asset.sizeBytes)}{asset.missing ? ' · fichier manquant' : ''}</small></button>)}</div>}
+            </div>
 
             {!selected.archivedAt && <div className="aw-library-version-form">
               <h3>Créer une nouvelle version</h3>
+              <p className="muted">Le contenu existant n’est jamais écrasé : toute évolution technique significative crée une nouvelle version.</p>
               <div className="aw-library-form-grid">
                 <label>Type<select value={versionForm.contentType} onChange={(event) => setVersionForm((value) => ({ ...value, contentType: event.target.value as ProjectTechnicalContentType }))}>{CONTENT_TYPES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
                 <label>Langage<input value={versionForm.language} onChange={(event) => setVersionForm((value) => ({ ...value, language: event.target.value }))} placeholder="php, css, json…" /></label>
@@ -293,6 +415,20 @@ function CreationPanel({ form, setForm, onCreate }: { form: CreationForm; setFor
   </article>;
 }
 
+function MetadataEditor({ form, setForm, onSave }: { form: MetadataForm; setForm: (value: MetadataForm) => void; onSave: () => Promise<void> }) {
+  return <div className="aw-library-metadata-editor">
+    <div className="aw-library-form-grid">
+      <label>Nom<input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>
+      <label>Catégorie<select value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value as AtoumWebLibraryCategory })}>{CATEGORIES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+      <label>Statut<select value={form.reuseStatus} onChange={(event) => setForm({ ...form, reuseStatus: event.target.value as AtoumWebReuseStatus })}>{REUSE_STATUSES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+      <label>Tags<input value={form.tags} onChange={(event) => setForm({ ...form, tags: event.target.value })} placeholder="Séparés par des virgules" /></label>
+    </div>
+    <label>Description<textarea rows={3} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
+    <label>ID origine Bibliothèque projet<input value={form.originTechnicalItemId} onChange={(event) => setForm({ ...form, originTechnicalItemId: event.target.value })} placeholder="Optionnel · uniquement un composant projet" /></label>
+    <button className="primary-button" type="button" onClick={() => void onSave()}>Enregistrer les métadonnées</button>
+  </div>;
+}
+
 function Summary({ label, value }: { label: string; value: number }) {
   return <article className="kpi-card"><span>{label}</span><strong>{value}</strong><small>Bibliothèque AtoumWeb</small></article>;
 }
@@ -303,4 +439,14 @@ function categoryLabel(category: AtoumWebLibraryCategory): string {
 
 function reuseStatusLabel(status: AtoumWebReuseStatus): string {
   return REUSE_STATUSES.find((item) => item.id === status)?.label ?? status;
+}
+
+function assetRoleLabel(role: AtoumWebTechnicalAssetRole): string {
+  return ASSET_ROLES.find((item) => item.id === role)?.label ?? role;
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} o`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} Ko`;
+  return `${(bytes / (1024 * 1024)).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} Mo`;
 }
