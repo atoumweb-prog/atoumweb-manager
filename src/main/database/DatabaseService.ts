@@ -2,6 +2,7 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DatabaseHealth } from '../../shared/contracts';
 import { BillingHandoffService } from '../billing/BillingHandoffService';
+import { BusinessBackupService } from '../backups/BusinessBackupService';
 import { CatalogService } from '../commercial/CatalogService';
 import { QuoteService } from '../commercial/QuoteService';
 import { ActionService } from '../crm/ActionService';
@@ -55,6 +56,7 @@ export class DatabaseService {
   readonly atoumWebTechnicalAssets: AtoumWebTechnicalAssetService;
   readonly reusePreparation: ReusePreparationService;
   readonly atoumWebPackages: AtoumWebPackageService;
+  readonly businessBackups: BusinessBackupService;
   readonly operations: OperationsService;
   readonly maintenance: MaintenanceService;
   readonly hourPacks: HourPackService;
@@ -87,6 +89,7 @@ export class DatabaseService {
     this.atoumWebTechnicalAssets = new AtoumWebTechnicalAssetService(this.database, this.workspace);
     this.reusePreparation = new ReusePreparationService(this.database, this.workspace, this.atoumWebTechnicalLibrary, this.atoumWebTechnicalAssets);
     this.atoumWebPackages = new AtoumWebPackageService(this.database, this.workspace, this.atoumWebTechnicalLibrary, this.atoumWebTechnicalAssets);
+    this.businessBackups = new BusinessBackupService(this.database);
     this.operations = new OperationsService(this.database);
     this.maintenance = new MaintenanceService(this.database);
     this.hourPacks = new HourPackService(this.database);
@@ -113,6 +116,7 @@ export class DatabaseService {
     this.seedDefaults();
     this.crm.rebuildSearchIndex();
     this.atoumWebTechnicalLibrary.rebuildSearchIndex();
+    this.businessBackups.rebuildSearchIndex();
     await this.createDailyBackupIfNeeded();
   }
 
