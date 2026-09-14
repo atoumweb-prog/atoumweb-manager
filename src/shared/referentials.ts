@@ -111,6 +111,47 @@ export interface ReuseCreateGlobalInput {
   version: AtoumWebTechnicalVersionInput;
 }
 
+export interface AtoumWebPackageExportResult {
+  path: string;
+  fileName: string;
+  itemId: string;
+  versionId: string;
+  versionNumber: number;
+  assetCount: number;
+  createdAt: string;
+}
+
+export interface AtoumWebPackageDuplicateCandidate {
+  itemId: string;
+  name: string;
+  category: AtoumWebLibraryCategory;
+  reason: 'same_name_category' | 'same_content';
+}
+
+export interface AtoumWebPackageInspection {
+  packagePath: string;
+  schemaVersion: number;
+  item: Omit<AtoumWebTechnicalItemInput, 'originTechnicalItemId'>;
+  version: AtoumWebTechnicalVersionInput & { exportedVersionNumber: number; stable: boolean };
+  assetCount: number;
+  missingAssetCount: number;
+  probableDuplicates: AtoumWebPackageDuplicateCandidate[];
+}
+
+export interface AtoumWebPackageImportInput {
+  packagePath: string;
+  mode: 'new_item' | 'new_version';
+  targetItemId?: string | null;
+  itemOverrides?: Partial<Omit<AtoumWebTechnicalItemInput, 'originTechnicalItemId'>>;
+  markStable?: boolean;
+}
+
+export interface AtoumWebPackageImportResult {
+  item: AtoumWebTechnicalItemDetail;
+  importedAssetCount: number;
+  importedAs: 'new_item' | 'new_version';
+}
+
 export interface ReferentialsApi {
   library: {
     list(filters?: AtoumWebTechnicalLibraryFilters): Promise<AtoumWebTechnicalItemSummary[]>;
@@ -132,5 +173,11 @@ export interface ReferentialsApi {
     prepareProjectItem(input: ReusePreparationInput): Promise<ReusePreparationResult>;
     createGlobal(input: ReuseCreateGlobalInput): Promise<AtoumWebTechnicalItemDetail>;
     openPackage(path: string): Promise<AtoumWebAssetOpenResult>;
+  };
+  packages: {
+    exportItem(itemId: string, versionId?: string | null): Promise<AtoumWebPackageExportResult>;
+    inspectImport(): Promise<AtoumWebPackageInspection | null>;
+    importPackage(input: AtoumWebPackageImportInput): Promise<AtoumWebPackageImportResult>;
+    showExport(path: string): Promise<AtoumWebAssetOpenResult>;
   };
 }
