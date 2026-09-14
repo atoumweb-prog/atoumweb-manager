@@ -501,7 +501,7 @@ export class ProjectService {
     let current: string | null = parentId; let guard = 0;
     while (current && guard++ < 200) {
       if (current === nodeId) throw new Error('Ce déplacement créerait une boucle dans l’arbre.');
-      const row = this.database.get<{ parent_id: string | null }>('SELECT parent_id FROM project_nodes WHERE id=?', [current]);
+      const row: { parent_id: string | null } | undefined = this.database.get<{ parent_id: string | null }>('SELECT parent_id FROM project_nodes WHERE id=?', [current]);
       current = row?.parent_id ?? null;
     }
   }

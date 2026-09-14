@@ -17,6 +17,7 @@ interface TimeRow extends Record<string, unknown> {
   client_account_id: string | null;
   project_id: string | null;
   project_node_id: string | null;
+  intervention_id: string | null;
   category: TimeCategory;
   activity_label: string | null;
   started_at: string;
@@ -30,6 +31,8 @@ interface TimeRow extends Record<string, unknown> {
   project_label: string | null;
   project_number: string | null;
   project_node_label: string | null;
+  intervention_number: string | null;
+  intervention_label: string | null;
 }
 
 interface PauseRow extends Record<string, unknown> {
@@ -59,18 +62,19 @@ export class TimeService {
     this.validateInput(input);
     if (this.active()) throw new Error('Une session de temps est déjà active. Arrête-la avant d’en démarrer une autre.');
 
-    const context = this.resolveContext(input.projectId ?? null, input.projectNodeId ?? null);
+    const context = this.resolveContext(input.projectId ?? null, input.projectNodeId ?? null, input.interventionId ?? null);
     const now = this.nowIso();
     const id = randomUUID();
     this.database.run(
       `INSERT INTO time_sessions
-       (id,client_account_id,project_id,project_node_id,category,activity_label,started_at,ended_at,billable,source,note,created_at,updated_at)
-       VALUES (?,?,?,?,?,?,?,NULL,?,'timer',?,?,?)`,
+       (id,client_account_id,project_id,project_node_id,intervention_id,category,activity_label,started_at,ended_at,billable,source,note,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,NULL,?,'timer',?,?,?)`,
       [
         id,
         context.clientAccountId,
         context.projectId,
         context.projectNodeId,
+        context.interventionId,
         input.category,
         clean(input.activityLabel),
         now,
@@ -207,18 +211,19 @@ export class TimeService {
     const ended = this.parseDate(input.endedAt, 'Date de fin invalide.');
     if (ended.getTime() <= started.getTime()) throw new Error('La fin doit être postérieure au début.');
 
-    const context = this.resolveContext(input.projectId ?? null, input.projectNodeId ?? null);
+    const context = this.resolveContext(input.projectId ?? null, input.projectNodeId ?? null, input.interventionId ?? null);
     const id = randomUUID();
     const now = this.nowIso();
     this.database.run(
       `INSERT INTO time_sessions
-       (id,client_account_id,project_id,project_node_id,category,activity_label,started_at,ended_at,billable,source,note,created_at,updated_at)
-       VALUES (?,?,?,?,?,?,?,?,?,'manual',?,?,?)`,
+       (id,client_account_id,project_id,project_node_id,intervention_id,category,activity_label,started_at,ended_at,billable,source,note,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,'manual',?,?,?)`,
       [
         id,
         context.clientAccountId,
         context.projectId,
         context.projectNodeId,
+        context.interventionId,
         input.category,
         clean(input.activityLabel),
         started.toISOString(),
@@ -253,6 +258,10 @@ export class TimeService {
     if (clean(filters.projectId)) {
       where.push('ts.project_id = ?');
       parameters.push(clean(filters.projectId) as string);
+    }
+    if (clean(filters.interventionId)) {
+      where.push('ts.intervention_id = ?');
+      parameters.push(clean(filters.interventionId) as string);
     }
     if (filters.category) {
       if (!TIME_CATEGORIES.includes(filters.category)) throw new Error('Catégorie de temps invalide.');
@@ -291,13 +300,16 @@ export class TimeService {
       COALESCE(o.name, trim(c.first_name || ' ' || c.last_name)) AS client_label,
       p.name AS project_label,
       p.project_number,
-      pn.name AS project_node_label
+      pn.name AS project_node_label,
+      iv.intervention_number,
+      iv.subject AS intervention_label
     FROM time_sessions ts
     LEFT JOIN client_accounts ca ON ca.id=ts.client_account_id
     LEFT JOIN organizations o ON o.id=ca.organization_id
     LEFT JOIN contacts c ON c.id=ca.primary_contact_id
     LEFT JOIN projects p ON p.id=ts.project_id
     LEFT JOIN project_nodes pn ON pn.id=ts.project_node_id
+    LEFT JOIN interventions iv ON iv.id=ts.intervention_id
     ${clause}`;
   }
 
@@ -332,6 +344,9 @@ export class TimeService {
       projectNumber: row.project_number,
       projectNodeId: row.project_node_id,
       projectNodeLabel: row.project_node_label,
+      interventionId: row.intervention_id,
+      interventionNumber: row.intervention_number,
+      interventionLabel: row.intervention_label,
       category: row.category,
       activityLabel: row.activity_label,
       startedAt: row.started_at,
@@ -347,13 +362,31 @@ export class TimeService {
     };
   }
 
-  private resolveContext(projectId?: string | null, nodeId?: string | null): {
+  private resolveContext(projectId?: string | null, nodeId?: string | null, interventionId?: string | null): {
     clientAccountId: string | null;
     projectId: string | null;
     projectNodeId: string | null;
+    interventionId: string | null;
   } {
     let resolvedProjectId = clean(projectId);
-    const resolvedNodeId = clean(nodeId);
+    let resolvedNodeId = clean(nodeId);
+    const resolvedInterventionId = clean(interventionId);
+    let interventionClientId: string | null = null;
+
+    if (resolvedInterventionId) {
+      const intervention = this.database.get<{
+        client_account_id: string;
+        project_id: string | null;
+        project_node_id: string | null;
+        status: string;
+      }>('SELECT client_account_id,project_id,project_node_id,status FROM interventions WHERE id=?', [resolvedInterventionId]);
+      if (!intervention) throw new Error('Intervention introuvable.');
+      if (['completed', 'cancelled', 'archived'].includes(intervention.status)) throw new Error('Cette intervention est clôturée. Réouvre-la avant de démarrer du temps.');
+      interventionClientId = intervention.client_account_id;
+      if (resolvedProjectId && intervention.project_id && intervention.project_id !== resolvedProjectId) throw new Error('L’intervention appartient à un autre projet.');
+      resolvedProjectId = resolvedProjectId ?? intervention.project_id;
+      if (!resolvedNodeId && intervention.project_node_id) resolvedNodeId = intervention.project_node_id;
+    }
 
     if (resolvedNodeId) {
       const node = this.database.get<{ project_id: string }>('SELECT project_id FROM project_nodes WHERE id=?', [resolvedNodeId]);
@@ -362,17 +395,26 @@ export class TimeService {
       resolvedProjectId = node.project_id;
     }
 
-    if (!resolvedProjectId) return { clientAccountId: null, projectId: null, projectNodeId: null };
+    if (!resolvedProjectId) {
+      return {
+        clientAccountId: interventionClientId,
+        projectId: null,
+        projectNodeId: resolvedNodeId,
+        interventionId: resolvedInterventionId,
+      };
+    }
 
     const project = this.database.get<{ client_account_id: string | null }>(
       'SELECT client_account_id FROM projects WHERE id=?',
       [resolvedProjectId],
     );
     if (!project) throw new Error('Projet introuvable.');
+    if (interventionClientId && project.client_account_id !== interventionClientId) throw new Error('Le projet et l’intervention appartiennent à des clients différents.');
     return {
-      clientAccountId: project.client_account_id,
+      clientAccountId: interventionClientId ?? project.client_account_id,
       projectId: resolvedProjectId,
       projectNodeId: resolvedNodeId,
+      interventionId: resolvedInterventionId,
     };
   }
 

@@ -1,0 +1,84 @@
+.client-operations-tab {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.client-operations-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.client-operation-kpi {
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-soft);
+}
+
+.client-operation-kpi span {
+  color: var(--text-muted);
+  font-size: 7px;
+}
+
+.client-operation-kpi strong {
+  font-size: 12px;
+}
+
+.client-operation-section {
+  display: grid;
+  gap: 5px;
+}
+
+.client-operation-section > strong {
+  font-size: 9px;
+}
+
+.client-operation-section > p {
+  margin: 0;
+  font-size: 8px;
+}
+
+.client-operation-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.client-operation-row > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.client-operation-row strong {
+  font-size: 8px;
+  overflow-wrap: anywhere;
+}
+
+.client-operation-row small,
+.client-operation-row > span {
+  color: var(--text-muted);
+  font-size: 7px;
+}
+
+.client-operation-row > span {
+  white-space: nowrap;
+}
+
+.client-operations-refresh {
+  justify-self: start;
+}
+
+@media (max-width: 620px) {
+  .client-operations-kpis,
+  .client-operation-row {
+    grid-template-columns: 1fr;
+  }
+}

@@ -18,6 +18,7 @@ import './project-technical-library.css';
 import './project-completion.css';
 import './time.css';
 import './time-recovery.css';
+import './operations.css';
 
 const rootElement = document.getElementById('root');
 

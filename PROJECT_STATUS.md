@@ -274,3 +274,29 @@ La validation réelle continue donc d’être effectuée localement sur Windows.
 **Phase 3 — fermeture des derniers écarts fonctionnels avant validation Windows.**
 
 Prochaine validation Windows après stabilisation de la branche : migration vers 10 migrations, `npm run typecheck`, `npm test`, puis parcours Projet / Ressources / Bibliothèque / Timer / Gestion des temps.
+
+## Phase 4 — Validation automatisée du 14/09/2026
+
+Cette entrée actualise le travail en cours décrit plus haut : Phase 4 en gel fonctionnel, validation visuelle Windows restante.
+Branche : feature/phase-4-operations — PR #61 conservée en brouillon.
+Point de départ distant vérifié : 6d09156.
+
+- [x] Node local 20.19.3 / npm 10.8.2 vérifiés.
+- [x] npm run typecheck : aucune erreur.
+- [x] npm test : **26 fichiers / 102 tests réussis**, aucun échec ni test désactivé.
+- [x] Tests exécutés par le script du dépôt sous Electron 44.3.0 / Node embarqué 24.20.0.
+- [x] Correction du tri SQLite des alertes : alias explicite created_at dans le UNION ALL.
+- [x] Temps Intervention calculé par TimeService : suppression de la troncature SQL imprécise, mêmes pauses et même arrêt au dernier point connu que le Timer.
+- [x] Tests de non-régression des pauses avec millisecondes et de la récupération d'une session oubliée.
+- [x] Migrations 1 à 17 : base vierge, ordre, application unique, mises à niveau depuis 4 / 6 / 10, préservation des données sentinelles et d'une session Phase 3, index composite, intégrité SQLite.
+- [x] Revue du périmètre : services Opérations, tests et suivi documentaire uniquement ; aucune migration modifiée ou renumérotée.
+- [ ] Validation visuelle Windows et migration sur données existantes avec sauvegarde pré-migration.
+- [ ] Parcours Intervention / Demande → Intervention / modification et retrait du rattachement / Timer au contexte sauvegardé / persistance après redémarrage.
+- [ ] Régressions Opérations / Maintenance / Packs / Incidents / recherche / fiches Client et Projet / trois thèmes.
+
+Aucune donnée du dossier utilisateur Documents\AtoumWeb Manager touchée. Les tests utilisent uniquement des bases en mémoire et des espaces temporaires de test.
+Le nouveau test d'index a été corrigé après constat : l'index existant comprend intervention_id puis started_at DESC ; l'assertion contrôle ces deux colonnes et leur ordre.
+Gel fonctionnel Phase 4 maintenu. Phase 5 différée, aucun apport de la branche Phase 6, aucune fusion.
+Point d'attention manuel : vérifier aussi la fluidité des listes d'interventions avec un historique de temps volumineux, le total utilisant désormais le service de temps commun.
+
+Prochaine action : lancement normal du Manager et parcours du plan docs/PHASE_4_VALIDATION_WINDOWS.md avec les données existantes et sauvegarde pré-migration. Conserver la PR #61 en brouillon ; aucune fusion avant validation Phase 4.

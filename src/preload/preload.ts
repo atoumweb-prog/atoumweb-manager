@@ -23,6 +23,27 @@ import type {
   ProspectInput,
   ProspectStage,
 } from '../shared/crm';
+import type { HourPackShortfallDecisionInput } from '../shared/hourPackShortfall';
+import type { MaintenanceOverageDecisionInput } from '../shared/maintenanceOverage';
+import type {
+  HourPackFilters,
+  HourPackInput,
+  HourPackMovementInput,
+  HourPackStatus,
+  InterventionFilters,
+  InterventionInput,
+  InterventionStatus,
+  MaintenanceCheckStatus,
+  MaintenancePeriodStatus,
+  MaintenancePlanInput,
+  MaintenanceSubscriptionFilters,
+  MaintenanceSubscriptionInput,
+  MaintenanceSubscriptionStatus,
+  ServiceRequestFilters,
+  ServiceRequestInput,
+  ServiceRequestStatus,
+  TransformRequestToInterventionInput,
+} from '../shared/operations';
 import type {
   InternalProjectInput,
   MoveProjectNodeInput,
@@ -169,6 +190,68 @@ const api: AtoumWebApi = {
       prepareForReuse: (itemId: string, versionId?: string | null) => ipcRenderer.invoke('projects:technical:prepare-reuse', itemId, versionId),
       archive: (itemId: string) => ipcRenderer.invoke('projects:technical:archive', itemId),
     },
+  },
+  operations: {
+    requests: {
+      list: (filters?: ServiceRequestFilters) => ipcRenderer.invoke('operations:requests:list', filters),
+      get: (id: string) => ipcRenderer.invoke('operations:requests:get', id),
+      create: (input: ServiceRequestInput) => ipcRenderer.invoke('operations:requests:create', input),
+      update: (id: string, input: Partial<ServiceRequestInput>) => ipcRenderer.invoke('operations:requests:update', id, input),
+      changeStatus: (id: string, status: ServiceRequestStatus) => ipcRenderer.invoke('operations:requests:change-status', id, status),
+      closeWithoutIntervention: (id: string, reason?: string | null) => ipcRenderer.invoke('operations:requests:close', id, reason),
+      transform: (input: TransformRequestToInterventionInput) => ipcRenderer.invoke('operations:requests:transform', input),
+    },
+    interventions: {
+      list: (filters?: InterventionFilters) => ipcRenderer.invoke('operations:interventions:list', filters),
+      get: (id: string) => ipcRenderer.invoke('operations:interventions:get', id),
+      create: (input: InterventionInput) => ipcRenderer.invoke('operations:interventions:create', input),
+      update: (id: string, input: Partial<InterventionInput>) => ipcRenderer.invoke('operations:interventions:update', id, input),
+      changeStatus: (id: string, status: InterventionStatus) => ipcRenderer.invoke('operations:interventions:change-status', id, status),
+      complete: (id: string) => ipcRenderer.invoke('operations:interventions:complete', id),
+    },
+    maintenance: {
+      plans: {
+        list: (includeArchived?: boolean) => ipcRenderer.invoke('operations:maintenance:plans:list', includeArchived),
+        create: (input: MaintenancePlanInput) => ipcRenderer.invoke('operations:maintenance:plans:create', input),
+        update: (id: string, input: Partial<MaintenancePlanInput>) => ipcRenderer.invoke('operations:maintenance:plans:update', id, input),
+        archive: (id: string) => ipcRenderer.invoke('operations:maintenance:plans:archive', id),
+      },
+      subscriptions: {
+        list: (filters?: MaintenanceSubscriptionFilters) => ipcRenderer.invoke('operations:maintenance:subscriptions:list', filters),
+        create: (input: MaintenanceSubscriptionInput) => ipcRenderer.invoke('operations:maintenance:subscriptions:create', input),
+        changeStatus: (id: string, status: MaintenanceSubscriptionStatus) => ipcRenderer.invoke('operations:maintenance:subscriptions:change-status', id, status),
+      },
+      periods: {
+        list: (subscriptionId: string) => ipcRenderer.invoke('operations:maintenance:periods:list', subscriptionId),
+        ensure: (subscriptionId: string, referenceDate?: string | null) => ipcRenderer.invoke('operations:maintenance:periods:ensure', subscriptionId, referenceDate),
+        changeStatus: (id: string, status: MaintenancePeriodStatus) => ipcRenderer.invoke('operations:maintenance:periods:change-status', id, status),
+        updateCheck: (id: string, status: MaintenanceCheckStatus, notes?: string | null) => ipcRenderer.invoke('operations:maintenance:checks:update', id, status, notes),
+      },
+    },
+    hourPacks: {
+      list: (filters?: HourPackFilters) => ipcRenderer.invoke('operations:hour-packs:list', filters),
+      get: (id: string) => ipcRenderer.invoke('operations:hour-packs:get', id),
+      create: (input: HourPackInput) => ipcRenderer.invoke('operations:hour-packs:create', input),
+      changeStatus: (id: string, status: HourPackStatus) => ipcRenderer.invoke('operations:hour-packs:change-status', id, status),
+      addMovement: (id: string, input: HourPackMovementInput) => ipcRenderer.invoke('operations:hour-packs:add-movement', id, input),
+      debitIntervention: (packId: string, interventionId: string) => ipcRenderer.invoke('operations:hour-packs:debit-intervention', packId, interventionId),
+      reverseMovement: (movementId: string, reason: string) => ipcRenderer.invoke('operations:hour-packs:reverse-movement', movementId, reason),
+    },
+  },
+  hourPackShortfalls: {
+    review: (packId: string) => ipcRenderer.invoke('hour-pack-shortfalls:review', packId),
+    decide: (packId: string, input: HourPackShortfallDecisionInput) => ipcRenderer.invoke('hour-pack-shortfalls:decide', packId, input),
+  },
+  maintenanceOverages: {
+    review: (periodId: string) => ipcRenderer.invoke('maintenance-overages:review', periodId),
+    decide: (periodId: string, input: MaintenanceOverageDecisionInput) => ipcRenderer.invoke('maintenance-overages:decide', periodId, input),
+  },
+  maintenanceReports: {
+    get: (periodId) => ipcRenderer.invoke('maintenance-reports:get', periodId),
+    updateDraft: (periodId, input) => ipcRenderer.invoke('maintenance-reports:update-draft', periodId, input),
+  },
+  operationsAlerts: {
+    get: () => ipcRenderer.invoke('operations-alerts:get'),
   },
   time: {
     active: () => ipcRenderer.invoke('time:active'),

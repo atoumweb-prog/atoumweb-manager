@@ -7,6 +7,7 @@ import {
   type ClientStatus,
   type ClientSummary,
 } from '../../shared/crm';
+import { ClientOperationsTab } from './ClientOperationsTab';
 
 const STATUS_LABELS: Record<ClientStatus, string> = {
   active: 'Actif',
@@ -22,7 +23,7 @@ const ROLE_LABELS: Record<ClientContactRole, string> = {
   other: 'Autre',
 };
 
-type ClientTab = 'summary' | 'contacts' | 'commercial' | 'history';
+type ClientTab = 'summary' | 'contacts' | 'operations' | 'commercial' | 'history';
 
 interface ClientDraft {
   company: string;
@@ -393,6 +394,7 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
               <div className="client-tabs-preview client-tabs-buttons">
                 <button className={activeTab === 'summary' ? 'active' : ''} type="button" onClick={() => setActiveTab('summary')}>Résumé</button>
                 <button className={activeTab === 'contacts' ? 'active' : ''} type="button" onClick={() => setActiveTab('contacts')}>Contacts</button>
+                <button className={activeTab === 'operations' ? 'active' : ''} type="button" onClick={() => setActiveTab('operations')}>Interventions</button>
                 <button className={activeTab === 'commercial' ? 'active' : ''} type="button" onClick={() => setActiveTab('commercial')}>Commercial</button>
                 <button className={activeTab === 'history' ? 'active' : ''} type="button" onClick={() => setActiveTab('history')}>Historique</button>
               </div>
@@ -481,6 +483,8 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
                   </div>
                 </div>
               )}
+
+              {activeTab === 'operations' && <ClientOperationsTab clientId={selected.id} onMessage={onMessage} />}
 
               {activeTab === 'commercial' && (
                 <div className="tab-content-stack">

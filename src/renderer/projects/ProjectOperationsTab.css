@@ -1,0 +1,82 @@
+.project-operations-tab {
+  gap: 10px;
+}
+
+.project-operation-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.project-operation-kpis > div {
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-soft);
+}
+
+.project-operation-kpis span {
+  color: var(--text-muted);
+  font-size: 7px;
+}
+
+.project-operation-kpis strong {
+  font-size: 12px;
+}
+
+.project-operation-section {
+  display: grid;
+  gap: 5px;
+}
+
+.project-operation-section > strong {
+  font-size: 9px;
+}
+
+.project-operation-section > p {
+  margin: 0;
+  font-size: 8px;
+}
+
+.project-operation-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.project-operation-row > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.project-operation-row strong {
+  font-size: 8px;
+  overflow-wrap: anywhere;
+}
+
+.project-operation-row small,
+.project-operation-row > span {
+  color: var(--text-muted);
+  font-size: 7px;
+}
+
+.project-operation-row > span {
+  white-space: nowrap;
+}
+
+.project-operations-refresh {
+  justify-self: start;
+}
+
+@media (max-width: 620px) {
+  .project-operation-kpis,
+  .project-operation-row {
+    grid-template-columns: 1fr;
+  }
+}

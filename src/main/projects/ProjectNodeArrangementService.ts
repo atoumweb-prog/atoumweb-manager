@@ -87,7 +87,7 @@ export class ProjectNodeArrangementService {
     let guard = 0;
     while (current && guard++ < 300) {
       if (current === nodeId) throw new Error('Ce déplacement créerait une boucle dans l’arbre du projet.');
-      const row = this.database.get<{ parent_id: string | null }>('SELECT parent_id FROM project_nodes WHERE id=?', [current]);
+      const row: { parent_id: string | null } | undefined = this.database.get<{ parent_id: string | null }>('SELECT parent_id FROM project_nodes WHERE id=?', [current]);
       current = row?.parent_id ?? null;
     }
     if (guard >= 300) throw new Error('Arbre du projet invalide ou trop profond.');

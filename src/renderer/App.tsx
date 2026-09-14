@@ -6,6 +6,8 @@ import { QuotesPage } from './commercial/QuotesPage';
 import { ClientsPage } from './crm/ClientsPage';
 import { GlobalSearch } from './crm/GlobalSearch';
 import { ProspectsPage } from './crm/ProspectsPage';
+import { DashboardOperationsWatch } from './operations/DashboardOperationsWatch';
+import { OperationsPage, type OperationsSearchTarget } from './operations/OperationsPage';
 import { ProjectsPage } from './projects/ProjectsPage';
 import { GlobalTimer } from './time/GlobalTimer';
 import { TimePage } from './time/TimePage';
@@ -67,6 +69,7 @@ function App() {
   const [message, setMessage] = useState<string | null>(null);
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [projectSearchTarget, setProjectSearchTarget] = useState<string | null>(null);
+  const [operationsSearchTarget, setOperationsSearchTarget] = useState<OperationsSearchTarget | null>(null);
 
   useEffect(() => {
     window.atoumweb.app.getBootstrap()
@@ -112,6 +115,17 @@ function App() {
     );
   }
 
+  function navigate(page: PageName): void {
+    if (page === 'Interventions & Maintenance') setOperationsSearchTarget(null);
+    if (page === 'Projets') setProjectSearchTarget(null);
+    setActivePage(page);
+  }
+
+  function openOperationsTarget(target: OperationsSearchTarget): void {
+    setOperationsSearchTarget(target);
+    setActivePage('Interventions & Maintenance');
+  }
+
   function openSearchResult(result: SearchResult): void {
     switch (result.entityType) {
       case 'prospect': setActivePage('Prospects'); break;
@@ -120,6 +134,12 @@ function App() {
       case 'project':
         setProjectSearchTarget(result.entityId);
         setActivePage('Projets');
+        break;
+      case 'service_request':
+      case 'intervention':
+      case 'maintenance':
+      case 'hour_pack':
+        openOperationsTarget({ entityType: result.entityType, entityId: result.entityId });
         break;
       case 'client':
       case 'organization':
@@ -142,7 +162,7 @@ function App() {
       <aside className="sidebar">
         <div className="brand-block"><div className="brand-mark">AW</div><div><strong>AtoumWeb</strong><span>Manager</span></div></div>
         <nav className="navigation" aria-label="Navigation principale">
-          {NAV_ITEMS.map((item) => <button key={item} className={`nav-item ${activePage === item ? 'active' : ''}`} onClick={() => setActivePage(item)} type="button"><span className="nav-dot" /><span>{item}</span></button>)}
+          {NAV_ITEMS.map((item) => <button key={item} className={`nav-item ${activePage === item ? 'active' : ''}`} onClick={() => navigate(item)} type="button"><span className="nav-dot" /><span>{item}</span></button>)}
         </nav>
         <div className="sidebar-footer"><span>V{bootstrap.appVersion}</span><span className="status-pill">Local</span></div>
       </aside>
@@ -157,22 +177,27 @@ function App() {
           <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1>{activePage}</h1><p>{PAGE_HINTS[activePage]}</p></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>
           {message && <div className="notice" role="status"><span>{message}</span><button type="button" onClick={() => setMessage(null)}>×</button></div>}
 
-          {activePage === 'Accueil' && <Dashboard bootstrap={bootstrap} />}
+          {activePage === 'Accueil' && <Dashboard bootstrap={bootstrap} onOpenOperations={openOperationsTarget} onMessage={setMessage} />}
           {activePage === 'Prospects' && <ProspectsPage onMessage={setMessage} />}
           {activePage === 'Clients' && <ClientsPage onMessage={setMessage} />}
           {activePage === 'Offres & Tarifs' && <CatalogPage onMessage={setMessage} />}
           {activePage === 'Devis' && <QuotesPage onMessage={setMessage} />}
           {activePage === 'Projets' && <ProjectsPage onMessage={setMessage} initialProjectId={projectSearchTarget} />}
+          {activePage === 'Interventions & Maintenance' && <OperationsPage onMessage={setMessage} initialTarget={operationsSearchTarget} />}
           {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}
           {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} onThemeChange={updateTheme} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
-          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Gestion des temps' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
+          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
         </section>
       </main>
     </div>
   );
 }
 
-function Dashboard({ bootstrap }: { bootstrap: BootstrapState }) {
+function Dashboard({ bootstrap, onOpenOperations, onMessage }: {
+  bootstrap: BootstrapState;
+  onOpenOperations: (target: OperationsSearchTarget) => void;
+  onMessage: (message: string) => void;
+}) {
   const [prospectCount, setProspectCount] = useState<number | null>(null);
   const [clientCount, setClientCount] = useState<number | null>(null);
   const [projectCount, setProjectCount] = useState<number | null>(null);
@@ -204,7 +229,8 @@ function Dashboard({ bootstrap }: { bootstrap: BootstrapState }) {
         <KpiCard label="Temps travaillé ce mois" value={monthTime == null ? '…' : formatDashboardTime(monthTime)} detail="Calculé depuis les sessions" />
       </div>
       <div className="dashboard-grid">
-        <article className="panel panel-large"><div className="panel-title"><div><span className="eyebrow">Socle métier</span><h2>CRM + Commercial + Projets</h2></div><span className="success-badge">Phase 3</span></div><div className="foundation-list"><FoundationRow label="Workspace local" value={bootstrap.workspacePath} /><FoundationRow label="Base SQLite" value={bootstrap.databasePath} /><FoundationRow label="CRM" value="Organisations · Contacts · Prospects · Clients" /><FoundationRow label="Commercial" value="Catalogue · Devis · Snapshots" /><FoundationRow label="Production" value="Projets · Modèles · Plans · Ressources · Temps" /></div></article>
+        <DashboardOperationsWatch onOpen={onOpenOperations} onMessage={onMessage} />
+        <article className="panel panel-large"><div className="panel-title"><div><span className="eyebrow">Socle métier</span><h2>CRM + Commercial + Projets + Opérations</h2></div><span className="status-pill">Phase 4 en cours</span></div><div className="foundation-list"><FoundationRow label="Workspace local" value={bootstrap.workspacePath} /><FoundationRow label="Base SQLite" value={bootstrap.databasePath} /><FoundationRow label="CRM" value="Organisations · Contacts · Prospects · Clients" /><FoundationRow label="Commercial" value="Catalogue · Devis · Snapshots" /><FoundationRow label="Production" value="Projets · Modèles · Plans · Ressources · Temps" /><FoundationRow label="Opérations" value="Demandes · Interventions · Maintenance · Packs d’heures" /></div></article>
         <article className="panel"><span className="eyebrow">Aujourd’hui</span><h2>{prospectCount ? `${prospectCount} prospect${prospectCount > 1 ? 's' : ''} actif${prospectCount > 1 ? 's' : ''}` : 'Pipeline à jour'}</h2><p className="muted">Les actions commerciales et le travail projet alimentent progressivement cette vue.</p></article>
         <article className="panel"><span className="eyebrow">Production</span><h2>{projectCount ?? 0} projet{projectCount === 1 ? '' : 's'} actif{projectCount === 1 ? '' : 's'}</h2><p className="muted">Le temps réel est maintenant issu exclusivement des sessions du timer et des saisies manuelles.</p></article>
       </div>
