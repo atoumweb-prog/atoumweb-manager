@@ -71,6 +71,7 @@ function App() {
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [projectSearchTarget, setProjectSearchTarget] = useState<string | null>(null);
   const [operationsSearchTarget, setOperationsSearchTarget] = useState<OperationsSearchTarget | null>(null);
+  const [librarySearchTarget, setLibrarySearchTarget] = useState<string | null>(null);
 
   useEffect(() => {
     window.atoumweb.app.getBootstrap()
@@ -119,6 +120,7 @@ function App() {
   function navigate(page: PageName): void {
     if (page === 'Interventions & Maintenance') setOperationsSearchTarget(null);
     if (page === 'Projets') setProjectSearchTarget(null);
+    if (page === 'Bibliothèque AtoumWeb') setLibrarySearchTarget(null);
     setActivePage(page);
   }
 
@@ -135,6 +137,10 @@ function App() {
       case 'project':
         setProjectSearchTarget(result.entityId);
         setActivePage('Projets');
+        break;
+      case 'atoumweb_library':
+        setLibrarySearchTarget(result.entityId);
+        setActivePage('Bibliothèque AtoumWeb');
         break;
       case 'service_request':
       case 'intervention':
@@ -186,7 +192,7 @@ function App() {
           {activePage === 'Projets' && <ProjectsPage onMessage={setMessage} initialProjectId={projectSearchTarget} />}
           {activePage === 'Interventions & Maintenance' && <OperationsPage onMessage={setMessage} initialTarget={operationsSearchTarget} />}
           {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}
-          {activePage === 'Bibliothèque AtoumWeb' && <AtoumWebLibraryPage onMessage={setMessage} />}
+          {activePage === 'Bibliothèque AtoumWeb' && <AtoumWebLibraryPage onMessage={setMessage} initialItemId={librarySearchTarget} />}
           {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} onThemeChange={updateTheme} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
           {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
         </section>
