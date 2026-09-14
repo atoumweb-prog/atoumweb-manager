@@ -4,6 +4,7 @@ import type {
   OperationsAlertThresholds,
 } from '../../shared/operationsAlerts';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
+import type { HourPackShortfallService } from './HourPackShortfallService';
 
 const DAY_MS = 86_400_000;
 
@@ -60,7 +61,10 @@ interface BillingAlertRow extends Record<string, unknown> {
 }
 
 export class OperationsAlertService {
-  constructor(private readonly database: DatabaseAdapter) {}
+  constructor(
+    private readonly database: DatabaseAdapter,
+    private readonly shortfalls: HourPackShortfallService,
+  ) {}
 
   get(): OperationsAlertsSnapshot {
     const now = new Date();
@@ -176,12 +180,16 @@ export class OperationsAlertService {
       const percent = Math.max(0, Math.round((balance / purchased) * 100));
 
       if (balance < 0) {
+        const review = this.shortfalls.review(row.id);
+        const unresolved = review.unresolvedCount;
         alerts.push({
           id: `pack-negative:${row.id}`,
           kind: 'hour_pack_negative',
-          severity: 'critical',
-          title: 'Pack d’heures en solde négatif',
-          detail: `${this.duration(Math.abs(balance))} dépassée(s) sur « ${row.name} ».`,
+          severity: unresolved > 0 ? 'critical' : 'warning',
+          title: unresolved > 0 ? 'Dépassement pack à décider' : 'Solde négatif décidé',
+          detail: unresolved > 0
+            ? `${unresolved} dépassement(s) sans décision · ${this.duration(Math.abs(balance))} sous zéro sur « ${row.name} ».`
+            : `${this.duration(Math.abs(balance))} sous zéro sur « ${row.name} », avec décision enregistrée.`,
           clientAccountId: row.client_account_id,
           clientLabel: row.client_label,
           projectId: row.project_id,
@@ -305,6 +313,19 @@ export class OperationsAlertService {
        FROM billing_items bi
        JOIN maintenance_overage_decisions mod ON bi.source_type='maintenance_overage' AND mod.id=bi.source_id
        JOIN interventions i ON i.id=mod.intervention_id
+       JOIN client_accounts ca ON ca.id=bi.client_account_id
+       LEFT JOIN organizations o ON o.id=ca.organization_id
+       LEFT JOIN contacts c ON c.id=ca.primary_contact_id
+       LEFT JOIN projects p ON p.id=bi.project_id
+       WHERE bi.status='ready' AND bi.expected_amount_cents>0 AND i.status='completed'
+       UNION ALL
+       SELECT bi.id AS billing_item_id,i.id AS intervention_id,i.intervention_number,
+        bi.client_account_id,bi.project_id,bi.description,bi.expected_amount_cents,bi.created_at,
+        COALESCE(o.name,trim(c.first_name || ' ' || c.last_name),'Client') AS client_label,
+        p.name AS project_label
+       FROM billing_items bi
+       JOIN hour_pack_shortfall_decisions hpsd ON bi.source_type='hour_pack' AND bi.source_id=hpsd.id
+       JOIN interventions i ON i.id=hpsd.intervention_id
        JOIN client_accounts ca ON ca.id=bi.client_account_id
        LEFT JOIN organizations o ON o.id=ca.organization_id
        LEFT JOIN contacts c ON c.id=ca.primary_contact_id
