@@ -160,21 +160,52 @@ describe('OperationsService', () => {
     expect(completed.completedAt).toBeTruthy();
   });
 
-  it('conserve les champs incident uniquement pour une intervention de type incident', () => {
+  it('conserve et met à jour tous les champs métier d’un incident puis les nettoie si le type change', () => {
     const client = createClient();
+    const startedAt = '2026-09-14T08:00:00.000Z';
+    const resolvedAt = '2026-09-14T09:15:00.000Z';
     const incident = operations.createIntervention({
       clientAccountId: client.id,
       subject: 'Site indisponible',
       type: 'incident',
       incidentCriticality: 'critical',
+      incidentStartedAt: startedAt,
       downtimeMinutes: 35,
+      incidentCause: 'Mise à jour défaillante',
       incidentDiagnosis: 'Erreur serveur',
+      incidentSolution: 'Retour à la version stable',
+      incidentFollowUp: 'Surveiller les journaux pendant 24 h',
     });
     expect(incident.incidentCriticality).toBe('critical');
+    expect(incident.incidentStartedAt).toBe(startedAt);
     expect(incident.downtimeMinutes).toBe(35);
+    expect(incident.incidentCause).toMatch(/mise à jour/i);
+    expect(incident.incidentDiagnosis).toBe('Erreur serveur');
+    expect(incident.incidentSolution).toMatch(/version stable/i);
+    expect(incident.incidentFollowUp).toMatch(/24 h/i);
+
+    const resolved = operations.updateIntervention(incident.id, {
+      incidentCriticality: 'urgent',
+      incidentResolvedAt: resolvedAt,
+      downtimeMinutes: 75,
+      incidentDiagnosis: 'Extension incompatible confirmée',
+      incidentSolution: 'Extension désactivée et remplacée',
+      incidentFollowUp: 'Vérification prévue le lendemain',
+    });
+    expect(resolved.incidentCriticality).toBe('urgent');
+    expect(resolved.incidentResolvedAt).toBe(resolvedAt);
+    expect(resolved.downtimeMinutes).toBe(75);
+    expect(resolved.incidentDiagnosis).toMatch(/incompatible/i);
+    expect(resolved.incidentSolution).toMatch(/remplacée/i);
 
     const converted = operations.updateIntervention(incident.id, { type: 'support' });
     expect(converted.incidentCriticality).toBeNull();
+    expect(converted.incidentStartedAt).toBeNull();
+    expect(converted.incidentResolvedAt).toBeNull();
     expect(converted.downtimeMinutes).toBeNull();
+    expect(converted.incidentCause).toBeNull();
+    expect(converted.incidentDiagnosis).toBeNull();
+    expect(converted.incidentSolution).toBeNull();
+    expect(converted.incidentFollowUp).toBeNull();
   });
 });
