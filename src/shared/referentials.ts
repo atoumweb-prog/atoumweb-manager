@@ -50,6 +50,15 @@ export interface AtoumWebTechnicalAsset {
   createdAt: string;
 }
 
+export interface AtoumWebAssetPreview {
+  available: boolean;
+  dataUrl?: string | null;
+  mimeType?: string | null;
+  width?: number | null;
+  height?: number | null;
+  error?: string | null;
+}
+
 export interface AtoumWebTechnicalItemSummary extends AtoumWebTechnicalItemInput {
   id: string;
   currentVersion?: AtoumWebTechnicalVersion | null;
@@ -165,6 +174,7 @@ export interface ReferentialsApi {
     assets: {
       list(versionId: string): Promise<AtoumWebTechnicalAsset[]>;
       importFiles(versionId: string, role: AtoumWebTechnicalAssetRole): Promise<AtoumWebTechnicalAsset[]>;
+      preview(assetId: string): Promise<AtoumWebAssetPreview>;
       openFile(assetId: string): Promise<AtoumWebAssetOpenResult>;
       openFolder(versionId: string): Promise<AtoumWebAssetOpenResult>;
     };
