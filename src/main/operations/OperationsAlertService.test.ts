@@ -4,6 +4,7 @@ import { CrmService } from '../crm/CrmService';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
 import { HourPackService } from './HourPackService';
+import { HourPackShortfallService } from './HourPackShortfallService';
 import { MaintenanceOverageService } from './MaintenanceOverageService';
 import { MaintenanceService } from './MaintenanceService';
 import { OperationsAlertService } from './OperationsAlertService';
@@ -13,6 +14,7 @@ let database: NodeSqliteAdapter;
 let crm: CrmService;
 let maintenance: MaintenanceService;
 let packs: HourPackService;
+let shortfalls: HourPackShortfallService;
 let operations: OperationsService;
 let alerts: OperationsAlertService;
 let overages: MaintenanceOverageService;
@@ -29,8 +31,9 @@ beforeEach(() => {
   maintenance = new MaintenanceService(database);
   packs = new HourPackService(database);
   operations = new OperationsService(database);
-  alerts = new OperationsAlertService(database);
   billing = new BillingHandoffService(database);
+  shortfalls = new HourPackShortfallService(database, packs, billing);
+  alerts = new OperationsAlertService(database, shortfalls);
   overages = new MaintenanceOverageService(database, billing);
   const contact = crm.createContact({ firstName: 'Client', lastName: 'Alertes' });
   clientId = crm.createClient({ primaryContactId: contact.id }).id;
@@ -63,6 +66,43 @@ describe('OperationsAlertService', () => {
     const kinds = alerts.get().alerts.filter((alert) => alert.hourPackId === pack.id).map((alert) => alert.kind);
     expect(kinds).toContain('hour_pack_low');
     expect(kinds).toContain('hour_pack_expiring');
+  });
+
+  it('passe le pack négatif de critique à surveiller après une décision explicite', () => {
+    const pack = packs.create({
+      clientAccountId: clientId,
+      name: 'Pack 1 h négatif',
+      purchasedSeconds: 3600,
+      contractPriceCents: 10000,
+    });
+    const intervention = operations.createIntervention({
+      clientAccountId: clientId,
+      type: 'support',
+      status: 'completed',
+      coverageMode: 'hour_pack',
+      hourPackId: pack.id,
+      subject: 'Intervention dépassant le pack',
+    });
+    database.run(
+      `INSERT INTO hour_pack_movements
+       (id,pack_id,intervention_id,movement_type,seconds_delta,reason,source_key,created_at)
+       VALUES ('alert-shortfall-debit',?,?,'intervention_debit',-5400,'Débit test','alert-shortfall-debit',?)`,
+      [pack.id, intervention.id, new Date().toISOString()],
+    );
+
+    let alert = alerts.get().alerts.find((candidate) => candidate.kind === 'hour_pack_negative' && candidate.hourPackId === pack.id);
+    expect(alert?.severity).toBe('critical');
+    expect(alert?.title).toBe('Dépassement pack à décider');
+
+    shortfalls.decide(pack.id, {
+      debitMovementId: 'alert-shortfall-debit',
+      decision: 'allow_negative',
+      reason: 'Négatif autorisé exceptionnellement',
+    });
+
+    alert = alerts.get().alerts.find((candidate) => candidate.kind === 'hour_pack_negative' && candidate.hourPackId === pack.id);
+    expect(alert?.severity).toBe('warning');
+    expect(alert?.title).toBe('Solde négatif décidé');
   });
 
   it('signale un incident critique tant qu’il reste ouvert', () => {
