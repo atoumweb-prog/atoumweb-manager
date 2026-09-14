@@ -131,6 +131,7 @@ export interface QuoteLineInput {
 }
 
 export interface QuoteLine extends QuoteLineInput {
+  adjustmentMode: QuoteAdjustmentMode;
   id: string;
   quoteId: string;
   sortOrder: number;
