@@ -48,3 +48,16 @@ export interface AtoumWebTechnicalLibraryFilters {
   reuseStatus?: AtoumWebReuseStatus | null;
   includeArchived?: boolean;
 }
+
+export interface ReferentialsApi {
+  library: {
+    list(filters?: AtoumWebTechnicalLibraryFilters): Promise<AtoumWebTechnicalItemSummary[]>;
+    get(id: string): Promise<AtoumWebTechnicalItemDetail>;
+    create(item: AtoumWebTechnicalItemInput, version: AtoumWebTechnicalVersionInput): Promise<AtoumWebTechnicalItemDetail>;
+    update(id: string, input: Partial<AtoumWebTechnicalItemInput>): Promise<AtoumWebTechnicalItemDetail>;
+    createVersion(itemId: string, version: AtoumWebTechnicalVersionInput): Promise<AtoumWebTechnicalItemDetail>;
+    markStable(versionId: string): Promise<AtoumWebTechnicalItemDetail>;
+    archive(itemId: string): Promise<AtoumWebTechnicalItemDetail>;
+    reactivate(itemId: string): Promise<AtoumWebTechnicalItemDetail>;
+  };
+}
