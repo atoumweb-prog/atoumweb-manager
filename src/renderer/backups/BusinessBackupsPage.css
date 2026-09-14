@@ -1,0 +1,65 @@
+.business-backups-page { display: grid; gap: 16px; }
+.business-backups-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.business-backups-toolbar { display: grid; grid-template-columns: minmax(260px, 1fr) 180px 180px auto; gap: 10px; align-items: center; padding: 14px; }
+.business-backups-toolbar input,
+.business-backups-toolbar select,
+.business-backups-create input,
+.business-backups-create select,
+.business-backups-create textarea,
+.business-backup-add-location input,
+.business-backup-add-location select,
+.business-backup-add-location textarea { width: 100%; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); color: var(--text); padding: 9px 10px; font: inherit; outline: none; }
+.business-backups-toolbar input:focus,
+.business-backups-toolbar select:focus,
+.business-backups-create input:focus,
+.business-backups-create select:focus,
+.business-backups-create textarea:focus,
+.business-backup-add-location input:focus,
+.business-backup-add-location select:focus,
+.business-backup-add-location textarea:focus { border-color: var(--accent); }
+.business-backups-layout { display: grid; grid-template-columns: minmax(330px, .85fr) minmax(0, 1.45fr); gap: 16px; align-items: start; }
+.business-backups-list { display: grid; gap: 8px; }
+.business-backup-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; padding: 11px 12px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface-soft); color: var(--text); text-align: left; cursor: pointer; }
+.business-backup-row:hover { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); }
+.business-backup-row.selected { border-color: var(--accent); background: var(--accent-soft); }
+.business-backup-row > div:first-child { display: grid; gap: 4px; min-width: 0; }
+.business-backup-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.business-backup-row span { color: var(--muted); font-size: 9px; }
+.business-backup-row > div:last-child { display: grid; justify-items: end; gap: 4px; white-space: nowrap; }
+.stable-badge { display: inline-flex; padding: 3px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-strong) !important; font-weight: 800; }
+.business-backups-detail { min-height: 330px; }
+.business-backups-empty { padding: 36px 12px; text-align: center; }
+.business-backups-create,
+.business-backup-add-location { display: grid; gap: 12px; }
+.business-backups-create label,
+.business-backup-add-location label { display: grid; gap: 5px; color: var(--muted); font-size: 10px; font-weight: 700; }
+.business-backups-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.business-backup-context { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin: 12px 0; }
+.business-backup-context > div { display: grid; gap: 4px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); }
+.business-backup-context span { color: var(--muted); font-size: 9px; }
+.business-backup-context strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.business-backup-locations { display: grid; gap: 8px; margin: 18px 0; }
+.business-backup-locations h3,
+.business-backup-add-location h3 { margin: 0; font-size: 14px; }
+.business-backup-location { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px 12px; padding: 11px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); }
+.business-backup-location.missing { border-style: dashed; border-color: color-mix(in srgb, var(--danger, #c24d4d) 55%, var(--border)); }
+.business-backup-location > div:first-child { display: grid; gap: 4px; min-width: 0; }
+.business-backup-location strong { font-size: 11px; }
+.business-backup-location span { color: var(--muted); font-size: 9px; overflow-wrap: anywhere; }
+.business-backup-location-state { align-self: start; padding: 4px 7px; border-radius: 999px; background: var(--surface); white-space: nowrap; }
+.business-backup-location .button-row { grid-column: 1 / -1; }
+.business-backup-add-location { margin-top: 18px; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-soft); }
+.business-backups-error { margin-bottom: 0; }
+
+@media (max-width: 1180px) {
+  .business-backups-toolbar { grid-template-columns: 1fr 1fr; }
+  .business-backups-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+  .business-backups-kpis,
+  .business-backups-form-grid,
+  .business-backup-context { grid-template-columns: 1fr; }
+  .business-backup-location { grid-template-columns: 1fr; }
+  .business-backup-location .button-row { grid-column: auto; }
+}
