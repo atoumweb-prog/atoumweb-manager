@@ -66,6 +66,8 @@ import type {
   AtoumWebTechnicalItemInput,
   AtoumWebTechnicalLibraryFilters,
   AtoumWebTechnicalVersionInput,
+  ReuseCreateGlobalInput,
+  ReusePreparationInput,
 } from '../shared/referentials';
 import type {
   ManualTimeSessionInput,
@@ -213,6 +215,11 @@ const api: AtoumWebApi = {
         openFile: (assetId: string) => ipcRenderer.invoke('referentials:library:assets:open-file', assetId),
         openFolder: (versionId: string) => ipcRenderer.invoke('referentials:library:assets:open-folder', versionId),
       },
+    },
+    reuse: {
+      prepareProjectItem: (input: ReusePreparationInput) => ipcRenderer.invoke('referentials:reuse:prepare-project-item', input),
+      createGlobal: (input: ReuseCreateGlobalInput) => ipcRenderer.invoke('referentials:reuse:create-global', input),
+      openPackage: (path: string) => ipcRenderer.invoke('referentials:reuse:open-package', path),
     },
   },
   operations: {
