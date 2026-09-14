@@ -92,4 +92,50 @@ describe('AtoumWebTechnicalAssetService', () => {
     expect(afterDeletion).toHaveLength(1);
     expect(afterDeletion[0].missing).toBe(true);
   });
+
+  it('renvoie un data URL uniquement pour une capture raster autorisée', () => {
+    const item = library.create(
+      { category: 'hero', name: 'Hero visuel', reuseStatus: 'ready' },
+      { contentType: 'text', contentText: 'Hero de référence' },
+    );
+    const source = join(workspaceRoot, 'hero.png');
+    writeFileSync(source, Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a]), 'binary');
+    const imported = assets.importFilePaths(item.currentVersion!.id, [source], 'screenshot');
+
+    const preview = assets.preview(imported[0].id);
+
+    expect(preview.available).toBe(true);
+    expect(preview.mimeType).toBe('image/png');
+    expect(preview.dataUrl).toMatch(/^data:image\/png;base64,/);
+  });
+
+  it('ne prévisualise pas directement une source, même si son extension est une image', () => {
+    const item = library.create(
+      { category: 'divi', name: 'Export visuel', reuseStatus: 'adapt' },
+      { contentType: 'json', contentText: '{"module":true}' },
+    );
+    const source = join(workspaceRoot, 'source.png');
+    writeFileSync(source, 'fake-image', 'utf8');
+    const imported = assets.importFilePaths(item.currentVersion!.id, [source], 'source');
+
+    const preview = assets.preview(imported[0].id);
+
+    expect(preview.available).toBe(false);
+    expect(preview.error).toMatch(/captures|aperçus/i);
+  });
+
+  it('ne prévisualise pas directement les SVG', () => {
+    const item = library.create(
+      { category: 'section', name: 'Section SVG', reuseStatus: 'reference' },
+      { contentType: 'text', contentText: 'Référence' },
+    );
+    const source = join(workspaceRoot, 'capture.svg');
+    writeFileSync(source, '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>', 'utf8');
+    const imported = assets.importFilePaths(item.currentVersion!.id, [source], 'screenshot');
+
+    const preview = assets.preview(imported[0].id);
+
+    expect(preview.available).toBe(false);
+    expect(preview.error).toMatch(/sécurité/i);
+  });
 });
