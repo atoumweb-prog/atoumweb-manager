@@ -1,8 +1,10 @@
 import { randomUUID } from 'node:crypto';
-import type { DatabaseAdapter } from '../database/DatabaseAdapter';
-import { PROJECT_TECHNICAL_CATEGORIES, PROJECT_TECHNICAL_CONTENT_TYPES } from '../../shared/projects';
+import type { ProjectTechnicalCategory } from '../../shared/projects';
+import { PROJECT_TECHNICAL_CONTENT_TYPES } from '../../shared/projects';
 import {
+  ATOUMWEB_LIBRARY_CATEGORIES,
   ATOUMWEB_REUSE_STATUSES,
+  type AtoumWebLibraryCategory,
   type AtoumWebTechnicalItemDetail,
   type AtoumWebTechnicalItemInput,
   type AtoumWebTechnicalItemSummary,
@@ -10,6 +12,7 @@ import {
   type AtoumWebTechnicalVersion,
   type AtoumWebTechnicalVersionInput,
 } from '../../shared/referentials';
+import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 
 const nowIso = (): string => new Date().toISOString();
 const clean = (value?: string | null): string | null => {
@@ -17,11 +20,32 @@ const clean = (value?: string | null): string | null => {
   return trimmed ? trimmed : null;
 };
 
+const TECHNICAL_CATEGORY_BY_LIBRARY_CATEGORY: Record<AtoumWebLibraryCategory, ProjectTechnicalCategory> = {
+  header: 'header',
+  footer: 'footer',
+  hero: 'hero',
+  page: 'page',
+  section: 'section',
+  form: 'section',
+  gallery: 'section',
+  carousel: 'section',
+  navigation: 'section',
+  css: 'css',
+  javascript: 'javascript',
+  php: 'php',
+  woocommerce: 'woocommerce',
+  acf: 'acf',
+  divi: 'divi',
+  app: 'plugin',
+  note: 'note',
+};
+
 interface ItemRow extends Record<string, unknown> {
   id: string;
   project_id: string | null;
   scope: 'project' | 'atoumweb';
-  category: AtoumWebTechnicalItemSummary['category'];
+  category: ProjectTechnicalCategory;
+  library_category: AtoumWebLibraryCategory | null;
   name: string;
   description: string | null;
   tags_json: string;
@@ -53,7 +77,7 @@ export class AtoumWebTechnicalLibraryService {
       `SELECT * FROM technical_items
        WHERE scope='atoumweb'
          AND (?=1 OR archived_at IS NULL)
-       ORDER BY category, name COLLATE NOCASE`,
+       ORDER BY library_category, name COLLATE NOCASE`,
       [filters.includeArchived ? 1 : 0],
     );
     const needle = clean(filters.search)?.toLocaleLowerCase('fr-FR');
@@ -80,14 +104,16 @@ export class AtoumWebTechnicalLibraryService {
 
     const id = randomUUID();
     const now = nowIso();
+    const technicalCategory = TECHNICAL_CATEGORY_BY_LIBRARY_CATEGORY[itemInput.category];
     this.database.exec('BEGIN IMMEDIATE;');
     try {
       this.database.run(
         `INSERT INTO technical_items
-         (id,project_id,scope,category,name,description,tags_json,reuse_status,origin_technical_item_id,created_at,updated_at)
-         VALUES (?,NULL,'atoumweb',?,?,?,?,?,?,?,?)`,
+         (id,project_id,scope,category,library_category,name,description,tags_json,reuse_status,origin_technical_item_id,created_at,updated_at)
+         VALUES (?,NULL,'atoumweb',?,?,?,?,?,?,?,?,?)`,
         [
           id,
+          technicalCategory,
           itemInput.category,
           name,
           clean(itemInput.description),
@@ -123,11 +149,13 @@ export class AtoumWebTechnicalLibraryService {
     this.validateItemInput(next);
     this.assertOrigin(next.originTechnicalItemId);
     const now = nowIso();
+    const technicalCategory = TECHNICAL_CATEGORY_BY_LIBRARY_CATEGORY[next.category];
     this.database.run(
       `UPDATE technical_items
-       SET category=?, name=?, description=?, tags_json=?, reuse_status=?, origin_technical_item_id=?, updated_at=?
+       SET category=?, library_category=?, name=?, description=?, tags_json=?, reuse_status=?, origin_technical_item_id=?, updated_at=?
        WHERE id=? AND scope='atoumweb'`,
       [
+        technicalCategory,
         next.category,
         name,
         clean(next.description),
@@ -212,10 +240,13 @@ export class AtoumWebTechnicalLibraryService {
     if (!row.reuse_status || !ATOUMWEB_REUSE_STATUSES.includes(row.reuse_status)) {
       throw new Error(`Composant AtoumWeb ${row.id} sans statut de réutilisation valide.`);
     }
+    if (!row.library_category || !ATOUMWEB_LIBRARY_CATEGORIES.includes(row.library_category)) {
+      throw new Error(`Composant AtoumWeb ${row.id} sans catégorie de bibliothèque valide.`);
+    }
     const versions = this.getVersions(row.id);
     return {
       id: row.id,
-      category: row.category,
+      category: row.library_category,
       name: row.name,
       description: row.description,
       tags: this.parseTags(row.tags_json),
@@ -249,7 +280,7 @@ export class AtoumWebTechnicalLibraryService {
   }
 
   private validateItemInput(input: AtoumWebTechnicalItemInput): void {
-    if (!PROJECT_TECHNICAL_CATEGORIES.includes(input.category)) throw new Error('Catégorie technique invalide.');
+    if (!ATOUMWEB_LIBRARY_CATEGORIES.includes(input.category)) throw new Error('Catégorie de Bibliothèque AtoumWeb invalide.');
     if (!ATOUMWEB_REUSE_STATUSES.includes(input.reuseStatus)) throw new Error('Statut de réutilisation invalide.');
   }
 
