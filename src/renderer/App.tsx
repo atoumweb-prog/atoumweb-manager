@@ -9,6 +9,7 @@ import { ProspectsPage } from './crm/ProspectsPage';
 import { DashboardOperationsWatch } from './operations/DashboardOperationsWatch';
 import { OperationsPage, type OperationsSearchTarget } from './operations/OperationsPage';
 import { ProjectsPage } from './projects/ProjectsPage';
+import { AtoumWebLibraryPage } from './referentials/AtoumWebLibraryPage';
 import { GlobalTimer } from './time/GlobalTimer';
 import { TimePage } from './time/TimePage';
 
@@ -185,8 +186,9 @@ function App() {
           {activePage === 'Projets' && <ProjectsPage onMessage={setMessage} initialProjectId={projectSearchTarget} />}
           {activePage === 'Interventions & Maintenance' && <OperationsPage onMessage={setMessage} initialTarget={operationsSearchTarget} />}
           {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}
+          {activePage === 'Bibliothèque AtoumWeb' && <AtoumWebLibraryPage onMessage={setMessage} />}
           {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} onThemeChange={updateTheme} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
-          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
+          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
         </section>
       </main>
     </div>
