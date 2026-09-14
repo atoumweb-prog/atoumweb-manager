@@ -22,6 +22,7 @@ import { ProjectReuseExportService } from '../projects/ProjectReuseExportService
 import { ProjectSearchService } from '../projects/ProjectSearchService';
 import { ProjectService } from '../projects/ProjectService';
 import { ProjectTechnicalLibraryService } from '../projects/ProjectTechnicalLibraryService';
+import { AtoumWebTechnicalLibraryService } from '../referentials/AtoumWebTechnicalLibraryService';
 import { TimeCorrectionService } from '../time/TimeCorrectionService';
 import { TimeService } from '../time/TimeService';
 import { TimeSwitchService } from '../time/TimeSwitchService';
@@ -47,6 +48,7 @@ export class DatabaseService {
   readonly projectReuseExport: ProjectReuseExportService;
   readonly projectSearch: ProjectSearchService;
   readonly projectTechnicalLibrary: ProjectTechnicalLibraryService;
+  readonly atoumWebTechnicalLibrary: AtoumWebTechnicalLibraryService;
   readonly operations: OperationsService;
   readonly maintenance: MaintenanceService;
   readonly hourPacks: HourPackService;
@@ -75,6 +77,7 @@ export class DatabaseService {
     this.projectReuseExport = new ProjectReuseExportService(this.database, this.workspace);
     this.projectSearch = new ProjectSearchService(this.database);
     this.projectTechnicalLibrary = new ProjectTechnicalLibraryService(this.database);
+    this.atoumWebTechnicalLibrary = new AtoumWebTechnicalLibraryService(this.database);
     this.operations = new OperationsService(this.database);
     this.maintenance = new MaintenanceService(this.database);
     this.hourPacks = new HourPackService(this.database);
