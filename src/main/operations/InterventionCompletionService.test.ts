@@ -6,6 +6,7 @@ import { applyPendingMigrations } from '../database/migrations';
 import { TimeService } from '../time/TimeService';
 import { HourPackService } from './HourPackService';
 import { InterventionCompletionService } from './InterventionCompletionService';
+import { MaintenanceOverageService } from './MaintenanceOverageService';
 import { OperationsService } from './OperationsService';
 
 let database: NodeSqliteAdapter;
@@ -26,7 +27,8 @@ beforeEach(() => {
   operations = new OperationsService(database);
   packs = new HourPackService(database);
   billing = new BillingHandoffService(database);
-  completion = new InterventionCompletionService(database, operations, packs, billing);
+  const maintenanceOverages = new MaintenanceOverageService(database, billing);
+  completion = new InterventionCompletionService(database, operations, packs, billing, maintenanceOverages);
   time = new TimeService(database);
 });
 
