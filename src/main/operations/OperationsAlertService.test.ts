@@ -16,6 +16,7 @@ let packs: HourPackService;
 let operations: OperationsService;
 let alerts: OperationsAlertService;
 let overages: MaintenanceOverageService;
+let billing: BillingHandoffService;
 let clientId: string;
 
 const dateOnly = (date: Date): string => date.toISOString().slice(0, 10);
@@ -29,7 +30,8 @@ beforeEach(() => {
   packs = new HourPackService(database);
   operations = new OperationsService(database);
   alerts = new OperationsAlertService(database);
-  overages = new MaintenanceOverageService(database, new BillingHandoffService(database));
+  billing = new BillingHandoffService(database);
+  overages = new MaintenanceOverageService(database, billing);
   const contact = crm.createContact({ firstName: 'Client', lastName: 'Alertes' });
   clientId = crm.createClient({ primaryContactId: contact.id }).id;
 });
@@ -61,6 +63,44 @@ describe('OperationsAlertService', () => {
     const kinds = alerts.get().alerts.filter((alert) => alert.hourPackId === pack.id).map((alert) => alert.kind);
     expect(kinds).toContain('hour_pack_low');
     expect(kinds).toContain('hour_pack_expiring');
+  });
+
+  it('signale un incident critique tant qu’il reste ouvert', () => {
+    const incident = operations.createIntervention({
+      clientAccountId: clientId,
+      type: 'incident',
+      status: 'in_progress',
+      coverageMode: 'out_of_scope',
+      subject: 'Site indisponible',
+      incidentCriticality: 'critical',
+      incidentStartedAt: new Date().toISOString(),
+    });
+
+    let snapshot = alerts.get();
+    const openAlert = snapshot.alerts.find((alert) => alert.kind === 'incident_critical_open' && alert.interventionId === incident.id);
+    expect(openAlert?.severity).toBe('critical');
+
+    operations.updateIntervention(incident.id, { incidentResolvedAt: new Date().toISOString() });
+    snapshot = alerts.get();
+    expect(snapshot.alerts.some((alert) => alert.kind === 'incident_critical_open' && alert.interventionId === incident.id)).toBe(false);
+  });
+
+  it('signale une intervention terminée dont la facturation est prête', () => {
+    const intervention = operations.createIntervention({
+      clientAccountId: clientId,
+      type: 'correction',
+      status: 'completed',
+      coverageMode: 'out_of_scope',
+      subject: 'Correction hors forfait',
+      theoreticalValueCents: 15000,
+      billableAmountCents: 12000,
+    });
+    const item = billing.ensureForIntervention(intervention.id);
+    expect(item?.status).toBe('ready');
+
+    const alert = alerts.get().alerts.find((candidate) => candidate.kind === 'intervention_ready_to_bill' && candidate.interventionId === intervention.id);
+    expect(alert?.billingItemId).toBe(item?.id);
+    expect(alert?.severity).toBe('warning');
   });
 
   it('remplace l’alerte de dépassement non décidé par une alerte quota après décision', () => {
