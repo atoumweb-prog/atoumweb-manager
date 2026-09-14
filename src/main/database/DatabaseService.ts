@@ -82,7 +82,7 @@ export class DatabaseService {
     this.hourPackShortfalls = new HourPackShortfallService(this.database, this.hourPacks, this.billingHandoff);
     this.maintenanceOverages = new MaintenanceOverageService(this.database, this.billingHandoff);
     this.maintenanceReports = new MaintenanceReportService(this.database);
-    this.operationsAlerts = new OperationsAlertService(this.database);
+    this.operationsAlerts = new OperationsAlertService(this.database, this.hourPackShortfalls);
     this.interventionCompletion = new InterventionCompletionService(this.database, this.operations, this.hourPacks, this.billingHandoff, this.maintenanceOverages);
     this.time = new TimeService(this.database);
     this.timeCorrections = new TimeCorrectionService(this.database, this.time);
