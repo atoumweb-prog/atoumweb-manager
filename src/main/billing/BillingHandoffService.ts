@@ -103,6 +103,46 @@ export class BillingHandoffService {
     return this.get(id);
   }
 
+  ensureForHourPackShortfall(decisionId: string): BillingItem | null {
+    const decision = this.database.get<{
+      id: string;
+      decision: string;
+      reason: string;
+      expected_amount_cents: number;
+      intervention_number: string;
+      subject: string;
+      client_account_id: string;
+      project_id: string | null;
+    }>(
+      `SELECT hpsd.id,hpsd.decision,hpsd.reason,hpsd.expected_amount_cents,
+        i.intervention_number,i.subject,i.client_account_id,i.project_id
+       FROM hour_pack_shortfall_decisions hpsd
+       JOIN interventions i ON i.id=hpsd.intervention_id
+       WHERE hpsd.id=?`,
+      [decisionId],
+    );
+    if (!decision) throw new Error('Décision de dépassement du pack introuvable.');
+    if (decision.decision !== 'bill_complement') return null;
+
+    const expected = Number(decision.expected_amount_cents);
+    if (expected <= 0) throw new Error('Indique le montant à facturer pour le complément du pack.');
+    const sourceKey = `hour_pack_shortfall:${decision.id}`;
+    const existing = this.database.get<{ id: string }>('SELECT id FROM billing_items WHERE source_key=?', [sourceKey]);
+    if (existing) return this.get(existing.id);
+
+    const description = `Complément pack d’heures · ${decision.intervention_number} · ${decision.subject}`;
+    const id = randomUUID();
+    const now = nowIso();
+    this.database.run(
+      `INSERT INTO billing_items
+       (id,client_account_id,project_id,source_type,source_id,source_key,description,expected_amount_cents,theoretical_value_cents,status,notes,created_at,updated_at)
+       VALUES (?,?,?,'hour_pack',?,?,?,?,?,'ready',?,?,?)`,
+      [id, decision.client_account_id, decision.project_id, decision.id, sourceKey, description, expected, expected, decision.reason, now, now],
+    );
+    this.writeActivity('billing_item', id, 'billing_item_created', `${description} · ready`);
+    return this.get(id);
+  }
+
   syncMaintenanceOverage(decisionId: string): BillingItem | null {
     const decision = this.database.get<{
       id: string;
