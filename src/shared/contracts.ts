@@ -1,3 +1,4 @@
+import type { BusinessBackupsApi } from './businessBackups';
 import type { CatalogApi, QuoteApi } from './commercial';
 import type { CrmApi } from './crm';
 import type { HourPackShortfallApi } from './hourPackShortfall';
@@ -62,6 +63,7 @@ export interface AtoumWebApi {
     createManual(): Promise<BackupResult>;
     restore(): Promise<RestoreScheduleResult>;
   };
+  businessBackups: BusinessBackupsApi;
   database: {
     health(): Promise<DatabaseHealth>;
   };
