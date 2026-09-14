@@ -115,4 +115,36 @@ describe('AtoumWebTechnicalLibraryService', () => {
       { contentType: 'text', contentText: 'Test' },
     )).toThrow(/Bibliothèque projet/i);
   });
+
+  it('indexe nom, tags, notes et contenu dans la recherche générale', () => {
+    const item = library.create(
+      {
+        category: 'carousel',
+        name: 'Carrousel véhicules générique',
+        description: 'Composant réutilisable',
+        reuseStatus: 'ready',
+        tags: ['automobile', 'slider'],
+      },
+      {
+        contentType: 'code',
+        language: 'javascript',
+        contentText: 'const rotationAutomatique = true;',
+        notes: 'Boucle continue',
+      },
+    );
+
+    const indexed = database.get<{ search_text: string }>(
+      "SELECT search_text FROM search_documents WHERE entity_type='atoumweb_library' AND entity_id=?",
+      [item.id],
+    );
+    expect(indexed?.search_text).toContain('automobile');
+    expect(indexed?.search_text).toContain('boucle continue');
+    expect(indexed?.search_text).toContain('rotationautomatique');
+
+    library.archive(item.id);
+    expect(database.get("SELECT id FROM search_documents WHERE entity_type='atoumweb_library' AND entity_id=?", [item.id])).toBeUndefined();
+
+    library.reactivate(item.id);
+    expect(database.get("SELECT id FROM search_documents WHERE entity_type='atoumweb_library' AND entity_id=?", [item.id])).toBeTruthy();
+  });
 });
