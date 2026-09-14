@@ -62,6 +62,7 @@ import type {
   TransformQuoteToProjectInput,
 } from '../shared/projects';
 import type {
+  AtoumWebPackageImportInput,
   AtoumWebTechnicalAssetRole,
   AtoumWebTechnicalItemInput,
   AtoumWebTechnicalLibraryFilters,
@@ -220,6 +221,12 @@ const api: AtoumWebApi = {
       prepareProjectItem: (input: ReusePreparationInput) => ipcRenderer.invoke('referentials:reuse:prepare-project-item', input),
       createGlobal: (input: ReuseCreateGlobalInput) => ipcRenderer.invoke('referentials:reuse:create-global', input),
       openPackage: (path: string) => ipcRenderer.invoke('referentials:reuse:open-package', path),
+    },
+    packages: {
+      exportItem: (itemId: string, versionId?: string | null) => ipcRenderer.invoke('referentials:packages:export', itemId, versionId),
+      inspectImport: () => ipcRenderer.invoke('referentials:packages:inspect-import'),
+      importPackage: (input: AtoumWebPackageImportInput) => ipcRenderer.invoke('referentials:packages:import', input),
+      showExport: (path: string) => ipcRenderer.invoke('referentials:packages:show-export', path),
     },
   },
   operations: {
