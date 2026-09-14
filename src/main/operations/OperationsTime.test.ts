@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CrmService } from '../crm/CrmService';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
@@ -19,9 +19,43 @@ beforeEach(() => {
   time = new TimeService(database);
 });
 
-afterEach(() => database.close());
+afterEach(() => {
+  vi.useRealTimers();
+  database.close();
+});
 
 describe('Intervention + TimeSession', () => {
+  it('conserve les fractions de seconde des pauses avant de calculer la durée totale', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-14T08:00:00.100Z'));
+    const contact = crm.createContact({ firstName: 'Client', lastName: 'Pauses' });
+    const client = crm.createClient({ primaryContactId: contact.id });
+    const intervention = operations.createIntervention({ clientAccountId: client.id, subject: 'Support' });
+    const session = time.start({ interventionId: intervention.id, category: 'support' });
+    vi.setSystemTime(new Date('2026-09-14T08:00:01.900Z'));
+    time.pause(session.id);
+    vi.setSystemTime(new Date('2026-09-14T08:00:02.100Z'));
+    expect(operations.getIntervention(intervention.id).totalTimeSeconds).toBe(1);
+    time.resume(session.id);
+    vi.setSystemTime(new Date('2026-09-14T08:00:03.200Z'));
+    expect(time.stop(session.id).durationSeconds).toBe(2);
+    expect(operations.getIntervention(intervention.id).totalTimeSeconds).toBe(2);
+  });
+
+  it('arrête le total au dernier point connu quand une session attend une récupération', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-14T08:00:00.000Z'));
+    const contact = crm.createContact({ firstName: 'Client', lastName: 'Reprise' });
+    const client = crm.createClient({ primaryContactId: contact.id });
+    const intervention = operations.createIntervention({ clientAccountId: client.id, subject: 'Support' });
+    const session = time.start({ interventionId: intervention.id, category: 'support' });
+    vi.setSystemTime(new Date('2026-09-14T08:01:00.000Z'));
+    time.heartbeat(session.id);
+    vi.setSystemTime(new Date('2026-09-14T09:00:00.000Z'));
+    expect(time.get(session.id).durationSeconds).toBe(60);
+    expect(operations.getIntervention(intervention.id).totalTimeSeconds).toBe(60);
+  });
+
   it('calcule le temps de l’intervention uniquement depuis time_sessions', () => {
     const organization = crm.createOrganization({ name: 'Client Temps Intervention' });
     const client = crm.createClient({ organizationId: organization.id });

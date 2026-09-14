@@ -295,7 +295,7 @@ export class OperationsAlertService {
   private readyToBillRows(): BillingAlertRow[] {
     return this.database.all<BillingAlertRow>(
       `SELECT bi.id AS billing_item_id,i.id AS intervention_id,i.intervention_number,
-        bi.client_account_id,bi.project_id,bi.description,bi.expected_amount_cents,bi.created_at,
+        bi.client_account_id,bi.project_id,bi.description,bi.expected_amount_cents,bi.created_at AS created_at,
         COALESCE(o.name,trim(c.first_name || ' ' || c.last_name),'Client') AS client_label,
         p.name AS project_label
        FROM billing_items bi
@@ -307,7 +307,7 @@ export class OperationsAlertService {
        WHERE bi.status='ready' AND bi.expected_amount_cents>0 AND i.status='completed'
        UNION ALL
        SELECT bi.id AS billing_item_id,i.id AS intervention_id,i.intervention_number,
-        bi.client_account_id,bi.project_id,bi.description,bi.expected_amount_cents,bi.created_at,
+        bi.client_account_id,bi.project_id,bi.description,bi.expected_amount_cents,bi.created_at AS created_at,
         COALESCE(o.name,trim(c.first_name || ' ' || c.last_name),'Client') AS client_label,
         p.name AS project_label
        FROM billing_items bi
@@ -320,7 +320,7 @@ export class OperationsAlertService {
        WHERE bi.status='ready' AND bi.expected_amount_cents>0 AND i.status='completed'
        UNION ALL
        SELECT bi.id AS billing_item_id,i.id AS intervention_id,i.intervention_number,
-        bi.client_account_id,bi.project_id,bi.description,bi.expected_amount_cents,bi.created_at,
+        bi.client_account_id,bi.project_id,bi.description,bi.expected_amount_cents,bi.created_at AS created_at,
         COALESCE(o.name,trim(c.first_name || ' ' || c.last_name),'Client') AS client_label,
         p.name AS project_label
        FROM billing_items bi

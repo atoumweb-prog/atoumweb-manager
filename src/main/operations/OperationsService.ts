@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { TimeService } from '../time/TimeService';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import {
   INCIDENT_CRITICALITIES,
@@ -82,7 +83,6 @@ interface InterventionRow extends Record<string, unknown> {
   client_label: string;
   project_label: string | null;
   project_node_label: string | null;
-  total_time_seconds: number;
 }
 
 export class OperationsService {
@@ -373,14 +373,7 @@ export class OperationsService {
     return `SELECT i.*,
       COALESCE(o.name, trim(c.first_name || ' ' || c.last_name), 'Client') AS client_label,
       p.name AS project_label,
-      pn.name AS project_node_label,
-      COALESCE((
-        SELECT SUM(MAX(0, CAST((julianday(COALESCE(ts.ended_at, CURRENT_TIMESTAMP)) - julianday(ts.started_at)) * 86400 AS INTEGER)) - COALESCE((
-          SELECT SUM(MAX(0, CAST((julianday(COALESCE(tsp.ended_at, COALESCE(ts.ended_at, CURRENT_TIMESTAMP))) - julianday(tsp.started_at)) * 86400 AS INTEGER)))
-          FROM time_session_pauses tsp WHERE tsp.time_session_id=ts.id
-        ),0))
-        FROM time_sessions ts WHERE ts.intervention_id=i.id
-      ),0) AS total_time_seconds
+      pn.name AS project_node_label
     FROM interventions i
     JOIN client_accounts ca ON ca.id=i.client_account_id
     LEFT JOIN organizations o ON o.id=ca.organization_id
@@ -411,7 +404,7 @@ export class OperationsService {
       downtimeMinutes: row.downtime_minutes, incidentCause: row.incident_cause, incidentDiagnosis: row.incident_diagnosis,
       incidentSolution: row.incident_solution, incidentFollowUp: row.incident_follow_up,
       clientLabel: row.client_label, projectLabel: row.project_label, projectNodeLabel: row.project_node_label,
-      totalTimeSeconds: Math.max(0, Number(row.total_time_seconds ?? 0)), createdAt: row.created_at, updatedAt: row.updated_at, archivedAt: row.archived_at,
+      totalTimeSeconds: new TimeService(this.database).summary({ interventionId: row.id }).totalSeconds, createdAt: row.created_at, updatedAt: row.updated_at, archivedAt: row.archived_at,
     };
   }
 
