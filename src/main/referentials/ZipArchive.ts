@@ -163,7 +163,16 @@ export function readZipArchive(path: string): ZipEntryOutput[] {
     if (dataEnd > buffer.length) throw new Error(`Contenu ZIP tronqué pour ${name}.`);
 
     const compressed = buffer.subarray(dataStart, dataEnd);
-    const data = method === 0 ? Buffer.from(compressed) : inflateRawSync(compressed);
+    let data: Buffer;
+    if (method === 0) {
+      data = Buffer.from(compressed);
+    } else {
+      try {
+        data = inflateRawSync(compressed, { maxOutputLength: Math.max(1, uncompressedSize) });
+      } catch {
+        throw new Error(`Décompression ZIP invalide ou trop volumineuse pour ${name}.`);
+      }
+    }
     if (data.length !== uncompressedSize) throw new Error(`Taille décompressée incohérente pour ${name}.`);
     if (crc32(data) !== expectedCrc) throw new Error(`CRC invalide pour ${name}.`);
 
