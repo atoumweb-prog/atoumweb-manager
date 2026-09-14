@@ -34,6 +34,31 @@ interface PackAlertRow extends Record<string, unknown> {
   balance_seconds: number;
 }
 
+interface IncidentAlertRow extends Record<string, unknown> {
+  id: string;
+  intervention_number: string;
+  client_account_id: string;
+  project_id: string | null;
+  client_label: string;
+  project_label: string | null;
+  subject: string;
+  incident_started_at: string | null;
+  created_at: string;
+}
+
+interface BillingAlertRow extends Record<string, unknown> {
+  billing_item_id: string;
+  intervention_id: string;
+  intervention_number: string;
+  client_account_id: string;
+  project_id: string | null;
+  client_label: string;
+  project_label: string | null;
+  description: string;
+  expected_amount_cents: number;
+  created_at: string;
+}
+
 export class OperationsAlertService {
   constructor(private readonly database: DatabaseAdapter) {}
 
@@ -42,6 +67,39 @@ export class OperationsAlertService {
     const today = now.toISOString().slice(0, 10);
     const thresholds = this.thresholds();
     const alerts: OperationsAlert[] = [];
+
+    for (const row of this.criticalIncidentRows()) {
+      alerts.push({
+        id: `incident-critical:${row.id}`,
+        kind: 'incident_critical_open',
+        severity: 'critical',
+        title: 'Incident critique ouvert',
+        detail: `${row.intervention_number} · ${row.subject}`,
+        clientAccountId: row.client_account_id,
+        clientLabel: row.client_label,
+        projectId: row.project_id,
+        projectLabel: row.project_label,
+        interventionId: row.id,
+        dueAt: row.incident_started_at ?? row.created_at,
+      });
+    }
+
+    for (const row of this.readyToBillRows()) {
+      alerts.push({
+        id: `billing-ready:${row.billing_item_id}`,
+        kind: 'intervention_ready_to_bill',
+        severity: 'warning',
+        title: 'Intervention terminée à facturer',
+        detail: `${row.intervention_number} · ${this.money(Number(row.expected_amount_cents))} à préparer dans Facturation.`,
+        clientAccountId: row.client_account_id,
+        clientLabel: row.client_label,
+        projectId: row.project_id,
+        projectLabel: row.project_label,
+        interventionId: row.intervention_id,
+        billingItemId: row.billing_item_id,
+        dueAt: row.created_at,
+      });
+    }
 
     for (const row of this.currentMaintenanceRows()) {
       if (!row.period_id) {
@@ -208,6 +266,54 @@ export class OperationsAlertService {
     }
   }
 
+  private criticalIncidentRows(): IncidentAlertRow[] {
+    return this.database.all<IncidentAlertRow>(
+      `SELECT i.id,i.intervention_number,i.client_account_id,i.project_id,i.subject,i.incident_started_at,i.created_at,
+        COALESCE(o.name,trim(c.first_name || ' ' || c.last_name),'Client') AS client_label,
+        p.name AS project_label
+       FROM interventions i
+       JOIN client_accounts ca ON ca.id=i.client_account_id
+       LEFT JOIN organizations o ON o.id=ca.organization_id
+       LEFT JOIN contacts c ON c.id=ca.primary_contact_id
+       LEFT JOIN projects p ON p.id=i.project_id
+       WHERE i.intervention_type='incident'
+         AND i.incident_criticality='critical'
+         AND i.incident_resolved_at IS NULL
+         AND i.status NOT IN ('completed','cancelled','archived')
+       ORDER BY COALESCE(i.incident_started_at,i.created_at)`,
+    );
+  }
+
+  private readyToBillRows(): BillingAlertRow[] {
+    return this.database.all<BillingAlertRow>(
+      `SELECT bi.id AS billing_item_id,i.id AS intervention_id,i.intervention_number,
+        bi.client_account_id,bi.project_id,bi.description,bi.expected_amount_cents,bi.created_at,
+        COALESCE(o.name,trim(c.first_name || ' ' || c.last_name),'Client') AS client_label,
+        p.name AS project_label
+       FROM billing_items bi
+       JOIN interventions i ON bi.source_type='intervention' AND i.id=bi.source_id
+       JOIN client_accounts ca ON ca.id=bi.client_account_id
+       LEFT JOIN organizations o ON o.id=ca.organization_id
+       LEFT JOIN contacts c ON c.id=ca.primary_contact_id
+       LEFT JOIN projects p ON p.id=bi.project_id
+       WHERE bi.status='ready' AND bi.expected_amount_cents>0 AND i.status='completed'
+       UNION ALL
+       SELECT bi.id AS billing_item_id,i.id AS intervention_id,i.intervention_number,
+        bi.client_account_id,bi.project_id,bi.description,bi.expected_amount_cents,bi.created_at,
+        COALESCE(o.name,trim(c.first_name || ' ' || c.last_name),'Client') AS client_label,
+        p.name AS project_label
+       FROM billing_items bi
+       JOIN maintenance_overage_decisions mod ON bi.source_type='maintenance_overage' AND mod.id=bi.source_id
+       JOIN interventions i ON i.id=mod.intervention_id
+       JOIN client_accounts ca ON ca.id=bi.client_account_id
+       LEFT JOIN organizations o ON o.id=ca.organization_id
+       LEFT JOIN contacts c ON c.id=ca.primary_contact_id
+       LEFT JOIN projects p ON p.id=bi.project_id
+       WHERE bi.status='ready' AND bi.expected_amount_cents>0 AND i.status='completed'
+       ORDER BY created_at`,
+    );
+  }
+
   private currentMaintenanceRows(): MaintenanceAlertRow[] {
     const today = new Date().toISOString().slice(0, 10);
     return this.database.all<MaintenanceAlertRow>(
@@ -288,5 +394,9 @@ export class OperationsAlertService {
     const rest = minutes % 60;
     if (!hours) return `${rest} min`;
     return rest ? `${hours} h ${String(rest).padStart(2, '0')}` : `${hours} h`;
+  }
+
+  private money(cents: number): string {
+    return `${(Math.max(0, cents) / 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €`;
   }
 }
