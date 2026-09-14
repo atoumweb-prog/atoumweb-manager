@@ -57,8 +57,9 @@
 .aw-library-section-title h3 { margin: 3px 0 0; font-size: 14px; }
 .aw-library-asset-toolbar { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(150px, .8fr) auto; gap: 10px; align-items: end; }
 .aw-library-asset-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.aw-library-asset { display: grid; gap: 4px; min-width: 0; padding: 10px 11px; text-align: left; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); cursor: pointer; }
+.aw-library-asset { display: grid; gap: 4px; min-width: 0; padding: 10px 11px; text-align: left; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); cursor: pointer; overflow: hidden; }
 .aw-library-asset:hover { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); }
+.aw-library-asset > img { width: calc(100% + 22px); height: 120px; margin: -10px -11px 5px; object-fit: cover; border-bottom: 1px solid var(--border); background: var(--surface-soft); }
 .aw-library-asset > span { color: var(--accent-strong); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
 .aw-library-asset > strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
 .aw-library-asset > small { color: var(--muted); font-size: 9px; }
@@ -72,7 +73,8 @@
 .aw-library-version > div:first-child span { color: var(--muted); font-size: 10px; }
 .aw-library-version-flags { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
 .aw-library-version p,
-.aw-library-version pre { grid-column: 1 / -1; }
+.aw-library-version pre,
+.aw-library-version .technical-content-viewer { grid-column: 1 / -1; }
 .aw-library-version p { margin: 0; color: var(--muted); font-size: 11px; }
 .aw-library-version pre { margin: 0; max-height: 300px; overflow: auto; padding: 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--text); font-size: 11px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
 .aw-library-package-review { border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
