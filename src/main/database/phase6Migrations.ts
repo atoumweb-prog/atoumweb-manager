@@ -56,4 +56,55 @@ export const PHASE_6_MIGRATIONS = [
         ON atoumweb_technical_assets(technical_item_version_id, asset_role, created_at DESC);
     `,
   },
+  {
+    id: 21,
+    name: 'phase_6_business_backup_records',
+    sql: `
+      CREATE TABLE IF NOT EXISTS backup_records (
+        id TEXT PRIMARY KEY,
+        client_account_id TEXT REFERENCES client_accounts(id) ON DELETE SET NULL,
+        project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
+        backup_type TEXT NOT NULL CHECK (backup_type IN (
+          'complete', 'database', 'files_code', 'config_export',
+          'pre_intervention', 'post_validation', 'other'
+        )),
+        label TEXT NOT NULL,
+        backup_at TEXT NOT NULL,
+        size_bytes INTEGER CHECK (size_bytes IS NULL OR size_bytes >= 0),
+        checksum_sha256 TEXT,
+        is_stable INTEGER NOT NULL DEFAULT 0 CHECK (is_stable IN (0,1)),
+        notes TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        CHECK (client_account_id IS NOT NULL OR project_id IS NOT NULL)
+      ) STRICT;
+
+      CREATE INDEX IF NOT EXISTS idx_backup_records_project
+        ON backup_records(project_id, backup_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_backup_records_client
+        ON backup_records(client_account_id, backup_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_backup_records_stable
+        ON backup_records(project_id, client_account_id, is_stable, backup_at DESC);
+
+      CREATE TABLE IF NOT EXISTS backup_locations (
+        id TEXT PRIMARY KEY,
+        backup_record_id TEXT NOT NULL REFERENCES backup_records(id) ON DELETE CASCADE,
+        location_type TEXT NOT NULL CHECK (location_type IN ('server', 'local', 'external', 'other')),
+        label TEXT NOT NULL,
+        path_or_reference TEXT NOT NULL,
+        verified_at TEXT,
+        last_checked_at TEXT,
+        missing_at TEXT,
+        notes TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        UNIQUE (backup_record_id, location_type, path_or_reference)
+      ) STRICT;
+
+      CREATE INDEX IF NOT EXISTS idx_backup_locations_record
+        ON backup_locations(backup_record_id, location_type, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_backup_locations_type
+        ON backup_locations(location_type, verified_at, missing_at);
+    `,
+  },
 ];
