@@ -107,6 +107,37 @@ describe('OperationsService', () => {
     })).toThrow(/n’appartient pas/i);
   });
 
+  it('rattache une intervention au nœud réel du projet et permet de modifier ce rattachement', () => {
+    const client = createClient('Client avec projet');
+    const projectId = 'project-node-context';
+    const now = new Date().toISOString();
+    database.run(
+      `INSERT INTO projects (id,project_number,client_account_id,name,project_type,status,commercial_mode,commercial_value_cents,contract_value_cents,created_at,updated_at)
+       VALUES (?,?,?,?,?,'in_progress','normal',0,0,?,?)`,
+      [projectId, 'PRO-2026-997', client.id, 'Projet avec plan', 'website', now, now],
+    );
+
+    projects.addProjectNode(projectId, { type: 'module', displaySubtype: 'page', name: 'Accueil' });
+    projects.addProjectNode(projectId, { type: 'task', name: 'Corriger le formulaire' });
+    const project = projects.getProject(projectId);
+    const page = project.nodes.find((node) => node.name === 'Accueil')!;
+    const task = project.nodes.find((node) => node.name === 'Corriger le formulaire')!;
+
+    const intervention = operations.createIntervention({
+      clientAccountId: client.id,
+      projectId,
+      projectNodeId: page.id,
+      subject: 'Ajustement page accueil',
+      type: 'modification',
+    });
+    expect(intervention.projectNodeId).toBe(page.id);
+    expect(intervention.projectNodeLabel).toBe('Accueil');
+
+    const updated = operations.updateIntervention(intervention.id, { projectNodeId: task.id });
+    expect(updated.projectNodeId).toBe(task.id);
+    expect(updated.projectNodeLabel).toBe('Corriger le formulaire');
+  });
+
   it('numérote les interventions et gère leurs statuts sans stocker de durée propre', () => {
     const client = createClient();
     const first = operations.createIntervention({
