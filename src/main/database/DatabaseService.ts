@@ -24,6 +24,7 @@ import { ProjectService } from '../projects/ProjectService';
 import { ProjectTechnicalLibraryService } from '../projects/ProjectTechnicalLibraryService';
 import { AtoumWebTechnicalAssetService } from '../referentials/AtoumWebTechnicalAssetService';
 import { AtoumWebTechnicalLibraryService } from '../referentials/AtoumWebTechnicalLibraryService';
+import { ReusePreparationService } from '../referentials/ReusePreparationService';
 import { TimeCorrectionService } from '../time/TimeCorrectionService';
 import { TimeService } from '../time/TimeService';
 import { TimeSwitchService } from '../time/TimeSwitchService';
@@ -51,6 +52,7 @@ export class DatabaseService {
   readonly projectTechnicalLibrary: ProjectTechnicalLibraryService;
   readonly atoumWebTechnicalLibrary: AtoumWebTechnicalLibraryService;
   readonly atoumWebTechnicalAssets: AtoumWebTechnicalAssetService;
+  readonly reusePreparation: ReusePreparationService;
   readonly operations: OperationsService;
   readonly maintenance: MaintenanceService;
   readonly hourPacks: HourPackService;
@@ -81,6 +83,7 @@ export class DatabaseService {
     this.projectTechnicalLibrary = new ProjectTechnicalLibraryService(this.database);
     this.atoumWebTechnicalLibrary = new AtoumWebTechnicalLibraryService(this.database);
     this.atoumWebTechnicalAssets = new AtoumWebTechnicalAssetService(this.database, this.workspace);
+    this.reusePreparation = new ReusePreparationService(this.database, this.workspace, this.atoumWebTechnicalLibrary, this.atoumWebTechnicalAssets);
     this.operations = new OperationsService(this.database);
     this.maintenance = new MaintenanceService(this.database);
     this.hourPacks = new HourPackService(this.database);
