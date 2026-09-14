@@ -9,6 +9,7 @@ import type {
   AtoumWebTechnicalItemSummary,
 } from '../../shared/referentials';
 import type { ProjectTechnicalContentType } from '../../shared/projects';
+import { TechnicalContentViewer } from './TechnicalContentViewer';
 import './AtoumWebLibraryPage.css';
 
 const CATEGORIES: Array<{ id: AtoumWebLibraryCategory; label: string }> = [
@@ -112,9 +113,11 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   const [form, setForm] = useState<CreationForm>(EMPTY_FORM);
   const [metadataForm, setMetadataForm] = useState<MetadataForm | null>(null);
   const [versionForm, setVersionForm] = useState({ contentType: 'code' as ProjectTechnicalContentType, language: '', contentText: '', notes: '' });
+  const [expandedVersionId, setExpandedVersionId] = useState<string | null>(null);
   const [assetVersionId, setAssetVersionId] = useState('');
   const [assetRole, setAssetRole] = useState<AtoumWebTechnicalAssetRole>('screenshot');
   const [assets, setAssets] = useState<AtoumWebTechnicalAsset[]>([]);
+  const [assetPreviews, setAssetPreviews] = useState<Record<string, string>>({});
   const [packageInspection, setPackageInspection] = useState<AtoumWebPackageInspection | null>(null);
   const [packageMode, setPackageMode] = useState<'new_item' | 'new_version'>('new_item');
   const [packageTargetItemId, setPackageTargetItemId] = useState('');
@@ -122,16 +125,31 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   const [packageBusy, setPackageBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  async function loadVersionAssets(versionId: string): Promise<void> {
+    if (!versionId) {
+      setAssets([]);
+      setAssetPreviews({});
+      return;
+    }
+    const nextAssets = await window.atoumweb.referentials.library.assets.list(versionId);
+    setAssets(nextAssets);
+    const previewable = nextAssets
+      .filter((asset) => !asset.missing && (asset.role === 'screenshot' || asset.role === 'preview'))
+      .slice(0, 12);
+    const pairs = await Promise.all(previewable.map(async (asset) => {
+      const preview = await window.atoumweb.referentials.library.assets.preview(asset.id);
+      return preview.available && preview.dataUrl ? [asset.id, preview.dataUrl] as const : null;
+    }));
+    setAssetPreviews(Object.fromEntries(pairs.filter((pair): pair is readonly [string, string] => pair !== null)));
+  }
+
   async function setOpenedItem(detail: AtoumWebTechnicalItemDetail): Promise<void> {
     setSelected(detail);
     setMetadataForm(metadataFromItem(detail));
+    setExpandedVersionId(null);
     const preferredVersion = detail.currentVersion?.id ?? detail.versions[0]?.id ?? '';
     setAssetVersionId(preferredVersion);
-    if (preferredVersion) {
-      setAssets(await window.atoumweb.referentials.library.assets.list(preferredVersion));
-    } else {
-      setAssets([]);
-    }
+    await loadVersionAssets(preferredVersion);
   }
 
   async function load(preferredId?: string | null): Promise<void> {
@@ -151,7 +169,9 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
         setSelected(null);
         setMetadataForm(null);
         setAssets([]);
+        setAssetPreviews({});
         setAssetVersionId('');
+        setExpandedVersionId(null);
       }
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Impossible de charger la Bibliothèque AtoumWeb.');
@@ -277,7 +297,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   async function changeAssetVersion(versionId: string): Promise<void> {
     setAssetVersionId(versionId);
     try {
-      setAssets(versionId ? await window.atoumweb.referentials.library.assets.list(versionId) : []);
+      await loadVersionAssets(versionId);
     } catch (assetError) {
       setError(assetError instanceof Error ? assetError.message : 'Impossible de charger les fichiers liés.');
     }
@@ -287,8 +307,8 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
     if (!assetVersionId) return;
     try {
       setError(null);
-      const next = await window.atoumweb.referentials.library.assets.importFiles(assetVersionId, assetRole);
-      setAssets(next);
+      await window.atoumweb.referentials.library.assets.importFiles(assetVersionId, assetRole);
+      await loadVersionAssets(assetVersionId);
       onMessage(`${assetRoleLabel(assetRole)} ajouté à la Bibliothèque AtoumWeb.`);
     } catch (assetError) {
       setError(assetError instanceof Error ? assetError.message : 'Import du fichier impossible.');
@@ -455,7 +475,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
                 <label>Type<select value={assetRole} onChange={(event) => setAssetRole(event.target.value as AtoumWebTechnicalAssetRole)}>{ASSET_ROLES.map((role) => <option key={role.id} value={role.id}>{role.label}</option>)}</select></label>
                 <button className="primary-button" type="button" disabled={!assetVersionId || Boolean(selected.archivedAt)} onClick={() => void importAssets()}>Ajouter des fichiers</button>
               </div>
-              {assets.length === 0 ? <p className="muted">Aucun fichier lié à cette version.</p> : <div className="aw-library-asset-list">{assets.map((asset) => <button key={asset.id} type="button" className={`aw-library-asset ${asset.missing ? 'missing' : ''}`} onClick={() => void openAsset(asset.id)}><span>{assetRoleLabel(asset.role)}</span><strong>{asset.fileName}</strong><small>{formatBytes(asset.sizeBytes)}{asset.missing ? ' · fichier manquant' : ''}</small></button>)}</div>}
+              {assets.length === 0 ? <p className="muted">Aucun fichier lié à cette version.</p> : <div className="aw-library-asset-list">{assets.map((asset) => <button key={asset.id} type="button" className={`aw-library-asset ${asset.missing ? 'missing' : ''}`} onClick={() => void openAsset(asset.id)}>{assetPreviews[asset.id] && <img src={assetPreviews[asset.id]} alt={`Aperçu ${asset.fileName}`} loading="lazy" />}<span>{assetRoleLabel(asset.role)}</span><strong>{asset.fileName}</strong><small>{formatBytes(asset.sizeBytes)}{asset.missing ? ' · fichier manquant' : ''}</small></button>)}</div>}
             </div>
 
             {!selected.archivedAt && <div className="aw-library-version-form">
@@ -476,7 +496,15 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
                 <div><strong>Version {version.versionNumber}</strong><span>{version.contentType}{version.language ? ` · ${version.language}` : ''}</span></div>
                 <div className="aw-library-version-flags">{version.current && <span>courante</span>}{version.stable && <span>stable</span>}{!version.stable && !selected.archivedAt && <button type="button" className="secondary-button" onClick={() => void markStable(version.id)}>Marquer stable</button>}</div>
                 {version.notes && <p>{version.notes}</p>}
-                {version.contentText && <pre>{version.contentText}</pre>}
+                {version.contentText && <TechnicalContentViewer
+                  contentType={version.contentType}
+                  language={version.language}
+                  content={version.contentText}
+                  title={`Version ${version.versionNumber}`}
+                  onMessage={onMessage}
+                  expanded={expandedVersionId === version.id}
+                  onToggleExpanded={() => setExpandedVersionId((current) => current === version.id ? null : version.id)}
+                />}
               </div>)}
             </div>
           </>}
