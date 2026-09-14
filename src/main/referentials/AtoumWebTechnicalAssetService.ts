@@ -113,7 +113,9 @@ export class AtoumWebTechnicalAssetService {
   }
 
   versionDirectory(versionId: string): string {
-    return this.versionDirectoryFromContext(this.requireGlobalVersion(versionId));
+    const directory = this.versionDirectoryFromContext(this.requireGlobalVersion(versionId));
+    mkdirSync(directory, { recursive: true });
+    return directory;
   }
 
   private requireGlobalVersion(versionId: string): VersionContext {
