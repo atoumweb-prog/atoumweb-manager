@@ -8,12 +8,15 @@ on:
       - feature/phase-1-crm
       - feature/phase-2-commercial
       - feature/phase-3-projects
+      - feature/phase-4-operations
   pull_request:
     branches:
       - main
       - foundation/electron-react-sqlite
       - feature/phase-1-crm
       - feature/phase-2-commercial
+      - feature/phase-3-projects
+      - feature/phase-4-operations
 
 jobs:
   quality:
