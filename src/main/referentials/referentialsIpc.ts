@@ -1,5 +1,6 @@
 import { dialog, ipcMain, shell } from 'electron';
 import type {
+  AtoumWebPackageImportInput,
   AtoumWebTechnicalAssetRole,
   AtoumWebTechnicalItemInput,
   AtoumWebTechnicalLibraryFilters,
@@ -55,5 +56,24 @@ export function registerReferentialsIpcHandlers(database: DatabaseService): void
     const validated = database.reusePreparation.assertPackagePath(path);
     const error = await shell.openPath(validated);
     return { ok: !error, error: error || null };
+  });
+
+  ipcMain.handle('referentials:packages:export', (_event, itemId: string, versionId?: string | null) =>
+    database.atoumWebPackages.exportItem(itemId, versionId));
+  ipcMain.handle('referentials:packages:inspect-import', async () => {
+    const selection = await dialog.showOpenDialog({
+      title: 'Importer un paquet Bibliothèque AtoumWeb',
+      properties: ['openFile'],
+      filters: [{ name: 'Paquet AtoumWeb ZIP', extensions: ['zip'] }],
+    });
+    if (selection.canceled || selection.filePaths.length === 0) return null;
+    return database.atoumWebPackages.inspectPackage(selection.filePaths[0]);
+  });
+  ipcMain.handle('referentials:packages:import', (_event, input: AtoumWebPackageImportInput) =>
+    database.atoumWebPackages.importPackage(input));
+  ipcMain.handle('referentials:packages:show-export', (_event, path: string) => {
+    const validated = database.atoumWebPackages.assertExportPath(path);
+    shell.showItemInFolder(validated);
+    return { ok: true, error: null };
   });
 }
