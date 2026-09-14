@@ -1,0 +1,56 @@
+.aw-library { display: grid; gap: 16px; }
+.aw-library-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.aw-library-toolbar { display: grid; grid-template-columns: minmax(260px, 1fr) 180px 165px auto auto; gap: 10px; align-items: center; padding: 14px; }
+.aw-library-toolbar input,
+.aw-library-toolbar select,
+.aw-library-form-grid input,
+.aw-library-form-grid select,
+.aw-library-create textarea,
+.aw-library-version-form textarea,
+.aw-library-version-form input,
+.aw-library-version-form select { width: 100%; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); color: var(--text); padding: 9px 10px; font: inherit; outline: none; }
+.aw-library-toolbar input:focus,
+.aw-library-toolbar select:focus,
+.aw-library-create textarea:focus,
+.aw-library-version-form textarea:focus,
+.aw-library-form-grid input:focus,
+.aw-library-form-grid select:focus { border-color: var(--accent); }
+.aw-library-checkbox { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; white-space: nowrap; }
+.aw-library-checkbox input { width: auto; }
+.aw-library-layout { display: grid; grid-template-columns: minmax(320px, .8fr) minmax(0, 1.4fr); gap: 16px; align-items: start; }
+.aw-library-list { display: grid; gap: 8px; }
+.aw-library-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; border: 1px solid var(--border); border-radius: 11px; padding: 11px 12px; background: var(--surface-soft); cursor: pointer; text-align: left; }
+.aw-library-item:hover { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); }
+.aw-library-item.selected { border-color: var(--accent); background: var(--accent-soft); }
+.aw-library-item > div:first-child { display: grid; gap: 4px; min-width: 0; }
+.aw-library-item strong { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aw-library-item span { color: var(--muted); font-size: 10px; }
+.aw-library-item-meta { display: grid; gap: 3px; justify-items: end; white-space: nowrap; }
+.aw-library-detail { min-height: 320px; }
+.aw-library-empty { padding: 34px 10px; text-align: center; }
+.aw-library-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 16px; }
+.aw-library-tags span,
+.aw-library-version-flags > span { display: inline-flex; border-radius: 999px; padding: 4px 8px; background: var(--accent-soft); color: var(--accent-strong); font-size: 9px; font-weight: 700; }
+.aw-library-create,
+.aw-library-version-form { display: grid; gap: 12px; }
+.aw-library-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.aw-library-create label,
+.aw-library-version-form label { display: grid; gap: 5px; color: var(--muted); font-size: 10px; font-weight: 700; }
+.aw-library-version-form { margin: 18px 0; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-soft); }
+.aw-library-version-form h3,
+.aw-library-versions h3 { margin: 0 0 8px; font-size: 14px; }
+.aw-library-versions { display: grid; gap: 10px; }
+.aw-library-version { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; padding: 13px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface-soft); }
+.aw-library-version > div:first-child { display: grid; gap: 3px; }
+.aw-library-version > div:first-child span { color: var(--muted); font-size: 10px; }
+.aw-library-version-flags { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
+.aw-library-version p,
+.aw-library-version pre { grid-column: 1 / -1; }
+.aw-library-version p { margin: 0; color: var(--muted); font-size: 11px; }
+.aw-library-version pre { margin: 0; max-height: 300px; overflow: auto; padding: 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--text); font-size: 11px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+.aw-library-error { margin-bottom: 0; }
+
+@media (max-width: 1180px) {
+  .aw-library-toolbar { grid-template-columns: 1fr 1fr; }
+  .aw-library-layout { grid-template-columns: 1fr; }
+}
