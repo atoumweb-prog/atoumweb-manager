@@ -29,9 +29,11 @@ export function registerBusinessBackupsIpcHandlers(database: DatabaseService): v
       defaultPath: current,
       properties: ['openFile', 'openDirectory'],
     });
-    if (selection.canceled || selection.filePaths.length === 0) return database.businessBackups.get(
-      database.businessBackups.verifyLocation(locationId).id,
-    );
+    if (selection.canceled || selection.filePaths.length === 0) {
+      const record = database.businessBackups.list().find((candidate) => candidate.locations.some((location) => location.id === locationId));
+      if (!record) throw new Error('Sauvegarde liée à cet emplacement introuvable.');
+      return record;
+    }
     return database.businessBackups.relocalizePath(locationId, selection.filePaths[0]);
   });
 
