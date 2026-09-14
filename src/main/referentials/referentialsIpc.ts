@@ -4,6 +4,8 @@ import type {
   AtoumWebTechnicalItemInput,
   AtoumWebTechnicalLibraryFilters,
   AtoumWebTechnicalVersionInput,
+  ReuseCreateGlobalInput,
+  ReusePreparationInput,
 } from '../../shared/referentials';
 import type { DatabaseService } from '../database/DatabaseService';
 
@@ -42,6 +44,16 @@ export function registerReferentialsIpcHandlers(database: DatabaseService): void
   });
   ipcMain.handle('referentials:library:assets:open-folder', async (_event, versionId: string) => {
     const error = await shell.openPath(database.atoumWebTechnicalAssets.versionDirectory(versionId));
+    return { ok: !error, error: error || null };
+  });
+
+  ipcMain.handle('referentials:reuse:prepare-project-item', (_event, input: ReusePreparationInput) =>
+    database.reusePreparation.prepareProjectItem(input));
+  ipcMain.handle('referentials:reuse:create-global', (_event, input: ReuseCreateGlobalInput) =>
+    database.reusePreparation.createGlobal(input));
+  ipcMain.handle('referentials:reuse:open-package', async (_event, path: string) => {
+    const validated = database.reusePreparation.assertPackagePath(path);
+    const error = await shell.openPath(validated);
     return { ok: !error, error: error || null };
   });
 }
