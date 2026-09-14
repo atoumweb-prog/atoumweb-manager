@@ -10,8 +10,12 @@
 - **Fondation** : `foundation/electron-react-sqlite` — PR #3
 - **Phase 1** : `feature/phase-1-crm` — PR #58 (brouillon)
 - **Phase 2** : `feature/phase-2-commercial` — PR #59 (brouillon)
-- **Phase 3 en cours** : `feature/phase-3-projects` — PR #60 (brouillon, base Phase 2)
-- **Migrations prévues sur la branche Phase 3** : 10
+- **Phase 3** : `feature/phase-3-projects` — PR #60 (brouillon, base Phase 2)
+- **Phase 4** : `feature/phase-4-operations` — PR #61 (brouillon) — développement V1 terminé, validation Windows requise
+- **Phase 5** : différée volontairement ; les contrats ne sont pas encore suffisamment finalisés
+- **Phase 6 active** : `feature/phase-6-referentials` — PR #62 (brouillon, base Phase 4)
+- **Head Phase 4 à valider** : `186f95d5e5dc6223834c27e64d8dd5bc6f55721d`
+- **Migrations sur la branche Phase 6** : 19
 - **Principe directeur** : une donnée métier possède une source unique ; les autres écrans la référencent sans duplication.
 
 ## Phase 0 — Fondation
@@ -186,7 +190,7 @@ PR : #60 (brouillon, empilée au-dessus de Phase 2)
 - [x] `Préparer pour réutilisation` génère un paquet projet sans généralisation automatique
 - [x] recherche globale des éléments techniques
 - [x] tests versioning / stable / ressources / réutilisation écrits
-- [x] schéma déjà extensible à `scope=atoumweb` pour la future Phase 6 sans modifier les projets clients
+- [x] schéma déjà extensible à `scope=atoumweb` pour la Phase 6 sans modifier les projets clients
 - [ ] coloration syntaxique avancée / Monaco plus tard
 - [ ] captures/aperçus avancés plus tard
 
@@ -233,11 +237,89 @@ PR : #60 (brouillon, empilée au-dessus de Phase 2)
 - [ ] test visuel complet trois thèmes
 - [ ] mise à jour finale documentation Phase 3 après validation
 
+## Phase 4 — Interventions, Maintenance & Packs
+
+Branche : `feature/phase-4-operations`  
+PR : #61 (brouillon)  
+Head gelé pour validation Windows : `186f95d5e5dc6223834c27e64d8dd5bc6f55721d`
+
+### État
+
+- [x] développement V1 terminé
+- [x] Demandes → Interventions
+- [x] rattachement Intervention → Projet → Module/Page/Tâche
+- [x] rattachement modifiable ou retirable après création
+- [x] Timer reprend automatiquement le contexte actuel de l’Intervention
+- [x] maintenance / packs d’heures / dépassements / rapports intégrés au socle Phase 4
+- [ ] validation Windows complète
+- [ ] `npm run typecheck` local sur le head final
+- [ ] `npm test` local sur le head final
+
+**Règle actuelle : ne plus ajouter de fonction Phase 4 avant la validation Windows.**
+
+## Phase 5 — Administration & Finance
+
+**Différée volontairement au 14/09/2026.**
+
+Motif : les contrats AtoumWeb ne sont pas encore suffisamment finalisés ; seul le contrat Site vitrine est actuellement prêt. La Phase 5 reste dans la V1 mais ne bloque pas le développement de la Phase 6.
+
+Les liens Phase 6 → Dépenses / Abonnements seront ajoutés ultérieurement lors de la reprise de la Phase 5.
+
+## Phase 6 — Référentiels & Continuité
+
+Branche : `feature/phase-6-referentials`  
+PR : #62 (brouillon, base `feature/phase-4-operations`)  
+Parent : #40  
+Premier chantier : #41 — Bibliothèque AtoumWeb
+
+### Phase 6A — Bibliothèque AtoumWeb
+
+- [x] branche Phase 6 isolée du head Phase 4 à valider
+- [x] réutilisation de `technical_items` / `technical_item_versions` sans créer une seconde source de vérité
+- [x] migration 18 : statut de réutilisation + origine Bibliothèque projet facultative
+- [x] migration 19 : catégories dédiées Bibliothèque AtoumWeb
+- [x] scope `atoumweb`
+- [x] statuts `ready` / `adapt` / `reference`
+- [x] catégories Headers / Footers / Heroes / Pages / Sections / Formulaires / Galeries / Carrousels / Navigation / CSS / JS / PHP / WooCommerce / ACF / Divi / App / Notes
+- [x] tags / description / origine projet facultative
+- [x] versions immuables + version courante
+- [x] version stable indépendante de la version courante
+- [x] archivage / réactivation
+- [x] journal d’activité
+- [x] filtres recherche / catégorie / statut / archives
+- [x] service backend dédié `AtoumWebTechnicalLibraryService`
+- [x] API IPC / preload / renderer dédiée
+- [x] écran `Bibliothèque AtoumWeb` branché dans la navigation
+- [x] création de composant et de nouvelles versions depuis l’interface
+- [x] tests écrits sur versioning, stable, filtres et indépendance Projet ↔ AtoumWeb
+- [ ] captures / assets globaux indépendants des fichiers d’un projet client
+- [ ] intégration à la recherche globale du Manager
+- [ ] édition complète des métadonnées depuis l’interface
+- [ ] validation locale TypeScript / tests / Windows
+
+### Règles Phase 6 confirmées
+
+1. Un composant AtoumWeb ne modifie jamais automatiquement un composant ou un projet client existant.
+2. L’origine Projet est une traçabilité, jamais un lien de mise à jour automatique.
+3. Les catégories globales sont mappées vers le socle technique existant sans modifier le `CHECK` historique des éléments Projet.
+4. Aucun code de bibliothèque n’est exécuté automatiquement.
+5. Les futurs assets globaux ne devront pas dépendre physiquement des `file_assets` d’un projet client.
+
+### Ordre de développement restant
+
+1. terminer #41 : assets/captures, recherche globale, métadonnées, validation ;
+2. #42 : Préparer pour réutilisation / import-export assisté ;
+3. #43 : Monaco / JSON / previews ;
+4. #44 : sauvegardes métier / emplacements / vérification ;
+5. #45 : rappels / versions stables / lien Interventions ;
+6. #46 : Annuaire interne ;
+7. #47 : validation complète Phase 6.
+
 ## CI GitHub
 
-Le workflow couvre maintenant les branches Fondation / Phase 1 / Phase 2 / Phase 3.
+Le workflow couvre les branches jusqu’à Phase 4 et les pull requests ciblant ces branches. La PR Phase 6 #62, basée sur Phase 4, déclenche donc la CI.
 
-Les runs Phase 3 observés restent **non exploitables** : GitHub crée le job `windows-latest` mais lui attribue `runner_id: 0` et n’exécute aucune étape. Il n’y a donc ni checkout, ni installation, ni typecheck, ni tests. Le statut rouge ne constitue pas un échec du code.
+Les runs observés restent **non exploitables** : GitHub crée le job `windows-latest` mais lui attribue `runner_id: 0` et n’exécute aucune étape (`steps: []`). Il n’y a donc ni checkout, ni installation, ni typecheck, ni tests. Le statut rouge ne constitue pas un échec du code.
 
 La validation réelle continue donc d’être effectuée localement sur Windows.
 
@@ -247,8 +329,8 @@ La validation réelle continue donc d’être effectuée localement sur Windows.
 - **Phase 2 — Commercial** : #10–#15
 - **Phase 3 — Projets & Production** : #16–#23
 - **Phase 4 — Interventions, Maintenance & Packs** : #24–#31
-- **Phase 5 — Administration & Finance** : #32–#39
-- **Phase 6 — Référentiels & Continuité** : #40–#47
+- **Phase 5 — Administration & Finance** : #32–#39 — différée
+- **Phase 6 — Référentiels & Continuité** : #40–#47 — active
 - **Phase 7 — Statistiques & Stabilisation V1** : #48–#57
 
 ## Règles à ne pas casser
@@ -268,9 +350,12 @@ La validation réelle continue donc d’être effectuée localement sur Windows.
 13. Les panneaux latéraux Prospect/Client/Projet restent à droite et les listes reprennent la largeur disponible lorsqu’ils sont fermés.
 14. Le temps réel a une seule source : `time_sessions`. Aucun module ne maintient un compteur indépendant.
 15. Une version de modèle, de catalogue ou de composant déjà utilisée ne modifie jamais rétroactivement un dossier existant.
+16. La Phase 5 peut être différée sans bloquer la Bibliothèque et les Sauvegardes Phase 6 ; seuls ses liens financiers restent différés.
 
 ## Travail en cours
 
-**Phase 3 — fermeture des derniers écarts fonctionnels avant validation Windows.**
+**Phase 6A — Bibliothèque AtoumWeb (#41).**
 
-Prochaine validation Windows après stabilisation de la branche : migration vers 10 migrations, `npm run typecheck`, `npm test`, puis parcours Projet / Ressources / Bibliothèque / Timer / Gestion des temps.
+La Phase 4 est gelée sur `186f95d…` en attente de validation Windows. Les changements Phase 6 sont exclusivement développés sur PR #62.
+
+Prochaine action Phase 6 : terminer les assets/captures globaux indépendants des projets, intégrer la Bibliothèque à la recherche globale, compléter l’édition des métadonnées puis effectuer la validation locale TypeScript/tests/Windows.
