@@ -34,4 +34,26 @@ export const PHASE_6_MIGRATIONS = [
         ON technical_items(scope, library_category, archived_at);
     `,
   },
+  {
+    id: 20,
+    name: 'phase_6_global_library_assets',
+    sql: `
+      CREATE TABLE IF NOT EXISTS atoumweb_technical_assets (
+        id TEXT PRIMARY KEY,
+        technical_item_version_id TEXT NOT NULL REFERENCES technical_item_versions(id) ON DELETE CASCADE,
+        asset_role TEXT NOT NULL CHECK (asset_role IN ('screenshot', 'preview', 'source', 'attachment')),
+        relative_path TEXT NOT NULL,
+        original_name TEXT NOT NULL,
+        mime_type TEXT,
+        size_bytes INTEGER NOT NULL CHECK (size_bytes >= 0),
+        checksum_sha256 TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        missing_at TEXT,
+        UNIQUE (technical_item_version_id, checksum_sha256)
+      ) STRICT;
+
+      CREATE INDEX IF NOT EXISTS idx_atoumweb_technical_assets_version
+        ON atoumweb_technical_assets(technical_item_version_id, asset_role, created_at DESC);
+    `,
+  },
 ];
