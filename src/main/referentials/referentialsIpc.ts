@@ -39,6 +39,8 @@ export function registerReferentialsIpcHandlers(database: DatabaseService): void
     if (selection.canceled || selection.filePaths.length === 0) return database.atoumWebTechnicalAssets.list(versionId);
     return database.atoumWebTechnicalAssets.importFilePaths(versionId, selection.filePaths, role);
   });
+  ipcMain.handle('referentials:library:assets:preview', (_event, assetId: string) =>
+    database.atoumWebTechnicalAssets.preview(assetId));
   ipcMain.handle('referentials:library:assets:open-file', async (_event, assetId: string) => {
     const error = await shell.openPath(database.atoumWebTechnicalAssets.absolutePath(assetId));
     return { ok: !error, error: error || null };
