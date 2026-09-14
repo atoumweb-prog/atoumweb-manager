@@ -9,6 +9,9 @@ export type AtoumWebLibraryCategory = (typeof ATOUMWEB_LIBRARY_CATEGORIES)[numbe
 export const ATOUMWEB_REUSE_STATUSES = ['ready', 'adapt', 'reference'] as const;
 export type AtoumWebReuseStatus = (typeof ATOUMWEB_REUSE_STATUSES)[number];
 
+export const ATOUMWEB_TECHNICAL_ASSET_ROLES = ['screenshot', 'preview', 'source', 'attachment'] as const;
+export type AtoumWebTechnicalAssetRole = (typeof ATOUMWEB_TECHNICAL_ASSET_ROLES)[number];
+
 export interface AtoumWebTechnicalItemInput {
   category: AtoumWebLibraryCategory;
   name: string;
@@ -34,6 +37,19 @@ export interface AtoumWebTechnicalVersion extends AtoumWebTechnicalVersionInput 
   createdAt: string;
 }
 
+export interface AtoumWebTechnicalAsset {
+  id: string;
+  versionId: string;
+  role: AtoumWebTechnicalAssetRole;
+  relativePath: string;
+  fileName: string;
+  mimeType?: string | null;
+  sizeBytes: number;
+  checksumSha256: string;
+  missing: boolean;
+  createdAt: string;
+}
+
 export interface AtoumWebTechnicalItemSummary extends AtoumWebTechnicalItemInput {
   id: string;
   currentVersion?: AtoumWebTechnicalVersion | null;
@@ -55,6 +71,11 @@ export interface AtoumWebTechnicalLibraryFilters {
   includeArchived?: boolean;
 }
 
+export interface AtoumWebAssetOpenResult {
+  ok: boolean;
+  error?: string | null;
+}
+
 export interface ReferentialsApi {
   library: {
     list(filters?: AtoumWebTechnicalLibraryFilters): Promise<AtoumWebTechnicalItemSummary[]>;
@@ -65,5 +86,11 @@ export interface ReferentialsApi {
     markStable(versionId: string): Promise<AtoumWebTechnicalItemDetail>;
     archive(itemId: string): Promise<AtoumWebTechnicalItemDetail>;
     reactivate(itemId: string): Promise<AtoumWebTechnicalItemDetail>;
+    assets: {
+      list(versionId: string): Promise<AtoumWebTechnicalAsset[]>;
+      importFiles(versionId: string, role: AtoumWebTechnicalAssetRole): Promise<AtoumWebTechnicalAsset[]>;
+      openFile(assetId: string): Promise<AtoumWebAssetOpenResult>;
+      openFolder(versionId: string): Promise<AtoumWebAssetOpenResult>;
+    };
   };
 }
