@@ -213,6 +213,7 @@ const api: AtoumWebApi = {
       assets: {
         list: (versionId: string) => ipcRenderer.invoke('referentials:library:assets:list', versionId),
         importFiles: (versionId: string, role: AtoumWebTechnicalAssetRole) => ipcRenderer.invoke('referentials:library:assets:import', versionId, role),
+        preview: (assetId: string) => ipcRenderer.invoke('referentials:library:assets:preview', assetId),
         openFile: (assetId: string) => ipcRenderer.invoke('referentials:library:assets:open-file', assetId),
         openFolder: (versionId: string) => ipcRenderer.invoke('referentials:library:assets:open-folder', versionId),
       },
