@@ -3,22 +3,17 @@ import type { OperationsAlert, OperationsAlertsSnapshot } from '../../shared/ope
 
 type TargetView = 'interventions' | 'maintenance' | 'packs';
 
-type AlertTarget = {
-  view: TargetView;
-  entityId?: string | null;
-};
-
 const SEVERITY_LABELS = { critical: 'Urgent', warning: 'À surveiller', info: 'Information' } as const;
 
-function targetFor(alert: OperationsAlert): AlertTarget {
-  if (alert.interventionId) return { view: 'interventions', entityId: alert.interventionId };
-  if (alert.hourPackId) return { view: 'packs', entityId: alert.hourPackId };
-  return { view: 'maintenance', entityId: alert.maintenanceSubscriptionId ?? null };
+function targetFor(alert: OperationsAlert): TargetView {
+  if (alert.interventionId) return 'interventions';
+  if (alert.hourPackId) return 'packs';
+  return 'maintenance';
 }
 
 export function OperationsAlertsPanel({ refreshKey, onNavigate, onMessage }: {
   refreshKey: number;
-  onNavigate: (target: AlertTarget) => void;
+  onNavigate: (view: TargetView) => void;
   onMessage: (message: string) => void;
 }) {
   const [snapshot, setSnapshot] = useState<OperationsAlertsSnapshot | null>(null);
