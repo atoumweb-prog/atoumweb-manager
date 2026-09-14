@@ -107,4 +107,42 @@ export const PHASE_6_MIGRATIONS = [
         ON backup_locations(location_type, verified_at, missing_at);
     `,
   },
+  {
+    id: 22,
+    name: 'phase_6_backup_policies_intervention_links',
+    sql: `
+      CREATE TABLE IF NOT EXISTS backup_policies (
+        id TEXT PRIMARY KEY,
+        client_account_id TEXT REFERENCES client_accounts(id) ON DELETE CASCADE,
+        project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+        max_known_age_days INTEGER NOT NULL CHECK (max_known_age_days >= 1),
+        max_local_age_days INTEGER NOT NULL CHECK (max_local_age_days >= 1),
+        warn_server_only INTEGER NOT NULL DEFAULT 1 CHECK (warn_server_only IN (0,1)),
+        remind_before_intervention INTEGER NOT NULL DEFAULT 1 CHECK (remind_before_intervention IN (0,1)),
+        remind_after_major_change INTEGER NOT NULL DEFAULT 1 CHECK (remind_after_major_change IN (0,1)),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        CHECK (client_account_id IS NOT NULL OR project_id IS NOT NULL)
+      ) STRICT;
+
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_backup_policies_project_unique
+        ON backup_policies(project_id) WHERE project_id IS NOT NULL;
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_backup_policies_client_only_unique
+        ON backup_policies(client_account_id) WHERE project_id IS NULL AND client_account_id IS NOT NULL;
+
+      CREATE TABLE IF NOT EXISTS backup_intervention_links (
+        id TEXT PRIMARY KEY,
+        backup_record_id TEXT NOT NULL REFERENCES backup_records(id) ON DELETE CASCADE,
+        intervention_id TEXT NOT NULL REFERENCES interventions(id) ON DELETE CASCADE,
+        link_role TEXT NOT NULL CHECK (link_role IN ('pre_intervention', 'post_intervention', 'reference')),
+        created_at TEXT NOT NULL,
+        UNIQUE (backup_record_id, intervention_id, link_role)
+      ) STRICT;
+
+      CREATE INDEX IF NOT EXISTS idx_backup_intervention_links_intervention
+        ON backup_intervention_links(intervention_id, link_role, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_backup_intervention_links_backup
+        ON backup_intervention_links(backup_record_id, link_role, created_at DESC);
+    `,
+  },
 ];
