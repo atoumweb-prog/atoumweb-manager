@@ -6,6 +6,7 @@ import type { MaintenanceReportApi } from './maintenanceReport';
 import type { OperationsApi } from './operations';
 import type { OperationsAlertsApi } from './operationsAlerts';
 import type { ProjectsApi } from './projects';
+import type { ReferentialsApi } from './referentials';
 import type { TimeApi } from './time';
 
 export const THEME_NAMES = ['atoumweb', 'noir', 'blanc'] as const;
@@ -68,6 +69,7 @@ export interface AtoumWebApi {
   catalog: CatalogApi;
   quotes: QuoteApi;
   projects: ProjectsApi;
+  referentials: ReferentialsApi;
   operations: OperationsApi;
   hourPackShortfalls: HourPackShortfallApi;
   maintenanceOverages: MaintenanceOverageApi;
