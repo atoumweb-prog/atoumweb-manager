@@ -8,6 +8,8 @@ export const OPERATIONS_ALERT_KINDS = [
   'hour_pack_expiring',
   'hour_pack_exhausted',
   'hour_pack_negative',
+  'incident_critical_open',
+  'intervention_ready_to_bill',
 ] as const;
 
 export type OperationsAlertSeverity = (typeof OPERATIONS_ALERT_SEVERITIES)[number];
@@ -26,6 +28,8 @@ export interface OperationsAlert {
   maintenanceSubscriptionId?: string | null;
   maintenancePeriodId?: string | null;
   hourPackId?: string | null;
+  interventionId?: string | null;
+  billingItemId?: string | null;
   dueAt?: string | null;
 }
 
