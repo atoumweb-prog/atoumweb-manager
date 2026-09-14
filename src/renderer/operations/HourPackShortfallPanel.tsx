@@ -93,8 +93,9 @@ function ShortfallDecisionEditor({ packId, candidate, alternatives, onResolved, 
 
   async function submit(): Promise<void> {
     if (!reason.trim()) { onMessage('Indique le motif de la décision sur le dépassement du pack.'); return; }
-    const amountCents = decision === 'bill_complement' ? Math.round(Number(amount.replace(',', '.')) * 100) : null;
-    if (decision === 'bill_complement' && (!Number.isFinite(amountCents) || (amountCents ?? 0) <= 0)) {
+    const parsedAmount = Number(amount.replace(',', '.'));
+    const amountCents = decision === 'bill_complement' ? Math.round(parsedAmount * 100) : null;
+    if (decision === 'bill_complement' && (amountCents == null || !Number.isFinite(amountCents) || amountCents <= 0)) {
       onMessage('Indique le montant du complément à facturer.');
       return;
     }
