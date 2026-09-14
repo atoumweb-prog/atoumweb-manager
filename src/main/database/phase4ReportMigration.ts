@@ -1,3 +1,5 @@
+import { PHASE_4_PACK_SHORTFALL_MIGRATIONS } from './phase4PackShortfallMigration';
+
 export const PHASE_4_REPORT_MIGRATIONS = [
   {
     id: 16,
@@ -12,4 +14,5 @@ export const PHASE_4_REPORT_MIGRATIONS = [
       ) STRICT;
     `,
   },
+  ...PHASE_4_PACK_SHORTFALL_MIGRATIONS,
 ];
