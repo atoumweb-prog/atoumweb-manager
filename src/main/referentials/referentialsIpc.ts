@@ -1,5 +1,6 @@
-import { ipcMain } from 'electron';
+import { dialog, ipcMain, shell } from 'electron';
 import type {
+  AtoumWebTechnicalAssetRole,
   AtoumWebTechnicalItemInput,
   AtoumWebTechnicalLibraryFilters,
   AtoumWebTechnicalVersionInput,
@@ -23,4 +24,24 @@ export function registerReferentialsIpcHandlers(database: DatabaseService): void
     database.atoumWebTechnicalLibrary.archive(itemId));
   ipcMain.handle('referentials:library:reactivate', (_event, itemId: string) =>
     database.atoumWebTechnicalLibrary.reactivate(itemId));
+
+  ipcMain.handle('referentials:library:assets:list', (_event, versionId: string) =>
+    database.atoumWebTechnicalAssets.list(versionId));
+  ipcMain.handle('referentials:library:assets:import', async (_event, versionId: string, role: AtoumWebTechnicalAssetRole) => {
+    const selection = await dialog.showOpenDialog({
+      title: 'Ajouter des fichiers à la Bibliothèque AtoumWeb',
+      defaultPath: database.atoumWebTechnicalAssets.versionDirectory(versionId),
+      properties: ['openFile', 'multiSelections'],
+    });
+    if (selection.canceled || selection.filePaths.length === 0) return database.atoumWebTechnicalAssets.list(versionId);
+    return database.atoumWebTechnicalAssets.importFilePaths(versionId, selection.filePaths, role);
+  });
+  ipcMain.handle('referentials:library:assets:open-file', async (_event, assetId: string) => {
+    const error = await shell.openPath(database.atoumWebTechnicalAssets.absolutePath(assetId));
+    return { ok: !error, error: error || null };
+  });
+  ipcMain.handle('referentials:library:assets:open-folder', async (_event, versionId: string) => {
+    const error = await shell.openPath(database.atoumWebTechnicalAssets.versionDirectory(versionId));
+    return { ok: !error, error: error || null };
+  });
 }
