@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync } from 'node:fs';
 import { basename, extname, join, relative, resolve } from 'node:path';
 import type {
+  AtoumWebAssetPreview,
   AtoumWebTechnicalAsset,
   AtoumWebTechnicalAssetRole,
 } from '../../shared/referentials';
@@ -15,6 +16,9 @@ const ROLE_DIRECTORIES: Record<AtoumWebTechnicalAssetRole, string> = {
   source: 'sources',
   attachment: 'fichiers',
 };
+
+const PREVIEW_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const MAX_PREVIEW_BYTES = 8 * 1024 * 1024;
 
 interface AssetRow extends Record<string, unknown> {
   id: string;
@@ -105,6 +109,32 @@ export class AtoumWebTechnicalAssetService {
     }
 
     return this.list(versionId);
+  }
+
+  preview(assetId: string): AtoumWebAssetPreview {
+    const asset = this.get(assetId);
+    if (asset.role !== 'screenshot' && asset.role !== 'preview') {
+      return { available: false, error: 'Seules les captures et les aperçus peuvent être affichés directement.' };
+    }
+    if (!asset.mimeType || !PREVIEW_MIME_TYPES.has(asset.mimeType)) {
+      return { available: false, error: 'Ce format d’image n’est pas affiché directement par sécurité.' };
+    }
+    const path = this.absolutePath(asset);
+    if (!existsSync(path) || !statSync(path).isFile()) {
+      return { available: false, error: 'Le fichier d’aperçu est introuvable.' };
+    }
+    const stats = statSync(path);
+    if (stats.size > MAX_PREVIEW_BYTES) {
+      return { available: false, error: 'L’image dépasse la taille maximale d’aperçu (8 Mo).' };
+    }
+    const data = readFileSync(path);
+    return {
+      available: true,
+      dataUrl: `data:${asset.mimeType};base64,${data.toString('base64')}`,
+      mimeType: asset.mimeType,
+      width: null,
+      height: null,
+    };
   }
 
   absolutePath(assetOrId: AtoumWebTechnicalAsset | string): string {
