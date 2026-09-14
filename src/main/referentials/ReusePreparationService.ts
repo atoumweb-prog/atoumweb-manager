@@ -50,6 +50,14 @@ interface AssetRow extends Record<string, unknown> {
   checksum_sha256: string | null;
 }
 
+interface PreparationManifest {
+  schemaVersion: number;
+  purpose: string;
+  project?: { id?: string };
+  technicalItem?: { id?: string };
+  version?: { id?: string; number?: number };
+}
+
 export class ReusePreparationService {
   constructor(
     private readonly database: DatabaseAdapter,
@@ -148,8 +156,28 @@ export class ReusePreparationService {
     if (version.id !== preparation.versionId || Number(version.version_number) !== preparation.versionNumber) {
       throw new Error('Le paquet de préparation ne correspond plus à la version source attendue.');
     }
-    this.assertPackagePath(preparation.packageDirectory);
-    if (!existsSync(preparation.manifestPath)) throw new Error('Le manifeste du paquet de réutilisation est introuvable.');
+
+    const packageDirectory = this.assertPackagePath(preparation.packageDirectory);
+    const manifestPath = this.assertPathInside(packageDirectory, preparation.manifestPath);
+    if (!existsSync(manifestPath) || !statSync(manifestPath).isFile()) {
+      throw new Error('Le manifeste du paquet de réutilisation est introuvable.');
+    }
+    const manifest = this.readManifest(manifestPath);
+    this.validateManifest(manifest, item, version);
+
+    const sourcePaths = preparation.copiedFiles
+      .filter((file) => file.copied && file.packageRelativePath)
+      .map((file) => this.assertPathInside(packageDirectory, join(packageDirectory, file.packageRelativePath as string)))
+      .filter((path) => existsSync(path) && statSync(path).isFile());
+
+    if (preparation.contentPath) {
+      const contentPath = this.assertPathInside(packageDirectory, preparation.contentPath);
+      if (existsSync(contentPath) && statSync(contentPath).isFile()) sourcePaths.push(contentPath);
+    }
+
+    const adaptationNotesPath = this.assertPathInside(packageDirectory, preparation.adaptationNotesPath);
+    const attachments = [manifestPath, adaptationNotesPath]
+      .filter((path) => existsSync(path) && statSync(path).isFile());
 
     const created = this.globalLibrary.create(
       { ...input.item, originTechnicalItemId: item.id },
@@ -158,18 +186,11 @@ export class ReusePreparationService {
     const targetVersionId = created.currentVersion?.id;
     if (!targetVersionId) throw new Error('La version initiale du composant AtoumWeb est introuvable.');
 
-    const sourcePaths = preparation.copiedFiles
-      .filter((file) => file.copied && file.packageRelativePath)
-      .map((file) => join(preparation.packageDirectory, file.packageRelativePath as string))
-      .filter((path) => existsSync(path));
-    if (preparation.contentPath && existsSync(preparation.contentPath)) sourcePaths.push(preparation.contentPath);
     if (sourcePaths.length) this.globalAssets.importFilePaths(targetVersionId, sourcePaths, 'source');
-
-    const attachments = [preparation.manifestPath, preparation.adaptationNotesPath].filter((path) => existsSync(path));
     if (attachments.length) this.globalAssets.importFilePaths(targetVersionId, attachments, 'attachment');
 
     this.writeActivity(
-      preparation.projectId,
+      item.project_id,
       'technical_reuse_promoted_to_global',
       `Composant AtoumWeb créé volontairement depuis ${item.name} v${Number(version.version_number)} : ${created.name}`,
       { sourceItemId: item.id, sourceVersionId: version.id, globalItemId: created.id },
@@ -180,10 +201,43 @@ export class ReusePreparationService {
   assertPackagePath(path: string): string {
     const root = resolve(this.workspace.exportsDirectory, 'reutilisation');
     const candidate = resolve(path);
-    if (candidate !== root && !candidate.startsWith(`${root}${sep}`)) {
+    if (!this.isPathInside(root, candidate)) {
       throw new Error('Ce chemin ne correspond pas à un paquet de réutilisation AtoumWeb.');
     }
     return candidate;
+  }
+
+  private assertPathInside(rootPath: string, candidatePath: string): string {
+    const root = resolve(rootPath);
+    const candidate = resolve(candidatePath);
+    if (!this.isPathInside(root, candidate)) {
+      throw new Error('Un fichier du paquet pointe en dehors du dossier de réutilisation autorisé.');
+    }
+    return candidate;
+  }
+
+  private isPathInside(root: string, candidate: string): boolean {
+    return candidate === root || candidate.startsWith(`${root}${sep}`);
+  }
+
+  private readManifest(path: string): PreparationManifest {
+    try {
+      return JSON.parse(readFileSync(path, 'utf8')) as PreparationManifest;
+    } catch {
+      throw new Error('Le manifeste du paquet de réutilisation est invalide.');
+    }
+  }
+
+  private validateManifest(manifest: PreparationManifest, item: ItemRow, version: VersionRow): void {
+    if (manifest.schemaVersion !== 2 || manifest.purpose !== 'assisted_manual_adaptation_for_atoumweb_library') {
+      throw new Error('Le manifeste ne correspond pas au format de réutilisation attendu.');
+    }
+    if (manifest.project?.id !== item.project_id || manifest.technicalItem?.id !== item.id) {
+      throw new Error('Le manifeste ne correspond pas au projet ou à l’élément technique source.');
+    }
+    if (manifest.version?.id !== version.id || Number(manifest.version?.number) !== Number(version.version_number)) {
+      throw new Error('Le manifeste ne correspond pas à la version technique source.');
+    }
   }
 
   private requireProjectItem(id: string): ItemRow {
@@ -233,7 +287,13 @@ export class ReusePreparationService {
     const root = join(this.workspace.exportsDirectory, 'reutilisation');
     mkdirSync(root, { recursive: true });
     const timestamp = createdAt.replace(/[:.]/g, '-');
-    const directory = join(root, `${timestamp} - ${this.safeSegment(name)} - v${versionNumber}`);
+    const baseName = `${timestamp} - ${this.safeSegment(name)} - v${versionNumber}`;
+    let directory = join(root, baseName);
+    let index = 2;
+    while (existsSync(directory)) {
+      directory = join(root, `${baseName} (${index})`);
+      index += 1;
+    }
     mkdirSync(directory, { recursive: false });
     return directory;
   }
