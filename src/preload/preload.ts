@@ -62,6 +62,11 @@ import type {
   TransformQuoteToProjectInput,
 } from '../shared/projects';
 import type {
+  AtoumWebTechnicalItemInput,
+  AtoumWebTechnicalLibraryFilters,
+  AtoumWebTechnicalVersionInput,
+} from '../shared/referentials';
+import type {
   ManualTimeSessionInput,
   StartTimeSessionInput,
   TimeSessionFilters,
@@ -189,6 +194,18 @@ const api: AtoumWebApi = {
       unlinkResource: (versionId: string, resourceId: string) => ipcRenderer.invoke('projects:technical:unlink-resource', versionId, resourceId),
       prepareForReuse: (itemId: string, versionId?: string | null) => ipcRenderer.invoke('projects:technical:prepare-reuse', itemId, versionId),
       archive: (itemId: string) => ipcRenderer.invoke('projects:technical:archive', itemId),
+    },
+  },
+  referentials: {
+    library: {
+      list: (filters?: AtoumWebTechnicalLibraryFilters) => ipcRenderer.invoke('referentials:library:list', filters),
+      get: (id: string) => ipcRenderer.invoke('referentials:library:get', id),
+      create: (item: AtoumWebTechnicalItemInput, version: AtoumWebTechnicalVersionInput) => ipcRenderer.invoke('referentials:library:create', item, version),
+      update: (id: string, input: Partial<AtoumWebTechnicalItemInput>) => ipcRenderer.invoke('referentials:library:update', id, input),
+      createVersion: (itemId: string, version: AtoumWebTechnicalVersionInput) => ipcRenderer.invoke('referentials:library:create-version', itemId, version),
+      markStable: (versionId: string) => ipcRenderer.invoke('referentials:library:mark-stable', versionId),
+      archive: (itemId: string) => ipcRenderer.invoke('referentials:library:archive', itemId),
+      reactivate: (itemId: string) => ipcRenderer.invoke('referentials:library:reactivate', itemId),
     },
   },
   operations: {
