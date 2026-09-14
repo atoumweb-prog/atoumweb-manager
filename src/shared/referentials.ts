@@ -1,10 +1,16 @@
-import type { ProjectTechnicalCategory, ProjectTechnicalContentType } from './projects';
+import type { ProjectTechnicalContentType } from './projects';
+
+export const ATOUMWEB_LIBRARY_CATEGORIES = [
+  'header', 'footer', 'hero', 'page', 'section', 'form', 'gallery', 'carousel',
+  'navigation', 'css', 'javascript', 'php', 'woocommerce', 'acf', 'divi', 'app', 'note',
+] as const;
+export type AtoumWebLibraryCategory = (typeof ATOUMWEB_LIBRARY_CATEGORIES)[number];
 
 export const ATOUMWEB_REUSE_STATUSES = ['ready', 'adapt', 'reference'] as const;
 export type AtoumWebReuseStatus = (typeof ATOUMWEB_REUSE_STATUSES)[number];
 
 export interface AtoumWebTechnicalItemInput {
-  category: ProjectTechnicalCategory;
+  category: AtoumWebLibraryCategory;
   name: string;
   description?: string | null;
   tags?: string[];
@@ -44,7 +50,7 @@ export interface AtoumWebTechnicalItemDetail extends AtoumWebTechnicalItemSummar
 
 export interface AtoumWebTechnicalLibraryFilters {
   search?: string | null;
-  category?: ProjectTechnicalCategory | null;
+  category?: AtoumWebLibraryCategory | null;
   reuseStatus?: AtoumWebReuseStatus | null;
   includeArchived?: boolean;
 }
