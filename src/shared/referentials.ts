@@ -76,6 +76,41 @@ export interface AtoumWebAssetOpenResult {
   error?: string | null;
 }
 
+export interface ReusePreparationInput {
+  itemId: string;
+  versionId?: string | null;
+  adaptationNotes?: string | null;
+}
+
+export interface ReusePreparationCopiedFile {
+  resourceId: string;
+  fileName: string;
+  sourceRelativePath: string;
+  packageRelativePath?: string | null;
+  copied: boolean;
+  missing: boolean;
+  checksumSha256?: string | null;
+}
+
+export interface ReusePreparationResult {
+  projectId: string;
+  itemId: string;
+  versionId: string;
+  versionNumber: number;
+  packageDirectory: string;
+  manifestPath: string;
+  contentPath?: string | null;
+  adaptationNotesPath: string;
+  copiedFiles: ReusePreparationCopiedFile[];
+  createdAt: string;
+}
+
+export interface ReuseCreateGlobalInput {
+  preparation: ReusePreparationResult;
+  item: Omit<AtoumWebTechnicalItemInput, 'originTechnicalItemId'>;
+  version: AtoumWebTechnicalVersionInput;
+}
+
 export interface ReferentialsApi {
   library: {
     list(filters?: AtoumWebTechnicalLibraryFilters): Promise<AtoumWebTechnicalItemSummary[]>;
@@ -92,5 +127,10 @@ export interface ReferentialsApi {
       openFile(assetId: string): Promise<AtoumWebAssetOpenResult>;
       openFolder(versionId: string): Promise<AtoumWebAssetOpenResult>;
     };
+  };
+  reuse: {
+    prepareProjectItem(input: ReusePreparationInput): Promise<ReusePreparationResult>;
+    createGlobal(input: ReuseCreateGlobalInput): Promise<AtoumWebTechnicalItemDetail>;
+    openPackage(path: string): Promise<AtoumWebAssetOpenResult>;
   };
 }
