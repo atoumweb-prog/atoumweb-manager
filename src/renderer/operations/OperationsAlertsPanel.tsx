@@ -1,17 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { OperationsAlert, OperationsAlertsSnapshot } from '../../shared/operationsAlerts';
 
-type TargetView = 'maintenance' | 'packs';
+type TargetView = 'interventions' | 'maintenance' | 'packs';
+
+type AlertTarget = {
+  view: TargetView;
+  entityId?: string | null;
+};
 
 const SEVERITY_LABELS = { critical: 'Urgent', warning: 'À surveiller', info: 'Information' } as const;
 
-function targetFor(alert: OperationsAlert): TargetView {
-  return alert.hourPackId ? 'packs' : 'maintenance';
+function targetFor(alert: OperationsAlert): AlertTarget {
+  if (alert.interventionId) return { view: 'interventions', entityId: alert.interventionId };
+  if (alert.hourPackId) return { view: 'packs', entityId: alert.hourPackId };
+  return { view: 'maintenance', entityId: alert.maintenanceSubscriptionId ?? null };
 }
 
 export function OperationsAlertsPanel({ refreshKey, onNavigate, onMessage }: {
   refreshKey: number;
-  onNavigate: (view: TargetView) => void;
+  onNavigate: (target: AlertTarget) => void;
   onMessage: (message: string) => void;
 }) {
   const [snapshot, setSnapshot] = useState<OperationsAlertsSnapshot | null>(null);
@@ -39,7 +46,7 @@ export function OperationsAlertsPanel({ refreshKey, onNavigate, onMessage }: {
         <button className="secondary-button" type="button" onClick={() => void load()}>↻</button>
       </div>
     </div>
-    {alerts.length === 0 ? <p className="muted">Maintenance, quotas et packs ne présentent actuellement aucun point critique selon les seuils configurés.</p> : <div className="operations-alerts-list">
+    {alerts.length === 0 ? <p className="muted">Maintenance, incidents, facturation opérationnelle et packs ne présentent actuellement aucun point critique selon les seuils configurés.</p> : <div className="operations-alerts-list">
       {visible.map((alert) => <button key={alert.id} type="button" className={`operations-alert alert-${alert.severity}`} onClick={() => onNavigate(targetFor(alert))}>
         <span className="operations-alert-severity">{SEVERITY_LABELS[alert.severity]}</span>
         <strong>{alert.title}</strong>
