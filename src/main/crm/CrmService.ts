@@ -612,7 +612,7 @@ export class CrmService {
   }
 
   rebuildSearchIndex(): { indexed: number } {
-    this.database.run('DELETE FROM search_documents');
+    this.database.run("DELETE FROM search_documents WHERE entity_type IN ('organization','contact','prospect','client')");
     const organizations = this.database.all<Record<string, unknown>>('SELECT id FROM organizations WHERE archived_at IS NULL');
     organizations.forEach((row) => this.indexOrganization(String(row.id)));
     const contacts = this.database.all<Record<string, unknown>>('SELECT id FROM contacts WHERE archived_at IS NULL');

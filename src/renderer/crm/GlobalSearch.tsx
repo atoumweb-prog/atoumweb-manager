@@ -46,7 +46,7 @@ export function GlobalSearch({ onOpen }: { onOpen: (result: SearchResult) => voi
         onFocus={() => results.length > 0 && setOpen(true)}
         onChange={(event) => setQuery(event.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Rechercher client, prospect, devis, projet, intervention…"
+        placeholder="Rechercher client, projet, intervention, composant…"
         value={query}
       />
       {open && (
@@ -86,5 +86,6 @@ function entityLabel(type: SearchResult['entityType']): string {
     case 'intervention': return 'Intervention';
     case 'maintenance': return 'Maintenance';
     case 'hour_pack': return 'Pack d’heures';
+    case 'atoumweb_library': return 'Bibliothèque';
   }
 }

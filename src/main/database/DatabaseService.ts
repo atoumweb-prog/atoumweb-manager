@@ -2,6 +2,8 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DatabaseHealth } from '../../shared/contracts';
 import { BillingHandoffService } from '../billing/BillingHandoffService';
+import { BusinessBackupAlertService } from '../backups/BusinessBackupAlertService';
+import { BusinessBackupService } from '../backups/BusinessBackupService';
 import { CatalogService } from '../commercial/CatalogService';
 import { QuoteService } from '../commercial/QuoteService';
 import { ActionService } from '../crm/ActionService';
@@ -22,6 +24,10 @@ import { ProjectReuseExportService } from '../projects/ProjectReuseExportService
 import { ProjectSearchService } from '../projects/ProjectSearchService';
 import { ProjectService } from '../projects/ProjectService';
 import { ProjectTechnicalLibraryService } from '../projects/ProjectTechnicalLibraryService';
+import { AtoumWebPackageService } from '../referentials/AtoumWebPackageService';
+import { AtoumWebTechnicalAssetService } from '../referentials/AtoumWebTechnicalAssetService';
+import { AtoumWebTechnicalLibraryService } from '../referentials/AtoumWebTechnicalLibraryService';
+import { ReusePreparationService } from '../referentials/ReusePreparationService';
 import { TimeCorrectionService } from '../time/TimeCorrectionService';
 import { TimeService } from '../time/TimeService';
 import { TimeSwitchService } from '../time/TimeSwitchService';
@@ -47,6 +53,12 @@ export class DatabaseService {
   readonly projectReuseExport: ProjectReuseExportService;
   readonly projectSearch: ProjectSearchService;
   readonly projectTechnicalLibrary: ProjectTechnicalLibraryService;
+  readonly atoumWebTechnicalLibrary: AtoumWebTechnicalLibraryService;
+  readonly atoumWebTechnicalAssets: AtoumWebTechnicalAssetService;
+  readonly reusePreparation: ReusePreparationService;
+  readonly atoumWebPackages: AtoumWebPackageService;
+  readonly businessBackups: BusinessBackupService;
+  readonly businessBackupAlerts: BusinessBackupAlertService;
   readonly operations: OperationsService;
   readonly maintenance: MaintenanceService;
   readonly hourPacks: HourPackService;
@@ -75,6 +87,12 @@ export class DatabaseService {
     this.projectReuseExport = new ProjectReuseExportService(this.database, this.workspace);
     this.projectSearch = new ProjectSearchService(this.database);
     this.projectTechnicalLibrary = new ProjectTechnicalLibraryService(this.database);
+    this.atoumWebTechnicalLibrary = new AtoumWebTechnicalLibraryService(this.database);
+    this.atoumWebTechnicalAssets = new AtoumWebTechnicalAssetService(this.database, this.workspace);
+    this.reusePreparation = new ReusePreparationService(this.database, this.workspace, this.atoumWebTechnicalLibrary, this.atoumWebTechnicalAssets);
+    this.atoumWebPackages = new AtoumWebPackageService(this.database, this.workspace, this.atoumWebTechnicalLibrary, this.atoumWebTechnicalAssets);
+    this.businessBackups = new BusinessBackupService(this.database);
+    this.businessBackupAlerts = new BusinessBackupAlertService(this.database, this.businessBackups);
     this.operations = new OperationsService(this.database);
     this.maintenance = new MaintenanceService(this.database);
     this.hourPacks = new HourPackService(this.database);
@@ -100,6 +118,8 @@ export class DatabaseService {
     applyPendingMigrations(this.database);
     this.seedDefaults();
     this.crm.rebuildSearchIndex();
+    this.atoumWebTechnicalLibrary.rebuildSearchIndex();
+    this.businessBackups.rebuildSearchIndex();
     await this.createDailyBackupIfNeeded();
   }
 
@@ -113,6 +133,11 @@ export class DatabaseService {
   private seedDefaults(): void {
     this.setSettingIfMissing('theme', 'atoumweb');
     this.setSettingIfMissing('show_hover_help', true);
+    this.setSettingIfMissing('business_backups_default_max_known_age_days', 7);
+    this.setSettingIfMissing('business_backups_default_max_local_age_days', 7);
+    this.setSettingIfMissing('business_backups_default_warn_server_only', true);
+    this.setSettingIfMissing('business_backups_default_remind_before_intervention', true);
+    this.setSettingIfMissing('business_backups_default_remind_after_major_change', true);
   }
 
   private setSettingIfMissing(key: string, value: unknown): void {

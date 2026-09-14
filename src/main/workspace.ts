@@ -14,6 +14,7 @@ export interface WorkspacePaths {
   clientsDirectory: string;
   internalDirectory: string;
   exportsDirectory: string;
+  atoumWebLibraryDirectory: string;
 }
 
 const BOOTSTRAP_FILENAME = 'workspace.json';
@@ -34,6 +35,7 @@ export function createWorkspacePaths(root: string): WorkspacePaths {
     clientsDirectory: join(normalizedRoot, 'clients'),
     internalDirectory: join(normalizedRoot, 'projets-internes'),
     exportsDirectory: join(normalizedRoot, 'exports'),
+    atoumWebLibraryDirectory: join(normalizedRoot, 'bibliotheque-atoumweb'),
   };
 }
 
@@ -47,6 +49,7 @@ export function ensureWorkspace(root: string): WorkspacePaths {
     paths.clientsDirectory,
     paths.internalDirectory,
     paths.exportsDirectory,
+    paths.atoumWebLibraryDirectory,
   ].forEach((directory) => mkdirSync(directory, { recursive: true }));
 
   return paths;
