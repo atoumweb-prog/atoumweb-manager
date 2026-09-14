@@ -23,6 +23,7 @@ import type {
   ProspectInput,
   ProspectStage,
 } from '../shared/crm';
+import type { HourPackShortfallDecisionInput } from '../shared/hourPackShortfall';
 import type { MaintenanceOverageDecisionInput } from '../shared/maintenanceOverage';
 import type {
   HourPackFilters,
@@ -236,6 +237,10 @@ const api: AtoumWebApi = {
       debitIntervention: (packId: string, interventionId: string) => ipcRenderer.invoke('operations:hour-packs:debit-intervention', packId, interventionId),
       reverseMovement: (movementId: string, reason: string) => ipcRenderer.invoke('operations:hour-packs:reverse-movement', movementId, reason),
     },
+  },
+  hourPackShortfalls: {
+    review: (packId: string) => ipcRenderer.invoke('hour-pack-shortfalls:review', packId),
+    decide: (packId: string, input: HourPackShortfallDecisionInput) => ipcRenderer.invoke('hour-pack-shortfalls:decide', packId, input),
   },
   maintenanceOverages: {
     review: (periodId: string) => ipcRenderer.invoke('maintenance-overages:review', periodId),
