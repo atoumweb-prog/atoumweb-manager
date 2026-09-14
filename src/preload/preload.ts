@@ -62,6 +62,7 @@ import type {
   TransformQuoteToProjectInput,
 } from '../shared/projects';
 import type {
+  AtoumWebTechnicalAssetRole,
   AtoumWebTechnicalItemInput,
   AtoumWebTechnicalLibraryFilters,
   AtoumWebTechnicalVersionInput,
@@ -206,6 +207,12 @@ const api: AtoumWebApi = {
       markStable: (versionId: string) => ipcRenderer.invoke('referentials:library:mark-stable', versionId),
       archive: (itemId: string) => ipcRenderer.invoke('referentials:library:archive', itemId),
       reactivate: (itemId: string) => ipcRenderer.invoke('referentials:library:reactivate', itemId),
+      assets: {
+        list: (versionId: string) => ipcRenderer.invoke('referentials:library:assets:list', versionId),
+        importFiles: (versionId: string, role: AtoumWebTechnicalAssetRole) => ipcRenderer.invoke('referentials:library:assets:import', versionId, role),
+        openFile: (assetId: string) => ipcRenderer.invoke('referentials:library:assets:open-file', assetId),
+        openFolder: (versionId: string) => ipcRenderer.invoke('referentials:library:assets:open-folder', versionId),
+      },
     },
   },
   operations: {
