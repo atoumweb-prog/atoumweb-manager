@@ -59,7 +59,7 @@ export class HourPackShortfallService {
        FROM hour_pack_movements hpm
        LEFT JOIN interventions i ON i.id=hpm.intervention_id
        WHERE hpm.pack_id=?
-       ORDER BY hpm.created_at,hpm.id`,
+       ORDER BY hpm.rowid`,
       [packId],
     );
     const reversed = new Set(
