@@ -8,6 +8,7 @@ import { ActionService } from '../crm/ActionService';
 import { ClientContactService } from '../crm/ClientContactService';
 import { CrmService } from '../crm/CrmService';
 import { HourPackService } from '../operations/HourPackService';
+import { HourPackShortfallService } from '../operations/HourPackShortfallService';
 import { InterventionCompletionService } from '../operations/InterventionCompletionService';
 import { MaintenanceOverageService } from '../operations/MaintenanceOverageService';
 import { MaintenanceReportService } from '../operations/MaintenanceReportService';
@@ -50,6 +51,7 @@ export class DatabaseService {
   readonly maintenance: MaintenanceService;
   readonly hourPacks: HourPackService;
   readonly billingHandoff: BillingHandoffService;
+  readonly hourPackShortfalls: HourPackShortfallService;
   readonly maintenanceOverages: MaintenanceOverageService;
   readonly maintenanceReports: MaintenanceReportService;
   readonly operationsAlerts: OperationsAlertService;
@@ -77,6 +79,7 @@ export class DatabaseService {
     this.maintenance = new MaintenanceService(this.database);
     this.hourPacks = new HourPackService(this.database);
     this.billingHandoff = new BillingHandoffService(this.database);
+    this.hourPackShortfalls = new HourPackShortfallService(this.database, this.hourPacks, this.billingHandoff);
     this.maintenanceOverages = new MaintenanceOverageService(this.database, this.billingHandoff);
     this.maintenanceReports = new MaintenanceReportService(this.database);
     this.operationsAlerts = new OperationsAlertService(this.database);
