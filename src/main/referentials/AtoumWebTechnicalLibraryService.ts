@@ -85,8 +85,7 @@ export class AtoumWebTechnicalLibraryService {
       .map((row) => this.mapSummary(row))
       .filter((item) => !filters.category || item.category === filters.category)
       .filter((item) => !filters.reuseStatus || item.reuseStatus === filters.reuseStatus)
-      .filter((item) => !needle || [item.name, item.description ?? '', item.category, item.reuseStatus, ...(item.tags ?? [])]
-        .some((value) => value.toLocaleLowerCase('fr-FR').includes(needle)));
+      .filter((item) => !needle || this.searchParts(item.id, item).some((value) => value.toLocaleLowerCase('fr-FR').includes(needle)));
   }
 
   get(id: string): AtoumWebTechnicalItemDetail {
@@ -131,7 +130,9 @@ export class AtoumWebTechnicalLibraryService {
       this.database.exec('ROLLBACK;');
       throw error;
     }
-    return this.get(id);
+    const created = this.get(id);
+    this.indexItem(created);
+    return created;
   }
 
   updateMetadata(id: string, input: Partial<AtoumWebTechnicalItemInput>): AtoumWebTechnicalItemDetail {
@@ -167,7 +168,9 @@ export class AtoumWebTechnicalLibraryService {
       ],
     );
     this.writeActivity(id, 'atoumweb_technical_item_updated', `Composant AtoumWeb mis à jour : ${name}`);
-    return this.get(id);
+    const updated = this.get(id);
+    this.indexItem(updated);
+    return updated;
   }
 
   createVersion(itemId: string, input: AtoumWebTechnicalVersionInput): AtoumWebTechnicalItemDetail {
@@ -187,7 +190,9 @@ export class AtoumWebTechnicalLibraryService {
       this.database.exec('ROLLBACK;');
       throw error;
     }
-    return this.get(itemId);
+    const updated = this.get(itemId);
+    this.indexItem(updated);
+    return updated;
   }
 
   markStable(versionId: string): AtoumWebTechnicalItemDetail {
@@ -206,7 +211,9 @@ export class AtoumWebTechnicalLibraryService {
       this.database.exec('ROLLBACK;');
       throw error;
     }
-    return this.get(item.id);
+    const updated = this.get(item.id);
+    this.indexItem(updated);
+    return updated;
   }
 
   archive(itemId: string): AtoumWebTechnicalItemDetail {
@@ -214,6 +221,7 @@ export class AtoumWebTechnicalLibraryService {
     if (item.archivedAt) return item;
     const now = nowIso();
     this.database.run('UPDATE technical_items SET archived_at=?, updated_at=? WHERE id=?', [now, now, itemId]);
+    this.database.run("DELETE FROM search_documents WHERE entity_type='atoumweb_library' AND entity_id=?", [itemId]);
     this.writeActivity(itemId, 'atoumweb_technical_item_archived', `Composant AtoumWeb archivé : ${item.name}`);
     return this.get(itemId);
   }
@@ -224,7 +232,16 @@ export class AtoumWebTechnicalLibraryService {
     const now = nowIso();
     this.database.run('UPDATE technical_items SET archived_at=NULL, updated_at=? WHERE id=?', [now, itemId]);
     this.writeActivity(itemId, 'atoumweb_technical_item_reactivated', `Composant AtoumWeb réactivé : ${item.name}`);
-    return this.get(itemId);
+    const updated = this.get(itemId);
+    this.indexItem(updated);
+    return updated;
+  }
+
+  rebuildSearchIndex(): { indexed: number } {
+    this.database.run("DELETE FROM search_documents WHERE entity_type='atoumweb_library'");
+    const ids = this.database.all<{ id: string }>("SELECT id FROM technical_items WHERE scope='atoumweb' AND archived_at IS NULL");
+    ids.forEach(({ id }) => this.indexItem(this.get(id)));
+    return { indexed: ids.length };
   }
 
   private insertVersion(itemId: string, versionNumber: number, input: AtoumWebTechnicalVersionInput, now: string): void {
@@ -277,6 +294,50 @@ export class AtoumWebTechnicalLibraryService {
       stable: Boolean(row.is_stable),
       createdAt: row.created_at,
     }));
+  }
+
+  private searchParts(itemId: string, item: AtoumWebTechnicalItemSummary): string[] {
+    const versions = this.getVersions(itemId);
+    return [
+      item.name,
+      item.description ?? '',
+      item.category,
+      item.reuseStatus,
+      ...(item.tags ?? []),
+      ...versions.flatMap((version) => [
+        version.contentType,
+        version.language ?? '',
+        version.notes ?? '',
+        version.contentText ?? '',
+      ]),
+    ];
+  }
+
+  private indexItem(item: AtoumWebTechnicalItemDetail): void {
+    if (item.archivedAt) {
+      this.database.run("DELETE FROM search_documents WHERE entity_type='atoumweb_library' AND entity_id=?", [item.id]);
+      return;
+    }
+    const searchText = this.searchParts(item.id, item).filter(Boolean).join(' ').toLocaleLowerCase('fr-FR');
+    this.database.run(
+      `INSERT INTO search_documents (id, entity_type, entity_id, title, subtitle, status, search_text, updated_at)
+       VALUES (?, 'atoumweb_library', ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(entity_type, entity_id) DO UPDATE SET
+         title=excluded.title,
+         subtitle=excluded.subtitle,
+         status=excluded.status,
+         search_text=excluded.search_text,
+         updated_at=excluded.updated_at`,
+      [
+        `atoumweb_library:${item.id}`,
+        item.id,
+        item.name,
+        `Bibliothèque AtoumWeb · ${item.category}`,
+        item.reuseStatus,
+        searchText,
+        nowIso(),
+      ],
+    );
   }
 
   private validateItemInput(input: AtoumWebTechnicalItemInput): void {
