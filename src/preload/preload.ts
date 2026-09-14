@@ -77,6 +77,19 @@ const api: AtoumWebApi = {
     restore: () => ipcRenderer.invoke('backups:restore'),
   },
   database: { health: () => ipcRenderer.invoke('database:health') },
+  workflow: {
+    needs: (owner,id) => ipcRenderer.invoke('workflow:needs',owner,id),
+    saveNeed: (owner,id,input,needId) => ipcRenderer.invoke('workflow:save-need',owner,id,input,needId),
+    removeNeed: (owner,id,needId) => ipcRenderer.invoke('workflow:remove-need',owner,id,needId),
+    identity: (owner,id) => ipcRenderer.invoke('workflow:identity',owner,id),
+    archiveProspect: (id,archived) => ipcRenderer.invoke('workflow:archive-prospect',id,archived),
+    dashboard: () => ipcRenderer.invoke('workflow:dashboard'),
+    beginDemoCapture: label => ipcRenderer.invoke('workflow:begin-demo-capture',label),
+    endDemoCapture: batch => ipcRenderer.invoke('workflow:end-demo-capture',batch),
+    createDemo: scenario => ipcRenderer.invoke('workflow:create-demo',scenario),
+    demoSummary: () => ipcRenderer.invoke('workflow:demo-summary'),
+    resetDemo: () => ipcRenderer.invoke('workflow:reset-demo'),
+  },
   crm: {
     organizations: {
       create: (input: OrganizationInput) => ipcRenderer.invoke('crm:organizations:create', input),
@@ -129,6 +142,7 @@ const api: AtoumWebApi = {
     setOfferComponents: (offerVersionId: string, components: OfferComponentInput[]) => ipcRenderer.invoke('catalog:set-offer-components', offerVersionId, components),
   },
   quotes: {
+    createWithLines: (input,lines) => ipcRenderer.invoke('quotes:create-with-lines',input,lines),
     list: (filters?: QuoteFilters) => ipcRenderer.invoke('quotes:list', filters),
     get: (id: string) => ipcRenderer.invoke('quotes:get', id),
     create: (input: QuoteInput) => ipcRenderer.invoke('quotes:create', input),

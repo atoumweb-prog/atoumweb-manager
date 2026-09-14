@@ -1,3 +1,4 @@
+import { STABILISATION_MIGRATION } from './stabilisationMigration';
 import type { DatabaseAdapter } from './DatabaseAdapter';
 import { PHASE_2_MIGRATIONS } from './phase2Migrations';
 import { PHASE_3_MIGRATIONS } from './phase3Migrations';
@@ -163,6 +164,7 @@ export const MIGRATIONS: Migration[] = [
   ...PHASE_4_MIGRATIONS,
   ...PHASE_4_OVERAGE_MIGRATIONS,
   ...PHASE_4_REPORT_MIGRATIONS,
+  STABILISATION_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {

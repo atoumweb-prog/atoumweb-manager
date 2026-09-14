@@ -1,3 +1,5 @@
+import { WorkflowService } from '../workflow/WorkflowService';
+import { DemoService } from '../workflow/DemoService';
 import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DatabaseHealth } from '../../shared/contracts';
@@ -35,6 +37,8 @@ export type BackupKind = 'automatic' | 'manual' | 'pre-migration';
 export class DatabaseService {
   private readonly database: DatabaseAdapter;
   private readonly existedBeforeOpen: boolean;
+  readonly workflow: WorkflowService;
+  readonly demo: DemoService;
   readonly crm: CrmService;
   readonly clientContacts: ClientContactService;
   readonly actions: ActionService;
@@ -87,6 +91,8 @@ export class DatabaseService {
     this.time = new TimeService(this.database);
     this.timeCorrections = new TimeCorrectionService(this.database, this.time);
     this.timeSwitches = new TimeSwitchService(this.database, this.time);
+    this.workflow = new WorkflowService(this.database, this.crm, this.quotes, this.projects, this.operations);
+    this.demo = new DemoService(this.database);
   }
 
   async initialize(): Promise<void> {
@@ -98,6 +104,7 @@ export class DatabaseService {
     }
 
     applyPendingMigrations(this.database);
+    this.demo.installTracking();
     this.seedDefaults();
     this.crm.rebuildSearchIndex();
     await this.createDailyBackupIfNeeded();

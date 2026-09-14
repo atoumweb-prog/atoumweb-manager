@@ -1,3 +1,5 @@
+import { DossierPanel, NeedChoices } from '../workflow/DossierPanel';
+import type { NeedInput } from '../../shared/workflow';
 import { useEffect, useMemo, useState } from 'react';
 import {
   CLIENT_CONTACT_ROLES,
@@ -75,19 +77,21 @@ function dateInputValue(value?: string | null): string {
   return Number.isNaN(date.getTime()) ? new Date().toISOString().slice(0, 10) : date.toISOString().slice(0, 10);
 }
 
-export function ClientsPage({ onMessage }: { onMessage: (message: string) => void }) {
+export function ClientsPage({ onMessage, initialId }: { onMessage: (message: string) => void; initialId?: string | null }) {
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
   const [contacts, setContacts] = useState<ClientContactLink[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<'all' | ClientStatus>('all');
   const [query, setQuery] = useState('');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(initialId ?? null);
+  const [needsDraft,setNeedsDraft] = useState<NeedInput[]>([]);
   const [activeTab, setActiveTab] = useState<ClientTab>('summary');
   const [showForm, setShowForm] = useState(false);
   const [draft, setDraft] = useState<ClientDraft>(EMPTY_DRAFT);
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
   const [showContactForm, setShowContactForm] = useState(false);
   const [contactDraft, setContactDraft] = useState<ContactDraft>(EMPTY_CONTACT_DRAFT);
   const [contactError, setContactError] = useState<string | null>(null);
@@ -154,7 +158,9 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
     }
 
     setSaving(true);
+    let demoBatch: string | null = null;
     try {
+      if (demoMode) demoBatch = await window.atoumweb.workflow.beginDemoCapture('client saisi manuellement');
       let organizationId: string | null = null;
       let contactId: string | null = null;
 
@@ -185,7 +191,10 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
         notes: draft.notes.trim() || null,
       });
 
+      for (const need of needsDraft) await window.atoumweb.workflow.saveNeed('client', client.id, need);
+      setNeedsDraft([]);
       setDraft(EMPTY_DRAFT);
+      setDemoMode(false);
       setShowForm(false);
       await refresh();
       openClient(client.id);
@@ -193,6 +202,7 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Impossible de créer le client.');
     } finally {
+      if (demoBatch) await window.atoumweb.workflow.endDemoCapture(demoBatch);
       setSaving(false);
     }
   }
@@ -345,13 +355,14 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
       {showForm && (
         <form className="panel crm-form" onSubmit={(event) => void submitClient(event)}>
           <div className="panel-title"><div><span className="eyebrow">Client</span><h2>Ajouter un client directement</h2></div></div>
+          <button className="secondary-button" type="button" onClick={() => { setDemoMode(true); setDraft({ company: 'DEMO — Atelier Mercure', firstName: 'Léa', lastName: 'Durand', email: 'lea@example.test', phone: '', notes: 'Dossier de démonstration.' }); setNeedsDraft([{ catalogItemId: 'atoumweb-ecommerce' }]); }}>Remplir avec des données test</button>
           <div className="form-grid">
             <label>Société<input value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} /></label>
             <label>Prénom<input value={draft.firstName} onChange={(e) => setDraft({ ...draft, firstName: e.target.value })} /></label>
             <label>Nom<input value={draft.lastName} onChange={(e) => setDraft({ ...draft, lastName: e.target.value })} /></label>
             <label>Email<input type="email" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} /></label>
             <label>Téléphone<input value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} /></label>
-            <label>Notes<input value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} /></label>
+            <NeedChoices value={needsDraft} onChange={setNeedsDraft}/><label>Notes<input value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} /></label>
           </div>
           {formError && <p className="form-error">{formError}</p>}
           <div className="form-actions"><button className="primary-button" disabled={saving} type="submit">{saving ? 'Création…' : 'Créer le client'}</button></div>
@@ -391,6 +402,7 @@ export function ClientsPage({ onMessage }: { onMessage: (message: string) => voi
                 <button className="close-detail" type="button" onClick={() => { setSelectedId(null); setActionEditor(null); setArchiveCandidateId(null); }}>×</button>
               </div>
 
+              <DossierPanel owner="client" id={selected.id} onSaved={()=>void refresh()} />
               <div className="client-tabs-preview client-tabs-buttons">
                 <button className={activeTab === 'summary' ? 'active' : ''} type="button" onClick={() => setActiveTab('summary')}>Résumé</button>
                 <button className={activeTab === 'contacts' ? 'active' : ''} type="button" onClick={() => setActiveTab('contacts')}>Contacts</button>

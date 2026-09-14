@@ -203,7 +203,7 @@ export class CrmService {
     return this.getOrganization(id);
   }
 
-  private getOrganization(id: string): Organization {
+  getOrganization(id: string): Organization {
     const row = this.database.get<Record<string, unknown>>('SELECT * FROM organizations WHERE id=?', [id]);
     if (!row) throw new Error('Organisation introuvable.');
     return {
@@ -258,7 +258,7 @@ export class CrmService {
     return this.getContact(id);
   }
 
-  private getContact(id: string): Contact {
+  getContact(id: string): Contact {
     const row = this.database.get<Record<string, unknown>>('SELECT * FROM contacts WHERE id=?', [id]);
     if (!row) throw new Error('Contact introuvable.');
     return {
@@ -381,7 +381,8 @@ export class CrmService {
 
   private prospectSelect(): string {
     return `SELECT p.*, o.name AS organization_name, c.first_name AS contact_first_name,
-      c.last_name AS contact_last_name, c.email AS contact_email
+      c.last_name AS contact_last_name, c.email AS contact_email,
+      COALESCE((SELECT group_concat(COALESCE(ci.name,n.other_text), ' · ') FROM crm_needs n LEFT JOIN catalog_items ci ON ci.id=n.catalog_item_id WHERE n.prospect_id=p.id),p.primary_need) AS live_need
       FROM prospects p
       LEFT JOIN organizations o ON o.id=p.organization_id
       LEFT JOIN contacts c ON c.id=p.contact_id`;
@@ -393,7 +394,7 @@ export class CrmService {
     return {
       id: row.id, organizationId: row.organization_id, contactId: row.contact_id,
       clientAccountId: row.client_account_id, stage: row.stage, temperature: row.temperature,
-      source: row.source, sourceDetail: row.source_detail, primaryNeed: row.primary_need,
+      source: row.source, sourceDetail: row.source_detail, primaryNeed: row.live_need as string | null,
       secondaryNeed: row.secondary_need, budgetMinCents: row.budget_min_cents,
       budgetMaxCents: row.budget_max_cents, estimatedValueCents: row.estimated_value_cents,
       probabilityPercent: row.probability_percent, nextActionAt: row.next_action_at,

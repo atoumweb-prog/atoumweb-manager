@@ -48,6 +48,7 @@ export interface RestoreScheduleResult {
 }
 
 export interface AtoumWebApi {
+  workflow: import('./workflow').WorkflowApi;
   app: {
     getBootstrap(): Promise<BootstrapState>;
   };

@@ -64,8 +64,12 @@ describe('CatalogService', () => {
   it('filtre les offres et services par type et mode tarifaire', () => {
     catalog.create({ type: 'service', name: 'Maintenance mensuelle' }, { priceMode: 'monthly', priceCents: 4900 });
     catalog.create({ type: 'offer', name: 'Landing page' }, { priceMode: 'fixed', priceCents: 49900 });
-    expect(catalog.list({ type: 'offer' })).toHaveLength(1);
-    expect(catalog.list({ priceMode: 'monthly' })).toHaveLength(1);
+    const offers = catalog.list({ type: 'offer' });
+    expect(offers).toHaveLength(12);
+    expect(offers.every(item => item.type === 'offer')).toBe(true);
+    const monthly = catalog.list({ priceMode: 'monthly' });
+    expect(monthly).toHaveLength(3);
+    expect(monthly.every(item => item.currentVersion?.priceMode === 'monthly')).toBe(true);
   });
 
   it('compose une offre avec des versions publiées de services', () => {

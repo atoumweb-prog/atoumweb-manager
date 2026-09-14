@@ -19,6 +19,7 @@ import './project-completion.css';
 import './time.css';
 import './time-recovery.css';
 import './operations.css';
+import './workflow.css';
 
 const rootElement = document.getElementById('root');
 

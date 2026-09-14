@@ -87,6 +87,7 @@ interface CatalogSnapshotRow extends Record<string, unknown> {
   prerequisites_json: string;
   price_mode: string;
   price_cents: number | null;
+  special_terms: string | null;
   default_deposit_percent: number | null;
   contract_type: string | null;
 }
@@ -145,7 +146,7 @@ export class QuoteService {
     return { ...this.mapSummary(row), needSummary: row.need_summary, estimatedDelay: row.estimated_delay, prerequisitesText: row.prerequisites_text, specialTerms: row.special_terms, contractType: row.contract_type, lines };
   }
 
-  create(input: QuoteInput): QuoteDetail {
+  create(input: QuoteInput, withinTransaction = false): QuoteDetail {
     this.validateOwner(input.prospectId, input.clientAccountId);
     const subject = clean(input.subject);
     if (!subject) throw new Error('L’objet du devis est requis.');
@@ -160,7 +161,7 @@ export class QuoteService {
     const validUntil = new Date(now);
     validUntil.setDate(validUntil.getDate() + validityDays);
 
-    this.database.exec('BEGIN IMMEDIATE;');
+    if (!withinTransaction) this.database.exec('BEGIN IMMEDIATE;');
     try {
       const number = this.nextQuoteNumber(now.getFullYear(), nowString);
       this.database.run(
@@ -190,12 +191,25 @@ export class QuoteService {
         ],
       );
       this.writeActivity(id, 'quote_created', `Devis ${number} créé`);
-      this.database.exec('COMMIT;');
+      if (!withinTransaction) this.database.exec('COMMIT;');
     } catch (error) {
-      this.database.exec('ROLLBACK;');
+      if (!withinTransaction) this.database.exec('ROLLBACK;');
       throw error;
     }
     return this.get(id);
+  }
+
+  createWithLines(input: QuoteInput, lines: Array<{catalogVersionId?: string; input: QuoteLineInput}>): QuoteDetail {
+    this.database.exec('BEGIN IMMEDIATE;');
+    try {
+      const quote=this.create(input,true);
+      for(const line of lines) {
+        if(line.catalogVersionId) this.addCatalogLine(quote.id,line.catalogVersionId,line.input);
+        else this.addCustomLine(quote.id,line.input);
+      }
+      this.database.exec('COMMIT;');
+      return this.get(quote.id);
+    } catch(error) { this.database.exec('ROLLBACK;'); throw error; }
   }
 
   addCatalogLine(quoteId: string, catalogVersionId: string, input: Partial<QuoteLineInput> = {}): QuoteDetail {
@@ -204,7 +218,7 @@ export class QuoteService {
       `SELECT v.id AS version_id, i.id AS item_id, i.name AS item_name, i.item_type,
               v.version_number, v.description, v.inclusions_json, v.exclusions_json,
               v.prerequisites_json, v.price_mode, v.price_cents, v.default_deposit_percent,
-              v.contract_type
+              v.contract_type, v.special_terms
        FROM catalog_versions v
        JOIN catalog_items i ON i.id=v.item_id
        WHERE v.id=?`,
@@ -268,9 +282,12 @@ export class QuoteService {
       priceCents: source.price_cents,
       defaultDepositPercent: source.default_deposit_percent,
       contractType: source.contract_type,
+      specialTerms: source.special_terms,
       offerComponents,
     };
 
+    const current = this.get(quoteId);
+    const firstOffer = source.item_type === 'offer' && !current.lines.some(line => line.snapshot?.itemType === 'offer');
     this.insertLine(quoteId, 'catalog', {
       ...input,
       label: clean(input.label) ?? source.item_name,
@@ -278,6 +295,13 @@ export class QuoteService {
       catalogUnitPriceCents: source.price_cents ?? proposed ?? 0,
       proposedUnitPriceCents: proposed ?? 0,
     }, source.item_id, source.version_id, snapshot);
+    if (firstOffer) {
+      this.updateConditions(quoteId, {
+        specialTerms: current.specialTerms || source.special_terms,
+        prerequisitesText: current.prerequisitesText || this.parseJsonList(source.prerequisites_json).join('\n'),
+        contractType: current.contractType || source.contract_type,
+      });
+    }
     this.recalculate(quoteId);
     return this.get(quoteId);
   }

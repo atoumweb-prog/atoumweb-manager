@@ -14,8 +14,8 @@ function createMainWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1440,
     height: 920,
-    minWidth: 1180,
-    minHeight: 720,
+    minWidth: 760,
+    minHeight: 560,
     backgroundColor: '#0f1720',
     title: 'AtoumWeb Manager',
     webPreferences: {

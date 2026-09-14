@@ -300,3 +300,22 @@ Gel fonctionnel Phase 4 maintenu. Phase 5 différée, aucun apport de la branche
 Point d'attention manuel : vérifier aussi la fluidité des listes d'interventions avec un historique de temps volumineux, le total utilisant désormais le service de temps commun.
 
 Prochaine action : lancement normal du Manager et parcours du plan docs/PHASE_4_VALIDATION_WINDOWS.md avec les données existantes et sauvegarde pré-migration. Conserver la PR #61 en brouillon ; aucune fusion avant validation Phase 4.
+
+
+## Stabilisation transverse — issue #65
+
+Branche feature/stabilisation-parcours-metier créée depuis 4f1323a (Phases 1 à 4 validées). Périmètre étendu explicitement par la demande utilisateur : catalogue AtoumWeb, besoins CRM référencés, continuité devis/projet/dashboard, données demo et responsive. Phase 6 non intégrée, Phase 5 non démarrée, aucune fusion.
+
+- [x] Socle propre vérifié : 26 fichiers / 102 tests, typecheck vert.
+- [x] Migration 18 ajoutée sans renuméroter 1 à 17 : catalogue AtoumWeb, conditions commerciales, besoins CRM et marquage des lots demo.
+- [x] Parcours raccordé : fiche Prospect/Client, devis et conditions, acceptation vers Projet, dashboard et liens profonds.
+- [x] Saisies de démonstration identifiables, trois parcours cohérents, sauvegarde obligatoire et purge transactionnelle sélective.
+- [x] Responsive, défilement des panneaux et taille des textes harmonisés.
+- [x] `npm run typecheck` : aucune erreur.
+- [x] `npm test` : **27 fichiers / 113 tests réussis**, aucun échec ni test désactivé.
+- [x] `npm run package` : package Electron Windows x64 généré avec succès pendant la stabilisation.
+- [ ] Validation visuelle Windows sur un workspace temporaire, puis parcours métier sur données utilisateur uniquement après sauvegarde explicite.
+
+Les tests couvrent les migrations vierges et mises à niveau, les prix confirmés / Sur devis, les besoins multiples, la conversion idempotente, les données vivantes, les snapshots, les lignes de devis atomiques, la création Projet, le dashboard et la purge demo sans suppression des références ni des dossiers réels.
+
+Prochaine action : validation visuelle du parcours complet et des trois thèmes sous Windows. Aucune ouverture du workspace utilisateur sans sauvegarde explicite.

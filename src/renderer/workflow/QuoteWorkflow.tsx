@@ -1,0 +1,20 @@
+import {useEffect,useState} from 'react';
+import type {QuoteDetail} from '../../shared/commercial';
+import type {ProjectSummary,ProjectTemplateSummary} from '../../shared/projects';
+import {changed,openEntity} from './DossierPanel';
+export function QuoteProjectPanel({quote}:{quote:QuoteDetail}){
+  const [templates,setTemplates]=useState<ProjectTemplateSummary[]>([]),[project,setProject]=useState<ProjectSummary|null>(null),[template,setTemplate]=useState(''),[date,setDate]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
+  useEffect(()=>{Promise.all([window.atoumweb.projects.templates.list(),window.atoumweb.projects.projects.list()]).then(([t,p])=>{setTemplates(t.filter(t=>t.currentVersion?.status==='published'));setProject(p.find(p=>p.sourceQuoteId===quote.id)??null);}).catch(e=>setError(String(e)));},[quote.id]);
+  async function create(){setBusy(true);try{
+    let version=template;
+    if(!version){const t=await window.atoumweb.projects.templates.create({name:'Projet standard',projectType:'web'});await window.atoumweb.projects.templates.addNode(t.currentVersion!.id,{type:'task',name:'Validation de la livraison',required:true});await window.atoumweb.projects.templates.publishVersion(t.currentVersion!.id);version=t.currentVersion!.id;}
+    const p=await window.atoumweb.projects.projects.transformQuote({quoteId:quote.id,templateVersionId:version,targetDate:date||null});setProject(p);changed();
+  }catch(e){setError(String(e));}finally{setBusy(false);}}
+  return <section className="workflow-fields"><h3>Projet du devis accepté</h3>{error&&<p role="alert">{error}</p>}{project?<button type="button" className="primary-button" onClick={()=>openEntity({entityType:'project',entityId:project.id,title:project.name})}>Ouvrir {project.name}</button>:<><p>Confirme le modèle et la date de fin. Cette opération crée un seul projet et reprend les prestations et valeurs du devis figé.</p><label>Modèle<select value={template} onChange={e=>setTemplate(e.target.value)}><option value="">Créer un modèle standard</option>{templates.map(t=><option key={t.id} value={t.currentVersion!.id}>{t.name}</option>)}</select></label><label>Fin prévisionnelle<input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label><button className="primary-button" type="button" disabled={busy} onClick={()=>void create()}>Confirmer et créer le projet</button></>}</section>;
+}
+export function QuoteConditions({quote,onSave}:{quote:QuoteDetail;onSave:(q:QuoteDetail)=>void}){
+  const [terms,setTerms]=useState(quote.specialTerms??''),[prerequisites,setPrerequisites]=useState(quote.prerequisitesText??''),[deposit,setDeposit]=useState(String(quote.depositPercent??0)),[error,setError]=useState('');
+  useEffect(()=>{setTerms(quote.specialTerms??'');setPrerequisites(quote.prerequisitesText??'');setDeposit(String(quote.depositPercent??0));},[quote.id,quote.specialTerms,quote.prerequisitesText,quote.depositPercent]);
+  if(quote.status!=='draft')return <section><h3>Conditions contractuelles</h3><p style={{whiteSpace:'pre-wrap'}}>{quote.specialTerms||'Aucune condition particulière.'}</p></section>;
+  return <form className="workflow-fields" onSubmit={e=>{e.preventDefault();window.atoumweb.quotes.updateConditions(quote.id,{specialTerms:terms,prerequisitesText:prerequisites,depositPercent:Number(deposit)}).then(q=>{onSave(q);changed();}).catch(e=>setError(String(e)));}}><h3>Conditions du devis</h3><label>Conditions commerciales<textarea value={terms} onChange={e=>setTerms(e.target.value)}/></label><label>Prérequis<textarea value={prerequisites} onChange={e=>setPrerequisites(e.target.value)}/></label><label>Acompte (%)<input type="number" min="0" max="100" value={deposit} onChange={e=>setDeposit(e.target.value)}/></label><button className="secondary-button">Enregistrer les conditions</button>{error&&<p role="alert">{error}</p>}</form>;
+}

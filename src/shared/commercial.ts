@@ -23,6 +23,7 @@ export interface CatalogItemInput {
 }
 
 export interface CatalogVersionInput {
+  specialTerms?: string | null;
   description?: string | null;
   inclusions?: string[];
   exclusions?: string[];
@@ -194,6 +195,7 @@ export interface QuotePdfResult {
 }
 
 export interface QuoteApi {
+  createWithLines(input: QuoteInput, lines: Array<{catalogVersionId?: string; input: QuoteLineInput}>): Promise<QuoteDetail>;
   list(filters?: QuoteFilters): Promise<QuoteSummary[]>;
   get(id: string): Promise<QuoteDetail>;
   create(input: QuoteInput): Promise<QuoteDetail>;

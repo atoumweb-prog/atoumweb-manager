@@ -55,6 +55,25 @@ import { scheduleDatabaseRestore } from './restore';
 import { saveWorkspaceRoot, type WorkspacePaths } from './workspace';
 
 export function registerIpcHandlers(database: DatabaseService, workspace: WorkspacePaths): void {
+  ipcMain.handle('workflow:needs', (_event, owner, id) => database.workflow.needs(owner,id));
+  ipcMain.handle('workflow:save-need', (_event, owner, id, input, needId) => database.workflow.saveNeed(owner,id,input,needId));
+  ipcMain.handle('workflow:remove-need', (_event, owner, id, needId) => database.workflow.removeNeed(owner,id,needId));
+  ipcMain.handle('workflow:identity', (_event, owner, id) => database.workflow.identity(owner,id));
+  ipcMain.handle('workflow:archive-prospect', (_event, id, archived) => database.workflow.archiveProspect(id,Boolean(archived)));
+  ipcMain.handle('workflow:dashboard', () => database.workflow.dashboard());
+  ipcMain.handle('workflow:begin-demo-capture', (_event, label: string) => database.demo.beginCapture(label));
+  ipcMain.handle('workflow:end-demo-capture', (_event, batch: string) => database.demo.endCapture(batch));
+  ipcMain.handle('workflow:create-demo', (_event, scenario) => database.demo.create(scenario,database));
+  ipcMain.handle('workflow:demo-summary', () => database.demo.summary());
+  ipcMain.handle('workflow:reset-demo', async () => {
+    const summary=database.demo.summary();
+    if(!summary.total) return {cancelled:true};
+    const confirmation=await dialog.showMessageBox({type:'warning',title:'Réinitialiser les données de test',message:'Supprimer uniquement les données marquées demo ?',detail:summary.counts.map(row=>row.table+' : '+row.count).join('\n')+'\n\nCatalogue, prix, modèles, paramètres et fichiers physiques conservés. Une sauvegarde SQLite sera créée avant suppression.',buttons:['Annuler','Sauvegarder et supprimer les données demo'],defaultId:0,cancelId:0});
+    if(confirmation.response!==1) return {cancelled:true};
+    const result=await database.demo.reset(()=>database.createBackup('manual'));
+    database.crm.rebuildSearchIndex();
+    return {cancelled:false,...result};
+  });
   ipcMain.handle('app:get-bootstrap', (): BootstrapState => {
     const storedTheme = database.getSetting<unknown>('theme', 'atoumweb');
     const theme: ThemeName = isThemeName(storedTheme) ? storedTheme : 'atoumweb';
@@ -190,6 +209,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
 
   ipcMain.handle('quotes:list', (_event, filters?: QuoteFilters) => database.quotes.list(filters));
   ipcMain.handle('quotes:get', (_event, id: string) => database.quotes.get(id));
+  ipcMain.handle('quotes:create-with-lines', (_event, input: QuoteInput, lines: Array<{catalogVersionId?: string; input: QuoteLineInput}>) => database.quotes.createWithLines(input,lines));
   ipcMain.handle('quotes:create', (_event, input: QuoteInput) => database.quotes.create(input));
   ipcMain.handle('quotes:add-catalog-line', (_event, quoteId: string, catalogVersionId: string, input?: Partial<QuoteLineInput>) => database.quotes.addCatalogLine(quoteId, catalogVersionId, input));
   ipcMain.handle('quotes:add-custom-line', (_event, quoteId: string, input: QuoteLineInput) => database.quotes.addCustomLine(quoteId, input));
