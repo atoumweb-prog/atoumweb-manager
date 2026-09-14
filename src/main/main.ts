@@ -1,5 +1,6 @@
 import { app, BrowserWindow } from 'electron';
 import { join } from 'node:path';
+import { registerBusinessBackupsIpcHandlers } from './backups/businessBackupsIpc';
 import { DatabaseService } from './database/DatabaseService';
 import { registerIpcHandlers } from './ipc';
 import { registerOperationsIpcHandlers } from './operations/operationsIpc';
@@ -59,6 +60,7 @@ async function bootstrap(): Promise<void> {
   registerIpcHandlers(database, workspace);
   registerOperationsIpcHandlers(database);
   registerReferentialsIpcHandlers(database);
+  registerBusinessBackupsIpcHandlers(database);
   registerTimeCorrectionIpcHandler(database);
   createMainWindow();
 }
