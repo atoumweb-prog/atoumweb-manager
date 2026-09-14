@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { DatabaseService } from './database/DatabaseService';
 import { registerIpcHandlers } from './ipc';
 import { registerOperationsIpcHandlers } from './operations/operationsIpc';
+import { registerReferentialsIpcHandlers } from './referentials/referentialsIpc';
 import { applyPendingDatabaseRestore } from './restore';
 import { registerTimeCorrectionIpcHandler } from './time/timeIpc';
 import { resolveWorkspace } from './workspace';
@@ -57,6 +58,7 @@ async function bootstrap(): Promise<void> {
   await database.initialize();
   registerIpcHandlers(database, workspace);
   registerOperationsIpcHandlers(database);
+  registerReferentialsIpcHandlers(database);
   registerTimeCorrectionIpcHandler(database);
   createMainWindow();
 }
