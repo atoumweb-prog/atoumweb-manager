@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type {
   AtoumWebLibraryCategory,
+  AtoumWebPackageInspection,
   AtoumWebReuseStatus,
   AtoumWebTechnicalAsset,
   AtoumWebTechnicalAssetRole,
@@ -114,6 +115,11 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   const [assetVersionId, setAssetVersionId] = useState('');
   const [assetRole, setAssetRole] = useState<AtoumWebTechnicalAssetRole>('screenshot');
   const [assets, setAssets] = useState<AtoumWebTechnicalAsset[]>([]);
+  const [packageInspection, setPackageInspection] = useState<AtoumWebPackageInspection | null>(null);
+  const [packageMode, setPackageMode] = useState<'new_item' | 'new_version'>('new_item');
+  const [packageTargetItemId, setPackageTargetItemId] = useState('');
+  const [packageMarkStable, setPackageMarkStable] = useState(false);
+  const [packageBusy, setPackageBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function setOpenedItem(detail: AtoumWebTechnicalItemDetail): Promise<void> {
@@ -154,7 +160,6 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
 
   useEffect(() => {
     void load(initialItemId ?? null);
-    // Rechargement piloté par les filtres et le deep-link éventuel.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, category, reuseStatus, includeArchived, initialItemId]);
 
@@ -301,6 +306,72 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
     if (!result.ok) setError(result.error ?? 'Impossible d’ouvrir le dossier de cette version.');
   }
 
+  async function exportPackage(): Promise<void> {
+    if (!selected) return;
+    setPackageBusy(true);
+    try {
+      setError(null);
+      const exported = await window.atoumweb.referentials.packages.exportItem(selected.id, assetVersionId || null);
+      const shown = await window.atoumweb.referentials.packages.showExport(exported.path);
+      if (!shown.ok) setError(shown.error ?? 'Le paquet a été créé mais son emplacement ne peut pas être affiché.');
+      onMessage(`Paquet ZIP exporté : ${exported.fileName} · v${exported.versionNumber} · ${exported.assetCount} fichier(s).`);
+    } catch (packageError) {
+      setError(packageError instanceof Error ? packageError.message : 'Export du paquet impossible.');
+    } finally {
+      setPackageBusy(false);
+    }
+  }
+
+  async function inspectPackage(): Promise<void> {
+    setPackageBusy(true);
+    try {
+      setError(null);
+      const inspection = await window.atoumweb.referentials.packages.inspectImport();
+      if (!inspection) return;
+      setPackageInspection(inspection);
+      const duplicate = inspection.probableDuplicates[0];
+      if (duplicate) {
+        setPackageMode('new_version');
+        setPackageTargetItemId(duplicate.itemId);
+      } else {
+        setPackageMode('new_item');
+        setPackageTargetItemId('');
+      }
+      setPackageMarkStable(inspection.version.stable);
+    } catch (packageError) {
+      setError(packageError instanceof Error ? packageError.message : 'Inspection du paquet impossible.');
+    } finally {
+      setPackageBusy(false);
+    }
+  }
+
+  async function importInspectedPackage(): Promise<void> {
+    if (!packageInspection) return;
+    if (packageMode === 'new_version' && !packageTargetItemId) {
+      setError('Choisis le composant qui doit recevoir cette nouvelle version.');
+      return;
+    }
+    setPackageBusy(true);
+    try {
+      setError(null);
+      const imported = await window.atoumweb.referentials.packages.importPackage({
+        packagePath: packageInspection.packagePath,
+        mode: packageMode,
+        targetItemId: packageMode === 'new_version' ? packageTargetItemId : null,
+        markStable: packageMarkStable,
+      });
+      setPackageInspection(null);
+      setPackageTargetItemId('');
+      await load(imported.item.id);
+      await setOpenedItem(imported.item);
+      onMessage(`Paquet importé comme ${imported.importedAs === 'new_item' ? 'nouveau composant' : 'nouvelle version'} · ${imported.importedAssetCount} asset(s) copié(s).`);
+    } catch (packageError) {
+      setError(packageError instanceof Error ? packageError.message : 'Import du paquet impossible.');
+    } finally {
+      setPackageBusy(false);
+    }
+  }
+
   return (
     <div className="aw-library">
       <div className="aw-library-summary">
@@ -323,8 +394,27 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
           {REUSE_STATUSES.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}
         </select>
         <label className="aw-library-checkbox"><input type="checkbox" checked={includeArchived} onChange={(event) => setIncludeArchived(event.target.checked)} /> Archivés</label>
+        <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void inspectPackage()}>Importer ZIP</button>
         <button className="primary-button" type="button" onClick={() => setCreating((value) => !value)}>{creating ? 'Fermer' : 'Nouveau composant'}</button>
       </article>
+
+      {packageInspection && <article className="panel aw-library-package-review">
+        <div className="panel-title"><div><span className="eyebrow">Import contrôlé</span><h2>{packageInspection.item.name}</h2></div><button className="secondary-button" type="button" onClick={() => setPackageInspection(null)}>Fermer</button></div>
+        <div className="aw-library-package-grid">
+          <div><span>Catégorie</span><strong>{categoryLabel(packageInspection.item.category)}</strong></div>
+          <div><span>Version exportée</span><strong>v{packageInspection.version.exportedVersionNumber}{packageInspection.version.stable ? ' · stable' : ''}</strong></div>
+          <div><span>Assets</span><strong>{packageInspection.assetCount}{packageInspection.missingAssetCount ? ` · ${packageInspection.missingAssetCount} manquant(s)` : ''}</strong></div>
+          <div><span>Doublons probables</span><strong>{packageInspection.probableDuplicates.length}</strong></div>
+        </div>
+        {packageInspection.probableDuplicates.length > 0 && <div className="aw-library-package-duplicates"><strong>Correspondances détectées</strong>{packageInspection.probableDuplicates.map((duplicate) => <button type="button" key={duplicate.itemId} onClick={() => { setPackageMode('new_version'); setPackageTargetItemId(duplicate.itemId); }}><span>{duplicate.reason === 'same_content' ? 'Même contenu' : 'Même nom / catégorie'}</span><strong>{duplicate.name}</strong></button>)}</div>}
+        <div className="aw-library-form-grid">
+          <label>Mode<select value={packageMode} onChange={(event) => setPackageMode(event.target.value as 'new_item' | 'new_version')}><option value="new_item">Créer un nouveau composant</option><option value="new_version">Ajouter une nouvelle version</option></select></label>
+          {packageMode === 'new_version' && <label>Composant cible<select value={packageTargetItemId} onChange={(event) => setPackageTargetItemId(event.target.value)}><option value="">Choisir…</option>{items.filter((item) => !item.archivedAt).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>}
+        </div>
+        <label className="aw-library-checkbox"><input type="checkbox" checked={packageMarkStable} onChange={(event) => setPackageMarkStable(event.target.checked)} /> Marquer la version importée comme stable</label>
+        <p className="technical-safety-note">Le paquet est inspecté avant création. Le code/JSON reste une donnée de référence et n’est jamais exécuté automatiquement.</p>
+        <button className="primary-button" type="button" disabled={packageBusy} onClick={() => void importInspectedPackage()}>Confirmer l’import</button>
+      </article>}
 
       {creating && <CreationPanel form={form} setForm={setForm} onCreate={createItem} />}
 
@@ -341,12 +431,13 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
         </article>
 
         <article className="panel aw-library-detail">
-          {!selected && <div className="aw-library-empty"><span className="eyebrow">Phase 6A</span><h2>Sélectionne un composant</h2><p className="muted">Tu retrouveras ici ses métadonnées, versions, captures et fichiers techniques.</p></div>}
+          {!selected && <div className="aw-library-empty"><span className="eyebrow">Phase 6</span><h2>Sélectionne un composant</h2><p className="muted">Tu retrouveras ici ses métadonnées, versions, captures, fichiers techniques et export portable.</p></div>}
           {selected && <>
             <div className="panel-title">
               <div><span className="eyebrow">{categoryLabel(selected.category)} · {reuseStatusLabel(selected.reuseStatus)}</span><h2>{selected.name}</h2></div>
               <div className="button-row">
                 {!selected.archivedAt && <button className="secondary-button" type="button" onClick={() => setEditingMetadata((value) => !value)}>{editingMetadata ? 'Annuler édition' : 'Modifier'}</button>}
+                <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void exportPackage()}>Exporter ZIP</button>
                 <button className="secondary-button" type="button" onClick={() => void toggleArchive()}>{selected.archivedAt ? 'Réactiver' : 'Archiver'}</button>
               </div>
             </div>
