@@ -6,6 +6,7 @@ import './DashboardOperationsWatch.css';
 const SEVERITY_LABELS = { critical: 'Urgent', warning: 'À surveiller', info: 'Information' } as const;
 
 function targetFor(alert: OperationsAlert): OperationsSearchTarget | null {
+  if (alert.interventionId) return { entityType: 'intervention', entityId: alert.interventionId };
   if (alert.hourPackId) return { entityType: 'hour_pack', entityId: alert.hourPackId };
   if (alert.maintenanceSubscriptionId) return { entityType: 'maintenance', entityId: alert.maintenanceSubscriptionId };
   return null;
@@ -43,7 +44,7 @@ export function DashboardOperationsWatch({ onOpen, onMessage }: {
       </div>
     </div>
 
-    {alerts.length === 0 ? <p className="muted">Aucune maintenance en retard, aucun dépassement à décider et aucun pack sous les seuils d’alerte.</p> : <div className="dashboard-watch-list">
+    {alerts.length === 0 ? <p className="muted">Aucun incident critique ouvert, aucune maintenance en retard, aucun dépassement à décider, aucune intervention prête à facturer et aucun pack sous les seuils d’alerte.</p> : <div className="dashboard-watch-list">
       {visible.map((alert) => {
         const target = targetFor(alert);
         return <button key={alert.id} type="button" className={`dashboard-watch-item watch-${alert.severity}`} disabled={!target} onClick={() => target && onOpen(target)}>
