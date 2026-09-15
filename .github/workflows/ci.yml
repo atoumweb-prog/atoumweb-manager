@@ -11,6 +11,7 @@ on:
       - feature/phase-3-projects
       - feature/phase-4-operations
       - fix/recette-commerciale-coherence
+      - feature/prospect-workflow-v2
   pull_request:
     branches:
       - main
@@ -19,6 +20,7 @@ on:
       - feature/phase-2-commercial
       - feature/phase-3-projects
       - feature/phase-4-operations
+      - feature/prospect-workflow-v2
 
 jobs:
   quality:
