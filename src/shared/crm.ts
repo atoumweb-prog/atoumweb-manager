@@ -48,6 +48,14 @@ export interface ProspectInput {
   primaryNeed?: string | null; secondaryNeed?: string | null; budgetMinCents?: number | null; budgetMaxCents?: number | null; estimatedValueCents?: number | null;
   probabilityPercent?: number | null; nextActionAt?: string | null; nextActionText?: string | null; targetDate?: string | null; notes?: string | null;
   decisionStatus?: 'yes' | 'no' | 'unknown' | null; decisionMakerDetails?: string | null; decisionMakerContactId?: string | null;
+  /** @deprecated Compatibilité transitoire migration 20 : utiliser decisionMakerContactId + Contact. */
+  decisionMakerName?: string | null;
+  /** @deprecated Compatibilité transitoire migration 20 : utiliser decisionMakerContactId + Contact. */
+  decisionMakerRole?: string | null;
+  /** @deprecated Compatibilité transitoire migration 20 : utiliser les contact_methods du Contact décisionnaire. */
+  decisionMakerEmail?: string | null;
+  /** @deprecated Compatibilité transitoire migration 20 : utiliser les contact_methods du Contact décisionnaire. */
+  decisionMakerPhone?: string | null;
   projectSummary?: string | null; projectContext?: string | null;
   budgetStatus?: 'known' | 'range' | 'not_disclosed' | null; timelineStatus?: 'date' | 'note' | 'not_disclosed' | null; timelineNote?: string | null;
   existingStatus?: 'yes' | 'no' | 'unknown' | null; existingUrl?: string | null; existingNotes?: string | null; missingInformation?: string | null;
