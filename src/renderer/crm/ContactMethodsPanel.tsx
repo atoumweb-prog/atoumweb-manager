@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ContactMethod, ContactMethodType } from '../../shared/crm';
+import { formatPhone, validateEmail, validatePhone } from '../../shared/contactValidation';
+
+function cleanError(error: unknown): string {
+  if (!(error instanceof Error)) return 'Une erreur est survenue.';
+  return error.message
+    .replace(/^Error invoking remote method ['"][^'"]+['"]:\s*/i, '')
+    .replace(/^Error:\s*/i, '')
+    .trim();
+}
 
 export function ContactMethodsPanel({ organizationId, contactId }: { organizationId?: string | null; contactId?: string | null }) {
   const [organizationItems, setOrganizationItems] = useState<ContactMethod[]>([]);
@@ -18,7 +27,7 @@ export function ContactMethodsPanel({ organizationId, contactId }: { organizatio
       ]);
       setOrganizationItems(org);
       setContactItems(contact);
-    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    } catch (e) { setError(cleanError(e)); }
   }
 
   useEffect(() => { if (!contactId && organizationId) setOwner('organization'); void load(); }, [organizationId, contactId]);
@@ -26,10 +35,11 @@ export function ContactMethodsPanel({ organizationId, contactId }: { organizatio
   const items = useMemo(() => [...organizationItems, ...contactItems], [organizationItems, contactItems]);
   const emailCount = items.filter((item) => item.type === 'email').length;
   const phoneCount = items.filter((item) => item.type === 'phone').length;
+  const validation = type === 'email' ? validateEmail(value) : validatePhone(value);
 
   async function add() {
     const ownerId = owner === 'contact' ? contactId : organizationId;
-    if (!ownerId || !value.trim()) return;
+    if (!ownerId || !value.trim() || !validation.valid) return;
     setError('');
     try {
       const siblings = owner === 'contact' ? contactItems : organizationItems;
@@ -41,17 +51,22 @@ export function ContactMethodsPanel({ organizationId, contactId }: { organizatio
         isPrimary: siblings.every((item) => item.type !== type),
       });
       setValue(''); setLabel(''); await load();
-    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+      window.dispatchEvent(new Event('atoumweb:changed'));
+    } catch (e) { setError(cleanError(e)); }
   }
 
   async function archive(id: string) {
-    await window.atoumweb.crm.contactMethods.archive(id, true);
-    await load();
+    try {
+      await window.atoumweb.crm.contactMethods.archive(id, true);
+      await load();
+      window.dispatchEvent(new Event('atoumweb:changed'));
+    } catch (e) { setError(cleanError(e)); }
   }
 
   function group(title: string, values: ContactMethod[]) {
     if (!values.length) return null;
-    return <div className="contact-method-group"><strong>{title}</strong>{values.map((item) => <div className="contact-method-row" key={item.id}><span><b>{item.type === 'email' ? 'Email' : 'Téléphone'}</b> · {item.value}{item.label ? ` · ${item.label}` : ''}{item.isPrimary ? ' · Principal' : ''}</span><button className="secondary-button compact-button" type="button" onClick={() => void archive(item.id)}>Archiver</button></div>)}</div>;
+    const sorted = [...values].sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary) || (a.label ?? '').localeCompare(b.label ?? '', 'fr'));
+    return <div className="contact-method-group"><strong>{title}</strong>{sorted.map((item) => <div className="contact-method-row" key={item.id}><span><b>{item.type === 'email' ? 'Email' : 'Téléphone'}</b> · {item.type === 'phone' ? formatPhone(item.value) : item.value}{item.label ? ` · ${item.label}` : ''}{item.isPrimary ? ' · Principal' : ''}</span><button className="secondary-button compact-button" type="button" onClick={() => void archive(item.id)}>Archiver</button></div>)}</div>;
   }
 
   if (!organizationId && !contactId) return null;
@@ -59,13 +74,13 @@ export function ContactMethodsPanel({ organizationId, contactId }: { organizatio
     <summary><span><strong>Coordonnées</strong><small>{emailCount} email{emailCount > 1 ? 's' : ''} · {phoneCount} téléphone{phoneCount > 1 ? 's' : ''}</small></span><span className="details-hint">Afficher / modifier</span></summary>
     <div className="contact-methods-content">
       {group('Entreprise / accueil', organizationItems)}
-      {group('Interlocuteur', contactItems)}
+      {group('Interlocuteur principal', contactItems)}
       <div className="contact-method-add">
-        {organizationId && contactId && <label>Rattacher à<select value={owner} onChange={(e) => setOwner(e.target.value as 'organization' | 'contact')}><option value="contact">Interlocuteur</option><option value="organization">Entreprise / accueil</option></select></label>}
-        <label>Type<select value={type} onChange={(e) => setType(e.target.value as ContactMethodType)}><option value="email">Email</option><option value="phone">Téléphone</option></select></label>
-        <label>Coordonnée<input value={value} onChange={(e) => setValue(e.target.value)} placeholder={type === 'email' ? 'nom@exemple.fr' : '06…'} /></label>
-        <label>Libellé<input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Accueil, mobile, facturation…" /></label>
-        <button className="secondary-button" type="button" disabled={!value.trim()} onClick={() => void add()}>Ajouter</button>
+        {organizationId && contactId && <label>Rattacher à<select value={owner} onChange={(e) => setOwner(e.target.value as 'organization' | 'contact')}><option value="contact">Interlocuteur principal</option><option value="organization">Entreprise / accueil</option></select></label>}
+        <label>Type<select value={type} onChange={(e) => { setType(e.target.value as ContactMethodType); setValue(''); setError(''); }}><option value="email">Email</option><option value="phone">Téléphone</option></select></label>
+        <label>Coordonnée<input inputMode={type === 'phone' ? 'tel' : 'email'} value={value} onChange={(e) => setValue(e.target.value)} placeholder={type === 'email' ? 'nom@exemple.fr' : '06 12 34 56 78 ou +33…'} />{value.trim() && !validation.valid && <small className="field-error">{validation.message}</small>}</label>
+        <label>Libellé<input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Portable, bureau, accueil…" /></label>
+        <button className="secondary-button" type="button" disabled={!value.trim() || !validation.valid} onClick={() => void add()}>Ajouter</button>
       </div>
       {error && <p className="form-error">{error}</p>}
     </div>
