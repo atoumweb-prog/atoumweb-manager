@@ -21,6 +21,7 @@ import './time.css';
 import './time-recovery.css';
 import './operations.css';
 import './workflow.css';
+import './display-density.css';
 
 const rootElement = document.getElementById('root');
 
