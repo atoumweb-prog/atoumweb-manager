@@ -122,6 +122,7 @@ export class DatabaseService {
 
   private seedDefaults(): void {
     this.setSettingIfMissing('theme', 'atoumweb');
+    this.setSettingIfMissing('display_density', 'comfort');
     this.setSettingIfMissing('show_hover_help', true);
   }
 
