@@ -1,7 +1,7 @@
 import { WorkflowDashboard } from './workflow/WorkflowDashboard';
 import { DemoPanel } from './workflow/DemoPanel';
 import { useEffect, useState } from 'react';
-import type { BootstrapState, ThemeName } from '../shared/contracts';
+import type { BootstrapState, DisplayDensity, ThemeName } from '../shared/contracts';
 import type { SearchResult } from '../shared/crm';
 import { CatalogPage } from './commercial/CatalogPage';
 import { QuotesPage } from './commercial/QuotesPage';
@@ -60,14 +60,25 @@ const THEMES: Array<{ id: ThemeName; label: string; description: string }> = [
   { id: 'blanc', label: 'Blanc', description: 'Interface claire et minimaliste.' },
 ];
 
+const DENSITIES: Array<{ id: DisplayDensity; label: string; description: string }> = [
+  { id: 'compact', label: 'Compact', description: 'Plus d’informations visibles avec des espacements resserrés.' },
+  { id: 'comfort', label: 'Confort', description: 'Réglage par défaut, équilibré pour le travail quotidien.' },
+  { id: 'comfort_plus', label: 'Confort +', description: 'Texte et zones cliquables plus grands pour une lecture facilitée.' },
+];
+
 function applyTheme(theme: ThemeName): void {
   document.documentElement.dataset.theme = theme;
+}
+
+function applyDensity(density: DisplayDensity): void {
+  document.documentElement.dataset.density = density;
 }
 
 function App() {
   const [bootstrap, setBootstrap] = useState<BootstrapState | null>(null);
   const [activePage, setActivePage] = useState<PageName>('Accueil');
   const [theme, setTheme] = useState<ThemeName>('atoumweb');
+  const [displayDensity, setDisplayDensity] = useState<DisplayDensity>('comfort');
   const [message, setMessage] = useState<string | null>(null);
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [crmTarget,setCrmTarget] = useState<string|null>(null);
@@ -81,7 +92,9 @@ function App() {
       .then((state) => {
         setBootstrap(state);
         setTheme(state.theme);
+        setDisplayDensity(state.displayDensity);
         applyTheme(state.theme);
+        applyDensity(state.displayDensity);
       })
       .catch((error: unknown) => {
         setLoadingError(error instanceof Error ? error.message : 'Erreur de démarrage inconnue.');
@@ -93,6 +106,13 @@ function App() {
     setTheme(savedTheme);
     applyTheme(savedTheme);
     setMessage(`Thème « ${THEMES.find((item) => item.id === savedTheme)?.label ?? savedTheme} » appliqué.`);
+  }
+
+  async function updateDisplayDensity(nextDensity: DisplayDensity): Promise<void> {
+    const savedDensity = await window.atoumweb.settings.setDisplayDensity(nextDensity);
+    setDisplayDensity(savedDensity);
+    applyDensity(savedDensity);
+    setMessage(`Affichage « ${DENSITIES.find((item) => item.id === savedDensity)?.label ?? savedDensity} » appliqué.`);
   }
 
   async function chooseWorkspace(): Promise<void> {
@@ -194,7 +214,7 @@ function App() {
           {activePage === 'Projets' && <ProjectsPage onMessage={setMessage} initialProjectId={projectSearchTarget} />}
           {activePage === 'Interventions & Maintenance' && <OperationsPage onMessage={setMessage} initialTarget={operationsSearchTarget} />}
           {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}
-          {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} onThemeChange={updateTheme} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
+          {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} displayDensity={displayDensity} onThemeChange={updateTheme} onDensityChange={updateDisplayDensity} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
           {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
         </section>
       </main>
@@ -252,14 +272,25 @@ function formatDashboardTime(seconds: number): string {
   return hours < 10 ? `${hours.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} h` : `${Math.round(hours)} h`;
 }
 
-function SettingsPage({ bootstrap, theme, onThemeChange, onChooseWorkspace, onCreateBackup, onRestoreBackup }: {
-  bootstrap: BootstrapState; theme: ThemeName; onThemeChange: (theme: ThemeName) => Promise<void>; onChooseWorkspace: () => Promise<void>; onCreateBackup: () => Promise<void>; onRestoreBackup: () => Promise<void>;
+function SettingsPage({ bootstrap, theme, displayDensity, onThemeChange, onDensityChange, onChooseWorkspace, onCreateBackup, onRestoreBackup }: {
+  bootstrap: BootstrapState;
+  theme: ThemeName;
+  displayDensity: DisplayDensity;
+  onThemeChange: (theme: ThemeName) => Promise<void>;
+  onDensityChange: (density: DisplayDensity) => Promise<void>;
+  onChooseWorkspace: () => Promise<void>;
+  onCreateBackup: () => Promise<void>;
+  onRestoreBackup: () => Promise<void>;
 }) {
   return (
     <div className="settings-grid">
       <article className="panel panel-large">
         <div className="panel-title"><div><span className="eyebrow">Apparence</span><h2>Thème de l’interface</h2></div>{theme !== 'atoumweb' && <button className="secondary-button" type="button" onClick={() => void onThemeChange('atoumweb')}>Rétablir le thème par défaut</button>}</div>
         <div className="theme-grid">{THEMES.map((item) => <button className={`theme-card ${theme === item.id ? 'selected' : ''}`} key={item.id} onClick={() => void onThemeChange(item.id)} type="button"><span className={`theme-preview preview-${item.id}`}><i /><b /></span><strong>{item.label}</strong><span>{item.description}</span></button>)}</div>
+        <div className="density-settings">
+          <div><span className="eyebrow">Lisibilité</span><h2>Densité d’affichage</h2><p className="muted">Adapte la taille des textes, les espacements et les zones cliquables à ton confort de travail.</p></div>
+          <div className="density-grid">{DENSITIES.map((item) => <button className={`density-card ${displayDensity === item.id ? 'selected' : ''}`} key={item.id} type="button" onClick={() => void onDensityChange(item.id)}><strong>{item.label}</strong><span>{item.description}</span></button>)}</div>
+        </div>
       </article>
       <article className="panel"><span className="eyebrow">Stockage</span><h2>Workspace local</h2><p className="path-value">{bootstrap.workspacePath}</p><button className="primary-button" type="button" onClick={() => void onChooseWorkspace()}>Choisir un autre dossier</button></article>
       <article className="panel"><span className="eyebrow">Sécurité</span><h2>Sauvegarde de la base</h2><p className="muted">Une sauvegarde automatique est créée chaque jour. Une copie de sécurité est aussi créée avant toute restauration.</p><div className="button-row"><button className="secondary-button" type="button" onClick={() => void onCreateBackup()}>Sauvegarder maintenant</button><button className="secondary-button" type="button" onClick={() => void onRestoreBackup()}>Restaurer une sauvegarde</button></div></article>
