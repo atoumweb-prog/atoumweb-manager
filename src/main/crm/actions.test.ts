@@ -120,6 +120,24 @@ describe('ActionService', () => {
     expect(refreshed?.nextActionAt).toBe('2026-09-25T09:00:00.000Z');
   });
 
+  it('permet de terminer une action récurrente sans recréer la suivante', () => {
+    const contact = crm.createContact({ firstName: 'Refus', lastName: 'Définitif' });
+    const prospect = crm.createProspect({ contactId: contact.id });
+    const recurring = actions.create({
+      ownerType: 'prospect',
+      ownerId: prospect.id,
+      type: 'follow_up',
+      title: 'Relance hebdomadaire',
+      dueAt: '2026-09-18T09:00:00.000Z',
+      recurrence: 'weekly',
+    });
+
+    actions.complete(recurring.id, { outcome: 'categorical_refusal', nextAction: null });
+
+    expect(actions.list({ ownerType: 'prospect', ownerId: prospect.id, status: 'open' })).toHaveLength(0);
+    expect(actions.list({ ownerType: 'prospect', ownerId: prospect.id, status: 'done' })).toHaveLength(1);
+  });
+
   it('garde une action terminée dans l’historique et permet de la rouvrir', () => {
     const contact = crm.createContact({ firstName: 'Historique', lastName: 'Action' });
     const prospect = crm.createProspect({ contactId: contact.id });
