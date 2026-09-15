@@ -1,0 +1,129 @@
+/* Recette commerciale — corrections Prospect / qualification / devis. */
+.form-span-3 { grid-column: 1 / -1; }
+.prospect-create-v2 textarea,
+.prospect-create-v2 input,
+.prospect-create-v2 select,
+.prospect-detail-v2 input,
+.prospect-detail-v2 select,
+.prospect-detail-v2 textarea,
+.workflow-row input,
+.workflow-row select,
+.workflow-row textarea,
+.contact-method-add input,
+.contact-method-add select,
+.need-add-row input,
+.need-add-row select,
+.waiting-form input,
+.waiting-form select,
+.followup-inline input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 9px 10px;
+}
+.prospect-create-v2 textarea { min-height: 82px; resize: vertical; }
+.prospect-create-v2 input::placeholder,
+.prospect-create-v2 textarea::placeholder,
+.prospect-detail-v2 input::placeholder,
+.prospect-detail-v2 textarea::placeholder { color: var(--muted); opacity: .82; }
+
+/* Toute la carte est teintée selon l’état commercial : la couleur n’est plus limitée au badge. */
+.prospect-card.prospect-temperature-neutral { background: color-mix(in srgb, #7fbe8d 13%, var(--surface)); border-color: color-mix(in srgb, #609b70 32%, var(--border)); }
+.prospect-card.prospect-temperature-cold { background: color-mix(in srgb, #79a9d7 14%, var(--surface)); border-color: color-mix(in srgb, #5d8ebd 34%, var(--border)); }
+.prospect-card.prospect-temperature-warm { background: color-mix(in srgb, #e7b75e 17%, var(--surface)); border-color: color-mix(in srgb, #bd842a 38%, var(--border)); }
+.prospect-card.prospect-temperature-hot { background: color-mix(in srgb, #e77a6f 16%, var(--surface)); border-color: color-mix(in srgb, #c24e48 38%, var(--border)); }
+.prospect-card.prospect-temperature-neutral .prospect-card-head,
+.prospect-card.prospect-temperature-cold .prospect-card-head,
+.prospect-card.prospect-temperature-warm .prospect-card-head,
+.prospect-card.prospect-temperature-hot .prospect-card-head,
+.prospect-card.prospect-temperature-neutral .prospect-card-body,
+.prospect-card.prospect-temperature-cold .prospect-card-body,
+.prospect-card.prospect-temperature-warm .prospect-card-body,
+.prospect-card.prospect-temperature-hot .prospect-card-body { background: transparent; }
+.prospect-card .card-action-line { background: color-mix(in srgb, var(--surface) 73%, transparent); }
+.prospect-card .quick-followups button { background: color-mix(in srgb, var(--surface) 76%, transparent); color: var(--text); }
+.prospect-card .card-state-control label { display: grid; gap: 4px; font-size: 8px; color: var(--muted); font-weight: 750; }
+.prospect-card .card-state-control select { background: color-mix(in srgb, var(--surface) 78%, transparent); }
+.temperature-neutral { color: #3d7650; background: color-mix(in srgb, #7fbe8d 22%, var(--surface)); }
+
+.prospect-controls-v2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0 6px; }
+.prospect-controls-v2 label { display: grid; gap: 4px; color: var(--muted); font-size: 9px; font-weight: 750; }
+.start-qualification-button, .create-quote-button { width: 100%; margin: 4px 0 8px; }
+
+.identity-summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.identity-summary-grid > div { display: grid; gap: 2px; padding: 9px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-soft); }
+.identity-summary-grid span { color: var(--muted); font-size: 8px; }
+.identity-summary-grid strong { font-size: 10px; overflow-wrap: anywhere; }
+.identity-summary-grid .identity-wide { grid-column: 1 / -1; }
+.identity-editor-v2 { margin: 0; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); }
+
+.contact-methods-panel { margin-top: 2px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); overflow: hidden; }
+.contact-methods-panel > summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px; cursor: pointer; list-style: none; }
+.contact-methods-panel > summary::-webkit-details-marker { display: none; }
+.contact-methods-panel > summary > span:first-child { display: grid; gap: 2px; }
+.contact-methods-panel > summary strong { font-size: 10px; }
+.contact-methods-panel > summary small, .details-hint { color: var(--muted); font-size: 8px; }
+.contact-methods-content { display: grid; gap: 10px; padding: 0 10px 10px; border-top: 1px solid var(--border); }
+.contact-method-group { display: grid; gap: 6px; padding-top: 9px; }
+.contact-method-group > strong { font-size: 9px; color: var(--accent-strong); }
+.contact-method-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.contact-method-row span { min-width: 0; overflow-wrap: anywhere; font-size: 9px; }
+.contact-method-add { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding-top: 8px; }
+.contact-method-add label { display: grid; gap: 4px; color: var(--muted); font-size: 8px; font-weight: 750; }
+.contact-method-add button { align-self: end; }
+
+.need-selector-v2 { display: grid; gap: 9px; padding: 11px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); }
+.need-selector-title { display: grid; gap: 2px; }
+.need-selector-title small { color: var(--muted); }
+.need-chip-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.need-chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 7px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); font-size: 9px; }
+.need-chip button { display: grid; place-items: center; width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%; background: var(--surface-soft); color: var(--muted); cursor: pointer; }
+.need-add-row { display: grid; grid-template-columns: minmax(130px, .75fr) minmax(190px, 1.4fr) auto; gap: 8px; align-items: end; }
+.need-add-row label { display: grid; gap: 4px; color: var(--muted); font-size: 8px; font-weight: 750; }
+.need-add-row label:nth-child(3) { grid-column: span 2; }
+.need-suggestions { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.need-suggestions > span { color: var(--muted); font-size: 8px; }
+.need-suggestions button { border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); padding: 5px 7px; cursor: pointer; font-size: 8px; }
+.need-current-list { display: grid; gap: 7px; }
+.need-current-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 9px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-soft); }
+.need-current-row > div:first-child { display: grid; gap: 2px; min-width: 0; }
+.need-current-row > div:first-child strong { color: var(--accent-strong); font-size: 8px; }
+.need-current-row > div:first-child span { font-size: 10px; overflow-wrap: anywhere; }
+.need-current-row > div:last-child { display: flex; gap: 5px; }
+
+.qualification-two-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.missing-info-fieldset { display: grid; gap: 9px; margin: 0; padding: 10px; border: 1px solid var(--border); border-radius: 9px; }
+.missing-info-fieldset legend { padding: 0 5px; font-weight: 750; font-size: 9px; }
+.missing-info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.workflow-fields .check-option { display: flex; align-items: center; gap: 6px; color: var(--text); font-size: 9px; font-weight: 550; }
+.workflow-fields .check-option input { width: auto; }
+.qualification-auto-note { margin: 0; color: var(--success); font-size: 9px; font-weight: 700; }
+
+.prospect-quote-panel { order: -1; margin-top: 8px; padding: 12px; border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border)); border-radius: 11px; background: color-mix(in srgb, var(--accent) 4%, var(--surface)); }
+.quote-command-header { display: flex; justify-content: space-between; gap: 8px; align-items: start; }
+.quote-command-header > div { display: grid; gap: 2px; }
+.quote-command-header strong { font-size: 11px; }
+.quote-command-header small { color: var(--muted); font-size: 8px; }
+.quote-command-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+.quote-command-summary > div { display: grid; gap: 2px; padding: 8px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); }
+.quote-command-summary span { color: var(--muted); font-size: 8px; }
+.quote-command-summary strong { font-size: 9px; }
+.quote-command-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.quote-send-block, .quote-after-send { display: grid; gap: 9px; }
+.followup-inline { display: grid; grid-template-columns: minmax(160px, 1fr) auto; gap: 7px; align-items: end; }
+.followup-inline label, .waiting-form label { display: grid; gap: 4px; color: var(--muted); font-size: 8px; font-weight: 750; }
+.waiting-inline { border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.waiting-inline summary { padding: 8px 10px; cursor: pointer; font-weight: 750; font-size: 9px; }
+.waiting-form { display: grid; gap: 7px; padding: 0 10px 10px; }
+.previous-quotes summary { cursor: pointer; color: var(--muted); font-size: 9px; }
+
+@media (max-width: 900px) {
+  .prospect-controls-v2, .identity-summary-grid, .qualification-two-fields, .missing-info-grid, .contact-method-add, .quote-command-summary { grid-template-columns: 1fr; }
+  .identity-summary-grid .identity-wide { grid-column: auto; }
+  .need-add-row, .followup-inline { grid-template-columns: 1fr; }
+  .need-add-row label:nth-child(3) { grid-column: auto; }
+}
