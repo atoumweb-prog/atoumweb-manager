@@ -18,11 +18,13 @@ import type {
   ContactInput,
   CrmActionFilters,
   CrmActionInput,
+  CompleteActionInput,
   OrganizationInput,
   ProspectFilters,
   ProspectInput,
   ProspectStage,
 } from '../shared/crm';
+import type {ClientDocumentInput} from '../shared/clientDocuments';
 import type { HourPackShortfallDecisionInput } from '../shared/hourPackShortfall';
 import type { MaintenanceOverageDecisionInput } from '../shared/maintenanceOverage';
 import type {
@@ -77,6 +79,19 @@ const api: AtoumWebApi = {
     restore: () => ipcRenderer.invoke('backups:restore'),
   },
   database: { health: () => ipcRenderer.invoke('database:health') },
+  workflow: {
+    needs: (owner,id) => ipcRenderer.invoke('workflow:needs',owner,id),
+    saveNeed: (owner,id,input,needId) => ipcRenderer.invoke('workflow:save-need',owner,id,input,needId),
+    removeNeed: (owner,id,needId) => ipcRenderer.invoke('workflow:remove-need',owner,id,needId),
+    identity: (owner,id) => ipcRenderer.invoke('workflow:identity',owner,id),
+    archiveProspect: (id,archived) => ipcRenderer.invoke('workflow:archive-prospect',id,archived),
+    dashboard: () => ipcRenderer.invoke('workflow:dashboard'),
+    beginDemoCapture: label => ipcRenderer.invoke('workflow:begin-demo-capture',label),
+    endDemoCapture: batch => ipcRenderer.invoke('workflow:end-demo-capture',batch),
+    createDemo: scenario => ipcRenderer.invoke('workflow:create-demo',scenario),
+    demoSummary: () => ipcRenderer.invoke('workflow:demo-summary'),
+    resetDemo: () => ipcRenderer.invoke('workflow:reset-demo'),
+  },
   crm: {
     organizations: {
       create: (input: OrganizationInput) => ipcRenderer.invoke('crm:organizations:create', input),
@@ -86,10 +101,16 @@ const api: AtoumWebApi = {
       create: (input: ContactInput) => ipcRenderer.invoke('crm:contacts:create', input),
       update: (id: string, input: ContactInput) => ipcRenderer.invoke('crm:contacts:update', id, input),
     },
+    contactMethods: {
+      list:(owner,id,includeArchived)=>ipcRenderer.invoke('crm:contact-methods:list',owner,id,includeArchived),
+      save:(input,id)=>ipcRenderer.invoke('crm:contact-methods:save',input,id),
+      archive:(id,archived)=>ipcRenderer.invoke('crm:contact-methods:archive',id,archived),
+    },
     prospects: {
       list: (filters?: ProspectFilters) => ipcRenderer.invoke('crm:prospects:list', filters),
       create: (input: ProspectInput) => ipcRenderer.invoke('crm:prospects:create', input),
       update: (id: string, input: ProspectInput) => ipcRenderer.invoke('crm:prospects:update', id, input),
+      updateQualification:(id:string,input:Partial<ProspectInput>)=>ipcRenderer.invoke('crm:prospects:update-qualification',id,input),
       changeStage: (id: string, stage: ProspectStage, lostReason?: string | null) => ipcRenderer.invoke('crm:prospects:change-stage', id, stage, lostReason),
       setNextAction: (id: string, at: string | null, text: string | null) => ipcRenderer.invoke('crm:prospects:set-next-action', id, at, text),
       convertToClient: (id: string) => ipcRenderer.invoke('crm:prospects:convert-to-client', id),
@@ -107,7 +128,7 @@ const api: AtoumWebApi = {
     actions: {
       list: (filters?: CrmActionFilters) => ipcRenderer.invoke('crm:actions:list', filters),
       create: (input: CrmActionInput) => ipcRenderer.invoke('crm:actions:create', input),
-      complete: (id: string) => ipcRenderer.invoke('crm:actions:complete', id),
+      complete: (id: string, input?:CompleteActionInput) => ipcRenderer.invoke('crm:actions:complete', id,input),
       cancel: (id: string) => ipcRenderer.invoke('crm:actions:cancel', id),
       reopen: (id: string) => ipcRenderer.invoke('crm:actions:reopen', id),
     },
@@ -116,6 +137,14 @@ const api: AtoumWebApi = {
       global: (query: string) => ipcRenderer.invoke('crm:search:global', query),
       rebuild: () => ipcRenderer.invoke('crm:search:rebuild'),
     },
+  },
+  clientDocuments:{
+    list:(clientId,includeArchived)=>ipcRenderer.invoke('client-documents:list',clientId,includeArchived),
+    importFiles:(clientId,input:ClientDocumentInput)=>ipcRenderer.invoke('client-documents:import',clientId,input),
+    update:(id,input)=>ipcRenderer.invoke('client-documents:update',id,input),
+    archive:(id,archived)=>ipcRenderer.invoke('client-documents:archive',id,archived),
+    deletePermanently:id=>ipcRenderer.invoke('client-documents:delete',id),
+    openFile:id=>ipcRenderer.invoke('client-documents:open-file',id),openFolder:clientId=>ipcRenderer.invoke('client-documents:open-folder',clientId),
   },
   catalog: {
     list: (filters?: CatalogFilters) => ipcRenderer.invoke('catalog:list', filters),
@@ -129,6 +158,7 @@ const api: AtoumWebApi = {
     setOfferComponents: (offerVersionId: string, components: OfferComponentInput[]) => ipcRenderer.invoke('catalog:set-offer-components', offerVersionId, components),
   },
   quotes: {
+    createWithLines: (input,lines) => ipcRenderer.invoke('quotes:create-with-lines',input,lines),
     list: (filters?: QuoteFilters) => ipcRenderer.invoke('quotes:list', filters),
     get: (id: string) => ipcRenderer.invoke('quotes:get', id),
     create: (input: QuoteInput) => ipcRenderer.invoke('quotes:create', input),
@@ -138,6 +168,8 @@ const api: AtoumWebApi = {
     removeLine: (lineId: string) => ipcRenderer.invoke('quotes:remove-line', lineId),
     updateConditions: (quoteId: string, input: Partial<QuoteInput>) => ipcRenderer.invoke('quotes:update-conditions', quoteId, input),
     markSent: (id: string) => ipcRenderer.invoke('quotes:mark-sent', id),
+    finalize:(id:string)=>ipcRenderer.invoke('quotes:finalize',id),
+    extendValidity:(id:string,validUntil:string)=>ipcRenderer.invoke('quotes:extend-validity',id,validUntil),
     markViewed: (id: string) => ipcRenderer.invoke('quotes:mark-viewed', id),
     accept: (id: string) => ipcRenderer.invoke('quotes:accept', id),
     refuse: (id: string) => ipcRenderer.invoke('quotes:refuse', id),

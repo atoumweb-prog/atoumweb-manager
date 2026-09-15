@@ -6,6 +6,14 @@ Le projet suit le versioning sémantique.
 
 ## [Unreleased]
 
+### Stabilisation commerciale
+
+- Ajout de la migration 19 avec conservation des dossiers existants.
+- Ajout de coordonnées multiples, qualification prospect, température neutre et étape « Devis à envoyer ».
+- Ajout des relances structurées et récurrentes, de la qualité de relation client et des alertes de conservation.
+- Ajout du dossier documentaire client avec fichiers externes à SQLite, archivage et suppression confirmée.
+- Correction des besoins temporaires vides et du renderer absent des paquets Windows.
+
 ### Préparé
 
 - Architecture V1 Electron / React / TypeScript / SQLite.

@@ -40,6 +40,7 @@ interface CatalogDraft {
   depositPercent: string;
   estimatedMinutes: string;
   recommendedDelayDays: string;
+  specialTerms: string;
   contractType: string;
   internalAdvice: string;
   visiblePublic: boolean;
@@ -59,6 +60,7 @@ const EMPTY_DRAFT: CatalogDraft = {
   depositPercent: '30',
   estimatedMinutes: '',
   recommendedDelayDays: '',
+  specialTerms: '',
   contractType: '',
   internalAdvice: '',
   visiblePublic: false,
@@ -182,6 +184,7 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
       defaultDepositPercent: deposit,
       estimatedMinutes: optionalInteger(input.estimatedMinutes, 'Durée estimée'),
       recommendedDelayDays: optionalInteger(input.recommendedDelayDays, 'Délai recommandé'),
+      specialTerms: input.specialTerms.trim() || null,
       contractType: input.contractType.trim() || null,
       internalAdvice: input.internalAdvice.trim() || null,
       inclusions: splitLines(input.inclusionsText),
@@ -234,6 +237,7 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
       depositPercent: current.defaultDepositPercent == null ? '' : String(current.defaultDepositPercent),
       estimatedMinutes: current.estimatedMinutes == null ? '' : String(current.estimatedMinutes),
       recommendedDelayDays: current.recommendedDelayDays == null ? '' : String(current.recommendedDelayDays),
+      specialTerms: current.specialTerms ?? '',
       contractType: current.contractType ?? '',
       internalAdvice: current.internalAdvice ?? '',
       visiblePublic: detail.visiblePublic,
@@ -441,7 +445,7 @@ function CatalogFields({ draft, onChange, showIdentity = false }: { draft: Catal
       <label>Acompte par défaut (%)<input inputMode="numeric" value={draft.depositPercent} onChange={(e) => onChange({ ...draft, depositPercent: e.target.value })} /></label>
       <label>Durée estimée (min)<input inputMode="numeric" value={draft.estimatedMinutes} onChange={(e) => onChange({ ...draft, estimatedMinutes: e.target.value })} /></label>
       <label>Délai recommandé (jours)<input inputMode="numeric" value={draft.recommendedDelayDays} onChange={(e) => onChange({ ...draft, recommendedDelayDays: e.target.value })} /></label>
-      <label>Type de contrat<input value={draft.contractType} onChange={(e) => onChange({ ...draft, contractType: e.target.value })} placeholder="Ex. Création de site" /></label>
+      <label className="catalog-description">Conditions commerciales<textarea value={draft.specialTerms} onChange={e=>onChange({...draft,specialTerms:e.target.value})}/></label><label>Type de contrat<input value={draft.contractType} onChange={(e) => onChange({ ...draft, contractType: e.target.value })} placeholder="Ex. Création de site" /></label>
       <label className="catalog-description">Description<textarea value={draft.description} onChange={(e) => onChange({ ...draft, description: e.target.value })} placeholder="Description de la prestation…" /></label>
       <label>Inclus — 1 par ligne<textarea value={draft.inclusionsText} onChange={(e) => onChange({ ...draft, inclusionsText: e.target.value })} /></label>
       <label>Exclusions — 1 par ligne<textarea value={draft.exclusionsText} onChange={(e) => onChange({ ...draft, exclusionsText: e.target.value })} /></label>

@@ -555,3 +555,6 @@ La Phase 2 est terminée lorsque :
 - la recherche globale retrouve Services/Offres/Devis si cette extension est activée dans la phase ;
 - les trois thèmes sont cohérents ;
 - les tests automatisés passent.
+# Stabilisation transverse (migration 19)
+
+Le pipeline distingue `quote_to_prepare` (« Devis en préparation ») et `quote_to_send` (« Devis à envoyer »). Finaliser un devis conserve son statut technique `draft`, puis l’envoi pose le statut `sent` et l’étape prospect `quote_sent`. Un devis envoyé reste figé : la négociation passe par une duplication en nouveau brouillon. La prolongation de validité est journalisée.

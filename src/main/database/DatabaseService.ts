@@ -1,3 +1,5 @@
+import { WorkflowService } from '../workflow/WorkflowService';
+import { DemoService } from '../workflow/DemoService';
 import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DatabaseHealth } from '../../shared/contracts';
@@ -6,6 +8,7 @@ import { CatalogService } from '../commercial/CatalogService';
 import { QuoteService } from '../commercial/QuoteService';
 import { ActionService } from '../crm/ActionService';
 import { ClientContactService } from '../crm/ClientContactService';
+import { ClientDocumentService } from '../crm/ClientDocumentService';
 import { CrmService } from '../crm/CrmService';
 import { HourPackService } from '../operations/HourPackService';
 import { HourPackShortfallService } from '../operations/HourPackShortfallService';
@@ -35,8 +38,11 @@ export type BackupKind = 'automatic' | 'manual' | 'pre-migration';
 export class DatabaseService {
   private readonly database: DatabaseAdapter;
   private readonly existedBeforeOpen: boolean;
+  readonly workflow: WorkflowService;
+  readonly demo: DemoService;
   readonly crm: CrmService;
   readonly clientContacts: ClientContactService;
+  readonly clientDocuments: ClientDocumentService;
   readonly actions: ActionService;
   readonly catalog: CatalogService;
   readonly quotes: QuoteService;
@@ -65,6 +71,7 @@ export class DatabaseService {
     this.database = new NodeSqliteAdapter(workspace.databaseFile);
     this.crm = new CrmService(this.database);
     this.clientContacts = new ClientContactService(this.database, this.crm);
+    this.clientDocuments = new ClientDocumentService(this.database, this.workspace);
     this.actions = new ActionService(this.database);
     this.catalog = new CatalogService(this.database);
     this.quotes = new QuoteService(this.database, this.crm);
@@ -87,6 +94,8 @@ export class DatabaseService {
     this.time = new TimeService(this.database);
     this.timeCorrections = new TimeCorrectionService(this.database, this.time);
     this.timeSwitches = new TimeSwitchService(this.database, this.time);
+    this.workflow = new WorkflowService(this.database, this.crm, this.quotes, this.projects, this.operations);
+    this.demo = new DemoService(this.database);
   }
 
   async initialize(): Promise<void> {
@@ -98,6 +107,7 @@ export class DatabaseService {
     }
 
     applyPendingMigrations(this.database);
+    this.demo.installTracking();
     this.seedDefaults();
     this.crm.rebuildSearchIndex();
     await this.createDailyBackupIfNeeded();

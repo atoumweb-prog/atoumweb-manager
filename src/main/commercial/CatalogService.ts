@@ -46,6 +46,7 @@ interface CatalogRow extends Record<string, unknown> {
   default_deposit_percent: number | null;
   contract_type: string | null;
   internal_advice: string | null;
+  special_terms: string | null;
   published_at: string | null;
   version_created_at: string | null;
 }
@@ -67,6 +68,7 @@ interface VersionRow extends Record<string, unknown> {
   default_deposit_percent: number | null;
   contract_type: string | null;
   internal_advice: string | null;
+  special_terms: string | null;
   published_at: string | null;
   created_at: string;
 }
@@ -148,6 +150,7 @@ export class CatalogService {
         v.default_deposit_percent,
         v.contract_type,
         v.internal_advice,
+        v.special_terms,
         v.published_at,
         v.created_at AS version_created_at
        FROM catalog_items i
@@ -378,8 +381,8 @@ export class CatalogService {
         id, item_id, version_number, status, description, inclusions_json, exclusions_json,
         prerequisites_json, price_mode, price_cents, recommended_price_cents,
         estimated_minutes, recommended_delay_days, default_deposit_percent,
-        contract_type, internal_advice, published_at, created_at
-      ) VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)`,
+        contract_type, internal_advice, published_at, created_at, special_terms
+      ) VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)`,
       [
         id,
         itemId,
@@ -397,6 +400,7 @@ export class CatalogService {
         clean(input.contractType),
         clean(input.internalAdvice),
         createdAt,
+        clean(input.specialTerms),
       ],
     );
     return this.getVersion(id);
@@ -469,6 +473,7 @@ export class CatalogService {
         default_deposit_percent: row.default_deposit_percent,
         contract_type: row.contract_type,
         internal_advice: row.internal_advice,
+        special_terms: row.special_terms,
         published_at: row.published_at,
         created_at: row.version_created_at as string,
       }) : null,
@@ -504,6 +509,7 @@ export class CatalogService {
       defaultDepositPercent: row.default_deposit_percent,
       contractType: row.contract_type,
       internalAdvice: row.internal_advice,
+      specialTerms: row.special_terms,
       publishedAt: row.published_at,
       createdAt: row.created_at,
     };

@@ -23,6 +23,7 @@ export interface CatalogItemInput {
 }
 
 export interface CatalogVersionInput {
+  specialTerms?: string | null;
   description?: string | null;
   inclusions?: string[];
   exclusions?: string[];
@@ -167,6 +168,8 @@ export interface QuoteSummary {
   refusedAt?: string | null;
   expiredAt?: string | null;
   snapshotLockedAt?: string | null;
+  finalizedAt?: string | null;
+  lastExtendedAt?: string | null;
   projectReadyAt?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -194,6 +197,7 @@ export interface QuotePdfResult {
 }
 
 export interface QuoteApi {
+  createWithLines(input: QuoteInput, lines: Array<{catalogVersionId?: string; input: QuoteLineInput}>): Promise<QuoteDetail>;
   list(filters?: QuoteFilters): Promise<QuoteSummary[]>;
   get(id: string): Promise<QuoteDetail>;
   create(input: QuoteInput): Promise<QuoteDetail>;
@@ -203,6 +207,8 @@ export interface QuoteApi {
   removeLine(lineId: string): Promise<QuoteDetail>;
   updateConditions(quoteId: string, input: Partial<QuoteInput>): Promise<QuoteDetail>;
   markSent(id: string): Promise<QuoteDetail>;
+  finalize(id: string): Promise<QuoteDetail>;
+  extendValidity(id: string, validUntil: string): Promise<QuoteDetail>;
   markViewed(id: string): Promise<QuoteDetail>;
   accept(id: string): Promise<QuoteDetail>;
   refuse(id: string): Promise<QuoteDetail>;

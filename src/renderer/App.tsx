@@ -1,3 +1,5 @@
+import { WorkflowDashboard } from './workflow/WorkflowDashboard';
+import { DemoPanel } from './workflow/DemoPanel';
 import { useEffect, useState } from 'react';
 import type { BootstrapState, ThemeName } from '../shared/contracts';
 import type { SearchResult } from '../shared/crm';
@@ -68,6 +70,9 @@ function App() {
   const [theme, setTheme] = useState<ThemeName>('atoumweb');
   const [message, setMessage] = useState<string | null>(null);
   const [loadingError, setLoadingError] = useState<string | null>(null);
+  const [crmTarget,setCrmTarget] = useState<string|null>(null);
+  const [quoteTarget,setQuoteTarget] = useState<string|null>(null);
+  useEffect(()=>{const open=(event:Event)=>openSearchResult((event as CustomEvent<SearchResult>).detail);window.addEventListener('atoumweb:navigate',open);return()=>window.removeEventListener('atoumweb:navigate',open);},[]);
   const [projectSearchTarget, setProjectSearchTarget] = useState<string | null>(null);
   const [operationsSearchTarget, setOperationsSearchTarget] = useState<OperationsSearchTarget | null>(null);
 
@@ -128,9 +133,9 @@ function App() {
 
   function openSearchResult(result: SearchResult): void {
     switch (result.entityType) {
-      case 'prospect': setActivePage('Prospects'); break;
+      case 'prospect': setCrmTarget(result.entityId); setActivePage('Prospects'); break;
       case 'catalog': setActivePage('Offres & Tarifs'); break;
-      case 'quote': setActivePage('Devis'); break;
+      case 'quote': setQuoteTarget(result.entityId); setActivePage('Devis'); break;
       case 'project':
         setProjectSearchTarget(result.entityId);
         setActivePage('Projets');
@@ -141,7 +146,9 @@ function App() {
       case 'hour_pack':
         openOperationsTarget({ entityType: result.entityType, entityId: result.entityId });
         break;
-      case 'client':
+      case 'client': setCrmTarget(result.entityId); setActivePage('Clients'); break;
+      case 'client_document': setCrmTarget(result.parentEntityId??result.entityId); setActivePage('Clients'); break;
+
       case 'organization':
       case 'contact':
       default: setActivePage('Clients'); break;
@@ -177,11 +184,13 @@ function App() {
           <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1>{activePage}</h1><p>{PAGE_HINTS[activePage]}</p></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>
           {message && <div className="notice" role="status"><span>{message}</span><button type="button" onClick={() => setMessage(null)}>×</button></div>}
 
+          {activePage === 'Accueil' && <WorkflowDashboard />}
+          {activePage === 'Réglages' && <DemoPanel />}
           {activePage === 'Accueil' && <Dashboard bootstrap={bootstrap} onOpenOperations={openOperationsTarget} onMessage={setMessage} />}
-          {activePage === 'Prospects' && <ProspectsPage onMessage={setMessage} />}
-          {activePage === 'Clients' && <ClientsPage onMessage={setMessage} />}
+          {activePage === 'Prospects' && <ProspectsPage key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
+          {activePage === 'Clients' && <ClientsPage key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
           {activePage === 'Offres & Tarifs' && <CatalogPage onMessage={setMessage} />}
-          {activePage === 'Devis' && <QuotesPage onMessage={setMessage} />}
+          {activePage === 'Devis' && <QuotesPage key={quoteTarget} initialId={quoteTarget} onMessage={setMessage} />}
           {activePage === 'Projets' && <ProjectsPage onMessage={setMessage} initialProjectId={projectSearchTarget} />}
           {activePage === 'Interventions & Maintenance' && <OperationsPage onMessage={setMessage} initialTarget={operationsSearchTarget} />}
           {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}

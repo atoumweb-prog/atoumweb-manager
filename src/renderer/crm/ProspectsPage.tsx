@@ -1,8 +1,12 @@
+import { DossierPanel, NeedChoices } from '../workflow/DossierPanel';
+import type { NeedInput } from '../../shared/workflow';
+import {ProspectQualificationPanel} from './ProspectQualificationPanel';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
   PROSPECT_SOURCES,
   PROSPECT_TEMPERATURES,
   type ActivityEvent,
+  type ActionRecurrence,
   type CrmAction,
   type CrmActionType,
   type ProspectSource,
@@ -16,6 +20,7 @@ const ACTIVE_STAGES: ProspectStage[] = [
   'qualifying',
   'need_identified',
   'quote_to_prepare',
+  'quote_to_send',
   'quote_sent',
   'follow_up',
   'negotiation',
@@ -26,7 +31,8 @@ const STAGE_LABELS: Record<ProspectStage, string> = {
   new: 'Nouveau contact',
   qualifying: 'À qualifier',
   need_identified: 'Besoin identifié',
-  quote_to_prepare: 'Devis à préparer',
+  quote_to_prepare: 'Devis en préparation',
+  quote_to_send: 'Devis à envoyer',
   quote_sent: 'Devis envoyé',
   follow_up: 'À relancer',
   negotiation: 'Négociation',
@@ -37,6 +43,7 @@ const STAGE_LABELS: Record<ProspectStage, string> = {
 
 const TEMPERATURE_LABELS: Record<ProspectTemperature, string> = {
   cold: 'Froid',
+  neutral: 'Neutre',
   warm: 'Tiède',
   hot: 'Chaud',
 };
@@ -75,6 +82,7 @@ interface ActionEditor {
   date: string;
   text: string;
   notes: string;
+  recurrence: ActionRecurrence;
 }
 
 interface LostEditor {
@@ -90,7 +98,7 @@ const EMPTY_DRAFT: ProspectDraft = {
   phone: '',
   primaryNeed: '',
   source: 'website',
-  temperature: 'warm',
+  temperature: 'neutral',
   estimatedValueEuros: '',
   firstActionDate: '',
   firstActionText: '',
@@ -112,10 +120,10 @@ function actionDueInput(value?: string | null): string {
 }
 
 function isClosed(prospect: ProspectSummary): boolean {
-  return Boolean(prospect.clientAccountId) || prospect.stage === 'won' || prospect.stage === 'lost';
+  return Boolean(prospect.archivedAt) || Boolean(prospect.clientAccountId) || prospect.stage === 'won' || prospect.stage === 'lost';
 }
 
-export function ProspectsPage({ onMessage }: { onMessage: (message: string) => void }) {
+export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: string) => void; initialId?: string | null }) {
   const [prospects, setProspects] = useState<ProspectSummary[]>([]);
   const [actions, setActions] = useState<CrmAction[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
@@ -127,7 +135,9 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
   const [draft, setDraft] = useState<ProspectDraft>(EMPTY_DRAFT);
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [demoMode, setDemoMode] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(initialId ?? null);
+  const [needsDraft,setNeedsDraft] = useState<NeedInput[]>([]);
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropStage, setDropStage] = useState<ProspectStage | null>(null);
@@ -138,14 +148,15 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
   async function refresh(): Promise<void> {
     setLoading(true);
     try {
-      let nextProspects = await window.atoumweb.crm.prospects.list();
+      let nextProspects = await window.atoumweb.crm.prospects.list({includeArchived:true});
       const inconsistentConverted = nextProspects.filter((prospect) => prospect.clientAccountId && prospect.stage !== 'won');
       if (inconsistentConverted.length > 0) {
         await Promise.all(inconsistentConverted.map((prospect) => window.atoumweb.crm.prospects.changeStage(prospect.id, 'won')));
-        nextProspects = await window.atoumweb.crm.prospects.list();
+        nextProspects = await window.atoumweb.crm.prospects.list({includeArchived:true});
       }
       const nextActions = await window.atoumweb.crm.actions.list({ ownerType: 'prospect' });
       setProspects(nextProspects);
+      if(initialId && nextProspects.some(p=>p.id===initialId && isClosed(p))) setView('history');
       setActions(nextActions);
     } finally {
       setLoading(false);
@@ -190,6 +201,7 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
     });
   }, [closedProspects, historyFilter, historySearch]);
 
+  useEffect(()=>{const reload=()=>void refresh();window.addEventListener('atoumweb:changed',reload);return()=>window.removeEventListener('atoumweb:changed',reload);},[]);
   const selected = prospects.find((prospect) => prospect.id === selectedId) ?? null;
   const selectedActions = actions.filter((action) => action.ownerId === selectedId);
   const selectedOpenActions = selectedActions.filter((action) => action.status === 'open');
@@ -215,7 +227,9 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
     }
 
     setSaving(true);
+    let demoBatch: string | null = null;
     try {
+      if (demoMode) demoBatch = await window.atoumweb.workflow.beginDemoCapture('prospect saisi manuellement');
       let organizationId: string | null = null;
       let contactId: string | null = null;
 
@@ -254,6 +268,8 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
         estimatedValueCents: value,
       });
 
+      for (const need of needsDraft) await window.atoumweb.workflow.saveNeed('prospect', prospect.id, need);
+      setNeedsDraft([]);
       if (draft.firstActionText.trim() || draft.firstActionDate) {
         await window.atoumweb.crm.actions.create({
           ownerType: 'prospect',
@@ -265,6 +281,7 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
       }
 
       setDraft(EMPTY_DRAFT);
+      setDemoMode(false);
       setShowForm(false);
       await refresh();
       setSelectedId(prospect.id);
@@ -273,6 +290,7 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Impossible de créer le prospect.');
     } finally {
+      if (demoBatch) await window.atoumweb.workflow.endDemoCapture(demoBatch);
       setSaving(false);
     }
   }
@@ -287,6 +305,8 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
     onMessage(result.createdClient ? 'Prospect transformé en nouveau client et retiré du pipeline.' : 'Prospect rattaché au client existant et retiré du pipeline.');
   }
 
+  async function createQuoteFromProspect(prospect:ProspectSummary):Promise<void>{try{const needs=await window.atoumweb.workflow.needs('prospect',prospect.id);if(!needs.length){onMessage('Ajoute au moins un besoin avant de créer le devis.');return;}const quote=await window.atoumweb.quotes.create({prospectId:prospect.id,subject:prospect.projectSummary||needs.map(n=>n.label).join(' + '),needSummary:needs.map(n=>n.label).join(' · ')});await refresh();window.dispatchEvent(new CustomEvent('atoumweb:navigate',{detail:{entityType:'quote',entityId:quote.id,title:quote.subject}}));}catch(error){onMessage(error instanceof Error?error.message:'Création du devis impossible.');}}
+
   async function changeStage(prospect: ProspectSummary, stage: ProspectStage): Promise<void> {
     if (stage === prospect.stage) return;
     if (prospect.clientAccountId) {
@@ -294,6 +314,8 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
       return;
     }
     if (!ACTIVE_STAGES.includes(stage)) return;
+    if (!['new','qualifying'].includes(stage) && !window.confirm(`Confirmer le passage vers « ${STAGE_LABELS[stage]} » ?`)) return;
+    if(stage==='waiting'){const reason=window.prompt('Motif de mise en attente');if(!reason?.trim())return;const resume=window.prompt('Date de reprise prévue (AAAA-MM-JJ), facultative')||null;await window.atoumweb.crm.prospects.updateQualification(prospect.id,{waitingReasonCode:'other',waitingReasonText:reason,waitingResumeAt:resume});}
     await window.atoumweb.crm.prospects.changeStage(prospect.id, stage);
     await refresh();
     onMessage(`Prospect déplacé vers « ${STAGE_LABELS[stage]} ».`);
@@ -332,6 +354,7 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
       date: type === 'follow_up' ? todayInput() : '',
       text: type === 'follow_up' ? 'Relancer le prospect' : '',
       notes: '',
+      recurrence: 'none',
     });
   }
 
@@ -354,6 +377,7 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
       title: text,
       dueAt,
       notes: actionEditor.notes.trim() || null,
+      recurrence: actionEditor.recurrence,
     });
     const type = actionEditor.type;
     setActionEditor(null);
@@ -362,7 +386,10 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
   }
 
   async function completeAction(action: CrmAction): Promise<void> {
-    await window.atoumweb.crm.actions.complete(action.id);
+    const channel=window.prompt('Canal utilisé (téléphone, email, visio…)',action.type==='follow_up'?'téléphone':'');if(channel===null)return;
+    const outcome=window.prompt('Résultat de l’action','réalisée');if(outcome===null)return;
+    const notes=window.prompt('Compte rendu (facultatif)','');if(notes===null)return;
+    await window.atoumweb.crm.actions.complete(action.id,{channel,outcome,notes});
     await refresh();
     onMessage(`${action.type === 'follow_up' ? 'Relance' : 'Action'} terminée.`);
   }
@@ -402,46 +429,9 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
   }
 
   async function seedDevelopmentPipeline(): Promise<void> {
-    if (seeding) return;
-    const missingStages = ACTIVE_STAGES.filter((stage) => (byStage.get(stage)?.length ?? 0) === 0);
-    if (missingStages.length === 0) {
-      onMessage('Le pipeline contient déjà au moins un dossier dans chaque étape active.');
-      return;
-    }
-
     setSeeding(true);
-    try {
-      const suffix = Date.now().toString().slice(-6);
-      for (const [index, stage] of missingStages.entries()) {
-        const organization = await window.atoumweb.crm.organizations.create({ name: `[DEV] ${STAGE_LABELS[stage]} ${suffix}-${index + 1}` });
-        const contact = await window.atoumweb.crm.contacts.create({
-          organizationId: organization.id,
-          firstName: 'Contact',
-          lastName: `Test ${index + 1}`,
-          email: `dev-${suffix}-${index + 1}@atoumweb.test`,
-        });
-        const prospect = await window.atoumweb.crm.prospects.create({
-          organizationId: organization.id,
-          contactId: contact.id,
-          stage,
-          temperature: index % 3 === 0 ? 'hot' : index % 3 === 1 ? 'warm' : 'cold',
-          source: 'website',
-          primaryNeed: `Dossier de test — ${STAGE_LABELS[stage]}`,
-          estimatedValueCents: 50000 + (index * 10000),
-        });
-        if (stage === 'follow_up') {
-          const date = new Date();
-          date.setDate(date.getDate() + 3);
-          await window.atoumweb.crm.actions.create({ ownerType: 'prospect', ownerId: prospect.id, type: 'follow_up', title: 'Relance de test', dueAt: date.toISOString() });
-        } else {
-          await window.atoumweb.crm.actions.create({ ownerType: 'prospect', ownerId: prospect.id, type: 'action', title: 'Action de test' });
-        }
-      }
-      await refresh();
-      onMessage(`${missingStages.length} dossier${missingStages.length > 1 ? 's' : ''} de test créé${missingStages.length > 1 ? 's' : ''}.`);
-    } finally {
-      setSeeding(false);
-    }
+    try { await window.atoumweb.workflow.createDemo('vitrine'); await refresh(); onMessage('Parcours Vitrine créé et marqué demo.'); }
+    catch(error) { onMessage(String(error)); } finally { setSeeding(false); }
   }
 
   function switchView(next: ProspectView): void {
@@ -466,7 +456,7 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
             <div><strong>{activeProspects.length}</strong><span> prospect{activeProspects.length > 1 ? 's' : ''} actif{activeProspects.length > 1 ? 's' : ''}</span></div>
             <div className="toolbar-controls prospect-toolbar-actions">
               <button className="secondary-button" type="button" onClick={() => void refresh()}>↻ Actualiser</button>
-              <button className="secondary-button dev-button" type="button" disabled={seeding} onClick={() => void seedDevelopmentPipeline()}>{seeding ? 'Création…' : 'DEV · Remplir le pipeline'}</button>
+              <button className="secondary-button dev-button" type="button" disabled={seeding} onClick={() => void seedDevelopmentPipeline()}>{seeding ? 'Création…' : 'Créer un parcours test Vitrine'}</button>
               <button className="primary-button" type="button" onClick={() => setShowForm((value) => !value)}>{showForm ? 'Fermer' : '+ Nouveau prospect'}</button>
             </div>
           </div>
@@ -474,13 +464,14 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
           {showForm && (
             <form className="panel crm-form" onSubmit={(event) => void submitProspect(event)}>
               <div className="panel-title"><div><span className="eyebrow">Prospect</span><h2>Nouveau contact commercial</h2></div></div>
+              <button className="secondary-button" type="button" onClick={() => { setDemoMode(true); setDraft({ ...EMPTY_DRAFT, company: 'DEMO — Boulangerie Martin', firstName: 'Camille', lastName: 'Martin', email: 'camille@example.test', primaryNeed: 'Site vitrine', estimatedValueEuros: '848', firstActionText: 'Préparer le devis' }); setNeedsDraft([{ catalogItemId: 'atoumweb-vitrine' }, { catalogItemId: 'atoumweb-article-seo' }]); }}>Remplir avec des données test</button>
               <div className="form-grid">
                 <label>Société<input value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} /></label>
                 <label>Prénom<input value={draft.firstName} onChange={(e) => setDraft({ ...draft, firstName: e.target.value })} /></label>
                 <label>Nom<input value={draft.lastName} onChange={(e) => setDraft({ ...draft, lastName: e.target.value })} /></label>
                 <label>Email<input type="email" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} /></label>
                 <label>Téléphone<input value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} /></label>
-                <label>Besoin principal<input value={draft.primaryNeed} onChange={(e) => setDraft({ ...draft, primaryNeed: e.target.value })} /></label>
+                <NeedChoices value={needsDraft} onChange={setNeedsDraft} />
                 <label>Source<select value={draft.source} onChange={(e) => setDraft({ ...draft, source: e.target.value as ProspectSource })}>{PROSPECT_SOURCES.map((source) => <option key={source} value={source}>{SOURCE_LABELS[source]}</option>)}</select></label>
                 <label>Température<select value={draft.temperature} onChange={(e) => setDraft({ ...draft, temperature: e.target.value as ProspectTemperature })}>{PROSPECT_TEMPERATURES.map((temperature) => <option key={temperature} value={temperature}>{TEMPERATURE_LABELS[temperature]}</option>)}</select></label>
                 <label>Valeur estimée (€)<input inputMode="decimal" value={draft.estimatedValueEuros} onChange={(e) => setDraft({ ...draft, estimatedValueEuros: e.target.value })} placeholder="Ex. 900" /></label>
@@ -524,7 +515,7 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
                               title="Cliquer pour ouvrir · Faire glisser pour déplacer"
                             >
                               <strong>{prospect.displayName}</strong>
-                              <span className={`temperature temperature-${prospect.temperature ?? 'warm'}`}>{TEMPERATURE_LABELS[prospect.temperature ?? 'warm']}</span>
+                              <span className={`temperature temperature-${prospect.temperature ?? 'neutral'}`} aria-label={`Température : ${TEMPERATURE_LABELS[prospect.temperature ?? 'neutral']}`}>{TEMPERATURE_LABELS[prospect.temperature ?? 'neutral']}</span>
                             </div>
 
                             <div className="prospect-card-body" onClick={() => setSelectedId(prospect.id)}>
@@ -587,6 +578,8 @@ export function ProspectsPage({ onMessage }: { onMessage: (message: string) => v
                 onLost={() => openLostEditor(selected)}
                 onConfirmLost={() => void confirmLost()}
                 onConvert={() => void convert(selected)}
+                onCreateQuote={() => void createQuoteFromProspect(selected)}
+                onQualificationSaved={() => void refresh()}
               />}
             </div>
           )}
@@ -641,6 +634,8 @@ function ProspectDetail({
   onLost,
   onConfirmLost,
   onConvert,
+  onCreateQuote,
+  onQualificationSaved,
 }: {
   prospect: ProspectSummary;
   actions: CrmAction[];
@@ -660,6 +655,8 @@ function ProspectDetail({
   onLost: () => void;
   onConfirmLost: () => void;
   onConvert: () => void;
+  onCreateQuote: () => void;
+  onQualificationSaved: () => void;
 }) {
   const active = !isClosed(prospect);
   const followUps = openActions.filter((action) => action.type === 'follow_up');
@@ -673,11 +670,14 @@ function ProspectDetail({
       </div>
 
       <div className="detail-badges">
-        <span className={`temperature temperature-${prospect.temperature ?? 'warm'}`}>{TEMPERATURE_LABELS[prospect.temperature ?? 'warm']}</span>
+        <span className={`temperature temperature-${prospect.temperature ?? 'neutral'}`} aria-label={`Température : ${TEMPERATURE_LABELS[prospect.temperature ?? 'neutral']}`}>{TEMPERATURE_LABELS[prospect.temperature ?? 'neutral']}</span>
         <span className="status-pill">{prospect.clientAccountId ? 'Client' : STAGE_LABELS[prospect.stage ?? 'new']}</span>
         {prospect.source && <span className="status-pill">{SOURCE_LABELS[prospect.source]}</span>}
       </div>
 
+      <DossierPanel owner="prospect" id={prospect.id} />
+      {active&&<button className="primary-button" type="button" onClick={onCreateQuote}>Créer un devis depuis ce prospect</button>}
+      <ProspectQualificationPanel prospect={prospect} onSaved={onQualificationSaved}/>
       <div className="summary-list">
         <SummaryLine label="Contact" value={prospect.secondaryLabel || 'Non renseigné'} />
         <SummaryLine label="Besoin" value={prospect.primaryNeed || 'À préciser'} />
@@ -705,6 +705,7 @@ function ProspectDetail({
           <label>Libellé<input value={actionEditor.text} onChange={(event) => setActionEditor({ ...actionEditor, text: event.target.value })} placeholder={actionEditor.type === 'follow_up' ? 'Ex. rappeler pour le devis' : 'Ex. préparer la proposition'} /></label>
           <label>Date {actionEditor.type === 'action' && <small>(facultative)</small>}<input type="date" value={actionEditor.date} onChange={(event) => setActionEditor({ ...actionEditor, date: event.target.value })} /></label>
           <label>Note <small>(facultative)</small><textarea value={actionEditor.notes} onChange={(event) => setActionEditor({ ...actionEditor, notes: event.target.value })} /></label>
+          <label>Récurrence<select value={actionEditor.recurrence} onChange={event=>setActionEditor({...actionEditor,recurrence:event.target.value as ActionRecurrence})}><option value="none">Aucune</option><option value="weekly">Chaque semaine</option><option value="monthly">Chaque mois</option><option value="quarterly">Chaque trimestre</option><option value="yearly">Chaque année</option></select></label>
           <div className="inline-editor-actions"><button className="secondary-button compact-button" type="button" onClick={() => setActionEditor(null)}>Annuler</button><button className="primary-button compact-button" type="button" onClick={onSaveAction}>Ajouter</button></div>
         </div>
       )}
@@ -829,8 +830,8 @@ function HistoryView({
         {selected && (
           <aside className="panel prospect-detail-panel history-detail-panel">
             <div className="detail-panel-heading"><div><span className="eyebrow">Historique prospect</span><h2>{selected.displayName}</h2></div><button className="close-detail" type="button" onClick={onClose}>×</button></div>
-            <div className="detail-badges"><span className={`history-outcome ${selected.stage === 'lost' ? 'lost' : 'won'}`}>{selected.stage === 'lost' ? 'Perdu' : 'Gagné · Client'}</span></div>
-            <div className="summary-list"><SummaryLine label="Contact" value={selected.secondaryLabel || 'Non renseigné'} /><SummaryLine label="Besoin" value={selected.primaryNeed || '—'} /><SummaryLine label="Valeur" value={selected.estimatedValueCents != null ? `${(selected.estimatedValueCents / 100).toLocaleString('fr-FR')} €` : '—'} />{selected.lostReason && <SummaryLine label="Raison" value={selected.lostReason} />}</div>
+            <div className="detail-badges"><span className={`history-outcome ${selected.stage === 'lost' ? 'lost' : 'won'}`}>{selected.archivedAt ? 'Archivé' : selected.stage === 'lost' ? 'Perdu' : 'Gagné · Client'}</span></div>
+            <DossierPanel owner="prospect" id={selected.id}/><div className="summary-list"><SummaryLine label="Contact" value={selected.secondaryLabel || 'Non renseigné'} /><SummaryLine label="Besoin" value={selected.primaryNeed || '—'} /><SummaryLine label="Valeur" value={selected.estimatedValueCents != null ? `${(selected.estimatedValueCents / 100).toLocaleString('fr-FR')} €` : '—'} />{selected.lostReason && <SummaryLine label="Raison" value={selected.lostReason} />}</div>
             {actions.length > 0 && <section className="prospect-work-section"><div className="work-section-heading"><div><span className="eyebrow">Actions du dossier</span><strong>{actions.length}</strong></div></div><div className="work-items">{actions.slice(0, 10).map((action) => <div className="work-item completed" key={action.id}><div className="work-item-main"><span className={`work-type ${action.type}`}>{action.type === 'follow_up' ? 'Relance' : 'Action'}</span><strong>{action.title}</strong><small>{action.status === 'open' ? 'Restée ouverte' : action.status === 'done' ? 'Terminée' : 'Annulée'}{action.dueAt ? ` · ${formatDate(action.dueAt)}` : ''}</small></div></div>)}</div></section>}
             <div className="activity-preview"><strong>Journal complet</strong>{activity.map((event) => <div className="activity-item" key={event.id}><span className="activity-dot" /><div><p>{event.summary}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div></div>)}{activity.length === 0 && <p className="muted">Aucune activité.</p>}</div>
           </aside>

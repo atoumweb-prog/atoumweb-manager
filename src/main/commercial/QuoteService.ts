@@ -48,6 +48,8 @@ interface QuoteRow extends Record<string, unknown> {
   expired_at: string | null;
   snapshot_locked_at: string | null;
   project_ready_at: string | null;
+  finalized_at: string | null;
+  last_extended_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -87,6 +89,7 @@ interface CatalogSnapshotRow extends Record<string, unknown> {
   prerequisites_json: string;
   price_mode: string;
   price_cents: number | null;
+  special_terms: string | null;
   default_deposit_percent: number | null;
   contract_type: string | null;
 }
@@ -145,7 +148,7 @@ export class QuoteService {
     return { ...this.mapSummary(row), needSummary: row.need_summary, estimatedDelay: row.estimated_delay, prerequisitesText: row.prerequisites_text, specialTerms: row.special_terms, contractType: row.contract_type, lines };
   }
 
-  create(input: QuoteInput): QuoteDetail {
+  create(input: QuoteInput, withinTransaction = false): QuoteDetail {
     this.validateOwner(input.prospectId, input.clientAccountId);
     const subject = clean(input.subject);
     if (!subject) throw new Error('L’objet du devis est requis.');
@@ -160,7 +163,7 @@ export class QuoteService {
     const validUntil = new Date(now);
     validUntil.setDate(validUntil.getDate() + validityDays);
 
-    this.database.exec('BEGIN IMMEDIATE;');
+    if (!withinTransaction) this.database.exec('BEGIN IMMEDIATE;');
     try {
       const number = this.nextQuoteNumber(now.getFullYear(), nowString);
       this.database.run(
@@ -190,12 +193,26 @@ export class QuoteService {
         ],
       );
       this.writeActivity(id, 'quote_created', `Devis ${number} créé`);
-      this.database.exec('COMMIT;');
+      if (input.prospectId) this.database.run("UPDATE prospects SET stage='quote_to_prepare',updated_at=? WHERE id=? AND stage NOT IN ('won','lost')",[nowString,input.prospectId]);
+      if (!withinTransaction) this.database.exec('COMMIT;');
     } catch (error) {
-      this.database.exec('ROLLBACK;');
+      if (!withinTransaction) this.database.exec('ROLLBACK;');
       throw error;
     }
     return this.get(id);
+  }
+
+  createWithLines(input: QuoteInput, lines: Array<{catalogVersionId?: string; input: QuoteLineInput}>): QuoteDetail {
+    this.database.exec('BEGIN IMMEDIATE;');
+    try {
+      const quote=this.create(input,true);
+      for(const line of lines) {
+        if(line.catalogVersionId) this.addCatalogLine(quote.id,line.catalogVersionId,line.input);
+        else this.addCustomLine(quote.id,line.input);
+      }
+      this.database.exec('COMMIT;');
+      return this.get(quote.id);
+    } catch(error) { this.database.exec('ROLLBACK;'); throw error; }
   }
 
   addCatalogLine(quoteId: string, catalogVersionId: string, input: Partial<QuoteLineInput> = {}): QuoteDetail {
@@ -204,7 +221,7 @@ export class QuoteService {
       `SELECT v.id AS version_id, i.id AS item_id, i.name AS item_name, i.item_type,
               v.version_number, v.description, v.inclusions_json, v.exclusions_json,
               v.prerequisites_json, v.price_mode, v.price_cents, v.default_deposit_percent,
-              v.contract_type
+              v.contract_type, v.special_terms
        FROM catalog_versions v
        JOIN catalog_items i ON i.id=v.item_id
        WHERE v.id=?`,
@@ -268,9 +285,12 @@ export class QuoteService {
       priceCents: source.price_cents,
       defaultDepositPercent: source.default_deposit_percent,
       contractType: source.contract_type,
+      specialTerms: source.special_terms,
       offerComponents,
     };
 
+    const current = this.get(quoteId);
+    const firstOffer = source.item_type === 'offer' && !current.lines.some(line => line.snapshot?.itemType === 'offer');
     this.insertLine(quoteId, 'catalog', {
       ...input,
       label: clean(input.label) ?? source.item_name,
@@ -278,6 +298,13 @@ export class QuoteService {
       catalogUnitPriceCents: source.price_cents ?? proposed ?? 0,
       proposedUnitPriceCents: proposed ?? 0,
     }, source.item_id, source.version_id, snapshot);
+    if (firstOffer) {
+      this.updateConditions(quoteId, {
+        specialTerms: current.specialTerms || source.special_terms,
+        prerequisitesText: current.prerequisitesText || this.parseJsonList(source.prerequisites_json).join('\n'),
+        contractType: current.contractType || source.contract_type,
+      });
+    }
     this.recalculate(quoteId);
     return this.get(quoteId);
   }
@@ -345,7 +372,29 @@ export class QuoteService {
   markSent(id: string): QuoteDetail {
     const quote = this.get(id);
     if (quote.status !== 'draft') throw new Error('Seul un devis brouillon peut être marqué envoyé.');
-    return this.transition(id, 'sent', 'sent_at', 'Devis marqué envoyé');
+    const result=this.transition(id, 'sent', 'sent_at', 'Devis marqué envoyé');
+    if(result.prospectId) this.database.run("UPDATE prospects SET stage='quote_sent',updated_at=? WHERE id=? AND stage NOT IN ('won','lost')",[nowIso(),result.prospectId]);
+    return result;
+  }
+
+  finalize(id: string): QuoteDetail {
+    const quote=this.get(id);
+    if(quote.status!=='draft') throw new Error('Seul un devis brouillon peut être finalisé.');
+    if(quote.lines.length===0) throw new Error('Ajoute au moins une ligne avant de finaliser le devis.');
+    const now=nowIso();
+    this.database.run('UPDATE quotes SET finalized_at=?,updated_at=? WHERE id=?',[now,now,id]);
+    if(quote.prospectId) this.database.run("UPDATE prospects SET stage='quote_to_send',updated_at=? WHERE id=? AND stage NOT IN ('won','lost')",[now,quote.prospectId]);
+    this.writeActivity(id,'quote_finalized',`Devis ${quote.number} finalisé et prêt à envoyer`);
+    return this.get(id);
+  }
+
+  extendValidity(id: string, validUntil: string): QuoteDetail {
+    const quote=this.get(id); const date=new Date(validUntil);
+    if(!['draft','sent','viewed'].includes(quote.status)) throw new Error('La validité de ce devis ne peut plus être prolongée.');
+    if(Number.isNaN(date.getTime()) || date.getTime()<=Date.now()) throw new Error('Choisis une nouvelle date de validité future.');
+    const now=nowIso(); this.database.run('UPDATE quotes SET valid_until=?,last_extended_at=?,updated_at=? WHERE id=?',[date.toISOString(),now,now,id]);
+    this.writeActivity(id,'quote_validity_extended',`Validité du devis ${quote.number} prolongée au ${date.toLocaleDateString('fr-FR')}`);
+    return this.get(id);
   }
 
   markViewed(id: string): QuoteDetail {
@@ -390,7 +439,7 @@ export class QuoteService {
 
   duplicate(id: string): QuoteDetail {
     const source = this.get(id);
-    if (!['refused', 'expired', 'cancelled'].includes(source.status)) throw new Error('Seul un devis refusé, expiré ou annulé peut être dupliqué.');
+    if (!['sent','viewed','refused', 'expired', 'cancelled'].includes(source.status)) throw new Error('Ce devis ne peut pas être dupliqué.');
     const copy = this.create({
       prospectId: source.prospectId,
       clientAccountId: source.clientAccountId ?? source.acceptedClientAccountId,
@@ -579,6 +628,8 @@ export class QuoteService {
       expiredAt: row.expired_at,
       snapshotLockedAt: row.snapshot_locked_at,
       projectReadyAt: row.project_ready_at,
+      finalizedAt: row.finalized_at,
+      lastExtendedAt: row.last_extended_at,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
