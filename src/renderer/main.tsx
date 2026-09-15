@@ -23,6 +23,7 @@ import './operations.css';
 import './workflow.css';
 import './display-density.css';
 import './prospect-workflow-v2.css';
+import './prospect-recipe-fixes.css';
 
 const rootElement = document.getElementById('root');
 
