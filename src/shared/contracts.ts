@@ -10,11 +10,17 @@ import type { ProjectsApi } from './projects';
 import type { TimeApi } from './time';
 
 export const THEME_NAMES = ['atoumweb', 'noir', 'blanc'] as const;
+export const DISPLAY_DENSITIES = ['compact', 'comfort', 'comfort_plus'] as const;
 
 export type ThemeName = (typeof THEME_NAMES)[number];
+export type DisplayDensity = (typeof DISPLAY_DENSITIES)[number];
 
 export function isThemeName(value: unknown): value is ThemeName {
   return typeof value === 'string' && THEME_NAMES.includes(value as ThemeName);
+}
+
+export function isDisplayDensity(value: unknown): value is DisplayDensity {
+  return typeof value === 'string' && DISPLAY_DENSITIES.includes(value as DisplayDensity);
 }
 
 export interface DatabaseHealth {
@@ -28,6 +34,7 @@ export interface BootstrapState {
   workspacePath: string;
   databasePath: string;
   theme: ThemeName;
+  displayDensity: DisplayDensity;
   database: DatabaseHealth;
 }
 
@@ -55,6 +62,7 @@ export interface AtoumWebApi {
   };
   settings: {
     setTheme(theme: ThemeName): Promise<ThemeName>;
+    setDisplayDensity(density: DisplayDensity): Promise<DisplayDensity>;
   };
   workspace: {
     choose(): Promise<WorkspaceChangeResult>;
