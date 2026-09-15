@@ -52,8 +52,8 @@ export function formatPhone(value?: string | null): string {
 
 function formatInternationalPhone(value: string): string {
   if (value.startsWith('+33') && value.length === 12) {
-    const national = `0${value.slice(3)}`;
-    return `+33 ${national.slice(1).replace(/(\d{2})(?=\d)/g, '$1 ').trim()}`;
+    const national = value.slice(3);
+    return `+33 ${national.slice(0, 1)} ${national.slice(1).replace(/(\d{2})(?=\d)/g, '$1 ').trim()}`;
   }
   return value;
 }

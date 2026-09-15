@@ -55,11 +55,11 @@ describe('Stabilisation du parcours métier',()=>{
     quotes.updateConditions(q.id,{specialTerms:'Conditions particulières validées'});
     quotes.finalize(q.id);
     quotes.markSent(q.id);
-    expect(workflow.dashboard().some(e=>e.group==='Devis en attente de réponse'&&e.target.entityId===q.id)).toBe(true);
+    expect(workflow.dashboard().some(e=>e.group==='Devis en attente de retour'&&e.target.entityId===q.id)).toBe(true);
     const accepted=quotes.accept(q.id);
     expect(quotes.list({clientAccountId:accepted.clientAccountId!}).map(q=>q.id)).toContain(q.id);
     expect(quotes.list({prospectId:p.id}).map(q=>q.id)).toContain(q.id);
-    expect(workflow.dashboard().some(e=>e.group==='Devis en attente de réponse'&&e.target.entityId===q.id)).toBe(false);
+    expect(workflow.dashboard().some(e=>e.group==='Devis en attente de retour'&&e.target.entityId===q.id)).toBe(false);
     expect(workflow.dashboard().some(e=>e.group==='Devis acceptés à démarrer'&&e.target.entityId===q.id)).toBe(true);
     const t=projects.createTemplate({name:'E-commerce',projectType:'ecommerce'});projects.publishTemplateVersion(t.currentVersion!.id);
     const project=projects.transformQuote({quoteId:q.id,templateVersionId:t.currentVersion!.id});
