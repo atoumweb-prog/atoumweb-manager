@@ -26,6 +26,10 @@
 
 /* La température commerciale reste présente jusque dans les contours des champs. */
 .prospect-detail-v2 { --prospect-line: color-mix(in srgb, var(--prospect-tint) 72%, var(--border)); }
+.prospect-detail-v2.prospect-temperature-neutral { --prospect-line: color-mix(in srgb, #7fbe8d 58%, var(--border)); }
+.prospect-detail-v2.prospect-temperature-cold { --prospect-line: color-mix(in srgb, #79a9d7 58%, var(--border)); }
+.prospect-detail-v2.prospect-temperature-warm { --prospect-line: color-mix(in srgb, #e7b75e 62%, var(--border)); }
+.prospect-detail-v2.prospect-temperature-hot { --prospect-line: color-mix(in srgb, #e77a6f 62%, var(--border)); }
 .prospect-detail-v2 .prospect-work-section,
 .prospect-detail-v2 .inline-editor,
 .prospect-detail-v2 .contact-methods-panel,
