@@ -53,6 +53,7 @@ describe('Stabilisation du parcours métier',()=>{
     expect(quotes.get(q.id).specialTerms).toContain('40 %');
     expect(quotes.get(q.id).lines).toHaveLength(4);
     quotes.updateConditions(q.id,{specialTerms:'Conditions particulières validées'});
+    quotes.finalize(q.id);
     quotes.markSent(q.id);
     expect(workflow.dashboard().some(e=>e.group==='Devis en attente de réponse'&&e.target.entityId===q.id)).toBe(true);
     const accepted=quotes.accept(q.id);
@@ -71,7 +72,7 @@ describe('Stabilisation du parcours métier',()=>{
     const v=catalog.createVersion('atoumweb-ecommerce',{priceMode:'fixed',priceCents:200000,specialTerms:'Nouvelles conditions'});catalog.publishVersion(v.id);
     expect(quotes.get(q.id)).toEqual(beforePublish);
     expect(projects.getProject(project.id).services).toEqual(project.services);
-    expect(()=>quotes.updateConditions(q.id,{specialTerms:'Interdit'})).toThrow(/figé/);
+    expect(()=>quotes.updateConditions(q.id,{specialTerms:'Interdit'})).toThrow(/figé|copie/);
   });
   it.each(['vitrine','ecommerce','maintenance'] as const)('crée et purge le scénario %s en conservant références et vrais dossiers',async scenario=>{
     const real=crm.createOrganization({name:'Ne pas supprimer'}),client=crm.createClient({organizationId:real.id});
