@@ -35,6 +35,9 @@ interface ActionRow extends Record<string, unknown> {
   completion_notes: string | null;
   related_type: string | null;
   related_id: string | null;
+  target_contact_id: string | null;
+  reason_code: string | null;
+  reason_text: string | null;
   recurrence: CrmAction['recurrence'];
 }
 
@@ -90,14 +93,19 @@ export class ActionService {
     if (input.type === 'follow_up' && !clean(input.dueAt)) throw new Error('Une date est requise pour une relance.');
 
     this.assertOwnerExists(input.ownerType, ownerId);
+    const targetContactId = clean(input.targetContactId);
+    if (targetContactId && !this.database.get('SELECT id FROM contacts WHERE id=? AND archived_at IS NULL', [targetContactId])) {
+      throw new Error('Le contact ciblé par l’action est introuvable.');
+    }
 
     const id = randomUUID();
     const now = nowIso();
     this.database.run(
       `INSERT INTO crm_actions (
         id, owner_type, prospect_id, client_account_id, action_type, title,
-        due_at, notes, related_type, related_id, recurrence, status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?)`,
+        due_at, notes, related_type, related_id, target_contact_id, reason_code, reason_text,
+        recurrence, status, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?)`,
       [
         id,
         input.ownerType,
@@ -109,6 +117,9 @@ export class ActionService {
         clean(input.notes),
         clean(input.relatedType),
         clean(input.relatedId),
+        targetContactId,
+        clean(input.reasonCode),
+        clean(input.reasonText),
         input.recurrence ?? 'none',
         now,
         now,
@@ -193,6 +204,9 @@ export class ActionService {
       completionNotes: row.completion_notes,
       relatedType: row.related_type,
       relatedId: row.related_id,
+      targetContactId: row.target_contact_id,
+      reasonCode: row.reason_code,
+      reasonText: row.reason_text,
       recurrence: row.recurrence ?? 'none',
       createdAt: row.created_at,
       updatedAt: row.updated_at,
@@ -213,8 +227,20 @@ export class ActionService {
     else if (action.recurrence === 'monthly') date.setUTCMonth(date.getUTCMonth() + 1);
     else if (action.recurrence === 'quarterly') date.setUTCMonth(date.getUTCMonth() + 3);
     else date.setUTCFullYear(date.getUTCFullYear() + 1);
-    return { ownerType:action.ownerType, ownerId:action.ownerId, type:action.type, title:action.title,
-      dueAt:date.toISOString(), notes:action.notes, relatedType:action.relatedType, relatedId:action.relatedId, recurrence:action.recurrence };
+    return {
+      ownerType: action.ownerType,
+      ownerId: action.ownerId,
+      type: action.type,
+      title: action.title,
+      dueAt: date.toISOString(),
+      notes: action.notes,
+      relatedType: action.relatedType,
+      relatedId: action.relatedId,
+      targetContactId: action.targetContactId,
+      reasonCode: action.reasonCode,
+      reasonText: action.reasonText,
+      recurrence: action.recurrence,
+    };
   }
 
   private writeActivity(ownerType: CrmActionOwnerType, ownerId: string, action: string, summary: string): void {
