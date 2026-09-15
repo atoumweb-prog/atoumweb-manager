@@ -1,7 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
+import { normalizeEmail, normalizePhone } from '../../shared/contactValidation';
 import {
   CLIENT_STATUSES,
+  PROSPECT_INTEREST_LEVELS,
+  PROSPECT_ORIGINS,
   PROSPECT_SOURCES,
   PROSPECT_STAGES,
   PROSPECT_TEMPERATURES,
@@ -19,6 +22,7 @@ import {
   type OrganizationInput,
   type ProspectFilters,
   type ProspectInput,
+  type ProspectOrigin,
   type ProspectStage,
   type ProspectSummary,
   type SearchResult,
@@ -44,13 +48,6 @@ const MANUAL_PROSPECT_STAGE_TRANSITIONS: Record<ProspectStage, readonly Prospect
   lost: ['new', 'qualifying'],
 };
 
-function assertEmail(value?: string | null): void {
-  const email = clean(value);
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    throw new Error('Adresse email invalide.');
-  }
-}
-
 function assertMoney(value: number | null | undefined, label: string): void {
   if (value != null && (!Number.isInteger(value) || value < 0)) {
     throw new Error(`${label} doit être un montant positif en centimes.`);
@@ -68,6 +65,8 @@ function assertProspectInput(input: ProspectInput): void {
   if (input.stage && !PROSPECT_STAGES.includes(input.stage)) throw new Error('Étape prospect invalide.');
   if (input.temperature && !PROSPECT_TEMPERATURES.includes(input.temperature)) throw new Error('Température prospect invalide.');
   if (input.source && !PROSPECT_SOURCES.includes(input.source)) throw new Error('Source prospect invalide.');
+  if (input.originType && !PROSPECT_ORIGINS.includes(input.originType)) throw new Error('Origine du prospect invalide.');
+  if (input.interestLevel && !PROSPECT_INTEREST_LEVELS.includes(input.interestLevel)) throw new Error('Niveau d’intérêt invalide.');
   assertMoney(input.budgetMinCents, 'Le budget minimum');
   assertMoney(input.budgetMaxCents, 'Le budget maximum');
   assertMoney(input.estimatedValueCents, 'La valeur estimée');
@@ -84,6 +83,14 @@ function assertClientInput(input: ClientInput): void {
   if (input.status && !CLIENT_STATUSES.includes(input.status)) throw new Error('Statut client invalide.');
 }
 
+function inferOrigin(source?: ProspectSummary['source'] | null): ProspectOrigin {
+  if (source === 'outbound') return 'outbound';
+  if (source === 'referral') return 'referral';
+  if (source === 'former_client') return 'existing';
+  if (source === 'website' || source === 'google' || source === 'social') return 'inbound';
+  return 'other';
+}
+
 interface ProspectRow extends Record<string, unknown> {
   id: string;
   organization_id: string | null;
@@ -93,6 +100,20 @@ interface ProspectRow extends Record<string, unknown> {
   temperature: ProspectSummary['temperature'];
   source: ProspectSummary['source'];
   source_detail: string | null;
+  origin_type: ProspectSummary['originType'];
+  prospecting_started_at: string | null;
+  qualification_validated_at: string | null;
+  targeting_reason_code: string | null;
+  targeting_reason_text: string | null;
+  initial_observation: string | null;
+  detected_opportunity: string | null;
+  first_contact_result_code: string | null;
+  first_contact_result_text: string | null;
+  interest_level: ProspectSummary['interestLevel'];
+  decision_maker_name: string | null;
+  decision_maker_role: string | null;
+  decision_maker_email: string | null;
+  decision_maker_phone: string | null;
   primary_need: string | null;
   secondary_need: string | null;
   budget_min_cents: number | null;
@@ -186,7 +207,8 @@ export class CrmService {
   createOrganization(input: OrganizationInput): Organization {
     const name = clean(input.name);
     if (!name) throw new Error('Le nom de l’organisation est requis.');
-    assertEmail(input.email);
+    const email = normalizeEmail(input.email);
+    const phone = normalizePhone(input.phone);
     const id = randomUUID();
     const now = nowIso();
     this.database.run(
@@ -195,7 +217,7 @@ export class CrmService {
         postal_code, city, country, industry, notes, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id, name, clean(input.legalName), clean(input.siret), clean(input.email), clean(input.phone),
+        id, name, clean(input.legalName), clean(input.siret), email, phone,
         clean(input.website), clean(input.addressLine1), clean(input.addressLine2), clean(input.postalCode),
         clean(input.city), clean(input.country), clean(input.industry), clean(input.notes), now, now,
       ],
@@ -208,14 +230,15 @@ export class CrmService {
   updateOrganization(id: string, input: OrganizationInput): Organization {
     const name = clean(input.name);
     if (!name) throw new Error('Le nom de l’organisation est requis.');
-    assertEmail(input.email);
+    const email = normalizeEmail(input.email);
+    const phone = normalizePhone(input.phone);
     const result = this.database.run(
       `UPDATE organizations SET
         name=?, legal_name=?, siret=?, email=?, phone=?, website=?, address_line1=?, address_line2=?,
         postal_code=?, city=?, country=?, industry=?, notes=?, updated_at=?
        WHERE id=? AND archived_at IS NULL`,
       [
-        name, clean(input.legalName), clean(input.siret), clean(input.email), clean(input.phone), clean(input.website),
+        name, clean(input.legalName), clean(input.siret), email, phone, clean(input.website),
         clean(input.addressLine1), clean(input.addressLine2), clean(input.postalCode), clean(input.city), clean(input.country),
         clean(input.industry), clean(input.notes), nowIso(), id,
       ],
@@ -244,7 +267,8 @@ export class CrmService {
     const firstName = clean(input.firstName);
     const lastName = clean(input.lastName);
     if (!firstName || !lastName) throw new Error('Le prénom et le nom sont requis.');
-    assertEmail(input.email);
+    const email = normalizeEmail(input.email);
+    const phone = normalizePhone(input.phone);
     const id = randomUUID();
     const now = nowIso();
     this.database.run(
@@ -253,8 +277,8 @@ export class CrmService {
         notes, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id, clean(input.organizationId), firstName, lastName, clean(input.jobTitle), clean(input.email),
-        clean(input.phone), clean(input.preferredChannel), clean(input.notes), now, now,
+        id, clean(input.organizationId), firstName, lastName, clean(input.jobTitle), email,
+        phone, clean(input.preferredChannel), clean(input.notes), now, now,
       ],
     );
     this.activity({ entityType: 'contact', entityId: id, action: 'created', summary: `Contact créé : ${firstName} ${lastName}`, contactId: id, organizationId: clean(input.organizationId) });
@@ -266,12 +290,13 @@ export class CrmService {
     const firstName = clean(input.firstName);
     const lastName = clean(input.lastName);
     if (!firstName || !lastName) throw new Error('Le prénom et le nom sont requis.');
-    assertEmail(input.email);
+    const email = normalizeEmail(input.email);
+    const phone = normalizePhone(input.phone);
     const result = this.database.run(
       `UPDATE contacts SET organization_id=?, first_name=?, last_name=?, job_title=?, email=?, phone=?,
        preferred_channel=?, notes=?, updated_at=? WHERE id=? AND archived_at IS NULL`,
       [
-        clean(input.organizationId), firstName, lastName, clean(input.jobTitle), clean(input.email), clean(input.phone),
+        clean(input.organizationId), firstName, lastName, clean(input.jobTitle), email, phone,
         clean(input.preferredChannel), clean(input.notes), nowIso(), id,
       ],
     );
@@ -303,9 +328,9 @@ export class CrmService {
   }
 
   saveContactMethod(input: ContactMethodInput, id?: string): ContactMethod {
-    const value=clean(input.value); if(!value) throw new Error('La coordonnée est requise.');
     if(!['email','phone'].includes(input.type)) throw new Error('Type de coordonnée invalide.');
-    if(input.type==='email') assertEmail(value);
+    const value = input.type === 'email' ? normalizeEmail(input.value) : normalizePhone(input.value);
+    if(!value) throw new Error('La coordonnée est requise.');
     if(Boolean(input.organizationId)===Boolean(input.contactId)) throw new Error('La coordonnée doit être rattachée à une seule identité.');
     const ownerColumn=input.organizationId?'organization_id':'contact_id'; const ownerId=input.organizationId??input.contactId??'';
     const now=nowIso(); const methodId=id ?? randomUUID();
@@ -331,15 +356,16 @@ export class CrmService {
     const id = randomUUID();
     const now = nowIso();
     const stage = input.stage ?? 'new';
+    const originType = input.originType ?? inferOrigin(input.source);
     this.database.run(
       `INSERT INTO prospects (
-        id, organization_id, contact_id, stage, temperature, source, source_detail, primary_need,
+        id, organization_id, contact_id, stage, temperature, source, source_detail, origin_type, primary_need,
         secondary_need, budget_min_cents, budget_max_cents, estimated_value_cents, probability_percent,
         next_action_at, next_action_text, target_date, notes, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id, clean(input.organizationId), clean(input.contactId), stage, input.temperature ?? 'neutral', input.source ?? null,
-        clean(input.sourceDetail), clean(input.primaryNeed), clean(input.secondaryNeed), input.budgetMinCents ?? null,
+        clean(input.sourceDetail), originType, clean(input.primaryNeed), clean(input.secondaryNeed), input.budgetMinCents ?? null,
         input.budgetMaxCents ?? null, input.estimatedValueCents ?? null, input.probabilityPercent ?? null,
         clean(input.nextActionAt), clean(input.nextActionText), clean(input.targetDate), clean(input.notes), now, now,
       ],
@@ -357,13 +383,14 @@ export class CrmService {
     }
     const stage = current.stage ?? 'new';
     const result = this.database.run(
-      `UPDATE prospects SET organization_id=?, contact_id=?, stage=?, temperature=?, source=?, source_detail=?,
+      `UPDATE prospects SET organization_id=?, contact_id=?, stage=?, temperature=?, source=?, source_detail=?, origin_type=?,
        primary_need=?, secondary_need=?, budget_min_cents=?, budget_max_cents=?, estimated_value_cents=?,
        probability_percent=?, next_action_at=?, next_action_text=?, target_date=?, notes=?, updated_at=?
        WHERE id=? AND archived_at IS NULL`,
       [
         clean(input.organizationId), clean(input.contactId), stage, input.temperature ?? current.temperature ?? 'neutral',
-        input.source ?? null, clean(input.sourceDetail), clean(input.primaryNeed), clean(input.secondaryNeed),
+        input.source ?? current.source ?? null, clean(input.sourceDetail), input.originType ?? current.originType ?? inferOrigin(input.source ?? current.source),
+        clean(input.primaryNeed), clean(input.secondaryNeed),
         input.budgetMinCents ?? null, input.budgetMaxCents ?? null, input.estimatedValueCents ?? null,
         input.probabilityPercent ?? null, clean(input.nextActionAt), clean(input.nextActionText), clean(input.targetDate),
         clean(input.notes), nowIso(), id,
@@ -377,15 +404,26 @@ export class CrmService {
 
   updateProspectQualification(id: string, input: Partial<ProspectInput>): ProspectSummary {
     const current=this.getProspect(id);
-    this.database.run(`UPDATE prospects SET decision_status=?,decision_maker_details=?,project_summary=?,project_context=?,budget_status=?,
+    const pick = <K extends keyof ProspectInput>(key: K): ProspectInput[K] => Object.prototype.hasOwnProperty.call(input, key) ? input[key] : current[key];
+    const decisionMakerEmail = normalizeEmail(pick('decisionMakerEmail') as string | null | undefined);
+    const decisionMakerPhone = normalizePhone(pick('decisionMakerPhone') as string | null | undefined);
+    this.database.run(`UPDATE prospects SET
+      origin_type=?,targeting_reason_code=?,targeting_reason_text=?,initial_observation=?,detected_opportunity=?,
+      first_contact_result_code=?,first_contact_result_text=?,interest_level=?,decision_status=?,decision_maker_details=?,
+      decision_maker_name=?,decision_maker_role=?,decision_maker_email=?,decision_maker_phone=?,project_summary=?,project_context=?,budget_status=?,
       timeline_status=?,timeline_note=?,existing_status=?,existing_url=?,existing_notes=?,missing_information=?,waiting_reason_code=?,
       waiting_reason_text=?,waiting_resume_at=?,lost_reason_code=?,updated_at=? WHERE id=? AND archived_at IS NULL`,[
-      input.decisionStatus??current.decisionStatus??null,clean(input.decisionMakerDetails??current.decisionMakerDetails),
-      clean(input.projectSummary??current.projectSummary),clean(input.projectContext??current.projectContext),input.budgetStatus??current.budgetStatus??null,
-      input.timelineStatus??current.timelineStatus??null,clean(input.timelineNote??current.timelineNote),input.existingStatus??current.existingStatus??null,
-      clean(input.existingUrl??current.existingUrl),clean(input.existingNotes??current.existingNotes),clean(input.missingInformation??current.missingInformation),
-      clean(input.waitingReasonCode??current.waitingReasonCode),clean(input.waitingReasonText??current.waitingReasonText),
-      clean(input.waitingResumeAt??current.waitingResumeAt),clean(input.lostReasonCode??current.lostReasonCode),nowIso(),id]);
+      pick('originType') ?? current.originType ?? inferOrigin(current.source), clean(pick('targetingReasonCode') as string|null|undefined),
+      clean(pick('targetingReasonText') as string|null|undefined), clean(pick('initialObservation') as string|null|undefined),
+      clean(pick('detectedOpportunity') as string|null|undefined), clean(pick('firstContactResultCode') as string|null|undefined),
+      clean(pick('firstContactResultText') as string|null|undefined), pick('interestLevel') ?? null,
+      pick('decisionStatus') ?? null, clean(pick('decisionMakerDetails') as string|null|undefined), clean(pick('decisionMakerName') as string|null|undefined),
+      clean(pick('decisionMakerRole') as string|null|undefined), decisionMakerEmail, decisionMakerPhone,
+      clean(pick('projectSummary') as string|null|undefined),clean(pick('projectContext') as string|null|undefined),pick('budgetStatus')??null,
+      pick('timelineStatus')??null,clean(pick('timelineNote') as string|null|undefined),pick('existingStatus')??null,
+      clean(pick('existingUrl') as string|null|undefined),clean(pick('existingNotes') as string|null|undefined),clean(pick('missingInformation') as string|null|undefined),
+      clean(pick('waitingReasonCode') as string|null|undefined),clean(pick('waitingReasonText') as string|null|undefined),
+      clean(pick('waitingResumeAt') as string|null|undefined),clean(pick('lostReasonCode') as string|null|undefined),nowIso(),id]);
     this.activity({entityType:'prospect',entityId:id,action:'qualification_updated',summary:'Qualification commerciale mise à jour',prospectId:id});
     this.indexProspect(id); return this.getProspect(id);
   }
@@ -398,17 +436,21 @@ export class CrmService {
       throw new Error(`Transition non autorisée : ${current.stage ?? 'new'} → ${stage}. Utilise l’action métier correspondante.`);
     }
     if (stage === 'lost' && !clean(lostReason)) throw new Error('Une raison est requise pour classer le prospect comme perdu.');
-    if (!['new', 'qualifying', 'lost'].includes(stage)) {
+    if (!['new', 'qualifying', 'need_identified', 'lost'].includes(stage)) {
       const count = this.database.get<{ count: number }>('SELECT COUNT(*) AS count FROM crm_needs WHERE prospect_id=?', [id])?.count ?? 0;
-      if (Number(count) === 0) throw new Error('Ajoute au moins un besoin avant de poursuivre la qualification.');
+      if (Number(count) === 0) throw new Error('Le besoin doit être identifié avant de passer au devis.');
     }
     if (current.stage === 'qualifying' && stage === 'need_identified') this.assertQualificationReady(id, current);
     const now = nowIso();
+    const prospectingStartedAt = stage === 'qualifying' && !current.prospectingStartedAt ? now : current.prospectingStartedAt ?? null;
+    const qualificationValidatedAt = current.stage === 'qualifying' && stage === 'need_identified'
+      ? (current.qualificationValidatedAt ?? now)
+      : current.qualificationValidatedAt ?? null;
     this.database.run(
-      `UPDATE prospects SET stage=?, lost_reason=?, lost_at=?, won_at=?, updated_at=? WHERE id=? AND archived_at IS NULL`,
+      `UPDATE prospects SET stage=?, lost_reason=?, lost_at=?, won_at=?, prospecting_started_at=?, qualification_validated_at=?, updated_at=? WHERE id=? AND archived_at IS NULL`,
       [
         stage, stage === 'lost' ? clean(lostReason) : null, stage === 'lost' ? now : null,
-        stage === 'won' ? (current.wonAt ?? now) : null, now, id,
+        stage === 'won' ? (current.wonAt ?? now) : null, prospectingStartedAt, qualificationValidatedAt, now, id,
       ],
     );
     this.activity({
@@ -422,20 +464,33 @@ export class CrmService {
 
   private assertQualificationReady(id: string, prospect: ProspectSummary): void {
     const missing: string[] = [];
-    const needCount = Number(this.database.get<{ count: number }>('SELECT COUNT(*) AS count FROM crm_needs WHERE prospect_id=?', [id])?.count ?? 0);
-    if (needCount === 0) missing.push('un besoin / une prestation');
-    if (!clean(prospect.projectSummary)) missing.push('le résumé du projet');
-    if (!prospect.decisionStatus) missing.push('le décideur');
-    if (prospect.decisionStatus === 'no' && !clean(prospect.decisionMakerDetails)) missing.push('qui prend la décision');
-    const budgetReady = prospect.budgetStatus === 'not_disclosed'
-      || (prospect.budgetStatus === 'known' && prospect.budgetMinCents != null)
-      || (prospect.budgetStatus === 'range' && prospect.budgetMinCents != null && prospect.budgetMaxCents != null);
-    if (!budgetReady) missing.push('le budget');
-    const timelineReady = prospect.timelineStatus === 'not_disclosed'
-      || (prospect.timelineStatus === 'date' && Boolean(clean(prospect.targetDate)))
-      || (prospect.timelineStatus === 'note' && Boolean(clean(prospect.timelineNote)));
-    if (!timelineReady) missing.push('le calendrier');
-    if (missing.length) throw new Error(`Qualification incomplète : renseigne ${missing.join(', ')}.`);
+    const contactCount = Number(this.database.get<{ count: number }>(
+      `SELECT COUNT(*) AS count FROM contact_methods
+       WHERE archived_at IS NULL
+         AND ((organization_id=? AND ? IS NOT NULL) OR (contact_id=? AND ? IS NOT NULL))`,
+      [prospect.organizationId ?? null, prospect.organizationId ?? null, prospect.contactId ?? null, prospect.contactId ?? null],
+    )?.count ?? 0);
+    if (contactCount === 0) missing.push('un moyen de contact valide');
+
+    const origin = prospect.originType ?? inferOrigin(prospect.source);
+    if (!origin) missing.push('l’origine du contact');
+
+    const decisionReady = Boolean(prospect.decisionStatus)
+      && (prospect.decisionStatus !== 'no' || Boolean(clean(prospect.decisionMakerName) || clean(prospect.decisionMakerDetails)));
+    if (!decisionReady) missing.push('la situation du décisionnaire');
+
+    if (origin === 'outbound') {
+      if (!clean(prospect.targetingReasonCode) && !clean(prospect.targetingReasonText)) missing.push('le motif de ciblage');
+      if (!clean(prospect.initialObservation) && !clean(prospect.detectedOpportunity)) missing.push('le constat ou l’opportunité détectée');
+      if (!clean(prospect.firstContactResultCode) && !clean(prospect.firstContactResultText)) missing.push('le résultat du premier contact');
+      if (!['interested', 'very_interested'].includes(prospect.interestLevel ?? '')) missing.push('un intérêt confirmé du prospect');
+    } else if (origin === 'inbound') {
+      if (!clean(prospect.projectSummary)) missing.push('la demande initiale du prospect');
+    } else if (!clean(prospect.projectSummary) && !clean(prospect.projectContext)) {
+      missing.push('le motif de l’échange ou le contexte commercial');
+    }
+
+    if (missing.length) throw new Error(`Qualification incomplète : il manque ${missing.join(', ')}.`);
   }
 
   setProspectNextAction(id: string, at: string | null, text: string | null): ProspectSummary {
@@ -492,8 +547,14 @@ export class CrmService {
     return {
       id: row.id, organizationId: row.organization_id, contactId: row.contact_id,
       clientAccountId: row.client_account_id, stage: row.stage, temperature: row.temperature,
-      source: row.source, sourceDetail: row.source_detail, primaryNeed: row.live_need as string | null,
-      secondaryNeed: row.secondary_need, budgetMinCents: row.budget_min_cents,
+      source: row.source, sourceDetail: row.source_detail, originType: row.origin_type ?? inferOrigin(row.source),
+      prospectingStartedAt: row.prospecting_started_at, qualificationValidatedAt: row.qualification_validated_at,
+      targetingReasonCode: row.targeting_reason_code, targetingReasonText: row.targeting_reason_text,
+      initialObservation: row.initial_observation, detectedOpportunity: row.detected_opportunity,
+      firstContactResultCode: row.first_contact_result_code, firstContactResultText: row.first_contact_result_text,
+      interestLevel: row.interest_level, decisionMakerName: row.decision_maker_name, decisionMakerRole: row.decision_maker_role,
+      decisionMakerEmail: row.decision_maker_email, decisionMakerPhone: row.decision_maker_phone,
+      primaryNeed: row.live_need as string | null, secondaryNeed: row.secondary_need, budgetMinCents: row.budget_min_cents,
       budgetMaxCents: row.budget_max_cents, estimatedValueCents: row.estimated_value_cents,
       probabilityPercent: row.probability_percent, nextActionAt: row.next_action_at,
       nextActionText: row.next_action_text, targetDate: row.target_date, lostReason: row.lost_reason,
@@ -803,7 +864,11 @@ export class CrmService {
     const prospect = this.getProspect(id);
     this.upsertSearchDocument(
       'prospect', id, prospect.displayName, prospect.primaryNeed ?? prospect.secondaryLabel ?? null,
-      prospect.stage ?? null, [prospect.displayName, prospect.secondaryLabel, prospect.primaryNeed, prospect.secondaryNeed, prospect.notes],
+      prospect.stage ?? null, [
+        prospect.displayName, prospect.secondaryLabel, prospect.primaryNeed, prospect.secondaryNeed, prospect.notes,
+        prospect.projectSummary, prospect.projectContext, prospect.targetingReasonText, prospect.initialObservation,
+        prospect.detectedOpportunity, prospect.decisionMakerName,
+      ],
     );
   }
 
