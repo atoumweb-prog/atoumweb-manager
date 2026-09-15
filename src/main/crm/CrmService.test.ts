@@ -51,6 +51,37 @@ describe('CrmService', () => {
     expect(lost.lostReason).toBe('Budget insuffisant');
   });
 
+  it('protège le parcours Prospect et exige une qualification réellement complète', () => {
+    const organization = crm.createOrganization({ name: 'Qualification Test' });
+    const prospect = crm.createProspect({ organizationId: organization.id });
+
+    expect(() => crm.changeProspectStage(prospect.id, 'quote_sent')).toThrow(/transition non autorisée/i);
+    expect(() => crm.updateProspect(prospect.id, { ...prospect, stage: 'quote_to_prepare' })).toThrow(/changement d’étape/i);
+
+    const qualifying = crm.changeProspectStage(prospect.id, 'qualifying');
+    database.run(
+      `INSERT INTO crm_needs (id,prospect_id,client_account_id,catalog_item_id,other_text,created_at)
+       VALUES ('need-qualification',?,NULL,NULL,'Site vitrine',?)`,
+      [prospect.id, new Date().toISOString()],
+    );
+    crm.updateProspect(prospect.id, {
+      ...qualifying,
+      budgetMinCents: 150000,
+      budgetMaxCents: 150000,
+      targetDate: '2026-12-15',
+    });
+    crm.updateProspectQualification(prospect.id, {
+      projectSummary: 'Créer un site vitrine pour présenter l’activité',
+      decisionStatus: 'no',
+      budgetStatus: 'known',
+      timelineStatus: 'date',
+    });
+
+    expect(() => crm.changeProspectStage(prospect.id, 'need_identified')).toThrow(/décision/i);
+    crm.updateProspectQualification(prospect.id, { decisionMakerDetails: 'Mme Martin, gérante' });
+    expect(crm.changeProspectStage(prospect.id, 'need_identified').stage).toBe('need_identified');
+  });
+
   it('convertit un prospect en client de manière idempotente', () => {
     const organization = crm.createOrganization({ name: 'Atelier Test' });
     const prospect = crm.createProspect({ organizationId: organization.id, primaryNeed: 'Site vitrine' });
@@ -84,6 +115,31 @@ describe('CrmService', () => {
 
     expect(() => crm.createClient({ organizationId: organization.id })).toThrow();
     expect(crm.listClients()).toHaveLength(1);
+  });
+
+  it('utilise les coordonnées multiples comme source principale du résumé et de la recherche client', () => {
+    const organization = crm.createOrganization({ name: 'Coordonnées Test', email: 'ancien@example.test' });
+    const client = crm.createClient({ organizationId: organization.id });
+
+    crm.saveContactMethod({
+      organizationId: organization.id,
+      type: 'email',
+      value: 'direction@coordonnees.test',
+      label: 'Direction',
+      isPrimary: true,
+    });
+    crm.saveContactMethod({
+      organizationId: organization.id,
+      type: 'phone',
+      value: '0380000000',
+      label: 'Accueil',
+      isPrimary: true,
+    });
+
+    const refreshed = crm.listClients().find((item) => item.id === client.id);
+    expect(refreshed?.email).toBe('direction@coordonnees.test');
+    expect(refreshed?.phone).toBe('0380000000');
+    expect(crm.globalSearch('direction@coordonnees.test').some((result) => result.entityId === client.id)).toBe(true);
   });
 
   it('archive puis réactive un client sans perdre son historique', () => {
