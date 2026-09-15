@@ -112,15 +112,184 @@
 .card-start-button { width: 100%; }
 .next-action-line { border-color: color-mix(in srgb, var(--accent) 28%, var(--border)); }
 
-.prequote-gate-placeholder {
+/* Le nouveau contrôle est désormais rendu dans Projet & solution AtoumWeb. */
+.prequote-gate-placeholder { display: none; }
+
+/* Entreprise, interlocuteur et décisionnaire. */
+.identity-decision-maker,
+.qualification-decision-summary {
   display: grid;
   gap: 10px;
-  margin-top: 12px;
-  padding: 16px;
-  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  padding: 14px;
+  border: 1px solid var(--border);
   border-radius: 11px;
+  background: color-mix(in srgb, var(--surface-soft) 88%, transparent);
 }
-.prequote-gate-placeholder .primary-button:disabled { opacity: .62; cursor: not-allowed; }
+.identity-decision-maker legend {
+  padding: 0 6px;
+  color: var(--text);
+  font-weight: 800;
+}
+.decision-maker-grid,
+.qualification-two-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.decision-summary { gap: 4px; }
+.decision-summary small,
+.qualification-decision-summary small { color: var(--muted); font-size: var(--ui-font-small); }
+.field-error { color: var(--danger, #b42318); font-weight: 700; line-height: 1.35; }
+
+/* Qualification commerciale. */
+.qualification-readiness {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.qualification-readiness span {
+  padding: 7px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: var(--ui-font-small);
+  font-weight: 750;
+}
+.qualification-readiness .ready {
+  background: color-mix(in srgb, #2e9f62 12%, var(--surface));
+  border-color: color-mix(in srgb, #2e9f62 42%, var(--border));
+}
+.qualification-readiness .missing {
+  background: color-mix(in srgb, #d49b32 11%, var(--surface));
+  border-color: color-mix(in srgb, #d49b32 38%, var(--border));
+}
+.qualification-recap {
+  display: grid;
+  gap: 7px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, #d49b32 42%, var(--border));
+  border-radius: 11px;
+  background: color-mix(in srgb, #d49b32 9%, var(--surface));
+}
+.qualification-recap.ready {
+  border-color: color-mix(in srgb, #2e9f62 42%, var(--border));
+  background: color-mix(in srgb, #2e9f62 9%, var(--surface));
+}
+.qualification-recap div { display: grid; gap: 4px; }
+.qualification-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 9px; }
+
+/* Projet & solution AtoumWeb. */
+.needs-panel-v2 { display: grid; gap: 16px; }
+.need-solution-card {
+  align-items: flex-start;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 13px;
+  background: color-mix(in srgb, var(--surface-soft) 86%, transparent);
+}
+.need-price { display: block; margin-top: 4px; color: var(--accent-strong); font-weight: 800; }
+.offer-inclusions { display: grid; gap: 3px; margin-top: 9px; }
+.offer-inclusions > span { color: var(--muted); font-size: var(--ui-font-small); font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.offer-inclusions small { color: var(--text); line-height: 1.45; }
+.need-add-block,
+.need-identification-fields {
+  display: grid;
+  gap: 12px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-soft) 82%, transparent);
+}
+.need-selector-title { display: grid; gap: 3px; }
+.need-selector-title small { color: var(--muted); }
+.selected-offer-preview {
+  display: grid;
+  gap: 8px;
+  padding: 13px;
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+.selected-offer-preview > div:first-child { display: grid; gap: 3px; }
+.selected-offer-preview p { margin: 0; color: var(--muted); }
+.need-scope-assessment {
+  display: grid;
+  gap: 5px;
+  padding: 13px;
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+}
+.need-scope-assessment small { color: var(--muted); }
+
+/* Contrôle avant devis. */
+.prequote-review {
+  display: grid;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.prequote-entry {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+.prequote-entry > div { display: grid; gap: 4px; }
+.prequote-entry p { margin: 0; color: var(--muted); }
+.prequote-review-body {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+}
+.prequote-result { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.prequote-state { padding: 7px 10px; border-radius: 999px; font-weight: 850; }
+.prequote-state.ready { background: color-mix(in srgb, #2e9f62 15%, var(--surface)); color: color-mix(in srgb, #2e9f62 75%, var(--text)); }
+.prequote-state.blocked { background: color-mix(in srgb, #d49b32 15%, var(--surface)); color: color-mix(in srgb, #b47c19 75%, var(--text)); }
+.prequote-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+.prequote-summary-grid > div {
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-soft);
+}
+.prequote-summary-grid span { color: var(--muted); font-size: var(--ui-font-small); }
+.prequote-wide { grid-column: 1 / -1; }
+.prequote-solutions { display: grid; gap: 8px; }
+.prequote-solution-row {
+  display: grid;
+  grid-template-columns: minmax(180px, .75fr) 1.5fr;
+  gap: 12px;
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+.prequote-solution-row > div:first-child { display: grid; gap: 4px; align-content: start; }
+.prequote-solution-row small { color: var(--muted); }
+.prequote-inclusions { display: grid; gap: 3px; }
+.prequote-blockers,
+.prequote-warning {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border-radius: 10px;
+}
+.prequote-blockers { border: 1px solid color-mix(in srgb, #d49b32 42%, var(--border)); background: color-mix(in srgb, #d49b32 9%, var(--surface)); }
+.prequote-warning { border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border)); background: color-mix(in srgb, var(--accent) 7%, var(--surface)); }
+.prequote-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 9px; }
 
 @media (max-width: 760px) {
   .prospect-desk-overlay { padding: 0; }
@@ -129,4 +298,9 @@
   .prospect-temperature-control { justify-content: stretch; }
   .prospect-temperature-control label { width: 100%; }
   .quick-date-scheduler { grid-template-columns: 1fr; }
+  .decision-maker-grid,
+  .qualification-two-fields,
+  .prequote-summary-grid,
+  .prequote-solution-row { grid-template-columns: 1fr; }
+  .prequote-entry { align-items: stretch; flex-direction: column; }
 }
