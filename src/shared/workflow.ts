@@ -3,11 +3,12 @@ export interface Need { id: string; catalogItemId: string | null; label: string;
 export interface NeedInput { catalogItemId?: string | null; otherText?: string | null; }
 export interface DashboardEntry { group: string; target: SearchResult; }
 export interface DemoSummary { counts: Array<{ table: string; count: number }>; total: number; }
+export interface WorkflowIdentity { organization: Organization | null; contact: Contact | null; decisionMaker: Contact | null; }
 export interface WorkflowApi {
   needs(owner: 'prospect' | 'client', id: string): Promise<Need[]>;
   saveNeed(owner: 'prospect' | 'client', id: string, input: NeedInput, needId?: string): Promise<Need[]>;
   removeNeed(owner: 'prospect' | 'client', id: string, needId: string): Promise<Need[]>;
-  identity(owner: 'prospect' | 'client', id: string): Promise<{ organization: Organization | null; contact: Contact | null }>;
+  identity(owner: 'prospect' | 'client', id: string): Promise<WorkflowIdentity>;
   archiveProspect(id: string, archived: boolean): Promise<void>;
   dashboard(): Promise<DashboardEntry[]>;
   beginDemoCapture(label: string): Promise<string>;
