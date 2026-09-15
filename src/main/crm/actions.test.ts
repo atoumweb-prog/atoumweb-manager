@@ -34,7 +34,7 @@ describe('ActionService', () => {
     expect(open.map((action) => action.title)).toContain('Vérifier le nom de domaine');
   });
 
-  it('sépare les relances des actions et déplace le prospect dans À relancer', () => {
+  it('sépare les relances des actions et déplace le prospect dans À relancer après envoi du devis', () => {
     const contact = crm.createContact({ firstName: 'Relance', lastName: 'Test' });
     const prospect = crm.createProspect({ contactId: contact.id, stage: 'quote_sent' });
 
@@ -49,6 +49,24 @@ describe('ActionService', () => {
     expect(crm.listProspects({ stage: 'follow_up' }).some((item) => item.id === prospect.id)).toBe(true);
     expect(actions.list({ ownerType: 'prospect', ownerId: prospect.id, type: 'follow_up' })).toHaveLength(1);
     expect(actions.list({ ownerType: 'prospect', ownerId: prospect.id, type: 'action' })).toHaveLength(0);
+  });
+
+  it('ne court-circuite pas la qualification lorsqu’une relance est planifiée trop tôt', () => {
+    const contact = crm.createContact({ firstName: 'Premier', lastName: 'Contact' });
+    const prospect = crm.createProspect({ contactId: contact.id, stage: 'new' });
+
+    actions.create({
+      ownerType: 'prospect',
+      ownerId: prospect.id,
+      type: 'follow_up',
+      title: 'Rappeler après le premier contact',
+      dueAt: '2026-09-20T09:00:00.000Z',
+    });
+
+    const refreshed = crm.listProspects().find((item) => item.id === prospect.id);
+    expect(refreshed?.stage).toBe('new');
+    expect(refreshed?.nextActionText).toBe('Rappeler après le premier contact');
+    expect(actions.list({ ownerType: 'prospect', ownerId: prospect.id, type: 'follow_up' })).toHaveLength(1);
   });
 
   it('utilise la première échéance ouverte comme prochaine action du prospect', () => {
