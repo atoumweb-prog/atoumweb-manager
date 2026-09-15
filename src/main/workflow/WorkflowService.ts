@@ -62,6 +62,14 @@ export class WorkflowService {
       decisionMaker: null,
     };
   }
+  setDecisionMaker(prospectId: string, contactId: string | null): WorkflowIdentity {
+    this.owner('prospect',prospectId);
+    if (contactId) this.crm.getContact(contactId);
+    this.db.run('UPDATE prospects SET decision_maker_contact_id=?,updated_at=? WHERE id=?',[contactId,new Date().toISOString(),prospectId]);
+    this.log('prospect',prospectId,contactId ? 'Décisionnaire rattaché au prospect' : 'Décisionnaire retiré du prospect');
+    this.crm.rebuildSearchIndex();
+    return this.identity('prospect',prospectId);
+  }
   archiveProspect(id: string, archived: boolean): void {
     this.owner('prospect',id);
     this.db.run('UPDATE prospects SET archived_at=?,updated_at=? WHERE id=?',[archived ? new Date().toISOString() : null,new Date().toISOString(),id]);
