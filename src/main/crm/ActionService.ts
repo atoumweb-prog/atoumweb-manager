@@ -151,7 +151,7 @@ export class ActionService {
       `UPDATE crm_actions SET status='done', completed_at=?, completion_channel=?, completion_outcome=?, completion_notes=?, updated_at=? WHERE id=?`,
       [now, clean(input.channel), clean(input.outcome), clean(input.notes), now, id],
     );
-    const nextInput = input.nextAction ?? this.recurringNext(action);
+    const nextInput = input.nextAction === null ? null : (input.nextAction ?? this.recurringNext(action));
     if (nextInput) this.create(nextInput);
     this.writeActivity(action.ownerType, action.ownerId, 'action_completed', `Action terminée : ${action.title}`);
     this.syncLegacyNextAction(action.ownerType, action.ownerId);
@@ -251,16 +251,7 @@ export class ActionService {
         id, entity_type, entity_id, action, summary, metadata_json,
         prospect_id, client_account_id, organization_id, contact_id, created_at
       ) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, NULL, NULL, ?)`,
-      [
-        id,
-        ownerType,
-        ownerId,
-        action,
-        summary,
-        ownerType === 'prospect' ? ownerId : null,
-        ownerType === 'client' ? ownerId : null,
-        now,
-      ],
+      [id, ownerType, ownerId, action, summary, ownerType === 'prospect' ? ownerId : null, ownerType === 'client' ? ownerId : null, now],
     );
   }
 
@@ -275,15 +266,9 @@ export class ActionService {
     );
 
     if (ownerType === 'prospect') {
-      this.database.run(
-        'UPDATE prospects SET next_action_at=?, next_action_text=?, updated_at=? WHERE id=?',
-        [next?.due_at ?? null, next?.title ?? null, nowIso(), ownerId],
-      );
+      this.database.run('UPDATE prospects SET next_action_at=?, next_action_text=?, updated_at=? WHERE id=?', [next?.due_at ?? null, next?.title ?? null, nowIso(), ownerId]);
     } else {
-      this.database.run(
-        'UPDATE client_accounts SET next_action_at=?, next_action_text=?, updated_at=? WHERE id=?',
-        [next?.due_at ?? null, next?.title ?? null, nowIso(), ownerId],
-      );
+      this.database.run('UPDATE client_accounts SET next_action_at=?, next_action_text=?, updated_at=? WHERE id=?', [next?.due_at ?? null, next?.title ?? null, nowIso(), ownerId]);
     }
   }
 }
