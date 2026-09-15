@@ -22,6 +22,7 @@ import './time-recovery.css';
 import './operations.css';
 import './workflow.css';
 import './display-density.css';
+import './prospect-workflow-v2.css';
 
 const rootElement = document.getElementById('root');
 
