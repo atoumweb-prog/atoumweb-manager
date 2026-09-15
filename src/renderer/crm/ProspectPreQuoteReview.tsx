@@ -88,8 +88,14 @@ export function ProspectPreQuoteReview({ prospect, needs, catalog, onChanged }: 
       for (const { item } of solutionRows) {
         const version = item?.currentVersion;
         if (!item || !version) continue;
-        if (version.priceCents == null && version.priceMode !== 'free') continue;
-        lines.push({ catalogVersionId: version.id, input: { label: item.name } });
+        const needsManualPrice = version.priceCents == null && version.priceMode !== 'free';
+        lines.push({
+          catalogVersionId: version.id,
+          input: {
+            label: item.name,
+            ...(needsManualPrice ? { proposedUnitPriceCents: 0 } : {}),
+          },
+        });
       }
       const customNeeds = solutionRows.filter(({ item, need }) => !item && need.otherText?.trim());
       for (const { need } of customNeeds) {
@@ -138,7 +144,7 @@ export function ProspectPreQuoteReview({ prospect, needs, catalog, onChanged }: 
       <div className="prequote-solutions"><span className="eyebrow">Solution retenue</span>{solutionRows.map(({ need, item }) => <div key={need.id} className="prequote-solution-row"><div><strong>{need.label}</strong><small>{item?.currentVersion?.priceCents != null ? money(item.currentVersion.priceCents) : item?.currentVersion?.priceMode === 'free' ? 'Gratuit' : 'Prix à saisir dans le devis'}</small></div>{item?.currentVersion?.inclusions && item.currentVersion.inclusions.length > 0 && <div className="prequote-inclusions">{item.currentVersion.inclusions.map((entry) => <small key={entry}>✓ {entry}</small>)}</div>}</div>)}</div>
 
       {blockers.length > 0 && <div className="prequote-blockers"><strong>À compléter avant de passer au devis</strong>{blockers.map((entry) => <span key={entry}>• {entry}</span>)}</div>}
-      {unpriced.length > 0 && <div className="prequote-warning"><strong>Chiffrage à compléter dans l’éditeur</strong><span>{unpriced.map(({ need }) => need.label).join(', ')} : le catalogue ne contient pas encore de prix fixe. Le brouillon pourra être ouvert, puis le montant sera saisi dans le devis.</span></div>}
+      {unpriced.length > 0 && <div className="prequote-warning"><strong>Chiffrage à compléter dans l’éditeur</strong><span>{unpriced.map(({ need }) => need.label).join(', ')} : ces lignes seront bien reprises dans le brouillon avec leur référence catalogue, puis leur montant devra être saisi dans le devis.</span></div>}
       {error && <p className="form-error" role="alert">{error}</p>}
       <div className="prequote-actions"><button type="button" className="secondary-button" onClick={() => setOpen(false)}>Retour au besoin</button><button type="button" className="primary-button" disabled={!ready || busy} onClick={() => void createDraftAndOpen()}>{busy ? 'Création du brouillon…' : 'Passer à l’édition du devis'}</button></div>
       <small className="muted">Le devis créé reste un brouillon modifiable. La gestion définitive du numéro officiel et de l’édition sera reprise avec l’éditeur de devis lors de la passe dédiée.</small>
