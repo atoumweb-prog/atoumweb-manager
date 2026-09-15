@@ -9,7 +9,7 @@ import type {
   QuoteInput,
   QuoteLineInput,
 } from '../shared/commercial';
-import type { AtoumWebApi, ThemeName } from '../shared/contracts';
+import type { AtoumWebApi, DisplayDensity, ThemeName } from '../shared/contracts';
 import type {
   ClientContactRole,
   ClientFilters,
@@ -72,7 +72,10 @@ import type {
 
 const api: AtoumWebApi = {
   app: { getBootstrap: () => ipcRenderer.invoke('app:get-bootstrap') },
-  settings: { setTheme: (theme: ThemeName) => ipcRenderer.invoke('settings:set-theme', theme) },
+  settings: {
+    setTheme: (theme: ThemeName) => ipcRenderer.invoke('settings:set-theme', theme),
+    setDisplayDensity: (density: DisplayDensity) => ipcRenderer.invoke('settings:set-display-density', density),
+  },
   workspace: { choose: () => ipcRenderer.invoke('workspace:choose') },
   backups: {
     createManual: () => ipcRenderer.invoke('backups:create-manual'),
