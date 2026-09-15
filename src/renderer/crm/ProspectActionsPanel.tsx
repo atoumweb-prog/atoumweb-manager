@@ -243,8 +243,6 @@ export function ProspectActionsPanel({ prospect, actions, onChanged }: {
     if (programNext && (!nextTitle.trim() || !nextDate)) { setError('Renseigne l’action suivante et sa date, ou décoche « Programmer une suite ».'); return; }
     setBusy(true); setError('');
     try {
-      const channelLabel = CHANNELS.find(([key]) => key === channel)?.[1] ?? channel;
-      const outcomeLabel = OUTCOMES.find(([key]) => key === outcome)?.[1] ?? outcome;
       const explicitNext = programNext ? {
         ownerType: 'prospect' as const, ownerId: prospect.id, type: 'follow_up' as const, title: nextTitle.trim(),
         dueAt: toDueAt(nextDate, nextTime), notes: nextNotes.trim() || null,
@@ -252,7 +250,12 @@ export function ProspectActionsPanel({ prospect, actions, onChanged }: {
         reasonText: nextReasonCode === 'other' ? nextReasonText.trim() || null : null,
         relatedType: action.relatedType, relatedId: action.relatedId, recurrence: 'none' as const,
       } : undefined;
-      await window.atoumweb.crm.actions.complete(action.id, { channel: channelLabel, outcome: outcomeLabel, notes: completionNotes.trim() || null, nextAction: explicitNext });
+      await window.atoumweb.crm.actions.complete(action.id, {
+        channel,
+        outcome,
+        notes: completionNotes.trim() || null,
+        nextAction: outcome === 'categorical_refusal' ? null : explicitNext,
+      });
       if (outcome === 'categorical_refusal') {
         await window.atoumweb.crm.prospects.updateQualification(prospect.id, { lostReasonCode: 'categorical_refusal' });
         await window.atoumweb.crm.prospects.changeStage(prospect.id, 'lost', 'Refus catégorique');
