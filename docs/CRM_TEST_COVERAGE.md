@@ -128,4 +128,8 @@ Par conséquent :
 
 La dernière validation automatisée connue du socle précédent était verte avant les corrections de cette branche, mais elle ne remplace pas une validation du delta courant. Le workflow est maintenant configuré pour cette branche ; dès qu’un runner Windows est de nouveau disponible, un nouveau push ou un lancement manuel exécutera directement `npm install`, `npm run typecheck` et `npm test`.
 
+### Nouvelle tentative
+
+Le runner Windows étant annoncé de nouveau disponible le 15/09/2026, cette mise à jour déclenche une nouvelle exécution complète de la CI sur la branche courante.
+
 Une branche n’est pas déclarée prête pour reprise de recette tant que ces deux commandes ne sont pas vertes sur le commit courant.
