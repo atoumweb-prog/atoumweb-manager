@@ -10,7 +10,23 @@ function cleanError(error: unknown): string {
     .trim();
 }
 
-export function ContactMethodsPanel({ organizationId, contactId }: { organizationId?: string | null; contactId?: string | null }) {
+interface ContactMethodsPanelProps {
+  organizationId?: string | null;
+  contactId?: string | null;
+  summaryLabel?: string;
+  organizationLabel?: string;
+  contactLabel?: string;
+  allowOrganization?: boolean;
+}
+
+export function ContactMethodsPanel({
+  organizationId,
+  contactId,
+  summaryLabel = 'Coordonnées',
+  organizationLabel = 'Entreprise / accueil',
+  contactLabel = 'Interlocuteur principal',
+  allowOrganization = true,
+}: ContactMethodsPanelProps) {
   const [organizationItems, setOrganizationItems] = useState<ContactMethod[]>([]);
   const [contactItems, setContactItems] = useState<ContactMethod[]>([]);
   const [owner, setOwner] = useState<'organization' | 'contact'>(contactId ? 'contact' : 'organization');
@@ -22,7 +38,7 @@ export function ContactMethodsPanel({ organizationId, contactId }: { organizatio
   async function load() {
     try {
       const [org, contact] = await Promise.all([
-        organizationId ? window.atoumweb.crm.contactMethods.list('organization', organizationId) : Promise.resolve([]),
+        allowOrganization && organizationId ? window.atoumweb.crm.contactMethods.list('organization', organizationId) : Promise.resolve([]),
         contactId ? window.atoumweb.crm.contactMethods.list('contact', contactId) : Promise.resolve([]),
       ]);
       setOrganizationItems(org);
@@ -30,7 +46,11 @@ export function ContactMethodsPanel({ organizationId, contactId }: { organizatio
     } catch (e) { setError(cleanError(e)); }
   }
 
-  useEffect(() => { if (!contactId && organizationId) setOwner('organization'); void load(); }, [organizationId, contactId]);
+  useEffect(() => {
+    if (contactId) setOwner('contact');
+    else if (allowOrganization && organizationId) setOwner('organization');
+    void load();
+  }, [organizationId, contactId, allowOrganization]);
 
   const items = useMemo(() => [...organizationItems, ...contactItems], [organizationItems, contactItems]);
   const emailCount = items.filter((item) => item.type === 'email').length;
@@ -38,13 +58,14 @@ export function ContactMethodsPanel({ organizationId, contactId }: { organizatio
   const validation = type === 'email' ? validateEmail(value) : validatePhone(value);
 
   async function add() {
-    const ownerId = owner === 'contact' ? contactId : organizationId;
+    const effectiveOwner = contactId && (!allowOrganization || !organizationId) ? 'contact' : owner;
+    const ownerId = effectiveOwner === 'contact' ? contactId : organizationId;
     if (!ownerId || !value.trim() || !validation.valid) return;
     setError('');
     try {
-      const siblings = owner === 'contact' ? contactItems : organizationItems;
+      const siblings = effectiveOwner === 'contact' ? contactItems : organizationItems;
       await window.atoumweb.crm.contactMethods.save({
-        [owner === 'contact' ? 'contactId' : 'organizationId']: ownerId,
+        [effectiveOwner === 'contact' ? 'contactId' : 'organizationId']: ownerId,
         type,
         value: value.trim(),
         label: label.trim() || null,
@@ -69,14 +90,15 @@ export function ContactMethodsPanel({ organizationId, contactId }: { organizatio
     return <div className="contact-method-group"><strong>{title}</strong>{sorted.map((item) => <div className="contact-method-row" key={item.id}><span><b>{item.type === 'email' ? 'Email' : 'Téléphone'}</b> · {item.type === 'phone' ? formatPhone(item.value) : item.value}{item.label ? ` · ${item.label}` : ''}{item.isPrimary ? ' · Principal' : ''}</span><button className="secondary-button compact-button" type="button" onClick={() => void archive(item.id)}>Archiver</button></div>)}</div>;
   }
 
-  if (!organizationId && !contactId) return null;
+  if ((!allowOrganization || !organizationId) && !contactId) return null;
+  const canChooseOwner = Boolean(allowOrganization && organizationId && contactId);
   return <details className="contact-methods-panel" open={false}>
-    <summary><span><strong>Coordonnées</strong><small>{emailCount} email{emailCount > 1 ? 's' : ''} · {phoneCount} téléphone{phoneCount > 1 ? 's' : ''}</small></span><span className="details-hint">Afficher / modifier</span></summary>
+    <summary><span><strong>{summaryLabel}</strong><small>{emailCount} email{emailCount > 1 ? 's' : ''} · {phoneCount} téléphone{phoneCount > 1 ? 's' : ''}</small></span><span className="details-hint">Afficher / modifier</span></summary>
     <div className="contact-methods-content">
-      {group('Entreprise / accueil', organizationItems)}
-      {group('Interlocuteur principal', contactItems)}
+      {allowOrganization && group(organizationLabel, organizationItems)}
+      {group(contactLabel, contactItems)}
       <div className="contact-method-add">
-        {organizationId && contactId && <label>Rattacher à<select value={owner} onChange={(e) => setOwner(e.target.value as 'organization' | 'contact')}><option value="contact">Interlocuteur principal</option><option value="organization">Entreprise / accueil</option></select></label>}
+        {canChooseOwner && <label>Rattacher à<select value={owner} onChange={(e) => setOwner(e.target.value as 'organization' | 'contact')}><option value="contact">{contactLabel}</option><option value="organization">{organizationLabel}</option></select></label>}
         <label>Type<select value={type} onChange={(e) => { setType(e.target.value as ContactMethodType); setValue(''); setError(''); }}><option value="email">Email</option><option value="phone">Téléphone</option></select></label>
         <label>Coordonnée<input inputMode={type === 'phone' ? 'tel' : 'email'} value={value} onChange={(e) => setValue(e.target.value)} placeholder={type === 'email' ? 'nom@exemple.fr' : '06 12 34 56 78 ou +33…'} />{value.trim() && !validation.valid && <small className="field-error">{validation.message}</small>}</label>
         <label>Libellé<input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Portable, bureau, accueil…" /></label>
