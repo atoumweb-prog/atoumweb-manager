@@ -47,8 +47,8 @@ export interface ProspectInput {
   firstContactResultCode?: string | null; firstContactResultText?: string | null; interestLevel?: ProspectInterestLevel | null;
   primaryNeed?: string | null; secondaryNeed?: string | null; budgetMinCents?: number | null; budgetMaxCents?: number | null; estimatedValueCents?: number | null;
   probabilityPercent?: number | null; nextActionAt?: string | null; nextActionText?: string | null; targetDate?: string | null; notes?: string | null;
-  decisionStatus?: 'yes' | 'no' | 'unknown' | null; decisionMakerDetails?: string | null; decisionMakerName?: string | null; decisionMakerRole?: string | null;
-  decisionMakerEmail?: string | null; decisionMakerPhone?: string | null; projectSummary?: string | null; projectContext?: string | null;
+  decisionStatus?: 'yes' | 'no' | 'unknown' | null; decisionMakerDetails?: string | null; decisionMakerContactId?: string | null;
+  projectSummary?: string | null; projectContext?: string | null;
   budgetStatus?: 'known' | 'range' | 'not_disclosed' | null; timelineStatus?: 'date' | 'note' | 'not_disclosed' | null; timelineNote?: string | null;
   existingStatus?: 'yes' | 'no' | 'unknown' | null; existingUrl?: string | null; existingNotes?: string | null; missingInformation?: string | null;
   waitingReasonCode?: string | null; waitingReasonText?: string | null; waitingResumeAt?: string | null; lostReasonCode?: string | null;
