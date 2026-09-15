@@ -51,19 +51,15 @@ describe('CrmService', () => {
     expect(lost.lostReason).toBe('Budget insuffisant');
   });
 
-  it('protège le parcours Prospect et exige une qualification réellement complète', () => {
+  it('protège le parcours Prospect et exige les prérequis commerciaux de qualification', () => {
     const organization = crm.createOrganization({ name: 'Qualification Test' });
-    const prospect = crm.createProspect({ organizationId: organization.id });
+    const prospect = crm.createProspect({ organizationId: organization.id, source: 'other' });
+    crm.saveContactMethod({ organizationId: organization.id, type: 'email', value: 'contact@qualification.test', isPrimary: true });
 
     expect(() => crm.changeProspectStage(prospect.id, 'quote_sent')).toThrow(/transition non autorisée/i);
     expect(() => crm.updateProspect(prospect.id, { ...prospect, stage: 'quote_to_prepare' })).toThrow(/changement d’étape/i);
 
     const qualifying = crm.changeProspectStage(prospect.id, 'qualifying');
-    database.run(
-      `INSERT INTO crm_needs (id,prospect_id,client_account_id,catalog_item_id,other_text,created_at)
-       VALUES ('need-qualification',?,NULL,NULL,'Site vitrine',?)`,
-      [prospect.id, new Date().toISOString()],
-    );
     crm.updateProspect(prospect.id, {
       ...qualifying,
       budgetMinCents: 150000,
