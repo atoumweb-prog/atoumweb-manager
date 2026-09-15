@@ -71,6 +71,8 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
   }, [prospect.id]);
 
   const readiness = useMemo<Array<{ key: ReadinessKey; label: string; ok: boolean }>>(() => {
+    const decisionOk = Boolean(draft.decisionStatus)
+      && (draft.decisionStatus !== 'no' || Boolean(draft.decisionMakerDetails?.trim()));
     const budgetOk = draft.budgetStatus === 'not_disclosed'
       || (draft.budgetStatus === 'known' && Boolean(budgetKnown.trim()))
       || (draft.budgetStatus === 'range' && Boolean(budgetMin.trim()) && Boolean(budgetMax.trim()));
@@ -79,7 +81,7 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
       || (draft.timelineStatus === 'note' && Boolean(draft.timelineNote?.trim()));
     return [
       { key: 'summary', label: 'Résumé du projet', ok: Boolean(draft.projectSummary?.trim()) },
-      { key: 'decision', label: 'Décisionnaire', ok: Boolean(draft.decisionStatus) },
+      { key: 'decision', label: 'Décisionnaire', ok: decisionOk },
       { key: 'budget', label: 'Budget', ok: budgetOk },
       { key: 'timeline', label: 'Calendrier', ok: timelineOk },
       { key: 'need', label: 'Besoin / prestation', ok: needCount > 0 },
@@ -160,7 +162,7 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
           <option value="">À préciser</option><option value="yes">Oui</option><option value="no">Non</option><option value="unknown">Inconnu</option>
         </select>
       </label>
-      {draft.decisionStatus !== 'yes' && <label>Qui décide / précisions <FieldHelp text="Nom, fonction ou fonctionnement de validation si l’interlocuteur n’est pas le décideur." />
+      {draft.decisionStatus !== 'yes' && <label>Qui décide / précisions <FieldHelp text="Nom, fonction ou fonctionnement de validation si l’interlocuteur n’est pas le décideur. Ce champ est nécessaire lorsque la réponse est Non." />
         <input value={draft.decisionMakerDetails ?? ''} onChange={(e) => setDraft({ ...draft, decisionMakerDetails: e.target.value })} />
       </label>}
 
