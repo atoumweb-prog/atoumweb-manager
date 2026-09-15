@@ -117,10 +117,36 @@ describe('QuoteService', () => {
     expect(result.balanceCents).toBe(9450);
   });
 
+  it('finalise une seule fois et exige la finalisation avant l’envoi', () => {
+    const prospect = createProspect();
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Finalisation' });
+    quotes.addCustomLine(quote.id, { label: 'Site', proposedUnitPriceCents: 69900 });
+
+    expect(() => quotes.markSent(quote.id)).toThrow(/finalise/i);
+
+    const first = quotes.finalize(quote.id);
+    const firstFinalizedAt = first.finalizedAt;
+    const second = quotes.finalize(quote.id);
+    const finalizationEvents = database.all<{ count: number }>(
+      "SELECT COUNT(*) AS count FROM activity_log WHERE entity_type='quote' AND entity_id=? AND action='quote_finalized'",
+      [quote.id],
+    );
+
+    expect(firstFinalizedAt).toBeTruthy();
+    expect(second.finalizedAt).toBe(firstFinalizedAt);
+    expect(Number(finalizationEvents[0]?.count ?? 0)).toBe(1);
+    expect(crm.listProspects().find((item) => item.id === prospect.id)?.stage).toBe('quote_to_send');
+
+    const sent = quotes.markSent(quote.id);
+    expect(sent.status).toBe('sent');
+    expect(crm.listProspects().find((item) => item.id === prospect.id)?.stage).toBe('quote_sent');
+  });
+
   it('accepte un devis prospect sans créer deux clients et verrouille le snapshot', () => {
     const prospect = createProspect();
     const quote = quotes.create({ prospectId: prospect.id, subject: 'Acceptation' });
     quotes.addCustomLine(quote.id, { label: 'Site', proposedUnitPriceCents: 69900 });
+    quotes.finalize(quote.id);
     quotes.markSent(quote.id);
 
     const accepted = quotes.accept(quote.id);
@@ -138,6 +164,7 @@ describe('QuoteService', () => {
     const prospect = createProspect();
     const quote = quotes.create({ prospectId: prospect.id, subject: 'À dupliquer' });
     quotes.addCustomLine(quote.id, { label: 'Ligne libre', proposedUnitPriceCents: 50000 });
+    quotes.finalize(quote.id);
     quotes.markSent(quote.id);
     quotes.refuse(quote.id);
 
