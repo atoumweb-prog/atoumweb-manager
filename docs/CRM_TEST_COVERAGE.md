@@ -2,7 +2,7 @@
 
 > Branche : `fix/recette-commerciale-coherence`.
 >
-> Statut au moment de la création de ce document : les tests ciblés ont été renforcés pendant la correction, mais la validation Windows complète de la branche doit encore être exécutée. Le résultat exact CI doit être reporté en fin de document après exécution.
+> Les tests ciblés ont été renforcés pendant la correction. Une validation GitHub Actions Windows a été lancée sur le commit `1105b0d3d2a83405a88b9be0ba91c275606c32fd`, mais le job n’a obtenu aucun runner : aucun step n’a commencé. Ce résultat est donc un **blocage d’infrastructure**, pas un échec de typecheck ou de tests.
 
 ## Niveaux
 
@@ -109,12 +109,23 @@ Les tests existants de ces modules restent utiles et doivent rester verts, mais 
 
 ## Validation automatisée de la branche
 
-À compléter après exécution Windows CI :
+Tentative GitHub Actions Windows :
 
-- `npm run typecheck` : **EN ATTENTE**
-- `npm test` : **EN ATTENTE**
-- nombre de fichiers de tests : **EN ATTENTE**
-- nombre de tests : **EN ATTENTE**
-- commit validé : **EN ATTENTE**
+- run : `34961007123`
+- commit : `1105b0d3d2a83405a88b9be0ba91c275606c32fd`
+- job : `quality` / `windows-latest`
+- résultat GitHub : `failure`
+- runner : **aucun alloué** (`runner_id=0`, nom vide)
+- steps exécutés : **0**
+- logs : indisponibles, car le job n’a pas démarré
+
+Par conséquent :
+
+- `npm run typecheck` : **NON EXÉCUTÉ — RUNNER INDISPONIBLE**
+- `npm test` : **NON EXÉCUTÉ — RUNNER INDISPONIBLE**
+- nombre de fichiers de tests exécutés : **0**
+- nombre de tests exécutés : **0**
+
+La dernière validation automatisée connue du socle précédent était verte avant les corrections de cette branche, mais elle ne remplace pas une validation du delta courant. Le workflow est maintenant configuré pour cette branche ; dès qu’un runner Windows est de nouveau disponible, un nouveau push ou un lancement manuel exécutera directement `npm install`, `npm run typecheck` et `npm test`.
 
 Une branche n’est pas déclarée prête pour reprise de recette tant que ces deux commandes ne sont pas vertes sur le commit courant.
