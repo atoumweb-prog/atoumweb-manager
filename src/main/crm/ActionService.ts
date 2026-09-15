@@ -118,7 +118,10 @@ export class ActionService {
     if (input.ownerType === 'prospect' && input.type === 'follow_up') {
       this.database.run(
         `UPDATE prospects
-         SET stage=CASE WHEN stage IN ('won','lost') THEN stage ELSE 'follow_up' END, updated_at=?
+         SET stage=CASE
+           WHEN stage IN ('quote_sent','follow_up','negotiation','waiting') THEN 'follow_up'
+           ELSE stage
+         END, updated_at=?
          WHERE id=?`,
         [now, ownerId],
       );
