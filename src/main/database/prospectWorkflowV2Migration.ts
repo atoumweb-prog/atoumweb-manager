@@ -16,10 +16,9 @@ export const PROSPECT_WORKFLOW_V2_MIGRATION: Migration = {
     ALTER TABLE prospects ADD COLUMN first_contact_result_text TEXT;
     ALTER TABLE prospects ADD COLUMN interest_level TEXT
       CHECK (interest_level IS NULL OR interest_level IN ('none','low','confirm','interested','very_interested'));
-    ALTER TABLE prospects ADD COLUMN decision_maker_name TEXT;
-    ALTER TABLE prospects ADD COLUMN decision_maker_role TEXT;
-    ALTER TABLE prospects ADD COLUMN decision_maker_email TEXT;
-    ALTER TABLE prospects ADD COLUMN decision_maker_phone TEXT;
+    ALTER TABLE prospects ADD COLUMN decision_maker_contact_id TEXT REFERENCES contacts(id);
+
+    CREATE INDEX IF NOT EXISTS idx_prospects_decision_maker_contact ON prospects(decision_maker_contact_id);
 
     UPDATE prospects
     SET origin_type = CASE
