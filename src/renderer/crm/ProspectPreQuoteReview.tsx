@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import type { CatalogItemSummary, QuoteLineInput } from '../../shared/commercial';
 import type { ProspectSummary } from '../../shared/crm';
 import type { Need, WorkflowIdentity } from '../../shared/workflow';
+import { parseProspectInformation } from '../../shared/prospectInformation';
 
 function cleanError(error: unknown): string {
   if (!(error instanceof Error)) return 'Une erreur est survenue.';
   return error.message
-    .replace(/^Error invoking remote method ['"][^'"]+['"]:\s*/i, '')
+    .replace(/^Error invoking remote method ['\"][^'\"]+['\"]:\s*/i, '')
     .replace(/^Error:\s*/i, '')
     .trim();
 }
@@ -31,9 +32,9 @@ function timelineLabel(prospect: ProspectSummary): string {
 }
 
 function decisionLabel(prospect: ProspectSummary, identity: WorkflowIdentity | null): string {
-  if (prospect.decisionStatus === 'yes') return 'Interlocuteur principal décisionnaire';
+  if (prospect.decisionStatus === 'yes') return identity?.contact ? `${identity.contact.firstName} ${identity.contact.lastName} · interlocuteur principal` : 'Interlocuteur principal à préciser';
   if (identity?.decisionMaker) return `${identity.decisionMaker.firstName} ${identity.decisionMaker.lastName}${identity.decisionMaker.jobTitle ? ` · ${identity.decisionMaker.jobTitle}` : ''}`;
-  if (prospect.decisionStatus === 'no') return prospect.decisionMakerName || prospect.decisionMakerDetails || 'Décisionnaire à préciser';
+  if (prospect.decisionStatus === 'no') return prospect.decisionMakerDetails || 'Décisionnaire à préciser';
   if (prospect.decisionStatus === 'unknown') return 'Décisionnaire encore inconnu';
   return 'À qualifier';
 }
@@ -57,6 +58,9 @@ export function ProspectPreQuoteReview({ prospect, needs, catalog, onChanged }: 
     need,
     item: need.catalogItemId ? catalog.find((candidate) => candidate.id === need.catalogItemId) ?? null : null,
   })), [needs, catalog]);
+  const informationItems = useMemo(() => parseProspectInformation(prospect.missingInformation), [prospect.missingInformation]);
+  const blockingInformation = informationItems.filter((item) => item.status === 'open' && item.isBlocking);
+  const laterInformation = informationItems.filter((item) => item.status !== 'resolved' && !item.isBlocking);
 
   const blockers = useMemo(() => {
     const result: string[] = [];
@@ -65,10 +69,10 @@ export function ProspectPreQuoteReview({ prospect, needs, catalog, onChanged }: 
     if (!prospect.budgetStatus) result.push('Renseigner le budget ou indiquer « Non communiqué ».');
     if (!prospect.timelineStatus) result.push('Renseigner le calendrier ou indiquer « Non communiqué ».');
     if (!prospect.decisionStatus) result.push('Préciser la situation du décisionnaire.');
-    if (prospect.decisionStatus === 'no' && !prospect.decisionMakerName?.trim() && !prospect.decisionMakerDetails?.trim() && !identity?.decisionMaker) result.push('Identifier le décisionnaire ou le chemin de validation.');
-    if (prospect.missingInformation?.trim()) result.push(`Résoudre les informations encore nécessaires au chiffrage : ${prospect.missingInformation.trim()}`);
+    if (prospect.decisionStatus === 'no' && !prospect.decisionMakerDetails?.trim() && !identity?.decisionMaker) result.push('Identifier le décisionnaire ou le chemin de validation.');
+    blockingInformation.forEach((item) => result.push(`Obtenir : ${item.label}`));
     return result;
-  }, [needs.length, prospect, identity]);
+  }, [needs.length, prospect, identity, blockingInformation.map((item) => `${item.id}:${item.status}:${item.isBlocking}`).join('|')]);
 
   const unpriced = solutionRows.filter(({ item }) => item?.currentVersion && item.currentVersion.priceCents == null && item.currentVersion.priceMode !== 'free');
   const ready = blockers.length === 0;
@@ -128,7 +132,7 @@ export function ProspectPreQuoteReview({ prospect, needs, catalog, onChanged }: 
       <button type="button" className="primary-button" onClick={() => setOpen((value) => !value)}>{open ? 'Fermer le contrôle' : 'Contrôler avant devis'}</button>
     </div>
     {open && <div className="prequote-review-body">
-      <div className="prequote-result"><span className={`prequote-state ${ready ? 'ready' : 'blocked'}`}>{ready ? '✓ Prêt pour devis' : '○ Devis non prêt'}</span><strong>{ready ? 'Les informations minimums sont validées.' : `${blockers.length} point${blockers.length > 1 ? 's' : ''} à régler avant le devis.`}</strong></div>
+      <div className="prequote-result"><span className={`prequote-state ${ready ? 'ready' : 'blocked'}`}>{ready ? '✓ Prêt pour devis' : '○ Devis non prêt'}</span><strong>{ready ? 'Les informations nécessaires au chiffrage sont validées.' : `${blockers.length} point${blockers.length > 1 ? 's' : ''} à régler avant le devis.`}</strong></div>
 
       <div className="prequote-summary-grid">
         <div><span>Entreprise</span><strong>{identity?.organization?.name || prospect.displayName}</strong></div>
@@ -144,6 +148,7 @@ export function ProspectPreQuoteReview({ prospect, needs, catalog, onChanged }: 
       <div className="prequote-solutions"><span className="eyebrow">Solution retenue</span>{solutionRows.map(({ need, item }) => <div key={need.id} className="prequote-solution-row"><div><strong>{need.label}</strong><small>{item?.currentVersion?.priceCents != null ? money(item.currentVersion.priceCents) : item?.currentVersion?.priceMode === 'free' ? 'Gratuit' : 'Prix à saisir dans le devis'}</small></div>{item?.currentVersion?.inclusions && item.currentVersion.inclusions.length > 0 && <div className="prequote-inclusions">{item.currentVersion.inclusions.map((entry) => <small key={entry}>✓ {entry}</small>)}</div>}</div>)}</div>
 
       {blockers.length > 0 && <div className="prequote-blockers"><strong>À compléter avant de passer au devis</strong>{blockers.map((entry) => <span key={entry}>• {entry}</span>)}</div>}
+      {laterInformation.length > 0 && <div className="prequote-warning"><strong>À obtenir plus tard — non bloquant</strong>{laterInformation.map((item) => <span key={item.id}>• {item.label}{item.answer ? ` — ${item.answer}` : ''}</span>)}</div>}
       {unpriced.length > 0 && <div className="prequote-warning"><strong>Chiffrage à compléter dans l’éditeur</strong><span>{unpriced.map(({ need }) => need.label).join(', ')} : ces lignes seront bien reprises dans le brouillon avec leur référence catalogue, puis leur montant devra être saisi dans le devis.</span></div>}
       {error && <p className="form-error" role="alert">{error}</p>}
       <div className="prequote-actions"><button type="button" className="secondary-button" onClick={() => setOpen(false)}>Retour au besoin</button><button type="button" className="primary-button" disabled={!ready || busy} onClick={() => void createDraftAndOpen()}>{busy ? 'Création du brouillon…' : 'Passer à l’édition du devis'}</button></div>
