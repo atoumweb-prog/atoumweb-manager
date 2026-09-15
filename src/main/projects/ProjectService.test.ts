@@ -60,6 +60,7 @@ function createAcceptedQuote() {
   catalog.publishVersion(service.versions[0].id);
   const quote = quotes.create({ prospectId: prospect.id, subject: 'Création du site vitrine', prerequisitesText: 'Accès hébergement' });
   quotes.addCatalogLine(quote.id, service.versions[0].id);
+  quotes.finalize(quote.id);
   quotes.markSent(quote.id);
   return quotes.accept(quote.id);
 }
