@@ -30,6 +30,20 @@ const clean = (value?: string | null): string | null => {
   return trimmed ? trimmed : null;
 };
 
+const MANUAL_PROSPECT_STAGE_TRANSITIONS: Record<ProspectStage, readonly ProspectStage[]> = {
+  new: ['qualifying', 'lost'],
+  qualifying: ['new', 'need_identified', 'lost'],
+  need_identified: ['qualifying', 'lost'],
+  quote_to_prepare: ['lost'],
+  quote_to_send: ['lost'],
+  quote_sent: ['follow_up', 'negotiation', 'waiting', 'lost'],
+  follow_up: ['quote_sent', 'negotiation', 'waiting', 'lost'],
+  negotiation: ['follow_up', 'waiting', 'lost'],
+  waiting: ['quote_sent', 'follow_up', 'negotiation', 'lost'],
+  won: [],
+  lost: ['new', 'qualifying'],
+};
+
 function assertEmail(value?: string | null): void {
   const email = clean(value);
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -338,14 +352,10 @@ export class CrmService {
   updateProspect(id: string, input: ProspectInput): ProspectSummary {
     assertProspectInput(input);
     const current = this.getProspect(id);
-    const stage = input.stage ?? current.stage ?? 'new';
-    if (!['new', 'qualifying', 'lost'].includes(stage)) {
-      const count = this.database.get<{ count: number }>('SELECT COUNT(*) AS count FROM crm_needs WHERE prospect_id=?', [id])?.count ?? 0;
-      if (Number(count) === 0) throw new Error('Ajoute au moins un besoin avant de poursuivre la qualification.');
+    if (input.stage && input.stage !== current.stage) {
+      throw new Error('Utilise le changement d’étape du parcours commercial pour déplacer un prospect.');
     }
-    if (stage === 'lost' && !current.lostReason) {
-      throw new Error('Utilise le changement de statut Perdu afin de renseigner une raison.');
-    }
+    const stage = current.stage ?? 'new';
     const result = this.database.run(
       `UPDATE prospects SET organization_id=?, contact_id=?, stage=?, temperature=?, source=?, source_detail=?,
        primary_need=?, secondary_need=?, budget_min_cents=?, budget_max_cents=?, estimated_value_cents=?,
@@ -382,12 +392,17 @@ export class CrmService {
 
   changeProspectStage(id: string, stage: ProspectStage, lostReason?: string | null): ProspectSummary {
     if (!PROSPECT_STAGES.includes(stage)) throw new Error('Étape prospect invalide.');
-    if (stage === 'lost' && !clean(lostReason)) throw new Error('Une raison est requise pour classer le prospect comme perdu.');
     const current = this.getProspect(id);
+    if (stage === current.stage) return current;
+    if (!MANUAL_PROSPECT_STAGE_TRANSITIONS[current.stage ?? 'new'].includes(stage)) {
+      throw new Error(`Transition non autorisée : ${current.stage ?? 'new'} → ${stage}. Utilise l’action métier correspondante.`);
+    }
+    if (stage === 'lost' && !clean(lostReason)) throw new Error('Une raison est requise pour classer le prospect comme perdu.');
     if (!['new', 'qualifying', 'lost'].includes(stage)) {
       const count = this.database.get<{ count: number }>('SELECT COUNT(*) AS count FROM crm_needs WHERE prospect_id=?', [id])?.count ?? 0;
       if (Number(count) === 0) throw new Error('Ajoute au moins un besoin avant de poursuivre la qualification.');
     }
+    if (current.stage === 'qualifying' && stage === 'need_identified') this.assertQualificationReady(id, current);
     const now = nowIso();
     this.database.run(
       `UPDATE prospects SET stage=?, lost_reason=?, lost_at=?, won_at=?, updated_at=? WHERE id=? AND archived_at IS NULL`,
@@ -403,6 +418,24 @@ export class CrmService {
     });
     this.indexProspect(id);
     return this.getProspect(id);
+  }
+
+  private assertQualificationReady(id: string, prospect: ProspectSummary): void {
+    const missing: string[] = [];
+    const needCount = Number(this.database.get<{ count: number }>('SELECT COUNT(*) AS count FROM crm_needs WHERE prospect_id=?', [id])?.count ?? 0);
+    if (needCount === 0) missing.push('un besoin / une prestation');
+    if (!clean(prospect.projectSummary)) missing.push('le résumé du projet');
+    if (!prospect.decisionStatus) missing.push('le décideur');
+    if (prospect.decisionStatus === 'no' && !clean(prospect.decisionMakerDetails)) missing.push('qui prend la décision');
+    const budgetReady = prospect.budgetStatus === 'not_disclosed'
+      || (prospect.budgetStatus === 'known' && prospect.budgetMinCents != null)
+      || (prospect.budgetStatus === 'range' && prospect.budgetMinCents != null && prospect.budgetMaxCents != null);
+    if (!budgetReady) missing.push('le budget');
+    const timelineReady = prospect.timelineStatus === 'not_disclosed'
+      || (prospect.timelineStatus === 'date' && Boolean(clean(prospect.targetDate)))
+      || (prospect.timelineStatus === 'note' && Boolean(clean(prospect.timelineNote)));
+    if (!timelineReady) missing.push('le calendrier');
+    if (missing.length) throw new Error(`Qualification incomplète : renseigne ${missing.join(', ')}.`);
   }
 
   setProspectNextAction(id: string, at: string | null, text: string | null): ProspectSummary {
@@ -601,8 +634,15 @@ export class CrmService {
     }
     if (clean(filters.search)) {
       const query = `%${clean(filters.search)}%`;
-      where.push('(o.name LIKE ? COLLATE NOCASE OR c.first_name LIKE ? COLLATE NOCASE OR c.last_name LIKE ? COLLATE NOCASE OR o.email LIKE ? COLLATE NOCASE OR c.email LIKE ? COLLATE NOCASE)');
-      params.push(query, query, query, query, query);
+      where.push(`(o.name LIKE ? COLLATE NOCASE OR c.first_name LIKE ? COLLATE NOCASE OR c.last_name LIKE ? COLLATE NOCASE
+        OR o.email LIKE ? COLLATE NOCASE OR c.email LIKE ? COLLATE NOCASE
+        OR EXISTS (
+          SELECT 1 FROM contact_methods cm
+          WHERE cm.archived_at IS NULL
+            AND (cm.organization_id=ca.organization_id OR cm.contact_id=ca.primary_contact_id)
+            AND cm.value LIKE ? COLLATE NOCASE
+        ))`);
+      params.push(query, query, query, query, query, query);
     }
     return this.database.all<ClientRow>(
       `${this.clientSelect()} ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY ca.updated_at DESC`,
@@ -617,9 +657,24 @@ export class CrmService {
   }
 
   private clientSelect(): string {
-    return `SELECT ca.*, o.name AS organization_name, o.email AS organization_email, o.phone AS organization_phone,
-      c.first_name AS contact_first_name, c.last_name AS contact_last_name, c.email AS contact_email,
-      c.phone AS contact_phone
+    return `SELECT ca.*, o.name AS organization_name,
+      COALESCE(
+        (SELECT cm.value FROM contact_methods cm WHERE cm.organization_id=ca.organization_id AND cm.method_type='email' AND cm.archived_at IS NULL ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1),
+        o.email
+      ) AS organization_email,
+      COALESCE(
+        (SELECT cm.value FROM contact_methods cm WHERE cm.organization_id=ca.organization_id AND cm.method_type='phone' AND cm.archived_at IS NULL ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1),
+        o.phone
+      ) AS organization_phone,
+      c.first_name AS contact_first_name, c.last_name AS contact_last_name,
+      COALESCE(
+        (SELECT cm.value FROM contact_methods cm WHERE cm.contact_id=ca.primary_contact_id AND cm.method_type='email' AND cm.archived_at IS NULL ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1),
+        c.email
+      ) AS contact_email,
+      COALESCE(
+        (SELECT cm.value FROM contact_methods cm WHERE cm.contact_id=ca.primary_contact_id AND cm.method_type='phone' AND cm.archived_at IS NULL ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1),
+        c.phone
+      ) AS contact_phone
       FROM client_accounts ca
       LEFT JOIN organizations o ON o.id=ca.organization_id
       LEFT JOIN contacts c ON c.id=ca.primary_contact_id`;
@@ -754,9 +809,13 @@ export class CrmService {
 
   private indexClient(id: string): void {
     const client = this.getClient(id);
+    const methods = [
+      ...(client.organizationId ? this.listContactMethods('organization', client.organizationId) : []),
+      ...(client.primaryContactId ? this.listContactMethods('contact', client.primaryContactId) : []),
+    ].map((method) => method.value);
     this.upsertSearchDocument(
       'client', id, client.displayName, client.contactName ?? client.email ?? null,
-      client.status ?? null, [client.displayName, client.contactName, client.email, client.phone, client.notes],
+      client.status ?? null, [client.displayName, client.contactName, client.email, client.phone, client.notes, ...methods],
     );
   }
 }
