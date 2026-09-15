@@ -20,6 +20,8 @@ interface DecisionDraft {
   details: string;
 }
 
+interface PrimaryDraft { firstName: string; lastName: string; role: string; }
+
 function legacyName(value?: string | null): { firstName: string; lastName: string } {
   const parts = value?.trim().split(/\s+/).filter(Boolean) ?? [];
   if (parts.length === 0) return { firstName: '', lastName: '' };
@@ -44,7 +46,7 @@ function decisionFromIdentity(prospect: ProspectSummary, identity?: IdentityStat
 function cleanError(error: unknown): string {
   if (!(error instanceof Error)) return 'Une erreur est survenue.';
   return error.message
-    .replace(/^Error invoking remote method ['"][^'"]+['"]:\s*/i, '')
+    .replace(/^Error invoking remote method ['\"][^'\"]+['\"]:\s*/i, '')
     .replace(/^Error:\s*/i, '')
     .trim();
 }
@@ -52,6 +54,7 @@ function cleanError(error: unknown): string {
 export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: ProspectSummary; onSaved: () => void }) {
   const [identity, setIdentity] = useState<IdentityState | null>(null);
   const [decision, setDecision] = useState<DecisionDraft>(() => decisionFromIdentity(prospect));
+  const [primaryDraft, setPrimaryDraft] = useState<PrimaryDraft>({ firstName: '', lastName: '', role: '' });
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -68,6 +71,7 @@ export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: Prospec
     try {
       const nextIdentity = await window.atoumweb.workflow.identity('prospect', prospect.id);
       setIdentity(nextIdentity);
+      setPrimaryDraft(nextIdentity.contact ? { firstName: nextIdentity.contact.firstName, lastName: nextIdentity.contact.lastName, role: nextIdentity.contact.jobTitle ?? '' } : { firstName: '', lastName: '', role: '' });
       setDecision(await hydrateDecisionMethods(nextIdentity, decisionFromIdentity(prospect, nextIdentity)));
     } catch (e) { setError(cleanError(e)); }
   }
@@ -90,7 +94,7 @@ export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: Prospec
       contactId,
       type,
       value: normalizedValue,
-      label: primary?.label ?? 'Principal',
+      label: primary?.label ?? (type === 'phone' ? 'Portable' : 'Professionnel'),
       isPrimary: true,
       notes: primary?.notes ?? null,
     }, primary?.id);
@@ -98,8 +102,13 @@ export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: Prospec
 
   async function save() {
     if (!identity || !decisionEmail.valid || !decisionPhone.valid) return;
-    if (decision.status === 'yes' && !identity.contact) {
-      setError('Renseigne d’abord l’interlocuteur principal pour pouvoir le définir comme décisionnaire.');
+    const primaryStarted = primaryDraft.firstName.trim() || primaryDraft.lastName.trim() || primaryDraft.role.trim();
+    if (!identity.contact && primaryStarted && (!primaryDraft.firstName.trim() || !primaryDraft.lastName.trim())) {
+      setError('Pour créer l’interlocuteur principal, renseigne son prénom et son nom.');
+      return;
+    }
+    if (decision.status === 'yes' && !identity.contact && (!primaryDraft.firstName.trim() || !primaryDraft.lastName.trim())) {
+      setError('Ajoute d’abord l’interlocuteur principal pour pouvoir le définir comme décisionnaire.');
       return;
     }
     if (decision.status === 'no' && (!decision.firstName.trim() || !decision.lastName.trim())) {
@@ -110,17 +119,36 @@ export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: Prospec
     setBusy(true); setError('');
     try {
       if (identity.organization) await window.atoumweb.crm.organizations.update(identity.organization.id, identity.organization);
-      if (identity.contact) await window.atoumweb.crm.contacts.update(identity.contact.id, identity.contact);
+
+      let primaryContact = identity.contact;
+      if (primaryContact) {
+        primaryContact = await window.atoumweb.crm.contacts.update(primaryContact.id, {
+          ...primaryContact,
+          firstName: primaryDraft.firstName.trim(),
+          lastName: primaryDraft.lastName.trim(),
+          jobTitle: primaryDraft.role.trim() || null,
+        });
+      } else if (primaryDraft.firstName.trim() && primaryDraft.lastName.trim()) {
+        primaryContact = await window.atoumweb.crm.contacts.create({
+          organizationId: identity.organization?.id ?? null,
+          firstName: primaryDraft.firstName.trim(),
+          lastName: primaryDraft.lastName.trim(),
+          jobTitle: primaryDraft.role.trim() || null,
+          email: null,
+          phone: null,
+        });
+        await window.atoumweb.crm.prospects.update(prospect.id, { ...prospect, contactId: primaryContact.id });
+      }
 
       let decisionMakerContactId: string | null = null;
       if (decision.status === 'yes') {
-        decisionMakerContactId = identity.contact?.id ?? null;
+        decisionMakerContactId = primaryContact?.id ?? null;
       } else if (decision.status === 'no') {
-        const existingSeparateDecisionMaker = identity.decisionMaker && identity.decisionMaker.id !== identity.contact?.id
+        const existingSeparateDecisionMaker = identity.decisionMaker && identity.decisionMaker.id !== primaryContact?.id
           ? identity.decisionMaker
           : null;
         const decisionInput = {
-          organizationId: identity.organization?.id ?? identity.contact?.organizationId ?? null,
+          organizationId: identity.organization?.id ?? primaryContact?.organizationId ?? null,
           firstName: decision.firstName.trim(),
           lastName: decision.lastName.trim(),
           jobTitle: decision.role.trim() || null,
@@ -143,7 +171,6 @@ export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: Prospec
         decisionMakerDetails: decision.status === 'yes'
           ? null
           : decision.details.trim() || (decision.status === 'no' ? 'Décisionnaire identifié dans les Contacts' : null),
-        // Les anciennes colonnes sont volontairement vidées : le Contact devient l’unique source de vérité.
         decisionMakerName: null,
         decisionMakerRole: null,
         decisionMakerEmail: null,
@@ -158,20 +185,20 @@ export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: Prospec
   if (!identity) return <section className="prospect-work-section"><p className="muted">Chargement des informations…</p></section>;
   const address = identity.organization ? [identity.organization.addressLine1, identity.organization.postalCode, identity.organization.city].filter(Boolean).join(' · ') : '';
   const decisionLabel = decision.status === 'yes'
-    ? identity.contact ? `${identity.contact.firstName} ${identity.contact.lastName} · interlocuteur décisionnaire` : 'Interlocuteur décisionnaire à renseigner'
+    ? identity.contact ? `${identity.contact.firstName} ${identity.contact.lastName} · interlocuteur principal` : 'Interlocuteur principal à renseigner'
     : decision.status === 'no'
       ? identity.decisionMaker
         ? `${identity.decisionMaker.firstName} ${identity.decisionMaker.lastName}${identity.decisionMaker.jobTitle ? ` · ${identity.decisionMaker.jobTitle}` : ''}`
-        : [decision.firstName, decision.lastName, decision.role].filter(Boolean).join(' · ') || 'Décisionnaire à préciser'
+        : [decision.firstName, decision.lastName, decision.role].filter(Boolean).join(' · ') || 'Autre décisionnaire à préciser'
       : decision.status === 'unknown'
-        ? 'Décisionnaire encore inconnu'
+        ? 'Inconnu pour le moment'
         : 'À qualifier';
 
   return <section className="prospect-work-section identity-panel-v2">
     <div className="work-section-heading"><div><span className="eyebrow">Entreprise & interlocuteur</span><strong>{identity.organization?.industry || identity.contact?.jobTitle || 'Informations principales'}</strong></div><button className="secondary-button compact-button" type="button" onClick={() => setEditing((value) => !value)}>{editing ? 'Fermer' : 'Modifier'}</button></div>
     {!editing && <div className="identity-summary-grid">
       {identity.organization && <><div><span>Société</span><strong>{identity.organization.name}</strong></div><div><span>Activité</span><strong>{identity.organization.industry || 'À préciser'}</strong></div>{identity.organization.website && <div><span>Site web</span><strong>{identity.organization.website}</strong></div>}{address && <div className="identity-wide"><span>Adresse</span><strong>{address}</strong></div>}{identity.organization.notes && <div className="identity-wide"><span>Description</span><strong>{identity.organization.notes}</strong></div>}</>}
-      {identity.contact && <><div><span>Interlocuteur principal</span><strong>{identity.contact.firstName} {identity.contact.lastName}</strong></div><div><span>Fonction</span><strong>{identity.contact.jobTitle || 'À préciser'}</strong></div></>}
+      {identity.contact ? <><div><span>Interlocuteur principal</span><strong>{identity.contact.firstName} {identity.contact.lastName}</strong></div><div><span>Fonction</span><strong>{identity.contact.jobTitle || 'À préciser'}</strong></div></> : <div className="identity-wide"><span>Interlocuteur principal</span><strong>Aucun interlocuteur renseigné</strong><small>Utilise « Modifier » pour l’ajouter sans recréer le prospect.</small></div>}
       <div className="identity-wide decision-summary"><span>Décisionnaire</span><strong>{decisionLabel}</strong>{decision.details && decision.details !== 'Décisionnaire identifié dans les Contacts' && <small>{decision.details}</small>}</div>
     </div>}
     {editing && <div className="workflow-fields identity-editor-v2">
@@ -186,23 +213,26 @@ export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: Prospec
         <label>Ville<input value={identity.organization.city ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, city: e.target.value } })} /></label>
         <label>Pays<input value={identity.organization.country ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, country: e.target.value } })} /></label>
       </>}
-      {identity.contact && <>
-        <label>Prénom interlocuteur<input value={identity.contact.firstName} onChange={(e) => setIdentity({ ...identity, contact: { ...identity.contact!, firstName: e.target.value } })} /></label>
-        <label>Nom interlocuteur<input value={identity.contact.lastName} onChange={(e) => setIdentity({ ...identity, contact: { ...identity.contact!, lastName: e.target.value } })} /></label>
-        <label>Fonction / rôle <FieldHelp text="Ex. gérant, responsable communication, secrétaire, interlocuteur technique…" /><input value={identity.contact.jobTitle ?? ''} onChange={(e) => setIdentity({ ...identity, contact: { ...identity.contact!, jobTitle: e.target.value } })} /></label>
-      </>}
+
+      <div className="form-span-2"><span className="eyebrow">Interlocuteur principal</span></div>
+      <label>Prénom interlocuteur<input value={primaryDraft.firstName} onChange={(e) => setPrimaryDraft({ ...primaryDraft, firstName: e.target.value })} placeholder="Prénom" /></label>
+      <label>Nom interlocuteur<input value={primaryDraft.lastName} onChange={(e) => setPrimaryDraft({ ...primaryDraft, lastName: e.target.value })} placeholder="Nom" /></label>
+      <label>Fonction / rôle <FieldHelp text="Champ libre : gérant, patron, comptable, banquier, responsable communication…" /><input value={primaryDraft.role} onChange={(e) => setPrimaryDraft({ ...primaryDraft, role: e.target.value })} placeholder="Gérant, responsable…" /></label>
 
       <fieldset className="identity-decision-maker form-span-2">
-        <legend>Décisionnaire <FieldHelp text="Indique si l’interlocuteur actuel peut valider le devis. Si ce n’est pas lui, le décisionnaire est enregistré comme un vrai Contact réutilisable dans le Manager." /></legend>
-        <label>L’interlocuteur principal peut valider le devis
+        <legend>Décisionnaire <FieldHelp text="Choisis qui peut réellement valider le devis. Un autre décisionnaire est enregistré comme un vrai Contact réutilisable." /></legend>
+        <label>Qui est le décisionnaire ?
           <select value={decision.status ?? ''} onChange={(e) => setDecision({ ...decision, status: (e.target.value || null) as ProspectInput['decisionStatus'] })}>
-            <option value="">À préciser</option><option value="yes">Oui</option><option value="no">Non</option><option value="unknown">Inconnu pour le moment</option>
+            <option value="">À préciser</option>
+            <option value="yes">L’interlocuteur principal</option>
+            <option value="no">Un autre contact</option>
+            <option value="unknown">Inconnu pour le moment</option>
           </select>
         </label>
         {decision.status === 'no' && <div className="decision-maker-grid">
           <label>Prénom du décisionnaire<input value={decision.firstName} onChange={(e) => setDecision({ ...decision, firstName: e.target.value })} /></label>
           <label>Nom du décisionnaire<input value={decision.lastName} onChange={(e) => setDecision({ ...decision, lastName: e.target.value })} /></label>
-          <label>Fonction<input value={decision.role} onChange={(e) => setDecision({ ...decision, role: e.target.value })} /></label>
+          <label>Fonction / rôle<input value={decision.role} onChange={(e) => setDecision({ ...decision, role: e.target.value })} placeholder="Gérant, associé, directeur…" /></label>
           <label>Email<input type="email" value={decision.email} onChange={(e) => setDecision({ ...decision, email: e.target.value })} />{!decisionEmail.valid && <small className="field-error">{decisionEmail.message}</small>}</label>
           <label>Téléphone<input inputMode="tel" value={decision.phone} onChange={(e) => setDecision({ ...decision, phone: e.target.value })} />{!decisionPhone.valid && <small className="field-error">{decisionPhone.message}</small>}</label>
         </div>}
