@@ -11,6 +11,7 @@ import {
   type ProspectTemperature,
 } from '../../shared/crm';
 import type { NeedInput } from '../../shared/workflow';
+import { ProspectActionsPanel } from './ProspectActionsPanel';
 import { ProspectIdentityPanel } from './ProspectIdentityPanel';
 import { NeedDraftSelector, ProspectNeedsPanel } from './ProspectNeedsPanel';
 import { FieldHelp, ProspectQualificationPanelV2 } from './ProspectQualificationPanelV2';
@@ -22,8 +23,29 @@ const STAGE_LABELS: Record<ProspectStage, string> = {
 };
 const TEMPERATURE_LABELS: Record<ProspectTemperature, string> = { cold: 'Froid', neutral: 'Neutre', warm: 'Tiède', hot: 'Chaud' };
 const SOURCE_LABELS: Record<ProspectSource, string> = { website: 'Site web', referral: 'Recommandation', google: 'Google', social: 'Réseaux sociaux', event: 'Événement', outbound: 'Prospection', former_client: 'Ancien client', other: 'Autre' };
-const LOST_REASONS = ['Trop cher', 'Concurrent choisi', 'Projet abandonné', 'Pas de réponse', 'Délai incompatible', 'Besoin hors périmètre AtoumWeb', 'Autre'];
+const LOSS_REASONS = [
+  ['too_expensive', 'Trop cher'],
+  ['competitor', 'Concurrent choisi'],
+  ['abandoned', 'Projet abandonné'],
+  ['no_response', 'Pas de réponse'],
+  ['timing', 'Délai incompatible'],
+  ['out_of_scope', 'Besoin hors périmètre AtoumWeb'],
+  ['other', 'Autre'],
+] as const;
 const QUOTE_FOLLOW_UP_STAGES: ProspectStage[] = ['quote_sent', 'follow_up', 'negotiation', 'waiting'];
+const MANUAL_STAGE_OPTIONS: Record<ProspectStage, ProspectStage[]> = {
+  new: ['new', 'qualifying'],
+  qualifying: ['qualifying', 'new', 'need_identified'],
+  need_identified: ['need_identified', 'qualifying'],
+  quote_to_prepare: ['quote_to_prepare'],
+  quote_to_send: ['quote_to_send'],
+  quote_sent: ['quote_sent', 'follow_up', 'negotiation', 'waiting'],
+  follow_up: ['follow_up', 'quote_sent', 'negotiation', 'waiting'],
+  negotiation: ['negotiation', 'follow_up', 'waiting'],
+  waiting: ['waiting', 'quote_sent', 'follow_up', 'negotiation'],
+  won: ['won'],
+  lost: ['lost'],
+};
 
 interface ProspectDraft {
   company: string; industry: string; activityDescription: string; website: string;
@@ -42,6 +64,7 @@ type View = 'pipeline' | 'history';
 function formatDate(value?: string | null) { return value ? new Date(value).toLocaleDateString('fr-FR') : 'Sans date'; }
 function isClosed(prospect: ProspectSummary) { return Boolean(prospect.archivedAt || prospect.clientAccountId || prospect.stage === 'won' || prospect.stage === 'lost'); }
 function isQuoteFollowUpStage(stage?: ProspectStage | null) { return QUOTE_FOLLOW_UP_STAGES.includes(stage ?? 'new'); }
+function manualStages(prospect: ProspectSummary): ProspectStage[] { return MANUAL_STAGE_OPTIONS[prospect.stage ?? 'new'].filter((stage) => ACTIVE_STAGES.includes(stage)); }
 function humanActivity(summary: string) {
   return summary.replace(/\bnew\b/g, 'Nouveau contact').replace(/\bqualifying\b/g, 'À qualifier').replace(/\bneed_identified\b/g, 'Besoin identifié').replace(/\bquote_to_prepare\b/g, 'Devis en préparation').replace(/\bquote_to_send\b/g, 'Devis à envoyer').replace(/\bquote_sent\b/g, 'Devis envoyé').replace(/\bfollow_up\b/g, 'À relancer').replace(/\bnegotiation\b/g, 'Négociation').replace(/\bwaiting\b/g, 'En attente').replace(/\bwon\b/g, 'Gagné').replace(/\blost\b/g, 'Perdu');
 }
@@ -112,8 +135,10 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
   }
 
   async function updateTemperature(prospect: ProspectSummary, temperature: ProspectTemperature) {
-    await window.atoumweb.crm.prospects.update(prospect.id, { ...prospect, temperature });
-    await refresh(); onMessage(`État commercial : ${TEMPERATURE_LABELS[temperature]}.`);
+    try {
+      await window.atoumweb.crm.prospects.update(prospect.id, { ...prospect, temperature });
+      await refresh(); onMessage(`État commercial : ${TEMPERATURE_LABELS[temperature]}.`);
+    } catch (e) { onMessage(e instanceof Error ? e.message : 'Modification de l’état commercial impossible.'); }
   }
 
   async function changeStage(prospect: ProspectSummary, stage: ProspectStage) {
@@ -146,40 +171,41 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
   }
 
   async function scheduleQuick(prospect: ProspectSummary, days: number) {
-    const d = new Date(); d.setDate(d.getDate() + days); d.setHours(9, 0, 0, 0);
-    const quoteFollowUp = isQuoteFollowUpStage(prospect.stage);
-    await window.atoumweb.crm.actions.create({
-      ownerType: 'prospect',
-      ownerId: prospect.id,
-      type: quoteFollowUp ? 'follow_up' : 'action',
-      title: quoteFollowUp ? 'Relancer le prospect' : 'Rappeler le prospect',
-      dueAt: d.toISOString(),
-    });
-    await refresh(); onMessage(quoteFollowUp ? 'Relance du devis programmée.' : 'Rappel de prospection programmé.');
-  }
-
-  async function addAction(prospect: ProspectSummary) {
-    const title = window.prompt('Action à réaliser', 'Recontacter le prospect'); if (!title?.trim()) return;
-    const date = window.prompt('Date (AAAA-MM-JJ, facultative)', '');
-    await window.atoumweb.crm.actions.create({ ownerType: 'prospect', ownerId: prospect.id, type: 'action', title: title.trim(), dueAt: date?.trim() ? new Date(`${date.trim()}T09:00:00`).toISOString() : null });
-    await refresh();
-  }
-
-  async function completeAction(action: CrmAction) {
-    const channel = window.prompt('Canal utilisé : téléphone, email, SMS, rendez-vous, autre', action.type === 'follow_up' ? 'téléphone' : ''); if (channel === null) return;
-    const outcome = window.prompt('Résultat : client joint, message laissé, email envoyé, pas de réponse, retour attendu, demande de modification…', 'réalisée'); if (outcome === null) return;
-    const notes = window.prompt('Compte rendu / information importante', ''); if (notes === null) return;
-    await window.atoumweb.crm.actions.complete(action.id, { channel, outcome, notes }); await refresh();
+    try {
+      const d = new Date(); d.setDate(d.getDate() + days); d.setHours(9, 0, 0, 0);
+      const quoteFollowUp = isQuoteFollowUpStage(prospect.stage);
+      await window.atoumweb.crm.actions.create({
+        ownerType: 'prospect',
+        ownerId: prospect.id,
+        type: quoteFollowUp ? 'follow_up' : 'action',
+        title: quoteFollowUp ? 'Relancer le prospect' : 'Rappeler le prospect',
+        dueAt: d.toISOString(),
+      });
+      await refresh(); onMessage(quoteFollowUp ? 'Relance du devis programmée.' : 'Rappel de prospection programmé.');
+    } catch (e) { onMessage(e instanceof Error ? e.message : 'Programmation impossible.'); }
   }
 
   async function archive(prospect: ProspectSummary) { await window.atoumweb.workflow.archiveProspect(prospect.id, true); setSelectedId(null); await refresh(); onMessage('Prospect archivé.'); }
 
-  async function markLost(prospect: ProspectSummary) {
-    const first = window.prompt(`Raison de perte :\n${LOST_REASONS.join(' / ')}`, 'Pas de réponse'); if (!first?.trim()) return;
-    await window.atoumweb.crm.prospects.changeStage(prospect.id, 'lost', first.trim()); setSelectedId(null); await refresh(); onMessage('Prospect classé perdu.');
+  async function markLost(prospect: ProspectSummary, reasonCode: string, reasonText: string) {
+    if (!reasonText.trim()) return;
+    try {
+      await window.atoumweb.crm.prospects.updateQualification(prospect.id, { lostReasonCode: reasonCode });
+      await window.atoumweb.crm.prospects.changeStage(prospect.id, 'lost', reasonText.trim());
+      setSelectedId(null); await refresh(); onMessage('Prospect classé perdu.');
+    } catch (e) { onMessage(e instanceof Error ? e.message : 'Classement en perdu impossible.'); }
   }
 
-  async function handleDrop(stage: ProspectStage) { const prospect = prospects.find((item) => item.id === draggingId); setDraggingId(null); setDropStage(null); if (prospect) await changeStage(prospect, stage); }
+  async function handleDrop(stage: ProspectStage) {
+    const prospect = prospects.find((item) => item.id === draggingId);
+    setDraggingId(null); setDropStage(null);
+    if (!prospect) return;
+    if (!manualStages(prospect).includes(stage)) {
+      onMessage(`Le passage vers « ${STAGE_LABELS[stage]} » se fait par l’action métier correspondante, pas par glisser-déposer.`);
+      return;
+    }
+    await changeStage(prospect, stage);
+  }
 
   return <div className="crm-stack prospects-v2">
     <div className="prospect-view-switch" role="tablist"><button className={view === 'pipeline' ? 'active' : ''} onClick={() => setView('pipeline')}>Pipeline <span>{active.length}</span></button><button className={view === 'history' ? 'active' : ''} onClick={() => setView('history')}>Historique <span>{closed.length}</span></button></div>
@@ -197,15 +223,21 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
         <NeedDraftSelector value={needsDraft} onChange={setNeedsDraft} />
         <label>Première action — date<input type="date" value={draft.firstActionDate} onChange={(e) => setDraft({ ...draft, firstActionDate: e.target.value })} /></label><label className="form-span-2">Première action<input value={draft.firstActionText} onChange={(e) => setDraft({ ...draft, firstActionText: e.target.value })} placeholder="Ex. appeler pour qualifier le besoin" /></label>
       </div>{formError && <p className="form-error">{formError}</p>}<div className="form-actions"><button className="primary-button" disabled={saving} type="submit">{saving ? 'Création…' : 'Créer le prospect'}</button></div></form>}
-      {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected ? 'prospects-layout with-detail' : 'prospects-layout'}><div className="kanban-board">{ACTIVE_STAGES.map((stage) => <section className={`kanban-column ${dropStage === stage ? 'drag-over' : ''}`} key={stage} onDragOver={(e) => e.preventDefault()} onDragEnter={() => setDropStage(stage)} onDrop={(e) => { e.preventDefault(); void handleDrop(stage); }}><header><strong>{STAGE_LABELS[stage]}</strong><span>{byStage.get(stage)?.length ?? 0}</span></header><div className="kanban-cards stacked-cards">{(byStage.get(stage) ?? []).map((prospect) => { const expanded = expandedId === prospect.id; const itemActions = actions.filter((a) => a.ownerId === prospect.id && a.status === 'open'); const quoteFollowUp = isQuoteFollowUpStage(prospect.stage); return <article className={`prospect-card stacked-card prospect-temperature-${prospect.temperature ?? 'neutral'} ${expanded ? 'expanded-card' : 'collapsed-card'} ${selectedId === prospect.id ? 'selected-prospect' : ''}`} key={prospect.id}><div className="prospect-card-head card-drag-handle" draggable onDragStart={(e) => { setDraggingId(prospect.id); e.dataTransfer.setData('text/plain', prospect.id); }} onClick={() => { setSelectedId(prospect.id); setExpandedId((id) => id === prospect.id ? null : prospect.id); }}><strong>{prospect.displayName}</strong><span className={`temperature temperature-${prospect.temperature ?? 'neutral'}`}>{TEMPERATURE_LABELS[prospect.temperature ?? 'neutral']}</span></div><div className="prospect-card-body"><small>{prospect.secondaryLabel || 'Interlocuteur à préciser'}</small><p>{prospect.primaryNeed || 'Besoin à préciser'}</p><small>{prospect.estimatedValueCents != null ? `${(prospect.estimatedValueCents / 100).toLocaleString('fr-FR')} €` : 'Valeur non estimée'}</small><div className="card-state-control"><label>État commercial<select value={prospect.temperature ?? 'neutral'} onChange={(e) => void updateTemperature(prospect, e.target.value as ProspectTemperature)}>{PROSPECT_TEMPERATURES.map((temp) => <option key={temp} value={temp}>{TEMPERATURE_LABELS[temp]}</option>)}</select></label></div>{itemActions.slice(0, 2).map((action) => <div className="card-action-line" key={action.id}><span>{action.type === 'follow_up' ? 'Relance' : 'Action'}</span><strong>{action.title}</strong><small>{formatDate(action.dueAt)}</small></div>)}<div className="quick-followups"><button onClick={() => void scheduleQuick(prospect, 1)}>{quoteFollowUp ? 'Relance demain' : 'Rappel demain'}</button><button onClick={() => void scheduleQuick(prospect, 7)}>+7 j</button><button onClick={() => void addAction(prospect)}>+ Action</button></div><select aria-label="Étape" value={prospect.stage} onChange={(e) => void changeStage(prospect, e.target.value as ProspectStage)}>{ACTIVE_STAGES.map((item) => <option key={item} value={item}>{STAGE_LABELS[item]}</option>)}</select></div></article>; })}{(byStage.get(stage)?.length ?? 0) === 0 && <div className="kanban-empty">Déposer ici</div>}</div></section>)}</div>{selected && <ProspectDetailV2 prospect={selected} actions={selectedActions} activity={activity} onRefresh={(message) => { void refresh(); if (message) onMessage(message); }} onClose={() => setSelectedId(null)} onTemperature={(temperature) => void updateTemperature(selected, temperature)} onStage={(stage) => void changeStage(selected, stage)} onCreateQuote={() => void createQuote(selected)} onAddAction={() => void addAction(selected)} onComplete={(action) => void completeAction(action)} onLost={() => void markLost(selected)} onArchive={() => void archive(selected)} />}</div>}
+      {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected ? 'prospects-layout with-detail' : 'prospects-layout'}><div className="kanban-board">{ACTIVE_STAGES.map((stage) => <section className={`kanban-column ${dropStage === stage ? 'drag-over' : ''}`} key={stage} onDragOver={(e) => e.preventDefault()} onDragEnter={() => setDropStage(stage)} onDrop={(e) => { e.preventDefault(); void handleDrop(stage); }}><header><strong>{STAGE_LABELS[stage]}</strong><span>{byStage.get(stage)?.length ?? 0}</span></header><div className="kanban-cards stacked-cards">{(byStage.get(stage) ?? []).map((prospect) => { const expanded = expandedId === prospect.id; const itemActions = actions.filter((a) => a.ownerId === prospect.id && a.status === 'open'); const quoteFollowUp = isQuoteFollowUpStage(prospect.stage); const stages = manualStages(prospect); return <article className={`prospect-card stacked-card prospect-temperature-${prospect.temperature ?? 'neutral'} ${expanded ? 'expanded-card' : 'collapsed-card'} ${selectedId === prospect.id ? 'selected-prospect' : ''}`} key={prospect.id}><div className="prospect-card-head card-drag-handle" draggable onDragStart={(e) => { setDraggingId(prospect.id); e.dataTransfer.setData('text/plain', prospect.id); }} onClick={() => { setSelectedId(prospect.id); setExpandedId((id) => id === prospect.id ? null : prospect.id); }}><strong>{prospect.displayName}</strong><span className={`temperature temperature-${prospect.temperature ?? 'neutral'}`}>{TEMPERATURE_LABELS[prospect.temperature ?? 'neutral']}</span></div><div className="prospect-card-body"><small>{prospect.secondaryLabel || 'Interlocuteur à préciser'}</small><p>{prospect.primaryNeed || 'Besoin à préciser'}</p><small>{prospect.estimatedValueCents != null ? `${(prospect.estimatedValueCents / 100).toLocaleString('fr-FR')} €` : 'Valeur non estimée'}</small><div className="card-state-control"><label>État commercial<select value={prospect.temperature ?? 'neutral'} onChange={(e) => void updateTemperature(prospect, e.target.value as ProspectTemperature)}>{PROSPECT_TEMPERATURES.map((temp) => <option key={temp} value={temp}>{TEMPERATURE_LABELS[temp]}</option>)}</select></label></div>{itemActions.slice(0, 2).map((action) => <div className="card-action-line" key={action.id}><span>{action.type === 'follow_up' ? 'Relance' : 'Action'}</span><strong>{action.title}</strong><small>{formatDate(action.dueAt)}</small></div>)}<div className="quick-followups"><button onClick={() => void scheduleQuick(prospect, 1)}>{quoteFollowUp ? 'Relance demain' : 'Rappel demain'}</button><button onClick={() => void scheduleQuick(prospect, 7)}>+7 j</button></div>{stages.length > 1 ? <select aria-label="Étape" value={prospect.stage} onChange={(e) => void changeStage(prospect, e.target.value as ProspectStage)}>{stages.map((item) => <option key={item} value={item}>{STAGE_LABELS[item]}</option>)}</select> : <span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span>}</div></article>; })}{(byStage.get(stage)?.length ?? 0) === 0 && <div className="kanban-empty">Déposer ici</div>}</div></section>)}</div>{selected && <ProspectDetailV2 prospect={selected} actions={selectedActions} activity={activity} onRefresh={(message) => { void refresh(); if (message) onMessage(message); }} onClose={() => setSelectedId(null)} onTemperature={(temperature) => void updateTemperature(selected, temperature)} onStage={(stage) => void changeStage(selected, stage)} onCreateQuote={() => void createQuote(selected)} onLost={(code, reason) => void markLost(selected, code, reason)} onArchive={() => void archive(selected)} />}</div>}
     </> : <HistoryView prospects={closed.filter((item) => [item.displayName, item.primaryNeed, item.lostReason].filter(Boolean).join(' ').toLocaleLowerCase('fr-FR').includes(historySearch.toLocaleLowerCase('fr-FR')))} search={historySearch} onSearch={setHistorySearch} onSelect={(item) => setSelectedId(item.id)} selected={selected} activity={activity} onClose={() => setSelectedId(null)} />}
   </div>;
 }
 
-function ProspectDetailV2({ prospect, actions, activity, onRefresh, onClose, onTemperature, onStage, onCreateQuote, onAddAction, onComplete, onLost, onArchive }: { prospect: ProspectSummary; actions: CrmAction[]; activity: ActivityEvent[]; onRefresh: (message?: string) => void; onClose: () => void; onTemperature: (value: ProspectTemperature) => void; onStage: (value: ProspectStage) => void; onCreateQuote: () => void; onAddAction: () => void; onComplete: (action: CrmAction) => void; onLost: () => void; onArchive: () => void }) {
-  const openActions = actions.filter((item) => item.status === 'open');
+function ProspectDetailV2({ prospect, actions, activity, onRefresh, onClose, onTemperature, onStage, onCreateQuote, onLost, onArchive }: { prospect: ProspectSummary; actions: CrmAction[]; activity: ActivityEvent[]; onRefresh: (message?: string) => void; onClose: () => void; onTemperature: (value: ProspectTemperature) => void; onStage: (value: ProspectStage) => void; onCreateQuote: () => void; onLost: (code: string, reason: string) => void; onArchive: () => void }) {
+  const [lossOpen, setLossOpen] = useState(false);
+  const [lossCode, setLossCode] = useState('no_response');
+  const [lossOther, setLossOther] = useState('');
+  const stages = manualStages(prospect);
+  const selectedLoss = LOSS_REASONS.find(([key]) => key === lossCode)?.[1] ?? 'Pas de réponse';
+  const lossReason = lossCode === 'other' ? lossOther.trim() : selectedLoss;
+
   return <aside className="panel prospect-detail-panel prospect-detail-v2"><div className="detail-panel-heading"><div><span className="eyebrow">Fiche prospect</span><h2>{prospect.displayName}</h2></div><button className="close-detail" onClick={onClose}>×</button></div>
-    <div className="prospect-controls-v2"><label>État commercial<select value={prospect.temperature ?? 'neutral'} onChange={(e) => onTemperature(e.target.value as ProspectTemperature)}>{PROSPECT_TEMPERATURES.map((value) => <option key={value} value={value}>{TEMPERATURE_LABELS[value]}</option>)}</select></label><label>Étape<select value={prospect.stage} onChange={(e) => onStage(e.target.value as ProspectStage)}>{ACTIVE_STAGES.map((value) => <option key={value} value={value}>{STAGE_LABELS[value]}</option>)}</select></label></div>
+    <div className="prospect-controls-v2"><label>État commercial<select value={prospect.temperature ?? 'neutral'} onChange={(e) => onTemperature(e.target.value as ProspectTemperature)}>{PROSPECT_TEMPERATURES.map((value) => <option key={value} value={value}>{TEMPERATURE_LABELS[value]}</option>)}</select></label><label>Étape{stages.length > 1 ? <select value={prospect.stage} onChange={(e) => onStage(e.target.value as ProspectStage)}>{stages.map((value) => <option key={value} value={value}>{STAGE_LABELS[value]}</option>)}</select> : <span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span>}</label></div>
     <div className="detail-badges"><span className={`temperature temperature-${prospect.temperature ?? 'neutral'}`}>{TEMPERATURE_LABELS[prospect.temperature ?? 'neutral']}</span><span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span>{prospect.source && <span className="status-pill">{SOURCE_LABELS[prospect.source]}{prospect.source === 'other' && prospect.sourceDetail ? ` · ${prospect.sourceDetail}` : ''}</span>}</div>
     {prospect.stage === 'new' && <button className="primary-button start-qualification-button" onClick={() => onStage('qualifying')}>Commencer la prospection / qualification</button>}
     <ProspectIdentityPanel prospect={prospect} onSaved={() => onRefresh('Informations du prospect mises à jour.')} />
@@ -213,8 +245,9 @@ function ProspectDetailV2({ prospect, actions, activity, onRefresh, onClose, onT
     <ProspectNeedsPanel prospectId={prospect.id} onChanged={() => onRefresh()} />
     {(prospect.stage === 'qualifying' || prospect.stage === 'need_identified') && <ProspectQualificationPanelV2 prospect={prospect} onSaved={onRefresh} />}
     {prospect.stage === 'need_identified' && <button className="primary-button create-quote-button" onClick={onCreateQuote}>Créer le devis depuis les besoins</button>}
-    <section className="prospect-work-section"><div className="work-section-heading"><div><span className="eyebrow">Actions & relances</span><strong>{openActions.length} en cours</strong></div><button className="secondary-button compact-button" onClick={onAddAction}>+ Action</button></div>{openActions.length === 0 ? <p className="muted">Aucune action en cours.</p> : <div className="work-items">{openActions.map((action) => <div className="work-item" key={action.id}><button className="work-check" onClick={() => onComplete(action)}>✓</button><div className="work-item-main"><strong>{action.title}</strong><small>{action.type === 'follow_up' ? 'Relance' : 'Action'} · {formatDate(action.dueAt)}{action.notes ? ` · ${action.notes}` : ''}</small></div></div>)}</div>}</section>
-    <div className="detail-actions"><button className="secondary-button danger-outline" onClick={onLost}>Perdu</button><button className="secondary-button" onClick={onArchive}>Archiver le prospect</button></div>
+    <ProspectActionsPanel prospect={prospect} actions={actions} onChanged={onRefresh} />
+    <div className="detail-actions"><button className="secondary-button danger-outline" onClick={() => setLossOpen((value) => !value)}>Perdu</button><button className="secondary-button" onClick={onArchive}>Archiver le prospect</button></div>
+    {lossOpen && <div className="inline-editor prospect-loss-editor"><strong>Classer le prospect comme perdu</strong><label>Raison<select value={lossCode} onChange={(e) => setLossCode(e.target.value)}>{LOSS_REASONS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>{lossCode === 'other' && <label>Préciser<input value={lossOther} onChange={(e) => setLossOther(e.target.value)} /></label>}<div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => setLossOpen(false)}>Annuler</button><button className="secondary-button danger-outline" type="button" disabled={!lossReason} onClick={() => onLost(lossCode, lossReason)}>Confirmer Perdu</button></div></div>}
     <div className="activity-preview"><strong>Journal du dossier</strong>{activity.slice(0, 20).map((event) => <div className="activity-item" key={event.id}><span className="activity-dot" /><div><p>{humanActivity(event.summary)}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div></div>)}{activity.length === 0 && <p className="muted">Aucune activité.</p>}</div>
   </aside>;
 }
