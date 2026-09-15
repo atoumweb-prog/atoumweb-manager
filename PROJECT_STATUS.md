@@ -24,6 +24,36 @@
 - [x] validations automatisées : 28 fichiers, 118 tests, TypeScript et packaging
 - [ ] recette fonctionnelle et visuelle Windows du scénario Boulangerie Martin
 
+### Prospect Workflow V2 — 15/09/2026
+
+Branche : `feature/prospect-workflow-v2`  
+Base fonctionnelle : `fix/recette-commerciale-coherence` au commit `b30d2a89e0515f4193e4958097be838fbd0eba44`.  
+Aucune fusion dans `main`.
+
+- [x] migration 20 : origine commerciale, démarrage de prospection, qualification V2 et référence `decision_maker_contact_id`
+- [x] parcours clarifié : `Nouveau contact → À qualifier → Besoin à identifier → Devis à préparer`
+- [x] bouton explicite `Démarrer la prospection` et ouverture de la fiche de travail bureau
+- [x] qualification conditionnelle selon l’origine du contact ; le besoin détaillé n’est plus demandé à cette étape
+- [x] `Projet & solution AtoumWeb` raccordé au catalogue existant avec ajout de prestation en une seule action
+- [x] contrôle avant devis intégré à l’étape `Besoin à identifier` ; ancien placeholder séparé supprimé
+- [x] validation téléphone/email centralisée via `contactValidation`
+- [x] décisionnaire rattaché à un vrai `contacts.id` ; coordonnées via `contact_methods`, anciennes colonnes conservées seulement pour compatibilité de migration
+- [x] `Compact / Confort / Confort +` disponible dans les Réglages
+- [x] température commerciale visible sur la carte, le panneau rapide et la fiche bureau
+- [x] rappels rapides `demain / +7 jours / date précise` raccordés à `crm_actions`
+- [x] suivi devis recentré sur `Devis à préparer → Devis à envoyer → En attente de retour`
+- [x] après envoi : devis, montant, validité, délai restant et prochaine relance mis en évidence dans la fiche et la vignette pipeline
+- [x] issues distinctes après envoi : `Accepté / signé`, `À modifier / Négociation`, `Refusé`; refus du devis distinct du statut Prospect `Perdu`
+- [x] alerte de validité du devis dans les 7 derniers jours
+- [x] ancien composant de qualification V1 supprimé
+- [ ] `npm run typecheck`
+- [ ] `npm test`
+- [ ] recette visuelle Windows sur le workspace de test propre
+
+La CI de cette branche a été branchée sur le workflow GitHub. Les runners disponibles dans l’environnement GitHub actuel n’exécutent cependant aucune étape (`runner_id` nul/0), y compris avec `windows-latest`; un statut rouge sans étape n’est donc pas un résultat de compilation ou de test. La validation TypeScript/tests doit être exécutée localement tant qu’un runner utilisable n’est pas disponible.
+
+Périmètre volontairement différé : refonte profonde de l’éditeur de devis et système d’import des packs d’offres `.atoum`. Les offres/contrats seront d’abord préparés comme configuration métier, puis le Manager évoluera selon le contrat technique commun validé.
+
 ## Phase 0 — Fondation
 
 Validations réelles effectuées sous Windows le 13/09/2026 :
