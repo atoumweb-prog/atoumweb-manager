@@ -24,29 +24,7 @@ on:
 
 jobs:
   quality:
-    if: github.ref != 'refs/heads/feature/prospect-workflow-v2'
     runs-on: [self-hosted, Windows, X64]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node 24
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Tests
-        run: npm test
-
-  prospect-workflow-quality:
-    if: github.ref == 'refs/heads/feature/prospect-workflow-v2'
-    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
