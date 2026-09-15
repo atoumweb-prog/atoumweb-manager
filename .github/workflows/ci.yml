@@ -9,7 +9,6 @@ on:
       - feature/phase-2-commercial
       - feature/phase-3-projects
       - feature/phase-4-operations
-      - fix/recette-commerciale-prospects
   pull_request:
     branches:
       - main
