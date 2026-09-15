@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ProspectInput, ProspectOrigin, ProspectSummary } from '../../shared/crm';
-import { validateEmail, validatePhone } from '../../shared/contactValidation';
 
 const TARGETING_REASONS = [
   ['no_site', 'Pas de site'],
@@ -74,6 +73,10 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
   const [error, setError] = useState('');
 
   useEffect(() => {
+    setDraft({ ...prospect, originType: inferOrigin(prospect) });
+  }, [prospect.updatedAt]);
+
+  useEffect(() => {
     let cancelled = false;
     async function loadContacts() {
       try {
@@ -129,12 +132,6 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
       firstContactResultCode: draft.firstContactResultCode ?? null,
       firstContactResultText: draft.firstContactResultText ?? null,
       interestLevel: draft.interestLevel ?? null,
-      decisionStatus: draft.decisionStatus ?? null,
-      decisionMakerDetails: draft.decisionMakerDetails ?? null,
-      decisionMakerName: draft.decisionMakerName ?? null,
-      decisionMakerRole: draft.decisionMakerRole ?? null,
-      decisionMakerEmail: draft.decisionMakerEmail ?? null,
-      decisionMakerPhone: draft.decisionMakerPhone ?? null,
       projectSummary: draft.projectSummary ?? null,
       projectContext: draft.projectContext ?? null,
     });
@@ -162,8 +159,13 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
     finally { setBusy(false); }
   }
 
-  const decisionEmail = validateEmail(draft.decisionMakerEmail);
-  const decisionPhone = validatePhone(draft.decisionMakerPhone);
+  const decisionSummary = draft.decisionStatus === 'yes'
+    ? 'L’interlocuteur principal est décisionnaire.'
+    : draft.decisionStatus === 'no'
+      ? `Décisionnaire : ${draft.decisionMakerName?.trim() || draft.decisionMakerDetails?.trim() || 'à préciser'}.`
+      : draft.decisionStatus === 'unknown'
+        ? 'Le décisionnaire n’est pas encore connu.'
+        : 'La situation du décisionnaire reste à renseigner.';
 
   return <section className="prospect-work-section qualification-panel-v2">
     <div className="work-section-heading">
@@ -205,7 +207,7 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
         <label>Demande initiale <FieldHelp text="Résume ce que le prospect demande au moment où il contacte AtoumWeb. L’identification détaillée du besoin se fera à l’étape suivante." />
           <textarea value={draft.projectSummary ?? ''} onChange={(e) => setDraft({ ...draft, projectSummary: e.target.value })} />
         </label>
-        <label>Contexte utile <textarea value={draft.projectContext ?? ''} onChange={(e) => setDraft({ ...draft, projectContext: e.target.value })} /></label>
+        <label>Contexte utile<textarea value={draft.projectContext ?? ''} onChange={(e) => setDraft({ ...draft, projectContext: e.target.value })} /></label>
       </>}
 
       {!['outbound', 'inbound'].includes(origin) && <>
@@ -213,27 +215,17 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
         <label>Contexte commercial<textarea value={draft.projectContext ?? ''} onChange={(e) => setDraft({ ...draft, projectContext: e.target.value })} /></label>
       </>}
 
-      <fieldset className="qualification-decision-block">
-        <legend>Décisionnaire <FieldHelp text="Cette information sera aussi visible dans Entreprise & interlocuteur. Elle sert ici uniquement à vérifier que le chemin de décision est suffisamment identifié." /></legend>
-        <label>Mon interlocuteur peut valider le devis
-          <select value={draft.decisionStatus ?? ''} onChange={(e) => setDraft({ ...draft, decisionStatus: (e.target.value || null) as ProspectInput['decisionStatus'] })}>
-            <option value="">À préciser</option><option value="yes">Oui</option><option value="no">Non</option><option value="unknown">Inconnu pour le moment</option>
-          </select>
-        </label>
-        {draft.decisionStatus === 'no' && <div className="qualification-two-fields">
-          <label>Nom du décisionnaire<input value={draft.decisionMakerName ?? ''} onChange={(e) => setDraft({ ...draft, decisionMakerName: e.target.value })} /></label>
-          <label>Fonction<input value={draft.decisionMakerRole ?? ''} onChange={(e) => setDraft({ ...draft, decisionMakerRole: e.target.value })} /></label>
-          <label>Email<input type="email" value={draft.decisionMakerEmail ?? ''} onChange={(e) => setDraft({ ...draft, decisionMakerEmail: e.target.value })} />{!decisionEmail.valid && <small className="field-error">{decisionEmail.message}</small>}</label>
-          <label>Téléphone<input inputMode="tel" value={draft.decisionMakerPhone ?? ''} onChange={(e) => setDraft({ ...draft, decisionMakerPhone: e.target.value })} />{!decisionPhone.valid && <small className="field-error">{decisionPhone.message}</small>}</label>
-        </div>}
-        {draft.decisionStatus !== 'yes' && <label>Précisions / chemin de validation<input value={draft.decisionMakerDetails ?? ''} onChange={(e) => setDraft({ ...draft, decisionMakerDetails: e.target.value })} placeholder="Ex. associé à consulter, responsable régional…" /></label>}
-      </fieldset>
+      <div className="qualification-decision-summary">
+        <span className="eyebrow">Décisionnaire</span>
+        <strong>{decisionSummary}</strong>
+        <small>Les coordonnées et le rôle se modifient dans « Entreprise & interlocuteur » afin d’éviter de saisir deux fois la même information.</small>
+      </div>
 
       {!allReady && <div className="qualification-recap" role="status"><strong>Qualification à compléter</strong><p>{readiness.filter((item) => item.ok).length}/{readiness.length} éléments acquis.</p><div>{missing.map((item) => <span key={item.key}>À compléter : {item.label}</span>)}</div><small>Action recommandée : complète uniquement ces éléments, puis valide la qualification pour passer à l’identification du besoin.</small></div>}
       {allReady && <div className="qualification-recap ready" role="status"><strong>Qualification prête à être validée</strong><p>Les éléments commerciaux minimums sont présents. Le besoin détaillé, le budget et le calendrier seront travaillés à l’étape suivante.</p></div>}
 
       {error && <p className="form-error" role="alert">{error}</p>}
-      <div className="qualification-actions"><button type="button" className="secondary-button" disabled={busy} onClick={() => void save()}>{busy ? 'Enregistrement…' : 'Enregistrer la qualification'}</button><button type="button" className="primary-button" disabled={busy || !allReady || !decisionEmail.valid || !decisionPhone.valid} onClick={() => void validateQualification()}>Valider la qualification → Besoin à identifier</button></div>
+      <div className="qualification-actions"><button type="button" className="secondary-button" disabled={busy} onClick={() => void save()}>{busy ? 'Enregistrement…' : 'Enregistrer la qualification'}</button><button type="button" className="primary-button" disabled={busy || !allReady} onClick={() => void validateQualification()}>Valider la qualification → Besoin à identifier</button></div>
     </div>
   </section>;
 }
