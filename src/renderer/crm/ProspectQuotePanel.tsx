@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { QuoteDetail, QuoteSummary } from '../../shared/commercial';
-import type { ProspectSummary } from '../../shared/crm';
+import type { CrmAction, ProspectSummary } from '../../shared/crm';
 
 const QUOTE_LABELS: Record<string, string> = {
   draft: 'Brouillon', sent: 'Envoyé', viewed: 'Vu', accepted: 'Accepté', refused: 'Refusé', expired: 'Expiré', cancelled: 'Annulé',
@@ -27,10 +27,14 @@ function date(value?: string | null) {
 function openQuote(quote: QuoteSummary) {
   window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'quote', entityId: quote.id, title: quote.subject } }));
 }
+function actionTime(action: CrmAction): number {
+  return Date.parse(action.completedAt || action.updatedAt || action.createdAt) || 0;
+}
 
 export function ProspectQuotePanel({ prospect, onChanged }: { prospect: ProspectSummary; onChanged: (message?: string) => void }) {
   const [quotes, setQuotes] = useState<QuoteSummary[]>([]);
   const [detail, setDetail] = useState<QuoteDetail | null>(null);
+  const [crmActions, setCrmActions] = useState<CrmAction[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [sendOpen, setSendOpen] = useState(false);
@@ -44,8 +48,12 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
 
   async function load() {
     try {
-      const next = await window.atoumweb.quotes.list({ prospectId: prospect.id });
+      const [next, actions] = await Promise.all([
+        window.atoumweb.quotes.list({ prospectId: prospect.id }),
+        window.atoumweb.crm.actions.list({ ownerType: 'prospect', ownerId: prospect.id }),
+      ]);
       setQuotes(next);
+      setCrmActions(actions);
       setDetail(next[0] ? await window.atoumweb.quotes.get(next[0].id) : null);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
   }
@@ -55,8 +63,32 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
   const isFinalized = Boolean(quote?.finalizedAt);
   const sent = quote?.status === 'sent' || quote?.status === 'viewed';
   const canEdit = quote?.status === 'draft';
-  const latestOpenFollowUp = useMemo(() => null, [quotes]);
-  void latestOpenFollowUp;
+  const relatedActions = useMemo(
+    () => quote ? crmActions.filter((action) => action.relatedType === 'quote' && action.relatedId === quote.id) : [],
+    [crmActions, quote?.id],
+  );
+  const latestDispatch = useMemo(
+    () => relatedActions
+      .filter((action) => action.status === 'done' && action.title.includes('envoyé'))
+      .sort((a, b) => actionTime(b) - actionTime(a))[0] ?? null,
+    [relatedActions],
+  );
+  const latestCompletedFollowUp = useMemo(
+    () => relatedActions
+      .filter((action) => action.type === 'follow_up' && action.status === 'done')
+      .sort((a, b) => actionTime(b) - actionTime(a))[0] ?? null,
+    [relatedActions],
+  );
+  const latestOpenFollowUp = useMemo(
+    () => relatedActions
+      .filter((action) => action.type === 'follow_up' && action.status === 'open')
+      .sort((a, b) => Date.parse(a.dueAt || '9999-12-31') - Date.parse(b.dueAt || '9999-12-31'))[0] ?? null,
+    [relatedActions],
+  );
+  const dispatchChannel = latestDispatch?.completionChannel
+    ? CHANNELS.find(([key]) => key === latestDispatch.completionChannel)?.[1] ?? latestDispatch.completionChannel
+    : '—';
+  const dispatchRecipient = latestDispatch?.completionOutcome?.replace(/^Envoyé à\s*/i, '') || '—';
 
   async function run(action: () => Promise<unknown>, message: string) {
     setBusy(true); setError('');
@@ -142,6 +174,8 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
   return <section className="prospect-work-section prospect-quote-panel">
     <div className="quote-command-header"><div><span className="eyebrow">Devis actif</span><strong>{quote.number} · {quote.subject}</strong><small>{QUOTE_LABELS[quote.status] ?? quote.status}{isFinalized && quote.status === 'draft' ? ' · prêt à envoyer' : ''}</small></div><button type="button" className="secondary-button compact-button" onClick={() => openQuote(quote)}>Ouvrir le devis complet</button></div>
     <div className="quote-command-summary"><div><span>Montant</span><strong>{money(quote.contractValueCents)}</strong></div><div><span>Envoyé</span><strong>{date(quote.sentAt)}</strong></div><div><span>Valable jusqu’au</span><strong>{date(quote.validUntil)}</strong></div></div>
+    {sent && <div className="quote-command-summary"><div><span>Canal</span><strong>{dispatchChannel}</strong></div><div><span>Destinataire</span><strong>{dispatchRecipient}</strong></div><div><span>Dernière relance</span><strong>{date(latestCompletedFollowUp?.completedAt)}</strong></div><div><span>Prochaine relance</span><strong>{date(latestOpenFollowUp?.dueAt)}</strong></div></div>}
+    {sent && latestDispatch?.completionNotes && <p className="muted">Note d’envoi : {latestDispatch.completionNotes}</p>}
     {error && <p className="form-error">{error}</p>}
 
     {canEdit && !isFinalized && <div className="quote-command-actions"><button className="secondary-button" type="button" disabled={busy} onClick={() => openQuote(quote)}>Modifier le devis</button><button className="secondary-button" type="button" disabled={busy} onClick={() => void pauseQuote()}>Mettre en pause / info manquante</button><button className="primary-button" type="button" disabled={busy} onClick={() => void finalize()}>Devis prêt à envoyer</button></div>}
