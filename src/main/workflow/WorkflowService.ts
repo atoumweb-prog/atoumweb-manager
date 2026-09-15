@@ -4,7 +4,14 @@ import type { CrmService } from '../crm/CrmService';
 import type { QuoteService } from '../commercial/QuoteService';
 import type { ProjectService } from '../projects/ProjectService';
 import type { OperationsService } from '../operations/OperationsService';
-import type { DashboardEntry, Need, NeedInput, WorkflowIdentity } from '../../shared/workflow';
+import type {
+  DashboardEntry,
+  Need,
+  NeedInput,
+  ProspectInformationInput,
+  ProspectInformationItem,
+  WorkflowIdentity,
+} from '../../shared/workflow';
 
 export class WorkflowService {
   constructor(private db: DatabaseAdapter, private crm: CrmService, private quotes: QuoteService, private projects: ProjectService, private operations: OperationsService) {}
@@ -40,6 +47,54 @@ export class WorkflowService {
     this.db.run(`DELETE FROM crm_needs WHERE id=? AND ${column}=?`,[needId,id]);
     this.log(owner,id,'Rattachement de besoin retiré');
     return this.needs(owner,id);
+  }
+  informationItems(prospectId: string): ProspectInformationItem[] {
+    this.owner('prospect', prospectId);
+    return this.db.all<Record<string, unknown>>(
+      `SELECT * FROM prospect_information_items
+       WHERE prospect_id=?
+       ORDER BY CASE status WHEN 'open' THEN 0 WHEN 'later' THEN 1 ELSE 2 END, created_at, id`,
+      [prospectId],
+    ).map((row) => ({
+      id: String(row.id),
+      prospectId: String(row.prospect_id),
+      label: String(row.label),
+      status: row.status as ProspectInformationItem['status'],
+      isBlocking: Boolean(row.is_blocking),
+      answer: row.answer as string | null,
+      resolvedAt: row.resolved_at as string | null,
+      createdAt: String(row.created_at),
+      updatedAt: String(row.updated_at),
+    }));
+  }
+  saveInformationItem(prospectId: string, input: ProspectInformationInput, itemId?: string): ProspectInformationItem[] {
+    this.owner('prospect', prospectId);
+    const label = input.label?.trim();
+    if (!label) throw new Error('Le point à confirmer est requis.');
+    const status = input.status ?? 'open';
+    if (!['open','resolved','later'].includes(status)) throw new Error('Statut du point à confirmer invalide.');
+    const now = new Date().toISOString();
+    const answer = input.answer?.trim() || null;
+    const isBlocking = status === 'later' ? false : input.isBlocking !== false;
+    const resolvedAt = status === 'resolved' ? now : null;
+    if (itemId) {
+      const result = this.db.run(
+        `UPDATE prospect_information_items
+         SET label=?,status=?,is_blocking=?,answer=?,resolved_at=?,updated_at=?
+         WHERE id=? AND prospect_id=?`,
+        [label,status,isBlocking?1:0,answer,resolvedAt,now,itemId,prospectId],
+      );
+      if (Number(result.changes) !== 1) throw new Error('Point à confirmer introuvable.');
+    } else {
+      this.db.run(
+        `INSERT INTO prospect_information_items
+         (id,prospect_id,label,status,is_blocking,answer,resolved_at,created_at,updated_at)
+         VALUES (?,?,?,?,?,?,?,?,?)`,
+        [randomUUID(),prospectId,label,status,isBlocking?1:0,answer,resolvedAt,now,now],
+      );
+    }
+    this.log('prospect',prospectId,status === 'resolved' ? `Information obtenue : ${label}` : `Point à confirmer : ${label}`);
+    return this.informationItems(prospectId);
   }
   identity(owner: 'prospect' | 'client', id: string): WorkflowIdentity {
     this.owner(owner,id);
