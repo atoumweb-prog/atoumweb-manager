@@ -69,6 +69,7 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
   const origin = inferOrigin(prospect);
   const [draft, setDraft] = useState<Partial<ProspectInput>>({ ...prospect, originType: origin });
   const [contactCount, setContactCount] = useState(0);
+  const [decisionMakerLabel, setDecisionMakerLabel] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -78,20 +79,25 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
 
   useEffect(() => {
     let cancelled = false;
-    async function loadContacts() {
+    async function loadIdentityContext() {
       try {
         const identity = await window.atoumweb.workflow.identity('prospect', prospect.id);
         const lists = await Promise.all([
           identity.organization ? window.atoumweb.crm.contactMethods.list('organization', identity.organization.id) : Promise.resolve([]),
           identity.contact ? window.atoumweb.crm.contactMethods.list('contact', identity.contact.id) : Promise.resolve([]),
         ]);
-        if (!cancelled) setContactCount(lists.flat().length);
+        if (!cancelled) {
+          setContactCount(lists.flat().length);
+          setDecisionMakerLabel(identity.decisionMaker
+            ? `${identity.decisionMaker.firstName} ${identity.decisionMaker.lastName}${identity.decisionMaker.jobTitle ? ` · ${identity.decisionMaker.jobTitle}` : ''}`
+            : '');
+        }
       } catch (e) {
         if (!cancelled) setError(cleanError(e));
       }
     }
-    void loadContacts();
-    const reload = () => void loadContacts();
+    void loadIdentityContext();
+    const reload = () => void loadIdentityContext();
     window.addEventListener('atoumweb:changed', reload);
     return () => { cancelled = true; window.removeEventListener('atoumweb:changed', reload); };
   }, [prospect.id]);
@@ -101,7 +107,7 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
       { key: 'contact', label: 'Moyen de contact valide', ok: contactCount > 0 },
     ];
     const decisionReady = Boolean(draft.decisionStatus)
-      && (draft.decisionStatus !== 'no' || Boolean(draft.decisionMakerName?.trim() || draft.decisionMakerDetails?.trim()));
+      && (draft.decisionStatus !== 'no' || Boolean(decisionMakerLabel || draft.decisionMakerDetails?.trim()));
     items.push({ key: 'decision', label: 'Situation du décisionnaire', ok: decisionReady });
 
     if (origin === 'outbound') {
@@ -117,7 +123,7 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
       items.push({ key: 'context', label: 'Motif / contexte commercial', ok: Boolean(draft.projectSummary?.trim() || draft.projectContext?.trim()) });
     }
     return items;
-  }, [contactCount, draft, origin]);
+  }, [contactCount, decisionMakerLabel, draft, origin]);
 
   const missing = readiness.filter((item) => !item.ok);
   const allReady = missing.length === 0;
@@ -162,7 +168,7 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
   const decisionSummary = draft.decisionStatus === 'yes'
     ? 'L’interlocuteur principal est décisionnaire.'
     : draft.decisionStatus === 'no'
-      ? `Décisionnaire : ${draft.decisionMakerName?.trim() || draft.decisionMakerDetails?.trim() || 'à préciser'}.`
+      ? `Décisionnaire : ${decisionMakerLabel || draft.decisionMakerDetails?.trim() || 'à préciser'}.`
       : draft.decisionStatus === 'unknown'
         ? 'Le décisionnaire n’est pas encore connu.'
         : 'La situation du décisionnaire reste à renseigner.';
@@ -218,7 +224,7 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
       <div className="qualification-decision-summary">
         <span className="eyebrow">Décisionnaire</span>
         <strong>{decisionSummary}</strong>
-        <small>Les coordonnées et le rôle se modifient dans « Entreprise & interlocuteur » afin d’éviter de saisir deux fois la même information.</small>
+        <small>Le décisionnaire et ses coordonnées se modifient dans « Entreprise & interlocuteur ». La qualification ne duplique plus ces informations.</small>
       </div>
 
       {!allReady && <div className="qualification-recap" role="status"><strong>Qualification à compléter</strong><p>{readiness.filter((item) => item.ok).length}/{readiness.length} éléments acquis.</p><div>{missing.map((item) => <span key={item.key}>À compléter : {item.label}</span>)}</div><small>Action recommandée : complète uniquement ces éléments, puis valide la qualification pour passer à l’identification du besoin.</small></div>}
