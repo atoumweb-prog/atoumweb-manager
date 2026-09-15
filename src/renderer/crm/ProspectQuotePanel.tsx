@@ -17,6 +17,23 @@ const WAITING_REASONS = [
   ['meeting', 'Rendez-vous programmé'],
   ['other', 'Autre'],
 ] as const;
+const PAUSE_REASONS = [
+  ['information', 'Informations complémentaires à récupérer'],
+  ['content', 'Contenus / éléments client manquants'],
+  ['pricing', 'Tarif ou chiffrage à compléter'],
+  ['technical', 'Information technique à vérifier'],
+  ['client', 'Attente d’un retour client'],
+  ['other', 'Autre'],
+] as const;
+const LOSS_REASONS = [
+  ['too_expensive', 'Trop cher'],
+  ['competitor', 'Concurrent choisi'],
+  ['abandoned', 'Projet abandonné'],
+  ['no_response', 'Pas de réponse'],
+  ['timing', 'Délai incompatible'],
+  ['out_of_scope', 'Besoin hors périmètre AtoumWeb'],
+  ['other', 'Autre'],
+] as const;
 
 function money(cents: number) {
   return `${(cents / 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €`;
@@ -41,10 +58,17 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
   const [channel, setChannel] = useState('email');
   const [recipient, setRecipient] = useState('');
   const [sendNote, setSendNote] = useState('');
+  const [pauseOpen, setPauseOpen] = useState(false);
+  const [pauseReason, setPauseReason] = useState('information');
+  const [pauseOther, setPauseOther] = useState('');
+  const [pauseNote, setPauseNote] = useState('');
   const [followDate, setFollowDate] = useState('');
   const [waitReason, setWaitReason] = useState('response');
   const [waitOther, setWaitOther] = useState('');
   const [resumeDate, setResumeDate] = useState('');
+  const [refuseOpen, setRefuseOpen] = useState(false);
+  const [lossReason, setLossReason] = useState('no_response');
+  const [lossOther, setLossOther] = useState('');
 
   async function load() {
     try {
@@ -57,7 +81,7 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
       setDetail(next[0] ? await window.atoumweb.quotes.get(next[0].id) : null);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
   }
-  useEffect(() => { setSendOpen(false); void load(); }, [prospect.id, prospect.stage]);
+  useEffect(() => { setSendOpen(false); setPauseOpen(false); setRefuseOpen(false); void load(); }, [prospect.id, prospect.stage]);
 
   const quote = detail;
   const isFinalized = Boolean(quote?.finalizedAt);
@@ -104,11 +128,17 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
 
   async function pauseQuote() {
     if (!quote) return;
-    const reason = window.prompt('Information manquante ou motif de pause', 'Attente d’informations complémentaires');
-    if (!reason?.trim()) return;
+    const label = PAUSE_REASONS.find(([key]) => key === pauseReason)?.[1] ?? 'Informations manquantes';
+    const reason = pauseReason === 'other' ? pauseOther.trim() : label;
+    if (!reason) { setError('Précise le motif de pause.'); return; }
     await run(async () => {
-      await window.atoumweb.crm.actions.create({ ownerType: 'prospect', ownerId: prospect.id, type: 'action', title: 'Compléter le devis avant envoi', notes: reason.trim(), relatedType: 'quote', relatedId: quote.id });
+      await window.atoumweb.crm.actions.create({
+        ownerType: 'prospect', ownerId: prospect.id, type: 'action', title: 'Compléter le devis avant envoi',
+        notes: pauseNote.trim() ? `${reason} — ${pauseNote.trim()}` : reason,
+        relatedType: 'quote', relatedId: quote.id,
+      });
     }, 'Devis conservé en préparation avec une action à réaliser.');
+    setPauseOpen(false); setPauseOther(''); setPauseNote('');
   }
 
   async function sendQuote() {
@@ -161,12 +191,15 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
 
   async function refuse() {
     if (!quote) return;
-    const reason = window.prompt('Raison du refus / de la perte', 'Projet refusé par le prospect');
-    if (!reason?.trim()) return;
+    const label = LOSS_REASONS.find(([key]) => key === lossReason)?.[1] ?? 'Projet refusé';
+    const reason = lossReason === 'other' ? lossOther.trim() : label;
+    if (!reason) { setError('Précise la raison du refus.'); return; }
     await run(async () => {
       if (quote.status === 'sent' || quote.status === 'viewed') await window.atoumweb.quotes.refuse(quote.id);
-      await window.atoumweb.crm.prospects.changeStage(prospect.id, 'lost', reason.trim());
+      await window.atoumweb.crm.prospects.updateQualification(prospect.id, { lostReasonCode: lossReason });
+      await window.atoumweb.crm.prospects.changeStage(prospect.id, 'lost', reason);
     }, 'Devis refusé et prospect classé perdu.');
+    setRefuseOpen(false); setLossOther('');
   }
 
   if (!quote) return <section className="prospect-work-section prospect-quote-panel"><div className="work-section-heading"><div><span className="eyebrow">Devis actif</span><strong>Aucun devis lié</strong></div></div><p className="muted">Le devis sera créé depuis les besoins du prospect et restera d’abord en préparation.</p></section>;
@@ -178,11 +211,12 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
     {sent && latestDispatch?.completionNotes && <p className="muted">Note d’envoi : {latestDispatch.completionNotes}</p>}
     {error && <p className="form-error">{error}</p>}
 
-    {canEdit && !isFinalized && <div className="quote-command-actions"><button className="secondary-button" type="button" disabled={busy} onClick={() => openQuote(quote)}>Modifier le devis</button><button className="secondary-button" type="button" disabled={busy} onClick={() => void pauseQuote()}>Mettre en pause / info manquante</button><button className="primary-button" type="button" disabled={busy} onClick={() => void finalize()}>Devis prêt à envoyer</button></div>}
+    {canEdit && !isFinalized && <><div className="quote-command-actions"><button className="secondary-button" type="button" disabled={busy} onClick={() => openQuote(quote)}>Modifier le devis</button><button className="secondary-button" type="button" disabled={busy} onClick={() => setPauseOpen((value) => !value)}>Mettre en pause / info manquante</button><button className="primary-button" type="button" disabled={busy} onClick={() => void finalize()}>Devis prêt à envoyer</button></div>{pauseOpen && <div className="inline-editor"><strong>Mettre le devis en pause</strong><label>Motif<select value={pauseReason} onChange={(e) => setPauseReason(e.target.value)}>{PAUSE_REASONS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>{pauseReason === 'other' && <label>Préciser<input value={pauseOther} onChange={(e) => setPauseOther(e.target.value)} /></label>}<label>Note<textarea value={pauseNote} onChange={(e) => setPauseNote(e.target.value)} placeholder="Ce qu’il faut récupérer ou vérifier" /></label><div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => setPauseOpen(false)}>Annuler</button><button className="primary-button" type="button" disabled={busy} onClick={() => void pauseQuote()}>Enregistrer la pause</button></div></div>}</>}
 
     {canEdit && isFinalized && <div className="quote-send-block"><button className="primary-button" type="button" onClick={() => setSendOpen((value) => !value)}>Envoyer / enregistrer l’envoi</button>{sendOpen && <div className="inline-editor"><strong>Envoi du devis</strong><label>Canal<select value={channel} onChange={(e) => setChannel(e.target.value)}>{CHANNELS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label><label>Destinataire<input value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder="Nom, email ou adresse utilisée" /></label><label>Note<textarea value={sendNote} onChange={(e) => setSendNote(e.target.value)} placeholder="Facultatif" /></label><div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => setSendOpen(false)}>Annuler</button><button className="primary-button" type="button" disabled={busy} onClick={() => void sendQuote()}>Confirmer l’envoi</button></div></div>}</div>}
 
-    {sent && <div className="quote-after-send"><div className="quote-command-actions"><button className="secondary-button" type="button" onClick={() => openQuote(quote)}>Prévisualiser / consulter</button><button className="secondary-button" type="button" disabled={busy} onClick={() => void negotiation()}>Négociation</button><button className="secondary-button" type="button" disabled={busy} onClick={() => void duplicate()}>Refaire / dupliquer le devis</button><button className="primary-button" type="button" disabled={busy} onClick={() => void accept()}>Devis accepté</button><button className="secondary-button danger-outline" type="button" disabled={busy} onClick={() => void refuse()}>Refusé / Perdu</button></div>
+    {sent && <div className="quote-after-send"><div className="quote-command-actions"><button className="secondary-button" type="button" onClick={() => openQuote(quote)}>Prévisualiser / consulter</button><button className="secondary-button" type="button" disabled={busy} onClick={() => void negotiation()}>Négociation</button><button className="secondary-button" type="button" disabled={busy} onClick={() => void duplicate()}>Refaire / dupliquer le devis</button><button className="primary-button" type="button" disabled={busy} onClick={() => void accept()}>Devis accepté</button><button className="secondary-button danger-outline" type="button" disabled={busy} onClick={() => setRefuseOpen((value) => !value)}>Refusé / Perdu</button></div>
+      {refuseOpen && <div className="inline-editor"><strong>Refus / perte du prospect</strong><label>Raison<select value={lossReason} onChange={(e) => setLossReason(e.target.value)}>{LOSS_REASONS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>{lossReason === 'other' && <label>Préciser<input value={lossOther} onChange={(e) => setLossOther(e.target.value)} /></label>}<div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => setRefuseOpen(false)}>Annuler</button><button className="secondary-button danger-outline" type="button" disabled={busy} onClick={() => void refuse()}>Confirmer le refus</button></div></div>}
       <div className="followup-inline"><label>Prochaine relance<input type="date" value={followDate} onChange={(e) => setFollowDate(e.target.value)} /></label><button className="secondary-button" type="button" disabled={busy || !followDate} onClick={() => void scheduleFollowUp()}>Programmer la relance</button></div>
       <details className="waiting-inline"><summary>Mettre en attente</summary><div className="waiting-form"><label>Motif<select value={waitReason} onChange={(e) => setWaitReason(e.target.value)}>{WAITING_REASONS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>{waitReason === 'other' && <label>Préciser<input value={waitOther} onChange={(e) => setWaitOther(e.target.value)} /></label>}<label>Date de reprise <small>(facultative)</small><input type="date" value={resumeDate} onChange={(e) => setResumeDate(e.target.value)} /></label><button className="secondary-button" type="button" disabled={busy} onClick={() => void waiting()}>Confirmer l’attente</button></div></details>
     </div>}
