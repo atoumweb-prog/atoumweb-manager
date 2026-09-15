@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { CatalogItemSummary, CatalogVersion, PriceMode } from '../../shared/commercial';
 import type { ProspectSummary } from '../../shared/crm';
 import type { Need } from '../../shared/workflow';
+import { ProspectPreQuoteReview } from './ProspectPreQuoteReview';
 
 const CATEGORY_ORDER = ['Web', 'E-commerce', 'Maintenance', 'Contenu', 'SEO / Visibilité', 'Visibilité', 'Identité visuelle', 'Création', 'Applications & outils métier', 'Applications', 'Mariage'];
 
@@ -260,6 +261,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
       </div>
     </div>
 
+    {prospect && <ProspectPreQuoteReview prospect={prospect} needs={needs} catalog={catalog} onChanged={() => { void load(); onChanged?.(); }} />}
     {needs.length === 0 && <p className="muted">Commence par sélectionner au moins une solution ou prestation envisagée. Rien n’est encore envoyé au devis à ce stade.</p>}
   </section>;
 }
