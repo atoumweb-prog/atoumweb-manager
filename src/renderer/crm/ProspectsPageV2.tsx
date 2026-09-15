@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import type { QuoteSummary } from '../../shared/commercial';
 import {
   PROSPECT_SOURCES,
   PROSPECT_TEMPERATURES,
@@ -80,6 +81,13 @@ const EMPTY_DRAFT: ProspectDraft = {
 type View = 'pipeline' | 'history';
 
 function formatDate(value?: string | null) { return value ? new Date(value).toLocaleDateString('fr-FR') : 'Sans date'; }
+function formatMoney(cents: number) { return `${(cents / 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €`; }
+function daysRemaining(value?: string | null): number | null {
+  if (!value) return null;
+  const timestamp = new Date(value).getTime();
+  if (!Number.isFinite(timestamp)) return null;
+  return Math.ceil((timestamp - Date.now()) / 86_400_000);
+}
 function isClosed(prospect: ProspectSummary) { return Boolean(prospect.archivedAt || prospect.clientAccountId || prospect.stage === 'won' || prospect.stage === 'lost'); }
 function isQuoteFollowUpStage(stage?: ProspectStage | null) { return QUOTE_FOLLOW_UP_STAGES.includes(stage ?? 'new'); }
 function manualStages(prospect: ProspectSummary): ProspectStage[] { return MANUAL_STAGE_OPTIONS[prospect.stage ?? 'new'].filter((stage) => ACTIVE_STAGES.includes(stage)); }
@@ -103,10 +111,21 @@ function nextOpenAction(actions: CrmAction[]): CrmAction | null {
       return a.dueAt.localeCompare(b.dueAt);
     })[0] ?? null;
 }
+function quoteCardState(prospect: ProspectSummary, quote: QuoteSummary): string {
+  if (quote.status === 'refused') return 'Devis refusé';
+  if (quote.status === 'expired') return 'Devis caduc';
+  if (prospect.stage === 'negotiation') return 'À modifier · Négociation';
+  if (prospect.stage === 'quote_to_send') return 'Prêt à envoyer';
+  if (prospect.stage === 'quote_to_prepare') return 'Brouillon à préparer';
+  if (prospect.stage === 'waiting') return 'En attente';
+  if (prospect.stage === 'follow_up') return 'Relance à effectuer';
+  return 'En attente de retour';
+}
 
 export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: string) => void; initialId?: string | null }) {
   const [prospects, setProspects] = useState<ProspectSummary[]>([]);
   const [actions, setActions] = useState<CrmAction[]>([]);
+  const [quotes, setQuotes] = useState<QuoteSummary[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
   const [view, setView] = useState<View>('pipeline');
   const [loading, setLoading] = useState(true);
@@ -126,8 +145,12 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
   async function refresh() {
     setLoading(true);
     try {
-      const [nextProspects, nextActions] = await Promise.all([window.atoumweb.crm.prospects.list({ includeArchived: true }), window.atoumweb.crm.actions.list({ ownerType: 'prospect' })]);
-      setProspects(nextProspects); setActions(nextActions);
+      const [nextProspects, nextActions, nextQuotes] = await Promise.all([
+        window.atoumweb.crm.prospects.list({ includeArchived: true }),
+        window.atoumweb.crm.actions.list({ ownerType: 'prospect' }),
+        window.atoumweb.quotes.list(),
+      ]);
+      setProspects(nextProspects); setActions(nextActions); setQuotes(nextQuotes);
       if (selectedId && !nextProspects.some((item) => item.id === selectedId)) setSelectedId(null);
       if (deskModeId && !nextProspects.some((item) => item.id === deskModeId)) setDeskModeId(null);
     } finally { setLoading(false); }
@@ -199,12 +222,15 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
   async function scheduleAt(prospect: ProspectSummary, dueAt: Date) {
     try {
       const quoteFollowUp = isQuoteFollowUpStage(prospect.stage);
+      const latestQuote = quotes.find((item) => item.prospectId === prospect.id) ?? null;
       await window.atoumweb.crm.actions.create({
         ownerType: 'prospect',
         ownerId: prospect.id,
         type: quoteFollowUp ? 'follow_up' : 'action',
-        title: quoteFollowUp ? 'Relancer le prospect' : 'Rappeler le prospect',
+        title: quoteFollowUp && latestQuote ? `Relancer pour le devis ${latestQuote.number}` : quoteFollowUp ? 'Relancer le prospect' : 'Rappeler le prospect',
         dueAt: dueAt.toISOString(),
+        relatedType: quoteFollowUp && latestQuote ? 'quote' : null,
+        relatedId: quoteFollowUp && latestQuote ? latestQuote.id : null,
       });
       setScheduleDateForId(null);
       setScheduleDate('');
@@ -276,7 +302,16 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
         <label>Température commerciale<select value={draft.temperature} onChange={(e) => setDraft({ ...draft, temperature: e.target.value as ProspectTemperature })}>{PROSPECT_TEMPERATURES.map((temperature) => <option key={temperature} value={temperature}>{TEMPERATURE_LABELS[temperature]}</option>)}</select></label><label>Valeur estimée (€)<input inputMode="decimal" value={draft.estimatedValueEuros} onChange={(e) => setDraft({ ...draft, estimatedValueEuros: e.target.value })} /></label>
         <label>Première action — date<input type="date" value={draft.firstActionDate} onChange={(e) => setDraft({ ...draft, firstActionDate: e.target.value })} /></label><label className="form-span-2">Première action<input value={draft.firstActionText} onChange={(e) => setDraft({ ...draft, firstActionText: e.target.value })} placeholder="Ex. appeler le prospect" /></label>
       </div>{formError && <p className="form-error" role="alert">{formError}</p>}<div className="form-actions"><button className="primary-button" disabled={saving} type="submit">{saving ? 'Création…' : 'Créer le prospect'}</button></div></form>}
-      {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'}><div className="kanban-board">{ACTIVE_STAGES.map((stage) => <section className={`kanban-column ${dropStage === stage ? 'drag-over' : ''}`} key={stage} onDragOver={(e) => e.preventDefault()} onDragEnter={() => setDropStage(stage)} onDrop={(e) => { e.preventDefault(); void handleDrop(stage); }}><header><strong>{STAGE_LABELS[stage]}</strong><span>{byStage.get(stage)?.length ?? 0}</span></header><div className="kanban-cards stacked-cards">{(byStage.get(stage) ?? []).map((prospect) => { const expanded = expandedId === prospect.id; const itemActions = actions.filter((a) => a.ownerId === prospect.id && a.status === 'open'); const quoteFollowUp = isQuoteFollowUpStage(prospect.stage); const nextAction = nextOpenAction(itemActions); return <article className={`prospect-card stacked-card prospect-temperature-${prospect.temperature ?? 'neutral'} ${expanded ? 'expanded-card' : 'collapsed-card'} ${selectedId === prospect.id ? 'selected-prospect' : ''}`} key={prospect.id}><div className="prospect-card-head card-drag-handle" draggable onDragStart={(e) => { setDraggingId(prospect.id); e.dataTransfer.setData('text/plain', prospect.id); }} onClick={() => { setSelectedId(prospect.id); setExpandedId((id) => id === prospect.id ? null : prospect.id); }}><strong>{prospect.displayName}</strong><span className={`temperature temperature-${prospect.temperature ?? 'neutral'}`}>{TEMPERATURE_LABELS[prospect.temperature ?? 'neutral']}</span></div><div className="prospect-card-body"><small>{prospect.secondaryLabel || 'Interlocuteur à préciser'}</small><p>{prospect.primaryNeed || (prospect.stage === 'new' || prospect.stage === 'qualifying' ? 'Besoin à travailler plus tard' : 'Besoin à préciser')}</p>{prospect.estimatedValueCents != null && <small>Estimation : {(prospect.estimatedValueCents / 100).toLocaleString('fr-FR')} €</small>}{nextAction && <div className="card-action-line next-action-line"><span>Prochaine action</span><strong>{nextAction.title}</strong><small>{formatDate(nextAction.dueAt)}</small></div>}<div className="quick-followups"><button type="button" onClick={() => void scheduleQuick(prospect, 1)}>{quoteFollowUp ? 'Relance demain' : 'Rappel demain'}</button><button type="button" onClick={() => void scheduleQuick(prospect, 7)}>{quoteFollowUp ? 'Relance +7 jours' : 'Rappel +7 jours'}</button><button type="button" onClick={() => { setScheduleDateForId((id) => id === prospect.id ? null : prospect.id); setScheduleDate(''); }}>Programmer…</button></div>{scheduleDateForId === prospect.id && <div className="quick-date-scheduler"><input aria-label="Date du rappel" type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} /><button type="button" className="secondary-button" onClick={() => void scheduleExact(prospect)}>Programmer</button></div>}{prospect.stage === 'new' && <button type="button" className="primary-button card-start-button" onClick={() => void startProspecting(prospect)}>Démarrer la prospection</button>}<span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span></div></article>; })}{(byStage.get(stage)?.length ?? 0) === 0 && <div className="kanban-empty">Déposer ici</div>}</div></section>)}</div>{selected && !deskProspect && detail}</div>}
+      {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'}><div className="kanban-board">{ACTIVE_STAGES.map((stage) => <section className={`kanban-column ${dropStage === stage ? 'drag-over' : ''}`} key={stage} onDragOver={(e) => e.preventDefault()} onDragEnter={() => setDropStage(stage)} onDrop={(e) => { e.preventDefault(); void handleDrop(stage); }}><header><strong>{STAGE_LABELS[stage]}</strong><span>{byStage.get(stage)?.length ?? 0}</span></header><div className="kanban-cards stacked-cards">{(byStage.get(stage) ?? []).map((prospect) => {
+        const expanded = expandedId === prospect.id;
+        const itemActions = actions.filter((a) => a.ownerId === prospect.id && a.status === 'open');
+        const quoteFollowUp = isQuoteFollowUpStage(prospect.stage);
+        const nextAction = nextOpenAction(itemActions);
+        const latestQuote = quotes.find((quote) => quote.prospectId === prospect.id) ?? null;
+        const quoteRemaining = daysRemaining(latestQuote?.validUntil);
+        const showQuoteFocus = Boolean(latestQuote && QUOTE_VISIBLE_STAGES.includes(prospect.stage ?? 'new'));
+        return <article className={`prospect-card stacked-card prospect-temperature-${prospect.temperature ?? 'neutral'} ${expanded ? 'expanded-card' : 'collapsed-card'} ${selectedId === prospect.id ? 'selected-prospect' : ''}`} key={prospect.id}><div className="prospect-card-head card-drag-handle" draggable onDragStart={(e) => { setDraggingId(prospect.id); e.dataTransfer.setData('text/plain', prospect.id); }} onClick={() => { setSelectedId(prospect.id); setExpandedId((id) => id === prospect.id ? null : prospect.id); }}><strong>{prospect.displayName}</strong><span className={`temperature temperature-${prospect.temperature ?? 'neutral'}`}>{TEMPERATURE_LABELS[prospect.temperature ?? 'neutral']}</span></div><div className="prospect-card-body"><small>{prospect.secondaryLabel || 'Interlocuteur à préciser'}</small>{showQuoteFocus && latestQuote ? <div className="prospect-card-quote-focus"><span>{quoteCardState(prospect, latestQuote)}</span><strong>{latestQuote.number} · {latestQuote.subject}</strong><div className="prospect-card-quote-meta"><b>{formatMoney(latestQuote.contractValueCents)}</b>{latestQuote.sentAt && <span>Envoyé {formatDate(latestQuote.sentAt)}</span>}{latestQuote.validUntil && <span>Valide jusqu’au {formatDate(latestQuote.validUntil)}</span>}{quoteFollowUp && quoteRemaining != null && <span>{quoteRemaining < 0 ? 'Caduc' : `${quoteRemaining} j restant${quoteRemaining > 1 ? 's' : ''}`}</span>}</div></div> : <><p>{prospect.primaryNeed || (prospect.stage === 'new' || prospect.stage === 'qualifying' ? 'Besoin à travailler plus tard' : 'Besoin à préciser')}</p>{prospect.estimatedValueCents != null && <small>Estimation : {(prospect.estimatedValueCents / 100).toLocaleString('fr-FR')} €</small>}</>}{nextAction && <div className="card-action-line next-action-line"><span>Prochaine action</span><strong>{nextAction.title}</strong><small>{formatDate(nextAction.dueAt)}</small></div>}<div className="quick-followups"><button type="button" onClick={() => void scheduleQuick(prospect, 1)}>{quoteFollowUp ? 'Relance demain' : 'Rappel demain'}</button><button type="button" onClick={() => void scheduleQuick(prospect, 7)}>{quoteFollowUp ? 'Relance +7 jours' : 'Rappel +7 jours'}</button><button type="button" onClick={() => { setScheduleDateForId((id) => id === prospect.id ? null : prospect.id); setScheduleDate(''); }}>Programmer…</button></div>{scheduleDateForId === prospect.id && <div className="quick-date-scheduler"><input aria-label="Date du rappel" type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} /><button type="button" className="secondary-button" onClick={() => void scheduleExact(prospect)}>Programmer</button></div>}{prospect.stage === 'new' && <button type="button" className="primary-button card-start-button" onClick={() => void startProspecting(prospect)}>Démarrer la prospection</button>}<span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span></div></article>;
+      })}{(byStage.get(stage)?.length ?? 0) === 0 && <div className="kanban-empty">Déposer ici</div>}</div></section>)}</div>{selected && !deskProspect && detail}</div>}
     </> : <HistoryView prospects={closed.filter((item) => [item.displayName, item.primaryNeed, item.lostReason].filter(Boolean).join(' ').toLocaleLowerCase('fr-FR').includes(historySearch.toLocaleLowerCase('fr-FR')))} search={historySearch} onSearch={setHistorySearch} onSelect={(item) => setSelectedId(item.id)} selected={selected} activity={activity} onClose={() => setSelectedId(null)} />}
     {deskProspect && <div className="prospect-desk-overlay" role="dialog" aria-modal="true" aria-label={`Fiche de travail ${deskProspect.displayName}`}><div className="prospect-desk-shell"><ProspectDetailV2 prospect={deskProspect} actions={actions.filter((item) => item.ownerId === deskProspect.id)} activity={selectedId === deskProspect.id ? activity : []} mode="desk" onRefresh={(message) => { void refresh(); if (message) onMessage(message); }} onClose={() => setDeskModeId(null)} onTemperature={(temperature) => void updateTemperature(deskProspect, temperature)} onStart={() => void startProspecting(deskProspect)} onLost={(code, reason) => void markLost(deskProspect, code, reason)} onArchive={() => void archive(deskProspect)} /></div></div>}
   </div>;
@@ -307,7 +342,7 @@ function ProspectDetailV2({ prospect, actions, activity, mode, onRefresh, onClos
     {prospect.stage === 'new' && <button className="primary-button start-qualification-button" onClick={onStart}>Démarrer la prospection</button>}
     <ProspectIdentityPanel prospect={prospect} onSaved={() => onRefresh('Informations du prospect mises à jour.')} />
     {prospect.stage === 'qualifying' && <ProspectQualificationPanelV2 prospect={prospect} onSaved={onRefresh} />}
-    {prospect.stage === 'need_identified' && <><ProspectNeedsPanel prospectId={prospect.id} onChanged={() => onRefresh()} /><section className="prospect-work-section prequote-gate-placeholder"><div className="work-section-heading"><div><span className="eyebrow">Étape suivante</span><strong>Contrôle avant devis</strong></div></div><p className="muted">Le passage au devis se fera ici après vérification des informations nécessaires au chiffrage. Tant que ce contrôle n’est pas validé, le prospect reste dans « Besoin à identifier ».</p><button className="primary-button" type="button" disabled>Contrôler avant devis — en cours de mise en place</button></section></>}
+    {prospect.stage === 'need_identified' && <ProspectNeedsPanel prospectId={prospect.id} onChanged={() => onRefresh()} />}
     {quoteVisible && <ProspectQuotePanel prospect={prospect} onChanged={onRefresh} />}
     <ProspectActionsPanel prospect={prospect} actions={actions} onChanged={onRefresh} />
     <div className="detail-actions"><button className="secondary-button danger-outline" onClick={() => setLossOpen((value) => !value)}>Perdu</button><button className="secondary-button" onClick={onArchive}>Archiver le prospect</button></div>
