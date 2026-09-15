@@ -12,11 +12,12 @@ import type {
 import type {
   BackupResult,
   BootstrapState,
+  DisplayDensity,
   RestoreScheduleResult,
   ThemeName,
   WorkspaceChangeResult,
 } from '../shared/contracts';
-import { isThemeName } from '../shared/contracts';
+import { isDisplayDensity, isThemeName } from '../shared/contracts';
 import type {
   ClientContactRole,
   ClientFilters,
@@ -79,13 +80,21 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   });
   ipcMain.handle('app:get-bootstrap', (): BootstrapState => {
     const storedTheme = database.getSetting<unknown>('theme', 'atoumweb');
+    const storedDensity = database.getSetting<unknown>('display_density', 'comfort');
     const theme: ThemeName = isThemeName(storedTheme) ? storedTheme : 'atoumweb';
-    return { appVersion: app.getVersion(), workspacePath: workspace.root, databasePath: workspace.databaseFile, theme, database: database.health() };
+    const displayDensity: DisplayDensity = isDisplayDensity(storedDensity) ? storedDensity : 'comfort';
+    return { appVersion: app.getVersion(), workspacePath: workspace.root, databasePath: workspace.databaseFile, theme, displayDensity, database: database.health() };
   });
 
   ipcMain.handle('settings:set-theme', (_event, value: unknown): ThemeName => {
     if (!isThemeName(value)) throw new Error('Thème invalide.');
     database.setSetting('theme', value);
+    return value;
+  });
+
+  ipcMain.handle('settings:set-display-density', (_event, value: unknown): DisplayDensity => {
+    if (!isDisplayDensity(value)) throw new Error('Densité d’affichage invalide.');
+    database.setSetting('display_density', value);
     return value;
   });
 
