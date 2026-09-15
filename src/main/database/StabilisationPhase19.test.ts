@@ -13,28 +13,55 @@ import {NodeSqliteAdapter} from './NodeSqliteAdapter';
 import {applyPendingMigrations,getPendingMigrations} from './migrations';
 import {createWorkspacePaths} from '../workspace';
 
-describe('stabilisation commerciale migration 19',()=>{
+describe('stabilisation commerciale migrations 19 et 20',()=>{
  let db:NodeSqliteAdapter,crm:CrmService,actions:ActionService,quotes:QuoteService,workflow:WorkflowService,documents:ClientDocumentService,root:string;
- beforeEach(()=>{root=mkdtempSync(join(tmpdir(),'atoumweb-v19-'));db=new NodeSqliteAdapter(':memory:');db.exec('PRAGMA foreign_keys=ON');applyPendingMigrations(db);crm=new CrmService(db);actions=new ActionService(db);quotes=new QuoteService(db,crm);const workspace=createWorkspacePaths(root);workflow=new WorkflowService(db,crm,quotes,new ProjectService(db,workspace),new OperationsService(db));documents=new ClientDocumentService(db,workspace);});
+ beforeEach(()=>{root=mkdtempSync(join(tmpdir(),'atoumweb-v20-'));db=new NodeSqliteAdapter(':memory:');db.exec('PRAGMA foreign_keys=ON');applyPendingMigrations(db);crm=new CrmService(db);actions=new ActionService(db);quotes=new QuoteService(db,crm);const workspace=createWorkspacePaths(root);workflow=new WorkflowService(db,crm,quotes,new ProjectService(db,workspace),new OperationsService(db));documents=new ClientDocumentService(db,workspace);});
  afterEach(()=>{db.close();const target=resolve(root);if(!target.startsWith(resolve(tmpdir())))throw Error('Chemin temporaire invalide');rmSync(target,{recursive:true,force:true});});
 
- it('migre une seule fois les coordonnées historiques et les rend recherchables',()=>{
+ it('met à niveau une base 18, conserve les coordonnées historiques et ajoute le workflow prospect v2',()=>{
    const legacy=new NodeSqliteAdapter(':memory:');legacy.exec('PRAGMA foreign_keys=ON');
    for(const migration of getPendingMigrations(legacy).filter(m=>m.id<=18)){legacy.exec(migration.sql);legacy.run('INSERT INTO schema_migrations VALUES (?,?,?)',[migration.id,migration.name,new Date().toISOString()]);}
    legacy.run("INSERT INTO organizations (id,name,email,phone,created_at,updated_at) VALUES ('o','Atoum Test','contact@atoum.test','0102030405','x','x')");
    legacy.run("INSERT INTO prospects (id,organization_id,stage,temperature,created_at,updated_at) VALUES ('p','o','new','warm','x','x')");
    legacy.run("INSERT INTO crm_needs (id,prospect_id,other_text,created_at) VALUES ('n','p','Besoin conservé','x')");
    legacy.run("INSERT INTO activity_events (id,entity_type,entity_id,action,summary,prospect_id,created_at) VALUES ('a','prospect','p','created','Historique conservé','p','x')");
-   expect(applyPendingMigrations(legacy).map(m=>m.id)).toEqual([19]);expect(applyPendingMigrations(legacy)).toEqual([]);
+   expect(applyPendingMigrations(legacy).map(m=>m.id)).toEqual([19,20]);expect(applyPendingMigrations(legacy)).toEqual([]);
    expect(legacy.all('SELECT method_type,value FROM contact_methods ORDER BY method_type')).toEqual([{method_type:'email',value:'contact@atoum.test'},{method_type:'phone',value:'0102030405'}]);
    expect(legacy.get("SELECT other_text FROM crm_needs WHERE id='n'")).toEqual({other_text:'Besoin conservé'});
    expect(legacy.get("SELECT summary FROM activity_events WHERE id='a'")).toEqual({summary:'Historique conservé'});
+   expect(legacy.get("SELECT origin_type FROM prospects WHERE id='p'")).toEqual({origin_type:'other'});
+   expect(legacy.get<{name:string}>("SELECT name FROM pragma_table_info('prospects') WHERE name='decision_maker_contact_id'")?.name).toBe('decision_maker_contact_id');
    expect(legacy.all('PRAGMA foreign_key_check')).toEqual([]);legacy.close();
  });
 
  it('gère plusieurs coordonnées et les inclut dans la recherche',()=>{const org=crm.createOrganization({name:'Société'});crm.saveContactMethod({organizationId:org.id,type:'email',value:'direction@example.test',isPrimary:true});crm.saveContactMethod({organizationId:org.id,type:'phone',value:'0600000000',label:'Portable'});expect(crm.listContactMethods('organization',org.id)).toHaveLength(2);expect(crm.globalSearch('060000').some(r=>r.entityId===org.id)).toBe(true);});
 
- it('autorise les besoins vides au départ puis les exige dans le parcours avancé',()=>{const org=crm.createOrganization({name:'Qualification'}),prospect=crm.createProspect({organizationId:org.id});expect(prospect.temperature).toBe('neutral');crm.changeProspectStage(prospect.id,'qualifying');expect(()=>crm.changeProspectStage(prospect.id,'need_identified')).toThrow(/besoin/);workflow.saveNeed('prospect',prospect.id,{otherText:'Refonte'});crm.updateProspectQualification(prospect.id,{projectSummary:'Refonte du site',decisionStatus:'yes',budgetStatus:'not_disclosed',timelineStatus:'note',timelineNote:'Cet automne',existingStatus:'yes'});expect(crm.changeProspectStage(prospect.id,'need_identified').stage).toBe('need_identified');});
+ it('sépare la qualification de l identification détaillée du besoin',()=>{
+   const org=crm.createOrganization({name:'Qualification'}),prospect=crm.createProspect({organizationId:org.id,source:'other'});
+   crm.saveContactMethod({organizationId:org.id,type:'email',value:'contact@qualification.test',isPrimary:true});
+   expect(prospect.temperature).toBe('neutral');
+   crm.changeProspectStage(prospect.id,'qualifying');
+   expect(()=>crm.changeProspectStage(prospect.id,'need_identified')).toThrow(/Qualification incomplète/);
+   crm.updateProspectQualification(prospect.id,{projectSummary:'Premier échange à approfondir',decisionStatus:'yes'});
+   const identified=crm.changeProspectStage(prospect.id,'need_identified');
+   expect(identified.stage).toBe('need_identified');
+   expect(identified.qualificationValidatedAt).toBeTruthy();
+   expect(workflow.needs('prospect',prospect.id)).toHaveLength(0);
+ });
+
+ it('rattache le décisionnaire à un vrai Contact sans dupliquer ses coordonnées',()=>{
+   const org=crm.createOrganization({name:'Décision'});
+   const primary=crm.createContact({organizationId:org.id,firstName:'Lucie',lastName:'Martin'});
+   const decision=crm.createContact({organizationId:org.id,firstName:'Marc',lastName:'Martin',jobTitle:'Gérant'});
+   crm.saveContactMethod({contactId:decision.id,type:'email',value:'marc@example.test',isPrimary:true});
+   const prospect=crm.createProspect({organizationId:org.id,contactId:primary.id,source:'referral'});
+   workflow.setDecisionMaker(prospect.id,decision.id);
+   crm.updateProspectQualification(prospect.id,{decisionStatus:'no',decisionMakerDetails:'Validation par le gérant'});
+   const identity=workflow.identity('prospect',prospect.id);
+   expect(identity.decisionMaker?.id).toBe(decision.id);
+   expect(identity.decisionMaker?.jobTitle).toBe('Gérant');
+   expect(crm.listContactMethods('contact',decision.id).map(method=>method.value)).toEqual(['marc@example.test']);
+ });
 
  it('finalise puis envoie un devis sans déverrouiller son contenu envoyé',()=>{const org=crm.createOrganization({name:'Devis'}),p=crm.createProspect({organizationId:org.id});workflow.saveNeed('prospect',p.id,{otherText:'Mission'});const q=quotes.create({prospectId:p.id,subject:'Mission'});quotes.addCustomLine(q.id,{label:'Mission',proposedUnitPriceCents:10000});expect(quotes.finalize(q.id).status).toBe('draft');expect(crm.listProspects().find(x=>x.id===p.id)?.stage).toBe('quote_to_send');quotes.markSent(q.id);expect(crm.listProspects().find(x=>x.id===p.id)?.stage).toBe('quote_sent');expect(()=>quotes.addCustomLine(q.id,{label:'Interdit',proposedUnitPriceCents:1})).toThrow(/copie/);});
 
