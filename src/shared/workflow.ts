@@ -9,6 +9,7 @@ export interface WorkflowApi {
   saveNeed(owner: 'prospect' | 'client', id: string, input: NeedInput, needId?: string): Promise<Need[]>;
   removeNeed(owner: 'prospect' | 'client', id: string, needId: string): Promise<Need[]>;
   identity(owner: 'prospect' | 'client', id: string): Promise<WorkflowIdentity>;
+  setDecisionMaker(prospectId: string, contactId: string | null): Promise<WorkflowIdentity>;
   archiveProspect(id: string, archived: boolean): Promise<void>;
   dashboard(): Promise<DashboardEntry[]>;
   beginDemoCapture(label: string): Promise<string>;
