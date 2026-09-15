@@ -1,0 +1,150 @@
+/* Réglage global de lisibilité — Compact / Confort / Confort +. */
+:root {
+  --ui-font-base: 16px;
+  --ui-font-secondary: 14px;
+  --ui-font-small: 13px;
+  --ui-control-height: 42px;
+  --ui-control-pad-y: 10px;
+  --ui-control-pad-x: 12px;
+  --ui-panel-pad: 22px;
+  --ui-gap: 12px;
+}
+
+:root[data-density='compact'] {
+  --ui-font-base: 14px;
+  --ui-font-secondary: 12px;
+  --ui-font-small: 11px;
+  --ui-control-height: 34px;
+  --ui-control-pad-y: 7px;
+  --ui-control-pad-x: 9px;
+  --ui-panel-pad: 16px;
+  --ui-gap: 8px;
+}
+
+:root[data-density='comfort_plus'] {
+  --ui-font-base: 18px;
+  --ui-font-secondary: 16px;
+  --ui-font-small: 14px;
+  --ui-control-height: 48px;
+  --ui-control-pad-y: 12px;
+  --ui-control-pad-x: 14px;
+  --ui-panel-pad: 26px;
+  --ui-gap: 16px;
+}
+
+body { font-size: var(--ui-font-base); }
+
+button,
+input,
+select,
+textarea { font-size: inherit; }
+
+.panel { padding: var(--ui-panel-pad); }
+.muted,
+.page-heading p,
+.notice,
+.global-search input,
+.timer-context,
+.foundation-row span,
+.foundation-row strong,
+.empty-module p { font-size: var(--ui-font-secondary); }
+
+.status-pill,
+.eyebrow,
+.database-chip,
+.kpi-card > span,
+.kpi-card small,
+.success-badge,
+.primary-button,
+.secondary-button,
+.theme-card strong,
+.theme-card > span:last-child,
+.path-value { font-size: var(--ui-font-small); }
+
+.primary-button,
+.secondary-button,
+.prospect-create-v2 input,
+.prospect-create-v2 select,
+.prospect-detail-v2 input,
+.prospect-detail-v2 select,
+.workflow-row input,
+.workflow-row select,
+.contact-method-add input,
+.contact-method-add select,
+.need-add-row input,
+.need-add-row select,
+.waiting-form input,
+.waiting-form select,
+.followup-inline input {
+  min-height: var(--ui-control-height);
+  padding: var(--ui-control-pad-y) var(--ui-control-pad-x);
+}
+
+.prospect-create-v2 textarea,
+.prospect-detail-v2 textarea,
+.workflow-row textarea { padding: var(--ui-control-pad-y) var(--ui-control-pad-x); }
+
+/* Le mode Confort est volontairement plus lisible que l'ancienne recette. */
+.prospect-card,
+.prospect-detail-v2,
+.prospect-create-v2,
+.prospect-work-section { font-size: var(--ui-font-base); }
+
+.prospect-card small,
+.prospect-card .card-state-control label,
+.prospect-controls-v2 label,
+.identity-summary-grid span,
+.contact-methods-panel > summary small,
+.details-hint,
+.contact-method-add label,
+.need-add-row label,
+.need-suggestions > span,
+.workflow-fields .check-option,
+.quote-command-header small,
+.quote-command-summary span,
+.followup-inline label,
+.waiting-form label,
+.previous-quotes summary,
+.inline-editor label,
+.closed-prospect-card small { font-size: var(--ui-font-small); }
+
+.identity-summary-grid strong,
+.contact-methods-panel > summary strong,
+.contact-method-group > strong,
+.contact-method-row span,
+.need-current-row > div:first-child span,
+.quote-command-header strong,
+.quote-command-summary strong,
+.inline-editor > strong,
+.closed-prospect-card strong { font-size: var(--ui-font-secondary); }
+
+.workflow-fields .check-option {
+  min-height: 38px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.workflow-fields .check-option input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  accent-color: var(--accent-strong);
+}
+
+:root[data-density='compact'] .workflow-fields .check-option { min-height: 32px; }
+:root[data-density='compact'] .workflow-fields .check-option input[type='checkbox'] { width: 17px; height: 17px; flex-basis: 17px; }
+:root[data-density='comfort_plus'] .workflow-fields .check-option { min-height: 46px; }
+:root[data-density='comfort_plus'] .workflow-fields .check-option input[type='checkbox'] { width: 24px; height: 24px; flex-basis: 24px; }
+
+/* Réglage lui-même. */
+.density-settings { display: grid; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+.density-settings h2 { margin-bottom: 4px; }
+.density-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.density-card { display: grid; gap: 6px; min-height: 92px; padding: 13px; text-align: left; cursor: pointer; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-soft); color: var(--text); }
+.density-card.selected { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: color-mix(in srgb, var(--accent) 7%, var(--surface-soft)); }
+.density-card strong { font-size: var(--ui-font-base); }
+.density-card span { color: var(--muted); font-size: var(--ui-font-secondary); line-height: 1.45; }
+
+@media (max-width: 900px) {
+  .density-grid { grid-template-columns: 1fr; }
+}
