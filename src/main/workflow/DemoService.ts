@@ -86,6 +86,7 @@ export class DemoService {
       const quote=services.quotes.create({prospectId:prospect.id,subject:'DEMO — '+label+' — '+scenario});
       services.quotes.addCatalogLine(quote.id,services.catalog.getItem('atoumweb-'+key).currentVersion!.id);
       if(scenario==='vitrine') services.quotes.addCatalogLine(quote.id,services.catalog.getItem('atoumweb-article-seo').currentVersion!.id);
+      services.quotes.finalize(quote.id);
       services.quotes.markSent(quote.id);
       const accepted=services.quotes.accept(quote.id);
       const project=services.projects.transformQuote({quoteId:quote.id,templateVersionId:template.currentVersion!.id,targetDate:new Date(Date.now()+21*86400000).toISOString().slice(0,10)});
