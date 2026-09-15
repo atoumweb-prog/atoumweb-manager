@@ -1,203 +1,239 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { ProspectInput, ProspectSummary } from '../../shared/crm';
+import type { ProspectInput, ProspectOrigin, ProspectSummary } from '../../shared/crm';
+import { validateEmail, validatePhone } from '../../shared/contactValidation';
 
-const MISSING_OPTIONS = [
-  ['logo', 'Logo / charte graphique'],
-  ['texts', 'Textes / contenus'],
-  ['photos', 'Photos / médias'],
-  ['hosting', 'Accès hébergement'],
-  ['domain', 'Nom de domaine'],
-  ['legal', 'Informations légales'],
-  ['budget', 'Budget à confirmer'],
-  ['decision', 'Validation du décideur'],
-  ['brief', 'Cahier des charges / brief'],
+const TARGETING_REASONS = [
+  ['no_site', 'Pas de site'],
+  ['old_site', 'Site vieillissant'],
+  ['not_mobile', 'Site non adapté mobile'],
+  ['poor_local_visibility', 'Mauvaise visibilité locale'],
+  ['poor_conversion', 'Pas de réservation / prise de contact efficace'],
+  ['weak_identity', 'Identité visuelle faible'],
+  ['social_only', 'Réseaux présents mais pas de site'],
+  ['no_shop', 'Boutique absente'],
+  ['automation', 'Besoin d’automatisation'],
+  ['business_opportunity', 'Opportunité métier repérée'],
+  ['other', 'Autre'],
 ] as const;
 
-type MissingKey = (typeof MISSING_OPTIONS)[number][0];
-type ReadinessKey = 'summary' | 'decision' | 'budget' | 'timeline' | 'need';
+const CONTACT_RESULTS = [
+  ['not_reached', 'Pas joint'],
+  ['message_left', 'Message laissé'],
+  ['interested', 'Intéressé'],
+  ['call_back', 'À rappeler'],
+  ['not_interested', 'Pas intéressé'],
+  ['asks_information', 'Demande des informations'],
+  ['meeting_planned', 'RDV prévu'],
+  ['wrong_contact', 'Mauvais interlocuteur'],
+  ['other', 'Autre'],
+] as const;
+
+const INTEREST_LEVELS: Array<{ value: NonNullable<ProspectInput['interestLevel']>; label: string }> = [
+  { value: 'none', label: 'Aucun' },
+  { value: 'low', label: 'Faible' },
+  { value: 'confirm', label: 'À confirmer' },
+  { value: 'interested', label: 'Intéressé' },
+  { value: 'very_interested', label: 'Très intéressé' },
+];
+
+const ORIGIN_LABELS: Record<ProspectOrigin, string> = {
+  outbound: 'Prospection AtoumWeb',
+  inbound: 'Demande entrante',
+  referral: 'Recommandation',
+  existing: 'Ancien client / relation existante',
+  partner: 'Partenaire / apporteur',
+  other: 'Autre',
+};
 
 export function FieldHelp({ text }: { text: string }) {
   return <span className="field-help" tabIndex={0} role="note" aria-label={text} title={text}>?</span>;
 }
 
-function parseMissing(value?: string | null): { selected: MissingKey[]; other: string } {
-  if (!value) return { selected: [], other: '' };
-  try {
-    const parsed = JSON.parse(value) as { selected?: MissingKey[]; other?: string };
-    return { selected: Array.isArray(parsed.selected) ? parsed.selected : [], other: parsed.other ?? '' };
-  } catch {
-    return { selected: [], other: value };
-  }
+function inferOrigin(prospect: ProspectSummary): ProspectOrigin {
+  if (prospect.originType) return prospect.originType;
+  if (prospect.source === 'outbound') return 'outbound';
+  if (prospect.source === 'referral') return 'referral';
+  if (prospect.source === 'former_client') return 'existing';
+  if (prospect.source === 'website' || prospect.source === 'google' || prospect.source === 'social') return 'inbound';
+  return 'other';
 }
 
-function eurosToCents(value: string): number | null {
-  const normalized = value.trim().replace(',', '.');
-  if (!normalized) return null;
-  const number = Number(normalized);
-  if (!Number.isFinite(number) || number < 0) throw new Error('Montant de budget invalide.');
-  return Math.round(number * 100);
+function cleanError(error: unknown): string {
+  if (!(error instanceof Error)) return 'Une erreur est survenue.';
+  return error.message
+    .replace(/^Error invoking remote method ['"][^'"]+['"]:\s*/i, '')
+    .replace(/^Error:\s*/i, '')
+    .trim();
 }
 
 export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: ProspectSummary; onSaved: (message?: string) => void }) {
-  const parsedMissing = parseMissing(prospect.missingInformation);
-  const [draft, setDraft] = useState<Partial<ProspectInput>>({ ...prospect });
-  const [budgetKnown, setBudgetKnown] = useState(prospect.budgetMinCents != null ? String(prospect.budgetMinCents / 100) : '');
-  const [budgetMin, setBudgetMin] = useState(prospect.budgetMinCents != null ? String(prospect.budgetMinCents / 100) : '');
-  const [budgetMax, setBudgetMax] = useState(prospect.budgetMaxCents != null ? String(prospect.budgetMaxCents / 100) : '');
-  const [targetDate, setTargetDate] = useState(prospect.targetDate?.slice(0, 10) ?? '');
-  const [missing, setMissing] = useState<MissingKey[]>(parsedMissing.selected);
-  const [missingOther, setMissingOther] = useState(parsedMissing.other);
-  const [needCount, setNeedCount] = useState(0);
+  const origin = inferOrigin(prospect);
+  const [draft, setDraft] = useState<Partial<ProspectInput>>({ ...prospect, originType: origin });
+  const [contactCount, setContactCount] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
-    const loadNeeds = async () => {
+    async function loadContacts() {
       try {
-        const needs = await window.atoumweb.workflow.needs('prospect', prospect.id);
-        if (!cancelled) setNeedCount(needs.length);
+        const identity = await window.atoumweb.workflow.identity('prospect', prospect.id);
+        const lists = await Promise.all([
+          identity.organization ? window.atoumweb.crm.contactMethods.list('organization', identity.organization.id) : Promise.resolve([]),
+          identity.contact ? window.atoumweb.crm.contactMethods.list('contact', identity.contact.id) : Promise.resolve([]),
+        ]);
+        if (!cancelled) setContactCount(lists.flat().length);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+        if (!cancelled) setError(cleanError(e));
       }
-    };
-    const reload = () => void loadNeeds();
-    void loadNeeds();
+    }
+    void loadContacts();
+    const reload = () => void loadContacts();
     window.addEventListener('atoumweb:changed', reload);
-    return () => {
-      cancelled = true;
-      window.removeEventListener('atoumweb:changed', reload);
-    };
+    return () => { cancelled = true; window.removeEventListener('atoumweb:changed', reload); };
   }, [prospect.id]);
 
-  const readiness = useMemo<Array<{ key: ReadinessKey; label: string; ok: boolean }>>(() => {
-    const decisionOk = Boolean(draft.decisionStatus)
-      && (draft.decisionStatus !== 'no' || Boolean(draft.decisionMakerDetails?.trim()));
-    const budgetOk = draft.budgetStatus === 'not_disclosed'
-      || (draft.budgetStatus === 'known' && Boolean(budgetKnown.trim()))
-      || (draft.budgetStatus === 'range' && Boolean(budgetMin.trim()) && Boolean(budgetMax.trim()));
-    const timelineOk = draft.timelineStatus === 'not_disclosed'
-      || (draft.timelineStatus === 'date' && Boolean(targetDate))
-      || (draft.timelineStatus === 'note' && Boolean(draft.timelineNote?.trim()));
-    return [
-      { key: 'summary', label: 'Résumé du projet', ok: Boolean(draft.projectSummary?.trim()) },
-      { key: 'decision', label: 'Décisionnaire', ok: decisionOk },
-      { key: 'budget', label: 'Budget', ok: budgetOk },
-      { key: 'timeline', label: 'Calendrier', ok: timelineOk },
-      { key: 'need', label: 'Besoin / prestation', ok: needCount > 0 },
+  const readiness = useMemo(() => {
+    const items: Array<{ key: string; label: string; ok: boolean }> = [
+      { key: 'contact', label: 'Moyen de contact valide', ok: contactCount > 0 },
     ];
-  }, [draft, budgetKnown, budgetMin, budgetMax, targetDate, needCount]);
+    const decisionReady = Boolean(draft.decisionStatus)
+      && (draft.decisionStatus !== 'no' || Boolean(draft.decisionMakerName?.trim() || draft.decisionMakerDetails?.trim()));
+    items.push({ key: 'decision', label: 'Situation du décisionnaire', ok: decisionReady });
+
+    if (origin === 'outbound') {
+      items.push(
+        { key: 'target', label: 'Motif de ciblage', ok: Boolean(draft.targetingReasonCode || draft.targetingReasonText?.trim()) },
+        { key: 'observation', label: 'Constat / opportunité', ok: Boolean(draft.initialObservation?.trim() || draft.detectedOpportunity?.trim()) },
+        { key: 'contact_result', label: 'Résultat du premier contact', ok: Boolean(draft.firstContactResultCode || draft.firstContactResultText?.trim()) },
+        { key: 'interest', label: 'Intérêt confirmé', ok: draft.interestLevel === 'interested' || draft.interestLevel === 'very_interested' },
+      );
+    } else if (origin === 'inbound') {
+      items.push({ key: 'request', label: 'Demande initiale', ok: Boolean(draft.projectSummary?.trim()) });
+    } else {
+      items.push({ key: 'context', label: 'Motif / contexte commercial', ok: Boolean(draft.projectSummary?.trim() || draft.projectContext?.trim()) });
+    }
+    return items;
+  }, [contactCount, draft, origin]);
+
+  const missing = readiness.filter((item) => !item.ok);
+  const allReady = missing.length === 0;
+
+  async function persist(): Promise<ProspectSummary> {
+    return window.atoumweb.crm.prospects.updateQualification(prospect.id, {
+      originType: origin,
+      targetingReasonCode: draft.targetingReasonCode ?? null,
+      targetingReasonText: draft.targetingReasonText ?? null,
+      initialObservation: draft.initialObservation ?? null,
+      detectedOpportunity: draft.detectedOpportunity ?? null,
+      firstContactResultCode: draft.firstContactResultCode ?? null,
+      firstContactResultText: draft.firstContactResultText ?? null,
+      interestLevel: draft.interestLevel ?? null,
+      decisionStatus: draft.decisionStatus ?? null,
+      decisionMakerDetails: draft.decisionMakerDetails ?? null,
+      decisionMakerName: draft.decisionMakerName ?? null,
+      decisionMakerRole: draft.decisionMakerRole ?? null,
+      decisionMakerEmail: draft.decisionMakerEmail ?? null,
+      decisionMakerPhone: draft.decisionMakerPhone ?? null,
+      projectSummary: draft.projectSummary ?? null,
+      projectContext: draft.projectContext ?? null,
+    });
+  }
 
   async function save() {
-    setBusy(true);
-    setError('');
+    setBusy(true); setError('');
     try {
-      let minCents: number | null = prospect.budgetMinCents ?? null;
-      let maxCents: number | null = prospect.budgetMaxCents ?? null;
-      if (draft.budgetStatus === 'known') {
-        minCents = eurosToCents(budgetKnown);
-        maxCents = minCents;
-      } else if (draft.budgetStatus === 'range') {
-        minCents = eurosToCents(budgetMin);
-        maxCents = eurosToCents(budgetMax);
-        if (minCents != null && maxCents != null && minCents > maxCents) throw new Error('Le budget minimum ne peut pas dépasser le maximum.');
-      } else if (draft.budgetStatus === 'not_disclosed') {
-        minCents = null;
-        maxCents = null;
-      }
-
-      const normalizedTarget = draft.timelineStatus === 'date' && targetDate ? targetDate : null;
-      const missingInformation = JSON.stringify({ selected: missing, other: missingOther.trim() });
-
-      await window.atoumweb.crm.prospects.update(prospect.id, {
-        ...prospect,
-        budgetMinCents: minCents,
-        budgetMaxCents: maxCents,
-        targetDate: normalizedTarget,
-      });
-      const updated = await window.atoumweb.crm.prospects.updateQualification(prospect.id, {
-        ...draft,
-        missingInformation,
-        timelineNote: draft.timelineStatus === 'note' ? draft.timelineNote : null,
-      });
-
-      const latestNeeds = await window.atoumweb.workflow.needs('prospect', prospect.id);
-      setNeedCount(latestNeeds.length);
-      const complete = readiness.filter((item) => item.key !== 'need').every((item) => item.ok) && latestNeeds.length > 0;
-      if (prospect.stage === 'qualifying' && complete) {
-        await window.atoumweb.crm.prospects.changeStage(prospect.id, 'need_identified');
-        onSaved('Qualification enregistrée : le prospect passe automatiquement en « Besoin identifié ».');
-      } else if (prospect.stage === 'qualifying' && latestNeeds.length === 0) {
-        onSaved('Qualification enregistrée. Ajoute au moins un besoin / une prestation avant le passage en « Besoin identifié ».');
-      } else {
-        onSaved(updated.stage === 'need_identified' ? 'Qualification mise à jour.' : 'Qualification enregistrée.');
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusy(false);
-    }
+      await persist();
+      onSaved(allReady
+        ? 'Qualification enregistrée. Tous les éléments minimums sont présents : tu peux la valider.'
+        : `Qualification enregistrée. ${missing.length} élément${missing.length > 1 ? 's' : ''} reste${missing.length > 1 ? 'nt' : ''} à compléter.`);
+    } catch (e) { setError(cleanError(e)); }
+    finally { setBusy(false); }
   }
 
-  function toggleMissing(key: MissingKey) {
-    setMissing((current) => current.includes(key) ? current.filter((item) => item !== key) : [...current, key]);
+  async function validateQualification() {
+    if (!allReady) return;
+    setBusy(true); setError('');
+    try {
+      await persist();
+      await window.atoumweb.crm.prospects.changeStage(prospect.id, 'need_identified');
+      onSaved('Qualification validée : le prospect passe en « Besoin à identifier ».');
+    } catch (e) { setError(cleanError(e)); }
+    finally { setBusy(false); }
   }
+
+  const decisionEmail = validateEmail(draft.decisionMakerEmail);
+  const decisionPhone = validatePhone(draft.decisionMakerPhone);
 
   return <section className="prospect-work-section qualification-panel-v2">
     <div className="work-section-heading">
-      <div><span className="eyebrow">Qualification</span><strong>{readiness.filter((x) => x.ok).length}/{readiness.length} informations clés</strong></div>
+      <div><span className="eyebrow">Qualification · {ORIGIN_LABELS[origin]}</span><strong>{readiness.filter((item) => item.ok).length}/{readiness.length} éléments minimums acquis</strong></div>
     </div>
-    <div className="qualification-readiness" aria-label="État de préparation">
+
+    <div className="qualification-readiness" aria-label="État de la qualification">
       {readiness.map((item) => <span key={item.key} className={item.ok ? 'ready' : 'missing'}>{item.ok ? '✓' : '○'} {item.label}</span>)}
     </div>
+
     <div className="workflow-fields">
-      <label>Résumé du projet <FieldHelp text="Décris clairement ce que le prospect veut obtenir. Cette information servira de base au devis." />
-        <textarea value={draft.projectSummary ?? ''} onChange={(e) => setDraft({ ...draft, projectSummary: e.target.value })} />
-      </label>
-      <label>Contexte <FieldHelp text="Note le métier, le problème actuel, les objectifs et les contraintes utiles pour comprendre la demande." />
-        <textarea value={draft.projectContext ?? ''} onChange={(e) => setDraft({ ...draft, projectContext: e.target.value })} />
-      </label>
-      <label>Décisionnaire <FieldHelp text="Indique si ton interlocuteur peut réellement valider le devis. Si ce n’est pas lui, précise qui décide." />
-        <select value={draft.decisionStatus ?? ''} onChange={(e) => setDraft({ ...draft, decisionStatus: (e.target.value || null) as ProspectInput['decisionStatus'] })}>
-          <option value="">À préciser</option><option value="yes">Oui</option><option value="no">Non</option><option value="unknown">Inconnu</option>
-        </select>
-      </label>
-      {draft.decisionStatus !== 'yes' && <label>Qui décide / précisions <FieldHelp text="Nom, fonction ou fonctionnement de validation si l’interlocuteur n’est pas le décideur. Ce champ est nécessaire lorsque la réponse est Non." />
-        <input value={draft.decisionMakerDetails ?? ''} onChange={(e) => setDraft({ ...draft, decisionMakerDetails: e.target.value })} />
-      </label>}
+      {origin === 'outbound' && <>
+        <label>Motif de ciblage <FieldHelp text="Pourquoi AtoumWeb a sélectionné cette entreprise pour une prise de contact ?" />
+          <select value={draft.targetingReasonCode ?? ''} onChange={(e) => setDraft({ ...draft, targetingReasonCode: e.target.value || null })}>
+            <option value="">À préciser</option>{TARGETING_REASONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+        </label>
+        {draft.targetingReasonCode === 'other' && <label>Autre motif<input value={draft.targetingReasonText ?? ''} onChange={(e) => setDraft({ ...draft, targetingReasonText: e.target.value })} /></label>}
+        <label>Constat <FieldHelp text="Ce que tu as observé avant la prise de contact : site absent ou ancien, visibilité faible, parcours client perfectible…" />
+          <textarea value={draft.initialObservation ?? ''} onChange={(e) => setDraft({ ...draft, initialObservation: e.target.value })} />
+        </label>
+        <label>Opportunité détectée <FieldHelp text="Ce qu’AtoumWeb pourrait concrètement améliorer ou apporter à cette entreprise." />
+          <textarea value={draft.detectedOpportunity ?? ''} onChange={(e) => setDraft({ ...draft, detectedOpportunity: e.target.value })} />
+        </label>
+        <label>Résultat du premier contact
+          <select value={draft.firstContactResultCode ?? ''} onChange={(e) => setDraft({ ...draft, firstContactResultCode: e.target.value || null })}>
+            <option value="">À préciser</option>{CONTACT_RESULTS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+        </label>
+        {draft.firstContactResultCode === 'other' && <label>Préciser le résultat<input value={draft.firstContactResultText ?? ''} onChange={(e) => setDraft({ ...draft, firstContactResultText: e.target.value })} /></label>}
+        <label>Niveau d’intérêt
+          <select value={draft.interestLevel ?? ''} onChange={(e) => setDraft({ ...draft, interestLevel: (e.target.value || null) as ProspectInput['interestLevel'] })}>
+            <option value="">À préciser</option>{INTEREST_LEVELS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+          </select>
+        </label>
+      </>}
 
-      <label>Budget <FieldHelp text="Permet de vérifier que la proposition est cohérente. Tu peux saisir un montant, une fourchette ou indiquer qu’il n’est pas communiqué." />
-        <select value={draft.budgetStatus ?? ''} onChange={(e) => setDraft({ ...draft, budgetStatus: (e.target.value || null) as ProspectInput['budgetStatus'] })}>
-          <option value="">À préciser</option><option value="known">Connu</option><option value="range">Fourchette</option><option value="not_disclosed">Non communiqué</option>
-        </select>
-      </label>
-      {draft.budgetStatus === 'known' && <label>Budget connu (€) <FieldHelp text="Montant communiqué par le prospect. Il sert à cadrer la proposition mais ne fixe pas le prix du devis." /><input inputMode="decimal" value={budgetKnown} onChange={(e) => setBudgetKnown(e.target.value)} placeholder="Ex. 1 500" /></label>}
-      {draft.budgetStatus === 'range' && <div className="qualification-two-fields"><label>Budget minimum (€) <FieldHelp text="Borne basse de la fourchette annoncée par le prospect." /><input inputMode="decimal" value={budgetMin} onChange={(e) => setBudgetMin(e.target.value)} /></label><label>Budget maximum (€) <FieldHelp text="Borne haute de la fourchette annoncée par le prospect." /><input inputMode="decimal" value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)} /></label></div>}
+      {origin === 'inbound' && <>
+        <label>Demande initiale <FieldHelp text="Résume ce que le prospect demande au moment où il contacte AtoumWeb. L’identification détaillée du besoin se fera à l’étape suivante." />
+          <textarea value={draft.projectSummary ?? ''} onChange={(e) => setDraft({ ...draft, projectSummary: e.target.value })} />
+        </label>
+        <label>Contexte utile <textarea value={draft.projectContext ?? ''} onChange={(e) => setDraft({ ...draft, projectContext: e.target.value })} /></label>
+      </>}
 
-      <label>Calendrier <FieldHelp text="Indique quand le prospect souhaite disposer du site ou du service. Une date réelle peut être saisie directement." />
-        <select value={draft.timelineStatus ?? ''} onChange={(e) => setDraft({ ...draft, timelineStatus: (e.target.value || null) as ProspectInput['timelineStatus'] })}>
-          <option value="">À préciser</option><option value="date">Date connue</option><option value="note">Indication libre</option><option value="not_disclosed">Non communiqué</option>
-        </select>
-      </label>
-      {draft.timelineStatus === 'date' && <label>Date souhaitée <FieldHelp text="Date cible souhaitée par le prospect. Elle pourra ensuite être confirmée ou ajustée lors de la création du projet." /><input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} /></label>}
-      {draft.timelineStatus === 'note' && <label>Précision calendrier <FieldHelp text="Conserve une contrainte souple lorsque le prospect ne donne pas de date exacte." /><input value={draft.timelineNote ?? ''} onChange={(e) => setDraft({ ...draft, timelineNote: e.target.value })} placeholder="Ex. avant Noël, courant novembre…" /></label>}
+      {!['outbound', 'inbound'].includes(origin) && <>
+        <label>Motif de l’échange / demande initiale<textarea value={draft.projectSummary ?? ''} onChange={(e) => setDraft({ ...draft, projectSummary: e.target.value })} /></label>
+        <label>Contexte commercial<textarea value={draft.projectContext ?? ''} onChange={(e) => setDraft({ ...draft, projectContext: e.target.value })} /></label>
+      </>}
 
-      <label>Site ou outil déjà existant ? <FieldHelp text="Précise s’il existe déjà un site, une boutique ou un outil à reprendre, auditer ou remplacer." />
-        <select value={draft.existingStatus ?? ''} onChange={(e) => setDraft({ ...draft, existingStatus: (e.target.value || null) as ProspectInput['existingStatus'] })}>
-          <option value="">À préciser</option><option value="yes">Oui</option><option value="no">Non</option><option value="unknown">Inconnu</option>
-        </select>
-      </label>
-      {draft.existingStatus === 'yes' && <><label>URL / accès public <FieldHelp text="Adresse du site ou de l’outil existant pour pouvoir l’examiner avant le devis." /><input type="url" value={draft.existingUrl ?? ''} onChange={(e) => setDraft({ ...draft, existingUrl: e.target.value })} placeholder="https://…" /></label><label>Remarques sur l’existant <FieldHelp text="Note les points à conserver, remplacer, migrer ou vérifier sur l’existant." /><textarea value={draft.existingNotes ?? ''} onChange={(e) => setDraft({ ...draft, existingNotes: e.target.value })} /></label></>}
-
-      <fieldset className="missing-info-fieldset"><legend>Informations encore nécessaires <FieldHelp text="Coche ce qu’il faudra récupérer avant ou pendant la préparation du devis. Ces éléments restent visibles dans le suivi." /></legend>
-        <div className="missing-info-grid">{MISSING_OPTIONS.map(([key, label]) => <label className="check-option" key={key}><input type="checkbox" checked={missing.includes(key)} onChange={() => toggleMissing(key)} /> {label}</label>)}</div>
-        <label>Autre / précisions<textarea value={missingOther} onChange={(e) => setMissingOther(e.target.value)} /></label>
+      <fieldset className="qualification-decision-block">
+        <legend>Décisionnaire <FieldHelp text="Cette information sera aussi visible dans Entreprise & interlocuteur. Elle sert ici uniquement à vérifier que le chemin de décision est suffisamment identifié." /></legend>
+        <label>Mon interlocuteur peut valider le devis
+          <select value={draft.decisionStatus ?? ''} onChange={(e) => setDraft({ ...draft, decisionStatus: (e.target.value || null) as ProspectInput['decisionStatus'] })}>
+            <option value="">À préciser</option><option value="yes">Oui</option><option value="no">Non</option><option value="unknown">Inconnu pour le moment</option>
+          </select>
+        </label>
+        {draft.decisionStatus === 'no' && <div className="qualification-two-fields">
+          <label>Nom du décisionnaire<input value={draft.decisionMakerName ?? ''} onChange={(e) => setDraft({ ...draft, decisionMakerName: e.target.value })} /></label>
+          <label>Fonction<input value={draft.decisionMakerRole ?? ''} onChange={(e) => setDraft({ ...draft, decisionMakerRole: e.target.value })} /></label>
+          <label>Email<input type="email" value={draft.decisionMakerEmail ?? ''} onChange={(e) => setDraft({ ...draft, decisionMakerEmail: e.target.value })} />{!decisionEmail.valid && <small className="field-error">{decisionEmail.message}</small>}</label>
+          <label>Téléphone<input inputMode="tel" value={draft.decisionMakerPhone ?? ''} onChange={(e) => setDraft({ ...draft, decisionMakerPhone: e.target.value })} />{!decisionPhone.valid && <small className="field-error">{decisionPhone.message}</small>}</label>
+        </div>}
+        {draft.decisionStatus !== 'yes' && <label>Précisions / chemin de validation<input value={draft.decisionMakerDetails ?? ''} onChange={(e) => setDraft({ ...draft, decisionMakerDetails: e.target.value })} placeholder="Ex. associé à consulter, responsable régional…" /></label>}
       </fieldset>
 
+      {!allReady && <div className="qualification-recap" role="status"><strong>Qualification à compléter</strong><p>{readiness.filter((item) => item.ok).length}/{readiness.length} éléments acquis.</p><div>{missing.map((item) => <span key={item.key}>À compléter : {item.label}</span>)}</div><small>Action recommandée : complète uniquement ces éléments, puis valide la qualification pour passer à l’identification du besoin.</small></div>}
+      {allReady && <div className="qualification-recap ready" role="status"><strong>Qualification prête à être validée</strong><p>Les éléments commerciaux minimums sont présents. Le besoin détaillé, le budget et le calendrier seront travaillés à l’étape suivante.</p></div>}
+
       {error && <p className="form-error" role="alert">{error}</p>}
-      <button type="button" className="primary-button" disabled={busy} onClick={() => void save()}>{busy ? 'Enregistrement…' : 'Enregistrer la qualification'}</button>
-      {prospect.stage === 'qualifying' && readiness.every((item) => item.ok) && <p className="qualification-auto-note">✓ Tous les éléments essentiels, dont au moins un besoin, sont renseignés : l’enregistrement fera passer automatiquement le prospect en « Besoin identifié ».</p>}
-      {prospect.stage === 'qualifying' && needCount === 0 && <p className="muted">Ajoute au moins un besoin / une prestation pour pouvoir terminer la qualification.</p>}
+      <div className="qualification-actions"><button type="button" className="secondary-button" disabled={busy} onClick={() => void save()}>{busy ? 'Enregistrement…' : 'Enregistrer la qualification'}</button><button type="button" className="primary-button" disabled={busy || !allReady || !decisionEmail.valid || !decisionPhone.valid} onClick={() => void validateQualification()}>Valider la qualification → Besoin à identifier</button></div>
     </div>
   </section>;
 }
