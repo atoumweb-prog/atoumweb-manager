@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -9,6 +10,7 @@ on:
       - feature/phase-2-commercial
       - feature/phase-3-projects
       - feature/phase-4-operations
+      - fix/recette-commerciale-coherence
   pull_request:
     branches:
       - main
