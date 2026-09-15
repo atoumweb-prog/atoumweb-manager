@@ -33,6 +33,8 @@ describe('migrations SQLite', () => {
         .toEqual([{ name: 'intervention_id' }]);
       expect(database.all("SELECT name, desc FROM pragma_index_xinfo('idx_time_sessions_intervention') WHERE key=1 ORDER BY seqno"))
         .toEqual([{ name: 'intervention_id', desc: 0 }, { name: 'started_at', desc: 1 }]);
+      expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('prospects') WHERE name='origin_type'")?.name).toBe('origin_type');
+      expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('prospects') WHERE name='decision_maker_contact_id'")?.name).toBe('decision_maker_contact_id');
       const schemaBefore = database.all('SELECT type, name, sql FROM sqlite_master ORDER BY type, name');
       const ledgerBefore = database.all('SELECT * FROM schema_migrations ORDER BY id');
       expect(applyPendingMigrations(database)).toEqual([]);
@@ -71,6 +73,8 @@ describe('migrations SQLite', () => {
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('time_sessions') WHERE name='intervention_id'")?.name).toBe('intervention_id');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('maintenance_subscriptions') WHERE name='carryover_mode_snapshot'")?.name).toBe('carryover_mode_snapshot');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('catalog_versions') WHERE name='special_terms'")?.name).toBe('special_terms');
+    expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('prospects') WHERE name='origin_type'")?.name).toBe('origin_type');
+    expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('prospects') WHERE name='decision_maker_contact_id'")?.name).toBe('decision_maker_contact_id');
 
     const seededPlans = database.all<{ name: string }>('SELECT name FROM maintenance_plans ORDER BY periodic_price_cents');
     expect(seededPlans.map((plan) => plan.name)).toEqual(['Maintenance 49 €/mois', 'Maintenance 99 €/mois']);
