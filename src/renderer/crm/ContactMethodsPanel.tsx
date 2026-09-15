@@ -5,10 +5,15 @@ import { formatPhone, validateEmail, validatePhone } from '../../shared/contactV
 function cleanError(error: unknown): string {
   if (!(error instanceof Error)) return 'Une erreur est survenue.';
   return error.message
-    .replace(/^Error invoking remote method ['"][^'"]+['"]:\s*/i, '')
+    .replace(/^Error invoking remote method ['\"][^'\"]+['\"]:\s*/i, '')
     .replace(/^Error:\s*/i, '')
     .trim();
 }
+
+const USAGES: Record<ContactMethodType, readonly string[]> = {
+  phone: ['Portable', 'Bureau', 'Standard', 'Personnel', 'Autre'],
+  email: ['Professionnel', 'Personnel', 'Facturation', 'Support', 'Autre'],
+};
 
 interface ContactMethodsPanelProps {
   organizationId?: string | null;
@@ -30,9 +35,9 @@ export function ContactMethodsPanel({
   const [organizationItems, setOrganizationItems] = useState<ContactMethod[]>([]);
   const [contactItems, setContactItems] = useState<ContactMethod[]>([]);
   const [owner, setOwner] = useState<'organization' | 'contact'>(contactId ? 'contact' : 'organization');
-  const [type, setType] = useState<ContactMethodType>('email');
+  const [type, setType] = useState<ContactMethodType>('phone');
   const [value, setValue] = useState('');
-  const [label, setLabel] = useState('');
+  const [usage, setUsage] = useState('Portable');
   const [error, setError] = useState('');
 
   async function load() {
@@ -68,10 +73,11 @@ export function ContactMethodsPanel({
         [effectiveOwner === 'contact' ? 'contactId' : 'organizationId']: ownerId,
         type,
         value: value.trim(),
-        label: label.trim() || null,
+        label: usage,
         isPrimary: siblings.every((item) => item.type !== type),
       });
-      setValue(''); setLabel(''); await load();
+      setValue('');
+      await load();
       window.dispatchEvent(new Event('atoumweb:changed'));
     } catch (e) { setError(cleanError(e)); }
   }
@@ -98,10 +104,10 @@ export function ContactMethodsPanel({
       {allowOrganization && group(organizationLabel, organizationItems)}
       {group(contactLabel, contactItems)}
       <div className="contact-method-add">
-        {canChooseOwner && <label>Rattacher à<select value={owner} onChange={(e) => setOwner(e.target.value as 'organization' | 'contact')}><option value="contact">{contactLabel}</option><option value="organization">{organizationLabel}</option></select></label>}
-        <label>Type<select value={type} onChange={(e) => { setType(e.target.value as ContactMethodType); setValue(''); setError(''); }}><option value="email">Email</option><option value="phone">Téléphone</option></select></label>
+        {canChooseOwner && <label>À qui ?<select value={owner} onChange={(e) => setOwner(e.target.value as 'organization' | 'contact')}><option value="contact">{contactLabel}</option><option value="organization">{organizationLabel}</option></select></label>}
+        <label>Type<select value={type} onChange={(e) => { const next = e.target.value as ContactMethodType; setType(next); setUsage(USAGES[next][0]); setValue(''); setError(''); }}><option value="phone">Téléphone</option><option value="email">Email</option></select></label>
+        <label>Usage<select value={usage} onChange={(e) => setUsage(e.target.value)}>{USAGES[type].map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
         <label>Coordonnée<input inputMode={type === 'phone' ? 'tel' : 'email'} value={value} onChange={(e) => setValue(e.target.value)} placeholder={type === 'email' ? 'nom@exemple.fr' : '06 12 34 56 78 ou +33…'} />{value.trim() && !validation.valid && <small className="field-error">{validation.message}</small>}</label>
-        <label>Libellé<input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Portable, bureau, accueil…" /></label>
         <button className="secondary-button" type="button" disabled={!value.trim() || !validation.valid} onClick={() => void add()}>Ajouter</button>
       </div>
       {error && <p className="form-error">{error}</p>}
