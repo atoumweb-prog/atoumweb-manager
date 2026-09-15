@@ -3,6 +3,8 @@ export const PROSPECT_STAGES = [
 ] as const;
 export const PROSPECT_TEMPERATURES = ['cold', 'neutral', 'warm', 'hot'] as const;
 export const PROSPECT_SOURCES = ['website', 'referral', 'google', 'social', 'event', 'outbound', 'former_client', 'other'] as const;
+export const PROSPECT_ORIGINS = ['outbound', 'inbound', 'referral', 'existing', 'partner', 'other'] as const;
+export const PROSPECT_INTEREST_LEVELS = ['none', 'low', 'confirm', 'interested', 'very_interested'] as const;
 export const CLIENT_STATUSES = ['active', 'inactive', 'archived'] as const;
 export const CLIENT_CONTACT_ROLES = ['primary', 'administrative', 'billing', 'technical', 'other'] as const;
 export const CRM_ACTION_TYPES = ['action', 'follow_up'] as const;
@@ -12,6 +14,8 @@ export const CRM_ACTION_OWNER_TYPES = ['prospect', 'client'] as const;
 export type ProspectStage = (typeof PROSPECT_STAGES)[number];
 export type ProspectTemperature = (typeof PROSPECT_TEMPERATURES)[number];
 export type ProspectSource = (typeof PROSPECT_SOURCES)[number];
+export type ProspectOrigin = (typeof PROSPECT_ORIGINS)[number];
+export type ProspectInterestLevel = (typeof PROSPECT_INTEREST_LEVELS)[number];
 export type ClientStatus = (typeof CLIENT_STATUSES)[number];
 export type ClientContactRole = (typeof CLIENT_CONTACT_ROLES)[number];
 export type CrmActionType = (typeof CRM_ACTION_TYPES)[number];
@@ -38,9 +42,13 @@ export interface ClientContactLink { id: string; clientAccountId: string; contac
 
 export interface ProspectInput {
   organizationId?: string | null; contactId?: string | null; stage?: ProspectStage; temperature?: ProspectTemperature; source?: ProspectSource | null; sourceDetail?: string | null;
+  originType?: ProspectOrigin | null; prospectingStartedAt?: string | null; qualificationValidatedAt?: string | null;
+  targetingReasonCode?: string | null; targetingReasonText?: string | null; initialObservation?: string | null; detectedOpportunity?: string | null;
+  firstContactResultCode?: string | null; firstContactResultText?: string | null; interestLevel?: ProspectInterestLevel | null;
   primaryNeed?: string | null; secondaryNeed?: string | null; budgetMinCents?: number | null; budgetMaxCents?: number | null; estimatedValueCents?: number | null;
   probabilityPercent?: number | null; nextActionAt?: string | null; nextActionText?: string | null; targetDate?: string | null; notes?: string | null;
-  decisionStatus?: 'yes' | 'no' | 'unknown' | null; decisionMakerDetails?: string | null; projectSummary?: string | null; projectContext?: string | null;
+  decisionStatus?: 'yes' | 'no' | 'unknown' | null; decisionMakerDetails?: string | null; decisionMakerName?: string | null; decisionMakerRole?: string | null;
+  decisionMakerEmail?: string | null; decisionMakerPhone?: string | null; projectSummary?: string | null; projectContext?: string | null;
   budgetStatus?: 'known' | 'range' | 'not_disclosed' | null; timelineStatus?: 'date' | 'note' | 'not_disclosed' | null; timelineNote?: string | null;
   existingStatus?: 'yes' | 'no' | 'unknown' | null; existingUrl?: string | null; existingNotes?: string | null; missingInformation?: string | null;
   waitingReasonCode?: string | null; waitingReasonText?: string | null; waitingResumeAt?: string | null; lostReasonCode?: string | null;
