@@ -116,6 +116,9 @@ export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: Prospec
       if (decision.status === 'yes') {
         decisionMakerContactId = identity.contact?.id ?? null;
       } else if (decision.status === 'no') {
+        const existingSeparateDecisionMaker = identity.decisionMaker && identity.decisionMaker.id !== identity.contact?.id
+          ? identity.decisionMaker
+          : null;
         const decisionInput = {
           organizationId: identity.organization?.id ?? identity.contact?.organizationId ?? null,
           firstName: decision.firstName.trim(),
@@ -123,11 +126,11 @@ export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: Prospec
           jobTitle: decision.role.trim() || null,
           email: null,
           phone: null,
-          preferredChannel: identity.decisionMaker?.preferredChannel ?? null,
-          notes: identity.decisionMaker?.notes ?? null,
+          preferredChannel: existingSeparateDecisionMaker?.preferredChannel ?? null,
+          notes: existingSeparateDecisionMaker?.notes ?? null,
         };
-        const decisionContact = identity.decisionMaker
-          ? await window.atoumweb.crm.contacts.update(identity.decisionMaker.id, decisionInput)
+        const decisionContact = existingSeparateDecisionMaker
+          ? await window.atoumweb.crm.contacts.update(existingSeparateDecisionMaker.id, decisionInput)
           : await window.atoumweb.crm.contacts.create(decisionInput);
         decisionMakerContactId = decisionContact.id;
         await syncPrimaryMethod(decisionContact.id, 'email', decision.email);
@@ -137,7 +140,9 @@ export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: Prospec
       await window.atoumweb.crm.prospects.updateQualification(prospect.id, {
         decisionStatus: decision.status ?? null,
         decisionMakerContactId,
-        decisionMakerDetails: decision.status === 'yes' ? null : decision.details.trim() || null,
+        decisionMakerDetails: decision.status === 'yes'
+          ? null
+          : decision.details.trim() || (decision.status === 'no' ? 'Décisionnaire identifié dans les Contacts' : null),
         // Les anciennes colonnes sont volontairement vidées : le Contact devient l’unique source de vérité.
         decisionMakerName: null,
         decisionMakerRole: null,
@@ -167,7 +172,7 @@ export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: Prospec
     {!editing && <div className="identity-summary-grid">
       {identity.organization && <><div><span>Société</span><strong>{identity.organization.name}</strong></div><div><span>Activité</span><strong>{identity.organization.industry || 'À préciser'}</strong></div>{identity.organization.website && <div><span>Site web</span><strong>{identity.organization.website}</strong></div>}{address && <div className="identity-wide"><span>Adresse</span><strong>{address}</strong></div>}{identity.organization.notes && <div className="identity-wide"><span>Description</span><strong>{identity.organization.notes}</strong></div>}</>}
       {identity.contact && <><div><span>Interlocuteur principal</span><strong>{identity.contact.firstName} {identity.contact.lastName}</strong></div><div><span>Fonction</span><strong>{identity.contact.jobTitle || 'À préciser'}</strong></div></>}
-      <div className="identity-wide decision-summary"><span>Décisionnaire</span><strong>{decisionLabel}</strong>{decision.details && <small>{decision.details}</small>}</div>
+      <div className="identity-wide decision-summary"><span>Décisionnaire</span><strong>{decisionLabel}</strong>{decision.details && decision.details !== 'Décisionnaire identifié dans les Contacts' && <small>{decision.details}</small>}</div>
     </div>}
     {editing && <div className="workflow-fields identity-editor-v2">
       {identity.organization && <>
@@ -201,7 +206,7 @@ export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: Prospec
           <label>Email<input type="email" value={decision.email} onChange={(e) => setDecision({ ...decision, email: e.target.value })} />{!decisionEmail.valid && <small className="field-error">{decisionEmail.message}</small>}</label>
           <label>Téléphone<input inputMode="tel" value={decision.phone} onChange={(e) => setDecision({ ...decision, phone: e.target.value })} />{!decisionPhone.valid && <small className="field-error">{decisionPhone.message}</small>}</label>
         </div>}
-        {decision.status !== 'yes' && <label>Précisions / chemin de validation<input value={decision.details} onChange={(e) => setDecision({ ...decision, details: e.target.value })} placeholder="Ex. associé à consulter, responsable régional, nom à confirmer…" /></label>}
+        {decision.status !== 'yes' && <label>Précisions / chemin de validation<input value={decision.details} onChange={(e) => setDecision({ ...decision, details: e.target.value === 'Décisionnaire identifié dans les Contacts' ? '' : e.target.value })} placeholder="Ex. associé à consulter, responsable régional, nom à confirmer…" /></label>}
       </fieldset>
 
       {error && <p className="form-error form-span-2">{error}</p>}
