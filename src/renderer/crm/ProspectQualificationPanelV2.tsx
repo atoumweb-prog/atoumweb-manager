@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ProspectInput, ProspectSummary } from '../../shared/crm';
 
 const MISSING_OPTIONS = [
@@ -14,6 +14,7 @@ const MISSING_OPTIONS = [
 ] as const;
 
 type MissingKey = (typeof MISSING_OPTIONS)[number][0];
+type ReadinessKey = 'summary' | 'decision' | 'budget' | 'timeline' | 'need';
 
 export function FieldHelp({ text }: { text: string }) {
   return <span className="field-help" tabIndex={0} role="note" aria-label={text} title={text}>?</span>;
@@ -46,10 +47,30 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
   const [targetDate, setTargetDate] = useState(prospect.targetDate?.slice(0, 10) ?? '');
   const [missing, setMissing] = useState<MissingKey[]>(parsedMissing.selected);
   const [missingOther, setMissingOther] = useState(parsedMissing.other);
+  const [needCount, setNeedCount] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  const readiness = useMemo(() => {
+  useEffect(() => {
+    let cancelled = false;
+    const loadNeeds = async () => {
+      try {
+        const needs = await window.atoumweb.workflow.needs('prospect', prospect.id);
+        if (!cancelled) setNeedCount(needs.length);
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+      }
+    };
+    const reload = () => void loadNeeds();
+    void loadNeeds();
+    window.addEventListener('atoumweb:changed', reload);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('atoumweb:changed', reload);
+    };
+  }, [prospect.id]);
+
+  const readiness = useMemo<Array<{ key: ReadinessKey; label: string; ok: boolean }>>(() => {
     const budgetOk = draft.budgetStatus === 'not_disclosed'
       || (draft.budgetStatus === 'known' && Boolean(budgetKnown.trim()))
       || (draft.budgetStatus === 'range' && Boolean(budgetMin.trim()) && Boolean(budgetMax.trim()));
@@ -57,12 +78,13 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
       || (draft.timelineStatus === 'date' && Boolean(targetDate))
       || (draft.timelineStatus === 'note' && Boolean(draft.timelineNote?.trim()));
     return [
-      { label: 'Résumé du projet', ok: Boolean(draft.projectSummary?.trim()) },
-      { label: 'Décisionnaire', ok: Boolean(draft.decisionStatus) },
-      { label: 'Budget', ok: budgetOk },
-      { label: 'Calendrier', ok: timelineOk },
+      { key: 'summary', label: 'Résumé du projet', ok: Boolean(draft.projectSummary?.trim()) },
+      { key: 'decision', label: 'Décisionnaire', ok: Boolean(draft.decisionStatus) },
+      { key: 'budget', label: 'Budget', ok: budgetOk },
+      { key: 'timeline', label: 'Calendrier', ok: timelineOk },
+      { key: 'need', label: 'Besoin / prestation', ok: needCount > 0 },
     ];
-  }, [draft, budgetKnown, budgetMin, budgetMax, targetDate]);
+  }, [draft, budgetKnown, budgetMin, budgetMax, targetDate, needCount]);
 
   async function save() {
     setBusy(true);
@@ -97,10 +119,14 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
         timelineNote: draft.timelineStatus === 'note' ? draft.timelineNote : null,
       });
 
-      const complete = readiness.every((item) => item.ok);
+      const latestNeeds = await window.atoumweb.workflow.needs('prospect', prospect.id);
+      setNeedCount(latestNeeds.length);
+      const complete = readiness.filter((item) => item.key !== 'need').every((item) => item.ok) && latestNeeds.length > 0;
       if (prospect.stage === 'qualifying' && complete) {
         await window.atoumweb.crm.prospects.changeStage(prospect.id, 'need_identified');
         onSaved('Qualification enregistrée : le prospect passe automatiquement en « Besoin identifié ».');
+      } else if (prospect.stage === 'qualifying' && latestNeeds.length === 0) {
+        onSaved('Qualification enregistrée. Ajoute au moins un besoin / une prestation avant le passage en « Besoin identifié ».');
       } else {
         onSaved(updated.stage === 'need_identified' ? 'Qualification mise à jour.' : 'Qualification enregistrée.');
       }
@@ -120,7 +146,7 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
       <div><span className="eyebrow">Qualification</span><strong>{readiness.filter((x) => x.ok).length}/{readiness.length} informations clés</strong></div>
     </div>
     <div className="qualification-readiness" aria-label="État de préparation">
-      {readiness.map((item) => <span key={item.label} className={item.ok ? 'ready' : 'missing'}>{item.ok ? '✓' : '○'} {item.label}</span>)}
+      {readiness.map((item) => <span key={item.key} className={item.ok ? 'ready' : 'missing'}>{item.ok ? '✓' : '○'} {item.label}</span>)}
     </div>
     <div className="workflow-fields">
       <label>Résumé du projet <FieldHelp text="Décris clairement ce que le prospect veut obtenir. Cette information servira de base au devis." />
@@ -143,23 +169,23 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
           <option value="">À préciser</option><option value="known">Connu</option><option value="range">Fourchette</option><option value="not_disclosed">Non communiqué</option>
         </select>
       </label>
-      {draft.budgetStatus === 'known' && <label>Budget connu (€)<input inputMode="decimal" value={budgetKnown} onChange={(e) => setBudgetKnown(e.target.value)} placeholder="Ex. 1 500" /></label>}
-      {draft.budgetStatus === 'range' && <div className="qualification-two-fields"><label>Budget minimum (€)<input inputMode="decimal" value={budgetMin} onChange={(e) => setBudgetMin(e.target.value)} /></label><label>Budget maximum (€)<input inputMode="decimal" value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)} /></label></div>}
+      {draft.budgetStatus === 'known' && <label>Budget connu (€) <FieldHelp text="Montant communiqué par le prospect. Il sert à cadrer la proposition mais ne fixe pas le prix du devis." /><input inputMode="decimal" value={budgetKnown} onChange={(e) => setBudgetKnown(e.target.value)} placeholder="Ex. 1 500" /></label>}
+      {draft.budgetStatus === 'range' && <div className="qualification-two-fields"><label>Budget minimum (€) <FieldHelp text="Borne basse de la fourchette annoncée par le prospect." /><input inputMode="decimal" value={budgetMin} onChange={(e) => setBudgetMin(e.target.value)} /></label><label>Budget maximum (€) <FieldHelp text="Borne haute de la fourchette annoncée par le prospect." /><input inputMode="decimal" value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)} /></label></div>}
 
       <label>Calendrier <FieldHelp text="Indique quand le prospect souhaite disposer du site ou du service. Une date réelle peut être saisie directement." />
         <select value={draft.timelineStatus ?? ''} onChange={(e) => setDraft({ ...draft, timelineStatus: (e.target.value || null) as ProspectInput['timelineStatus'] })}>
           <option value="">À préciser</option><option value="date">Date connue</option><option value="note">Indication libre</option><option value="not_disclosed">Non communiqué</option>
         </select>
       </label>
-      {draft.timelineStatus === 'date' && <label>Date souhaitée<input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} /></label>}
-      {draft.timelineStatus === 'note' && <label>Précision calendrier<input value={draft.timelineNote ?? ''} onChange={(e) => setDraft({ ...draft, timelineNote: e.target.value })} placeholder="Ex. avant Noël, courant novembre…" /></label>}
+      {draft.timelineStatus === 'date' && <label>Date souhaitée <FieldHelp text="Date cible souhaitée par le prospect. Elle pourra ensuite être confirmée ou ajustée lors de la création du projet." /><input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} /></label>}
+      {draft.timelineStatus === 'note' && <label>Précision calendrier <FieldHelp text="Conserve une contrainte souple lorsque le prospect ne donne pas de date exacte." /><input value={draft.timelineNote ?? ''} onChange={(e) => setDraft({ ...draft, timelineNote: e.target.value })} placeholder="Ex. avant Noël, courant novembre…" /></label>}
 
       <label>Site ou outil déjà existant ? <FieldHelp text="Précise s’il existe déjà un site, une boutique ou un outil à reprendre, auditer ou remplacer." />
         <select value={draft.existingStatus ?? ''} onChange={(e) => setDraft({ ...draft, existingStatus: (e.target.value || null) as ProspectInput['existingStatus'] })}>
           <option value="">À préciser</option><option value="yes">Oui</option><option value="no">Non</option><option value="unknown">Inconnu</option>
         </select>
       </label>
-      {draft.existingStatus === 'yes' && <><label>URL / accès public<input type="url" value={draft.existingUrl ?? ''} onChange={(e) => setDraft({ ...draft, existingUrl: e.target.value })} placeholder="https://…" /></label><label>Remarques sur l’existant<textarea value={draft.existingNotes ?? ''} onChange={(e) => setDraft({ ...draft, existingNotes: e.target.value })} /></label></>}
+      {draft.existingStatus === 'yes' && <><label>URL / accès public <FieldHelp text="Adresse du site ou de l’outil existant pour pouvoir l’examiner avant le devis." /><input type="url" value={draft.existingUrl ?? ''} onChange={(e) => setDraft({ ...draft, existingUrl: e.target.value })} placeholder="https://…" /></label><label>Remarques sur l’existant <FieldHelp text="Note les points à conserver, remplacer, migrer ou vérifier sur l’existant." /><textarea value={draft.existingNotes ?? ''} onChange={(e) => setDraft({ ...draft, existingNotes: e.target.value })} /></label></>}
 
       <fieldset className="missing-info-fieldset"><legend>Informations encore nécessaires <FieldHelp text="Coche ce qu’il faudra récupérer avant ou pendant la préparation du devis. Ces éléments restent visibles dans le suivi." /></legend>
         <div className="missing-info-grid">{MISSING_OPTIONS.map(([key, label]) => <label className="check-option" key={key}><input type="checkbox" checked={missing.includes(key)} onChange={() => toggleMissing(key)} /> {label}</label>)}</div>
@@ -168,7 +194,8 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
 
       {error && <p className="form-error" role="alert">{error}</p>}
       <button type="button" className="primary-button" disabled={busy} onClick={() => void save()}>{busy ? 'Enregistrement…' : 'Enregistrer la qualification'}</button>
-      {prospect.stage === 'qualifying' && readiness.every((item) => item.ok) && <p className="qualification-auto-note">✓ Tous les éléments essentiels sont renseignés : l’enregistrement fera passer automatiquement le prospect en « Besoin identifié ».</p>}
+      {prospect.stage === 'qualifying' && readiness.every((item) => item.ok) && <p className="qualification-auto-note">✓ Tous les éléments essentiels, dont au moins un besoin, sont renseignés : l’enregistrement fera passer automatiquement le prospect en « Besoin identifié ».</p>}
+      {prospect.stage === 'qualifying' && needCount === 0 && <p className="muted">Ajoute au moins un besoin / une prestation pour pouvoir terminer la qualification.</p>}
     </div>
   </section>;
 }
