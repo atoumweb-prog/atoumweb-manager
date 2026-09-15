@@ -34,6 +34,28 @@ describe('ActionService', () => {
     expect(open.map((action) => action.title)).toContain('Vérifier le nom de domaine');
   });
 
+  it('conserve le contact cible et le motif structuré d’une relance', () => {
+    const organization = crm.createOrganization({ name: 'Entreprise Test' });
+    const contact = crm.createContact({ organizationId: organization.id, firstName: 'Jeanne', lastName: 'Décideuse' });
+    const prospect = crm.createProspect({ organizationId: organization.id, contactId: contact.id });
+
+    const action = actions.create({
+      ownerType: 'prospect',
+      ownerId: prospect.id,
+      type: 'follow_up',
+      title: 'Rappeler la décisionnaire',
+      dueAt: '2026-09-20T08:30:00.000Z',
+      targetContactId: contact.id,
+      reasonCode: 'decision_maker_unavailable',
+      reasonText: null,
+      notes: 'Elle revient lundi matin.',
+    });
+
+    expect(action.targetContactId).toBe(contact.id);
+    expect(action.reasonCode).toBe('decision_maker_unavailable');
+    expect(action.notes).toBe('Elle revient lundi matin.');
+  });
+
   it('sépare les relances des actions et déplace le prospect dans À relancer après envoi du devis', () => {
     const contact = crm.createContact({ firstName: 'Relance', lastName: 'Test' });
     const prospect = crm.createProspect({ contactId: contact.id, stage: 'quote_sent' });
