@@ -33,6 +33,7 @@ const OUTCOMES = [
   ['email_sent', 'Email envoyé'],
   ['no_answer', 'Pas de réponse'],
   ['awaiting_reply', 'Retour attendu'],
+  ['meeting_set', 'RDV fixé'],
   ['change_requested', 'Demande de modification'],
   ['other', 'Autre'],
 ] as const;
@@ -55,6 +56,14 @@ function toDueAt(value: string): string | null {
 
 function isQuoteFollowUpStage(prospect: ProspectSummary): boolean {
   return ['quote_sent', 'follow_up', 'negotiation', 'waiting'].includes(prospect.stage ?? 'new');
+}
+
+function cleanError(error: unknown): string {
+  if (!(error instanceof Error)) return 'Une erreur est survenue.';
+  return error.message
+    .replace(/^Error invoking remote method ['"][^'"]+['"]:\s*/i, '')
+    .replace(/^Error:\s*/i, '')
+    .trim();
 }
 
 export function ProspectActionsPanel({ prospect, actions, onChanged }: {
@@ -104,7 +113,7 @@ export function ProspectActionsPanel({ prospect, actions, onChanged }: {
       setCreateOpen(false); setDueDate(''); setNotes(''); setRecurrence('none');
       onChanged(followUp ? 'Relance du devis programmée.' : 'Action commerciale ajoutée.');
       window.dispatchEvent(new Event('atoumweb:changed'));
-    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    } catch (e) { setError(cleanError(e)); }
     finally { setBusy(false); }
   }
 
@@ -134,7 +143,7 @@ export function ProspectActionsPanel({ prospect, actions, onChanged }: {
       setCompletingId(null); setCompletionNotes(''); setNextTitle(''); setNextDate('');
       onChanged('Action terminée et enregistrée dans l’historique.');
       window.dispatchEvent(new Event('atoumweb:changed'));
-    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    } catch (e) { setError(cleanError(e)); }
     finally { setBusy(false); }
   }
 
@@ -145,7 +154,7 @@ export function ProspectActionsPanel({ prospect, actions, onChanged }: {
       if (completingId === action.id) setCompletingId(null);
       onChanged('Action annulée.');
       window.dispatchEvent(new Event('atoumweb:changed'));
-    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    } catch (e) { setError(cleanError(e)); }
     finally { setBusy(false); }
   }
 
