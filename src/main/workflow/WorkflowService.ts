@@ -4,7 +4,7 @@ import type { CrmService } from '../crm/CrmService';
 import type { QuoteService } from '../commercial/QuoteService';
 import type { ProjectService } from '../projects/ProjectService';
 import type { OperationsService } from '../operations/OperationsService';
-import type { DashboardEntry, Need, NeedInput } from '../../shared/workflow';
+import type { DashboardEntry, Need, NeedInput, WorkflowIdentity } from '../../shared/workflow';
 
 export class WorkflowService {
   constructor(private db: DatabaseAdapter, private crm: CrmService, private quotes: QuoteService, private projects: ProjectService, private operations: OperationsService) {}
@@ -41,10 +41,26 @@ export class WorkflowService {
     this.log(owner,id,'Rattachement de besoin retiré');
     return this.needs(owner,id);
   }
-  identity(owner: 'prospect' | 'client', id: string) {
+  identity(owner: 'prospect' | 'client', id: string): WorkflowIdentity {
     this.owner(owner,id);
-    const row = owner === 'prospect' ? this.db.get<{organization_id:string|null;contact_id:string|null}>('SELECT organization_id,contact_id FROM prospects WHERE id=?',[id])! : this.db.get<{organization_id:string|null;contact_id:string|null}>('SELECT organization_id,primary_contact_id AS contact_id FROM client_accounts WHERE id=?',[id])!;
-    return { organization: row.organization_id ? this.crm.getOrganization(row.organization_id) : null, contact: row.contact_id ? this.crm.getContact(row.contact_id) : null };
+    if (owner === 'prospect') {
+      const row = this.db.get<{organization_id:string|null;contact_id:string|null;decision_maker_contact_id:string|null}>(
+        'SELECT organization_id,contact_id,decision_maker_contact_id FROM prospects WHERE id=?',[id],
+      )!;
+      return {
+        organization: row.organization_id ? this.crm.getOrganization(row.organization_id) : null,
+        contact: row.contact_id ? this.crm.getContact(row.contact_id) : null,
+        decisionMaker: row.decision_maker_contact_id ? this.crm.getContact(row.decision_maker_contact_id) : null,
+      };
+    }
+    const row = this.db.get<{organization_id:string|null;contact_id:string|null}>(
+      'SELECT organization_id,primary_contact_id AS contact_id FROM client_accounts WHERE id=?',[id],
+    )!;
+    return {
+      organization: row.organization_id ? this.crm.getOrganization(row.organization_id) : null,
+      contact: row.contact_id ? this.crm.getContact(row.contact_id) : null,
+      decisionMaker: null,
+    };
   }
   archiveProspect(id: string, archived: boolean): void {
     this.owner('prospect',id);
@@ -62,11 +78,13 @@ export class WorkflowService {
       if (['won','lost'].includes(p.stage ?? '')) continue;
       const target={entityType:'prospect' as const,entityId:p.id,title:p.displayName,status:p.stage};
       if (p.stage==='follow_up' || p.nextActionAt && p.nextActionAt.slice(0,10)<=new Date().toISOString().slice(0,10)) entries.push({group:'Prospects à relancer',target});
-      if (p.stage==='need_identified' || p.stage==='quote_to_prepare') entries.push({group:'Devis à préparer',target});
+      if (p.stage==='need_identified') entries.push({group:'Besoins à identifier',target});
+      if (p.stage==='quote_to_prepare') entries.push({group:'Devis à préparer',target});
       if (p.stage==='quote_to_send') entries.push({group:'Devis à envoyer',target});
+      if (p.stage==='quote_sent') entries.push({group:'Devis en attente de retour',target});
     }
     for (const q of this.quotes.list()) {
-      const group=q.status==='draft'?'Devis à préparer':['sent','viewed'].includes(q.status)?'Devis en attente de réponse':q.status==='accepted' && !this.db.get('SELECT id FROM projects WHERE source_quote_id=?',[q.id])?'Devis acceptés à démarrer':null;
+      const group=q.status==='draft'?'Devis à préparer':['sent','viewed'].includes(q.status)?'Devis en attente de retour':q.status==='accepted' && !this.db.get('SELECT id FROM projects WHERE source_quote_id=?',[q.id])?'Devis acceptés à démarrer':null;
       if(group) entries.push({group,target:{entityType:'quote',entityId:q.id,title:`${q.number} · ${q.subject}`,status:q.status}});
     }
     const labels:Record<string,string>={to_prepare:'Projets à préparer',in_progress:'Projets en cours',waiting_client:'Projets en attente Client',blocked:'Projets bloqués',to_validate:'Projets à valider'};
