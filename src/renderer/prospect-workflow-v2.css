@@ -1,0 +1,132 @@
+/* Prospect workflow V2 — pipeline, mode bureau et couleur commerciale persistante. */
+.prospect-detail-v2 {
+  --prospect-tint: transparent;
+  background: linear-gradient(var(--prospect-tint), var(--prospect-tint)), var(--surface);
+  border-color: color-mix(in srgb, var(--prospect-tint) 70%, var(--border));
+}
+.prospect-detail-v2.prospect-temperature-neutral { --prospect-tint: color-mix(in srgb, #7fbe8d 11%, transparent); }
+.prospect-detail-v2.prospect-temperature-cold { --prospect-tint: color-mix(in srgb, #79a9d7 12%, transparent); }
+.prospect-detail-v2.prospect-temperature-warm { --prospect-tint: color-mix(in srgb, #e7b75e 14%, transparent); }
+.prospect-detail-v2.prospect-temperature-hot { --prospect-tint: color-mix(in srgb, #e77a6f 13%, transparent); }
+
+.prospect-detail-v2 .prospect-work-section,
+.prospect-detail-v2 .inline-editor,
+.prospect-detail-v2 .contact-methods-panel,
+.prospect-detail-v2 .need-selector-v2,
+.prospect-detail-v2 .prospect-quote-panel,
+.prospect-detail-v2 .activity-preview {
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.prospect-header-meta { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 9px; }
+.detail-heading-actions { display: flex; align-items: center; gap: 8px; }
+.open-desk-button { white-space: nowrap; }
+
+.prospect-temperature-control {
+  display: flex;
+  justify-content: flex-end;
+  margin: 12px 0 14px;
+}
+.prospect-temperature-control label {
+  display: grid;
+  gap: 5px;
+  min-width: 190px;
+  color: var(--muted);
+  font-size: var(--ui-font-small);
+  font-weight: 750;
+}
+.prospect-temperature-control select {
+  min-height: var(--ui-control-height);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  color: var(--text);
+  padding: var(--ui-control-pad-y) var(--ui-control-pad-x);
+}
+
+.prospect-desk-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: color-mix(in srgb, #071018 62%, transparent);
+  backdrop-filter: blur(5px);
+}
+.prospect-desk-shell {
+  width: min(1180px, calc(100vw - 56px));
+  height: min(920px, calc(100dvh - 56px));
+  min-height: 0;
+}
+.prospect-detail-desk {
+  position: static;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  overflow-y: auto;
+  padding: max(var(--ui-panel-pad), 24px);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, .28);
+}
+.prospect-detail-desk .detail-panel-heading {
+  position: sticky;
+  top: calc(-1 * max(var(--ui-panel-pad), 24px));
+  z-index: 20;
+  margin: calc(-1 * max(var(--ui-panel-pad), 24px)) calc(-1 * max(var(--ui-panel-pad), 24px)) 18px;
+  padding: max(var(--ui-panel-pad), 24px);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+}
+.prospect-detail-desk .prospect-work-section,
+.prospect-detail-desk .identity-editor-v2,
+.prospect-detail-desk .contact-methods-panel,
+.prospect-detail-desk .prospect-quote-panel,
+.prospect-detail-desk .activity-preview {
+  max-width: 1040px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.quick-date-scheduler {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+}
+.quick-date-scheduler input {
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 9px;
+  background: var(--surface);
+  color: var(--text);
+}
+.card-start-button { width: 100%; }
+.next-action-line { border-color: color-mix(in srgb, var(--accent) 28%, var(--border)); }
+
+.prequote-gate-placeholder {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  border-radius: 11px;
+}
+.prequote-gate-placeholder .primary-button:disabled { opacity: .62; cursor: not-allowed; }
+
+@media (max-width: 760px) {
+  .prospect-desk-overlay { padding: 0; }
+  .prospect-desk-shell { width: 100vw; height: 100dvh; }
+  .prospect-detail-desk { border-radius: 0; }
+  .prospect-temperature-control { justify-content: stretch; }
+  .prospect-temperature-control label { width: 100%; }
+  .quick-date-scheduler { grid-template-columns: 1fr; }
+}
