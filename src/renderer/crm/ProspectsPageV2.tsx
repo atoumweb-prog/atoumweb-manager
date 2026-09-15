@@ -128,7 +128,13 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
       const lines = needs.map((need) => {
         if (need.catalogItemId) {
           const item = byId.get(need.catalogItemId); const versionId = item?.currentVersion?.id;
-          if (versionId) return { catalogVersionId: versionId, input: { label: item?.name ?? need.label } };
+          if (versionId) return {
+            catalogVersionId: versionId,
+            input: {
+              label: item?.name ?? need.label,
+              proposedUnitPriceCents: item?.currentVersion?.priceCents ?? 0,
+            },
+          };
         }
         return { input: { label: need.label || need.otherText || 'Prestation à chiffrer', proposedUnitPriceCents: 0, catalogUnitPriceCents: 0 } };
       });
@@ -191,7 +197,7 @@ function ProspectDetailV2({ prospect, actions, activity, onRefresh, onClose, onT
   const openActions = actions.filter((item) => item.status === 'open');
   return <aside className="panel prospect-detail-panel prospect-detail-v2"><div className="detail-panel-heading"><div><span className="eyebrow">Fiche prospect</span><h2>{prospect.displayName}</h2></div><button className="close-detail" onClick={onClose}>×</button></div>
     <div className="prospect-controls-v2"><label>État commercial<select value={prospect.temperature ?? 'neutral'} onChange={(e) => onTemperature(e.target.value as ProspectTemperature)}>{PROSPECT_TEMPERATURES.map((value) => <option key={value} value={value}>{TEMPERATURE_LABELS[value]}</option>)}</select></label><label>Étape<select value={prospect.stage} onChange={(e) => onStage(e.target.value as ProspectStage)}>{ACTIVE_STAGES.map((value) => <option key={value} value={value}>{STAGE_LABELS[value]}</option>)}</select></label></div>
-    <div className="detail-badges"><span className={`temperature temperature-${prospect.temperature ?? 'neutral'}`}>{TEMPERATURE_LABELS[prospect.temperature ?? 'neutral']}</span><span className="status-pill">{STAGE_LABELS[prospect.stage]}</span>{prospect.source && <span className="status-pill">{SOURCE_LABELS[prospect.source]}{prospect.source === 'other' && prospect.sourceDetail ? ` · ${prospect.sourceDetail}` : ''}</span>}</div>
+    <div className="detail-badges"><span className={`temperature temperature-${prospect.temperature ?? 'neutral'}`}>{TEMPERATURE_LABELS[prospect.temperature ?? 'neutral']}</span><span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span>{prospect.source && <span className="status-pill">{SOURCE_LABELS[prospect.source]}{prospect.source === 'other' && prospect.sourceDetail ? ` · ${prospect.sourceDetail}` : ''}</span>}</div>
     {prospect.stage === 'new' && <button className="primary-button start-qualification-button" onClick={() => onStage('qualifying')}>Commencer la prospection / qualification</button>}
     <ProspectIdentityPanel prospect={prospect} onSaved={() => onRefresh('Informations du prospect mises à jour.')} />
     <ProspectQuotePanel prospect={prospect} onChanged={onRefresh} />
