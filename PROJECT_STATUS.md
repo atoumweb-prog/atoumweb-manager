@@ -14,6 +14,16 @@
 - **Migrations prévues sur la branche Phase 3** : 10
 - **Principe directeur** : une donnée métier possède une source unique ; les autres écrans la référencent sans duplication.
 
+### Stabilisation transverse — 15/09/2026
+
+- [x] migration SQLite 19 : pipeline enrichi, température neutre, qualification, coordonnées multiples, actions structurées et documents client
+- [x] ancien libellé « Dossier partagé » retiré de l’interface ; l’identité, les besoins, les devis et les projets restent des données liées
+- [x] parcours devis « en préparation → à envoyer → envoyé » sans modifier le statut technique `draft` avant envoi
+- [x] fichiers client stockés hors SQLite sous `clients/<client-id>/Documents`, métadonnées en base
+- [x] correction du paquet Windows vide : renderer désormais inclus dans `app.asar`
+- [x] validations automatisées : 28 fichiers, 118 tests, TypeScript et packaging
+- [ ] recette fonctionnelle et visuelle Windows du scénario Boulangerie Martin
+
 ## Phase 0 — Fondation
 
 Validations réelles effectuées sous Windows le 13/09/2026 :

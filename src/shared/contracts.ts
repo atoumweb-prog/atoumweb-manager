@@ -1,5 +1,6 @@
 import type { CatalogApi, QuoteApi } from './commercial';
 import type { CrmApi } from './crm';
+import type { ClientDocumentsApi } from './clientDocuments';
 import type { HourPackShortfallApi } from './hourPackShortfall';
 import type { MaintenanceOverageApi } from './maintenanceOverage';
 import type { MaintenanceReportApi } from './maintenanceReport';
@@ -66,6 +67,7 @@ export interface AtoumWebApi {
     health(): Promise<DatabaseHealth>;
   };
   crm: CrmApi;
+  clientDocuments: ClientDocumentsApi;
   catalog: CatalogApi;
   quotes: QuoteApi;
   projects: ProjectsApi;

@@ -25,12 +25,15 @@ import type {
   ContactInput,
   CrmActionFilters,
   CrmActionInput,
+  CompleteActionInput,
+  ContactMethodInput,
   OrganizationInput,
   ProspectFilters,
   ProspectInput,
   ProspectStage,
   SearchResult,
 } from '../shared/crm';
+import type {ClientDocumentInput} from '../shared/clientDocuments';
 import type {
   InternalProjectInput,
   MoveProjectNodeInput,
@@ -129,9 +132,13 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('crm:organizations:update', (_event, id: string, input: OrganizationInput) => database.crm.updateOrganization(id, input));
   ipcMain.handle('crm:contacts:create', (_event, input: ContactInput) => database.crm.createContact(input));
   ipcMain.handle('crm:contacts:update', (_event, id: string, input: ContactInput) => database.crm.updateContact(id, input));
+  ipcMain.handle('crm:contact-methods:list',(_event,owner:'organization'|'contact',id:string,includeArchived?:boolean)=>database.crm.listContactMethods(owner,id,includeArchived));
+  ipcMain.handle('crm:contact-methods:save',(_event,input:ContactMethodInput,id?:string)=>database.crm.saveContactMethod(input,id));
+  ipcMain.handle('crm:contact-methods:archive',(_event,id:string,archived?:boolean)=>database.crm.archiveContactMethod(id,archived));
   ipcMain.handle('crm:prospects:list', (_event, filters?: ProspectFilters) => database.crm.listProspects(filters));
   ipcMain.handle('crm:prospects:create', (_event, input: ProspectInput) => database.crm.createProspect(input));
   ipcMain.handle('crm:prospects:update', (_event, id: string, input: ProspectInput) => database.crm.updateProspect(id, input));
+  ipcMain.handle('crm:prospects:update-qualification',(_event,id:string,input:Partial<ProspectInput>)=>database.crm.updateProspectQualification(id,input));
   ipcMain.handle('crm:prospects:change-stage', (_event, id: string, stage: ProspectStage, lostReason?: string | null) => database.crm.changeProspectStage(id, stage, lostReason));
   ipcMain.handle('crm:prospects:set-next-action', (_event, id: string, at: string | null, text: string | null) => database.crm.setProspectNextAction(id, at, text));
   ipcMain.handle('crm:prospects:convert-to-client', (_event, id: string) => database.crm.convertProspectToClient(id));
@@ -145,7 +152,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('crm:clients:set-primary-contact', (_event, id: string, contactId: string) => database.clientContacts.setPrimary(id, contactId));
   ipcMain.handle('crm:actions:list', (_event, filters?: CrmActionFilters) => database.actions.list(filters));
   ipcMain.handle('crm:actions:create', (_event, input: CrmActionInput) => database.actions.create(input));
-  ipcMain.handle('crm:actions:complete', (_event, id: string) => database.actions.complete(id));
+  ipcMain.handle('crm:actions:complete', (_event, id: string,input?:CompleteActionInput) => database.actions.complete(id,input));
   ipcMain.handle('crm:actions:cancel', (_event, id: string) => database.actions.cancel(id));
   ipcMain.handle('crm:actions:reopen', (_event, id: string) => database.actions.reopen(id));
   ipcMain.handle('crm:activity:list', (_event, entityType: string, entityId: string) => database.crm.listActivity(entityType, entityId));
@@ -183,6 +190,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
       entityType: 'hour_pack', entityId: pack.id, title: pack.name,
       subtitle: `${pack.clientLabel}${pack.projectLabel ? ` · ${pack.projectLabel}` : ''}`, status: pack.status,
     }));
+    const documentResults:SearchResult[]=database.clientDocuments.search(normalized).map(row=>({entityType:'client_document',entityId:String(row.id),parentEntityId:String(row.client_account_id),title:String(row.title),subtitle:`${String(row.client_name)} · ${String(row.original_name)}`,status:String(row.category)}));
 
     return [
       ...crmResults,
@@ -193,9 +201,18 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
       ...requestResults,
       ...maintenanceResults,
       ...hourPackResults,
+      ...documentResults,
     ].slice(0, 30);
   });
   ipcMain.handle('crm:search:rebuild', () => database.crm.rebuildSearchIndex());
+
+  ipcMain.handle('client-documents:list',(_event,clientId:string,includeArchived?:boolean)=>database.clientDocuments.list(clientId,includeArchived));
+  ipcMain.handle('client-documents:import',async(_event,clientId:string,input:ClientDocumentInput)=>{const selection=await dialog.showOpenDialog({title:'Importer des documents client',properties:['openFile','multiSelections']});return selection.canceled?database.clientDocuments.list(clientId):database.clientDocuments.importPaths(clientId,selection.filePaths,input);});
+  ipcMain.handle('client-documents:update',(_event,id:string,input:ClientDocumentInput)=>database.clientDocuments.update(id,input));
+  ipcMain.handle('client-documents:archive',(_event,id:string,archived?:boolean)=>database.clientDocuments.archive(id,archived));
+  ipcMain.handle('client-documents:delete',async(_event,id:string)=>{const doc=database.clientDocuments.get(id);const answer=await dialog.showMessageBox({type:'warning',title:'Suppression définitive',message:`Supprimer définitivement « ${doc.title} » ?`,detail:'Le fichier physique et ses métadonnées seront supprimés. Cette action est irréversible.',buttons:['Annuler','Supprimer définitivement'],defaultId:0,cancelId:0});if(answer.response!==1)return{cancelled:true};database.clientDocuments.deletePermanently(id);return{cancelled:false};});
+  ipcMain.handle('client-documents:open-file',async(_event,id:string)=>{const error=await shell.openPath(database.clientDocuments.absolutePath(id));if(error)throw Error(error);});
+  ipcMain.handle('client-documents:open-folder',async(_event,clientId:string)=>{const path=database.clientDocuments.clientRoot(clientId);const error=await shell.openPath(path);if(error)throw Error(error);});
 
   ipcMain.handle('catalog:list', (_event, filters?: CatalogFilters) => database.catalog.list(filters));
   ipcMain.handle('catalog:get-item', (_event, id: string) => database.catalog.getItem(id));
@@ -217,6 +234,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('quotes:remove-line', (_event, lineId: string) => database.quotes.removeLine(lineId));
   ipcMain.handle('quotes:update-conditions', (_event, quoteId: string, input: Partial<QuoteInput>) => database.quotes.updateConditions(quoteId, input));
   ipcMain.handle('quotes:mark-sent', (_event, id: string) => database.quotes.markSent(id));
+  ipcMain.handle('quotes:finalize',(_event,id:string)=>database.quotes.finalize(id));
+  ipcMain.handle('quotes:extend-validity',(_event,id:string,validUntil:string)=>database.quotes.extendValidity(id,validUntil));
   ipcMain.handle('quotes:mark-viewed', (_event, id: string) => database.quotes.markViewed(id));
   ipcMain.handle('quotes:accept', (_event, id: string) => database.quotes.accept(id));
   ipcMain.handle('quotes:refuse', (_event, id: string) => database.quotes.refuse(id));

@@ -1,10 +1,12 @@
 import { DossierPanel, NeedChoices } from '../workflow/DossierPanel';
 import type { NeedInput } from '../../shared/workflow';
+import {ProspectQualificationPanel} from './ProspectQualificationPanel';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
   PROSPECT_SOURCES,
   PROSPECT_TEMPERATURES,
   type ActivityEvent,
+  type ActionRecurrence,
   type CrmAction,
   type CrmActionType,
   type ProspectSource,
@@ -18,6 +20,7 @@ const ACTIVE_STAGES: ProspectStage[] = [
   'qualifying',
   'need_identified',
   'quote_to_prepare',
+  'quote_to_send',
   'quote_sent',
   'follow_up',
   'negotiation',
@@ -28,7 +31,8 @@ const STAGE_LABELS: Record<ProspectStage, string> = {
   new: 'Nouveau contact',
   qualifying: 'À qualifier',
   need_identified: 'Besoin identifié',
-  quote_to_prepare: 'Devis à préparer',
+  quote_to_prepare: 'Devis en préparation',
+  quote_to_send: 'Devis à envoyer',
   quote_sent: 'Devis envoyé',
   follow_up: 'À relancer',
   negotiation: 'Négociation',
@@ -39,6 +43,7 @@ const STAGE_LABELS: Record<ProspectStage, string> = {
 
 const TEMPERATURE_LABELS: Record<ProspectTemperature, string> = {
   cold: 'Froid',
+  neutral: 'Neutre',
   warm: 'Tiède',
   hot: 'Chaud',
 };
@@ -77,6 +82,7 @@ interface ActionEditor {
   date: string;
   text: string;
   notes: string;
+  recurrence: ActionRecurrence;
 }
 
 interface LostEditor {
@@ -92,7 +98,7 @@ const EMPTY_DRAFT: ProspectDraft = {
   phone: '',
   primaryNeed: '',
   source: 'website',
-  temperature: 'warm',
+  temperature: 'neutral',
   estimatedValueEuros: '',
   firstActionDate: '',
   firstActionText: '',
@@ -299,6 +305,8 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
     onMessage(result.createdClient ? 'Prospect transformé en nouveau client et retiré du pipeline.' : 'Prospect rattaché au client existant et retiré du pipeline.');
   }
 
+  async function createQuoteFromProspect(prospect:ProspectSummary):Promise<void>{try{const needs=await window.atoumweb.workflow.needs('prospect',prospect.id);if(!needs.length){onMessage('Ajoute au moins un besoin avant de créer le devis.');return;}const quote=await window.atoumweb.quotes.create({prospectId:prospect.id,subject:prospect.projectSummary||needs.map(n=>n.label).join(' + '),needSummary:needs.map(n=>n.label).join(' · ')});await refresh();window.dispatchEvent(new CustomEvent('atoumweb:navigate',{detail:{entityType:'quote',entityId:quote.id,title:quote.subject}}));}catch(error){onMessage(error instanceof Error?error.message:'Création du devis impossible.');}}
+
   async function changeStage(prospect: ProspectSummary, stage: ProspectStage): Promise<void> {
     if (stage === prospect.stage) return;
     if (prospect.clientAccountId) {
@@ -306,6 +314,8 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
       return;
     }
     if (!ACTIVE_STAGES.includes(stage)) return;
+    if (!['new','qualifying'].includes(stage) && !window.confirm(`Confirmer le passage vers « ${STAGE_LABELS[stage]} » ?`)) return;
+    if(stage==='waiting'){const reason=window.prompt('Motif de mise en attente');if(!reason?.trim())return;const resume=window.prompt('Date de reprise prévue (AAAA-MM-JJ), facultative')||null;await window.atoumweb.crm.prospects.updateQualification(prospect.id,{waitingReasonCode:'other',waitingReasonText:reason,waitingResumeAt:resume});}
     await window.atoumweb.crm.prospects.changeStage(prospect.id, stage);
     await refresh();
     onMessage(`Prospect déplacé vers « ${STAGE_LABELS[stage]} ».`);
@@ -344,6 +354,7 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
       date: type === 'follow_up' ? todayInput() : '',
       text: type === 'follow_up' ? 'Relancer le prospect' : '',
       notes: '',
+      recurrence: 'none',
     });
   }
 
@@ -366,6 +377,7 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
       title: text,
       dueAt,
       notes: actionEditor.notes.trim() || null,
+      recurrence: actionEditor.recurrence,
     });
     const type = actionEditor.type;
     setActionEditor(null);
@@ -374,7 +386,10 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
   }
 
   async function completeAction(action: CrmAction): Promise<void> {
-    await window.atoumweb.crm.actions.complete(action.id);
+    const channel=window.prompt('Canal utilisé (téléphone, email, visio…)',action.type==='follow_up'?'téléphone':'');if(channel===null)return;
+    const outcome=window.prompt('Résultat de l’action','réalisée');if(outcome===null)return;
+    const notes=window.prompt('Compte rendu (facultatif)','');if(notes===null)return;
+    await window.atoumweb.crm.actions.complete(action.id,{channel,outcome,notes});
     await refresh();
     onMessage(`${action.type === 'follow_up' ? 'Relance' : 'Action'} terminée.`);
   }
@@ -500,7 +515,7 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
                               title="Cliquer pour ouvrir · Faire glisser pour déplacer"
                             >
                               <strong>{prospect.displayName}</strong>
-                              <span className={`temperature temperature-${prospect.temperature ?? 'warm'}`}>{TEMPERATURE_LABELS[prospect.temperature ?? 'warm']}</span>
+                              <span className={`temperature temperature-${prospect.temperature ?? 'neutral'}`} aria-label={`Température : ${TEMPERATURE_LABELS[prospect.temperature ?? 'neutral']}`}>{TEMPERATURE_LABELS[prospect.temperature ?? 'neutral']}</span>
                             </div>
 
                             <div className="prospect-card-body" onClick={() => setSelectedId(prospect.id)}>
@@ -563,6 +578,8 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
                 onLost={() => openLostEditor(selected)}
                 onConfirmLost={() => void confirmLost()}
                 onConvert={() => void convert(selected)}
+                onCreateQuote={() => void createQuoteFromProspect(selected)}
+                onQualificationSaved={() => void refresh()}
               />}
             </div>
           )}
@@ -617,6 +634,8 @@ function ProspectDetail({
   onLost,
   onConfirmLost,
   onConvert,
+  onCreateQuote,
+  onQualificationSaved,
 }: {
   prospect: ProspectSummary;
   actions: CrmAction[];
@@ -636,6 +655,8 @@ function ProspectDetail({
   onLost: () => void;
   onConfirmLost: () => void;
   onConvert: () => void;
+  onCreateQuote: () => void;
+  onQualificationSaved: () => void;
 }) {
   const active = !isClosed(prospect);
   const followUps = openActions.filter((action) => action.type === 'follow_up');
@@ -649,12 +670,14 @@ function ProspectDetail({
       </div>
 
       <div className="detail-badges">
-        <span className={`temperature temperature-${prospect.temperature ?? 'warm'}`}>{TEMPERATURE_LABELS[prospect.temperature ?? 'warm']}</span>
+        <span className={`temperature temperature-${prospect.temperature ?? 'neutral'}`} aria-label={`Température : ${TEMPERATURE_LABELS[prospect.temperature ?? 'neutral']}`}>{TEMPERATURE_LABELS[prospect.temperature ?? 'neutral']}</span>
         <span className="status-pill">{prospect.clientAccountId ? 'Client' : STAGE_LABELS[prospect.stage ?? 'new']}</span>
         {prospect.source && <span className="status-pill">{SOURCE_LABELS[prospect.source]}</span>}
       </div>
 
       <DossierPanel owner="prospect" id={prospect.id} />
+      {active&&<button className="primary-button" type="button" onClick={onCreateQuote}>Créer un devis depuis ce prospect</button>}
+      <ProspectQualificationPanel prospect={prospect} onSaved={onQualificationSaved}/>
       <div className="summary-list">
         <SummaryLine label="Contact" value={prospect.secondaryLabel || 'Non renseigné'} />
         <SummaryLine label="Besoin" value={prospect.primaryNeed || 'À préciser'} />
@@ -682,6 +705,7 @@ function ProspectDetail({
           <label>Libellé<input value={actionEditor.text} onChange={(event) => setActionEditor({ ...actionEditor, text: event.target.value })} placeholder={actionEditor.type === 'follow_up' ? 'Ex. rappeler pour le devis' : 'Ex. préparer la proposition'} /></label>
           <label>Date {actionEditor.type === 'action' && <small>(facultative)</small>}<input type="date" value={actionEditor.date} onChange={(event) => setActionEditor({ ...actionEditor, date: event.target.value })} /></label>
           <label>Note <small>(facultative)</small><textarea value={actionEditor.notes} onChange={(event) => setActionEditor({ ...actionEditor, notes: event.target.value })} /></label>
+          <label>Récurrence<select value={actionEditor.recurrence} onChange={event=>setActionEditor({...actionEditor,recurrence:event.target.value as ActionRecurrence})}><option value="none">Aucune</option><option value="weekly">Chaque semaine</option><option value="monthly">Chaque mois</option><option value="quarterly">Chaque trimestre</option><option value="yearly">Chaque année</option></select></label>
           <div className="inline-editor-actions"><button className="secondary-button compact-button" type="button" onClick={() => setActionEditor(null)}>Annuler</button><button className="primary-button compact-button" type="button" onClick={onSaveAction}>Ajouter</button></div>
         </div>
       )}

@@ -1,4 +1,5 @@
 import { DossierPanel, NeedChoices } from '../workflow/DossierPanel';
+import {ClientDocumentsPanel} from './ClientDocumentsPanel';
 import type { NeedInput } from '../../shared/workflow';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -8,6 +9,7 @@ import {
   type ClientContactRole,
   type ClientStatus,
   type ClientSummary,
+  type ClientRelationshipStatus,
 } from '../../shared/crm';
 import { ClientOperationsTab } from './ClientOperationsTab';
 
@@ -25,7 +27,7 @@ const ROLE_LABELS: Record<ClientContactRole, string> = {
   other: 'Autre',
 };
 
-type ClientTab = 'summary' | 'contacts' | 'operations' | 'commercial' | 'history';
+type ClientTab = 'summary' | 'contacts' | 'documents' | 'operations' | 'commercial' | 'history';
 
 interface ClientDraft {
   company: string;
@@ -406,6 +408,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
               <div className="client-tabs-preview client-tabs-buttons">
                 <button className={activeTab === 'summary' ? 'active' : ''} type="button" onClick={() => setActiveTab('summary')}>Résumé</button>
                 <button className={activeTab === 'contacts' ? 'active' : ''} type="button" onClick={() => setActiveTab('contacts')}>Contacts</button>
+                <button className={activeTab === 'documents' ? 'active' : ''} type="button" onClick={() => setActiveTab('documents')}>Documents</button>
                 <button className={activeTab === 'operations' ? 'active' : ''} type="button" onClick={() => setActiveTab('operations')}>Interventions</button>
                 <button className={activeTab === 'commercial' ? 'active' : ''} type="button" onClick={() => setActiveTab('commercial')}>Commercial</button>
                 <button className={activeTab === 'history' ? 'active' : ''} type="button" onClick={() => setActiveTab('history')}>Historique</button>
@@ -422,6 +425,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
                       </select>
                     </label>
                     <p className="muted">Ce statut est indépendant de l’ancien pipeline Prospect. Un prospect gagné devient Client actif, puis tu gères ici sa relation dans le temps.</p>
+                    <label>Qualité de la relation<select aria-label="Qualité de la relation client" value={selected.relationshipStatus??'neutral'} onChange={async event=>{await window.atoumweb.crm.clients.update(selected.id,{...selected,relationshipStatus:event.target.value as ClientRelationshipStatus});await refresh();await openClient(selected.id);}}><option value="excellent">Excellente</option><option value="good">Bonne</option><option value="neutral">Neutre</option><option value="watch">À surveiller</option><option value="difficult">Difficile</option></select></label>
                   </div>
 
                   {archiveCandidateId === selected.id && (
@@ -497,6 +501,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
               )}
 
               {activeTab === 'operations' && <ClientOperationsTab clientId={selected.id} onMessage={onMessage} />}
+              {activeTab === 'documents' && <ClientDocumentsPanel clientId={selected.id}/>}
 
               {activeTab === 'commercial' && (
                 <div className="tab-content-stack">

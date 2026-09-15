@@ -79,6 +79,7 @@ function entityLabel(type: SearchResult['entityType']): string {
     case 'prospect': return 'Prospect';
     case 'organization': return 'Société';
     case 'contact': return 'Contact';
+    case 'client_document': return 'Document client';
     case 'catalog': return 'Offre / Service';
     case 'quote': return 'Devis';
     case 'project': return 'Projet';

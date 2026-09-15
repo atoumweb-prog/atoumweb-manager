@@ -1,4 +1,5 @@
 import { STABILISATION_MIGRATION } from './stabilisationMigration';
+import { STABILISATION_PHASE_19_MIGRATION } from './stabilisationPhase19Migration';
 import type { DatabaseAdapter } from './DatabaseAdapter';
 import { PHASE_2_MIGRATIONS } from './phase2Migrations';
 import { PHASE_3_MIGRATIONS } from './phase3Migrations';
@@ -6,7 +7,7 @@ import { PHASE_4_MIGRATIONS } from './phase4Migrations';
 import { PHASE_4_OVERAGE_MIGRATIONS } from './phase4OverageMigration';
 import { PHASE_4_REPORT_MIGRATIONS } from './phase4ReportMigration';
 
-export interface Migration { id: number; name: string; sql: string; }
+export interface Migration { id: number; name: string; sql: string; disableForeignKeys?: boolean; }
 
 export const MIGRATIONS: Migration[] = [
   {
@@ -165,6 +166,7 @@ export const MIGRATIONS: Migration[] = [
   ...PHASE_4_OVERAGE_MIGRATIONS,
   ...PHASE_4_REPORT_MIGRATIONS,
   STABILISATION_MIGRATION,
+  STABILISATION_PHASE_19_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {
@@ -181,13 +183,16 @@ export function getPendingMigrations(database: DatabaseAdapter): Migration[] {
 export function applyPendingMigrations(database: DatabaseAdapter): Migration[] {
   const pending = getPendingMigrations(database);
   for (const migration of pending) {
+    if (migration.disableForeignKeys) database.exec('PRAGMA foreign_keys = OFF;');
     database.exec('BEGIN IMMEDIATE;');
     try {
       database.exec(migration.sql);
       database.run('INSERT INTO schema_migrations (id, name, applied_at) VALUES (?, ?, ?)', [migration.id, migration.name, new Date().toISOString()]);
       database.exec('COMMIT;');
+      if (migration.disableForeignKeys) database.exec('PRAGMA foreign_keys = ON;');
     } catch (error) {
       database.exec('ROLLBACK;');
+      if (migration.disableForeignKeys) database.exec('PRAGMA foreign_keys = ON;');
       throw error;
     }
   }

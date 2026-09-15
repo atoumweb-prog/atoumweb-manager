@@ -591,3 +591,12 @@ La Phase 1 est terminée lorsque :
 - les événements importants apparaissent dans le journal ;
 - les trois thèmes fonctionnent sur tous les écrans Phase 1 ;
 - les tests automatisés passent.
+# Stabilisation transverse (migration 19)
+
+Le CRM accepte un prospect `new` ou `qualifying` sans besoin. Les étapes suivantes exigent au moins un besoin persistant. Les coordonnées multiples sont stockées dans `contact_methods`; les champs historiques `email` et `phone` restent des valeurs de repli et sont migrés une seule fois.
+
+La qualification regroupe décisionnaire, contexte, résumé, budget, calendrier, existant et informations manquantes. La température commerciale inclut désormais `neutral` et reste indépendante de l’étape du pipeline. Les actions peuvent enregistrer canal, résultat et compte rendu, puis générer leur prochaine occurrence.
+
+Le « Dossier partagé » n’existe plus comme bloc visuel. Les écrans affichent directement les informations liées à l’organisation, au contact, aux besoins, aux devis et aux projets.
+
+Le dossier client désigne maintenant le dossier de travail complet du client. Les documents physiques vivent dans `clients/<client-id>/Documents`; SQLite ne conserve que leurs métadonnées.

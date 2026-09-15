@@ -8,6 +8,7 @@ import {
   type CrmActionFilters,
   type CrmActionInput,
   type CrmActionOwnerType,
+  type CompleteActionInput,
 } from '../../shared/crm';
 
 const nowIso = (): string => new Date().toISOString();
@@ -29,6 +30,12 @@ interface ActionRow extends Record<string, unknown> {
   completed_at: string | null;
   created_at: string;
   updated_at: string;
+  completion_channel: string | null;
+  completion_outcome: string | null;
+  completion_notes: string | null;
+  related_type: string | null;
+  related_id: string | null;
+  recurrence: CrmAction['recurrence'];
 }
 
 export class ActionService {
@@ -89,8 +96,8 @@ export class ActionService {
     this.database.run(
       `INSERT INTO crm_actions (
         id, owner_type, prospect_id, client_account_id, action_type, title,
-        due_at, notes, status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?)`,
+        due_at, notes, related_type, related_id, recurrence, status, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?)`,
       [
         id,
         input.ownerType,
@@ -100,6 +107,9 @@ export class ActionService {
         title,
         clean(input.dueAt),
         clean(input.notes),
+        clean(input.relatedType),
+        clean(input.relatedId),
+        input.recurrence ?? 'none',
         now,
         now,
       ],
@@ -119,14 +129,16 @@ export class ActionService {
     return this.get(id);
   }
 
-  complete(id: string): CrmAction {
+  complete(id: string, input: CompleteActionInput = {}): CrmAction {
     const action = this.get(id);
     if (action.status === 'done') return action;
     const now = nowIso();
     this.database.run(
-      `UPDATE crm_actions SET status='done', completed_at=?, updated_at=? WHERE id=?`,
-      [now, now, id],
+      `UPDATE crm_actions SET status='done', completed_at=?, completion_channel=?, completion_outcome=?, completion_notes=?, updated_at=? WHERE id=?`,
+      [now, clean(input.channel), clean(input.outcome), clean(input.notes), now, id],
     );
+    const nextInput = input.nextAction ?? this.recurringNext(action);
+    if (nextInput) this.create(nextInput);
     this.writeActivity(action.ownerType, action.ownerId, 'action_completed', `Action terminée : ${action.title}`);
     this.syncLegacyNextAction(action.ownerType, action.ownerId);
     return this.get(id);
@@ -173,6 +185,12 @@ export class ActionService {
       notes: row.notes,
       status: row.status,
       completedAt: row.completed_at,
+      completionChannel: row.completion_channel,
+      completionOutcome: row.completion_outcome,
+      completionNotes: row.completion_notes,
+      relatedType: row.related_type,
+      relatedId: row.related_id,
+      recurrence: row.recurrence ?? 'none',
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
@@ -182,6 +200,18 @@ export class ActionService {
     const table = ownerType === 'prospect' ? 'prospects' : 'client_accounts';
     const row = this.database.get<{ id: string }>(`SELECT id FROM ${table} WHERE id=?`, [ownerId]);
     if (!row) throw new Error(ownerType === 'prospect' ? 'Prospect introuvable.' : 'Client introuvable.');
+  }
+
+  private recurringNext(action: CrmAction): CrmActionInput | null {
+    if (!action.recurrence || action.recurrence === 'none' || !action.dueAt) return null;
+    const date = new Date(action.dueAt);
+    if (Number.isNaN(date.getTime())) return null;
+    if (action.recurrence === 'weekly') date.setUTCDate(date.getUTCDate() + 7);
+    else if (action.recurrence === 'monthly') date.setUTCMonth(date.getUTCMonth() + 1);
+    else if (action.recurrence === 'quarterly') date.setUTCMonth(date.getUTCMonth() + 3);
+    else date.setUTCFullYear(date.getUTCFullYear() + 1);
+    return { ownerType:action.ownerType, ownerId:action.ownerId, type:action.type, title:action.title,
+      dueAt:date.toISOString(), notes:action.notes, relatedType:action.relatedType, relatedId:action.relatedId, recurrence:action.recurrence };
   }
 
   private writeActivity(ownerType: CrmActionOwnerType, ownerId: string, action: string, summary: string): void {

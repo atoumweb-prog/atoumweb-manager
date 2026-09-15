@@ -1,7 +1,7 @@
 export const PROSPECT_STAGES = [
-  'new', 'qualifying', 'need_identified', 'quote_to_prepare', 'quote_sent', 'follow_up', 'negotiation', 'waiting', 'won', 'lost',
+  'new', 'qualifying', 'need_identified', 'quote_to_prepare', 'quote_to_send', 'quote_sent', 'follow_up', 'negotiation', 'waiting', 'won', 'lost',
 ] as const;
-export const PROSPECT_TEMPERATURES = ['cold', 'warm', 'hot'] as const;
+export const PROSPECT_TEMPERATURES = ['cold', 'neutral', 'warm', 'hot'] as const;
 export const PROSPECT_SOURCES = ['website', 'referral', 'google', 'social', 'event', 'outbound', 'former_client', 'other'] as const;
 export const CLIENT_STATUSES = ['active', 'inactive', 'archived'] as const;
 export const CLIENT_CONTACT_ROLES = ['primary', 'administrative', 'billing', 'technical', 'other'] as const;
@@ -17,6 +17,11 @@ export type ClientContactRole = (typeof CLIENT_CONTACT_ROLES)[number];
 export type CrmActionType = (typeof CRM_ACTION_TYPES)[number];
 export type CrmActionStatus = (typeof CRM_ACTION_STATUSES)[number];
 export type CrmActionOwnerType = (typeof CRM_ACTION_OWNER_TYPES)[number];
+export type ContactMethodType = 'email' | 'phone';
+export type ActionRecurrence = 'none' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+export type ClientRelationshipStatus = 'excellent' | 'good' | 'neutral' | 'watch' | 'difficult';
+export interface ContactMethodInput { organizationId?: string | null; contactId?: string | null; type: ContactMethodType; value: string; label?: string | null; isPrimary?: boolean; notes?: string | null; }
+export interface ContactMethod extends ContactMethodInput { id: string; isPrimary: boolean; createdAt: string; updatedAt: string; archivedAt?: string | null; }
 
 export interface OrganizationInput {
   name: string; legalName?: string | null; siret?: string | null; email?: string | null; phone?: string | null; website?: string | null;
@@ -35,6 +40,10 @@ export interface ProspectInput {
   organizationId?: string | null; contactId?: string | null; stage?: ProspectStage; temperature?: ProspectTemperature; source?: ProspectSource | null; sourceDetail?: string | null;
   primaryNeed?: string | null; secondaryNeed?: string | null; budgetMinCents?: number | null; budgetMaxCents?: number | null; estimatedValueCents?: number | null;
   probabilityPercent?: number | null; nextActionAt?: string | null; nextActionText?: string | null; targetDate?: string | null; notes?: string | null;
+  decisionStatus?: 'yes' | 'no' | 'unknown' | null; decisionMakerDetails?: string | null; projectSummary?: string | null; projectContext?: string | null;
+  budgetStatus?: 'known' | 'range' | 'not_disclosed' | null; timelineStatus?: 'date' | 'note' | 'not_disclosed' | null; timelineNote?: string | null;
+  existingStatus?: 'yes' | 'no' | 'unknown' | null; existingUrl?: string | null; existingNotes?: string | null; missingInformation?: string | null;
+  waitingReasonCode?: string | null; waitingReasonText?: string | null; waitingResumeAt?: string | null; lostReasonCode?: string | null;
 }
 export interface ProspectSummary extends ProspectInput {
   id: string; clientAccountId?: string | null; lostReason?: string | null; wonAt?: string | null; lostAt?: string | null; createdAt: string; updatedAt: string; archivedAt?: string | null;
@@ -42,24 +51,26 @@ export interface ProspectSummary extends ProspectInput {
 }
 export interface ProspectFilters { stage?: ProspectStage | null; includeArchived?: boolean; search?: string | null; }
 
-export interface ClientInput { organizationId?: string | null; primaryContactId?: string | null; status?: ClientStatus; nextActionAt?: string | null; nextActionText?: string | null; notes?: string | null; }
+export interface ClientInput { organizationId?: string | null; primaryContactId?: string | null; status?: ClientStatus; nextActionAt?: string | null; nextActionText?: string | null; notes?: string | null; relationshipStatus?: ClientRelationshipStatus; relationshipNote?: string | null; }
 export interface ClientSummary extends ClientInput {
   id: string; becameClientAt: string; createdAt: string; updatedAt: string; archivedAt?: string | null; displayName: string; contactName?: string | null; email?: string | null; phone?: string | null;
 }
 export interface ClientFilters { status?: ClientStatus | null; includeArchived?: boolean; search?: string | null; }
 
-export interface CrmActionInput { ownerType: CrmActionOwnerType; ownerId: string; type: CrmActionType; title: string; dueAt?: string | null; notes?: string | null; }
-export interface CrmAction extends CrmActionInput { id: string; status: CrmActionStatus; completedAt?: string | null; createdAt: string; updatedAt: string; }
+export interface CrmActionInput { ownerType: CrmActionOwnerType; ownerId: string; type: CrmActionType; title: string; dueAt?: string | null; notes?: string | null; relatedType?: string | null; relatedId?: string | null; recurrence?: ActionRecurrence; }
+export interface CompleteActionInput { channel?: string | null; outcome?: string | null; notes?: string | null; nextAction?: CrmActionInput | null; }
+export interface CrmAction extends CrmActionInput { id: string; status: CrmActionStatus; completedAt?: string | null; completionChannel?: string | null; completionOutcome?: string | null; completionNotes?: string | null; createdAt: string; updatedAt: string; }
 export interface CrmActionFilters { ownerType?: CrmActionOwnerType | null; ownerId?: string | null; type?: CrmActionType | null; status?: CrmActionStatus | null; }
 
 export interface ActivityEvent { id: string; entityType: string; entityId: string; action: string; summary: string; metadata?: Record<string, unknown> | null; createdAt: string; }
 
 export interface SearchResult {
-  entityType: 'prospect' | 'client' | 'organization' | 'contact' | 'catalog' | 'quote' | 'project' | 'service_request' | 'intervention' | 'maintenance' | 'hour_pack';
+  entityType: 'prospect' | 'client' | 'organization' | 'contact' | 'client_document' | 'catalog' | 'quote' | 'project' | 'service_request' | 'intervention' | 'maintenance' | 'hour_pack';
   entityId: string;
   title: string;
   subtitle?: string | null;
   status?: string | null;
+  parentEntityId?: string | null;
 }
 
 export interface ConvertProspectResult { prospectId: string; clientId: string; createdClient: boolean; }
@@ -73,10 +84,16 @@ export interface CrmApi {
     create(input: ContactInput): Promise<Contact>;
     update(id: string, input: ContactInput): Promise<Contact>;
   };
+  contactMethods: {
+    list(owner: 'organization' | 'contact', id: string, includeArchived?: boolean): Promise<ContactMethod[]>;
+    save(input: ContactMethodInput, id?: string): Promise<ContactMethod>;
+    archive(id: string, archived?: boolean): Promise<void>;
+  };
   prospects: {
     list(filters?: ProspectFilters): Promise<ProspectSummary[]>;
     create(input: ProspectInput): Promise<ProspectSummary>;
     update(id: string, input: ProspectInput): Promise<ProspectSummary>;
+    updateQualification(id: string, input: Partial<ProspectInput>): Promise<ProspectSummary>;
     changeStage(id: string, stage: ProspectStage, lostReason?: string | null): Promise<ProspectSummary>;
     setNextAction(id: string, at: string | null, text: string | null): Promise<ProspectSummary>;
     convertToClient(id: string): Promise<ConvertProspectResult>;
@@ -94,7 +111,7 @@ export interface CrmApi {
   actions: {
     list(filters?: CrmActionFilters): Promise<CrmAction[]>;
     create(input: CrmActionInput): Promise<CrmAction>;
-    complete(id: string): Promise<CrmAction>;
+    complete(id: string, input?: CompleteActionInput): Promise<CrmAction>;
     cancel(id: string): Promise<CrmAction>;
     reopen(id: string): Promise<CrmAction>;
   };

@@ -23,7 +23,7 @@ describe('migrations SQLite', () => {
       }
       const sessionsBefore = version === 10 ? database.all('SELECT * FROM time_sessions') : [];
       expect(applyPendingMigrations(database).map((migration) => migration.id))
-        .toEqual(Array.from({ length: 18 - version }, (_, index) => version + index + 1));
+        .toEqual(Array.from({ length: MIGRATIONS.length - version }, (_, index) => version + index + 1));
       expect(database.all('SELECT id, name FROM schema_migrations ORDER BY id'))
         .toEqual(MIGRATIONS.map(({ id, name }) => ({ id, name })));
       expect(database.get('SELECT value_json FROM settings WHERE key=?', ['migration-sentinel']))
@@ -48,8 +48,8 @@ describe('migrations SQLite', () => {
   it('applique chaque migration une seule fois', () => {
     const database = new NodeSqliteAdapter(':memory:');
 
-    expect(getPendingMigrations(database)).toHaveLength(18);
-    expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual(Array.from({ length: 18 }, (_, index) => index + 1));
+    expect(getPendingMigrations(database)).toHaveLength(MIGRATIONS.length);
+    expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual(MIGRATIONS.map((migration) => migration.id));
     expect(getPendingMigrations(database)).toHaveLength(0);
     expect(applyPendingMigrations(database)).toHaveLength(0);
 
@@ -61,7 +61,7 @@ describe('migrations SQLite', () => {
       'service_requests', 'interventions', 'maintenance_checklist_templates', 'maintenance_checklist_template_items', 'maintenance_plans',
       'maintenance_subscriptions', 'maintenance_periods', 'maintenance_checks', 'hour_packs', 'hour_pack_movements', 'billing_items',
       'maintenance_overage_decisions', 'maintenance_report_drafts', 'hour_pack_shortfall_decisions',
-      'crm_needs', 'demo_batches', 'demo_records', 'demo_context',
+      'crm_needs', 'demo_batches', 'demo_records', 'demo_context', 'contact_methods', 'client_documents',
     ]) {
       const row = database.get<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", [table]);
       expect(row?.name).toBe(table);

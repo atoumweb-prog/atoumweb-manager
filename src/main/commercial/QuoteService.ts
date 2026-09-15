@@ -48,6 +48,8 @@ interface QuoteRow extends Record<string, unknown> {
   expired_at: string | null;
   snapshot_locked_at: string | null;
   project_ready_at: string | null;
+  finalized_at: string | null;
+  last_extended_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -191,6 +193,7 @@ export class QuoteService {
         ],
       );
       this.writeActivity(id, 'quote_created', `Devis ${number} créé`);
+      if (input.prospectId) this.database.run("UPDATE prospects SET stage='quote_to_prepare',updated_at=? WHERE id=? AND stage NOT IN ('won','lost')",[nowString,input.prospectId]);
       if (!withinTransaction) this.database.exec('COMMIT;');
     } catch (error) {
       if (!withinTransaction) this.database.exec('ROLLBACK;');
@@ -369,7 +372,29 @@ export class QuoteService {
   markSent(id: string): QuoteDetail {
     const quote = this.get(id);
     if (quote.status !== 'draft') throw new Error('Seul un devis brouillon peut être marqué envoyé.');
-    return this.transition(id, 'sent', 'sent_at', 'Devis marqué envoyé');
+    const result=this.transition(id, 'sent', 'sent_at', 'Devis marqué envoyé');
+    if(result.prospectId) this.database.run("UPDATE prospects SET stage='quote_sent',updated_at=? WHERE id=? AND stage NOT IN ('won','lost')",[nowIso(),result.prospectId]);
+    return result;
+  }
+
+  finalize(id: string): QuoteDetail {
+    const quote=this.get(id);
+    if(quote.status!=='draft') throw new Error('Seul un devis brouillon peut être finalisé.');
+    if(quote.lines.length===0) throw new Error('Ajoute au moins une ligne avant de finaliser le devis.');
+    const now=nowIso();
+    this.database.run('UPDATE quotes SET finalized_at=?,updated_at=? WHERE id=?',[now,now,id]);
+    if(quote.prospectId) this.database.run("UPDATE prospects SET stage='quote_to_send',updated_at=? WHERE id=? AND stage NOT IN ('won','lost')",[now,quote.prospectId]);
+    this.writeActivity(id,'quote_finalized',`Devis ${quote.number} finalisé et prêt à envoyer`);
+    return this.get(id);
+  }
+
+  extendValidity(id: string, validUntil: string): QuoteDetail {
+    const quote=this.get(id); const date=new Date(validUntil);
+    if(!['draft','sent','viewed'].includes(quote.status)) throw new Error('La validité de ce devis ne peut plus être prolongée.');
+    if(Number.isNaN(date.getTime()) || date.getTime()<=Date.now()) throw new Error('Choisis une nouvelle date de validité future.');
+    const now=nowIso(); this.database.run('UPDATE quotes SET valid_until=?,last_extended_at=?,updated_at=? WHERE id=?',[date.toISOString(),now,now,id]);
+    this.writeActivity(id,'quote_validity_extended',`Validité du devis ${quote.number} prolongée au ${date.toLocaleDateString('fr-FR')}`);
+    return this.get(id);
   }
 
   markViewed(id: string): QuoteDetail {
@@ -414,7 +439,7 @@ export class QuoteService {
 
   duplicate(id: string): QuoteDetail {
     const source = this.get(id);
-    if (!['refused', 'expired', 'cancelled'].includes(source.status)) throw new Error('Seul un devis refusé, expiré ou annulé peut être dupliqué.');
+    if (!['sent','viewed','refused', 'expired', 'cancelled'].includes(source.status)) throw new Error('Ce devis ne peut pas être dupliqué.');
     const copy = this.create({
       prospectId: source.prospectId,
       clientAccountId: source.clientAccountId ?? source.acceptedClientAccountId,
@@ -603,6 +628,8 @@ export class QuoteService {
       expiredAt: row.expired_at,
       snapshotLockedAt: row.snapshot_locked_at,
       projectReadyAt: row.project_ready_at,
+      finalizedAt: row.finalized_at,
+      lastExtendedAt: row.last_extended_at,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };

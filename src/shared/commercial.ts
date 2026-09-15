@@ -168,6 +168,8 @@ export interface QuoteSummary {
   refusedAt?: string | null;
   expiredAt?: string | null;
   snapshotLockedAt?: string | null;
+  finalizedAt?: string | null;
+  lastExtendedAt?: string | null;
   projectReadyAt?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -205,6 +207,8 @@ export interface QuoteApi {
   removeLine(lineId: string): Promise<QuoteDetail>;
   updateConditions(quoteId: string, input: Partial<QuoteInput>): Promise<QuoteDetail>;
   markSent(id: string): Promise<QuoteDetail>;
+  finalize(id: string): Promise<QuoteDetail>;
+  extendValidity(id: string, validUntil: string): Promise<QuoteDetail>;
   markViewed(id: string): Promise<QuoteDetail>;
   accept(id: string): Promise<QuoteDetail>;
   refuse(id: string): Promise<QuoteDetail>;

@@ -63,6 +63,7 @@ export class WorkflowService {
       const target={entityType:'prospect' as const,entityId:p.id,title:p.displayName,status:p.stage};
       if (p.stage==='follow_up' || p.nextActionAt && p.nextActionAt.slice(0,10)<=new Date().toISOString().slice(0,10)) entries.push({group:'Prospects à relancer',target});
       if (p.stage==='need_identified' || p.stage==='quote_to_prepare') entries.push({group:'Devis à préparer',target});
+      if (p.stage==='quote_to_send') entries.push({group:'Devis à envoyer',target});
     }
     for (const q of this.quotes.list()) {
       const group=q.status==='draft'?'Devis à préparer':['sent','viewed'].includes(q.status)?'Devis en attente de réponse':q.status==='accepted' && !this.db.get('SELECT id FROM projects WHERE source_quote_id=?',[q.id])?'Devis acceptés à démarrer':null;
@@ -79,6 +80,11 @@ export class WorkflowService {
     }
     for(const r of this.operations.listRequests()) if(r.status==='new') entries.push({group:'Demandes nouvelles',target:{entityType:'service_request',entityId:r.id,title:r.subject,status:r.status}});
     for(const i of this.operations.listInterventions()) if(['in_progress','to_validate'].includes(i.status)) entries.push({group:i.status==='in_progress'?'Interventions en cours':'Interventions à valider',target:{entityType:'intervention',entityId:i.id,title:i.subject,status:i.status}});
+    for(const action of this.db.all<{id:string;owner_type:'prospect'|'client';prospect_id:string|null;client_account_id:string|null;title:string;due_at:string|null}>("SELECT id,owner_type,prospect_id,client_account_id,title,due_at FROM crm_actions WHERE status='open' AND due_at IS NOT NULL ORDER BY due_at")) {
+      const day=action.due_at?.slice(0,10)??'',group=day<=today?'Aujourd’hui':day<=soon?'À venir':null;if(!group)continue;
+      entries.push({group,target:{entityType:action.owner_type,entityId:(action.prospect_id??action.client_account_id)!,title:action.title,status:day}});
+    }
+    for(const doc of this.db.all<{id:string;client_account_id:string;title:string;retention_until:string}>("SELECT id,client_account_id,title,retention_until FROM client_documents WHERE archived_at IS NULL AND retention_until IS NOT NULL AND retention_until<=date('now','+90 days') ORDER BY retention_until")) entries.push({group:'RGPD / conservation',target:{entityType:'client_document',entityId:doc.id,parentEntityId:doc.client_account_id,title:doc.title,status:doc.retention_until}});
     return entries;
   }
 }

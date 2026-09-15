@@ -147,6 +147,7 @@ function App() {
         openOperationsTarget({ entityType: result.entityType, entityId: result.entityId });
         break;
       case 'client': setCrmTarget(result.entityId); setActivePage('Clients'); break;
+      case 'client_document': setCrmTarget(result.parentEntityId??result.entityId); setActivePage('Clients'); break;
 
       case 'organization':
       case 'contact':
