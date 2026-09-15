@@ -79,9 +79,7 @@
 
 /* Les formulaires d'action utilisent la largeur disponible. */
 .prospect-actions-panel .inline-editor,
-.action-completion-editor {
-  width: 100%;
-}
+.action-completion-editor { width: 100%; }
 .action-editor-grid,
 .action-followup-grid {
   display: grid;
@@ -100,9 +98,10 @@
   margin-top: 10px;
 }
 .action-completion-editor .inline-editor-actions,
-.prospect-loss-editor .inline-editor-actions {
-  justify-content: space-between;
-}
+.prospect-loss-editor .inline-editor-actions { justify-content: space-between; }
+.prospect-actions-panel details { border-top: 1px solid var(--prospect-line, var(--border)); padding-top: 8px; }
+.prospect-actions-panel details > summary { cursor: pointer; font-size: var(--ui-font-small); font-weight: 700; }
+.prospect-actions-panel details > label { display: grid; gap: 6px; margin-top: 8px; max-width: 320px; }
 
 /* Checklist des informations à obtenir avant devis. */
 .missing-info-checklist {
@@ -152,13 +151,19 @@
 .activity-journal .activity-item p { font-size: var(--ui-font-secondary); }
 .activity-journal .activity-item small { font-size: var(--ui-font-small); }
 
-/* Le suivi devis dans un volet étroit devient une liste lisible plutôt qu'une mosaïque tassée. */
+/* Le suivi devis du petit volet devient une liste verticale lisible. */
 .prospect-detail-panel:not(.prospect-detail-desk) .quote-command-summary,
 .prospect-detail-panel:not(.prospect-detail-desk) .quote-follow-summary {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
 }
-.prospect-detail-panel:not(.prospect-detail-desk) .quote-command-summary > div {
-  min-height: 68px;
+.prospect-detail-panel:not(.prospect-detail-desk) .quote-command-summary > div,
+.prospect-detail-panel:not(.prospect-detail-desk) .quote-follow-summary > div {
+  min-height: auto;
+  padding: 9px 10px;
+}
+.prospect-detail-panel:not(.prospect-detail-desk) .quote-command-actions,
+.prospect-detail-panel:not(.prospect-detail-desk) .quote-follow-actions {
+  grid-template-columns: 1fr;
 }
 
 @media (max-width: 1180px) {
@@ -181,6 +186,4 @@
   .action-followup-grid .span-2,
   .action-editor-grid .span-all,
   .action-followup-grid .span-all { grid-column: auto; }
-  .prospect-detail-panel:not(.prospect-detail-desk) .quote-command-summary,
-  .prospect-detail-panel:not(.prospect-detail-desk) .quote-follow-summary { grid-template-columns: 1fr; }
 }
