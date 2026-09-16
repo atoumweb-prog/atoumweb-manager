@@ -1,14 +1,10 @@
 import { useEffect, useState } from 'react';
-import type { Contact, ContactMethodType, Organization, ProspectInput, ProspectSummary } from '../../shared/crm';
+import type { ContactMethodType, ProspectInput, ProspectSummary } from '../../shared/crm';
+import type { WorkflowIdentity } from '../../shared/workflow';
 import { validateEmail, validatePhone } from '../../shared/contactValidation';
 import { ContactMethodsPanel } from './ContactMethodsPanel';
+import { ProspectLinkedContactsPanel } from './ProspectLinkedContactsPanel';
 import { FieldHelp } from './ProspectQualificationPanelV2';
-
-interface IdentityState {
-  organization: Organization | null;
-  contact: Contact | null;
-  decisionMaker: Contact | null;
-}
 
 interface DecisionDraft {
   status: ProspectInput['decisionStatus'];
@@ -29,7 +25,7 @@ function legacyName(value?: string | null): { firstName: string; lastName: strin
   return { firstName: parts[0], lastName: parts.slice(1).join(' ') };
 }
 
-function decisionFromIdentity(prospect: ProspectSummary, identity?: IdentityState | null): DecisionDraft {
+function decisionFromIdentity(prospect: ProspectSummary, identity?: WorkflowIdentity | null): DecisionDraft {
   const decisionMaker = identity?.decisionMaker;
   const legacy = legacyName(prospect.decisionMakerName);
   return {
@@ -52,35 +48,64 @@ function cleanError(error: unknown): string {
 }
 
 export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: ProspectSummary; onSaved: () => void }) {
-  const [identity, setIdentity] = useState<IdentityState | null>(null);
+  const [identity, setIdentity] = useState<WorkflowIdentity | null>(null);
   const [decision, setDecision] = useState<DecisionDraft>(() => decisionFromIdentity(prospect));
+  const [decisionContactId, setDecisionContactId] = useState('');
   const [primaryDraft, setPrimaryDraft] = useState<PrimaryDraft>({ firstName: '', lastName: '', role: '' });
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  async function hydrateDecisionMethods(nextIdentity: IdentityState, base: DecisionDraft): Promise<DecisionDraft> {
-    if (!nextIdentity.decisionMaker || prospect.decisionStatus !== 'no') return base;
-    const methods = await window.atoumweb.crm.contactMethods.list('contact', nextIdentity.decisionMaker.id);
+  async function draftFromContact(contactId: string, base: DecisionDraft, sourceIdentity: WorkflowIdentity): Promise<DecisionDraft> {
+    const contact = sourceIdentity.contacts.find((item) => item.id === contactId) ?? sourceIdentity.decisionMaker;
+    if (!contact) return base;
+    const methods = await window.atoumweb.crm.contactMethods.list('contact', contact.id);
     const primaryEmail = methods.find((item) => item.type === 'email' && item.isPrimary) ?? methods.find((item) => item.type === 'email');
     const primaryPhone = methods.find((item) => item.type === 'phone' && item.isPrimary) ?? methods.find((item) => item.type === 'phone');
-    return { ...base, email: primaryEmail?.value ?? '', phone: primaryPhone?.value ?? '' };
+    return {
+      ...base,
+      firstName: contact.firstName,
+      lastName: contact.lastName,
+      role: contact.jobTitle ?? '',
+      email: primaryEmail?.value ?? '',
+      phone: primaryPhone?.value ?? '',
+    };
   }
 
   async function load() {
     try {
       const nextIdentity = await window.atoumweb.workflow.identity('prospect', prospect.id);
       setIdentity(nextIdentity);
-      setPrimaryDraft(nextIdentity.contact ? { firstName: nextIdentity.contact.firstName, lastName: nextIdentity.contact.lastName, role: nextIdentity.contact.jobTitle ?? '' } : { firstName: '', lastName: '', role: '' });
-      setDecision(await hydrateDecisionMethods(nextIdentity, decisionFromIdentity(prospect, nextIdentity)));
+      setPrimaryDraft(nextIdentity.contact
+        ? { firstName: nextIdentity.contact.firstName, lastName: nextIdentity.contact.lastName, role: nextIdentity.contact.jobTitle ?? '' }
+        : { firstName: '', lastName: '', role: '' });
+      const separateDecisionMaker = nextIdentity.decisionMaker && nextIdentity.decisionMaker.id !== nextIdentity.contact?.id
+        ? nextIdentity.decisionMaker
+        : null;
+      const nextDecisionContactId = prospect.decisionStatus === 'no' ? separateDecisionMaker?.id ?? '' : '';
+      setDecisionContactId(nextDecisionContactId);
+      const base = decisionFromIdentity(prospect, nextIdentity);
+      setDecision(nextDecisionContactId ? await draftFromContact(nextDecisionContactId, base, nextIdentity) : base);
     } catch (e) { setError(cleanError(e)); }
   }
 
   useEffect(() => { setEditing(false); void load(); }, [prospect.id]);
-  useEffect(() => { if (identity) void hydrateDecisionMethods(identity, decisionFromIdentity(prospect, identity)).then(setDecision); }, [prospect.updatedAt]);
+  useEffect(() => { if (identity) void load(); }, [prospect.updatedAt]);
 
   const decisionEmail = validateEmail(decision.email);
   const decisionPhone = validatePhone(decision.phone);
+
+  async function chooseDecisionContact(contactId: string) {
+    if (!identity) return;
+    setDecisionContactId(contactId);
+    if (!contactId) {
+      setDecision({ ...decision, firstName: '', lastName: '', role: '', email: '', phone: '' });
+      return;
+    }
+    try {
+      setDecision(await draftFromContact(contactId, { ...decision, status: 'no' }, identity));
+    } catch (e) { setError(cleanError(e)); }
+  }
 
   async function syncPrimaryMethod(contactId: string, type: ContactMethodType, value: string) {
     const methods = await window.atoumweb.crm.contactMethods.list('contact', contactId);
@@ -101,7 +126,9 @@ export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: Prospec
   }
 
   async function save() {
-    if (!identity || !decisionEmail.valid || !decisionPhone.valid) return;
+    if (!identity) return;
+    const creatingDecisionContact = decision.status === 'no' && !decisionContactId;
+    if (creatingDecisionContact && (!decisionEmail.valid || !decisionPhone.valid)) return;
     const primaryStarted = primaryDraft.firstName.trim() || primaryDraft.lastName.trim() || primaryDraft.role.trim();
     if (!identity.contact && primaryStarted && (!primaryDraft.firstName.trim() || !primaryDraft.lastName.trim())) {
       setError('Pour créer l’interlocuteur principal, renseigne son prénom et son nom.');
@@ -111,8 +138,8 @@ export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: Prospec
       setError('Ajoute d’abord l’interlocuteur principal pour pouvoir le définir comme décisionnaire.');
       return;
     }
-    if (decision.status === 'no' && (!decision.firstName.trim() || !decision.lastName.trim())) {
-      setError('Renseigne le prénom et le nom du décisionnaire, ou choisis « Inconnu pour le moment ».');
+    if (creatingDecisionContact && (!decision.firstName.trim() || !decision.lastName.trim())) {
+      setError('Choisis un contact existant ou renseigne le prénom et le nom du nouveau décisionnaire.');
       return;
     }
 
@@ -144,25 +171,21 @@ export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: Prospec
       if (decision.status === 'yes') {
         decisionMakerContactId = primaryContact?.id ?? null;
       } else if (decision.status === 'no') {
-        const existingSeparateDecisionMaker = identity.decisionMaker && identity.decisionMaker.id !== primaryContact?.id
-          ? identity.decisionMaker
-          : null;
-        const decisionInput = {
-          organizationId: identity.organization?.id ?? primaryContact?.organizationId ?? null,
-          firstName: decision.firstName.trim(),
-          lastName: decision.lastName.trim(),
-          jobTitle: decision.role.trim() || null,
-          email: null,
-          phone: null,
-          preferredChannel: existingSeparateDecisionMaker?.preferredChannel ?? null,
-          notes: existingSeparateDecisionMaker?.notes ?? null,
-        };
-        const decisionContact = existingSeparateDecisionMaker
-          ? await window.atoumweb.crm.contacts.update(existingSeparateDecisionMaker.id, decisionInput)
-          : await window.atoumweb.crm.contacts.create(decisionInput);
-        decisionMakerContactId = decisionContact.id;
-        await syncPrimaryMethod(decisionContact.id, 'email', decision.email);
-        await syncPrimaryMethod(decisionContact.id, 'phone', decision.phone);
+        if (decisionContactId) {
+          decisionMakerContactId = decisionContactId;
+        } else {
+          const decisionContact = await window.atoumweb.crm.contacts.create({
+            organizationId: identity.organization?.id ?? primaryContact?.organizationId ?? null,
+            firstName: decision.firstName.trim(),
+            lastName: decision.lastName.trim(),
+            jobTitle: decision.role.trim() || null,
+            email: null,
+            phone: null,
+          });
+          decisionMakerContactId = decisionContact.id;
+          await syncPrimaryMethod(decisionContact.id, 'email', decision.email);
+          await syncPrimaryMethod(decisionContact.id, 'phone', decision.phone);
+        }
       }
 
       await window.atoumweb.crm.prospects.updateQualification(prospect.id, {
@@ -193,6 +216,15 @@ export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: Prospec
       : decision.status === 'unknown'
         ? 'Inconnu pour le moment'
         : 'À qualifier';
+  const decisionOptions = identity.contacts.filter((contact) => contact.id !== identity.contact?.id);
+  const contactOwners = identity.contacts.map((contact) => ({
+    id: contact.id,
+    label: contact.id === identity.contact?.id
+      ? `Interlocuteur principal · ${contact.firstName} ${contact.lastName}`
+      : contact.id === identity.decisionMaker?.id
+        ? `Décisionnaire · ${contact.firstName} ${contact.lastName}`
+        : `${contact.jobTitle || 'Contact'} · ${contact.firstName} ${contact.lastName}`,
+  }));
 
   return <section className="prospect-work-section identity-panel-v2">
     <div className="work-section-heading"><div><span className="eyebrow">Entreprise & interlocuteur</span><strong>{identity.organization?.industry || identity.contact?.jobTitle || 'Informations principales'}</strong></div><button className="secondary-button compact-button" type="button" onClick={() => setEditing((value) => !value)}>{editing ? 'Fermer' : 'Modifier'}</button></div>
@@ -220,9 +252,9 @@ export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: Prospec
       <label>Fonction / rôle <FieldHelp text="Champ libre : gérant, patron, comptable, banquier, responsable communication…" /><input value={primaryDraft.role} onChange={(e) => setPrimaryDraft({ ...primaryDraft, role: e.target.value })} placeholder="Gérant, responsable…" /></label>
 
       <fieldset className="identity-decision-maker form-span-2">
-        <legend>Décisionnaire <FieldHelp text="Choisis qui peut réellement valider le devis. Un autre décisionnaire est enregistré comme un vrai Contact réutilisable." /></legend>
+        <legend>Décisionnaire <FieldHelp text="Choisis qui peut réellement valider le devis. Le décisionnaire reste un vrai Contact réutilisable." /></legend>
         <label>Qui est le décisionnaire ?
-          <select value={decision.status ?? ''} onChange={(e) => setDecision({ ...decision, status: (e.target.value || null) as ProspectInput['decisionStatus'] })}>
+          <select value={decision.status ?? ''} onChange={(e) => { const status = (e.target.value || null) as ProspectInput['decisionStatus']; setDecision({ ...decision, status }); if (status !== 'no') setDecisionContactId(''); }}>
             <option value="">À préciser</option>
             <option value="yes">L’interlocuteur principal</option>
             <option value="no">Un autre contact</option>
@@ -230,19 +262,38 @@ export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: Prospec
           </select>
         </label>
         {decision.status === 'no' && <div className="decision-maker-grid">
-          <label>Prénom du décisionnaire<input value={decision.firstName} onChange={(e) => setDecision({ ...decision, firstName: e.target.value })} /></label>
-          <label>Nom du décisionnaire<input value={decision.lastName} onChange={(e) => setDecision({ ...decision, lastName: e.target.value })} /></label>
-          <label>Fonction / rôle<input value={decision.role} onChange={(e) => setDecision({ ...decision, role: e.target.value })} placeholder="Gérant, associé, directeur…" /></label>
-          <label>Email<input type="email" value={decision.email} onChange={(e) => setDecision({ ...decision, email: e.target.value })} />{!decisionEmail.valid && <small className="field-error">{decisionEmail.message}</small>}</label>
-          <label>Téléphone<input inputMode="tel" value={decision.phone} onChange={(e) => setDecision({ ...decision, phone: e.target.value })} />{!decisionPhone.valid && <small className="field-error">{decisionPhone.message}</small>}</label>
+          <label className="form-span-2">Contact décisionnaire
+            <select value={decisionContactId} onChange={(e) => void chooseDecisionContact(e.target.value)}>
+              <option value="">Créer un nouveau contact…</option>
+              {decisionOptions.map((contact) => <option key={contact.id} value={contact.id}>{contact.firstName} {contact.lastName}{contact.jobTitle ? ` · ${contact.jobTitle}` : ''}</option>)}
+            </select>
+          </label>
+          {decisionContactId ? <div className="form-span-2 selected-contact-summary"><strong>{decision.firstName} {decision.lastName}</strong><small>{decision.role || 'Fonction à préciser'} · les coordonnées restent modifiables dans le bloc Coordonnées ci-dessous.</small></div> : <>
+            <label>Prénom du décisionnaire<input value={decision.firstName} onChange={(e) => setDecision({ ...decision, firstName: e.target.value })} /></label>
+            <label>Nom du décisionnaire<input value={decision.lastName} onChange={(e) => setDecision({ ...decision, lastName: e.target.value })} /></label>
+            <label>Fonction / rôle<input value={decision.role} onChange={(e) => setDecision({ ...decision, role: e.target.value })} placeholder="Gérant, associé, directeur…" /></label>
+            <label>Email<input type="email" value={decision.email} onChange={(e) => setDecision({ ...decision, email: e.target.value })} />{decision.email.trim() && !decisionEmail.valid && <small className="field-error">{decisionEmail.message}</small>}</label>
+            <label>Téléphone<input inputMode="tel" value={decision.phone} onChange={(e) => setDecision({ ...decision, phone: e.target.value })} />{decision.phone.trim() && !decisionPhone.valid && <small className="field-error">{decisionPhone.message}</small>}</label>
+          </>}
         </div>}
         {decision.status !== 'yes' && <label>Précisions / chemin de validation<input value={decision.details} onChange={(e) => setDecision({ ...decision, details: e.target.value === 'Décisionnaire identifié dans les Contacts' ? '' : e.target.value })} placeholder="Ex. associé à consulter, responsable régional, nom à confirmer…" /></label>}
       </fieldset>
 
       {error && <p className="form-error form-span-2">{error}</p>}
-      <button className="primary-button" type="button" disabled={busy || !decisionEmail.valid || !decisionPhone.valid} onClick={() => void save()}>{busy ? 'Enregistrement…' : 'Enregistrer les informations'}</button>
+      <button className="primary-button" type="button" disabled={busy || (decision.status === 'no' && !decisionContactId && (!decisionEmail.valid || !decisionPhone.valid))} onClick={() => void save()}>{busy ? 'Enregistrement…' : 'Enregistrer les informations'}</button>
     </div>}
-    <ContactMethodsPanel organizationId={identity.organization?.id} contactId={identity.contact?.id} />
-    {identity.decisionMaker && prospect.decisionStatus === 'no' && <ContactMethodsPanel contactId={identity.decisionMaker.id} allowOrganization={false} summaryLabel="Coordonnées du décisionnaire" contactLabel={`Décisionnaire · ${identity.decisionMaker.firstName} ${identity.decisionMaker.lastName}`} />}
+    <ProspectLinkedContactsPanel
+      organizationId={identity.organization?.id}
+      contacts={identity.contacts}
+      primaryContactId={identity.contact?.id}
+      decisionMakerContactId={identity.decisionMaker?.id}
+      onChanged={() => void load()}
+    />
+    <ContactMethodsPanel
+      organizationId={identity.organization?.id}
+      contactOwners={contactOwners}
+      organizationLabel="Entreprise / accueil"
+      summaryLabel="Coordonnées"
+    />
   </section>;
 }
