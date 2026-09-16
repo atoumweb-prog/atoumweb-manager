@@ -53,7 +53,7 @@ async function bootstrap(): Promise<void> {
     console.info('Base AtoumWeb Manager restaurée', restoreResult);
   }
 
-  database = new DatabaseService(workspace);
+  database = new DatabaseService(workspace, app.getAppPath());
   await database.initialize();
   registerIpcHandlers(database, workspace);
   registerOperationsIpcHandlers(database);

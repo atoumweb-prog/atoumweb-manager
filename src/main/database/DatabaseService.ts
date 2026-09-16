@@ -4,6 +4,7 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DatabaseHealth } from '../../shared/contracts';
 import { BillingHandoffService } from '../billing/BillingHandoffService';
+import { AtoumPackService } from '../commercial/AtoumPackService';
 import { CatalogService } from '../commercial/CatalogService';
 import { QuoteService } from '../commercial/QuoteService';
 import { ActionService } from '../crm/ActionService';
@@ -45,6 +46,7 @@ export class DatabaseService {
   readonly clientDocuments: ClientDocumentService;
   readonly actions: ActionService;
   readonly catalog: CatalogService;
+  readonly offerPacks: AtoumPackService;
   readonly quotes: QuoteService;
   readonly projects: ProjectService;
   readonly projectCompletion: ProjectCompletionService;
@@ -66,7 +68,7 @@ export class DatabaseService {
   readonly timeCorrections: TimeCorrectionService;
   readonly timeSwitches: TimeSwitchService;
 
-  constructor(private readonly workspace: WorkspacePaths) {
+  constructor(private readonly workspace: WorkspacePaths, appRoot = process.cwd()) {
     this.existedBeforeOpen = existsSync(workspace.databaseFile);
     this.database = new NodeSqliteAdapter(workspace.databaseFile);
     this.crm = new CrmService(this.database);
@@ -74,6 +76,7 @@ export class DatabaseService {
     this.clientDocuments = new ClientDocumentService(this.database, this.workspace);
     this.actions = new ActionService(this.database);
     this.catalog = new CatalogService(this.database);
+    this.offerPacks = new AtoumPackService(this.database, this.workspace, appRoot);
     this.quotes = new QuoteService(this.database, this.crm);
     this.projects = new ProjectService(this.database, this.workspace);
     this.projectCompletion = new ProjectCompletionService(this.database);
@@ -107,6 +110,7 @@ export class DatabaseService {
     }
 
     applyPendingMigrations(this.database);
+    this.offerPacks.bootstrapBuiltins();
     this.demo.installTracking();
     this.seedDefaults();
     this.crm.rebuildSearchIndex();

@@ -3,7 +3,7 @@ import { NodeSqliteAdapter } from './NodeSqliteAdapter';
 import { applyPendingMigrations, getPendingMigrations, MIGRATIONS } from './migrations';
 
 describe('migrations SQLite', () => {
-  it.each([4, 6, 10, 17])('met à niveau une base à %i migrations sans perdre les données existantes', (version) => {
+  it.each([4, 6, 10, 17, 21])('met à niveau une base à %i migrations sans perdre les données existantes', (version) => {
     const database = new NodeSqliteAdapter(':memory:');
     database.exec('PRAGMA foreign_keys = ON;');
     try {
@@ -36,6 +36,7 @@ describe('migrations SQLite', () => {
       expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('prospects') WHERE name='origin_type'")?.name).toBe('origin_type');
       expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('prospects') WHERE name='decision_maker_contact_id'")?.name).toBe('decision_maker_contact_id');
       expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('crm_actions') WHERE name='target_contact_id'")?.name).toBe('target_contact_id');
+      expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('crm_needs') WHERE name='package_version'")?.name).toBe('package_version');
       const schemaBefore = database.all('SELECT type, name, sql FROM sqlite_master ORDER BY type, name');
       const ledgerBefore = database.all('SELECT * FROM schema_migrations ORDER BY id');
       expect(applyPendingMigrations(database)).toEqual([]);
@@ -65,6 +66,7 @@ describe('migrations SQLite', () => {
       'maintenance_subscriptions', 'maintenance_periods', 'maintenance_checks', 'hour_packs', 'hour_pack_movements', 'billing_items',
       'maintenance_overage_decisions', 'maintenance_report_drafts', 'hour_pack_shortfall_decisions',
       'crm_needs', 'demo_batches', 'demo_records', 'demo_context', 'contact_methods', 'client_documents',
+      'atoum_packages', 'atoum_portable_refs', 'atoum_package_documents',
     ]) {
       const row = database.get<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", [table]);
       expect(row?.name).toBe(table);
@@ -74,10 +76,14 @@ describe('migrations SQLite', () => {
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('time_sessions') WHERE name='intervention_id'")?.name).toBe('intervention_id');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('maintenance_subscriptions') WHERE name='carryover_mode_snapshot'")?.name).toBe('carryover_mode_snapshot');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('catalog_versions') WHERE name='special_terms'")?.name).toBe('special_terms');
+    expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('catalog_items') WHERE name='subcategory'")?.name).toBe('subcategory');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('prospects') WHERE name='origin_type'")?.name).toBe('origin_type');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('prospects') WHERE name='decision_maker_contact_id'")?.name).toBe('decision_maker_contact_id');
     for (const column of ['target_contact_id', 'reason_code', 'reason_text']) {
       expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('crm_actions') WHERE name='${column}'`)?.name).toBe(column);
+    }
+    for (const column of ['catalog_version_id', 'package_id', 'package_version', 'offer_config_json']) {
+      expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('crm_needs') WHERE name='${column}'`)?.name).toBe(column);
     }
 
     const seededPlans = database.all<{ name: string }>('SELECT name FROM maintenance_plans ORDER BY periodic_price_cents');
