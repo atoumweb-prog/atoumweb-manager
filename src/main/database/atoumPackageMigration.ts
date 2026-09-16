@@ -13,6 +13,8 @@ export const ATOUM_PACKAGE_BOOTSTRAP_MIGRATION: Migration = {
       description TEXT,
       install_state TEXT NOT NULL DEFAULT 'staged' CHECK (install_state IN ('staged','installed','disabled','error')),
       source_kind TEXT NOT NULL DEFAULT 'builtin' CHECK (source_kind IN ('builtin','file')),
+      source_sha256 TEXT NOT NULL,
+      source_relative_path TEXT,
       manifest_json TEXT NOT NULL,
       package_snapshot_json TEXT NOT NULL,
       capability_gaps_json TEXT NOT NULL DEFAULT '[]',
@@ -59,6 +61,8 @@ export const ATOUM_PACKAGE_BOOTSTRAP_MIGRATION: Migration = {
     ) STRICT;
 
     CREATE INDEX idx_atoum_package_documents_ref ON atoum_package_documents(document_ref, document_version);
+
+    ALTER TABLE catalog_items ADD COLUMN subcategory TEXT;
 
     ALTER TABLE crm_needs ADD COLUMN catalog_version_id TEXT REFERENCES catalog_versions(id);
     ALTER TABLE crm_needs ADD COLUMN package_id TEXT;
