@@ -14,6 +14,8 @@ export interface WorkspacePaths {
   clientsDirectory: string;
   internalDirectory: string;
   exportsDirectory: string;
+  packagesDirectory: string;
+  contractTemplatesDirectory: string;
 }
 
 const BOOTSTRAP_FILENAME = 'workspace.json';
@@ -34,6 +36,8 @@ export function createWorkspacePaths(root: string): WorkspacePaths {
     clientsDirectory: join(normalizedRoot, 'clients'),
     internalDirectory: join(normalizedRoot, 'projets-internes'),
     exportsDirectory: join(normalizedRoot, 'exports'),
+    packagesDirectory: join(normalizedRoot, 'packs-atoum'),
+    contractTemplatesDirectory: join(normalizedRoot, 'modeles-contrats'),
   };
 }
 
@@ -47,6 +51,8 @@ export function ensureWorkspace(root: string): WorkspacePaths {
     paths.clientsDirectory,
     paths.internalDirectory,
     paths.exportsDirectory,
+    paths.packagesDirectory,
+    paths.contractTemplatesDirectory,
   ].forEach((directory) => mkdirSync(directory, { recursive: true }));
 
   return paths;
