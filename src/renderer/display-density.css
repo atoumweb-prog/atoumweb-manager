@@ -1,8 +1,9 @@
-/* Réglage global de lisibilité — Compact / Confort / Confort +. */
+/* Réglage global de lisibilité — Compact / Confort / Confort +.
+   Règle absolue : aucun texte fonctionnel ne descend sous 14 px. */
 :root {
   --ui-font-base: 16px;
-  --ui-font-secondary: 14px;
-  --ui-font-small: 13px;
+  --ui-font-secondary: 15px;
+  --ui-font-small: 14px;
   --ui-control-height: 42px;
   --ui-control-pad-y: 10px;
   --ui-control-pad-x: 12px;
@@ -11,10 +12,10 @@
 }
 
 :root[data-density='compact'] {
-  --ui-font-base: 14px;
-  --ui-font-secondary: 12px;
-  --ui-font-small: 11px;
-  --ui-control-height: 34px;
+  --ui-font-base: 15px;
+  --ui-font-secondary: 14px;
+  --ui-font-small: 14px;
+  --ui-control-height: 36px;
   --ui-control-pad-y: 7px;
   --ui-control-pad-x: 9px;
   --ui-panel-pad: 16px;
@@ -38,6 +39,8 @@ button,
 input,
 select,
 textarea { font-size: inherit; }
+
+small { font-size: max(14px, var(--ui-font-small)); }
 
 .panel { padding: var(--ui-panel-pad); }
 .muted,
@@ -84,7 +87,6 @@ textarea { font-size: inherit; }
 .prospect-detail-v2 textarea,
 .workflow-row textarea { padding: var(--ui-control-pad-y) var(--ui-control-pad-x); }
 
-/* Le mode Confort est volontairement plus lisible que l'ancienne recette. */
 .prospect-card,
 .prospect-detail-v2,
 .prospect-create-v2,
@@ -131,12 +133,11 @@ textarea { font-size: inherit; }
   accent-color: var(--accent-strong);
 }
 
-:root[data-density='compact'] .workflow-fields .check-option { min-height: 32px; }
-:root[data-density='compact'] .workflow-fields .check-option input[type='checkbox'] { width: 17px; height: 17px; flex-basis: 17px; }
+:root[data-density='compact'] .workflow-fields .check-option { min-height: 34px; }
+:root[data-density='compact'] .workflow-fields .check-option input[type='checkbox'] { width: 18px; height: 18px; flex-basis: 18px; }
 :root[data-density='comfort_plus'] .workflow-fields .check-option { min-height: 46px; }
 :root[data-density='comfort_plus'] .workflow-fields .check-option input[type='checkbox'] { width: 24px; height: 24px; flex-basis: 24px; }
 
-/* Réglage lui-même. */
 .density-settings { display: grid; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
 .density-settings h2 { margin-bottom: 4px; }
 .density-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }

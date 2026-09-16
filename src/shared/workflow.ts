@@ -3,7 +3,12 @@ export interface Need { id: string; catalogItemId: string | null; label: string;
 export interface NeedInput { catalogItemId?: string | null; otherText?: string | null; }
 export interface DashboardEntry { group: string; target: SearchResult; }
 export interface DemoSummary { counts: Array<{ table: string; count: number }>; total: number; }
-export interface WorkflowIdentity { organization: Organization | null; contact: Contact | null; decisionMaker: Contact | null; }
+export interface WorkflowIdentity {
+  organization: Organization | null;
+  contact: Contact | null;
+  decisionMaker: Contact | null;
+  contacts: Contact[];
+}
 export interface WorkflowApi {
   needs(owner: 'prospect' | 'client', id: string): Promise<Need[]>;
   saveNeed(owner: 'prospect' | 'client', id: string, input: NeedInput, needId?: string): Promise<Need[]>;

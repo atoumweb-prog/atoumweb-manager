@@ -54,6 +54,35 @@ La CI de cette branche a été branchée sur le workflow GitHub. Les runners dis
 
 Périmètre volontairement différé : refonte profonde de l’éditeur de devis et système d’import des packs d’offres `.atoum`. Les offres/contrats seront d’abord préparés comme configuration métier, puis le Manager évoluera selon le contrat technique commun validé.
 
+### Correctifs de recette UX Prospect — 16/09/2026
+
+Branche : `fix/prospect-recipe-ux-v2`  
+PR : #67, conservée en brouillon.  
+Base : `feature/prospect-workflow-v2` au commit validé `8284e1fc64c53bb4e5976a58c1fdb52715c5c671`.  
+Aucune fusion dans `feature/prospect-workflow-v2` ni dans `main` avant validation technique et recette visuelle.
+
+- [x] taille de texte fonctionnelle minimale portée à 14 px, y compris en densité Compact
+- [x] fiche de travail Prospect élargie et agrandie sans plein écran forcé ; densité verticale réduite
+- [x] teinte commerciale conservée sur la fiche avec champs neutres et contours liés à la température
+- [x] interlocuteur principal ajoutable ou modifiable après création du prospect
+- [x] décisionnaire sélectionnable parmi les Contacts liés, créable comme nouveau Contact ou conservé inconnu
+- [x] autres Contacts d’entreprise avec fonction libre (`Gérant`, `Patron`, `Banquier`, `Comptable`…) sans détourner le libellé d’une coordonnée
+- [x] bloc Coordonnées pleine largeur : propriétaire distinct de l’usage, plusieurs téléphones/emails par Contact
+- [x] Actions / Relances enrichies avec cible Contact, motif, date, heure, contexte et récurrence avancée
+- [x] compte rendu d’action en pleine largeur avec suites proposées selon le résultat
+- [x] refus catégorique : classement Prospect `Perdu` sans recréation automatique d’une récurrence
+- [x] informations nécessaires au devis transformées en checklist conservant les réponses et les points à obtenir plus tard
+- [x] historique du dossier replié par défaut avec aperçu des 10 événements les plus récents
+- [x] suivi devis du panneau latéral rendu lisible en disposition verticale
+- [x] migration 21 limitée au contexte structuré des actions (`target_contact_id`, `reason_code`, `reason_text`)
+- [x] tests ajoutés pour le contexte des actions, l’arrêt explicite d’une récurrence et les Contacts liés du workflow
+- [ ] `npm run typecheck`
+- [ ] `npm test`
+- [ ] `npm run package`
+- [ ] recette visuelle Windows de la fiche Prospect corrigée
+
+Le workflow CI de la PR #67 est actuellement créé mais reste en file d’attente sur le runner Windows ; aucun résultat de compilation ou de test ne doit être déduit tant qu’aucune étape n’a réellement démarré.
+
 ## Phase 0 — Fondation
 
 Validations réelles effectuées sous Windows le 13/09/2026 :

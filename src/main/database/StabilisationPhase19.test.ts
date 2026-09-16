@@ -13,9 +13,9 @@ import {NodeSqliteAdapter} from './NodeSqliteAdapter';
 import {applyPendingMigrations,getPendingMigrations} from './migrations';
 import {createWorkspacePaths} from '../workspace';
 
-describe('stabilisation commerciale migrations 19 et 20',()=>{
+describe('stabilisation commerciale migrations 19 à 21',()=>{
  let db:NodeSqliteAdapter,crm:CrmService,actions:ActionService,quotes:QuoteService,workflow:WorkflowService,documents:ClientDocumentService,root:string;
- beforeEach(()=>{root=mkdtempSync(join(tmpdir(),'atoumweb-v20-'));db=new NodeSqliteAdapter(':memory:');db.exec('PRAGMA foreign_keys=ON');applyPendingMigrations(db);crm=new CrmService(db);actions=new ActionService(db);quotes=new QuoteService(db,crm);const workspace=createWorkspacePaths(root);workflow=new WorkflowService(db,crm,quotes,new ProjectService(db,workspace),new OperationsService(db));documents=new ClientDocumentService(db,workspace);});
+ beforeEach(()=>{root=mkdtempSync(join(tmpdir(),'atoumweb-v21-'));db=new NodeSqliteAdapter(':memory:');db.exec('PRAGMA foreign_keys=ON');applyPendingMigrations(db);crm=new CrmService(db);actions=new ActionService(db);quotes=new QuoteService(db,crm);const workspace=createWorkspacePaths(root);workflow=new WorkflowService(db,crm,quotes,new ProjectService(db,workspace),new OperationsService(db));documents=new ClientDocumentService(db,workspace);});
  afterEach(()=>{db.close();const target=resolve(root);if(!target.startsWith(resolve(tmpdir())))throw Error('Chemin temporaire invalide');rmSync(target,{recursive:true,force:true});});
 
  it('met à niveau une base 18, conserve les coordonnées historiques et ajoute le workflow prospect v2',()=>{
@@ -25,12 +25,13 @@ describe('stabilisation commerciale migrations 19 et 20',()=>{
    legacy.run("INSERT INTO prospects (id,organization_id,stage,temperature,created_at,updated_at) VALUES ('p','o','new','warm','x','x')");
    legacy.run("INSERT INTO crm_needs (id,prospect_id,other_text,created_at) VALUES ('n','p','Besoin conservé','x')");
    legacy.run("INSERT INTO activity_events (id,entity_type,entity_id,action,summary,prospect_id,created_at) VALUES ('a','prospect','p','created','Historique conservé','p','x')");
-   expect(applyPendingMigrations(legacy).map(m=>m.id)).toEqual([19,20]);expect(applyPendingMigrations(legacy)).toEqual([]);
+   expect(applyPendingMigrations(legacy).map(m=>m.id)).toEqual([19,20,21]);expect(applyPendingMigrations(legacy)).toEqual([]);
    expect(legacy.all('SELECT method_type,value FROM contact_methods ORDER BY method_type')).toEqual([{method_type:'email',value:'contact@atoum.test'},{method_type:'phone',value:'0102030405'}]);
    expect(legacy.get("SELECT other_text FROM crm_needs WHERE id='n'")).toEqual({other_text:'Besoin conservé'});
    expect(legacy.get("SELECT summary FROM activity_events WHERE id='a'")).toEqual({summary:'Historique conservé'});
    expect(legacy.get("SELECT origin_type FROM prospects WHERE id='p'")).toEqual({origin_type:'other'});
    expect(legacy.get<{name:string}>("SELECT name FROM pragma_table_info('prospects') WHERE name='decision_maker_contact_id'")?.name).toBe('decision_maker_contact_id');
+   expect(legacy.get<{name:string}>("SELECT name FROM pragma_table_info('crm_actions') WHERE name='target_contact_id'")?.name).toBe('target_contact_id');
    expect(legacy.all('PRAGMA foreign_key_check')).toEqual([]);legacy.close();
  });
 
@@ -53,6 +54,7 @@ describe('stabilisation commerciale migrations 19 et 20',()=>{
    const org=crm.createOrganization({name:'Décision'});
    const primary=crm.createContact({organizationId:org.id,firstName:'Lucie',lastName:'Martin'});
    const decision=crm.createContact({organizationId:org.id,firstName:'Marc',lastName:'Martin',jobTitle:'Gérant'});
+   const accountant=crm.createContact({organizationId:org.id,firstName:'Anne',lastName:'Compta',jobTitle:'Comptable'});
    crm.saveContactMethod({contactId:decision.id,type:'email',value:'marc@example.test',isPrimary:true});
    const prospect=crm.createProspect({organizationId:org.id,contactId:primary.id,source:'referral'});
    workflow.setDecisionMaker(prospect.id,decision.id);
@@ -60,7 +62,17 @@ describe('stabilisation commerciale migrations 19 et 20',()=>{
    const identity=workflow.identity('prospect',prospect.id);
    expect(identity.decisionMaker?.id).toBe(decision.id);
    expect(identity.decisionMaker?.jobTitle).toBe('Gérant');
+   expect(identity.contacts.map(contact=>contact.id).sort()).toEqual([primary.id,decision.id,accountant.id].sort());
    expect(crm.listContactMethods('contact',decision.id).map(method=>method.value)).toEqual(['marc@example.test']);
+ });
+
+ it('inclut aussi un interlocuteur individuel sans organisation dans les contacts du workflow',()=>{
+   const primary=crm.createContact({firstName:'Solo',lastName:'Prospect'});
+   const prospect=crm.createProspect({contactId:primary.id,source:'outbound'});
+   const identity=workflow.identity('prospect',prospect.id);
+   expect(identity.organization).toBeNull();
+   expect(identity.contact?.id).toBe(primary.id);
+   expect(identity.contacts.map(contact=>contact.id)).toEqual([primary.id]);
  });
 
  it('finalise puis envoie un devis sans déverrouiller son contenu envoyé',()=>{const org=crm.createOrganization({name:'Devis'}),p=crm.createProspect({organizationId:org.id});workflow.saveNeed('prospect',p.id,{otherText:'Mission'});const q=quotes.create({prospectId:p.id,subject:'Mission'});quotes.addCustomLine(q.id,{label:'Mission',proposedUnitPriceCents:10000});expect(quotes.finalize(q.id).status).toBe('draft');expect(crm.listProspects().find(x=>x.id===p.id)?.stage).toBe('quote_to_send');quotes.markSent(q.id);expect(crm.listProspects().find(x=>x.id===p.id)?.stage).toBe('quote_sent');expect(()=>quotes.addCustomLine(q.id,{label:'Interdit',proposedUnitPriceCents:1})).toThrow(/copie/);});

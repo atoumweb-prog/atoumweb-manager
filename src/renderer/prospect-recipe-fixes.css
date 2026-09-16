@@ -1,0 +1,208 @@
+/* Correctifs de recette Prospect — largeur, lisibilité, couleur et formulaires. */
+
+/* La fiche de travail utilise davantage l'écran sans passer en plein écran strict. */
+.prospect-desk-overlay { padding: 16px; }
+.prospect-desk-shell {
+  width: min(1480px, calc(100vw - 32px));
+  height: min(1040px, calc(100dvh - 32px));
+}
+.prospect-detail-desk { padding: max(var(--ui-panel-pad), 18px); }
+.prospect-detail-desk .detail-panel-heading {
+  top: calc(-1 * max(var(--ui-panel-pad), 18px));
+  margin: calc(-1 * max(var(--ui-panel-pad), 18px)) calc(-1 * max(var(--ui-panel-pad), 18px)) 14px;
+  padding: max(var(--ui-panel-pad), 18px);
+}
+.prospect-detail-desk .prospect-work-section,
+.prospect-detail-desk .identity-editor-v2,
+.prospect-detail-desk .contact-methods-panel,
+.prospect-detail-desk .prospect-quote-panel,
+.prospect-detail-desk .activity-preview,
+.prospect-detail-desk .activity-journal {
+  max-width: none;
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* La température commerciale reste présente jusque dans les contours des champs. */
+.prospect-detail-v2 { --prospect-line: color-mix(in srgb, var(--prospect-tint) 72%, var(--border)); }
+.prospect-detail-v2.prospect-temperature-neutral { --prospect-line: color-mix(in srgb, #7fbe8d 58%, var(--border)); }
+.prospect-detail-v2.prospect-temperature-cold { --prospect-line: color-mix(in srgb, #79a9d7 58%, var(--border)); }
+.prospect-detail-v2.prospect-temperature-warm { --prospect-line: color-mix(in srgb, #e7b75e 62%, var(--border)); }
+.prospect-detail-v2.prospect-temperature-hot { --prospect-line: color-mix(in srgb, #e77a6f 62%, var(--border)); }
+.prospect-detail-v2 .prospect-work-section,
+.prospect-detail-v2 .inline-editor,
+.prospect-detail-v2 .contact-methods-panel,
+.prospect-detail-v2 .need-add-block,
+.prospect-detail-v2 .need-identification-fields,
+.prospect-detail-v2 .identity-decision-maker,
+.prospect-detail-v2 .prequote-review-body,
+.prospect-detail-v2 .prospect-quote-panel,
+.prospect-detail-v2 .activity-preview,
+.prospect-detail-v2 .activity-journal,
+.prospect-detail-v2 .linked-contacts-panel { border-color: var(--prospect-line); }
+.prospect-detail-v2 input,
+.prospect-detail-v2 select,
+.prospect-detail-v2 textarea {
+  border-color: color-mix(in srgb, var(--prospect-line) 78%, var(--border));
+  background: var(--surface);
+}
+.prospect-detail-v2 input:focus,
+.prospect-detail-v2 select:focus,
+.prospect-detail-v2 textarea:focus {
+  outline: 2px solid color-mix(in srgb, var(--prospect-line) 70%, transparent);
+  outline-offset: 1px;
+}
+
+/* Coordonnées : une vraie section pleine largeur, pas une petite boîte centrée. */
+.contact-methods-panel { width: 100%; }
+.contact-methods-panel > summary { width: 100%; min-height: 54px; }
+.contact-methods-content,
+.contact-method-group { width: 100%; }
+.contact-method-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+.contact-method-add {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(140px, .7fr) minmax(170px, .9fr) minmax(240px, 1.4fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+.contact-method-add label { min-width: 0; }
+.contact-method-add input,
+.contact-method-add select { width: 100%; min-width: 0; }
+
+/* Contacts liés : fonctions libres et une seule source Contact. */
+.linked-contacts-panel {
+  width: 100%;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--prospect-line, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+}
+.linked-contact-list { display: grid; gap: 8px; }
+.linked-contact-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--prospect-line, var(--border)) 65%, var(--border));
+  border-radius: 10px;
+  background: var(--surface);
+}
+.linked-contact-row > div,
+.selected-contact-summary { display: grid; gap: 4px; }
+.linked-contact-row small,
+.selected-contact-summary small { color: var(--muted); }
+.selected-contact-summary {
+  padding: 10px 12px;
+  border: 1px solid var(--prospect-line, var(--border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+}
+
+/* Les formulaires d'action utilisent la largeur disponible. */
+.prospect-actions-panel .inline-editor,
+.action-completion-editor { width: 100%; }
+.action-editor-grid,
+.action-followup-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+.action-editor-grid .span-2,
+.action-followup-grid .span-2 { grid-column: span 2; }
+.action-editor-grid .span-all,
+.action-followup-grid .span-all { grid-column: 1 / -1; }
+.action-editor-grid textarea,
+.action-followup-grid textarea { min-height: 78px; }
+.action-completion-editor { grid-column: 1 / -1; margin-top: 10px; }
+.action-completion-editor .inline-editor-actions,
+.prospect-loss-editor .inline-editor-actions { justify-content: space-between; }
+.prospect-actions-panel details { border-top: 1px solid var(--prospect-line, var(--border)); padding-top: 8px; }
+.prospect-actions-panel details > summary { cursor: pointer; font-size: var(--ui-font-small); font-weight: 700; }
+.prospect-actions-panel details > label { display: grid; gap: 6px; margin-top: 8px; max-width: 320px; }
+
+/* Checklist des informations à obtenir avant devis. */
+.missing-info-checklist { display: grid; gap: 10px; grid-column: 1 / -1; }
+.missing-info-list { display: grid; gap: 8px; }
+.missing-info-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(150px, .6fr) minmax(150px, .7fr) minmax(220px, 1fr);
+  gap: 9px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--prospect-line, var(--border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+}
+.missing-info-row.resolved { opacity: .82; }
+.missing-info-row strong { overflow-wrap: anywhere; }
+.missing-info-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) auto auto;
+  gap: 9px;
+  align-items: end;
+}
+
+/* Journal : un seul volet replié par défaut, l'ancien aperçu est masqué dans la fiche active. */
+.prospect-detail-v2 > .activity-preview { display: none; }
+.activity-journal {
+  border: 1px solid var(--prospect-line, var(--border));
+  border-radius: 12px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+}
+.activity-journal > summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 13px 15px;
+  cursor: pointer;
+  font-size: var(--ui-font-secondary);
+  font-weight: 800;
+}
+.activity-journal > summary small { color: var(--muted); }
+.activity-journal-content { display: grid; gap: 8px; padding: 0 15px 15px; }
+.activity-journal .activity-item p { font-size: var(--ui-font-secondary); }
+.activity-journal .activity-item small { font-size: var(--ui-font-small); }
+
+/* Le suivi devis du petit volet devient une liste verticale lisible. */
+.prospect-detail-panel:not(.prospect-detail-desk) .quote-command-summary,
+.prospect-detail-panel:not(.prospect-detail-desk) .quote-follow-summary { grid-template-columns: 1fr; }
+.prospect-detail-panel:not(.prospect-detail-desk) .quote-command-summary > div,
+.prospect-detail-panel:not(.prospect-detail-desk) .quote-follow-summary > div { min-height: auto; padding: 9px 10px; }
+.prospect-detail-panel:not(.prospect-detail-desk) .quote-command-actions,
+.prospect-detail-panel:not(.prospect-detail-desk) .quote-follow-actions { grid-template-columns: 1fr; }
+
+@media (max-width: 1180px) {
+  .contact-method-add { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .contact-method-add > button { grid-column: 1 / -1; }
+  .action-editor-grid,
+  .action-followup-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .missing-info-row { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 760px) {
+  .prospect-desk-overlay { padding: 6px; }
+  .prospect-desk-shell { width: calc(100vw - 12px); height: calc(100dvh - 12px); }
+  .contact-method-add,
+  .action-editor-grid,
+  .action-followup-grid,
+  .missing-info-row,
+  .missing-info-add { grid-template-columns: 1fr; }
+  .action-editor-grid .span-2,
+  .action-followup-grid .span-2,
+  .action-editor-grid .span-all,
+  .action-followup-grid .span-all { grid-column: auto; }
+  .activity-journal > summary,
+  .linked-contact-row { align-items: flex-start; flex-direction: column; }
+}

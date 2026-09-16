@@ -14,6 +14,21 @@ export class WorkflowService {
     if (!this.db.get(`SELECT id FROM ${table} WHERE id=?`, [id])) throw new Error('Dossier introuvable.');
     return owner === 'prospect' ? 'prospect_id' : 'client_account_id';
   }
+  private contactsForOrganization(organizationId: string | null): WorkflowIdentity['contacts'] {
+    if (!organizationId) return [];
+    return this.db.all<{id:string}>(
+      'SELECT id FROM contacts WHERE organization_id=? AND archived_at IS NULL ORDER BY last_name COLLATE NOCASE,first_name COLLATE NOCASE',
+      [organizationId],
+    ).map((row) => this.crm.getContact(row.id));
+  }
+  private identityContacts(organizationId: string | null, contactIds: Array<string | null>): WorkflowIdentity['contacts'] {
+    const contacts = this.contactsForOrganization(organizationId);
+    for (const contactId of contactIds) {
+      if (!contactId || contacts.some((contact) => contact.id === contactId)) continue;
+      contacts.push(this.crm.getContact(contactId));
+    }
+    return contacts;
+  }
   needs(owner: 'prospect' | 'client', id: string): Need[] {
     const column = this.owner(owner,id);
     return this.db.all<{ id: string; catalogItemId: string | null; label: string; type: string; otherText: string | null }>(
@@ -51,6 +66,7 @@ export class WorkflowService {
         organization: row.organization_id ? this.crm.getOrganization(row.organization_id) : null,
         contact: row.contact_id ? this.crm.getContact(row.contact_id) : null,
         decisionMaker: row.decision_maker_contact_id ? this.crm.getContact(row.decision_maker_contact_id) : null,
+        contacts: this.identityContacts(row.organization_id, [row.contact_id, row.decision_maker_contact_id]),
       };
     }
     const row = this.db.get<{organization_id:string|null;contact_id:string|null}>(
@@ -60,6 +76,7 @@ export class WorkflowService {
       organization: row.organization_id ? this.crm.getOrganization(row.organization_id) : null,
       contact: row.contact_id ? this.crm.getContact(row.contact_id) : null,
       decisionMaker: null,
+      contacts: this.identityContacts(row.organization_id, [row.contact_id]),
     };
   }
   setDecisionMaker(prospectId: string, contactId: string | null): WorkflowIdentity {

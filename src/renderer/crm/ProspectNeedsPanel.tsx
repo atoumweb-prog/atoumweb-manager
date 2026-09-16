@@ -2,6 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import type { CatalogItemSummary, CatalogVersion, PriceMode } from '../../shared/commercial';
 import type { ProspectSummary } from '../../shared/crm';
 import type { Need, NeedInput } from '../../shared/workflow';
+import {
+  parseProspectInformation,
+  serializeProspectInformation,
+  type ProspectInformationItem,
+  type ProspectInformationStatus,
+} from '../../shared/prospectInformation';
 import { ProspectPreQuoteReview } from './ProspectPreQuoteReview';
 
 const CATEGORY_ORDER = ['Web', 'E-commerce', 'Maintenance', 'Contenu', 'SEO / Visibilité', 'Visibilité', 'Identité visuelle', 'Création', 'Applications & outils métier', 'Applications', 'Mariage'];
@@ -30,7 +36,7 @@ type BudgetPreset = (typeof BUDGET_PRESETS)[number][0];
 function cleanError(error: unknown): string {
   if (!(error instanceof Error)) return 'Une erreur est survenue.';
   return error.message
-    .replace(/^Error invoking remote method ['"][^'"]+['"]:\s*/i, '')
+    .replace(/^Error invoking remote method ['\"][^'\"]+['\"]:\s*/i, '')
     .replace(/^Error:\s*/i, '')
     .trim();
 }
@@ -142,6 +148,10 @@ function budgetValues(preset: BudgetPreset, customMin: string, customMax: string
   }
 }
 
+function newInformationId(): string {
+  return `info-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: string; onChanged?: () => void }) {
   const [catalog, setCatalog] = useState<CatalogItemSummary[]>([]);
   const [needs, setNeeds] = useState<Need[]>([]);
@@ -162,7 +172,9 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
   const [existingStatus, setExistingStatus] = useState<NonNullable<ProspectSummary['existingStatus']>>('unknown');
   const [existingUrl, setExistingUrl] = useState('');
   const [existingNotes, setExistingNotes] = useState('');
-  const [missingInformation, setMissingInformation] = useState('');
+  const [informationItems, setInformationItems] = useState<ProspectInformationItem[]>([]);
+  const [newInformation, setNewInformation] = useState('');
+  const [newInformationBlocking, setNewInformationBlocking] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -196,7 +208,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
         setExistingStatus(current.existingStatus ?? 'unknown');
         setExistingUrl(current.existingUrl ?? '');
         setExistingNotes(current.existingNotes ?? '');
-        setMissingInformation(current.missingInformation ?? '');
+        setInformationItems(parseProspectInformation(current.missingInformation));
       }
     } catch (e) { setError(cleanError(e)); }
   }
@@ -223,6 +235,45 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
     finally { setBusy(false); }
   }
 
+  async function persistInformation(next: ProspectInformationItem[]) {
+    if (!prospect) return;
+    setInformationItems(next);
+    try {
+      const updated = await window.atoumweb.crm.prospects.updateQualification(prospect.id, {
+        missingInformation: serializeProspectInformation(next),
+      });
+      setProspect(updated);
+      onChanged?.();
+      window.dispatchEvent(new Event('atoumweb:changed'));
+    } catch (e) { setError(cleanError(e)); }
+  }
+
+  function updateInformation(id: string, patch: Partial<ProspectInformationItem>, save = true) {
+    const now = new Date().toISOString();
+    const next = informationItems.map((item) => {
+      if (item.id !== id) return item;
+      const status = patch.status ?? item.status;
+      return {
+        ...item,
+        ...patch,
+        status,
+        isBlocking: status === 'later' ? false : (patch.isBlocking ?? item.isBlocking),
+        resolvedAt: status === 'resolved' ? (item.resolvedAt ?? now) : null,
+      };
+    });
+    setInformationItems(next);
+    if (save) void persistInformation(next);
+  }
+
+  function addInformation() {
+    const label = newInformation.trim();
+    if (!label) return;
+    const next = [...informationItems, { id: newInformationId(), label, status: 'open' as const, isBlocking: newInformationBlocking, answer: null, resolvedAt: null }];
+    setNewInformation('');
+    setNewInformationBlocking(true);
+    void persistInformation(next);
+  }
+
   async function saveIdentification() {
     if (!prospect) return;
     const budget = budgetValues(budgetPreset, budgetMin, budgetMax, budgetExact);
@@ -240,7 +291,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
         existingStatus,
         existingUrl: existingStatus === 'yes' ? existingUrl.trim() || null : null,
         existingNotes: existingStatus !== 'no' ? existingNotes.trim() || null : null,
-        missingInformation: missingInformation.trim() || null,
+        missingInformation: serializeProspectInformation(informationItems),
       });
       await window.atoumweb.crm.prospects.update(prospect.id, {
         ...prospect,
@@ -263,6 +314,8 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
     }
   }
 
+  const openBlockingInformation = informationItems.filter((item) => item.status === 'open' && item.isBlocking);
+  const openLaterInformation = informationItems.filter((item) => item.status !== 'resolved' && !item.isBlocking);
   const identificationReady = needs.length > 0 && Boolean(projectSummary.trim()) && Boolean(prospect?.budgetStatus) && Boolean(prospect?.timelineStatus);
 
   return <section className="prospect-work-section needs-panel-v2">
@@ -305,8 +358,26 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
         {existingStatus === 'yes' && <label>URL / référence existante<input value={existingUrl} onChange={(e) => setExistingUrl(e.target.value)} placeholder="https://…" /></label>}
         {existingStatus !== 'no' && <label className="form-span-2">Précisions sur l’existant<input value={existingNotes} onChange={(e) => setExistingNotes(e.target.value)} /></label>}
 
-        <label className="form-span-2">Informations encore nécessaires au chiffrage<textarea value={missingInformation} onChange={(e) => setMissingInformation(e.target.value)} placeholder="Seulement les points nécessaires avant devis. Les éléments utiles uniquement au démarrage du projet ne bloquent pas le devis." /></label>
-        <div className="need-scope-assessment form-span-2"><span className="eyebrow">Lecture du périmètre</span><strong>{missingInformation.trim() ? 'À préciser — des informations restent nécessaires avant devis' : projectContext.trim() ? 'Périmètre décrit — contrôle final à effectuer' : 'Socle sélectionné — vérifier les éventuels compléments hors offre'}</strong><small>Cette indication ne crée pas encore le devis. Le contrôle final décidera si le dossier est prêt à chiffrer.</small></div>
+        <div className="missing-info-checklist">
+          <div className="need-selector-title"><strong>Informations / points à confirmer</strong><small>Garde les questions dans le dossier. Seuls les points « À obtenir » marqués bloquants empêchent le devis.</small></div>
+          {informationItems.length > 0 && <div className="missing-info-list">{informationItems.map((item) => <div className={`missing-info-row ${item.status === 'resolved' ? 'resolved' : ''}`} key={item.id}>
+            <strong>{item.label}</strong>
+            <select aria-label={`État de ${item.label}`} value={item.status} onChange={(e) => updateInformation(item.id, { status: e.target.value as ProspectInformationStatus })}>
+              <option value="open">À obtenir</option>
+              <option value="resolved">Obtenu / résolu</option>
+              <option value="later">À obtenir plus tard</option>
+            </select>
+            <label className="check-option"><input type="checkbox" checked={item.isBlocking && item.status !== 'later'} disabled={item.status === 'later' || item.status === 'resolved'} onChange={(e) => updateInformation(item.id, { isBlocking: e.target.checked })} />Bloque le devis</label>
+            <input value={item.answer ?? ''} onChange={(e) => updateInformation(item.id, { answer: e.target.value }, false)} onBlur={() => void persistInformation(informationItems)} placeholder={item.status === 'resolved' ? 'Réponse obtenue / précision' : 'Note ou réponse éventuelle'} />
+          </div>)}</div>}
+          <div className="missing-info-add">
+            <label>Ajouter un point<input value={newInformation} onChange={(e) => setNewInformation(e.target.value)} placeholder="Ex. combien peuvent-ils investir ?" /></label>
+            <label className="check-option"><input type="checkbox" checked={newInformationBlocking} onChange={(e) => setNewInformationBlocking(e.target.checked)} />Bloquant avant devis</label>
+            <button type="button" className="secondary-button" disabled={!newInformation.trim()} onClick={addInformation}>Ajouter</button>
+          </div>
+        </div>
+
+        <div className="need-scope-assessment form-span-2"><span className="eyebrow">Lecture du périmètre</span><strong>{openBlockingInformation.length > 0 ? `${openBlockingInformation.length} point${openBlockingInformation.length > 1 ? 's' : ''} bloquant${openBlockingInformation.length > 1 ? 's' : ''} avant devis` : openLaterInformation.length > 0 ? 'Périmètre prêt pour contrôle — certains points seront obtenus plus tard' : projectContext.trim() ? 'Périmètre décrit — contrôle final à effectuer' : 'Socle sélectionné — vérifier les éventuels compléments hors offre'}</strong><small>Les points résolus restent dans le dossier : aucune information n’a besoin d’être effacée pour avancer.</small></div>
         <button type="button" className="primary-button" disabled={busy} onClick={() => void saveIdentification()}>{busy ? 'Enregistrement…' : 'Enregistrer l’identification du besoin'}</button>
       </div>
     </div>

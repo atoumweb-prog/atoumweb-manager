@@ -73,7 +73,20 @@ export interface ClientSummary extends ClientInput {
 }
 export interface ClientFilters { status?: ClientStatus | null; includeArchived?: boolean; search?: string | null; }
 
-export interface CrmActionInput { ownerType: CrmActionOwnerType; ownerId: string; type: CrmActionType; title: string; dueAt?: string | null; notes?: string | null; relatedType?: string | null; relatedId?: string | null; recurrence?: ActionRecurrence; }
+export interface CrmActionInput {
+  ownerType: CrmActionOwnerType;
+  ownerId: string;
+  type: CrmActionType;
+  title: string;
+  dueAt?: string | null;
+  notes?: string | null;
+  relatedType?: string | null;
+  relatedId?: string | null;
+  targetContactId?: string | null;
+  reasonCode?: string | null;
+  reasonText?: string | null;
+  recurrence?: ActionRecurrence;
+}
 export interface CompleteActionInput { channel?: string | null; outcome?: string | null; notes?: string | null; nextAction?: CrmActionInput | null; }
 export interface CrmAction extends CrmActionInput { id: string; status: CrmActionStatus; completedAt?: string | null; completionChannel?: string | null; completionOutcome?: string | null; completionNotes?: string | null; createdAt: string; updatedAt: string; }
 export interface CrmActionFilters { ownerType?: CrmActionOwnerType | null; ownerId?: string | null; type?: CrmActionType | null; status?: CrmActionStatus | null; }
