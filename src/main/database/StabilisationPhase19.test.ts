@@ -54,6 +54,7 @@ describe('stabilisation commerciale migrations 19 à 21',()=>{
    const org=crm.createOrganization({name:'Décision'});
    const primary=crm.createContact({organizationId:org.id,firstName:'Lucie',lastName:'Martin'});
    const decision=crm.createContact({organizationId:org.id,firstName:'Marc',lastName:'Martin',jobTitle:'Gérant'});
+   const accountant=crm.createContact({organizationId:org.id,firstName:'Anne',lastName:'Compta',jobTitle:'Comptable'});
    crm.saveContactMethod({contactId:decision.id,type:'email',value:'marc@example.test',isPrimary:true});
    const prospect=crm.createProspect({organizationId:org.id,contactId:primary.id,source:'referral'});
    workflow.setDecisionMaker(prospect.id,decision.id);
@@ -61,7 +62,17 @@ describe('stabilisation commerciale migrations 19 à 21',()=>{
    const identity=workflow.identity('prospect',prospect.id);
    expect(identity.decisionMaker?.id).toBe(decision.id);
    expect(identity.decisionMaker?.jobTitle).toBe('Gérant');
+   expect(identity.contacts.map(contact=>contact.id).sort()).toEqual([primary.id,decision.id,accountant.id].sort());
    expect(crm.listContactMethods('contact',decision.id).map(method=>method.value)).toEqual(['marc@example.test']);
+ });
+
+ it('inclut aussi un interlocuteur individuel sans organisation dans les contacts du workflow',()=>{
+   const primary=crm.createContact({firstName:'Solo',lastName:'Prospect'});
+   const prospect=crm.createProspect({contactId:primary.id,source:'outbound'});
+   const identity=workflow.identity('prospect',prospect.id);
+   expect(identity.organization).toBeNull();
+   expect(identity.contact?.id).toBe(primary.id);
+   expect(identity.contacts.map(contact=>contact.id)).toEqual([primary.id]);
  });
 
  it('finalise puis envoie un devis sans déverrouiller son contenu envoyé',()=>{const org=crm.createOrganization({name:'Devis'}),p=crm.createProspect({organizationId:org.id});workflow.saveNeed('prospect',p.id,{otherText:'Mission'});const q=quotes.create({prospectId:p.id,subject:'Mission'});quotes.addCustomLine(q.id,{label:'Mission',proposedUnitPriceCents:10000});expect(quotes.finalize(q.id).status).toBe('draft');expect(crm.listProspects().find(x=>x.id===p.id)?.stage).toBe('quote_to_send');quotes.markSent(q.id);expect(crm.listProspects().find(x=>x.id===p.id)?.stage).toBe('quote_sent');expect(()=>quotes.addCustomLine(q.id,{label:'Interdit',proposedUnitPriceCents:1})).toThrow(/copie/);});
