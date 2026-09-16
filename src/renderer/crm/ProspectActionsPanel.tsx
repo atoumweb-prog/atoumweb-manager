@@ -162,10 +162,15 @@ export function ProspectActionsPanel({ prospect, actions, onChanged }: {
   }, [prospect.id, prospect.updatedAt, actions]);
 
   const contactOptions = useMemo(() => {
-    const result: Array<{ id: string; label: string }> = [];
-    if (identity?.contact) result.push({ id: identity.contact.id, label: `${identity.contact.firstName} ${identity.contact.lastName} · Interlocuteur principal` });
-    if (identity?.decisionMaker && identity.decisionMaker.id !== identity.contact?.id) result.push({ id: identity.decisionMaker.id, label: `${identity.decisionMaker.firstName} ${identity.decisionMaker.lastName} · Décisionnaire` });
-    return result;
+    if (!identity) return [] as Array<{ id: string; label: string }>;
+    return identity.contacts.map((contact) => {
+      const role = contact.id === identity.decisionMaker?.id
+        ? 'Décisionnaire'
+        : contact.id === identity.contact?.id
+          ? 'Interlocuteur principal'
+          : contact.jobTitle || 'Contact lié';
+      return { id: contact.id, label: `${contact.firstName} ${contact.lastName} · ${role}` };
+    });
   }, [identity]);
 
   function contactLabel(id?: string | null): string {
