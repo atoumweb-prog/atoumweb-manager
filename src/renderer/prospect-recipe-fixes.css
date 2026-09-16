@@ -39,7 +39,8 @@
 .prospect-detail-v2 .prequote-review-body,
 .prospect-detail-v2 .prospect-quote-panel,
 .prospect-detail-v2 .activity-preview,
-.prospect-detail-v2 .activity-journal { border-color: var(--prospect-line); }
+.prospect-detail-v2 .activity-journal,
+.prospect-detail-v2 .linked-contacts-panel { border-color: var(--prospect-line); }
 .prospect-detail-v2 input,
 .prospect-detail-v2 select,
 .prospect-detail-v2 textarea {
@@ -73,6 +74,38 @@
 .contact-method-add label { min-width: 0; }
 .contact-method-add input,
 .contact-method-add select { width: 100%; min-width: 0; }
+
+/* Contacts liés : fonctions libres et une seule source Contact. */
+.linked-contacts-panel {
+  width: 100%;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--prospect-line, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+}
+.linked-contact-list { display: grid; gap: 8px; }
+.linked-contact-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--prospect-line, var(--border)) 65%, var(--border));
+  border-radius: 10px;
+  background: var(--surface);
+}
+.linked-contact-row > div,
+.selected-contact-summary { display: grid; gap: 4px; }
+.linked-contact-row small,
+.selected-contact-summary small { color: var(--muted); }
+.selected-contact-summary {
+  padding: 10px 12px;
+  border: 1px solid var(--prospect-line, var(--border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+}
 
 /* Les formulaires d'action utilisent la largeur disponible. */
 .prospect-actions-panel .inline-editor,
@@ -170,5 +203,6 @@
   .action-followup-grid .span-2,
   .action-editor-grid .span-all,
   .action-followup-grid .span-all { grid-column: auto; }
-  .activity-journal > summary { align-items: flex-start; flex-direction: column; }
+  .activity-journal > summary,
+  .linked-contact-row { align-items: flex-start; flex-direction: column; }
 }
