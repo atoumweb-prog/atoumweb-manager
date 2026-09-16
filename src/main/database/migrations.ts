@@ -2,6 +2,7 @@ import { STABILISATION_MIGRATION } from './stabilisationMigration';
 import { STABILISATION_PHASE_19_MIGRATION } from './stabilisationPhase19Migration';
 import { PROSPECT_WORKFLOW_V2_MIGRATION } from './prospectWorkflowV2Migration';
 import { PROSPECT_RECIPE_UX_MIGRATION } from './prospectRecipeUxMigration';
+import { ATOUM_PACKAGE_BOOTSTRAP_MIGRATION } from './atoumPackageMigration';
 import type { DatabaseAdapter } from './DatabaseAdapter';
 import { PHASE_2_MIGRATIONS } from './phase2Migrations';
 import { PHASE_3_MIGRATIONS } from './phase3Migrations';
@@ -171,6 +172,7 @@ export const MIGRATIONS: Migration[] = [
   STABILISATION_PHASE_19_MIGRATION,
   PROSPECT_WORKFLOW_V2_MIGRATION,
   PROSPECT_RECIPE_UX_MIGRATION,
+  ATOUM_PACKAGE_BOOTSTRAP_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {
