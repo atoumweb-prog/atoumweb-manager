@@ -1,0 +1,11 @@
+- [ ] trois binaires présents avec SHA-256 attendu
+- [ ] migration 22 sur base vierge
+- [ ] typecheck
+- [ ] tests
+- [ ] packaging Windows x64
+- [ ] 3 packs enregistrés
+- [ ] 3 DOCX extraits
+- [ ] réimport idempotent
+- [ ] anciennes références remplacées archivées
+- [ ] aucun doublon catalogue
+- [ ] base utilisateur inchangée pendant la validation
