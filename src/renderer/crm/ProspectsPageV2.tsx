@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import type { QuoteSummary } from '../../shared/commercial';
 import {
   PROSPECT_SOURCES,
@@ -83,6 +83,7 @@ const EMPTY_DRAFT: ProspectDraft = {
 };
 
 type View = 'directory' | 'pipeline' | 'history';
+type DirectoryStatusFilter = 'follow' | 'all' | 'prepare' | 'ready' | ProspectStage;
 
 const PIPELINE_GROUPS: Array<{ id: string; step: number; label: string; stages: ProspectStage[]; icon: string }> = [
   { id: 'qualify', step: 1, label: 'À qualifier', stages: ['qualifying'], icon: '1' },
@@ -108,6 +109,24 @@ function prospectReadiness(prospect: ProspectSummary): { ready: boolean; missing
   if (!prospect.hasContactMethod && !prospect.secondaryLabel) missing.push('contact');
   if (!prospect.researchSnapshotCount && !prospect.initialObservation && !prospect.detectedOpportunity && !prospect.organizationNotes) missing.push('point à évoquer');
   return { ready: missing.length === 0, missing };
+}
+function directoryStatus(prospect: ProspectSummary): { key: DirectoryStatusFilter; label: string; tone: string } {
+  const stage = prospect.stage ?? 'new';
+  if (stage === 'new') {
+    const readiness = prospectReadiness(prospect);
+    return readiness.ready
+      ? { key: 'ready', label: 'Prêt pour démarchage', tone: 'ready' }
+      : { key: 'prepare', label: 'À préparer', tone: 'prepare' };
+  }
+  if (stage === 'won') return { key: 'won', label: 'Gagné', tone: 'won' };
+  if (stage === 'lost') return { key: 'lost', label: 'Perdu', tone: 'lost' };
+  return { key: stage, label: STAGE_LABELS[stage], tone: stage };
+}
+function matchesDirectoryStatus(prospect: ProspectSummary, filter: DirectoryStatusFilter): boolean {
+  if (filter === 'all') return true;
+  const status = directoryStatus(prospect);
+  if (filter === 'follow') return status.key !== 'won' && status.key !== 'lost';
+  return status.key === filter;
 }
 function isQuoteFollowUpStage(stage?: ProspectStage | null) { return QUOTE_FOLLOW_UP_STAGES.includes(stage ?? 'new'); }
 function manualStages(prospect: ProspectSummary): ProspectStage[] { return MANUAL_STAGE_OPTIONS[prospect.stage ?? 'new'].filter((stage) => ACTIVE_STAGES.includes(stage)); }
@@ -151,6 +170,8 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
   const [directorySearch, setDirectorySearch] = useState('');
   const [directoryIndustry, setDirectoryIndustry] = useState('');
   const [directoryCity, setDirectoryCity] = useState('');
+  const [directoryStatusFilter, setDirectoryStatusFilter] = useState<DirectoryStatusFilter>('follow');
+  const sidePanelRef = useRef<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [draft, setDraft] = useState<ProspectDraft>(EMPTY_DRAFT);
@@ -181,9 +202,19 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
   useEffect(() => { void refresh(); }, []);
   useEffect(() => { if (!selectedId) { setActivity([]); return; } void window.atoumweb.crm.activity.list('prospect', selectedId).then(setActivity); }, [selectedId, prospects, actions]);
   useEffect(() => { const reload = () => void refresh(); window.addEventListener('atoumweb:changed', reload); return () => window.removeEventListener('atoumweb:changed', reload); }, []);
+  useEffect(() => {
+    if (!selectedId || deskModeId) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target || sidePanelRef.current?.contains(target)) return;
+      setSelectedId(null);
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    return () => document.removeEventListener('pointerdown', closeOnOutside);
+  }, [selectedId, deskModeId]);
 
   const active = useMemo(() => prospects.filter((item) => !isClosed(item)), [prospects]);
-  const directory = useMemo(() => active.filter((item) => (item.stage ?? 'new') === 'new'), [active]);
+  const directory = useMemo(() => prospects.filter((item) => !item.archivedAt), [prospects]);
   const pipelineActive = useMemo(() => active.filter((item) => (item.stage ?? 'new') !== 'new'), [active]);
   const directoryIndustries = useMemo(() => [...new Set(directory.map((item) => item.organizationIndustry).filter((value): value is string => Boolean(value)))].sort((a,b) => a.localeCompare(b, 'fr')), [directory]);
   const directoryCities = useMemo(() => [...new Set(directory.map((item) => item.organizationCity).filter((value): value is string => Boolean(value)))].sort((a,b) => a.localeCompare(b, 'fr')), [directory]);
@@ -192,8 +223,9 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
     const haystack = [item.displayName, item.secondaryLabel, item.organizationIndustry, item.organizationCity, item.organizationWebsite, item.organizationNotes, item.initialObservation, item.detectedOpportunity].filter(Boolean).join(' ').toLocaleLowerCase('fr-FR');
     return (!needle || haystack.includes(needle))
       && (!directoryIndustry || item.organizationIndustry === directoryIndustry)
-      && (!directoryCity || item.organizationCity === directoryCity);
-  }), [directory, directorySearch, directoryIndustry, directoryCity]);
+      && (!directoryCity || item.organizationCity === directoryCity)
+      && matchesDirectoryStatus(item, directoryStatusFilter);
+  }), [directory, directorySearch, directoryIndustry, directoryCity, directoryStatusFilter]);
   const closed = useMemo(() => prospects.filter(isClosed), [prospects]);
   const selected = prospects.find((item) => item.id === selectedId) ?? null;
   const deskProspect = prospects.find((item) => item.id === deskModeId) ?? null;
