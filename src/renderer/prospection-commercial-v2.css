@@ -72,3 +72,87 @@
 @media (max-width: 620px) {
   .research-opportunity-row { grid-template-columns: 1fr; }
 }
+
+
+/* Annuaire prospects : même logique de lecture que Clients. */
+.prospect-directory-table-panel { min-width: 0; overflow: hidden; }
+.prospect-directory-table { width: 100%; table-layout: auto; }
+.prospect-directory-table th:nth-child(1) { min-width: 220px; }
+.prospect-directory-table th:nth-child(2) { min-width: 160px; }
+.prospect-directory-table th:nth-child(3) { min-width: 140px; }
+.prospect-directory-table th:nth-child(4) { min-width: 180px; }
+.prospect-directory-table th:nth-child(5) { min-width: 170px; }
+.prospect-directory-table tbody tr { cursor: pointer; }
+.prospect-directory-table tbody tr.selected-row > td { background: color-mix(in srgb, #a47c34 8%, #fff); }
+.prospect-ready { display: inline-flex; align-items: center; border-radius: 999px; padding: 6px 9px; font-size: .78rem; font-weight: 800; white-space: nowrap; }
+.prospect-ready-yes { background: color-mix(in srgb, #198754 14%, #fff); color: #346d43; }
+.prospect-ready-no { background: color-mix(in srgb, #f2b705 18%, #fff); color: #805e21; }
+
+/* Fiche succincte : uniquement l'information nécessaire avant l'ouverture du poste de travail. */
+.prospect-compact-scroll { display: grid; gap: 12px; overflow-y: auto; min-height: 0; padding-top: 10px; }
+.prospect-readiness-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border-radius: 12px; border: 1px solid rgba(24,33,43,.14); background: #fff; }
+.prospect-readiness-card > div { display: grid; gap: 3px; }
+.prospect-readiness-card span, .prospect-readiness-card small { color: #64748b; }
+.prospect-readiness-card.ready { border-left: 5px solid #198754; }
+.prospect-readiness-card.incomplete { border-left: 5px solid #f2b705; }
+.prospect-commercial-priority { display: grid; gap: 12px; border: 1px solid rgba(24,33,43,.14); background: #fff; border-radius: 12px; padding: 14px; }
+.prospect-commercial-priority h3 { margin: 0; }
+.prospect-compact-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.prospect-reference-summary { display: grid; gap: 10px; border: 1px solid rgba(24,33,43,.14); border-radius: 12px; padding: 14px; background: #fff; min-width: 0; }
+.reference-summary-heading { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+.reference-summary-heading > div { display: grid; gap: 2px; }
+.reference-summary-heading small { color: #64748b; }
+.reference-summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+.reference-summary-grid > div { display: grid; gap: 3px; padding: 9px; border-radius: 9px; background: rgba(24,33,43,.045); min-width: 0; }
+.reference-summary-grid span, .reference-priority-block > span, .reference-opportunity-summary > span { color: #64748b; font-size: .78rem; font-weight: 700; }
+.reference-summary-grid strong { overflow-wrap: anywhere; }
+.reference-priority-block { display: grid; gap: 4px; padding: 10px; border-radius: 9px; background: color-mix(in srgb, #a47c34 7%, #fff); }
+.reference-priority-block p, .reference-priority-block strong { margin: 0; white-space: pre-wrap; }
+.reference-opportunity-summary { display: grid; gap: 7px; }
+.reference-opportunity-summary > div { display: grid; gap: 2px; border-left: 3px solid #a47c34; padding-left: 9px; }
+.reference-opportunity-summary small { color: #64748b; }
+
+/* Grand mode Prospect : le travail commercial et la référence sont séparés. */
+.prospect-desk-tabs { display: flex; gap: 6px; flex-wrap: wrap; padding: 10px 0; border-bottom: 1px solid rgba(24,33,43,.12); }
+.prospect-desk-tabs button, .research-tabs button { border: 1px solid rgba(24,33,43,.14); background: #fff; color: #334155; border-radius: 9px; padding: 8px 11px; cursor: pointer; font-weight: 700; }
+.prospect-desk-tabs button.active, .research-tabs button.active { background: color-mix(in srgb, #a47c34 14%, #fff); color: #5f451b; border-color: color-mix(in srgb, #a47c34 45%, #fff); }
+.prospect-desk-content { display: grid; gap: 12px; padding-top: 12px; min-width: 0; }
+.reference-tab-intro { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px; border-radius: 12px; background: #fff; border: 1px solid rgba(24,33,43,.14); }
+.reference-tab-intro > div { display: grid; gap: 3px; }
+.reference-tab-intro span { color: #64748b; }
+
+/* Référence prospect : navigation par onglets, aucun long formulaire imposé. */
+.research-tabs { display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid rgba(24,33,43,.12); padding-bottom: 10px; }
+.research-tab-content { min-width: 0; }
+.research-grid-single-row { align-items: stretch; }
+.research-checks-stack { display: grid; gap: 12px; }
+.research-check-card { border: 1px solid rgba(24,33,43,.14); border-radius: 12px; background: #fff; padding: 14px; display: grid; gap: 10px; min-width: 0; }
+.research-check-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.research-check-card-head > div { display: flex; align-items: center; gap: 6px; }
+.research-status { border-radius: 999px; padding: 4px 8px; font-size: .75rem; font-weight: 800; }
+.research-status-ok { background: color-mix(in srgb, #198754 14%, #fff); color: #346d43; }
+.research-status-review { background: color-mix(in srgb, #f2b705 18%, #fff); color: #805e21; }
+.research-status-missing { background: color-mix(in srgb, #d62828 12%, #fff); color: #9c3934; }
+.research-status-na { background: color-mix(in srgb, #6b7280 12%, #fff); color: #4b5563; }
+.prospect-detail-desk .prospect-research-panel,
+.reference-window-shell .prospect-research-panel { width: 100%; max-width: none; min-width: 0; }
+.prospect-detail-desk .research-card,
+.reference-window-shell .research-card { min-width: 0; }
+.prospect-detail-desk .research-check-row,
+.reference-window-shell .research-check-row { grid-template-columns: minmax(230px,1fr) minmax(150px,.45fr) minmax(220px,1fr); }
+
+/* Vraie fenêtre Electron indépendante : déplaçable/minimisable/maximisable par Windows. */
+.reference-window-shell { min-height: 100vh; box-sizing: border-box; padding: 20px; background: #f6f4ee; color: #18212b; display: grid; align-content: start; gap: 14px; }
+.reference-window-header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; padding: 16px; background: #fff; border: 1px solid rgba(24,33,43,.14); border-radius: 14px; }
+.reference-window-header h1 { margin: 3px 0; }
+.reference-window-header p { margin: 0; color: #64748b; }
+.reference-window-badge { border-radius: 999px; padding: 7px 10px; background: color-mix(in srgb, #198754 10%, #fff); color: #346d43; font-size: .78rem; font-weight: 800; }
+.reference-window-identity { min-width: 0; }
+.reference-window-identity > * { width: 100%; box-sizing: border-box; }
+
+@media (max-width: 900px) {
+  .reference-summary-grid { grid-template-columns: 1fr; }
+  .prospect-readiness-card { align-items: stretch; flex-direction: column; }
+  .prospect-detail-desk .research-check-row,
+  .reference-window-shell .research-check-row { grid-template-columns: 1fr; }
+}
