@@ -155,6 +155,8 @@ export interface ProspectSummary extends ProspectInput {
   organizationCity?: string | null;
   organizationWebsite?: string | null;
   organizationNotes?: string | null;
+  hasContactMethod?: boolean;
+  researchSnapshotCount?: number;
 }
 export interface ProspectFilters { stage?: ProspectStage | null; includeArchived?: boolean; search?: string | null; }
 
@@ -221,6 +223,7 @@ export interface CrmApi {
       list(id: string): Promise<ProspectResearchSnapshot[]>;
       save(id: string, input: ProspectResearchSnapshotInput): Promise<ProspectResearchSnapshot>;
     };
+    openReferenceWindow(id: string): Promise<void>;
   };
   clients: {
     list(filters?: ClientFilters): Promise<ClientSummary[]>;
