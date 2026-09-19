@@ -1,7 +1,7 @@
 import { NeedChoices, openEntity } from '../workflow/DossierPanel';
 import {ClientDocumentsPanel} from './ClientDocumentsPanel';
 import type { NeedInput } from '../../shared/workflow';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   CLIENT_CONTACT_ROLES,
   type ActivityEvent,
@@ -121,6 +121,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
   const [contactSaving, setContactSaving] = useState(false);
   const [actionEditor, setActionEditor] = useState<ClientActionEditor | null>(null);
   const [archiveCandidateId, setArchiveCandidateId] = useState<string | null>(null);
+  const sidePanelRef = useRef<HTMLElement | null>(null);
 
   async function refresh(): Promise<void> {
     setLoading(true);
@@ -166,6 +167,20 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
     }
     void refreshSelectedClientData(selectedId);
   }, [selectedId, clients]);
+
+  useEffect(() => {
+    if (!selectedId || largeView) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target || sidePanelRef.current?.contains(target)) return;
+      setSelectedId(null);
+      setActionEditor(null);
+      setArchiveCandidateId(null);
+      setRelationshipMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    return () => document.removeEventListener('pointerdown', closeOnOutside);
+  }, [selectedId, largeView]);
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase('fr-FR');
@@ -474,7 +489,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
           </div>
 
           {selected && (
-            <aside className={`panel client-summary-panel client-relationship-${selected.relationshipStatus ?? 'neutral'} ${largeView ? 'client-large-view' : ''}`} role={largeView ? 'dialog' : undefined} aria-modal={largeView ? true : undefined} aria-label={largeView ? `Fiche client ${selected.displayName}` : undefined}>
+            <aside ref={sidePanelRef} className={`panel client-summary-panel client-relationship-${selected.relationshipStatus ?? 'neutral'} ${largeView ? 'client-large-view' : ''}`} role={largeView ? 'dialog' : undefined} aria-modal={largeView ? true : undefined} aria-label={largeView ? `Fiche client ${selected.displayName}` : undefined}>
               <div className="detail-panel-heading">
                 <div>
                   <span className="eyebrow">Fiche client</span>
