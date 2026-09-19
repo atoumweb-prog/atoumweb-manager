@@ -16,6 +16,7 @@ import { ProspectNeedsPanel } from './ProspectNeedsPanel';
 import { FieldHelp, ProspectQualificationPanelV2 } from './ProspectQualificationPanelV2';
 import { ProspectQuotePanel } from './ProspectQuotePanel';
 import { ProspectResearchPanel } from './ProspectResearchPanel';
+import { ProspectReferenceSummary } from './ProspectReferenceSummary';
 
 const ACTIVE_STAGES: ProspectStage[] = ['new', 'qualifying', 'need_identified', 'quote_to_prepare', 'quote_to_send', 'quote_sent', 'follow_up', 'negotiation', 'waiting'];
 const STAGE_LABELS: Record<ProspectStage, string> = {
@@ -73,10 +74,12 @@ interface ProspectDraft {
   firstName: string; lastName: string; jobTitle: string; email: string; phone: string;
   source: ProspectSource; sourceDetail: string; temperature: ProspectTemperature; estimatedValueEuros: string;
   firstActionDate: string; firstActionText: string;
+  services: string; customerSegments: string; differentiators: string; talkingPoints: string; approach: string;
 }
 const EMPTY_DRAFT: ProspectDraft = {
   company: '', industry: '', activityDescription: '', website: '', addressLine1: '', addressLine2: '', postalCode: '', city: '', country: 'France',
   firstName: '', lastName: '', jobTitle: '', email: '', phone: '', source: 'website', sourceDetail: '', temperature: 'neutral', estimatedValueEuros: '', firstActionDate: '', firstActionText: '',
+  services: '', customerSegments: '', differentiators: '', talkingPoints: '', approach: '',
 };
 
 type View = 'directory' | 'pipeline' | 'history';
@@ -98,6 +101,14 @@ function daysRemaining(value?: string | null): number | null {
   return Math.ceil((timestamp - Date.now()) / 86_400_000);
 }
 function isClosed(prospect: ProspectSummary) { return Boolean(prospect.archivedAt || prospect.clientAccountId || prospect.stage === 'won' || prospect.stage === 'lost'); }
+function splitList(value: string): string[] { return value.split(',').map((item) => item.trim()).filter(Boolean); }
+function prospectReadiness(prospect: ProspectSummary): { ready: boolean; missing: string[] } {
+  const missing: string[] = [];
+  if (!prospect.organizationIndustry?.trim()) missing.push('activité');
+  if (!prospect.hasContactMethod && !prospect.secondaryLabel) missing.push('contact');
+  if (!prospect.researchSnapshotCount && !prospect.initialObservation && !prospect.detectedOpportunity && !prospect.organizationNotes) missing.push('point à évoquer');
+  return { ready: missing.length === 0, missing };
+}
 function isQuoteFollowUpStage(stage?: ProspectStage | null) { return QUOTE_FOLLOW_UP_STAGES.includes(stage ?? 'new'); }
 function manualStages(prospect: ProspectSummary): ProspectStage[] { return MANUAL_STAGE_OPTIONS[prospect.stage ?? 'new'].filter((stage) => ACTIVE_STAGES.includes(stage)); }
 function cleanBusinessError(error: unknown, fallback: string): string {
@@ -212,6 +223,22 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
       const estimatedValueCents = normalized ? Math.round(Number(normalized) * 100) : null;
       if (estimatedValueCents != null && (!Number.isFinite(estimatedValueCents) || estimatedValueCents < 0)) throw new Error('Valeur estimée invalide.');
       const prospect = await window.atoumweb.crm.prospects.create({ organizationId, contactId, stage: 'new', temperature: draft.temperature, source: draft.source, sourceDetail: draft.source === 'other' ? draft.sourceDetail.trim() || null : null, estimatedValueCents });
+      const structuredKnowledge = [draft.services, draft.customerSegments, draft.differentiators, draft.talkingPoints, draft.approach].some((value) => value.trim());
+      if (structuredKnowledge) {
+        await window.atoumweb.crm.prospects.research.save(prospect.id, {
+          checkedAt: new Date().toISOString().slice(0, 10),
+          source: 'Saisie annuaire',
+          sourceUrl: draft.website.trim() || null,
+          services: splitList(draft.services),
+          customerSegments: splitList(draft.customerSegments),
+          differentiators: splitList(draft.differentiators),
+          website: draft.website.trim() ? { presence: 'present', url: draft.website.trim() } : { presence: 'review' },
+          conversation: {
+            talkingPoints: draft.talkingPoints.trim() || null,
+            approach: draft.approach.trim() || null,
+          },
+        });
+      }
       if (draft.firstActionText.trim() || draft.firstActionDate) await window.atoumweb.crm.actions.create({ ownerType: 'prospect', ownerId: prospect.id, type: 'action', title: draft.firstActionText.trim() || 'Première prise de contact', dueAt: draft.firstActionDate ? new Date(`${draft.firstActionDate}T09:00:00`).toISOString() : null });
       setDraft(EMPTY_DRAFT); setShowForm(false); await refresh(); setSelectedId(prospect.id); setExpandedId(prospect.id); onMessage('Prospect créé. Il reste en « Nouveau contact » jusqu’au démarrage de la prospection.');
     } catch (e) { setFormError(cleanBusinessError(e, 'Création impossible.')); }
