@@ -22,6 +22,7 @@ import type {
   OrganizationInput,
   ProspectFilters,
   ProspectInput,
+  ProspectResearchSnapshotInput,
   ProspectStage,
 } from '../shared/crm';
 import type {ClientDocumentInput} from '../shared/clientDocuments';
@@ -117,6 +118,10 @@ const api: AtoumWebApi = {
       changeStage: (id: string, stage: ProspectStage, lostReason?: string | null) => ipcRenderer.invoke('crm:prospects:change-stage', id, stage, lostReason),
       setNextAction: (id: string, at: string | null, text: string | null) => ipcRenderer.invoke('crm:prospects:set-next-action', id, at, text),
       convertToClient: (id: string) => ipcRenderer.invoke('crm:prospects:convert-to-client', id),
+      research: {
+        list: (id: string) => ipcRenderer.invoke('crm:prospects:research:list', id),
+        save: (id: string, input: ProspectResearchSnapshotInput) => ipcRenderer.invoke('crm:prospects:research:save', id, input),
+      },
     },
     clients: {
       list: (filters?: ClientFilters) => ipcRenderer.invoke('crm:clients:list', filters),
