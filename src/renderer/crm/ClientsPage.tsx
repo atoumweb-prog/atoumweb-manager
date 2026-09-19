@@ -20,7 +20,7 @@ import { ContactMethodsPanel } from './ContactMethodsPanel';
 
 const STATUS_LABELS: Record<ClientStatus, string> = {
   active: 'Actif',
-  inactive: 'Inactif',
+  inactive: 'Ancien client',
   archived: 'Archivé',
 };
 
@@ -441,7 +441,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | ClientStatus)}>
             <option value="all">Tous les statuts</option>
             <option value="active">Actifs</option>
-            <option value="inactive">Inactifs</option>
+            <option value="inactive">Anciens clients</option>
             <option value="archived">Archivés</option>
           </select>
           <button className="primary-button" type="button" onClick={() => setShowForm((value) => !value)}>{showForm ? 'Fermer' : '+ Nouveau client'}</button>
@@ -531,7 +531,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
                     <label>Statut du client
                       <select value={selected.status} onChange={(event) => void updateStatus(selected, event.target.value as ClientStatus)}>
                         <option value="active">Actif — relation en cours</option>
-                        <option value="inactive">Inactif — conservé, rien en cours</option>
+                        <option value="inactive">Ancien client — relation terminée, historique conservé</option>
                         <option value="archived">Archivé — historique uniquement</option>
                       </select>
                     </label>
