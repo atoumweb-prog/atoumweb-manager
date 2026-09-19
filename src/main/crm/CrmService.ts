@@ -623,6 +623,14 @@ export class CrmService {
       products: (input.products ?? []).map((value) => value.trim()).filter(Boolean),
       customerSegments: (input.customerSegments ?? []).map((value) => value.trim()).filter(Boolean),
       differentiators: (input.differentiators ?? []).map((value) => value.trim()).filter(Boolean),
+      opportunities: (input.opportunities ?? [])
+        .map((item) => ({
+          ...item,
+          finding: item.finding.trim(),
+          service: item.service.trim(),
+          note: clean(item.note),
+        }))
+        .filter((item) => item.finding || item.service),
     };
     this.activity({
       entityType: 'prospect',
