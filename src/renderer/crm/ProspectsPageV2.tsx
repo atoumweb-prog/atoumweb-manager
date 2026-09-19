@@ -422,7 +422,7 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
 
     {view === 'directory' && <>
       <div className="module-toolbar prospect-toolbar prospect-directory-toolbar">
-        <div><strong>{directoryFiltered.length}</strong><span> entreprise{directoryFiltered.length > 1 ? 's' : ''} préparée{directoryFiltered.length > 1 ? 's' : ''}</span></div>
+        <div><strong>{directoryFiltered.length}</strong><span> entreprise{directoryFiltered.length > 1 ? 's' : ''} dans l’annuaire</span></div>
         <div className="toolbar-controls"><button className="secondary-button" onClick={() => void refresh()}>↻ Actualiser</button><button className="primary-button" onClick={() => setShowForm((value) => !value)}>{showForm ? 'Fermer' : '+ Ajouter une entreprise'}</button></div>
       </div>
       <div className="prospect-directory-filters">
@@ -535,7 +535,7 @@ function ProspectDetailV2({ prospect, actions, activity, mode, onRefresh, onClos
         <div className="detail-heading-actions">{onOpenDesk && <button className="secondary-button open-desk-button" type="button" onClick={onOpenDesk}>Agrandir</button>}<button className="close-detail" type="button" aria-label="Fermer la fiche prospect" onClick={onClose}>×</button></div>
       </div>
       <div className="prospect-compact-scroll">
-        {prospect.stage === 'new' && <div className={`prospect-readiness-card ${readiness.ready ? 'ready' : 'incomplete'}`}><div><span>Préparation</span><strong>{readiness.ready ? 'Prêt pour prospection' : 'À compléter avant ou pendant le premier contact'}</strong>{!readiness.ready && <small>Manque : {readiness.missing.join(', ')}</small>}</div><button className="primary-button" type="button" onClick={onStart}>Démarrer la prospection</button></div>}
+        {prospect.stage === 'new' && <div className={`prospect-readiness-card ${readiness.ready ? 'ready' : 'incomplete'}`}><div><span>Préparation</span><strong>{readiness.ready ? 'Prêt pour démarchage' : 'À compléter avant ou pendant le premier contact'}</strong>{!readiness.ready && <small>Manque : {readiness.missing.join(', ')}</small>}</div><button className="primary-button" type="button" onClick={onStart}>Démarrer la prospection</button></div>}
         {prospect.stage !== 'new' && <section className="prospect-commercial-priority">
           <h3>Priorité commerciale</h3>
           <div className="reference-summary-grid">
