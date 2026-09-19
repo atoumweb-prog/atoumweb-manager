@@ -15,6 +15,7 @@ import { ProspectIdentityPanel } from './ProspectIdentityPanel';
 import { ProspectNeedsPanel } from './ProspectNeedsPanel';
 import { FieldHelp, ProspectQualificationPanelV2 } from './ProspectQualificationPanelV2';
 import { ProspectQuotePanel } from './ProspectQuotePanel';
+import { ProspectResearchPanel } from './ProspectResearchPanel';
 
 const ACTIVE_STAGES: ProspectStage[] = ['new', 'qualifying', 'need_identified', 'quote_to_prepare', 'quote_to_send', 'quote_sent', 'follow_up', 'negotiation', 'waiting'];
 const STAGE_LABELS: Record<ProspectStage, string> = {
@@ -78,7 +79,15 @@ const EMPTY_DRAFT: ProspectDraft = {
   firstName: '', lastName: '', jobTitle: '', email: '', phone: '', source: 'website', sourceDetail: '', temperature: 'neutral', estimatedValueEuros: '', firstActionDate: '', firstActionText: '',
 };
 
-type View = 'pipeline' | 'history';
+type View = 'directory' | 'pipeline' | 'history';
+
+const PIPELINE_GROUPS: Array<{ id: string; step: number; label: string; stages: ProspectStage[]; icon: string }> = [
+  { id: 'qualify', step: 1, label: 'À qualifier', stages: ['qualifying'], icon: '1' },
+  { id: 'needs', step: 2, label: 'Identifier les besoins', stages: ['need_identified'], icon: '2' },
+  { id: 'quote', step: 3, label: 'Préparer le devis Abby', stages: ['quote_to_prepare', 'quote_to_send'], icon: '3' },
+  { id: 'reply', step: 4, label: 'Attente du retour', stages: ['quote_sent', 'follow_up', 'waiting'], icon: '⏱' },
+  { id: 'negotiation', step: 5, label: 'Négociation', stages: ['negotiation'], icon: '↔' },
+];
 
 function formatDate(value?: string | null) { return value ? new Date(value).toLocaleDateString('fr-FR') : 'Sans date'; }
 function formatMoney(cents: number) { return `${(cents / 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €`; }
@@ -127,7 +136,10 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
   const [actions, setActions] = useState<CrmAction[]>([]);
   const [quotes, setQuotes] = useState<QuoteSummary[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
-  const [view, setView] = useState<View>('pipeline');
+  const [view, setView] = useState<View>('directory');
+  const [directorySearch, setDirectorySearch] = useState('');
+  const [directoryIndustry, setDirectoryIndustry] = useState('');
+  const [directoryCity, setDirectoryCity] = useState('');
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [draft, setDraft] = useState<ProspectDraft>(EMPTY_DRAFT);
@@ -160,11 +172,22 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
   useEffect(() => { const reload = () => void refresh(); window.addEventListener('atoumweb:changed', reload); return () => window.removeEventListener('atoumweb:changed', reload); }, []);
 
   const active = useMemo(() => prospects.filter((item) => !isClosed(item)), [prospects]);
+  const directory = useMemo(() => active.filter((item) => (item.stage ?? 'new') === 'new'), [active]);
+  const pipelineActive = useMemo(() => active.filter((item) => (item.stage ?? 'new') !== 'new'), [active]);
+  const directoryIndustries = useMemo(() => [...new Set(directory.map((item) => item.organizationIndustry).filter((value): value is string => Boolean(value)))].sort((a,b) => a.localeCompare(b, 'fr')), [directory]);
+  const directoryCities = useMemo(() => [...new Set(directory.map((item) => item.organizationCity).filter((value): value is string => Boolean(value)))].sort((a,b) => a.localeCompare(b, 'fr')), [directory]);
+  const directoryFiltered = useMemo(() => directory.filter((item) => {
+    const needle = directorySearch.trim().toLocaleLowerCase('fr-FR');
+    const haystack = [item.displayName, item.secondaryLabel, item.organizationIndustry, item.organizationCity, item.organizationWebsite, item.organizationNotes, item.initialObservation, item.detectedOpportunity].filter(Boolean).join(' ').toLocaleLowerCase('fr-FR');
+    return (!needle || haystack.includes(needle))
+      && (!directoryIndustry || item.organizationIndustry === directoryIndustry)
+      && (!directoryCity || item.organizationCity === directoryCity);
+  }), [directory, directorySearch, directoryIndustry, directoryCity]);
   const closed = useMemo(() => prospects.filter(isClosed), [prospects]);
   const selected = prospects.find((item) => item.id === selectedId) ?? null;
   const deskProspect = prospects.find((item) => item.id === deskModeId) ?? null;
   const selectedActions = actions.filter((item) => item.ownerId === selectedId);
-  const byStage = useMemo(() => { const map = new Map<ProspectStage, ProspectSummary[]>(); ACTIVE_STAGES.forEach((stage) => map.set(stage, [])); active.forEach((item) => map.get(item.stage ?? 'new')?.push(item)); return map; }, [active]);
+  const byStage = useMemo(() => { const map = new Map<ProspectStage, ProspectSummary[]>(); ACTIVE_STAGES.forEach((stage) => map.set(stage, [])); pipelineActive.forEach((item) => map.get(item.stage ?? 'new')?.push(item)); return map; }, [pipelineActive]);
 
   async function submitProspect(event: FormEvent) {
     event.preventDefault(); setFormError('');
@@ -287,32 +310,73 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
     onArchive={() => void archive(selected)}
   /> : null;
 
+  const renderProspectCard = (prospect: ProspectSummary, draggable = true) => {
+    const expanded = expandedId === prospect.id;
+    const itemActions = actions.filter((a) => a.ownerId === prospect.id && a.status === 'open');
+    const quoteFollowUp = isQuoteFollowUpStage(prospect.stage);
+    const nextAction = nextOpenAction(itemActions);
+    const latestQuote = quotes.find((quote) => quote.prospectId === prospect.id) ?? null;
+    const quoteRemaining = daysRemaining(latestQuote?.validUntil);
+    const showQuoteFocus = Boolean(latestQuote && QUOTE_VISIBLE_STAGES.includes(prospect.stage ?? 'new'));
+    const group = PIPELINE_GROUPS.find((item) => item.stages.includes(prospect.stage ?? 'new'));
+    return <article className={`prospect-card stacked-card prospect-temperature-${prospect.temperature ?? 'neutral'} ${expanded ? 'expanded-card' : 'collapsed-card'} ${selectedId === prospect.id ? 'selected-prospect' : ''}`} key={prospect.id}>
+      <div className="prospect-card-head card-drag-handle" draggable={draggable} onDragStart={(e) => { if (!draggable) return; setDraggingId(prospect.id); e.dataTransfer.setData('text/plain', prospect.id); }} onClick={() => { setSelectedId(prospect.id); setExpandedId((id) => id === prospect.id ? null : prospect.id); }}>
+        <strong>{prospect.displayName}</strong>
+        {group && <span className="pipeline-state-icon" title={group.label}>{group.icon}</span>}
+      </div>
+      <div className="prospect-card-body">
+        {group && <span className="prospect-card-step">Étape {group.step} · {group.label}</span>}
+        <small>{prospect.secondaryLabel || 'Interlocuteur à préciser'}</small>
+        {showQuoteFocus && latestQuote ? <div className="prospect-card-quote-focus"><span>{quoteCardState(prospect, latestQuote)}</span><strong>{latestQuote.number} · {latestQuote.subject}</strong><div className="prospect-card-quote-meta"><b>{formatMoney(latestQuote.contractValueCents)}</b>{latestQuote.sentAt && <span>Envoyé {formatDate(latestQuote.sentAt)}</span>}{latestQuote.validUntil && <span>Valide jusqu’au {formatDate(latestQuote.validUntil)}</span>}{quoteFollowUp && quoteRemaining != null && <span>{quoteRemaining < 0 ? `J+${Math.abs(quoteRemaining)} · relance dépassée` : `J-${quoteRemaining} avant échéance`}</span>}</div></div> : <><p>{prospect.primaryNeed || 'Besoin à préciser'}</p>{prospect.estimatedValueCents != null && <small>Estimation : {(prospect.estimatedValueCents / 100).toLocaleString('fr-FR')} €</small>}</>}
+        {nextAction && <div className="card-action-line next-action-line"><span>Prochaine action</span><strong>{nextAction.title}</strong><small>{formatDate(nextAction.dueAt)}</small></div>}
+        <div className="quick-followups"><button type="button" onClick={() => void scheduleQuick(prospect, 1)}>{quoteFollowUp ? 'Relance demain' : 'Rappel demain'}</button><button type="button" onClick={() => void scheduleQuick(prospect, 7)}>{quoteFollowUp ? 'Relance +7 jours' : 'Rappel +7 jours'}</button><button type="button" onClick={() => { setScheduleDateForId((id) => id === prospect.id ? null : prospect.id); setScheduleDate(''); }}>Programmer…</button></div>
+        {scheduleDateForId === prospect.id && <div className="quick-date-scheduler"><input aria-label="Date du rappel" type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} /><button type="button" className="secondary-button" onClick={() => void scheduleExact(prospect)}>Programmer</button></div>}
+        <span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span>
+      </div>
+    </article>;
+  };
+
   return <div className="crm-stack prospects-v2">
-    <div className="prospect-view-switch" role="tablist"><button className={view === 'pipeline' ? 'active' : ''} onClick={() => setView('pipeline')}>Pipeline <span>{active.length}</span></button><button className={view === 'history' ? 'active' : ''} onClick={() => setView('history')}>Historique <span>{closed.length}</span></button></div>
-    {view === 'pipeline' ? <>
-      <div className="module-toolbar prospect-toolbar"><div><strong>{active.length}</strong><span> prospect{active.length > 1 ? 's' : ''} actif{active.length > 1 ? 's' : ''}</span></div><div className="toolbar-controls"><button className="secondary-button" onClick={() => void refresh()}>↻ Actualiser</button><button className="primary-button" onClick={() => setShowForm((v) => !v)}>{showForm ? 'Fermer' : '+ Nouveau prospect'}</button></div></div>
-      {showForm && <form className="panel crm-form prospect-create-v2" onSubmit={(e) => void submitProspect(e)}><div className="panel-title"><div><span className="eyebrow">Prospect</span><h2>Nouveau contact commercial</h2><p className="muted">Enregistre l’identité, l’origine du contact et les coordonnées. Le besoin sera travaillé ensuite dans le parcours commercial.</p></div></div><div className="form-grid">
+    <div className="prospect-view-switch" role="tablist">
+      <button className={view === 'directory' ? 'active' : ''} onClick={() => setView('directory')}>Annuaire prospects <span>{directory.length}</span></button>
+      <button className={view === 'pipeline' ? 'active' : ''} onClick={() => setView('pipeline')}>Parcours commercial <span>{pipelineActive.length}</span></button>
+      <button className={view === 'history' ? 'active' : ''} onClick={() => setView('history')}>Historique <span>{closed.length}</span></button>
+    </div>
+
+    {view === 'directory' && <>
+      <div className="module-toolbar prospect-toolbar prospect-directory-toolbar">
+        <div><strong>{directoryFiltered.length}</strong><span> entreprise{directoryFiltered.length > 1 ? 's' : ''} préparée{directoryFiltered.length > 1 ? 's' : ''}</span></div>
+        <div className="toolbar-controls"><button className="secondary-button" onClick={() => void refresh()}>↻ Actualiser</button><button className="primary-button" onClick={() => setShowForm((value) => !value)}>{showForm ? 'Fermer' : '+ Ajouter une entreprise'}</button></div>
+      </div>
+      <div className="prospect-directory-filters">
+        <input value={directorySearch} onChange={(e) => setDirectorySearch(e.target.value)} placeholder="Rechercher entreprise, activité, ville…" />
+        <select value={directoryIndustry} onChange={(e) => setDirectoryIndustry(e.target.value)}><option value="">Tous les métiers</option>{directoryIndustries.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+        <select value={directoryCity} onChange={(e) => setDirectoryCity(e.target.value)}><option value="">Toutes les villes</option>{directoryCities.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+      </div>
+      {showForm && <form className="panel crm-form prospect-create-v2" onSubmit={(e) => void submitProspect(e)}><div className="panel-title"><div><span className="eyebrow">Annuaire de prospection</span><h2>Nouvelle entreprise à préparer</h2><p className="muted">Enregistre ce que tu sais déjà. Le dossier n’entre dans le parcours commercial qu’au clic sur « Démarrer le parcours commercial ».</p></div></div><div className="form-grid">
         <label>Société <FieldHelp text="Nom commercial ou nom de la structure." /><input value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} /></label>
-        <label>Activité / type de structure <FieldHelp text="Ex. artisan, restaurant, commerçant, association, profession libérale…" /><input value={draft.industry} onChange={(e) => setDraft({ ...draft, industry: e.target.value })} placeholder="Ex. restaurant" /></label>
+        <label>Corps de métier / activité <FieldHelp text="Utilise un libellé stable pour pouvoir filtrer l’annuaire : restaurant, artisan, garage, profession libérale…" /><input value={draft.industry} onChange={(e) => setDraft({ ...draft, industry: e.target.value })} placeholder="Ex. restaurant" /></label>
         <label>Site web<input type="url" value={draft.website} onChange={(e) => setDraft({ ...draft, website: e.target.value })} placeholder="https://…" /></label>
-        <label className="form-span-3">Description de l’activité <FieldHelp text="Quelques mots pour comprendre rapidement ce que fait l’entreprise et son positionnement." /><textarea value={draft.activityDescription} onChange={(e) => setDraft({ ...draft, activityDescription: e.target.value })} /></label>
+        <label className="form-span-3">Ce que tu sais déjà sur l’entreprise <FieldHelp text="Note ce qui aide à préparer la prise de contact : activité, positionnement, particularités, services visibles, contexte local." /><textarea value={draft.activityDescription} onChange={(e) => setDraft({ ...draft, activityDescription: e.target.value })} /></label>
         <label>Adresse<input value={draft.addressLine1} onChange={(e) => setDraft({ ...draft, addressLine1: e.target.value })} /></label><label>Complément<input value={draft.addressLine2} onChange={(e) => setDraft({ ...draft, addressLine2: e.target.value })} /></label><label>Code postal<input value={draft.postalCode} onChange={(e) => setDraft({ ...draft, postalCode: e.target.value })} /></label><label>Ville<input value={draft.city} onChange={(e) => setDraft({ ...draft, city: e.target.value })} /></label><label>Pays<input value={draft.country} onChange={(e) => setDraft({ ...draft, country: e.target.value })} /></label>
         <label>Prénom interlocuteur<input value={draft.firstName} onChange={(e) => setDraft({ ...draft, firstName: e.target.value })} /></label><label>Nom interlocuteur<input value={draft.lastName} onChange={(e) => setDraft({ ...draft, lastName: e.target.value })} /></label><label>Fonction<input value={draft.jobTitle} onChange={(e) => setDraft({ ...draft, jobTitle: e.target.value })} placeholder="Gérant, responsable…" /></label><label>Email<input type="email" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} /></label><label>Téléphone<input inputMode="tel" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} /></label>
-        <label>Origine du contact <FieldHelp text="Le parcours de qualification s’adaptera à l’origine du prospect." /><select value={draft.source} onChange={(e) => setDraft({ ...draft, source: e.target.value as ProspectSource })}>{PROSPECT_SOURCES.map((source) => <option key={source} value={source}>{SOURCE_LABELS[source]}</option>)}</select></label>{draft.source === 'other' && <label>Préciser l’origine<input value={draft.sourceDetail} onChange={(e) => setDraft({ ...draft, sourceDetail: e.target.value })} placeholder="Partenaire, apporteur, autre…" /></label>}
+        <label>Origine <FieldHelp text="Une demande entrante reste Prospect jusqu’à l’acceptation du devis. Choisis la vraie origine pour adapter la qualification." /><select value={draft.source} onChange={(e) => setDraft({ ...draft, source: e.target.value as ProspectSource })}>{PROSPECT_SOURCES.map((source) => <option key={source} value={source}>{SOURCE_LABELS[source]}</option>)}</select></label>{draft.source === 'other' && <label>Préciser l’origine<input value={draft.sourceDetail} onChange={(e) => setDraft({ ...draft, sourceDetail: e.target.value })} /></label>}
         <label>Température commerciale<select value={draft.temperature} onChange={(e) => setDraft({ ...draft, temperature: e.target.value as ProspectTemperature })}>{PROSPECT_TEMPERATURES.map((temperature) => <option key={temperature} value={temperature}>{TEMPERATURE_LABELS[temperature]}</option>)}</select></label><label>Valeur estimée (€)<input inputMode="decimal" value={draft.estimatedValueEuros} onChange={(e) => setDraft({ ...draft, estimatedValueEuros: e.target.value })} /></label>
-        <label>Première action — date<input type="date" value={draft.firstActionDate} onChange={(e) => setDraft({ ...draft, firstActionDate: e.target.value })} /></label><label className="form-span-2">Première action<input value={draft.firstActionText} onChange={(e) => setDraft({ ...draft, firstActionText: e.target.value })} placeholder="Ex. appeler le prospect" /></label>
-      </div>{formError && <p className="form-error" role="alert">{formError}</p>}<div className="form-actions"><button className="primary-button" disabled={saving} type="submit">{saving ? 'Création…' : 'Créer le prospect'}</button></div></form>}
-      {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'}><div className="kanban-board">{ACTIVE_STAGES.map((stage) => <section className={`kanban-column ${dropStage === stage ? 'drag-over' : ''}`} key={stage} onDragOver={(e) => e.preventDefault()} onDragEnter={() => setDropStage(stage)} onDrop={(e) => { e.preventDefault(); void handleDrop(stage); }}><header><strong>{STAGE_LABELS[stage]}</strong><span>{byStage.get(stage)?.length ?? 0}</span></header><div className="kanban-cards stacked-cards">{(byStage.get(stage) ?? []).map((prospect) => {
-        const expanded = expandedId === prospect.id;
-        const itemActions = actions.filter((a) => a.ownerId === prospect.id && a.status === 'open');
-        const quoteFollowUp = isQuoteFollowUpStage(prospect.stage);
-        const nextAction = nextOpenAction(itemActions);
-        const latestQuote = quotes.find((quote) => quote.prospectId === prospect.id) ?? null;
-        const quoteRemaining = daysRemaining(latestQuote?.validUntil);
-        const showQuoteFocus = Boolean(latestQuote && QUOTE_VISIBLE_STAGES.includes(prospect.stage ?? 'new'));
-        return <article className={`prospect-card stacked-card prospect-temperature-${prospect.temperature ?? 'neutral'} ${expanded ? 'expanded-card' : 'collapsed-card'} ${selectedId === prospect.id ? 'selected-prospect' : ''}`} key={prospect.id}><div className="prospect-card-head card-drag-handle" draggable onDragStart={(e) => { setDraggingId(prospect.id); e.dataTransfer.setData('text/plain', prospect.id); }} onClick={() => { setSelectedId(prospect.id); setExpandedId((id) => id === prospect.id ? null : prospect.id); }}><strong>{prospect.displayName}</strong></div><div className="prospect-card-body"><small>{prospect.secondaryLabel || 'Interlocuteur à préciser'}</small>{showQuoteFocus && latestQuote ? <div className="prospect-card-quote-focus"><span>{quoteCardState(prospect, latestQuote)}</span><strong>{latestQuote.number} · {latestQuote.subject}</strong><div className="prospect-card-quote-meta"><b>{formatMoney(latestQuote.contractValueCents)}</b>{latestQuote.sentAt && <span>Envoyé {formatDate(latestQuote.sentAt)}</span>}{latestQuote.validUntil && <span>Valide jusqu’au {formatDate(latestQuote.validUntil)}</span>}{quoteFollowUp && quoteRemaining != null && <span>{quoteRemaining < 0 ? 'Caduc' : `${quoteRemaining} j restant${quoteRemaining > 1 ? 's' : ''}`}</span>}</div></div> : <><p>{prospect.primaryNeed || (prospect.stage === 'new' || prospect.stage === 'qualifying' ? 'Besoin à travailler plus tard' : 'Besoin à préciser')}</p>{prospect.estimatedValueCents != null && <small>Estimation : {(prospect.estimatedValueCents / 100).toLocaleString('fr-FR')} €</small>}</>}{nextAction && <div className="card-action-line next-action-line"><span>Prochaine action</span><strong>{nextAction.title}</strong><small>{formatDate(nextAction.dueAt)}</small></div>}<div className="quick-followups"><button type="button" onClick={() => void scheduleQuick(prospect, 1)}>{quoteFollowUp ? 'Relance demain' : 'Rappel demain'}</button><button type="button" onClick={() => void scheduleQuick(prospect, 7)}>{quoteFollowUp ? 'Relance +7 jours' : 'Rappel +7 jours'}</button><button type="button" onClick={() => { setScheduleDateForId((id) => id === prospect.id ? null : prospect.id); setScheduleDate(''); }}>Programmer…</button></div>{scheduleDateForId === prospect.id && <div className="quick-date-scheduler"><input aria-label="Date du rappel" type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} /><button type="button" className="secondary-button" onClick={() => void scheduleExact(prospect)}>Programmer</button></div>}{prospect.stage === 'new' && <button type="button" className="primary-button card-start-button" onClick={() => void startProspecting(prospect)}>Démarrer la prospection</button>}<span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span></div></article>;
-      })}{(byStage.get(stage)?.length ?? 0) === 0 && <div className="kanban-empty">Déposer ici</div>}</div></section>)}</div>{selected && !deskProspect && detail}</div>}
-    </> : <HistoryView prospects={closed.filter((item) => [item.displayName, item.primaryNeed, item.lostReason].filter(Boolean).join(' ').toLocaleLowerCase('fr-FR').includes(historySearch.toLocaleLowerCase('fr-FR')))} search={historySearch} onSearch={setHistorySearch} onSelect={(item) => setSelectedId(item.id)} selected={selected} activity={activity} onClose={() => setSelectedId(null)} />}
+        <label>Première action — date<input type="date" value={draft.firstActionDate} onChange={(e) => setDraft({ ...draft, firstActionDate: e.target.value })} /></label><label className="form-span-2">Première action<input value={draft.firstActionText} onChange={(e) => setDraft({ ...draft, firstActionText: e.target.value })} placeholder="Ex. rechercher le gérant, appeler l’accueil…" /></label>
+      </div>{formError && <p className="form-error" role="alert">{formError}</p>}<div className="form-actions"><button className="primary-button" disabled={saving} type="submit">{saving ? 'Création…' : 'Ajouter à l’annuaire'}</button></div></form>}
+      {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'}><div className="prospect-directory-grid">{directoryFiltered.map((prospect) => <article className="prospect-directory-card" key={prospect.id}><header><div><strong>{prospect.displayName}</strong><small>{prospect.secondaryLabel || 'Contact à identifier'}</small></div></header><div className="directory-meta">{prospect.organizationIndustry && <span>{prospect.organizationIndustry}</span>}{prospect.organizationCity && <span>{prospect.organizationCity}</span>}<span>{SOURCE_LABELS[prospect.source ?? 'other']}</span></div>{prospect.organizationWebsite && <div className="directory-website">{prospect.organizationWebsite}</div>}{(prospect.organizationNotes || prospect.initialObservation || prospect.detectedOpportunity) && <div className="directory-observation">{prospect.organizationNotes || prospect.initialObservation || prospect.detectedOpportunity}</div>}<div className="prospect-directory-actions"><button type="button" className="secondary-button" onClick={() => setSelectedId(prospect.id)}>Ouvrir la fiche</button><button type="button" className="primary-button" onClick={() => void startProspecting(prospect)}>Démarrer le parcours commercial</button></div></article>)}{directoryFiltered.length === 0 && <div className="panel"><p className="muted">Aucune entreprise ne correspond aux filtres.</p></div>}</div>{selected && !deskProspect && detail}</div>}
+    </>}
+
+    {view === 'pipeline' && <>
+      <div className="module-toolbar prospect-toolbar"><div><strong>{pipelineActive.length}</strong><span> opportunité{pipelineActive.length > 1 ? 's' : ''} commerciale{pipelineActive.length > 1 ? 's' : ''}</span></div><div className="toolbar-controls"><button className="secondary-button" onClick={() => void refresh()}>↻ Actualiser</button><button className="secondary-button" onClick={() => setView('directory')}>Annuaire prospects</button></div></div>
+      {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'}><div className="kanban-board">{PIPELINE_GROUPS.map((group) => {
+        const groupProspects = group.stages.flatMap((stage) => byStage.get(stage) ?? []);
+        const targetStage = group.stages[0];
+        return <section className={`kanban-column pipeline-step-column ${dropStage === targetStage ? 'drag-over' : ''}`} key={group.id} onDragOver={(e) => e.preventDefault()} onDragEnter={() => setDropStage(targetStage)} onDrop={(e) => { e.preventDefault(); void handleDrop(targetStage); }}><header><div><small>Étape {group.step}</small><strong>{group.label}</strong></div><span>{groupProspects.length}</span></header><div className="kanban-cards stacked-cards">{groupProspects.map((prospect) => renderProspectCard(prospect))}{groupProspects.length === 0 && <div className="kanban-empty">Aucun dossier</div>}</div></section>;
+      })}</div>{selected && !deskProspect && detail}</div>}
+    </>}
+
+    {view === 'history' && <HistoryView prospects={closed.filter((item) => [item.displayName, item.primaryNeed, item.lostReason].filter(Boolean).join(' ').toLocaleLowerCase('fr-FR').includes(historySearch.toLocaleLowerCase('fr-FR')))} search={historySearch} onSearch={setHistorySearch} onSelect={(item) => setSelectedId(item.id)} selected={selected} activity={activity} onClose={() => setSelectedId(null)} />}
     {deskProspect && <div className="prospect-desk-overlay" role="dialog" aria-modal="true" aria-label={`Fiche de travail ${deskProspect.displayName}`}><div className="prospect-desk-shell"><ProspectDetailV2 prospect={deskProspect} actions={actions.filter((item) => item.ownerId === deskProspect.id)} activity={selectedId === deskProspect.id ? activity : []} mode="desk" onRefresh={(message) => { void refresh(); if (message) onMessage(message); }} onClose={() => setDeskModeId(null)} onTemperature={(temperature) => void updateTemperature(deskProspect, temperature)} onStart={() => void startProspecting(deskProspect)} onLost={(code, reason) => void markLost(deskProspect, code, reason)} onArchive={() => void archive(deskProspect)} /></div></div>}
   </div>;
 }
@@ -346,6 +410,7 @@ function ProspectDetailV2({ prospect, actions, activity, mode, onRefresh, onClos
     </div>}
     {prospect.stage === 'new' && <button className="primary-button start-qualification-button" onClick={onStart}>Démarrer la prospection</button>}
     <div id={`prospect-identity-${prospect.id}`} className="prospect-target-section"><ProspectIdentityPanel prospect={prospect} focusRequest={identityFocus} onSaved={() => onRefresh('Informations du prospect mises à jour.')} /></div>
+    <ProspectResearchPanel prospect={prospect} defaultOpen={mode === 'desk' || prospect.stage === 'new'} onChanged={onRefresh} />
     {prospect.stage === 'qualifying' && <ProspectQualificationPanelV2 prospect={prospect} onSaved={onRefresh} onGoTo={(target) => { if (target === 'decision' || target === 'contact') setIdentityFocus({ target, sequence: Date.now() }); else document.getElementById(`prospect-${target}-${prospect.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} />}
     {prospect.stage === 'need_identified' && <div id={`prospect-need-${prospect.id}`} className="prospect-target-section"><ProspectNeedsPanel prospectId={prospect.id} onChanged={() => onRefresh()} /></div>}
     {quoteVisible && <ProspectQuotePanel prospect={prospect} onChanged={onRefresh} />}
@@ -357,5 +422,5 @@ function ProspectDetailV2({ prospect, actions, activity, mode, onRefresh, onClos
 }
 
 function HistoryView({ prospects, search, onSearch, onSelect, selected, activity, onClose }: { prospects: ProspectSummary[]; search: string; onSearch: (value: string) => void; onSelect: (item: ProspectSummary) => void; selected: ProspectSummary | null; activity: ActivityEvent[]; onClose: () => void }) {
-  return <div className="history-view-stack"><div className="module-toolbar"><div><strong>{prospects.length}</strong><span> dossier(s)</span></div><input className="inline-search" value={search} onChange={(e) => onSearch(e.target.value)} placeholder="Rechercher l’historique…" /></div><div className={selected ? 'prospects-layout with-detail' : 'prospects-layout'}><section className="panel history-prospects-panel"><div className="history-prospect-list">{prospects.map((item) => <button className="history-prospect-row" key={item.id} onClick={() => onSelect(item)}><div><strong>{item.displayName}</strong><small>{item.secondaryLabel || 'Contact non renseigné'}</small></div><span className={`history-outcome ${item.stage === 'lost' ? 'lost' : 'won'}`}>{item.stage === 'lost' ? 'Perdu' : 'Gagné / Client'}</span><span>{item.primaryNeed || '—'}</span><span>{item.estimatedValueCents != null ? `${item.estimatedValueCents / 100} €` : '—'}</span><span>{formatDate(item.lostAt || item.wonAt)}</span></button>)}</div></section>{selected && <aside className="panel prospect-detail-panel"><div className="detail-panel-heading"><div><span className="eyebrow">Historique</span><h2>{selected.displayName}</h2></div><button className="close-detail" onClick={onClose}>×</button></div><div className="summary-list"><div className="summary-line"><span>Issue</span><strong>{selected.stage === 'lost' ? 'Perdu' : 'Gagné / Client'}</strong></div><div className="summary-line"><span>Besoin</span><strong>{selected.primaryNeed || '—'}</strong></div>{selected.lostReason && <div className="summary-line"><span>Raison</span><strong>{selected.lostReason}</strong></div>}</div><div className="activity-preview"><strong>Journal</strong>{activity.map((event) => <div className="activity-item" key={event.id}><span className="activity-dot" /><div><p>{humanActivity(event.summary)}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div></div>)}</div></aside>}</div></div>;
+  return <div className="history-view-stack"><div className="module-toolbar"><div><strong>{prospects.length}</strong><span> dossier(s)</span></div><input className="inline-search" value={search} onChange={(e) => onSearch(e.target.value)} placeholder="Rechercher l’historique…" /></div><div className={selected ? 'prospects-layout with-detail' : 'prospects-layout'}><section className="panel history-prospects-panel"><div className="history-prospect-list">{prospects.map((item) => <button className="history-prospect-row" key={item.id} onClick={() => onSelect(item)}><div><strong>{item.displayName}</strong><small>{item.secondaryLabel || 'Contact non renseigné'}</small></div><span className={`history-outcome ${item.stage === 'lost' ? 'lost' : 'won'}`}>{item.stage === 'lost' ? '✕ Refusé' : '✓ Validé / Client'}</span><span>{item.primaryNeed || '—'}</span><span>{item.estimatedValueCents != null ? `${item.estimatedValueCents / 100} €` : '—'}</span><span>{formatDate(item.lostAt || item.wonAt)}</span></button>)}</div></section>{selected && <aside className="panel prospect-detail-panel"><div className="detail-panel-heading"><div><span className="eyebrow">Historique</span><h2>{selected.displayName}</h2></div><button className="close-detail" onClick={onClose}>×</button></div><div className="summary-list"><div className="summary-line"><span>Issue</span><strong>{selected.stage === 'lost' ? 'Perdu' : 'Gagné / Client'}</strong></div><div className="summary-line"><span>Besoin</span><strong>{selected.primaryNeed || '—'}</strong></div>{selected.lostReason && <div className="summary-line"><span>Raison</span><strong>{selected.lostReason}</strong></div>}</div><div className="activity-preview"><strong>Journal</strong>{activity.map((event) => <div className="activity-item" key={event.id}><span className="activity-dot" /><div><p>{humanActivity(event.summary)}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div></div>)}</div></aside>}</div></div>;
 }
