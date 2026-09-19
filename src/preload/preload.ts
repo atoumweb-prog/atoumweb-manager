@@ -72,7 +72,10 @@ import type {
 } from '../shared/time';
 
 const api: AtoumWebApi = {
-  app: { getBootstrap: () => ipcRenderer.invoke('app:get-bootstrap') },
+  app: {
+    getBootstrap: () => ipcRenderer.invoke('app:get-bootstrap'),
+    openProspectReferenceWindow: (id: string) => ipcRenderer.invoke('app:open-prospect-reference', id),
+  },
   settings: {
     setTheme: (theme: ThemeName) => ipcRenderer.invoke('settings:set-theme', theme),
     setDisplayDensity: (density: DisplayDensity) => ipcRenderer.invoke('settings:set-display-density', density),
