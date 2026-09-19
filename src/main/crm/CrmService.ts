@@ -587,7 +587,7 @@ export class CrmService {
       `SELECT id, metadata_json, created_at
        FROM activity_events
        WHERE entity_type='prospect' AND entity_id=? AND action='research_snapshot'
-       ORDER BY created_at DESC`,
+       ORDER BY created_at DESC, rowid DESC`,
       [id],
     ).flatMap((row) => {
       if (!row.metadata_json) return [];
