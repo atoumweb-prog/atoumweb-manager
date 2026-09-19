@@ -451,7 +451,7 @@ export class CrmService {
     let qualificationMissing: string[] = [];
     if (current.stage === 'qualifying' && stage === 'need_identified') {
       if (!this.hasQualificationProgress(current)) {
-        throw new Error('Renseigne au moins une information de qualification avant de passer à l’étape suivante.');
+        throw new Error('Qualification incomplète : renseigne au moins une information de qualification avant de passer à l’étape suivante.');
       }
       qualificationMissing = this.qualificationMissingFields(id, current);
       if (qualificationMissing.length && !allowIncompleteQualification) {
