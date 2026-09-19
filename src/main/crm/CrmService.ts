@@ -501,6 +501,7 @@ export class CrmService {
       || clean(prospect.firstContactResultText)
       || prospect.interestLevel
       || prospect.decisionStatus
+      || clean(prospect.decisionMakerContactId)
       || clean(prospect.decisionMakerDetails)
       || clean(prospect.decisionMakerName)
       || clean(prospect.projectSummary)
