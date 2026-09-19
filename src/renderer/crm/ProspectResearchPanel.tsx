@@ -209,6 +209,34 @@ const emptySnapshot = (prospect: ProspectSummary): ProspectResearchSnapshotInput
   },
 });
 
+function hydrateSnapshot(prospect: ProspectSummary, snapshot: ProspectResearchSnapshot): ProspectResearchSnapshotInput {
+  const defaults = emptySnapshot(prospect);
+  const defaultLegal = defaults.legalNotices as ProspectResearchStructuredCheck;
+  return {
+    ...defaults,
+    ...snapshot,
+    googleBusiness: { ...defaults.googleBusiness!, ...snapshot.googleBusiness },
+    website: { ...defaults.website!, ...snapshot.website },
+    legalNotices: snapshot.legalNotices
+      ? {
+          ...defaultLegal,
+          ...snapshot.legalNotices,
+          items: LEGAL_ITEMS.map((fallback) => snapshot.legalNotices?.items.find((item) => item.key === fallback.key) ?? { ...fallback }),
+        }
+      : defaultLegal,
+    audits: {
+      privacy: { ...createAudit('privacy'), ...snapshot.audits?.privacy },
+      cookies: { ...createAudit('cookies'), ...snapshot.audits?.cookies },
+      seo: { ...createAudit('seo'), ...snapshot.audits?.seo },
+      performance: { ...createAudit('performance'), ...snapshot.audits?.performance },
+      mobile: { ...createAudit('mobile'), ...snapshot.audits?.mobile },
+      accessibility: { ...createAudit('accessibility'), ...snapshot.audits?.accessibility },
+    },
+    opportunities: snapshot.opportunities ?? [],
+    conversation: { ...defaults.conversation, ...snapshot.conversation },
+  };
+}
+
 function csv(value?: string[]): string { return (value ?? []).join(', '); }
 function csvList(value: string): string[] { return value.split(',').map((item) => item.trim()).filter(Boolean); }
 function displayDate(value?: string | null): string {
@@ -229,14 +257,14 @@ function factMap(snapshot: ProspectResearchSnapshot): Map<string, string> {
     ['URL site', snapshot.website?.url ?? '—'],
     ['CMS', snapshot.website?.cms ?? '—'],
     ['HTTPS', stringifyStatus(snapshot.website?.httpsStatus)],
-    ['Mobile', stringifyStatus(snapshot.website?.responsiveStatus)],
+    ['Responsive du site', stringifyStatus(snapshot.website?.responsiveStatus)],
     ['Mentions légales', stringifyStatus(snapshot.legalNotices?.overallStatus)],
     ['Observations légales', snapshot.legalNotices?.observations ?? '—'],
     ['RGPD', stringifyStatus(snapshot.audits?.privacy?.overallStatus)],
     ['Cookies', stringifyStatus(snapshot.audits?.cookies?.overallStatus)],
     ['SEO', stringifyStatus(snapshot.audits?.seo?.overallStatus)],
     ['Performance', stringifyStatus(snapshot.audits?.performance?.overallStatus)],
-    ['Mobile', stringifyStatus(snapshot.audits?.mobile?.overallStatus)],
+    ['Audit mobile', stringifyStatus(snapshot.audits?.mobile?.overallStatus)],
     ['Accessibilité', stringifyStatus(snapshot.audits?.accessibility?.overallStatus)],
     ['Opportunités retenues', (snapshot.opportunities ?? []).filter((item) => item.keep).map((item) => item.service || item.finding).join(', ')],
   ]);
@@ -256,7 +284,7 @@ export function ProspectResearchPanel({ prospect, defaultOpen = false, onChanged
   async function load() {
     const snapshots = await window.atoumweb.crm.prospects.research.list(prospect.id);
     setHistory(snapshots);
-    setDraft(snapshots[0] ?? emptySnapshot(prospect));
+    setDraft(snapshots[0] ? hydrateSnapshot(prospect, snapshots[0]) : emptySnapshot(prospect));
   }
 
   useEffect(() => { void load(); }, [prospect.id]);
