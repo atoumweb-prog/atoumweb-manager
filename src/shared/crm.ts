@@ -43,6 +43,16 @@ export interface ProspectResearchStructuredCheck {
   url?: string | null;
 }
 
+export type ProspectResearchPriority = 'low' | 'medium' | 'high';
+
+export interface ProspectResearchOpportunity {
+  finding: string;
+  service: string;
+  priority: ProspectResearchPriority;
+  note?: string | null;
+  keep: boolean;
+}
+
 export interface ProspectResearchSnapshotInput {
   checkedAt?: string | null;
   source?: string | null;
@@ -77,6 +87,15 @@ export interface ProspectResearchSnapshotInput {
     notes?: string | null;
   };
   legalNotices?: ProspectResearchStructuredCheck;
+  audits?: {
+    privacy?: ProspectResearchStructuredCheck;
+    cookies?: ProspectResearchStructuredCheck;
+    seo?: ProspectResearchStructuredCheck;
+    performance?: ProspectResearchStructuredCheck;
+    mobile?: ProspectResearchStructuredCheck;
+    accessibility?: ProspectResearchStructuredCheck;
+  };
+  opportunities?: ProspectResearchOpportunity[];
   conversation?: {
     strengths?: string | null;
     issues?: string | null;
