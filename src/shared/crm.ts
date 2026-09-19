@@ -24,6 +24,74 @@ export type CrmActionOwnerType = (typeof CRM_ACTION_OWNER_TYPES)[number];
 export type ContactMethodType = 'email' | 'phone';
 export type ActionRecurrence = 'none' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 export type ClientRelationshipStatus = 'excellent' | 'good' | 'neutral' | 'watch' | 'difficult';
+export type ProspectResearchPresence = 'present' | 'absent' | 'review';
+export type ProspectResearchCheckStatus = 'ok' | 'review' | 'missing' | 'na';
+
+export interface ProspectResearchChecklistItem {
+  key: string;
+  label: string;
+  status: ProspectResearchCheckStatus;
+  note?: string | null;
+}
+
+export interface ProspectResearchStructuredCheck {
+  overallStatus: ProspectResearchCheckStatus;
+  items: ProspectResearchChecklistItem[];
+  observations?: string | null;
+  talkingPoint?: string | null;
+  source?: string | null;
+  url?: string | null;
+}
+
+export interface ProspectResearchSnapshotInput {
+  checkedAt?: string | null;
+  source?: string | null;
+  sourceUrl?: string | null;
+  services?: string[];
+  products?: string[];
+  customerSegments?: string[];
+  differentiators?: string[];
+  googleBusiness?: {
+    presence: ProspectResearchPresence;
+    url?: string | null;
+    category?: string | null;
+    rating?: number | null;
+    reviewCount?: number | null;
+    hoursStatus?: ProspectResearchCheckStatus;
+    photosStatus?: ProspectResearchCheckStatus;
+    websiteLinkedStatus?: ProspectResearchCheckStatus;
+    contactConsistencyStatus?: ProspectResearchCheckStatus;
+    notes?: string | null;
+  };
+  website?: {
+    presence: ProspectResearchPresence;
+    url?: string | null;
+    cms?: string | null;
+    hosting?: string | null;
+    httpsStatus?: ProspectResearchCheckStatus;
+    responsiveStatus?: ProspectResearchCheckStatus;
+    ecommerceStatus?: ProspectResearchCheckStatus;
+    bookingStatus?: ProspectResearchCheckStatus;
+    contactFormStatus?: ProspectResearchCheckStatus;
+    blogStatus?: ProspectResearchCheckStatus;
+    notes?: string | null;
+  };
+  legalNotices?: ProspectResearchStructuredCheck;
+  conversation?: {
+    strengths?: string | null;
+    issues?: string | null;
+    talkingPoints?: string | null;
+    approach?: string | null;
+    callNotes?: string | null;
+  };
+}
+
+export interface ProspectResearchSnapshot extends ProspectResearchSnapshotInput {
+  id: string;
+  prospectId: string;
+  checkedAt: string;
+  createdAt: string;
+}
 export interface ContactMethodInput { organizationId?: string | null; contactId?: string | null; type: ContactMethodType; value: string; label?: string | null; isPrimary?: boolean; notes?: string | null; }
 export interface ContactMethod extends ContactMethodInput { id: string; isPrimary: boolean; createdAt: string; updatedAt: string; archivedAt?: string | null; }
 
@@ -64,6 +132,10 @@ export interface ProspectInput {
 export interface ProspectSummary extends ProspectInput {
   id: string; clientAccountId?: string | null; lostReason?: string | null; wonAt?: string | null; lostAt?: string | null; createdAt: string; updatedAt: string; archivedAt?: string | null;
   displayName: string; secondaryLabel?: string | null;
+  organizationIndustry?: string | null;
+  organizationCity?: string | null;
+  organizationWebsite?: string | null;
+  organizationNotes?: string | null;
 }
 export interface ProspectFilters { stage?: ProspectStage | null; includeArchived?: boolean; search?: string | null; }
 
@@ -126,6 +198,10 @@ export interface CrmApi {
     changeStage(id: string, stage: ProspectStage, lostReason?: string | null): Promise<ProspectSummary>;
     setNextAction(id: string, at: string | null, text: string | null): Promise<ProspectSummary>;
     convertToClient(id: string): Promise<ConvertProspectResult>;
+    research: {
+      list(id: string): Promise<ProspectResearchSnapshot[]>;
+      save(id: string, input: ProspectResearchSnapshotInput): Promise<ProspectResearchSnapshot>;
+    };
   };
   clients: {
     list(filters?: ClientFilters): Promise<ClientSummary[]>;
