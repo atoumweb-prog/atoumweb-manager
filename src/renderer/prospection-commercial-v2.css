@@ -1,0 +1,56 @@
+/* Annuaire de prospection et connaissance entreprise — pré-Phase 5. */
+.prospect-view-switch { flex-wrap: wrap; }
+.prospect-directory-toolbar { align-items: flex-end; }
+.prospect-directory-filters { display: flex; gap: 8px; flex-wrap: wrap; }
+.prospect-directory-filters input, .prospect-directory-filters select { min-width: 180px; }
+.prospect-directory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.prospect-directory-card { background: var(--surface, #fff); border: 1px solid rgba(24,33,43,.14); border-radius: 16px; padding: 16px; display: grid; gap: 12px; box-shadow: 0 12px 30px rgba(24,33,43,.06); }
+.prospect-directory-card header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.prospect-directory-card header strong { font-size: 1rem; }
+.prospect-directory-card .directory-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+.prospect-directory-card .directory-meta span { border-radius: 999px; padding: 5px 8px; background: rgba(24,33,43,.06); font-size: .78rem; }
+.prospect-directory-card .directory-website { overflow-wrap: anywhere; color: #315e8c; }
+.prospect-directory-card .directory-observation { padding: 10px; border-radius: 10px; background: rgba(24,33,43,.04); }
+.prospect-directory-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.pipeline-step-column > header { align-items: flex-start; }
+.pipeline-step-column > header div { display: grid; gap: 2px; }
+.pipeline-step-column > header small { color: #718096; font-size: .72rem; }
+.pipeline-state-icon { margin-left: auto; width: 26px; height: 26px; display: inline-grid; place-items: center; border-radius: 50%; background: rgba(255,255,255,.72); font-weight: 800; }
+.prospect-card-step { display: inline-flex; align-items: center; gap: 6px; font-size: .72rem; font-weight: 700; color: #475569; }
+.prospect-research-panel { display: grid; gap: 14px; }
+.research-heading, .research-history-heading { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+.research-heading h3 { margin: 2px 0 4px; }
+.research-company-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.research-company-strip > div { background: #fff; border: 1px solid rgba(24,33,43,.13); border-radius: 10px; padding: 10px; display: grid; gap: 3px; min-width: 0; }
+.research-company-strip strong { overflow-wrap: anywhere; }
+.research-company-strip small { color: #64748b; }
+.research-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.research-card { margin: 0; min-width: 0; border: 1px solid rgba(24,33,43,.14); border-radius: 12px; padding: 14px; background: #fff; display: grid; gap: 10px; }
+.research-card-wide { grid-column: 1 / -1; }
+.research-card legend { padding: 0 6px; font-weight: 800; }
+.research-card label { display: grid; gap: 5px; min-width: 0; }
+.research-inline-fields, .research-check-grid, .research-two-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.research-inline-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.research-checklist { display: grid; gap: 7px; }
+.research-check-row { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(130px, .4fr) minmax(180px, 1fr); gap: 8px; align-items: center; }
+.research-check-row strong { font-size: .88rem; }
+.research-save-bar { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; padding-top: 4px; }
+.research-save-meta { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; }
+.research-save-meta label { display: grid; gap: 4px; min-width: 180px; flex: 1; }
+.research-history { display: grid; gap: 10px; border-top: 1px solid rgba(24,33,43,.13); padding-top: 12px; }
+.research-history-heading > div { display: grid; }
+.research-version-list { display: flex; gap: 6px; flex-wrap: wrap; }
+.research-version-list span { padding: 5px 8px; border-radius: 999px; background: rgba(24,33,43,.06); font-size: .78rem; }
+.research-version-list span.current { font-weight: 800; outline: 1px solid rgba(24,33,43,.18); }
+.research-diff { display: grid; gap: 6px; }
+.research-diff-row { display: grid; grid-template-columns: minmax(130px,.7fr) minmax(0,1fr) auto minmax(0,1fr); gap: 8px; align-items: center; background: rgba(24,33,43,.04); padding: 8px; border-radius: 8px; }
+@media (max-width: 900px) {
+  .research-company-strip, .research-grid { grid-template-columns: 1fr 1fr; }
+  .research-inline-fields { grid-template-columns: 1fr 1fr; }
+  .research-check-row { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+  .research-company-strip, .research-grid, .research-inline-fields, .research-check-grid, .research-two-columns { grid-template-columns: 1fr; }
+  .research-card-wide { grid-column: auto; }
+  .research-diff-row { grid-template-columns: 1fr; }
+}
