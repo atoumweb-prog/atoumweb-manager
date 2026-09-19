@@ -64,7 +64,7 @@ describe('CrmService', () => {
     expect(lost.lostReason).toBe('Budget insuffisant');
   });
 
-  it('protège le parcours Prospect et exige les prérequis commerciaux de qualification', () => {
+  it('protège le parcours Prospect mais permet de confirmer une qualification incomplète déjà commencée', () => {
     const organization = crm.createOrganization({ name: 'Qualification Test' });
     const prospect = crm.createProspect({ organizationId: organization.id, source: 'other' });
     crm.saveContactMethod({ organizationId: organization.id, type: 'email', value: 'contact@qualification.test', isPrimary: true });
@@ -73,6 +73,8 @@ describe('CrmService', () => {
     expect(() => crm.updateProspect(prospect.id, { ...prospect, stage: 'quote_to_prepare' })).toThrow(/changement d’étape/i);
 
     const qualifying = crm.changeProspectStage(prospect.id, 'qualifying');
+    expect(() => crm.changeProspectStage(prospect.id, 'need_identified', null, true)).toThrow(/au moins une information/i);
+
     crm.updateProspect(prospect.id, {
       ...qualifying,
       budgetMinCents: 150000,
@@ -86,9 +88,10 @@ describe('CrmService', () => {
       timelineStatus: 'date',
     });
 
-    expect(() => crm.changeProspectStage(prospect.id, 'need_identified')).toThrow(/décision/i);
-    crm.updateProspectQualification(prospect.id, { decisionMakerDetails: 'Mme Martin, gérante' });
-    expect(crm.changeProspectStage(prospect.id, 'need_identified').stage).toBe('need_identified');
+    expect(() => crm.changeProspectStage(prospect.id, 'need_identified')).toThrow(/qualification incomplète/i);
+    const advanced = crm.changeProspectStage(prospect.id, 'need_identified', null, true);
+    expect(advanced.stage).toBe('need_identified');
+    expect(crm.listActivity('prospect', prospect.id).some((event) => event.action === 'qualification_override')).toBe(true);
   });
 
   it('convertit un prospect en client de manière idempotente', () => {
