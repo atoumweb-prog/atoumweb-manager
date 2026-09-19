@@ -83,7 +83,7 @@
 .prospect-directory-table th:nth-child(4) { min-width: 180px; }
 .prospect-directory-table th:nth-child(5) { min-width: 170px; }
 .prospect-directory-table tbody tr { cursor: pointer; }
-.prospect-directory-table tbody tr.selected-row > td { background: color-mix(in srgb, #a47c34 8%, #fff); }
+.prospect-directory-table tbody tr.selected-row > td { filter: brightness(.97); }
 .prospect-ready { display: inline-flex; align-items: center; border-radius: 999px; padding: 6px 9px; font-size: .78rem; font-weight: 800; white-space: nowrap; }
 .prospect-ready-yes { background: color-mix(in srgb, #198754 14%, #fff); color: #346d43; }
 .prospect-ready-no { background: color-mix(in srgb, #f2b705 18%, #fff); color: #805e21; }
@@ -228,4 +228,33 @@
 @media (max-width: 760px) {
   .prospect-work-accordion-trigger { grid-template-columns: auto 1fr; }
   .prospect-work-accordion-summary { grid-column: 2; white-space: normal; }
+}
+
+
+/* Température du prospect visible sur toute la ligne, comme la relation Client. */
+.prospect-directory-table tbody tr.prospect-temperature-hot {
+  --prospect-temperature-color: #D62828;
+  --prospect-temperature-pastel: color-mix(in srgb, #D62828 13%, #fff);
+}
+.prospect-directory-table tbody tr.prospect-temperature-warm {
+  --prospect-temperature-color: #B88700;
+  --prospect-temperature-pastel: color-mix(in srgb, #F2B705 17%, #fff);
+}
+.prospect-directory-table tbody tr.prospect-temperature-cold {
+  --prospect-temperature-color: #1565C0;
+  --prospect-temperature-pastel: color-mix(in srgb, #1565C0 12%, #fff);
+}
+.prospect-directory-table tbody tr.prospect-temperature-neutral {
+  --prospect-temperature-color: #198754;
+  --prospect-temperature-pastel: color-mix(in srgb, #198754 13%, #fff);
+}
+.prospect-directory-table tbody tr[class*='prospect-temperature-'] > td {
+  background: var(--prospect-temperature-pastel) !important;
+}
+.prospect-directory-table tbody tr[class*='prospect-temperature-'] > td:first-child {
+  border-left: 5px solid var(--prospect-temperature-color);
+}
+.prospect-directory-table tbody tr[class*='prospect-temperature-']:hover > td,
+.prospect-directory-table tbody tr[class*='prospect-temperature-'].selected-row > td {
+  filter: brightness(.97);
 }
