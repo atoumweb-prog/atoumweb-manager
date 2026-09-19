@@ -31,6 +31,7 @@ import type {
   OrganizationInput,
   ProspectFilters,
   ProspectInput,
+  ProspectResearchSnapshotInput,
   ProspectStage,
   SearchResult,
 } from '../shared/crm';
@@ -153,9 +154,11 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     }
     return database.crm.updateProspectQualification(id,input);
   });
-  ipcMain.handle('crm:prospects:change-stage', (_event, id: string, stage: ProspectStage, lostReason?: string | null) => database.crm.changeProspectStage(id, stage, lostReason));
+  ipcMain.handle('crm:prospects:change-stage', (_event, id: string, stage: ProspectStage, lostReason?: string | null, allowIncompleteQualification?: boolean) => database.crm.changeProspectStage(id, stage, lostReason, Boolean(allowIncompleteQualification)));
   ipcMain.handle('crm:prospects:set-next-action', (_event, id: string, at: string | null, text: string | null) => database.crm.setProspectNextAction(id, at, text));
   ipcMain.handle('crm:prospects:convert-to-client', (_event, id: string) => database.crm.convertProspectToClient(id));
+  ipcMain.handle('crm:prospects:research:list', (_event, id: string) => database.crm.listProspectResearchSnapshots(id));
+  ipcMain.handle('crm:prospects:research:save', (_event, id: string, input: ProspectResearchSnapshotInput) => database.crm.saveProspectResearchSnapshot(id, input));
   ipcMain.handle('crm:clients:list', (_event, filters?: ClientFilters) => database.crm.listClients(filters));
   ipcMain.handle('crm:clients:create', (_event, input: ClientInput) => database.crm.createClient(input));
   ipcMain.handle('crm:clients:update', (_event, id: string, input: ClientInput) => database.crm.updateClient(id, input));

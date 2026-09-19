@@ -64,7 +64,7 @@ describe('CrmService', () => {
     expect(lost.lostReason).toBe('Budget insuffisant');
   });
 
-  it('protège le parcours Prospect et exige les prérequis commerciaux de qualification', () => {
+  it('protège le parcours Prospect mais permet de confirmer une qualification incomplète déjà commencée', () => {
     const organization = crm.createOrganization({ name: 'Qualification Test' });
     const prospect = crm.createProspect({ organizationId: organization.id, source: 'other' });
     crm.saveContactMethod({ organizationId: organization.id, type: 'email', value: 'contact@qualification.test', isPrimary: true });
@@ -73,6 +73,8 @@ describe('CrmService', () => {
     expect(() => crm.updateProspect(prospect.id, { ...prospect, stage: 'quote_to_prepare' })).toThrow(/changement d’étape/i);
 
     const qualifying = crm.changeProspectStage(prospect.id, 'qualifying');
+    expect(() => crm.changeProspectStage(prospect.id, 'need_identified', null, true)).toThrow(/au moins une information/i);
+
     crm.updateProspect(prospect.id, {
       ...qualifying,
       budgetMinCents: 150000,
@@ -86,9 +88,10 @@ describe('CrmService', () => {
       timelineStatus: 'date',
     });
 
-    expect(() => crm.changeProspectStage(prospect.id, 'need_identified')).toThrow(/décision/i);
-    crm.updateProspectQualification(prospect.id, { decisionMakerDetails: 'Mme Martin, gérante' });
-    expect(crm.changeProspectStage(prospect.id, 'need_identified').stage).toBe('need_identified');
+    expect(() => crm.changeProspectStage(prospect.id, 'need_identified')).toThrow(/qualification incomplète/i);
+    const advanced = crm.changeProspectStage(prospect.id, 'need_identified', null, true);
+    expect(advanced.stage).toBe('need_identified');
+    expect(crm.listActivity('prospect', prospect.id).some((event) => event.action === 'qualification_override')).toBe(true);
   });
 
   it('convertit un prospect en client de manière idempotente', () => {
@@ -202,4 +205,70 @@ describe('CrmService', () => {
     expect(() => crm.createProspect({ contactId: contact.id, probabilityPercent: 101 })).toThrow();
     expect(() => crm.createProspect({ contactId: contact.id, budgetMinCents: 2000, budgetMaxCents: 1000 })).toThrow();
   });
+  it('expose les informations entreprise utiles à l annuaire de prospection', () => {
+    const organization = crm.createOrganization({
+      name: 'Atelier Dijon',
+      industry: 'Artisan',
+      city: 'Dijon',
+      website: 'https://atelier-dijon.test',
+      notes: 'Fabrication locale et vente sur rendez-vous',
+    });
+    const prospect = crm.createProspect({ organizationId: organization.id, source: 'outbound' });
+    const listed = crm.listProspects().find((item) => item.id === prospect.id);
+    expect(listed?.organizationIndustry).toBe('Artisan');
+    expect(listed?.organizationCity).toBe('Dijon');
+    expect(listed?.organizationWebsite).toBe('https://atelier-dijon.test');
+    expect(listed?.organizationNotes).toContain('Fabrication locale');
+  });
+
+  it('conserve les vérifications de prospection sous forme de snapshots comparables', () => {
+    const organization = crm.createOrganization({ name: 'Audit Prospect', website: 'https://audit.test' });
+    const prospect = crm.createProspect({ organizationId: organization.id, source: 'outbound' });
+    const first = crm.saveProspectResearchSnapshot(prospect.id, {
+      checkedAt: '2026-09-19',
+      source: 'Site public',
+      services: ['Site vitrine'],
+      googleBusiness: { presence: 'review', rating: 4.2, reviewCount: 12 },
+      website: { presence: 'present', url: 'https://audit.test', cms: 'WordPress', httpsStatus: 'ok' },
+      legalNotices: {
+        overallStatus: 'review',
+        items: [{ key: 'identity', label: 'Identité / raison sociale', status: 'missing' }],
+        observations: 'Raison sociale absente',
+        talkingPoint: 'Proposer une mise à jour des mentions légales',
+      },
+    });
+    const second = crm.saveProspectResearchSnapshot(prospect.id, {
+      checkedAt: '2026-10-01',
+      source: 'Site public',
+      services: ['Site vitrine', 'Réservation'],
+      googleBusiness: { presence: 'present', rating: 4.4, reviewCount: 18 },
+      website: { presence: 'present', url: 'https://audit.test', cms: 'WordPress', httpsStatus: 'ok' },
+      legalNotices: {
+        overallStatus: 'ok',
+        items: [{ key: 'identity', label: 'Identité / raison sociale', status: 'ok' }],
+        observations: 'Raison sociale ajoutée',
+      },
+      audits: {
+        seo: {
+          overallStatus: 'review',
+          items: [{ key: 'title', label: 'Titre de page pertinent', status: 'review', note: 'Titre générique' }],
+          observations: 'Le titre de la page d’accueil peut être amélioré',
+          talkingPoint: 'Proposer une optimisation SEO de base',
+        },
+      },
+      opportunities: [
+        { finding: 'Titre de page générique', service: 'SEO / visibilité', priority: 'medium', keep: true, note: 'À évoquer pendant l’appel' },
+      ],
+    });
+    const history = crm.listProspectResearchSnapshots(prospect.id);
+    expect(history).toHaveLength(2);
+    expect(history[0].id).toBe(second.id);
+    expect(history[1].id).toBe(first.id);
+    expect(history[0].googleBusiness?.reviewCount).toBe(18);
+    expect(history[0].audits?.seo?.items[0].note).toBe('Titre générique');
+    expect(history[0].opportunities?.[0].service).toBe('SEO / visibilité');
+    expect(history[1].legalNotices?.items[0].status).toBe('missing');
+    expect(crm.listActivity('prospect', prospect.id).filter((event) => event.action === 'research_snapshot')).toHaveLength(2);
+  });
+
 });

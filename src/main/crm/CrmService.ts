@@ -23,6 +23,8 @@ import {
   type ProspectFilters,
   type ProspectInput,
   type ProspectOrigin,
+  type ProspectResearchSnapshot,
+  type ProspectResearchSnapshotInput,
   type ProspectStage,
   type ProspectSummary,
   type SearchResult,
@@ -130,12 +132,18 @@ interface ProspectRow extends Record<string, unknown> {
   created_at: string;
   updated_at: string;
   archived_at: string | null;
-  decision_status: ProspectSummary['decisionStatus']; decision_maker_details: string | null;
+  decision_status: ProspectSummary['decisionStatus']; decision_maker_details: string | null; decision_maker_contact_id: string | null;
   project_summary: string | null; project_context: string | null; budget_status: ProspectSummary['budgetStatus'];
   timeline_status: ProspectSummary['timelineStatus']; timeline_note: string | null; existing_status: ProspectSummary['existingStatus'];
   existing_url: string | null; existing_notes: string | null; missing_information: string | null;
   waiting_reason_code: string | null; waiting_reason_text: string | null; waiting_resume_at: string | null; lost_reason_code: string | null;
   organization_name: string | null;
+  organization_industry: string | null;
+  organization_city: string | null;
+  organization_website: string | null;
+  organization_notes: string | null;
+  has_contact_method: number;
+  research_snapshot_count: number;
   contact_first_name: string | null;
   contact_last_name: string | null;
   contact_email: string | null;
@@ -428,7 +436,7 @@ export class CrmService {
     this.indexProspect(id); return this.getProspect(id);
   }
 
-  changeProspectStage(id: string, stage: ProspectStage, lostReason?: string | null): ProspectSummary {
+  changeProspectStage(id: string, stage: ProspectStage, lostReason?: string | null, allowIncompleteQualification = false): ProspectSummary {
     if (!PROSPECT_STAGES.includes(stage)) throw new Error('Étape prospect invalide.');
     const current = this.getProspect(id);
     if (stage === current.stage) return current;
@@ -440,7 +448,16 @@ export class CrmService {
       const count = this.database.get<{ count: number }>('SELECT COUNT(*) AS count FROM crm_needs WHERE prospect_id=?', [id])?.count ?? 0;
       if (Number(count) === 0) throw new Error('Le besoin doit être identifié avant de passer au devis.');
     }
-    if (current.stage === 'qualifying' && stage === 'need_identified') this.assertQualificationReady(id, current);
+    let qualificationMissing: string[] = [];
+    if (current.stage === 'qualifying' && stage === 'need_identified') {
+      if (!this.hasQualificationProgress(current)) {
+        throw new Error('Qualification incomplète : renseigne au moins une information de qualification avant de passer à l’étape suivante.');
+      }
+      qualificationMissing = this.qualificationMissingFields(id, current);
+      if (qualificationMissing.length && !allowIncompleteQualification) {
+        throw new Error(`Qualification incomplète : il manque ${qualificationMissing.join(', ')}.`);
+      }
+    }
     const now = nowIso();
     const prospectingStartedAt = stage === 'qualifying' && !current.prospectingStartedAt ? now : current.prospectingStartedAt ?? null;
     const qualificationValidatedAt = current.stage === 'qualifying' && stage === 'need_identified'
@@ -455,14 +472,56 @@ export class CrmService {
     );
     this.activity({
       entityType: 'prospect', entityId: id, action: 'stage_changed', summary: `Prospect déplacé vers ${stage}`,
-      metadata: { from: current.stage, to: stage }, prospectId: id,
-      organizationId: current.organizationId, contactId: current.contactId,
+      metadata: { from: current.stage, to: stage, qualificationMissing, qualificationOverride: qualificationMissing.length > 0 && allowIncompleteQualification },
+      prospectId: id, organizationId: current.organizationId, contactId: current.contactId,
     });
+    if (qualificationMissing.length && allowIncompleteQualification) {
+      this.activity({
+        entityType: 'prospect',
+        entityId: id,
+        action: 'qualification_override',
+        summary: `Passage à l’étape suivante confirmé malgré ${qualificationMissing.length} information(s) de qualification manquante(s)`,
+        metadata: { missing: qualificationMissing },
+        prospectId: id,
+        organizationId: current.organizationId,
+        contactId: current.contactId,
+      });
+    }
     this.indexProspect(id);
     return this.getProspect(id);
   }
 
-  private assertQualificationReady(id: string, prospect: ProspectSummary): void {
+  private hasQualificationProgress(prospect: ProspectSummary): boolean {
+    return Boolean(
+      clean(prospect.targetingReasonCode)
+      || clean(prospect.targetingReasonText)
+      || clean(prospect.initialObservation)
+      || clean(prospect.detectedOpportunity)
+      || clean(prospect.firstContactResultCode)
+      || clean(prospect.firstContactResultText)
+      || prospect.interestLevel
+      || prospect.decisionStatus
+      || clean(prospect.decisionMakerContactId)
+      || clean(prospect.decisionMakerDetails)
+      || clean(prospect.decisionMakerName)
+      || clean(prospect.projectSummary)
+      || clean(prospect.projectContext)
+      || prospect.budgetStatus
+      || prospect.budgetMinCents != null
+      || prospect.budgetMaxCents != null
+      || prospect.timelineStatus
+      || clean(prospect.timelineNote)
+      || clean(prospect.targetDate)
+      || prospect.existingStatus
+      || clean(prospect.existingUrl)
+      || clean(prospect.existingNotes)
+      || clean(prospect.missingInformation)
+      || clean(prospect.primaryNeed)
+      || clean(prospect.secondaryNeed)
+    );
+  }
+
+  private qualificationMissingFields(id: string, prospect: ProspectSummary): string[] {
     const missing: string[] = [];
     const contactCount = Number(this.database.get<{ count: number }>(
       `SELECT COUNT(*) AS count FROM contact_methods
@@ -476,7 +535,7 @@ export class CrmService {
     if (!origin) missing.push('l’origine du contact');
 
     const decisionReady = Boolean(prospect.decisionStatus)
-      && (prospect.decisionStatus !== 'no' || Boolean(clean(prospect.decisionMakerName) || clean(prospect.decisionMakerDetails)));
+      && (prospect.decisionStatus !== 'no' || Boolean(clean(prospect.decisionMakerContactId) || clean(prospect.decisionMakerName) || clean(prospect.decisionMakerDetails)));
     if (!decisionReady) missing.push('la situation du décisionnaire');
 
     if (origin === 'outbound') {
@@ -490,7 +549,7 @@ export class CrmService {
       missing.push('le motif de l’échange ou le contexte commercial');
     }
 
-    if (missing.length) throw new Error(`Qualification incomplète : il manque ${missing.join(', ')}.`);
+    return missing;
   }
 
   setProspectNextAction(id: string, at: string | null, text: string | null): ProspectSummary {
@@ -533,8 +592,17 @@ export class CrmService {
   }
 
   private prospectSelect(): string {
-    return `SELECT p.*, o.name AS organization_name, c.first_name AS contact_first_name,
-      c.last_name AS contact_last_name, c.email AS contact_email,
+    return `SELECT p.*, o.name AS organization_name, o.industry AS organization_industry,
+      o.city AS organization_city, o.website AS organization_website, o.notes AS organization_notes,
+      EXISTS(
+        SELECT 1 FROM contact_methods cm
+        WHERE cm.archived_at IS NULL
+          AND ((p.organization_id IS NOT NULL AND cm.organization_id=p.organization_id)
+            OR (p.contact_id IS NOT NULL AND cm.contact_id=p.contact_id))
+      ) AS has_contact_method,
+      (SELECT COUNT(*) FROM activity_events ae
+        WHERE ae.entity_type='prospect' AND ae.entity_id=p.id AND ae.action='research_snapshot') AS research_snapshot_count,
+      c.first_name AS contact_first_name, c.last_name AS contact_last_name, c.email AS contact_email,
       COALESCE((SELECT group_concat(COALESCE(ci.name,n.other_text), ' · ') FROM crm_needs n LEFT JOIN catalog_items ci ON ci.id=n.catalog_item_id WHERE n.prospect_id=p.id),p.primary_need) AS live_need
       FROM prospects p
       LEFT JOIN organizations o ON o.id=p.organization_id
@@ -559,7 +627,7 @@ export class CrmService {
       probabilityPercent: row.probability_percent, nextActionAt: row.next_action_at,
       nextActionText: row.next_action_text, targetDate: row.target_date, lostReason: row.lost_reason,
       notes: row.notes, wonAt: row.won_at, lostAt: row.lost_at, createdAt: row.created_at,
-      decisionStatus: row.decision_status, decisionMakerDetails: row.decision_maker_details,
+      decisionStatus: row.decision_status, decisionMakerDetails: row.decision_maker_details, decisionMakerContactId: row.decision_maker_contact_id,
       projectSummary: row.project_summary, projectContext: row.project_context, budgetStatus: row.budget_status,
       timelineStatus: row.timeline_status, timelineNote: row.timeline_note, existingStatus: row.existing_status,
       existingUrl: row.existing_url, existingNotes: row.existing_notes, missingInformation: row.missing_information,
@@ -567,7 +635,79 @@ export class CrmService {
       waitingResumeAt: row.waiting_resume_at, lostReasonCode: row.lost_reason_code,
       updatedAt: row.updated_at, archivedAt: row.archived_at, displayName,
       secondaryLabel: row.organization_name && contactName ? contactName : row.contact_email,
+      organizationIndustry: row.organization_industry,
+      organizationCity: row.organization_city,
+      organizationWebsite: row.organization_website,
+      organizationNotes: row.organization_notes,
+      hasContactMethod: Boolean(row.has_contact_method),
+      researchSnapshotCount: Number(row.research_snapshot_count ?? 0),
     };
+  }
+
+  listProspectResearchSnapshots(id: string): ProspectResearchSnapshot[] {
+    this.getProspect(id);
+    return this.database.all<Record<string, unknown>>(
+      `SELECT id, metadata_json, created_at
+       FROM activity_events
+       WHERE entity_type='prospect' AND entity_id=? AND action='research_snapshot'
+       ORDER BY created_at DESC, rowid DESC`,
+      [id],
+    ).flatMap((row) => {
+      if (!row.metadata_json) return [];
+      try {
+        const metadata = JSON.parse(String(row.metadata_json)) as { snapshot?: ProspectResearchSnapshotInput };
+        const snapshot = metadata.snapshot;
+        if (!snapshot) return [];
+        return [{
+          ...snapshot,
+          id: String(row.id),
+          prospectId: id,
+          checkedAt: snapshot.checkedAt?.trim() || String(row.created_at),
+          createdAt: String(row.created_at),
+        }];
+      } catch {
+        return [];
+      }
+    });
+  }
+
+  saveProspectResearchSnapshot(id: string, input: ProspectResearchSnapshotInput): ProspectResearchSnapshot {
+    const prospect = this.getProspect(id);
+    const checkedAt = clean(input.checkedAt) ?? nowIso();
+    const rating = input.googleBusiness?.rating;
+    const reviewCount = input.googleBusiness?.reviewCount;
+    if (rating != null && (!Number.isFinite(rating) || rating < 0 || rating > 5)) throw new Error('La note Google doit être comprise entre 0 et 5.');
+    if (reviewCount != null && (!Number.isInteger(reviewCount) || reviewCount < 0)) throw new Error('Le nombre d’avis Google doit être positif.');
+
+    const snapshot: ProspectResearchSnapshotInput = {
+      ...input,
+      checkedAt,
+      services: (input.services ?? []).map((value) => value.trim()).filter(Boolean),
+      products: (input.products ?? []).map((value) => value.trim()).filter(Boolean),
+      customerSegments: (input.customerSegments ?? []).map((value) => value.trim()).filter(Boolean),
+      differentiators: (input.differentiators ?? []).map((value) => value.trim()).filter(Boolean),
+      opportunities: (input.opportunities ?? [])
+        .map((item) => ({
+          ...item,
+          finding: item.finding.trim(),
+          service: item.service.trim(),
+          note: clean(item.note),
+        }))
+        .filter((item) => item.finding || item.service),
+    };
+    this.activity({
+      entityType: 'prospect',
+      entityId: id,
+      action: 'research_snapshot',
+      summary: 'Vérification de la connaissance entreprise enregistrée',
+      metadata: { snapshot },
+      prospectId: id,
+      organizationId: prospect.organizationId,
+      contactId: prospect.contactId,
+    });
+    const saved = this.listProspectResearchSnapshots(id)[0];
+    if (!saved) throw new Error('La vérification n’a pas pu être relue.');
+    return saved;
   }
 
   createClient(input: ClientInput): ClientSummary {

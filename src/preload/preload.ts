@@ -22,6 +22,7 @@ import type {
   OrganizationInput,
   ProspectFilters,
   ProspectInput,
+  ProspectResearchSnapshotInput,
   ProspectStage,
 } from '../shared/crm';
 import type {ClientDocumentInput} from '../shared/clientDocuments';
@@ -71,7 +72,10 @@ import type {
 } from '../shared/time';
 
 const api: AtoumWebApi = {
-  app: { getBootstrap: () => ipcRenderer.invoke('app:get-bootstrap') },
+  app: {
+    getBootstrap: () => ipcRenderer.invoke('app:get-bootstrap'),
+    openProspectReferenceWindow: (id: string) => ipcRenderer.invoke('app:open-prospect-reference', id),
+  },
   settings: {
     setTheme: (theme: ThemeName) => ipcRenderer.invoke('settings:set-theme', theme),
     setDisplayDensity: (density: DisplayDensity) => ipcRenderer.invoke('settings:set-display-density', density),
@@ -114,9 +118,13 @@ const api: AtoumWebApi = {
       create: (input: ProspectInput) => ipcRenderer.invoke('crm:prospects:create', input),
       update: (id: string, input: ProspectInput) => ipcRenderer.invoke('crm:prospects:update', id, input),
       updateQualification:(id:string,input:Partial<ProspectInput>)=>ipcRenderer.invoke('crm:prospects:update-qualification',id,input),
-      changeStage: (id: string, stage: ProspectStage, lostReason?: string | null) => ipcRenderer.invoke('crm:prospects:change-stage', id, stage, lostReason),
+      changeStage: (id: string, stage: ProspectStage, lostReason?: string | null, allowIncompleteQualification?: boolean) => ipcRenderer.invoke('crm:prospects:change-stage', id, stage, lostReason, allowIncompleteQualification),
       setNextAction: (id: string, at: string | null, text: string | null) => ipcRenderer.invoke('crm:prospects:set-next-action', id, at, text),
       convertToClient: (id: string) => ipcRenderer.invoke('crm:prospects:convert-to-client', id),
+      research: {
+        list: (id: string) => ipcRenderer.invoke('crm:prospects:research:list', id),
+        save: (id: string, input: ProspectResearchSnapshotInput) => ipcRenderer.invoke('crm:prospects:research:save', id, input),
+      },
     },
     clients: {
       list: (filters?: ClientFilters) => ipcRenderer.invoke('crm:clients:list', filters),

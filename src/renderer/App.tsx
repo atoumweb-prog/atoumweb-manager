@@ -8,6 +8,7 @@ import { QuotesPage } from './commercial/QuotesPage';
 import { ClientsPage } from './crm/ClientsPage';
 import { GlobalSearch } from './crm/GlobalSearch';
 import { ProspectsPage } from './crm/ProspectsPage';
+import { ProspectReferenceWindow } from './crm/ProspectReferenceWindow';
 import { DashboardOperationsWatch } from './operations/DashboardOperationsWatch';
 import { OperationsPage, type OperationsSearchTarget } from './operations/OperationsPage';
 import { ProjectsPage } from './projects/ProjectsPage';
@@ -37,7 +38,7 @@ type PageName = (typeof NAV_ITEMS)[number];
 
 const PAGE_HINTS: Record<PageName, string> = {
   Accueil: 'Vue synthétique des actions, alertes et indicateurs AtoumWeb.',
-  Prospects: 'Pipeline commercial et prochaines actions.',
+  Prospects: 'Annuaire, démarchage, qualification, devis et suivi des opportunités.',
   Clients: 'Base clients, contacts, projets et historique.',
   'Offres & Tarifs': 'Catalogue, services, offres et versions tarifaires.',
   Devis: 'Création guidée et suivi des devis.',
@@ -75,6 +76,7 @@ function applyDensity(density: DisplayDensity): void {
 }
 
 function App() {
+  const prospectReferenceId = new URLSearchParams(window.location.search).get('prospectReference');
   const [bootstrap, setBootstrap] = useState<BootstrapState | null>(null);
   const [activePage, setActivePage] = useState<PageName>('Accueil');
   const [theme, setTheme] = useState<ThemeName>('atoumweb');
@@ -185,12 +187,16 @@ function App() {
     return <div className="splash-screen"><div className="brand-mark">AW</div><strong>AtoumWeb Manager</strong><span>Initialisation du workspace et de la base locale…</span></div>;
   }
 
+  if (prospectReferenceId) {
+    return <ProspectReferenceWindow prospectId={prospectReferenceId} />;
+  }
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand-block"><div className="brand-mark">AW</div><div><strong>AtoumWeb</strong><span>Manager</span></div></div>
         <nav className="navigation" aria-label="Navigation principale">
-          {NAV_ITEMS.map((item) => <button key={item} className={`nav-item ${activePage === item ? 'active' : ''}`} onClick={() => navigate(item)} type="button"><span className="nav-dot" /><span>{item}</span></button>)}
+          {NAV_ITEMS.map((item) => <button key={item} className={`nav-item ${activePage === item ? 'active' : ''}`} onClick={() => navigate(item)} type="button"><span className="nav-dot" /><span>{item === 'Prospects' ? 'Prospection' : item}</span></button>)}
         </nav>
         <div className="sidebar-footer"><span>V{bootstrap.appVersion}</span><span className="status-pill">Local</span></div>
       </aside>
@@ -202,7 +208,7 @@ function App() {
         </header>
 
         <section className="content-area">
-          <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1>{activePage}</h1><p>{PAGE_HINTS[activePage]}</p></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>
+          <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1>{activePage === 'Prospects' ? 'Prospection' : activePage}</h1><p>{PAGE_HINTS[activePage]}</p></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>
           {message && <div className="notice" role="status"><span>{message}</span><button type="button" onClick={() => setMessage(null)}>×</button></div>}
 
           {activePage === 'Accueil' && <WorkflowDashboard />}

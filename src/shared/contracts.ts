@@ -59,6 +59,7 @@ export interface AtoumWebApi {
   workflow: import('./workflow').WorkflowApi;
   app: {
     getBootstrap(): Promise<BootstrapState>;
+    openProspectReferenceWindow(id: string): Promise<void>;
   };
   settings: {
     setTheme(theme: ThemeName): Promise<ThemeName>;

@@ -1,7 +1,7 @@
 import { NeedChoices, openEntity } from '../workflow/DossierPanel';
 import {ClientDocumentsPanel} from './ClientDocumentsPanel';
 import type { NeedInput } from '../../shared/workflow';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   CLIENT_CONTACT_ROLES,
   type ActivityEvent,
@@ -20,7 +20,7 @@ import { ContactMethodsPanel } from './ContactMethodsPanel';
 
 const STATUS_LABELS: Record<ClientStatus, string> = {
   active: 'Actif',
-  inactive: 'Inactif',
+  inactive: 'Ancien client',
   archived: 'Archivé',
 };
 
@@ -121,6 +121,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
   const [contactSaving, setContactSaving] = useState(false);
   const [actionEditor, setActionEditor] = useState<ClientActionEditor | null>(null);
   const [archiveCandidateId, setArchiveCandidateId] = useState<string | null>(null);
+  const sidePanelRef = useRef<HTMLElement | null>(null);
 
   async function refresh(): Promise<void> {
     setLoading(true);
@@ -166,6 +167,20 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
     }
     void refreshSelectedClientData(selectedId);
   }, [selectedId, clients]);
+
+  useEffect(() => {
+    if (!selectedId || largeView) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target || sidePanelRef.current?.contains(target)) return;
+      setSelectedId(null);
+      setActionEditor(null);
+      setArchiveCandidateId(null);
+      setRelationshipMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    return () => document.removeEventListener('pointerdown', closeOnOutside);
+  }, [selectedId, largeView]);
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase('fr-FR');
@@ -426,7 +441,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | ClientStatus)}>
             <option value="all">Tous les statuts</option>
             <option value="active">Actifs</option>
-            <option value="inactive">Inactifs</option>
+            <option value="inactive">Anciens clients</option>
             <option value="archived">Archivés</option>
           </select>
           <button className="primary-button" type="button" onClick={() => setShowForm((value) => !value)}>{showForm ? 'Fermer' : '+ Nouveau client'}</button>
@@ -474,7 +489,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
           </div>
 
           {selected && (
-            <aside className={`panel client-summary-panel client-relationship-${selected.relationshipStatus ?? 'neutral'} ${largeView ? 'client-large-view' : ''}`} role={largeView ? 'dialog' : undefined} aria-modal={largeView ? true : undefined} aria-label={largeView ? `Fiche client ${selected.displayName}` : undefined}>
+            <aside ref={sidePanelRef} className={`panel client-summary-panel client-relationship-${selected.relationshipStatus ?? 'neutral'} ${largeView ? 'client-large-view' : ''}`} role={largeView ? 'dialog' : undefined} aria-modal={largeView ? true : undefined} aria-label={largeView ? `Fiche client ${selected.displayName}` : undefined}>
               <div className="detail-panel-heading">
                 <div>
                   <span className="eyebrow">Fiche client</span>
@@ -516,7 +531,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
                     <label>Statut du client
                       <select value={selected.status} onChange={(event) => void updateStatus(selected, event.target.value as ClientStatus)}>
                         <option value="active">Actif — relation en cours</option>
-                        <option value="inactive">Inactif — conservé, rien en cours</option>
+                        <option value="inactive">Ancien client — relation terminée, historique conservé</option>
                         <option value="archived">Archivé — historique uniquement</option>
                       </select>
                     </label>

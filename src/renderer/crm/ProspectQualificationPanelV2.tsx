@@ -127,6 +127,29 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
 
   const missing = readiness.filter((item) => !item.ok);
   const allReady = missing.length === 0;
+  const qualificationStarted = Boolean(
+    draft.targetingReasonCode
+    || draft.targetingReasonText?.trim()
+    || draft.initialObservation?.trim()
+    || draft.detectedOpportunity?.trim()
+    || draft.firstContactResultCode
+    || draft.firstContactResultText?.trim()
+    || draft.interestLevel
+    || draft.decisionStatus
+    || draft.decisionMakerContactId
+    || draft.decisionMakerDetails?.trim()
+    || draft.projectSummary?.trim()
+    || draft.projectContext?.trim()
+    || draft.budgetStatus
+    || draft.timelineStatus
+    || draft.timelineNote?.trim()
+    || draft.existingStatus
+    || draft.existingUrl?.trim()
+    || draft.existingNotes?.trim()
+    || draft.missingInformation?.trim()
+    || draft.primaryNeed?.trim()
+    || draft.secondaryNeed?.trim()
+  );
   function goToMissing(key: string) {
     if (key === 'decision' || key === 'contact') { onGoTo?.(key); return; }
     const labels: Record<string, string> = { target: 'Motif de ciblage', observation: 'Constat', contact_result: 'Résultat du premier contact', interest: 'Niveau d’intérêt', request: 'Demande initiale', context: 'Motif de l’échange' };
@@ -162,10 +185,23 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
   }
 
   async function validateQualification() {
-    if (!allReady) return;
+    if (!qualificationStarted) {
+      setError('Renseigne au moins une information de qualification avant de passer à l’étape suivante.');
+      return;
+    }
     setBusy(true); setError('');
     try {
       await persist();
+      if (!allReady) {
+        const confirmed = window.confirm(`Il reste à préciser : ${missing.map((item) => item.label).join(', ')}.\n\nPasser quand même à « Besoin à identifier » ?\nTu pourras compléter ces informations plus tard.`);
+        if (!confirmed) {
+          onSaved('Le prospect reste à l’étape « À qualifier ».');
+          return;
+        }
+        await window.atoumweb.crm.prospects.changeStage(prospect.id, 'need_identified', null, true);
+        onSaved('Prospect avancé vers « Besoin à identifier » malgré des informations encore à compléter.');
+        return;
+      }
       await window.atoumweb.crm.prospects.changeStage(prospect.id, 'need_identified');
       onSaved('Qualification validée : le prospect passe en « Besoin à identifier ».');
     } catch (e) { setError(cleanError(e)); }
@@ -239,7 +275,7 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
       {allReady && <div className="qualification-recap ready" role="status"><strong>Qualification prête à être validée</strong><p>Les éléments commerciaux minimums sont présents. Le besoin détaillé, le budget et le calendrier seront travaillés à l’étape suivante.</p></div>}
 
       {error && <p className="form-error" role="alert">{error}</p>}
-      <div className="qualification-actions"><button type="button" className="secondary-button" disabled={busy} onClick={() => void save()}>{busy ? 'Enregistrement…' : 'Enregistrer la qualification'}</button><button type="button" className="primary-button" disabled={busy || !allReady} onClick={() => void validateQualification()}>Valider la qualification → Besoin à identifier</button></div>
+      <div className="qualification-actions"><button type="button" className="secondary-button" disabled={busy} onClick={() => void save()}>{busy ? 'Enregistrement…' : 'Enregistrer la qualification'}</button><button type="button" className="primary-button" disabled={busy || !qualificationStarted} title={!qualificationStarted ? 'Renseigne au moins une information de qualification pour continuer.' : undefined} onClick={() => void validateQualification()}>{allReady ? 'Valider la qualification → Besoin à identifier' : 'Passer à l’étape suivante…'}</button></div>
     </div>
   </section>;
 }
