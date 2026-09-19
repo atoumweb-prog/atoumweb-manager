@@ -202,4 +202,57 @@ describe('CrmService', () => {
     expect(() => crm.createProspect({ contactId: contact.id, probabilityPercent: 101 })).toThrow();
     expect(() => crm.createProspect({ contactId: contact.id, budgetMinCents: 2000, budgetMaxCents: 1000 })).toThrow();
   });
+  it('expose les informations entreprise utiles à l annuaire de prospection', () => {
+    const organization = crm.createOrganization({
+      name: 'Atelier Dijon',
+      industry: 'Artisan',
+      city: 'Dijon',
+      website: 'https://atelier-dijon.test',
+      notes: 'Fabrication locale et vente sur rendez-vous',
+    });
+    const prospect = crm.createProspect({ organizationId: organization.id, source: 'outbound' });
+    const listed = crm.listProspects().find((item) => item.id === prospect.id);
+    expect(listed?.organizationIndustry).toBe('Artisan');
+    expect(listed?.organizationCity).toBe('Dijon');
+    expect(listed?.organizationWebsite).toBe('https://atelier-dijon.test');
+    expect(listed?.organizationNotes).toContain('Fabrication locale');
+  });
+
+  it('conserve les vérifications de prospection sous forme de snapshots comparables', () => {
+    const organization = crm.createOrganization({ name: 'Audit Prospect', website: 'https://audit.test' });
+    const prospect = crm.createProspect({ organizationId: organization.id, source: 'outbound' });
+    const first = crm.saveProspectResearchSnapshot(prospect.id, {
+      checkedAt: '2026-09-19',
+      source: 'Site public',
+      services: ['Site vitrine'],
+      googleBusiness: { presence: 'review', rating: 4.2, reviewCount: 12 },
+      website: { presence: 'present', url: 'https://audit.test', cms: 'WordPress', httpsStatus: 'ok' },
+      legalNotices: {
+        overallStatus: 'review',
+        items: [{ key: 'identity', label: 'Identité / raison sociale', status: 'missing' }],
+        observations: 'Raison sociale absente',
+        talkingPoint: 'Proposer une mise à jour des mentions légales',
+      },
+    });
+    const second = crm.saveProspectResearchSnapshot(prospect.id, {
+      checkedAt: '2026-10-01',
+      source: 'Site public',
+      services: ['Site vitrine', 'Réservation'],
+      googleBusiness: { presence: 'present', rating: 4.4, reviewCount: 18 },
+      website: { presence: 'present', url: 'https://audit.test', cms: 'WordPress', httpsStatus: 'ok' },
+      legalNotices: {
+        overallStatus: 'ok',
+        items: [{ key: 'identity', label: 'Identité / raison sociale', status: 'ok' }],
+        observations: 'Raison sociale ajoutée',
+      },
+    });
+    const history = crm.listProspectResearchSnapshots(prospect.id);
+    expect(history).toHaveLength(2);
+    expect(history[0].id).toBe(second.id);
+    expect(history[1].id).toBe(first.id);
+    expect(history[0].googleBusiness?.reviewCount).toBe(18);
+    expect(history[1].legalNotices?.items[0].status).toBe('missing');
+    expect(crm.listActivity('prospect', prospect.id).filter((event) => event.action === 'research_snapshot')).toHaveLength(2);
+  });
+
 });
