@@ -471,7 +471,7 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
                 {directoryFiltered.map((prospect) => {
                   const readiness = prospectReadiness(prospect);
                   const status = directoryStatus(prospect);
-                  return <tr key={prospect.id} className={selectedId === prospect.id ? 'selected-row' : ''} onClick={() => setSelectedId(prospect.id)}>
+                  return <tr key={prospect.id} className={`prospect-temperature-${prospect.temperature ?? 'neutral'} ${selectedId === prospect.id ? 'selected-row' : ''}`} onClick={() => setSelectedId(prospect.id)}>
                     <td><div className="client-name-cell"><span className="avatar-initials">{prospect.displayName.split(/\s+/).slice(0,2).map((part) => part[0]?.toUpperCase()).join('')}</span><div><strong>{prospect.displayName}</strong><small>{SOURCE_LABELS[prospect.source ?? 'other']}</small></div></div></td>
                     <td>{prospect.organizationIndustry || <span className="muted">À compléter</span>}</td>
                     <td>{prospect.organizationCity || <span className="muted">—</span>}</td>
