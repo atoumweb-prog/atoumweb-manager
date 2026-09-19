@@ -296,6 +296,19 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
     await changeStage(prospect, stage);
   }
 
+  async function handleGroupDrop(stages: ProspectStage[]) {
+    const prospect = prospects.find((item) => item.id === draggingId);
+    setDraggingId(null); setDropStage(null);
+    if (!prospect) return;
+    const allowed = manualStages(prospect);
+    const target = stages.find((stage) => allowed.includes(stage));
+    if (!target) {
+      onMessage('Ce changement d’étape nécessite l’action métier prévue dans la fiche du prospect.');
+      return;
+    }
+    await changeStage(prospect, target);
+  }
+
   const detail = selected ? <ProspectDetailV2
     prospect={selected}
     actions={selectedActions}
@@ -372,7 +385,7 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
       {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'}><div className="kanban-board">{PIPELINE_GROUPS.map((group) => {
         const groupProspects = group.stages.flatMap((stage) => byStage.get(stage) ?? []);
         const targetStage = group.stages[0];
-        return <section className={`kanban-column pipeline-step-column ${dropStage === targetStage ? 'drag-over' : ''}`} key={group.id} onDragOver={(e) => e.preventDefault()} onDragEnter={() => setDropStage(targetStage)} onDrop={(e) => { e.preventDefault(); void handleDrop(targetStage); }}><header><div><small>Étape {group.step}</small><strong>{group.label}</strong></div><span>{groupProspects.length}</span></header><div className="kanban-cards stacked-cards">{groupProspects.map((prospect) => renderProspectCard(prospect))}{groupProspects.length === 0 && <div className="kanban-empty">Aucun dossier</div>}</div></section>;
+        return <section className={`kanban-column pipeline-step-column ${dropStage === targetStage ? 'drag-over' : ''}`} key={group.id} onDragOver={(e) => e.preventDefault()} onDragEnter={() => setDropStage(targetStage)} onDrop={(e) => { e.preventDefault(); void handleGroupDrop(group.stages); }}><header><div><small>Étape {group.step}</small><strong>{group.label}</strong></div><span>{groupProspects.length}</span></header><div className="kanban-cards stacked-cards">{groupProspects.map((prospect) => renderProspectCard(prospect))}{groupProspects.length === 0 && <div className="kanban-empty">Aucun dossier</div>}</div></section>;
       })}</div>{selected && !deskProspect && detail}</div>}
     </>}
 
