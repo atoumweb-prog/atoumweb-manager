@@ -8,6 +8,7 @@ import { QuotesPage } from './commercial/QuotesPage';
 import { ClientsPage } from './crm/ClientsPage';
 import { GlobalSearch } from './crm/GlobalSearch';
 import { ProspectsPage } from './crm/ProspectsPage';
+import { ProspectReferenceWindow } from './crm/ProspectReferenceWindow';
 import { DashboardOperationsWatch } from './operations/DashboardOperationsWatch';
 import { OperationsPage, type OperationsSearchTarget } from './operations/OperationsPage';
 import { ProjectsPage } from './projects/ProjectsPage';
@@ -75,6 +76,7 @@ function applyDensity(density: DisplayDensity): void {
 }
 
 function App() {
+  const prospectReferenceId = new URLSearchParams(window.location.search).get('prospectReference');
   const [bootstrap, setBootstrap] = useState<BootstrapState | null>(null);
   const [activePage, setActivePage] = useState<PageName>('Accueil');
   const [theme, setTheme] = useState<ThemeName>('atoumweb');
@@ -183,6 +185,10 @@ function App() {
 
   if (!bootstrap) {
     return <div className="splash-screen"><div className="brand-mark">AW</div><strong>AtoumWeb Manager</strong><span>Initialisation du workspace et de la base locale…</span></div>;
+  }
+
+  if (prospectReferenceId) {
+    return <ProspectReferenceWindow prospectId={prospectReferenceId} />;
   }
 
   return (
