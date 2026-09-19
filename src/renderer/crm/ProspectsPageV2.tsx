@@ -373,7 +373,7 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
     await changeStage(prospect, target);
   }
 
-  const detail = selected ? <ProspectDetailV2
+  const detail = selected ? <div ref={sidePanelRef} className="prospect-side-panel-boundary"><ProspectDetailV2
     prospect={selected}
     actions={selectedActions}
     activity={activity}
@@ -385,7 +385,7 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
     onStart={() => void startProspecting(selected)}
     onLost={(code, reason) => void markLost(selected, code, reason)}
     onArchive={() => void archive(selected)}
-  /> : null;
+  /></div> : null;
 
   const renderProspectCard = (prospect: ProspectSummary, draggable = true) => {
     const expanded = expandedId === prospect.id;
@@ -429,6 +429,22 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
         <input value={directorySearch} onChange={(e) => setDirectorySearch(e.target.value)} placeholder="Rechercher entreprise, activité, ville…" />
         <select value={directoryIndustry} onChange={(e) => setDirectoryIndustry(e.target.value)}><option value="">Tous les métiers</option>{directoryIndustries.map((value) => <option key={value} value={value}>{value}</option>)}</select>
         <select value={directoryCity} onChange={(e) => setDirectoryCity(e.target.value)}><option value="">Toutes les villes</option>{directoryCities.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+        <select value={directoryStatusFilter} onChange={(e) => setDirectoryStatusFilter(e.target.value as DirectoryStatusFilter)} aria-label="Filtrer par statut de prospection">
+          <option value="follow">À suivre</option>
+          <option value="all">Tous les statuts</option>
+          <option value="prepare">À préparer</option>
+          <option value="ready">Prêt pour démarchage</option>
+          <option value="qualifying">À qualifier</option>
+          <option value="need_identified">Besoin à identifier</option>
+          <option value="quote_to_prepare">Devis à préparer</option>
+          <option value="quote_to_send">Devis à envoyer</option>
+          <option value="quote_sent">En attente de retour</option>
+          <option value="follow_up">À relancer</option>
+          <option value="negotiation">Négociation</option>
+          <option value="waiting">En attente</option>
+          <option value="won">Gagné</option>
+          <option value="lost">Perdu</option>
+        </select>
       </div>
       {showForm && <form className="panel crm-form prospect-create-v2" onSubmit={(e) => void submitProspect(e)}><div className="panel-title"><div><span className="eyebrow">Annuaire de prospection</span><h2>Nouvelle entreprise à préparer</h2><p className="muted">Enregistre ce que tu sais déjà. Le dossier n’entre dans le parcours commercial qu’au clic sur « Démarrer le parcours commercial ».</p></div></div><div className="form-grid">
         <label>Société <FieldHelp text="Nom commercial ou nom de la structure." /><input value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} /></label>
@@ -450,16 +466,17 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
         <div className="panel table-panel prospect-directory-table-panel">
           <div className="clients-table-wrap">
             <table className="clients-table prospect-directory-table">
-              <thead><tr><th>Entreprise</th><th>Activité</th><th>Ville</th><th>Contact</th><th>Préparation</th><th /></tr></thead>
+              <thead><tr><th>Entreprise</th><th>Activité</th><th>Ville</th><th>Contact</th><th>Statut</th><th /></tr></thead>
               <tbody>
                 {directoryFiltered.map((prospect) => {
                   const readiness = prospectReadiness(prospect);
+                  const status = directoryStatus(prospect);
                   return <tr key={prospect.id} className={selectedId === prospect.id ? 'selected-row' : ''} onClick={() => setSelectedId(prospect.id)}>
                     <td><div className="client-name-cell"><span className="avatar-initials">{prospect.displayName.split(/\s+/).slice(0,2).map((part) => part[0]?.toUpperCase()).join('')}</span><div><strong>{prospect.displayName}</strong><small>{SOURCE_LABELS[prospect.source ?? 'other']}</small></div></div></td>
                     <td>{prospect.organizationIndustry || <span className="muted">À compléter</span>}</td>
                     <td>{prospect.organizationCity || <span className="muted">—</span>}</td>
                     <td>{prospect.secondaryLabel || <span className="muted">À identifier</span>}</td>
-                    <td><span className={`prospect-ready prospect-ready-${readiness.ready ? 'yes' : 'no'}`} title={readiness.ready ? 'Les informations minimales sont présentes.' : `À compléter : ${readiness.missing.join(', ')}`}>{readiness.ready ? 'Prêt pour prospection' : 'À compléter'}</span></td>
+                    <td><span className={`prospect-directory-status prospect-directory-status-${status.tone}`} title={prospect.stage === 'new' && !readiness.ready ? `À compléter : ${readiness.missing.join(', ')}` : status.label}>{status.label}</span></td>
                     <td><button type="button" className="link-button" onClick={(event) => { event.stopPropagation(); setSelectedId(prospect.id); }}>Ouvrir</button></td>
                   </tr>;
                 })}
