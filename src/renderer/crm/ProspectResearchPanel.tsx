@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import type {
   ProspectResearchCheckStatus,
   ProspectResearchChecklistItem,
+  ProspectResearchOpportunity,
   ProspectResearchSnapshot,
   ProspectResearchSnapshotInput,
+  ProspectResearchStructuredCheck,
   ProspectSummary,
 } from '../../shared/crm';
 import { FieldHelp } from './ProspectQualificationPanelV2';
@@ -25,6 +27,128 @@ const LEGAL_ITEMS: ProspectResearchChecklistItem[] = [
   { key: 'consistency', label: 'Informations cohérentes avec l’entreprise actuelle', status: 'review' },
   { key: 'access', label: 'Lien vers les mentions facilement accessible', status: 'review' },
 ];
+
+const AUDIT_DEFINITIONS = {
+  privacy: {
+    title: 'RGPD / confidentialité',
+    help: 'Vérifier la présence d’une politique de confidentialité, l’identité du responsable, les finalités annoncées, les droits des personnes et les coordonnées ou moyens prévus pour exercer ces droits.',
+    items: [
+      ['privacy-policy', 'Politique de confidentialité accessible'],
+      ['controller', 'Responsable du traitement identifiable'],
+      ['purposes', 'Finalités des traitements expliquées'],
+      ['rights', 'Droits des personnes mentionnés'],
+      ['contact', 'Moyen de contact pour exercer ses droits'],
+    ],
+  },
+  cookies: {
+    title: 'Cookies / consentement',
+    help: 'Vérifier le bandeau, le refus aussi simple que l’acceptation, l’absence de dépôt des traceurs non nécessaires avant consentement et la possibilité de modifier son choix.',
+    items: [
+      ['banner', 'Bandeau cookies présent si nécessaire'],
+      ['refuse', 'Refuser aussi facilement qu’accepter'],
+      ['prior-consent', 'Traceurs non nécessaires bloqués avant consentement'],
+      ['preferences', 'Préférences modifiables après le choix'],
+    ],
+  },
+  seo: {
+    title: 'SEO de base',
+    help: 'Vérifier les titres de pages, meta descriptions, H1, indexabilité, cohérence locale et présence d’informations structurantes pour les moteurs de recherche.',
+    items: [
+      ['title', 'Titre de page pertinent'],
+      ['description', 'Meta description renseignée'],
+      ['h1', 'H1 clair et cohérent'],
+      ['indexable', 'Pages importantes indexables'],
+      ['local', 'Informations locales cohérentes'],
+    ],
+  },
+  performance: {
+    title: 'Performance',
+    help: 'Repérer les lenteurs visibles, les images très lourdes, les ressources bloquantes et les problèmes manifestes de chargement. Ce contrôle est un indicateur, pas un audit Core Web Vitals complet.',
+    items: [
+      ['loading', 'Chargement perçu correct'],
+      ['images', 'Images raisonnablement optimisées'],
+      ['errors', 'Pas d’erreur de chargement visible'],
+    ],
+  },
+  mobile: {
+    title: 'Mobile / responsive',
+    help: 'Tester au minimum la lisibilité, la navigation, les boutons, formulaires et contenus sur une largeur mobile courante.',
+    items: [
+      ['layout', 'Mise en page adaptée'],
+      ['navigation', 'Navigation utilisable'],
+      ['tap-targets', 'Boutons et liens faciles à toucher'],
+      ['forms', 'Formulaires utilisables'],
+    ],
+  },
+  accessibility: {
+    title: 'Accessibilité de base',
+    help: 'Repérer les problèmes évidents : contraste, textes alternatifs, structure des titres, intitulés de liens et boutons. Ce contrôle ne constitue pas un audit RGAA.',
+    items: [
+      ['contrast', 'Contrastes lisibles'],
+      ['alt', 'Images importantes avec texte alternatif'],
+      ['headings', 'Hiérarchie de titres cohérente'],
+      ['controls', 'Boutons et liens avec intitulé compréhensible'],
+    ],
+  },
+} as const;
+
+type AuditKey = keyof typeof AUDIT_DEFINITIONS;
+
+function createAudit(key: AuditKey): ProspectResearchStructuredCheck {
+  const definition = AUDIT_DEFINITIONS[key];
+  return {
+    overallStatus: 'review',
+    items: definition.items.map(([itemKey, label]) => ({ key: itemKey, label, status: 'review' })),
+    observations: '',
+    talkingPoint: '',
+    source: 'Site public',
+    url: '',
+  };
+}
+
+function statusValue(value: unknown): ProspectResearchCheckStatus {
+  return value === 'ok' || value === 'review' || value === 'missing' || value === 'na' ? value : 'review';
+}
+
+function CheckSelect({ value, onChange, label }: {
+  value?: ProspectResearchCheckStatus;
+  onChange: (value: ProspectResearchCheckStatus) => void;
+  label?: string;
+}) {
+  return <select aria-label={label} value={value ?? 'review'} onChange={(event) => onChange(event.target.value as ProspectResearchCheckStatus)}>
+    {CHECK_OPTIONS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+  </select>;
+}
+
+function StructuredCheckEditor({ title, help, value, onChange }: {
+  title: string;
+  help: string;
+  value: ProspectResearchStructuredCheck;
+  onChange: (value: ProspectResearchStructuredCheck) => void;
+}) {
+  function updateItem(index: number, patch: Partial<ProspectResearchChecklistItem>) {
+    onChange({ ...value, items: value.items.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item) });
+  }
+  return <details className="research-audit-detail">
+    <summary><strong>{title}</strong><FieldHelp text={help} /><span>{stringifyStatus(value.overallStatus)}</span></summary>
+    <div className="research-audit-body">
+      <label>État global<CheckSelect value={value.overallStatus} onChange={(overallStatus) => onChange({ ...value, overallStatus })} /></label>
+      <div className="research-checklist">
+        {value.items.map((item, index) => <div className="research-check-row" key={item.key}>
+          <strong>{item.label}</strong>
+          <CheckSelect label={`Statut ${item.label}`} value={item.status} onChange={(status) => updateItem(index, { status })} />
+          <input aria-label={`Note ${item.label}`} value={item.note ?? ''} onChange={(event) => updateItem(index, { note: event.target.value })} placeholder="Note facultative" />
+        </div>)}
+      </div>
+      <div className="research-two-columns">
+        <label>Observations<textarea value={value.observations ?? ''} onChange={(event) => onChange({ ...value, observations: event.target.value })} /></label>
+        <label>Point à reprendre pendant la prospection<textarea value={value.talkingPoint ?? ''} onChange={(event) => onChange({ ...value, talkingPoint: event.target.value })} /></label>
+        <label>URL contrôlée<input value={value.url ?? ''} onChange={(event) => onChange({ ...value, url: event.target.value })} /></label>
+        <label>Source<input value={value.source ?? ''} onChange={(event) => onChange({ ...value, source: event.target.value })} /></label>
+      </div>
+    </div>
+  </details>;
+}
 
 const emptySnapshot = (prospect: ProspectSummary): ProspectResearchSnapshotInput => ({
   checkedAt: new Date().toISOString().slice(0, 10),
@@ -67,6 +191,15 @@ const emptySnapshot = (prospect: ProspectSummary): ProspectResearchSnapshotInput
     source: 'Site public',
     url: '',
   },
+  audits: {
+    privacy: createAudit('privacy'),
+    cookies: createAudit('cookies'),
+    seo: createAudit('seo'),
+    performance: createAudit('performance'),
+    mobile: createAudit('mobile'),
+    accessibility: createAudit('accessibility'),
+  },
+  opportunities: [],
   conversation: {
     strengths: '',
     issues: '',
@@ -99,6 +232,13 @@ function factMap(snapshot: ProspectResearchSnapshot): Map<string, string> {
     ['Mobile', stringifyStatus(snapshot.website?.responsiveStatus)],
     ['Mentions légales', stringifyStatus(snapshot.legalNotices?.overallStatus)],
     ['Observations légales', snapshot.legalNotices?.observations ?? '—'],
+    ['RGPD', stringifyStatus(snapshot.audits?.privacy?.overallStatus)],
+    ['Cookies', stringifyStatus(snapshot.audits?.cookies?.overallStatus)],
+    ['SEO', stringifyStatus(snapshot.audits?.seo?.overallStatus)],
+    ['Performance', stringifyStatus(snapshot.audits?.performance?.overallStatus)],
+    ['Mobile', stringifyStatus(snapshot.audits?.mobile?.overallStatus)],
+    ['Accessibilité', stringifyStatus(snapshot.audits?.accessibility?.overallStatus)],
+    ['Opportunités retenues', (snapshot.opportunities ?? []).filter((item) => item.keep).map((item) => item.service || item.finding).join(', ')],
   ]);
 }
 
@@ -139,6 +279,27 @@ export function ProspectResearchPanel({ prospect, defaultOpen = false, onChanged
         items: legal.items.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item),
       },
     });
+  }
+
+  function auditValue(key: AuditKey): ProspectResearchStructuredCheck {
+    return draft.audits?.[key] ?? createAudit(key);
+  }
+
+  function updateAudit(key: AuditKey, value: ProspectResearchStructuredCheck) {
+    setDraft({ ...draft, audits: { ...(draft.audits ?? {}), [key]: value } });
+  }
+
+  function addOpportunity() {
+    const opportunity: ProspectResearchOpportunity = { finding: '', service: '', priority: 'medium', note: '', keep: true };
+    setDraft({ ...draft, opportunities: [...(draft.opportunities ?? []), opportunity] });
+  }
+
+  function updateOpportunity(index: number, patch: Partial<ProspectResearchOpportunity>) {
+    setDraft({ ...draft, opportunities: (draft.opportunities ?? []).map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item) });
+  }
+
+  function removeOpportunity(index: number) {
+    setDraft({ ...draft, opportunities: (draft.opportunities ?? []).filter((_, itemIndex) => itemIndex !== index) });
   }
 
   async function save() {
@@ -198,7 +359,7 @@ export function ProspectResearchPanel({ prospect, defaultOpen = false, onChanged
               ['photosStatus','Photos'],
               ['websiteLinkedStatus','Site lié'],
               ['contactConsistencyStatus','Coordonnées cohérentes'],
-            ].map(([key,label]) => <label key={key}>{label}<select value={(draft.googleBusiness as Record<string, unknown> | undefined)?.[key] as string ?? 'review'} onChange={(e) => setDraft({ ...draft, googleBusiness: { ...(draft.googleBusiness ?? { presence: 'review' }), [key]: e.target.value as ProspectResearchCheckStatus } })}>{CHECK_OPTIONS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>)}
+            ].map(([key,label]) => <label key={key}>{label}<select value={statusValue((draft.googleBusiness as Record<string, unknown> | undefined)?.[key])} onChange={(e) => setDraft({ ...draft, googleBusiness: { ...(draft.googleBusiness ?? { presence: 'review' }), [key]: e.target.value as ProspectResearchCheckStatus } })}>{CHECK_OPTIONS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>)}
           </div>
           <label>Observations<textarea value={draft.googleBusiness?.notes ?? ''} onChange={(e) => setDraft({ ...draft, googleBusiness: { ...(draft.googleBusiness ?? { presence: 'review' }), notes: e.target.value } })} /></label>
         </fieldset>
@@ -219,7 +380,7 @@ export function ProspectResearchPanel({ prospect, defaultOpen = false, onChanged
               ['bookingStatus','Réservation'],
               ['contactFormStatus','Formulaire'],
               ['blogStatus','Blog / actualités'],
-            ].map(([key,label]) => <label key={key}>{label}<select value={(draft.website as Record<string, unknown> | undefined)?.[key] as string ?? 'review'} onChange={(e) => setDraft({ ...draft, website: { ...(draft.website ?? { presence: 'review' }), [key]: e.target.value as ProspectResearchCheckStatus } })}>{CHECK_OPTIONS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>)}
+            ].map(([key,label]) => <label key={key}>{label}<select value={statusValue((draft.website as Record<string, unknown> | undefined)?.[key])} onChange={(e) => setDraft({ ...draft, website: { ...(draft.website ?? { presence: 'review' }), [key]: e.target.value as ProspectResearchCheckStatus } })}>{CHECK_OPTIONS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>)}
           </div>
           <label>Observations<textarea value={draft.website?.notes ?? ''} onChange={(e) => setDraft({ ...draft, website: { ...(draft.website ?? { presence: 'review' }), notes: e.target.value } })} /></label>
         </fieldset>
@@ -245,14 +406,44 @@ export function ProspectResearchPanel({ prospect, defaultOpen = false, onChanged
         </fieldset>
 
         <fieldset className="research-card research-card-wide">
+          <legend>Autres contrôles structurés</legend>
+          <p className="muted">Ces contrôles utilisent la même logique que les mentions légales : état par point, observations et sujet à reprendre pendant l’échange.</p>
+          <div className="research-audit-list">
+            {(Object.keys(AUDIT_DEFINITIONS) as AuditKey[]).map((key) => <StructuredCheckEditor
+              key={key}
+              title={AUDIT_DEFINITIONS[key].title}
+              help={AUDIT_DEFINITIONS[key].help}
+              value={auditValue(key)}
+              onChange={(value) => updateAudit(key, value)}
+            />)}
+          </div>
+        </fieldset>
+
+        <fieldset className="research-card research-card-wide">
+          <legend>Opportunités AtoumWeb <FieldHelp text="Transformer un constat factuel en piste commerciale sans créer automatiquement de devis. Garde uniquement les opportunités utiles pour la conversation et la suite du parcours." /></legend>
+          <div className="research-opportunities">
+            {(draft.opportunities ?? []).map((item, index) => <div className="research-opportunity-row" key={index}>
+              <label>Constat<input value={item.finding} onChange={(event) => updateOpportunity(index, { finding: event.target.value })} placeholder="Ex. fiche Google peu renseignée" /></label>
+              <label>Prestation AtoumWeb<input value={item.service} onChange={(event) => updateOpportunity(index, { service: event.target.value })} placeholder="Ex. SEO local / visibilité" /></label>
+              <label>Priorité<select value={item.priority} onChange={(event) => updateOpportunity(index, { priority: event.target.value as ProspectResearchOpportunity['priority'] })}><option value="low">Faible</option><option value="medium">Moyenne</option><option value="high">Forte</option></select></label>
+              <label>Note<input value={item.note ?? ''} onChange={(event) => updateOpportunity(index, { note: event.target.value })} /></label>
+              <label className="research-keep"><input type="checkbox" checked={item.keep} onChange={(event) => updateOpportunity(index, { keep: event.target.checked })} /> Retenir</label>
+              <button type="button" className="secondary-button danger-outline" onClick={() => removeOpportunity(index)}>Supprimer</button>
+            </div>)}
+            {(draft.opportunities ?? []).length === 0 && <p className="muted">Aucune opportunité enregistrée pour le moment.</p>}
+            <button type="button" className="secondary-button" onClick={addOpportunity}>+ Ajouter une opportunité</button>
+          </div>
+        </fieldset>
+
+        <fieldset className="research-card research-card-wide">
           <legend>Préparation de la conversation</legend>
           <div className="research-two-columns">
-            <label>Points forts repérés<textarea value={draft.conversation?.strengths ?? ''} onChange={(e) => setDraft({ ...draft, conversation: { ...draft.conversation, strengths: e.target.value } })} /></label>
-            <label>Problèmes observés<textarea value={draft.conversation?.issues ?? ''} onChange={(e) => setDraft({ ...draft, conversation: { ...draft.conversation, issues: e.target.value } })} /></label>
-            <label>Points à évoquer<textarea value={draft.conversation?.talkingPoints ?? ''} onChange={(e) => setDraft({ ...draft, conversation: { ...draft.conversation, talkingPoints: e.target.value } })} /></label>
-            <label>Angle d’approche<textarea value={draft.conversation?.approach ?? ''} onChange={(e) => setDraft({ ...draft, conversation: { ...draft.conversation, approach: e.target.value } })} /></label>
+            <label>Points forts repérés<textarea value={draft.conversation?.strengths ?? ''} onChange={(e) => setDraft({ ...draft, conversation: { ...(draft.conversation ?? {}), strengths: e.target.value } })} /></label>
+            <label>Problèmes observés<textarea value={draft.conversation?.issues ?? ''} onChange={(e) => setDraft({ ...draft, conversation: { ...(draft.conversation ?? {}), issues: e.target.value } })} /></label>
+            <label>Points à évoquer<textarea value={draft.conversation?.talkingPoints ?? ''} onChange={(e) => setDraft({ ...draft, conversation: { ...(draft.conversation ?? {}), talkingPoints: e.target.value } })} /></label>
+            <label>Angle d’approche<textarea value={draft.conversation?.approach ?? ''} onChange={(e) => setDraft({ ...draft, conversation: { ...(draft.conversation ?? {}), approach: e.target.value } })} /></label>
           </div>
-          <label>À ne pas oublier / notes pendant l’appel<textarea value={draft.conversation?.callNotes ?? ''} onChange={(e) => setDraft({ ...draft, conversation: { ...draft.conversation, callNotes: e.target.value } })} /></label>
+          <label>À ne pas oublier / notes pendant l’appel<textarea value={draft.conversation?.callNotes ?? ''} onChange={(e) => setDraft({ ...draft, conversation: { ...(draft.conversation ?? {}), callNotes: e.target.value } })} /></label>
         </fieldset>
       </div>
 
