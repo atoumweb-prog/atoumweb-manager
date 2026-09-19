@@ -8,6 +8,7 @@ import { PHASE_3_MIGRATIONS } from './phase3Migrations';
 import { PHASE_4_MIGRATIONS } from './phase4Migrations';
 import { PHASE_4_OVERAGE_MIGRATIONS } from './phase4OverageMigration';
 import { PHASE_4_REPORT_MIGRATIONS } from './phase4ReportMigration';
+import { PHASE_6_MIGRATIONS } from './phase6Migrations';
 
 export interface Migration { id: number; name: string; sql: string; disableForeignKeys?: boolean; }
 
@@ -171,6 +172,7 @@ export const MIGRATIONS: Migration[] = [
   STABILISATION_PHASE_19_MIGRATION,
   PROSPECT_WORKFLOW_V2_MIGRATION,
   PROSPECT_RECIPE_UX_MIGRATION,
+  ...PHASE_6_MIGRATIONS,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {
