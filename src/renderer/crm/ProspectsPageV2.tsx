@@ -503,6 +503,23 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
   </div>;
 }
 
+function ProspectWorkAccordion({ title, summary, defaultOpen = false, children }: {
+  title: string;
+  summary?: string | null;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return <section className={`prospect-work-accordion ${open ? 'open' : ''}`}>
+    <button type="button" className="prospect-work-accordion-trigger" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
+      <span className="prospect-work-accordion-arrow" aria-hidden="true">{open ? '▾' : '▸'}</span>
+      <span className="prospect-work-accordion-title">{title}</span>
+      {summary && <span className="prospect-work-accordion-summary">{summary}</span>}
+    </button>
+    {open && <div className="prospect-work-accordion-body">{children}</div>}
+  </section>;
+}
+
 function ProspectDetailV2({ prospect, actions, activity, mode, onRefresh, onClose, onOpenDesk, onTemperature, onStart, onLost, onArchive }: {
   prospect: ProspectSummary;
   actions: CrmAction[];
@@ -568,8 +585,12 @@ function ProspectDetailV2({ prospect, actions, activity, mode, onRefresh, onClos
     <div className="prospect-desk-content">
       {deskTab === 'reference' ? <>
         <div className="reference-tab-intro"><div><strong>Connaissance entreprise</strong><span>Informations préparées dans l’annuaire, accessibles et modifiables sans quitter le suivi commercial.</span></div><button type="button" className="secondary-button" onClick={() => void window.atoumweb.app.openProspectReferenceWindow(prospect.id)}>Ouvrir sur un autre écran</button></div>
-        <div id={`prospect-identity-${prospect.id}`} className="prospect-target-section"><ProspectIdentityPanel prospect={prospect} focusRequest={identityFocus} onSaved={() => onRefresh('Informations du prospect mises à jour.')} /></div>
-        <ProspectResearchPanel prospect={prospect} defaultOpen onChanged={onRefresh} />
+        <ProspectWorkAccordion title="Entreprise & contacts" summary={prospect.secondaryLabel || 'Contact à compléter'} defaultOpen>
+          <div id={`prospect-identity-${prospect.id}`} className="prospect-target-section"><ProspectIdentityPanel prospect={prospect} focusRequest={identityFocus} onSaved={() => onRefresh('Informations du prospect mises à jour.')} /></div>
+        </ProspectWorkAccordion>
+        <ProspectWorkAccordion title="Connaissance entreprise" summary={prospect.organizationIndustry || 'Activité à compléter'} defaultOpen>
+          <ProspectResearchPanel prospect={prospect} defaultOpen onChanged={onRefresh} />
+        </ProspectWorkAccordion>
       </> : <>
         <div className="prospect-temperature-control"><label>Température commerciale<select value={prospect.temperature ?? 'neutral'} onChange={(event) => onTemperature(event.target.value as ProspectTemperature)}>{PROSPECT_TEMPERATURES.map((value) => <option key={value} value={value}>{TEMPERATURE_LABELS[value]}</option>)}</select></label></div>
         {(prospect.stage === 'need_identified' && !prospect.primaryNeed || !actions.some((item) => item.status === 'open')) && <div className="prospect-missing-actions" aria-label="Informations à compléter">
@@ -577,24 +598,47 @@ function ProspectDetailV2({ prospect, actions, activity, mode, onRefresh, onClos
           {!actions.some((item) => item.status === 'open') && <div className="missing-action"><span>Aucune relance ou action ouverte.</span><button type="button" className="secondary-button" onClick={() => document.getElementById(`prospect-followup-${prospect.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>Programmer une relance</button></div>}
         </div>}
         {prospect.stage === 'new' && <button className="primary-button start-qualification-button" onClick={onStart}>Démarrer la prospection</button>}
-        <section className="prospect-commercial-priority">
-          <div className="work-section-heading"><div><span className="eyebrow">Conversation commerciale</span><strong>Informations prioritaires</strong></div><button type="button" className="secondary-button compact-button" onClick={() => setDeskTab('reference')}>Voir la référence prospect</button></div>
-          <div className="reference-summary-grid">
-            <div><span>Interlocuteur</span><strong>{prospect.secondaryLabel || 'À préciser'}</strong></div>
-            <div><span>Décideur</span><strong>{prospect.decisionMakerName || prospect.decisionMakerDetails || 'À qualifier'}</strong></div>
-            <div><span>Besoin</span><strong>{prospect.primaryNeed || prospect.projectSummary || 'À préciser'}</strong></div>
-            <div><span>Prochaine action</span><strong>{nextAction?.title || 'À programmer'}</strong>{nextAction?.dueAt && <small>{formatDate(nextAction.dueAt)}</small>}</div>
-          </div>
-          <ProspectReferenceSummary prospect={prospect} />
-        </section>
-        <div id={`prospect-identity-${prospect.id}`} className="prospect-target-section"><ProspectIdentityPanel prospect={prospect} focusRequest={identityFocus} onSaved={() => onRefresh('Informations du prospect mises à jour.')} /></div>
-        {prospect.stage === 'qualifying' && <ProspectQualificationPanelV2 prospect={prospect} onSaved={onRefresh} onGoTo={(target) => { if (target === 'decision' || target === 'contact') setIdentityFocus({ target, sequence: Date.now() }); else document.getElementById(`prospect-${target}-${prospect.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} />}
-        {prospect.stage === 'need_identified' && <div id={`prospect-need-${prospect.id}`} className="prospect-target-section"><ProspectNeedsPanel prospectId={prospect.id} onChanged={() => onRefresh()} /></div>}
-        {quoteVisible && <ProspectQuotePanel prospect={prospect} onChanged={onRefresh} />}
-        <div id={`prospect-followup-${prospect.id}`} className="prospect-target-section"><ProspectActionsPanel prospect={prospect} actions={actions} onChanged={onRefresh} /></div>
-        <div className="detail-actions"><button className="secondary-button danger-outline" onClick={() => setLossOpen((value) => !value)}>Perdu</button><button className="secondary-button" onClick={onArchive}>Archiver le prospect</button></div>
-        {lossOpen && <div className="inline-editor prospect-loss-editor"><strong>Classer le prospect comme perdu</strong><label>Raison<select value={lossCode} onChange={(event) => setLossCode(event.target.value)}>{LOSS_REASONS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>{lossCode === 'other' && <label>Préciser<input value={lossOther} onChange={(event) => setLossOther(event.target.value)} /></label>}<div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => setLossOpen(false)}>Annuler</button><button className="secondary-button danger-outline" type="button" disabled={!lossReason} onClick={() => onLost(lossCode, lossReason)}>Confirmer Perdu</button></div></div>}
-        <div className="activity-preview"><strong>Journal du dossier</strong>{activity.slice(0, 20).map((event) => <div className="activity-item" key={event.id}><span className="activity-dot" /><div><p>{humanActivity(event.summary)}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div></div>)}{activity.length === 0 && <p className="muted">Aucune activité.</p>}</div>
+        <ProspectWorkAccordion title="Informations prioritaires" summary={`${prospect.secondaryLabel || 'Interlocuteur à préciser'} · ${nextAction?.title || 'Action à programmer'}`} defaultOpen>
+          <section className="prospect-commercial-priority">
+            <div className="work-section-heading"><div><span className="eyebrow">Conversation commerciale</span><strong>Synthèse immédiate</strong></div><button type="button" className="secondary-button compact-button" onClick={() => setDeskTab('reference')}>Voir la référence prospect</button></div>
+            <div className="reference-summary-grid">
+              <div><span>Interlocuteur</span><strong>{prospect.secondaryLabel || 'À préciser'}</strong></div>
+              <div><span>Décideur</span><strong>{prospect.decisionMakerName || prospect.decisionMakerDetails || 'À qualifier'}</strong></div>
+              <div><span>Besoin</span><strong>{prospect.primaryNeed || prospect.projectSummary || 'À préciser'}</strong></div>
+              <div><span>Prochaine action</span><strong>{nextAction?.title || 'À programmer'}</strong>{nextAction?.dueAt && <small>{formatDate(nextAction.dueAt)}</small>}</div>
+            </div>
+            <ProspectReferenceSummary prospect={prospect} />
+          </section>
+        </ProspectWorkAccordion>
+
+        <ProspectWorkAccordion title="Entreprise & interlocuteurs" summary={prospect.secondaryLabel || 'Contact à compléter'}>
+          <div id={`prospect-identity-${prospect.id}`} className="prospect-target-section"><ProspectIdentityPanel prospect={prospect} focusRequest={identityFocus} onSaved={() => onRefresh('Informations du prospect mises à jour.')} /></div>
+        </ProspectWorkAccordion>
+
+        {prospect.stage === 'qualifying' && <ProspectWorkAccordion title="Qualification" summary={prospect.decisionMakerName || prospect.decisionMakerDetails || 'Décideur à préciser'} defaultOpen>
+          <ProspectQualificationPanelV2 prospect={prospect} onSaved={onRefresh} onGoTo={(target) => { if (target === 'decision' || target === 'contact') setIdentityFocus({ target, sequence: Date.now() }); else document.getElementById(`prospect-${target}-${prospect.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} />
+        </ProspectWorkAccordion>}
+
+        {prospect.stage === 'need_identified' && <ProspectWorkAccordion title="Besoin / projet" summary={prospect.primaryNeed || prospect.projectSummary || 'Besoin à préciser'} defaultOpen>
+          <div id={`prospect-need-${prospect.id}`} className="prospect-target-section"><ProspectNeedsPanel prospectId={prospect.id} onChanged={() => onRefresh()} /></div>
+        </ProspectWorkAccordion>}
+
+        {quoteVisible && <ProspectWorkAccordion title="Devis" summary={STAGE_LABELS[prospect.stage ?? 'quote_to_prepare']} defaultOpen={['quote_to_prepare','quote_to_send','quote_sent','follow_up','negotiation'].includes(prospect.stage ?? '')}>
+          <ProspectQuotePanel prospect={prospect} onChanged={onRefresh} />
+        </ProspectWorkAccordion>}
+
+        <ProspectWorkAccordion title="Relances & prochaines actions" summary={nextAction ? `${nextAction.title}${nextAction.dueAt ? ` · ${formatDate(nextAction.dueAt)}` : ''}` : 'Aucune action programmée'} defaultOpen={!nextAction}>
+          <div id={`prospect-followup-${prospect.id}`} className="prospect-target-section"><ProspectActionsPanel prospect={prospect} actions={actions} onChanged={onRefresh} /></div>
+        </ProspectWorkAccordion>
+
+        <ProspectWorkAccordion title="Clôture du dossier" summary={prospect.stage === 'won' ? 'Gagné' : prospect.stage === 'lost' ? 'Perdu' : 'Dossier en cours'}>
+          <div className="detail-actions"><button className="secondary-button danger-outline" onClick={() => setLossOpen((value) => !value)}>Perdu</button><button className="secondary-button" onClick={onArchive}>Archiver le prospect</button></div>
+          {lossOpen && <div className="inline-editor prospect-loss-editor"><strong>Classer le prospect comme perdu</strong><label>Raison<select value={lossCode} onChange={(event) => setLossCode(event.target.value)}>{LOSS_REASONS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>{lossCode === 'other' && <label>Préciser<input value={lossOther} onChange={(event) => setLossOther(event.target.value)} /></label>}<div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => setLossOpen(false)}>Annuler</button><button className="secondary-button danger-outline" type="button" disabled={!lossReason} onClick={() => onLost(lossCode, lossReason)}>Confirmer Perdu</button></div></div>}
+        </ProspectWorkAccordion>
+
+        <ProspectWorkAccordion title="Historique du dossier" summary={`${activity.length} événement${activity.length > 1 ? 's' : ''}`}>
+          <div className="activity-preview"><strong>Journal du dossier</strong>{activity.slice(0, 20).map((event) => <div className="activity-item" key={event.id}><span className="activity-dot" /><div><p>{humanActivity(event.summary)}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div></div>)}{activity.length === 0 && <p className="muted">Aucune activité.</p>}</div>
+        </ProspectWorkAccordion>
       </>}
     </div>
   </aside>;
