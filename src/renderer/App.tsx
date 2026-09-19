@@ -84,6 +84,7 @@ function App() {
   const [crmTarget,setCrmTarget] = useState<string|null>(null);
   const [quoteTarget,setQuoteTarget] = useState<string|null>(null);
   useEffect(()=>{const open=(event:Event)=>openSearchResult((event as CustomEvent<SearchResult>).detail);window.addEventListener('atoumweb:navigate',open);return()=>window.removeEventListener('atoumweb:navigate',open);},[]);
+  useEffect(() => { const open = (event: Event) => setActivePage((event as CustomEvent<PageName>).detail); window.addEventListener('atoumweb:open-page', open); return () => window.removeEventListener('atoumweb:open-page', open); }, []);
   const [projectSearchTarget, setProjectSearchTarget] = useState<string | null>(null);
   const [operationsSearchTarget, setOperationsSearchTarget] = useState<OperationsSearchTarget | null>(null);
 

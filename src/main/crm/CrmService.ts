@@ -600,12 +600,19 @@ export class CrmService {
       [
         clean(input.organizationId), clean(input.primaryContactId), status, clean(input.nextActionAt),
         clean(input.nextActionText), clean(input.notes), input.relationshipStatus ?? current.relationshipStatus ?? 'neutral',
-        clean(input.relationshipNote), nowIso(), id,
+        clean(input.relationshipNote ?? current.relationshipNote), nowIso(), id,
       ],
     );
     if (Number(result.changes) !== 1) throw new Error('Client introuvable.');
     if (clean(input.primaryContactId)) this.ensurePrimaryContactRole(id, clean(input.primaryContactId) as string);
     this.activity({ entityType: 'client', entityId: id, action: 'updated', summary: 'Client mis à jour', clientId: id, organizationId: clean(input.organizationId), contactId: clean(input.primaryContactId) });
+    if (input.relationshipStatus && input.relationshipStatus !== (current.relationshipStatus ?? 'neutral')) {
+      const labels = { excellent: 'Excellente', good: 'Bonne', neutral: 'Neutre', watch: 'À surveiller', difficult: 'Difficile' };
+      this.activity({ entityType: 'client', entityId: id, action: 'relationship_changed',
+        summary: `Qualité de relation : ${labels[current.relationshipStatus ?? 'neutral']} → ${labels[input.relationshipStatus]}`,
+        metadata: { from: current.relationshipStatus ?? 'neutral', to: input.relationshipStatus, note: clean(input.relationshipNote) },
+        clientId: id, organizationId: clean(input.organizationId), contactId: clean(input.primaryContactId) });
+    }
     this.indexClient(id);
     return this.getClient(id);
   }

@@ -1,5 +1,19 @@
 # AtoumWeb Manager — Suivi du projet
 
+## Lot UX commercial avant Phase 5 — 19/09/2026
+
+Branche `fix/pre-phase5-commercial-ux`, créée depuis `fix/prospect-recipe-ux-v2` à `3bc0f19`. Phase 5 en pause ; Phase 6 non intégrée. Aucune migration modifiée.
+
+- [x] Fiches Prospect et Client : mode compact et vue agrandie avec défilement interne et hauteur disponible corrigée.
+- [x] Couleurs métier des fiches, cartes et champs blancs ; température retirée du texte des cartes Prospect sans changer la donnée.
+- [x] Qualification Prospect : accès direct aux champs manquants ; raccourcis vers besoin et relance.
+- [x] Fiche Client : coordonnées prioritaires, éléments liés réellement présents, échéances conditionnelles et accès secondaires repliés.
+- [x] Relation Client : cinq états distincts de la température Prospect, changement rapide, couleur de la fiche et des lignes, historique de transition.
+- [x] `npm run typecheck` et `npm test` : 30 fichiers / 135 tests réussis.
+- [ ] Recette visuelle Windows finale sur le profil de validation, plusieurs résolutions et trois thèmes.
+
+Prochaine action : terminer la recette visuelle du lot avant toute validation finale ou fusion. Aucune migration ajoutée.
+
 > Source de vérité partagée entre AtoumWeb, ChatGPT et Codex. À mettre à jour après chaque étape significative.
 
 ## État général

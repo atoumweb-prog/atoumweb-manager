@@ -47,7 +47,7 @@ function cleanError(error: unknown): string {
     .trim();
 }
 
-export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: ProspectSummary; onSaved: () => void }) {
+export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { prospect: ProspectSummary; onSaved: () => void; focusRequest?: { target: 'decision' | 'contact'; sequence: number } | null }) {
   const [identity, setIdentity] = useState<WorkflowIdentity | null>(null);
   const [decision, setDecision] = useState<DecisionDraft>(() => decisionFromIdentity(prospect));
   const [decisionContactId, setDecisionContactId] = useState('');
@@ -55,6 +55,17 @@ export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: Prospec
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!focusRequest) return;
+    if (focusRequest.target === 'decision') setEditing(true);
+    window.setTimeout(() => {
+      const field = focusRequest.target === 'decision' ? document.getElementById('prospect-decision-field') : document.querySelector<HTMLElement>('.prospect-detail-v2 .contact-methods-panel');
+      if (field instanceof HTMLDetailsElement) field.open = true;
+      field?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      field?.querySelector<HTMLElement>(focusRequest.target === 'decision' ? 'select' : '.contact-method-add input')?.focus({ preventScroll: true });
+    }, 50);
+  }, [focusRequest?.sequence]);
 
   async function draftFromContact(contactId: string, base: DecisionDraft, sourceIdentity: WorkflowIdentity): Promise<DecisionDraft> {
     const contact = sourceIdentity.contacts.find((item) => item.id === contactId) ?? sourceIdentity.decisionMaker;
@@ -247,11 +258,11 @@ export function ProspectIdentityPanel({ prospect, onSaved }: { prospect: Prospec
       </>}
 
       <div className="form-span-2"><span className="eyebrow">Interlocuteur principal</span></div>
-      <label>Prénom interlocuteur<input value={primaryDraft.firstName} onChange={(e) => setPrimaryDraft({ ...primaryDraft, firstName: e.target.value })} placeholder="Prénom" /></label>
+      <label id="prospect-contact-field">Prénom interlocuteur<input value={primaryDraft.firstName} onChange={(e) => setPrimaryDraft({ ...primaryDraft, firstName: e.target.value })} placeholder="Prénom" /></label>
       <label>Nom interlocuteur<input value={primaryDraft.lastName} onChange={(e) => setPrimaryDraft({ ...primaryDraft, lastName: e.target.value })} placeholder="Nom" /></label>
       <label>Fonction / rôle <FieldHelp text="Champ libre : gérant, patron, comptable, banquier, responsable communication…" /><input value={primaryDraft.role} onChange={(e) => setPrimaryDraft({ ...primaryDraft, role: e.target.value })} placeholder="Gérant, responsable…" /></label>
 
-      <fieldset className="identity-decision-maker form-span-2">
+      <fieldset id="prospect-decision-field" className="identity-decision-maker form-span-2">
         <legend>Décisionnaire <FieldHelp text="Choisis qui peut réellement valider le devis. Le décisionnaire reste un vrai Contact réutilisable." /></legend>
         <label>Qui est le décisionnaire ?
           <select value={decision.status ?? ''} onChange={(e) => { const status = (e.target.value || null) as ProspectInput['decisionStatus']; setDecision({ ...decision, status }); if (status !== 'no') setDecisionContactId(''); }}>

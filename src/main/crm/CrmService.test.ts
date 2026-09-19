@@ -18,6 +18,19 @@ afterEach(() => {
 });
 
 describe('CrmService', () => {
+  it('conserve la qualité de relation client et journalise ses changements', () => {
+    const organization = crm.createOrganization({ name: 'Relation Test' });
+    const client = crm.createClient({ organizationId: organization.id });
+    const watched = crm.updateClient(client.id, { ...client, relationshipStatus: 'watch', relationshipNote: 'Retard de paiement' });
+    expect(watched.relationshipStatus).toBe('watch');
+    expect(watched.relationshipNote).toBe('Retard de paiement');
+    const good = crm.updateClient(client.id, { ...watched, relationshipStatus: 'good' });
+    expect(good.relationshipStatus).toBe('good');
+    expect(good.relationshipNote).toBe('Retard de paiement');
+    const changes = crm.listActivity('client', client.id).filter((event) => event.action === 'relationship_changed');
+    expect(changes).toHaveLength(2);
+    expect(changes.map((event) => event.summary)).toContain('Qualité de relation : À surveiller → Bonne');
+  });
   it('crée un prospect entreprise avec contact et le retrouve dans la recherche', () => {
     const organization = crm.createOrganization({ name: 'Cazor Auto Passion', email: 'contact@cazor.test' });
     const contact = crm.createContact({

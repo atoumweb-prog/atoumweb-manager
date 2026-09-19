@@ -65,7 +65,7 @@ function cleanError(error: unknown): string {
     .trim();
 }
 
-export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: ProspectSummary; onSaved: (message?: string) => void }) {
+export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { prospect: ProspectSummary; onSaved: (message?: string) => void; onGoTo?: (target: 'identity' | 'decision' | 'contact' | 'need' | 'followup') => void }) {
   const origin = inferOrigin(prospect);
   const [draft, setDraft] = useState<Partial<ProspectInput>>({ ...prospect, originType: origin });
   const [contactCount, setContactCount] = useState(0);
@@ -127,6 +127,13 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
 
   const missing = readiness.filter((item) => !item.ok);
   const allReady = missing.length === 0;
+  function goToMissing(key: string) {
+    if (key === 'decision' || key === 'contact') { onGoTo?.(key); return; }
+    const labels: Record<string, string> = { target: 'Motif de ciblage', observation: 'Constat', contact_result: 'Résultat du premier contact', interest: 'Niveau d’intérêt', request: 'Demande initiale', context: 'Motif de l’échange' };
+    const label = Array.from(document.querySelectorAll<HTMLElement>('.qualification-panel-v2 label')).find((item) => item.textContent?.trim().startsWith(labels[key]));
+    label?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    label?.querySelector<HTMLElement>('input, select, textarea')?.focus({ preventScroll: true });
+  }
 
   async function persist(): Promise<ProspectSummary> {
     return window.atoumweb.crm.prospects.updateQualification(prospect.id, {
@@ -224,10 +231,11 @@ export function ProspectQualificationPanelV2({ prospect, onSaved }: { prospect: 
       <div className="qualification-decision-summary">
         <span className="eyebrow">Décisionnaire</span>
         <strong>{decisionSummary}</strong>
+        {!draft.decisionStatus && <button className="secondary-button" type="button" onClick={() => onGoTo?.('decision')}>Renseigner le décisionnaire</button>}
         <small>Le décisionnaire et ses coordonnées se modifient dans « Entreprise & interlocuteur ». La qualification ne duplique plus ces informations.</small>
       </div>
 
-      {!allReady && <div className="qualification-recap" role="status"><strong>Qualification à compléter</strong><p>{readiness.filter((item) => item.ok).length}/{readiness.length} éléments acquis.</p><div>{missing.map((item) => <span key={item.key}>À compléter : {item.label}</span>)}</div><small>Action recommandée : complète uniquement ces éléments, puis valide la qualification pour passer à l’identification du besoin.</small></div>}
+      {!allReady && <div className="qualification-recap" role="status"><strong>Qualification à compléter</strong><p>{readiness.filter((item) => item.ok).length}/{readiness.length} éléments acquis.</p><div>{missing.map((item) => <div className="missing-action" key={item.key}><span>À compléter : {item.label}</span><button type="button" className="secondary-button" onClick={() => goToMissing(item.key)}>Renseigner {item.label.toLocaleLowerCase('fr-FR')}</button></div>)}</div></div>}
       {allReady && <div className="qualification-recap ready" role="status"><strong>Qualification prête à être validée</strong><p>Les éléments commerciaux minimums sont présents. Le besoin détaillé, le budget et le calendrier seront travaillés à l’étape suivante.</p></div>}
 
       {error && <p className="form-error" role="alert">{error}</p>}

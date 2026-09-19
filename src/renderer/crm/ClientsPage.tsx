@@ -1,4 +1,4 @@
-import { DossierPanel, NeedChoices } from '../workflow/DossierPanel';
+import { NeedChoices, openEntity } from '../workflow/DossierPanel';
 import {ClientDocumentsPanel} from './ClientDocumentsPanel';
 import type { NeedInput } from '../../shared/workflow';
 import { useEffect, useMemo, useState } from 'react';
@@ -12,12 +12,22 @@ import {
   type ClientRelationshipStatus,
 } from '../../shared/crm';
 import { ClientOperationsTab } from './ClientOperationsTab';
+import type { QuoteSummary } from '../../shared/commercial';
+import type { Contact, Organization } from '../../shared/crm';
+import type { ProjectSummary } from '../../shared/projects';
+import type { Intervention, MaintenanceSubscription } from '../../shared/operations';
+import { ContactMethodsPanel } from './ContactMethodsPanel';
 
 const STATUS_LABELS: Record<ClientStatus, string> = {
   active: 'Actif',
   inactive: 'Inactif',
   archived: 'Archivé',
 };
+
+const RELATION_LABELS: Record<ClientRelationshipStatus, string> = {
+  excellent: 'Excellente', good: 'Bonne', neutral: 'Neutre', watch: 'À surveiller', difficult: 'Difficile',
+};
+const RELATION_OPTIONS = Object.keys(RELATION_LABELS) as ClientRelationshipStatus[];
 
 const ROLE_LABELS: Record<ClientContactRole, string> = {
   primary: 'Principal',
@@ -27,7 +37,7 @@ const ROLE_LABELS: Record<ClientContactRole, string> = {
   other: 'Autre',
 };
 
-type ClientTab = 'summary' | 'contacts' | 'documents' | 'operations' | 'commercial' | 'history';
+type ClientTab = 'summary' | 'contacts' | 'documents' | 'operations' | 'history';
 
 interface ClientDraft {
   company: string;
@@ -83,6 +93,16 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
   const [contacts, setContacts] = useState<ClientContactLink[]>([]);
+  const [identity, setIdentity] = useState<{ organization: Organization | null; contact: Contact | null } | null>(null);
+  const [quotes, setQuotes] = useState<QuoteSummary[]>([]);
+  const [projects, setProjects] = useState<ProjectSummary[]>([]);
+  const [subscriptions, setSubscriptions] = useState<MaintenanceSubscription[]>([]);
+  const [interventions, setInterventions] = useState<Intervention[]>([]);
+  const [largeView, setLargeView] = useState(false);
+  const [relationshipMenuOpen, setRelationshipMenuOpen] = useState(false);
+  const [relationshipSaving, setRelationshipSaving] = useState(false);
+  const [editingCoordinates, setEditingCoordinates] = useState(false);
+  const [coordinateDraft, setCoordinateDraft] = useState({ firstName: '', lastName: '', addressLine1: '', addressLine2: '', postalCode: '', city: '' });
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<'all' | ClientStatus>('all');
   const [query, setQuery] = useState('');
@@ -96,6 +116,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
   const [demoMode, setDemoMode] = useState(false);
   const [showContactForm, setShowContactForm] = useState(false);
   const [contactDraft, setContactDraft] = useState<ContactDraft>(EMPTY_CONTACT_DRAFT);
+  const [editingContactId, setEditingContactId] = useState<string | null>(null);
   const [contactError, setContactError] = useState<string | null>(null);
   const [contactSaving, setContactSaving] = useState(false);
   const [actionEditor, setActionEditor] = useState<ClientActionEditor | null>(null);
@@ -111,12 +132,19 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
   }
 
   async function refreshSelectedClientData(clientId: string): Promise<void> {
-    const [nextActivity, nextContacts] = await Promise.all([
+    const [nextActivity, nextContacts, nextIdentity, nextQuotes, nextProjects, nextSubscriptions, nextInterventions] = await Promise.all([
       window.atoumweb.crm.activity.list('client', clientId),
       window.atoumweb.crm.clients.listContacts(clientId),
+      window.atoumweb.workflow.identity('client', clientId),
+      window.atoumweb.quotes.list({ clientAccountId: clientId }),
+      window.atoumweb.projects.projects.list({ clientAccountId: clientId }),
+      window.atoumweb.operations.maintenance.subscriptions.list({ clientAccountId: clientId }),
+      window.atoumweb.operations.interventions.list({ clientAccountId: clientId }),
     ]);
     setActivity(nextActivity);
     setContacts(nextContacts);
+    setIdentity(nextIdentity); setQuotes(nextQuotes); setProjects(nextProjects);
+    setSubscriptions(nextSubscriptions); setInterventions(nextInterventions);
   }
 
   async function refreshAll(): Promise<void> {
@@ -133,6 +161,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
     if (!selectedId) {
       setActivity([]);
       setContacts([]);
+      setIdentity(null); setQuotes([]); setProjects([]); setSubscriptions([]); setInterventions([]);
       return;
     }
     void refreshSelectedClientData(selectedId);
@@ -150,6 +179,26 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
   }, [clients, query, statusFilter]);
 
   const selected = clients.find((client) => client.id === selectedId) ?? null;
+
+  async function updateRelationship(client: ClientSummary, next: ClientRelationshipStatus): Promise<void> {
+    setRelationshipMenuOpen(false);
+    if (next === (client.relationshipStatus ?? 'neutral') || relationshipSaving) return;
+    setRelationshipSaving(true);
+    setClients((items) => items.map((item) => item.id === client.id ? { ...item, relationshipStatus: next } : item));
+    try {
+      const updated = await window.atoumweb.crm.clients.update(client.id, {
+        organizationId: client.organizationId, primaryContactId: client.primaryContactId,
+        status: client.status, nextActionAt: client.nextActionAt, nextActionText: client.nextActionText,
+        notes: client.notes, relationshipStatus: next, relationshipNote: client.relationshipNote,
+      });
+      setClients((items) => items.map((item) => item.id === client.id ? updated : item));
+      await refreshSelectedClientData(client.id);
+      onMessage(`Relation client : ${RELATION_LABELS[next]}.`);
+    } catch (error) {
+      setClients((items) => items.map((item) => item.id === client.id ? client : item));
+      onMessage(error instanceof Error ? error.message : 'Mise à jour de la relation impossible.');
+    } finally { setRelationshipSaving(false); }
+  }
 
   async function submitClient(event: React.FormEvent): Promise<void> {
     event.preventDefault();
@@ -212,9 +261,32 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
   function openClient(id: string): void {
     setSelectedId(id);
     setActiveTab('summary');
+    setLargeView(false);
+    setEditingCoordinates(false);
     setShowContactForm(false);
+    setEditingContactId(null);
     setActionEditor(null);
     setArchiveCandidateId(null);
+  }
+
+  function beginCoordinateEdit(): void {
+    setCoordinateDraft({
+      firstName: identity?.contact?.firstName ?? '', lastName: identity?.contact?.lastName ?? '',
+      addressLine1: identity?.organization?.addressLine1 ?? '', addressLine2: identity?.organization?.addressLine2 ?? '',
+      postalCode: identity?.organization?.postalCode ?? '', city: identity?.organization?.city ?? '',
+    });
+    setEditingCoordinates(true);
+  }
+
+  async function saveCoordinates(): Promise<void> {
+    if (!selected || !identity) return;
+    try {
+      if (identity.contact) await window.atoumweb.crm.contacts.update(identity.contact.id, { ...identity.contact, firstName: coordinateDraft.firstName.trim(), lastName: coordinateDraft.lastName.trim() });
+      if (identity.organization) await window.atoumweb.crm.organizations.update(identity.organization.id, { ...identity.organization, addressLine1: coordinateDraft.addressLine1.trim() || null, addressLine2: coordinateDraft.addressLine2.trim() || null, postalCode: coordinateDraft.postalCode.trim() || null, city: coordinateDraft.city.trim() || null });
+      setEditingCoordinates(false);
+      await refreshSelectedClientData(selected.id); await refresh();
+      onMessage('Coordonnées du client mises à jour.');
+    } catch (error) { onMessage(error instanceof Error ? error.message : 'Mise à jour impossible.'); }
   }
 
   async function updateStatus(client: ClientSummary, status: ClientStatus): Promise<void> {
@@ -302,9 +374,15 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
       return;
     }
 
+    const wasEditing = Boolean(editingContactId);
     setContactSaving(true);
     try {
-      await window.atoumweb.crm.clients.addContact(
+      if (editingContactId) {
+        const link = contacts.find((item) => item.contactId === editingContactId);
+        if (!link) throw new Error('Contact introuvable.');
+        await window.atoumweb.crm.contacts.update(editingContactId, { ...link.contact, firstName: contactDraft.firstName.trim(), lastName: contactDraft.lastName.trim(), jobTitle: contactDraft.jobTitle.trim() || null });
+        if (contactDraft.makePrimary && !link.isPrimary) await window.atoumweb.crm.clients.setPrimaryContact(selected.id, editingContactId);
+      } else await window.atoumweb.crm.clients.addContact(
         selected.id,
         {
           organizationId: selected.organizationId,
@@ -318,10 +396,11 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
         contactDraft.makePrimary,
       );
       setContactDraft(EMPTY_CONTACT_DRAFT);
+      setEditingContactId(null);
       setShowContactForm(false);
       await refresh();
       await refreshSelectedClientData(selected.id);
-      onMessage('Contact ajouté au client.');
+      onMessage(wasEditing ? 'Contact mis à jour.' : 'Contact ajouté au client.');
     } catch (error) {
       setContactError(error instanceof Error ? error.message : 'Impossible d’ajouter le contact.');
     } finally {
@@ -379,7 +458,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
                 <thead><tr><th>Client</th><th>Statut</th><th>Contact principal</th><th>Coordonnées</th><th>Prochaine action</th><th /></tr></thead>
                 <tbody>
                   {filtered.map((client) => (
-                    <tr key={client.id} className={selectedId === client.id ? 'selected-row' : ''} onClick={() => openClient(client.id)}>
+                    <tr key={client.id} className={`client-relationship-${client.relationshipStatus ?? 'neutral'} ${selectedId === client.id ? 'selected-row' : ''}`} onClick={() => openClient(client.id)}>
                       <td><div className="client-name-cell"><span className="avatar-initials">{initials(client.displayName)}</span><div><strong>{client.displayName}</strong><small>Client depuis {new Date(client.becameClientAt).toLocaleDateString('fr-FR')}</small></div></div></td>
                       <td><span className={`client-status status-${client.status}`}>{STATUS_LABELS[client.status ?? 'active']}</span></td>
                       <td>{client.contactName || '—'}</td>
@@ -395,24 +474,41 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
           </div>
 
           {selected && (
-            <aside className="panel client-summary-panel">
+            <aside className={`panel client-summary-panel client-relationship-${selected.relationshipStatus ?? 'neutral'} ${largeView ? 'client-large-view' : ''}`} role={largeView ? 'dialog' : undefined} aria-modal={largeView ? true : undefined} aria-label={largeView ? `Fiche client ${selected.displayName}` : undefined}>
               <div className="detail-panel-heading">
                 <div>
                   <span className="eyebrow">Fiche client</span>
                   <div className="client-summary-head"><span className="avatar-large">{initials(selected.displayName)}</span><div><h2>{selected.displayName}</h2><span className={`client-status status-${selected.status}`}>{STATUS_LABELS[selected.status ?? 'active']}</span></div></div>
                 </div>
-                <button className="close-detail" type="button" onClick={() => { setSelectedId(null); setActionEditor(null); setArchiveCandidateId(null); }}>×</button>
+                <div className="detail-heading-actions"><div className="client-relationship-picker"><button className="secondary-button client-relationship-trigger" type="button" aria-expanded={relationshipMenuOpen} aria-haspopup="true" disabled={relationshipSaving} onClick={() => setRelationshipMenuOpen((value) => !value)}><span className="client-relationship-dot" />Relation client · {RELATION_LABELS[selected.relationshipStatus ?? 'neutral']}</button>{relationshipMenuOpen && <div className="client-relationship-menu" role="group" aria-label="Qualité de la relation client">{RELATION_OPTIONS.map((option) => <button key={option} type="button" className={`client-relationship-choice client-relationship-${option}`} aria-pressed={(selected.relationshipStatus ?? 'neutral') === option} onClick={() => void updateRelationship(selected, option)}><span className="client-relationship-dot" />{RELATION_LABELS[option]}</button>)}</div>}</div><button className="secondary-button" type="button" onClick={() => setLargeView((value) => !value)}>{largeView ? 'Réduire' : 'Agrandir'}</button><button className="close-detail" type="button" aria-label="Fermer la fiche client" onClick={() => { setRelationshipMenuOpen(false); setLargeView(false); setSelectedId(null); setActionEditor(null); setArchiveCandidateId(null); }}>×</button></div>
               </div>
-
-              <DossierPanel owner="client" id={selected.id} onSaved={()=>void refresh()} />
-              <div className="client-tabs-preview client-tabs-buttons">
-                <button className={activeTab === 'summary' ? 'active' : ''} type="button" onClick={() => setActiveTab('summary')}>Résumé</button>
+              <div className="client-summary-scroll">
+              {activeTab === 'summary' && <>
+                <section className="client-primary-card"><div className="contact-tab-heading"><h3>Coordonnées</h3><button className="secondary-button" type="button" onClick={beginCoordinateEdit}>Modifier</button></div>
+                  {selected.contactName && <SummaryLine label="Contact principal" value={selected.contactName} />}
+                  {selected.phone && <SummaryLine label="Téléphone" value={selected.phone} />}
+                  {selected.email && <SummaryLine label="Email" value={selected.email} />}
+                  {identity?.organization && [identity.organization.addressLine1, identity.organization.addressLine2, identity.organization.postalCode, identity.organization.city].some(Boolean) && <SummaryLine label="Adresse" value={[identity.organization.addressLine1, identity.organization.addressLine2, identity.organization.postalCode, identity.organization.city].filter(Boolean).join(' · ')} />}
+                  {contacts.filter((item) => !item.isPrimary).map((item) => <div className="client-secondary-contact" key={item.id}><strong>{item.contact.firstName} {item.contact.lastName}</strong><span>{item.contact.phone || item.contact.email || ROLE_LABELS[item.role]}</span><button type="button" className="link-button" onClick={() => setActiveTab('contacts')}>Modifier</button></div>)}
+                  <ContactMethodsPanel organizationId={identity?.organization?.id} contactId={identity?.contact?.id} />
+                  <button className="secondary-button" type="button" onClick={() => { setActiveTab('contacts'); setShowContactForm(true); }}>Ajouter un contact</button>
+                  {editingCoordinates && <div className="contact-inline-form"><div className="contact-form-grid">{identity?.contact && <><label>Prénom<input value={coordinateDraft.firstName} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, firstName: event.target.value })} /></label><label>Nom<input value={coordinateDraft.lastName} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, lastName: event.target.value })} /></label></>}{identity?.organization && <><label>Adresse<input value={coordinateDraft.addressLine1} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, addressLine1: event.target.value })} /></label><label>Complément<input value={coordinateDraft.addressLine2} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, addressLine2: event.target.value })} /></label><label>Code postal<input value={coordinateDraft.postalCode} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, postalCode: event.target.value })} /></label><label>Ville<input value={coordinateDraft.city} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, city: event.target.value })} /></label></>}</div><div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => setEditingCoordinates(false)}>Annuler</button><button className="primary-button" type="button" disabled={!identity?.contact && !identity?.organization} onClick={() => void saveCoordinates()}>Enregistrer</button></div></div>}
+                </section>
+                <section className="client-primary-card"><h3>Relation avec AtoumWeb</h3>
+                  {quotes.filter((item) => !['refused', 'expired'].includes(item.status)).map((item) => <button className="workflow-link" type="button" key={item.id} onClick={() => openEntity({ entityType: 'quote', entityId: item.id, title: item.subject })}>Devis {item.number} · {item.subject}</button>)}
+                  {projects.map((item) => <button className="workflow-link" type="button" key={item.id} onClick={() => openEntity({ entityType: 'project', entityId: item.id, title: item.name })}>Projet · {item.name}</button>)}
+                  {subscriptions.filter((item) => item.status === 'active').map((item) => <div className="client-related-item" key={item.id}>Maintenance active · {item.planName}</div>)}
+                  <div className="detail-actions"><button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:open-page', { detail: 'Devis' }))}>Nouveau devis</button><button className="secondary-button" type="button" disabled title="Disponible avec la Phase 5">Nouveau contrat</button><button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:open-page', { detail: 'Projets' }))}>Nouveau projet</button></div>
+                </section>
+                {(selected.nextActionAt || interventions.some((item) => !['completed', 'cancelled'].includes(item.status))) && <section className="client-primary-card"><h3>Échéances · À suivre</h3>{selected.nextActionAt && <SummaryLine label="Prochaine action" value={`${selected.nextActionText || 'Action'} · ${new Date(selected.nextActionAt).toLocaleDateString('fr-FR')}`} />}{interventions.filter((item) => !['completed', 'cancelled'].includes(item.status)).map((item) => <div className="client-related-item" key={item.id}>Intervention {item.number} · {item.subject}</div>)}</section>}
+              </>}
+              <details className="client-secondary-sections" open={activeTab !== 'summary'}><summary>Informations complémentaires : contacts, documents, interventions, historique</summary><div className="client-tabs-preview client-tabs-buttons">
+                <button className={activeTab === 'summary' ? 'active' : ''} type="button" onClick={() => setActiveTab('summary')}>Fiche</button>
                 <button className={activeTab === 'contacts' ? 'active' : ''} type="button" onClick={() => setActiveTab('contacts')}>Contacts</button>
                 <button className={activeTab === 'documents' ? 'active' : ''} type="button" onClick={() => setActiveTab('documents')}>Documents</button>
                 <button className={activeTab === 'operations' ? 'active' : ''} type="button" onClick={() => setActiveTab('operations')}>Interventions</button>
-                <button className={activeTab === 'commercial' ? 'active' : ''} type="button" onClick={() => setActiveTab('commercial')}>Commercial</button>
                 <button className={activeTab === 'history' ? 'active' : ''} type="button" onClick={() => setActiveTab('history')}>Historique</button>
-              </div>
+              </div></details>
 
               {activeTab === 'summary' && (
                 <>
@@ -425,7 +521,6 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
                       </select>
                     </label>
                     <p className="muted">Ce statut est indépendant de l’ancien pipeline Prospect. Un prospect gagné devient Client actif, puis tu gères ici sa relation dans le temps.</p>
-                    <label>Qualité de la relation<select aria-label="Qualité de la relation client" value={selected.relationshipStatus??'neutral'} onChange={async event=>{await window.atoumweb.crm.clients.update(selected.id,{...selected,relationshipStatus:event.target.value as ClientRelationshipStatus});await refresh();await openClient(selected.id);}}><option value="excellent">Excellente</option><option value="good">Bonne</option><option value="neutral">Neutre</option><option value="watch">À surveiller</option><option value="difficult">Difficile</option></select></label>
                   </div>
 
                   {archiveCandidateId === selected.id && (
@@ -436,13 +531,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
                     </div>
                   )}
 
-                  <div className="summary-list">
-                    <SummaryLine label="Contact principal" value={selected.contactName || 'Non renseigné'} />
-                    <SummaryLine label="Email" value={selected.email || 'Non renseigné'} />
-                    <SummaryLine label="Téléphone" value={selected.phone || 'Non renseigné'} />
-                    <SummaryLine label="Prochaine action" value={selected.nextActionAt ? `${selected.nextActionText || 'Action'} · ${new Date(selected.nextActionAt).toLocaleDateString('fr-FR')}` : 'Aucune'} />
-                    <SummaryLine label="Depuis" value={new Date(selected.becameClientAt).toLocaleDateString('fr-FR')} />
-                  </div>
+                  <p className="client-since">Client depuis {new Date(selected.becameClientAt).toLocaleDateString('fr-FR')}</p>
                   {selected.notes && <div className="client-notes"><strong>Notes</strong><p>{selected.notes}</p></div>}
 
                   {actionEditor?.clientId === selected.id && (
@@ -464,7 +553,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
 
               {activeTab === 'contacts' && (
                 <div className="tab-content-stack">
-                  <div className="contact-tab-heading"><strong>{contacts.length} contact{contacts.length > 1 ? 's' : ''}</strong><button className="secondary-button compact-button" type="button" onClick={() => setShowContactForm((value) => !value)}>{showContactForm ? 'Fermer' : '+ Ajouter'}</button></div>
+                  <div className="contact-tab-heading"><strong>{contacts.length} contact{contacts.length > 1 ? 's' : ''}</strong><button className="secondary-button compact-button" type="button" onClick={() => { setEditingContactId(null); setContactDraft(EMPTY_CONTACT_DRAFT); setShowContactForm((value) => !value); }}>{showContactForm ? 'Fermer' : '+ Ajouter'}</button></div>
 
                   {showContactForm && (
                     <form className="contact-inline-form" onSubmit={(event) => void submitContact(event)}>
@@ -472,13 +561,12 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
                         <label>Prénom<input value={contactDraft.firstName} onChange={(e) => setContactDraft({ ...contactDraft, firstName: e.target.value })} /></label>
                         <label>Nom<input value={contactDraft.lastName} onChange={(e) => setContactDraft({ ...contactDraft, lastName: e.target.value })} /></label>
                         <label>Fonction<input value={contactDraft.jobTitle} onChange={(e) => setContactDraft({ ...contactDraft, jobTitle: e.target.value })} /></label>
-                        <label>Email<input type="email" value={contactDraft.email} onChange={(e) => setContactDraft({ ...contactDraft, email: e.target.value })} /></label>
-                        <label>Téléphone<input value={contactDraft.phone} onChange={(e) => setContactDraft({ ...contactDraft, phone: e.target.value })} /></label>
-                        <label>Rôle<select value={contactDraft.role} onChange={(e) => setContactDraft({ ...contactDraft, role: e.target.value as ClientContactRole })}>{CLIENT_CONTACT_ROLES.map((role) => <option key={role} value={role}>{ROLE_LABELS[role]}</option>)}</select></label>
+                        {!editingContactId && <><label>Email<input type="email" value={contactDraft.email} onChange={(e) => setContactDraft({ ...contactDraft, email: e.target.value })} /></label><label>Téléphone<input value={contactDraft.phone} onChange={(e) => setContactDraft({ ...contactDraft, phone: e.target.value })} /></label></>}
+                        <label>Rôle<select value={contactDraft.role} disabled={Boolean(editingContactId)} onChange={(e) => setContactDraft({ ...contactDraft, role: e.target.value as ClientContactRole })}>{CLIENT_CONTACT_ROLES.map((role) => <option key={role} value={role}>{ROLE_LABELS[role]}</option>)}</select></label>
                       </div>
                       <label className="primary-check"><input type="checkbox" checked={contactDraft.makePrimary} onChange={(e) => setContactDraft({ ...contactDraft, makePrimary: e.target.checked })} /> Définir comme contact principal</label>
                       {contactError && <p className="form-error">{contactError}</p>}
-                      <div className="form-actions"><button className="primary-button compact-button" disabled={contactSaving} type="submit">{contactSaving ? 'Ajout…' : 'Ajouter le contact'}</button></div>
+                      <div className="form-actions"><button className="primary-button compact-button" disabled={contactSaving} type="submit">{contactSaving ? 'Enregistrement…' : editingContactId ? 'Enregistrer le contact' : 'Ajouter le contact'}</button></div>
                     </form>
                   )}
 
@@ -492,7 +580,9 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
                           {link.contact.jobTitle && <small>{link.contact.jobTitle}</small>}
                           <small>{link.contact.email || 'Email non renseigné'}{link.contact.phone ? ` · ${link.contact.phone}` : ''}</small>
                         </div>
+                        <button className="link-button" type="button" onClick={() => { setEditingContactId(link.contactId); setContactDraft({ firstName: link.contact.firstName, lastName: link.contact.lastName, jobTitle: link.contact.jobTitle ?? '', email: link.contact.email ?? '', phone: link.contact.phone ?? '', role: link.role, makePrimary: link.isPrimary }); setShowContactForm(true); }}>Modifier</button>
                         {!link.isPrimary && <button className="link-button" type="button" onClick={() => void makePrimary(link)}>Définir principal</button>}
+                        <ContactMethodsPanel contactId={link.contactId} allowOrganization={false} summaryLabel="Téléphone et email" contactLabel={`${link.contact.firstName} ${link.contact.lastName}`} />
                       </div>
                     ))}
                     {contacts.length === 0 && <p className="muted">Aucun contact rattaché à ce client.</p>}
@@ -503,19 +593,8 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
               {activeTab === 'operations' && <ClientOperationsTab clientId={selected.id} onMessage={onMessage} />}
               {activeTab === 'documents' && <ClientDocumentsPanel clientId={selected.id}/>}
 
-              {activeTab === 'commercial' && (
-                <div className="tab-content-stack">
-                  <div className="commercial-kpis">
-                    <MiniKpi label="Projets actifs" value="0" />
-                    <MiniKpi label="Services actifs" value="0" />
-                    <MiniKpi label="CA encaissé" value="0 €" />
-                    <MiniKpi label="Temps cumulé" value="0 h" />
-                  </div>
-                  <p className="muted">Ces valeurs seront calculées depuis Projets, Facturation et Gestion des temps. Elles ne sont pas stockées en double dans la fiche Client.</p>
-                </div>
-              )}
-
               {activeTab === 'history' && <ActivityList activity={activity} />}
+              </div>
             </aside>
           )}
         </div>
@@ -530,10 +609,6 @@ function initials(name: string): string {
 
 function SummaryLine({ label, value }: { label: string; value: string }) {
   return <div className="summary-line"><span>{label}</span><strong>{value}</strong></div>;
-}
-
-function MiniKpi({ label, value }: { label: string; value: string }) {
-  return <div className="mini-kpi"><span>{label}</span><strong>{value}</strong></div>;
 }
 
 function ActivityList({ activity }: { activity: ActivityEvent[] }) {
