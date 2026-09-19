@@ -132,7 +132,7 @@ interface ProspectRow extends Record<string, unknown> {
   created_at: string;
   updated_at: string;
   archived_at: string | null;
-  decision_status: ProspectSummary['decisionStatus']; decision_maker_details: string | null;
+  decision_status: ProspectSummary['decisionStatus']; decision_maker_details: string | null; decision_maker_contact_id: string | null;
   project_summary: string | null; project_context: string | null; budget_status: ProspectSummary['budgetStatus'];
   timeline_status: ProspectSummary['timelineStatus']; timeline_note: string | null; existing_status: ProspectSummary['existingStatus'];
   existing_url: string | null; existing_notes: string | null; missing_information: string | null;
@@ -535,7 +535,7 @@ export class CrmService {
     if (!origin) missing.push('l’origine du contact');
 
     const decisionReady = Boolean(prospect.decisionStatus)
-      && (prospect.decisionStatus !== 'no' || Boolean(clean(prospect.decisionMakerName) || clean(prospect.decisionMakerDetails)));
+      && (prospect.decisionStatus !== 'no' || Boolean(clean(prospect.decisionMakerContactId) || clean(prospect.decisionMakerName) || clean(prospect.decisionMakerDetails)));
     if (!decisionReady) missing.push('la situation du décisionnaire');
 
     if (origin === 'outbound') {
@@ -627,7 +627,7 @@ export class CrmService {
       probabilityPercent: row.probability_percent, nextActionAt: row.next_action_at,
       nextActionText: row.next_action_text, targetDate: row.target_date, lostReason: row.lost_reason,
       notes: row.notes, wonAt: row.won_at, lostAt: row.lost_at, createdAt: row.created_at,
-      decisionStatus: row.decision_status, decisionMakerDetails: row.decision_maker_details,
+      decisionStatus: row.decision_status, decisionMakerDetails: row.decision_maker_details, decisionMakerContactId: row.decision_maker_contact_id,
       projectSummary: row.project_summary, projectContext: row.project_context, budgetStatus: row.budget_status,
       timelineStatus: row.timeline_status, timelineNote: row.timeline_note, existingStatus: row.existing_status,
       existingUrl: row.existing_url, existingNotes: row.existing_notes, missingInformation: row.missing_information,
