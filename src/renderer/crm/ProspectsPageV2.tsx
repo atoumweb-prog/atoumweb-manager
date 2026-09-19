@@ -285,17 +285,6 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
     } catch (e) { onMessage(cleanBusinessError(e, 'Classement en perdu impossible.')); }
   }
 
-  async function handleDrop(stage: ProspectStage) {
-    const prospect = prospects.find((item) => item.id === draggingId);
-    setDraggingId(null); setDropStage(null);
-    if (!prospect) return;
-    if (!manualStages(prospect).includes(stage)) {
-      onMessage(`Le passage vers « ${STAGE_LABELS[stage]} » se fait par l’action métier correspondante.`);
-      return;
-    }
-    await changeStage(prospect, stage);
-  }
-
   async function handleGroupDrop(stages: ProspectStage[]) {
     const prospect = prospects.find((item) => item.id === draggingId);
     setDraggingId(null); setDropStage(null);
