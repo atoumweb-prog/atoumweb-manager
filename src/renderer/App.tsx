@@ -37,7 +37,7 @@ type PageName = (typeof NAV_ITEMS)[number];
 
 const PAGE_HINTS: Record<PageName, string> = {
   Accueil: 'Vue synthétique des actions, alertes et indicateurs AtoumWeb.',
-  Prospects: 'Pipeline commercial et prochaines actions.',
+  Prospects: 'Annuaire de prospection, connaissance entreprise et parcours commercial.',
   Clients: 'Base clients, contacts, projets et historique.',
   'Offres & Tarifs': 'Catalogue, services, offres et versions tarifaires.',
   Devis: 'Création guidée et suivi des devis.',
@@ -190,7 +190,7 @@ function App() {
       <aside className="sidebar">
         <div className="brand-block"><div className="brand-mark">AW</div><div><strong>AtoumWeb</strong><span>Manager</span></div></div>
         <nav className="navigation" aria-label="Navigation principale">
-          {NAV_ITEMS.map((item) => <button key={item} className={`nav-item ${activePage === item ? 'active' : ''}`} onClick={() => navigate(item)} type="button"><span className="nav-dot" /><span>{item}</span></button>)}
+          {NAV_ITEMS.map((item) => <button key={item} className={`nav-item ${activePage === item ? 'active' : ''}`} onClick={() => navigate(item)} type="button"><span className="nav-dot" /><span>{item === 'Prospects' ? 'Commercial' : item}</span></button>)}
         </nav>
         <div className="sidebar-footer"><span>V{bootstrap.appVersion}</span><span className="status-pill">Local</span></div>
       </aside>
@@ -202,7 +202,7 @@ function App() {
         </header>
 
         <section className="content-area">
-          <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1>{activePage}</h1><p>{PAGE_HINTS[activePage]}</p></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>
+          <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1>{activePage === 'Prospects' ? 'Commercial' : activePage}</h1><p>{PAGE_HINTS[activePage]}</p></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>
           {message && <div className="notice" role="status"><span>{message}</span><button type="button" onClick={() => setMessage(null)}>×</button></div>}
 
           {activePage === 'Accueil' && <WorkflowDashboard />}
