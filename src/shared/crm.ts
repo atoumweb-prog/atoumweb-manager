@@ -223,7 +223,6 @@ export interface CrmApi {
       list(id: string): Promise<ProspectResearchSnapshot[]>;
       save(id: string, input: ProspectResearchSnapshotInput): Promise<ProspectResearchSnapshot>;
     };
-    openReferenceWindow(id: string): Promise<void>;
   };
   clients: {
     list(filters?: ClientFilters): Promise<ClientSummary[]>;
