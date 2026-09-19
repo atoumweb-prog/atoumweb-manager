@@ -291,7 +291,23 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
       await refresh();
       onMessage(`Prospect déplacé vers « ${STAGE_LABELS[stage]} ».`);
     } catch (e) {
-      onMessage(`Impossible d’avancer ce prospect : ${cleanBusinessError(e, 'vérifie les informations nécessaires à cette étape.')}`);
+      const message = cleanBusinessError(e, 'vérifie les informations nécessaires à cette étape.');
+      if (prospect.stage === 'qualifying' && stage === 'need_identified' && /qualification incomplète/i.test(message)) {
+        const confirmed = window.confirm(`${message}\n\nPasser quand même à « ${STAGE_LABELS[stage]} » ?\nLes informations manquantes resteront visibles et pourront être complétées plus tard.`);
+        if (!confirmed) {
+          onMessage('Le prospect reste à l’étape « À qualifier ».');
+          return;
+        }
+        try {
+          await window.atoumweb.crm.prospects.changeStage(prospect.id, stage, null, true);
+          await refresh();
+          onMessage(`Prospect déplacé vers « ${STAGE_LABELS[stage]} » malgré une qualification incomplète.`);
+        } catch (confirmedError) {
+          onMessage(`Impossible d’avancer ce prospect : ${cleanBusinessError(confirmedError, 'vérifie les informations nécessaires à cette étape.')}`);
+        }
+        return;
+      }
+      onMessage(`Impossible d’avancer ce prospect : ${message}`);
     }
   }
 
