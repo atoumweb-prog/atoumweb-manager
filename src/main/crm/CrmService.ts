@@ -142,6 +142,8 @@ interface ProspectRow extends Record<string, unknown> {
   organization_city: string | null;
   organization_website: string | null;
   organization_notes: string | null;
+  has_contact_method: number;
+  research_snapshot_count: number;
   contact_first_name: string | null;
   contact_last_name: string | null;
   contact_email: string | null;
@@ -541,6 +543,14 @@ export class CrmService {
   private prospectSelect(): string {
     return `SELECT p.*, o.name AS organization_name, o.industry AS organization_industry,
       o.city AS organization_city, o.website AS organization_website, o.notes AS organization_notes,
+      EXISTS(
+        SELECT 1 FROM contact_methods cm
+        WHERE cm.archived_at IS NULL
+          AND ((p.organization_id IS NOT NULL AND cm.organization_id=p.organization_id)
+            OR (p.contact_id IS NOT NULL AND cm.contact_id=p.contact_id))
+      ) AS has_contact_method,
+      (SELECT COUNT(*) FROM activity_events ae
+        WHERE ae.entity_type='prospect' AND ae.entity_id=p.id AND ae.action='research_snapshot') AS research_snapshot_count,
       c.first_name AS contact_first_name, c.last_name AS contact_last_name, c.email AS contact_email,
       COALESCE((SELECT group_concat(COALESCE(ci.name,n.other_text), ' · ') FROM crm_needs n LEFT JOIN catalog_items ci ON ci.id=n.catalog_item_id WHERE n.prospect_id=p.id),p.primary_need) AS live_need
       FROM prospects p
@@ -578,6 +588,8 @@ export class CrmService {
       organizationCity: row.organization_city,
       organizationWebsite: row.organization_website,
       organizationNotes: row.organization_notes,
+      hasContactMethod: Boolean(row.has_contact_method),
+      researchSnapshotCount: Number(row.research_snapshot_count ?? 0),
     };
   }
 
