@@ -436,7 +436,7 @@ export class CrmService {
     this.indexProspect(id); return this.getProspect(id);
   }
 
-  changeProspectStage(id: string, stage: ProspectStage, lostReason?: string | null): ProspectSummary {
+  changeProspectStage(id: string, stage: ProspectStage, lostReason?: string | null, allowIncompleteQualification = false): ProspectSummary {
     if (!PROSPECT_STAGES.includes(stage)) throw new Error('Étape prospect invalide.');
     const current = this.getProspect(id);
     if (stage === current.stage) return current;
@@ -448,7 +448,16 @@ export class CrmService {
       const count = this.database.get<{ count: number }>('SELECT COUNT(*) AS count FROM crm_needs WHERE prospect_id=?', [id])?.count ?? 0;
       if (Number(count) === 0) throw new Error('Le besoin doit être identifié avant de passer au devis.');
     }
-    if (current.stage === 'qualifying' && stage === 'need_identified') this.assertQualificationReady(id, current);
+    let qualificationMissing: string[] = [];
+    if (current.stage === 'qualifying' && stage === 'need_identified') {
+      if (!this.hasQualificationProgress(current)) {
+        throw new Error('Renseigne au moins une information de qualification avant de passer à l’étape suivante.');
+      }
+      qualificationMissing = this.qualificationMissingFields(id, current);
+      if (qualificationMissing.length && !allowIncompleteQualification) {
+        throw new Error(`Qualification incomplète : il manque ${qualificationMissing.join(', ')}.`);
+      }
+    }
     const now = nowIso();
     const prospectingStartedAt = stage === 'qualifying' && !current.prospectingStartedAt ? now : current.prospectingStartedAt ?? null;
     const qualificationValidatedAt = current.stage === 'qualifying' && stage === 'need_identified'
@@ -463,14 +472,55 @@ export class CrmService {
     );
     this.activity({
       entityType: 'prospect', entityId: id, action: 'stage_changed', summary: `Prospect déplacé vers ${stage}`,
-      metadata: { from: current.stage, to: stage }, prospectId: id,
-      organizationId: current.organizationId, contactId: current.contactId,
+      metadata: { from: current.stage, to: stage, qualificationMissing, qualificationOverride: qualificationMissing.length > 0 && allowIncompleteQualification },
+      prospectId: id, organizationId: current.organizationId, contactId: current.contactId,
     });
+    if (qualificationMissing.length && allowIncompleteQualification) {
+      this.activity({
+        entityType: 'prospect',
+        entityId: id,
+        action: 'qualification_override',
+        summary: `Passage à l’étape suivante confirmé malgré ${qualificationMissing.length} information(s) de qualification manquante(s)`,
+        metadata: { missing: qualificationMissing },
+        prospectId: id,
+        organizationId: current.organizationId,
+        contactId: current.contactId,
+      });
+    }
     this.indexProspect(id);
     return this.getProspect(id);
   }
 
-  private assertQualificationReady(id: string, prospect: ProspectSummary): void {
+  private hasQualificationProgress(prospect: ProspectSummary): boolean {
+    return Boolean(
+      clean(prospect.targetingReasonCode)
+      || clean(prospect.targetingReasonText)
+      || clean(prospect.initialObservation)
+      || clean(prospect.detectedOpportunity)
+      || clean(prospect.firstContactResultCode)
+      || clean(prospect.firstContactResultText)
+      || prospect.interestLevel
+      || prospect.decisionStatus
+      || clean(prospect.decisionMakerDetails)
+      || clean(prospect.decisionMakerName)
+      || clean(prospect.projectSummary)
+      || clean(prospect.projectContext)
+      || prospect.budgetStatus
+      || prospect.budgetMinCents != null
+      || prospect.budgetMaxCents != null
+      || prospect.timelineStatus
+      || clean(prospect.timelineNote)
+      || clean(prospect.targetDate)
+      || prospect.existingStatus
+      || clean(prospect.existingUrl)
+      || clean(prospect.existingNotes)
+      || clean(prospect.missingInformation)
+      || clean(prospect.primaryNeed)
+      || clean(prospect.secondaryNeed)
+    );
+  }
+
+  private qualificationMissingFields(id: string, prospect: ProspectSummary): string[] {
     const missing: string[] = [];
     const contactCount = Number(this.database.get<{ count: number }>(
       `SELECT COUNT(*) AS count FROM contact_methods
@@ -498,7 +548,7 @@ export class CrmService {
       missing.push('le motif de l’échange ou le contexte commercial');
     }
 
-    if (missing.length) throw new Error(`Qualification incomplète : il manque ${missing.join(', ')}.`);
+    return missing;
   }
 
   setProspectNextAction(id: string, at: string | null, text: string | null): ProspectSummary {
