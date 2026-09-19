@@ -245,12 +245,25 @@ describe('CrmService', () => {
         items: [{ key: 'identity', label: 'Identité / raison sociale', status: 'ok' }],
         observations: 'Raison sociale ajoutée',
       },
+      audits: {
+        seo: {
+          overallStatus: 'review',
+          items: [{ key: 'title', label: 'Titre de page pertinent', status: 'review', note: 'Titre générique' }],
+          observations: 'Le titre de la page d’accueil peut être amélioré',
+          talkingPoint: 'Proposer une optimisation SEO de base',
+        },
+      },
+      opportunities: [
+        { finding: 'Titre de page générique', service: 'SEO / visibilité', priority: 'medium', keep: true, note: 'À évoquer pendant l’appel' },
+      ],
     });
     const history = crm.listProspectResearchSnapshots(prospect.id);
     expect(history).toHaveLength(2);
     expect(history[0].id).toBe(second.id);
     expect(history[1].id).toBe(first.id);
     expect(history[0].googleBusiness?.reviewCount).toBe(18);
+    expect(history[0].audits?.seo?.items[0].note).toBe('Titre générique');
+    expect(history[0].opportunities?.[0].service).toBe('SEO / visibilité');
     expect(history[1].legalNotices?.items[0].status).toBe('missing');
     expect(crm.listActivity('prospect', prospect.id).filter((event) => event.action === 'research_snapshot')).toHaveLength(2);
   });
