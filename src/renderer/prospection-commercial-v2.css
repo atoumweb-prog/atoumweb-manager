@@ -156,3 +156,76 @@
   .prospect-detail-desk .research-check-row,
   .reference-window-shell .research-check-row { grid-template-columns: 1fr; }
 }
+
+
+/* Statuts permanents de l'annuaire Prospection. */
+.prospect-side-panel-boundary { display: contents; }
+.prospect-directory-status {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  border-radius: 999px;
+  padding: 6px 9px;
+  font-size: .78rem;
+  font-weight: 800;
+  line-height: 1.15;
+  white-space: normal;
+}
+.prospect-directory-status-prepare { background: color-mix(in srgb, #f2b705 18%, #fff); color: #805e21; }
+.prospect-directory-status-ready { background: color-mix(in srgb, #198754 14%, #fff); color: #346d43; }
+.prospect-directory-status-qualifying { background: color-mix(in srgb, #1565c0 11%, #fff); color: #315e8c; }
+.prospect-directory-status-need_identified { background: color-mix(in srgb, #7b61a8 12%, #fff); color: #61498c; }
+.prospect-directory-status-quote_to_prepare,
+.prospect-directory-status-quote_to_send { background: color-mix(in srgb, #a47c34 13%, #fff); color: #6e5225; }
+.prospect-directory-status-quote_sent,
+.prospect-directory-status-follow_up,
+.prospect-directory-status-waiting { background: color-mix(in srgb, #e7b75e 15%, #fff); color: #805e21; }
+.prospect-directory-status-negotiation { background: color-mix(in srgb, #d88946 15%, #fff); color: #8a4f1c; }
+.prospect-directory-status-won { background: color-mix(in srgb, #198754 16%, #fff); color: #286238; }
+.prospect-directory-status-lost { background: color-mix(in srgb, #d62828 12%, #fff); color: #9c3934; }
+
+/* Modules repliables de la fiche de travail. */
+.prospect-work-accordion {
+  border: 1px solid rgba(24,33,43,.14);
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+  min-width: 0;
+}
+.prospect-work-accordion-trigger {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto minmax(150px,.55fr) minmax(220px,1fr);
+  align-items: center;
+  gap: 9px;
+  padding: 11px 13px;
+  border: 0;
+  background: #fff;
+  color: #18212b;
+  text-align: left;
+  cursor: pointer;
+}
+.prospect-work-accordion-trigger:hover { background: rgba(24,33,43,.035); }
+.prospect-work-accordion.open .prospect-work-accordion-trigger { border-bottom: 1px solid rgba(24,33,43,.10); }
+.prospect-work-accordion-arrow { font-size: 1rem; color: #805e21; }
+.prospect-work-accordion-title { font-weight: 800; }
+.prospect-work-accordion-summary {
+  color: #64748b;
+  font-size: .82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.prospect-work-accordion-body {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  min-width: 0;
+}
+.prospect-work-accordion-body > :first-child { margin-top: 0; }
+.prospect-work-accordion-body > :last-child { margin-bottom: 0; }
+
+@media (max-width: 760px) {
+  .prospect-work-accordion-trigger { grid-template-columns: auto 1fr; }
+  .prospect-work-accordion-summary { grid-column: 2; white-space: normal; }
+}
