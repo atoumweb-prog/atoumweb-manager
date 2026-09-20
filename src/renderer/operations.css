@@ -237,3 +237,76 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Harmonisation visuelle Operations avec Clients / Prospection. */
+.operations-toolbar .toolbar-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.operations-toolbar input,
+.operations-toolbar select,
+.operation-create-grid input,
+.operation-create-grid select,
+.operation-create-grid textarea,
+.operation-detail-panel input,
+.operation-detail-panel select,
+.operation-detail-panel textarea,
+.maintenance-panel-stack input,
+.maintenance-panel-stack select,
+.maintenance-panel-stack textarea,
+.hour-packs-stack input,
+.hour-packs-stack select,
+.hour-packs-stack textarea {
+  width: 100%;
+  min-height: var(--ui-control-height);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-soft);
+  color: var(--text);
+  padding: var(--ui-control-pad-y) var(--ui-control-pad-x);
+  outline: none;
+}
+.operations-toolbar input:focus,
+.operations-toolbar select:focus,
+.operation-create-grid input:focus,
+.operation-create-grid select:focus,
+.operation-create-grid textarea:focus,
+.operation-detail-panel input:focus,
+.operation-detail-panel select:focus,
+.operation-detail-panel textarea:focus,
+.maintenance-panel-stack input:focus,
+.maintenance-panel-stack select:focus,
+.maintenance-panel-stack textarea:focus,
+.hour-packs-stack input:focus,
+.hour-packs-stack select:focus,
+.hour-packs-stack textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 13%, transparent);
+}
+.operation-create-panel {
+  width: min(980px, 100%);
+  justify-self: start;
+  padding: var(--ui-panel-pad);
+}
+.operation-create-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.operation-create-grid .wide {
+  grid-column: 1 / -1;
+}
+.operation-create-grid textarea {
+  min-height: 120px;
+}
+.operation-create-panel .panel-title {
+  margin-bottom: 6px;
+}
+.operation-create-panel .button-row {
+  margin-top: 2px;
+}
+.operations-table th {
+  letter-spacing: .04em;
+}
