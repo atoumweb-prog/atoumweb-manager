@@ -310,3 +310,8 @@
 .operations-table th {
   letter-spacing: .04em;
 }
+
+
+.operation-detail-boundary {
+  display: contents;
+}
