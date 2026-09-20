@@ -104,6 +104,7 @@ function metadataFromItem(item: AtoumWebTechnicalItemDetail): MetadataForm {
 export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   const [items, setItems] = useState<AtoumWebTechnicalItemSummary[]>([]);
   const [selected, setSelected] = useState<AtoumWebTechnicalItemDetail | null>(null);
+  const [detailCollapsed, setDetailCollapsed] = useState(false);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<AtoumWebLibraryCategory | ''>('');
   const [reuseStatus, setReuseStatus] = useState<AtoumWebReuseStatus | ''>('');
@@ -145,6 +146,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
 
   async function setOpenedItem(detail: AtoumWebTechnicalItemDetail): Promise<void> {
     setSelected(detail);
+    setDetailCollapsed(false);
     setMetadataForm(metadataFromItem(detail));
     setExpandedVersionId(null);
     const preferredVersion = detail.currentVersion?.id ?? detail.versions[0]?.id ?? '';
@@ -189,6 +191,17 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
     adapt: items.filter((item) => item.reuseStatus === 'adapt').length,
     references: items.filter((item) => item.reuseStatus === 'reference').length,
   }), [items]);
+
+  function closeDetail(): void {
+    setSelected(null);
+    setDetailCollapsed(false);
+    setEditingMetadata(false);
+    setMetadataForm(null);
+    setAssets([]);
+    setAssetPreviews({});
+    setAssetVersionId('');
+    setExpandedVersionId(null);
+  }
 
   async function openItem(id: string): Promise<void> {
     try {
@@ -438,7 +451,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
 
       {creating && <CreationPanel form={form} setForm={setForm} onCreate={createItem} />}
 
-      <div className="aw-library-layout">
+      <div className={`aw-library-layout ${selected ? '' : 'aw-library-layout-list-only'} ${detailCollapsed ? 'aw-library-layout-detail-collapsed' : ''}`}>
         <article className="panel aw-library-list">
           <div className="panel-title"><div><span className="eyebrow">Bibliothèque</span><h2>Composants AtoumWeb</h2></div><span className="status-pill">{items.length}</span></div>
           {items.length === 0 && <p className="muted">Aucun composant ne correspond aux filtres.</p>}
@@ -450,18 +463,19 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
           ))}
         </article>
 
-        <article className="panel aw-library-detail">
-          {!selected && <div className="aw-library-empty"><span className="eyebrow">Phase 6</span><h2>Sélectionne un composant</h2><p className="muted">Tu retrouveras ici ses métadonnées, versions, captures, fichiers techniques et export portable.</p></div>}
-          {selected && <>
-            <div className="panel-title">
+        {selected && <article className={`panel aw-library-detail ${detailCollapsed ? 'collapsed' : ''}`}>
+            <div className="panel-title aw-library-detail-heading">
               <div><span className="eyebrow">{categoryLabel(selected.category)} · {reuseStatusLabel(selected.reuseStatus)}</span><h2>{selected.name}</h2></div>
               <div className="button-row">
-                {!selected.archivedAt && <button className="secondary-button" type="button" onClick={() => setEditingMetadata((value) => !value)}>{editingMetadata ? 'Annuler édition' : 'Modifier'}</button>}
-                <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void exportPackage()}>Exporter ZIP</button>
-                <button className="secondary-button" type="button" onClick={() => void toggleArchive()}>{selected.archivedAt ? 'Réactiver' : 'Archiver'}</button>
+                {!detailCollapsed && !selected.archivedAt && <button className="secondary-button" type="button" onClick={() => setEditingMetadata((value) => !value)}>{editingMetadata ? 'Annuler édition' : 'Modifier'}</button>}
+                {!detailCollapsed && <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void exportPackage()}>Exporter ZIP</button>}
+                {!detailCollapsed && <button className="secondary-button" type="button" onClick={() => void toggleArchive()}>{selected.archivedAt ? 'Réactiver' : 'Archiver'}</button>}
+                <button className="secondary-button" type="button" onClick={() => setDetailCollapsed((value) => !value)}>{detailCollapsed ? 'Agrandir' : 'Réduire'}</button>
+                <button className="close-detail" type="button" aria-label="Fermer la fiche composant" onClick={closeDetail}>×</button>
               </div>
             </div>
 
+            {!detailCollapsed && <>
             {editingMetadata && metadataForm ? <MetadataEditor form={metadataForm} setForm={setMetadataForm} onSave={saveMetadata} /> : <>
               {selected.description && <p>{selected.description}</p>}
               <div className="aw-library-tags">{selected.tags?.map((tag) => <span key={tag}>{tag}</span>)}</div>
@@ -507,8 +521,8 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
                 />}
               </div>)}
             </div>
-          </>}
-        </article>
+            </>}
+        </article>}
       </div>
     </div>
   );
