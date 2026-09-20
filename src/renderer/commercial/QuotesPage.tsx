@@ -1,6 +1,6 @@
 import {QuoteDraftLines,type DraftLine} from '../workflow/QuoteDraftLines';
 import { QuoteProjectPanel, QuoteConditions } from '../workflow/QuoteWorkflow';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CatalogItemSummary, QuoteDetail, QuoteLineInput, QuoteStatus, QuoteSummary } from '../../shared/commercial';
 import type { ClientSummary, ProspectSummary } from '../../shared/crm';
 import { QuoteClientPreview } from './QuoteClientPreview';
@@ -54,6 +54,7 @@ export function QuotesPage({ onMessage, initialId }: { onMessage: (message: stri
   const [customPrice, setCustomPrice] = useState('');
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const detailPanelRef = useRef<HTMLElement | null>(null);
 
   async function refresh(): Promise<void> {
     setLoading(true);
@@ -71,6 +72,19 @@ export function QuotesPage({ onMessage, initialId }: { onMessage: (message: stri
 
   useEffect(() => { void refresh(); }, []);
   useEffect(()=>{if(initialId){setSelectedId(initialId);void openQuote(initialId);}},[initialId]);
+
+  useEffect(() => {
+    if (!detail || previewOpen) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target || detailPanelRef.current?.contains(target)) return;
+      setDetail(null);
+      setSelectedId(null);
+      setEditingLineId(null);
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    return () => document.removeEventListener('pointerdown', closeOnOutside);
+  }, [detail?.id, previewOpen]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase('fr-FR');
@@ -180,12 +194,34 @@ export function QuotesPage({ onMessage, initialId }: { onMessage: (message: stri
         {wizardStep === 3 && <div className="quote-step-content"><h2>Offre de départ</h2><p className="muted">Optionnel : choisis une Offre ou un Service du catalogue. Le contenu et le tarif seront copiés dans le devis.</p><label>Catalogue<select value={wizard.catalogVersionId} onChange={(e) => {const v=catalog.find(i=>i.currentVersion?.id===e.target.value)?.currentVersion;setWizardTerms(v?.specialTerms??'');setWizard({ ...wizard, catalogVersionId: e.target.value, depositPercent: String(v?.defaultDepositPercent??30), estimatedDelay:v?.recommendedDelayDays?String(v.recommendedDelayDays)+' jours':'' });}}><option value="">Aucune — partir d’un devis libre</option>{catalog.filter(item=>item.type==='offer').map((item) => <option key={item.id} value={item.currentVersion!.id}>{item.type === 'offer' ? 'Offre' : 'Service'} · {item.name}</option>)}</select></label></div>}
         {wizardStep === 4 && <div className="quote-step-content"><h2>Services / lignes complémentaires</h2><QuoteDraftLines catalog={catalog} lines={draftLines} onChange={setDraftLines}/></div>}
         {wizardStep === 5 && <div className="quote-step-content"><h2>Conditions</h2><label>Conditions commerciales<textarea value={wizardTerms} onChange={e=>setWizardTerms(e.target.value)}/></label><div className="quote-three-fields"><label>Validité (jours)<input inputMode="numeric" value={wizard.validityDays} onChange={(e) => setWizard({ ...wizard, validityDays: e.target.value })} /></label><label>Acompte (%)<input inputMode="numeric" value={wizard.depositPercent} onChange={(e) => setWizard({ ...wizard, depositPercent: e.target.value })} /></label><label>Délai estimé<input value={wizard.estimatedDelay} onChange={(e) => setWizard({ ...wizard, estimatedDelay: e.target.value })} placeholder="Ex. 3 à 4 semaines" /></label></div></div>}
-        {wizardStep === 6 && <div className="quote-preview"><span className="eyebrow">Prévisualisation</span><h2>{wizard.subject || 'Devis sans objet'}</h2><p>{ownerOptions.find((owner) => owner.id === wizard.ownerId)?.label || 'Destinataire'}</p>{wizard.needSummary && <p className="muted">{wizard.needSummary}</p>}<div className="quote-preview-summary"><span>Catalogue</span><strong>{wizard.catalogVersionId ? catalog.find((item) => item.currentVersion?.id === wizard.catalogVersionId)?.name : 'Aucune ligne catalogue'}</strong><span>Ligne libre</span><strong>{wizard.customLabel || 'Aucune'}</strong><span>Acompte</span><strong>{wizard.depositPercent || '0'} %</strong></div></div>}
+        {wizardStep === 6 && <div className="quote-preview"><span className="eyebrow">Prévisualisation</span><h2>{wizard.subject || 'Devis sans objet'}</h2><p>{ownerOptions.find((owner) => owner.id === wizard.ownerId)?.label || 'Destinataire'}</p>{wizard.needSummary && <p className="muted">{wizard.needSummary}</p>}
+          <div className="quote-preview-lines">
+            <div className="quote-preview-lines-heading"><strong>Lignes qui seront enregistrées</strong><span>{(wizard.catalogVersionId ? 1 : 0) + draftLines.length} ligne(s)</span></div>
+            {wizard.catalogVersionId && (() => {
+              const item = catalog.find((entry) => entry.currentVersion?.id === wizard.catalogVersionId);
+              return item ? <div className="quote-preview-line">
+                <div><strong>{item.name}</strong><small>Offre catalogue · 1 ×</small></div>
+                <span>{item.currentVersion?.priceCents != null ? money(item.currentVersion.priceCents) : 'Sur devis'}</span>
+              </div> : null;
+            })()}
+            {draftLines.map((line, index) => {
+              const quantity = Number(line.quantity.replace(',', '.'));
+              const unitCents = (() => { try { return eurosToCents(line.price); } catch { return null; } })();
+              const totalCents = unitCents != null && Number.isFinite(quantity) && quantity > 0 ? Math.round(unitCents * quantity) : null;
+              return <div className="quote-preview-line" key={`${line.versionId}-${index}`}>
+                <div><strong>{line.label.trim() || 'Ligne à compléter'}</strong><small>{line.versionId ? 'Service catalogue' : 'Ligne libre'} · {line.quantity || '—'} × {line.price ? `${line.price} €` : 'prix à compléter'}</small></div>
+                <span>{totalCents != null ? money(totalCents) : 'À compléter'}</span>
+              </div>;
+            })}
+            {!wizard.catalogVersionId && draftLines.length === 0 && <p className="muted">Aucune ligne complémentaire n’a été ajoutée.</p>}
+          </div>
+          <div className="quote-preview-summary"><span>Acompte</span><strong>{wizard.depositPercent || '0'} %</strong><span>Validité</span><strong>{wizard.validityDays || '—'} jours</strong><span>Délai estimé</span><strong>{wizard.estimatedDelay || 'Non renseigné'}</strong></div>
+        </div>}
       </div>{wizardError && <p className="form-error">{wizardError}</p>}<div className="quote-wizard-actions"><button className="secondary-button" type="button" disabled={wizardStep === 1} onClick={() => setWizardStep((step) => Math.max(1, step - 1))}>← Précédent</button>{wizardStep < 6 ? <button className="primary-button" type="button" onClick={nextWizard}>Suivant →</button> : <button className="primary-button" disabled={saving} type="button" onClick={() => void createQuote()}>{saving ? 'Création…' : 'Créer le devis'}</button>}</div></section>}
 
       {loading ? <div className="panel"><p className="muted">Chargement des devis…</p></div> : <div className={detail ? 'quotes-layout with-detail' : 'quotes-layout'}><div className="panel quote-list-panel"><table className="quote-table"><thead><tr><th>Numéro</th><th>Destinataire</th><th>Objet</th><th>Statut</th><th>Valeur</th><th>Acompte</th><th>Créé le</th></tr></thead><tbody>{filtered.map((quote) => <tr key={quote.id} className={selectedId === quote.id ? 'selected-row' : ''} onClick={() => void openQuote(quote.id)}><td><strong>{quote.number}</strong></td><td>{quote.ownerLabel}</td><td>{quote.subject}</td><td><span className={`quote-status quote-${quote.status}`}>{STATUS_LABELS[quote.status]}</span></td><td>{money(quote.contractValueCents)}</td><td>{money(quote.depositCents)}</td><td>{new Date(quote.createdAt).toLocaleDateString('fr-FR')}</td></tr>)}{filtered.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucun devis.</div></td></tr>}</tbody></table></div>
 
-        {detail && <aside className="panel quote-detail-panel"><div className="detail-panel-heading"><div><span className="eyebrow">{detail.number}</span><h2>{detail.subject}</h2><p className="muted">{detail.ownerLabel}</p></div><button className="close-detail" type="button" onClick={() => { setDetail(null); setSelectedId(null); setEditingLineId(null); setPreviewOpen(false); }}>×</button></div><div className="detail-badges"><span className={`quote-status quote-${detail.status}`}>{STATUS_LABELS[detail.status]}</span>{detail.projectReadyAt && <span className="status-pill">Prêt pour Projet</span>}</div><button className="secondary-button quote-preview-button" type="button" onClick={() => setPreviewOpen(true)}>Prévisualiser côté client</button>
+        {detail && <aside ref={detailPanelRef} className="panel quote-detail-panel"><div className="detail-panel-heading"><div><span className="eyebrow">{detail.number}</span><h2>{detail.subject}</h2><p className="muted">{detail.ownerLabel}</p></div><button className="close-detail" type="button" onClick={() => { setDetail(null); setSelectedId(null); setEditingLineId(null); setPreviewOpen(false); }}>×</button></div><div className="detail-badges"><span className={`quote-status quote-${detail.status}`}>{STATUS_LABELS[detail.status]}</span>{detail.projectReadyAt && <span className="status-pill">Prêt pour Projet</span>}</div><button className="secondary-button quote-preview-button" type="button" onClick={() => setPreviewOpen(true)}>Prévisualiser côté client</button>
           {detail.status === 'accepted' && <QuoteProjectPanel key={detail.id} quote={detail}/>}<QuoteConditions quote={detail} onSave={q=>{setDetail(q);void refresh();}}/><div className="quote-lines"><strong>Lignes du devis</strong>{detail.lines.map((line) => <div className="quote-line-block" key={line.id}><div className="quote-line"><div><strong>{line.label}</strong><small>{line.source === 'catalog' ? 'Catalogue · snapshot figé' : 'Ligne libre'} · {(line.quantityMilli ?? 1000) / 1000} ×{line.adjustmentMode && line.adjustmentMode !== 'none' ? ` · ${line.adjustmentMode}` : ''}</small></div><span>{money(line.contractLineValueCents)}</span>{detail.status === 'draft' && <div className="quote-line-actions"><button type="button" title="Modifier" onClick={() => setEditingLineId(editingLineId === line.id ? null : line.id)}>✎</button><button type="button" title="Supprimer" onClick={() => void removeLine(line.id)}>×</button></div>}</div>{detail.status === 'draft' && editingLineId === line.id && <QuoteLineEditor line={line} onCancel={() => setEditingLineId(null)} onSave={(input) => saveLine(line.id, input)} />}</div>)}{detail.lines.length === 0 && <p className="muted">Aucune ligne pour le moment.</p>}</div>
           {detail.status === 'draft' && <><div className="quote-add-line"><strong>Ajouter depuis le catalogue</strong><select value={catalogToAdd} onChange={(e) => setCatalogToAdd(e.target.value)}><option value="">Choisir…</option>{catalog.map((item) => <option key={item.id} value={item.currentVersion!.id}>{item.name}</option>)}</select><input aria-label="Prix proposé pour la prestation" placeholder="Prix proposé € (facultatif sauf Sur devis)" value={catalogPrice} onChange={e=>setCatalogPrice(e.target.value)}/><button className="secondary-button" type="button" onClick={() => void addCatalogLine()}>Ajouter une ligne</button></div><div className="quote-add-line"><strong>Ligne libre</strong><input value={customLabel} onChange={(e) => setCustomLabel(e.target.value)} placeholder="Libellé" /><input inputMode="decimal" value={customPrice} onChange={(e) => setCustomPrice(e.target.value)} placeholder="Prix €" /><button className="secondary-button" type="button" onClick={() => void addCustomLine()}>Ajouter</button></div></>}
           <div className="quote-totals"><div><span>Valeur catalogue</span><strong>{money(detail.catalogValueCents)}</strong></div><div><span>Remises</span><strong>- {money(detail.discountValueCents)}</strong></div><div className="quote-total-main"><span>Total contractuel</span><strong>{money(detail.contractValueCents)}</strong></div><div><span>Acompte {detail.depositPercent ?? 0} %</span><strong>{money(detail.depositCents)}</strong></div><div><span>Solde</span><strong>{money(detail.balanceCents)}</strong></div></div>
