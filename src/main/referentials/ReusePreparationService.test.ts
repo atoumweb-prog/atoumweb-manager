@@ -171,7 +171,7 @@ describe('ReusePreparationService', () => {
       { contentType: 'text', contentText: 'Contenu client' },
     );
     const preparation = reuse.prepareProjectItem({ itemId: item.id });
-    const outsidePath = join(workspace.clientsDirectory, 'faux-manifest.json');
+    const outsidePath = join(workspace.root, 'faux-manifest.json');
     writeFileSync(outsidePath, '{}', 'utf8');
 
     expect(() => reuse.createGlobal({
