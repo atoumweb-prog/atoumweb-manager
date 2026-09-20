@@ -4,6 +4,10 @@ import type {
   BusinessBackupLocationInput,
   BusinessBackupRecordInput,
 } from '../../shared/businessBackups';
+import type {
+  BusinessBackupPolicyInput,
+  InterventionBackupRecordInput,
+} from '../../shared/businessBackupAlerts';
 import type { DatabaseService } from '../database/DatabaseService';
 
 export function registerBusinessBackupsIpcHandlers(database: DatabaseService): void {
@@ -46,4 +50,21 @@ export function registerBusinessBackupsIpcHandlers(database: DatabaseService): v
       return { ok: false, error: error instanceof Error ? error.message : 'Impossible d’ouvrir cet emplacement.' };
     }
   });
+
+  ipcMain.handle('business-backup-alerts:get-policy', (_event, input: { clientAccountId?: string | null; projectId?: string | null }) =>
+    database.businessBackupAlerts.getPolicy(input));
+  ipcMain.handle('business-backup-alerts:update-policy', (_event, input: BusinessBackupPolicyInput) =>
+    database.businessBackupAlerts.updatePolicy(input));
+  ipcMain.handle('business-backup-alerts:list', () =>
+    database.businessBackupAlerts.listAlerts());
+  ipcMain.handle('business-backup-alerts:review-intervention', (_event, interventionId: string) =>
+    database.businessBackupAlerts.reviewIntervention(interventionId));
+  ipcMain.handle('business-backup-alerts:record-intervention', (_event, input: InterventionBackupRecordInput) =>
+    database.businessBackupAlerts.recordForIntervention(input));
+  ipcMain.handle('business-backup-alerts:link-existing', (
+    _event,
+    interventionId: string,
+    backupRecordId: string,
+    role: 'pre_intervention' | 'post_intervention' | 'reference',
+  ) => database.businessBackupAlerts.linkExisting(interventionId, backupRecordId, role));
 }
