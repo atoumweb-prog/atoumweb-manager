@@ -108,3 +108,19 @@
   .aw-library-asset-toolbar .primary-button { grid-column: auto; }
   .aw-library-package-duplicates button { grid-template-columns: 1fr; }
 }
+
+.aw-library-layout.aw-library-layout-list-only {
+  grid-template-columns: 1fr;
+}
+.aw-library-layout.aw-library-layout-detail-collapsed {
+  grid-template-columns: minmax(420px, 1fr) minmax(250px, 320px);
+}
+.aw-library-detail.collapsed {
+  min-height: 0;
+}
+.aw-library-detail.collapsed .aw-library-detail-heading {
+  margin-bottom: 0;
+}
+.aw-library-detail-heading .button-row {
+  align-items: center;
+}
