@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   BusinessBackupLocationInput,
   BusinessBackupLocationType,
@@ -38,6 +38,7 @@ export function BusinessBackupsPage({ onMessage, initialRecordId }: Props) {
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [overview, setOverview] = useState<BusinessBackupOverview | null>(null);
   const [selected, setSelected] = useState<BusinessBackupRecord | null>(null);
+  const detailPanelRef = useRef<HTMLElement | null>(null);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<BusinessBackupType | ''>('');
   const [locationFilter, setLocationFilter] = useState<BusinessBackupLocationType | ''>('');
@@ -86,6 +87,17 @@ export function BusinessBackupsPage({ onMessage, initialRecordId }: Props) {
     void load(initialRecordId ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, typeFilter, locationFilter, initialRecordId]);
+
+  useEffect(() => {
+    if (!selected) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target || detailPanelRef.current?.contains(target)) return;
+      setSelected(null);
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    return () => document.removeEventListener('pointerdown', closeOnOutside);
+  }, [selected?.id]);
 
   const projectById = useMemo(() => new Map(projects.map((project) => [project.id, project])), [projects]);
   const clientById = useMemo(() => new Map(clients.map((client) => [client.id, client])), [clients]);
@@ -212,7 +224,7 @@ export function BusinessBackupsPage({ onMessage, initialRecordId }: Props) {
           </button>)}
         </article>
 
-        <article className="panel business-backups-detail">
+        <article ref={detailPanelRef} className="panel business-backups-detail">
           {!selected ? <div className="business-backups-empty"><span className="eyebrow">Sauvegardes métier</span><h2>Sélectionne une sauvegarde</h2><p className="muted">Les emplacements serveur et locaux sont suivis séparément.</p></div> : <>
             <div className="panel-title"><div><span className="eyebrow">{backupTypeLabel(selected.backupType)} · {dateLabel(selected.backupAt)}</span><h2>{selected.label}</h2></div>{!selected.stable && <button className="secondary-button" type="button" onClick={() => void markStable()}>Marquer stable</button>}</div>
             <div className="business-backup-context">
