@@ -42,7 +42,7 @@ function createClientProject(name = 'Client sauvegardes') {
   const client = crm.createClient({ organizationId: organization.id });
   const project = projects.createInternal({ name: `${name} — site` });
   database.run('UPDATE projects SET client_account_id=? WHERE id=?', [client.id, project.id]);
-  return { client, project: projects.get(project.id) };
+  return { client, project: projects.getProject(project.id) };
 }
 
 describe('BusinessBackupAlertService', () => {
