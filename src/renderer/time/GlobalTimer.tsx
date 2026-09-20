@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ProjectDetail, ProjectSummary } from '../../shared/projects';
 import {
   TIME_CATEGORIES,
@@ -58,6 +58,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
   const [snapshotAt, setSnapshotAt] = useState(Date.now());
   const [tick, setTick] = useState(Date.now());
   const [busy, setBusy] = useState(false);
+  const timerRef = useRef<HTMLDivElement | null>(null);
 
   function installActive(current: TimeSession | null, announce = false): void {
     setActive(current);
@@ -136,6 +137,18 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
       window.removeEventListener('atoumweb:timer-context', prepareContext);
     };
   }, [active, recovery]);
+
+  useEffect(() => {
+    if (!open && !pendingSwitch) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target || timerRef.current?.contains(target)) return;
+      setOpen(false);
+      setPendingSwitch(null);
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    return () => document.removeEventListener('pointerdown', closeOnOutside);
+  }, [open, pendingSwitch]);
 
   useEffect(() => {
     if (!projectId) {
@@ -271,7 +284,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
     || (pendingSwitch?.category ? CATEGORY_LABELS[pendingSwitch.category] : 'Nouvelle activité');
 
   return (
-    <div className={`global-timer ${active ? 'running' : ''} ${active?.paused ? 'paused' : ''} ${recovery ? 'needs-recovery' : ''}`}>
+    <div ref={timerRef} className={`global-timer ${active ? 'running' : ''} ${active?.paused ? 'paused' : ''} ${recovery ? 'needs-recovery' : ''}`}>
       <button className="timer-main-button" type="button" onClick={() => !active && setOpen((value) => !value)} title={active ? contextLabel(active) : 'Démarrer une session de temps'}>
         <span className="timer-label">{recovery ? 'Timer · À vérifier' : `Timer${active?.paused ? ' · Pause' : ''}`}</span>
         <strong>{clock(displayedSeconds)}</strong>
