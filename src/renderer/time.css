@@ -393,3 +393,72 @@
     display: grid;
   }
 }
+
+/* Le timer utilise les mêmes contrôles que Clients / Prospection. */
+.timer-popover {
+  width: min(390px, calc(100vw - 32px));
+  max-height: calc(100dvh - 110px);
+  overflow-y: auto;
+  padding: 16px;
+  gap: 12px;
+}
+.timer-popover label {
+  gap: 6px;
+  color: var(--muted);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 750;
+}
+.timer-popover input:not([type='checkbox']),
+.timer-popover select,
+.manual-time-grid input:not([type='checkbox']),
+.manual-time-grid select,
+.manual-time-grid textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--ui-control-height);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  padding: var(--ui-control-pad-y) var(--ui-control-pad-x);
+  outline: none;
+  font-size: var(--aw-font-functional, 14px);
+}
+.timer-popover input:not([type='checkbox']):focus,
+.timer-popover select:focus,
+.manual-time-grid input:not([type='checkbox']):focus,
+.manual-time-grid select:focus,
+.manual-time-grid textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 13%, transparent);
+}
+.timer-popover input::placeholder,
+.manual-time-grid input::placeholder,
+.manual-time-grid textarea::placeholder {
+  color: var(--muted);
+  opacity: .82;
+}
+:root:not([data-theme='noir']) .timer-popover input,
+:root:not([data-theme='noir']) .timer-popover select,
+:root:not([data-theme='noir']) .manual-time-grid input,
+:root:not([data-theme='noir']) .manual-time-grid select,
+:root:not([data-theme='noir']) .manual-time-grid textarea {
+  color-scheme: light;
+}
+:root[data-theme='noir'] .timer-popover input,
+:root[data-theme='noir'] .timer-popover select,
+:root[data-theme='noir'] .manual-time-grid input,
+:root[data-theme='noir'] .manual-time-grid select,
+:root[data-theme='noir'] .manual-time-grid textarea {
+  color-scheme: dark;
+}
+.timer-popover > div:first-child strong {
+  font-size: var(--aw-font-secondary, 15px);
+}
+.timer-billable {
+  min-height: 28px;
+  color: var(--text) !important;
+}
+.timer-billable input {
+  accent-color: var(--accent);
+}
