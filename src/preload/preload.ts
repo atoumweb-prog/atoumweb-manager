@@ -11,6 +11,7 @@ import type {
 } from '../shared/commercial';
 import type { AtoumWebApi, DisplayDensity, ThemeName } from '../shared/contracts';
 import type { BusinessBackupFilters, BusinessBackupLocationInput, BusinessBackupRecordInput } from '../shared/businessBackups';
+import type { BusinessBackupPolicyInput, InterventionBackupRecordInput } from '../shared/businessBackupAlerts';
 import type {
   ClientContactRole,
   ClientFilters,
@@ -105,6 +106,14 @@ const api: AtoumWebApi = {
     overview: (filters?: Pick<BusinessBackupFilters, 'clientAccountId' | 'projectId'>) => ipcRenderer.invoke('business-backups:overview', filters),
     relocalize: (locationId: string) => ipcRenderer.invoke('business-backups:relocalize', locationId),
     openLocation: (locationId: string) => ipcRenderer.invoke('business-backups:open-location', locationId),
+  },
+  businessBackupAlerts: {
+    getPolicy: (input: { clientAccountId?: string | null; projectId?: string | null }) => ipcRenderer.invoke('business-backup-alerts:get-policy', input),
+    updatePolicy: (input: BusinessBackupPolicyInput) => ipcRenderer.invoke('business-backup-alerts:update-policy', input),
+    listAlerts: () => ipcRenderer.invoke('business-backup-alerts:list'),
+    reviewIntervention: (interventionId: string) => ipcRenderer.invoke('business-backup-alerts:review-intervention', interventionId),
+    recordForIntervention: (input: InterventionBackupRecordInput) => ipcRenderer.invoke('business-backup-alerts:record-intervention', input),
+    linkExisting: (interventionId: string, backupRecordId: string, role: 'pre_intervention' | 'post_intervention' | 'reference') => ipcRenderer.invoke('business-backup-alerts:link-existing', interventionId, backupRecordId, role),
   },
   database: { health: () => ipcRenderer.invoke('database:health') },
   workflow: {
