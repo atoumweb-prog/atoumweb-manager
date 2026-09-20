@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   AtoumWebLibraryCategory,
   AtoumWebPackageInspection,
@@ -125,6 +125,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   const [packageMarkStable, setPackageMarkStable] = useState(false);
   const [packageBusy, setPackageBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const detailPanelRef = useRef<HTMLElement | null>(null);
 
   async function loadVersionAssets(versionId: string): Promise<void> {
     if (!versionId) {
@@ -202,6 +203,17 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
     setAssetVersionId('');
     setExpandedVersionId(null);
   }
+
+  useEffect(() => {
+    if (!selected) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target || detailPanelRef.current?.contains(target)) return;
+      closeDetail();
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    return () => document.removeEventListener('pointerdown', closeOnOutside);
+  }, [selected?.id]);
 
   async function openItem(id: string): Promise<void> {
     try {
@@ -463,7 +475,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
           ))}
         </article>
 
-        {selected && <article className={`panel aw-library-detail ${detailCollapsed ? 'collapsed' : ''}`}>
+        {selected && <article ref={detailPanelRef} className={`panel aw-library-detail ${detailCollapsed ? 'collapsed' : ''}`}>
             <div className="panel-title aw-library-detail-heading">
               <div><span className="eyebrow">{categoryLabel(selected.category)} · {reuseStatusLabel(selected.reuseStatus)}</span><h2>{selected.name}</h2></div>
               <div className="button-row">
