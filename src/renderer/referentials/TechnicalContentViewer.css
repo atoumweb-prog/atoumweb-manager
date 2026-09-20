@@ -30,3 +30,14 @@
   .technical-content-actions { justify-content: flex-start; }
   .technical-content-viewer.expanded { inset: 10px; }
 }
+
+.technical-content-preview {
+  width: 100%;
+  min-height: 420px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #fff;
+}
+.technical-content-viewer.expanded .technical-content-preview {
+  min-height: calc(100vh - 180px);
+}
