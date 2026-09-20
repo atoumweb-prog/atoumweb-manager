@@ -13,6 +13,7 @@ interface Props {
 }
 
 type JsonMode = 'structured' | 'raw';
+type ViewerMode = 'source' | 'preview';
 
 export function TechnicalContentViewer({
   contentType,
@@ -24,9 +25,12 @@ export function TechnicalContentViewer({
   onToggleExpanded,
 }: Props) {
   const [jsonMode, setJsonMode] = useState<JsonMode>('structured');
+  const [viewerMode, setViewerMode] = useState<ViewerMode>('source');
   const parsed = useMemo(() => parseJson(contentType, content), [contentType, content]);
   const text = content ?? '';
   const lineCount = text ? text.split(/\r?\n/).length : 0;
+  const canPreviewHtml = contentType === 'code' && ['html', 'htm'].includes((language ?? '').trim().toLowerCase());
+  const previewDocument = useMemo(() => canPreviewHtml ? buildHtmlPreviewDocument(text) : '', [canPreviewHtml, text]);
 
   async function copy(): Promise<void> {
     if (!text) return;
@@ -50,7 +54,12 @@ export function TechnicalContentViewer({
           <span>{contentType}{language ? ` · ${language}` : ''} · {lineCount} ligne{lineCount > 1 ? 's' : ''}</span>
         </div>
         <div className="technical-content-actions">
-          {parsed !== null && (
+          {canPreviewHtml && (
+            <button type="button" className="secondary-button" onClick={() => setViewerMode((value) => value === 'source' ? 'preview' : 'source')}>
+              {viewerMode === 'source' ? 'Aperçu rendu' : 'Voir le code'}
+            </button>
+          )}
+          {parsed !== null && viewerMode === 'source' && (
             <button type="button" className="secondary-button" onClick={() => setJsonMode((value) => value === 'raw' ? 'structured' : 'raw')}>
               {jsonMode === 'raw' ? 'Vue structurée' : 'Vue brute'}
             </button>
@@ -60,11 +69,17 @@ export function TechnicalContentViewer({
         </div>
       </header>
 
-      <div className="technical-content-safety">Lecture uniquement · aucun code n’est exécuté par AtoumWeb Manager.</div>
+      <div className="technical-content-safety">
+        {viewerMode === 'preview'
+          ? 'Aperçu isolé · scripts et ressources externes bloqués · le composant ne modifie pas AtoumWeb Manager.'
+          : 'Lecture uniquement · aucun code n’est exécuté par AtoumWeb Manager.'}
+      </div>
 
-      {parsed !== null && jsonMode === 'structured'
-        ? <JsonTree value={parsed} />
-        : <LineNumberedContent content={text} />}
+      {viewerMode === 'preview' && canPreviewHtml
+        ? <iframe className="technical-content-preview" title={`Aperçu rendu · ${title}`} sandbox="" srcDoc={previewDocument} />
+        : parsed !== null && jsonMode === 'structured'
+          ? <JsonTree value={parsed} />
+          : <LineNumberedContent content={text} />}
     </section>
   );
 }
@@ -123,4 +138,26 @@ function JsonScalar({ value }: { value: unknown }) {
   if (typeof value === 'number') return <span className="technical-json-number">{String(value)}</span>;
   if (typeof value === 'boolean') return <span className="technical-json-boolean">{String(value)}</span>;
   return <span>{String(value)}</span>;
+}
+
+
+function buildHtmlPreviewDocument(content: string): string {
+  if (/<!doctype\s+html|<html[\s>]/i.test(content)) return content;
+  return `<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base target="_blank">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:;">
+  <style>
+    html, body { margin: 0; min-height: 100%; background: #fff; }
+    body { font-family: Arial, Helvetica, sans-serif; }
+    *, *::before, *::after { box-sizing: border-box; }
+  </style>
+</head>
+<body>
+${content}
+</body>
+</html>`;
 }
