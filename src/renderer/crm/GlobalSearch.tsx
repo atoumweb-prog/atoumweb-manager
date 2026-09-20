@@ -87,5 +87,7 @@ function entityLabel(type: SearchResult['entityType']): string {
     case 'intervention': return 'Intervention';
     case 'maintenance': return 'Maintenance';
     case 'hour_pack': return 'Pack d’heures';
+    case 'atoumweb_library': return 'Bibliothèque AtoumWeb';
+    case 'backup_record': return 'Sauvegarde';
   }
 }
