@@ -62,7 +62,7 @@ export function BusinessBackupsPage({ onMessage, initialRecordId }: Props) {
           locationType: locationFilter || null,
         }),
         window.atoumweb.projects.projects.list(),
-        window.atoumweb.crm.clients.list(),
+        window.atoumweb.crm.clients.list({ includeArchived: true }),
         window.atoumweb.businessBackups.overview(),
       ]);
       setRecords(nextRecords);
@@ -192,7 +192,7 @@ export function BusinessBackupsPage({ onMessage, initialRecordId }: Props) {
         <div className="panel-title"><div><span className="eyebrow">Nouvel enregistrement</span><h2>Sauvegarde métier</h2></div></div>
         <div className="business-backups-form-grid">
           <label>Projet<select value={form.projectId} onChange={(event) => setForm((value) => ({ ...value, projectId: event.target.value }))}><option value="">Aucun projet</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.number} · {project.name}</option>)}</select></label>
-          <label>Client<select value={form.clientAccountId} onChange={(event) => setForm((value) => ({ ...value, clientAccountId: event.target.value }))}><option value="">Déduit du projet / aucun</option>{clients.map((client) => <option key={client.id} value={client.id}>{client.displayName}</option>)}</select></label>
+          <label>Client<select value={form.clientAccountId} onChange={(event) => setForm((value) => ({ ...value, clientAccountId: event.target.value }))}><option value="">Déduit du projet / aucun</option>{clients.map((client) => <option key={client.id} value={client.id}>{client.displayName}{client.status === 'archived' ? ' · Archivé' : client.status === 'inactive' ? ' · Ancien client' : ''}</option>)}</select></label>
           <label>Type<select value={form.backupType} onChange={(event) => setForm((value) => ({ ...value, backupType: event.target.value as BusinessBackupType }))}>{BACKUP_TYPES.map((type) => <option key={type.id} value={type.id}>{type.label}</option>)}</select></label>
           <label>Date / heure<input type="datetime-local" value={form.backupAt} onChange={(event) => setForm((value) => ({ ...value, backupAt: event.target.value }))} /></label>
         </div>
