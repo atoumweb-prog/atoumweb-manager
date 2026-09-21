@@ -208,6 +208,7 @@ export interface AnalyticsProjectEconomics {
   completedProjectsWithTrackedTime: number;
   trackedSeconds: number;
   estimatedSeconds: number;
+  estimateTrackedSeconds: number;
   estimateSample: number;
   averageCalendarDays: number | null;
   calendarDurationSample: number;
