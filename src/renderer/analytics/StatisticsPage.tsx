@@ -4,6 +4,7 @@ import type {
   AnalyticsFinancialMetric,
   AnalyticsFinancialMetricValue,
   AnalyticsFinancialSnapshot,
+  AnalyticsProjectTimeSnapshot,
   AnalyticsPeriodInput,
   AnalyticsPeriodPreset,
 } from '../../shared/analytics';
@@ -106,6 +107,15 @@ function countComparison(current: number, previous: number): string {
   return `${delta > 0 ? '+' : ''}${delta} vs période précédente`;
 }
 
+function secondsLabel(seconds: number): string {
+  if (seconds < 3600) return `${Math.round(seconds / 60)} min`;
+  return `${(seconds / 3600).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} h`;
+}
+
+function hourlyMoney(cents: number | null): string {
+  return cents == null ? '—' : `${money(cents)} / h`;
+}
+
 function normalizedPair(metric: AnalyticsFinancialMetricValue): { current: number; previous: number } {
   if (!metric.available || metric.currentCents == null || metric.previousCents == null) return { current: 0, previous: 0 };
   const max = Math.max(Math.abs(metric.currentCents), Math.abs(metric.previousCents), 1);
@@ -119,8 +129,10 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
   const [period, setPeriod] = useState<AnalyticsPeriodInput>({ preset: 'month' });
   const [snapshot, setSnapshot] = useState<AnalyticsFinancialSnapshot | null>(null);
   const [commercial, setCommercial] = useState<AnalyticsCommercialSnapshot | null>(null);
+  const [projectTime, setProjectTime] = useState<AnalyticsProjectTimeSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
   const [commercialOpen, setCommercialOpen] = useState(false);
+  const [projectTimeOpen, setProjectTimeOpen] = useState(false);
   const [primaryOpen, setPrimaryOpen] = useState(false);
   const [flowOpen, setFlowOpen] = useState(false);
   const [expandedMetricKey, setExpandedMetricKey] = useState<AnalyticsFinancialMetric | null>(null);
@@ -134,12 +146,14 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
     if (effectivePeriod.preset === 'custom' && (!effectivePeriod.from || !effectivePeriod.to)) return;
     setLoading(true);
     try {
-      const [financialSnapshot, commercialSnapshot] = await Promise.all([
+      const [financialSnapshot, commercialSnapshot, projectTimeSnapshot] = await Promise.all([
         window.atoumweb.analytics.financialSnapshot(effectivePeriod),
         window.atoumweb.analytics.commercialSnapshot(effectivePeriod),
+        window.atoumweb.analytics.projectTimeSnapshot(effectivePeriod),
       ]);
       setSnapshot(financialSnapshot);
       setCommercial(commercialSnapshot);
+      setProjectTime(projectTimeSnapshot);
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de calculer les statistiques.');
     } finally {
@@ -233,6 +247,12 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
       snapshot={commercial}
       open={commercialOpen}
       onToggle={() => setCommercialOpen((value) => !value)}
+    />}
+
+    {projectTime && <ProjectTimeSection
+      snapshot={projectTime}
+      open={projectTimeOpen}
+      onToggle={() => setProjectTimeOpen((value) => !value)}
     />}
 
     <MetricSection
@@ -421,6 +441,91 @@ function CommercialCountCard({ icon, tone, label, current, previous }: {
       <div><span>Précédent</span><i><b className="previous" style={{ width: `${previous === 0 ? 0 : Math.max(7, (previous / max) * 100)}%` }} /></i></div>
     </div>
   </article>;
+}
+
+function ProjectTimeSection({ snapshot, open, onToggle }: {
+  snapshot: AnalyticsProjectTimeSnapshot;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  const { current, previous, economics, previousEconomics } = snapshot;
+  const billablePercent = current.totalSeconds > 0 ? (current.billableSeconds / current.totalSeconds) * 100 : null;
+  const estimatedGapSeconds = economics.estimateSample > 0 ? economics.trackedSeconds - economics.estimatedSeconds : null;
+  const maxCategory = Math.max(...snapshot.categories.map((item) => item.seconds), 1);
+
+  return <section className={`statistics-section statistics-project-time-section collapsible ${open ? 'open' : 'closed'}`}>
+    <button className="statistics-section-toggle" type="button" onClick={onToggle} aria-expanded={open} aria-controls="statistics-section-project-time">
+      <div>
+        <span className="eyebrow">Projets & temps</span>
+        <h3>Production & rentabilité</h3>
+        <p>Temps réel, livraison et rendement sur des projets terminés.</p>
+      </div>
+      <div className="statistics-section-summary project-time">
+        <span className="statistics-summary-chip tone-blue"><i>▣</i><b>{current.projectsCreated} créé{current.projectsCreated > 1 ? 's' : ''}</b></span>
+        <span className="statistics-summary-chip tone-green"><i>✓</i><b>{current.projectsCompleted} terminé{current.projectsCompleted > 1 ? 's' : ''}</b></span>
+        <span className="statistics-summary-chip tone-violet"><i>◷</i><b>{secondsLabel(current.totalSeconds)}</b></span>
+        <span className="statistics-summary-chip tone-gold"><i>€</i><b>{hourlyMoney(economics.contractHourlyCents)}</b></span>
+      </div>
+      <span className="statistics-section-chevron" aria-hidden="true">{open ? '−' : '+'}</span>
+    </button>
+
+    {open && <div className="statistics-project-time-grid" id="statistics-section-project-time">
+      <article className="statistics-project-card tone-blue">
+        <div className="statistics-project-card-head"><span>▣</span><div><small>Volume</small><h4>Projets</h4></div></div>
+        <div className="statistics-project-kpi-row">
+          <div><span>Créés</span><strong>{current.projectsCreated}</strong><small>{countComparison(current.projectsCreated, previous.projectsCreated)}</small></div>
+          <div><span>Terminés</span><strong>{current.projectsCompleted}</strong><small>{countComparison(current.projectsCompleted, previous.projectsCompleted)}</small></div>
+        </div>
+      </article>
+
+      <article className="statistics-project-card tone-violet">
+        <div className="statistics-project-card-head"><span>◷</span><div><small>Temps clôturé</small><h4>Temps suivi</h4></div></div>
+        <div className="statistics-project-main"><strong>{secondsLabel(current.totalSeconds)}</strong><span>{current.sessionCount} session{current.sessionCount > 1 ? 's' : ''}</span></div>
+        <div className="statistics-time-split"><i className="billable" style={{ width: `${billablePercent ?? 0}%` }} /><i className="nonbillable" style={{ width: `${100 - (billablePercent ?? 0)}%` }} /></div>
+        <div className="statistics-commercial-legend"><span><i className="won" />Facturable {secondsLabel(current.billableSeconds)}</span><span><i className="lost" />Non facturable {secondsLabel(current.nonBillableSeconds)}</span></div>
+        <small className="statistics-commercial-previous">Précédente : {secondsLabel(previous.totalSeconds)}</small>
+      </article>
+
+      <article className="statistics-project-card tone-gold">
+        <div className="statistics-project-card-head"><span>€</span><div><small>Projets terminés avec temps</small><h4>Rendement horaire</h4></div></div>
+        <div className="statistics-project-kpi-row">
+          <div><span>Contractuel</span><strong>{hourlyMoney(economics.contractHourlyCents)}</strong></div>
+          <div><span>Commercial</span><strong>{hourlyMoney(economics.commercialHourlyCents)}</strong></div>
+        </div>
+        <small className="statistics-commercial-previous">n={economics.completedProjectsWithTrackedTime} projet{economics.completedProjectsWithTrackedTime > 1 ? 's' : ''} avec temps suivi · précédente {hourlyMoney(previousEconomics.contractHourlyCents)}</small>
+      </article>
+
+      <article className="statistics-project-card tone-green">
+        <div className="statistics-project-card-head"><span>◇</span><div><small>Prévision vs réel</small><h4>Temps estimé</h4></div></div>
+        <div className="statistics-project-main"><strong>{economics.estimateSample > 0 ? secondsLabel(economics.estimatedSeconds) : '—'}</strong><span>Réel : {economics.estimateSample > 0 ? secondsLabel(economics.trackedSeconds) : '—'} · n={economics.estimateSample}</span></div>
+        <div className={`statistics-estimate-gap ${estimatedGapSeconds != null && estimatedGapSeconds > 0 ? 'over' : 'under'}`}>
+          {estimatedGapSeconds == null ? 'Pas assez de données' : estimatedGapSeconds === 0 ? 'Estimation respectée' : `${estimatedGapSeconds > 0 ? '+' : '−'}${secondsLabel(Math.abs(estimatedGapSeconds))} vs estimation`}
+        </div>
+        <small className="statistics-commercial-previous">Durée calendaire moyenne : {economics.averageCalendarDays == null ? '—' : `${economics.averageCalendarDays.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} j`} · n={economics.calendarDurationSample}</small>
+      </article>
+
+      <article className="statistics-project-insight">
+        <div className="statistics-insight-heading"><div><span className="eyebrow">Répartition</span><h4>Temps par catégorie</h4></div><span>{secondsLabel(current.totalSeconds)}</span></div>
+        <div className="statistics-category-list">
+          {snapshot.categories.length > 0 ? snapshot.categories.slice(0, 7).map((item) => <div className="statistics-category-row" key={item.category}>
+            <div><strong>{item.category.replaceAll('_', ' ')}</strong><small>{secondsLabel(item.seconds)} · {item.sessionCount} session{item.sessionCount > 1 ? 's' : ''}</small></div>
+            <i><b style={{ width: `${Math.max(5, (item.seconds / maxCategory) * 100)}%` }} /></i>
+          </div>) : <p className="statistics-insight-empty">Aucun temps clôturé sur la période.</p>}
+        </div>
+      </article>
+
+      <article className="statistics-project-insight">
+        <div className="statistics-insight-heading"><div><span className="eyebrow">Comparabilité</span><h4>Projets terminés par type</h4></div></div>
+        <div className="statistics-project-type-list">
+          {snapshot.projectTypes.length > 0 ? snapshot.projectTypes.map((item) => <div className="statistics-project-type-row" key={item.projectType}>
+            <div><strong>{item.projectType}</strong><small>n={item.completedCount} · temps suivi sur {item.trackedProjectCount}</small></div>
+            <span>{item.averageCalendarDays == null ? '—' : `${item.averageCalendarDays.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} j`}</span>
+          </div>) : <p className="statistics-insight-empty">Aucun projet terminé sur la période.</p>}
+        </div>
+        <small className="statistics-comparability-note">Les types restent séparés : aucune moyenne globale n’est utilisée pour comparer automatiquement des projets de nature différente.</small>
+      </article>
+    </div>}
+  </section>;
 }
 
 function MetricSection({ id, title, subtitle, metrics, open, onToggle, onExpand, secondary = false }: {
