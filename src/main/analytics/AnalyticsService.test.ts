@@ -94,7 +94,7 @@ describe('AnalyticsService', () => {
        VALUES ('p-lost-current','org','lost','neutral','outbound','Budget','2026-09-10T10:00:00.000Z','2026-09-03T10:00:00.000Z','2026-09-10T10:00:00.000Z')`,
     );
     database.run(
-      `INSERT INTO prospects (id,organization_id,stage,temperature,won_at,created_at,updated_at)
+      `INSERT INTO prospects (id,organization_id,stage,temperature,source,won_at,created_at,updated_at)
        VALUES ('p-won-previous','org','won','neutral','referral','2026-08-11T10:00:00.000Z','2026-08-05T10:00:00.000Z','2026-08-11T10:00:00.000Z')`,
     );
 
