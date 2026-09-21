@@ -527,7 +527,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
       )}
 
       {loading ? <div className="panel"><p className="muted">Chargement des projets…</p></div> : (
-        <div className={detail ? `projects-layout with-detail ${detailTab === 'plan' ? 'project-workshop-layout' : ''}` : 'projects-layout'}>
+        <div className="projects-layout">
           <section className="panel project-list-panel">
             <table className="project-table">
               <thead><tr><th>Numéro</th><th>Client</th><th>Projet</th><th>Statut</th><th>Progression</th><th>Temps estimé</th><th>Cible</th></tr></thead>
@@ -542,77 +542,6 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
             </table>
           </section>
 
-          {detail && <>
-            <div className="project-detail-backdrop" role="presentation" onClick={closeProjectDetail} />
-            <aside className={`panel project-detail-panel ${detailTab === 'plan' ? 'workshop' : ''} ${detailExpanded ? 'expanded' : ''}`}>
-              <div className="detail-panel-heading">
-                <div><span className="eyebrow">{detail.number}</span><h2>{detail.name}</h2><p className="muted">{detail.clientLabel}</p></div>
-                <div className="project-detail-heading-actions">
-                  <button className="project-detail-expand" type="button" title={detailExpanded ? 'Réduire la fenêtre' : 'Agrandir la fenêtre'} onClick={() => setDetailExpanded((value) => !value)}>{detailExpanded ? '↙' : '⛶'}</button>
-                  <button className="close-detail" type="button" title="Fermer" onClick={closeProjectDetail}>×</button>
-                </div>
-              </div>
-              <div className="project-detail-status"><select value={detail.status} onChange={(event) => void changeProjectStatus(event.target.value as ProjectStatus)}>{PROJECT_STATUSES.map((status) => <option key={status} value={status}>{PROJECT_STATUS_LABELS[status]}</option>)}</select><span>{detail.progressPercent} %</span></div>
-              <div className="project-main-progress"><i><b style={{ width: `${detail.progressPercent}%` }} /></i></div>
-
-              {completionReview && <ProjectCompletionReviewPanel review={completionReview} busy={completionBusy} onConfirm={confirmProjectCompletion} onCancel={() => setCompletionReview(null)} />}
-
-              <div className="project-tabs">
-                <button className={detailTab === 'summary' ? 'active' : ''} type="button" onClick={() => setDetailTab('summary')}>Résumé</button>
-                <button className={detailTab === 'plan' ? 'active' : ''} type="button" onClick={() => setDetailTab('plan')}>Plan / Tâches</button>
-                <button className={detailTab === 'prerequisites' ? 'active' : ''} type="button" onClick={() => setDetailTab('prerequisites')}>Prérequis</button>
-                <button className={detailTab === 'resources' ? 'active' : ''} type="button" onClick={() => setDetailTab('resources')}>Ressources</button>
-                <button className={detailTab === 'technical' ? 'active' : ''} type="button" onClick={() => setDetailTab('technical')}>Bibliothèque</button>
-                <button className={detailTab === 'operations' ? 'active' : ''} type="button" onClick={() => setDetailTab('operations')}>Interventions</button>
-                <button className={detailTab === 'time' ? 'active' : ''} type="button" onClick={() => setDetailTab('time')}>Temps</button>
-                <button className={detailTab === 'commercial' ? 'active' : ''} type="button" onClick={() => setDetailTab('commercial')}>Commercial</button>
-              </div>
-
-              {detailTab === 'summary' && <ProjectSummaryTab project={detail} />}
-              {detailTab === 'plan' && (
-                <div className="project-tab-content project-atelier">
-                  <div className="project-atelier-tree">
-                    {!detailUsesBlueprint && <div className="project-legacy-plan-note">
-                      <div>
-                        <strong>Ce projet utilise un ancien plan</strong>
-                        <span>Le projet affiché ne contient pas encore le blueprint AtoumWeb : il conserve le modèle qui lui a servi lors de sa création. C’est pour cela que tu ne vois ici qu’une tâche.</span>
-                      </div>
-                      <small>Pour tester le nouvel arbre, crée un nouveau projet en laissant « Automatique depuis le devis ». Les offres/formules contenant le service Site vitrine sont maintenant reconnues.</small>
-                    </div>}
-                    <div className="project-node-add"><strong>Ajouter au plan</strong><div className="project-node-add-grid"><input value={newNodeName} onChange={(event) => setNewNodeName(event.target.value)} placeholder="Nom de la tâche / module…" /><select value={newNodeType} onChange={(event) => setNewNodeType(event.target.value as typeof newNodeType)}><option value="lot">Lot</option><option value="module">Module / Page</option><option value="task">Tâche</option><option value="checklist">Checklist</option></select><select value={newNodeParentId} onChange={(event) => setNewNodeParentId(event.target.value)}><option value="">Racine du projet</option>{detail.nodes.map((node) => <option key={node.id} value={node.id}>{node.name}</option>)}</select><input type="number" min="0" value={newNodeMinutes} onChange={(event) => setNewNodeMinutes(event.target.value)} placeholder="Minutes estimées" /><label className="project-checkbox"><input type="checkbox" checked={newNodeRequired} onChange={(event) => setNewNodeRequired(event.target.checked)} /> Obligatoire</label><button className="secondary-button" type="button" onClick={() => void addProjectNode()}>Ajouter</button></div></div>
-                    <div className="project-tree">{renderProjectTree(detail.nodes, null, updateNodeStatus, moveProjectNode, setSelectedNodeId, selectedNodeId)}</div>
-                    {detail.nodes.length === 0 && <p className="muted">Le plan est vide. Ajoute un lot, un module ou une tâche.</p>}
-                  </div>
-                  <ProjectNodeWorkbench
-                    projectId={detail.id}
-                    node={detail.nodes.find((node) => node.id === selectedNodeId) ?? null}
-                    onUpdate={async (nodeId, input) => {
-                      const updated = await window.atoumweb.projects.projects.updateNode(nodeId, input);
-                      setDetail(updated);
-                      await refresh();
-                    }}
-                    onPause={setNodePause}
-                    onOpenResources={() => setDetailTab('resources')}
-                    onOpenTechnical={() => setDetailTab('technical')}
-                    onOpenTime={() => setDetailTab('time')}
-                    onMessage={onMessage}
-                  />
-                </div>
-              )}
-              {detailTab === 'prerequisites' && (
-                <div className="project-tab-content">
-                  <div className="project-prerequisite-add"><input value={newPrerequisite} onChange={(event) => setNewPrerequisite(event.target.value)} placeholder="Ajouter un prérequis…" /><button className="secondary-button" type="button" onClick={() => void addPrerequisite()}>Ajouter</button></div>
-                  <div className="project-prerequisites">{detail.prerequisites.map((item) => <div key={item.id} className="project-prerequisite"><div><strong>{item.label}</strong>{item.description && <small>{item.description}</small>}</div><select value={item.status} onChange={(event) => void updatePrerequisiteStatus(item.id, event.target.value as ProjectPrerequisiteStatus)}>{PROJECT_PREREQUISITE_STATUSES.map((status) => <option key={status} value={status}>{PREREQUISITE_STATUS_LABELS[status]}</option>)}</select></div>)}</div>
-                  {detail.prerequisites.length === 0 && <p className="muted">Aucun prérequis enregistré.</p>}
-                </div>
-              )}
-              {detailTab === 'resources' && <ProjectResourcesTab projectId={detail.id} nodes={detail.nodes} resourceRootPath={detail.resourceRootPath} onMessage={onMessage} />}
-              {detailTab === 'technical' && <ProjectTechnicalLibraryTab projectId={detail.id} onMessage={onMessage} />}
-              {detailTab === 'operations' && <ProjectOperationsTab projectId={detail.id} onMessage={onMessage} />}
-              {detailTab === 'time' && <ProjectTimeTab projectId={detail.id} nodes={detail.nodes} onMessage={onMessage} />}
-              {detailTab === 'commercial' && <ProjectCommercialTab project={detail} />}
-            </aside>
-          </>}
         </div>
       )}
     </div>
@@ -758,7 +687,7 @@ function ProjectNodeWorkbench({ projectId, node, onUpdate, onPause, onOpenResour
   }
 
   async function pauseOrResumeNodeTimer(): Promise<void> {
-    if (!activeTime || activeTime.projectNodeId !== node.id) return;
+    if (!node || !activeTime || activeTime.projectNodeId !== node.id) return;
     setTimerBusy(true);
     try {
       const next = activeTime.paused
@@ -774,7 +703,7 @@ function ProjectNodeWorkbench({ projectId, node, onUpdate, onPause, onOpenResour
   }
 
   async function stopNodeTimer(): Promise<void> {
-    if (!activeTime || activeTime.projectNodeId !== node.id) return;
+    if (!node || !activeTime || activeTime.projectNodeId !== node.id) return;
     setTimerBusy(true);
     try {
       await window.atoumweb.time.stop(activeTime.id);
