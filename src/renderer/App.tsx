@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import type { BootstrapState, DisplayDensity, ThemeName } from '../shared/contracts';
 import type { SearchResult } from '../shared/crm';
 import { BusinessBackupsPage } from './backups/BusinessBackupsPage';
+import { StatisticsPage } from './analytics/StatisticsPage';
 import { CatalogPage } from './commercial/CatalogPage';
 import { QuotesPage } from './commercial/QuotesPage';
 import { ClientsPage } from './crm/ClientsPage';
@@ -237,8 +238,9 @@ function App() {
           {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}
           {activePage === 'Bibliothèque AtoumWeb' && <AtoumWebLibraryPage onMessage={setMessage} initialItemId={librarySearchTarget} />}
           {activePage === 'Sauvegardes' && <BusinessBackupsPage onMessage={setMessage} initialRecordId={backupSearchTarget} />}
+          {activePage === 'Statistiques' && <StatisticsPage onMessage={setMessage} />}
           {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} displayDensity={displayDensity} onThemeChange={updateTheme} onDensityChange={updateDisplayDensity} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
-          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Sauvegardes' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
+          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Sauvegardes' && activePage !== 'Statistiques' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
         </section>
       </main>
     </div>
