@@ -607,13 +607,14 @@ export class ProjectService {
         const serviceVersionId = typeof component.serviceVersionId === 'string' ? component.serviceVersionId : null;
         if (!serviceVersionId) continue;
         for (const link of this.blueprintLinksForCatalogVersion(serviceVersionId)) {
-          if (link.role !== 'addon') continue;
-          pushAddon({
+          const contribution: BlueprintContribution = {
             templateVersionId: link.template_version_id,
             quoteLineId: line.id,
             catalogVersionId: serviceVersionId,
             sourceRole: 'offer_component',
-          });
+          };
+          if (link.role === 'base' && !mappedBase) mappedBase = contribution;
+          if (link.role === 'addon') pushAddon(contribution);
         }
       }
     }
