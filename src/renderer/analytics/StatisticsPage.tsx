@@ -7,14 +7,14 @@ import type {
   AnalyticsPeriodPreset,
 } from '../../shared/analytics';
 
-const PRESETS: Array<{ value: AnalyticsPeriodPreset; label: string; short: string }> = [
-  { value: 'today', label: 'Aujourd’hui', short: 'Jour' },
-  { value: 'week', label: 'Cette semaine', short: 'Semaine' },
-  { value: 'month', label: 'Ce mois', short: 'Mois' },
-  { value: 'quarter', label: 'Ce trimestre', short: 'Trimestre' },
-  { value: 'year', label: 'Cette année', short: 'Année' },
-  { value: 'previous_year', label: 'Année précédente', short: 'N-1' },
-  { value: 'custom', label: 'Période personnalisée', short: 'Dates' },
+const PRESETS: Array<{ value: AnalyticsPeriodPreset; short: string }> = [
+  { value: 'today', short: 'Jour' },
+  { value: 'week', short: 'Semaine' },
+  { value: 'month', short: 'Mois' },
+  { value: 'quarter', short: 'Trimestre' },
+  { value: 'year', short: 'Année' },
+  { value: 'previous_year', short: 'N-1' },
+  { value: 'custom', short: 'Dates' },
 ];
 
 const PRIMARY_METRICS: AnalyticsFinancialMetric[] = [
@@ -76,12 +76,12 @@ function trendArrow(metric: AnalyticsFinancialMetricValue): string {
   return '·';
 }
 
-function comparisonWidths(metric: AnalyticsFinancialMetricValue): { current: string; previous: string } {
-  if (!metric.available || metric.currentCents == null || metric.previousCents == null) return { current: '0%', previous: '0%' };
+function normalizedPair(metric: AnalyticsFinancialMetricValue): { current: number; previous: number } {
+  if (!metric.available || metric.currentCents == null || metric.previousCents == null) return { current: 0, previous: 0 };
   const max = Math.max(Math.abs(metric.currentCents), Math.abs(metric.previousCents), 1);
   return {
-    current: `${Math.max(5, Math.round((Math.abs(metric.currentCents) / max) * 100))}%`,
-    previous: metric.previousCents === 0 ? '0%' : `${Math.max(5, Math.round((Math.abs(metric.previousCents) / max) * 100))}%`,
+    current: metric.currentCents === 0 ? 0 : Math.max(7, Math.round((Math.abs(metric.currentCents) / max) * 100)),
+    previous: metric.previousCents === 0 ? 0 : Math.max(7, Math.round((Math.abs(metric.previousCents) / max) * 100)),
   };
 }
 
@@ -89,6 +89,9 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
   const [period, setPeriod] = useState<AnalyticsPeriodInput>({ preset: 'month' });
   const [snapshot, setSnapshot] = useState<AnalyticsFinancialSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
+  const [primaryOpen, setPrimaryOpen] = useState(false);
+  const [flowOpen, setFlowOpen] = useState(false);
+  const [expandedMetricKey, setExpandedMetricKey] = useState<AnalyticsFinancialMetric | null>(null);
 
   const effectivePeriod = useMemo<AnalyticsPeriodInput>(() => {
     if (period.preset !== 'custom') return { preset: period.preset };
@@ -109,40 +112,50 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
 
   useEffect(() => { void load(); }, [effectivePeriod.preset, effectivePeriod.from, effectivePeriod.to]);
 
+  useEffect(() => {
+    if (!expandedMetricKey) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setExpandedMetricKey(null);
+    };
+    window.addEventListener('keydown', close);
+    return () => window.removeEventListener('keydown', close);
+  }, [expandedMetricKey]);
+
   const metricMap = useMemo(
     () => new Map(snapshot?.metrics.map((metric) => [metric.key, metric]) ?? []),
     [snapshot],
   );
+
+  const primaryMetrics = PRIMARY_METRICS.map((key) => metricMap.get(key)).filter(Boolean) as AnalyticsFinancialMetricValue[];
+  const flowMetrics = FLOW_METRICS.map((key) => metricMap.get(key)).filter(Boolean) as AnalyticsFinancialMetricValue[];
   const availableCount = snapshot?.metrics.filter((metric) => metric.available).length ?? 0;
   const signed = metricMap.get('contract_signed');
   const delivered = metricMap.get('commercial_delivered');
   const gifted = metricMap.get('gifted_value');
+  const expandedMetric = expandedMetricKey ? metricMap.get(expandedMetricKey) ?? null : null;
 
   return <div className="statistics-page">
-    <section className="statistics-hero">
+    <section className="statistics-hero compact">
       <div className="statistics-hero-copy">
         <div className="statistics-hero-mark" aria-hidden="true">AW</div>
         <div>
           <span className="eyebrow">Pilotage AtoumWeb · Phase 7A</span>
           <h2>Les chiffres qui racontent ton activité</h2>
-          <p>Une lecture rapide d’abord, les sources et règles de calcul restent accessibles derrière chaque indicateur.</p>
+          <p>Vue synthétique par défaut. Chaque bloc peut être déployé et chaque indicateur agrandi.</p>
         </div>
       </div>
-
       <div className="statistics-hero-side">
         <div className="statistics-hero-score">
-          <strong>{availableCount}</strong>
-          <span>indicateurs actifs</span>
-          <small>sur {snapshot?.metrics.length ?? 8}</small>
+          <strong>{availableCount}/{snapshot?.metrics.length ?? 8}</strong>
+          <span>sources actives</span>
         </div>
-        <button className="statistics-refresh" type="button" disabled={loading} onClick={() => void load()} aria-label="Recalculer les statistiques">
-          <span aria-hidden="true">{loading ? '…' : '↻'}</span>
-          {loading ? 'Calcul' : 'Actualiser'}
+        <button className="statistics-refresh" type="button" disabled={loading} onClick={() => void load()}>
+          <span aria-hidden="true">{loading ? '…' : '↻'}</span>{loading ? 'Calcul' : 'Actualiser'}
         </button>
       </div>
     </section>
 
-    <section className="statistics-period-panel">
+    <section className="statistics-period-panel compact">
       <div className="statistics-quick-periods" aria-label="Période statistique">
         {PRESETS.map((item) => <button
           key={item.value}
@@ -153,47 +166,56 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
       </div>
 
       {period.preset === 'custom' && <div className="statistics-custom-dates">
-        <label>Du
-          <input type="date" value={period.from ?? ''} onChange={(event) => setPeriod((current) => ({ ...current, from: event.target.value }))} />
-        </label>
+        <label>Du<input type="date" value={period.from ?? ''} onChange={(event) => setPeriod((current) => ({ ...current, from: event.target.value }))} /></label>
         <span>→</span>
-        <label>Au
-          <input type="date" value={period.to ?? ''} onChange={(event) => setPeriod((current) => ({ ...current, to: event.target.value }))} />
-        </label>
+        <label>Au<input type="date" value={period.to ?? ''} onChange={(event) => setPeriod((current) => ({ ...current, to: event.target.value }))} /></label>
       </div>}
 
       {snapshot && <div className="statistics-period-summary">
-        <div><span>Période analysée</span><strong>{dateFr(snapshot.period.from)} → {dateFr(snapshot.period.to)}</strong></div>
+        <div><span>Période</span><strong>{dateFr(snapshot.period.from)} → {dateFr(snapshot.period.to)}</strong></div>
         <i aria-hidden="true" />
         <div><span>Comparaison</span><strong>{dateFr(snapshot.period.comparisonFrom)} → {dateFr(snapshot.period.comparisonTo)}</strong></div>
       </div>}
     </section>
 
-    {snapshot && <section className="statistics-glance">
-      <div className="statistics-glance-heading">
-        <span className="eyebrow">À retenir</span>
-        <strong>Le résumé en 10 secondes</strong>
+    {snapshot && <section className="statistics-overview-grid">
+      <div className="statistics-glance compact">
+        <div className="statistics-glance-heading">
+          <span className="eyebrow">À retenir</span>
+          <strong>Résumé express</strong>
+        </div>
+        <QuickFact icon="✓" label="Signé" value={signed?.currentCents != null ? money(signed.currentCents) : '—'} />
+        <QuickFact icon="◆" label="Livré" value={delivered?.currentCents != null ? money(delivered.currentCents) : '—'} />
+        <QuickFact icon="◇" label="Offert" value={gifted?.currentCents != null ? money(gifted.currentCents) : '—'} />
       </div>
-      <QuickFact icon="✓" label="Signé sur la période" value={signed?.currentCents != null ? money(signed.currentCents) : '—'} />
-      <QuickFact icon="◆" label="Valeur livrée" value={delivered?.currentCents != null ? money(delivered.currentCents) : '—'} />
-      <QuickFact icon="◇" label="Valeur offerte" value={gifted?.currentCents != null ? money(gifted.currentCents) : '—'} />
-      <QuickFact icon="◎" label="Sources exploitables" value={`${availableCount} / ${snapshot.metrics.length}`} />
+
+      <OverviewChart metrics={primaryMetrics} />
     </section>}
 
     <MetricSection
+      id="primary"
       title="Activité & valeur"
-      subtitle="Ce que tu signes, livres ou offres commercialement."
-      metrics={PRIMARY_METRICS.map((key) => metricMap.get(key)).filter(Boolean) as AnalyticsFinancialMetricValue[]}
+      subtitle="Signé, livré et valeur offerte."
+      metrics={primaryMetrics}
+      open={primaryOpen}
+      onToggle={() => setPrimaryOpen((value) => !value)}
+      onExpand={setExpandedMetricKey}
     />
 
     <MetricSection
+      id="flow"
       title="Flux financiers"
-      subtitle="Factures, encaissements et dépenses dès que la Phase 5 fournit leurs sources de vérité."
-      metrics={FLOW_METRICS.map((key) => metricMap.get(key)).filter(Boolean) as AnalyticsFinancialMetricValue[]}
+      subtitle="Facturation, encaissements et dépenses."
+      metrics={flowMetrics}
+      open={flowOpen}
+      onToggle={() => setFlowOpen((value) => !value)}
+      onExpand={setExpandedMetricKey}
       secondary
     />
 
     {!snapshot && <article className="panel statistics-loading"><span className="statistics-loader" /><strong>{loading ? 'Calcul des indicateurs…' : 'Choisis une période pour afficher les indicateurs.'}</strong></article>}
+
+    {expandedMetric && <MetricDetailModal metric={expandedMetric} onClose={() => setExpandedMetricKey(null)} />}
   </div>;
 }
 
@@ -204,77 +226,159 @@ function QuickFact({ icon, label, value }: { icon: string; label: string; value:
   </div>;
 }
 
-function MetricSection({ title, subtitle, metrics, secondary = false }: {
+function OverviewChart({ metrics }: { metrics: AnalyticsFinancialMetricValue[] }) {
+  const available = metrics.filter((metric) => metric.available && metric.currentCents != null);
+  const max = Math.max(...available.flatMap((metric) => [Math.abs(metric.currentCents ?? 0), Math.abs(metric.previousCents ?? 0)]), 1);
+
+  return <article className="statistics-overview-chart">
+    <div className="statistics-chart-heading">
+      <div><span className="eyebrow">Comparaison</span><strong>Actuel vs précédent</strong></div>
+      <div className="statistics-chart-legend"><span><i className="current" />Actuel</span><span><i />Précédent</span></div>
+    </div>
+    <div className="statistics-chart-bars">
+      {available.map((metric) => {
+        const meta = METRIC_META[metric.key];
+        const current = Math.max(3, Math.round((Math.abs(metric.currentCents ?? 0) / max) * 100));
+        const previous = metric.previousCents ? Math.max(3, Math.round((Math.abs(metric.previousCents) / max) * 100)) : 0;
+        return <div className={`statistics-chart-row tone-${meta.tone}`} key={metric.key}>
+          <span title={metric.label}>{metric.label.replace('Valeur ', '')}</span>
+          <div className="statistics-chart-track">
+            <i className="previous" style={{ width: `${previous}%` }} />
+            <i className="current" style={{ width: `${current}%` }} />
+          </div>
+          <strong>{money(metric.currentCents ?? 0)}</strong>
+        </div>;
+      })}
+    </div>
+  </article>;
+}
+
+function MetricSection({ id, title, subtitle, metrics, open, onToggle, onExpand, secondary = false }: {
+  id: string;
   title: string;
   subtitle: string;
   metrics: AnalyticsFinancialMetricValue[];
+  open: boolean;
+  onToggle: () => void;
+  onExpand: (key: AnalyticsFinancialMetric) => void;
   secondary?: boolean;
 }) {
   if (metrics.length === 0) return null;
-  return <section className={`statistics-section ${secondary ? 'secondary' : ''}`}>
-    <div className="statistics-section-heading">
-      <div><span className="eyebrow">{secondary ? 'Suivi' : 'Performance'}</span><h3>{title}</h3></div>
-      <p>{subtitle}</p>
-    </div>
-    <div className="statistics-metrics-grid">
-      {metrics.map((metric) => <MetricCard metric={metric} key={metric.key} />)}
-    </div>
+
+  return <section className={`statistics-section collapsible ${secondary ? 'secondary' : ''} ${open ? 'open' : 'closed'}`}>
+    <button className="statistics-section-toggle" type="button" onClick={onToggle} aria-expanded={open} aria-controls={`statistics-section-${id}`}>
+      <div>
+        <span className="eyebrow">{secondary ? 'Suivi' : 'Performance'}</span>
+        <h3>{title}</h3>
+        <p>{subtitle}</p>
+      </div>
+      <div className="statistics-section-summary">
+        {metrics.map((metric) => <MetricSummaryChip metric={metric} key={metric.key} />)}
+      </div>
+      <span className="statistics-section-chevron" aria-hidden="true">{open ? '−' : '+'}</span>
+    </button>
+
+    {open && <div className="statistics-metrics-grid compact" id={`statistics-section-${id}`}>
+      {metrics.map((metric) => <MetricCard metric={metric} key={metric.key} onExpand={() => onExpand(metric.key)} />)}
+    </div>}
   </section>;
 }
 
-function MetricCard({ metric }: { metric: AnalyticsFinancialMetricValue }) {
+function MetricSummaryChip({ metric }: { metric: AnalyticsFinancialMetricValue }) {
+  const meta = METRIC_META[metric.key];
+  return <span className={`statistics-summary-chip tone-${meta.tone} ${metric.available ? '' : 'unavailable'}`} title={metric.label}>
+    <i aria-hidden="true">{meta.icon}</i>
+    <b>{metric.available && metric.currentCents != null ? money(metric.currentCents) : 'Phase 5'}</b>
+  </span>;
+}
+
+function MetricCard({ metric, onExpand }: { metric: AnalyticsFinancialMetricValue; onExpand: () => void }) {
   const meta = METRIC_META[metric.key];
   const state = trend(metric);
-  const widths = comparisonWidths(metric);
+  const pair = normalizedPair(metric);
 
-  return <article className={`statistics-metric-card tone-${meta.tone} ${metric.available ? '' : 'unavailable'}`}>
+  return <article className={`statistics-metric-card compact tone-${meta.tone} ${metric.available ? '' : 'unavailable'}`}>
     <div className="statistics-metric-top">
       <span className="statistics-metric-icon" aria-hidden="true">{meta.icon}</span>
       <div className="statistics-metric-title">
         <small>{meta.kicker}</small>
         <h4>{metric.label}</h4>
       </div>
-      {metric.available
-        ? <span className="statistics-live-badge"><i /> Actif</span>
-        : <span className="statistics-phase-badge">Phase 5</span>}
+      <button className="statistics-expand-button" type="button" onClick={onExpand} title="Agrandir le module" aria-label={`Agrandir ${metric.label}`}>⤢</button>
     </div>
 
     {metric.available && metric.currentCents != null
-      ? <>
-        <div className="statistics-value-row">
-          <strong>{money(metric.currentCents)}</strong>
-          <span className={`statistics-trend ${state}`}><b>{trendArrow(metric)}</b>{deltaLabel(metric)}</span>
-        </div>
-
-        <div className="statistics-mini-compare" aria-label="Comparaison avec la période précédente">
-          <div>
-            <span>Cette période</span>
-            <i><b style={{ width: widths.current }} /></i>
+      ? <div className="statistics-card-compact-body">
+          <div className="statistics-value-row compact">
+            <strong>{money(metric.currentCents)}</strong>
+            <span className={`statistics-trend ${state}`}><b>{trendArrow(metric)}</b>{deltaLabel(metric)}</span>
           </div>
-          <div>
-            <span>Précédente</span>
-            <i><b className="previous" style={{ width: widths.previous }} /></i>
+          <MiniBars current={pair.current} previous={pair.previous} tone={meta.tone} />
+        </div>
+      : <div className="statistics-unavailable-compact">
+          <strong>En attente de connexion</strong>
+          <span>Phase 5 différée</span>
+        </div>}
+
+    <button className="statistics-card-detail-button" type="button" onClick={onExpand}>
+      <span>{metric.available ? 'Voir le détail' : 'Voir ce qui manque'}</span><b aria-hidden="true">→</b>
+    </button>
+  </article>;
+}
+
+function MiniBars({ current, previous, tone }: { current: number; previous: number; tone: string }) {
+  return <div className={`statistics-mini-bars tone-${tone}`} aria-label="Comparaison visuelle">
+    <span><i style={{ width: `${current}%` }} /></span>
+    <span><i className="previous" style={{ width: `${previous}%` }} /></span>
+  </div>;
+}
+
+function MetricDetailModal({ metric, onClose }: { metric: AnalyticsFinancialMetricValue; onClose: () => void }) {
+  const meta = METRIC_META[metric.key];
+  const pair = normalizedPair(metric);
+
+  return <div className="statistics-modal-backdrop" role="presentation" onMouseDown={(event) => {
+    if (event.target === event.currentTarget) onClose();
+  }}>
+    <article className={`statistics-metric-modal tone-${meta.tone}`} role="dialog" aria-modal="true" aria-label={metric.label}>
+      <div className="statistics-modal-head">
+        <div className="statistics-modal-title">
+          <span className="statistics-metric-icon" aria-hidden="true">{meta.icon}</span>
+          <div><span className="eyebrow">{meta.kicker}</span><h3>{metric.label}</h3></div>
+        </div>
+        <button className="statistics-modal-close" type="button" onClick={onClose} aria-label="Fermer">×</button>
+      </div>
+
+      {metric.available && metric.currentCents != null
+        ? <div className="statistics-modal-content">
+            <div className="statistics-modal-kpis">
+              <div><span>Cette période</span><strong>{money(metric.currentCents)}</strong></div>
+              <div><span>Période précédente</span><strong>{money(metric.previousCents ?? 0)}</strong></div>
+              <div><span>Évolution</span><strong className={trend(metric)}>{deltaLabel(metric)}</strong></div>
+            </div>
+
+            <div className="statistics-detail-chart">
+              <div className="statistics-detail-column">
+                <div className="statistics-detail-bar-zone"><i className="current" style={{ height: `${pair.current}%` }} /></div>
+                <strong>{money(metric.currentCents)}</strong><span>Cette période</span>
+              </div>
+              <div className="statistics-detail-column">
+                <div className="statistics-detail-bar-zone"><i className="previous" style={{ height: `${pair.previous}%` }} /></div>
+                <strong>{money(metric.previousCents ?? 0)}</strong><span>Précédente</span>
+              </div>
+            </div>
           </div>
-        </div>
+        : <div className="statistics-modal-missing">
+            <span className="statistics-phase-badge">Phase 5 différée</span>
+            <h4>Donnée pas encore connectée</h4>
+            <p>{metric.note}</p>
+          </div>}
 
-        <div className="statistics-previous">
-          <span>Période précédente</span>
-          <strong>{metric.previousCents != null ? money(metric.previousCents) : '—'}</strong>
-        </div>
-      </>
-      : <div className="statistics-unavailable-body">
-        <strong>En attente de connexion</strong>
-        <p>{metric.note}</p>
-        <span><i aria-hidden="true">↗</i> Prévu dans la Phase 5 différée</span>
-      </div>}
-
-    <details>
-      <summary><span>Voir la source du calcul</span><b aria-hidden="true">+</b></summary>
-      <div className="statistics-source-detail">
-        <span><b>Source</b>{metric.source}</span>
-        <span><b>Date métier</b>{metric.businessDate}</span>
+      <div className="statistics-modal-source">
+        <div><span>Source</span><strong>{metric.source}</strong></div>
+        <div><span>Date métier</span><strong>{metric.businessDate}</strong></div>
         <p>{metric.note}</p>
       </div>
-    </details>
-  </article>;
+    </article>
+  </div>;
 }
