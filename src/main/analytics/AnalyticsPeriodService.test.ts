@@ -9,7 +9,7 @@ describe('resolveAnalyticsPeriod', () => {
       preset: 'month',
       from: '2026-09-01',
       to: '2026-09-30',
-      comparisonFrom: '2026-08-02',
+      comparisonFrom: '2026-08-01',
       comparisonTo: '2026-08-31',
     });
   });
@@ -29,7 +29,7 @@ describe('resolveAnalyticsPeriod', () => {
       preset: 'quarter',
       from: '2026-07-01',
       to: '2026-09-30',
-      comparisonFrom: '2026-03-31',
+      comparisonFrom: '2026-04-01',
       comparisonTo: '2026-06-30',
     });
   });
@@ -39,7 +39,7 @@ describe('resolveAnalyticsPeriod', () => {
       preset: 'previous_year',
       from: '2025-01-01',
       to: '2025-12-31',
-      comparisonFrom: '2024-01-02',
+      comparisonFrom: '2024-01-01',
       comparisonTo: '2024-12-31',
     });
   });
