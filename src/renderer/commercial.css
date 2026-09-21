@@ -176,3 +176,91 @@
   font-weight: 800;
   font-size: var(--aw-font-secondary, 15px);
 }
+
+
+/* Projet V2 — devis en side-sheet extensible */
+.quotes-layout.with-detail {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.quote-detail-backdrop {
+  position: fixed;
+  inset: 122px 0 0 232px;
+  z-index: 70;
+  background: rgba(17, 27, 35, .12);
+  backdrop-filter: blur(1px);
+}
+
+.quote-detail-panel {
+  position: fixed;
+  z-index: 71;
+  top: 136px;
+  right: 20px;
+  bottom: 18px;
+  width: min(620px, calc(100vw - 300px));
+  max-height: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+  box-shadow: 0 24px 70px rgba(18, 28, 36, .18);
+  transition: width .18s ease, left .18s ease;
+}
+
+.quote-detail-panel.expanded {
+  left: 260px;
+  right: 20px;
+  width: auto;
+}
+
+.quote-detail-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.quote-detail-expand {
+  display: grid;
+  place-items: center;
+  width: 31px;
+  height: 31px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 800;
+}
+.quote-detail-expand:hover {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+  color: var(--text);
+  background: var(--surface-soft);
+}
+
+.quote-project-create {
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 4%, var(--surface));
+}
+.quote-project-create > p {
+  margin: 0;
+  line-height: 1.5;
+}
+.quote-project-error {
+  margin: 0;
+  padding: 9px 10px;
+  border-radius: 9px;
+}
+
+@media (max-width: 980px) {
+  .quote-detail-backdrop {
+    inset: 122px 0 0 0;
+  }
+  .quote-detail-panel,
+  .quote-detail-panel.expanded {
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+}
