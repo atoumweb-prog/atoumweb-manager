@@ -95,6 +95,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
   const [statusFilter, setStatusFilter] = useState<'all' | ProjectStatus>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<ProjectDetail | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [createMode, setCreateMode] = useState<'quote' | 'internal' | null>(null);
   const [quoteId, setQuoteId] = useState('');
@@ -161,6 +162,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
   async function openProject(id: string): Promise<void> {
     try {
       setSelectedId(id);
+      setSelectedNodeId(null);
       setCompletionReview(null);
       setDetail(await window.atoumweb.projects.projects.get(id));
       setDetailTab('summary');
@@ -199,7 +201,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
         if (!templateVersionId) throw new Error('Choisis un modèle de projet publié.');
         created = await window.atoumweb.projects.projects.transformQuote({
           quoteId,
-          templateVersionId,
+          templateVersionId: templateVersionId || null,
           name: projectName.trim() || null,
           targetDate: targetDate || null,
           commercialMode,
@@ -293,6 +295,18 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
     }
   }
 
+  async function setNodePause(node: ProjectNode, paused: boolean): Promise<void> {
+    try {
+      const reason = paused ? window.prompt('Pourquoi mettre ce module en pause ?', node.pauseReason ?? '') : null;
+      if (paused && reason === null) return;
+      const updated = await window.atoumweb.projects.projects.setNodePause(node.id, paused, reason);
+      setDetail(updated);
+      await refresh();
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible de modifier la pause.');
+    }
+  }
+
   async function moveProjectNode(node: ProjectNode, parentId: string | null, targetIndex: number): Promise<void> {
     try {
       const updated = await window.atoumweb.projects.projects.moveNode(node.id, { parentId, targetIndex });
@@ -359,19 +373,19 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
               }}><option value="">Choisir…</option>{acceptedQuotes.map((quote) => <option key={quote.id} value={quote.id}>{quote.number} · {quote.ownerLabel} · {quote.subject}</option>)}</select></label>
             )}
             <label>Nom du projet<input value={projectName} onChange={(event) => setProjectName(event.target.value)} placeholder={createMode === 'internal' ? 'Ex. AtoumWeb Manager' : 'Par défaut : objet du devis'} /></label>
-            <label>Modèle<select value={templateVersionId} onChange={(event) => setTemplateVersionId(event.target.value)}><option value="">{createMode === 'internal' ? 'Aucun modèle' : 'Choisir un modèle publié…'}</option>{publishedTemplates.map((template) => <option key={template.currentVersion!.id} value={template.currentVersion!.id}>{template.name} · v{template.currentVersion!.versionNumber}</option>)}</select></label>
+            <label>Modèle<select value={templateVersionId} onChange={(event) => setTemplateVersionId(event.target.value)}><option value="">{createMode === 'internal' ? 'Aucun modèle' : 'Automatique depuis le devis (recommandé)'}</option>{publishedTemplates.map((template) => <option key={template.currentVersion!.id} value={template.currentVersion!.id}>{template.name} · v{template.currentVersion!.versionNumber}</option>)}</select></label>
             <label>Date cible<input type="date" value={targetDate} onChange={(event) => setTargetDate(event.target.value)} /></label>
             {createMode === 'quote' && <label>Mode commercial<select value={commercialMode} onChange={(event) => setCommercialMode(event.target.value as ProjectCommercialMode)}>{PROJECT_COMMERCIAL_MODES.filter((mode) => mode !== 'internal').map((mode) => <option key={mode} value={mode}>{COMMERCIAL_MODE_LABELS[mode]}</option>)}</select></label>}
           </div>
           {createMode === 'quote' && acceptedQuotes.length === 0 && <p className="muted">Aucun devis accepté n’attend actuellement sa transformation en projet.</p>}
-          {createMode === 'quote' && publishedTemplates.length === 0 && <div className="project-template-required">
+          {createMode === 'quote' && <div className="project-template-required project-blueprint-hint">
             <div>
-              <strong>Aucun modèle de projet publié.</strong>
-              <span>{templates.length > 0 ? `${templates.length} modèle(s) existe(nt), mais aucun n’est encore publié.` : 'Crée d’abord un modèle de projet, puis publie sa version v1.'}</span>
+              <strong>Génération depuis le devis</strong>
+              <span>Si l’offre vendue possède un blueprint AtoumWeb, le plan de production est généré automatiquement. Tu peux encore forcer un modèle publié si nécessaire.</span>
             </div>
-            <button className="secondary-button" type="button" onClick={() => { resetCreate(); setView('templates'); }}>Créer / publier un modèle</button>
+            <button className="secondary-button" type="button" onClick={() => { resetCreate(); setView('templates'); }}>Voir les modèles</button>
           </div>}
-          <div className="button-row"><button className="primary-button" type="button" disabled={saving || (createMode === 'quote' && (!quoteId || !templateVersionId))} onClick={() => void createProject()}>{saving ? 'Création…' : 'Créer le projet'}</button><button className="secondary-button" type="button" onClick={resetCreate}>Annuler</button></div>
+          <div className="button-row"><button className="primary-button" type="button" disabled={saving || (createMode === 'quote' && !quoteId)} onClick={() => void createProject()}>{saving ? 'Création…' : 'Créer le projet'}</button><button className="secondary-button" type="button" onClick={resetCreate}>Annuler</button></div>
         </section>
       )}
 
@@ -393,7 +407,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
 
           {detail && (
             <aside className="panel project-detail-panel">
-              <div className="detail-panel-heading"><div><span className="eyebrow">{detail.number}</span><h2>{detail.name}</h2><p className="muted">{detail.clientLabel}</p></div><button className="close-detail" type="button" onClick={() => { setCompletionReview(null); setDetail(null); setSelectedId(null); }}>×</button></div>
+              <div className="detail-panel-heading"><div><span className="eyebrow">{detail.number}</span><h2>{detail.name}</h2><p className="muted">{detail.clientLabel}</p></div><button className="close-detail" type="button" onClick={() => { setCompletionReview(null); setSelectedNodeId(null); setDetail(null); setSelectedId(null); }}>×</button></div>
               <div className="project-detail-status"><select value={detail.status} onChange={(event) => void changeProjectStatus(event.target.value as ProjectStatus)}>{PROJECT_STATUSES.map((status) => <option key={status} value={status}>{PROJECT_STATUS_LABELS[status]}</option>)}</select><span>{detail.progressPercent} %</span></div>
               <div className="project-main-progress"><i><b style={{ width: `${detail.progressPercent}%` }} /></i></div>
 
@@ -412,10 +426,25 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
 
               {detailTab === 'summary' && <ProjectSummaryTab project={detail} />}
               {detailTab === 'plan' && (
-                <div className="project-tab-content">
-                  <div className="project-node-add"><strong>Ajouter au plan</strong><div className="project-node-add-grid"><input value={newNodeName} onChange={(event) => setNewNodeName(event.target.value)} placeholder="Nom de la tâche / module…" /><select value={newNodeType} onChange={(event) => setNewNodeType(event.target.value as typeof newNodeType)}><option value="lot">Lot</option><option value="module">Module / Page</option><option value="task">Tâche</option><option value="checklist">Checklist</option></select><select value={newNodeParentId} onChange={(event) => setNewNodeParentId(event.target.value)}><option value="">Racine du projet</option>{detail.nodes.map((node) => <option key={node.id} value={node.id}>{node.name}</option>)}</select><input type="number" min="0" value={newNodeMinutes} onChange={(event) => setNewNodeMinutes(event.target.value)} placeholder="Minutes estimées" /><label className="project-checkbox"><input type="checkbox" checked={newNodeRequired} onChange={(event) => setNewNodeRequired(event.target.checked)} /> Obligatoire</label><button className="secondary-button" type="button" onClick={() => void addProjectNode()}>Ajouter</button></div></div>
-                  <div className="project-tree">{renderProjectTree(detail.nodes, null, updateNodeStatus, moveProjectNode)}</div>
-                  {detail.nodes.length === 0 && <p className="muted">Le plan est vide. Ajoute un lot, un module ou une tâche.</p>}
+                <div className="project-tab-content project-atelier">
+                  <div className="project-atelier-tree">
+                    <div className="project-node-add"><strong>Ajouter au plan</strong><div className="project-node-add-grid"><input value={newNodeName} onChange={(event) => setNewNodeName(event.target.value)} placeholder="Nom de la tâche / module…" /><select value={newNodeType} onChange={(event) => setNewNodeType(event.target.value as typeof newNodeType)}><option value="lot">Lot</option><option value="module">Module / Page</option><option value="task">Tâche</option><option value="checklist">Checklist</option></select><select value={newNodeParentId} onChange={(event) => setNewNodeParentId(event.target.value)}><option value="">Racine du projet</option>{detail.nodes.map((node) => <option key={node.id} value={node.id}>{node.name}</option>)}</select><input type="number" min="0" value={newNodeMinutes} onChange={(event) => setNewNodeMinutes(event.target.value)} placeholder="Minutes estimées" /><label className="project-checkbox"><input type="checkbox" checked={newNodeRequired} onChange={(event) => setNewNodeRequired(event.target.checked)} /> Obligatoire</label><button className="secondary-button" type="button" onClick={() => void addProjectNode()}>Ajouter</button></div></div>
+                    <div className="project-tree">{renderProjectTree(detail.nodes, null, updateNodeStatus, moveProjectNode, setSelectedNodeId, selectedNodeId)}</div>
+                    {detail.nodes.length === 0 && <p className="muted">Le plan est vide. Ajoute un lot, un module ou une tâche.</p>}
+                  </div>
+                  <ProjectNodeWorkbench
+                    node={detail.nodes.find((node) => node.id === selectedNodeId) ?? null}
+                    onUpdate={async (nodeId, input) => {
+                      const updated = await window.atoumweb.projects.projects.updateNode(nodeId, input);
+                      setDetail(updated);
+                      await refresh();
+                    }}
+                    onPause={setNodePause}
+                    onOpenResources={() => setDetailTab('resources')}
+                    onOpenTechnical={() => setDetailTab('technical')}
+                    onOpenTime={() => setDetailTab('time')}
+                    onMessage={onMessage}
+                  />
                 </div>
               )}
               {detailTab === 'prerequisites' && (
@@ -481,6 +510,8 @@ function renderProjectTree(
   parentId: string | null,
   onStatus: (node: ProjectNode, status: ProjectNodeStatus) => Promise<void>,
   onMove: (node: ProjectNode, parentId: string | null, targetIndex: number) => Promise<void>,
+  onSelect: (id: string) => void,
+  selectedNodeId: string | null,
   depth = 0,
 ) {
   const siblings = nodes
@@ -496,9 +527,13 @@ function renderProjectTree(
 
     return (
       <div key={node.id} className="project-tree-branch">
-        <div className={`project-tree-node node-${node.type}`} style={{ marginLeft: `${depth * 14}px` }}>
+        <div
+          className={`project-tree-node node-${node.type} ${selectedNodeId === node.id ? 'selected' : ''} ${node.paused ? 'paused' : ''}`}
+          style={{ marginLeft: `${depth * 14}px` }}
+          onClick={() => onSelect(node.id)}
+        >
           <span className="project-node-kind">{node.type === 'lot' ? 'LOT' : node.type === 'module' ? (node.displaySubtype === 'page' ? 'PAGE' : 'MODULE') : node.type === 'checklist' ? 'CHECK' : 'TÂCHE'}</span>
-          <div className="project-node-name"><strong>{node.name}</strong><small>{node.estimatedMinutes ? duration(node.estimatedMinutes) : 'Sans estimation'}{node.required ? ' · obligatoire' : ' · optionnel'}</small></div>
+          <div className="project-node-name"><strong>{node.name}</strong><small>{node.estimatedMinutes ? duration(node.estimatedMinutes) : 'Sans estimation'}{node.required ? ' · obligatoire' : ' · optionnel'}{node.paused ? ' · ⏸ en pause' : ''}</small></div>
           <div className="project-node-controls">
             <select className="project-node-status" value={node.status} onChange={(event) => void onStatus(node, event.target.value as ProjectNodeStatus)}>{PROJECT_NODE_STATUSES.map((status) => <option key={status} value={status}>{NODE_STATUS_LABELS[status]}</option>)}</select>
             <div className="project-node-arrange">
@@ -521,7 +556,7 @@ function renderProjectTree(
             </div>
           </div>
         </div>
-        {renderProjectTree(nodes, node.id, onStatus, onMove, depth + 1)}
+        {renderProjectTree(nodes, node.id, onStatus, onMove, onSelect, selectedNodeId, depth + 1)}
       </div>
     );
   });
