@@ -197,3 +197,33 @@ table td small {
 .technical-json-tree {
   font-size: var(--aw-font-functional);
 }
+
+
+/* Projet V2 — production : aucune information fonctionnelle sous 14 px. */
+.project-production-page,
+.project-production-page button,
+.project-production-page input,
+.project-production-page select,
+.project-production-page textarea,
+.project-production-page label,
+.project-production-page small,
+.project-production-page span,
+.project-production-page .project-node-kind,
+.project-production-page .project-node-name strong,
+.project-production-page .project-node-name small,
+.project-production-page .project-workbench-badges span,
+.project-production-page .project-workbench-section-title,
+.project-production-page .project-workbench-section-title span,
+.project-production-page .project-workbench-tool-grid button strong,
+.project-production-page .project-workbench-tool-grid button small,
+.project-production-page .project-companion-cards article,
+.project-production-page .project-companion-cards article p,
+.project-production-page .project-workbench-footer,
+.project-production-page .project-workbench-footer code {
+  font-size: var(--aw-font-functional);
+}
+
+.project-production-page .project-node-name strong,
+.project-production-page .project-workbench-section-title > strong {
+  font-size: var(--aw-font-secondary);
+}
