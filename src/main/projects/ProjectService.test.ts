@@ -175,6 +175,25 @@ describe('ProjectService', () => {
     for (const folder of folders) expect(existsSync(join(project.resourceRootPath!, folder))).toBe(true);
   });
 
+  it('crée automatiquement un projet depuis un devis Site vitrine avec une page complémentaire', () => {
+    const organization = crm.createOrganization({ name: 'Client Vitrine Plus' });
+    const prospect = crm.createProspect({ organizationId: organization.id, primaryNeed: 'Site vitrine' });
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Site vitrine + page' });
+    quotes.addCatalogLine(quote.id, 'atoumweb-vitrine-v1');
+    quotes.addCatalogLine(quote.id, 'atoumweb-page-v1');
+    quotes.finalize(quote.id);
+    quotes.markSent(quote.id);
+    const accepted = quotes.accept(quote.id);
+
+    const project = projects.transformQuote({ quoteId: accepted.id, targetDate: '2026-12-12' });
+
+    expect(project.templateVersionId).toBe('atoumweb-project-template-vitrine-v1');
+    expect(project.targetDate).toBe('2026-12-12');
+    expect(project.services).toHaveLength(2);
+    expect(project.nodes.some((node) => node.semanticKey === 'pages.home.hero')).toBe(true);
+    expect(project.nodes.length).toBeGreaterThan(15);
+  });
+
   it('retrouve le blueprint Site vitrine quand il est inclus dans une formule', () => {
     const offer = catalog.create(
       { type: 'offer', name: 'Formule vitrine test', category: 'Création web' },
