@@ -11,10 +11,12 @@ import {
   PROJECT_STATUSES,
   type InternalProjectInput,
   type ProjectCommercialMode,
+  type ProjectCompanionAdvice,
   type ProjectDetail,
   type ProjectFilters,
   type ProjectNode,
   type ProjectNodeInput,
+  type ProjectNodeSource,
   type ProjectNodeStatus,
   type ProjectPrerequisite,
   type ProjectPrerequisiteInput,
@@ -28,6 +30,7 @@ import {
   type ProjectTemplateNodeInput,
   type ProjectTemplateSummary,
   type ProjectTemplateVersion,
+  type ProjectWorkCard,
   type TransformQuoteToProjectInput,
 } from '../../shared/projects';
 
@@ -35,6 +38,26 @@ const nowIso = (): string => new Date().toISOString();
 const clean = (value?: string | null): string | null => {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
+};
+
+const parseJsonObject = <T>(value?: string | null): T | null => {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as T : null;
+  } catch {
+    return null;
+  }
+};
+
+const parseJsonArray = <T>(value?: string | null): T[] => {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return Array.isArray(parsed) ? parsed as T[] : [];
+  } catch {
+    return [];
+  }
 };
 
 interface TemplateRow extends Record<string, unknown> {
@@ -45,6 +68,7 @@ interface TemplateVersionRow extends Record<string, unknown> {
 }
 interface TemplateNodeRow extends Record<string, unknown> {
   id: string; template_version_id: string; parent_id: string | null; node_type: ProjectTemplateNode['type']; display_subtype: string | null; name: string; description: string | null; sort_order: number; estimated_minutes: number | null; is_required: number; initial_status: ProjectNodeStatus; time_category: string | null; created_at: string;
+  semantic_key: string | null; work_card_json: string | null; advice_json: string | null;
 }
 interface ProjectRow extends Record<string, unknown> {
   id: string; project_number: string; client_account_id: string | null; source_quote_id: string | null; template_version_id: string | null;
@@ -53,6 +77,7 @@ interface ProjectRow extends Record<string, unknown> {
 }
 interface ProjectNodeRow extends Record<string, unknown> {
   id: string; project_id: string; parent_id: string | null; source_template_node_id: string | null; node_type: ProjectNode['type']; display_subtype: string | null; name: string; description: string | null; sort_order: number; estimated_minutes: number | null; is_required: number; status: ProjectNodeStatus; time_category: string | null; created_at: string; updated_at: string;
+  semantic_key: string | null; work_card_json: string | null; advice_json: string | null; is_paused: number; pause_reason: string | null;
 }
 interface ProjectServiceRow extends Record<string, unknown> {
   id: string; project_id: string; source_quote_line_id: string | null; catalog_item_id: string | null; catalog_version_id: string | null; label: string; snapshot_json: string | null; catalog_value_cents: number; contract_value_cents: number; created_at: string;
@@ -66,6 +91,32 @@ interface QuoteProjectRow extends Record<string, unknown> {
 interface QuoteLineProjectRow extends Record<string, unknown> {
   id: string; catalog_item_id: string | null; catalog_version_id: string | null; label: string; snapshot_json: string | null; catalog_line_value_cents: number; contract_line_value_cents: number;
 }
+
+interface BlueprintLinkRow extends Record<string, unknown> {
+  id: string;
+  catalog_version_id: string;
+  template_version_id: string;
+  role: 'base' | 'addon';
+  sort_order: number;
+}
+
+interface ProjectNodeSourceRow extends Record<string, unknown> {
+  id: string;
+  project_node_id: string;
+  quote_line_id: string | null;
+  catalog_version_id: string | null;
+  template_version_id: string | null;
+  source_role: ProjectNodeSource['sourceRole'];
+  created_at: string;
+}
+
+interface BlueprintContribution {
+  templateVersionId: string;
+  quoteLineId: string | null;
+  catalogVersionId: string | null;
+  sourceRole: ProjectNodeSource['sourceRole'];
+}
+
 
 export class ProjectService {
   constructor(private readonly database: DatabaseAdapter, private readonly workspace: WorkspacePaths) {}
