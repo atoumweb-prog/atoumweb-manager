@@ -1682,3 +1682,28 @@
     overflow-x: auto;
   }
 }
+
+
+.project-workbench-title-input {
+  width: min(100%, 560px);
+  min-height: 34px;
+  padding: 2px 4px;
+  border: 1px solid transparent !important;
+  border-radius: 7px;
+  background: transparent !important;
+  color: var(--text) !important;
+  -webkit-text-fill-color: var(--text) !important;
+  font-size: 20px !important;
+  font-weight: 850;
+  line-height: 1.15;
+}
+.project-workbench-title-input:hover {
+  border-color: var(--border) !important;
+  background: var(--surface-soft) !important;
+}
+.project-workbench-title-input:focus {
+  outline: 0;
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--border)) !important;
+  background: var(--surface) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 8%, transparent);
+}
