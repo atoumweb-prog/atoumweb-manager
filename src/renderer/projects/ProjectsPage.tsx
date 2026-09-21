@@ -529,6 +529,7 @@ function ProjectNodeWorkbench({ node, onUpdate, onPause, onOpenResources, onOpen
   }
 
   async function save(): Promise<void> {
+    if (!node) return;
     setSaving(true);
     try {
       const minutes = estimatedMinutes.trim() ? Number(estimatedMinutes) : null;
@@ -543,6 +544,7 @@ function ProjectNodeWorkbench({ node, onUpdate, onPause, onOpenResources, onOpen
   }
 
   async function togglePause(): Promise<void> {
+    if (!node) return;
     if (!node.paused && !pauseReason.trim()) {
       onMessage('Indique la raison de la pause pour garder un historique utile.');
       return;
