@@ -83,12 +83,18 @@ function App() {
   const [activePage, setActivePage] = useState<PageName>('Accueil');
   const [theme, setTheme] = useState<ThemeName>('atoumweb');
   const [displayDensity, setDisplayDensity] = useState<DisplayDensity>('comfort');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [crmTarget,setCrmTarget] = useState<string|null>(null);
   const [quoteTarget,setQuoteTarget] = useState<string|null>(null);
   useEffect(()=>{const open=(event:Event)=>openSearchResult((event as CustomEvent<SearchResult>).detail);window.addEventListener('atoumweb:navigate',open);return()=>window.removeEventListener('atoumweb:navigate',open);},[]);
   useEffect(() => { const open = (event: Event) => setActivePage((event as CustomEvent<PageName>).detail); window.addEventListener('atoumweb:open-page', open); return () => window.removeEventListener('atoumweb:open-page', open); }, []);
+  useEffect(() => {
+    const collapse = (event: Event) => setSidebarCollapsed(Boolean((event as CustomEvent<boolean>).detail));
+    window.addEventListener('atoumweb:sidebar-collapse', collapse);
+    return () => window.removeEventListener('atoumweb:sidebar-collapse', collapse);
+  }, []);
   const [projectSearchTarget, setProjectSearchTarget] = useState<string | null>(null);
   const [operationsSearchTarget, setOperationsSearchTarget] = useState<OperationsSearchTarget | null>(null);
   const [librarySearchTarget, setLibrarySearchTarget] = useState<string | null>(null);
@@ -206,7 +212,7 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
       <aside className="sidebar">
         <div className="brand-block"><div className="brand-mark">AW</div><div><strong>AtoumWeb</strong><span>Manager</span></div></div>
         <nav className="navigation" aria-label="Navigation principale">
@@ -217,7 +223,17 @@ function App() {
 
       <main className="main-area">
         <header className="topbar">
-          <GlobalSearch onOpen={openSearchResult} />
+          <div className="topbar-left">
+            <button
+              className="sidebar-toggle"
+              type="button"
+              title={sidebarCollapsed ? 'Afficher le menu' : 'Masquer le menu'}
+              aria-label={sidebarCollapsed ? 'Afficher le menu' : 'Masquer le menu'}
+              aria-pressed={sidebarCollapsed}
+              onClick={() => setSidebarCollapsed((value) => !value)}
+            >{sidebarCollapsed ? '☰' : '‹'}</button>
+            <GlobalSearch onOpen={openSearchResult} />
+          </div>
           <GlobalTimer onMessage={setMessage} />
         </header>
 
