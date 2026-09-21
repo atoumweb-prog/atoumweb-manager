@@ -450,7 +450,7 @@ function ProjectTimeSection({ snapshot, open, onToggle }: {
 }) {
   const { current, previous, economics, previousEconomics } = snapshot;
   const billablePercent = current.totalSeconds > 0 ? (current.billableSeconds / current.totalSeconds) * 100 : null;
-  const estimatedGapSeconds = economics.estimateSample > 0 ? economics.trackedSeconds - economics.estimatedSeconds : null;
+  const estimatedGapSeconds = economics.estimateSample > 0 ? economics.estimateTrackedSeconds - economics.estimatedSeconds : null;
   const maxCategory = Math.max(...snapshot.categories.map((item) => item.seconds), 1);
 
   return <section className={`statistics-section statistics-project-time-section collapsible ${open ? 'open' : 'closed'}`}>
@@ -497,7 +497,7 @@ function ProjectTimeSection({ snapshot, open, onToggle }: {
 
       <article className="statistics-project-card tone-green">
         <div className="statistics-project-card-head"><span>◇</span><div><small>Prévision vs réel</small><h4>Temps estimé</h4></div></div>
-        <div className="statistics-project-main"><strong>{economics.estimateSample > 0 ? secondsLabel(economics.estimatedSeconds) : '—'}</strong><span>Réel : {economics.estimateSample > 0 ? secondsLabel(economics.trackedSeconds) : '—'} · n={economics.estimateSample}</span></div>
+        <div className="statistics-project-main"><strong>{economics.estimateSample > 0 ? secondsLabel(economics.estimatedSeconds) : '—'}</strong><span>Réel : {economics.estimateSample > 0 ? secondsLabel(economics.estimateTrackedSeconds) : '—'} · n={economics.estimateSample}</span></div>
         <div className={`statistics-estimate-gap ${estimatedGapSeconds != null && estimatedGapSeconds > 0 ? 'over' : 'under'}`}>
           {estimatedGapSeconds == null ? 'Pas assez de données' : estimatedGapSeconds === 0 ? 'Estimation respectée' : `${estimatedGapSeconds > 0 ? '+' : '−'}${secondsLabel(Math.abs(estimatedGapSeconds))} vs estimation`}
         </div>
