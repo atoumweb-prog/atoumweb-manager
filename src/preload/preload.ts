@@ -119,6 +119,7 @@ const api: AtoumWebApi = {
   database: { health: () => ipcRenderer.invoke('database:health') },
   analytics: {
     financialSnapshot: (input: AnalyticsPeriodInput) => ipcRenderer.invoke('analytics:financial-snapshot', input),
+    commercialSnapshot: (input: AnalyticsPeriodInput) => ipcRenderer.invoke('analytics:commercial-snapshot', input),
     definitions: () => ipcRenderer.invoke('analytics:definitions'),
   },
   workflow: {
