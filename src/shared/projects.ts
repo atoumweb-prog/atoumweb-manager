@@ -28,6 +28,38 @@ export type ProjectTechnicalContentType = (typeof PROJECT_TECHNICAL_CONTENT_TYPE
 export type ProjectCompletionState = (typeof PROJECT_COMPLETION_STATES)[number];
 export type ProjectCompletionKey = (typeof PROJECT_COMPLETION_KEYS)[number];
 
+export type ProjectWorkCardFieldType = 'text' | 'textarea' | 'check' | 'select' | 'url';
+export type ProjectCompanionAdviceKind = 'best_practice' | 'check' | 'library' | 'warning';
+
+export interface ProjectWorkCardField {
+  key: string;
+  label: string;
+  type: ProjectWorkCardFieldType;
+  options?: string[];
+  value?: string | boolean | null;
+}
+
+export interface ProjectWorkCard {
+  goal?: string | null;
+  fields: ProjectWorkCardField[];
+}
+
+export interface ProjectCompanionAdvice {
+  kind: ProjectCompanionAdviceKind;
+  title: string;
+  body: string;
+}
+
+export interface ProjectNodeSource {
+  id: string;
+  projectNodeId: string;
+  quoteLineId?: string | null;
+  catalogVersionId?: string | null;
+  templateVersionId?: string | null;
+  sourceRole: 'direct' | 'offer_component' | 'manual';
+  createdAt: string;
+}
+
 export interface ProjectTemplateInput {
   name: string;
   projectType: string;
@@ -45,6 +77,9 @@ export interface ProjectTemplateNodeInput {
   required?: boolean;
   initialStatus?: ProjectNodeStatus;
   timeCategory?: string | null;
+  semanticKey?: string | null;
+  workCard?: ProjectWorkCard | null;
+  advice?: ProjectCompanionAdvice[];
 }
 
 export interface ProjectTemplateNode extends ProjectTemplateNodeInput {
@@ -92,6 +127,9 @@ export interface ProjectNodeInput {
   required?: boolean;
   status?: ProjectNodeStatus;
   timeCategory?: string | null;
+  semanticKey?: string | null;
+  workCard?: ProjectWorkCard | null;
+  advice?: ProjectCompanionAdvice[];
 }
 
 export interface MoveProjectNodeInput {
@@ -106,6 +144,9 @@ export interface ProjectNode extends ProjectNodeInput {
   required: boolean;
   sortOrder: number;
   status: ProjectNodeStatus;
+  paused: boolean;
+  pauseReason?: string | null;
+  sources: ProjectNodeSource[];
   createdAt: string;
   updatedAt: string;
 }
@@ -183,7 +224,7 @@ export interface ProjectFilters {
 
 export interface TransformQuoteToProjectInput {
   quoteId: string;
-  templateVersionId: string;
+  templateVersionId?: string | null;
   name?: string | null;
   targetDate?: string | null;
   commercialMode?: ProjectCommercialMode | null;
@@ -306,6 +347,7 @@ export interface ProjectsApi {
     addNode(projectId: string, input: ProjectNodeInput): Promise<ProjectDetail>;
     updateNode(nodeId: string, input: Partial<ProjectNodeInput>): Promise<ProjectDetail>;
     moveNode(nodeId: string, input: MoveProjectNodeInput): Promise<ProjectDetail>;
+    setNodePause(nodeId: string, paused: boolean, reason?: string | null): Promise<ProjectDetail>;
     addPrerequisite(projectId: string, input: ProjectPrerequisiteInput): Promise<ProjectDetail>;
     updatePrerequisiteStatus(id: string, status: ProjectPrerequisiteStatus): Promise<ProjectDetail>;
   };
