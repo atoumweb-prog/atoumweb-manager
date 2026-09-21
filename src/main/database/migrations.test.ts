@@ -66,6 +66,7 @@ describe('migrations SQLite', () => {
       'maintenance_overage_decisions', 'maintenance_report_drafts', 'hour_pack_shortfall_decisions',
       'crm_needs', 'demo_batches', 'demo_records', 'demo_context', 'contact_methods', 'client_documents',
       'atoumweb_technical_assets', 'backup_records', 'backup_locations', 'backup_policies', 'backup_intervention_links',
+      'catalog_project_blueprints', 'project_node_sources',
     ]) {
       const row = database.get<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", [table]);
       expect(row?.name).toBe(table);
@@ -83,9 +84,15 @@ describe('migrations SQLite', () => {
     for (const column of ['reuse_status', 'origin_technical_item_id', 'library_category']) {
       expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('technical_items') WHERE name='${column}'`)?.name).toBe(column);
     }
-    expect(MIGRATIONS.at(-1)?.id).toBe(26);
+    expect(MIGRATIONS.at(-1)?.id).toBe(28);
     expect(database.get<{ name: string }>("SELECT name FROM sqlite_master WHERE type='table' AND name='backup_records'")?.name).toBe('backup_records');
     expect(database.get<{ name: string }>("SELECT name FROM sqlite_master WHERE type='table' AND name='backup_policies'")?.name).toBe('backup_policies');
+    for (const column of ['semantic_key', 'work_card_json', 'advice_json', 'is_paused', 'pause_reason']) {
+      expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('project_nodes') WHERE name='${column}'`)?.name).toBe(column);
+    }
+    expect(database.get<{ id: string }>(
+      "SELECT id FROM catalog_project_blueprints WHERE catalog_version_id='atoumweb-vitrine-v1' AND role='base'",
+    )?.id).toBe('atoumweb-blueprint-link-vitrine');
 
     const seededPlans = database.all<{ name: string }>('SELECT name FROM maintenance_plans ORDER BY periodic_price_cents');
     expect(seededPlans.map((plan) => plan.name)).toEqual(['Maintenance 49 €/mois', 'Maintenance 99 €/mois']);
