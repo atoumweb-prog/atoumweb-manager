@@ -135,6 +135,7 @@ export interface AnalyticsFinancialSnapshot {
 export interface AnalyticsApi {
   financialSnapshot(input: AnalyticsPeriodInput): Promise<AnalyticsFinancialSnapshot>;
   commercialSnapshot(input: AnalyticsPeriodInput): Promise<AnalyticsCommercialSnapshot>;
+  projectTimeSnapshot(input: AnalyticsPeriodInput): Promise<AnalyticsProjectTimeSnapshot>;
   definitions(): Promise<AnalyticsMetricDefinition[]>;
 }
 
@@ -184,4 +185,53 @@ export interface AnalyticsCommercialSnapshot {
   previousLostReasons: AnalyticsCommercialReasonStat[];
   delays: AnalyticsCommercialDelayStats;
   previousDelays: AnalyticsCommercialDelayStats;
+}
+
+
+export interface AnalyticsTimeCategoryStat {
+  category: string;
+  seconds: number;
+  sessionCount: number;
+}
+
+export interface AnalyticsProjectTimePeriodStats {
+  projectsCreated: number;
+  projectsCompleted: number;
+  totalSeconds: number;
+  billableSeconds: number;
+  nonBillableSeconds: number;
+  sessionCount: number;
+}
+
+export interface AnalyticsProjectEconomics {
+  completedProjectSample: number;
+  completedProjectsWithTrackedTime: number;
+  trackedSeconds: number;
+  estimatedSeconds: number;
+  estimateSample: number;
+  averageCalendarDays: number | null;
+  calendarDurationSample: number;
+  contractValueCents: number;
+  commercialValueCents: number;
+  contractHourlyCents: number | null;
+  commercialHourlyCents: number | null;
+}
+
+export interface AnalyticsProjectTypeStat {
+  projectType: string;
+  completedCount: number;
+  trackedProjectCount: number;
+  trackedSeconds: number;
+  averageCalendarDays: number | null;
+}
+
+export interface AnalyticsProjectTimeSnapshot {
+  period: AnalyticsDateRange;
+  current: AnalyticsProjectTimePeriodStats;
+  previous: AnalyticsProjectTimePeriodStats;
+  categories: AnalyticsTimeCategoryStat[];
+  previousCategories: AnalyticsTimeCategoryStat[];
+  economics: AnalyticsProjectEconomics;
+  previousEconomics: AnalyticsProjectEconomics;
+  projectTypes: AnalyticsProjectTypeStat[];
 }
