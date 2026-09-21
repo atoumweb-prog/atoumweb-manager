@@ -191,9 +191,17 @@ export class ProjectService {
     }
     const now = nowIso();
     this.database.run(
-      `INSERT INTO project_template_nodes (id,template_version_id,parent_id,node_type,display_subtype,name,description,sort_order,estimated_minutes,is_required,initial_status,time_category,created_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [randomUUID(), versionId, input.parentId ?? null, input.type, clean(input.displaySubtype), clean(input.name), clean(input.description), input.sortOrder ?? this.nextTemplateNodeOrder(versionId, input.parentId ?? null), input.estimatedMinutes ?? null, input.required === false ? 0 : 1, input.initialStatus ?? 'todo', clean(input.timeCategory), now],
+      `INSERT INTO project_template_nodes (
+         id,template_version_id,parent_id,node_type,display_subtype,name,description,sort_order,estimated_minutes,
+         is_required,initial_status,time_category,created_at,semantic_key,work_card_json,advice_json
+       ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [
+        randomUUID(), versionId, input.parentId ?? null, input.type, clean(input.displaySubtype), clean(input.name),
+        clean(input.description), input.sortOrder ?? this.nextTemplateNodeOrder(versionId, input.parentId ?? null),
+        input.estimatedMinutes ?? null, input.required === false ? 0 : 1, input.initialStatus ?? 'todo',
+        clean(input.timeCategory), now, clean(input.semanticKey), input.workCard ? JSON.stringify(input.workCard) : null,
+        input.advice?.length ? JSON.stringify(input.advice) : null,
+      ],
     );
     return this.getTemplateVersion(versionId);
   }
@@ -316,9 +324,17 @@ export class ProjectService {
     if (input.parentId) this.assertProjectParent(projectId, input.parentId);
     const now = nowIso();
     this.database.run(
-      `INSERT INTO project_nodes (id,project_id,parent_id,source_template_node_id,node_type,display_subtype,name,description,sort_order,estimated_minutes,is_required,status,time_category,created_at,updated_at)
-       VALUES (?,?,?,NULL,?,?,?,?,?,?,?,?,?,?,?)`,
-      [randomUUID(), projectId, input.parentId ?? null, input.type, clean(input.displaySubtype), clean(input.name), clean(input.description), input.sortOrder ?? this.nextProjectNodeOrder(projectId, input.parentId ?? null), input.estimatedMinutes ?? null, input.required === false ? 0 : 1, input.status ?? 'todo', clean(input.timeCategory), now, now],
+      `INSERT INTO project_nodes (
+         id,project_id,parent_id,source_template_node_id,node_type,display_subtype,name,description,sort_order,
+         estimated_minutes,is_required,status,time_category,created_at,updated_at,semantic_key,work_card_json,advice_json
+       ) VALUES (?,?,?,NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [
+        randomUUID(), projectId, input.parentId ?? null, input.type, clean(input.displaySubtype), clean(input.name),
+        clean(input.description), input.sortOrder ?? this.nextProjectNodeOrder(projectId, input.parentId ?? null),
+        input.estimatedMinutes ?? null, input.required === false ? 0 : 1, input.status ?? 'todo', clean(input.timeCategory),
+        now, now, clean(input.semanticKey), input.workCard ? JSON.stringify(input.workCard) : null,
+        input.advice?.length ? JSON.stringify(input.advice) : null,
+      ],
     );
     return this.getProject(projectId);
   }
@@ -335,8 +351,21 @@ export class ProjectService {
     const type = input.type ?? row.node_type; const status = input.status ?? row.status;
     if (!PROJECT_NODE_TYPES.includes(type) || !PROJECT_NODE_STATUSES.includes(status)) throw new Error('Type ou statut de tâche invalide.');
     this.database.run(
-      `UPDATE project_nodes SET parent_id=?, node_type=?, display_subtype=?, name=?, description=?, sort_order=?, estimated_minutes=?, is_required=?, status=?, time_category=?, updated_at=? WHERE id=?`,
-      [parentId ?? null, type, clean(input.displaySubtype ?? row.display_subtype), clean(input.name ?? row.name), clean(input.description ?? row.description), input.sortOrder ?? row.sort_order, input.estimatedMinutes === undefined ? row.estimated_minutes : input.estimatedMinutes, input.required === undefined ? row.is_required : input.required ? 1 : 0, status, clean(input.timeCategory ?? row.time_category), nowIso(), nodeId],
+      `UPDATE project_nodes
+       SET parent_id=?, node_type=?, display_subtype=?, name=?, description=?, sort_order=?, estimated_minutes=?,
+           is_required=?, status=?, time_category=?, semantic_key=?, work_card_json=?, advice_json=?, updated_at=?
+       WHERE id=?`,
+      [
+        parentId ?? null, type, clean(input.displaySubtype ?? row.display_subtype), clean(input.name ?? row.name),
+        clean(input.description ?? row.description), input.sortOrder ?? row.sort_order,
+        input.estimatedMinutes === undefined ? row.estimated_minutes : input.estimatedMinutes,
+        input.required === undefined ? row.is_required : input.required ? 1 : 0, status,
+        clean(input.timeCategory ?? row.time_category),
+        input.semanticKey === undefined ? row.semantic_key : clean(input.semanticKey),
+        input.workCard === undefined ? row.work_card_json : input.workCard ? JSON.stringify(input.workCard) : null,
+        input.advice === undefined ? row.advice_json : input.advice.length ? JSON.stringify(input.advice) : null,
+        nowIso(), nodeId,
+      ],
     );
     if (status === 'done' && row.status !== 'done') this.writeActivity('project', row.project_id, 'project_node_done', `Tâche terminée : ${input.name ?? row.name}`);
     return this.getProject(row.project_id);
