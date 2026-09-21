@@ -41,6 +41,7 @@ export interface ProjectWorkCardField {
 
 export interface ProjectWorkCard {
   goal?: string | null;
+  notes?: string | null;
   fields: ProjectWorkCardField[];
 }
 
