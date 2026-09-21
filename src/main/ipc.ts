@@ -140,6 +140,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('database:health', () => database.health());
   ipcMain.handle('analytics:financial-snapshot', (_event, input: AnalyticsPeriodInput) => database.analytics.financialSnapshot(input));
   ipcMain.handle('analytics:commercial-snapshot', (_event, input: AnalyticsPeriodInput) => database.analytics.commercialSnapshot(input));
+  ipcMain.handle('analytics:project-time-snapshot', (_event, input: AnalyticsPeriodInput) => database.analytics.projectTimeSnapshot(input));
   ipcMain.handle('analytics:definitions', () => database.analytics.definitions());
 
   ipcMain.handle('crm:organizations:create', (_event, input: OrganizationInput) => database.crm.createOrganization(input));
