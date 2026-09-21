@@ -242,15 +242,23 @@ export class ProjectService {
   transformQuote(input: TransformQuoteToProjectInput): ProjectDetail {
     const existing = this.database.get<{ id: string }>('SELECT id FROM projects WHERE source_quote_id=?', [input.quoteId]);
     if (existing) return this.getProject(existing.id);
-    const quote = this.database.get<QuoteProjectRow>('SELECT id,quote_number,status,subject,client_account_id,accepted_client_account_id,catalog_value_cents,contract_value_cents,prerequisites_text,project_id FROM quotes WHERE id=?', [input.quoteId]);
+
+    const quote = this.database.get<QuoteProjectRow>(
+      'SELECT id,quote_number,status,subject,client_account_id,accepted_client_account_id,catalog_value_cents,contract_value_cents,prerequisites_text,project_id FROM quotes WHERE id=?',
+      [input.quoteId],
+    );
     if (!quote) throw new Error('Devis introuvable.');
     if (quote.project_id) return this.getProject(quote.project_id);
     if (quote.status !== 'accepted') throw new Error('Le devis doit être accepté avant création du projet.');
+
     const clientId = quote.accepted_client_account_id ?? quote.client_account_id;
     if (!clientId) throw new Error('Le devis accepté doit être rattaché à un Client.');
-    const templateVersion = this.getTemplateVersion(input.templateVersionId);
-    if (templateVersion.status !== 'published') throw new Error('Choisis une version publiée du modèle de projet.');
+
+    const blueprintPlan = this.resolveBlueprintPlan(input.quoteId, clean(input.templateVersionId));
+    const templateVersion = this.getTemplateVersion(blueprintPlan.base.templateVersionId);
+    if (templateVersion.status !== 'published') throw new Error('Le blueprint principal doit être publié.');
     const template = this.getTemplate(templateVersion.templateId);
+
     const name = clean(input.name) ?? quote.subject;
     const mode = input.commercialMode ?? this.inferCommercialMode(Number(quote.catalog_value_cents), Number(quote.contract_value_cents));
     if (!PROJECT_COMMERCIAL_MODES.includes(mode)) throw new Error('Mode commercial invalide.');
@@ -269,11 +277,21 @@ export class ProjectService {
          VALUES (?,?,?,?,?,?,?,'to_prepare',?,?,?,?,?,?,?,?)`,
         [id, number, clientId, quote.id, templateVersion.id, name, template.projectType, mode, null, input.targetDate ?? null, Number(quote.catalog_value_cents), Number(quote.contract_value_cents), paths.resourceRoot, now, now],
       );
-      this.copyTemplateTreeToProject(templateVersion.id, id, now);
+
+      this.copyTemplateTreeToProject(templateVersion.id, id, now, blueprintPlan.base, false);
+      for (const addon of blueprintPlan.addons) {
+        this.copyTemplateTreeToProject(addon.templateVersionId, id, now, addon, true);
+      }
+
       this.copyQuoteServicesToProject(quote.id, id, now);
       this.seedPrerequisitesFromQuote(quote.id, id, quote.prerequisites_text, now);
       this.database.run('UPDATE quotes SET project_id=?, updated_at=? WHERE id=?', [id, now, quote.id]);
-      this.writeActivity('project', id, 'project_created_from_quote', `Projet ${number} créé depuis ${quote.quote_number}`);
+      this.writeActivity(
+        'project',
+        id,
+        'project_created_from_quote',
+        `Projet ${number} créé depuis ${quote.quote_number} avec blueprint ${template.name}${blueprintPlan.addons.length ? ` + ${blueprintPlan.addons.length} module(s)` : ''}`,
+      );
       this.database.exec('COMMIT;');
     } catch (error) {
       this.database.exec('ROLLBACK;');
