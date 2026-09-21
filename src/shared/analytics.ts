@@ -134,5 +134,27 @@ export interface AnalyticsFinancialSnapshot {
 
 export interface AnalyticsApi {
   financialSnapshot(input: AnalyticsPeriodInput): Promise<AnalyticsFinancialSnapshot>;
+  commercialSnapshot(input: AnalyticsPeriodInput): Promise<AnalyticsCommercialSnapshot>;
   definitions(): Promise<AnalyticsMetricDefinition[]>;
+}
+
+
+export interface AnalyticsCommercialPeriodStats {
+  newProspects: number;
+  wonProspects: number;
+  lostProspects: number;
+  decidedProspects: number;
+  conversionPercent: number | null;
+  quotesCreated: number;
+  quotesAccepted: number;
+  quotesRefused: number;
+  quotesExpired: number;
+  quoteDecisions: number;
+  quoteAcceptancePercent: number | null;
+}
+
+export interface AnalyticsCommercialSnapshot {
+  period: AnalyticsDateRange;
+  current: AnalyticsCommercialPeriodStats;
+  previous: AnalyticsCommercialPeriodStats;
 }
