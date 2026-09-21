@@ -278,6 +278,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('projects:update-node', (_event, nodeId: string, input: Partial<ProjectNodeInput>) => database.projects.updateProjectNode(nodeId, input));
   ipcMain.handle('projects:move-node', (_event, nodeId: string, input: MoveProjectNodeInput) => database.projectNodes.move(nodeId, input));
   ipcMain.handle('projects:set-node-pause', (_event, nodeId: string, paused: boolean, reason?: string | null) => database.projects.setProjectNodePause(nodeId, paused, reason));
+  ipcMain.handle('projects:complete-phase', (_event, nodeId: string) => database.projects.completeProjectPhase(nodeId));
   ipcMain.handle('projects:add-prerequisite', (_event, projectId: string, input: ProjectPrerequisiteInput) => database.projects.addPrerequisite(projectId, input));
   ipcMain.handle('projects:update-prerequisite-status', (_event, id: string, status: ProjectPrerequisiteStatus) => database.projects.updatePrerequisiteStatus(id, status));
 
