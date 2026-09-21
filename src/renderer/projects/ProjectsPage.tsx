@@ -386,8 +386,19 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
       const target = direction === 'undo' ? action.before : action.after;
       return window.atoumweb.projects.projects.moveNode(action.nodeId, target);
     }
-    const target = direction === 'undo' ? action.before : action.after;
-    return window.atoumweb.projects.projects.setNodePause(action.nodeId, target.paused, target.reason);
+    if (action.kind === 'pause') {
+      const target = direction === 'undo' ? action.before : action.after;
+      return window.atoumweb.projects.projects.setNodePause(action.nodeId, target.paused, target.reason);
+    }
+
+    let updated: ProjectDetail | null = null;
+    for (const change of action.changes) {
+      updated = await window.atoumweb.projects.projects.updateNode(change.nodeId, {
+        status: direction === 'undo' ? change.before : change.after,
+      });
+    }
+    if (!updated) throw new Error('Historique de phase vide.');
+    return updated;
   }
 
   async function undoProjectChange(): Promise<void> {
