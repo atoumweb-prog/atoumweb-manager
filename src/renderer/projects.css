@@ -1115,3 +1115,24 @@
     overflow: visible;
   }
 }
+
+
+/* Quand un projet est ouvert, le contenu principal devient directement l'atelier de production. */
+.content-area:has(> .project-production-page) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 14px 18px 18px;
+}
+.content-area:has(> .project-production-page) > .page-heading {
+  display: none;
+}
+.content-area:has(> .project-production-page) > .notice {
+  flex: 0 0 auto;
+  margin-bottom: 10px;
+}
+.content-area:has(> .project-production-page) > .project-production-page {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+}
