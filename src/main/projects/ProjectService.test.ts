@@ -165,7 +165,7 @@ describe('ProjectService', () => {
     expect(hero?.sources).toEqual([
       expect.objectContaining({
         quoteLineId: quote.lines[0]?.id,
-        catalogVersionId: 'atoumweb-web-v1',
+        catalogVersionId: 'atoumweb-vitrine-v1',
         templateVersionId: 'atoumweb-project-template-vitrine-v1',
         sourceRole: 'direct',
       }),
@@ -178,7 +178,7 @@ describe('ProjectService', () => {
   it('retrouve le blueprint Site vitrine quand il est inclus dans une formule', () => {
     const offer = catalog.create(
       { type: 'offer', name: 'Formule vitrine test', category: 'Création web' },
-      { priceMode: 'fixed', priceCents: 89900, description: 'Formule contenant le service Site vitrine' },
+      { priceMode: 'fixed', priceCents: 89900, description: 'Formule contenant le service Conception et réalisation web' },
     );
     catalog.setOfferComponents(offer.versions[0].id, [
       { serviceVersionId: 'atoumweb-web-v1', quantityMilli: 1000, isOptional: false, sortOrder: 10 },
@@ -200,7 +200,7 @@ describe('ProjectService', () => {
     expect(project.nodes.find((node) => node.semanticKey === 'pages.home.hero')?.sources)
       .toEqual([expect.objectContaining({
         quoteLineId: accepted.lines[0]?.id,
-        catalogVersionId: 'atoumweb-vitrine-v1',
+        catalogVersionId: 'atoumweb-web-v1',
         sourceRole: 'offer_component',
       })]);
   });
