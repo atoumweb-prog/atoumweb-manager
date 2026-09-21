@@ -65,6 +65,17 @@ function createAcceptedQuote() {
   return quotes.accept(quote.id);
 }
 
+function createAcceptedSeededVitrineQuote(extraCatalogVersionId?: string) {
+  const organization = crm.createOrganization({ name: 'Client Blueprint AtoumWeb' });
+  const prospect = crm.createProspect({ organizationId: organization.id, primaryNeed: 'Site vitrine' });
+  const quote = quotes.create({ prospectId: prospect.id, subject: 'Site vitrine Blueprint' });
+  quotes.addCatalogLine(quote.id, 'atoumweb-vitrine-v1');
+  if (extraCatalogVersionId) quotes.addCatalogLine(quote.id, extraCatalogVersionId);
+  quotes.finalize(quote.id);
+  quotes.markSent(quote.id);
+  return quotes.accept(quote.id);
+}
+
 describe('ProjectService', () => {
   it('versionne un modèle sans modifier la version publiée précédente', () => {
     const published = createPublishedTemplate();
@@ -135,6 +146,125 @@ describe('ProjectService', () => {
     expect(internal.projectType).toBe('internal');
     expect(internal.nodes).toHaveLength(4);
     expect(existsSync(join(internal.resourceRootPath!, '05 Technique - Sources - Exports'))).toBe(true);
+  });
+
+  it('génère automatiquement le blueprint Site vitrine depuis l’offre du devis', () => {
+    const quote = createAcceptedSeededVitrineQuote();
+
+    const project = projects.transformQuote({ quoteId: quote.id });
+
+    expect(project.projectType).toBe('website');
+    expect(project.templateVersionId).toBe('atoumweb-project-template-vitrine-v1');
+    expect(project.nodes.length).toBeGreaterThan(15);
+
+    const hero = project.nodes.find((node) => node.semanticKey === 'pages.home.hero');
+    expect(hero).toBeTruthy();
+    expect(hero?.name).toBe('Hero');
+    expect(hero?.workCard?.fields.map((field) => field.key)).toEqual(expect.arrayContaining(['h1', 'lead', 'cta', 'visual_notes', 'code_notes']));
+    expect(hero?.advice?.some((advice) => advice.kind === 'library')).toBe(true);
+    expect(hero?.sources).toEqual([
+      expect.objectContaining({
+        quoteLineId: quote.lines[0]?.id,
+        catalogVersionId: 'atoumweb-vitrine-v1',
+        templateVersionId: 'atoumweb-project-template-vitrine-v1',
+        sourceRole: 'direct',
+      }),
+    ]);
+
+    const folders = ['01 Identité', '02 Textes', '03 Images & médias', '04 Documents projet', '05 Technique - Sources - Exports', '06 Livrables', '07 Archives'];
+    for (const folder of folders) expect(existsSync(join(project.resourceRootPath!, folder))).toBe(true);
+  });
+
+  it('conserve la fiche projet indépendante et permet de mettre un module en pause', () => {
+    const quote = createAcceptedSeededVitrineQuote();
+    const project = projects.transformQuote({ quoteId: quote.id });
+    const home = project.nodes.find((node) => node.semanticKey === 'pages.home')!;
+
+    const editedCard = {
+      ...(home.workCard ?? { fields: [] }),
+      fields: (home.workCard?.fields ?? []).map((field) =>
+        field.key === 'page_goal' ? { ...field, value: 'Présenter clairement la proposition de valeur du client.' } : field,
+      ),
+    };
+
+    const edited = projects.updateProjectNode(home.id, { workCard: editedCard });
+    const editedHome = edited.nodes.find((node) => node.id === home.id)!;
+    expect(editedHome.workCard?.fields.find((field) => field.key === 'page_goal')?.value)
+      .toBe('Présenter clairement la proposition de valeur du client.');
+
+    const paused = projects.setProjectNodePause(home.id, true, 'En attente des textes du client');
+    const pausedHome = paused.nodes.find((node) => node.id === home.id)!;
+    expect(pausedHome.paused).toBe(true);
+    expect(pausedHome.pauseReason).toBe('En attente des textes du client');
+
+    const resumed = projects.setProjectNodePause(home.id, false);
+    const resumedHome = resumed.nodes.find((node) => node.id === home.id)!;
+    expect(resumedHome.paused).toBe(false);
+    expect(resumedHome.pauseReason).toBeNull();
+
+    database.run(
+      "UPDATE project_template_nodes SET work_card_json='{\"goal\":\"Modèle modifié après création\",\"fields\":[]}' WHERE id='aw-vitrine-home'",
+    );
+    const reloaded = projects.getProject(project.id);
+    expect(reloaded.nodes.find((node) => node.id === home.id)?.workCard?.goal).not.toBe('Modèle modifié après création');
+  });
+
+  it('fusionne un blueprint additionnel dans le bon nœud grâce à la clé sémantique', () => {
+    const addon = projects.createTemplate({ name: 'Module Rédaction', projectType: 'website', description: 'Rédaction intégrée aux pages' });
+    const draft = addon.versions[0];
+    const homeAnchor = projects.addTemplateNode(draft.id, {
+      type: 'module',
+      displaySubtype: 'page',
+      name: 'Accueil',
+      semanticKey: 'pages.home',
+      required: false,
+    }).nodes.find((node) => node.semanticKey === 'pages.home')!;
+    projects.addTemplateNode(draft.id, {
+      parentId: homeAnchor.id,
+      type: 'task',
+      name: 'Rédaction de la page Accueil',
+      semanticKey: 'pages.home.copywriting',
+      estimatedMinutes: 60,
+      required: true,
+      timeCategory: 'production',
+      workCard: {
+        goal: 'Rédiger le contenu directement dans le contexte de la page.',
+        fields: [
+          { key: 'client_source', label: 'Texte client / source', type: 'textarea' },
+          { key: 'final_copy', label: 'Texte final', type: 'textarea' },
+        ],
+      },
+    });
+    const publishedAddon = projects.publishTemplateVersion(draft.id);
+
+    const service = catalog.create(
+      { type: 'service', name: 'Rédaction AtoumWeb test', category: 'Contenu' },
+      { priceMode: 'fixed', priceCents: 9900, description: 'Rédaction intégrée au site' },
+    );
+    const serviceVersion = catalog.publishVersion(service.versions[0].id);
+    database.run(
+      `INSERT INTO catalog_project_blueprints
+       (id,catalog_version_id,template_version_id,role,sort_order,created_at)
+       VALUES ('test-addon-writing',?,?,'addon',10,'2026-09-21T00:00:00.000Z')`,
+      [serviceVersion.id, publishedAddon.id],
+    );
+
+    const quote = createAcceptedSeededVitrineQuote(serviceVersion.id);
+    const project = projects.transformQuote({ quoteId: quote.id });
+
+    expect(project.nodes.filter((node) => node.semanticKey === 'pages.home')).toHaveLength(1);
+    const home = project.nodes.find((node) => node.semanticKey === 'pages.home')!;
+    const writing = project.nodes.find((node) => node.semanticKey === 'pages.home.copywriting')!;
+    expect(writing.parentId).toBe(home.id);
+    expect(writing.workCard?.fields.map((field) => field.key)).toEqual(['client_source', 'final_copy']);
+    expect(writing.sources).toEqual([
+      expect.objectContaining({
+        catalogVersionId: serviceVersion.id,
+        templateVersionId: publishedAddon.id,
+        sourceRole: 'direct',
+      }),
+    ]);
+    expect(home.sources.length).toBeGreaterThanOrEqual(2);
   });
 
   it('empêche une boucle dans l’arbre projet', () => {
