@@ -721,7 +721,7 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
   projectId: string;
   node: ProjectNode | null;
   position: ProjectNodePosition | null;
-  onUpdate: (nodeId: string, input: Partial<ProjectNode>) => Promise<void>;
+  onUpdate: (nodeId: string, input: Partial<ProjectNodeInput>) => Promise<void>;
   onPause: (node: ProjectNode, paused: boolean, reason?: string | null) => Promise<void>;
   onOpenResources: () => void;
   onOpenTechnical: () => void;
@@ -872,10 +872,6 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
       ? activeTime.durationSeconds
       : activeTime.durationSeconds + Math.max(0, Math.floor((timerTick - Date.parse(activeTime.updatedAt)) / 1000))
     : 0;
-
-  const sourceLabel = node.sources.length > 0
-    ? node.sources.some((source) => source.quoteLineId) ? 'Issu du devis' : 'Ajout manuel'
-    : node.sourceTemplateNodeId ? 'Issu du modèle' : 'Ajout manuel';
 
   const positionLabel = position
     ? position.stepIndex
