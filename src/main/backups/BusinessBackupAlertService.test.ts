@@ -122,6 +122,34 @@ describe('BusinessBackupAlertService', () => {
     expect(after.alerts.some((alert) => alert.code === 'pre_intervention_missing')).toBe(false);
   });
 
+  it('retrouve une copie locale client même après création d une trace avant intervention', () => {
+    const organization = crm.createOrganization({ name: 'Client sans projet' });
+    const client = crm.createClient({ organizationId: organization.id });
+    const localPath = join(workspaceRoot, 'copie-client.zip');
+    writeFileSync(localPath, 'backup', 'utf8');
+    const existing = backups.create({
+      clientAccountId: client.id,
+      backupType: 'files_code',
+      label: 'Copie locale client',
+      backupAt: '2026-09-20T17:00:00.000Z',
+    });
+    backups.addLocation(existing.id, {
+      locationType: 'local',
+      label: 'Copie locale MSI',
+      pathOrReference: localPath,
+    });
+    const intervention = operations.createIntervention({
+      clientAccountId: client.id,
+      type: 'correction',
+      subject: 'Correction sans projet',
+    });
+
+    const after = alerts.recordForIntervention({ interventionId: intervention.id, role: 'pre_intervention' });
+
+    expect(after.preInterventionBackup).toBeTruthy();
+    expect(after.latestLocal?.id).toBe(existing.id);
+  });
+
   it('propose une sauvegarde post-validation après une modification terminée', () => {
     const { client, project } = createClientProject('Post validation');
     const intervention = operations.createIntervention({
