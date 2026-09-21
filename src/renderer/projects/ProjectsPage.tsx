@@ -646,6 +646,12 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
         </header>
 
         {completionReview && <ProjectCompletionReviewPanel review={completionReview} busy={completionBusy} onConfirm={confirmProjectCompletion} onCancel={() => setCompletionReview(null)} />}
+        {phaseCompletionReview && <PhaseCompletionReviewPanel
+          review={phaseCompletionReview}
+          busy={phaseCompletionBusy}
+          onConfirm={confirmPhaseCompletion}
+          onCancel={() => setPhaseCompletionReview(null)}
+        />}
 
         <nav className="project-production-nav" aria-label="Sections du projet">
           <button className={detailTab === 'plan' ? 'active' : ''} type="button" onClick={() => setDetailTab('plan')}>Production</button>
@@ -656,7 +662,10 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
         </nav>
 
         {detailTab === 'plan' && (
-          <main className="project-production-workspace">
+          <main
+            className="project-production-workspace"
+            style={{ gridTemplateColumns: `${productionSplitPercent}% 8px minmax(0, 1fr)` }}
+          >
             <section className="project-production-tree-panel">
               <div className="project-production-tree-head">
                 <div>
@@ -694,10 +703,26 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
                   expandedPhaseIds,
                   togglePhase,
                   nodePositions,
+                  renameProjectNode,
+                  requestPhaseCompletion,
                 )}</div>
                 {detail.nodes.length === 0 && <p className="muted">Le plan est vide. Ajoute un lot, un module ou une tâche.</p>}
               </div>
             </section>
+
+            <div
+              className="project-production-splitter"
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Redimensionner le plan et la fiche"
+              tabIndex={0}
+              onPointerDown={() => beginProductionResize()}
+              onDoubleClick={() => setProductionSplitPercent(40)}
+              onKeyDown={(event) => {
+                if (event.key === 'ArrowLeft') setProductionSplitPercent((value) => Math.max(28, value - 3));
+                if (event.key === 'ArrowRight') setProductionSplitPercent((value) => Math.min(68, value + 3));
+              }}
+            ><span /></div>
 
             <ProjectNodeWorkbench
               projectId={detail.id}
@@ -705,13 +730,32 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
               position={selectedPosition}
               onUpdate={updateProjectNodeWithHistory}
               onPause={setNodePause}
-              onOpenResources={() => setDetailTab('resources')}
-              onOpenTechnical={() => setDetailTab('technical')}
-              onOpenTime={() => setDetailTab('time')}
+              onOpenResources={() => setProductionOverlay('resources')}
+              onOpenTechnical={() => setProductionOverlay('technical')}
+              onOpenTime={() => setProductionOverlay('time')}
               onMessage={onMessage}
             />
           </main>
         )}
+
+        {productionOverlay && <div className="project-production-overlay" role="dialog" aria-modal="true">
+          <div className="project-production-overlay-backdrop" onClick={() => setProductionOverlay(null)} />
+          <section className="project-production-overlay-panel">
+            <header>
+              <div>
+                <span className="eyebrow">{selectedPosition ? `Phase ${selectedPosition.phaseIndex}${selectedPosition.stepIndex ? ` · Étape ${selectedPosition.phaseIndex}.${selectedPosition.stepIndex}` : ''}` : 'Projet'}</span>
+                <h3>{productionOverlay === 'resources' ? 'Ressources' : productionOverlay === 'technical' ? 'Technique & bibliothèque' : 'Temps'}</h3>
+                {selectedNode && <p>{selectedNode.name}</p>}
+              </div>
+              <button type="button" className="close-detail" onClick={() => setProductionOverlay(null)}>×</button>
+            </header>
+            <div className="project-production-overlay-content">
+              {productionOverlay === 'resources' && <ProjectResourcesTab projectId={detail.id} nodes={detail.nodes} resourceRootPath={detail.resourceRootPath} onMessage={onMessage} />}
+              {productionOverlay === 'technical' && <ProjectTechnicalLibraryTab projectId={detail.id} onMessage={onMessage} />}
+              {productionOverlay === 'time' && <ProjectTimeTab projectId={detail.id} nodes={detail.nodes} onMessage={onMessage} />}
+            </div>
+          </section>
+        </div>}
 
         {detailTab !== 'plan' && <main className="project-production-secondary">
           {detailTab === 'summary' && <ProjectSummaryTab project={detail} />}
