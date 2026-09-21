@@ -10,6 +10,8 @@ import type {
   QuoteLineInput,
 } from '../shared/commercial';
 import type { AtoumWebApi, DisplayDensity, ThemeName } from '../shared/contracts';
+import type { BusinessBackupFilters, BusinessBackupLocationInput, BusinessBackupRecordInput } from '../shared/businessBackups';
+import type { BusinessBackupPolicyInput, InterventionBackupRecordInput } from '../shared/businessBackupAlerts';
 import type {
   ClientContactRole,
   ClientFilters,
@@ -65,6 +67,15 @@ import type {
   TransformQuoteToProjectInput,
 } from '../shared/projects';
 import type {
+  AtoumWebPackageImportInput,
+  AtoumWebTechnicalAssetRole,
+  AtoumWebTechnicalItemInput,
+  AtoumWebTechnicalLibraryFilters,
+  AtoumWebTechnicalVersionInput,
+  ReuseCreateGlobalInput,
+  ReusePreparationInput,
+} from '../shared/referentials';
+import type {
   ManualTimeSessionInput,
   StartTimeSessionInput,
   TimeSessionFilters,
@@ -84,6 +95,25 @@ const api: AtoumWebApi = {
   backups: {
     createManual: () => ipcRenderer.invoke('backups:create-manual'),
     restore: () => ipcRenderer.invoke('backups:restore'),
+  },
+  businessBackups: {
+    list: (filters?: BusinessBackupFilters) => ipcRenderer.invoke('business-backups:list', filters),
+    get: (id: string) => ipcRenderer.invoke('business-backups:get', id),
+    create: (input: BusinessBackupRecordInput) => ipcRenderer.invoke('business-backups:create', input),
+    addLocation: (recordId: string, input: BusinessBackupLocationInput) => ipcRenderer.invoke('business-backups:add-location', recordId, input),
+    verifyLocation: (locationId: string) => ipcRenderer.invoke('business-backups:verify-location', locationId),
+    markStable: (recordId: string) => ipcRenderer.invoke('business-backups:mark-stable', recordId),
+    overview: (filters?: Pick<BusinessBackupFilters, 'clientAccountId' | 'projectId'>) => ipcRenderer.invoke('business-backups:overview', filters),
+    relocalize: (locationId: string) => ipcRenderer.invoke('business-backups:relocalize', locationId),
+    openLocation: (locationId: string) => ipcRenderer.invoke('business-backups:open-location', locationId),
+  },
+  businessBackupAlerts: {
+    getPolicy: (input: { clientAccountId?: string | null; projectId?: string | null }) => ipcRenderer.invoke('business-backup-alerts:get-policy', input),
+    updatePolicy: (input: BusinessBackupPolicyInput) => ipcRenderer.invoke('business-backup-alerts:update-policy', input),
+    listAlerts: () => ipcRenderer.invoke('business-backup-alerts:list'),
+    reviewIntervention: (interventionId: string) => ipcRenderer.invoke('business-backup-alerts:review-intervention', interventionId),
+    recordForIntervention: (input: InterventionBackupRecordInput) => ipcRenderer.invoke('business-backup-alerts:record-intervention', input),
+    linkExisting: (interventionId: string, backupRecordId: string, role: 'pre_intervention' | 'post_intervention' | 'reference') => ipcRenderer.invoke('business-backup-alerts:link-existing', interventionId, backupRecordId, role),
   },
   database: { health: () => ipcRenderer.invoke('database:health') },
   workflow: {
@@ -232,6 +262,36 @@ const api: AtoumWebApi = {
       unlinkResource: (versionId: string, resourceId: string) => ipcRenderer.invoke('projects:technical:unlink-resource', versionId, resourceId),
       prepareForReuse: (itemId: string, versionId?: string | null) => ipcRenderer.invoke('projects:technical:prepare-reuse', itemId, versionId),
       archive: (itemId: string) => ipcRenderer.invoke('projects:technical:archive', itemId),
+    },
+  },
+  referentials: {
+    library: {
+      list: (filters?: AtoumWebTechnicalLibraryFilters) => ipcRenderer.invoke('referentials:library:list', filters),
+      get: (id: string) => ipcRenderer.invoke('referentials:library:get', id),
+      create: (item: AtoumWebTechnicalItemInput, version: AtoumWebTechnicalVersionInput) => ipcRenderer.invoke('referentials:library:create', item, version),
+      update: (id: string, input: Partial<AtoumWebTechnicalItemInput>) => ipcRenderer.invoke('referentials:library:update', id, input),
+      createVersion: (itemId: string, version: AtoumWebTechnicalVersionInput) => ipcRenderer.invoke('referentials:library:create-version', itemId, version),
+      markStable: (versionId: string) => ipcRenderer.invoke('referentials:library:mark-stable', versionId),
+      archive: (itemId: string) => ipcRenderer.invoke('referentials:library:archive', itemId),
+      reactivate: (itemId: string) => ipcRenderer.invoke('referentials:library:reactivate', itemId),
+      assets: {
+        list: (versionId: string) => ipcRenderer.invoke('referentials:library:assets:list', versionId),
+        importFiles: (versionId: string, role: AtoumWebTechnicalAssetRole) => ipcRenderer.invoke('referentials:library:assets:import', versionId, role),
+        preview: (assetId: string) => ipcRenderer.invoke('referentials:library:assets:preview', assetId),
+        openFile: (assetId: string) => ipcRenderer.invoke('referentials:library:assets:open-file', assetId),
+        openFolder: (versionId: string) => ipcRenderer.invoke('referentials:library:assets:open-folder', versionId),
+      },
+    },
+    reuse: {
+      prepareProjectItem: (input: ReusePreparationInput) => ipcRenderer.invoke('referentials:reuse:prepare-project-item', input),
+      createGlobal: (input: ReuseCreateGlobalInput) => ipcRenderer.invoke('referentials:reuse:create-global', input),
+      openPackage: (packagePath: string) => ipcRenderer.invoke('referentials:reuse:open-package', packagePath),
+    },
+    packages: {
+      exportItem: (itemId: string, versionId?: string | null) => ipcRenderer.invoke('referentials:packages:export', itemId, versionId),
+      inspectImport: () => ipcRenderer.invoke('referentials:packages:inspect-import'),
+      importPackage: (input: AtoumWebPackageImportInput) => ipcRenderer.invoke('referentials:packages:import', input),
+      showExport: (packagePath: string) => ipcRenderer.invoke('referentials:packages:show-export', packagePath),
     },
   },
   operations: {

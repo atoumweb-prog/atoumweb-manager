@@ -3,7 +3,7 @@ import { NodeSqliteAdapter } from './NodeSqliteAdapter';
 import { applyPendingMigrations, getPendingMigrations, MIGRATIONS } from './migrations';
 
 describe('migrations SQLite', () => {
-  it.each([4, 6, 10, 17])('met à niveau une base à %i migrations sans perdre les données existantes', (version) => {
+  it.each([4, 6, 10, 17, 21])('met à niveau une base à %i migrations sans perdre les données existantes', (version) => {
     const database = new NodeSqliteAdapter(':memory:');
     database.exec('PRAGMA foreign_keys = ON;');
     try {
@@ -65,6 +65,7 @@ describe('migrations SQLite', () => {
       'maintenance_subscriptions', 'maintenance_periods', 'maintenance_checks', 'hour_packs', 'hour_pack_movements', 'billing_items',
       'maintenance_overage_decisions', 'maintenance_report_drafts', 'hour_pack_shortfall_decisions',
       'crm_needs', 'demo_batches', 'demo_records', 'demo_context', 'contact_methods', 'client_documents',
+      'atoumweb_technical_assets', 'backup_records', 'backup_locations', 'backup_policies', 'backup_intervention_links',
     ]) {
       const row = database.get<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", [table]);
       expect(row?.name).toBe(table);
@@ -79,6 +80,12 @@ describe('migrations SQLite', () => {
     for (const column of ['target_contact_id', 'reason_code', 'reason_text']) {
       expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('crm_actions') WHERE name='${column}'`)?.name).toBe(column);
     }
+    for (const column of ['reuse_status', 'origin_technical_item_id', 'library_category']) {
+      expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('technical_items') WHERE name='${column}'`)?.name).toBe(column);
+    }
+    expect(MIGRATIONS.at(-1)?.id).toBe(26);
+    expect(database.get<{ name: string }>("SELECT name FROM sqlite_master WHERE type='table' AND name='backup_records'")?.name).toBe('backup_records');
+    expect(database.get<{ name: string }>("SELECT name FROM sqlite_master WHERE type='table' AND name='backup_policies'")?.name).toBe('backup_policies');
 
     const seededPlans = database.all<{ name: string }>('SELECT name FROM maintenance_plans ORDER BY periodic_price_cents');
     expect(seededPlans.map((plan) => plan.name)).toEqual(['Maintenance 49 €/mois', 'Maintenance 99 €/mois']);

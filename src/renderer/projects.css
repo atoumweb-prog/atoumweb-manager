@@ -157,3 +157,118 @@
   .resource-folder-list { grid-template-columns: 1fr; }
   .template-node-add { grid-template-columns: 1fr; }
 }
+
+
+/* Harmonisation des formulaires Projets avec Clients / Prospection / Devis. */
+.projects-stack input,
+.projects-stack select,
+.projects-stack textarea,
+.project-templates-stack input,
+.project-templates-stack select,
+.project-templates-stack textarea {
+  min-height: var(--ui-control-height);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  padding: var(--ui-control-pad-y) var(--ui-control-pad-x);
+  outline: none;
+  font-size: var(--aw-font-functional, 14px);
+}
+.projects-stack textarea,
+.project-templates-stack textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+.projects-stack input::placeholder,
+.projects-stack textarea::placeholder,
+.project-templates-stack input::placeholder,
+.project-templates-stack textarea::placeholder {
+  color: var(--muted);
+  opacity: .82;
+}
+.projects-stack input:focus,
+.projects-stack select:focus,
+.projects-stack textarea:focus,
+.project-templates-stack input:focus,
+.project-templates-stack select:focus,
+.project-templates-stack textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 13%, transparent);
+}
+:root:not([data-theme='noir']) .projects-stack input,
+:root:not([data-theme='noir']) .projects-stack select,
+:root:not([data-theme='noir']) .projects-stack textarea,
+:root:not([data-theme='noir']) .project-templates-stack input,
+:root:not([data-theme='noir']) .project-templates-stack select,
+:root:not([data-theme='noir']) .project-templates-stack textarea {
+  color-scheme: light;
+}
+:root[data-theme='noir'] .projects-stack input,
+:root[data-theme='noir'] .projects-stack select,
+:root[data-theme='noir'] .projects-stack textarea,
+:root[data-theme='noir'] .project-templates-stack input,
+:root[data-theme='noir'] .project-templates-stack select,
+:root[data-theme='noir'] .project-templates-stack textarea {
+  color-scheme: dark;
+}
+
+.project-create-grid label,
+.project-template-create label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 750;
+}
+.project-template-create label > span {
+  margin-left: 4px;
+  color: var(--muted);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 500;
+}
+.project-template-create {
+  gap: 12px;
+}
+.project-template-help {
+  margin: 0 0 2px;
+  color: var(--muted);
+  font-size: var(--aw-font-functional, 14px);
+  line-height: 1.5;
+}
+.project-template-create-error {
+  margin: 0;
+}
+.project-template-create .primary-button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.project-template-required {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, #c84b4b 30%, var(--border));
+  border-radius: 10px;
+  background: color-mix(in srgb, #c84b4b 7%, var(--surface));
+}
+.project-template-required > div {
+  display: grid;
+  gap: 3px;
+}
+.project-template-required strong {
+  font-size: var(--aw-font-secondary, 15px);
+}
+.project-template-required span {
+  color: var(--muted);
+  font-size: var(--aw-font-functional, 14px);
+}
+
+@media (max-width: 760px) {
+  .project-template-required {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

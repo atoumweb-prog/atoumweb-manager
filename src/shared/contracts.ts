@@ -7,6 +7,9 @@ import type { MaintenanceReportApi } from './maintenanceReport';
 import type { OperationsApi } from './operations';
 import type { OperationsAlertsApi } from './operationsAlerts';
 import type { ProjectsApi } from './projects';
+import type { ReferentialsApi } from './referentials';
+import type { BusinessBackupsApi } from './businessBackups';
+import type { BusinessBackupAlertsApi } from './businessBackupAlerts';
 import type { TimeApi } from './time';
 
 export const THEME_NAMES = ['atoumweb', 'noir', 'blanc'] as const;
@@ -72,6 +75,8 @@ export interface AtoumWebApi {
     createManual(): Promise<BackupResult>;
     restore(): Promise<RestoreScheduleResult>;
   };
+  businessBackups: BusinessBackupsApi;
+  businessBackupAlerts: BusinessBackupAlertsApi;
   database: {
     health(): Promise<DatabaseHealth>;
   };
@@ -80,6 +85,7 @@ export interface AtoumWebApi {
   catalog: CatalogApi;
   quotes: QuoteApi;
   projects: ProjectsApi;
+  referentials: ReferentialsApi;
   operations: OperationsApi;
   hourPackShortfalls: HourPackShortfallApi;
   maintenanceOverages: MaintenanceOverageApi;

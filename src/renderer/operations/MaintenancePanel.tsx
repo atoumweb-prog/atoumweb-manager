@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ClientSummary } from '../../shared/crm';
 import {
   MAINTENANCE_CHECK_STATUSES,
@@ -46,6 +46,7 @@ export function MaintenancePanel({ clients, projects, onMessage, onInterventionC
   const [createSubscriptionOpen, setCreateSubscriptionOpen] = useState(false);
   const [createPlanOpen, setCreatePlanOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const detailPanelRef = useRef<HTMLElement | null>(null);
 
   const [clientId, setClientId] = useState('');
   const [projectId, setProjectId] = useState('');
@@ -91,6 +92,18 @@ export function MaintenancePanel({ clients, projects, onMessage, onInterventionC
   useEffect(() => {
     if (initialSubscriptionId) setSelectedSubscriptionId(initialSubscriptionId);
   }, [initialSubscriptionId]);
+
+  useEffect(() => {
+    if (!selectedSubscriptionId) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target || detailPanelRef.current?.contains(target)) return;
+      setSelectedSubscriptionId('');
+      setSelectedPeriodId('');
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    return () => document.removeEventListener('pointerdown', closeOnOutside);
+  }, [selectedSubscriptionId]);
 
   const selectedSubscription = subscriptions.find((item) => item.id === selectedSubscriptionId) ?? null;
   const selectedPeriod = periods.find((item) => item.id === selectedPeriodId) ?? null;
@@ -224,7 +237,7 @@ export function MaintenancePanel({ clients, projects, onMessage, onInterventionC
     <div className={selectedSubscription ? 'maintenance-layout with-detail' : 'maintenance-layout'}>
       <section className="panel operation-list-panel"><table className="operations-table"><thead><tr><th>Client</th><th>Plan</th><th>Projet</th><th>Prix</th><th>Statut</th></tr></thead><tbody>{activeSubscriptions.map((subscription) => <tr key={subscription.id} className={selectedSubscriptionId === subscription.id ? 'selected-row' : ''} onClick={() => setSelectedSubscriptionId(subscription.id)}><td><strong>{subscription.clientLabel}</strong><small>Depuis {subscription.startDate}</small></td><td><strong>{subscription.planName}</strong><small>{FREQUENCY_LABELS[subscription.frequency]} · {subscription.includedInterventions} intervention(s)</small></td><td>{subscription.projectLabel || 'Tous / sans projet'}</td><td>{euro(subscription.contractPriceCents)}</td><td>{SUBSCRIPTION_LABELS[subscription.status]}</td></tr>)}{activeSubscriptions.length === 0 && <tr><td colSpan={5}><div className="empty-table">Aucune maintenance active.</div></td></tr>}</tbody></table></section>
 
-      {selectedSubscription && <aside className="panel operation-detail-panel maintenance-detail-panel"><div className="detail-panel-heading"><div><span className="eyebrow">Maintenance</span><h2>{selectedSubscription.clientLabel}</h2><p className="muted">{selectedSubscription.planName}{selectedSubscription.projectLabel ? ` · ${selectedSubscription.projectLabel}` : ''}</p></div><button className="close-detail" type="button" onClick={() => { setSelectedSubscriptionId(''); setSelectedPeriodId(''); }}>×</button></div>
+      {selectedSubscription && <aside ref={detailPanelRef} className="panel operation-detail-panel maintenance-detail-panel"><div className="detail-panel-heading"><div><span className="eyebrow">Maintenance</span><h2>{selectedSubscription.clientLabel}</h2><p className="muted">{selectedSubscription.planName}{selectedSubscription.projectLabel ? ` · ${selectedSubscription.projectLabel}` : ''}</p></div><button className="close-detail" type="button" onClick={() => { setSelectedSubscriptionId(''); setSelectedPeriodId(''); }}>×</button></div>
         <div className="operation-detail-grid"><div><span>Prix contractuel</span><strong>{euro(selectedSubscription.contractPriceCents)}</strong></div><div><span>Quota</span><strong>{selectedSubscription.includedInterventions} intervention(s)</strong></div></div>
         <label>Statut<select value={selectedSubscription.status} onChange={(event) => void changeSubscriptionStatus(event.target.value as MaintenanceSubscriptionStatus)}>{MAINTENANCE_SUBSCRIPTION_STATUSES.map((status) => <option key={status} value={status}>{SUBSCRIPTION_LABELS[status]}</option>)}</select></label>
         <button className="secondary-button" type="button" disabled={selectedSubscription.status !== 'active'} onClick={() => void ensureCurrentPeriod()}>Générer / ouvrir la période actuelle</button>

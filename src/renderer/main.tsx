@@ -26,6 +26,7 @@ import './prospect-workflow-v2.css';
 import './prospect-recipe-fixes.css';
 import './pre-phase5-commercial-ux.css';
 import './prospection-commercial-v2.css';
+import './ui-typography-consistency.css';
 
 const rootElement = document.getElementById('root');
 

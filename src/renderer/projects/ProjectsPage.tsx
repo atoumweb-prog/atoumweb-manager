@@ -178,6 +178,17 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
     setCommercialMode('normal');
   }
 
+  function openQuoteProjectCreate(): void {
+    if (createMode === 'quote') {
+      resetCreate();
+      return;
+    }
+    setCreateMode('quote');
+    if (publishedTemplates.length === 1) {
+      setTemplateVersionId(publishedTemplates[0].currentVersion?.id ?? '');
+    }
+  }
+
   async function createProject(): Promise<void> {
     if (!createMode) return;
     setSaving(true);
@@ -327,7 +338,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
             <option value="all">Tous les statuts</option>
             {PROJECT_STATUSES.map((status) => <option key={status} value={status}>{PROJECT_STATUS_LABELS[status]}</option>)}
           </select>
-          <button className="primary-button" type="button" onClick={() => setCreateMode(createMode === 'quote' ? null : 'quote')}>+ Depuis un devis</button>
+          <button className="primary-button" type="button" onClick={openQuoteProjectCreate}>+ Depuis un devis</button>
           <button className="secondary-button" type="button" onClick={() => setCreateMode(createMode === 'internal' ? null : 'internal')}>+ Projet interne</button>
         </div>
       </div>
@@ -353,7 +364,13 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
             {createMode === 'quote' && <label>Mode commercial<select value={commercialMode} onChange={(event) => setCommercialMode(event.target.value as ProjectCommercialMode)}>{PROJECT_COMMERCIAL_MODES.filter((mode) => mode !== 'internal').map((mode) => <option key={mode} value={mode}>{COMMERCIAL_MODE_LABELS[mode]}</option>)}</select></label>}
           </div>
           {createMode === 'quote' && acceptedQuotes.length === 0 && <p className="muted">Aucun devis accepté n’attend actuellement sa transformation en projet.</p>}
-          {createMode === 'quote' && publishedTemplates.length === 0 && <p className="form-error">Aucun modèle publié. Ouvre « Modèles de projets » pour en préparer un avant la transformation.</p>}
+          {createMode === 'quote' && publishedTemplates.length === 0 && <div className="project-template-required">
+            <div>
+              <strong>Aucun modèle de projet publié.</strong>
+              <span>{templates.length > 0 ? `${templates.length} modèle(s) existe(nt), mais aucun n’est encore publié.` : 'Crée d’abord un modèle de projet, puis publie sa version v1.'}</span>
+            </div>
+            <button className="secondary-button" type="button" onClick={() => { resetCreate(); setView('templates'); }}>Créer / publier un modèle</button>
+          </div>}
           <div className="button-row"><button className="primary-button" type="button" disabled={saving || (createMode === 'quote' && (!quoteId || !templateVersionId))} onClick={() => void createProject()}>{saving ? 'Création…' : 'Créer le projet'}</button><button className="secondary-button" type="button" onClick={resetCreate}>Annuler</button></div>
         </section>
       )}
@@ -513,9 +530,10 @@ function renderProjectTree(
 function ProjectTemplatesView({ templates, onBack, onRefresh, onMessage }: { templates: ProjectTemplateSummary[]; onBack: () => void; onRefresh: () => Promise<void>; onMessage: (message: string) => void }) {
   const [selectedId, setSelectedId] = useState<string | null>(templates[0]?.id ?? null);
   const [detail, setDetail] = useState<ProjectTemplateDetail | null>(null);
-  const [name, setName] = useState('');
+  const [name, setName] = useState('Site vitrine');
   const [projectType, setProjectType] = useState('website');
   const [description, setDescription] = useState('');
+  const [createError, setCreateError] = useState<string | null>(null);
   const [newNodeName, setNewNodeName] = useState('');
   const [newNodeType, setNewNodeType] = useState<'lot' | 'module' | 'task' | 'checklist'>('task');
   const [newNodeParent, setNewNodeParent] = useState('');
@@ -531,14 +549,24 @@ function ProjectTemplatesView({ templates, onBack, onRefresh, onMessage }: { tem
   const workingVersion: ProjectTemplateVersion | null = detail?.versions.find((version) => version.status === 'draft') ?? detail?.versions.find((version) => version.status === 'published') ?? detail?.versions[0] ?? null;
 
   async function createTemplate(): Promise<void> {
+    setCreateError(null);
     try {
-      if (!name.trim()) throw new Error('Nom du modèle requis.');
+      if (!name.trim()) {
+        setCreateError('Donne un nom au modèle avant de le créer.');
+        return;
+      }
       const created = await window.atoumweb.projects.templates.create({ name: name.trim(), projectType, description: description.trim() || null });
-      setName(''); setDescription('');
+      const defaultName = PROJECT_TYPES.find(([value]) => value === projectType)?.[1] ?? '';
+      setName(defaultName);
+      setDescription('');
       await onRefresh();
       await load(created.id);
-      onMessage('Modèle de projet créé. Ajoute maintenant ses lots, modules et tâches.');
-    } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de créer le modèle.'); }
+      onMessage('Modèle créé en brouillon v1. Ajoute les éléments souhaités puis clique sur « Publier v1 et rendre disponible ».');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Impossible de créer le modèle.';
+      setCreateError(message);
+      onMessage(message);
+    }
   }
 
   async function createVersion(): Promise<void> {
@@ -583,13 +611,26 @@ function ProjectTemplatesView({ templates, onBack, onRefresh, onMessage }: { tem
       <div className="project-templates-layout">
         <section className="panel project-template-list">
           <span className="eyebrow">Modèles de projets</span><h2>Structures réutilisables</h2>
-          <div className="project-template-create"><input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nom du modèle" /><select value={projectType} onChange={(event) => setProjectType(event.target.value)}>{PROJECT_TYPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Description facultative" /><button className="primary-button" type="button" onClick={() => void createTemplate()}>Créer le modèle</button></div>
+          <div className="project-template-create">
+            <p className="project-template-help">1. Crée le modèle · 2. Ajoute ses lots / tâches · 3. Publie la v1. Seuls les modèles publiés sont proposés lors de la transformation d’un devis en projet.</p>
+            <label>Nom du modèle <span>obligatoire</span><input value={name} onChange={(event) => { setName(event.target.value); setCreateError(null); }} placeholder="Ex. Site vitrine standard" /></label>
+            <label>Type de projet<select value={projectType} onChange={(event) => {
+              const previousLabel = PROJECT_TYPES.find(([value]) => value === projectType)?.[1] ?? '';
+              const nextType = event.target.value;
+              const nextLabel = PROJECT_TYPES.find(([value]) => value === nextType)?.[1] ?? '';
+              setProjectType(nextType);
+              setName((current) => !current.trim() || current === previousLabel ? nextLabel : current);
+            }}>{PROJECT_TYPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+            <label>Description <span>facultative</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Ex. Structure standard pour un site vitrine 5 pages" /></label>
+            {createError && <p className="form-error project-template-create-error">{createError}</p>}
+            <button className="primary-button" type="button" disabled={!name.trim()} onClick={() => void createTemplate()}>Créer le modèle en brouillon</button>
+          </div>
           <div className="project-template-items">{templates.map((template) => <button key={template.id} className={selectedId === template.id ? 'active' : ''} type="button" onClick={() => void load(template.id)}><div><strong>{template.name}</strong><small>{template.projectType}</small></div><span>{template.currentVersion ? `v${template.currentVersion.versionNumber} · ${template.currentVersion.status}` : 'Aucune version'}</span></button>)}</div>
         </section>
 
         <section className="panel project-template-editor">
           {!detail ? <div className="empty-table">Sélectionne ou crée un modèle.</div> : <>
-            <div className="panel-title"><div><span className="eyebrow">{detail.projectType}</span><h2>{detail.name}</h2></div><div className="button-row">{workingVersion?.status === 'published' && <button className="secondary-button" type="button" onClick={() => void createVersion()}>Créer v{workingVersion.versionNumber + 1}</button>}{workingVersion?.status === 'draft' && <button className="primary-button" type="button" onClick={() => void publish()}>Publier v{workingVersion.versionNumber}</button>}</div></div>
+            <div className="panel-title"><div><span className="eyebrow">{detail.projectType}</span><h2>{detail.name}</h2></div><div className="button-row">{workingVersion?.status === 'published' && <button className="secondary-button" type="button" onClick={() => void createVersion()}>Créer v{workingVersion.versionNumber + 1}</button>}{workingVersion?.status === 'draft' && <button className="primary-button" type="button" onClick={() => void publish()}>Publier v{workingVersion.versionNumber} et rendre disponible</button>}</div></div>
             {workingVersion && <div className="template-version-banner"><span>Version de travail</span><strong>v{workingVersion.versionNumber}</strong><span className={`status-pill ${workingVersion.status}`}>{workingVersion.status === 'draft' ? 'Brouillon modifiable' : 'Publiée · figée'}</span></div>}
             {workingVersion?.status === 'draft' && <div className="template-node-add"><input value={newNodeName} onChange={(event) => setNewNodeName(event.target.value)} placeholder="Lot, page, tâche…" /><select value={newNodeType} onChange={(event) => setNewNodeType(event.target.value as typeof newNodeType)}><option value="lot">Lot</option><option value="module">Module / Page</option><option value="task">Tâche</option><option value="checklist">Checklist</option></select><select value={newNodeParent} onChange={(event) => setNewNodeParent(event.target.value)}><option value="">Racine</option>{workingVersion.nodes.map((node) => <option key={node.id} value={node.id}>{node.name}</option>)}</select><input type="number" min="0" value={newNodeMinutes} onChange={(event) => setNewNodeMinutes(event.target.value)} placeholder="Minutes" /><button className="secondary-button" type="button" onClick={() => void addNode()}>Ajouter</button></div>}
             {workingVersion && <div className="template-tree">{renderTemplateTree(workingVersion, null, workingVersion.status === 'draft' ? removeNode : undefined)}</div>}

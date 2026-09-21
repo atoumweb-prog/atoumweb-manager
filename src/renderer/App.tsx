@@ -3,6 +3,7 @@ import { DemoPanel } from './workflow/DemoPanel';
 import { useEffect, useState } from 'react';
 import type { BootstrapState, DisplayDensity, ThemeName } from '../shared/contracts';
 import type { SearchResult } from '../shared/crm';
+import { BusinessBackupsPage } from './backups/BusinessBackupsPage';
 import { CatalogPage } from './commercial/CatalogPage';
 import { QuotesPage } from './commercial/QuotesPage';
 import { ClientsPage } from './crm/ClientsPage';
@@ -12,6 +13,7 @@ import { ProspectReferenceWindow } from './crm/ProspectReferenceWindow';
 import { DashboardOperationsWatch } from './operations/DashboardOperationsWatch';
 import { OperationsPage, type OperationsSearchTarget } from './operations/OperationsPage';
 import { ProjectsPage } from './projects/ProjectsPage';
+import { AtoumWebLibraryPage } from './referentials/AtoumWebLibraryPage';
 import { GlobalTimer } from './time/GlobalTimer';
 import { TimePage } from './time/TimePage';
 
@@ -89,6 +91,8 @@ function App() {
   useEffect(() => { const open = (event: Event) => setActivePage((event as CustomEvent<PageName>).detail); window.addEventListener('atoumweb:open-page', open); return () => window.removeEventListener('atoumweb:open-page', open); }, []);
   const [projectSearchTarget, setProjectSearchTarget] = useState<string | null>(null);
   const [operationsSearchTarget, setOperationsSearchTarget] = useState<OperationsSearchTarget | null>(null);
+  const [librarySearchTarget, setLibrarySearchTarget] = useState<string | null>(null);
+  const [backupSearchTarget, setBackupSearchTarget] = useState<string | null>(null);
 
   useEffect(() => {
     window.atoumweb.app.getBootstrap()
@@ -146,6 +150,8 @@ function App() {
   function navigate(page: PageName): void {
     if (page === 'Interventions & Maintenance') setOperationsSearchTarget(null);
     if (page === 'Projets') setProjectSearchTarget(null);
+    if (page === 'Bibliothèque AtoumWeb') setLibrarySearchTarget(null);
+    if (page === 'Sauvegardes') setBackupSearchTarget(null);
     setActivePage(page);
   }
 
@@ -162,6 +168,14 @@ function App() {
       case 'project':
         setProjectSearchTarget(result.entityId);
         setActivePage('Projets');
+        break;
+      case 'atoumweb_library':
+        setLibrarySearchTarget(result.entityId);
+        setActivePage('Bibliothèque AtoumWeb');
+        break;
+      case 'backup_record':
+        setBackupSearchTarget(result.entityId);
+        setActivePage('Sauvegardes');
         break;
       case 'service_request':
       case 'intervention':
@@ -221,8 +235,10 @@ function App() {
           {activePage === 'Projets' && <ProjectsPage onMessage={setMessage} initialProjectId={projectSearchTarget} />}
           {activePage === 'Interventions & Maintenance' && <OperationsPage onMessage={setMessage} initialTarget={operationsSearchTarget} />}
           {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}
+          {activePage === 'Bibliothèque AtoumWeb' && <AtoumWebLibraryPage onMessage={setMessage} initialItemId={librarySearchTarget} />}
+          {activePage === 'Sauvegardes' && <BusinessBackupsPage onMessage={setMessage} initialRecordId={backupSearchTarget} />}
           {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} displayDensity={displayDensity} onThemeChange={updateTheme} onDensityChange={updateDisplayDensity} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
-          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
+          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Sauvegardes' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
         </section>
       </main>
     </div>

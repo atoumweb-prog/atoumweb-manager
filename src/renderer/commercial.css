@@ -126,3 +126,53 @@
   .quote-two-fields, .quote-three-fields { grid-template-columns: 1fr; }
   .quote-stepper { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+
+.quote-preview-lines {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+}
+.quote-preview-lines-heading,
+.quote-preview-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+.quote-preview-lines-heading {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.quote-preview-lines-heading > span {
+  color: var(--muted);
+  font-size: var(--aw-font-functional, 14px);
+}
+.quote-preview-line {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.quote-preview-line:last-child {
+  border-bottom: 0;
+}
+.quote-preview-line > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.quote-preview-line strong {
+  font-size: var(--aw-font-secondary, 15px);
+}
+.quote-preview-line small {
+  color: var(--muted);
+  font-size: var(--aw-font-functional, 14px);
+}
+.quote-preview-line > span {
+  flex: 0 0 auto;
+  font-weight: 800;
+  font-size: var(--aw-font-secondary, 15px);
+}

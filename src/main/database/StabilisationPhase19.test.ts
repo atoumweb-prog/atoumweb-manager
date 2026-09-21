@@ -18,14 +18,17 @@ describe('stabilisation commerciale migrations 19 à 21',()=>{
  beforeEach(()=>{root=mkdtempSync(join(tmpdir(),'atoumweb-v21-'));db=new NodeSqliteAdapter(':memory:');db.exec('PRAGMA foreign_keys=ON');applyPendingMigrations(db);crm=new CrmService(db);actions=new ActionService(db);quotes=new QuoteService(db,crm);const workspace=createWorkspacePaths(root);workflow=new WorkflowService(db,crm,quotes,new ProjectService(db,workspace),new OperationsService(db));documents=new ClientDocumentService(db,workspace);});
  afterEach(()=>{db.close();const target=resolve(root);if(!target.startsWith(resolve(tmpdir())))throw Error('Chemin temporaire invalide');rmSync(target,{recursive:true,force:true});});
 
- it('met à niveau une base 18, conserve les coordonnées historiques et ajoute le workflow prospect v2',()=>{
+ it('met à niveau une base 18 jusqu’à l’état courant sans perdre les données commerciales',()=>{
    const legacy=new NodeSqliteAdapter(':memory:');legacy.exec('PRAGMA foreign_keys=ON');
    for(const migration of getPendingMigrations(legacy).filter(m=>m.id<=18)){legacy.exec(migration.sql);legacy.run('INSERT INTO schema_migrations VALUES (?,?,?)',[migration.id,migration.name,new Date().toISOString()]);}
    legacy.run("INSERT INTO organizations (id,name,email,phone,created_at,updated_at) VALUES ('o','Atoum Test','contact@atoum.test','0102030405','x','x')");
    legacy.run("INSERT INTO prospects (id,organization_id,stage,temperature,created_at,updated_at) VALUES ('p','o','new','warm','x','x')");
    legacy.run("INSERT INTO crm_needs (id,prospect_id,other_text,created_at) VALUES ('n','p','Besoin conservé','x')");
    legacy.run("INSERT INTO activity_events (id,entity_type,entity_id,action,summary,prospect_id,created_at) VALUES ('a','prospect','p','created','Historique conservé','p','x')");
-   expect(applyPendingMigrations(legacy).map(m=>m.id)).toEqual([19,20,21]);expect(applyPendingMigrations(legacy)).toEqual([]);
+   const applied=applyPendingMigrations(legacy).map(m=>m.id);
+   expect(applied.slice(0,3)).toEqual([19,20,21]);
+   expect(applied).toEqual([19,20,21,22,23,24,25,26]);
+   expect(applyPendingMigrations(legacy)).toEqual([]);
    expect(legacy.all('SELECT method_type,value FROM contact_methods ORDER BY method_type')).toEqual([{method_type:'email',value:'contact@atoum.test'},{method_type:'phone',value:'0102030405'}]);
    expect(legacy.get("SELECT other_text FROM crm_needs WHERE id='n'")).toEqual({other_text:'Besoin conservé'});
    expect(legacy.get("SELECT summary FROM activity_events WHERE id='a'")).toEqual({summary:'Historique conservé'});
