@@ -152,6 +152,69 @@ describe('AnalyticsService', () => {
     expect(snapshot.previousDelays.prospectToQuoteSample).toBe(1);
   });
 
+  it('calcule projets temps pauses estimation et rendement sur un échantillon cohérent', () => {
+    database.run(
+      `UPDATE projects
+       SET start_date='2026-09-10', contract_value_cents=90000, commercial_value_cents=120000
+       WHERE id='project-current'`,
+    );
+    database.run(
+      `INSERT INTO project_nodes
+       (id,project_id,node_type,name,sort_order,estimated_minutes,is_required,status,created_at,updated_at)
+       VALUES ('node-estimate','project-current','task','Production',10,120,1,'done',
+         '2026-09-01T00:00:00.000Z','2026-09-18T00:00:00.000Z')`,
+    );
+    database.run(
+      `INSERT INTO time_sessions
+       (id,project_id,category,activity_label,started_at,ended_at,billable,source,created_at,updated_at)
+       VALUES ('time-billable','project-current','development','Développement',
+         '2026-09-18T09:00:00.000Z','2026-09-18T12:00:00.000Z',1,'manual',
+         '2026-09-18T12:00:00.000Z','2026-09-18T12:00:00.000Z')`,
+    );
+    database.run(
+      `INSERT INTO time_session_pauses (id,time_session_id,started_at,ended_at,created_at)
+       VALUES ('pause-1','time-billable','2026-09-18T10:00:00.000Z','2026-09-18T10:30:00.000Z','2026-09-18T10:00:00.000Z')`,
+    );
+    database.run(
+      `INSERT INTO time_sessions
+       (id,project_id,category,activity_label,started_at,ended_at,billable,source,created_at,updated_at)
+       VALUES ('time-nonbillable','project-current','design','Ajustements',
+         '2026-09-18T13:00:00.000Z','2026-09-18T14:00:00.000Z',0,'manual',
+         '2026-09-18T14:00:00.000Z','2026-09-18T14:00:00.000Z')`,
+    );
+
+    const snapshot = analytics.projectTimeSnapshot({ preset: 'month' }, new Date('2026-09-21T12:00:00.000Z'));
+
+    expect(snapshot.current).toMatchObject({
+      projectsCreated: 1,
+      projectsCompleted: 1,
+      totalSeconds: 12600,
+      billableSeconds: 9000,
+      nonBillableSeconds: 3600,
+      sessionCount: 2,
+    });
+    expect(snapshot.categories).toEqual(expect.arrayContaining([
+      { category: 'development', seconds: 9000, sessionCount: 1 },
+      { category: 'design', seconds: 3600, sessionCount: 1 },
+    ]));
+    expect(snapshot.economics).toMatchObject({
+      completedProjectSample: 1,
+      completedProjectsWithTrackedTime: 1,
+      trackedSeconds: 12600,
+      estimatedSeconds: 7200,
+      estimateTrackedSeconds: 12600,
+      estimateSample: 1,
+      contractValueCents: 90000,
+      commercialValueCents: 120000,
+    });
+    expect(snapshot.economics.contractHourlyCents).toBeCloseTo(25714.2857, 3);
+    expect(snapshot.economics.commercialHourlyCents).toBeCloseTo(34285.7143, 3);
+    expect(snapshot.economics.averageCalendarDays).toBeCloseTo(8, 4);
+    expect(snapshot.projectTypes).toEqual([
+      expect.objectContaining({ projectType: 'internal', completedCount: 1, trackedProjectCount: 1, trackedSeconds: 12600 }),
+    ]);
+  });
+
   it('n invente aucun chiffre pour les sources Phase 5 absentes', () => {
     const snapshot = analytics.financialSnapshot({ preset: 'month' }, new Date('2026-09-21T12:00:00.000Z'));
 
