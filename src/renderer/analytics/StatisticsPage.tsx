@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type {
+  AnalyticsCommercialSnapshot,
   AnalyticsFinancialMetric,
   AnalyticsFinancialMetricValue,
   AnalyticsFinancialSnapshot,
@@ -76,6 +77,16 @@ function trendArrow(metric: AnalyticsFinancialMetricValue): string {
   return '·';
 }
 
+function percent(value: number | null): string {
+  return value == null ? '—' : `${value.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} %`;
+}
+
+function countComparison(current: number, previous: number): string {
+  const delta = current - previous;
+  if (delta === 0) return 'Stable';
+  return `${delta > 0 ? '+' : ''}${delta} vs période précédente`;
+}
+
 function normalizedPair(metric: AnalyticsFinancialMetricValue): { current: number; previous: number } {
   if (!metric.available || metric.currentCents == null || metric.previousCents == null) return { current: 0, previous: 0 };
   const max = Math.max(Math.abs(metric.currentCents), Math.abs(metric.previousCents), 1);
@@ -88,7 +99,9 @@ function normalizedPair(metric: AnalyticsFinancialMetricValue): { current: numbe
 export function StatisticsPage({ onMessage }: { onMessage: (message: string) => void }) {
   const [period, setPeriod] = useState<AnalyticsPeriodInput>({ preset: 'month' });
   const [snapshot, setSnapshot] = useState<AnalyticsFinancialSnapshot | null>(null);
+  const [commercial, setCommercial] = useState<AnalyticsCommercialSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
+  const [commercialOpen, setCommercialOpen] = useState(false);
   const [primaryOpen, setPrimaryOpen] = useState(false);
   const [flowOpen, setFlowOpen] = useState(false);
   const [expandedMetricKey, setExpandedMetricKey] = useState<AnalyticsFinancialMetric | null>(null);
@@ -102,7 +115,12 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
     if (effectivePeriod.preset === 'custom' && (!effectivePeriod.from || !effectivePeriod.to)) return;
     setLoading(true);
     try {
-      setSnapshot(await window.atoumweb.analytics.financialSnapshot(effectivePeriod));
+      const [financialSnapshot, commercialSnapshot] = await Promise.all([
+        window.atoumweb.analytics.financialSnapshot(effectivePeriod),
+        window.atoumweb.analytics.commercialSnapshot(effectivePeriod),
+      ]);
+      setSnapshot(financialSnapshot);
+      setCommercial(commercialSnapshot);
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de calculer les statistiques.');
     } finally {
@@ -192,6 +210,12 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
       <OverviewChart metrics={primaryMetrics} />
     </section>}
 
+    {commercial && <CommercialSection
+      snapshot={commercial}
+      open={commercialOpen}
+      onToggle={() => setCommercialOpen((value) => !value)}
+    />}
+
     <MetricSection
       id="primary"
       title="Activité & valeur"
@@ -249,6 +273,92 @@ function OverviewChart({ metrics }: { metrics: AnalyticsFinancialMetricValue[] }
           <strong>{money(metric.currentCents ?? 0)}</strong>
         </div>;
       })}
+    </div>
+  </article>;
+}
+
+function CommercialSection({ snapshot, open, onToggle }: {
+  snapshot: AnalyticsCommercialSnapshot;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  const { current, previous } = snapshot;
+  const wonMax = Math.max(current.wonProspects + current.lostProspects, 1);
+  const quoteMax = Math.max(current.quotesAccepted + current.quotesRefused + current.quotesExpired, 1);
+
+  return <section className={`statistics-section statistics-commercial-section collapsible ${open ? 'open' : 'closed'}`}>
+    <button className="statistics-section-toggle" type="button" onClick={onToggle} aria-expanded={open} aria-controls="statistics-section-commercial">
+      <div>
+        <span className="eyebrow">Commercial</span>
+        <h3>Prospects & devis</h3>
+        <p>Volumes bruts d’abord, pourcentages ensuite.</p>
+      </div>
+      <div className="statistics-section-summary commercial">
+        <span className="statistics-summary-chip tone-blue"><i>+</i><b>{current.newProspects} prospect{current.newProspects > 1 ? 's' : ''}</b></span>
+        <span className="statistics-summary-chip tone-green"><i>✓</i><b>{current.wonProspects} gagné{current.wonProspects > 1 ? 's' : ''}</b></span>
+        <span className="statistics-summary-chip tone-gold"><i>%</i><b>{percent(current.conversionPercent)}</b></span>
+        <span className="statistics-summary-chip tone-violet"><i>▤</i><b>{current.quotesAccepted}/{current.quoteDecisions} devis</b></span>
+      </div>
+      <span className="statistics-section-chevron" aria-hidden="true">{open ? '−' : '+'}</span>
+    </button>
+
+    {open && <div className="statistics-commercial-grid" id="statistics-section-commercial">
+      <CommercialCountCard
+        icon="+"
+        tone="blue"
+        label="Nouveaux prospects"
+        current={current.newProspects}
+        previous={previous.newProspects}
+      />
+
+      <article className="statistics-commercial-card tone-green">
+        <div className="statistics-commercial-card-head"><span className="statistics-commercial-icon">✓</span><div><small>Prospects décidés</small><h4>Gagnés / perdus</h4></div></div>
+        <div className="statistics-commercial-main"><strong>{current.wonProspects} / {current.lostProspects}</strong><span>{percent(current.conversionPercent)} de conversion · n={current.decidedProspects}</span></div>
+        <div className="statistics-split-bar" aria-label="Répartition gagnés et perdus">
+          <i className="won" style={{ width: `${(current.wonProspects / wonMax) * 100}%` }} />
+          <i className="lost" style={{ width: `${(current.lostProspects / wonMax) * 100}%` }} />
+        </div>
+        <div className="statistics-commercial-legend"><span><i className="won" />Gagnés {current.wonProspects}</span><span><i className="lost" />Perdus {current.lostProspects}</span></div>
+        <small className="statistics-commercial-previous">Précédente : {previous.wonProspects} gagné{previous.wonProspects > 1 ? 's' : ''}, {previous.lostProspects} perdu{previous.lostProspects > 1 ? 's' : ''} · {percent(previous.conversionPercent)}</small>
+      </article>
+
+      <CommercialCountCard
+        icon="▤"
+        tone="violet"
+        label="Devis créés"
+        current={current.quotesCreated}
+        previous={previous.quotesCreated}
+      />
+
+      <article className="statistics-commercial-card tone-orange">
+        <div className="statistics-commercial-card-head"><span className="statistics-commercial-icon">◎</span><div><small>Décisions devis</small><h4>Acceptés / refusés / expirés</h4></div></div>
+        <div className="statistics-commercial-main"><strong>{current.quotesAccepted} / {current.quotesRefused} / {current.quotesExpired}</strong><span>{percent(current.quoteAcceptancePercent)} d’acceptation · n={current.quoteDecisions}</span></div>
+        <div className="statistics-split-bar quote" aria-label="Répartition décisions devis">
+          <i className="accepted" style={{ width: `${(current.quotesAccepted / quoteMax) * 100}%` }} />
+          <i className="refused" style={{ width: `${(current.quotesRefused / quoteMax) * 100}%` }} />
+          <i className="expired" style={{ width: `${(current.quotesExpired / quoteMax) * 100}%` }} />
+        </div>
+        <div className="statistics-commercial-legend three"><span><i className="accepted" />Acceptés {current.quotesAccepted}</span><span><i className="refused" />Refusés {current.quotesRefused}</span><span><i className="expired" />Expirés {current.quotesExpired}</span></div>
+        <small className="statistics-commercial-previous">Précédente : {previous.quotesAccepted}/{previous.quoteDecisions} acceptés · {percent(previous.quoteAcceptancePercent)}</small>
+      </article>
+    </div>}
+  </section>;
+}
+
+function CommercialCountCard({ icon, tone, label, current, previous }: {
+  icon: string;
+  tone: string;
+  label: string;
+  current: number;
+  previous: number;
+}) {
+  const max = Math.max(current, previous, 1);
+  return <article className={`statistics-commercial-card tone-${tone}`}>
+    <div className="statistics-commercial-card-head"><span className="statistics-commercial-icon">{icon}</span><div><small>Volume</small><h4>{label}</h4></div></div>
+    <div className="statistics-commercial-main"><strong>{current}</strong><span>{countComparison(current, previous)}</span></div>
+    <div className="statistics-commercial-bars">
+      <div><span>Actuel</span><i><b style={{ width: `${current === 0 ? 0 : Math.max(7, (current / max) * 100)}%` }} /></i></div>
+      <div><span>Précédent</span><i><b className="previous" style={{ width: `${previous === 0 ? 0 : Math.max(7, (previous / max) * 100)}%` }} /></i></div>
     </div>
   </article>;
 }
