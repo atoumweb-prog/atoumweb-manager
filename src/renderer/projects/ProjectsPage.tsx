@@ -847,6 +847,41 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
   );
 }
 
+function PhaseCompletionReviewPanel({ review, busy, onConfirm, onCancel }: {
+  review: PhaseCompletionReviewState;
+  busy: boolean;
+  onConfirm: () => Promise<void>;
+  onCancel: () => void;
+}) {
+  return <div className="phase-completion-review" role="dialog" aria-modal="true" aria-labelledby="phase-completion-title">
+    <div className="phase-completion-review-backdrop" onClick={onCancel} />
+    <section className="phase-completion-review-card">
+      <span className="eyebrow">Validation de phase</span>
+      <h3 id="phase-completion-title">Terminer « {review.phase.name} » ?</h3>
+      <p>La phase et toutes les étapes qu’elle contient passeront en <strong>Terminé</strong>. Les éléments non renseignés ne bloquent pas, mais ils sont signalés avant validation.</p>
+
+      <div className="phase-completion-review-summary">
+        <div><span>Étapes à clôturer</span><strong>{review.unfinishedCount}</strong></div>
+        <div><span>Champs non renseignés</span><strong>{review.missingFields.length}</strong></div>
+      </div>
+
+      {review.missingFields.length > 0 && <div className="phase-completion-missing">
+        {review.missingFields.slice(0, 12).map((item, index) => <div key={`${item.nodeName}-${item.fieldLabel}-${index}`}>
+          <strong>{item.nodeName}</strong><span>{item.fieldLabel}</span>
+        </div>)}
+        {review.missingFields.length > 12 && <small>+ {review.missingFields.length - 12} autre(s) champ(s) non renseigné(s)</small>}
+      </div>}
+
+      <div className="phase-completion-review-actions">
+        <button className="secondary-button" type="button" disabled={busy} onClick={onCancel}>Annuler</button>
+        <button className="primary-button" type="button" disabled={busy} onClick={() => void onConfirm()}>
+          {busy ? 'Validation…' : review.missingFields.length ? 'Terminer quand même' : 'Terminer la phase'}
+        </button>
+      </div>
+    </section>
+  </div>;
+}
+
 function ProjectSummaryTab({ project }: { project: ProjectDetail }) {
   const missingPrerequisites = project.prerequisites.filter((item) => item.required && !['validated', 'not_applicable'].includes(item.status)).length;
   const openTasks = project.nodes.filter((node) => ['task', 'checklist'].includes(node.type) && node.required && node.status !== 'done').length;
