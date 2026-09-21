@@ -389,6 +389,23 @@ export class ProjectService {
     return this.getProject(row.project_id);
   }
 
+  setProjectNodePause(nodeId: string, paused: boolean, reason?: string | null): ProjectDetail {
+    const row = this.database.get<ProjectNodeRow>('SELECT * FROM project_nodes WHERE id=?', [nodeId]);
+    if (!row) throw new Error('Tâche introuvable.');
+    const now = nowIso();
+    this.database.run(
+      'UPDATE project_nodes SET is_paused=?, pause_reason=?, updated_at=? WHERE id=?',
+      [paused ? 1 : 0, paused ? clean(reason) : null, now, nodeId],
+    );
+    this.writeActivity(
+      'project',
+      row.project_id,
+      paused ? 'project_node_paused' : 'project_node_resumed',
+      paused ? `Module mis en pause : ${row.name}${clean(reason) ? ` — ${clean(reason)}` : ''}` : `Module repris : ${row.name}`,
+    );
+    return this.getProject(row.project_id);
+  }
+
   addPrerequisite(projectId: string, input: ProjectPrerequisiteInput): ProjectDetail {
     this.getProject(projectId); const label = clean(input.label); if (!label) throw new Error('Libellé requis.'); const now = nowIso();
     this.database.run(
