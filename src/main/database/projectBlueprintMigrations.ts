@@ -229,4 +229,21 @@ export const PROJECT_BLUEPRINT_MIGRATIONS: Migration[] = [
         AND EXISTS (SELECT 1 FROM project_template_versions WHERE id='atoumweb-project-template-vitrine-v1');
     `,
   },
+  {
+    id: 29,
+    name: 'project_v2_link_web_service_blueprint',
+    sql: `
+      INSERT OR IGNORE INTO catalog_project_blueprints
+        (id,catalog_version_id,template_version_id,role,sort_order,created_at)
+      SELECT
+        'atoumweb-blueprint-link-web-service',
+        'atoumweb-web-v1',
+        'atoumweb-project-template-vitrine-v1',
+        'base',
+        20,
+        '2026-09-21T00:00:00.000Z'
+      WHERE EXISTS (SELECT 1 FROM catalog_versions WHERE id='atoumweb-web-v1')
+        AND EXISTS (SELECT 1 FROM project_template_versions WHERE id='atoumweb-project-template-vitrine-v1');
+    `,
+  },
 ];
