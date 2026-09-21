@@ -16,6 +16,7 @@ import {
   type ProjectTemplateDetail,
   type ProjectTemplateSummary,
   type ProjectTemplateVersion,
+  type ProjectWorkCard,
 } from '../../shared/projects';
 import { ProjectCompletionReviewPanel } from './ProjectCompletionReviewPanel';
 import { ProjectOperationsTab } from './ProjectOperationsTab';
@@ -186,9 +187,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
       return;
     }
     setCreateMode('quote');
-    if (publishedTemplates.length === 1) {
-      setTemplateVersionId(publishedTemplates[0].currentVersion?.id ?? '');
-    }
+    setTemplateVersionId('');
   }
 
   async function createProject(): Promise<void> {
@@ -198,7 +197,6 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
       let created: ProjectDetail;
       if (createMode === 'quote') {
         if (!quoteId) throw new Error('Choisis un devis accepté.');
-        if (!templateVersionId) throw new Error('Choisis un modèle de projet publié.');
         created = await window.atoumweb.projects.projects.transformQuote({
           quoteId,
           templateVersionId: templateVersionId || null,
@@ -295,10 +293,8 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
     }
   }
 
-  async function setNodePause(node: ProjectNode, paused: boolean): Promise<void> {
+  async function setNodePause(node: ProjectNode, paused: boolean, reason?: string | null): Promise<void> {
     try {
-      const reason = paused ? window.prompt('Pourquoi mettre ce module en pause ?', node.pauseReason ?? '') : null;
-      if (paused && reason === null) return;
       const updated = await window.atoumweb.projects.projects.setNodePause(node.id, paused, reason);
       setDetail(updated);
       await refresh();
@@ -488,6 +484,162 @@ function ProjectCommercialTab({ project }: { project: ProjectDetail }) {
       {project.services.length === 0 && <p className="muted">Aucune prestation commerciale rattachée.</p>}
     </div>
   );
+}
+
+function ProjectNodeWorkbench({ node, onUpdate, onPause, onOpenResources, onOpenTechnical, onOpenTime, onMessage }: {
+  node: ProjectNode | null;
+  onUpdate: (nodeId: string, input: Partial<ProjectNode>) => Promise<void>;
+  onPause: (node: ProjectNode, paused: boolean, reason?: string | null) => Promise<void>;
+  onOpenResources: () => void;
+  onOpenTechnical: () => void;
+  onOpenTime: () => void;
+  onMessage: (message: string) => void;
+}) {
+  const [card, setCard] = useState<ProjectWorkCard | null>(node?.workCard ?? null);
+  const [pauseReason, setPauseReason] = useState(node?.pauseReason ?? '');
+  const [estimatedMinutes, setEstimatedMinutes] = useState(node?.estimatedMinutes?.toString() ?? '');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setCard(node?.workCard ? {
+      ...node.workCard,
+      fields: node.workCard.fields.map((field) => ({ ...field, options: field.options ? [...field.options] : undefined })),
+    } : null);
+    setPauseReason(node?.pauseReason ?? '');
+    setEstimatedMinutes(node?.estimatedMinutes?.toString() ?? '');
+  }, [node?.id, node?.updatedAt]);
+
+  if (!node) {
+    return <aside className="project-workbench empty">
+      <div className="project-workbench-empty-mark" aria-hidden="true">AW</div>
+      <span className="eyebrow">Atelier AtoumWeb</span>
+      <h3>Sélectionne une fiche</h3>
+      <p>Choisis une étape dans l’arbre pour retrouver son objectif, ses informations de travail, ses ressources et les conseils associés.</p>
+    </aside>;
+  }
+
+  function updateField(key: string, value: string | boolean): void {
+    setCard((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        fields: current.fields.map((field) => field.key === key ? { ...field, value } : field),
+      };
+    });
+  }
+
+  async function save(): Promise<void> {
+    setSaving(true);
+    try {
+      const minutes = estimatedMinutes.trim() ? Number(estimatedMinutes) : null;
+      if (minutes != null && (!Number.isInteger(minutes) || minutes < 0)) throw new Error('Temps estimé invalide.');
+      await onUpdate(node.id, { workCard: card, estimatedMinutes: minutes });
+      onMessage(`Fiche « ${node.name} » enregistrée.`);
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible d’enregistrer la fiche.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function togglePause(): Promise<void> {
+    if (!node.paused && !pauseReason.trim()) {
+      onMessage('Indique la raison de la pause pour garder un historique utile.');
+      return;
+    }
+    await onPause(node, !node.paused, node.paused ? null : pauseReason.trim());
+  }
+
+  const sourceLabel = node.sources.length > 0
+    ? node.sources.some((source) => source.quoteLineId) ? 'Issu du devis' : 'Ajout manuel'
+    : node.sourceTemplateNodeId ? 'Issu du modèle' : 'Ajout manuel';
+
+  return <aside className="project-workbench">
+    <header className="project-workbench-head">
+      <div>
+        <span className="eyebrow">Fiche de travail</span>
+        <h3>{node.name}</h3>
+        <div className="project-workbench-badges">
+          <span>{node.type === 'module' && node.displaySubtype === 'page' ? 'Page' : node.type}</span>
+          <span>{sourceLabel}</span>
+          {node.paused && <span className="paused">⏸ En pause</span>}
+        </div>
+      </div>
+      <div className="project-workbench-estimate">
+        <label>Estimé
+          <div><input type="number" min="0" step="5" value={estimatedMinutes} onChange={(event) => setEstimatedMinutes(event.target.value)} /><span>min</span></div>
+        </label>
+      </div>
+    </header>
+
+    {node.description && <p className="project-workbench-description">{node.description}</p>}
+
+    {card?.goal && <section className="project-workbench-goal">
+      <span className="eyebrow">Objectif</span>
+      <p>{card.goal}</p>
+    </section>}
+
+    {card && card.fields.length > 0 && <section className="project-workbench-fields">
+      <div className="project-workbench-section-title"><strong>Informations de travail</strong><span>{card.fields.length} champ{card.fields.length > 1 ? 's' : ''}</span></div>
+      <div className="project-work-card-fields">
+        {card.fields.map((field) => <label key={field.key} className={field.type === 'check' ? 'check-field' : ''}>
+          {field.type === 'check'
+            ? <><input type="checkbox" checked={field.value === true} onChange={(event) => updateField(field.key, event.target.checked)} /><span>{field.label}</span></>
+            : <>
+                <span>{field.label}</span>
+                {field.type === 'textarea'
+                  ? <textarea value={typeof field.value === 'string' ? field.value : ''} onChange={(event) => updateField(field.key, event.target.value)} />
+                  : field.type === 'select'
+                    ? <select value={typeof field.value === 'string' ? field.value : ''} onChange={(event) => updateField(field.key, event.target.value)}>
+                        <option value="">À renseigner…</option>
+                        {(field.options ?? []).map((option) => <option key={option} value={option}>{option}</option>)}
+                      </select>
+                    : <input type={field.type === 'url' ? 'url' : 'text'} value={typeof field.value === 'string' ? field.value : ''} onChange={(event) => updateField(field.key, event.target.value)} />
+                }
+              </>}
+        </label>)}
+      </div>
+    </section>}
+
+    <section className="project-workbench-tools">
+      <div className="project-workbench-section-title"><strong>Travailler sur cette fiche</strong></div>
+      <div className="project-workbench-tool-grid">
+        <button type="button" onClick={onOpenTime}><span aria-hidden="true">◷</span><strong>Temps</strong><small>Chrono & sessions</small></button>
+        <button type="button" onClick={onOpenResources}><span aria-hidden="true">▧</span><strong>Ressources</strong><small>Textes, logos, visuels</small></button>
+        <button type="button" onClick={onOpenTechnical}><span aria-hidden="true">&lt;/&gt;</span><strong>Technique</strong><small>Code & bibliothèque</small></button>
+      </div>
+    </section>
+
+    <section className="project-workbench-pause">
+      <div>
+        <strong>{node.paused ? 'Module en pause' : 'Besoin de mettre cette étape en pause ?'}</strong>
+        <span>{node.paused ? node.pauseReason || 'Aucune raison renseignée.' : 'Ex. attente des textes, validation client, accès manquant…'}</span>
+      </div>
+      {!node.paused && <input value={pauseReason} onChange={(event) => setPauseReason(event.target.value)} placeholder="Raison de la pause…" />}
+      <button className="secondary-button" type="button" onClick={() => void togglePause()}>{node.paused ? 'Reprendre' : 'Mettre en pause'}</button>
+    </section>
+
+    {node.advice && node.advice.length > 0 && <section className="project-companion">
+      <div className="project-companion-title">
+        <div className="project-companion-mark" aria-hidden="true">AW</div>
+        <div><span className="eyebrow">Compagnon AtoumWeb</span><strong>Conseils pour cette étape</strong></div>
+      </div>
+      <div className="project-companion-cards">
+        {node.advice.map((advice, index) => <article className={`advice-${advice.kind}`} key={`${advice.title}-${index}`}>
+          <span aria-hidden="true">{advice.kind === 'warning' ? '!' : advice.kind === 'library' ? '◇' : advice.kind === 'check' ? '✓' : '💡'}</span>
+          <div><strong>{advice.title}</strong><p>{advice.body}</p></div>
+        </article>)}
+      </div>
+    </section>}
+
+    <footer className="project-workbench-footer">
+      <div>
+        <span>{node.sources.length} source{node.sources.length > 1 ? 's' : ''} liée{node.sources.length > 1 ? 's' : ''}</span>
+        {node.semanticKey && <code>{node.semanticKey}</code>}
+      </div>
+      <button className="primary-button" type="button" disabled={saving} onClick={() => void save()}>{saving ? 'Enregistrement…' : 'Enregistrer la fiche'}</button>
+    </footer>
+  </aside>;
 }
 
 function descendantIds(nodes: ProjectNode[], nodeId: string): Set<string> {
