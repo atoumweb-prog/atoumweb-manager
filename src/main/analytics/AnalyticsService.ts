@@ -4,6 +4,8 @@ import {
   type AnalyticsFinancialMetric,
   type AnalyticsFinancialMetricValue,
   type AnalyticsFinancialSnapshot,
+  type AnalyticsCommercialPeriodStats,
+  type AnalyticsCommercialSnapshot,
   type AnalyticsMetricDefinition,
   type AnalyticsPeriodInput,
 } from '../../shared/analytics';
@@ -27,6 +29,70 @@ export class AnalyticsService {
       metrics: ANALYTICS_METRIC_DEFINITIONS.map((definition) =>
         this.metricValue(definition, period.from, period.to, period.comparisonFrom, period.comparisonTo),
       ),
+    };
+  }
+
+  commercialSnapshot(input: AnalyticsPeriodInput, now = new Date()): AnalyticsCommercialSnapshot {
+    const period = resolveAnalyticsPeriod(input, now);
+    return {
+      period,
+      current: this.commercialStats(period.from, period.to),
+      previous: this.commercialStats(period.comparisonFrom, period.comparisonTo),
+    };
+  }
+
+  private commercialStats(from: string, to: string): AnalyticsCommercialPeriodStats {
+    const newProspects = this.count(
+      `SELECT COUNT(*) AS total FROM prospects
+       WHERE date(created_at) BETWEEN date(?) AND date(?)`,
+      [from, to],
+    );
+    const wonProspects = this.count(
+      `SELECT COUNT(*) AS total FROM prospects
+       WHERE won_at IS NOT NULL AND date(won_at) BETWEEN date(?) AND date(?)`,
+      [from, to],
+    );
+    const lostProspects = this.count(
+      `SELECT COUNT(*) AS total FROM prospects
+       WHERE lost_at IS NOT NULL AND date(lost_at) BETWEEN date(?) AND date(?)`,
+      [from, to],
+    );
+    const decidedProspects = wonProspects + lostProspects;
+
+    const quotesCreated = this.count(
+      `SELECT COUNT(*) AS total FROM quotes
+       WHERE date(created_at) BETWEEN date(?) AND date(?)`,
+      [from, to],
+    );
+    const quotesAccepted = this.count(
+      `SELECT COUNT(*) AS total FROM quotes
+       WHERE accepted_at IS NOT NULL AND date(accepted_at) BETWEEN date(?) AND date(?)`,
+      [from, to],
+    );
+    const quotesRefused = this.count(
+      `SELECT COUNT(*) AS total FROM quotes
+       WHERE refused_at IS NOT NULL AND date(refused_at) BETWEEN date(?) AND date(?)`,
+      [from, to],
+    );
+    const quotesExpired = this.count(
+      `SELECT COUNT(*) AS total FROM quotes
+       WHERE expired_at IS NOT NULL AND date(expired_at) BETWEEN date(?) AND date(?)`,
+      [from, to],
+    );
+    const quoteDecisions = quotesAccepted + quotesRefused + quotesExpired;
+
+    return {
+      newProspects,
+      wonProspects,
+      lostProspects,
+      decidedProspects,
+      conversionPercent: decidedProspects > 0 ? (wonProspects / decidedProspects) * 100 : null,
+      quotesCreated,
+      quotesAccepted,
+      quotesRefused,
+      quotesExpired,
+      quoteDecisions,
+      quoteAcceptancePercent: quoteDecisions > 0 ? (quotesAccepted / quoteDecisions) * 100 : null,
     };
   }
 
@@ -117,6 +183,11 @@ export class AnalyticsService {
         throw new Error(`Indicateur financier inconnu : ${exhaustive}`);
       }
     }
+  }
+
+  private count(sql: string, params: Array<string | number | null>): number {
+    const row = this.database.get<SumRow>(sql, params);
+    return Number(row?.total ?? 0);
   }
 
   private sum(sql: string, params: Array<string | number | null>): number {
