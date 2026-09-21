@@ -12,6 +12,7 @@ import type {
 import type { AtoumWebApi, DisplayDensity, ThemeName } from '../shared/contracts';
 import type { BusinessBackupFilters, BusinessBackupLocationInput, BusinessBackupRecordInput } from '../shared/businessBackups';
 import type { BusinessBackupPolicyInput, InterventionBackupRecordInput } from '../shared/businessBackupAlerts';
+import type { AnalyticsPeriodInput } from '../shared/analytics';
 import type {
   ClientContactRole,
   ClientFilters,
@@ -116,6 +117,10 @@ const api: AtoumWebApi = {
     linkExisting: (interventionId: string, backupRecordId: string, role: 'pre_intervention' | 'post_intervention' | 'reference') => ipcRenderer.invoke('business-backup-alerts:link-existing', interventionId, backupRecordId, role),
   },
   database: { health: () => ipcRenderer.invoke('database:health') },
+  analytics: {
+    financialSnapshot: (input: AnalyticsPeriodInput) => ipcRenderer.invoke('analytics:financial-snapshot', input),
+    definitions: () => ipcRenderer.invoke('analytics:definitions'),
+  },
   workflow: {
     needs: (owner,id) => ipcRenderer.invoke('workflow:needs',owner,id),
     saveNeed: (owner,id,input,needId) => ipcRenderer.invoke('workflow:save-need',owner,id,input,needId),
