@@ -349,6 +349,7 @@ export interface ProjectsApi {
     updateNode(nodeId: string, input: Partial<ProjectNodeInput>): Promise<ProjectDetail>;
     moveNode(nodeId: string, input: MoveProjectNodeInput): Promise<ProjectDetail>;
     setNodePause(nodeId: string, paused: boolean, reason?: string | null): Promise<ProjectDetail>;
+    completePhase(nodeId: string): Promise<ProjectDetail>;
     addPrerequisite(projectId: string, input: ProjectPrerequisiteInput): Promise<ProjectDetail>;
     updatePrerequisiteStatus(id: string, status: ProjectPrerequisiteStatus): Promise<ProjectDetail>;
   };
