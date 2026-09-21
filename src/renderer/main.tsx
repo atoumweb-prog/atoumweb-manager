@@ -20,6 +20,7 @@ import './project-completion.css';
 import './time.css';
 import './time-recovery.css';
 import './operations.css';
+import './analytics.css';
 import './workflow.css';
 import './display-density.css';
 import './prospect-workflow-v2.css';
