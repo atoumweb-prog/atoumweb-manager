@@ -10,6 +10,7 @@ import type { ProjectsApi } from './projects';
 import type { ReferentialsApi } from './referentials';
 import type { BusinessBackupsApi } from './businessBackups';
 import type { BusinessBackupAlertsApi } from './businessBackupAlerts';
+import type { AnalyticsApi } from './analytics';
 import type { TimeApi } from './time';
 
 export const THEME_NAMES = ['atoumweb', 'noir', 'blanc'] as const;
@@ -77,6 +78,7 @@ export interface AtoumWebApi {
   };
   businessBackups: BusinessBackupsApi;
   businessBackupAlerts: BusinessBackupAlertsApi;
+  analytics: AnalyticsApi;
   database: {
     health(): Promise<DatabaseHealth>;
   };
