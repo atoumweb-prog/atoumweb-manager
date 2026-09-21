@@ -97,6 +97,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<ProjectDetail | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [detailExpanded, setDetailExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [createMode, setCreateMode] = useState<'quote' | 'internal' | null>(null);
   const [quoteId, setQuoteId] = useState('');
@@ -146,6 +147,15 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
     void openProject(initialProjectId);
   }, [initialProjectId]);
 
+  useEffect(() => {
+    if (!detail) return undefined;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeProjectDetail();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [detail?.id]);
+
   const filtered = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase('fr-FR');
     return projects.filter((project) => {
@@ -164,12 +174,21 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
     try {
       setSelectedId(id);
       setSelectedNodeId(null);
+      setDetailExpanded(false);
       setCompletionReview(null);
       setDetail(await window.atoumweb.projects.projects.get(id));
       setDetailTab('summary');
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Projet introuvable.');
     }
+  }
+
+  function closeProjectDetail(): void {
+    setCompletionReview(null);
+    setSelectedNodeId(null);
+    setDetailExpanded(false);
+    setDetail(null);
+    setSelectedId(null);
   }
 
   function resetCreate(): void {
@@ -332,6 +351,8 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
     }
   }
 
+  const detailUsesBlueprint = Boolean(detail?.nodes.some((node) => node.semanticKey));
+
   if (view === 'templates') {
     return <ProjectTemplatesView templates={templates} onBack={() => setView('projects')} onRefresh={refresh} onMessage={onMessage} />;
   }
@@ -401,9 +422,16 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
             </table>
           </section>
 
-          {detail && (
-            <aside className={`panel project-detail-panel ${detailTab === 'plan' ? 'workshop' : ''}`}>
-              <div className="detail-panel-heading"><div><span className="eyebrow">{detail.number}</span><h2>{detail.name}</h2><p className="muted">{detail.clientLabel}</p></div><button className="close-detail" type="button" onClick={() => { setCompletionReview(null); setSelectedNodeId(null); setDetail(null); setSelectedId(null); }}>×</button></div>
+          {detail && <>
+            <div className="project-detail-backdrop" role="presentation" onClick={closeProjectDetail} />
+            <aside className={`panel project-detail-panel ${detailTab === 'plan' ? 'workshop' : ''} ${detailExpanded ? 'expanded' : ''}`}>
+              <div className="detail-panel-heading">
+                <div><span className="eyebrow">{detail.number}</span><h2>{detail.name}</h2><p className="muted">{detail.clientLabel}</p></div>
+                <div className="project-detail-heading-actions">
+                  <button className="project-detail-expand" type="button" title={detailExpanded ? 'Réduire la fenêtre' : 'Agrandir la fenêtre'} onClick={() => setDetailExpanded((value) => !value)}>{detailExpanded ? '↙' : '⛶'}</button>
+                  <button className="close-detail" type="button" title="Fermer" onClick={closeProjectDetail}>×</button>
+                </div>
+              </div>
               <div className="project-detail-status"><select value={detail.status} onChange={(event) => void changeProjectStatus(event.target.value as ProjectStatus)}>{PROJECT_STATUSES.map((status) => <option key={status} value={status}>{PROJECT_STATUS_LABELS[status]}</option>)}</select><span>{detail.progressPercent} %</span></div>
               <div className="project-main-progress"><i><b style={{ width: `${detail.progressPercent}%` }} /></i></div>
 
@@ -424,6 +452,13 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
               {detailTab === 'plan' && (
                 <div className="project-tab-content project-atelier">
                   <div className="project-atelier-tree">
+                    {!detailUsesBlueprint && <div className="project-legacy-plan-note">
+                      <div>
+                        <strong>Ce projet utilise un ancien plan</strong>
+                        <span>Le projet affiché ne contient pas encore le blueprint AtoumWeb : il conserve le modèle qui lui a servi lors de sa création. C’est pour cela que tu ne vois ici qu’une tâche.</span>
+                      </div>
+                      <small>Pour tester le nouvel arbre, crée un nouveau projet en laissant « Automatique depuis le devis ». Les offres/formules contenant le service Site vitrine sont maintenant reconnues.</small>
+                    </div>}
                     <div className="project-node-add"><strong>Ajouter au plan</strong><div className="project-node-add-grid"><input value={newNodeName} onChange={(event) => setNewNodeName(event.target.value)} placeholder="Nom de la tâche / module…" /><select value={newNodeType} onChange={(event) => setNewNodeType(event.target.value as typeof newNodeType)}><option value="lot">Lot</option><option value="module">Module / Page</option><option value="task">Tâche</option><option value="checklist">Checklist</option></select><select value={newNodeParentId} onChange={(event) => setNewNodeParentId(event.target.value)}><option value="">Racine du projet</option>{detail.nodes.map((node) => <option key={node.id} value={node.id}>{node.name}</option>)}</select><input type="number" min="0" value={newNodeMinutes} onChange={(event) => setNewNodeMinutes(event.target.value)} placeholder="Minutes estimées" /><label className="project-checkbox"><input type="checkbox" checked={newNodeRequired} onChange={(event) => setNewNodeRequired(event.target.checked)} /> Obligatoire</label><button className="secondary-button" type="button" onClick={() => void addProjectNode()}>Ajouter</button></div></div>
                     <div className="project-tree">{renderProjectTree(detail.nodes, null, updateNodeStatus, moveProjectNode, setSelectedNodeId, selectedNodeId)}</div>
                     {detail.nodes.length === 0 && <p className="muted">Le plan est vide. Ajoute un lot, un module ou une tâche.</p>}
@@ -456,7 +491,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
               {detailTab === 'time' && <ProjectTimeTab projectId={detail.id} nodes={detail.nodes} onMessage={onMessage} />}
               {detailTab === 'commercial' && <ProjectCommercialTab project={detail} />}
             </aside>
-          )}
+          </>}
         </div>
       )}
     </div>
