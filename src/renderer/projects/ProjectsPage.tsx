@@ -227,6 +227,15 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
     }
   }
 
+  function togglePhase(phaseId: string): void {
+    setExpandedPhaseIds((current) => {
+      const next = new Set(current);
+      if (next.has(phaseId)) next.delete(phaseId);
+      else next.add(phaseId);
+      return next;
+    });
+  }
+
   function closeProjectDetail(): void {
     setCompletionReview(null);
     setSelectedNodeId(null);
@@ -491,6 +500,8 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
 
   if (detail) {
     const selectedNode = detail.nodes.find((node) => node.id === selectedNodeId) ?? null;
+    const nodePositions = buildProjectNodePositions(detail.nodes);
+    const selectedPosition = selectedNode ? nodePositions.get(selectedNode.id) ?? null : null;
     return (
       <div className="project-production-page">
         <header className="project-production-header">
@@ -502,16 +513,22 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
               <p>{detail.clientLabel}</p>
             </div>
           </div>
-          <div className="project-production-status">
-            <label>
+          <div className="project-production-actions">
+            <div className="project-history-buttons" aria-label="Historique des modifications">
+              <button type="button" className="secondary-button" disabled={undoStack.length === 0} title={undoStack.length ? `Annuler : ${undoStack.at(-1)?.label}` : 'Rien à annuler'} onClick={() => void undoProjectChange()}>↶</button>
+              <button type="button" className="secondary-button" disabled={redoStack.length === 0} title={redoStack.length ? `Rétablir : ${redoStack.at(-1)?.label}` : 'Rien à rétablir'} onClick={() => void redoProjectChange()}>↷</button>
+            </div>
+            <div className="project-production-status">
+              <label>
               <span>Statut</span>
               <select value={detail.status} onChange={(event) => void changeProjectStatus(event.target.value as ProjectStatus)}>
                 {PROJECT_STATUSES.map((status) => <option key={status} value={status}>{PROJECT_STATUS_LABELS[status]}</option>)}
               </select>
             </label>
-            <div className="project-production-progress">
-              <strong>{detail.progressPercent} %</strong>
-              <i><b style={{ width: `${detail.progressPercent}%` }} /></i>
+              <div className="project-production-progress">
+                <strong>{detail.progressPercent} %</strong>
+                <i><b style={{ width: `${detail.progressPercent}%` }} /></i>
+              </div>
             </div>
           </div>
         </header>
@@ -535,7 +552,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
               <div className="project-production-tree-head">
                 <div>
                   <span className="eyebrow">Plan de production</span>
-                  <strong>{detail.nodes.length} étape{detail.nodes.length > 1 ? 's' : ''}</strong>
+                  <strong>{detail.nodes.filter((node) => !node.parentId).length} phase{detail.nodes.filter((node) => !node.parentId).length > 1 ? 's' : ''}</strong>
                 </div>
                 <details className="project-production-add">
                   <summary>+ Ajouter</summary>
@@ -559,7 +576,16 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
                 <div><strong>Ce projet utilise un ancien plan</strong><span>Il conserve le modèle utilisé lors de sa création.</span></div>
               </div>}
               <div className="project-production-tree-scroll">
-                <div className="project-tree">{renderProjectTree(detail.nodes, null, updateNodeStatus, moveProjectNode, setSelectedNodeId, selectedNodeId)}</div>
+                <div className="project-tree">{renderProjectProductionTree(
+                  detail.nodes,
+                  updateNodeStatus,
+                  moveProjectNode,
+                  setSelectedNodeId,
+                  selectedNodeId,
+                  expandedPhaseIds,
+                  togglePhase,
+                  nodePositions,
+                )}</div>
                 {detail.nodes.length === 0 && <p className="muted">Le plan est vide. Ajoute un lot, un module ou une tâche.</p>}
               </div>
             </section>
@@ -567,11 +593,8 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
             <ProjectNodeWorkbench
               projectId={detail.id}
               node={selectedNode}
-              onUpdate={async (nodeId, input) => {
-                const updated = await window.atoumweb.projects.projects.updateNode(nodeId, input);
-                setDetail(updated);
-                await refresh();
-              }}
+              position={selectedPosition}
+              onUpdate={updateProjectNodeWithHistory}
               onPause={setNodePause}
               onOpenResources={() => setDetailTab('resources')}
               onOpenTechnical={() => setDetailTab('technical')}
