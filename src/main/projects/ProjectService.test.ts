@@ -175,6 +175,36 @@ describe('ProjectService', () => {
     for (const folder of folders) expect(existsSync(join(project.resourceRootPath!, folder))).toBe(true);
   });
 
+  it('retrouve le blueprint Site vitrine quand il est inclus dans une formule', () => {
+    const offer = catalog.create(
+      { type: 'offer', name: 'Formule vitrine test', category: 'Création web' },
+      { priceMode: 'fixed', priceCents: 89900, description: 'Formule contenant le service Site vitrine' },
+    );
+    catalog.setOfferComponents(offer.versions[0].id, [
+      { serviceVersionId: 'atoumweb-vitrine-v1', quantityMilli: 1000, isOptional: false, sortOrder: 10 },
+    ]);
+    const offerVersion = catalog.publishVersion(offer.versions[0].id);
+
+    const organization = crm.createOrganization({ name: 'Client Formule Blueprint' });
+    const prospect = crm.createProspect({ organizationId: organization.id, primaryNeed: 'Site vitrine' });
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Formule site vitrine' });
+    quotes.addCatalogLine(quote.id, offerVersion.id);
+    quotes.finalize(quote.id);
+    quotes.markSent(quote.id);
+    const accepted = quotes.accept(quote.id);
+
+    const project = projects.transformQuote({ quoteId: accepted.id });
+
+    expect(project.templateVersionId).toBe('atoumweb-project-template-vitrine-v1');
+    expect(project.nodes.some((node) => node.semanticKey === 'pages.home.hero')).toBe(true);
+    expect(project.nodes.find((node) => node.semanticKey === 'pages.home.hero')?.sources)
+      .toEqual([expect.objectContaining({
+        quoteLineId: accepted.lines[0]?.id,
+        catalogVersionId: 'atoumweb-vitrine-v1',
+        sourceRole: 'offer_component',
+      })]);
+  });
+
   it('conserve la fiche projet indépendante et permet de mettre un module en pause', () => {
     const quote = createAcceptedSeededVitrineQuote();
     const project = projects.transformQuote({ quoteId: quote.id });
