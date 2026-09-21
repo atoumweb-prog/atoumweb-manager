@@ -348,10 +348,76 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
     }
   }
 
+  function rememberProjectChange(action: ProjectHistoryAction): void {
+    setUndoStack((current) => [...current.slice(-29), action]);
+    setRedoStack([]);
+  }
+
+  async function applyProjectHistoryAction(action: ProjectHistoryAction, direction: 'undo' | 'redo'): Promise<ProjectDetail> {
+    if (action.kind === 'update') {
+      return window.atoumweb.projects.projects.updateNode(action.nodeId, direction === 'undo' ? action.before : action.after);
+    }
+    if (action.kind === 'move') {
+      const target = direction === 'undo' ? action.before : action.after;
+      return window.atoumweb.projects.projects.moveNode(action.nodeId, target);
+    }
+    const target = direction === 'undo' ? action.before : action.after;
+    return window.atoumweb.projects.projects.setNodePause(action.nodeId, target.paused, target.reason);
+  }
+
+  async function undoProjectChange(): Promise<void> {
+    const action = undoStack.at(-1);
+    if (!action) return;
+    try {
+      const updated = await applyProjectHistoryAction(action, 'undo');
+      setDetail(updated);
+      setUndoStack((current) => current.slice(0, -1));
+      setRedoStack((current) => [...current, action]);
+      await refresh();
+      onMessage(`Annulé : ${action.label}.`);
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible d’annuler la dernière modification.');
+    }
+  }
+
+  async function redoProjectChange(): Promise<void> {
+    const action = redoStack.at(-1);
+    if (!action) return;
+    try {
+      const updated = await applyProjectHistoryAction(action, 'redo');
+      setDetail(updated);
+      setRedoStack((current) => current.slice(0, -1));
+      setUndoStack((current) => [...current, action]);
+      await refresh();
+      onMessage(`Rétabli : ${action.label}.`);
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible de rétablir la modification.');
+    }
+  }
+
+  async function updateProjectNodeWithHistory(nodeId: string, input: Partial<ProjectNodeInput>): Promise<void> {
+    if (!detail) return;
+    const currentNode = detail.nodes.find((node) => node.id === nodeId);
+    if (!currentNode) return;
+
+    const before: Partial<ProjectNodeInput> = {};
+    if (input.workCard !== undefined) before.workCard = currentNode.workCard ?? null;
+    if (input.estimatedMinutes !== undefined) before.estimatedMinutes = currentNode.estimatedMinutes ?? null;
+    if (input.name !== undefined) before.name = currentNode.name;
+    if (input.description !== undefined) before.description = currentNode.description ?? null;
+
+    const updated = await window.atoumweb.projects.projects.updateNode(nodeId, input);
+    setDetail(updated);
+    rememberProjectChange({ kind: 'update', nodeId, before, after: input, label: currentNode.name });
+    await refresh();
+  }
+
   async function updateNodeStatus(node: ProjectNode, status: ProjectNodeStatus): Promise<void> {
+    if (status === node.status) return;
     try {
       const updated = await window.atoumweb.projects.projects.updateNode(node.id, { status });
       setDetail(updated);
+      rememberProjectChange({ kind: 'update', nodeId: node.id, before: { status: node.status }, after: { status }, label: node.name });
       await refresh();
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de mettre à jour la tâche.');
@@ -359,9 +425,17 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
   }
 
   async function setNodePause(node: ProjectNode, paused: boolean, reason?: string | null): Promise<void> {
+    if (node.paused === paused && (node.pauseReason ?? null) === (reason ?? null)) return;
     try {
       const updated = await window.atoumweb.projects.projects.setNodePause(node.id, paused, reason);
       setDetail(updated);
+      rememberProjectChange({
+        kind: 'pause',
+        nodeId: node.id,
+        before: { paused: node.paused, reason: node.pauseReason ?? null },
+        after: { paused, reason: reason ?? null },
+        label: node.name,
+      });
       await refresh();
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de modifier la pause.');
@@ -369,9 +443,21 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
   }
 
   async function moveProjectNode(node: ProjectNode, parentId: string | null, targetIndex: number): Promise<void> {
+    if (!detail) return;
+    const currentIndex = detail.nodes
+      .filter((candidate) => (candidate.parentId ?? null) === (node.parentId ?? null))
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .findIndex((candidate) => candidate.id === node.id);
     try {
       const updated = await window.atoumweb.projects.projects.moveNode(node.id, { parentId, targetIndex });
       setDetail(updated);
+      rememberProjectChange({
+        kind: 'move',
+        nodeId: node.id,
+        before: { parentId: node.parentId ?? null, targetIndex: Math.max(0, currentIndex) },
+        after: { parentId, targetIndex },
+        label: node.name,
+      });
       await refresh();
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de déplacer cet élément du projet.');
