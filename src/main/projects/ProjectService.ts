@@ -540,21 +540,171 @@ export class ProjectService {
     }
   }
 
-  private copyTemplateTreeToProject(versionId: string, projectId: string, now: string): void {
-    const source = this.database.all<TemplateNodeRow>('SELECT * FROM project_template_nodes WHERE template_version_id=? ORDER BY sort_order, created_at', [versionId]);
-    const pending = [...source]; const ids = new Map<string, string>(); let guard = 0;
+  private resolveBlueprintPlan(quoteId: string, explicitTemplateVersionId?: string | null): { base: BlueprintContribution; addons: BlueprintContribution[] } {
+    const lines = this.database.all<QuoteLineProjectRow>(
+      'SELECT id,catalog_item_id,catalog_version_id,label,snapshot_json,catalog_line_value_cents,contract_line_value_cents FROM quote_lines WHERE quote_id=? ORDER BY sort_order, created_at',
+      [quoteId],
+    );
+
+    let mappedBase: BlueprintContribution | null = null;
+    const addons: BlueprintContribution[] = [];
+
+    const pushAddon = (contribution: BlueprintContribution) => {
+      const duplicate = addons.some((item) =>
+        item.templateVersionId === contribution.templateVersionId
+        && item.quoteLineId === contribution.quoteLineId
+        && item.catalogVersionId === contribution.catalogVersionId,
+      );
+      if (!duplicate) addons.push(contribution);
+    };
+
+    for (const line of lines) {
+      if (line.catalog_version_id) {
+        for (const link of this.blueprintLinksForCatalogVersion(line.catalog_version_id)) {
+          const contribution: BlueprintContribution = {
+            templateVersionId: link.template_version_id,
+            quoteLineId: line.id,
+            catalogVersionId: line.catalog_version_id,
+            sourceRole: 'direct',
+          };
+          if (link.role === 'base' && !mappedBase) mappedBase = contribution;
+          if (link.role === 'addon') pushAddon(contribution);
+        }
+      }
+
+      if (!line.snapshot_json) continue;
+      let snapshot: Record<string, unknown> | null = null;
+      try {
+        const parsed = JSON.parse(line.snapshot_json) as unknown;
+        snapshot = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : null;
+      } catch {
+        snapshot = null;
+      }
+      const components = snapshot?.offerComponents;
+      if (!Array.isArray(components)) continue;
+
+      for (const raw of components) {
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+        const component = raw as Record<string, unknown>;
+        if (component.isOptional === true) continue;
+        const serviceVersionId = typeof component.serviceVersionId === 'string' ? component.serviceVersionId : null;
+        if (!serviceVersionId) continue;
+        for (const link of this.blueprintLinksForCatalogVersion(serviceVersionId)) {
+          if (link.role !== 'addon') continue;
+          pushAddon({
+            templateVersionId: link.template_version_id,
+            quoteLineId: line.id,
+            catalogVersionId: serviceVersionId,
+            sourceRole: 'offer_component',
+          });
+        }
+      }
+    }
+
+    const explicit = clean(explicitTemplateVersionId);
+    const base: BlueprintContribution | null = explicit
+      ? { templateVersionId: explicit, quoteLineId: null, catalogVersionId: null, sourceRole: 'manual' }
+      : mappedBase;
+
+    if (!base) {
+      throw new Error('Aucun blueprint de base n’est lié à ce devis. Choisis un modèle publié ou configure le lien Catalogue → Projet.');
+    }
+
+    const baseVersion = this.getTemplateVersion(base.templateVersionId);
+    if (baseVersion.status !== 'published') throw new Error('Le blueprint de base doit être publié.');
+
+    const filteredAddons = addons.filter((addon) => addon.templateVersionId !== base.templateVersionId);
+    for (const addon of filteredAddons) {
+      const version = this.getTemplateVersion(addon.templateVersionId);
+      if (version.status !== 'published') throw new Error('Un module de production lié au devis n’est pas publié.');
+    }
+
+    return { base, addons: filteredAddons };
+  }
+
+  private blueprintLinksForCatalogVersion(catalogVersionId: string): BlueprintLinkRow[] {
+    return this.database.all<BlueprintLinkRow>(
+      'SELECT * FROM catalog_project_blueprints WHERE catalog_version_id=? ORDER BY CASE role WHEN \'base\' THEN 0 ELSE 1 END, sort_order, created_at',
+      [catalogVersionId],
+    );
+  }
+
+  private copyTemplateTreeToProject(
+    versionId: string,
+    projectId: string,
+    now: string,
+    sourceContribution?: BlueprintContribution,
+    mergeExisting = false,
+  ): void {
+    const source = this.database.all<TemplateNodeRow>(
+      'SELECT * FROM project_template_nodes WHERE template_version_id=? ORDER BY sort_order, created_at',
+      [versionId],
+    );
+    const pending = [...source];
+    const ids = new Map<string, string>();
+    const existingBySemanticKey = new Map(
+      this.database.all<{ id: string; semantic_key: string }>(
+        'SELECT id,semantic_key FROM project_nodes WHERE project_id=? AND semantic_key IS NOT NULL',
+        [projectId],
+      ).map((row) => [row.semantic_key, row.id] as const),
+    );
+    let guard = 0;
+
     while (pending.length && guard++ < source.length + 2) {
       let progressed = false;
       for (let index = pending.length - 1; index >= 0; index--) {
-        const node = pending[index]; if (node.parent_id && !ids.has(node.parent_id)) continue;
-        const newId = randomUUID(); ids.set(node.id, newId);
+        const node = pending[index];
+        if (node.parent_id && !ids.has(node.parent_id)) continue;
+
+        const existingId = mergeExisting && node.semantic_key ? existingBySemanticKey.get(node.semantic_key) : undefined;
+        if (existingId) {
+          ids.set(node.id, existingId);
+          if (sourceContribution) this.linkProjectNodeSource(existingId, sourceContribution, versionId, now);
+          pending.splice(index, 1);
+          progressed = true;
+          continue;
+        }
+
+        const newId = randomUUID();
+        const parentId = node.parent_id ? ids.get(node.parent_id)! : null;
+        ids.set(node.id, newId);
         this.database.run(
-          `INSERT INTO project_nodes (id,project_id,parent_id,source_template_node_id,node_type,display_subtype,name,description,sort_order,estimated_minutes,is_required,status,time_category,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-          [newId, projectId, node.parent_id ? ids.get(node.parent_id)! : null, node.id, node.node_type, node.display_subtype, node.name, node.description, node.sort_order, node.estimated_minutes, node.is_required, node.initial_status, node.time_category, now, now],
-        ); pending.splice(index, 1); progressed = true;
+          `INSERT INTO project_nodes (
+             id,project_id,parent_id,source_template_node_id,node_type,display_subtype,name,description,sort_order,
+             estimated_minutes,is_required,status,time_category,created_at,updated_at,semantic_key,work_card_json,advice_json
+           ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          [
+            newId, projectId, parentId, node.id, node.node_type, node.display_subtype, node.name, node.description,
+            node.sort_order, node.estimated_minutes, node.is_required, node.initial_status, node.time_category,
+            now, now, node.semantic_key, node.work_card_json, node.advice_json,
+          ],
+        );
+        if (node.semantic_key) existingBySemanticKey.set(node.semantic_key, newId);
+        if (sourceContribution) this.linkProjectNodeSource(newId, sourceContribution, versionId, now);
+        pending.splice(index, 1);
+        progressed = true;
       }
       if (!progressed) throw new Error('Arbre du modèle invalide.');
     }
+  }
+
+  private linkProjectNodeSource(nodeId: string, source: BlueprintContribution, templateVersionId: string, now: string): void {
+    const existing = this.database.get<{ id: string }>(
+      `SELECT id FROM project_node_sources
+       WHERE project_node_id=?
+         AND quote_line_id IS ?
+         AND catalog_version_id IS ?
+         AND template_version_id IS ?
+         AND source_role=?`,
+      [nodeId, source.quoteLineId, source.catalogVersionId, templateVersionId, source.sourceRole],
+    );
+    if (existing) return;
+    this.database.run(
+      `INSERT INTO project_node_sources
+       (id,project_node_id,quote_line_id,catalog_version_id,template_version_id,source_role,created_at)
+       VALUES (?,?,?,?,?,?,?)`,
+      [randomUUID(), nodeId, source.quoteLineId, source.catalogVersionId, templateVersionId, source.sourceRole, now],
+    );
   }
 
   private copyQuoteServicesToProject(quoteId: string, projectId: string, now: string): void {
