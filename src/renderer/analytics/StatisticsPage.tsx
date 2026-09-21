@@ -508,7 +508,7 @@ function ProjectTimeSection({ snapshot, open, onToggle }: {
         <div className="statistics-insight-heading"><div><span className="eyebrow">Répartition</span><h4>Temps par catégorie</h4></div><span>{secondsLabel(current.totalSeconds)}</span></div>
         <div className="statistics-category-list">
           {snapshot.categories.length > 0 ? snapshot.categories.slice(0, 7).map((item) => <div className="statistics-category-row" key={item.category}>
-            <div><strong>{item.category.replaceAll('_', ' ')}</strong><small>{secondsLabel(item.seconds)} · {item.sessionCount} session{item.sessionCount > 1 ? 's' : ''}</small></div>
+            <div><strong>{item.category.replace(/_/g, ' ')}</strong><small>{secondsLabel(item.seconds)} · {item.sessionCount} session{item.sessionCount > 1 ? 's' : ''}</small></div>
             <i><b style={{ width: `${Math.max(5, (item.seconds / maxCategory) * 100)}%` }} /></i>
           </div>) : <p className="statistics-insight-empty">Aucun temps clôturé sur la période.</p>}
         </div>
