@@ -32,6 +32,18 @@ const FLOW_METRICS: AnalyticsFinancialMetric[] = [
   'expenses',
 ];
 
+const SOURCE_LABELS: Record<string, string> = {
+  website: 'Site web',
+  referral: 'Recommandation',
+  google: 'Google',
+  social: 'Réseaux sociaux',
+  event: 'Événement',
+  outbound: 'Prospection',
+  former_client: 'Ancien client',
+  other: 'Autre',
+  not_set: 'Non renseigné',
+};
+
 const METRIC_META: Record<AnalyticsFinancialMetric, { icon: string; tone: string; kicker: string }> = {
   commercial_signed: { icon: '↗', tone: 'gold', kicker: 'Commercial' },
   contract_signed: { icon: '✓', tone: 'green', kicker: 'Contractuel' },
@@ -79,6 +91,13 @@ function trendArrow(metric: AnalyticsFinancialMetricValue): string {
 
 function percent(value: number | null): string {
   return value == null ? '—' : `${value.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} %`;
+}
+
+function durationLabel(hours: number | null): string {
+  if (hours == null) return '—';
+  if (hours < 24) return `${hours.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} h`;
+  const days = hours / 24;
+  return `${days.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} j`;
 }
 
 function countComparison(current: number, previous: number): string {
@@ -341,8 +360,49 @@ function CommercialSection({ snapshot, open, onToggle }: {
         <div className="statistics-commercial-legend three"><span><i className="accepted" />Acceptés {current.quotesAccepted}</span><span><i className="refused" />Refusés {current.quotesRefused}</span><span><i className="expired" />Expirés {current.quotesExpired}</span></div>
         <small className="statistics-commercial-previous">Précédente : {previous.quotesAccepted}/{previous.quoteDecisions} acceptés · {percent(previous.quoteAcceptancePercent)}</small>
       </article>
+
+      <CommercialInsights snapshot={snapshot} />
     </div>}
   </section>;
+}
+
+function CommercialInsights({ snapshot }: { snapshot: AnalyticsCommercialSnapshot }) {
+  const maxSource = Math.max(...snapshot.sources.map((item) => item.prospectCount), 1);
+  const maxReason = Math.max(...snapshot.lostReasons.map((item) => item.count), 1);
+
+  return <div className="statistics-commercial-insights">
+    <article className="statistics-insight-card">
+      <div className="statistics-insight-heading"><div><span className="eyebrow">Origines</span><h4>D’où viennent les prospects ?</h4></div><span>{snapshot.sources.reduce((sum, item) => sum + item.prospectCount, 0)} créés</span></div>
+      <div className="statistics-source-list">
+        {snapshot.sources.length > 0 ? snapshot.sources.map((item) => <div className="statistics-source-row" key={item.source}>
+          <div><strong>{SOURCE_LABELS[item.source] ?? item.source}</strong><small>{item.prospectCount} prospect{item.prospectCount > 1 ? 's' : ''}{item.decidedCount > 0 ? ` · ${percent(item.conversionPercent)} · n=${item.decidedCount}` : ''}</small></div>
+          <i><b style={{ width: `${Math.max(5, (item.prospectCount / maxSource) * 100)}%` }} /></i>
+        </div>) : <p className="statistics-insight-empty">Aucune source de prospect sur la période.</p>}
+      </div>
+    </article>
+
+    <article className="statistics-insight-card">
+      <div className="statistics-insight-heading"><div><span className="eyebrow">Délais</span><h4>Vitesse commerciale</h4></div></div>
+      <div className="statistics-delay-grid">
+        <div><span>Prospect → 1er devis</span><strong>{durationLabel(snapshot.delays.prospectToQuoteHours)}</strong><small>n={snapshot.delays.prospectToQuoteSample}</small></div>
+        <div><span>Devis → acceptation</span><strong>{durationLabel(snapshot.delays.quoteToAcceptanceHours)}</strong><small>n={snapshot.delays.quoteToAcceptanceSample}</small></div>
+      </div>
+      <div className="statistics-delay-previous">
+        <span>Période précédente</span>
+        <strong>{durationLabel(snapshot.previousDelays.prospectToQuoteHours)} / {durationLabel(snapshot.previousDelays.quoteToAcceptanceHours)}</strong>
+      </div>
+    </article>
+
+    <article className="statistics-insight-card">
+      <div className="statistics-insight-heading"><div><span className="eyebrow">Pertes</span><h4>Pourquoi les prospects sont perdus ?</h4></div><span>{snapshot.lostReasons.reduce((sum, item) => sum + item.count, 0)} perdu{snapshot.lostReasons.reduce((sum, item) => sum + item.count, 0) > 1 ? 's' : ''}</span></div>
+      <div className="statistics-reason-list">
+        {snapshot.lostReasons.length > 0 ? snapshot.lostReasons.slice(0, 5).map((item) => <div className="statistics-reason-row" key={item.reason}>
+          <div><strong>{item.reason}</strong><span>{item.count}</span></div>
+          <i><b style={{ width: `${Math.max(7, (item.count / maxReason) * 100)}%` }} /></i>
+        </div>) : <p className="statistics-insight-empty">Aucun prospect perdu sur la période.</p>}
+      </div>
+    </article>
+  </div>;
 }
 
 function CommercialCountCard({ icon, tone, label, current, previous }: {
