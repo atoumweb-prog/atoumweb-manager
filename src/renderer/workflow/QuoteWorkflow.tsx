@@ -4,13 +4,31 @@ import type {ProjectSummary,ProjectTemplateSummary} from '../../shared/projects'
 import {changed,openEntity} from './DossierPanel';
 export function QuoteProjectPanel({quote}:{quote:QuoteDetail}){
   const [templates,setTemplates]=useState<ProjectTemplateSummary[]>([]),[project,setProject]=useState<ProjectSummary|null>(null),[template,setTemplate]=useState(''),[date,setDate]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
-  useEffect(()=>{Promise.all([window.atoumweb.projects.templates.list(),window.atoumweb.projects.projects.list()]).then(([t,p])=>{setTemplates(t.filter(t=>t.currentVersion?.status==='published'));setProject(p.find(p=>p.sourceQuoteId===quote.id)??null);}).catch(e=>setError(String(e)));},[quote.id]);
-  async function create(){setBusy(true);try{
-    let version=template;
-    if(!version){const t=await window.atoumweb.projects.templates.create({name:'Projet standard',projectType:'web'});await window.atoumweb.projects.templates.addNode(t.currentVersion!.id,{type:'task',name:'Validation de la livraison',required:true});await window.atoumweb.projects.templates.publishVersion(t.currentVersion!.id);version=t.currentVersion!.id;}
-    const p=await window.atoumweb.projects.projects.transformQuote({quoteId:quote.id,templateVersionId:version,targetDate:date||null});setProject(p);changed();
-  }catch(e){setError(String(e));}finally{setBusy(false);}}
-  return <section className="workflow-fields"><h3>Projet du devis accepté</h3>{error&&<p role="alert">{error}</p>}{project?<button type="button" className="primary-button" onClick={()=>openEntity({entityType:'project',entityId:project.id,title:project.name})}>Ouvrir {project.name}</button>:<><p>Confirme le modèle et la date de fin. Cette opération crée un seul projet et reprend les prestations et valeurs du devis figé.</p><label>Modèle<select value={template} onChange={e=>setTemplate(e.target.value)}><option value="">Créer un modèle standard</option>{templates.map(t=><option key={t.id} value={t.currentVersion!.id}>{t.name}</option>)}</select></label><label>Fin prévisionnelle<input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label><button className="primary-button" type="button" disabled={busy} onClick={()=>void create()}>Confirmer et créer le projet</button></>}</section>;
+  useEffect(()=>{setTemplate('');setError('');Promise.all([window.atoumweb.projects.templates.list(),window.atoumweb.projects.projects.list()]).then(([t,p])=>{setTemplates(t.filter(t=>t.currentVersion?.status==='published'));setProject(p.find(p=>p.sourceQuoteId===quote.id)??null);}).catch(e=>setError(e instanceof Error?e.message:String(e)));},[quote.id]);
+  async function create(){
+    setBusy(true);setError('');
+    try{
+      const p=await window.atoumweb.projects.projects.transformQuote({quoteId:quote.id,templateVersionId:template||null,targetDate:date||null});
+      setProject(p);changed();
+    }catch(e){
+      setError(e instanceof Error?e.message:String(e));
+    }finally{setBusy(false);}
+  }
+  return <section className="workflow-fields quote-project-create">
+    <h3>Projet du devis accepté</h3>
+    {project
+      ? <button type="button" className="primary-button" onClick={()=>openEntity({entityType:'project',entityId:project.id,title:project.name})}>Ouvrir {project.name}</button>
+      : <>
+          <p>Le Manager peut construire automatiquement le plan de production depuis les prestations du devis figé. Un modèle manuel reste disponible uniquement en remplacement.</p>
+          <label>Plan de production<select value={template} onChange={e=>{setTemplate(e.target.value);setError('');}}>
+            <option value="">Automatique depuis le devis (recommandé)</option>
+            {templates.map(t=><option key={t.id} value={t.currentVersion!.id}>Forcer · {t.name}</option>)}
+          </select></label>
+          <label>Fin prévisionnelle<input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label>
+          <button className="primary-button" type="button" disabled={busy} onClick={()=>void create()}>{busy?'Création du projet…':'Confirmer et créer le projet'}</button>
+          {error&&<p className="form-error quote-project-error" role="alert">{error}</p>}
+        </>}
+  </section>;
 }
 export function QuoteConditions({quote,onSave}:{quote:QuoteDetail;onSave:(q:QuoteDetail)=>void}){
   const [terms,setTerms]=useState(quote.specialTerms??''),[prerequisites,setPrerequisites]=useState(quote.prerequisitesText??''),[deposit,setDeposit]=useState(String(quote.depositPercent??0)),[error,setError]=useState('');
