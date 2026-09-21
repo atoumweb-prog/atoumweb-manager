@@ -165,7 +165,7 @@ describe('ProjectService', () => {
     expect(hero?.sources).toEqual([
       expect.objectContaining({
         quoteLineId: quote.lines[0]?.id,
-        catalogVersionId: 'atoumweb-vitrine-v1',
+        catalogVersionId: 'atoumweb-web-v1',
         templateVersionId: 'atoumweb-project-template-vitrine-v1',
         sourceRole: 'direct',
       }),
@@ -181,7 +181,7 @@ describe('ProjectService', () => {
       { priceMode: 'fixed', priceCents: 89900, description: 'Formule contenant le service Site vitrine' },
     );
     catalog.setOfferComponents(offer.versions[0].id, [
-      { serviceVersionId: 'atoumweb-vitrine-v1', quantityMilli: 1000, isOptional: false, sortOrder: 10 },
+      { serviceVersionId: 'atoumweb-web-v1', quantityMilli: 1000, isOptional: false, sortOrder: 10 },
     ]);
     const offerVersion = catalog.publishVersion(offer.versions[0].id);
 
