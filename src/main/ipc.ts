@@ -54,6 +54,7 @@ import type {
   TransformQuoteToProjectInput,
 } from '../shared/projects';
 import type { ManualTimeSessionInput, StartTimeSessionInput, TimeSessionFilters } from '../shared/time';
+import type { AnalyticsPeriodInput } from '../shared/analytics';
 import { generateQuotePdf } from './commercial/quotePdf';
 import type { DatabaseService } from './database/DatabaseService';
 import { scheduleDatabaseRestore } from './restore';
@@ -137,6 +138,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   });
 
   ipcMain.handle('database:health', () => database.health());
+  ipcMain.handle('analytics:financial-snapshot', (_event, input: AnalyticsPeriodInput) => database.analytics.financialSnapshot(input));
+  ipcMain.handle('analytics:definitions', () => database.analytics.definitions());
 
   ipcMain.handle('crm:organizations:create', (_event, input: OrganizationInput) => database.crm.createOrganization(input));
   ipcMain.handle('crm:organizations:update', (_event, id: string, input: OrganizationInput) => database.crm.updateOrganization(id, input));
