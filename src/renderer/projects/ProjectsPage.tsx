@@ -386,7 +386,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
       )}
 
       {loading ? <div className="panel"><p className="muted">Chargement des projets…</p></div> : (
-        <div className={detail ? 'projects-layout with-detail' : 'projects-layout'}>
+        <div className={detail ? `projects-layout with-detail ${detailTab === 'plan' ? 'project-workshop-layout' : ''}` : 'projects-layout'}>
           <section className="panel project-list-panel">
             <table className="project-table">
               <thead><tr><th>Numéro</th><th>Client</th><th>Projet</th><th>Statut</th><th>Progression</th><th>Temps estimé</th><th>Cible</th></tr></thead>
@@ -402,7 +402,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
           </section>
 
           {detail && (
-            <aside className="panel project-detail-panel">
+            <aside className={`panel project-detail-panel ${detailTab === 'plan' ? 'workshop' : ''}`}>
               <div className="detail-panel-heading"><div><span className="eyebrow">{detail.number}</span><h2>{detail.name}</h2><p className="muted">{detail.clientLabel}</p></div><button className="close-detail" type="button" onClick={() => { setCompletionReview(null); setSelectedNodeId(null); setDetail(null); setSelectedId(null); }}>×</button></div>
               <div className="project-detail-status"><select value={detail.status} onChange={(event) => void changeProjectStatus(event.target.value as ProjectStatus)}>{PROJECT_STATUSES.map((status) => <option key={status} value={status}>{PROJECT_STATUS_LABELS[status]}</option>)}</select><span>{detail.progressPercent} %</span></div>
               <div className="project-main-progress"><i><b style={{ width: `${detail.progressPercent}%` }} /></i></div>
