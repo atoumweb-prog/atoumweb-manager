@@ -238,6 +238,7 @@ const api: AtoumWebApi = {
       addNode: (projectId: string, input: ProjectNodeInput) => ipcRenderer.invoke('projects:add-node', projectId, input),
       updateNode: (nodeId: string, input: Partial<ProjectNodeInput>) => ipcRenderer.invoke('projects:update-node', nodeId, input),
       moveNode: (nodeId: string, input: MoveProjectNodeInput) => ipcRenderer.invoke('projects:move-node', nodeId, input),
+      setNodePause: (nodeId: string, paused: boolean, reason?: string | null) => ipcRenderer.invoke('projects:set-node-pause', nodeId, paused, reason),
       addPrerequisite: (projectId: string, input: ProjectPrerequisiteInput) => ipcRenderer.invoke('projects:add-prerequisite', projectId, input),
       updatePrerequisiteStatus: (id: string, status: ProjectPrerequisiteStatus) => ipcRenderer.invoke('projects:update-prerequisite-status', id, status),
     },
