@@ -120,6 +120,7 @@ const api: AtoumWebApi = {
   analytics: {
     financialSnapshot: (input: AnalyticsPeriodInput) => ipcRenderer.invoke('analytics:financial-snapshot', input),
     commercialSnapshot: (input: AnalyticsPeriodInput) => ipcRenderer.invoke('analytics:commercial-snapshot', input),
+    projectTimeSnapshot: (input: AnalyticsPeriodInput) => ipcRenderer.invoke('analytics:project-time-snapshot', input),
     definitions: () => ipcRenderer.invoke('analytics:definitions'),
   },
   workflow: {
