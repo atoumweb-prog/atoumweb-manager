@@ -153,8 +153,35 @@ export interface AnalyticsCommercialPeriodStats {
   quoteAcceptancePercent: number | null;
 }
 
+export interface AnalyticsCommercialSourceStat {
+  source: string;
+  prospectCount: number;
+  wonCount: number;
+  lostCount: number;
+  decidedCount: number;
+  conversionPercent: number | null;
+}
+
+export interface AnalyticsCommercialReasonStat {
+  reason: string;
+  count: number;
+}
+
+export interface AnalyticsCommercialDelayStats {
+  prospectToQuoteHours: number | null;
+  prospectToQuoteSample: number;
+  quoteToAcceptanceHours: number | null;
+  quoteToAcceptanceSample: number;
+}
+
 export interface AnalyticsCommercialSnapshot {
   period: AnalyticsDateRange;
   current: AnalyticsCommercialPeriodStats;
   previous: AnalyticsCommercialPeriodStats;
+  sources: AnalyticsCommercialSourceStat[];
+  previousSources: AnalyticsCommercialSourceStat[];
+  lostReasons: AnalyticsCommercialReasonStat[];
+  previousLostReasons: AnalyticsCommercialReasonStat[];
+  delays: AnalyticsCommercialDelayStats;
+  previousDelays: AnalyticsCommercialDelayStats;
 }
