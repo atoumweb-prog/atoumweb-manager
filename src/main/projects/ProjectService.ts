@@ -406,6 +406,55 @@ export class ProjectService {
     return this.getProject(row.project_id);
   }
 
+  completeProjectPhase(nodeId: string): ProjectDetail {
+    const phase = this.database.get<ProjectNodeRow>('SELECT * FROM project_nodes WHERE id=?', [nodeId]);
+    if (!phase) throw new Error('Phase introuvable.');
+    if (phase.parent_id) throw new Error('Seule une phase racine peut être terminée en bloc.');
+
+    const nodes = this.database.all<ProjectNodeRow>(
+      'SELECT * FROM project_nodes WHERE project_id=? ORDER BY sort_order, created_at',
+      [phase.project_id],
+    );
+    const descendants = new Set<string>();
+    const queue = [phase.id];
+    while (queue.length > 0) {
+      const parent = queue.shift()!;
+      for (const node of nodes) {
+        if (node.parent_id === parent && !descendants.has(node.id)) {
+          descendants.add(node.id);
+          queue.push(node.id);
+        }
+      }
+    }
+
+    const now = nowIso();
+    this.database.exec('BEGIN IMMEDIATE;');
+    try {
+      this.database.run(
+        "UPDATE project_nodes SET status='done', is_paused=0, pause_reason=NULL, updated_at=? WHERE id=?",
+        [now, phase.id],
+      );
+      for (const descendantId of descendants) {
+        this.database.run(
+          "UPDATE project_nodes SET status='done', is_paused=0, pause_reason=NULL, updated_at=? WHERE id=?",
+          [now, descendantId],
+        );
+      }
+      this.writeActivity(
+        'project',
+        phase.project_id,
+        'project_phase_completed',
+        `Phase terminée : ${phase.name} · ${descendants.size} étape(s) clôturée(s)`,
+      );
+      this.database.exec('COMMIT;');
+    } catch (error) {
+      this.database.exec('ROLLBACK;');
+      throw error;
+    }
+
+    return this.getProject(phase.project_id);
+  }
+
   addPrerequisite(projectId: string, input: ProjectPrerequisiteInput): ProjectDetail {
     this.getProject(projectId); const label = clean(input.label); if (!label) throw new Error('Libellé requis.'); const now = nowIso();
     this.database.run(
