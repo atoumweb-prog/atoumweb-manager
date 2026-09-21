@@ -83,6 +83,11 @@ type ProjectHistoryAction =
       before: { paused: boolean; reason: string | null };
       after: { paused: boolean; reason: string | null };
       label: string;
+    }
+  | {
+      kind: 'batch-status';
+      changes: Array<{ nodeId: string; before: ProjectNodeStatus; after: ProjectNodeStatus }>;
+      label: string;
     };
 
 interface ProjectNodePosition {
@@ -90,6 +95,13 @@ interface ProjectNodePosition {
   phaseId: string;
   phaseName: string;
   stepIndex?: number;
+}
+
+interface PhaseCompletionReviewState {
+  phase: ProjectNode;
+  nodes: ProjectNode[];
+  unfinishedCount: number;
+  missingFields: Array<{ nodeName: string; fieldLabel: string }>;
 }
 
 const PROJECT_TYPES = [
@@ -140,6 +152,8 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
   const [expandedPhaseIds, setExpandedPhaseIds] = useState<Set<string>>(() => new Set());
   const [undoStack, setUndoStack] = useState<ProjectHistoryAction[]>([]);
   const [redoStack, setRedoStack] = useState<ProjectHistoryAction[]>([]);
+  const [phaseCompletionReview, setPhaseCompletionReview] = useState<PhaseCompletionReviewState | null>(null);
+  const [phaseCompletionBusy, setPhaseCompletionBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [createMode, setCreateMode] = useState<'quote' | 'internal' | null>(null);
   const [quoteId, setQuoteId] = useState('');
@@ -219,6 +233,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
       setExpandedPhaseIds(new Set());
       setUndoStack([]);
       setRedoStack([]);
+      setPhaseCompletionReview(null);
       setCompletionReview(null);
       setDetail(await window.atoumweb.projects.projects.get(id));
       setDetailTab('plan');
@@ -242,6 +257,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
     setExpandedPhaseIds(new Set());
     setUndoStack([]);
     setRedoStack([]);
+    setPhaseCompletionReview(null);
     setDetail(null);
     setSelectedId(null);
   }
