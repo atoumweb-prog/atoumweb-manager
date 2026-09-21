@@ -9,6 +9,7 @@ import {
   type ProjectCompletionReview,
   type ProjectDetail,
   type ProjectNode,
+  type ProjectNodeInput,
   type ProjectNodeStatus,
   type ProjectPrerequisiteStatus,
   type ProjectStatus,
@@ -61,6 +62,36 @@ const COMMERCIAL_MODE_LABELS: Record<ProjectCommercialMode, string> = {
   internal: 'Interne AtoumWeb',
 };
 
+type ProjectHistoryAction =
+  | {
+      kind: 'update';
+      nodeId: string;
+      before: Partial<ProjectNodeInput>;
+      after: Partial<ProjectNodeInput>;
+      label: string;
+    }
+  | {
+      kind: 'move';
+      nodeId: string;
+      before: { parentId: string | null; targetIndex: number };
+      after: { parentId: string | null; targetIndex: number };
+      label: string;
+    }
+  | {
+      kind: 'pause';
+      nodeId: string;
+      before: { paused: boolean; reason: string | null };
+      after: { paused: boolean; reason: string | null };
+      label: string;
+    };
+
+interface ProjectNodePosition {
+  phaseIndex: number;
+  phaseId: string;
+  phaseName: string;
+  stepIndex?: number;
+}
+
 const PROJECT_TYPES = [
   ['website', 'Site vitrine'],
   ['ecommerce', 'E-commerce'],
@@ -106,6 +137,9 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<ProjectDetail | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [expandedPhaseIds, setExpandedPhaseIds] = useState<Set<string>>(() => new Set());
+  const [undoStack, setUndoStack] = useState<ProjectHistoryAction[]>([]);
+  const [redoStack, setRedoStack] = useState<ProjectHistoryAction[]>([]);
   const [loading, setLoading] = useState(true);
   const [createMode, setCreateMode] = useState<'quote' | 'internal' | null>(null);
   const [quoteId, setQuoteId] = useState('');
@@ -182,6 +216,9 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
     try {
       setSelectedId(id);
       setSelectedNodeId(null);
+      setExpandedPhaseIds(new Set());
+      setUndoStack([]);
+      setRedoStack([]);
       setCompletionReview(null);
       setDetail(await window.atoumweb.projects.projects.get(id));
       setDetailTab('plan');
@@ -193,6 +230,9 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
   function closeProjectDetail(): void {
     setCompletionReview(null);
     setSelectedNodeId(null);
+    setExpandedPhaseIds(new Set());
+    setUndoStack([]);
+    setRedoStack([]);
     setDetail(null);
     setSelectedId(null);
   }
