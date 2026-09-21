@@ -106,7 +106,6 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<ProjectDetail | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [detailExpanded, setDetailExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [createMode, setCreateMode] = useState<'quote' | 'internal' | null>(null);
   const [quoteId, setQuoteId] = useState('');
@@ -183,7 +182,6 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
     try {
       setSelectedId(id);
       setSelectedNodeId(null);
-      setDetailExpanded(false);
       setCompletionReview(null);
       setDetail(await window.atoumweb.projects.projects.get(id));
       setDetailTab('plan');
@@ -195,7 +193,6 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
   function closeProjectDetail(): void {
     setCompletionReview(null);
     setSelectedNodeId(null);
-    setDetailExpanded(false);
     setDetail(null);
     setSelectedId(null);
   }
