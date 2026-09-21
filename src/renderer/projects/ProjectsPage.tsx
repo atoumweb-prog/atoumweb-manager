@@ -1218,6 +1218,8 @@ function renderProjectProductionTree(
   expandedPhaseIds: Set<string>,
   onTogglePhase: (phaseId: string) => void,
   positions: Map<string, ProjectNodePosition>,
+  onRename: (node: ProjectNode, name: string) => Promise<void>,
+  onCompletePhase: (phase: ProjectNode) => void,
 ) {
   const phases = sortedProjectChildren(nodes, null);
 
@@ -1230,6 +1232,15 @@ function renderProjectProductionTree(
     const phaseStatus = aggregatePhaseStatus(trackableSteps);
     const expanded = expandedPhaseIds.has(phase.id);
 
+    const dropIntoPhase = (sourceId: string) => {
+      const source = nodes.find((node) => node.id === sourceId);
+      if (!source || source.id === phase.id) return;
+      const invalidParents = descendantIds(nodes, source.id);
+      if (invalidParents.has(phase.id)) return;
+      const targetIndex = sortedProjectChildren(nodes, phase.id).filter((node) => node.id !== source.id).length;
+      void onMove(source, phase.id, targetIndex);
+    };
+
     return <section key={phase.id} className={`project-phase status-${phaseStatus} ${selectedNodeId === phase.id ? 'selected' : ''}`}>
       <div className="project-phase-row">
         <button
@@ -1239,6 +1250,18 @@ function renderProjectProductionTree(
           onClick={() => {
             onSelect(phase.id);
             onTogglePhase(phase.id);
+          }}
+          onDragOver={(event) => {
+            if (!event.dataTransfer.types.includes('text/atoumweb-project-node')) return;
+            event.preventDefault();
+            event.currentTarget.classList.add('drag-over');
+          }}
+          onDragLeave={(event) => event.currentTarget.classList.remove('drag-over')}
+          onDrop={(event) => {
+            event.preventDefault();
+            event.currentTarget.classList.remove('drag-over');
+            dropIntoPhase(event.dataTransfer.getData('text/atoumweb-project-node'));
+            setTimeout(() => onTogglePhase(phase.id), 0);
           }}
         >
           <span className="project-phase-chevron">{expanded ? '⌄' : '›'}</span>
@@ -1250,6 +1273,7 @@ function renderProjectProductionTree(
         <details className="project-node-menu" onClick={(event) => event.stopPropagation()}>
           <summary title="Actions sur la phase">•••</summary>
           <div>
+            <button type="button" disabled={phaseStatus === 'done'} onClick={() => onCompletePhase(phase)}>✓ Terminer la phase</button>
             <button type="button" disabled={phaseIndex === 0} onClick={() => void onMove(phase, null, phaseIndex - 1)}>↑ Monter</button>
             <button type="button" disabled={phaseIndex === phases.length - 1} onClick={() => void onMove(phase, null, phaseIndex + 1)}>↓ Descendre</button>
           </div>
@@ -1268,15 +1292,64 @@ function renderProjectProductionTree(
           const position = positions.get(node.id);
           const typeLabel = node.displaySubtype === 'page' ? 'Page' : node.type === 'module' ? 'Module' : node.type === 'checklist' ? 'Checklist' : 'Tâche';
 
+          const dropBeforeStep = (sourceId: string) => {
+            const source = nodes.find((candidate) => candidate.id === sourceId);
+            if (!source || source.id === node.id) return;
+            const nextParentId = node.parentId ?? phase.id;
+            const invalidParents = descendantIds(nodes, source.id);
+            if (invalidParents.has(nextParentId)) return;
+            const targetSiblings = sortedProjectChildren(nodes, nextParentId).filter((candidate) => candidate.id !== source.id);
+            const targetIndex = Math.max(0, targetSiblings.findIndex((candidate) => candidate.id === node.id));
+            void onMove(source, nextParentId, targetIndex);
+          };
+
           return <div
             key={node.id}
             className={`project-step status-${node.status} ${selectedNodeId === node.id ? 'selected' : ''} ${node.paused ? 'paused' : ''}`}
             style={{ paddingLeft: `${10 + Math.min(depth, 3) * 14}px` }}
             onClick={() => onSelect(node.id)}
+            onDragOver={(event) => {
+              if (!event.dataTransfer.types.includes('text/atoumweb-project-node')) return;
+              event.preventDefault();
+              event.currentTarget.classList.add('drag-over');
+            }}
+            onDragLeave={(event) => event.currentTarget.classList.remove('drag-over')}
+            onDrop={(event) => {
+              event.preventDefault();
+              event.currentTarget.classList.remove('drag-over');
+              dropBeforeStep(event.dataTransfer.getData('text/atoumweb-project-node'));
+            }}
           >
+            <span
+              className="project-step-drag"
+              draggable
+              title="Glisser pour déplacer l’étape"
+              onClick={(event) => event.stopPropagation()}
+              onDragStart={(event) => {
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/atoumweb-project-node', node.id);
+                event.currentTarget.closest('.project-step')?.classList.add('dragging');
+              }}
+              onDragEnd={(event) => {
+                event.currentTarget.closest('.project-step')?.classList.remove('dragging');
+                document.querySelectorAll('.project-step.drag-over,.project-phase-main.drag-over').forEach((element) => element.classList.remove('drag-over'));
+              }}
+            >⋮⋮</span>
             <span className="project-step-number">{position ? `${position.phaseIndex}.${position.stepIndex}` : `${phaseIndex + 1}.${stepIndex + 1}`}</span>
             <div className="project-step-content">
-              <strong>{node.name}</strong>
+              {node.displaySubtype === 'page'
+                ? <input
+                    className="project-step-name-input"
+                    defaultValue={node.name}
+                    aria-label={`Nom de la page ${node.name}`}
+                    onClick={(event) => event.stopPropagation()}
+                    onBlur={(event) => void onRename(node, event.currentTarget.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') event.currentTarget.blur();
+                      if (event.key === 'Escape') { event.currentTarget.value = node.name; event.currentTarget.blur(); }
+                    }}
+                  />
+                : <strong>{node.name}</strong>}
               <small>{typeLabel} · {node.estimatedMinutes ? duration(node.estimatedMinutes) : 'sans estimation'}{node.required ? '' : ' · optionnel'}{node.paused ? ' · en pause' : ''}</small>
             </div>
             <select
