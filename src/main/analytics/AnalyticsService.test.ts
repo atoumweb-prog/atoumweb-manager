@@ -84,6 +84,65 @@ describe('AnalyticsService', () => {
     expect(delivered).toMatchObject({ currentCents: 150000 });
   });
 
+  it('calcule les volumes commerciaux avec les pourcentages et leurs volumes bruts', () => {
+    database.run(
+      `INSERT INTO prospects (id,organization_id,stage,temperature,won_at,created_at,updated_at)
+       VALUES ('p-won-current','org','won','neutral','2026-09-08T10:00:00.000Z','2026-09-02T10:00:00.000Z','2026-09-08T10:00:00.000Z')`,
+    );
+    database.run(
+      `INSERT INTO prospects (id,organization_id,stage,temperature,lost_reason,lost_at,created_at,updated_at)
+       VALUES ('p-lost-current','org','lost','neutral','Budget','2026-09-10T10:00:00.000Z','2026-09-03T10:00:00.000Z','2026-09-10T10:00:00.000Z')`,
+    );
+    database.run(
+      `INSERT INTO prospects (id,organization_id,stage,temperature,won_at,created_at,updated_at)
+       VALUES ('p-won-previous','org','won','neutral','2026-08-11T10:00:00.000Z','2026-08-05T10:00:00.000Z','2026-08-11T10:00:00.000Z')`,
+    );
+
+    database.run(
+      `INSERT INTO quotes (
+         id,quote_number,prospect_id,subject,status,catalog_value_cents,discount_value_cents,contract_value_cents,
+         deposit_cents,balance_cents,refused_at,created_at,updated_at
+       ) VALUES ('q-refused','DEV-2026-002','prospect','Refus','refused',30000,0,30000,0,30000,
+         '2026-09-17T10:00:00.000Z','2026-09-06T10:00:00.000Z','2026-09-17T10:00:00.000Z')`,
+    );
+    database.run(
+      `INSERT INTO quotes (
+         id,quote_number,prospect_id,subject,status,catalog_value_cents,discount_value_cents,contract_value_cents,
+         deposit_cents,balance_cents,expired_at,created_at,updated_at
+       ) VALUES ('q-expired','DEV-2026-003','prospect','Expiré','expired',25000,0,25000,0,25000,
+         '2026-09-20T10:00:00.000Z','2026-09-07T10:00:00.000Z','2026-09-20T10:00:00.000Z')`,
+    );
+
+    const snapshot = analytics.commercialSnapshot({ preset: 'month' }, new Date('2026-09-21T12:00:00.000Z'));
+
+    expect(snapshot.current).toMatchObject({
+      newProspects: 2,
+      wonProspects: 1,
+      lostProspects: 1,
+      decidedProspects: 2,
+      conversionPercent: 50,
+      quotesCreated: 3,
+      quotesAccepted: 1,
+      quotesRefused: 1,
+      quotesExpired: 1,
+      quoteDecisions: 3,
+    });
+    expect(snapshot.current.quoteAcceptancePercent).toBeCloseTo(33.3333, 3);
+    expect(snapshot.previous).toMatchObject({
+      newProspects: 1,
+      wonProspects: 1,
+      lostProspects: 0,
+      decidedProspects: 1,
+      conversionPercent: 100,
+      quotesCreated: 1,
+      quotesAccepted: 1,
+      quotesRefused: 0,
+      quotesExpired: 0,
+      quoteDecisions: 1,
+      quoteAcceptancePercent: 100,
+    });
+  });
+
   it('n invente aucun chiffre pour les sources Phase 5 absentes', () => {
     const snapshot = analytics.financialSnapshot({ preset: 'month' }, new Date('2026-09-21T12:00:00.000Z'));
 
