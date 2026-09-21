@@ -794,3 +794,324 @@
     bottom: 10px;
   }
 }
+
+
+/* Projet V2 — véritable page de production */
+.project-production-page {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 10px;
+  height: calc(100dvh - 148px);
+  min-height: 620px;
+  min-width: 0;
+}
+
+.project-production-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, .55fr);
+  gap: 18px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.project-production-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.project-production-title > div {
+  min-width: 0;
+}
+.project-production-title h2 {
+  margin: 2px 0 3px;
+  font-size: 24px;
+  line-height: 1.1;
+}
+.project-production-title p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.project-production-back {
+  flex: 0 0 auto;
+}
+
+.project-production-status {
+  display: grid;
+  grid-template-columns: minmax(190px, 1fr) minmax(120px, .6fr);
+  gap: 12px;
+  align-items: end;
+}
+.project-production-status label {
+  display: grid;
+  gap: 5px;
+}
+.project-production-status label > span {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+.project-production-status select {
+  width: 100%;
+}
+.project-production-progress {
+  display: grid;
+  gap: 7px;
+}
+.project-production-progress strong {
+  color: var(--accent);
+  font-size: 18px;
+}
+.project-production-progress i {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-soft);
+}
+.project-production-progress b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.project-production-nav {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0 4px;
+}
+.project-production-nav button {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 7px 11px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-weight: 800;
+  cursor: pointer;
+}
+.project-production-nav button.active {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.project-production-workspace {
+  display: grid;
+  grid-template-columns: minmax(410px, .8fr) minmax(520px, 1.2fr);
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.project-production-tree-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 9px;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.project-production-tree-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.project-production-tree-head > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+.project-production-tree-head strong {
+  font-size: 16px;
+}
+
+.project-production-add {
+  position: relative;
+}
+.project-production-add > summary {
+  list-style: none;
+  min-height: 36px;
+  padding: 8px 11px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-soft);
+  cursor: pointer;
+  font-weight: 800;
+}
+.project-production-add > summary::-webkit-details-marker {
+  display: none;
+}
+.project-production-add[open] > .project-node-add {
+  margin-top: 8px;
+}
+
+.project-production-tree-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
+  scrollbar-gutter: stable;
+}
+
+.project-production-page .project-workbench {
+  position: static;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  align-content: start;
+}
+
+.project-production-secondary {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  scrollbar-gutter: stable;
+}
+
+/* Tree controls: never fall back to native black buttons in light mode. */
+.project-production-page .project-tree-node {
+  grid-template-columns: auto minmax(0, 1fr) minmax(190px, auto);
+  gap: 10px;
+  padding: 10px 11px;
+}
+.project-production-page .project-node-controls {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr);
+  gap: 6px;
+}
+.project-production-page .project-node-arrange {
+  display: grid;
+  grid-template-columns: 34px 34px minmax(115px, 1fr);
+  gap: 5px;
+  align-items: center;
+}
+.project-production-page .project-node-arrange button,
+.project-production-page .project-node-arrange select,
+.project-production-page .project-node-status,
+.project-production-page input,
+.project-production-page select,
+.project-production-page textarea {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  -webkit-text-fill-color: var(--text);
+  opacity: 1;
+}
+.project-production-page .project-node-arrange button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.project-production-page .project-node-arrange button:disabled {
+  opacity: .38;
+  cursor: default;
+}
+.project-production-page .project-node-status,
+.project-production-page .project-node-parent {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Prominent timer in the selected work card. */
+.project-node-timer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+}
+.project-node-timer.running {
+  border-color: color-mix(in srgb, var(--success) 42%, var(--border));
+  background: color-mix(in srgb, var(--success) 7%, var(--surface));
+}
+.project-node-timer > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+.project-node-timer > div:first-child > strong {
+  font-variant-numeric: tabular-nums;
+  font-size: 24px;
+  line-height: 1;
+}
+.project-node-timer > div:first-child > small {
+  color: var(--text-muted);
+}
+.project-node-timer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  justify-content: flex-end;
+}
+
+/* Better readable work-card controls. */
+.project-production-page .project-work-card-fields textarea {
+  min-height: 100px;
+}
+.project-production-page .project-work-card-fields input,
+.project-production-page .project-work-card-fields select,
+.project-production-page .project-work-card-fields textarea,
+.project-production-page .project-workbench-pause input {
+  width: 100%;
+  min-height: 40px;
+}
+.project-production-page .project-work-card-fields textarea {
+  min-height: 100px;
+}
+
+@media (max-width: 1250px) {
+  .project-production-workspace {
+    grid-template-columns: minmax(360px, .9fr) minmax(430px, 1.1fr);
+  }
+  .project-production-page .project-tree-node {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .project-production-page .project-node-controls {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(130px, .6fr) minmax(210px, 1fr);
+  }
+}
+
+@media (max-width: 940px) {
+  .project-production-page {
+    height: auto;
+    min-height: 0;
+  }
+  .project-production-header {
+    grid-template-columns: 1fr;
+  }
+  .project-production-workspace {
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+  .project-production-tree-scroll,
+  .project-production-page .project-workbench,
+  .project-production-secondary {
+    max-height: none;
+    overflow: visible;
+  }
+}
