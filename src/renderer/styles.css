@@ -155,3 +155,47 @@ button { color: inherit; }
   .timer-widget { min-width: 280px; }
   .theme-grid { grid-template-columns: 1fr; }
 }
+
+
+/* Barre latérale escamotable */
+.app-shell {
+  transition: grid-template-columns .18s ease;
+}
+.app-shell.sidebar-collapsed {
+  grid-template-columns: 0 minmax(0, 1fr);
+}
+.app-shell.sidebar-collapsed > .sidebar {
+  overflow: hidden;
+  border-right: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+.topbar-left .global-search {
+  flex: 1;
+}
+.sidebar-toggle {
+  display: grid;
+  place-items: center;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-soft);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 21px;
+  font-weight: 800;
+}
+.sidebar-toggle:hover {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+}
