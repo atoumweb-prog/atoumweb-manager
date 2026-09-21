@@ -538,10 +538,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
         <nav className="project-production-nav" aria-label="Sections du projet">
           <button className={detailTab === 'plan' ? 'active' : ''} type="button" onClick={() => setDetailTab('plan')}>Production</button>
           <button className={detailTab === 'prerequisites' ? 'active' : ''} type="button" onClick={() => setDetailTab('prerequisites')}>Prérequis</button>
-          <button className={detailTab === 'resources' ? 'active' : ''} type="button" onClick={() => setDetailTab('resources')}>Ressources</button>
-          <button className={detailTab === 'technical' ? 'active' : ''} type="button" onClick={() => setDetailTab('technical')}>Bibliothèque</button>
           <button className={detailTab === 'operations' ? 'active' : ''} type="button" onClick={() => setDetailTab('operations')}>Interventions</button>
-          <button className={detailTab === 'time' ? 'active' : ''} type="button" onClick={() => setDetailTab('time')}>Temps</button>
           <button className={detailTab === 'commercial' ? 'active' : ''} type="button" onClick={() => setDetailTab('commercial')}>Commercial</button>
           <button className={detailTab === 'summary' ? 'active' : ''} type="button" onClick={() => setDetailTab('summary')}>Résumé</button>
         </nav>
