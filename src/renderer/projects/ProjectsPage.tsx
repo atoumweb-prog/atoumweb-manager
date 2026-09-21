@@ -530,6 +530,61 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
     }
   }
 
+  async function renameProjectNode(node: ProjectNode, name: string): Promise<void> {
+    const nextName = name.trim();
+    if (!nextName || nextName === node.name) return;
+    try {
+      await updateProjectNodeWithHistory(node.id, { name: nextName });
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible de renommer cette étape.');
+    }
+  }
+
+  function requestPhaseCompletion(phase: ProjectNode): void {
+    if (!detail) return;
+    const childIds = descendantIds(detail.nodes, phase.id);
+    const nodes = [phase, ...detail.nodes.filter((node) => childIds.has(node.id))];
+    const missingFields: Array<{ nodeName: string; fieldLabel: string }> = [];
+
+    for (const node of nodes) {
+      for (const field of node.workCard?.fields ?? []) {
+        const missing = field.type === 'check'
+          ? field.value !== true
+          : typeof field.value !== 'string' || !field.value.trim();
+        if (missing) missingFields.push({ nodeName: node.name, fieldLabel: field.label });
+      }
+    }
+
+    setPhaseCompletionReview({
+      phase,
+      nodes,
+      unfinishedCount: nodes.filter((node) => node.status !== 'done').length,
+      missingFields,
+    });
+  }
+
+  async function confirmPhaseCompletion(): Promise<void> {
+    if (!phaseCompletionReview) return;
+    setPhaseCompletionBusy(true);
+    try {
+      const changes = phaseCompletionReview.nodes.map((node) => ({
+        nodeId: node.id,
+        before: node.status,
+        after: 'done' as ProjectNodeStatus,
+      }));
+      const updated = await window.atoumweb.projects.projects.completePhase(phaseCompletionReview.phase.id);
+      setDetail(updated);
+      rememberProjectChange({ kind: 'batch-status', changes, label: `Phase · ${phaseCompletionReview.phase.name}` });
+      setPhaseCompletionReview(null);
+      await refresh();
+      onMessage(`Phase « ${phaseCompletionReview.phase.name} » terminée : toutes ses étapes sont passées au vert.`);
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible de terminer cette phase.');
+    } finally {
+      setPhaseCompletionBusy(false);
+    }
+  }
+
   async function addPrerequisite(): Promise<void> {
     if (!detail || !newPrerequisite.trim()) return;
     try {
