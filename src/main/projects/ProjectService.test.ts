@@ -194,6 +194,31 @@ describe('ProjectService', () => {
     expect(project.nodes.length).toBeGreaterThan(15);
   });
 
+  it('termine une phase et passe toutes ses étapes au vert', () => {
+    const quote = createAcceptedSeededVitrineQuote();
+    const project = projects.transformQuote({ quoteId: quote.id });
+    const phase = project.nodes.find((node) => node.semanticKey === 'technical')!;
+    const wordpress = project.nodes.find((node) => node.semanticKey === 'technical.wordpress')!;
+    const divi = project.nodes.find((node) => node.semanticKey === 'technical.divi')!;
+
+    projects.updateProjectNode(wordpress.id, { status: 'in_progress' });
+    projects.setProjectNodePause(divi.id, true, 'Test');
+
+    const completed = projects.completeProjectPhase(phase.id);
+    const descendants = completed.nodes.filter((node) =>
+      node.id === phase.id
+      || node.parentId === phase.id
+      || node.parentId === wordpress.id
+      || node.parentId === divi.id,
+    );
+
+    expect(completed.nodes.find((node) => node.id === phase.id)?.status).toBe('done');
+    expect(completed.nodes.find((node) => node.id === wordpress.id)?.status).toBe('done');
+    expect(completed.nodes.find((node) => node.id === divi.id)?.status).toBe('done');
+    expect(completed.nodes.find((node) => node.id === divi.id)?.paused).toBe(false);
+    expect(descendants.every((node) => node.status === 'done')).toBe(true);
+  });
+
   it('retrouve le blueprint Site vitrine quand il est inclus dans une formule', () => {
     const offer = catalog.create(
       { type: 'offer', name: 'Formule vitrine test', category: 'Création web' },
