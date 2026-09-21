@@ -717,9 +717,10 @@ function ProjectCommercialTab({ project }: { project: ProjectDetail }) {
   );
 }
 
-function ProjectNodeWorkbench({ projectId, node, onUpdate, onPause, onOpenResources, onOpenTechnical, onOpenTime, onMessage }: {
+function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, onOpenResources, onOpenTechnical, onOpenTime, onMessage }: {
   projectId: string;
   node: ProjectNode | null;
+  position: ProjectNodePosition | null;
   onUpdate: (nodeId: string, input: Partial<ProjectNode>) => Promise<void>;
   onPause: (node: ProjectNode, paused: boolean, reason?: string | null) => Promise<void>;
   onOpenResources: () => void;
@@ -734,6 +735,7 @@ function ProjectNodeWorkbench({ projectId, node, onUpdate, onPause, onOpenResour
   const [activeTime, setActiveTime] = useState<TimeSession | null>(null);
   const [timerBusy, setTimerBusy] = useState(false);
   const [timerTick, setTimerTick] = useState(Date.now());
+  const [workbenchTab, setWorkbenchTab] = useState<'form' | 'notes'>('form');
 
   useEffect(() => {
     setCard(node?.workCard ? {
@@ -742,6 +744,7 @@ function ProjectNodeWorkbench({ projectId, node, onUpdate, onPause, onOpenResour
     } : null);
     setPauseReason(node?.pauseReason ?? '');
     setEstimatedMinutes(node?.estimatedMinutes?.toString() ?? '');
+    setWorkbenchTab('form');
   }, [node?.id, node?.updatedAt]);
 
   useEffect(() => {
@@ -874,59 +877,36 @@ function ProjectNodeWorkbench({ projectId, node, onUpdate, onPause, onOpenResour
     ? node.sources.some((source) => source.quoteLineId) ? 'Issu du devis' : 'Ajout manuel'
     : node.sourceTemplateNodeId ? 'Issu du modèle' : 'Ajout manuel';
 
+  const positionLabel = position
+    ? position.stepIndex
+      ? `Phase ${position.phaseIndex} · Étape ${position.phaseIndex}.${position.stepIndex}`
+      : `Phase ${position.phaseIndex}`
+    : 'Étape du projet';
+
   return <aside className="project-workbench">
-    <header className="project-workbench-head">
+    <header className="project-workbench-head compact">
       <div>
-        <span className="eyebrow">Fiche de travail</span>
+        <span className="project-workbench-kicker">Fiche · {positionLabel}</span>
         <h3>{node.name}</h3>
         <div className="project-workbench-badges">
-          <span>{node.type === 'module' && node.displaySubtype === 'page' ? 'Page' : node.type}</span>
-          <span>{sourceLabel}</span>
+          <span className={`status-${node.status}`}>{NODE_STATUS_LABELS[node.status]}</span>
+          <span>{node.required ? 'Obligatoire' : 'Optionnel'}</span>
           {node.paused && <span className="paused">⏸ En pause</span>}
         </div>
       </div>
       <div className="project-workbench-estimate">
-        <label>Estimé
+        <label><span>Estimé</span>
           <div><input type="number" min="0" step="5" value={estimatedMinutes} onChange={(event) => setEstimatedMinutes(event.target.value)} /><span>min</span></div>
         </label>
       </div>
     </header>
 
-    {node.description && <p className="project-workbench-description">{node.description}</p>}
-
-    {card?.goal && <section className="project-workbench-goal">
-      <span className="eyebrow">Objectif</span>
-      <p>{card.goal}</p>
-    </section>}
-
-    {card && card.fields.length > 0 && <section className="project-workbench-fields">
-      <div className="project-workbench-section-title"><strong>Informations de travail</strong><span>{card.fields.length} champ{card.fields.length > 1 ? 's' : ''}</span></div>
-      <div className="project-work-card-fields">
-        {card.fields.map((field) => <label key={field.key} className={field.type === 'check' ? 'check-field' : ''}>
-          {field.type === 'check'
-            ? <><input type="checkbox" checked={field.value === true} onChange={(event) => updateField(field.key, event.target.checked)} /><span>{field.label}</span></>
-            : <>
-                <span>{field.label}</span>
-                {field.type === 'textarea'
-                  ? <textarea value={typeof field.value === 'string' ? field.value : ''} onChange={(event) => updateField(field.key, event.target.value)} />
-                  : field.type === 'select'
-                    ? <select value={typeof field.value === 'string' ? field.value : ''} onChange={(event) => updateField(field.key, event.target.value)}>
-                        <option value="">À renseigner…</option>
-                        {(field.options ?? []).map((option) => <option key={option} value={option}>{option}</option>)}
-                      </select>
-                    : <input type={field.type === 'url' ? 'url' : 'text'} value={typeof field.value === 'string' ? field.value : ''} onChange={(event) => updateField(field.key, event.target.value)} />
-                }
-              </>}
-        </label>)}
-      </div>
-    </section>}
-
-    <section className={`project-node-timer ${activeOnNode ? 'running' : ''}`}>
+    <section className={`project-node-timer compact ${activeOnNode ? 'running' : ''}`}>
       <div>
-        <span className="eyebrow">Chrono de la fiche</span>
+        <span>Chrono</span>
         <strong>{activeOnNode ? formatTimer(displayedTimerSeconds) : '00:00:00'}</strong>
-        <small>{activeOnNode ? (activeTime?.paused ? 'En pause' : 'Temps en cours') : 'Le temps sera rattaché directement à cette étape.'}</small>
       </div>
+      <small>{activeOnNode ? (activeTime?.paused ? 'En pause' : 'En cours sur cette étape') : 'Temps rattaché à cette étape'}</small>
       <div className="project-node-timer-actions">
         {!activeOnNode
           ? <button className="primary-button" type="button" disabled={timerBusy} onClick={() => void startNodeTimer()}>▶ Démarrer</button>
@@ -937,43 +917,80 @@ function ProjectNodeWorkbench({ projectId, node, onUpdate, onPause, onOpenResour
       </div>
     </section>
 
-    <section className="project-workbench-tools">
-      <div className="project-workbench-section-title"><strong>Travailler sur cette fiche</strong></div>
-      <div className="project-workbench-tool-grid">
-        <button type="button" onClick={onOpenTime}><span aria-hidden="true">◷</span><strong>Temps</strong><small>Chrono & sessions</small></button>
-        <button type="button" onClick={onOpenResources}><span aria-hidden="true">▧</span><strong>Ressources</strong><small>Textes, logos, visuels</small></button>
-        <button type="button" onClick={onOpenTechnical}><span aria-hidden="true">&lt;/&gt;</span><strong>Technique</strong><small>Code & bibliothèque</small></button>
-      </div>
-    </section>
+    <nav className="project-workbench-nav" aria-label="Outils de la fiche">
+      <button type="button" className={workbenchTab === 'form' ? 'active' : ''} onClick={() => setWorkbenchTab('form')}>Fiche</button>
+      <button type="button" className={workbenchTab === 'notes' ? 'active' : ''} onClick={() => setWorkbenchTab('notes')}>Notes</button>
+      <button type="button" onClick={onOpenResources}>Ressources</button>
+      <button type="button" onClick={onOpenTechnical}>Technique</button>
+      <button type="button" onClick={onOpenTime}>Temps</button>
+      <details className="project-workbench-pause-menu">
+        <summary>{node.paused ? '▶ Reprendre' : '⏸ Pause'}</summary>
+        <div>
+          {node.paused
+            ? <><span>{node.pauseReason || 'Étape en pause.'}</span><button className="secondary-button" type="button" onClick={() => void togglePause()}>Reprendre</button></>
+            : <><input value={pauseReason} onChange={(event) => setPauseReason(event.target.value)} placeholder="Raison de la pause…" /><button className="secondary-button" type="button" onClick={() => void togglePause()}>Mettre en pause</button></>}
+        </div>
+      </details>
+    </nav>
 
-    <section className="project-workbench-pause">
-      <div>
-        <strong>{node.paused ? 'Module en pause' : 'Besoin de mettre cette étape en pause ?'}</strong>
-        <span>{node.paused ? node.pauseReason || 'Aucune raison renseignée.' : 'Ex. attente des textes, validation client, accès manquant…'}</span>
-      </div>
-      {!node.paused && <input value={pauseReason} onChange={(event) => setPauseReason(event.target.value)} placeholder="Raison de la pause…" />}
-      <button className="secondary-button" type="button" onClick={() => void togglePause()}>{node.paused ? 'Reprendre' : 'Mettre en pause'}</button>
-    </section>
+    {workbenchTab === 'form' && <div className="project-workbench-body">
+      {node.description && <p className="project-workbench-description">{node.description}</p>}
 
-    {node.advice && node.advice.length > 0 && <section className="project-companion">
-      <div className="project-companion-title">
-        <div className="project-companion-mark" aria-hidden="true">AW</div>
-        <div><span className="eyebrow">Compagnon AtoumWeb</span><strong>Conseils pour cette étape</strong></div>
-      </div>
-      <div className="project-companion-cards">
-        {node.advice.map((advice, index) => <article className={`advice-${advice.kind}`} key={`${advice.title}-${index}`}>
-          <span aria-hidden="true">{advice.kind === 'warning' ? '!' : advice.kind === 'library' ? '◇' : advice.kind === 'check' ? '✓' : '💡'}</span>
-          <div><strong>{advice.title}</strong><p>{advice.body}</p></div>
-        </article>)}
-      </div>
+      {card?.goal && <section className="project-workbench-goal compact">
+        <span>Objectif</span>
+        <p>{card.goal}</p>
+      </section>}
+
+      {card && card.fields.length > 0 && <section className="project-workbench-fields">
+        <div className="project-workbench-section-title"><strong>À renseigner</strong><span>{card.fields.length}</span></div>
+        <div className="project-work-card-fields compact">
+          {card.fields.map((field) => <label key={field.key} className={field.type === 'check' ? 'check-field' : ''}>
+            {field.type === 'check'
+              ? <><input type="checkbox" checked={field.value === true} onChange={(event) => updateField(field.key, event.target.checked)} /><span>{field.label}</span></>
+              : <>
+                  <span>{field.label}</span>
+                  {field.type === 'textarea'
+                    ? <textarea value={typeof field.value === 'string' ? field.value : ''} onChange={(event) => updateField(field.key, event.target.value)} />
+                    : field.type === 'select'
+                      ? <select value={typeof field.value === 'string' ? field.value : ''} onChange={(event) => updateField(field.key, event.target.value)}>
+                          <option value="">À renseigner…</option>
+                          {(field.options ?? []).map((option) => <option key={option} value={option}>{option}</option>)}
+                        </select>
+                      : <input type={field.type === 'url' ? 'url' : 'text'} value={typeof field.value === 'string' ? field.value : ''} onChange={(event) => updateField(field.key, event.target.value)} />
+                  }
+                </>}
+          </label>)}
+        </div>
+      </section>}
+
+      {node.advice && node.advice.length > 0 && <details className="project-companion-compact">
+        <summary>Conseils AtoumWeb <span>{node.advice.length}</span></summary>
+        <div className="project-companion-cards">
+          {node.advice.map((advice, index) => <article className={`advice-${advice.kind}`} key={`${advice.title}-${index}`}>
+            <span aria-hidden="true">{advice.kind === 'warning' ? '!' : advice.kind === 'library' ? '◇' : advice.kind === 'check' ? '✓' : '💡'}</span>
+            <div><strong>{advice.title}</strong><p>{advice.body}</p></div>
+          </article>)}
+        </div>
+      </details>}
+    </div>}
+
+    {workbenchTab === 'notes' && <section className="project-workbench-notes">
+      <label>
+        <span>Notes de cette étape</span>
+        <textarea
+          value={card?.notes ?? ''}
+          placeholder="Décision, retour client, idée, point à reprendre…"
+          onChange={(event) => setCard((current) => ({ ...(current ?? { fields: [] }), notes: event.target.value }))}
+        />
+      </label>
     </section>}
 
-    <footer className="project-workbench-footer">
+    <footer className="project-workbench-footer compact">
       <div>
-        <span>{node.sources.length} source{node.sources.length > 1 ? 's' : ''} liée{node.sources.length > 1 ? 's' : ''}</span>
+        <span>{positionLabel}</span>
         {node.semanticKey && <code>{node.semanticKey}</code>}
       </div>
-      <button className="primary-button" type="button" disabled={saving} onClick={() => void save()}>{saving ? 'Enregistrement…' : 'Enregistrer la fiche'}</button>
+      <button className="primary-button" type="button" disabled={saving} onClick={() => void save()}>{saving ? 'Enregistrement…' : 'Enregistrer'}</button>
     </footer>
   </aside>;
 }
