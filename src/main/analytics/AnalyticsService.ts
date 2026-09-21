@@ -11,6 +11,11 @@ import {
   type AnalyticsCommercialSourceStat,
   type AnalyticsMetricDefinition,
   type AnalyticsPeriodInput,
+  type AnalyticsProjectEconomics,
+  type AnalyticsProjectTimePeriodStats,
+  type AnalyticsProjectTimeSnapshot,
+  type AnalyticsProjectTypeStat,
+  type AnalyticsTimeCategoryStat,
 } from '../../shared/analytics';
 import { resolveAnalyticsPeriod } from './AnalyticsPeriodService';
 
@@ -33,6 +38,41 @@ interface ReasonRow extends Record<string, unknown> {
 interface DelayRow extends Record<string, unknown> {
   average_hours: number | null;
   sample: number;
+}
+
+interface ProjectTimeRow extends Record<string, unknown> {
+  projects_created: number;
+  projects_completed: number;
+  total_seconds: number | null;
+  billable_seconds: number | null;
+  non_billable_seconds: number | null;
+  session_count: number;
+}
+
+interface CategoryTimeRow extends Record<string, unknown> {
+  category: string;
+  seconds: number | null;
+  session_count: number;
+}
+
+interface ProjectEconomicsRow extends Record<string, unknown> {
+  completed_project_sample: number;
+  completed_with_time: number;
+  tracked_seconds: number | null;
+  estimated_seconds: number | null;
+  estimate_sample: number;
+  average_calendar_days: number | null;
+  calendar_duration_sample: number;
+  contract_value_cents: number | null;
+  commercial_value_cents: number | null;
+}
+
+interface ProjectTypeRow extends Record<string, unknown> {
+  project_type: string;
+  completed_count: number;
+  tracked_project_count: number;
+  tracked_seconds: number | null;
+  average_calendar_days: number | null;
 }
 
 export class AnalyticsService {
@@ -64,6 +104,20 @@ export class AnalyticsService {
       previousLostReasons: this.lostReasons(period.comparisonFrom, period.comparisonTo),
       delays: this.commercialDelays(period.from, period.to),
       previousDelays: this.commercialDelays(period.comparisonFrom, period.comparisonTo),
+    };
+  }
+
+  projectTimeSnapshot(input: AnalyticsPeriodInput, now = new Date()): AnalyticsProjectTimeSnapshot {
+    const period = resolveAnalyticsPeriod(input, now);
+    return {
+      period,
+      current: this.projectTimeStats(period.from, period.to),
+      previous: this.projectTimeStats(period.comparisonFrom, period.comparisonTo),
+      categories: this.timeCategories(period.from, period.to),
+      previousCategories: this.timeCategories(period.comparisonFrom, period.comparisonTo),
+      economics: this.projectEconomics(period.from, period.to),
+      previousEconomics: this.projectEconomics(period.comparisonFrom, period.comparisonTo),
+      projectTypes: this.projectTypes(period.from, period.to),
     };
   }
 
@@ -120,6 +174,173 @@ export class AnalyticsService {
       quoteDecisions,
       quoteAcceptancePercent: quoteDecisions > 0 ? (quotesAccepted / quoteDecisions) * 100 : null,
     };
+  }
+
+  private closedTimeCte(): string {
+    return `
+      WITH closed_sessions AS (
+        SELECT
+          ts.id,
+          ts.project_id,
+          ts.category,
+          ts.billable,
+          ts.started_at,
+          MAX(
+            0,
+            CAST(strftime('%s', ts.ended_at) - strftime('%s', ts.started_at) AS INTEGER)
+            - COALESCE((
+              SELECT SUM(MAX(
+                0,
+                CAST(strftime('%s', COALESCE(p.ended_at, ts.ended_at)) - strftime('%s', p.started_at) AS INTEGER)
+              ))
+              FROM time_session_pauses p
+              WHERE p.time_session_id = ts.id
+            ), 0)
+          ) AS duration_seconds
+        FROM time_sessions ts
+        WHERE ts.ended_at IS NOT NULL
+      )
+    `;
+  }
+
+  private projectTimeStats(from: string, to: string): AnalyticsProjectTimePeriodStats {
+    const row = this.database.get<ProjectTimeRow>(
+      `${this.closedTimeCte()}
+       SELECT
+         (SELECT COUNT(*) FROM projects WHERE date(created_at) BETWEEN date(?) AND date(?)) AS projects_created,
+         (SELECT COUNT(*) FROM projects WHERE completed_at IS NOT NULL AND date(completed_at) BETWEEN date(?) AND date(?)) AS projects_completed,
+         COALESCE(SUM(CASE WHEN date(started_at) BETWEEN date(?) AND date(?) THEN duration_seconds ELSE 0 END),0) AS total_seconds,
+         COALESCE(SUM(CASE WHEN date(started_at) BETWEEN date(?) AND date(?) AND billable=1 THEN duration_seconds ELSE 0 END),0) AS billable_seconds,
+         COALESCE(SUM(CASE WHEN date(started_at) BETWEEN date(?) AND date(?) AND billable=0 THEN duration_seconds ELSE 0 END),0) AS non_billable_seconds,
+         SUM(CASE WHEN date(started_at) BETWEEN date(?) AND date(?) THEN 1 ELSE 0 END) AS session_count
+       FROM closed_sessions`,
+      [from, to, from, to, from, to, from, to, from, to, from, to],
+    );
+
+    return {
+      projectsCreated: Number(row?.projects_created ?? 0),
+      projectsCompleted: Number(row?.projects_completed ?? 0),
+      totalSeconds: Number(row?.total_seconds ?? 0),
+      billableSeconds: Number(row?.billable_seconds ?? 0),
+      nonBillableSeconds: Number(row?.non_billable_seconds ?? 0),
+      sessionCount: Number(row?.session_count ?? 0),
+    };
+  }
+
+  private timeCategories(from: string, to: string): AnalyticsTimeCategoryStat[] {
+    return this.database.all<CategoryTimeRow>(
+      `${this.closedTimeCte()}
+       SELECT category, COALESCE(SUM(duration_seconds),0) AS seconds, COUNT(*) AS session_count
+       FROM closed_sessions
+       WHERE date(started_at) BETWEEN date(?) AND date(?)
+       GROUP BY category
+       ORDER BY seconds DESC, category ASC`,
+      [from, to],
+    ).map((row) => ({
+      category: row.category,
+      seconds: Number(row.seconds ?? 0),
+      sessionCount: Number(row.session_count ?? 0),
+    }));
+  }
+
+  private projectEconomics(from: string, to: string): AnalyticsProjectEconomics {
+    const row = this.database.get<ProjectEconomicsRow>(
+      `${this.closedTimeCte()},
+       project_time AS (
+         SELECT project_id, SUM(duration_seconds) AS tracked_seconds
+         FROM closed_sessions
+         WHERE project_id IS NOT NULL
+         GROUP BY project_id
+       ),
+       project_estimates AS (
+         SELECT pn.project_id, SUM(COALESCE(pn.estimated_minutes,0) * 60) AS estimated_seconds
+         FROM project_nodes pn
+         WHERE NOT EXISTS (SELECT 1 FROM project_nodes child WHERE child.parent_id = pn.id)
+         GROUP BY pn.project_id
+       ),
+       completed AS (
+         SELECT
+           p.id,
+           p.contract_value_cents,
+           p.commercial_value_cents,
+           p.created_at,
+           p.start_date,
+           p.completed_at,
+           COALESCE(pt.tracked_seconds,0) AS tracked_seconds,
+           COALESCE(pe.estimated_seconds,0) AS estimated_seconds
+         FROM projects p
+         LEFT JOIN project_time pt ON pt.project_id=p.id
+         LEFT JOIN project_estimates pe ON pe.project_id=p.id
+         WHERE p.completed_at IS NOT NULL
+           AND date(p.completed_at) BETWEEN date(?) AND date(?)
+       )
+       SELECT
+         COUNT(*) AS completed_project_sample,
+         SUM(CASE WHEN tracked_seconds > 0 THEN 1 ELSE 0 END) AS completed_with_time,
+         COALESCE(SUM(CASE WHEN tracked_seconds > 0 THEN tracked_seconds ELSE 0 END),0) AS tracked_seconds,
+         COALESCE(SUM(CASE WHEN estimated_seconds > 0 THEN estimated_seconds ELSE 0 END),0) AS estimated_seconds,
+         SUM(CASE WHEN estimated_seconds > 0 THEN 1 ELSE 0 END) AS estimate_sample,
+         AVG(
+           CASE WHEN completed_at IS NOT NULL
+             THEN MAX(0, julianday(completed_at) - julianday(COALESCE(NULLIF(start_date,''), created_at)))
+             ELSE NULL END
+         ) AS average_calendar_days,
+         COUNT(*) AS calendar_duration_sample,
+         COALESCE(SUM(CASE WHEN tracked_seconds > 0 THEN contract_value_cents ELSE 0 END),0) AS contract_value_cents,
+         COALESCE(SUM(CASE WHEN tracked_seconds > 0 THEN commercial_value_cents ELSE 0 END),0) AS commercial_value_cents
+       FROM completed`,
+      [from, to],
+    );
+
+    const trackedSeconds = Number(row?.tracked_seconds ?? 0);
+    const contractValueCents = Number(row?.contract_value_cents ?? 0);
+    const commercialValueCents = Number(row?.commercial_value_cents ?? 0);
+    const hours = trackedSeconds / 3600;
+
+    return {
+      completedProjectSample: Number(row?.completed_project_sample ?? 0),
+      completedProjectsWithTrackedTime: Number(row?.completed_with_time ?? 0),
+      trackedSeconds,
+      estimatedSeconds: Number(row?.estimated_seconds ?? 0),
+      estimateSample: Number(row?.estimate_sample ?? 0),
+      averageCalendarDays: row?.average_calendar_days == null ? null : Number(row.average_calendar_days),
+      calendarDurationSample: Number(row?.calendar_duration_sample ?? 0),
+      contractValueCents,
+      commercialValueCents,
+      contractHourlyCents: hours > 0 ? contractValueCents / hours : null,
+      commercialHourlyCents: hours > 0 ? commercialValueCents / hours : null,
+    };
+  }
+
+  private projectTypes(from: string, to: string): AnalyticsProjectTypeStat[] {
+    return this.database.all<ProjectTypeRow>(
+      `${this.closedTimeCte()},
+       project_time AS (
+         SELECT project_id, SUM(duration_seconds) AS tracked_seconds
+         FROM closed_sessions
+         WHERE project_id IS NOT NULL
+         GROUP BY project_id
+       )
+       SELECT
+         p.project_type,
+         COUNT(*) AS completed_count,
+         SUM(CASE WHEN COALESCE(pt.tracked_seconds,0) > 0 THEN 1 ELSE 0 END) AS tracked_project_count,
+         COALESCE(SUM(pt.tracked_seconds),0) AS tracked_seconds,
+         AVG(MAX(0, julianday(p.completed_at) - julianday(COALESCE(NULLIF(p.start_date,''), p.created_at)))) AS average_calendar_days
+       FROM projects p
+       LEFT JOIN project_time pt ON pt.project_id=p.id
+       WHERE p.completed_at IS NOT NULL
+         AND date(p.completed_at) BETWEEN date(?) AND date(?)
+       GROUP BY p.project_type
+       ORDER BY completed_count DESC, p.project_type ASC`,
+      [from, to],
+    ).map((row) => ({
+      projectType: row.project_type,
+      completedCount: Number(row.completed_count ?? 0),
+      trackedProjectCount: Number(row.tracked_project_count ?? 0),
+      trackedSeconds: Number(row.tracked_seconds ?? 0),
+      averageCalendarDays: row.average_calendar_days == null ? null : Number(row.average_calendar_days),
+    }));
   }
 
   private commercialSources(from: string, to: string): AnalyticsCommercialSourceStat[] {
