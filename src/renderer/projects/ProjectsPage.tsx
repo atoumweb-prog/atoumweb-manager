@@ -731,6 +731,7 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
   const [card, setCard] = useState<ProjectWorkCard | null>(node?.workCard ?? null);
   const [pauseReason, setPauseReason] = useState(node?.pauseReason ?? '');
   const [estimatedMinutes, setEstimatedMinutes] = useState(node?.estimatedMinutes?.toString() ?? '');
+  const [nodeName, setNodeName] = useState(node?.name ?? '');
   const [saving, setSaving] = useState(false);
   const [activeTime, setActiveTime] = useState<TimeSession | null>(null);
   const [timerBusy, setTimerBusy] = useState(false);
@@ -744,6 +745,7 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
     } : null);
     setPauseReason(node?.pauseReason ?? '');
     setEstimatedMinutes(node?.estimatedMinutes?.toString() ?? '');
+    setNodeName(node?.name ?? '');
     setWorkbenchTab('form');
   }, [node?.id, node?.updatedAt]);
 
@@ -783,7 +785,9 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
     try {
       const minutes = estimatedMinutes.trim() ? Number(estimatedMinutes) : null;
       if (minutes != null && (!Number.isInteger(minutes) || minutes < 0)) throw new Error('Temps estimé invalide.');
-      await onUpdate(node.id, { workCard: card, estimatedMinutes: minutes });
+      const nextName = nodeName.trim();
+      if (!nextName) throw new Error('Le nom de l’étape est requis.');
+      await onUpdate(node.id, { workCard: card, estimatedMinutes: minutes, name: nextName });
       onMessage(`Fiche « ${node.name} » enregistrée.`);
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible d’enregistrer la fiche.');
@@ -883,7 +887,7 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
     <header className="project-workbench-head compact">
       <div>
         <span className="project-workbench-kicker">Fiche · {positionLabel}</span>
-        <h3>{node.name}</h3>
+        <input className="project-workbench-title-input" value={nodeName} onChange={(event) => setNodeName(event.target.value)} aria-label="Nom de l’étape" />
         <div className="project-workbench-badges">
           <span className={`status-${node.status}`}>{NODE_STATUS_LABELS[node.status]}</span>
           <span>{node.required ? 'Obligatoire' : 'Optionnel'}</span>
