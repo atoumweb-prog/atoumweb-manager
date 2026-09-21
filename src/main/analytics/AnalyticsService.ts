@@ -60,6 +60,7 @@ interface ProjectEconomicsRow extends Record<string, unknown> {
   completed_with_time: number;
   tracked_seconds: number | null;
   estimated_seconds: number | null;
+  estimate_tracked_seconds: number | null;
   estimate_sample: number;
   average_calendar_days: number | null;
   calendar_duration_sample: number;
@@ -278,8 +279,9 @@ export class AnalyticsService {
          COUNT(*) AS completed_project_sample,
          SUM(CASE WHEN tracked_seconds > 0 THEN 1 ELSE 0 END) AS completed_with_time,
          COALESCE(SUM(CASE WHEN tracked_seconds > 0 THEN tracked_seconds ELSE 0 END),0) AS tracked_seconds,
-         COALESCE(SUM(CASE WHEN estimated_seconds > 0 THEN estimated_seconds ELSE 0 END),0) AS estimated_seconds,
-         SUM(CASE WHEN estimated_seconds > 0 THEN 1 ELSE 0 END) AS estimate_sample,
+         COALESCE(SUM(CASE WHEN estimated_seconds > 0 AND tracked_seconds > 0 THEN estimated_seconds ELSE 0 END),0) AS estimated_seconds,
+         COALESCE(SUM(CASE WHEN estimated_seconds > 0 AND tracked_seconds > 0 THEN tracked_seconds ELSE 0 END),0) AS estimate_tracked_seconds,
+         SUM(CASE WHEN estimated_seconds > 0 AND tracked_seconds > 0 THEN 1 ELSE 0 END) AS estimate_sample,
          AVG(
            CASE WHEN completed_at IS NOT NULL
              THEN MAX(0, julianday(completed_at) - julianday(COALESCE(NULLIF(start_date,''), created_at)))
@@ -302,6 +304,7 @@ export class AnalyticsService {
       completedProjectsWithTrackedTime: Number(row?.completed_with_time ?? 0),
       trackedSeconds,
       estimatedSeconds: Number(row?.estimated_seconds ?? 0),
+      estimateTrackedSeconds: Number(row?.estimate_tracked_seconds ?? 0),
       estimateSample: Number(row?.estimate_sample ?? 0),
       averageCalendarDays: row?.average_calendar_days == null ? null : Number(row.average_calendar_days),
       calendarDurationSample: Number(row?.calendar_duration_sample ?? 0),
