@@ -154,6 +154,8 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
   const [redoStack, setRedoStack] = useState<ProjectHistoryAction[]>([]);
   const [phaseCompletionReview, setPhaseCompletionReview] = useState<PhaseCompletionReviewState | null>(null);
   const [phaseCompletionBusy, setPhaseCompletionBusy] = useState(false);
+  const [productionSplitPercent, setProductionSplitPercent] = useState(40);
+  const [productionOverlay, setProductionOverlay] = useState<'resources' | 'technical' | 'time' | null>(null);
   const [loading, setLoading] = useState(true);
   const [createMode, setCreateMode] = useState<'quote' | 'internal' | null>(null);
   const [quoteId, setQuoteId] = useState('');
@@ -204,6 +206,13 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
   }, [initialProjectId]);
 
   useEffect(() => {
+    window.dispatchEvent(new CustomEvent('atoumweb:sidebar-collapse', { detail: Boolean(detail) }));
+    return () => {
+      if (detail) window.dispatchEvent(new CustomEvent('atoumweb:sidebar-collapse', { detail: false }));
+    };
+  }, [detail?.id]);
+
+  useEffect(() => {
     if (!detail) return undefined;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') closeProjectDetail();
@@ -234,12 +243,32 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
       setUndoStack([]);
       setRedoStack([]);
       setPhaseCompletionReview(null);
+      setProductionOverlay(null);
       setCompletionReview(null);
       setDetail(await window.atoumweb.projects.projects.get(id));
       setDetailTab('plan');
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Projet introuvable.');
     }
+  }
+
+  function beginProductionResize(): void {
+    const workspace = document.querySelector<HTMLElement>('.project-production-workspace');
+    if (!workspace) return;
+    document.body.classList.add('project-resizing');
+    const onMove = (event: PointerEvent) => {
+      const rect = workspace.getBoundingClientRect();
+      if (!rect.width) return;
+      const ratio = ((event.clientX - rect.left) / rect.width) * 100;
+      setProductionSplitPercent(Math.max(28, Math.min(68, ratio)));
+    };
+    const onUp = () => {
+      document.body.classList.remove('project-resizing');
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp, { once: true });
   }
 
   function togglePhase(phaseId: string): void {
@@ -258,6 +287,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
     setUndoStack([]);
     setRedoStack([]);
     setPhaseCompletionReview(null);
+    setProductionOverlay(null);
     setDetail(null);
     setSelectedId(null);
   }
