@@ -38,6 +38,12 @@ export function InterventionBackupPanel({ intervention, onMessage, onChanged }: 
 
   useEffect(() => { void load(); }, [intervention.id, intervention.status, intervention.updatedAt]);
 
+  const latestLocal = useMemo(() =>
+    records.find((record) => record.locations.some((location) => location.locationType === 'local' && location.exists === true))
+      ?? review?.latestLocal
+      ?? null,
+  [records, review?.latestLocal?.id]);
+
   const suggestedRole = useMemo<'pre_intervention' | 'post_intervention' | 'reference'>(() => {
     if (review && !review.preInterventionBackup && !['completed', 'cancelled', 'archived'].includes(intervention.status)) return 'pre_intervention';
     if (review && !review.postInterventionBackup && intervention.status === 'completed') return 'post_intervention';
@@ -98,7 +104,7 @@ export function InterventionBackupPanel({ intervention, onMessage, onChanged }: 
 
     <div className="intervention-backup-summary">
       <div><span>Dernière sauvegarde connue</span><strong>{review.latestKnown ? review.latestKnown.label : 'Aucune'}</strong><small>{review.latestKnown ? dateLabel(review.latestKnown.backupAt) : '—'}</small></div>
-      <div><span>Dernière copie locale</span><strong>{review.latestLocal ? review.latestLocal.label : 'Aucune'}</strong><small>{review.latestLocal ? dateLabel(review.latestLocal.backupAt) : '—'}</small></div>
+      <div><span>Dernière copie locale</span><strong>{latestLocal ? latestLocal.label : 'Aucune'}</strong><small>{latestLocal ? dateLabel(latestLocal.backupAt) : '—'}</small></div>
       <div><span>Avant intervention</span><strong>{review.preInterventionBackup?.label ?? 'Non reliée'}</strong></div>
       <div><span>Après validation</span><strong>{review.postInterventionBackup?.label ?? 'Non reliée'}</strong></div>
     </div>
