@@ -40,7 +40,7 @@ function endOfQuarter(date: Date): Date {
   return new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 3, 0));
 }
 
-function comparisonRange(from: Date, to: Date): { comparisonFrom: string; comparisonTo: string } {
+function previousCustomRange(from: Date, to: Date): { comparisonFrom: string; comparisonTo: string } {
   const days = Math.round((to.getTime() - from.getTime()) / 86_400_000) + 1;
   const comparisonTo = addDays(from, -1);
   const comparisonFrom = addDays(comparisonTo, -(days - 1));
@@ -51,31 +51,45 @@ export function resolveAnalyticsPeriod(input: AnalyticsPeriodInput, now = new Da
   const today = parseDateOnly(isoDate(now), 'Date courante');
   let from: Date;
   let to: Date;
+  let comparisonFrom: Date | null = null;
+  let comparisonTo: Date | null = null;
 
   switch (input.preset) {
     case 'today':
       from = today;
       to = today;
+      comparisonFrom = addDays(today, -1);
+      comparisonTo = comparisonFrom;
       break;
     case 'week':
       from = startOfWeek(today);
       to = addDays(from, 6);
+      comparisonFrom = addDays(from, -7);
+      comparisonTo = addDays(from, -1);
       break;
     case 'month':
       from = startOfMonth(today);
       to = endOfMonth(today);
+      comparisonFrom = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth() - 1, 1));
+      comparisonTo = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), 0));
       break;
     case 'quarter':
       from = startOfQuarter(today);
       to = endOfQuarter(today);
+      comparisonFrom = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth() - 3, 1));
+      comparisonTo = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), 0));
       break;
     case 'year':
       from = new Date(Date.UTC(today.getUTCFullYear(), 0, 1));
       to = new Date(Date.UTC(today.getUTCFullYear(), 11, 31));
+      comparisonFrom = new Date(Date.UTC(today.getUTCFullYear() - 1, 0, 1));
+      comparisonTo = new Date(Date.UTC(today.getUTCFullYear() - 1, 11, 31));
       break;
     case 'previous_year':
       from = new Date(Date.UTC(today.getUTCFullYear() - 1, 0, 1));
       to = new Date(Date.UTC(today.getUTCFullYear() - 1, 11, 31));
+      comparisonFrom = new Date(Date.UTC(today.getUTCFullYear() - 2, 0, 1));
+      comparisonTo = new Date(Date.UTC(today.getUTCFullYear() - 2, 11, 31));
       break;
     case 'custom':
       if (!input.from || !input.to) throw new Error('Une période personnalisée nécessite une date de début et une date de fin.');
@@ -89,10 +103,14 @@ export function resolveAnalyticsPeriod(input: AnalyticsPeriodInput, now = new Da
     }
   }
 
+  const comparison = comparisonFrom && comparisonTo
+    ? { comparisonFrom: isoDate(comparisonFrom), comparisonTo: isoDate(comparisonTo) }
+    : previousCustomRange(from, to);
+
   return {
     preset: input.preset,
     from: isoDate(from),
     to: isoDate(to),
-    ...comparisonRange(from, to),
+    ...comparison,
   };
 }
