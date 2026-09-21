@@ -215,11 +215,20 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
   useEffect(() => {
     if (!detail) return undefined;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') closeProjectDetail();
+      if (event.key !== 'Escape') return;
+      if (phaseCompletionReview) {
+        setPhaseCompletionReview(null);
+        return;
+      }
+      if (productionOverlay) {
+        setProductionOverlay(null);
+        return;
+      }
+      closeProjectDetail();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [detail?.id]);
+  }, [detail?.id, phaseCompletionReview, productionOverlay]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase('fr-FR');
@@ -1178,7 +1187,7 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
         <span>{positionLabel}</span>
         {node.semanticKey && <code>{node.semanticKey}</code>}
       </div>
-      <button className="primary-button" type="button" disabled={saving} onClick={() => void save()}>{saving ? 'Enregistrement…' : 'Enregistrer'}</button>
+      <button className="primary-button" type="button" disabled={saving} onClick={() => void save()}>{saving ? 'Enregistrement…' : 'Enregistrer la fiche'}</button>
     </footer>
   </aside>;
 }
@@ -1296,7 +1305,7 @@ function renderProjectProductionTree(
             event.preventDefault();
             event.currentTarget.classList.remove('drag-over');
             dropIntoPhase(event.dataTransfer.getData('text/atoumweb-project-node'));
-            setTimeout(() => onTogglePhase(phase.id), 0);
+            if (!expanded) setTimeout(() => onTogglePhase(phase.id), 0);
           }}
         >
           <span className="project-phase-chevron">{expanded ? '⌄' : '›'}</span>
@@ -1374,6 +1383,7 @@ function renderProjectProductionTree(
             <div className="project-step-content">
               {node.displaySubtype === 'page'
                 ? <input
+                    key={`${node.id}-${node.name}`}
                     className="project-step-name-input"
                     defaultValue={node.name}
                     aria-label={`Nom de la page ${node.name}`}
