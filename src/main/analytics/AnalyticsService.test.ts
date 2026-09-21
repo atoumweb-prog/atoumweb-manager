@@ -86,16 +86,16 @@ describe('AnalyticsService', () => {
 
   it('calcule les volumes commerciaux avec les pourcentages et leurs volumes bruts', () => {
     database.run(
-      `INSERT INTO prospects (id,organization_id,stage,temperature,won_at,created_at,updated_at)
-       VALUES ('p-won-current','org','won','neutral','2026-09-08T10:00:00.000Z','2026-09-02T10:00:00.000Z','2026-09-08T10:00:00.000Z')`,
+      `INSERT INTO prospects (id,organization_id,stage,temperature,source,won_at,created_at,updated_at)
+       VALUES ('p-won-current','org','won','neutral','google','2026-09-08T10:00:00.000Z','2026-09-02T10:00:00.000Z','2026-09-08T10:00:00.000Z')`,
     );
     database.run(
-      `INSERT INTO prospects (id,organization_id,stage,temperature,lost_reason,lost_at,created_at,updated_at)
-       VALUES ('p-lost-current','org','lost','neutral','Budget','2026-09-10T10:00:00.000Z','2026-09-03T10:00:00.000Z','2026-09-10T10:00:00.000Z')`,
+      `INSERT INTO prospects (id,organization_id,stage,temperature,source,lost_reason,lost_at,created_at,updated_at)
+       VALUES ('p-lost-current','org','lost','neutral','outbound','Budget','2026-09-10T10:00:00.000Z','2026-09-03T10:00:00.000Z','2026-09-10T10:00:00.000Z')`,
     );
     database.run(
       `INSERT INTO prospects (id,organization_id,stage,temperature,won_at,created_at,updated_at)
-       VALUES ('p-won-previous','org','won','neutral','2026-08-11T10:00:00.000Z','2026-08-05T10:00:00.000Z','2026-08-11T10:00:00.000Z')`,
+       VALUES ('p-won-previous','org','won','neutral','referral','2026-08-11T10:00:00.000Z','2026-08-05T10:00:00.000Z','2026-08-11T10:00:00.000Z')`,
     );
 
     database.run(
@@ -141,6 +141,15 @@ describe('AnalyticsService', () => {
       quoteDecisions: 1,
       quoteAcceptancePercent: 100,
     });
+
+    expect(snapshot.sources).toEqual(expect.arrayContaining([
+      expect.objectContaining({ source: 'google', prospectCount: 1, wonCount: 1, conversionPercent: 100 }),
+      expect.objectContaining({ source: 'outbound', prospectCount: 1, lostCount: 1, conversionPercent: 0 }),
+    ]));
+    expect(snapshot.lostReasons).toEqual([{ reason: 'Budget', count: 1 }]);
+    expect(snapshot.delays.quoteToAcceptanceSample).toBe(1);
+    expect(snapshot.delays.quoteToAcceptanceHours).toBeCloseTo(336, 4);
+    expect(snapshot.previousDelays.prospectToQuoteSample).toBe(1);
   });
 
   it('n invente aucun chiffre pour les sources Phase 5 absentes', () => {
