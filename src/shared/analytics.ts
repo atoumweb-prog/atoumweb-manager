@@ -112,3 +112,27 @@ export const ANALYTICS_METRIC_DEFINITIONS: readonly AnalyticsMetricDefinition[] 
     note: 'Différence documentée sur les devis acceptés ; jamais déduite automatiquement d’une facture.',
   },
 ] as const;
+
+
+export interface AnalyticsFinancialMetricValue {
+  key: AnalyticsFinancialMetric;
+  label: string;
+  source: string;
+  businessDate: string;
+  available: boolean;
+  currentCents: number | null;
+  previousCents: number | null;
+  deltaCents: number | null;
+  deltaPercent: number | null;
+  note: string;
+}
+
+export interface AnalyticsFinancialSnapshot {
+  period: AnalyticsDateRange;
+  metrics: AnalyticsFinancialMetricValue[];
+}
+
+export interface AnalyticsApi {
+  financialSnapshot(input: AnalyticsPeriodInput): Promise<AnalyticsFinancialSnapshot>;
+  definitions(): Promise<AnalyticsMetricDefinition[]>;
+}
