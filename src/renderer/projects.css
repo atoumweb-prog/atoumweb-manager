@@ -682,3 +682,115 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Projet V2 — fiche projet en side-sheet */
+.projects-layout.with-detail,
+.projects-layout.with-detail.project-workshop-layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.project-detail-backdrop {
+  position: fixed;
+  inset: 122px 0 0 232px;
+  z-index: 70;
+  background: rgba(17, 27, 35, .12);
+  backdrop-filter: blur(1px);
+}
+
+.project-detail-panel,
+.project-detail-panel.workshop {
+  position: fixed;
+  z-index: 71;
+  top: 136px;
+  right: 20px;
+  bottom: 18px;
+  width: min(660px, calc(100vw - 300px));
+  max-height: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+  box-shadow: 0 24px 70px rgba(18, 28, 36, .18);
+  transition: width .18s ease, left .18s ease;
+}
+
+.project-detail-panel.expanded,
+.project-detail-panel.workshop.expanded {
+  left: 260px;
+  right: 20px;
+  width: auto;
+}
+
+.project-detail-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.project-detail-expand {
+  display: grid;
+  place-items: center;
+  width: 31px;
+  height: 31px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 800;
+}
+.project-detail-expand:hover {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+  color: var(--text);
+  background: var(--surface-soft);
+}
+
+.project-legacy-plan-note {
+  display: grid;
+  gap: 8px;
+  padding: 11px 12px;
+  border: 1px solid color-mix(in srgb, #b98342 35%, var(--border));
+  border-radius: 11px;
+  background: color-mix(in srgb, #b98342 7%, var(--surface));
+}
+.project-legacy-plan-note > div {
+  display: grid;
+  gap: 3px;
+}
+.project-legacy-plan-note strong {
+  font-size: 14px;
+}
+.project-legacy-plan-note span,
+.project-legacy-plan-note small {
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+.project-legacy-plan-note small {
+  padding-top: 7px;
+  border-top: 1px solid color-mix(in srgb, #b98342 18%, var(--border));
+}
+
+@media (max-width: 980px) {
+  .project-detail-backdrop {
+    inset: 122px 0 0 0;
+  }
+  .project-detail-panel,
+  .project-detail-panel.workshop,
+  .project-detail-panel.expanded,
+  .project-detail-panel.workshop.expanded {
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .project-detail-panel,
+  .project-detail-panel.workshop,
+  .project-detail-panel.expanded,
+  .project-detail-panel.workshop.expanded {
+    top: 116px;
+    bottom: 10px;
+  }
+}
