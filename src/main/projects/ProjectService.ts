@@ -407,8 +407,22 @@ export class ProjectService {
 
   private mapTemplateVersion(row: TemplateVersionRow): ProjectTemplateVersion {
     const nodes = this.database.all<TemplateNodeRow>('SELECT * FROM project_template_nodes WHERE template_version_id=? ORDER BY sort_order, created_at', [row.id]).map((node) => ({
-      id: node.id, templateVersionId: node.template_version_id, parentId: node.parent_id, type: node.node_type, displaySubtype: node.display_subtype,
-      name: node.name, description: node.description, sortOrder: Number(node.sort_order), estimatedMinutes: node.estimated_minutes, required: Boolean(node.is_required), initialStatus: node.initial_status, timeCategory: node.time_category, createdAt: node.created_at,
+      id: node.id,
+      templateVersionId: node.template_version_id,
+      parentId: node.parent_id,
+      type: node.node_type,
+      displaySubtype: node.display_subtype,
+      name: node.name,
+      description: node.description,
+      sortOrder: Number(node.sort_order),
+      estimatedMinutes: node.estimated_minutes,
+      required: Boolean(node.is_required),
+      initialStatus: node.initial_status,
+      timeCategory: node.time_category,
+      semanticKey: node.semantic_key,
+      workCard: parseJsonObject<ProjectWorkCard>(node.work_card_json),
+      advice: parseJsonArray<ProjectCompanionAdvice>(node.advice_json),
+      createdAt: node.created_at,
     }));
     return { id: row.id, templateId: row.template_id, versionNumber: Number(row.version_number), status: row.status, description: row.description, publishedAt: row.published_at, createdAt: row.created_at, nodes };
   }
@@ -432,8 +446,42 @@ export class ProjectService {
 
   private getProjectNodes(projectId: string): ProjectNode[] {
     return this.database.all<ProjectNodeRow>('SELECT * FROM project_nodes WHERE project_id=? ORDER BY sort_order, created_at', [projectId]).map((row) => ({
-      id: row.id, projectId: row.project_id, parentId: row.parent_id, sourceTemplateNodeId: row.source_template_node_id, type: row.node_type, displaySubtype: row.display_subtype,
-      name: row.name, description: row.description, sortOrder: Number(row.sort_order), estimatedMinutes: row.estimated_minutes, required: Boolean(row.is_required), status: row.status, timeCategory: row.time_category, createdAt: row.created_at, updatedAt: row.updated_at,
+      id: row.id,
+      projectId: row.project_id,
+      parentId: row.parent_id,
+      sourceTemplateNodeId: row.source_template_node_id,
+      type: row.node_type,
+      displaySubtype: row.display_subtype,
+      name: row.name,
+      description: row.description,
+      sortOrder: Number(row.sort_order),
+      estimatedMinutes: row.estimated_minutes,
+      required: Boolean(row.is_required),
+      status: row.status,
+      timeCategory: row.time_category,
+      semanticKey: row.semantic_key,
+      workCard: parseJsonObject<ProjectWorkCard>(row.work_card_json),
+      advice: parseJsonArray<ProjectCompanionAdvice>(row.advice_json),
+      paused: Boolean(row.is_paused),
+      pauseReason: row.pause_reason,
+      sources: this.getProjectNodeSources(row.id),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+  }
+
+  private getProjectNodeSources(nodeId: string): ProjectNodeSource[] {
+    return this.database.all<ProjectNodeSourceRow>(
+      'SELECT * FROM project_node_sources WHERE project_node_id=? ORDER BY created_at',
+      [nodeId],
+    ).map((row) => ({
+      id: row.id,
+      projectNodeId: row.project_node_id,
+      quoteLineId: row.quote_line_id,
+      catalogVersionId: row.catalog_version_id,
+      templateVersionId: row.template_version_id,
+      sourceRole: row.source_role,
+      createdAt: row.created_at,
     }));
   }
 
@@ -459,8 +507,15 @@ export class ProjectService {
         const node = pending[index]; if (node.parent_id && !ids.has(node.parent_id)) continue;
         const newId = randomUUID(); ids.set(node.id, newId);
         this.database.run(
-          `INSERT INTO project_template_nodes (id,template_version_id,parent_id,node_type,display_subtype,name,description,sort_order,estimated_minutes,is_required,initial_status,time_category,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-          [newId, toVersionId, node.parent_id ? ids.get(node.parent_id)! : null, node.node_type, node.display_subtype, node.name, node.description, node.sort_order, node.estimated_minutes, node.is_required, node.initial_status, node.time_category, now],
+          `INSERT INTO project_template_nodes (
+             id,template_version_id,parent_id,node_type,display_subtype,name,description,sort_order,estimated_minutes,
+             is_required,initial_status,time_category,created_at,semantic_key,work_card_json,advice_json
+           ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          [
+            newId, toVersionId, node.parent_id ? ids.get(node.parent_id)! : null, node.node_type, node.display_subtype,
+            node.name, node.description, node.sort_order, node.estimated_minutes, node.is_required, node.initial_status,
+            node.time_category, now, node.semantic_key, node.work_card_json, node.advice_json,
+          ],
         ); pending.splice(index, 1); progressed = true;
       }
       if (!progressed) throw new Error('Arbre du modèle invalide.');
