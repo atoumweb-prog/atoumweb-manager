@@ -263,3 +263,89 @@ table td {
   line-height: 1;
   border-radius: 9px;
 }
+
+
+/* Hiérarchie typographique CRM — règle de lecture unique.
+   1. Titres / libellés = gras.
+   2. Valeurs saisies ou métier = normal.
+   3. Aides / résumés = normal et atténué.
+   Les balises <strong> historiques ne dictent plus la graisse des valeurs. */
+
+/* Titres de blocs et libellés. */
+.prospect-detail-v2 :is(
+  .prospect-work-accordion-title,
+  .work-section-heading .eyebrow,
+  .work-section-heading > div > strong,
+  .need-selector-title > strong,
+  .reference-summary-heading .eyebrow,
+  .prospect-commercial-priority > h3,
+  .need-scope-assessment .eyebrow
+) {
+  font-weight: 750 !important;
+}
+
+.prospect-detail-v2 .workflow-fields > label,
+.prospect-detail-v2 .workflow-fields .qualification-two-fields > label,
+.prospect-detail-v2 .missing-info-add > label:not(.check-option),
+.prospect-detail-v2 .project-work-field-label {
+  font-weight: 700 !important;
+}
+
+/* Les contrôles contiennent des valeurs, jamais des titres. */
+.prospect-detail-v2 :is(input, select, textarea, option) {
+  font-weight: 400 !important;
+}
+
+/* Synthèses : libellé en gras, donnée en normal. */
+.prospect-detail-v2 .reference-summary-grid > div > span,
+.prospect-reference-summary .reference-summary-grid > div > span,
+.prospect-detail-v2 .identity-summary-grid > div > span,
+.prospect-detail-v2 .summary-line > span,
+.reference-window-shell .identity-summary-grid > div > span {
+  font-weight: 700 !important;
+}
+
+.prospect-detail-v2 .reference-summary-grid > div > strong,
+.prospect-reference-summary .reference-summary-grid > div > strong,
+.prospect-detail-v2 .identity-summary-grid > div > strong,
+.prospect-detail-v2 .summary-line > strong,
+.reference-window-shell .identity-summary-grid > div > strong {
+  font-weight: 400 !important;
+}
+
+/* Référence prospect : le commentaire est une information secondaire, pas un titre. */
+.prospect-reference-summary .reference-summary-heading > div > strong,
+.prospect-detail-v2 .reference-priority-block > strong,
+.prospect-detail-v2 .reference-priority-block > p,
+.prospect-detail-v2 .reference-opportunity-summary > div > strong {
+  font-weight: 400 !important;
+}
+
+.prospect-detail-v2 .reference-priority-block > span,
+.prospect-detail-v2 .reference-opportunity-summary > span {
+  font-weight: 700 !important;
+}
+
+/* Besoin / projet : le diagnostic est une valeur, pas un titre. */
+.prospect-detail-v2 .need-scope-assessment > strong {
+  font-weight: 400 !important;
+}
+.prospect-detail-v2 .need-scope-assessment > small,
+.prospect-detail-v2 .need-selector-title > small,
+.prospect-detail-v2 .prospect-work-accordion-summary,
+.prospect-detail-v2 .muted {
+  font-weight: 400 !important;
+}
+
+/* Questions et options : la question peut être mise en avant, l'option reste normale. */
+.prospect-detail-v2 .missing-info-row > strong {
+  font-weight: 650 !important;
+}
+.prospect-detail-v2 .check-option {
+  font-weight: 400 !important;
+}
+
+/* Les boutons restent des actions et gardent un poids intermédiaire. */
+.prospect-detail-v2 button {
+  font-weight: 650;
+}
