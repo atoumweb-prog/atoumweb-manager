@@ -220,7 +220,7 @@ function App() {
   }
 
   return (
-    <div className={`app-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+    <div className={`app-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${showHoverHelp ? '' : 'help-disabled'}`}>
       <aside className="sidebar">
         <div className="brand-block"><div className="brand-mark">AW</div><div><strong>AtoumWeb</strong><span>Manager</span></div></div>
         <nav className="navigation" aria-label="Navigation principale">
