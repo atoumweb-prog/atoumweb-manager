@@ -105,7 +105,7 @@ export class ExpenseService {
   changeStatus(id: string, status: ExpenseStatus): Expense {
     if (!EXPENSE_STATUSES.includes(status)) throw new Error('Statut de dépense invalide.');
     const current = this.get(id);
-    const paidAt = status === 'paid' ? current.paidAt ?? nowIso() : status === 'cancelled' ? null : current.paidAt;
+    const paidAt = status === 'paid' ? current.paidAt ?? nowIso() : null;
     this.database.run('UPDATE expenses SET status=?,paid_at=?,updated_at=? WHERE id=?', [status, paidAt, nowIso(), id]);
     this.log(id, 'expense_status_changed', current.label + ' · ' + status);
     return this.get(id);
@@ -161,7 +161,7 @@ export class ExpenseService {
     const status = input.status ?? 'committed';
     const paidAt = status === 'paid'
       ? (input.paidAt ? this.dateIso(input.paidAt, 'Date de paiement invalide.') : nowIso())
-      : (input.paidAt ? this.dateIso(input.paidAt, 'Date de paiement invalide.') : null);
+      : null;
 
     return {
       clientAccountId,
@@ -221,7 +221,7 @@ export class ExpenseService {
       const root = join(this.workspace.clientsDirectory, expense.clientAccountId, 'Documents', '09 Depenses');
       return expense.projectNumber ? join(root, expense.projectNumber) : root;
     }
-    return join(this.workspace.internalDirectory, 'Depenses');
+    return this.workspace.expensesDirectory;
   }
 
   private uniqueDestination(directory: string, name: string): string {
