@@ -1,5 +1,21 @@
 # Plan d’exécution Codex — AtoumWeb Manager
 
+## Priorité courante — 22/09/2026
+
+Avant d'appliquer l'ordre historique ci-dessous, lire `docs/HANDOFF_CODEX_MSI.md`.
+
+Le chantier actif est `feature/project-blueprints-v1` / PR #73. Ne pas repartir de `main`, des anciennes branches Phase 1/2/3/4 ou de la branche Phase 7 sans instruction explicite.
+
+Tant que Projet V2 n'est pas recetté :
+1. synchroniser la branche active par `git pull --ff-only` ;
+2. exécuter typecheck/tests/package ;
+3. corriger uniquement les écarts du chantier courant ;
+4. mettre à jour `PROJECT_STATUS.md` si l'état change ;
+5. ne pas lancer de refonte parallèle.
+
+La branche `feature/phase-7-analytics-v1` est conservée mais suspendue jusqu'à intégration avec Projet V2.
+
+
 Ce fichier indique l’ordre d’exécution recommandé pour Codex. Lire également `AGENTS.md`, `PROJECT_STATUS.md` et le document de phase concerné avant tout changement.
 
 ## Règle générale
