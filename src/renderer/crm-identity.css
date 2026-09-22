@@ -154,3 +154,17 @@
     grid-template-columns: 1fr;
   }
 }
+
+.prospect-card-identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.prospect-card-identity > strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
