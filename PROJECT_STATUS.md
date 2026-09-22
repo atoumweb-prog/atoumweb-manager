@@ -12,7 +12,7 @@
 - Branche active : `feature/project-blueprints-v1`.
 - PR active : **#73 — Projet V2 — Blueprints de production et atelier AtoumWeb**.
 - Branche Phase 7 existante en parallèle : `feature/phase-7-analytics-v1` / PR #71 ; ne pas la poursuivre sans la réaligner sur Projet V2.
-- Migrations sur Projet V2 / recette visuelle : **32**.
+- Migrations sur Projet V2 / recette visuelle : **33**.
 - `main` reste historique et très en retard par rapport au socle de travail ; ne pas l'utiliser comme base de développement courant.
 
 ### Projet V2 — réalisé
@@ -36,11 +36,15 @@
 - [x] statut Facturé verrouillé par la présence d’un PDF de facture client ;
 - [x] facture PDF classée dans les Documents client / `03 Factures` sans API Abby ;
 - [x] création d’un pack d’heures payant raccordée automatiquement aux éléments à facturer.
+- [x] page Dépenses opérationnelle : frais internes AtoumWeb, client/projet, catégories, statuts, récurrence et justificatifs ;
+- [x] suivi des frais engagés / payés avec dashboard mensuel et montant récurrent mensuel équivalent ;
+- [x] justificatifs PDF/images stockés dans le workspace, avec classement client/projet lorsque disponible ;
+- [x] migration 33 : table `expenses`.
 
 ### Validation
 
 - [x] dernière validation complète connue sur MSI avant la passe Catalogue : **36 fichiers / 177 tests réussis**, SQLite à **30 migrations**.
-- [ ] revalider le HEAD actuel après le dernier lot : aide / actions / coffre sécurisé / Catalogue Offres & Tarifs / ateliers Interventions & Packs / Gestion des temps / Facturation PDF Abby / migrations 31–32 / cohérence UI globale.
+- [ ] revalider le HEAD actuel après le dernier lot : aide / actions / coffre sécurisé / Catalogue Offres & Tarifs / ateliers Interventions & Packs / Gestion des temps / Facturation PDF Abby / Dépenses / migrations 31–33 / cohérence UI globale.
 - [ ] `npm run typecheck`
 - [ ] `npm test`
 - [ ] `npm run package`
