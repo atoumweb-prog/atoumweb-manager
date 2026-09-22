@@ -32,7 +32,7 @@ export function ProspectReferenceSummary({ prospect }: { prospect: ProspectSumma
       <div><span>Activité</span><strong>{prospect.organizationIndustry || 'À compléter'}</strong></div>
       <div><span>Ville</span><strong>{prospect.organizationCity || 'À compléter'}</strong></div>
       <div><span>Contact</span><strong>{prospect.secondaryLabel || 'À identifier'}</strong></div>
-      <div><span>Site</span><strong>{prospect.organizationWebsite || prospect.existingUrl || 'À vérifier'}</strong></div>
+      <div><span>Site</span><strong>{displayWebUrl(prospect.organizationWebsite || prospect.existingUrl) || 'À vérifier'}</strong></div>
     </div>
     {talkingPoints && <div className="reference-priority-block"><span>Points à évoquer</span><strong>{talkingPoints}</strong></div>}
     {approach && <div className="reference-priority-block"><span>Angle d’approche</span><p>{approach}</p></div>}
