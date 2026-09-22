@@ -1,5 +1,6 @@
 import { app, dialog, ipcMain, safeStorage, shell } from 'electron';
 import type { BillingInvoiceInput, BillingItemFilters, BillingItemStatus } from '../shared/billing';
+import type { ExpenseFilters, ExpenseInput, ExpenseStatus } from '../shared/expenses';
 import type {
   CatalogFilters,
   CatalogItemInput,
@@ -269,6 +270,29 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     const item = database.billingHandoff.get(id);
     if (!item.invoiceDocumentId) throw new Error('Aucune facture PDF n’est rattachée à cet élément.');
     const error = await shell.openPath(database.clientDocuments.absolutePath(item.invoiceDocumentId));
+    if (error) throw new Error(error);
+  });
+
+  ipcMain.handle('expenses:list', (_event, filters?: ExpenseFilters) => database.expenses.list(filters));
+  ipcMain.handle('expenses:get', (_event, id: string) => database.expenses.get(id));
+  ipcMain.handle('expenses:create', (_event, input: ExpenseInput) => database.expenses.create(input));
+  ipcMain.handle('expenses:update', (_event, id: string, input: ExpenseInput) => database.expenses.update(id, input));
+  ipcMain.handle('expenses:change-status', (_event, id: string, status: ExpenseStatus) => database.expenses.changeStatus(id, status));
+  ipcMain.handle('expenses:import-receipt', async (_event, id: string) => {
+    const expense = database.expenses.get(id);
+    const selection = await dialog.showOpenDialog({
+      title: `Importer un justificatif · ${expense.label}`,
+      defaultPath: workspace.root,
+      properties: ['openFile'],
+      filters: [
+        { name: 'Justificatifs', extensions: ['pdf', 'png', 'jpg', 'jpeg', 'webp'] },
+      ],
+    });
+    if (selection.canceled || selection.filePaths.length === 0) return null;
+    return database.expenses.importReceipt(id, selection.filePaths[0]);
+  });
+  ipcMain.handle('expenses:open-receipt', async (_event, id: string) => {
+    const error = await shell.openPath(database.expenses.absoluteReceiptPath(id));
     if (error) throw new Error(error);
   });
 
