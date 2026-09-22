@@ -6,6 +6,20 @@ Le projet suit le versioning sémantique.
 
 ## [Unreleased]
 
+### Projet V2 — atelier de production
+
+- Génération du projet depuis les blueprints liés au devis accepté.
+- Atelier plein écran : phases repliées, étapes numérotées, progression et glisser-déposer.
+- Plan/Fiche redimensionnables, barre latérale escamotable et outils secondaires en fenêtre.
+- Timer rattaché à l'étape, notes et actions libres par fiche.
+- Validation de fin de phase avec signalement des champs non renseignés et clôture groupée.
+- Ressources, bibliothèque technique et suivi du temps accessibles sans quitter Production.
+- Pages renommables directement dans l'arbre et undo/redo des modifications courantes.
+- Aide contextuelle désactivable dans Réglages.
+- Migration 30 : coffre d'accès projet/étape ; secrets chiffrés via Electron `safeStorage`.
+- Harmonisation transverse des anciens écrans : contrôles, boutons, onglets, focus, débordements et lisibilité.
+
+
 ### Stabilisation commerciale
 
 - Ajout de la migration 19 avec conservation des dossiers existants.
