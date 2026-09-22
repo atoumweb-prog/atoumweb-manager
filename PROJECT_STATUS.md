@@ -12,7 +12,7 @@
 - Branche active : `feature/project-blueprints-v1`.
 - PR active : **#73 — Projet V2 — Blueprints de production et atelier AtoumWeb**.
 - Branche Phase 7 existante en parallèle : `feature/phase-7-analytics-v1` / PR #71 ; ne pas la poursuivre sans la réaligner sur Projet V2.
-- Migrations sur Projet V2 : **30**.
+- Migrations sur Projet V2 / recette Catalogue : **31**.
 - `main` reste historique et très en retard par rapport au socle de travail ; ne pas l'utiliser comme base de développement courant.
 
 ### Projet V2 — réalisé
@@ -35,8 +35,8 @@
 
 ### Validation
 
-- [x] recette Projet V2 antérieure : typecheck/tests signalés verts sur MSI.
-- [ ] revalider le HEAD actuel après le dernier lot : aide / actions / coffre sécurisé / migration 30 / cohérence UI globale.
+- [x] dernière validation complète connue sur MSI avant la passe Catalogue : **36 fichiers / 177 tests réussis**, SQLite à **30 migrations**.
+- [ ] revalider le HEAD actuel après le dernier lot : aide / actions / coffre sécurisé / migration 30 / Catalogue Offres & Tarifs / migration 31 / cohérence UI globale.
 - [ ] `npm run typecheck`
 - [ ] `npm test`
 - [ ] `npm run package`
@@ -84,7 +84,7 @@ Prochaine action : terminer la recette visuelle du lot avant toute validation fi
 - **Socle fonctionnel courant** : `fix/pre-phase5-commercial-ux`
 - **Chantier actif** : `feature/project-blueprints-v1` — PR #73
 - **Statistiques en attente d'intégration** : `feature/phase-7-analytics-v1` — PR #71
-- **Migrations courantes sur Projet V2** : 30
+- **Migrations courantes sur Projet V2 / Catalogue** : 31
 - **Principe directeur** : une donnée métier possède une source unique ; les autres écrans la référencent sans duplication.
 
 ### Stabilisation transverse — 15/09/2026
