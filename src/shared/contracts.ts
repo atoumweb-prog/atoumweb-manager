@@ -1,3 +1,4 @@
+import type { BillingApi } from './billing';
 import type { CatalogApi, QuoteApi } from './commercial';
 import type { CrmApi } from './crm';
 import type { ClientDocumentsApi } from './clientDocuments';
@@ -84,6 +85,7 @@ export interface AtoumWebApi {
   };
   crm: CrmApi;
   clientDocuments: ClientDocumentsApi;
+  billing: BillingApi;
   catalog: CatalogApi;
   quotes: QuoteApi;
   projects: ProjectsApi;
