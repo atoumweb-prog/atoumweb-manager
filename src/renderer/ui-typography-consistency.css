@@ -4,8 +4,8 @@
 
 :root {
   --aw-font-functional: max(14px, var(--ui-font-small));
-  --aw-font-secondary: max(15px, var(--ui-font-secondary));
-  --aw-font-body: max(16px, var(--ui-font-base));
+  --aw-font-secondary: max(14px, var(--ui-font-secondary));
+  --aw-font-body: max(15px, var(--ui-font-base));
 }
 
 /* Contrôles et libellés */
