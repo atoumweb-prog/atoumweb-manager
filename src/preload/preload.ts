@@ -23,6 +23,8 @@ import type {
   CrmActionFilters,
   CrmActionInput,
   CompleteActionInput,
+  CrmIdentityAssetRole,
+  CrmIdentityOwnerType,
   OrganizationInput,
   ProspectFilters,
   ProspectInput,
@@ -146,6 +148,12 @@ const api: AtoumWebApi = {
       list:(owner,id,includeArchived)=>ipcRenderer.invoke('crm:contact-methods:list',owner,id,includeArchived),
       save:(input,id)=>ipcRenderer.invoke('crm:contact-methods:save',input,id),
       archive:(id,archived)=>ipcRenderer.invoke('crm:contact-methods:archive',id,archived),
+    },
+    identityAssets: {
+      list: (owner: CrmIdentityOwnerType, id: string) => ipcRenderer.invoke('crm:identity-assets:list', owner, id),
+      importFile: (owner: CrmIdentityOwnerType, id: string, role: CrmIdentityAssetRole) => ipcRenderer.invoke('crm:identity-assets:import', owner, id, role),
+      preview: (assetId: string) => ipcRenderer.invoke('crm:identity-assets:preview', assetId),
+      remove: (assetId: string) => ipcRenderer.invoke('crm:identity-assets:remove', assetId),
     },
     prospects: {
       list: (filters?: ProspectFilters) => ipcRenderer.invoke('crm:prospects:list', filters),
