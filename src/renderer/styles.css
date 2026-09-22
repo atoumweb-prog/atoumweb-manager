@@ -199,3 +199,46 @@ button { color: inherit; }
   border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
   background: color-mix(in srgb, var(--accent) 6%, var(--surface));
 }
+
+
+/* Réglages — aide contextuelle */
+.settings-help-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+.settings-help-row h2 {
+  margin: 4px 0 5px;
+}
+.settings-help-row p {
+  margin: 0;
+}
+.settings-switch {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 40px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-soft);
+  cursor: pointer;
+  font-weight: 750;
+}
+.settings-switch input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--accent);
+}
+@media (max-width: 760px) {
+  .settings-help-row {
+    grid-template-columns: 1fr;
+  }
+  .settings-switch {
+    justify-self: start;
+  }
+}
