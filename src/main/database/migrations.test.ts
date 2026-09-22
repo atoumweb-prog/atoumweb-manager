@@ -66,7 +66,7 @@ describe('migrations SQLite', () => {
       'maintenance_overage_decisions', 'maintenance_report_drafts', 'hour_pack_shortfall_decisions',
       'crm_needs', 'demo_batches', 'demo_records', 'demo_context', 'contact_methods', 'client_documents',
       'atoumweb_technical_assets', 'backup_records', 'backup_locations', 'backup_policies', 'backup_intervention_links',
-      'catalog_project_blueprints', 'project_node_sources', 'project_node_secrets', 'expenses',
+      'catalog_project_blueprints', 'project_node_sources', 'project_node_secrets', 'expenses', 'crm_identity_assets',
     ]) {
       const row = database.get<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", [table]);
       expect(row?.name).toBe(table);
@@ -84,9 +84,11 @@ describe('migrations SQLite', () => {
     for (const column of ['reuse_status', 'origin_technical_item_id', 'library_category']) {
       expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('technical_items') WHERE name='${column}'`)?.name).toBe(column);
     }
-    expect(MIGRATIONS.at(-1)?.id).toBe(33);
+    expect(MIGRATIONS.at(-1)?.id).toBe(34);
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('expenses') WHERE name='project_id'")?.name).toBe('project_id');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('expenses') WHERE name='receipt_relative_path'")?.name).toBe('receipt_relative_path');
+    expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('crm_identity_assets') WHERE name='role'")?.name).toBe('role');
+    expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('crm_identity_assets') WHERE name='relative_path'")?.name).toBe('relative_path');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('billing_items') WHERE name='invoice_document_id'")?.name).toBe('invoice_document_id');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('billing_items') WHERE name='invoice_reference'")?.name).toBe('invoice_reference');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('billing_items') WHERE name='invoiced_at'")?.name).toBe('invoiced_at');
