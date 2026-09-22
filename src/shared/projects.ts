@@ -37,12 +37,47 @@ export interface ProjectWorkCardField {
   type: ProjectWorkCardFieldType;
   options?: string[];
   value?: string | boolean | null;
+  help?: string | null;
+}
+
+export interface ProjectWorkAction {
+  id: string;
+  title: string;
+  done: boolean;
 }
 
 export interface ProjectWorkCard {
   goal?: string | null;
   notes?: string | null;
   fields: ProjectWorkCardField[];
+  actions?: ProjectWorkAction[];
+}
+
+export interface ProjectSecretInput {
+  projectId: string;
+  projectNodeId?: string | null;
+  label: string;
+  username?: string | null;
+  secret: string;
+  url?: string | null;
+  notes?: string | null;
+}
+
+export interface ProjectSecretSummary {
+  id: string;
+  projectId: string;
+  projectNodeId?: string | null;
+  label: string;
+  username?: string | null;
+  url?: string | null;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProjectSecretReveal {
+  id: string;
+  secret: string;
 }
 
 export interface ProjectCompanionAdvice {
@@ -352,6 +387,12 @@ export interface ProjectsApi {
     completePhase(nodeId: string): Promise<ProjectDetail>;
     addPrerequisite(projectId: string, input: ProjectPrerequisiteInput): Promise<ProjectDetail>;
     updatePrerequisiteStatus(id: string, status: ProjectPrerequisiteStatus): Promise<ProjectDetail>;
+  };
+  secrets: {
+    list(projectId: string, projectNodeId?: string | null): Promise<ProjectSecretSummary[]>;
+    save(input: ProjectSecretInput): Promise<ProjectSecretSummary>;
+    reveal(id: string): Promise<ProjectSecretReveal>;
+    remove(id: string): Promise<void>;
   };
   resources: {
     list(projectId: string): Promise<ProjectResource[]>;
