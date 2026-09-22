@@ -181,3 +181,85 @@ table td {
 .content-area :is(label, .muted, small, .status-pill) {
   overflow-wrap: anywhere;
 }
+
+
+/* Recette CRM 22/09/2026 — hiérarchie typographique validée.
+   Titres/libellés en gras, informations en graisse normale. */
+.prospect-directory-status,
+.prospect-detail-v2 .status-pill {
+  font-size: 13px !important;
+  font-weight: 750 !important;
+  line-height: 1.15;
+}
+
+.prospect-detail-v2 {
+  font-size: 14px;
+}
+.prospect-detail-v2 .detail-panel-heading h2 {
+  font-size: 20px;
+  line-height: 1.15;
+}
+.prospect-detail-v2 .eyebrow,
+.prospect-detail-v2 .muted,
+.prospect-detail-v2 small,
+.prospect-detail-v2 label,
+.prospect-detail-v2 button,
+.prospect-detail-v2 input,
+.prospect-detail-v2 select,
+.prospect-detail-v2 textarea {
+  font-size: 14px;
+}
+
+/* Valeurs de synthèse : information = normal ; libellé = gras. */
+.prospect-detail-v2 .reference-summary-grid > div > span,
+.prospect-reference-summary .reference-summary-grid > div > span,
+.identity-summary-grid > div > span,
+.reference-priority-block > span,
+.reference-opportunity-summary > span,
+.summary-line > span {
+  font-weight: 750;
+  color: var(--text-muted);
+}
+
+.prospect-detail-v2 .reference-summary-grid > div > strong,
+.prospect-reference-summary .reference-summary-grid > div > strong,
+.identity-summary-grid > div > strong,
+.reference-priority-block > strong,
+.summary-line > strong {
+  font-weight: 450;
+  color: var(--text);
+}
+
+/* Même logique dans la fenêtre Référence indépendante. */
+.reference-window-shell {
+  font-size: 14px;
+}
+.reference-window-header h1 {
+  font-size: 26px;
+  line-height: 1.12;
+}
+.reference-window-header p,
+.reference-window-shell :is(label, input, select, textarea, button, small, .muted) {
+  font-size: 14px;
+}
+.reference-window-shell .identity-summary-grid > div > span {
+  font-weight: 750;
+}
+.reference-window-shell .identity-summary-grid > div > strong {
+  font-weight: 450;
+}
+
+/* Bouton d’agrandissement : icône carrée, sans changement de hauteur du header. */
+.prospect-detail-v2 .open-desk-button {
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 !important;
+  font-size: 17px !important;
+  line-height: 1;
+  border-radius: 9px;
+}
