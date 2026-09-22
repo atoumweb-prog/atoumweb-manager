@@ -129,9 +129,9 @@ export class CatalogService {
       params.push(filters.priceMode);
     }
     if (clean(filters.search)) {
-      where.push('(i.name LIKE ? COLLATE NOCASE OR COALESCE(i.category, \'\') LIKE ? COLLATE NOCASE OR COALESCE(v.description, \'\') LIKE ? COLLATE NOCASE)');
+      where.push('(i.name LIKE ? COLLATE NOCASE OR COALESCE(i.category, \'\') LIKE ? COLLATE NOCASE OR COALESCE(v.nature, \'\') LIKE ? COLLATE NOCASE OR COALESCE(v.description, \'\') LIKE ? COLLATE NOCASE)');
       const query = `%${clean(filters.search)}%`;
-      params.push(query, query, query);
+      params.push(query, query, query, query);
     }
 
     const rows = this.database.all<CatalogRow>(
