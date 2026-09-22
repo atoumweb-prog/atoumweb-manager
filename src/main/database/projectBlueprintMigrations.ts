@@ -246,4 +246,25 @@ export const PROJECT_BLUEPRINT_MIGRATIONS: Migration[] = [
         AND EXISTS (SELECT 1 FROM project_template_versions WHERE id='atoumweb-project-template-vitrine-v1');
     `,
   },
+  {
+    id: 30,
+    name: 'project_v2_secure_node_secrets',
+    sql: `
+      CREATE TABLE IF NOT EXISTS project_node_secrets (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        project_node_id TEXT NULL REFERENCES project_nodes(id) ON DELETE CASCADE,
+        label TEXT NOT NULL,
+        username TEXT NULL,
+        secret_ciphertext TEXT NOT NULL,
+        url TEXT NULL,
+        notes TEXT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_project_node_secrets_project
+        ON project_node_secrets(project_id, project_node_id, created_at);
+    `,
+  },
 ];
