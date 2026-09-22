@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import type { BootstrapState, DisplayDensity, ThemeName } from '../shared/contracts';
 import type { SearchResult } from '../shared/crm';
 import { BusinessBackupsPage } from './backups/BusinessBackupsPage';
+import { BillingPage } from './billing/BillingPage';
 import { CatalogPage } from './commercial/CatalogPage';
 import { QuotesPage } from './commercial/QuotesPage';
 import { ClientsPage } from './crm/ClientsPage';
@@ -259,10 +260,11 @@ function App() {
           {activePage === 'Projets' && <ProjectsPage onMessage={setMessage} initialProjectId={projectSearchTarget} showHoverHelp={showHoverHelp} />}
           {activePage === 'Interventions & Maintenance' && <OperationsPage onMessage={setMessage} initialTarget={operationsSearchTarget} />}
           {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}
+          {activePage === 'Facturation' && <BillingPage onMessage={setMessage} />}
           {activePage === 'Bibliothèque AtoumWeb' && <AtoumWebLibraryPage onMessage={setMessage} initialItemId={librarySearchTarget} />}
           {activePage === 'Sauvegardes' && <BusinessBackupsPage onMessage={setMessage} initialRecordId={backupSearchTarget} />}
           {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} displayDensity={displayDensity} showHoverHelp={showHoverHelp} onThemeChange={updateTheme} onDensityChange={updateDisplayDensity} onShowHoverHelpChange={updateShowHoverHelp} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
-          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Sauvegardes' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
+          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Facturation' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Sauvegardes' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
         </section>
       </main>
     </div>
