@@ -452,6 +452,13 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
               </div>
               <div className="detail-badges"><span className={`catalog-status catalog-${detail.status}`}>{STATUS_LABELS[detail.status]}</span><span className="status-pill">{detail.visiblePublic ? 'Visible site' : 'Interne'}</span>{detail.currentVersion && <span className="status-pill">v{detail.currentVersion.versionNumber} · {VERSION_STATUS_LABELS[detail.currentVersion.status]}</span>}</div>
 
+              {detail.currentVersion && (!detail.currentVersion.nature || !detail.currentVersion.description || (detail.currentVersion.inclusions?.length ?? 0) === 0) && (
+                <div className="catalog-completeness">
+                  <div><strong>Fiche à compléter</strong><span>Nature, description et contenu inclus permettent de comprendre immédiatement ce qui est réellement vendu.</span></div>
+                  <button className="secondary-button" type="button" onClick={prepareNewVersion}>Compléter la fiche</button>
+                </div>
+              )}
+
               {detail.currentVersion ? (
                 <div className="catalog-current-version">
                   <Summary label="Nature" value={detail.currentVersion.nature || 'Non renseignée'} />
@@ -500,30 +507,109 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
 
 function CatalogFields({ draft, onChange, showIdentity = false }: { draft: CatalogDraft; onChange: (draft: CatalogDraft) => void; showIdentity?: boolean }) {
   const priceDisabled = draft.priceMode === 'quote_only' || draft.priceMode === 'free';
+
   return (
     <div className="catalog-fields">
-      {showIdentity && <><label>Type<select value={draft.type} onChange={(e) => onChange({ ...draft, type: e.target.value as CatalogItemType })}><option value="service">Service</option><option value="offer">Offre</option></select></label><label>Nom<input value={draft.name} onChange={(e) => onChange({ ...draft, name: e.target.value })} placeholder="Ex. Site vitrine" /></label><label>Catégorie<input value={draft.category} onChange={(e) => onChange({ ...draft, category: e.target.value })} placeholder="Ex. Création de site" /></label></>}
-      <label>Mode tarifaire<select value={draft.priceMode} onChange={(e) => onChange({ ...draft, priceMode: e.target.value as PriceMode })}>{PRICE_MODES.map((mode) => <option key={mode} value={mode}>{PRICE_LABELS[mode]}</option>)}</select></label>
-      <label>Prix AtoumWeb (€)<input disabled={priceDisabled} inputMode="decimal" value={priceDisabled ? '' : draft.priceEuros} onChange={(e) => onChange({ ...draft, priceEuros: e.target.value })} placeholder="699" /></label>
-      <label>Prix conseillé (€)<input inputMode="decimal" value={draft.recommendedEuros} onChange={(e) => onChange({ ...draft, recommendedEuros: e.target.value })} /></label>
-      <label>Acompte par défaut (%)<input inputMode="numeric" value={draft.depositPercent} onChange={(e) => onChange({ ...draft, depositPercent: e.target.value })} /></label>
-      <label>Durée estimée (min)<input inputMode="numeric" value={draft.estimatedMinutes} onChange={(e) => onChange({ ...draft, estimatedMinutes: e.target.value })} /></label>
-      <label>Délai recommandé (jours)<input inputMode="numeric" value={draft.recommendedDelayDays} onChange={(e) => onChange({ ...draft, recommendedDelayDays: e.target.value })} /></label>
-      <label className="catalog-description">Conditions commerciales<textarea value={draft.specialTerms} onChange={e=>onChange({...draft,specialTerms:e.target.value})}/></label><label>Type de contrat<input value={draft.contractType} onChange={(e) => onChange({ ...draft, contractType: e.target.value })} placeholder="Ex. Création de site" /></label>
-      <label className="catalog-description">Description<textarea value={draft.description} onChange={(e) => onChange({ ...draft, description: e.target.value })} placeholder="Description de la prestation…" /></label>
-      <label>Inclus — 1 par ligne<textarea value={draft.inclusionsText} onChange={(e) => onChange({ ...draft, inclusionsText: e.target.value })} /></label>
-      <label>Exclusions — 1 par ligne<textarea value={draft.exclusionsText} onChange={(e) => onChange({ ...draft, exclusionsText: e.target.value })} /></label>
-      <label>Prérequis — 1 par ligne<textarea value={draft.prerequisitesText} onChange={(e) => onChange({ ...draft, prerequisitesText: e.target.value })} /></label>
-      <label className="catalog-description">Conseil interne AtoumWeb<textarea value={draft.internalAdvice} onChange={(e) => onChange({ ...draft, internalAdvice: e.target.value })} placeholder="Information interne, jamais affichée automatiquement au client." /></label>
-      {showIdentity && <label className="catalog-public-check"><input type="checkbox" checked={draft.visiblePublic} onChange={(e) => onChange({ ...draft, visiblePublic: e.target.checked })} /> Visible sur le site public</label>}
+      {showIdentity && <section className="catalog-field-group">
+        <div className="catalog-field-group-heading"><strong>Identité</strong><span>Ce qui permet de retrouver et classer la prestation.</span></div>
+        <div className="catalog-fields-grid">
+          <label>
+            <span className="field-label-with-help">Type <FieldHelp text="Service = prestation atomique. Offre = assemblage commercial de plusieurs Services." /></span>
+            <select value={draft.type} onChange={(e) => onChange({ ...draft, type: e.target.value as CatalogItemType })}><option value="service">Service</option><option value="offer">Offre</option></select>
+          </label>
+          <label>
+            <span className="field-label-with-help">Nom <FieldHelp text="Nom commercial interne de la prestation ou de l’offre." /></span>
+            <input value={draft.name} onChange={(e) => onChange({ ...draft, name: e.target.value })} placeholder="Ex. Article essentiel" />
+          </label>
+          <label>
+            <span className="field-label-with-help">Catégorie <FieldHelp text="Famille utilisée pour organiser le catalogue : Contenu, Web, SEO, Maintenance…" /></span>
+            <input value={draft.category} onChange={(e) => onChange({ ...draft, category: e.target.value })} placeholder="Ex. Contenu" />
+          </label>
+        </div>
+      </section>}
+
+      <section className="catalog-field-group">
+        <div className="catalog-field-group-heading"><strong>Contenu de la prestation</strong><span>Ce que tu vends réellement et ce que le projet devra reprendre.</span></div>
+        <div className="catalog-fields-grid">
+          <label className="catalog-wide">
+            <span className="field-label-with-help">Nature de la prestation <FieldHelp text="Décris en une courte phrase le rôle de cette prestation. Exemple : rédaction d’un article de blog optimisé ou création d’une page supplémentaire." /></span>
+            <input value={draft.nature} onChange={(e) => onChange({ ...draft, nature: e.target.value })} placeholder="Ex. Rédaction d’un article de blog prêt à publier" />
+          </label>
+          <label className="catalog-wide">
+            <span className="field-label-with-help">Description <FieldHelp text="Explique le résultat attendu, le périmètre et la valeur apportée au client." /></span>
+            <textarea value={draft.description} onChange={(e) => onChange({ ...draft, description: e.target.value })} placeholder="Décris clairement la prestation, son objectif et son résultat attendu…" />
+          </label>
+          <label>
+            <span className="field-label-with-help">Inclus <FieldHelp text="Un élément par ligne. Ce sont les livrables ou actions compris dans le prix." /></span>
+            <textarea value={draft.inclusionsText} onChange={(e) => onChange({ ...draft, inclusionsText: e.target.value })} placeholder={"Recherche du sujet\nRédaction\nMise en forme"} />
+          </label>
+          <label>
+            <span className="field-label-with-help">Exclusions <FieldHelp text="Un élément par ligne. Précise ce qui n’est pas compris pour éviter les ambiguïtés." /></span>
+            <textarea value={draft.exclusionsText} onChange={(e) => onChange({ ...draft, exclusionsText: e.target.value })} placeholder={"Achat de photos\nTraduction"} />
+          </label>
+          <label>
+            <span className="field-label-with-help">Prérequis <FieldHelp text="Un élément par ligne. Informations, accès ou validations nécessaires avant de commencer." /></span>
+            <textarea value={draft.prerequisitesText} onChange={(e) => onChange({ ...draft, prerequisitesText: e.target.value })} placeholder={"Sujet validé\nAccès WordPress"} />
+          </label>
+        </div>
+      </section>
+
+      <section className="catalog-field-group">
+        <div className="catalog-field-group-heading"><strong>Tarification & délai</strong><span>Références commerciales et estimation interne.</span></div>
+        <div className="catalog-fields-grid">
+          <label>
+            <span className="field-label-with-help">Mode tarifaire <FieldHelp text="Détermine la façon dont le prix est présenté et calculé dans le catalogue." /></span>
+            <select value={draft.priceMode} onChange={(e) => onChange({ ...draft, priceMode: e.target.value as PriceMode })}>{PRICE_MODES.map((mode) => <option key={mode} value={mode}>{PRICE_LABELS[mode]}</option>)}</select>
+          </label>
+          <label>
+            <span className="field-label-with-help">Prix AtoumWeb (€) <FieldHelp text="Prix de vente courant utilisé comme référence pour les devis." /></span>
+            <input disabled={priceDisabled} inputMode="decimal" value={priceDisabled ? '' : draft.priceEuros} onChange={(e) => onChange({ ...draft, priceEuros: e.target.value })} placeholder="99" />
+          </label>
+          <label>
+            <span className="field-label-with-help">Prix conseillé (€) <FieldHelp text="Référence interne éventuelle permettant de mesurer une remise ou un positionnement commercial." /></span>
+            <input inputMode="decimal" value={draft.recommendedEuros} onChange={(e) => onChange({ ...draft, recommendedEuros: e.target.value })} />
+          </label>
+          <label>
+            <span className="field-label-with-help">Acompte par défaut (%) <FieldHelp text="Pourcentage proposé automatiquement lors de la création d’un devis." /></span>
+            <input inputMode="numeric" value={draft.depositPercent} onChange={(e) => onChange({ ...draft, depositPercent: e.target.value })} />
+          </label>
+          <label>
+            <span className="field-label-with-help">Durée estimée (min) <FieldHelp text="Temps de production interne de référence. Il servira ensuite aux comparaisons de temps et de rentabilité." /></span>
+            <input inputMode="numeric" value={draft.estimatedMinutes} onChange={(e) => onChange({ ...draft, estimatedMinutes: e.target.value })} />
+          </label>
+          <label>
+            <span className="field-label-with-help">Délai recommandé (jours) <FieldHelp text="Délai indicatif à reprendre dans le devis ou le planning du projet." /></span>
+            <input inputMode="numeric" value={draft.recommendedDelayDays} onChange={(e) => onChange({ ...draft, recommendedDelayDays: e.target.value })} />
+          </label>
+        </div>
+      </section>
+
+      <section className="catalog-field-group">
+        <div className="catalog-field-group-heading"><strong>Cadre commercial</strong><span>Informations de contrat et conseils internes.</span></div>
+        <div className="catalog-fields-grid">
+          <label>
+            <span className="field-label-with-help">Type de contrat <FieldHelp text="Type de document ou cadre contractuel recommandé pour cette prestation." /></span>
+            <input value={draft.contractType} onChange={(e) => onChange({ ...draft, contractType: e.target.value })} placeholder="Ex. Création de contenu" />
+          </label>
+          <label className="catalog-wide">
+            <span className="field-label-with-help">Conditions commerciales <FieldHelp text="Conditions particulières à reprendre dans le devis lorsque cette prestation est utilisée." /></span>
+            <textarea value={draft.specialTerms} onChange={(e) => onChange({ ...draft, specialTerms: e.target.value })} />
+          </label>
+          <label className="catalog-wide">
+            <span className="field-label-with-help">Conseil interne AtoumWeb <FieldHelp text="Bonne pratique, point de vigilance ou conseil réservé à AtoumWeb. Jamais affiché automatiquement au client." /></span>
+            <textarea value={draft.internalAdvice} onChange={(e) => onChange({ ...draft, internalAdvice: e.target.value })} placeholder="Ex. demander le sujet, le mot-clé principal et les visuels avant démarrage." />
+          </label>
+          {showIdentity && <label className="catalog-public-check"><input type="checkbox" checked={draft.visiblePublic} onChange={(e) => onChange({ ...draft, visiblePublic: e.target.checked })} /> Visible sur le site public</label>}
+        </div>
+      </section>
     </div>
   );
 }
 
 function Summary({ label, value }: { label: string; value: string }) {
-  return <div className="summary-line"><span>{label}</span><strong>{value}</strong></div>;
+  return <div className="summary-line"><strong>{label}</strong><span>{value}</span></div>;
 }
 
 function ListSummary({ label, values }: { label: string; values: string[] }) {
-  return <div className="catalog-list-summary"><span>{label}</span>{values.length ? <ul>{values.map((value) => <li key={value}>{value}</li>)}</ul> : <strong>—</strong>}</div>;
+  return <div className="catalog-list-summary"><strong>{label}</strong>{values.length ? <ul>{values.map((value) => <li key={value}>{value}</li>)}</ul> : <span>Non renseigné</span>}</div>;
 }
