@@ -63,7 +63,11 @@ export function registerOperationsIpcHandlers(database: DatabaseService): void {
 
   ipcMain.handle('operations:hour-packs:list', (_event, filters?: HourPackFilters) => database.hourPacks.list(filters));
   ipcMain.handle('operations:hour-packs:get', (_event, id: string) => database.hourPacks.get(id));
-  ipcMain.handle('operations:hour-packs:create', (_event, input: HourPackInput) => database.hourPacks.create(input));
+  ipcMain.handle('operations:hour-packs:create', (_event, input: HourPackInput) => {
+    const pack = database.hourPacks.create(input);
+    database.billingHandoff.ensureForHourPack(pack.id);
+    return pack;
+  });
   ipcMain.handle('operations:hour-packs:change-status', (_event, id: string, status: HourPackStatus) => database.hourPacks.changeStatus(id, status));
   ipcMain.handle('operations:hour-packs:add-movement', (_event, id: string, input: HourPackMovementInput) => database.hourPacks.addMovement(id, input));
   ipcMain.handle('operations:hour-packs:debit-intervention', (_event, packId: string, interventionId: string) => database.hourPacks.debitIntervention(packId, interventionId));
