@@ -79,6 +79,8 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
   const [interventionStatus, setInterventionStatus] = useState<'all' | InterventionStatus>('all');
   const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
   const [selectedIntervention, setSelectedIntervention] = useState<Intervention | null>(null);
+  const [interventionSplitPercent, setInterventionSplitPercent] = useState(34);
+  const [interventionExpanded, setInterventionExpanded] = useState(false);
   const [createRequestOpen, setCreateRequestOpen] = useState(false);
   const [createInterventionOpen, setCreateInterventionOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -139,13 +141,14 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
 
   useEffect(() => {
     if (!selectedIntervention) return;
-    const closeOnOutside = (event: PointerEvent) => {
-      const target = event.target as Node | null;
-      if (!target || interventionDetailRef.current?.contains(target)) return;
-      setSelectedIntervention(null);
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSelectedIntervention(null);
+        setInterventionExpanded(false);
+      }
     };
-    document.addEventListener('pointerdown', closeOnOutside);
-    return () => document.removeEventListener('pointerdown', closeOnOutside);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
   }, [selectedIntervention?.id]);
 
   useEffect(() => {
@@ -309,6 +312,25 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
     window.dispatchEvent(new CustomEvent('atoumweb:timer-context', { detail: { interventionId: intervention.id, projectId: intervention.projectId ?? null, nodeId: intervention.projectNodeId ?? null, activityLabel: `${intervention.number} · ${intervention.subject}`, category: categoryForIntervention(intervention.type), billable: !['commercial_gesture', 'internal'].includes(intervention.coverageMode) } }));
   }
 
+  function beginInterventionResize(): void {
+    const workspace = document.querySelector<HTMLElement>('.intervention-workspace.with-detail');
+    if (!workspace) return;
+    document.body.classList.add('operation-resizing');
+    const onMove = (event: PointerEvent) => {
+      const rect = workspace.getBoundingClientRect();
+      if (!rect.width) return;
+      const ratio = ((event.clientX - rect.left) / rect.width) * 100;
+      setInterventionSplitPercent(Math.max(20, Math.min(55, ratio)));
+    };
+    const onUp = () => {
+      document.body.classList.remove('operation-resizing');
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp, { once: true });
+  }
+
   return <div className="operations-stack">
     <OperationsAlertsPanel refreshKey={alertRefreshKey} onNavigate={(target) => setView(target)} onMessage={onMessage} />
     <div className="operations-view-tabs">
@@ -327,7 +349,54 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
 
     {view === 'interventions' && <>
       {createInterventionOpen && <section className="panel operation-create-panel"><button type="button" className="secondary-button" onClick={()=>{setInterventionDemoMode(true);setInterventionSubject('DEMO — Correction page Accueil');setInterventionDescription('Vérifier le contenu et les liens avant validation.');setInterventionType('correction');setInterventionPriority('normal');}}>Remplir avec des données test</button><div className="panel-title"><div><span className="eyebrow">Nouvelle intervention</span><h2>Créer une intervention directe</h2></div><button className="close-detail" type="button" onClick={() => setCreateInterventionOpen(false)}>×</button></div><div className="operation-create-grid"><label>Client<select value={interventionClientId} onChange={(event) => { setInterventionClientId(event.target.value); setInterventionProjectId(''); setInterventionProjectNodeId(''); }}><option value="">Choisir…</option>{clients.map((client) => <option key={client.id} value={client.id}>{client.displayName}</option>)}</select></label><label>Projet éventuel<select value={interventionProjectId} onChange={(event) => { setInterventionProjectId(event.target.value); setInterventionProjectNodeId(''); }} disabled={!interventionClientId}><option value="">Aucun projet</option>{interventionProjects.map((project) => <option key={project.id} value={project.id}>{project.number} · {project.name}</option>)}</select></label><label>Module / Page / Tâche<select value={interventionProjectNodeId} onChange={(event) => setInterventionProjectNodeId(event.target.value)} disabled={!interventionProjectId || interventionProjectNodes.length === 0}><option value="">Aucun rattachement précis</option>{interventionProjectNodes.map((node) => <option key={node.id} value={node.id}>{projectNodeLabel(node)}</option>)}</select></label><label>Type<select value={interventionType} onChange={(event) => setInterventionType(event.target.value as InterventionType)}>{INTERVENTION_TYPES.map((type) => <option key={type} value={type}>{INTERVENTION_TYPE_LABELS[type]}</option>)}</select></label><label>Prise en charge<select value={interventionCoverage} onChange={(event) => setInterventionCoverage(event.target.value as InterventionCoverageMode)}>{INTERVENTION_COVERAGE_MODES.map((mode) => <option key={mode} value={mode}>{COVERAGE_LABELS[mode]}</option>)}</select></label><label>Priorité<select value={interventionPriority} onChange={(event) => setInterventionPriority(event.target.value as ServiceRequestPriority)}>{SERVICE_REQUEST_PRIORITIES.map((priority) => <option key={priority} value={priority}>{PRIORITY_LABELS[priority]}</option>)}</select></label><label className="wide">Sujet<input value={interventionSubject} onChange={(event) => setInterventionSubject(event.target.value)} /></label><label>Statut initial<select value={interventionInitialStatus} onChange={e=>setInterventionInitialStatus(e.target.value as InterventionStatus)}>{INTERVENTION_STATUSES.filter(s=>!['completed','cancelled','archived'].includes(s)).map(s=><option key={s} value={s}>{INTERVENTION_STATUS_LABELS[s]}</option>)}</select></label><InterventionExtraFields value={{...extra,clientAccountId:interventionClientId,type:interventionType}} onChange={setExtra}/><label className="wide">Description<textarea value={interventionDescription} onChange={(event) => setInterventionDescription(event.target.value)} /></label></div><div className="button-row"><button className="primary-button" disabled={saving || !interventionClientId || !interventionSubject.trim()} type="button" onClick={() => void createIntervention()}>Créer l’intervention</button><button className="secondary-button" type="button" onClick={() => { resetInterventionForm(); setCreateInterventionOpen(false); }}>Annuler</button></div></section>}
-      {loading ? <section className="panel"><p className="muted">Chargement…</p></section> : <div className={selectedIntervention ? 'operations-layout with-detail' : 'operations-layout'}><section className="panel operation-list-panel"><table className="operations-table"><thead><tr><th>Numéro</th><th>Client</th><th>Intervention</th><th>Prise en charge</th><th>Temps</th><th>Statut</th></tr></thead><tbody>{filteredInterventions.map((intervention) => <tr key={intervention.id} className={selectedIntervention?.id === intervention.id ? 'selected-row' : ''} onClick={() => { setSelectedIntervention(intervention); setSelectedRequest(null); }}><td><strong>{intervention.number}</strong></td><td><strong>{intervention.clientLabel}</strong><small>{intervention.projectLabel || 'Sans projet'}{intervention.projectNodeLabel ? ` · ${intervention.projectNodeLabel}` : ''}</small></td><td><strong>{intervention.subject}</strong><small>{INTERVENTION_TYPE_LABELS[intervention.type]}</small></td><td>{COVERAGE_LABELS[intervention.coverageMode]}</td><td>{duration(intervention.totalTimeSeconds)}</td><td>{INTERVENTION_STATUS_LABELS[intervention.status]}</td></tr>)}{filteredInterventions.length === 0 && <tr><td colSpan={6}><div className="empty-table">Aucune intervention dans cette vue.</div></td></tr>}</tbody></table></section>{selectedIntervention && <div ref={interventionDetailRef} className="operation-detail-boundary"><InterventionDetail onSaved={()=>void refresh()} intervention={selectedIntervention} onClose={() => setSelectedIntervention(null)} onStatus={changeInterventionStatus} onCoverage={changeCoverage} onProjectNode={changeInterventionProjectNode} onTimer={startInterventionTimer} onMessage={onMessage} /></div>}</div>}
+      {loading ? <section className="panel"><p className="muted">Chargement…</p></section> : <div
+        className={selectedIntervention ? `operations-layout intervention-workspace with-detail ${interventionExpanded ? 'detail-expanded' : ''}` : 'operations-layout intervention-workspace'}
+        style={selectedIntervention && !interventionExpanded ? { gridTemplateColumns: `${interventionSplitPercent}% 8px minmax(0, 1fr)` } : undefined}
+      >
+        {!interventionExpanded && <section className="panel operation-list-panel intervention-list-panel">
+          {selectedIntervention ? <div className="intervention-compact-list" role="list" aria-label="Interventions">
+            {filteredInterventions.map((intervention) => <button
+              key={intervention.id}
+              type="button"
+              role="listitem"
+              className={`intervention-compact-item ${selectedIntervention.id === intervention.id ? 'selected' : ''}`}
+              onClick={() => { setSelectedIntervention(intervention); setSelectedRequest(null); }}
+            >
+              <span className="intervention-compact-heading"><strong>{intervention.number}</strong><span className={`operation-status-chip status-${intervention.status}`}>{INTERVENTION_STATUS_LABELS[intervention.status]}</span></span>
+              <span className="intervention-compact-subject">{intervention.subject}</span>
+              <span className="intervention-compact-client">{intervention.clientLabel}</span>
+              <span className="intervention-compact-meta"><span>{INTERVENTION_TYPE_LABELS[intervention.type]}</span><span>{duration(intervention.totalTimeSeconds)}</span></span>
+              <span className="intervention-compact-coverage">{COVERAGE_LABELS[intervention.coverageMode]}</span>
+            </button>)}
+            {filteredInterventions.length === 0 && <div className="empty-table">Aucune intervention dans cette vue.</div>}
+          </div> : <table className="operations-table"><thead><tr><th>Numéro</th><th>Client</th><th>Intervention</th><th>Prise en charge</th><th>Temps</th><th>Statut</th></tr></thead><tbody>{filteredInterventions.map((intervention) => <tr key={intervention.id} onClick={() => { setSelectedIntervention(intervention); setSelectedRequest(null); setInterventionExpanded(false); }}><td><strong>{intervention.number}</strong></td><td><strong>{intervention.clientLabel}</strong><small>{intervention.projectLabel || 'Sans projet'}{intervention.projectNodeLabel ? ` · ${intervention.projectNodeLabel}` : ''}</small></td><td><strong>{intervention.subject}</strong><small>{INTERVENTION_TYPE_LABELS[intervention.type]}</small></td><td>{COVERAGE_LABELS[intervention.coverageMode]}</td><td>{duration(intervention.totalTimeSeconds)}</td><td><span className={`operation-status-chip status-${intervention.status}`}>{INTERVENTION_STATUS_LABELS[intervention.status]}</span></td></tr>)}{filteredInterventions.length === 0 && <tr><td colSpan={6}><div className="empty-table">Aucune intervention dans cette vue.</div></td></tr>}</tbody></table>}
+        </section>}
+        {selectedIntervention && !interventionExpanded && <div
+          className="operation-splitter"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Redimensionner la liste et l’atelier"
+          tabIndex={0}
+          onPointerDown={() => beginInterventionResize()}
+          onDoubleClick={() => setInterventionSplitPercent(34)}
+          onKeyDown={(event) => {
+            if (event.key === 'ArrowLeft') setInterventionSplitPercent((value) => Math.max(20, value - 3));
+            if (event.key === 'ArrowRight') setInterventionSplitPercent((value) => Math.min(55, value + 3));
+          }}
+        ><span /></div>}
+        {selectedIntervention && <div ref={interventionDetailRef} className="operation-detail-boundary"><InterventionDetail
+          onSaved={()=>void refresh()}
+          intervention={selectedIntervention}
+          expanded={interventionExpanded}
+          onExpand={() => setInterventionExpanded((value) => !value)}
+          onClose={() => { setSelectedIntervention(null); setInterventionExpanded(false); }}
+          onStatus={changeInterventionStatus}
+          onCoverage={changeCoverage}
+          onProjectNode={changeInterventionProjectNode}
+          onTimer={startInterventionTimer}
+          onMessage={onMessage}
+        /></div>}
+      </div>}
     </>}
 
     {view === 'maintenance' && <MaintenancePanel clients={clients} projects={projects} onMessage={onMessage} initialSubscriptionId={initialTarget?.entityType === 'maintenance' ? initialTarget.entityId : null} onInterventionCreated={(intervention) => { setSelectedRequest(null); setSelectedIntervention(intervention); setView('interventions'); void refresh(); }} />}
@@ -340,7 +409,7 @@ function RequestDetail({ request, transformType, setTransformType, transformCove
   return <aside className="panel operation-detail-panel"><div className="detail-panel-heading"><div><span className="eyebrow">Demande · {SOURCE_LABELS[request.source]}</span><h2>{request.subject}</h2><p className="muted">{request.clientLabel}{request.projectLabel ? ` · ${request.projectLabel}` : ''}</p></div><button className="close-detail" type="button" onClick={onClose}>×</button></div><div className="operation-detail-grid"><div><span>Reçue</span><strong>{dateLabel(request.receivedAt)}</strong></div><div><span>Priorité</span><strong>{PRIORITY_LABELS[request.priority]}</strong></div></div><label>Statut<select disabled={request.status === 'converted'} value={request.status} onChange={(event) => void onStatus(event.target.value as ServiceRequestStatus)}>{SERVICE_REQUEST_STATUSES.map((status) => <option key={status} value={status}>{REQUEST_STATUS_LABELS[status]}</option>)}</select></label>{request.description && <div className="operation-description"><span className="eyebrow">Description</span><p>{request.description}</p></div>}{request.interventionId ? <div className="operation-linked"><strong>✓ Transformée en intervention</strong><span>L’intervention liée est conservée comme source unique du travail réalisé.</span></div> : !locked && <><div className="operation-action-box"><strong>Créer une intervention</strong>{request.projectId && <label>Module / Page / Tâche<select value={transformProjectNodeId} onChange={(event) => setTransformProjectNodeId(event.target.value)} disabled={transformProjectNodes.length === 0}><option value="">Aucun rattachement précis</option>{transformProjectNodes.map((node) => <option key={node.id} value={node.id}>{projectNodeLabel(node)}</option>)}</select></label>}<label>Type<select value={transformType} onChange={(event) => setTransformType(event.target.value as InterventionType)}>{INTERVENTION_TYPES.map((type) => <option key={type} value={type}>{INTERVENTION_TYPE_LABELS[type]}</option>)}</select></label><label>Prise en charge<select value={transformCoverage} onChange={(event) => setTransformCoverage(event.target.value as InterventionCoverageMode)}>{INTERVENTION_COVERAGE_MODES.map((mode) => <option key={mode} value={mode}>{COVERAGE_LABELS[mode]}</option>)}</select></label><button className="primary-button" type="button" disabled={saving} onClick={() => void onTransform()}>Créer l’intervention</button></div><div className="operation-action-box subtle"><strong>Ou clore sans travail</strong><input value={closeReason} onChange={(event) => setCloseReason(event.target.value)} placeholder="Motif facultatif" /><button className="secondary-button" type="button" onClick={() => void onCloseRequest()}>Clore sans intervention</button></div></>}</aside>;
 }
 
-function InterventionDetail({ onSaved, intervention, onClose, onStatus, onCoverage, onProjectNode, onTimer, onMessage }: { onSaved:()=>void; intervention: Intervention; onClose: () => void; onStatus: (status: InterventionStatus) => Promise<void>; onCoverage: (coverage: InterventionCoverageMode) => Promise<void>; onProjectNode: (projectNodeId: string | null) => Promise<void>; onTimer: (intervention: Intervention) => void; onMessage: (message: string) => void; }) {
+function InterventionDetail({ onSaved, intervention, expanded, onExpand, onClose, onStatus, onCoverage, onProjectNode, onTimer, onMessage }: { onSaved:()=>void; intervention: Intervention; expanded: boolean; onExpand: () => void; onClose: () => void; onStatus: (status: InterventionStatus) => Promise<void>; onCoverage: (coverage: InterventionCoverageMode) => Promise<void>; onProjectNode: (projectNodeId: string | null) => Promise<void>; onTimer: (intervention: Intervention) => void; onMessage: (message: string) => void; }) {
   const [projectNodes, setProjectNodes] = useState<ProjectNode[]>([]);
   useEffect(() => {
     if (!intervention.projectId) {
@@ -356,7 +425,68 @@ function InterventionDetail({ onSaved, intervention, onClose, onStatus, onCovera
     return () => { active = false; };
   }, [intervention.projectId]);
 
-  return <aside className="panel operation-detail-panel"><div className="detail-panel-heading"><div><span className="eyebrow">{intervention.number}</span><h2>{intervention.subject}</h2><p className="muted">{intervention.clientLabel}{intervention.projectLabel ? ` · ${intervention.projectLabel}` : ''}</p></div><button className="close-detail" type="button" onClick={onClose}>×</button></div><InterventionEditor intervention={intervention} onSaved={onSaved}/><div className="operation-detail-grid"><div><span>Type</span><strong>{INTERVENTION_TYPE_LABELS[intervention.type]}</strong></div><div><span>Temps réel</span><strong>{duration(intervention.totalTimeSeconds)}</strong></div><div><span>Valeur théorique</span><strong>{money(intervention.theoreticalValueCents)}</strong></div><div><span>Facturable</span><strong>{money(intervention.billableAmountCents)}</strong></div>{intervention.projectNodeLabel && <div><span>Élément projet</span><strong>{intervention.projectNodeLabel}</strong></div>}</div>{intervention.projectId && <label>Module / Page / Tâche<select value={intervention.projectNodeId ?? ''} onChange={(event) => void onProjectNode(event.target.value || null)}><option value="">Aucun rattachement précis</option>{projectNodes.map((node) => <option key={node.id} value={node.id}>{projectNodeLabel(node)}</option>)}</select></label>}<label>Statut<select value={intervention.status} onChange={(event) => void onStatus(event.target.value as InterventionStatus)}>{INTERVENTION_STATUSES.map((status) => <option key={status} value={status}>{INTERVENTION_STATUS_LABELS[status]}</option>)}</select></label><label>Prise en charge<select value={intervention.coverageMode} onChange={(event) => void onCoverage(event.target.value as InterventionCoverageMode)}>{INTERVENTION_COVERAGE_MODES.map((mode) => <option key={mode} value={mode}>{COVERAGE_LABELS[mode]}</option>)}</select></label><button className="primary-button operation-timer-button" type="button" disabled={['completed', 'cancelled', 'archived'].includes(intervention.status)} onClick={() => onTimer(intervention)}>▶ Démarrer le timer sur cette intervention</button><InterventionBackupPanel intervention={intervention} onMessage={onMessage} onChanged={onSaved} />{intervention.description && <div className="operation-description"><span className="eyebrow">Description</span><p>{intervention.description}</p></div>}{intervention.type === 'incident' && <div className="incident-summary"><span className="eyebrow">Incident</span><strong>{intervention.incidentCriticality ? `Criticité ${intervention.incidentCriticality}` : 'Incident'}</strong>{intervention.downtimeMinutes != null && <span>Indisponibilité : {intervention.downtimeMinutes} min</span>}{intervention.incidentDiagnosis && <p>{intervention.incidentDiagnosis}</p>}</div>}<div className="operation-meta"><span>Créée : {dateLabel(intervention.createdAt)}</span>{intervention.startedAt && <span>Démarrée : {dateLabel(intervention.startedAt)}</span>}{intervention.completedAt && <span>Terminée : {dateLabel(intervention.completedAt)}</span>}</div></aside>;
+  const locked = ['completed', 'cancelled', 'archived'].includes(intervention.status);
+  return <aside className={`panel operation-detail-panel intervention-workbench-panel ${expanded ? 'expanded' : ''}`}>
+    <div className="detail-panel-heading intervention-workbench-heading">
+      <div>
+        <span className="eyebrow">{intervention.number}</span>
+        <h2>{intervention.subject}</h2>
+        <p className="muted">{intervention.clientLabel}{intervention.projectLabel ? ` · ${intervention.projectLabel}` : ''}</p>
+      </div>
+      <div className="intervention-workbench-heading-actions">
+        <button className="operation-detail-expand" type="button" title={expanded ? 'Réduire l’atelier' : 'Agrandir l’atelier'} aria-label={expanded ? 'Réduire l’atelier' : 'Agrandir l’atelier'} onClick={onExpand}>{expanded ? '↙' : '⛶'}</button>
+        <button className="close-detail" type="button" title="Fermer" onClick={onClose}>×</button>
+      </div>
+    </div>
+
+    <div className="intervention-workbench-badges">
+      <span className={`operation-status-chip status-${intervention.status}`}>{INTERVENTION_STATUS_LABELS[intervention.status]}</span>
+      <span className="status-pill">{INTERVENTION_TYPE_LABELS[intervention.type]}</span>
+      <span className={`operation-priority priority-${intervention.priority}`}>{PRIORITY_LABELS[intervention.priority]}</span>
+    </div>
+
+    <div className="intervention-kpi-grid">
+      <div><strong>Temps réel</strong><span>{duration(intervention.totalTimeSeconds)}</span></div>
+      <div><strong>Facturable</strong><span>{money(intervention.billableAmountCents)}</span></div>
+      <div><strong>Valeur théorique</strong><span>{money(intervention.theoreticalValueCents)}</span></div>
+      <div><strong>Prise en charge</strong><span>{COVERAGE_LABELS[intervention.coverageMode]}</span></div>
+    </div>
+
+    <div className="intervention-workbench-actions">
+      <button className="primary-button" type="button" disabled={locked} onClick={() => onTimer(intervention)}>▶ {intervention.totalTimeSeconds > 0 ? 'Reprendre le timer' : 'Démarrer le timer'}</button>
+      <InterventionEditor intervention={intervention} onSaved={onSaved}/>
+    </div>
+
+    <details className="intervention-workbench-section" open>
+      <summary><span><strong>Pilotage</strong><small>Statut, prise en charge et rattachement au projet</small></span></summary>
+      <div className="intervention-workbench-section-body intervention-pilot-grid">
+        <label>Statut<select value={intervention.status} onChange={(event) => void onStatus(event.target.value as InterventionStatus)}>{INTERVENTION_STATUSES.map((status) => <option key={status} value={status}>{INTERVENTION_STATUS_LABELS[status]}</option>)}</select></label>
+        <label>Prise en charge<select value={intervention.coverageMode} onChange={(event) => void onCoverage(event.target.value as InterventionCoverageMode)}>{INTERVENTION_COVERAGE_MODES.map((mode) => <option key={mode} value={mode}>{COVERAGE_LABELS[mode]}</option>)}</select></label>
+        {intervention.projectId && <label className="wide">Module / Page / Tâche<select value={intervention.projectNodeId ?? ''} onChange={(event) => void onProjectNode(event.target.value || null)}><option value="">Aucun rattachement précis</option>{projectNodes.map((node) => <option key={node.id} value={node.id}>{projectNodeLabel(node)}</option>)}</select></label>}
+      </div>
+    </details>
+
+    <details className="intervention-workbench-section" open>
+      <summary><span><strong>Contexte & compte rendu</strong><small>Description, notes et informations d’incident</small></span></summary>
+      <div className="intervention-workbench-section-body">
+        {intervention.description ? <div className="operation-description"><strong>Description</strong><p>{intervention.description}</p></div> : <p className="muted">Aucune description renseignée.</p>}
+        {intervention.notes && <div className="operation-description"><strong>Notes</strong><p>{intervention.notes}</p></div>}
+        {intervention.type === 'incident' && <div className="incident-summary"><strong>{intervention.incidentCriticality ? `Criticité ${intervention.incidentCriticality}` : 'Incident'}</strong>{intervention.downtimeMinutes != null && <span>Indisponibilité : {intervention.downtimeMinutes} min</span>}{intervention.incidentDiagnosis && <p><b>Diagnostic :</b> {intervention.incidentDiagnosis}</p>}{intervention.incidentSolution && <p><b>Solution :</b> {intervention.incidentSolution}</p>}{intervention.incidentFollowUp && <p><b>Suivi :</b> {intervention.incidentFollowUp}</p>}</div>}
+      </div>
+    </details>
+
+    <details className="intervention-workbench-section">
+      <summary><span><strong>Sécurité & sauvegardes</strong><small>Protection et points de restauration liés à l’intervention</small></span></summary>
+      <div className="intervention-workbench-section-body"><InterventionBackupPanel intervention={intervention} onMessage={onMessage} onChanged={onSaved} /></div>
+    </details>
+
+    <div className="operation-meta intervention-workbench-meta">
+      <span>Créée : {dateLabel(intervention.createdAt)}</span>
+      {intervention.scheduledAt && <span>Prévue : {dateLabel(intervention.scheduledAt)}</span>}
+      {intervention.startedAt && <span>Démarrée : {dateLabel(intervention.startedAt)}</span>}
+      {intervention.completedAt && <span>Terminée : {dateLabel(intervention.completedAt)}</span>}
+    </div>
+  </aside>;
 }
 
 function categoryForIntervention(type: InterventionType): TimeCategory {
