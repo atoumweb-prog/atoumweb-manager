@@ -18,6 +18,8 @@ import type { ProjectSummary } from '../../shared/projects';
 import type { Intervention, MaintenanceSubscription } from '../../shared/operations';
 import { ContactMethodsPanel } from './ContactMethodsPanel';
 import { FieldHelp } from '../ui/FieldHelp';
+import { displayWebUrl } from '../../shared/webUrl';
+import { CrmIdentityAssetEditor, CrmIdentityAvatar } from './CrmIdentityVisual';
 
 const STATUS_LABELS: Record<ClientStatus, string> = {
   active: 'Actif',
@@ -46,6 +48,7 @@ interface ClientDraft {
   lastName: string;
   email: string;
   phone: string;
+  website: string;
   notes: string;
 }
 
@@ -71,6 +74,7 @@ const EMPTY_DRAFT: ClientDraft = {
   lastName: '',
   email: '',
   phone: '',
+  website: '',
   notes: '',
 };
 
@@ -103,7 +107,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
   const [relationshipMenuOpen, setRelationshipMenuOpen] = useState(false);
   const [relationshipSaving, setRelationshipSaving] = useState(false);
   const [editingCoordinates, setEditingCoordinates] = useState(false);
-  const [coordinateDraft, setCoordinateDraft] = useState({ firstName: '', lastName: '', addressLine1: '', addressLine2: '', postalCode: '', city: '' });
+  const [coordinateDraft, setCoordinateDraft] = useState({ firstName: '', lastName: '', website: '', addressLine1: '', addressLine2: '', postalCode: '', city: '' });
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<'all' | ClientStatus>('all');
   const [query, setQuery] = useState('');
@@ -236,6 +240,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
           name: draft.company.trim(),
           email: !draft.firstName.trim() ? draft.email.trim() || null : null,
           phone: !draft.firstName.trim() ? draft.phone.trim() || null : null,
+          website: draft.website.trim() || null,
         });
         organizationId = organization.id;
       }
@@ -288,6 +293,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
   function beginCoordinateEdit(): void {
     setCoordinateDraft({
       firstName: identity?.contact?.firstName ?? '', lastName: identity?.contact?.lastName ?? '',
+      website: displayWebUrl(identity?.organization?.website),
       addressLine1: identity?.organization?.addressLine1 ?? '', addressLine2: identity?.organization?.addressLine2 ?? '',
       postalCode: identity?.organization?.postalCode ?? '', city: identity?.organization?.city ?? '',
     });
@@ -298,7 +304,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
     if (!selected || !identity) return;
     try {
       if (identity.contact) await window.atoumweb.crm.contacts.update(identity.contact.id, { ...identity.contact, firstName: coordinateDraft.firstName.trim(), lastName: coordinateDraft.lastName.trim() });
-      if (identity.organization) await window.atoumweb.crm.organizations.update(identity.organization.id, { ...identity.organization, addressLine1: coordinateDraft.addressLine1.trim() || null, addressLine2: coordinateDraft.addressLine2.trim() || null, postalCode: coordinateDraft.postalCode.trim() || null, city: coordinateDraft.city.trim() || null });
+      if (identity.organization) await window.atoumweb.crm.organizations.update(identity.organization.id, { ...identity.organization, website: coordinateDraft.website.trim() || null, addressLine1: coordinateDraft.addressLine1.trim() || null, addressLine2: coordinateDraft.addressLine2.trim() || null, postalCode: coordinateDraft.postalCode.trim() || null, city: coordinateDraft.city.trim() || null });
       setEditingCoordinates(false);
       await refreshSelectedClientData(selected.id); await refresh();
       onMessage('Coordonnées du client mises à jour.');
@@ -452,13 +458,14 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
       {showForm && (
         <form className="panel crm-form" onSubmit={(event) => void submitClient(event)}>
           <div className="panel-title"><div><span className="eyebrow">Client</span><h2>Ajouter un client directement</h2></div></div>
-          <button className="secondary-button" type="button" onClick={() => { setDemoMode(true); setDraft({ company: 'DEMO — Atelier Mercure', firstName: 'Léa', lastName: 'Durand', email: 'lea@example.test', phone: '', notes: 'Dossier de démonstration.' }); setNeedsDraft([{ catalogItemId: 'atoumweb-ecommerce' }]); }}>Remplir avec des données test</button>
+          <button className="secondary-button" type="button" onClick={() => { setDemoMode(true); setDraft({ company: 'DEMO — Atelier Mercure', firstName: 'Léa', lastName: 'Durand', email: 'lea@example.test', phone: '', website: 'atelier-mercure.example', notes: 'Dossier de démonstration.' }); setNeedsDraft([{ catalogItemId: 'atoumweb-ecommerce' }]); }}>Remplir avec des données test</button>
           <div className="form-grid">
             <label><span className="field-label-with-help">Société <FieldHelp text="Nom de l’entreprise cliente. Laisse vide uniquement pour un client particulier." /></span><input value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} /></label>
             <label><span className="field-label-with-help">Prénom <FieldHelp text="Prénom du contact principal si le client est une personne ou si un interlocuteur est déjà identifié." /></span><input value={draft.firstName} onChange={(e) => setDraft({ ...draft, firstName: e.target.value })} /></label>
             <label><span className="field-label-with-help">Nom <FieldHelp text="Nom du contact principal." /></span><input value={draft.lastName} onChange={(e) => setDraft({ ...draft, lastName: e.target.value })} /></label>
             <label><span className="field-label-with-help">Email <FieldHelp text="Adresse de contact principale. Elle pourra ensuite être complétée par d’autres coordonnées." /></span><input type="email" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} /></label>
             <label><span className="field-label-with-help">Téléphone <FieldHelp text="Numéro principal du client ou de l’interlocuteur." /></span><input value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} /></label>
+            <label><span className="field-label-with-help">Site web <FieldHelp text="Saisis simplement exemple.fr : https:// sera ajouté automatiquement. Tu peux saisir http:// explicitement si nécessaire." /></span><input inputMode="url" value={draft.website} onChange={(e) => setDraft({ ...draft, website: e.target.value })} placeholder="exemple.fr" /></label>
             <NeedChoices value={needsDraft} onChange={setNeedsDraft}/>
             <label><span className="field-label-with-help">Notes <FieldHelp text="Information interne utile au démarrage du dossier client." /></span><input value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} /></label>
           </div>
@@ -476,7 +483,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
                 <tbody>
                   {filtered.map((client) => (
                     <tr key={client.id} className={`client-relationship-${client.relationshipStatus ?? 'neutral'} ${selectedId === client.id ? 'selected-row' : ''}`} onClick={() => openClient(client.id)}>
-                      <td><div className="client-name-cell"><span className="avatar-initials">{initials(client.displayName)}</span><div><strong>{client.displayName}</strong><small>Client depuis {new Date(client.becameClientAt).toLocaleDateString('fr-FR')}</small></div></div></td>
+                      <td><div className="client-name-cell"><CrmIdentityAvatar organizationId={client.organizationId} contactId={client.primaryContactId} name={client.displayName} /><div><strong>{client.displayName}</strong><small>Client depuis {new Date(client.becameClientAt).toLocaleDateString('fr-FR')}</small></div></div></td>
                       <td><span className={`client-status status-${client.status}`}>{STATUS_LABELS[client.status ?? 'active']}</span></td>
                       <td>{client.contactName || '—'}</td>
                       <td><div className="contact-stack"><span>{client.email || '—'}</span><small>{client.phone || ''}</small></div></td>
@@ -495,13 +502,13 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
               <div className="detail-panel-heading">
                 <div>
                   <span className="eyebrow">Fiche client</span>
-                  <div className="client-summary-head"><span className="avatar-large">{initials(selected.displayName)}</span><div><h2>{selected.displayName}</h2><span className={`client-status status-${selected.status}`}>{STATUS_LABELS[selected.status ?? 'active']}</span></div></div>
+                  <div className="client-summary-head"><CrmIdentityAvatar organizationId={selected.organizationId} contactId={selected.primaryContactId} name={selected.displayName} size="large" /><div><h2>{selected.displayName}</h2><span className={`client-status status-${selected.status}`}>{STATUS_LABELS[selected.status ?? 'active']}</span></div></div>
                 </div>
                 <div className="detail-heading-actions"><div className="client-relationship-picker"><button className="secondary-button client-relationship-trigger" type="button" aria-expanded={relationshipMenuOpen} aria-haspopup="true" disabled={relationshipSaving} onClick={() => setRelationshipMenuOpen((value) => !value)}><span className="client-relationship-dot" />Relation client · {RELATION_LABELS[selected.relationshipStatus ?? 'neutral']}</button>{relationshipMenuOpen && <div className="client-relationship-menu" role="group" aria-label="Qualité de la relation client">{RELATION_OPTIONS.map((option) => <button key={option} type="button" className={`client-relationship-choice client-relationship-${option}`} aria-pressed={(selected.relationshipStatus ?? 'neutral') === option} onClick={() => void updateRelationship(selected, option)}><span className="client-relationship-dot" />{RELATION_LABELS[option]}</button>)}</div>}</div><button className="secondary-button" type="button" onClick={() => setLargeView((value) => !value)}>{largeView ? 'Réduire' : 'Agrandir'}</button><button className="close-detail" type="button" aria-label="Fermer la fiche client" onClick={() => { setRelationshipMenuOpen(false); setLargeView(false); setSelectedId(null); setActionEditor(null); setArchiveCandidateId(null); }}>×</button></div>
               </div>
               <div className="client-summary-scroll">
               {activeTab === 'summary' && <>
-                <section className="client-primary-card"><div className="contact-tab-heading"><h3>Coordonnées</h3><button className="secondary-button" type="button" onClick={beginCoordinateEdit}>Modifier</button></div>
+                <section className="client-primary-card"><CrmIdentityAssetEditor organizationId={identity?.organization?.id} contactId={identity?.contact?.id} onMessage={onMessage} /><div className="contact-tab-heading"><h3>Coordonnées</h3><button className="secondary-button" type="button" onClick={beginCoordinateEdit}>Modifier</button></div>
                   {selected.contactName && <SummaryLine label="Contact principal" value={selected.contactName} />}
                   {selected.phone && <SummaryLine label="Téléphone" value={selected.phone} />}
                   {selected.email && <SummaryLine label="Email" value={selected.email} />}
@@ -509,7 +516,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
                   {contacts.filter((item) => !item.isPrimary).map((item) => <div className="client-secondary-contact" key={item.id}><strong>{item.contact.firstName} {item.contact.lastName}</strong><span>{item.contact.phone || item.contact.email || ROLE_LABELS[item.role]}</span><button type="button" className="link-button" onClick={() => setActiveTab('contacts')}>Modifier</button></div>)}
                   <ContactMethodsPanel organizationId={identity?.organization?.id} contactId={identity?.contact?.id} />
                   <button className="secondary-button" type="button" onClick={() => { setActiveTab('contacts'); setShowContactForm(true); }}>Ajouter un contact</button>
-                  {editingCoordinates && <div className="contact-inline-form"><div className="contact-form-grid">{identity?.contact && <><label>Prénom<input value={coordinateDraft.firstName} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, firstName: event.target.value })} /></label><label>Nom<input value={coordinateDraft.lastName} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, lastName: event.target.value })} /></label></>}{identity?.organization && <><label>Adresse<input value={coordinateDraft.addressLine1} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, addressLine1: event.target.value })} /></label><label>Complément<input value={coordinateDraft.addressLine2} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, addressLine2: event.target.value })} /></label><label>Code postal<input value={coordinateDraft.postalCode} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, postalCode: event.target.value })} /></label><label>Ville<input value={coordinateDraft.city} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, city: event.target.value })} /></label></>}</div><div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => setEditingCoordinates(false)}>Annuler</button><button className="primary-button" type="button" disabled={!identity?.contact && !identity?.organization} onClick={() => void saveCoordinates()}>Enregistrer</button></div></div>}
+                  {editingCoordinates && <div className="contact-inline-form"><div className="contact-form-grid">{identity?.contact && <><label>Prénom<input value={coordinateDraft.firstName} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, firstName: event.target.value })} /></label><label>Nom<input value={coordinateDraft.lastName} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, lastName: event.target.value })} /></label></>}{identity?.organization && <><label>Site web<input inputMode="url" value={coordinateDraft.website} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, website: event.target.value })} placeholder="exemple.fr" /></label><label>Adresse<input value={coordinateDraft.addressLine1} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, addressLine1: event.target.value })} /></label><label>Complément<input value={coordinateDraft.addressLine2} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, addressLine2: event.target.value })} /></label><label>Code postal<input value={coordinateDraft.postalCode} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, postalCode: event.target.value })} /></label><label>Ville<input value={coordinateDraft.city} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, city: event.target.value })} /></label></>}</div><div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => setEditingCoordinates(false)}>Annuler</button><button className="primary-button" type="button" disabled={!identity?.contact && !identity?.organization} onClick={() => void saveCoordinates()}>Enregistrer</button></div></div>}
                 </section>
                 <section className="client-primary-card"><h3>Relation avec AtoumWeb</h3>
                   {quotes.filter((item) => !['refused', 'expired'].includes(item.status)).map((item) => <button className="workflow-link" type="button" key={item.id} onClick={() => openEntity({ entityType: 'quote', entityId: item.id, title: item.subject })}>Devis {item.number} · {item.subject}</button>)}
@@ -590,7 +597,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
                   <div className="contact-cards-list">
                     {contacts.map((link) => (
                       <div className="contact-card" key={link.id}>
-                        <span className="avatar-initials">{initials(`${link.contact.firstName} ${link.contact.lastName}`)}</span>
+                        <CrmIdentityAvatar contactId={link.contactId} name={`${link.contact.firstName} ${link.contact.lastName}`} />
                         <div className="contact-card-main">
                           <strong>{link.contact.firstName} {link.contact.lastName}</strong>
                           <span>{ROLE_LABELS[link.role]}{link.isPrimary ? ' · Principal' : ''}</span>
