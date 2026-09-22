@@ -156,6 +156,7 @@ describe('QuoteService', () => {
     expect(accepted.acceptedClientAccountId).toBeTruthy();
     expect(second.acceptedClientAccountId).toBe(accepted.acceptedClientAccountId);
     expect(crm.listClients()).toHaveLength(1);
+    expect(crm.listProspects().find((item) => item.id === prospect.id)?.stage).toBe('won');
     expect(accepted.projectReadyAt).toBeTruthy();
     expect(() => quotes.addCustomLine(quote.id, { label: 'Interdit', proposedUnitPriceCents: 1000 })).toThrow(/figé|accepté/i);
   });
