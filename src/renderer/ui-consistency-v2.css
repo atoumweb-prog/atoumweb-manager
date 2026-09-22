@@ -349,3 +349,29 @@ table td {
 .prospect-detail-v2 button {
   font-weight: 650;
 }
+
+
+/* Recette transverse — boutons dimensionnés sur leur libellé.
+   Les CTA ne doivent plus s'étirer sur toute une grille simplement parce que
+   le conteneur utilise le comportement stretch par défaut. */
+.primary-button,
+.secondary-button {
+  width: fit-content;
+  max-width: 100%;
+  justify-self: start;
+}
+
+.content-area .workflow-fields > :is(.primary-button, .secondary-button),
+.content-area .inline-editor-actions > :is(.primary-button, .secondary-button),
+.content-area .button-row > :is(.primary-button, .secondary-button),
+.content-area .detail-actions > :is(.primary-button, .secondary-button) {
+  width: fit-content;
+  max-width: 100%;
+}
+
+/* Les véritables lignes/cartes cliquables restent volontairement pleine largeur. */
+.project-template-items > button,
+.maintenance-period-list > button {
+  width: 100%;
+  justify-self: stretch;
+}
