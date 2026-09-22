@@ -525,6 +525,159 @@ body.catalog-resizing * {
   font-weight: 700;
 }
 
+/* Catalogue ouvert : la colonne gauche devient une vraie liste de navigation.
+   Elle reste exploitable même fortement réduite, contrairement au tableau complet. */
+.catalog-compact-list {
+  display: grid;
+  gap: 6px;
+  max-height: calc(100dvh - 150px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 3px;
+  scrollbar-gutter: stable;
+}
+
+.catalog-compact-item {
+  display: grid;
+  gap: 7px;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 11px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.catalog-compact-item:hover {
+  border-color: var(--border);
+  background: var(--surface-soft);
+}
+
+.catalog-compact-item.selected {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+.catalog-compact-heading,
+.catalog-compact-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.catalog-compact-heading > strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 700;
+}
+
+.catalog-compact-heading .status-pill,
+.catalog-compact-meta .catalog-status {
+  flex: 0 0 auto;
+}
+
+.catalog-compact-meta {
+  color: var(--text-muted);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 400;
+}
+
+.catalog-compact-meta > span:not(.catalog-status) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Fiche Offre / Service : lecture par blocs plutôt qu'une longue colonne de champs. */
+.catalog-current-version {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.catalog-detail-section {
+  display: grid;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+}
+
+.catalog-detail-section-heading {
+  display: grid;
+  gap: 2px;
+}
+
+.catalog-detail-section-heading > strong {
+  font-size: var(--aw-font-secondary, 14px);
+  font-weight: 700;
+}
+
+.catalog-detail-overview h3 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.catalog-detail-overview p {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 400;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.catalog-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+  gap: 8px 12px;
+}
+
+.catalog-summary-grid .summary-line {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3px;
+  padding: 8px 0;
+  border-bottom: 0;
+}
+
+.catalog-summary-grid .summary-line > strong {
+  color: var(--text-muted);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 700;
+}
+
+.catalog-summary-grid .summary-line > span {
+  color: var(--text);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.catalog-detail-section > .catalog-list-summary {
+  padding: 8px 0;
+}
+
+.catalog-detail-section > .summary-line {
+  padding: 8px 0 0;
+}
+
 @media (max-width: 1180px) {
   .catalog-fields-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
