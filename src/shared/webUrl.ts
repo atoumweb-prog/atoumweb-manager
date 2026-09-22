@@ -24,7 +24,11 @@ export function normalizeWebUrl(value?: string | null): string | null {
     throw new Error('L’adresse web doit utiliser http:// ou https://.');
   }
 
-  return url.toString();
+  const normalized = url.toString();
+  if (url.pathname === '/' && !url.search && !url.hash) {
+    return normalized.replace(/\/$/, '');
+  }
+  return normalized;
 }
 
 export function displayWebUrl(value?: string | null): string {
