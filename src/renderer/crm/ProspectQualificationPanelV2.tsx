@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import { FieldHelp } from '../ui/FieldHelp';
+export { FieldHelp } from '../ui/FieldHelp';
 import type { ProspectInput, ProspectOrigin, ProspectSummary } from '../../shared/crm';
 
 const TARGETING_REASONS = [
@@ -43,10 +45,6 @@ const ORIGIN_LABELS: Record<ProspectOrigin, string> = {
   partner: 'Partenaire / apporteur',
   other: 'Autre',
 };
-
-export function FieldHelp({ text }: { text: string }) {
-  return <span className="field-help" tabIndex={0} role="note" aria-label={text} title={text}>?</span>;
-}
 
 function inferOrigin(prospect: ProspectSummary): ProspectOrigin {
   if (prospect.originType) return prospect.originType;
