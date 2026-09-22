@@ -21,6 +21,7 @@ import {
   type ProjectPrerequisite,
   type ProjectPrerequisiteInput,
   type ProjectPrerequisiteStatus,
+  type ProjectSecretSummary,
   type ProjectServiceSnapshot,
   type ProjectStatus,
   type ProjectSummary,
@@ -82,6 +83,19 @@ interface ProjectNodeRow extends Record<string, unknown> {
 interface ProjectServiceRow extends Record<string, unknown> {
   id: string; project_id: string; source_quote_line_id: string | null; catalog_item_id: string | null; catalog_version_id: string | null; label: string; snapshot_json: string | null; catalog_value_cents: number; contract_value_cents: number; created_at: string;
 }
+interface ProjectSecretRow extends Record<string, unknown> {
+  id: string;
+  project_id: string;
+  project_node_id: string | null;
+  label: string;
+  username: string | null;
+  secret_ciphertext: string;
+  url: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 interface PrerequisiteRow extends Record<string, unknown> {
   id: string; project_id: string; label: string; description: string | null; status: ProjectPrerequisiteStatus; is_required: number; sort_order: number; requested_at: string | null; received_at: string | null; validated_at: string | null; created_at: string; updated_at: string;
 }
@@ -455,6 +469,72 @@ export class ProjectService {
     return this.getProject(phase.project_id);
   }
 
+  listProjectSecrets(projectId: string, projectNodeId?: string | null): ProjectSecretSummary[] {
+    this.getProject(projectId);
+    const params: SqlValue[] = [projectId];
+    let sql = 'SELECT * FROM project_node_secrets WHERE project_id=?';
+    if (projectNodeId !== undefined) {
+      if (projectNodeId === null) sql += ' AND project_node_id IS NULL';
+      else {
+        sql += ' AND project_node_id=?';
+        params.push(projectNodeId);
+      }
+    }
+    sql += ' ORDER BY created_at, label';
+    return this.database.all<ProjectSecretRow>(sql, params).map((row) => this.mapProjectSecret(row));
+  }
+
+  saveProjectSecret(input: {
+    projectId: string;
+    projectNodeId?: string | null;
+    label: string;
+    username?: string | null;
+    secretCiphertext: string;
+    url?: string | null;
+    notes?: string | null;
+  }): ProjectSecretSummary {
+    this.getProject(input.projectId);
+    const label = clean(input.label);
+    if (!label) throw new Error('Nom de l’identifiant requis.');
+    if (!input.secretCiphertext?.trim()) throw new Error('Secret chiffré manquant.');
+    if (input.projectNodeId) {
+      const node = this.database.get<ProjectNodeRow>('SELECT * FROM project_nodes WHERE id=?', [input.projectNodeId]);
+      if (!node || node.project_id !== input.projectId) throw new Error('Étape du projet introuvable.');
+    }
+    const now = nowIso();
+    const id = randomUUID();
+    this.database.run(
+      `INSERT INTO project_node_secrets
+       (id,project_id,project_node_id,label,username,secret_ciphertext,url,notes,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?)`,
+      [
+        id,
+        input.projectId,
+        input.projectNodeId ?? null,
+        label,
+        clean(input.username),
+        input.secretCiphertext,
+        clean(input.url),
+        clean(input.notes),
+        now,
+        now,
+      ],
+    );
+    return this.mapProjectSecret(this.database.get<ProjectSecretRow>('SELECT * FROM project_node_secrets WHERE id=?', [id])!);
+  }
+
+  getProjectSecretCiphertext(id: string): { id: string; ciphertext: string } {
+    const row = this.database.get<ProjectSecretRow>('SELECT * FROM project_node_secrets WHERE id=?', [id]);
+    if (!row) throw new Error('Identifiant sécurisé introuvable.');
+    return { id: row.id, ciphertext: row.secret_ciphertext };
+  }
+
+  removeProjectSecret(id: string): void {
+    const row = this.database.get<ProjectSecretRow>('SELECT * FROM project_node_secrets WHERE id=?', [id]);
+    if (!row) return;
+    this.database.run('DELETE FROM project_node_secrets WHERE id=?', [id]);
+  }
+
   addPrerequisite(projectId: string, input: ProjectPrerequisiteInput): ProjectDetail {
     this.getProject(projectId); const label = clean(input.label); if (!label) throw new Error('Libellé requis.'); const now = nowIso();
     this.database.run(
@@ -477,6 +557,20 @@ export class ProjectService {
     );
     if (['received', 'validated'].includes(status)) this.writeActivity('project', row.project_id, 'project_prerequisite_changed', `${row.label} : ${status}`);
     return this.getProject(row.project_id);
+  }
+
+  private mapProjectSecret(row: ProjectSecretRow): ProjectSecretSummary {
+    return {
+      id: row.id,
+      projectId: row.project_id,
+      projectNodeId: row.project_node_id,
+      label: row.label,
+      username: row.username,
+      url: row.url,
+      notes: row.notes,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
   }
 
   private getTemplateVersions(templateId: string): ProjectTemplateVersion[] {
