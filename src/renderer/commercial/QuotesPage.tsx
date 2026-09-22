@@ -183,6 +183,30 @@ export function QuotesPage({ onMessage, initialId }: { onMessage: (message: stri
     catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de supprimer la ligne.'); }
   }
 
+  async function validateQuoteFromList(quote: QuoteSummary): Promise<void> {
+    if (!['sent', 'viewed'].includes(quote.status)) return;
+    try {
+      await window.atoumweb.quotes.accept(quote.id);
+      await refresh();
+      onMessage(quote.prospectId
+        ? 'Devis validé : le prospect passe en « Gagné » et devient client.'
+        : 'Devis validé.');
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Validation du devis impossible.');
+    }
+  }
+
+  async function negotiateQuote(quote: QuoteSummary): Promise<void> {
+    if (!quote.prospectId || !['sent', 'viewed'].includes(quote.status)) return;
+    try {
+      await window.atoumweb.crm.prospects.changeStage(quote.prospectId, 'negotiation');
+      await refresh();
+      onMessage('Le prospect passe en « Négociation ». Le devis envoyé reste conservé.');
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Passage en négociation impossible.');
+    }
+  }
+
   async function transition(action: 'finalized' | 'sent' | 'viewed' | 'accepted' | 'refused' | 'expired' | 'duplicate'): Promise<void> {
     if (!detail) return;
     try {
@@ -194,7 +218,7 @@ export function QuotesPage({ onMessage, initialId }: { onMessage: (message: stri
       else if (action === 'refused') next = await window.atoumweb.quotes.refuse(detail.id);
       else if (action === 'expired') next = await window.atoumweb.quotes.expire(detail.id);
       else next = await window.atoumweb.quotes.duplicate(detail.id);
-      await refresh(); await openQuote(next.id); onMessage(action === 'accepted' ? 'Devis accepté : prêt à transformer en projet.' : `Devis ${next.number} mis à jour.`);
+      await refresh(); await openQuote(next.id); onMessage(action === 'accepted' ? 'Devis validé : le prospect passe en « Gagné » et devient client.' : `Devis ${next.number} mis à jour.`);
     } catch (error) { onMessage(error instanceof Error ? error.message : 'Action impossible.'); }
   }
 
@@ -235,13 +259,34 @@ export function QuotesPage({ onMessage, initialId }: { onMessage: (message: stri
         </div>}
       </div>{wizardError && <p className="form-error">{wizardError}</p>}<div className="quote-wizard-actions"><button className="secondary-button" type="button" disabled={wizardStep === 1} onClick={() => setWizardStep((step) => Math.max(1, step - 1))}>← Précédent</button>{wizardStep < 6 ? <button className="primary-button" type="button" onClick={nextWizard}>Suivant →</button> : <button className="primary-button" disabled={saving} type="button" onClick={() => void createQuote()}>{saving ? 'Création…' : 'Créer le devis'}</button>}</div></section>}
 
-      {loading ? <div className="panel"><p className="muted">Chargement des devis…</p></div> : <div className={detail ? 'quotes-layout with-detail' : 'quotes-layout'}><div className="panel quote-list-panel"><table className="quote-table"><thead><tr><th>Numéro</th><th>Destinataire</th><th>Objet</th><th>Statut</th><th>Valeur</th><th>Acompte</th><th>Créé le</th></tr></thead><tbody>{filtered.map((quote) => <tr key={quote.id} className={selectedId === quote.id ? 'selected-row' : ''} onClick={() => void openQuote(quote.id)}><td><strong>{quote.number}</strong></td><td>{quote.ownerLabel}</td><td>{quote.subject}</td><td><span className={`quote-status quote-${quote.status}`}>{STATUS_LABELS[quote.status]}</span></td><td>{money(quote.contractValueCents)}</td><td>{money(quote.depositCents)}</td><td>{new Date(quote.createdAt).toLocaleDateString('fr-FR')}</td></tr>)}{filtered.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucun devis.</div></td></tr>}</tbody></table></div>
+      {loading ? <div className="panel"><p className="muted">Chargement des devis…</p></div> : <div className={detail ? 'quotes-layout with-detail' : 'quotes-layout'}><div className="panel quote-list-panel"><table className="quote-table"><thead><tr><th>Numéro</th><th>Destinataire</th><th>Objet</th><th>Statut</th><th>Valeur</th><th>Décision</th><th>Créé le</th></tr></thead><tbody>{filtered.map((quote) => {
+        const prospect = quote.prospectId ? prospects.find((item) => item.id === quote.prospectId) ?? null : null;
+        const actionable = quote.status === 'sent' || quote.status === 'viewed';
+        const negotiating = prospect?.stage === 'negotiation';
+        return <tr key={quote.id} className={selectedId === quote.id ? 'selected-row' : ''} onClick={() => void openQuote(quote.id)}>
+          <td><strong>{quote.number}</strong></td>
+          <td>{quote.ownerLabel}</td>
+          <td>{quote.subject}</td>
+          <td><span className={`quote-status quote-${quote.status}`}>{STATUS_LABELS[quote.status]}</span></td>
+          <td>{money(quote.contractValueCents)}</td>
+          <td>
+            <div className="quote-decision-actions">
+              {actionable && <button className="primary-button compact-button" type="button" onClick={(event) => { event.stopPropagation(); void validateQuoteFromList(quote); }}>Valider</button>}
+              {actionable && quote.prospectId && !negotiating && <button className="secondary-button compact-button" type="button" onClick={(event) => { event.stopPropagation(); void negotiateQuote(quote); }}>À négocier</button>}
+              {actionable && negotiating && <span className="status-pill">En négociation</span>}
+              {quote.status === 'accepted' && <span className="status-pill">Validé</span>}
+              {!actionable && quote.status !== 'accepted' && <span className="muted">—</span>}
+            </div>
+          </td>
+          <td>{new Date(quote.createdAt).toLocaleDateString('fr-FR')}</td>
+        </tr>;
+      })}{filtered.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucun devis.</div></td></tr>}</tbody></table></div>
 
         {detail && <><div className="quote-detail-backdrop" role="presentation" onClick={closeQuoteDetail}/><aside ref={detailPanelRef} className={`panel quote-detail-panel ${detailExpanded?'expanded':''}`}><div className="detail-panel-heading"><div><span className="eyebrow">{detail.number}</span><h2>{detail.subject}</h2><p className="muted">{detail.ownerLabel}</p></div><div className="quote-detail-heading-actions"><button className="quote-detail-expand" type="button" title={detailExpanded?'Réduire la fenêtre':'Agrandir la fenêtre'} onClick={()=>setDetailExpanded(value=>!value)}>{detailExpanded?'↙':'⛶'}</button><button className="close-detail" type="button" title="Fermer" onClick={closeQuoteDetail}>×</button></div></div><div className="detail-badges"><span className={`quote-status quote-${detail.status}`}>{STATUS_LABELS[detail.status]}</span>{detail.projectReadyAt && <span className="status-pill">Prêt pour Projet</span>}</div><button className="secondary-button quote-preview-button" type="button" onClick={() => setPreviewOpen(true)}>Prévisualiser côté client</button>
           {detail.status === 'accepted' && <QuoteProjectPanel key={detail.id} quote={detail}/>}<QuoteConditions quote={detail} onSave={q=>{setDetail(q);void refresh();}}/><div className="quote-lines"><strong>Lignes du devis</strong>{detail.lines.map((line) => <div className="quote-line-block" key={line.id}><div className="quote-line"><div><strong>{line.label}</strong><small>{line.source === 'catalog' ? 'Catalogue · snapshot figé' : 'Ligne libre'} · {(line.quantityMilli ?? 1000) / 1000} ×{line.adjustmentMode && line.adjustmentMode !== 'none' ? ` · ${line.adjustmentMode}` : ''}</small></div><span>{money(line.contractLineValueCents)}</span>{detail.status === 'draft' && <div className="quote-line-actions"><button type="button" title="Modifier" onClick={() => setEditingLineId(editingLineId === line.id ? null : line.id)}>✎</button><button type="button" title="Supprimer" onClick={() => void removeLine(line.id)}>×</button></div>}</div>{detail.status === 'draft' && editingLineId === line.id && <QuoteLineEditor line={line} onCancel={() => setEditingLineId(null)} onSave={(input) => saveLine(line.id, input)} />}</div>)}{detail.lines.length === 0 && <p className="muted">Aucune ligne pour le moment.</p>}</div>
           {detail.status === 'draft' && <><div className="quote-add-line"><strong>Ajouter depuis le catalogue</strong><select value={catalogToAdd} onChange={(e) => setCatalogToAdd(e.target.value)}><option value="">Choisir…</option>{catalog.map((item) => <option key={item.id} value={item.currentVersion!.id}>{item.name}</option>)}</select><input aria-label="Prix proposé pour la prestation" placeholder="Prix proposé € (facultatif sauf Sur devis)" value={catalogPrice} onChange={e=>setCatalogPrice(e.target.value)}/><button className="secondary-button" type="button" onClick={() => void addCatalogLine()}>Ajouter une ligne</button></div><div className="quote-add-line"><strong>Ligne libre</strong><input value={customLabel} onChange={(e) => setCustomLabel(e.target.value)} placeholder="Libellé" /><input inputMode="decimal" value={customPrice} onChange={(e) => setCustomPrice(e.target.value)} placeholder="Prix €" /><button className="secondary-button" type="button" onClick={() => void addCustomLine()}>Ajouter</button></div></>}
           <div className="quote-totals"><div><span>Valeur catalogue</span><strong>{money(detail.catalogValueCents)}</strong></div><div><span>Remises</span><strong>- {money(detail.discountValueCents)}</strong></div><div className="quote-total-main"><span>Total contractuel</span><strong>{money(detail.contractValueCents)}</strong></div><div><span>Acompte {detail.depositPercent ?? 0} %</span><strong>{money(detail.depositCents)}</strong></div><div><span>Solde</span><strong>{money(detail.balanceCents)}</strong></div></div>
-          <div className="quote-status-actions">{detail.status === 'draft' && !detail.finalizedAt && <button className="primary-button" type="button" onClick={() => void transition('finalized')}>Finaliser le devis</button>}{detail.status === 'draft' && detail.finalizedAt && <button className="primary-button" type="button" onClick={() => void transition('sent')}>Marquer envoyé</button>}{detail.status === 'sent' && <><button className="secondary-button" type="button" onClick={() => void transition('viewed')}>Marquer vu</button><button className="primary-button" type="button" onClick={() => void transition('accepted')}>Accepter</button><button className="secondary-button danger-outline" type="button" onClick={() => void transition('refused')}>Refuser</button><button className="secondary-button" type="button" onClick={() => void transition('expired')}>Expirer</button></>}{detail.status === 'viewed' && <><button className="primary-button" type="button" onClick={() => void transition('accepted')}>Accepter</button><button className="secondary-button danger-outline" type="button" onClick={() => void transition('refused')}>Refuser</button><button className="secondary-button" type="button" onClick={() => void transition('expired')}>Expirer</button></>}{['sent','viewed','refused', 'expired', 'cancelled'].includes(detail.status) && <button className="primary-button" type="button" onClick={() => void transition('duplicate')}>Dupliquer en nouveau devis</button>}</div>
+          <div className="quote-status-actions">{detail.status === 'draft' && !detail.finalizedAt && <button className="primary-button" type="button" onClick={() => void transition('finalized')}>Finaliser le devis</button>}{detail.status === 'draft' && detail.finalizedAt && <button className="primary-button" type="button" onClick={() => void transition('sent')}>Marquer envoyé</button>}{detail.status === 'sent' && <><button className="secondary-button" type="button" onClick={() => void transition('viewed')}>Marquer vu</button><button className="primary-button" type="button" onClick={() => void transition('accepted')}>Valider</button>{detail.prospectId && <button className="secondary-button" type="button" onClick={() => void negotiateQuote(detail)}>À négocier</button>}<button className="secondary-button danger-outline" type="button" onClick={() => void transition('refused')}>Refuser</button><button className="secondary-button" type="button" onClick={() => void transition('expired')}>Expirer</button></>}{detail.status === 'viewed' && <><button className="primary-button" type="button" onClick={() => void transition('accepted')}>Valider</button>{detail.prospectId && <button className="secondary-button" type="button" onClick={() => void negotiateQuote(detail)}>À négocier</button>}<button className="secondary-button danger-outline" type="button" onClick={() => void transition('refused')}>Refuser</button><button className="secondary-button" type="button" onClick={() => void transition('expired')}>Expirer</button></>}{['sent','viewed','refused', 'expired', 'cancelled'].includes(detail.status) && <button className="primary-button" type="button" onClick={() => void transition('duplicate')}>Dupliquer en nouveau devis</button>}</div>
         </aside></>}
       </div>}
       {detail && previewOpen && <QuoteClientPreview quote={detail} onClose={() => setPreviewOpen(false)} />}
