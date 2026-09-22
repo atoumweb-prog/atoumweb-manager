@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import type { BillingInvoiceInput, BillingItemFilters, BillingItemStatus } from '../shared/billing';
 import type {
   CatalogFilters,
   CatalogItemInput,
@@ -188,6 +189,14 @@ const api: AtoumWebApi = {
     archive:(id,archived)=>ipcRenderer.invoke('client-documents:archive',id,archived),
     deletePermanently:id=>ipcRenderer.invoke('client-documents:delete',id),
     openFile:id=>ipcRenderer.invoke('client-documents:open-file',id),openFolder:clientId=>ipcRenderer.invoke('client-documents:open-folder',clientId),
+  },
+  billing: {
+    list: (filters?: BillingItemFilters) => ipcRenderer.invoke('billing:list', filters),
+    get: (id: string) => ipcRenderer.invoke('billing:get', id),
+    changeStatus: (id: string, status: BillingItemStatus) => ipcRenderer.invoke('billing:change-status', id, status),
+    importInvoice: (id: string, input?: BillingInvoiceInput) => ipcRenderer.invoke('billing:import-invoice', id, input),
+    updateInvoiceMetadata: (id: string, input: BillingInvoiceInput) => ipcRenderer.invoke('billing:update-invoice-metadata', id, input),
+    openInvoice: (id: string) => ipcRenderer.invoke('billing:open-invoice', id),
   },
   catalog: {
     list: (filters?: CatalogFilters) => ipcRenderer.invoke('catalog:list', filters),
