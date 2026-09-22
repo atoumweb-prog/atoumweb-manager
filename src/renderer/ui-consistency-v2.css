@@ -435,6 +435,20 @@ table td {
   max-width: 100%;
 }
 
+/* Règle transverse validée : statut et action en semi-gras, jamais en graisse forte. */
+.content-area :is(
+  .status-pill,
+  .catalog-status,
+  .quote-status,
+  .prospect-directory-status
+) {
+  font-weight: 650 !important;
+}
+
+.content-area :is(.primary-button, .secondary-button, .danger-button) {
+  font-weight: 650 !important;
+}
+
 /* Formulaires CRM : libellé = repère, saisie = donnée. */
 .crm-form label,
 .contact-inline-form label,
