@@ -193,6 +193,10 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
       ]
         .filter((value): value is string => typeof value === 'string')
         .some((value) => value.toLocaleLowerCase('fr-FR').includes(needle));
+    }).sort((a, b) => {
+      const categoryOrder = (a.category ?? '').localeCompare(b.category ?? '', 'fr-FR', { sensitivity: 'base' });
+      if (categoryOrder !== 0) return categoryOrder;
+      return a.name.localeCompare(b.name, 'fr-FR', { sensitivity: 'base' });
     });
   }, [items, query, typeFilter, statusFilter]);
 
