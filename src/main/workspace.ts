@@ -13,6 +13,7 @@ export interface WorkspacePaths {
   backupsDirectory: string;
   clientsDirectory: string;
   internalDirectory: string;
+  expensesDirectory: string;
   exportsDirectory: string;
   atoumWebLibraryDirectory: string;
 }
@@ -34,6 +35,7 @@ export function createWorkspacePaths(root: string): WorkspacePaths {
     backupsDirectory: join(normalizedRoot, 'backups'),
     clientsDirectory: join(normalizedRoot, 'clients'),
     internalDirectory: join(normalizedRoot, 'projets-internes'),
+    expensesDirectory: join(normalizedRoot, 'depenses'),
     exportsDirectory: join(normalizedRoot, 'exports'),
     atoumWebLibraryDirectory: join(normalizedRoot, 'bibliotheque-atoumweb'),
   };
@@ -48,6 +50,7 @@ export function ensureWorkspace(root: string): WorkspacePaths {
     paths.backupsDirectory,
     paths.clientsDirectory,
     paths.internalDirectory,
+    paths.expensesDirectory,
     paths.exportsDirectory,
     paths.atoumWebLibraryDirectory,
   ].forEach((directory) => mkdirSync(directory, { recursive: true }));
