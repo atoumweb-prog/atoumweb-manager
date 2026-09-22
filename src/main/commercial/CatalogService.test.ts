@@ -19,12 +19,13 @@ describe('CatalogService', () => {
   it('crée un service avec une première version brouillon', () => {
     const service = catalog.create(
       { type: 'service', name: 'Page supplémentaire', category: 'Création de site', visiblePublic: true },
-      { priceMode: 'fixed', priceCents: 9900, recommendedPriceCents: 12000, description: 'Une page supplémentaire.' },
+      { priceMode: 'fixed', priceCents: 9900, recommendedPriceCents: 12000, nature: 'Création d’une page de contenu', description: 'Une page supplémentaire.' },
     );
     expect(service.name).toBe('Page supplémentaire');
     expect(service.visiblePublic).toBe(true);
     expect(service.currentVersion?.status).toBe('draft');
     expect(service.currentVersion?.priceCents).toBe(9900);
+    expect(service.currentVersion?.nature).toBe('Création d’une page de contenu');
     expect(service.versions).toHaveLength(1);
   });
 
