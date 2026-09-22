@@ -5,6 +5,8 @@ import { validateEmail, validatePhone } from '../../shared/contactValidation';
 import { ContactMethodsPanel } from './ContactMethodsPanel';
 import { ProspectLinkedContactsPanel } from './ProspectLinkedContactsPanel';
 import { FieldHelp } from './ProspectQualificationPanelV2';
+import { displayWebUrl } from '../../shared/webUrl';
+import { CrmIdentityAssetEditor } from './CrmIdentityVisual';
 
 interface DecisionDraft {
   status: ProspectInput['decisionStatus'];
@@ -240,16 +242,17 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
   return <section className="prospect-work-section identity-panel-v2">
     <div className="work-section-heading"><div><span className="eyebrow">Entreprise & interlocuteur</span><strong>{identity.organization?.industry || identity.contact?.jobTitle || 'Informations principales'}</strong></div><button className="secondary-button compact-button" type="button" onClick={() => setEditing((value) => !value)}>{editing ? 'Fermer' : 'Modifier'}</button></div>
     {!editing && <div className="identity-summary-grid">
-      {identity.organization && <><div><span>Société</span><strong>{identity.organization.name}</strong></div><div><span>Activité</span><strong>{identity.organization.industry || 'À préciser'}</strong></div>{identity.organization.website && <div><span>Site web</span><strong>{identity.organization.website}</strong></div>}{address && <div className="identity-wide"><span>Adresse</span><strong>{address}</strong></div>}{identity.organization.notes && <div className="identity-wide"><span>Description</span><strong>{identity.organization.notes}</strong></div>}</>}
+      {identity.organization && <><div><span>Société</span><strong>{identity.organization.name}</strong></div><div><span>Activité</span><strong>{identity.organization.industry || 'À préciser'}</strong></div>{identity.organization.website && <div><span>Site web</span><strong>{displayWebUrl(identity.organization.website)}</strong></div>}{address && <div className="identity-wide"><span>Adresse</span><strong>{address}</strong></div>}{identity.organization.notes && <div className="identity-wide"><span>Description</span><strong>{identity.organization.notes}</strong></div>}</>}
       {identity.contact ? <><div><span>Interlocuteur principal</span><strong>{identity.contact.firstName} {identity.contact.lastName}</strong></div><div><span>Fonction</span><strong>{identity.contact.jobTitle || 'À préciser'}</strong></div></> : <div className="identity-wide"><span>Interlocuteur principal</span><strong>Aucun interlocuteur renseigné</strong><small>Utilise « Modifier » pour l’ajouter sans recréer le prospect.</small></div>}
       <div className="identity-wide decision-summary"><span>Décisionnaire</span><strong>{decisionLabel}</strong>{decision.details && decision.details !== 'Décisionnaire identifié dans les Contacts' && <small>{decision.details}</small>}</div>
     </div>}
     {editing && <div className="workflow-fields identity-editor-v2">
+      <div className="form-span-2"><CrmIdentityAssetEditor organizationId={identity.organization?.id} contactId={identity.contact?.id} /></div>
       {identity.organization && <>
         <label>Société <FieldHelp text="Nom usuel de la société ou de la structure commerciale." /><input value={identity.organization.name} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, name: e.target.value } })} /></label>
         <label>Activité / type de structure <FieldHelp text="Permet d’identifier rapidement le métier : artisan, restaurant, commerçant, association, profession libérale…" /><input value={identity.organization.industry ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, industry: e.target.value } })} placeholder="Ex. artisan cirier, restaurant, commerce…" /></label>
         <label className="form-span-2">Description de l’activité <FieldHelp text="Quelques mots sur l’activité, le positionnement et ce que fait l’entreprise. Utile pour préparer la prospection et le devis." /><textarea value={identity.organization.notes ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, notes: e.target.value } })} /></label>
-        <label>Site web<input type="url" value={identity.organization.website ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, website: e.target.value } })} placeholder="https://…" /></label>
+        <label>Site web <FieldHelp text="Tu peux saisir simplement exemple.fr. Le Manager ajoute https:// automatiquement. Si le site fonctionne volontairement en http://, saisis-le explicitement." /><input inputMode="url" value={displayWebUrl(identity.organization.website)} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, website: e.target.value } })} placeholder="exemple.fr" /></label>
         <label>Adresse<input value={identity.organization.addressLine1 ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, addressLine1: e.target.value } })} /></label>
         <label>Complément d’adresse<input value={identity.organization.addressLine2 ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, addressLine2: e.target.value } })} /></label>
         <label>Code postal<input value={identity.organization.postalCode ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, postalCode: e.target.value } })} /></label>
