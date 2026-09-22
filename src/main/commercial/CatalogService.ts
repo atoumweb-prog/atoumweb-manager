@@ -34,6 +34,7 @@ interface CatalogRow extends Record<string, unknown> {
   version_id: string | null;
   version_number: number | null;
   version_status: CatalogVersion['status'] | null;
+  nature: string | null;
   description: string | null;
   inclusions_json: string | null;
   exclusions_json: string | null;
@@ -56,6 +57,7 @@ interface VersionRow extends Record<string, unknown> {
   item_id: string;
   version_number: number;
   status: CatalogVersion['status'];
+  nature: string | null;
   description: string | null;
   inclusions_json: string;
   exclusions_json: string;
@@ -138,6 +140,7 @@ export class CatalogService {
         v.id AS version_id,
         v.version_number,
         v.status AS version_status,
+        v.nature,
         v.description,
         v.inclusions_json,
         v.exclusions_json,
@@ -378,15 +381,16 @@ export class CatalogService {
     const id = randomUUID();
     this.database.run(
       `INSERT INTO catalog_versions (
-        id, item_id, version_number, status, description, inclusions_json, exclusions_json,
+        id, item_id, version_number, status, nature, description, inclusions_json, exclusions_json,
         prerequisites_json, price_mode, price_cents, recommended_price_cents,
         estimated_minutes, recommended_delay_days, default_deposit_percent,
         contract_type, internal_advice, published_at, created_at, special_terms
-      ) VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)`,
+      ) VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)`,
       [
         id,
         itemId,
         versionNumber,
+        clean(input.nature),
         clean(input.description),
         JSON.stringify(input.inclusions ?? []),
         JSON.stringify(input.exclusions ?? []),
@@ -461,6 +465,7 @@ export class CatalogService {
         item_id: row.id,
         version_number: Number(row.version_number),
         status: row.version_status as CatalogVersion['status'],
+        nature: row.nature,
         description: row.description,
         inclusions_json: row.inclusions_json ?? '[]',
         exclusions_json: row.exclusions_json ?? '[]',
@@ -497,6 +502,7 @@ export class CatalogService {
       itemId: row.item_id,
       versionNumber: Number(row.version_number),
       status: row.status,
+      nature: row.nature,
       description: row.description,
       inclusions: parseList(row.inclusions_json),
       exclusions: parseList(row.exclusions_json),
