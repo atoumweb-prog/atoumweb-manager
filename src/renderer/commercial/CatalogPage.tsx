@@ -108,6 +108,12 @@ function formatPrice(item: CatalogItemSummary): string {
   return amount;
 }
 
+function formatCatalogDate(value?: string | null): string {
+  if (!value) return '—';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('fr-FR');
+}
+
 export function CatalogPage({ onMessage }: { onMessage: (message: string) => void }) {
   const [items, setItems] = useState<CatalogItemSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,7 +128,7 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
   const [formError, setFormError] = useState<string | null>(null);
   const [versionMode, setVersionMode] = useState(false);
   const [versionDraft, setVersionDraft] = useState<CatalogDraft>(EMPTY_DRAFT);
-  const [detailSplitPercent, setDetailSplitPercent] = useState(62);
+  const [detailSplitPercent, setDetailSplitPercent] = useState(40);
   const [detailExpanded, setDetailExpanded] = useState(false);
   const [offerComponents, setOfferComponents] = useState<OfferComponent[]>([]);
   const [offerVersionId, setOfferVersionId] = useState<string | null>(null);
@@ -172,9 +178,21 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
       if (typeFilter !== 'all' && item.type !== typeFilter) return false;
       if (statusFilter !== 'all' && item.status !== statusFilter) return false;
       if (!needle) return true;
-      return [item.name, item.category, item.currentVersion?.description]
-        .filter(Boolean)
-        .some((value) => value?.toLocaleLowerCase('fr-FR').includes(needle));
+      const version = item.currentVersion;
+      return [
+        item.name,
+        item.category,
+        version?.nature,
+        version?.description,
+        version?.contractType,
+        version?.specialTerms,
+        version?.internalAdvice,
+        ...(version?.inclusions ?? []),
+        ...(version?.exclusions ?? []),
+        ...(version?.prerequisites ?? []),
+      ]
+        .filter((value): value is string => typeof value === 'string')
+        .some((value) => value.toLocaleLowerCase('fr-FR').includes(needle));
     });
   }, [items, query, typeFilter, statusFilter]);
 
@@ -200,7 +218,7 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
       const rect = workspace.getBoundingClientRect();
       if (!rect.width) return;
       const ratio = ((event.clientX - rect.left) / rect.width) * 100;
-      setDetailSplitPercent(Math.max(28, Math.min(76, ratio)));
+      setDetailSplitPercent(Math.max(18, Math.min(68, ratio)));
     };
     const onUp = () => {
       document.body.classList.remove('catalog-resizing');
@@ -386,7 +404,7 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
         <div><strong>{filtered.length}</strong><span> élément{filtered.length > 1 ? 's' : ''}</span></div>
         <div className="toolbar-controls catalog-toolbar-controls">
           <button className="secondary-button" type="button" onClick={() => void refresh()}>↻ Actualiser</button>
-          <input className="inline-search" placeholder="Rechercher une offre…" value={query} onChange={(e) => setQuery(e.target.value)} />
+          <input className="inline-search" placeholder="Rechercher dans le catalogue…" value={query} onChange={(e) => setQuery(e.target.value)} />
           <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as 'all' | CatalogItemType)}>
             <option value="all">Services + Offres</option><option value="service">Services</option><option value="offer">Offres</option>
           </select>
@@ -412,19 +430,47 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
           style={detail && !detailExpanded ? { gridTemplateColumns: `${detailSplitPercent}% 8px minmax(0, 1fr)` } : undefined}
         >
           <div className="panel table-panel catalog-table-panel">
-            <div className="catalog-table-wrap">
-              <table className="catalog-table">
-                <thead><tr><th>Catégorie</th><th>Nom</th><th>Type</th><th>Prix AtoumWeb</th><th>Prix conseillé</th><th>Mode</th><th>Statut</th><th>Site</th><th>Version</th></tr></thead>
-                <tbody>
-                  {filtered.map((item) => (
-                    <tr key={item.id} className={selectedId === item.id ? 'selected-row' : ''} onClick={() => void openItem(item.id)}>
-                      <td>{item.category || '—'}</td><td><strong>{item.name}</strong></td><td><span className="status-pill">{item.type === 'offer' ? 'Offre' : 'Service'}</span></td><td>{formatPrice(item)}</td><td>{item.currentVersion?.recommendedPriceCents != null ? `${(item.currentVersion.recommendedPriceCents / 100).toLocaleString('fr-FR')} €` : '—'}</td><td>{item.currentVersion ? PRICE_LABELS[item.currentVersion.priceMode] : '—'}</td><td><span className={`catalog-status catalog-${item.status}`}>{STATUS_LABELS[item.status]}</span></td><td>{item.visiblePublic ? 'Oui' : 'Non'}</td><td>{item.currentVersion ? `v${item.currentVersion.versionNumber} · ${VERSION_STATUS_LABELS[item.currentVersion.status]}` : '—'}</td>
-                    </tr>
-                  ))}
-                  {filtered.length === 0 && <tr><td colSpan={9}><div className="empty-table">Aucune offre ou service pour ces filtres.</div></td></tr>}
-                </tbody>
-              </table>
-            </div>
+            {detail ? (
+              <div className="catalog-compact-list" role="list" aria-label="Offres et services">
+                {filtered.map((item) => (
+                  <button
+                    key={item.id}
+                    className={`catalog-compact-item ${selectedId === item.id ? 'selected' : ''}`}
+                    type="button"
+                    role="listitem"
+                    onClick={() => void openItem(item.id)}
+                  >
+                    <span className="catalog-compact-heading">
+                      <strong>{item.name}</strong>
+                      <span className="status-pill">{item.type === 'offer' ? 'Offre' : 'Service'}</span>
+                    </span>
+                    <span className="catalog-compact-meta">
+                      <span>{item.category || 'Sans catégorie'}</span>
+                      <span>{formatPrice(item)}</span>
+                    </span>
+                    <span className="catalog-compact-meta">
+                      <span className={`catalog-status catalog-${item.status}`}>{STATUS_LABELS[item.status]}</span>
+                      <span>{item.currentVersion ? `v${item.currentVersion.versionNumber} · ${VERSION_STATUS_LABELS[item.currentVersion.status]}` : 'Sans version'}</span>
+                    </span>
+                  </button>
+                ))}
+                {filtered.length === 0 && <div className="empty-table">Aucune offre ou service pour ces filtres.</div>}
+              </div>
+            ) : (
+              <div className="catalog-table-wrap">
+                <table className="catalog-table">
+                  <thead><tr><th>Catégorie</th><th>Nom</th><th>Type</th><th>Prix AtoumWeb</th><th>Prix conseillé</th><th>Mode</th><th>Statut</th><th>Site</th><th>Version</th></tr></thead>
+                  <tbody>
+                    {filtered.map((item) => (
+                      <tr key={item.id} className={selectedId === item.id ? 'selected-row' : ''} onClick={() => void openItem(item.id)}>
+                        <td>{item.category || '—'}</td><td><strong>{item.name}</strong></td><td><span className="status-pill">{item.type === 'offer' ? 'Offre' : 'Service'}</span></td><td>{formatPrice(item)}</td><td>{item.currentVersion?.recommendedPriceCents != null ? `${(item.currentVersion.recommendedPriceCents / 100).toLocaleString('fr-FR')} €` : '—'}</td><td>{item.currentVersion ? PRICE_LABELS[item.currentVersion.priceMode] : '—'}</td><td><span className={`catalog-status catalog-${item.status}`}>{STATUS_LABELS[item.status]}</span></td><td>{item.visiblePublic ? 'Oui' : 'Non'}</td><td>{item.currentVersion ? `v${item.currentVersion.versionNumber} · ${VERSION_STATUS_LABELS[item.currentVersion.status]}` : '—'}</td>
+                      </tr>
+                    ))}
+                    {filtered.length === 0 && <tr><td colSpan={9}><div className="empty-table">Aucune offre ou service pour ces filtres.</div></td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           {detail && !detailExpanded && <div
@@ -434,10 +480,10 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
             aria-label="Redimensionner la liste et la fiche"
             tabIndex={0}
             onPointerDown={() => beginCatalogResize()}
-            onDoubleClick={() => setDetailSplitPercent(62)}
+            onDoubleClick={() => setDetailSplitPercent(40)}
             onKeyDown={(event) => {
-              if (event.key === 'ArrowLeft') setDetailSplitPercent((value) => Math.max(28, value - 3));
-              if (event.key === 'ArrowRight') setDetailSplitPercent((value) => Math.min(76, value + 3));
+              if (event.key === 'ArrowLeft') setDetailSplitPercent((value) => Math.max(18, value - 3));
+              if (event.key === 'ArrowRight') setDetailSplitPercent((value) => Math.min(68, value + 3));
             }}
           ><span /></div>}
 
@@ -461,17 +507,37 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
 
               {detail.currentVersion ? (
                 <div className="catalog-current-version">
-                  <Summary label="Nature" value={detail.currentVersion.nature || 'Non renseignée'} />
-                  <Summary label="Tarif actuel" value={formatPrice(detail)} />
-                  <Summary label="Prix conseillé" value={detail.currentVersion.recommendedPriceCents != null ? `${(detail.currentVersion.recommendedPriceCents / 100).toLocaleString('fr-FR')} €` : '—'} />
-                  <Summary label="Acompte par défaut" value={detail.currentVersion.defaultDepositPercent != null ? `${detail.currentVersion.defaultDepositPercent} %` : '—'} />
-                  <Summary label="Durée estimée" value={detail.currentVersion.estimatedMinutes != null ? `${detail.currentVersion.estimatedMinutes} min` : '—'} />
-                  <Summary label="Délai recommandé" value={detail.currentVersion.recommendedDelayDays != null ? `${detail.currentVersion.recommendedDelayDays} jours` : '—'} />
-                  <Summary label="Contrat" value={detail.currentVersion.contractType || '—'} />
-                  <Summary label="Description" value={detail.currentVersion.description || 'Non renseignée'} />
-                  <ListSummary label="Inclus" values={detail.currentVersion.inclusions ?? []} />
-                  <ListSummary label="Exclusions" values={detail.currentVersion.exclusions ?? []} />
-                  <ListSummary label="Prérequis" values={detail.currentVersion.prerequisites ?? []} />
+                  <section className="catalog-detail-section catalog-detail-overview">
+                    <div className="catalog-detail-section-heading"><span className="eyebrow">Prestation</span><strong>Ce qui est réellement vendu</strong></div>
+                    <h3>{detail.currentVersion.nature || 'Nature de la prestation à renseigner'}</h3>
+                    <p>{detail.currentVersion.description || 'Description à compléter pour expliquer clairement le résultat attendu au client.'}</p>
+                  </section>
+
+                  <section className="catalog-detail-section">
+                    <div className="catalog-detail-section-heading"><span className="eyebrow">Repères</span><strong>Tarification, délai et cadre</strong></div>
+                    <div className="catalog-summary-grid">
+                      <Summary label="Tarif actuel" value={formatPrice(detail)} />
+                      <Summary label="Prix conseillé" value={detail.currentVersion.recommendedPriceCents != null ? `${(detail.currentVersion.recommendedPriceCents / 100).toLocaleString('fr-FR')} €` : '—'} />
+                      <Summary label="Acompte par défaut" value={detail.currentVersion.defaultDepositPercent != null ? `${detail.currentVersion.defaultDepositPercent} %` : '—'} />
+                      <Summary label="Durée estimée" value={detail.currentVersion.estimatedMinutes != null ? `${detail.currentVersion.estimatedMinutes} min` : '—'} />
+                      <Summary label="Délai recommandé" value={detail.currentVersion.recommendedDelayDays != null ? `${detail.currentVersion.recommendedDelayDays} jours` : '—'} />
+                      <Summary label="Type de contrat" value={detail.currentVersion.contractType || '—'} />
+                      <Summary label={detail.currentVersion.publishedAt ? 'Publiée le' : 'Créée le'} value={formatCatalogDate(detail.currentVersion.publishedAt ?? detail.currentVersion.createdAt)} />
+                    </div>
+                  </section>
+
+                  <section className="catalog-detail-section">
+                    <div className="catalog-detail-section-heading"><span className="eyebrow">Périmètre</span><strong>Inclus, exclusions et prérequis</strong></div>
+                    <ListSummary label="Inclus" values={detail.currentVersion.inclusions ?? []} />
+                    <ListSummary label="Exclusions" values={detail.currentVersion.exclusions ?? []} />
+                    <ListSummary label="Prérequis" values={detail.currentVersion.prerequisites ?? []} />
+                  </section>
+
+                  <section className="catalog-detail-section">
+                    <div className="catalog-detail-section-heading"><span className="eyebrow">Conditions</span><strong>Cadre commercial</strong></div>
+                    <Summary label="Conditions commerciales" value={detail.currentVersion.specialTerms || 'Non renseignées'} />
+                  </section>
+
                   {detail.currentVersion.internalAdvice && <div className="catalog-internal-note"><strong>Conseil interne AtoumWeb</strong><p>{detail.currentVersion.internalAdvice}</p></div>}
                 </div>
               ) : <p className="muted">Aucune version.</p>}
@@ -496,7 +562,7 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
                 </section>
               )}
 
-              <div className="catalog-versions"><strong>Historique des versions</strong>{detail.versions.map((version) => <div className="catalog-version-row" key={version.id}><div><strong>v{version.versionNumber}</strong><span>{VERSION_STATUS_LABELS[version.status]}</span><small>{PRICE_LABELS[version.priceMode]} · {version.priceCents != null ? `${(version.priceCents / 100).toLocaleString('fr-FR')} €` : '—'}</small></div>{version.status === 'draft' && <button className="primary-button compact-button" type="button" onClick={() => void publish(version.id)}>Publier</button>}</div>)}</div>
+              <div className="catalog-versions"><strong>Historique des versions</strong>{detail.versions.map((version) => <div className="catalog-version-row" key={version.id}><div><strong>v{version.versionNumber}</strong><span>{VERSION_STATUS_LABELS[version.status]}</span><small>{PRICE_LABELS[version.priceMode]} · {version.priceCents != null ? `${(version.priceCents / 100).toLocaleString('fr-FR')} €` : '—'} · {version.publishedAt ? `publiée le ${formatCatalogDate(version.publishedAt)}` : `créée le ${formatCatalogDate(version.createdAt)}`}</small></div>{version.status === 'draft' && <button className="primary-button compact-button" type="button" onClick={() => void publish(version.id)}>Publier</button>}</div>)}</div>
             </aside>
           )}
         </div>
