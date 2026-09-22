@@ -1,4 +1,4 @@
-import { app, dialog, ipcMain, shell } from 'electron';
+import { app, dialog, ipcMain, safeStorage, shell } from 'electron';
 import type {
   CatalogFilters,
   CatalogItemInput,
@@ -84,7 +84,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     const storedDensity = database.getSetting<unknown>('display_density', 'comfort');
     const theme: ThemeName = isThemeName(storedTheme) ? storedTheme : 'atoumweb';
     const displayDensity: DisplayDensity = isDisplayDensity(storedDensity) ? storedDensity : 'comfort';
-    return { appVersion: app.getVersion(), workspacePath: workspace.root, databasePath: workspace.databaseFile, theme, displayDensity, database: database.health() };
+    const showHoverHelp = database.getSetting<boolean>('show_hover_help', true) !== false;
+    return { appVersion: app.getVersion(), workspacePath: workspace.root, databasePath: workspace.databaseFile, theme, displayDensity, showHoverHelp, database: database.health() };
   });
 
   ipcMain.handle('settings:set-theme', (_event, value: unknown): ThemeName => {
@@ -96,6 +97,12 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('settings:set-display-density', (_event, value: unknown): DisplayDensity => {
     if (!isDisplayDensity(value)) throw new Error('Densité d’affichage invalide.');
     database.setSetting('display_density', value);
+    return value;
+  });
+
+  ipcMain.handle('settings:set-show-hover-help', (_event, enabled: unknown): boolean => {
+    const value = Boolean(enabled);
+    database.setSetting('show_hover_help', value);
     return value;
   });
 
@@ -279,6 +286,36 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('projects:move-node', (_event, nodeId: string, input: MoveProjectNodeInput) => database.projectNodes.move(nodeId, input));
   ipcMain.handle('projects:set-node-pause', (_event, nodeId: string, paused: boolean, reason?: string | null) => database.projects.setProjectNodePause(nodeId, paused, reason));
   ipcMain.handle('projects:complete-phase', (_event, nodeId: string) => database.projects.completeProjectPhase(nodeId));
+  ipcMain.handle('projects:secrets:list', (_event, projectId: string, projectNodeId?: string | null) =>
+    database.projects.listProjectSecrets(projectId, projectNodeId));
+
+  ipcMain.handle('projects:secrets:save', (_event, input: {
+    projectId: string;
+    projectNodeId?: string | null;
+    label: string;
+    username?: string | null;
+    secret: string;
+    url?: string | null;
+    notes?: string | null;
+  }) => {
+    if (!safeStorage.isEncryptionAvailable()) throw new Error('Le chiffrement système Windows n’est pas disponible.');
+    const secret = input.secret?.trim();
+    if (!secret) throw new Error('Mot de passe ou clé requis.');
+    const secretCiphertext = safeStorage.encryptString(secret).toString('base64');
+    return database.projects.saveProjectSecret({ ...input, secretCiphertext });
+  });
+
+  ipcMain.handle('projects:secrets:reveal', (_event, id: string) => {
+    if (!safeStorage.isEncryptionAvailable()) throw new Error('Le chiffrement système Windows n’est pas disponible.');
+    const stored = database.projects.getProjectSecretCiphertext(id);
+    const secret = safeStorage.decryptString(Buffer.from(stored.ciphertext, 'base64'));
+    return { id: stored.id, secret };
+  });
+
+  ipcMain.handle('projects:secrets:remove', (_event, id: string) => {
+    database.projects.removeProjectSecret(id);
+  });
+
   ipcMain.handle('projects:add-prerequisite', (_event, projectId: string, input: ProjectPrerequisiteInput) => database.projects.addPrerequisite(projectId, input));
   ipcMain.handle('projects:update-prerequisite-status', (_event, id: string, status: ProjectPrerequisiteStatus) => database.projects.updatePrerequisiteStatus(id, status));
 
