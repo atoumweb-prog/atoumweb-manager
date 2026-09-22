@@ -9,6 +9,7 @@ import {
   type OfferComponent,
   type PriceMode,
 } from '../../shared/commercial';
+import { FieldHelp } from '../ui/FieldHelp';
 
 const PRICE_LABELS: Record<PriceMode, string> = {
   fixed: 'Prix fixe',
@@ -26,10 +27,17 @@ const STATUS_LABELS: Record<CatalogItemStatus, string> = {
   archived: 'Archivé',
 };
 
+const VERSION_STATUS_LABELS = {
+  draft: 'Brouillon',
+  published: 'Publiée',
+  retired: 'Retirée',
+} as const;
+
 interface CatalogDraft {
   type: CatalogItemType;
   name: string;
   category: string;
+  nature: string;
   description: string;
   inclusionsText: string;
   exclusionsText: string;
@@ -50,6 +58,7 @@ const EMPTY_DRAFT: CatalogDraft = {
   type: 'service',
   name: '',
   category: '',
+  nature: '',
   description: '',
   inclusionsText: '',
   exclusionsText: '',
@@ -113,6 +122,8 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
   const [formError, setFormError] = useState<string | null>(null);
   const [versionMode, setVersionMode] = useState(false);
   const [versionDraft, setVersionDraft] = useState<CatalogDraft>(EMPTY_DRAFT);
+  const [detailSplitPercent, setDetailSplitPercent] = useState(62);
+  const [detailExpanded, setDetailExpanded] = useState(false);
   const [offerComponents, setOfferComponents] = useState<OfferComponent[]>([]);
   const [offerVersionId, setOfferVersionId] = useState<string | null>(null);
   const [componentServiceVersionId, setComponentServiceVersionId] = useState('');
@@ -170,13 +181,41 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
   async function openItem(id: string): Promise<void> {
     setSelectedId(id);
     setVersionMode(false);
+    setDetailExpanded(false);
     await loadDetail(id);
+  }
+
+  function closeDetail(): void {
+    setSelectedId(null);
+    setDetail(null);
+    setVersionMode(false);
+    setDetailExpanded(false);
+  }
+
+  function beginCatalogResize(): void {
+    const workspace = document.querySelector<HTMLElement>('.catalog-layout.with-detail');
+    if (!workspace) return;
+    document.body.classList.add('catalog-resizing');
+    const onMove = (event: PointerEvent) => {
+      const rect = workspace.getBoundingClientRect();
+      if (!rect.width) return;
+      const ratio = ((event.clientX - rect.left) / rect.width) * 100;
+      setDetailSplitPercent(Math.max(28, Math.min(76, ratio)));
+    };
+    const onUp = () => {
+      document.body.classList.remove('catalog-resizing');
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp, { once: true });
   }
 
   function buildVersion(input: CatalogDraft): CatalogVersionInput {
     const deposit = input.depositPercent.trim() ? Number(input.depositPercent) : null;
     if (deposit != null && (!Number.isInteger(deposit) || deposit < 0 || deposit > 100)) throw new Error('Acompte invalide.');
     return {
+      nature: input.nature.trim() || null,
       description: input.description.trim() || null,
       priceMode: input.priceMode,
       priceCents: input.priceMode === 'free' ? 0 : eurosToCents(input.priceEuros),
@@ -227,6 +266,7 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
       type: detail.type,
       name: detail.name,
       category: detail.category ?? '',
+      nature: current.nature ?? '',
       description: current.description ?? '',
       inclusionsText: (current.inclusions ?? []).join('\n'),
       exclusionsText: (current.exclusions ?? []).join('\n'),
@@ -367,7 +407,10 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
       )}
 
       {loading ? <div className="panel"><p className="muted">Chargement du catalogue…</p></div> : (
-        <div className={detail ? 'catalog-layout with-detail' : 'catalog-layout'}>
+        <div
+          className={detail ? `catalog-layout with-detail ${detailExpanded ? 'detail-expanded' : ''}` : 'catalog-layout'}
+          style={detail && !detailExpanded ? { gridTemplateColumns: `${detailSplitPercent}% 8px minmax(0, 1fr)` } : undefined}
+        >
           <div className="panel table-panel catalog-table-panel">
             <div className="catalog-table-wrap">
               <table className="catalog-table">
@@ -375,7 +418,7 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
                 <tbody>
                   {filtered.map((item) => (
                     <tr key={item.id} className={selectedId === item.id ? 'selected-row' : ''} onClick={() => void openItem(item.id)}>
-                      <td>{item.category || '—'}</td><td><strong>{item.name}</strong></td><td><span className="status-pill">{item.type === 'offer' ? 'Offre' : 'Service'}</span></td><td>{formatPrice(item)}</td><td>{item.currentVersion?.recommendedPriceCents != null ? `${(item.currentVersion.recommendedPriceCents / 100).toLocaleString('fr-FR')} €` : '—'}</td><td>{item.currentVersion ? PRICE_LABELS[item.currentVersion.priceMode] : '—'}</td><td><span className={`catalog-status catalog-${item.status}`}>{STATUS_LABELS[item.status]}</span></td><td>{item.visiblePublic ? 'Oui' : 'Non'}</td><td>{item.currentVersion ? `v${item.currentVersion.versionNumber} · ${item.currentVersion.status}` : '—'}</td>
+                      <td>{item.category || '—'}</td><td><strong>{item.name}</strong></td><td><span className="status-pill">{item.type === 'offer' ? 'Offre' : 'Service'}</span></td><td>{formatPrice(item)}</td><td>{item.currentVersion?.recommendedPriceCents != null ? `${(item.currentVersion.recommendedPriceCents / 100).toLocaleString('fr-FR')} €` : '—'}</td><td>{item.currentVersion ? PRICE_LABELS[item.currentVersion.priceMode] : '—'}</td><td><span className={`catalog-status catalog-${item.status}`}>{STATUS_LABELS[item.status]}</span></td><td>{item.visiblePublic ? 'Oui' : 'Non'}</td><td>{item.currentVersion ? `v${item.currentVersion.versionNumber} · ${VERSION_STATUS_LABELS[item.currentVersion.status]}` : '—'}</td>
                     </tr>
                   ))}
                   {filtered.length === 0 && <tr><td colSpan={9}><div className="empty-table">Aucune offre ou service pour ces filtres.</div></td></tr>}
@@ -384,13 +427,34 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
             </div>
           </div>
 
+          {detail && !detailExpanded && <div
+            className="catalog-splitter"
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Redimensionner la liste et la fiche"
+            tabIndex={0}
+            onPointerDown={() => beginCatalogResize()}
+            onDoubleClick={() => setDetailSplitPercent(62)}
+            onKeyDown={(event) => {
+              if (event.key === 'ArrowLeft') setDetailSplitPercent((value) => Math.max(28, value - 3));
+              if (event.key === 'ArrowRight') setDetailSplitPercent((value) => Math.min(76, value + 3));
+            }}
+          ><span /></div>}
+
           {detail && (
-            <aside className="panel catalog-detail-panel">
-              <div className="detail-panel-heading"><div><span className="eyebrow">{detail.type === 'offer' ? 'Offre' : 'Service'}</span><h2>{detail.name}</h2><p className="muted">{detail.category || 'Sans catégorie'}</p></div><button className="close-detail" type="button" onClick={() => { setSelectedId(null); setDetail(null); setVersionMode(false); }}>×</button></div>
-              <div className="detail-badges"><span className={`catalog-status catalog-${detail.status}`}>{STATUS_LABELS[detail.status]}</span><span className="status-pill">{detail.visiblePublic ? 'Visible site' : 'Interne'}</span>{detail.currentVersion && <span className="status-pill">v{detail.currentVersion.versionNumber} · {detail.currentVersion.status}</span>}</div>
+            <aside className={`panel catalog-detail-panel ${detailExpanded ? 'expanded' : ''}`}>
+              <div className="detail-panel-heading">
+                <div><span className="eyebrow">{detail.type === 'offer' ? 'Offre' : 'Service'}</span><h2>{detail.name}</h2><p className="muted">{detail.category || 'Sans catégorie'}</p></div>
+                <div className="catalog-detail-heading-actions">
+                  <button className="catalog-detail-expand" type="button" aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}>{detailExpanded ? '↙' : '⛶'}</button>
+                  <button className="close-detail" type="button" onClick={closeDetail}>×</button>
+                </div>
+              </div>
+              <div className="detail-badges"><span className={`catalog-status catalog-${detail.status}`}>{STATUS_LABELS[detail.status]}</span><span className="status-pill">{detail.visiblePublic ? 'Visible site' : 'Interne'}</span>{detail.currentVersion && <span className="status-pill">v{detail.currentVersion.versionNumber} · {VERSION_STATUS_LABELS[detail.currentVersion.status]}</span>}</div>
 
               {detail.currentVersion ? (
                 <div className="catalog-current-version">
+                  <Summary label="Nature" value={detail.currentVersion.nature || 'Non renseignée'} />
                   <Summary label="Tarif actuel" value={formatPrice(detail)} />
                   <Summary label="Prix conseillé" value={detail.currentVersion.recommendedPriceCents != null ? `${(detail.currentVersion.recommendedPriceCents / 100).toLocaleString('fr-FR')} €` : '—'} />
                   <Summary label="Acompte par défaut" value={detail.currentVersion.defaultDepositPercent != null ? `${detail.currentVersion.defaultDepositPercent} %` : '—'} />
@@ -405,13 +469,13 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
                 </div>
               ) : <p className="muted">Aucune version.</p>}
 
-              <div className="catalog-detail-actions"><button className="secondary-button" type="button" onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select value={detail.status} onChange={(e) => void updateStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion} onClick={prepareNewVersion}>+ Nouvelle version</button></div>
+              <div className="catalog-detail-actions"><button className="secondary-button" type="button" onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select value={detail.status} onChange={(e) => void updateStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion} onClick={prepareNewVersion}>Modifier via une nouvelle version</button></div>
 
               {versionMode && <form className="catalog-version-editor" onSubmit={(event) => void createVersion(event)}><strong>Nouvelle version</strong><CatalogFields draft={versionDraft} onChange={setVersionDraft} /><div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => setVersionMode(false)}>Annuler</button><button className="primary-button" disabled={saving} type="submit">Créer v{(detail.versions[0]?.versionNumber ?? 0) + 1}</button></div></form>}
 
               {detail.type === 'offer' && offerCompositionVersion && (
                 <section className="offer-composition">
-                  <div className="offer-composition-heading"><div><span className="eyebrow">Composition</span><strong>Services de l’Offre · v{offerCompositionVersion.versionNumber}</strong></div><span className="status-pill">{offerCompositionVersion.status}</span></div>
+                  <div className="offer-composition-heading"><div><span className="eyebrow">Composition</span><strong>Services de l’Offre · v{offerCompositionVersion.versionNumber}</strong></div><span className="status-pill">{VERSION_STATUS_LABELS[offerCompositionVersion.status]}</span></div>
                   {offerComponents.map((component) => <div className="offer-component-row" key={component.id}><div><strong>{component.serviceName}</strong><span>v{component.serviceVersionNumber} · {(component.quantityMilli / 1000).toLocaleString('fr-FR')} × · {component.isOptional ? 'Optionnel' : 'Inclus'}</span></div>{offerCompositionEditable && <button className="close-detail" type="button" onClick={() => void removeOfferComponent(component.id)}>×</button>}</div>)}
                   {offerComponents.length === 0 && <p className="muted">Aucun Service dans cette Offre.</p>}
                   {offerCompositionEditable ? (
@@ -425,7 +489,7 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
                 </section>
               )}
 
-              <div className="catalog-versions"><strong>Historique des versions</strong>{detail.versions.map((version) => <div className="catalog-version-row" key={version.id}><div><strong>v{version.versionNumber}</strong><span>{version.status}</span><small>{PRICE_LABELS[version.priceMode]} · {version.priceCents != null ? `${(version.priceCents / 100).toLocaleString('fr-FR')} €` : '—'}</small></div>{version.status === 'draft' && <button className="primary-button compact-button" type="button" onClick={() => void publish(version.id)}>Publier</button>}</div>)}</div>
+              <div className="catalog-versions"><strong>Historique des versions</strong>{detail.versions.map((version) => <div className="catalog-version-row" key={version.id}><div><strong>v{version.versionNumber}</strong><span>{VERSION_STATUS_LABELS[version.status]}</span><small>{PRICE_LABELS[version.priceMode]} · {version.priceCents != null ? `${(version.priceCents / 100).toLocaleString('fr-FR')} €` : '—'}</small></div>{version.status === 'draft' && <button className="primary-button compact-button" type="button" onClick={() => void publish(version.id)}>Publier</button>}</div>)}</div>
             </aside>
           )}
         </div>
