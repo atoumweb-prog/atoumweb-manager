@@ -1,5 +1,65 @@
 # AtoumWeb Manager — Suivi du projet
 
+## État canonique — 22/09/2026
+
+> Cette section prime sur les entrées historiques plus bas. Source de vérité partagée ChatGPT / Codex MSI.
+
+### Socle courant
+
+- Branche de base fonctionnelle : `fix/pre-phase5-commercial-ux` au commit `3494a76`.
+- Phase 6 intégrée dans ce socle.
+- Phase 5 Administration / Finance : **différée, pas supprimée**.
+- Branche active : `feature/project-blueprints-v1`.
+- PR active : **#73 — Projet V2 — Blueprints de production et atelier AtoumWeb**.
+- Branche Phase 7 existante en parallèle : `feature/phase-7-analytics-v1` / PR #71 ; ne pas la poursuivre sans la réaligner sur Projet V2.
+- Migrations sur Projet V2 : **30**.
+- `main` reste historique et très en retard par rapport au socle de travail ; ne pas l'utiliser comme base de développement courant.
+
+### Projet V2 — réalisé
+
+- [x] devis accepté → projet généré depuis les blueprints Catalogue ;
+- [x] snapshot projet indépendant du modèle après création ;
+- [x] phases repliées + étapes numérotées ;
+- [x] glisser-déposer des étapes ;
+- [x] plan / fiche redimensionnables ;
+- [x] barre latérale escamotable et masquée automatiquement en Production ;
+- [x] timer directement rattaché à une étape ;
+- [x] notes et actions libres dans chaque étape ;
+- [x] ressources / technique / temps ouverts en fenêtre sans quitter Production ;
+- [x] pages renommables directement ;
+- [x] validation avant clôture d'une phase et passage groupé de toutes les étapes en Terminé ;
+- [x] undo / redo du travail de production ;
+- [x] aide contextuelle des champs désactivable dans Réglages ;
+- [x] coffre d'accès projet / étape chiffré avec Electron `safeStorage` ;
+- [x] couche de cohérence UI transverse pour rapprocher les anciens écrans des pages récemment recettées.
+
+### Validation
+
+- [x] recette Projet V2 antérieure : typecheck/tests signalés verts sur MSI.
+- [ ] revalider le HEAD actuel après le dernier lot : aide / actions / coffre sécurisé / migration 30 / cohérence UI globale.
+- [ ] `npm run typecheck`
+- [ ] `npm test`
+- [ ] `npm run package`
+- [ ] recette visuelle Validation-MSI : Projet + anciens écrans principaux + trois thèmes.
+
+### Prochaine action
+
+Sur MSI :
+
+```powershell
+cd C:\DEV\01_PROJETS\AtoumWeb\atoumweb-manager
+git fetch --all --prune
+git switch feature/project-blueprints-v1
+git pull --ff-only
+npm run typecheck
+npm test
+npm run package
+C:\DEV\Lanceurs\AtoumWeb-Validation-MSI.cmd
+```
+
+Voir aussi : `docs/HANDOFF_CODEX_MSI.md`.
+
+
 ## Lot UX commercial avant Phase 5 — 19/09/2026
 
 Branche `fix/pre-phase5-commercial-ux`, créée depuis `fix/prospect-recipe-ux-v2` à `3bc0f19`. Phase 5 en pause ; Phase 6 non intégrée. Aucune migration modifiée.
@@ -20,12 +80,11 @@ Prochaine action : terminer la recette visuelle du lot avant toute validation fi
 
 - **Version cible** : V1
 - **Dépôt** : `atoumweb-prog/atoumweb-manager`
-- **Branche stable** : `main`
-- **Fondation** : `foundation/electron-react-sqlite` — PR #3
-- **Phase 1** : `feature/phase-1-crm` — PR #58 (brouillon)
-- **Phase 2** : `feature/phase-2-commercial` — PR #59 (brouillon)
-- **Phase 3 en cours** : `feature/phase-3-projects` — PR #60 (brouillon, base Phase 2)
-- **Migrations prévues sur la branche Phase 3** : 10
+- **Branche Git historique** : `main` (non utilisée comme base courante tant que le socle n'est pas consolidé)
+- **Socle fonctionnel courant** : `fix/pre-phase5-commercial-ux`
+- **Chantier actif** : `feature/project-blueprints-v1` — PR #73
+- **Statistiques en attente d'intégration** : `feature/phase-7-analytics-v1` — PR #71
+- **Migrations courantes sur Projet V2** : 30
 - **Principe directeur** : une donnée métier possède une source unique ; les autres écrans la référencent sans duplication.
 
 ### Stabilisation transverse — 15/09/2026
