@@ -26,8 +26,7 @@ export function ProspectReferenceWindow({ prospectId }: { prospectId: string }) 
 
   return <div className="reference-window-shell">
     <header className="reference-window-header">
-      <div><span className="eyebrow">Référence prospect détachée</span><h1>{prospect.displayName}</h1><p>{prospect.organizationIndustry || 'Activité à compléter'}{prospect.organizationCity ? ` · ${prospect.organizationCity}` : ''}</p></div>
-      <div className="reference-window-badge">Fenêtre indépendante · déplaçable sur un autre écran</div>
+      <div><span className="eyebrow">Référence prospect</span><h1>{prospect.displayName}</h1><p>{prospect.organizationIndustry || 'Activité à compléter'}{prospect.organizationCity ? ` · ${prospect.organizationCity}` : ''}</p></div>
     </header>
     {message && <div className="notice"><span>{message}</span><button type="button" onClick={() => setMessage('')}>×</button></div>}
     <section className="reference-window-identity">
