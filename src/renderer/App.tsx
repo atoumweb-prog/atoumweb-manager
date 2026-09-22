@@ -5,6 +5,7 @@ import type { BootstrapState, DisplayDensity, ThemeName } from '../shared/contra
 import type { SearchResult } from '../shared/crm';
 import { BusinessBackupsPage } from './backups/BusinessBackupsPage';
 import { BillingPage } from './billing/BillingPage';
+import { ExpensesPage } from './expenses/ExpensesPage';
 import { CatalogPage } from './commercial/CatalogPage';
 import { QuotesPage } from './commercial/QuotesPage';
 import { ClientsPage } from './crm/ClientsPage';
@@ -49,7 +50,7 @@ const PAGE_HINTS: Record<PageName, string> = {
   'Interventions & Maintenance': 'Demandes, interventions, maintenance et packs d’heures.',
   'Gestion des temps': 'Analyse du temps réel par client, projet et activité.',
   Facturation: 'Éléments à facturer et archivage des PDF de factures Abby.',
-  Dépenses: 'Abonnements, dépenses et échéances AtoumWeb.',
+  Dépenses: 'Frais AtoumWeb, dépenses clients/projets, abonnements et justificatifs.',
   'Documents & Contrats': 'Modèles, contrats, avenants, rapports et PDF.',
   'Bibliothèque AtoumWeb': 'Composants et références techniques réutilisables.',
   Sauvegardes: 'Traçabilité des sauvegardes serveur, locales et externes.',
@@ -261,10 +262,11 @@ function App() {
           {activePage === 'Interventions & Maintenance' && <OperationsPage onMessage={setMessage} initialTarget={operationsSearchTarget} />}
           {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}
           {activePage === 'Facturation' && <BillingPage onMessage={setMessage} />}
+          {activePage === 'Dépenses' && <ExpensesPage onMessage={setMessage} />}
           {activePage === 'Bibliothèque AtoumWeb' && <AtoumWebLibraryPage onMessage={setMessage} initialItemId={librarySearchTarget} />}
           {activePage === 'Sauvegardes' && <BusinessBackupsPage onMessage={setMessage} initialRecordId={backupSearchTarget} />}
           {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} displayDensity={displayDensity} showHoverHelp={showHoverHelp} onThemeChange={updateTheme} onDensityChange={updateDisplayDensity} onShowHoverHelpChange={updateShowHoverHelp} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
-          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Facturation' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Sauvegardes' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
+          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Facturation' && activePage !== 'Dépenses' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Sauvegardes' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
         </section>
       </main>
     </div>
