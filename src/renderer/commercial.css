@@ -109,6 +109,10 @@
 .quote-totals span { color: var(--muted); font-size: 9px; }
 .quote-totals strong { font-size: 10px; }
 .quote-total-main strong { font-size: 14px; color: var(--accent-strong); }
+.quote-decision-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 150px; }
+.quote-decision-actions .compact-button { min-height: 30px; padding: 5px 9px; }
+.quote-decision-actions .status-pill { white-space: nowrap; }
+
 .quote-status-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; }
 
 @media (max-width: 1180px) {
