@@ -20,6 +20,16 @@ git switch feature/project-blueprints-v1
 git pull --ff-only
 ```
 
+Pour détecter un travail local non poussé avant toute modification :
+
+```powershell
+git status -sb
+git branch -vv
+git log --oneline --decorate --branches --not --remotes
+```
+
+Si la dernière commande ne retourne rien, aucun commit local n'attend d'être poussé. Ne pas pousser une ancienne branche uniquement parce qu'elle existe localement.
+
 Contrôle local recommandé :
 
 ```powershell
