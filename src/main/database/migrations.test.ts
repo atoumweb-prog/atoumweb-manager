@@ -84,7 +84,7 @@ describe('migrations SQLite', () => {
     for (const column of ['reuse_status', 'origin_technical_item_id', 'library_category']) {
       expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('technical_items') WHERE name='${column}'`)?.name).toBe(column);
     }
-    expect(MIGRATIONS.at(-1)?.id).toBe(30);
+    expect(MIGRATIONS.at(-1)?.id).toBe(31);
     expect(database.get<{ name: string }>("SELECT name FROM sqlite_master WHERE type='table' AND name='backup_records'")?.name).toBe('backup_records');
     expect(database.get<{ name: string }>("SELECT name FROM sqlite_master WHERE type='table' AND name='backup_policies'")?.name).toBe('backup_policies');
     for (const column of ['semantic_key', 'work_card_json', 'advice_json', 'is_paused', 'pause_reason']) {
