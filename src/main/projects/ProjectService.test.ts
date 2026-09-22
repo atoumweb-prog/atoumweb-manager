@@ -341,6 +341,35 @@ describe('ProjectService', () => {
     expect(home.sources.length).toBeGreaterThanOrEqual(2);
   });
 
+  it('conserve uniquement le secret chiffré dans le coffre projet', () => {
+    const quote = createAcceptedSeededVitrineQuote();
+    const project = projects.transformQuote({ quoteId: quote.id });
+    const wordpress = project.nodes.find((node) => node.semanticKey === 'technical.wordpress')!;
+
+    const saved = projects.saveProjectSecret({
+      projectId: project.id,
+      projectNodeId: wordpress.id,
+      label: 'WordPress admin',
+      username: 'atoumweb',
+      secretCiphertext: 'ciphertext-test-only',
+      url: 'https://example.test/wp-admin',
+      notes: 'Compte de production',
+    });
+
+    expect(saved.label).toBe('WordPress admin');
+    expect(saved).not.toHaveProperty('secretCiphertext');
+    expect(projects.listProjectSecrets(project.id, wordpress.id)).toEqual([
+      expect.objectContaining({ id: saved.id, username: 'atoumweb' }),
+    ]);
+    expect(projects.getProjectSecretCiphertext(saved.id)).toEqual({
+      id: saved.id,
+      ciphertext: 'ciphertext-test-only',
+    });
+
+    projects.removeProjectSecret(saved.id);
+    expect(projects.listProjectSecrets(project.id, wordpress.id)).toHaveLength(0);
+  });
+
   it('empêche une boucle dans l’arbre projet', () => {
     const template = createPublishedTemplate();
     const quote = createAcceptedQuote();
