@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import { normalizeEmail, normalizePhone } from '../../shared/contactValidation';
+import { normalizeWebUrl } from '../../shared/webUrl';
 import {
   CLIENT_STATUSES,
   PROSPECT_INTEREST_LEVELS,
@@ -226,7 +227,7 @@ export class CrmService {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id, name, clean(input.legalName), clean(input.siret), email, phone,
-        clean(input.website), clean(input.addressLine1), clean(input.addressLine2), clean(input.postalCode),
+        normalizeWebUrl(input.website), clean(input.addressLine1), clean(input.addressLine2), clean(input.postalCode),
         clean(input.city), clean(input.country), clean(input.industry), clean(input.notes), now, now,
       ],
     );
@@ -246,7 +247,7 @@ export class CrmService {
         postal_code=?, city=?, country=?, industry=?, notes=?, updated_at=?
        WHERE id=? AND archived_at IS NULL`,
       [
-        name, clean(input.legalName), clean(input.siret), email, phone, clean(input.website),
+        name, clean(input.legalName), clean(input.siret), email, phone, normalizeWebUrl(input.website),
         clean(input.addressLine1), clean(input.addressLine2), clean(input.postalCode), clean(input.city), clean(input.country),
         clean(input.industry), clean(input.notes), nowIso(), id,
       ],
@@ -429,7 +430,7 @@ export class CrmService {
       clean(pick('decisionMakerRole') as string|null|undefined), decisionMakerEmail, decisionMakerPhone,
       clean(pick('projectSummary') as string|null|undefined),clean(pick('projectContext') as string|null|undefined),pick('budgetStatus')??null,
       pick('timelineStatus')??null,clean(pick('timelineNote') as string|null|undefined),pick('existingStatus')??null,
-      clean(pick('existingUrl') as string|null|undefined),clean(pick('existingNotes') as string|null|undefined),clean(pick('missingInformation') as string|null|undefined),
+      normalizeWebUrl(pick('existingUrl') as string|null|undefined),clean(pick('existingNotes') as string|null|undefined),clean(pick('missingInformation') as string|null|undefined),
       clean(pick('waitingReasonCode') as string|null|undefined),clean(pick('waitingReasonText') as string|null|undefined),
       clean(pick('waitingResumeAt') as string|null|undefined),clean(pick('lostReasonCode') as string|null|undefined),nowIso(),id]);
     this.activity({entityType:'prospect',entityId:id,action:'qualification_updated',summary:'Qualification commerciale mise à jour',prospectId:id});
@@ -682,6 +683,9 @@ export class CrmService {
     const snapshot: ProspectResearchSnapshotInput = {
       ...input,
       checkedAt,
+      sourceUrl: normalizeWebUrl(input.sourceUrl),
+      googleBusiness: input.googleBusiness ? { ...input.googleBusiness, url: normalizeWebUrl(input.googleBusiness.url) } : undefined,
+      website: input.website ? { ...input.website, url: normalizeWebUrl(input.website.url) } : undefined,
       services: (input.services ?? []).map((value) => value.trim()).filter(Boolean),
       products: (input.products ?? []).map((value) => value.trim()).filter(Boolean),
       customerSegments: (input.customerSegments ?? []).map((value) => value.trim()).filter(Boolean),
