@@ -1,4 +1,5 @@
 import { app, dialog, ipcMain, safeStorage, shell } from 'electron';
+import type { BillingInvoiceInput, BillingItemFilters, BillingItemStatus } from '../shared/billing';
 import type {
   CatalogFilters,
   CatalogItemInput,
@@ -237,6 +238,39 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('client-documents:delete',async(_event,id:string)=>{const doc=database.clientDocuments.get(id);const answer=await dialog.showMessageBox({type:'warning',title:'Suppression définitive',message:`Supprimer définitivement « ${doc.title} » ?`,detail:'Le fichier physique et ses métadonnées seront supprimés. Cette action est irréversible.',buttons:['Annuler','Supprimer définitivement'],defaultId:0,cancelId:0});if(answer.response!==1)return{cancelled:true};database.clientDocuments.deletePermanently(id);return{cancelled:false};});
   ipcMain.handle('client-documents:open-file',async(_event,id:string)=>{const error=await shell.openPath(database.clientDocuments.absolutePath(id));if(error)throw Error(error);});
   ipcMain.handle('client-documents:open-folder',async(_event,clientId:string)=>{const path=database.clientDocuments.clientRoot(clientId);const error=await shell.openPath(path);if(error)throw Error(error);});
+
+  ipcMain.handle('billing:list', (_event, filters?: BillingItemFilters) => database.billingHandoff.list(filters));
+  ipcMain.handle('billing:get', (_event, id: string) => database.billingHandoff.get(id));
+  ipcMain.handle('billing:change-status', (_event, id: string, status: BillingItemStatus) => database.billingHandoff.changeStatus(id, status));
+  ipcMain.handle('billing:update-invoice-metadata', (_event, id: string, input: BillingInvoiceInput) => database.billingHandoff.updateInvoiceMetadata(id, input));
+  ipcMain.handle('billing:import-invoice', async (_event, id: string, input: BillingInvoiceInput = {}) => {
+    const item = database.billingHandoff.get(id);
+    const selection = await dialog.showOpenDialog({
+      title: `Importer la facture PDF · ${item.clientLabel}`,
+      defaultPath: database.clientDocuments.clientRoot(item.clientAccountId),
+      properties: ['openFile'],
+      filters: [{ name: 'Factures PDF', extensions: ['pdf'] }],
+    });
+    if (selection.canceled || selection.filePaths.length === 0) return null;
+
+    const before = new Set(database.clientDocuments.list(item.clientAccountId, true).map((document) => document.id));
+    const reference = input.reference?.trim();
+    const title = reference ? `Facture ${reference}` : `Facture · ${item.description}`;
+    const imported = database.clientDocuments.importPaths(item.clientAccountId, [selection.filePaths[0]], {
+      category: 'invoice',
+      title,
+      notes: `Facture Abby rattachée à la facturation « ${item.description} ».`,
+    });
+    const document = imported.find((candidate) => !before.has(candidate.id));
+    if (!document) throw new Error('La facture PDF n’a pas pu être identifiée après import.');
+    return database.billingHandoff.attachInvoice(id, document.id, input);
+  });
+  ipcMain.handle('billing:open-invoice', async (_event, id: string) => {
+    const item = database.billingHandoff.get(id);
+    if (!item.invoiceDocumentId) throw new Error('Aucune facture PDF n’est rattachée à cet élément.');
+    const error = await shell.openPath(database.clientDocuments.absolutePath(item.invoiceDocumentId));
+    if (error) throw new Error(error);
+  });
 
   ipcMain.handle('catalog:list', (_event, filters?: CatalogFilters) => database.catalog.list(filters));
   ipcMain.handle('catalog:get-item', (_event, id: string) => database.catalog.getItem(id));
