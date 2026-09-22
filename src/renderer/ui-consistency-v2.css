@@ -1,0 +1,183 @@
+/* Cohérence transverse AtoumWeb Manager — recette 22/09/2026.
+   Cette couche est volontairement chargée en dernier.
+   Elle applique aux écrans historiques les conventions validées récemment :
+   contrôles lisibles, surfaces sobres, boutons cohérents, focus visible et barres d'onglets scrollables. */
+
+.content-area,
+.content-area * {
+  box-sizing: border-box;
+}
+
+.content-area :is(
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']),
+  select,
+  textarea
+) {
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  -webkit-text-fill-color: var(--text);
+  font: inherit;
+  opacity: 1;
+}
+
+.content-area :is(
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']),
+  select
+) {
+  min-height: var(--ui-control-height);
+  padding: var(--ui-control-pad-y) var(--ui-control-pad-x);
+}
+
+.content-area textarea {
+  min-height: 84px;
+  padding: var(--ui-control-pad-y) var(--ui-control-pad-x);
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.content-area input::placeholder,
+.content-area textarea::placeholder {
+  color: var(--muted);
+  opacity: .78;
+}
+
+.content-area :is(input, select, textarea, button):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: 2px;
+}
+
+.primary-button,
+.secondary-button,
+.content-area button:not(.nav-item):not(.close-detail) {
+  border-radius: 9px;
+}
+
+.primary-button,
+.secondary-button {
+  min-height: var(--ui-control-height);
+  padding: var(--ui-control-pad-y) var(--ui-control-pad-x);
+}
+
+.close-detail {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.close-detail:hover {
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+/* Même logique d'onglets que l'atelier Production : compacte, lisible, scrollable. */
+:is(
+  .client-tabs-buttons,
+  .operations-view-tabs,
+  .time-period-tabs,
+  .project-production-nav,
+  .quote-stepper,
+  .project-detail-tabs,
+  .catalog-detail-tabs,
+  .workflow-tabs
+) {
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+:is(
+  .client-tabs-buttons,
+  .operations-view-tabs,
+  .time-period-tabs,
+  .project-production-nav,
+  .quote-stepper,
+  .project-detail-tabs,
+  .catalog-detail-tabs,
+  .workflow-tabs
+) > button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* Les listes restent lisibles et ne forcent plus toute la page à déborder. */
+:is(
+  .table-panel,
+  .projects-table-wrap,
+  .quotes-table-wrap,
+  .catalog-table-wrap,
+  .operations-table-wrap,
+  .time-table-wrap
+) {
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-gutter: stable;
+}
+
+table {
+  max-width: 100%;
+}
+
+table th,
+table td {
+  vertical-align: middle;
+}
+
+/* Cartes et panneaux secondaires : rayon commun et pas de fonds natifs noirs. */
+:is(
+  .panel,
+  .project-tab-content,
+  .quote-detail-panel,
+  .catalog-detail-panel,
+  .operation-detail-panel,
+  .timer-popover,
+  .business-backups-page article,
+  .aw-library article
+) {
+  border-radius: 12px;
+}
+
+/* Details utilisés comme menus/actions : interaction explicite sans prendre plus de place. */
+.content-area details > summary {
+  cursor: pointer;
+}
+
+/* Checkboxes sobres partout, sauf composants qui définissent volontairement leur propre rendu. */
+.content-area input[type='checkbox']:not(.toggle-input),
+.content-area input[type='radio'] {
+  accent-color: var(--accent);
+}
+
+/* Les barres d'outils se replient plutôt que de déborder. */
+.module-toolbar,
+.toolbar-controls,
+.button-row,
+.detail-actions {
+  min-width: 0;
+}
+.toolbar-controls,
+.button-row,
+.detail-actions {
+  flex-wrap: wrap;
+}
+
+/* États désactivés homogènes. */
+.content-area :is(button, input, select, textarea):disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+/* Évite les libellés coupés sur les écrans historiques. */
+.content-area :is(label, .muted, small, .status-pill) {
+  overflow-wrap: anywhere;
+}
