@@ -48,7 +48,7 @@ const PAGE_HINTS: Record<PageName, string> = {
   Projets: 'Lots, modules, tâches, ressources et avancement.',
   'Interventions & Maintenance': 'Demandes, interventions, maintenance et packs d’heures.',
   'Gestion des temps': 'Analyse du temps réel par client, projet et activité.',
-  Facturation: 'Éléments à facturer et suivi des factures Abby.',
+  Facturation: 'Éléments à facturer et archivage des PDF de factures Abby.',
   Dépenses: 'Abonnements, dépenses et échéances AtoumWeb.',
   'Documents & Contrats': 'Modèles, contrats, avenants, rapports et PDF.',
   'Bibliothèque AtoumWeb': 'Composants et références techniques réutilisables.',
