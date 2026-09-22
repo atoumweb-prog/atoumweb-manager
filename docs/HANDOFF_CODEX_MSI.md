@@ -71,9 +71,13 @@ Le chantier actif est **Projet V2 / atelier de production** :
 
 ## Migrations
 
-La branche Projet V2 porte désormais **30 migrations SQLite**.
+La branche Projet V2 porte désormais **31 migrations SQLite**.
+
+La dernière validation complète connue sur MSI avant la passe Catalogue était à **36 fichiers / 177 tests réussis** avec **30 migrations**.
 
 La migration 30 ajoute `project_node_secrets` pour les métadonnées et le ciphertext des accès sécurisés.
+
+La migration 31 ajoute `catalog_versions.nature` pour distinguer la nature courte d’une prestation de sa description détaillée.
 
 Les mots de passe / clés ne doivent jamais être stockés en clair dans SQLite, les logs ou les documents de suivi.
 
@@ -87,7 +91,7 @@ Le **HEAD actuel doit donc être revalidé** sur MSI avec :
 - `npm test`
 - `npm run package`
 - lancement du profil Validation-MSI
-- vérification de la migration 30
+- vérification des migrations 30 et 31
 - test du coffre avec une fausse clé, jamais une vraie
 - vérification rapide des anciens écrans après la nouvelle couche UI globale.
 
