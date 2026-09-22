@@ -164,4 +164,4 @@ ChatGPT pilote actuellement la conception et les modifications de la branche Pro
 - ordre d’affichage : logo entreprise → favicon → avatar du contact → initiales ;
 - les images sont copiées dans le workspace sous `crm-identites/` et les aperçus passent par l’API locale du Manager ;
 - conversion Prospect → Client : l’identité visuelle est conservée automatiquement car elle appartient à l’entreprise/contact, pas au statut commercial ;
-- URL CRM : saisir `atoumweb.fr` suffit ; le backend stocke `https://atoumweb.fr/`. Un `http://` saisi explicitement est conservé.
+- URL CRM : saisir `atoumweb.fr` suffit ; le backend stocke `https://atoumweb.fr`. Un `http://` saisi explicitement est conservé.
