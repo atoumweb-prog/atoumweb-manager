@@ -3,12 +3,12 @@ import { displayWebUrl, normalizeWebUrl } from './webUrl';
 
 describe('webUrl', () => {
   it('ajoute https par défaut', () => {
-    expect(normalizeWebUrl('atoumweb.fr')).toBe('https://atoumweb.fr/');
+    expect(normalizeWebUrl('atoumweb.fr')).toBe('https://atoumweb.fr');
     expect(normalizeWebUrl('www.atoumweb.fr/contact')).toBe('https://www.atoumweb.fr/contact');
   });
 
   it('respecte http lorsqu il est saisi explicitement', () => {
-    expect(normalizeWebUrl('http://ancien-site.fr')).toBe('http://ancien-site.fr/');
+    expect(normalizeWebUrl('http://ancien-site.fr')).toBe('http://ancien-site.fr');
   });
 
   it('refuse les protocoles non web', () => {
