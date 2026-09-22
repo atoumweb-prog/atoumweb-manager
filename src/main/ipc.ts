@@ -302,7 +302,15 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     const secret = input.secret?.trim();
     if (!secret) throw new Error('Mot de passe ou clé requis.');
     const secretCiphertext = safeStorage.encryptString(secret).toString('base64');
-    return database.projects.saveProjectSecret({ ...input, secretCiphertext });
+    return database.projects.saveProjectSecret({
+      projectId: input.projectId,
+      projectNodeId: input.projectNodeId ?? null,
+      label: input.label,
+      username: input.username ?? null,
+      secretCiphertext,
+      url: input.url ?? null,
+      notes: input.notes ?? null,
+    });
   });
 
   ipcMain.handle('projects:secrets:reveal', (_event, id: string) => {
