@@ -71,7 +71,7 @@ Le chantier actif est **Projet V2 / atelier de production** :
 
 ## Migrations
 
-La branche Projet V2 porte désormais **32 migrations SQLite**.
+La branche Projet V2 porte désormais **33 migrations SQLite**.
 
 La dernière validation complète connue sur MSI avant la passe Catalogue était à **36 fichiers / 177 tests réussis** avec **30 migrations**.
 
@@ -80,6 +80,8 @@ La migration 30 ajoute `project_node_secrets` pour les métadonnées et le ciphe
 La migration 31 ajoute `catalog_versions.nature` pour distinguer la nature courte d’une prestation de sa description détaillée.
 
 La migration 32 rattache un élément de facturation à son PDF client (`invoice_document_id`, référence et date de facture). Le PDF est stocké via le système Documents client dans `03 Factures` ; aucune API Abby n’est utilisée.
+
+La migration 33 ajoute le suivi des dépenses : frais AtoumWeb, rattachement facultatif client/projet, catégorie, fournisseur, montant, TVA, statut, dates, récurrence et justificatif.
 
 Les mots de passe / clés ne doivent jamais être stockés en clair dans SQLite, les logs ou les documents de suivi.
 
@@ -93,7 +95,7 @@ Le **HEAD actuel doit donc être revalidé** sur MSI avec :
 - `npm test`
 - `npm run package`
 - lancement du profil Validation-MSI
-- vérification des migrations 30, 31 et 32
+- vérification des migrations 30, 31, 32 et 33
 - test du coffre avec une fausse clé, jamais une vraie
 - vérification rapide des anciens écrans après la nouvelle couche UI globale.
 
@@ -137,3 +139,16 @@ ChatGPT pilote actuellement la conception et les modifications de la branche Pro
 - Une facture devient **Facturée** dans le Manager lorsque son PDF est importé et rattaché.
 - Le PDF est classé dans les Documents du client, catégorie Factures (`03 Factures`), et reste ouvrable depuis Facturation.
 - Les packs d’heures payants alimentent automatiquement la file des éléments à facturer.
+
+## Dépenses et frais engagés
+
+- page Dépenses dédiée, sans logiciel comptable externe ;
+- dépenses ponctuelles ou récurrentes ;
+- rattachement facultatif à un client et/ou un projet ;
+- statuts : Prévu / Engagé / Payé / Annulé ;
+- catégories métier : hébergement, domaine, logiciel, licence, sous-traitance, publicité, déplacement, matériel, banque, taxe, bureau, autre ;
+- montant TTC et TVA facultative ;
+- date de dépense, échéance, date de paiement, prochaine échéance ;
+- justificatif PDF/image importable et ouvrable depuis la fiche ;
+- justificatif client classé sous `Documents/09 Depenses`, avec sous-dossier projet si disponible ;
+- dashboard : engagé ce mois, à payer, payé ce mois, récurrent mensuel équivalent.
