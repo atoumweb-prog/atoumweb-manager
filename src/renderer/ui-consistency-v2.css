@@ -375,3 +375,94 @@ table td {
   width: 100%;
   justify-self: stretch;
 }
+
+
+/* Passe transverse — boutons compacts, aide contextuelle et hiérarchie des formulaires. */
+.content-area :is(.primary-button, .secondary-button, .danger-button) {
+  width: fit-content !important;
+  min-width: 0;
+  max-width: 100%;
+  justify-self: start;
+  align-self: start;
+}
+
+.content-area .form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.content-area .form-actions > :is(.primary-button, .secondary-button, .danger-button) {
+  flex: 0 0 auto;
+}
+
+.field-help {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 5px;
+  border: 1px solid color-mix(in srgb, var(--text-muted) 48%, var(--border));
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: help;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.field-help:hover,
+.field-help:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+.app-shell.help-disabled .field-help {
+  display: none !important;
+}
+
+.field-label-with-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  width: fit-content;
+  max-width: 100%;
+}
+
+/* Formulaires CRM : libellé = repère, saisie = donnée. */
+.crm-form label,
+.contact-inline-form label,
+.contact-form-grid label {
+  font-weight: 700 !important;
+  color: var(--text-muted);
+}
+
+.crm-form :is(input, select, textarea),
+.contact-inline-form :is(input, select, textarea),
+.contact-form-grid :is(input, select, textarea) {
+  font-weight: 400 !important;
+  color: var(--text);
+  -webkit-text-fill-color: var(--text);
+}
+
+/* Les valeurs de tableaux/catalogue ne deviennent pas des titres. */
+.catalog-table td,
+.catalog-table td strong {
+  font-weight: 400 !important;
+}
+
+.catalog-table th,
+.catalog-fields label {
+  font-weight: 700 !important;
+}
+
+.catalog-fields :is(input, select, textarea),
+.catalog-detail-actions select {
+  font-weight: 400 !important;
+}
