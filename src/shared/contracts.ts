@@ -38,6 +38,7 @@ export interface BootstrapState {
   databasePath: string;
   theme: ThemeName;
   displayDensity: DisplayDensity;
+  showHoverHelp: boolean;
   database: DatabaseHealth;
 }
 
@@ -67,6 +68,7 @@ export interface AtoumWebApi {
   settings: {
     setTheme(theme: ThemeName): Promise<ThemeName>;
     setDisplayDensity(density: DisplayDensity): Promise<DisplayDensity>;
+    setShowHoverHelp(enabled: boolean): Promise<boolean>;
   };
   workspace: {
     choose(): Promise<WorkspaceChangeResult>;
