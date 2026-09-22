@@ -26,6 +26,7 @@ import {
   type ProspectOrigin,
   type ProspectResearchSnapshot,
   type ProspectResearchSnapshotInput,
+  type ProspectResearchStructuredCheck,
   type ProspectStage,
   type ProspectSummary,
   type SearchResult,
@@ -84,6 +85,10 @@ function assertProspectInput(input: ProspectInput): void {
 function assertClientInput(input: ClientInput): void {
   assertIdentity(input.organizationId, input.primaryContactId);
   if (input.status && !CLIENT_STATUSES.includes(input.status)) throw new Error('Statut client invalide.');
+}
+
+function normalizeResearchCheck(check?: ProspectResearchStructuredCheck): ProspectResearchStructuredCheck | undefined {
+  return check ? { ...check, url: normalizeWebUrl(check.url) } : undefined;
 }
 
 function inferOrigin(source?: ProspectSummary['source'] | null): ProspectOrigin {
@@ -686,6 +691,15 @@ export class CrmService {
       sourceUrl: normalizeWebUrl(input.sourceUrl),
       googleBusiness: input.googleBusiness ? { ...input.googleBusiness, url: normalizeWebUrl(input.googleBusiness.url) } : undefined,
       website: input.website ? { ...input.website, url: normalizeWebUrl(input.website.url) } : undefined,
+      legalNotices: normalizeResearchCheck(input.legalNotices),
+      audits: input.audits ? {
+        privacy: normalizeResearchCheck(input.audits.privacy),
+        cookies: normalizeResearchCheck(input.audits.cookies),
+        seo: normalizeResearchCheck(input.audits.seo),
+        performance: normalizeResearchCheck(input.audits.performance),
+        mobile: normalizeResearchCheck(input.audits.mobile),
+        accessibility: normalizeResearchCheck(input.audits.accessibility),
+      } : undefined,
       services: (input.services ?? []).map((value) => value.trim()).filter(Boolean),
       products: (input.products ?? []).map((value) => value.trim()).filter(Boolean),
       customerSegments: (input.customerSegments ?? []).map((value) => value.trim()).filter(Boolean),
