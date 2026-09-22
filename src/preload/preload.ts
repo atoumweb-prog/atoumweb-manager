@@ -59,6 +59,7 @@ import type {
   ProjectResourceFolder,
   ProjectResourceRole,
   ProjectResourceStatus,
+  ProjectSecretInput,
   ProjectStatus,
   ProjectTechnicalItemInput,
   ProjectTechnicalVersionInput,
@@ -90,6 +91,7 @@ const api: AtoumWebApi = {
   settings: {
     setTheme: (theme: ThemeName) => ipcRenderer.invoke('settings:set-theme', theme),
     setDisplayDensity: (density: DisplayDensity) => ipcRenderer.invoke('settings:set-display-density', density),
+    setShowHoverHelp: (enabled: boolean) => ipcRenderer.invoke('settings:set-show-hover-help', enabled),
   },
   workspace: { choose: () => ipcRenderer.invoke('workspace:choose') },
   backups: {
@@ -242,6 +244,12 @@ const api: AtoumWebApi = {
       completePhase: (nodeId: string) => ipcRenderer.invoke('projects:complete-phase', nodeId),
       addPrerequisite: (projectId: string, input: ProjectPrerequisiteInput) => ipcRenderer.invoke('projects:add-prerequisite', projectId, input),
       updatePrerequisiteStatus: (id: string, status: ProjectPrerequisiteStatus) => ipcRenderer.invoke('projects:update-prerequisite-status', id, status),
+    },
+    secrets: {
+      list: (projectId: string, projectNodeId?: string | null) => ipcRenderer.invoke('projects:secrets:list', projectId, projectNodeId),
+      save: (input: ProjectSecretInput) => ipcRenderer.invoke('projects:secrets:save', input),
+      reveal: (id: string) => ipcRenderer.invoke('projects:secrets:reveal', id),
+      remove: (id: string) => ipcRenderer.invoke('projects:secrets:remove', id),
     },
     resources: {
       list: (projectId: string) => ipcRenderer.invoke('projects:resources:list', projectId),
