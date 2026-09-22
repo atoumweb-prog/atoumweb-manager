@@ -1951,3 +1951,232 @@ body.project-resizing * {
     height: calc(100vh - 24px);
   }
 }
+
+
+/* Projet V2 — plan plus compact et fiche orientée travail */
+.project-production-tree-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.project-tree-size-button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-weight: 900;
+}
+.project-tree-size-button:hover {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+}
+
+/* Les informations secondaires ne prennent plus de place dans la fiche principale. */
+.project-workbench-info-panel,
+.project-workbench-advice-panel,
+.project-workbench-actions,
+.project-workbench-notes {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 4px 1px;
+}
+.project-workbench-info-panel > div {
+  padding: 10px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-soft);
+}
+.project-workbench-info-panel p {
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+.project-workbench-advice-panel .project-companion-cards {
+  display: grid;
+  gap: 8px;
+}
+.project-workbench-nav {
+  flex-wrap: wrap;
+}
+.project-workbench-nav > button {
+  white-space: nowrap;
+}
+
+/* Actions internes à une étape */
+.project-action-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+.project-action-add input {
+  width: 100%;
+}
+.project-action-list {
+  display: grid;
+  gap: 6px;
+}
+.project-work-action {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
+  gap: 8px;
+  align-items: center;
+  min-height: 42px;
+  padding: 6px 8px 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-soft);
+}
+.project-work-action > label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  cursor: pointer;
+}
+.project-work-action > label input[type="checkbox"] {
+  width: 16px !important;
+  min-width: 16px !important;
+  height: 16px !important;
+  min-height: 16px !important;
+  accent-color: var(--accent);
+}
+.project-work-action > label span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.project-work-action.done > label span {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+.project-work-action > button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 18px;
+}
+.project-work-action > button:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* Coffre d'accès projet */
+.project-secrets-panel {
+  display: grid;
+  gap: 14px;
+}
+.project-secret-intro {
+  display: grid;
+  gap: 4px;
+  padding: 11px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+}
+.project-secret-intro span {
+  color: var(--text-muted);
+}
+.project-secret-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface-soft);
+}
+.project-secret-form label {
+  display: grid;
+  gap: 5px;
+  font-weight: 750;
+}
+.project-secret-form .wide {
+  grid-column: 1 / -1;
+}
+.project-secret-form input {
+  min-height: 38px;
+}
+.project-secret-form > button {
+  justify-self: start;
+}
+.project-secret-list {
+  display: grid;
+  gap: 8px;
+}
+.project-secret-list article {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, .8fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.project-secret-list article > div:first-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.project-secret-list article > div:first-child span,
+.project-secret-list article > div:first-child small {
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.project-secret-list code {
+  overflow: hidden;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: var(--surface-soft);
+  font-family: Consolas, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.project-secret-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: flex-end;
+}
+
+/* Aide au survol : uniquement quand le réglage est actif via l'attribut title. */
+.project-work-card-fields.compact label[title] {
+  cursor: help;
+}
+.project-work-card-fields.compact label[title]:hover {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+}
+
+@media (max-width: 1050px) {
+  .project-secret-list article {
+    grid-template-columns: 1fr;
+  }
+  .project-secret-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 760px) {
+  .project-secret-form {
+    grid-template-columns: 1fr;
+  }
+  .project-secret-form .wide {
+    grid-column: auto;
+  }
+}
