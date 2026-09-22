@@ -168,3 +168,22 @@
   text-overflow: ellipsis;
 }
 
+.prospect-detail-identity-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.prospect-detail-identity-head > div:last-child {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.prospect-detail-identity-head h2 {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
