@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { BillingInvoiceInput, BillingItemFilters, BillingItemStatus } from '../shared/billing';
+import type { ExpenseFilters, ExpenseInput, ExpenseStatus } from '../shared/expenses';
 import type {
   CatalogFilters,
   CatalogItemInput,
@@ -197,6 +198,15 @@ const api: AtoumWebApi = {
     importInvoice: (id: string, input?: BillingInvoiceInput) => ipcRenderer.invoke('billing:import-invoice', id, input),
     updateInvoiceMetadata: (id: string, input: BillingInvoiceInput) => ipcRenderer.invoke('billing:update-invoice-metadata', id, input),
     openInvoice: (id: string) => ipcRenderer.invoke('billing:open-invoice', id),
+  },
+  expenses: {
+    list: (filters?: ExpenseFilters) => ipcRenderer.invoke('expenses:list', filters),
+    get: (id: string) => ipcRenderer.invoke('expenses:get', id),
+    create: (input: ExpenseInput) => ipcRenderer.invoke('expenses:create', input),
+    update: (id: string, input: ExpenseInput) => ipcRenderer.invoke('expenses:update', id, input),
+    changeStatus: (id: string, status: ExpenseStatus) => ipcRenderer.invoke('expenses:change-status', id, status),
+    importReceipt: (id: string) => ipcRenderer.invoke('expenses:import-receipt', id),
+    openReceipt: (id: string) => ipcRenderer.invoke('expenses:open-receipt', id),
   },
   catalog: {
     list: (filters?: CatalogFilters) => ipcRenderer.invoke('catalog:list', filters),
