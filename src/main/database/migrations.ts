@@ -11,6 +11,7 @@ import { PHASE_4_REPORT_MIGRATIONS } from './phase4ReportMigration';
 import { PHASE_6_MIGRATIONS } from './phase6Migrations';
 import { PROJECT_BLUEPRINT_MIGRATIONS } from './projectBlueprintMigrations';
 import { CATALOG_V2_MIGRATION } from './catalogV2Migration';
+import { BILLING_INVOICE_MIGRATION } from './billingInvoiceMigration';
 
 export interface Migration { id: number; name: string; sql: string; disableForeignKeys?: boolean; }
 
@@ -177,6 +178,7 @@ export const MIGRATIONS: Migration[] = [
   ...PHASE_6_MIGRATIONS,
   ...PROJECT_BLUEPRINT_MIGRATIONS,
   CATALOG_V2_MIGRATION,
+  BILLING_INVOICE_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {
