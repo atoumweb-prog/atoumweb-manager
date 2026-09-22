@@ -114,16 +114,396 @@
 .hour-pack-movement > span { font-size: 9px; font-weight: 800; white-space: nowrap; }
 .negative-balance { color: #a82d2d !important; }
 
+/* Atelier Intervention — logique Liste / Fiche proche de Projet V2. */
+.intervention-workspace.with-detail {
+  gap: 0;
+  align-items: stretch;
+}
+
+.intervention-workspace.detail-expanded {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.intervention-list-panel {
+  max-height: calc(100dvh - 250px);
+  overflow: hidden;
+}
+
+.intervention-compact-list {
+  display: grid;
+  gap: 6px;
+  max-height: calc(100dvh - 250px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 7px;
+  scrollbar-gutter: stable;
+}
+
+.intervention-compact-item {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 11px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.intervention-compact-item:hover {
+  border-color: var(--border);
+  background: var(--surface-soft);
+}
+
+.intervention-compact-item.selected {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--border));
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+.intervention-compact-heading,
+.intervention-compact-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.intervention-compact-heading > strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 700;
+}
+
+.intervention-compact-subject {
+  overflow: hidden;
+  color: var(--text);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.intervention-compact-client,
+.intervention-compact-meta,
+.intervention-compact-coverage {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.operation-status-chip {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 7px;
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.operation-status-chip.status-in_progress,
+.operation-status-chip.status-planned,
+.operation-status-chip.status-to_plan {
+  color: #4a6f9b;
+  background: color-mix(in srgb, #4a7fb3 12%, var(--surface));
+}
+
+.operation-status-chip.status-waiting_client,
+.operation-status-chip.status-to_validate {
+  color: #946b19;
+  background: color-mix(in srgb, #c58b24 12%, var(--surface));
+}
+
+.operation-status-chip.status-blocked {
+  color: #a63d43;
+  background: color-mix(in srgb, #c44950 10%, var(--surface));
+}
+
+.operation-status-chip.status-completed {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+}
+
+.operation-splitter {
+  position: relative;
+  min-height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.operation-splitter::before {
+  content: "";
+  position: absolute;
+  inset: 0 2px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background 120ms ease;
+}
+
+.operation-splitter:hover::before,
+.operation-resizing .operation-splitter::before {
+  background: color-mix(in srgb, var(--accent) 30%, var(--border));
+}
+
+.operation-splitter span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  height: 38px;
+  border-radius: 999px;
+  background: var(--border);
+  transform: translate(-50%, -50%);
+}
+
+body.operation-resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.intervention-workbench-panel {
+  position: sticky;
+  top: 0;
+  display: grid;
+  gap: 12px;
+  max-height: calc(100dvh - 250px);
+  margin-left: 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+}
+
+.intervention-workbench-panel.expanded {
+  position: relative;
+  max-height: none;
+  margin-left: 0;
+}
+
+.intervention-workbench-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.operation-detail-expand {
+  display: inline-grid;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.intervention-workbench-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+}
+
+.intervention-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.intervention-kpi-grid > div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-soft);
+}
+
+.intervention-kpi-grid strong {
+  color: var(--text-muted);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 700;
+}
+
+.intervention-kpi-grid span {
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font-size: var(--aw-font-body, 14px);
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.intervention-workbench-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.intervention-workbench-actions > section {
+  display: contents;
+}
+
+.intervention-workbench-actions .workflow-fields {
+  flex: 1 1 100%;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.intervention-workbench-section {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+}
+
+.intervention-workbench-section > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.intervention-workbench-section > summary::-webkit-details-marker {
+  display: none;
+}
+
+.intervention-workbench-section > summary::after {
+  content: "⌄";
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 650;
+  transition: transform 120ms ease;
+}
+
+.intervention-workbench-section[open] > summary::after {
+  transform: rotate(180deg);
+}
+
+.intervention-workbench-section > summary > span {
+  display: grid;
+  gap: 2px;
+}
+
+.intervention-workbench-section > summary strong {
+  font-size: var(--aw-font-secondary, 14px);
+  font-weight: 700;
+}
+
+.intervention-workbench-section > summary small {
+  color: var(--text-muted);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 400;
+}
+
+.intervention-workbench-section-body {
+  display: grid;
+  gap: 10px;
+  padding: 0 12px 12px;
+}
+
+.intervention-pilot-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.intervention-pilot-grid > label {
+  display: grid;
+  gap: 5px;
+  color: var(--text);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 700;
+}
+
+.intervention-pilot-grid > label.wide {
+  grid-column: 1 / -1;
+}
+
+.intervention-workbench-section .operation-description {
+  padding: 0;
+}
+
+.intervention-workbench-section .operation-description > strong {
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 700;
+}
+
+.intervention-workbench-section .operation-description p,
+.intervention-workbench-section .incident-summary span,
+.intervention-workbench-section .incident-summary p {
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 400;
+}
+
+.intervention-workbench-section .intervention-backup-panel {
+  margin-top: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.intervention-workbench-meta {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 6px 12px;
+  padding: 9px 0 0;
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 400;
+}
+
+/* Typographie Operations : le libellé guide, la valeur reste normale. */
+.operation-detail-grid span,
+.maintenance-usage-grid span,
+.intervention-backup-summary span {
+  font-weight: 700;
+}
+
+.operation-detail-grid strong,
+.maintenance-usage-grid strong,
+.intervention-backup-summary strong {
+  font-weight: 400;
+}
+
+.operation-create-grid label,
+.operation-detail-panel > label,
+.operation-action-box label,
+.maintenance-period-detail > label {
+  font-weight: 700;
+}
+
 @media (max-width: 1250px) {
-  .operations-layout.with-detail,
+  .operations-layout.with-detail:not(.intervention-workspace),
   .maintenance-layout.with-detail { grid-template-columns: minmax(0, 1fr) minmax(320px, 38%); }
+  .intervention-kpi-grid { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
   .operation-create-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 850px) {
   .operations-alerts-list { grid-template-columns: 1fr; }
   .operations-layout.with-detail,
-  .maintenance-layout.with-detail { grid-template-columns: 1fr; }
+  .maintenance-layout.with-detail { grid-template-columns: 1fr !important; }
+  .operation-splitter { display: none; }
+  .intervention-workbench-panel { margin-left: 0; }
   .operation-detail-panel { position: static; max-height: none; }
 }
 
@@ -132,7 +512,9 @@
   .operation-create-grid { grid-template-columns: 1fr; }
   .operation-create-grid .wide { grid-column: auto; }
   .operation-detail-grid,
-  .maintenance-usage-grid { grid-template-columns: 1fr; }
+  .maintenance-usage-grid,
+  .intervention-kpi-grid,
+  .intervention-pilot-grid { grid-template-columns: 1fr; }
   .maintenance-check,
   .hour-pack-movement,
   .hour-pack-history-title { grid-template-columns: 1fr; }
