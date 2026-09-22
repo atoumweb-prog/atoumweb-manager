@@ -11,6 +11,7 @@ import './detail-layout-overrides.css';
 import './prospect-workflow.css';
 import './prospect-recipe.css';
 import './commercial.css';
+import './billing.css';
 import './quote-line-editor.css';
 import './quote-client-preview.css';
 import './projects.css';
