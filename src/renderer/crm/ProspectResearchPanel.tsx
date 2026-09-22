@@ -248,7 +248,7 @@ function StructuredCheckEditor({ title, help, value, onChange }: {
     <div className="research-two-columns">
       <label>Observations<textarea value={value.observations ?? ''} onChange={(event) => onChange({ ...value, observations: event.target.value })} /></label>
       <label>Point à reprendre pendant la prospection<textarea value={value.talkingPoint ?? ''} onChange={(event) => onChange({ ...value, talkingPoint: event.target.value })} /></label>
-      <label>URL contrôlée<input value={value.url ?? ''} onChange={(event) => onChange({ ...value, url: event.target.value })} /></label>
+      <label>URL contrôlée<input inputMode="url" value={displayWebUrl(value.url)} onChange={(event) => onChange({ ...value, url: event.target.value })} placeholder="exemple.fr" /></label>
       <label>Source<input value={value.source ?? ''} onChange={(event) => onChange({ ...value, source: event.target.value })} /></label>
     </div>
   </section>;
@@ -391,7 +391,7 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, onChanged 
               <label>Note<input type="number" min="0" max="5" step="0.1" value={draft.googleBusiness?.rating ?? ''} onChange={(event) => setDraft({ ...draft, googleBusiness: { ...(draft.googleBusiness ?? { presence: 'review' }), rating: event.target.value === '' ? null : Number(event.target.value) } })} /></label>
               <label>Nombre d’avis<input type="number" min="0" step="1" value={draft.googleBusiness?.reviewCount ?? ''} onChange={(event) => setDraft({ ...draft, googleBusiness: { ...(draft.googleBusiness ?? { presence: 'review' }), reviewCount: event.target.value === '' ? null : Number(event.target.value) } })} /></label>
             </div>
-            <label>URL de la fiche<input value={draft.googleBusiness?.url ?? ''} onChange={(event) => setDraft({ ...draft, googleBusiness: { ...(draft.googleBusiness ?? { presence: 'review' }), url: event.target.value } })} /></label>
+            <label>URL de la fiche<input inputMode="url" value={displayWebUrl(draft.googleBusiness?.url)} onChange={(event) => setDraft({ ...draft, googleBusiness: { ...(draft.googleBusiness ?? { presence: 'review' }), url: event.target.value } })} placeholder="google.com/…" /></label>
             <label>Catégorie principale<input value={draft.googleBusiness?.category ?? ''} onChange={(event) => setDraft({ ...draft, googleBusiness: { ...(draft.googleBusiness ?? { presence: 'review' }), category: event.target.value } })} /></label>
             <div className="research-check-grid">
               <label>Horaires<CheckSelect value={draft.googleBusiness?.hoursStatus} onChange={(value) => updateGoogleStatus('hoursStatus', value)} /></label>
@@ -409,7 +409,7 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, onChanged 
               <label>CMS<input value={draft.website?.cms ?? ''} onChange={(event) => setDraft({ ...draft, website: { ...(draft.website ?? { presence: 'review' }), cms: event.target.value } })} /></label>
               <label>Hébergeur<input value={draft.website?.hosting ?? ''} onChange={(event) => setDraft({ ...draft, website: { ...(draft.website ?? { presence: 'review' }), hosting: event.target.value } })} /></label>
             </div>
-            <label>URL<input value={draft.website?.url ?? ''} onChange={(event) => setDraft({ ...draft, website: { ...(draft.website ?? { presence: 'review' }), url: event.target.value } })} /></label>
+            <label>URL<input inputMode="url" value={displayWebUrl(draft.website?.url)} onChange={(event) => setDraft({ ...draft, website: { ...(draft.website ?? { presence: 'review' }), url: event.target.value } })} placeholder="exemple.fr" /></label>
             <div className="research-check-grid">
               <label>HTTPS<CheckSelect value={draft.website?.httpsStatus} onChange={(value) => updateWebsiteStatus('httpsStatus', value)} /></label>
               <label>Mobile / responsive<CheckSelect value={draft.website?.responsiveStatus} onChange={(value) => updateWebsiteStatus('responsiveStatus', value)} /></label>
@@ -466,7 +466,7 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, onChanged 
         <div className="research-save-meta">
           <label>Date de vérification<input type="date" value={(draft.checkedAt ?? '').slice(0, 10)} onChange={(event) => setDraft({ ...draft, checkedAt: event.target.value })} /></label>
           <label>Source générale<input value={draft.source ?? ''} onChange={(event) => setDraft({ ...draft, source: event.target.value })} /></label>
-          <label>URL source<input value={draft.sourceUrl ?? ''} onChange={(event) => setDraft({ ...draft, sourceUrl: event.target.value })} /></label>
+          <label>URL source<input inputMode="url" value={displayWebUrl(draft.sourceUrl)} onChange={(event) => setDraft({ ...draft, sourceUrl: event.target.value })} placeholder="exemple.fr" /></label>
         </div>
         <button type="button" className="primary-button" disabled={busy} onClick={() => void save()}>{busy ? 'Enregistrement…' : 'Enregistrer une nouvelle version'}</button>
       </div>}
