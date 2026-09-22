@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import type { DatabaseHealth } from '../../shared/contracts';
 import { BillingHandoffService } from '../billing/BillingHandoffService';
 import { ExpenseService } from '../expenses/ExpenseService';
+import { CrmIdentityAssetService } from '../crm/CrmIdentityAssetService';
 import { BusinessBackupAlertService } from '../backups/BusinessBackupAlertService';
 import { BusinessBackupService } from '../backups/BusinessBackupService';
 import { CatalogService } from '../commercial/CatalogService';
@@ -71,6 +72,7 @@ export class DatabaseService {
   readonly hourPacks: HourPackService;
   readonly billingHandoff: BillingHandoffService;
   readonly expenses: ExpenseService;
+  readonly crmIdentityAssets: CrmIdentityAssetService;
   readonly hourPackShortfalls: HourPackShortfallService;
   readonly maintenanceOverages: MaintenanceOverageService;
   readonly maintenanceReports: MaintenanceReportService;
@@ -107,6 +109,7 @@ export class DatabaseService {
     this.hourPacks = new HourPackService(this.database);
     this.billingHandoff = new BillingHandoffService(this.database);
     this.expenses = new ExpenseService(this.database, this.workspace);
+    this.crmIdentityAssets = new CrmIdentityAssetService(this.database, this.workspace);
     this.hourPackShortfalls = new HourPackShortfallService(this.database, this.hourPacks, this.billingHandoff);
     this.maintenanceOverages = new MaintenanceOverageService(this.database, this.billingHandoff);
     this.maintenanceReports = new MaintenanceReportService(this.database);
