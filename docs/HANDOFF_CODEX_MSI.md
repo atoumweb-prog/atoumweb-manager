@@ -123,3 +123,7 @@ Avant toute nouvelle branche, partir de la branche fonctionnelle explicitement i
 ## Règle de coordination ChatGPT / Codex
 
 ChatGPT pilote actuellement la conception et les modifications de la branche Projet V2. Codex MSI peut auditer, tester, diagnostiquer ou appliquer un lot explicitement demandé, mais ne doit pas lancer une refonte parallèle ni repartir d'une branche historique sans instruction.
+## Recette visuelle continue
+
+> Je vais continuer à t’envoyer des captures page par page. Prends-les comme une recette visuelle continue et garde les corrections cohérentes avec les précédentes.
+
