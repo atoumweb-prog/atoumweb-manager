@@ -17,6 +17,7 @@ import { FieldHelp, ProspectQualificationPanelV2 } from './ProspectQualification
 import { ProspectQuotePanel } from './ProspectQuotePanel';
 import { ProspectResearchPanel } from './ProspectResearchPanel';
 import { ProspectReferenceSummary } from './ProspectReferenceSummary';
+import { CrmIdentityAvatar } from './CrmIdentityVisual';
 
 const ACTIVE_STAGES: ProspectStage[] = ['new', 'qualifying', 'need_identified', 'quote_to_prepare', 'quote_to_send', 'quote_sent', 'follow_up', 'negotiation', 'waiting'];
 const STAGE_LABELS: Record<ProspectStage, string> = {
@@ -398,7 +399,7 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
     const group = PIPELINE_GROUPS.find((item) => item.stages.includes(prospect.stage ?? 'new'));
     return <article className={`prospect-card stacked-card prospect-temperature-${prospect.temperature ?? 'neutral'} ${expanded ? 'expanded-card' : 'collapsed-card'} ${selectedId === prospect.id ? 'selected-prospect' : ''}`} key={prospect.id}>
       <div className="prospect-card-head card-drag-handle" draggable={draggable} onDragStart={(e) => { if (!draggable) return; setDraggingId(prospect.id); e.dataTransfer.setData('text/plain', prospect.id); }} onClick={() => { setSelectedId(prospect.id); setExpandedId((id) => id === prospect.id ? null : prospect.id); }}>
-        <strong>{prospect.displayName}</strong>
+        <div className="prospect-card-identity"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} /><strong>{prospect.displayName}</strong></div>
         {group && <span className="pipeline-state-icon" title={group.label}>{group.icon}</span>}
       </div>
       <div className="prospect-card-body">
@@ -472,7 +473,7 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
                   const readiness = prospectReadiness(prospect);
                   const status = directoryStatus(prospect);
                   return <tr key={prospect.id} className={`prospect-temperature-${prospect.temperature ?? 'neutral'} ${selectedId === prospect.id ? 'selected-row' : ''}`} onClick={() => setSelectedId(prospect.id)}>
-                    <td><div className="client-name-cell"><span className="avatar-initials">{prospect.displayName.split(/\s+/).slice(0,2).map((part) => part[0]?.toUpperCase()).join('')}</span><div><strong>{prospect.displayName}</strong><small>{SOURCE_LABELS[prospect.source ?? 'other']}</small></div></div></td>
+                    <td><div className="client-name-cell"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} /><div><strong>{prospect.displayName}</strong><small>{SOURCE_LABELS[prospect.source ?? 'other']}</small></div></div></td>
                     <td>{prospect.organizationIndustry || <span className="muted">À compléter</span>}</td>
                     <td>{prospect.organizationCity || <span className="muted">—</span>}</td>
                     <td>{prospect.secondaryLabel || <span className="muted">À identifier</span>}</td>
