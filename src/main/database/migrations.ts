@@ -13,6 +13,7 @@ import { PROJECT_BLUEPRINT_MIGRATIONS } from './projectBlueprintMigrations';
 import { CATALOG_V2_MIGRATION } from './catalogV2Migration';
 import { BILLING_INVOICE_MIGRATION } from './billingInvoiceMigration';
 import { EXPENSES_MIGRATION } from './expensesMigration';
+import { CRM_IDENTITY_ASSETS_MIGRATION } from './crmIdentityAssetsMigration';
 
 export interface Migration { id: number; name: string; sql: string; disableForeignKeys?: boolean; }
 
@@ -181,6 +182,7 @@ export const MIGRATIONS: Migration[] = [
   CATALOG_V2_MIGRATION,
   BILLING_INVOICE_MIGRATION,
   EXPENSES_MIGRATION,
+  CRM_IDENTITY_ASSETS_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {
