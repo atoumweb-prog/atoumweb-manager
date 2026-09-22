@@ -24,6 +24,7 @@ export interface CatalogItemInput {
 
 export interface CatalogVersionInput {
   specialTerms?: string | null;
+  nature?: string | null;
   description?: string | null;
   inclusions?: string[];
   exclusions?: string[];
