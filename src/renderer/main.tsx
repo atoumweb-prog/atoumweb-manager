@@ -4,6 +4,7 @@ import App from './App';
 import './styles.css';
 import './crm.css';
 import './crm-extras.css';
+import './crm-identity.css';
 import './prospect-detail.css';
 import './client-detail.css';
 import './search-extra.css';
