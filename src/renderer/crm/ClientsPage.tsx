@@ -17,6 +17,7 @@ import type { Contact, Organization } from '../../shared/crm';
 import type { ProjectSummary } from '../../shared/projects';
 import type { Intervention, MaintenanceSubscription } from '../../shared/operations';
 import { ContactMethodsPanel } from './ContactMethodsPanel';
+import { FieldHelp } from '../ui/FieldHelp';
 
 const STATUS_LABELS: Record<ClientStatus, string> = {
   active: 'Actif',
@@ -453,12 +454,13 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
           <div className="panel-title"><div><span className="eyebrow">Client</span><h2>Ajouter un client directement</h2></div></div>
           <button className="secondary-button" type="button" onClick={() => { setDemoMode(true); setDraft({ company: 'DEMO — Atelier Mercure', firstName: 'Léa', lastName: 'Durand', email: 'lea@example.test', phone: '', notes: 'Dossier de démonstration.' }); setNeedsDraft([{ catalogItemId: 'atoumweb-ecommerce' }]); }}>Remplir avec des données test</button>
           <div className="form-grid">
-            <label>Société<input value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} /></label>
-            <label>Prénom<input value={draft.firstName} onChange={(e) => setDraft({ ...draft, firstName: e.target.value })} /></label>
-            <label>Nom<input value={draft.lastName} onChange={(e) => setDraft({ ...draft, lastName: e.target.value })} /></label>
-            <label>Email<input type="email" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} /></label>
-            <label>Téléphone<input value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} /></label>
-            <NeedChoices value={needsDraft} onChange={setNeedsDraft}/><label>Notes<input value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} /></label>
+            <label><span className="field-label-with-help">Société <FieldHelp text="Nom de l’entreprise cliente. Laisse vide uniquement pour un client particulier." /></span><input value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} /></label>
+            <label><span className="field-label-with-help">Prénom <FieldHelp text="Prénom du contact principal si le client est une personne ou si un interlocuteur est déjà identifié." /></span><input value={draft.firstName} onChange={(e) => setDraft({ ...draft, firstName: e.target.value })} /></label>
+            <label><span className="field-label-with-help">Nom <FieldHelp text="Nom du contact principal." /></span><input value={draft.lastName} onChange={(e) => setDraft({ ...draft, lastName: e.target.value })} /></label>
+            <label><span className="field-label-with-help">Email <FieldHelp text="Adresse de contact principale. Elle pourra ensuite être complétée par d’autres coordonnées." /></span><input type="email" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} /></label>
+            <label><span className="field-label-with-help">Téléphone <FieldHelp text="Numéro principal du client ou de l’interlocuteur." /></span><input value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} /></label>
+            <NeedChoices value={needsDraft} onChange={setNeedsDraft}/>
+            <label><span className="field-label-with-help">Notes <FieldHelp text="Information interne utile au démarrage du dossier client." /></span><input value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} /></label>
           </div>
           {formError && <p className="form-error">{formError}</p>}
           <div className="form-actions"><button className="primary-button" disabled={saving} type="submit">{saving ? 'Création…' : 'Créer le client'}</button></div>
