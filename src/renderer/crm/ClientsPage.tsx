@@ -627,10 +627,6 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
   );
 }
 
-function initials(name: string): string {
-  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'AW';
-}
-
 function SummaryLine({ label, value }: { label: string; value: string }) {
   return <div className="summary-line"><span>{label}</span><strong>{value}</strong></div>;
 }
