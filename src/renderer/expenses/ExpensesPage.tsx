@@ -215,7 +215,7 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
 
   const monthItems = items.filter((item) => {
     const value = new Date(item.expenseDate).getTime();
-    return value >= monthStart && value < monthEnd && item.status !== 'cancelled';
+    return value >= monthStart && value < monthEnd && (item.status === 'committed' || item.status === 'paid');
   });
   const committedThisMonth = monthItems.reduce((sum, item) => sum + item.amountCents, 0);
   const toPay = items.filter((item) => item.status === 'committed').reduce((sum, item) => sum + item.amountCents, 0);
@@ -256,7 +256,7 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
       status: form.status,
       expenseDate: toIso(form.expenseDate) || new Date().toISOString(),
       dueAt: toIso(form.dueAt),
-      paidAt: toIso(form.paidAt),
+      paidAt: form.status === 'paid' ? toIso(form.paidAt) : null,
       frequency: form.frequency,
       nextDueAt: form.frequency === 'none' ? null : toIso(form.nextDueAt),
       notes: form.notes.trim() || null,
