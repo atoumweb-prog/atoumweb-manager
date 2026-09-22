@@ -83,6 +83,7 @@ function App() {
   const [activePage, setActivePage] = useState<PageName>('Accueil');
   const [theme, setTheme] = useState<ThemeName>('atoumweb');
   const [displayDensity, setDisplayDensity] = useState<DisplayDensity>('comfort');
+  const [showHoverHelp, setShowHoverHelp] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [loadingError, setLoadingError] = useState<string | null>(null);
@@ -106,6 +107,7 @@ function App() {
         setBootstrap(state);
         setTheme(state.theme);
         setDisplayDensity(state.displayDensity);
+        setShowHoverHelp(state.showHoverHelp);
         applyTheme(state.theme);
         applyDensity(state.displayDensity);
       })
@@ -126,6 +128,12 @@ function App() {
     setDisplayDensity(savedDensity);
     applyDensity(savedDensity);
     setMessage(`Affichage « ${DENSITIES.find((item) => item.id === savedDensity)?.label ?? savedDensity} » appliqué.`);
+  }
+
+  async function updateShowHoverHelp(enabled: boolean): Promise<void> {
+    const saved = await window.atoumweb.settings.setShowHoverHelp(enabled);
+    setShowHoverHelp(saved);
+    setMessage(saved ? 'Aides contextuelles activées.' : 'Aides contextuelles masquées.');
   }
 
   async function chooseWorkspace(): Promise<void> {
@@ -248,12 +256,12 @@ function App() {
           {activePage === 'Clients' && <ClientsPage key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
           {activePage === 'Offres & Tarifs' && <CatalogPage onMessage={setMessage} />}
           {activePage === 'Devis' && <QuotesPage key={quoteTarget} initialId={quoteTarget} onMessage={setMessage} />}
-          {activePage === 'Projets' && <ProjectsPage onMessage={setMessage} initialProjectId={projectSearchTarget} />}
+          {activePage === 'Projets' && <ProjectsPage onMessage={setMessage} initialProjectId={projectSearchTarget} showHoverHelp={showHoverHelp} />}
           {activePage === 'Interventions & Maintenance' && <OperationsPage onMessage={setMessage} initialTarget={operationsSearchTarget} />}
           {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}
           {activePage === 'Bibliothèque AtoumWeb' && <AtoumWebLibraryPage onMessage={setMessage} initialItemId={librarySearchTarget} />}
           {activePage === 'Sauvegardes' && <BusinessBackupsPage onMessage={setMessage} initialRecordId={backupSearchTarget} />}
-          {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} displayDensity={displayDensity} onThemeChange={updateTheme} onDensityChange={updateDisplayDensity} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
+          {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} displayDensity={displayDensity} showHoverHelp={showHoverHelp} onThemeChange={updateTheme} onDensityChange={updateDisplayDensity} onShowHoverHelpChange={updateShowHoverHelp} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
           {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Sauvegardes' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
         </section>
       </main>
@@ -311,12 +319,14 @@ function formatDashboardTime(seconds: number): string {
   return hours < 10 ? `${hours.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} h` : `${Math.round(hours)} h`;
 }
 
-function SettingsPage({ bootstrap, theme, displayDensity, onThemeChange, onDensityChange, onChooseWorkspace, onCreateBackup, onRestoreBackup }: {
+function SettingsPage({ bootstrap, theme, displayDensity, showHoverHelp, onThemeChange, onDensityChange, onShowHoverHelpChange, onChooseWorkspace, onCreateBackup, onRestoreBackup }: {
   bootstrap: BootstrapState;
   theme: ThemeName;
   displayDensity: DisplayDensity;
+  showHoverHelp: boolean;
   onThemeChange: (theme: ThemeName) => Promise<void>;
   onDensityChange: (density: DisplayDensity) => Promise<void>;
+  onShowHoverHelpChange: (enabled: boolean) => Promise<void>;
   onChooseWorkspace: () => Promise<void>;
   onCreateBackup: () => Promise<void>;
   onRestoreBackup: () => Promise<void>;
@@ -329,6 +339,17 @@ function SettingsPage({ bootstrap, theme, displayDensity, onThemeChange, onDensi
         <div className="density-settings">
           <div><span className="eyebrow">Lisibilité</span><h2>Densité d’affichage</h2><p className="muted">Adapte la taille des textes, les espacements et les zones cliquables à ton confort de travail.</p></div>
           <div className="density-grid">{DENSITIES.map((item) => <button className={`density-card ${displayDensity === item.id ? 'selected' : ''}`} key={item.id} type="button" onClick={() => void onDensityChange(item.id)}><strong>{item.label}</strong><span>{item.description}</span></button>)}</div>
+        </div>
+        <div className="settings-help-row">
+          <div>
+            <span className="eyebrow">Aide contextuelle</span>
+            <h2>Conseils au survol</h2>
+            <p className="muted">Affiche de courtes explications sur les champs de production quand tu passes la souris dessus.</p>
+          </div>
+          <label className="settings-switch">
+            <input type="checkbox" checked={showHoverHelp} onChange={(event) => void onShowHoverHelpChange(event.target.checked)} />
+            <span>{showHoverHelp ? 'Activée' : 'Désactivée'}</span>
+          </label>
         </div>
       </article>
       <article className="panel"><span className="eyebrow">Stockage</span><h2>Workspace local</h2><p className="path-value">{bootstrap.workspacePath}</p><button className="primary-button" type="button" onClick={() => void onChooseWorkspace()}>Choisir un autre dossier</button></article>
