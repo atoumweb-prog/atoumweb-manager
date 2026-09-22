@@ -30,6 +30,8 @@ import type {
   CrmActionInput,
   CompleteActionInput,
   ContactMethodInput,
+  CrmIdentityAssetRole,
+  CrmIdentityOwnerType,
   OrganizationInput,
   ProspectFilters,
   ProspectInput,
@@ -154,6 +156,19 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('crm:contact-methods:list',(_event,owner:'organization'|'contact',id:string,includeArchived?:boolean)=>database.crm.listContactMethods(owner,id,includeArchived));
   ipcMain.handle('crm:contact-methods:save',(_event,input:ContactMethodInput,id?:string)=>database.crm.saveContactMethod(input,id));
   ipcMain.handle('crm:contact-methods:archive',(_event,id:string,archived?:boolean)=>database.crm.archiveContactMethod(id,archived));
+  ipcMain.handle('crm:identity-assets:list', (_event, owner: CrmIdentityOwnerType, id: string) => database.crmIdentityAssets.list(owner, id));
+  ipcMain.handle('crm:identity-assets:import', async (_event, owner: CrmIdentityOwnerType, id: string, role: CrmIdentityAssetRole) => {
+    const selection = await dialog.showOpenDialog({
+      title: role === 'logo' ? 'Choisir le logo' : role === 'favicon' ? 'Choisir la favicon' : 'Choisir la photo',
+      defaultPath: workspace.root,
+      properties: ['openFile'],
+      filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'ico'] }],
+    });
+    if (selection.canceled || selection.filePaths.length === 0) return null;
+    return database.crmIdentityAssets.importFilePath(owner, id, role, selection.filePaths[0]);
+  });
+  ipcMain.handle('crm:identity-assets:preview', (_event, assetId: string) => database.crmIdentityAssets.preview(assetId));
+  ipcMain.handle('crm:identity-assets:remove', (_event, assetId: string) => database.crmIdentityAssets.remove(assetId));
   ipcMain.handle('crm:prospects:list', (_event, filters?: ProspectFilters) => database.crm.listProspects(filters));
   ipcMain.handle('crm:prospects:create', (_event, input: ProspectInput) => database.crm.createProspect(input));
   ipcMain.handle('crm:prospects:update', (_event, id: string, input: ProspectInput) => database.crm.updateProspect(id, input));
