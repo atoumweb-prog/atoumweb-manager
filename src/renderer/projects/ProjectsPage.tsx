@@ -12,6 +12,7 @@ import {
   type ProjectNodeInput,
   type ProjectNodeStatus,
   type ProjectPrerequisiteStatus,
+  type ProjectSecretSummary,
   type ProjectStatus,
   type ProjectSummary,
   type ProjectTemplateDetail,
@@ -139,7 +140,7 @@ function formatTimer(seconds: number): string {
   return [hours, minutes, rest].map((value) => String(value).padStart(2, '0')).join(':');
 }
 
-export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (message: string) => void; initialProjectId?: string | null }) {
+export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true }: { onMessage: (message: string) => void; initialProjectId?: string | null; showHoverHelp?: boolean }) {
   const [view, setView] = useState<'projects' | 'templates'>('projects');
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [templates, setTemplates] = useState<ProjectTemplateSummary[]>([]);
@@ -155,7 +156,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
   const [phaseCompletionReview, setPhaseCompletionReview] = useState<PhaseCompletionReviewState | null>(null);
   const [phaseCompletionBusy, setPhaseCompletionBusy] = useState(false);
   const [productionSplitPercent, setProductionSplitPercent] = useState(40);
-  const [productionOverlay, setProductionOverlay] = useState<'resources' | 'technical' | 'time' | null>(null);
+  const [productionOverlay, setProductionOverlay] = useState<'resources' | 'technical' | 'time' | 'secrets' | null>(null);
   const [loading, setLoading] = useState(true);
   const [createMode, setCreateMode] = useState<'quote' | 'internal' | null>(null);
   const [quoteId, setQuoteId] = useState('');
@@ -269,7 +270,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
       const rect = workspace.getBoundingClientRect();
       if (!rect.width) return;
       const ratio = ((event.clientX - rect.left) / rect.width) * 100;
-      setProductionSplitPercent(Math.max(28, Math.min(68, ratio)));
+      setProductionSplitPercent(Math.max(18, Math.min(68, ratio)));
     };
     const onUp = () => {
       document.body.classList.remove('project-resizing');
@@ -681,6 +682,9 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
                   <span className="eyebrow">Plan de production</span>
                   <strong>{detail.nodes.filter((node) => !node.parentId).length} phase{detail.nodes.filter((node) => !node.parentId).length > 1 ? 's' : ''}</strong>
                 </div>
+                <div className="project-production-tree-actions">
+                  <button className="project-tree-size-button" type="button" title="Réduire le plan pour agrandir la fiche" onClick={() => setProductionSplitPercent(22)}>◀</button>
+                  <button className="project-tree-size-button" type="button" title="Rétablir le partage 40 / 60" onClick={() => setProductionSplitPercent(40)}>↔</button>
                 <details className="project-production-add">
                   <summary>+ Ajouter</summary>
                   <div className="project-node-add">
@@ -698,6 +702,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
                     </div>
                   </div>
                 </details>
+                </div>
               </div>
               {!detailUsesBlueprint && <div className="project-legacy-plan-note">
                 <div><strong>Ce projet utilise un ancien plan</strong><span>Il conserve le modèle utilisé lors de sa création.</span></div>
@@ -728,7 +733,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
               onPointerDown={() => beginProductionResize()}
               onDoubleClick={() => setProductionSplitPercent(40)}
               onKeyDown={(event) => {
-                if (event.key === 'ArrowLeft') setProductionSplitPercent((value) => Math.max(28, value - 3));
+                if (event.key === 'ArrowLeft') setProductionSplitPercent((value) => Math.max(18, value - 3));
                 if (event.key === 'ArrowRight') setProductionSplitPercent((value) => Math.min(68, value + 3));
               }}
             ><span /></div>
@@ -742,6 +747,8 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
               onOpenResources={() => setProductionOverlay('resources')}
               onOpenTechnical={() => setProductionOverlay('technical')}
               onOpenTime={() => setProductionOverlay('time')}
+              onOpenSecrets={() => setProductionOverlay('secrets')}
+              showHoverHelp={showHoverHelp}
               onMessage={onMessage}
             />
           </main>
@@ -753,7 +760,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
             <header>
               <div>
                 <span className="eyebrow">{selectedPosition ? `Phase ${selectedPosition.phaseIndex}${selectedPosition.stepIndex ? ` · Étape ${selectedPosition.phaseIndex}.${selectedPosition.stepIndex}` : ''}` : 'Projet'}</span>
-                <h3>{productionOverlay === 'resources' ? 'Ressources' : productionOverlay === 'technical' ? 'Technique & bibliothèque' : 'Temps'}</h3>
+                <h3>{productionOverlay === 'resources' ? 'Ressources' : productionOverlay === 'technical' ? 'Technique & bibliothèque' : productionOverlay === 'time' ? 'Temps' : 'Accès sécurisés'}</h3>
                 {selectedNode && <p>{selectedNode.name}</p>}
               </div>
               <button type="button" className="close-detail" onClick={() => setProductionOverlay(null)}>×</button>
@@ -762,6 +769,7 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
               {productionOverlay === 'resources' && <ProjectResourcesTab projectId={detail.id} nodes={detail.nodes} resourceRootPath={detail.resourceRootPath} onMessage={onMessage} />}
               {productionOverlay === 'technical' && <ProjectTechnicalLibraryTab projectId={detail.id} onMessage={onMessage} />}
               {productionOverlay === 'time' && <ProjectTimeTab projectId={detail.id} nodes={detail.nodes} onMessage={onMessage} />}
+              {productionOverlay === 'secrets' && <ProjectSecretsPanel projectId={detail.id} node={selectedNode} onMessage={onMessage} />}
             </div>
           </section>
         </div>}
@@ -856,6 +864,110 @@ export function ProjectsPage({ onMessage, initialProjectId }: { onMessage: (mess
   );
 }
 
+function fieldHelpText(field: ProjectWorkCard['fields'][number]): string {
+  if (field.type === 'check') return `Coche « ${field.label} » lorsque ce point est réellement vérifié.`;
+  if (field.type === 'url') return `Renseigne l’adresse utile pour « ${field.label} ».`;
+  if (field.type === 'textarea') return `Zone de notes détaillées : ${field.label}.`;
+  if (field.type === 'select') return `Choisis la valeur correspondant à « ${field.label} ».`;
+  return `Renseigne « ${field.label} » pour conserver cette information dans la fiche projet.`;
+}
+
+function ProjectSecretsPanel({ projectId, node, onMessage }: {
+  projectId: string;
+  node: ProjectNode | null;
+  onMessage: (message: string) => void;
+}) {
+  const [items, setItems] = useState<ProjectSecretSummary[]>([]);
+  const [label, setLabel] = useState('');
+  const [username, setUsername] = useState('');
+  const [secret, setSecret] = useState('');
+  const [url, setUrl] = useState('');
+  const [notes, setNotes] = useState('');
+  const [revealed, setRevealed] = useState<Record<string, string>>({});
+  const [savingSecret, setSavingSecret] = useState(false);
+
+  async function loadSecrets(): Promise<void> {
+    try {
+      setItems(await window.atoumweb.projects.secrets.list(projectId, node?.id ?? null));
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible de charger les accès sécurisés.');
+    }
+  }
+
+  useEffect(() => { void loadSecrets(); }, [projectId, node?.id]);
+
+  async function saveSecret(): Promise<void> {
+    if (!label.trim() || !secret.trim()) return;
+    setSavingSecret(true);
+    try {
+      await window.atoumweb.projects.secrets.save({
+        projectId,
+        projectNodeId: node?.id ?? null,
+        label: label.trim(),
+        username: username.trim() || null,
+        secret,
+        url: url.trim() || null,
+        notes: notes.trim() || null,
+      });
+      setLabel(''); setUsername(''); setSecret(''); setUrl(''); setNotes('');
+      await loadSecrets();
+      onMessage('Accès enregistré dans le coffre chiffré Windows.');
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible d’enregistrer cet accès.');
+    } finally {
+      setSavingSecret(false);
+    }
+  }
+
+  async function revealSecret(id: string): Promise<void> {
+    try {
+      const value = await window.atoumweb.projects.secrets.reveal(id);
+      setRevealed((current) => ({ ...current, [id]: value.secret }));
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible de révéler cet accès.');
+    }
+  }
+
+  async function removeSecret(id: string): Promise<void> {
+    try {
+      await window.atoumweb.projects.secrets.remove(id);
+      setRevealed((current) => {
+        const next = { ...current }; delete next[id]; return next;
+      });
+      await loadSecrets();
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible de supprimer cet accès.');
+    }
+  }
+
+  return <div className="project-secrets-panel">
+    <div className="project-secret-intro">
+      <strong>{node ? `Accès liés à « ${node.name} »` : 'Accès généraux du projet'}</strong>
+      <span>Les mots de passe et clés sont chiffrés par Windows. Ils ne sont jamais enregistrés en clair dans SQLite.</span>
+    </div>
+    <div className="project-secret-form">
+      <label>Nom<input value={label} onChange={(event) => setLabel(event.target.value)} placeholder="Ex. WordPress admin, licence Divi…" /></label>
+      <label>Utilisateur<input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="Optionnel" /></label>
+      <label>Mot de passe / clé<input type="password" value={secret} onChange={(event) => setSecret(event.target.value)} placeholder="Valeur chiffrée" /></label>
+      <label>URL<input value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://…" /></label>
+      <label className="wide">Notes<input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Contexte, compte, expiration…" /></label>
+      <button className="primary-button" type="button" disabled={savingSecret || !label.trim() || !secret.trim()} onClick={() => void saveSecret()}>{savingSecret ? 'Enregistrement…' : 'Ajouter au coffre'}</button>
+    </div>
+    <div className="project-secret-list">
+      {items.map((item) => <article key={item.id}>
+        <div><strong>{item.label}</strong><span>{item.username || 'Sans utilisateur'}{item.url ? ` · ${item.url}` : ''}</span>{item.notes && <small>{item.notes}</small>}</div>
+        <code>{revealed[item.id] ?? '••••••••••••'}</code>
+        <div className="project-secret-actions">
+          <button className="secondary-button" type="button" onClick={() => revealed[item.id] ? setRevealed((current) => { const next={...current}; delete next[item.id]; return next; }) : void revealSecret(item.id)}>{revealed[item.id] ? 'Masquer' : 'Afficher'}</button>
+          {revealed[item.id] && <button className="secondary-button" type="button" onClick={() => void navigator.clipboard.writeText(revealed[item.id])}>Copier</button>}
+          <button className="secondary-button" type="button" onClick={() => void removeSecret(item.id)}>Supprimer</button>
+        </div>
+      </article>)}
+      {items.length === 0 && <p className="muted">Aucun accès sécurisé lié à cette étape.</p>}
+    </div>
+  </div>;
+}
+
 function PhaseCompletionReviewPanel({ review, busy, onConfirm, onCancel }: {
   review: PhaseCompletionReviewState;
   busy: boolean;
@@ -914,7 +1026,7 @@ function ProjectCommercialTab({ project }: { project: ProjectDetail }) {
   );
 }
 
-function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, onOpenResources, onOpenTechnical, onOpenTime, onMessage }: {
+function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, onOpenResources, onOpenTechnical, onOpenTime, onOpenSecrets, showHoverHelp, onMessage }: {
   projectId: string;
   node: ProjectNode | null;
   position: ProjectNodePosition | null;
@@ -923,6 +1035,8 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
   onOpenResources: () => void;
   onOpenTechnical: () => void;
   onOpenTime: () => void;
+  onOpenSecrets: () => void;
+  showHoverHelp: boolean;
   onMessage: (message: string) => void;
 }) {
   const [card, setCard] = useState<ProjectWorkCard | null>(node?.workCard ?? null);
@@ -933,7 +1047,8 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
   const [activeTime, setActiveTime] = useState<TimeSession | null>(null);
   const [timerBusy, setTimerBusy] = useState(false);
   const [timerTick, setTimerTick] = useState(Date.now());
-  const [workbenchTab, setWorkbenchTab] = useState<'form' | 'notes'>('form');
+  const [workbenchTab, setWorkbenchTab] = useState<'form' | 'notes' | 'actions' | 'info' | 'advice'>('form');
+  const [newActionTitle, setNewActionTitle] = useState('');
 
   useEffect(() => {
     setCard(node?.workCard ? {
@@ -974,6 +1089,30 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
         fields: current.fields.map((field) => field.key === key ? { ...field, value } : field),
       };
     });
+  }
+
+  function addWorkAction(): void {
+    const title = newActionTitle.trim();
+    if (!title) return;
+    setCard((current) => ({
+      ...(current ?? { fields: [] }),
+      actions: [...(current?.actions ?? []), { id: crypto.randomUUID(), title, done: false }],
+    }));
+    setNewActionTitle('');
+  }
+
+  function toggleWorkAction(id: string, done: boolean): void {
+    setCard((current) => current ? {
+      ...current,
+      actions: (current.actions ?? []).map((action) => action.id === id ? { ...action, done } : action),
+    } : current);
+  }
+
+  function removeWorkAction(id: string): void {
+    setCard((current) => current ? {
+      ...current,
+      actions: (current.actions ?? []).filter((action) => action.id !== id),
+    } : current);
   }
 
   async function save(): Promise<void> {
@@ -1117,9 +1256,13 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
     <nav className="project-workbench-nav" aria-label="Outils de la fiche">
       <button type="button" className={workbenchTab === 'form' ? 'active' : ''} onClick={() => setWorkbenchTab('form')}>Fiche</button>
       <button type="button" className={workbenchTab === 'notes' ? 'active' : ''} onClick={() => setWorkbenchTab('notes')}>Notes</button>
+      <button type="button" className={workbenchTab === 'actions' ? 'active' : ''} onClick={() => setWorkbenchTab('actions')}>Actions{(card?.actions?.length ?? 0) ? ` · ${card?.actions?.filter((action) => !action.done).length}` : ''}</button>
       <button type="button" onClick={onOpenResources}>Ressources</button>
       <button type="button" onClick={onOpenTechnical}>Technique</button>
       <button type="button" onClick={onOpenTime}>Temps</button>
+      <button type="button" onClick={onOpenSecrets}>Accès</button>
+      {(node.description || card?.goal) && <button type="button" className={workbenchTab === 'info' ? 'active' : ''} onClick={() => setWorkbenchTab('info')}>Infos</button>}
+      {node.advice?.length ? <button type="button" className={workbenchTab === 'advice' ? 'active' : ''} onClick={() => setWorkbenchTab('advice')}>Conseils · {node.advice.length}</button> : null}
       <details className="project-workbench-pause-menu">
         <summary>{node.paused ? '▶ Reprendre' : '⏸ Pause'}</summary>
         <div>
@@ -1131,17 +1274,14 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
     </nav>
 
     {workbenchTab === 'form' && <div className="project-workbench-body">
-      {node.description && <p className="project-workbench-description">{node.description}</p>}
-
-      {card?.goal && <section className="project-workbench-goal compact">
-        <span>Objectif</span>
-        <p>{card.goal}</p>
-      </section>}
-
       {card && card.fields.length > 0 && <section className="project-workbench-fields">
         <div className="project-workbench-section-title"><strong>À renseigner</strong><span>{card.fields.length}</span></div>
         <div className="project-work-card-fields compact">
-          {card.fields.map((field) => <label key={field.key} className={field.type === 'check' ? 'check-field' : ''}>
+          {card.fields.map((field) => <label
+            key={field.key}
+            className={field.type === 'check' ? 'check-field' : ''}
+            title={showHoverHelp ? (field.help || fieldHelpText(field)) : undefined}
+          >
             {field.type === 'check'
               ? <><input type="checkbox" checked={field.value === true} onChange={(event) => updateField(field.key, event.target.checked)} /><span>{field.label}</span></>
               : <>
@@ -1160,16 +1300,36 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
         </div>
       </section>}
 
-      {node.advice && node.advice.length > 0 && <details className="project-companion-compact">
-        <summary>Conseils AtoumWeb <span>{node.advice.length}</span></summary>
-        <div className="project-companion-cards">
-          {node.advice.map((advice, index) => <article className={`advice-${advice.kind}`} key={`${advice.title}-${index}`}>
-            <span aria-hidden="true">{advice.kind === 'warning' ? '!' : advice.kind === 'library' ? '◇' : advice.kind === 'check' ? '✓' : '💡'}</span>
-            <div><strong>{advice.title}</strong><p>{advice.body}</p></div>
-          </article>)}
-        </div>
-      </details>}
     </div>}
+
+    {workbenchTab === 'actions' && <section className="project-workbench-actions">
+      <div className="project-action-add">
+        <input value={newActionTitle} onChange={(event) => setNewActionTitle(event.target.value)} placeholder="Ajouter une action dans cette étape…" onKeyDown={(event) => { if (event.key === 'Enter') addWorkAction(); }} />
+        <button className="secondary-button" type="button" onClick={addWorkAction}>+ Ajouter</button>
+      </div>
+      <div className="project-action-list">
+        {(card?.actions ?? []).map((action) => <div key={action.id} className={`project-work-action ${action.done ? 'done' : ''}`}>
+          <label><input type="checkbox" checked={action.done} onChange={(event) => toggleWorkAction(action.id, event.target.checked)} /><span>{action.title}</span></label>
+          <button type="button" title="Supprimer l’action" onClick={() => removeWorkAction(action.id)}>×</button>
+        </div>)}
+        {(card?.actions?.length ?? 0) === 0 && <p className="muted">Aucune action supplémentaire. Ajoute-en seulement quand cette étape en a besoin.</p>}
+      </div>
+    </section>}
+
+    {workbenchTab === 'info' && <section className="project-workbench-info-panel">
+      {node.description && <div><span className="eyebrow">Description</span><p>{node.description}</p></div>}
+      {card?.goal && <div><span className="eyebrow">Objectif</span><p>{card.goal}</p></div>}
+      {!node.description && !card?.goal && <p className="muted">Aucune information complémentaire pour cette étape.</p>}
+    </section>}
+
+    {workbenchTab === 'advice' && <section className="project-workbench-advice-panel">
+      <div className="project-companion-cards">
+        {(node.advice ?? []).map((advice, index) => <article className={`advice-${advice.kind}`} key={`${advice.title}-${index}`}>
+          <span aria-hidden="true">{advice.kind === 'warning' ? '!' : advice.kind === 'library' ? '◇' : advice.kind === 'check' ? '✓' : '💡'}</span>
+          <div><strong>{advice.title}</strong><p>{advice.body}</p></div>
+        </article>)}
+      </div>
+    </section>}
 
     {workbenchTab === 'notes' && <section className="project-workbench-notes">
       <label>
