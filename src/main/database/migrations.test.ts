@@ -66,7 +66,7 @@ describe('migrations SQLite', () => {
       'maintenance_overage_decisions', 'maintenance_report_drafts', 'hour_pack_shortfall_decisions',
       'crm_needs', 'demo_batches', 'demo_records', 'demo_context', 'contact_methods', 'client_documents',
       'atoumweb_technical_assets', 'backup_records', 'backup_locations', 'backup_policies', 'backup_intervention_links',
-      'catalog_project_blueprints', 'project_node_sources',
+      'catalog_project_blueprints', 'project_node_sources', 'project_node_secrets',
     ]) {
       const row = database.get<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", [table]);
       expect(row?.name).toBe(table);
