@@ -24,6 +24,30 @@ export type CrmActionOwnerType = (typeof CRM_ACTION_OWNER_TYPES)[number];
 export type ContactMethodType = 'email' | 'phone';
 export type ActionRecurrence = 'none' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 export type ClientRelationshipStatus = 'excellent' | 'good' | 'neutral' | 'watch' | 'difficult';
+export const CRM_IDENTITY_ASSET_ROLES = ['logo', 'favicon', 'avatar'] as const;
+export type CrmIdentityOwnerType = 'organization' | 'contact';
+export type CrmIdentityAssetRole = (typeof CRM_IDENTITY_ASSET_ROLES)[number];
+
+export interface CrmIdentityAsset {
+  id: string;
+  ownerType: CrmIdentityOwnerType;
+  ownerId: string;
+  role: CrmIdentityAssetRole;
+  relativePath: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  missing: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CrmIdentityAssetPreview {
+  available: boolean;
+  dataUrl?: string;
+  mimeType?: string | null;
+  error?: string;
+}
 export type ProspectResearchPresence = 'present' | 'absent' | 'review';
 export type ProspectResearchCheckStatus = 'ok' | 'review' | 'missing' | 'na';
 
@@ -210,6 +234,12 @@ export interface CrmApi {
     list(owner: 'organization' | 'contact', id: string, includeArchived?: boolean): Promise<ContactMethod[]>;
     save(input: ContactMethodInput, id?: string): Promise<ContactMethod>;
     archive(id: string, archived?: boolean): Promise<void>;
+  };
+  identityAssets: {
+    list(owner: CrmIdentityOwnerType, id: string): Promise<CrmIdentityAsset[]>;
+    importFile(owner: CrmIdentityOwnerType, id: string, role: CrmIdentityAssetRole): Promise<CrmIdentityAsset | null>;
+    preview(assetId: string): Promise<CrmIdentityAssetPreview>;
+    remove(assetId: string): Promise<void>;
   };
   prospects: {
     list(filters?: ProspectFilters): Promise<ProspectSummary[]>;
