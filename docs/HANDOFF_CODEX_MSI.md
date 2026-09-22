@@ -71,13 +71,15 @@ Le chantier actif est **Projet V2 / atelier de production** :
 
 ## Migrations
 
-La branche Projet V2 porte désormais **31 migrations SQLite**.
+La branche Projet V2 porte désormais **32 migrations SQLite**.
 
 La dernière validation complète connue sur MSI avant la passe Catalogue était à **36 fichiers / 177 tests réussis** avec **30 migrations**.
 
 La migration 30 ajoute `project_node_secrets` pour les métadonnées et le ciphertext des accès sécurisés.
 
 La migration 31 ajoute `catalog_versions.nature` pour distinguer la nature courte d’une prestation de sa description détaillée.
+
+La migration 32 rattache un élément de facturation à son PDF client (`invoice_document_id`, référence et date de facture). Le PDF est stocké via le système Documents client dans `03 Factures` ; aucune API Abby n’est utilisée.
 
 Les mots de passe / clés ne doivent jamais être stockés en clair dans SQLite, les logs ou les documents de suivi.
 
@@ -91,7 +93,7 @@ Le **HEAD actuel doit donc être revalidé** sur MSI avec :
 - `npm test`
 - `npm run package`
 - lancement du profil Validation-MSI
-- vérification des migrations 30 et 31
+- vérification des migrations 30, 31 et 32
 - test du coffre avec une fausse clé, jamais une vraie
 - vérification rapide des anciens écrans après la nouvelle couche UI globale.
 
@@ -127,3 +129,11 @@ ChatGPT pilote actuellement la conception et les modifications de la branche Pro
 
 > Je vais continuer à t’envoyer des captures page par page. Prends-les comme une recette visuelle continue et garde les corrections cohérentes avec les précédentes.
 
+## Facturation sans API Abby
+
+- Abby reste l’outil qui produit la facture réglementaire.
+- AtoumWeb Manager ne dépend d’aucune API Abby payante.
+- Le Manager prépare les éléments à facturer et conserve le suivi interne.
+- Une facture devient **Facturée** dans le Manager lorsque son PDF est importé et rattaché.
+- Le PDF est classé dans les Documents du client, catégorie Factures (`03 Factures`), et reste ouvrable depuis Facturation.
+- Les packs d’heures payants alimentent automatiquement la file des éléments à facturer.
