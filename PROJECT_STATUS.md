@@ -12,7 +12,7 @@
 - Branche active : `feature/project-blueprints-v1`.
 - PR active : **#73 — Projet V2 — Blueprints de production et atelier AtoumWeb**.
 - Branche Phase 7 existante en parallèle : `feature/phase-7-analytics-v1` / PR #71 ; ne pas la poursuivre sans la réaligner sur Projet V2.
-- Migrations sur Projet V2 / recette visuelle : **33**.
+- Migrations sur Projet V2 / recette visuelle : **34**.
 - `main` reste historique et très en retard par rapport au socle de travail ; ne pas l'utiliser comme base de développement courant.
 
 ### Projet V2 — réalisé
@@ -40,11 +40,16 @@
 - [x] suivi des frais engagés / payés avec dashboard mensuel et montant récurrent mensuel équivalent ;
 - [x] justificatifs PDF/images stockés dans le workspace, avec classement client/projet lorsque disponible ;
 - [x] migration 33 : table `expenses`.
+- [x] thème Noir : contraste CRM/Prospection corrigé avec teintes sémantiques adaptées au sombre ;
+- [x] identité visuelle CRM : logo + favicon pour les entreprises, photo/avatar pour les contacts, fallback initiales ;
+- [x] identité réutilisée dans Annuaire Prospection, cartes du parcours et Clients ;
+- [x] URL CRM normalisées : saisie sans protocole → `https://`, `http://` explicite conservé ;
+- [x] migration 34 : table `crm_identity_assets`.
 
 ### Validation
 
 - [x] dernière validation complète connue sur MSI avant la passe Catalogue : **36 fichiers / 177 tests réussis**, SQLite à **30 migrations**.
-- [ ] revalider le HEAD actuel après le dernier lot : aide / actions / coffre sécurisé / Catalogue Offres & Tarifs / ateliers Interventions & Packs / Gestion des temps / Facturation PDF Abby / Dépenses / migrations 31–33 / cohérence UI globale.
+- [ ] revalider le HEAD actuel après le dernier lot : aide / actions / coffre sécurisé / Catalogue Offres & Tarifs / ateliers Interventions & Packs / Gestion des temps / Facturation PDF Abby / Dépenses / identité CRM / migrations 31–34 / cohérence UI globale.
 - [ ] `npm run typecheck`
 - [ ] `npm test`
 - [ ] `npm run package`
