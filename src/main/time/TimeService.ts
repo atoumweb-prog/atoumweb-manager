@@ -3,12 +3,14 @@ import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import {
   TIME_CATEGORIES,
   TIME_RECOVERY_STALE_AFTER_SECONDS,
+  TIME_PAUSE_REASONS,
   type ManualTimeSessionInput,
   type StartTimeSessionInput,
   type TimeCategory,
   type TimeSession,
   type TimeSessionFilters,
   type TimeSessionPause,
+  type TimePauseReason,
   type TimeSummary,
 } from '../../shared/time';
 
@@ -40,6 +42,8 @@ interface PauseRow extends Record<string, unknown> {
   time_session_id: string;
   started_at: string;
   ended_at: string | null;
+  reason: TimePauseReason | null;
+  reason_note: string | null;
 }
 
 const clean = (value?: string | null): string | null => {
@@ -95,14 +99,15 @@ export class TimeService {
     return this.get(id);
   }
 
-  pause(id: string): TimeSession {
+  pause(id: string, reason?: TimePauseReason | null, reasonNote?: string | null): TimeSession {
     const session = this.get(id);
     if (session.endedAt) throw new Error('Cette session est déjà terminée.');
     if (session.paused) return session;
+    if (reason && !TIME_PAUSE_REASONS.includes(reason)) throw new Error('Motif de pause invalide.');
     const now = this.nowIso();
     this.database.run(
-      'INSERT INTO time_session_pauses (id,time_session_id,started_at,ended_at,created_at) VALUES (?,?,?,NULL,?)',
-      [randomUUID(), id, now, now],
+      'INSERT INTO time_session_pauses (id,time_session_id,started_at,ended_at,reason,reason_note,created_at) VALUES (?,?,?,NULL,?,?,?)',
+      [randomUUID(), id, now, reason ?? null, clean(reasonNote), now],
     );
     this.database.run('UPDATE time_sessions SET updated_at=? WHERE id=?', [now, id]);
     return this.get(id);
@@ -322,6 +327,8 @@ export class TimeService {
       sessionId: pause.time_session_id,
       startedAt: pause.started_at,
       endedAt: pause.ended_at,
+      reason: pause.reason,
+      reasonNote: pause.reason_note,
     }));
 
     const nowMs = this.clock().getTime();
