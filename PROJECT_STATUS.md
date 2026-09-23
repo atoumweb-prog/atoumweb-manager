@@ -1,6 +1,6 @@
 # AtoumWeb Manager — Suivi du projet
 
-## État canonique — 22/09/2026
+## État canonique — 24/09/2026
 
 > Cette section prime sur les entrées historiques plus bas. Source de vérité partagée ChatGPT / Codex MSI.
 
@@ -12,7 +12,7 @@
 - Branche active : `feature/project-blueprints-v1`.
 - PR active : **#73 — Projet V2 — Blueprints de production et atelier AtoumWeb**.
 - Branche Phase 7 existante en parallèle : `feature/phase-7-analytics-v1` / PR #71 ; ne pas la poursuivre sans la réaligner sur Projet V2.
-- Migrations sur Projet V2 / recette visuelle : **35**.
+- Migrations sur Projet V2 / recette visuelle : **36**.
 - `main` reste historique et très en retard par rapport au socle de travail ; ne pas l'utiliser comme base de développement courant.
 
 ### Projet V2 — réalisé
@@ -56,12 +56,16 @@
 - [x] thème Noir : contraste des teintes métier CRM renforcé pendant la recette visuelle continue.
 - [x] Annuaire professionnel central : vues Organisations / Contacts, recherche et filtres, liens réels Client / Prospect / Externe, identité visuelle, fiche redimensionnable et agrandissable, sans migration supplémentaire ;
 - [x] Statistiques V1 intégrées sur le socle Projet V2 : Vue d’ensemble / Commercial / Projets & temps / Clients, périodes mois / trimestre / année / toutes données, comparaison à la période précédente et indicateurs dérivés des données métier existantes ;
+- [x] import Snapshot V1 AtoumWeb Bridge : nouvelle page **Sites**, inspection du ZIP avant import, contrôles SHA-256 / package fingerprint / références / arbres / compteurs, stockage historique Site → Snapshot → Page → Node, Sources / Assets / Dependencies, payloads en lecture seule et conservation des warnings du scan ;
+- [x] migration 36 : stockage central des sites, snapshots, pages, nœuds, sources, assets, dépendances, relations et objets adressés par hash issus d’AtoumWeb Bridge ;
+- [x] lecteur ZIP durci pour l’import Bridge : chemins dangereux, entrées chiffrées, types Unix spéciaux, doublons, CRC, tailles et ratios de compression suspects refusés ;
+- [ ] diff Snapshot A / B et attribution des `logical_node_id` Manager à valider après réception d’un second snapshot réel.
 - [ ] analytique avancée Phase 7 encore à réaligner : encaissements/paiements, rentabilité complète par prestation, exports statistiques et pilotage avancé.
 
 ### Validation
 
 - [x] dernier checkpoint MSI confirmé par l’utilisateur avant ce lot : **40 fichiers / 187 tests réussis**, SQLite à **34 migrations**.
-- [ ] revalider le HEAD actuel après le dernier lot : aide / actions / coffre sécurisé / Catalogue Offres & Tarifs / ateliers Interventions & Packs / Gestion des temps / Facturation PDF Abby / Dépenses / identité CRM / timer Intervention / Bibliothèque / Sauvegardes / Documents & Contrats / Annuaire / Statistiques / migrations 31–35 / cohérence UI globale. La recette visuelle a déjà confirmé le correctif du plantage Gestion des temps après import manquant de `OperationIcon`.
+- [ ] revalider le HEAD actuel après le dernier lot : aide / actions / coffre sécurisé / Catalogue Offres & Tarifs / ateliers Interventions & Packs / Gestion des temps / Facturation PDF Abby / Dépenses / identité CRM / timer Intervention / Bibliothèque / Sauvegardes / Documents & Contrats / Annuaire / Statistiques / migrations 31–36 / import Bridge / cohérence UI globale. La recette visuelle a déjà confirmé le correctif du plantage Gestion des temps après import manquant de `OperationIcon`.
 - [ ] `npm run typecheck`
 - [ ] `npm test`
 - [ ] `npm run package`
