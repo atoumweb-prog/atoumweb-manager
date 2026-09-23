@@ -525,7 +525,7 @@ function RequestDetail({ request, expanded, onExpand, transformType, setTransfor
   return <aside className={`panel operation-detail-panel request-workbench-panel ${expanded ? 'expanded' : ''}`}><div className="detail-panel-heading"><div><span className="eyebrow">Demande · {SOURCE_LABELS[request.source]}</span><h2>{request.subject}</h2><p className="muted">{request.clientLabel}{request.projectLabel ? ` · ${request.projectLabel}` : ''}</p></div><div className="request-workbench-heading-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire la demande' : 'Agrandir la demande'} aria-label={expanded ? 'Réduire la demande' : 'Agrandir la demande'} onClick={onExpand}><OperationIcon name={expanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={onClose}><OperationIcon name="close" size={18} /></button></div></div><div className="operation-detail-grid"><div><span>Reçue</span><strong>{dateLabel(request.receivedAt)}</strong></div><div><span>Priorité</span><strong>{PRIORITY_LABELS[request.priority]}</strong></div></div><label>Statut<select disabled={request.status === 'converted'} value={request.status} onChange={(event) => void onStatus(event.target.value as ServiceRequestStatus)}>{SERVICE_REQUEST_STATUSES.map((status) => <option key={status} value={status}>{REQUEST_STATUS_LABELS[status]}</option>)}</select></label>{request.description && <div className="operation-description"><span className="eyebrow">Description</span><p>{request.description}</p></div>}{request.interventionId ? <div className="operation-linked"><strong>✓ Transformée en intervention</strong><span>L’intervention liée est conservée comme source unique du travail réalisé.</span></div> : !locked && <><div className="operation-action-box"><strong>Créer une intervention</strong>{request.projectId && <label>Module / Page / Tâche<select value={transformProjectNodeId} onChange={(event) => setTransformProjectNodeId(event.target.value)} disabled={transformProjectNodes.length === 0}><option value="">Aucun rattachement précis</option>{transformProjectNodes.map((node) => <option key={node.id} value={node.id}>{projectNodeLabel(node)}</option>)}</select></label>}<label>Type<select value={transformType} onChange={(event) => setTransformType(event.target.value as InterventionType)}>{INTERVENTION_TYPES.map((type) => <option key={type} value={type}>{INTERVENTION_TYPE_LABELS[type]}</option>)}</select></label><label>Prise en charge<select value={transformCoverage} onChange={(event) => setTransformCoverage(event.target.value as InterventionCoverageMode)}>{INTERVENTION_COVERAGE_MODES.map((mode) => <option key={mode} value={mode}>{COVERAGE_LABELS[mode]}</option>)}</select></label><button className="primary-button" type="button" disabled={saving} onClick={() => void onTransform()}>Créer l’intervention</button></div><div className="operation-action-box subtle"><strong>Ou clore sans travail</strong><input value={closeReason} onChange={(event) => setCloseReason(event.target.value)} placeholder="Motif facultatif" /><button className="secondary-button" type="button" onClick={() => void onCloseRequest()}>Clore sans intervention</button></div></>}</aside>;
 }
 
-function InterventionDetail({ onSaved, intervention, expanded, onExpand, onClose, onStatus, onCoverage, onProjectNode, onTimer, onMessage }: { onSaved:()=>void; intervention: Intervention; expanded: boolean; onExpand: () => void; onClose: () => void; onStatus: (status: InterventionStatus) => Promise<void>; onCoverage: (coverage: InterventionCoverageMode) => Promise<void>; onProjectNode: (projectNodeId: string | null) => Promise<void>; onTimer: (intervention: Intervention) => void; onMessage: (message: string) => void; }) {
+function InterventionDetail({ onSaved, intervention, expanded, onExpand, onClose, onStatus, onCoverage, onProjectNode, onTimer, conclusionRequested, onConclusionHandled, onMessage }: { onSaved:()=>void; intervention: Intervention; expanded: boolean; onExpand: () => void; onClose: () => void; onStatus: (status: InterventionStatus) => Promise<void>; onCoverage: (coverage: InterventionCoverageMode) => Promise<void>; onProjectNode: (projectNodeId: string | null) => Promise<void>; onTimer: (intervention: Intervention) => void; conclusionRequested: boolean; onConclusionHandled: () => void; onMessage: (message: string) => void; }) {
   const [projectNodes, setProjectNodes] = useState<ProjectNode[]>([]);
   useEffect(() => {
     if (!intervention.projectId) {
@@ -573,6 +573,15 @@ function InterventionDetail({ onSaved, intervention, expanded, onExpand, onClose
       <InterventionEditor intervention={intervention} onSaved={onSaved}/>
     </div>
 
+    {intervention.type === 'incident' && <InterventionConclusionPanel
+      intervention={intervention}
+      forceOpen={conclusionRequested}
+      onHandled={onConclusionHandled}
+      onSaved={onSaved}
+      onComplete={() => onStatus('completed')}
+      onMessage={onMessage}
+    />}
+
     <details className="intervention-workbench-section" open>
       <summary><span><strong>Pilotage</strong><small>Statut, prise en charge et rattachement au projet</small></span></summary>
       <div className="intervention-workbench-section-body intervention-pilot-grid">
@@ -603,6 +612,93 @@ function InterventionDetail({ onSaved, intervention, expanded, onExpand, onClose
       {intervention.completedAt && <span>Terminée : {dateLabel(intervention.completedAt)}</span>}
     </div>
   </aside>;
+}
+
+function InterventionConclusionPanel({ intervention, forceOpen, onHandled, onSaved, onComplete, onMessage }: {
+  intervention: Intervention;
+  forceOpen: boolean;
+  onHandled: () => void;
+  onSaved: () => void;
+  onComplete: () => Promise<void>;
+  onMessage: (message: string) => void;
+}) {
+  const [open, setOpen] = useState(forceOpen);
+  const [cause, setCause] = useState(intervention.incidentCause ?? '');
+  const [diagnosis, setDiagnosis] = useState(intervention.incidentDiagnosis ?? '');
+  const [solution, setSolution] = useState(intervention.incidentSolution ?? '');
+  const [followUp, setFollowUp] = useState(intervention.incidentFollowUp ?? '');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setCause(intervention.incidentCause ?? '');
+    setDiagnosis(intervention.incidentDiagnosis ?? '');
+    setSolution(intervention.incidentSolution ?? '');
+    setFollowUp(intervention.incidentFollowUp ?? '');
+  }, [intervention.id, intervention.incidentCause, intervention.incidentDiagnosis, intervention.incidentSolution, intervention.incidentFollowUp]);
+
+  useEffect(() => {
+    if (!forceOpen) return;
+    setOpen(true);
+    onHandled();
+  }, [forceOpen, intervention.id]);
+
+  async function save(finalize: boolean): Promise<void> {
+    if (finalize && !solution.trim()) {
+      onMessage('Renseigne au minimum la solution apportée avant de clôturer l’incident.');
+      return;
+    }
+    setBusy(true);
+    try {
+      await window.atoumweb.operations.interventions.update(intervention.id, {
+        incidentResolvedAt: intervention.incidentResolvedAt ?? new Date().toISOString(),
+        incidentCause: cause.trim() || null,
+        incidentDiagnosis: diagnosis.trim() || null,
+        incidentSolution: solution.trim() || null,
+        incidentFollowUp: followUp.trim() || null,
+      });
+      onSaved();
+      if (finalize) {
+        await onComplete();
+        setOpen(false);
+        onMessage(`${intervention.number} clôturée · conclusion et rapport de fin enregistrés.`);
+      } else {
+        onMessage('Conclusion de panne enregistrée.');
+      }
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible d’enregistrer la conclusion.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return <section className={`intervention-conclusion-panel ${open ? 'open' : ''}`}>
+    <button className="intervention-conclusion-toggle" type="button" onClick={() => setOpen((value) => !value)}>
+      <span><span className="eyebrow">Fin d’incident</span><strong>Conclusion & rapport de fin</strong><small>{intervention.incidentResolvedAt ? `Résolution : ${dateLabel(intervention.incidentResolvedAt)}` : 'À compléter avant clôture'}</small></span>
+      <span aria-hidden="true">{open ? '−' : '+'}</span>
+    </button>
+    {open && <div className="intervention-conclusion-content">
+      <div className="intervention-conclusion-grid">
+        <label>Cause constatée<textarea value={cause} onChange={(event) => setCause(event.target.value)} placeholder="Origine du défaut ou cause probable…" /></label>
+        <label>Diagnostic<textarea value={diagnosis} onChange={(event) => setDiagnosis(event.target.value)} placeholder="Constats, contrôles et diagnostic…" /></label>
+        <label>Solution apportée <span className="required-mark">*</span><textarea value={solution} onChange={(event) => setSolution(event.target.value)} placeholder="Correction réalisée et résultat obtenu…" /></label>
+        <label>Suivi / recommandation<textarea value={followUp} onChange={(event) => setFollowUp(event.target.value)} placeholder="Surveillance, action future ou recommandation…" /></label>
+      </div>
+      <div className="intervention-final-report-preview">
+        <div><span className="eyebrow">Rapport de fin</span><strong>{intervention.number} · {intervention.subject}</strong></div>
+        <div className="intervention-final-report-stats">
+          <span>Client <strong>{intervention.clientLabel}</strong></span>
+          <span>Temps <strong>{duration(intervention.totalTimeSeconds)}</strong></span>
+          <span>Résolution <strong>{intervention.incidentResolvedAt ? dateLabel(intervention.incidentResolvedAt) : 'Maintenant'}</strong></span>
+          <span>Statut <strong>{INTERVENTION_STATUS_LABELS[intervention.status]}</strong></span>
+        </div>
+        <small>Ces informations serviront de base au document/PDF de fin dans Documents & Contrats.</small>
+      </div>
+      <div className="button-row">
+        <button className="secondary-button" type="button" disabled={busy} onClick={() => void save(false)}>Enregistrer la conclusion</button>
+        <button className="primary-button" type="button" disabled={busy || !solution.trim()} onClick={() => void save(true)}>{busy ? 'Enregistrement…' : 'Clôturer l’incident'}</button>
+      </div>
+    </div>}
+  </section>;
 }
 
 function categoryForIntervention(type: InterventionType): TimeCategory {
