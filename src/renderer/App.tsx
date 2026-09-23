@@ -94,6 +94,16 @@ function App() {
   useEffect(()=>{const open=(event:Event)=>openSearchResult((event as CustomEvent<SearchResult>).detail);window.addEventListener('atoumweb:navigate',open);return()=>window.removeEventListener('atoumweb:navigate',open);},[]);
   useEffect(() => { const open = (event: Event) => setActivePage((event as CustomEvent<PageName>).detail); window.addEventListener('atoumweb:open-page', open); return () => window.removeEventListener('atoumweb:open-page', open); }, []);
   useEffect(() => {
+    const openConclusion = (event: Event) => {
+      const interventionId = (event as CustomEvent<{ interventionId?: string }>).detail?.interventionId;
+      if (!interventionId) return;
+      setOperationsSearchTarget({ entityType: 'intervention', entityId: interventionId, focus: 'conclusion' });
+      setActivePage('Interventions & Maintenance');
+    };
+    window.addEventListener('atoumweb:open-intervention-conclusion', openConclusion);
+    return () => window.removeEventListener('atoumweb:open-intervention-conclusion', openConclusion);
+  }, []);
+  useEffect(() => {
     const collapse = (event: Event) => setSidebarCollapsed(Boolean((event as CustomEvent<boolean>).detail));
     window.addEventListener('atoumweb:sidebar-collapse', collapse);
     return () => window.removeEventListener('atoumweb:sidebar-collapse', collapse);
