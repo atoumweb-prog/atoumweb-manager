@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type {
   AtoumWebLibraryCategory,
   AtoumWebPackageInspection,
@@ -10,6 +10,7 @@ import type {
 } from '../../shared/referentials';
 import type { ProjectTechnicalContentType } from '../../shared/projects';
 import { TechnicalContentViewer } from './TechnicalContentViewer';
+import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
 import './AtoumWebLibraryPage.css';
 
 const CATEGORIES: Array<{ id: AtoumWebLibraryCategory; label: string }> = [
@@ -104,7 +105,8 @@ function metadataFromItem(item: AtoumWebTechnicalItemDetail): MetadataForm {
 export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   const [items, setItems] = useState<AtoumWebTechnicalItemSummary[]>([]);
   const [selected, setSelected] = useState<AtoumWebTechnicalItemDetail | null>(null);
-  const [detailCollapsed, setDetailCollapsed] = useState(false);
+  const [detailExpanded, setDetailExpanded] = useState(false);
+  const [splitPercent, setSplitPercent] = useState(38);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<AtoumWebLibraryCategory | ''>('');
   const [reuseStatus, setReuseStatus] = useState<AtoumWebReuseStatus | ''>('');
@@ -125,7 +127,6 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   const [packageMarkStable, setPackageMarkStable] = useState(false);
   const [packageBusy, setPackageBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const detailPanelRef = useRef<HTMLElement | null>(null);
 
   async function loadVersionAssets(versionId: string): Promise<void> {
     if (!versionId) {
@@ -147,7 +148,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
 
   async function setOpenedItem(detail: AtoumWebTechnicalItemDetail): Promise<void> {
     setSelected(detail);
-    setDetailCollapsed(false);
+    setDetailExpanded(false);
     setMetadataForm(metadataFromItem(detail));
     setExpandedVersionId(null);
     const preferredVersion = detail.currentVersion?.id ?? detail.versions[0]?.id ?? '';
@@ -195,7 +196,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
 
   function closeDetail(): void {
     setSelected(null);
-    setDetailCollapsed(false);
+    setDetailExpanded(false);
     setEditingMetadata(false);
     setMetadataForm(null);
     setAssets([]);
@@ -206,14 +207,31 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
 
   useEffect(() => {
     if (!selected) return;
-    const closeOnOutside = (event: PointerEvent) => {
-      const target = event.target as Node | null;
-      if (!target || detailPanelRef.current?.contains(target)) return;
-      closeDetail();
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeDetail();
     };
-    document.addEventListener('pointerdown', closeOnOutside);
-    return () => document.removeEventListener('pointerdown', closeOnOutside);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
   }, [selected?.id]);
+
+  function beginResize(): void {
+    const workspace = document.querySelector<HTMLElement>('.aw-library-layout.with-detail');
+    if (!workspace) return;
+    document.body.classList.add('aw-library-resizing');
+    const onMove = (event: PointerEvent) => {
+      const rect = workspace.getBoundingClientRect();
+      if (!rect.width) return;
+      const ratio = ((event.clientX - rect.left) / rect.width) * 100;
+      setSplitPercent(Math.max(20, Math.min(58, ratio)));
+    };
+    const onUp = () => {
+      document.body.classList.remove('aw-library-resizing');
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp, { once: true });
+  }
 
   async function openItem(id: string): Promise<void> {
     try {
@@ -420,10 +438,10 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   return (
     <div className="aw-library">
       <div className="aw-library-summary">
-        <Summary label="Composants affichés" value={summary.total} />
-        <Summary label="Prêts" value={summary.ready} />
-        <Summary label="À adapter" value={summary.adapt} />
-        <Summary label="Références" value={summary.references} />
+        <Summary icon="package" label="Composants affichés" value={summary.total} />
+        <Summary icon="check-circle" label="Prêts" value={summary.ready} />
+        <Summary icon="wrench" label="À adapter" value={summary.adapt} />
+        <Summary icon="file-text" label="Références" value={summary.references} />
       </div>
 
       {error && <div className="notice aw-library-error"><span>{error}</span><button type="button" onClick={() => setError(null)}>×</button></div>}
@@ -463,8 +481,11 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
 
       {creating && <CreationPanel form={form} setForm={setForm} onCreate={createItem} />}
 
-      <div className={`aw-library-layout ${selected ? '' : 'aw-library-layout-list-only'} ${detailCollapsed ? 'aw-library-layout-detail-collapsed' : ''}`}>
-        <article className="panel aw-library-list">
+      <div
+        className={`aw-library-layout ${selected ? 'with-detail' : 'aw-library-layout-list-only'} ${detailExpanded ? 'detail-expanded' : ''}`}
+        style={selected && !detailExpanded ? { gridTemplateColumns: `${splitPercent}% 8px minmax(0, 1fr)` } : undefined}
+      >
+        {!detailExpanded && <article className="panel aw-library-list">
           <div className="panel-title"><div><span className="eyebrow">Bibliothèque</span><h2>Composants AtoumWeb</h2></div><span className="status-pill">{items.length}</span></div>
           {items.length === 0 && <p className="muted">Aucun composant ne correspond aux filtres.</p>}
           {items.map((item) => (
@@ -473,9 +494,14 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
               <div className="aw-library-item-meta"><span>v{item.currentVersion?.versionNumber ?? '—'}</span>{item.stableVersion && <span>stable v{item.stableVersion.versionNumber}</span>}{item.archivedAt && <span>archivé</span>}</div>
             </button>
           ))}
-        </article>
+        </article>}
 
-        {selected && <article ref={detailPanelRef} className={`panel aw-library-detail ${detailCollapsed ? 'collapsed' : ''}`}>
+        {selected && !detailExpanded && <div className="aw-library-splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner la bibliothèque et la fiche" tabIndex={0} onPointerDown={beginResize} onDoubleClick={() => setSplitPercent(38)} onKeyDown={(event) => {
+          if (event.key === 'ArrowLeft') setSplitPercent((value) => Math.max(20, value - 3));
+          if (event.key === 'ArrowRight') setSplitPercent((value) => Math.min(58, value + 3));
+        }}><span /></div>}
+
+        {selected && <article className={`panel aw-library-detail ${detailExpanded ? 'expanded' : ''}`}>
             <div className="panel-title aw-library-detail-heading">
               <div><span className="eyebrow">{categoryLabel(selected.category)} · {reuseStatusLabel(selected.reuseStatus)}</span><h2>{selected.name}</h2></div>
               <div className="button-row">
@@ -487,7 +513,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
               </div>
             </div>
 
-            {!detailCollapsed && <>
+            <>
             {editingMetadata && metadataForm ? <MetadataEditor form={metadataForm} setForm={setMetadataForm} onSave={saveMetadata} /> : <>
               {selected.description && <p>{selected.description}</p>}
               <div className="aw-library-tags">{selected.tags?.map((tag) => <span key={tag}>{tag}</span>)}</div>
@@ -533,7 +559,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
                 />}
               </div>)}
             </div>
-            </>}
+            </>
         </article>}
       </div>
     </div>
@@ -574,8 +600,8 @@ function MetadataEditor({ form, setForm, onSave }: { form: MetadataForm; setForm
   </div>;
 }
 
-function Summary({ label, value }: { label: string; value: number }) {
-  return <article className="kpi-card"><span>{label}</span><strong>{value}</strong><small>Bibliothèque AtoumWeb</small></article>;
+function Summary({ icon, label, value }: { icon: OperationIconName; label: string; value: number }) {
+  return <article className="kpi-card aw-library-kpi"><span className="aw-library-kpi-icon"><OperationIcon name={icon} size={27} /></span><div><span>{label}</span><strong>{value}</strong><small>Bibliothèque AtoumWeb</small></div></article>;
 }
 
 function categoryLabel(category: AtoumWebLibraryCategory): string {
