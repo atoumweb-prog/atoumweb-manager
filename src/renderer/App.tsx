@@ -1,4 +1,3 @@
-import { WorkflowDashboard } from './workflow/WorkflowDashboard';
 import { DemoPanel } from './workflow/DemoPanel';
 import { useEffect, useState } from 'react';
 import type { BootstrapState, DisplayDensity, ThemeName } from '../shared/contracts';
@@ -10,9 +9,9 @@ import { CatalogPage } from './commercial/CatalogPage';
 import { QuotesPage } from './commercial/QuotesPage';
 import { ClientsPage } from './crm/ClientsPage';
 import { GlobalSearch } from './crm/GlobalSearch';
+import { HomeDashboard } from './home/HomeDashboard';
 import { ProspectsPage } from './crm/ProspectsPage';
 import { ProspectReferenceWindow } from './crm/ProspectReferenceWindow';
-import { DashboardOperationsWatch } from './operations/DashboardOperationsWatch';
 import { OperationsPage, type OperationsSearchTarget } from './operations/OperationsPage';
 import { ProjectsPage } from './projects/ProjectsPage';
 import { AtoumWebLibraryPage } from './referentials/AtoumWebLibraryPage';
@@ -257,13 +256,12 @@ function App() {
           <GlobalTimer onMessage={setMessage} />
         </header>
 
-        <section className="content-area">
-          <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1>{activePage === 'Prospects' ? 'Prospection' : activePage}</h1><p>{PAGE_HINTS[activePage]}</p></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>
+        <section className={`content-area ${activePage === 'Accueil' ? 'home-content' : ''}`}>
+          {activePage !== 'Accueil' && <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1>{activePage === 'Prospects' ? 'Prospection' : activePage}</h1><p>{PAGE_HINTS[activePage]}</p></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>}
           {message && <div className="notice" role="status"><span>{message}</span><button type="button" onClick={() => setMessage(null)}>×</button></div>}
 
-          {activePage === 'Accueil' && <WorkflowDashboard />}
+          {activePage === 'Accueil' && <HomeDashboard onMessage={setMessage} />}
           {activePage === 'Réglages' && <DemoPanel />}
-          {activePage === 'Accueil' && <Dashboard bootstrap={bootstrap} onOpenOperations={openOperationsTarget} onMessage={setMessage} />}
           {activePage === 'Prospects' && <ProspectsPage key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
           {activePage === 'Clients' && <ClientsPage key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
           {activePage === 'Offres & Tarifs' && <CatalogPage onMessage={setMessage} />}
@@ -281,56 +279,6 @@ function App() {
       </main>
     </div>
   );
-}
-
-function Dashboard({ bootstrap, onOpenOperations, onMessage }: {
-  bootstrap: BootstrapState;
-  onOpenOperations: (target: OperationsSearchTarget) => void;
-  onMessage: (message: string) => void;
-}) {
-  const [prospectCount, setProspectCount] = useState<number | null>(null);
-  const [clientCount, setClientCount] = useState<number | null>(null);
-  const [projectCount, setProjectCount] = useState<number | null>(null);
-  const [monthTime, setMonthTime] = useState<number | null>(null);
-
-  useEffect(() => {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-    void Promise.all([
-      window.atoumweb.crm.prospects.list(),
-      window.atoumweb.crm.clients.list(),
-      window.atoumweb.projects.projects.list(),
-      window.atoumweb.time.summary({ from: start.toISOString(), to: end.toISOString() }),
-    ]).then(([prospects, clients, projects, timeSummary]) => {
-      setProspectCount(prospects.filter((prospect) => prospect.stage !== 'won' && prospect.stage !== 'lost').length);
-      setClientCount(clients.length);
-      setProjectCount(projects.filter((project) => !['completed', 'archived'].includes(project.status)).length);
-      setMonthTime(timeSummary.totalSeconds);
-    });
-  }, []);
-
-  return (
-    <>
-      <div className="kpi-grid">
-        <KpiCard label="Prospects actifs" value={prospectCount == null ? '…' : String(prospectCount)} detail="Pipeline commercial" />
-        <KpiCard label="Projets en cours" value={projectCount == null ? '…' : String(projectCount)} detail={`${clientCount ?? 0} client${clientCount === 1 ? '' : 's'} enregistré${clientCount === 1 ? '' : 's'}`} />
-        <KpiCard label="CA encaissé ce mois" value="0 €" detail="Suivi Abby à venir" />
-        <KpiCard label="Temps travaillé ce mois" value={monthTime == null ? '…' : formatDashboardTime(monthTime)} detail="Calculé depuis les sessions" />
-      </div>
-      <div className="dashboard-grid">
-        <DashboardOperationsWatch onOpen={onOpenOperations} onMessage={onMessage} />
-        <article className="panel panel-large"><div className="panel-title"><div><span className="eyebrow">Socle métier</span><h2>CRM + Commercial + Projets + Opérations</h2></div><span className="status-pill">Phase 4 en cours</span></div><div className="foundation-list"><FoundationRow label="Workspace local" value={bootstrap.workspacePath} /><FoundationRow label="Base SQLite" value={bootstrap.databasePath} /><FoundationRow label="CRM" value="Organisations · Contacts · Prospects · Clients" /><FoundationRow label="Commercial" value="Catalogue · Devis · Snapshots" /><FoundationRow label="Production" value="Projets · Modèles · Plans · Ressources · Temps" /><FoundationRow label="Opérations" value="Demandes · Interventions · Maintenance · Packs d’heures" /></div></article>
-        <article className="panel"><span className="eyebrow">Aujourd’hui</span><h2>{prospectCount ? `${prospectCount} prospect${prospectCount > 1 ? 's' : ''} actif${prospectCount > 1 ? 's' : ''}` : 'Pipeline à jour'}</h2><p className="muted">Les actions commerciales et le travail projet alimentent progressivement cette vue.</p></article>
-        <article className="panel"><span className="eyebrow">Production</span><h2>{projectCount ?? 0} projet{projectCount === 1 ? '' : 's'} actif{projectCount === 1 ? '' : 's'}</h2><p className="muted">Le temps réel est maintenant issu exclusivement des sessions du timer et des saisies manuelles.</p></article>
-      </div>
-    </>
-  );
-}
-
-function formatDashboardTime(seconds: number): string {
-  const hours = seconds / 3600;
-  return hours < 10 ? `${hours.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} h` : `${Math.round(hours)} h`;
 }
 
 function SettingsPage({ bootstrap, theme, displayDensity, showHoverHelp, onThemeChange, onDensityChange, onShowHoverHelpChange, onChooseWorkspace, onCreateBackup, onRestoreBackup }: {
@@ -374,14 +322,6 @@ function SettingsPage({ bootstrap, theme, displayDensity, showHoverHelp, onTheme
 
 function ModulePlaceholder({ page }: { page: PageName }) {
   return <article className="panel empty-module"><span className="module-number">V1</span><h2>{page}</h2><p>{PAGE_HINTS[page]}</p><span className="status-pill">Conception validée · Développement à venir</span></article>;
-}
-
-function KpiCard({ label, value, detail }: { label: string; value: string; detail: string }) {
-  return <article className="kpi-card"><span>{label}</span><strong>{value}</strong><small>{detail}</small></article>;
-}
-
-function FoundationRow({ label, value }: { label: string; value: string }) {
-  return <div className="foundation-row"><span>{label}</span><strong>{value}</strong></div>;
 }
 
 export default App;
