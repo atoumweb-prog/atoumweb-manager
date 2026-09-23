@@ -124,10 +124,9 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
   const activeProspects = useMemo(() => data?.prospects.filter((item) => !item.archivedAt && !item.clientAccountId && !['won', 'lost'].includes(item.stage ?? 'new')) ?? [], [data]);
   const pipelineProspects = useMemo(() => activeProspects.filter((item) => (item.stage ?? 'new') !== 'new'), [activeProspects]);
   const dueFollowUps = useMemo(() => {
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const endOfToday = new Date(startOfToday);
-    endOfToday.setDate(endOfToday.getDate() + 1);
+    const nowTimestamp = Date.now();
+    const endOfToday = new Date();
+    endOfToday.setHours(24, 0, 0, 0);
     const due = new Set<string>();
     const overdue = new Set<string>();
     for (const action of data?.actions ?? []) {
@@ -135,7 +134,7 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
       const timestamp = new Date(action.dueAt).getTime();
       if (!Number.isFinite(timestamp) || timestamp >= endOfToday.getTime()) continue;
       due.add(action.ownerId);
-      if (timestamp < startOfToday.getTime()) overdue.add(action.ownerId);
+      if (timestamp < nowTimestamp) overdue.add(action.ownerId);
     }
     return { due, overdue };
   }, [data?.actions]);
