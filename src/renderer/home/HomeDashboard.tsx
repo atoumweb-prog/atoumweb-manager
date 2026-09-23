@@ -74,7 +74,6 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
-  const [clockNow, setClockNow] = useState(() => new Date());
 
   async function load(): Promise<void> {
     const now = new Date();
@@ -101,11 +100,6 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
       setLoading(false);
     }
   }
-
-  useEffect(() => {
-    const clock = window.setInterval(() => setClockNow(new Date()), 30_000);
-    return () => window.clearInterval(clock);
-  }, []);
 
   useEffect(() => {
     void load();
@@ -159,10 +153,6 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
   const readyBilling = data?.billing.filter((item) => item.status === 'ready') ?? [];
   const readyAmount = readyBilling.reduce((sum, item) => sum + item.expectedAmountCents, 0);
   const alerts = data?.alerts.alerts ?? [];
-  const greeting = clockNow.getHours() < 18 ? 'Bonjour !' : 'Bonsoir !';
-  const dateLabel = clockNow.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-
-
   if (loading && !data) {
     return <section className="home-dashboard home-dashboard-loading"><div className="home-loading-card"><span className="eyebrow">Accueil</span><strong>Chargement du tableau de bord…</strong></div></section>;
   }
@@ -174,7 +164,6 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
   return <section className="home-dashboard">
     <header className="home-heading">
       <div><h1>Accueil</h1><p>Vue rapide de l’activité AtoumWeb</p></div>
-      <div className="home-greeting"><div><strong>{greeting}</strong><span>{dateLabel}</span></div></div>
     </header>
 
     <div className="home-kpi-grid">
