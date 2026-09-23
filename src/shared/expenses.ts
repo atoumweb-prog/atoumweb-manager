@@ -39,6 +39,16 @@ export interface ExpenseInput {
 
 export interface Expense extends ExpenseInput {
   id: string;
+  clientAccountId: string | null;
+  projectId: string | null;
+  supplier: string | null;
+  vatCents: number | null;
+  status: ExpenseStatus;
+  dueAt: string | null;
+  paidAt: string | null;
+  frequency: ExpenseFrequency;
+  nextDueAt: string | null;
+  notes: string | null;
   clientLabel?: string | null;
   projectLabel?: string | null;
   projectNumber?: string | null;
