@@ -239,6 +239,16 @@ export function BridgeSitesPage({ onMessage }: Props) {
               <div>{currentWarnings.map((issue, index) => <p key={`${issue.code}-${index}`}><strong>{issue.code}</strong> — {issue.message}</p>)}</div>
             </details>}
 
+            {snapshot && <details className="bridge-snapshot-technical">
+              <summary><OperationIcon name="shield-check" size={16} />Périmètre technique du snapshot</summary>
+              <div className="bridge-tech-grid">
+                <div><strong>Capacités Bridge</strong><span>{trueKeys(snapshot.scannerCapabilities).join(' · ') || 'Non renseigné'}</span></div>
+                <div><strong>Contenu observé</strong><span>{trueKeys(snapshot.observedContent).join(' · ') || 'Non renseigné'}</span></div>
+                <div><strong>Couverture</strong><span>{Object.keys(snapshot.coverage).join(' · ') || 'Non renseignée'}</span></div>
+                <div><strong>Sécurité</strong><span>{snapshot.security.redaction_applied ? 'Redaction appliquée' : 'Redaction non annoncée'} · payloads en lecture seule</span></div>
+              </div>
+            </details>}
+
             <div className="bridge-page-tools">
               <div className="search-field"><OperationIcon name="folder" size={16} /><input value={search} onChange={(event) => void runSearch(event.target.value)} placeholder="Rechercher une page, un type, un slug…" /></div>
               <span>{pages.length} résultat{pages.length > 1 ? 's' : ''}</span>
@@ -350,4 +360,9 @@ function scanStatusLabel(value: string): string {
 function formatDate(value: string): string {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+
+function trueKeys(value: Record<string, unknown>): string[] {
+  return Object.entries(value).filter(([, enabled]) => enabled === true).map(([key]) => key);
 }
