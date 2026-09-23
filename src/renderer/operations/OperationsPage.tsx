@@ -24,6 +24,7 @@ import { HourPacksPanel } from './HourPacksPanel';
 import { MaintenancePanel } from './MaintenancePanel';
 import { OperationsAlertsPanel } from './OperationsAlertsPanel';
 import { InterventionBackupPanel } from './InterventionBackupPanel';
+import { OperationIcon } from './OperationIcon';
 
 type OperationsView = 'requests' | 'interventions' | 'maintenance' | 'packs';
 export type OperationsSearchTarget = {
@@ -115,8 +116,9 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
   const [transformProjectNodes, setTransformProjectNodes] = useState<ProjectNode[]>([]);
   const [closeReason, setCloseReason] = useState('');
 
-  async function refresh(): Promise<void> {
-    setLoading(true);
+  async function refresh(options: { showLoading?: boolean } = {}): Promise<void> {
+    const showLoading = options.showLoading ?? true;
+    if (showLoading) setLoading(true);
     try {
       const [nextRequests, nextInterventions, nextClients, nextProjects] = await Promise.all([
         window.atoumweb.operations.requests.list(), window.atoumweb.operations.interventions.list(), window.atoumweb.crm.clients.list(), window.atoumweb.projects.projects.list(),
@@ -126,10 +128,10 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
       if (selectedIntervention) setSelectedIntervention(nextInterventions.find((item) => item.id === selectedIntervention.id) ?? null);
       setAlertRefreshKey((value) => value + 1);
     } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de charger les opérations.'); }
-    finally { setLoading(false); }
+    finally { if (showLoading) setLoading(false); }
   }
 
-  useEffect(() => { void refresh(); }, []);
+  useEffect(() => { void refresh({ showLoading: true }); }, []);
   useEffect(() => {
     if (!selectedRequest) return;
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -246,7 +248,7 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
     setSaving(true);
     try {
       const created = await window.atoumweb.operations.requests.create({ clientAccountId: requestClientId, projectId: requestProjectId || null, source: requestSource, subject: requestSubject, description: requestDescription || null, priority: requestPriority });
-      resetRequestForm(); setCreateRequestOpen(false); await refresh(); setSelectedRequest(created); onMessage('Demande créée.');
+      resetRequestForm(); setCreateRequestOpen(false); await refresh({ showLoading: false }); setSelectedRequest(created); onMessage('Demande créée.');
     } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de créer la demande.'); } finally { setSaving(false); }
   }
 
@@ -256,7 +258,7 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
     try {
       if (interventionDemoMode) demoBatch = await window.atoumweb.workflow.beginDemoCapture('intervention saisie manuellement');
       const created = await window.atoumweb.operations.interventions.create({ ...extra,status:interventionInitialStatus,clientAccountId: interventionClientId, projectId: interventionProjectId || null, projectNodeId: interventionProjectNodeId || null, type: interventionType, coverageMode: interventionCoverage, subject: interventionSubject, description: interventionDescription || null, priority: interventionPriority });
-      setInterventionDemoMode(false); resetInterventionForm(); setCreateInterventionOpen(false); await refresh(); setSelectedIntervention(created); setView('interventions'); onMessage(`Intervention ${created.number} créée.`);
+      setInterventionDemoMode(false); resetInterventionForm(); setCreateInterventionOpen(false); await refresh({ showLoading: false }); setSelectedIntervention(created); setView('interventions'); onMessage(`Intervention ${created.number} créée.`);
     } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de créer l’intervention.'); } finally { if (demoBatch) await window.atoumweb.workflow.endDemoCapture(demoBatch); setSaving(false); }
   }
 
@@ -264,19 +266,19 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
     if (!selectedRequest) return; setSaving(true);
     try {
       const intervention = await window.atoumweb.operations.requests.transform({ requestId: selectedRequest.id, type: transformType, coverageMode: transformCoverage, projectNodeId: transformProjectNodeId || null });
-      await refresh(); setSelectedRequest(null); setSelectedIntervention(intervention); setView('interventions'); onMessage(`Demande transformée en ${intervention.number}.`);
+      await refresh({ showLoading: false }); setSelectedRequest(null); setSelectedIntervention(intervention); setView('interventions'); onMessage(`Demande transformée en ${intervention.number}.`);
     } catch (error) { onMessage(error instanceof Error ? error.message : 'Transformation impossible.'); } finally { setSaving(false); }
   }
 
   async function closeRequest(): Promise<void> {
     if (!selectedRequest) return;
-    try { const updated = await window.atoumweb.operations.requests.closeWithoutIntervention(selectedRequest.id, closeReason || null); setSelectedRequest(updated); setCloseReason(''); await refresh(); onMessage('Demande close sans intervention.'); }
+    try { const updated = await window.atoumweb.operations.requests.closeWithoutIntervention(selectedRequest.id, closeReason || null); setSelectedRequest(updated); setCloseReason(''); await refresh({ showLoading: false }); onMessage('Demande close sans intervention.'); }
     catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de clore la demande.'); }
   }
 
   async function changeRequestStatus(status: ServiceRequestStatus): Promise<void> {
     if (!selectedRequest) return;
-    try { const updated = await window.atoumweb.operations.requests.changeStatus(selectedRequest.id, status); setSelectedRequest(updated); await refresh(); }
+    try { const updated = await window.atoumweb.operations.requests.changeStatus(selectedRequest.id, status); setSelectedRequest(updated); await refresh({ showLoading: false }); }
     catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de modifier le statut.'); }
   }
 
@@ -287,14 +289,14 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
         ? await window.atoumweb.operations.interventions.complete(selectedIntervention.id)
         : await window.atoumweb.operations.interventions.changeStatus(selectedIntervention.id, status);
       setSelectedIntervention(updated);
-      await refresh();
+      await refresh({ showLoading: false });
       if (status === 'completed') onMessage(`${updated.number} terminée · prise en charge traitée.`);
     } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de modifier le statut.'); }
   }
 
   async function changeCoverage(coverageMode: InterventionCoverageMode): Promise<void> {
     if (!selectedIntervention) return;
-    try { const updated = await window.atoumweb.operations.interventions.update(selectedIntervention.id, { coverageMode }); setSelectedIntervention(updated); await refresh(); }
+    try { const updated = await window.atoumweb.operations.interventions.update(selectedIntervention.id, { coverageMode }); setSelectedIntervention(updated); await refresh({ showLoading: false }); }
     catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de modifier la prise en charge.'); }
   }
 
@@ -303,7 +305,7 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
     try {
       const updated = await window.atoumweb.operations.interventions.update(selectedIntervention.id, { projectNodeId });
       setSelectedIntervention(updated);
-      await refresh();
+      await refresh({ showLoading: false });
       onMessage(projectNodeId ? 'Rattachement au plan du projet mis à jour.' : 'Rattachement précis au plan du projet retiré.');
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de modifier le rattachement au projet.');
@@ -362,10 +364,10 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
 
   return <div className="operations-stack">
     <section className="operations-kpi-grid" aria-label="Synthèse Interventions et Maintenance">
-      <article><span className="operations-kpi-icon" aria-hidden="true">✉</span><div><strong>Demandes ouvertes</strong><span>{openRequests.length}</span><small>À traiter ou à qualifier</small></div></article>
-      <article><span className="operations-kpi-icon" aria-hidden="true">!</span><div><strong>Urgentes</strong><span>{urgentOpenRequests.length}</span><small>Demandes ouvertes prioritaires</small></div></article>
-      <article><span className="operations-kpi-icon" aria-hidden="true">⚙</span><div><strong>Interventions actives</strong><span>{activeInterventions.length}</span><small>Planifiées, en cours ou à valider</small></div></article>
-      <article><span className="operations-kpi-icon" aria-hidden="true">◷</span><div><strong>En attente client</strong><span>{waitingClientCount}</span><small>Demandes + interventions</small></div></article>
+      <article><span className="operations-kpi-icon"><OperationIcon name="inbox" /></span><div><strong>Demandes ouvertes</strong><span>{openRequests.length}</span><small>À traiter ou à qualifier</small></div></article>
+      <article><span className="operations-kpi-icon"><OperationIcon name="alert" /></span><div><strong>Urgentes</strong><span>{urgentOpenRequests.length}</span><small>Demandes ouvertes prioritaires</small></div></article>
+      <article><span className="operations-kpi-icon"><OperationIcon name="wrench" /></span><div><strong>Interventions actives</strong><span>{activeInterventions.length}</span><small>Planifiées, en cours ou à valider</small></div></article>
+      <article><span className="operations-kpi-icon"><OperationIcon name="clock" /></span><div><strong>En attente client</strong><span>{waitingClientCount}</span><small>Demandes + interventions</small></div></article>
     </section>
     <OperationsAlertsPanel refreshKey={alertRefreshKey} onNavigate={(target) => setView(target)} onMessage={onMessage} />
     <div className="operations-view-tabs">
@@ -375,7 +377,7 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
       <button type="button" className={view === 'packs' ? 'active' : ''} onClick={() => setView('packs')}>Packs d’heures</button>
     </div>
 
-    {(view === 'requests' || view === 'interventions') && <div className="module-toolbar operations-toolbar"><div><strong>{view === 'requests' ? filteredRequests.length : filteredInterventions.length}</strong><span>{view === 'requests' ? ' demande(s)' : ' intervention(s)'}</span></div><div className="toolbar-controls"><button className="secondary-button" type="button" onClick={() => void refresh()}>↻ Actualiser</button><input className="inline-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher client, sujet, numéro…" />{view === 'requests' ? <select value={requestStatus} onChange={(event) => setRequestStatus(event.target.value as typeof requestStatus)}><option value="all">Tous les statuts</option>{SERVICE_REQUEST_STATUSES.map((status) => <option key={status} value={status}>{REQUEST_STATUS_LABELS[status]}</option>)}</select> : <select value={interventionStatus} onChange={(event) => setInterventionStatus(event.target.value as typeof interventionStatus)}><option value="all">Tous les statuts</option>{INTERVENTION_STATUSES.map((status) => <option key={status} value={status}>{INTERVENTION_STATUS_LABELS[status]}</option>)}</select>}{view === 'requests' ? <button className="primary-button" type="button" onClick={() => setCreateRequestOpen((value) => !value)}>+ Nouvelle demande</button> : <button className="primary-button" type="button" onClick={() => setCreateInterventionOpen((value) => !value)}>+ Intervention</button>}</div></div>}
+    {(view === 'requests' || view === 'interventions') && <div className="module-toolbar operations-toolbar"><div><strong>{view === 'requests' ? filteredRequests.length : filteredInterventions.length}</strong><span>{view === 'requests' ? ' demande(s)' : ' intervention(s)'}</span></div><div className="toolbar-controls"><button className="secondary-button" type="button" onClick={() => void refresh({ showLoading: false })}><OperationIcon name="refresh" size={16} /> Actualiser</button><input className="inline-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher client, sujet, numéro…" />{view === 'requests' ? <select value={requestStatus} onChange={(event) => setRequestStatus(event.target.value as typeof requestStatus)}><option value="all">Tous les statuts</option>{SERVICE_REQUEST_STATUSES.map((status) => <option key={status} value={status}>{REQUEST_STATUS_LABELS[status]}</option>)}</select> : <select value={interventionStatus} onChange={(event) => setInterventionStatus(event.target.value as typeof interventionStatus)}><option value="all">Tous les statuts</option>{INTERVENTION_STATUSES.map((status) => <option key={status} value={status}>{INTERVENTION_STATUS_LABELS[status]}</option>)}</select>}{view === 'requests' ? <button className="primary-button" type="button" onClick={() => setCreateRequestOpen((value) => !value)}>+ Nouvelle demande</button> : <button className="primary-button" type="button" onClick={() => setCreateInterventionOpen((value) => !value)}>+ Intervention</button>}</div></div>}
 
     {view === 'requests' && <>
       {createRequestOpen && <section className="panel operation-create-panel"><div className="panel-title"><div><span className="eyebrow">Nouvelle demande</span><h2>Enregistrer un besoin entrant</h2></div><button className="close-detail" type="button" onClick={() => setCreateRequestOpen(false)}>×</button></div><div className="operation-create-grid"><label>Client<select value={requestClientId} onChange={(event) => { setRequestClientId(event.target.value); setRequestProjectId(''); }}><option value="">Choisir…</option>{clients.map((client) => <option key={client.id} value={client.id}>{client.displayName}</option>)}</select></label><label>Projet éventuel<select value={requestProjectId} onChange={(event) => setRequestProjectId(event.target.value)} disabled={!requestClientId}><option value="">Aucun projet</option>{requestProjects.map((project) => <option key={project.id} value={project.id}>{project.number} · {project.name}</option>)}</select></label><label>Origine<select value={requestSource} onChange={(event) => setRequestSource(event.target.value as ServiceRequestSource)}>{SERVICE_REQUEST_SOURCES.map((source) => <option key={source} value={source}>{SOURCE_LABELS[source]}</option>)}</select></label><label>Priorité<select value={requestPriority} onChange={(event) => setRequestPriority(event.target.value as ServiceRequestPriority)}>{SERVICE_REQUEST_PRIORITIES.map((priority) => <option key={priority} value={priority}>{PRIORITY_LABELS[priority]}</option>)}</select></label><label className="wide">Sujet<input value={requestSubject} onChange={(event) => setRequestSubject(event.target.value)} placeholder="Ex. Modifier le formulaire de contact" /></label><label className="wide">Description<textarea value={requestDescription} onChange={(event) => setRequestDescription(event.target.value)} placeholder="Demande du client, contexte…" /></label></div><div className="button-row"><button className="primary-button" disabled={saving || !requestClientId || !requestSubject.trim()} type="button" onClick={() => void createRequest()}>Créer la demande</button><button className="secondary-button" type="button" onClick={() => { resetRequestForm(); setCreateRequestOpen(false); }}>Annuler</button></div></section>}
@@ -473,7 +475,7 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
           }}
         ><span /></div>}
         {selectedIntervention && <div ref={interventionDetailRef} className="operation-detail-boundary"><InterventionDetail
-          onSaved={()=>void refresh()}
+          onSaved={() => void refresh({ showLoading: false })}
           intervention={selectedIntervention}
           expanded={interventionExpanded}
           onExpand={() => setInterventionExpanded((value) => !value)}
@@ -487,7 +489,7 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
       </div>}
     </>}
 
-    {view === 'maintenance' && <MaintenancePanel clients={clients} projects={projects} onMessage={onMessage} initialSubscriptionId={initialTarget?.entityType === 'maintenance' ? initialTarget.entityId : null} onInterventionCreated={(intervention) => { setSelectedRequest(null); setSelectedIntervention(intervention); setView('interventions'); void refresh(); }} />}
+    {view === 'maintenance' && <MaintenancePanel clients={clients} projects={projects} onMessage={onMessage} initialSubscriptionId={initialTarget?.entityType === 'maintenance' ? initialTarget.entityId : null} onInterventionCreated={(intervention) => { setSelectedRequest(null); setSelectedIntervention(intervention); setView('interventions'); void refresh({ showLoading: false }); }} />}
     {view === 'packs' && <HourPacksPanel clients={clients} projects={projects} interventions={interventions} onMessage={onMessage} onOperationsChanged={refresh} initialPackId={initialTarget?.entityType === 'hour_pack' ? initialTarget.entityId : null} />}
   </div>;
 }
@@ -522,8 +524,8 @@ function InterventionDetail({ onSaved, intervention, expanded, onExpand, onClose
         <p className="muted">{intervention.clientLabel}{intervention.projectLabel ? ` · ${intervention.projectLabel}` : ''}</p>
       </div>
       <div className="intervention-workbench-heading-actions">
-        <button className="operation-detail-expand" type="button" title={expanded ? 'Réduire l’atelier' : 'Agrandir l’atelier'} aria-label={expanded ? 'Réduire l’atelier' : 'Agrandir l’atelier'} onClick={onExpand}>{expanded ? '↙' : '⛶'}</button>
-        <button className="close-detail" type="button" title="Fermer" onClick={onClose}>×</button>
+        <button className="operation-detail-expand" type="button" title={expanded ? 'Réduire l’atelier' : 'Agrandir l’atelier'} aria-label={expanded ? 'Réduire l’atelier' : 'Agrandir l’atelier'} onClick={onExpand}><OperationIcon name={expanded ? 'collapse' : 'expand'} size={18} /></button>
+        <button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={onClose}><OperationIcon name="close" size={18} /></button>
       </div>
     </div>
 
