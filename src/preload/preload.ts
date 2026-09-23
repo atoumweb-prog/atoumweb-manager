@@ -138,10 +138,14 @@ const api: AtoumWebApi = {
   },
   crm: {
     organizations: {
+      list: (includeArchived?: boolean) => ipcRenderer.invoke('crm:organizations:list', includeArchived),
+      get: (id: string) => ipcRenderer.invoke('crm:organizations:get', id),
       create: (input: OrganizationInput) => ipcRenderer.invoke('crm:organizations:create', input),
       update: (id: string, input: OrganizationInput) => ipcRenderer.invoke('crm:organizations:update', id, input),
     },
     contacts: {
+      list: (includeArchived?: boolean) => ipcRenderer.invoke('crm:contacts:list', includeArchived),
+      get: (id: string) => ipcRenderer.invoke('crm:contacts:get', id),
       create: (input: ContactInput) => ipcRenderer.invoke('crm:contacts:create', input),
       update: (id: string, input: ContactInput) => ipcRenderer.invoke('crm:contacts:update', id, input),
     },
