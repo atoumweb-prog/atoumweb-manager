@@ -7,6 +7,7 @@ import {
   type TimePauseReason,
   type TimeSession,
 } from '../../shared/time';
+import { OperationIcon } from '../operations/OperationIcon';
 
 const CATEGORY_LABELS: Record<TimeCategory, string> = {
   production: 'Production',
@@ -402,9 +403,17 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
   return (
     <div ref={timerRef} className={`global-timer ${active ? 'running' : ''} ${active?.paused ? 'paused' : ''} ${recovery ? 'needs-recovery' : ''}`}>
       <button className="timer-main-button" type="button" onClick={() => !active && toggleManualTimer()} title={active ? contextLabel(active) : 'Démarrer une session de temps'}>
-        <span className="timer-label">{recovery ? 'Timer · À vérifier' : `Timer${active?.paused ? ' · Pause' : active?.interventionId ? ' · En cours' : ''}`}</span>
-        <strong>{clock(displayedSeconds)}</strong>
-        <span className="timer-context">{active ? contextLabel(active) : 'Aucune activité'}</span>
+        <span className="timer-brand-icon" aria-hidden="true">
+          <OperationIcon name="clock" size={20} />
+          <i className={`timer-live-indicator ${recovery ? 'warning' : active?.paused ? 'paused' : active ? 'running' : 'idle'}`} />
+        </span>
+        <span className="timer-copy">
+          <span className="timer-topline">
+            <span className="timer-label">{recovery ? 'Timer · À vérifier' : `Timer${active?.paused ? ' · Pause' : active ? ' · En cours' : ''}`}</span>
+            <strong>{clock(displayedSeconds)}</strong>
+          </span>
+          <span className="timer-context">{active ? contextLabel(active) : 'Aucune activité'}</span>
+        </span>
       </button>
 
       {active ? (
