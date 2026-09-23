@@ -39,9 +39,9 @@
   align-items: center;
   gap: 9px;
   padding: 11px 14px;
-  border: 1px solid color-mix(in srgb, var(--danger) 45%, var(--border));
+  border: 1px solid color-mix(in srgb, #D62828 45%, var(--border));
   border-radius: 12px;
-  background: color-mix(in srgb, var(--danger) 8%, var(--surface));
+  background: color-mix(in srgb, #D62828 8%, var(--surface));
   color: var(--text);
 }
 
@@ -117,8 +117,8 @@
 }
 
 .bridge-status.warning {
-  border-color: color-mix(in srgb, var(--warning) 45%, var(--border));
-  background: color-mix(in srgb, var(--warning) 9%, var(--surface));
+  border-color: color-mix(in srgb, #F2B705 45%, var(--border));
+  background: color-mix(in srgb, #F2B705 9%, var(--surface));
 }
 
 .bridge-warning-list {
@@ -248,7 +248,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--warning);
+  background: #F2B705;
 }
 
 .bridge-site-card i.ok {
@@ -298,9 +298,9 @@
 
 .bridge-snapshot-warnings {
   margin-bottom: 10px;
-  border: 1px solid color-mix(in srgb, var(--warning) 40%, var(--border));
+  border: 1px solid color-mix(in srgb, #F2B705 40%, var(--border));
   border-radius: 10px;
-  background: color-mix(in srgb, var(--warning) 6%, var(--surface));
+  background: color-mix(in srgb, #F2B705 6%, var(--surface));
 }
 
 .bridge-snapshot-warnings summary {
