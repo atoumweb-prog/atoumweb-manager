@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ProspectResearchSnapshot, ProspectSummary } from '../../shared/crm';
+import { displayWebUrl } from '../../shared/webUrl';
 
 function date(value?: string | null): string {
   if (!value) return 'Jamais';
