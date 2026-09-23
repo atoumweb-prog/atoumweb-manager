@@ -27,7 +27,7 @@ const STAGE_LABELS: Record<ProspectStage, string> = {
   quote_to_prepare: 'Devis à préparer',
   quote_to_send: 'Devis à envoyer',
   quote_sent: 'En attente de retour',
-  follow_up: 'À relancer',
+  follow_up: 'Attente du retour',
   negotiation: 'Négociation',
   waiting: 'En attente',
   won: 'Gagné',
@@ -85,7 +85,7 @@ const EMPTY_DRAFT: ProspectDraft = {
 
 type View = 'directory' | 'pipeline' | 'history';
 export type ProspectPipelineFilter = 'all' | 'relaunch' | 'overdue';
-type DirectoryStatusFilter = 'follow' | 'all' | 'prepare' | 'ready' | ProspectStage;
+type DirectoryStatusFilter = 'follow' | 'all' | 'prepare' | 'ready' | 'relaunch' | 'overdue' | ProspectStage;
 
 const PIPELINE_GROUPS: Array<{ id: string; step: number; label: string; stages: ProspectStage[]; icon: string }> = [
   { id: 'qualify', step: 1, label: 'À qualifier', stages: ['qualifying'], icon: '1' },
@@ -140,7 +140,7 @@ function cleanBusinessError(error: unknown, fallback: string): string {
     .trim() || fallback;
 }
 function humanActivity(summary: string) {
-  return summary.replace(/\bnew\b/g, 'Nouveau contact').replace(/\bqualifying\b/g, 'À qualifier').replace(/\bneed_identified\b/g, 'Besoin à identifier').replace(/\bquote_to_prepare\b/g, 'Devis à préparer').replace(/\bquote_to_send\b/g, 'Devis à envoyer').replace(/\bquote_sent\b/g, 'En attente de retour').replace(/\bfollow_up\b/g, 'À relancer').replace(/\bnegotiation\b/g, 'Négociation').replace(/\bwaiting\b/g, 'En attente').replace(/\bwon\b/g, 'Gagné').replace(/\blost\b/g, 'Perdu');
+  return summary.replace(/\bnew\b/g, 'Nouveau contact').replace(/\bqualifying\b/g, 'À qualifier').replace(/\bneed_identified\b/g, 'Besoin à identifier').replace(/\bquote_to_prepare\b/g, 'Devis à préparer').replace(/\bquote_to_send\b/g, 'Devis à envoyer').replace(/\bquote_sent\b/g, 'En attente de retour').replace(/\bfollow_up\b/g, 'Attente du retour').replace(/\bnegotiation\b/g, 'Négociation').replace(/\bwaiting\b/g, 'En attente').replace(/\bwon\b/g, 'Gagné').replace(/\blost\b/g, 'Perdu');
 }
 function nextOpenAction(actions: CrmAction[]): CrmAction | null {
   return [...actions]
@@ -159,7 +159,7 @@ function quoteCardState(prospect: ProspectSummary, quote: QuoteSummary): string 
   if (prospect.stage === 'quote_to_send') return 'Prêt à envoyer';
   if (prospect.stage === 'quote_to_prepare') return 'Brouillon à préparer';
   if (prospect.stage === 'waiting') return 'En attente';
-  if (prospect.stage === 'follow_up') return 'Relance à effectuer';
+  if (prospect.stage === 'follow_up') return 'En attente de retour';
   return 'En attente de retour';
 }
 
@@ -246,11 +246,16 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
   const directoryFiltered = useMemo(() => directory.filter((item) => {
     const needle = directorySearch.trim().toLocaleLowerCase('fr-FR');
     const haystack = [item.displayName, item.secondaryLabel, item.organizationIndustry, item.organizationCity, item.organizationWebsite, item.organizationNotes, item.initialObservation, item.detectedOpportunity].filter(Boolean).join(' ').toLocaleLowerCase('fr-FR');
+    const statusMatches = directoryStatusFilter === 'relaunch'
+      ? followUpBuckets.relaunch.has(item.id)
+      : directoryStatusFilter === 'overdue'
+        ? followUpBuckets.overdue.has(item.id)
+        : matchesDirectoryStatus(item, directoryStatusFilter);
     return (!needle || haystack.includes(needle))
       && (!directoryIndustry || item.organizationIndustry === directoryIndustry)
       && (!directoryCity || item.organizationCity === directoryCity)
-      && matchesDirectoryStatus(item, directoryStatusFilter);
-  }), [directory, directorySearch, directoryIndustry, directoryCity, directoryStatusFilter]);
+      && statusMatches;
+  }), [directory, directorySearch, directoryIndustry, directoryCity, directoryStatusFilter, followUpBuckets]);
   const closed = useMemo(() => prospects.filter(isClosed), [prospects]);
   const selected = prospects.find((item) => item.id === selectedId) ?? null;
   const deskProspect = prospects.find((item) => item.id === deskModeId) ?? null;
@@ -474,7 +479,8 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
           <option value="quote_to_prepare">Devis à préparer</option>
           <option value="quote_to_send">Devis à envoyer</option>
           <option value="quote_sent">En attente de retour</option>
-          <option value="follow_up">À relancer</option>
+          <option value="relaunch">À relancer</option>
+          <option value="overdue">Relance en retard</option>
           <option value="negotiation">Négociation</option>
           <option value="waiting">En attente</option>
           <option value="won">Gagné</option>
