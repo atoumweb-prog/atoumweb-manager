@@ -362,10 +362,10 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
 
   return <div className="operations-stack">
     <section className="operations-kpi-grid" aria-label="Synthèse Interventions et Maintenance">
-      <article><span className="operations-kpi-icon" aria-hidden="true">✉</span><div><strong>Demandes ouvertes</strong><span>${openRequests.length}</span><small>À traiter ou à qualifier</small></div></article>
-      <article><span className="operations-kpi-icon" aria-hidden="true">!</span><div><strong>Urgentes</strong><span>${urgentOpenRequests.length}</span><small>Demandes ouvertes prioritaires</small></div></article>
-      <article><span className="operations-kpi-icon" aria-hidden="true">⚙</span><div><strong>Interventions actives</strong><span>${activeInterventions.length}</span><small>Planifiées, en cours ou à valider</small></div></article>
-      <article><span className="operations-kpi-icon" aria-hidden="true">◷</span><div><strong>En attente client</strong><span>${waitingClientCount}</span><small>Demandes + interventions</small></div></article>
+      <article><span className="operations-kpi-icon" aria-hidden="true">✉</span><div><strong>Demandes ouvertes</strong><span>{openRequests.length}</span><small>À traiter ou à qualifier</small></div></article>
+      <article><span className="operations-kpi-icon" aria-hidden="true">!</span><div><strong>Urgentes</strong><span>{urgentOpenRequests.length}</span><small>Demandes ouvertes prioritaires</small></div></article>
+      <article><span className="operations-kpi-icon" aria-hidden="true">⚙</span><div><strong>Interventions actives</strong><span>{activeInterventions.length}</span><small>Planifiées, en cours ou à valider</small></div></article>
+      <article><span className="operations-kpi-icon" aria-hidden="true">◷</span><div><strong>En attente client</strong><span>{waitingClientCount}</span><small>Demandes + interventions</small></div></article>
     </section>
     <OperationsAlertsPanel refreshKey={alertRefreshKey} onNavigate={(target) => setView(target)} onMessage={onMessage} />
     <div className="operations-view-tabs">
