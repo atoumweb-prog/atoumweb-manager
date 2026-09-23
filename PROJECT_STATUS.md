@@ -12,7 +12,7 @@
 - Branche active : `feature/project-blueprints-v1`.
 - PR active : **#73 — Projet V2 — Blueprints de production et atelier AtoumWeb**.
 - Branche Phase 7 existante en parallèle : `feature/phase-7-analytics-v1` / PR #71 ; ne pas la poursuivre sans la réaligner sur Projet V2.
-- Migrations sur Projet V2 / recette visuelle : **34**.
+- Migrations sur Projet V2 / recette visuelle : **35**.
 - `main` reste historique et très en retard par rapport au socle de travail ; ne pas l'utiliser comme base de développement courant.
 
 ### Projet V2 — réalisé
@@ -45,11 +45,16 @@
 - [x] identité réutilisée dans Annuaire Prospection, cartes du parcours et Clients ;
 - [x] URL CRM normalisées : saisie sans protocole → `https://`, `http://` explicite conservé ;
 - [x] migration 34 : table `crm_identity_assets`.
+- [x] timer Intervention : démarrage → statut En cours ; arrêt guidé entre résolution et pause ; motif de pause historisé ;
+- [x] incident résolu : passage À valider puis panneau Conclusion & rapport de fin avant clôture ;
+- [x] migration 35 : motifs de pause sur `time_session_pauses` ;
+- [x] Facturation / Dépenses : pictos SVG cohérents, splitter redimensionnable, fiche agrandissable et responsive ;
+- [x] Bibliothèque AtoumWeb / Sauvegardes : liste + fiche redimensionnable, plein écran, fermeture explicite, responsive et hiérarchie typographique harmonisée.
 
 ### Validation
 
-- [x] dernière validation complète connue sur MSI avant la passe Catalogue : **36 fichiers / 177 tests réussis**, SQLite à **30 migrations**.
-- [ ] revalider le HEAD actuel après le dernier lot : aide / actions / coffre sécurisé / Catalogue Offres & Tarifs / ateliers Interventions & Packs / Gestion des temps / Facturation PDF Abby / Dépenses / identité CRM / migrations 31–34 / cohérence UI globale.
+- [x] dernier checkpoint MSI confirmé par l’utilisateur avant ce lot : **40 fichiers / 187 tests réussis**, SQLite à **34 migrations**.
+- [ ] revalider le HEAD actuel après le dernier lot : aide / actions / coffre sécurisé / Catalogue Offres & Tarifs / ateliers Interventions & Packs / Gestion des temps / Facturation PDF Abby / Dépenses / identité CRM / timer Intervention / Bibliothèque / Sauvegardes / migrations 31–35 / cohérence UI globale.
 - [ ] `npm run typecheck`
 - [ ] `npm test`
 - [ ] `npm run package`
