@@ -328,12 +328,16 @@ function GlobalClock() {
     return () => window.clearInterval(timer);
   }, []);
 
-  const isDay = now.getHours() >= 7 && now.getHours() < 20;
+  const hour = now.getHours();
+  const isDay = hour >= 7 && hour < 20;
+  const greeting = hour < 18 ? 'Bonjour !' : 'Bonsoir !';
   const time = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const date = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
-  return <div className="global-clock" title={isDay ? 'Période de jour' : 'Période de nuit'} aria-label={`${isDay ? 'Jour' : 'Nuit'}, ${time}`}>
-    <OperationIcon name={isDay ? 'sun' : 'moon'} size={22} />
-    <strong>{time}</strong>
+  return <div className="global-clock" title={isDay ? 'Période de jour' : 'Période de nuit'} aria-label={`${greeting} ${date}, ${time}`}>
+    <span className="global-clock-icon"><OperationIcon name={isDay ? 'sun' : 'moon'} size={20} /></span>
+    <span className="global-clock-copy"><strong>{greeting}</strong><small>{date}</small></span>
+    <b>{time}</b>
   </div>;
 }
 
