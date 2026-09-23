@@ -17,6 +17,23 @@ import type { WorkspacePaths } from '../workspace';
 const nowIso = (): string => new Date().toISOString();
 const clean = (value?: string | null): string | null => value?.trim() || null;
 
+type NormalizedExpenseInput = {
+  clientAccountId: string | null;
+  projectId: string | null;
+  category: ExpenseInput['category'];
+  supplier: string | null;
+  label: string;
+  amountCents: number;
+  vatCents: number | null;
+  status: NonNullable<ExpenseInput['status']>;
+  expenseDate: string;
+  dueAt: string | null;
+  paidAt: string | null;
+  frequency: NonNullable<ExpenseInput['frequency']>;
+  nextDueAt: string | null;
+  notes: string | null;
+};
+
 interface ExpenseRow extends Record<string, unknown> {
   id: string;
   client_account_id: string | null;
@@ -137,7 +154,7 @@ export class ExpenseService {
     return absolute;
   }
 
-  private normalize(input: ExpenseInput): ExpenseInput {
+  private normalize(input: ExpenseInput): NormalizedExpenseInput {
     if (!EXPENSE_CATEGORIES.includes(input.category)) throw new Error('Catégorie de dépense invalide.');
     if (!EXPENSE_FREQUENCIES.includes(input.frequency ?? 'none')) throw new Error('Fréquence de dépense invalide.');
     if (!EXPENSE_STATUSES.includes(input.status ?? 'committed')) throw new Error('Statut de dépense invalide.');
