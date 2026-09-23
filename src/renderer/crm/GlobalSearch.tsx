@@ -6,7 +6,14 @@ export function GlobalSearch({ onOpen }: { onOpen: (result: SearchResult) => voi
   const [results, setResults] = useState<SearchResult[]>([]);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [compactPlaceholder, setCompactPlaceholder] = useState(() => window.innerWidth < 1180);
   const requestId = useRef(0);
+
+  useEffect(() => {
+    const update = () => setCompactPlaceholder(window.innerWidth < 1180);
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
   useEffect(() => {
     const normalized = query.trim();
@@ -46,7 +53,7 @@ export function GlobalSearch({ onOpen }: { onOpen: (result: SearchResult) => voi
         onFocus={() => results.length > 0 && setOpen(true)}
         onChange={(event) => setQuery(event.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Rechercher client, prospect, devis, projet, intervention…"
+        placeholder={compactPlaceholder ? 'Rechercher dans AtoumWeb…' : 'Rechercher client, prospect, devis, projet, intervention…'}
         value={query}
       />
       {open && (
