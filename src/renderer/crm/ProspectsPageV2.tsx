@@ -162,12 +162,12 @@ function quoteCardState(prospect: ProspectSummary, quote: QuoteSummary): string 
   return 'En attente de retour';
 }
 
-export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: string) => void; initialId?: string | null }) {
+export function ProspectsPage({ onMessage, initialId, initialView = 'directory' }: { onMessage: (message: string) => void; initialId?: string | null; initialView?: View }) {
   const [prospects, setProspects] = useState<ProspectSummary[]>([]);
   const [actions, setActions] = useState<CrmAction[]>([]);
   const [quotes, setQuotes] = useState<QuoteSummary[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
-  const [view, setView] = useState<View>('directory');
+  const [view, setView] = useState<View>(initialView);
   const [directorySearch, setDirectorySearch] = useState('');
   const [directoryIndustry, setDirectoryIndustry] = useState('');
   const [directoryCity, setDirectoryCity] = useState('');
