@@ -6,6 +6,7 @@ import { BusinessBackupsPage } from './backups/BusinessBackupsPage';
 import { BillingPage } from './billing/BillingPage';
 import { ExpensesPage } from './expenses/ExpensesPage';
 import { DocumentsPage } from './documents/DocumentsPage';
+import { DirectoryPage, type DirectorySearchTarget } from './directory/DirectoryPage';
 import { CatalogPage } from './commercial/CatalogPage';
 import { QuotesPage } from './commercial/QuotesPage';
 import { ClientsPage } from './crm/ClientsPage';
@@ -54,7 +55,7 @@ const PAGE_HINTS: Record<PageName, string> = {
   'Documents & Contrats': 'Modèles, contrats, avenants, rapports et PDF.',
   'Bibliothèque AtoumWeb': 'Composants et références techniques réutilisables.',
   Sauvegardes: 'Traçabilité des sauvegardes serveur, locales et externes.',
-  Annuaire: 'Fournisseurs, partenaires et contacts professionnels.',
+  Annuaire: 'Organisations, contacts professionnels et relations CRM.',
   Statistiques: 'Commercial, temps, rentabilité, clients et prestations.',
   Réglages: 'Identité, apparence, stockage, modèles et préférences.',
 };
@@ -93,6 +94,7 @@ function App() {
   const [prospectViewTarget, setProspectViewTarget] = useState<'directory' | 'pipeline' | 'history'>('directory');
   const [quoteTarget,setQuoteTarget] = useState<string|null>(null);
   const [documentTarget, setDocumentTarget] = useState<string | null>(null);
+  const [directoryTarget, setDirectoryTarget] = useState<DirectorySearchTarget | null>(null);
   useEffect(()=>{const open=(event:Event)=>openSearchResult((event as CustomEvent<SearchResult>).detail);window.addEventListener('atoumweb:navigate',open);return()=>window.removeEventListener('atoumweb:navigate',open);},[]);
   useEffect(() => { const open = (event: Event) => setActivePage((event as CustomEvent<PageName>).detail); window.addEventListener('atoumweb:open-page', open); return () => window.removeEventListener('atoumweb:open-page', open); }, []);
   useEffect(() => {
@@ -191,6 +193,7 @@ function App() {
     if (page === 'Bibliothèque AtoumWeb') setLibrarySearchTarget(null);
     if (page === 'Sauvegardes') setBackupSearchTarget(null);
     if (page === 'Documents & Contrats') setDocumentTarget(null);
+    if (page === 'Annuaire') setDirectoryTarget(null);
     setActivePage(page);
   }
 
@@ -227,6 +230,9 @@ function App() {
 
       case 'organization':
       case 'contact':
+        setDirectoryTarget({ entityType: result.entityType, entityId: result.entityId });
+        setActivePage('Annuaire');
+        break;
       default: setActivePage('Clients'); break;
     }
     setMessage(`${result.title} trouvé dans la recherche globale.`);
@@ -288,8 +294,9 @@ function App() {
           {activePage === 'Documents & Contrats' && <DocumentsPage onMessage={setMessage} initialDocumentId={documentTarget} />}
           {activePage === 'Bibliothèque AtoumWeb' && <AtoumWebLibraryPage onMessage={setMessage} initialItemId={librarySearchTarget} />}
           {activePage === 'Sauvegardes' && <BusinessBackupsPage onMessage={setMessage} initialRecordId={backupSearchTarget} />}
+          {activePage === 'Annuaire' && <DirectoryPage onMessage={setMessage} initialTarget={directoryTarget} />}
           {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} displayDensity={displayDensity} showHoverHelp={showHoverHelp} onThemeChange={updateTheme} onDensityChange={updateDisplayDensity} onShowHoverHelpChange={updateShowHoverHelp} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
-          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Facturation' && activePage !== 'Dépenses' && activePage !== 'Documents & Contrats' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Sauvegardes' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
+          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Facturation' && activePage !== 'Dépenses' && activePage !== 'Documents & Contrats' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Sauvegardes' && activePage !== 'Annuaire' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
         </section>
       </main>
     </div>
