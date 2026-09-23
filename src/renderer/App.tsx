@@ -15,6 +15,7 @@ import { HomeDashboard } from './home/HomeDashboard';
 import { ProspectsPage } from './crm/ProspectsPage';
 import { ProspectReferenceWindow } from './crm/ProspectReferenceWindow';
 import { OperationsPage, type OperationsSearchTarget } from './operations/OperationsPage';
+import { OperationIcon } from './operations/OperationIcon';
 import { ProjectsPage } from './projects/ProjectsPage';
 import { AtoumWebLibraryPage } from './referentials/AtoumWebLibraryPage';
 import { StatisticsPage } from './statistics/StatisticsPage';
@@ -41,6 +42,7 @@ const NAV_ITEMS = [
 ] as const;
 
 type PageName = (typeof NAV_ITEMS)[number];
+type ProspectPipelineFilter = 'all' | 'relaunch' | 'overdue';
 
 const PAGE_HINTS: Record<PageName, string> = {
   Accueil: 'Vue synthétique des actions, alertes et indicateurs AtoumWeb.',
@@ -93,6 +95,7 @@ function App() {
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [crmTarget,setCrmTarget] = useState<string|null>(null);
   const [prospectViewTarget, setProspectViewTarget] = useState<'directory' | 'pipeline' | 'history'>('directory');
+  const [prospectPipelineFilter, setProspectPipelineFilter] = useState<ProspectPipelineFilter>('all');
   const [quoteTarget,setQuoteTarget] = useState<string|null>(null);
   const [documentTarget, setDocumentTarget] = useState<string | null>(null);
   const [directoryTarget, setDirectoryTarget] = useState<DirectorySearchTarget | null>(null);
@@ -100,8 +103,16 @@ function App() {
   useEffect(() => { const open = (event: Event) => setActivePage((event as CustomEvent<PageName>).detail); window.addEventListener('atoumweb:open-page', open); return () => window.removeEventListener('atoumweb:open-page', open); }, []);
   useEffect(() => {
     const open = (event: Event) => {
-      const view = (event as CustomEvent<'directory' | 'pipeline' | 'history'>).detail;
+      const detail = (event as CustomEvent<
+        | 'directory'
+        | 'pipeline'
+        | 'history'
+        | { view: 'directory' | 'pipeline' | 'history'; pipelineFilter?: ProspectPipelineFilter }
+      >).detail;
+      const view = typeof detail === 'string' ? detail : detail.view;
+      const pipelineFilter = typeof detail === 'string' ? 'all' : detail.pipelineFilter ?? 'all';
       setProspectViewTarget(view);
+      setProspectPipelineFilter(view === 'pipeline' ? pipelineFilter : 'all');
       setCrmTarget(null);
       setActivePage('Prospects');
     };
@@ -274,7 +285,10 @@ function App() {
             >{sidebarCollapsed ? '☰' : '‹'}</button>
             <GlobalSearch onOpen={openSearchResult} />
           </div>
-          <GlobalTimer onMessage={setMessage} />
+          <div className="topbar-right">
+            <GlobalTimer onMessage={setMessage} />
+            <GlobalClock />
+          </div>
         </header>
 
         <section className={`content-area ${activePage === 'Accueil' ? 'home-content' : ''}`}>
@@ -283,7 +297,7 @@ function App() {
 
           {activePage === 'Accueil' && <HomeDashboard onMessage={setMessage} />}
           {activePage === 'Réglages' && <DemoPanel />}
-          {activePage === 'Prospects' && <ProspectsPage key={`${crmTarget ?? 'none'}:${prospectViewTarget}`} initialId={crmTarget} initialView={prospectViewTarget} onMessage={setMessage} />}
+          {activePage === 'Prospects' && <ProspectsPage key={`${crmTarget ?? 'none'}:${prospectViewTarget}:${prospectPipelineFilter}`} initialId={crmTarget} initialView={prospectViewTarget} initialPipelineFilter={prospectPipelineFilter} onMessage={setMessage} />}
           {activePage === 'Clients' && <ClientsPage key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
           {activePage === 'Offres & Tarifs' && <CatalogPage onMessage={setMessage} />}
           {activePage === 'Devis' && <QuotesPage key={quoteTarget} initialId={quoteTarget} onMessage={setMessage} />}
@@ -303,6 +317,24 @@ function App() {
       </main>
     </div>
   );
+}
+
+
+function GlobalClock() {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const isDay = now.getHours() >= 7 && now.getHours() < 20;
+  const time = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+  return <div className="global-clock" title={isDay ? 'Période de jour' : 'Période de nuit'} aria-label={`${isDay ? 'Jour' : 'Nuit'}, ${time}`}>
+    <OperationIcon name={isDay ? 'sun' : 'moon'} size={22} />
+    <strong>{time}</strong>
+  </div>;
 }
 
 function SettingsPage({ bootstrap, theme, displayDensity, showHoverHelp, onThemeChange, onDensityChange, onShowHoverHelpChange, onChooseWorkspace, onCreateBackup, onRestoreBackup }: {
