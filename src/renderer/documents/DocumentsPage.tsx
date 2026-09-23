@@ -127,7 +127,8 @@ export function DocumentsPage({ onMessage, initialDocumentId }: { onMessage: (me
       const requested = preferredId ?? selectedId ?? initialDocumentId ?? '';
       if (requested && nextItems.some((item) => item.id === requested)) setSelectedId(requested);
       else if (requested) setSelectedId('');
-      if (!createClientId && nextClients.length) setCreateClientId(nextClients[0].id);
+      const firstImportable = nextClients.find((client) => !client.archivedAt && client.status !== 'archived');
+      if (!createClientId && firstImportable) setCreateClientId(firstImportable.id);
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de charger les documents.');
     } finally {
@@ -164,6 +165,7 @@ export function DocumentsPage({ onMessage, initialDocumentId }: { onMessage: (me
     });
   }, [items, query, clientFilter, categoryFilter, archiveFilter]);
 
+  const importableClients = clients.filter((client) => !client.archivedAt && client.status !== 'archived');
   const activeItems = items.filter((item) => !item.archivedAt);
   const contractCount = activeItems.filter((item) => item.category === 'contract').length;
   const invoiceCount = activeItems.filter((item) => item.category === 'invoice').length;
@@ -287,7 +289,7 @@ export function DocumentsPage({ onMessage, initialDocumentId }: { onMessage: (me
         <input className="inline-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher document, client, fichier…" />
         <select value={clientFilter} onChange={(event) => setClientFilter(event.target.value)}>
           <option value="all">Tous les clients</option>
-          {clients.map((client) => <option key={client.id} value={client.id}>{client.displayName}</option>)}
+          {importableClients.map((client) => <option key={client.id} value={client.id}>{client.displayName}</option>)}
         </select>
         <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value as 'all' | ClientDocumentCategory)}>
           <option value="all">Tous les types</option>
