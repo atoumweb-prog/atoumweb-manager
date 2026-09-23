@@ -205,6 +205,13 @@ export const BRIDGE_SNAPSHOT_MIGRATION: Migration = {
     CREATE INDEX IF NOT EXISTS idx_bridge_relations_to
       ON bridge_relations(snapshot_id, to_entity, to_id);
 
+    CREATE TABLE IF NOT EXISTS bridge_snapshot_sections (
+      snapshot_id TEXT NOT NULL REFERENCES bridge_snapshots(id) ON DELETE CASCADE,
+      section_key TEXT NOT NULL,
+      payload_json TEXT NOT NULL,
+      PRIMARY KEY(snapshot_id, section_key)
+    ) STRICT;
+
     CREATE TABLE IF NOT EXISTS bridge_objects (
       object_ref TEXT PRIMARY KEY,
       relative_path TEXT NOT NULL,
