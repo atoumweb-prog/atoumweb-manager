@@ -350,3 +350,10 @@ body.aw-library-resizing {
   }
 }
 
+
+.aw-library-toolbar button,
+.aw-library-asset-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
