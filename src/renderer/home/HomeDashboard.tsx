@@ -200,9 +200,9 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
       </article>
 
       <article className="home-card home-pipeline-card">
-        <div className="home-card-title"><div><OperationIcon name="chart" size={20} /><strong>Pipeline commercial</strong></div><button type="button" onClick={openProspectPipeline} aria-label="Ouvrir le pipeline commercial">›</button></div>
+        <div className="home-card-title"><div><OperationIcon name="chart" size={20} /><strong>Pipeline commercial</strong></div><button type="button" onClick={() => openProspectPipeline()} aria-label="Ouvrir le pipeline commercial">›</button></div>
         <div className="home-pipeline-items">
-          {pipeline.map((item) => <button type="button" key={item.key} className={`home-pipeline-item tone-${item.tone}`} onClick={openProspectPipeline}>
+          {pipeline.map((item) => <button type="button" key={item.key} className={`home-pipeline-item tone-${item.tone}`} onClick={() => openProspectPipeline()}>
             <strong>{item.count}</strong><span>{item.label}</span>
           </button>)}
         </div>
