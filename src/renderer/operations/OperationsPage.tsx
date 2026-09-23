@@ -78,6 +78,8 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
   const [requestStatus, setRequestStatus] = useState<'all' | ServiceRequestStatus>('all');
   const [interventionStatus, setInterventionStatus] = useState<'all' | InterventionStatus>('all');
   const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
+  const [requestSplitPercent, setRequestSplitPercent] = useState(38);
+  const [requestExpanded, setRequestExpanded] = useState(false);
   const [selectedIntervention, setSelectedIntervention] = useState<Intervention | null>(null);
   const [interventionSplitPercent, setInterventionSplitPercent] = useState(34);
   const [interventionExpanded, setInterventionExpanded] = useState(false);
@@ -130,13 +132,14 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
   useEffect(() => { void refresh(); }, []);
   useEffect(() => {
     if (!selectedRequest) return;
-    const closeOnOutside = (event: PointerEvent) => {
-      const target = event.target as Node | null;
-      if (!target || requestDetailRef.current?.contains(target)) return;
-      setSelectedRequest(null);
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSelectedRequest(null);
+        setRequestExpanded(false);
+      }
     };
-    document.addEventListener('pointerdown', closeOnOutside);
-    return () => document.removeEventListener('pointerdown', closeOnOutside);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
   }, [selectedRequest?.id]);
 
   useEffect(() => {
@@ -312,6 +315,25 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
     window.dispatchEvent(new CustomEvent('atoumweb:timer-context', { detail: { interventionId: intervention.id, projectId: intervention.projectId ?? null, nodeId: intervention.projectNodeId ?? null, activityLabel: `${intervention.number} · ${intervention.subject}`, category: categoryForIntervention(intervention.type), billable: !['commercial_gesture', 'internal'].includes(intervention.coverageMode) } }));
   }
 
+  function beginRequestResize(): void {
+    const workspace = document.querySelector<HTMLElement>('.request-workspace.with-detail');
+    if (!workspace) return;
+    document.body.classList.add('operation-resizing');
+    const onMove = (event: PointerEvent) => {
+      const rect = workspace.getBoundingClientRect();
+      if (!rect.width) return;
+      const ratio = ((event.clientX - rect.left) / rect.width) * 100;
+      setRequestSplitPercent(Math.max(20, Math.min(58, ratio)));
+    };
+    const onUp = () => {
+      document.body.classList.remove('operation-resizing');
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp, { once: true });
+  }
+
   function beginInterventionResize(): void {
     const workspace = document.querySelector<HTMLElement>('.intervention-workspace.with-detail');
     if (!workspace) return;
@@ -331,7 +353,20 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
     window.addEventListener('pointerup', onUp, { once: true });
   }
 
+  const openRequests = requests.filter((item) => !['closed', 'converted', 'archived'].includes(item.status));
+  const urgentOpenRequests = openRequests.filter((item) => item.priority === 'urgent');
+  const waitingClientCount =
+    requests.filter((item) => item.status === 'waiting_client').length
+    + interventions.filter((item) => item.status === 'waiting_client').length;
+  const activeInterventions = interventions.filter((item) => !['completed', 'cancelled', 'archived'].includes(item.status));
+
   return <div className="operations-stack">
+    <section className="operations-kpi-grid" aria-label="Synthèse Interventions et Maintenance">
+      <article><span className="operations-kpi-icon" aria-hidden="true">✉</span><div><strong>Demandes ouvertes</strong><span>${openRequests.length}</span><small>À traiter ou à qualifier</small></div></article>
+      <article><span className="operations-kpi-icon" aria-hidden="true">!</span><div><strong>Urgentes</strong><span>${urgentOpenRequests.length}</span><small>Demandes ouvertes prioritaires</small></div></article>
+      <article><span className="operations-kpi-icon" aria-hidden="true">⚙</span><div><strong>Interventions actives</strong><span>${activeInterventions.length}</span><small>Planifiées, en cours ou à valider</small></div></article>
+      <article><span className="operations-kpi-icon" aria-hidden="true">◷</span><div><strong>En attente client</strong><span>${waitingClientCount}</span><small>Demandes + interventions</small></div></article>
+    </section>
     <OperationsAlertsPanel refreshKey={alertRefreshKey} onNavigate={(target) => setView(target)} onMessage={onMessage} />
     <div className="operations-view-tabs">
       <button type="button" className={view === 'requests' ? 'active' : ''} onClick={() => setView('requests')}>Demandes <span>{requests.filter((item) => !['closed', 'converted', 'archived'].includes(item.status)).length}</span></button>
@@ -340,11 +375,64 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
       <button type="button" className={view === 'packs' ? 'active' : ''} onClick={() => setView('packs')}>Packs d’heures</button>
     </div>
 
-    {(view === 'requests' || view === 'interventions') && <div className="module-toolbar operations-toolbar"><div><strong>{view === 'requests' ? filteredRequests.length : filteredInterventions.length}</strong><span>{view === 'requests' ? ' demande(s)' : ' intervention(s)'}</span></div><div className="toolbar-controls"><button className="secondary-button" type="button" onClick={() => void refresh()}>↻ Actualiser</button><input className="inline-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher client, sujet, numéro…" />{view === 'requests' ? <select value={requestStatus} onChange={(event) => setRequestStatus(event.target.value as typeof requestStatus)}><option value="all">Tous les statuts</option>{SERVICE_REQUEST_STATUSES.map((status) => <option key={status} value={status}>{REQUEST_STATUS_LABELS[status]}</option>)}</select> : <select value={interventionStatus} onChange={(event) => setInterventionStatus(event.target.value as typeof interventionStatus)}><option value="all">Tous les statuts</option>{INTERVENTION_STATUSES.map((status) => <option key={status} value={status}>{INTERVENTION_STATUS_LABELS[status]}</option>)}</select>}{view === 'requests' ? <button className="primary-button" type="button" onClick={() => setCreateRequestOpen((value) => !value)}>+ Demande</button> : <button className="primary-button" type="button" onClick={() => setCreateInterventionOpen((value) => !value)}>+ Intervention</button>}</div></div>}
+    {(view === 'requests' || view === 'interventions') && <div className="module-toolbar operations-toolbar"><div><strong>{view === 'requests' ? filteredRequests.length : filteredInterventions.length}</strong><span>{view === 'requests' ? ' demande(s)' : ' intervention(s)'}</span></div><div className="toolbar-controls"><button className="secondary-button" type="button" onClick={() => void refresh()}>↻ Actualiser</button><input className="inline-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher client, sujet, numéro…" />{view === 'requests' ? <select value={requestStatus} onChange={(event) => setRequestStatus(event.target.value as typeof requestStatus)}><option value="all">Tous les statuts</option>{SERVICE_REQUEST_STATUSES.map((status) => <option key={status} value={status}>{REQUEST_STATUS_LABELS[status]}</option>)}</select> : <select value={interventionStatus} onChange={(event) => setInterventionStatus(event.target.value as typeof interventionStatus)}><option value="all">Tous les statuts</option>{INTERVENTION_STATUSES.map((status) => <option key={status} value={status}>{INTERVENTION_STATUS_LABELS[status]}</option>)}</select>}{view === 'requests' ? <button className="primary-button" type="button" onClick={() => setCreateRequestOpen((value) => !value)}>+ Nouvelle demande</button> : <button className="primary-button" type="button" onClick={() => setCreateInterventionOpen((value) => !value)}>+ Intervention</button>}</div></div>}
 
     {view === 'requests' && <>
       {createRequestOpen && <section className="panel operation-create-panel"><div className="panel-title"><div><span className="eyebrow">Nouvelle demande</span><h2>Enregistrer un besoin entrant</h2></div><button className="close-detail" type="button" onClick={() => setCreateRequestOpen(false)}>×</button></div><div className="operation-create-grid"><label>Client<select value={requestClientId} onChange={(event) => { setRequestClientId(event.target.value); setRequestProjectId(''); }}><option value="">Choisir…</option>{clients.map((client) => <option key={client.id} value={client.id}>{client.displayName}</option>)}</select></label><label>Projet éventuel<select value={requestProjectId} onChange={(event) => setRequestProjectId(event.target.value)} disabled={!requestClientId}><option value="">Aucun projet</option>{requestProjects.map((project) => <option key={project.id} value={project.id}>{project.number} · {project.name}</option>)}</select></label><label>Origine<select value={requestSource} onChange={(event) => setRequestSource(event.target.value as ServiceRequestSource)}>{SERVICE_REQUEST_SOURCES.map((source) => <option key={source} value={source}>{SOURCE_LABELS[source]}</option>)}</select></label><label>Priorité<select value={requestPriority} onChange={(event) => setRequestPriority(event.target.value as ServiceRequestPriority)}>{SERVICE_REQUEST_PRIORITIES.map((priority) => <option key={priority} value={priority}>{PRIORITY_LABELS[priority]}</option>)}</select></label><label className="wide">Sujet<input value={requestSubject} onChange={(event) => setRequestSubject(event.target.value)} placeholder="Ex. Modifier le formulaire de contact" /></label><label className="wide">Description<textarea value={requestDescription} onChange={(event) => setRequestDescription(event.target.value)} placeholder="Demande du client, contexte…" /></label></div><div className="button-row"><button className="primary-button" disabled={saving || !requestClientId || !requestSubject.trim()} type="button" onClick={() => void createRequest()}>Créer la demande</button><button className="secondary-button" type="button" onClick={() => { resetRequestForm(); setCreateRequestOpen(false); }}>Annuler</button></div></section>}
-      {loading ? <section className="panel"><p className="muted">Chargement…</p></section> : <div className={selectedRequest ? 'operations-layout with-detail' : 'operations-layout'}><section className="panel operation-list-panel"><table className="operations-table"><thead><tr><th>Reçue</th><th>Client</th><th>Sujet</th><th>Priorité</th><th>Statut</th></tr></thead><tbody>{filteredRequests.map((request) => <tr key={request.id} className={selectedRequest?.id === request.id ? 'selected-row' : ''} onClick={() => { setSelectedRequest(request); setSelectedIntervention(null); }}><td>{dateLabel(request.receivedAt)}</td><td><strong>{request.clientLabel}</strong><small>{request.projectLabel || 'Sans projet'}</small></td><td><strong>{request.subject}</strong><small>{SOURCE_LABELS[request.source]}</small></td><td><span className={`operation-priority priority-${request.priority}`}>{PRIORITY_LABELS[request.priority]}</span></td><td>{REQUEST_STATUS_LABELS[request.status]}</td></tr>)}{filteredRequests.length === 0 && <tr><td colSpan={5}><div className="empty-table">Aucune demande dans cette vue.</div></td></tr>}</tbody></table></section>{selectedRequest && <div ref={requestDetailRef} className="operation-detail-boundary"><RequestDetail request={selectedRequest} transformType={transformType} setTransformType={setTransformType} transformCoverage={transformCoverage} setTransformCoverage={setTransformCoverage} transformProjectNodeId={transformProjectNodeId} setTransformProjectNodeId={setTransformProjectNodeId} transformProjectNodes={transformProjectNodes} closeReason={closeReason} setCloseReason={setCloseReason} saving={saving} onClose={() => setSelectedRequest(null)} onStatus={changeRequestStatus} onTransform={transformRequest} onCloseRequest={closeRequest} /></div>}</div>}
+      {loading ? <section className="panel"><p className="muted">Chargement…</p></section> : <div
+        className={selectedRequest ? `operations-layout request-workspace with-detail ${requestExpanded ? 'detail-expanded' : ''}` : 'operations-layout request-workspace'}
+        style={selectedRequest && !requestExpanded ? { gridTemplateColumns: `${requestSplitPercent}% 8px minmax(0, 1fr)` } : undefined}
+      >
+        {!requestExpanded && <section className="panel operation-list-panel request-list-panel">
+          {selectedRequest ? <div className="request-compact-list" role="list" aria-label="Demandes">
+            {filteredRequests.map((request) => <button
+              key={request.id}
+              type="button"
+              role="listitem"
+              className={`request-compact-item ${selectedRequest.id === request.id ? 'selected' : ''}`}
+              onClick={() => { setSelectedRequest(request); setSelectedIntervention(null); }}
+            >
+              <span className="request-compact-heading"><strong>{request.subject}</strong><span className={`operation-priority priority-${request.priority}`}>{PRIORITY_LABELS[request.priority]}</span></span>
+              <span className="request-compact-client">{request.clientLabel}</span>
+              <span className="request-compact-meta"><span>{SOURCE_LABELS[request.source]}</span><span>{REQUEST_STATUS_LABELS[request.status]}</span></span>
+              <span className="request-compact-date">{dateLabel(request.receivedAt)}</span>
+            </button>)}
+            {filteredRequests.length === 0 && <div className="empty-table">Aucune demande dans cette vue.</div>}
+          </div> : <table className="operations-table"><thead><tr><th>Reçue</th><th>Client</th><th>Sujet</th><th>Priorité</th><th>Statut</th></tr></thead><tbody>{filteredRequests.map((request) => <tr key={request.id} className={selectedRequest?.id === request.id ? 'selected-row' : ''} onClick={() => { setSelectedRequest(request); setSelectedIntervention(null); setRequestExpanded(false); }}><td>{dateLabel(request.receivedAt)}</td><td><strong>{request.clientLabel}</strong><small>{request.projectLabel || 'Sans projet'}</small></td><td><strong>{request.subject}</strong><small>{SOURCE_LABELS[request.source]}</small></td><td><span className={`operation-priority priority-${request.priority}`}>{PRIORITY_LABELS[request.priority]}</span></td><td>{REQUEST_STATUS_LABELS[request.status]}</td></tr>)}{filteredRequests.length === 0 && <tr><td colSpan={5}><div className="empty-table">Aucune demande dans cette vue.</div></td></tr>}</tbody></table>}
+        </section>}
+        {selectedRequest && !requestExpanded && <div
+          className="operation-splitter"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Redimensionner la liste et la demande"
+          tabIndex={0}
+          onPointerDown={() => beginRequestResize()}
+          onDoubleClick={() => setRequestSplitPercent(38)}
+          onKeyDown={(event) => {
+            if (event.key === 'ArrowLeft') setRequestSplitPercent((value) => Math.max(20, value - 3));
+            if (event.key === 'ArrowRight') setRequestSplitPercent((value) => Math.min(58, value + 3));
+          }}
+        ><span /></div>}
+        {selectedRequest && <div ref={requestDetailRef} className="operation-detail-boundary"><RequestDetail
+          request={selectedRequest}
+          expanded={requestExpanded}
+          onExpand={() => setRequestExpanded((value) => !value)}
+          transformType={transformType}
+          setTransformType={setTransformType}
+          transformCoverage={transformCoverage}
+          setTransformCoverage={setTransformCoverage}
+          transformProjectNodeId={transformProjectNodeId}
+          setTransformProjectNodeId={setTransformProjectNodeId}
+          transformProjectNodes={transformProjectNodes}
+          closeReason={closeReason}
+          setCloseReason={setCloseReason}
+          saving={saving}
+          onClose={() => { setSelectedRequest(null); setRequestExpanded(false); }}
+          onStatus={changeRequestStatus}
+          onTransform={transformRequest}
+          onCloseRequest={closeRequest}
+        /></div>}
+      </div>}
     </>}
 
     {view === 'interventions' && <>
@@ -404,9 +492,9 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
   </div>;
 }
 
-function RequestDetail({ request, transformType, setTransformType, transformCoverage, setTransformCoverage, transformProjectNodeId, setTransformProjectNodeId, transformProjectNodes, closeReason, setCloseReason, saving, onClose, onStatus, onTransform, onCloseRequest }: { request: ServiceRequest; transformType: InterventionType; setTransformType: (value: InterventionType) => void; transformCoverage: InterventionCoverageMode; setTransformCoverage: (value: InterventionCoverageMode) => void; transformProjectNodeId: string; setTransformProjectNodeId: (value: string) => void; transformProjectNodes: ProjectNode[]; closeReason: string; setCloseReason: (value: string) => void; saving: boolean; onClose: () => void; onStatus: (status: ServiceRequestStatus) => Promise<void>; onTransform: () => Promise<void>; onCloseRequest: () => Promise<void>; }) {
+function RequestDetail({ request, expanded, onExpand, transformType, setTransformType, transformCoverage, setTransformCoverage, transformProjectNodeId, setTransformProjectNodeId, transformProjectNodes, closeReason, setCloseReason, saving, onClose, onStatus, onTransform, onCloseRequest }: { request: ServiceRequest; expanded: boolean; onExpand: () => void; transformType: InterventionType; setTransformType: (value: InterventionType) => void; transformCoverage: InterventionCoverageMode; setTransformCoverage: (value: InterventionCoverageMode) => void; transformProjectNodeId: string; setTransformProjectNodeId: (value: string) => void; transformProjectNodes: ProjectNode[]; closeReason: string; setCloseReason: (value: string) => void; saving: boolean; onClose: () => void; onStatus: (status: ServiceRequestStatus) => Promise<void>; onTransform: () => Promise<void>; onCloseRequest: () => Promise<void>; }) {
   const locked = request.status === 'converted' || request.status === 'archived';
-  return <aside className="panel operation-detail-panel"><div className="detail-panel-heading"><div><span className="eyebrow">Demande · {SOURCE_LABELS[request.source]}</span><h2>{request.subject}</h2><p className="muted">{request.clientLabel}{request.projectLabel ? ` · ${request.projectLabel}` : ''}</p></div><button className="close-detail" type="button" onClick={onClose}>×</button></div><div className="operation-detail-grid"><div><span>Reçue</span><strong>{dateLabel(request.receivedAt)}</strong></div><div><span>Priorité</span><strong>{PRIORITY_LABELS[request.priority]}</strong></div></div><label>Statut<select disabled={request.status === 'converted'} value={request.status} onChange={(event) => void onStatus(event.target.value as ServiceRequestStatus)}>{SERVICE_REQUEST_STATUSES.map((status) => <option key={status} value={status}>{REQUEST_STATUS_LABELS[status]}</option>)}</select></label>{request.description && <div className="operation-description"><span className="eyebrow">Description</span><p>{request.description}</p></div>}{request.interventionId ? <div className="operation-linked"><strong>✓ Transformée en intervention</strong><span>L’intervention liée est conservée comme source unique du travail réalisé.</span></div> : !locked && <><div className="operation-action-box"><strong>Créer une intervention</strong>{request.projectId && <label>Module / Page / Tâche<select value={transformProjectNodeId} onChange={(event) => setTransformProjectNodeId(event.target.value)} disabled={transformProjectNodes.length === 0}><option value="">Aucun rattachement précis</option>{transformProjectNodes.map((node) => <option key={node.id} value={node.id}>{projectNodeLabel(node)}</option>)}</select></label>}<label>Type<select value={transformType} onChange={(event) => setTransformType(event.target.value as InterventionType)}>{INTERVENTION_TYPES.map((type) => <option key={type} value={type}>{INTERVENTION_TYPE_LABELS[type]}</option>)}</select></label><label>Prise en charge<select value={transformCoverage} onChange={(event) => setTransformCoverage(event.target.value as InterventionCoverageMode)}>{INTERVENTION_COVERAGE_MODES.map((mode) => <option key={mode} value={mode}>{COVERAGE_LABELS[mode]}</option>)}</select></label><button className="primary-button" type="button" disabled={saving} onClick={() => void onTransform()}>Créer l’intervention</button></div><div className="operation-action-box subtle"><strong>Ou clore sans travail</strong><input value={closeReason} onChange={(event) => setCloseReason(event.target.value)} placeholder="Motif facultatif" /><button className="secondary-button" type="button" onClick={() => void onCloseRequest()}>Clore sans intervention</button></div></>}</aside>;
+  return <aside className={`panel operation-detail-panel request-workbench-panel ${expanded ? 'expanded' : ''}`}><div className="detail-panel-heading"><div><span className="eyebrow">Demande · {SOURCE_LABELS[request.source]}</span><h2>{request.subject}</h2><p className="muted">{request.clientLabel}{request.projectLabel ? ` · ${request.projectLabel}` : ''}</p></div><div className="request-workbench-heading-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire la demande' : 'Agrandir la demande'} aria-label={expanded ? 'Réduire la demande' : 'Agrandir la demande'} onClick={onExpand}>{expanded ? '↙' : '⛶'}</button><button className="close-detail" type="button" title="Fermer" onClick={onClose}>×</button></div></div><div className="operation-detail-grid"><div><span>Reçue</span><strong>{dateLabel(request.receivedAt)}</strong></div><div><span>Priorité</span><strong>{PRIORITY_LABELS[request.priority]}</strong></div></div><label>Statut<select disabled={request.status === 'converted'} value={request.status} onChange={(event) => void onStatus(event.target.value as ServiceRequestStatus)}>{SERVICE_REQUEST_STATUSES.map((status) => <option key={status} value={status}>{REQUEST_STATUS_LABELS[status]}</option>)}</select></label>{request.description && <div className="operation-description"><span className="eyebrow">Description</span><p>{request.description}</p></div>}{request.interventionId ? <div className="operation-linked"><strong>✓ Transformée en intervention</strong><span>L’intervention liée est conservée comme source unique du travail réalisé.</span></div> : !locked && <><div className="operation-action-box"><strong>Créer une intervention</strong>{request.projectId && <label>Module / Page / Tâche<select value={transformProjectNodeId} onChange={(event) => setTransformProjectNodeId(event.target.value)} disabled={transformProjectNodes.length === 0}><option value="">Aucun rattachement précis</option>{transformProjectNodes.map((node) => <option key={node.id} value={node.id}>{projectNodeLabel(node)}</option>)}</select></label>}<label>Type<select value={transformType} onChange={(event) => setTransformType(event.target.value as InterventionType)}>{INTERVENTION_TYPES.map((type) => <option key={type} value={type}>{INTERVENTION_TYPE_LABELS[type]}</option>)}</select></label><label>Prise en charge<select value={transformCoverage} onChange={(event) => setTransformCoverage(event.target.value as InterventionCoverageMode)}>{INTERVENTION_COVERAGE_MODES.map((mode) => <option key={mode} value={mode}>{COVERAGE_LABELS[mode]}</option>)}</select></label><button className="primary-button" type="button" disabled={saving} onClick={() => void onTransform()}>Créer l’intervention</button></div><div className="operation-action-box subtle"><strong>Ou clore sans travail</strong><input value={closeReason} onChange={(event) => setCloseReason(event.target.value)} placeholder="Motif facultatif" /><button className="secondary-button" type="button" onClick={() => void onCloseRequest()}>Clore sans intervention</button></div></>}</aside>;
 }
 
 function InterventionDetail({ onSaved, intervention, expanded, onExpand, onClose, onStatus, onCoverage, onProjectNode, onTimer, onMessage }: { onSaved:()=>void; intervention: Intervention; expanded: boolean; onExpand: () => void; onClose: () => void; onStatus: (status: InterventionStatus) => Promise<void>; onCoverage: (coverage: InterventionCoverageMode) => Promise<void>; onProjectNode: (projectNodeId: string | null) => Promise<void>; onTimer: (intervention: Intervention) => void; onMessage: (message: string) => void; }) {
