@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import type { BillingItem } from '../../shared/billing';
-import type { ProspectSummary, SearchResult } from '../../shared/crm';
+import type { CrmAction, ProspectSummary, SearchResult } from '../../shared/crm';
 import type { Intervention } from '../../shared/operations';
 import type { OperationsAlert, OperationsAlertsSnapshot } from '../../shared/operationsAlerts';
 import type { ProjectSummary } from '../../shared/projects';
@@ -15,6 +15,7 @@ type HomePageName = 'Prospects' | 'Devis' | 'Projets' | 'Interventions & Mainten
 interface HomeData {
   entries: DashboardEntry[];
   prospects: ProspectSummary[];
+  actions: CrmAction[];
   projects: ProjectSummary[];
   interventions: Intervention[];
   time: TimeSummary;
@@ -35,8 +36,8 @@ function openPage(page: HomePageName): void {
   window.dispatchEvent(new CustomEvent('atoumweb:open-page', { detail: page }));
 }
 
-function openProspectPipeline(): void {
-  window.dispatchEvent(new CustomEvent('atoumweb:open-prospects-view', { detail: 'pipeline' }));
+function openProspectPipeline(filter: 'all' | 'relaunch' | 'overdue' = 'all'): void {
+  window.dispatchEvent(new CustomEvent('atoumweb:open-prospects-view', { detail: { view: 'pipeline', pipelineFilter: filter } }));
 }
 
 function money(cents: number): string {
@@ -81,16 +82,17 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
     const to = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).toISOString();
     setLoadError('');
     try {
-      const [entries, prospects, projects, interventions, time, billing, alerts] = await Promise.all([
+      const [entries, prospects, actions, projects, interventions, time, billing, alerts] = await Promise.all([
         window.atoumweb.workflow.dashboard(),
         window.atoumweb.crm.prospects.list(),
+        window.atoumweb.crm.actions.list({ ownerType: 'prospect' }),
         window.atoumweb.projects.projects.list(),
         window.atoumweb.operations.interventions.list(),
         window.atoumweb.time.summary({ from, to }),
         window.atoumweb.billing.list(),
         window.atoumweb.operationsAlerts.get(),
       ]);
-      setData({ entries, prospects, projects, interventions, time, billing, alerts });
+      setData({ entries, prospects, actions, projects, interventions, time, billing, alerts });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Impossible de charger l’accueil.';
       setLoadError(message);
@@ -119,18 +121,36 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
   }, []);
 
   const todayEntries = useMemo(() => data?.entries.filter((entry) => entry.group === 'Aujourd’hui') ?? [], [data]);
-  const activeProspects = useMemo(() => data?.prospects.filter((item) => !item.archivedAt && !['won', 'lost'].includes(item.stage ?? 'new')) ?? [], [data]);
-  const relaunchCount = activeProspects.filter((item) => ['follow_up', 'waiting'].includes(item.stage ?? 'new')).length;
-  const quotePrepareCount = activeProspects.filter((item) => item.stage === 'quote_to_prepare').length;
+  const activeProspects = useMemo(() => data?.prospects.filter((item) => !item.archivedAt && !item.clientAccountId && !['won', 'lost'].includes(item.stage ?? 'new')) ?? [], [data]);
+  const pipelineProspects = useMemo(() => activeProspects.filter((item) => (item.stage ?? 'new') !== 'new'), [activeProspects]);
+  const dueFollowUps = useMemo(() => {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date(startOfToday);
+    endOfToday.setDate(endOfToday.getDate() + 1);
+    const due = new Set<string>();
+    const overdue = new Set<string>();
+    for (const action of data?.actions ?? []) {
+      if (action.ownerType !== 'prospect' || action.type !== 'follow_up' || action.status !== 'open' || !action.dueAt) continue;
+      const timestamp = new Date(action.dueAt).getTime();
+      if (!Number.isFinite(timestamp) || timestamp >= endOfToday.getTime()) continue;
+      due.add(action.ownerId);
+      if (timestamp < startOfToday.getTime()) overdue.add(action.ownerId);
+    }
+    return { due, overdue };
+  }, [data?.actions]);
+  const relaunchCount = pipelineProspects.filter((item) => dueFollowUps.due.has(item.id)).length;
+  const overdueRelaunchCount = pipelineProspects.filter((item) => dueFollowUps.overdue.has(item.id)).length;
+  const quotePrepareCount = activeProspects.filter((item) => ['quote_to_prepare', 'quote_to_send'].includes(item.stage ?? 'new')).length;
   const projectsToStart = data?.projects.filter((item) => item.status === 'to_prepare').length ?? 0;
   const interventionsInProgress = data?.interventions.filter((item) => item.status === 'in_progress').length ?? 0;
 
   const pipeline: PipelineItem[] = [
-    { key: 'need', label: 'Besoin à identifier', count: activeProspects.filter((item) => item.stage === 'new').length, tone: 'blue' },
-    { key: 'qualify', label: 'À qualifier', count: activeProspects.filter((item) => ['qualifying', 'need_identified'].includes(item.stage ?? 'new')).length, tone: 'purple' },
-    { key: 'negotiation', label: 'Négociation', count: activeProspects.filter((item) => item.stage === 'negotiation').length, tone: 'yellow' },
-    { key: 'followup', label: 'À relancer', count: activeProspects.filter((item) => ['follow_up', 'waiting'].includes(item.stage ?? 'new')).length, tone: 'orange' },
-    { key: 'quote', label: 'Devis envoyé', count: activeProspects.filter((item) => ['quote_to_prepare', 'quote_to_send', 'quote_sent'].includes(item.stage ?? 'new')).length, tone: 'green' },
+    { key: 'qualify', label: 'À qualifier', count: pipelineProspects.filter((item) => item.stage === 'qualifying').length, tone: 'blue' },
+    { key: 'needs', label: 'Identifier les besoins', count: pipelineProspects.filter((item) => item.stage === 'need_identified').length, tone: 'purple' },
+    { key: 'quote', label: 'Préparer le devis Abby', count: pipelineProspects.filter((item) => ['quote_to_prepare', 'quote_to_send'].includes(item.stage ?? 'new')).length, tone: 'yellow' },
+    { key: 'reply', label: 'Attente du retour', count: pipelineProspects.filter((item) => ['quote_sent', 'follow_up', 'waiting'].includes(item.stage ?? 'new')).length, tone: 'orange' },
+    { key: 'negotiation', label: 'Négociation', count: pipelineProspects.filter((item) => item.stage === 'negotiation').length, tone: 'green' },
   ];
 
   const pipelineTotal = pipeline.reduce((sum, item) => sum + item.count, 0);
@@ -142,7 +162,7 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
   const alerts = data?.alerts.alerts ?? [];
   const greeting = clockNow.getHours() < 18 ? 'Bonjour !' : 'Bonsoir !';
   const dateLabel = clockNow.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  const timeLabel = clockNow.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
 
   if (loading && !data) {
     return <section className="home-dashboard home-dashboard-loading"><div className="home-loading-card"><span className="eyebrow">Accueil</span><strong>Chargement du tableau de bord…</strong></div></section>;
@@ -155,11 +175,11 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
   return <section className="home-dashboard">
     <header className="home-heading">
       <div><h1>Accueil</h1><p>Vue rapide de l’activité AtoumWeb</p></div>
-      <div className="home-greeting"><OperationIcon name="sun" size={27} /><div><strong>{greeting}</strong><span>{dateLabel} · {timeLabel}</span></div></div>
+      <div className="home-greeting"><div><strong>{greeting}</strong><span>{dateLabel}</span></div></div>
     </header>
 
     <div className="home-kpi-grid">
-      <HomeKpi icon="user" tone="red" label="Prospects à relancer" value={relaunchCount} helper="À reprendre dans le pipeline" onClick={openProspectPipeline} />
+      <HomeKpi icon="user" tone="red" label="Prospects à relancer" value={relaunchCount} helper={overdueRelaunchCount ? `${overdueRelaunchCount} en retard · à traiter dans le pipeline` : 'À traiter aujourd’hui dans le pipeline'} onClick={() => openProspectPipeline('relaunch')} />
       <HomeKpi icon="file-text" tone="blue" label="Devis à préparer" value={quotePrepareCount} helper="Dossiers prêts à chiffrer" onClick={() => openPage('Devis')} />
       <HomeKpi icon="folder" tone="green" label="Projets à démarrer" value={projectsToStart} helper="Projets encore à préparer" onClick={() => openPage('Projets')} />
       <HomeKpi icon="wrench" tone="orange" label="Interventions en cours" value={interventionsInProgress} helper="Travail actuellement ouvert" onClick={() => openPage('Interventions & Maintenance')} />
@@ -189,7 +209,7 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
         <div className="home-pipeline-bar" aria-label="Répartition du pipeline">
           {pipeline.map((item) => <span key={item.key} className={`tone-${item.tone}`} style={{ flexGrow: Math.max(item.count, .3) }} />)}
         </div>
-        <div className="home-pipeline-footer"><span>{pipelineTotal} prospect{pipelineTotal > 1 ? 's' : ''} dans le pipeline</span><button type="button" onClick={openProspectPipeline}>Voir tout →</button></div>
+        <div className="home-pipeline-footer"><span>{pipelineTotal} prospect{pipelineTotal > 1 ? 's' : ''} dans le pipeline</span></div>
       </article>
 
       <article className="home-card home-time-card">
@@ -232,9 +252,9 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
 }
 
 function HomeKpi({ icon, tone, label, value, helper, onClick }: { icon: OperationIconName; tone: string; label: string; value: number; helper: string; onClick: () => void }) {
-  return <button type="button" className={`home-kpi-card tone-${tone}`} onClick={onClick}>
+  return <button type="button" className={`home-kpi-card tone-${tone}`} onClick={onClick} title={`${label} : ${value}. ${helper}`}>
     <span className="home-kpi-icon"><OperationIcon name={icon} size={28} /></span>
-    <span className="home-kpi-copy"><strong>{label}</strong><b>{value}</b><small>{helper}</small></span>
+    <span className="home-kpi-copy"><strong title={label}>{label}</strong><b>{value}</b><small title={helper}>{helper}</small></span>
     <span className="home-kpi-open">›</span>
   </button>;
 }
