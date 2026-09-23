@@ -238,9 +238,9 @@ export function MaintenancePanel({ clients, projects, onMessage, onInterventionC
 
   return <div className="maintenance-panel-stack">
     <section className="maintenance-dashboard" aria-label="Synthèse Maintenance">
-      <article><span className="maintenance-dashboard-icon" aria-hidden="true">✓</span><div><strong>Maintenances actives</strong><span>${activeCount}</span><small>Contrats actuellement suivis</small></div></article>
-      <article><span className="maintenance-dashboard-icon" aria-hidden="true">Ⅱ</span><div><strong>Suspendues</strong><span>${suspendedCount}</span><small>À reprendre ou à clôturer</small></div></article>
-      <article><span className="maintenance-dashboard-icon" aria-hidden="true">▤</span><div><strong>Plans actifs</strong><span>${activePlansCount}</span><small>Références disponibles</small></div></article>
+      <article><span className="maintenance-dashboard-icon" aria-hidden="true">✓</span><div><strong>Maintenances actives</strong><span>{activeCount}</span><small>Contrats actuellement suivis</small></div></article>
+      <article><span className="maintenance-dashboard-icon" aria-hidden="true">Ⅱ</span><div><strong>Suspendues</strong><span>{suspendedCount}</span><small>À reprendre ou à clôturer</small></div></article>
+      <article><span className="maintenance-dashboard-icon" aria-hidden="true">▤</span><div><strong>Plans actifs</strong><span>{activePlansCount}</span><small>Références disponibles</small></div></article>
       <article><span className="maintenance-dashboard-icon" aria-hidden="true">€</span><div><strong>Valeur / période</strong><span>{euro(contractValue)}</span><small>Souscriptions actives</small></div></article>
     </section>
     <div className="module-toolbar operations-toolbar">
