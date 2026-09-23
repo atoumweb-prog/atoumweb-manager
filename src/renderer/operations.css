@@ -1642,3 +1642,127 @@ button.operations-health-chip:disabled {
   }
 }
 
+/* Incident — conclusion de panne et rapport de fin */
+.intervention-conclusion-panel {
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 4%, var(--surface));
+}
+
+.intervention-conclusion-panel.open {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
+}
+
+.intervention-conclusion-toggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.intervention-conclusion-toggle > span:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.intervention-conclusion-toggle strong {
+  font-size: var(--aw-font-secondary, 15px);
+  font-weight: 700;
+}
+
+.intervention-conclusion-toggle small {
+  color: var(--text-muted);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 400;
+}
+
+.intervention-conclusion-content {
+  display: grid;
+  gap: 12px;
+  padding: 0 14px 14px;
+}
+
+.intervention-conclusion-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.intervention-conclusion-grid label {
+  display: grid;
+  gap: 6px;
+  color: var(--text);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 700;
+}
+
+.intervention-conclusion-grid textarea {
+  min-height: 92px;
+  resize: vertical;
+  font-weight: 400;
+}
+
+.intervention-final-report-preview {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.intervention-final-report-preview > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.intervention-final-report-preview > div:first-child > strong {
+  font-size: var(--aw-font-secondary, 15px);
+  font-weight: 700;
+}
+
+.intervention-final-report-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(110px, 1fr));
+  gap: 7px;
+}
+
+.intervention-final-report-stats span {
+  display: grid;
+  gap: 2px;
+  color: var(--text-muted);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 400;
+}
+
+.intervention-final-report-stats strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.intervention-final-report-preview > small {
+  color: var(--text-muted);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 400;
+}
+
+.required-mark {
+  color: var(--danger);
+}
+
+@media (max-width: 860px) {
+  .intervention-conclusion-grid,
+  .intervention-final-report-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
