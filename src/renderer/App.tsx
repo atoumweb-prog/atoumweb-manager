@@ -89,9 +89,20 @@ function App() {
   const [message, setMessage] = useState<string | null>(null);
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [crmTarget,setCrmTarget] = useState<string|null>(null);
+  const [prospectViewTarget, setProspectViewTarget] = useState<'directory' | 'pipeline' | 'history'>('directory');
   const [quoteTarget,setQuoteTarget] = useState<string|null>(null);
   useEffect(()=>{const open=(event:Event)=>openSearchResult((event as CustomEvent<SearchResult>).detail);window.addEventListener('atoumweb:navigate',open);return()=>window.removeEventListener('atoumweb:navigate',open);},[]);
   useEffect(() => { const open = (event: Event) => setActivePage((event as CustomEvent<PageName>).detail); window.addEventListener('atoumweb:open-page', open); return () => window.removeEventListener('atoumweb:open-page', open); }, []);
+  useEffect(() => {
+    const open = (event: Event) => {
+      const view = (event as CustomEvent<'directory' | 'pipeline' | 'history'>).detail;
+      setProspectViewTarget(view);
+      setCrmTarget(null);
+      setActivePage('Prospects');
+    };
+    window.addEventListener('atoumweb:open-prospects-view', open);
+    return () => window.removeEventListener('atoumweb:open-prospects-view', open);
+  }, []);
   useEffect(() => {
     const openConclusion = (event: Event) => {
       const interventionId = (event as CustomEvent<{ interventionId?: string }>).detail?.interventionId;
@@ -187,7 +198,7 @@ function App() {
 
   function openSearchResult(result: SearchResult): void {
     switch (result.entityType) {
-      case 'prospect': setCrmTarget(result.entityId); setActivePage('Prospects'); break;
+      case 'prospect': setProspectViewTarget('directory'); setCrmTarget(result.entityId); setActivePage('Prospects'); break;
       case 'catalog': setActivePage('Offres & Tarifs'); break;
       case 'quote': setQuoteTarget(result.entityId); setActivePage('Devis'); break;
       case 'project':
@@ -262,7 +273,7 @@ function App() {
 
           {activePage === 'Accueil' && <HomeDashboard onMessage={setMessage} />}
           {activePage === 'Réglages' && <DemoPanel />}
-          {activePage === 'Prospects' && <ProspectsPage key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
+          {activePage === 'Prospects' && <ProspectsPage key={`${crmTarget ?? 'none'}:${prospectViewTarget}`} initialId={crmTarget} initialView={prospectViewTarget} onMessage={setMessage} />}
           {activePage === 'Clients' && <ClientsPage key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
           {activePage === 'Offres & Tarifs' && <CatalogPage onMessage={setMessage} />}
           {activePage === 'Devis' && <QuotesPage key={quoteTarget} initialId={quoteTarget} onMessage={setMessage} />}
