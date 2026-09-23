@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import type { QuoteSummary } from '../../shared/commercial';
 import {
   PROSPECT_SOURCES,
@@ -181,6 +181,7 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(initialId ?? null);
+  const [prospectSplitPercent, setProspectSplitPercent] = useState(66);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deskModeId, setDeskModeId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -261,6 +262,9 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
   const deskProspect = prospects.find((item) => item.id === deskModeId) ?? null;
   const selectedActions = actions.filter((item) => item.ownerId === selectedId);
   const byStage = useMemo(() => { const map = new Map<ProspectStage, ProspectSummary[]>(); ACTIVE_STAGES.forEach((stage) => map.set(stage, [])); pipelineFiltered.forEach((item) => map.get(item.stage ?? 'new')?.push(item)); return map; }, [pipelineFiltered]);
+  const prospectSplitStyle = selected && !deskProspect
+    ? ({ '--prospect-list-percent': `${prospectSplitPercent}%` } as CSSProperties)
+    : undefined;
 
   async function submitProspect(event: FormEvent) {
     event.preventDefault(); setFormError('');
@@ -403,6 +407,41 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
     await changeStage(prospect, target);
   }
 
+  function beginProspectResize(splitter: HTMLElement): void {
+    const workspace = splitter.parentElement;
+    if (!workspace) return;
+    document.body.classList.add('operation-resizing');
+    const onMove = (event: PointerEvent) => {
+      const rect = workspace.getBoundingClientRect();
+      if (!rect.width) return;
+      const requested = ((event.clientX - rect.left) / rect.width) * 100;
+      const maxForDetail = ((rect.width - 328) / rect.width) * 100;
+      const maxPercent = Math.max(52, Math.min(74, maxForDetail));
+      setProspectSplitPercent(Math.max(40, Math.min(maxPercent, requested)));
+    };
+    const onUp = () => {
+      document.body.classList.remove('operation-resizing');
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp, { once: true });
+  }
+
+  const prospectSplitter = selected && !deskProspect ? <div
+    className="operation-splitter prospect-splitter"
+    role="separator"
+    aria-orientation="vertical"
+    aria-label="Redimensionner l’annuaire et la fiche prospect"
+    tabIndex={0}
+    onPointerDown={(event) => { event.stopPropagation(); beginProspectResize(event.currentTarget); }}
+    onDoubleClick={(event) => { event.stopPropagation(); setProspectSplitPercent(66); }}
+    onKeyDown={(event) => {
+      if (event.key === 'ArrowLeft') setProspectSplitPercent((value) => Math.max(40, value - 3));
+      if (event.key === 'ArrowRight') setProspectSplitPercent((value) => Math.min(74, value + 3));
+    }}
+  ><span /></div> : null;
+
   const detail = selected ? <div ref={sidePanelRef} className="prospect-side-panel-boundary"><ProspectDetailV2
     prospect={selected}
     actions={selectedActions}
@@ -503,7 +542,7 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
         <label>Température commerciale<select value={draft.temperature} onChange={(e) => setDraft({ ...draft, temperature: e.target.value as ProspectTemperature })}>{PROSPECT_TEMPERATURES.map((temperature) => <option key={temperature} value={temperature}>{TEMPERATURE_LABELS[temperature]}</option>)}</select></label><label>Valeur estimée (€)<input inputMode="decimal" value={draft.estimatedValueEuros} onChange={(e) => setDraft({ ...draft, estimatedValueEuros: e.target.value })} /></label>
         <label>Première action — date<input type="date" value={draft.firstActionDate} onChange={(e) => setDraft({ ...draft, firstActionDate: e.target.value })} /></label><label className="form-span-2">Première action<input value={draft.firstActionText} onChange={(e) => setDraft({ ...draft, firstActionText: e.target.value })} placeholder="Ex. rechercher le gérant, appeler l’accueil…" /></label>
       </div>{formError && <p className="form-error" role="alert">{formError}</p>}<div className="form-actions"><button className="primary-button" disabled={saving} type="submit">{saving ? 'Création…' : 'Ajouter à l’annuaire'}</button></div></form>}
-      {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'}>
+      {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'} style={prospectSplitStyle}>
         <div className="panel table-panel prospect-directory-table-panel">
           <div className="clients-table-wrap">
             <table className="clients-table prospect-directory-table">
@@ -526,6 +565,7 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
             </table>
           </div>
         </div>
+        {prospectSplitter}
         {selected && !deskProspect && detail}
       </div>}
     </>}
@@ -541,11 +581,11 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
           <button className="secondary-button" onClick={() => setView('directory')}>Annuaire prospects</button>
         </div>
       </div>
-      {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'}><div className="kanban-board">{PIPELINE_GROUPS.map((group) => {
+      {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'} style={prospectSplitStyle}><div className="kanban-board">{PIPELINE_GROUPS.map((group) => {
         const groupProspects = group.stages.flatMap((stage) => byStage.get(stage) ?? []);
         const targetStage = group.stages[0];
         return <section className={`kanban-column pipeline-step-column ${dropStage === targetStage ? 'drag-over' : ''}`} key={group.id} onDragOver={(e) => e.preventDefault()} onDragEnter={() => setDropStage(targetStage)} onDrop={(e) => { e.preventDefault(); void handleGroupDrop(group.stages); }}><header><div><small>Étape {group.step}</small><strong>{group.label}</strong></div><span>{groupProspects.length}</span></header><div className="kanban-cards stacked-cards">{groupProspects.map((prospect) => renderProspectCard(prospect))}{groupProspects.length === 0 && <div className="kanban-empty">Aucun dossier</div>}</div></section>;
-      })}</div>{selected && !deskProspect && detail}</div>}
+      })}</div>{prospectSplitter}{selected && !deskProspect && detail}</div>}
     </>}
 
     {view === 'history' && <HistoryView prospects={closed.filter((item) => [item.displayName, item.primaryNeed, item.lostReason].filter(Boolean).join(' ').toLocaleLowerCase('fr-FR').includes(historySearch.toLocaleLowerCase('fr-FR')))} search={historySearch} onSearch={setHistorySearch} onSelect={(item) => setSelectedId(item.id)} selected={selected} activity={activity} onClose={() => setSelectedId(null)} />}
