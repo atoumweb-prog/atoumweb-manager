@@ -54,11 +54,14 @@
 - [x] protection page Clients alignée sur la logique de la fenêtre Référence Prospect pour éviter qu’une fiche défaillante fasse disparaître toute l’interface ;
 - [x] Gestion des temps : correction du plantage `ReferenceError: OperationIcon is not defined` introduit lors du remplacement des anciens symboles par les pictos SVG ; correctif confirmé visuellement sur MSI par l’utilisateur ;
 - [x] thème Noir : contraste des teintes métier CRM renforcé pendant la recette visuelle continue.
+- [x] Annuaire professionnel central : vues Organisations / Contacts, recherche et filtres, liens réels Client / Prospect / Externe, identité visuelle, fiche redimensionnable et agrandissable, sans migration supplémentaire ;
+- [x] Statistiques V1 intégrées sur le socle Projet V2 : Vue d’ensemble / Commercial / Projets & temps / Clients, périodes mois / trimestre / année / toutes données, comparaison à la période précédente et indicateurs dérivés des données métier existantes ;
+- [ ] analytique avancée Phase 7 encore à réaligner : encaissements/paiements, rentabilité complète par prestation, exports statistiques et pilotage avancé.
 
 ### Validation
 
 - [x] dernier checkpoint MSI confirmé par l’utilisateur avant ce lot : **40 fichiers / 187 tests réussis**, SQLite à **34 migrations**.
-- [ ] revalider le HEAD actuel après le dernier lot : aide / actions / coffre sécurisé / Catalogue Offres & Tarifs / ateliers Interventions & Packs / Gestion des temps / Facturation PDF Abby / Dépenses / identité CRM / timer Intervention / Bibliothèque / Sauvegardes / migrations 31–35 / cohérence UI globale. La recette visuelle a déjà confirmé le correctif du plantage Gestion des temps après import manquant de `OperationIcon`.
+- [ ] revalider le HEAD actuel après le dernier lot : aide / actions / coffre sécurisé / Catalogue Offres & Tarifs / ateliers Interventions & Packs / Gestion des temps / Facturation PDF Abby / Dépenses / identité CRM / timer Intervention / Bibliothèque / Sauvegardes / Documents & Contrats / Annuaire / Statistiques / migrations 31–35 / cohérence UI globale. La recette visuelle a déjà confirmé le correctif du plantage Gestion des temps après import manquant de `OperationIcon`.
 - [ ] `npm run typecheck`
 - [ ] `npm test`
 - [ ] `npm run package`
@@ -105,8 +108,8 @@ Prochaine action : terminer la recette visuelle du lot avant toute validation fi
 - **Branche Git historique** : `main` (non utilisée comme base courante tant que le socle n'est pas consolidé)
 - **Socle fonctionnel courant** : `fix/pre-phase5-commercial-ux`
 - **Chantier actif** : `feature/project-blueprints-v1` — PR #73
-- **Statistiques en attente d'intégration** : `feature/phase-7-analytics-v1` — PR #71
-- **Migrations courantes sur Projet V2 / Catalogue** : 31
+- **Statistiques V1 initiales intégrées dans le chantier actif** ; la branche historique `feature/phase-7-analytics-v1` / PR #71 reste à réaligner uniquement pour l’analytique avancée non encore reprise
+- **Migrations courantes sur Projet V2 / recette visuelle** : 35
 - **Principe directeur** : une donnée métier possède une source unique ; les autres écrans la référencent sans duplication.
 
 ### Stabilisation transverse — 15/09/2026
