@@ -553,7 +553,8 @@ export class BridgeSnapshotService {
   }
 
   private safeSegment(value: string): string {
-    return value.replace(/[<>:"/\\|?*]/g, '-').replace(/[. ]+$/g, '').trim().slice(0, 150) || 'snapshot';
+    const printable = [...value].map((char) => char.charCodeAt(0) < 32 ? '-' : char).join('');
+    return printable.replace(/[<>:"/\\|?*]/g, '-').replace(/[. ]+$/g, '').trim().slice(0, 150) || 'snapshot';
   }
 }
 
