@@ -13,6 +13,7 @@ import type { ReferentialsApi } from './referentials';
 import type { BusinessBackupsApi } from './businessBackups';
 import type { BusinessBackupAlertsApi } from './businessBackupAlerts';
 import type { TimeApi } from './time';
+import type { BridgeSnapshotsApi } from './bridgeSnapshots';
 
 export const THEME_NAMES = ['atoumweb', 'noir', 'blanc'] as const;
 export const DISPLAY_DENSITIES = ['compact', 'comfort', 'comfort_plus'] as const;
@@ -84,6 +85,7 @@ export interface AtoumWebApi {
   database: {
     health(): Promise<DatabaseHealth>;
   };
+  bridgeSnapshots: BridgeSnapshotsApi;
   crm: CrmApi;
   clientDocuments: ClientDocumentsApi;
   billing: BillingApi;
