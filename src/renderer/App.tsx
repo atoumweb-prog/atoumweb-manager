@@ -17,6 +17,7 @@ import { ProspectReferenceWindow } from './crm/ProspectReferenceWindow';
 import { OperationsPage, type OperationsSearchTarget } from './operations/OperationsPage';
 import { ProjectsPage } from './projects/ProjectsPage';
 import { AtoumWebLibraryPage } from './referentials/AtoumWebLibraryPage';
+import { StatisticsPage } from './statistics/StatisticsPage';
 import { GlobalTimer } from './time/GlobalTimer';
 import { TimePage } from './time/TimePage';
 
@@ -56,7 +57,7 @@ const PAGE_HINTS: Record<PageName, string> = {
   'Bibliothèque AtoumWeb': 'Composants et références techniques réutilisables.',
   Sauvegardes: 'Traçabilité des sauvegardes serveur, locales et externes.',
   Annuaire: 'Organisations, contacts professionnels et relations CRM.',
-  Statistiques: 'Commercial, temps, rentabilité, clients et prestations.',
+  Statistiques: 'Commercial, projets, temps, clients et repères financiers.',
   Réglages: 'Identité, apparence, stockage, modèles et préférences.',
 };
 
@@ -295,8 +296,9 @@ function App() {
           {activePage === 'Bibliothèque AtoumWeb' && <AtoumWebLibraryPage onMessage={setMessage} initialItemId={librarySearchTarget} />}
           {activePage === 'Sauvegardes' && <BusinessBackupsPage onMessage={setMessage} initialRecordId={backupSearchTarget} />}
           {activePage === 'Annuaire' && <DirectoryPage onMessage={setMessage} initialTarget={directoryTarget} />}
+          {activePage === 'Statistiques' && <StatisticsPage onMessage={setMessage} />}
           {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} displayDensity={displayDensity} showHoverHelp={showHoverHelp} onThemeChange={updateTheme} onDensityChange={updateDisplayDensity} onShowHoverHelpChange={updateShowHoverHelp} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
-          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Facturation' && activePage !== 'Dépenses' && activePage !== 'Documents & Contrats' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Sauvegardes' && activePage !== 'Annuaire' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
+          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Facturation' && activePage !== 'Dépenses' && activePage !== 'Documents & Contrats' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Sauvegardes' && activePage !== 'Annuaire' && activePage !== 'Statistiques' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
         </section>
       </main>
     </div>
