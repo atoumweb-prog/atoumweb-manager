@@ -72,11 +72,11 @@
 
 .billing-kpi-icon {
   display: inline-grid;
-  width: 38px;
-  height: 38px;
+  width: 48px;
+  height: 48px;
   place-items: center;
   border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
-  border-radius: 10px;
+  border-radius: 12px;
   background: color-mix(in srgb, var(--accent-soft) 52%, var(--surface));
   color: var(--accent);
   font-size: 17px;
@@ -609,5 +609,27 @@ body.billing-resizing {
 
   .billing-origin-line {
     grid-template-columns: 1fr;
+  }
+}
+
+.billing-toolbar .secondary-button,
+.billing-invoice-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 1050px) {
+  .billing-toolbar {
+    align-items: stretch;
+  }
+
+  .billing-toolbar .toolbar-controls {
+    width: 100%;
+  }
+
+  .billing-toolbar .inline-search {
+    flex: 1 1 260px;
+    min-width: 220px;
   }
 }
