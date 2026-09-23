@@ -84,6 +84,7 @@ const EMPTY_DRAFT: ProspectDraft = {
 };
 
 type View = 'directory' | 'pipeline' | 'history';
+export type ProspectPipelineFilter = 'all' | 'relaunch' | 'overdue';
 type DirectoryStatusFilter = 'follow' | 'all' | 'prepare' | 'ready' | ProspectStage;
 
 const PIPELINE_GROUPS: Array<{ id: string; step: number; label: string; stages: ProspectStage[]; icon: string }> = [
@@ -162,12 +163,13 @@ function quoteCardState(prospect: ProspectSummary, quote: QuoteSummary): string 
   return 'En attente de retour';
 }
 
-export function ProspectsPage({ onMessage, initialId, initialView = 'directory' }: { onMessage: (message: string) => void; initialId?: string | null; initialView?: View }) {
+export function ProspectsPage({ onMessage, initialId, initialView = 'directory', initialPipelineFilter = 'all' }: { onMessage: (message: string) => void; initialId?: string | null; initialView?: View; initialPipelineFilter?: ProspectPipelineFilter }) {
   const [prospects, setProspects] = useState<ProspectSummary[]>([]);
   const [actions, setActions] = useState<CrmAction[]>([]);
   const [quotes, setQuotes] = useState<QuoteSummary[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
   const [view, setView] = useState<View>(initialView);
+  const [pipelineFilter, setPipelineFilter] = useState<ProspectPipelineFilter>(initialPipelineFilter);
   const [directorySearch, setDirectorySearch] = useState('');
   const [directoryIndustry, setDirectoryIndustry] = useState('');
   const [directoryCity, setDirectoryCity] = useState('');
@@ -217,6 +219,29 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory' 
   const active = useMemo(() => prospects.filter((item) => !isClosed(item)), [prospects]);
   const directory = useMemo(() => prospects.filter((item) => !item.archivedAt), [prospects]);
   const pipelineActive = useMemo(() => active.filter((item) => (item.stage ?? 'new') !== 'new'), [active]);
+  const followUpBuckets = useMemo(() => {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date(startOfToday);
+    endOfToday.setDate(endOfToday.getDate() + 1);
+    const relaunch = new Set<string>();
+    const overdue = new Set<string>();
+    for (const action of actions) {
+      if (action.ownerType !== 'prospect' || action.type !== 'follow_up' || action.status !== 'open' || !action.dueAt) continue;
+      const timestamp = new Date(action.dueAt).getTime();
+      if (!Number.isFinite(timestamp) || timestamp >= endOfToday.getTime()) continue;
+      relaunch.add(action.ownerId);
+      if (timestamp < startOfToday.getTime()) overdue.add(action.ownerId);
+    }
+    return { relaunch, overdue };
+  }, [actions]);
+  const relaunchCount = useMemo(() => pipelineActive.filter((item) => followUpBuckets.relaunch.has(item.id)).length, [pipelineActive, followUpBuckets]);
+  const overdueCount = useMemo(() => pipelineActive.filter((item) => followUpBuckets.overdue.has(item.id)).length, [pipelineActive, followUpBuckets]);
+  const pipelineFiltered = useMemo(() => {
+    if (pipelineFilter === 'relaunch') return pipelineActive.filter((item) => followUpBuckets.relaunch.has(item.id));
+    if (pipelineFilter === 'overdue') return pipelineActive.filter((item) => followUpBuckets.overdue.has(item.id));
+    return pipelineActive;
+  }, [pipelineActive, pipelineFilter, followUpBuckets]);
   const directoryIndustries = useMemo(() => [...new Set(directory.map((item) => item.organizationIndustry).filter((value): value is string => Boolean(value)))].sort((a,b) => a.localeCompare(b, 'fr')), [directory]);
   const directoryCities = useMemo(() => [...new Set(directory.map((item) => item.organizationCity).filter((value): value is string => Boolean(value)))].sort((a,b) => a.localeCompare(b, 'fr')), [directory]);
   const directoryFiltered = useMemo(() => directory.filter((item) => {
@@ -231,7 +256,7 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory' 
   const selected = prospects.find((item) => item.id === selectedId) ?? null;
   const deskProspect = prospects.find((item) => item.id === deskModeId) ?? null;
   const selectedActions = actions.filter((item) => item.ownerId === selectedId);
-  const byStage = useMemo(() => { const map = new Map<ProspectStage, ProspectSummary[]>(); ACTIVE_STAGES.forEach((stage) => map.set(stage, [])); pipelineActive.forEach((item) => map.get(item.stage ?? 'new')?.push(item)); return map; }, [pipelineActive]);
+  const byStage = useMemo(() => { const map = new Map<ProspectStage, ProspectSummary[]>(); ACTIVE_STAGES.forEach((stage) => map.set(stage, [])); pipelineFiltered.forEach((item) => map.get(item.stage ?? 'new')?.push(item)); return map; }, [pipelineFiltered]);
 
   async function submitProspect(event: FormEvent) {
     event.preventDefault(); setFormError('');
@@ -393,6 +418,15 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory' 
     const itemActions = actions.filter((a) => a.ownerId === prospect.id && a.status === 'open');
     const quoteFollowUp = isQuoteFollowUpStage(prospect.stage);
     const nextAction = nextOpenAction(itemActions);
+    const nextFollowUp = nextOpenAction(itemActions.filter((item) => item.type === 'follow_up'));
+    const followUpDueAt = nextFollowUp?.dueAt ? new Date(nextFollowUp.dueAt) : null;
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+    const followUpUrgency = followUpDueAt && Number.isFinite(followUpDueAt.getTime()) && followUpDueAt < tomorrowStart
+      ? (followUpDueAt < todayStart ? 'overdue' : 'today')
+      : null;
     const latestQuote = quotes.find((quote) => quote.prospectId === prospect.id) ?? null;
     const quoteRemaining = daysRemaining(latestQuote?.validUntil);
     const showQuoteFocus = Boolean(latestQuote && QUOTE_VISIBLE_STAGES.includes(prospect.stage ?? 'new'));
@@ -404,6 +438,7 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory' 
       </div>
       <div className="prospect-card-body">
         {group && <span className="prospect-card-step">Étape {group.step} · {group.label}</span>}
+        {followUpUrgency && <span className={`prospect-card-relaunch ${followUpUrgency}`}>{followUpUrgency === 'overdue' ? `Relance en retard · ${formatDate(nextFollowUp?.dueAt)}` : 'Relance à faire aujourd’hui'}</span>}
         <small>{prospect.secondaryLabel || 'Interlocuteur à préciser'}</small>
         {showQuoteFocus && latestQuote ? <div className="prospect-card-quote-focus"><span>{quoteCardState(prospect, latestQuote)}</span><strong>{latestQuote.number} · {latestQuote.subject}</strong><div className="prospect-card-quote-meta"><b>{formatMoney(latestQuote.contractValueCents)}</b>{latestQuote.sentAt && <span>Envoyé {formatDate(latestQuote.sentAt)}</span>}{latestQuote.validUntil && <span>Valide jusqu’au {formatDate(latestQuote.validUntil)}</span>}{quoteFollowUp && quoteRemaining != null && <span>{quoteRemaining < 0 ? `J+${Math.abs(quoteRemaining)} · relance dépassée` : `J-${quoteRemaining} avant échéance`}</span>}</div></div> : <><p>{prospect.primaryNeed || 'Besoin à préciser'}</p>{prospect.estimatedValueCents != null && <small>Estimation : {(prospect.estimatedValueCents / 100).toLocaleString('fr-FR')} €</small>}</>}
         {nextAction && <div className="card-action-line next-action-line"><span>Prochaine action</span><strong>{nextAction.title}</strong><small>{formatDate(nextAction.dueAt)}</small></div>}
@@ -417,7 +452,7 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory' 
   return <div className="crm-stack prospects-v2">
     <div className="prospect-view-switch" role="tablist">
       <button className={view === 'directory' ? 'active' : ''} onClick={() => setView('directory')}>Annuaire prospects <span>{directory.length}</span></button>
-      <button className={view === 'pipeline' ? 'active' : ''} onClick={() => setView('pipeline')}>Parcours commercial <span>{pipelineActive.length}</span></button>
+      <button className={view === 'pipeline' ? 'active' : ''} onClick={() => { setView('pipeline'); setPipelineFilter('all'); }}>Parcours commercial <span>{pipelineActive.length}</span></button>
       <button className={view === 'history' ? 'active' : ''} onClick={() => setView('history')}>Historique <span>{closed.length}</span></button>
     </div>
 
@@ -491,7 +526,16 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory' 
     </>}
 
     {view === 'pipeline' && <>
-      <div className="module-toolbar prospect-toolbar"><div><strong>{pipelineActive.length}</strong><span> opportunité{pipelineActive.length > 1 ? 's' : ''} commerciale{pipelineActive.length > 1 ? 's' : ''}</span></div><div className="toolbar-controls"><button className="secondary-button" onClick={() => void refresh()}>↻ Actualiser</button><button className="secondary-button" onClick={() => setView('directory')}>Annuaire prospects</button></div></div>
+      <div className="module-toolbar prospect-toolbar">
+        <div><strong>{pipelineFiltered.length}</strong><span> opportunité{pipelineFiltered.length > 1 ? 's' : ''} commerciale{pipelineFiltered.length > 1 ? 's' : ''}{pipelineFilter === 'relaunch' ? ' à relancer' : pipelineFilter === 'overdue' ? ' en retard' : ''}</span></div>
+        <div className="toolbar-controls">
+          <button className={pipelineFilter === 'all' ? 'primary-button' : 'secondary-button'} type="button" onClick={() => setPipelineFilter('all')}>Tous · {pipelineActive.length}</button>
+          <button className={pipelineFilter === 'relaunch' ? 'primary-button' : 'secondary-button'} type="button" onClick={() => setPipelineFilter('relaunch')}>À relancer · {relaunchCount}</button>
+          <button className={pipelineFilter === 'overdue' ? 'primary-button' : 'secondary-button'} type="button" onClick={() => setPipelineFilter('overdue')}>En retard · {overdueCount}</button>
+          <button className="secondary-button" onClick={() => void refresh()}>↻ Actualiser</button>
+          <button className="secondary-button" onClick={() => setView('directory')}>Annuaire prospects</button>
+        </div>
+      </div>
       {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'}><div className="kanban-board">{PIPELINE_GROUPS.map((group) => {
         const groupProspects = group.stages.flatMap((stage) => byStage.get(stage) ?? []);
         const targetStage = group.stages[0];
