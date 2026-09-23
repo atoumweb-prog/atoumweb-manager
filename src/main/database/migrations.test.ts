@@ -84,11 +84,13 @@ describe('migrations SQLite', () => {
     for (const column of ['reuse_status', 'origin_technical_item_id', 'library_category']) {
       expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('technical_items') WHERE name='${column}'`)?.name).toBe(column);
     }
-    expect(MIGRATIONS.at(-1)?.id).toBe(34);
+    expect(MIGRATIONS.at(-1)?.id).toBe(35);
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('expenses') WHERE name='project_id'")?.name).toBe('project_id');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('expenses') WHERE name='receipt_relative_path'")?.name).toBe('receipt_relative_path');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('crm_identity_assets') WHERE name='role'")?.name).toBe('role');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('crm_identity_assets') WHERE name='relative_path'")?.name).toBe('relative_path');
+    expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('time_session_pauses') WHERE name='reason'")?.name).toBe('reason');
+    expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('time_session_pauses') WHERE name='reason_note'")?.name).toBe('reason_note');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('billing_items') WHERE name='invoice_document_id'")?.name).toBe('invoice_document_id');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('billing_items') WHERE name='invoice_reference'")?.name).toBe('invoice_reference');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('billing_items') WHERE name='invoiced_at'")?.name).toBe('invoiced_at');
