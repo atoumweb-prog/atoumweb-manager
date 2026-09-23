@@ -5,6 +5,7 @@ import {
   type Intervention,
 } from '../../shared/operations';
 import type { OperationsAlert, OperationsAlertsSnapshot } from '../../shared/operationsAlerts';
+import { OperationIcon } from './OperationIcon';
 import './incident-quick-editor.css';
 
 type TargetView = 'interventions' | 'maintenance' | 'packs';
@@ -84,17 +85,38 @@ export function OperationsAlertsPanel({ refreshKey, onNavigate, onMessage }: {
     onNavigate(targetFor(alert));
   }
 
-  const compactEmpty = alerts.length === 0 && incidents.length === 0 && !incidentsExpanded;
+  const incidentAlertIds = new Set(alerts.filter((alert) => alert.kind === 'incident_critical_open').map((alert) => alert.interventionId).filter(Boolean));
+  const additionalIncidentCount = incidents.filter((incident) => !incidentAlertIds.has(incident.id)).length;
+  const attentionCount = alerts.length + additionalIncidentCount;
+  const billingCount = alerts.filter((alert) => alert.kind === 'intervention_ready_to_bill').length;
+  const maintenanceCount = alerts.filter((alert) => alert.kind.startsWith('maintenance_')).length;
+  const packCount = alerts.filter((alert) => alert.kind.startsWith('hour_pack_')).length;
 
-  return <section className={`panel operations-alerts-panel ${compactEmpty ? 'compact-empty' : ''}`}>
-    <div className="operations-alerts-heading">
-      <div><span className="eyebrow">À surveiller</span><h2>{alerts.length ? `${alerts.length} point(s) à suivre` : 'Aucune alerte opérationnelle'}</h2></div>
-      <div className="operations-alerts-actions">
-        {criticalCount > 0 && <span className="operation-priority priority-urgent">{criticalCount} urgent(s)</span>}
-        <button className="secondary-button" type="button" onClick={() => void load()}>↻</button>
+  return <section className={`panel operations-alerts-panel health-strip ${attentionCount === 0 ? 'is-clear' : 'has-attention'}`}>
+    <div className="operations-health-main">
+      <span className="operations-health-icon"><OperationIcon name={attentionCount === 0 ? 'shield-check' : 'alert'} size={22} /></span>
+      <div>
+        <span className="eyebrow">Suivi opérationnel</span>
+        <strong>{attentionCount === 0 ? 'Tout est à jour' : `${attentionCount} point(s) à traiter`}</strong>
+        <small>Incidents, facturation, maintenance et packs d’heures.</small>
       </div>
     </div>
-    {alerts.length === 0 ? <p className="muted">Maintenance, incidents, facturation opérationnelle et packs ne présentent actuellement aucun point critique selon les seuils configurés.</p> : <div className="operations-alerts-list">
+
+    <div className="operations-health-counters" aria-label="Points suivis">
+      <button type="button" className={incidents.length ? 'operations-health-chip has-value' : 'operations-health-chip'} onClick={() => incidents.length && setIncidentsExpanded((value) => !value)} disabled={!incidents.length}>
+        <OperationIcon name="alert" size={16} /><span>Incidents</span><strong>{incidents.length}</strong>
+      </button>
+      <span className={billingCount ? 'operations-health-chip has-value' : 'operations-health-chip'}><OperationIcon name="receipt" size={16} /><span>À facturer</span><strong>{billingCount}</strong></span>
+      <span className={maintenanceCount ? 'operations-health-chip has-value' : 'operations-health-chip'}><OperationIcon name="maintenance" size={16} /><span>Maintenance</span><strong>{maintenanceCount}</strong></span>
+      <span className={packCount ? 'operations-health-chip has-value' : 'operations-health-chip'}><OperationIcon name="hourglass" size={16} /><span>Packs</span><strong>{packCount}</strong></span>
+    </div>
+
+    <div className="operations-health-actions">
+      {criticalCount > 0 && <span className="operation-priority priority-urgent">{criticalCount} urgent(s)</span>}
+      <button className="icon-button" type="button" title="Actualiser le suivi" aria-label="Actualiser le suivi" onClick={() => void load()}><OperationIcon name="refresh" size={17} /></button>
+    </div>
+
+    {alerts.length > 0 && <div className="operations-alerts-list">
       {visible.map((alert) => <button key={alert.id} type="button" className={`operations-alert alert-${alert.severity}`} onClick={() => void handleAlert(alert)}>
         <span className="operations-alert-severity">{SEVERITY_LABELS[alert.severity]}</span>
         <strong>{alert.title}</strong>
@@ -103,11 +125,6 @@ export function OperationsAlertsPanel({ refreshKey, onNavigate, onMessage }: {
       </button>)}
       {alerts.length > 4 && <button className="operations-alerts-more" type="button" onClick={() => setExpanded((value) => !value)}>{expanded ? 'Réduire' : `Afficher les ${alerts.length - 4} autre(s)`}</button>}
     </div>}
-
-    <div className="incident-watch-heading">
-      <div><span className="eyebrow">Incidents ouverts</span><strong>{incidents.length} incident(s)</strong></div>
-      <button className="secondary-button" type="button" onClick={() => setIncidentsExpanded((value) => !value)}>{incidentsExpanded ? 'Masquer' : 'Afficher'}</button>
-    </div>
 
     {incidentsExpanded && <div className="incident-watch-layout">
       <div className="incident-watch-list">
