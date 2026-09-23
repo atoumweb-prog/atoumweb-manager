@@ -25,6 +25,7 @@ export interface BridgeLoadedPackage {
   assets: BridgeJson[];
   dependencies: BridgeJson[];
   relations: BridgeJson[];
+  sections: Record<string, BridgeJson>;
   pages: BridgeLoadedPage[];
   packageFingerprint: string;
   inspection: BridgeSnapshotInspection;
@@ -57,6 +58,10 @@ export function loadBridgeSnapshotPackage(path: string): BridgeLoadedPackage {
   const assetRegistry = parseJson(rootEntries, 'registries/assets.json', 10 * 1024 * 1024);
   const dependencyRegistry = parseJson(rootEntries, 'registries/dependencies.json', 10 * 1024 * 1024);
   const relationRegistry = parseJson(rootEntries, 'registries/relations.json', 20 * 1024 * 1024);
+  const sections: Record<string, BridgeJson> = {};
+  for (const sectionPath of ['theme-builder/index.json', 'divi-library/index.json', 'globals/wordpress.json', 'globals/divi.json']) {
+    if (rootEntries.has(sectionPath)) sections[sectionPath] = parseJson(rootEntries, sectionPath, 12 * 1024 * 1024);
+  }
 
   assertContract(manifest, site, snapshot);
   const checksumFiles = asRecord(checksums.files);
@@ -208,7 +213,7 @@ export function loadBridgeSnapshotPackage(path: string): BridgeLoadedPackage {
     checksumsVerified: true,
   };
 
-  return { path: absolute, entries, rootEntries, manifest, site, snapshot, objects, sources, assets, dependencies, relations, pages, packageFingerprint, inspection };
+  return { path: absolute, entries, rootEntries, manifest, site, snapshot, objects, sources, assets, dependencies, relations, sections, pages, packageFingerprint, inspection };
 }
 
 export function calculateBridgePackageFingerprint(files: BridgeJson): string {
