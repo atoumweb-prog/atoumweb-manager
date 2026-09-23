@@ -101,11 +101,13 @@ export interface BridgePageSummary {
   title: string;
   slug: string | null;
   canonicalUrl: string | null;
+  storageFormat: string | null;
   builder: string | null;
   builderGeneration: string | null;
   isDiviContent: boolean;
   scope: string | null;
   auditStatus: string | null;
+  rawObjectRef: string | null;
   nodeCount: number;
   sourceCount: number;
   assetCount: number;
