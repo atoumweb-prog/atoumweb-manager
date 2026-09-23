@@ -12,6 +12,7 @@ import {
   type ExpenseStatus,
 } from '../../shared/expenses';
 import type { ProjectSummary } from '../../shared/projects';
+import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
 
 const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   hosting: 'Hébergement',
@@ -28,19 +29,19 @@ const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   other: 'Autre',
 };
 
-const CATEGORY_ICONS: Record<ExpenseCategory, string> = {
-  hosting: '▣',
-  domain: '◎',
-  software: '⌘',
-  license: '◇',
-  subcontracting: '↗',
-  advertising: '◉',
-  travel: '➜',
-  equipment: '▤',
-  banking: '€',
-  tax: '%',
-  office: '□',
-  other: '•',
+const CATEGORY_ICONS: Record<ExpenseCategory, OperationIconName> = {
+  hosting: 'server',
+  domain: 'external-link',
+  software: 'code',
+  license: 'file-text',
+  subcontracting: 'external-link',
+  advertising: 'alert',
+  travel: 'external-link',
+  equipment: 'package',
+  banking: 'euro',
+  tax: 'receipt',
+  office: 'folder',
+  other: 'receipt',
 };
 
 const STATUS_LABELS: Record<ExpenseStatus, string> = {
@@ -355,16 +356,16 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
 
   return <div className="expenses-page-stack">
     <section className="expenses-kpi-grid" aria-label="Synthèse des dépenses">
-      <article><span className="expenses-kpi-icon" aria-hidden="true">€</span><div><strong>Engagé ce mois</strong><span>{money(committedThisMonth)}</span><small>{monthItems.length} dépense(s)</small></div></article>
-      <article><span className="expenses-kpi-icon" aria-hidden="true">◷</span><div><strong>À payer</strong><span>{money(toPay)}</span><small>Dépenses engagées non réglées</small></div></article>
-      <article><span className="expenses-kpi-icon" aria-hidden="true">✓</span><div><strong>Payé ce mois</strong><span>{money(paidThisMonth)}</span><small>Règlements enregistrés</small></div></article>
-      <article><span className="expenses-kpi-icon" aria-hidden="true">↻</span><div><strong>Récurrent mensuel</strong><span>{money(recurringMonthlyEquivalent)}</span><small>{recurring.length} dépense(s) récurrente(s)</small></div></article>
+      <article><span className="expenses-kpi-icon" aria-hidden="true"><OperationIcon name="euro" size={28} /></span><div><strong>Engagé ce mois</strong><span>{money(committedThisMonth)}</span><small>{monthItems.length} dépense(s)</small></div></article>
+      <article><span className="expenses-kpi-icon" aria-hidden="true"><OperationIcon name="clock" size={27} /></span><div><strong>À payer</strong><span>{money(toPay)}</span><small>Dépenses engagées non réglées</small></div></article>
+      <article><span className="expenses-kpi-icon" aria-hidden="true"><OperationIcon name="check-circle" size={27} /></span><div><strong>Payé ce mois</strong><span>{money(paidThisMonth)}</span><small>Règlements enregistrés</small></div></article>
+      <article><span className="expenses-kpi-icon" aria-hidden="true"><OperationIcon name="repeat" size={27} /></span><div><strong>Récurrent mensuel</strong><span>{money(recurringMonthlyEquivalent)}</span><small>{recurring.length} dépense(s) récurrente(s)</small></div></article>
     </section>
 
     <div className="module-toolbar expenses-toolbar">
       <div><strong>{filtered.length}</strong><span> dépense(s)</span></div>
       <div className="toolbar-controls">
-        <button className="secondary-button" type="button" onClick={() => void refresh()}>↻ Actualiser</button>
+        <button className="secondary-button" type="button" onClick={() => void refresh()}><OperationIcon name="refresh" size={16} /> Actualiser</button>
         <input className="inline-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher fournisseur, client, projet…" />
         <select value={scopeFilter} onChange={(event) => setScopeFilter(event.target.value as typeof scopeFilter)}>
           <option value="all">Tous les rattachements</option>
@@ -392,12 +393,12 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
         {detailOpen ? <div className="expenses-compact-list" role="list" aria-label="Dépenses">
           {filtered.map((item) => <button key={item.id} type="button" role="listitem" className={'expenses-compact-item' + (selected?.id === item.id ? ' selected' : '')} onClick={() => { setCreateOpen(false); setSelectedId(item.id); }}>
             <span className="expenses-compact-heading"><strong>{item.label}</strong><span className={'expense-status status-' + item.status}>{STATUS_LABELS[item.status]}</span></span>
-            <span className="expenses-compact-meta"><span>{CATEGORY_ICONS[item.category]} {CATEGORY_LABELS[item.category]}</span><span>{money(item.amountCents)}</span></span>
+            <span className="expenses-compact-meta"><span><OperationIcon name={CATEGORY_ICONS[item.category]} size={15} /> {CATEGORY_LABELS[item.category]}</span><span>{money(item.amountCents)}</span></span>
             <span className="expenses-compact-scope">{item.projectNumber ? item.projectNumber + ' · ' + item.projectLabel : item.clientLabel || 'AtoumWeb interne'}</span>
             <span className="expenses-compact-supplier">{item.supplier || 'Fournisseur non renseigné'}</span>
           </button>)}
           {filtered.length === 0 && <div className="empty-table">Aucune dépense dans cette vue.</div>}
-        </div> : <div className="expenses-table-wrap"><table className="expenses-table"><thead><tr><th>Date</th><th>Dépense</th><th>Catégorie</th><th>Client / Projet</th><th>Montant</th><th>Statut</th><th>Justificatif</th></tr></thead><tbody>{filtered.map((item) => <tr key={item.id} onClick={() => { setSelectedId(item.id); setCreateOpen(false); setExpanded(false); }}><td>{dateLabel(item.expenseDate)}</td><td><strong>{item.label}</strong><small>{item.supplier || '—'}</small></td><td><span className="expense-category-pill">{CATEGORY_ICONS[item.category]} {CATEGORY_LABELS[item.category]}</span></td><td>{item.projectNumber ? item.projectNumber + ' · ' + item.projectLabel : item.clientLabel || 'AtoumWeb interne'}</td><td>{money(item.amountCents)}</td><td><span className={'expense-status status-' + item.status}>{STATUS_LABELS[item.status]}</span></td><td>{item.receiptFileName ? <span className="expense-receipt-present">▤ Oui</span> : <span className="muted">—</span>}</td></tr>)}{filtered.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucune dépense.</div></td></tr>}</tbody></table></div>}
+        </div> : <div className="expenses-table-wrap"><table className="expenses-table"><thead><tr><th>Date</th><th>Dépense</th><th>Catégorie</th><th>Client / Projet</th><th>Montant</th><th>Statut</th><th>Justificatif</th></tr></thead><tbody>{filtered.map((item) => <tr key={item.id} onClick={() => { setSelectedId(item.id); setCreateOpen(false); setExpanded(false); }}><td>{dateLabel(item.expenseDate)}</td><td><strong>{item.label}</strong><small>{item.supplier || '—'}</small></td><td><span className="expense-category-pill"><OperationIcon name={CATEGORY_ICONS[item.category]} size={15} /> {CATEGORY_LABELS[item.category]}</span></td><td>{item.projectNumber ? item.projectNumber + ' · ' + item.projectLabel : item.clientLabel || 'AtoumWeb interne'}</td><td>{money(item.amountCents)}</td><td><span className={'expense-status status-' + item.status}>{STATUS_LABELS[item.status]}</span></td><td>{item.receiptFileName ? <span className="expense-receipt-present">▤ Oui</span> : <span className="muted">—</span>}</td></tr>)}{filtered.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucune dépense.</div></td></tr>}</tbody></table></div>}
       </section>}
 
       {detailOpen && !expanded && <div className="expenses-splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner la liste et la fiche" tabIndex={0} onPointerDown={beginResize} onDoubleClick={() => setSplitPercent(38)} onKeyDown={(event) => {
@@ -408,13 +409,13 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
       {detailOpen && <aside className={'panel expenses-detail-panel' + (expanded ? ' expanded' : '')}>
         <div className="detail-panel-heading">
           <div><span className="eyebrow">{createOpen ? 'Nouvelle dépense' : 'Dépense'}</span><h2>{createOpen ? 'Enregistrer un frais' : selected?.label}</h2><p className="muted">{createOpen ? 'AtoumWeb interne, client ou projet.' : selected?.projectNumber ? selected.projectNumber + ' · ' + selected.projectLabel : selected?.clientLabel || 'AtoumWeb interne'}</p></div>
-          <div className="expenses-detail-heading-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setExpanded((value) => !value)}>{expanded ? '↙' : '⛶'}</button><button className="close-detail" type="button" title="Fermer" onClick={() => { setCreateOpen(false); setSelectedId(''); setExpanded(false); }}>×</button></div>
+          <div className="expenses-detail-heading-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setExpanded((value) => !value)}><OperationIcon name={expanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={() => { setCreateOpen(false); setSelectedId(''); setExpanded(false); }}><OperationIcon name="close" size={18} /></button></div>
         </div>
 
         {!createOpen && selected && <div className="expenses-detail-badges">
           <span className={'expense-status status-' + selected.status}>{STATUS_LABELS[selected.status]}</span>
           <span className="expense-category-pill">{CATEGORY_ICONS[selected.category]} {CATEGORY_LABELS[selected.category]}</span>
-          {selected.frequency !== 'none' && <span className="status-pill">↻ {FREQUENCY_LABELS[selected.frequency]}</span>}
+          {selected.frequency !== 'none' && <span className="status-pill"><OperationIcon name="repeat" size={14} /> {FREQUENCY_LABELS[selected.frequency]}</span>}
         </div>}
 
         {!createOpen && selected && <div className="expenses-summary-grid">
@@ -464,7 +465,7 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
           <summary><span><strong>Justificatif</strong><small>Facture fournisseur, ticket ou preuve du frais</small></span></summary>
           <div className="expense-section-body">
             <div className={'expense-receipt-card' + (selected.receiptFileName ? ' attached' : '')}>
-              <span className="expense-receipt-icon" aria-hidden="true">▤</span>
+              <span className="expense-receipt-icon" aria-hidden="true"><OperationIcon name="file-text" size={24} /></span>
               <div><strong>{selected.receiptFileName || 'Aucun justificatif rattaché'}</strong><small>{selected.receiptFileName ? (selected.receiptMissing ? 'Fichier introuvable · à relocaliser manuellement.' : 'Document conservé dans le workspace AtoumWeb.') : 'PDF ou image : facture fournisseur, reçu ou ticket.'}</small></div>
             </div>
             <div className="button-row">
