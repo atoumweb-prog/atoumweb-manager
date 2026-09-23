@@ -358,14 +358,14 @@
 
 .time-kpi-icon {
   display: inline-grid;
-  width: 38px;
-  height: 38px;
+  width: 52px;
+  height: 52px;
   place-items: center;
   border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
-  border-radius: 10px;
+  border-radius: 13px;
   background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
   color: var(--accent);
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 650;
 }
 
@@ -773,3 +773,5 @@
 }
 
 
+
+.time-kpi-icon-nonbillable svg { transform: scale(1.04); }
