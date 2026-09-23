@@ -505,11 +505,11 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
             <div className="panel-title aw-library-detail-heading">
               <div><span className="eyebrow">{categoryLabel(selected.category)} · {reuseStatusLabel(selected.reuseStatus)}</span><h2>{selected.name}</h2></div>
               <div className="button-row">
-                {!detailCollapsed && !selected.archivedAt && <button className="secondary-button" type="button" onClick={() => setEditingMetadata((value) => !value)}>{editingMetadata ? 'Annuler édition' : 'Modifier'}</button>}
-                {!detailCollapsed && <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void exportPackage()}>Exporter ZIP</button>}
-                {!detailCollapsed && <button className="secondary-button" type="button" onClick={() => void toggleArchive()}>{selected.archivedAt ? 'Réactiver' : 'Archiver'}</button>}
-                <button className="secondary-button" type="button" onClick={() => setDetailCollapsed((value) => !value)}>{detailCollapsed ? 'Agrandir' : 'Réduire'}</button>
-                <button className="close-detail" type="button" aria-label="Fermer la fiche composant" onClick={closeDetail}>×</button>
+                {!selected.archivedAt && <button className="secondary-button" type="button" onClick={() => setEditingMetadata((value) => !value)}>{editingMetadata ? 'Annuler édition' : 'Modifier'}</button>}
+                <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void exportPackage()}><OperationIcon name="package" size={16} /> Exporter ZIP</button>
+                <button className="secondary-button" type="button" onClick={() => void toggleArchive()}><OperationIcon name="archive" size={16} /> {selected.archivedAt ? 'Réactiver' : 'Archiver'}</button>
+                <button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'collapse' : 'expand'} size={18} /></button>
+                <button className="close-detail" type="button" aria-label="Fermer la fiche composant" title="Fermer" onClick={closeDetail}><OperationIcon name="close" size={18} /></button>
               </div>
             </div>
 
