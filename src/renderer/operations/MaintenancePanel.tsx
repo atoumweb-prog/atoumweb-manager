@@ -15,6 +15,7 @@ import {
   type MaintenanceSubscriptionStatus,
 } from '../../shared/operations';
 import type { ProjectSummary } from '../../shared/projects';
+import { OperationIcon } from './OperationIcon';
 import { MaintenanceOveragePanel } from './MaintenanceOveragePanel';
 import { MaintenanceReportPanel } from './MaintenanceReportPanel';
 
@@ -288,7 +289,7 @@ export function MaintenancePanel({ clients, projects, onMessage, onInterventionC
         if (event.key === 'ArrowRight') setSplitPercent((value) => Math.min(58, value + 3));
       }}><span /></div>}
 
-      {selectedSubscription && <aside className={`panel operation-detail-panel maintenance-detail-panel ${detailExpanded ? 'expanded' : ''}`}><div className="detail-panel-heading"><div><span className="eyebrow">Maintenance</span><h2>{selectedSubscription.clientLabel}</h2><p className="muted">{selectedSubscription.planName}{selectedSubscription.projectLabel ? ` · ${selectedSubscription.projectLabel}` : ''}</p></div><div className="maintenance-detail-heading-actions"><button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}>{detailExpanded ? '↙' : '⛶'}</button><button className="close-detail" type="button" title="Fermer" onClick={() => { setSelectedSubscriptionId(''); setSelectedPeriodId(''); setDetailExpanded(false); }}>×</button></div></div>
+      {selectedSubscription && <aside className={`panel operation-detail-panel maintenance-detail-panel ${detailExpanded ? 'expanded' : ''}`}><div className="detail-panel-heading"><div><span className="eyebrow">Maintenance</span><h2>{selectedSubscription.clientLabel}</h2><p className="muted">{selectedSubscription.planName}{selectedSubscription.projectLabel ? ` · ${selectedSubscription.projectLabel}` : ''}</p></div><div className="maintenance-detail-heading-actions"><button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={() => { setSelectedSubscriptionId(''); setSelectedPeriodId(''); setDetailExpanded(false); }}><OperationIcon name="close" size={18} /></button></div></div>
         <div className="operation-detail-grid"><div><span>Prix contractuel</span><strong>{euro(selectedSubscription.contractPriceCents)}</strong></div><div><span>Quota</span><strong>{selectedSubscription.includedInterventions} intervention(s)</strong></div></div>
         <label>Statut<select value={selectedSubscription.status} onChange={(event) => void changeSubscriptionStatus(event.target.value as MaintenanceSubscriptionStatus)}>{MAINTENANCE_SUBSCRIPTION_STATUSES.map((status) => <option key={status} value={status}>{SUBSCRIPTION_LABELS[status]}</option>)}</select></label>
         <button className="secondary-button" type="button" disabled={selectedSubscription.status !== 'active'} onClick={() => void ensureCurrentPeriod()}>Générer / ouvrir la période actuelle</button>
