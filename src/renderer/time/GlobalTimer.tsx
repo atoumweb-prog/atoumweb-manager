@@ -4,6 +4,7 @@ import {
   TIME_CATEGORIES,
   TIME_RECOVERY_STALE_AFTER_SECONDS,
   type TimeCategory,
+  type TimePauseReason,
   type TimeSession,
 } from '../../shared/time';
 
@@ -20,7 +21,15 @@ const CATEGORY_LABELS: Record<TimeCategory, string> = {
   other: 'Autre',
 };
 
+const PAUSE_REASON_LABELS: Record<TimePauseReason, string> = {
+  need_information: 'Besoin d’informations complémentaires',
+  not_enough_time: 'Pas assez de temps maintenant',
+  other_emergency: 'Autre urgence à traiter',
+  other: 'Autre raison',
+};
+
 interface TimerContextEvent {
+  interventionId?: string | null;
   projectId?: string | null;
   nodeId?: string | null;
   activityLabel?: string | null;
@@ -50,6 +59,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [projectDetail, setProjectDetail] = useState<ProjectDetail | null>(null);
   const [open, setOpen] = useState(false);
+  const [interventionId, setInterventionId] = useState('');
   const [projectId, setProjectId] = useState('');
   const [nodeId, setNodeId] = useState('');
   const [category, setCategory] = useState<TimeCategory>('development');
@@ -58,6 +68,10 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
   const [snapshotAt, setSnapshotAt] = useState(Date.now());
   const [tick, setTick] = useState(Date.now());
   const [busy, setBusy] = useState(false);
+  const [stopDecisionOpen, setStopDecisionOpen] = useState(false);
+  const [pauseReasonOpen, setPauseReasonOpen] = useState(false);
+  const [pauseReason, setPauseReason] = useState<TimePauseReason>('need_information');
+  const [pauseReasonNote, setPauseReasonNote] = useState('');
   const timerRef = useRef<HTMLDivElement | null>(null);
 
   function installActive(current: TimeSession | null, announce = false): void {
@@ -70,6 +84,17 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
         ? `Un chrono oublié a été retrouvé : ${contextLabel(current)}. Choisis comment le reprendre.`
         : `Session de temps retrouvée : ${contextLabel(current)}.`);
     }
+  }
+
+  function notifyInterventionChanged(interventionIdToRefresh?: string | null): void {
+    if (!interventionIdToRefresh) return;
+    window.dispatchEvent(new CustomEvent('atoumweb:intervention-updated', { detail: { interventionId: interventionIdToRefresh } }));
+  }
+
+  async function setInterventionStatus(interventionIdToUpdate: string | null | undefined, status: 'in_progress' | 'waiting_client' | 'blocked' | 'to_validate'): Promise<void> {
+    if (!interventionIdToUpdate) return;
+    await window.atoumweb.operations.interventions.changeStatus(interventionIdToUpdate, status);
+    notifyInterventionChanged(interventionIdToUpdate);
   }
 
   async function loadActive(showRecovery = false): Promise<void> {
@@ -121,8 +146,11 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
         }
         setPendingSwitch(context);
         setOpen(false);
+        setStopDecisionOpen(false);
+        setPauseReasonOpen(false);
         return;
       }
+      setInterventionId(context.interventionId ?? '');
       setProjectId(context.projectId ?? '');
       setNodeId(context.nodeId ?? '');
       setActivityLabel(context.activityLabel ?? '');
@@ -139,16 +167,18 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
   }, [active, recovery]);
 
   useEffect(() => {
-    if (!open && !pendingSwitch) return;
+    if (!open && !pendingSwitch && !stopDecisionOpen && !pauseReasonOpen) return;
     const closeOnOutside = (event: PointerEvent) => {
       const target = event.target as Node | null;
       if (!target || timerRef.current?.contains(target)) return;
       setOpen(false);
       setPendingSwitch(null);
+      setStopDecisionOpen(false);
+      setPauseReasonOpen(false);
     };
     document.addEventListener('pointerdown', closeOnOutside);
     return () => document.removeEventListener('pointerdown', closeOnOutside);
-  }, [open, pendingSwitch]);
+  }, [open, pendingSwitch, stopDecisionOpen, pauseReasonOpen]);
 
   useEffect(() => {
     if (!projectId) {
@@ -174,12 +204,14 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
     setBusy(true);
     try {
       const session = await window.atoumweb.time.start({
+        interventionId: interventionId || null,
         projectId: projectId || null,
         projectNodeId: nodeId || null,
         category,
         activityLabel: activityLabel.trim() || null,
         billable,
       });
+      if (session.interventionId) await setInterventionStatus(session.interventionId, 'in_progress');
       installActive(session);
       setOpen(false);
       window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
@@ -197,12 +229,14 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
     setBusy(true);
     try {
       const session = await window.atoumweb.time.switchTo({
+        interventionId: pendingSwitch.interventionId ?? null,
         projectId: pendingSwitch.projectId ?? null,
         projectNodeId: pendingSwitch.nodeId ?? null,
         category: pendingSwitch.category ?? 'production',
         activityLabel: pendingSwitch.activityLabel?.trim() || null,
         billable: pendingSwitch.billable ?? true,
       });
+      if (session.interventionId) await setInterventionStatus(session.interventionId, 'in_progress');
       installActive(session);
       setPendingSwitch(null);
       window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
@@ -217,11 +251,20 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
 
   async function pauseOrResume(): Promise<void> {
     if (!active || recovery) return;
+    if (!active.paused && active.interventionId) {
+      setPauseReason('need_information');
+      setPauseReasonNote('');
+      setStopDecisionOpen(false);
+      setPauseReasonOpen(true);
+      return;
+    }
+
     setBusy(true);
     try {
       const next = active.paused
         ? await window.atoumweb.time.resume(active.id)
         : await window.atoumweb.time.pause(active.id);
+      if (active.paused && next.interventionId) await setInterventionStatus(next.interventionId, 'in_progress');
       installActive(next);
       window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
     } catch (error) {
@@ -231,17 +274,74 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
     }
   }
 
-  async function stop(): Promise<void> {
+  function requestStop(): void {
+    if (!active || recovery) return;
+    if (active.interventionId) {
+      setPauseReasonOpen(false);
+      setStopDecisionOpen(true);
+      return;
+    }
+    void stopSession();
+  }
+
+  async function stopSession(): Promise<void> {
     if (!active || recovery) return;
     setBusy(true);
     try {
       const stopped = await window.atoumweb.time.stop(active.id);
       installActive(null);
       setPendingSwitch(null);
+      setStopDecisionOpen(false);
+      setPauseReasonOpen(false);
       window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
       onMessage(`Session terminée · ${clock(stopped.durationSeconds)}.`);
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible d’arrêter le timer.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function pauseIntervention(): Promise<void> {
+    if (!active?.interventionId || recovery) return;
+    setBusy(true);
+    try {
+      const next = await window.atoumweb.time.pause(active.id, pauseReason, pauseReasonNote);
+      const status = pauseReason === 'need_information' ? 'waiting_client' : 'blocked';
+      await setInterventionStatus(active.interventionId, status);
+      installActive(next);
+      setPauseReasonOpen(false);
+      setStopDecisionOpen(false);
+      window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
+      onMessage(`Timer mis en pause · ${PAUSE_REASON_LABELS[pauseReason]}.`);
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible de mettre l’intervention en pause.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resolveIntervention(): Promise<void> {
+    if (!active?.interventionId || recovery) return;
+    setBusy(true);
+    try {
+      const intervention = await window.atoumweb.operations.interventions.get(active.interventionId);
+      const stopped = await window.atoumweb.time.stop(active.id);
+      if (intervention.type === 'incident') {
+        await window.atoumweb.operations.interventions.update(intervention.id, {
+          incidentResolvedAt: intervention.incidentResolvedAt ?? new Date().toISOString(),
+        });
+      }
+      await setInterventionStatus(intervention.id, 'to_validate');
+      installActive(null);
+      setPendingSwitch(null);
+      setStopDecisionOpen(false);
+      setPauseReasonOpen(false);
+      window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
+      window.dispatchEvent(new CustomEvent('atoumweb:open-intervention-conclusion', { detail: { interventionId: intervention.id } }));
+      onMessage(`Timer arrêté · ${clock(stopped.durationSeconds)}. Complète maintenant la conclusion avant clôture.`);
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible de terminer le travail en cours.');
     } finally {
       setBusy(false);
     }
@@ -252,6 +352,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
     setBusy(true);
     try {
       const resumed = await window.atoumweb.time.recoverResume(recovery.id);
+      if (resumed.interventionId) await setInterventionStatus(resumed.interventionId, 'in_progress');
       installActive(resumed);
       window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
       onMessage('Chrono repris. Le temps où AtoumWeb Manager était fermé n’a pas été compté.');
@@ -286,7 +387,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
   return (
     <div ref={timerRef} className={`global-timer ${active ? 'running' : ''} ${active?.paused ? 'paused' : ''} ${recovery ? 'needs-recovery' : ''}`}>
       <button className="timer-main-button" type="button" onClick={() => !active && setOpen((value) => !value)} title={active ? contextLabel(active) : 'Démarrer une session de temps'}>
-        <span className="timer-label">{recovery ? 'Timer · À vérifier' : `Timer${active?.paused ? ' · Pause' : ''}`}</span>
+        <span className="timer-label">{recovery ? 'Timer · À vérifier' : `Timer${active?.paused ? ' · Pause' : active?.interventionId ? ' · En cours' : ''}`}</span>
         <strong>{clock(displayedSeconds)}</strong>
         <span className="timer-context">{active ? contextLabel(active) : 'Aucune activité'}</span>
       </button>
@@ -294,7 +395,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
       {active ? (
         <div className="timer-actions">
           <button type="button" disabled={busy || Boolean(recovery)} onClick={() => void pauseOrResume()} title={active.paused ? 'Reprendre' : 'Mettre en pause'}>{active.paused ? '▶' : 'Ⅱ'}</button>
-          <button type="button" disabled={busy || Boolean(recovery)} onClick={() => void stop()} title="Arrêter">■</button>
+          <button type="button" disabled={busy || Boolean(recovery)} onClick={requestStop} title="Arrêter">■</button>
         </div>
       ) : <button className="timer-start-shortcut" type="button" onClick={() => setOpen((value) => !value)} title="Démarrer">▶</button>}
 
@@ -308,6 +409,30 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
             <button className="secondary-button" type="button" disabled={busy} onClick={() => void stopAtLastKnown()}>■ Arrêter au dernier point connu</button>
           </div>
           <small>Tu pourras toujours corriger ensuite les horaires dans Gestion des temps.</small>
+        </div>
+      )}
+
+      {stopDecisionOpen && active?.interventionId && !recovery && (
+        <div className="timer-popover timer-stop-decision" role="dialog" aria-label="Arrêter le timer d’intervention">
+          <div><span className="eyebrow">Arrêt du timer</span><strong>L’intervention est-elle résolue ?</strong></div>
+          <p>Choisis si le travail est terminé ou si tu dois simplement interrompre l’intervention.</p>
+          <div className="button-row">
+            <button className="primary-button" type="button" disabled={busy} onClick={() => void resolveIntervention()}>✓ Oui · conclusion</button>
+            <button className="secondary-button" type="button" disabled={busy} onClick={() => { setStopDecisionOpen(false); setPauseReasonOpen(true); }}>Ⅱ Mettre en pause</button>
+            <button className="secondary-button" type="button" disabled={busy} onClick={() => setStopDecisionOpen(false)}>Annuler</button>
+          </div>
+        </div>
+      )}
+
+      {pauseReasonOpen && active?.interventionId && !recovery && (
+        <div className="timer-popover timer-pause-reason" role="dialog" aria-label="Motif de pause">
+          <div><span className="eyebrow">Pause intervention</span><strong>Pourquoi interromps-tu le travail ?</strong></div>
+          <label>Motif<select value={pauseReason} onChange={(event) => setPauseReason(event.target.value as TimePauseReason)}>{Object.entries(PAUSE_REASON_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+          <label>Précision facultative<textarea value={pauseReasonNote} onChange={(event) => setPauseReasonNote(event.target.value)} placeholder="Ex. attente d’un accès client, reprise demain matin…" /></label>
+          <div className="button-row">
+            <button className="primary-button" type="button" disabled={busy} onClick={() => void pauseIntervention()}>Enregistrer la pause</button>
+            <button className="secondary-button" type="button" disabled={busy} onClick={() => setPauseReasonOpen(false)}>Annuler</button>
+          </div>
         </div>
       )}
 
@@ -336,7 +461,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
 }
 
 function contextLabel(session: TimeSession): string {
-  const parts = [session.clientLabel, session.projectNumber ? `${session.projectNumber} · ${session.projectLabel ?? ''}` : session.projectLabel, session.projectNodeLabel, session.activityLabel]
+  const parts = [session.clientLabel, session.projectNumber ? `${session.projectNumber} · ${session.projectLabel ?? ''}` : session.projectLabel, session.interventionNumber ? `${session.interventionNumber} · ${session.interventionLabel ?? ''}` : null, session.projectNodeLabel, session.activityLabel]
     .map((value) => value?.trim())
     .filter(Boolean);
   return parts.length ? parts.join(' › ') : CATEGORY_LABELS[session.category];
