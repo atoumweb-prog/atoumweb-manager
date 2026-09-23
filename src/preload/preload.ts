@@ -123,6 +123,15 @@ const api: AtoumWebApi = {
     linkExisting: (interventionId: string, backupRecordId: string, role: 'pre_intervention' | 'post_intervention' | 'reference') => ipcRenderer.invoke('business-backup-alerts:link-existing', interventionId, backupRecordId, role),
   },
   database: { health: () => ipcRenderer.invoke('database:health') },
+  bridgeSnapshots: {
+    inspectImport: () => ipcRenderer.invoke('bridge:inspect-import'),
+    importSnapshot: (packagePath: string) => ipcRenderer.invoke('bridge:import', packagePath),
+    listSites: () => ipcRenderer.invoke('bridge:sites:list'),
+    getSite: (id: string) => ipcRenderer.invoke('bridge:sites:get', id),
+    listPages: (snapshotId: string, search?: string | null) => ipcRenderer.invoke('bridge:pages:list', snapshotId, search),
+    getPage: (pageSnapshotId: string) => ipcRenderer.invoke('bridge:pages:get', pageSnapshotId),
+    getObjectPreview: (objectRef: string) => ipcRenderer.invoke('bridge:objects:preview', objectRef),
+  },
   workflow: {
     needs: (owner,id) => ipcRenderer.invoke('workflow:needs',owner,id),
     saveNeed: (owner,id,input,needId) => ipcRenderer.invoke('workflow:save-need',owner,id,input,needId),
