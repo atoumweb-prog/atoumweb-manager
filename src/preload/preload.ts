@@ -83,6 +83,7 @@ import type {
 import type {
   ManualTimeSessionInput,
   StartTimeSessionInput,
+  TimePauseReason,
   TimeSessionFilters,
   UpdateTimeSessionInput,
 } from '../shared/time';
