@@ -447,7 +447,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('time:active', () => database.time.active());
   ipcMain.handle('time:start', (_event, input: StartTimeSessionInput) => database.time.start(input));
   ipcMain.handle('time:heartbeat', (_event, id: string) => database.time.heartbeat(id));
-  ipcMain.handle('time:pause', (_event, id: string) => database.time.pause(id));
+  ipcMain.handle('time:pause', (_event, id: string, reason?: TimePauseReason | null, reasonNote?: string | null) => database.time.pause(id, reason, reasonNote));
   ipcMain.handle('time:resume', (_event, id: string) => database.time.resume(id));
   ipcMain.handle('time:recover-resume', (_event, id: string) => database.time.recoverResume(id));
   ipcMain.handle('time:stop', (_event, id: string) => database.time.stop(id));
