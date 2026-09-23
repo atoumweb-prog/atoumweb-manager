@@ -200,6 +200,15 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
     return active.durationSeconds + Math.max(0, Math.floor((tick - snapshotAt) / 1000));
   }, [active, recovery, snapshotAt, tick]);
 
+  function toggleManualTimer(): void {
+    if (!open) {
+      setInterventionId('');
+      setNodeId('');
+      setActivityLabel('');
+    }
+    setOpen((value) => !value);
+  }
+
   async function start(): Promise<void> {
     setBusy(true);
     try {
@@ -290,6 +299,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
     try {
       const stopped = await window.atoumweb.time.stop(active.id);
       installActive(null);
+      setInterventionId('');
       setPendingSwitch(null);
       setStopDecisionOpen(false);
       setPauseReasonOpen(false);
@@ -334,12 +344,17 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
       }
       await setInterventionStatus(intervention.id, 'to_validate');
       installActive(null);
+      setInterventionId('');
       setPendingSwitch(null);
       setStopDecisionOpen(false);
       setPauseReasonOpen(false);
       window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
-      window.dispatchEvent(new CustomEvent('atoumweb:open-intervention-conclusion', { detail: { interventionId: intervention.id } }));
-      onMessage(`Timer arrêté · ${clock(stopped.durationSeconds)}. Complète maintenant la conclusion avant clôture.`);
+      if (intervention.type === 'incident') {
+        window.dispatchEvent(new CustomEvent('atoumweb:open-intervention-conclusion', { detail: { interventionId: intervention.id } }));
+        onMessage(`Timer arrêté · ${clock(stopped.durationSeconds)}. Complète maintenant la conclusion de panne avant clôture.`);
+      } else {
+        onMessage(`Timer arrêté · ${clock(stopped.durationSeconds)}. L’intervention passe « À valider ».`);
+      }
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de terminer le travail en cours.');
     } finally {
@@ -386,7 +401,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
 
   return (
     <div ref={timerRef} className={`global-timer ${active ? 'running' : ''} ${active?.paused ? 'paused' : ''} ${recovery ? 'needs-recovery' : ''}`}>
-      <button className="timer-main-button" type="button" onClick={() => !active && setOpen((value) => !value)} title={active ? contextLabel(active) : 'Démarrer une session de temps'}>
+      <button className="timer-main-button" type="button" onClick={() => !active && toggleManualTimer()} title={active ? contextLabel(active) : 'Démarrer une session de temps'}>
         <span className="timer-label">{recovery ? 'Timer · À vérifier' : `Timer${active?.paused ? ' · Pause' : active?.interventionId ? ' · En cours' : ''}`}</span>
         <strong>{clock(displayedSeconds)}</strong>
         <span className="timer-context">{active ? contextLabel(active) : 'Aucune activité'}</span>
