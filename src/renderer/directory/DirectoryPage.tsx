@@ -236,6 +236,8 @@ export function DirectoryPage({ onMessage, initialTarget }: { onMessage: (messag
     try {
       if (create) {
         const created = await window.atoumweb.crm.organizations.create(organizationDraft);
+        if (organizationDraft.email?.trim()) await window.atoumweb.crm.contactMethods.save({ organizationId: created.id, type: 'email', value: organizationDraft.email.trim(), label: 'Principal', isPrimary: true });
+        if (organizationDraft.phone?.trim()) await window.atoumweb.crm.contactMethods.save({ organizationId: created.id, type: 'phone', value: organizationDraft.phone.trim(), label: 'Principal', isPrimary: true });
         setCreateMode(null);
         await refresh({ entityType: 'organization', entityId: created.id });
         onMessage('Organisation ajoutée à l’annuaire.');
@@ -263,6 +265,8 @@ export function DirectoryPage({ onMessage, initialTarget }: { onMessage: (messag
       const input = { ...contactDraft, organizationId: contactDraft.organizationId || null };
       if (create) {
         const created = await window.atoumweb.crm.contacts.create(input);
+        if (contactDraft.email?.trim()) await window.atoumweb.crm.contactMethods.save({ contactId: created.id, type: 'email', value: contactDraft.email.trim(), label: 'Professionnel', isPrimary: true });
+        if (contactDraft.phone?.trim()) await window.atoumweb.crm.contactMethods.save({ contactId: created.id, type: 'phone', value: contactDraft.phone.trim(), label: 'Portable', isPrimary: true });
         setCreateMode(null);
         await refresh({ entityType: 'contact', entityId: created.id });
         onMessage('Contact ajouté à l’annuaire.');
@@ -371,8 +375,8 @@ export function DirectoryPage({ onMessage, initialTarget }: { onMessage: (messag
         <DirectoryDetailActions expanded={expanded} onExpand={() => setExpanded((value) => !value)} onClose={() => { setCreateMode(null); setExpanded(false); }} />
         <div className="directory-detail-heading"><span className="eyebrow">Nouvelle entrée</span><h2>{createMode === 'organization' ? 'Ajouter une organisation' : 'Ajouter un contact'}</h2><p>Une seule identité, réutilisable ensuite dans le CRM.</p></div>
         {createMode === 'organization'
-          ? <OrganizationEditor value={organizationDraft} onChange={setOrganizationDraft} onSave={() => void saveOrganization(true)} busy={busy} />
-          : <ContactEditor value={contactDraft} organizations={organizations} onChange={setContactDraft} onSave={() => void saveContact(true)} busy={busy} />}
+          ? <OrganizationEditor value={organizationDraft} onChange={setOrganizationDraft} onSave={() => void saveOrganization(true)} busy={busy} includeCoordinates />
+          : <ContactEditor value={contactDraft} organizations={organizations} onChange={setContactDraft} onSave={() => void saveContact(true)} busy={busy} includeCoordinates />}
       </article>}
 
       {selectedOrganization && !createMode && <article className={`panel directory-detail-panel ${expanded ? 'expanded' : ''}`}>
@@ -443,13 +447,13 @@ function DirectoryDetailActions({ expanded, onExpand, onClose }: { expanded: boo
   return <div className="directory-detail-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={onExpand}><OperationIcon name={expanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" onClick={onClose}><OperationIcon name="close" size={18} /></button></div>;
 }
 
-function OrganizationEditor({ value, onChange, onSave, busy }: { value: OrganizationInput; onChange: (value: OrganizationInput) => void; onSave: () => void; busy: boolean }) {
+function OrganizationEditor({ value, onChange, onSave, busy, includeCoordinates = false }: { value: OrganizationInput; onChange: (value: OrganizationInput) => void; onSave: () => void; busy: boolean; includeCoordinates?: boolean }) {
   return <div className="directory-editor">
     <label className="wide">Nom de l’organisation<input value={value.name} onChange={(event) => onChange({ ...value, name: event.target.value })} /></label>
     <label>Raison sociale<input value={value.legalName ?? ''} onChange={(event) => onChange({ ...value, legalName: event.target.value })} /></label>
     <label>Activité<input value={value.industry ?? ''} onChange={(event) => onChange({ ...value, industry: event.target.value })} /></label>
-    <label>Email<input inputMode="email" value={value.email ?? ''} onChange={(event) => onChange({ ...value, email: event.target.value })} /></label>
-    <label>Téléphone<input inputMode="tel" value={value.phone ?? ''} onChange={(event) => onChange({ ...value, phone: event.target.value })} /></label>
+    {includeCoordinates && <><label>Email<input inputMode="email" value={value.email ?? ''} onChange={(event) => onChange({ ...value, email: event.target.value })} /></label>
+    <label>Téléphone<input inputMode="tel" value={value.phone ?? ''} onChange={(event) => onChange({ ...value, phone: event.target.value })} /></label></>}
     <label className="wide">Site web<input value={value.website ?? ''} onChange={(event) => onChange({ ...value, website: event.target.value })} placeholder="exemple.fr" /></label>
     <label>SIRET<input value={value.siret ?? ''} onChange={(event) => onChange({ ...value, siret: event.target.value })} /></label>
     <label>Ville<input value={value.city ?? ''} onChange={(event) => onChange({ ...value, city: event.target.value })} /></label>
@@ -462,15 +466,15 @@ function OrganizationEditor({ value, onChange, onSave, busy }: { value: Organiza
   </div>;
 }
 
-function ContactEditor({ value, organizations, onChange, onSave, busy }: { value: ContactInput; organizations: DirectoryOrganization[]; onChange: (value: ContactInput) => void; onSave: () => void; busy: boolean }) {
+function ContactEditor({ value, organizations, onChange, onSave, busy, includeCoordinates = false }: { value: ContactInput; organizations: DirectoryOrganization[]; onChange: (value: ContactInput) => void; onSave: () => void; busy: boolean; includeCoordinates?: boolean }) {
   return <div className="directory-editor">
     <label>Prénom<input value={value.firstName} onChange={(event) => onChange({ ...value, firstName: event.target.value })} /></label>
     <label>Nom<input value={value.lastName} onChange={(event) => onChange({ ...value, lastName: event.target.value })} /></label>
     <label className="wide">Entreprise<select value={value.organizationId ?? ''} onChange={(event) => onChange({ ...value, organizationId: event.target.value || null })}><option value="">Sans entreprise</option>{organizations.map((organization) => <option key={organization.id} value={organization.id}>{organization.name}</option>)}</select></label>
     <label>Fonction<input value={value.jobTitle ?? ''} onChange={(event) => onChange({ ...value, jobTitle: event.target.value })} /></label>
     <label>Canal préféré<select value={value.preferredChannel ?? ''} onChange={(event) => onChange({ ...value, preferredChannel: event.target.value || null })}><option value="">Non renseigné</option><option value="email">Email</option><option value="phone">Téléphone</option></select></label>
-    <label>Email<input inputMode="email" value={value.email ?? ''} onChange={(event) => onChange({ ...value, email: event.target.value })} /></label>
-    <label>Téléphone<input inputMode="tel" value={value.phone ?? ''} onChange={(event) => onChange({ ...value, phone: event.target.value })} /></label>
+    {includeCoordinates && <><label>Email<input inputMode="email" value={value.email ?? ''} onChange={(event) => onChange({ ...value, email: event.target.value })} /></label>
+    <label>Téléphone<input inputMode="tel" value={value.phone ?? ''} onChange={(event) => onChange({ ...value, phone: event.target.value })} /></label></>}
     <label className="wide">Notes<textarea value={value.notes ?? ''} onChange={(event) => onChange({ ...value, notes: event.target.value })} /></label>
     <div className="wide directory-editor-footer"><span /><button className="primary-button" type="button" disabled={busy || !value.firstName.trim() || !value.lastName.trim()} onClick={onSave}>{busy ? 'Enregistrement…' : 'Enregistrer'}</button></div>
   </div>;
