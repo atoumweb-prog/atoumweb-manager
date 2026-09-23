@@ -24,7 +24,7 @@ const CATEGORY_ICONS: Record<ClientDocumentCategory, OperationIconName> = {
   contract: 'file-text',
   quote: 'receipt',
   invoice: 'file-text',
-  brief: 'clipboard',
+  brief: 'file-text',
   content: 'image',
   technical: 'code',
   legal: 'archive',
