@@ -717,3 +717,47 @@ table td {
   filter: brightness(1.08);
 }
 
+/* Renderer — jamais d'écran noir muet : afficher l'erreur exploitable. */
+.renderer-fatal-shell {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.renderer-fatal-card {
+  width: min(860px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.renderer-fatal-card h1,
+.renderer-fatal-card p {
+  margin: 0;
+}
+
+.renderer-fatal-card pre {
+  max-height: 42dvh;
+  overflow: auto;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-soft);
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 12px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.renderer-fatal-card .secondary-button {
+  justify-self: start;
+}
+
