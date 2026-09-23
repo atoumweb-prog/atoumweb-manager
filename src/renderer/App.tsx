@@ -18,6 +18,7 @@ import { OperationsPage, type OperationsSearchTarget } from './operations/Operat
 import { OperationIcon } from './operations/OperationIcon';
 import { ProjectsPage } from './projects/ProjectsPage';
 import { AtoumWebLibraryPage } from './referentials/AtoumWebLibraryPage';
+import { BridgeSitesPage } from './bridge/BridgeSitesPage';
 import { StatisticsPage } from './statistics/StatisticsPage';
 import { GlobalTimer } from './time/GlobalTimer';
 import { TimePage } from './time/TimePage';
@@ -35,6 +36,7 @@ const NAV_ITEMS = [
   'Dépenses',
   'Documents & Contrats',
   'Bibliothèque AtoumWeb',
+  'Sites',
   'Sauvegardes',
   'Annuaire',
   'Statistiques',
@@ -57,6 +59,7 @@ const PAGE_HINTS: Record<PageName, string> = {
   Dépenses: 'Frais AtoumWeb, dépenses clients/projets, abonnements et justificatifs.',
   'Documents & Contrats': 'Modèles, contrats, avenants, rapports et PDF.',
   'Bibliothèque AtoumWeb': 'Composants et références techniques réutilisables.',
+  Sites: 'Copies techniques, pages et snapshots collectés par AtoumWeb Bridge.',
   Sauvegardes: 'Traçabilité des sauvegardes serveur, locales et externes.',
   Annuaire: 'Organisations, contacts professionnels et relations CRM.',
   Statistiques: 'Commercial, projets, temps, clients et repères financiers.',
@@ -308,11 +311,12 @@ function App() {
           {activePage === 'Dépenses' && <ExpensesPage onMessage={setMessage} />}
           {activePage === 'Documents & Contrats' && <DocumentsPage onMessage={setMessage} initialDocumentId={documentTarget} />}
           {activePage === 'Bibliothèque AtoumWeb' && <AtoumWebLibraryPage onMessage={setMessage} initialItemId={librarySearchTarget} />}
+          {activePage === 'Sites' && <BridgeSitesPage onMessage={setMessage} />}
           {activePage === 'Sauvegardes' && <BusinessBackupsPage onMessage={setMessage} initialRecordId={backupSearchTarget} />}
           {activePage === 'Annuaire' && <DirectoryPage onMessage={setMessage} initialTarget={directoryTarget} />}
           {activePage === 'Statistiques' && <StatisticsPage onMessage={setMessage} />}
           {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} displayDensity={displayDensity} showHoverHelp={showHoverHelp} onThemeChange={updateTheme} onDensityChange={updateDisplayDensity} onShowHoverHelpChange={updateShowHoverHelp} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
-          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Facturation' && activePage !== 'Dépenses' && activePage !== 'Documents & Contrats' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Sauvegardes' && activePage !== 'Annuaire' && activePage !== 'Statistiques' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
+          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Facturation' && activePage !== 'Dépenses' && activePage !== 'Documents & Contrats' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Sites' && activePage !== 'Sauvegardes' && activePage !== 'Annuaire' && activePage !== 'Statistiques' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
         </section>
       </main>
     </div>
