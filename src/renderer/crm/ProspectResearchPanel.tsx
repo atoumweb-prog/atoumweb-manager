@@ -8,6 +8,7 @@ import type {
   ProspectResearchStructuredCheck,
   ProspectSummary,
 } from '../../shared/crm';
+import { displayWebUrl } from '../../shared/webUrl';
 import { FieldHelp } from './ProspectQualificationPanelV2';
 
 type ResearchTab = 'company' | 'visibility' | 'checks' | 'opportunities' | 'conversation' | 'history';
