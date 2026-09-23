@@ -28,7 +28,12 @@ export type OperationIconName =
   | 'upload'
   | 'package'
   | 'code'
-  | 'image';
+  | 'image'
+  | 'user'
+  | 'calendar'
+  | 'chart'
+  | 'bolt'
+  | 'sun';
 
 const paths: Record<OperationIconName, ReactNode> = {
   inbox: <>
@@ -137,6 +142,24 @@ const paths: Record<OperationIconName, ReactNode> = {
     <rect x="3.5" y="4" width="17" height="16" rx="2" />
     <circle cx="9" cy="9" r="1.5" />
     <path d="m5.5 17 4.5-4.5 3 3 2-2 3.5 3.5" />
+  </>,
+  user: <>
+    <circle cx="12" cy="8" r="3.2" />
+    <path d="M5.5 20c.7-4 3-6 6.5-6s5.8 2 6.5 6" />
+  </>,
+  calendar: <>
+    <rect x="4" y="5.5" width="16" height="14" rx="2" />
+    <path d="M8 3.5v4M16 3.5v4M4 9.5h16" />
+  </>,
+  chart: <>
+    <path d="M5 19V11M10 19V6M15 19v-9M20 19V4" />
+  </>,
+  bolt: <>
+    <path d="m13.5 2.8-7 10h5l-1 8.4 7-10h-5l1-8.4Z" />
+  </>,
+  sun: <>
+    <circle cx="12" cy="12" r="3.5" />
+    <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4" />
   </>,
 };
 
