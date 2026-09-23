@@ -1,0 +1,212 @@
+export type BridgeSnapshotType = 'full' | 'partial';
+export type BridgeScanStatus = 'complete' | 'complete_with_warnings' | 'partial_failure' | 'failed';
+
+export interface BridgeSnapshotCounts {
+  pages: number;
+  nodes: number;
+  sources: number;
+  assets: number;
+  dependencies: number;
+  relations: number;
+  objects: number;
+}
+
+export interface BridgeSnapshotIssue {
+  code: string;
+  severity: 'info' | 'warning' | 'error' | 'fatal' | string;
+  scope: string;
+  entityRef: string | null;
+  message: string;
+}
+
+export interface BridgeSnapshotInspection {
+  packagePath: string;
+  contract: string;
+  schemaVersion: string;
+  bridgeVersion: string;
+  fingerprintProfile: string;
+  generatedAt: string;
+  sourceInstanceId: string;
+  sourceSiteKey: string;
+  externalSnapshotId: string;
+  snapshotType: BridgeSnapshotType;
+  scanStatus: BridgeScanStatus | string;
+  packageFingerprint: string;
+  site: {
+    name: string;
+    canonicalUrl: string | null;
+    wordpressSiteUrl: string | null;
+    environment: string | null;
+    timezone: string | null;
+  };
+  counts: BridgeSnapshotCounts;
+  issues: BridgeSnapshotIssue[];
+  coverage: Record<string, unknown>;
+  scannerCapabilities: Record<string, unknown>;
+  observedContent: Record<string, unknown>;
+  security: Record<string, unknown>;
+  checksumsVerified: boolean;
+}
+
+export interface BridgeSiteSummary {
+  id: string;
+  name: string;
+  canonicalUrl: string | null;
+  wordpressSiteUrl: string | null;
+  environment: string | null;
+  sourceInstanceId: string;
+  sourceSiteKey: string;
+  createdAt: string;
+  updatedAt: string;
+  lastSnapshotAt: string | null;
+  snapshotCount: number;
+  latestPageCount: number;
+  latestScanStatus: string | null;
+}
+
+export interface BridgeSnapshotSummary {
+  id: string;
+  siteId: string;
+  externalSnapshotId: string;
+  packageFingerprint: string;
+  generatedAt: string;
+  importedAt: string;
+  snapshotType: BridgeSnapshotType | string;
+  scanStatus: string;
+  bridgeVersion: string;
+  schemaVersion: string;
+  fingerprintProfile: string;
+  counts: BridgeSnapshotCounts;
+  issues: BridgeSnapshotIssue[];
+  coverage: Record<string, unknown>;
+  scannerCapabilities: Record<string, unknown>;
+  observedContent: Record<string, unknown>;
+  security: Record<string, unknown>;
+  packageRelativePath: string | null;
+}
+
+export interface BridgeSiteDetail extends BridgeSiteSummary {
+  snapshots: BridgeSnapshotSummary[];
+}
+
+export interface BridgePageSummary {
+  pageId: string;
+  pageSnapshotId: string;
+  externalPageSnapshotId: string;
+  snapshotId: string;
+  sourcePageKey: string;
+  sourcePostId: number | null;
+  postType: string;
+  status: string | null;
+  title: string;
+  slug: string | null;
+  canonicalUrl: string | null;
+  builder: string | null;
+  builderGeneration: string | null;
+  isDiviContent: boolean;
+  scope: string | null;
+  auditStatus: string | null;
+  nodeCount: number;
+  sourceCount: number;
+  assetCount: number;
+  dependencyCount: number;
+}
+
+export interface BridgeNodeSummary {
+  occurrenceId: string;
+  logicalNodeId: string | null;
+  parentOccurrenceId: string | null;
+  position: number;
+  ordinal: number;
+  depth: number;
+  nodeType: string;
+  moduleType: string | null;
+  label: string | null;
+  builder: string | null;
+  builderGeneration: string | null;
+  classes: string[];
+  ids: string[];
+  sourceIds: string[];
+  assetIds: string[];
+  dependencyIds: string[];
+  relationIds: string[];
+  rawObjectRef: string | null;
+  contentObjectRef: string | null;
+  fingerprints: Record<string, unknown>;
+  matchingHints: Record<string, unknown>;
+}
+
+export interface BridgeSourceSummary {
+  sourceId: string;
+  kind: string;
+  scope: string;
+  origin: string;
+  owner: string;
+  ownerSlug: string | null;
+  managedExternally: boolean;
+  nodeOccurrenceId: string | null;
+  payloadObjectRef: string | null;
+  fingerprint: string | null;
+  lines: number | null;
+  bytes: number | null;
+  evidence: Record<string, unknown>;
+}
+
+export interface BridgeAssetSummary {
+  assetId: string;
+  type: string;
+  wordpressAttachmentId: number | null;
+  url: string | null;
+  localPath: string | null;
+  mimeType: string | null;
+  width: number | null;
+  height: number | null;
+  sizeBytes: number | null;
+  hash: string | null;
+  archiveMode: string | null;
+}
+
+export interface BridgeDependencySummary {
+  dependencyId: string;
+  type: string;
+  slug: string | null;
+  name: string;
+  version: string | null;
+  active: boolean | null;
+}
+
+export interface BridgePageSnapshotDetail {
+  page: BridgePageSummary;
+  nodes: BridgeNodeSummary[];
+  sources: BridgeSourceSummary[];
+  assets: BridgeAssetSummary[];
+  dependencies: BridgeDependencySummary[];
+  metadata: Record<string, unknown>;
+}
+
+export interface BridgeObjectPreview {
+  objectRef: string;
+  contentType: string | null;
+  serialization: string | null;
+  encoding: string | null;
+  byteLength: number;
+  available: boolean;
+  text: string | null;
+  truncated: boolean;
+}
+
+export interface BridgeSnapshotImportResult {
+  alreadyImported: boolean;
+  site: BridgeSiteSummary;
+  snapshot: BridgeSnapshotSummary;
+}
+
+export interface BridgeSnapshotsApi {
+  inspectImport(): Promise<BridgeSnapshotInspection | null>;
+  importSnapshot(packagePath: string): Promise<BridgeSnapshotImportResult>;
+  listSites(): Promise<BridgeSiteSummary[]>;
+  getSite(id: string): Promise<BridgeSiteDetail>;
+  listPages(snapshotId: string, search?: string | null): Promise<BridgePageSummary[]>;
+  getPage(pageSnapshotId: string): Promise<BridgePageSnapshotDetail>;
+  getObjectPreview(objectRef: string): Promise<BridgeObjectPreview>;
+}
