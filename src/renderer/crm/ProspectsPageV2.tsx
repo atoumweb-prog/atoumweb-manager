@@ -220,10 +220,9 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
   const directory = useMemo(() => prospects.filter((item) => !item.archivedAt), [prospects]);
   const pipelineActive = useMemo(() => active.filter((item) => (item.stage ?? 'new') !== 'new'), [active]);
   const followUpBuckets = useMemo(() => {
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const endOfToday = new Date(startOfToday);
-    endOfToday.setDate(endOfToday.getDate() + 1);
+    const nowTimestamp = Date.now();
+    const endOfToday = new Date();
+    endOfToday.setHours(24, 0, 0, 0);
     const relaunch = new Set<string>();
     const overdue = new Set<string>();
     for (const action of actions) {
@@ -231,7 +230,7 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
       const timestamp = new Date(action.dueAt).getTime();
       if (!Number.isFinite(timestamp) || timestamp >= endOfToday.getTime()) continue;
       relaunch.add(action.ownerId);
-      if (timestamp < startOfToday.getTime()) overdue.add(action.ownerId);
+      if (timestamp < nowTimestamp) overdue.add(action.ownerId);
     }
     return { relaunch, overdue };
   }, [actions]);
@@ -421,12 +420,11 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
     const nextFollowUp = nextOpenAction(itemActions.filter((item) => item.type === 'follow_up'));
     const followUpDueAt = nextFollowUp?.dueAt ? new Date(nextFollowUp.dueAt) : null;
     const followUpTimestamp = followUpDueAt?.getTime() ?? Number.NaN;
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const tomorrowStart = new Date(todayStart);
-    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+    const nowTimestamp = Date.now();
+    const tomorrowStart = new Date();
+    tomorrowStart.setHours(24, 0, 0, 0);
     const followUpUrgency = Number.isFinite(followUpTimestamp) && followUpTimestamp < tomorrowStart.getTime()
-      ? (followUpTimestamp < todayStart.getTime() ? 'overdue' : 'today')
+      ? (followUpTimestamp < nowTimestamp ? 'overdue' : 'today')
       : null;
     const latestQuote = quotes.find((quote) => quote.prospectId === prospect.id) ?? null;
     const quoteRemaining = daysRemaining(latestQuote?.validUntil);
