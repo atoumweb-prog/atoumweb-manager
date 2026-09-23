@@ -249,10 +249,15 @@ body.aw-library-resizing {
   font-weight: 700;
 }
 
-.aw-library-summary .aw-library-kpi > div > strong,
-.aw-library-package-grid strong {
+.aw-library-summary .aw-library-kpi > div > strong {
   color: var(--text);
   font-size: 20px;
+  font-weight: 400;
+}
+
+.aw-library-package-grid strong {
+  color: var(--text);
+  font-size: var(--aw-font-functional, 14px);
   font-weight: 400;
 }
 
