@@ -50,11 +50,15 @@
 - [x] migration 35 : motifs de pause sur `time_session_pauses` ;
 - [x] Facturation / Dépenses : pictos SVG cohérents, splitter redimensionnable, fiche agrandissable et responsive ;
 - [x] Bibliothèque AtoumWeb / Sauvegardes : liste + fiche redimensionnable, plein écran, fermeture explicite, responsive et hiérarchie typographique harmonisée.
+- [x] protection renderer globale : une erreur React non interceptée n’aboutit plus à un écran noir muet ; l’erreur exacte est affichée dans AtoumWeb Manager ;
+- [x] protection page Clients alignée sur la logique de la fenêtre Référence Prospect pour éviter qu’une fiche défaillante fasse disparaître toute l’interface ;
+- [x] Gestion des temps : correction du plantage `ReferenceError: OperationIcon is not defined` introduit lors du remplacement des anciens symboles par les pictos SVG ; correctif confirmé visuellement sur MSI par l’utilisateur ;
+- [x] thème Noir : contraste des teintes métier CRM renforcé pendant la recette visuelle continue.
 
 ### Validation
 
 - [x] dernier checkpoint MSI confirmé par l’utilisateur avant ce lot : **40 fichiers / 187 tests réussis**, SQLite à **34 migrations**.
-- [ ] revalider le HEAD actuel après le dernier lot : aide / actions / coffre sécurisé / Catalogue Offres & Tarifs / ateliers Interventions & Packs / Gestion des temps / Facturation PDF Abby / Dépenses / identité CRM / timer Intervention / Bibliothèque / Sauvegardes / migrations 31–35 / cohérence UI globale.
+- [ ] revalider le HEAD actuel après le dernier lot : aide / actions / coffre sécurisé / Catalogue Offres & Tarifs / ateliers Interventions & Packs / Gestion des temps / Facturation PDF Abby / Dépenses / identité CRM / timer Intervention / Bibliothèque / Sauvegardes / migrations 31–35 / cohérence UI globale. La recette visuelle a déjà confirmé le correctif du plantage Gestion des temps après import manquant de `OperationIcon`.
 - [ ] `npm run typecheck`
 - [ ] `npm test`
 - [ ] `npm run package`
