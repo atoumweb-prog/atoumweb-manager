@@ -1,6 +1,6 @@
 import { WorkflowDashboard } from './workflow/WorkflowDashboard';
 import { DemoPanel } from './workflow/DemoPanel';
-import { useEffect, useState } from 'react';
+import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from 'react';
 import type { BootstrapState, DisplayDensity, ThemeName } from '../shared/contracts';
 import type { SearchResult } from '../shared/crm';
 import { BusinessBackupsPage } from './backups/BusinessBackupsPage';
@@ -77,6 +77,39 @@ function applyTheme(theme: ThemeName): void {
 
 function applyDensity(density: DisplayDensity): void {
   document.documentElement.dataset.density = density;
+}
+
+class ClientPageErrorBoundary extends Component<
+  { resetKey: string; children: ReactNode },
+  { error: string | null }
+> {
+  state: { error: string | null } = { error: null };
+
+  static getDerivedStateFromError(error: unknown): { error: string } {
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+
+  componentDidCatch(error: unknown, info: ErrorInfo): void {
+    console.error('Erreur page Clients', error, info);
+  }
+
+  componentDidUpdate(previous: Readonly<{ resetKey: string; children: ReactNode }>): void {
+    if (previous.resetKey !== this.props.resetKey && this.state.error) {
+      this.setState({ error: null });
+    }
+  }
+
+  render(): ReactNode {
+    if (this.state.error) {
+      return <div className="panel client-page-error-card">
+        <span className="eyebrow">Clients</span>
+        <h2>La fiche Client a rencontré une erreur</h2>
+        <p>{this.state.error}</p>
+        <p className="muted">Le Manager reste ouvert. Change de page puis reviens sur Clients pour réessayer.</p>
+      </div>;
+    }
+    return this.props.children;
+  }
 }
 
 function App() {
@@ -265,7 +298,7 @@ function App() {
           {activePage === 'Réglages' && <DemoPanel />}
           {activePage === 'Accueil' && <Dashboard bootstrap={bootstrap} onOpenOperations={openOperationsTarget} onMessage={setMessage} />}
           {activePage === 'Prospects' && <ProspectsPage key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
-          {activePage === 'Clients' && <ClientsPage key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
+          {activePage === 'Clients' && <ClientPageErrorBoundary resetKey={crmTarget ?? 'clients'}><ClientsPage key={crmTarget} initialId={crmTarget} onMessage={setMessage} /></ClientPageErrorBoundary>}
           {activePage === 'Offres & Tarifs' && <CatalogPage onMessage={setMessage} />}
           {activePage === 'Devis' && <QuotesPage key={quoteTarget} initialId={quoteTarget} onMessage={setMessage} />}
           {activePage === 'Projets' && <ProjectsPage onMessage={setMessage} initialProjectId={projectSearchTarget} showHoverHelp={showHoverHelp} />}
