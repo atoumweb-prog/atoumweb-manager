@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-type OperationIconName =
+export type OperationIconName =
   | 'inbox'
   | 'alert'
   | 'wrench'
@@ -14,7 +14,21 @@ type OperationIconName =
   | 'collapse'
   | 'close'
   | 'euro'
-  | 'piggy-broken';
+  | 'piggy-broken'
+  | 'file-text'
+  | 'gift'
+  | 'wallet'
+  | 'repeat'
+  | 'database'
+  | 'folder'
+  | 'archive'
+  | 'check-circle'
+  | 'server'
+  | 'external-link'
+  | 'upload'
+  | 'package'
+  | 'code'
+  | 'image';
 
 const paths: Record<OperationIconName, ReactNode> = {
   inbox: <>
@@ -69,6 +83,60 @@ const paths: Record<OperationIconName, ReactNode> = {
     <path d="M5.2 10.2c1.3-2.5 4-4 7.1-4 4 0 7.2 2.5 7.2 5.9 0 1-.3 2-.8 2.8l1.3 1.4-2.1 1.4-1.1-.8c-.8.5-1.8.8-2.8 1l-.4 2h-2.2l-.5-1.8H8.6l-.5 1.8H5.9l-.5-2.1C3.9 17.2 3 16 3 14.6v-2.4c0-.7.6-1.3 1.3-1.3h1" />
     <path d="M9 7.1 7.8 4.5c1.6-.3 2.9.1 3.8 1.6M15.8 8.8h.01M10.2 10.2l1.4 1.5-1.3 1.2 1.6 1.6" />
     <path d="m18.8 3.6 1.6 1.6-2.3 2.3M17.8 4.6l2 2" />
+  </>,
+  'file-text': <>
+    <path d="M6 3.5h8l4 4v13H6z" />
+    <path d="M14 3.5v4h4M9 12h6M9 15.5h6" />
+  </>,
+  gift: <>
+    <path d="M4 10h16v10H4zM3 7h18v3H3zM12 7v13" />
+    <path d="M12 7H8.8C6.8 7 6 4.4 7.7 3.5 9.5 2.6 11.5 5.2 12 7ZM12 7h3.2c2 0 2.8-2.6 1.1-3.5-1.8-.9-3.8 1.7-4.3 3.5Z" />
+  </>,
+  wallet: <>
+    <path d="M4 6.5h13a3 3 0 0 1 3 3v8H5a2 2 0 0 1-2-2v-9a3 3 0 0 1 3-3h10" />
+    <path d="M16 11h4v4h-4a2 2 0 1 1 0-4Z" />
+  </>,
+  repeat: <>
+    <path d="M7 7h10l-2.5-2.5M17 17H7l2.5 2.5M18.5 7.5A6.5 6.5 0 0 1 19 10M5.5 16.5A6.5 6.5 0 0 1 5 14" />
+  </>,
+  database: <>
+    <ellipse cx="12" cy="5.5" rx="7" ry="3" />
+    <path d="M5 5.5v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6M5 11.5v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" />
+  </>,
+  folder: <>
+    <path d="M3.5 6.5h6l2 2H20a1.5 1.5 0 0 1 1.5 1.5v7.5A2.5 2.5 0 0 1 19 20H5a2.5 2.5 0 0 1-2.5-2.5V8A1.5 1.5 0 0 1 4 6.5Z" />
+  </>,
+  archive: <>
+    <path d="M4 7h16v13H4zM3 4h18v3H3zM9 11h6" />
+  </>,
+  'check-circle': <>
+    <circle cx="12" cy="12" r="9" />
+    <path d="m8 12.2 2.6 2.6 5.6-6" />
+  </>,
+  server: <>
+    <rect x="4" y="4" width="16" height="6" rx="1.5" />
+    <rect x="4" y="14" width="16" height="6" rx="1.5" />
+    <path d="M8 7h.01M8 17h.01M12 7h5M12 17h5" />
+  </>,
+  'external-link': <>
+    <path d="M14 4h6v6M20 4l-9 9" />
+    <path d="M18 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h6" />
+  </>,
+  upload: <>
+    <path d="M12 16V4M7.5 8.5 12 4l4.5 4.5" />
+    <path d="M5 14v5h14v-5" />
+  </>,
+  package: <>
+    <path d="m4 7 8-4 8 4-8 4-8-4Z" />
+    <path d="M4 7v10l8 4 8-4V7M12 11v10" />
+  </>,
+  code: <>
+    <path d="m9 7-5 5 5 5M15 7l5 5-5 5M13 5l-2 14" />
+  </>,
+  image: <>
+    <rect x="3.5" y="4" width="17" height="16" rx="2" />
+    <circle cx="9" cy="9" r="1.5" />
+    <path d="m5.5 17 4.5-4.5 3 3 2-2 3.5 3.5" />
   </>,
 };
 
