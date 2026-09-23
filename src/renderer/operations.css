@@ -1411,3 +1411,50 @@ body.operation-resizing {
   }
 }
 
+.operations-alerts-panel.compact-empty {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 18px;
+  padding-top: 11px;
+  padding-bottom: 11px;
+}
+
+.operations-alerts-panel.compact-empty .operations-alerts-heading {
+  grid-column: 1 / -1;
+  align-items: center;
+}
+
+.operations-alerts-panel.compact-empty .operations-alerts-heading h2 {
+  display: inline;
+  margin-left: 8px;
+}
+
+.operations-alerts-panel.compact-empty > p.muted {
+  grid-column: 1;
+  margin: 0;
+}
+
+.operations-alerts-panel.compact-empty .incident-watch-heading {
+  grid-column: 2;
+  grid-row: 2;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  white-space: nowrap;
+}
+
+.operations-alerts-panel.compact-empty .operations-alert-thresholds {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .operations-alerts-panel.compact-empty {
+    grid-template-columns: 1fr;
+  }
+
+  .operations-alerts-panel.compact-empty .incident-watch-heading {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+
