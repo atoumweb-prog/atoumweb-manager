@@ -12,7 +12,9 @@ type OperationIconName =
   | 'refresh'
   | 'expand'
   | 'collapse'
-  | 'close';
+  | 'close'
+  | 'euro'
+  | 'piggy-broken';
 
 const paths: Record<OperationIconName, ReactNode> = {
   inbox: <>
@@ -59,6 +61,14 @@ const paths: Record<OperationIconName, ReactNode> = {
   </>,
   close: <>
     <path d="m7 7 10 10M17 7 7 17" />
+  </>,
+  euro: <>
+    <path d="M17.5 6.2A6 6 0 0 0 7.2 8.5M6 10h8M6 14h7.5M7.2 15.5A6 6 0 0 0 17.5 17.8" />
+  </>,
+  'piggy-broken': <>
+    <path d="M5.2 10.2c1.3-2.5 4-4 7.1-4 4 0 7.2 2.5 7.2 5.9 0 1-.3 2-.8 2.8l1.3 1.4-2.1 1.4-1.1-.8c-.8.5-1.8.8-2.8 1l-.4 2h-2.2l-.5-1.8H8.6l-.5 1.8H5.9l-.5-2.1C3.9 17.2 3 16 3 14.6v-2.4c0-.7.6-1.3 1.3-1.3h1" />
+    <path d="M9 7.1 7.8 4.5c1.6-.3 2.9.1 3.8 1.6M15.8 8.8h.01M10.2 10.2l1.4 1.5-1.3 1.2 1.6 1.6" />
+    <path d="m18.8 3.6 1.6 1.6-2.3 2.3M17.8 4.6l2 2" />
   </>,
 };
 
