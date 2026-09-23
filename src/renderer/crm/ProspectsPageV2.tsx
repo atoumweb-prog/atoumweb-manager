@@ -420,12 +420,13 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
     const nextAction = nextOpenAction(itemActions);
     const nextFollowUp = nextOpenAction(itemActions.filter((item) => item.type === 'follow_up'));
     const followUpDueAt = nextFollowUp?.dueAt ? new Date(nextFollowUp.dueAt) : null;
+    const followUpTimestamp = followUpDueAt?.getTime() ?? Number.NaN;
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const tomorrowStart = new Date(todayStart);
     tomorrowStart.setDate(tomorrowStart.getDate() + 1);
-    const followUpUrgency = followUpDueAt && Number.isFinite(followUpDueAt.getTime()) && followUpDueAt < tomorrowStart
-      ? (followUpDueAt < todayStart ? 'overdue' : 'today')
+    const followUpUrgency = Number.isFinite(followUpTimestamp) && followUpTimestamp < tomorrowStart.getTime()
+      ? (followUpTimestamp < todayStart.getTime() ? 'overdue' : 'today')
       : null;
     const latestQuote = quotes.find((quote) => quote.prospectId === prospect.id) ?? null;
     const quoteRemaining = daysRemaining(latestQuote?.validUntil);
