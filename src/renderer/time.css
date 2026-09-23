@@ -2,17 +2,20 @@
   position: relative;
   display: flex;
   align-items: stretch;
-  min-width: 270px;
-  max-width: 390px;
+  min-width: 285px;
+  max-width: 410px;
   min-height: 54px;
+  overflow: visible;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
+  border-radius: 14px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 34%, var(--surface)) 0%, var(--surface) 68%);
   box-shadow: 0 8px 24px rgb(0 0 0 / 5%);
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
 }
 
 .global-timer.running {
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  border-color: color-mix(in srgb, var(--success) 58%, var(--border));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--success) 10%, transparent), 0 9px 26px rgb(0 0 0 / 6%);
 }
 
 .global-timer.paused {
@@ -20,13 +23,12 @@
 }
 
 .timer-main-button {
-  display: grid;
-  grid-template-columns: auto 1fr;
+  display: flex;
   align-items: center;
-  gap: 2px 9px;
+  gap: 10px;
   min-width: 0;
   flex: 1;
-  padding: 8px 10px;
+  padding: 7px 10px;
   border: 0;
   background: transparent;
   color: var(--text);
@@ -34,14 +36,71 @@
   cursor: pointer;
 }
 
+.timer-brand-icon {
+  position: relative;
+  display: inline-grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent-strong);
+}
+
+.timer-live-indicator {
+  position: absolute;
+  right: -1px;
+  bottom: 1px;
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.timer-live-indicator.running {
+  background: var(--success);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 16%, transparent);
+  animation: timer-pulse 1.7s ease-in-out infinite;
+}
+
+.timer-live-indicator.paused {
+  background: #f2b705;
+}
+
+.timer-live-indicator.warning {
+  background: #d62828;
+}
+
+@keyframes timer-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 14%, transparent); }
+  50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--success) 4%, transparent); }
+}
+
+.timer-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 3px;
+}
+
+.timer-topline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .global-timer.running .timer-main-button {
   cursor: default;
 }
 
 .timer-main-button strong {
-  justify-self: end;
+  color: var(--text);
   font-variant-numeric: tabular-nums;
-  font-size: 15px;
+  font-size: 16px;
+  font-weight: 750;
   letter-spacing: .03em;
 }
 
@@ -54,14 +113,13 @@
 }
 
 .timer-context {
-  grid-column: 1 / -1;
   display: block;
   max-width: 260px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: 9px;
 }
 
 .timer-actions {
@@ -71,13 +129,20 @@
 
 .timer-actions button,
 .timer-start-shortcut {
-  width: 38px;
+  width: 42px;
   border: 0;
   border-left: 1px solid var(--border);
   background: transparent;
   color: var(--text);
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 800;
   cursor: pointer;
+}
+
+.timer-start-shortcut {
+  border-radius: 0 13px 13px 0;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--accent-strong);
 }
 
 .timer-actions button:first-child {
