@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ProjectSummary } from '../../shared/projects';
+import { OperationIcon } from '../operations/OperationIcon';
 import { TIME_CATEGORIES, type TimeCategory, type TimeSession, type TimeSessionFilters, type TimeSummary } from '../../shared/time';
 
 const CATEGORY_LABELS: Record<TimeCategory, string> = {
