@@ -41,11 +41,13 @@ interface PageRow extends Record<string, unknown> {
   title: string;
   slug: string | null;
   canonical_url: string | null;
+  storage_format: string | null;
   builder: string | null;
   builder_generation: string | null;
   is_divi_content: number;
   scope: string | null;
   audit_status: string | null;
+  raw_object_ref: string | null;
   source_ids_json: string;
   asset_ids_json: string;
   dependency_ids_json: string;
@@ -340,8 +342,8 @@ export class BridgeSnapshotService {
   getPage(pageSnapshotId: string): BridgePageSnapshotDetail {
     const row = this.database.get<PageRow>(
       `SELECT bp.id page_id,bps.id page_snapshot_id,bps.external_page_snapshot_id,bps.snapshot_id,bps.source_page_key,bp.source_post_id,
-       bp.post_type,bps.status,bps.title,bps.slug,bps.canonical_url,bps.builder,bps.builder_generation,bps.is_divi_content,bps.scope,
-       bps.audit_status,bps.source_ids_json,bps.asset_ids_json,bps.dependency_ids_json,bps.metadata_json,
+       bp.post_type,bps.status,bps.title,bps.slug,bps.canonical_url,bps.storage_format,bps.builder,bps.builder_generation,bps.is_divi_content,bps.scope,
+       bps.audit_status,bps.raw_object_ref,bps.source_ids_json,bps.asset_ids_json,bps.dependency_ids_json,bps.metadata_json,
        (SELECT COUNT(*) FROM bridge_nodes n WHERE n.page_snapshot_id=bps.id) node_count
        FROM bridge_page_snapshots bps JOIN bridge_pages bp ON bp.id=bps.page_id WHERE bps.id=?`,
       [pageSnapshotId],
@@ -397,8 +399,8 @@ export class BridgeSnapshotService {
   private pageRows(snapshotId: string): PageRow[] {
     return this.database.all<PageRow>(
       `SELECT bp.id page_id,bps.id page_snapshot_id,bps.external_page_snapshot_id,bps.snapshot_id,bps.source_page_key,bp.source_post_id,
-       bp.post_type,bps.status,bps.title,bps.slug,bps.canonical_url,bps.builder,bps.builder_generation,bps.is_divi_content,bps.scope,
-       bps.audit_status,bps.source_ids_json,bps.asset_ids_json,bps.dependency_ids_json,bps.metadata_json,
+       bp.post_type,bps.status,bps.title,bps.slug,bps.canonical_url,bps.storage_format,bps.builder,bps.builder_generation,bps.is_divi_content,bps.scope,
+       bps.audit_status,bps.raw_object_ref,bps.source_ids_json,bps.asset_ids_json,bps.dependency_ids_json,bps.metadata_json,
        (SELECT COUNT(*) FROM bridge_nodes n WHERE n.page_snapshot_id=bps.id) node_count
        FROM bridge_page_snapshots bps JOIN bridge_pages bp ON bp.id=bps.page_id
        WHERE bps.snapshot_id=? ORDER BY CASE WHEN bp.post_type='page' THEN 0 WHEN bp.post_type='post' THEN 1 ELSE 2 END,bps.title COLLATE NOCASE`,
@@ -410,8 +412,9 @@ export class BridgeSnapshotService {
     return {
       pageId: row.page_id, pageSnapshotId: row.page_snapshot_id, externalPageSnapshotId: row.external_page_snapshot_id,
       snapshotId: row.snapshot_id, sourcePageKey: row.source_page_key, sourcePostId: row.source_post_id, postType: row.post_type,
-      status: row.status, title: row.title, slug: row.slug, canonicalUrl: row.canonical_url, builder: row.builder,
-      builderGeneration: row.builder_generation, isDiviContent: Boolean(row.is_divi_content), scope: row.scope, auditStatus: row.audit_status,
+      status: row.status, title: row.title, slug: row.slug, canonicalUrl: row.canonical_url, storageFormat: row.storage_format,
+      builder: row.builder, builderGeneration: row.builder_generation, isDiviContent: Boolean(row.is_divi_content),
+      scope: row.scope, auditStatus: row.audit_status, rawObjectRef: row.raw_object_ref,
       nodeCount: Number(row.node_count ?? 0), sourceCount: parseStringArray(row.source_ids_json).length,
       assetCount: parseStringArray(row.asset_ids_json).length, dependencyCount: parseStringArray(row.dependency_ids_json).length,
     };
