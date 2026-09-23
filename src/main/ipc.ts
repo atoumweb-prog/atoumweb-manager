@@ -149,8 +149,12 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
 
   ipcMain.handle('database:health', () => database.health());
 
+  ipcMain.handle('crm:organizations:list', (_event, includeArchived?: boolean) => database.crm.listDirectoryOrganizations(includeArchived));
+  ipcMain.handle('crm:organizations:get', (_event, id: string) => database.crm.getDirectoryOrganization(id));
   ipcMain.handle('crm:organizations:create', (_event, input: OrganizationInput) => database.crm.createOrganization(input));
   ipcMain.handle('crm:organizations:update', (_event, id: string, input: OrganizationInput) => database.crm.updateOrganization(id, input));
+  ipcMain.handle('crm:contacts:list', (_event, includeArchived?: boolean) => database.crm.listDirectoryContacts(includeArchived));
+  ipcMain.handle('crm:contacts:get', (_event, id: string) => database.crm.getDirectoryContact(id));
   ipcMain.handle('crm:contacts:create', (_event, input: ContactInput) => database.crm.createContact(input));
   ipcMain.handle('crm:contacts:update', (_event, id: string, input: ContactInput) => database.crm.updateContact(id, input));
   ipcMain.handle('crm:contact-methods:list',(_event,owner:'organization'|'contact',id:string,includeArchived?:boolean)=>database.crm.listContactMethods(owner,id,includeArchived));
