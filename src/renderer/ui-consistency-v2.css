@@ -485,20 +485,20 @@ table td {
    Les teintes métier restent visibles mais sont calculées sur les surfaces sombres,
    jamais sur #fff afin d'éviter texte clair + pastel clair. */
 :root[data-theme='noir'] {
-  --aw-status-green-bg: color-mix(in srgb, #55b98b 15%, var(--surface));
-  --aw-status-green-fg: #86d6ae;
-  --aw-status-blue-bg: color-mix(in srgb, #79a9d7 17%, var(--surface));
-  --aw-status-blue-fg: #a9c9e8;
-  --aw-status-yellow-bg: color-mix(in srgb, #e7b75e 17%, var(--surface));
-  --aw-status-yellow-fg: #efd08c;
-  --aw-status-orange-bg: color-mix(in srgb, #d88946 18%, var(--surface));
-  --aw-status-orange-fg: #e7ad75;
-  --aw-status-red-bg: color-mix(in srgb, #e77a6f 17%, var(--surface));
-  --aw-status-red-fg: #f0a39b;
-  --aw-status-purple-bg: color-mix(in srgb, #8f78bd 18%, var(--surface));
-  --aw-status-purple-fg: #baa9dc;
-  --aw-status-neutral-bg: color-mix(in srgb, #87919e 14%, var(--surface));
-  --aw-status-neutral-fg: #bdc5cf;
+  --aw-status-green-bg: color-mix(in srgb, #55b98b 27%, var(--surface));
+  --aw-status-green-fg: #9ce3c0;
+  --aw-status-blue-bg: color-mix(in srgb, #79a9d7 29%, var(--surface));
+  --aw-status-blue-fg: #bad8f2;
+  --aw-status-yellow-bg: color-mix(in srgb, #e7b75e 28%, var(--surface));
+  --aw-status-yellow-fg: #f3d99e;
+  --aw-status-orange-bg: color-mix(in srgb, #d88946 30%, var(--surface));
+  --aw-status-orange-fg: #efbd8a;
+  --aw-status-red-bg: color-mix(in srgb, #e77a6f 28%, var(--surface));
+  --aw-status-red-fg: #f5b2ab;
+  --aw-status-purple-bg: color-mix(in srgb, #8f78bd 30%, var(--surface));
+  --aw-status-purple-fg: #c8b9e5;
+  --aw-status-neutral-bg: color-mix(in srgb, #87919e 22%, var(--surface));
+  --aw-status-neutral-fg: #c9d0d9;
 }
 
 :root[data-theme='noir'] .prospect-directory-table tbody tr.prospect-temperature-hot {
@@ -680,5 +680,40 @@ table td {
 :root[data-theme='noir'] .client-summary-panel .muted,
 :root[data-theme='noir'] .client-summary-panel small {
   color: var(--muted) !important;
+}
+
+/* Client — une erreur de fiche ne doit jamais faire disparaître tout le Manager. */
+.client-detail-error-card,
+.client-page-error-card {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  min-height: 180px;
+  color: var(--text);
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+.client-detail-error-card h2,
+.client-page-error-card h2 {
+  margin: 0;
+}
+
+.client-detail-error-card p,
+.client-page-error-card p {
+  margin: 0;
+  color: var(--text);
+}
+
+.client-detail-error-card .button-row {
+  justify-content: flex-start;
+}
+
+:root[data-theme='noir'] .prospect-directory-table tbody tr[class*='prospect-temperature-'] > td {
+  border-color: color-mix(in srgb, var(--prospect-temperature-color) 20%, var(--border));
+}
+
+:root[data-theme='noir'] .prospect-directory-table tbody tr[class*='prospect-temperature-']:hover > td {
+  filter: brightness(1.08);
 }
 
