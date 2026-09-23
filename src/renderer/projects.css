@@ -2180,3 +2180,55 @@ body.project-resizing * {
     grid-column: auto;
   }
 }
+
+/* Projet — plan de production réellement masquable */
+.project-production-workspace.tree-collapsed {
+  position: relative;
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.project-production-workspace.tree-collapsed .project-workbench {
+  grid-column: 1;
+}
+
+.project-tree-restore-button {
+  position: absolute;
+  z-index: 4;
+  top: 10px;
+  left: 10px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 8px 20px rgb(0 0 0 / 8%);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.project-tree-restore-button:hover {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+}
+
+.project-production-workspace.tree-collapsed .project-workbench-head {
+  padding-left: 42px;
+}
+
+@media (max-width: 940px) {
+  .project-tree-restore-button {
+    position: static;
+    justify-self: start;
+    margin-bottom: 8px;
+  }
+
+  .project-production-workspace.tree-collapsed .project-workbench-head {
+    padding-left: 0;
+  }
+}
+
