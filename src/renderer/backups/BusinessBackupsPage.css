@@ -193,10 +193,15 @@ body.business-backups-resizing {
   font-weight: 700;
 }
 
-.business-backup-kpi > div > strong,
-.business-backup-context strong {
+.business-backup-kpi > div > strong {
   color: var(--text);
   font-size: 20px;
+  font-weight: 400;
+}
+
+.business-backup-context strong {
+  color: var(--text);
+  font-size: var(--aw-font-functional, 14px);
   font-weight: 400;
 }
 
