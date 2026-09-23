@@ -245,7 +245,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
                 <div><strong>Capacités Bridge</strong><span>{trueKeys(snapshot.scannerCapabilities).join(' · ') || 'Non renseigné'}</span></div>
                 <div><strong>Contenu observé</strong><span>{trueKeys(snapshot.observedContent).join(' · ') || 'Non renseigné'}</span></div>
                 <div><strong>Couverture</strong><span>{Object.keys(snapshot.coverage).join(' · ') || 'Non renseignée'}</span></div>
-                <div><strong>Sécurité</strong><span>{snapshot.security.redaction_applied ? 'Redaction appliquée' : 'Redaction non annoncée'} · payloads en lecture seule</span></div>
+                <div><strong>Sécurité</strong><span>{snapshot.security.redaction_applied === true ? 'Redaction appliquée' : 'Redaction non annoncée'} · payloads en lecture seule</span></div>
               </div>
             </details>}
 
