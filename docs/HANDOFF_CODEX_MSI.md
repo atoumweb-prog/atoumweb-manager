@@ -174,6 +174,16 @@ ChatGPT pilote actuellement la conception et les modifications de la branche Pro
 - Bibliothèque AtoumWeb et Sauvegardes utilisent désormais la même logique : liste à gauche, barre centrale redimensionnable, fiche à droite, agrandissement `⛶`, réduction, fermeture explicite et empilement responsive sur petite largeur.
 - Sur Bibliothèque et Sauvegardes, appliquer la règle typographique commune : titre / libellé / champ en gras, valeur ou contenu saisi en poids normal, commentaire discret, statut et bouton semi-gras.
 
+## Derniers correctifs de recette — 23/09/2026
+
+- une protection renderer globale a été ajoutée : si React rencontre une erreur non interceptée, le Manager affiche maintenant l’erreur exacte au lieu d’une fenêtre noire vide ;
+- la page Clients possède une barrière d’erreur dédiée, calquée sur la protection déjà validée de la fenêtre Référence Prospect ;
+- le thème Noir conserve désormais des teintes métier CRM plus contrastées ;
+- la page **Gestion des temps** a planté pendant la recette avec `ReferenceError: OperationIcon is not defined` dans `TimePage.tsx` après le remplacement des anciens symboles par les nouveaux pictos SVG ;
+- correctif appliqué au commit `b8c5af96` : import explicite de `OperationIcon` dans `TimePage.tsx` ;
+- l’utilisateur a confirmé juste après relance que **Gestion des temps fonctionne de nouveau** ;
+- ce retour est une validation visuelle ciblée, pas une validation complète `typecheck / tests / package`.
+
 ## Timer Intervention / Incident
 
 - une session démarrée depuis une Intervention conserve réellement `interventionId` ;
