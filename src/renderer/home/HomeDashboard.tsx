@@ -190,9 +190,15 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
       <article className="home-card home-pipeline-card">
         <div className="home-card-title"><div><OperationIcon name="chart" size={20} /><strong>Pipeline commercial</strong></div><button type="button" onClick={() => openProspectPipeline()} aria-label="Ouvrir le pipeline commercial">›</button></div>
         <div className="home-pipeline-items">
-          {pipeline.map((item) => <button type="button" key={item.key} className={`home-pipeline-item tone-${item.tone}`} onClick={() => openProspectPipeline()}>
-            <strong>{item.count}</strong><span>{item.label}</span>
-          </button>)}
+          {pipeline.map((item, index) => {
+            const share = pipelineTotal > 0 ? Math.round((item.count / pipelineTotal) * 100) : 0;
+            return <button type="button" key={item.key} className={`home-pipeline-item tone-${item.tone}`} onClick={() => openProspectPipeline()} title={`${item.label} · ${item.count} prospect${item.count > 1 ? 's' : ''}`}>
+              <span className="home-pipeline-step"><i />Étape {index + 1}</span>
+              <span className="home-pipeline-metric"><strong>{item.count}</strong><small>prospect{item.count > 1 ? 's' : ''}</small></span>
+              <span className="home-pipeline-label">{item.label}</span>
+              <span className="home-pipeline-share">{share}% du pipeline</span>
+            </button>;
+          })}
         </div>
         <div className="home-pipeline-bar" aria-label="Répartition du pipeline">
           {pipeline.map((item) => <span key={item.key} className={`tone-${item.tone}`} style={{ flexGrow: Math.max(item.count, .3) }} />)}
