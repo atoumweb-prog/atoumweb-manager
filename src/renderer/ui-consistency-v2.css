@@ -767,9 +767,16 @@ table td {
 
 /* La fiche latérale exploite davantage l'espace disponible sur les grands écrans. */
 .prospects-layout.with-detail {
-  grid-template-columns: minmax(0, 1fr) clamp(340px, 32vw, 500px) !important;
+  grid-template-columns: minmax(0, var(--prospect-list-percent, 66%)) 8px minmax(320px, 1fr) !important;
+  gap: 0 !important;
   align-items: start !important;
   min-width: 0;
+}
+
+.prospect-splitter {
+  align-self: stretch;
+  min-height: 100%;
+  margin-inline: 0;
 }
 
 .prospects-layout.with-detail > * {
@@ -819,7 +826,7 @@ table td {
 /* Comme Interventions / Maintenance : largeur moyenne = panneau plus généreux. */
 @media (max-width: 1250px) {
   .prospects-layout.with-detail {
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 38%) !important;
+    grid-template-columns: minmax(0, var(--prospect-list-percent, 62%)) 8px minmax(300px, 1fr) !important;
   }
 }
 
@@ -827,6 +834,11 @@ table td {
 @media (max-width: 850px) {
   .prospects-layout.with-detail {
     grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .prospect-splitter {
+    display: none !important;
   }
 
   .prospect-detail-panel:not(.prospect-detail-desk) {
