@@ -59,6 +59,10 @@
   background: var(--muted);
 }
 
+.timer-live-indicator.idle {
+  display: none;
+}
+
 .timer-live-indicator.running {
   background: var(--success);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 16%, transparent);
