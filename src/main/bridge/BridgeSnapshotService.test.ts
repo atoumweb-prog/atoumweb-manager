@@ -1,0 +1,225 @@
+import { createHash } from 'node:crypto';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
+import { applyPendingMigrations } from '../database/migrations';
+import { writeZipArchive, type ZipEntryInput } from '../referentials/ZipArchive';
+import { createWorkspacePaths, ensureWorkspace, type WorkspacePaths } from '../workspace';
+import { calculateBridgePackageFingerprint } from './BridgeSnapshotPackage';
+import { BridgeSnapshotService } from './BridgeSnapshotService';
+
+let database: NodeSqliteAdapter;
+let workspaceRoot: string;
+let workspace: WorkspacePaths;
+let service: BridgeSnapshotService;
+
+beforeEach(() => {
+  workspaceRoot = mkdtempSync(join(tmpdir(), 'atoumweb-bridge-manager-'));
+  workspace = ensureWorkspace(workspaceRoot);
+  database = new NodeSqliteAdapter(':memory:');
+  database.exec('PRAGMA foreign_keys = ON;');
+  applyPendingMigrations(database);
+  service = new BridgeSnapshotService(database, workspace);
+});
+
+afterEach(() => {
+  database.close();
+  rmSync(workspaceRoot, { recursive: true, force: true });
+});
+
+describe('BridgeSnapshotService', () => {
+  it('valide, importe et relit un Snapshot V1 sans dupliquer un réimport identique', () => {
+    const packagePath = buildSnapshot(join(workspaceRoot, 'snapshot-v1.zip'), 'Accueil');
+
+    const inspection = service.inspectPackage(packagePath);
+    expect(inspection.contract).toBe('atoumweb-bridge-snapshot');
+    expect(inspection.schemaVersion).toBe('1.0.0');
+    expect(inspection.counts.pages).toBe(1);
+    expect(inspection.counts.nodes).toBe(1);
+    expect(inspection.checksumsVerified).toBe(true);
+
+    const imported = service.importPackage(packagePath);
+    expect(imported.alreadyImported).toBe(false);
+    expect(imported.site.snapshotCount).toBe(1);
+    expect(imported.snapshot.counts.pages).toBe(1);
+
+    const sites = service.listSites();
+    expect(sites).toHaveLength(1);
+    const site = service.getSite(sites[0].id);
+    expect(site.snapshots).toHaveLength(1);
+
+    const pages = service.listPages(site.snapshots[0].id);
+    expect(pages).toHaveLength(1);
+    expect(pages[0].title).toBe('Accueil');
+
+    const detail = service.getPage(pages[0].pageSnapshotId);
+    expect(detail.nodes).toHaveLength(1);
+    expect(detail.nodes[0].moduleType).toBe('text');
+
+    const preview = service.getObjectPreview(detail.nodes[0].contentObjectRef!);
+    expect(preview.available).toBe(true);
+    expect(preview.text).toContain('Bonjour Bridge');
+
+    const again = service.importPackage(packagePath);
+    expect(again.alreadyImported).toBe(true);
+    expect(service.getSite(sites[0].id).snapshots).toHaveLength(1);
+  });
+
+  it('refuse le même snapshot_id si le package a changé', () => {
+    const first = buildSnapshot(join(workspaceRoot, 'snapshot-a.zip'), 'Accueil');
+    const second = buildSnapshot(join(workspaceRoot, 'snapshot-b.zip'), 'Accueil modifié');
+    service.importPackage(first);
+    expect(() => service.importPackage(second)).toThrow(/package différent/i);
+  });
+});
+
+function buildSnapshot(destination: string, title: string): string {
+  const sourceInstanceId = 'awb-site:test-instance';
+  const sourceSiteKey = 'wp:https://example.test/:blog:1';
+  const snapshotId = 'awb-snap:20260924T000000Z:test';
+  const pageSnapshotId = 'awb-pagesnap:test';
+  const raw = Buffer.from('<p>Bonjour Bridge</p>', 'utf8');
+  const rawHash = sha256(raw);
+  const objectRef = `sha256:${rawHash}`;
+  const objectPath = `objects/sha256/${rawHash.slice(0, 2)}/${rawHash}`;
+
+  const manifest = {
+    contract: 'atoumweb-bridge-snapshot',
+    schema_version: '1.0.0',
+    bridge_version: '0.4.2',
+    fingerprint_profile: 'awb-json-c14n-v1',
+    generated_at: '2026-09-24T00:00:00Z',
+    site_id: null,
+    source_instance_id: sourceInstanceId,
+    source_site_key: sourceSiteKey,
+    snapshot_id: snapshotId,
+    snapshot_type: 'full',
+    scanner_capabilities: { wordpress: true, divi4: true, divi5: false },
+    observed_content: { wordpress: true, divi4: true, divi5: false },
+    coverage: { pages: { mode: 'complete', post_types: ['page'], statuses: ['publish'], excluded: [] } },
+    scan_status: 'complete_with_warnings',
+    issues: [{ code: 'FRONTEND_AUDIT_NOT_ATTACHED', severity: 'warning', scope: 'site', entity_ref: sourceSiteKey, message: 'Front non joint.' }],
+    counts: { pages: 1, nodes: 1, sources: 0, assets: 0, dependencies: 0, relations: 0, objects: 1 },
+    security: { potential_sensitive_payloads: true, redaction_applied: true, redaction_rules_version: '1', payloads_modified: false },
+    package: { format: 'zip', root: 'snapshot/', checksums_file: 'checksums.json' },
+  };
+  const site = {
+    site_id: null,
+    source_instance_id: sourceInstanceId,
+    source_site_key: sourceSiteKey,
+    canonical_url: 'https://example.test/',
+    wordpress_site_url: 'https://example.test/',
+    wordpress_home_url: 'https://example.test/',
+    name: 'Site test',
+    environment: 'test',
+    source: { wordpress_blog_id: 1, multisite: false },
+    timezone: { name: 'Europe/Paris', utc_offset_at_scan: '+02:00' },
+  };
+  const snapshot = {
+    snapshot_id: snapshotId,
+    site_id: null,
+    source_instance_id: sourceInstanceId,
+    source_site_key: sourceSiteKey,
+    snapshot_type: 'full',
+    generated_at: '2026-09-24T00:00:00Z',
+    bridge: { version: '0.4.2', schema_version: '1.0.0', fingerprint_profile: 'awb-json-c14n-v1' },
+    environment: { wordpress_version: '7.1.2', php_version: '8.1.34', theme: 'Divi', theme_version: '5.13.1', child_theme: null },
+    fingerprints: {},
+  };
+  const page = {
+    page_id: null,
+    source_post_id: 10,
+    source_page_key: 'wp-post:10',
+    page_snapshot_id: pageSnapshotId,
+    source_instance_id: sourceInstanceId,
+    source_site_key: sourceSiteKey,
+    snapshot_id: snapshotId,
+    post_type: 'page',
+    status: 'publish',
+    title,
+    slug: 'accueil',
+    canonical_url: 'https://example.test/',
+    wordpress_guid: null,
+    storage_format: 'divi4_shortcodes',
+    builder: 'divi',
+    builder_generation: '4',
+    is_divi_content: true,
+    scope: 'content',
+    audit_status: 'ready',
+    raw_source: { object_ref: objectRef, redacted: false },
+    tree_ref: 'pages/10/tree.json',
+    source_ids: [],
+    asset_ids: [],
+    dependency_ids: [],
+    relation_ids: [],
+    fingerprints: {},
+    frontend: { checked: false, http_status: null },
+  };
+  const tree = {
+    page_snapshot_id: pageSnapshotId,
+    builder: 'divi',
+    builder_generation: '4',
+    root_nodes: ['node_text_1'],
+    nodes: [{
+      occurrence_id: 'node_text_1',
+      page_snapshot_id: pageSnapshotId,
+      parent_occurrence_id: null,
+      position: 0,
+      node_type: 'module',
+      builder: 'divi',
+      builder_generation: '4',
+      module_type: 'text',
+      label: 'Texte',
+      classes: [],
+      ids: [],
+      source_ids: [],
+      asset_ids: [],
+      dependency_ids: [],
+      relation_ids: [],
+      raw_source: { object_ref: objectRef },
+      content: { object_ref: objectRef },
+      fingerprints: { node: objectRef, content: objectRef },
+      matching_hints: {},
+      attributes: {},
+      responsive: {},
+      design: {},
+    }],
+    matching_hints: [],
+  };
+  const meta = { source_post_id: 10, post: { post_type: 'page', post_status: 'publish' }, meta: [] };
+
+  const relativeEntries = new Map<string, Buffer>();
+  const addJson = (name: string, value: unknown) => relativeEntries.set(name, Buffer.from(`${JSON.stringify(value, null, 2)}\n`, 'utf8'));
+  addJson('manifest.json', manifest);
+  addJson('site.json', site);
+  addJson('snapshot.json', snapshot);
+  addJson('registries/objects.json', { objects: [{ ref: objectRef, path: objectPath, content_type: 'text/html', encoding: 'utf-8', byte_length: raw.length, serialization: 'text', compression: 'none' }] });
+  addJson('registries/sources.json', { sources: [] });
+  addJson('registries/assets.json', { assets: [] });
+  addJson('registries/dependencies.json', { dependencies: [] });
+  addJson('registries/relations.json', { relations: [] });
+  addJson('pages/10/page.json', page);
+  addJson('pages/10/meta.json', meta);
+  addJson('pages/10/tree.json', tree);
+  relativeEntries.set(objectPath, raw);
+
+  const files: Record<string, string> = {};
+  for (const [name, data] of relativeEntries) files[name] = `sha256:${sha256(data)}`;
+  const checksums = {
+    algorithm: 'sha256',
+    fingerprint_profile: 'awb-json-c14n-v1',
+    files,
+    package_fingerprint: calculateBridgePackageFingerprint(files),
+  };
+  addJson('checksums.json', checksums);
+
+  const entries: ZipEntryInput[] = [...relativeEntries.entries()].map(([name, data]) => ({ name: `snapshot/${name}`, data }));
+  writeZipArchive(destination, entries);
+  return destination;
+}
+
+function sha256(data: Buffer): string {
+  return createHash('sha256').update(data).digest('hex');
+}
