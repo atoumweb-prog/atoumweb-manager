@@ -103,6 +103,7 @@ export class BridgeSnapshotService {
     const packageRelativePath = join('packages', siteId, `${this.safeSegment(loaded.inspection.externalSnapshotId)}.zip`).replace(/\\/g, '/');
 
     this.persistObjects(loaded);
+    this.persistPackage(loaded.path, packageRelativePath);
     const pageSnapshotIds = new Map<string, string>();
 
     this.database.exec('BEGIN IMMEDIATE;');
@@ -301,7 +302,6 @@ export class BridgeSnapshotService {
       throw error;
     }
 
-    this.persistPackage(loaded.path, packageRelativePath);
     return { alreadyImported: false, site: this.getSiteSummary(siteId), snapshot: this.getSnapshot(snapshotId) };
   }
 
