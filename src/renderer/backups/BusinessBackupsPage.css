@@ -283,3 +283,10 @@ body.business-backups-resizing {
   }
 }
 
+
+.business-backups-toolbar button,
+.business-backup-location .button-row button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
