@@ -260,9 +260,9 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
       </section>
 
       <div className="time-kpi-grid">
-        <article className="kpi-card time-kpi-card"><span className="time-kpi-icon" aria-hidden="true">◷</span><div><strong className="time-kpi-label">Temps total</strong><span className="time-kpi-value">{secondsLabel(summary.totalSeconds)}</span><small>{summary.sessionCount} session{summary.sessionCount > 1 ? 's' : ''}</small></div></article>
-        <article className="kpi-card time-kpi-card"><span className="time-kpi-icon" aria-hidden="true">€</span><div><strong className="time-kpi-label">Facturable</strong><span className="time-kpi-value">{secondsLabel(summary.billableSeconds)}</span><small>Calculé depuis les sessions</small></div></article>
-        <article className="kpi-card time-kpi-card"><span className="time-kpi-icon" aria-hidden="true">◌</span><div><strong className="time-kpi-label">Non facturable</strong><span className="time-kpi-value">{secondsLabel(summary.nonBillableSeconds)}</span><small>Interne, formation, gestes…</small></div></article>
+        <article className="kpi-card time-kpi-card"><span className="time-kpi-icon" aria-hidden="true"><OperationIcon name="clock" size={29} /></span><div><strong className="time-kpi-label">Temps total</strong><span className="time-kpi-value">{secondsLabel(summary.totalSeconds)}</span><small>{summary.sessionCount} session{summary.sessionCount > 1 ? 's' : ''}</small></div></article>
+        <article className="kpi-card time-kpi-card"><span className="time-kpi-icon" aria-hidden="true"><OperationIcon name="euro" size={30} /></span><div><strong className="time-kpi-label">Facturable</strong><span className="time-kpi-value">{secondsLabel(summary.billableSeconds)}</span><small>Calculé depuis les sessions</small></div></article>
+        <article className="kpi-card time-kpi-card"><span className="time-kpi-icon time-kpi-icon-nonbillable" aria-hidden="true"><OperationIcon name="piggy-broken" size={31} /></span><div><strong className="time-kpi-label">Non facturable</strong><span className="time-kpi-value">{secondsLabel(summary.nonBillableSeconds)}</span><small>Interne, formation, gestes…</small></div></article>
       </div>
 
       {manualOpen && (
