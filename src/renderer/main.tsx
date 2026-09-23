@@ -38,7 +38,54 @@ if (!rootElement) {
   throw new Error('Élément racine introuvable.');
 }
 
-createRoot(rootElement).render(
+let fatalRendererShown = false;
+
+function rendererErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.stack || error.message;
+  if (typeof error === 'string') return error;
+  try { return JSON.stringify(error); } catch { return String(error); }
+}
+
+function showRendererFailure(error: unknown): void {
+  if (fatalRendererShown) return;
+  fatalRendererShown = true;
+  const message = rendererErrorMessage(error);
+  console.error('Erreur renderer AtoumWeb Manager', error);
+  rootElement.innerHTML = '';
+  const shell = document.createElement('div');
+  shell.className = 'renderer-fatal-shell';
+  const card = document.createElement('div');
+  card.className = 'renderer-fatal-card';
+  const eyebrow = document.createElement('span');
+  eyebrow.className = 'eyebrow';
+  eyebrow.textContent = 'AtoumWeb Manager';
+  const title = document.createElement('h1');
+  title.textContent = 'Une erreur d’affichage a interrompu la page';
+  const explanation = document.createElement('p');
+  explanation.textContent = 'Les données locales ne sont pas supprimées. Voici l’erreur exacte à corriger :';
+  const details = document.createElement('pre');
+  details.textContent = message;
+  const reload = document.createElement('button');
+  reload.type = 'button';
+  reload.className = 'secondary-button';
+  reload.textContent = 'Recharger le Manager';
+  reload.addEventListener('click', () => window.location.reload());
+  card.append(eyebrow, title, explanation, details, reload);
+  shell.append(card);
+  rootElement.append(shell);
+}
+
+window.addEventListener('error', (event) => {
+  showRendererFailure(event.error ?? event.message);
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  showRendererFailure(event.reason);
+});
+
+createRoot(rootElement, {
+  onUncaughtError: (error) => showRendererFailure(error),
+}).render(
   <StrictMode>
     <App />
   </StrictMode>,
