@@ -144,10 +144,30 @@ export interface OrganizationInput {
 }
 export interface Organization extends OrganizationInput { id: string; createdAt: string; updatedAt: string; archivedAt?: string | null; }
 
+export type DirectoryRelation = 'client' | 'prospect' | 'client_prospect' | 'external';
+
+export interface DirectoryOrganization extends Organization {
+  contactCount: number;
+  activeProspectCount: number;
+  activeClientCount: number;
+  relation: DirectoryRelation;
+  prospectId?: string | null;
+  clientId?: string | null;
+}
+
 export interface ContactInput {
   organizationId?: string | null; firstName: string; lastName: string; jobTitle?: string | null; email?: string | null; phone?: string | null; preferredChannel?: string | null; notes?: string | null;
 }
 export interface Contact extends ContactInput { id: string; createdAt: string; updatedAt: string; archivedAt?: string | null; }
+
+export interface DirectoryContact extends Contact {
+  organizationName?: string | null;
+  activeProspectCount: number;
+  activeClientCount: number;
+  relation: DirectoryRelation;
+  prospectId?: string | null;
+  clientId?: string | null;
+}
 
 export interface ClientContactLink { id: string; clientAccountId: string; contactId: string; role: ClientContactRole; isPrimary: boolean; contact: Contact; }
 
@@ -223,10 +243,14 @@ export interface ConvertProspectResult { prospectId: string; clientId: string; c
 
 export interface CrmApi {
   organizations: {
+    list(includeArchived?: boolean): Promise<DirectoryOrganization[]>;
+    get(id: string): Promise<DirectoryOrganization>;
     create(input: OrganizationInput): Promise<Organization>;
     update(id: string, input: OrganizationInput): Promise<Organization>;
   };
   contacts: {
+    list(includeArchived?: boolean): Promise<DirectoryContact[]>;
+    get(id: string): Promise<DirectoryContact>;
     create(input: ContactInput): Promise<Contact>;
     update(id: string, input: ContactInput): Promise<Contact>;
   };
