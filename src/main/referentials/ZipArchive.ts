@@ -8,6 +8,8 @@ const UTF8_FLAG = 0x0800;
 const MAX_ENTRIES = 5000;
 const MAX_ENTRY_SIZE = 50 * 1024 * 1024;
 const MAX_TOTAL_SIZE = 200 * 1024 * 1024;
+const MAX_COMPRESSION_RATIO = 200;
+const ENCRYPTED_FLAG = 0x0001;
 
 export interface ZipEntryInput {
   name: string;
@@ -131,6 +133,8 @@ export function readZipArchive(path: string): ZipEntryOutput[] {
     if (cursor + 46 > buffer.length || buffer.readUInt32LE(cursor) !== CENTRAL_DIRECTORY_HEADER) {
       throw new Error('Entrée ZIP invalide.');
     }
+    const versionMadeBy = buffer.readUInt16LE(cursor + 4);
+    const hostSystem = versionMadeBy >>> 8;
     const flags = buffer.readUInt16LE(cursor + 8);
     const method = buffer.readUInt16LE(cursor + 10);
     const expectedCrc = buffer.readUInt32LE(cursor + 16);
@@ -139,6 +143,7 @@ export function readZipArchive(path: string): ZipEntryOutput[] {
     const nameLength = buffer.readUInt16LE(cursor + 28);
     const extraLength = buffer.readUInt16LE(cursor + 30);
     const commentLength = buffer.readUInt16LE(cursor + 32);
+    const externalAttributes = buffer.readUInt32LE(cursor + 38);
     const localOffset = buffer.readUInt32LE(cursor + 42);
     const entryEnd = cursor + 46 + nameLength + extraLength + commentLength;
     if (entryEnd > buffer.length) throw new Error('Nom ou métadonnées ZIP invalides.');
@@ -148,7 +153,20 @@ export function readZipArchive(path: string): ZipEntryOutput[] {
     if (seen.has(name)) throw new Error(`Entrée ZIP dupliquée : ${name}`);
     seen.add(name);
 
+    if (flags & ENCRYPTED_FLAG) throw new Error(`Entrée ZIP chiffrée non prise en charge : ${name}`);
     if (uncompressedSize > MAX_ENTRY_SIZE) throw new Error(`Fichier trop volumineux dans le ZIP : ${name}`);
+    if (method === 8 && uncompressedSize > 0) {
+      if (compressedSize === 0 || uncompressedSize / compressedSize > MAX_COMPRESSION_RATIO) {
+        throw new Error(`Ratio de compression ZIP suspect : ${name}`);
+      }
+    }
+    if (hostSystem === 3) {
+      const unixMode = externalAttributes >>> 16;
+      const fileType = unixMode & 0o170000;
+      if (fileType !== 0 && fileType !== 0o100000) {
+        throw new Error(`Type de fichier ZIP non autorisé : ${name}`);
+      }
+    }
     totalUncompressed += uncompressedSize;
     if (totalUncompressed > MAX_TOTAL_SIZE) throw new Error('Le paquet ZIP dépasse la taille totale autorisée.');
     if (method !== 0 && method !== 8) throw new Error(`Méthode de compression ZIP non prise en charge pour ${name}.`);
@@ -156,8 +174,12 @@ export function readZipArchive(path: string): ZipEntryOutput[] {
     if (localOffset + 30 > buffer.length || buffer.readUInt32LE(localOffset) !== LOCAL_FILE_HEADER) {
       throw new Error(`En-tête local ZIP invalide pour ${name}.`);
     }
+    const localFlags = buffer.readUInt16LE(localOffset + 6);
+    const localMethod = buffer.readUInt16LE(localOffset + 8);
     const localNameLength = buffer.readUInt16LE(localOffset + 26);
     const localExtraLength = buffer.readUInt16LE(localOffset + 28);
+    const localName = normalizeEntryName(buffer.subarray(localOffset + 30, localOffset + 30 + localNameLength).toString((localFlags & UTF8_FLAG) ? 'utf8' : 'latin1'));
+    if (localName !== name || localMethod !== method) throw new Error(`En-tête local ZIP incohérent pour ${name}.`);
     const dataStart = localOffset + 30 + localNameLength + localExtraLength;
     const dataEnd = dataStart + compressedSize;
     if (dataEnd > buffer.length) throw new Error(`Contenu ZIP tronqué pour ${name}.`);
