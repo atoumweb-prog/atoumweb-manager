@@ -13,9 +13,11 @@ export const TIME_CATEGORIES = [
 
 export const TIME_SESSION_SOURCES = ['timer', 'manual', 'import'] as const;
 export const TIME_RECOVERY_STALE_AFTER_SECONDS = 90;
+export const TIME_PAUSE_REASONS = ['need_information', 'not_enough_time', 'other_emergency', 'other'] as const;
 
 export type TimeCategory = (typeof TIME_CATEGORIES)[number];
 export type TimeSessionSource = (typeof TIME_SESSION_SOURCES)[number];
+export type TimePauseReason = (typeof TIME_PAUSE_REASONS)[number];
 
 export interface StartTimeSessionInput {
   projectId?: string | null;
@@ -39,6 +41,8 @@ export interface TimeSessionPause {
   sessionId: string;
   startedAt: string;
   endedAt?: string | null;
+  reason?: TimePauseReason | null;
+  reasonNote?: string | null;
 }
 
 export interface TimeSession {
@@ -89,7 +93,7 @@ export interface TimeApi {
   start(input: StartTimeSessionInput): Promise<TimeSession>;
   switchTo(input: StartTimeSessionInput): Promise<TimeSession>;
   heartbeat(id: string): Promise<TimeSession>;
-  pause(id: string): Promise<TimeSession>;
+  pause(id: string, reason?: TimePauseReason | null, reasonNote?: string | null): Promise<TimeSession>;
   resume(id: string): Promise<TimeSession>;
   recoverResume(id: string): Promise<TimeSession>;
   stop(id: string): Promise<TimeSession>;
