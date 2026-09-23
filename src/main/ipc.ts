@@ -57,7 +57,7 @@ import type {
   ProjectTemplateNodeInput,
   TransformQuoteToProjectInput,
 } from '../shared/projects';
-import type { ManualTimeSessionInput, StartTimeSessionInput, TimeSessionFilters } from '../shared/time';
+import type { ManualTimeSessionInput, StartTimeSessionInput, TimePauseReason, TimeSessionFilters } from '../shared/time';
 import { generateQuotePdf } from './commercial/quotePdf';
 import type { DatabaseService } from './database/DatabaseService';
 import { scheduleDatabaseRestore } from './restore';
