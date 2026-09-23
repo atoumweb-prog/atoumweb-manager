@@ -143,6 +143,27 @@ export function loadBridgeSnapshotPackage(path: string): BridgeLoadedPackage {
     if (nodeId && !allNodeIds.has(nodeId)) throw new Error(`Node Source introuvable : ${nodeId}`);
   }
 
+  const relationTargets: Record<string, Set<string>> = {
+    page_snapshot: pageSnapshotIds,
+    node: allNodeIds,
+    source: sourceIds,
+    asset: assetIds,
+    dependency: dependencyIds,
+  };
+  for (const relation of relations) {
+    for (const endpoint of [asRecord(relation.from), asRecord(relation.to)]) {
+      const entity = requiredString(endpoint.entity, 'relation endpoint entity');
+      const id = requiredString(endpoint.id, 'relation endpoint id');
+      if (entity === 'global') {
+        if (!id.startsWith('global:')) throw new Error(`Référence globale Bridge invalide : ${id}`);
+        continue;
+      }
+      const allowed = relationTargets[entity];
+      if (!allowed) throw new Error(`Type de relation Bridge non pris en charge : ${entity}`);
+      if (!allowed.has(id)) throw new Error(`Référence Relation introuvable : ${entity} ${id}`);
+    }
+  }
+
   const counts: BridgeSnapshotCounts = {
     pages: pages.length,
     nodes: pages.reduce((sum, page) => sum + page.nodes.length, 0),
