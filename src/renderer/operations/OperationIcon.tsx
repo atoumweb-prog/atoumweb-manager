@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 type OperationIconName =
   | 'inbox'
   | 'alert'
@@ -12,7 +14,7 @@ type OperationIconName =
   | 'collapse'
   | 'close';
 
-const paths: Record<OperationIconName, React.ReactNode> = {
+const paths: Record<OperationIconName, ReactNode> = {
   inbox: <>
     <path d="M4 5.5h16v11H4z" />
     <path d="M4 13h4l2 3h4l2-3h4" />
