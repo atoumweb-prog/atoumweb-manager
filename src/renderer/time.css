@@ -130,6 +130,7 @@
 
 .timer-popover input,
 .timer-popover select,
+.timer-popover textarea,
 .manual-time-grid input,
 .manual-time-grid select,
 .manual-time-grid textarea {
@@ -693,6 +694,7 @@
 }
 .timer-popover input:not([type='checkbox']),
 .timer-popover select,
+.timer-popover textarea,
 .manual-time-grid input:not([type='checkbox']),
 .manual-time-grid select,
 .manual-time-grid textarea {
@@ -709,6 +711,7 @@
 }
 .timer-popover input:not([type='checkbox']):focus,
 .timer-popover select:focus,
+.timer-popover textarea:focus,
 .manual-time-grid input:not([type='checkbox']):focus,
 .manual-time-grid select:focus,
 .manual-time-grid textarea:focus {
@@ -716,6 +719,7 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 13%, transparent);
 }
 .timer-popover input::placeholder,
+.timer-popover textarea::placeholder,
 .manual-time-grid input::placeholder,
 .manual-time-grid textarea::placeholder {
   color: var(--muted);
@@ -723,6 +727,7 @@
 }
 :root:not([data-theme='noir']) .timer-popover input,
 :root:not([data-theme='noir']) .timer-popover select,
+:root:not([data-theme='noir']) .timer-popover textarea,
 :root:not([data-theme='noir']) .manual-time-grid input,
 :root:not([data-theme='noir']) .manual-time-grid select,
 :root:not([data-theme='noir']) .manual-time-grid textarea {
@@ -730,6 +735,7 @@
 }
 :root[data-theme='noir'] .timer-popover input,
 :root[data-theme='noir'] .timer-popover select,
+:root[data-theme='noir'] .timer-popover textarea,
 :root[data-theme='noir'] .manual-time-grid input,
 :root[data-theme='noir'] .manual-time-grid select,
 :root[data-theme='noir'] .manual-time-grid textarea {
@@ -775,3 +781,7 @@
 
 
 .time-kpi-icon-nonbillable svg { transform: scale(1.04); }
+
+.timer-pause-reason textarea { min-height: 82px; resize: vertical; }
+.timer-stop-decision .button-row,
+.timer-pause-reason .button-row { align-items: stretch; }
