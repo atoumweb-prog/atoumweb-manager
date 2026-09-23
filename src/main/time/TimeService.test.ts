@@ -70,6 +70,21 @@ describe('TimeService', () => {
     expect(time.active()).toBeNull();
   });
 
+  it('conserve le motif métier d une pause', () => {
+    const session = time.start({ category: 'support', activityLabel: 'Incident client' });
+    advance(12);
+    const paused = time.pause(session.id, 'need_information', 'Attente accès administrateur');
+
+    expect(paused.paused).toBe(true);
+    expect(paused.pauses).toHaveLength(1);
+    expect(paused.pauses[0]).toMatchObject({
+      reason: 'need_information',
+      reasonNote: 'Attente accès administrateur',
+    });
+
+    expect(() => time.resume(session.id)).not.toThrow();
+  });
+
   it('refuse une deuxième session active', () => {
     const project = projects.createInternal({ name: 'Premier projet' });
     time.start({ projectId: project.id, category: 'development' });
