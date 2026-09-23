@@ -124,3 +124,224 @@
 .aw-library-detail-heading .button-row {
   align-items: center;
 }
+
+/* Bibliothèque V2 — même atelier redimensionnable que les pages validées */
+.aw-library-layout.with-detail {
+  gap: 0;
+  align-items: stretch;
+}
+
+.aw-library-layout.detail-expanded {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.aw-library-splitter {
+  position: relative;
+  min-height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.aw-library-splitter::before {
+  content: "";
+  position: absolute;
+  inset: 0 2px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background 120ms ease;
+}
+
+.aw-library-splitter:hover::before,
+.aw-library-resizing .aw-library-splitter::before {
+  background: color-mix(in srgb, var(--accent) 30%, var(--border));
+}
+
+.aw-library-splitter span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--border);
+  transform: translate(-50%, -50%);
+}
+
+body.aw-library-resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.aw-library-list {
+  min-width: 0;
+  max-height: calc(100dvh - 250px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+}
+
+.aw-library-detail {
+  position: sticky;
+  top: 0;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  max-height: calc(100dvh - 250px);
+  margin-left: 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+}
+
+.aw-library-detail.expanded {
+  position: relative;
+  max-height: none;
+  margin-left: 0;
+}
+
+.aw-library-detail-heading .button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+}
+
+.aw-library-detail-heading .secondary-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Bibliothèque — hiérarchie typographique globale */
+.aw-library-summary .aw-library-kpi {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.aw-library-kpi > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.aw-library-kpi-icon {
+  display: inline-grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent-soft) 52%, var(--surface));
+  color: var(--accent);
+}
+
+.aw-library-summary .aw-library-kpi > div > span,
+.aw-library-package-grid span,
+.aw-library-create label,
+.aw-library-version-form label,
+.aw-library-metadata-editor label,
+.aw-library-asset-toolbar label,
+.aw-library-package-review label {
+  color: var(--text);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 700;
+}
+
+.aw-library-summary .aw-library-kpi > div > strong,
+.aw-library-package-grid strong {
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.aw-library-summary .aw-library-kpi small,
+.aw-library-item span,
+.aw-library-asset > small,
+.aw-library-version > div:first-child span,
+.aw-library-version p,
+.aw-library-checkbox {
+  color: var(--text-muted);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 400;
+}
+
+.aw-library-item strong,
+.aw-library-asset > strong,
+.aw-library-version > div:first-child strong,
+.aw-library-section-title h3,
+.aw-library-version-form h3,
+.aw-library-versions h3 {
+  color: var(--text);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 700;
+}
+
+.aw-library-tags span,
+.aw-library-version-flags > span,
+.aw-library-package-duplicates button span {
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 650;
+}
+
+.aw-library-asset > span {
+  color: var(--accent-strong);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 650;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.aw-library :is(input, select, textarea) {
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 400;
+}
+
+.aw-library-package-duplicates button strong {
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 400;
+}
+
+@media (max-width: 1050px) {
+  .aw-library-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .aw-library-toolbar > input {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 900px) {
+  .aw-library-layout.with-detail {
+    grid-template-columns: 1fr !important;
+  }
+
+  .aw-library-splitter {
+    display: none;
+  }
+
+  .aw-library-detail {
+    position: static;
+    max-height: none;
+    margin-left: 0;
+    margin-top: 10px;
+  }
+
+  .aw-library-list {
+    max-height: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .aw-library-toolbar,
+  .aw-library-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .aw-library-toolbar > input {
+    grid-column: auto;
+  }
+}
+
