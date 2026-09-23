@@ -480,7 +480,7 @@ export class BridgeSnapshotService {
   private persistPackage(source: string, relativePath: string): void {
     const destination = this.bridgePath(relativePath);
     mkdirSync(resolve(destination, '..'), { recursive: true });
-    if (!existsSync(destination)) copyFileSync(source, destination);
+    copyFileSync(source, destination);
   }
 
   private getSiteSummary(id: string): BridgeSiteSummary {
