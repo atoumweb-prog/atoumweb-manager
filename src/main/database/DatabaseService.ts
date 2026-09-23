@@ -4,6 +4,7 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DatabaseHealth } from '../../shared/contracts';
 import { BillingHandoffService } from '../billing/BillingHandoffService';
+import { BridgeSnapshotService } from '../bridge/BridgeSnapshotService';
 import { ExpenseService } from '../expenses/ExpenseService';
 import { CrmIdentityAssetService } from '../crm/CrmIdentityAssetService';
 import { BusinessBackupAlertService } from '../backups/BusinessBackupAlertService';
@@ -47,6 +48,7 @@ export class DatabaseService {
   private readonly database: DatabaseAdapter;
   private readonly existedBeforeOpen: boolean;
   readonly workflow: WorkflowService;
+  readonly bridgeSnapshots: BridgeSnapshotService;
   readonly demo: DemoService;
   readonly crm: CrmService;
   readonly clientContacts: ClientContactService;
@@ -119,6 +121,7 @@ export class DatabaseService {
     this.timeCorrections = new TimeCorrectionService(this.database, this.time);
     this.timeSwitches = new TimeSwitchService(this.database, this.time);
     this.workflow = new WorkflowService(this.database, this.crm, this.quotes, this.projects, this.operations);
+    this.bridgeSnapshots = new BridgeSnapshotService(this.database, this.workspace);
     this.demo = new DemoService(this.database);
   }
 
