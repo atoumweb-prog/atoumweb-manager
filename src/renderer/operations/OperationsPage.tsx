@@ -30,6 +30,7 @@ type OperationsView = 'requests' | 'interventions' | 'maintenance' | 'packs';
 export type OperationsSearchTarget = {
   entityType: Extract<SearchResult['entityType'], 'service_request' | 'intervention' | 'maintenance' | 'hour_pack'>;
   entityId: string;
+  focus?: 'conclusion';
 };
 
 const REQUEST_STATUS_LABELS: Record<ServiceRequestStatus, string> = {
@@ -84,6 +85,7 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
   const [selectedIntervention, setSelectedIntervention] = useState<Intervention | null>(null);
   const [interventionSplitPercent, setInterventionSplitPercent] = useState(34);
   const [interventionExpanded, setInterventionExpanded] = useState(false);
+  const [conclusionInterventionId, setConclusionInterventionId] = useState<string | null>(null);
   const [createRequestOpen, setCreateRequestOpen] = useState(false);
   const [createInterventionOpen, setCreateInterventionOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -157,6 +159,22 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
   }, [selectedIntervention?.id]);
 
   useEffect(() => {
+    const refreshIntervention = (event: Event) => {
+      const interventionId = (event as CustomEvent<{ interventionId?: string }>).detail?.interventionId;
+      if (!interventionId) return;
+      void window.atoumweb.operations.interventions.get(interventionId)
+        .then((intervention) => {
+          setInterventions((current) => current.map((item) => item.id === intervention.id ? intervention : item));
+          setSelectedIntervention((current) => current?.id === intervention.id ? intervention : current);
+          setAlertRefreshKey((value) => value + 1);
+        })
+        .catch(() => undefined);
+    };
+    window.addEventListener('atoumweb:intervention-updated', refreshIntervention);
+    return () => window.removeEventListener('atoumweb:intervention-updated', refreshIntervention);
+  }, []);
+
+  useEffect(() => {
     if (!initialTarget) return;
     setQuery('');
     setSelectedRequest(null);
@@ -174,7 +192,13 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
       setView('interventions');
       setInterventionStatus('all');
       void window.atoumweb.operations.interventions.get(initialTarget.entityId)
-        .then((intervention) => setSelectedIntervention(intervention))
+        .then((intervention) => {
+          setSelectedIntervention(intervention);
+          if (initialTarget.focus === 'conclusion') {
+            setConclusionInterventionId(intervention.id);
+            setInterventionExpanded(true);
+          }
+        })
         .catch((error: unknown) => onMessage(error instanceof Error ? error.message : 'Intervention introuvable.'));
       return;
     }
@@ -183,7 +207,7 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
       return;
     }
     setView('packs');
-  }, [initialTarget?.entityType, initialTarget?.entityId]);
+  }, [initialTarget?.entityType, initialTarget?.entityId, initialTarget?.focus]);
 
   useEffect(() => {
     if (!interventionProjectId) {
@@ -484,6 +508,8 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
           onCoverage={changeCoverage}
           onProjectNode={changeInterventionProjectNode}
           onTimer={startInterventionTimer}
+          conclusionRequested={conclusionInterventionId === selectedIntervention.id}
+          onConclusionHandled={() => setConclusionInterventionId(null)}
           onMessage={onMessage}
         /></div>}
       </div>}
