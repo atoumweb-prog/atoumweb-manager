@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type {
   BusinessBackupLocationInput,
   BusinessBackupLocationType,
@@ -8,6 +8,7 @@ import type {
 } from '../../shared/businessBackups';
 import type { ClientSummary } from '../../shared/crm';
 import type { ProjectSummary } from '../../shared/projects';
+import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
 import './BusinessBackupsPage.css';
 
 const BACKUP_TYPES: Array<{ id: BusinessBackupType; label: string }> = [
@@ -38,7 +39,8 @@ export function BusinessBackupsPage({ onMessage, initialRecordId }: Props) {
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [overview, setOverview] = useState<BusinessBackupOverview | null>(null);
   const [selected, setSelected] = useState<BusinessBackupRecord | null>(null);
-  const detailPanelRef = useRef<HTMLElement | null>(null);
+  const [detailExpanded, setDetailExpanded] = useState(false);
+  const [splitPercent, setSplitPercent] = useState(38);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<BusinessBackupType | ''>('');
   const [locationFilter, setLocationFilter] = useState<BusinessBackupLocationType | ''>('');
@@ -90,13 +92,14 @@ export function BusinessBackupsPage({ onMessage, initialRecordId }: Props) {
 
   useEffect(() => {
     if (!selected) return;
-    const closeOnOutside = (event: PointerEvent) => {
-      const target = event.target as Node | null;
-      if (!target || detailPanelRef.current?.contains(target)) return;
-      setSelected(null);
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSelected(null);
+        setDetailExpanded(false);
+      }
     };
-    document.addEventListener('pointerdown', closeOnOutside);
-    return () => document.removeEventListener('pointerdown', closeOnOutside);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
   }, [selected?.id]);
 
   const projectById = useMemo(() => new Map(projects.map((project) => [project.id, project])), [projects]);
@@ -170,6 +173,25 @@ export function BusinessBackupsPage({ onMessage, initialRecordId }: Props) {
     if (!result.ok) setError(result.error ?? 'Impossible d’ouvrir cette copie locale.');
   }
 
+  function beginResize(): void {
+    const workspace = document.querySelector<HTMLElement>('.business-backups-layout.with-detail');
+    if (!workspace) return;
+    document.body.classList.add('business-backups-resizing');
+    const onMove = (event: PointerEvent) => {
+      const rect = workspace.getBoundingClientRect();
+      if (!rect.width) return;
+      const ratio = ((event.clientX - rect.left) / rect.width) * 100;
+      setSplitPercent(Math.max(20, Math.min(58, ratio)));
+    };
+    const onUp = () => {
+      document.body.classList.remove('business-backups-resizing');
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp, { once: true });
+  }
+
   async function markStable(): Promise<void> {
     if (!selected) return;
     try {
@@ -185,10 +207,10 @@ export function BusinessBackupsPage({ onMessage, initialRecordId }: Props) {
   return (
     <div className="business-backups-page">
       <div className="business-backups-kpis">
-        <BackupKpi label="Sauvegardes connues" value={overview?.totalRecords ?? 0} detail={overview?.latestKnown ? dateLabel(overview.latestKnown.backupAt) : 'Aucune'} />
-        <BackupKpi label="Copies locales présentes" value={overview?.localCopies ?? 0} detail={overview?.latestLocal ? `Dernière : ${dateLabel(overview.latestLocal.backupAt)}` : 'Aucune copie locale'} />
-        <BackupKpi label="Copies locales manquantes" value={overview?.missingLocalCopies ?? 0} detail={overview?.missingLocalCopies ? 'À relocaliser' : 'Aucune anomalie'} />
-        <BackupKpi label="Version stable" value={overview?.latestStable ? '1' : '0'} detail={overview?.latestStable?.label ?? 'Non définie'} />
+        <BackupKpi icon="database" label="Sauvegardes connues" value={overview?.totalRecords ?? 0} detail={overview?.latestKnown ? dateLabel(overview.latestKnown.backupAt) : 'Aucune'} />
+        <BackupKpi icon="folder" label="Copies locales présentes" value={overview?.localCopies ?? 0} detail={overview?.latestLocal ? `Dernière : ${dateLabel(overview.latestLocal.backupAt)}` : 'Aucune copie locale'} />
+        <BackupKpi icon="alert" label="Copies locales manquantes" value={overview?.missingLocalCopies ?? 0} detail={overview?.missingLocalCopies ? 'À relocaliser' : 'Aucune anomalie'} />
+        <BackupKpi icon="check-circle" label="Version stable" value={overview?.latestStable ? '1' : '0'} detail={overview?.latestStable?.label ?? 'Non définie'} />
       </div>
 
       {error && <div className="notice business-backups-error"><span>{error}</span><button type="button" onClick={() => setError(null)}>×</button></div>}
@@ -214,19 +236,26 @@ export function BusinessBackupsPage({ onMessage, initialRecordId }: Props) {
         <button className="primary-button" type="button" onClick={() => void createRecord()}>Créer l’enregistrement</button>
       </article>}
 
-      <div className="business-backups-layout">
-        <article className="panel business-backups-list">
+      <div
+        className={`business-backups-layout ${selected ? 'with-detail' : 'list-only'} ${detailExpanded ? 'detail-expanded' : ''}`}
+        style={selected && !detailExpanded ? { gridTemplateColumns: `${splitPercent}% 8px minmax(0, 1fr)` } : undefined}
+      >
+        {!detailExpanded && <article className="panel business-backups-list">
           <div className="panel-title"><div><span className="eyebrow">Historique</span><h2>Sauvegardes</h2></div><span className="status-pill">{records.length}</span></div>
           {records.length === 0 && <p className="muted">Aucune sauvegarde ne correspond aux filtres.</p>}
-          {records.map((record) => <button type="button" key={record.id} className={`business-backup-row ${selected?.id === record.id ? 'selected' : ''}`} onClick={() => setSelected(record)}>
+          {records.map((record) => <button type="button" key={record.id} className={`business-backup-row ${selected?.id === record.id ? 'selected' : ''}`} onClick={() => { setSelected(record); setDetailExpanded(false); }}>
             <div><strong>{record.label}</strong><span>{backupTypeLabel(record.backupType)} · {dateLabel(record.backupAt)}</span></div>
             <div>{record.stable && <span className="stable-badge">Stable</span>}<span>{record.locations.length} emplacement{record.locations.length > 1 ? 's' : ''}</span></div>
           </button>)}
-        </article>
+        </article>}
 
-        <article ref={detailPanelRef} className="panel business-backups-detail">
-          {!selected ? <div className="business-backups-empty"><span className="eyebrow">Sauvegardes métier</span><h2>Sélectionne une sauvegarde</h2><p className="muted">Les emplacements serveur et locaux sont suivis séparément.</p></div> : <>
-            <div className="panel-title"><div><span className="eyebrow">{backupTypeLabel(selected.backupType)} · {dateLabel(selected.backupAt)}</span><h2>{selected.label}</h2></div>{!selected.stable && <button className="secondary-button" type="button" onClick={() => void markStable()}>Marquer stable</button>}</div>
+        {selected && !detailExpanded && <div className="business-backups-splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner la liste et la fiche sauvegarde" tabIndex={0} onPointerDown={beginResize} onDoubleClick={() => setSplitPercent(38)} onKeyDown={(event) => {
+          if (event.key === 'ArrowLeft') setSplitPercent((value) => Math.max(20, value - 3));
+          if (event.key === 'ArrowRight') setSplitPercent((value) => Math.min(58, value + 3));
+        }}><span /></div>}
+
+        {selected && <article className={`panel business-backups-detail ${detailExpanded ? 'expanded' : ''}`}>
+            <div className="panel-title business-backups-detail-heading"><div><span className="eyebrow">{backupTypeLabel(selected.backupType)} · {dateLabel(selected.backupAt)}</span><h2>{selected.label}</h2></div><div className="business-backups-detail-actions">{!selected.stable && <button className="secondary-button" type="button" onClick={() => void markStable()}><OperationIcon name="check-circle" size={16} /> Marquer stable</button>}<button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={() => { setSelected(null); setDetailExpanded(false); }}><OperationIcon name="close" size={18} /></button></div></div>
             <div className="business-backup-context">
               <div><span>Projet</span><strong>{selected.projectId ? projectById.get(selected.projectId)?.name ?? selected.projectId : '—'}</strong></div>
               <div><span>Client</span><strong>{selected.clientAccountId ? clientById.get(selected.clientAccountId)?.displayName ?? selected.clientAccountId : '—'}</strong></div>
@@ -258,15 +287,14 @@ export function BusinessBackupsPage({ onMessage, initialRecordId }: Props) {
               <label>Notes<textarea rows={2} value={locationForm.notes} onChange={(event) => setLocationForm((value) => ({ ...value, notes: event.target.value }))} /></label>
               <button className="primary-button" type="button" onClick={() => void addLocation()}>Ajouter l’emplacement</button>
             </div>
-          </>}
-        </article>
+        </article>}
       </div>
     </div>
   );
 }
 
-function BackupKpi({ label, value, detail }: { label: string; value: number | string; detail: string }) {
-  return <article className="kpi-card"><span>{label}</span><strong>{value}</strong><small>{detail}</small></article>;
+function BackupKpi({ icon, label, value, detail }: { icon: OperationIconName; label: string; value: number | string; detail: string }) {
+  return <article className="kpi-card business-backup-kpi"><span className="business-backup-kpi-icon"><OperationIcon name={icon} size={27} /></span><div><span>{label}</span><strong>{value}</strong><small>{detail}</small></div></article>;
 }
 
 function backupTypeLabel(type: BusinessBackupType): string {
