@@ -92,9 +92,53 @@ button { color: inherit; }
 .timer-context { flex: 1; color: var(--muted); font-size: 11px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
 .timer-widget button { width: 31px; height: 31px; border: 0; border-radius: 9px; background: var(--accent-soft); color: var(--accent-strong); }
-.topbar-right { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex: 0 1 auto; min-width: 0; }
-.global-clock { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 96px; height: 44px; padding: 0 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-soft); color: var(--accent-strong); }
-.global-clock strong { color: var(--text); font-size: 14px; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.topbar-right { display: flex; align-items: stretch; justify-content: flex-end; gap: 10px; flex: 0 1 auto; min-width: 0; }
+.global-clock {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  min-width: 255px;
+  min-height: 54px;
+  padding: 7px 11px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 42%, var(--surface)) 0%, var(--surface) 72%);
+  color: var(--accent-strong);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 4%);
+}
+.global-clock-icon {
+  display: inline-grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 11%, var(--surface));
+  color: var(--accent-strong);
+}
+.global-clock-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+.global-clock-copy strong {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 800;
+}
+.global-clock-copy small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.global-clock > b {
+  color: var(--text);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+}
 
 .content-area { min-height: 0; overflow-y: auto; padding: 28px 30px 40px; }
 .content-area.home-content {
@@ -172,7 +216,8 @@ button { color: inherit; }
   .app-shell { grid-template-columns: 220px 1fr; }
   .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .timer-widget { min-width: 250px; }
-  .global-clock { min-width: 88px; padding-inline: 10px; }
+  .global-clock { min-width: 220px; }
+  .global-clock-copy small { max-width: 118px; }
   .topbar { gap: 14px; padding-inline: 18px; }
   .theme-grid { grid-template-columns: 1fr; }
 }
