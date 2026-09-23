@@ -176,9 +176,12 @@ export function readZipArchive(path: string): ZipEntryOutput[] {
     }
     const localFlags = buffer.readUInt16LE(localOffset + 6);
     const localMethod = buffer.readUInt16LE(localOffset + 8);
+    if (localFlags & ENCRYPTED_FLAG) throw new Error(`Entrée ZIP chiffrée non prise en charge : ${name}`);
     const localNameLength = buffer.readUInt16LE(localOffset + 26);
     const localExtraLength = buffer.readUInt16LE(localOffset + 28);
-    const localName = normalizeEntryName(buffer.subarray(localOffset + 30, localOffset + 30 + localNameLength).toString((localFlags & UTF8_FLAG) ? 'utf8' : 'latin1'));
+    const localNameEnd = localOffset + 30 + localNameLength;
+    if (localNameEnd > buffer.length) throw new Error(`Nom local ZIP invalide pour ${name}.`);
+    const localName = normalizeEntryName(buffer.subarray(localOffset + 30, localNameEnd).toString((localFlags & UTF8_FLAG) ? 'utf8' : 'latin1'));
     if (localName !== name || localMethod !== method) throw new Error(`En-tête local ZIP incohérent pour ${name}.`);
     const dataStart = localOffset + 30 + localNameLength + localExtraLength;
     const dataEnd = dataStart + compressedSize;
