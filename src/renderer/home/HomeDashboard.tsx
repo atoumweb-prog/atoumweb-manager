@@ -35,6 +35,10 @@ function openPage(page: HomePageName): void {
   window.dispatchEvent(new CustomEvent('atoumweb:open-page', { detail: page }));
 }
 
+function openProspectPipeline(): void {
+  window.dispatchEvent(new CustomEvent('atoumweb:open-prospects-view', { detail: 'pipeline' }));
+}
+
 function money(cents: number): string {
   return `${(cents / 100).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`;
 }
@@ -69,6 +73,7 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [clockNow, setClockNow] = useState(() => new Date());
 
   async function load(): Promise<void> {
     const now = new Date();
@@ -94,6 +99,11 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    const clock = window.setInterval(() => setClockNow(new Date()), 30_000);
+    return () => window.clearInterval(clock);
+  }, []);
 
   useEffect(() => {
     void load();
@@ -130,9 +140,9 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
   const readyBilling = data?.billing.filter((item) => item.status === 'ready') ?? [];
   const readyAmount = readyBilling.reduce((sum, item) => sum + item.expectedAmountCents, 0);
   const alerts = data?.alerts.alerts ?? [];
-  const date = new Date();
-  const greeting = date.getHours() < 18 ? 'Bonjour !' : 'Bonsoir !';
-  const dateLabel = date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const greeting = clockNow.getHours() < 18 ? 'Bonjour !' : 'Bonsoir !';
+  const dateLabel = clockNow.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const timeLabel = clockNow.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
   if (loading && !data) {
     return <section className="home-dashboard home-dashboard-loading"><div className="home-loading-card"><span className="eyebrow">Accueil</span><strong>Chargement du tableau de bord…</strong></div></section>;
@@ -145,11 +155,11 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
   return <section className="home-dashboard">
     <header className="home-heading">
       <div><h1>Accueil</h1><p>Vue rapide de l’activité AtoumWeb</p></div>
-      <div className="home-greeting"><OperationIcon name="sun" size={27} /><div><strong>{greeting}</strong><span>{dateLabel}</span></div></div>
+      <div className="home-greeting"><OperationIcon name="sun" size={27} /><div><strong>{greeting}</strong><span>{dateLabel} · {timeLabel}</span></div></div>
     </header>
 
     <div className="home-kpi-grid">
-      <HomeKpi icon="user" tone="red" label="Prospects à relancer" value={relaunchCount} helper="À reprendre dans Prospection" onClick={() => openPage('Prospects')} />
+      <HomeKpi icon="user" tone="red" label="Prospects à relancer" value={relaunchCount} helper="À reprendre dans le pipeline" onClick={openProspectPipeline} />
       <HomeKpi icon="file-text" tone="blue" label="Devis à préparer" value={quotePrepareCount} helper="Dossiers prêts à chiffrer" onClick={() => openPage('Devis')} />
       <HomeKpi icon="folder" tone="green" label="Projets à démarrer" value={projectsToStart} helper="Projets encore à préparer" onClick={() => openPage('Projets')} />
       <HomeKpi icon="wrench" tone="orange" label="Interventions en cours" value={interventionsInProgress} helper="Travail actuellement ouvert" onClick={() => openPage('Interventions & Maintenance')} />
@@ -170,16 +180,16 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
       </article>
 
       <article className="home-card home-pipeline-card">
-        <div className="home-card-title"><div><OperationIcon name="chart" size={20} /><strong>Pipeline commercial</strong></div><button type="button" onClick={() => openPage('Prospects')} aria-label="Ouvrir la prospection">›</button></div>
+        <div className="home-card-title"><div><OperationIcon name="chart" size={20} /><strong>Pipeline commercial</strong></div><button type="button" onClick={openProspectPipeline} aria-label="Ouvrir le pipeline commercial">›</button></div>
         <div className="home-pipeline-items">
-          {pipeline.map((item) => <button type="button" key={item.key} className={`home-pipeline-item tone-${item.tone}`} onClick={() => openPage('Prospects')}>
+          {pipeline.map((item) => <button type="button" key={item.key} className={`home-pipeline-item tone-${item.tone}`} onClick={openProspectPipeline}>
             <strong>{item.count}</strong><span>{item.label}</span>
           </button>)}
         </div>
         <div className="home-pipeline-bar" aria-label="Répartition du pipeline">
           {pipeline.map((item) => <span key={item.key} className={`tone-${item.tone}`} style={{ flexGrow: Math.max(item.count, .3) }} />)}
         </div>
-        <div className="home-pipeline-footer"><span>{pipelineTotal} prospect{pipelineTotal > 1 ? 's' : ''} dans le pipeline</span><button type="button" onClick={() => openPage('Prospects')}>Voir tout →</button></div>
+        <div className="home-pipeline-footer"><span>{pipelineTotal} prospect{pipelineTotal > 1 ? 's' : ''} dans le pipeline</span><button type="button" onClick={openProspectPipeline}>Voir tout →</button></div>
       </article>
 
       <article className="home-card home-time-card">
@@ -211,7 +221,7 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
       <article className="home-card home-actions-card">
         <div className="home-card-title"><div><OperationIcon name="bolt" size={20} /><strong>Actions rapides</strong></div></div>
         <div className="home-quick-actions">
-          <button className="quick-prospect" type="button" onClick={() => openPage('Prospects')}><OperationIcon name="user" size={19} />+ Prospect</button>
+          <button className="quick-prospect" type="button" onClick={openProspectPipeline}><OperationIcon name="user" size={19} />+ Prospect</button>
           <button className="quick-quote" type="button" onClick={() => openPage('Devis')}><OperationIcon name="file-text" size={19} />+ Devis</button>
           <button className="quick-project" type="button" onClick={() => openPage('Projets')}><OperationIcon name="folder" size={19} />+ Projet</button>
           <button className="quick-request" type="button" onClick={() => openPage('Interventions & Maintenance')}><OperationIcon name="wrench" size={19} />+ Demande</button>
