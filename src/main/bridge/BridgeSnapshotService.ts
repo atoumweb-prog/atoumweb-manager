@@ -276,6 +276,13 @@ export class BridgeSnapshotService {
         );
       }
 
+      for (const [sectionKey, payload] of Object.entries(loaded.sections)) {
+        this.database.run(
+          'INSERT INTO bridge_snapshot_sections (snapshot_id,section_key,payload_json) VALUES (?,?,?)',
+          [snapshotId, sectionKey, JSON.stringify(payload)],
+        );
+      }
+
       for (const object of loaded.objects) {
         this.database.run(
           `INSERT OR IGNORE INTO bridge_objects
