@@ -88,8 +88,8 @@ const EMPTY_CONTACT_DRAFT: ContactDraft = {
   makePrimary: false,
 };
 
-class ClientDetailErrorBoundary extends Component<
-  { clientId: string; clientName: string; onClose: () => void; children: ReactNode },
+class ClientsPageErrorBoundary extends Component<
+  { children: ReactNode },
   { error: string | null }
 > {
   state: { error: string | null } = { error: null };
@@ -99,30 +99,20 @@ class ClientDetailErrorBoundary extends Component<
   }
 
   componentDidCatch(error: unknown, info: ErrorInfo): void {
-    console.error('Erreur fiche Client', error, info);
-  }
-
-  componentDidUpdate(previous: Readonly<{ clientId: string; clientName: string; onClose: () => void; children: ReactNode }>): void {
-    if (previous.clientId !== this.props.clientId && this.state.error) {
-      this.setState({ error: null });
-    }
+    console.error('Erreur page Clients', error, info);
   }
 
   render(): ReactNode {
     if (this.state.error) {
-      return <aside className="panel client-summary-panel client-detail-error-card">
-        <div>
-          <span className="eyebrow">Fiche client</span>
-          <h2>{this.props.clientName}</h2>
-          <strong>La fiche n’a pas pu s’afficher.</strong>
+      return <div className="clients-page-error-shell">
+        <div className="panel fatal-card">
+          <span className="eyebrow">Clients</span>
+          <h1>La fiche Client n’a pas pu s’afficher</h1>
           <p>{this.state.error}</p>
-          <p className="muted">Le reste du Manager et les données du client restent disponibles.</p>
-        </div>
-        <div className="button-row">
+          <p className="muted">Le Manager et les données CRM ne sont pas affectés.</p>
           <button className="secondary-button" type="button" onClick={() => this.setState({ error: null })}>Réessayer</button>
-          <button className="secondary-button" type="button" onClick={this.props.onClose}>Fermer la fiche</button>
         </div>
-      </aside>;
+      </div>;
     }
     return this.props.children;
   }
@@ -134,7 +124,13 @@ function dateInputValue(value?: string | null): string {
   return Number.isNaN(date.getTime()) ? new Date().toISOString().slice(0, 10) : date.toISOString().slice(0, 10);
 }
 
-export function ClientsPage({ onMessage, initialId }: { onMessage: (message: string) => void; initialId?: string | null }) {
+export function ClientsPage(props: { onMessage: (message: string) => void; initialId?: string | null }) {
+  return <ClientsPageErrorBoundary>
+    <ClientsPageContent {...props} />
+  </ClientsPageErrorBoundary>;
+}
+
+function ClientsPageContent({ onMessage, initialId }: { onMessage: (message: string) => void; initialId?: string | null }) {
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
   const [contacts, setContacts] = useState<ClientContactLink[]>([]);
@@ -149,6 +145,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
   const [editingCoordinates, setEditingCoordinates] = useState(false);
   const [coordinateDraft, setCoordinateDraft] = useState({ firstName: '', lastName: '', website: '', addressLine1: '', addressLine2: '', postalCode: '', city: '' });
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | ClientStatus>('all');
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(initialId ?? null);
@@ -170,8 +167,12 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
 
   async function refresh(): Promise<void> {
     setLoading(true);
+    setLoadError(null);
     try {
       setClients(await window.atoumweb.crm.clients.list({ includeArchived: true }));
+    } catch (error) {
+      setClients([]);
+      setLoadError(error instanceof Error ? error.message : String(error));
     } finally {
       setLoading(false);
     }
@@ -516,7 +517,8 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
         </form>
       )}
 
-      {loading ? <div className="panel"><p className="muted">Chargement des clients…</p></div> : (
+      {loadError && <div className="panel fatal-card clients-load-error"><span className="eyebrow">Clients</span><h2>Chargement impossible</h2><p>{loadError}</p><button className="secondary-button" type="button" onClick={() => void refresh()}>Réessayer</button></div>}
+      {loading ? <div className="panel"><p className="muted">Chargement des clients…</p></div> : !loadError && (
         <div className="clients-layout">
           <div className="panel table-panel">
             <div className="clients-table-wrap">
@@ -540,17 +542,6 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
           </div>
 
           {selected && (
-            <ClientDetailErrorBoundary
-              clientId={selected.id}
-              clientName={selected.displayName}
-              onClose={() => {
-                setRelationshipMenuOpen(false);
-                setLargeView(false);
-                setSelectedId(null);
-                setActionEditor(null);
-                setArchiveCandidateId(null);
-              }}
-            >
             <aside ref={sidePanelRef} className={`panel client-summary-panel client-relationship-${selected.relationshipStatus ?? 'neutral'} ${largeView ? 'client-large-view' : ''}`} role={largeView ? 'dialog' : undefined} aria-modal={largeView ? true : undefined} aria-label={largeView ? `Fiche client ${selected.displayName}` : undefined}>
               <div className="detail-panel-heading">
                 <div>
@@ -673,7 +664,6 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
               {activeTab === 'history' && <ActivityList activity={activity} />}
               </div>
             </aside>
-            </ClientDetailErrorBoundary>
           )}
         </div>
       )}
