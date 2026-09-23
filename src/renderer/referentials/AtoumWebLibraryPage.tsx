@@ -457,7 +457,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
           {REUSE_STATUSES.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}
         </select>
         <label className="aw-library-checkbox"><input type="checkbox" checked={includeArchived} onChange={(event) => setIncludeArchived(event.target.checked)} /> Archivés</label>
-        <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void inspectPackage()}>Importer ZIP</button>
+        <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void inspectPackage()}><OperationIcon name="upload" size={16} /> Importer ZIP</button>
         <button className="primary-button" type="button" onClick={() => setCreating((value) => !value)}>{creating ? 'Fermer' : 'Nouveau composant'}</button>
       </article>
 
@@ -521,11 +521,11 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
             </>}
 
             <div className="aw-library-assets">
-              <div className="aw-library-section-title"><div><span className="eyebrow">Fichiers indépendants</span><h3>Captures & assets</h3></div><button className="secondary-button" type="button" disabled={!assetVersionId} onClick={() => void openAssetFolder()}>Ouvrir le dossier</button></div>
+              <div className="aw-library-section-title"><div><span className="eyebrow">Fichiers indépendants</span><h3>Captures & assets</h3></div><button className="secondary-button" type="button" disabled={!assetVersionId} onClick={() => void openAssetFolder()}><OperationIcon name="folder" size={16} /> Ouvrir le dossier</button></div>
               <div className="aw-library-asset-toolbar">
                 <label>Version<select value={assetVersionId} onChange={(event) => void changeAssetVersion(event.target.value)}>{selected.versions.map((version) => <option key={version.id} value={version.id}>Version {version.versionNumber}{version.current ? ' · courante' : ''}{version.stable ? ' · stable' : ''}</option>)}</select></label>
                 <label>Type<select value={assetRole} onChange={(event) => setAssetRole(event.target.value as AtoumWebTechnicalAssetRole)}>{ASSET_ROLES.map((role) => <option key={role.id} value={role.id}>{role.label}</option>)}</select></label>
-                <button className="primary-button" type="button" disabled={!assetVersionId || Boolean(selected.archivedAt)} onClick={() => void importAssets()}>Ajouter des fichiers</button>
+                <button className="primary-button" type="button" disabled={!assetVersionId || Boolean(selected.archivedAt)} onClick={() => void importAssets()}><OperationIcon name="upload" size={16} /> Ajouter des fichiers</button>
               </div>
               {assets.length === 0 ? <p className="muted">Aucun fichier lié à cette version.</p> : <div className="aw-library-asset-list">{assets.map((asset) => <button key={asset.id} type="button" className={`aw-library-asset ${asset.missing ? 'missing' : ''}`} onClick={() => void openAsset(asset.id)}>{assetPreviews[asset.id] && <img src={assetPreviews[asset.id]} alt={`Aperçu ${asset.fileName}`} loading="lazy" />}<span>{assetRoleLabel(asset.role)}</span><strong>{asset.fileName}</strong><small>{formatBytes(asset.sizeBytes)}{asset.missing ? ' · fichier manquant' : ''}</small></button>)}</div>}
             </div>
