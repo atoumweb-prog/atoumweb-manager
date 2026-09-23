@@ -84,7 +84,9 @@ export function OperationsAlertsPanel({ refreshKey, onNavigate, onMessage }: {
     onNavigate(targetFor(alert));
   }
 
-  return <section className="panel operations-alerts-panel">
+  const compactEmpty = alerts.length === 0 && incidents.length === 0 && !incidentsExpanded;
+
+  return <section className={`panel operations-alerts-panel ${compactEmpty ? 'compact-empty' : ''}`}>
     <div className="operations-alerts-heading">
       <div><span className="eyebrow">À surveiller</span><h2>{alerts.length ? `${alerts.length} point(s) à suivre` : 'Aucune alerte opérationnelle'}</h2></div>
       <div className="operations-alerts-actions">
