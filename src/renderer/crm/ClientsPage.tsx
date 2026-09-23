@@ -1,7 +1,7 @@
 import { NeedChoices, openEntity } from '../workflow/DossierPanel';
 import {ClientDocumentsPanel} from './ClientDocumentsPanel';
 import type { NeedInput } from '../../shared/workflow';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Component, useEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from 'react';
 import {
   CLIENT_CONTACT_ROLES,
   type ActivityEvent,
@@ -88,6 +88,46 @@ const EMPTY_CONTACT_DRAFT: ContactDraft = {
   makePrimary: false,
 };
 
+class ClientDetailErrorBoundary extends Component<
+  { clientId: string; clientName: string; onClose: () => void; children: ReactNode },
+  { error: string | null }
+> {
+  state: { error: string | null } = { error: null };
+
+  static getDerivedStateFromError(error: unknown): { error: string } {
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+
+  componentDidCatch(error: unknown, info: ErrorInfo): void {
+    console.error('Erreur fiche Client', error, info);
+  }
+
+  componentDidUpdate(previous: Readonly<{ clientId: string; clientName: string; onClose: () => void; children: ReactNode }>): void {
+    if (previous.clientId !== this.props.clientId && this.state.error) {
+      this.setState({ error: null });
+    }
+  }
+
+  render(): ReactNode {
+    if (this.state.error) {
+      return <aside className="panel client-summary-panel client-detail-error-card">
+        <div>
+          <span className="eyebrow">Fiche client</span>
+          <h2>{this.props.clientName}</h2>
+          <strong>La fiche n’a pas pu s’afficher.</strong>
+          <p>{this.state.error}</p>
+          <p className="muted">Le reste du Manager et les données du client restent disponibles.</p>
+        </div>
+        <div className="button-row">
+          <button className="secondary-button" type="button" onClick={() => this.setState({ error: null })}>Réessayer</button>
+          <button className="secondary-button" type="button" onClick={this.props.onClose}>Fermer la fiche</button>
+        </div>
+      </aside>;
+    }
+    return this.props.children;
+  }
+}
+
 function dateInputValue(value?: string | null): string {
   if (!value) return new Date().toISOString().slice(0, 10);
   const date = new Date(value);
@@ -170,7 +210,9 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
       setIdentity(null); setQuotes([]); setProjects([]); setSubscriptions([]); setInterventions([]);
       return;
     }
-    void refreshSelectedClientData(selectedId);
+    void refreshSelectedClientData(selectedId).catch((error: unknown) => {
+      onMessage(error instanceof Error ? error.message : 'Impossible de charger la fiche client.');
+    });
   }, [selectedId, clients]);
 
   useEffect(() => {
@@ -498,6 +540,17 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
           </div>
 
           {selected && (
+            <ClientDetailErrorBoundary
+              clientId={selected.id}
+              clientName={selected.displayName}
+              onClose={() => {
+                setRelationshipMenuOpen(false);
+                setLargeView(false);
+                setSelectedId(null);
+                setActionEditor(null);
+                setArchiveCandidateId(null);
+              }}
+            >
             <aside ref={sidePanelRef} className={`panel client-summary-panel client-relationship-${selected.relationshipStatus ?? 'neutral'} ${largeView ? 'client-large-view' : ''}`} role={largeView ? 'dialog' : undefined} aria-modal={largeView ? true : undefined} aria-label={largeView ? `Fiche client ${selected.displayName}` : undefined}>
               <div className="detail-panel-heading">
                 <div>
@@ -620,6 +673,7 @@ export function ClientsPage({ onMessage, initialId }: { onMessage: (message: str
               {activeTab === 'history' && <ActivityList activity={activity} />}
               </div>
             </aside>
+            </ClientDetailErrorBoundary>
           )}
         </div>
       )}
