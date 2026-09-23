@@ -219,7 +219,7 @@ export function BusinessBackupsPage({ onMessage, initialRecordId }: Props) {
         <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher une sauvegarde ou un emplacement…" />
         <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as BusinessBackupType | '')}><option value="">Tous les types</option>{BACKUP_TYPES.map((type) => <option key={type.id} value={type.id}>{type.label}</option>)}</select>
         <select value={locationFilter} onChange={(event) => setLocationFilter(event.target.value as BusinessBackupLocationType | '')}><option value="">Tous les emplacements</option>{LOCATION_TYPES.map((type) => <option key={type.id} value={type.id}>{type.label}</option>)}</select>
-        <button className="primary-button" type="button" onClick={() => setCreating((value) => !value)}>{creating ? 'Fermer' : 'Nouvelle sauvegarde'}</button>
+        <button className="primary-button" type="button" onClick={() => setCreating((value) => !value)}>{creating ? <><OperationIcon name="close" size={16} /> Fermer</> : <><OperationIcon name="database" size={16} /> Nouvelle sauvegarde</>}</button>
       </article>
 
       {creating && <article className="panel business-backups-create">
@@ -270,9 +270,9 @@ export function BusinessBackupsPage({ onMessage, initialRecordId }: Props) {
                 <div><strong>{location.label}</strong><span>{locationTypeLabel(location.locationType)} · {location.pathOrReference}</span></div>
                 <div className="business-backup-location-state">{location.locationType === 'local' ? <span>{location.exists ? 'Présente' : 'Introuvable'}</span> : <span>{location.verifiedAt ? `Confirmé ${dateLabel(location.verifiedAt)}` : 'Non confirmé'}</span>}</div>
                 <div className="button-row">
-                  <button className="secondary-button" type="button" onClick={() => void verifyLocation(location.id)}>{location.locationType === 'local' ? 'Vérifier' : 'Confirmer'}</button>
-                  {location.locationType === 'local' && location.exists && <button className="secondary-button" type="button" onClick={() => void openLocal(location.id)}>Ouvrir</button>}
-                  {location.locationType === 'local' && <button className="secondary-button" type="button" onClick={() => void relocalize(location.id)}>Relocaliser</button>}
+                  <button className="secondary-button" type="button" onClick={() => void verifyLocation(location.id)}><OperationIcon name="check-circle" size={16} /> {location.locationType === 'local' ? 'Vérifier' : 'Confirmer'}</button>
+                  {location.locationType === 'local' && location.exists && <button className="secondary-button" type="button" onClick={() => void openLocal(location.id)}><OperationIcon name="external-link" size={16} /> Ouvrir</button>}
+                  {location.locationType === 'local' && <button className="secondary-button" type="button" onClick={() => void relocalize(location.id)}><OperationIcon name="folder" size={16} /> Relocaliser</button>}
                 </div>
               </div>)}
             </div>
