@@ -10,6 +10,7 @@ import {
 } from '../../shared/operations';
 import type { ProjectSummary } from '../../shared/projects';
 import { HourPackShortfallPanel } from './HourPackShortfallPanel';
+import { OperationIcon } from './OperationIcon';
 
 const STATUS_LABELS: Record<HourPackStatus, string> = {
   active: 'Actif', exhausted: 'Épuisé', expired: 'Expiré', suspended: 'Suspendu', archived: 'Archivé',
