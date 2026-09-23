@@ -105,9 +105,11 @@ Le **HEAD actuel doit donc être revalidé** sur MSI avec :
 
 ## Phase 7
 
-La branche `feature/phase-7-analytics-v1` / PR #71 existe toujours. Elle est une branche sœur de Projet V2 : les deux partent de `fix/pre-phase5-commercial-ux`.
+La branche `feature/phase-7-analytics-v1` / PR #71 existe toujours comme chantier historique d’analytique avancée.
 
-Ne pas poursuivre simultanément les deux sans intégration explicite. Après validation de Projet V2, il faudra réintégrer/rebaser Phase 7 sur le nouveau socle afin que la rentabilité lise le vrai suivi de production.
+Une première page **Statistiques V1** est désormais intégrée directement dans `feature/project-blueprints-v1` afin de rester cohérente avec le vrai socle Projet V2. Elle dérive ses chiffres des données métier existantes et n’ajoute aucune migration : Vue d’ensemble, Commercial, Projets & temps et Clients, avec filtres mois / trimestre / année / toutes données et comparaison à la période précédente.
+
+La branche Phase 7 historique ne doit pas être fusionnée telle quelle. Elle reste utile pour reprendre plus tard les fonctions non encore intégrées : encaissements/paiements, rentabilité avancée, statistiques par prestation, exports et pilotage approfondi.
 
 ## Branches historiques
 
@@ -173,6 +175,8 @@ ChatGPT pilote actuellement la conception et les modifications de la branche Pro
 - Facturation et Dépenses utilisent les pictos SVG communs, une liste compacte lorsqu’une fiche est ouverte, un splitter redimensionnable, un mode fiche agrandie et un comportement responsive.
 - Bibliothèque AtoumWeb et Sauvegardes utilisent désormais la même logique : liste à gauche, barre centrale redimensionnable, fiche à droite, agrandissement `⛶`, réduction, fermeture explicite et empilement responsive sur petite largeur.
 - Sur Bibliothèque et Sauvegardes, appliquer la règle typographique commune : titre / libellé / champ en gras, valeur ou contenu saisi en poids normal, commentaire discret, statut et bouton semi-gras.
+- Annuaire suit la même logique liste / fiche : Organisations et Contacts, splitter redimensionnable, agrandissement, responsive, identité visuelle et accès direct aux fiches Client / Prospect liées.
+- Statistiques reste une page de lecture compacte : pictos, KPI, graphiques CSS simples et onglets courts ; les chiffres restent dérivés des sources métier et ne deviennent jamais une nouvelle source de vérité.
 
 ## Derniers correctifs de recette — 23/09/2026
 
