@@ -98,6 +98,7 @@ function ratio(part: number, total: number): number {
 }
 
 function compare(current: number, previous: number) {
+  if (current === 0 && previous === 0) return { text: 'Aucune donnée sur les deux périodes', direction: 'same' as const };
   const delta = statisticsDelta(current, previous);
   if (delta === null) return { text: 'Nouveau sur la période', direction: 'new' as const };
   if (Math.abs(delta) < .05) return { text: 'Stable vs période précédente', direction: 'same' as const };
@@ -105,6 +106,10 @@ function compare(current: number, previous: number) {
     text: (delta > 0 ? '+' : '') + delta.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' % vs période précédente',
     direction: delta > 0 ? 'up' as const : 'down' as const,
   };
+}
+
+function countLabel(value: number, singular: string, plural: string): string {
+  return value + ' ' + (value === 1 ? singular : plural);
 }
 
 function openPage(page: string): void {
@@ -249,7 +254,8 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
     { label: 'Dépenses', value: spent, display: money(spent), tone: 'red' },
   ];
   const maxFinancial = Math.max(1, ...financial.map((item) => item.value));
-  const billableRatio = ratio(billableSeconds, seconds);
+  const hasRecordedTime = seconds > 0;
+  const billableRatio = hasRecordedTime ? ratio(billableSeconds, seconds) : 0;
   const comparison = (current: number, previous: number) => previousRange ? compare(current, previous) : undefined;
   const donutStyle = { '--statistics-donut-angle': Math.round((billableRatio / 100) * 360) + 'deg' } as CSSProperties;
 
@@ -289,7 +295,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         <article className="panel statistics-card">
           <CardTitle eyebrow="Temps" title="Répartition facturable" action="Voir les temps →" onClick={() => openPage('Gestion des temps')} />
           <div className="statistics-time">
-            <div className="statistics-donut" style={donutStyle}><span><strong>{pct(billableRatio)}</strong><small>facturable</small></span></div>
+            <div className={'statistics-donut' + (hasRecordedTime ? '' : ' no-data')} style={donutStyle}><span><strong>{hasRecordedTime ? pct(billableRatio) : '0 h'}</strong><small>{hasRecordedTime ? 'facturable' : 'aucun temps'}</small></span></div>
             <div className="statistics-legend">
               <div><i className="billable" /><span>Facturable</span><strong>{hours(billableSeconds)}</strong></div>
               <div><i /><span>Non facturable</span><strong>{hours(nonBillableSeconds)}</strong></div>
@@ -299,9 +305,9 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         </article>
       </div>
       <div className="statistics-snapshots">
-        <Snapshot icon="user" label="Prospects actifs" value={activeProspects.length} helper={newProspects.length + ' nouveau(x) sur la période'} onClick={() => openPage('Prospects')} />
-        <Snapshot icon="folder" label="Projets actifs" value={activeProjects.length} helper={projectsCompleted.length + ' terminé(s) sur la période'} onClick={() => openPage('Projets')} />
-        <Snapshot icon="wrench" label="Interventions actives" value={activeInterventions.length} helper={interventionsCompleted.length + ' terminée(s) sur la période'} onClick={() => openPage('Interventions & Maintenance')} />
+        <Snapshot icon="user" label="Prospects actifs" value={activeProspects.length} helper={countLabel(newProspects.length, 'nouveau prospect', 'nouveaux prospects') + ' sur la période'} onClick={() => openPage('Prospects')} />
+        <Snapshot icon="folder" label="Projets actifs" value={activeProjects.length} helper={countLabel(projectsCompleted.length, 'projet terminé', 'projets terminés') + ' sur la période'} onClick={() => openPage('Projets')} />
+        <Snapshot icon="wrench" label="Interventions actives" value={activeInterventions.length} helper={countLabel(interventionsCompleted.length, 'intervention terminée', 'interventions terminées') + ' sur la période'} onClick={() => openPage('Interventions & Maintenance')} />
         <Snapshot icon="euro" label="À facturer" value={readyBilling.length} helper={money(readyAmount) + ' à préparer'} onClick={() => openPage('Facturation')} />
       </div>
     </>}
@@ -310,8 +316,8 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
       <div className="statistics-kpis">
         <Kpi icon="user" label="Nouveaux prospects" value={String(newProspects.length)} comparison={comparison(newProspects.length, previousProspects.length)} />
         <Kpi icon="file-text" label="Devis créés" value={String(quotes.length)} comparison={comparison(quotes.length, previousQuotes.length)} />
-        <Kpi icon="check-circle" label="Taux d’acceptation" value={pct(acceptanceRate)} helper={accepted.length + ' accepté(s) · ' + refused.length + ' refusé(s)'} />
-        <Kpi icon="chart" label="Conversion prospects" value={pct(conversionRate)} helper={won.length + ' gagné(s) · ' + lost.length + ' perdu(s)'} />
+        <Kpi icon="check-circle" label="Taux d’acceptation" value={pct(acceptanceRate)} helper={countLabel(accepted.length, 'devis accepté', 'devis acceptés') + ' · ' + countLabel(refused.length, 'devis refusé', 'devis refusés')} />
+        <Kpi icon="chart" label="Conversion prospects" value={pct(conversionRate)} helper={countLabel(won.length, 'prospect gagné', 'prospects gagnés') + ' · ' + countLabel(lost.length, 'prospect perdu', 'prospects perdus')} />
       </div>
       <div className="statistics-main-grid">
         <article className="panel statistics-card">
@@ -329,9 +335,9 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
     {tab === 'production' && <>
       <div className="statistics-kpis">
         <Kpi icon="folder" label="Projets créés" value={String(projectsCreated.length)} comparison={comparison(projectsCreated.length, previousProjects.length)} />
-        <Kpi icon="check-circle" label="Projets terminés" value={String(projectsCompleted.length)} helper={activeProjects.length + ' projet(s) actif(s)'} />
+        <Kpi icon="check-circle" label="Projets terminés" value={String(projectsCompleted.length)} helper={countLabel(activeProjects.length, 'projet actif', 'projets actifs')} />
         <Kpi icon="clock" label="Temps travaillé" value={hours(seconds)} comparison={comparison(seconds, previousSeconds)} />
-        <Kpi icon="wrench" label="Interventions terminées" value={String(interventionsCompleted.length)} helper={activeInterventions.length + ' intervention(s) active(s)'} />
+        <Kpi icon="wrench" label="Interventions terminées" value={String(interventionsCompleted.length)} helper={countLabel(activeInterventions.length, 'intervention active', 'interventions actives')} />
       </div>
       <div className="statistics-main-grid">
         <article className="panel statistics-card">
@@ -348,10 +354,10 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
 
     {tab === 'clients' && <>
       <div className="statistics-kpis">
-        <Kpi icon="user" label="Clients actifs" value={String(data.clients.filter((item) => item.status === 'active').length)} helper={newClients.length + ' nouveau(x) sur la période'} />
+        <Kpi icon="user" label="Clients actifs" value={String(data.clients.filter((item) => item.status === 'active').length)} helper={countLabel(newClients.length, 'nouveau client', 'nouveaux clients') + ' sur la période'} />
         <Kpi icon="receipt" label="Facturé période" value={money(invoiced)} comparison={comparison(invoiced, previousInvoiced)} />
         <Kpi icon="clock" label="Temps client" value={hours(sum(sessions.filter((item) => item.clientAccountId), (item) => item.durationSeconds))} helper="Sessions rattachées aux clients" />
-        <Kpi icon="euro" label="À facturer" value={money(readyAmount)} helper={readyBilling.length + ' élément(s) actuellement'} />
+        <Kpi icon="euro" label="À facturer" value={money(readyAmount)} helper={countLabel(readyBilling.length, 'élément', 'éléments') + ' actuellement'} />
       </div>
       <article className="panel statistics-card statistics-client-card">
         <CardTitle eyebrow="Clients" title="Activité sur la période" />
