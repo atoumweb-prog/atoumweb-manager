@@ -221,7 +221,7 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
       <article className="home-card home-actions-card">
         <div className="home-card-title"><div><OperationIcon name="bolt" size={20} /><strong>Actions rapides</strong></div></div>
         <div className="home-quick-actions">
-          <button className="quick-prospect" type="button" onClick={openProspectPipeline}><OperationIcon name="user" size={19} />+ Prospect</button>
+          <button className="quick-prospect" type="button" onClick={() => openPage('Prospects')}><OperationIcon name="user" size={19} />+ Prospect</button>
           <button className="quick-quote" type="button" onClick={() => openPage('Devis')}><OperationIcon name="file-text" size={19} />+ Devis</button>
           <button className="quick-project" type="button" onClick={() => openPage('Projets')}><OperationIcon name="folder" size={19} />+ Projet</button>
           <button className="quick-request" type="button" onClick={() => openPage('Interventions & Maintenance')}><OperationIcon name="wrench" size={19} />+ Demande</button>
