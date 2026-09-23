@@ -156,6 +156,7 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
   const [phaseCompletionReview, setPhaseCompletionReview] = useState<PhaseCompletionReviewState | null>(null);
   const [phaseCompletionBusy, setPhaseCompletionBusy] = useState(false);
   const [productionSplitPercent, setProductionSplitPercent] = useState(40);
+  const [productionTreeCollapsed, setProductionTreeCollapsed] = useState(false);
   const [productionOverlay, setProductionOverlay] = useState<'resources' | 'technical' | 'time' | 'secrets' | null>(null);
   const [loading, setLoading] = useState(true);
   const [createMode, setCreateMode] = useState<'quote' | 'internal' | null>(null);
@@ -254,6 +255,7 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
       setRedoStack([]);
       setPhaseCompletionReview(null);
       setProductionOverlay(null);
+      setProductionTreeCollapsed(false);
       setCompletionReview(null);
       setDetail(await window.atoumweb.projects.projects.get(id));
       setDetailTab('plan');
@@ -673,18 +675,18 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
 
         {detailTab === 'plan' && (
           <main
-            className="project-production-workspace"
-            style={{ gridTemplateColumns: `${productionSplitPercent}% 8px minmax(0, 1fr)` }}
+            className={`project-production-workspace ${productionTreeCollapsed ? 'tree-collapsed' : ''}`}
+            style={!productionTreeCollapsed ? { gridTemplateColumns: `${productionSplitPercent}% 8px minmax(0, 1fr)` } : undefined}
           >
-            <section className="project-production-tree-panel">
+            {!productionTreeCollapsed && <section className="project-production-tree-panel">
               <div className="project-production-tree-head">
                 <div>
                   <span className="eyebrow">Plan de production</span>
                   <strong>{detail.nodes.filter((node) => !node.parentId).length} phase{detail.nodes.filter((node) => !node.parentId).length > 1 ? 's' : ''}</strong>
                 </div>
                 <div className="project-production-tree-actions">
-                  <button className="project-tree-size-button" type="button" title="Réduire le plan pour agrandir la fiche" onClick={() => setProductionSplitPercent(22)}>◀</button>
-                  <button className="project-tree-size-button" type="button" title="Rétablir le partage 40 / 60" onClick={() => setProductionSplitPercent(40)}>↔</button>
+                  <button className="project-tree-size-button" type="button" title="Masquer le plan de production" aria-label="Masquer le plan de production" onClick={() => setProductionTreeCollapsed(true)}>←</button>
+                  <button className="project-tree-size-button" type="button" title="Rétablir le partage 40 / 60" aria-label="Rétablir le partage 40 / 60" onClick={() => setProductionSplitPercent(40)}>↔</button>
                 <details className="project-production-add">
                   <summary>+ Ajouter</summary>
                   <div className="project-node-add">
@@ -722,9 +724,9 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
                 )}</div>
                 {detail.nodes.length === 0 && <p className="muted">Le plan est vide. Ajoute un lot, un module ou une tâche.</p>}
               </div>
-            </section>
+            </section>}
 
-            <div
+            {!productionTreeCollapsed && <div
               className="project-production-splitter"
               role="separator"
               aria-orientation="vertical"
@@ -736,7 +738,9 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
                 if (event.key === 'ArrowLeft') setProductionSplitPercent((value) => Math.max(18, value - 3));
                 if (event.key === 'ArrowRight') setProductionSplitPercent((value) => Math.min(68, value + 3));
               }}
-            ><span /></div>
+            ><span /></div>}
+
+            {productionTreeCollapsed && <button className="project-tree-restore-button" type="button" title="Afficher le plan de production" aria-label="Afficher le plan de production" onClick={() => setProductionTreeCollapsed(false)}>→</button>}
 
             <ProjectNodeWorkbench
               projectId={detail.id}
