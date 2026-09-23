@@ -572,3 +572,22 @@ body.documents-resizing {
     align-self: flex-end;
   }
 }
+
+.documents-status-row .status-pill.success {
+  border-color: color-mix(in srgb, #48b77d 38%, var(--border));
+  background: color-mix(in srgb, #48b77d 13%, var(--surface));
+  color: color-mix(in srgb, #48b77d 72%, var(--text));
+}
+
+.documents-status-row .status-pill.warning {
+  border-color: color-mix(in srgb, #d7a33b 40%, var(--border));
+  background: color-mix(in srgb, #d7a33b 14%, var(--surface));
+  color: color-mix(in srgb, #d7a33b 76%, var(--text));
+}
+
+.documents-status-row .status-pill.danger,
+.documents-table .status-pill.danger {
+  border-color: color-mix(in srgb, #d96762 40%, var(--border));
+  background: color-mix(in srgb, #d96762 14%, var(--surface));
+  color: color-mix(in srgb, #d96762 76%, var(--text));
+}
