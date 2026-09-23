@@ -1,6 +1,6 @@
 # Handoff Codex MSI — AtoumWeb Manager
 
-> État partagé au 22/09/2026. À lire avec `AGENTS.md`, `PROJECT_STATUS.md` et le document de phase concerné.
+> État partagé au 24/09/2026. À lire avec `AGENTS.md`, `PROJECT_STATUS.md` et le document de phase concerné.
 
 ## Branche de travail à utiliser
 
@@ -71,7 +71,7 @@ Le chantier actif est **Projet V2 / atelier de production** :
 
 ## Migrations
 
-La branche Projet V2 porte désormais **35 migrations SQLite**.
+La branche Projet V2 porte désormais **36 migrations SQLite**.
 
 La dernière validation complète connue sur MSI avant la passe Catalogue était à **36 fichiers / 177 tests réussis** avec **30 migrations**.
 
@@ -87,6 +87,8 @@ La migration 34 ajoute les identités visuelles CRM (`crm_identity_assets`) : lo
 
 La migration 35 ajoute les motifs de pause du timer sur `time_session_pauses` : besoin d’informations, manque de temps, autre urgence ou autre raison, avec note facultative.
 
+La migration 36 ajoute le stockage AtoumWeb Bridge Snapshot V1 : sites, snapshots, pages, occurrences de nœuds, sources, assets, dépendances, relations et registre d’objets SHA-256.
+
 Les mots de passe / clés ne doivent jamais être stockés en clair dans SQLite, les logs ou les documents de suivi.
 
 ## Validation
@@ -99,9 +101,30 @@ Le **HEAD actuel doit donc être revalidé** sur MSI avec :
 - `npm test`
 - `npm run package`
 - lancement du profil Validation-MSI
-- vérification des migrations 30, 31, 32, 33, 34 et 35
+- vérification des migrations 30, 31, 32, 33, 34, 35 et 36
 - test du coffre avec une fausse clé, jamais une vraie
 - vérification rapide des anciens écrans après la nouvelle couche UI globale.
+
+## AtoumWeb Bridge Snapshot V1
+
+Le contrat `atoumweb-bridge-snapshot` **1.0.0** est gelé. Le premier snapshot réel d’AtoumWeb.fr a été produit par **AtoumWeb Bridge 0.4.2** et vérifié avant l’implémentation Manager.
+
+Le Manager possède désormais une page **Sites** dédiée et un import V1 séparé de la Bibliothèque AtoumWeb :
+
+- inspection du ZIP avant import ;
+- validation du contrat / version / fingerprint profile ;
+- vérification des checksums et du `package_fingerprint` ;
+- contrôle des objets SHA-256, références, arbres, parents et compteurs ;
+- import idempotent par `snapshot_id + package_fingerprint` ;
+- conservation des warnings Bridge, notamment `FRONTEND_AUDIT_NOT_ATTACHED` ;
+- stockage des payloads dans `workspace/bridge/objects/sha256` et métadonnées en SQLite ;
+- copie du ZIP original dans `workspace/bridge/packages` ;
+- navigation Site → Snapshot → Page → Structure / Sources / Assets / Dépendances ;
+- aperçu texte des payloads en lecture seule : aucun HTML / CSS / JS importé n’est exécuté.
+
+Le premier snapshot réel observé contient **82 pages, 1 507 nœuds, 1 114 sources, 169 assets, 16 dépendances, 3 147 relations et 1 892 objets**. Son statut est `complete_with_warnings`. Les contenus Divi 5 observés restent best-effort tant que Bridge n’annonce pas la capability Divi 5.
+
+Le diff Snapshot A / B et l’attribution historique des `logical_node_id` restent pour le lot suivant, après réception d’un deuxième snapshot réel.
 
 ## Phase 7
 
