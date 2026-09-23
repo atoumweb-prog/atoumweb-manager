@@ -221,6 +221,28 @@ describe('CrmService', () => {
     expect(listed?.organizationNotes).toContain('Fabrication locale');
   });
 
+  it('alimente l annuaire avec les liens Client Prospect et Externe', () => {
+    const clientOrg = crm.createOrganization({ name: 'Client Annuaire', city: 'Dijon' });
+    const clientContact = crm.createContact({ organizationId: clientOrg.id, firstName: 'Alice', lastName: 'Client' });
+    crm.createClient({ organizationId: clientOrg.id, primaryContactId: clientContact.id });
+
+    const prospectOrg = crm.createOrganization({ name: 'Prospect Annuaire', city: 'Beaune' });
+    const prospectContact = crm.createContact({ organizationId: prospectOrg.id, firstName: 'Paul', lastName: 'Prospect' });
+    crm.createProspect({ organizationId: prospectOrg.id, contactId: prospectContact.id });
+
+    const externalOrg = crm.createOrganization({ name: 'Prestataire Externe', city: 'Chenôve' });
+
+    const organizations = crm.listDirectoryOrganizations();
+    expect(organizations.find((item) => item.id === clientOrg.id)?.relation).toBe('client');
+    expect(organizations.find((item) => item.id === prospectOrg.id)?.relation).toBe('prospect');
+    expect(organizations.find((item) => item.id === externalOrg.id)?.relation).toBe('external');
+    expect(organizations.find((item) => item.id === clientOrg.id)?.contactCount).toBe(1);
+
+    const contacts = crm.listDirectoryContacts();
+    expect(contacts.find((item) => item.id === clientContact.id)?.relation).toBe('client');
+    expect(contacts.find((item) => item.id === prospectContact.id)?.relation).toBe('prospect');
+  });
+
   it('conserve les vérifications de prospection sous forme de snapshots comparables', () => {
     const organization = crm.createOrganization({ name: 'Audit Prospect', website: 'https://audit.test' });
     const prospect = crm.createProspect({ organizationId: organization.id, source: 'outbound' });
