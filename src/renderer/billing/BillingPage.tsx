@@ -6,6 +6,7 @@ import {
   type BillingItemSourceType,
   type BillingItemStatus,
 } from '../../shared/billing';
+import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
 
 const STATUS_LABELS: Record<BillingItemStatus, string> = {
   planned: 'Prévu',
@@ -25,14 +26,14 @@ const SOURCE_LABELS: Record<BillingItemSourceType, string> = {
   other: 'Autre',
 };
 
-const SOURCE_ICONS: Record<BillingItemSourceType, string> = {
-  quote_deposit: '◒',
-  project_balance: '◇',
-  intervention: '⚙',
-  maintenance_overage: '△',
-  hour_pack: '◷',
-  subscription: '↻',
-  other: '•',
+const SOURCE_ICONS: Record<BillingItemSourceType, OperationIconName> = {
+  quote_deposit: 'file-text',
+  project_balance: 'wallet',
+  intervention: 'wrench',
+  maintenance_overage: 'maintenance',
+  hour_pack: 'clock',
+  subscription: 'repeat',
+  other: 'receipt',
 };
 
 function money(cents: number): string {
@@ -199,7 +200,7 @@ export function BillingPage({ onMessage }: { onMessage: (message: string) => voi
 
   return <div className="billing-page-stack">
     <section className="billing-guidance-strip">
-      <div className="billing-guidance-icon" aria-hidden="true">▤</div>
+      <div className="billing-guidance-icon" aria-hidden="true"><OperationIcon name="file-text" size={27} /></div>
       <div>
         <span className="eyebrow">Facturation sans API</span>
         <strong>Abby crée la facture · AtoumWeb Manager conserve le suivi et le PDF client</strong>
@@ -208,16 +209,16 @@ export function BillingPage({ onMessage }: { onMessage: (message: string) => voi
     </section>
 
     <section className="billing-kpi-grid" aria-label="Synthèse facturation">
-      <article><span className="billing-kpi-icon" aria-hidden="true">◷</span><div><strong>À facturer</strong><span>{readyItems.length}</span><small>{money(amountToPrepare)} à préparer</small></div></article>
-      <article><span className="billing-kpi-icon" aria-hidden="true">✓</span><div><strong>Facturé</strong><span>{invoicedItems.length}</span><small>PDF rattaché et archivé</small></div></article>
-      <article><span className="billing-kpi-icon" aria-hidden="true">◌</span><div><strong>Offert</strong><span>{offeredItems.length}</span><small>Gestes commerciaux / valeur offerte</small></div></article>
-      <article><span className="billing-kpi-icon" aria-hidden="true">€</span><div><strong>Montant à préparer</strong><span>{money(amountToPrepare)}</span><small>Éléments prévus ou prêts</small></div></article>
+      <article><span className="billing-kpi-icon" aria-hidden="true"><OperationIcon name="receipt" size={27} /></span><div><strong>À facturer</strong><span>{readyItems.length}</span><small>{money(amountToPrepare)} à préparer</small></div></article>
+      <article><span className="billing-kpi-icon" aria-hidden="true"><OperationIcon name="check-circle" size={27} /></span><div><strong>Facturé</strong><span>{invoicedItems.length}</span><small>PDF rattaché et archivé</small></div></article>
+      <article><span className="billing-kpi-icon" aria-hidden="true"><OperationIcon name="gift" size={27} /></span><div><strong>Offert</strong><span>{offeredItems.length}</span><small>Gestes commerciaux / valeur offerte</small></div></article>
+      <article><span className="billing-kpi-icon" aria-hidden="true"><OperationIcon name="euro" size={28} /></span><div><strong>Montant à préparer</strong><span>{money(amountToPrepare)}</span><small>Éléments prévus ou prêts</small></div></article>
     </section>
 
     <div className="module-toolbar billing-toolbar">
       <div><strong>{filtered.length}</strong><span> élément(s)</span></div>
       <div className="toolbar-controls">
-        <button className="secondary-button" type="button" onClick={() => void refresh()}>↻ Actualiser</button>
+        <button className="secondary-button" type="button" onClick={() => void refresh()}><OperationIcon name="refresh" size={16} /> Actualiser</button>
         <input className="inline-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher client, projet, facture…" />
         <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value as typeof sourceFilter)}>
           <option value="all">Toutes les origines</option>
@@ -239,11 +240,11 @@ export function BillingPage({ onMessage }: { onMessage: (message: string) => voi
           {filtered.map((item) => <button key={item.id} type="button" role="listitem" className={`billing-compact-item ${item.id === selected.id ? 'selected' : ''}`} onClick={() => setSelectedId(item.id)}>
             <span className="billing-compact-heading"><strong>{item.clientLabel}</strong><span className={`billing-status status-${item.status}`}>{STATUS_LABELS[item.status]}</span></span>
             <span className="billing-compact-description">{item.description}</span>
-            <span className="billing-compact-meta"><span>{SOURCE_ICONS[item.sourceType]} {SOURCE_LABELS[item.sourceType]}</span><span>{money(item.expectedAmountCents)}</span></span>
+            <span className="billing-compact-meta"><span><OperationIcon name={SOURCE_ICONS[item.sourceType]} size={15} /> {SOURCE_LABELS[item.sourceType]}</span><span>{money(item.expectedAmountCents)}</span></span>
             <span className="billing-compact-project">{item.projectLabel || 'Sans projet dédié'}</span>
           </button>)}
           {filtered.length === 0 && <div className="empty-table">Aucun élément de facturation.</div>}
-        </div> : <div className="billing-table-wrap"><table className="billing-table"><thead><tr><th>Client</th><th>Origine</th><th>Description</th><th>Projet</th><th>Montant</th><th>Statut</th><th>Facture</th></tr></thead><tbody>{filtered.map((item) => <tr key={item.id} onClick={() => { setSelectedId(item.id); setExpanded(false); }}><td><strong>{item.clientLabel}</strong></td><td><span className="billing-source-pill"><span aria-hidden="true">{SOURCE_ICONS[item.sourceType]}</span>{SOURCE_LABELS[item.sourceType]}</span></td><td>{item.description}</td><td>{item.projectLabel || '—'}</td><td>{money(item.expectedAmountCents)}</td><td><span className={`billing-status status-${item.status}`}>{STATUS_LABELS[item.status]}</span></td><td>{item.invoiceFileName ? <span className="billing-pdf-present">▤ PDF</span> : <span className="muted">—</span>}</td></tr>)}{filtered.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucun élément de facturation.</div></td></tr>}</tbody></table></div>}
+        </div> : <div className="billing-table-wrap"><table className="billing-table"><thead><tr><th>Client</th><th>Origine</th><th>Description</th><th>Projet</th><th>Montant</th><th>Statut</th><th>Facture</th></tr></thead><tbody>{filtered.map((item) => <tr key={item.id} onClick={() => { setSelectedId(item.id); setExpanded(false); }}><td><strong>{item.clientLabel}</strong></td><td><span className="billing-source-pill"><OperationIcon name={SOURCE_ICONS[item.sourceType]} size={15} />{SOURCE_LABELS[item.sourceType]}</span></td><td>{item.description}</td><td>{item.projectLabel || '—'}</td><td>{money(item.expectedAmountCents)}</td><td><span className={`billing-status status-${item.status}`}>{STATUS_LABELS[item.status]}</span></td><td>{item.invoiceFileName ? <span className="billing-pdf-present">▤ PDF</span> : <span className="muted">—</span>}</td></tr>)}{filtered.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucun élément de facturation.</div></td></tr>}</tbody></table></div>}
       </section>}
 
       {selected && !expanded && <div className="billing-splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner la liste et la fiche" tabIndex={0} onPointerDown={beginResize} onDoubleClick={() => setSplitPercent(38)} onKeyDown={(event) => {
@@ -254,12 +255,12 @@ export function BillingPage({ onMessage }: { onMessage: (message: string) => voi
       {selected && <aside className={`panel billing-detail-panel ${expanded ? 'expanded' : ''}`}>
         <div className="detail-panel-heading billing-detail-heading">
           <div><span className="eyebrow">Facturation</span><h2>{selected.description}</h2><p className="muted">{selected.clientLabel}{selected.projectLabel ? ` · ${selected.projectLabel}` : ''}</p></div>
-          <div className="billing-detail-heading-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setExpanded((value) => !value)}>{expanded ? '↙' : '⛶'}</button><button className="close-detail" type="button" title="Fermer" onClick={() => { setSelectedId(''); setExpanded(false); }}>×</button></div>
+          <div className="billing-detail-heading-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setExpanded((value) => !value)}><OperationIcon name={expanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={() => { setSelectedId(''); setExpanded(false); }}><OperationIcon name="close" size={18} /></button></div>
         </div>
 
         <div className="billing-detail-badges">
           <span className={`billing-status status-${selected.status}`}>{STATUS_LABELS[selected.status]}</span>
-          <span className="billing-source-pill"><span aria-hidden="true">{SOURCE_ICONS[selected.sourceType]}</span>{SOURCE_LABELS[selected.sourceType]}</span>
+          <span className="billing-source-pill"><OperationIcon name={SOURCE_ICONS[selected.sourceType]} size={15} />{SOURCE_LABELS[selected.sourceType]}</span>
         </div>
 
         <div className="billing-summary-grid">
@@ -273,7 +274,7 @@ export function BillingPage({ onMessage }: { onMessage: (message: string) => voi
           <summary><span><strong>Facture PDF Abby</strong><small>Le PDF client est la preuve documentaire conservée dans AtoumWeb Manager</small></span></summary>
           <div className="billing-section-body">
             <div className={`billing-invoice-state ${selected.invoiceDocumentId ? 'attached' : ''}`}>
-              <span className="billing-invoice-icon" aria-hidden="true">▤</span>
+              <span className="billing-invoice-icon" aria-hidden="true"><OperationIcon name="file-text" size={25} /></span>
               <div><strong>{selected.invoiceFileName || 'Aucune facture PDF rattachée'}</strong><small>{selected.invoiceDocumentId ? `Importée le ${dateLabel(selected.invoicedAt)} · classée dans Documents client / Factures` : 'Crée d’abord la facture dans Abby, puis importe le PDF téléchargé.'}</small></div>
             </div>
 
@@ -283,8 +284,8 @@ export function BillingPage({ onMessage }: { onMessage: (message: string) => voi
             </div>
 
             <div className="button-row billing-invoice-actions">
-              <button className="primary-button" type="button" disabled={busy} onClick={() => void importInvoice()}>{selected.invoiceDocumentId ? '▤ Remplacer le PDF' : '▤ Importer la facture PDF'}</button>
-              {selected.invoiceDocumentId && <button className="secondary-button" type="button" onClick={() => void openInvoice()}>↗ Ouvrir la facture</button>}
+              <button className="primary-button" type="button" disabled={busy} onClick={() => void importInvoice()}>{selected.invoiceDocumentId ? <><OperationIcon name="upload" size={16} /> Remplacer le PDF</> : <><OperationIcon name="upload" size={16} /> Importer la facture PDF</>}</button>
+              {selected.invoiceDocumentId && <button className="secondary-button" type="button" onClick={() => void openInvoice()}><OperationIcon name="external-link" size={16} /> Ouvrir la facture</button>}
               {selected.invoiceDocumentId && <button className="secondary-button" type="button" disabled={busy} onClick={() => void saveInvoiceMetadata()}>Enregistrer les informations</button>}
             </div>
           </div>
