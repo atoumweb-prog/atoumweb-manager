@@ -27,7 +27,7 @@ describe('stabilisation commerciale migrations 19 à 21',()=>{
    legacy.run("INSERT INTO activity_events (id,entity_type,entity_id,action,summary,prospect_id,created_at) VALUES ('a','prospect','p','created','Historique conservé','p','x')");
    const applied=applyPendingMigrations(legacy).map(m=>m.id);
    expect(applied.slice(0,3)).toEqual([19,20,21]);
-   expect(applied).toEqual([19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35]);
+   expect(applied).toEqual([19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36]);
    expect(applyPendingMigrations(legacy)).toEqual([]);
    expect(legacy.all('SELECT method_type,value FROM contact_methods ORDER BY method_type')).toEqual([{method_type:'email',value:'contact@atoum.test'},{method_type:'phone',value:'0102030405'}]);
    expect(legacy.get("SELECT other_text FROM crm_needs WHERE id='n'")).toEqual({other_text:'Besoin conservé'});
