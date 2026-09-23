@@ -149,6 +149,23 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
 
   ipcMain.handle('database:health', () => database.health());
 
+  ipcMain.handle('bridge:inspect-import', async () => {
+    const selection = await dialog.showOpenDialog({
+      title: 'Importer un snapshot AtoumWeb Bridge',
+      defaultPath: workspace.root,
+      properties: ['openFile'],
+      filters: [{ name: 'Snapshot AtoumWeb Bridge', extensions: ['zip'] }],
+    });
+    if (selection.canceled || selection.filePaths.length === 0) return null;
+    return database.bridgeSnapshots.inspectPackage(selection.filePaths[0]);
+  });
+  ipcMain.handle('bridge:import', (_event, packagePath: string) => database.bridgeSnapshots.importPackage(packagePath));
+  ipcMain.handle('bridge:sites:list', () => database.bridgeSnapshots.listSites());
+  ipcMain.handle('bridge:sites:get', (_event, id: string) => database.bridgeSnapshots.getSite(id));
+  ipcMain.handle('bridge:pages:list', (_event, snapshotId: string, search?: string | null) => database.bridgeSnapshots.listPages(snapshotId, search));
+  ipcMain.handle('bridge:pages:get', (_event, pageSnapshotId: string) => database.bridgeSnapshots.getPage(pageSnapshotId));
+  ipcMain.handle('bridge:objects:preview', (_event, objectRef: string) => database.bridgeSnapshots.getObjectPreview(objectRef));
+
   ipcMain.handle('crm:organizations:list', (_event, includeArchived?: boolean) => database.crm.listDirectoryOrganizations(includeArchived));
   ipcMain.handle('crm:organizations:get', (_event, id: string) => database.crm.getDirectoryOrganization(id));
   ipcMain.handle('crm:organizations:create', (_event, input: OrganizationInput) => database.crm.createOrganization(input));
