@@ -1216,3 +1216,198 @@ body.operation-resizing {
   }
 }
 
+/* Maintenance — dashboard et atelier */
+.maintenance-dashboard {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 9px;
+}
+
+.maintenance-dashboard article {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px 13px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+}
+
+.maintenance-dashboard article > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.maintenance-dashboard-icon {
+  display: inline-grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
+  color: var(--accent);
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.maintenance-dashboard strong {
+  color: var(--text-muted);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 700;
+}
+
+.maintenance-dashboard article span:not(.maintenance-dashboard-icon) {
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.maintenance-dashboard small {
+  color: var(--text-muted);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 400;
+}
+
+.maintenance-layout.with-detail {
+  gap: 0;
+  align-items: stretch;
+}
+
+.maintenance-layout.detail-expanded {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.maintenance-list-panel {
+  max-height: calc(100dvh - 250px);
+  overflow: hidden;
+}
+
+.maintenance-compact-list {
+  display: grid;
+  gap: 6px;
+  max-height: calc(100dvh - 250px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 7px;
+  scrollbar-gutter: stable;
+}
+
+.maintenance-compact-item {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 11px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.maintenance-compact-item:hover {
+  border-color: var(--border);
+  background: var(--surface-soft);
+}
+
+.maintenance-compact-item.selected {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--border));
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+.maintenance-compact-heading,
+.maintenance-compact-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.maintenance-compact-heading strong,
+.maintenance-compact-plan,
+.maintenance-compact-project {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.maintenance-compact-heading strong {
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 700;
+}
+
+.maintenance-compact-plan,
+.maintenance-compact-project,
+.maintenance-compact-meta {
+  color: var(--text-muted);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 400;
+}
+
+.maintenance-status {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 7px;
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.maintenance-status.status-active {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 11%, transparent);
+}
+
+.maintenance-status.status-suspended {
+  color: #9a650d;
+  background: color-mix(in srgb, #d8a34e 14%, var(--surface));
+}
+
+.maintenance-detail-panel {
+  margin-left: 10px;
+}
+
+.maintenance-detail-panel.expanded {
+  position: relative;
+  max-height: none;
+  margin-left: 0;
+}
+
+.maintenance-detail-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 1250px) {
+  .maintenance-dashboard {
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 850px) {
+  .maintenance-detail-panel {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .maintenance-dashboard {
+    grid-template-columns: 1fr;
+  }
+}
+
