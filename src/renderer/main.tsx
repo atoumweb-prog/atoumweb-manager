@@ -37,6 +37,7 @@ const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error('Élément racine introuvable.');
 }
+const rendererRoot = rootElement;
 
 let fatalRendererShown = false;
 
@@ -51,7 +52,7 @@ function showRendererFailure(error: unknown): void {
   fatalRendererShown = true;
   const message = rendererErrorMessage(error);
   console.error('Erreur renderer AtoumWeb Manager', error);
-  rootElement.innerHTML = '';
+  rendererRoot.innerHTML = '';
   const shell = document.createElement('div');
   shell.className = 'renderer-fatal-shell';
   const card = document.createElement('div');
@@ -72,7 +73,7 @@ function showRendererFailure(error: unknown): void {
   reload.addEventListener('click', () => window.location.reload());
   card.append(eyebrow, title, explanation, details, reload);
   shell.append(card);
-  rootElement.append(shell);
+  rendererRoot.append(shell);
 }
 
 window.addEventListener('error', (event) => {
@@ -83,7 +84,7 @@ window.addEventListener('unhandledrejection', (event) => {
   showRendererFailure(event.reason);
 });
 
-createRoot(rootElement, {
+createRoot(rendererRoot, {
   onUncaughtError: (error) => showRendererFailure(error),
 }).render(
   <StrictMode>
