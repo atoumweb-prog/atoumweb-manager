@@ -98,6 +98,10 @@ export class BridgeSnapshotService {
     }
 
     const siteId = byInstance?.id ?? byKey?.id ?? `bridge-site-${randomUUID()}`;
+    const declaredManagerSiteId = nullableString(loaded.manifest.site_id);
+    if (declaredManagerSiteId && declaredManagerSiteId !== siteId) {
+      throw new Error('Le site_id fourni par Bridge ne correspond pas à l’identité historique du Manager.');
+    }
     const snapshotId = `bridge-snapshot-${randomUUID()}`;
     const now = new Date().toISOString();
     const packageRelativePath = join('packages', siteId, `${this.safeSegment(loaded.inspection.externalSnapshotId)}.zip`).replace(/\\/g, '/');
