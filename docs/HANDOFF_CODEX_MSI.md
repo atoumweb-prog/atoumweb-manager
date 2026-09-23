@@ -71,7 +71,7 @@ Le chantier actif est **Projet V2 / atelier de production** :
 
 ## Migrations
 
-La branche Projet V2 porte désormais **34 migrations SQLite**.
+La branche Projet V2 porte désormais **35 migrations SQLite**.
 
 La dernière validation complète connue sur MSI avant la passe Catalogue était à **36 fichiers / 177 tests réussis** avec **30 migrations**.
 
@@ -85,6 +85,8 @@ La migration 33 ajoute le suivi des dépenses : frais AtoumWeb, rattachement fac
 
 La migration 34 ajoute les identités visuelles CRM (`crm_identity_assets`) : logo et favicon d’entreprise, photo/avatar de contact, stockés localement dans le workspace.
 
+La migration 35 ajoute les motifs de pause du timer sur `time_session_pauses` : besoin d’informations, manque de temps, autre urgence ou autre raison, avec note facultative.
+
 Les mots de passe / clés ne doivent jamais être stockés en clair dans SQLite, les logs ou les documents de suivi.
 
 ## Validation
@@ -97,7 +99,7 @@ Le **HEAD actuel doit donc être revalidé** sur MSI avec :
 - `npm test`
 - `npm run package`
 - lancement du profil Validation-MSI
-- vérification des migrations 30, 31, 32, 33 et 34
+- vérification des migrations 30, 31, 32, 33, 34 et 35
 - test du coffre avec une fausse clé, jamais une vraie
 - vérification rapide des anciens écrans après la nouvelle couche UI globale.
 
@@ -165,3 +167,21 @@ ChatGPT pilote actuellement la conception et les modifications de la branche Pro
 - les images sont copiées dans le workspace sous `crm-identites/` et les aperçus passent par l’API locale du Manager ;
 - conversion Prospect → Client : l’identité visuelle est conservée automatiquement car elle appartient à l’entreprise/contact, pas au statut commercial ;
 - URL CRM : saisir `atoumweb.fr` suffit ; le backend stocke `https://atoumweb.fr`. Un `http://` saisi explicitement est conservé.
+
+## Ergonomie transverse — ateliers liste / fiche
+
+- Facturation et Dépenses utilisent les pictos SVG communs, une liste compacte lorsqu’une fiche est ouverte, un splitter redimensionnable, un mode fiche agrandie et un comportement responsive.
+- Bibliothèque AtoumWeb et Sauvegardes utilisent désormais la même logique : liste à gauche, barre centrale redimensionnable, fiche à droite, agrandissement `⛶`, réduction, fermeture explicite et empilement responsive sur petite largeur.
+- Sur Bibliothèque et Sauvegardes, appliquer la règle typographique commune : titre / libellé / champ en gras, valeur ou contenu saisi en poids normal, commentaire discret, statut et bouton semi-gras.
+
+## Timer Intervention / Incident
+
+- une session démarrée depuis une Intervention conserve réellement `interventionId` ;
+- démarrer/reprendre le timer place l’Intervention en **En cours** ;
+- arrêter le timer d’une Intervention ouvre un choix **travail résolu / mettre en pause** ;
+- une pause demande un motif métier et l’enregistre dans l’historique du temps ;
+- besoin d’informations → Intervention en **En attente client** ; autres interruptions → **Bloquée** ;
+- reprise du timer → retour **En cours** ;
+- incident résolu → timer arrêté, date de résolution renseignée, statut **À valider**, puis ouverture de **Conclusion & rapport de fin** ;
+- la conclusion réutilise Cause / Diagnostic / Solution / Suivi ; la Solution est obligatoire pour clôturer l’incident ;
+- les données de conclusion servent de base au futur document/PDF de fin dans Documents & Contrats.
