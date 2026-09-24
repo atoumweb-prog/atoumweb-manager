@@ -129,6 +129,14 @@ Règles générales :
 
 La première migration crée notamment `settings` et `activity_log`.
 
+## 6 bis. Snapshots Bridge et coffre d’assets
+
+La stratégie détaillée pour les snapshots de sites, médias locaux, déduplication SHA-256 et réutilisation en Bibliothèque est définie dans :
+
+- `docs/BRIDGE_SNAPSHOT_ASSET_STORAGE.md`
+
+Cette décision complète les règles générales de stockage : les snapshots Bridge sont historiques et les médias identiques ne doivent pas être dupliqués physiquement à chaque import.
+
 ## 7. Stockage des fichiers
 
 ### Workspace
