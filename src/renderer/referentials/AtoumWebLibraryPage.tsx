@@ -279,6 +279,13 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
       reusable: parsed.find((entry) => entry.payload.stage === 'reusable') ?? null,
     };
   }, [selected?.id, selected?.versions]);
+  const originalBridgeCandidate = bridgeWorkflow.original?.payload.stage === 'original' ? bridgeWorkflow.original.payload.value : null;
+  const recommendedBridgeCategory = originalBridgeCandidate ? inferBridgeLibraryCategory(originalBridgeCandidate) : null;
+  const recommendedBridgeName = originalBridgeCandidate && recommendedBridgeCategory
+    ? suggestedBridgeLibraryName(originalBridgeCandidate, recommendedBridgeCategory)
+    : null;
+  const bridgeClassificationMismatch = Boolean(selected && recommendedBridgeCategory && recommendedBridgeName
+    && (selected.category !== recommendedBridgeCategory || selected.name !== recommendedBridgeName));
 
   function closeDetail(): void {
     setSelected(null);
@@ -393,6 +400,103 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
       onMessage(`Nouvelle version créée pour « ${changed.name} ».`);
     } catch (versionError) {
       setError(versionError instanceof Error ? versionError.message : 'Création de version impossible.');
+    }
+  }
+
+  async function correctBridgeClassification(): Promise<void> {
+    if (!selected) return;
+    const payload = bridgeWorkflow.original?.payload;
+    if (!payload || payload.stage !== 'original') return;
+    const category = inferBridgeLibraryCategory(payload.value);
+    const name = suggestedBridgeLibraryName(payload.value, category);
+    if (selected.category === category && selected.name === name) return;
+
+    setBridgeWorkflowBusy(true);
+    try {
+      setError(null);
+      const changed = await window.atoumweb.referentials.library.update(selected.id, { category, name });
+      await load(changed.id);
+      await setOpenedItem(changed);
+      onMessage(`Classement corrigé : « ${changed.name} » est maintenant rangé dans ${categoryLabel(changed.category)}.`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Impossible de corriger le classement de ce composant.');
+    } finally {
+      setBridgeWorkflowBusy(false);
+    }
+  }
+
+  async function createBridgeCleanedVersion(): Promise<void> {
+    if (!selected || bridgeWorkflow.cleaned) return;
+    const payload = bridgeWorkflow.original?.payload;
+    if (!payload || payload.stage !== 'original') {
+      setError('La version originale Bridge est introuvable.');
+      return;
+    }
+
+    setBridgeWorkflowBusy(true);
+    try {
+      setError(null);
+      const cleaned = buildBridgeCleanedComponent(payload.value);
+      let changed = await window.atoumweb.referentials.library.createVersion(selected.id, {
+        contentType: 'json',
+        language: 'json',
+        contentText: JSON.stringify(cleaned, null, 2),
+        notes: 'Version nettoyée — HTML isolé, CSS utile consolidé, JavaScript séparé. La V1 originale reste conservée.',
+      });
+
+      const category = inferBridgeLibraryCategory(payload.value);
+      const name = suggestedBridgeLibraryName(payload.value, category);
+      if (changed.category !== category || changed.name !== name) {
+        changed = await window.atoumweb.referentials.library.update(changed.id, { category, name, reuseStatus: 'adapt' });
+      }
+
+      await load(changed.id);
+      await setOpenedItem(changed);
+      onMessage(`Version nettoyée créée pour « ${changed.name} ».`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Impossible de créer la version nettoyée.');
+    } finally {
+      setBridgeWorkflowBusy(false);
+    }
+  }
+
+  async function createBridgeReusableVersion(): Promise<void> {
+    if (!selected || bridgeWorkflow.reusable) return;
+    const payload = bridgeWorkflow.cleaned?.payload;
+    if (!payload || payload.stage !== 'cleaned') {
+      setError('Crée d’abord la version nettoyée.');
+      return;
+    }
+
+    setBridgeWorkflowBusy(true);
+    try {
+      setError(null);
+      const reusable = buildBridgeReusableComponent(payload.value);
+      let changed = await window.atoumweb.referentials.library.createVersion(selected.id, {
+        contentType: 'json',
+        language: 'json',
+        contentText: JSON.stringify(reusable, null, 2),
+        notes: reusable.checks.remoteAssetUrls.length
+          ? `Version réutilisable préparée — ${reusable.checks.remoteAssetUrls.length} média(s) distant(s) restent à embarquer localement.`
+          : 'Version réutilisable prête à copier dans un module Code Divi.',
+      });
+
+      if (reusable.checks.remoteAssetUrls.length === 0) {
+        changed = await window.atoumweb.referentials.library.update(changed.id, { reuseStatus: 'ready' });
+        if (changed.currentVersion?.id) changed = await window.atoumweb.referentials.library.markStable(changed.currentVersion.id);
+      } else {
+        changed = await window.atoumweb.referentials.library.update(changed.id, { reuseStatus: 'adapt' });
+      }
+
+      await load(changed.id);
+      await setOpenedItem(changed);
+      onMessage(reusable.checks.remoteAssetUrls.length
+        ? `Version réutilisable préparée pour « ${changed.name} ». Les médias distants restent à intégrer localement.`
+        : `« ${changed.name} » est prêt à réutiliser.`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Impossible de préparer la version réutilisable.');
+    } finally {
+      setBridgeWorkflowBusy(false);
     }
   }
 
@@ -606,14 +710,52 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
               {selected.originTechnicalItemId && <p className="muted">Origine conservée : composant de Bibliothèque projet {selected.originTechnicalItemId}</p>}
             </>}
 
+            {bridgeWorkflow.original && <section className="aw-library-bridge-workflow">
+              <div className="aw-library-section-title">
+                <div><span className="eyebrow">Parcours du composant</span><h3>Original → Nettoyé → Réutilisable</h3></div>
+              </div>
+
+              {bridgeClassificationMismatch && <div className="aw-library-classification-warning">
+                <OperationIcon name="alert" size={17} />
+                <div><strong>Classement à corriger</strong><span>Ce composant ressemble à « {recommendedBridgeName} » et doit être rangé dans {recommendedBridgeCategory ? categoryLabel(recommendedBridgeCategory) : 'la bonne catégorie'}, pas dans {categoryLabel(selected.category)}.</span></div>
+                <button className="secondary-button" type="button" disabled={bridgeWorkflowBusy} onClick={() => void correctBridgeClassification()}>Corriger</button>
+              </div>}
+
+              <div className="aw-library-stage-grid">
+                <div className="done">
+                  <span>1</span>
+                  <div><strong>Originale</strong><small>V{bridgeWorkflow.original.version.versionNumber} · snapshot conservé intact</small></div>
+                  <OperationIcon name="check-circle" size={18} />
+                </div>
+                <div className={bridgeWorkflow.cleaned ? 'done' : 'next'}>
+                  <span>2</span>
+                  <div><strong>Nettoyée</strong><small>{bridgeWorkflow.cleaned ? `V${bridgeWorkflow.cleaned.version.versionNumber} · HTML/CSS/JS séparés` : 'Consolider uniquement le code utile'}</small></div>
+                  {bridgeWorkflow.cleaned
+                    ? <OperationIcon name="check-circle" size={18} />
+                    : <button className="primary-button" type="button" disabled={bridgeWorkflowBusy} onClick={() => void createBridgeCleanedVersion()}>Nettoyer</button>}
+                </div>
+                <div className={bridgeWorkflow.reusable ? 'done' : bridgeWorkflow.cleaned ? 'next' : 'locked'}>
+                  <span>3</span>
+                  <div><strong>Réutilisable</strong><small>{bridgeWorkflow.reusable ? `V${bridgeWorkflow.reusable.version.versionNumber} · paquet prêt` : 'Version finale + mode d’emploi + contrôle des médias'}</small></div>
+                  {bridgeWorkflow.reusable
+                    ? <OperationIcon name="check-circle" size={18} />
+                    : <button className="primary-button" type="button" disabled={bridgeWorkflowBusy || !bridgeWorkflow.cleaned} onClick={() => void createBridgeReusableVersion()}>Préparer</button>}
+                </div>
+              </div>
+            </section>}
+
             {currentVersion && <section className="aw-library-current-version">
               <div className="aw-library-section-title">
                 <div><span className="eyebrow">Aperçu principal</span><h3>Version courante · v{currentVersion.versionNumber}</h3></div>
                 <div className="aw-library-version-flags">{currentVersion.stable && <span>stable</span>}<span>{currentVersion.contentType}{currentVersion.language ? ` · ${currentVersion.language}` : ''}</span></div>
               </div>
               {currentVersion.notes && <p className="muted aw-library-current-notes">{currentVersion.notes}</p>}
-              {currentBridgeCandidate
-                ? <BridgeCandidateViewer candidate={currentBridgeCandidate} rawContent={currentVersion.contentText ?? ''} onMessage={onMessage} />
+              {currentBridgePayload
+                ? currentBridgePayload.stage === 'original'
+                  ? <BridgeCandidateViewer candidate={currentBridgePayload.value} rawContent={currentVersion.contentText ?? ''} onMessage={onMessage} />
+                  : currentBridgePayload.stage === 'cleaned'
+                    ? <BridgeCleanedViewer component={currentBridgePayload.value} rawContent={currentVersion.contentText ?? ''} onMessage={onMessage} />
+                    : <BridgeReusableViewer component={currentBridgePayload.value} rawContent={currentVersion.contentText ?? ''} onMessage={onMessage} />
                 : <TechnicalContentViewer
                     contentType={currentVersion.contentType}
                     language={currentVersion.language}
