@@ -1368,18 +1368,10 @@ function buildBridgeWorkComponent(candidate: BridgeLibraryCandidate): BridgeWork
 }
 
 function refreshBridgeWorkChecks(work: BridgeWorkComponent): BridgeWorkComponent {
-  const normalized = {
-    ...work,
-    work: {
-      ...work.work,
-      html: normalizeReusableText(work.work.html),
-      css: normalizeReusableText(work.work.css),
-      javascript: normalizeReusableText(work.work.javascript),
-    },
-  };
   return {
-    ...normalized,
-    checks: { remoteAssetUrls: extractRemoteAssetUrls(`${normalized.work.html}\n${normalized.work.css}`) },
+    ...work,
+    work: { ...work.work },
+    checks: { remoteAssetUrls: extractRemoteAssetUrls(`${work.work.html}\n${work.work.css}`) },
   };
 }
 
