@@ -760,3 +760,188 @@ body.aw-library-resizing {
     height: 420px;
   }
 }
+
+
+/* Workflow Bridge : originale -> nettoyée -> réutilisable */
+.aw-library-bridge-workflow {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent-soft) 18%, var(--surface));
+}
+
+.aw-library-classification-warning {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: center;
+  padding: 9px 10px;
+  border: 1px solid color-mix(in srgb, #F2B705 42%, var(--border));
+  border-radius: 9px;
+  background: color-mix(in srgb, #F2B705 7%, var(--surface));
+}
+
+.aw-library-classification-warning > div {
+  display: grid;
+  gap: 2px;
+}
+
+.aw-library-classification-warning span {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.aw-library-stage-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.aw-library-stage-grid > div {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.aw-library-stage-grid > div > span {
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: var(--surface-soft);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.aw-library-stage-grid > div > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.aw-library-stage-grid small {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.aw-library-stage-grid .done {
+  border-color: color-mix(in srgb, var(--success) 32%, var(--border));
+}
+
+.aw-library-stage-grid .done > span {
+  background: color-mix(in srgb, var(--success) 10%, var(--surface));
+  color: var(--success);
+}
+
+.aw-library-stage-grid .next {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
+}
+
+.aw-library-stage-grid .locked {
+  opacity: .68;
+}
+
+.aw-bridge-candidate-state.cleaned {
+  border-color: color-mix(in srgb, #1565C0 32%, var(--border));
+  background: color-mix(in srgb, #1565C0 6%, var(--surface));
+}
+
+.aw-bridge-candidate-state.ready {
+  border-color: color-mix(in srgb, var(--success) 40%, var(--border));
+  background: color-mix(in srgb, var(--success) 7%, var(--surface));
+}
+
+.aw-bridge-candidate-state.reusable {
+  border-color: color-mix(in srgb, #F2B705 42%, var(--border));
+  background: color-mix(in srgb, #F2B705 7%, var(--surface));
+}
+
+.aw-bridge-copy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.aw-bridge-copy-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+}
+
+.aw-bridge-copy-card > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.aw-bridge-copy-card span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.aw-bridge-remote-assets {
+  border: 1px solid color-mix(in srgb, #F2B705 38%, var(--border));
+  border-radius: 9px;
+  background: color-mix(in srgb, #F2B705 5%, var(--surface));
+}
+
+.aw-bridge-remote-assets summary {
+  padding: 9px 10px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.aw-bridge-remote-assets code {
+  display: block;
+  margin: 0 10px 7px;
+  padding: 6px 8px;
+  overflow-wrap: anywhere;
+  border-radius: 7px;
+  background: var(--surface);
+  font-size: 9px;
+}
+
+@media (max-width: 1080px) {
+  .aw-library-stage-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+  .aw-library-classification-warning {
+    grid-template-columns: 1fr;
+  }
+
+  .aw-library-classification-warning > button,
+  .aw-library-stage-grid button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .aw-library-stage-grid > div {
+    grid-template-columns: 30px minmax(0, 1fr);
+  }
+
+  .aw-library-stage-grid > div > button,
+  .aw-library-stage-grid > div > svg {
+    grid-column: 2;
+  }
+}
