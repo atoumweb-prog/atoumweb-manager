@@ -94,6 +94,7 @@ function App() {
   const [displayDensity, setDisplayDensity] = useState<DisplayDensity>('comfort');
   const [showHoverHelp, setShowHoverHelp] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [libraryHeaderCollapsed, setLibraryHeaderCollapsed] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [crmTarget,setCrmTarget] = useState<string|null>(null);
@@ -305,7 +306,7 @@ function App() {
           </div>
         </header>
 
-        <section className={`content-area ${activePage === 'Accueil' ? 'home-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' || activePage === 'Sites' ? 'workspace-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' ? 'library-workspace-content' : ''}`}>
+        <section className={`content-area ${activePage === 'Accueil' ? 'home-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' || activePage === 'Sites' ? 'workspace-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' ? 'library-workspace-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' && libraryHeaderCollapsed ? 'library-header-collapsed' : ''}`}>
           {activePage !== 'Accueil' && <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1>{activePage === 'Prospects' ? 'Prospection' : activePage}</h1><p>{PAGE_HINTS[activePage]}</p></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>}
           {message && <div className="notice" role="status"><span>{message}</span><button type="button" onClick={() => setMessage(null)}>×</button></div>}
 
@@ -321,7 +322,12 @@ function App() {
           {activePage === 'Facturation' && <BillingPage onMessage={setMessage} />}
           {activePage === 'Dépenses' && <ExpensesPage onMessage={setMessage} />}
           {activePage === 'Documents & Contrats' && <DocumentsPage onMessage={setMessage} initialDocumentId={documentTarget} />}
-          {activePage === 'Bibliothèque AtoumWeb' && <AtoumWebLibraryPage onMessage={setMessage} initialItemId={librarySearchTarget} />}
+          {activePage === 'Bibliothèque AtoumWeb' && <AtoumWebLibraryPage
+            onMessage={setMessage}
+            initialItemId={librarySearchTarget}
+            headerCollapsed={libraryHeaderCollapsed}
+            onToggleHeader={() => setLibraryHeaderCollapsed((value) => !value)}
+          />}
           {activePage === 'Sites' && <BridgeSitesPage onMessage={setMessage} />}
           {activePage === 'Sauvegardes' && <BusinessBackupsPage onMessage={setMessage} initialRecordId={backupSearchTarget} />}
           {activePage === 'Annuaire' && <DirectoryPage onMessage={setMessage} initialTarget={directoryTarget} />}
