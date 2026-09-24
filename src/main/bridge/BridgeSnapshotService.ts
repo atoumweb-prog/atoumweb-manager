@@ -509,6 +509,8 @@ export class BridgeSnapshotService {
         .join('\n\n');
     };
 
+    const uniqueCount = (rows: Record<string, unknown>[], kind: string): number =>
+      new Set(rows.filter((row) => String(row.kind) === kind).map((row) => nullableString(row.payload_object_ref)).filter(Boolean)).size;
     const moduleHtml = joinKind(moduleSources, 'html');
     const fallbackHtmlRef = nullableString(nodeRow.content_object_ref);
     const rawRef = nullableString(nodeRow.raw_object_ref);
@@ -529,11 +531,11 @@ export class BridgeSnapshotService {
       javascript: joinKind(moduleSources, 'js'),
       diviSource: rawRef ? this.getObjectPreview(rawRef).text ?? null : null,
       sourceCounts: {
-        html: moduleSources.filter((row) => String(row.kind) === 'html').length,
-        moduleCss: moduleSources.filter((row) => String(row.kind) === 'css').length,
-        pageCss: pageSources.filter((row) => String(row.kind) === 'css').length,
-        globalCss: globalSources.filter((row) => String(row.kind) === 'css').length,
-        javascript: moduleSources.filter((row) => String(row.kind) === 'js').length,
+        html: uniqueCount(moduleSources, 'html'),
+        moduleCss: uniqueCount(moduleSources, 'css'),
+        pageCss: uniqueCount(pageSources, 'css'),
+        globalCss: uniqueCount(globalSources, 'css'),
+        javascript: uniqueCount(moduleSources, 'js'),
       },
       frontendValidated: frontend.checked === true,
     };
