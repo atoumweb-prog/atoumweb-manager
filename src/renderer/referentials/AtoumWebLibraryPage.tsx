@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type {
   AtoumWebLibraryCategory,
   AtoumWebPackageInspection,
@@ -198,26 +198,6 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   const [packageBusy, setPackageBusy] = useState(false);
   const [bridgeWorkflowBusy, setBridgeWorkflowBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const libraryRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const measureWorkspace = () => {
-      const node = libraryRef.current;
-      if (!node) return;
-      const rect = node.getBoundingClientRect();
-      const bottomGap = 40;
-      const available = Math.max(420, window.innerHeight - rect.top - bottomGap);
-      node.style.setProperty('--aw-library-available-height', `${available}px`);
-    };
-
-    measureWorkspace();
-    const frame = window.requestAnimationFrame(measureWorkspace);
-    window.addEventListener('resize', measureWorkspace);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.removeEventListener('resize', measureWorkspace);
-    };
-  }, []);
 
   async function loadVersionAssets(versionId: string): Promise<void> {
     if (!versionId) {
@@ -647,7 +627,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   }
 
   return (
-    <div className="aw-library" ref={libraryRef}>
+    <div className="aw-library">
       <div className="aw-library-fixed-head">
         <div className="aw-library-summary">
         <Summary icon="package" label="Composants affichés" value={summary.total} />
