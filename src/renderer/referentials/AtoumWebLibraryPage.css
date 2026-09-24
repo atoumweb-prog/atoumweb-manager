@@ -945,3 +945,145 @@ body.aw-library-resizing {
     grid-column: 2;
   }
 }
+
+
+/* Bibliothèque desktop : bandeau fixe + atelier borné à la fenêtre */
+@media (min-width: 901px) {
+  .aw-library {
+    display: flex;
+    height: var(--aw-library-available-height, calc(100dvh - 280px));
+    max-height: var(--aw-library-available-height, calc(100dvh - 280px));
+    min-height: 420px;
+    flex-direction: column;
+    gap: 12px;
+    overflow: hidden;
+  }
+
+  .aw-library-fixed-head {
+    position: relative;
+    z-index: 30;
+    display: grid;
+    flex: 0 0 auto;
+    gap: 12px;
+    min-width: 0;
+    padding-bottom: 2px;
+    background: var(--canvas);
+  }
+
+  .aw-library-fixed-head .aw-library-summary,
+  .aw-library-fixed-head .aw-library-toolbar {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  .aw-library > .aw-library-package-review,
+  .aw-library > .aw-library-create {
+    flex: 0 0 auto;
+    max-height: 34vh;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
+
+  .aw-library-layout {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    max-height: none;
+    overflow: hidden;
+    align-items: stretch;
+  }
+
+  .aw-library-layout.with-detail,
+  .aw-library-layout.aw-library-layout-list-only,
+  .aw-library-layout.detail-expanded {
+    min-height: 0;
+    height: 100%;
+  }
+
+  .aw-library-list,
+  .aw-library-detail {
+    min-height: 0;
+    height: 100%;
+    max-height: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+    align-content: start;
+    grid-auto-rows: max-content;
+    scrollbar-gutter: stable;
+  }
+
+  .aw-library-list {
+    position: relative;
+  }
+
+  .aw-library-list > .panel-title {
+    position: sticky;
+    z-index: 8;
+    top: 0;
+    margin: -4px -2px 10px;
+    padding: 4px 2px 10px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .aw-library-detail {
+    position: relative;
+    top: auto;
+    margin-left: 10px;
+  }
+
+  .aw-library-detail.expanded {
+    position: relative;
+    height: 100%;
+    max-height: none;
+    margin-left: 0;
+    overflow-y: auto;
+  }
+
+  .aw-library-splitter {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .aw-library-detail-heading {
+    position: sticky;
+    z-index: 20;
+    top: 0;
+    margin: -4px -2px 0;
+    padding: 4px 2px 11px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: 0 8px 16px color-mix(in srgb, var(--surface) 92%, transparent);
+  }
+}
+
+@media (min-width: 1181px) {
+  .aw-library-detail .aw-library-bridge-workflow {
+    position: sticky;
+    z-index: 15;
+    top: 76px;
+    background: color-mix(in srgb, var(--surface) 96%, var(--accent-soft));
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--surface) 88%, transparent);
+  }
+}
+
+/* Sur petit écran on revient au flux naturel et au scroll général. */
+@media (max-width: 900px) {
+  .aw-library {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible;
+  }
+
+  .aw-library-fixed-head {
+    display: grid;
+    gap: 12px;
+  }
+
+  .aw-library-list > .panel-title,
+  .aw-library-detail-heading,
+  .aw-library-detail .aw-library-bridge-workflow {
+    position: static;
+    box-shadow: none;
+  }
+}
