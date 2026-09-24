@@ -126,6 +126,15 @@ interface BridgeWorkComponent {
   notes: string[];
 }
 
+interface BridgeReusableField {
+  id: string;
+  label: string;
+  type: 'text' | 'link' | 'image';
+  selector: string;
+  originalValue: string;
+  defaultValue: string;
+}
+
 interface BridgeReusableComponent {
   schemaVersion: number;
   kind: 'atoumweb-library-reusable-component';
@@ -137,6 +146,8 @@ interface BridgeReusableComponent {
     rootClasses: string[];
     method: 'divi-code';
     instructions: string[];
+    generalized: boolean;
+    fields: BridgeReusableField[];
   };
   checks: {
     remoteAssetUrls: string[];
@@ -288,7 +299,11 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
       : bridgeWorkflow.reusable;
   const reusableNeedsRefresh = Boolean(
     bridgeWorkflow.work
-    && (!bridgeWorkflow.reusable || bridgeWorkflow.work.version.versionNumber > bridgeWorkflow.reusable.version.versionNumber),
+    && (
+      !bridgeWorkflow.reusable
+      || bridgeWorkflow.work.version.versionNumber > bridgeWorkflow.reusable.version.versionNumber
+      || (bridgeWorkflow.reusable.payload.stage === 'reusable' && !bridgeWorkflow.reusable.payload.value.reusable.generalized)
+    ),
   );
   const reusableRemoteAssets = bridgeWorkflow.reusable?.payload.stage === 'reusable'
     ? bridgeWorkflow.reusable.payload.value.checks.remoteAssetUrls.length
