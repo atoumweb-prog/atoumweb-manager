@@ -92,6 +92,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
       setError(null);
       setSnapshot(next);
       setPage(null);
+      setModuleAnalyses({});
       setDetailExpanded(false);
       setSearch('');
       setContentView('pages');
@@ -108,6 +109,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
     setSearch(nextSearch);
     setContents(filterBridgeContents(allContents, nextView, nextSearch));
     setPage(null);
+    setModuleAnalyses({});
     setDetailExpanded(false);
   }
 
