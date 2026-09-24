@@ -197,6 +197,30 @@ export interface BridgeObjectPreview {
   truncated: boolean;
 }
 
+export interface BridgeModulePreview {
+  pageSnapshotId: string;
+  occurrenceId: string;
+  moduleType: string | null;
+  label: string | null;
+  builderGeneration: string | null;
+  pageTitle: string;
+  pageUrl: string | null;
+  html: string;
+  moduleCss: string;
+  pageCss: string;
+  globalCss: string;
+  javascript: string;
+  diviSource: string | null;
+  sourceCounts: {
+    html: number;
+    moduleCss: number;
+    pageCss: number;
+    globalCss: number;
+    javascript: number;
+  };
+  frontendValidated: boolean;
+}
+
 export interface BridgeSnapshotImportResult {
   alreadyImported: boolean;
   site: BridgeSiteSummary;
@@ -216,5 +240,6 @@ export interface BridgeSnapshotsApi {
   listPages(snapshotId: string, search?: string | null): Promise<BridgePageSummary[]>;
   getPage(pageSnapshotId: string): Promise<BridgePageSnapshotDetail>;
   getObjectPreview(objectRef: string): Promise<BridgeObjectPreview>;
+  getModulePreview(pageSnapshotId: string, occurrenceId: string): Promise<BridgeModulePreview>;
   exportDiagnostic(snapshotId: string): Promise<BridgeSnapshotDiagnosticExportResult>;
 }
