@@ -778,7 +778,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
               {assets.length === 0 ? <p className="muted">Aucun fichier lié à cette version.</p> : <div className="aw-library-asset-list">{assets.map((asset) => <button key={asset.id} type="button" className={`aw-library-asset ${asset.missing ? 'missing' : ''}`} onClick={() => void openAsset(asset.id)}>{assetPreviews[asset.id] && <img src={assetPreviews[asset.id]} alt={`Aperçu ${asset.fileName}`} loading="lazy" />}<span>{assetRoleLabel(asset.role)}</span><strong>{asset.fileName}</strong><small>{formatBytes(asset.sizeBytes)}{asset.missing ? ' · fichier manquant' : ''}</small></button>)}</div>}
             </div>
 
-            {!selected.archivedAt && <div className="aw-library-version-form">
+            {!selected.archivedAt && !bridgeWorkflow.original && <div className="aw-library-version-form">
               <h3>Créer une nouvelle version</h3>
               <p className="muted">Le contenu existant n’est jamais écrasé : toute évolution technique significative crée une nouvelle version.</p>
               <div className="aw-library-form-grid">
