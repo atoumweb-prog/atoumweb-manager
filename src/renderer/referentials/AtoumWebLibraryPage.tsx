@@ -109,11 +109,11 @@ interface BridgeLibraryCandidate {
   };
 }
 
-interface BridgeCleanedComponent {
+interface BridgeWorkComponent {
   schemaVersion: number;
-  kind: 'atoumweb-library-cleaned-component';
+  kind: 'atoumweb-library-work-component';
   origin: BridgeLibraryCandidate['origin'];
-  cleaned: {
+  work: {
     html: string;
     css: string;
     javascript: string;
@@ -146,8 +146,10 @@ interface BridgeReusableComponent {
 
 type BridgeLibraryPayload =
   | { stage: 'original'; value: BridgeLibraryCandidate }
-  | { stage: 'cleaned'; value: BridgeCleanedComponent }
+  | { stage: 'work'; value: BridgeWorkComponent }
   | { stage: 'reusable'; value: BridgeReusableComponent };
+
+type BridgeStageView = 'original' | 'work' | 'reusable';
 
 const EMPTY_FORM: CreationForm = {
   name: '',
@@ -197,6 +199,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   const [packageMarkStable, setPackageMarkStable] = useState(false);
   const [packageBusy, setPackageBusy] = useState(false);
   const [bridgeWorkflowBusy, setBridgeWorkflowBusy] = useState(false);
+  const [bridgeStageView, setBridgeStageView] = useState<BridgeStageView>('original');
   const [error, setError] = useState<string | null>(null);
 
   async function loadVersionAssets(versionId: string): Promise<void> {
@@ -223,6 +226,8 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
     setMetadataForm(metadataFromItem(detail));
     setExpandedVersionId(null);
     const preferredVersion = detail.currentVersion?.id ?? detail.versions[0]?.id ?? '';
+    const currentPayload = parseBridgeLibraryPayload(detail.currentVersion?.contentType, detail.currentVersion?.contentText);
+    setBridgeStageView(currentPayload?.stage ?? 'original');
     setAssetVersionId(preferredVersion);
     await loadVersionAssets(preferredVersion);
   }
@@ -276,10 +281,16 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
       .filter((entry): entry is { version: AtoumWebTechnicalVersion; payload: BridgeLibraryPayload } => Boolean(entry.payload));
     return {
       original: parsed.find((entry) => entry.payload.stage === 'original') ?? null,
-      cleaned: parsed.find((entry) => entry.payload.stage === 'cleaned') ?? null,
+      work: parsed.find((entry) => entry.payload.stage === 'work') ?? null,
       reusable: parsed.find((entry) => entry.payload.stage === 'reusable') ?? null,
     };
   }, [selected?.id, selected?.versions]);
+  const displayedBridgeEntry = bridgeStageView === 'original'
+    ? bridgeWorkflow.original
+    : bridgeStageView === 'work'
+      ? bridgeWorkflow.work
+      : bridgeWorkflow.reusable;
+
   const originalBridgeCandidate = bridgeWorkflow.original?.payload.stage === 'original' ? bridgeWorkflow.original.payload.value : null;
   const recommendedBridgeCategory = originalBridgeCandidate ? inferBridgeLibraryCategory(originalBridgeCandidate) : null;
   const recommendedBridgeName = originalBridgeCandidate && recommendedBridgeCategory
