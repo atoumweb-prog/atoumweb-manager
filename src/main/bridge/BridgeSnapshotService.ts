@@ -615,8 +615,8 @@ export class BridgeSnapshotService {
       pageCss,
       globalCss,
       renderedModuleCount: previews.filter((preview) => Boolean(preview.html)).length,
-      totalModuleCount: detail.nodes.filter((node) => node.nodeType === 'module').length,
-      omittedModuleCount: Math.max(0, detail.nodes.filter((node) => node.nodeType === 'module').length - previews.filter((preview) => Boolean(preview.html)).length),
+      totalModuleCount: codeNodes.length,
+      omittedModuleCount: Math.max(0, codeNodes.length - previews.filter((preview) => Boolean(preview.html)).length),
       frontendValidated: previews[0]?.frontendValidated ?? false,
     };
   }
@@ -826,7 +826,8 @@ function extractHtmlFromDiviSource(source: string | null): string {
     const commentEnd = jsonStart >= 0 ? source.indexOf('-->', jsonStart) : -1;
     if (jsonStart >= 0 && commentEnd > jsonStart) {
       try {
-        const parsed = JSON.parse(source.slice(jsonStart, commentEnd).trim()) as Record<string, unknown>;
+        const rawJson = source.slice(jsonStart, commentEnd).trim().replace(/\/\s*$/, '').trim();
+        const parsed = JSON.parse(rawJson) as Record<string, unknown>;
         const candidate = findHtmlValue(parsed);
         if (candidate) return candidate.trim();
       } catch {
