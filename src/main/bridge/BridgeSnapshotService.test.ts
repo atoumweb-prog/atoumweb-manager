@@ -56,7 +56,7 @@ describe('BridgeSnapshotService', () => {
 
     const detail = service.getPage(pages[0].pageSnapshotId);
     expect(detail.nodes).toHaveLength(1);
-    expect(detail.nodes[0].moduleType).toBe('code');
+    expect(detail.nodes[0].moduleType).toBe('divi/code');
 
     const preview = service.getObjectPreview(detail.nodes[0].rawObjectRef!);
     expect(preview.available).toBe(true);
