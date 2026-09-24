@@ -443,6 +443,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
               <p>{page.page.canonicalUrl ?? page.page.slug ?? page.page.sourcePageKey}</p>
             </div>
             <div className="bridge-detail-actions">
+              <button className="primary-button bridge-page-preview-button" type="button" onClick={() => void showPagePreview()}><OperationIcon name="image" size={16} />Visualiser la page</button>
               <button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'collapse' : 'expand'} size={18} /></button>
               <button className="close-detail" type="button" aria-label="Fermer la fiche" title="Fermer" onClick={closePage}><OperationIcon name="close" size={18} /></button>
             </div>
@@ -463,15 +464,22 @@ export function BridgeSitesPage({ onMessage }: Props) {
           <div className="bridge-detail-body">
             <div className="bridge-tree">
               {page.nodes.map((node) => {
-                const customCode = isCustomCodeModule(node.moduleType);
+                const customCode = node.nodeType === 'module' && isCustomCodeModule(node.moduleType);
+                const analysis = customCode ? moduleAnalyses[node.occurrenceId] : null;
                 return <div className={`bridge-node ${customCode ? 'custom-code' : ''}`} key={node.occurrenceId} style={{ '--bridge-depth': Math.min(node.depth, 8) } as CSSProperties}>
                   <span className="bridge-node-kind">{nodeTypeLabel(node.nodeType)}</span>
                   <span className="bridge-node-copy">
-                    <strong>{humanNodeLabel(node.label, node.moduleType, node.nodeType)}</strong>
-                    <small>{customCode ? 'HTML / CSS récupérés par Bridge' : builderNodeHint(node.moduleType, node.builder)}</small>
+                    <strong>{analysis?.reuse.suggestedName ?? humanNodeLabel(node.label, node.moduleType, node.nodeType)}</strong>
+                    {customCode
+                      ? <small className="bridge-reuse-summary">
+                          <span className={`bridge-reuse-status ${analysis?.reuse.status ?? 'review'}`}>{reuseStatusLabel(analysis?.reuse.status)}</span>
+                          <span>{analysis ? reuseDependencySummary(analysis) : 'Analyse en cours…'}</span>
+                        </small>
+                      : <small>{builderNodeHint(node.moduleType, node.builder)}</small>}
                   </span>
                   <div className="bridge-node-actions">
-                    {customCode && <button className="secondary-button bridge-code-button" type="button" onClick={() => void showModule(node.occurrenceId)}><OperationIcon name="image" size={15} />Voir le rendu</button>}
+                    {customCode && <button className="secondary-button bridge-code-button" type="button" onClick={() => void showModule(node.occurrenceId)}><OperationIcon name="image" size={15} />Voir</button>}
+                    {customCode && analysis && <button className="secondary-button bridge-library-button" type="button" onClick={() => setLibraryCandidate(analysis)}><OperationIcon name="folder" size={15} />Bibliothèque</button>}
                     {!customCode && node.contentObjectRef && <button className="icon-button" type="button" title="Voir le contenu enregistré" onClick={() => void showObject(node.contentObjectRef!)}><OperationIcon name="file-text" size={15} /></button>}
                   </div>
                 </div>;
@@ -503,12 +511,26 @@ export function BridgeSitesPage({ onMessage }: Props) {
         </article>}
       </section>
 
+      {pagePreview && <div className="bridge-preview-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPagePreview(null); }}>
+        <section className="bridge-preview bridge-page-preview-modal panel" role="dialog" aria-modal="true" aria-label="Visualisation reconstruite de la page">
+          <div className="bridge-detail-header">
+            <div><span className="eyebrow">Page complète · {pagePreview.builderGeneration === '5' ? 'Divi 5' : pagePreview.builderGeneration === '4' ? 'Divi 4' : 'WordPress'}</span><h2>{pagePreview.title}</h2><p>{pagePreview.url}</p></div>
+            <button className="close-detail" type="button" aria-label="Fermer" onClick={() => setPagePreview(null)}><OperationIcon name="close" size={18} /></button>
+          </div>
+          <div className="bridge-preview-confidence reconstructed">
+            <OperationIcon name="alert" size={16} />
+            <span>Rendu reconstruit depuis le snapshot Bridge : {pagePreview.renderedModuleCount} module(s) affiché(s) sur {pagePreview.totalModuleCount}. {pagePreview.omittedModuleCount > 0 ? `${pagePreview.omittedModuleCount} élément(s) Divi non reconstructible(s) automatiquement peuvent manquer.` : 'Tous les modules détectés ont pu être reconstruits.'}</span>
+          </div>
+          <iframe className="bridge-html-preview bridge-page-html-preview" sandbox="" title={`Visualisation de ${pagePreview.title}`} srcDoc={buildReconstructedPagePreview(pagePreview)} />
+        </section>
+      </div>}
+
       {modulePreview && <div className="bridge-preview-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setModulePreview(null); }}>
         <section className="bridge-preview bridge-module-preview panel" role="dialog" aria-modal="true" aria-label="Aperçu reconstruit du module">
           <div className="bridge-detail-header">
             <div>
               <span className="eyebrow">Module du snapshot · {modulePreview.builderGeneration === '5' ? 'Divi 5' : modulePreview.builderGeneration === '4' ? 'Divi 4' : 'Divi'}</span>
-              <h2>{modulePreview.label || 'Module Code'}</h2>
+              <h2>{modulePreview.reuse.suggestedName}</h2>
               <p>{modulePreview.pageTitle}{modulePreview.pageUrl ? ` · ${modulePreview.pageUrl}` : ''}</p>
             </div>
             <button className="close-detail" type="button" aria-label="Fermer" onClick={() => setModulePreview(null)}><OperationIcon name="close" size={18} /></button>
@@ -521,12 +543,17 @@ export function BridgeSitesPage({ onMessage }: Props) {
               : 'Aperçu reconstruit — ce n’est pas une capture exacte du site. Bridge n’a pas joint de contrôle frontend pour ce snapshot.'}</span>
           </div>
 
-          <div className="bridge-preview-layers" aria-label="Sources utilisées pour la reconstruction">
-            <span className={modulePreview.sourceCounts.html ? 'present' : ''}>HTML <strong>{modulePreview.sourceCounts.html || '—'}</strong></span>
-            <span className={modulePreview.sourceCounts.moduleCss ? 'present' : ''}>CSS module <strong>{modulePreview.sourceCounts.moduleCss || '—'}</strong></span>
-            <span className={modulePreview.sourceCounts.pageCss ? 'present' : ''}>CSS page <strong>{modulePreview.sourceCounts.pageCss || '—'}</strong></span>
-            <span className={modulePreview.sourceCounts.globalCss ? 'present' : ''}>CSS global <strong>{modulePreview.sourceCounts.globalCss || '—'}</strong></span>
-            <span className={modulePreview.sourceCounts.javascript ? 'warning' : ''}>JS <strong>{modulePreview.sourceCounts.javascript || '—'}</strong></span>
+          <div className="bridge-reuse-banner">
+            <div><strong>{reuseStatusLabel(modulePreview.reuse.status)}</strong><span>{reuseDependencySummary(modulePreview)}</span></div>
+            <button className="primary-button" type="button" onClick={() => setLibraryCandidate(modulePreview)}><OperationIcon name="folder" size={16} />Préparer pour la Bibliothèque</button>
+          </div>
+
+          <div className="bridge-preview-layers" aria-label="Éléments nécessaires pour la réutilisation">
+            <span className={modulePreview.html ? 'present' : ''}>HTML <strong>{modulePreview.html ? 'oui' : '—'}</strong></span>
+            <span className={modulePreview.moduleCss ? 'present' : ''}>CSS module <strong>{modulePreview.moduleCss ? 'oui' : '—'}</strong></span>
+            <span className={modulePreview.reuse.relevantPageRuleCount ? 'present' : ''}>CSS page utile <strong>{modulePreview.reuse.relevantPageRuleCount}/{modulePreview.reuse.pageCssRuleCount}</strong></span>
+            <span className={modulePreview.reuse.relevantGlobalRuleCount ? 'present' : ''}>CSS global utile <strong>{modulePreview.reuse.relevantGlobalRuleCount}/{modulePreview.reuse.globalCssRuleCount}</strong></span>
+            <span className={modulePreview.javascript ? 'warning' : ''}>JavaScript <strong>{modulePreview.javascript ? 'à vérifier' : 'aucun'}</strong></span>
           </div>
 
           <div className="bridge-preview-modes" role="tablist" aria-label="Voir le module">
@@ -534,19 +561,57 @@ export function BridgeSitesPage({ onMessage }: Props) {
             <PreviewTab label="HTML" active={modulePreviewTab === 'html'} onClick={() => setModulePreviewTab('html')} />
             <PreviewTab label="CSS" active={modulePreviewTab === 'css'} onClick={() => setModulePreviewTab('css')} />
             {modulePreview.javascript && <PreviewTab label="JS" active={modulePreviewTab === 'js'} onClick={() => setModulePreviewTab('js')} />}
-            {modulePreview.diviSource && <PreviewTab label="Divi / JSON" active={modulePreviewTab === 'divi'} onClick={() => setModulePreviewTab('divi')} />}
+            {modulePreview.diviSource && <PreviewTab label="Source Divi originale" active={modulePreviewTab === 'divi'} onClick={() => setModulePreviewTab('divi')} />}
           </div>
 
           <div className="bridge-module-preview-body">
             {modulePreviewTab === 'preview' && <iframe className="bridge-html-preview" sandbox="" title="Aperçu reconstruit du module" srcDoc={buildReconstructedPreview(modulePreview)} />}
             {modulePreviewTab === 'html' && <CodePanel title="HTML du module" content={modulePreview.html} empty="Aucun HTML séparé n’a été fourni pour ce module." />}
-            {modulePreviewTab === 'css' && <div className="bridge-css-layers">
-              <CodePanel title="CSS du module" content={modulePreview.moduleCss} empty="Aucun CSS propre à ce module." />
-              <CodePanel title="CSS de la page" content={modulePreview.pageCss} empty="Aucun CSS de page rattaché." />
-              <CodePanel title="CSS global du site" content={modulePreview.globalCss} empty="Aucun CSS global rattaché au snapshot." />
+            {modulePreviewTab === 'css' && <div className="bridge-css-use">
+              <div className="bridge-css-layers">
+                <CodePanel title="CSS du module — à emporter" content={modulePreview.moduleCss} empty="Aucun CSS propre à ce module." />
+                <CodePanel title={`CSS de page utile — ${modulePreview.reuse.relevantPageRuleCount}/${modulePreview.reuse.pageCssRuleCount} règle(s)`} content={modulePreview.reuse.relevantPageCss} empty="Le CSS de page existe, mais aucune règle propre à ce composant n’a été détectée." />
+                <CodePanel title={`CSS global utile — ${modulePreview.reuse.relevantGlobalRuleCount}/${modulePreview.reuse.globalCssRuleCount} règle(s)`} content={modulePreview.reuse.relevantGlobalCss} empty="Le CSS global existe, mais aucune règle propre à ce composant n’a été détectée." />
+              </div>
+              <details className="bridge-original-css">
+                <summary>Voir les CSS source complets conservés dans le snapshot</summary>
+                <div className="bridge-css-layers">
+                  <CodePanel title="CSS de page original" content={modulePreview.pageCss} empty="Aucun CSS de page." />
+                  <CodePanel title="CSS global original" content={modulePreview.globalCss} empty="Aucun CSS global." />
+                </div>
+              </details>
             </div>}
             {modulePreviewTab === 'js' && <><div className="bridge-js-warning"><OperationIcon name="shield-check" size={16} />JavaScript conservé mais non exécuté dans l’aperçu.</div><CodePanel title="JavaScript du module" content={modulePreview.javascript} empty="Aucun JavaScript." /></>}
             {modulePreviewTab === 'divi' && <CodePanel title="Source Divi originale" content={modulePreview.diviSource ?? ''} empty="Aucune source Divi brute disponible." />}
+          </div>
+        </section>
+      </div>}
+
+      {libraryCandidate && <div className="bridge-preview-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setLibraryCandidate(null); }}>
+        <section className="bridge-preview bridge-library-candidate panel" role="dialog" aria-modal="true" aria-label="Préparer pour la Bibliothèque AtoumWeb">
+          <div className="bridge-detail-header">
+            <div><span className="eyebrow">Candidat Bibliothèque AtoumWeb</span><h2>{libraryCandidate.reuse.suggestedName}</h2><p>{site?.name} → {libraryCandidate.pageTitle}</p></div>
+            <button className="close-detail" type="button" aria-label="Fermer" onClick={() => setLibraryCandidate(null)}><OperationIcon name="close" size={18} /></button>
+          </div>
+          <div className="bridge-candidate-grid">
+            <div><span>Type proposé</span><strong>{libraryCategoryLabel(libraryCandidate.reuse.suggestedCategory)}</strong></div>
+            <div><span>État</span><strong>{reuseStatusLabel(libraryCandidate.reuse.status)}</strong></div>
+            <div><span>HTML</span><strong>{libraryCandidate.html ? 'Disponible' : 'À analyser'}</strong></div>
+            <div><span>CSS module</span><strong>{libraryCandidate.moduleCss ? 'À emporter' : 'Aucun'}</strong></div>
+            <div><span>CSS page utile</span><strong>{libraryCandidate.reuse.relevantPageRuleCount} règle(s)</strong></div>
+            <div><span>CSS global utile</span><strong>{libraryCandidate.reuse.relevantGlobalRuleCount} règle(s)</strong></div>
+          </div>
+          <section className="bridge-candidate-instructions">
+            <h3>Pour le réutiliser ailleurs</h3>
+            {libraryCandidate.reuse.instructions.map((instruction) => <p key={instruction}><OperationIcon name="check-circle" size={15} />{instruction}</p>)}
+            {libraryCandidate.reuse.notes.map((note) => <p className="muted" key={note}><OperationIcon name="alert" size={15} />{note}</p>)}
+          </section>
+          <div className="bridge-candidate-footer">
+            <p>La Bibliothèque recevra d’abord une <strong>V1 originale</strong> contenant la source du snapshot. Elle restera « à adapter » tant qu’une version nettoyée/réutilisable n’aura pas été créée.</p>
+            <div className="button-row">
+              <button className="secondary-button" type="button" onClick={() => setLibraryCandidate(null)}>Annuler</button>
+              <button className="primary-button" type="button" onClick={() => void createLibraryCandidate(libraryCandidate)}><OperationIcon name="folder" size={16} />Créer le candidat</button>
+            </div>
           </div>
         </section>
       </div>}
