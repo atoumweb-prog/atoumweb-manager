@@ -1906,3 +1906,28 @@ details.aw-reusable-fields {
 .aw-bridge-workbench-note strong {
   color: var(--text);
 }
+
+
+.aw-bridge-package-summary {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.aw-bridge-package-summary > span {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  min-height: 27px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.aw-bridge-package-summary strong {
+  color: var(--text);
+  font-size: 10px;
+}
