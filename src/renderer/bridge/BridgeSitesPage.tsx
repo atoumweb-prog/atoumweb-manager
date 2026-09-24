@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import type {
   BridgeObjectPreview,
   BridgePageSnapshotDetail,
@@ -318,7 +318,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
             <div className="bridge-tree">
               {page.nodes.map((node) => {
                 const customCode = isCustomCodeModule(node.moduleType);
-                return <div className={`bridge-node ${customCode ? 'custom-code' : ''}`} key={node.occurrenceId} style={{ '--bridge-depth': Math.min(node.depth, 8) } as React.CSSProperties}>
+                return <div className={`bridge-node ${customCode ? 'custom-code' : ''}`} key={node.occurrenceId} style={{ '--bridge-depth': Math.min(node.depth, 8) } as CSSProperties}>
                   <span className="bridge-node-kind">{nodeTypeLabel(node.nodeType)}</span>
                   <span className="bridge-node-copy">
                     <strong>{humanNodeLabel(node.label, node.moduleType, node.nodeType)}</strong>
