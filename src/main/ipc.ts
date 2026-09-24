@@ -1,4 +1,6 @@
 import { app, dialog, ipcMain, safeStorage, shell } from 'electron';
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { BillingInvoiceInput, BillingItemFilters, BillingItemStatus } from '../shared/billing';
 import type { ExpenseFilters, ExpenseInput, ExpenseStatus } from '../shared/expenses';
 import type {
@@ -165,6 +167,21 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('bridge:pages:list', (_event, snapshotId: string, search?: string | null) => database.bridgeSnapshots.listPages(snapshotId, search));
   ipcMain.handle('bridge:pages:get', (_event, pageSnapshotId: string) => database.bridgeSnapshots.getPage(pageSnapshotId));
   ipcMain.handle('bridge:objects:preview', (_event, objectRef: string) => database.bridgeSnapshots.getObjectPreview(objectRef));
+  ipcMain.handle('bridge:export-diagnostic', async (_event, snapshotId: string) => {
+    const diagnostic = database.bridgeSnapshots.buildDiagnostic(snapshotId);
+    const site = diagnostic.site as { name?: string } | undefined;
+    const snapshot = diagnostic.snapshot as { generatedAt?: string } | undefined;
+    const safeName = String(site?.name ?? 'site').normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'site';
+    const date = String(snapshot?.generatedAt ?? new Date().toISOString()).slice(0, 10);
+    const selection = await dialog.showSaveDialog({
+      title: 'Exporter le diagnostic Bridge',
+      defaultPath: join(workspace.root, `bridge-diagnostic-${safeName}-${date}.json`),
+      filters: [{ name: 'Diagnostic Bridge JSON', extensions: ['json'] }],
+    });
+    if (selection.canceled || !selection.filePath) return { cancelled: true };
+    writeFileSync(selection.filePath, `${JSON.stringify(diagnostic, null, 2)}\n`, 'utf8');
+    return { cancelled: false, path: selection.filePath };
+  });
 
   ipcMain.handle('crm:organizations:list', (_event, includeArchived?: boolean) => database.crm.listDirectoryOrganizations(includeArchived));
   ipcMain.handle('crm:organizations:get', (_event, id: string) => database.crm.getDirectoryOrganization(id));
