@@ -270,10 +270,24 @@
   white-space: nowrap;
 }
 
+.bridge-snapshot-actions {
+  display: flex;
+  gap: 8px;
+  align-items: end;
+}
+
 .bridge-snapshot-select {
   display: grid;
   gap: 5px;
   min-width: 230px;
+}
+
+.bridge-diagnostic-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  white-space: nowrap;
 }
 
 .bridge-snapshot-select label {
@@ -294,6 +308,36 @@
 
 .bridge-snapshot-strip .bridge-status {
   align-self: center;
+}
+
+.bridge-content-breakdown {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 7px;
+  margin: 0 0 10px;
+}
+
+.bridge-content-breakdown > span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px 9px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--surface-soft) 78%, var(--surface));
+}
+
+.bridge-content-breakdown strong {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.bridge-content-breakdown small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .bridge-snapshot-warnings {
@@ -589,6 +633,10 @@
   .bridge-inspection-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+
+  .bridge-content-breakdown {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 1050px) {
@@ -622,6 +670,19 @@
 
   .bridge-import-button {
     justify-content: center;
+  }
+
+  .bridge-snapshot-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .bridge-diagnostic-button {
+    justify-content: center;
+  }
+
+  .bridge-content-breakdown {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .bridge-inspection-grid,
