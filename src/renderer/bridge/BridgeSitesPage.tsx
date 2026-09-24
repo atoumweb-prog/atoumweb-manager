@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type {
   BridgeModulePreview,
   BridgeObjectPreview,
@@ -40,6 +40,30 @@ export function BridgeSitesPage({ onMessage }: Props) {
   const [detailExpanded, setDetailExpanded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [diagnosticOpen, setDiagnosticOpen] = useState(false);
+  const diagnosticRef = useRef<HTMLDetailsElement | null>(null);
+
+  useEffect(() => {
+    if (!diagnosticOpen) return;
+
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      const node = diagnosticRef.current;
+      const target = event.target;
+      if (!node || !(target instanceof Node) || node.contains(target)) return;
+      setDiagnosticOpen(false);
+    };
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setDiagnosticOpen(false);
+    };
+
+    document.addEventListener('pointerdown', closeOnOutsidePointer);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePointer);
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [diagnosticOpen]);
 
   async function refreshSites(preferredId?: string | null): Promise<void> {
     const nextSites = await window.atoumweb.bridgeSnapshots.listSites();
@@ -67,6 +91,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
       setError(null);
       const detail = await window.atoumweb.bridgeSnapshots.getSite(id);
       setSite(detail);
+      setDiagnosticOpen(false);
       const latest = detail.snapshots[0] ?? null;
       setSnapshot(latest);
       setPage(null);
@@ -91,6 +116,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
     try {
       setError(null);
       setSnapshot(next);
+      setDiagnosticOpen(false);
       setPage(null);
       setModuleAnalyses({});
       setDetailExpanded(false);
@@ -108,6 +134,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
     setContentView(nextView);
     setSearch(nextSearch);
     setContents(filterBridgeContents(allContents, nextView, nextSearch));
+    setDiagnosticOpen(false);
     setPage(null);
     setModuleAnalyses({});
     setDetailExpanded(false);
@@ -406,7 +433,12 @@ export function BridgeSitesPage({ onMessage }: Props) {
                 {snapshot && contents.length === 0 && <div className="bridge-empty"><strong>Aucun élément</strong><span>Aucun contenu ne correspond à cette rubrique ou à cette recherche.</span></div>}
               </div>
 
-              {snapshot && <details className="bridge-snapshot-technical">
+              {snapshot && <details
+                ref={diagnosticRef}
+                className="bridge-snapshot-technical"
+                open={diagnosticOpen}
+                onToggle={(event) => setDiagnosticOpen(event.currentTarget.open)}
+              >
                 <summary><OperationIcon name="wrench" size={16} />Diagnostic technique de cette copie</summary>
                 <div className="bridge-tech-summary">
                   <Metric label="Contenus" value={String(snapshot.counts.pages)} />
@@ -416,7 +448,10 @@ export function BridgeSitesPage({ onMessage }: Props) {
                 </div>
                 {currentWarnings.length > 0 && <div className="bridge-warning-list">{currentWarnings.map((issue, index) => <div key={`${issue.code}-${index}`}><strong>{issue.code}</strong><span>{issue.message}</span></div>)}</div>}
                 <div className="bridge-tech-actions">
-                  <button className="secondary-button" type="button" onClick={() => void exportDiagnostic()}><OperationIcon name="file-text" size={16} />Exporter le diagnostic</button>
+                  <div className="button-row">
+                    <button className="secondary-button" type="button" onClick={() => void exportDiagnostic()}><OperationIcon name="file-text" size={16} />Exporter le diagnostic</button>
+                    <button className="secondary-button" type="button" onClick={() => setDiagnosticOpen(false)}><OperationIcon name="close" size={16} />Fermer</button>
+                  </div>
                   <span>Bridge v{snapshot.bridgeVersion} · {scanStatusLabel(snapshot.scanStatus)}</span>
                 </div>
               </details>}
