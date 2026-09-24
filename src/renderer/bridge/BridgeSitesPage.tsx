@@ -22,6 +22,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
   const [site, setSite] = useState<BridgeSiteDetail | null>(null);
   const [snapshot, setSnapshot] = useState<BridgeSnapshotSummary | null>(null);
   const [pages, setPages] = useState<BridgePageSummary[]>([]);
+  const [allContents, setAllContents] = useState<BridgePageSummary[]>([]);
   const [page, setPage] = useState<BridgePageSnapshotDetail | null>(null);
   const [inspection, setInspection] = useState<BridgeSnapshotInspection | null>(null);
   const [preview, setPreview] = useState<BridgeObjectPreview | null>(null);
@@ -39,6 +40,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
       setSite(null);
       setSnapshot(null);
       setPages([]);
+      setAllContents([]);
       setPage(null);
     }
   }
@@ -57,8 +59,14 @@ export function BridgeSitesPage({ onMessage }: Props) {
       setSnapshot(latest);
       setPage(null);
       setTab('structure');
-      if (latest) setPages(await window.atoumweb.bridgeSnapshots.listPages(latest.id));
-      else setPages([]);
+      if (latest) {
+        const nextContents = await window.atoumweb.bridgeSnapshots.listPages(latest.id);
+        setAllContents(nextContents);
+        setPages(nextContents);
+      } else {
+        setAllContents([]);
+        setPages([]);
+      }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Impossible d’ouvrir ce site Bridge.');
     }
@@ -70,7 +78,9 @@ export function BridgeSitesPage({ onMessage }: Props) {
       setSnapshot(next);
       setPage(null);
       setTab('structure');
-      setPages(await window.atoumweb.bridgeSnapshots.listPages(next.id, search || null));
+      const nextContents = await window.atoumweb.bridgeSnapshots.listPages(next.id);
+      setAllContents(nextContents);
+      setPages(search ? filterBridgeContents(nextContents, search) : nextContents);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Impossible de charger ce snapshot.');
     }
@@ -80,7 +90,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
     setSearch(value);
     if (!snapshot) return;
     try {
-      setPages(await window.atoumweb.bridgeSnapshots.listPages(snapshot.id, value || null));
+      setPages(filterBridgeContents(allContents, value));
       setPage(null);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Recherche impossible.');
@@ -120,7 +130,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
       await refreshSites(result.site.id);
       onMessage(result.alreadyImported
         ? 'Ce snapshot Bridge était déjà importé : aucune duplication créée.'
-        : `Snapshot Bridge importé : ${result.site.name} · ${result.snapshot.counts.pages} page(s).`);
+        : `Snapshot Bridge importé : ${result.site.name} · ${result.snapshot.counts.pages} contenu(s).`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Import du snapshot Bridge impossible.');
     } finally {
@@ -137,6 +147,17 @@ export function BridgeSitesPage({ onMessage }: Props) {
     }
   }
 
+  async function exportDiagnostic(): Promise<void> {
+    if (!snapshot) return;
+    try {
+      setError(null);
+      const result = await window.atoumweb.bridgeSnapshots.exportDiagnostic(snapshot.id);
+      if (!result.cancelled) onMessage(`Diagnostic Bridge exporté : ${result.path ?? 'fichier JSON'}`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Export du diagnostic Bridge impossible.');
+    }
+  }
+
   const currentWarnings = snapshot?.issues.filter((issue) => issue.severity === 'warning' || issue.severity === 'error' || issue.severity === 'fatal') ?? [];
   const pageStats = useMemo(() => {
     if (!page) return null;
@@ -147,6 +168,18 @@ export function BridgeSitesPage({ onMessage }: Props) {
       dependencies: page.dependencies.length,
     };
   }, [page]);
+
+  const contentBreakdown = useMemo(() => {
+    const result = { pages: 0, posts: 0, diviLibrary: 0, themeBuilder: 0, other: 0 };
+    allContents.forEach((item) => {
+      if (item.postType === 'page') result.pages += 1;
+      else if (item.postType === 'post') result.posts += 1;
+      else if (item.scope === 'divi_library') result.diviLibrary += 1;
+      else if (item.scope === 'theme_builder') result.themeBuilder += 1;
+      else result.other += 1;
+    });
+    return result;
+  }, [allContents]);
 
   return (
     <div className="bridge-page">
@@ -178,7 +211,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
         </div>
         <div className="bridge-inspection-grid">
           <Metric label="Bridge" value={`v${inspection.bridgeVersion}`} />
-          <Metric label="Pages" value={String(inspection.counts.pages)} />
+          <Metric label="Contenus" value={String(inspection.counts.pages)} />
           <Metric label="Nœuds" value={String(inspection.counts.nodes)} />
           <Metric label="Sources" value={String(inspection.counts.sources)} />
           <Metric label="Assets" value={String(inspection.counts.assets)} />
@@ -205,33 +238,47 @@ export function BridgeSitesPage({ onMessage }: Props) {
             ? <div className="bridge-empty"><OperationIcon name="server" size={30} /><strong>Aucun site importé</strong><span>Importe le premier snapshot produit par AtoumWeb Bridge.</span></div>
             : <div className="bridge-site-list">{sites.map((item) => <button key={item.id} type="button" className={`bridge-site-card ${site?.id === item.id ? 'selected' : ''}`} onClick={() => void openSite(item.id)}>
                 <span className="bridge-site-icon"><OperationIcon name="server" size={18} /></span>
-                <span><strong>{item.name}</strong><small>{item.latestPageCount} pages · {item.snapshotCount} snapshot{item.snapshotCount > 1 ? 's' : ''}</small></span>
+                <span><strong>{item.name}</strong><small>{item.latestPageCount} contenus · {item.snapshotCount} snapshot{item.snapshotCount > 1 ? 's' : ''}</small></span>
                 <i className={item.latestScanStatus === 'complete' ? 'ok' : 'warning'} />
               </button>)}</div>}
         </aside>
 
         <div className="bridge-browser panel">
-          {!site ? <div className="bridge-empty large"><OperationIcon name="folder" size={38} /><strong>Sélectionne un site</strong><span>Les pages et snapshots apparaîtront ici.</span></div> : <>
+          {!site ? <div className="bridge-empty large"><OperationIcon name="folder" size={38} /><strong>Sélectionne un site</strong><span>Les contenus et snapshots apparaîtront ici.</span></div> : <>
             <div className="bridge-site-header">
               <div><span className="eyebrow">Site collecté</span><h2>{site.name}</h2><p>{site.canonicalUrl ?? site.sourceSiteKey}</p></div>
-              <div className="bridge-snapshot-select">
-                <label htmlFor="bridge-snapshot">Snapshot</label>
-                <select id="bridge-snapshot" value={snapshot?.id ?? ''} onChange={(event) => {
-                  const next = site.snapshots.find((item) => item.id === event.target.value);
-                  if (next) void openSnapshot(next);
-                }}>
-                  {site.snapshots.map((item) => <option key={item.id} value={item.id}>{formatDate(item.generatedAt)} · {scanStatusLabel(item.scanStatus)}</option>)}
-                </select>
+              <div className="bridge-snapshot-actions">
+                <div className="bridge-snapshot-select">
+                  <label htmlFor="bridge-snapshot">Snapshot</label>
+                  <select id="bridge-snapshot" value={snapshot?.id ?? ''} onChange={(event) => {
+                    const next = site.snapshots.find((item) => item.id === event.target.value);
+                    if (next) void openSnapshot(next);
+                  }}>
+                    {site.snapshots.map((item) => <option key={item.id} value={item.id}>{formatDate(item.generatedAt)} · {scanStatusLabel(item.scanStatus)}</option>)}
+                  </select>
+                </div>
+                {snapshot && <button className="secondary-button bridge-diagnostic-button" type="button" onClick={() => void exportDiagnostic()}>
+                  <OperationIcon name="file-text" size={16} />Exporter diagnostic
+                </button>}
               </div>
             </div>
 
             {snapshot && <div className="bridge-snapshot-strip">
-              <Metric label="Pages" value={String(snapshot.counts.pages)} />
+              <Metric label="Contenus" value={String(snapshot.counts.pages)} />
               <Metric label="Nœuds" value={String(snapshot.counts.nodes)} />
               <Metric label="Sources" value={String(snapshot.counts.sources)} />
               <Metric label="Assets" value={String(snapshot.counts.assets)} />
               <Metric label="Objets" value={String(snapshot.counts.objects)} />
               <span className={`bridge-status ${snapshot.scanStatus === 'complete' ? 'ok' : 'warning'}`}>{scanStatusLabel(snapshot.scanStatus)}</span>
+            </div>}
+
+            {snapshot && <div className="bridge-content-breakdown" aria-label="Répartition des contenus importés">
+              <span><strong>{allContents.length}</strong><small>contenus importés</small></span>
+              <span><strong>{contentBreakdown.pages}</strong><small>pages WordPress</small></span>
+              <span><strong>{contentBreakdown.posts}</strong><small>articles</small></span>
+              <span><strong>{contentBreakdown.diviLibrary}</strong><small>bibliothèque Divi</small></span>
+              <span><strong>{contentBreakdown.themeBuilder}</strong><small>Theme Builder</small></span>
+              <span><strong>{contentBreakdown.other}</strong><small>autres / plugins</small></span>
             </div>}
 
             {currentWarnings.length > 0 && <details className="bridge-snapshot-warnings">
@@ -250,7 +297,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
             </details>}
 
             <div className="bridge-page-tools">
-              <div className="search-field"><OperationIcon name="folder" size={16} /><input value={search} onChange={(event) => void runSearch(event.target.value)} placeholder="Rechercher une page, un type, un slug…" /></div>
+              <div className="search-field"><OperationIcon name="folder" size={16} /><input value={search} onChange={(event) => void runSearch(event.target.value)} placeholder="Rechercher un contenu, un type, un slug…" /></div>
               <span>{pages.length} résultat{pages.length > 1 ? 's' : ''}</span>
             </div>
 
@@ -261,7 +308,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
                 <span className="bridge-page-builder">{item.builderGeneration === '4' ? 'Divi 4' : item.builderGeneration === '5' ? 'Divi 5' : item.builder ?? 'WordPress'}</span>
                 <span className="bridge-page-count">{item.nodeCount} nœuds</span>
               </button>)}
-              {snapshot && pages.length === 0 && <div className="bridge-empty"><strong>Aucune page</strong><span>Aucun contenu ne correspond à cette recherche.</span></div>}
+              {snapshot && pages.length === 0 && <div className="bridge-empty"><strong>Aucun contenu</strong><span>Aucun contenu ne correspond à cette recherche.</span></div>}
             </div>
           </>}
         </div>
@@ -347,6 +394,21 @@ export function BridgeSitesPage({ onMessage }: Props) {
 
 function Metric({ label, value }: { label: string; value: string }) {
   return <div className="bridge-metric"><span>{label}</span><strong>{value}</strong></div>;
+}
+
+function filterBridgeContents(contents: BridgePageSummary[], query: string): BridgePageSummary[] {
+  const needle = query.trim().toLocaleLowerCase('fr-FR');
+  if (!needle) return contents;
+  return contents.filter((item) => [
+    item.title,
+    item.slug ?? '',
+    item.postType,
+    item.scope ?? '',
+    item.builder ?? '',
+    item.builderGeneration ?? '',
+    item.sourcePageKey,
+    item.canonicalUrl ?? '',
+  ].join(' ').toLocaleLowerCase('fr-FR').includes(needle));
 }
 
 function scanStatusLabel(value: string): string {
