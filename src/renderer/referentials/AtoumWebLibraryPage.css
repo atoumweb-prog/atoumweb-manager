@@ -1493,3 +1493,15 @@ button.aw-library-stage-open:hover {
     min-height: 240px;
   }
 }
+
+
+.aw-library-stage-badges > span.warning {
+  border-color: color-mix(in srgb, #F2B705 42%, var(--border));
+  background: color-mix(in srgb, #F2B705 8%, var(--surface));
+  color: var(--text);
+}
+
+.aw-library-stage-grid .warning {
+  border-color: color-mix(in srgb, #F2B705 48%, var(--border));
+  background: color-mix(in srgb, #F2B705 4%, var(--surface));
+}
