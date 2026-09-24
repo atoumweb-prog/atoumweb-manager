@@ -66,12 +66,14 @@ describe('BridgeSnapshotService', () => {
     expect(modulePreview.html).toContain('Bonjour Bridge');
     expect(modulePreview.htmlDerivedFromDiviSource).toBe(true);
     expect(modulePreview.html).not.toContain('<style>');
-    expect(modulePreview.moduleCss).toContain('.atoum-test-hero');
+    expect(modulePreview.moduleCss).toContain('.atoum-home-blog-v2');
     expect(modulePreview.pageCss).toBe('');
     expect(modulePreview.globalCss).toBe('');
     expect(modulePreview.javascript).toBe('');
     expect(modulePreview.frontendValidated).toBe(false);
     expect(modulePreview.reuse.status).toBe('ready');
+    expect(modulePreview.reuse.suggestedCategory).toBe('section');
+    expect(modulePreview.reuse.suggestedName).toBe('Section — Home Blog V2');
 
     const pagePreview = service.getPagePreview(detail.page.pageSnapshotId);
     expect(pagePreview.renderedModuleCount).toBe(1);
@@ -118,7 +120,7 @@ function buildSnapshot(destination: string, title: string): string {
   const sourceSiteKey = 'wp:https://example.test/:blog:1';
   const snapshotId = 'awb-snap:20260924T000000Z:test';
   const pageSnapshotId = 'awb-pagesnap:test';
-  const raw = Buffer.from('<!-- wp:divi/code {"module":{"content":{"innerContent":{"desktop":{"value":"<section class=\\\"atoum-test-hero\\\"><h1>Bonjour Bridge</h1></section><style>.atoum-test-hero{color:red}</style>"}}}}} /-->', 'utf8');
+  const raw = Buffer.from('<!-- wp:divi/code {"module":{"content":{"innerContent":{"desktop":{"value":"<section class=\\\"atoum-home-blog-v2\\\"><div class=\\\"article-card\\\"><header class=\\\"article-card__header\\\">Blog</header><h1>Bonjour Bridge</h1></div></section><style>.atoum-home-blog-v2{color:red}</style>"}}}}} /-->', 'utf8');
   const rawHash = sha256(raw);
   const objectRef = `sha256:${rawHash}`;
   const objectPath = `objects/sha256/${rawHash.slice(0, 2)}/${rawHash}`;
