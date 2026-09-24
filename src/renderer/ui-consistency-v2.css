@@ -1124,6 +1124,9 @@ table td {
 }
 
 .prospects-v2 {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
   gap: clamp(8px, 1.25vh, 14px);
 }
 
