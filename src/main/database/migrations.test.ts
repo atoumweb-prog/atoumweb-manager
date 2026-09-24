@@ -48,6 +48,31 @@ describe('migrations SQLite', () => {
     }
   });
 
+  it('répare une base déjà marquée en migration 36 sans bridge_snapshot_sections', () => {
+    const database = new NodeSqliteAdapter(':memory:');
+    database.exec('PRAGMA foreign_keys = ON;');
+    try {
+      for (const migration of getPendingMigrations(database).filter((item) => item.id <= 36)) {
+        database.exec(migration.sql);
+        database.run('INSERT INTO schema_migrations (id, name, applied_at) VALUES (?, ?, ?)',
+          [migration.id, migration.name, '2026-09-24T00:00:00.000Z']);
+      }
+
+      database.exec('DROP TABLE bridge_snapshot_sections;');
+      expect(database.get<{ name: string }>(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='bridge_snapshot_sections'",
+      )).toBeUndefined();
+
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([37]);
+      expect(database.get<{ name: string }>(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='bridge_snapshot_sections'",
+      )?.name).toBe('bridge_snapshot_sections');
+      expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+    } finally {
+      database.close();
+    }
+  });
+
   it('applique chaque migration une seule fois', () => {
     const database = new NodeSqliteAdapter(':memory:');
 
@@ -84,7 +109,7 @@ describe('migrations SQLite', () => {
     for (const column of ['reuse_status', 'origin_technical_item_id', 'library_category']) {
       expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('technical_items') WHERE name='${column}'`)?.name).toBe(column);
     }
-    expect(MIGRATIONS.at(-1)?.id).toBe(36);
+    expect(MIGRATIONS.at(-1)?.id).toBe(37);
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('expenses') WHERE name='project_id'")?.name).toBe('project_id');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('expenses') WHERE name='receipt_relative_path'")?.name).toBe('receipt_relative_path');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('crm_identity_assets') WHERE name='role'")?.name).toBe('role');
