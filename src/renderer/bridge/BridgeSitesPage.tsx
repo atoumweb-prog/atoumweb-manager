@@ -295,7 +295,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
           name: candidate.reuse.suggestedName,
           reuseStatus: 'adapt',
           description: `Candidat préparé depuis ${site?.name ?? 'un site Bridge'} → ${candidate.pageTitle}. L’original est conservé avant création d’une version de travail puis validation réutilisable.`,
-          tags: ['bridge', 'snapshot', candidate.builderGeneration === '5' ? 'divi5' : 'divi4', ...candidate.reuse.rootClasses.slice(0, 4)],
+          tags: ['bridge', 'snapshot', 'bridge-stage-original', candidate.builderGeneration === '5' ? 'divi5' : 'divi4', ...candidate.reuse.rootClasses.slice(0, 4)],
         },
         {
           contentType: 'json',
