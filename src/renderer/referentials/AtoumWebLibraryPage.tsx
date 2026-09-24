@@ -871,6 +871,282 @@ function BridgeCandidateViewer({ candidate, rawContent, onMessage }: { candidate
   </div>;
 }
 
+function BridgeCleanedViewer({ component, rawContent, onMessage }: { component: BridgeCleanedComponent; rawContent: string; onMessage: (message: string) => void }) {
+  const previewDocument = buildBridgeCleanedPreview(component);
+  return <div className="aw-bridge-candidate-viewer">
+    <div className="aw-bridge-candidate-state cleaned">
+      <OperationIcon name="wrench" size={18} />
+      <div><strong>Version nettoyée</strong><span>Le HTML a été isolé et le CSS utile du module, de la page et du site a été consolidé dans une seule feuille.</span></div>
+    </div>
+    <section className="aw-bridge-candidate-preview">
+      <div className="aw-library-section-title"><div><span className="eyebrow">Rendu</span><h3>Aperçu nettoyé</h3></div></div>
+      <iframe className="aw-bridge-candidate-frame" title={`Aperçu nettoyé ${component.origin.page}`} sandbox="" srcDoc={previewDocument} />
+    </section>
+    <section className="aw-bridge-candidate-reuse">
+      <div className="aw-bridge-candidate-grid">
+        <div><span>HTML</span><strong>{lineCount(component.cleaned.html)} ligne(s)</strong></div>
+        <div><span>CSS consolidé</span><strong>{lineCount(component.cleaned.css)} ligne(s)</strong></div>
+        <div><span>JavaScript</span><strong>{component.cleaned.javascript ? `${lineCount(component.cleaned.javascript)} ligne(s)` : 'Aucun'}</strong></div>
+        <div><span>Médias distants</span><strong>{component.checks.remoteAssetUrls.length}</strong></div>
+      </div>
+      <div className="aw-bridge-copy-grid">
+        <CopyCodeCard title="HTML nettoyé" content={component.cleaned.html} onMessage={onMessage} />
+        <CopyCodeCard title="CSS final du composant" content={component.cleaned.css} onMessage={onMessage} />
+        {component.cleaned.javascript && <CopyCodeCard title="JavaScript séparé" content={component.cleaned.javascript} onMessage={onMessage} />}
+      </div>
+    </section>
+    <details className="aw-bridge-candidate-source">
+      <summary>Voir le paquet nettoyé complet</summary>
+      <TechnicalContentViewer contentType="json" language="json" content={rawContent} title="Paquet nettoyé" onMessage={onMessage} />
+    </details>
+  </div>;
+}
+
+function BridgeReusableViewer({ component, rawContent, onMessage }: { component: BridgeReusableComponent; rawContent: string; onMessage: (message: string) => void }) {
+  const previewDocument = buildBridgeReusablePreview(component);
+  const ready = component.checks.remoteAssetUrls.length === 0;
+  return <div className="aw-bridge-candidate-viewer">
+    <div className={`aw-bridge-candidate-state ${ready ? 'ready' : 'reusable'}`}>
+      <OperationIcon name={ready ? 'check-circle' : 'alert'} size={18} />
+      <div><strong>{ready ? 'Version réutilisable prête' : 'Version réutilisable préparée'}</strong><span>{ready ? 'Le composant peut être copié sur un autre site.' : `${component.checks.remoteAssetUrls.length} média(s) utilisent encore une URL distante. Le code est prêt mais les assets doivent être embarqués localement.`}</span></div>
+    </div>
+    <section className="aw-bridge-candidate-preview">
+      <div className="aw-library-section-title"><div><span className="eyebrow">Rendu</span><h3>Aperçu réutilisable</h3></div></div>
+      <iframe className="aw-bridge-candidate-frame" title={`Aperçu réutilisable ${component.origin.page}`} sandbox="" srcDoc={previewDocument} />
+    </section>
+    <section className="aw-bridge-candidate-reuse">
+      <div className="aw-library-section-title"><div><span className="eyebrow">Mode d’emploi</span><h3>Utiliser dans un autre site</h3></div></div>
+      <div className="aw-bridge-candidate-instructions">
+        {component.reusable.instructions.map((instruction) => <p key={instruction}><OperationIcon name="check-circle" size={15} />{instruction}</p>)}
+      </div>
+      <div className="aw-bridge-copy-grid">
+        <CopyCodeCard title="HTML prêt à copier" content={component.reusable.html} onMessage={onMessage} />
+        <CopyCodeCard title="CSS prêt à copier" content={component.reusable.css} onMessage={onMessage} />
+        {component.reusable.javascript && <CopyCodeCard title="JavaScript prêt à copier" content={component.reusable.javascript} onMessage={onMessage} />}
+      </div>
+      {component.checks.remoteAssetUrls.length > 0 && <details className="aw-bridge-remote-assets">
+        <summary>{component.checks.remoteAssetUrls.length} média(s) encore chargés depuis le site d’origine</summary>
+        {component.checks.remoteAssetUrls.map((url) => <code key={url}>{url}</code>)}
+      </details>}
+    </section>
+    <details className="aw-bridge-candidate-source">
+      <summary>Voir le paquet réutilisable complet</summary>
+      <TechnicalContentViewer contentType="json" language="json" content={rawContent} title="Paquet réutilisable" onMessage={onMessage} />
+    </details>
+  </div>;
+}
+
+function CopyCodeCard({ title, content, onMessage }: { title: string; content: string; onMessage: (message: string) => void }) {
+  async function copy(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(content);
+      onMessage(`${title} copié.`);
+    } catch {
+      onMessage('Copie impossible depuis cet environnement.');
+    }
+  }
+  return <div className="aw-bridge-copy-card">
+    <div><strong>{title}</strong><span>{lineCount(content)} ligne(s)</span></div>
+    <button className="secondary-button" type="button" onClick={() => void copy()}>Copier</button>
+  </div>;
+}
+
+function parseBridgeLibraryPayload(contentType?: ProjectTechnicalContentType | null, content?: string | null): BridgeLibraryPayload | null {
+  if (contentType !== 'json' || !content?.trim()) return null;
+  try {
+    const value = JSON.parse(content) as Record<string, unknown>;
+    if (value.kind === 'atoumweb-bridge-library-candidate') {
+      const candidate = parseBridgeLibraryCandidate(contentType, content);
+      return candidate ? { stage: 'original', value: candidate } : null;
+    }
+    if (value.kind === 'atoumweb-library-cleaned-component') {
+      const cleaned = parseBridgeCleanedComponent(value);
+      return cleaned ? { stage: 'cleaned', value: cleaned } : null;
+    }
+    if (value.kind === 'atoumweb-library-reusable-component') {
+      const reusable = parseBridgeReusableComponent(value);
+      return reusable ? { stage: 'reusable', value: reusable } : null;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function parseBridgeCleanedComponent(value: Record<string, unknown>): BridgeCleanedComponent | null {
+  const origin = parseBridgeOrigin(value.origin);
+  const cleaned = value.cleaned && typeof value.cleaned === 'object' ? value.cleaned as Record<string, unknown> : null;
+  const checks = value.checks && typeof value.checks === 'object' ? value.checks as Record<string, unknown> : {};
+  if (!origin || !cleaned) return null;
+  return {
+    schemaVersion: Number(value.schemaVersion ?? 1),
+    kind: 'atoumweb-library-cleaned-component',
+    origin,
+    cleaned: {
+      html: typeof cleaned.html === 'string' ? cleaned.html : '',
+      css: typeof cleaned.css === 'string' ? cleaned.css : '',
+      javascript: typeof cleaned.javascript === 'string' ? cleaned.javascript : '',
+      rootClasses: stringArray(cleaned.rootClasses),
+    },
+    checks: { remoteAssetUrls: stringArray(checks.remoteAssetUrls) },
+    instructions: stringArray(value.instructions),
+    notes: stringArray(value.notes),
+  };
+}
+
+function parseBridgeReusableComponent(value: Record<string, unknown>): BridgeReusableComponent | null {
+  const origin = parseBridgeOrigin(value.origin);
+  const reusable = value.reusable && typeof value.reusable === 'object' ? value.reusable as Record<string, unknown> : null;
+  const checks = value.checks && typeof value.checks === 'object' ? value.checks as Record<string, unknown> : {};
+  if (!origin || !reusable) return null;
+  return {
+    schemaVersion: Number(value.schemaVersion ?? 1),
+    kind: 'atoumweb-library-reusable-component',
+    origin,
+    reusable: {
+      html: typeof reusable.html === 'string' ? reusable.html : '',
+      css: typeof reusable.css === 'string' ? reusable.css : '',
+      javascript: typeof reusable.javascript === 'string' ? reusable.javascript : '',
+      rootClasses: stringArray(reusable.rootClasses),
+      method: 'divi-code',
+      instructions: stringArray(reusable.instructions),
+    },
+    checks: { remoteAssetUrls: stringArray(checks.remoteAssetUrls) },
+    notes: stringArray(value.notes),
+  };
+}
+
+function parseBridgeOrigin(value: unknown): BridgeLibraryCandidate['origin'] | null {
+  if (!value || typeof value !== 'object') return null;
+  const origin = value as Record<string, unknown>;
+  return {
+    site: typeof origin.site === 'string' ? origin.site : null,
+    page: typeof origin.page === 'string' ? origin.page : 'Page inconnue',
+    pageUrl: typeof origin.pageUrl === 'string' ? origin.pageUrl : null,
+    snapshotId: typeof origin.snapshotId === 'string' ? origin.snapshotId : null,
+    snapshotDate: typeof origin.snapshotDate === 'string' ? origin.snapshotDate : null,
+    builderGeneration: typeof origin.builderGeneration === 'string' ? origin.builderGeneration : null,
+    occurrenceId: typeof origin.occurrenceId === 'string' ? origin.occurrenceId : '',
+  };
+}
+
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+}
+
+function inferBridgeLibraryCategory(candidate: BridgeLibraryCandidate): AtoumWebLibraryCategory {
+  const roots = candidate.prepared.rootClasses.join(' ').toLowerCase();
+  const markup = candidate.original.html.slice(0, 6000).toLowerCase();
+  if (/\b(hero|banner-hero|main-hero)\b/.test(roots)) return 'hero';
+  if (/\b(blog|articles?|posts?|news|actualit[eé]s?)\b/.test(roots)) return 'section';
+  if (/\b(gallery|galerie)\b/.test(roots)) return 'gallery';
+  if (/\b(carousel|slider)\b/.test(roots)) return 'carousel';
+  if (/\b(form|formulaire|contact-form)\b/.test(roots)) return 'form';
+  if (/\b(nav|navigation|menu)\b/.test(roots)) return 'navigation';
+  if (/\b(site-header|global-header|main-header|header-global)\b/.test(roots) || /^\s*<header\b/.test(markup)) return 'header';
+  if (/\b(site-footer|global-footer|main-footer|footer-global)\b/.test(roots) || /^\s*<footer\b/.test(markup)) return 'footer';
+  return 'section';
+}
+
+function suggestedBridgeLibraryName(candidate: BridgeLibraryCandidate, category: AtoumWebLibraryCategory): string {
+  const labels: Partial<Record<AtoumWebLibraryCategory, string>> = {
+    header: 'Header', footer: 'Footer', hero: 'Hero', section: 'Section', form: 'Formulaire',
+    gallery: 'Galerie', carousel: 'Carrousel', navigation: 'Navigation',
+  };
+  const root = candidate.prepared.rootClasses[0] ?? '';
+  const cleaned = root.replace(/^atoum[-_]?/i, '').replace(/[-_]+/g, ' ').trim();
+  const detail = cleaned && !['hero', 'section', 'module', 'code'].includes(cleaned.toLowerCase())
+    ? cleaned.replace(/\b\w/g, (letter) => letter.toUpperCase())
+    : candidate.origin.page;
+  return `${labels[category] ?? 'Composant'} — ${detail}`;
+}
+
+function buildBridgeCleanedComponent(candidate: BridgeLibraryCandidate): BridgeCleanedComponent {
+  const cssParts = [
+    candidate.original.cssModule.trim() ? `/* CSS du module */\n${candidate.original.cssModule.trim()}` : '',
+    candidate.prepared.cssPageUseful.trim() ? `/* CSS utile extrait de la page */\n${candidate.prepared.cssPageUseful.trim()}` : '',
+    candidate.prepared.cssGlobalUseful.trim() ? `/* CSS global utile extrait du site */\n${candidate.prepared.cssGlobalUseful.trim()}` : '',
+  ].filter(Boolean);
+  const html = normalizeReusableText(candidate.original.html);
+  const css = normalizeReusableText(cssParts.join('\n\n'));
+  const javascript = normalizeReusableText(candidate.original.javascript);
+  const remoteAssetUrls = extractRemoteAssetUrls(`${html}\n${css}`);
+
+  return {
+    schemaVersion: 1,
+    kind: 'atoumweb-library-cleaned-component',
+    origin: candidate.origin,
+    cleaned: { html, css, javascript, rootClasses: candidate.prepared.rootClasses },
+    checks: { remoteAssetUrls },
+    instructions: [
+      'Coller le HTML dans un module Code Divi.',
+      ...(css ? ['Ajouter le CSS final du composant.'] : []),
+      ...(javascript ? ['Ajouter le JavaScript séparé après vérification.'] : []),
+    ],
+    notes: [
+      'Le CSS sans rapport avec les classes du composant n’est pas repris depuis la page ou le global.',
+      ...(remoteAssetUrls.length ? [`${remoteAssetUrls.length} média(s) utilisent encore une URL distante.`] : []),
+    ],
+  };
+}
+
+function buildBridgeReusableComponent(cleaned: BridgeCleanedComponent): BridgeReusableComponent {
+  return {
+    schemaVersion: 1,
+    kind: 'atoumweb-library-reusable-component',
+    origin: cleaned.origin,
+    reusable: {
+      html: cleaned.cleaned.html,
+      css: cleaned.cleaned.css,
+      javascript: cleaned.cleaned.javascript,
+      rootClasses: cleaned.cleaned.rootClasses,
+      method: 'divi-code',
+      instructions: [
+        'Dans Divi, ajouter un module Code.',
+        'Copier le HTML du composant dans le module Code.',
+        ...(cleaned.cleaned.css ? ['Ajouter le CSS fourni dans le CSS de la page ou dans la zone prévue pour les composants AtoumWeb.'] : []),
+        ...(cleaned.cleaned.javascript ? ['Ajouter le JavaScript fourni dans une zone d’intégration contrôlée et le tester avant mise en ligne.'] : []),
+        ...(cleaned.checks.remoteAssetUrls.length ? ['Remplacer les URLs des médias par les copies locales du nouveau site dès que les assets auront été embarqués.'] : []),
+      ],
+    },
+    checks: { remoteAssetUrls: cleaned.checks.remoteAssetUrls },
+    notes: cleaned.notes,
+  };
+}
+
+function normalizeReusableText(value: string): string {
+  return value.replace(/\r\n/g, '\n').replace(/[ \t]+$/gm, '').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+function extractRemoteAssetUrls(value: string): string[] {
+  const matches = value.match(/https?:\/\/[^"'\s)]+/gi) ?? [];
+  return [...new Set(matches.filter((url) => /\.(?:avif|gif|jpe?g|png|svg|webp|woff2?|ttf|otf)(?:[?#].*)?$/i.test(url)))];
+}
+
+function buildBridgeCleanedPreview(component: BridgeCleanedComponent): string {
+  return buildReusablePreviewDocument(component.origin.pageUrl, component.cleaned.html, component.cleaned.css);
+}
+
+function buildBridgeReusablePreview(component: BridgeReusableComponent): string {
+  return buildReusablePreviewDocument(component.origin.pageUrl, component.reusable.html, component.reusable.css);
+}
+
+function buildReusablePreviewDocument(pageUrl: string | null, html: string, css: string): string {
+  const base = pageUrl ? `<base href="${escapeAttribute(pageUrl)}">` : '';
+  return `<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+${base}
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https: data:; font-src https: data:; media-src https: data:;">
+<style>html,body{margin:0;min-height:100%;background:#fff;color:#111}body{font-family:Arial,Helvetica,sans-serif}*,*::before,*::after{box-sizing:border-box}</style>
+<style>${safeStyle(css)}</style>
+</head>
+<body>${html}</body>
+</html>`;
+}
+
 function parseBridgeLibraryCandidate(contentType?: ProjectTechnicalContentType | null, content?: string | null): BridgeLibraryCandidate | null {
   if (contentType !== 'json' || !content?.trim()) return null;
   try {
