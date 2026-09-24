@@ -863,7 +863,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
             <div className="aw-library-assets">
               <div className="aw-library-section-title"><div><span className="eyebrow">Fichiers indépendants</span><h3>Captures & assets</h3></div><button className="secondary-button" type="button" disabled={!assetVersionId} onClick={() => void openAssetFolder()}><OperationIcon name="folder" size={16} /> Ouvrir le dossier</button></div>
               <div className="aw-library-asset-toolbar">
-                <label>Version<select value={assetVersionId} onChange={(event) => void changeAssetVersion(event.target.value)}>{selected.versions.map((version) => <option key={version.id} value={version.id}>Version {version.versionNumber}{version.current ? ' · courante' : ''}{version.stable ? ' · stable' : ''}</option>)}</select></label>
+                <label>Version<select value={assetVersionId} onChange={(event) => void changeAssetVersion(event.target.value)}>{selected.versions.map((version) => <option key={version.id} value={version.id}>{technicalVersionLabel(version)}{version.current ? ' · courante' : ''}{version.stable ? ' · stable' : ''}</option>)}</select></label>
                 <label>Type<select value={assetRole} onChange={(event) => setAssetRole(event.target.value as AtoumWebTechnicalAssetRole)}>{ASSET_ROLES.map((role) => <option key={role.id} value={role.id}>{role.label}</option>)}</select></label>
                 <button className="primary-button" type="button" disabled={!assetVersionId || Boolean(selected.archivedAt)} onClick={() => void importAssets()}><OperationIcon name="upload" size={16} /> Ajouter des fichiers</button>
               </div>
@@ -884,21 +884,29 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
 
             <div className="aw-library-versions">
               <h3>Historique des versions</h3>
-              {selected.versions.filter((version) => version.id !== currentVersion?.id).map((version) => <div className="aw-library-version" key={version.id}>
-                <div><strong>Version {version.versionNumber}</strong><span>{version.contentType}{version.language ? ` · ${version.language}` : ''}</span></div>
-                <div className="aw-library-version-flags">{version.current && <span>courante</span>}{version.stable && <span>stable</span>}{!version.stable && !selected.archivedAt && <button type="button" className="secondary-button" onClick={() => void markStable(version.id)}>Marquer stable</button>}</div>
-                {version.notes && <p>{version.notes}</p>}
-                {version.contentText && <button className="secondary-button aw-library-version-toggle" type="button" onClick={() => setExpandedVersionId((current) => current === version.id ? null : version.id)}>
-                  {expandedVersionId === version.id ? 'Masquer cette version' : 'Voir cette version'}
-                </button>}
-                {version.contentText && expandedVersionId === version.id && <TechnicalContentViewer
-                  contentType={version.contentType}
-                  language={version.language}
-                  content={version.contentText}
-                  title={`Version ${version.versionNumber}`}
-                  onMessage={onMessage}
-                />}
-              </div>)}
+              {selected.versions.filter((version) => version.id !== currentVersion?.id).map((version) => {
+                const stage = parseBridgeLibraryPayload(version.contentType, version.contentText)?.stage ?? null;
+                return <div className="aw-library-version" key={version.id}>
+                  <div><strong>{technicalVersionLabel(version)}</strong><span>{version.contentType}{version.language ? ` · ${version.language}` : ''}</span></div>
+                  <div className="aw-library-version-flags">
+                    {version.current && <span>courante</span>}
+                    {version.stable && <span>stable</span>}
+                    {!stage && !version.stable && !selected.archivedAt && <button type="button" className="secondary-button" onClick={() => void markStable(version.id)}>Marquer stable</button>}
+                    {stage === 'reusable' && !version.stable && !selected.archivedAt && <span>ancienne réutilisable</span>}
+                  </div>
+                  {version.notes && <p>{version.notes}</p>}
+                  {version.contentText && <button className="secondary-button aw-library-version-toggle" type="button" onClick={() => setExpandedVersionId((current) => current === version.id ? null : version.id)}>
+                    {expandedVersionId === version.id ? 'Masquer cette version' : 'Voir cette version'}
+                  </button>}
+                  {version.contentText && expandedVersionId === version.id && <TechnicalContentViewer
+                    contentType={version.contentType}
+                    language={version.language}
+                    content={version.contentText}
+                    title={technicalVersionLabel(version)}
+                    onMessage={onMessage}
+                  />}
+                </div>;
+              })}
               {selected.versions.filter((version) => version.id !== currentVersion?.id).length === 0 && <p className="muted">Aucune ancienne version : seule la version courante existe pour le moment.</p>}
             </div>
             </>
@@ -906,6 +914,14 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
       </div>
     </div>
   );
+}
+
+function technicalVersionLabel(version: AtoumWebTechnicalVersion): string {
+  const stage = parseBridgeLibraryPayload(version.contentType, version.contentText)?.stage;
+  if (stage === 'original') return `Originale · v${version.versionNumber}`;
+  if (stage === 'work') return `Travail · v${version.versionNumber}`;
+  if (stage === 'reusable') return `Réutilisable · v${version.versionNumber}`;
+  return `Version ${version.versionNumber}`;
 }
 
 function BridgeSummaryStages({ item }: { item: AtoumWebTechnicalItemSummary }) {
