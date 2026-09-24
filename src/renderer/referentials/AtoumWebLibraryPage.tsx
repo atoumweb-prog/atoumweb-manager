@@ -1433,36 +1433,38 @@ function refreshBridgeWorkChecks(work: BridgeWorkComponent): BridgeWorkComponent
 
 function buildBridgeReusableComponent(work: BridgeWorkComponent): BridgeReusableComponent {
   const checked = refreshBridgeWorkChecks(work);
-  const template = generalizeBridgeReusableHtml(checked.work.html);
-  const remoteAssetUrls = extractRemoteAssetUrls(`${template.html}\n${checked.work.css}`);
+  const htmlTemplate = generalizeBridgeReusableHtml(checked.work.html);
+  const cssTemplate = generalizeBridgeReusableCss(checked.work.css, htmlTemplate.fields.length);
+  const fields = [...htmlTemplate.fields, ...cssTemplate.fields];
+  const remoteAssetUrls = extractRemoteAssetUrls(`${htmlTemplate.html}\n${cssTemplate.css}`);
 
   return {
     schemaVersion: 2,
     kind: 'atoumweb-library-reusable-component',
     origin: checked.origin,
     reusable: {
-      html: template.html,
-      css: checked.work.css,
+      html: htmlTemplate.html,
+      css: cssTemplate.css,
       javascript: checked.work.javascript,
       rootClasses: checked.work.rootClasses,
       method: 'divi-code',
-      generalized: template.generalized,
-      fields: template.fields,
+      generalized: htmlTemplate.generalized && cssTemplate.generalized,
+      fields,
       instructions: [
-        `Personnaliser les ${template.fields.length} champ(s) du modèle avant utilisation sur un nouveau site.`,
+        `Personnaliser les ${fields.length} champ(s) du modèle avant utilisation sur un nouveau site.`,
         'Dans Divi, ajouter un module Code.',
         'Copier le HTML du composant dans le module Code.',
-        ...(checked.work.css ? ['Ajouter le CSS fourni dans le CSS de la page ou dans la zone prévue pour les composants AtoumWeb.'] : []),
+        ...(cssTemplate.css ? ['Ajouter le CSS fourni dans le CSS de la page ou dans la zone prévue pour les composants AtoumWeb.'] : []),
         ...(checked.work.javascript ? ['Ajouter le JavaScript fourni dans une zone d’intégration contrôlée et le tester avant mise en ligne.'] : []),
-        ...(remoteAssetUrls.length ? ['Remplacer les URLs de ressources encore distantes par les copies locales du nouveau site dès que les assets auront été embarqués.'] : []),
+        ...(remoteAssetUrls.length ? ['Remplacer les ressources encore distantes par les copies locales du nouveau site dès que les assets auront été embarqués.'] : []),
       ],
     },
     checks: { remoteAssetUrls },
     notes: [
       ...checked.notes,
-      template.generalized
-        ? `Modèle généralisé : ${template.fields.length} champ(s) personnalisable(s) utilisent des valeurs de démonstration.`
-        : 'La généralisation automatique n’a pas pu être appliquée : vérifier ce composant avant réutilisation.',
+      htmlTemplate.generalized && cssTemplate.generalized
+        ? `Modèle généralisé : ${fields.length} champ(s) personnalisable(s) utilisent des valeurs de démonstration.`
+        : 'La généralisation automatique n’a pas pu être appliquée complètement : vérifier ce composant avant réutilisation.',
     ],
   };
 }
@@ -1577,6 +1579,33 @@ function generalizeBridgeReusableHtml(html: string): { html: string; fields: Bri
     };
   } catch {
     return { html, fields: [], generalized: false };
+  }
+}
+
+function generalizeBridgeReusableCss(css: string, fieldOffset = 0): { css: string; fields: BridgeReusableField[]; generalized: boolean } {
+  if (!css.trim()) return { css, fields: [], generalized: true };
+
+  try {
+    const fields: BridgeReusableField[] = [];
+    let imageIndex = fieldOffset;
+    const imageUrlPattern = /url\(\s*(['"]?)(https?:\/\/[^'")\s]+\.(?:avif|gif|jpe?g|png|svg|webp)(?:[?#][^'")\s]*)?)\1\s*\)/gi;
+    const generalizedCss = css.replace(imageUrlPattern, (_match, _quote, originalUrl: string) => {
+      imageIndex += 1;
+      const id = `image-${imageIndex}`;
+      fields.push({
+        id,
+        label: `Image de fond ${fields.length + 1}`,
+        type: 'image',
+        selector: `css:url:${id}`,
+        originalValue: originalUrl,
+        defaultValue: 'Image de démonstration locale',
+      });
+      return `url("${reusablePlaceholderImageDataUrl()}")`;
+    });
+
+    return { css: generalizedCss, fields, generalized: true };
+  } catch {
+    return { css, fields: [], generalized: false };
   }
 }
 
