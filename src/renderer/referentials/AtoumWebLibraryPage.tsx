@@ -730,7 +730,11 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
           {items.length === 0 && <p className="muted">Aucun composant ne correspond aux filtres.</p>}
           {items.map((item) => (
             <button className={`aw-library-item ${selected?.id === item.id ? 'selected' : ''}`} key={item.id} type="button" onClick={() => void openItem(item.id)}>
-              <div><strong>{item.name}</strong><span>{categoryLabel(item.category)} · {reuseStatusLabel(item.reuseStatus)}</span></div>
+              <div className="aw-library-item-main">
+                <strong>{item.name}</strong>
+                <span>{categoryLabel(item.category)} · {reuseStatusLabel(item.reuseStatus)}</span>
+                <BridgeSummaryStages item={item} />
+              </div>
               <div className="aw-library-item-meta"><span>v{item.currentVersion?.versionNumber ?? '—'}</span>{item.stableVersion && <span>stable v{item.stableVersion.versionNumber}</span>}{item.archivedAt && <span>archivé</span>}</div>
             </button>
           ))}
@@ -762,7 +766,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
 
             {bridgeWorkflow.original && <section className="aw-library-bridge-workflow">
               <div className="aw-library-section-title">
-                <div><span className="eyebrow">Parcours du composant</span><h3>Original → Nettoyé → Réutilisable</h3></div>
+                <div><span className="eyebrow">Parcours du composant</span><h3>Originale → Version de travail → Réutilisable</h3></div>
               </div>
 
               {bridgeClassificationMismatch && <div className="aw-library-classification-warning">
@@ -772,49 +776,85 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
               </div>}
 
               <div className="aw-library-stage-grid">
-                <div className="done">
-                  <span>1</span>
-                  <div><strong>Originale</strong><small>V{bridgeWorkflow.original.version.versionNumber} · snapshot conservé intact</small></div>
-                  <OperationIcon name="check-circle" size={18} />
+                <div className={`done ${bridgeStageView === 'original' ? 'active' : ''}`}>
+                  <button className="aw-library-stage-open" type="button" onClick={() => setBridgeStageView('original')}>
+                    <span>1</span>
+                    <div><strong>Originale</strong><small>V{bridgeWorkflow.original.version.versionNumber} · snapshot intact</small></div>
+                    <OperationIcon name="check-circle" size={18} />
+                  </button>
                 </div>
-                <div className={bridgeWorkflow.cleaned ? 'done' : 'next'}>
-                  <span>2</span>
-                  <div><strong>Nettoyée</strong><small>{bridgeWorkflow.cleaned ? `V${bridgeWorkflow.cleaned.version.versionNumber} · HTML/CSS/JS séparés` : 'Consolider uniquement le code utile'}</small></div>
-                  {bridgeWorkflow.cleaned
-                    ? <OperationIcon name="check-circle" size={18} />
-                    : <button className="primary-button" type="button" disabled={bridgeWorkflowBusy} onClick={() => void createBridgeCleanedVersion()}>Nettoyer</button>}
+
+                <div className={`${bridgeWorkflow.work ? 'done' : 'next'} ${bridgeStageView === 'work' ? 'active' : ''}`}>
+                  {bridgeWorkflow.work
+                    ? <button className="aw-library-stage-open" type="button" onClick={() => setBridgeStageView('work')}>
+                        <span>2</span>
+                        <div><strong>Version de travail</strong><small>V{bridgeWorkflow.work.version.versionNumber} · modifiable dans le Manager</small></div>
+                        <OperationIcon name="check-circle" size={18} />
+                      </button>
+                    : <div className="aw-library-stage-create">
+                        <span>2</span>
+                        <div><strong>Version de travail</strong><small>Créer une copie propre et modifiable</small></div>
+                        <button className="primary-button" type="button" disabled={bridgeWorkflowBusy} onClick={() => void createBridgeWorkVersion()}>Créer</button>
+                      </div>}
                 </div>
-                <div className={bridgeWorkflow.reusable ? 'done' : bridgeWorkflow.cleaned ? 'next' : 'locked'}>
-                  <span>3</span>
-                  <div><strong>Réutilisable</strong><small>{bridgeWorkflow.reusable ? `V${bridgeWorkflow.reusable.version.versionNumber} · paquet prêt` : 'Version finale + mode d’emploi + contrôle des médias'}</small></div>
+
+                <div className={`${bridgeWorkflow.reusable ? 'done' : bridgeWorkflow.work ? 'next' : 'locked'} ${bridgeStageView === 'reusable' ? 'active' : ''}`}>
                   {bridgeWorkflow.reusable
-                    ? <OperationIcon name="check-circle" size={18} />
-                    : <button className="primary-button" type="button" disabled={bridgeWorkflowBusy || !bridgeWorkflow.cleaned} onClick={() => void createBridgeReusableVersion()}>Préparer</button>}
+                    ? <button className="aw-library-stage-open" type="button" onClick={() => setBridgeStageView('reusable')}>
+                        <span>3</span>
+                        <div><strong>Réutilisable</strong><small>V{bridgeWorkflow.reusable.version.versionNumber} · paquet validé</small></div>
+                        <OperationIcon name="check-circle" size={18} />
+                      </button>
+                    : <div className="aw-library-stage-create">
+                        <span>3</span>
+                        <div><strong>Réutilisable</strong><small>Figer la version de travail + mode d’emploi</small></div>
+                        <button className="primary-button" type="button" disabled={bridgeWorkflowBusy || !bridgeWorkflow.work} onClick={() => void createBridgeReusableVersion()}>Préparer</button>
+                      </div>}
                 </div>
               </div>
             </section>}
 
-            {currentVersion && <section className="aw-library-current-version">
+            {bridgeWorkflow.original && displayedBridgeEntry && <section className="aw-library-current-version">
+              <div className="aw-library-section-title">
+                <div><span className="eyebrow">Aperçu principal</span><h3>{bridgeStageLabel(displayedBridgeEntry.payload.stage)} · v{displayedBridgeEntry.version.versionNumber}</h3></div>
+                <div className="aw-library-version-flags">{displayedBridgeEntry.version.stable && <span>stable</span>}<span>{displayedBridgeEntry.version.contentType}{displayedBridgeEntry.version.language ? ` · ${displayedBridgeEntry.version.language}` : ''}</span></div>
+              </div>
+              {displayedBridgeEntry.version.notes && <p className="muted aw-library-current-notes">{displayedBridgeEntry.version.notes}</p>}
+              {displayedBridgeEntry.payload.stage === 'original'
+                ? <BridgeCandidateViewer candidate={displayedBridgeEntry.payload.value} rawContent={displayedBridgeEntry.version.contentText ?? ''} onMessage={onMessage} />
+                : displayedBridgeEntry.payload.stage === 'work'
+                  ? <BridgeWorkViewer
+                      key={displayedBridgeEntry.version.id}
+                      component={displayedBridgeEntry.payload.value}
+                      original={originalBridgeCandidate}
+                      rawContent={displayedBridgeEntry.version.contentText ?? ''}
+                      busy={bridgeWorkflowBusy}
+                      onSave={saveBridgeWorkVersion}
+                      onMessage={onMessage}
+                    />
+                  : <BridgeReusableViewer
+                      component={displayedBridgeEntry.payload.value}
+                      original={originalBridgeCandidate}
+                      rawContent={displayedBridgeEntry.version.contentText ?? ''}
+                      onMessage={onMessage}
+                    />}
+            </section>}
+
+            {!bridgeWorkflow.original && currentVersion && <section className="aw-library-current-version">
               <div className="aw-library-section-title">
                 <div><span className="eyebrow">Aperçu principal</span><h3>Version courante · v{currentVersion.versionNumber}</h3></div>
                 <div className="aw-library-version-flags">{currentVersion.stable && <span>stable</span>}<span>{currentVersion.contentType}{currentVersion.language ? ` · ${currentVersion.language}` : ''}</span></div>
               </div>
               {currentVersion.notes && <p className="muted aw-library-current-notes">{currentVersion.notes}</p>}
-              {currentBridgePayload
-                ? currentBridgePayload.stage === 'original'
-                  ? <BridgeCandidateViewer candidate={currentBridgePayload.value} rawContent={currentVersion.contentText ?? ''} onMessage={onMessage} />
-                  : currentBridgePayload.stage === 'cleaned'
-                    ? <BridgeCleanedViewer component={currentBridgePayload.value} rawContent={currentVersion.contentText ?? ''} onMessage={onMessage} />
-                    : <BridgeReusableViewer component={currentBridgePayload.value} rawContent={currentVersion.contentText ?? ''} onMessage={onMessage} />
-                : <TechnicalContentViewer
-                    contentType={currentVersion.contentType}
-                    language={currentVersion.language}
-                    content={currentVersion.contentText}
-                    title="Version courante"
-                    onMessage={onMessage}
-                    expanded={expandedVersionId === currentVersion.id}
-                    onToggleExpanded={() => setExpandedVersionId((current) => current === currentVersion.id ? null : currentVersion.id)}
-                  />}
+              <TechnicalContentViewer
+                contentType={currentVersion.contentType}
+                language={currentVersion.language}
+                content={currentVersion.contentText}
+                title="Version courante"
+                onMessage={onMessage}
+                expanded={expandedVersionId === currentVersion.id}
+                onToggleExpanded={() => setExpandedVersionId((current) => current === currentVersion.id ? null : currentVersion.id)}
+              />
             </section>}
 
             <div className="aw-library-assets">
