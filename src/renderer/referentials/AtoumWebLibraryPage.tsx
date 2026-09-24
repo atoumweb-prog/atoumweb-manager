@@ -57,6 +57,8 @@ const ASSET_ROLES: Array<{ id: AtoumWebTechnicalAssetRole; label: string }> = [
 interface Props {
   onMessage: (message: string) => void;
   initialItemId?: string | null;
+  headerCollapsed?: boolean;
+  onToggleHeader?: () => void;
 }
 
 interface CreationForm {
@@ -185,7 +187,7 @@ function metadataFromItem(item: AtoumWebTechnicalItemDetail): MetadataForm {
   };
 }
 
-export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
+export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed = false, onToggleHeader }: Props) {
   const [items, setItems] = useState<AtoumWebTechnicalItemSummary[]>([]);
   const [selected, setSelected] = useState<AtoumWebTechnicalItemDetail | null>(null);
   const [detailExpanded, setDetailExpanded] = useState(false);
@@ -695,7 +697,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   }
 
   return (
-    <div className="aw-library">
+    <div className={`aw-library ${headerCollapsed ? 'head-collapsed' : ''}`}>
       <div className="aw-library-fixed-head">
         <div className="aw-library-summary">
         <Summary icon="package" label="Composants affichés" value={summary.total} />
@@ -721,6 +723,18 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
         <button className="primary-button" type="button" onClick={() => setCreating((value) => !value)}>{creating ? 'Fermer' : 'Nouveau composant'}</button>
         </article>
       </div>
+
+      {onToggleHeader && <button
+        className="aw-library-head-toggle"
+        type="button"
+        onClick={onToggleHeader}
+        title={headerCollapsed ? 'Afficher le bandeau de la Bibliothèque' : 'Masquer le bandeau de la Bibliothèque'}
+        aria-label={headerCollapsed ? 'Afficher le bandeau de la Bibliothèque' : 'Masquer le bandeau de la Bibliothèque'}
+        aria-expanded={!headerCollapsed}
+      >
+        <span aria-hidden="true">{headerCollapsed ? '↓' : '↑'}</span>
+        <small>{headerCollapsed ? 'Afficher' : 'Masquer'}</small>
+      </button>}
 
       {packageInspection && <article className="panel aw-library-package-review">
         <div className="panel-title"><div><span className="eyebrow">Import contrôlé</span><h2>{packageInspection.item.name}</h2></div><button className="secondary-button" type="button" onClick={() => setPackageInspection(null)}>Fermer</button></div>
