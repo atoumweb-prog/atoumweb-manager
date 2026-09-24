@@ -37,10 +37,68 @@
   display: grid;
   gap: 9px;
   min-width: 0;
-  padding: 11px;
+  padding: 10px;
   border: 1px solid var(--border);
   border-radius: 11px;
   background: color-mix(in srgb, var(--surface-soft) 84%, var(--surface));
+}
+
+.crm-identity-assets.is-compact {
+  padding: 8px 10px;
+}
+
+.crm-identity-assets-compact {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.crm-identity-assets-icon {
+  display: inline-grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  border-radius: 9px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.crm-identity-assets-summary {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.crm-identity-assets-summary strong {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.crm-identity-assets-summary small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crm-identity-assets-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.crm-identity-assets-editor {
+  display: grid;
+  gap: 9px;
+  padding-top: 2px;
 }
 
 .crm-identity-assets-heading {
@@ -145,6 +203,15 @@
 }
 
 @media (max-width: 720px) {
+  .crm-identity-assets-compact {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .crm-identity-assets-toggle {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
   .crm-identity-assets-heading {
     align-items: start;
     flex-direction: column;
