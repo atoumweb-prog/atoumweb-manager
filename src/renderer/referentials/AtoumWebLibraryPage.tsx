@@ -1199,20 +1199,7 @@ function BridgeReusableViewer({
       <BridgePreviewWorkbench title="Réutilisable" document={previewDocument} originalDocument={comparisonDocument} originalLabel={comparisonLabel} />
     </section>
 
-    {component.reusable.fields.length > 0 && <section className="aw-reusable-fields">
-      <div className="aw-library-section-title">
-        <div><span className="eyebrow">Modèle générique</span><h3>Champs à personnaliser</h3></div>
-        <span className="aw-reusable-field-count">{component.reusable.fields.length} champ(s)</span>
-      </div>
-      <p className="muted">Les valeurs ci-dessous sont des contenus de démonstration. Elles remplacent les textes, liens et images propres au site d’origine sans modifier la structure graphique du composant.</p>
-      <div className="aw-reusable-field-grid">
-        {component.reusable.fields.map((field) => <div className={`aw-reusable-field ${field.type}`} key={field.id}>
-          <span>{field.type === 'image' ? 'Image' : field.type === 'link' ? 'Lien' : 'Texte'}</span>
-          <strong>{field.label}</strong>
-          <small>{field.defaultValue}</small>
-        </div>)}
-      </div>
-    </section>}
+    {component.reusable.fields.length > 0 && <ReusableFieldsPanel fields={component.reusable.fields} />}
 
     <section className="aw-bridge-candidate-reuse">
       <div className="aw-library-section-title"><div><span className="eyebrow">Mode d’emploi</span><h3>Utiliser dans un autre site</h3></div></div>
@@ -1235,6 +1222,102 @@ function BridgeReusableViewer({
       <TechnicalContentViewer contentType="json" language="json" content={rawContent} title="Paquet réutilisable" onMessage={onMessage} />
     </details>
   </div>;
+}
+
+function ReusableFieldsPanel({ fields }: { fields: BridgeReusableField[] }) {
+  const summary = summarizeReusableFields(fields);
+  const { actions, standalone } = groupReusableFields(fields);
+
+  return <details className="aw-reusable-fields">
+    <summary className="aw-reusable-fields-summary">
+      <div className="aw-reusable-fields-summary-copy">
+        <span className="eyebrow">Modèle générique</span>
+        <h3>{fields.length} champ(s) personnalisable(s)</h3>
+        <p>{[
+          summary.titles ? `${summary.titles} titre${summary.titles > 1 ? 's' : ''}` : '',
+          summary.texts ? `${summary.texts} texte${summary.texts > 1 ? 's' : ''}` : '',
+          summary.buttons ? `${summary.buttons} bouton${summary.buttons > 1 ? 's' : ''}` : '',
+          summary.links ? `${summary.links} lien${summary.links > 1 ? 's' : ''}` : '',
+          summary.images ? `${summary.images} image${summary.images > 1 ? 's' : ''}` : '',
+        ].filter(Boolean).join(' · ')}</p>
+      </div>
+      <div className="aw-reusable-fields-summary-action">
+        <span className="aw-reusable-field-count">{fields.length} champ(s)</span>
+        <span className="aw-reusable-fields-toggle">
+          <span className="when-closed">Voir les champs</span>
+          <span className="when-open">Masquer</span>
+          <b aria-hidden="true">⌄</b>
+        </span>
+      </div>
+    </summary>
+
+    <div className="aw-reusable-fields-body">
+      <p className="muted">Cette liste décrit ce que le Manager remplacera quand le composant sera utilisé sur un autre site. Les boutons sont regroupés avec leur destination pour éviter les doublons visuels.</p>
+
+      <div className="aw-reusable-field-grid">
+        {standalone.map((field) => <div className={`aw-reusable-field ${field.type}`} key={field.id}>
+          <span>{reusableFieldTypeLabel(field)}</span>
+          <strong>{field.label}</strong>
+          <small>{field.defaultValue}</small>
+        </div>)}
+
+        {actions.map((action) => <div className="aw-reusable-field action" key={action.key}>
+          <span>Action</span>
+          <strong>{action.label}</strong>
+          {action.text && <small><b>Libellé</b>{action.text.defaultValue}</small>}
+          {action.link && <small><b>Destination</b>{action.link.defaultValue}</small>}
+        </div>)}
+      </div>
+    </div>
+  </details>;
+}
+
+function summarizeReusableFields(fields: BridgeReusableField[]): { titles: number; texts: number; buttons: number; links: number; images: number } {
+  return fields.reduce((result, field) => {
+    if (field.type === 'image') result.images += 1;
+    else if (field.type === 'link') result.links += 1;
+    else if (/^titre\b/i.test(field.label)) result.titles += 1;
+    else if (/^bouton\s*\/\s*lien\b/i.test(field.label)) result.buttons += 1;
+    else result.texts += 1;
+    return result;
+  }, { titles: 0, texts: 0, buttons: 0, links: 0, images: 0 });
+}
+
+function groupReusableFields(fields: BridgeReusableField[]): {
+  actions: Array<{ key: string; label: string; text: BridgeReusableField | null; link: BridgeReusableField | null }>;
+  standalone: BridgeReusableField[];
+} {
+  const groups = new Map<string, { key: string; label: string; text: BridgeReusableField | null; link: BridgeReusableField | null }>();
+  const standalone: BridgeReusableField[] = [];
+
+  for (const field of fields) {
+    const buttonMatch = field.type === 'text' ? field.label.match(/^bouton\s*\/\s*lien\s*(\d+)/i) : null;
+    const linkMatch = field.type === 'link' ? field.label.match(/^lien\s*(\d+)/i) : null;
+    const index = buttonMatch?.[1] ?? linkMatch?.[1];
+
+    if (!index) {
+      standalone.push(field);
+      continue;
+    }
+
+    const key = `action-${index}`;
+    const current = groups.get(key) ?? { key, label: `Action ${index}`, text: null, link: null };
+    if (field.type === 'link') current.link = field;
+    else current.text = field;
+    groups.set(key, current);
+  }
+
+  return {
+    actions: [...groups.values()].sort((a, b) => Number(a.key.replace('action-', '')) - Number(b.key.replace('action-', ''))),
+    standalone,
+  };
+}
+
+function reusableFieldTypeLabel(field: BridgeReusableField): string {
+  if (field.type === 'image') return 'Image';
+  if (field.type === 'link') return 'Lien';
+  if (/^titre\b/i.test(field.label)) return 'Titre';
+  return 'Texte';
 }
 
 function CopyCodeCard({ title, content, onMessage }: { title: string; content: string; onMessage: (message: string) => void }) {
