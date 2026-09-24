@@ -7,6 +7,7 @@ import type {
   AtoumWebTechnicalAssetRole,
   AtoumWebTechnicalItemDetail,
   AtoumWebTechnicalItemSummary,
+  AtoumWebTechnicalVersion,
 } from '../../shared/referentials';
 import type { ProjectTechnicalContentType } from '../../shared/projects';
 import { TechnicalContentViewer } from './TechnicalContentViewer';
@@ -272,7 +273,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   const bridgeWorkflow = useMemo(() => {
     const parsed = (selected?.versions ?? [])
       .map((version) => ({ version, payload: parseBridgeLibraryPayload(version.contentType, version.contentText) }))
-      .filter((entry): entry is { version: NonNullable<typeof selected>['versions'][number]; payload: BridgeLibraryPayload } => Boolean(entry.payload));
+      .filter((entry): entry is { version: AtoumWebTechnicalVersion; payload: BridgeLibraryPayload } => Boolean(entry.payload));
     return {
       original: parsed.find((entry) => entry.payload.stage === 'original') ?? null,
       cleaned: parsed.find((entry) => entry.payload.stage === 'cleaned') ?? null,
