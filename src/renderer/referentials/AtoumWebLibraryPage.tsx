@@ -194,6 +194,8 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
     references: items.filter((item) => item.reuseStatus === 'reference').length,
   }), [items]);
 
+  const currentVersion = selected?.currentVersion ?? selected?.versions[0] ?? null;
+
   function closeDetail(): void {
     setSelected(null);
     setDetailExpanded(false);
@@ -520,6 +522,23 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
               {selected.originTechnicalItemId && <p className="muted">Origine conservée : composant de Bibliothèque projet {selected.originTechnicalItemId}</p>}
             </>}
 
+            {currentVersion && <section className="aw-library-current-version">
+              <div className="aw-library-section-title">
+                <div><span className="eyebrow">Aperçu principal</span><h3>Version courante · v{currentVersion.versionNumber}</h3></div>
+                <div className="aw-library-version-flags">{currentVersion.stable && <span>stable</span>}<span>{currentVersion.contentType}{currentVersion.language ? ` · ${currentVersion.language}` : ''}</span></div>
+              </div>
+              {currentVersion.notes && <p className="muted aw-library-current-notes">{currentVersion.notes}</p>}
+              <TechnicalContentViewer
+                contentType={currentVersion.contentType}
+                language={currentVersion.language}
+                content={currentVersion.contentText}
+                title="Version courante"
+                onMessage={onMessage}
+                expanded={expandedVersionId === currentVersion.id}
+                onToggleExpanded={() => setExpandedVersionId((current) => current === currentVersion.id ? null : currentVersion.id)}
+              />
+            </section>}
+
             <div className="aw-library-assets">
               <div className="aw-library-section-title"><div><span className="eyebrow">Fichiers indépendants</span><h3>Captures & assets</h3></div><button className="secondary-button" type="button" disabled={!assetVersionId} onClick={() => void openAssetFolder()}><OperationIcon name="folder" size={16} /> Ouvrir le dossier</button></div>
               <div className="aw-library-asset-toolbar">
@@ -544,20 +563,22 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
 
             <div className="aw-library-versions">
               <h3>Historique des versions</h3>
-              {selected.versions.map((version) => <div className="aw-library-version" key={version.id}>
+              {selected.versions.filter((version) => version.id !== currentVersion?.id).map((version) => <div className="aw-library-version" key={version.id}>
                 <div><strong>Version {version.versionNumber}</strong><span>{version.contentType}{version.language ? ` · ${version.language}` : ''}</span></div>
                 <div className="aw-library-version-flags">{version.current && <span>courante</span>}{version.stable && <span>stable</span>}{!version.stable && !selected.archivedAt && <button type="button" className="secondary-button" onClick={() => void markStable(version.id)}>Marquer stable</button>}</div>
                 {version.notes && <p>{version.notes}</p>}
-                {version.contentText && <TechnicalContentViewer
+                {version.contentText && <button className="secondary-button aw-library-version-toggle" type="button" onClick={() => setExpandedVersionId((current) => current === version.id ? null : version.id)}>
+                  {expandedVersionId === version.id ? 'Masquer cette version' : 'Voir cette version'}
+                </button>}
+                {version.contentText && expandedVersionId === version.id && <TechnicalContentViewer
                   contentType={version.contentType}
                   language={version.language}
                   content={version.contentText}
                   title={`Version ${version.versionNumber}`}
                   onMessage={onMessage}
-                  expanded={expandedVersionId === version.id}
-                  onToggleExpanded={() => setExpandedVersionId((current) => current === version.id ? null : version.id)}
                 />}
               </div>)}
+              {selected.versions.filter((version) => version.id !== currentVersion?.id).length === 0 && <p className="muted">Aucune ancienne version : seule la version courante existe pour le moment.</p>}
             </div>
             </>
         </article>}
