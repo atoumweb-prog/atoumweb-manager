@@ -1398,6 +1398,8 @@ function parseBridgeWorkComponent(value: Record<string, unknown>): BridgeWorkCom
       javascript: typeof work.javascript === 'string' ? work.javascript : '',
       rootClasses: stringArray(work.rootClasses),
     },
+    dependencies: parseBridgeDependencies(value.dependencies),
+    assets: parseBridgeAssets(value.assets),
     checks: { remoteAssetUrls: stringArray(checks.remoteAssetUrls) },
     instructions: stringArray(value.instructions),
     notes: stringArray(value.notes),
@@ -1419,6 +1421,8 @@ function parseLegacyBridgeCleanedAsWork(value: Record<string, unknown>): BridgeW
       javascript: typeof cleaned.javascript === 'string' ? cleaned.javascript : '',
       rootClasses: stringArray(cleaned.rootClasses),
     },
+    dependencies: parseBridgeDependencies(value.dependencies),
+    assets: parseBridgeAssets(value.assets),
     checks: { remoteAssetUrls: stringArray(checks.remoteAssetUrls) },
     instructions: stringArray(value.instructions),
     notes: [...stringArray(value.notes), 'Ancienne version « nettoyée » interprétée comme version de travail.'],
@@ -1444,9 +1448,46 @@ function parseBridgeReusableComponent(value: Record<string, unknown>): BridgeReu
       generalized: reusable.generalized === true,
       fields: parseBridgeReusableFields(reusable.fields),
     },
+    dependencies: parseBridgeDependencies(value.dependencies),
+    assets: parseBridgeAssets(value.assets),
     checks: { remoteAssetUrls: stringArray(checks.remoteAssetUrls) },
     notes: stringArray(value.notes),
   };
+}
+
+function parseBridgeDependencies(value: unknown): NonNullable<BridgeLibraryCandidate['prepared']['dependencies']> {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const dependency = item as Record<string, unknown>;
+    if (typeof dependency.name !== 'string' || !dependency.name.trim()) return [];
+    return [{
+      dependencyId: typeof dependency.dependencyId === 'string' ? dependency.dependencyId : '',
+      type: typeof dependency.type === 'string' ? dependency.type : 'unknown',
+      slug: typeof dependency.slug === 'string' ? dependency.slug : null,
+      name: dependency.name,
+      version: typeof dependency.version === 'string' ? dependency.version : null,
+      active: typeof dependency.active === 'boolean' ? dependency.active : null,
+    }];
+  });
+}
+
+function parseBridgeAssets(value: unknown): NonNullable<BridgeLibraryCandidate['prepared']['assets']> {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const asset = item as Record<string, unknown>;
+    if (typeof asset.assetId !== 'string' || !asset.assetId.trim()) return [];
+    return [{
+      assetId: asset.assetId,
+      type: typeof asset.type === 'string' ? asset.type : 'unknown',
+      url: typeof asset.url === 'string' ? asset.url : null,
+      localPath: typeof asset.localPath === 'string' ? asset.localPath : null,
+      mimeType: typeof asset.mimeType === 'string' ? asset.mimeType : null,
+      hash: typeof asset.hash === 'string' ? asset.hash : null,
+      archiveMode: typeof asset.archiveMode === 'string' ? asset.archiveMode : null,
+    }];
+  });
 }
 
 function parseBridgeReusableFields(value: unknown): BridgeReusableField[] {
@@ -1528,6 +1569,8 @@ function buildBridgeWorkComponent(candidate: BridgeLibraryCandidate): BridgeWork
     kind: 'atoumweb-library-work-component',
     origin: candidate.origin,
     work: { html, css, javascript, rootClasses: candidate.prepared.rootClasses },
+    dependencies: candidate.prepared.dependencies ?? [],
+    assets: candidate.prepared.assets ?? [],
     checks: { remoteAssetUrls },
     instructions: [
       'Vérifier le rendu face à l’original sur Desktop, Tablette et Mobile.',
@@ -1577,6 +1620,8 @@ function buildBridgeReusableComponent(work: BridgeWorkComponent): BridgeReusable
         ...(remoteAssetUrls.length ? ['Remplacer les ressources encore distantes par les copies locales du nouveau site dès que les assets auront été embarqués.'] : []),
       ],
     },
+    dependencies: checked.dependencies,
+    assets: checked.assets,
     checks: { remoteAssetUrls },
     notes: [
       ...checked.notes,
