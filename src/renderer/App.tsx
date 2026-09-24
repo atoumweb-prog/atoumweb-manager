@@ -143,6 +143,17 @@ function App() {
   const [backupSearchTarget, setBackupSearchTarget] = useState<string | null>(null);
 
   useEffect(() => {
+    const openLibraryItem = (event: Event) => {
+      const itemId = (event as CustomEvent<string>).detail;
+      if (!itemId) return;
+      setLibrarySearchTarget(itemId);
+      setActivePage('Bibliothèque AtoumWeb');
+    };
+    window.addEventListener('atoumweb:open-library-item', openLibraryItem);
+    return () => window.removeEventListener('atoumweb:open-library-item', openLibraryItem);
+  }, []);
+
+  useEffect(() => {
     window.atoumweb.app.getBootstrap()
       .then((state) => {
         setBootstrap(state);
