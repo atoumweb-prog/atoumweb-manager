@@ -137,6 +137,12 @@ La stratégie détaillée pour les snapshots de sites, médias locaux, déduplic
 
 Cette décision complète les règles générales de stockage : les snapshots Bridge sont historiques et les médias identiques ne doivent pas être dupliqués physiquement à chaque import.
 
+L’évolution Bridge vers le **Page Code Organizer + Workbench Divi**, ainsi que la frontière de responsabilité Bridge/Manager et le futur flux Bibliothèque → package → Workbench, sont définis dans :
+
+- `docs/BRIDGE_WORKBENCH_MANAGER_INTEGRATION.md`
+
+Cette évolution est séparée du Snapshot V1 : **Snapshot V1 reste gelé et inchangé**.
+
 ## 7. Stockage des fichiers
 
 ### Workspace
