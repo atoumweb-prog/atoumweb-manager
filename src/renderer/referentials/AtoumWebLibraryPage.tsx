@@ -79,6 +79,35 @@ interface MetadataForm {
   originTechnicalItemId: string;
 }
 
+interface BridgeLibraryCandidate {
+  schemaVersion: number;
+  kind: 'atoumweb-bridge-library-candidate';
+  origin: {
+    site: string | null;
+    page: string;
+    pageUrl: string | null;
+    snapshotId: string | null;
+    snapshotDate: string | null;
+    builderGeneration: string | null;
+    occurrenceId: string;
+  };
+  original: {
+    html: string;
+    cssModule: string;
+    cssPage: string;
+    cssGlobal: string;
+    javascript: string;
+    diviSource: string | null;
+  };
+  prepared: {
+    cssPageUseful: string;
+    cssGlobalUseful: string;
+    rootClasses: string[];
+    instructions: string[];
+    notes: string[];
+  };
+}
+
 const EMPTY_FORM: CreationForm = {
   name: '',
   category: 'section',
@@ -195,6 +224,10 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   }), [items]);
 
   const currentVersion = selected?.currentVersion ?? selected?.versions[0] ?? null;
+  const currentBridgeCandidate = useMemo(
+    () => parseBridgeLibraryCandidate(currentVersion?.contentType, currentVersion?.contentText),
+    [currentVersion?.id, currentVersion?.contentType, currentVersion?.contentText],
+  );
 
   function closeDetail(): void {
     setSelected(null);
@@ -528,15 +561,17 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
                 <div className="aw-library-version-flags">{currentVersion.stable && <span>stable</span>}<span>{currentVersion.contentType}{currentVersion.language ? ` · ${currentVersion.language}` : ''}</span></div>
               </div>
               {currentVersion.notes && <p className="muted aw-library-current-notes">{currentVersion.notes}</p>}
-              <TechnicalContentViewer
-                contentType={currentVersion.contentType}
-                language={currentVersion.language}
-                content={currentVersion.contentText}
-                title="Version courante"
-                onMessage={onMessage}
-                expanded={expandedVersionId === currentVersion.id}
-                onToggleExpanded={() => setExpandedVersionId((current) => current === currentVersion.id ? null : currentVersion.id)}
-              />
+              {currentBridgeCandidate
+                ? <BridgeCandidateViewer candidate={currentBridgeCandidate} rawContent={currentVersion.contentText ?? ''} onMessage={onMessage} />
+                : <TechnicalContentViewer
+                    contentType={currentVersion.contentType}
+                    language={currentVersion.language}
+                    content={currentVersion.contentText}
+                    title="Version courante"
+                    onMessage={onMessage}
+                    expanded={expandedVersionId === currentVersion.id}
+                    onToggleExpanded={() => setExpandedVersionId((current) => current === currentVersion.id ? null : currentVersion.id)}
+                  />}
             </section>}
 
             <div className="aw-library-assets">
@@ -585,6 +620,141 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
       </div>
     </div>
   );
+}
+
+function BridgeCandidateViewer({ candidate, rawContent, onMessage }: { candidate: BridgeLibraryCandidate; rawContent: string; onMessage: (message: string) => void }) {
+  const previewDocument = buildBridgeCandidatePreview(candidate);
+  const usefulPageLines = lineCount(candidate.prepared.cssPageUseful);
+  const usefulGlobalLines = lineCount(candidate.prepared.cssGlobalUseful);
+  const moduleCssLines = lineCount(candidate.original.cssModule);
+
+  return <div className="aw-bridge-candidate-viewer">
+    <div className="aw-bridge-candidate-origin">
+      <div><span>Site d’origine</span><strong>{candidate.origin.site || 'Site Bridge'}</strong></div>
+      <div><span>Page d’origine</span><strong>{candidate.origin.page}</strong></div>
+      <div><span>Builder</span><strong>{candidate.origin.builderGeneration ? `Divi ${candidate.origin.builderGeneration}` : 'Divi'}</strong></div>
+      <div><span>Snapshot</span><strong>{candidate.origin.snapshotDate ? formatDateTime(candidate.origin.snapshotDate) : 'Date non disponible'}</strong></div>
+    </div>
+
+    <div className="aw-bridge-candidate-state">
+      <OperationIcon name="archive" size={18} />
+      <div><strong>Version originale du site</strong><span>Cette V1 conserve la source telle qu’elle existait dans le snapshot. Elle n’est pas encore la version nettoyée à copier sur un autre site.</span></div>
+    </div>
+
+    <section className="aw-bridge-candidate-preview">
+      <div className="aw-library-section-title">
+        <div><span className="eyebrow">Rendu</span><h3>Aperçu du composant</h3></div>
+        {candidate.origin.pageUrl && <span className="muted">{candidate.origin.pageUrl}</span>}
+      </div>
+      {candidate.original.html
+        ? <iframe className="aw-bridge-candidate-frame" title={`Aperçu ${candidate.origin.page}`} sandbox="" srcDoc={previewDocument} />
+        : <div className="technical-content-empty">Le HTML n’a pas pu être isolé pour ce candidat.</div>}
+    </section>
+
+    <section className="aw-bridge-candidate-reuse">
+      <div className="aw-library-section-title"><div><span className="eyebrow">Réutilisation</span><h3>Ce qu’il faut emporter</h3></div></div>
+      <div className="aw-bridge-candidate-grid">
+        <div><span>HTML</span><strong>{candidate.original.html ? 'Disponible' : 'À analyser'}</strong></div>
+        <div><span>CSS du module</span><strong>{moduleCssLines ? `${moduleCssLines} ligne(s)` : 'Aucun'}</strong></div>
+        <div><span>CSS page utile</span><strong>{usefulPageLines ? `${usefulPageLines} ligne(s)` : 'Aucun détecté'}</strong></div>
+        <div><span>CSS global utile</span><strong>{usefulGlobalLines ? `${usefulGlobalLines} ligne(s)` : 'Aucun détecté'}</strong></div>
+        <div><span>JavaScript</span><strong>{candidate.original.javascript ? 'Présent · à vérifier' : 'Aucun'}</strong></div>
+        <div><span>Classes principales</span><strong>{candidate.prepared.rootClasses.length ? candidate.prepared.rootClasses.join(' · ') : 'Non détectées'}</strong></div>
+      </div>
+
+      {candidate.prepared.instructions.length > 0 && <div className="aw-bridge-candidate-instructions">
+        <strong>Mode d’emploi provisoire</strong>
+        {candidate.prepared.instructions.map((instruction) => <p key={instruction}><OperationIcon name="check-circle" size={15} />{instruction}</p>)}
+      </div>}
+      {candidate.prepared.notes.length > 0 && <div className="aw-bridge-candidate-notes">
+        {candidate.prepared.notes.map((note) => <p key={note}><OperationIcon name="alert" size={15} />{note}</p>)}
+      </div>}
+    </section>
+
+    <details className="aw-bridge-candidate-source">
+      <summary>Voir la source originale complète</summary>
+      <TechnicalContentViewer contentType="json" language="json" content={rawContent} title="Archive technique du candidat" onMessage={onMessage} />
+    </details>
+  </div>;
+}
+
+function parseBridgeLibraryCandidate(contentType?: ProjectTechnicalContentType | null, content?: string | null): BridgeLibraryCandidate | null {
+  if (contentType !== 'json' || !content?.trim()) return null;
+  try {
+    const value = JSON.parse(content) as Partial<BridgeLibraryCandidate>;
+    if (value.kind !== 'atoumweb-bridge-library-candidate' || !value.origin || !value.original || !value.prepared) return null;
+    return {
+      schemaVersion: Number(value.schemaVersion ?? 1),
+      kind: 'atoumweb-bridge-library-candidate',
+      origin: {
+        site: typeof value.origin.site === 'string' ? value.origin.site : null,
+        page: typeof value.origin.page === 'string' ? value.origin.page : 'Page inconnue',
+        pageUrl: typeof value.origin.pageUrl === 'string' ? value.origin.pageUrl : null,
+        snapshotId: typeof value.origin.snapshotId === 'string' ? value.origin.snapshotId : null,
+        snapshotDate: typeof value.origin.snapshotDate === 'string' ? value.origin.snapshotDate : null,
+        builderGeneration: typeof value.origin.builderGeneration === 'string' ? value.origin.builderGeneration : null,
+        occurrenceId: typeof value.origin.occurrenceId === 'string' ? value.origin.occurrenceId : '',
+      },
+      original: {
+        html: typeof value.original.html === 'string' ? value.original.html : '',
+        cssModule: typeof value.original.cssModule === 'string' ? value.original.cssModule : '',
+        cssPage: typeof value.original.cssPage === 'string' ? value.original.cssPage : '',
+        cssGlobal: typeof value.original.cssGlobal === 'string' ? value.original.cssGlobal : '',
+        javascript: typeof value.original.javascript === 'string' ? value.original.javascript : '',
+        diviSource: typeof value.original.diviSource === 'string' ? value.original.diviSource : null,
+      },
+      prepared: {
+        cssPageUseful: typeof value.prepared.cssPageUseful === 'string' ? value.prepared.cssPageUseful : '',
+        cssGlobalUseful: typeof value.prepared.cssGlobalUseful === 'string' ? value.prepared.cssGlobalUseful : '',
+        rootClasses: Array.isArray(value.prepared.rootClasses) ? value.prepared.rootClasses.filter((item): item is string => typeof item === 'string') : [],
+        instructions: Array.isArray(value.prepared.instructions) ? value.prepared.instructions.filter((item): item is string => typeof item === 'string') : [],
+        notes: Array.isArray(value.prepared.notes) ? value.prepared.notes.filter((item): item is string => typeof item === 'string') : [],
+      },
+    };
+  } catch {
+    return null;
+  }
+}
+
+function buildBridgeCandidatePreview(candidate: BridgeLibraryCandidate): string {
+  const base = candidate.origin.pageUrl ? `<base href="${escapeAttribute(candidate.origin.pageUrl)}">` : '';
+  return `<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+${base}
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https: data:; font-src https: data:; media-src https: data:;">
+<style>
+html,body{margin:0;min-height:100%;background:#fff;color:#111}
+body{font-family:Arial,Helvetica,sans-serif}
+*,*::before,*::after{box-sizing:border-box}
+</style>
+<style>${safeStyle(candidate.prepared.cssGlobalUseful)}</style>
+<style>${safeStyle(candidate.prepared.cssPageUseful)}</style>
+<style>${safeStyle(candidate.original.cssModule)}</style>
+</head>
+<body>
+${candidate.original.html}
+</body>
+</html>`;
+}
+
+function safeStyle(value: string): string {
+  return value.replace(/<\/style/gi, '<\\/style');
+}
+
+function escapeAttribute(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function lineCount(value: string): number {
+  return value.trim() ? value.split(/\r?\n/).length : 0;
+}
+
+function formatDateTime(value: string): string {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
 }
 
 function CreationPanel({ form, setForm, onCreate }: { form: CreationForm; setForm: (value: CreationForm) => void; onCreate: () => Promise<void> }) {
