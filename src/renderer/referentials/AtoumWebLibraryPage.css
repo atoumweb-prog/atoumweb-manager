@@ -1754,3 +1754,137 @@ button.aw-library-stage-open:hover {
     margin: 0 auto 5px;
   }
 }
+
+
+/* Modèle générique : résumé compact fermé par défaut */
+details.aw-reusable-fields {
+  display: block;
+  padding: 0;
+  overflow: hidden;
+}
+
+.aw-reusable-fields-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  padding: 11px 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.aw-reusable-fields-summary::-webkit-details-marker {
+  display: none;
+}
+
+.aw-reusable-fields-summary-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.aw-reusable-fields-summary-copy h3 {
+  margin: 1px 0 0;
+  font-size: 13px;
+}
+
+.aw-reusable-fields-summary-copy p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.aw-reusable-fields-summary-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.aw-reusable-fields-toggle {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.aw-reusable-fields-toggle b {
+  color: var(--accent-strong);
+  font-size: 12px;
+  line-height: 1;
+  transition: transform .16s ease;
+}
+
+.aw-reusable-fields .when-open {
+  display: none;
+}
+
+.aw-reusable-fields[open] .when-closed {
+  display: none;
+}
+
+.aw-reusable-fields[open] .when-open {
+  display: inline;
+}
+
+.aw-reusable-fields[open] .aw-reusable-fields-toggle b {
+  transform: rotate(180deg);
+}
+
+.aw-reusable-fields[open] .aw-reusable-fields-summary {
+  border-bottom: 1px solid color-mix(in srgb, var(--success) 20%, var(--border));
+}
+
+.aw-reusable-fields-body {
+  display: grid;
+  gap: 9px;
+  padding: 10px 12px 12px;
+}
+
+.aw-reusable-fields-body > .muted {
+  margin: 0;
+}
+
+.aw-reusable-field.action {
+  border-color: color-mix(in srgb, var(--accent) 26%, var(--border));
+  background: color-mix(in srgb, var(--accent-soft) 20%, var(--surface));
+}
+
+.aw-reusable-field.action > span {
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+  color: var(--accent-strong);
+}
+
+.aw-reusable-field.action small {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 6px;
+  align-items: baseline;
+}
+
+.aw-reusable-field.action small b {
+  color: var(--text);
+  font-size: 8px;
+  font-weight: 750;
+}
+
+@media (max-width: 720px) {
+  .aw-reusable-fields-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .aw-reusable-fields-summary-action {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
