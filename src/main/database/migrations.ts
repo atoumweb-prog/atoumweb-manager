@@ -16,6 +16,7 @@ import { EXPENSES_MIGRATION } from './expensesMigration';
 import { CRM_IDENTITY_ASSETS_MIGRATION } from './crmIdentityAssetsMigration';
 import { TIME_PAUSE_REASON_MIGRATION } from './timePauseReasonMigration';
 import { BRIDGE_SNAPSHOT_MIGRATION } from './bridgeSnapshotMigration';
+import { BRIDGE_SNAPSHOT_REPAIR_MIGRATION } from './bridgeSnapshotRepairMigration';
 
 export interface Migration { id: number; name: string; sql: string; disableForeignKeys?: boolean; }
 
@@ -187,6 +188,7 @@ export const MIGRATIONS: Migration[] = [
   CRM_IDENTITY_ASSETS_MIGRATION,
   TIME_PAUSE_REASON_MIGRATION,
   BRIDGE_SNAPSHOT_MIGRATION,
+  BRIDGE_SNAPSHOT_REPAIR_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {
