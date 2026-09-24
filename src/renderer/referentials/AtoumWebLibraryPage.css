@@ -619,3 +619,144 @@ body.aw-library-resizing {
     padding-inline: 10px;
   }
 }
+
+
+/* Candidats issus d'AtoumWeb Bridge */
+.aw-bridge-candidate-viewer {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.aw-bridge-candidate-origin,
+.aw-bridge-candidate-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.aw-bridge-candidate-origin > div,
+.aw-bridge-candidate-grid > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+}
+
+.aw-bridge-candidate-origin span,
+.aw-bridge-candidate-grid span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.aw-bridge-candidate-origin strong,
+.aw-bridge-candidate-grid strong {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+
+.aw-bridge-candidate-state {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  padding: 10px 11px;
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent-soft) 28%, var(--surface));
+}
+
+.aw-bridge-candidate-state > div {
+  display: grid;
+  gap: 3px;
+}
+
+.aw-bridge-candidate-state span {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.aw-bridge-candidate-preview,
+.aw-bridge-candidate-reuse {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+}
+
+.aw-bridge-candidate-frame {
+  width: 100%;
+  height: min(480px, 48vh);
+  min-height: 300px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.aw-bridge-candidate-instructions,
+.aw-bridge-candidate-notes {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+}
+
+.aw-bridge-candidate-instructions p,
+.aw-bridge-candidate-notes p {
+  display: flex;
+  gap: 7px;
+  align-items: flex-start;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.aw-bridge-candidate-notes {
+  border-color: color-mix(in srgb, #F2B705 38%, var(--border));
+  background: color-mix(in srgb, #F2B705 6%, var(--surface));
+}
+
+.aw-bridge-candidate-source {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-soft);
+}
+
+.aw-bridge-candidate-source summary {
+  padding: 9px 10px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.aw-bridge-candidate-source[open] {
+  padding-bottom: 10px;
+}
+
+.aw-bridge-candidate-source .technical-content-viewer {
+  margin: 0 10px;
+}
+
+@media (max-width: 900px) {
+  .aw-bridge-candidate-origin,
+  .aw-bridge-candidate-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .aw-bridge-candidate-origin,
+  .aw-bridge-candidate-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .aw-bridge-candidate-frame {
+    min-height: 240px;
+    height: 420px;
+  }
+}
