@@ -78,6 +78,67 @@ describe('AtoumWebPackageService', () => {
     expect(inspection.probableDuplicates.some((candidate) => candidate.itemId === stable.id)).toBe(true);
   });
 
+  it('enrichit une version réutilisable avec un package Bridge Workbench sans casser le paquet Manager', () => {
+    const reusablePayload = {
+      schemaVersion: 2,
+      kind: 'atoumweb-library-reusable-component',
+      origin: {
+        site: 'atoumweb.fr',
+        page: 'Accueil',
+        pageUrl: 'https://www.atoumweb.fr/',
+        snapshotId: 'awb-snap:test',
+        snapshotDate: '2026-09-24T12:00:00Z',
+        builderGeneration: '5',
+        occurrenceId: 'module-1',
+      },
+      reusable: {
+        html: '<section class="atoum-hero"><h1 data-aw-field-text="text-1">Votre titre personnalisable</h1></section>',
+        css: '.atoum-hero{padding:2rem}',
+        javascript: '',
+        rootClasses: ['atoum-hero'],
+        method: 'divi-code',
+        instructions: ['Ajouter le composant dans un Workbench.'],
+        generalized: true,
+        fields: [{ id: 'text-1', label: 'Titre principal', type: 'text', selector: '[data-aw-field-text="text-1"]', originalValue: 'Titre source', defaultValue: 'Votre titre personnalisable' }],
+      },
+      dependencies: [{ dependencyId: 'dep-1', type: 'plugin', slug: 'forminator', name: 'Forminator', version: '1.0.0', active: true }],
+      assets: [{ assetId: 'asset-1', type: 'image', url: 'https://www.atoumweb.fr/media.jpg', localPath: null, mimeType: 'image/jpeg', hash: 'abc', archiveMode: 'reference_only' }],
+      checks: { remoteAssetUrls: [] },
+      notes: [],
+    };
+    const item = library.create(
+      { category: 'hero', name: 'Hero réutilisable', reuseStatus: 'ready', tags: ['bridge', 'bridge-stage-reusable'] },
+      { contentType: 'json', language: 'json', contentText: JSON.stringify(reusablePayload), notes: 'Réutilisable' },
+    );
+    const stable = library.markStable(item.currentVersion!.id);
+
+    const exported = packages.exportItem(stable.id, stable.currentVersion!.id);
+    const entries = readZipArchive(exported.path);
+    const names = new Set(entries.map((entry) => entry.name));
+
+    expect(names.has('manifest.json')).toBe(true);
+    expect(names.has('component/component.html')).toBe(true);
+    expect(names.has('component/component.css')).toBe(true);
+    expect(names.has('component/fields.json')).toBe(true);
+    expect(names.has('component/dependencies.json')).toBe(true);
+    expect(names.has('component/source-assets.json')).toBe(true);
+    expect(names.has('component/provenance.json')).toBe(true);
+    expect(names.has('component/component.js')).toBe(false);
+
+    const manifest = JSON.parse(entries.find((entry) => entry.name === 'manifest.json')!.data.toString('utf8'));
+    expect(manifest.bridgeWorkbench.contract).toBe('atoumweb_bridge_component_package');
+    expect(manifest.bridgeWorkbench.flow).toBe('workbench_first');
+    expect(manifest.bridgeWorkbench.directProductionInjection).toBe(false);
+    expect(manifest.bridgeWorkbench.component.rootClasses).toEqual(['atoum-hero']);
+
+    const dependencies = JSON.parse(entries.find((entry) => entry.name === 'component/dependencies.json')!.data.toString('utf8'));
+    expect(dependencies[0].name).toBe('Forminator');
+
+    const inspection = packages.inspectPackage(exported.path);
+    expect(inspection.item.name).toBe('Hero réutilisable');
+    expect(inspection.version.contentText).toContain('atoumweb-library-reusable-component');
+  });
+
   it('importe un paquet comme nouvel item sans exécuter ni modifier le composant source', () => {
     const source = library.create(
       { category: 'header', name: 'Header source', reuseStatus: 'reference' },
