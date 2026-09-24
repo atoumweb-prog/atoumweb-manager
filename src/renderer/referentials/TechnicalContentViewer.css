@@ -41,3 +41,79 @@
 .technical-content-viewer.expanded .technical-content-preview {
   min-height: calc(100vh - 180px);
 }
+
+
+/* Responsive preview shared by Sites / Bibliothèque */
+.technical-content-viewer {
+  min-width: 0;
+}
+
+.technical-content-toolbar {
+  min-width: 0;
+}
+
+.technical-content-toolbar > div:first-child strong,
+.technical-content-toolbar > div:first-child span {
+  overflow-wrap: anywhere;
+}
+
+.technical-content-preview {
+  min-height: clamp(280px, 42vh, 520px);
+}
+
+.technical-content-raw,
+.technical-json-tree {
+  width: 100%;
+  max-width: 100%;
+}
+
+.technical-content-line {
+  min-width: 0;
+  width: max-content;
+}
+
+@media (max-width: 980px) {
+  .technical-content-toolbar {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .technical-content-actions {
+    justify-content: flex-start;
+  }
+
+  .technical-content-preview {
+    min-height: 340px;
+  }
+}
+
+@media (max-width: 620px) {
+  .technical-content-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .technical-content-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .technical-content-viewer.expanded {
+    inset: 6px;
+    padding: 10px;
+  }
+
+  .technical-content-preview {
+    min-height: 300px;
+  }
+
+  .technical-content-raw,
+  .technical-json-tree {
+    font-size: 9px;
+  }
+
+  .technical-content-line {
+    grid-template-columns: 34px minmax(0, 1fr);
+  }
+}
