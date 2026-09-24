@@ -106,6 +106,23 @@ interface BridgeLibraryCandidate {
     cssPageUseful: string;
     cssGlobalUseful: string;
     rootClasses: string[];
+    dependencies?: Array<{
+      dependencyId: string;
+      type: string;
+      slug: string | null;
+      name: string;
+      version: string | null;
+      active: boolean | null;
+    }>;
+    assets?: Array<{
+      assetId: string;
+      type: string;
+      url: string | null;
+      localPath: string | null;
+      mimeType: string | null;
+      hash: string | null;
+      archiveMode: string | null;
+    }>;
     instructions: string[];
     notes: string[];
   };
@@ -121,6 +138,8 @@ interface BridgeWorkComponent {
     javascript: string;
     rootClasses: string[];
   };
+  dependencies: NonNullable<BridgeLibraryCandidate['prepared']['dependencies']>;
+  assets: NonNullable<BridgeLibraryCandidate['prepared']['assets']>;
   checks: {
     remoteAssetUrls: string[];
   };
@@ -151,6 +170,8 @@ interface BridgeReusableComponent {
     generalized: boolean;
     fields: BridgeReusableField[];
   };
+  dependencies: NonNullable<BridgeLibraryCandidate['prepared']['dependencies']>;
+  assets: NonNullable<BridgeLibraryCandidate['prepared']['assets']>;
   checks: {
     remoteAssetUrls: string[];
   };
