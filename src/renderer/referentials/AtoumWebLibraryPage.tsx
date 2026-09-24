@@ -1302,10 +1302,30 @@ function parseBridgeReusableComponent(value: Record<string, unknown>): BridgeReu
       rootClasses: stringArray(reusable.rootClasses),
       method: 'divi-code',
       instructions: stringArray(reusable.instructions),
+      generalized: reusable.generalized === true,
+      fields: parseBridgeReusableFields(reusable.fields),
     },
     checks: { remoteAssetUrls: stringArray(checks.remoteAssetUrls) },
     notes: stringArray(value.notes),
   };
+}
+
+function parseBridgeReusableFields(value: unknown): BridgeReusableField[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const field = item as Record<string, unknown>;
+    const type = field.type;
+    if (type !== 'text' && type !== 'link' && type !== 'image') return [];
+    return [{
+      id: typeof field.id === 'string' ? field.id : '',
+      label: typeof field.label === 'string' ? field.label : 'Champ',
+      type,
+      selector: typeof field.selector === 'string' ? field.selector : '',
+      originalValue: typeof field.originalValue === 'string' ? field.originalValue : '',
+      defaultValue: typeof field.defaultValue === 'string' ? field.defaultValue : '',
+    }];
+  });
 }
 
 function parseBridgeOrigin(value: unknown): BridgeLibraryCandidate['origin'] | null {
