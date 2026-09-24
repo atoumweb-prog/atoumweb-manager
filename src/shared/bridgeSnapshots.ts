@@ -203,6 +203,11 @@ export interface BridgeSnapshotImportResult {
   snapshot: BridgeSnapshotSummary;
 }
 
+export interface BridgeSnapshotDiagnosticExportResult {
+  cancelled: boolean;
+  path?: string;
+}
+
 export interface BridgeSnapshotsApi {
   inspectImport(): Promise<BridgeSnapshotInspection | null>;
   importSnapshot(packagePath: string): Promise<BridgeSnapshotImportResult>;
@@ -211,4 +216,5 @@ export interface BridgeSnapshotsApi {
   listPages(snapshotId: string, search?: string | null): Promise<BridgePageSummary[]>;
   getPage(pageSnapshotId: string): Promise<BridgePageSnapshotDetail>;
   getObjectPreview(objectRef: string): Promise<BridgeObjectPreview>;
+  exportDiagnostic(snapshotId: string): Promise<BridgeSnapshotDiagnosticExportResult>;
 }
