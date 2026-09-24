@@ -92,6 +92,8 @@ describe('migrations SQLite', () => {
       'crm_needs', 'demo_batches', 'demo_records', 'demo_context', 'contact_methods', 'client_documents',
       'atoumweb_technical_assets', 'backup_records', 'backup_locations', 'backup_policies', 'backup_intervention_links',
       'catalog_project_blueprints', 'project_node_sources', 'project_node_secrets', 'expenses', 'crm_identity_assets',
+      'bridge_sites', 'bridge_snapshots', 'bridge_pages', 'bridge_page_snapshots', 'bridge_nodes', 'bridge_sources',
+      'bridge_assets', 'bridge_dependencies', 'bridge_relations', 'bridge_snapshot_sections', 'bridge_objects',
     ]) {
       const row = database.get<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", [table]);
       expect(row?.name).toBe(table);
