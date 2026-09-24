@@ -518,11 +518,15 @@ export class BridgeSnapshotService {
     const fallbackHtmlRef = nullableString(nodeRow.content_object_ref);
     const objectHtml = fallbackHtmlRef ? this.getObjectPreview(fallbackHtmlRef).text ?? '' : '';
     const derivedHtml = separatedHtml || objectHtml ? '' : extractHtmlFromDiviSource(diviSource);
-    const html = separatedHtml || objectHtml || derivedHtml;
-    const moduleCss = joinKind(moduleSources, 'css');
+    const sourceHtml = separatedHtml || objectHtml || derivedHtml;
+    const embedded = splitEmbeddedCode(sourceHtml);
+    const html = embedded.html;
+    const separatedModuleCss = joinKind(moduleSources, 'css');
+    const moduleCss = [separatedModuleCss, embedded.css].filter(Boolean).join('\n\n');
     const pageCss = joinKind(pageSources, 'css');
     const globalCss = joinKind(globalSources, 'css');
-    const javascript = joinKind(moduleSources, 'js');
+    const separatedJavascript = joinKind(moduleSources, 'js');
+    const javascript = [separatedJavascript, embedded.javascript].filter(Boolean).join('\n\n');
     const frontend = parseObject(pageRow.frontend_json);
 
     const tokens = extractHtmlTokens(html);
@@ -567,10 +571,10 @@ export class BridgeSnapshotService {
       diviSource,
       sourceCounts: {
         html: uniqueCount(moduleSources, 'html') || (html ? 1 : 0),
-        moduleCss: uniqueCount(moduleSources, 'css'),
+        moduleCss: uniqueCount(moduleSources, 'css') + (embedded.css ? 1 : 0),
         pageCss: uniqueCount(pageSources, 'css'),
         globalCss: uniqueCount(globalSources, 'css'),
-        javascript: uniqueCount(moduleSources, 'js'),
+        javascript: uniqueCount(moduleSources, 'js') + (embedded.javascript ? 1 : 0),
       },
       frontendValidated: frontend.checked === true,
       htmlDerivedFromDiviSource: Boolean(derivedHtml),
@@ -874,6 +878,21 @@ function findHtmlValue(value: unknown): string {
     if (found) return found;
   }
   return '';
+}
+
+function splitEmbeddedCode(html: string): { html: string; css: string; javascript: string } {
+  if (!html) return { html: '', css: '', javascript: '' };
+  const css: string[] = [];
+  const javascript: string[] = [];
+  let clean = html.replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gi, (_match, body: string) => {
+    if (body.trim()) css.push(body.trim());
+    return '';
+  });
+  clean = clean.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, (_match, body: string) => {
+    if (body.trim()) javascript.push(body.trim());
+    return '';
+  });
+  return { html: clean.trim(), css: css.join('\n\n'), javascript: javascript.join('\n\n') };
 }
 
 function extractHtmlTokens(html: string): HtmlTokens {
