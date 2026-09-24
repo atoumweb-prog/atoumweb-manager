@@ -917,14 +917,22 @@ function pickRootClasses(classes: string[]): string[] {
 }
 
 function suggestLibraryCategory(rootClasses: string[], html: string): 'header' | 'footer' | 'hero' | 'section' | 'form' | 'gallery' | 'carousel' | 'navigation' | 'divi' {
-  const haystack = `${rootClasses.join(' ')} ${html.slice(0, 3000)}`.toLowerCase();
-  if (/\bhero\b/.test(haystack)) return 'hero';
-  if (/<header\b|\bheader\b/.test(haystack)) return 'header';
-  if (/<footer\b|\bfooter\b/.test(haystack)) return 'footer';
-  if (/<form\b|\bformulaire\b|\bcontact-form\b/.test(haystack)) return 'form';
-  if (/\bgallery\b|\bgalerie\b/.test(haystack)) return 'gallery';
-  if (/\bcarousel\b|\bslider\b/.test(haystack)) return 'carousel';
-  if (/<nav\b|\bnavigation\b|\bmenu\b/.test(haystack)) return 'navigation';
+  const roots = rootClasses.join(' ').toLowerCase();
+  const markup = html.slice(0, 6000).toLowerCase();
+
+  // La nature du composant vient d'abord de sa racine. Un mot "header" présent
+  // dans une carte/article interne ne transforme pas toute la section en Header de site.
+  if (/\b(hero|banner-hero|main-hero)\b/.test(roots)) return 'hero';
+  if (/\b(blog|articles?|posts?|news|actualit[eé]s?)\b/.test(roots)) return 'section';
+  if (/\b(gallery|galerie)\b/.test(roots)) return 'gallery';
+  if (/\b(carousel|slider)\b/.test(roots)) return 'carousel';
+  if (/\b(form|formulaire|contact-form)\b/.test(roots)) return 'form';
+  if (/\b(nav|navigation|menu)\b/.test(roots)) return 'navigation';
+  if (/\b(site-header|global-header|main-header|header-global)\b/.test(roots) || /^\s*<header\b/.test(markup)) return 'header';
+  if (/\b(site-footer|global-footer|main-footer|footer-global)\b/.test(roots) || /^\s*<footer\b/.test(markup)) return 'footer';
+
+  if (/^\s*<form\b/.test(markup)) return 'form';
+  if (/^\s*<nav\b/.test(markup)) return 'navigation';
   return html ? 'section' : 'divi';
 }
 
