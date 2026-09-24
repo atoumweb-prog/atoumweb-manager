@@ -1581,7 +1581,7 @@ function generalizeBridgeReusableHtml(html: string): { html: string; fields: Bri
 }
 
 function replaceMeaningfulTextNodes(element: HTMLElement, pieces: string[]): void {
-  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  const walker = element.ownerDocument.createTreeWalker(element, NodeFilter.SHOW_TEXT);
   const nodes: Text[] = [];
   let node = walker.nextNode();
   while (node) {
