@@ -147,14 +147,18 @@ function JsonScalar({ value }: { value: unknown }) {
 
 
 function buildHtmlPreviewDocument(content: string): string {
-  if (/<!doctype\s+html|<html[\s>]/i.test(content)) return content;
+  const policy = '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; img-src data:; font-src data:;">';
+  if (/<!doctype\s+html|<html[\s>]/i.test(content)) {
+    if (/<head[\s>]/i.test(content)) return content.replace(/<head([^>]*)>/i, `<head$1>${policy}`);
+    return content.replace(/<html([^>]*)>/i, `<html$1><head>${policy}</head>`);
+  }
   return `<!doctype html>
 <html lang="fr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <base target="_blank">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:;">
+  ${policy}
   <style>
     html, body { margin: 0; min-height: 100%; background: #fff; }
     body { font-family: Arial, Helvetica, sans-serif; }
