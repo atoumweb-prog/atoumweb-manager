@@ -373,3 +373,20 @@ button { color: inherit; }
     align-items: flex-start;
   }
 }
+
+
+/* Bibliothèque : le bandeau métier peut être replié pour maximiser la hauteur utile. */
+.content-area.library-workspace-content.library-header-collapsed {
+  padding-top: 5px;
+}
+
+.content-area.library-workspace-content.library-header-collapsed > .page-heading,
+.content-area.library-workspace-content.library-header-collapsed > .notice {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .content-area.library-workspace-content.library-header-collapsed {
+    padding-top: 8px;
+  }
+}
