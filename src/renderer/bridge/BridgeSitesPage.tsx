@@ -19,6 +19,14 @@ interface Props {
 
 type ContentView = 'pages' | 'posts' | 'diviLibrary' | 'themeBuilder' | 'other' | 'all';
 type ModulePreviewTab = 'preview' | 'html' | 'css' | 'js' | 'divi';
+type PreviewDevice = 'auto' | 'desktop' | 'tablet' | 'mobile';
+
+const PREVIEW_DEVICE_OPTIONS: Array<{ id: PreviewDevice; label: string; width: number | null }> = [
+  { id: 'auto', label: 'Auto', width: null },
+  { id: 'desktop', label: 'Desktop', width: 1440 },
+  { id: 'tablet', label: 'Tablette', width: 768 },
+  { id: 'mobile', label: 'Mobile', width: 390 },
+];
 
 export function BridgeSitesPage({ onMessage }: Props) {
   const [sites, setSites] = useState<BridgeSiteSummary[]>([]);
@@ -34,6 +42,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
   const [pagePreview, setPagePreview] = useState<BridgePagePreview | null>(null);
   const [libraryCandidate, setLibraryCandidate] = useState<BridgeModulePreview | null>(null);
   const [modulePreviewTab, setModulePreviewTab] = useState<ModulePreviewTab>('preview');
+  const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('auto');
   const [search, setSearch] = useState('');
   const [contentView, setContentView] = useState<ContentView>('pages');
   const [splitPercent, setSplitPercent] = useState(62);
@@ -232,6 +241,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
       const next = await window.atoumweb.bridgeSnapshots.getModulePreview(page.page.pageSnapshotId, occurrenceId);
       setModulePreview(next);
       setModulePreviewTab('preview');
+      setPreviewDevice('auto');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Impossible de reconstruire ce module.');
     }
@@ -242,6 +252,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
     try {
       setError(null);
       setPagePreview(await window.atoumweb.bridgeSnapshots.getPagePreview(page.page.pageSnapshotId));
+      setPreviewDevice('auto');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Impossible de reconstruire cette page.');
     }
@@ -283,14 +294,14 @@ export function BridgeSitesPage({ onMessage }: Props) {
           category: candidate.reuse.suggestedCategory,
           name: candidate.reuse.suggestedName,
           reuseStatus: 'adapt',
-          description: `Candidat préparé depuis ${site?.name ?? 'un site Bridge'} → ${candidate.pageTitle}. La version originale est conservée avant nettoyage et généralisation.`,
+          description: `Candidat préparé depuis ${site?.name ?? 'un site Bridge'} → ${candidate.pageTitle}. L’original est conservé avant création d’une version de travail puis validation réutilisable.`,
           tags: ['bridge', 'snapshot', candidate.builderGeneration === '5' ? 'divi5' : 'divi4', ...candidate.reuse.rootClasses.slice(0, 4)],
         },
         {
           contentType: 'json',
           language: 'json',
           contentText: JSON.stringify(bundle, null, 2),
-          notes: 'V1 — Source originale du site. À nettoyer puis généraliser avant de marquer le composant comme prêt à réutiliser.',
+          notes: 'V1 — Source originale du site. Créer ensuite une version de travail modifiable avant validation de la version réutilisable.',
         },
       );
       setLibraryCandidate(null);
@@ -559,7 +570,13 @@ export function BridgeSitesPage({ onMessage }: Props) {
             <OperationIcon name="alert" size={16} />
             <span>Rendu reconstruit depuis le snapshot Bridge : {pagePreview.renderedModuleCount} module(s) affiché(s) sur {pagePreview.totalModuleCount}. {pagePreview.omittedModuleCount > 0 ? `${pagePreview.omittedModuleCount} élément(s) Divi non reconstructible(s) automatiquement peuvent manquer.` : 'Tous les modules détectés ont pu être reconstruits.'}</span>
           </div>
-          <iframe className="bridge-html-preview bridge-page-html-preview" sandbox="" title={`Visualisation de ${pagePreview.title}`} srcDoc={buildReconstructedPagePreview(pagePreview)} />
+          <BridgeResponsivePreview
+            device={previewDevice}
+            onDeviceChange={setPreviewDevice}
+            title={`Visualisation de ${pagePreview.title}`}
+            document={buildReconstructedPagePreview(pagePreview)}
+            className="bridge-page-html-preview"
+          />
         </section>
       </div>}
 
@@ -603,7 +620,12 @@ export function BridgeSitesPage({ onMessage }: Props) {
           </div>
 
           <div className="bridge-module-preview-body">
-            {modulePreviewTab === 'preview' && <iframe className="bridge-html-preview" sandbox="" title="Aperçu reconstruit du module" srcDoc={buildReconstructedPreview(modulePreview)} />}
+            {modulePreviewTab === 'preview' && <BridgeResponsivePreview
+              device={previewDevice}
+              onDeviceChange={setPreviewDevice}
+              title="Aperçu reconstruit du module"
+              document={buildReconstructedPreview(modulePreview)}
+            />}
             {modulePreviewTab === 'html' && <CodePanel title="HTML du module" content={modulePreview.html} empty="Aucun HTML séparé n’a été fourni pour ce module." />}
             {modulePreviewTab === 'css' && <div className="bridge-css-use">
               <div className="bridge-css-layers">
@@ -645,7 +667,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
             {libraryCandidate.reuse.notes.map((note) => <p className="muted" key={note}><OperationIcon name="alert" size={15} />{note}</p>)}
           </section>
           <div className="bridge-candidate-footer">
-            <p>La Bibliothèque recevra d’abord une <strong>V1 originale</strong> contenant la source du snapshot. Elle restera « à adapter » tant qu’une version nettoyée/réutilisable n’aura pas été créée.</p>
+            <p>La Bibliothèque recevra d’abord une <strong>V1 originale</strong> contenant la source du snapshot. Ensuite : <strong>Version de travail</strong> modifiable, puis <strong>Réutilisable</strong> une fois validée.</p>
             <div className="button-row">
               <button className="secondary-button" type="button" onClick={() => setLibraryCandidate(null)}>Annuler</button>
               <button className="primary-button" type="button" onClick={() => void createLibraryCandidate(libraryCandidate)}><OperationIcon name="folder" size={16} />Créer le candidat</button>
@@ -673,6 +695,34 @@ export function BridgeSitesPage({ onMessage }: Props) {
 
 function Metric({ label, value }: { label: string; value: string }) {
   return <div className="bridge-metric"><span>{label}</span><strong>{value}</strong></div>;
+}
+
+function BridgeResponsivePreview({
+  device,
+  onDeviceChange,
+  title,
+  document,
+  className = '',
+}: {
+  device: PreviewDevice;
+  onDeviceChange: (device: PreviewDevice) => void;
+  title: string;
+  document: string;
+  className?: string;
+}) {
+  const selected = PREVIEW_DEVICE_OPTIONS.find((item) => item.id === device) ?? { id: 'auto' as const, label: 'Auto', width: null };
+  return <div className="bridge-responsive-preview">
+    <div className="bridge-responsive-toolbar" role="group" aria-label="Largeur de prévisualisation">
+      {PREVIEW_DEVICE_OPTIONS.map((item) => <button key={item.id} type="button" className={device === item.id ? 'active' : ''} onClick={() => onDeviceChange(item.id)}>
+        <span>{item.label}</span>{item.width ? <small>{item.width}px</small> : null}
+      </button>)}
+    </div>
+    <div className="bridge-responsive-scroll">
+      <div className="bridge-responsive-device" style={{ width: selected.width ? `${selected.width}px` : '100%' }}>
+        <iframe className={`bridge-html-preview ${className}`} sandbox="" title={title} srcDoc={document} />
+      </div>
+    </div>
+  </div>;
 }
 
 function ContentTab({ label, count, active, onClick }: { label: string; count: number; active: boolean; onClick: () => void }) {
