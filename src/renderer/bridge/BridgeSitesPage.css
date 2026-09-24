@@ -1142,6 +1142,11 @@
     overflow: hidden;
   }
 
+  .bridge-sites {
+    display: flex;
+    flex-direction: column;
+  }
+
   .bridge-site-list {
     max-height: none;
     flex: 1;
