@@ -374,6 +374,90 @@ export class BridgeSnapshotService {
     };
   }
 
+  buildDiagnostic(snapshotId: string): Record<string, unknown> {
+    const snapshot = this.getSnapshot(snapshotId);
+    const site = this.getSiteSummary(snapshot.siteId);
+    const contents = this.listPages(snapshotId);
+
+    const byPostType: Record<string, number> = {};
+    const byScope: Record<string, number> = {};
+    const byStatus: Record<string, number> = {};
+    const byBuilderGeneration: Record<string, number> = {};
+    const categories = { pages: 0, posts: 0, diviLibrary: 0, themeBuilder: 0, other: 0 };
+
+    for (const item of contents) {
+      byPostType[item.postType] = (byPostType[item.postType] ?? 0) + 1;
+      const scope = item.scope ?? 'unknown';
+      byScope[scope] = (byScope[scope] ?? 0) + 1;
+      const status = item.status ?? 'unknown';
+      byStatus[status] = (byStatus[status] ?? 0) + 1;
+      const generation = item.builderGeneration ?? item.builder ?? 'unknown';
+      byBuilderGeneration[generation] = (byBuilderGeneration[generation] ?? 0) + 1;
+
+      if (item.postType === 'page') categories.pages += 1;
+      else if (item.postType === 'post') categories.posts += 1;
+      else if (item.scope === 'divi_library') categories.diviLibrary += 1;
+      else if (item.scope === 'theme_builder') categories.themeBuilder += 1;
+      else categories.other += 1;
+    }
+
+    const scalarCount = (sql: string, params: (string | number | null)[] = []) =>
+      Number(this.database.get<{ count: number }>(sql, params)?.count ?? 0);
+
+    const actualCounts = {
+      contents: scalarCount('SELECT COUNT(*) count FROM bridge_page_snapshots WHERE snapshot_id=?', [snapshotId]),
+      nodes: scalarCount(
+        'SELECT COUNT(*) count FROM bridge_nodes n JOIN bridge_page_snapshots p ON p.id=n.page_snapshot_id WHERE p.snapshot_id=?',
+        [snapshotId],
+      ),
+      sources: scalarCount('SELECT COUNT(*) count FROM bridge_sources WHERE snapshot_id=?', [snapshotId]),
+      assets: scalarCount('SELECT COUNT(*) count FROM bridge_assets WHERE snapshot_id=?', [snapshotId]),
+      dependencies: scalarCount('SELECT COUNT(*) count FROM bridge_dependencies WHERE snapshot_id=?', [snapshotId]),
+      relations: scalarCount('SELECT COUNT(*) count FROM bridge_relations WHERE snapshot_id=?', [snapshotId]),
+      sections: scalarCount('SELECT COUNT(*) count FROM bridge_snapshot_sections WHERE snapshot_id=?', [snapshotId]),
+    };
+
+    const declaredCounts = {
+      contents: snapshot.counts.pages,
+      nodes: snapshot.counts.nodes,
+      sources: snapshot.counts.sources,
+      assets: snapshot.counts.assets,
+      dependencies: snapshot.counts.dependencies,
+      relations: snapshot.counts.relations,
+      objects: snapshot.counts.objects,
+    };
+
+    return {
+      format: 'atoumweb-manager-bridge-diagnostic-v1',
+      exportedAt: new Date().toISOString(),
+      site,
+      snapshot,
+      declaredCounts,
+      actualCounts,
+      countChecks: {
+        contents: declaredCounts.contents === actualCounts.contents,
+        nodes: declaredCounts.nodes === actualCounts.nodes,
+        sources: declaredCounts.sources === actualCounts.sources,
+        assets: declaredCounts.assets === actualCounts.assets,
+        dependencies: declaredCounts.dependencies === actualCounts.dependencies,
+        relations: declaredCounts.relations === actualCounts.relations,
+      },
+      contentBreakdown: {
+        total: contents.length,
+        categories,
+        byPostType,
+        byScope,
+        byStatus,
+        byBuilderGeneration,
+      },
+      sectionKeys: this.database.all<{ section_key: string }>(
+        'SELECT section_key FROM bridge_snapshot_sections WHERE snapshot_id=? ORDER BY section_key',
+        [snapshotId],
+      ).map((row) => row.section_key),
+      contents,
+    };
+  }
+
   getObjectPreview(objectRefValue: string): BridgeObjectPreview {
     if (!objectRefValue.startsWith('sha256:') || objectRefValue.length !== 71) throw new Error('Référence objet Bridge invalide.');
     const row = this.database.get<Record<string, unknown>>('SELECT * FROM bridge_objects WHERE object_ref=?', [objectRefValue]);
