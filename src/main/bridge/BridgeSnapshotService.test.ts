@@ -58,12 +58,13 @@ describe('BridgeSnapshotService', () => {
     expect(detail.nodes).toHaveLength(1);
     expect(detail.nodes[0].moduleType).toBe('code');
 
-    const preview = service.getObjectPreview(detail.nodes[0].contentObjectRef!);
+    const preview = service.getObjectPreview(detail.nodes[0].rawObjectRef!);
     expect(preview.available).toBe(true);
-    expect(preview.text).toContain('Bonjour Bridge');
+    expect(preview.text).toContain('wp:divi/code');
 
     const modulePreview = service.getModulePreview(detail.page.pageSnapshotId, detail.nodes[0].occurrenceId);
     expect(modulePreview.html).toContain('Bonjour Bridge');
+    expect(modulePreview.htmlDerivedFromDiviSource).toBe(true);
     expect(modulePreview.moduleCss).toBe('');
     expect(modulePreview.pageCss).toBe('');
     expect(modulePreview.globalCss).toBe('');
@@ -116,7 +117,7 @@ function buildSnapshot(destination: string, title: string): string {
   const sourceSiteKey = 'wp:https://example.test/:blog:1';
   const snapshotId = 'awb-snap:20260924T000000Z:test';
   const pageSnapshotId = 'awb-pagesnap:test';
-  const raw = Buffer.from('<p>Bonjour Bridge</p>', 'utf8');
+  const raw = Buffer.from('<!-- wp:divi/code {"module":{"content":{"innerContent":{"desktop":{"value":"<section class=\\\"atoum-test-hero\\\"><h1>Bonjour Bridge</h1></section>"}}}}} -->', 'utf8');
   const rawHash = sha256(raw);
   const objectRef = `sha256:${rawHash}`;
   const objectPath = `objects/sha256/${rawHash.slice(0, 2)}/${rawHash}`;
@@ -133,7 +134,7 @@ function buildSnapshot(destination: string, title: string): string {
     snapshot_id: snapshotId,
     snapshot_type: 'full',
     scanner_capabilities: { wordpress: true, divi4: true, divi5: false },
-    observed_content: { wordpress: true, divi4: true, divi5: false },
+    observed_content: { wordpress: true, divi4: false, divi5: true },
     coverage: { pages: { mode: 'complete', post_types: ['page'], statuses: ['publish'], excluded: [] } },
     scan_status: 'complete_with_warnings',
     issues: [{ code: 'FRONTEND_AUDIT_NOT_ATTACHED', severity: 'warning', scope: 'site', entity_ref: sourceSiteKey, message: 'Front non joint.' }],
@@ -178,9 +179,9 @@ function buildSnapshot(destination: string, title: string): string {
     slug: 'accueil',
     canonical_url: 'https://example.test/',
     wordpress_guid: null,
-    storage_format: 'divi4_shortcodes',
+    storage_format: 'divi5_serialized_blocks',
     builder: 'divi',
-    builder_generation: '4',
+    builder_generation: '5',
     is_divi_content: true,
     scope: 'content',
     audit_status: 'ready',
@@ -196,7 +197,7 @@ function buildSnapshot(destination: string, title: string): string {
   const tree = {
     page_snapshot_id: pageSnapshotId,
     builder: 'divi',
-    builder_generation: '4',
+    builder_generation: '5',
     root_nodes: ['node_text_1'],
     nodes: [{
       occurrence_id: 'node_text_1',
@@ -205,8 +206,8 @@ function buildSnapshot(destination: string, title: string): string {
       position: 0,
       node_type: 'module',
       builder: 'divi',
-      builder_generation: '4',
-      module_type: 'code',
+      builder_generation: '5',
+      module_type: 'divi/code',
       label: 'Code',
       classes: [],
       ids: [],
@@ -215,8 +216,8 @@ function buildSnapshot(destination: string, title: string): string {
       dependency_ids: [],
       relation_ids: [],
       raw_source: { object_ref: objectRef },
-      content: { object_ref: objectRef },
-      fingerprints: { node: objectRef, content: objectRef },
+      content: null,
+      fingerprints: { node: objectRef },
       matching_hints: {},
       attributes: {},
       responsive: {},
@@ -231,7 +232,7 @@ function buildSnapshot(destination: string, title: string): string {
   addJson('manifest.json', manifest);
   addJson('site.json', site);
   addJson('snapshot.json', snapshot);
-  addJson('registries/objects.json', { objects: [{ ref: objectRef, path: objectPath, content_type: 'text/html', encoding: 'utf-8', byte_length: raw.length, serialization: 'text', compression: 'none' }] });
+  addJson('registries/objects.json', { objects: [{ ref: objectRef, path: objectPath, content_type: 'text/plain', encoding: 'utf-8', byte_length: raw.length, serialization: 'text', compression: 'none' }] });
   addJson('registries/sources.json', { sources: [] });
   addJson('registries/assets.json', { assets: [] });
   addJson('registries/dependencies.json', { dependencies: [] });
