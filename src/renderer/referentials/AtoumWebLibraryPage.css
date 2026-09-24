@@ -357,3 +357,265 @@ body.aw-library-resizing {
   align-items: center;
   gap: 6px;
 }
+
+
+/* V2 responsive — exploitation-first */
+.aw-library {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.aw-library-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.aw-library-toolbar {
+  grid-template-columns: minmax(260px, 2fr) minmax(150px, 1fr) minmax(150px, 1fr) auto auto auto;
+  align-items: center;
+}
+
+.aw-library-layout {
+  min-width: 0;
+  align-items: start;
+}
+
+.aw-library-list,
+.aw-library-detail {
+  min-width: 0;
+  scrollbar-gutter: stable;
+}
+
+.aw-library-detail {
+  max-width: 100%;
+}
+
+.aw-library-detail-heading {
+  gap: 12px;
+}
+
+.aw-library-detail-heading > div:first-child {
+  min-width: 0;
+}
+
+.aw-library-detail-heading h2 {
+  overflow-wrap: anywhere;
+}
+
+.aw-library-current-version {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent-soft) 22%, var(--surface));
+}
+
+.aw-library-current-version .aw-library-section-title {
+  align-items: center;
+}
+
+.aw-library-current-notes {
+  margin: -2px 0 0;
+}
+
+.aw-library-version-toggle {
+  justify-self: start;
+}
+
+.aw-library-assets,
+.aw-library-version-form,
+.aw-library-versions,
+.aw-library-create,
+.aw-library-package-review,
+.aw-library-metadata-editor {
+  min-width: 0;
+}
+
+.aw-library-asset-toolbar {
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) minmax(150px, .8fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.aw-library-asset-toolbar label,
+.aw-library-form-grid label {
+  min-width: 0;
+}
+
+.aw-library-asset-toolbar select,
+.aw-library-form-grid input,
+.aw-library-form-grid select,
+.aw-library textarea {
+  width: 100%;
+  min-width: 0;
+}
+
+.aw-library-asset-list {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.aw-library-version {
+  min-width: 0;
+}
+
+.aw-library-version > div:first-child {
+  min-width: 0;
+}
+
+.aw-library-version-flags {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1320px) {
+  .aw-library-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .aw-library-toolbar {
+    grid-template-columns: minmax(240px, 2fr) repeat(2, minmax(150px, 1fr));
+  }
+
+  .aw-library-toolbar > input {
+    grid-column: 1 / -1;
+  }
+
+  .aw-library-toolbar > .aw-library-checkbox,
+  .aw-library-toolbar > button {
+    min-width: 0;
+  }
+
+  .aw-library-detail-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .aw-library-detail-heading .button-row {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 1120px) {
+  .aw-library-layout.with-detail,
+  .aw-library-layout.detail-expanded {
+    grid-template-columns: 1fr !important;
+  }
+
+  .aw-library-splitter {
+    display: none;
+  }
+
+  .aw-library-list,
+  .aw-library-detail {
+    position: static;
+    max-height: none;
+    margin-left: 0;
+  }
+
+  .aw-library-list {
+    max-height: 420px;
+  }
+
+  .aw-library-detail {
+    margin-top: 10px;
+  }
+
+  .aw-library-detail.expanded {
+    margin-top: 0;
+  }
+
+  .aw-library-asset-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .aw-library-asset-toolbar > button {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 820px) {
+  .aw-library-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .aw-library-toolbar > input {
+    grid-column: 1 / -1;
+  }
+
+  .aw-library-form-grid,
+  .aw-library-package-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .aw-library-section-title {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .aw-library-section-title > button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .aw-library-detail-heading .button-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .aw-library-detail-heading .button-row .secondary-button {
+    justify-content: center;
+  }
+
+  .aw-library-detail-heading .operation-detail-expand,
+  .aw-library-detail-heading .close-detail {
+    width: 100%;
+  }
+}
+
+@media (max-width: 620px) {
+  .aw-library-summary,
+  .aw-library-toolbar,
+  .aw-library-asset-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .aw-library-toolbar > input,
+  .aw-library-asset-toolbar > button {
+    grid-column: auto;
+  }
+
+  .aw-library-toolbar button,
+  .aw-library-asset-toolbar button {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .aw-library-detail-heading .button-row {
+    grid-template-columns: 1fr;
+  }
+
+  .aw-library-list {
+    max-height: 360px;
+  }
+
+  .aw-library-item {
+    gap: 8px;
+  }
+
+  .aw-library-item-meta {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .aw-library-current-version,
+  .aw-library-assets,
+  .aw-library-version-form,
+  .aw-library-versions {
+    padding-inline: 10px;
+  }
+}
