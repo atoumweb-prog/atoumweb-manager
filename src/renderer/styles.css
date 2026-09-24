@@ -332,3 +332,44 @@ button { color: inherit; }
     justify-self: start;
   }
 }
+
+
+/* Bibliothèque : haut fixe compact pour libérer l'espace de travail */
+.content-area.library-workspace-content {
+  padding-top: 16px;
+  padding-bottom: 14px;
+}
+
+.content-area.library-workspace-content > .page-heading {
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.content-area.library-workspace-content > .page-heading h1 {
+  margin: 2px 0 3px;
+  font-size: clamp(22px, 2.2vw, 28px);
+}
+
+.content-area.library-workspace-content > .page-heading p {
+  font-size: 11px;
+}
+
+.content-area.library-workspace-content > .notice {
+  margin-bottom: 8px;
+  padding: 7px 10px;
+  font-size: 11px;
+}
+
+.content-area.library-workspace-content > .notice button {
+  font-size: 16px;
+}
+
+@media (max-width: 900px) {
+  .content-area.library-workspace-content {
+    padding-top: 18px;
+  }
+
+  .content-area.library-workspace-content > .page-heading {
+    align-items: flex-start;
+  }
+}
