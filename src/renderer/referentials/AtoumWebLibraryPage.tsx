@@ -1184,9 +1184,14 @@ function parseBridgeLibraryPayload(contentType?: ProjectTechnicalContentType | n
       const candidate = parseBridgeLibraryCandidate(contentType, content);
       return candidate ? { stage: 'original', value: candidate } : null;
     }
+    if (value.kind === 'atoumweb-library-work-component') {
+      const work = parseBridgeWorkComponent(value);
+      return work ? { stage: 'work', value: work } : null;
+    }
+    // Compatibilité avec les versions créées avant le renommage "Nettoyée" -> "Version de travail".
     if (value.kind === 'atoumweb-library-cleaned-component') {
-      const cleaned = parseBridgeCleanedComponent(value);
-      return cleaned ? { stage: 'cleaned', value: cleaned } : null;
+      const work = parseLegacyBridgeCleanedAsWork(value);
+      return work ? { stage: 'work', value: work } : null;
     }
     if (value.kind === 'atoumweb-library-reusable-component') {
       const reusable = parseBridgeReusableComponent(value);
@@ -1198,16 +1203,37 @@ function parseBridgeLibraryPayload(contentType?: ProjectTechnicalContentType | n
   }
 }
 
-function parseBridgeCleanedComponent(value: Record<string, unknown>): BridgeCleanedComponent | null {
+function parseBridgeWorkComponent(value: Record<string, unknown>): BridgeWorkComponent | null {
+  const origin = parseBridgeOrigin(value.origin);
+  const work = value.work && typeof value.work === 'object' ? value.work as Record<string, unknown> : null;
+  const checks = value.checks && typeof value.checks === 'object' ? value.checks as Record<string, unknown> : {};
+  if (!origin || !work) return null;
+  return {
+    schemaVersion: Number(value.schemaVersion ?? 1),
+    kind: 'atoumweb-library-work-component',
+    origin,
+    work: {
+      html: typeof work.html === 'string' ? work.html : '',
+      css: typeof work.css === 'string' ? work.css : '',
+      javascript: typeof work.javascript === 'string' ? work.javascript : '',
+      rootClasses: stringArray(work.rootClasses),
+    },
+    checks: { remoteAssetUrls: stringArray(checks.remoteAssetUrls) },
+    instructions: stringArray(value.instructions),
+    notes: stringArray(value.notes),
+  };
+}
+
+function parseLegacyBridgeCleanedAsWork(value: Record<string, unknown>): BridgeWorkComponent | null {
   const origin = parseBridgeOrigin(value.origin);
   const cleaned = value.cleaned && typeof value.cleaned === 'object' ? value.cleaned as Record<string, unknown> : null;
   const checks = value.checks && typeof value.checks === 'object' ? value.checks as Record<string, unknown> : {};
   if (!origin || !cleaned) return null;
   return {
     schemaVersion: Number(value.schemaVersion ?? 1),
-    kind: 'atoumweb-library-cleaned-component',
+    kind: 'atoumweb-library-work-component',
     origin,
-    cleaned: {
+    work: {
       html: typeof cleaned.html === 'string' ? cleaned.html : '',
       css: typeof cleaned.css === 'string' ? cleaned.css : '',
       javascript: typeof cleaned.javascript === 'string' ? cleaned.javascript : '',
@@ -1215,7 +1241,7 @@ function parseBridgeCleanedComponent(value: Record<string, unknown>): BridgeClea
     },
     checks: { remoteAssetUrls: stringArray(checks.remoteAssetUrls) },
     instructions: stringArray(value.instructions),
-    notes: stringArray(value.notes),
+    notes: [...stringArray(value.notes), 'Ancienne version « nettoyée » interprétée comme version de travail.'],
   };
 }
 
@@ -1286,7 +1312,7 @@ function suggestedBridgeLibraryName(candidate: BridgeLibraryCandidate, category:
   return `${labels[category] ?? 'Composant'} — ${detail}`;
 }
 
-function buildBridgeCleanedComponent(candidate: BridgeLibraryCandidate): BridgeCleanedComponent {
+function buildBridgeWorkComponent(candidate: BridgeLibraryCandidate): BridgeWorkComponent {
   const cssParts = [
     candidate.original.cssModule.trim() ? `/* CSS du module */\n${candidate.original.cssModule.trim()}` : '',
     candidate.prepared.cssPageUseful.trim() ? `/* CSS utile extrait de la page */\n${candidate.prepared.cssPageUseful.trim()}` : '',
@@ -1299,44 +1325,65 @@ function buildBridgeCleanedComponent(candidate: BridgeLibraryCandidate): BridgeC
 
   return {
     schemaVersion: 1,
-    kind: 'atoumweb-library-cleaned-component',
+    kind: 'atoumweb-library-work-component',
     origin: candidate.origin,
-    cleaned: { html, css, javascript, rootClasses: candidate.prepared.rootClasses },
+    work: { html, css, javascript, rootClasses: candidate.prepared.rootClasses },
     checks: { remoteAssetUrls },
     instructions: [
-      'Coller le HTML dans un module Code Divi.',
-      ...(css ? ['Ajouter le CSS final du composant.'] : []),
-      ...(javascript ? ['Ajouter le JavaScript séparé après vérification.'] : []),
+      'Vérifier le rendu face à l’original sur Desktop, Tablette et Mobile.',
+      'Modifier ici le HTML, le CSS ou le JavaScript si nécessaire.',
+      'Chaque enregistrement crée une nouvelle révision de travail.',
     ],
     notes: [
-      'Le CSS sans rapport avec les classes du composant n’est pas repris depuis la page ou le global.',
+      'Le CSS page/global non détecté comme utile n’est pas incorporé automatiquement.',
       ...(remoteAssetUrls.length ? [`${remoteAssetUrls.length} média(s) utilisent encore une URL distante.`] : []),
     ],
   };
 }
 
-function buildBridgeReusableComponent(cleaned: BridgeCleanedComponent): BridgeReusableComponent {
+function refreshBridgeWorkChecks(work: BridgeWorkComponent): BridgeWorkComponent {
+  const normalized = {
+    ...work,
+    work: {
+      ...work.work,
+      html: normalizeReusableText(work.work.html),
+      css: normalizeReusableText(work.work.css),
+      javascript: normalizeReusableText(work.work.javascript),
+    },
+  };
+  return {
+    ...normalized,
+    checks: { remoteAssetUrls: extractRemoteAssetUrls(`${normalized.work.html}\n${normalized.work.css}`) },
+  };
+}
+
+function buildBridgeReusableComponent(work: BridgeWorkComponent): BridgeReusableComponent {
+  const checked = refreshBridgeWorkChecks(work);
   return {
     schemaVersion: 1,
     kind: 'atoumweb-library-reusable-component',
-    origin: cleaned.origin,
+    origin: checked.origin,
     reusable: {
-      html: cleaned.cleaned.html,
-      css: cleaned.cleaned.css,
-      javascript: cleaned.cleaned.javascript,
-      rootClasses: cleaned.cleaned.rootClasses,
+      html: checked.work.html,
+      css: checked.work.css,
+      javascript: checked.work.javascript,
+      rootClasses: checked.work.rootClasses,
       method: 'divi-code',
       instructions: [
         'Dans Divi, ajouter un module Code.',
         'Copier le HTML du composant dans le module Code.',
-        ...(cleaned.cleaned.css ? ['Ajouter le CSS fourni dans le CSS de la page ou dans la zone prévue pour les composants AtoumWeb.'] : []),
-        ...(cleaned.cleaned.javascript ? ['Ajouter le JavaScript fourni dans une zone d’intégration contrôlée et le tester avant mise en ligne.'] : []),
-        ...(cleaned.checks.remoteAssetUrls.length ? ['Remplacer les URLs des médias par les copies locales du nouveau site dès que les assets auront été embarqués.'] : []),
+        ...(checked.work.css ? ['Ajouter le CSS fourni dans le CSS de la page ou dans la zone prévue pour les composants AtoumWeb.'] : []),
+        ...(checked.work.javascript ? ['Ajouter le JavaScript fourni dans une zone d’intégration contrôlée et le tester avant mise en ligne.'] : []),
+        ...(checked.checks.remoteAssetUrls.length ? ['Remplacer les URLs des médias par les copies locales du nouveau site dès que les assets auront été embarqués.'] : []),
       ],
     },
-    checks: { remoteAssetUrls: cleaned.checks.remoteAssetUrls },
-    notes: cleaned.notes,
+    checks: { remoteAssetUrls: checked.checks.remoteAssetUrls },
+    notes: checked.notes,
   };
+}
+
+function mergeLibraryTags(existing: string[] | null | undefined, additions: string[]): string[] {
+  return [...new Set([...(existing ?? []), ...additions])];
 }
 
 function normalizeReusableText(value: string): string {
@@ -1346,10 +1393,6 @@ function normalizeReusableText(value: string): string {
 function extractRemoteAssetUrls(value: string): string[] {
   const matches = value.match(/https?:\/\/[^"'\s)]+/gi) ?? [];
   return [...new Set(matches.filter((url) => /\.(?:avif|gif|jpe?g|png|svg|webp|woff2?|ttf|otf)(?:[?#].*)?$/i.test(url)))];
-}
-
-function buildBridgeCleanedPreview(component: BridgeCleanedComponent): string {
-  return buildReusablePreviewDocument(component.origin.pageUrl, component.cleaned.html, component.cleaned.css);
 }
 
 function buildBridgeReusablePreview(component: BridgeReusableComponent): string {
