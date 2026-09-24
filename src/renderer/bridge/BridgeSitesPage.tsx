@@ -743,6 +743,38 @@ function isCustomCodeModule(moduleType: string | null): boolean {
   return Boolean(moduleType && /(^|[/_-])code($|[/_-])/i.test(moduleType));
 }
 
+function reuseStatusLabel(status?: BridgeModulePreview['reuse']['status'] | null): string {
+  if (status === 'ready') return 'Réutilisable';
+  if (status === 'dependencies') return 'Réutilisable avec dépendances';
+  return 'À analyser';
+}
+
+function reuseDependencySummary(preview: BridgeModulePreview): string {
+  if (!preview.html) return 'HTML non isolé automatiquement';
+  const parts: string[] = [];
+  if (preview.moduleCss) parts.push('CSS module');
+  if (preview.reuse.relevantPageRuleCount) parts.push(`${preview.reuse.relevantPageRuleCount} règle(s) CSS page`);
+  if (preview.reuse.relevantGlobalRuleCount) parts.push(`${preview.reuse.relevantGlobalRuleCount} règle(s) CSS global`);
+  if (preview.javascript) parts.push('JS');
+  if (preview.reuse.moduleAssetCount) parts.push(`${preview.reuse.moduleAssetCount} média(s)`);
+  return parts.length ? parts.join(' · ') : 'HTML autonome';
+}
+
+function libraryCategoryLabel(category: BridgeModulePreview['reuse']['suggestedCategory']): string {
+  const labels: Record<BridgeModulePreview['reuse']['suggestedCategory'], string> = {
+    header: 'Header',
+    footer: 'Footer',
+    hero: 'Hero',
+    section: 'Section',
+    form: 'Formulaire',
+    gallery: 'Galerie',
+    carousel: 'Carrousel',
+    navigation: 'Navigation',
+    divi: 'Élément Divi',
+  };
+  return labels[category];
+}
+
 function sourceOriginLabel(origin: string): string {
   if (origin === 'divi_code_module') return 'HTML module Code';
   if (origin === 'divi_code_module_style_block') return 'CSS du module';
@@ -758,6 +790,34 @@ function sourceScopeLabel(scope: string): string {
   if (scope === 'page') return 'Lié à cette page';
   if (scope === 'global') return 'Global au site';
   return scope;
+}
+
+function buildReconstructedPagePreview(preview: BridgePagePreview): string {
+  const globalCss = safeCss(preview.globalCss);
+  const pageCss = safeCss(preview.pageCss);
+  const moduleCss = safeCss(preview.moduleCss);
+  const base = preview.url ? `<base href="${escapeHtmlAttribute(preview.url)}">` : '';
+  return `<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+${base}
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https: data:; font-src https: data:; media-src https: data:;">
+<style>
+html,body{margin:0;min-height:100%;background:#fff;color:#111}
+body{font-family:Arial,Helvetica,sans-serif}
+*,*::before,*::after{box-sizing:border-box}
+[data-bridge-page-module]{position:relative}
+</style>
+<style data-bridge-layer="global">${globalCss}</style>
+<style data-bridge-layer="page">${pageCss}</style>
+<style data-bridge-layer="modules">${moduleCss}</style>
+</head>
+<body>
+${preview.html}
+</body>
+</html>`;
 }
 
 function buildReconstructedPreview(preview: BridgeModulePreview): string {
