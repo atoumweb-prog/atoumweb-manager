@@ -1241,6 +1241,11 @@ function BridgeReusableViewer({
         <OperationIcon name="wrench" size={16} />
         <span>Prévu pour le flux <strong>Bibliothèque → Bridge → Workbench Divi</strong>. Ce package ne déclenche aucune écriture directe en production.</span>
       </div>
+      <div className="aw-bridge-package-summary">
+        <span>Dépendances <strong>{component.dependencies.length}</strong></span>
+        <span>Assets source <strong>{component.assets.length}</strong></span>
+        <span>Ressources distantes <strong>{component.checks.remoteAssetUrls.length}</strong></span>
+      </div>
       <div className="aw-bridge-candidate-instructions">
         {component.reusable.instructions.map((instruction) => <p key={instruction}><OperationIcon name="check-circle" size={15} />{instruction}</p>)}
       </div>
@@ -1263,8 +1268,8 @@ function BridgeReusableViewer({
 }
 
 function ReusableFieldsPanel({ fields }: { fields: BridgeReusableField[] }) {
-  const summary = summarizeReusableFields(fields);
   const { actions, standalone } = groupReusableFields(fields);
+  const summary = summarizeReusableFields(standalone, actions.length);
 
   return <details className="aw-reusable-fields">
     <summary className="aw-reusable-fields-summary">
@@ -1274,8 +1279,8 @@ function ReusableFieldsPanel({ fields }: { fields: BridgeReusableField[] }) {
         <p>{[
           summary.titles ? `${summary.titles} titre${summary.titles > 1 ? 's' : ''}` : '',
           summary.texts ? `${summary.texts} texte${summary.texts > 1 ? 's' : ''}` : '',
-          summary.buttons ? `${summary.buttons} bouton${summary.buttons > 1 ? 's' : ''}` : '',
-          summary.links ? `${summary.links} lien${summary.links > 1 ? 's' : ''}` : '',
+          summary.actions ? `${summary.actions} action${summary.actions > 1 ? 's' : ''}` : '',
+          summary.links ? `${summary.links} lien${summary.links > 1 ? 's' : ''} isolé${summary.links > 1 ? 's' : ''}` : '',
           summary.images ? `${summary.images} image${summary.images > 1 ? 's' : ''}` : '',
         ].filter(Boolean).join(' · ')}</p>
       </div>
@@ -1310,15 +1315,14 @@ function ReusableFieldsPanel({ fields }: { fields: BridgeReusableField[] }) {
   </details>;
 }
 
-function summarizeReusableFields(fields: BridgeReusableField[]): { titles: number; texts: number; buttons: number; links: number; images: number } {
+function summarizeReusableFields(fields: BridgeReusableField[], actionCount: number): { titles: number; texts: number; actions: number; links: number; images: number } {
   return fields.reduce((result, field) => {
     if (field.type === 'image') result.images += 1;
     else if (field.type === 'link') result.links += 1;
     else if (/^titre\b/i.test(field.label)) result.titles += 1;
-    else if (/^bouton\s*\/\s*lien\b/i.test(field.label)) result.buttons += 1;
     else result.texts += 1;
     return result;
-  }, { titles: 0, texts: 0, buttons: 0, links: 0, images: 0 });
+  }, { titles: 0, texts: 0, actions: actionCount, links: 0, images: 0 });
 }
 
 function groupReusableFields(fields: BridgeReusableField[]): {
