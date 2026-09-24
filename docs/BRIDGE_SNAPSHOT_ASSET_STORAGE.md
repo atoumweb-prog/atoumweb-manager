@@ -161,7 +161,30 @@ La version de travail doit pouvoir :
 
 ### Réutilisable
 
-La version réutilisable doit idéalement devenir autonome :
+La version réutilisable n’est pas une copie conforme de la version de travail : elle devient un **modèle AtoumWeb générique**.
+
+Elle doit :
+
+- conserver la structure, les classes, le CSS, le responsive et le comportement validés ;
+- remplacer les textes métier propres au site d’origine par des contenus de démonstration neutres ;
+- neutraliser les liens propres au site d’origine ;
+- remplacer les images de contenu et images de fond par des médias de démonstration locaux ;
+- identifier explicitement les champs personnalisables (texte, lien, image) ;
+- ne devenir `Prêt à réutiliser` que si la généralisation est valide et que les ressources nécessaires ne dépendent plus du site source.
+
+Exemple de champs :
+
+```text
+Titre principal      -> Texte
+Texte principal      -> Texte
+Bouton principal     -> Texte
+Lien principal       -> Lien
+Image principale     -> Image
+```
+
+À terme, l’action **Utiliser ce composant** doit permettre de renseigner ces champs dans le Manager avant de produire le HTML/CSS/JS final du nouveau projet.
+
+La version réutilisable doit également pouvoir devenir autonome sous forme de paquet :
 
 ```text
 Home-Blog-V2/
