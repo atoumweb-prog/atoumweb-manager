@@ -268,6 +268,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
       );
       setLibraryCandidate(null);
       onMessage(`Candidat « ${created.name} » ajouté à la Bibliothèque AtoumWeb avec sa source originale.`);
+      window.dispatchEvent(new CustomEvent('atoumweb:open-library-item', { detail: created.id }));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Impossible de préparer ce composant pour la Bibliothèque.');
     }
