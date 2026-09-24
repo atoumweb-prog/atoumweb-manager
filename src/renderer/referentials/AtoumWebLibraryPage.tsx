@@ -271,10 +271,6 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   }), [items]);
 
   const currentVersion = selected?.currentVersion ?? selected?.versions[0] ?? null;
-  const currentBridgePayload = useMemo(
-    () => parseBridgeLibraryPayload(currentVersion?.contentType, currentVersion?.contentText),
-    [currentVersion?.id, currentVersion?.contentType, currentVersion?.contentText],
-  );
   const bridgeWorkflow = useMemo(() => {
     const parsed = (selected?.versions ?? [])
       .map((version) => ({ version, payload: parseBridgeLibraryPayload(version.contentType, version.contentText) }))
@@ -290,6 +286,13 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
     : bridgeStageView === 'work'
       ? bridgeWorkflow.work
       : bridgeWorkflow.reusable;
+  const reusableNeedsRefresh = Boolean(
+    bridgeWorkflow.work
+    && (!bridgeWorkflow.reusable || bridgeWorkflow.work.version.versionNumber > bridgeWorkflow.reusable.version.versionNumber),
+  );
+  const reusableRemoteAssets = bridgeWorkflow.reusable?.payload.stage === 'reusable'
+    ? bridgeWorkflow.reusable.payload.value.checks.remoteAssetUrls.length
+    : 0;
 
   const originalBridgeCandidate = bridgeWorkflow.original?.payload.stage === 'original' ? bridgeWorkflow.original.payload.value : null;
   const recommendedBridgeCategory = originalBridgeCandidate ? inferBridgeLibraryCategory(originalBridgeCandidate) : null;
@@ -506,7 +509,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   }
 
   async function createBridgeReusableVersion(): Promise<void> {
-    if (!selected || bridgeWorkflow.reusable) return;
+    if (!selected || !reusableNeedsRefresh) return;
     const payload = bridgeWorkflow.work?.payload;
     if (!payload || payload.stage !== 'work') {
       setError('Crée d’abord une version de travail.');
@@ -798,17 +801,17 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
                       </div>}
                 </div>
 
-                <div className={`${bridgeWorkflow.reusable ? 'done' : bridgeWorkflow.work ? 'next' : 'locked'} ${bridgeStageView === 'reusable' ? 'active' : ''}`}>
-                  {bridgeWorkflow.reusable
+                <div className={`${bridgeWorkflow.reusable ? (selected.reuseStatus === 'ready' && !reusableNeedsRefresh ? 'done' : 'warning') : bridgeWorkflow.work ? 'next' : 'locked'} ${bridgeStageView === 'reusable' ? 'active' : ''}`}>
+                  {bridgeWorkflow.reusable && !reusableNeedsRefresh
                     ? <button className="aw-library-stage-open" type="button" onClick={() => setBridgeStageView('reusable')}>
                         <span>3</span>
-                        <div><strong>Réutilisable</strong><small>V{bridgeWorkflow.reusable.version.versionNumber} · paquet validé</small></div>
-                        <OperationIcon name="check-circle" size={18} />
+                        <div><strong>Réutilisable</strong><small>V{bridgeWorkflow.reusable.version.versionNumber} · {reusableRemoteAssets ? `${reusableRemoteAssets} média(s) à localiser` : 'prête et stable'}</small></div>
+                        <OperationIcon name={selected.reuseStatus === 'ready' ? 'check-circle' : 'alert'} size={18} />
                       </button>
                     : <div className="aw-library-stage-create">
                         <span>3</span>
-                        <div><strong>Réutilisable</strong><small>Figer la version de travail + mode d’emploi</small></div>
-                        <button className="primary-button" type="button" disabled={bridgeWorkflowBusy || !bridgeWorkflow.work} onClick={() => void createBridgeReusableVersion()}>Préparer</button>
+                        <div><strong>Réutilisable</strong><small>{bridgeWorkflow.reusable ? 'La version de travail a changé : régénérer le paquet' : 'Figer la version de travail + mode d’emploi'}</small></div>
+                        <button className="primary-button" type="button" disabled={bridgeWorkflowBusy || !bridgeWorkflow.work} onClick={() => void createBridgeReusableVersion()}>{bridgeWorkflow.reusable ? 'Mettre à jour' : 'Préparer'}</button>
                       </div>}
                 </div>
               </div>
@@ -913,11 +916,12 @@ function BridgeSummaryStages({ item }: { item: AtoumWebTechnicalItemSummary }) {
 
   const hasWork = tags.has('bridge-stage-work') || current?.stage === 'work' || current?.stage === 'reusable';
   const hasReusable = tags.has('bridge-stage-reusable') || current?.stage === 'reusable';
+  const reusableReady = hasReusable && item.reuseStatus === 'ready';
 
   return <span className="aw-library-stage-badges" aria-label="Étapes du composant">
     <span className="done">Originale ✓</span>
     <span className={hasWork ? 'done' : 'pending'}>Travail {hasWork ? '✓' : '—'}</span>
-    <span className={hasReusable ? 'done' : 'pending'}>Réutil. {hasReusable ? '✓' : '—'}</span>
+    <span className={reusableReady ? 'done' : hasReusable ? 'warning' : 'pending'}>Réutil. {reusableReady ? '✓' : hasReusable ? '⚠' : '—'}</span>
   </span>;
 }
 
@@ -948,7 +952,7 @@ function BridgePreviewWorkbench({
 }) {
   const [device, setDevice] = useState<PreviewDevice>('auto');
   const [compare, setCompare] = useState(false);
-  const selectedDevice = PREVIEW_DEVICES.find((item) => item.id === device) ?? PREVIEW_DEVICES[0];
+  const selectedDevice = PREVIEW_DEVICES.find((item) => item.id === device) ?? { id: 'auto' as const, label: 'Auto', width: null };
 
   return <div className="aw-preview-workbench">
     <div className="aw-preview-toolbar">
