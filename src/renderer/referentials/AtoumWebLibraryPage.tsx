@@ -108,6 +108,46 @@ interface BridgeLibraryCandidate {
   };
 }
 
+interface BridgeCleanedComponent {
+  schemaVersion: number;
+  kind: 'atoumweb-library-cleaned-component';
+  origin: BridgeLibraryCandidate['origin'];
+  cleaned: {
+    html: string;
+    css: string;
+    javascript: string;
+    rootClasses: string[];
+  };
+  checks: {
+    remoteAssetUrls: string[];
+  };
+  instructions: string[];
+  notes: string[];
+}
+
+interface BridgeReusableComponent {
+  schemaVersion: number;
+  kind: 'atoumweb-library-reusable-component';
+  origin: BridgeLibraryCandidate['origin'];
+  reusable: {
+    html: string;
+    css: string;
+    javascript: string;
+    rootClasses: string[];
+    method: 'divi-code';
+    instructions: string[];
+  };
+  checks: {
+    remoteAssetUrls: string[];
+  };
+  notes: string[];
+}
+
+type BridgeLibraryPayload =
+  | { stage: 'original'; value: BridgeLibraryCandidate }
+  | { stage: 'cleaned'; value: BridgeCleanedComponent }
+  | { stage: 'reusable'; value: BridgeReusableComponent };
+
 const EMPTY_FORM: CreationForm = {
   name: '',
   category: 'section',
@@ -155,6 +195,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   const [packageTargetItemId, setPackageTargetItemId] = useState('');
   const [packageMarkStable, setPackageMarkStable] = useState(false);
   const [packageBusy, setPackageBusy] = useState(false);
+  const [bridgeWorkflowBusy, setBridgeWorkflowBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function loadVersionAssets(versionId: string): Promise<void> {
@@ -224,10 +265,20 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   }), [items]);
 
   const currentVersion = selected?.currentVersion ?? selected?.versions[0] ?? null;
-  const currentBridgeCandidate = useMemo(
-    () => parseBridgeLibraryCandidate(currentVersion?.contentType, currentVersion?.contentText),
+  const currentBridgePayload = useMemo(
+    () => parseBridgeLibraryPayload(currentVersion?.contentType, currentVersion?.contentText),
     [currentVersion?.id, currentVersion?.contentType, currentVersion?.contentText],
   );
+  const bridgeWorkflow = useMemo(() => {
+    const parsed = (selected?.versions ?? [])
+      .map((version) => ({ version, payload: parseBridgeLibraryPayload(version.contentType, version.contentText) }))
+      .filter((entry): entry is { version: NonNullable<typeof selected>['versions'][number]; payload: BridgeLibraryPayload } => Boolean(entry.payload));
+    return {
+      original: parsed.find((entry) => entry.payload.stage === 'original') ?? null,
+      cleaned: parsed.find((entry) => entry.payload.stage === 'cleaned') ?? null,
+      reusable: parsed.find((entry) => entry.payload.stage === 'reusable') ?? null,
+    };
+  }, [selected?.id, selected?.versions]);
 
   function closeDetail(): void {
     setSelected(null);
