@@ -837,6 +837,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
                     />
                   : <BridgeReusableViewer
                       component={displayedBridgeEntry.payload.value}
+                      work={bridgeWorkflow.work?.payload.stage === 'work' ? bridgeWorkflow.work.payload.value : null}
                       original={originalBridgeCandidate}
                       rawContent={displayedBridgeEntry.version.contentText ?? ''}
                       onMessage={onMessage}
@@ -1134,17 +1135,22 @@ function BridgeWorkViewer({
 
 function BridgeReusableViewer({
   component,
+  work,
   original,
   rawContent,
   onMessage,
 }: {
   component: BridgeReusableComponent;
+  work: BridgeWorkComponent | null;
   original: BridgeLibraryCandidate | null;
   rawContent: string;
   onMessage: (message: string) => void;
 }) {
   const previewDocument = buildBridgeReusablePreview(component);
+  const workDocument = work ? buildReusablePreviewDocument(work.origin.pageUrl, work.work.html, work.work.css) : null;
   const originalDocument = original ? buildBridgeCandidatePreview(original) : null;
+  const comparisonDocument = workDocument ?? originalDocument;
+  const comparisonLabel = workDocument ? 'Version de travail' : 'Originale';
   const ready = component.checks.remoteAssetUrls.length === 0;
 
   return <div className="aw-bridge-candidate-viewer">
@@ -1155,7 +1161,7 @@ function BridgeReusableViewer({
 
     <section className="aw-bridge-candidate-preview">
       <div className="aw-library-section-title"><div><span className="eyebrow">Contrôle final</span><h3>Réutilisable responsive + comparaison</h3></div></div>
-      <BridgePreviewWorkbench title="Réutilisable" document={previewDocument} originalDocument={originalDocument} />
+      <BridgePreviewWorkbench title="Réutilisable" document={previewDocument} originalDocument={comparisonDocument} originalLabel={comparisonLabel} />
     </section>
 
     <section className="aw-bridge-candidate-reuse">
