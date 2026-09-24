@@ -905,6 +905,84 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   );
 }
 
+function BridgeSummaryStages({ item }: { item: AtoumWebTechnicalItemSummary }) {
+  const current = parseBridgeLibraryPayload(item.currentVersion?.contentType, item.currentVersion?.contentText);
+  const tags = new Set(item.tags ?? []);
+  const isBridge = tags.has('bridge') || Boolean(current);
+  if (!isBridge) return null;
+
+  const hasWork = tags.has('bridge-stage-work') || current?.stage === 'work' || current?.stage === 'reusable';
+  const hasReusable = tags.has('bridge-stage-reusable') || current?.stage === 'reusable';
+
+  return <span className="aw-library-stage-badges" aria-label="Étapes du composant">
+    <span className="done">Originale ✓</span>
+    <span className={hasWork ? 'done' : 'pending'}>Travail {hasWork ? '✓' : '—'}</span>
+    <span className={hasReusable ? 'done' : 'pending'}>Réutil. {hasReusable ? '✓' : '—'}</span>
+  </span>;
+}
+
+function bridgeStageLabel(stage: BridgeLibraryPayload['stage']): string {
+  if (stage === 'original') return 'Version originale';
+  if (stage === 'work') return 'Version de travail';
+  return 'Version réutilisable';
+}
+
+type PreviewDevice = 'auto' | 'desktop' | 'tablet' | 'mobile';
+const PREVIEW_DEVICES: Array<{ id: PreviewDevice; label: string; width: number | null }> = [
+  { id: 'auto', label: 'Auto', width: null },
+  { id: 'desktop', label: 'Desktop', width: 1440 },
+  { id: 'tablet', label: 'Tablette', width: 768 },
+  { id: 'mobile', label: 'Mobile', width: 390 },
+];
+
+function BridgePreviewWorkbench({
+  title,
+  document,
+  originalDocument,
+  originalLabel = 'Originale',
+}: {
+  title: string;
+  document: string;
+  originalDocument?: string | null;
+  originalLabel?: string;
+}) {
+  const [device, setDevice] = useState<PreviewDevice>('auto');
+  const [compare, setCompare] = useState(false);
+  const selectedDevice = PREVIEW_DEVICES.find((item) => item.id === device) ?? PREVIEW_DEVICES[0];
+
+  return <div className="aw-preview-workbench">
+    <div className="aw-preview-toolbar">
+      <div className="aw-preview-devices" role="group" aria-label="Largeur de prévisualisation">
+        {PREVIEW_DEVICES.map((item) => <button
+          key={item.id}
+          type="button"
+          className={device === item.id ? 'active' : ''}
+          onClick={() => setDevice(item.id)}
+        >{item.label}{item.width ? <small>{item.width}px</small> : null}</button>)}
+      </div>
+      {originalDocument && <button className={`secondary-button ${compare ? 'active' : ''}`} type="button" onClick={() => setCompare((value) => !value)}>
+        {compare ? 'Vue simple' : 'Comparer à l’original'}
+      </button>}
+    </div>
+
+    <div className={`aw-preview-grid ${compare && originalDocument ? 'compare' : ''}`}>
+      {compare && originalDocument && <PreviewViewport label={originalLabel} document={originalDocument} device={selectedDevice} />}
+      <PreviewViewport label={title} document={document} device={selectedDevice} />
+    </div>
+  </div>;
+}
+
+function PreviewViewport({ label, document, device }: { label: string; document: string; device: { width: number | null } }) {
+  return <div className="aw-preview-pane">
+    <div className="aw-preview-pane-title"><strong>{label}</strong><span>{device.width ? `${device.width} px` : 'largeur disponible'}</span></div>
+    <div className="aw-preview-scroll">
+      <div className="aw-preview-device" style={{ width: device.width ? `${device.width}px` : '100%' }}>
+        <iframe className="aw-bridge-candidate-frame" title={`Aperçu ${label}`} sandbox="" srcDoc={document} />
+      </div>
+    </div>
+  </div>;
+}
+
 function BridgeCandidateViewer({ candidate, rawContent, onMessage }: { candidate: BridgeLibraryCandidate; rawContent: string; onMessage: (message: string) => void }) {
   const previewDocument = buildBridgeCandidatePreview(candidate);
   const usefulPageLines = lineCount(candidate.prepared.cssPageUseful);
@@ -921,21 +999,21 @@ function BridgeCandidateViewer({ candidate, rawContent, onMessage }: { candidate
 
     <div className="aw-bridge-candidate-state">
       <OperationIcon name="archive" size={18} />
-      <div><strong>Version originale du site</strong><span>Cette V1 conserve la source telle qu’elle existait dans le snapshot. Elle n’est pas encore la version nettoyée à copier sur un autre site.</span></div>
+      <div><strong>Archive originale</strong><span>Source fidèle du snapshot. Elle reste immuable et sert de référence aux transformations suivantes.</span></div>
     </div>
 
     <section className="aw-bridge-candidate-preview">
       <div className="aw-library-section-title">
-        <div><span className="eyebrow">Rendu</span><h3>Aperçu du composant</h3></div>
+        <div><span className="eyebrow">Rendu responsive</span><h3>Aperçu de l’original</h3></div>
         {candidate.origin.pageUrl && <span className="muted">{candidate.origin.pageUrl}</span>}
       </div>
       {candidate.original.html
-        ? <iframe className="aw-bridge-candidate-frame" title={`Aperçu ${candidate.origin.page}`} sandbox="" srcDoc={previewDocument} />
+        ? <BridgePreviewWorkbench title="Originale" document={previewDocument} />
         : <div className="technical-content-empty">Le HTML n’a pas pu être isolé pour ce candidat.</div>}
     </section>
 
     <section className="aw-bridge-candidate-reuse">
-      <div className="aw-library-section-title"><div><span className="eyebrow">Réutilisation</span><h3>Ce qu’il faut emporter</h3></div></div>
+      <div className="aw-library-section-title"><div><span className="eyebrow">Inventaire</span><h3>Ce que l’original utilise</h3></div></div>
       <div className="aw-bridge-candidate-grid">
         <div><span>HTML</span><strong>{candidate.original.html ? 'Disponible' : 'À analyser'}</strong></div>
         <div><span>CSS du module</span><strong>{moduleCssLines ? `${moduleCssLines} ligne(s)` : 'Aucun'}</strong></div>
@@ -945,10 +1023,6 @@ function BridgeCandidateViewer({ candidate, rawContent, onMessage }: { candidate
         <div><span>Classes principales</span><strong>{candidate.prepared.rootClasses.length ? candidate.prepared.rootClasses.join(' · ') : 'Non détectées'}</strong></div>
       </div>
 
-      {candidate.prepared.instructions.length > 0 && <div className="aw-bridge-candidate-instructions">
-        <strong>Mode d’emploi provisoire</strong>
-        {candidate.prepared.instructions.map((instruction) => <p key={instruction}><OperationIcon name="check-circle" size={15} />{instruction}</p>)}
-      </div>}
       {candidate.prepared.notes.length > 0 && <div className="aw-bridge-candidate-notes">
         {candidate.prepared.notes.map((note) => <p key={note}><OperationIcon name="alert" size={15} />{note}</p>)}
       </div>}
@@ -961,49 +1035,109 @@ function BridgeCandidateViewer({ candidate, rawContent, onMessage }: { candidate
   </div>;
 }
 
-function BridgeCleanedViewer({ component, rawContent, onMessage }: { component: BridgeCleanedComponent; rawContent: string; onMessage: (message: string) => void }) {
-  const previewDocument = buildBridgeCleanedPreview(component);
+function BridgeWorkViewer({
+  component,
+  original,
+  rawContent,
+  busy,
+  onSave,
+  onMessage,
+}: {
+  component: BridgeWorkComponent;
+  original: BridgeLibraryCandidate | null;
+  rawContent: string;
+  busy: boolean;
+  onSave: (work: BridgeWorkComponent) => Promise<void>;
+  onMessage: (message: string) => void;
+}) {
+  const [draft, setDraft] = useState(component.work);
+  const [editorTab, setEditorTab] = useState<'html' | 'css' | 'js'>('html');
+  const draftDocument = buildReusablePreviewDocument(component.origin.pageUrl, draft.html, draft.css);
+  const originalDocument = original ? buildBridgeCandidatePreview(original) : null;
+  const remoteAssets = extractRemoteAssetUrls(`${draft.html}\n${draft.css}`);
+
+  const changed = draft.html !== component.work.html
+    || draft.css !== component.work.css
+    || draft.javascript !== component.work.javascript;
+
+  async function save(): Promise<void> {
+    await onSave({
+      ...component,
+      work: { ...draft },
+      checks: { remoteAssetUrls: remoteAssets },
+    });
+  }
+
   return <div className="aw-bridge-candidate-viewer">
-    <div className="aw-bridge-candidate-state cleaned">
+    <div className="aw-bridge-candidate-state work">
       <OperationIcon name="wrench" size={18} />
-      <div><strong>Version nettoyée</strong><span>Le HTML a été isolé et le CSS utile du module, de la page et du site a été consolidé dans une seule feuille.</span></div>
+      <div><strong>Version de travail</strong><span>Copie modifiable dans le Manager. Chaque enregistrement crée une nouvelle révision : l’original et les révisions précédentes ne sont jamais écrasés.</span></div>
     </div>
+
     <section className="aw-bridge-candidate-preview">
-      <div className="aw-library-section-title"><div><span className="eyebrow">Rendu</span><h3>Aperçu nettoyé</h3></div></div>
-      <iframe className="aw-bridge-candidate-frame" title={`Aperçu nettoyé ${component.origin.page}`} sandbox="" srcDoc={previewDocument} />
+      <div className="aw-library-section-title"><div><span className="eyebrow">Contrôle visuel</span><h3>Travail responsive + comparaison</h3></div></div>
+      <BridgePreviewWorkbench title="Version de travail" document={draftDocument} originalDocument={originalDocument} />
     </section>
-    <section className="aw-bridge-candidate-reuse">
+
+    <section className="aw-work-editor">
+      <div className="aw-library-section-title">
+        <div><span className="eyebrow">Éditeur</span><h3>HTML / CSS / JavaScript</h3></div>
+        <div className="button-row">
+          <span className={`aw-work-change-state ${changed ? 'changed' : ''}`}>{changed ? 'Modifications non enregistrées' : 'À jour'}</span>
+          <button className="primary-button" type="button" disabled={busy || !changed} onClick={() => void save()}>Enregistrer une nouvelle révision</button>
+        </div>
+      </div>
+
+      <div className="aw-work-editor-tabs">
+        <button type="button" className={editorTab === 'html' ? 'active' : ''} onClick={() => setEditorTab('html')}>HTML <small>{lineCount(draft.html)} lignes</small></button>
+        <button type="button" className={editorTab === 'css' ? 'active' : ''} onClick={() => setEditorTab('css')}>CSS <small>{lineCount(draft.css)} lignes</small></button>
+        <button type="button" className={editorTab === 'js' ? 'active' : ''} onClick={() => setEditorTab('js')}>JavaScript <small>{lineCount(draft.javascript)} lignes</small></button>
+      </div>
+
+      {editorTab === 'html' && <textarea className="aw-work-code-editor" spellCheck={false} value={draft.html} onChange={(event) => setDraft((value) => ({ ...value, html: event.target.value }))} />}
+      {editorTab === 'css' && <textarea className="aw-work-code-editor" spellCheck={false} value={draft.css} onChange={(event) => setDraft((value) => ({ ...value, css: event.target.value }))} />}
+      {editorTab === 'js' && <textarea className="aw-work-code-editor" spellCheck={false} value={draft.javascript} onChange={(event) => setDraft((value) => ({ ...value, javascript: event.target.value }))} />}
+
       <div className="aw-bridge-candidate-grid">
-        <div><span>HTML</span><strong>{lineCount(component.cleaned.html)} ligne(s)</strong></div>
-        <div><span>CSS consolidé</span><strong>{lineCount(component.cleaned.css)} ligne(s)</strong></div>
-        <div><span>JavaScript</span><strong>{component.cleaned.javascript ? `${lineCount(component.cleaned.javascript)} ligne(s)` : 'Aucun'}</strong></div>
-        <div><span>Médias distants</span><strong>{component.checks.remoteAssetUrls.length}</strong></div>
-      </div>
-      <div className="aw-bridge-copy-grid">
-        <CopyCodeCard title="HTML nettoyé" content={component.cleaned.html} onMessage={onMessage} />
-        <CopyCodeCard title="CSS final du composant" content={component.cleaned.css} onMessage={onMessage} />
-        {component.cleaned.javascript && <CopyCodeCard title="JavaScript séparé" content={component.cleaned.javascript} onMessage={onMessage} />}
+        <div><span>Classes principales</span><strong>{draft.rootClasses.length ? draft.rootClasses.join(' · ') : 'Non détectées'}</strong></div>
+        <div><span>Médias distants</span><strong>{remoteAssets.length}</strong></div>
+        <div><span>JS exécuté en aperçu</span><strong>Non · sécurité</strong></div>
       </div>
     </section>
+
     <details className="aw-bridge-candidate-source">
-      <summary>Voir le paquet nettoyé complet</summary>
-      <TechnicalContentViewer contentType="json" language="json" content={rawContent} title="Paquet nettoyé" onMessage={onMessage} />
+      <summary>Voir le paquet de travail complet</summary>
+      <TechnicalContentViewer contentType="json" language="json" content={rawContent} title="Paquet de travail" onMessage={onMessage} />
     </details>
   </div>;
 }
 
-function BridgeReusableViewer({ component, rawContent, onMessage }: { component: BridgeReusableComponent; rawContent: string; onMessage: (message: string) => void }) {
+function BridgeReusableViewer({
+  component,
+  original,
+  rawContent,
+  onMessage,
+}: {
+  component: BridgeReusableComponent;
+  original: BridgeLibraryCandidate | null;
+  rawContent: string;
+  onMessage: (message: string) => void;
+}) {
   const previewDocument = buildBridgeReusablePreview(component);
+  const originalDocument = original ? buildBridgeCandidatePreview(original) : null;
   const ready = component.checks.remoteAssetUrls.length === 0;
+
   return <div className="aw-bridge-candidate-viewer">
     <div className={`aw-bridge-candidate-state ${ready ? 'ready' : 'reusable'}`}>
       <OperationIcon name={ready ? 'check-circle' : 'alert'} size={18} />
-      <div><strong>{ready ? 'Version réutilisable prête' : 'Version réutilisable préparée'}</strong><span>{ready ? 'Le composant peut être copié sur un autre site.' : `${component.checks.remoteAssetUrls.length} média(s) utilisent encore une URL distante. Le code est prêt mais les assets doivent être embarqués localement.`}</span></div>
+      <div><strong>{ready ? 'Version réutilisable prête' : 'Version réutilisable préparée'}</strong><span>{ready ? 'Version figée et validée pour réemploi.' : `${component.checks.remoteAssetUrls.length} média(s) utilisent encore une URL distante. Le code est prêt mais les assets doivent encore devenir locaux.`}</span></div>
     </div>
+
     <section className="aw-bridge-candidate-preview">
-      <div className="aw-library-section-title"><div><span className="eyebrow">Rendu</span><h3>Aperçu réutilisable</h3></div></div>
-      <iframe className="aw-bridge-candidate-frame" title={`Aperçu réutilisable ${component.origin.page}`} sandbox="" srcDoc={previewDocument} />
+      <div className="aw-library-section-title"><div><span className="eyebrow">Contrôle final</span><h3>Réutilisable responsive + comparaison</h3></div></div>
+      <BridgePreviewWorkbench title="Réutilisable" document={previewDocument} originalDocument={originalDocument} />
     </section>
+
     <section className="aw-bridge-candidate-reuse">
       <div className="aw-library-section-title"><div><span className="eyebrow">Mode d’emploi</span><h3>Utiliser dans un autre site</h3></div></div>
       <div className="aw-bridge-candidate-instructions">
@@ -1019,6 +1153,7 @@ function BridgeReusableViewer({ component, rawContent, onMessage }: { component:
         {component.checks.remoteAssetUrls.map((url) => <code key={url}>{url}</code>)}
       </details>}
     </section>
+
     <details className="aw-bridge-candidate-source">
       <summary>Voir le paquet réutilisable complet</summary>
       <TechnicalContentViewer contentType="json" language="json" content={rawContent} title="Paquet réutilisable" onMessage={onMessage} />
