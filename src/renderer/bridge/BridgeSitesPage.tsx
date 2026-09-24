@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import type {
   BridgeModulePreview,
   BridgeObjectPreview,
+  BridgePagePreview,
   BridgePageSnapshotDetail,
   BridgePageSummary,
   BridgeSiteDetail,
@@ -29,6 +30,9 @@ export function BridgeSitesPage({ onMessage }: Props) {
   const [inspection, setInspection] = useState<BridgeSnapshotInspection | null>(null);
   const [preview, setPreview] = useState<BridgeObjectPreview | null>(null);
   const [modulePreview, setModulePreview] = useState<BridgeModulePreview | null>(null);
+  const [moduleAnalyses, setModuleAnalyses] = useState<Record<string, BridgeModulePreview>>({});
+  const [pagePreview, setPagePreview] = useState<BridgePagePreview | null>(null);
+  const [libraryCandidate, setLibraryCandidate] = useState<BridgeModulePreview | null>(null);
   const [modulePreviewTab, setModulePreviewTab] = useState<ModulePreviewTab>('preview');
   const [search, setSearch] = useState('');
   const [contentView, setContentView] = useState<ContentView>('pages');
@@ -49,6 +53,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
       setAllContents([]);
       setPage(null);
       setDetailExpanded(false);
+      setModuleAnalyses({});
     }
   }
 
@@ -66,6 +71,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
       setSnapshot(latest);
       setPage(null);
       setDetailExpanded(false);
+      setModuleAnalyses({});
       setSearch('');
       setContentView('pages');
       if (latest) {
@@ -108,8 +114,16 @@ export function BridgeSitesPage({ onMessage }: Props) {
   async function openPage(item: BridgePageSummary): Promise<void> {
     try {
       setError(null);
-      setPage(await window.atoumweb.bridgeSnapshots.getPage(item.pageSnapshotId));
+      const detail = await window.atoumweb.bridgeSnapshots.getPage(item.pageSnapshotId);
+      setPage(detail);
       setDetailExpanded(false);
+      const codeNodes = detail.nodes.filter((node) => node.nodeType === 'module' && isCustomCodeModule(node.moduleType));
+      const previews = await Promise.all(codeNodes.map((node) =>
+        window.atoumweb.bridgeSnapshots.getModulePreview(item.pageSnapshotId, node.occurrenceId)
+          .then((preview) => [node.occurrenceId, preview] as const)
+          .catch(() => null),
+      ));
+      setModuleAnalyses(Object.fromEntries(previews.filter((entry): entry is readonly [string, BridgeModulePreview] => entry !== null)));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Impossible d’ouvrir ce contenu.');
     }
@@ -117,6 +131,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
 
   function closePage(): void {
     setPage(null);
+    setModuleAnalyses({});
     setDetailExpanded(false);
   }
 
@@ -193,6 +208,69 @@ export function BridgeSitesPage({ onMessage }: Props) {
     }
   }
 
+  async function showPagePreview(): Promise<void> {
+    if (!page) return;
+    try {
+      setError(null);
+      setPagePreview(await window.atoumweb.bridgeSnapshots.getPagePreview(page.page.pageSnapshotId));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Impossible de reconstruire cette page.');
+    }
+  }
+
+  async function createLibraryCandidate(candidate: BridgeModulePreview): Promise<void> {
+    try {
+      setError(null);
+      const bundle = {
+        schemaVersion: 1,
+        kind: 'atoumweb-bridge-library-candidate',
+        origin: {
+          site: site?.name ?? null,
+          page: candidate.pageTitle,
+          pageUrl: candidate.pageUrl,
+          snapshotId: snapshot?.externalSnapshotId ?? null,
+          snapshotDate: snapshot?.generatedAt ?? null,
+          builderGeneration: candidate.builderGeneration,
+          occurrenceId: candidate.occurrenceId,
+        },
+        original: {
+          html: candidate.html,
+          cssModule: candidate.moduleCss,
+          cssPage: candidate.pageCss,
+          cssGlobal: candidate.globalCss,
+          javascript: candidate.javascript,
+          diviSource: candidate.diviSource,
+        },
+        prepared: {
+          cssPageUseful: candidate.reuse.relevantPageCss,
+          cssGlobalUseful: candidate.reuse.relevantGlobalCss,
+          rootClasses: candidate.reuse.rootClasses,
+          instructions: candidate.reuse.instructions,
+          notes: candidate.reuse.notes,
+        },
+      };
+      const created = await window.atoumweb.referentials.library.create(
+        {
+          category: candidate.reuse.suggestedCategory,
+          name: candidate.reuse.suggestedName,
+          reuseStatus: 'adapt',
+          description: `Candidat préparé depuis ${site?.name ?? 'un site Bridge'} → ${candidate.pageTitle}. La version originale est conservée avant nettoyage et généralisation.`,
+          tags: ['bridge', 'snapshot', candidate.builderGeneration === '5' ? 'divi5' : 'divi4', ...candidate.reuse.rootClasses.slice(0, 4)],
+        },
+        {
+          contentType: 'json',
+          language: 'json',
+          contentText: JSON.stringify(bundle, null, 2),
+          notes: 'V1 — Source originale du site. À nettoyer puis généraliser avant de marquer le composant comme prêt à réutiliser.',
+        },
+      );
+      setLibraryCandidate(null);
+      onMessage(`Candidat « ${created.name} » ajouté à la Bibliothèque AtoumWeb avec sa source originale.`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Impossible de préparer ce composant pour la Bibliothèque.');
+    }
+  }
+
   async function exportDiagnostic(): Promise<void> {
     if (!snapshot) return;
     try {
@@ -208,7 +286,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
 
   const pageStats = useMemo(() => {
     if (!page) return null;
-    const customCodeModules = page.nodes.filter((node) => isCustomCodeModule(node.moduleType) && node.contentObjectRef).length;
+    const customCodeModules = page.nodes.filter((node) => node.nodeType === 'module' && isCustomCodeModule(node.moduleType)).length;
     return {
       modules: page.nodes.filter((node) => node.nodeType === 'module').length,
       customCodeModules,
