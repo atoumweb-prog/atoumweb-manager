@@ -156,6 +156,30 @@ button { color: inherit; }
 .content-area.home-content > .home-dashboard {
   flex: 1 0 auto;
 }
+
+.content-area.workspace-content {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 18px;
+}
+
+.content-area.workspace-content > .page-heading,
+.content-area.workspace-content > .notice {
+  flex: 0 0 auto;
+}
+
+.content-area.workspace-content > .page-heading {
+  margin-bottom: 16px;
+}
+
+.content-area.workspace-content > .aw-library,
+.content-area.workspace-content > .bridge-page {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .page-heading { display: flex; justify-content: space-between; gap: 24px; align-items: flex-end; margin-bottom: 25px; }
 .page-heading h1 { margin: 4px 0 6px; font-size: clamp(25px, 3vw, 34px); letter-spacing: -.035em; }
 .page-heading p { margin: 0; color: var(--muted); font-size: 13px; }
