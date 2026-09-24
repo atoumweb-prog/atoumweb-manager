@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import type {
+  BridgeModulePreview,
   BridgeObjectPreview,
   BridgePageSnapshotDetail,
   BridgePageSummary,
@@ -16,7 +17,7 @@ interface Props {
 }
 
 type ContentView = 'pages' | 'posts' | 'diviLibrary' | 'themeBuilder' | 'other' | 'all';
-type PreviewMode = 'visual' | 'code';
+type ModulePreviewTab = 'preview' | 'html' | 'css' | 'js' | 'divi';
 
 export function BridgeSitesPage({ onMessage }: Props) {
   const [sites, setSites] = useState<BridgeSiteSummary[]>([]);
@@ -27,9 +28,12 @@ export function BridgeSitesPage({ onMessage }: Props) {
   const [page, setPage] = useState<BridgePageSnapshotDetail | null>(null);
   const [inspection, setInspection] = useState<BridgeSnapshotInspection | null>(null);
   const [preview, setPreview] = useState<BridgeObjectPreview | null>(null);
-  const [previewMode, setPreviewMode] = useState<PreviewMode>('code');
+  const [modulePreview, setModulePreview] = useState<BridgeModulePreview | null>(null);
+  const [modulePreviewTab, setModulePreviewTab] = useState<ModulePreviewTab>('preview');
   const [search, setSearch] = useState('');
   const [contentView, setContentView] = useState<ContentView>('pages');
+  const [splitPercent, setSplitPercent] = useState(62);
+  const [detailExpanded, setDetailExpanded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,6 +48,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
       setContents([]);
       setAllContents([]);
       setPage(null);
+      setDetailExpanded(false);
     }
   }
 
@@ -60,6 +65,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
       const latest = detail.snapshots[0] ?? null;
       setSnapshot(latest);
       setPage(null);
+      setDetailExpanded(false);
       setSearch('');
       setContentView('pages');
       if (latest) {
@@ -80,6 +86,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
       setError(null);
       setSnapshot(next);
       setPage(null);
+      setDetailExpanded(false);
       setSearch('');
       setContentView('pages');
       const nextContents = await window.atoumweb.bridgeSnapshots.listPages(next.id);
@@ -95,15 +102,43 @@ export function BridgeSitesPage({ onMessage }: Props) {
     setSearch(nextSearch);
     setContents(filterBridgeContents(allContents, nextView, nextSearch));
     setPage(null);
+    setDetailExpanded(false);
   }
 
   async function openPage(item: BridgePageSummary): Promise<void> {
     try {
       setError(null);
       setPage(await window.atoumweb.bridgeSnapshots.getPage(item.pageSnapshotId));
+      setDetailExpanded(false);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Impossible d’ouvrir ce contenu.');
     }
+  }
+
+  function closePage(): void {
+    setPage(null);
+    setDetailExpanded(false);
+  }
+
+  function beginResize(splitter: HTMLElement): void {
+    const workspace = splitter.parentElement;
+    if (!workspace) return;
+    document.body.classList.add('operation-resizing');
+    const onMove = (event: PointerEvent) => {
+      const rect = workspace.getBoundingClientRect();
+      if (!rect.width) return;
+      const requested = ((event.clientX - rect.left) / rect.width) * 100;
+      const maxForDetail = ((rect.width - 360) / rect.width) * 100;
+      const maxPercent = Math.max(54, Math.min(72, maxForDetail));
+      setSplitPercent(Math.max(42, Math.min(maxPercent, requested)));
+    };
+    const onUp = () => {
+      document.body.classList.remove('operation-resizing');
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp, { once: true });
   }
 
   async function inspectImport(): Promise<void> {
@@ -140,11 +175,21 @@ export function BridgeSitesPage({ onMessage }: Props) {
   async function showObject(objectRef: string): Promise<void> {
     try {
       setError(null);
-      const next = await window.atoumweb.bridgeSnapshots.getObjectPreview(objectRef);
-      setPreview(next);
-      setPreviewMode(canRenderHtml(next) ? 'visual' : 'code');
+      setPreview(await window.atoumweb.bridgeSnapshots.getObjectPreview(objectRef));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Impossible de lire ce contenu.');
+    }
+  }
+
+  async function showModule(occurrenceId: string): Promise<void> {
+    if (!page) return;
+    try {
+      setError(null);
+      const next = await window.atoumweb.bridgeSnapshots.getModulePreview(page.page.pageSnapshotId, occurrenceId);
+      setModulePreview(next);
+      setModulePreviewTab('preview');
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Impossible de reconstruire ce module.');
     }
   }
 
@@ -177,13 +222,17 @@ export function BridgeSitesPage({ onMessage }: Props) {
     return result;
   }, [allContents]);
 
+  const workspaceStyle = page && !detailExpanded
+    ? { gridTemplateColumns: `${splitPercent}% 8px minmax(340px, 1fr)` }
+    : undefined;
+
   return (
     <div className="bridge-page">
       <section className="bridge-toolbar panel">
         <div>
           <span className="eyebrow">Sites AtoumWeb</span>
           <h2>Copies des sites</h2>
-          <p className="muted">Une photographie lisible de chaque site. Le diagnostic technique reste disponible sans encombrer le travail courant.</p>
+          <p className="muted">Une photographie lisible de chaque site. Les informations techniques restent disponibles sans encombrer le travail courant.</p>
         </div>
         <button className="primary-button bridge-import-button" type="button" disabled={busy} onClick={() => void inspectImport()}>
           <OperationIcon name="upload" size={18} />
@@ -225,93 +274,112 @@ export function BridgeSitesPage({ onMessage }: Props) {
         </div>
       </section>}
 
-      <section className={`bridge-workspace ${page ? 'with-detail' : ''}`}>
-        <aside className="bridge-sites panel">
-          <div className="bridge-panel-title"><div><span className="eyebrow">Mes sites</span><h3>{sites.length} site{sites.length > 1 ? 's' : ''}</h3></div></div>
-          {sites.length === 0
-            ? <div className="bridge-empty"><OperationIcon name="server" size={30} /><strong>Aucun site importé</strong><span>Importe le premier snapshot produit par AtoumWeb Bridge.</span></div>
-            : <div className="bridge-site-list">{sites.map((item) => <button key={item.id} type="button" className={`bridge-site-card ${site?.id === item.id ? 'selected' : ''}`} onClick={() => void openSite(item.id)}>
-                <span className="bridge-site-icon"><OperationIcon name="server" size={18} /></span>
-                <span><strong>{item.name}</strong><small>{item.snapshotCount} copie{item.snapshotCount > 1 ? 's' : ''} enregistrée{item.snapshotCount > 1 ? 's' : ''}</small></span>
-                <i className={item.latestScanStatus === 'complete' ? 'ok' : 'warning'} />
-              </button>)}</div>}
-        </aside>
+      <section className={`bridge-workspace ${page ? 'with-detail' : ''} ${detailExpanded ? 'detail-expanded' : ''}`} style={workspaceStyle}>
+        {!detailExpanded && <div className="bridge-master">
+          <aside className="bridge-sites panel">
+            <div className="bridge-panel-title"><div><span className="eyebrow">Mes sites</span><h3>{sites.length} site{sites.length > 1 ? 's' : ''}</h3></div></div>
+            {sites.length === 0
+              ? <div className="bridge-empty"><OperationIcon name="server" size={30} /><strong>Aucun site importé</strong><span>Importe le premier snapshot produit par AtoumWeb Bridge.</span></div>
+              : <div className="bridge-site-list">{sites.map((item) => <button key={item.id} type="button" className={`bridge-site-card ${site?.id === item.id ? 'selected' : ''}`} onClick={() => void openSite(item.id)}>
+                  <span className="bridge-site-icon"><OperationIcon name="server" size={18} /></span>
+                  <span><strong>{item.name}</strong><small>{item.snapshotCount} copie{item.snapshotCount > 1 ? 's' : ''} enregistrée{item.snapshotCount > 1 ? 's' : ''}</small></span>
+                  <i className={item.latestScanStatus === 'complete' ? 'ok' : 'warning'} />
+                </button>)}</div>}
+          </aside>
 
-        <div className="bridge-browser panel">
-          {!site ? <div className="bridge-empty large"><OperationIcon name="folder" size={38} /><strong>Sélectionne un site</strong><span>Ses pages apparaîtront ici.</span></div> : <>
-            <div className="bridge-site-header">
-              <div><span className="eyebrow">Site sauvegardé</span><h2>{site.name}</h2><p>{site.canonicalUrl ?? site.sourceSiteKey}</p></div>
-              <div className="bridge-snapshot-select">
-                <label htmlFor="bridge-snapshot">Copie du site</label>
-                <select id="bridge-snapshot" value={snapshot?.id ?? ''} onChange={(event) => {
-                  const next = site.snapshots.find((item) => item.id === event.target.value);
-                  if (next) void openSnapshot(next);
-                }}>
-                  {site.snapshots.map((item) => <option key={item.id} value={item.id}>{formatDate(item.generatedAt)}</option>)}
-                </select>
+          <div className="bridge-browser panel">
+            {!site ? <div className="bridge-empty large"><OperationIcon name="folder" size={38} /><strong>Sélectionne un site</strong><span>Ses pages apparaîtront ici.</span></div> : <>
+              <div className="bridge-site-header">
+                <div><span className="eyebrow">Site sauvegardé</span><h2>{site.name}</h2><p>{site.canonicalUrl ?? site.sourceSiteKey}</p></div>
+                <div className="bridge-snapshot-select">
+                  <label htmlFor="bridge-snapshot">Copie du site</label>
+                  <select id="bridge-snapshot" value={snapshot?.id ?? ''} onChange={(event) => {
+                    const next = site.snapshots.find((item) => item.id === event.target.value);
+                    if (next) void openSnapshot(next);
+                  }}>
+                    {site.snapshots.map((item) => <option key={item.id} value={item.id}>{formatDate(item.generatedAt)}</option>)}
+                  </select>
+                </div>
               </div>
-            </div>
 
-            {snapshot && <div className="bridge-content-tabs" role="tablist" aria-label="Contenus du site">
-              <ContentTab label="Pages" count={contentBreakdown.pages} active={contentView === 'pages'} onClick={() => applyContentFilter('pages', search)} />
-              <ContentTab label="Articles" count={contentBreakdown.posts} active={contentView === 'posts'} onClick={() => applyContentFilter('posts', search)} />
-              <ContentTab label="Bibliothèque Divi" count={contentBreakdown.diviLibrary} active={contentView === 'diviLibrary'} onClick={() => applyContentFilter('diviLibrary', search)} />
-              <ContentTab label="Theme Builder" count={contentBreakdown.themeBuilder} active={contentView === 'themeBuilder'} onClick={() => applyContentFilter('themeBuilder', search)} />
-              <ContentTab label="Autres" count={contentBreakdown.other} active={contentView === 'other'} onClick={() => applyContentFilter('other', search)} />
-              <ContentTab label="Tout" count={allContents.length} active={contentView === 'all'} onClick={() => applyContentFilter('all', search)} />
-            </div>}
+              {snapshot && <div className="bridge-content-tabs" role="tablist" aria-label="Contenus du site">
+                <ContentTab label="Pages" count={contentBreakdown.pages} active={contentView === 'pages'} onClick={() => applyContentFilter('pages', search)} />
+                <ContentTab label="Articles" count={contentBreakdown.posts} active={contentView === 'posts'} onClick={() => applyContentFilter('posts', search)} />
+                <ContentTab label="Bibliothèque Divi" count={contentBreakdown.diviLibrary} active={contentView === 'diviLibrary'} onClick={() => applyContentFilter('diviLibrary', search)} />
+                <ContentTab label="Theme Builder" count={contentBreakdown.themeBuilder} active={contentView === 'themeBuilder'} onClick={() => applyContentFilter('themeBuilder', search)} />
+                <ContentTab label="Autres" count={contentBreakdown.other} active={contentView === 'other'} onClick={() => applyContentFilter('other', search)} />
+                <ContentTab label="Tout" count={allContents.length} active={contentView === 'all'} onClick={() => applyContentFilter('all', search)} />
+              </div>}
 
-            <div className="bridge-page-tools">
-              <div className="search-field"><OperationIcon name="folder" size={16} /><input value={search} onChange={(event) => applyContentFilter(contentView, event.target.value)} placeholder="Rechercher dans cette rubrique…" /></div>
-              <span>{contents.length} élément{contents.length > 1 ? 's' : ''}</span>
-            </div>
-
-            <div className="bridge-page-list">
-              {contents.map((item) => <button key={item.pageSnapshotId} type="button" className={`bridge-page-row ${page?.page.pageSnapshotId === item.pageSnapshotId ? 'selected' : ''}`} onClick={() => void openPage(item)}>
-                <span className={`bridge-page-status ${item.status === 'publish' ? 'published' : ''}`}>{statusLabel(item.status)}</span>
-                <span className="bridge-page-copy"><strong>{item.title}</strong><small>{item.canonicalUrl ?? item.slug ?? item.sourcePageKey}</small></span>
-                <span className="bridge-page-builder">{builderLabel(item)}</span>
-              </button>)}
-              {snapshot && contents.length === 0 && <div className="bridge-empty"><strong>Aucun élément</strong><span>Aucun contenu ne correspond à cette rubrique ou à cette recherche.</span></div>}
-            </div>
-
-            {snapshot && <details className="bridge-snapshot-technical">
-              <summary><OperationIcon name="wrench" size={16} />Diagnostic technique de cette copie</summary>
-              <div className="bridge-tech-summary">
-                <Metric label="Contenus" value={String(snapshot.counts.pages)} />
-                <Metric label="Nœuds Divi/WordPress" value={String(snapshot.counts.nodes)} />
-                <Metric label="Sources" value={String(snapshot.counts.sources)} />
-                <Metric label="Assets" value={String(snapshot.counts.assets)} />
+              <div className="bridge-page-tools">
+                <div className="search-field"><OperationIcon name="folder" size={16} /><input value={search} onChange={(event) => applyContentFilter(contentView, event.target.value)} placeholder="Rechercher dans cette rubrique…" /></div>
+                <span>{contents.length} élément{contents.length > 1 ? 's' : ''}</span>
               </div>
-              {currentWarnings.length > 0 && <div className="bridge-warning-list">{currentWarnings.map((issue, index) => <div key={`${issue.code}-${index}`}><strong>{issue.code}</strong><span>{issue.message}</span></div>)}</div>}
-              <div className="bridge-tech-actions">
-                <button className="secondary-button" type="button" onClick={() => void exportDiagnostic()}><OperationIcon name="file-text" size={16} />Exporter le diagnostic</button>
-                <span>Bridge v{snapshot.bridgeVersion} · {scanStatusLabel(snapshot.scanStatus)}</span>
-              </div>
-            </details>}
-          </>}
-        </div>
 
-        {page && <article className="bridge-detail panel">
+              <div className="bridge-page-list">
+                {contents.map((item) => <button key={item.pageSnapshotId} type="button" className={`bridge-page-row ${page?.page.pageSnapshotId === item.pageSnapshotId ? 'selected' : ''}`} onClick={() => void openPage(item)}>
+                  <span className={`bridge-page-status ${item.status === 'publish' ? 'published' : ''}`}>{statusLabel(item.status)}</span>
+                  <span className="bridge-page-copy"><strong>{item.title}</strong><small>{item.canonicalUrl ?? item.slug ?? item.sourcePageKey}</small></span>
+                  <span className="bridge-page-builder">{builderLabel(item)}</span>
+                </button>)}
+                {snapshot && contents.length === 0 && <div className="bridge-empty"><strong>Aucun élément</strong><span>Aucun contenu ne correspond à cette rubrique ou à cette recherche.</span></div>}
+              </div>
+
+              {snapshot && <details className="bridge-snapshot-technical">
+                <summary><OperationIcon name="wrench" size={16} />Diagnostic technique de cette copie</summary>
+                <div className="bridge-tech-summary">
+                  <Metric label="Contenus" value={String(snapshot.counts.pages)} />
+                  <Metric label="Nœuds Divi/WordPress" value={String(snapshot.counts.nodes)} />
+                  <Metric label="Sources" value={String(snapshot.counts.sources)} />
+                  <Metric label="Assets" value={String(snapshot.counts.assets)} />
+                </div>
+                {currentWarnings.length > 0 && <div className="bridge-warning-list">{currentWarnings.map((issue, index) => <div key={`${issue.code}-${index}`}><strong>{issue.code}</strong><span>{issue.message}</span></div>)}</div>}
+                <div className="bridge-tech-actions">
+                  <button className="secondary-button" type="button" onClick={() => void exportDiagnostic()}><OperationIcon name="file-text" size={16} />Exporter le diagnostic</button>
+                  <span>Bridge v{snapshot.bridgeVersion} · {scanStatusLabel(snapshot.scanStatus)}</span>
+                </div>
+              </details>}
+            </>}
+          </div>
+        </div>}
+
+        {page && !detailExpanded && <div
+          className="operation-splitter bridge-workspace-splitter"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Redimensionner la liste des pages et la fiche"
+          tabIndex={0}
+          onPointerDown={(event) => { event.stopPropagation(); beginResize(event.currentTarget); }}
+          onDoubleClick={() => setSplitPercent(62)}
+          onKeyDown={(event) => {
+            if (event.key === 'ArrowLeft') setSplitPercent((value) => Math.max(42, value - 3));
+            if (event.key === 'ArrowRight') setSplitPercent((value) => Math.min(72, value + 3));
+          }}
+        ><span /></div>}
+
+        {page && <article className={`bridge-detail panel ${detailExpanded ? 'expanded' : ''}`}>
           <div className="bridge-detail-header">
             <div>
               <span className="eyebrow">{contentTypeLabel(page.page)} · {statusLabel(page.page.status)}</span>
               <h2>{page.page.title}</h2>
               <p>{page.page.canonicalUrl ?? page.page.slug ?? page.page.sourcePageKey}</p>
             </div>
-            <button className="icon-button" type="button" aria-label="Fermer la fiche" title="Fermer la fiche" onClick={() => setPage(null)}><OperationIcon name="close" size={18} /></button>
+            <div className="bridge-detail-actions">
+              <button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'collapse' : 'expand'} size={18} /></button>
+              <button className="close-detail" type="button" aria-label="Fermer la fiche" title="Fermer" onClick={closePage}><OperationIcon name="close" size={18} /></button>
+            </div>
           </div>
 
           {pageStats && <div className="bridge-page-summary">
-            <span><strong>{builderLabel(page.page)}</strong><small>construction</small></span>
+            <span><strong>{builderLabel(page.page)}</strong><small>construction détectée</small></span>
             <span><strong>{pageStats.modules}</strong><small>modules</small></span>
-            <span><strong>{pageStats.customCodeModules}</strong><small>modules code</small></span>
+            <span><strong>{pageStats.customCodeModules}</strong><small>modules Code</small></span>
             <span><strong>{pageStats.assets}</strong><small>médias liés</small></span>
           </div>}
 
           <div className="bridge-detail-intro">
             <strong>Construction de la page</strong>
-            <span>Ouvre un module Code pour voir ce que Bridge a réellement sauvegardé. Les informations internes de Divi restent masquées par défaut.</span>
+            <span>Les éléments internes de Divi sont conservés mais simplifiés ici. Ouvre un module Code pour voir son rendu reconstruit et ce qui se trouve derrière.</span>
           </div>
 
           <div className="bridge-detail-body">
@@ -322,10 +390,10 @@ export function BridgeSitesPage({ onMessage }: Props) {
                   <span className="bridge-node-kind">{nodeTypeLabel(node.nodeType)}</span>
                   <span className="bridge-node-copy">
                     <strong>{humanNodeLabel(node.label, node.moduleType, node.nodeType)}</strong>
-                    <small>{customCode ? 'Code personnalisé récupéré' : builderNodeHint(node.moduleType, node.builder)}</small>
+                    <small>{customCode ? 'HTML / CSS récupérés par Bridge' : builderNodeHint(node.moduleType, node.builder)}</small>
                   </span>
                   <div className="bridge-node-actions">
-                    {customCode && node.contentObjectRef && <button className="secondary-button bridge-code-button" type="button" onClick={() => void showObject(node.contentObjectRef!)}><OperationIcon name="code" size={15} />Voir le code</button>}
+                    {customCode && <button className="secondary-button bridge-code-button" type="button" onClick={() => void showModule(node.occurrenceId)}><OperationIcon name="image" size={15} />Voir le rendu</button>}
                     {!customCode && node.contentObjectRef && <button className="icon-button" type="button" title="Voir le contenu enregistré" onClick={() => void showObject(node.contentObjectRef!)}><OperationIcon name="file-text" size={15} /></button>}
                   </div>
                 </div>;
@@ -333,13 +401,13 @@ export function BridgeSitesPage({ onMessage }: Props) {
             </div>
 
             <details className="bridge-page-technical">
-              <summary><OperationIcon name="wrench" size={15} />Code et ressources associés</summary>
+              <summary><OperationIcon name="wrench" size={15} />Code et ressources associés à la page</summary>
               <div className="bridge-page-technical-grid">
                 <section>
                   <h4>CSS / JS / sources</h4>
                   {page.sources.length === 0 ? <p className="muted">Aucune source spécifique rattachée à cette page.</p> : page.sources.map((source) => <div className="bridge-source" key={source.sourceId}>
                     <span className="bridge-source-icon"><OperationIcon name="code" size={17} /></span>
-                    <span><strong>{source.kind.toUpperCase()} · {source.origin}</strong><small>{source.scope} · {source.owner}</small></span>
+                    <span><strong>{source.kind.toUpperCase()} · {sourceOriginLabel(source.origin)}</strong><small>{sourceScopeLabel(source.scope)}</small></span>
                     {source.payloadObjectRef && <button className="secondary-button" type="button" onClick={() => void showObject(source.payloadObjectRef!)}>Voir</button>}
                   </div>)}
                 </section>
@@ -357,21 +425,63 @@ export function BridgeSitesPage({ onMessage }: Props) {
         </article>}
       </section>
 
-      {preview && <div className="bridge-preview-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPreview(null); }}>
-        <section className="bridge-preview panel" role="dialog" aria-modal="true" aria-label="Contenu sauvegardé par Bridge">
+      {modulePreview && <div className="bridge-preview-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setModulePreview(null); }}>
+        <section className="bridge-preview bridge-module-preview panel" role="dialog" aria-modal="true" aria-label="Aperçu reconstruit du module">
           <div className="bridge-detail-header">
-            <div><span className="eyebrow">Copie en lecture seule</span><h2>{preview.contentType ?? preview.serialization ?? 'Contenu Bridge'}</h2><p>{preview.objectRef}</p></div>
-            <button className="icon-button" type="button" aria-label="Fermer" onClick={() => setPreview(null)}><OperationIcon name="close" size={18} /></button>
+            <div>
+              <span className="eyebrow">Module du snapshot · {modulePreview.builderGeneration === '5' ? 'Divi 5' : modulePreview.builderGeneration === '4' ? 'Divi 4' : 'Divi'}</span>
+              <h2>{modulePreview.label || 'Module Code'}</h2>
+              <p>{modulePreview.pageTitle}{modulePreview.pageUrl ? ` · ${modulePreview.pageUrl}` : ''}</p>
+            </div>
+            <button className="close-detail" type="button" aria-label="Fermer" onClick={() => setModulePreview(null)}><OperationIcon name="close" size={18} /></button>
           </div>
-          {preview.available && preview.text != null && canRenderHtml(preview) && <div className="bridge-preview-modes">
-            <button type="button" className={previewMode === 'visual' ? 'active' : ''} onClick={() => setPreviewMode('visual')}>Aperçu</button>
-            <button type="button" className={previewMode === 'code' ? 'active' : ''} onClick={() => setPreviewMode('code')}>Code</button>
-          </div>}
+
+          <div className={`bridge-preview-confidence ${modulePreview.frontendValidated ? 'validated' : 'reconstructed'}`}>
+            <OperationIcon name={modulePreview.frontendValidated ? 'check-circle' : 'alert'} size={16} />
+            <span>{modulePreview.frontendValidated
+              ? 'Aperçu reconstruit à partir des sources Bridge avec contrôle frontend joint au snapshot.'
+              : 'Aperçu reconstruit — ce n’est pas une capture exacte du site. Bridge n’a pas joint de contrôle frontend pour ce snapshot.'}</span>
+          </div>
+
+          <div className="bridge-preview-layers" aria-label="Sources utilisées pour la reconstruction">
+            <span className={modulePreview.sourceCounts.html ? 'present' : ''}>HTML <strong>{modulePreview.sourceCounts.html || '—'}</strong></span>
+            <span className={modulePreview.sourceCounts.moduleCss ? 'present' : ''}>CSS module <strong>{modulePreview.sourceCounts.moduleCss || '—'}</strong></span>
+            <span className={modulePreview.sourceCounts.pageCss ? 'present' : ''}>CSS page <strong>{modulePreview.sourceCounts.pageCss || '—'}</strong></span>
+            <span className={modulePreview.sourceCounts.globalCss ? 'present' : ''}>CSS global <strong>{modulePreview.sourceCounts.globalCss || '—'}</strong></span>
+            <span className={modulePreview.sourceCounts.javascript ? 'warning' : ''}>JS <strong>{modulePreview.sourceCounts.javascript || '—'}</strong></span>
+          </div>
+
+          <div className="bridge-preview-modes" role="tablist" aria-label="Voir le module">
+            <PreviewTab label="Aperçu" active={modulePreviewTab === 'preview'} onClick={() => setModulePreviewTab('preview')} />
+            <PreviewTab label="HTML" active={modulePreviewTab === 'html'} onClick={() => setModulePreviewTab('html')} />
+            <PreviewTab label="CSS" active={modulePreviewTab === 'css'} onClick={() => setModulePreviewTab('css')} />
+            {modulePreview.javascript && <PreviewTab label="JS" active={modulePreviewTab === 'js'} onClick={() => setModulePreviewTab('js')} />}
+            {modulePreview.diviSource && <PreviewTab label="Divi / JSON" active={modulePreviewTab === 'divi'} onClick={() => setModulePreviewTab('divi')} />}
+          </div>
+
+          <div className="bridge-module-preview-body">
+            {modulePreviewTab === 'preview' && <iframe className="bridge-html-preview" sandbox="" title="Aperçu reconstruit du module" srcDoc={buildReconstructedPreview(modulePreview)} />}
+            {modulePreviewTab === 'html' && <CodePanel title="HTML du module" content={modulePreview.html} empty="Aucun HTML séparé n’a été fourni pour ce module." />}
+            {modulePreviewTab === 'css' && <div className="bridge-css-layers">
+              <CodePanel title="CSS du module" content={modulePreview.moduleCss} empty="Aucun CSS propre à ce module." />
+              <CodePanel title="CSS de la page" content={modulePreview.pageCss} empty="Aucun CSS de page rattaché." />
+              <CodePanel title="CSS global du site" content={modulePreview.globalCss} empty="Aucun CSS global rattaché au snapshot." />
+            </div>}
+            {modulePreviewTab === 'js' && <><div className="bridge-js-warning"><OperationIcon name="shield-check" size={16} />JavaScript conservé mais non exécuté dans l’aperçu.</div><CodePanel title="JavaScript du module" content={modulePreview.javascript} empty="Aucun JavaScript." /></>}
+            {modulePreviewTab === 'divi' && <CodePanel title="Source Divi originale" content={modulePreview.diviSource ?? ''} empty="Aucune source Divi brute disponible." />}
+          </div>
+        </section>
+      </div>}
+
+      {preview && <div className="bridge-preview-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPreview(null); }}>
+        <section className="bridge-preview panel" role="dialog" aria-modal="true" aria-label="Contenu technique du snapshot">
+          <div className="bridge-detail-header">
+            <div><span className="eyebrow">Donnée technique en lecture seule</span><h2>{preview.contentType ?? preview.serialization ?? 'Contenu Bridge'}</h2><p>{preview.objectRef}</p></div>
+            <button className="close-detail" type="button" aria-label="Fermer" onClick={() => setPreview(null)}><OperationIcon name="close" size={18} /></button>
+          </div>
           {preview.available
             ? preview.text != null
-              ? previewMode === 'visual' && canRenderHtml(preview)
-                ? <iframe className="bridge-html-preview" sandbox="" title="Aperçu du contenu HTML" srcDoc={buildSafeHtmlPreview(preview.text)} />
-                : <pre>{preview.text}{preview.truncated ? '\n\n[… aperçu limité à 256 Ko …]' : ''}</pre>
+              ? <pre>{preview.text}{preview.truncated ? '\n\n[… aperçu limité à 256 Ko …]' : ''}</pre>
               : <div className="bridge-empty"><strong>Fichier conservé</strong><span>Ce contenu est binaire et ne peut pas être affiché ici.</span></div>
             : <div className="bridge-empty"><strong>Contenu introuvable</strong><span>Les métadonnées existent mais le fichier n’est plus disponible dans le workspace.</span></div>}
         </section>
@@ -386,6 +496,17 @@ function Metric({ label, value }: { label: string; value: string }) {
 
 function ContentTab({ label, count, active, onClick }: { label: string; count: number; active: boolean; onClick: () => void }) {
   return <button type="button" className={active ? 'active' : ''} onClick={onClick}><span>{label}</span><strong>{count}</strong></button>;
+}
+
+function PreviewTab({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return <button type="button" className={active ? 'active' : ''} onClick={onClick}>{label}</button>;
+}
+
+function CodePanel({ title, content, empty }: { title: string; content: string; empty: string }) {
+  return <section className="bridge-code-panel">
+    <header><strong>{title}</strong><span>{content ? `${content.split(/\r?\n/).length} lignes` : '—'}</span></header>
+    {content ? <pre>{content}</pre> : <p className="muted">{empty}</p>}
+  </section>;
 }
 
 function contentCategory(item: BridgePageSummary): Exclude<ContentView, 'all'> {
@@ -455,43 +576,80 @@ function nodeTypeLabel(value: string): string {
 }
 
 function humanNodeLabel(label: string | null, moduleType: string | null, nodeType: string): string {
-  if (label?.trim()) return label;
+  if (label?.trim()) return cleanDiviLabel(label);
   if (!moduleType) return nodeTypeLabel(nodeType);
   if (isCustomCodeModule(moduleType)) return 'Module Code';
-  return moduleType.replace(/^et_pb_/, '').replace(/^divi\//, '').replace(/[_-]+/g, ' ');
+  return cleanDiviLabel(moduleType);
 }
 
 function builderNodeHint(moduleType: string | null, builder: string | null): string {
-  if (moduleType) return moduleType.replace(/^et_pb_/, '').replace(/^divi\//, '').replace(/[_-]+/g, ' ');
+  if (moduleType) return cleanDiviLabel(moduleType);
   return builder ?? '';
+}
+
+function cleanDiviLabel(value: string): string {
+  const cleaned = value.replace(/^et_pb_/, '').replace(/^divi\//, '').replace(/^wp:divi\//, '').replace(/[_-]+/g, ' ');
+  if (cleaned.toLowerCase() === 'row') return 'Ligne';
+  if (cleaned.toLowerCase() === 'column') return 'Colonne';
+  if (cleaned.toLowerCase() === 'section') return 'Section';
+  if (cleaned.toLowerCase() === 'code') return 'Code';
+  return cleaned;
 }
 
 function isCustomCodeModule(moduleType: string | null): boolean {
   return Boolean(moduleType && /(^|[/_-])code($|[/_-])/i.test(moduleType));
 }
 
-function canRenderHtml(preview: BridgeObjectPreview): boolean {
-  const type = (preview.contentType ?? '').toLowerCase();
-  const serialization = (preview.serialization ?? '').toLowerCase();
-  return type === 'text/html' || serialization === 'html';
+function sourceOriginLabel(origin: string): string {
+  if (origin === 'divi_code_module') return 'HTML module Code';
+  if (origin === 'divi_code_module_style_block') return 'CSS du module';
+  if (origin === 'divi_code_module_script_block') return 'JavaScript du module';
+  if (origin === 'post_meta') return 'CSS de la page';
+  if (origin === 'wordpress_additional_css') return 'CSS global WordPress';
+  if (origin === 'divi_global_option') return 'CSS global Divi';
+  return origin.replace(/[_-]+/g, ' ');
 }
 
-function buildSafeHtmlPreview(content: string): string {
-  const policy = '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; img-src data:; font-src data:;">';
-  if (/<!doctype\s+html|<html[\s>]/i.test(content)) {
-    if (/<head[\s>]/i.test(content)) return content.replace(/<head([^>]*)>/i, `<head$1>${policy}`);
-    return content.replace(/<html([^>]*)>/i, `<html$1><head>${policy}</head>`);
-  }
+function sourceScopeLabel(scope: string): string {
+  if (scope === 'element') return 'Lié à un module';
+  if (scope === 'page') return 'Lié à cette page';
+  if (scope === 'global') return 'Global au site';
+  return scope;
+}
+
+function buildReconstructedPreview(preview: BridgeModulePreview): string {
+  const globalCss = safeCss(preview.globalCss);
+  const pageCss = safeCss(preview.pageCss);
+  const moduleCss = safeCss(preview.moduleCss);
+  const base = preview.pageUrl ? `<base href="${escapeHtmlAttribute(preview.pageUrl)}">` : '';
   return `<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-${policy}
-<style>html,body{margin:0;min-height:100%;background:#fff}body{font-family:Arial,Helvetica,sans-serif}*,*::before,*::after{box-sizing:border-box}</style>
+${base}
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https: data:; font-src https: data:; media-src https: data:;">
+<style>
+html,body{margin:0;min-height:100%;background:#fff;color:#111}
+body{font-family:Arial,Helvetica,sans-serif}
+*,*::before,*::after{box-sizing:border-box}
+</style>
+<style data-bridge-layer="global">${globalCss}</style>
+<style data-bridge-layer="page">${pageCss}</style>
+<style data-bridge-layer="module">${moduleCss}</style>
 </head>
-<body>${content}</body>
+<body>
+${preview.html}
+</body>
 </html>`;
+}
+
+function safeCss(value: string): string {
+  return value.replace(/<\/style/gi, '<\\/style');
+}
+
+function escapeHtmlAttribute(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function formatDate(value: string): string {
