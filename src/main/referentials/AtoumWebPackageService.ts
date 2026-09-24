@@ -491,6 +491,32 @@ export class AtoumWebPackageService {
       }
     }
 
+    if (manifest.bridgeWorkbench) {
+      const bridge = manifest.bridgeWorkbench;
+      if (bridge.contract !== 'atoumweb_bridge_component_package' || bridge.schemaVersion !== 1) {
+        throw new Error('Format du package Bridge Workbench non pris en charge.');
+      }
+      if (bridge.flow !== 'workbench_first' || bridge.workbenchRequired !== true || bridge.directProductionInjection !== false) {
+        throw new Error('Le package Bridge doit imposer un passage par Workbench avant production.');
+      }
+      const declaredFiles = [
+        bridge.files.html,
+        bridge.files.css,
+        bridge.files.javascript,
+        bridge.files.fields,
+        bridge.files.dependencies,
+        bridge.files.sourceAssets,
+        bridge.files.provenance,
+      ].filter((entry): entry is { path: string; sha256: string } => Boolean(entry));
+      for (const file of declaredFiles) {
+        if (typeof file.path !== 'string' || !file.path.trim()) throw new Error('Chemin de fichier Bridge invalide.');
+        if (typeof file.sha256 !== 'string' || !/^[a-f0-9]{64}$/i.test(file.sha256)) throw new Error(`Checksum Bridge invalide : ${file.path}`);
+        const entry = entries.get(file.path);
+        if (!entry) throw new Error(`Fichier Bridge déclaré absent du ZIP : ${file.path}`);
+        if (this.sha256(entry.data) !== file.sha256) throw new Error(`Checksum Bridge invalide : ${file.path}`);
+      }
+    }
+
     if (!Array.isArray(manifest.assets)) throw new Error('Liste des assets invalide.');
     for (const asset of manifest.assets) {
       if (!ATOUMWEB_TECHNICAL_ASSET_ROLES.includes(asset.role)) throw new Error('Rôle d’asset invalide dans le paquet.');
