@@ -545,7 +545,8 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
       });
 
       const tags = mergeLibraryTags(changed.tags, ['bridge-stage-original', 'bridge-stage-work', 'bridge-stage-reusable']);
-      if (reusable.checks.remoteAssetUrls.length === 0) {
+      const templateReady = reusable.reusable.generalized && reusable.checks.remoteAssetUrls.length === 0;
+      if (templateReady) {
         changed = await window.atoumweb.referentials.library.update(changed.id, { reuseStatus: 'ready', tags });
         if (changed.currentVersion?.id) changed = await window.atoumweb.referentials.library.markStable(changed.currentVersion.id);
       } else {
@@ -556,9 +557,11 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
       await load(changed.id);
       await setOpenedItem(changed);
       setBridgeStageView('reusable');
-      onMessage(reusable.checks.remoteAssetUrls.length
-        ? `Version réutilisable préparée pour « ${changed.name} ». Les médias distants restent à intégrer localement.`
-        : `« ${changed.name} » est prêt à réutiliser.`);
+      onMessage(!reusable.reusable.generalized
+        ? `Version réutilisable créée pour « ${changed.name} », mais la généralisation automatique doit être vérifiée.`
+        : reusable.checks.remoteAssetUrls.length
+          ? `Version réutilisable généralisée pour « ${changed.name} ». Les ressources distantes restantes doivent encore devenir locales.`
+          : `« ${changed.name} » est maintenant un modèle générique prêt à réutiliser.`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Impossible de préparer la version réutilisable.');
     } finally {
@@ -948,7 +951,10 @@ function BridgeSummaryStages({ item }: { item: AtoumWebTechnicalItemSummary }) {
 
   const hasWork = tags.has('bridge-stage-work') || current?.stage === 'work' || current?.stage === 'reusable';
   const hasReusable = tags.has('bridge-stage-reusable') || current?.stage === 'reusable';
-  const reusableReady = hasReusable && item.reuseStatus === 'ready';
+  const reusableReady = hasReusable
+    && item.reuseStatus === 'ready'
+    && current?.stage === 'reusable'
+    && current.value.reusable.generalized;
 
   return <span className="aw-library-stage-badges" aria-label="Étapes du composant">
     <span className="done">Originale ✓</span>
@@ -1166,7 +1172,7 @@ function BridgeReusableViewer({
   const originalDocument = original ? buildBridgeCandidatePreview(original) : null;
   const comparisonDocument = workDocument ?? originalDocument;
   const comparisonLabel = workDocument ? 'Version de travail' : 'Originale';
-  const ready = component.checks.remoteAssetUrls.length === 0;
+  const ready = component.reusable.generalized && component.checks.remoteAssetUrls.length === 0;
 
   return <div className="aw-bridge-candidate-viewer">
     <div className={`aw-bridge-candidate-state ${ready ? 'ready' : 'reusable'}`}>
@@ -1178,6 +1184,21 @@ function BridgeReusableViewer({
       <div className="aw-library-section-title"><div><span className="eyebrow">Contrôle final</span><h3>Réutilisable responsive + comparaison</h3></div></div>
       <BridgePreviewWorkbench title="Réutilisable" document={previewDocument} originalDocument={comparisonDocument} originalLabel={comparisonLabel} />
     </section>
+
+    {component.reusable.fields.length > 0 && <section className="aw-reusable-fields">
+      <div className="aw-library-section-title">
+        <div><span className="eyebrow">Modèle générique</span><h3>Champs à personnaliser</h3></div>
+        <span className="aw-reusable-field-count">{component.reusable.fields.length} champ(s)</span>
+      </div>
+      <p className="muted">Les valeurs ci-dessous sont des contenus de démonstration. Elles remplacent les textes, liens et images propres au site d’origine sans modifier la structure graphique du composant.</p>
+      <div className="aw-reusable-field-grid">
+        {component.reusable.fields.map((field) => <div className={`aw-reusable-field ${field.type}`} key={field.id}>
+          <span>{field.type === 'image' ? 'Image' : field.type === 'link' ? 'Lien' : 'Texte'}</span>
+          <strong>{field.label}</strong>
+          <small>{field.defaultValue}</small>
+        </div>)}
+      </div>
+    </section>}
 
     <section className="aw-bridge-candidate-reuse">
       <div className="aw-library-section-title"><div><span className="eyebrow">Mode d’emploi</span><h3>Utiliser dans un autre site</h3></div></div>
