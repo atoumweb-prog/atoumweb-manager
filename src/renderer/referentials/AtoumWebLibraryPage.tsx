@@ -205,8 +205,8 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
       const node = libraryRef.current;
       if (!node) return;
       const rect = node.getBoundingClientRect();
-      const bottomGap = 18;
-      const available = Math.max(520, window.innerHeight - rect.top - bottomGap);
+      const bottomGap = 40;
+      const available = Math.max(420, window.innerHeight - rect.top - bottomGap);
       node.style.setProperty('--aw-library-available-height', `${available}px`);
     };
 
