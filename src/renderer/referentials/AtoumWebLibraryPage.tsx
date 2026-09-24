@@ -1412,27 +1412,177 @@ function refreshBridgeWorkChecks(work: BridgeWorkComponent): BridgeWorkComponent
 
 function buildBridgeReusableComponent(work: BridgeWorkComponent): BridgeReusableComponent {
   const checked = refreshBridgeWorkChecks(work);
+  const template = generalizeBridgeReusableHtml(checked.work.html);
+  const remoteAssetUrls = extractRemoteAssetUrls(`${template.html}\n${checked.work.css}`);
+
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     kind: 'atoumweb-library-reusable-component',
     origin: checked.origin,
     reusable: {
-      html: checked.work.html,
+      html: template.html,
       css: checked.work.css,
       javascript: checked.work.javascript,
       rootClasses: checked.work.rootClasses,
       method: 'divi-code',
+      generalized: template.generalized,
+      fields: template.fields,
       instructions: [
+        `Personnaliser les ${template.fields.length} champ(s) du modèle avant utilisation sur un nouveau site.`,
         'Dans Divi, ajouter un module Code.',
         'Copier le HTML du composant dans le module Code.',
         ...(checked.work.css ? ['Ajouter le CSS fourni dans le CSS de la page ou dans la zone prévue pour les composants AtoumWeb.'] : []),
         ...(checked.work.javascript ? ['Ajouter le JavaScript fourni dans une zone d’intégration contrôlée et le tester avant mise en ligne.'] : []),
-        ...(checked.checks.remoteAssetUrls.length ? ['Remplacer les URLs des médias par les copies locales du nouveau site dès que les assets auront été embarqués.'] : []),
+        ...(remoteAssetUrls.length ? ['Remplacer les URLs de ressources encore distantes par les copies locales du nouveau site dès que les assets auront été embarqués.'] : []),
       ],
     },
-    checks: { remoteAssetUrls: checked.checks.remoteAssetUrls },
-    notes: checked.notes,
+    checks: { remoteAssetUrls },
+    notes: [
+      ...checked.notes,
+      template.generalized
+        ? `Modèle généralisé : ${template.fields.length} champ(s) personnalisable(s) utilisent des valeurs de démonstration.`
+        : 'La généralisation automatique n’a pas pu être appliquée : vérifier ce composant avant réutilisation.',
+    ],
   };
+}
+
+function generalizeBridgeReusableHtml(html: string): { html: string; fields: BridgeReusableField[]; generalized: boolean } {
+  if (!html.trim()) return { html, fields: [], generalized: true };
+
+  try {
+    const parser = new DOMParser();
+    const document = parser.parseFromString(`<div id="aw-reusable-root">${html}</div>`, 'text/html');
+    const root = document.getElementById('aw-reusable-root');
+    if (!root) return { html, fields: [], generalized: false };
+
+    const fields: BridgeReusableField[] = [];
+    let textIndex = 0;
+    let linkIndex = 0;
+    let imageIndex = 0;
+
+    const addTextField = (element: HTMLElement, label: string, defaultValue: string, pieces: string[]) => {
+      const originalValue = element.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+      if (!originalValue) return;
+      textIndex += 1;
+      const id = `text-${textIndex}`;
+      element.dataset.awFieldText = id;
+      replaceMeaningfulTextNodes(element, pieces);
+      fields.push({
+        id,
+        label,
+        type: 'text',
+        selector: `[data-aw-field-text="${id}"]`,
+        originalValue,
+        defaultValue,
+      });
+    };
+
+    root.querySelectorAll<HTMLElement>('h1,h2,h3,h4,h5,h6').forEach((heading, index) => {
+      addTextField(
+        heading,
+        index === 0 ? 'Titre principal' : `Titre ${index + 1}`,
+        index === 0 ? 'Votre titre personnalisable' : 'Votre sous-titre',
+        index === 0 ? ['Votre titre ', 'personnalisable'] : ['Votre sous-titre'],
+      );
+    });
+
+    root.querySelectorAll<HTMLElement>('p').forEach((paragraph, index) => {
+      if (!paragraph.textContent?.trim()) return;
+      const hasStrongLead = Boolean(paragraph.querySelector('strong,b'));
+      const defaultValue = index === 0
+        ? 'Votre service : présentez ici votre offre, votre service ou votre message principal.'
+        : 'Ajoutez ici les informations utiles pour votre visiteur.';
+      addTextField(
+        paragraph,
+        `Texte ${index + 1}`,
+        defaultValue,
+        hasStrongLead
+          ? ['Votre service :', ' présentez ici votre offre, votre service ou votre message principal.']
+          : [defaultValue],
+      );
+    });
+
+    root.querySelectorAll<HTMLElement>('button,a').forEach((element, index) => {
+      const anchor = element instanceof HTMLAnchorElement ? element : null;
+      if (anchor) {
+        const originalHref = anchor.getAttribute('href') ?? '';
+        if (originalHref && originalHref !== '#') {
+          linkIndex += 1;
+          const id = `link-${linkIndex}`;
+          anchor.dataset.awFieldLink = id;
+          anchor.setAttribute('href', '#');
+          anchor.removeAttribute('target');
+          fields.push({
+            id,
+            label: `Lien ${linkIndex}`,
+            type: 'link',
+            selector: `[data-aw-field-link="${id}"]`,
+            originalValue: originalHref,
+            defaultValue: '#',
+          });
+        }
+      }
+
+      if (element.closest('h1,h2,h3,h4,h5,h6,p')) return;
+      const originalText = element.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+      if (!originalText || originalText.length > 90) return;
+      addTextField(element, `Bouton / lien ${index + 1}`, 'En savoir plus', ['En savoir plus']);
+    });
+
+    root.querySelectorAll<HTMLImageElement>('img').forEach((image) => {
+      const originalSrc = image.getAttribute('src') ?? '';
+      if (!originalSrc) return;
+      imageIndex += 1;
+      const id = `image-${imageIndex}`;
+      image.dataset.awFieldImage = id;
+      image.setAttribute('src', reusablePlaceholderImageDataUrl());
+      image.setAttribute('alt', 'Image de démonstration à remplacer');
+      image.removeAttribute('srcset');
+      image.removeAttribute('sizes');
+      fields.push({
+        id,
+        label: `Image ${imageIndex}`,
+        type: 'image',
+        selector: `[data-aw-field-image="${id}"]`,
+        originalValue: originalSrc,
+        defaultValue: 'Image de démonstration locale',
+      });
+    });
+
+    return {
+      html: root.innerHTML.trim(),
+      fields,
+      generalized: true,
+    };
+  } catch {
+    return { html, fields: [], generalized: false };
+  }
+}
+
+function replaceMeaningfulTextNodes(element: HTMLElement, pieces: string[]): void {
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  const nodes: Text[] = [];
+  let node = walker.nextNode();
+  while (node) {
+    const text = node as Text;
+    const parent = text.parentElement;
+    if (parent && !parent.closest('script,style') && text.nodeValue?.trim()) nodes.push(text);
+    node = walker.nextNode();
+  }
+
+  if (!nodes.length) {
+    element.textContent = pieces.join('');
+    return;
+  }
+
+  nodes.forEach((textNode, index) => {
+    textNode.nodeValue = pieces[index] ?? '';
+  });
+}
+
+function reusablePlaceholderImageDataUrl(): string {
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675"><rect width="1200" height="675" fill="#f1eee7"/><rect x="50" y="50" width="1100" height="575" rx="28" fill="none" stroke="#b99a5f" stroke-width="4" stroke-dasharray="18 14"/><text x="600" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-size="42" font-weight="700" fill="#6e604b">Image de démonstration</text><text x="600" y="380" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" fill="#81745f">À remplacer pour le nouveau projet</text></svg>';
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
 function mergeLibraryTags(existing: string[] | null | undefined, additions: string[]): string[] {
