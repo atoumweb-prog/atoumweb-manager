@@ -1888,3 +1888,21 @@ details.aw-reusable-fields {
     justify-content: space-between;
   }
 }
+
+
+.aw-bridge-workbench-note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--border));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--accent-soft) 18%, var(--surface));
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.aw-bridge-workbench-note strong {
+  color: var(--text);
+}
