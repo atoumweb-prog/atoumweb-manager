@@ -605,8 +605,6 @@ export class BridgeSnapshotService {
     const uniqueModuleCss = [...new Set(previews.map((preview) => preview.moduleCss).filter(Boolean))].join('\n\n');
     const pageCss = previews.find((preview) => preview.pageCss)?.pageCss ?? '';
     const globalCss = previews.find((preview) => preview.globalCss)?.globalCss ?? '';
-    const frontend = parseObject(detail.metadata.frontend);
-
     return {
       pageSnapshotId,
       title: detail.page.title,
