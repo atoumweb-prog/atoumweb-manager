@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ProjectTechnicalContentType } from '../../shared/projects';
 import './TechnicalContentViewer.css';
 
@@ -25,12 +25,17 @@ export function TechnicalContentViewer({
   onToggleExpanded,
 }: Props) {
   const [jsonMode, setJsonMode] = useState<JsonMode>('structured');
-  const [viewerMode, setViewerMode] = useState<ViewerMode>('source');
+  const initialPreview = contentType === 'code' && ['html', 'htm'].includes((language ?? '').trim().toLowerCase());
+  const [viewerMode, setViewerMode] = useState<ViewerMode>(initialPreview ? 'preview' : 'source');
   const parsed = useMemo(() => parseJson(contentType, content), [contentType, content]);
   const text = content ?? '';
   const lineCount = text ? text.split(/\r?\n/).length : 0;
   const canPreviewHtml = contentType === 'code' && ['html', 'htm'].includes((language ?? '').trim().toLowerCase());
   const previewDocument = useMemo(() => canPreviewHtml ? buildHtmlPreviewDocument(text) : '', [canPreviewHtml, text]);
+
+  useEffect(() => {
+    setViewerMode(canPreviewHtml ? 'preview' : 'source');
+  }, [canPreviewHtml, content]);
 
   async function copy(): Promise<void> {
     if (!text) return;
