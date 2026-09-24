@@ -437,8 +437,8 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
     }
   }
 
-  async function createBridgeCleanedVersion(): Promise<void> {
-    if (!selected || bridgeWorkflow.cleaned) return;
+  async function createBridgeWorkVersion(): Promise<void> {
+    if (!selected || bridgeWorkflow.work) return;
     const payload = bridgeWorkflow.original?.payload;
     if (!payload || payload.stage !== 'original') {
       setError('La version originale Bridge est introuvable.');
@@ -448,25 +448,58 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
     setBridgeWorkflowBusy(true);
     try {
       setError(null);
-      const cleaned = buildBridgeCleanedComponent(payload.value);
+      const work = buildBridgeWorkComponent(payload.value);
       let changed = await window.atoumweb.referentials.library.createVersion(selected.id, {
         contentType: 'json',
         language: 'json',
-        contentText: JSON.stringify(cleaned, null, 2),
-        notes: 'Version nettoyée — HTML isolé, CSS utile consolidé, JavaScript séparé. La V1 originale reste conservée.',
+        contentText: JSON.stringify(work, null, 2),
+        notes: 'Version de travail — HTML isolé, CSS utile consolidé et JavaScript séparé. L’original reste intact.',
       });
 
       const category = inferBridgeLibraryCategory(payload.value);
       const name = suggestedBridgeLibraryName(payload.value, category);
-      if (changed.category !== category || changed.name !== name) {
-        changed = await window.atoumweb.referentials.library.update(changed.id, { category, name, reuseStatus: 'adapt' });
-      }
+      changed = await window.atoumweb.referentials.library.update(changed.id, {
+        category,
+        name,
+        reuseStatus: 'adapt',
+        tags: mergeLibraryTags(changed.tags, ['bridge-stage-original', 'bridge-stage-work']),
+      });
 
+      setBridgeStageView('work');
       await load(changed.id);
       await setOpenedItem(changed);
-      onMessage(`Version nettoyée créée pour « ${changed.name} ».`);
+      setBridgeStageView('work');
+      onMessage(`Version de travail créée pour « ${changed.name} ».`);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Impossible de créer la version nettoyée.');
+      setError(reason instanceof Error ? reason.message : 'Impossible de créer la version de travail.');
+    } finally {
+      setBridgeWorkflowBusy(false);
+    }
+  }
+
+  async function saveBridgeWorkVersion(work: BridgeWorkComponent): Promise<void> {
+    if (!selected) return;
+    setBridgeWorkflowBusy(true);
+    try {
+      setError(null);
+      const normalized = refreshBridgeWorkChecks(work);
+      let changed = await window.atoumweb.referentials.library.createVersion(selected.id, {
+        contentType: 'json',
+        language: 'json',
+        contentText: JSON.stringify(normalized, null, 2),
+        notes: 'Nouvelle révision de travail enregistrée depuis l’éditeur du Manager.',
+      });
+      changed = await window.atoumweb.referentials.library.update(changed.id, {
+        reuseStatus: 'adapt',
+        tags: mergeLibraryTags(changed.tags, ['bridge-stage-original', 'bridge-stage-work']),
+      });
+      setBridgeStageView('work');
+      await load(changed.id);
+      await setOpenedItem(changed);
+      setBridgeStageView('work');
+      onMessage(`Nouvelle révision de travail enregistrée pour « ${changed.name} ».`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Impossible d’enregistrer la version de travail.');
     } finally {
       setBridgeWorkflowBusy(false);
     }
@@ -474,9 +507,9 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
 
   async function createBridgeReusableVersion(): Promise<void> {
     if (!selected || bridgeWorkflow.reusable) return;
-    const payload = bridgeWorkflow.cleaned?.payload;
-    if (!payload || payload.stage !== 'cleaned') {
-      setError('Crée d’abord la version nettoyée.');
+    const payload = bridgeWorkflow.work?.payload;
+    if (!payload || payload.stage !== 'work') {
+      setError('Crée d’abord une version de travail.');
       return;
     }
 
@@ -493,15 +526,18 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
           : 'Version réutilisable prête à copier dans un module Code Divi.',
       });
 
+      const tags = mergeLibraryTags(changed.tags, ['bridge-stage-original', 'bridge-stage-work', 'bridge-stage-reusable']);
       if (reusable.checks.remoteAssetUrls.length === 0) {
-        changed = await window.atoumweb.referentials.library.update(changed.id, { reuseStatus: 'ready' });
+        changed = await window.atoumweb.referentials.library.update(changed.id, { reuseStatus: 'ready', tags });
         if (changed.currentVersion?.id) changed = await window.atoumweb.referentials.library.markStable(changed.currentVersion.id);
       } else {
-        changed = await window.atoumweb.referentials.library.update(changed.id, { reuseStatus: 'adapt' });
+        changed = await window.atoumweb.referentials.library.update(changed.id, { reuseStatus: 'adapt', tags });
       }
 
+      setBridgeStageView('reusable');
       await load(changed.id);
       await setOpenedItem(changed);
+      setBridgeStageView('reusable');
       onMessage(reusable.checks.remoteAssetUrls.length
         ? `Version réutilisable préparée pour « ${changed.name} ». Les médias distants restent à intégrer localement.`
         : `« ${changed.name} » est prêt à réutiliser.`);
