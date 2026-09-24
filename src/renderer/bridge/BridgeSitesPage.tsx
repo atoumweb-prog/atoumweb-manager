@@ -261,6 +261,31 @@ export function BridgeSitesPage({ onMessage }: Props) {
   async function createLibraryCandidate(candidate: BridgeModulePreview): Promise<void> {
     try {
       setError(null);
+      const sourceNode = page?.nodes.find((node) => node.occurrenceId === candidate.occurrenceId) ?? null;
+      const sourceDependencyIds = new Set(sourceNode?.dependencyIds ?? []);
+      const sourceAssetIds = new Set(sourceNode?.assetIds ?? []);
+      const componentDependencies = (page?.dependencies ?? [])
+        .filter((dependency) => sourceDependencyIds.has(dependency.dependencyId))
+        .map((dependency) => ({
+          dependencyId: dependency.dependencyId,
+          type: dependency.type,
+          slug: dependency.slug,
+          name: dependency.name,
+          version: dependency.version,
+          active: dependency.active,
+        }));
+      const componentAssets = (page?.assets ?? [])
+        .filter((asset) => sourceAssetIds.has(asset.assetId))
+        .map((asset) => ({
+          assetId: asset.assetId,
+          type: asset.type,
+          url: asset.url,
+          localPath: asset.localPath,
+          mimeType: asset.mimeType,
+          hash: asset.hash,
+          archiveMode: asset.archiveMode,
+        }));
+
       const bundle = {
         schemaVersion: 1,
         kind: 'atoumweb-bridge-library-candidate',
@@ -285,6 +310,8 @@ export function BridgeSitesPage({ onMessage }: Props) {
           cssPageUseful: candidate.reuse.relevantPageCss,
           cssGlobalUseful: candidate.reuse.relevantGlobalCss,
           rootClasses: candidate.reuse.rootClasses,
+          dependencies: componentDependencies,
+          assets: componentAssets,
           instructions: candidate.reuse.instructions,
           notes: candidate.reuse.notes,
         },
