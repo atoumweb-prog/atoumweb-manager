@@ -651,15 +651,17 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
     if (!result.ok) setError(result.error ?? 'Impossible d’ouvrir le dossier de cette version.');
   }
 
-  async function exportPackage(): Promise<void> {
+  async function exportPackage(versionId?: string | null, bridgeWorkbench = false): Promise<void> {
     if (!selected) return;
     setPackageBusy(true);
     try {
       setError(null);
-      const exported = await window.atoumweb.referentials.packages.exportItem(selected.id, assetVersionId || null);
+      const exported = await window.atoumweb.referentials.packages.exportItem(selected.id, (versionId ?? assetVersionId) || null);
       const shown = await window.atoumweb.referentials.packages.showExport(exported.path);
       if (!shown.ok) setError(shown.error ?? 'Le paquet a été créé mais son emplacement ne peut pas être affiché.');
-      onMessage(`Paquet ZIP exporté : ${exported.fileName} · v${exported.versionNumber} · ${exported.assetCount} fichier(s).`);
+      onMessage(bridgeWorkbench
+        ? `Package Bridge/Workbench préparé : ${exported.fileName} · v${exported.versionNumber}.`
+        : `Paquet ZIP exporté : ${exported.fileName} · v${exported.versionNumber} · ${exported.assetCount} fichier(s).`);
     } catch (packageError) {
       setError(packageError instanceof Error ? packageError.message : 'Export du paquet impossible.');
     } finally {
@@ -893,6 +895,8 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
                       work={bridgeWorkflow.work?.payload.stage === 'work' ? bridgeWorkflow.work.payload.value : null}
                       original={originalBridgeCandidate}
                       rawContent={displayedBridgeEntry.version.contentText ?? ''}
+                      packageBusy={packageBusy}
+                      onExportBridgePackage={() => exportPackage(displayedBridgeEntry.version.id, true)}
                       onMessage={onMessage}
                     />}
             </section>}
@@ -1194,12 +1198,16 @@ function BridgeReusableViewer({
   work,
   original,
   rawContent,
+  packageBusy,
+  onExportBridgePackage,
   onMessage,
 }: {
   component: BridgeReusableComponent;
   work: BridgeWorkComponent | null;
   original: BridgeLibraryCandidate | null;
   rawContent: string;
+  packageBusy: boolean;
+  onExportBridgePackage: () => Promise<void>;
   onMessage: (message: string) => void;
 }) {
   const previewDocument = buildBridgeReusablePreview(component);
@@ -1223,7 +1231,16 @@ function BridgeReusableViewer({
     {component.reusable.fields.length > 0 && <ReusableFieldsPanel fields={component.reusable.fields} />}
 
     <section className="aw-bridge-candidate-reuse">
-      <div className="aw-library-section-title"><div><span className="eyebrow">Mode d’emploi</span><h3>Utiliser dans un autre site</h3></div></div>
+      <div className="aw-library-section-title">
+        <div><span className="eyebrow">Mode d’emploi</span><h3>Utiliser dans un autre site</h3></div>
+        <button className="primary-button" type="button" disabled={packageBusy || !component.reusable.generalized} onClick={() => void onExportBridgePackage()}>
+          <OperationIcon name="package" size={16} />{packageBusy ? 'Préparation…' : 'Exporter package Bridge'}
+        </button>
+      </div>
+      <div className="aw-bridge-workbench-note">
+        <OperationIcon name="wrench" size={16} />
+        <span>Prévu pour le flux <strong>Bibliothèque → Bridge → Workbench Divi</strong>. Ce package ne déclenche aucune écriture directe en production.</span>
+      </div>
       <div className="aw-bridge-candidate-instructions">
         {component.reusable.instructions.map((instruction) => <p key={instruction}><OperationIcon name="check-circle" size={15} />{instruction}</p>)}
       </div>
