@@ -1572,6 +1572,48 @@ function generalizeBridgeReusableHtml(html: string): { html: string; fields: Bri
       });
     });
 
+    root.querySelectorAll<HTMLSourceElement>('source[srcset]').forEach((source) => {
+      const originalSrcSet = source.getAttribute('srcset') ?? '';
+      if (!/^https?:\/\//i.test(originalSrcSet.trim())) return;
+      imageIndex += 1;
+      const id = `image-${imageIndex}`;
+      source.dataset.awFieldImage = id;
+      source.setAttribute('srcset', reusablePlaceholderImageDataUrl());
+      fields.push({
+        id,
+        label: `Image responsive ${imageIndex}`,
+        type: 'image',
+        selector: `[data-aw-field-image="${id}"]`,
+        originalValue: originalSrcSet,
+        defaultValue: 'Image de démonstration locale',
+      });
+    });
+
+    root.querySelectorAll<HTMLElement>('[style*="url("]').forEach((element) => {
+      const originalStyle = element.getAttribute('style') ?? '';
+      const urls = extractRemoteAssetUrls(originalStyle).filter((url) => /\.(?:avif|gif|jpe?g|png|svg|webp)(?:[?#].*)?$/i.test(url));
+      if (!urls.length) return;
+
+      let nextStyle = originalStyle;
+      urls.forEach((url) => {
+        imageIndex += 1;
+        const id = `image-${imageIndex}`;
+        element.dataset.awFieldImage = element.dataset.awFieldImage
+          ? `${element.dataset.awFieldImage} ${id}`
+          : id;
+        nextStyle = nextStyle.split(url).join(reusablePlaceholderImageDataUrl());
+        fields.push({
+          id,
+          label: `Image de fond ${imageIndex}`,
+          type: 'image',
+          selector: `[data-aw-field-image~="${id}"]`,
+          originalValue: url,
+          defaultValue: 'Image de démonstration locale',
+        });
+      });
+      element.setAttribute('style', nextStyle);
+    });
+
     return {
       html: root.innerHTML.trim(),
       fields,
