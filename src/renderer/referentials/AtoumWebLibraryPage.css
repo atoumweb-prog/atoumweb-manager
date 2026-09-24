@@ -1505,3 +1505,183 @@ button.aw-library-stage-open:hover {
   border-color: color-mix(in srgb, #F2B705 48%, var(--border));
   background: color-mix(in srgb, #F2B705 4%, var(--surface));
 }
+
+
+/* Bibliothèque — bandeau fixe compact */
+@media (min-width: 901px) {
+  .aw-library {
+    gap: 8px;
+  }
+
+  .aw-library-fixed-head {
+    gap: 7px;
+  }
+
+  .aw-library-summary {
+    gap: 8px;
+  }
+
+  .aw-library-summary .aw-library-kpi {
+    min-height: 54px;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 11px;
+    box-shadow: none;
+  }
+
+  .aw-library-kpi-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+  }
+
+  .aw-library-summary .aw-library-kpi > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 7px;
+    align-items: baseline;
+  }
+
+  .aw-library-summary .aw-library-kpi > div > span {
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .aw-library-summary .aw-library-kpi > div > strong {
+    font-size: 16px;
+    font-weight: 750;
+  }
+
+  .aw-library-summary .aw-library-kpi small {
+    display: none;
+  }
+
+  .aw-library-toolbar {
+    grid-template-columns: minmax(220px, 1fr) minmax(140px, .48fr) minmax(140px, .45fr) auto auto auto;
+    gap: 7px;
+    padding: 8px 10px;
+    border-radius: 11px;
+    box-shadow: none;
+  }
+
+  .aw-library-toolbar input,
+  .aw-library-toolbar select {
+    min-height: 34px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    font-size: 11px;
+  }
+
+  .aw-library-toolbar .primary-button,
+  .aw-library-toolbar .secondary-button {
+    min-height: 34px;
+    padding: 6px 9px;
+    font-size: 10px;
+  }
+
+  .aw-library-checkbox {
+    font-size: 10px;
+  }
+}
+
+/* Réutilisable = modèle générique à personnaliser */
+.aw-reusable-fields {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--success) 28%, var(--border));
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--success) 3%, var(--surface-soft));
+}
+
+.aw-reusable-field-count {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 8px;
+  border: 1px solid color-mix(in srgb, var(--success) 28%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--success) 7%, var(--surface));
+  color: var(--success);
+  font-size: 9px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.aw-reusable-field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 7px;
+}
+
+.aw-reusable-field {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+}
+
+.aw-reusable-field > span {
+  width: fit-content;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.aw-reusable-field.image > span {
+  background: color-mix(in srgb, #1565C0 8%, var(--surface));
+  color: #1565C0;
+}
+
+.aw-reusable-field.link > span {
+  background: color-mix(in srgb, #F2B705 10%, var(--surface));
+  color: var(--text);
+}
+
+.aw-reusable-field strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aw-reusable-field small {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+@media (max-width: 1080px) and (min-width: 901px) {
+  .aw-library-toolbar {
+    grid-template-columns: minmax(200px, 1fr) repeat(2, minmax(130px, .5fr)) auto;
+  }
+
+  .aw-library-toolbar .aw-library-checkbox {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .aw-library-summary {
+    gap: 8px;
+  }
+
+  .aw-library-summary .aw-library-kpi {
+    padding: 9px 10px;
+  }
+
+  .aw-library-kpi-icon {
+    width: 38px;
+    height: 38px;
+  }
+}
