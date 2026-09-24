@@ -1685,3 +1685,72 @@ button.aw-library-stage-open:hover {
     height: 38px;
   }
 }
+
+
+/* Poignée verticale du bandeau Bibliothèque */
+.aw-library-head-toggle {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  justify-self: center;
+  align-self: center;
+  gap: 4px;
+  min-width: 42px;
+  min-height: 22px;
+  margin: -2px auto 1px;
+  padding: 2px 8px;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 94%, var(--accent-soft));
+  color: var(--accent-strong);
+  box-shadow: 0 3px 10px rgb(0 0 0 / 5%);
+  cursor: pointer;
+}
+
+.aw-library-head-toggle > span {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.aw-library-head-toggle > small {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.aw-library-head-toggle:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.aw-library.head-collapsed {
+  gap: 3px;
+}
+
+.aw-library.head-collapsed .aw-library-fixed-head {
+  display: none;
+}
+
+.aw-library.head-collapsed .aw-library-head-toggle {
+  margin-top: 0;
+}
+
+@media (min-width: 901px) {
+  .aw-library-head-toggle > small {
+    display: none;
+  }
+
+  .aw-library.head-collapsed .aw-library-layout {
+    flex: 1 1 auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .aw-library-head-toggle {
+    position: sticky;
+    z-index: 20;
+    top: 4px;
+    margin: 0 auto 5px;
+  }
+}
