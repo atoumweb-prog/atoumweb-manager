@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   AtoumWebLibraryCategory,
   AtoumWebPackageInspection,
@@ -198,6 +198,26 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   const [packageBusy, setPackageBusy] = useState(false);
   const [bridgeWorkflowBusy, setBridgeWorkflowBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const libraryRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const measureWorkspace = () => {
+      const node = libraryRef.current;
+      if (!node) return;
+      const rect = node.getBoundingClientRect();
+      const bottomGap = 18;
+      const available = Math.max(520, window.innerHeight - rect.top - bottomGap);
+      node.style.setProperty('--aw-library-available-height', `${available}px`);
+    };
+
+    measureWorkspace();
+    const frame = window.requestAnimationFrame(measureWorkspace);
+    window.addEventListener('resize', measureWorkspace);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('resize', measureWorkspace);
+    };
+  }, []);
 
   async function loadVersionAssets(versionId: string): Promise<void> {
     if (!versionId) {
@@ -627,8 +647,9 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
   }
 
   return (
-    <div className="aw-library">
-      <div className="aw-library-summary">
+    <div className="aw-library" ref={libraryRef}>
+      <div className="aw-library-fixed-head">
+        <div className="aw-library-summary">
         <Summary icon="package" label="Composants affichés" value={summary.total} />
         <Summary icon="check-circle" label="Prêts" value={summary.ready} />
         <Summary icon="wrench" label="À adapter" value={summary.adapt} />
@@ -650,7 +671,8 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId }: Props) {
         <label className="aw-library-checkbox"><input type="checkbox" checked={includeArchived} onChange={(event) => setIncludeArchived(event.target.checked)} /> Archivés</label>
         <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void inspectPackage()}><OperationIcon name="upload" size={16} /> Importer ZIP</button>
         <button className="primary-button" type="button" onClick={() => setCreating((value) => !value)}>{creating ? 'Fermer' : 'Nouveau composant'}</button>
-      </article>
+        </article>
+      </div>
 
       {packageInspection && <article className="panel aw-library-package-review">
         <div className="panel-title"><div><span className="eyebrow">Import contrôlé</span><h2>{packageInspection.item.name}</h2></div><button className="secondary-button" type="button" onClick={() => setPackageInspection(null)}>Fermer</button></div>
