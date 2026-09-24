@@ -972,3 +972,135 @@ table td {
     overflow: visible !important;
   }
 }
+
+
+/* Responsive Clients — même atelier adaptatif que Prospection / Interventions. */
+.clients-layout {
+  min-width: 0;
+}
+
+.clients-layout:not(.with-detail) {
+  grid-template-columns: 1fr !important;
+}
+
+.clients-layout.with-detail {
+  grid-template-columns: minmax(0, var(--client-list-percent, 68%)) 8px minmax(340px, 1fr) !important;
+  gap: 0 !important;
+  align-items: start !important;
+}
+
+.clients-layout.with-detail > * {
+  min-width: 0;
+}
+
+.client-splitter {
+  align-self: stretch;
+  min-height: 100%;
+  margin-inline: 0;
+}
+
+.client-summary-panel:not(.client-large-view) {
+  container-type: inline-size;
+  container-name: clientpanel;
+}
+
+.client-detail-expand {
+  flex: 0 0 34px;
+}
+
+/* Largeur moyenne : on protège davantage la fiche client. */
+@media (max-width: 1250px) {
+  .clients-layout.with-detail {
+    grid-template-columns: minmax(0, var(--client-list-percent, 62%)) 8px minmax(320px, 1fr) !important;
+  }
+}
+
+/* Comme Interventions : quand l'espace devient trop faible, la fiche passe dessous. */
+@media (max-width: 850px) {
+  .clients-layout.with-detail {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .client-splitter {
+    display: none !important;
+  }
+
+  .client-summary-panel:not(.client-large-view) {
+    position: static !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .client-summary-panel:not(.client-large-view) .client-summary-scroll {
+    overflow: visible !important;
+  }
+}
+
+/* La fiche adapte ses propres cases à sa largeur réelle. */
+@container clientpanel (max-width: 410px) {
+  .client-summary-panel .detail-panel-heading {
+    gap: 8px;
+  }
+
+  .client-summary-panel .client-summary-head {
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .client-summary-panel .client-summary-head h2 {
+    font-size: 18px;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+
+  .client-summary-panel .detail-heading-actions {
+    gap: 6px;
+  }
+
+  .client-summary-panel .client-relationship-trigger {
+    max-width: 100%;
+    white-space: normal;
+    text-align: left;
+  }
+
+  .client-summary-panel .contact-form-grid,
+  .client-summary-panel .commercial-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .client-summary-panel .summary-line {
+    grid-template-columns: minmax(92px, .8fr) minmax(0, 1.2fr);
+  }
+
+  .client-summary-panel .client-tabs-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .client-summary-panel .client-tabs-buttons button {
+    width: 100%;
+  }
+}
+
+@container clientpanel (max-width: 330px) {
+  .client-summary-panel .client-summary-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .client-summary-panel .summary-line {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+
+  .client-summary-panel .client-tabs-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .client-summary-panel .contact-tab-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
