@@ -619,7 +619,7 @@ export class BridgeSnapshotService {
       renderedModuleCount: previews.filter((preview) => Boolean(preview.html)).length,
       totalModuleCount: detail.nodes.filter((node) => node.nodeType === 'module').length,
       omittedModuleCount: Math.max(0, detail.nodes.filter((node) => node.nodeType === 'module').length - previews.filter((preview) => Boolean(preview.html)).length),
-      frontendValidated: frontend.checked === true,
+      frontendValidated: previews[0]?.frontendValidated ?? false,
     };
   }
 
@@ -808,6 +808,234 @@ export class BridgeSnapshotService {
     const printable = [...value].map((char) => char.charCodeAt(0) < 32 ? '-' : char).join('');
     return printable.replace(/[<>:"/\\|?*]/g, '-').replace(/[. ]+$/g, '').trim().slice(0, 150) || 'snapshot';
   }
+}
+
+interface HtmlTokens {
+  classes: string[];
+  ids: string[];
+}
+
+function isBridgeCodeModule(moduleType: string | null): boolean {
+  return Boolean(moduleType && /(^|[\/_-])code($|[\/_-])/i.test(moduleType));
+}
+
+function extractHtmlFromDiviSource(source: string | null): string {
+  if (!source) return '';
+
+  const divi5Marker = source.indexOf('<!-- wp:divi/code');
+  if (divi5Marker >= 0) {
+    const jsonStart = source.indexOf('{', divi5Marker);
+    const commentEnd = jsonStart >= 0 ? source.indexOf('-->', jsonStart) : -1;
+    if (jsonStart >= 0 && commentEnd > jsonStart) {
+      try {
+        const parsed = JSON.parse(source.slice(jsonStart, commentEnd).trim()) as Record<string, unknown>;
+        const candidate = findHtmlValue(parsed);
+        if (candidate) return candidate.trim();
+      } catch {
+        // La source brute reste disponible ; on bascule sur les autres formats ci-dessous.
+      }
+    }
+  }
+
+  const divi4 = source.match(/\[et_pb_code[^\]]*\]([\s\S]*?)\[\/et_pb_code\]/i);
+  if (divi4?.[1]) {
+    return divi4[1]
+      .replace(/<!--\s*\[et_pb_line_break_holder\]\s*-->/gi, '\n')
+      .replace(/\[et_pb_line_break_holder\]/gi, '\n')
+      .trim();
+  }
+
+  return '';
+}
+
+function findHtmlValue(value: unknown): string {
+  if (typeof value === 'string') return /<\/?[a-z][\s\S]*>/i.test(value) ? value : '';
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findHtmlValue(item);
+      if (found) return found;
+    }
+    return '';
+  }
+  if (!value || typeof value !== 'object') return '';
+  const record = value as Record<string, unknown>;
+  const preferredPaths = [
+    record.innerContent,
+    record.content,
+    record.module,
+    record.desktop,
+    record.value,
+  ];
+  for (const candidate of preferredPaths) {
+    const found = findHtmlValue(candidate);
+    if (found) return found;
+  }
+  for (const candidate of Object.values(record)) {
+    const found = findHtmlValue(candidate);
+    if (found) return found;
+  }
+  return '';
+}
+
+function extractHtmlTokens(html: string): HtmlTokens {
+  const classes = new Set<string>();
+  const ids = new Set<string>();
+  const classPattern = /\bclass\s*=\s*["']([^"']+)["']/gi;
+  const idPattern = /\bid\s*=\s*["']([^"']+)["']/gi;
+  let match: RegExpExecArray | null;
+  while ((match = classPattern.exec(html))) {
+    match[1].split(/\s+/).filter(Boolean).forEach((name) => classes.add(name));
+  }
+  while ((match = idPattern.exec(html))) {
+    if (match[1].trim()) ids.add(match[1].trim());
+  }
+  return { classes: [...classes], ids: [...ids] };
+}
+
+function pickRootClasses(classes: string[]): string[] {
+  const atoumRoots = classes.filter((name) => /^atoum[-_]/i.test(name) && !name.includes('__') && !name.includes('--'));
+  const roots = atoumRoots.length ? atoumRoots : classes.filter((name) => !name.includes('__') && !name.includes('--'));
+  return [...new Set(roots)].slice(0, 8);
+}
+
+function suggestLibraryCategory(rootClasses: string[], html: string): 'header' | 'footer' | 'hero' | 'section' | 'form' | 'gallery' | 'carousel' | 'navigation' | 'divi' {
+  const haystack = `${rootClasses.join(' ')} ${html.slice(0, 3000)}`.toLowerCase();
+  if (/\bhero\b/.test(haystack)) return 'hero';
+  if (/<header\b|\bheader\b/.test(haystack)) return 'header';
+  if (/<footer\b|\bfooter\b/.test(haystack)) return 'footer';
+  if (/<form\b|\bformulaire\b|\bcontact-form\b/.test(haystack)) return 'form';
+  if (/\bgallery\b|\bgalerie\b/.test(haystack)) return 'gallery';
+  if (/\bcarousel\b|\bslider\b/.test(haystack)) return 'carousel';
+  if (/<nav\b|\bnavigation\b|\bmenu\b/.test(haystack)) return 'navigation';
+  return html ? 'section' : 'divi';
+}
+
+function suggestLibraryName(rootClasses: string[], pageTitle: string, category: string): string {
+  const categoryLabel: Record<string, string> = {
+    hero: 'Hero',
+    header: 'Header',
+    footer: 'Footer',
+    form: 'Formulaire',
+    gallery: 'Galerie',
+    carousel: 'Carrousel',
+    navigation: 'Navigation',
+    section: 'Section',
+    divi: 'Élément Divi',
+  };
+  const root = rootClasses[0];
+  if (root) {
+    const cleaned = root.replace(/^atoum[-_]?/i, '').replace(/[-_]+/g, ' ').trim();
+    if (cleaned && !['hero', 'section', 'module', 'code'].includes(cleaned.toLowerCase())) {
+      return `${categoryLabel[category] ?? 'Composant'} — ${cleaned.replace(/\b\w/g, (letter) => letter.toUpperCase())}`;
+    }
+  }
+  return `${categoryLabel[category] ?? 'Composant'} — ${pageTitle}`;
+}
+
+function extractRelevantCss(css: string, tokens: HtmlTokens): { css: string; ruleCount: number } {
+  if (!css.trim()) return { css: '', ruleCount: 0 };
+  const selectors = [
+    ...tokens.classes.map((name) => `.${name}`),
+    ...tokens.ids.map((name) => `#${name}`),
+  ];
+  if (!selectors.length) return { css: '', ruleCount: 0 };
+  return filterCssRange(css, selectors);
+}
+
+function filterCssRange(css: string, selectors: string[]): { css: string; ruleCount: number } {
+  let cursor = 0;
+  const kept: string[] = [];
+  let ruleCount = 0;
+
+  while (cursor < css.length) {
+    while (cursor < css.length && /\s/.test(css[cursor])) cursor += 1;
+    if (cursor >= css.length) break;
+
+    if (css.startsWith('/*', cursor)) {
+      const commentEnd = css.indexOf('*/', cursor + 2);
+      cursor = commentEnd >= 0 ? commentEnd + 2 : css.length;
+      continue;
+    }
+
+    const open = css.indexOf('{', cursor);
+    if (open < 0) break;
+    const header = css.slice(cursor, open).trim();
+    const close = findMatchingBrace(css, open);
+    if (close < 0) break;
+    const body = css.slice(open + 1, close);
+
+    if (header.startsWith('@')) {
+      if (/^@(media|supports|container|layer)\b/i.test(header)) {
+        const nested = filterCssRange(body, selectors);
+        if (nested.css.trim()) {
+          kept.push(`${header} {\n${nested.css}\n}`);
+          ruleCount += nested.ruleCount;
+        }
+      }
+    } else if (selectors.some((selector) => header.includes(selector))) {
+      kept.push(`${header} {\n${body.trim()}\n}`);
+      ruleCount += 1;
+    }
+
+    cursor = close + 1;
+  }
+
+  return { css: kept.join('\n\n'), ruleCount };
+}
+
+function findMatchingBrace(css: string, openIndex: number): number {
+  let depth = 0;
+  let quote: string | null = null;
+  let inComment = false;
+  for (let index = openIndex; index < css.length; index += 1) {
+    const char = css[index];
+    const next = css[index + 1];
+    if (inComment) {
+      if (char === '*' && next === '/') {
+        inComment = false;
+        index += 1;
+      }
+      continue;
+    }
+    if (!quote && char === '/' && next === '*') {
+      inComment = true;
+      index += 1;
+      continue;
+    }
+    if (quote) {
+      if (char === '\\') {
+        index += 1;
+        continue;
+      }
+      if (char === quote) quote = null;
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      quote = char;
+      continue;
+    }
+    if (char === '{') depth += 1;
+    if (char === '}') {
+      depth -= 1;
+      if (depth === 0) return index;
+    }
+  }
+  return -1;
+}
+
+function countCssRules(css: string): number {
+  if (!css.trim()) return 0;
+  let count = 0;
+  let cursor = 0;
+  while (cursor < css.length) {
+    const open = css.indexOf('{', cursor);
+    if (open < 0) break;
+    const headerStart = Math.max(css.lastIndexOf('}', open - 1), css.lastIndexOf(';', open - 1)) + 1;
+    const header = css.slice(headerStart, open).trim();
+    if (header && !header.startsWith('@')) count += 1;
+    cursor = open + 1;
+  }
+  return count;
 }
 
 function parseObject(value: unknown): Record<string, unknown> {
