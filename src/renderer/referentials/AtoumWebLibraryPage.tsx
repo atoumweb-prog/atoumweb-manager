@@ -1753,7 +1753,7 @@ function MetadataEditor({ form, setForm, onSave }: { form: MetadataForm; setForm
 }
 
 function Summary({ icon, label, value }: { icon: OperationIconName; label: string; value: number }) {
-  return <article className="kpi-card aw-library-kpi"><span className="aw-library-kpi-icon"><OperationIcon name={icon} size={27} /></span><div><span>{label}</span><strong>{value}</strong><small>Bibliothèque AtoumWeb</small></div></article>;
+  return <article className="kpi-card aw-library-kpi"><span className="aw-library-kpi-icon"><OperationIcon name={icon} size={20} /></span><div><span>{label}</span><strong>{value}</strong><small>Bibliothèque AtoumWeb</small></div></article>;
 }
 
 function categoryLabel(category: AtoumWebLibraryCategory): string {
