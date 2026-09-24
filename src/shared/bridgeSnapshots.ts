@@ -197,6 +197,23 @@ export interface BridgeObjectPreview {
   truncated: boolean;
 }
 
+export interface BridgeReuseAnalysis {
+  status: 'ready' | 'dependencies' | 'review';
+  suggestedName: string;
+  suggestedCategory: 'header' | 'footer' | 'hero' | 'section' | 'form' | 'gallery' | 'carousel' | 'navigation' | 'divi';
+  rootClasses: string[];
+  relevantPageCss: string;
+  relevantGlobalCss: string;
+  relevantPageRuleCount: number;
+  relevantGlobalRuleCount: number;
+  pageCssRuleCount: number;
+  globalCssRuleCount: number;
+  moduleAssetCount: number;
+  moduleDependencyCount: number;
+  instructions: string[];
+  notes: string[];
+}
+
 export interface BridgeModulePreview {
   pageSnapshotId: string;
   occurrenceId: string;
@@ -218,6 +235,23 @@ export interface BridgeModulePreview {
     globalCss: number;
     javascript: number;
   };
+  frontendValidated: boolean;
+  htmlDerivedFromDiviSource: boolean;
+  reuse: BridgeReuseAnalysis;
+}
+
+export interface BridgePagePreview {
+  pageSnapshotId: string;
+  title: string;
+  url: string | null;
+  builderGeneration: string | null;
+  html: string;
+  moduleCss: string;
+  pageCss: string;
+  globalCss: string;
+  renderedModuleCount: number;
+  totalModuleCount: number;
+  omittedModuleCount: number;
   frontendValidated: boolean;
 }
 
@@ -241,5 +275,6 @@ export interface BridgeSnapshotsApi {
   getPage(pageSnapshotId: string): Promise<BridgePageSnapshotDetail>;
   getObjectPreview(objectRef: string): Promise<BridgeObjectPreview>;
   getModulePreview(pageSnapshotId: string, occurrenceId: string): Promise<BridgeModulePreview>;
+  getPagePreview(pageSnapshotId: string): Promise<BridgePagePreview>;
   exportDiagnostic(snapshotId: string): Promise<BridgeSnapshotDiagnosticExportResult>;
 }
