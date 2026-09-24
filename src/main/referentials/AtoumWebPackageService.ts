@@ -34,6 +34,63 @@ interface PackageManifestAsset {
   missing: boolean;
 }
 
+interface BridgeReusableExportPayload {
+  schemaVersion: number;
+  kind: 'atoumweb-library-reusable-component';
+  origin: {
+    site: string | null;
+    page: string;
+    pageUrl: string | null;
+    snapshotId: string | null;
+    snapshotDate: string | null;
+    builderGeneration: string | null;
+    occurrenceId: string;
+  };
+  reusable: {
+    html: string;
+    css: string;
+    javascript: string;
+    rootClasses: string[];
+    method: string;
+    generalized: boolean;
+    fields: unknown[];
+  };
+  dependencies: unknown[];
+  assets: unknown[];
+}
+
+interface BridgeWorkbenchManifest {
+  contract: 'atoumweb_bridge_component_package';
+  schemaVersion: 1;
+  flow: 'workbench_first';
+  workbenchRequired: true;
+  directProductionInjection: false;
+  component: {
+    libraryItemId: string;
+    libraryVersionId: string;
+    libraryVersionNumber: number;
+    name: string;
+    category: AtoumWebLibraryCategory;
+    rootClasses: string[];
+    generalized: boolean;
+    method: string;
+  };
+  files: {
+    html: { path: string; sha256: string };
+    css: { path: string; sha256: string } | null;
+    javascript: { path: string; sha256: string } | null;
+    fields: { path: string; sha256: string };
+    dependencies: { path: string; sha256: string };
+    sourceAssets: { path: string; sha256: string };
+    provenance: { path: string; sha256: string };
+  };
+  provenance: BridgeReusableExportPayload['origin'] & {
+    libraryItemId: string;
+    libraryVersionId: string;
+    libraryVersionNumber: number;
+  };
+}
+
 interface PackageManifestV1 {
   schemaVersion: number;
   purpose: string;
@@ -59,6 +116,7 @@ interface PackageManifestV1 {
     contentSha256: string | null;
   };
   assets: PackageManifestAsset[];
+  bridgeWorkbench?: BridgeWorkbenchManifest;
 }
 
 interface LoadedPackage {
@@ -80,6 +138,7 @@ export class AtoumWebPackageService {
     const version = this.pickVersion(item, requestedVersionId);
     const versionAssets = this.assets.list(version.id);
     const zipEntries: ZipEntryInput[] = [];
+    const bridgePayload = this.parseBridgeReusablePayload(version.contentText);
 
     let contentFile: string | null = null;
     let contentSha256: string | null = null;
@@ -133,6 +192,10 @@ export class AtoumWebPackageService {
     }
 
     const createdAt = new Date().toISOString();
+    const bridgeWorkbench = bridgePayload
+      ? this.buildBridgeWorkbenchPackage(item, version, bridgePayload, zipEntries)
+      : undefined;
+
     const manifest: PackageManifestV1 = {
       schemaVersion: 1,
       purpose: 'atoumweb_technical_library_package',
@@ -155,6 +218,7 @@ export class AtoumWebPackageService {
         contentSha256,
       },
       assets: manifestAssets,
+      bridgeWorkbench,
     };
     zipEntries.unshift({ name: 'manifest.json', data: Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`, 'utf8') });
 
@@ -179,6 +243,100 @@ export class AtoumWebPackageService {
       assetCount: manifestAssets.length,
       createdAt,
     };
+  }
+
+  private buildBridgeWorkbenchPackage(
+    item: AtoumWebTechnicalItemDetail,
+    version: AtoumWebTechnicalVersion,
+    payload: BridgeReusableExportPayload,
+    zipEntries: ZipEntryInput[],
+  ): BridgeWorkbenchManifest {
+    const addText = (path: string, content: string): { path: string; sha256: string } => {
+      const data = Buffer.from(content, 'utf8');
+      zipEntries.push({ name: path, data });
+      return { path, sha256: this.sha256(data) };
+    };
+
+    const html = addText('component/component.html', payload.reusable.html);
+    const css = payload.reusable.css.trim()
+      ? addText('component/component.css', payload.reusable.css)
+      : null;
+    const javascript = payload.reusable.javascript.trim()
+      ? addText('component/component.js', payload.reusable.javascript)
+      : null;
+    const fields = addText('component/fields.json', `${JSON.stringify(payload.reusable.fields ?? [], null, 2)}\n`);
+    const dependencies = addText('component/dependencies.json', `${JSON.stringify(payload.dependencies ?? [], null, 2)}\n`);
+    const sourceAssets = addText('component/source-assets.json', `${JSON.stringify(payload.assets ?? [], null, 2)}\n`);
+    const provenanceValue = {
+      ...payload.origin,
+      libraryItemId: item.id,
+      libraryVersionId: version.id,
+      libraryVersionNumber: version.versionNumber,
+    };
+    const provenance = addText('component/provenance.json', `${JSON.stringify(provenanceValue, null, 2)}\n`);
+
+    return {
+      contract: 'atoumweb_bridge_component_package',
+      schemaVersion: 1,
+      flow: 'workbench_first',
+      workbenchRequired: true,
+      directProductionInjection: false,
+      component: {
+        libraryItemId: item.id,
+        libraryVersionId: version.id,
+        libraryVersionNumber: version.versionNumber,
+        name: item.name,
+        category: item.category,
+        rootClasses: payload.reusable.rootClasses,
+        generalized: payload.reusable.generalized,
+        method: payload.reusable.method,
+      },
+      files: { html, css, javascript, fields, dependencies, sourceAssets, provenance },
+      provenance: provenanceValue,
+    };
+  }
+
+  private parseBridgeReusablePayload(contentText: string | null | undefined): BridgeReusableExportPayload | null {
+    if (!contentText?.trim()) return null;
+    try {
+      const value = JSON.parse(contentText) as Record<string, unknown>;
+      if (value.kind !== 'atoumweb-library-reusable-component') return null;
+      const origin = value.origin;
+      const reusable = value.reusable;
+      if (!origin || typeof origin !== 'object' || !reusable || typeof reusable !== 'object') return null;
+      const reusableValue = reusable as Record<string, unknown>;
+      if (typeof reusableValue.html !== 'string' || typeof reusableValue.css !== 'string' || typeof reusableValue.javascript !== 'string') return null;
+
+      const originValue = origin as Record<string, unknown>;
+      return {
+        schemaVersion: Number(value.schemaVersion ?? 1),
+        kind: 'atoumweb-library-reusable-component',
+        origin: {
+          site: typeof originValue.site === 'string' ? originValue.site : null,
+          page: typeof originValue.page === 'string' ? originValue.page : 'Page inconnue',
+          pageUrl: typeof originValue.pageUrl === 'string' ? originValue.pageUrl : null,
+          snapshotId: typeof originValue.snapshotId === 'string' ? originValue.snapshotId : null,
+          snapshotDate: typeof originValue.snapshotDate === 'string' ? originValue.snapshotDate : null,
+          builderGeneration: typeof originValue.builderGeneration === 'string' ? originValue.builderGeneration : null,
+          occurrenceId: typeof originValue.occurrenceId === 'string' ? originValue.occurrenceId : '',
+        },
+        reusable: {
+          html: reusableValue.html,
+          css: reusableValue.css,
+          javascript: reusableValue.javascript,
+          rootClasses: Array.isArray(reusableValue.rootClasses)
+            ? reusableValue.rootClasses.filter((entry): entry is string => typeof entry === 'string')
+            : [],
+          method: typeof reusableValue.method === 'string' ? reusableValue.method : 'divi-code',
+          generalized: reusableValue.generalized === true,
+          fields: Array.isArray(reusableValue.fields) ? reusableValue.fields : [],
+        },
+        dependencies: Array.isArray(value.dependencies) ? value.dependencies : [],
+        assets: Array.isArray(value.assets) ? value.assets : [],
+      };
+    } catch {
+      return null;
+    }
   }
 
   inspectPackage(path: string): AtoumWebPackageInspection {
