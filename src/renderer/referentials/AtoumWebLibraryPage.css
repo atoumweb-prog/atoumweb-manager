@@ -1087,3 +1087,86 @@ body.aw-library-resizing {
     box-shadow: none;
   }
 }
+
+
+/* Correction recette 24/09 — seul le haut de page est fixe.
+   Aucune sous-zone de la fiche ne flotte au-dessus du scroll. */
+@media (min-width: 901px) {
+  .aw-library {
+    display: flex;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    flex-direction: column;
+    gap: 12px;
+    overflow: hidden;
+  }
+
+  .aw-library-fixed-head {
+    position: static;
+    z-index: auto;
+    flex: 0 0 auto;
+    background: transparent;
+  }
+
+  .aw-library-layout {
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+    overflow: hidden;
+    align-items: stretch;
+  }
+
+  .aw-library-layout.with-detail,
+  .aw-library-layout.aw-library-layout-list-only,
+  .aw-library-layout.detail-expanded {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .aw-library-list,
+  .aw-library-detail,
+  .aw-library-detail.expanded {
+    position: static;
+    top: auto;
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+    align-content: start;
+    grid-auto-rows: max-content;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-gutter: stable;
+  }
+
+  .aw-library-detail {
+    margin-left: 10px;
+  }
+
+  .aw-library-detail.expanded {
+    margin-left: 0;
+  }
+
+  .aw-library-list > .panel-title,
+  .aw-library-detail-heading,
+  .aw-library-detail .aw-library-bridge-workflow {
+    position: static;
+    z-index: auto;
+    top: auto;
+    margin: 0 0 14px;
+    padding: 0;
+    border-bottom: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .aw-library-detail .aw-library-bridge-workflow {
+    margin-bottom: 0;
+  }
+
+  .aw-library-splitter {
+    height: 100%;
+    min-height: 0;
+  }
+}
