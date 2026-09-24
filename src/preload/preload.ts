@@ -132,6 +132,7 @@ const api: AtoumWebApi = {
     getPage: (pageSnapshotId: string) => ipcRenderer.invoke('bridge:pages:get', pageSnapshotId),
     getObjectPreview: (objectRef: string) => ipcRenderer.invoke('bridge:objects:preview', objectRef),
     getModulePreview: (pageSnapshotId: string, occurrenceId: string) => ipcRenderer.invoke('bridge:modules:preview', pageSnapshotId, occurrenceId),
+    getPagePreview: (pageSnapshotId: string) => ipcRenderer.invoke('bridge:pages:preview', pageSnapshotId),
     exportDiagnostic: (snapshotId: string) => ipcRenderer.invoke('bridge:export-diagnostic', snapshotId),
   },
   workflow: {
