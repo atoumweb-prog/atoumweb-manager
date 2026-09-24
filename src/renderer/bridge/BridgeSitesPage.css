@@ -1545,3 +1545,101 @@
     min-height: 0;
   }
 }
+
+
+/* Aperçus responsive Bridge — le cadre appartient au Manager, jamais au code du site. */
+.bridge-responsive-preview {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bridge-responsive-toolbar {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.bridge-responsive-toolbar button {
+  display: grid;
+  gap: 1px;
+  min-height: 34px;
+  padding: 5px 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 10px;
+  text-align: center;
+}
+
+.bridge-responsive-toolbar button small {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 500;
+}
+
+.bridge-responsive-toolbar button.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.bridge-responsive-scroll {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background:
+    linear-gradient(45deg, color-mix(in srgb, var(--border) 24%, transparent) 25%, transparent 25%) 0 0 / 16px 16px,
+    linear-gradient(-45deg, color-mix(in srgb, var(--border) 24%, transparent) 25%, transparent 25%) 0 8px / 16px 16px,
+    var(--surface-soft);
+  scrollbar-gutter: stable;
+}
+
+.bridge-responsive-device {
+  min-width: 0;
+  max-width: none;
+  min-height: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 7%);
+}
+
+.bridge-responsive-device .bridge-html-preview {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  border: 0;
+  border-radius: 9px;
+}
+
+.bridge-module-preview-body > .bridge-responsive-preview {
+  height: 100%;
+}
+
+.bridge-page-preview-modal .bridge-responsive-preview {
+  flex: 1 1 auto;
+}
+
+@media (max-width: 560px) {
+  .bridge-responsive-toolbar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bridge-responsive-toolbar button {
+    width: 100%;
+  }
+}
