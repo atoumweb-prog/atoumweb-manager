@@ -62,6 +62,14 @@ describe('BridgeSnapshotService', () => {
     expect(preview.available).toBe(true);
     expect(preview.text).toContain('Bonjour Bridge');
 
+    const modulePreview = service.getModulePreview(detail.page.pageSnapshotId, detail.nodes[0].occurrenceId);
+    expect(modulePreview.html).toContain('Bonjour Bridge');
+    expect(modulePreview.moduleCss).toBe('');
+    expect(modulePreview.pageCss).toBe('');
+    expect(modulePreview.globalCss).toBe('');
+    expect(modulePreview.javascript).toBe('');
+    expect(modulePreview.frontendValidated).toBe(false);
+
     const diagnostic = service.buildDiagnostic(site.snapshots[0].id);
     expect(diagnostic.actualCounts).toEqual(expect.objectContaining({
       contents: 1,
