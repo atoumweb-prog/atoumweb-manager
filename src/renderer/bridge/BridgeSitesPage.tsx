@@ -291,7 +291,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
     if (!page) return null;
     const customCodeModules = page.nodes.filter((node) => node.nodeType === 'module' && isCustomCodeModule(node.moduleType)).length;
     return {
-      modules: page.nodes.filter((node) => node.nodeType === 'module').length,
+      modules: page.nodes.filter((node) => node.nodeType === 'module' && node.moduleType !== 'divi/placeholder').length,
       customCodeModules,
       assets: page.assets.length,
     };
@@ -466,7 +466,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
 
           <div className="bridge-detail-body">
             <div className="bridge-tree">
-              {page.nodes.map((node) => {
+              {page.nodes.filter((node) => node.moduleType !== 'divi/placeholder').map((node) => {
                 const customCode = node.nodeType === 'module' && isCustomCodeModule(node.moduleType);
                 const analysis = customCode ? moduleAnalyses[node.occurrenceId] : null;
                 return <div className={`bridge-node ${customCode ? 'custom-code' : ''}`} key={node.occurrenceId} style={{ '--bridge-depth': Math.min(node.depth, 8) } as CSSProperties}>
