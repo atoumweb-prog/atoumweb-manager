@@ -399,6 +399,48 @@ Le Manager peut continuer à renforcer :
 - liens logiques entre composant source, package et occurrence future ;
 - coffre local/déduplication d’assets.
 
+## 17 bis. Préparation déjà réalisée côté Manager
+
+Sans ouvrir de communication directe avec WordPress, le Manager sait maintenant préparer une version Réutilisable sous forme de ZIP compatible avec son format de Bibliothèque actuel et enrichi pour le futur Workbench.
+
+Pour une version `atoumweb-library-reusable-component`, l’export ajoute :
+
+```text
+manifest.json
+technical/source.json          # conservation complète côté Manager
+component/
+├─ component.html
+├─ component.css               # si présent
+├─ component.js                # si présent
+├─ fields.json
+├─ dependencies.json
+├─ source-assets.json
+└─ provenance.json
+```
+
+Le `manifest.json` conserve le contrat Bibliothèque actuel et ajoute une section optionnelle `bridgeWorkbench` contenant notamment :
+
+- `contract: atoumweb_bridge_component_package` ;
+- `flow: workbench_first` ;
+- `workbenchRequired: true` ;
+- `directProductionInjection: false` ;
+- identité/version du composant Bibliothèque ;
+- classes racines ;
+- état de généralisation ;
+- chemins et SHA-256 des fichiers du composant ;
+- provenance d’origine.
+
+Les fichiers déclarés dans cette section sont vérifiés par checksum lors d’une relecture/import côté Manager.
+
+Cette enveloppe est volontairement **extensible et provisoire côté Bridge** : elle prépare le terrain sans prétendre remplacer le futur contrat officiel exposé par Bridge.
+
+Les nouveaux candidats créés depuis Sites conservent également, lorsqu’ils sont rattachables au nœud source :
+
+- dépendances Bridge du composant ;
+- références d’assets Bridge du composant.
+
+Ces informations suivent ensuite la chaîne Originale → Travail → Réutilisable et sont exportées dans le package.
+
 ## 18. État Bridge communiqué au 24/09/2026
 
 Bridge est en série **0.6.x**.
