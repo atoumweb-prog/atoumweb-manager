@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { OperationIcon } from '../operations/OperationIcon';
 import type {
   CrmIdentityAsset,
   CrmIdentityAssetRole,
@@ -81,6 +82,7 @@ export function CrmIdentityAssetEditor({
   const [assets, setAssets] = useState<CrmIdentityAsset[]>([]);
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
 
   const slots = useMemo<AssetSlot[]>(() => {
     const next: AssetSlot[] = [];
@@ -127,6 +129,7 @@ export function CrmIdentityAssetEditor({
   }
 
   useEffect(() => {
+    setOpen(false);
     void load().catch(() => {
       setAssets([]);
       setPreviews({});
@@ -165,33 +168,59 @@ export function CrmIdentityAssetEditor({
 
   if (slots.length === 0) return null;
 
-  return <section className="crm-identity-assets">
-    <div className="crm-identity-assets-heading">
-      <div><span className="eyebrow">Identité visuelle</span><strong>Logo, favicon & photo</strong></div>
-      <small>JPG, PNG, WEBP, GIF ou ICO · 8 Mo max.</small>
+  const availableCount = slots.filter((slot) => assets.some((asset) =>
+    asset.ownerType === slot.owner
+    && asset.ownerId === slot.ownerId
+    && asset.role === slot.role
+    && !asset.missing
+  )).length;
+
+  return <section className={`crm-identity-assets ${open ? 'is-open' : 'is-compact'}`}>
+    <div className="crm-identity-assets-compact">
+      <span className="crm-identity-assets-icon"><OperationIcon name="image" size={18} /></span>
+      <div className="crm-identity-assets-summary">
+        <strong>Identité visuelle</strong>
+        <small>{availableCount > 0 ? `${availableCount}/${slots.length} élément${availableCount > 1 ? 's' : ''} renseigné${availableCount > 1 ? 's' : ''}` : 'Aucun visuel renseigné'}</small>
+      </div>
+      <button
+        className="secondary-button crm-identity-assets-toggle"
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <OperationIcon name={open ? 'collapse' : 'image'} size={16} />
+        <span>{open ? 'Masquer' : 'Gérer l’identité visuelle'}</span>
+      </button>
     </div>
-    <div className="crm-identity-assets-grid">
-      {slots.map((slot) => {
-        const asset = assets.find((candidate) => candidate.ownerType === slot.owner && candidate.ownerId === slot.ownerId && candidate.role === slot.role);
-        const key = `${slot.owner}:${slot.ownerId}:${slot.role}`;
-        return <div className="crm-identity-asset-slot" key={key}>
-          <div className={`crm-identity-asset-preview role-${slot.role}`}>
-            {asset && previews[asset.id]
-              ? <img src={previews[asset.id]} alt="" />
-              : <span aria-hidden="true">{slot.role === 'logo' ? '▣' : slot.role === 'favicon' ? '◎' : '◉'}</span>}
-          </div>
-          <div className="crm-identity-asset-copy">
-            <strong>{slot.label}</strong>
-            <small>{asset?.fileName || slot.help}</small>
-          </div>
-          <div className="crm-identity-asset-actions">
-            <button className="secondary-button compact-button" type="button" disabled={Boolean(busyKey)} onClick={() => void importAsset(slot)}>
-              {asset ? 'Remplacer' : 'Ajouter'}
-            </button>
-            {asset && <button className="link-button danger-link" type="button" disabled={Boolean(busyKey)} onClick={() => void removeAsset(asset, slot.label)}>Supprimer</button>}
-          </div>
-        </div>;
-      })}
-    </div>
+
+    {open && <div className="crm-identity-assets-editor">
+      <div className="crm-identity-assets-heading">
+        <div><span className="eyebrow">Identité visuelle</span><strong>Logo, favicon & photo</strong></div>
+        <small>JPG, PNG, WEBP, GIF ou ICO · 8 Mo max.</small>
+      </div>
+      <div className="crm-identity-assets-grid">
+        {slots.map((slot) => {
+          const asset = assets.find((candidate) => candidate.ownerType === slot.owner && candidate.ownerId === slot.ownerId && candidate.role === slot.role);
+          const key = `${slot.owner}:${slot.ownerId}:${slot.role}`;
+          return <div className="crm-identity-asset-slot" key={key}>
+            <div className={`crm-identity-asset-preview role-${slot.role}`}>
+              {asset && previews[asset.id]
+                ? <img src={previews[asset.id]} alt="" />
+                : <span aria-hidden="true">{slot.role === 'logo' ? '▣' : slot.role === 'favicon' ? '◎' : '◉'}</span>}
+            </div>
+            <div className="crm-identity-asset-copy">
+              <strong>{slot.label}</strong>
+              <small>{asset?.fileName || slot.help}</small>
+            </div>
+            <div className="crm-identity-asset-actions">
+              <button className="secondary-button compact-button" type="button" disabled={Boolean(busyKey)} onClick={() => void importAsset(slot)}>
+                {asset ? 'Remplacer' : 'Ajouter'}
+              </button>
+              {asset && <button className="link-button danger-link" type="button" disabled={Boolean(busyKey)} onClick={() => void removeAsset(asset, slot.label)}>Supprimer</button>}
+            </div>
+          </div>;
+        })}
+      </div>
+    </div>}
   </section>;
 }
