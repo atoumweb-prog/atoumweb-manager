@@ -1104,3 +1104,172 @@ table td {
     flex-direction: column;
   }
 }
+
+
+/* Prospection — densité verticale adaptative et tableau qui absorbe l'espace disponible. */
+.content-area:has(.prospects-v2) {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.content-area:has(.prospects-v2) > .page-heading,
+.content-area:has(.prospects-v2) > .notice {
+  flex: 0 0 auto;
+}
+
+.content-area:has(.prospects-v2) > .prospects-v2 {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.prospects-v2 {
+  gap: clamp(8px, 1.25vh, 14px);
+}
+
+.prospects-v2 > .prospects-layout {
+  flex: 1 1 360px;
+  min-height: 300px;
+}
+
+.prospects-v2 .prospect-directory-table-panel {
+  min-height: 0;
+  height: 100%;
+}
+
+.prospects-v2 .prospect-directory-table-panel > .clients-table-wrap {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.prospects-v2 .prospect-directory-table thead th {
+  position: sticky;
+  z-index: 3;
+  top: 0;
+}
+
+.prospects-v2 .prospect-view-switch,
+.prospects-v2 .prospect-directory-toolbar,
+.prospects-v2 .prospect-directory-filters {
+  flex: 0 0 auto;
+}
+
+.prospects-v2 .prospect-directory-filters {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.15fr) repeat(3, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.prospects-v2 .prospect-directory-filters > * {
+  min-width: 0 !important;
+  width: 100%;
+}
+
+/* Hauteur moyenne : on réduit l'air avant de toucher à la lisibilité. */
+@media (max-height: 900px) and (min-width: 851px) {
+  .content-area:has(.prospects-v2) {
+    padding-top: 18px;
+    padding-bottom: 18px;
+  }
+
+  .content-area:has(.prospects-v2) > .page-heading {
+    margin-bottom: 14px;
+  }
+
+  .content-area:has(.prospects-v2) > .page-heading h1 {
+    margin-top: 2px;
+    margin-bottom: 3px;
+  }
+
+  .prospects-v2 {
+    gap: 9px;
+  }
+
+  .prospects-v2 .prospect-view-switch button {
+    padding-block: 7px;
+  }
+
+  .prospects-v2 .module-toolbar {
+    min-height: 34px;
+  }
+
+  .prospects-v2 .prospect-directory-filters {
+    gap: 6px;
+  }
+
+  .prospects-v2 .prospect-directory-table th {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .prospects-v2 .prospect-directory-table td {
+    padding-top: 9px;
+    padding-bottom: 9px;
+  }
+}
+
+/* Fenêtre basse : densité renforcée, mais sans supprimer d'information. */
+@media (max-height: 760px) and (min-width: 851px) {
+  .content-area:has(.prospects-v2) {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .content-area:has(.prospects-v2) > .page-heading {
+    margin-bottom: 10px;
+  }
+
+  .content-area:has(.prospects-v2) > .page-heading .eyebrow {
+    display: none;
+  }
+
+  .content-area:has(.prospects-v2) > .page-heading h1 {
+    font-size: 26px;
+    margin: 0 0 2px;
+  }
+
+  .content-area:has(.prospects-v2) > .page-heading p {
+    font-size: 11px;
+  }
+
+  .prospects-v2 {
+    gap: 7px;
+  }
+
+  .prospects-v2 .prospect-view-switch button {
+    padding: 6px 9px;
+  }
+
+  .prospects-v2 .prospect-directory-table th {
+    padding: 7px 10px;
+  }
+
+  .prospects-v2 .prospect-directory-table td {
+    padding: 7px 10px;
+  }
+
+  .prospects-v2 .avatar-initials {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+/* Largeur plus faible : les filtres se replient progressivement. */
+@media (max-width: 1050px) {
+  .prospects-v2 .prospect-directory-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .prospects-v2 .prospect-directory-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .prospects-v2 > .prospects-layout {
+    min-height: 260px;
+  }
+}
