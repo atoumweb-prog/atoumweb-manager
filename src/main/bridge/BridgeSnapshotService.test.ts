@@ -62,6 +62,28 @@ describe('BridgeSnapshotService', () => {
     expect(preview.available).toBe(true);
     expect(preview.text).toContain('Bonjour Bridge');
 
+    const diagnostic = service.buildDiagnostic(site.snapshots[0].id);
+    expect(diagnostic.actualCounts).toEqual(expect.objectContaining({
+      contents: 1,
+      nodes: 1,
+      sources: 0,
+      assets: 0,
+      dependencies: 0,
+      relations: 0,
+    }));
+    expect(diagnostic.countChecks).toEqual(expect.objectContaining({
+      contents: true,
+      nodes: true,
+      sources: true,
+      assets: true,
+      dependencies: true,
+      relations: true,
+    }));
+    expect(diagnostic.contentBreakdown).toEqual(expect.objectContaining({
+      total: 1,
+      categories: { pages: 1, posts: 0, diviLibrary: 0, themeBuilder: 0, other: 0 },
+    }));
+
     const again = service.importPackage(packagePath);
     expect(again.alreadyImported).toBe(true);
     expect(service.getSite(sites[0].id).snapshots).toHaveLength(1);
