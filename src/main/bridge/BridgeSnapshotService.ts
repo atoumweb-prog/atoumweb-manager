@@ -7,6 +7,7 @@ import type {
   BridgeNodeSummary,
   BridgeObjectPreview,
   BridgeModulePreview,
+  BridgePagePreview,
   BridgePageSnapshotDetail,
   BridgePageSummary,
   BridgeSiteDetail,
@@ -467,7 +468,7 @@ export class BridgeSnapshotService {
     if (!pageRow) throw new Error('Page Snapshot Bridge introuvable.');
 
     const nodeRow = this.database.get<Record<string, unknown>>(
-      `SELECT occurrence_id,module_type,label,builder_generation,content_object_ref,raw_object_ref
+      `SELECT occurrence_id,module_type,label,builder_generation,content_object_ref,raw_object_ref,classes_json,ids_json,asset_ids_json,dependency_ids_json
        FROM bridge_nodes WHERE page_snapshot_id=? AND occurrence_id=?`,
       [pageSnapshotId, occurrenceId],
     );
@@ -508,13 +509,47 @@ export class BridgeSnapshotService {
         .filter(Boolean)
         .join('\n\n');
     };
-
     const uniqueCount = (rows: Record<string, unknown>[], kind: string): number =>
       new Set(rows.filter((row) => String(row.kind) === kind).map((row) => nullableString(row.payload_object_ref)).filter(Boolean)).size;
-    const moduleHtml = joinKind(moduleSources, 'html');
-    const fallbackHtmlRef = nullableString(nodeRow.content_object_ref);
+
     const rawRef = nullableString(nodeRow.raw_object_ref);
+    const diviSource = rawRef ? this.getObjectPreview(rawRef).text ?? null : null;
+    const separatedHtml = joinKind(moduleSources, 'html');
+    const fallbackHtmlRef = nullableString(nodeRow.content_object_ref);
+    const objectHtml = fallbackHtmlRef ? this.getObjectPreview(fallbackHtmlRef).text ?? '' : '';
+    const derivedHtml = separatedHtml || objectHtml ? '' : extractHtmlFromDiviSource(diviSource);
+    const html = separatedHtml || objectHtml || derivedHtml;
+    const moduleCss = joinKind(moduleSources, 'css');
+    const pageCss = joinKind(pageSources, 'css');
+    const globalCss = joinKind(globalSources, 'css');
+    const javascript = joinKind(moduleSources, 'js');
     const frontend = parseObject(pageRow.frontend_json);
+
+    const tokens = extractHtmlTokens(html);
+    const relevantPage = extractRelevantCss(pageCss, tokens);
+    const relevantGlobal = extractRelevantCss(globalCss, tokens);
+    const rootClasses = pickRootClasses(tokens.classes);
+    const moduleAssetIds = parseStringArray(nodeRow.asset_ids_json);
+    const moduleDependencyIds = parseStringArray(nodeRow.dependency_ids_json);
+    const suggestedCategory = suggestLibraryCategory(rootClasses, html);
+    const suggestedName = suggestLibraryName(rootClasses, String(pageRow.title), suggestedCategory);
+    const hasDependencies = Boolean(relevantPage.css || relevantGlobal.css || javascript || moduleAssetIds.length || moduleDependencyIds.length);
+    const reuseStatus: 'ready' | 'dependencies' | 'review' = !html ? 'review' : hasDependencies ? 'dependencies' : 'ready';
+
+    const instructions = html ? [
+      'Copier le HTML dans un module Code Divi.',
+      ...(moduleCss ? ['Ajouter le CSS propre du module.'] : []),
+      ...(relevantPage.css ? ['Ajouter uniquement les règles utiles extraites du CSS de page.'] : []),
+      ...(relevantGlobal.css ? ['Ajouter uniquement les règles globales réellement utilisées par ce composant.'] : []),
+      ...(javascript ? ['Reprendre le JavaScript séparément après vérification.'] : []),
+      ...(moduleAssetIds.length ? ['Reprendre les médias liés au module.'] : []),
+    ] : ['La source Divi est conservée, mais le HTML n’est pas encore isolé automatiquement.'];
+
+    const notes = [
+      ...(pageCss && !relevantPage.css ? ['Le CSS de page existe mais aucune règle spécifique à ce composant n’a été détectée.'] : []),
+      ...(globalCss && !relevantGlobal.css ? ['Le CSS global existe mais aucune règle spécifique à ce composant n’a été détectée.'] : []),
+      ...(derivedHtml ? ['HTML extrait automatiquement depuis la source Divi originale.'] : []),
+    ];
 
     return {
       pageSnapshotId,
@@ -524,19 +559,66 @@ export class BridgeSnapshotService {
       builderGeneration: nullableString(nodeRow.builder_generation),
       pageTitle: String(pageRow.title),
       pageUrl: nullableString(pageRow.canonical_url),
-      html: moduleHtml || (fallbackHtmlRef ? this.getObjectPreview(fallbackHtmlRef).text ?? '' : ''),
-      moduleCss: joinKind(moduleSources, 'css'),
-      pageCss: joinKind(pageSources, 'css'),
-      globalCss: joinKind(globalSources, 'css'),
-      javascript: joinKind(moduleSources, 'js'),
-      diviSource: rawRef ? this.getObjectPreview(rawRef).text ?? null : null,
+      html,
+      moduleCss,
+      pageCss,
+      globalCss,
+      javascript,
+      diviSource,
       sourceCounts: {
-        html: uniqueCount(moduleSources, 'html'),
+        html: uniqueCount(moduleSources, 'html') || (html ? 1 : 0),
         moduleCss: uniqueCount(moduleSources, 'css'),
         pageCss: uniqueCount(pageSources, 'css'),
         globalCss: uniqueCount(globalSources, 'css'),
         javascript: uniqueCount(moduleSources, 'js'),
       },
+      frontendValidated: frontend.checked === true,
+      htmlDerivedFromDiviSource: Boolean(derivedHtml),
+      reuse: {
+        status: reuseStatus,
+        suggestedName,
+        suggestedCategory,
+        rootClasses,
+        relevantPageCss: relevantPage.css,
+        relevantGlobalCss: relevantGlobal.css,
+        relevantPageRuleCount: relevantPage.ruleCount,
+        relevantGlobalRuleCount: relevantGlobal.ruleCount,
+        pageCssRuleCount: countCssRules(pageCss),
+        globalCssRuleCount: countCssRules(globalCss),
+        moduleAssetCount: moduleAssetIds.length,
+        moduleDependencyCount: moduleDependencyIds.length,
+        instructions,
+        notes,
+      },
+    };
+  }
+
+  getPagePreview(pageSnapshotId: string): BridgePagePreview {
+    const detail = this.getPage(pageSnapshotId);
+    const codeNodes = detail.nodes.filter((node) => node.nodeType === 'module' && isBridgeCodeModule(node.moduleType));
+    const previews = codeNodes.map((node) => this.getModulePreview(pageSnapshotId, node.occurrenceId));
+    const html = previews.map((preview, index) =>
+      preview.html
+        ? `<div data-bridge-page-module="${index + 1}">${preview.html}</div>`
+        : `<div data-bridge-page-module-missing="${index + 1}" style="padding:16px;border:1px dashed #bbb;margin:8px">Module non reconstructible automatiquement</div>`,
+    ).join('\n');
+    const uniqueModuleCss = [...new Set(previews.map((preview) => preview.moduleCss).filter(Boolean))].join('\n\n');
+    const pageCss = previews.find((preview) => preview.pageCss)?.pageCss ?? '';
+    const globalCss = previews.find((preview) => preview.globalCss)?.globalCss ?? '';
+    const frontend = parseObject(detail.metadata.frontend);
+
+    return {
+      pageSnapshotId,
+      title: detail.page.title,
+      url: detail.page.canonicalUrl,
+      builderGeneration: detail.page.builderGeneration,
+      html,
+      moduleCss: uniqueModuleCss,
+      pageCss,
+      globalCss,
+      renderedModuleCount: previews.filter((preview) => Boolean(preview.html)).length,
+      totalModuleCount: detail.nodes.filter((node) => node.nodeType === 'module').length,
+      omittedModuleCount: Math.max(0, detail.nodes.filter((node) => node.nodeType === 'module').length - previews.filter((preview) => Boolean(preview.html)).length),
       frontendValidated: frontend.checked === true,
     };
   }
