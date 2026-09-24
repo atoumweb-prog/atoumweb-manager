@@ -936,3 +936,39 @@ table td {
     gap: 3px;
   }
 }
+
+
+/* Historique Prospection — layout indépendant du séparateur Annuaire/Pipeline. */
+.history-view-stack .prospects-layout.with-detail {
+  grid-template-columns: minmax(0, 1fr) clamp(320px, 32vw, 500px) !important;
+  gap: 12px !important;
+  align-items: start !important;
+}
+
+.history-view-stack .prospects-layout.with-detail > .history-prospects-panel {
+  min-width: 0;
+}
+
+.history-view-stack .prospects-layout.with-detail > .prospect-detail-panel {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+@media (max-width: 1250px) {
+  .history-view-stack .prospects-layout.with-detail {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 38%) !important;
+  }
+}
+
+@media (max-width: 850px) {
+  .history-view-stack .prospects-layout.with-detail {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .history-view-stack .prospect-detail-panel {
+    position: static !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
