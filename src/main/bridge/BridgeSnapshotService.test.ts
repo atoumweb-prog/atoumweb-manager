@@ -56,7 +56,7 @@ describe('BridgeSnapshotService', () => {
 
     const detail = service.getPage(pages[0].pageSnapshotId);
     expect(detail.nodes).toHaveLength(1);
-    expect(detail.nodes[0].moduleType).toBe('text');
+    expect(detail.nodes[0].moduleType).toBe('code');
 
     const preview = service.getObjectPreview(detail.nodes[0].contentObjectRef!);
     expect(preview.available).toBe(true);
@@ -69,6 +69,12 @@ describe('BridgeSnapshotService', () => {
     expect(modulePreview.globalCss).toBe('');
     expect(modulePreview.javascript).toBe('');
     expect(modulePreview.frontendValidated).toBe(false);
+    expect(modulePreview.reuse.status).toBe('ready');
+
+    const pagePreview = service.getPagePreview(detail.page.pageSnapshotId);
+    expect(pagePreview.renderedModuleCount).toBe(1);
+    expect(pagePreview.totalModuleCount).toBe(1);
+    expect(pagePreview.html).toContain('Bonjour Bridge');
 
     const diagnostic = service.buildDiagnostic(site.snapshots[0].id);
     expect(diagnostic.actualCounts).toEqual(expect.objectContaining({
@@ -200,8 +206,8 @@ function buildSnapshot(destination: string, title: string): string {
       node_type: 'module',
       builder: 'divi',
       builder_generation: '4',
-      module_type: 'text',
-      label: 'Texte',
+      module_type: 'code',
+      label: 'Code',
       classes: [],
       ids: [],
       source_ids: [],
