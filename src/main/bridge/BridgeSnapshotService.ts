@@ -6,6 +6,7 @@ import type {
   BridgeDependencySummary,
   BridgeNodeSummary,
   BridgeObjectPreview,
+  BridgeModulePreview,
   BridgePageSnapshotDetail,
   BridgePageSummary,
   BridgeSiteDetail,
@@ -455,6 +456,74 @@ export class BridgeSnapshotService {
         [snapshotId],
       ).map((row) => row.section_key),
       contents,
+    };
+  }
+
+  getModulePreview(pageSnapshotId: string, occurrenceId: string): BridgeModulePreview {
+    const pageRow = this.database.get<Record<string, unknown>>(
+      `SELECT snapshot_id,title,canonical_url,frontend_json FROM bridge_page_snapshots WHERE id=?`,
+      [pageSnapshotId],
+    );
+    if (!pageRow) throw new Error('Page Snapshot Bridge introuvable.');
+
+    const nodeRow = this.database.get<Record<string, unknown>>(
+      `SELECT occurrence_id,module_type,label,builder_generation,content_object_ref,raw_object_ref
+       FROM bridge_nodes WHERE page_snapshot_id=? AND occurrence_id=?`,
+      [pageSnapshotId, occurrenceId],
+    );
+    if (!nodeRow) throw new Error('Module Bridge introuvable.');
+
+    const snapshotId = String(pageRow.snapshot_id);
+    const moduleSources = this.database.all<Record<string, unknown>>(
+      `SELECT kind,payload_object_ref FROM bridge_sources
+       WHERE snapshot_id=? AND page_snapshot_id=? AND node_occurrence_id=? ORDER BY source_id`,
+      [snapshotId, pageSnapshotId, occurrenceId],
+    );
+    const pageSources = this.database.all<Record<string, unknown>>(
+      `SELECT kind,payload_object_ref FROM bridge_sources
+       WHERE snapshot_id=? AND page_snapshot_id=? AND node_occurrence_id IS NULL AND scope='page' ORDER BY source_id`,
+      [snapshotId, pageSnapshotId],
+    );
+    const globalSources = this.database.all<Record<string, unknown>>(
+      `SELECT kind,payload_object_ref FROM bridge_sources
+       WHERE snapshot_id=? AND scope='global' ORDER BY source_id`,
+      [snapshotId],
+    );
+
+    const textFrom = (row: Record<string, unknown>): string => {
+      const ref = nullableString(row.payload_object_ref);
+      return ref ? this.getObjectPreview(ref).text ?? '' : '';
+    };
+    const joinKind = (rows: Record<string, unknown>[], kind: string): string =>
+      rows.filter((row) => String(row.kind) === kind).map(textFrom).filter(Boolean).join('\n\n');
+
+    const moduleHtml = joinKind(moduleSources, 'html');
+    const fallbackHtmlRef = nullableString(nodeRow.content_object_ref);
+    const rawRef = nullableString(nodeRow.raw_object_ref);
+    const frontend = parseObject(pageRow.frontend_json);
+
+    return {
+      pageSnapshotId,
+      occurrenceId,
+      moduleType: nullableString(nodeRow.module_type),
+      label: nullableString(nodeRow.label),
+      builderGeneration: nullableString(nodeRow.builder_generation),
+      pageTitle: String(pageRow.title),
+      pageUrl: nullableString(pageRow.canonical_url),
+      html: moduleHtml || (fallbackHtmlRef ? this.getObjectPreview(fallbackHtmlRef).text ?? '' : ''),
+      moduleCss: joinKind(moduleSources, 'css'),
+      pageCss: joinKind(pageSources, 'css'),
+      globalCss: joinKind(globalSources, 'css'),
+      javascript: joinKind(moduleSources, 'js'),
+      diviSource: rawRef ? this.getObjectPreview(rawRef).text ?? null : null,
+      sourceCounts: {
+        html: moduleSources.filter((row) => String(row.kind) === 'html').length,
+        moduleCss: moduleSources.filter((row) => String(row.kind) === 'css').length,
+        pageCss: pageSources.filter((row) => String(row.kind) === 'css').length,
+        globalCss: globalSources.filter((row) => String(row.kind) === 'css').length,
+        javascript: moduleSources.filter((row) => String(row.kind) === 'js').length,
+      },
+      frontendValidated: frontend.checked === true,
     };
   }
 
