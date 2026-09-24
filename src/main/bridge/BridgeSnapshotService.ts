@@ -494,8 +494,20 @@ export class BridgeSnapshotService {
       const ref = nullableString(row.payload_object_ref);
       return ref ? this.getObjectPreview(ref).text ?? '' : '';
     };
-    const joinKind = (rows: Record<string, unknown>[], kind: string): string =>
-      rows.filter((row) => String(row.kind) === kind).map(textFrom).filter(Boolean).join('\n\n');
+    const joinKind = (rows: Record<string, unknown>[], kind: string): string => {
+      const seen = new Set<string>();
+      return rows
+        .filter((row) => String(row.kind) === kind)
+        .filter((row) => {
+          const ref = nullableString(row.payload_object_ref);
+          if (!ref || seen.has(ref)) return false;
+          seen.add(ref);
+          return true;
+        })
+        .map(textFrom)
+        .filter(Boolean)
+        .join('\n\n');
+    };
 
     const moduleHtml = joinKind(moduleSources, 'html');
     const fallbackHtmlRef = nullableString(nodeRow.content_object_ref);
