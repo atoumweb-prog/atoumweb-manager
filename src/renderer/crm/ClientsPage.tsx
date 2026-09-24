@@ -1,7 +1,7 @@
 import { NeedChoices, openEntity } from '../workflow/DossierPanel';
 import {ClientDocumentsPanel} from './ClientDocumentsPanel';
 import type { NeedInput } from '../../shared/workflow';
-import { Component, useEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from 'react';
+import { Component, useEffect, useMemo, useRef, useState, type CSSProperties, type ErrorInfo, type ReactNode } from 'react';
 import {
   CLIENT_CONTACT_ROLES,
   type ActivityEvent,
@@ -20,6 +20,7 @@ import { ContactMethodsPanel } from './ContactMethodsPanel';
 import { FieldHelp } from '../ui/FieldHelp';
 import { displayWebUrl } from '../../shared/webUrl';
 import { CrmIdentityAssetEditor, CrmIdentityAvatar } from './CrmIdentityVisual';
+import { OperationIcon } from '../operations/OperationIcon';
 
 const STATUS_LABELS: Record<ClientStatus, string> = {
   active: 'Actif',
@@ -149,6 +150,7 @@ function ClientsPageContent({ onMessage, initialId }: { onMessage: (message: str
   const [statusFilter, setStatusFilter] = useState<'all' | ClientStatus>('all');
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(initialId ?? null);
+  const [clientSplitPercent, setClientSplitPercent] = useState(68);
   const [needsDraft,setNeedsDraft] = useState<NeedInput[]>([]);
   const [activeTab, setActiveTab] = useState<ClientTab>('summary');
   const [showForm, setShowForm] = useState(false);
@@ -242,6 +244,9 @@ function ClientsPageContent({ onMessage, initialId }: { onMessage: (message: str
   }, [clients, query, statusFilter]);
 
   const selected = clients.find((client) => client.id === selectedId) ?? null;
+  const clientSplitStyle = selected && !largeView
+    ? ({ '--client-list-percent': `${clientSplitPercent}%` } as CSSProperties)
+    : undefined;
 
   async function updateRelationship(client: ClientSummary, next: ClientRelationshipStatus): Promise<void> {
     setRelationshipMenuOpen(false);
@@ -332,6 +337,41 @@ function ClientsPageContent({ onMessage, initialId }: { onMessage: (message: str
     setActionEditor(null);
     setArchiveCandidateId(null);
   }
+
+  function beginClientResize(splitter: HTMLElement): void {
+    const workspace = splitter.parentElement;
+    if (!workspace) return;
+    document.body.classList.add('operation-resizing');
+    const onMove = (event: PointerEvent) => {
+      const rect = workspace.getBoundingClientRect();
+      if (!rect.width) return;
+      const requested = ((event.clientX - rect.left) / rect.width) * 100;
+      const maxForDetail = ((rect.width - 350) / rect.width) * 100;
+      const maxPercent = Math.max(54, Math.min(74, maxForDetail));
+      setClientSplitPercent(Math.max(42, Math.min(maxPercent, requested)));
+    };
+    const onUp = () => {
+      document.body.classList.remove('operation-resizing');
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp, { once: true });
+  }
+
+  const clientSplitter = selected && !largeView ? <div
+    className="operation-splitter client-splitter"
+    role="separator"
+    aria-orientation="vertical"
+    aria-label="Redimensionner la liste clients et la fiche client"
+    tabIndex={0}
+    onPointerDown={(event) => { event.stopPropagation(); beginClientResize(event.currentTarget); }}
+    onDoubleClick={(event) => { event.stopPropagation(); setClientSplitPercent(68); }}
+    onKeyDown={(event) => {
+      if (event.key === 'ArrowLeft') setClientSplitPercent((value) => Math.max(42, value - 3));
+      if (event.key === 'ArrowRight') setClientSplitPercent((value) => Math.min(74, value + 3));
+    }}
+  ><span /></div> : null;
 
   function beginCoordinateEdit(): void {
     setCoordinateDraft({
@@ -519,7 +559,7 @@ function ClientsPageContent({ onMessage, initialId }: { onMessage: (message: str
 
       {loadError && <div className="panel fatal-card clients-load-error"><span className="eyebrow">Clients</span><h2>Chargement impossible</h2><p>{loadError}</p><button className="secondary-button" type="button" onClick={() => void refresh()}>Réessayer</button></div>}
       {loading ? <div className="panel"><p className="muted">Chargement des clients…</p></div> : !loadError && (
-        <div className="clients-layout">
+        <div className={selected && !largeView ? 'clients-layout with-detail' : 'clients-layout'} style={clientSplitStyle}>
           <div className="panel table-panel">
             <div className="clients-table-wrap">
               <table className="clients-table">
@@ -541,6 +581,7 @@ function ClientsPageContent({ onMessage, initialId }: { onMessage: (message: str
             </div>
           </div>
 
+          {clientSplitter}
           {selected && (
             <aside ref={sidePanelRef} className={`panel client-summary-panel client-relationship-${selected.relationshipStatus ?? 'neutral'} ${largeView ? 'client-large-view' : ''}`} role={largeView ? 'dialog' : undefined} aria-modal={largeView ? true : undefined} aria-label={largeView ? `Fiche client ${selected.displayName}` : undefined}>
               <div className="detail-panel-heading">
@@ -548,7 +589,7 @@ function ClientsPageContent({ onMessage, initialId }: { onMessage: (message: str
                   <span className="eyebrow">Fiche client</span>
                   <div className="client-summary-head"><CrmIdentityAvatar organizationId={selected.organizationId} contactId={selected.primaryContactId} name={selected.displayName} size="large" /><div><h2>{selected.displayName}</h2><span className={`client-status status-${selected.status}`}>{STATUS_LABELS[selected.status ?? 'active']}</span></div></div>
                 </div>
-                <div className="detail-heading-actions"><div className="client-relationship-picker"><button className="secondary-button client-relationship-trigger" type="button" aria-expanded={relationshipMenuOpen} aria-haspopup="true" disabled={relationshipSaving} onClick={() => setRelationshipMenuOpen((value) => !value)}><span className="client-relationship-dot" />Relation client · {RELATION_LABELS[selected.relationshipStatus ?? 'neutral']}</button>{relationshipMenuOpen && <div className="client-relationship-menu" role="group" aria-label="Qualité de la relation client">{RELATION_OPTIONS.map((option) => <button key={option} type="button" className={`client-relationship-choice client-relationship-${option}`} aria-pressed={(selected.relationshipStatus ?? 'neutral') === option} onClick={() => void updateRelationship(selected, option)}><span className="client-relationship-dot" />{RELATION_LABELS[option]}</button>)}</div>}</div><button className="secondary-button" type="button" onClick={() => setLargeView((value) => !value)}>{largeView ? 'Réduire' : 'Agrandir'}</button><button className="close-detail" type="button" aria-label="Fermer la fiche client" onClick={() => { setRelationshipMenuOpen(false); setLargeView(false); setSelectedId(null); setActionEditor(null); setArchiveCandidateId(null); }}>×</button></div>
+                <div className="detail-heading-actions"><div className="client-relationship-picker"><button className="secondary-button client-relationship-trigger" type="button" aria-expanded={relationshipMenuOpen} aria-haspopup="true" disabled={relationshipSaving} onClick={() => setRelationshipMenuOpen((value) => !value)}><span className="client-relationship-dot" />Relation client · {RELATION_LABELS[selected.relationshipStatus ?? 'neutral']}</button>{relationshipMenuOpen && <div className="client-relationship-menu" role="group" aria-label="Qualité de la relation client">{RELATION_OPTIONS.map((option) => <button key={option} type="button" className={`client-relationship-choice client-relationship-${option}`} aria-pressed={(selected.relationshipStatus ?? 'neutral') === option} onClick={() => void updateRelationship(selected, option)}><span className="client-relationship-dot" />{RELATION_LABELS[option]}</button>)}</div>}</div><button className="operation-detail-expand client-detail-expand" type="button" title={largeView ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={largeView ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setLargeView((value) => !value)}><OperationIcon name={largeView ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" aria-label="Fermer la fiche client" onClick={() => { setRelationshipMenuOpen(false); setLargeView(false); setSelectedId(null); setActionEditor(null); setArchiveCandidateId(null); }}>×</button></div>
               </div>
               <div className="client-summary-scroll">
               {activeTab === 'summary' && <>
