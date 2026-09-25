@@ -125,6 +125,69 @@ describe('migrations SQLite', () => {
     }
   });
 
+  it('migration 41 déduit le public contractuel des devis existants', () => {
+    const database = new NodeSqliteAdapter(':memory:');
+    database.exec('PRAGMA foreign_keys = ON;');
+    try {
+      for (const migration of getPendingMigrations(database).filter((item) => item.id <= 40)) {
+        if (migration.disableForeignKeys) database.exec('PRAGMA foreign_keys = OFF;');
+        database.exec('BEGIN IMMEDIATE;');
+        try {
+          database.exec(migration.sql);
+          database.run('INSERT INTO schema_migrations (id, name, applied_at) VALUES (?, ?, ?)',
+            [migration.id, migration.name, '2026-09-25T00:00:00.000Z']);
+          database.exec('COMMIT;');
+          if (migration.disableForeignKeys) database.exec('PRAGMA foreign_keys = ON;');
+        } catch (error) {
+          database.exec('ROLLBACK;');
+          if (migration.disableForeignKeys) database.exec('PRAGMA foreign_keys = ON;');
+          throw error;
+        }
+      }
+
+      const now = '2026-09-25T12:00:00.000Z';
+      database.run(
+        `INSERT INTO organizations (id,name,created_at,updated_at) VALUES ('org-pro','Entreprise Pro',?,?)`,
+        [now, now],
+      );
+      database.run(
+        `INSERT INTO contacts (id,first_name,last_name,created_at,updated_at) VALUES ('contact-consumer','Camille','Particulier',?,?)`,
+        [now, now],
+      );
+      database.run(
+        `INSERT INTO prospects (id,organization_id,stage,temperature,origin_type,created_at,updated_at)
+         VALUES ('prospect-pro','org-pro','new','neutral','other',?,?)`,
+        [now, now],
+      );
+      database.run(
+        `INSERT INTO prospects (id,contact_id,stage,temperature,origin_type,created_at,updated_at)
+         VALUES ('prospect-consumer','contact-consumer','new','neutral','other',?,?)`,
+        [now, now],
+      );
+      database.run(
+        `INSERT INTO quotes (id,quote_number,prospect_id,subject,status,created_at,updated_at)
+         VALUES ('quote-pro','DEV-2026-901','prospect-pro','Pro','draft',?,?)`,
+        [now, now],
+      );
+      database.run(
+        `INSERT INTO quotes (id,quote_number,prospect_id,subject,status,created_at,updated_at)
+         VALUES ('quote-consumer','DEV-2026-902','prospect-consumer','Particulier','draft',?,?)`,
+        [now, now],
+      );
+
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([41]);
+      expect(database.get<{ contract_audience: string }>(
+        "SELECT contract_audience FROM quotes WHERE id='quote-pro'",
+      )?.contract_audience).toBe('professional');
+      expect(database.get<{ contract_audience: string }>(
+        "SELECT contract_audience FROM quotes WHERE id='quote-consumer'",
+      )?.contract_audience).toBe('consumer');
+      expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+    } finally {
+      database.close();
+    }
+  });
+
   it('applique chaque migration une seule fois', () => {
     const database = new NodeSqliteAdapter(':memory:');
 
