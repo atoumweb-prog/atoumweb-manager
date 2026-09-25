@@ -73,6 +73,58 @@ describe('migrations SQLite', () => {
     }
   });
 
+  it('migration 38 conserve la Bibliothèque existante et ouvre les métiers / Code snippets', () => {
+    const database = new NodeSqliteAdapter(':memory:');
+    database.exec('PRAGMA foreign_keys = ON;');
+    try {
+      for (const migration of getPendingMigrations(database).filter((item) => item.id <= 37)) {
+        if (migration.disableForeignKeys) database.exec('PRAGMA foreign_keys = OFF;');
+        database.exec('BEGIN IMMEDIATE;');
+        try {
+          database.exec(migration.sql);
+          database.run('INSERT INTO schema_migrations (id, name, applied_at) VALUES (?, ?, ?)',
+            [migration.id, migration.name, '2026-09-25T00:00:00.000Z']);
+          database.exec('COMMIT;');
+          if (migration.disableForeignKeys) database.exec('PRAGMA foreign_keys = ON;');
+        } catch (error) {
+          database.exec('ROLLBACK;');
+          if (migration.disableForeignKeys) database.exec('PRAGMA foreign_keys = ON;');
+          throw error;
+        }
+      }
+
+      database.run(
+        `INSERT INTO technical_items
+         (id,project_id,scope,category,name,description,tags_json,reuse_status,origin_technical_item_id,library_category,created_at,updated_at,archived_at)
+         VALUES ('legacy-library-item',NULL,'atoumweb','section','Section historique','Conserver','["mariage"]','ready',NULL,'section',
+           '2026-09-24T10:00:00.000Z','2026-09-24T10:00:00.000Z',NULL)`,
+      );
+
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([38]);
+
+      expect(database.get<{ name: string; library_category: string; vertical: string | null }>(
+        "SELECT name, library_category, vertical FROM technical_items WHERE id='legacy-library-item'",
+      )).toEqual({
+        name: 'Section historique',
+        library_category: 'section',
+        vertical: null,
+      });
+
+      database.run(
+        `INSERT INTO technical_items
+         (id,project_id,scope,category,name,description,tags_json,reuse_status,origin_technical_item_id,library_category,vertical,created_at,updated_at,archived_at)
+         VALUES ('snippet-after-v38',NULL,'atoumweb','other','Snippet JS',NULL,'[]','ready',NULL,'code_snippet','fleuriste',
+           '2026-09-25T10:00:00.000Z','2026-09-25T10:00:00.000Z',NULL)`,
+      );
+      expect(database.get<{ library_category: string; vertical: string }>(
+        "SELECT library_category, vertical FROM technical_items WHERE id='snippet-after-v38'",
+      )).toEqual({ library_category: 'code_snippet', vertical: 'fleuriste' });
+      expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+    } finally {
+      database.close();
+    }
+  });
+
   it('applique chaque migration une seule fois', () => {
     const database = new NodeSqliteAdapter(':memory:');
 
