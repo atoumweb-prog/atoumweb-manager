@@ -34,7 +34,7 @@ export function QuoteProjectPanel({quote}:{quote:QuoteDetail}){
 export function QuoteConditions({quote,onSave}:{quote:QuoteDetail;onSave:(q:QuoteDetail)=>void}){
   const [prerequisites,setPrerequisites]=useState(quote.prerequisitesText??''),[deposit,setDeposit]=useState(String(quote.depositPercent??0)),[error,setError]=useState('');
   useEffect(()=>{setPrerequisites(quote.prerequisitesText??'');setDeposit(String(quote.depositPercent??0));},[quote.id,quote.prerequisitesText,quote.depositPercent]);
-  const editable=quote.status==='draft'&&!quote.finalizedAt&&!quote.contractCompiledAt;
+  const editable=quote.status==='draft'&&!quote.finalizedAt;
   return <>
     {editable
       ? <form className="workflow-fields" onSubmit={e=>{e.preventDefault();window.atoumweb.quotes.updateConditions(quote.id,{prerequisitesText:prerequisites,depositPercent:Number(deposit)}).then(q=>{onSave(q);changed();}).catch(e=>setError(String(e)));}}>
