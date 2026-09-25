@@ -162,13 +162,16 @@ Construire puis faire relire le contenu réel :
 
 Le Builder fournit la mécanique ; les textes juridiques doivent être validés avant leur utilisation commerciale réelle.
 
-### V1.2 — Dossier documentaire
+### V1.2 — Dossier documentaire — implémenté dans la branche
 
 Après acceptation :
-- rattacher le PDF Abby signé/accepté au devis et au client ;
-- afficher clairement la date d'acceptation ;
-- conserver la référence du document Abby ;
-- permettre d'ouvrir rapidement le devis contractuel depuis la fiche Client.
+- le PDF Abby accepté peut être importé directement depuis la fiche Devis ;
+- il est classé dans les documents Client, catégorie `contract` ;
+- le devis conserve le lien vers le document actif, sa date de rattachement et la référence Abby ;
+- le PDF peut être ouvert directement depuis la fiche Devis ;
+- une nouvelle version peut être importée sans supprimer les anciens documents du dossier Client.
+
+Reste à améliorer ultérieurement : accès direct à ce devis contractuel depuis l'onglet Documents/Contrats de la fiche Client.
 
 ### V1.3 — Confort et contrôle
 
