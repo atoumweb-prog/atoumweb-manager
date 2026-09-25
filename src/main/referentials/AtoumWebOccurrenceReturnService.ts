@@ -9,6 +9,7 @@ import type {
   AtoumWebOccurrenceReturnSummary,
 } from '../../shared/referentials';
 import {
+  type AtoumWebOccurrenceReturnFile,
   type AtoumWebOccurrenceReturnManifestV1,
   type AtoumWebSiteOccurrenceV1,
   validateOccurrenceReturnManifestV1,
@@ -187,7 +188,7 @@ export class AtoumWebOccurrenceReturnService {
       manifest.files.javascript,
       manifest.files.assets,
       manifest.files.provenance,
-    ].filter((file): file is NonNullable<typeof file> => Boolean(file));
+    ].filter((file): file is AtoumWebOccurrenceReturnFile => file !== null);
     for (const file of declared) {
       const entry = entries.get(file.path);
       if (!entry) throw new Error(`Fichier déclaré absent du retour Bridge : ${file.path}`);
