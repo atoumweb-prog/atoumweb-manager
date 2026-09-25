@@ -679,6 +679,81 @@ production
 
 Cette direction doit guider les futures fonctions de classement, variantes, import retour, composition multi-composants et création de Workbench.
 
+## 17 sexies. Site Occurrence V1 et retour vers Manager
+
+La matérialisation et la restitution d’une occurrence Workbench sont désormais définies par un contrat séparé :
+
+- `docs/ATOUMWEB_SITE_OCCURRENCE_CONTRACT_V1.md`
+- `docs/ATOUMWEB_SITE_OCCURRENCE_V1.schema.json`
+- `docs/ATOUMWEB_OCCURRENCE_RETURN_V1.schema.json`
+
+Bridge crée le `siteOccurrenceId`. Le Manager ne le fournit pas.
+
+L’occurrence conserve :
+
+```text
+source Manager
+  libraryItemId
+  libraryVersionId
+  libraryVersionNumber
+  componentFamilyId / componentKey
+  libraryVariantId / variantKey
+  versions des contrats
+        ↓
+cible Bridge
+  workbenchId
+  workbenchPostId
+  site
+        ↓
+configuration réellement appliquée
+  fieldValues
+  cssVariables
+  assetSelections
+        ↓
+résumé factuel des changements
+  champs
+  variables CSS
+  assets
+  HTML / CSS / JS
+  divergence structurelle
+```
+
+Le retour Bridge → Manager utilise obligatoirement :
+
+```text
+actionPolicy = manager_decides
+```
+
+Bridge ne décide jamais qu’une occurrence devient une variante, une nouvelle version ou une nouvelle famille.
+
+Le futur écran Manager doit proposer explicitement :
+
+```text
+- conserver uniquement l’occurrence
+- créer une nouvelle variante
+- mettre à jour une variante existante
+- détacher / créer une nouvelle famille
+```
+
+`structuralChange` reste un constat Bridge. Il peut aider le Manager à mettre en évidence un fork potentiel, mais ne déclenche aucune action automatique.
+
+Le package de retour mono-composant cible est :
+
+```text
+manifest.json
+occurrence/
+├─ occurrence.json
+├─ component.html
+├─ component.css
+├─ component.js
+├─ assets.json
+└─ provenance.json
+```
+
+Chaque fichier déclaré est associé à un SHA-256.
+
+Ce contrat prépare l’import retour côté Manager, mais ne crée pas encore le stockage SQL final ni l’interface de décision.
+
 ## 18. État Bridge communiqué au 24/09/2026
 
 Bridge est en série **0.6.x**.
