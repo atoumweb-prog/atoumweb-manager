@@ -63,7 +63,7 @@ describe('migrations SQLite', () => {
         "SELECT name FROM sqlite_master WHERE type='table' AND name='bridge_snapshot_sections'",
       )).toBeUndefined();
 
-      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([37, 38, 39, 40, 41]);
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([37, 38, 39, 40, 41, 42]);
       expect(database.get<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='bridge_snapshot_sections'",
       )?.name).toBe('bridge_snapshot_sections');
@@ -100,7 +100,7 @@ describe('migrations SQLite', () => {
            '2026-09-24T10:00:00.000Z','2026-09-24T10:00:00.000Z',NULL)`,
       );
 
-      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([38, 39, 40, 41]);
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([38, 39, 40, 41, 42]);
 
       expect(database.get<{ name: string; library_category: string; vertical: string | null }>(
         "SELECT name, library_category, vertical FROM technical_items WHERE id='legacy-library-item'",
@@ -125,11 +125,11 @@ describe('migrations SQLite', () => {
     }
   });
 
-  it('migration 41 déduit le public contractuel des devis existants', () => {
+  it('migration 42 déduit le public contractuel des devis existants', () => {
     const database = new NodeSqliteAdapter(':memory:');
     database.exec('PRAGMA foreign_keys = ON;');
     try {
-      for (const migration of getPendingMigrations(database).filter((item) => item.id <= 40)) {
+      for (const migration of getPendingMigrations(database).filter((item) => item.id <= 41)) {
         if (migration.disableForeignKeys) database.exec('PRAGMA foreign_keys = OFF;');
         database.exec('BEGIN IMMEDIATE;');
         try {
@@ -175,7 +175,7 @@ describe('migrations SQLite', () => {
         [now, now],
       );
 
-      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([41]);
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([42]);
       expect(database.get<{ contract_audience: string }>(
         "SELECT contract_audience FROM quotes WHERE id='quote-pro'",
       )?.contract_audience).toBe('professional');
@@ -208,7 +208,7 @@ describe('migrations SQLite', () => {
       'atoumweb_technical_assets', 'backup_records', 'backup_locations', 'backup_policies', 'backup_intervention_links',
       'catalog_project_blueprints', 'project_node_sources', 'project_node_secrets', 'expenses', 'crm_identity_assets',
       'bridge_sites', 'bridge_snapshots', 'bridge_pages', 'bridge_page_snapshots', 'bridge_nodes', 'bridge_sources',
-      'bridge_assets', 'bridge_dependencies', 'bridge_relations', 'bridge_snapshot_sections', 'bridge_objects',
+      'bridge_assets', 'bridge_dependencies', 'bridge_relations', 'bridge_snapshot_sections', 'bridge_objects', 'bridge_occurrence_returns',
       'contract_clause_templates', 'contract_clause_versions', 'catalog_contract_clause_links', 'quote_contract_clauses',
     ]) {
       const row = database.get<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", [table]);
@@ -231,7 +231,7 @@ describe('migrations SQLite', () => {
       expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('technical_items') WHERE name='${column}'`)?.name).toBe(column);
     }
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('contract_clause_templates') WHERE name='audience'")?.name).toBe('audience');
-    expect(MIGRATIONS.at(-1)?.id).toBe(41);
+    expect(MIGRATIONS.at(-1)?.id).toBe(42);
     expect(() => database.run(
       `INSERT INTO technical_items (id,project_id,scope,category,library_category,name,description,tags_json,reuse_status,origin_technical_item_id,vertical,created_at,updated_at,archived_at)
        VALUES ('snippet-test',NULL,'atoumweb','other','code_snippet','Snippet test',NULL,'[]','ready',NULL,'fleuriste','2026-09-25T00:00:00.000Z','2026-09-25T00:00:00.000Z',NULL)`,
