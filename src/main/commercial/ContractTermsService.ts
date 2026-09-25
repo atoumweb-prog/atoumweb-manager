@@ -300,6 +300,22 @@ export class ContractTermsService {
     if (clauses.some((clause) => clause.isOrphaned && clause.enabled)) {
       warnings.push('Une clause liée à une prestation retirée est encore incluse.');
     }
+    if (clauses.some((clause) => clause.enabled && /\[À RENSEIGNER/i.test(clause.body))) {
+      warnings.push('Au moins une clause contient encore un placeholder « À RENSEIGNER ».');
+    }
+    const dedicatedAudienceClause = this.database.get<{ id: string }>(
+      `SELECT qc.id
+       FROM quote_contract_clauses qc
+       JOIN contract_clause_templates t ON t.id=qc.source_clause_id
+       WHERE qc.quote_id=? AND qc.enabled=1 AND qc.is_orphaned=0 AND t.audience=?
+       LIMIT 1`,
+      [quoteId, audience],
+    );
+    if (!dedicatedAudienceClause) {
+      warnings.push(audience === 'consumer'
+        ? 'Aucune clause dédiée aux particuliers / consommateurs n’est incluse.'
+        : 'Aucune clause dédiée aux clients professionnels n’est incluse.');
+    }
     return {
       quoteId,
       audience,
