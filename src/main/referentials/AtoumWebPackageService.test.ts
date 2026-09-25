@@ -101,6 +101,16 @@ describe('AtoumWebPackageService', () => {
         generalized: true,
         fields: [{ id: 'text-1', label: 'Titre principal', type: 'text', selector: '[data-aw-field-text="text-1"]', originalValue: 'Titre source', defaultValue: 'Votre titre personnalisable' }],
       },
+      identity: {
+        componentFamilyId: 'awcf:test-feature-bubbles',
+        componentKey: 'aw-feature-bubbles',
+        libraryVariantId: 'awv:test-florist',
+        variantKey: 'florist',
+        variantOf: 'aw-feature-bubbles',
+        variantMode: 'inherit',
+        vertical: 'fleuriste',
+        reusabilityScope: 'vertical',
+      },
       dependencies: [{ dependencyId: 'dep-1', type: 'plugin', slug: 'forminator', name: 'Forminator', version: '1.0.0', active: true }],
       assets: [{ assetId: 'asset-1', type: 'image', url: 'https://www.atoumweb.fr/media.jpg', localPath: null, mimeType: 'image/jpeg', hash: 'abc', archiveMode: 'reference_only' }],
       checks: { remoteAssetUrls: [] },
@@ -120,6 +130,7 @@ describe('AtoumWebPackageService', () => {
     expect(names.has('component/component.html')).toBe(true);
     expect(names.has('component/component.css')).toBe(true);
     expect(names.has('component/fields.json')).toBe(true);
+    expect(names.has('component/identity.json')).toBe(true);
     expect(names.has('component/dependencies.json')).toBe(true);
     expect(names.has('component/source-assets.json')).toBe(true);
     expect(names.has('component/provenance.json')).toBe(true);
@@ -129,6 +140,7 @@ describe('AtoumWebPackageService', () => {
     expect(manifest.bridgeWorkbench.contract).toBe('atoumweb_bridge_component_package');
     expect(manifest.bridgeWorkbench.componentPackageContractVersion).toBe(1);
     expect(manifest.bridgeWorkbench.fieldsContractVersion).toBe(1);
+    expect(manifest.bridgeWorkbench.identityContractVersion).toBe(1);
     expect(manifest.bridgeWorkbench.flow).toBe('workbench_first');
     expect(manifest.bridgeWorkbench.directProductionInjection).toBe(false);
     expect(manifest.bridgeWorkbench.component.rootClasses).toEqual(['atoum-hero']);
@@ -146,6 +158,23 @@ describe('AtoumWebPackageService', () => {
       binding: { type: 'html_text', selector: '[data-aw-field-text="text-1"]' },
       source: { mode: 'auto_detected', confidence: 'high', ambiguous: false },
     });
+
+    const identity = JSON.parse(entries.find((entry) => entry.name === 'component/identity.json')!.data.toString('utf8'));
+    expect(identity).toMatchObject({
+      contract: 'atoumweb_component_identity',
+      schemaVersion: 1,
+      classificationStatus: 'classified',
+      libraryDisplayName: 'Hero réutilisable',
+      componentFamilyId: 'awcf:test-feature-bubbles',
+      componentKey: 'aw-feature-bubbles',
+      libraryVariantId: 'awv:test-florist',
+      variantKey: 'florist',
+      variantOf: 'aw-feature-bubbles',
+      variantMode: 'inherit',
+      vertical: 'fleuriste',
+      reusabilityScope: 'vertical',
+    });
+    expect(manifest.bridgeWorkbench.component.identity).toEqual(identity);
 
     const dependencies = JSON.parse(entries.find((entry) => entry.name === 'component/dependencies.json')!.data.toString('utf8'));
     expect(dependencies[0].name).toBe('Forminator');
