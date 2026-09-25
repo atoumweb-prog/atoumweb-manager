@@ -109,6 +109,8 @@ interface OfferComponentSnapshotRow extends Record<string, unknown> {
   prerequisites_json: string;
   price_mode: string;
   price_cents: number | null;
+  special_terms: string | null;
+  contract_type: string | null;
   is_optional: number;
   quantity_milli: number;
   sort_order: number;
@@ -263,6 +265,8 @@ export class QuoteService {
           sv.prerequisites_json,
           sv.price_mode,
           sv.price_cents,
+          sv.special_terms,
+          sv.contract_type,
           oc.is_optional,
           oc.quantity_milli,
           oc.sort_order
@@ -283,6 +287,8 @@ export class QuoteService {
         prerequisites: this.parseJsonList(component.prerequisites_json),
         priceMode: component.price_mode,
         priceCents: component.price_cents,
+        specialTerms: component.special_terms,
+        contractType: component.contract_type,
         isOptional: Boolean(component.is_optional),
         quantityMilli: Number(component.quantity_milli),
         sortOrder: Number(component.sort_order),
