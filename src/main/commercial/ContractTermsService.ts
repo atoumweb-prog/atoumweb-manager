@@ -621,7 +621,10 @@ export class ContractTermsService {
     }
 
     const legacySpecialTerms = clean(state.special_terms);
-    if (legacySpecialTerms) {
+    const duplicatesExistingTerm = legacySpecialTerms
+      ? [...desired.values()].some((clause) => clause.body.trim() === legacySpecialTerms)
+      : false;
+    if (legacySpecialTerms && !duplicatesExistingTerm) {
       desired.set('legacy:quote-special', {
         sourceKey: 'legacy:quote-special',
         sourceKind: 'custom',
