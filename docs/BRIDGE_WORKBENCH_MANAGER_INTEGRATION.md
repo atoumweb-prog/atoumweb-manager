@@ -441,6 +441,72 @@ Les nouveaux candidats créés depuis Sites conservent également, lorsqu’ils 
 
 Ces informations suivent ensuite la chaîne Originale → Travail → Réutilisable et sont exportées dans le package.
 
+## 17 ter. Component Package Contract V1 et champs configurables
+
+Le format des champs personnalisables est maintenant versionné indépendamment du Snapshot Schema V1.
+
+Références canoniques :
+
+- `docs/ATOUMWEB_COMPONENT_PACKAGE_CONTRACT_V1.md`
+- `docs/ATOUMWEB_COMPONENT_FIELDS_V1.schema.json`
+
+Le package Bridge exporté par le Manager annonce :
+
+```json
+{
+  "componentPackageContractVersion": 1,
+  "fieldsContractVersion": 1
+}
+```
+
+Le fichier `component/fields.json` suit le contrat :
+
+```json
+{
+  "contract": "atoumweb_component_fields",
+  "schemaVersion": 1,
+  "fields": []
+}
+```
+
+Types V1 :
+
+```text
+text
+textarea
+rich_text
+url
+image
+color
+number
+select
+toggle
+icon
+```
+
+Bindings V1 :
+
+```text
+html_text
+html_html
+html_attribute
+css_variable
+css_url
+unresolved
+```
+
+Règles importantes :
+
+- les couleurs configurables doivent privilégier `css_variable` ;
+- un champ automatique est marqué `source.mode = auto_detected` ;
+- un champ automatique ambigu porte `ambiguous = true` et ne doit pas être appliqué silencieusement par Bridge ;
+- le Manager convertit les anciens champs `text/link/image` vers le contrat canonique lors de l’export ;
+- les anciens composants de la Bibliothèque restent donc compatibles sans migration destructive ;
+- Bridge peut générer une UI générique uniquement à partir de `fields.json` ;
+- l’HTML/CSS/JS brut reste toujours disponible pour les modifications avancées.
+
+Le Manager valide également la version du contrat et la structure minimale de `fields.json` lorsqu’il relit un package Bridge.
+
 ## 18. État Bridge communiqué au 24/09/2026
 
 Bridge est en série **0.6.x**.
