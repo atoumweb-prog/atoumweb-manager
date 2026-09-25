@@ -127,9 +127,25 @@ describe('AtoumWebPackageService', () => {
 
     const manifest = JSON.parse(entries.find((entry) => entry.name === 'manifest.json')!.data.toString('utf8'));
     expect(manifest.bridgeWorkbench.contract).toBe('atoumweb_bridge_component_package');
+    expect(manifest.bridgeWorkbench.componentPackageContractVersion).toBe(1);
+    expect(manifest.bridgeWorkbench.fieldsContractVersion).toBe(1);
     expect(manifest.bridgeWorkbench.flow).toBe('workbench_first');
     expect(manifest.bridgeWorkbench.directProductionInjection).toBe(false);
     expect(manifest.bridgeWorkbench.component.rootClasses).toEqual(['atoum-hero']);
+
+    const fields = JSON.parse(entries.find((entry) => entry.name === 'component/fields.json')!.data.toString('utf8'));
+    expect(fields.contract).toBe('atoumweb_component_fields');
+    expect(fields.schemaVersion).toBe(1);
+    expect(fields.fields).toHaveLength(1);
+    expect(fields.fields[0]).toMatchObject({
+      id: 'text-1',
+      type: 'text',
+      label: 'Titre principal',
+      default: 'Votre titre personnalisable',
+      required: false,
+      binding: { type: 'html_text', selector: '[data-aw-field-text="text-1"]' },
+      source: { mode: 'auto_detected', confidence: 'high', ambiguous: false },
+    });
 
     const dependencies = JSON.parse(entries.find((entry) => entry.name === 'component/dependencies.json')!.data.toString('utf8'));
     expect(dependencies[0].name).toBe('Forminator');
