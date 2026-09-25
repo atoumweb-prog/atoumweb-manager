@@ -48,9 +48,9 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   const counts = useMemo(() => {
     const clauses = build?.clauses ?? [];
     return {
-      base: clauses.filter((clause) => clause.sourceKind === 'base' && clause.enabled && !clause.isOrphaned).length,
-      catalog: clauses.filter((clause) => clause.sourceKind === 'catalog' && clause.enabled && !clause.isOrphaned).length,
-      custom: clauses.filter((clause) => clause.sourceKind === 'custom' && clause.enabled && !clause.isOrphaned).length,
+      base: clauses.filter((clause) => clause.sourceKind === 'base' && clause.enabled).length,
+      catalog: clauses.filter((clause) => clause.sourceKind === 'catalog' && clause.enabled).length,
+      custom: clauses.filter((clause) => clause.sourceKind === 'custom' && clause.enabled).length,
     };
   }, [build]);
 
