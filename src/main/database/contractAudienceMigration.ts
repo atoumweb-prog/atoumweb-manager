@@ -1,7 +1,7 @@
 import type { Migration } from './migrations';
 
 export const CONTRACT_AUDIENCE_MIGRATION: Migration = {
-  id: 41,
+  id: 42,
   name: 'contract_clause_audience',
   sql: `
     ALTER TABLE contract_clause_templates
