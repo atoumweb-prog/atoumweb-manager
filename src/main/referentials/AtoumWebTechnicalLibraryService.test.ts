@@ -99,6 +99,52 @@ describe('AtoumWebTechnicalLibraryService', () => {
     expect(reactivated.archivedAt).toBeNull();
   });
 
+  it('classe par métier et filtre la Bibliothèque sans confondre métier et tags', () => {
+    const florist = library.create(
+      {
+        category: 'section',
+        name: 'Section bulles Fleuriste',
+        reuseStatus: 'ready',
+        vertical: 'Fleuriste',
+        tags: ['services', 'présentation'],
+      },
+      { contentType: 'code', language: 'html', contentText: '<section>Fleurs</section>' },
+    );
+    library.create(
+      {
+        category: 'section',
+        name: 'Section bulles Automobile',
+        reuseStatus: 'ready',
+        vertical: 'automobile',
+        tags: ['services'],
+      },
+      { contentType: 'code', language: 'html', contentText: '<section>Auto</section>' },
+    );
+
+    expect(library.get(florist.id).vertical).toBe('fleuriste');
+    expect(library.list({ vertical: 'fleur' }).map((item) => item.id)).toEqual([florist.id]);
+  });
+
+  it('accepte la catégorie Code snippets avec le langage porté par la version', () => {
+    const snippet = library.create(
+      {
+        category: 'code_snippet',
+        name: 'Masquer un élément au scroll',
+        reuseStatus: 'ready',
+        tags: ['scroll', 'ui'],
+      },
+      {
+        contentType: 'code',
+        language: 'javascript',
+        contentText: 'window.addEventListener("scroll", () => {});',
+      },
+    );
+
+    expect(snippet.category).toBe('code_snippet');
+    expect(snippet.currentVersion?.language).toBe('javascript');
+    expect(library.list({ category: 'code_snippet' }).map((item) => item.id)).toEqual([snippet.id]);
+  });
+
   it('refuse une origine globale pour préserver la notion d’origine projet', () => {
     const first = library.create(
       { category: 'note', name: 'Composant global', reuseStatus: 'reference' },
