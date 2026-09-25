@@ -32,13 +32,14 @@ export function QuoteProjectPanel({quote}:{quote:QuoteDetail}){
   </section>;
 }
 export function QuoteConditions({quote,onSave}:{quote:QuoteDetail;onSave:(q:QuoteDetail)=>void}){
-  const [prerequisites,setPrerequisites]=useState(quote.prerequisitesText??''),[deposit,setDeposit]=useState(String(quote.depositPercent??0)),[error,setError]=useState('');
-  useEffect(()=>{setPrerequisites(quote.prerequisitesText??'');setDeposit(String(quote.depositPercent??0));},[quote.id,quote.prerequisitesText,quote.depositPercent]);
+  const [prerequisites,setPrerequisites]=useState(quote.prerequisitesText??''),[deposit,setDeposit]=useState(String(quote.depositPercent??0)),[audience,setAudience]=useState<'professional'|'consumer'>(quote.contractAudience??'professional'),[error,setError]=useState('');
+  useEffect(()=>{setPrerequisites(quote.prerequisitesText??'');setDeposit(String(quote.depositPercent??0));setAudience(quote.contractAudience??'professional');},[quote.id,quote.prerequisitesText,quote.depositPercent,quote.contractAudience]);
   const editable=quote.status==='draft'&&!quote.finalizedAt;
   return <>
     {editable
-      ? <form className="workflow-fields" onSubmit={e=>{e.preventDefault();window.atoumweb.quotes.updateConditions(quote.id,{prerequisitesText:prerequisites,depositPercent:Number(deposit)}).then(q=>{onSave(q);changed();}).catch(e=>setError(String(e)));}}>
+      ? <form className="workflow-fields" onSubmit={e=>{e.preventDefault();window.atoumweb.quotes.updateConditions(quote.id,{prerequisitesText:prerequisites,depositPercent:Number(deposit),contractAudience:audience}).then(q=>{onSave(q);changed();}).catch(e=>setError(String(e)));}}>
           <h3>Paramètres du devis</h3>
+          <label>Type de client contractuel<select value={audience} onChange={e=>setAudience(e.target.value as 'professional'|'consumer')}><option value="professional">Professionnel</option><option value="consumer">Particulier / consommateur</option></select></label>
           <label>Prérequis<textarea value={prerequisites} onChange={e=>setPrerequisites(e.target.value)}/></label>
           <label>Acompte (%)<input type="number" min="0" max="100" value={deposit} onChange={e=>setDeposit(e.target.value)}/></label>
           <button className="secondary-button">Enregistrer les paramètres</button>
@@ -46,6 +47,7 @@ export function QuoteConditions({quote,onSave}:{quote:QuoteDetail;onSave:(q:Quot
         </form>
       : <section className="workflow-fields">
           <h3>Paramètres du devis</h3>
+          <p><strong>Type de client contractuel :</strong> {quote.contractAudience==='consumer'?'Particulier / consommateur':'Professionnel'}</p>
           <p><strong>Acompte :</strong> {quote.depositPercent??0} %</p>
           {quote.prerequisitesText&&<p style={{whiteSpace:'pre-wrap'}}><strong>Prérequis :</strong> {quote.prerequisitesText}</p>}
         </section>}
