@@ -88,6 +88,40 @@ describe('Component Fields Contract V1', () => {
     });
   });
 
+  it('préserve un champ couleur généré avec variable CSS', () => {
+    const result = canonicalizeComponentFields([
+      {
+        id: 'color-1',
+        type: 'color',
+        label: 'Couleur 1',
+        selector: '.atoum-card',
+        defaultValue: '#071b3a',
+        binding: {
+          type: 'css_variable',
+          name: '--aw-atoum-card-color-1',
+          selector: '.atoum-card',
+        },
+      },
+    ]);
+
+    expect(result.fields[0]).toMatchObject({
+      id: 'color-1',
+      type: 'color',
+      group: 'Couleurs',
+      default: '#071b3a',
+      binding: {
+        type: 'css_variable',
+        name: '--aw-atoum-card-color-1',
+        selector: '.atoum-card',
+      },
+      source: {
+        mode: 'auto_detected',
+        confidence: 'high',
+        ambiguous: false,
+      },
+    });
+  });
+
   it('marque une ancienne image CSS comme détectée et ambiguë', () => {
     const result = canonicalizeComponentFields([
       {
