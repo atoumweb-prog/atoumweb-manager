@@ -18,6 +18,7 @@ import {
   type AtoumWebTechnicalVersion,
 } from '../../shared/referentials';
 import { PROJECT_TECHNICAL_CONTENT_TYPES, type ProjectTechnicalContentType } from '../../shared/projects';
+import { canonicalizeComponentFields } from '../../shared/componentPackageFields';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import type { WorkspacePaths } from '../workspace';
 import { AtoumWebTechnicalAssetService } from './AtoumWebTechnicalAssetService';
@@ -62,6 +63,8 @@ interface BridgeReusableExportPayload {
 interface BridgeWorkbenchManifest {
   contract: 'atoumweb_bridge_component_package';
   schemaVersion: 1;
+  componentPackageContractVersion: 1;
+  fieldsContractVersion: 1;
   flow: 'workbench_first';
   workbenchRequired: true;
   directProductionInjection: false;
@@ -264,7 +267,8 @@ export class AtoumWebPackageService {
     const javascript = payload.reusable.javascript.trim()
       ? addText('component/component.js', payload.reusable.javascript)
       : null;
-    const fields = addText('component/fields.json', `${JSON.stringify(payload.reusable.fields ?? [], null, 2)}\n`);
+    const canonicalFields = canonicalizeComponentFields(payload.reusable.fields ?? []);
+    const fields = addText('component/fields.json', `${JSON.stringify(canonicalFields, null, 2)}\n`);
     const dependencies = addText('component/dependencies.json', `${JSON.stringify(payload.dependencies ?? [], null, 2)}\n`);
     const sourceAssets = addText('component/source-assets.json', `${JSON.stringify(payload.assets ?? [], null, 2)}\n`);
     const provenanceValue = {
@@ -278,6 +282,8 @@ export class AtoumWebPackageService {
     return {
       contract: 'atoumweb_bridge_component_package',
       schemaVersion: 1,
+      componentPackageContractVersion: 1,
+      fieldsContractVersion: 1,
       flow: 'workbench_first',
       workbenchRequired: true,
       directProductionInjection: false,
@@ -495,6 +501,9 @@ export class AtoumWebPackageService {
       const bridge = manifest.bridgeWorkbench;
       if (bridge.contract !== 'atoumweb_bridge_component_package' || bridge.schemaVersion !== 1) {
         throw new Error('Format du package Bridge Workbench non pris en charge.');
+      }
+      if (bridge.componentPackageContractVersion !== 1 || bridge.fieldsContractVersion !== 1) {
+        throw new Error('Version du Component Package Contract ou de fields.json non prise en charge.');
       }
       if (bridge.flow !== 'workbench_first' || bridge.workbenchRequired !== true || bridge.directProductionInjection !== false) {
         throw new Error('Le package Bridge doit imposer un passage par Workbench avant production.');
