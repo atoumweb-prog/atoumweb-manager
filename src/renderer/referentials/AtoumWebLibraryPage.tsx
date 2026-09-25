@@ -10,6 +10,7 @@ import type {
   AtoumWebTechnicalVersion,
 } from '../../shared/referentials';
 import type { ProjectTechnicalContentType } from '../../shared/projects';
+import { assessBridgeReusableValidation } from '../../shared/bridgeReusableValidation';
 import { TechnicalContentViewer } from './TechnicalContentViewer';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
 import './AtoumWebLibraryPage.css';
@@ -351,9 +352,17 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
       || (bridgeWorkflow.reusable.payload.stage === 'reusable' && !bridgeWorkflow.reusable.payload.value.reusable.generalized)
     ),
   );
-  const reusableRemoteAssets = bridgeWorkflow.reusable?.payload.stage === 'reusable'
-    ? bridgeWorkflow.reusable.payload.value.checks.remoteAssetUrls.length
-    : 0;
+  const reusableValidation = bridgeWorkflow.reusable?.payload.stage === 'reusable'
+    ? bridgeReusableValidation(bridgeWorkflow.reusable.payload.value)
+    : null;
+  const reusableValidated = Boolean(
+    selected
+    && bridgeWorkflow.reusable
+    && !reusableNeedsRefresh
+    && bridgeWorkflow.reusable.version.stable
+    && selected.reuseStatus === 'ready'
+    && reusableValidation?.automaticChecksPassed
+  );
 
   const originalBridgeCandidate = bridgeWorkflow.original?.payload.stage === 'original' ? bridgeWorkflow.original.payload.value : null;
   const recommendedBridgeCategory = originalBridgeCandidate ? inferBridgeLibraryCategory(originalBridgeCandidate) : null;
@@ -443,6 +452,10 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
 
   async function saveMetadata(): Promise<void> {
     if (!selected || !metadataForm) return;
+    if (bridgeWorkflow.original && metadataForm.reuseStatus === 'ready' && !reusableValidated) {
+      setError('Pour un composant Bridge, le statut « Prêt à réutiliser » est attribué uniquement après validation humaine de la version réutilisable.');
+      return;
+    }
     try {
       setError(null);
       const changed = await window.atoumweb.referentials.library.update(selected.id, {
@@ -593,25 +606,48 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
       });
 
       const tags = mergeLibraryTags(changed.tags, ['bridge-stage-original', 'bridge-stage-work', 'bridge-stage-reusable']);
-      const templateReady = reusable.reusable.generalized && reusable.checks.remoteAssetUrls.length === 0;
-      if (templateReady) {
-        changed = await window.atoumweb.referentials.library.update(changed.id, { reuseStatus: 'ready', tags });
-        if (changed.currentVersion?.id) changed = await window.atoumweb.referentials.library.markStable(changed.currentVersion.id);
-      } else {
-        changed = await window.atoumweb.referentials.library.update(changed.id, { reuseStatus: 'adapt', tags });
-      }
+      changed = await window.atoumweb.referentials.library.update(changed.id, { reuseStatus: 'adapt', tags });
 
       setBridgeStageView('reusable');
       await load(changed.id);
       await setOpenedItem(changed);
       setBridgeStageView('reusable');
       onMessage(!reusable.reusable.generalized
-        ? `Version réutilisable créée pour « ${changed.name} », mais la généralisation automatique doit être vérifiée.`
+        ? `Version réutilisable préparée pour « ${changed.name} », mais la généralisation automatique doit être reprise avant validation.`
         : reusable.checks.remoteAssetUrls.length
-          ? `Version réutilisable généralisée pour « ${changed.name} ». Les ressources distantes restantes doivent encore devenir locales.`
-          : `« ${changed.name} » est maintenant un modèle générique prêt à réutiliser.`);
+          ? `Version réutilisable préparée pour « ${changed.name} ». Les ressources distantes restantes doivent encore devenir locales avant validation.`
+          : `Version réutilisable préparée pour « ${changed.name} ». Une validation humaine est requise avant le statut « Prêt à réutiliser ».`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Impossible de préparer la version réutilisable.');
+    } finally {
+      setBridgeWorkflowBusy(false);
+    }
+  }
+
+  async function validateBridgeReusableVersion(): Promise<void> {
+    if (!selected || !bridgeWorkflow.reusable || reusableNeedsRefresh || bridgeWorkflow.reusable.payload.stage !== 'reusable') {
+      setError('Prépare d’abord une version réutilisable à jour.');
+      return;
+    }
+    const assessment = bridgeReusableValidation(bridgeWorkflow.reusable.payload.value);
+    if (!assessment.automaticChecksPassed) {
+      setError('Validation impossible : ' + assessment.blockers.join(' '));
+      return;
+    }
+
+    setBridgeWorkflowBusy(true);
+    try {
+      setError(null);
+      let changed = bridgeWorkflow.reusable.version.stable
+        ? await window.atoumweb.referentials.library.get(selected.id)
+        : await window.atoumweb.referentials.library.markStable(bridgeWorkflow.reusable.version.id);
+      changed = await window.atoumweb.referentials.library.update(changed.id, { reuseStatus: 'ready' });
+      await load(changed.id);
+      await setOpenedItem(changed);
+      setBridgeStageView('reusable');
+      onMessage(`« ${changed.name} » a été validé humainement : version stable et prête à réutiliser.`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Impossible de valider cette version réutilisable.');
     } finally {
       setBridgeWorkflowBusy(false);
     }
@@ -893,12 +929,16 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
                       </div>}
                 </div>
 
-                <div className={`${bridgeWorkflow.reusable ? (selected.reuseStatus === 'ready' && !reusableNeedsRefresh ? 'done' : 'warning') : bridgeWorkflow.work ? 'next' : 'locked'} ${bridgeStageView === 'reusable' ? 'active' : ''}`}>
+                <div className={`${bridgeWorkflow.reusable ? (reusableValidated ? 'done' : 'warning') : bridgeWorkflow.work ? 'next' : 'locked'} ${bridgeStageView === 'reusable' ? 'active' : ''}`}>
                   {bridgeWorkflow.reusable && !reusableNeedsRefresh
                     ? <button className="aw-library-stage-open" type="button" onClick={() => setBridgeStageView('reusable')}>
                         <span>3</span>
-                        <div><strong>Réutilisable</strong><small>V{bridgeWorkflow.reusable.version.versionNumber} · {reusableRemoteAssets ? `${reusableRemoteAssets} média(s) à localiser` : 'prête et stable'}</small></div>
-                        <OperationIcon name={selected.reuseStatus === 'ready' ? 'check-circle' : 'alert'} size={18} />
+                        <div><strong>Réutilisable</strong><small>V{bridgeWorkflow.reusable.version.versionNumber} · {reusableValidated
+                          ? 'validée humainement · stable'
+                          : reusableValidation?.automaticChecksPassed
+                            ? 'préparée · validation humaine requise'
+                            : `${reusableValidation?.blockers.length ?? 0} contrôle(s) à reprendre`}</small></div>
+                        <OperationIcon name={reusableValidated ? 'check-circle' : 'alert'} size={18} />
                       </button>
                     : <div className="aw-library-stage-create">
                         <span>3</span>
@@ -915,7 +955,9 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
                 <div className="aw-library-version-flags">{displayedBridgeEntry.version.stable && <span>stable</span>}<span>{displayedBridgeEntry.version.contentType}{displayedBridgeEntry.version.language ? ` · ${displayedBridgeEntry.version.language}` : ''}</span></div>
               </div>
               {displayedBridgeEntry.payload.stage === 'reusable'
-                ? <p className="muted aw-library-current-notes">Modèle réutilisable prêt pour un Workbench Divi. Une utilisation manuelle HTML/CSS reste disponible.</p>
+                ? <p className="muted aw-library-current-notes">{reusableValidated
+                    ? 'Modèle réutilisable validé humainement et stable. Il peut être envoyé vers un Workbench Divi.'
+                    : 'Modèle préparé automatiquement. Contrôle et validation humaine requis avant le statut « Prêt à réutiliser ».'}</p>
                 : displayedBridgeEntry.version.notes && <p className="muted aw-library-current-notes">{displayedBridgeEntry.version.notes}</p>}
               {displayedBridgeEntry.payload.stage === 'original'
                 ? <BridgeCandidateViewer candidate={displayedBridgeEntry.payload.value} rawContent={displayedBridgeEntry.version.contentText ?? ''} onMessage={onMessage} />
@@ -935,6 +977,9 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
                       original={originalBridgeCandidate}
                       rawContent={displayedBridgeEntry.version.contentText ?? ''}
                       packageBusy={packageBusy}
+                      validationBusy={bridgeWorkflowBusy}
+                      validated={reusableValidated}
+                      onValidate={validateBridgeReusableVersion}
                       onExportBridgePackage={() => exportPackage(displayedBridgeEntry.version.id, true)}
                       onMessage={onMessage}
                     />}
@@ -1046,7 +1091,9 @@ function BridgeSummaryStages({ item }: { item: AtoumWebTechnicalItemSummary }) {
   const reusableReady = hasReusable
     && item.reuseStatus === 'ready'
     && current?.stage === 'reusable'
-    && current.value.reusable.generalized;
+    && current.value.reusable.generalized
+    && current.value.checks.remoteAssetUrls.length === 0
+    && item.stableVersion?.id === item.currentVersion?.id;
 
   return <span className="aw-library-stage-badges" aria-label="Étapes du composant">
     <span className="done">Originale ✓</span>
@@ -1252,6 +1299,9 @@ function BridgeReusableViewer({
   original,
   rawContent,
   packageBusy,
+  validationBusy,
+  validated,
+  onValidate,
   onExportBridgePackage,
   onMessage,
 }: {
@@ -1260,6 +1310,9 @@ function BridgeReusableViewer({
   original: BridgeLibraryCandidate | null;
   rawContent: string;
   packageBusy: boolean;
+  validationBusy: boolean;
+  validated: boolean;
+  onValidate: () => Promise<void>;
   onExportBridgePackage: () => Promise<void>;
   onMessage: (message: string) => void;
 }) {
@@ -1268,17 +1321,55 @@ function BridgeReusableViewer({
   const originalDocument = original ? buildBridgeCandidatePreview(original) : null;
   const comparisonDocument = workDocument ?? originalDocument;
   const comparisonLabel = workDocument ? 'Version de travail' : 'Originale';
-  const ready = component.reusable.generalized && component.checks.remoteAssetUrls.length === 0;
+  const validation = bridgeReusableValidation(component);
+  const [reviewConfirmed, setReviewConfirmed] = useState(false);
+
+  useEffect(() => {
+    setReviewConfirmed(false);
+  }, [rawContent]);
+
+  const requiresManualChecks = validation.warnings.length > 0;
+  const canValidate = validation.automaticChecksPassed && (!requiresManualChecks || reviewConfirmed);
 
   return <div className="aw-bridge-candidate-viewer">
-    {!ready && <div className="aw-bridge-candidate-state reusable">
-      <OperationIcon name="alert" size={18} />
-      <div><strong>Version réutilisable à finaliser</strong><span>{component.checks.remoteAssetUrls.length} ressource(s) utilisent encore une URL distante. Elles doivent devenir locales avant validation complète.</span></div>
-    </div>}
+    {validated
+      ? <div className="aw-bridge-candidate-state reusable">
+          <OperationIcon name="check-circle" size={18} />
+          <div><strong>Validé humainement</strong><span>Cette version est stable et porte le statut « Prêt à réutiliser ».</span></div>
+        </div>
+      : <div className="aw-bridge-candidate-state reusable">
+          <OperationIcon name={validation.automaticChecksPassed ? 'wrench' : 'alert'} size={18} />
+          <div><strong>{validation.automaticChecksPassed ? 'Préparé automatiquement — validation humaine requise' : 'Préparé — validation bloquée'}</strong><span>{validation.automaticChecksPassed
+            ? 'Les contrôles automatiques connus sont passés. Le Manager ne transforme plus ce résultat en validation métier.'
+            : validation.blockers.join(' ')}</span></div>
+        </div>}
 
     <section className="aw-bridge-candidate-preview">
       <div className="aw-library-section-title"><div><span className="eyebrow">Contrôle final</span><h3>Réutilisable responsive + comparaison</h3></div></div>
       <BridgePreviewWorkbench title="Réutilisable" document={previewDocument} originalDocument={comparisonDocument} originalLabel={comparisonLabel} />
+    </section>
+
+    <section className="aw-bridge-candidate-reuse">
+      <div className="aw-library-section-title">
+        <div><span className="eyebrow">Validation humaine</span><h3>{validated ? 'Version approuvée' : 'Décision avant statut « Prêt à réutiliser »'}</h3></div>
+        {!validated && <button className="primary-button" type="button" disabled={validationBusy || !canValidate} onClick={() => void onValidate()}>
+          <OperationIcon name="check-circle" size={16} />{validationBusy ? 'Validation…' : 'Valider comme prêt à réutiliser'}
+        </button>}
+      </div>
+      <div className="aw-bridge-candidate-grid">
+        <div><span>Généralisation</span><strong>{component.reusable.generalized ? 'OK automatique' : 'À reprendre'}</strong></div>
+        <div><span>Ressources distantes</span><strong>{component.checks.remoteAssetUrls.length ? `${component.checks.remoteAssetUrls.length} à localiser` : 'Aucune détectée'}</strong></div>
+        <div><span>JavaScript</span><strong>{component.reusable.javascript.trim() ? 'Présent · contrôle manuel' : 'Aucun'}</strong></div>
+        <div><span>Dépendances</span><strong>{component.dependencies.length ? `${component.dependencies.length} · contrôle manuel` : 'Aucune déclarée'}</strong></div>
+      </div>
+      {validation.blockers.length > 0 && <div className="aw-bridge-candidate-notes">{validation.blockers.map((blocker) => <p key={blocker}><OperationIcon name="alert" size={15} />{blocker}</p>)}</div>}
+      {validation.warnings.length > 0 && <div className="aw-bridge-candidate-notes">{validation.warnings.map((warning) => <p key={warning}><OperationIcon name="wrench" size={15} />{warning}</p>)}</div>}
+      {!validated && requiresManualChecks && validation.automaticChecksPassed && <label className="aw-library-checkbox">
+        <input type="checkbox" checked={reviewConfirmed} onChange={(event) => setReviewConfirmed(event.target.checked)} />
+        J’ai vérifié les points manuels ci-dessus.
+      </label>}
+      {!validated && !validation.automaticChecksPassed && <p className="technical-safety-note">La validation reste indisponible tant que les contrôles bloquants ne sont pas corrigés.</p>}
+      {validated && <p className="technical-safety-note">Une nouvelle révision de travail remettra le composant au statut « À adapter » et nécessitera une nouvelle validation.</p>}
     </section>
 
     {component.reusable.fields.length > 0 && <ReusableFieldsPanel fields={component.reusable.fields} />}
@@ -1958,6 +2049,15 @@ function reusablePlaceholderImageDataUrl(): string {
 
 function mergeLibraryTags(existing: string[] | null | undefined, additions: string[]): string[] {
   return [...new Set([...(existing ?? []), ...additions])];
+}
+
+function bridgeReusableValidation(component: BridgeReusableComponent) {
+  return assessBridgeReusableValidation({
+    generalized: component.reusable.generalized,
+    remoteAssetUrls: component.checks.remoteAssetUrls,
+    javascript: component.reusable.javascript,
+    dependencies: component.dependencies,
+  });
 }
 
 function normalizeReusableText(value: string): string {

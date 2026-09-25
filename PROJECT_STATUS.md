@@ -1,5 +1,16 @@
 # AtoumWeb Manager — Suivi du projet
 
+## Lot 3 — Validation humaine des versions réutilisables — 25/09/2026
+
+- [x] Une préparation automatique ne passe plus seule le composant à « Prêt à réutiliser » et ne marque plus la version stable.
+- [x] Validation humaine explicite ajoutée avant le couple statut `ready` + version stable.
+- [x] Généralisation incomplète et ressources distantes bloquent la validation ; JavaScript et dépendances imposent une confirmation humaine.
+- [x] Les badges et messages distinguent désormais « préparé », « à reprendre » et « validé humainement ».
+- [x] Le statut « Prêt à réutiliser » n’est plus attribuable par simple édition de métadonnées pour un composant Bridge non validé.
+- [x] Tests unitaires ciblés ajoutés pour la décision automatique / humaine.
+- [ ] Typecheck et tests locaux à exécuter sur le MSI après synchronisation.
+- Aucun changement de migration, de contrat V1, de Famille / Variante ou de retour Bridge.
+
 ## Lot 2 — Transport des assets et imports — 25/09/2026
 
 - Base vérifiée avant modification : 4fb795035b32f312ea16496ab13f6a7b8d74e682 ; working tree initialement propre.
