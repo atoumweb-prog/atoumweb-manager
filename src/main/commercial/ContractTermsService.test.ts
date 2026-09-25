@@ -64,23 +64,36 @@ describe('ContractTermsService', () => {
     expect(build.compiledText).toContain('Contenus fournis par le client');
   });
 
-  it('conserve une adaptation propre au devis quand le modèle publié évolue', () => {
-    const base = publishedClause('BASE-PAIEMENT', 'Paiement', 'base', 'Texte version 1.');
+  it('conserve une adaptation de clause prestation quand le modèle publié évolue', () => {
+    const specific = publishedClause('WEB-DELAI', 'Délais de réalisation', 'catalog', 'Texte version 1.');
+    const service = publishedService('Site vitrine');
+    contractTerms.setCatalogLinks(specific.id, [service.id]);
     const quote = quotes.create({ prospectId: prospectId(), subject: 'Adaptation' });
+    quotes.addCatalogLine(quote.id, service.currentVersion!.id);
     const first = contractTerms.syncQuote(quote.id);
-    const instance = first.clauses.find((clause) => clause.sourceClauseId === base.id)!;
+    const instance = first.clauses.find((clause) => clause.sourceClauseId === specific.id)!;
 
     contractTerms.updateQuoteClause(instance.id, { body: 'Texte adapté uniquement pour ce devis.' });
-    const draft = contractTerms.createVersion(base.id, { body: 'Texte version 2.' });
+    const draft = contractTerms.createVersion(specific.id, { body: 'Texte version 2.' });
     contractTerms.publishVersion(draft.id);
 
     const after = contractTerms.syncQuote(quote.id);
-    const adapted = after.clauses.find((clause) => clause.sourceClauseId === base.id)!;
+    const adapted = after.clauses.find((clause) => clause.sourceClauseId === specific.id)!;
     expect(adapted.body).toBe('Texte adapté uniquement pour ce devis.');
     expect(adapted.isCustomized).toBe(true);
 
     const reset = contractTerms.resetQuoteClause(adapted.id);
-    expect(reset.clauses.find((clause) => clause.sourceClauseId === base.id)?.body).toBe('Texte version 2.');
+    expect(reset.clauses.find((clause) => clause.sourceClauseId === specific.id)?.body).toBe('Texte version 2.');
+  });
+
+  it('interdit de modifier ou exclure le socle fixe dans un devis', () => {
+    const base = publishedClause('BASE-PAIEMENT', 'Paiement', 'base', 'Texte du socle.');
+    const quote = quotes.create({ prospectId: prospectId(), subject: 'Socle fixe' });
+    const build = contractTerms.syncQuote(quote.id);
+    const instance = build.clauses.find((clause) => clause.sourceClauseId === base.id)!;
+
+    expect(() => contractTerms.updateQuoteClause(instance.id, { enabled: false })).toThrow(/socle/i);
+    expect(() => contractTerms.updateQuoteClause(instance.id, { body: 'Modification locale' })).toThrow(/Bibliothèque|socle/i);
   });
 
   it('signale et désactive automatiquement une clause devenue orpheline après retrait de la prestation', () => {
