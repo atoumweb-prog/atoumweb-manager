@@ -171,7 +171,7 @@ Après acceptation :
 - le PDF peut être ouvert directement depuis la fiche Devis ;
 - une nouvelle version peut être importée sans supprimer les anciens documents du dossier Client.
 
-Reste à améliorer ultérieurement : accès direct à ce devis contractuel depuis l'onglet Documents/Contrats de la fiche Client.
+Depuis la fiche Client, l’onglet **Contrats** liste les devis acceptés. Il ouvre directement le devis contractuel et, lorsqu’il existe, le PDF Abby rattaché.
 
 ### V1.3 — Confort et contrôle
 
