@@ -186,6 +186,7 @@ export function QuotesPage({ onMessage, initialId }: { onMessage: (message: stri
 
   async function validateQuoteFromList(quote: QuoteSummary): Promise<void> {
     if (!['sent', 'viewed'].includes(quote.status)) return;
+    if (!window.confirm(`Confirmer que le devis ${quote.number} a été accepté / signé dans Abby ?\n\nCette validation le rend contractuel et, pour un prospect, déclenche sa conversion en client.`)) return;
     try {
       await window.atoumweb.quotes.accept(quote.id);
       await refresh();
@@ -210,6 +211,7 @@ export function QuotesPage({ onMessage, initialId }: { onMessage: (message: stri
 
   async function transition(action: 'finalized' | 'sent' | 'viewed' | 'accepted' | 'refused' | 'expired' | 'duplicate'): Promise<void> {
     if (!detail) return;
+    if (action === 'accepted' && !window.confirm(`Confirmer que le devis ${detail.number} a été accepté / signé dans Abby ?\n\nLe devis devient la référence contractuelle du client.`)) return;
     try {
       let next: QuoteDetail;
       if (action === 'finalized') next = await window.atoumweb.quotes.finalize(detail.id);
