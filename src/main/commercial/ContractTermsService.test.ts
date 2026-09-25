@@ -156,6 +156,9 @@ describe('ContractTermsService', () => {
     expect(finalized.contractCompiledAt).toBeTruthy();
     expect(finalized.contractTextSnapshot).toContain('Acceptation du devis');
     expect(finalized.contractTextSnapshot).toContain('Condition particulière');
+    const frozen = JSON.parse(finalized.contractSnapshotJson ?? '{}') as { audience?: string; clauses?: unknown[] };
+    expect(frozen.audience).toBe('professional');
+    expect(frozen.clauses?.length).toBe(2);
     expect(contractTerms.getQuoteBuild(quote.id).locked).toBe(true);
     expect(() => contractTerms.addCustomQuoteClause(quote.id, { title: 'Après', body: 'Interdit' })).toThrow(/figées/i);
     expect(() => quotes.addCustomLine(quote.id, { label: 'Après finalisation', proposedUnitPriceCents: 1000 })).toThrow(/finalisé/i);
