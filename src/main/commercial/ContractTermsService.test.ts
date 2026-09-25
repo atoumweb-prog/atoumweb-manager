@@ -49,6 +49,14 @@ function createConsumerProspect() {
 }
 
 describe('ContractTermsService', () => {
+  it('refuse de publier une clause contenant un placeholder juridique', () => {
+    const clause = contractTerms.createTemplate(
+      { code: 'CONS-MEDIATION-DRAFT', title: 'Médiation', scope: 'base', audience: 'consumer' },
+      { body: 'Médiateur : [À RENSEIGNER : NOM DU MÉDIATEUR]' },
+    );
+    expect(() => contractTerms.publishVersion(clause.versions[0].id)).toThrow(/À RENSEIGNER|placeholder/i);
+  });
+
   it('sélectionne automatiquement les clauses selon le type de client', () => {
     const common = publishedClause('BASE-COMMON', 'Socle commun', 'base', 'Tous clients.');
     const pro = publishedClause('BASE-PRO', 'Conditions professionnels', 'base', 'Uniquement B2B.', 'professional');
