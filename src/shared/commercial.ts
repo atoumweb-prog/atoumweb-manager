@@ -1,3 +1,4 @@
+import type { QuoteContractAudience } from './contractTerms';
 export const CATALOG_ITEM_TYPES = ['service', 'offer'] as const;
 export const CATALOG_ITEM_STATUSES = ['active', 'inactive', 'archived'] as const;
 export const CATALOG_VERSION_STATUSES = ['draft', 'published', 'retired'] as const;
@@ -117,6 +118,7 @@ export interface QuoteInput {
   prerequisitesText?: string | null;
   specialTerms?: string | null;
   contractType?: string | null;
+  contractAudience?: QuoteContractAudience | null;
   depositPercent?: number | null;
 }
 
@@ -186,6 +188,7 @@ export interface QuoteDetail extends QuoteSummary {
   prerequisitesText?: string | null;
   specialTerms?: string | null;
   contractType?: string | null;
+  contractAudience?: QuoteContractAudience | null;
   contractTextSnapshot?: string | null;
   contractSnapshotJson?: string | null;
   lines: QuoteLine[];
