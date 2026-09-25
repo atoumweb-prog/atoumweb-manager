@@ -754,6 +754,58 @@ Chaque fichier déclaré est associé à un SHA-256.
 
 Ce contrat prépare l’import retour côté Manager, mais ne crée pas encore le stockage SQL final ni l’interface de décision.
 
+## 17 septies. Classement métier et Code snippets
+
+La Bibliothèque distingue maintenant le **métier** des tags grâce à la métadonnée `vertical`.
+
+Exemples :
+
+```text
+mariage
+automobile
+fleuriste
+patisserie
+restaurant
+artisan
+coach
+immobilier
+```
+
+La valeur est un slug extensible et n'est pas limitée à cette liste.
+
+Le Manager peut :
+
+- enregistrer le métier sur un élément de Bibliothèque ;
+- rechercher/filtrer la Bibliothèque par métier ;
+- afficher le métier dans la liste et la fiche ;
+- transporter le métier dans les archives ;
+- utiliser ce métier comme `vertical` de `identity.json` lors d'un export Bridge.
+
+Le métier peut être connu avant que la famille technique soit classifiée. Par exemple un ancien composant peut avoir :
+
+```text
+vertical = fleuriste
+classificationStatus = unclassified
+componentKey = null
+```
+
+Bridge ne doit toujours pas inventer de famille technique.
+
+Une catégorie de Bibliothèque `code_snippet` est également disponible sous le libellé **Code snippets**.
+
+Elle sert aux petits éléments techniques réutilisables qui ne constituent pas nécessairement un composant visuel Family/Variant :
+
+```text
+HTML
+CSS
+JavaScript
+PHP
+JSON
+autres extraits techniques
+```
+
+Le langage reste porté par la version technique du snippet. Un snippet peut être générique ou associé à un métier, mais il n'est pas obligé d'entrer dans le workflow Component Family / Library Variant.
+
 ## 18. État Bridge communiqué au 24/09/2026
 
 Bridge est en série **0.6.x**.
