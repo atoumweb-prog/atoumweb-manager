@@ -237,6 +237,20 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     }
   }
 
+  async function changeTemplateAudience(template: ContractClauseTemplate, audience: ContractClauseAudience): Promise<void> {
+    setBusy(true);
+    setError('');
+    try {
+      await window.atoumweb.contractTerms.library.setAudience(template.id, audience);
+      await refreshLibrary();
+      if (editable) setBuildAndDrafts(await window.atoumweb.contractTerms.quotes.sync(quote.id));
+    } catch (cause) {
+      setError(errorMessage(cause));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function toggleTemplateStatus(template: ContractClauseTemplate): Promise<void> {
     setBusy(true);
     setError('');
@@ -367,6 +381,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
                 <span className={'catalog-status status-' + template.status}>{template.status === 'active' ? 'Active' : template.status === 'inactive' ? 'Inactive' : 'Archivée'}</span>
               </summary>
               <div className="cgv-template-body">
+                <label>Public d'application<select value={template.audience} disabled={busy || template.status === 'archived'} onChange={(event) => void changeTemplateAudience(template, event.target.value as ContractClauseAudience)}><option value="all">Tous les clients</option><option value="professional">Professionnels</option><option value="consumer">Particuliers / consommateurs</option></select></label>
                 <label>Version publiée<textarea readOnly value={template.currentVersion?.body ?? 'Aucune version publiée.'} /></label>
                 <div className="cgv-template-actions">
                   <button className="secondary-button compact-button" type="button" disabled={busy || template.status === 'archived'} onClick={() => setVersionEditors((current) => ({ ...current, [template.id]: current[template.id] === undefined ? (template.currentVersion?.body ?? '') : undefined }))}>{versionEditors[template.id] === undefined ? 'Nouvelle version' : 'Annuler la version'}</button>
