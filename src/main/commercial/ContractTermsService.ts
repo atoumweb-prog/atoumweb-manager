@@ -293,7 +293,7 @@ export class ContractTermsService {
     }
     return {
       quoteId,
-      locked: state.status !== 'draft' || Boolean(state.finalized_at) || Boolean(state.contract_compiled_at),
+      locked: state.status !== 'draft' || Boolean(state.finalized_at),
       clauses,
       compiledText,
       snapshotText: state.contract_text_snapshot,
@@ -403,7 +403,7 @@ export class ContractTermsService {
 
   freezeQuote(quoteId: string): QuoteContractBuild {
     const state = this.quoteState(quoteId);
-    if (state.contract_compiled_at && state.contract_text_snapshot) return this.getQuoteBuild(quoteId);
+    if (state.finalized_at && state.contract_compiled_at && state.contract_text_snapshot) return this.getQuoteBuild(quoteId);
 
     this.syncQuoteInternal(quoteId, true);
     const clauses = this.quoteClauses(quoteId);
@@ -450,7 +450,7 @@ export class ContractTermsService {
 
   private syncQuoteInternal(quoteId: string, allowLocked = false): void {
     const state = this.quoteState(quoteId);
-    if (!allowLocked && (state.status !== 'draft' || state.finalized_at || state.contract_compiled_at)) {
+    if (!allowLocked && (state.status !== 'draft' || state.finalized_at)) {
       throw new Error('Les CGV de ce devis sont figées. Duplique le devis pour les modifier.');
     }
 
@@ -652,7 +652,7 @@ export class ContractTermsService {
 
   private assertQuoteEditable(quoteId: string): void {
     const state = this.quoteState(quoteId);
-    if (state.status !== 'draft' || state.finalized_at || state.contract_compiled_at) {
+    if (state.status !== 'draft' || state.finalized_at) {
       throw new Error('Les CGV de ce devis sont figées. Duplique le devis pour les modifier.');
     }
   }
