@@ -298,11 +298,15 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
                 </div>
               </summary>
               <div className="cgv-clause-editor">
-                <label>Titre<input disabled={!editable} value={draft.title} onChange={(event) => setDrafts((current) => ({ ...current, [clause.id]: { ...draft, title: event.target.value } }))} /></label>
-                <label>Texte<textarea disabled={!editable} value={draft.body} onChange={(event) => setDrafts((current) => ({ ...current, [clause.id]: { ...draft, body: event.target.value } }))} /></label>
+                <label>Titre<input disabled={!editable || clause.sourceKind === 'base'} value={draft.title} onChange={(event) => setDrafts((current) => ({ ...current, [clause.id]: { ...draft, title: event.target.value } }))} /></label>
+                <label>Texte<textarea disabled={!editable || clause.sourceKind === 'base'} value={draft.body} onChange={(event) => setDrafts((current) => ({ ...current, [clause.id]: { ...draft, body: event.target.value } }))} /></label>
                 {editable && <div className="cgv-clause-actions">
-                  <button className="primary-button compact-button" type="button" disabled={busy} onClick={() => void saveClause(clause)}>Enregistrer</button>
-                  <button className="secondary-button compact-button" type="button" disabled={busy} onClick={() => void toggleClause(clause)}>{clause.enabled ? 'Exclure du devis' : 'Inclure dans le devis'}</button>
+                  {clause.sourceKind === 'base'
+                    ? <span className="status-pill">Socle fixe</span>
+                    : <>
+                        <button className="primary-button compact-button" type="button" disabled={busy} onClick={() => void saveClause(clause)}>Enregistrer</button>
+                        <button className="secondary-button compact-button" type="button" disabled={busy} onClick={() => void toggleClause(clause)}>{clause.enabled ? 'Exclure du devis' : 'Inclure dans le devis'}</button>
+                      </>}
                   {clause.sourceClauseId && clause.isCustomized && <button className="secondary-button compact-button" type="button" disabled={busy} onClick={() => void resetClause(clause)}>Revenir au modèle</button>}
                   {clause.sourceKey.startsWith('custom:') && <button className="secondary-button compact-button danger-outline" type="button" disabled={busy} onClick={() => void removeCustom(clause)}>Supprimer</button>}
                   <span className="cgv-spacer" />
