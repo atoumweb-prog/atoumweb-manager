@@ -405,7 +405,13 @@ export class ContractTermsService {
     const state = this.quoteState(quoteId);
     if (state.finalized_at && state.contract_compiled_at && state.contract_text_snapshot) return this.getQuoteBuild(quoteId);
 
-    this.syncQuoteInternal(quoteId, true);
+    const before = this.quoteClauses(quoteId);
+    if (state.status === 'draft' && !state.finalized_at) {
+      this.syncQuoteInternal(quoteId, true);
+    } else if (before.length === 0) {
+      // Compatibilité pour les anciens devis déjà envoyés avant l'arrivée du Builder CGV.
+      this.syncQuoteInternal(quoteId, true);
+    }
     const clauses = this.quoteClauses(quoteId);
     const compiledText = this.compile(clauses);
     const included = clauses.filter((clause) => clause.enabled);
