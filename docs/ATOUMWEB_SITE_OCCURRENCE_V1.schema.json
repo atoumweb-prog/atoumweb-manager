@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://atoumweb.local/contracts/site-occurrence-v1.schema.json",
+  "title": "AtoumWeb Site Occurrence Contract V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "schemaVersion",
+    "siteOccurrenceId",
+    "createdBy",
+    "source",
+    "target",
+    "state",
+    "configuration",
+    "changes",
+    "createdAt",
+    "updatedAt"
+  ],
+  "properties": {
+    "contract": { "const": "atoumweb_site_occurrence" },
+    "schemaVersion": { "const": 1 },
+    "siteOccurrenceId": { "type": "string", "minLength": 1 },
+    "createdBy": { "const": "bridge" },
+    "source": { "$ref": "#/$defs/source" },
+    "target": { "$ref": "#/$defs/target" },
+    "state": {
+      "enum": [
+        "created",
+        "configured",
+        "workbench_created",
+        "modified",
+        "analyzed",
+        "ready_for_review",
+        "validated",
+        "published",
+        "archived"
+      ]
+    },
+    "configuration": { "$ref": "#/$defs/configuration" },
+    "changes": { "$ref": "#/$defs/changes" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "componentPackageContractVersion",
+        "fieldsContractVersion",
+        "identityContractVersion",
+        "libraryItemId",
+        "libraryVersionId",
+        "libraryVersionNumber",
+        "componentFamilyId",
+        "componentKey",
+        "libraryVariantId",
+        "variantKey"
+      ],
+      "properties": {
+        "componentPackageContractVersion": { "const": 1 },
+        "fieldsContractVersion": { "const": 1 },
+        "identityContractVersion": { "const": 1 },
+        "libraryItemId": { "type": "string", "minLength": 1 },
+        "libraryVersionId": { "type": "string", "minLength": 1 },
+        "libraryVersionNumber": { "type": "integer", "minimum": 1 },
+        "componentFamilyId": { "type": ["string", "null"] },
+        "componentKey": {
+          "anyOf": [
+            { "type": "string", "pattern": "^aw-[a-z0-9]+(?:-[a-z0-9]+)*$" },
+            { "type": "null" }
+          ]
+        },
+        "libraryVariantId": { "type": ["string", "null"] },
+        "variantKey": {
+          "anyOf": [
+            { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+            { "type": "null" }
+          ]
+        },
+        "sourcePackageFingerprint": { "type": ["string", "null"] },
+        "sourceHtmlSha256": { "$ref": "#/$defs/nullableSha" },
+        "sourceCssSha256": { "$ref": "#/$defs/nullableSha" },
+        "sourceJavascriptSha256": { "$ref": "#/$defs/nullableSha" }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["siteUrl", "siteKey", "workbenchId", "workbenchPostId", "bridgeVersion"],
+      "properties": {
+        "siteUrl": { "type": ["string", "null"] },
+        "siteKey": { "type": ["string", "null"] },
+        "workbenchId": { "type": "string", "minLength": 1 },
+        "workbenchPostId": { "type": ["string", "null"] },
+        "bridgeVersion": { "type": ["string", "null"] }
+      }
+    },
+    "configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fieldValues", "cssVariables", "assetSelections"],
+      "properties": {
+        "fieldValues": {
+          "type": "object",
+          "additionalProperties": {
+            "type": ["string", "number", "boolean", "null"]
+          }
+        },
+        "cssVariables": {
+          "type": "object",
+          "propertyNames": { "pattern": "^--[A-Za-z0-9_-]+$" },
+          "additionalProperties": {
+            "type": ["string", "number"]
+          }
+        },
+        "assetSelections": {
+          "type": "object",
+          "additionalProperties": {
+            "type": ["string", "null"]
+          }
+        }
+      }
+    },
+    "changes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "changedFieldIds",
+        "changedCssVariables",
+        "changedAssetIds",
+        "htmlChanged",
+        "cssChanged",
+        "javascriptChanged",
+        "structuralChange"
+      ],
+      "properties": {
+        "changedFieldIds": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "changedCssVariables": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "changedAssetIds": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "htmlChanged": { "type": "boolean" },
+        "cssChanged": { "type": "boolean" },
+        "javascriptChanged": { "type": "boolean" },
+        "structuralChange": { "type": "boolean" }
+      }
+    },
+    "nullableSha": {
+      "anyOf": [
+        { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        { "type": "null" }
+      ]
+    }
+  }
+}
