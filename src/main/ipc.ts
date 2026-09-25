@@ -403,7 +403,13 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('quotes:refuse', (_event, id: string) => database.quotes.refuse(id));
   ipcMain.handle('quotes:expire', (_event, id: string) => database.quotes.expire(id));
   ipcMain.handle('quotes:duplicate', (_event, id: string) => database.quotes.duplicate(id));
-  ipcMain.handle('quotes:generate-pdf', async (_event, id: string) => generateQuotePdf(database.quotes.get(id), workspace));
+  ipcMain.handle('quotes:generate-pdf', async (_event, id: string) => {
+    const quote = database.quotes.get(id);
+    const contract = quote.status === 'draft' && !quote.finalizedAt && !quote.contractCompiledAt
+      ? database.contractTerms.syncQuote(id)
+      : database.contractTerms.getQuoteBuild(id);
+    return generateQuotePdf({ ...quote, contractTextSnapshot: contract.snapshotText || contract.compiledText }, workspace);
+  });
 
   ipcMain.handle('projects:templates:list', () => database.projects.listTemplates());
   ipcMain.handle('projects:templates:get', (_event, id: string) => database.projects.getTemplate(id));
