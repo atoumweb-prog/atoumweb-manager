@@ -213,6 +213,13 @@ export function QuotesPage({ onMessage, initialId }: { onMessage: (message: stri
     if (!detail) return;
     if (action === 'accepted' && !window.confirm(`Confirmer que le devis ${detail.number} a été accepté / signé dans Abby ?\n\nLe devis devient la référence contractuelle du client.`)) return;
     try {
+      if (action === 'finalized') {
+        const review = await window.atoumweb.contractTerms.quotes.sync(detail.id);
+        if (review.warnings.length > 0) {
+          const warningText = review.warnings.map((warning) => `• ${warning}`).join('\n');
+          if (!window.confirm(`Avertissements CGV avant finalisation :\n\n${warningText}\n\nFinaliser quand même le devis ?`)) return;
+        }
+      }
       let next: QuoteDetail;
       if (action === 'finalized') next = await window.atoumweb.quotes.finalize(detail.id);
       else if (action === 'sent') next = await window.atoumweb.quotes.markSent(detail.id);
