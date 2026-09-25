@@ -147,14 +147,21 @@ export class AtoumWebOccurrenceReturnService {
     }
     if (current.decision === 'keep_occurrence') return current;
     const decidedAt = nowIso();
-    this.database.run(
-      "UPDATE bridge_occurrence_returns SET decision='keep_occurrence', decided_at=? WHERE id=?",
-      [decidedAt, id],
-    );
-    this.writeActivity(id, 'bridge_occurrence_return_decided', 'Retour Bridge conservé comme occurrence uniquement.', {
-      decision: 'keep_occurrence',
-      siteOccurrenceId: current.siteOccurrenceId,
-    });
+    this.database.exec('SAVEPOINT bridge_occurrence_return_decision;');
+    try {
+      this.database.run(
+        "UPDATE bridge_occurrence_returns SET decision='keep_occurrence', decided_at=? WHERE id=?",
+        [decidedAt, id],
+      );
+      this.writeActivity(id, 'bridge_occurrence_return_decided', 'Retour Bridge conservé comme occurrence uniquement.', {
+        decision: 'keep_occurrence',
+        siteOccurrenceId: current.siteOccurrenceId,
+      });
+      this.database.exec('RELEASE SAVEPOINT bridge_occurrence_return_decision;');
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT bridge_occurrence_return_decision; RELEASE SAVEPOINT bridge_occurrence_return_decision;');
+      throw error;
+    }
     return this.get(id);
   }
 
