@@ -54,6 +54,9 @@ interface QuoteRow extends Record<string, unknown> {
   contract_text_snapshot: string | null;
   contract_snapshot_json: string | null;
   contract_compiled_at: string | null;
+  contract_document_id: string | null;
+  contract_document_attached_at: string | null;
+  abby_reference: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -454,6 +457,36 @@ export class QuoteService {
     return this.get(id);
   }
 
+  attachContractDocument(id: string, documentId: string, abbyReference?: string | null): QuoteDetail {
+    const quote = this.get(id);
+    if (quote.status !== 'accepted') throw new Error('Le devis doit être accepté avant de rattacher son document contractuel.');
+    const clientId = quote.acceptedClientAccountId ?? quote.clientAccountId;
+    if (!clientId) throw new Error('Client introuvable pour ce devis.');
+    const document = this.database.get<{ id: string; client_account_id: string; category: string }>(
+      'SELECT id,client_account_id,category FROM client_documents WHERE id=?',
+      [documentId],
+    );
+    if (!document || document.client_account_id !== clientId) throw new Error('Le document sélectionné n’appartient pas au client du devis.');
+    if (!['contract', 'quote'].includes(document.category)) throw new Error('Le document doit être classé comme contrat ou devis.');
+
+    const now = nowIso();
+    this.database.run(
+      'UPDATE quotes SET contract_document_id=?,contract_document_attached_at=?,abby_reference=?,updated_at=? WHERE id=?',
+      [documentId, now, clean(abbyReference) ?? quote.abbyReference ?? null, now, id],
+    );
+    this.writeActivity(id, 'quote_contract_document_attached', `Document contractuel rattaché au devis ${quote.number}`);
+    return this.get(id);
+  }
+
+  updateAbbyReference(id: string, abbyReference?: string | null): QuoteDetail {
+    const quote = this.get(id);
+    if (quote.status !== 'accepted') throw new Error('La référence Abby est disponible après acceptation du devis.');
+    const now = nowIso();
+    this.database.run('UPDATE quotes SET abby_reference=?,updated_at=? WHERE id=?', [clean(abbyReference), now, id]);
+    this.writeActivity(id, 'quote_abby_reference_updated', `Référence Abby mise à jour pour ${quote.number}`);
+    return this.get(id);
+  }
+
   refuse(id: string): QuoteDetail {
     const quote = this.get(id);
     if (!['sent', 'viewed'].includes(quote.status)) throw new Error('Le devis doit être envoyé avant refus.');
@@ -662,6 +695,9 @@ export class QuoteService {
       finalizedAt: row.finalized_at,
       lastExtendedAt: row.last_extended_at,
       contractCompiledAt: row.contract_compiled_at,
+      contractDocumentId: row.contract_document_id,
+      contractDocumentAttachedAt: row.contract_document_attached_at,
+      abbyReference: row.abby_reference,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
