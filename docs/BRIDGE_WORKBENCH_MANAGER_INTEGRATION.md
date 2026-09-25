@@ -413,6 +413,7 @@ component/
 ├─ component.css               # si présent
 ├─ component.js                # si présent
 ├─ fields.json
+├─ identity.json
 ├─ dependencies.json
 ├─ source-assets.json
 └─ provenance.json
@@ -449,13 +450,16 @@ Références canoniques :
 
 - `docs/ATOUMWEB_COMPONENT_PACKAGE_CONTRACT_V1.md`
 - `docs/ATOUMWEB_COMPONENT_FIELDS_V1.schema.json`
+- `docs/ATOUMWEB_COMPONENT_IDENTITY_CONTRACT_V1.md`
+- `docs/ATOUMWEB_COMPONENT_IDENTITY_V1.schema.json`
 
 Le package Bridge exporté par le Manager annonce :
 
 ```json
 {
   "componentPackageContractVersion": 1,
-  "fieldsContractVersion": 1
+  "fieldsContractVersion": 1,
+  "identityContractVersion": 1
 }
 ```
 
@@ -506,6 +510,52 @@ Règles importantes :
 - l’HTML/CSS/JS brut reste toujours disponible pour les modifications avancées.
 
 Le Manager valide également la version du contrat et la structure minimale de `fields.json` lorsqu’il relit un package Bridge.
+
+## 17 quater. Component Family / Library Variant / Site Occurrence
+
+La Bibliothèque distingue désormais conceptuellement trois niveaux :
+
+```text
+Component Family
+      ↓
+Library Variant
+      ↓
+Site Occurrence
+```
+
+Contrat canonique :
+
+`docs/ATOUMWEB_COMPONENT_IDENTITY_CONTRACT_V1.md`
+
+Identifiants principaux :
+
+```text
+componentFamilyId
+componentKey
+libraryVariantId
+variantKey
+variantOf
+variantMode
+vertical
+reusabilityScope
+libraryItemId
+libraryVersionId
+```
+
+Règles :
+
+- `libraryDisplayName` est éditorial et ne doit jamais servir de clé technique ;
+- `componentKey` est la clé technique stable de la famille, par exemple `aw-feature-bubbles` ;
+- une variante `inherit` pourra à terme stocker principalement ses différences ;
+- une variante devenue structurellement trop différente pourra être forkée ;
+- l’occurrence site est créée par Bridge et reste distincte de la famille et de la variante ;
+- la personnalisation d’une occurrence ne remonte jamais automatiquement vers la Bibliothèque ;
+- le métier est porté par `vertical`, séparément des tags ;
+- la réutilisabilité est `generic`, `vertical`, `site_specific` ou `unclassified`.
+
+Les composants historiques sont exportés honnêtement comme `unclassified` tant que l’utilisateur n’a pas défini leur famille technique. Le Manager ne transforme pas automatiquement une classe métier historique comme `atoum-mariage-why` en une famille générique supposée.
+
+Le package Bridge contient maintenant `component/identity.json` et annonce `identityContractVersion: 1`.
 
 ## 18. État Bridge communiqué au 24/09/2026
 
