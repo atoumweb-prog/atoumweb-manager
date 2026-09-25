@@ -408,7 +408,7 @@ export class ContractTermsService {
     this.syncQuoteInternal(quoteId, true);
     const clauses = this.quoteClauses(quoteId);
     const compiledText = this.compile(clauses);
-    const included = clauses.filter((clause) => clause.enabled && !clause.isOrphaned);
+    const included = clauses.filter((clause) => clause.enabled);
     const now = nowIso();
     this.database.run(
       `UPDATE quotes SET contract_text_snapshot=?,contract_snapshot_json=?,contract_compiled_at=?,updated_at=? WHERE id=?`,
@@ -664,7 +664,7 @@ export class ContractTermsService {
   }
 
   private compile(clauses: QuoteContractClause[]): string {
-    const included = clauses.filter((clause) => clause.enabled && !clause.isOrphaned);
+    const included = clauses.filter((clause) => clause.enabled);
     if (included.length === 0) return '';
     const body = included.map((clause, index) => {
       const text = clause.body.trim();
