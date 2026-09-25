@@ -378,6 +378,13 @@ const api: AtoumWebApi = {
       importPackage: (input: AtoumWebPackageImportInput) => ipcRenderer.invoke('referentials:packages:import', input),
       showExport: (packagePath: string) => ipcRenderer.invoke('referentials:packages:show-export', packagePath),
     },
+    occurrenceReturns: {
+      list: () => ipcRenderer.invoke('referentials:occurrence-returns:list'),
+      get: (id: string) => ipcRenderer.invoke('referentials:occurrence-returns:get', id),
+      inspectImport: () => ipcRenderer.invoke('referentials:occurrence-returns:inspect-import'),
+      importReturn: (packagePath: string) => ipcRenderer.invoke('referentials:occurrence-returns:import', packagePath),
+      keepOccurrence: (id: string) => ipcRenderer.invoke('referentials:occurrence-returns:keep', id),
+    },
   },
   operations: {
     requests: {
