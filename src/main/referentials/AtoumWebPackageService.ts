@@ -18,7 +18,7 @@ import {
   type AtoumWebTechnicalVersion,
 } from '../../shared/referentials';
 import { PROJECT_TECHNICAL_CONTENT_TYPES, type ProjectTechnicalContentType } from '../../shared/projects';
-import { canonicalizeComponentFields } from '../../shared/componentPackageFields';
+import { ATOUMWEB_COMPONENT_FIELD_TYPES, canonicalizeComponentFields } from '../../shared/componentPackageFields';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import type { WorkspacePaths } from '../workspace';
 import { AtoumWebTechnicalAssetService } from './AtoumWebTechnicalAssetService';
@@ -524,6 +524,10 @@ export class AtoumWebPackageService {
         if (!entry) throw new Error(`Fichier Bridge déclaré absent du ZIP : ${file.path}`);
         if (this.sha256(entry.data) !== file.sha256) throw new Error(`Checksum Bridge invalide : ${file.path}`);
       }
+
+      const fieldsEntry = entries.get(bridge.files.fields.path);
+      if (!fieldsEntry) throw new Error('fields.json déclaré absent du package Bridge.');
+      this.validateComponentFieldsJson(fieldsEntry.data);
     }
 
     if (!Array.isArray(manifest.assets)) throw new Error('Liste des assets invalide.');
@@ -538,6 +542,43 @@ export class AtoumWebPackageService {
       if (!entry) throw new Error(`Asset déclaré absent du ZIP : ${asset.fileName}`);
       if (entry.data.length !== asset.sizeBytes) throw new Error(`Taille d’asset incohérente : ${asset.fileName}`);
       if (this.sha256(entry.data) !== asset.checksumSha256) throw new Error(`Checksum d’asset invalide : ${asset.fileName}`);
+    }
+  }
+
+  private validateComponentFieldsJson(data: Buffer): void {
+    let value: unknown;
+    try {
+      value = JSON.parse(data.toString('utf8'));
+    } catch {
+      throw new Error('component/fields.json est invalide.');
+    }
+    if (!value || typeof value !== 'object') throw new Error('component/fields.json doit être un objet.');
+    const document = value as Record<string, unknown>;
+    if (document.contract !== 'atoumweb_component_fields' || document.schemaVersion !== 1 || !Array.isArray(document.fields)) {
+      throw new Error('Component Fields Contract non pris en charge.');
+    }
+
+    const ids = new Set<string>();
+    for (const entry of document.fields) {
+      if (!entry || typeof entry !== 'object') throw new Error('Champ configurable invalide.');
+      const field = entry as Record<string, unknown>;
+      if (typeof field.id !== 'string' || !/^[a-z0-9][a-z0-9._-]*$/.test(field.id)) throw new Error('ID de champ configurable invalide.');
+      if (ids.has(field.id)) throw new Error(`ID de champ configurable dupliqué : ${field.id}`);
+      ids.add(field.id);
+      if (typeof field.type !== 'string' || !(ATOUMWEB_COMPONENT_FIELD_TYPES as readonly string[]).includes(field.type)) {
+        throw new Error(`Type de champ configurable invalide : ${field.id}`);
+      }
+      if (typeof field.label !== 'string' || !field.label.trim()) throw new Error(`Libellé de champ configurable manquant : ${field.id}`);
+      if (typeof field.required !== 'boolean') throw new Error(`Propriété required invalide : ${field.id}`);
+      if (!field.binding || typeof field.binding !== 'object') throw new Error(`Binding manquant : ${field.id}`);
+      const binding = field.binding as Record<string, unknown>;
+      const bindingType = binding.type;
+      if (!['html_text', 'html_html', 'html_attribute', 'css_variable', 'css_url', 'unresolved'].includes(String(bindingType))) {
+        throw new Error(`Binding non pris en charge : ${field.id}`);
+      }
+      if (!field.source || typeof field.source !== 'object') throw new Error(`Source du champ manquante : ${field.id}`);
+      const source = field.source as Record<string, unknown>;
+      if (source.mode !== 'declared' && source.mode !== 'auto_detected') throw new Error(`Source du champ invalide : ${field.id}`);
     }
   }
 
