@@ -117,6 +117,7 @@ interface PackageManifestV1 {
     category: AtoumWebLibraryCategory;
     description: string | null;
     tags: string[];
+    vertical?: string | null;
     reuseStatus: AtoumWebReuseStatus;
   };
   version: {
@@ -219,6 +220,7 @@ export class AtoumWebPackageService {
         category: item.category,
         description: item.description ?? null,
         tags: item.tags ?? [],
+        vertical: item.vertical ?? null,
         reuseStatus: item.reuseStatus,
       },
       version: {
@@ -292,7 +294,7 @@ export class AtoumWebPackageService {
       variantKey: this.optionalString(sourceIdentity.variantKey ?? sourceIdentity.variant_key),
       variantOf: this.optionalString(sourceIdentity.variantOf ?? sourceIdentity.variant_of),
       variantMode: this.optionalVariantMode(sourceIdentity.variantMode ?? sourceIdentity.variant_mode),
-      vertical: this.optionalString(sourceIdentity.vertical),
+      vertical: this.optionalString(sourceIdentity.vertical) ?? item.vertical ?? null,
       reusabilityScope: this.optionalReusabilityScope(sourceIdentity.reusabilityScope ?? sourceIdentity.reusability_scope),
     });
     const identity = addText('component/identity.json', `${JSON.stringify(identityValue, null, 2)}\n`);
@@ -399,6 +401,7 @@ export class AtoumWebPackageService {
           category: overrides.category ?? inspection.item.category,
           description: overrides.description === undefined ? inspection.item.description : overrides.description,
           tags: overrides.tags ?? inspection.item.tags,
+          vertical: overrides.vertical === undefined ? inspection.item.vertical ?? null : overrides.vertical,
           reuseStatus: overrides.reuseStatus ?? inspection.item.reuseStatus,
           originTechnicalItemId: null,
         },
@@ -489,6 +492,7 @@ export class AtoumWebPackageService {
         category: manifest.item.category,
         description: manifest.item.description,
         tags: manifest.item.tags,
+        vertical: typeof manifest.item.vertical === 'string' ? manifest.item.vertical : null,
         reuseStatus: manifest.item.reuseStatus,
       },
       version: {
@@ -516,6 +520,7 @@ export class AtoumWebPackageService {
     if (!ATOUMWEB_LIBRARY_CATEGORIES.includes(manifest.item.category)) throw new Error('Catégorie de paquet invalide.');
     if (!ATOUMWEB_REUSE_STATUSES.includes(manifest.item.reuseStatus)) throw new Error('Statut de réutilisation invalide dans le paquet.');
     if (!Array.isArray(manifest.item.tags) || manifest.item.tags.some((tag) => typeof tag !== 'string')) throw new Error('Tags invalides dans le paquet.');
+    if (manifest.item.vertical != null && typeof manifest.item.vertical !== 'string') throw new Error('Métier invalide dans le paquet.');
     if (!manifest.version || !PROJECT_TECHNICAL_CONTENT_TYPES.includes(manifest.version.contentType)) throw new Error('Type de contenu invalide dans le paquet.');
     if (!Number.isInteger(manifest.version.exportedVersionNumber) || manifest.version.exportedVersionNumber < 1) throw new Error('Numéro de version exportée invalide.');
 
