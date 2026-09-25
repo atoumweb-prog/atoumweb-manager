@@ -258,6 +258,16 @@ export class ContractTermsService {
     return this.getTemplate(id);
   }
 
+  setTemplateAudience(id: string, audience: ContractClauseAudience): ContractClauseTemplate {
+    if (!CONTRACT_CLAUSE_AUDIENCES.includes(audience)) throw new Error('Public contractuel invalide.');
+    const template = this.getTemplate(id);
+    if (template.status === 'archived') throw new Error('Réactive la clause avant de modifier son public.');
+    const now = nowIso();
+    this.database.run('UPDATE contract_clause_templates SET audience=?,updated_at=? WHERE id=?', [audience, now, id]);
+    this.writeActivity('contract_clause', id, 'contract_clause_audience_changed', `${template.code} · public ${audience}`);
+    return this.getTemplate(id);
+  }
+
   setCatalogLinks(id: string, catalogItemIds: string[]): ContractClauseTemplate {
     const template = this.getTemplate(id);
     if (template.scope !== 'catalog') throw new Error('Seules les clauses de prestation peuvent être liées au catalogue.');
