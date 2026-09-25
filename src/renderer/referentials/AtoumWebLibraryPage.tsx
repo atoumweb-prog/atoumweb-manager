@@ -150,10 +150,14 @@ interface BridgeWorkComponent {
 interface BridgeReusableField {
   id: string;
   label: string;
-  type: 'text' | 'link' | 'image';
+  type: 'text' | 'textarea' | 'rich_text' | 'link' | 'url' | 'image' | 'color' | 'number' | 'select' | 'toggle' | 'icon';
   selector: string;
   originalValue: string;
   defaultValue: string;
+  group?: string | null;
+  required?: boolean;
+  binding?: Record<string, unknown> | null;
+  sourceMode?: 'declared' | 'auto_detected';
 }
 
 interface BridgeReusableComponent {
@@ -1344,7 +1348,7 @@ function ReusableFieldsPanel({ fields }: { fields: BridgeReusableField[] }) {
 function summarizeReusableFields(fields: BridgeReusableField[], actionCount: number): { titles: number; texts: number; actions: number; links: number; images: number } {
   return fields.reduce((result, field) => {
     if (field.type === 'image') result.images += 1;
-    else if (field.type === 'link') result.links += 1;
+    else if (field.type === 'link' || field.type === 'url') result.links += 1;
     else if (/^titre\b/i.test(field.label)) result.titles += 1;
     else result.texts += 1;
     return result;
@@ -1360,7 +1364,7 @@ function groupReusableFields(fields: BridgeReusableField[]): {
 
   for (const field of fields) {
     const buttonMatch = field.type === 'text' ? field.label.match(/^bouton\s*\/\s*lien\s*(\d+)/i) : null;
-    const linkMatch = field.type === 'link' ? field.label.match(/^lien\s*(\d+)/i) : null;
+    const linkMatch = field.type === 'link' || field.type === 'url' ? field.label.match(/^lien\s*(\d+)/i) : null;
     const index = buttonMatch?.[1] ?? linkMatch?.[1];
 
     if (!index) {
@@ -1370,7 +1374,7 @@ function groupReusableFields(fields: BridgeReusableField[]): {
 
     const key = `action-${index}`;
     const current = groups.get(key) ?? { key, label: `Action ${index}`, text: null, link: null };
-    if (field.type === 'link') current.link = field;
+    if (field.type === 'link' || field.type === 'url') current.link = field;
     else current.text = field;
     groups.set(key, current);
   }
@@ -1383,7 +1387,14 @@ function groupReusableFields(fields: BridgeReusableField[]): {
 
 function reusableFieldTypeLabel(field: BridgeReusableField): string {
   if (field.type === 'image') return 'Image';
-  if (field.type === 'link') return 'Lien';
+  if (field.type === 'link' || field.type === 'url') return 'Lien';
+  if (field.type === 'color') return 'Couleur';
+  if (field.type === 'number') return 'Nombre';
+  if (field.type === 'select') return 'Choix';
+  if (field.type === 'toggle') return 'Option';
+  if (field.type === 'icon') return 'Icône';
+  if (field.type === 'rich_text') return 'Texte riche';
+  if (field.type === 'textarea') return 'Texte long';
   if (/^titre\b/i.test(field.label)) return 'Titre';
   return 'Texte';
 }
@@ -1538,19 +1549,42 @@ function parseBridgeAssets(value: unknown): NonNullable<BridgeLibraryCandidate['
 }
 
 function parseBridgeReusableFields(value: unknown): BridgeReusableField[] {
-  if (!Array.isArray(value)) return [];
-  return value.flatMap((item) => {
+  const rawFields = Array.isArray(value)
+    ? value
+    : value && typeof value === 'object' && Array.isArray((value as Record<string, unknown>).fields)
+      ? (value as Record<string, unknown>).fields as unknown[]
+      : [];
+
+  const supportedTypes = new Set(['text', 'textarea', 'rich_text', 'link', 'url', 'image', 'color', 'number', 'select', 'toggle', 'icon']);
+
+  return rawFields.flatMap((item) => {
     if (!item || typeof item !== 'object') return [];
     const field = item as Record<string, unknown>;
-    const type = field.type;
-    if (type !== 'text' && type !== 'link' && type !== 'image') return [];
+    const type = typeof field.type === 'string' ? field.type : 'text';
+    if (!supportedTypes.has(type)) return [];
+
+    const binding = field.binding && typeof field.binding === 'object' ? field.binding as Record<string, unknown> : null;
+    const selector = typeof field.selector === 'string'
+      ? field.selector
+      : binding && typeof binding.selector === 'string'
+        ? binding.selector
+        : '';
+    const defaultRaw = field.defaultValue ?? field.default;
+    const source = field.source && typeof field.source === 'object' ? field.source as Record<string, unknown> : null;
+
     return [{
       id: typeof field.id === 'string' ? field.id : '',
       label: typeof field.label === 'string' ? field.label : 'Champ',
-      type,
-      selector: typeof field.selector === 'string' ? field.selector : '',
+      type: type as BridgeReusableField['type'],
+      selector,
       originalValue: typeof field.originalValue === 'string' ? field.originalValue : '',
-      defaultValue: typeof field.defaultValue === 'string' ? field.defaultValue : '',
+      defaultValue: typeof defaultRaw === 'string' || typeof defaultRaw === 'number' || typeof defaultRaw === 'boolean'
+        ? String(defaultRaw)
+        : '',
+      group: typeof field.group === 'string' ? field.group : null,
+      required: field.required === true,
+      binding,
+      sourceMode: source?.mode === 'auto_detected' ? 'auto_detected' : source?.mode === 'declared' ? 'declared' : undefined,
     }];
   });
 }
