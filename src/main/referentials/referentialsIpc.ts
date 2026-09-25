@@ -78,4 +78,22 @@ export function registerReferentialsIpcHandlers(database: DatabaseService): void
     shell.showItemInFolder(validated);
     return { ok: true, error: null };
   });
+
+  ipcMain.handle('referentials:occurrence-returns:list', () =>
+    database.atoumWebOccurrenceReturns.list());
+  ipcMain.handle('referentials:occurrence-returns:get', (_event, id: string) =>
+    database.atoumWebOccurrenceReturns.get(id));
+  ipcMain.handle('referentials:occurrence-returns:inspect-import', async () => {
+    const selection = await dialog.showOpenDialog({
+      title: 'Importer un retour AtoumWeb Bridge',
+      properties: ['openFile'],
+      filters: [{ name: 'Occurrence Return V1 ZIP', extensions: ['zip'] }],
+    });
+    if (selection.canceled || selection.filePaths.length === 0) return null;
+    return database.atoumWebOccurrenceReturns.inspectPackage(selection.filePaths[0]);
+  });
+  ipcMain.handle('referentials:occurrence-returns:import', (_event, packagePath: string) =>
+    database.atoumWebOccurrenceReturns.importReturn(packagePath));
+  ipcMain.handle('referentials:occurrence-returns:keep', (_event, id: string) =>
+    database.atoumWebOccurrenceReturns.keepOccurrence(id));
 }
