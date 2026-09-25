@@ -1,8 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import {
+  CONTRACT_CLAUSE_AUDIENCES,
   CONTRACT_CLAUSE_SCOPES,
   CONTRACT_CLAUSE_STATUSES,
+  type ContractClauseAudience,
   type ContractClauseScope,
   type ContractClauseStatus,
   type ContractClauseTemplate,
@@ -10,6 +12,7 @@ import {
   type ContractClauseVersion,
   type ContractClauseVersionInput,
   type ContractClauseVersionStatus,
+  type QuoteContractAudience,
   type QuoteContractBuild,
   type QuoteContractClause,
   type QuoteContractClauseInput,
@@ -28,6 +31,7 @@ interface TemplateRow extends Record<string, unknown> {
   code: string;
   title: string;
   scope: ContractClauseScope;
+  audience: ContractClauseAudience;
   status: ContractClauseStatus;
   sort_order: number;
   current_version_id: string | null;
@@ -73,6 +77,7 @@ interface QuoteStateRow extends Record<string, unknown> {
   contract_text_snapshot: string | null;
   contract_snapshot_json: string | null;
   contract_compiled_at: string | null;
+  contract_audience: QuoteContractAudience | null;
 }
 
 interface QuoteLineSourceRow extends Record<string, unknown> {
@@ -134,6 +139,7 @@ export class ContractTermsService {
       code: row.code,
       title: row.title,
       scope: row.scope,
+      audience: row.audience,
       status: row.status,
       sortOrder: Number(row.sort_order),
       currentVersionId: row.current_version_id,
@@ -153,6 +159,8 @@ export class ContractTermsService {
     if (!/^[A-Z0-9][A-Z0-9._-]*$/.test(code)) throw new Error('Le code de la clause ne peut contenir que lettres, chiffres, points, tirets et underscores.');
     if (!title) throw new Error('Le titre de la clause est requis.');
     if (!CONTRACT_CLAUSE_SCOPES.includes(input.scope)) throw new Error('Type de clause invalide.');
+    const audience = input.audience ?? 'all';
+    if (!CONTRACT_CLAUSE_AUDIENCES.includes(audience)) throw new Error('Public contractuel invalide.');
     if (this.database.get<{ id: string }>('SELECT id FROM contract_clause_templates WHERE code=? COLLATE NOCASE', [code])) {
       throw new Error('Ce code de clause existe déjà.');
     }
@@ -164,9 +172,9 @@ export class ContractTermsService {
     try {
       this.database.run(
         `INSERT INTO contract_clause_templates
-         (id,code,title,scope,status,sort_order,current_version_id,created_at,updated_at,archived_at)
-         VALUES (?,?,?,?,'active',?,NULL,?,?,NULL)`,
-        [id, code, title, input.scope, Math.trunc(input.sortOrder ?? 0), now, now],
+         (id,code,title,scope,audience,status,sort_order,current_version_id,created_at,updated_at,archived_at)
+         VALUES (?,?,?,?,?,'active',?,NULL,?,?,NULL)`,
+        [id, code, title, input.scope, audience, Math.trunc(input.sortOrder ?? 0), now, now],
       );
       this.database.run(
         `INSERT INTO contract_clause_versions
@@ -280,6 +288,7 @@ export class ContractTermsService {
   getQuoteBuild(quoteId: string): QuoteContractBuild {
     const state = this.quoteState(quoteId);
     const clauses = this.quoteClauses(quoteId);
+    const audience = this.resolveQuoteAudience(state);
     const compiledText = this.compile(clauses);
     const warnings: string[] = [];
     if (!clauses.some((clause) => clause.sourceKind === 'base' && clause.enabled && !clause.isOrphaned)) {
@@ -293,6 +302,7 @@ export class ContractTermsService {
     }
     return {
       quoteId,
+      audience,
       locked: state.status !== 'draft' || Boolean(state.finalized_at),
       clauses,
       compiledText,
@@ -528,12 +538,15 @@ export class ContractTermsService {
 
   private desiredClauses(quoteId: string, state: QuoteStateRow): Map<string, DesiredClause> {
     const desired = new Map<string, DesiredClause>();
+    const audience = this.resolveQuoteAudience(state);
     const baseRows = this.database.all<PublishedTemplateRow>(
       `SELECT t.id,t.title,t.scope,t.sort_order,v.id AS version_id,v.body
        FROM contract_clause_templates t
        JOIN contract_clause_versions v ON v.id=t.current_version_id
        WHERE t.scope='base' AND t.status='active' AND v.status='published'
+         AND t.audience IN ('all', ?)
        ORDER BY t.sort_order,t.title COLLATE NOCASE`,
+      [audience],
     );
     baseRows.forEach((row, index) => desired.set(`template:${row.id}`, {
       sourceKey: `template:${row.id}`,
@@ -597,8 +610,9 @@ export class ContractTermsService {
          JOIN contract_clause_versions v ON v.id=t.current_version_id
          WHERE l.catalog_item_id IN (${placeholders})
            AND t.scope='catalog' AND t.status='active' AND v.status='published'
+           AND t.audience IN ('all', ?)
          ORDER BY l.sort_order,t.sort_order,t.title COLLATE NOCASE`,
-        ids as SqlValue[],
+        [...ids, audience] as SqlValue[],
       );
 
       const grouped = new Map<string, { row: LinkedTemplateRow; itemIds: Set<string> }>();
@@ -684,12 +698,25 @@ export class ContractTermsService {
   private quoteState(quoteId: string): QuoteStateRow {
     const row = this.database.get<QuoteStateRow>(
       `SELECT id,quote_number,status,finalized_at,special_terms,
-              contract_text_snapshot,contract_snapshot_json,contract_compiled_at
+              contract_text_snapshot,contract_snapshot_json,contract_compiled_at,contract_audience
        FROM quotes WHERE id=?`,
       [quoteId],
     );
     if (!row) throw new Error('Devis introuvable.');
     return row;
+  }
+
+  private resolveQuoteAudience(state: QuoteStateRow): QuoteContractAudience {
+    if (state.contract_audience) return state.contract_audience;
+    const owner = this.database.get<{ client_organization_id: string | null; prospect_organization_id: string | null }>(
+      `SELECT ca.organization_id AS client_organization_id, p.organization_id AS prospect_organization_id
+       FROM quotes q
+       LEFT JOIN client_accounts ca ON ca.id=COALESCE(q.client_account_id,q.accepted_client_account_id)
+       LEFT JOIN prospects p ON p.id=q.prospect_id
+       WHERE q.id=?`,
+      [state.id],
+    );
+    return owner?.client_organization_id || owner?.prospect_organization_id ? 'professional' : 'consumer';
   }
 
   private assertQuoteEditable(quoteId: string): void {
