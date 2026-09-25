@@ -216,6 +216,16 @@ Source : https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000032226842
 - formulaire type lorsque requis ;
 - exceptions éventuelles uniquement lorsqu'elles sont réellement applicables.
 
+### CONS-RETRACTATION-EN-LIGNE — Fonctionnalité de rétractation en ligne
+**Audience :** consumer  
+**Type :** contrôle de parcours, pas seulement clause texte
+
+Depuis le 19 juin 2026, pour les contrats conclus à distance au moyen d'une interface en ligne, l'article L. 221-21 prévoit une fonctionnalité gratuite permettant au consommateur d'exercer son droit de rétractation, avec un accès facile, direct et permanent selon les modalités réglementaires.  
+Source : https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000053310520/2026-06-24
+
+**Conséquence AtoumWeb / Abby :**
+avant d'utiliser un parcours de signature/acceptation en ligne pour un devis consommateur, vérifier comment Abby qualifie ce parcours et quelles fonctions de rétractation il fournit. Le Builder CGV ne doit pas prétendre, à lui seul, satisfaire cette obligation.
+
 ### CONS-DEBUT-ANTICIPE — Demande d'exécution avant la fin du délai de rétractation
 **Audience :** consumer  
 **Type :** base fixe + contrôle métier à prévoir
@@ -512,6 +522,8 @@ Le Builder V1 sait déjà assembler et figer les clauses. Avant de publier les t
   https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000044563141
 - Code de la consommation, art. L. 221-18 — délai de rétractation :  
   https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000032226842
+- Code de la consommation, art. L. 221-21 — exercice / fonctionnalité de rétractation en ligne :  
+  https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000053310520/2026-06-24
 - Code de la consommation, art. L. 221-25 — commencement d'exécution avant la fin du délai de rétractation :  
   https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000044563179
 - Code de la consommation, art. L. 616-1 — médiation :  
