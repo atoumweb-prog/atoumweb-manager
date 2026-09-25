@@ -19,6 +19,12 @@ import {
 } from '../../shared/referentials';
 import { PROJECT_TECHNICAL_CONTENT_TYPES, type ProjectTechnicalContentType } from '../../shared/projects';
 import { ATOUMWEB_COMPONENT_FIELD_TYPES, canonicalizeComponentFields } from '../../shared/componentPackageFields';
+import {
+  ATOUMWEB_COMPONENT_REUSABILITY_SCOPES,
+  ATOUMWEB_COMPONENT_VARIANT_MODES,
+  buildComponentIdentityV1,
+  type AtoumWebComponentIdentityV1,
+} from '../../shared/componentIdentity';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import type { WorkspacePaths } from '../workspace';
 import { AtoumWebTechnicalAssetService } from './AtoumWebTechnicalAssetService';
@@ -56,6 +62,7 @@ interface BridgeReusableExportPayload {
     generalized: boolean;
     fields: unknown[];
   };
+  identity: Record<string, unknown> | null;
   dependencies: unknown[];
   assets: unknown[];
 }
@@ -65,6 +72,7 @@ interface BridgeWorkbenchManifest {
   schemaVersion: 1;
   componentPackageContractVersion: 1;
   fieldsContractVersion: 1;
+  identityContractVersion: 1;
   flow: 'workbench_first';
   workbenchRequired: true;
   directProductionInjection: false;
@@ -77,12 +85,14 @@ interface BridgeWorkbenchManifest {
     rootClasses: string[];
     generalized: boolean;
     method: string;
+    identity: AtoumWebComponentIdentityV1;
   };
   files: {
     html: { path: string; sha256: string };
     css: { path: string; sha256: string } | null;
     javascript: { path: string; sha256: string } | null;
     fields: { path: string; sha256: string };
+    identity: { path: string; sha256: string };
     dependencies: { path: string; sha256: string };
     sourceAssets: { path: string; sha256: string };
     provenance: { path: string; sha256: string };
@@ -269,6 +279,23 @@ export class AtoumWebPackageService {
       : null;
     const canonicalFields = canonicalizeComponentFields(payload.reusable.fields ?? []);
     const fields = addText('component/fields.json', `${JSON.stringify(canonicalFields, null, 2)}\n`);
+    const sourceIdentity = payload.identity ?? {};
+    const identityValue = buildComponentIdentityV1({
+      libraryDisplayName: item.name,
+      libraryItemId: item.id,
+      libraryVersionId: version.id,
+      libraryVersionNumber: version.versionNumber,
+      tags: item.tags ?? [],
+      componentFamilyId: this.optionalString(sourceIdentity.componentFamilyId ?? sourceIdentity.component_family_id),
+      componentKey: this.optionalString(sourceIdentity.componentKey ?? sourceIdentity.component_key),
+      libraryVariantId: this.optionalString(sourceIdentity.libraryVariantId ?? sourceIdentity.variant_id),
+      variantKey: this.optionalString(sourceIdentity.variantKey ?? sourceIdentity.variant_key),
+      variantOf: this.optionalString(sourceIdentity.variantOf ?? sourceIdentity.variant_of),
+      variantMode: this.optionalVariantMode(sourceIdentity.variantMode ?? sourceIdentity.variant_mode),
+      vertical: this.optionalString(sourceIdentity.vertical),
+      reusabilityScope: this.optionalReusabilityScope(sourceIdentity.reusabilityScope ?? sourceIdentity.reusability_scope),
+    });
+    const identity = addText('component/identity.json', `${JSON.stringify(identityValue, null, 2)}\n`);
     const dependencies = addText('component/dependencies.json', `${JSON.stringify(payload.dependencies ?? [], null, 2)}\n`);
     const sourceAssets = addText('component/source-assets.json', `${JSON.stringify(payload.assets ?? [], null, 2)}\n`);
     const provenanceValue = {
@@ -284,6 +311,7 @@ export class AtoumWebPackageService {
       schemaVersion: 1,
       componentPackageContractVersion: 1,
       fieldsContractVersion: 1,
+      identityContractVersion: 1,
       flow: 'workbench_first',
       workbenchRequired: true,
       directProductionInjection: false,
@@ -296,8 +324,9 @@ export class AtoumWebPackageService {
         rootClasses: payload.reusable.rootClasses,
         generalized: payload.reusable.generalized,
         method: payload.reusable.method,
+        identity: identityValue,
       },
-      files: { html, css, javascript, fields, dependencies, sourceAssets, provenance },
+      files: { html, css, javascript, fields, identity, dependencies, sourceAssets, provenance },
       provenance: provenanceValue,
     };
   }
@@ -337,6 +366,7 @@ export class AtoumWebPackageService {
           generalized: reusableValue.generalized === true,
           fields: Array.isArray(reusableValue.fields) ? reusableValue.fields : [],
         },
+        identity: value.identity && typeof value.identity === 'object' ? value.identity as Record<string, unknown> : null,
         dependencies: Array.isArray(value.dependencies) ? value.dependencies : [],
         assets: Array.isArray(value.assets) ? value.assets : [],
       };
@@ -502,8 +532,8 @@ export class AtoumWebPackageService {
       if (bridge.contract !== 'atoumweb_bridge_component_package' || bridge.schemaVersion !== 1) {
         throw new Error('Format du package Bridge Workbench non pris en charge.');
       }
-      if (bridge.componentPackageContractVersion !== 1 || bridge.fieldsContractVersion !== 1) {
-        throw new Error('Version du Component Package Contract ou de fields.json non prise en charge.');
+      if (bridge.componentPackageContractVersion !== 1 || bridge.fieldsContractVersion !== 1 || bridge.identityContractVersion !== 1) {
+        throw new Error('Version du Component Package Contract, de fields.json ou de identity.json non prise en charge.');
       }
       if (bridge.flow !== 'workbench_first' || bridge.workbenchRequired !== true || bridge.directProductionInjection !== false) {
         throw new Error('Le package Bridge doit imposer un passage par Workbench avant production.');
@@ -513,6 +543,7 @@ export class AtoumWebPackageService {
         bridge.files.css,
         bridge.files.javascript,
         bridge.files.fields,
+        bridge.files.identity,
         bridge.files.dependencies,
         bridge.files.sourceAssets,
         bridge.files.provenance,
@@ -528,6 +559,10 @@ export class AtoumWebPackageService {
       const fieldsEntry = entries.get(bridge.files.fields.path);
       if (!fieldsEntry) throw new Error('fields.json déclaré absent du package Bridge.');
       this.validateComponentFieldsJson(fieldsEntry.data);
+
+      const identityEntry = entries.get(bridge.files.identity.path);
+      if (!identityEntry) throw new Error('identity.json déclaré absent du package Bridge.');
+      this.validateComponentIdentityJson(identityEntry.data, bridge.component.identity);
     }
 
     if (!Array.isArray(manifest.assets)) throw new Error('Liste des assets invalide.');
@@ -543,6 +578,54 @@ export class AtoumWebPackageService {
       if (entry.data.length !== asset.sizeBytes) throw new Error(`Taille d’asset incohérente : ${asset.fileName}`);
       if (this.sha256(entry.data) !== asset.checksumSha256) throw new Error(`Checksum d’asset invalide : ${asset.fileName}`);
     }
+  }
+
+  private validateComponentIdentityJson(data: Buffer, manifestIdentity: AtoumWebComponentIdentityV1): void {
+    let value: unknown;
+    try {
+      value = JSON.parse(data.toString('utf8'));
+    } catch {
+      throw new Error('component/identity.json est invalide.');
+    }
+    if (!value || typeof value !== 'object') throw new Error('component/identity.json doit être un objet.');
+    const identity = value as Record<string, unknown>;
+    if (identity.contract !== 'atoumweb_component_identity' || identity.schemaVersion !== 1) {
+      throw new Error('Component Identity Contract non pris en charge.');
+    }
+    if (identity.classificationStatus !== 'classified' && identity.classificationStatus !== 'unclassified') {
+      throw new Error('Statut de classification du composant invalide.');
+    }
+    if (typeof identity.libraryDisplayName !== 'string' || !identity.libraryDisplayName.trim()) {
+      throw new Error('Nom affiché de Bibliothèque manquant dans identity.json.');
+    }
+    if (identity.componentKey != null && (typeof identity.componentKey !== 'string' || !/^aw-[a-z0-9]+(?:-[a-z0-9]+)*$/.test(identity.componentKey))) {
+      throw new Error('component_key invalide dans identity.json.');
+    }
+    if (typeof identity.reusabilityScope !== 'string' || !(ATOUMWEB_COMPONENT_REUSABILITY_SCOPES as readonly string[]).includes(identity.reusabilityScope)) {
+      throw new Error('Réutilisabilité invalide dans identity.json.');
+    }
+    if (typeof identity.variantMode !== 'string' || !(ATOUMWEB_COMPONENT_VARIANT_MODES as readonly string[]).includes(identity.variantMode)) {
+      throw new Error('Mode de variante invalide dans identity.json.');
+    }
+    if (JSON.stringify(identity) !== JSON.stringify(manifestIdentity)) {
+      throw new Error('identity.json ne correspond pas à l’identité déclarée dans le manifeste.');
+    }
+  }
+
+  private optionalString(value: unknown): string | null {
+    return typeof value === 'string' && value.trim() ? value.trim() : null;
+  }
+
+  private optionalVariantMode(value: unknown): AtoumWebComponentIdentityV1['variantMode'] | null {
+    return typeof value === 'string' && (ATOUMWEB_COMPONENT_VARIANT_MODES as readonly string[]).includes(value)
+      ? value as AtoumWebComponentIdentityV1['variantMode']
+      : null;
+  }
+
+  private optionalReusabilityScope(value: unknown): AtoumWebComponentIdentityV1['reusabilityScope'] | null {
+    return typeof value === 'string' && (ATOUMWEB_COMPONENT_REUSABILITY_SCOPES as readonly string[]).includes(value)
+      ? value as AtoumWebComponentIdentityV1['reusabilityScope']
+      : null;
   }
 
   private validateComponentFieldsJson(data: Buffer): void {
