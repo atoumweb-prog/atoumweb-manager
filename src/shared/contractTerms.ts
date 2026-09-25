@@ -1,9 +1,12 @@
 export const CONTRACT_CLAUSE_SCOPES = ['base', 'catalog'] as const;
+export const CONTRACT_CLAUSE_AUDIENCES = ['all', 'professional', 'consumer'] as const;
 export const CONTRACT_CLAUSE_STATUSES = ['active', 'inactive', 'archived'] as const;
 export const CONTRACT_CLAUSE_VERSION_STATUSES = ['draft', 'published', 'retired'] as const;
 export const QUOTE_CONTRACT_CLAUSE_SOURCES = ['base', 'catalog', 'custom'] as const;
 
 export type ContractClauseScope = (typeof CONTRACT_CLAUSE_SCOPES)[number];
+export type ContractClauseAudience = (typeof CONTRACT_CLAUSE_AUDIENCES)[number];
+export type QuoteContractAudience = Exclude<ContractClauseAudience, 'all'>;
 export type ContractClauseStatus = (typeof CONTRACT_CLAUSE_STATUSES)[number];
 export type ContractClauseVersionStatus = (typeof CONTRACT_CLAUSE_VERSION_STATUSES)[number];
 export type QuoteContractClauseSource = (typeof QUOTE_CONTRACT_CLAUSE_SOURCES)[number];
@@ -12,6 +15,7 @@ export interface ContractClauseTemplateInput {
   code: string;
   title: string;
   scope: ContractClauseScope;
+  audience?: ContractClauseAudience;
   sortOrder?: number;
 }
 
@@ -34,6 +38,7 @@ export interface ContractClauseTemplate {
   code: string;
   title: string;
   scope: ContractClauseScope;
+  audience: ContractClauseAudience;
   status: ContractClauseStatus;
   sortOrder: number;
   currentVersionId?: string | null;
@@ -77,6 +82,7 @@ export interface QuoteContractClauseUpdate {
 
 export interface QuoteContractBuild {
   quoteId: string;
+  audience: QuoteContractAudience;
   locked: boolean;
   clauses: QuoteContractClause[];
   compiledText: string;
