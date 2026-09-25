@@ -145,6 +145,26 @@ function legacyFieldToCanonical(field: LegacyField, index: number): AtoumWebComp
     };
   }
 
+  if (legacyType === 'color') {
+    const binding = field.binding
+      ? canonicalBinding(field.binding)
+      : { type: 'unresolved' as const, reason: 'Ancien champ couleur sans variable CSS exploitable.' };
+    return {
+      id,
+      type: 'color',
+      label,
+      group: 'Couleurs',
+      default: defaultValue,
+      required: false,
+      binding,
+      source: {
+        mode: 'auto_detected',
+        confidence: binding.type === 'css_variable' ? 'high' : 'low',
+        ambiguous: binding.type !== 'css_variable',
+      },
+    };
+  }
+
   if (legacyType === 'image') {
     if (field.binding) {
       const binding = canonicalBinding(field.binding);
