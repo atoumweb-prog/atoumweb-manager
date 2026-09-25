@@ -323,3 +323,15 @@ Déjà présent :
 - exports/configurations de plugins lorsque leur format le permet.
 
 Cette différence doit rester explicite afin de ne pas présenter la cible comme déjà implémentée.
+
+## 18. Transport Bibliothèque — lot 2 Manager
+
+Le transport des assets déclarés utilise les champs existants : référence `hash` → fichier du manifeste `checksumSha256` → `archivePath`. Il ne change aucun contrat V1.
+
+À l'export, Manager utilise d'abord les fichiers attachés à la version. Une référence peut également être résolue dans le coffre par SHA-256 ou par son couple snapshot d'origine / assetId. Le fichier est vérifié avant embarquement ; un même contenu n'est écrit qu'une fois dans le ZIP. Le `localPath` fourni par le site n'est jamais utilisé comme chemin local à ouvrir.
+
+Quand le Snapshot fournit un objet vérifiable mais que la référence n'a pas de hash, seule la copie JSON exportée est enrichie. La version historique reste inchangée. Aucun téléchargement externe ni remapping du HTML n'est effectué.
+
+Le bilan présenté à l'export et à l'inspection porte sur les assets **déclarés** : il ne certifie pas l'absence de dépendances non déclarées dans le code. Toutes les références déclarées sont traitées conservativement comme nécessaires. Les références externes ou non résolues restent conservées, avec un bilan incomplet. Un fichier déclaré embarqué mais absent ou altéré fait échouer la validation du ZIP.
+
+Un package incomplet peut être exporté et inspecté, mais son import est refusé avant création d'un élément/version. Pour un package complet, les fichiers sont préparés avant la transaction métier. Une erreur pendant l'import annule les données, y compris les statuts courant/stable, l'index et le journal, puis supprime uniquement les fichiers créés par cette tentative. Les objets partagés du coffre ne sont jamais supprimés. Un échec de nettoyage est remonté explicitement ; des répertoires vides peuvent subsister. Cette compensation traite les exceptions de l'opération, pas une interruption brutale du processus.

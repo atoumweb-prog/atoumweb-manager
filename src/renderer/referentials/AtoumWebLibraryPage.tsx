@@ -684,9 +684,12 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
       const exported = await window.atoumweb.referentials.packages.exportItem(selected.id, (versionId ?? assetVersionId) || null);
       const shown = await window.atoumweb.referentials.packages.showExport(exported.path);
       if (!shown.ok) setError(shown.error ?? 'Le paquet a été créé mais son emplacement ne peut pas être affiché.');
-      onMessage(bridgeWorkbench
+      const transportMessage = exported.assetTransport.complete
+        ? 'Transport des assets déclarés complet.'
+        : 'Transport incomplet : ' + exported.assetTransport.issues.join(' ');
+      onMessage((bridgeWorkbench
         ? `Package Bridge/Workbench préparé : ${exported.fileName} · v${exported.versionNumber}.`
-        : `Paquet ZIP exporté : ${exported.fileName} · v${exported.versionNumber} · ${exported.assetCount} fichier(s).`);
+        : `Paquet ZIP exporté : ${exported.fileName} · v${exported.versionNumber} · ${exported.assetCount} fichier(s).`) + ' ' + transportMessage);
     } catch (packageError) {
       setError(packageError instanceof Error ? packageError.message : 'Export du paquet impossible.');
     } finally {
@@ -797,6 +800,9 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
           <div><span>Assets</span><strong>{packageInspection.assetCount}{packageInspection.missingAssetCount ? ` · ${packageInspection.missingAssetCount} manquant(s)` : ''}</strong></div>
           <div><span>Doublons probables</span><strong>{packageInspection.probableDuplicates.length}</strong></div>
         </div>
+        <p role="status">{packageInspection.assetTransport.complete ? 'Transport des assets déclarés complet.' : 'Transport incomplet — import bloqué.'}</p>
+        {!packageInspection.assetTransport.complete && <ul>{packageInspection.assetTransport.issues.map(issue => <li key={issue}>{issue}</li>)}</ul>}
+        {packageInspection.assetTransport.references.length > 0 && <details><summary>Correspondance des assets</summary><ul>{packageInspection.assetTransport.references.map((asset, index) => <li key={index}>{asset.assetId} : {asset.archivePath ?? asset.reason} · SHA-256 : {asset.checksumSha256 ?? 'non disponible'}</li>)}</ul></details>}
         {packageInspection.probableDuplicates.length > 0 && <div className="aw-library-package-duplicates"><strong>Correspondances détectées</strong>{packageInspection.probableDuplicates.map((duplicate) => <button type="button" key={duplicate.itemId} onClick={() => { setPackageMode('new_version'); setPackageTargetItemId(duplicate.itemId); }}><span>{duplicate.reason === 'same_content' ? 'Même contenu' : 'Même nom / catégorie'}</span><strong>{duplicate.name}</strong></button>)}</div>}
         <div className="aw-library-form-grid">
           <label>Mode<select value={packageMode} onChange={(event) => setPackageMode(event.target.value as 'new_item' | 'new_version')}><option value="new_item">Créer un nouveau composant</option><option value="new_version">Ajouter une nouvelle version</option></select></label>
@@ -804,7 +810,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
         </div>
         <label className="aw-library-checkbox"><input type="checkbox" checked={packageMarkStable} onChange={(event) => setPackageMarkStable(event.target.checked)} /> Marquer la version importée comme stable</label>
         <p className="technical-safety-note">Le paquet est inspecté avant création. Le code/JSON reste une donnée de référence et n’est jamais exécuté automatiquement.</p>
-        <button className="primary-button" type="button" disabled={packageBusy} onClick={() => void importInspectedPackage()}>Confirmer l’import</button>
+        <button className="primary-button" type="button" disabled={packageBusy || !packageInspection.assetTransport.complete} onClick={() => void importInspectedPackage()}>Confirmer l’import</button>
       </article>}
 
       {creating && <CreationPanel form={form} setForm={setForm} onCreate={createItem} />}

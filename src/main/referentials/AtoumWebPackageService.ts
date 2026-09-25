@@ -1,3 +1,4 @@
+import { inspectAssetTransport, preparePackageAssets, packageAssetReferences, type PackageManifestAsset } from './AtoumWebPackageAssets';
 import { isDeepStrictEqual } from 'node:util';
 import fieldsSchema from '../../../docs/ATOUMWEB_COMPONENT_FIELDS_V1.schema.json';
 import identitySchema from '../../../docs/ATOUMWEB_COMPONENT_IDENTITY_V1.schema.json';
@@ -34,16 +35,6 @@ import type { WorkspacePaths } from '../workspace';
 import { AtoumWebTechnicalAssetService } from './AtoumWebTechnicalAssetService';
 import { AtoumWebTechnicalLibraryService } from './AtoumWebTechnicalLibraryService';
 import { readZipArchive, writeZipArchive, type ZipEntryInput, type ZipEntryOutput } from './ZipArchive';
-
-interface PackageManifestAsset {
-  role: AtoumWebTechnicalAssetRole;
-  fileName: string;
-  mimeType: string | null;
-  sizeBytes: number;
-  checksumSha256: string;
-  archivePath: string | null;
-  missing: boolean;
-}
 
 interface BridgeReusableExportPayload {
   schemaVersion: number;
@@ -156,62 +147,28 @@ export class AtoumWebPackageService {
     const version = this.pickVersion(item, requestedVersionId);
     const versionAssets = this.assets.list(version.id);
     const zipEntries: ZipEntryInput[] = [];
-    const bridgePayload = this.parseBridgeReusablePayload(version.contentText);
+    const prepared = preparePackageAssets(version.contentText, versionAssets.map(asset => ({
+      role: asset.role, fileName: asset.fileName, mimeType: asset.mimeType ?? null, sizeBytes: asset.sizeBytes,
+      checksumSha256: asset.checksumSha256, missing: asset.missing, archivePath: null,
+      absolutePath: this.assets.absolutePath(asset),
+    })), this.database, this.workspace, zipEntries);
+    const exportVersion = { ...version, contentText: prepared.contentText };
+    const bridgePayload = this.parseBridgeReusablePayload(exportVersion.contentText);
 
     let contentFile: string | null = null;
     let contentSha256: string | null = null;
-    if (version.contentText != null) {
+    if (exportVersion.contentText != null) {
       contentFile = `technical/source${this.contentExtension(version.contentType, version.language)}`;
-      const data = Buffer.from(version.contentText, 'utf8');
+      const data = Buffer.from(exportVersion.contentText, 'utf8');
       contentSha256 = this.sha256(data);
       zipEntries.push({ name: contentFile, data });
     }
 
-    const manifestAssets: PackageManifestAsset[] = [];
-    for (const asset of versionAssets) {
-      if (asset.missing) {
-        manifestAssets.push({
-          role: asset.role,
-          fileName: asset.fileName,
-          mimeType: asset.mimeType ?? null,
-          sizeBytes: asset.sizeBytes,
-          checksumSha256: asset.checksumSha256,
-          archivePath: null,
-          missing: true,
-        });
-        continue;
-      }
-      const absolute = this.assets.absolutePath(asset);
-      if (!existsSync(absolute) || !statSync(absolute).isFile()) {
-        manifestAssets.push({
-          role: asset.role,
-          fileName: asset.fileName,
-          mimeType: asset.mimeType ?? null,
-          sizeBytes: asset.sizeBytes,
-          checksumSha256: asset.checksumSha256,
-          archivePath: null,
-          missing: true,
-        });
-        continue;
-      }
-      const data = readFileSync(absolute);
-      const archivePath = `assets/${asset.role}/${asset.id}-${this.safeFileName(asset.fileName)}`;
-      const checksum = this.sha256(data);
-      zipEntries.push({ name: archivePath, data });
-      manifestAssets.push({
-        role: asset.role,
-        fileName: asset.fileName,
-        mimeType: asset.mimeType ?? null,
-        sizeBytes: data.length,
-        checksumSha256: checksum,
-        archivePath,
-        missing: false,
-      });
-    }
+    const manifestAssets = prepared.assets;
 
     const createdAt = new Date().toISOString();
     const bridgeWorkbench = bridgePayload
-      ? this.buildBridgeWorkbenchPackage(item, version, bridgePayload, zipEntries)
+      ? this.buildBridgeWorkbenchPackage(item, exportVersion, bridgePayload, zipEntries)
       : undefined;
 
     const manifest: PackageManifestV1 = {
@@ -260,6 +217,7 @@ export class AtoumWebPackageService {
       versionId: version.id,
       versionNumber: version.versionNumber,
       assetCount: manifestAssets.length,
+      assetTransport: prepared.transport,
       createdAt,
     };
   }
@@ -388,21 +346,56 @@ export class AtoumWebPackageService {
   }
 
   importPackage(input: AtoumWebPackageImportInput): AtoumWebPackageImportResult {
-    const loaded = this.loadPackage(input.packagePath);
-    const { inspection, manifest, entries } = loaded;
+    const { inspection, manifest, entries } = this.loadPackage(input.packagePath);
+    if (input.mode !== 'new_item' && input.mode !== 'new_version') throw new Error('Mode d’import invalide.');
+    if (!inspection.assetTransport.complete) {
+      throw new Error('Import incomplet refusé : ' + inspection.assetTransport.issues.join(' '));
+    }
+    if (input.mode === 'new_version') {
+      if (!input.targetItemId) throw new Error('Un composant AtoumWeb cible est requis pour importer comme nouvelle version.');
+      this.library.get(input.targetItemId);
+    }
     const versionInput = {
       contentType: inspection.version.contentType,
       language: inspection.version.language ?? null,
       contentText: inspection.version.contentText ?? null,
       notes: inspection.version.notes ?? null,
     };
+    const tempDirectory = mkdtempSync(join(tmpdir(), 'atoumweb-package-import-'));
+    const createdFiles: string[] = [];
+    let transactionStarted = false;
+    const cleanTemporary = () => {
+      const temporaryRoot = resolve(tmpdir());
+      const candidate = resolve(tempDirectory);
+      if (!candidate.startsWith(temporaryRoot + sep) || !basename(candidate).startsWith('atoumweb-package-import-')) {
+        throw new Error('Dossier temporaire d’import invalide.');
+      }
+      rmSync(candidate, { recursive: true, force: true });
+    };
+    try {
+      // Stage and verify every physical file before creating any item/version.
+      const staged: Array<{ path: string; asset: PackageManifestAsset }> = [];
+      const hashes = new Set<string>();
+      for (const asset of manifest.assets) {
+        const hash = asset.checksumSha256.toLowerCase();
+        if (hashes.has(hash)) continue;
+        const entry = asset.archivePath ? entries.get(asset.archivePath) : undefined;
+        if (!entry || asset.missing) throw new Error('Asset indispensable absent : ' + asset.fileName);
+        const directory = join(tempDirectory, String(staged.length));
+        mkdirSync(directory);
+        const path = join(directory, this.safeFileName(asset.fileName));
+        writeFileSync(path, entry.data);
+        if (this.sha256(readFileSync(path)) !== hash) throw new Error('Asset préparé altéré : ' + asset.fileName);
+        staged.push({ path, asset });
+        hashes.add(hash);
+      }
 
-    let detail: AtoumWebTechnicalItemDetail;
-    let importedAs: 'new_item' | 'new_version';
-    if (input.mode === 'new_item') {
-      const overrides = input.itemOverrides ?? {};
-      detail = this.library.create(
-        {
+      this.database.exec('BEGIN IMMEDIATE;');
+      transactionStarted = true;
+      let detail: AtoumWebTechnicalItemDetail;
+      if (input.mode === 'new_item') {
+        const overrides = input.itemOverrides ?? {};
+        detail = this.library.create({
           name: overrides.name ?? inspection.item.name,
           category: overrides.category ?? inspection.item.category,
           description: overrides.description === undefined ? inspection.item.description : overrides.description,
@@ -410,52 +403,47 @@ export class AtoumWebPackageService {
           vertical: overrides.vertical === undefined ? inspection.item.vertical ?? null : overrides.vertical,
           reuseStatus: overrides.reuseStatus ?? inspection.item.reuseStatus,
           originTechnicalItemId: null,
-        },
-        versionInput,
-      );
-      importedAs = 'new_item';
-    } else {
-      if (!input.targetItemId) throw new Error('Un composant AtoumWeb cible est requis pour importer comme nouvelle version.');
-      detail = this.library.createVersion(input.targetItemId, versionInput);
-      importedAs = 'new_version';
-    }
-
-    const targetVersionId = detail.currentVersion?.id;
-    if (!targetVersionId) throw new Error('La version importée est introuvable.');
-
-    let importedAssetCount = 0;
-    const tempDirectory = mkdtempSync(join(tmpdir(), 'atoumweb-package-import-'));
-    try {
-      for (const asset of manifest.assets) {
-        if (asset.missing || !asset.archivePath) continue;
-        const entry = entries.get(asset.archivePath);
-        if (!entry) throw new Error(`Asset manquant dans le ZIP : ${asset.fileName}`);
-        const roleDirectory = join(tempDirectory, asset.role);
-        mkdirSync(roleDirectory, { recursive: true });
-        const destination = join(roleDirectory, this.safeFileName(asset.fileName));
-        writeFileSync(destination, entry.data);
-        const before = this.assets.list(targetVersionId).length;
-        const after = this.assets.importFilePaths(targetVersionId, [destination], asset.role).length;
-        if (after > before) importedAssetCount += 1;
+        }, versionInput);
+      } else {
+        detail = this.library.createVersion(input.targetItemId!, versionInput);
       }
-    } finally {
-      rmSync(tempDirectory, { recursive: true, force: true });
+      const targetVersionId = detail.currentVersion?.id;
+      if (!targetVersionId) throw new Error('La version importée est introuvable.');
+      for (const { path, asset } of staged) {
+        const imported = this.assets.importFilePaths(targetVersionId, [path], asset.role, createdFiles);
+        const match = imported.find(file => file.checksumSha256.toLowerCase() === asset.checksumSha256.toLowerCase());
+        if (!match || match.missing || this.sha256(readFileSync(this.assets.absolutePath(match))) !== asset.checksumSha256.toLowerCase()) {
+          throw new Error('Import du fichier non confirmé : ' + asset.fileName);
+        }
+      }
+      detail = input.markStable ? this.library.markStable(targetVersionId) : this.library.get(detail.id);
+      this.writeActivity(detail.id, 'atoumweb_package_imported', 'Paquet ZIP importé : ' + detail.name, {
+        packagePath: input.packagePath, importedAs: input.mode, importedAssetCount: staged.length,
+        exportedVersionNumber: inspection.version.exportedVersionNumber,
+      });
+      cleanTemporary();
+      this.database.exec('COMMIT;');
+      transactionStarted = false;
+      return { item: detail, importedAssetCount: staged.length, importedAs: input.mode };
+    } catch (error) {
+      const failures: unknown[] = [error];
+      if (transactionStarted) {
+        try { this.database.exec('ROLLBACK;'); } catch (rollbackError) { failures.push(rollbackError); }
+      }
+      // Remove only files created by this attempt, never shared vault objects.
+      for (const file of createdFiles) {
+        try {
+          const candidate = resolve(file);
+          if (!candidate.startsWith(resolve(this.workspace.atoumWebLibraryDirectory) + sep)) {
+            throw new Error('Chemin de compensation hors Bibliothèque.');
+          }
+          rmSync(candidate, { force: true });
+        } catch (cleanupError) { failures.push(cleanupError); }
+      }
+      try { cleanTemporary(); } catch (cleanupError) { failures.push(cleanupError); }
+      if (failures.length > 1) throw new AggregateError(failures, 'Import annulé ; nettoyage incomplet à vérifier : ' + failures.map(String).join(' ; '));
+      throw error;
     }
-
-    if (input.markStable) {
-      detail = this.library.markStable(targetVersionId);
-    } else {
-      detail = this.library.get(detail.id);
-    }
-
-    this.writeActivity(detail.id, 'atoumweb_package_imported', `Paquet ZIP importé : ${detail.name}`, {
-      packagePath: input.packagePath,
-      importedAs,
-      importedAssetCount,
-      exportedVersionNumber: inspection.version.exportedVersionNumber,
-    });
-
-    return { item: detail, importedAssetCount, importedAs };
   }
 
   assertExportPath(path: string): string {
@@ -490,6 +478,10 @@ export class AtoumWebPackageService {
     const contentText = manifest.version.contentFile
       ? entries.get(manifest.version.contentFile)!.data.toString('utf8')
       : null;
+    if (manifest.bridgeWorkbench) {
+      const declared = JSON.parse(entries.get(manifest.bridgeWorkbench.files.sourceAssets.path)!.data.toString('utf8'));
+      if (!isDeepStrictEqual(declared, packageAssetReferences(contentText))) throw new Error('Références d’assets incohérentes entre source et composant.');
+    }
     const inspection: AtoumWebPackageInspection = {
       packagePath: absolute,
       schemaVersion: manifest.schemaVersion,
@@ -511,6 +503,7 @@ export class AtoumWebPackageService {
       },
       assetCount: manifest.assets.length,
       missingAssetCount: manifest.assets.filter((asset) => asset.missing).length,
+      assetTransport: inspectAssetTransport(contentText, manifest.assets),
       probableDuplicates: this.findProbableDuplicates(manifest, contentText),
     };
     return { inspection, manifest, entries };

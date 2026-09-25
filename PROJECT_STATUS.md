@@ -1,5 +1,18 @@
 # AtoumWeb Manager — Suivi du projet
 
+## Lot 2 — Transport des assets et imports — 25/09/2026
+
+- Base vérifiée avant modification : 4fb795035b32f312ea16496ab13f6a7b8d74e682 ; working tree initialement propre.
+- [x] Correspondance des références déclarées avec les fichiers du package par SHA-256 ; récupération ciblée des objets du coffre et déduplication.
+- [x] Assets absents, externes ou sans correspondance signalés ; import incomplet refusé avant toute création.
+- [x] Préparation des fichiers avant écriture métier ; transaction couvrant version, assets, index et journal ; compensation des seuls fichiers créés lors d'un échec.
+- [x] Nouvelle tentative après échec testée pour nouveau composant et nouvelle version.
+- [x] Typecheck réussi ; tests ciblés : 46 réussis / 0 échec ; suite complète exécutée une fois : 257 réussis / 0 échec (46 fichiers).
+- Aucun changement des contrats V1 ni de migration. Les champs existants hash / checksumSha256 / archivePath assurent la correspondance ; le bilan de transport est calculé, pas ajouté au manifeste.
+- Les originaux en base restent inchangés ; une empreinte prouvée peut enrichir seulement le JSON exporté.
+- Bridge repo pending. Aucun push ; prochain lot en attente de validation utilisateur.
+
+
 ## Lot 1 — Fiabilisation des contrats V1 — 25/09/2026
 
 - [x] Cibles image explicites src/srcset conservées ; style inline et anciennes images sans attribut cible explicite exportés unresolved.

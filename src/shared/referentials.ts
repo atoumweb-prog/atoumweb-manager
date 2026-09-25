@@ -122,7 +122,21 @@ export interface ReuseCreateGlobalInput {
   version: AtoumWebTechnicalVersionInput;
 }
 
+export interface AtoumWebPackageAssetTransport {
+  complete: boolean;
+  references: Array<{
+    assetId: string;
+    url: string | null;
+    checksumSha256: string | null;
+    archivePath: string | null;
+    status: 'embedded' | 'missing' | 'external' | 'unresolved';
+    reason: string | null;
+  }>;
+  issues: string[];
+}
+
 export interface AtoumWebPackageExportResult {
+  assetTransport: AtoumWebPackageAssetTransport;
   path: string;
   fileName: string;
   itemId: string;
@@ -140,6 +154,7 @@ export interface AtoumWebPackageDuplicateCandidate {
 }
 
 export interface AtoumWebPackageInspection {
+  assetTransport: AtoumWebPackageAssetTransport;
   packagePath: string;
   schemaVersion: number;
   item: Omit<AtoumWebTechnicalItemInput, 'originTechnicalItemId'>;

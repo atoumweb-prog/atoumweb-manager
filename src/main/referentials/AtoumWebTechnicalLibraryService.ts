@@ -111,7 +111,7 @@ export class AtoumWebTechnicalLibraryService {
     const id = randomUUID();
     const now = nowIso();
     const technicalCategory = TECHNICAL_CATEGORY_BY_LIBRARY_CATEGORY[itemInput.category];
-    this.database.exec('BEGIN IMMEDIATE;');
+    this.database.exec('SAVEPOINT library_create;');
     try {
       this.database.run(
         `INSERT INTO technical_items
@@ -133,9 +133,9 @@ export class AtoumWebTechnicalLibraryService {
       );
       this.insertVersion(id, 1, versionInput, now);
       this.writeActivity(id, 'atoumweb_technical_item_created', `Composant AtoumWeb créé : ${name}`);
-      this.database.exec('COMMIT;');
+      this.database.exec('RELEASE SAVEPOINT library_create;');
     } catch (error) {
-      this.database.exec('ROLLBACK;');
+      this.database.exec('ROLLBACK TO SAVEPOINT library_create; RELEASE SAVEPOINT library_create;');
       throw error;
     }
     const created = this.get(id);
@@ -189,15 +189,15 @@ export class AtoumWebTechnicalLibraryService {
     if (item.archivedAt) throw new Error('Ce composant AtoumWeb est archivé.');
     const nextVersion = Math.max(0, ...item.versions.map((version) => version.versionNumber)) + 1;
     const now = nowIso();
-    this.database.exec('BEGIN IMMEDIATE;');
+    this.database.exec('SAVEPOINT library_version;');
     try {
       this.database.run('UPDATE technical_item_versions SET is_current=0 WHERE technical_item_id=?', [itemId]);
       this.insertVersion(itemId, nextVersion, input, now);
       this.database.run('UPDATE technical_items SET updated_at=? WHERE id=?', [now, itemId]);
       this.writeActivity(itemId, 'atoumweb_technical_item_version_created', `${item.name} · version ${nextVersion}`);
-      this.database.exec('COMMIT;');
+      this.database.exec('RELEASE SAVEPOINT library_version;');
     } catch (error) {
-      this.database.exec('ROLLBACK;');
+      this.database.exec('ROLLBACK TO SAVEPOINT library_version; RELEASE SAVEPOINT library_version;');
       throw error;
     }
     const updated = this.get(itemId);
@@ -210,15 +210,15 @@ export class AtoumWebTechnicalLibraryService {
     if (!row) throw new Error('Version technique introuvable.');
     const item = this.get(row.technical_item_id);
     const now = nowIso();
-    this.database.exec('BEGIN IMMEDIATE;');
+    this.database.exec('SAVEPOINT library_stable;');
     try {
       this.database.run('UPDATE technical_item_versions SET is_stable=0 WHERE technical_item_id=?', [item.id]);
       this.database.run('UPDATE technical_item_versions SET is_stable=1 WHERE id=?', [versionId]);
       this.database.run('UPDATE technical_items SET updated_at=? WHERE id=?', [now, item.id]);
       this.writeActivity(item.id, 'atoumweb_technical_item_stable', `${item.name} · version ${Number(row.version_number)} marquée stable`);
-      this.database.exec('COMMIT;');
+      this.database.exec('RELEASE SAVEPOINT library_stable;');
     } catch (error) {
-      this.database.exec('ROLLBACK;');
+      this.database.exec('ROLLBACK TO SAVEPOINT library_stable; RELEASE SAVEPOINT library_stable;');
       throw error;
     }
     const updated = this.get(item.id);

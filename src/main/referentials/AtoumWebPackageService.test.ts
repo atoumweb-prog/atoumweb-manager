@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
 import { createWorkspacePaths, type WorkspacePaths } from '../workspace';
@@ -30,6 +30,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.restoreAllMocks();
   database.close();
   rmSync(workspaceRoot, { recursive: true, force: true });
 });
@@ -332,5 +333,170 @@ describe('Contrats V1 du package : validation et cohérence', () => {
     const f = fixture();
     delete f.manifest.bridgeWorkbench.files.html;
     expect(() => packages.inspectPackage(f.save())).toThrow(/obligatoire/);
+  });
+});
+
+describe('Lot 2 — transport des assets et imports annulables', () => {
+  const bytes = Buffer.from('image-lot-2');
+  const hash = createHash('sha256').update(bytes).digest('hex');
+  function createSource(references: unknown[] = [], snapshotId: string | null = null) {
+    return library.create({ category: 'hero', name: 'Transport assets', reuseStatus: 'adapt' }, {
+      contentType: 'json', language: 'json', contentText: JSON.stringify({
+        schemaVersion: 2, kind: 'atoumweb-library-reusable-component',
+        origin: { page: 'Accueil', occurrenceId: 'node-1', snapshotId },
+        reusable: { html: '<img src="https://example.test/image.png">', css: '', javascript: '',
+          rootClasses: [], generalized: true, fields: [] }, assets: references,
+      }),
+    });
+  }
+  function attach(item: ReturnType<typeof createSource>, name: string, content: Buffer) {
+    const path = join(workspaceRoot, name);
+    writeFileSync(path, content);
+    return assets.importFilePaths(item.currentVersion!.id, [path], 'source');
+  }
+  function seedVault() {
+    database.run("INSERT INTO bridge_sites (id,name,source_instance_id,source_site_key,created_at,updated_at) VALUES ('site','Site','instance','key','now','now')");
+    database.run(
+      "INSERT INTO bridge_snapshots (id,site_id,external_snapshot_id,package_fingerprint,generated_at,imported_at,snapshot_type,scan_status,bridge_version,schema_version,fingerprint_profile,issues_json,coverage_json,scanner_capabilities_json,observed_content_json,security_json,environment_json) VALUES ('snapshot','site','external-snapshot','fingerprint','now','now','full','complete','0.6','1','sha256','[]','{}','{}','{}','{}','{}')",
+    );
+    database.run("INSERT INTO bridge_assets (snapshot_id,asset_id,type,url,archive_mode,object_ref,raw_json) VALUES ('snapshot','image-1','image','https://example.test/image.png','embedded',?,'{}')", ['sha256:' + hash]);
+    database.run("INSERT INTO bridge_objects (object_ref,relative_path,byte_length,first_seen_at) VALUES (?,?,?,'now')",
+      ['sha256:' + hash, 'unused-untrusted-path', bytes.length]);
+    const directory = join(workspace.bridgeDirectory, 'objects', 'sha256', hash.slice(0, 2));
+    mkdirSync(directory, { recursive: true });
+    const path = join(directory, hash);
+    writeFileSync(path, bytes);
+    return path;
+  }
+  function state() {
+    return Object.fromEntries(['technical_items', 'technical_item_versions', 'atoumweb_technical_assets', 'search_documents', 'activity_log']
+      .map(table => [table, database.all('SELECT * FROM ' + table + ' ORDER BY rowid')]));
+  }
+
+  it('relie deux références à un seul fichier attaché, avec son empreinte vérifiée', () => {
+    const references = ['image-1', 'image-2'].map(assetId => ({ assetId, hash: 'sha256:' + hash, url: 'https://example.test/image.png' }));
+    const item = createSource(references);
+    attach(item, 'image.png', bytes);
+    const exported = packages.exportItem(item.id);
+    const inspected = packages.inspectPackage(exported.path);
+    expect(inspected.assetTransport.complete).toBe(true);
+    expect(inspected.assetTransport.references).toHaveLength(2);
+    expect(new Set(inspected.assetTransport.references.map(ref => ref.archivePath)).size).toBe(1);
+    const files = readZipArchive(exported.path).filter(entry => entry.name.startsWith('assets/'));
+    expect(files).toHaveLength(1);
+    expect(createHash('sha256').update(files[0].data).digest('hex')).toBe(hash);
+    expect(inspected.assetTransport.references[0]).toMatchObject({ assetId: 'image-1', checksumSha256: hash, archivePath: files[0].name, status: 'embedded' });
+    const imported = packages.importPackage({ packagePath: exported.path, mode: 'new_item' });
+    expect(imported.importedAssetCount).toBe(1);
+    expect(assets.list(imported.item.currentVersion!.id)).toHaveLength(1);
+  });
+
+  it('exporte depuis le coffre sans recopier la source et conserve le lien après import', () => {
+    const vaultPath = seedVault();
+    const item = createSource([{ assetId: 'image-1', hash: null, url: 'https://example.test/image.png', archiveMode: 'embedded' }], 'external-snapshot');
+    const original = item.currentVersion!.contentText;
+    const exported = packages.exportItem(item.id);
+    expect(exported.assetTransport.complete).toBe(true);
+    expect(assets.list(item.currentVersion!.id)).toEqual([]);
+    expect(library.get(item.id).currentVersion!.contentText).toBe(original);
+    expect(readFileSync(vaultPath)).toEqual(bytes);
+    const entries = readZipArchive(exported.path);
+    const source = JSON.parse(entries.find(entry => entry.name === 'technical/source.json')!.data.toString('utf8'));
+    expect(source.assets[0].hash).toBe('sha256:' + hash);
+    const imported = packages.importPackage({ packagePath: exported.path, mode: 'new_item' });
+    database.run('DELETE FROM bridge_objects'); // Simulate a receiving Manager without the source vault registry.
+    const reexported = packages.exportItem(imported.item.id);
+    expect(reexported.assetTransport.complete).toBe(true);
+    expect(reexported.assetTransport.references[0].checksumSha256).toBe(hash);
+  });
+
+  it('signale une copie référencée absente et refuse son import avant écriture', () => {
+    const item = createSource([{ assetId: 'missing', hash, localPath: '/uploads/absent.png', archiveMode: 'embedded' }]);
+    const exported = packages.exportItem(item.id);
+    expect(exported.assetTransport.complete).toBe(false);
+    expect(packages.inspectPackage(exported.path).assetTransport.references[0].status).toBe('missing');
+    const before = state();
+    expect(() => packages.importPackage({ packagePath: exported.path, mode: 'new_item' })).toThrow(/Import incomplet refusé/);
+    expect(state()).toEqual(before);
+  });
+
+  it('conserve une référence externe non transportée au lieu de la masquer', () => {
+    const ref = { assetId: 'remote', url: 'https://example.test/remote.png', hash: null, archiveMode: 'reference_only' };
+    const item = createSource([ref]);
+    const exported = packages.exportItem(item.id);
+    expect(exported.assetTransport.references[0]).toMatchObject({ assetId: 'remote', url: ref.url, status: 'external', archivePath: null });
+    const source = JSON.parse(readZipArchive(exported.path).find(entry => entry.name === 'component/source-assets.json')!.data.toString('utf8'));
+    expect(source).toEqual([ref]);
+    expect(() => packages.importPackage({ packagePath: exported.path, mode: 'new_item', markStable: true })).toThrow(/non transportée/);
+  });
+
+  it('ne lit jamais un localPath arbitraire fourni dans la référence', () => {
+    const path = join(workspaceRoot, 'unrelated.txt');
+    writeFileSync(path, 'do-not-export');
+    const item = createSource([{ assetId: 'unsafe-local-path', localPath: path, hash: null }]);
+    const exported = packages.exportItem(item.id);
+    expect(exported.assetTransport.complete).toBe(false);
+    expect(readZipArchive(exported.path).filter(entry => entry.name.startsWith('assets/'))).toHaveLength(0);
+  });
+
+  it('conserve missing dans le manifest pour un fichier attaché disparu', () => {
+    const item = createSource();
+    const [file] = attach(item, 'removed.png', bytes);
+    rmSync(assets.absolutePath(file));
+    const exported = packages.exportItem(item.id);
+    const inspected = packages.inspectPackage(exported.path);
+    expect(inspected.missingAssetCount).toBe(1);
+    expect(inspected.assetTransport.complete).toBe(false);
+    expect(() => packages.importPackage({ packagePath: exported.path, mode: 'new_item' })).toThrow(/manquant/);
+  });
+
+  it('refuse des octets du coffre qui ne correspondent plus à leur empreinte', () => {
+    const path = seedVault();
+    const item = createSource([{ assetId: 'image-1', hash: null }], 'external-snapshot');
+    writeFileSync(path, 'corrupt');
+    expect(() => packages.exportItem(item.id)).toThrow(/coffre altéré/);
+  });
+
+  it.each(['new_item', 'new_version'] as const)('annule %s après copie et permet une nouvelle tentative déterministe', mode => {
+    const source = createSource();
+    attach(source, 'first.png', bytes);
+    attach(source, 'second.png', Buffer.from('second-image'));
+    const target = createSource();
+    library.markStable(target.currentVersion!.id);
+    const exported = packages.exportItem(source.id);
+    const input = { packagePath: exported.path, mode, targetItemId: target.id, markStable: true };
+    const before = state();
+    const original = assets.importFilePaths.bind(assets);
+    const copied: string[] = [];
+    let calls = 0;
+    const spy = vi.spyOn(assets, 'importFilePaths').mockImplementation((versionId, paths, role, createdFiles) => {
+      const result = original(versionId, paths, role, createdFiles);
+      copied.push(...(createdFiles ?? []));
+      if (++calls === 2) throw new Error('simulated copy failure');
+      return result;
+    });
+    expect(() => packages.importPackage(input)).toThrow(/simulated copy failure/);
+    expect(state()).toEqual(before);
+    expect(copied.length).toBeGreaterThan(0);
+    expect(copied.every(path => !existsSync(path))).toBe(true);
+    spy.mockRestore();
+    const retried = packages.importPackage(input);
+    expect(retried.importedAssetCount).toBe(2);
+    expect(retried.item.currentVersion!.versionNumber).toBe(mode === 'new_item' ? 1 : 2);
+    expect(retried.item.versionCount).toBe(mode === 'new_item' ? 1 : 2);
+    expect(retried.item.stableVersion!.id).toBe(retried.item.currentVersion!.id);
+    expect(assets.list(retried.item.currentVersion!.id).every(file => !file.missing)).toBe(true);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('annule aussi si un import de fichier retourne sans avoir créé le fichier attendu', () => {
+    const source = createSource();
+    attach(source, 'image.png', bytes);
+    const exported = packages.exportItem(source.id);
+    const before = state();
+    const spy = vi.spyOn(assets, 'importFilePaths').mockReturnValue([]);
+    expect(() => packages.importPackage({ packagePath: exported.path, mode: 'new_item' })).toThrow(/non confirmé/);
+    spy.mockRestore();
+    expect(state()).toEqual(before);
   });
 });
