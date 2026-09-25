@@ -1,5 +1,16 @@
 # AtoumWeb Manager — Suivi du projet
 
+## Lot 1 — Fiabilisation des contrats V1 — 25/09/2026
+
+- [x] Cibles image explicites src/srcset conservées ; style inline et anciennes images sans attribut cible explicite exportés unresolved.
+- [x] Validation des schémas V1 existants aux frontières du package et des occurrences, sans dépendance supplémentaire.
+- [x] Identités comparées structurellement ; identifiants Bibliothèque/version cohérents entre composant, identité et provenance.
+- [x] Typecheck réussi ; tests ciblés : 53 réussis / 0 échec ; suite complète exécutée une fois : 247 réussis / 0 échec (46 fichiers).
+- Aucun changement de migration, de contrat V1, de publication ou de qualification prêt/stable.
+- Bridge repo pending.
+- Prochaine action : validation utilisateur du lot 1 ; aucun lot 2 engagé.
+
+
 ## État canonique — 24/09/2026
 
 > Cette section prime sur les entrées historiques plus bas. Source de vérité partagée ChatGPT / Codex MSI.

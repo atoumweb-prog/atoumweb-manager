@@ -126,3 +126,42 @@ describe('Site Occurrence Contract V1', () => {
     expect(validateOccurrenceReturnManifestV1(manifest)).toContain('actionPolicy doit valoir manager_decides.');
   });
 });
+
+describe('Validation stricte des occurrences V1', () => {
+  it.each([
+    ['source', 'componentFamilyId'], ['source', 'componentKey'], ['source', 'libraryVariantId'],
+    ['source', 'variantKey'], ['target', 'siteUrl'], ['target', 'siteKey'],
+    ['target', 'workbenchPostId'], ['target', 'bridgeVersion'],
+  ])('refuse la propriété obligatoire absente %s.%s', (section, key) => {
+    const value = structuredClone(validOccurrence) as unknown as Record<string, Record<string, unknown>>;
+    delete value[section][key];
+    expect(validateSiteOccurrenceV1(value).some(error => error.includes(key))).toBe(true);
+  });
+  it('accepte les identités et cibles facultativement nulles, mais présentes', () => {
+    const value = structuredClone(validOccurrence);
+    Object.assign(value.source, { componentFamilyId: null, componentKey: null, libraryVariantId: null, variantKey: null });
+    Object.assign(value.target, { siteUrl: null, siteKey: null, workbenchPostId: null, bridgeVersion: null });
+    expect(validateSiteOccurrenceV1(value)).toEqual([]);
+  });
+  it.each([
+    { source: { ...validOccurrence.source, componentKey: 'bad-key' } },
+    { source: { ...validOccurrence.source, sourceHtmlSha256: 'bad-hash' } },
+    { configuration: { ...validOccurrence.configuration, cssVariables: { color: 'red' } } },
+    { changes: { ...validOccurrence.changes, changedFieldIds: ['title', 'title'] } },
+    { createdAt: '2026-02-30T09:00:00Z' },
+    { unexpected: true },
+  ])('refuse les valeurs hors schéma : %j', (patch) => {
+    expect(validateSiteOccurrenceV1({ ...validOccurrence, ...patch }).length).toBeGreaterThan(0);
+  });
+  it('exige les entrées css et javascript du retour même si elles valent null', () => {
+    const file = { path: 'file.json', sha256: 'a'.repeat(64) };
+    const value = {
+      contract: 'atoumweb_bridge_occurrence_return', schemaVersion: 1, occurrenceContractVersion: 1,
+      sourceComponentPackageContractVersion: 1, returnedAt: '2026-09-25T10:00:00Z',
+      actionPolicy: 'manager_decides', siteOccurrenceId: 'awocc:test',
+      files: { occurrence: file, html: file, assets: file, provenance: file }, changes: validOccurrence.changes,
+    };
+    expect(validateOccurrenceReturnManifestV1(value).some(error => error.includes('css'))).toBe(true);
+    expect(validateOccurrenceReturnManifestV1({ ...value, files: { ...value.files, css: null, javascript: null } })).toEqual([]);
+  });
+});

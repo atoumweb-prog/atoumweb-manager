@@ -1837,6 +1837,7 @@ function generalizeBridgeReusableHtml(html: string): { html: string; fields: Bri
         label: `Image ${imageIndex}`,
         type: 'image',
         selector: `[data-aw-field-image="${id}"]`,
+        binding: { type: 'html_attribute', selector: `[data-aw-field-image="${id}"]`, attribute: 'src' },
         originalValue: originalSrc,
         defaultValue: 'Image de démonstration locale',
       });
@@ -1854,6 +1855,7 @@ function generalizeBridgeReusableHtml(html: string): { html: string; fields: Bri
         label: `Image responsive ${imageIndex}`,
         type: 'image',
         selector: `[data-aw-field-image="${id}"]`,
+        binding: { type: 'html_attribute', selector: `[data-aw-field-image="${id}"]`, attribute: 'srcset' },
         originalValue: originalSrcSet,
         defaultValue: 'Image de démonstration locale',
       });
@@ -1877,6 +1879,7 @@ function generalizeBridgeReusableHtml(html: string): { html: string; fields: Bri
           label: `Image de fond ${imageIndex}`,
           type: 'image',
           selector: `[data-aw-field-image~="${id}"]`,
+          binding: { type: 'unresolved', reason: 'Image dans style inline : V1 ne cible pas une URL individuelle sans écraser le style.' },
           originalValue: url,
           defaultValue: 'Image de démonstration locale',
         });

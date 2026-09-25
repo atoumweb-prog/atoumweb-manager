@@ -44,7 +44,7 @@ describe('Component Fields Contract V1', () => {
     expect(result.fields[2]).toMatchObject({
       id: 'hero-image',
       type: 'image',
-      binding: { type: 'html_attribute', selector: '[data-aw-field-image="hero-image"]', attribute: 'src' },
+      binding: { type: 'unresolved' },
     });
   });
 
@@ -108,5 +108,27 @@ describe('Component Fields Contract V1', () => {
         ambiguous: true,
       },
     });
+  });
+});
+
+describe('Cibles image V1', () => {
+  it.each(['src', 'srcset'])('conserve la cible explicite %s', (attribute) => {
+    const binding = { type: 'html_attribute', selector: '[data-aw-field-image="image-1"]', attribute };
+    const [field] = canonicalizeComponentFields([{ id: 'image-1', type: 'image', label: 'Image',
+      selector: binding.selector, defaultValue: '', binding }]).fields;
+    expect(field.binding).toEqual(binding);
+  });
+  it('conserve unresolved pour une URL dans un style inline', () => {
+    const binding = { type: 'unresolved', reason: 'URL dans style inline non représentable en V1.' };
+    const [field] = canonicalizeComponentFields([{ id: 'image-1', type: 'image', label: 'Fond',
+      selector: '[data-aw-field-image~="image-1"]', defaultValue: '', binding }]).fields;
+    expect(field.binding).toEqual(binding);
+    expect(field.source.ambiguous).toBe(true);
+  });
+  it('ne devine pas src pour une ancienne image sans attribut cible', () => {
+    const [field] = canonicalizeComponentFields([{ id: 'image-1', type: 'image', label: 'Image responsive',
+      selector: '[data-aw-field-image="image-1"]', defaultValue: '' }]).fields;
+    expect(field.binding.type).toBe('unresolved');
+    expect(field.source.ambiguous).toBe(true);
   });
 });

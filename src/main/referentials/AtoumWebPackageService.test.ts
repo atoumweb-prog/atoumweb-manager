@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -252,5 +253,84 @@ describe('AtoumWebPackageService', () => {
     writeFileSync(destination, bytes);
 
     expect(() => readZipArchive(destination)).toThrow(/CRC invalide/i);
+  });
+});
+
+describe('Contrats V1 du package : validation et cohérence', () => {
+  // Real export, then a semantically altered archive with valid hashes/CRC.
+  function fixture() {
+    const item = library.create(
+      { category: 'hero', name: 'Test V1', reuseStatus: 'adapt' },
+      { contentType: 'json', language: 'json', contentText: JSON.stringify({
+        kind: 'atoumweb-library-reusable-component', schemaVersion: 2,
+        origin: { page: 'Accueil', occurrenceId: 'node-1' },
+        reusable: { html: '<img data-aw-field-image="image-1">', css: '', javascript: '',
+          rootClasses: [], generalized: true, fields: [] },
+      }) },
+    );
+    const exported = packages.exportItem(item.id);
+    const entries = readZipArchive(exported.path);
+    const manifest = JSON.parse(entries.find(entry => entry.name === 'manifest.json')!.data.toString('utf8'));
+    function json(path: string, value: unknown) {
+      const entry = entries.find(entry => entry.name === path)!;
+      entry.data = Buffer.from(JSON.stringify(value));
+      return createHash('sha256').update(entry.data).digest('hex');
+    }
+    return { manifest, entries, json, save() {
+      json('manifest.json', manifest);
+      const path = join(workspaceRoot, 'modified.zip');
+      writeZipArchive(path, entries);
+      return path;
+    } };
+  }
+
+  it('accepte des identités équivalentes dont les propriétés sont réordonnées', () => {
+    const f = fixture();
+    const reordered = Object.fromEntries(Object.entries(f.manifest.bridgeWorkbench.component.identity).reverse());
+    f.manifest.bridgeWorkbench.files.identity.sha256 = f.json('component/identity.json', reordered);
+    expect(() => packages.inspectPackage(f.save())).not.toThrow();
+  });
+  it('refuse des identités valides mais différentes', () => {
+    const f = fixture();
+    const identity = { ...f.manifest.bridgeWorkbench.component.identity, libraryItemId: 'other-item' };
+    f.manifest.bridgeWorkbench.files.identity.sha256 = f.json('component/identity.json', identity);
+    expect(() => packages.inspectPackage(f.save())).toThrow(/identité déclarée/);
+  });
+  it.each([null, '', 'incorrect'])('refuse classified avec componentKey=%s', (componentKey) => {
+    const f = fixture();
+    const identity = { ...f.manifest.bridgeWorkbench.component.identity, classificationStatus: 'classified',
+      reusabilityScope: 'generic', componentKey };
+    f.manifest.bridgeWorkbench.component.identity = identity;
+    f.manifest.bridgeWorkbench.files.identity.sha256 = f.json('component/identity.json', identity);
+    expect(() => packages.inspectPackage(f.save())).toThrow(/identity.json invalide/);
+  });
+  it.each([
+    { type: 'html_text' }, { type: 'html_html', selector: '' },
+    { type: 'html_attribute', selector: 'img' }, { type: 'css_variable', name: 'color' },
+    { type: 'css_url' }, { type: 'unresolved' },
+  ])('refuse un binding incomplet ou invalide : %j', (binding) => {
+    const f = fixture();
+    f.manifest.bridgeWorkbench.files.fields.sha256 = f.json('component/fields.json', {
+      contract: 'atoumweb_component_fields', schemaVersion: 1,
+      fields: [{ id: 'image-1', type: 'image', label: 'Image', default: null, required: false,
+        binding, source: { mode: 'declared' } }],
+    });
+    expect(() => packages.inspectPackage(f.save())).toThrow(/fields.json invalide/);
+  });
+  it.each(['component', 'provenance', 'provenance-file', 'version'])('refuse une divergence dans %s', (section) => {
+    const f = fixture();
+    const bridge = f.manifest.bridgeWorkbench;
+    if (section === 'component') bridge.component.libraryVersionId = 'other-version';
+    if (section === 'provenance') bridge.provenance.libraryItemId = 'other-item';
+    if (section === 'provenance-file') {
+      bridge.files.provenance.sha256 = f.json('component/provenance.json', { ...bridge.provenance, libraryVersionNumber: 99 });
+    }
+    if (section === 'version') f.manifest.version.exportedVersionNumber = 99;
+    expect(() => packages.inspectPackage(f.save())).toThrow(/[Ii]dentifiant incohérent|version incohérent/);
+  });
+  it('refuse un fichier HTML obligatoire non déclaré', () => {
+    const f = fixture();
+    delete f.manifest.bridgeWorkbench.files.html;
+    expect(() => packages.inspectPackage(f.save())).toThrow(/obligatoire/);
   });
 });

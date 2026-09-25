@@ -1,3 +1,7 @@
+import { isDeepStrictEqual } from 'node:util';
+import fieldsSchema from '../../../docs/ATOUMWEB_COMPONENT_FIELDS_V1.schema.json';
+import identitySchema from '../../../docs/ATOUMWEB_COMPONENT_IDENTITY_V1.schema.json';
+import { validateContractSchemaV1 } from '../../shared/contractSchemaV1';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, extname, join, resolve, sep } from 'node:path';
@@ -280,6 +284,7 @@ export class AtoumWebPackageService {
       ? addText('component/component.js', payload.reusable.javascript)
       : null;
     const canonicalFields = canonicalizeComponentFields(payload.reusable.fields ?? []);
+    this.validateComponentFieldsJson(Buffer.from(JSON.stringify(canonicalFields), 'utf8'));
     const fields = addText('component/fields.json', `${JSON.stringify(canonicalFields, null, 2)}\n`);
     const sourceIdentity = payload.identity ?? {};
     const identityValue = buildComponentIdentityV1({
@@ -297,6 +302,7 @@ export class AtoumWebPackageService {
       vertical: this.optionalString(sourceIdentity.vertical) ?? item.vertical ?? null,
       reusabilityScope: this.optionalReusabilityScope(sourceIdentity.reusabilityScope ?? sourceIdentity.reusability_scope),
     });
+    this.validateComponentIdentityJson(Buffer.from(JSON.stringify(identityValue), 'utf8'), identityValue);
     const identity = addText('component/identity.json', `${JSON.stringify(identityValue, null, 2)}\n`);
     const dependencies = addText('component/dependencies.json', `${JSON.stringify(payload.dependencies ?? [], null, 2)}\n`);
     const sourceAssets = addText('component/source-assets.json', `${JSON.stringify(payload.assets ?? [], null, 2)}\n`);
@@ -543,6 +549,10 @@ export class AtoumWebPackageService {
       if (bridge.flow !== 'workbench_first' || bridge.workbenchRequired !== true || bridge.directProductionInjection !== false) {
         throw new Error('Le package Bridge doit imposer un passage par Workbench avant production.');
       }
+      if (!bridge.files || !bridge.component || !bridge.provenance) throw new Error('Sections Bridge obligatoires manquantes.');
+      for (const key of ['html', 'fields', 'identity', 'dependencies', 'sourceAssets', 'provenance'] as const) {
+        if (!bridge.files[key]) throw new Error('Fichier Bridge obligatoire manquant : ' + key);
+      }
       const declaredFiles = [
         bridge.files.html,
         bridge.files.css,
@@ -568,6 +578,17 @@ export class AtoumWebPackageService {
       const identityEntry = entries.get(bridge.files.identity.path);
       if (!identityEntry) throw new Error('identity.json déclaré absent du package Bridge.');
       this.validateComponentIdentityJson(identityEntry.data, bridge.component.identity);
+      const provenance = JSON.parse(entries.get(bridge.files.provenance.path)!.data.toString('utf8')) as Record<string, unknown>;
+      if (!provenance || typeof provenance !== 'object' || Array.isArray(provenance)) throw new Error('Provenance invalide.');
+      for (const key of ['libraryItemId', 'libraryVersionId', 'libraryVersionNumber'] as const) {
+        const expected = bridge.component.identity[key];
+        if (bridge.component[key] !== expected || bridge.provenance[key] !== expected || provenance[key] !== expected) {
+          throw new Error('Identifiant incohérent dans le package : ' + key);
+        }
+      }
+      if (manifest.version.exportedVersionNumber !== bridge.component.identity.libraryVersionNumber) {
+        throw new Error('Numéro de version incohérent dans le package.');
+      }
     }
 
     if (!Array.isArray(manifest.assets)) throw new Error('Liste des assets invalide.');
@@ -593,6 +614,8 @@ export class AtoumWebPackageService {
       throw new Error('component/identity.json est invalide.');
     }
     if (!value || typeof value !== 'object') throw new Error('component/identity.json doit être un objet.');
+    const identityErrors = [...validateContractSchemaV1(value, identitySchema), ...validateContractSchemaV1(manifestIdentity, identitySchema)];
+    if (identityErrors.length) throw new Error('identity.json invalide : ' + identityErrors.join(' '));
     const identity = value as Record<string, unknown>;
     if (identity.contract !== 'atoumweb_component_identity' || identity.schemaVersion !== 1) {
       throw new Error('Component Identity Contract non pris en charge.');
@@ -612,7 +635,7 @@ export class AtoumWebPackageService {
     if (typeof identity.variantMode !== 'string' || !(ATOUMWEB_COMPONENT_VARIANT_MODES as readonly string[]).includes(identity.variantMode)) {
       throw new Error('Mode de variante invalide dans identity.json.');
     }
-    if (JSON.stringify(identity) !== JSON.stringify(manifestIdentity)) {
+    if (!isDeepStrictEqual(identity, manifestIdentity)) {
       throw new Error('identity.json ne correspond pas à l’identité déclarée dans le manifeste.');
     }
   }
@@ -641,6 +664,8 @@ export class AtoumWebPackageService {
       throw new Error('component/fields.json est invalide.');
     }
     if (!value || typeof value !== 'object') throw new Error('component/fields.json doit être un objet.');
+    const fieldErrors = validateContractSchemaV1(value, fieldsSchema);
+    if (fieldErrors.length) throw new Error('fields.json invalide : ' + fieldErrors.join(' '));
     const document = value as Record<string, unknown>;
     if (document.contract !== 'atoumweb_component_fields' || document.schemaVersion !== 1 || !Array.isArray(document.fields)) {
       throw new Error('Component Fields Contract non pris en charge.');

@@ -70,6 +70,7 @@ interface LegacyField {
   selector?: unknown;
   originalValue?: unknown;
   defaultValue?: unknown;
+  binding?: unknown;
 }
 
 export function canonicalizeComponentFields(fields: unknown): AtoumWebComponentFieldsV1 {
@@ -145,6 +146,11 @@ function legacyFieldToCanonical(field: LegacyField, index: number): AtoumWebComp
   }
 
   if (legacyType === 'image') {
+    if (field.binding) {
+      const binding = canonicalBinding(field.binding);
+      return { id, type: 'image', label, group: 'Images', default: defaultValue, required: false, binding,
+        source: { mode: 'auto_detected', confidence: binding.type === 'unresolved' ? 'low' : 'high', ambiguous: binding.type === 'unresolved' } };
+    }
     if (selector.startsWith('css:url:')) {
       return {
         id,
@@ -169,10 +175,8 @@ function legacyFieldToCanonical(field: LegacyField, index: number): AtoumWebComp
       group: 'Images',
       default: defaultValue,
       required: false,
-      binding: selector
-        ? { type: 'html_attribute', selector, attribute: 'src' }
-        : { type: 'unresolved', reason: 'Ancien champ image sans sélecteur exploitable.' },
-      source: { mode: 'auto_detected', confidence: selector ? 'high' : 'low', ambiguous: !selector },
+      binding: { type: 'unresolved', reason: 'Ancienne image sans attribut cible explicite : confirmer src, srcset ou style.' },
+      source: { mode: 'auto_detected', confidence: 'low', ambiguous: true },
     };
   }
 

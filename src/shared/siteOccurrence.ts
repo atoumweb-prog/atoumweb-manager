@@ -1,3 +1,7 @@
+import occurrenceSchema from '../../docs/ATOUMWEB_SITE_OCCURRENCE_V1.schema.json';
+import returnSchema from '../../docs/ATOUMWEB_OCCURRENCE_RETURN_V1.schema.json';
+import { validateContractSchemaV1 } from './contractSchemaV1';
+
 export const ATOUMWEB_SITE_OCCURRENCE_STATES = [
   'created',
   'configured',
@@ -93,7 +97,7 @@ export interface AtoumWebOccurrenceReturnManifestV1 {
 }
 
 export function validateSiteOccurrenceV1(value: unknown): string[] {
-  const errors: string[] = [];
+  const errors: string[] = validateContractSchemaV1(value, occurrenceSchema);
   if (!value || typeof value !== 'object') return ['Occurrence absente ou invalide.'];
   const occurrence = value as Record<string, unknown>;
 
@@ -117,7 +121,7 @@ export function validateSiteOccurrenceV1(value: unknown): string[] {
 }
 
 export function validateOccurrenceReturnManifestV1(value: unknown): string[] {
-  const errors: string[] = [];
+  const errors: string[] = validateContractSchemaV1(value, returnSchema);
   if (!value || typeof value !== 'object') return ['Manifest de retour absent ou invalide.'];
   const manifest = value as Record<string, unknown>;
 
