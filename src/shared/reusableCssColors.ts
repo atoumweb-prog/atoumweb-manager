@@ -22,7 +22,7 @@ export interface GeneralizedCssColorsResult {
 }
 
 const HEX_COLOR_RE = /#[0-9a-fA-F]{6}\b/g;
-const DECLARATION_RE = /(^\s*|[;{]\s*)([-A-Za-z][A-Za-z0-9_-]*)\s*:\s*([^;{}]+)(;?)/gm;
+const DECLARATION_RE = /(^\s*|[;{]\s*)([-A-Za-z][A-Za-z0-9_-]*)\s*:\s*([^;{}]+)(?=;|})/gm;
 
 export function generalizeReusableCssColors(
   css: string,
@@ -43,7 +43,7 @@ export function generalizeReusableCssColors(
 
   const rewriteDeclarations = (segment: string): string => segment.replace(
     DECLARATION_RE,
-    (whole, prefix: string, property: string, rawValue: string, terminator: string) => {
+    (whole, prefix: string, property: string, rawValue: string) => {
       if (property.startsWith('--')) return whole;
 
       const nextValue = rawValue.replace(HEX_COLOR_RE, (matched: string) => {
@@ -57,7 +57,7 @@ export function generalizeReusableCssColors(
         return `var(--aw-${slug}-color-${index + 1})`;
       });
 
-      return `${prefix}${property}: ${nextValue}${terminator}`;
+      return `${prefix}${property}: ${nextValue}`;
     },
   );
 
