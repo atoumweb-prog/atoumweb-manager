@@ -481,7 +481,7 @@ export class ContractTermsService {
             [
               clause.sourceKind,
               clause.sourceClauseId,
-              clause.sourceClauseVersionId,
+              row.is_customized ? row.source_clause_version_id : clause.sourceClauseVersionId,
               JSON.stringify(clause.sourceCatalogItemIds),
               row.is_customized ? row.title : clause.title,
               row.is_customized ? row.body : clause.body,
