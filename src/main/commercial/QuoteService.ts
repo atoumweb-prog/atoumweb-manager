@@ -54,6 +54,7 @@ interface QuoteRow extends Record<string, unknown> {
   contract_text_snapshot: string | null;
   contract_snapshot_json: string | null;
   contract_compiled_at: string | null;
+  contract_audience: 'professional' | 'consumer' | null;
   contract_document_id: string | null;
   contract_document_attached_at: string | null;
   abby_reference: string | null;
@@ -162,6 +163,7 @@ export class QuoteService {
       prerequisitesText: row.prerequisites_text,
       specialTerms: row.special_terms,
       contractType: row.contract_type,
+      contractAudience: row.contract_audience,
       contractTextSnapshot: row.contract_text_snapshot,
       contractSnapshotJson: row.contract_snapshot_json,
       lines,
@@ -176,6 +178,7 @@ export class QuoteService {
     if (!Number.isInteger(validityDays) || validityDays <= 0) throw new Error('Durée de validité invalide.');
     const depositPercent = input.depositPercent ?? 30;
     if (!Number.isInteger(depositPercent) || depositPercent < 0 || depositPercent > 100) throw new Error('Acompte invalide.');
+    const contractAudience = input.contractAudience ?? this.inferContractAudience(input.prospectId, input.clientAccountId);
 
     const id = randomUUID();
     const now = new Date();
@@ -190,10 +193,10 @@ export class QuoteService {
         `INSERT INTO quotes (
           id, quote_number, prospect_id, client_account_id, accepted_client_account_id,
           subject, need_summary, status, validity_days, valid_until, estimated_delay,
-          prerequisites_text, special_terms, contract_type, deposit_percent,
+          prerequisites_text, special_terms, contract_type, contract_audience, deposit_percent,
           catalog_value_cents, discount_value_cents, contract_value_cents, deposit_cents, balance_cents,
           created_at, updated_at
-        ) VALUES (?, ?, ?, ?, NULL, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 0, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, NULL, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 0, ?, ?)`,
         [
           id,
           number,
@@ -207,6 +210,7 @@ export class QuoteService {
           clean(input.prerequisitesText),
           clean(input.specialTerms),
           clean(input.contractType),
+          contractAudience,
           depositPercent,
           nowString,
           nowString,
@@ -380,16 +384,18 @@ export class QuoteService {
     const depositPercent = input.depositPercent ?? current.depositPercent ?? 30;
     if (!Number.isInteger(depositPercent) || depositPercent < 0 || depositPercent > 100) throw new Error('Acompte invalide.');
     const validityDays = input.validityDays ?? this.daysUntil(current.validUntil) ?? 30;
+    const contractAudience = input.contractAudience ?? current.contractAudience ?? this.inferContractAudience(current.prospectId, current.clientAccountId ?? current.acceptedClientAccountId);
+    if (!['professional', 'consumer'].includes(contractAudience)) throw new Error('Type de client contractuel invalide.');
     const validUntil = new Date();
     validUntil.setDate(validUntil.getDate() + validityDays);
 
     this.database.run(
       `UPDATE quotes SET subject=?, need_summary=?, validity_days=?, valid_until=?, estimated_delay=?,
-       prerequisites_text=?, special_terms=?, contract_type=?, deposit_percent=?, updated_at=? WHERE id=?`,
+       prerequisites_text=?, special_terms=?, contract_type=?, contract_audience=?, deposit_percent=?, updated_at=? WHERE id=?`,
       [subject, clean(input.needSummary ?? current.needSummary), validityDays, validUntil.toISOString(),
         clean(input.estimatedDelay ?? current.estimatedDelay), clean(input.prerequisitesText ?? current.prerequisitesText),
         clean(input.specialTerms ?? current.specialTerms), clean(input.contractType ?? current.contractType),
-        depositPercent, nowIso(), quoteId],
+        contractAudience, depositPercent, nowIso(), quoteId],
     );
     this.recalculate(quoteId);
     return this.get(quoteId);
@@ -512,6 +518,7 @@ export class QuoteService {
       prerequisitesText: source.prerequisitesText,
       specialTerms: source.specialTerms,
       contractType: source.contractType,
+      contractAudience: source.contractAudience,
       depositPercent: source.depositPercent,
     });
     const now = nowIso();
@@ -646,6 +653,20 @@ export class QuoteService {
     this.database.run(`UPDATE quotes SET status=?, ${timestampColumn}=?, updated_at=? WHERE id=?`, [status, now, now, id]);
     this.writeActivity(id, `quote_${status}`, summary);
     return this.get(id);
+  }
+
+  private inferContractAudience(prospectId?: string | null, clientId?: string | null): 'professional' | 'consumer' {
+    const client = clean(clientId);
+    if (client) {
+      const row = this.database.get<{ organization_id: string | null }>('SELECT organization_id FROM client_accounts WHERE id=?', [client]);
+      return row?.organization_id ? 'professional' : 'consumer';
+    }
+    const prospect = clean(prospectId);
+    if (prospect) {
+      const row = this.database.get<{ organization_id: string | null }>('SELECT organization_id FROM prospects WHERE id=?', [prospect]);
+      return row?.organization_id ? 'professional' : 'consumer';
+    }
+    return 'consumer';
   }
 
   private validateOwner(prospectId?: string | null, clientId?: string | null): void {
