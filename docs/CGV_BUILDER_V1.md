@@ -20,7 +20,7 @@ Abby reste l'outil d'édition/finalisation externe du devis. AtoumWeb Manager pr
 ### 1. Bibliothèque de clauses
 
 Deux familles de clauses versionnées :
-- **Socle commun** : clauses applicables à tous les devis.
+- **Socle commun** : clauses fixes applicables à tous les devis. Elles ne sont ni désactivables ni modifiables au niveau d’un devis ; une évolution passe par une nouvelle version publiée dans la bibliothèque.
 - **Clauses prestation** : clauses déclenchées par une ou plusieurs prestations du catalogue.
 
 Une clause possède :
