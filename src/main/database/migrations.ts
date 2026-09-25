@@ -19,6 +19,7 @@ import { BRIDGE_SNAPSHOT_MIGRATION } from './bridgeSnapshotMigration';
 import { BRIDGE_SNAPSHOT_REPAIR_MIGRATION } from './bridgeSnapshotRepairMigration';
 import { ATOUMWEB_LIBRARY_VERTICAL_MIGRATION } from './atoumWebLibraryVerticalMigration';
 import { CONTRACT_TERMS_MIGRATION } from './contractTermsMigration';
+import { QUOTE_CONTRACT_DOCUMENT_MIGRATION } from './quoteContractDocumentMigration';
 
 export interface Migration { id: number; name: string; sql: string; disableForeignKeys?: boolean; }
 
@@ -193,6 +194,7 @@ export const MIGRATIONS: Migration[] = [
   BRIDGE_SNAPSHOT_REPAIR_MIGRATION,
   ATOUMWEB_LIBRARY_VERTICAL_MIGRATION,
   CONTRACT_TERMS_MIGRATION,
+  QUOTE_CONTRACT_DOCUMENT_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {
