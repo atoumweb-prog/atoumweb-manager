@@ -63,7 +63,7 @@ describe('migrations SQLite', () => {
         "SELECT name FROM sqlite_master WHERE type='table' AND name='bridge_snapshot_sections'",
       )).toBeUndefined();
 
-      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([37]);
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([37, 38]);
       expect(database.get<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='bridge_snapshot_sections'",
       )?.name).toBe('bridge_snapshot_sections');
@@ -108,10 +108,16 @@ describe('migrations SQLite', () => {
     for (const column of ['target_contact_id', 'reason_code', 'reason_text']) {
       expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('crm_actions') WHERE name='${column}'`)?.name).toBe(column);
     }
-    for (const column of ['reuse_status', 'origin_technical_item_id', 'library_category']) {
+    for (const column of ['reuse_status', 'origin_technical_item_id', 'library_category', 'vertical']) {
       expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('technical_items') WHERE name='${column}'`)?.name).toBe(column);
     }
-    expect(MIGRATIONS.at(-1)?.id).toBe(37);
+    expect(MIGRATIONS.at(-1)?.id).toBe(38);
+    expect(() => database.run(
+      `INSERT INTO technical_items (id,project_id,scope,category,library_category,name,description,tags_json,reuse_status,origin_technical_item_id,vertical,created_at,updated_at,archived_at)
+       VALUES ('snippet-test',NULL,'atoumweb','other','code_snippet','Snippet test',NULL,'[]','ready',NULL,'fleuriste','2026-09-25T00:00:00.000Z','2026-09-25T00:00:00.000Z',NULL)`,
+    )).not.toThrow();
+    expect(database.get<{ vertical: string }>("SELECT vertical FROM technical_items WHERE id='snippet-test'")?.vertical).toBe('fleuriste');
+
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('expenses') WHERE name='project_id'")?.name).toBe('project_id');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('expenses') WHERE name='receipt_relative_path'")?.name).toBe('receipt_relative_path');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('crm_identity_assets') WHERE name='role'")?.name).toBe('role');
