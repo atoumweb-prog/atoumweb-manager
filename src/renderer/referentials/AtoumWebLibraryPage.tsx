@@ -924,7 +924,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
             <details className="aw-library-secondary-panel aw-library-assets">
               <summary>
                 <div><span className="eyebrow">Fichiers indépendants</span><strong>Captures & assets</strong></div>
-                <span className="aw-library-secondary-count">${assets.length} fichier(s)</span>
+                <span className="aw-library-secondary-count">{assets.length} fichier(s)</span>
               </summary>
               <div className="aw-library-secondary-body">
                 <div className="aw-library-section-title">
@@ -967,7 +967,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
                       {version.stable && <span>stable</span>}
                       {!stage && !version.stable && !selected.archivedAt && <button type="button" className="secondary-button" onClick={() => void markStable(version.id)}>Marquer stable</button>}
                       {stage === 'reusable' && !version.stable && !selected.archivedAt && <span>ancienne réutilisable</span>}
-
+                    </div>
                     {version.notes && <p>{version.notes}</p>}
                     {version.contentText && <button className="secondary-button aw-library-version-toggle" type="button" onClick={() => setExpandedVersionId((current) => current === version.id ? null : version.id)}>
                       {expandedVersionId === version.id ? 'Masquer cette version' : 'Voir cette version'}
@@ -982,8 +982,6 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
                   </div>;
                 })}
                 {selected.versions.filter((version) => version.id !== currentVersion?.id).length === 0 && <p className="muted">Aucune ancienne version : seule la version courante existe pour le moment.</p>}
-              </div>
-  
               </div>
             </details>
             </>
