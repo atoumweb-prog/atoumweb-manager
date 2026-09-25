@@ -161,6 +161,34 @@ describe('QuoteService', () => {
     expect(() => quotes.addCustomLine(quote.id, { label: 'Interdit', proposedUnitPriceCents: 1000 })).toThrow(/figé|accepté/i);
   });
 
+  it('rattache le PDF contractuel Abby uniquement après acceptation du devis', () => {
+    const prospect = createProspect();
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Devis signé Abby' });
+    quotes.addCustomLine(quote.id, { label: 'Site', proposedUnitPriceCents: 69900 });
+
+    expect(() => quotes.attachContractDocument(quote.id, 'doc-inexistant')).toThrow(/accepté/i);
+
+    quotes.finalize(quote.id);
+    quotes.markSent(quote.id);
+    const accepted = quotes.accept(quote.id);
+    const clientId = accepted.acceptedClientAccountId!;
+    const now = new Date().toISOString();
+    database.run(
+      `INSERT INTO client_documents
+       (id,client_account_id,category,title,original_name,relative_path,mime_type,size_bytes,created_at,updated_at)
+       VALUES ('contract-doc',?,'contract','Devis signé','devis-signe.pdf','Clients/test/devis-signe.pdf','application/pdf',123,?,?)`,
+      [clientId, now, now],
+    );
+
+    const attached = quotes.attachContractDocument(quote.id, 'contract-doc', 'ABBY-DEV-2026-42');
+    expect(attached.contractDocumentId).toBe('contract-doc');
+    expect(attached.abbyReference).toBe('ABBY-DEV-2026-42');
+    expect(attached.contractDocumentAttachedAt).toBeTruthy();
+
+    const updated = quotes.updateAbbyReference(quote.id, 'ABBY-DEV-2026-43');
+    expect(updated.abbyReference).toBe('ABBY-DEV-2026-43');
+  });
+
   it('duplique un devis refusé avec un nouveau numéro', () => {
     const prospect = createProspect();
     const quote = quotes.create({ prospectId: prospect.id, subject: 'À dupliquer' });
