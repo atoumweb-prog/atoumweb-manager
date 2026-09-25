@@ -42,7 +42,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   const [templateBody, setTemplateBody] = useState('');
   const [versionEditors, setVersionEditors] = useState<Record<string, string | undefined>>({});
 
-  const editable = quote.status === 'draft' && !quote.finalizedAt && !quote.contractCompiledAt;
+  const editable = quote.status === 'draft' && !quote.finalizedAt;
   const textForAbby = (build?.snapshotText || build?.compiledText || '').trim();
 
   const counts = useMemo(() => {
