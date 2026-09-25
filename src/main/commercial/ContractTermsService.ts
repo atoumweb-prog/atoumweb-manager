@@ -218,6 +218,7 @@ export class ContractTermsService {
     if (!version) throw new Error('Version de clause introuvable.');
     const body = clean(version.body);
     if (!body) throw new Error('Le texte de la clause doit être renseigné avant publication.');
+    if (/\[À RENSEIGNER/i.test(body)) throw new Error('Cette clause contient encore un placeholder « À RENSEIGNER » et ne peut pas être publiée.');
     const template = this.getTemplate(version.clause_id);
     if (template.status === 'archived') throw new Error('Réactive la clause avant publication.');
 
