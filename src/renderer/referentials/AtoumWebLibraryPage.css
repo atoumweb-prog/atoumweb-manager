@@ -1931,3 +1931,204 @@ details.aw-reusable-fields {
   color: var(--text);
   font-size: 10px;
 }
+
+
+/* Bibliothèque — hiérarchie finale de fiche, pensée aussi pour les fenêtres partielles */
+.aw-library-detail {
+  container-type: inline-size;
+  container-name: library-detail;
+}
+
+.aw-library-bridge-workflow {
+  gap: 8px;
+  padding: 10px;
+}
+
+.aw-library-current-version {
+  gap: 8px;
+  padding: 10px;
+}
+
+.aw-library-metadata-editor {
+  gap: 8px;
+  margin: 6px 0 10px;
+  padding: 10px;
+}
+
+.aw-library-metadata-editor .aw-library-form-grid {
+  gap: 8px;
+}
+
+.aw-library-metadata-editor textarea {
+  min-height: 58px;
+  resize: vertical;
+}
+
+.aw-library-metadata-editor > .primary-button {
+  justify-self: start;
+  min-width: 120px;
+}
+
+.aw-library-metadata-advanced {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.aw-library-metadata-advanced summary {
+  padding: 7px 9px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.aw-library-metadata-advanced[open] {
+  padding-bottom: 9px;
+}
+
+.aw-library-metadata-advanced[open] > label {
+  margin: 0 9px;
+}
+
+.aw-library-secondary-panel {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-soft);
+}
+
+.aw-library-secondary-panel > summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  min-height: 48px;
+  padding: 9px 11px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.aw-library-secondary-panel > summary::-webkit-details-marker {
+  display: none;
+}
+
+.aw-library-secondary-panel > summary > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.aw-library-secondary-panel > summary strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.aw-library-secondary-panel > summary::after {
+  content: "⌄";
+  flex: 0 0 auto;
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 800;
+  transition: transform 120ms ease;
+}
+
+.aw-library-secondary-panel[open] > summary::after {
+  transform: rotate(180deg);
+}
+
+.aw-library-secondary-count {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  padding: 3px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.aw-library-secondary-body {
+  display: grid;
+  gap: 10px;
+  padding: 10px 11px 11px;
+  border-top: 1px solid var(--border);
+}
+
+.aw-library-assets,
+.aw-library-versions {
+  display: block;
+  padding: 0;
+  background: var(--surface-soft);
+}
+
+.aw-library-version-history {
+  gap: 8px;
+}
+
+.aw-library-manual-use {
+  background: color-mix(in srgb, var(--surface-soft) 65%, var(--surface));
+}
+
+.aw-library-manual-use > summary {
+  min-height: 42px;
+}
+
+.aw-bridge-candidate-reuse {
+  gap: 8px;
+}
+
+.aw-bridge-package-summary {
+  margin-top: -1px;
+}
+
+/* La largeur de la fiche, et non celle de la fenêtre, décide de la densité.
+   Une fiche agrandie reste donc compacte même dans une fenêtre non maximisée. */
+@container library-detail (min-width: 760px) {
+  .aw-library-stage-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .aw-library-stage-open,
+  .aw-library-stage-create {
+    min-height: 54px;
+    padding: 8px 9px;
+  }
+
+  .aw-library-detail-heading {
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .aw-library-detail-heading .button-row {
+    justify-content: flex-end;
+  }
+}
+
+@container library-detail (min-width: 980px) {
+  .aw-library-metadata-main-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@container library-detail (max-width: 759px) {
+  .aw-library-stage-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+  .aw-library-secondary-panel > summary {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .aw-library-secondary-count {
+    margin-left: 0;
+  }
+}
