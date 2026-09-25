@@ -114,6 +114,12 @@ Cet identifiant **n’appartient pas au package Bibliothèque source**.
 
 Il est créé par Bridge lorsqu’un composant est instancié dans un Workbench ou sur un site.
 
+Le contrat canonique de cette occurrence et de son retour vers Manager est défini dans :
+
+- `docs/ATOUMWEB_SITE_OCCURRENCE_CONTRACT_V1.md`
+- `docs/ATOUMWEB_SITE_OCCURRENCE_V1.schema.json`
+- `docs/ATOUMWEB_OCCURRENCE_RETURN_V1.schema.json`
+
 L’occurrence doit conserver au minimum la provenance suivante :
 
 ```text
