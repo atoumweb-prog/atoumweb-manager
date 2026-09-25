@@ -112,7 +112,13 @@ function isCanonicalField(value: Record<string, unknown>): value is Record<strin
   return typeof value.id === 'string'
     && typeof value.label === 'string'
     && typeof value.type === 'string'
-    && (ATOUMWEB_COMPONENT_FIELD_TYPES as readonly string[]).includes(value.type);
+    && (ATOUMWEB_COMPONENT_FIELD_TYPES as readonly string[]).includes(value.type)
+    && Object.prototype.hasOwnProperty.call(value, 'default')
+    && typeof value.required === 'boolean'
+    && value.binding != null
+    && typeof value.binding === 'object'
+    && value.source != null
+    && typeof value.source === 'object';
 }
 
 function legacyFieldToCanonical(field: LegacyField, index: number): AtoumWebComponentField {
