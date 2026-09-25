@@ -1,5 +1,19 @@
 # AtoumWeb Manager — Suivi du projet
 
+## Lot 4 — Réception Occurrence Return V1 — 25/09/2026
+
+- [x] Stockage SQL dédié aux retours Bridge sans détourner les snapshots ni les versions de Bibliothèque.
+- [x] Inspection ZIP sécurisée : manifest V1, SHA-256 de chaque fichier déclaré, Site Occurrence V1 et cohérence des identifiants.
+- [x] Vérification que le composant et la version Bibliothèque source existent réellement dans Manager.
+- [x] Import idempotent par empreinte du package et conservation locale du ZIP source.
+- [x] API Electron pour lister, ouvrir, inspecter, importer et décider.
+- [x] Écran Bibliothèque pour voir les changements, le contenu retourné et la provenance.
+- [x] Décision « Conserver uniquement cette occurrence » enregistrée de manière transactionnelle.
+- [x] Les choix « nouvelle variante / mise à jour variante / nouvelle famille » sont visibles mais désactivés jusqu’au lot Family / Variant.
+- [x] Tests ciblés ajoutés pour import nominal, déduplication, checksum invalide, version source inconnue et décision.
+- [x] Validation MSI : typecheck réussi ; tests ciblés 12/12 (4 Occurrence Return + 8 migrations), 0 échec.
+- Aucun changement des contrats V1, aucune publication production, aucune décision Family / Variant automatique.
+
 ## Lot 3 — Validation humaine des versions réutilisables — 25/09/2026
 
 - [x] Une préparation automatique ne passe plus seule le composant à « Prêt à réutiliser » et ne marque plus la version stable.
