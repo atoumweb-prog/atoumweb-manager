@@ -2021,15 +2021,18 @@ function CreationPanel({ form, setForm, onCreate }: { form: CreationForm; setFor
 
 function MetadataEditor({ form, setForm, onSave }: { form: MetadataForm; setForm: (value: MetadataForm) => void; onSave: () => Promise<void> }) {
   return <div className="aw-library-metadata-editor">
-    <div className="aw-library-form-grid">
+    <div className="aw-library-form-grid aw-library-metadata-main-grid">
       <label>Nom<input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>
       <label>Catégorie<select value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value as AtoumWebLibraryCategory })}>{CATEGORIES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
       <label>Statut<select value={form.reuseStatus} onChange={(event) => setForm({ ...form, reuseStatus: event.target.value as AtoumWebReuseStatus })}>{REUSE_STATUSES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
       <label>Tags<input value={form.tags} onChange={(event) => setForm({ ...form, tags: event.target.value })} placeholder="Séparés par des virgules" /></label>
     </div>
     <label>Description<textarea rows={2} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
-    <label>ID origine Bibliothèque projet<input value={form.originTechnicalItemId} onChange={(event) => setForm({ ...form, originTechnicalItemId: event.target.value })} placeholder="Optionnel · uniquement un composant projet" /></label>
-    <button className="primary-button" type="button" onClick={() => void onSave()}>Enregistrer les métadonnées</button>
+    <details className="aw-library-metadata-advanced">
+      <summary>Informations avancées</summary>
+      <label>ID origine Bibliothèque projet<input value={form.originTechnicalItemId} onChange={(event) => setForm({ ...form, originTechnicalItemId: event.target.value })} placeholder="Optionnel · uniquement un composant projet" /></label>
+    </details>
+    <button className="primary-button" type="button" onClick={() => void onSave()}>Enregistrer</button>
   </div>;
 }
 
