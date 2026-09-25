@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { ProjectTechnicalCategory } from '../../shared/projects';
 import { PROJECT_TECHNICAL_CONTENT_TYPES } from '../../shared/projects';
+import { normalizeSlug } from '../../shared/componentIdentity';
 import {
   ATOUMWEB_LIBRARY_CATEGORIES,
   ATOUMWEB_REUSE_STATUSES,
@@ -30,6 +31,7 @@ const TECHNICAL_CATEGORY_BY_LIBRARY_CATEGORY: Record<AtoumWebLibraryCategory, Pr
   gallery: 'section',
   carousel: 'section',
   navigation: 'section',
+  code_snippet: 'other',
   css: 'css',
   javascript: 'javascript',
   php: 'php',
@@ -51,6 +53,7 @@ interface ItemRow extends Record<string, unknown> {
   tags_json: string;
   reuse_status: AtoumWebTechnicalItemSummary['reuseStatus'] | null;
   origin_technical_item_id: string | null;
+  vertical: string | null;
   created_at: string;
   updated_at: string;
   archived_at: string | null;
@@ -85,6 +88,10 @@ export class AtoumWebTechnicalLibraryService {
       .map((row) => this.mapSummary(row))
       .filter((item) => !filters.category || item.category === filters.category)
       .filter((item) => !filters.reuseStatus || item.reuseStatus === filters.reuseStatus)
+      .filter((item) => {
+        const verticalNeedle = normalizeSlug(filters.vertical);
+        return !verticalNeedle || Boolean(item.vertical?.includes(verticalNeedle));
+      })
       .filter((item) => !needle || this.searchParts(item.id, item).some((value) => value.toLocaleLowerCase('fr-FR').includes(needle)));
   }
 
@@ -108,8 +115,8 @@ export class AtoumWebTechnicalLibraryService {
     try {
       this.database.run(
         `INSERT INTO technical_items
-         (id,project_id,scope,category,library_category,name,description,tags_json,reuse_status,origin_technical_item_id,created_at,updated_at)
-         VALUES (?,NULL,'atoumweb',?,?,?,?,?,?,?,?,?)`,
+         (id,project_id,scope,category,library_category,name,description,tags_json,reuse_status,origin_technical_item_id,vertical,created_at,updated_at)
+         VALUES (?,NULL,'atoumweb',?,?,?,?,?,?,?,?,?,?)`,
         [
           id,
           technicalCategory,
@@ -119,6 +126,7 @@ export class AtoumWebTechnicalLibraryService {
           JSON.stringify(this.normalizeTags(itemInput.tags)),
           itemInput.reuseStatus,
           itemInput.originTechnicalItemId ?? null,
+          normalizeSlug(itemInput.vertical),
           now,
           now,
         ],
@@ -142,6 +150,7 @@ export class AtoumWebTechnicalLibraryService {
       name: input.name ?? item.name,
       description: input.description === undefined ? item.description : input.description,
       tags: input.tags ?? item.tags,
+      vertical: input.vertical === undefined ? item.vertical : input.vertical,
       reuseStatus: input.reuseStatus ?? item.reuseStatus,
       originTechnicalItemId: input.originTechnicalItemId === undefined ? item.originTechnicalItemId : input.originTechnicalItemId,
     };
@@ -153,7 +162,7 @@ export class AtoumWebTechnicalLibraryService {
     const technicalCategory = TECHNICAL_CATEGORY_BY_LIBRARY_CATEGORY[next.category];
     this.database.run(
       `UPDATE technical_items
-       SET category=?, library_category=?, name=?, description=?, tags_json=?, reuse_status=?, origin_technical_item_id=?, updated_at=?
+       SET category=?, library_category=?, name=?, description=?, tags_json=?, reuse_status=?, origin_technical_item_id=?, vertical=?, updated_at=?
        WHERE id=? AND scope='atoumweb'`,
       [
         technicalCategory,
@@ -163,6 +172,7 @@ export class AtoumWebTechnicalLibraryService {
         JSON.stringify(this.normalizeTags(next.tags)),
         next.reuseStatus,
         next.originTechnicalItemId ?? null,
+        normalizeSlug(next.vertical),
         now,
         id,
       ],
@@ -267,6 +277,7 @@ export class AtoumWebTechnicalLibraryService {
       name: row.name,
       description: row.description,
       tags: this.parseTags(row.tags_json),
+      vertical: row.vertical,
       reuseStatus: row.reuse_status,
       originTechnicalItemId: row.origin_technical_item_id,
       currentVersion: versions.find((version) => version.current) ?? null,
@@ -302,6 +313,7 @@ export class AtoumWebTechnicalLibraryService {
       item.name,
       item.description ?? '',
       item.category,
+      item.vertical ?? '',
       item.reuseStatus,
       ...(item.tags ?? []),
       ...versions.flatMap((version) => [
