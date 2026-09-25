@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import type {
   AtoumWebLibraryCategory,
+  AtoumWebOccurrenceReturnDetail,
+  AtoumWebOccurrenceReturnInspection,
+  AtoumWebOccurrenceReturnSummary,
   AtoumWebPackageInspection,
   AtoumWebReuseStatus,
   AtoumWebTechnicalAsset,
@@ -256,6 +259,11 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
   const [packageTargetItemId, setPackageTargetItemId] = useState('');
   const [packageMarkStable, setPackageMarkStable] = useState(false);
   const [packageBusy, setPackageBusy] = useState(false);
+  const [occurrenceReturns, setOccurrenceReturns] = useState<AtoumWebOccurrenceReturnSummary[]>([]);
+  const [occurrenceReturnInspection, setOccurrenceReturnInspection] = useState<AtoumWebOccurrenceReturnInspection | null>(null);
+  const [selectedOccurrenceReturn, setSelectedOccurrenceReturn] = useState<AtoumWebOccurrenceReturnDetail | null>(null);
+  const [showOccurrenceReturns, setShowOccurrenceReturns] = useState(false);
+  const [occurrenceReturnBusy, setOccurrenceReturnBusy] = useState(false);
   const [bridgeWorkflowBusy, setBridgeWorkflowBusy] = useState(false);
   const [bridgeStageView, setBridgeStageView] = useState<BridgeStageView>('original');
   const [error, setError] = useState<string | null>(null);
@@ -323,12 +331,21 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, category, reuseStatus, vertical, includeArchived, initialItemId]);
 
+  useEffect(() => {
+    void loadOccurrenceReturns();
+  }, []);
+
   const summary = useMemo(() => ({
     total: items.length,
     ready: items.filter((item) => effectiveReuseStatus(item) === 'ready').length,
     adapt: items.filter((item) => effectiveReuseStatus(item) === 'adapt').length,
     references: items.filter((item) => effectiveReuseStatus(item) === 'reference').length,
   }), [items]);
+
+  const pendingOccurrenceReturnCount = useMemo(
+    () => occurrenceReturns.filter((item) => !item.decision).length,
+    [occurrenceReturns],
+  );
 
   const currentVersion = selected?.currentVersion ?? selected?.versions[0] ?? null;
   const bridgeWorkflow = useMemo(() => {
@@ -800,6 +817,85 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
     }
   }
 
+  async function loadOccurrenceReturns(preferredId?: string | null): Promise<void> {
+    try {
+      const next = await window.atoumweb.referentials.occurrenceReturns.list();
+      setOccurrenceReturns(next);
+      const id = preferredId ?? selectedOccurrenceReturn?.id;
+      if (id && next.some((item) => item.id === id)) {
+        setSelectedOccurrenceReturn(await window.atoumweb.referentials.occurrenceReturns.get(id));
+      } else if (selectedOccurrenceReturn && !next.some((item) => item.id === selectedOccurrenceReturn.id)) {
+        setSelectedOccurrenceReturn(null);
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Impossible de charger les retours Bridge.');
+    }
+  }
+
+  async function inspectOccurrenceReturn(): Promise<void> {
+    setOccurrenceReturnBusy(true);
+    try {
+      setError(null);
+      const inspection = await window.atoumweb.referentials.occurrenceReturns.inspectImport();
+      if (!inspection) return;
+      setOccurrenceReturnInspection(inspection);
+      setShowOccurrenceReturns(true);
+      if (inspection.existingReturnId) {
+        setSelectedOccurrenceReturn(await window.atoumweb.referentials.occurrenceReturns.get(inspection.existingReturnId));
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Inspection du retour Bridge impossible.');
+    } finally {
+      setOccurrenceReturnBusy(false);
+    }
+  }
+
+  async function importInspectedOccurrenceReturn(): Promise<void> {
+    if (!occurrenceReturnInspection) return;
+    setOccurrenceReturnBusy(true);
+    try {
+      setError(null);
+      const imported = await window.atoumweb.referentials.occurrenceReturns.importReturn(occurrenceReturnInspection.packagePath);
+      setOccurrenceReturnInspection(null);
+      setSelectedOccurrenceReturn(imported);
+      setShowOccurrenceReturns(true);
+      await loadOccurrenceReturns(imported.id);
+      onMessage(`Retour Bridge importé : ${imported.siteOccurrenceId} · source ${imported.libraryItemName} v${imported.libraryVersionNumber}.`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Import du retour Bridge impossible.');
+    } finally {
+      setOccurrenceReturnBusy(false);
+    }
+  }
+
+  async function openOccurrenceReturn(id: string): Promise<void> {
+    setOccurrenceReturnBusy(true);
+    try {
+      setError(null);
+      setSelectedOccurrenceReturn(await window.atoumweb.referentials.occurrenceReturns.get(id));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Impossible d’ouvrir ce retour Bridge.');
+    } finally {
+      setOccurrenceReturnBusy(false);
+    }
+  }
+
+  async function keepOccurrenceReturn(): Promise<void> {
+    if (!selectedOccurrenceReturn) return;
+    setOccurrenceReturnBusy(true);
+    try {
+      setError(null);
+      const decided = await window.atoumweb.referentials.occurrenceReturns.keepOccurrence(selectedOccurrenceReturn.id);
+      setSelectedOccurrenceReturn(decided);
+      await loadOccurrenceReturns(decided.id);
+      onMessage('Décision enregistrée : conserver uniquement cette occurrence.');
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Impossible d’enregistrer la décision.');
+    } finally {
+      setOccurrenceReturnBusy(false);
+    }
+  }
+
   return (
     <div className={`aw-library ${headerCollapsed ? 'head-collapsed' : ''}`}>
       <div className="aw-library-fixed-head">
@@ -828,6 +924,8 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
         </datalist>
         <label className="aw-library-checkbox"><input type="checkbox" checked={includeArchived} onChange={(event) => setIncludeArchived(event.target.checked)} /> Archivés</label>
         <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void inspectPackage()}><OperationIcon name="upload" size={16} /> Importer ZIP</button>
+        <button className="secondary-button" type="button" disabled={occurrenceReturnBusy} onClick={() => void inspectOccurrenceReturn()}><OperationIcon name="upload" size={16} /> Retour Bridge</button>
+        {occurrenceReturns.length > 0 && <button className="secondary-button" type="button" onClick={() => setShowOccurrenceReturns((value) => !value)}>Retours {pendingOccurrenceReturnCount ? `· ${pendingOccurrenceReturnCount} à décider` : `· ${occurrenceReturns.length}`}</button>}
         <button className="primary-button" type="button" onClick={() => setCreating((value) => !value)}>{creating ? 'Fermer' : 'Nouveau composant'}</button>
         </article>
       </div>
@@ -843,6 +941,78 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
         <span aria-hidden="true">{headerCollapsed ? '↓' : '↑'}</span>
         <small>{headerCollapsed ? 'Afficher' : 'Masquer'}</small>
       </button>}
+
+      {occurrenceReturnInspection && <article className="panel aw-library-package-review">
+        <div className="panel-title">
+          <div><span className="eyebrow">Occurrence Return V1</span><h2>{occurrenceReturnInspection.libraryItemName}</h2></div>
+          <button className="secondary-button" type="button" onClick={() => setOccurrenceReturnInspection(null)}>Fermer</button>
+        </div>
+        <div className="aw-library-package-grid">
+          <div><span>Occurrence</span><strong>{occurrenceReturnInspection.siteOccurrenceId}</strong></div>
+          <div><span>Source Manager</span><strong>v{occurrenceReturnInspection.libraryVersionNumber}</strong></div>
+          <div><span>État Bridge</span><strong>{occurrenceReturnInspection.occurrenceState}</strong></div>
+          <div><span>Retour</span><strong>{formatLibraryDate(occurrenceReturnInspection.returnedAt)}</strong></div>
+        </div>
+        <OccurrenceChangesSummary changes={occurrenceReturnInspection.changes} />
+        <p className="technical-safety-note">Le retour est vérifié contre le contrat V1, ses SHA-256 et la version Bibliothèque qui a créé l’occurrence. Aucune décision de Bibliothèque n’est appliquée automatiquement.</p>
+        {occurrenceReturnInspection.alreadyImported
+          ? <p role="status">Ce package a déjà été importé. L’import est idempotent : aucune copie supplémentaire ne sera créée.</p>
+          : <button className="primary-button" type="button" disabled={occurrenceReturnBusy} onClick={() => void importInspectedOccurrenceReturn()}>Importer le retour vérifié</button>}
+      </article>}
+
+      {showOccurrenceReturns && occurrenceReturns.length > 0 && <article className="panel aw-library-package-review">
+        <div className="panel-title">
+          <div><span className="eyebrow">Bridge → Manager</span><h2>Retours d’occurrences</h2></div>
+          <button className="secondary-button" type="button" onClick={() => setShowOccurrenceReturns(false)}>Masquer</button>
+        </div>
+        <div className="aw-library-package-duplicates">
+          {occurrenceReturns.map((item) => <button type="button" key={item.id} onClick={() => void openOccurrenceReturn(item.id)}>
+            <span>{item.decision === 'keep_occurrence' ? 'Occurrence conservée' : item.changes.structuralChange ? 'Décision requise · changement structurel' : 'Décision requise'}</span>
+            <strong>{item.libraryItemName} · v{item.libraryVersionNumber}</strong>
+            <small>{item.siteOccurrenceId} · {formatLibraryDate(item.returnedAt)}</small>
+          </button>)}
+        </div>
+      </article>}
+
+      {selectedOccurrenceReturn && <article className="panel aw-library-package-review">
+        <div className="panel-title">
+          <div><span className="eyebrow">Revue du retour</span><h2>{selectedOccurrenceReturn.libraryItemName} · v{selectedOccurrenceReturn.libraryVersionNumber}</h2></div>
+          <button className="secondary-button" type="button" onClick={() => setSelectedOccurrenceReturn(null)}>Fermer</button>
+        </div>
+        <div className="aw-library-package-grid">
+          <div><span>Occurrence</span><strong>{selectedOccurrenceReturn.siteOccurrenceId}</strong></div>
+          <div><span>Site cible</span><strong>{selectedOccurrenceReturn.occurrence.target.siteUrl ?? selectedOccurrenceReturn.occurrence.target.siteKey ?? 'Non renseigné'}</strong></div>
+          <div><span>Workbench</span><strong>{selectedOccurrenceReturn.occurrence.target.workbenchId}</strong></div>
+          <div><span>État</span><strong>{selectedOccurrenceReturn.occurrenceState}</strong></div>
+        </div>
+        <OccurrenceChangesSummary changes={selectedOccurrenceReturn.changes} />
+        <details className="aw-library-secondary-panel">
+          <summary><div><span className="eyebrow">Contenu revenu</span><strong>HTML / CSS / JavaScript</strong></div></summary>
+          <div className="aw-library-secondary-body">
+            <TechnicalContentViewer contentType="code" language="html" content={selectedOccurrenceReturn.html} title="HTML retourné" onMessage={onMessage} />
+            {selectedOccurrenceReturn.css && <TechnicalContentViewer contentType="code" language="css" content={selectedOccurrenceReturn.css} title="CSS retourné" onMessage={onMessage} />}
+            {selectedOccurrenceReturn.javascript && <TechnicalContentViewer contentType="code" language="javascript" content={selectedOccurrenceReturn.javascript} title="JavaScript retourné" onMessage={onMessage} />}
+          </div>
+        </details>
+        <details className="aw-library-secondary-panel">
+          <summary><div><span className="eyebrow">Traçabilité</span><strong>Provenance du retour</strong></div></summary>
+          <div className="aw-library-secondary-body">
+            <TechnicalContentViewer contentType="json" language="json" content={JSON.stringify(selectedOccurrenceReturn.provenance, null, 2)} title="Provenance" onMessage={onMessage} />
+          </div>
+        </details>
+        <div className="aw-library-section-title">
+          <div><span className="eyebrow">Décision humaine</span><h3>Que faire de cette occurrence ?</h3></div>
+        </div>
+        {selectedOccurrenceReturn.decision === 'keep_occurrence'
+          ? <div className="aw-bridge-candidate-state reusable"><OperationIcon name="check-circle" size={18} /><div><strong>Occurrence conservée</strong><span>Aucune modification n’a été appliquée à la Bibliothèque source.</span></div></div>
+          : <div className="button-row">
+              <button className="primary-button" type="button" disabled={occurrenceReturnBusy} onClick={() => void keepOccurrenceReturn()}>Conserver uniquement cette occurrence</button>
+              <button className="secondary-button" type="button" disabled title="Disponible après le lot Family / Variant">Créer une nouvelle variante</button>
+              <button className="secondary-button" type="button" disabled title="Disponible après le lot Family / Variant">Mettre à jour une variante</button>
+              <button className="secondary-button" type="button" disabled title="Disponible après le lot Family / Variant">Détacher / nouvelle famille</button>
+            </div>}
+        {selectedOccurrenceReturn.changes.structuralChange && <p className="technical-safety-note">Bridge signale un changement structurel. La future option « Détacher / nouvelle famille » devra être particulièrement mise en évidence, mais aucune action automatique n’est effectuée.</p>}
+      </article>}
 
       {packageInspection && <article className="panel aw-library-package-review">
         <div className="panel-title"><div><span className="eyebrow">Import contrôlé</span><h2>{packageInspection.item.name}</h2></div><button className="secondary-button" type="button" onClick={() => setPackageInspection(null)}>Fermer</button></div>
@@ -2239,6 +2409,26 @@ function MetadataEditor({ form, setForm, onSave }: { form: MetadataForm; setForm
 
 function Summary({ icon, label, value }: { icon: OperationIconName; label: string; value: number }) {
   return <article className="kpi-card aw-library-kpi"><span className="aw-library-kpi-icon"><OperationIcon name={icon} size={20} /></span><div><span>{label}</span><strong>{value}</strong><small>Bibliothèque AtoumWeb</small></div></article>;
+}
+
+function OccurrenceChangesSummary({ changes }: { changes: AtoumWebOccurrenceReturnSummary['changes'] }) {
+  const flags = [
+    changes.htmlChanged ? 'HTML' : null,
+    changes.cssChanged ? 'CSS' : null,
+    changes.javascriptChanged ? 'JavaScript' : null,
+    changes.structuralChange ? 'Structure' : null,
+  ].filter((value): value is string => Boolean(value));
+  return <div className="aw-library-package-grid">
+    <div><span>Champs modifiés</span><strong>{changes.changedFieldIds.length ? changes.changedFieldIds.join(', ') : 'Aucun'}</strong></div>
+    <div><span>Variables CSS</span><strong>{changes.changedCssVariables.length ? changes.changedCssVariables.join(', ') : 'Aucune'}</strong></div>
+    <div><span>Assets modifiés</span><strong>{changes.changedAssetIds.length ? changes.changedAssetIds.join(', ') : 'Aucun'}</strong></div>
+    <div><span>Différences techniques</span><strong>{flags.length ? flags.join(' · ') : 'Aucune'}</strong></div>
+  </div>;
+}
+
+function formatLibraryDate(value: string): string {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
 }
 
 function categoryLabel(category: AtoumWebLibraryCategory): string {
