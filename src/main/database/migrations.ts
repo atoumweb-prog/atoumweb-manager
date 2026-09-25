@@ -18,6 +18,7 @@ import { TIME_PAUSE_REASON_MIGRATION } from './timePauseReasonMigration';
 import { BRIDGE_SNAPSHOT_MIGRATION } from './bridgeSnapshotMigration';
 import { BRIDGE_SNAPSHOT_REPAIR_MIGRATION } from './bridgeSnapshotRepairMigration';
 import { ATOUMWEB_LIBRARY_VERTICAL_MIGRATION } from './atoumWebLibraryVerticalMigration';
+import { BRIDGE_OCCURRENCE_RETURN_MIGRATION } from './bridgeOccurrenceReturnMigration';
 
 export interface Migration { id: number; name: string; sql: string; disableForeignKeys?: boolean; }
 
@@ -191,6 +192,7 @@ export const MIGRATIONS: Migration[] = [
   BRIDGE_SNAPSHOT_MIGRATION,
   BRIDGE_SNAPSHOT_REPAIR_MIGRATION,
   ATOUMWEB_LIBRARY_VERTICAL_MIGRATION,
+  BRIDGE_OCCURRENCE_RETURN_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {
