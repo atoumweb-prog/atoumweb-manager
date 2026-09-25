@@ -430,12 +430,15 @@ export class ContractTermsService {
       this.syncQuoteInternal(quoteId, true);
     }
     const clauses = this.quoteClauses(quoteId);
+    const audience = this.resolveQuoteAudience(state);
     const compiledText = this.compile(clauses);
     const included = clauses.filter((clause) => clause.enabled);
     const now = nowIso();
     this.database.run(
-      `UPDATE quotes SET contract_text_snapshot=?,contract_snapshot_json=?,contract_compiled_at=?,updated_at=? WHERE id=?`,
-      [compiledText, JSON.stringify(included), now, now, quoteId],
+      `UPDATE quotes
+       SET contract_text_snapshot=?,contract_snapshot_json=?,contract_compiled_at=?,contract_audience=?,updated_at=?
+       WHERE id=?`,
+      [compiledText, JSON.stringify({ audience, clauses: included }), now, audience, now, quoteId],
     );
     this.writeActivity('quote', quoteId, 'quote_contract_frozen', 'Version contractuelle des CGV figée');
     return this.getQuoteBuild(quoteId);
