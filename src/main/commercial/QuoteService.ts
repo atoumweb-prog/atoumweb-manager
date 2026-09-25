@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import type { CrmService } from '../crm/CrmService';
+import { ContractTermsService } from './ContractTermsService';
 import {
   QUOTE_ADJUSTMENT_MODES,
   QUOTE_DISCOUNT_REASONS,
@@ -50,6 +51,9 @@ interface QuoteRow extends Record<string, unknown> {
   project_ready_at: string | null;
   finalized_at: string | null;
   last_extended_at: string | null;
+  contract_text_snapshot: string | null;
+  contract_snapshot_json: string | null;
+  contract_compiled_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -114,6 +118,7 @@ export class QuoteService {
   constructor(
     private readonly database: DatabaseAdapter,
     private readonly crm: CrmService,
+    private readonly contractTerms: ContractTermsService = new ContractTermsService(database),
   ) {}
 
   list(filters: QuoteFilters = {}): QuoteSummary[] {
@@ -145,7 +150,17 @@ export class QuoteService {
     const lines = this.database
       .all<QuoteLineRow>('SELECT * FROM quote_lines WHERE quote_id=? ORDER BY sort_order, created_at', [id])
       .map((line) => this.mapLine(line));
-    return { ...this.mapSummary(row), needSummary: row.need_summary, estimatedDelay: row.estimated_delay, prerequisitesText: row.prerequisites_text, specialTerms: row.special_terms, contractType: row.contract_type, lines };
+    return {
+      ...this.mapSummary(row),
+      needSummary: row.need_summary,
+      estimatedDelay: row.estimated_delay,
+      prerequisitesText: row.prerequisites_text,
+      specialTerms: row.special_terms,
+      contractType: row.contract_type,
+      contractTextSnapshot: row.contract_text_snapshot,
+      contractSnapshotJson: row.contract_snapshot_json,
+      lines,
+    };
   }
 
   create(input: QuoteInput, withinTransaction = false): QuoteDetail {
@@ -386,6 +401,7 @@ export class QuoteService {
     if (quote.status !== 'draft') throw new Error('Seul un devis brouillon peut être finalisé.');
     if (quote.finalizedAt) return quote;
     if (quote.lines.length === 0) throw new Error('Ajoute au moins une ligne avant de finaliser le devis.');
+    this.contractTerms.freezeQuote(id);
     const now = nowIso();
     this.database.run('UPDATE quotes SET finalized_at=?,updated_at=? WHERE id=?', [now, now, id]);
     if (quote.prospectId) this.database.run("UPDATE prospects SET stage='quote_to_send',updated_at=? WHERE id=? AND stage NOT IN ('won','lost')", [now, quote.prospectId]);
@@ -415,6 +431,7 @@ export class QuoteService {
     if (quote.status === 'accepted') return quote;
     if (!['sent', 'viewed'].includes(quote.status)) throw new Error('Le devis doit être envoyé avant acceptation.');
     if (quote.lines.length === 0) throw new Error('Impossible d’accepter un devis vide.');
+    this.contractTerms.freezeQuote(id);
 
     let clientId = quote.clientAccountId ?? quote.acceptedClientAccountId ?? null;
     if (!clientId && quote.prospectId) {
@@ -476,6 +493,7 @@ export class QuoteService {
       );
     }
     this.recalculate(copy.id);
+    this.contractTerms.copyQuoteCustomizations(id, copy.id);
     return this.get(copy.id);
   }
 
@@ -581,6 +599,7 @@ export class QuoteService {
     const quote = this.get(quoteId);
     if (quote.snapshotLockedAt || quote.status === 'accepted') throw new Error('Ce devis est accepté et figé.');
     if (quote.status !== 'draft') throw new Error('Repasse par une copie du devis pour modifier son contenu après envoi.');
+    if (quote.finalizedAt) throw new Error('Ce devis est finalisé et figé. Duplique-le pour modifier son contenu.');
   }
 
   private transition(id: string, status: QuoteStatus, timestampColumn: 'sent_at' | 'viewed_at' | 'refused_at' | 'expired_at', summary: string): QuoteDetail {
@@ -637,6 +656,7 @@ export class QuoteService {
       projectReadyAt: row.project_ready_at,
       finalizedAt: row.finalized_at,
       lastExtendedAt: row.last_extended_at,
+      contractCompiledAt: row.contract_compiled_at,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
