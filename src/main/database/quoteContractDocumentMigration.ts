@@ -1,7 +1,7 @@
 import type { Migration } from './migrations';
 
 export const QUOTE_CONTRACT_DOCUMENT_MIGRATION: Migration = {
-  id: 40,
+  id: 41,
   name: 'quote_contract_document',
   sql: `
     ALTER TABLE quotes ADD COLUMN contract_document_id TEXT REFERENCES client_documents(id) ON DELETE SET NULL;
