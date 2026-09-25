@@ -67,6 +67,8 @@ const ASSET_ROLES: Array<{ id: AtoumWebTechnicalAssetRole; label: string }> = [
   { id: 'attachment', label: 'Fichier lié' },
 ];
 
+const BRIDGE_HUMAN_VALIDATION_TAG = 'bridge-human-validated';
+
 interface Props {
   onMessage: (message: string) => void;
   initialItemId?: string | null;
@@ -223,7 +225,7 @@ function metadataFromItem(item: AtoumWebTechnicalItemDetail): MetadataForm {
     category: item.category,
     reuseStatus: item.reuseStatus,
     description: item.description ?? '',
-    tags: (item.tags ?? []).join(', '),
+    tags: (item.tags ?? []).filter((tag) => tag !== BRIDGE_HUMAN_VALIDATION_TAG).join(', '),
     vertical: item.vertical ?? '',
     originTechnicalItemId: item.originTechnicalItemId ?? '',
   };
@@ -361,6 +363,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
     && !reusableNeedsRefresh
     && bridgeWorkflow.reusable.version.stable
     && selected.reuseStatus === 'ready'
+    && selected.tags?.includes(BRIDGE_HUMAN_VALIDATION_TAG)
     && reusableValidation?.automaticChecksPassed
   );
 
@@ -463,7 +466,10 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
         category: metadataForm.category,
         reuseStatus: metadataForm.reuseStatus,
         description: metadataForm.description || null,
-        tags: metadataForm.tags.split(',').map((tag) => tag.trim()).filter(Boolean),
+        tags: mergeLibraryTags(
+          metadataForm.tags.split(',').map((tag) => tag.trim()).filter((tag) => Boolean(tag) && tag !== BRIDGE_HUMAN_VALIDATION_TAG),
+          selected.tags?.includes(BRIDGE_HUMAN_VALIDATION_TAG) ? [BRIDGE_HUMAN_VALIDATION_TAG] : [],
+        ),
         vertical: metadataForm.vertical || null,
         originTechnicalItemId: metadataForm.originTechnicalItemId || null,
       });
@@ -541,7 +547,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
         category,
         name,
         reuseStatus: 'adapt',
-        tags: mergeLibraryTags(changed.tags, ['bridge-stage-original', 'bridge-stage-work']),
+        tags: mergeLibraryTags(removeLibraryTags(changed.tags, [BRIDGE_HUMAN_VALIDATION_TAG]), ['bridge-stage-original', 'bridge-stage-work']),
       });
 
       setBridgeStageView('work');
@@ -570,7 +576,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
       });
       changed = await window.atoumweb.referentials.library.update(changed.id, {
         reuseStatus: 'adapt',
-        tags: mergeLibraryTags(changed.tags, ['bridge-stage-original', 'bridge-stage-work']),
+        tags: mergeLibraryTags(removeLibraryTags(changed.tags, [BRIDGE_HUMAN_VALIDATION_TAG]), ['bridge-stage-original', 'bridge-stage-work']),
       });
       setBridgeStageView('work');
       await load(changed.id);
@@ -605,7 +611,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
           : 'Version réutilisable prête à copier dans un module Code Divi.',
       });
 
-      const tags = mergeLibraryTags(changed.tags, ['bridge-stage-original', 'bridge-stage-work', 'bridge-stage-reusable']);
+      const tags = mergeLibraryTags(removeLibraryTags(changed.tags, [BRIDGE_HUMAN_VALIDATION_TAG]), ['bridge-stage-original', 'bridge-stage-work', 'bridge-stage-reusable']);
       changed = await window.atoumweb.referentials.library.update(changed.id, { reuseStatus: 'adapt', tags });
 
       setBridgeStageView('reusable');
@@ -641,7 +647,10 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
       let changed = bridgeWorkflow.reusable.version.stable
         ? await window.atoumweb.referentials.library.get(selected.id)
         : await window.atoumweb.referentials.library.markStable(bridgeWorkflow.reusable.version.id);
-      changed = await window.atoumweb.referentials.library.update(changed.id, { reuseStatus: 'ready' });
+      changed = await window.atoumweb.referentials.library.update(changed.id, {
+        reuseStatus: 'ready',
+        tags: mergeLibraryTags(changed.tags, [BRIDGE_HUMAN_VALIDATION_TAG]),
+      });
       await load(changed.id);
       await setOpenedItem(changed);
       setBridgeStageView('reusable');
@@ -1089,6 +1098,7 @@ function BridgeSummaryStages({ item }: { item: AtoumWebTechnicalItemSummary }) {
   const hasWork = tags.has('bridge-stage-work') || current?.stage === 'work' || current?.stage === 'reusable';
   const hasReusable = tags.has('bridge-stage-reusable') || current?.stage === 'reusable';
   const reusableReady = hasReusable
+    && tags.has(BRIDGE_HUMAN_VALIDATION_TAG)
     && item.reuseStatus === 'ready'
     && current?.stage === 'reusable'
     && current.value.reusable.generalized
@@ -2049,6 +2059,11 @@ function reusablePlaceholderImageDataUrl(): string {
 
 function mergeLibraryTags(existing: string[] | null | undefined, additions: string[]): string[] {
   return [...new Set([...(existing ?? []), ...additions])];
+}
+
+function removeLibraryTags(existing: string[] | null | undefined, removals: string[]): string[] {
+  const removed = new Set(removals);
+  return (existing ?? []).filter((tag) => !removed.has(tag));
 }
 
 function bridgeReusableValidation(component: BridgeReusableComponent) {
