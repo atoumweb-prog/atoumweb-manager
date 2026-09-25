@@ -11,7 +11,7 @@
 - [x] Décision « Conserver uniquement cette occurrence » enregistrée de manière transactionnelle.
 - [x] Les choix « nouvelle variante / mise à jour variante / nouvelle famille » sont visibles mais désactivés jusqu’au lot Family / Variant.
 - [x] Tests ciblés ajoutés pour import nominal, déduplication, checksum invalide, version source inconnue et décision.
-- [ ] Typecheck et tests locaux à exécuter sur le MSI après synchronisation.
+- [x] Validation MSI : typecheck réussi ; tests ciblés 12/12 (4 Occurrence Return + 8 migrations), 0 échec.
 - Aucun changement des contrats V1, aucune publication production, aucune décision Family / Variant automatique.
 
 ## Lot 3 — Validation humaine des versions réutilisables — 25/09/2026
