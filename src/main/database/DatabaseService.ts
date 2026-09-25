@@ -10,6 +10,7 @@ import { CrmIdentityAssetService } from '../crm/CrmIdentityAssetService';
 import { BusinessBackupAlertService } from '../backups/BusinessBackupAlertService';
 import { BusinessBackupService } from '../backups/BusinessBackupService';
 import { CatalogService } from '../commercial/CatalogService';
+import { ContractTermsService } from '../commercial/ContractTermsService';
 import { QuoteService } from '../commercial/QuoteService';
 import { ActionService } from '../crm/ActionService';
 import { ClientContactService } from '../crm/ClientContactService';
@@ -55,6 +56,7 @@ export class DatabaseService {
   readonly clientDocuments: ClientDocumentService;
   readonly actions: ActionService;
   readonly catalog: CatalogService;
+  readonly contractTerms: ContractTermsService;
   readonly quotes: QuoteService;
   readonly projects: ProjectService;
   readonly projectCompletion: ProjectCompletionService;
@@ -92,7 +94,8 @@ export class DatabaseService {
     this.clientDocuments = new ClientDocumentService(this.database, this.workspace);
     this.actions = new ActionService(this.database);
     this.catalog = new CatalogService(this.database);
-    this.quotes = new QuoteService(this.database, this.crm);
+    this.contractTerms = new ContractTermsService(this.database);
+    this.quotes = new QuoteService(this.database, this.crm, this.contractTerms);
     this.projects = new ProjectService(this.database, this.workspace);
     this.projectCompletion = new ProjectCompletionService(this.database);
     this.projectNodes = new ProjectNodeArrangementService(this.database, this.projects);
