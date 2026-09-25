@@ -336,6 +336,12 @@ export class ContractTermsService {
     const row = this.database.get<QuoteClauseRow>('SELECT * FROM quote_contract_clauses WHERE id=?', [id]);
     if (!row) throw new Error('Clause du devis introuvable.');
     this.assertQuoteEditable(row.quote_id);
+    if (row.source_kind === 'base') {
+      if (input.enabled === false) throw new Error('Le socle CGV AtoumWeb est fixe et ne peut pas être exclu d’un devis.');
+      if (input.title !== undefined || input.body !== undefined) {
+        throw new Error('Une clause du socle fixe se modifie dans la Bibliothèque CGV, par nouvelle version.');
+      }
+    }
     const nextTitle = input.title === undefined ? row.title : clean(input.title);
     if (!nextTitle) throw new Error('Le titre de la clause est requis.');
     const nextBody = input.body === undefined ? row.body : input.body;
@@ -354,6 +360,7 @@ export class ContractTermsService {
     const row = this.database.get<QuoteClauseRow>('SELECT * FROM quote_contract_clauses WHERE id=?', [id]);
     if (!row) throw new Error('Clause du devis introuvable.');
     this.assertQuoteEditable(row.quote_id);
+    if (row.source_kind === 'base') throw new Error('Le socle fixe reprend toujours la version publiée de la Bibliothèque CGV.');
     if (!row.source_clause_id) throw new Error('Cette clause particulière ne dépend pas d’un modèle réinitialisable.');
     const template = this.getTemplate(row.source_clause_id);
     if (!template.currentVersion) throw new Error('Aucune version publiée n’est disponible pour cette clause.');
