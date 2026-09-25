@@ -405,7 +405,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('quotes:duplicate', (_event, id: string) => database.quotes.duplicate(id));
   ipcMain.handle('quotes:generate-pdf', async (_event, id: string) => {
     const quote = database.quotes.get(id);
-    const contract = quote.status === 'draft' && !quote.finalizedAt && !quote.contractCompiledAt
+    const contract = quote.status === 'draft' && !quote.finalizedAt
       ? database.contractTerms.syncQuote(id)
       : database.contractTerms.getQuoteBuild(id);
     return generateQuotePdf({ ...quote, contractTextSnapshot: contract.snapshotText || contract.compiledText }, workspace);
