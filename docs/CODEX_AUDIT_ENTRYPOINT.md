@@ -46,25 +46,44 @@ Le HEAD peut évoluer : toujours vérifier le HEAD réel avant toute analyse.
 
 ## 2. Dépôt Bridge
 
-Le dépôt Bridge est en cours de création.
+Dépôt GitHub :
 
-Tant qu'il n'est pas disponible :
+`atoumweb-prog/atoumweb-bridge`
 
-- ne pas chercher Bridge ailleurs sur le disque ;
-- ne pas supposer son chemin ;
-- ne pas déduire son architecture à partir de noms similaires ;
-- poursuivre uniquement l'audit Manager ;
-- signaler simplement : `Bridge repo pending`.
+Branche de travail :
 
-Quand le dépôt Bridge sera créé, renseigner ici :
+`feature/workbench-occurrence-v1`
 
-```text
-Bridge GitHub repo : TODO
-Bridge local path  : TODO
-Bridge branch      : TODO
-```
+HEAD Bridge de raccordement :
 
-Puis faire l'audit croisé Manager ↔ Bridge.
+`0cfdf832f119a0ca3ba8d0ce10d38774ab86ecd2`
+
+Chemin local MSI :
+
+`PENDING — ne pas le supposer ni chercher Bridge ailleurs sur le disque.`
+
+État du miroir source :
+
+`INCOMPLET`
+
+La PR Bridge #1 et `SOURCE_BASELINE_SHA256.txt` indiquent que la baseline canonique 0.7.2 n'est pas encore entièrement reflétée dans Git. Le ZIP canonique 0.7.2 reste l'artefact de référence pendant ce bootstrap.
+
+Conséquences :
+
+- le dépôt Bridge peut être lu pour ses handoffs, contrats présents et structure déjà versionnée ;
+- ne pas considérer le code Bridge actuel comme une baseline source exhaustive ;
+- ne pas conclure qu'un comportement est absent uniquement parce que son fichier n'est pas encore dans Git ;
+- ne pas lancer l'audit croisé Manager ↔ Bridge définitif tant que le miroir 0.7.2 n'est pas complet et rapproché de `SOURCE_BASELINE_SHA256.txt` ;
+- ne pas modifier Bridge pour « combler » les fichiers absents : ils doivent d'abord être récupérés depuis la baseline canonique 0.7.2 ;
+- une fois le miroir complet, vérifier le HEAD réel et le chemin local MSI avant toute recette locale.
+
+Référence Bridge à lire en premier :
+
+1. `HANDOFF_CODEX.md`
+2. `SOURCE_BASELINE_SHA256.txt`
+3. `README.md`
+
+Puis, uniquement après complétude du miroir, faire l'audit croisé Manager ↔ Bridge.
 
 ## 3. Architecture Manager à lire en premier
 
