@@ -179,6 +179,7 @@ export class QuoteService {
     const depositPercent = input.depositPercent ?? 30;
     if (!Number.isInteger(depositPercent) || depositPercent < 0 || depositPercent > 100) throw new Error('Acompte invalide.');
     const contractAudience = input.contractAudience ?? this.inferContractAudience(input.prospectId, input.clientAccountId);
+    if (!['professional', 'consumer'].includes(contractAudience)) throw new Error('Type de client contractuel invalide.');
 
     const id = randomUUID();
     const now = new Date();
