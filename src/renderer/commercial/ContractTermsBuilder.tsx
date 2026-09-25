@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { CatalogItemSummary, QuoteDetail } from '../../shared/commercial';
 import type {
+  ContractClauseAudience,
   ContractClauseScope,
   ContractClauseTemplate,
   QuoteContractBuild,
@@ -39,6 +40,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   const [templateCode, setTemplateCode] = useState('');
   const [templateTitle, setTemplateTitle] = useState('');
   const [templateScope, setTemplateScope] = useState<ContractClauseScope>('base');
+  const [templateAudience, setTemplateAudience] = useState<ContractClauseAudience>('all');
   const [templateBody, setTemplateBody] = useState('');
   const [versionEditors, setVersionEditors] = useState<Record<string, string | undefined>>({});
 
@@ -176,7 +178,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     setError('');
     try {
       const created = await window.atoumweb.contractTerms.library.create(
-        { code: templateCode, title: templateTitle, scope: templateScope },
+        { code: templateCode, title: templateTitle, scope: templateScope, audience: templateAudience },
         { body: templateBody },
       );
       const draft = created.versions.find((version) => version.status === 'draft');
@@ -186,6 +188,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
       setTemplateTitle('');
       setTemplateBody('');
       setTemplateScope('base');
+      setTemplateAudience('all');
       setShowCreateTemplate(false);
       await refreshLibrary();
       if (editable) setBuildAndDrafts(await window.atoumweb.contractTerms.quotes.sync(quote.id));
@@ -273,6 +276,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
         <span><strong>{counts.base}</strong> socle</span>
         <span><strong>{counts.catalog}</strong> prestation(s)</span>
         <span><strong>{counts.custom}</strong> particulière(s)</span>
+        <span className="status-pill">{build?.audience === 'professional' ? 'Client professionnel' : 'Client particulier'}</span>
         {build?.locked && <span className="status-pill">Version figée</span>}
       </div>
 
@@ -349,6 +353,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
             <label>Code<input value={templateCode} onChange={(event) => setTemplateCode(event.target.value)} placeholder="CGV-PAIEMENT" /></label>
             <label>Titre<input value={templateTitle} onChange={(event) => setTemplateTitle(event.target.value)} placeholder="Modalités de paiement" /></label>
             <label>Type<select value={templateScope} onChange={(event) => setTemplateScope(event.target.value as ContractClauseScope)}><option value="base">Socle commun</option><option value="catalog">Liée aux prestations</option></select></label>
+            <label>Public<select value={templateAudience} onChange={(event) => setTemplateAudience(event.target.value as ContractClauseAudience)}><option value="all">Tous les clients</option><option value="professional">Professionnels</option><option value="consumer">Particuliers</option></select></label>
           </div>
           <label>Texte de la version 1<textarea value={templateBody} onChange={(event) => setTemplateBody(event.target.value)} /></label>
           <button className="primary-button" type="button" disabled={busy} onClick={() => void createTemplate()}>Créer et publier</button>
@@ -358,7 +363,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
           {templates.map((template) => (
             <details className="cgv-template" key={template.id}>
               <summary>
-                <div><strong>{template.title}</strong><span>{template.code} · {template.scope === 'base' ? 'Socle commun' : 'Clause prestation'} · v{template.currentVersion?.versionNumber ?? '—'}</span></div>
+                <div><strong>{template.title}</strong><span>{template.code} · {template.scope === 'base' ? 'Socle commun' : 'Clause prestation'} · {template.audience === 'all' ? 'Tous clients' : template.audience === 'professional' ? 'Professionnels' : 'Particuliers'} · v{template.currentVersion?.versionNumber ?? '—'}</span></div>
                 <span className={'catalog-status status-' + template.status}>{template.status === 'active' ? 'Active' : template.status === 'inactive' ? 'Inactive' : 'Archivée'}</span>
               </summary>
               <div className="cgv-template-body">
