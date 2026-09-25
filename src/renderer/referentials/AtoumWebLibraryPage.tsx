@@ -255,13 +255,14 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
   }
 
   async function setOpenedItem(detail: AtoumWebTechnicalItemDetail): Promise<void> {
+    const sameItem = selected?.id === detail.id;
     setSelected(detail);
-    setDetailExpanded(false);
+    if (!sameItem) setDetailExpanded(false);
     setMetadataForm(metadataFromItem(detail));
     setExpandedVersionId(null);
     const preferredVersion = detail.currentVersion?.id ?? detail.versions[0]?.id ?? '';
     const currentPayload = parseBridgeLibraryPayload(detail.currentVersion?.contentType, detail.currentVersion?.contentText);
-    setBridgeStageView(currentPayload?.stage ?? 'original');
+    if (!sameItem) setBridgeStageView(currentPayload?.stage ?? 'original');
     setAssetVersionId(preferredVersion);
     await loadVersionAssets(preferredVersion);
   }
