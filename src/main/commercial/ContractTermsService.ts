@@ -544,6 +544,7 @@ export class ContractTermsService {
       [quoteId],
     );
     const catalogItemIds = new Set<string>();
+    const componentLegacyTerms: Array<{ itemId: string; versionId: string | null; name: string; body: string }> = [];
     const lineSnapshots: Array<{ row: QuoteLineSourceRow; snapshot: Record<string, unknown> | null }> = [];
     for (const row of lines) {
       if (row.catalog_item_id) catalogItemIds.add(row.catalog_item_id);
@@ -561,7 +562,18 @@ export class ContractTermsService {
         if (!raw || typeof raw !== 'object') continue;
         const component = raw as Record<string, unknown>;
         if (component.isOptional) continue;
-        if (typeof component.serviceItemId === 'string' && component.serviceItemId) catalogItemIds.add(component.serviceItemId);
+        if (typeof component.serviceItemId === 'string' && component.serviceItemId) {
+          catalogItemIds.add(component.serviceItemId);
+          const componentTerms = typeof component.specialTerms === 'string' ? clean(component.specialTerms) : null;
+          if (componentTerms) {
+            componentLegacyTerms.push({
+              itemId: component.serviceItemId,
+              versionId: typeof component.serviceVersionId === 'string' ? component.serviceVersionId : null,
+              name: typeof component.serviceName === 'string' ? component.serviceName : 'Prestation',
+              body: componentTerms,
+            });
+          }
+        }
       }
       lineSnapshots.push({ row, snapshot });
     }
@@ -621,6 +633,23 @@ export class ContractTermsService {
         sourceCatalogItemIds: [row.catalog_item_id],
         title: `Conditions spécifiques — ${row.label}`,
         body: specialTerms,
+        sortOrder: 1500 + legacyIndex * 10,
+      });
+      legacyIndex += 1;
+    }
+
+    for (const component of componentLegacyTerms) {
+      if (linkedItemIds.has(component.itemId)) continue;
+      const sourceKey = `legacy-catalog:${component.versionId ?? component.itemId}`;
+      if (desired.has(sourceKey)) continue;
+      desired.set(sourceKey, {
+        sourceKey,
+        sourceKind: 'catalog',
+        sourceClauseId: null,
+        sourceClauseVersionId: null,
+        sourceCatalogItemIds: [component.itemId],
+        title: `Conditions spécifiques — ${component.name}`,
+        body: component.body,
         sortOrder: 1500 + legacyIndex * 10,
       });
       legacyIndex += 1;
