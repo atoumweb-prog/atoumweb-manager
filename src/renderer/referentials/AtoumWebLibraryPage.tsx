@@ -24,6 +24,7 @@ const CATEGORIES: Array<{ id: AtoumWebLibraryCategory; label: string }> = [
   { id: 'gallery', label: 'Galeries' },
   { id: 'carousel', label: 'Carrousels' },
   { id: 'navigation', label: 'Navigation' },
+  { id: 'code_snippet', label: 'Code snippets' },
   { id: 'css', label: 'CSS' },
   { id: 'javascript', label: 'JavaScript' },
   { id: 'php', label: 'PHP' },
@@ -39,6 +40,17 @@ const REUSE_STATUSES: Array<{ id: AtoumWebReuseStatus; label: string }> = [
   { id: 'adapt', label: 'À adapter' },
   { id: 'reference', label: 'Référence' },
 ];
+
+const VERTICAL_SUGGESTIONS = [
+  'mariage',
+  'automobile',
+  'fleuriste',
+  'patisserie',
+  'restaurant',
+  'artisan',
+  'coach',
+  'immobilier',
+] as const;
 
 const CONTENT_TYPES: Array<{ id: ProjectTechnicalContentType; label: string }> = [
   { id: 'code', label: 'Code' },
@@ -67,6 +79,7 @@ interface CreationForm {
   reuseStatus: AtoumWebReuseStatus;
   description: string;
   tags: string;
+  vertical: string;
   contentType: ProjectTechnicalContentType;
   language: string;
   contentText: string;
@@ -79,6 +92,7 @@ interface MetadataForm {
   reuseStatus: AtoumWebReuseStatus;
   description: string;
   tags: string;
+  vertical: string;
   originTechnicalItemId: string;
 }
 
@@ -195,6 +209,7 @@ const EMPTY_FORM: CreationForm = {
   reuseStatus: 'adapt',
   description: '',
   tags: '',
+  vertical: '',
   contentType: 'code',
   language: '',
   contentText: '',
@@ -208,6 +223,7 @@ function metadataFromItem(item: AtoumWebTechnicalItemDetail): MetadataForm {
     reuseStatus: item.reuseStatus,
     description: item.description ?? '',
     tags: (item.tags ?? []).join(', '),
+    vertical: item.vertical ?? '',
     originTechnicalItemId: item.originTechnicalItemId ?? '',
   };
 }
@@ -220,6 +236,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<AtoumWebLibraryCategory | ''>('');
   const [reuseStatus, setReuseStatus] = useState<AtoumWebReuseStatus | ''>('');
+  const [vertical, setVertical] = useState('');
   const [includeArchived, setIncludeArchived] = useState(false);
   const [creating, setCreating] = useState(false);
   const [editingMetadata, setEditingMetadata] = useState(false);
@@ -278,6 +295,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
         search: search || null,
         category: category || null,
         reuseStatus: reuseStatus || null,
+        vertical: vertical || null,
         includeArchived,
       });
       setItems(next);
@@ -300,7 +318,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
   useEffect(() => {
     void load(initialItemId ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, category, reuseStatus, includeArchived, initialItemId]);
+  }, [search, category, reuseStatus, vertical, includeArchived, initialItemId]);
 
   const summary = useMemo(() => ({
     total: items.length,
@@ -404,6 +422,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
           reuseStatus: form.reuseStatus,
           description: form.description || null,
           tags: form.tags.split(',').map((tag) => tag.trim()).filter(Boolean),
+          vertical: form.vertical || null,
         },
         {
           contentType: form.contentType,
@@ -432,6 +451,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
         reuseStatus: metadataForm.reuseStatus,
         description: metadataForm.description || null,
         tags: metadataForm.tags.split(',').map((tag) => tag.trim()).filter(Boolean),
+        vertical: metadataForm.vertical || null,
         originTechnicalItemId: metadataForm.originTechnicalItemId || null,
       });
       setEditingMetadata(false);
@@ -746,6 +766,10 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
           <option value="">Tous les statuts</option>
           {REUSE_STATUSES.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}
         </select>
+        <input list="aw-library-vertical-options" value={vertical} onChange={(event) => setVertical(event.target.value)} placeholder="Métier : tous" aria-label="Filtrer par métier" />
+        <datalist id="aw-library-vertical-options">
+          {[...new Set([...VERTICAL_SUGGESTIONS, ...items.map((item) => item.vertical).filter((value): value is string => Boolean(value))])].map((value) => <option key={value} value={value} />)}
+        </datalist>
         <label className="aw-library-checkbox"><input type="checkbox" checked={includeArchived} onChange={(event) => setIncludeArchived(event.target.checked)} /> Archivés</label>
         <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void inspectPackage()}><OperationIcon name="upload" size={16} /> Importer ZIP</button>
         <button className="primary-button" type="button" onClick={() => setCreating((value) => !value)}>{creating ? 'Fermer' : 'Nouveau composant'}</button>
@@ -768,6 +792,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
         <div className="panel-title"><div><span className="eyebrow">Import contrôlé</span><h2>{packageInspection.item.name}</h2></div><button className="secondary-button" type="button" onClick={() => setPackageInspection(null)}>Fermer</button></div>
         <div className="aw-library-package-grid">
           <div><span>Catégorie</span><strong>{categoryLabel(packageInspection.item.category)}</strong></div>
+          <div><span>Métier</span><strong>{packageInspection.item.vertical ? verticalLabel(packageInspection.item.vertical) : 'Tous métiers / non classé'}</strong></div>
           <div><span>Version exportée</span><strong>v{packageInspection.version.exportedVersionNumber}{packageInspection.version.stable ? ' · stable' : ''}</strong></div>
           <div><span>Assets</span><strong>{packageInspection.assetCount}{packageInspection.missingAssetCount ? ` · ${packageInspection.missingAssetCount} manquant(s)` : ''}</strong></div>
           <div><span>Doublons probables</span><strong>{packageInspection.probableDuplicates.length}</strong></div>
@@ -795,7 +820,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
             <button className={`aw-library-item ${selected?.id === item.id ? 'selected' : ''}`} key={item.id} type="button" onClick={() => void openItem(item.id)}>
               <div className="aw-library-item-main">
                 <strong>{item.name}</strong>
-                <span>{categoryLabel(item.category)} · {reuseStatusLabel(item.reuseStatus)}</span>
+                <span>{categoryLabel(item.category)} · {reuseStatusLabel(item.reuseStatus)}{item.vertical ? ` · ${verticalLabel(item.vertical)}` : ''}</span>
                 <BridgeSummaryStages item={item} />
               </div>
               <div className="aw-library-item-meta"><span>v{item.currentVersion?.versionNumber ?? '—'}</span>{item.stableVersion && <span>stable v{item.stableVersion.versionNumber}</span>}{item.archivedAt && <span>archivé</span>}</div>
@@ -810,7 +835,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
 
         {selected && <article className={`panel aw-library-detail ${detailExpanded ? 'expanded' : ''}`}>
             <div className="panel-title aw-library-detail-heading">
-              <div><span className="eyebrow">{categoryLabel(selected.category)} · {reuseStatusLabel(selected.reuseStatus)}</span><h2>{selected.name}</h2></div>
+              <div><span className="eyebrow">{categoryLabel(selected.category)} · {reuseStatusLabel(selected.reuseStatus)}{selected.vertical ? ` · ${verticalLabel(selected.vertical)}` : ''}</span><h2>{selected.name}</h2></div>
               <div className="button-row">
                 {!selected.archivedAt && <button className="secondary-button" type="button" onClick={() => setEditingMetadata((value) => !value)}>{editingMetadata ? 'Annuler édition' : 'Modifier'}</button>}
                 <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void exportPackage()}><OperationIcon name="package" size={16} /> Exporter archive</button>
@@ -823,6 +848,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
             <>
             {editingMetadata && metadataForm ? <MetadataEditor form={metadataForm} setForm={setMetadataForm} onSave={saveMetadata} /> : <>
               {selected.description && <p>{selected.description}</p>}
+              {selected.vertical && <p className="muted">Métier : <strong>{verticalLabel(selected.vertical)}</strong></p>}
               <div className="aw-library-tags">{selected.tags?.map((tag) => <span key={tag}>{tag}</span>)}</div>
               {selected.originTechnicalItemId && <p className="muted">Origine conservée : composant de Bibliothèque projet {selected.originTechnicalItemId}</p>}
             </>}
@@ -2040,6 +2066,7 @@ function CreationPanel({ form, setForm, onCreate }: { form: CreationForm; setFor
       <label>Nom<input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>
       <label>Catégorie<select value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value as AtoumWebLibraryCategory })}>{CATEGORIES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
       <label>Statut<select value={form.reuseStatus} onChange={(event) => setForm({ ...form, reuseStatus: event.target.value as AtoumWebReuseStatus })}>{REUSE_STATUSES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+      <label>Métier<input list="aw-library-vertical-options" value={form.vertical} onChange={(event) => setForm({ ...form, vertical: event.target.value })} placeholder="Optionnel · fleuriste, automobile…" /></label>
       <label>Tags<input value={form.tags} onChange={(event) => setForm({ ...form, tags: event.target.value })} placeholder="Divi, header, responsive…" /></label>
     </div>
     <label>Description<textarea rows={2} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
@@ -2059,6 +2086,7 @@ function MetadataEditor({ form, setForm, onSave }: { form: MetadataForm; setForm
       <label>Nom<input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>
       <label>Catégorie<select value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value as AtoumWebLibraryCategory })}>{CATEGORIES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
       <label>Statut<select value={form.reuseStatus} onChange={(event) => setForm({ ...form, reuseStatus: event.target.value as AtoumWebReuseStatus })}>{REUSE_STATUSES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+      <label>Métier<input list="aw-library-vertical-options" value={form.vertical} onChange={(event) => setForm({ ...form, vertical: event.target.value })} placeholder="Optionnel · fleuriste, automobile…" /></label>
       <label>Tags<input value={form.tags} onChange={(event) => setForm({ ...form, tags: event.target.value })} placeholder="Séparés par des virgules" /></label>
     </div>
     <label>Description<textarea rows={2} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
@@ -2080,6 +2108,11 @@ function categoryLabel(category: AtoumWebLibraryCategory): string {
 
 function reuseStatusLabel(status: AtoumWebReuseStatus): string {
   return REUSE_STATUSES.find((item) => item.id === status)?.label ?? status;
+}
+
+function verticalLabel(vertical: string): string {
+  const spaced = vertical.replace(/[-_]+/g, ' ').trim();
+  return spaced ? spaced.charAt(0).toLocaleUpperCase('fr-FR') + spaced.slice(1) : vertical;
 }
 
 function assetRoleLabel(role: AtoumWebTechnicalAssetRole): string {
