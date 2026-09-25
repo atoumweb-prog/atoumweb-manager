@@ -108,7 +108,6 @@ describe('AtoumWebPackageService', () => {
         variantKey: 'florist',
         variantOf: 'aw-feature-bubbles',
         variantMode: 'inherit',
-        vertical: 'fleuriste',
         reusabilityScope: 'vertical',
       },
       dependencies: [{ dependencyId: 'dep-1', type: 'plugin', slug: 'forminator', name: 'Forminator', version: '1.0.0', active: true }],
@@ -117,7 +116,7 @@ describe('AtoumWebPackageService', () => {
       notes: [],
     };
     const item = library.create(
-      { category: 'hero', name: 'Hero réutilisable', reuseStatus: 'ready', tags: ['bridge', 'bridge-stage-reusable'] },
+      { category: 'hero', name: 'Hero réutilisable', reuseStatus: 'ready', vertical: 'Fleuriste', tags: ['bridge', 'bridge-stage-reusable'] },
       { contentType: 'json', language: 'json', contentText: JSON.stringify(reusablePayload), notes: 'Réutilisable' },
     );
     const stable = library.markStable(item.currentVersion!.id);
@@ -181,6 +180,7 @@ describe('AtoumWebPackageService', () => {
 
     const inspection = packages.inspectPackage(exported.path);
     expect(inspection.item.name).toBe('Hero réutilisable');
+    expect(inspection.item.vertical).toBe('fleuriste');
     expect(inspection.version.contentText).toContain('atoumweb-library-reusable-component');
   });
 
