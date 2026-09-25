@@ -557,6 +557,128 @@ Les composants historiques sont exportés honnêtement comme `unclassified` tant
 
 Le package Bridge contient maintenant `component/identity.json` et annonce `identityContractVersion: 1`.
 
+## 17 quinquies. Direction produit validée — Bibliothèque comme catalogue réutilisable
+
+Direction fonctionnelle retenue pour la suite :
+
+```text
+Site réel
+  ↓
+Snapshot Bridge
+  ↓
+Originale immuable
+  ↓
+Version de travail
+  ↓
+Famille générique
+  ↓
+Variantes réutilisables
+  ↓
+Occurrences sur les sites
+  ↓
+retour éventuel vers la Bibliothèque
+```
+
+### Original toujours conservé
+
+La source provenant d’un site réel reste une référence historique immuable.
+
+Toute généralisation, transformation ou création de variante se fait dans une nouvelle couche :
+
+```text
+Originale
+≠ Travail
+≠ Famille
+≠ Variante
+≠ Occurrence
+```
+
+Aucune opération de réutilisation ne doit détruire ou réécrire l’original issu du site.
+
+### Une variante peut naître d’un vrai projet client
+
+Parcours cible :
+
+```text
+Famille générique
+      ↓
+export vers Bridge
+      ↓
+Workbench d’un site client
+      ↓
+modification avec Divi
+      ↓
+Occurrence site adaptée
+      ↓
+retour vers Manager
+      ↓
+choix utilisateur :
+  - garder seulement l’occurrence
+  - créer une nouvelle variante
+  - mettre à jour une variante existante
+  - détacher / créer une nouvelle famille
+```
+
+Le retour dans la Bibliothèque n’est jamais automatique.
+
+Le Manager doit toujours demander explicitement ce que l’utilisateur veut faire de l’occurrence revenue du site.
+
+### Futur catalogue / composition de projet
+
+La Bibliothèque doit évoluer vers un catalogue de composants AtoumWeb permettant de sélectionner plusieurs éléments pour composer un futur site :
+
+```text
+Header
+Hero
+Section
+Galerie
+Avis
+Footer
+...
+```
+
+Exemple cible :
+
+```text
+Nouveau site Fleuriste
+  ↓
+choisir Header A
++ Hero B
++ aw-feature-bubbles / variante florist
++ Galerie C
++ Footer D
+  ↓
+composition / panier de composants
+  ↓
+package projet
+  ↓
+Bridge
+  ↓
+Workbench WordPress / Divi
+  ↓
+personnalisation
+  ↓
+modification libre avec Divi
+  ↓
+validation
+  ↓
+production
+```
+
+### Règles à ne pas perdre
+
+- une sélection de composants ne modifie jamais les sources de Bibliothèque ;
+- chaque utilisation crée une nouvelle occurrence indépendante ;
+- une occurrence conserve famille, variante, version et provenance ;
+- plusieurs composants peuvent être assemblés dans un même Workbench ;
+- Bridge reste le seul point d’entrée WordPress/Divi ;
+- le Manager prépare, sélectionne, compare, versionne et conserve l’historique ;
+- Divi reste disponible pour les adaptations visuelles avancées ;
+- une amélioration réalisée sur un site peut être ramenée dans Manager, mais uniquement sur décision explicite de l’utilisateur ;
+- la Bibliothèque devient progressivement un design system / catalogue AtoumWeb construit à partir de vrais projets, sans perdre les sources historiques.
+
+Cette direction doit guider les futures fonctions de classement, variantes, import retour, composition multi-composants et création de Workbench.
+
 ## 18. État Bridge communiqué au 24/09/2026
 
 Bridge est en série **0.6.x**.
