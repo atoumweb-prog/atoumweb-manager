@@ -12,7 +12,6 @@ on:
       - feature/phase-4-operations
       - fix/recette-commerciale-coherence
       - feature/prospect-workflow-v2
-      - feature/quote-cgv-builder-v1
   pull_request:
     branches:
       - main
