@@ -41,7 +41,7 @@ export function generalizeReusableCssColors(
   const slug = rootClass.toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'component';
   const colors: string[] = [];
 
-  const rewritten = css.replace(
+  const rewriteDeclarations = (segment: string): string => segment.replace(
     DECLARATION_RE,
     (whole, prefix: string, property: string, rawValue: string, terminator: string) => {
       if (property.startsWith('--')) return whole;
@@ -60,6 +60,11 @@ export function generalizeReusableCssColors(
       return `${prefix}${property}: ${nextValue}${terminator}`;
     },
   );
+
+  const rewritten = css
+    .split(/(\/\*[\s\S]*?\*\/)/g)
+    .map((segment) => segment.startsWith('/*') ? segment : rewriteDeclarations(segment))
+    .join('');
 
   if (!colors.length) return { css, fields: [], generalized: true };
 
