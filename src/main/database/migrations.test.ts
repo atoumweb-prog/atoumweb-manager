@@ -63,7 +63,7 @@ describe('migrations SQLite', () => {
         "SELECT name FROM sqlite_master WHERE type='table' AND name='bridge_snapshot_sections'",
       )).toBeUndefined();
 
-      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([37, 38, 39]);
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([37, 38, 39, 40]);
       expect(database.get<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='bridge_snapshot_sections'",
       )?.name).toBe('bridge_snapshot_sections');
@@ -100,7 +100,7 @@ describe('migrations SQLite', () => {
            '2026-09-24T10:00:00.000Z','2026-09-24T10:00:00.000Z',NULL)`,
       );
 
-      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([38, 39]);
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([38, 39, 40]);
 
       expect(database.get<{ name: string; library_category: string; vertical: string | null }>(
         "SELECT name, library_category, vertical FROM technical_items WHERE id='legacy-library-item'",
@@ -153,7 +153,7 @@ describe('migrations SQLite', () => {
     }
 
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('quotes') WHERE name='project_id'")?.name).toBe('project_id');
-    for (const column of ['contract_text_snapshot', 'contract_snapshot_json', 'contract_compiled_at']) {
+    for (const column of ['contract_text_snapshot', 'contract_snapshot_json', 'contract_compiled_at', 'contract_document_id', 'abby_reference', 'contract_document_attached_at']) {
       expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('quotes') WHERE name='${column}'`)?.name).toBe(column);
     }
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('time_sessions') WHERE name='intervention_id'")?.name).toBe('intervention_id');
@@ -167,7 +167,7 @@ describe('migrations SQLite', () => {
     for (const column of ['reuse_status', 'origin_technical_item_id', 'library_category', 'vertical']) {
       expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('technical_items') WHERE name='${column}'`)?.name).toBe(column);
     }
-    expect(MIGRATIONS.at(-1)?.id).toBe(39);
+    expect(MIGRATIONS.at(-1)?.id).toBe(40);
     expect(() => database.run(
       `INSERT INTO technical_items (id,project_id,scope,category,library_category,name,description,tags_json,reuse_status,origin_technical_item_id,vertical,created_at,updated_at,archived_at)
        VALUES ('snippet-test',NULL,'atoumweb','other','code_snippet','Snippet test',NULL,'[]','ready',NULL,'fleuriste','2026-09-25T00:00:00.000Z','2026-09-25T00:00:00.000Z',NULL)`,
