@@ -223,7 +223,7 @@ function metadataFromItem(item: AtoumWebTechnicalItemDetail): MetadataForm {
   return {
     name: item.name,
     category: item.category,
-    reuseStatus: item.reuseStatus,
+    reuseStatus: effectiveReuseStatus(item),
     description: item.description ?? '',
     tags: (item.tags ?? []).filter((tag) => tag !== BRIDGE_HUMAN_VALIDATION_TAG).join(', '),
     vertical: item.vertical ?? '',
@@ -325,9 +325,9 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
 
   const summary = useMemo(() => ({
     total: items.length,
-    ready: items.filter((item) => item.reuseStatus === 'ready').length,
-    adapt: items.filter((item) => item.reuseStatus === 'adapt').length,
-    references: items.filter((item) => item.reuseStatus === 'reference').length,
+    ready: items.filter((item) => effectiveReuseStatus(item) === 'ready').length,
+    adapt: items.filter((item) => effectiveReuseStatus(item) === 'adapt').length,
+    references: items.filter((item) => effectiveReuseStatus(item) === 'reference').length,
   }), [items]);
 
   const currentVersion = selected?.currentVersion ?? selected?.versions[0] ?? null;
@@ -365,6 +365,14 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
     && selected.reuseStatus === 'ready'
     && selected.tags?.includes(BRIDGE_HUMAN_VALIDATION_TAG)
     && reusableValidation?.automaticChecksPassed
+  );
+  const legacyReusableStable = Boolean(
+    selected
+    && bridgeWorkflow.reusable
+    && !reusableNeedsRefresh
+    && bridgeWorkflow.reusable.version.stable
+    && selected.reuseStatus === 'ready'
+    && !selected.tags?.includes(BRIDGE_HUMAN_VALIDATION_TAG)
   );
 
   const originalBridgeCandidate = bridgeWorkflow.original?.payload.stage === 'original' ? bridgeWorkflow.original.payload.value : null;
@@ -871,7 +879,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
             <button className={`aw-library-item ${selected?.id === item.id ? 'selected' : ''}`} key={item.id} type="button" onClick={() => void openItem(item.id)}>
               <div className="aw-library-item-main">
                 <strong>{item.name}</strong>
-                <span>{categoryLabel(item.category)} · {reuseStatusLabel(item.reuseStatus)}{item.vertical ? ` · ${verticalLabel(item.vertical)}` : ''}</span>
+                <span>{categoryLabel(item.category)} · {reuseStatusLabel(effectiveReuseStatus(item))}{item.vertical ? ` · ${verticalLabel(item.vertical)}` : ''}</span>
                 <BridgeSummaryStages item={item} />
               </div>
               <div className="aw-library-item-meta"><span>v{item.currentVersion?.versionNumber ?? '—'}</span>{item.stableVersion && <span>stable v{item.stableVersion.versionNumber}</span>}{item.archivedAt && <span>archivé</span>}</div>
@@ -886,7 +894,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
 
         {selected && <article className={`panel aw-library-detail ${detailExpanded ? 'expanded' : ''}`}>
             <div className="panel-title aw-library-detail-heading">
-              <div><span className="eyebrow">{categoryLabel(selected.category)} · {reuseStatusLabel(selected.reuseStatus)}{selected.vertical ? ` · ${verticalLabel(selected.vertical)}` : ''}</span><h2>{selected.name}</h2></div>
+              <div><span className="eyebrow">{categoryLabel(selected.category)} · {reuseStatusLabel(effectiveReuseStatus(selected))}{selected.vertical ? ` · ${verticalLabel(selected.vertical)}` : ''}</span><h2>{selected.name}</h2></div>
               <div className="button-row">
                 {!selected.archivedAt && <button className="secondary-button" type="button" onClick={() => setEditingMetadata((value) => !value)}>{editingMetadata ? 'Annuler édition' : 'Modifier'}</button>}
                 <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void exportPackage()}><OperationIcon name="package" size={16} /> Exporter archive</button>
@@ -944,9 +952,11 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
                         <span>3</span>
                         <div><strong>Réutilisable</strong><small>V{bridgeWorkflow.reusable.version.versionNumber} · {reusableValidated
                           ? 'validée humainement · stable'
-                          : reusableValidation?.automaticChecksPassed
-                            ? 'préparée · validation humaine requise'
-                            : `${reusableValidation?.blockers.length ?? 0} contrôle(s) à reprendre`}</small></div>
+                          : legacyReusableStable
+                            ? 'ancien état stable · validation humaine requise'
+                            : reusableValidation?.automaticChecksPassed
+                              ? 'préparée · validation humaine requise'
+                              : `${reusableValidation?.blockers.length ?? 0} contrôle(s) à reprendre`}</small></div>
                         <OperationIcon name={reusableValidated ? 'check-circle' : 'alert'} size={18} />
                       </button>
                     : <div className="aw-library-stage-create">
@@ -961,12 +971,17 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
             {bridgeWorkflow.original && displayedBridgeEntry && <section className="aw-library-current-version">
               <div className="aw-library-section-title">
                 <div><span className="eyebrow">Aperçu principal</span><h3>{bridgeStageLabel(displayedBridgeEntry.payload.stage)} · v{displayedBridgeEntry.version.versionNumber}</h3></div>
-                <div className="aw-library-version-flags">{displayedBridgeEntry.version.stable && <span>stable</span>}<span>{displayedBridgeEntry.version.contentType}{displayedBridgeEntry.version.language ? ` · ${displayedBridgeEntry.version.language}` : ''}</span></div>
+                <div className="aw-library-version-flags">
+                  {displayedBridgeEntry.version.stable && <span>{displayedBridgeEntry.payload.stage === 'reusable' && !reusableValidated ? 'stable technique · non validée humainement' : 'stable'}</span>}
+                  <span>{displayedBridgeEntry.version.contentType}{displayedBridgeEntry.version.language ? ` · ${displayedBridgeEntry.version.language}` : ''}</span>
+                </div>
               </div>
               {displayedBridgeEntry.payload.stage === 'reusable'
                 ? <p className="muted aw-library-current-notes">{reusableValidated
                     ? 'Modèle réutilisable validé humainement et stable. Il peut être envoyé vers un Workbench Divi.'
-                    : 'Modèle préparé automatiquement. Contrôle et validation humaine requis avant le statut « Prêt à réutiliser ».'}</p>
+                    : legacyReusableStable
+                      ? 'Ancien état stable détecté, sans trace de validation humaine. Une nouvelle validation explicite est requise pour le considérer « Prêt à réutiliser ».'
+                      : 'Modèle préparé automatiquement. Contrôle et validation humaine requis avant le statut « Prêt à réutiliser ».'}</p>
                 : displayedBridgeEntry.version.notes && <p className="muted aw-library-current-notes">{displayedBridgeEntry.version.notes}</p>}
               {displayedBridgeEntry.payload.stage === 'original'
                 ? <BridgeCandidateViewer candidate={displayedBridgeEntry.payload.value} rawContent={displayedBridgeEntry.version.contentText ?? ''} onMessage={onMessage} />
@@ -1054,7 +1069,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
                     <div><strong>{technicalVersionLabel(version)}</strong><span>{version.contentType}{version.language ? ` · ${version.language}` : ''}</span></div>
                     <div className="aw-library-version-flags">
                       {version.current && <span>courante</span>}
-                      {version.stable && <span>stable</span>}
+                      {version.stable && <span>{stage === 'reusable' && !selected.tags?.includes(BRIDGE_HUMAN_VALIDATION_TAG) ? 'stable technique · ancien état' : 'stable'}</span>}
                       {!stage && !version.stable && !selected.archivedAt && <button type="button" className="secondary-button" onClick={() => void markStable(version.id)}>Marquer stable</button>}
                       {stage === 'reusable' && !version.stable && !selected.archivedAt && <span>ancienne réutilisable</span>}
                     </div>
@@ -2228,6 +2243,14 @@ function Summary({ icon, label, value }: { icon: OperationIconName; label: strin
 
 function categoryLabel(category: AtoumWebLibraryCategory): string {
   return CATEGORIES.find((item) => item.id === category)?.label ?? category;
+}
+
+function effectiveReuseStatus(item: AtoumWebTechnicalItemSummary | AtoumWebTechnicalItemDetail): AtoumWebReuseStatus {
+  if (item.reuseStatus !== 'ready') return item.reuseStatus;
+  const current = parseBridgeLibraryPayload(item.currentVersion?.contentType, item.currentVersion?.contentText);
+  const tags = new Set(item.tags ?? []);
+  const isBridge = tags.has('bridge') || Boolean(current);
+  return isBridge && !tags.has(BRIDGE_HUMAN_VALIDATION_TAG) ? 'adapt' : item.reuseStatus;
 }
 
 function reuseStatusLabel(status: AtoumWebReuseStatus): string {

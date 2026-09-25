@@ -5,6 +5,7 @@
 - [x] Une préparation automatique ne passe plus seule le composant à « Prêt à réutiliser » et ne marque plus la version stable.
 - [x] Validation humaine explicite ajoutée avant le couple statut `ready` + version stable.
 - [x] La validation humaine est enregistrée par un marqueur interne ; les anciens états auto `ready`/stable ne sont donc pas présentés comme validés humainement.
+- [x] Compatibilité historique : les anciens composants Bridge `ready`/stable sans marqueur humain sont présentés comme « À adapter » et leur stabilité est explicitement qualifiée de technique/ancienne, sans réécriture automatique des données.
 - [x] Généralisation incomplète et ressources distantes bloquent la validation ; JavaScript et dépendances imposent une confirmation humaine.
 - [x] Les badges et messages distinguent désormais « préparé », « à reprendre » et « validé humainement ».
 - [x] Le statut « Prêt à réutiliser » n’est plus attribuable par simple édition de métadonnées pour un composant Bridge non validé.
