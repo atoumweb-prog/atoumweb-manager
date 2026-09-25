@@ -1,4 +1,5 @@
 import type { ProjectTechnicalContentType } from './projects';
+import type { AtoumWebSiteOccurrenceChangeSummaryV1, AtoumWebSiteOccurrenceV1 } from './siteOccurrence';
 
 export const ATOUMWEB_LIBRARY_CATEGORIES = [
   'header', 'footer', 'hero', 'page', 'section', 'form', 'gallery', 'carousel',
@@ -178,6 +179,53 @@ export interface AtoumWebPackageImportResult {
   importedAs: 'new_item' | 'new_version';
 }
 
+export type AtoumWebOccurrenceReturnDecision =
+  | 'keep_occurrence'
+  | 'create_variant'
+  | 'update_variant'
+  | 'new_family';
+
+export interface AtoumWebOccurrenceReturnSummary {
+  id: string;
+  packageFingerprint: string;
+  siteOccurrenceId: string;
+  libraryItemId: string;
+  libraryVersionId: string;
+  libraryVersionNumber: number;
+  libraryItemName: string;
+  returnedAt: string;
+  occurrenceState: string;
+  changes: AtoumWebSiteOccurrenceChangeSummaryV1;
+  decision: AtoumWebOccurrenceReturnDecision | null;
+  decidedAt: string | null;
+  createdAt: string;
+}
+
+export interface AtoumWebOccurrenceReturnDetail extends AtoumWebOccurrenceReturnSummary {
+  occurrence: AtoumWebSiteOccurrenceV1;
+  html: string;
+  css: string | null;
+  javascript: string | null;
+  assets: Record<string, unknown>;
+  provenance: Record<string, unknown>;
+  packageRelativePath: string;
+}
+
+export interface AtoumWebOccurrenceReturnInspection {
+  packagePath: string;
+  packageFingerprint: string;
+  siteOccurrenceId: string;
+  libraryItemId: string;
+  libraryVersionId: string;
+  libraryVersionNumber: number;
+  libraryItemName: string;
+  returnedAt: string;
+  occurrenceState: string;
+  changes: AtoumWebSiteOccurrenceChangeSummaryV1;
+  alreadyImported: boolean;
+  existingReturnId: string | null;
+}
+
 export interface ReferentialsApi {
   library: {
     list(filters?: AtoumWebTechnicalLibraryFilters): Promise<AtoumWebTechnicalItemSummary[]>;
@@ -206,5 +254,12 @@ export interface ReferentialsApi {
     inspectImport(): Promise<AtoumWebPackageInspection | null>;
     importPackage(input: AtoumWebPackageImportInput): Promise<AtoumWebPackageImportResult>;
     showExport(path: string): Promise<AtoumWebAssetOpenResult>;
+  };
+  occurrenceReturns: {
+    list(): Promise<AtoumWebOccurrenceReturnSummary[]>;
+    get(id: string): Promise<AtoumWebOccurrenceReturnDetail>;
+    inspectImport(): Promise<AtoumWebOccurrenceReturnInspection | null>;
+    importReturn(packagePath: string): Promise<AtoumWebOccurrenceReturnDetail>;
+    keepOccurrence(id: string): Promise<AtoumWebOccurrenceReturnDetail>;
   };
 }
