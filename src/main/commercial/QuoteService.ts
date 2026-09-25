@@ -324,7 +324,6 @@ export class QuoteService {
     }, source.item_id, source.version_id, snapshot);
     if (firstOffer) {
       this.updateConditions(quoteId, {
-        specialTerms: current.specialTerms || source.special_terms,
         prerequisitesText: current.prerequisitesText || this.parseJsonList(source.prerequisites_json).join('\n'),
         contractType: current.contractType || source.contract_type,
       });
