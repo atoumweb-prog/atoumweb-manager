@@ -14,6 +14,7 @@ import type {
 } from '../../shared/referentials';
 import type { ProjectTechnicalContentType } from '../../shared/projects';
 import { assessBridgeReusableValidation } from '../../shared/bridgeReusableValidation';
+import { generalizeReusableCssColors } from '../../shared/reusableCssColors';
 import { TechnicalContentViewer } from './TechnicalContentViewer';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
 import './AtoumWebLibraryPage.css';
@@ -1994,7 +1995,7 @@ function refreshBridgeWorkChecks(work: BridgeWorkComponent): BridgeWorkComponent
 function buildBridgeReusableComponent(work: BridgeWorkComponent): BridgeReusableComponent {
   const checked = refreshBridgeWorkChecks(work);
   const htmlTemplate = generalizeBridgeReusableHtml(checked.work.html);
-  const cssTemplate = generalizeBridgeReusableCss(checked.work.css, htmlTemplate.fields.length);
+  const cssTemplate = generalizeBridgeReusableCss(checked.work.css, checked.work.rootClasses, htmlTemplate.fields.length);
   const fields = [...htmlTemplate.fields, ...cssTemplate.fields];
   const remoteAssetUrls = extractRemoteAssetUrls(`${htmlTemplate.html}\n${cssTemplate.css}`);
 
@@ -2189,14 +2190,14 @@ function generalizeBridgeReusableHtml(html: string): { html: string; fields: Bri
   }
 }
 
-function generalizeBridgeReusableCss(css: string, fieldOffset = 0): { css: string; fields: BridgeReusableField[]; generalized: boolean } {
+function generalizeBridgeReusableCss(css: string, rootClasses: string[], fieldOffset = 0): { css: string; fields: BridgeReusableField[]; generalized: boolean } {
   if (!css.trim()) return { css, fields: [], generalized: true };
 
   try {
     const fields: BridgeReusableField[] = [];
     let imageIndex = fieldOffset;
     const imageUrlPattern = /url\(\s*(['"]?)(https?:\/\/[^'")\s]+\.(?:avif|gif|jpe?g|png|svg|webp)(?:[?#][^'")\s]*)?)\1\s*\)/gi;
-    const generalizedCss = css.replace(imageUrlPattern, (_match, _quote, originalUrl: string) => {
+    const imageGeneralizedCss = css.replace(imageUrlPattern, (_match, _quote, originalUrl: string) => {
       imageIndex += 1;
       const id = `image-${imageIndex}`;
       fields.push({
@@ -2210,7 +2211,10 @@ function generalizeBridgeReusableCss(css: string, fieldOffset = 0): { css: strin
       return `url("${reusablePlaceholderImageDataUrl()}")`;
     });
 
-    return { css: generalizedCss, fields, generalized: true };
+    const colorGeneralization = generalizeReusableCssColors(imageGeneralizedCss, rootClasses);
+    fields.push(...colorGeneralization.fields);
+
+    return { css: colorGeneralization.css, fields, generalized: colorGeneralization.generalized };
   } catch {
     return { css, fields: [], generalized: false };
   }
