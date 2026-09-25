@@ -54,36 +54,44 @@ Branche de travail :
 
 `feature/workbench-occurrence-v1`
 
-HEAD Bridge de raccordement :
+HEAD Bridge raccordé :
 
-`0cfdf832f119a0ca3ba8d0ce10d38774ab86ecd2`
+`844d702c1fabab9fcd2a61c6baaf3af93c446729`
 
-Chemin local MSI :
+Chemin local MSI confirmé :
 
-`PENDING — ne pas le supposer ni chercher Bridge ailleurs sur le disque.`
+`C:\DEV\01_PROJETS\AtoumWeb\atoumweb-bridge`
 
 État du miroir source :
 
-`INCOMPLET`
+`COMPLÉTÉ POUR AUDIT`
 
-La PR Bridge #1 et `SOURCE_BASELINE_SHA256.txt` indiquent que la baseline canonique 0.7.2 n'est pas encore entièrement reflétée dans Git. Le ZIP canonique 0.7.2 reste l'artefact de référence pendant ce bootstrap.
+Le commit `844d702` ajoute les 26 fichiers 0.7.2 absents du dépôt à partir du ZIP canonique vérifié par SHA-256, sans écraser les fichiers Git déjà présents.
+
+Références de baseline :
+
+- ZIP canonique plugin 0.7.2 : 35 fichiers vérifiés ;
+- `HANDOFF_CODEX.md` : artefact documentaire vérifié séparément ;
+- `SOURCE_BASELINE_SHA256.txt` : 36 entrées de référence ;
+- `includes/class-awb-child-theme-assets.php` diffère réellement du ZIP canonique mais correspond à une évolution Git existante (`feat: add child theme asset manager`) et doit être auditée comme telle, pas rétrogradée.
 
 Conséquences :
 
-- le dépôt Bridge peut être lu pour ses handoffs, contrats présents et structure déjà versionnée ;
-- ne pas considérer le code Bridge actuel comme une baseline source exhaustive ;
-- ne pas conclure qu'un comportement est absent uniquement parce que son fichier n'est pas encore dans Git ;
-- ne pas lancer l'audit croisé Manager ↔ Bridge définitif tant que le miroir 0.7.2 n'est pas complet et rapproché de `SOURCE_BASELINE_SHA256.txt` ;
-- ne pas modifier Bridge pour « combler » les fichiers absents : ils doivent d'abord être récupérés depuis la baseline canonique 0.7.2 ;
-- une fois le miroir complet, vérifier le HEAD réel et le chemin local MSI avant toute recette locale.
+- l'audit croisé Manager ↔ Bridge peut maintenant commencer ;
+- ne pas forcer un retour byte-for-byte au ZIP 0.7.2 pour les fichiers Git ayant déjà évolué ;
+- distinguer la baseline packagée 0.7.2 de la ligne de développement de la branche ;
+- vérifier le HEAD réel des deux dépôts avant toute modification ;
+- commencer en lecture seule et produire un rapport avant tout nouveau lot de code.
 
 Référence Bridge à lire en premier :
 
 1. `HANDOFF_CODEX.md`
 2. `SOURCE_BASELINE_SHA256.txt`
 3. `README.md`
+4. `includes/class-awb-library-importer.php`
+5. `includes/class-awb-site-occurrence.php`
+6. `includes/class-awb-workbench.php`
 
-Puis, uniquement après complétude du miroir, faire l'audit croisé Manager ↔ Bridge.
 
 ## 3. Architecture Manager à lire en premier
 
