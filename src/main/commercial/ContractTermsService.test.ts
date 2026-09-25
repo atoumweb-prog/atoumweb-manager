@@ -161,13 +161,15 @@ describe('ContractTermsService', () => {
     expect(() => quotes.addCustomLine(quote.id, { label: 'Après finalisation', proposedUnitPriceCents: 1000 })).toThrow(/finalisé/i);
   });
 
-  it('reprend les choix et clauses particulières lors de la duplication', () => {
-    const base = publishedClause('BASE-RESP', 'Responsabilité', 'base', 'Texte standard.');
+  it('reprend les adaptations de prestation et clauses particulières lors de la duplication', () => {
+    const specific = publishedClause('WEB-RESP', 'Responsabilité prestation', 'catalog', 'Texte standard.');
+    const service = publishedService('Site sur mesure');
+    contractTerms.setCatalogLinks(specific.id, [service.id]);
     const quote = quotes.create({ prospectId: prospectId(), subject: 'Version client' });
-    quotes.addCustomLine(quote.id, { label: 'Prestation', proposedUnitPriceCents: 50000 });
+    quotes.addCatalogLine(quote.id, service.currentVersion!.id);
     const build = contractTerms.syncQuote(quote.id);
-    const baseInstance = build.clauses.find((clause) => clause.sourceClauseId === base.id)!;
-    contractTerms.updateQuoteClause(baseInstance.id, { body: 'Texte négocié.' });
+    const instance = build.clauses.find((clause) => clause.sourceClauseId === specific.id)!;
+    contractTerms.updateQuoteClause(instance.id, { body: 'Texte négocié.' });
     contractTerms.addCustomQuoteClause(quote.id, { title: 'Cas particulier', body: 'Conserver cette clause.' });
     quotes.finalize(quote.id);
     quotes.markSent(quote.id);
@@ -175,7 +177,7 @@ describe('ContractTermsService', () => {
 
     const copy = quotes.duplicate(quote.id);
     const copiedBuild = contractTerms.getQuoteBuild(copy.id);
-    expect(copiedBuild.clauses.find((clause) => clause.sourceClauseId === base.id)?.body).toBe('Texte négocié.');
+    expect(copiedBuild.clauses.find((clause) => clause.sourceClauseId === specific.id)?.body).toBe('Texte négocié.');
     expect(copiedBuild.clauses.some((clause) => clause.title === 'Cas particulier' && clause.body === 'Conserver cette clause.')).toBe(true);
   });
 });
