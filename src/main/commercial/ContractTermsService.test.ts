@@ -38,12 +38,40 @@ function publishedService(name: string) {
   return catalog.getItem(item.id);
 }
 
-function publishedClause(code: string, title: string, scope: 'base' | 'catalog', body: string) {
-  const clause = contractTerms.createTemplate({ code, title, scope }, { body });
+function publishedClause(code: string, title: string, scope: 'base' | 'catalog', body: string, audience: 'all' | 'professional' | 'consumer' = 'all') {
+  const clause = contractTerms.createTemplate({ code, title, scope, audience }, { body });
   return contractTerms.publishVersion(clause.versions[0].id);
 }
 
+function createConsumerProspect() {
+  const contact = crm.createContact({ firstName: 'Camille', lastName: 'Particulier' });
+  return crm.createProspect({ contactId: contact.id, primaryNeed: 'Site mariage' });
+}
+
 describe('ContractTermsService', () => {
+  it('sélectionne automatiquement les clauses selon le type de client', () => {
+    const common = publishedClause('BASE-COMMON', 'Socle commun', 'base', 'Tous clients.');
+    const pro = publishedClause('BASE-PRO', 'Conditions professionnels', 'base', 'Uniquement B2B.', 'professional');
+    const consumer = publishedClause('BASE-CONSUMER', 'Conditions consommateurs', 'base', 'Uniquement particuliers.', 'consumer');
+
+    const professionalQuote = quotes.create({ prospectId: prospectId(), subject: 'Client pro' });
+    const professionalBuild = contractTerms.syncQuote(professionalQuote.id);
+    expect(professionalQuote.contractAudience).toBe('professional');
+    expect(professionalBuild.audience).toBe('professional');
+    expect(professionalBuild.clauses.some((clause) => clause.sourceClauseId === common.id)).toBe(true);
+    expect(professionalBuild.clauses.some((clause) => clause.sourceClauseId === pro.id)).toBe(true);
+    expect(professionalBuild.clauses.some((clause) => clause.sourceClauseId === consumer.id)).toBe(false);
+
+    const consumerProspect = createConsumerProspect();
+    const consumerQuote = quotes.create({ prospectId: consumerProspect.id, subject: 'Client particulier' });
+    const consumerBuild = contractTerms.syncQuote(consumerQuote.id);
+    expect(consumerQuote.contractAudience).toBe('consumer');
+    expect(consumerBuild.audience).toBe('consumer');
+    expect(consumerBuild.clauses.some((clause) => clause.sourceClauseId === common.id)).toBe(true);
+    expect(consumerBuild.clauses.some((clause) => clause.sourceClauseId === consumer.id)).toBe(true);
+    expect(consumerBuild.clauses.some((clause) => clause.sourceClauseId === pro.id)).toBe(false);
+  });
+
   it('assemble le socle et les clauses des prestations sans doublonner une clause partagée', () => {
     const base = publishedClause('BASE-OBJET', 'Objet et acceptation', 'base', 'Socle commun.');
     const specific = publishedClause('WEB-CONTENU', 'Contenus fournis par le client', 'catalog', 'Le client fournit les contenus.');
