@@ -72,6 +72,24 @@ describe('ContractTermsService', () => {
     expect(consumerBuild.clauses.some((clause) => clause.sourceClauseId === pro.id)).toBe(false);
   });
 
+  it('rebascule les clauses fixes lorsque le public contractuel change avant finalisation', () => {
+    const professional = publishedClause('BASE-SWITCH-PRO', 'Socle professionnel', 'base', 'B2B.', 'professional');
+    const consumer = publishedClause('BASE-SWITCH-CONSUMER', 'Socle consommateur', 'base', 'B2C.', 'consumer');
+    const quote = quotes.create({ prospectId: prospectId(), subject: 'Changement de public' });
+
+    const first = contractTerms.syncQuote(quote.id);
+    expect(first.clauses.find((clause) => clause.sourceClauseId === professional.id)?.enabled).toBe(true);
+    expect(first.clauses.some((clause) => clause.sourceClauseId === consumer.id)).toBe(false);
+
+    const changedQuote = quotes.updateConditions(quote.id, { contractAudience: 'consumer' });
+    expect(changedQuote.contractAudience).toBe('consumer');
+    const after = contractTerms.syncQuote(quote.id);
+    expect(after.audience).toBe('consumer');
+    expect(after.clauses.find((clause) => clause.sourceClauseId === professional.id)?.enabled).toBe(false);
+    expect(after.clauses.find((clause) => clause.sourceClauseId === professional.id)?.isOrphaned).toBe(true);
+    expect(after.clauses.find((clause) => clause.sourceClauseId === consumer.id)?.enabled).toBe(true);
+  });
+
   it('assemble le socle et les clauses des prestations sans doublonner une clause partagée', () => {
     const base = publishedClause('BASE-OBJET', 'Objet et acceptation', 'base', 'Socle commun.');
     const specific = publishedClause('WEB-CONTENU', 'Contenus fournis par le client', 'catalog', 'Le client fournit les contenus.');
