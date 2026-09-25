@@ -63,7 +63,7 @@ describe('migrations SQLite', () => {
         "SELECT name FROM sqlite_master WHERE type='table' AND name='bridge_snapshot_sections'",
       )).toBeUndefined();
 
-      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([37, 38]);
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([37, 38, 39]);
       expect(database.get<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='bridge_snapshot_sections'",
       )?.name).toBe('bridge_snapshot_sections');
@@ -100,7 +100,7 @@ describe('migrations SQLite', () => {
            '2026-09-24T10:00:00.000Z','2026-09-24T10:00:00.000Z',NULL)`,
       );
 
-      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([38]);
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([38, 39]);
 
       expect(database.get<{ name: string; library_category: string; vertical: string | null }>(
         "SELECT name, library_category, vertical FROM technical_items WHERE id='legacy-library-item'",
@@ -145,7 +145,7 @@ describe('migrations SQLite', () => {
       'atoumweb_technical_assets', 'backup_records', 'backup_locations', 'backup_policies', 'backup_intervention_links',
       'catalog_project_blueprints', 'project_node_sources', 'project_node_secrets', 'expenses', 'crm_identity_assets',
       'bridge_sites', 'bridge_snapshots', 'bridge_pages', 'bridge_page_snapshots', 'bridge_nodes', 'bridge_sources',
-      'bridge_assets', 'bridge_dependencies', 'bridge_relations', 'bridge_snapshot_sections', 'bridge_objects',
+      'bridge_assets', 'bridge_dependencies', 'bridge_relations', 'bridge_snapshot_sections', 'bridge_objects', 'bridge_occurrence_returns',
     ]) {
       const row = database.get<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", [table]);
       expect(row?.name).toBe(table);
@@ -163,7 +163,7 @@ describe('migrations SQLite', () => {
     for (const column of ['reuse_status', 'origin_technical_item_id', 'library_category', 'vertical']) {
       expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('technical_items') WHERE name='${column}'`)?.name).toBe(column);
     }
-    expect(MIGRATIONS.at(-1)?.id).toBe(38);
+    expect(MIGRATIONS.at(-1)?.id).toBe(39);
     expect(() => database.run(
       `INSERT INTO technical_items (id,project_id,scope,category,library_category,name,description,tags_json,reuse_status,origin_technical_item_id,vertical,created_at,updated_at,archived_at)
        VALUES ('snippet-test',NULL,'atoumweb','other','code_snippet','Snippet test',NULL,'[]','ready',NULL,'fleuriste','2026-09-25T00:00:00.000Z','2026-09-25T00:00:00.000Z',NULL)`,
