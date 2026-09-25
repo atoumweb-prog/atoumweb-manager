@@ -1015,3 +1015,54 @@ body.catalog-resizing * {
     justify-content: center;
   }
 }
+
+
+.quote-contract-document {
+  margin-top: 14px;
+  padding: 13px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--accent) 3%, var(--surface));
+}
+
+.quote-contract-document-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.quote-contract-document-heading > div {
+  display: grid;
+  gap: 3px;
+}
+
+.quote-contract-document-heading h3,
+.quote-contract-document-heading p {
+  margin: 0;
+}
+
+.quote-contract-reference {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.quote-contract-reference input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.quote-contract-document-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 720px) {
+  .quote-contract-document-heading,
+  .quote-contract-reference {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
