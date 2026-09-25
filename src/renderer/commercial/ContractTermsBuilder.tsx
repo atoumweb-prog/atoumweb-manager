@@ -89,7 +89,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
 
   useEffect(() => {
     void load();
-  }, [quote.id, quote.status, quote.finalizedAt, quote.contractCompiledAt]);
+  }, [quote.id, quote.status, quote.finalizedAt, quote.contractCompiledAt, quote.updatedAt]);
 
   async function run(action: () => Promise<QuoteContractBuild>): Promise<void> {
     setBusy(true);
