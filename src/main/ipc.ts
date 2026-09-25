@@ -403,6 +403,36 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('quotes:refuse', (_event, id: string) => database.quotes.refuse(id));
   ipcMain.handle('quotes:expire', (_event, id: string) => database.quotes.expire(id));
   ipcMain.handle('quotes:duplicate', (_event, id: string) => database.quotes.duplicate(id));
+  ipcMain.handle('quotes:import-contract-document', async (_event, id: string, abbyReference?: string | null) => {
+    const quote = database.quotes.get(id);
+    if (quote.status !== 'accepted') throw new Error('Le devis doit être accepté avant d’importer le document contractuel.');
+    const clientId = quote.acceptedClientAccountId ?? quote.clientAccountId;
+    if (!clientId) throw new Error('Client introuvable pour ce devis.');
+    const selection = await dialog.showOpenDialog({
+      title: `Importer le devis contractuel Abby · ${quote.number}`,
+      defaultPath: database.clientDocuments.clientRoot(clientId),
+      properties: ['openFile'],
+      filters: [{ name: 'Devis / contrat PDF', extensions: ['pdf'] }],
+    });
+    if (selection.canceled || selection.filePaths.length === 0) return null;
+    const before = new Set(database.clientDocuments.list(clientId, true).map((document) => document.id));
+    const imported = database.clientDocuments.importPaths(clientId, [selection.filePaths[0]], {
+      category: 'contract',
+      title: `Devis contractuel ${quote.number}`,
+      notes: `Document Abby accepté rattaché au devis ${quote.number}.`,
+    });
+    const document = imported.find((candidate) => !before.has(candidate.id));
+    if (!document) throw new Error('Le document contractuel n’a pas pu être identifié après import.');
+    return database.quotes.attachContractDocument(id, document.id, abbyReference);
+  });
+  ipcMain.handle('quotes:open-contract-document', async (_event, id: string) => {
+    const quote = database.quotes.get(id);
+    if (!quote.contractDocumentId) throw new Error('Aucun document contractuel n’est rattaché à ce devis.');
+    const error = await shell.openPath(database.clientDocuments.absolutePath(quote.contractDocumentId));
+    if (error) throw new Error(error);
+  });
+  ipcMain.handle('quotes:update-abby-reference', (_event, id: string, abbyReference?: string | null) => database.quotes.updateAbbyReference(id, abbyReference));
+
   ipcMain.handle('quotes:generate-pdf', async (_event, id: string) => {
     const quote = database.quotes.get(id);
     const contract = quote.status === 'draft' && !quote.finalizedAt
