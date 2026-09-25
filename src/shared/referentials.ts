@@ -2,7 +2,7 @@ import type { ProjectTechnicalContentType } from './projects';
 
 export const ATOUMWEB_LIBRARY_CATEGORIES = [
   'header', 'footer', 'hero', 'page', 'section', 'form', 'gallery', 'carousel',
-  'navigation', 'css', 'javascript', 'php', 'woocommerce', 'acf', 'divi', 'app', 'note',
+  'navigation', 'code_snippet', 'css', 'javascript', 'php', 'woocommerce', 'acf', 'divi', 'app', 'note',
 ] as const;
 export type AtoumWebLibraryCategory = (typeof ATOUMWEB_LIBRARY_CATEGORIES)[number];
 
@@ -17,6 +17,7 @@ export interface AtoumWebTechnicalItemInput {
   name: string;
   description?: string | null;
   tags?: string[];
+  vertical?: string | null;
   reuseStatus: AtoumWebReuseStatus;
   originTechnicalItemId?: string | null;
 }
@@ -77,6 +78,7 @@ export interface AtoumWebTechnicalLibraryFilters {
   search?: string | null;
   category?: AtoumWebLibraryCategory | null;
   reuseStatus?: AtoumWebReuseStatus | null;
+  vertical?: string | null;
   includeArchived?: boolean;
 }
 
