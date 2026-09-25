@@ -1,5 +1,6 @@
 import { NeedChoices, openEntity } from '../workflow/DossierPanel';
 import {ClientDocumentsPanel} from './ClientDocumentsPanel';
+import {ClientContractsPanel} from './ClientContractsPanel';
 import type { NeedInput } from '../../shared/workflow';
 import { Component, useEffect, useMemo, useRef, useState, type CSSProperties, type ErrorInfo, type ReactNode } from 'react';
 import {
@@ -41,7 +42,7 @@ const ROLE_LABELS: Record<ClientContactRole, string> = {
   other: 'Autre',
 };
 
-type ClientTab = 'summary' | 'contacts' | 'documents' | 'operations' | 'history';
+type ClientTab = 'summary' | 'contacts' | 'contracts' | 'documents' | 'operations' | 'history';
 
 interface ClientDraft {
   company: string;
@@ -607,13 +608,14 @@ function ClientsPageContent({ onMessage, initialId }: { onMessage: (message: str
                   {quotes.filter((item) => !['refused', 'expired'].includes(item.status)).map((item) => <button className="workflow-link" type="button" key={item.id} onClick={() => openEntity({ entityType: 'quote', entityId: item.id, title: item.subject })}>Devis {item.number} · {item.subject}</button>)}
                   {projects.map((item) => <button className="workflow-link" type="button" key={item.id} onClick={() => openEntity({ entityType: 'project', entityId: item.id, title: item.name })}>Projet · {item.name}</button>)}
                   {subscriptions.filter((item) => item.status === 'active').map((item) => <div className="client-related-item" key={item.id}>Maintenance active · {item.planName}</div>)}
-                  <div className="detail-actions"><button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:open-page', { detail: 'Devis' }))}>Nouveau devis</button><button className="secondary-button" type="button" disabled title="Disponible avec la Phase 5">Nouveau contrat</button><button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:open-page', { detail: 'Projets' }))}>Nouveau projet</button></div>
+                  <div className="detail-actions"><button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:open-page', { detail: 'Devis' }))}>Nouveau devis</button><button className="secondary-button" type="button" onClick={() => setActiveTab('contracts')}>Voir les contrats</button><button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:open-page', { detail: 'Projets' }))}>Nouveau projet</button></div>
                 </section>
                 {(selected.nextActionAt || interventions.some((item) => !['completed', 'cancelled'].includes(item.status))) && <section className="client-primary-card"><h3>Échéances · À suivre</h3>{selected.nextActionAt && <SummaryLine label="Prochaine action" value={`${selected.nextActionText || 'Action'} · ${new Date(selected.nextActionAt).toLocaleDateString('fr-FR')}`} />}{interventions.filter((item) => !['completed', 'cancelled'].includes(item.status)).map((item) => <div className="client-related-item" key={item.id}>Intervention {item.number} · {item.subject}</div>)}</section>}
               </>}
-              <details className="client-secondary-sections" open={activeTab !== 'summary'}><summary>Informations complémentaires : contacts, documents, interventions, historique</summary><div className="client-tabs-preview client-tabs-buttons">
+              <details className="client-secondary-sections" open={activeTab !== 'summary'}><summary>Informations complémentaires : contacts, contrats, documents, interventions, historique</summary><div className="client-tabs-preview client-tabs-buttons">
                 <button className={activeTab === 'summary' ? 'active' : ''} type="button" onClick={() => setActiveTab('summary')}>Fiche</button>
                 <button className={activeTab === 'contacts' ? 'active' : ''} type="button" onClick={() => setActiveTab('contacts')}>Contacts</button>
+                <button className={activeTab === 'contracts' ? 'active' : ''} type="button" onClick={() => setActiveTab('contracts')}>Contrats</button>
                 <button className={activeTab === 'documents' ? 'active' : ''} type="button" onClick={() => setActiveTab('documents')}>Documents</button>
                 <button className={activeTab === 'operations' ? 'active' : ''} type="button" onClick={() => setActiveTab('operations')}>Interventions</button>
                 <button className={activeTab === 'history' ? 'active' : ''} type="button" onClick={() => setActiveTab('history')}>Historique</button>
@@ -699,8 +701,9 @@ function ClientsPageContent({ onMessage, initialId }: { onMessage: (message: str
                 </div>
               )}
 
+              {activeTab === 'contracts' && <ClientContractsPanel quotes={quotes} onMessage={onMessage} />}
               {activeTab === 'operations' && <ClientOperationsTab clientId={selected.id} onMessage={onMessage} />}
-              {activeTab === 'documents' && <ClientDocumentsPanel clientId={selected.id}/>}
+              {activeTab === 'documents' && <ClientDocumentsPanel clientId={selected.id}/>} 
 
               {activeTab === 'history' && <ActivityList activity={activity} />}
               </div>
