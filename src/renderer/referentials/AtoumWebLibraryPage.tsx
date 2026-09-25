@@ -809,7 +809,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
               <div><span className="eyebrow">{categoryLabel(selected.category)} · {reuseStatusLabel(selected.reuseStatus)}</span><h2>{selected.name}</h2></div>
               <div className="button-row">
                 {!selected.archivedAt && <button className="secondary-button" type="button" onClick={() => setEditingMetadata((value) => !value)}>{editingMetadata ? 'Annuler édition' : 'Modifier'}</button>}
-                <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void exportPackage()}><OperationIcon name="package" size={16} /> Exporter ZIP</button>
+                <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void exportPackage()}><OperationIcon name="package" size={16} /> Exporter archive</button>
                 <button className="secondary-button" type="button" onClick={() => void toggleArchive()}><OperationIcon name="archive" size={16} /> {selected.archivedAt ? 'Réactiver' : 'Archiver'}</button>
                 <button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'collapse' : 'expand'} size={18} /></button>
                 <button className="close-detail" type="button" aria-label="Fermer la fiche composant" title="Fermer" onClick={closeDetail}><OperationIcon name="close" size={18} /></button>
@@ -878,7 +878,9 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
                 <div><span className="eyebrow">Aperçu principal</span><h3>{bridgeStageLabel(displayedBridgeEntry.payload.stage)} · v{displayedBridgeEntry.version.versionNumber}</h3></div>
                 <div className="aw-library-version-flags">{displayedBridgeEntry.version.stable && <span>stable</span>}<span>{displayedBridgeEntry.version.contentType}{displayedBridgeEntry.version.language ? ` · ${displayedBridgeEntry.version.language}` : ''}</span></div>
               </div>
-              {displayedBridgeEntry.version.notes && <p className="muted aw-library-current-notes">{displayedBridgeEntry.version.notes}</p>}
+              {displayedBridgeEntry.payload.stage === 'reusable'
+                ? <p className="muted aw-library-current-notes">Modèle réutilisable prêt pour un Workbench Divi. Une utilisation manuelle HTML/CSS reste disponible.</p>
+                : displayedBridgeEntry.version.notes && <p className="muted aw-library-current-notes">{displayedBridgeEntry.version.notes}</p>}
               {displayedBridgeEntry.payload.stage === 'original'
                 ? <BridgeCandidateViewer candidate={displayedBridgeEntry.payload.value} rawContent={displayedBridgeEntry.version.contentText ?? ''} onMessage={onMessage} />
                 : displayedBridgeEntry.payload.stage === 'work'
@@ -919,15 +921,24 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
               />
             </section>}
 
-            <div className="aw-library-assets">
-              <div className="aw-library-section-title"><div><span className="eyebrow">Fichiers indépendants</span><h3>Captures & assets</h3></div><button className="secondary-button" type="button" disabled={!assetVersionId} onClick={() => void openAssetFolder()}><OperationIcon name="folder" size={16} /> Ouvrir le dossier</button></div>
-              <div className="aw-library-asset-toolbar">
-                <label>Version<select value={assetVersionId} onChange={(event) => void changeAssetVersion(event.target.value)}>{selected.versions.map((version) => <option key={version.id} value={version.id}>{technicalVersionLabel(version)}{version.current ? ' · courante' : ''}{version.stable ? ' · stable' : ''}</option>)}</select></label>
-                <label>Type<select value={assetRole} onChange={(event) => setAssetRole(event.target.value as AtoumWebTechnicalAssetRole)}>{ASSET_ROLES.map((role) => <option key={role.id} value={role.id}>{role.label}</option>)}</select></label>
-                <button className="primary-button" type="button" disabled={!assetVersionId || Boolean(selected.archivedAt)} onClick={() => void importAssets()}><OperationIcon name="upload" size={16} /> Ajouter des fichiers</button>
+            <details className="aw-library-secondary-panel aw-library-assets">
+              <summary>
+                <div><span className="eyebrow">Fichiers indépendants</span><strong>Captures & assets</strong></div>
+                <span className="aw-library-secondary-count">${assets.length} fichier(s)</span>
+              </summary>
+              <div className="aw-library-secondary-body">
+                <div className="aw-library-section-title">
+                  <div><span className="muted">Fichiers liés à la version sélectionnée</span></div>
+                  <button className="secondary-button" type="button" disabled={!assetVersionId} onClick={() => void openAssetFolder()}><OperationIcon name="folder" size={16} /> Ouvrir le dossier</button>
+                </div>
+                <div className="aw-library-asset-toolbar">
+                  <label>Version<select value={assetVersionId} onChange={(event) => void changeAssetVersion(event.target.value)}>{selected.versions.map((version) => <option key={version.id} value={version.id}>{technicalVersionLabel(version)}{version.current ? ' · courante' : ''}{version.stable ? ' · stable' : ''}</option>)}</select></label>
+                  <label>Type<select value={assetRole} onChange={(event) => setAssetRole(event.target.value as AtoumWebTechnicalAssetRole)}>{ASSET_ROLES.map((role) => <option key={role.id} value={role.id}>{role.label}</option>)}</select></label>
+                  <button className="primary-button" type="button" disabled={!assetVersionId || Boolean(selected.archivedAt)} onClick={() => void importAssets()}><OperationIcon name="upload" size={16} /> Ajouter des fichiers</button>
+                </div>
+                {assets.length === 0 ? <p className="muted">Aucun fichier lié à cette version.</p> : <div className="aw-library-asset-list">{assets.map((asset) => <button key={asset.id} type="button" className={`aw-library-asset ${asset.missing ? 'missing' : ''}`} onClick={() => void openAsset(asset.id)}>{assetPreviews[asset.id] && <img src={assetPreviews[asset.id]} alt={`Aperçu ${asset.fileName}`} loading="lazy" />}<span>{assetRoleLabel(asset.role)}</span><strong>{asset.fileName}</strong><small>{formatBytes(asset.sizeBytes)}{asset.missing ? ' · fichier manquant' : ''}</small></button>)}</div>}
               </div>
-              {assets.length === 0 ? <p className="muted">Aucun fichier lié à cette version.</p> : <div className="aw-library-asset-list">{assets.map((asset) => <button key={asset.id} type="button" className={`aw-library-asset ${asset.missing ? 'missing' : ''}`} onClick={() => void openAsset(asset.id)}>{assetPreviews[asset.id] && <img src={assetPreviews[asset.id]} alt={`Aperçu ${asset.fileName}`} loading="lazy" />}<span>{assetRoleLabel(asset.role)}</span><strong>{asset.fileName}</strong><small>{formatBytes(asset.sizeBytes)}{asset.missing ? ' · fichier manquant' : ''}</small></button>)}</div>}
-            </div>
+            </details>
 
             {!selected.archivedAt && !bridgeWorkflow.original && <div className="aw-library-version-form">
               <h3>Créer une nouvelle version</h3>
@@ -941,33 +952,40 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
               <button className="primary-button" type="button" onClick={() => void addVersion()}>Créer la version</button>
             </div>}
 
-            <div className="aw-library-versions">
-              <h3>Historique des versions</h3>
-              {selected.versions.filter((version) => version.id !== currentVersion?.id).map((version) => {
-                const stage = parseBridgeLibraryPayload(version.contentType, version.contentText)?.stage ?? null;
-                return <div className="aw-library-version" key={version.id}>
-                  <div><strong>{technicalVersionLabel(version)}</strong><span>{version.contentType}{version.language ? ` · ${version.language}` : ''}</span></div>
-                  <div className="aw-library-version-flags">
-                    {version.current && <span>courante</span>}
-                    {version.stable && <span>stable</span>}
-                    {!stage && !version.stable && !selected.archivedAt && <button type="button" className="secondary-button" onClick={() => void markStable(version.id)}>Marquer stable</button>}
-                    {stage === 'reusable' && !version.stable && !selected.archivedAt && <span>ancienne réutilisable</span>}
-                  </div>
-                  {version.notes && <p>{version.notes}</p>}
-                  {version.contentText && <button className="secondary-button aw-library-version-toggle" type="button" onClick={() => setExpandedVersionId((current) => current === version.id ? null : version.id)}>
-                    {expandedVersionId === version.id ? 'Masquer cette version' : 'Voir cette version'}
-                  </button>}
-                  {version.contentText && expandedVersionId === version.id && <TechnicalContentViewer
-                    contentType={version.contentType}
-                    language={version.language}
-                    content={version.contentText}
-                    title={technicalVersionLabel(version)}
-                    onMessage={onMessage}
-                  />}
-                </div>;
-              })}
-              {selected.versions.filter((version) => version.id !== currentVersion?.id).length === 0 && <p className="muted">Aucune ancienne version : seule la version courante existe pour le moment.</p>}
-            </div>
+            <details className="aw-library-secondary-panel aw-library-versions">
+              <summary>
+                <div><span className="eyebrow">Historique</span><strong>Versions précédentes</strong></div>
+                <span className="aw-library-secondary-count">{Math.max(0, selected.versions.length - 1)} version(s)</span>
+              </summary>
+              <div className="aw-library-secondary-body aw-library-version-history">
+                {selected.versions.filter((version) => version.id !== currentVersion?.id).map((version) => {
+                  const stage = parseBridgeLibraryPayload(version.contentType, version.contentText)?.stage ?? null;
+                  return <div className="aw-library-version" key={version.id}>
+                    <div><strong>{technicalVersionLabel(version)}</strong><span>{version.contentType}{version.language ? ` · ${version.language}` : ''}</span></div>
+                    <div className="aw-library-version-flags">
+                      {version.current && <span>courante</span>}
+                      {version.stable && <span>stable</span>}
+                      {!stage && !version.stable && !selected.archivedAt && <button type="button" className="secondary-button" onClick={() => void markStable(version.id)}>Marquer stable</button>}
+                      {stage === 'reusable' && !version.stable && !selected.archivedAt && <span>ancienne réutilisable</span>}
+
+                    {version.notes && <p>{version.notes}</p>}
+                    {version.contentText && <button className="secondary-button aw-library-version-toggle" type="button" onClick={() => setExpandedVersionId((current) => current === version.id ? null : version.id)}>
+                      {expandedVersionId === version.id ? 'Masquer cette version' : 'Voir cette version'}
+                    </button>}
+                    {version.contentText && expandedVersionId === version.id && <TechnicalContentViewer
+                      contentType={version.contentType}
+                      language={version.language}
+                      content={version.contentText}
+                      title={technicalVersionLabel(version)}
+                      onMessage={onMessage}
+                    />}
+                  </div>;
+                })}
+                {selected.versions.filter((version) => version.id !== currentVersion?.id).length === 0 && <p className="muted">Aucune ancienne version : seule la version courante existe pour le moment.</p>}
+              </div>
+  
+              </div>
+            </details>
             </>
         </article>}
       </div>
@@ -1219,10 +1237,10 @@ function BridgeReusableViewer({
   const ready = component.reusable.generalized && component.checks.remoteAssetUrls.length === 0;
 
   return <div className="aw-bridge-candidate-viewer">
-    <div className={`aw-bridge-candidate-state ${ready ? 'ready' : 'reusable'}`}>
-      <OperationIcon name={ready ? 'check-circle' : 'alert'} size={18} />
-      <div><strong>{ready ? 'Version réutilisable prête' : 'Version réutilisable préparée'}</strong><span>{ready ? 'Version figée et validée pour réemploi.' : `${component.checks.remoteAssetUrls.length} média(s) utilisent encore une URL distante. Le code est prêt mais les assets doivent encore devenir locaux.`}</span></div>
-    </div>
+    {!ready && <div className="aw-bridge-candidate-state reusable">
+      <OperationIcon name="alert" size={18} />
+      <div><strong>Version réutilisable à finaliser</strong><span>{component.checks.remoteAssetUrls.length} ressource(s) utilisent encore une URL distante. Elles doivent devenir locales avant validation complète.</span></div>
+    </div>}
 
     <section className="aw-bridge-candidate-preview">
       <div className="aw-library-section-title"><div><span className="eyebrow">Contrôle final</span><h3>Réutilisable responsive + comparaison</h3></div></div>
@@ -1233,36 +1251,45 @@ function BridgeReusableViewer({
 
     <section className="aw-bridge-candidate-reuse">
       <div className="aw-library-section-title">
-        <div><span className="eyebrow">Mode d’emploi</span><h3>Utiliser dans un autre site</h3></div>
+        <div><span className="eyebrow">Utilisation</span><h3>Envoyer vers un Workbench Divi</h3></div>
         <button className="primary-button" type="button" disabled={packageBusy || !component.reusable.generalized} onClick={() => void onExportBridgePackage()}>
           <OperationIcon name="package" size={16} />{packageBusy ? 'Préparation…' : 'Exporter package Bridge'}
         </button>
       </div>
       <div className="aw-bridge-workbench-note">
         <OperationIcon name="wrench" size={16} />
-        <span>Prévu pour le flux <strong>Bibliothèque → Bridge → Workbench Divi</strong>. Ce package ne déclenche aucune écriture directe en production.</span>
+        <span>Parcours principal : <strong>Bibliothèque → Bridge → Workbench Divi</strong>. Aucune écriture directe en production.</span>
       </div>
       <div className="aw-bridge-package-summary">
         <span>Dépendances <strong>{component.dependencies.length}</strong></span>
         <span>Assets source <strong>{component.assets.length}</strong></span>
         <span>Ressources distantes <strong>{component.checks.remoteAssetUrls.length}</strong></span>
       </div>
-      <div className="aw-bridge-candidate-instructions">
-        {component.reusable.instructions.map((instruction) => <p key={instruction}><OperationIcon name="check-circle" size={15} />{instruction}</p>)}
-      </div>
-      <div className="aw-bridge-copy-grid">
-        <CopyCodeCard title="HTML prêt à copier" content={component.reusable.html} onMessage={onMessage} />
-        <CopyCodeCard title="CSS prêt à copier" content={component.reusable.css} onMessage={onMessage} />
-        {component.reusable.javascript && <CopyCodeCard title="JavaScript prêt à copier" content={component.reusable.javascript} onMessage={onMessage} />}
-      </div>
-      {component.checks.remoteAssetUrls.length > 0 && <details className="aw-bridge-remote-assets">
-        <summary>{component.checks.remoteAssetUrls.length} média(s) encore chargés depuis le site d’origine</summary>
-        {component.checks.remoteAssetUrls.map((url) => <code key={url}>{url}</code>)}
-      </details>}
+
+      <details className="aw-library-secondary-panel aw-library-manual-use">
+        <summary>
+          <div><span className="eyebrow">Alternative</span><strong>Utilisation manuelle / dépannage</strong></div>
+          <span className="aw-library-secondary-count">HTML / CSS{component.reusable.javascript ? ' / JS' : ''}</span>
+        </summary>
+        <div className="aw-library-secondary-body">
+          <div className="aw-bridge-candidate-instructions">
+            {component.reusable.instructions.map((instruction) => <p key={instruction}><OperationIcon name="check-circle" size={15} />{instruction}</p>)}
+          </div>
+          <div className="aw-bridge-copy-grid">
+            <CopyCodeCard title="HTML prêt à copier" content={component.reusable.html} onMessage={onMessage} />
+            <CopyCodeCard title="CSS prêt à copier" content={component.reusable.css} onMessage={onMessage} />
+            {component.reusable.javascript && <CopyCodeCard title="JavaScript prêt à copier" content={component.reusable.javascript} onMessage={onMessage} />}
+          </div>
+          {component.checks.remoteAssetUrls.length > 0 && <details className="aw-bridge-remote-assets">
+            <summary>{component.checks.remoteAssetUrls.length} média(s) encore chargés depuis le site d’origine</summary>
+            {component.checks.remoteAssetUrls.map((url) => <code key={url}>{url}</code>)}
+          </details>}
+        </div>
+      </details>
     </section>
 
     <details className="aw-bridge-candidate-source">
-      <summary>Voir le paquet réutilisable complet</summary>
+      <summary>Voir le paquet technique complet</summary>
       <TechnicalContentViewer contentType="json" language="json" content={rawContent} title="Paquet réutilisable" onMessage={onMessage} />
     </details>
   </div>;
@@ -2002,7 +2029,7 @@ function MetadataEditor({ form, setForm, onSave }: { form: MetadataForm; setForm
       <label>Statut<select value={form.reuseStatus} onChange={(event) => setForm({ ...form, reuseStatus: event.target.value as AtoumWebReuseStatus })}>{REUSE_STATUSES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
       <label>Tags<input value={form.tags} onChange={(event) => setForm({ ...form, tags: event.target.value })} placeholder="Séparés par des virgules" /></label>
     </div>
-    <label>Description<textarea rows={3} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
+    <label>Description<textarea rows={2} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
     <label>ID origine Bibliothèque projet<input value={form.originTechnicalItemId} onChange={(event) => setForm({ ...form, originTechnicalItemId: event.target.value })} placeholder="Optionnel · uniquement un composant projet" /></label>
     <button className="primary-button" type="button" onClick={() => void onSave()}>Enregistrer les métadonnées</button>
   </div>;
