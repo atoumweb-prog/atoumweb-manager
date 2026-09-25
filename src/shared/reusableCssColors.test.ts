@@ -26,6 +26,18 @@ describe('generalizeReusableCssColors', () => {
     expect(result.css).toContain('border-color: var(--aw-atoum-card-color-1)');
   });
 
+  it('préserve les commentaires contenant une syntaxe qui ressemble à une couleur', () => {
+    const result = generalizeReusableCssColors(
+      '/* color: #123456; */\n.atoum-card {\n  color: #071b3a;\n  background: #d88972;\n}',
+      ['atoum-card'],
+    );
+
+    expect(result.fields).toHaveLength(2);
+    expect(result.css).toContain('/* color: #123456; */');
+    expect(result.css).toContain('color: var(--aw-atoum-card-color-1)');
+    expect(result.css).toContain('background: var(--aw-atoum-card-color-2)');
+  });
+
   it('ne transforme pas les couleurs rgba', () => {
     const result = generalizeReusableCssColors(
       '.atoum-card { box-shadow: 0 10px 20px rgba(7, 27, 58, 0.08); color: #071b3a; }',
