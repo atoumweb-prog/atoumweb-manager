@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { BillingInvoiceInput, BillingItemFilters, BillingItemStatus } from '../shared/billing';
 import type { ExpenseFilters, ExpenseInput, ExpenseStatus } from '../shared/expenses';
 import type {
+  ContractClauseAudience,
   ContractClauseStatus,
   ContractClauseTemplateInput,
   ContractClauseVersionInput,
@@ -259,6 +260,7 @@ const api: AtoumWebApi = {
       createVersion: (clauseId: string, input: ContractClauseVersionInput) => ipcRenderer.invoke('contract-terms:library:create-version', clauseId, input),
       publishVersion: (versionId: string) => ipcRenderer.invoke('contract-terms:library:publish-version', versionId),
       setStatus: (id: string, status: ContractClauseStatus) => ipcRenderer.invoke('contract-terms:library:set-status', id, status),
+      setAudience: (id: string, audience: ContractClauseAudience) => ipcRenderer.invoke('contract-terms:library:set-audience', id, audience),
       setCatalogLinks: (id: string, catalogItemIds: string[]) => ipcRenderer.invoke('contract-terms:library:set-catalog-links', id, catalogItemIds),
     },
     quotes: {
