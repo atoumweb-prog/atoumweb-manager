@@ -22,7 +22,7 @@ export interface GeneralizedCssColorsResult {
 }
 
 const HEX_COLOR_RE = /#[0-9a-fA-F]{6}\b/g;
-const DECLARATION_RE = /(^|[;{]\s*)([-A-Za-z][A-Za-z0-9_-]*)\s*:\s*([^;{}]+)(;?)/gm;
+const DECLARATION_RE = /(^\s*|[;{]\s*)([-A-Za-z][A-Za-z0-9_-]*)\s*:\s*([^;{}]+)(;?)/gm;
 
 export function generalizeReusableCssColors(
   css: string,
