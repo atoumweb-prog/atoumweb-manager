@@ -40,7 +40,8 @@ Le package et les champs disposent de leurs propres versions :
 ```json
 {
   "componentPackageContractVersion": 1,
-  "fieldsContractVersion": 1
+  "fieldsContractVersion": 1,
+  "identityContractVersion": 1
 }
 ```
 
@@ -54,9 +55,21 @@ Le fichier canonique des champs utilise :
 }
 ```
 
-Schéma de validation :
+Schémas de validation :
 
-`docs/ATOUMWEB_COMPONENT_FIELDS_V1.schema.json`
+- `docs/ATOUMWEB_COMPONENT_FIELDS_V1.schema.json`
+- `docs/ATOUMWEB_COMPONENT_IDENTITY_V1.schema.json`
+
+Identité technique et variantes :
+
+- `docs/ATOUMWEB_COMPONENT_IDENTITY_CONTRACT_V1.md`
+
+Le package transporte également `component/identity.json` afin de séparer explicitement :
+
+- le nom affiché dans la Bibliothèque ;
+- la famille technique ;
+- une variante éventuelle ;
+- l’occurrence site qui sera créée plus tard par Bridge.
 
 ## 3. Types de champs V1
 
@@ -442,6 +455,58 @@ La personnalisation d’une occurrence :
 - ne modifie pas sa version ;
 - conserve un lien de provenance ;
 - peut ensuite évoluer indépendamment sur le site cible.
+
+## 13 bis. Identité du composant
+
+Le Component Package V1 inclut un contrat d’identité séparé :
+
+```text
+Component Family
+      ↓
+Library Variant
+      ↓
+Site Occurrence
+```
+
+Le fichier `component/identity.json` contient notamment :
+
+```text
+libraryDisplayName
+componentFamilyId
+componentKey
+libraryVariantId
+variantKey
+variantOf
+variantMode
+vertical
+reusabilityScope
+tags
+libraryItemId
+libraryVersionId
+libraryVersionNumber
+```
+
+Règle centrale :
+
+```text
+libraryDisplayName != componentKey
+```
+
+Bridge doit utiliser `componentKey` quand elle est classifiée et ne doit jamais dériver sa clé technique du nom affiché.
+
+Les composants historiques non encore classifiés exportent explicitement :
+
+```text
+classificationStatus = unclassified
+componentKey = null
+reusabilityScope = unclassified
+```
+
+Ils pourront être reclassés progressivement sans réécrire leur historique.
+
+La définition complète est dans :
+
+`docs/ATOUMWEB_COMPONENT_IDENTITY_CONTRACT_V1.md`
 
 ## 14. Décision V1
 
