@@ -172,6 +172,7 @@ export interface QuoteSummary {
   finalizedAt?: string | null;
   lastExtendedAt?: string | null;
   projectReadyAt?: string | null;
+  contractCompiledAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -182,6 +183,8 @@ export interface QuoteDetail extends QuoteSummary {
   prerequisitesText?: string | null;
   specialTerms?: string | null;
   contractType?: string | null;
+  contractTextSnapshot?: string | null;
+  contractSnapshotJson?: string | null;
   lines: QuoteLine[];
 }
 
