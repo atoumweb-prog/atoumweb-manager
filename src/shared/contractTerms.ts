@@ -99,6 +99,7 @@ export interface ContractTermsApi {
     createVersion(clauseId: string, input: ContractClauseVersionInput): Promise<ContractClauseVersion>;
     publishVersion(versionId: string): Promise<ContractClauseTemplate>;
     setStatus(id: string, status: ContractClauseStatus): Promise<ContractClauseTemplate>;
+    setAudience(id: string, audience: ContractClauseAudience): Promise<ContractClauseTemplate>;
     setCatalogLinks(id: string, catalogItemIds: string[]): Promise<ContractClauseTemplate>;
   };
   quotes: {
