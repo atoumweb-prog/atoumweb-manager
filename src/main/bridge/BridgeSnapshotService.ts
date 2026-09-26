@@ -67,15 +67,6 @@ function stableStringSet(value: unknown): string {
   return JSON.stringify(parseStringArray(value).slice().sort());
 }
 
-function stableJsonString(value: unknown): string {
-  if (typeof value !== 'string') return stableObjectString(value);
-  try {
-    return stableObjectString(JSON.parse(value));
-  } catch {
-    return value;
-  }
-}
-
 function stableObjectString(value: unknown): string {
   const normalize = (input: unknown): unknown => {
     if (Array.isArray(input)) return input.map(normalize);
