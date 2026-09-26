@@ -428,6 +428,240 @@ export class AtoumWebOccurrenceReturnService {
     }
   }
 
+  private assertDecisionAvailable(current: AtoumWebOccurrenceReturnDetail, next: AtoumWebOccurrenceReturnDecision): void {
+    if (!current.decision || current.decision === 'keep_occurrence') return;
+    if (current.decision === next && current.resultTechnicalItemId && current.resultVariantId) return;
+    throw new Error('Une autre décision de Bibliothèque a déjà été enregistrée pour ce retour.');
+  }
+
+  private ensureSourceFamily(
+    itemId: string,
+    itemName: string,
+    category: string,
+    vertical: string | null,
+  ): FamilyRow {
+    const existingVariant = this.variantForItem(itemId);
+    if (existingVariant) return this.familyById(existingVariant.family_id);
+
+    const familyId = `awfam:${randomUUID()}`;
+    const baseVariantId = `awvar:${randomUUID()}`;
+    const componentKey = this.uniqueComponentKey(category, itemName);
+    const scope = vertical ? 'vertical' as const : 'generic' as const;
+    const now = nowIso();
+
+    this.database.run(
+      `INSERT INTO atoumweb_component_families
+       (id,component_key,display_name,category,vertical,reusability_scope,base_item_id,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?)`,
+      [familyId, componentKey, itemName, category, vertical, scope, itemId, now, now],
+    );
+    this.database.run(
+      `INSERT INTO atoumweb_component_variants
+       (id,family_id,technical_item_id,variant_key,display_name,variant_mode,variant_of_id,source_occurrence_return_id,created_at,updated_at)
+       VALUES (?,?,?,?,?,'base',NULL,NULL,?,?)`,
+      [baseVariantId, familyId, itemId, 'base', 'Base', now, now],
+    );
+    return this.familyById(familyId);
+  }
+
+  private variantForItem(itemId: string): VariantRow | null {
+    return this.database.get<VariantRow>(
+      'SELECT * FROM atoumweb_component_variants WHERE technical_item_id=?',
+      [itemId],
+    ) ?? null;
+  }
+
+  private familyById(id: string): FamilyRow {
+    const family = this.database.get<FamilyRow>('SELECT * FROM atoumweb_component_families WHERE id=?', [id]);
+    if (!family) throw new Error('Famille de composant introuvable.');
+    return family;
+  }
+
+  private uniqueVariantKey(familyId: string, value: string): string {
+    const normalized = normalizeSlug(value) ?? 'variant';
+    const base = normalized === 'base' ? 'variant' : normalized;
+    let candidate = base;
+    let suffix = 2;
+    while (this.database.get<{ id: string }>(
+      'SELECT id FROM atoumweb_component_variants WHERE family_id=? AND variant_key=?',
+      [familyId, candidate],
+    )) {
+      candidate = `${base}-${suffix}`;
+      suffix += 1;
+    }
+    return candidate;
+  }
+
+  private uniqueComponentKey(category: string, name: string, requested?: string | null): string {
+    if (requested?.trim()) {
+      const normalizedRequested = normalizeComponentKey(requested);
+      if (!normalizedRequested) throw new Error('La clé de famille doit respecter le format aw-nom-de-famille.');
+      const existing = this.database.get<{ id: string }>(
+        'SELECT id FROM atoumweb_component_families WHERE component_key=?',
+        [normalizedRequested],
+      );
+      if (existing) throw new Error('Cette clé de famille existe déjà.');
+      return normalizedRequested;
+    }
+
+    const categorySlug = normalizeSlug(category) ?? 'component';
+    const nameSlug = normalizeSlug(name) ?? 'component';
+    const base = normalizeComponentKey(`aw-${categorySlug}-${nameSlug}`) ?? 'aw-component';
+    let candidate = base;
+    let suffix = 2;
+    while (this.database.get<{ id: string }>(
+      'SELECT id FROM atoumweb_component_families WHERE component_key=?',
+      [candidate],
+    )) {
+      candidate = `${base}-${suffix}`;
+      suffix += 1;
+    }
+    return candidate;
+  }
+
+  private variantItemName(sourceName: string, variantLabel: string): string {
+    const normalizedSource = sourceName.trim().toLocaleLowerCase('fr-FR');
+    const normalizedLabel = variantLabel.trim().toLocaleLowerCase('fr-FR');
+    return normalizedLabel.startsWith(normalizedSource)
+      ? variantLabel.trim()
+      : `${sourceName} — ${variantLabel.trim()}`;
+  }
+
+  private variantTags(tags: string[], inheritValidation: boolean): string[] {
+    const next = new Set(tags.map((tag) => tag.trim()).filter(Boolean));
+    next.add('bridge-family-managed');
+    if (inheritValidation) next.add('bridge-human-validated');
+    else next.delete('bridge-human-validated');
+    return [...next];
+  }
+
+  private canInheritValidation(current: AtoumWebOccurrenceReturnDetail): boolean {
+    const sourceVersion = this.database.get<SourceVersionRow>(
+      'SELECT content_text, is_stable FROM technical_item_versions WHERE id=?',
+      [current.libraryVersionId],
+    );
+    const sourceItem = this.database.get<SourceItemStateRow>(
+      "SELECT reuse_status, tags_json FROM technical_items WHERE id=? AND scope='atoumweb'",
+      [current.libraryItemId],
+    );
+    if (!sourceVersion || !sourceItem || !sourceVersion.is_stable || sourceItem.reuse_status !== 'ready') return false;
+
+    let tags: unknown = [];
+    try {
+      tags = JSON.parse(sourceItem.tags_json);
+    } catch {
+      tags = [];
+    }
+    if (!Array.isArray(tags) || !tags.includes('bridge-human-validated')) return false;
+
+    const changes = current.changes;
+    if (changes.structuralChange || changes.javascriptChanged) return false;
+    if (changes.htmlChanged && changes.changedFieldIds.length === 0) return false;
+    if (changes.cssChanged && changes.changedCssVariables.length === 0) return false;
+    return true;
+  }
+
+  private buildReusablePayloadFromReturn(
+    current: AtoumWebOccurrenceReturnDetail,
+    identity: {
+      componentFamilyId: string;
+      componentKey: string;
+      libraryVariantId: string;
+      variantKey: string;
+      variantOf: string | null;
+      variantMode: 'base' | 'inherit' | 'forked';
+      vertical: string | null;
+      reusabilityScope: 'generic' | 'vertical' | 'site_specific';
+    },
+  ): Record<string, unknown> {
+    const sourceVersion = this.database.get<SourceVersionRow>(
+      'SELECT content_text, is_stable FROM technical_item_versions WHERE id=?',
+      [current.libraryVersionId],
+    );
+    if (!sourceVersion?.content_text) throw new Error('Le contenu de la version source est introuvable.');
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(sourceVersion.content_text);
+    } catch {
+      throw new Error('La version source ne contient pas un paquet réutilisable JSON valide.');
+    }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('La version source ne contient pas un paquet réutilisable exploitable.');
+    }
+    const source = parsed as Record<string, unknown>;
+    if (source.kind !== 'atoumweb-library-reusable-component') {
+      throw new Error('Seule une version réutilisable peut devenir une famille ou une variante.');
+    }
+
+    const payload = JSON.parse(JSON.stringify(source)) as Record<string, unknown>;
+    const reusable = payload.reusable && typeof payload.reusable === 'object' && !Array.isArray(payload.reusable)
+      ? payload.reusable as Record<string, unknown>
+      : null;
+    if (!reusable) throw new Error('Bloc réutilisable absent de la version source.');
+
+    reusable.html = current.html;
+    reusable.css = current.css ?? '';
+    reusable.javascript = current.javascript ?? '';
+
+    const configuration = current.occurrence.configuration;
+    if (Array.isArray(reusable.fields)) {
+      reusable.fields = reusable.fields.map((raw) => {
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return raw;
+        const field = { ...(raw as Record<string, unknown>) };
+        const id = typeof field.id === 'string' ? field.id : '';
+        const binding = field.binding && typeof field.binding === 'object' && !Array.isArray(field.binding)
+          ? field.binding as Record<string, unknown>
+          : null;
+
+        let configured: unknown = undefined;
+        if (binding?.type === 'css_variable' && typeof binding.name === 'string') {
+          configured = configuration.cssVariables[binding.name];
+        } else if (id && Object.prototype.hasOwnProperty.call(configuration.fieldValues, id)) {
+          configured = configuration.fieldValues[id];
+        } else if (id && Object.prototype.hasOwnProperty.call(configuration.assetSelections, id)) {
+          configured = configuration.assetSelections[id];
+        }
+
+        if (configured !== undefined && configured !== null) {
+          const value = String(configured);
+          field.originalValue = value;
+          field.defaultValue = value;
+        }
+        return field;
+      });
+    }
+
+    payload.identity = identity;
+    const notes = Array.isArray(payload.notes)
+      ? payload.notes.filter((note): note is string => typeof note === 'string')
+      : [];
+    payload.notes = [...notes, `Dérivé de l’occurrence Bridge ${current.siteOccurrenceId}.`];
+    return payload;
+  }
+
+  private recordDecision(
+    current: AtoumWebOccurrenceReturnDetail,
+    decision: AtoumWebOccurrenceReturnDecision,
+    resultTechnicalItemId: string,
+    resultVariantId: string,
+    summary: string,
+  ): void {
+    const decidedAt = nowIso();
+    this.database.run(
+      `UPDATE bridge_occurrence_returns
+       SET decision=?, decided_at=?, result_technical_item_id=?, result_variant_id=?
+       WHERE id=?`,
+      [decision, decidedAt, resultTechnicalItemId, resultVariantId, current.id],
+    );
+    this.writeActivity(current.id, 'bridge_occurrence_return_decided', summary, {
+      decision,
+      siteOccurrenceId: current.siteOccurrenceId,
+      resultTechnicalItemId,
+      resultVariantId,
+    });
+  }
+
   private inspect(packagePath: string): InspectedReturn {
     const absolute = resolve(packagePath);
     if (!existsSync(absolute) || !statSync(absolute).isFile()) throw new Error('Package de retour Bridge introuvable.');
