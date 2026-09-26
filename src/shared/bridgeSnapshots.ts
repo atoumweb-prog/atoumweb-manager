@@ -261,6 +261,52 @@ export interface BridgeSnapshotImportResult {
   snapshot: BridgeSnapshotSummary;
 }
 
+export type BridgeSnapshotDiffStatus = 'added' | 'removed' | 'changed' | 'unchanged';
+
+export interface BridgeSnapshotPageDiff {
+  sourcePageKey: string;
+  status: BridgeSnapshotDiffStatus;
+  titleBefore: string | null;
+  titleAfter: string | null;
+  beforePageSnapshotId: string | null;
+  afterPageSnapshotId: string | null;
+  changes: {
+    title: boolean;
+    status: boolean;
+    url: boolean;
+    builder: boolean;
+    rawObject: boolean;
+    fingerprints: boolean;
+    nodes: boolean;
+    sources: boolean;
+    assets: boolean;
+    dependencies: boolean;
+  };
+  counts: {
+    nodesBefore: number;
+    nodesAfter: number;
+    sourcesBefore: number;
+    sourcesAfter: number;
+    assetsBefore: number;
+    assetsAfter: number;
+    dependenciesBefore: number;
+    dependenciesAfter: number;
+  };
+}
+
+export interface BridgeSnapshotDiff {
+  siteId: string;
+  before: BridgeSnapshotSummary;
+  after: BridgeSnapshotSummary;
+  summary: {
+    added: number;
+    removed: number;
+    changed: number;
+    unchanged: number;
+  };
+  pages: BridgeSnapshotPageDiff[];
+}
+
 export interface BridgeSnapshotDiagnosticExportResult {
   cancelled: boolean;
   path?: string;
@@ -276,5 +322,6 @@ export interface BridgeSnapshotsApi {
   getObjectPreview(objectRef: string): Promise<BridgeObjectPreview>;
   getModulePreview(pageSnapshotId: string, occurrenceId: string): Promise<BridgeModulePreview>;
   getPagePreview(pageSnapshotId: string): Promise<BridgePagePreview>;
+  compareSnapshots(beforeSnapshotId: string, afterSnapshotId: string): Promise<BridgeSnapshotDiff>;
   exportDiagnostic(snapshotId: string): Promise<BridgeSnapshotDiagnosticExportResult>;
 }
