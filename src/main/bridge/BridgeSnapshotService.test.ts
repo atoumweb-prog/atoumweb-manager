@@ -157,6 +157,51 @@ describe('BridgeSnapshotService', () => {
     expect(() => service.compareSnapshots(imported.id, imported.id)).toThrow(/deux snapshots différents/i);
   });
 
+  it('distingue une page supprimée et une page ajoutée entre deux snapshots', () => {
+    const before = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-pages-a.zip'), 'Ancienne page', {
+      snapshotId: 'awb-snap:pages-a',
+      pageSnapshotId: 'awb-pagesnap:pages-a',
+      generatedAt: '2026-09-24T00:00:00Z',
+      sourcePageKey: 'wp-post:10',
+      sourcePostId: 10,
+    })).snapshot;
+    const after = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-pages-b.zip'), 'Nouvelle page', {
+      snapshotId: 'awb-snap:pages-b',
+      pageSnapshotId: 'awb-pagesnap:pages-b',
+      generatedAt: '2026-09-25T00:00:00Z',
+      sourcePageKey: 'wp-post:11',
+      sourcePostId: 11,
+    })).snapshot;
+
+    const diff = service.compareSnapshots(before.id, after.id);
+    expect(diff.summary).toEqual({ added: 1, removed: 1, changed: 0, unchanged: 0 });
+    expect(diff.pages).toEqual(expect.arrayContaining([
+      expect.objectContaining({ sourcePageKey: 'wp-post:10', status: 'removed' }),
+      expect.objectContaining({ sourcePageKey: 'wp-post:11', status: 'added' }),
+    ]));
+  });
+
+  it('signale qu’un snapshot partiel rend les absences moins fiables', () => {
+    const before = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-partial-a.zip'), 'Accueil', {
+      snapshotId: 'awb-snap:partial-a',
+      pageSnapshotId: 'awb-pagesnap:partial-a',
+      generatedAt: '2026-09-24T00:00:00Z',
+    })).snapshot;
+    const after = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-partial-b.zip'), 'Accueil', {
+      snapshotId: 'awb-snap:partial-b',
+      pageSnapshotId: 'awb-pagesnap:partial-b',
+      generatedAt: '2026-09-25T00:00:00Z',
+      snapshotType: 'partial',
+      coverageMode: 'partial',
+      scanStatus: 'partial_failure',
+    })).snapshot;
+
+    const diff = service.compareSnapshots(before.id, after.id);
+    expect(diff.warnings.length).toBeGreaterThanOrEqual(2);
+    expect(diff.warnings.join(' ')).toMatch(/pas un snapshot complet/i);
+    expect(diff.warnings.join(' ')).toMatch(/couverture pages/i);
+  });
+
   it('propose une correspondance de nœud sans écrire de logical_node_id', () => {
     const first = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-node-a.zip'), 'Accueil', {
       snapshotId: 'awb-snap:node-a',
@@ -202,6 +247,11 @@ function buildSnapshot(
     generatedAt?: string;
     heading?: string;
     occurrenceId?: string;
+    sourcePageKey?: string;
+    sourcePostId?: number;
+    snapshotType?: string;
+    coverageMode?: string;
+    scanStatus?: string;
   } = {},
 ): string {
   const sourceInstanceId = 'awb-site:test-instance';
@@ -211,6 +261,11 @@ function buildSnapshot(
   const generatedAt = options.generatedAt ?? '2026-09-24T00:00:00Z';
   const heading = options.heading ?? 'Bonjour Bridge';
   const occurrenceId = options.occurrenceId ?? 'node_text_1';
+  const sourcePageKey = options.sourcePageKey ?? 'wp-post:10';
+  const sourcePostId = options.sourcePostId ?? 10;
+  const snapshotType = options.snapshotType ?? 'full';
+  const coverageMode = options.coverageMode ?? 'complete';
+  const scanStatus = options.scanStatus ?? 'complete_with_warnings';
   const raw = Buffer.from(`<!-- wp:divi/code {"module":{"content":{"innerContent":{"desktop":{"value":"<section class=\\\"atoum-home-blog-v2\\\"><div class=\\\"article-card\\\"><header class=\\\"article-card__header\\\">Blog</header><h1>${heading}</h1></div></section><style>.atoum-home-blog-v2{color:red}</style>"}}}}} /-->`, 'utf8');
   const rawHash = sha256(raw);
   const objectRef = `sha256:${rawHash}`;
@@ -226,11 +281,11 @@ function buildSnapshot(
     source_instance_id: sourceInstanceId,
     source_site_key: sourceSiteKey,
     snapshot_id: snapshotId,
-    snapshot_type: 'full',
+    snapshot_type: snapshotType,
     scanner_capabilities: { wordpress: true, divi4: true, divi5: false },
     observed_content: { wordpress: true, divi4: false, divi5: true },
-    coverage: { pages: { mode: 'complete', post_types: ['page'], statuses: ['publish'], excluded: [] } },
-    scan_status: 'complete_with_warnings',
+    coverage: { pages: { mode: coverageMode, post_types: ['page'], statuses: ['publish'], excluded: [] } },
+    scan_status: scanStatus,
     issues: [{ code: 'FRONTEND_AUDIT_NOT_ATTACHED', severity: 'warning', scope: 'site', entity_ref: sourceSiteKey, message: 'Front non joint.' }],
     counts: { pages: 1, nodes: 1, sources: 0, assets: 0, dependencies: 0, relations: 0, objects: 1 },
     security: { potential_sensitive_payloads: true, redaction_applied: true, redaction_rules_version: '1', payloads_modified: false },
@@ -253,7 +308,7 @@ function buildSnapshot(
     site_id: null,
     source_instance_id: sourceInstanceId,
     source_site_key: sourceSiteKey,
-    snapshot_type: 'full',
+    snapshot_type: snapshotType,
     generated_at: generatedAt,
     bridge: { version: '0.4.2', schema_version: '1.0.0', fingerprint_profile: 'awb-json-c14n-v1' },
     environment: { wordpress_version: '7.1.2', php_version: '8.1.34', theme: 'Divi', theme_version: '5.13.1', child_theme: null },
@@ -261,8 +316,8 @@ function buildSnapshot(
   };
   const page = {
     page_id: null,
-    source_post_id: 10,
-    source_page_key: 'wp-post:10',
+    source_post_id: sourcePostId,
+    source_page_key: sourcePageKey,
     page_snapshot_id: pageSnapshotId,
     source_instance_id: sourceInstanceId,
     source_site_key: sourceSiteKey,
@@ -319,7 +374,7 @@ function buildSnapshot(
     }],
     matching_hints: [],
   };
-  const meta = { source_post_id: 10, post: { post_type: 'page', post_status: 'publish' }, meta: [] };
+  const meta = { source_post_id: sourcePostId, post: { post_type: 'page', post_status: 'publish' }, meta: [] };
 
   const relativeEntries = new Map<string, Buffer>();
   const addJson = (name: string, value: unknown) => relativeEntries.set(name, Buffer.from(`${JSON.stringify(value, null, 2)}\n`, 'utf8'));
