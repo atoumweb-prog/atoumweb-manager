@@ -209,6 +209,225 @@ export class AtoumWebOccurrenceReturnService {
     return this.get(id);
   }
 
+  listVariantTargets(id: string): AtoumWebOccurrenceVariantTarget[] {
+    const current = this.get(id);
+    const sourceVariant = this.variantForItem(current.libraryItemId);
+    if (!sourceVariant) return [];
+
+    return this.database.all<VariantRow & { item_name: string }>(
+      `SELECT variant.*, item.name AS item_name
+       FROM atoumweb_component_variants variant
+       JOIN technical_items item ON item.id=variant.technical_item_id
+       WHERE variant.family_id=? AND variant.variant_mode<>'base' AND item.archived_at IS NULL
+       ORDER BY variant.display_name COLLATE NOCASE`,
+      [sourceVariant.family_id],
+    ).map((variant) => ({
+      variantId: variant.id,
+      familyId: variant.family_id,
+      technicalItemId: variant.technical_item_id,
+      itemName: variant.item_name,
+      variantKey: variant.variant_key,
+      displayName: variant.display_name,
+      variantMode: variant.variant_mode,
+      isSourceVariant: variant.technical_item_id === current.libraryItemId,
+    }));
+  }
+
+  createVariant(id: string, input: AtoumWebOccurrenceCreateVariantInput): AtoumWebOccurrenceReturnDetail {
+    const current = this.get(id);
+    if (current.decision === 'create_variant' && current.resultTechnicalItemId && current.resultVariantId) return current;
+    this.assertDecisionAvailable(current, 'create_variant');
+
+    const variantLabel = input.name?.trim();
+    if (!variantLabel) throw new Error('Le nom de la variante est requis.');
+
+    this.database.exec('SAVEPOINT bridge_occurrence_create_variant;');
+    try {
+      const sourceItem = this.library.get(current.libraryItemId);
+      const family = this.ensureSourceFamily(sourceItem.id, sourceItem.name, sourceItem.category, sourceItem.vertical ?? null);
+      const baseVariant = this.database.get<VariantRow>(
+        "SELECT * FROM atoumweb_component_variants WHERE family_id=? AND variant_mode='base'",
+        [family.id],
+      );
+      if (!baseVariant) throw new Error('Variante de base introuvable pour cette famille.');
+
+      const variantId = `awvar:${randomUUID()}`;
+      const variantKey = this.uniqueVariantKey(family.id, input.variantKey ?? variantLabel);
+      const itemName = this.variantItemName(sourceItem.name, variantLabel);
+      const inheritValidation = this.canInheritValidation(current);
+      const tags = this.variantTags(sourceItem.tags ?? [], inheritValidation);
+      const payload = this.buildReusablePayloadFromReturn(current, {
+        componentFamilyId: family.id,
+        componentKey: family.component_key,
+        libraryVariantId: variantId,
+        variantKey,
+        variantOf: baseVariant.id,
+        variantMode: 'inherit',
+        vertical: family.vertical,
+        reusabilityScope: family.reusability_scope,
+      });
+
+      let created = this.library.create(
+        {
+          category: sourceItem.category,
+          name: itemName,
+          description: `Variante de « ${sourceItem.name} » issue du retour Bridge ${current.siteOccurrenceId}.`,
+          tags,
+          vertical: sourceItem.vertical ?? null,
+          reuseStatus: inheritValidation ? 'ready' : 'adapt',
+        },
+        {
+          contentType: 'json',
+          language: 'json',
+          contentText: JSON.stringify(payload, null, 2),
+          notes: `Variante créée depuis l’occurrence ${current.siteOccurrenceId}.`,
+        },
+      );
+
+      const now = nowIso();
+      this.database.run(
+        `INSERT INTO atoumweb_component_variants
+         (id,family_id,technical_item_id,variant_key,display_name,variant_mode,variant_of_id,source_occurrence_return_id,created_at,updated_at)
+         VALUES (?,?,?,?,?,'inherit',?,?,?,?)`,
+        [variantId, family.id, created.id, variantKey, variantLabel, baseVariant.id, current.id, now, now],
+      );
+
+      if (inheritValidation && created.currentVersion) {
+        created = this.library.markStable(created.currentVersion.id);
+      }
+
+      this.recordDecision(current, 'create_variant', created.id, variantId, 'Occurrence promue en nouvelle variante de Bibliothèque.');
+      this.database.exec('RELEASE SAVEPOINT bridge_occurrence_create_variant;');
+      return this.get(id);
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT bridge_occurrence_create_variant; RELEASE SAVEPOINT bridge_occurrence_create_variant;');
+      throw error;
+    }
+  }
+
+  updateVariant(id: string, input: AtoumWebOccurrenceUpdateVariantInput): AtoumWebOccurrenceReturnDetail {
+    const current = this.get(id);
+    if (current.decision === 'update_variant' && current.resultTechnicalItemId && current.resultVariantId) return current;
+    this.assertDecisionAvailable(current, 'update_variant');
+
+    const sourceVariant = this.variantForItem(current.libraryItemId);
+    if (!sourceVariant) throw new Error('Le composant source doit d’abord appartenir à une famille.');
+    const target = this.database.get<VariantRow>(
+      'SELECT * FROM atoumweb_component_variants WHERE id=?',
+      [input.targetVariantId],
+    );
+    if (!target || target.family_id !== sourceVariant.family_id || target.variant_mode === 'base') {
+      throw new Error('La variante cible doit appartenir à la même famille et ne peut pas être la variante de base.');
+    }
+
+    this.database.exec('SAVEPOINT bridge_occurrence_update_variant;');
+    try {
+      const family = this.familyById(target.family_id);
+      const targetItem = this.library.get(target.technical_item_id);
+      const payload = this.buildReusablePayloadFromReturn(current, {
+        componentFamilyId: family.id,
+        componentKey: family.component_key,
+        libraryVariantId: target.id,
+        variantKey: target.variant_key,
+        variantOf: target.variant_of_id,
+        variantMode: target.variant_mode,
+        vertical: family.vertical,
+        reusabilityScope: family.reusability_scope,
+      });
+      const inheritValidation = target.technical_item_id === current.libraryItemId && this.canInheritValidation(current);
+      const tags = this.variantTags(targetItem.tags ?? [], inheritValidation);
+
+      let changed = this.library.createVersion(targetItem.id, {
+        contentType: 'json',
+        language: 'json',
+        contentText: JSON.stringify(payload, null, 2),
+        notes: `Variante mise à jour depuis l’occurrence ${current.siteOccurrenceId}.`,
+      });
+      changed = this.library.updateMetadata(changed.id, {
+        reuseStatus: inheritValidation ? 'ready' : 'adapt',
+        tags,
+      });
+      if (inheritValidation && changed.currentVersion) {
+        changed = this.library.markStable(changed.currentVersion.id);
+      }
+      this.database.run('UPDATE atoumweb_component_variants SET updated_at=? WHERE id=?', [nowIso(), target.id]);
+
+      this.recordDecision(current, 'update_variant', changed.id, target.id, 'Occurrence appliquée à une variante existante.');
+      this.database.exec('RELEASE SAVEPOINT bridge_occurrence_update_variant;');
+      return this.get(id);
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT bridge_occurrence_update_variant; RELEASE SAVEPOINT bridge_occurrence_update_variant;');
+      throw error;
+    }
+  }
+
+  createFamily(id: string, input: AtoumWebOccurrenceCreateFamilyInput): AtoumWebOccurrenceReturnDetail {
+    const current = this.get(id);
+    if (current.decision === 'new_family' && current.resultTechnicalItemId && current.resultVariantId) return current;
+    this.assertDecisionAvailable(current, 'new_family');
+
+    const familyName = input.name?.trim();
+    if (!familyName) throw new Error('Le nom de la nouvelle famille est requis.');
+
+    this.database.exec('SAVEPOINT bridge_occurrence_new_family;');
+    try {
+      const sourceItem = this.library.get(current.libraryItemId);
+      const familyId = `awfam:${randomUUID()}`;
+      const variantId = `awvar:${randomUUID()}`;
+      const componentKey = this.uniqueComponentKey(sourceItem.category, familyName, input.componentKey);
+      const scope = sourceItem.vertical ? 'vertical' as const : 'generic' as const;
+      const payload = this.buildReusablePayloadFromReturn(current, {
+        componentFamilyId: familyId,
+        componentKey,
+        libraryVariantId: variantId,
+        variantKey: 'base',
+        variantOf: null,
+        variantMode: 'base',
+        vertical: sourceItem.vertical ?? null,
+        reusabilityScope: scope,
+      });
+      const tags = this.variantTags(sourceItem.tags ?? [], false);
+
+      const created = this.library.create(
+        {
+          category: sourceItem.category,
+          name: familyName,
+          description: `Nouvelle famille détachée de « ${sourceItem.name} » depuis le retour Bridge ${current.siteOccurrenceId}.`,
+          tags,
+          vertical: sourceItem.vertical ?? null,
+          reuseStatus: 'adapt',
+        },
+        {
+          contentType: 'json',
+          language: 'json',
+          contentText: JSON.stringify(payload, null, 2),
+          notes: `Famille créée depuis l’occurrence ${current.siteOccurrenceId}. Validation humaine requise.`,
+        },
+      );
+
+      const now = nowIso();
+      this.database.run(
+        `INSERT INTO atoumweb_component_families
+         (id,component_key,display_name,category,vertical,reusability_scope,base_item_id,created_at,updated_at)
+         VALUES (?,?,?,?,?,?,?,?,?)`,
+        [familyId, componentKey, familyName, sourceItem.category, sourceItem.vertical ?? null, scope, created.id, now, now],
+      );
+      this.database.run(
+        `INSERT INTO atoumweb_component_variants
+         (id,family_id,technical_item_id,variant_key,display_name,variant_mode,variant_of_id,source_occurrence_return_id,created_at,updated_at)
+         VALUES (?,?,?,?,?,'base',NULL,?,?,?)`,
+        [variantId, familyId, created.id, 'base', 'Base', current.id, now, now],
+      );
+
+      this.recordDecision(current, 'new_family', created.id, variantId, 'Occurrence détachée dans une nouvelle famille de Bibliothèque.');
+      this.database.exec('RELEASE SAVEPOINT bridge_occurrence_new_family;');
+      return this.get(id);
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT bridge_occurrence_new_family; RELEASE SAVEPOINT bridge_occurrence_new_family;');
+      throw error;
+    }
+  }
+
   private inspect(packagePath: string): InspectedReturn {
     const absolute = resolve(packagePath);
     if (!existsSync(absolute) || !statSync(absolute).isFile()) throw new Error('Package de retour Bridge introuvable.');
