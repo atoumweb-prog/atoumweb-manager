@@ -12,6 +12,7 @@ import type {
   BridgePageSummary,
   BridgeSiteDetail,
   BridgeSiteSummary,
+  BridgeSnapshotDiff,
   BridgeSnapshotImportResult,
   BridgeSnapshotIssue,
   BridgeSnapshotSummary,
@@ -55,6 +56,36 @@ interface PageRow extends Record<string, unknown> {
   dependency_ids_json: string;
   metadata_json: string;
   node_count: number;
+}
+
+interface SnapshotDiffPageRow extends PageRow {
+  fingerprints_json: string;
+}
+
+function stableStringSet(value: unknown): string {
+  return JSON.stringify(parseStringArray(value).slice().sort());
+}
+
+function stableJsonString(value: unknown): string {
+  if (typeof value !== 'string') return stableObjectString(value);
+  try {
+    return stableObjectString(JSON.parse(value));
+  } catch {
+    return value;
+  }
+}
+
+function stableObjectString(value: unknown): string {
+  const normalize = (input: unknown): unknown => {
+    if (Array.isArray(input)) return input.map(normalize);
+    if (!input || typeof input !== 'object') return input;
+    return Object.fromEntries(
+      Object.entries(input as Record<string, unknown>)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, nested]) => [key, normalize(nested)]),
+    );
+  };
+  return JSON.stringify(normalize(value));
 }
 
 export class BridgeSnapshotService {
@@ -376,6 +407,96 @@ export class BridgeSnapshotService {
     };
   }
 
+  compareSnapshots(beforeSnapshotId: string, afterSnapshotId: string): BridgeSnapshotDiff {
+    if (beforeSnapshotId === afterSnapshotId) {
+      throw new Error('Choisis deux snapshots différents pour lancer la comparaison.');
+    }
+
+    const before = this.getSnapshot(beforeSnapshotId);
+    const after = this.getSnapshot(afterSnapshotId);
+    if (before.siteId !== after.siteId) {
+      throw new Error('Les deux snapshots doivent appartenir au même site Bridge.');
+    }
+
+    const beforeRows = this.snapshotDiffPageRows(beforeSnapshotId);
+    const afterRows = this.snapshotDiffPageRows(afterSnapshotId);
+    const beforeByKey = new Map(beforeRows.map((row) => [row.source_page_key, row] as const));
+    const afterByKey = new Map(afterRows.map((row) => [row.source_page_key, row] as const));
+    const keys = [...new Set([...beforeByKey.keys(), ...afterByKey.keys()])].sort((left, right) => left.localeCompare(right, 'fr'));
+
+    const pages = keys.map((sourcePageKey) => {
+      const beforePage = beforeByKey.get(sourcePageKey) ?? null;
+      const afterPage = afterByKey.get(sourcePageKey) ?? null;
+
+      if (!beforePage && afterPage) {
+        return {
+          sourcePageKey,
+          status: 'added' as const,
+          titleBefore: null,
+          titleAfter: afterPage.title,
+          beforePageSnapshotId: null,
+          afterPageSnapshotId: afterPage.page_snapshot_id,
+          changes: this.allPageChanges(true),
+          counts: this.pageDiffCounts(null, afterPage),
+        };
+      }
+      if (beforePage && !afterPage) {
+        return {
+          sourcePageKey,
+          status: 'removed' as const,
+          titleBefore: beforePage.title,
+          titleAfter: null,
+          beforePageSnapshotId: beforePage.page_snapshot_id,
+          afterPageSnapshotId: null,
+          changes: this.allPageChanges(true),
+          counts: this.pageDiffCounts(beforePage, null),
+        };
+      }
+
+      const left = beforePage!;
+      const right = afterPage!;
+      const changes = {
+        title: left.title !== right.title || left.slug !== right.slug,
+        status: left.status !== right.status || left.audit_status !== right.audit_status,
+        url: left.canonical_url !== right.canonical_url,
+        builder: left.builder !== right.builder
+          || left.builder_generation !== right.builder_generation
+          || left.storage_format !== right.storage_format,
+        rawObject: left.raw_object_ref !== right.raw_object_ref,
+        fingerprints: stableJsonString(left.fingerprints_json) !== stableJsonString(right.fingerprints_json),
+        nodes: this.nodeDiffSignature(left.page_snapshot_id) !== this.nodeDiffSignature(right.page_snapshot_id),
+        sources: stableStringSet(left.source_ids_json) !== stableStringSet(right.source_ids_json),
+        assets: stableStringSet(left.asset_ids_json) !== stableStringSet(right.asset_ids_json),
+        dependencies: stableStringSet(left.dependency_ids_json) !== stableStringSet(right.dependency_ids_json),
+      };
+      const changed = Object.values(changes).some(Boolean);
+
+      return {
+        sourcePageKey,
+        status: changed ? 'changed' as const : 'unchanged' as const,
+        titleBefore: left.title,
+        titleAfter: right.title,
+        beforePageSnapshotId: left.page_snapshot_id,
+        afterPageSnapshotId: right.page_snapshot_id,
+        changes,
+        counts: this.pageDiffCounts(left, right),
+      };
+    });
+
+    return {
+      siteId: before.siteId,
+      before,
+      after,
+      summary: {
+        added: pages.filter((page) => page.status === 'added').length,
+        removed: pages.filter((page) => page.status === 'removed').length,
+        changed: pages.filter((page) => page.status === 'changed').length,
+        unchanged: pages.filter((page) => page.status === 'unchanged').length,
+      },
+      pages,
+    };
+  }
+
   buildDiagnostic(snapshotId: string): Record<string, unknown> {
     const snapshot = this.getSnapshot(snapshotId);
     const site = this.getSiteSummary(snapshot.siteId);
@@ -644,6 +765,65 @@ export class BridgeSnapshotService {
     return {
       objectRef: objectRefValue, contentType, serialization, encoding, byteLength, available: true,
       text: bytes.subarray(0, Math.min(bytes.length, limit)).toString('utf8'), truncated: bytes.length > limit,
+    };
+  }
+
+  private snapshotDiffPageRows(snapshotId: string): SnapshotDiffPageRow[] {
+    return this.database.all<SnapshotDiffPageRow>(
+      `SELECT bp.id page_id,bps.id page_snapshot_id,bps.external_page_snapshot_id,bps.snapshot_id,bps.source_page_key,bp.source_post_id,
+       bp.post_type,bps.status,bps.title,bps.slug,bps.canonical_url,bps.storage_format,bps.builder,bps.builder_generation,bps.is_divi_content,bps.scope,
+       bps.audit_status,bps.raw_object_ref,bps.source_ids_json,bps.asset_ids_json,bps.dependency_ids_json,bps.metadata_json,bps.fingerprints_json,
+       (SELECT COUNT(*) FROM bridge_nodes n WHERE n.page_snapshot_id=bps.id) node_count
+       FROM bridge_page_snapshots bps JOIN bridge_pages bp ON bp.id=bps.page_id
+       WHERE bps.snapshot_id=?`,
+      [snapshotId],
+    );
+  }
+
+  private nodeDiffSignature(pageSnapshotId: string): string {
+    const rows = this.database.all<Record<string, unknown>>(
+      `SELECT logical_node_id,node_type,module_type,label,position,depth,fingerprints_json,classes_json,ids_json
+       FROM bridge_nodes WHERE page_snapshot_id=?`,
+      [pageSnapshotId],
+    );
+    return rows.map((row) => stableObjectString({
+      logicalNodeId: nullableString(row.logical_node_id),
+      nodeType: String(row.node_type ?? ''),
+      moduleType: nullableString(row.module_type),
+      label: nullableString(row.label),
+      position: Number(row.position ?? 0),
+      depth: Number(row.depth ?? 0),
+      fingerprints: parseObject(row.fingerprints_json),
+      classes: parseStringArray(row.classes_json).slice().sort(),
+      ids: parseStringArray(row.ids_json).slice().sort(),
+    })).sort().join('\n');
+  }
+
+  private allPageChanges(value: boolean) {
+    return {
+      title: value,
+      status: value,
+      url: value,
+      builder: value,
+      rawObject: value,
+      fingerprints: value,
+      nodes: value,
+      sources: value,
+      assets: value,
+      dependencies: value,
+    };
+  }
+
+  private pageDiffCounts(before: SnapshotDiffPageRow | null, after: SnapshotDiffPageRow | null) {
+    return {
+      nodesBefore: Number(before?.node_count ?? 0),
+      nodesAfter: Number(after?.node_count ?? 0),
+      sourcesBefore: before ? parseStringArray(before.source_ids_json).length : 0,
+      sourcesAfter: after ? parseStringArray(after.source_ids_json).length : 0,
+      assetsBefore: before ? parseStringArray(before.asset_ids_json).length : 0,
+      assetsAfter: after ? parseStringArray(after.asset_ids_json).length : 0,
+      dependenciesBefore: before ? parseStringArray(before.dependency_ids_json).length : 0,
+      dependenciesAfter: after ? parseStringArray(after.dependency_ids_json).length : 0,
     };
   }
 
