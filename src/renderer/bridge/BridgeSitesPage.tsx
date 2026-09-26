@@ -508,6 +508,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
                     <Metric label="Ajoutés" value={String(snapshotDiff.summary.added)} />
                     <Metric label="Supprimés" value={String(snapshotDiff.summary.removed)} />
                     <Metric label="Modifiés" value={String(snapshotDiff.summary.changed)} />
+                    <Metric label="Écarts techniques" value={String(snapshotDiff.summary.technical)} />
                     <Metric label="Inchangés" value={String(snapshotDiff.summary.unchanged)} />
                   </div>
                   {snapshotDiff.warnings.length > 0 && <div className="bridge-warning-list bridge-compare-warnings">
@@ -522,7 +523,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
                       </div>
                       <div className="bridge-compare-changes">
                         {bridgePageChangeLabels(item.changes).map((label) => <span key={label}>{label}</span>)}
-                        {item.beforePageSnapshotId && item.afterPageSnapshotId && <button
+                        {item.changes.nodes && item.beforePageSnapshotId && item.afterPageSnapshotId && <button
                           className="secondary-button bridge-node-match-button"
                           type="button"
                           disabled={nodeMatchBusy}
@@ -988,6 +989,7 @@ function snapshotDiffStatusLabel(status: BridgeSnapshotDiff['pages'][number]['st
   if (status === 'added') return 'Ajouté';
   if (status === 'removed') return 'Supprimé';
   if (status === 'changed') return 'Modifié';
+  if (status === 'technical') return 'Écart technique';
   return 'Inchangé';
 }
 
