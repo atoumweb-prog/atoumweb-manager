@@ -38,9 +38,14 @@
 - [x] Les sélecteurs Avant / Après sont normalisés chronologiquement, même si la copie actuellement ouverte est la plus ancienne.
 - [x] Avertissement prévu lorsque les deux copies proviennent de versions Bridge ou profils de fingerprint différents.
 - [x] Test de régression ajouté : deux scans identiques avec IDs techniques différents doivent produire **0 modifié / 1 inchangé**.
+- [x] Analyse archive-à-archive réelle 24/09 Bridge 0.4.2 → 26/09 Bridge 0.7.5 : **82/82 sources brutes communes ont le même SHA-256** ; aucune modification réelle du contenu WordPress/Divi détectée.
+- [x] Les 29 anciens « modifiés » sont reclassés comme écarts techniques : 27 pages ont un inventaire de dépendances front enrichi, et 3 pages ont une extraction Sources/Nœuds plus riche (union : 29 pages).
+- [x] Les 169 assets sont identiques dans les deux archives.
+- [x] Le seul contenu ajouté est le brouillon interne `AWB Workbench — Bibliothèque — atoum-mariage-why` (#3671) ; les brouillons Workbench sont maintenant ignorés dans le bilan du site.
+- [x] Le diff distingue désormais `changed` (contenu réel) et `technical` (scanner/contexte technique), et les correspondances modules ne sont proposées que si les nœuds diffèrent.
 - [ ] Validation MSI : typecheck + test ciblé `BridgeSnapshotService.test.ts`.
-- [ ] Recette réelle : nécessite au moins deux snapshots importés du même site.
-- [ ] Attribution des `logical_node_id` volontairement non automatique ; aucune écriture avant validation sur un second snapshot réel.
+- [x] Recette réelle effectuée avec les snapshots 24/09 et 26/09 ; correction issue de cette recette à revalider après pull.
+- [ ] Attribution des `logical_node_id` volontairement non automatique ; aucune écriture avant validation d’une correspondance réelle.
 
 ### Finition du round-trip LOT 4
 
