@@ -1749,7 +1749,7 @@
 
 .bridge-compare-summary {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -1806,6 +1806,14 @@
 
 .bridge-compare-page.changed {
   border-color: color-mix(in srgb, #F2B705 45%, var(--border));
+}
+
+.bridge-compare-page.technical {
+  border-color: color-mix(in srgb, #1565C0 35%, var(--border));
+}
+
+.bridge-compare-page.technical .bridge-compare-status {
+  color: #1565C0;
 }
 
 .bridge-compare-changes {
