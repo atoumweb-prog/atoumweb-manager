@@ -125,6 +125,75 @@ describe('migrations SQLite', () => {
     }
   });
 
+  it('migration 40 conserve les retours Bridge existants et ajoute Familles / Variantes', () => {
+    const database = new NodeSqliteAdapter(':memory:');
+    database.exec('PRAGMA foreign_keys = ON;');
+    try {
+      for (const migration of getPendingMigrations(database).filter((item) => item.id <= 39)) {
+        if (migration.disableForeignKeys) database.exec('PRAGMA foreign_keys = OFF;');
+        database.exec('BEGIN IMMEDIATE;');
+        try {
+          database.exec(migration.sql);
+          database.run('INSERT INTO schema_migrations (id, name, applied_at) VALUES (?, ?, ?)',
+            [migration.id, migration.name, '2026-09-26T00:00:00.000Z']);
+          database.exec('COMMIT;');
+          if (migration.disableForeignKeys) database.exec('PRAGMA foreign_keys = ON;');
+        } catch (error) {
+          database.exec('ROLLBACK;');
+          if (migration.disableForeignKeys) database.exec('PRAGMA foreign_keys = ON;');
+          throw error;
+        }
+      }
+
+      database.run(
+        `INSERT INTO technical_items
+         (id,project_id,scope,category,library_category,name,description,tags_json,reuse_status,origin_technical_item_id,vertical,created_at,updated_at,archived_at)
+         VALUES ('family-source',NULL,'atoumweb','section','section','Section famille',NULL,'["bridge"]','ready',NULL,'mariage',
+           '2026-09-26T00:00:00.000Z','2026-09-26T00:00:00.000Z',NULL)`,
+      );
+      database.run(
+        `INSERT INTO technical_item_versions
+         (id,technical_item_id,version_number,content_type,language,content_text,notes,is_current,is_stable,created_at)
+         VALUES ('family-source-v1','family-source',1,'json','json','{}',NULL,1,1,'2026-09-26T00:00:00.000Z')`,
+      );
+      database.run(
+        `INSERT INTO bridge_occurrence_returns
+         (id,package_fingerprint,site_occurrence_id,technical_item_id,technical_item_version_id,source_version_number,
+          returned_at,occurrence_state,decision,decided_at,changes_json,occurrence_json,assets_json,provenance_json,
+          html_text,css_text,javascript_text,package_relative_path,created_at)
+         VALUES ('return-before-40',?,'awocc:before-40','family-source','family-source-v1',1,
+          '2026-09-26T01:00:00.000Z','ready_for_review','keep_occurrence','2026-09-26T01:05:00.000Z',
+          '{}','{}','{}','{}','<section></section>',NULL,NULL,'bridge/return.zip','2026-09-26T01:00:00.000Z')`,
+        ['a'.repeat(64)],
+      );
+
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([40]);
+      expect(database.get<{ decision: string; result_technical_item_id: string | null; result_variant_id: string | null }>(
+        "SELECT decision,result_technical_item_id,result_variant_id FROM bridge_occurrence_returns WHERE id='return-before-40'",
+      )).toEqual({
+        decision: 'keep_occurrence',
+        result_technical_item_id: null,
+        result_variant_id: null,
+      });
+
+      database.run(
+        `INSERT INTO atoumweb_component_families
+         (id,component_key,display_name,category,vertical,reusability_scope,base_item_id,created_at,updated_at)
+         VALUES ('awfam:migration','aw-section-famille','Section famille','section','mariage','vertical','family-source',
+           '2026-09-26T01:10:00.000Z','2026-09-26T01:10:00.000Z')`,
+      );
+      database.run(
+        `INSERT INTO atoumweb_component_variants
+         (id,family_id,technical_item_id,variant_key,display_name,variant_mode,variant_of_id,source_occurrence_return_id,created_at,updated_at)
+         VALUES ('awvar:migration-base','awfam:migration','family-source','base','Base','base',NULL,NULL,
+           '2026-09-26T01:10:00.000Z','2026-09-26T01:10:00.000Z')`,
+      );
+      expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+    } finally {
+      database.close();
+    }
+  });
+
   it('applique chaque migration une seule fois', () => {
     const database = new NodeSqliteAdapter(':memory:');
 
