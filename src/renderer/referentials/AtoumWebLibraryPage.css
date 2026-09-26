@@ -2132,3 +2132,152 @@ details.aw-reusable-fields {
     margin-left: 0;
   }
 }
+
+
+/* LOT 5 — arbre Familles / Variantes */
+.aw-library-family-tree {
+  display: grid;
+  gap: 6px;
+  margin: 2px 0 8px;
+  padding: 8px;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent-soft) 12%, var(--surface));
+}
+
+.aw-library-family-tree-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 2px 3px 4px;
+}
+
+.aw-library-family-tree-head > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.aw-library-family-tree-head span {
+  color: var(--accent-strong);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.aw-library-family-tree-head strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: var(--aw-font-functional, 14px);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aw-library-family-tree-head small {
+  flex: 0 0 auto;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.aw-library-tree-item.tree-base {
+  border-style: solid;
+}
+
+.aw-library-family-variants {
+  display: grid;
+  gap: 6px;
+  margin-left: 14px;
+  padding-left: 12px;
+  border-left: 2px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+}
+
+.aw-library-tree-item.tree-variant {
+  position: relative;
+}
+
+.aw-library-tree-item.tree-variant::before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: 50%;
+  width: 12px;
+  border-top: 2px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+}
+
+.aw-library-family-role {
+  color: var(--accent-strong) !important;
+  font-weight: 700 !important;
+}
+
+/* LOT 5 — retours Bridge en fenêtre contextuelle */
+.aw-library-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(8 15 24 / 52%);
+  backdrop-filter: blur(2px);
+}
+
+.aw-library-modal {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: min(1080px, calc(100vw - 48px));
+  max-height: calc(100dvh - 48px);
+  margin: 0;
+  overflow: hidden;
+  box-shadow: 0 24px 70px rgb(0 0 0 / 22%);
+}
+
+.aw-library-return-list-modal {
+  width: min(780px, calc(100vw - 48px));
+}
+
+.aw-library-modal-head {
+  margin: 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.aw-library-modal-body {
+  display: grid;
+  gap: 14px;
+  min-height: 0;
+  padding-top: 14px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+}
+
+.aw-library-modal-body .aw-library-secondary-panel {
+  margin: 0;
+}
+
+.aw-library-decision-form {
+  align-items: end;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  border-radius: 10px;
+  background: var(--surface-soft);
+}
+
+@media (max-width: 760px) {
+  .aw-library-modal-backdrop {
+    padding: 10px;
+  }
+
+  .aw-library-modal,
+  .aw-library-return-list-modal {
+    width: calc(100vw - 20px);
+    max-height: calc(100dvh - 20px);
+  }
+
+  .aw-library-family-variants {
+    margin-left: 8px;
+    padding-left: 9px;
+  }
+}
