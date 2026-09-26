@@ -348,6 +348,45 @@ export function BridgeSitesPage({ onMessage }: Props) {
     }
   }
 
+  async function compareSelectedSnapshots(): Promise<void> {
+    if (!site || !compareBeforeId || !compareAfterId) {
+      setError('Choisis deux copies du site à comparer.');
+      return;
+    }
+    if (compareBeforeId === compareAfterId) {
+      setError('Les copies A et B doivent être différentes.');
+      return;
+    }
+
+    setBusy(true);
+    try {
+      setError(null);
+      setSnapshotDiff(await window.atoumweb.bridgeSnapshots.compareSnapshots(compareBeforeId, compareAfterId));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Comparaison des snapshots impossible.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function openSnapshotComparison(): void {
+    if (!site || site.snapshots.length < 2) {
+      setError('Il faut au moins deux snapshots du même site pour les comparer.');
+      return;
+    }
+
+    const afterId = snapshot?.id ?? site.snapshots[0].id;
+    const afterIndex = site.snapshots.findIndex((item) => item.id === afterId);
+    const fallbackBefore = site.snapshots[Math.max(0, afterIndex + 1)]?.id
+      ?? site.snapshots.find((item) => item.id !== afterId)?.id
+      ?? '';
+
+    setCompareAfterId(afterId);
+    setCompareBeforeId(compareBeforeId && compareBeforeId !== afterId ? compareBeforeId : fallbackBefore);
+    setSnapshotDiff(null);
+    setCompareOpen(true);
+  }
+
   async function exportDiagnostic(): Promise<void> {
     if (!snapshot) return;
     try {
