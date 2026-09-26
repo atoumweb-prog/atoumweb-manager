@@ -258,6 +258,10 @@ export class AtoumWebTechnicalLibraryService {
     return updated;
   }
 
+  refreshSearchIndex(itemId: string): void {
+    this.indexItem(this.get(itemId));
+  }
+
   rebuildSearchIndex(): { indexed: number } {
     this.database.run("DELETE FROM search_documents WHERE entity_type='atoumweb_library'");
     const ids = this.database.all<{ id: string }>("SELECT id FROM technical_items WHERE scope='atoumweb' AND archived_at IS NULL");
