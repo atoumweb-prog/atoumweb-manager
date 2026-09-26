@@ -157,6 +157,40 @@ describe('BridgeSnapshotService', () => {
     expect(() => service.compareSnapshots(imported.id, imported.id)).toThrow(/deux snapshots différents/i);
   });
 
+  it('considère deux scans identiques comme inchangés malgré leurs IDs techniques différents', () => {
+    const first = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-stable-a.zip'), 'Accueil', {
+      snapshotId: 'awb-snap:stable-a',
+      pageSnapshotId: 'awb-pagesnap:stable-a',
+      generatedAt: '2026-09-24T00:00:00Z',
+      occurrenceId: 'occurrence-stable-a',
+    })).snapshot;
+    const second = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-stable-b.zip'), 'Accueil', {
+      snapshotId: 'awb-snap:stable-b',
+      pageSnapshotId: 'awb-pagesnap:stable-b',
+      generatedAt: '2026-09-26T11:48:00Z',
+      occurrenceId: 'occurrence-stable-b',
+    })).snapshot;
+
+    const diff = service.compareSnapshots(first.id, second.id);
+    expect(diff.summary).toEqual({ added: 0, removed: 0, changed: 0, unchanged: 1 });
+    expect(diff.pages[0]).toMatchObject({
+      sourcePageKey: 'wp-post:10',
+      status: 'unchanged',
+      changes: {
+        title: false,
+        status: false,
+        url: false,
+        builder: false,
+        rawObject: false,
+        fingerprints: false,
+        nodes: false,
+        sources: false,
+        assets: false,
+        dependencies: false,
+      },
+    });
+  });
+
   it('distingue une page supprimée et une page ajoutée entre deux snapshots', () => {
     const before = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-pages-a.zip'), 'Ancienne page', {
       snapshotId: 'awb-snap:pages-a',
@@ -271,6 +305,7 @@ function buildSnapshot(
   const rawHash = sha256(raw);
   const objectRef = `sha256:${rawHash}`;
   const objectPath = `objects/sha256/${rawHash.slice(0, 2)}/${rawHash}`;
+  const sourceId = `source_${createHash('sha256').update(`${pageSnapshotId}|page-style`).digest('hex').slice(0, 24)}`;
 
   const manifest = {
     contract: 'atoumweb-bridge-snapshot',
@@ -288,7 +323,7 @@ function buildSnapshot(
     coverage: { pages: { mode: coverageMode, post_types: ['page'], statuses: ['publish'], excluded: [] } },
     scan_status: scanStatus,
     issues: [{ code: 'FRONTEND_AUDIT_NOT_ATTACHED', severity: 'warning', scope: 'site', entity_ref: sourceSiteKey, message: 'Front non joint.' }],
-    counts: { pages: 1, nodes: 1, sources: 0, assets: 0, dependencies: 0, relations: 0, objects: 1 },
+    counts: { pages: 1, nodes: 1, sources: 1, assets: 0, dependencies: 0, relations: 0, objects: 1 },
     security: { potential_sensitive_payloads: true, redaction_applied: true, redaction_rules_version: '1', payloads_modified: false },
     package: { format: 'zip', root: 'snapshot/', checksums_file: 'checksums.json' },
   };
@@ -337,11 +372,16 @@ function buildSnapshot(
     audit_status: 'ready',
     raw_source: { object_ref: objectRef, redacted: false },
     tree_ref: `${pageFolder}/tree.json`,
-    source_ids: [],
+    source_ids: [sourceId],
     asset_ids: [],
     dependency_ids: [],
     relation_ids: [],
-    fingerprints: {},
+    fingerprints: {
+      page: `sha256:${createHash('sha256').update(`${snapshotId}|page`).digest('hex')}`,
+      raw_source: objectRef,
+      normalized_tree: `sha256:${createHash('sha256').update(`${pageSnapshotId}|tree`).digest('hex')}`,
+      frontend: null,
+    },
     frontend: { checked: false, http_status: null },
   };
   const tree = {
@@ -383,7 +423,26 @@ function buildSnapshot(
   addJson('site.json', site);
   addJson('snapshot.json', snapshot);
   addJson('registries/objects.json', { objects: [{ ref: objectRef, path: objectPath, content_type: 'text/plain', encoding: 'utf-8', byte_length: raw.length, serialization: 'text', compression: 'none' }] });
-  addJson('registries/sources.json', { sources: [] });
+  addJson('registries/sources.json', { sources: [{
+    source_id: sourceId,
+    kind: 'css',
+    scope: 'page',
+    origin: 'post_content',
+    owner: 'atoumweb',
+    owner_slug: null,
+    managed_externally: false,
+    source_instance_id: sourceInstanceId,
+    source_site_key: sourceSiteKey,
+    snapshot_id: snapshotId,
+    source_page_key: sourcePageKey,
+    page_snapshot_id: pageSnapshotId,
+    node_occurrence_id: null,
+    payload: { object_ref: objectRef },
+    fingerprint: objectRef,
+    lines: 1,
+    bytes: raw.length,
+    evidence: {},
+  }] });
   addJson('registries/assets.json', { assets: [] });
   addJson('registries/dependencies.json', { dependencies: [] });
   addJson('registries/relations.json', { relations: [] });
