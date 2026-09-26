@@ -28,10 +28,13 @@
 - [x] Comparaison des nœuds sans dépendre de leurs `occurrence_id` ; aucune mutation des snapshots.
 - [x] API Electron + preload exposés pour lancer la comparaison depuis la page Sites.
 - [x] Fenêtre contextuelle « Comparer deux copies » avec synthèse et détails des pages modifiées.
-- [x] Tests ajoutés pour comparaison nominale et refus de comparer un snapshot avec lui-même.
+- [x] Revue des correspondances de modules ajoutée : score, confiance et raisons à partir du type, empreintes, libellé, profondeur, position, classes, IDs et matching hints.
+- [x] Les correspondances ambiguës ou concurrentes restent explicitement « faible / à vérifier » et ne sont jamais écrites en base.
+- [x] Le diff de structure ignore volontairement `logical_node_id` afin qu’une future annotation Manager ne crée pas elle-même un faux changement de snapshot.
+- [x] Tests ajoutés pour comparaison nominale, refus de comparer un snapshot avec lui-même et proposition de correspondance non mutante malgré des `occurrence_id` différents.
 - [ ] Validation MSI : typecheck + test ciblé `BridgeSnapshotService.test.ts`.
 - [ ] Recette réelle : nécessite au moins deux snapshots importés du même site.
-- [ ] Attribution des `logical_node_id` volontairement non automatique ; à traiter seulement après validation sur un second snapshot réel.
+- [ ] Attribution des `logical_node_id` volontairement non automatique ; aucune écriture avant validation sur un second snapshot réel.
 
 ### Finition du round-trip LOT 4
 
