@@ -39,7 +39,7 @@ describe('AtoumWebOccurrenceReturnService', () => {
 
     const inspection = service.inspectPackage(packagePath);
     expect(inspection).toMatchObject({
-      siteOccurrenceId,
+      siteOccurrenceId: 'awocc:test-01',
       libraryItemId: source.id,
       libraryVersionId: source.currentVersion!.id,
       libraryVersionNumber: 1,
@@ -146,7 +146,7 @@ function createReturnPackage(
   const occurrence: AtoumWebSiteOccurrenceV1 = {
     contract: 'atoumweb_site_occurrence',
     schemaVersion: 1,
-    siteOccurrenceId: 'awocc:test-01',
+    siteOccurrenceId,
     createdBy: 'bridge',
     source: {
       componentPackageContractVersion: 1,
