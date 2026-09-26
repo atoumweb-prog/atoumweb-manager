@@ -117,6 +117,7 @@ describe('AtoumWebOccurrenceReturnService', () => {
     expect(variant.componentFamilyId).toBeTruthy();
     expect(variant.componentFamilyId).toBe(sourceAfter.componentFamilyId);
     expect(sourceAfter.variantMode).toBe('base');
+    expect(sourceAfter.componentKey).toBe('aw-hero-retour');
     expect(variant.variantMode).toBe('inherit');
     expect(variant.variantKey).toBe('menthe-ivoire');
     expect(variant.reuseStatus).toBe('ready');
@@ -177,7 +178,7 @@ describe('AtoumWebOccurrenceReturnService', () => {
     expect(detached.name).toBe('Hero éditorial détaché');
     expect(detached.componentFamilyId).toBeTruthy();
     expect(detached.variantMode).toBe('base');
-    expect(detached.componentKey).toMatch(/^aw-hero-/);
+    expect(detached.componentKey).toBe('aw-hero-editorial-detache');
     expect(detached.reuseStatus).toBe('adapt');
     expect(detached.currentVersion?.stable).toBe(false);
     expect(detached.tags).not.toContain('bridge-human-validated');
