@@ -266,6 +266,7 @@ function buildSnapshot(
   const snapshotType = options.snapshotType ?? 'full';
   const coverageMode = options.coverageMode ?? 'complete';
   const scanStatus = options.scanStatus ?? 'complete_with_warnings';
+  const pageFolder = `pages/${sourcePostId}`;
   const raw = Buffer.from(`<!-- wp:divi/code {"module":{"content":{"innerContent":{"desktop":{"value":"<section class=\\\"atoum-home-blog-v2\\\"><div class=\\\"article-card\\\"><header class=\\\"article-card__header\\\">Blog</header><h1>${heading}</h1></div></section><style>.atoum-home-blog-v2{color:red}</style>"}}}}} /-->`, 'utf8');
   const rawHash = sha256(raw);
   const objectRef = `sha256:${rawHash}`;
@@ -335,7 +336,7 @@ function buildSnapshot(
     scope: 'content',
     audit_status: 'ready',
     raw_source: { object_ref: objectRef, redacted: false },
-    tree_ref: 'pages/10/tree.json',
+    tree_ref: `${pageFolder}/tree.json`,
     source_ids: [],
     asset_ids: [],
     dependency_ids: [],
@@ -386,9 +387,9 @@ function buildSnapshot(
   addJson('registries/assets.json', { assets: [] });
   addJson('registries/dependencies.json', { dependencies: [] });
   addJson('registries/relations.json', { relations: [] });
-  addJson('pages/10/page.json', page);
-  addJson('pages/10/meta.json', meta);
-  addJson('pages/10/tree.json', tree);
+  addJson(`${pageFolder}/page.json`, page);
+  addJson(`${pageFolder}/meta.json`, meta);
+  addJson(`${pageFolder}/tree.json`, tree);
   relativeEntries.set(objectPath, raw);
 
   const files: Record<string, string> = {};
