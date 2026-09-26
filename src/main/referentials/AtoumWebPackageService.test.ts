@@ -186,6 +186,79 @@ describe('AtoumWebPackageService', () => {
     expect(inspection.version.contentText).toContain('atoumweb-library-reusable-component');
   });
 
+  it('exporte l’identité famille / variante gérée par le Manager en priorité', () => {
+    const reusablePayload = {
+      schemaVersion: 2,
+      generatorRevision: 2,
+      kind: 'atoumweb-library-reusable-component',
+      origin: {
+        site: 'atoumweb.fr',
+        page: 'Accueil',
+        pageUrl: 'https://www.atoumweb.fr/',
+        snapshotId: 'snapshot:family-test',
+        snapshotDate: '2026-09-26T05:00:00Z',
+        builderGeneration: '5',
+        occurrenceId: 'module-family-test',
+      },
+      identity: {
+        componentFamilyId: 'legacy-family',
+        componentKey: 'aw-legacy-family',
+        libraryVariantId: 'legacy-variant',
+        variantKey: 'legacy',
+        variantMode: 'inherit',
+        reusabilityScope: 'generic',
+      },
+      reusable: {
+        html: '<section class="family-test"><h2>Variante</h2></section>',
+        css: '.family-test{color:#111111}',
+        javascript: '',
+        rootClasses: ['family-test'],
+        method: 'divi-code',
+        instructions: [],
+        generalized: true,
+        fields: [],
+      },
+      dependencies: [],
+      assets: [],
+      checks: { remoteAssetUrls: [] },
+      notes: [],
+    };
+    const item = library.create(
+      { category: 'section', name: 'Section famille', reuseStatus: 'ready', vertical: 'mariage', tags: ['bridge', 'bridge-human-validated'] },
+      { contentType: 'json', language: 'json', contentText: JSON.stringify(reusablePayload), notes: 'Famille gérée' },
+    );
+    const stable = library.markStable(item.currentVersion!.id);
+    const now = '2026-09-26T05:10:00.000Z';
+    database.run(
+      `INSERT INTO atoumweb_component_families
+       (id,component_key,display_name,category,vertical,reusability_scope,base_item_id,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?)`,
+      ['awfam:test', 'aw-section-famille', 'Section famille', 'section', 'mariage', 'vertical', stable.id, now, now],
+    );
+    database.run(
+      `INSERT INTO atoumweb_component_variants
+       (id,family_id,technical_item_id,variant_key,display_name,variant_mode,variant_of_id,source_occurrence_return_id,created_at,updated_at)
+       VALUES (?,?,?,?,?,'base',NULL,NULL,?,?)`,
+      ['awvar:test-base', 'awfam:test', stable.id, 'base', 'Base', now, now],
+    );
+
+    const exported = packages.exportItem(stable.id, stable.currentVersion!.id);
+    const entries = readZipArchive(exported.path);
+    const identity = JSON.parse(entries.find((entry) => entry.name === 'component/identity.json')!.data.toString('utf8'));
+
+    expect(identity).toMatchObject({
+      classificationStatus: 'classified',
+      componentFamilyId: 'awfam:test',
+      componentKey: 'aw-section-famille',
+      libraryVariantId: 'awvar:test-base',
+      variantKey: 'base',
+      variantMode: 'base',
+      vertical: 'mariage',
+      reusabilityScope: 'vertical',
+    });
+    expect(identity.componentFamilyId).not.toBe('legacy-family');
+  });
+
   it('importe un paquet comme nouvel item sans exécuter ni modifier le composant source', () => {
     const source = library.create(
       { category: 'header', name: 'Header source', reuseStatus: 'reference' },
