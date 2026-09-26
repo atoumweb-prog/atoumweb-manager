@@ -81,6 +81,26 @@ describe('AtoumWebOccurrenceReturnService', () => {
     expect(decided.decidedAt).toBeTruthy();
   });
 
+  it('ne dégrade pas une promotion à cause de l’ancien faux positif HTML sur un espace final', () => {
+    const source = createSource();
+    const imported = service.importReturn(createReturnPackage(
+      source.id,
+      source.currentVersion!.id,
+      1,
+      {
+        siteOccurrenceId: 'awocc:legacy-space',
+        title: 'Titre source',
+        changedFieldIds: [],
+        fileName: 'occurrence-return-legacy-space.zip',
+      },
+    ));
+
+    const promoted = service.createVariant(imported.id, { name: 'Sans faux positif' });
+    const variant = library.get(promoted.resultTechnicalItemId!);
+    expect(variant.reuseStatus).toBe('ready');
+    expect(variant.currentVersion?.stable).toBe(true);
+  });
+
   it('peut promouvoir une occurrence déjà conservée en nouvelle variante réutilisable', () => {
     const source = createSource();
     const imported = service.importReturn(createReturnPackage(source.id, source.currentVersion!.id, 1));
@@ -189,7 +209,7 @@ function createSource() {
     },
     identity: null,
     reusable: {
-      html: '<section class="hero-return"><h1 data-aw-field-text="title">Titre source</h1></section>',
+      html: '<section class="hero-return"><h1 data-aw-field-text="title">Titre source </h1></section>',
       css: '.hero-return{color:#111111;}',
       javascript: '',
       rootClasses: ['hero-return'],
@@ -230,6 +250,7 @@ function createReturnPackage(
     siteOccurrenceId?: string;
     title?: string;
     fileName?: string;
+    changedFieldIds?: string[];
   } = {},
 ): string {
   const siteOccurrenceId = options.siteOccurrenceId ?? 'awocc:test-01';
@@ -269,7 +290,7 @@ function createReturnPackage(
       assetSelections: {},
     },
     changes: {
-      changedFieldIds: ['title'],
+      changedFieldIds: options.changedFieldIds ?? ['title'],
       changedCssVariables: [],
       changedAssetIds: [],
       htmlChanged: true,
