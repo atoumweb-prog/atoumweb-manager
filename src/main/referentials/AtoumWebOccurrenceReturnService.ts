@@ -295,6 +295,8 @@ export class AtoumWebOccurrenceReturnService {
          VALUES (?,?,?,?,?,?,?,?,?,?)`,
         [variantId, family.id, created.id, variantKey, variantLabel, variantMode, parentVariant.id, current.id, now, now],
       );
+      this.library.refreshSearchIndex(sourceItem.id);
+      this.library.refreshSearchIndex(created.id);
 
       if (created.currentVersion) {
         this.copySourceVersionAssets(current.libraryVersionId, created.currentVersion.id, createdFiles);
@@ -433,6 +435,7 @@ export class AtoumWebOccurrenceReturnService {
          VALUES (?,?,?,?,?,'base',NULL,?,?,?)`,
         [variantId, familyId, created.id, 'base', 'Base', current.id, now, now],
       );
+      this.library.refreshSearchIndex(created.id);
 
       if (created.currentVersion) {
         this.copySourceVersionAssets(current.libraryVersionId, created.currentVersion.id, createdFiles);
