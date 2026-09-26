@@ -1445,6 +1445,14 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
   );
 }
 
+function occurrenceReturnDecisionLabel(item: AtoumWebOccurrenceReturnSummary): string {
+  if (item.decision === 'keep_occurrence') return 'Occurrence conservée';
+  if (item.decision === 'create_variant') return 'Variante créée';
+  if (item.decision === 'update_variant') return 'Variante mise à jour';
+  if (item.decision === 'new_family') return 'Nouvelle famille créée';
+  return item.changes.structuralChange ? 'Décision requise · changement structurel' : 'Décision requise';
+}
+
 function technicalVersionLabel(version: AtoumWebTechnicalVersion): string {
   const stage = parseBridgeLibraryPayload(version.contentType, version.contentText)?.stage;
   if (stage === 'original') return `Originale · v${version.versionNumber}`;
@@ -1468,6 +1476,14 @@ function BridgeSummaryStages({ item }: { item: AtoumWebTechnicalItemSummary }) {
     && current.value.reusable.generalized
     && current.value.checks.remoteAssetUrls.length === 0
     && item.stableVersion?.id === item.currentVersion?.id;
+
+  if (item.libraryVariantId) {
+    return <span className="aw-library-stage-badges" aria-label="Famille et variante du composant">
+      <span className="done">Famille ✓</span>
+      <span className="done">{item.variantMode === 'base' ? 'Base' : `Variante ${item.variantKey ?? ''}`} ✓</span>
+      <span className={reusableReady ? 'done' : hasReusable ? 'warning' : 'pending'}>Réutil. {reusableReady ? '✓' : hasReusable ? '⚠' : '—'}</span>
+    </span>;
+  }
 
   return <span className="aw-library-stage-badges" aria-label="Étapes du composant">
     <span className="done">Originale ✓</span>
