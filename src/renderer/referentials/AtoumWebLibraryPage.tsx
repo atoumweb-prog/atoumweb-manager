@@ -1092,27 +1092,16 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
         </div>
         <div className="aw-library-toolbar-actions">
           <div className="aw-library-action-group" aria-label="Échanges Bridge">
-            <button className="secondary-button" type="button" disabled={occurrenceReturnBusy} onClick={() => void inspectOccurrenceReturn()}><OperationIcon name="upload" size={16} /> Retour Bridge</button>
-            {occurrenceReturns.length > 0 && <button className="secondary-button" type="button" onClick={() => setShowOccurrenceReturns((value) => !value)}><OperationIcon name="repeat" size={16} /> Retours {pendingOccurrenceReturnCount ? `· ${pendingOccurrenceReturnCount} à décider` : `· ${occurrenceReturns.length}`}</button>}
+            <button className="secondary-button" type="button" disabled={occurrenceReturnBusy} onClick={() => void inspectOccurrenceReturn()} title="Importer dans Manager un retour d’occurrence exporté depuis Bridge"><OperationIcon name="upload" size={16} /> Importer un retour</button>
+            {occurrenceReturns.length > 0 && <button className="secondary-button" type="button" onClick={() => setShowOccurrenceReturns((value) => !value)} title="Ouvrir les retours Bridge déjà importés dans Manager"><OperationIcon name="repeat" size={16} /> {pendingOccurrenceReturnCount ? `À traiter · ${pendingOccurrenceReturnCount}` : `Historique · ${occurrenceReturns.length}`}</button>}
           </div>
           <div className="aw-library-action-group" aria-label="Gestion de la Bibliothèque">
-            <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void inspectPackage()}><OperationIcon name="package" size={16} /> Importer ZIP</button>
+            <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void inspectPackage()} title="Importer un package de composant dans la Bibliothèque"><OperationIcon name="package" size={16} /> Importer un composant</button>
             <button className="primary-button" type="button" onClick={() => setCreating((value) => !value)}>{creating ? 'Fermer' : 'Nouveau composant'}</button>
           </div>
         </div>
       </article>
       </div>
-
-      {onToggleHeader && <button
-        className="aw-library-head-toggle"
-        type="button"
-        onClick={onToggleHeader}
-        title={headerCollapsed ? 'Afficher le bandeau de la Bibliothèque' : 'Masquer le bandeau de la Bibliothèque'}
-        aria-label={headerCollapsed ? 'Afficher le bandeau de la Bibliothèque' : 'Masquer le bandeau de la Bibliothèque'}
-        aria-pressed={headerCollapsed}
-      >
-        <span aria-hidden="true">{headerCollapsed ? '↓' : '↑'}</span>
-      </button>}
 
       {occurrenceReturnInspection && <div className="aw-library-modal-backdrop" role="presentation" onMouseDown={(event) => {
         if (event.currentTarget === event.target) {
