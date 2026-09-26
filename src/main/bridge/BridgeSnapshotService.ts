@@ -196,6 +196,12 @@ function snapshotDiffWarnings(before: BridgeSnapshotSummary, after: BridgeSnapsh
   };
   describe(before, 'La copie Avant');
   describe(after, 'La copie Après');
+  if (before.bridgeVersion !== after.bridgeVersion) {
+    warnings.push(`Versions Bridge différentes (${before.bridgeVersion} → ${after.bridgeVersion}) : une évolution du scanner peut expliquer certains écarts techniques.`);
+  }
+  if (before.schemaVersion !== after.schemaVersion || before.fingerprintProfile !== after.fingerprintProfile) {
+    warnings.push('Le schéma ou le profil de fingerprint diffère entre les deux copies : la comparabilité technique est réduite.');
+  }
   return warnings;
 }
 
@@ -568,15 +574,15 @@ export class BridgeSnapshotService {
       const right = afterPage!;
       const changes = {
         title: left.title !== right.title || left.slug !== right.slug,
-        status: left.status !== right.status || left.audit_status !== right.audit_status,
+        status: left.status !== right.status,
         url: left.canonical_url !== right.canonical_url,
         builder: left.builder !== right.builder
           || left.builder_generation !== right.builder_generation
           || left.storage_format !== right.storage_format,
         rawObject: left.raw_object_ref !== right.raw_object_ref,
-        fingerprints: stableJsonString(left.fingerprints_json) !== stableJsonString(right.fingerprints_json),
+        fingerprints: this.stablePageFingerprintSignature(left) !== this.stablePageFingerprintSignature(right),
         nodes: this.nodeDiffSignature(left.page_snapshot_id) !== this.nodeDiffSignature(right.page_snapshot_id),
-        sources: stableStringSet(left.source_ids_json) !== stableStringSet(right.source_ids_json),
+        sources: this.sourceDiffSignature(left.page_snapshot_id) !== this.sourceDiffSignature(right.page_snapshot_id),
         assets: stableStringSet(left.asset_ids_json) !== stableStringSet(right.asset_ids_json),
         dependencies: stableStringSet(left.dependency_ids_json) !== stableStringSet(right.dependency_ids_json),
       };
@@ -972,6 +978,31 @@ export class BridgeSnapshotService {
        WHERE bps.snapshot_id=?`,
       [snapshotId],
     );
+  }
+
+  private stablePageFingerprintSignature(page: SnapshotDiffPageRow): string {
+    const fingerprints = parseObject(page.fingerprints_json);
+    return stableObjectString({
+      rawSource: nullableString(fingerprints.raw_source) ?? page.raw_object_ref,
+    });
+  }
+
+  private sourceDiffSignature(pageSnapshotId: string): string {
+    const rows = this.database.all<Record<string, unknown>>(
+      `SELECT kind,scope,origin,owner,owner_slug,managed_externally,fingerprint
+       FROM bridge_sources
+       WHERE page_snapshot_id=?`,
+      [pageSnapshotId],
+    );
+    return rows.map((row) => stableObjectString({
+      kind: String(row.kind ?? ''),
+      scope: String(row.scope ?? ''),
+      origin: String(row.origin ?? ''),
+      owner: String(row.owner ?? ''),
+      ownerSlug: nullableString(row.owner_slug),
+      managedExternally: Number(row.managed_externally ?? 0) === 1,
+      fingerprint: nullableString(row.fingerprint),
+    })).sort().join('\n');
   }
 
   private nodeDiffSignature(pageSnapshotId: string): string {
