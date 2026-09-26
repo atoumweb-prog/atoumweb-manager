@@ -440,13 +440,30 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
   }
 
   useEffect(() => {
-    if (!selected) return;
+    if (!selected || selectedOccurrenceReturn || occurrenceReturnInspection || showOccurrenceReturns) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') closeDetail();
     };
     window.addEventListener('keydown', closeOnEscape);
     return () => window.removeEventListener('keydown', closeOnEscape);
-  }, [selected?.id]);
+  }, [selected?.id, Boolean(selectedOccurrenceReturn), Boolean(occurrenceReturnInspection), showOccurrenceReturns]);
+
+  useEffect(() => {
+    if (!selectedOccurrenceReturn && !occurrenceReturnInspection && !showOccurrenceReturns) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      if (selectedOccurrenceReturn) {
+        closeOccurrenceReturnDialog();
+      } else if (occurrenceReturnInspection) {
+        setOccurrenceReturnInspection(null);
+        setShowOccurrenceReturns(false);
+      } else {
+        setShowOccurrenceReturns(false);
+      }
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [Boolean(selectedOccurrenceReturn), Boolean(occurrenceReturnInspection), showOccurrenceReturns]);
 
   function beginResize(): void {
     const workspace = document.querySelector<HTMLElement>('.aw-library-layout.with-detail');
