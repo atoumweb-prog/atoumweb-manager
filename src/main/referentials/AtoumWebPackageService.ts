@@ -62,6 +62,17 @@ interface BridgeReusableExportPayload {
   assets: unknown[];
 }
 
+interface ManagedComponentIdentityRow extends Record<string, unknown> {
+  family_id: string;
+  component_key: string;
+  family_vertical: string | null;
+  reusability_scope: 'generic' | 'vertical' | 'site_specific';
+  variant_id: string;
+  variant_key: string;
+  variant_mode: 'base' | 'inherit' | 'forked';
+  variant_of_id: string | null;
+}
+
 interface BridgeWorkbenchManifest {
   contract: 'atoumweb_bridge_component_package';
   schemaVersion: 1;
@@ -245,20 +256,45 @@ export class AtoumWebPackageService {
     this.validateComponentFieldsJson(Buffer.from(JSON.stringify(canonicalFields), 'utf8'));
     const fields = addText('component/fields.json', `${JSON.stringify(canonicalFields, null, 2)}\n`);
     const sourceIdentity = payload.identity ?? {};
+    const managedIdentity = this.database.get<ManagedComponentIdentityRow>(
+      `SELECT
+         family.id AS family_id,
+         family.component_key,
+         family.vertical AS family_vertical,
+         family.reusability_scope,
+         variant.id AS variant_id,
+         variant.variant_key,
+         variant.variant_mode,
+         variant.variant_of_id
+       FROM atoumweb_component_variants variant
+       JOIN atoumweb_component_families family ON family.id=variant.family_id
+       WHERE variant.technical_item_id=?`,
+      [item.id],
+    );
     const identityValue = buildComponentIdentityV1({
       libraryDisplayName: item.name,
       libraryItemId: item.id,
       libraryVersionId: version.id,
       libraryVersionNumber: version.versionNumber,
       tags: item.tags ?? [],
-      componentFamilyId: this.optionalString(sourceIdentity.componentFamilyId ?? sourceIdentity.component_family_id),
-      componentKey: this.optionalString(sourceIdentity.componentKey ?? sourceIdentity.component_key),
-      libraryVariantId: this.optionalString(sourceIdentity.libraryVariantId ?? sourceIdentity.variant_id),
-      variantKey: this.optionalString(sourceIdentity.variantKey ?? sourceIdentity.variant_key),
-      variantOf: this.optionalString(sourceIdentity.variantOf ?? sourceIdentity.variant_of),
-      variantMode: this.optionalVariantMode(sourceIdentity.variantMode ?? sourceIdentity.variant_mode),
-      vertical: this.optionalString(sourceIdentity.vertical) ?? item.vertical ?? null,
-      reusabilityScope: this.optionalReusabilityScope(sourceIdentity.reusabilityScope ?? sourceIdentity.reusability_scope),
+      componentFamilyId: managedIdentity?.family_id
+        ?? this.optionalString(sourceIdentity.componentFamilyId ?? sourceIdentity.component_family_id),
+      componentKey: managedIdentity?.component_key
+        ?? this.optionalString(sourceIdentity.componentKey ?? sourceIdentity.component_key),
+      libraryVariantId: managedIdentity?.variant_id
+        ?? this.optionalString(sourceIdentity.libraryVariantId ?? sourceIdentity.variant_id),
+      variantKey: managedIdentity?.variant_key
+        ?? this.optionalString(sourceIdentity.variantKey ?? sourceIdentity.variant_key),
+      variantOf: managedIdentity?.variant_of_id
+        ?? this.optionalString(sourceIdentity.variantOf ?? sourceIdentity.variant_of),
+      variantMode: managedIdentity?.variant_mode
+        ?? this.optionalVariantMode(sourceIdentity.variantMode ?? sourceIdentity.variant_mode),
+      vertical: managedIdentity?.family_vertical
+        ?? this.optionalString(sourceIdentity.vertical)
+        ?? item.vertical
+        ?? null,
+      reusabilityScope: managedIdentity?.reusability_scope
+        ?? this.optionalReusabilityScope(sourceIdentity.reusabilityScope ?? sourceIdentity.reusability_scope),
     });
     this.validateComponentIdentityJson(Buffer.from(JSON.stringify(identityValue), 'utf8'), identityValue);
     const identity = addText('component/identity.json', `${JSON.stringify(identityValue, null, 2)}\n`);
