@@ -384,11 +384,24 @@ export function BridgeSitesPage({ onMessage }: Props) {
       return;
     }
 
+    const beforeSnapshot = site.snapshots.find((item) => item.id === compareBeforeId);
+    const afterSnapshot = site.snapshots.find((item) => item.id === compareAfterId);
+    const orderedIds = beforeSnapshot && afterSnapshot
+      ? [beforeSnapshot, afterSnapshot]
+          .sort((left, right) => new Date(left.generatedAt).getTime() - new Date(right.generatedAt).getTime())
+          .map((item) => item.id)
+      : [compareBeforeId, compareAfterId];
+
+    if (orderedIds[0] !== compareBeforeId) {
+      setCompareBeforeId(orderedIds[0]);
+      setCompareAfterId(orderedIds[1]);
+    }
+
     setBusy(true);
     try {
       setError(null);
       setNodeMatchReview(null);
-      setSnapshotDiff(await window.atoumweb.bridgeSnapshots.compareSnapshots(compareBeforeId, compareAfterId));
+      setSnapshotDiff(await window.atoumweb.bridgeSnapshots.compareSnapshots(orderedIds[0], orderedIds[1]));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Comparaison des snapshots impossible.');
     } finally {
@@ -402,14 +415,17 @@ export function BridgeSitesPage({ onMessage }: Props) {
       return;
     }
 
-    const afterId = snapshot?.id ?? site.snapshots[0].id;
-    const afterIndex = site.snapshots.findIndex((item) => item.id === afterId);
-    const fallbackBefore = site.snapshots[Math.max(0, afterIndex + 1)]?.id
-      ?? site.snapshots.find((item) => item.id !== afterId)?.id
-      ?? '';
+    const ordered = [...site.snapshots].sort((left, right) =>
+      new Date(left.generatedAt).getTime() - new Date(right.generatedAt).getTime());
+    const currentId = snapshot?.id ?? ordered[ordered.length - 1].id;
+    const currentIndex = ordered.findIndex((item) => item.id === currentId);
+    const neighbour = ordered[currentIndex > 0 ? currentIndex - 1 : Math.min(ordered.length - 1, currentIndex + 1)];
+    const pair = [ordered[currentIndex >= 0 ? currentIndex : ordered.length - 1], neighbour]
+      .filter((item): item is BridgeSnapshotSummary => Boolean(item))
+      .sort((left, right) => new Date(left.generatedAt).getTime() - new Date(right.generatedAt).getTime());
 
-    setCompareAfterId(afterId);
-    setCompareBeforeId(compareBeforeId && compareBeforeId !== afterId ? compareBeforeId : fallbackBefore);
+    setCompareBeforeId(pair[0]?.id ?? ordered[0].id);
+    setCompareAfterId(pair[1]?.id ?? ordered[ordered.length - 1].id);
     setSnapshotDiff(null);
     setNodeMatchReview(null);
     setCompareOpen(true);
