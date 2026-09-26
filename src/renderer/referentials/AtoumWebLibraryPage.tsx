@@ -1232,7 +1232,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
               {selected.vertical && <p className="muted">Métier : <strong>{verticalLabel(selected.vertical)}</strong></p>}
               <div className="aw-library-tags">{selected.tags?.map((tag) => <span key={tag}>{tag}</span>)}</div>
               {selected.componentFamilyId && <p className="muted">Famille : <strong>{selected.familyDisplayName ?? selected.componentKey}</strong> · {selected.variantMode === 'base' ? 'Variante de base' : `Variante « ${selected.variantKey ?? 'sans clé'} »`}</p>}
-              {selected.originTechnicalItemId && <p className="muted">Origine conservée : composant de Bibliothèque projet {selected.originTechnicalItemId}</p>
+              {selected.originTechnicalItemId && <p className="muted">Origine conservée : composant de Bibliothèque projet {selected.originTechnicalItemId}</p>}
             </>}
 
             {bridgeWorkflow.original && <section className="aw-library-bridge-workflow">
