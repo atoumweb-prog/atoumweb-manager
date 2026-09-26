@@ -215,6 +215,18 @@ type BridgeLibraryPayload =
 
 type BridgeStageView = 'original' | 'work' | 'reusable';
 
+type LibraryTreeGroup =
+  | { kind: 'standalone'; key: string; firstIndex: number; item: AtoumWebTechnicalItemSummary }
+  | {
+      kind: 'family';
+      key: string;
+      firstIndex: number;
+      familyId: string;
+      label: string;
+      base: AtoumWebTechnicalItemSummary | null;
+      variants: AtoumWebTechnicalItemSummary[];
+    };
+
 const EMPTY_FORM: CreationForm = {
   name: '',
   category: 'section',
@@ -351,6 +363,8 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
     adapt: items.filter((item) => effectiveReuseStatus(item) === 'adapt').length,
     references: items.filter((item) => effectiveReuseStatus(item) === 'reference').length,
   }), [items]);
+
+  const libraryTree = useMemo(() => buildLibraryTree(items), [items]);
 
   const pendingOccurrenceReturnCount = useMemo(
     () => occurrenceReturns.filter((item) => !item.decision).length,
@@ -837,6 +851,17 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
     setOccurrenceDecisionTargetVariantId('');
   }
 
+  function closeOccurrenceReturnDialog(): void {
+    setSelectedOccurrenceReturn(null);
+    setOccurrenceVariantTargets([]);
+    resetOccurrenceDecisionEditor();
+    setShowOccurrenceReturns(false);
+  }
+
+  async function refreshOccurrenceReturnListOnly(): Promise<void> {
+    setOccurrenceReturns(await window.atoumweb.referentials.occurrenceReturns.list());
+  }
+
   async function loadOccurrenceReturnContext(id: string): Promise<AtoumWebOccurrenceReturnDetail> {
     const [detail, targets] = await Promise.all([
       window.atoumweb.referentials.occurrenceReturns.get(id),
@@ -917,10 +942,10 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
     setOccurrenceReturnBusy(true);
     try {
       setError(null);
-      const decided = await window.atoumweb.referentials.occurrenceReturns.keepOccurrence(selectedOccurrenceReturn.id);
-      setSelectedOccurrenceReturn(decided);
-      await loadOccurrenceReturns(decided.id);
-      onMessage('Décision enregistrée : conserver uniquement cette occurrence.');
+      await window.atoumweb.referentials.occurrenceReturns.keepOccurrence(selectedOccurrenceReturn.id);
+      closeOccurrenceReturnDialog();
+      await refreshOccurrenceReturnListOnly();
+      onMessage('Décision enregistrée : occurrence conservée.');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Impossible d’enregistrer la décision.');
     } finally {
@@ -940,8 +965,10 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
       const decided = await window.atoumweb.referentials.occurrenceReturns.createVariant(selectedOccurrenceReturn.id, {
         name: occurrenceDecisionName.trim(),
       });
-      await loadOccurrenceReturns(decided.id);
-      if (decided.resultTechnicalItemId) await openPromotedLibraryItem(decided.resultTechnicalItemId);
+      const resultItemId = decided.resultTechnicalItemId;
+      closeOccurrenceReturnDialog();
+      await refreshOccurrenceReturnListOnly();
+      if (resultItemId) await openPromotedLibraryItem(resultItemId);
       onMessage('Occurrence promue en nouvelle variante réutilisable.');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Création de la variante impossible.');
@@ -962,8 +989,10 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
       const decided = await window.atoumweb.referentials.occurrenceReturns.updateVariant(selectedOccurrenceReturn.id, {
         targetVariantId: occurrenceDecisionTargetVariantId,
       });
-      await loadOccurrenceReturns(decided.id);
-      if (decided.resultTechnicalItemId) await openPromotedLibraryItem(decided.resultTechnicalItemId);
+      const resultItemId = decided.resultTechnicalItemId;
+      closeOccurrenceReturnDialog();
+      await refreshOccurrenceReturnListOnly();
+      if (resultItemId) await openPromotedLibraryItem(resultItemId);
       onMessage('Occurrence appliquée à la variante choisie.');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Mise à jour de la variante impossible.');
@@ -984,8 +1013,10 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
       const decided = await window.atoumweb.referentials.occurrenceReturns.createFamily(selectedOccurrenceReturn.id, {
         name: occurrenceDecisionName.trim(),
       });
-      await loadOccurrenceReturns(decided.id);
-      if (decided.resultTechnicalItemId) await openPromotedLibraryItem(decided.resultTechnicalItemId);
+      const resultItemId = decided.resultTechnicalItemId;
+      closeOccurrenceReturnDialog();
+      await refreshOccurrenceReturnListOnly();
+      if (resultItemId) await openPromotedLibraryItem(resultItemId);
       onMessage('Occurrence détachée dans une nouvelle famille de composants.');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Création de la nouvelle famille impossible.');
@@ -1000,6 +1031,14 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
     setReuseStatus('');
     setVertical('');
     setIncludeArchived(false);
+    const next = await window.atoumweb.referentials.library.list({
+      search: null,
+      category: null,
+      reuseStatus: null,
+      vertical: null,
+      includeArchived: false,
+    });
+    setItems(next);
     await setOpenedItem(await window.atoumweb.referentials.library.get(itemId));
   }
 
