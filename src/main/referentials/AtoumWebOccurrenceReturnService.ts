@@ -576,9 +576,32 @@ export class AtoumWebOccurrenceReturnService {
 
     const changes = current.changes;
     if (changes.structuralChange || changes.javascriptChanged) return false;
-    if (changes.htmlChanged && changes.changedFieldIds.length === 0) return false;
+    if (changes.htmlChanged && changes.changedFieldIds.length === 0) {
+      const sourceHtml = this.sourceReusableHtml(sourceVersion.content_text);
+      if (!sourceHtml || this.normalizeHtmlForComparison(sourceHtml) !== this.normalizeHtmlForComparison(current.html)) return false;
+    }
     if (changes.cssChanged && changes.changedCssVariables.length === 0) return false;
     return true;
+  }
+
+  private sourceReusableHtml(contentText: string | null): string | null {
+    if (!contentText) return null;
+    try {
+      const parsed = JSON.parse(contentText) as Record<string, unknown>;
+      const reusable = parsed.reusable && typeof parsed.reusable === 'object' && !Array.isArray(parsed.reusable)
+        ? parsed.reusable as Record<string, unknown>
+        : null;
+      return reusable && typeof reusable.html === 'string' ? reusable.html : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private normalizeHtmlForComparison(html: string): string {
+    return html
+      .replace(/\r\n?/g, '\n')
+      .trim()
+      .replace(/[ \t]+(<\/(?:h[1-6]|p|div|section|article|header|footer|main|aside|nav|li|ul|ol|form|blockquote|figure|figcaption|table|thead|tbody|tfoot|tr|td|th)>)/gi, '$1');
   }
 
   private buildReusablePayloadFromReturn(
