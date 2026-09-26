@@ -531,8 +531,12 @@ export class BridgeSnapshotService {
     const beforeByKey = new Map(beforeRows.map((row) => [row.source_page_key, row] as const));
     const afterByKey = new Map(afterRows.map((row) => [row.source_page_key, row] as const));
     const keys = [...new Set([...beforeByKey.keys(), ...afterByKey.keys()])].sort((left, right) => left.localeCompare(right, 'fr'));
+    const ignoredInternalKeys = keys.filter((sourcePageKey) =>
+      this.isInternalBridgePage(beforeByKey.get(sourcePageKey) ?? null)
+      || this.isInternalBridgePage(afterByKey.get(sourcePageKey) ?? null));
+    const comparableKeys = keys.filter((sourcePageKey) => !ignoredInternalKeys.includes(sourcePageKey));
 
-    const pages = keys.map((sourcePageKey) => {
+    const pages = comparableKeys.map((sourcePageKey) => {
       const beforePage = beforeByKey.get(sourcePageKey) ?? null;
       const afterPage = afterByKey.get(sourcePageKey) ?? null;
 
@@ -577,11 +581,22 @@ export class BridgeSnapshotService {
         assets: stableStringSet(left.asset_ids_json) !== stableStringSet(right.asset_ids_json),
         dependencies: stableStringSet(left.dependency_ids_json) !== stableStringSet(right.dependency_ids_json),
       };
-      const changed = Object.values(changes).some(Boolean);
+      const contentChanged = changes.title
+        || changes.status
+        || changes.url
+        || changes.builder
+        || changes.rawObject;
+      const technicalChanged = !contentChanged && (
+        changes.fingerprints
+        || changes.nodes
+        || changes.sources
+        || changes.assets
+        || changes.dependencies
+      );
 
       return {
         sourcePageKey,
-        status: changed ? 'changed' as const : 'unchanged' as const,
+        status: contentChanged ? 'changed' as const : technicalChanged ? 'technical' as const : 'unchanged' as const,
         titleBefore: left.title,
         titleAfter: right.title,
         beforePageSnapshotId: left.page_snapshot_id,
@@ -591,16 +606,23 @@ export class BridgeSnapshotService {
       };
     });
 
+    const warnings = snapshotDiffWarnings(before, after);
+    if (ignoredInternalKeys.length > 0) {
+      warnings.push(`${ignoredInternalKeys.length} contenu(s) interne(s) Bridge/Workbench ignoré(s) dans le bilan du site.`);
+    }
+
     return {
       siteId: before.siteId,
       before,
       after,
-      warnings: snapshotDiffWarnings(before, after),
+      warnings,
       summary: {
         added: pages.filter((page) => page.status === 'added').length,
         removed: pages.filter((page) => page.status === 'removed').length,
         changed: pages.filter((page) => page.status === 'changed').length,
+        technical: pages.filter((page) => page.status === 'technical').length,
         unchanged: pages.filter((page) => page.status === 'unchanged').length,
+        ignoredInternal: ignoredInternalKeys.length,
       },
       pages,
     };
@@ -969,6 +991,21 @@ export class BridgeSnapshotService {
        WHERE bps.snapshot_id=?`,
       [snapshotId],
     );
+  }
+
+  private isInternalBridgePage(page: SnapshotDiffPageRow | null): boolean {
+    if (!page) return false;
+    if (/^AWB Workbench\b/i.test(page.title)) return true;
+
+    const metadata = parseObject(page.metadata_json);
+    const meta = Array.isArray(metadata.meta) ? metadata.meta : [];
+    return meta.some((entry) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return false;
+      const key = String((entry as Record<string, unknown>).key ?? '');
+      return key === '_awb_workbench'
+        || key === '_awb_site_occurrence_v1'
+        || key === '_awb_workbench_component';
+    });
   }
 
   private stablePageFingerprintSignature(page: SnapshotDiffPageRow): string {
