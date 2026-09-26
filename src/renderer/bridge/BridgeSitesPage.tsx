@@ -454,12 +454,12 @@ export function BridgeSitesPage({ onMessage }: Props) {
       {error && <div className="bridge-error" role="alert"><OperationIcon name="alert" size={18} /><span>{error}</span><button type="button" onClick={() => setError(null)}>×</button></div>}
 
       {compareOpen && site && <div className="bridge-compare-backdrop" role="presentation" onMouseDown={(event) => {
-        if (event.currentTarget === event.target) setCompareOpen(false);
+        if (event.currentTarget === event.target) { setCompareOpen(false); setNodeMatchReview(null); }
       }}>
         <section className="panel bridge-compare-modal" role="dialog" aria-modal="true" aria-labelledby="bridge-compare-title">
           <div className="bridge-compare-head">
             <div><span className="eyebrow">Historique du site</span><h2 id="bridge-compare-title">Comparer deux copies</h2><p>{site.name}</p></div>
-            <button className="secondary-button" type="button" onClick={() => setCompareOpen(false); setNodeMatchReview(null); }}>Fermer</button>
+            <button className="secondary-button" type="button" onClick={() => { setCompareOpen(false); setNodeMatchReview(null); }}>Fermer</button>
           </div>
           <div className="bridge-compare-controls">
             <label>Avant<select value={compareBeforeId} onChange={(event) => { setCompareBeforeId(event.target.value); setSnapshotDiff(null); setNodeMatchReview(null); }}>
