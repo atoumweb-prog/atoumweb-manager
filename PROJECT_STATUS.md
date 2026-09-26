@@ -33,6 +33,11 @@
 - [x] Le diff de structure ignore volontairement `logical_node_id` afin qu’une future annotation Manager ne crée pas elle-même un faux changement de snapshot.
 - [x] Tests ajoutés pour comparaison nominale, refus de comparer un snapshot avec lui-même, pages ajoutées/supprimées, avertissements de snapshot partiel et proposition de correspondance non mutante malgré des `occurrence_id` différents.
 - [x] Les snapshots partiels / scans incomplets produisent des avertissements explicites afin de ne pas présenter une absence comme une suppression certaine.
+- [x] Correctif après recette réelle : les `source_id`, `page_snapshot_id` et `occurrence_id` étant propres à chaque snapshot, le diff compare désormais les fingerprints/contenus stables et non ces IDs volatils.
+- [x] `audit_status` n’est plus assimilé à un changement métier du statut WordPress.
+- [x] Les sélecteurs Avant / Après sont normalisés chronologiquement, même si la copie actuellement ouverte est la plus ancienne.
+- [x] Avertissement prévu lorsque les deux copies proviennent de versions Bridge ou profils de fingerprint différents.
+- [x] Test de régression ajouté : deux scans identiques avec IDs techniques différents doivent produire **0 modifié / 1 inchangé**.
 - [ ] Validation MSI : typecheck + test ciblé `BridgeSnapshotService.test.ts`.
 - [ ] Recette réelle : nécessite au moins deux snapshots importés du même site.
 - [ ] Attribution des `logical_node_id` volontairement non automatique ; aucune écriture avant validation sur un second snapshot réel.
