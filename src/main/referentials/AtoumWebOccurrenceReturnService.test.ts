@@ -140,6 +140,27 @@ describe('AtoumWebOccurrenceReturnService', () => {
     ]));
   });
 
+  it('classe une variante structurellement modifiée comme forked et impose une nouvelle validation', () => {
+    const source = createSource();
+    const imported = service.importReturn(createReturnPackage(
+      source.id,
+      source.currentVersion!.id,
+      1,
+      {
+        siteOccurrenceId: 'awocc:structural',
+        title: 'Titre structurel',
+        structuralChange: true,
+        fileName: 'occurrence-return-structural.zip',
+      },
+    ));
+
+    const decided = service.createVariant(imported.id, { name: 'Structure différente' });
+    const variant = library.get(decided.resultTechnicalItemId!);
+    expect(variant.variantMode).toBe('forked');
+    expect(variant.reuseStatus).toBe('adapt');
+    expect(variant.currentVersion?.stable).toBe(false);
+  });
+
   it('copie les assets de la version source dans la nouvelle variante', () => {
     const source = createSource();
     const sourceFile = join(workspaceRoot, 'source-asset.txt');
@@ -278,6 +299,7 @@ function createReturnPackage(
     title?: string;
     fileName?: string;
     changedFieldIds?: string[];
+    structuralChange?: boolean;
   } = {},
 ): string {
   const siteOccurrenceId = options.siteOccurrenceId ?? 'awocc:test-01';
@@ -323,7 +345,7 @@ function createReturnPackage(
       htmlChanged: true,
       cssChanged: false,
       javascriptChanged: false,
-      structuralChange: false,
+      structuralChange: options.structuralChange ?? false,
     },
     createdAt: '2026-09-25T10:00:00.000Z',
     updatedAt: '2026-09-25T10:15:00.000Z',
