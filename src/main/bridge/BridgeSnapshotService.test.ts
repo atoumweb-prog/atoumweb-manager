@@ -136,7 +136,7 @@ describe('BridgeSnapshotService', () => {
     expect(diff.before.id).toBe(first.id);
     expect(diff.after.id).toBe(second.id);
     expect(diff.warnings).toEqual([]);
-    expect(diff.summary).toEqual({ added: 0, removed: 0, changed: 1, unchanged: 0 });
+    expect(diff.summary).toEqual({ added: 0, removed: 0, changed: 1, technical: 0, unchanged: 0, ignoredInternal: 0 });
     expect(diff.pages).toHaveLength(1);
     expect(diff.pages[0]).toMatchObject({
       sourcePageKey: 'wp-post:10',
@@ -174,7 +174,7 @@ describe('BridgeSnapshotService', () => {
     })).snapshot;
 
     const diff = service.compareSnapshots(first.id, second.id);
-    expect(diff.summary).toEqual({ added: 0, removed: 0, changed: 0, unchanged: 1 });
+    expect(diff.summary).toEqual({ added: 0, removed: 0, changed: 0, technical: 0, unchanged: 1, ignoredInternal: 0 });
     expect(diff.pages[0]).toMatchObject({
       sourcePageKey: 'wp-post:10',
       status: 'unchanged',
@@ -191,6 +191,57 @@ describe('BridgeSnapshotService', () => {
         dependencies: false,
       },
     });
+  });
+
+  it('classe un enrichissement scanner sans changement de source brute comme écart technique', () => {
+    const first = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-technical-a.zip'), 'Accueil', {
+      snapshotId: 'awb-snap:technical-a',
+      pageSnapshotId: 'awb-pagesnap:technical-a',
+      generatedAt: '2026-09-24T00:00:00Z',
+      occurrenceId: 'occurrence-technical-a',
+      includeVolatileSource: false,
+    })).snapshot;
+    const second = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-technical-b.zip'), 'Accueil', {
+      snapshotId: 'awb-snap:technical-b',
+      pageSnapshotId: 'awb-pagesnap:technical-b',
+      generatedAt: '2026-09-26T00:00:00Z',
+      occurrenceId: 'occurrence-technical-b',
+      includeVolatileSource: true,
+    })).snapshot;
+
+    const diff = service.compareSnapshots(first.id, second.id);
+    expect(diff.summary).toEqual({ added: 0, removed: 0, changed: 0, technical: 1, unchanged: 0, ignoredInternal: 0 });
+    expect(diff.pages[0]).toMatchObject({
+      sourcePageKey: 'wp-post:10',
+      status: 'technical',
+      changes: {
+        rawObject: false,
+        sources: true,
+      },
+    });
+  });
+
+  it('ignore un brouillon Workbench Bridge dans le bilan du site', () => {
+    const first = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-workbench-a.zip'), 'Accueil', {
+      snapshotId: 'awb-snap:workbench-a',
+      pageSnapshotId: 'awb-pagesnap:workbench-a',
+      generatedAt: '2026-09-24T00:00:00Z',
+    })).snapshot;
+    const second = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-workbench-b.zip'), 'AWB Workbench — Bibliothèque — test', {
+      snapshotId: 'awb-snap:workbench-b',
+      pageSnapshotId: 'awb-pagesnap:workbench-b',
+      generatedAt: '2026-09-26T00:00:00Z',
+      sourcePageKey: 'wp-post:3671',
+      sourcePostId: 3671,
+      internalWorkbench: true,
+    })).snapshot;
+
+    const diff = service.compareSnapshots(first.id, second.id);
+    expect(diff.summary).toEqual({ added: 0, removed: 1, changed: 0, technical: 0, unchanged: 0, ignoredInternal: 1 });
+    expect(diff.pages).toEqual([
+      expect.objectContaining({ sourcePageKey: 'wp-post:10', status: 'removed' }),
+    ]);
+    expect(diff.warnings.join(' ')).toMatch(/Workbench ignoré/i);
   });
 
   it('distingue une page supprimée et une page ajoutée entre deux snapshots', () => {
@@ -210,7 +261,7 @@ describe('BridgeSnapshotService', () => {
     })).snapshot;
 
     const diff = service.compareSnapshots(before.id, after.id);
-    expect(diff.summary).toEqual({ added: 1, removed: 1, changed: 0, unchanged: 0 });
+    expect(diff.summary).toEqual({ added: 1, removed: 1, changed: 0, technical: 0, unchanged: 0, ignoredInternal: 0 });
     expect(diff.pages).toEqual(expect.arrayContaining([
       expect.objectContaining({ sourcePageKey: 'wp-post:10', status: 'removed' }),
       expect.objectContaining({ sourcePageKey: 'wp-post:11', status: 'added' }),
@@ -289,6 +340,7 @@ function buildSnapshot(
     coverageMode?: string;
     scanStatus?: string;
     includeVolatileSource?: boolean;
+    internalWorkbench?: boolean;
   } = {},
 ): string {
   const sourceInstanceId = 'awb-site:test-instance';
@@ -304,6 +356,7 @@ function buildSnapshot(
   const coverageMode = options.coverageMode ?? 'complete';
   const scanStatus = options.scanStatus ?? 'complete_with_warnings';
   const includeVolatileSource = options.includeVolatileSource ?? false;
+  const internalWorkbench = options.internalWorkbench ?? false;
   const pageFolder = `pages/${sourcePostId}`;
   const raw = Buffer.from(`<!-- wp:divi/code {"module":{"content":{"innerContent":{"desktop":{"value":"<section class=\\\"atoum-home-blog-v2\\\"><div class=\\\"article-card\\\"><header class=\\\"article-card__header\\\">Blog</header><h1>${heading}</h1></div></section><style>.atoum-home-blog-v2{color:red}</style>"}}}}} /-->`, 'utf8');
   const rawHash = sha256(raw);
@@ -419,7 +472,11 @@ function buildSnapshot(
     }],
     matching_hints: [],
   };
-  const meta = { source_post_id: sourcePostId, post: { post_type: 'page', post_status: 'publish' }, meta: [] };
+  const meta = {
+    source_post_id: sourcePostId,
+    post: { post_type: 'page', post_status: internalWorkbench ? 'draft' : 'publish' },
+    meta: internalWorkbench ? [{ key: '_awb_workbench', classification: 'unknown_review', value_exported: false }] : [],
+  };
 
   const relativeEntries = new Map<string, Buffer>();
   const addJson = (name: string, value: unknown) => relativeEntries.set(name, Buffer.from(`${JSON.stringify(value, null, 2)}\n`, 'utf8'));
