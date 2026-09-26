@@ -1853,3 +1853,125 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Snapshot A/B — propositions de correspondance des modules */
+.bridge-node-match-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 5px 8px;
+  font-size: 11px;
+}
+
+.bridge-node-match-review {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--surface-soft) 92%, var(--accent-soft));
+}
+
+.bridge-node-match-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bridge-node-match-head h3 {
+  margin: 3px 0 0;
+  font-size: 15px;
+}
+
+.bridge-node-match-head > span {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.bridge-node-match-list {
+  display: grid;
+  gap: 8px;
+}
+
+.bridge-node-match {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 9px;
+  background: var(--surface);
+}
+
+.bridge-node-match.high {
+  border-left-color: var(--success);
+}
+
+.bridge-node-match.medium {
+  border-left-color: #F2B705;
+}
+
+.bridge-node-match.low {
+  border-left-color: #D62828;
+}
+
+.bridge-node-match-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.bridge-node-match-pair strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bridge-node-match-pair > span {
+  color: var(--accent-strong);
+  font-weight: 800;
+}
+
+.bridge-node-match-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.bridge-node-match-meta small {
+  flex-basis: 100%;
+  overflow-wrap: anywhere;
+}
+
+.bridge-node-match-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.bridge-node-match-reasons span {
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+@media (max-width: 700px) {
+  .bridge-node-match-pair {
+    grid-template-columns: 1fr;
+  }
+
+  .bridge-node-match-pair > span {
+    transform: rotate(90deg);
+    justify-self: start;
+  }
+}
