@@ -135,6 +135,7 @@ describe('BridgeSnapshotService', () => {
     expect(diff.siteId).toBe(first.siteId);
     expect(diff.before.id).toBe(first.id);
     expect(diff.after.id).toBe(second.id);
+    expect(diff.warnings).toEqual([]);
     expect(diff.summary).toEqual({ added: 0, removed: 0, changed: 1, unchanged: 0 });
     expect(diff.pages).toHaveLength(1);
     expect(diff.pages[0]).toMatchObject({
