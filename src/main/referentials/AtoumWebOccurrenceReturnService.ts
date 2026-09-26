@@ -775,6 +775,8 @@ export class AtoumWebOccurrenceReturnService {
       changes: JSON.parse(row.changes_json),
       decision: row.decision,
       decidedAt: row.decided_at,
+      resultTechnicalItemId: row.result_technical_item_id,
+      resultVariantId: row.result_variant_id,
       createdAt: row.created_at,
     };
   }
