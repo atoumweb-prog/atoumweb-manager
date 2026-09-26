@@ -155,6 +155,41 @@ describe('BridgeSnapshotService', () => {
     const imported = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-same.zip'), 'Accueil')).snapshot;
     expect(() => service.compareSnapshots(imported.id, imported.id)).toThrow(/deux snapshots différents/i);
   });
+
+  it('propose une correspondance de nœud sans écrire de logical_node_id', () => {
+    const first = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-node-a.zip'), 'Accueil', {
+      snapshotId: 'awb-snap:node-a',
+      pageSnapshotId: 'awb-pagesnap:node-a',
+      generatedAt: '2026-09-24T00:00:00Z',
+      heading: 'Contenu identique',
+      occurrenceId: 'occurrence-a',
+    })).snapshot;
+    const second = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-node-b.zip'), 'Accueil renommée', {
+      snapshotId: 'awb-snap:node-b',
+      pageSnapshotId: 'awb-pagesnap:node-b',
+      generatedAt: '2026-09-25T00:00:00Z',
+      heading: 'Contenu identique',
+      occurrenceId: 'occurrence-b',
+    })).snapshot;
+
+    const beforePage = service.listPages(first.id)[0];
+    const afterPage = service.listPages(second.id)[0];
+    const review = service.reviewPageNodeMatches(beforePage.pageSnapshotId, afterPage.pageSnapshotId);
+
+    expect(review.sourcePageKey).toBe('wp-post:10');
+    expect(review.candidates).toHaveLength(1);
+    expect(review.candidates[0]).toMatchObject({
+      beforeOccurrenceId: 'occurrence-a',
+      afterOccurrenceId: 'occurrence-b',
+      confidence: 'high',
+    });
+    expect(review.candidates[0].score).toBeGreaterThanOrEqual(82);
+    expect(review.unmatchedBefore).toEqual([]);
+    expect(review.unmatchedAfter).toEqual([]);
+
+    expect(service.getPage(beforePage.pageSnapshotId).nodes[0].logicalNodeId).toBeNull();
+    expect(service.getPage(afterPage.pageSnapshotId).nodes[0].logicalNodeId).toBeNull();
+  });
 });
 
 function buildSnapshot(
@@ -165,6 +200,7 @@ function buildSnapshot(
     pageSnapshotId?: string;
     generatedAt?: string;
     heading?: string;
+    occurrenceId?: string;
   } = {},
 ): string {
   const sourceInstanceId = 'awb-site:test-instance';
@@ -173,6 +209,7 @@ function buildSnapshot(
   const pageSnapshotId = options.pageSnapshotId ?? 'awb-pagesnap:test';
   const generatedAt = options.generatedAt ?? '2026-09-24T00:00:00Z';
   const heading = options.heading ?? 'Bonjour Bridge';
+  const occurrenceId = options.occurrenceId ?? 'node_text_1';
   const raw = Buffer.from(`<!-- wp:divi/code {"module":{"content":{"innerContent":{"desktop":{"value":"<section class=\\\"atoum-home-blog-v2\\\"><div class=\\\"article-card\\\"><header class=\\\"article-card__header\\\">Blog</header><h1>${heading}</h1></div></section><style>.atoum-home-blog-v2{color:red}</style>"}}}}} /-->`, 'utf8');
   const rawHash = sha256(raw);
   const objectRef = `sha256:${rawHash}`;
@@ -254,9 +291,9 @@ function buildSnapshot(
     page_snapshot_id: pageSnapshotId,
     builder: 'divi',
     builder_generation: '5',
-    root_nodes: ['node_text_1'],
+    root_nodes: [occurrenceId],
     nodes: [{
-      occurrence_id: 'node_text_1',
+      occurrence_id: occurrenceId,
       page_snapshot_id: pageSnapshotId,
       parent_occurrence_id: null,
       position: 0,
