@@ -72,6 +72,17 @@ interface VersionRow extends Record<string, unknown> {
   created_at: string;
 }
 
+interface ComponentIdentityRow extends Record<string, unknown> {
+  family_id: string;
+  component_key: string;
+  family_display_name: string;
+  reusability_scope: 'generic' | 'vertical' | 'site_specific';
+  variant_id: string;
+  variant_key: string;
+  variant_mode: 'base' | 'inherit' | 'forked';
+  variant_of_id: string | null;
+}
+
 export class AtoumWebTechnicalLibraryService {
   constructor(private readonly database: DatabaseAdapter) {}
 
@@ -271,8 +282,17 @@ export class AtoumWebTechnicalLibraryService {
       throw new Error(`Composant AtoumWeb ${row.id} sans catégorie de bibliothèque valide.`);
     }
     const versions = this.getVersions(row.id);
+    const identity = this.getComponentIdentity(row.id);
     return {
       id: row.id,
+      componentFamilyId: identity?.family_id ?? null,
+      componentKey: identity?.component_key ?? null,
+      familyDisplayName: identity?.family_display_name ?? null,
+      libraryVariantId: identity?.variant_id ?? null,
+      variantKey: identity?.variant_key ?? null,
+      variantMode: identity?.variant_mode ?? null,
+      variantOfId: identity?.variant_of_id ?? null,
+      reusabilityScope: identity?.reusability_scope ?? null,
       category: row.library_category,
       name: row.name,
       description: row.description,
@@ -287,6 +307,24 @@ export class AtoumWebTechnicalLibraryService {
       updatedAt: row.updated_at,
       archivedAt: row.archived_at,
     };
+  }
+
+  private getComponentIdentity(itemId: string): ComponentIdentityRow | null {
+    return this.database.get<ComponentIdentityRow>(
+      `SELECT
+         family.id AS family_id,
+         family.component_key,
+         family.display_name AS family_display_name,
+         family.reusability_scope,
+         variant.id AS variant_id,
+         variant.variant_key,
+         variant.variant_mode,
+         variant.variant_of_id
+       FROM atoumweb_component_variants variant
+       JOIN atoumweb_component_families family ON family.id=variant.family_id
+       WHERE variant.technical_item_id=?`,
+      [itemId],
+    ) ?? null;
   }
 
   private getVersions(itemId: string): AtoumWebTechnicalVersion[] {
