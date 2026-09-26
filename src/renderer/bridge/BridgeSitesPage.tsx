@@ -82,6 +82,17 @@ export function BridgeSitesPage({ onMessage }: Props) {
     };
   }, [diagnosticOpen]);
 
+  useEffect(() => {
+    if (!compareOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setCompareOpen(false);
+      setNodeMatchReview(null);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [compareOpen]);
+
   async function refreshSites(preferredId?: string | null): Promise<void> {
     const nextSites = await window.atoumweb.bridgeSnapshots.listSites();
     setSites(nextSites);
