@@ -39,7 +39,7 @@ describe('AtoumWebOccurrenceReturnService', () => {
 
     const inspection = service.inspectPackage(packagePath);
     expect(inspection).toMatchObject({
-      siteOccurrenceId: 'awocc:test-01',
+      siteOccurrenceId,
       libraryItemId: source.id,
       libraryVersionId: source.currentVersion!.id,
       libraryVersionNumber: 1,
@@ -83,18 +83,66 @@ describe('AtoumWebOccurrenceReturnService', () => {
 });
 
 function createSource() {
-  return library.create(
+  const payload = {
+    schemaVersion: 2,
+    generatorRevision: 2,
+    kind: 'atoumweb-library-reusable-component',
+    origin: {
+      site: 'https://source.test',
+      page: 'Accueil',
+      pageUrl: 'https://source.test/',
+      snapshotId: 'snapshot:test',
+      snapshotDate: '2026-09-25T09:00:00.000Z',
+      builderGeneration: 'divi-4',
+      occurrenceId: 'source:hero-retour',
+    },
+    identity: null,
+    reusable: {
+      html: '<section class="hero-return"><h1 data-aw-field-text="title">Titre source</h1></section>',
+      css: '.hero-return{color:#111111;}',
+      javascript: '',
+      rootClasses: ['hero-return'],
+      method: 'divi-code',
+      instructions: ['Personnaliser le titre.'],
+      generalized: true,
+      fields: [{
+        id: 'title',
+        label: 'Titre principal',
+        type: 'text',
+        selector: '[data-aw-field-text="title"]',
+        originalValue: 'Titre source',
+        defaultValue: 'Votre titre',
+        group: 'Contenu',
+        required: false,
+        binding: { type: 'html_text', selector: '[data-aw-field-text="title"]' },
+        sourceMode: 'auto_detected',
+      }],
+    },
+    dependencies: [],
+    assets: [],
+    checks: { remoteAssetUrls: [] },
+    notes: [],
+  };
+  const created = library.create(
     { category: 'hero', name: 'Hero retour', reuseStatus: 'ready', tags: ['bridge', 'bridge-human-validated'] },
-    { contentType: 'json', language: 'json', contentText: '{"kind":"test"}', notes: 'Source Bridge' },
+    { contentType: 'json', language: 'json', contentText: JSON.stringify(payload), notes: 'Source Bridge' },
   );
+  return library.markStable(created.currentVersion!.id);
 }
 
 function createReturnPackage(
   libraryItemId: string,
   libraryVersionId: string,
   libraryVersionNumber: number,
-  options: { invalidHtmlChecksum?: boolean } = {},
+  options: {
+    invalidHtmlChecksum?: boolean;
+    siteOccurrenceId?: string;
+    title?: string;
+    fileName?: string;
+  } = {},
 ): string {
+  const siteOccurrenceId = options.siteOccurrenceId ?? 'awocc:test-01';
+  const title = options.title ?? 'Titre client';
   const occurrence: AtoumWebSiteOccurrenceV1 = {
     contract: 'atoumweb_site_occurrence',
     schemaVersion: 1,
@@ -125,7 +173,7 @@ function createReturnPackage(
     },
     state: 'ready_for_review',
     configuration: {
-      fieldValues: { title: 'Titre client' },
+      fieldValues: { title },
       cssVariables: {},
       assetSelections: {},
     },
@@ -144,7 +192,7 @@ function createReturnPackage(
 
   const payloads = {
     'occurrence/occurrence.json': Buffer.from(JSON.stringify(occurrence), 'utf8'),
-    'occurrence/component.html': Buffer.from('<section><h1>Titre client</h1></section>', 'utf8'),
+    'occurrence/component.html': Buffer.from(`<section class="hero-return"><h1 data-aw-field-text="title">${title}</h1></section>`, 'utf8'),
     'occurrence/assets.json': Buffer.from(JSON.stringify({ contract: 'atoumweb_occurrence_assets', schemaVersion: 1 }), 'utf8'),
     'occurrence/provenance.json': Buffer.from(JSON.stringify({ contract: 'atoumweb_occurrence_provenance', schemaVersion: 1, actionPolicy: 'manager_decides' }), 'utf8'),
   };
@@ -176,7 +224,7 @@ function createReturnPackage(
     changes: occurrence.changes,
   };
 
-  const packagePath = join(workspaceRoot, 'occurrence-return.zip');
+  const packagePath = join(workspaceRoot, options.fileName ?? `occurrence-return-${siteOccurrenceId.replace(/[^a-z0-9]+/gi, '-')}.zip`);
   writeZipArchive(packagePath, [
     { name: 'manifest.json', data: Buffer.from(JSON.stringify(manifest), 'utf8') },
     ...Object.entries(payloads).map(([name, data]) => ({ name, data })),
