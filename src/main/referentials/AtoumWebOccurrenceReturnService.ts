@@ -258,6 +258,7 @@ export class AtoumWebOccurrenceReturnService {
       const variantId = `awvar:${randomUUID()}`;
       const variantKey = this.uniqueVariantKey(family.id, input.variantKey ?? variantLabel);
       const itemName = this.variantItemName(sourceItem.name, variantLabel);
+      const variantMode = current.changes.structuralChange ? 'forked' as const : 'inherit' as const;
       const inheritValidation = this.canInheritValidation(current);
       const tags = this.variantTags(sourceItem.tags ?? [], inheritValidation);
       const payload = this.buildReusablePayloadFromReturn(current, {
@@ -266,7 +267,7 @@ export class AtoumWebOccurrenceReturnService {
         libraryVariantId: variantId,
         variantKey,
         variantOf: baseVariant.id,
-        variantMode: 'inherit',
+        variantMode,
         vertical: family.vertical,
         reusabilityScope: family.reusability_scope,
       });
@@ -292,8 +293,8 @@ export class AtoumWebOccurrenceReturnService {
       this.database.run(
         `INSERT INTO atoumweb_component_variants
          (id,family_id,technical_item_id,variant_key,display_name,variant_mode,variant_of_id,source_occurrence_return_id,created_at,updated_at)
-         VALUES (?,?,?,?,?,'inherit',?,?,?,?)`,
-        [variantId, family.id, created.id, variantKey, variantLabel, baseVariant.id, current.id, now, now],
+         VALUES (?,?,?,?,?,?,?,?,?,?)`,
+        [variantId, family.id, created.id, variantKey, variantLabel, variantMode, baseVariant.id, current.id, now, now],
       );
 
       if (created.currentVersion) {
