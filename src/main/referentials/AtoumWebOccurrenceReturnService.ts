@@ -3,11 +3,16 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, statSync } f
 import { extname, join, relative, resolve } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import type {
+  AtoumWebOccurrenceCreateFamilyInput,
+  AtoumWebOccurrenceCreateVariantInput,
   AtoumWebOccurrenceReturnDecision,
   AtoumWebOccurrenceReturnDetail,
   AtoumWebOccurrenceReturnInspection,
   AtoumWebOccurrenceReturnSummary,
+  AtoumWebOccurrenceUpdateVariantInput,
+  AtoumWebOccurrenceVariantTarget,
 } from '../../shared/referentials';
+import { normalizeComponentKey, normalizeSlug } from '../../shared/componentIdentity';
 import {
   type AtoumWebOccurrenceReturnFile,
   type AtoumWebOccurrenceReturnManifestV1,
@@ -17,6 +22,7 @@ import {
 } from '../../shared/siteOccurrence';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import type { WorkspacePaths } from '../workspace';
+import { AtoumWebTechnicalLibraryService } from './AtoumWebTechnicalLibraryService';
 import { readZipArchive, type ZipEntryOutput } from './ZipArchive';
 
 interface ReturnRow extends Record<string, unknown> {
@@ -38,6 +44,8 @@ interface ReturnRow extends Record<string, unknown> {
   css_text: string | null;
   javascript_text: string | null;
   package_relative_path: string;
+  result_technical_item_id: string | null;
+  result_variant_id: string | null;
   created_at: string;
 }
 
@@ -52,13 +60,48 @@ interface InspectedReturn {
   provenance: Record<string, unknown>;
 }
 
+interface FamilyRow extends Record<string, unknown> {
+  id: string;
+  component_key: string;
+  display_name: string;
+  category: string;
+  vertical: string | null;
+  reusability_scope: 'generic' | 'vertical' | 'site_specific';
+  base_item_id: string;
+}
+
+interface VariantRow extends Record<string, unknown> {
+  id: string;
+  family_id: string;
+  technical_item_id: string;
+  variant_key: string;
+  display_name: string;
+  variant_mode: 'base' | 'inherit' | 'forked';
+  variant_of_id: string | null;
+  source_occurrence_return_id: string | null;
+}
+
+interface SourceVersionRow extends Record<string, unknown> {
+  content_text: string | null;
+  is_stable: number;
+}
+
+interface SourceItemStateRow extends Record<string, unknown> {
+  reuse_status: string | null;
+  tags_json: string;
+}
+
 const nowIso = (): string => new Date().toISOString();
 
 export class AtoumWebOccurrenceReturnService {
+  private readonly library: AtoumWebTechnicalLibraryService;
+
   constructor(
     private readonly database: DatabaseAdapter,
     private readonly workspace: WorkspacePaths,
-  ) {}
+  ) {
+    this.library = new AtoumWebTechnicalLibraryService(database);
+  }
 
   list(): AtoumWebOccurrenceReturnSummary[] {
     return this.database.all<ReturnRow>(
