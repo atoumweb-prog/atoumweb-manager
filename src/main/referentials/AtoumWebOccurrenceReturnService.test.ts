@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -7,6 +7,7 @@ import type { AtoumWebOccurrenceReturnManifestV1, AtoumWebSiteOccurrenceV1 } fro
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
 import { createWorkspacePaths, type WorkspacePaths } from '../workspace';
+import { AtoumWebTechnicalAssetService } from './AtoumWebTechnicalAssetService';
 import { AtoumWebTechnicalLibraryService } from './AtoumWebTechnicalLibraryService';
 import { AtoumWebOccurrenceReturnService } from './AtoumWebOccurrenceReturnService';
 import { writeZipArchive } from './ZipArchive';
@@ -136,6 +137,31 @@ describe('AtoumWebOccurrenceReturnService', () => {
         variantKey: 'menthe-ivoire',
       }),
     ]));
+  });
+
+  it('copie les assets de la version source dans la nouvelle variante', () => {
+    const source = createSource();
+    const sourceFile = join(workspaceRoot, 'source-asset.txt');
+    writeFileSync(sourceFile, 'asset de référence', 'utf8');
+    const technicalAssets = new AtoumWebTechnicalAssetService(database, workspace);
+    technicalAssets.importFilePaths(source.currentVersion!.id, [sourceFile], 'attachment');
+
+    const imported = service.importReturn(createReturnPackage(
+      source.id,
+      source.currentVersion!.id,
+      1,
+      { siteOccurrenceId: 'awocc:asset-copy', fileName: 'occurrence-return-asset-copy.zip' },
+    ));
+    const promoted = service.createVariant(imported.id, { name: 'Avec asset' });
+    const variant = library.get(promoted.resultTechnicalItemId!);
+    const copied = technicalAssets.list(variant.currentVersion!.id);
+
+    expect(copied).toHaveLength(1);
+    expect(copied[0]).toMatchObject({
+      role: 'attachment',
+      fileName: 'source-asset.txt',
+      missing: false,
+    });
   });
 
   it('peut détacher une occurrence dans une nouvelle famille sans la valider automatiquement', () => {
