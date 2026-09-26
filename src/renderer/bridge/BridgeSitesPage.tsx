@@ -509,7 +509,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
                     <Metric label="Supprimés" value={String(snapshotDiff.summary.removed)} />
                     <Metric label="Modifiés" value={String(snapshotDiff.summary.changed)} />
                     <Metric label="Écarts techniques" value={String(snapshotDiff.summary.technical)} />
-                    <Metric label="Inchangés" value={String(snapshotDiff.summary.unchanged)} />
+                    <Metric label="Sans écart" value={String(snapshotDiff.summary.unchanged)} />
                   </div>
                   {snapshotDiff.warnings.length > 0 && <div className="bridge-warning-list bridge-compare-warnings">
                     {snapshotDiff.warnings.map((warning) => <div key={warning}><OperationIcon name="alert" size={15} /><span>{warning}</span></div>)}
