@@ -436,6 +436,55 @@ export function BridgeSitesPage({ onMessage }: Props) {
 
       {error && <div className="bridge-error" role="alert"><OperationIcon name="alert" size={18} /><span>{error}</span><button type="button" onClick={() => setError(null)}>×</button></div>}
 
+      {compareOpen && site && <div className="bridge-compare-backdrop" role="presentation" onMouseDown={(event) => {
+        if (event.currentTarget === event.target) setCompareOpen(false);
+      }}>
+        <section className="panel bridge-compare-modal" role="dialog" aria-modal="true" aria-labelledby="bridge-compare-title">
+          <div className="bridge-compare-head">
+            <div><span className="eyebrow">Historique du site</span><h2 id="bridge-compare-title">Comparer deux copies</h2><p>{site.name}</p></div>
+            <button className="secondary-button" type="button" onClick={() => setCompareOpen(false)}>Fermer</button>
+          </div>
+          <div className="bridge-compare-controls">
+            <label>Avant<select value={compareBeforeId} onChange={(event) => { setCompareBeforeId(event.target.value); setSnapshotDiff(null); }}>
+              {site.snapshots.map((item) => <option key={item.id} value={item.id}>{formatDate(item.generatedAt)}</option>)}
+            </select></label>
+            <span aria-hidden="true">→</span>
+            <label>Après<select value={compareAfterId} onChange={(event) => { setCompareAfterId(event.target.value); setSnapshotDiff(null); }}>
+              {site.snapshots.map((item) => <option key={item.id} value={item.id}>{formatDate(item.generatedAt)}</option>)}
+            </select></label>
+            <button className="primary-button" type="button" disabled={busy || !compareBeforeId || !compareAfterId || compareBeforeId === compareAfterId} onClick={() => void compareSelectedSnapshots()}>
+              <OperationIcon name="repeat" size={16} />{busy ? 'Comparaison…' : 'Comparer'}
+            </button>
+          </div>
+          <div className="bridge-compare-body">
+            {!snapshotDiff
+              ? <div className="bridge-empty"><OperationIcon name="repeat" size={28} /><strong>Comparaison prête</strong><span>Choisis les deux copies puis lance le diff. Rien n’est modifié dans les snapshots.</span></div>
+              : <>
+                  <div className="bridge-compare-summary">
+                    <Metric label="Ajoutés" value={String(snapshotDiff.summary.added)} />
+                    <Metric label="Supprimés" value={String(snapshotDiff.summary.removed)} />
+                    <Metric label="Modifiés" value={String(snapshotDiff.summary.changed)} />
+                    <Metric label="Inchangés" value={String(snapshotDiff.summary.unchanged)} />
+                  </div>
+                  <div className="bridge-compare-pages">
+                    {snapshotDiff.pages.filter((item) => item.status !== 'unchanged').map((item) => <div className={`bridge-compare-page ${item.status}`} key={item.sourcePageKey}>
+                      <div>
+                        <span className="bridge-compare-status">{snapshotDiffStatusLabel(item.status)}</span>
+                        <strong>{item.titleAfter ?? item.titleBefore ?? item.sourcePageKey}</strong>
+                        <small>{item.sourcePageKey}</small>
+                      </div>
+                      <div className="bridge-compare-changes">
+                        {bridgePageChangeLabels(item.changes).map((label) => <span key={label}>{label}</span>)}
+                      </div>
+                    </div>)}
+                    {snapshotDiff.pages.every((item) => item.status === 'unchanged') && <div className="bridge-empty"><OperationIcon name="check-circle" size={28} /><strong>Aucun changement détecté</strong><span>Les deux copies ont le même contenu observable selon Snapshot V1.</span></div>}
+                  </div>
+                  <p className="muted bridge-compare-note">Diff en lecture seule. Aucun logical_node_id n’est attribué automatiquement : les correspondances de modules resteront soumises à validation.</p>
+                </>}
+          </div>
+        </section>
+      </div>}
+
       {inspection && <section className="bridge-inspection panel">
         <div className="bridge-inspection-heading">
           <div>
@@ -487,12 +536,17 @@ export function BridgeSitesPage({ onMessage }: Props) {
                 <div><span className="eyebrow">Site sauvegardé</span><h2>{site.name}</h2><p>{site.canonicalUrl ?? site.sourceSiteKey}</p></div>
                 <div className="bridge-snapshot-select">
                   <label htmlFor="bridge-snapshot">Copie du site</label>
-                  <select id="bridge-snapshot" value={snapshot?.id ?? ''} onChange={(event) => {
-                    const next = site.snapshots.find((item) => item.id === event.target.value);
-                    if (next) void openSnapshot(next);
-                  }}>
-                    {site.snapshots.map((item) => <option key={item.id} value={item.id}>{formatDate(item.generatedAt)}</option>)}
-                  </select>
+                  <div className="bridge-snapshot-select-row">
+                    <select id="bridge-snapshot" value={snapshot?.id ?? ''} onChange={(event) => {
+                      const next = site.snapshots.find((item) => item.id === event.target.value);
+                      if (next) void openSnapshot(next);
+                    }}>
+                      {site.snapshots.map((item) => <option key={item.id} value={item.id}>{formatDate(item.generatedAt)}</option>)}
+                    </select>
+                    {site.snapshots.length > 1 && <button className="secondary-button" type="button" onClick={openSnapshotComparison}>
+                      <OperationIcon name="repeat" size={16} />Comparer
+                    </button>}
+                  </div>
                 </div>
               </div>
 
@@ -839,6 +893,28 @@ function filterBridgeContents(items: BridgePageSummary[], view: ContentView, que
       item.canonicalUrl ?? '',
     ].join(' ').toLocaleLowerCase('fr-FR').includes(needle);
   });
+}
+
+function snapshotDiffStatusLabel(status: BridgeSnapshotDiff['pages'][number]['status']): string {
+  if (status === 'added') return 'Ajouté';
+  if (status === 'removed') return 'Supprimé';
+  if (status === 'changed') return 'Modifié';
+  return 'Inchangé';
+}
+
+function bridgePageChangeLabels(changes: BridgeSnapshotDiff['pages'][number]['changes']): string[] {
+  const labels: string[] = [];
+  if (changes.title) labels.push('Titre / slug');
+  if (changes.status) labels.push('État');
+  if (changes.url) labels.push('URL');
+  if (changes.builder) labels.push('Builder');
+  if (changes.rawObject) labels.push('Source brute');
+  if (changes.fingerprints) labels.push('Empreintes');
+  if (changes.nodes) labels.push('Structure / modules');
+  if (changes.sources) labels.push('Sources');
+  if (changes.assets) labels.push('Assets');
+  if (changes.dependencies) labels.push('Dépendances');
+  return labels;
 }
 
 function scanStatusLabel(value: string): string {
