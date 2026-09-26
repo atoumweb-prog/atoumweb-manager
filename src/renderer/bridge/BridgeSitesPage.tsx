@@ -7,6 +7,7 @@ import type {
   BridgePageSummary,
   BridgeSiteDetail,
   BridgeSiteSummary,
+  BridgeSnapshotDiff,
   BridgeSnapshotInspection,
   BridgeSnapshotSummary,
 } from '../../shared/bridgeSnapshots';
@@ -32,6 +33,10 @@ export function BridgeSitesPage({ onMessage }: Props) {
   const [sites, setSites] = useState<BridgeSiteSummary[]>([]);
   const [site, setSite] = useState<BridgeSiteDetail | null>(null);
   const [snapshot, setSnapshot] = useState<BridgeSnapshotSummary | null>(null);
+  const [snapshotDiff, setSnapshotDiff] = useState<BridgeSnapshotDiff | null>(null);
+  const [compareBeforeId, setCompareBeforeId] = useState('');
+  const [compareAfterId, setCompareAfterId] = useState('');
+  const [compareOpen, setCompareOpen] = useState(false);
   const [contents, setContents] = useState<BridgePageSummary[]>([]);
   const [allContents, setAllContents] = useState<BridgePageSummary[]>([]);
   const [page, setPage] = useState<BridgePageSnapshotDetail | null>(null);
@@ -103,6 +108,10 @@ export function BridgeSitesPage({ onMessage }: Props) {
       setDiagnosticOpen(false);
       const latest = detail.snapshots[0] ?? null;
       setSnapshot(latest);
+      setSnapshotDiff(null);
+      setCompareOpen(false);
+      setCompareAfterId(detail.snapshots[0]?.id ?? '');
+      setCompareBeforeId(detail.snapshots[1]?.id ?? '');
       setPage(null);
       setDetailExpanded(false);
       setModuleAnalyses({});
