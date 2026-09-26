@@ -31,7 +31,8 @@
 - [x] Revue des correspondances de modules ajoutée : score, confiance et raisons à partir du type, empreintes, libellé, profondeur, position, classes, IDs et matching hints.
 - [x] Les correspondances ambiguës ou concurrentes restent explicitement « faible / à vérifier » et ne sont jamais écrites en base.
 - [x] Le diff de structure ignore volontairement `logical_node_id` afin qu’une future annotation Manager ne crée pas elle-même un faux changement de snapshot.
-- [x] Tests ajoutés pour comparaison nominale, refus de comparer un snapshot avec lui-même et proposition de correspondance non mutante malgré des `occurrence_id` différents.
+- [x] Tests ajoutés pour comparaison nominale, refus de comparer un snapshot avec lui-même, pages ajoutées/supprimées, avertissements de snapshot partiel et proposition de correspondance non mutante malgré des `occurrence_id` différents.
+- [x] Les snapshots partiels / scans incomplets produisent des avertissements explicites afin de ne pas présenter une absence comme une suppression certaine.
 - [ ] Validation MSI : typecheck + test ciblé `BridgeSnapshotService.test.ts`.
 - [ ] Recette réelle : nécessite au moins deux snapshots importés du même site.
 - [ ] Attribution des `logical_node_id` volontairement non automatique ; aucune écriture avant validation sur un second snapshot réel.
