@@ -261,7 +261,7 @@ export interface BridgeSnapshotImportResult {
   snapshot: BridgeSnapshotSummary;
 }
 
-export type BridgeSnapshotDiffStatus = 'added' | 'removed' | 'changed' | 'unchanged';
+export type BridgeSnapshotDiffStatus = 'added' | 'removed' | 'changed' | 'technical' | 'unchanged';
 
 export interface BridgeSnapshotPageDiff {
   sourcePageKey: string;
@@ -303,7 +303,9 @@ export interface BridgeSnapshotDiff {
     added: number;
     removed: number;
     changed: number;
+    technical: number;
     unchanged: number;
+    ignoredInternal: number;
   };
   pages: BridgeSnapshotPageDiff[];
 }
