@@ -72,6 +72,9 @@ import type {
   TransformQuoteToProjectInput,
 } from '../shared/projects';
 import type {
+  AtoumWebOccurrenceCreateFamilyInput,
+  AtoumWebOccurrenceCreateVariantInput,
+  AtoumWebOccurrenceUpdateVariantInput,
   AtoumWebPackageImportInput,
   AtoumWebTechnicalAssetRole,
   AtoumWebTechnicalItemInput,
@@ -353,6 +356,13 @@ const api: AtoumWebApi = {
       inspectImport: () => ipcRenderer.invoke('referentials:occurrence-returns:inspect-import'),
       importReturn: (packagePath: string) => ipcRenderer.invoke('referentials:occurrence-returns:import', packagePath),
       keepOccurrence: (id: string) => ipcRenderer.invoke('referentials:occurrence-returns:keep', id),
+      listVariantTargets: (id: string) => ipcRenderer.invoke('referentials:occurrence-returns:list-variant-targets', id),
+      createVariant: (id: string, input: AtoumWebOccurrenceCreateVariantInput) =>
+        ipcRenderer.invoke('referentials:occurrence-returns:create-variant', id, input),
+      updateVariant: (id: string, input: AtoumWebOccurrenceUpdateVariantInput) =>
+        ipcRenderer.invoke('referentials:occurrence-returns:update-variant', id, input),
+      createFamily: (id: string, input: AtoumWebOccurrenceCreateFamilyInput) =>
+        ipcRenderer.invoke('referentials:occurrence-returns:create-family', id, input),
     },
   },
   operations: {
