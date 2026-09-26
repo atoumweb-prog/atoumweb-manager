@@ -353,6 +353,10 @@ export class AtoumWebTechnicalLibraryService {
       item.category,
       item.vertical ?? '',
       item.reuseStatus,
+      item.familyDisplayName ?? '',
+      item.componentKey ?? '',
+      item.variantKey ?? '',
+      item.variantMode ?? '',
       ...(item.tags ?? []),
       ...versions.flatMap((version) => [
         version.contentType,
