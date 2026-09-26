@@ -15,11 +15,11 @@ import type {
 import type { ProjectTechnicalContentType } from '../../shared/projects';
 import { assessBridgeReusableValidation } from '../../shared/bridgeReusableValidation';
 import { generalizeReusableCssColors } from '../../shared/reusableCssColors';
-
-const BRIDGE_REUSABLE_GENERATOR_REVISION = 2;
 import { TechnicalContentViewer } from './TechnicalContentViewer';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
 import './AtoumWebLibraryPage.css';
+
+const BRIDGE_REUSABLE_GENERATOR_REVISION = 2;
 
 const CATEGORIES: Array<{ id: AtoumWebLibraryCategory; label: string }> = [
   { id: 'header', label: 'Headers' },
