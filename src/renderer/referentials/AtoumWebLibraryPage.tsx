@@ -15,6 +15,8 @@ import type {
 import type { ProjectTechnicalContentType } from '../../shared/projects';
 import { assessBridgeReusableValidation } from '../../shared/bridgeReusableValidation';
 import { generalizeReusableCssColors } from '../../shared/reusableCssColors';
+
+const BRIDGE_REUSABLE_GENERATOR_REVISION = 2;
 import { TechnicalContentViewer } from './TechnicalContentViewer';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
 import './AtoumWebLibraryPage.css';
@@ -183,6 +185,7 @@ interface BridgeReusableField {
 
 interface BridgeReusableComponent {
   schemaVersion: number;
+  generatorRevision: number;
   kind: 'atoumweb-library-reusable-component';
   origin: BridgeLibraryCandidate['origin'];
   reusable: {
@@ -369,7 +372,11 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
     && (
       !bridgeWorkflow.reusable
       || bridgeWorkflow.work.version.versionNumber > bridgeWorkflow.reusable.version.versionNumber
-      || (bridgeWorkflow.reusable.payload.stage === 'reusable' && !bridgeWorkflow.reusable.payload.value.reusable.generalized)
+      || (bridgeWorkflow.reusable.payload.stage === 'reusable'
+        && (
+          !bridgeWorkflow.reusable.payload.value.reusable.generalized
+          || bridgeWorkflow.reusable.payload.value.generatorRevision < BRIDGE_REUSABLE_GENERATOR_REVISION
+        ))
     ),
   );
   const reusableValidation = bridgeWorkflow.reusable?.payload.stage === 'reusable'
@@ -1132,7 +1139,11 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
                       </button>
                     : <div className="aw-library-stage-create">
                         <span>3</span>
-                        <div><strong>Réutilisable</strong><small>{bridgeWorkflow.reusable ? 'La version de travail a changé : régénérer le paquet' : 'Figer la version de travail + mode d’emploi'}</small></div>
+                        <div><strong>Réutilisable</strong><small>{bridgeWorkflow.reusable
+                          ? bridgeWorkflow.reusable.payload.stage === 'reusable' && bridgeWorkflow.reusable.payload.value.generatorRevision < BRIDGE_REUSABLE_GENERATOR_REVISION
+                            ? 'Le générateur a évolué : régénérer le paquet'
+                            : 'La version de travail a changé : régénérer le paquet'
+                          : 'Figer la version de travail + mode d’emploi'}</small></div>
                         <button className="primary-button" type="button" disabled={bridgeWorkflowBusy || !bridgeWorkflow.work} onClick={() => void createBridgeReusableVersion()}>{bridgeWorkflow.reusable ? 'Mettre à jour' : 'Préparer'}</button>
                       </div>}
                 </div>
@@ -1813,6 +1824,7 @@ function parseBridgeReusableComponent(value: Record<string, unknown>): BridgeReu
   if (!origin || !reusable) return null;
   return {
     schemaVersion: Number(value.schemaVersion ?? 1),
+    generatorRevision: Number(value.generatorRevision ?? 0),
     kind: 'atoumweb-library-reusable-component',
     origin,
     reusable: {
@@ -2001,6 +2013,7 @@ function buildBridgeReusableComponent(work: BridgeWorkComponent): BridgeReusable
 
   return {
     schemaVersion: 2,
+    generatorRevision: BRIDGE_REUSABLE_GENERATOR_REVISION,
     kind: 'atoumweb-library-reusable-component',
     origin: checked.origin,
     reusable: {
