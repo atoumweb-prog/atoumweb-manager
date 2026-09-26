@@ -298,6 +298,7 @@ export interface BridgeSnapshotDiff {
   siteId: string;
   before: BridgeSnapshotSummary;
   after: BridgeSnapshotSummary;
+  warnings: string[];
   summary: {
     added: number;
     removed: number;
