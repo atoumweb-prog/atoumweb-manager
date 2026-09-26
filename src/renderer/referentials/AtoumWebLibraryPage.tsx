@@ -1073,7 +1073,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
         </div>
         <div className="aw-library-package-duplicates">
           {occurrenceReturns.map((item) => <button type="button" key={item.id} onClick={() => void openOccurrenceReturn(item.id)}>
-            <span>{item.decision === 'keep_occurrence' ? 'Occurrence conservée' : item.changes.structuralChange ? 'Décision requise · changement structurel' : 'Décision requise'}</span>
+            <span>{occurrenceReturnDecisionLabel(item)}</span>
             <strong>{item.libraryItemName} · v{item.libraryVersionNumber}</strong>
             <small>{item.siteOccurrenceId} · {formatLibraryDate(item.returnedAt)}</small>
           </button>)}
@@ -1083,7 +1083,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
       {selectedOccurrenceReturn && <article className="panel aw-library-package-review">
         <div className="panel-title">
           <div><span className="eyebrow">Revue du retour</span><h2>{selectedOccurrenceReturn.libraryItemName} · v{selectedOccurrenceReturn.libraryVersionNumber}</h2></div>
-          <button className="secondary-button" type="button" onClick={() => setSelectedOccurrenceReturn(null)}>Fermer</button>
+          <button className="secondary-button" type="button" onClick={() => { setSelectedOccurrenceReturn(null); setOccurrenceVariantTargets([]); resetOccurrenceDecisionEditor(); }}>Fermer</button>
         </div>
         <div className="aw-library-package-grid">
           <div><span>Occurrence</span><strong>{selectedOccurrenceReturn.siteOccurrenceId}</strong></div>
@@ -1109,15 +1109,59 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
         <div className="aw-library-section-title">
           <div><span className="eyebrow">Décision humaine</span><h3>Que faire de cette occurrence ?</h3></div>
         </div>
-        {selectedOccurrenceReturn.decision === 'keep_occurrence'
-          ? <div className="aw-bridge-candidate-state reusable"><OperationIcon name="check-circle" size={18} /><div><strong>Occurrence conservée</strong><span>Aucune modification n’a été appliquée à la Bibliothèque source.</span></div></div>
-          : <div className="button-row">
-              <button className="primary-button" type="button" disabled={occurrenceReturnBusy} onClick={() => void keepOccurrenceReturn()}>Conserver uniquement cette occurrence</button>
-              <button className="secondary-button" type="button" disabled title="Disponible après le lot Family / Variant">Créer une nouvelle variante</button>
-              <button className="secondary-button" type="button" disabled title="Disponible après le lot Family / Variant">Mettre à jour une variante</button>
-              <button className="secondary-button" type="button" disabled title="Disponible après le lot Family / Variant">Détacher / nouvelle famille</button>
-            </div>}
-        {selectedOccurrenceReturn.changes.structuralChange && <p className="technical-safety-note">Bridge signale un changement structurel. La future option « Détacher / nouvelle famille » devra être particulièrement mise en évidence, mais aucune action automatique n’est effectuée.</p>}
+        {selectedOccurrenceReturn.decision && selectedOccurrenceReturn.decision !== 'keep_occurrence'
+          ? <div className="aw-bridge-candidate-state reusable">
+              <OperationIcon name="check-circle" size={18} />
+              <div>
+                <strong>{selectedOccurrenceReturn.decision === 'create_variant'
+                  ? 'Nouvelle variante créée'
+                  : selectedOccurrenceReturn.decision === 'update_variant'
+                    ? 'Variante mise à jour'
+                    : 'Nouvelle famille créée'}</strong>
+                <span>Le résultat est maintenant un composant de la Bibliothèque, avec la provenance de cette occurrence conservée.</span>
+              </div>
+              {selectedOccurrenceReturn.resultTechnicalItemId && <button className="secondary-button" type="button" onClick={() => void openPromotedLibraryItem(selectedOccurrenceReturn.resultTechnicalItemId!)}>Ouvrir dans la Bibliothèque</button>}
+            </div>
+          : <>
+              {selectedOccurrenceReturn.decision === 'keep_occurrence' && <div className="aw-bridge-candidate-state reusable">
+                <OperationIcon name="check-circle" size={18} />
+                <div><strong>Occurrence conservée</strong><span>Elle reste historisée sans modifier la Bibliothèque source. Tu peux encore la promouvoir ci-dessous.</span></div>
+              </div>}
+              <div className="button-row">
+                {!selectedOccurrenceReturn.decision && <button className="primary-button" type="button" disabled={occurrenceReturnBusy} onClick={() => void keepOccurrenceReturn()}>Conserver uniquement cette occurrence</button>}
+                <button className="secondary-button" type="button" disabled={occurrenceReturnBusy} onClick={() => { setOccurrenceDecisionMode('create_variant'); setOccurrenceDecisionName(''); setOccurrenceDecisionTargetVariantId(''); }}>Créer une nouvelle variante</button>
+                <button className="secondary-button" type="button" disabled={occurrenceReturnBusy || occurrenceVariantTargets.length === 0} title={occurrenceVariantTargets.length ? undefined : 'Aucune variante existante dans cette famille'} onClick={() => { setOccurrenceDecisionMode('update_variant'); setOccurrenceDecisionName(''); setOccurrenceDecisionTargetVariantId(occurrenceVariantTargets[0]?.variantId ?? ''); }}>Mettre à jour une variante</button>
+                <button className="secondary-button" type="button" disabled={occurrenceReturnBusy} onClick={() => { setOccurrenceDecisionMode('new_family'); setOccurrenceDecisionName(''); setOccurrenceDecisionTargetVariantId(''); }}>Détacher / nouvelle famille</button>
+              </div>
+
+              {occurrenceDecisionMode === 'create_variant' && <div className="aw-library-form-grid">
+                <label>Nom de la variante<input value={occurrenceDecisionName} onChange={(event) => setOccurrenceDecisionName(event.target.value)} placeholder="Ex. Menthe & ivoire" /></label>
+                <div className="button-row">
+                  <button className="primary-button" type="button" disabled={occurrenceReturnBusy || !occurrenceDecisionName.trim()} onClick={() => void createOccurrenceVariant()}>Créer la variante</button>
+                  <button className="secondary-button" type="button" onClick={resetOccurrenceDecisionEditor}>Annuler</button>
+                </div>
+              </div>}
+
+              {occurrenceDecisionMode === 'update_variant' && <div className="aw-library-form-grid">
+                <label>Variante cible<select value={occurrenceDecisionTargetVariantId} onChange={(event) => setOccurrenceDecisionTargetVariantId(event.target.value)}>
+                  <option value="">Choisir…</option>
+                  {occurrenceVariantTargets.map((variant) => <option value={variant.variantId} key={variant.variantId}>{variant.itemName} · {variant.variantKey}{variant.isSourceVariant ? ' · occurrence source' : ''}</option>)}
+                </select></label>
+                <div className="button-row">
+                  <button className="primary-button" type="button" disabled={occurrenceReturnBusy || !occurrenceDecisionTargetVariantId} onClick={() => void updateOccurrenceVariant()}>Créer une nouvelle version de cette variante</button>
+                  <button className="secondary-button" type="button" onClick={resetOccurrenceDecisionEditor}>Annuler</button>
+                </div>
+              </div>}
+
+              {occurrenceDecisionMode === 'new_family' && <div className="aw-library-form-grid">
+                <label>Nom de la nouvelle famille<input value={occurrenceDecisionName} onChange={(event) => setOccurrenceDecisionName(event.target.value)} placeholder="Ex. Section message éditorial" /></label>
+                <div className="button-row">
+                  <button className="primary-button" type="button" disabled={occurrenceReturnBusy || !occurrenceDecisionName.trim()} onClick={() => void createOccurrenceFamily()}>Créer la famille</button>
+                  <button className="secondary-button" type="button" onClick={resetOccurrenceDecisionEditor}>Annuler</button>
+                </div>
+              </div>}
+            </>}
+        {selectedOccurrenceReturn.changes.structuralChange && !selectedOccurrenceReturn.decision && <p className="technical-safety-note">Bridge signale un changement structurel. « Détacher / nouvelle famille » permet de conserver cette adaptation sans faire évoluer silencieusement la famille source.</p>}
       </article>}
 
       {packageInspection && <article className="panel aw-library-package-review">
