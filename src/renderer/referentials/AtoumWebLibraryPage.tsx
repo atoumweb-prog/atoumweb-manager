@@ -80,7 +80,6 @@ interface Props {
   onMessage: (message: string) => void;
   initialItemId?: string | null;
   headerCollapsed?: boolean;
-  onToggleHeader?: () => void;
 }
 
 interface CreationForm {
@@ -252,7 +251,7 @@ function metadataFromItem(item: AtoumWebTechnicalItemDetail): MetadataForm {
   };
 }
 
-export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed = false, onToggleHeader }: Props) {
+export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed = false }: Props) {
   const [items, setItems] = useState<AtoumWebTechnicalItemSummary[]>([]);
   const [selected, setSelected] = useState<AtoumWebTechnicalItemDetail | null>(null);
   const [detailExpanded, setDetailExpanded] = useState(false);
