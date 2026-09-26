@@ -830,15 +830,34 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
     }
   }
 
+  function resetOccurrenceDecisionEditor(): void {
+    setOccurrenceDecisionMode(null);
+    setOccurrenceDecisionName('');
+    setOccurrenceDecisionTargetVariantId('');
+  }
+
+  async function loadOccurrenceReturnContext(id: string): Promise<AtoumWebOccurrenceReturnDetail> {
+    const [detail, targets] = await Promise.all([
+      window.atoumweb.referentials.occurrenceReturns.get(id),
+      window.atoumweb.referentials.occurrenceReturns.listVariantTargets(id),
+    ]);
+    setSelectedOccurrenceReturn(detail);
+    setOccurrenceVariantTargets(targets);
+    resetOccurrenceDecisionEditor();
+    return detail;
+  }
+
   async function loadOccurrenceReturns(preferredId?: string | null): Promise<void> {
     try {
       const next = await window.atoumweb.referentials.occurrenceReturns.list();
       setOccurrenceReturns(next);
       const id = preferredId ?? selectedOccurrenceReturn?.id;
       if (id && next.some((item) => item.id === id)) {
-        setSelectedOccurrenceReturn(await window.atoumweb.referentials.occurrenceReturns.get(id));
+        await loadOccurrenceReturnContext(id);
       } else if (selectedOccurrenceReturn && !next.some((item) => item.id === selectedOccurrenceReturn.id)) {
         setSelectedOccurrenceReturn(null);
+        setOccurrenceVariantTargets([]);
+        resetOccurrenceDecisionEditor();
       }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Impossible de charger les retours Bridge.');
@@ -854,7 +873,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
       setOccurrenceReturnInspection(inspection);
       setShowOccurrenceReturns(true);
       if (inspection.existingReturnId) {
-        setSelectedOccurrenceReturn(await window.atoumweb.referentials.occurrenceReturns.get(inspection.existingReturnId));
+        await loadOccurrenceReturnContext(inspection.existingReturnId);
       }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Inspection du retour Bridge impossible.');
@@ -870,7 +889,6 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
       setError(null);
       const imported = await window.atoumweb.referentials.occurrenceReturns.importReturn(occurrenceReturnInspection.packagePath);
       setOccurrenceReturnInspection(null);
-      setSelectedOccurrenceReturn(imported);
       setShowOccurrenceReturns(true);
       await loadOccurrenceReturns(imported.id);
       onMessage(`Retour Bridge importé : ${imported.siteOccurrenceId} · source ${imported.libraryItemName} v${imported.libraryVersionNumber}.`);
@@ -885,7 +903,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
     setOccurrenceReturnBusy(true);
     try {
       setError(null);
-      setSelectedOccurrenceReturn(await window.atoumweb.referentials.occurrenceReturns.get(id));
+      await loadOccurrenceReturnContext(id);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Impossible d’ouvrir ce retour Bridge.');
     } finally {
@@ -907,6 +925,81 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
     } finally {
       setOccurrenceReturnBusy(false);
     }
+  }
+
+  async function createOccurrenceVariant(): Promise<void> {
+    if (!selectedOccurrenceReturn) return;
+    if (!occurrenceDecisionName.trim()) {
+      setError('Donne un nom à la nouvelle variante.');
+      return;
+    }
+    setOccurrenceReturnBusy(true);
+    try {
+      setError(null);
+      const decided = await window.atoumweb.referentials.occurrenceReturns.createVariant(selectedOccurrenceReturn.id, {
+        name: occurrenceDecisionName.trim(),
+      });
+      await loadOccurrenceReturns(decided.id);
+      if (decided.resultTechnicalItemId) await openPromotedLibraryItem(decided.resultTechnicalItemId);
+      onMessage('Occurrence promue en nouvelle variante réutilisable.');
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Création de la variante impossible.');
+    } finally {
+      setOccurrenceReturnBusy(false);
+    }
+  }
+
+  async function updateOccurrenceVariant(): Promise<void> {
+    if (!selectedOccurrenceReturn) return;
+    if (!occurrenceDecisionTargetVariantId) {
+      setError('Choisis la variante à mettre à jour.');
+      return;
+    }
+    setOccurrenceReturnBusy(true);
+    try {
+      setError(null);
+      const decided = await window.atoumweb.referentials.occurrenceReturns.updateVariant(selectedOccurrenceReturn.id, {
+        targetVariantId: occurrenceDecisionTargetVariantId,
+      });
+      await loadOccurrenceReturns(decided.id);
+      if (decided.resultTechnicalItemId) await openPromotedLibraryItem(decided.resultTechnicalItemId);
+      onMessage('Occurrence appliquée à la variante choisie.');
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Mise à jour de la variante impossible.');
+    } finally {
+      setOccurrenceReturnBusy(false);
+    }
+  }
+
+  async function createOccurrenceFamily(): Promise<void> {
+    if (!selectedOccurrenceReturn) return;
+    if (!occurrenceDecisionName.trim()) {
+      setError('Donne un nom à la nouvelle famille.');
+      return;
+    }
+    setOccurrenceReturnBusy(true);
+    try {
+      setError(null);
+      const decided = await window.atoumweb.referentials.occurrenceReturns.createFamily(selectedOccurrenceReturn.id, {
+        name: occurrenceDecisionName.trim(),
+      });
+      await loadOccurrenceReturns(decided.id);
+      if (decided.resultTechnicalItemId) await openPromotedLibraryItem(decided.resultTechnicalItemId);
+      onMessage('Occurrence détachée dans une nouvelle famille de composants.');
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Création de la nouvelle famille impossible.');
+    } finally {
+      setOccurrenceReturnBusy(false);
+    }
+  }
+
+  async function openPromotedLibraryItem(itemId: string): Promise<void> {
+    setSearch('');
+    setCategory('');
+    setReuseStatus('');
+    setVertical('');
+    setIncludeArchived(false);
+    await setOpenedItem(await window.atoumweb.referentials.library.get(itemId));
   }
 
   return (
