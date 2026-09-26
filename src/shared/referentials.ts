@@ -63,6 +63,14 @@ export interface AtoumWebAssetPreview {
 
 export interface AtoumWebTechnicalItemSummary extends AtoumWebTechnicalItemInput {
   id: string;
+  componentFamilyId?: string | null;
+  componentKey?: string | null;
+  familyDisplayName?: string | null;
+  libraryVariantId?: string | null;
+  variantKey?: string | null;
+  variantMode?: 'base' | 'inherit' | 'forked' | null;
+  variantOfId?: string | null;
+  reusabilityScope?: 'generic' | 'vertical' | 'site_specific' | null;
   currentVersion?: AtoumWebTechnicalVersion | null;
   stableVersion?: AtoumWebTechnicalVersion | null;
   versionCount: number;
@@ -185,6 +193,31 @@ export type AtoumWebOccurrenceReturnDecision =
   | 'update_variant'
   | 'new_family';
 
+export interface AtoumWebOccurrenceVariantTarget {
+  variantId: string;
+  familyId: string;
+  technicalItemId: string;
+  itemName: string;
+  variantKey: string;
+  displayName: string;
+  variantMode: 'base' | 'inherit' | 'forked';
+  isSourceVariant: boolean;
+}
+
+export interface AtoumWebOccurrenceCreateVariantInput {
+  name: string;
+  variantKey?: string | null;
+}
+
+export interface AtoumWebOccurrenceUpdateVariantInput {
+  targetVariantId: string;
+}
+
+export interface AtoumWebOccurrenceCreateFamilyInput {
+  name: string;
+  componentKey?: string | null;
+}
+
 export interface AtoumWebOccurrenceReturnSummary {
   id: string;
   packageFingerprint: string;
@@ -198,6 +231,8 @@ export interface AtoumWebOccurrenceReturnSummary {
   changes: AtoumWebSiteOccurrenceChangeSummaryV1;
   decision: AtoumWebOccurrenceReturnDecision | null;
   decidedAt: string | null;
+  resultTechnicalItemId: string | null;
+  resultVariantId: string | null;
   createdAt: string;
 }
 
@@ -261,5 +296,9 @@ export interface ReferentialsApi {
     inspectImport(): Promise<AtoumWebOccurrenceReturnInspection | null>;
     importReturn(packagePath: string): Promise<AtoumWebOccurrenceReturnDetail>;
     keepOccurrence(id: string): Promise<AtoumWebOccurrenceReturnDetail>;
+    listVariantTargets(id: string): Promise<AtoumWebOccurrenceVariantTarget[]>;
+    createVariant(id: string, input: AtoumWebOccurrenceCreateVariantInput): Promise<AtoumWebOccurrenceReturnDetail>;
+    updateVariant(id: string, input: AtoumWebOccurrenceUpdateVariantInput): Promise<AtoumWebOccurrenceReturnDetail>;
+    createFamily(id: string, input: AtoumWebOccurrenceCreateFamilyInput): Promise<AtoumWebOccurrenceReturnDetail>;
   };
 }
