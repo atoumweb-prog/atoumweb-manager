@@ -244,6 +244,7 @@ export class AtoumWebOccurrenceReturnService {
     const variantLabel = input.name?.trim();
     if (!variantLabel) throw new Error('Le nom de la variante est requis.');
 
+    const createdFiles: string[] = [];
     this.database.exec('SAVEPOINT bridge_occurrence_create_variant;');
     try {
       const sourceItem = this.library.get(current.libraryItemId);
@@ -295,6 +296,10 @@ export class AtoumWebOccurrenceReturnService {
         [variantId, family.id, created.id, variantKey, variantLabel, baseVariant.id, current.id, now, now],
       );
 
+      if (created.currentVersion) {
+        this.copySourceVersionAssets(current.libraryVersionId, created.currentVersion.id, createdFiles);
+      }
+
       if (inheritValidation && created.currentVersion) {
         created = this.library.markStable(created.currentVersion.id);
       }
@@ -304,6 +309,7 @@ export class AtoumWebOccurrenceReturnService {
       return this.get(id);
     } catch (error) {
       this.database.exec('ROLLBACK TO SAVEPOINT bridge_occurrence_create_variant; RELEASE SAVEPOINT bridge_occurrence_create_variant;');
+      this.cleanupCreatedFiles(createdFiles);
       throw error;
     }
   }
@@ -323,6 +329,7 @@ export class AtoumWebOccurrenceReturnService {
       throw new Error('La variante cible doit appartenir à la même famille et ne peut pas être la variante de base.');
     }
 
+    const createdFiles: string[] = [];
     this.database.exec('SAVEPOINT bridge_occurrence_update_variant;');
     try {
       const family = this.familyById(target.family_id);
@@ -346,6 +353,9 @@ export class AtoumWebOccurrenceReturnService {
         contentText: JSON.stringify(payload, null, 2),
         notes: `Variante mise à jour depuis l’occurrence ${current.siteOccurrenceId}.`,
       });
+      if (changed.currentVersion) {
+        this.copySourceVersionAssets(current.libraryVersionId, changed.currentVersion.id, createdFiles);
+      }
       changed = this.library.updateMetadata(changed.id, {
         reuseStatus: inheritValidation ? 'ready' : 'adapt',
         tags,
@@ -360,6 +370,7 @@ export class AtoumWebOccurrenceReturnService {
       return this.get(id);
     } catch (error) {
       this.database.exec('ROLLBACK TO SAVEPOINT bridge_occurrence_update_variant; RELEASE SAVEPOINT bridge_occurrence_update_variant;');
+      this.cleanupCreatedFiles(createdFiles);
       throw error;
     }
   }
@@ -372,6 +383,7 @@ export class AtoumWebOccurrenceReturnService {
     const familyName = input.name?.trim();
     if (!familyName) throw new Error('Le nom de la nouvelle famille est requis.');
 
+    const createdFiles: string[] = [];
     this.database.exec('SAVEPOINT bridge_occurrence_new_family;');
     try {
       const sourceItem = this.library.get(current.libraryItemId);
@@ -422,11 +434,16 @@ export class AtoumWebOccurrenceReturnService {
         [variantId, familyId, created.id, 'base', 'Base', current.id, now, now],
       );
 
+      if (created.currentVersion) {
+        this.copySourceVersionAssets(current.libraryVersionId, created.currentVersion.id, createdFiles);
+      }
+
       this.recordDecision(current, 'new_family', created.id, variantId, 'Occurrence détachée dans une nouvelle famille de Bibliothèque.');
       this.database.exec('RELEASE SAVEPOINT bridge_occurrence_new_family;');
       return this.get(id);
     } catch (error) {
       this.database.exec('ROLLBACK TO SAVEPOINT bridge_occurrence_new_family; RELEASE SAVEPOINT bridge_occurrence_new_family;');
+      this.cleanupCreatedFiles(createdFiles);
       throw error;
     }
   }
