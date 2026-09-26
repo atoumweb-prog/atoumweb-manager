@@ -526,7 +526,10 @@ export class AtoumWebOccurrenceReturnService {
 
     const categorySlug = normalizeSlug(category) ?? 'component';
     const nameSlug = normalizeSlug(name) ?? 'component';
-    const base = normalizeComponentKey(`aw-${categorySlug}-${nameSlug}`) ?? 'aw-component';
+    const stem = nameSlug === categorySlug || nameSlug.startsWith(`${categorySlug}-`)
+      ? nameSlug
+      : `${categorySlug}-${nameSlug}`;
+    const base = normalizeComponentKey(`aw-${stem}`) ?? 'aw-component';
     let candidate = base;
     let suffix = 2;
     while (this.database.get<{ id: string }>(
