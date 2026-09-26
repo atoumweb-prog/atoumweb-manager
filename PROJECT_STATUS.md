@@ -11,11 +11,27 @@
 - [x] Compatibilité avec les retours Bridge 0.7.4 : l’ancien faux positif HTML dû à un espace terminal insignifiant ne bloque pas une promotion sûre.
 - [x] Les assets de la version source sont copiés vers la nouvelle version avec compensation des fichiers en cas d’échec transactionnel.
 - [x] L’identité Family / Variant gérée par Manager prime lors de l’export du Component Package vers Bridge.
-- [x] La Bibliothèque affiche Famille / Base / Variante, les rend recherchables et permet d’ouvrir puis de réexporter un composant promu.
+- [x] La Bibliothèque affiche désormais un arbre Famille → Base → Variantes, rend ces éléments recherchables et permet d’ouvrir puis de réexporter un composant promu.
+- [x] Les retours Bridge sont revus dans une fenêtre contextuelle avec son propre scroll ; après décision la fenêtre se ferme et la Bibliothèque est rafraîchie.
 - [x] L’écran de revue d’un retour active les décisions Famille / Variante et ouvre directement le composant créé ou mis à jour.
 - [x] Tests ajoutés pour migration 40, promotion après conservation, variante sûre, variante structurelle forkée, copie d’assets, nouvelle famille, mise à jour de variante et identité exportée.
-- [ ] Validation MSI : `npm run typecheck` + tests ciblés + recette visuelle.
+- [x] Validation MSI : typecheck réussi ; tests ciblés **52/52** (migrations 9, Occurrence Return 10, packages 33) ; recette réelle confirmée avec `Section — Mariage Why`, famille/base/variante et modales de retour.
+- [x] Validation humaine de la version réutilisable confirmée : une v4 peut devenir stable et « Prêt à réutiliser » sans écraser l’historique.
+- [ ] Finition UX en attente de recette après dernier correctif : actions du bandeau regroupées visuellement et bouton masquer/afficher Bibliothèque aligné sur le bouton masquer/afficher du menu principal.
 - Aucun changement automatique de la Bibliothèque à l’import d’un retour ; toute promotion reste une décision humaine.
+
+## Prochain lot — Diff Snapshot A / B — 26/09/2026
+
+- [x] Contrat interne de comparaison en lecture seule ajouté sans modifier Snapshot Schema V1.
+- [x] Comparaison de deux snapshots du même site par `source_page_key` : ajouté / supprimé / modifié / inchangé.
+- [x] Détection des écarts sur titre/slug, statut, URL, builder, source brute, empreintes, structure/modules, sources, assets et dépendances.
+- [x] Comparaison des nœuds sans dépendre de leurs `occurrence_id` ; aucune mutation des snapshots.
+- [x] API Electron + preload exposés pour lancer la comparaison depuis la page Sites.
+- [x] Fenêtre contextuelle « Comparer deux copies » avec synthèse et détails des pages modifiées.
+- [x] Tests ajoutés pour comparaison nominale et refus de comparer un snapshot avec lui-même.
+- [ ] Validation MSI : typecheck + test ciblé `BridgeSnapshotService.test.ts`.
+- [ ] Recette réelle : nécessite au moins deux snapshots importés du même site.
+- [ ] Attribution des `logical_node_id` volontairement non automatique ; à traiter seulement après validation sur un second snapshot réel.
 
 ### Finition du round-trip LOT 4
 
