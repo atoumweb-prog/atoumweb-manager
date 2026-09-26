@@ -1,5 +1,8 @@
 import { dialog, ipcMain, shell } from 'electron';
 import type {
+  AtoumWebOccurrenceCreateFamilyInput,
+  AtoumWebOccurrenceCreateVariantInput,
+  AtoumWebOccurrenceUpdateVariantInput,
   AtoumWebPackageImportInput,
   AtoumWebTechnicalAssetRole,
   AtoumWebTechnicalItemInput,
@@ -96,4 +99,12 @@ export function registerReferentialsIpcHandlers(database: DatabaseService): void
     database.atoumWebOccurrenceReturns.importReturn(packagePath));
   ipcMain.handle('referentials:occurrence-returns:keep', (_event, id: string) =>
     database.atoumWebOccurrenceReturns.keepOccurrence(id));
+  ipcMain.handle('referentials:occurrence-returns:list-variant-targets', (_event, id: string) =>
+    database.atoumWebOccurrenceReturns.listVariantTargets(id));
+  ipcMain.handle('referentials:occurrence-returns:create-variant', (_event, id: string, input: AtoumWebOccurrenceCreateVariantInput) =>
+    database.atoumWebOccurrenceReturns.createVariant(id, input));
+  ipcMain.handle('referentials:occurrence-returns:update-variant', (_event, id: string, input: AtoumWebOccurrenceUpdateVariantInput) =>
+    database.atoumWebOccurrenceReturns.updateVariant(id, input));
+  ipcMain.handle('referentials:occurrence-returns:create-family', (_event, id: string, input: AtoumWebOccurrenceCreateFamilyInput) =>
+    database.atoumWebOccurrenceReturns.createFamily(id, input));
 }
