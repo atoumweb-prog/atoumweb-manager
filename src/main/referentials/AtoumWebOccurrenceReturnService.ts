@@ -22,6 +22,7 @@ import {
 } from '../../shared/siteOccurrence';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import type { WorkspacePaths } from '../workspace';
+import { AtoumWebTechnicalAssetService } from './AtoumWebTechnicalAssetService';
 import { AtoumWebTechnicalLibraryService } from './AtoumWebTechnicalLibraryService';
 import { readZipArchive, type ZipEntryOutput } from './ZipArchive';
 
@@ -95,12 +96,14 @@ const nowIso = (): string => new Date().toISOString();
 
 export class AtoumWebOccurrenceReturnService {
   private readonly library: AtoumWebTechnicalLibraryService;
+  private readonly technicalAssets: AtoumWebTechnicalAssetService;
 
   constructor(
     private readonly database: DatabaseAdapter,
     private readonly workspace: WorkspacePaths,
   ) {
     this.library = new AtoumWebTechnicalLibraryService(database);
+    this.technicalAssets = new AtoumWebTechnicalAssetService(database, workspace);
   }
 
   list(): AtoumWebOccurrenceReturnSummary[] {
@@ -638,6 +641,20 @@ export class AtoumWebOccurrenceReturnService {
       : [];
     payload.notes = [...notes, `Dérivé de l’occurrence Bridge ${current.siteOccurrenceId}.`];
     return payload;
+  }
+
+  private copySourceVersionAssets(sourceVersionId: string, targetVersionId: string, createdFiles: string[]): void {
+    for (const asset of this.technicalAssets.list(sourceVersionId)) {
+      if (asset.missing) continue;
+      const sourcePath = this.technicalAssets.absolutePath(asset.id);
+      this.technicalAssets.importFilePaths(targetVersionId, [sourcePath], asset.role, createdFiles);
+    }
+  }
+
+  private cleanupCreatedFiles(paths: string[]): void {
+    for (const path of [...paths].reverse()) {
+      rmSync(path, { force: true });
+    }
   }
 
   private recordDecision(
