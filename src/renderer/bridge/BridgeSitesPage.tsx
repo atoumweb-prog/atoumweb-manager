@@ -494,6 +494,9 @@ export function BridgeSitesPage({ onMessage }: Props) {
                     <Metric label="Modifiés" value={String(snapshotDiff.summary.changed)} />
                     <Metric label="Inchangés" value={String(snapshotDiff.summary.unchanged)} />
                   </div>
+                  {snapshotDiff.warnings.length > 0 && <div className="bridge-warning-list bridge-compare-warnings">
+                    {snapshotDiff.warnings.map((warning) => <div key={warning}><OperationIcon name="alert" size={15} /><span>{warning}</span></div>)}
+                  </div>}
                   <div className="bridge-compare-pages">
                     {snapshotDiff.pages.filter((item) => item.status !== 'unchanged').map((item) => <div className={`bridge-compare-page ${item.status}`} key={item.sourcePageKey}>
                       <div>
