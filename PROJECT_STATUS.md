@@ -1,5 +1,28 @@
 # AtoumWeb Manager — Suivi du projet
 
+## Lot 5 — Familles / Variantes depuis les retours Bridge — 26/09/2026
+
+- [x] Migration 40 : familles de composants et variantes explicites, sans modifier les contrats Bridge V1.
+- [x] Un composant source devient la variante de base de sa famille uniquement lors d’une décision humaine de promotion.
+- [x] Une occurrence peut rester seule, devenir une nouvelle variante, mettre à jour une variante existante ou être détachée dans une nouvelle famille.
+- [x] Une occurrence déjà marquée « Conserver uniquement cette occurrence » peut ensuite être promue ; l’historique des décisions reste journalisé.
+- [x] Les changements structurels créent une variante `forked` et imposent une nouvelle validation humaine.
+- [x] Les adaptations limitées aux champs configurables d’une source stable et validée peuvent hériter de la validation ; les changements inexpliqués restent « À adapter ».
+- [x] Compatibilité avec les retours Bridge 0.7.4 : l’ancien faux positif HTML dû à un espace terminal insignifiant ne bloque pas une promotion sûre.
+- [x] Les assets de la version source sont copiés vers la nouvelle version avec compensation des fichiers en cas d’échec transactionnel.
+- [x] L’identité Family / Variant gérée par Manager prime lors de l’export du Component Package vers Bridge.
+- [x] La Bibliothèque affiche Famille / Base / Variante, les rend recherchables et permet d’ouvrir puis de réexporter un composant promu.
+- [x] L’écran de revue d’un retour active les décisions Famille / Variante et ouvre directement le composant créé ou mis à jour.
+- [x] Tests ajoutés pour migration 40, promotion après conservation, variante sûre, variante structurelle forkée, copie d’assets, nouvelle famille, mise à jour de variante et identité exportée.
+- [ ] Validation MSI : `npm run typecheck` + tests ciblés + recette visuelle.
+- Aucun changement automatique de la Bibliothèque à l’import d’un retour ; toute promotion reste une décision humaine.
+
+### Finition du round-trip LOT 4
+
+- Bridge 0.7.5 : le diff HTML ignore les espaces finaux non significatifs juste avant la fermeture d’un élément de bloc.
+- Le retour réel de `Section — Mariage Why · v4` / Workbench `#3671` a validé le cycle Manager → Bridge → Manager ; les trois couleurs configurées sont revenues comme variables CSS modifiées.
+- Le correctif 0.7.5 ne réécrit pas les anciens retours déjà importés ; Manager reconnaît néanmoins ce faux positif historique lors d’une promotion LOT 5.
+
 ## Lot 4 — Réception Occurrence Return V1 — 25/09/2026
 
 - [x] Stockage SQL dédié aux retours Bridge sans détourner les snapshots ni les versions de Bibliothèque.
@@ -9,10 +32,11 @@
 - [x] API Electron pour lister, ouvrir, inspecter, importer et décider.
 - [x] Écran Bibliothèque pour voir les changements, le contenu retourné et la provenance.
 - [x] Décision « Conserver uniquement cette occurrence » enregistrée de manière transactionnelle.
-- [x] Les choix « nouvelle variante / mise à jour variante / nouvelle famille » sont visibles mais désactivés jusqu’au lot Family / Variant.
+- [x] Au périmètre du LOT 4, les choix « nouvelle variante / mise à jour variante / nouvelle famille » étaient visibles mais volontairement désactivés ; ils sont désormais implémentés par le LOT 5.
 - [x] Tests ciblés ajoutés pour import nominal, déduplication, checksum invalide, version source inconnue et décision.
 - [x] Validation MSI : typecheck réussi ; tests ciblés 12/12 (4 Occurrence Return + 8 migrations), 0 échec.
 - Aucun changement des contrats V1, aucune publication production, aucune décision Family / Variant automatique.
+- [x] Recette réelle 26/09/2026 : package Manager v4 → Workbench Bridge #3671 → configuration des champs → Occurrence Return V1 → import Manager → décision « occurrence conservée ».
 
 ## Lot 3 — Validation humaine des versions réutilisables — 25/09/2026
 
