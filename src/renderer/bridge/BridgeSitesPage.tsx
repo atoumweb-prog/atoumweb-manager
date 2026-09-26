@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import type {
   BridgeModulePreview,
   BridgeObjectPreview,
+  BridgePageNodeMatchReview,
   BridgePagePreview,
   BridgePageSnapshotDetail,
   BridgePageSummary,
@@ -37,6 +38,8 @@ export function BridgeSitesPage({ onMessage }: Props) {
   const [compareBeforeId, setCompareBeforeId] = useState('');
   const [compareAfterId, setCompareAfterId] = useState('');
   const [compareOpen, setCompareOpen] = useState(false);
+  const [nodeMatchReview, setNodeMatchReview] = useState<BridgePageNodeMatchReview | null>(null);
+  const [nodeMatchBusy, setNodeMatchBusy] = useState(false);
   const [contents, setContents] = useState<BridgePageSummary[]>([]);
   const [allContents, setAllContents] = useState<BridgePageSummary[]>([]);
   const [page, setPage] = useState<BridgePageSnapshotDetail | null>(null);
@@ -348,6 +351,18 @@ export function BridgeSitesPage({ onMessage }: Props) {
     }
   }
 
+  async function reviewNodeMatches(beforePageSnapshotId: string, afterPageSnapshotId: string): Promise<void> {
+    setNodeMatchBusy(true);
+    try {
+      setError(null);
+      setNodeMatchReview(await window.atoumweb.bridgeSnapshots.reviewPageNodeMatches(beforePageSnapshotId, afterPageSnapshotId));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Analyse des correspondances de modules impossible.');
+    } finally {
+      setNodeMatchBusy(false);
+    }
+  }
+
   async function compareSelectedSnapshots(): Promise<void> {
     if (!site || !compareBeforeId || !compareAfterId) {
       setError('Choisis deux copies du site à comparer.');
@@ -361,6 +376,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
     setBusy(true);
     try {
       setError(null);
+      setNodeMatchReview(null);
       setSnapshotDiff(await window.atoumweb.bridgeSnapshots.compareSnapshots(compareBeforeId, compareAfterId));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Comparaison des snapshots impossible.');
@@ -384,6 +400,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
     setCompareAfterId(afterId);
     setCompareBeforeId(compareBeforeId && compareBeforeId !== afterId ? compareBeforeId : fallbackBefore);
     setSnapshotDiff(null);
+    setNodeMatchReview(null);
     setCompareOpen(true);
   }
 
@@ -442,14 +459,14 @@ export function BridgeSitesPage({ onMessage }: Props) {
         <section className="panel bridge-compare-modal" role="dialog" aria-modal="true" aria-labelledby="bridge-compare-title">
           <div className="bridge-compare-head">
             <div><span className="eyebrow">Historique du site</span><h2 id="bridge-compare-title">Comparer deux copies</h2><p>{site.name}</p></div>
-            <button className="secondary-button" type="button" onClick={() => setCompareOpen(false)}>Fermer</button>
+            <button className="secondary-button" type="button" onClick={() => setCompareOpen(false); setNodeMatchReview(null); }}>Fermer</button>
           </div>
           <div className="bridge-compare-controls">
-            <label>Avant<select value={compareBeforeId} onChange={(event) => { setCompareBeforeId(event.target.value); setSnapshotDiff(null); }}>
+            <label>Avant<select value={compareBeforeId} onChange={(event) => { setCompareBeforeId(event.target.value); setSnapshotDiff(null); setNodeMatchReview(null); }}>
               {site.snapshots.map((item) => <option key={item.id} value={item.id}>{formatDate(item.generatedAt)}</option>)}
             </select></label>
             <span aria-hidden="true">→</span>
-            <label>Après<select value={compareAfterId} onChange={(event) => { setCompareAfterId(event.target.value); setSnapshotDiff(null); }}>
+            <label>Après<select value={compareAfterId} onChange={(event) => { setCompareAfterId(event.target.value); setSnapshotDiff(null); setNodeMatchReview(null); }}>
               {site.snapshots.map((item) => <option key={item.id} value={item.id}>{formatDate(item.generatedAt)}</option>)}
             </select></label>
             <button className="primary-button" type="button" disabled={busy || !compareBeforeId || !compareAfterId || compareBeforeId === compareAfterId} onClick={() => void compareSelectedSnapshots()}>
@@ -475,10 +492,46 @@ export function BridgeSitesPage({ onMessage }: Props) {
                       </div>
                       <div className="bridge-compare-changes">
                         {bridgePageChangeLabels(item.changes).map((label) => <span key={label}>{label}</span>)}
+                        {item.beforePageSnapshotId && item.afterPageSnapshotId && <button
+                          className="secondary-button bridge-node-match-button"
+                          type="button"
+                          disabled={nodeMatchBusy}
+                          onClick={() => void reviewNodeMatches(item.beforePageSnapshotId!, item.afterPageSnapshotId!)}
+                        >
+                          <OperationIcon name="repeat" size={14} /> Correspondances modules
+                        </button>}
                       </div>
                     </div>)}
                     {snapshotDiff.pages.every((item) => item.status === 'unchanged') && <div className="bridge-empty"><OperationIcon name="check-circle" size={28} /><strong>Aucun changement détecté</strong><span>Les deux copies ont le même contenu observable selon Snapshot V1.</span></div>}
                   </div>
+                  {nodeMatchReview && <section className="bridge-node-match-review">
+                    <div className="bridge-node-match-head">
+                      <div><span className="eyebrow">Correspondances proposées</span><h3>Modules de la page</h3></div>
+                      <span>{nodeMatchReview.candidates.length} proposition{nodeMatchReview.candidates.length > 1 ? 's' : ''}</span>
+                    </div>
+                    {nodeMatchReview.candidates.length
+                      ? <div className="bridge-node-match-list">
+                          {nodeMatchReview.candidates.map((candidate) => <div className={`bridge-node-match ${candidate.confidence}`} key={candidate.beforeOccurrenceId}>
+                            <div className="bridge-node-match-pair">
+                              <strong>{candidate.beforeLabel}</strong>
+                              <span aria-hidden="true">→</span>
+                              <strong>{candidate.afterLabel}</strong>
+                            </div>
+                            <div className="bridge-node-match-meta">
+                              <span>Confiance : {nodeMatchConfidenceLabel(candidate.confidence)}</span>
+                              <span>Score : {candidate.score}/100</span>
+                              <small>{candidate.beforeOccurrenceId} → {candidate.afterOccurrenceId}</small>
+                            </div>
+                            <div className="bridge-node-match-reasons">
+                              {candidate.reasons.map((reason) => <span key={reason}>{reason}</span>)}
+                            </div>
+                          </div>)}
+                        </div>
+                      : <div className="bridge-empty"><OperationIcon name="alert" size={24} /><strong>Aucune correspondance suffisamment fiable</strong><span>Les modules restent non appariés ; aucune identité logique n’est créée.</span></div>}
+                    {(nodeMatchReview.unmatchedBefore.length > 0 || nodeMatchReview.unmatchedAfter.length > 0) && <p className="muted">
+                      Non appariés : {nodeMatchReview.unmatchedBefore.length} avant · {nodeMatchReview.unmatchedAfter.length} après.
+                    </p>}
+                  </section>}
                   <p className="muted bridge-compare-note">Diff en lecture seule. Aucun logical_node_id n’est attribué automatiquement : les correspondances de modules resteront soumises à validation.</p>
                 </>}
           </div>
@@ -893,6 +946,12 @@ function filterBridgeContents(items: BridgePageSummary[], view: ContentView, que
       item.canonicalUrl ?? '',
     ].join(' ').toLocaleLowerCase('fr-FR').includes(needle);
   });
+}
+
+function nodeMatchConfidenceLabel(value: BridgePageNodeMatchReview['candidates'][number]['confidence']): string {
+  if (value === 'high') return 'forte';
+  if (value === 'medium') return 'moyenne';
+  return 'faible / à vérifier';
 }
 
 function snapshotDiffStatusLabel(status: BridgeSnapshotDiff['pages'][number]['status']): string {
