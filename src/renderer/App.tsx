@@ -299,6 +299,16 @@ function App() {
               onClick={() => setSidebarCollapsed((value) => !value)}
             >{sidebarCollapsed ? '☰' : '‹'}</button>
             <GlobalSearch onOpen={openSearchResult} />
+            {activePage === 'Bibliothèque AtoumWeb' && <button
+              className="sidebar-toggle library-header-topbar-toggle"
+              type="button"
+              title={libraryHeaderCollapsed ? 'Afficher le bandeau de la Bibliothèque' : 'Masquer le bandeau de la Bibliothèque'}
+              aria-label={libraryHeaderCollapsed ? 'Afficher le bandeau de la Bibliothèque' : 'Masquer le bandeau de la Bibliothèque'}
+              aria-pressed={libraryHeaderCollapsed}
+              onClick={() => setLibraryHeaderCollapsed((value) => !value)}
+            >
+              <OperationIcon name={libraryHeaderCollapsed ? 'chevron-down' : 'chevron-up'} size={20} />
+            </button>}
           </div>
           <div className="topbar-right">
             <GlobalTimer onMessage={setMessage} />
