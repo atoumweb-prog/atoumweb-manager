@@ -1262,17 +1262,18 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
         {!detailExpanded && <article className="panel aw-library-list">
           <div className="panel-title"><div><span className="eyebrow">Bibliothèque</span><h2>Composants AtoumWeb</h2></div><span className="status-pill">{items.length}</span></div>
           {items.length === 0 && <p className="muted">Aucun composant ne correspond aux filtres.</p>}
-          {items.map((item) => (
-            <button className={`aw-library-item ${selected?.id === item.id ? 'selected' : ''}`} key={item.id} type="button" onClick={() => void openItem(item.id)}>
-              <div className="aw-library-item-main">
-                <strong>{item.name}</strong>
-                <span>{categoryLabel(item.category)} · {reuseStatusLabel(effectiveReuseStatus(item))}{item.vertical ? ` · ${verticalLabel(item.vertical)}` : ''}</span>
-                {item.componentFamilyId && <span>Famille : {item.familyDisplayName ?? item.componentKey ?? 'Composant'} · {item.variantMode === 'base' ? 'Base' : `Variante ${item.variantKey ?? ''}`}</span>}
-                <BridgeSummaryStages item={item} />
-              </div>
-              <div className="aw-library-item-meta"><span>v{item.currentVersion?.versionNumber ?? '—'}</span>{item.stableVersion && <span>stable v{item.stableVersion.versionNumber}</span>}{item.archivedAt && <span>archivé</span>}</div>
-            </button>
-          ))}
+          {libraryTree.map((group) => group.kind === 'standalone'
+            ? <LibraryTreeItem key={group.key} item={group.item} selectedId={selected?.id ?? null} onOpen={openItem} />
+            : <div className="aw-library-family-tree" key={group.key}>
+                <div className="aw-library-family-tree-head">
+                  <div><span>Famille</span><strong>{group.label}</strong></div>
+                  <small>{group.variants.length} variante{group.variants.length > 1 ? 's' : ''}</small>
+                </div>
+                {group.base && <LibraryTreeItem item={group.base} selectedId={selected?.id ?? null} onOpen={openItem} familyRole="base" />}
+                {group.variants.length > 0 && <div className="aw-library-family-variants">
+                  {group.variants.map((item) => <LibraryTreeItem key={item.id} item={item} selectedId={selected?.id ?? null} onOpen={openItem} familyRole="variant" />)}
+                </div>}
+              </div>)}
         </article>}
 
         {selected && !detailExpanded && <div className="aw-library-splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner la bibliothèque et la fiche" tabIndex={0} onPointerDown={beginResize} onDoubleClick={() => setSplitPercent(38)} onKeyDown={(event) => {
@@ -1509,6 +1510,80 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
       </div>
     </div>
   );
+}
+
+function buildLibraryTree(items: AtoumWebTechnicalItemSummary[]): LibraryTreeGroup[] {
+  const result: LibraryTreeGroup[] = [];
+  const families = new Map<string, Extract<LibraryTreeGroup, { kind: 'family' }>>();
+
+  items.forEach((item, index) => {
+    if (!item.componentFamilyId) {
+      result.push({ kind: 'standalone', key: `item:${item.id}`, firstIndex: index, item });
+      return;
+    }
+
+    let family = families.get(item.componentFamilyId);
+    if (!family) {
+      family = {
+        kind: 'family',
+        key: `family:${item.componentFamilyId}`,
+        firstIndex: index,
+        familyId: item.componentFamilyId,
+        label: item.familyDisplayName ?? item.componentKey ?? item.name,
+        base: null,
+        variants: [],
+      };
+      families.set(item.componentFamilyId, family);
+      result.push(family);
+    } else {
+      family.firstIndex = Math.min(family.firstIndex, index);
+    }
+
+    if (item.variantMode === 'base') family.base = item;
+    else family.variants.push(item);
+  });
+
+  for (const family of families.values()) {
+    family.variants.sort((left, right) => left.name.localeCompare(right.name, 'fr', { sensitivity: 'base' }));
+  }
+
+  return result.sort((left, right) => left.firstIndex - right.firstIndex);
+}
+
+function LibraryTreeItem({
+  item,
+  selectedId,
+  onOpen,
+  familyRole = 'standalone',
+}: {
+  item: AtoumWebTechnicalItemSummary;
+  selectedId: string | null;
+  onOpen: (id: string) => Promise<void>;
+  familyRole?: 'standalone' | 'base' | 'variant';
+}) {
+  const familyName = item.familyDisplayName ?? item.componentKey ?? '';
+  const variantPrefix = familyName ? `${familyName} — ` : '';
+  const displayName = familyRole === 'variant' && variantPrefix && item.name.startsWith(variantPrefix)
+    ? item.name.slice(variantPrefix.length)
+    : item.name;
+
+  return <button
+    className={`aw-library-item aw-library-tree-item ${familyRole !== 'standalone' ? `tree-${familyRole}` : ''} ${selectedId === item.id ? 'selected' : ''}`}
+    type="button"
+    onClick={() => void onOpen(item.id)}
+  >
+    <div className="aw-library-item-main">
+      <strong>{displayName}</strong>
+      <span>{categoryLabel(item.category)} · {reuseStatusLabel(effectiveReuseStatus(item))}{item.vertical ? ` · ${verticalLabel(item.vertical)}` : ''}</span>
+      {familyRole !== 'standalone' && <span className="aw-library-family-role">{familyRole === 'base' ? 'Base de la famille' : `Variante · ${item.variantKey ?? 'sans clé'}`}</span>}
+      <BridgeSummaryStages item={item} />
+    </div>
+    <div className="aw-library-item-meta">
+      <span>v{item.currentVersion?.versionNumber ?? '—'}</span>
+      {item.stableVersion && <span>stable v{item.stableVersion.versionNumber}</span>}
+      {item.archivedAt && <span>archivé</span>}
+    </div>
+  </button>;
 }
 
 function occurrenceReturnDecisionLabel(item: AtoumWebOccurrenceReturnSummary): string {
