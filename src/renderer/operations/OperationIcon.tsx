@@ -12,6 +12,8 @@ export type OperationIconName =
   | 'refresh'
   | 'expand'
   | 'collapse'
+  | 'chevron-up'
+  | 'chevron-down'
   | 'close'
   | 'euro'
   | 'piggy-broken'
@@ -78,6 +80,12 @@ const paths: Record<OperationIconName, ReactNode> = {
   </>,
   collapse: <>
     <path d="M9 9H4.5V4.5M15 9h4.5V4.5M9 15H4.5v4.5M15 15h4.5v4.5" />
+  </>,
+  'chevron-up': <>
+    <path d="m6.5 14.5 5.5-5 5.5 5" />
+  </>,
+  'chevron-down': <>
+    <path d="m6.5 9.5 5.5 5 5.5-5" />
   </>,
   close: <>
     <path d="m7 7 10 10M17 7 7 17" />
