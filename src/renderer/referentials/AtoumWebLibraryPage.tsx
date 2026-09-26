@@ -4,6 +4,7 @@ import type {
   AtoumWebOccurrenceReturnDetail,
   AtoumWebOccurrenceReturnInspection,
   AtoumWebOccurrenceReturnSummary,
+  AtoumWebOccurrenceVariantTarget,
   AtoumWebPackageInspection,
   AtoumWebReuseStatus,
   AtoumWebTechnicalAsset,
@@ -266,6 +267,10 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
   const [occurrenceReturns, setOccurrenceReturns] = useState<AtoumWebOccurrenceReturnSummary[]>([]);
   const [occurrenceReturnInspection, setOccurrenceReturnInspection] = useState<AtoumWebOccurrenceReturnInspection | null>(null);
   const [selectedOccurrenceReturn, setSelectedOccurrenceReturn] = useState<AtoumWebOccurrenceReturnDetail | null>(null);
+  const [occurrenceVariantTargets, setOccurrenceVariantTargets] = useState<AtoumWebOccurrenceVariantTarget[]>([]);
+  const [occurrenceDecisionMode, setOccurrenceDecisionMode] = useState<'create_variant' | 'update_variant' | 'new_family' | null>(null);
+  const [occurrenceDecisionName, setOccurrenceDecisionName] = useState('');
+  const [occurrenceDecisionTargetVariantId, setOccurrenceDecisionTargetVariantId] = useState('');
   const [showOccurrenceReturns, setShowOccurrenceReturns] = useState(false);
   const [occurrenceReturnBusy, setOccurrenceReturnBusy] = useState(false);
   const [bridgeWorkflowBusy, setBridgeWorkflowBusy] = useState(false);
