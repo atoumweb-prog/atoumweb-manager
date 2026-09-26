@@ -163,12 +163,14 @@ describe('BridgeSnapshotService', () => {
       pageSnapshotId: 'awb-pagesnap:stable-a',
       generatedAt: '2026-09-24T00:00:00Z',
       occurrenceId: 'occurrence-stable-a',
+      includeVolatileSource: true,
     })).snapshot;
     const second = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-stable-b.zip'), 'Accueil', {
       snapshotId: 'awb-snap:stable-b',
       pageSnapshotId: 'awb-pagesnap:stable-b',
       generatedAt: '2026-09-26T11:48:00Z',
       occurrenceId: 'occurrence-stable-b',
+      includeVolatileSource: true,
     })).snapshot;
 
     const diff = service.compareSnapshots(first.id, second.id);
@@ -286,6 +288,7 @@ function buildSnapshot(
     snapshotType?: string;
     coverageMode?: string;
     scanStatus?: string;
+    includeVolatileSource?: boolean;
   } = {},
 ): string {
   const sourceInstanceId = 'awb-site:test-instance';
@@ -300,6 +303,7 @@ function buildSnapshot(
   const snapshotType = options.snapshotType ?? 'full';
   const coverageMode = options.coverageMode ?? 'complete';
   const scanStatus = options.scanStatus ?? 'complete_with_warnings';
+  const includeVolatileSource = options.includeVolatileSource ?? false;
   const pageFolder = `pages/${sourcePostId}`;
   const raw = Buffer.from(`<!-- wp:divi/code {"module":{"content":{"innerContent":{"desktop":{"value":"<section class=\\\"atoum-home-blog-v2\\\"><div class=\\\"article-card\\\"><header class=\\\"article-card__header\\\">Blog</header><h1>${heading}</h1></div></section><style>.atoum-home-blog-v2{color:red}</style>"}}}}} /-->`, 'utf8');
   const rawHash = sha256(raw);
@@ -323,7 +327,7 @@ function buildSnapshot(
     coverage: { pages: { mode: coverageMode, post_types: ['page'], statuses: ['publish'], excluded: [] } },
     scan_status: scanStatus,
     issues: [{ code: 'FRONTEND_AUDIT_NOT_ATTACHED', severity: 'warning', scope: 'site', entity_ref: sourceSiteKey, message: 'Front non joint.' }],
-    counts: { pages: 1, nodes: 1, sources: 1, assets: 0, dependencies: 0, relations: 0, objects: 1 },
+    counts: { pages: 1, nodes: 1, sources: includeVolatileSource ? 1 : 0, assets: 0, dependencies: 0, relations: 0, objects: 1 },
     security: { potential_sensitive_payloads: true, redaction_applied: true, redaction_rules_version: '1', payloads_modified: false },
     package: { format: 'zip', root: 'snapshot/', checksums_file: 'checksums.json' },
   };
@@ -372,7 +376,7 @@ function buildSnapshot(
     audit_status: 'ready',
     raw_source: { object_ref: objectRef, redacted: false },
     tree_ref: `${pageFolder}/tree.json`,
-    source_ids: [sourceId],
+    source_ids: includeVolatileSource ? [sourceId] : [],
     asset_ids: [],
     dependency_ids: [],
     relation_ids: [],
@@ -423,7 +427,7 @@ function buildSnapshot(
   addJson('site.json', site);
   addJson('snapshot.json', snapshot);
   addJson('registries/objects.json', { objects: [{ ref: objectRef, path: objectPath, content_type: 'text/plain', encoding: 'utf-8', byte_length: raw.length, serialization: 'text', compression: 'none' }] });
-  addJson('registries/sources.json', { sources: [{
+  addJson('registries/sources.json', { sources: includeVolatileSource ? [{
     source_id: sourceId,
     kind: 'css',
     scope: 'page',
@@ -442,7 +446,7 @@ function buildSnapshot(
     lines: 1,
     bytes: raw.length,
     evidence: {},
-  }] });
+  }] : [] });
   addJson('registries/assets.json', { assets: [] });
   addJson('registries/dependencies.json', { dependencies: [] });
   addJson('registries/relations.json', { relations: [] });
