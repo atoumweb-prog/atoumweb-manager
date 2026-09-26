@@ -189,6 +189,7 @@ interface BridgeReusableComponent {
   generatorRevision: number;
   kind: 'atoumweb-library-reusable-component';
   origin: BridgeLibraryCandidate['origin'];
+  identity: Record<string, unknown> | null;
   reusable: {
     html: string;
     css: string;
@@ -1200,6 +1201,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
               <div className="aw-library-item-main">
                 <strong>{item.name}</strong>
                 <span>{categoryLabel(item.category)} · {reuseStatusLabel(effectiveReuseStatus(item))}{item.vertical ? ` · ${verticalLabel(item.vertical)}` : ''}</span>
+                {item.componentFamilyId && <span>Famille : {item.familyDisplayName ?? item.componentKey ?? 'Composant'} · {item.variantMode === 'base' ? 'Base' : `Variante ${item.variantKey ?? ''}`}</span>}
                 <BridgeSummaryStages item={item} />
               </div>
               <div className="aw-library-item-meta"><span>v{item.currentVersion?.versionNumber ?? '—'}</span>{item.stableVersion && <span>stable v{item.stableVersion.versionNumber}</span>}{item.archivedAt && <span>archivé</span>}</div>
@@ -1229,7 +1231,8 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
               {selected.description && <p>{selected.description}</p>}
               {selected.vertical && <p className="muted">Métier : <strong>{verticalLabel(selected.vertical)}</strong></p>}
               <div className="aw-library-tags">{selected.tags?.map((tag) => <span key={tag}>{tag}</span>)}</div>
-              {selected.originTechnicalItemId && <p className="muted">Origine conservée : composant de Bibliothèque projet {selected.originTechnicalItemId}</p>}
+              {selected.componentFamilyId && <p className="muted">Famille : <strong>{selected.familyDisplayName ?? selected.componentKey}</strong> · {selected.variantMode === 'base' ? 'Variante de base' : `Variante « ${selected.variantKey ?? 'sans clé'} »`}</p>}
+              {selected.originTechnicalItemId && <p className="muted">Origine conservée : composant de Bibliothèque projet {selected.originTechnicalItemId}</p>
             </>}
 
             {bridgeWorkflow.original && <section className="aw-library-bridge-workflow">
@@ -1333,22 +1336,44 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
                     />}
             </section>}
 
-            {!bridgeWorkflow.original && currentVersion && <section className="aw-library-current-version">
-              <div className="aw-library-section-title">
-                <div><span className="eyebrow">Aperçu principal</span><h3>Version courante · v{currentVersion.versionNumber}</h3></div>
-                <div className="aw-library-version-flags">{currentVersion.stable && <span>stable</span>}<span>{currentVersion.contentType}{currentVersion.language ? ` · ${currentVersion.language}` : ''}</span></div>
-              </div>
-              {currentVersion.notes && <p className="muted aw-library-current-notes">{currentVersion.notes}</p>}
-              <TechnicalContentViewer
-                contentType={currentVersion.contentType}
-                language={currentVersion.language}
-                content={currentVersion.contentText}
-                title="Version courante"
-                onMessage={onMessage}
-                expanded={expandedVersionId === currentVersion.id}
-                onToggleExpanded={() => setExpandedVersionId((current) => current === currentVersion.id ? null : currentVersion.id)}
-              />
-            </section>}
+            {!bridgeWorkflow.original && currentVersion && bridgeWorkflow.reusable?.payload.stage === 'reusable'
+              ? <section className="aw-library-current-version">
+                  <div className="aw-library-section-title">
+                    <div><span className="eyebrow">Composant de famille</span><h3>Réutilisable · v{bridgeWorkflow.reusable.version.versionNumber}</h3></div>
+                    <div className="aw-library-version-flags">{bridgeWorkflow.reusable.version.stable && <span>stable</span>}<span>{selected.variantMode === 'base' ? 'base' : `variante · ${selected.variantKey ?? ''}`}</span></div>
+                  </div>
+                  <p className="muted aw-library-current-notes">{reusableValidated
+                    ? 'Cette variante est validée et peut être renvoyée vers un Workbench Divi.'
+                    : 'Cette variante doit être validée humainement avant d’être considérée prête à réutiliser.'}</p>
+                  <BridgeReusableViewer
+                    component={bridgeWorkflow.reusable.payload.value}
+                    work={null}
+                    original={null}
+                    rawContent={bridgeWorkflow.reusable.version.contentText ?? ''}
+                    packageBusy={packageBusy}
+                    validationBusy={bridgeWorkflowBusy}
+                    validated={reusableValidated}
+                    onValidate={validateBridgeReusableVersion}
+                    onExportBridgePackage={() => exportPackage(bridgeWorkflow.reusable!.version.id, true)}
+                    onMessage={onMessage}
+                  />
+                </section>
+              : !bridgeWorkflow.original && currentVersion && <section className="aw-library-current-version">
+                  <div className="aw-library-section-title">
+                    <div><span className="eyebrow">Aperçu principal</span><h3>Version courante · v{currentVersion.versionNumber}</h3></div>
+                    <div className="aw-library-version-flags">{currentVersion.stable && <span>stable</span>}<span>{currentVersion.contentType}{currentVersion.language ? ` · ${currentVersion.language}` : ''}</span></div>
+                  </div>
+                  {currentVersion.notes && <p className="muted aw-library-current-notes">{currentVersion.notes}</p>}
+                  <TechnicalContentViewer
+                    contentType={currentVersion.contentType}
+                    language={currentVersion.language}
+                    content={currentVersion.contentText}
+                    title="Version courante"
+                    onMessage={onMessage}
+                    expanded={expandedVersionId === currentVersion.id}
+                    onToggleExpanded={() => setExpandedVersionId((current) => current === currentVersion.id ? null : currentVersion.id)}
+                  />
+                </section>}
 
             <details className="aw-library-secondary-panel aw-library-assets">
               <summary>
@@ -1969,6 +1994,9 @@ function parseBridgeReusableComponent(value: Record<string, unknown>): BridgeReu
     generatorRevision: Number(value.generatorRevision ?? 0),
     kind: 'atoumweb-library-reusable-component',
     origin,
+    identity: value.identity && typeof value.identity === 'object' && !Array.isArray(value.identity)
+      ? value.identity as Record<string, unknown>
+      : null,
     reusable: {
       html: typeof reusable.html === 'string' ? reusable.html : '',
       css: typeof reusable.css === 'string' ? reusable.css : '',
@@ -2158,6 +2186,7 @@ function buildBridgeReusableComponent(work: BridgeWorkComponent): BridgeReusable
     generatorRevision: BRIDGE_REUSABLE_GENERATOR_REVISION,
     kind: 'atoumweb-library-reusable-component',
     origin: checked.origin,
+    identity: null,
     reusable: {
       html: htmlTemplate.html,
       css: cssTemplate.css,
