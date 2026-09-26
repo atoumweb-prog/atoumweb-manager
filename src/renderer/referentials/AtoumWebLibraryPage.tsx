@@ -1074,25 +1074,33 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
       {error && <div className="notice aw-library-error"><span>{error}</span><button type="button" onClick={() => setError(null)}>×</button></div>}
 
       <article className="panel aw-library-toolbar">
-        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher nom, tag, notes ou contenu technique…" />
-        <select value={category} onChange={(event) => setCategory(event.target.value as AtoumWebLibraryCategory | '')}>
-          <option value="">Toutes les catégories</option>
-          {CATEGORIES.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}
-        </select>
-        <select value={reuseStatus} onChange={(event) => setReuseStatus(event.target.value as AtoumWebReuseStatus | '')}>
-          <option value="">Tous les statuts</option>
-          {REUSE_STATUSES.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}
-        </select>
-        <input list="aw-library-vertical-options" value={vertical} onChange={(event) => setVertical(event.target.value)} placeholder="Métier : tous" aria-label="Filtrer par métier" />
-        <datalist id="aw-library-vertical-options">
-          {[...new Set([...VERTICAL_SUGGESTIONS, ...items.map((item) => item.vertical).filter((value): value is string => Boolean(value))])].map((value) => <option key={value} value={value} />)}
-        </datalist>
-        <label className="aw-library-checkbox"><input type="checkbox" checked={includeArchived} onChange={(event) => setIncludeArchived(event.target.checked)} /> Archivés</label>
-        <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void inspectPackage()}><OperationIcon name="upload" size={16} /> Importer ZIP</button>
-        <button className="secondary-button" type="button" disabled={occurrenceReturnBusy} onClick={() => void inspectOccurrenceReturn()}><OperationIcon name="upload" size={16} /> Retour Bridge</button>
-        {occurrenceReturns.length > 0 && <button className="secondary-button" type="button" onClick={() => setShowOccurrenceReturns((value) => !value)}>Retours {pendingOccurrenceReturnCount ? `· ${pendingOccurrenceReturnCount} à décider` : `· ${occurrenceReturns.length}`}</button>}
-        <button className="primary-button" type="button" onClick={() => setCreating((value) => !value)}>{creating ? 'Fermer' : 'Nouveau composant'}</button>
-        </article>
+        <div className="aw-library-toolbar-filters">
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher nom, tag, notes ou contenu technique…" />
+          <select value={category} onChange={(event) => setCategory(event.target.value as AtoumWebLibraryCategory | '')}>
+            <option value="">Toutes les catégories</option>
+            {CATEGORIES.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}
+          </select>
+          <select value={reuseStatus} onChange={(event) => setReuseStatus(event.target.value as AtoumWebReuseStatus | '')}>
+            <option value="">Tous les statuts</option>
+            {REUSE_STATUSES.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}
+          </select>
+          <input list="aw-library-vertical-options" value={vertical} onChange={(event) => setVertical(event.target.value)} placeholder="Métier : tous" aria-label="Filtrer par métier" />
+          <datalist id="aw-library-vertical-options">
+            {[...new Set([...VERTICAL_SUGGESTIONS, ...items.map((item) => item.vertical).filter((value): value is string => Boolean(value))])].map((value) => <option key={value} value={value} />)}
+          </datalist>
+          <label className="aw-library-checkbox"><input type="checkbox" checked={includeArchived} onChange={(event) => setIncludeArchived(event.target.checked)} /> Archivés</label>
+        </div>
+        <div className="aw-library-toolbar-actions">
+          <div className="aw-library-action-group" aria-label="Échanges Bridge">
+            <button className="secondary-button" type="button" disabled={occurrenceReturnBusy} onClick={() => void inspectOccurrenceReturn()}><OperationIcon name="upload" size={16} /> Retour Bridge</button>
+            {occurrenceReturns.length > 0 && <button className="secondary-button" type="button" onClick={() => setShowOccurrenceReturns((value) => !value)}><OperationIcon name="repeat" size={16} /> Retours {pendingOccurrenceReturnCount ? `· ${pendingOccurrenceReturnCount} à décider` : `· ${occurrenceReturns.length}`}</button>}
+          </div>
+          <div className="aw-library-action-group" aria-label="Gestion de la Bibliothèque">
+            <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void inspectPackage()}><OperationIcon name="package" size={16} /> Importer ZIP</button>
+            <button className="primary-button" type="button" onClick={() => setCreating((value) => !value)}>{creating ? 'Fermer' : 'Nouveau composant'}</button>
+          </div>
+        </div>
+      </article>
       </div>
 
       {onToggleHeader && <button
@@ -1101,10 +1109,9 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
         onClick={onToggleHeader}
         title={headerCollapsed ? 'Afficher le bandeau de la Bibliothèque' : 'Masquer le bandeau de la Bibliothèque'}
         aria-label={headerCollapsed ? 'Afficher le bandeau de la Bibliothèque' : 'Masquer le bandeau de la Bibliothèque'}
-        aria-expanded={!headerCollapsed}
+        aria-pressed={headerCollapsed}
       >
         <span aria-hidden="true">{headerCollapsed ? '↓' : '↑'}</span>
-        <small>{headerCollapsed ? 'Afficher' : 'Masquer'}</small>
       </button>}
 
       {occurrenceReturnInspection && <div className="aw-library-modal-backdrop" role="presentation" onMouseDown={(event) => {
