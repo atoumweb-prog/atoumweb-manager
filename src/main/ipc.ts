@@ -169,6 +169,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('bridge:objects:preview', (_event, objectRef: string) => database.bridgeSnapshots.getObjectPreview(objectRef));
   ipcMain.handle('bridge:modules:preview', (_event, pageSnapshotId: string, occurrenceId: string) => database.bridgeSnapshots.getModulePreview(pageSnapshotId, occurrenceId));
   ipcMain.handle('bridge:pages:preview', (_event, pageSnapshotId: string) => database.bridgeSnapshots.getPagePreview(pageSnapshotId));
+  ipcMain.handle('bridge:snapshots:compare', (_event, beforeSnapshotId: string, afterSnapshotId: string) =>
+    database.bridgeSnapshots.compareSnapshots(beforeSnapshotId, afterSnapshotId));
   ipcMain.handle('bridge:export-diagnostic', async (_event, snapshotId: string) => {
     const diagnostic = database.bridgeSnapshots.buildDiagnostic(snapshotId);
     const site = diagnostic.site as { name?: string } | undefined;
