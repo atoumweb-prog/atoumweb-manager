@@ -177,6 +177,28 @@ function intersection(left: string[], right: string[]): string[] {
   return [...new Set(left.filter((item) => rightSet.has(item)))].sort();
 }
 
+function snapshotDiffWarnings(before: BridgeSnapshotSummary, after: BridgeSnapshotSummary): string[] {
+  const warnings: string[] = [];
+  const describe = (snapshot: BridgeSnapshotSummary, label: string) => {
+    if (snapshot.snapshotType !== 'full') {
+      warnings.push(`${label} n’est pas un snapshot complet : les absences ne prouvent pas forcément une suppression.`);
+    }
+    const pagesCoverage = snapshot.coverage.pages;
+    const pageMode = pagesCoverage && typeof pagesCoverage === 'object' && !Array.isArray(pagesCoverage)
+      ? String((pagesCoverage as Record<string, unknown>).mode ?? '')
+      : '';
+    if (pageMode && pageMode !== 'complete') {
+      warnings.push(`${label} a une couverture pages « ${pageMode} » : interpréter les ajouts/suppressions avec prudence.`);
+    }
+    if (snapshot.scanStatus === 'partial_failure' || snapshot.scanStatus === 'failed') {
+      warnings.push(`${label} a un scan ${snapshot.scanStatus} : le diff peut être incomplet.`);
+    }
+  };
+  describe(before, 'La copie Avant');
+  describe(after, 'La copie Après');
+  return warnings;
+}
+
 export class BridgeSnapshotService {
   constructor(
     private readonly database: DatabaseAdapter,
@@ -576,6 +598,7 @@ export class BridgeSnapshotService {
       siteId: before.siteId,
       before,
       after,
+      warnings: snapshotDiffWarnings(before, after),
       summary: {
         added: pages.filter((page) => page.status === 'added').length,
         removed: pages.filter((page) => page.status === 'removed').length,
@@ -593,8 +616,10 @@ export class BridgeSnapshotService {
 
     const before = this.getPage(beforePageSnapshotId);
     const after = this.getPage(afterPageSnapshotId);
-    if (before.page.sourcePageKey !== after.page.sourcePageKey) {
-      throw new Error('Les deux pages doivent représenter le même contenu WordPress.');
+    const beforeSnapshot = this.getSnapshot(before.page.snapshotId);
+    const afterSnapshot = this.getSnapshot(after.page.snapshotId);
+    if (beforeSnapshot.siteId !== afterSnapshot.siteId || before.page.sourcePageKey !== after.page.sourcePageKey) {
+      throw new Error('Les deux pages doivent représenter le même contenu du même site Bridge.');
     }
 
     const proposals = before.nodes.flatMap((beforeNode) => {
