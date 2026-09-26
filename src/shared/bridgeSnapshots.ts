@@ -307,6 +307,30 @@ export interface BridgeSnapshotDiff {
   pages: BridgeSnapshotPageDiff[];
 }
 
+export type BridgeNodeMatchConfidence = 'high' | 'medium' | 'low';
+
+export interface BridgeNodeMatchCandidate {
+  beforeOccurrenceId: string;
+  afterOccurrenceId: string;
+  beforeLabel: string;
+  afterLabel: string;
+  nodeType: string;
+  moduleType: string | null;
+  score: number;
+  confidence: BridgeNodeMatchConfidence;
+  reasons: string[];
+}
+
+export interface BridgePageNodeMatchReview {
+  beforePageSnapshotId: string;
+  afterPageSnapshotId: string;
+  sourcePageKey: string;
+  candidates: BridgeNodeMatchCandidate[];
+  unmatchedBefore: string[];
+  unmatchedAfter: string[];
+  ambiguousBefore: string[];
+}
+
 export interface BridgeSnapshotDiagnosticExportResult {
   cancelled: boolean;
   path?: string;
@@ -323,5 +347,6 @@ export interface BridgeSnapshotsApi {
   getModulePreview(pageSnapshotId: string, occurrenceId: string): Promise<BridgeModulePreview>;
   getPagePreview(pageSnapshotId: string): Promise<BridgePagePreview>;
   compareSnapshots(beforeSnapshotId: string, afterSnapshotId: string): Promise<BridgeSnapshotDiff>;
+  reviewPageNodeMatches(beforePageSnapshotId: string, afterPageSnapshotId: string): Promise<BridgePageNodeMatchReview>;
   exportDiagnostic(snapshotId: string): Promise<BridgeSnapshotDiagnosticExportResult>;
 }
