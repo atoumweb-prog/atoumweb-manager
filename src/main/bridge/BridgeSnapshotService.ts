@@ -7,6 +7,7 @@ import type {
   BridgeNodeSummary,
   BridgeObjectPreview,
   BridgeModulePreview,
+  BridgePageNodeMatchReview,
   BridgePagePreview,
   BridgePageSnapshotDetail,
   BridgePageSummary,
@@ -86,6 +87,94 @@ function stableObjectString(value: unknown): string {
     );
   };
   return JSON.stringify(normalize(value));
+}
+
+function scoreNodeMatch(before: BridgeNodeSummary, after: BridgeNodeSummary) {
+  let score = 0;
+  const reasons: string[] = [];
+
+  if (before.nodeType === after.nodeType) {
+    score += 14;
+    reasons.push('Même type de nœud');
+  } else {
+    return makeNodeScore(before, after, 0, []);
+  }
+
+  if (before.moduleType && before.moduleType === after.moduleType) {
+    score += 24;
+    reasons.push('Même type de module');
+  } else if (before.moduleType !== after.moduleType) {
+    score -= 8;
+  }
+
+  const beforeFingerprints = meaningfulRecord(before.fingerprints);
+  const afterFingerprints = meaningfulRecord(after.fingerprints);
+  if (beforeFingerprints && afterFingerprints && stableObjectString(beforeFingerprints) === stableObjectString(afterFingerprints)) {
+    score += 40;
+    reasons.push('Empreinte technique identique');
+  }
+
+  if (before.label && after.label && normalizeMatchText(before.label) === normalizeMatchText(after.label)) {
+    score += 10;
+    reasons.push('Même libellé');
+  }
+
+  if (before.depth === after.depth) {
+    score += 4;
+    reasons.push('Même profondeur');
+  }
+
+  if (before.position === after.position) {
+    score += 4;
+    reasons.push('Même position');
+  }
+
+  const sharedIds = intersection(before.ids, after.ids);
+  if (sharedIds.length > 0) {
+    score += 18;
+    reasons.push(`Identifiant HTML commun : ${sharedIds.slice(0, 2).join(', ')}`);
+  }
+
+  const sharedClasses = intersection(before.classes, after.classes);
+  if (sharedClasses.length > 0) {
+    score += Math.min(12, 4 + sharedClasses.length * 2);
+    reasons.push(`Classe(s) commune(s) : ${sharedClasses.slice(0, 3).join(', ')}`);
+  }
+
+  const beforeHints = meaningfulRecord(before.matchingHints);
+  const afterHints = meaningfulRecord(after.matchingHints);
+  if (beforeHints && afterHints && stableObjectString(beforeHints) === stableObjectString(afterHints)) {
+    score += 10;
+    reasons.push('Indices de correspondance identiques');
+  }
+
+  return makeNodeScore(before, after, Math.max(0, Math.min(100, score)), reasons);
+}
+
+function makeNodeScore(before: BridgeNodeSummary, after: BridgeNodeSummary, score: number, reasons: string[]) {
+  return {
+    beforeOccurrenceId: before.occurrenceId,
+    afterOccurrenceId: after.occurrenceId,
+    beforeLabel: before.label ?? before.moduleType ?? before.nodeType,
+    afterLabel: after.label ?? after.moduleType ?? after.nodeType,
+    nodeType: before.nodeType,
+    moduleType: before.moduleType,
+    score,
+    reasons,
+  };
+}
+
+function meaningfulRecord(value: Record<string, unknown>): Record<string, unknown> | null {
+  return Object.keys(value).length > 0 ? value : null;
+}
+
+function normalizeMatchText(value: string): string {
+  return value.trim().toLocaleLowerCase('fr-FR').replace(/\s+/g, ' ');
+}
+
+function intersection(left: string[], right: string[]): string[] {
+  const rightSet = new Set(right);
+  return [...new Set(left.filter((item) => rightSet.has(item)))].sort();
 }
 
 export class BridgeSnapshotService {
@@ -497,6 +586,86 @@ export class BridgeSnapshotService {
     };
   }
 
+  reviewPageNodeMatches(beforePageSnapshotId: string, afterPageSnapshotId: string): BridgePageNodeMatchReview {
+    if (beforePageSnapshotId === afterPageSnapshotId) {
+      throw new Error('Choisis deux versions différentes de la page.');
+    }
+
+    const before = this.getPage(beforePageSnapshotId);
+    const after = this.getPage(afterPageSnapshotId);
+    if (before.page.sourcePageKey !== after.page.sourcePageKey) {
+      throw new Error('Les deux pages doivent représenter le même contenu WordPress.');
+    }
+
+    const proposals = before.nodes.flatMap((beforeNode) => {
+      const scored = after.nodes
+        .map((afterNode) => scoreNodeMatch(beforeNode, afterNode))
+        .filter((candidate) => candidate.score >= 35)
+        .sort((left, right) => right.score - left.score || left.afterOccurrenceId.localeCompare(right.afterOccurrenceId));
+
+      if (scored.length === 0) return [];
+      const best = scored[0];
+      const second = scored[1];
+      const ambiguous = Boolean(second && best.score - second.score < 12);
+      return [{
+        ...best,
+        confidence: ambiguous ? 'low' as const : best.score >= 82 ? 'high' as const : best.score >= 58 ? 'medium' as const : 'low' as const,
+        ambiguous,
+      }];
+    });
+
+    const accepted = proposals.filter((proposal) => !proposal.ambiguous);
+    const afterUsage = new Map<string, typeof accepted>();
+    accepted.forEach((proposal) => {
+      const current = afterUsage.get(proposal.afterOccurrenceId) ?? [];
+      current.push(proposal);
+      afterUsage.set(proposal.afterOccurrenceId, current);
+    });
+
+    const collidingAfterIds = new Set(
+      [...afterUsage.entries()]
+        .filter(([, matches]) => matches.length > 1)
+        .map(([afterOccurrenceId]) => afterOccurrenceId),
+    );
+
+    const candidates = proposals
+      .map((proposal) => ({
+        beforeOccurrenceId: proposal.beforeOccurrenceId,
+        afterOccurrenceId: proposal.afterOccurrenceId,
+        beforeLabel: proposal.beforeLabel,
+        afterLabel: proposal.afterLabel,
+        nodeType: proposal.nodeType,
+        moduleType: proposal.moduleType,
+        score: proposal.score,
+        confidence: proposal.ambiguous || collidingAfterIds.has(proposal.afterOccurrenceId)
+          ? 'low' as const
+          : proposal.confidence,
+        reasons: [
+          ...proposal.reasons,
+          ...(proposal.ambiguous ? ['Plusieurs cibles proches : validation humaine requise.'] : []),
+          ...(collidingAfterIds.has(proposal.afterOccurrenceId) ? ['Cette cible est proposée pour plusieurs nœuds source.'] : []),
+        ],
+      }))
+      .sort((left, right) => right.score - left.score || left.beforeOccurrenceId.localeCompare(right.beforeOccurrenceId));
+
+    const safelyMatchedBefore = new Set(
+      candidates.filter((candidate) => candidate.confidence !== 'low').map((candidate) => candidate.beforeOccurrenceId),
+    );
+    const safelyMatchedAfter = new Set(
+      candidates.filter((candidate) => candidate.confidence !== 'low').map((candidate) => candidate.afterOccurrenceId),
+    );
+
+    return {
+      beforePageSnapshotId,
+      afterPageSnapshotId,
+      sourcePageKey: before.page.sourcePageKey,
+      candidates,
+      unmatchedBefore: before.nodes.filter((node) => !safelyMatchedBefore.has(node.occurrenceId)).map((node) => node.occurrenceId),
+      unmatchedAfter: after.nodes.filter((node) => !safelyMatchedAfter.has(node.occurrenceId)).map((node) => node.occurrenceId),
+      ambiguousBefore: candidates.filter((candidate) => candidate.confidence === 'low').map((candidate) => candidate.beforeOccurrenceId),
+    };
+  }
+
   buildDiagnostic(snapshotId: string): Record<string, unknown> {
     const snapshot = this.getSnapshot(snapshotId);
     const site = this.getSiteSummary(snapshot.siteId);
@@ -782,12 +951,11 @@ export class BridgeSnapshotService {
 
   private nodeDiffSignature(pageSnapshotId: string): string {
     const rows = this.database.all<Record<string, unknown>>(
-      `SELECT logical_node_id,node_type,module_type,label,position,depth,fingerprints_json,classes_json,ids_json
+      `SELECT node_type,module_type,label,position,depth,fingerprints_json,classes_json,ids_json
        FROM bridge_nodes WHERE page_snapshot_id=?`,
       [pageSnapshotId],
     );
     return rows.map((row) => stableObjectString({
-      logicalNodeId: nullableString(row.logical_node_id),
       nodeType: String(row.node_type ?? ''),
       moduleType: nullableString(row.module_type),
       label: nullableString(row.label),
