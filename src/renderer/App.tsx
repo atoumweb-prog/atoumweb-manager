@@ -336,7 +336,6 @@ function App() {
             onMessage={setMessage}
             initialItemId={librarySearchTarget}
             headerCollapsed={libraryHeaderCollapsed}
-            onToggleHeader={() => setLibraryHeaderCollapsed((value) => !value)}
           />}
           {activePage === 'Sites' && <BridgeSitesPage onMessage={setMessage} />}
           {activePage === 'Sauvegardes' && <BusinessBackupsPage onMessage={setMessage} initialRecordId={backupSearchTarget} />}
