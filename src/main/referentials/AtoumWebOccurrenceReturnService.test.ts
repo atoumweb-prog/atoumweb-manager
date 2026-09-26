@@ -284,6 +284,7 @@ function createReturnPackage(
   const payloads = {
     'occurrence/occurrence.json': Buffer.from(JSON.stringify(occurrence), 'utf8'),
     'occurrence/component.html': Buffer.from(`<section class="hero-return"><h1 data-aw-field-text="title">${title}</h1></section>`, 'utf8'),
+    'occurrence/component.css': Buffer.from('.hero-return{color:#111111;}', 'utf8'),
     'occurrence/assets.json': Buffer.from(JSON.stringify({ contract: 'atoumweb_occurrence_assets', schemaVersion: 1 }), 'utf8'),
     'occurrence/provenance.json': Buffer.from(JSON.stringify({ contract: 'atoumweb_occurrence_provenance', schemaVersion: 1, actionPolicy: 'manager_decides' }), 'utf8'),
   };
@@ -307,7 +308,7 @@ function createReturnPackage(
         ...htmlFile,
         sha256: options.invalidHtmlChecksum ? '0'.repeat(64) : htmlFile.sha256,
       },
-      css: null,
+      css: file('occurrence/component.css'),
       javascript: null,
       assets: file('occurrence/assets.json'),
       provenance: file('occurrence/provenance.json'),
