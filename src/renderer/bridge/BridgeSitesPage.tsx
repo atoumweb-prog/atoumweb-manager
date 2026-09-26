@@ -14,6 +14,7 @@ import type {
 } from '../../shared/bridgeSnapshots';
 import { OperationIcon } from '../operations/OperationIcon';
 import './BridgeSitesPage.css';
+import { BridgeNodeMatchReviewPanel } from './BridgeNodeMatchReview';
 
 interface Props {
   onMessage: (message: string) => void;
@@ -39,6 +40,8 @@ export function BridgeSitesPage({ onMessage }: Props) {
   const [compareAfterId, setCompareAfterId] = useState('');
   const [compareOpen, setCompareOpen] = useState(false);
   const [nodeMatchReview, setNodeMatchReview] = useState<BridgePageNodeMatchReview | null>(null);
+  const [nodeMatchError, setNodeMatchError] = useState<string | null>(null);
+  const [showUnchangedMatches, setShowUnchangedMatches] = useState(false);
   const [nodeMatchBusy, setNodeMatchBusy] = useState(false);
   const [contents, setContents] = useState<BridgePageSummary[]>([]);
   const [allContents, setAllContents] = useState<BridgePageSummary[]>([]);
@@ -364,6 +367,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
 
   async function reviewNodeMatches(beforePageSnapshotId: string, afterPageSnapshotId: string): Promise<void> {
     setNodeMatchBusy(true);
+    setNodeMatchError(null);
     try {
       setError(null);
       setNodeMatchReview(await window.atoumweb.bridgeSnapshots.reviewPageNodeMatches(beforePageSnapshotId, afterPageSnapshotId));
@@ -406,6 +410,23 @@ export function BridgeSitesPage({ onMessage }: Props) {
       setError(reason instanceof Error ? reason.message : 'Comparaison des snapshots impossible.');
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function decideNodeMatch(beforeOccurrenceId: string, afterOccurrenceId: string, decision: 'accepted' | 'rejected' | 'pending'): Promise<void> {
+    if (!nodeMatchReview || nodeMatchBusy) return;
+    const { beforePageSnapshotId, afterPageSnapshotId } = nodeMatchReview;
+    setNodeMatchBusy(true);
+    setNodeMatchError(null);
+    try {
+      const next = await window.atoumweb.bridgeSnapshots.decideNodeMatch({
+        beforePageSnapshotId, afterPageSnapshotId, beforeOccurrenceId, afterOccurrenceId, decision,
+      });
+      setNodeMatchReview((current) => current?.beforePageSnapshotId === beforePageSnapshotId && current.afterPageSnapshotId === afterPageSnapshotId ? next : current);
+    } catch (reason) {
+      setNodeMatchError(reason instanceof Error ? reason.message : 'Enregistrement de la décision impossible.');
+    } finally {
+      setNodeMatchBusy(false);
     }
   }
 
@@ -507,18 +528,25 @@ export function BridgeSitesPage({ onMessage }: Props) {
                   <div className="bridge-compare-summary">
                     <Metric label="Ajoutés" value={String(snapshotDiff.summary.added)} />
                     <Metric label="Supprimés" value={String(snapshotDiff.summary.removed)} />
-                    <Metric label="Modifiés" value={String(snapshotDiff.summary.changed)} />
-                    <Metric label="Inchangés" value={String(snapshotDiff.summary.unchanged)} />
+                    <Metric label="Modifiés réels" value={String(snapshotDiff.summary.changed)} />
+                    <Metric label="Écarts techniques" value={String(snapshotDiff.summary.technical)} />
+                    <Metric label="Sans écart" value={String(snapshotDiff.summary.unchanged)} />
                   </div>
+                  {snapshotDiff.ignoredWorkbenches.length > 0 && <p>
+                    {snapshotDiff.ignoredWorkbenches.length} Workbench(s) interne(s) ignoré(s) du bilan du site :{' '}
+                    {snapshotDiff.ignoredWorkbenches.map((item) => `${item.title} (${item.sourcePageKey})`).join(', ')}.
+                  </p>}
                   {snapshotDiff.warnings.length > 0 && <div className="bridge-warning-list bridge-compare-warnings">
                     {snapshotDiff.warnings.map((warning) => <div key={warning}><OperationIcon name="alert" size={15} /><span>{warning}</span></div>)}
                   </div>}
                   <div className="bridge-compare-pages">
-                    {snapshotDiff.pages.filter((item) => item.status !== 'unchanged').map((item) => <div className={`bridge-compare-page ${item.status}`} key={item.sourcePageKey}>
+                    <label><input type="checkbox" checked={showUnchangedMatches} onChange={(event) => setShowUnchangedMatches(event.target.checked)} /> Afficher aussi les pages sans écart pour revoir leurs correspondances</label>
+                    {snapshotDiff.pages.filter((item) => showUnchangedMatches || item.status !== 'unchanged').map((item) => <div className={`bridge-compare-page ${item.status}`} key={item.sourcePageKey}>
                       <div>
                         <span className="bridge-compare-status">{snapshotDiffStatusLabel(item.status)}</span>
                         <strong>{item.titleAfter ?? item.titleBefore ?? item.sourcePageKey}</strong>
                         <small>{item.sourcePageKey}</small>
+                        {item.status === 'technical' && <small>Source brute identique ; version du scanner différente. Écarts d’extraction / dépendances à examiner, sans modification détectée du contenu WordPress/Divi. Le rendu et les ressources externes ne sont pas validés par ce constat.</small>}
                       </div>
                       <div className="bridge-compare-changes">
                         {bridgePageChangeLabels(item.changes).map((label) => <span key={label}>{label}</span>)}
@@ -528,41 +556,17 @@ export function BridgeSitesPage({ onMessage }: Props) {
                           disabled={nodeMatchBusy}
                           onClick={() => void reviewNodeMatches(item.beforePageSnapshotId!, item.afterPageSnapshotId!)}
                         >
-                          <OperationIcon name="repeat" size={14} /> Correspondances modules
+                          <OperationIcon name="repeat" size={14} /> Reconnaître les éléments
                         </button>}
                       </div>
+                      {nodeMatchReview?.beforePageSnapshotId === item.beforePageSnapshotId && nodeMatchReview?.afterPageSnapshotId === item.afterPageSnapshotId && <BridgeNodeMatchReviewPanel
+                        key={`${item.beforePageSnapshotId}:${item.afterPageSnapshotId}`} review={nodeMatchReview}
+                        pageTitle={item.titleAfter ?? item.titleBefore ?? 'Page'} beforeDate={snapshotDiff.before.generatedAt} afterDate={snapshotDiff.after.generatedAt}
+                        busy={nodeMatchBusy} error={nodeMatchError} onDecision={decideNodeMatch} />}
                     </div>)}
                     {snapshotDiff.pages.every((item) => item.status === 'unchanged') && <div className="bridge-empty"><OperationIcon name="check-circle" size={28} /><strong>Aucun changement détecté</strong><span>Les deux copies ont le même contenu observable selon Snapshot V1.</span></div>}
                   </div>
-                  {nodeMatchReview && <section className="bridge-node-match-review">
-                    <div className="bridge-node-match-head">
-                      <div><span className="eyebrow">Correspondances proposées</span><h3>Modules de la page</h3></div>
-                      <span>{nodeMatchReview.candidates.length} proposition{nodeMatchReview.candidates.length > 1 ? 's' : ''}</span>
-                    </div>
-                    {nodeMatchReview.candidates.length
-                      ? <div className="bridge-node-match-list">
-                          {nodeMatchReview.candidates.map((candidate) => <div className={`bridge-node-match ${candidate.confidence}`} key={candidate.beforeOccurrenceId}>
-                            <div className="bridge-node-match-pair">
-                              <strong>{candidate.beforeLabel}</strong>
-                              <span aria-hidden="true">→</span>
-                              <strong>{candidate.afterLabel}</strong>
-                            </div>
-                            <div className="bridge-node-match-meta">
-                              <span>Confiance : {nodeMatchConfidenceLabel(candidate.confidence)}</span>
-                              <span>Score : {candidate.score}/100</span>
-                              <small>{candidate.beforeOccurrenceId} → {candidate.afterOccurrenceId}</small>
-                            </div>
-                            <div className="bridge-node-match-reasons">
-                              {candidate.reasons.map((reason) => <span key={reason}>{reason}</span>)}
-                            </div>
-                          </div>)}
-                        </div>
-                      : <div className="bridge-empty"><OperationIcon name="alert" size={24} /><strong>Aucune correspondance suffisamment fiable</strong><span>Les modules restent non appariés ; aucune identité logique n’est créée.</span></div>}
-                    {(nodeMatchReview.unmatchedBefore.length > 0 || nodeMatchReview.unmatchedAfter.length > 0) && <p className="muted">
-                      Non appariés : {nodeMatchReview.unmatchedBefore.length} avant · {nodeMatchReview.unmatchedAfter.length} après.
-                    </p>}
-                  </section>}
-                  <p className="muted bridge-compare-note">Diff en lecture seule. Aucun logical_node_id n’est attribué automatiquement : les correspondances de modules resteront soumises à validation.</p>
+                  <p className="muted bridge-compare-note">Snapshots en lecture seule. Les identités logiques sont des annotations Manager créées uniquement après validation humaine.</p>
                 </>}
           </div>
         </section>
@@ -978,16 +982,11 @@ function filterBridgeContents(items: BridgePageSummary[], view: ContentView, que
   });
 }
 
-function nodeMatchConfidenceLabel(value: BridgePageNodeMatchReview['candidates'][number]['confidence']): string {
-  if (value === 'high') return 'forte';
-  if (value === 'medium') return 'moyenne';
-  return 'faible / à vérifier';
-}
-
 function snapshotDiffStatusLabel(status: BridgeSnapshotDiff['pages'][number]['status']): string {
   if (status === 'added') return 'Ajouté';
   if (status === 'removed') return 'Supprimé';
   if (status === 'changed') return 'Modifié';
+  if (status === 'technical') return 'Écart technique';
   return 'Inchangé';
 }
 

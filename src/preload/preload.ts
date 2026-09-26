@@ -140,6 +140,7 @@ const api: AtoumWebApi = {
       ipcRenderer.invoke('bridge:snapshots:compare', beforeSnapshotId, afterSnapshotId),
     reviewPageNodeMatches: (beforePageSnapshotId: string, afterPageSnapshotId: string) =>
       ipcRenderer.invoke('bridge:pages:review-node-matches', beforePageSnapshotId, afterPageSnapshotId),
+    decideNodeMatch: (input) => ipcRenderer.invoke('bridge:pages:decide-node-match', input),
     exportDiagnostic: (snapshotId: string) => ipcRenderer.invoke('bridge:export-diagnostic', snapshotId),
   },
   workflow: {

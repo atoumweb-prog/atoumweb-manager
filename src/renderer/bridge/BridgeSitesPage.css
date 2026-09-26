@@ -1749,7 +1749,7 @@
 
 .bridge-compare-summary {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -1807,6 +1807,18 @@
 .bridge-compare-page.changed {
   border-color: color-mix(in srgb, #F2B705 45%, var(--border));
 }
+
+.bridge-match-context { grid-column: 1 / -1; min-width: 0; border-top: 1px solid var(--border); padding-top: 16px; }
+.bridge-match-card { margin: 12px 0; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+.bridge-match-card header { display: grid; gap: 8px; }
+.bridge-match-context strong, .bridge-match-context small { white-space: normal; overflow-wrap: anywhere; }
+.bridge-match-context h4 { margin: 8px 0; }
+.bridge-match-context p, .bridge-match-context details { font-weight: 400; overflow-wrap: anywhere; }
+.bridge-match-context button { margin: 8px 8px 8px 0; }
+.bridge-match-context summary { cursor: pointer; margin: 12px 0; }
+.bridge-match-before-after { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.bridge-match-before-after iframe { width: 100%; height: 320px; border: 1px solid var(--border); background: white; }
+@media (max-width: 900px) { .bridge-match-before-after { grid-template-columns: 1fr; } }
 
 .bridge-compare-changes {
   display: flex;

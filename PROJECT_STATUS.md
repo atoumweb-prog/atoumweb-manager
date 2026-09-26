@@ -1,5 +1,29 @@
 # AtoumWeb Manager — Suivi du projet
 
+## Correction UX — Reconnaissance des éléments et réexamen — 26/09/2026
+
+- Retour Carlos : persistance confirmée, mais la validation basée sur des IDs / scores est incompréhensible. La première recette valide le stockage, pas la pertinence des correspondances choisies.
+- [x] Revue ouverte directement sous la page concernée. Chargement des aperçus avant/après uniquement à la demande, contexte de page, dates, position, extrait de contenu ; IDs et score repliés dans les détails techniques.
+- [x] Décision affichée sur le bloc qui reste en place : « C’est le même élément » / « Ce sont deux éléments différents ». Les propositions peuvent rester en attente sans bloquer le parcours ; « À examiner plus tard » replie la carte sans écrire de décision.
+- [x] Les aperçus sont reconstruits, sans exécution JavaScript ni chargement externe ; leur rendu peut être incomplet. Pas de décision proposée sans contenu reconnaissable ; les conteneurs sans aperçu restent en attente.
+- [x] Migration 42 additive pour historiser les réexamens, compatible avec les décisions déjà enregistrées sous migration 41. Réexamen transactionnel et idempotent, historique conservé, attributions retirées seulement si aucune validation dépendante ne les utilise. Sinon, message demandant de réexaminer d’abord les validations suivantes.
+- [x] Tests ciblés : **35 réussis / 0 échoué** (Snapshot 26, migrations 9) ; typecheck réussi. Aucun contrat V1 ni snapshot modifié. Aucun commit/push, suite complète ou packaging.
+- [ ] Recette Carlos : ouvrir « Reconnaître les éléments », identifier le contenu avant/après, vérifier la décision sur place et remettre une ancienne décision de recette en attente avec « Réexaminer cette décision ».
+
+## Validation humaine des correspondances de nœuds — 26/09/2026
+
+- [x] Migration 41 : identités logiques, attributions et décisions dans des tables Manager séparées. Les snapshots, objets et `bridge_nodes.logical_node_id` importés restent intacts.
+- [x] Validation / refus explicites depuis Sites → comparaison → Correspondances modules ; accès possible aux pages sans écart.
+- [x] Provenance conservée : couple de nœuds/pages/snapshots, proposition et score au moment de la décision, date, origine `manager_human`, journal d'activité. Aucun nom d'opérateur n'est inventé : le Manager local n'identifie pas l'humain connecté.
+- [x] Une identité ne peut désigner deux nœuds d'un même snapshot. Les identités déjà distinctes ne sont jamais fusionnées silencieusement ; les refus restent respectés même par les chaînes de validations.
+- [x] Décisions transactionnelles et idempotentes ; erreur de journalisation = annulation complète. Un refus n'attribue aucune identité.
+- [x] Les propositions ne constituent plus un appariement validé dans les compteurs. La restriction initiale « décision définitive » est remplacée par le réexamen historisé décrit ci-dessus.
+- [x] Typecheck réussi ; tests ciblés finaux : **32 réussis / 0 échoué** (BridgeSnapshotService 23, migrations 9). Suite complète et packaging réservés au checkpoint final.
+- [ ] Recette Carlos : valider une proposition vérifiée, refuser une autre, rouvrir la comparaison et vérifier historique/identité, contrôler que le bilan A/B ne change pas. Utiliser le profil de validation.
+- [ ] Recette réelle sur une prochaine modification naturelle du site à compléter ; elle ne bloque pas les lots suivants si les contrôles ciblés restent verts.
+- Base locale connue : `d05c38fd6e445c7d4adaedc47c0c8266a0df29e6`. Aucun commit, push ou intégration de branches 40/41/42 dans cette passe.
+- Prochaine étape : recette de cet écran puis composition multi-composants ; publication production et intégration des branches différées.
+
 ## Lot 5 — Familles / Variantes depuis les retours Bridge — 26/09/2026
 
 - [x] Migration 40 : familles de composants et variantes explicites, sans modifier les contrats Bridge V1.
@@ -22,6 +46,11 @@
 
 ## Prochain lot — Diff Snapshot A / B — 26/09/2026
 
+- [x] Recette MSI : les 29 écarts et le Workbench #3671 restaient classés modifiés/ajouté sur `d05c38f` ; la distinction technique et l'exclusion décrites dans le document de reprise étaient absentes du code.
+- [x] Correctif local : catégorie interne `technical` et compteur dédiés lorsque les versions Bridge diffèrent, que la source brute est présente et identique, sans écart de titre/slug, statut, URL, builder, empreinte brute ou références d'assets. Les écarts d'extraction/dépendances restent visibles ; ce classement ne valide ni le rendu ni les ressources externes.
+- [x] Les brouillons de type page portant le préfixe réservé `AWB Workbench — Bibliothèque —` sont exclus du bilan et listés explicitement. Les pages publiées, les titres ordinaires et les transitions vers un contenu non interne restent comparés. Aucun snapshot enregistré n'est modifié.
+- [x] Validation locale du correctif : typecheck réussi ; `BridgeSnapshotService.test.ts` **16 réussis / 0 échoué**. Pas de suite complète, packaging, commit ou push.
+- [x] Recette Carlos confirmée par capture : 24/09/2026 01:14 → 26/09/2026 13:48, 0 ajouté / 0 supprimé / 0 modifié réel / 29 techniques / 53 sans écart ; Workbench #3671 explicitement ignoré. Les détails affichent « Écart technique » pour les dépendances et les écarts structure/sources.
 - [x] Contrat interne de comparaison en lecture seule ajouté sans modifier Snapshot Schema V1.
 - [x] Comparaison de deux snapshots du même site par `source_page_key` : ajouté / supprimé / modifié / inchangé.
 - [x] Détection des écarts sur titre/slug, statut, URL, builder, source brute, empreintes, structure/modules, sources, assets et dépendances.
@@ -38,9 +67,9 @@
 - [x] Les sélecteurs Avant / Après sont normalisés chronologiquement, même si la copie actuellement ouverte est la plus ancienne.
 - [x] Avertissement prévu lorsque les deux copies proviennent de versions Bridge ou profils de fingerprint différents.
 - [x] Test de régression ajouté : deux scans identiques avec IDs techniques différents doivent produire **0 modifié / 1 inchangé**.
-- [ ] Validation MSI : typecheck + test ciblé `BridgeSnapshotService.test.ts`.
-- [ ] Recette réelle : nécessite au moins deux snapshots importés du même site.
-- [ ] Attribution des `logical_node_id` volontairement non automatique ; aucune écriture avant validation sur un second snapshot réel.
+- [x] Validation MSI : typecheck + test ciblé `BridgeSnapshotService.test.ts` (8/8 avant correctif, 16/16 après).
+- [x] Recette réelle : bilan corrigé validé par Carlos sur les deux snapshots AtoumWeb.fr. Prochaine étape : validation humaine des correspondances de nœuds, sans attribution automatique ni modification des snapshots historiques.
+- [x] Attribution des identités logiques uniquement après décision humaine dans le registre Manager (migration 41), sans réécriture des snapshots ; recette de l'écran en attente.
 
 ### Finition du round-trip LOT 4
 

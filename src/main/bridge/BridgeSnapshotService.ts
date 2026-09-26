@@ -3,6 +3,7 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileS
 import { join, resolve, sep } from 'node:path';
 import type {
   BridgeAssetSummary,
+  BridgeNodeMatchDecisionInput,
   BridgeDependencySummary,
   BridgeNodeSummary,
   BridgeObjectPreview,
@@ -20,6 +21,7 @@ import type {
   BridgeSourceSummary,
 } from '../../shared/bridgeSnapshots';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
+import { BridgeNodeMatchDecisions } from './BridgeNodeMatchDecisions';
 import type { WorkspacePaths } from '../workspace';
 import {
   arrayOfRecords,
@@ -528,8 +530,17 @@ export class BridgeSnapshotService {
 
     const beforeRows = this.snapshotDiffPageRows(beforeSnapshotId);
     const afterRows = this.snapshotDiffPageRows(afterSnapshotId);
-    const beforeByKey = new Map(beforeRows.map((row) => [row.source_page_key, row] as const));
-    const afterByKey = new Map(afterRows.map((row) => [row.source_page_key, row] as const));
+    // Exclusion limitée aux brouillons portant le préfixe réservé de Bridge.
+    // Une page publiée ou un simple titre contenant « Workbench » reste comparé.
+    const isWorkbench = (row: SnapshotDiffPageRow) => row.post_type === 'page'
+      && row.status === 'draft' && /^AWB Workbench\s*[—–-]\s*Bibliothèque\s*[—–-]\s*\S/i.test(row.title);
+    const allRows = [...beforeRows, ...afterRows];
+    const ignoredWorkbenches = [...new Map(allRows.filter(isWorkbench)
+      .filter((row) => allRows.filter((other) => other.source_page_key === row.source_page_key).every(isWorkbench))
+      .map((row) => [row.source_page_key, { sourcePageKey: row.source_page_key, title: row.title }])).values()];
+    const ignoredKeys = new Set(ignoredWorkbenches.map((row) => row.sourcePageKey));
+    const beforeByKey = new Map(beforeRows.filter((row) => !ignoredKeys.has(row.source_page_key)).map((row) => [row.source_page_key, row] as const));
+    const afterByKey = new Map(afterRows.filter((row) => !ignoredKeys.has(row.source_page_key)).map((row) => [row.source_page_key, row] as const));
     const keys = [...new Set([...beforeByKey.keys(), ...afterByKey.keys()])].sort((left, right) => left.localeCompare(right, 'fr'));
 
     const pages = keys.map((sourcePageKey) => {
@@ -578,10 +589,16 @@ export class BridgeSnapshotService {
         dependencies: stableStringSet(left.dependency_ids_json) !== stableStringSet(right.dependency_ids_json),
       };
       const changed = Object.values(changes).some(Boolean);
+      // Le scanner peut extraire autrement les mêmes données WordPress/Divi.
+      // Sans preuve d'une source brute identique, conserver « modifié ».
+      const technical = changed && before.bridgeVersion !== after.bridgeVersion
+        && Boolean(left.raw_object_ref) && left.raw_object_ref === right.raw_object_ref
+        && !changes.title && !changes.status && !changes.url && !changes.builder
+        && !changes.fingerprints && !changes.assets;
 
       return {
         sourcePageKey,
-        status: changed ? 'changed' as const : 'unchanged' as const,
+        status: technical ? 'technical' as const : changed ? 'changed' as const : 'unchanged' as const,
         titleBefore: left.title,
         titleAfter: right.title,
         beforePageSnapshotId: left.page_snapshot_id,
@@ -600,9 +617,11 @@ export class BridgeSnapshotService {
         added: pages.filter((page) => page.status === 'added').length,
         removed: pages.filter((page) => page.status === 'removed').length,
         changed: pages.filter((page) => page.status === 'changed').length,
+        technical: pages.filter((page) => page.status === 'technical').length,
         unchanged: pages.filter((page) => page.status === 'unchanged').length,
       },
       pages,
+      ignoredWorkbenches,
     };
   }
 
@@ -670,12 +689,9 @@ export class BridgeSnapshotService {
       }))
       .sort((left, right) => right.score - left.score || left.beforeOccurrenceId.localeCompare(right.beforeOccurrenceId));
 
-    const safelyMatchedBefore = new Set(
-      candidates.filter((candidate) => candidate.confidence !== 'low').map((candidate) => candidate.beforeOccurrenceId),
-    );
-    const safelyMatchedAfter = new Set(
-      candidates.filter((candidate) => candidate.confidence !== 'low').map((candidate) => candidate.afterOccurrenceId),
-    );
+    const decisions = new BridgeNodeMatchDecisions(this.database).list(beforePageSnapshotId, afterPageSnapshotId);
+    const safelyMatchedBefore = new Set(decisions.filter((item) => item.decision === 'accepted').map((item) => item.beforeOccurrenceId));
+    const safelyMatchedAfter = new Set(decisions.filter((item) => item.decision === 'accepted').map((item) => item.afterOccurrenceId));
 
     return {
       beforePageSnapshotId,
@@ -685,7 +701,22 @@ export class BridgeSnapshotService {
       unmatchedBefore: before.nodes.filter((node) => !safelyMatchedBefore.has(node.occurrenceId)).map((node) => node.occurrenceId),
       unmatchedAfter: after.nodes.filter((node) => !safelyMatchedAfter.has(node.occurrenceId)).map((node) => node.occurrenceId),
       ambiguousBefore: candidates.filter((candidate) => candidate.confidence === 'low').map((candidate) => candidate.beforeOccurrenceId),
+      decisions,
+      history: new BridgeNodeMatchDecisions(this.database).history(beforePageSnapshotId, afterPageSnapshotId),
     };
+  }
+
+  decideNodeMatch(input: BridgeNodeMatchDecisionInput): BridgePageNodeMatchReview {
+    if (!input || typeof input !== 'object') throw new Error('Décision de correspondance invalide.');
+    const review = this.reviewPageNodeMatches(input.beforePageSnapshotId, input.afterPageSnapshotId);
+    if (input.decision === 'pending') {
+      new BridgeNodeMatchDecisions(this.database).reopen(input);
+      return this.reviewPageNodeMatches(input.beforePageSnapshotId, input.afterPageSnapshotId);
+    }
+    const proposal = review.candidates.find((item) => item.beforeOccurrenceId === input.beforeOccurrenceId && item.afterOccurrenceId === input.afterOccurrenceId);
+    if (!proposal) throw new Error('Cette correspondance ne fait pas partie des propositions actuelles.');
+    new BridgeNodeMatchDecisions(this.database).record(input, proposal);
+    return this.reviewPageNodeMatches(input.beforePageSnapshotId, input.afterPageSnapshotId);
   }
 
   buildDiagnostic(snapshotId: string): Record<string, unknown> {
