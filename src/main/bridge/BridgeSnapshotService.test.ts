@@ -113,14 +113,67 @@ describe('BridgeSnapshotService', () => {
     service.importPackage(first);
     expect(() => service.importPackage(second)).toThrow(/package différent/i);
   });
+
+  it('compare deux snapshots du même site sans modifier leur contenu', () => {
+    const firstPath = buildSnapshot(join(workspaceRoot, 'snapshot-diff-a.zip'), 'Accueil', {
+      snapshotId: 'awb-snap:20260924T000000Z:diff-a',
+      pageSnapshotId: 'awb-pagesnap:diff-a',
+      generatedAt: '2026-09-24T00:00:00Z',
+      heading: 'Bonjour Bridge',
+    });
+    const secondPath = buildSnapshot(join(workspaceRoot, 'snapshot-diff-b.zip'), 'Accueil refondue', {
+      snapshotId: 'awb-snap:20260925T000000Z:diff-b',
+      pageSnapshotId: 'awb-pagesnap:diff-b',
+      generatedAt: '2026-09-25T00:00:00Z',
+      heading: 'Bonjour Bridge V2',
+    });
+
+    const first = service.importPackage(firstPath).snapshot;
+    const second = service.importPackage(secondPath).snapshot;
+    const diff = service.compareSnapshots(first.id, second.id);
+
+    expect(diff.siteId).toBe(first.siteId);
+    expect(diff.before.id).toBe(first.id);
+    expect(diff.after.id).toBe(second.id);
+    expect(diff.summary).toEqual({ added: 0, removed: 0, changed: 1, unchanged: 0 });
+    expect(diff.pages).toHaveLength(1);
+    expect(diff.pages[0]).toMatchObject({
+      sourcePageKey: 'wp-post:10',
+      status: 'changed',
+      titleBefore: 'Accueil',
+      titleAfter: 'Accueil refondue',
+    });
+    expect(diff.pages[0].changes.title).toBe(true);
+    expect(diff.pages[0].changes.rawObject).toBe(true);
+    expect(diff.pages[0].changes.nodes).toBe(true);
+
+    expect(service.listPages(first.id)[0].title).toBe('Accueil');
+    expect(service.listPages(second.id)[0].title).toBe('Accueil refondue');
+  });
+
+  it('refuse de comparer un snapshot avec lui-même', () => {
+    const imported = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-same.zip'), 'Accueil')).snapshot;
+    expect(() => service.compareSnapshots(imported.id, imported.id)).toThrow(/deux snapshots différents/i);
+  });
 });
 
-function buildSnapshot(destination: string, title: string): string {
+function buildSnapshot(
+  destination: string,
+  title: string,
+  options: {
+    snapshotId?: string;
+    pageSnapshotId?: string;
+    generatedAt?: string;
+    heading?: string;
+  } = {},
+): string {
   const sourceInstanceId = 'awb-site:test-instance';
   const sourceSiteKey = 'wp:https://example.test/:blog:1';
-  const snapshotId = 'awb-snap:20260924T000000Z:test';
-  const pageSnapshotId = 'awb-pagesnap:test';
-  const raw = Buffer.from('<!-- wp:divi/code {"module":{"content":{"innerContent":{"desktop":{"value":"<section class=\\\"atoum-home-blog-v2\\\"><div class=\\\"article-card\\\"><header class=\\\"article-card__header\\\">Blog</header><h1>Bonjour Bridge</h1></div></section><style>.atoum-home-blog-v2{color:red}</style>"}}}}} /-->', 'utf8');
+  const snapshotId = options.snapshotId ?? 'awb-snap:20260924T000000Z:test';
+  const pageSnapshotId = options.pageSnapshotId ?? 'awb-pagesnap:test';
+  const generatedAt = options.generatedAt ?? '2026-09-24T00:00:00Z';
+  const heading = options.heading ?? 'Bonjour Bridge';
+  const raw = Buffer.from(`<!-- wp:divi/code {"module":{"content":{"innerContent":{"desktop":{"value":"<section class=\\\"atoum-home-blog-v2\\\"><div class=\\\"article-card\\\"><header class=\\\"article-card__header\\\">Blog</header><h1>${heading}</h1></div></section><style>.atoum-home-blog-v2{color:red}</style>"}}}}} /-->`, 'utf8');
   const rawHash = sha256(raw);
   const objectRef = `sha256:${rawHash}`;
   const objectPath = `objects/sha256/${rawHash.slice(0, 2)}/${rawHash}`;
@@ -130,7 +183,7 @@ function buildSnapshot(destination: string, title: string): string {
     schema_version: '1.0.0',
     bridge_version: '0.4.2',
     fingerprint_profile: 'awb-json-c14n-v1',
-    generated_at: '2026-09-24T00:00:00Z',
+    generated_at: generatedAt,
     site_id: null,
     source_instance_id: sourceInstanceId,
     source_site_key: sourceSiteKey,
@@ -163,7 +216,7 @@ function buildSnapshot(destination: string, title: string): string {
     source_instance_id: sourceInstanceId,
     source_site_key: sourceSiteKey,
     snapshot_type: 'full',
-    generated_at: '2026-09-24T00:00:00Z',
+    generated_at: generatedAt,
     bridge: { version: '0.4.2', schema_version: '1.0.0', fingerprint_profile: 'awb-json-c14n-v1' },
     environment: { wordpress_version: '7.1.2', php_version: '8.1.34', theme: 'Divi', theme_version: '5.13.1', child_theme: null },
     fingerprints: {},
