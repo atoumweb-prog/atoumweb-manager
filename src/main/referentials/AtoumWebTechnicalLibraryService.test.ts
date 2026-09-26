@@ -145,6 +145,52 @@ describe('AtoumWebTechnicalLibraryService', () => {
     expect(library.list({ category: 'code_snippet' }).map((item) => item.id)).toEqual([snippet.id]);
   });
 
+  it('expose et recherche les métadonnées Famille / Variante', () => {
+    const item = library.create(
+      {
+        category: 'section',
+        name: 'Section mariage premium',
+        reuseStatus: 'ready',
+        vertical: 'mariage',
+        tags: ['bridge'],
+      },
+      { contentType: 'json', language: 'json', contentText: '{"kind":"atoumweb-library-reusable-component"}' },
+    );
+    const now = '2026-09-26T06:00:00.000Z';
+    database.run(
+      `INSERT INTO atoumweb_component_families
+       (id,component_key,display_name,category,vertical,reusability_scope,base_item_id,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?)`,
+      ['awfam:library-test', 'aw-section-mariage-premium', 'Famille Mariage Premium', 'section', 'mariage', 'vertical', item.id, now, now],
+    );
+    database.run(
+      `INSERT INTO atoumweb_component_variants
+       (id,family_id,technical_item_id,variant_key,display_name,variant_mode,variant_of_id,source_occurrence_return_id,created_at,updated_at)
+       VALUES (?,?,?,?,?,'base',NULL,NULL,?,?)`,
+      ['awvar:library-test-base', 'awfam:library-test', item.id, 'base', 'Base', now, now],
+    );
+
+    const detailed = library.get(item.id);
+    expect(detailed).toMatchObject({
+      componentFamilyId: 'awfam:library-test',
+      componentKey: 'aw-section-mariage-premium',
+      familyDisplayName: 'Famille Mariage Premium',
+      libraryVariantId: 'awvar:library-test-base',
+      variantKey: 'base',
+      variantMode: 'base',
+      reusabilityScope: 'vertical',
+    });
+    expect(library.list({ search: 'famille mariage premium' }).map((candidate) => candidate.id)).toContain(item.id);
+    expect(library.list({ search: 'aw-section-mariage-premium' }).map((candidate) => candidate.id)).toContain(item.id);
+
+    library.rebuildSearchIndex();
+    const indexed = database.get<{ search_text: string }>(
+      "SELECT search_text FROM search_documents WHERE entity_type='atoumweb_library' AND entity_id=?",
+      [item.id],
+    );
+    expect(indexed?.search_text).toContain('aw-section-mariage-premium');
+  });
+
   it('refuse une origine globale pour préserver la notion d’origine projet', () => {
     const first = library.create(
       { category: 'note', name: 'Composant global', reuseStatus: 'reference' },
