@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import type { CrmService } from '../crm/CrmService';
+import { ContractTermsService } from './ContractTermsService';
 import {
   QUOTE_ADJUSTMENT_MODES,
   QUOTE_DISCOUNT_REASONS,
@@ -50,6 +51,13 @@ interface QuoteRow extends Record<string, unknown> {
   project_ready_at: string | null;
   finalized_at: string | null;
   last_extended_at: string | null;
+  contract_text_snapshot: string | null;
+  contract_snapshot_json: string | null;
+  contract_compiled_at: string | null;
+  contract_audience: 'professional' | 'consumer' | null;
+  contract_document_id: string | null;
+  contract_document_attached_at: string | null;
+  abby_reference: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -105,6 +113,8 @@ interface OfferComponentSnapshotRow extends Record<string, unknown> {
   prerequisites_json: string;
   price_mode: string;
   price_cents: number | null;
+  special_terms: string | null;
+  contract_type: string | null;
   is_optional: number;
   quantity_milli: number;
   sort_order: number;
@@ -114,6 +124,7 @@ export class QuoteService {
   constructor(
     private readonly database: DatabaseAdapter,
     private readonly crm: CrmService,
+    private readonly contractTerms: ContractTermsService = new ContractTermsService(database),
   ) {}
 
   list(filters: QuoteFilters = {}): QuoteSummary[] {
@@ -145,7 +156,18 @@ export class QuoteService {
     const lines = this.database
       .all<QuoteLineRow>('SELECT * FROM quote_lines WHERE quote_id=? ORDER BY sort_order, created_at', [id])
       .map((line) => this.mapLine(line));
-    return { ...this.mapSummary(row), needSummary: row.need_summary, estimatedDelay: row.estimated_delay, prerequisitesText: row.prerequisites_text, specialTerms: row.special_terms, contractType: row.contract_type, lines };
+    return {
+      ...this.mapSummary(row),
+      needSummary: row.need_summary,
+      estimatedDelay: row.estimated_delay,
+      prerequisitesText: row.prerequisites_text,
+      specialTerms: row.special_terms,
+      contractType: row.contract_type,
+      contractAudience: row.contract_audience,
+      contractTextSnapshot: row.contract_text_snapshot,
+      contractSnapshotJson: row.contract_snapshot_json,
+      lines,
+    };
   }
 
   create(input: QuoteInput, withinTransaction = false): QuoteDetail {
@@ -156,6 +178,8 @@ export class QuoteService {
     if (!Number.isInteger(validityDays) || validityDays <= 0) throw new Error('Durée de validité invalide.');
     const depositPercent = input.depositPercent ?? 30;
     if (!Number.isInteger(depositPercent) || depositPercent < 0 || depositPercent > 100) throw new Error('Acompte invalide.');
+    const contractAudience = input.contractAudience ?? this.inferContractAudience(input.prospectId, input.clientAccountId);
+    if (!['professional', 'consumer'].includes(contractAudience)) throw new Error('Type de client contractuel invalide.');
 
     const id = randomUUID();
     const now = new Date();
@@ -170,10 +194,10 @@ export class QuoteService {
         `INSERT INTO quotes (
           id, quote_number, prospect_id, client_account_id, accepted_client_account_id,
           subject, need_summary, status, validity_days, valid_until, estimated_delay,
-          prerequisites_text, special_terms, contract_type, deposit_percent,
+          prerequisites_text, special_terms, contract_type, contract_audience, deposit_percent,
           catalog_value_cents, discount_value_cents, contract_value_cents, deposit_cents, balance_cents,
           created_at, updated_at
-        ) VALUES (?, ?, ?, ?, NULL, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 0, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, NULL, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 0, ?, ?)`,
         [
           id,
           number,
@@ -187,6 +211,7 @@ export class QuoteService {
           clean(input.prerequisitesText),
           clean(input.specialTerms),
           clean(input.contractType),
+          contractAudience,
           depositPercent,
           nowString,
           nowString,
@@ -248,6 +273,8 @@ export class QuoteService {
           sv.prerequisites_json,
           sv.price_mode,
           sv.price_cents,
+          sv.special_terms,
+          sv.contract_type,
           oc.is_optional,
           oc.quantity_milli,
           oc.sort_order
@@ -268,6 +295,8 @@ export class QuoteService {
         prerequisites: this.parseJsonList(component.prerequisites_json),
         priceMode: component.price_mode,
         priceCents: component.price_cents,
+        specialTerms: component.special_terms,
+        contractType: component.contract_type,
         isOptional: Boolean(component.is_optional),
         quantityMilli: Number(component.quantity_milli),
         sortOrder: Number(component.sort_order),
@@ -303,7 +332,6 @@ export class QuoteService {
     }, source.item_id, source.version_id, snapshot);
     if (firstOffer) {
       this.updateConditions(quoteId, {
-        specialTerms: current.specialTerms || source.special_terms,
         prerequisitesText: current.prerequisitesText || this.parseJsonList(source.prerequisites_json).join('\n'),
         contractType: current.contractType || source.contract_type,
       });
@@ -357,16 +385,18 @@ export class QuoteService {
     const depositPercent = input.depositPercent ?? current.depositPercent ?? 30;
     if (!Number.isInteger(depositPercent) || depositPercent < 0 || depositPercent > 100) throw new Error('Acompte invalide.');
     const validityDays = input.validityDays ?? this.daysUntil(current.validUntil) ?? 30;
+    const contractAudience = input.contractAudience ?? current.contractAudience ?? this.inferContractAudience(current.prospectId, current.clientAccountId ?? current.acceptedClientAccountId);
+    if (!['professional', 'consumer'].includes(contractAudience)) throw new Error('Type de client contractuel invalide.');
     const validUntil = new Date();
     validUntil.setDate(validUntil.getDate() + validityDays);
 
     this.database.run(
       `UPDATE quotes SET subject=?, need_summary=?, validity_days=?, valid_until=?, estimated_delay=?,
-       prerequisites_text=?, special_terms=?, contract_type=?, deposit_percent=?, updated_at=? WHERE id=?`,
+       prerequisites_text=?, special_terms=?, contract_type=?, contract_audience=?, deposit_percent=?, updated_at=? WHERE id=?`,
       [subject, clean(input.needSummary ?? current.needSummary), validityDays, validUntil.toISOString(),
         clean(input.estimatedDelay ?? current.estimatedDelay), clean(input.prerequisitesText ?? current.prerequisitesText),
         clean(input.specialTerms ?? current.specialTerms), clean(input.contractType ?? current.contractType),
-        depositPercent, nowIso(), quoteId],
+        contractAudience, depositPercent, nowIso(), quoteId],
     );
     this.recalculate(quoteId);
     return this.get(quoteId);
@@ -386,6 +416,7 @@ export class QuoteService {
     if (quote.status !== 'draft') throw new Error('Seul un devis brouillon peut être finalisé.');
     if (quote.finalizedAt) return quote;
     if (quote.lines.length === 0) throw new Error('Ajoute au moins une ligne avant de finaliser le devis.');
+    this.contractTerms.freezeQuote(id);
     const now = nowIso();
     this.database.run('UPDATE quotes SET finalized_at=?,updated_at=? WHERE id=?', [now, now, id]);
     if (quote.prospectId) this.database.run("UPDATE prospects SET stage='quote_to_send',updated_at=? WHERE id=? AND stage NOT IN ('won','lost')", [now, quote.prospectId]);
@@ -415,6 +446,7 @@ export class QuoteService {
     if (quote.status === 'accepted') return quote;
     if (!['sent', 'viewed'].includes(quote.status)) throw new Error('Le devis doit être envoyé avant acceptation.');
     if (quote.lines.length === 0) throw new Error('Impossible d’accepter un devis vide.');
+    this.contractTerms.freezeQuote(id);
 
     let clientId = quote.clientAccountId ?? quote.acceptedClientAccountId ?? null;
     if (!clientId && quote.prospectId) {
@@ -429,6 +461,36 @@ export class QuoteService {
       [clientId, clientId, now, now, now, now, id],
     );
     this.writeActivity(id, 'quote_accepted', `Devis ${quote.number} accepté`);
+    return this.get(id);
+  }
+
+  attachContractDocument(id: string, documentId: string, abbyReference?: string | null): QuoteDetail {
+    const quote = this.get(id);
+    if (quote.status !== 'accepted') throw new Error('Le devis doit être accepté avant de rattacher son document contractuel.');
+    const clientId = quote.acceptedClientAccountId ?? quote.clientAccountId;
+    if (!clientId) throw new Error('Client introuvable pour ce devis.');
+    const document = this.database.get<{ id: string; client_account_id: string; category: string }>(
+      'SELECT id,client_account_id,category FROM client_documents WHERE id=?',
+      [documentId],
+    );
+    if (!document || document.client_account_id !== clientId) throw new Error('Le document sélectionné n’appartient pas au client du devis.');
+    if (!['contract', 'quote'].includes(document.category)) throw new Error('Le document doit être classé comme contrat ou devis.');
+
+    const now = nowIso();
+    this.database.run(
+      'UPDATE quotes SET contract_document_id=?,contract_document_attached_at=?,abby_reference=?,updated_at=? WHERE id=?',
+      [documentId, now, clean(abbyReference) ?? quote.abbyReference ?? null, now, id],
+    );
+    this.writeActivity(id, 'quote_contract_document_attached', `Document contractuel rattaché au devis ${quote.number}`);
+    return this.get(id);
+  }
+
+  updateAbbyReference(id: string, abbyReference?: string | null): QuoteDetail {
+    const quote = this.get(id);
+    if (quote.status !== 'accepted') throw new Error('La référence Abby est disponible après acceptation du devis.');
+    const now = nowIso();
+    this.database.run('UPDATE quotes SET abby_reference=?,updated_at=? WHERE id=?', [clean(abbyReference), now, id]);
+    this.writeActivity(id, 'quote_abby_reference_updated', `Référence Abby mise à jour pour ${quote.number}`);
     return this.get(id);
   }
 
@@ -457,6 +519,7 @@ export class QuoteService {
       prerequisitesText: source.prerequisitesText,
       specialTerms: source.specialTerms,
       contractType: source.contractType,
+      contractAudience: source.contractAudience,
       depositPercent: source.depositPercent,
     });
     const now = nowIso();
@@ -476,6 +539,7 @@ export class QuoteService {
       );
     }
     this.recalculate(copy.id);
+    this.contractTerms.copyQuoteCustomizations(id, copy.id);
     return this.get(copy.id);
   }
 
@@ -581,6 +645,7 @@ export class QuoteService {
     const quote = this.get(quoteId);
     if (quote.snapshotLockedAt || quote.status === 'accepted') throw new Error('Ce devis est accepté et figé.');
     if (quote.status !== 'draft') throw new Error('Repasse par une copie du devis pour modifier son contenu après envoi.');
+    if (quote.finalizedAt) throw new Error('Ce devis est finalisé et figé. Duplique-le pour modifier son contenu.');
   }
 
   private transition(id: string, status: QuoteStatus, timestampColumn: 'sent_at' | 'viewed_at' | 'refused_at' | 'expired_at', summary: string): QuoteDetail {
@@ -589,6 +654,20 @@ export class QuoteService {
     this.database.run(`UPDATE quotes SET status=?, ${timestampColumn}=?, updated_at=? WHERE id=?`, [status, now, now, id]);
     this.writeActivity(id, `quote_${status}`, summary);
     return this.get(id);
+  }
+
+  private inferContractAudience(prospectId?: string | null, clientId?: string | null): 'professional' | 'consumer' {
+    const client = clean(clientId);
+    if (client) {
+      const row = this.database.get<{ organization_id: string | null }>('SELECT organization_id FROM client_accounts WHERE id=?', [client]);
+      return row?.organization_id ? 'professional' : 'consumer';
+    }
+    const prospect = clean(prospectId);
+    if (prospect) {
+      const row = this.database.get<{ organization_id: string | null }>('SELECT organization_id FROM prospects WHERE id=?', [prospect]);
+      return row?.organization_id ? 'professional' : 'consumer';
+    }
+    return 'consumer';
   }
 
   private validateOwner(prospectId?: string | null, clientId?: string | null): void {
@@ -637,6 +716,10 @@ export class QuoteService {
       projectReadyAt: row.project_ready_at,
       finalizedAt: row.finalized_at,
       lastExtendedAt: row.last_extended_at,
+      contractCompiledAt: row.contract_compiled_at,
+      contractDocumentId: row.contract_document_id,
+      contractDocumentAttachedAt: row.contract_document_attached_at,
+      abbyReference: row.abby_reference,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
