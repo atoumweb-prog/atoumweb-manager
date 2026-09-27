@@ -2,10 +2,12 @@ import { createHash } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { basename, join, resolve, sep } from 'node:path';
 import type { AtoumWebCompositionPackageExportResult } from '../../shared/referentials';
+import { buildComponentIdentityV1 } from '../../shared/componentIdentity';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import type { WorkspacePaths } from '../workspace';
 import { AtoumWebCompositionService } from './AtoumWebCompositionService';
 import { AtoumWebPackageService } from './AtoumWebPackageService';
+import { AtoumWebTechnicalLibraryService } from './AtoumWebTechnicalLibraryService';
 import { readZipArchive, writeZipArchive, type ZipEntryInput } from './ZipArchive';
 
 interface ComponentPackageManifest {
@@ -35,6 +37,7 @@ export class AtoumWebCompositionPackageService {
     private readonly workspace: WorkspacePaths,
     private readonly compositions: AtoumWebCompositionService,
     private readonly packages: AtoumWebPackageService,
+    private readonly library: AtoumWebTechnicalLibraryService,
   ) {}
 
   exportPackage(compositionId: string): AtoumWebCompositionPackageExportResult {
@@ -61,6 +64,7 @@ export class AtoumWebCompositionPackageService {
       }
 
       const bridge = componentManifest.bridgeWorkbench;
+      const prefix = `components/${String(index + 1).padStart(3, '0')}`;
       if (!bridge
         || bridge.contract !== 'atoumweb_bridge_component_package'
         || bridge.schemaVersion !== 1
@@ -70,10 +74,85 @@ export class AtoumWebCompositionPackageService {
         || bridge.flow !== 'workbench_first'
         || bridge.workbenchRequired !== true
         || bridge.directProductionInjection !== false) {
-        throw new Error(`Le composant « ${compositionItem.displayName} » n’est pas exportable vers un Workbench Bridge V1.`);
-      }
+        const item = this.library.get(compositionItem.sourceItemId);
+        const version = item.versions.find((candidate) => candidate.id === compositionItem.sourceVersionId);
+        const language = (version?.language ?? '').trim().toLowerCase();
+        if (!version || version.contentType !== 'code' || language !== 'html' || !version.contentText?.trim()) {
+          throw new Error(`Le composant « ${compositionItem.displayName} » n’a pas de package Workbench V1 ni de source HTML réutilisable.`);
+        }
 
-      const prefix = `components/${String(index + 1).padStart(3, '0')}`;
+        const addText = (relativePath: string, value: string): { path: string; sha256: string } => {
+          const data = Buffer.from(value, 'utf8');
+          const path = `${prefix}/${relativePath}`;
+          entries.push({ name: path, data });
+          return { path, sha256: this.sha256(data) };
+        };
+        const identityValue = buildComponentIdentityV1({
+          libraryDisplayName: item.name,
+          libraryItemId: item.id,
+          libraryVersionId: version.id,
+          libraryVersionNumber: version.versionNumber,
+          tags: item.tags ?? [],
+          componentFamilyId: item.componentFamilyId ?? null,
+          componentKey: item.componentKey ?? null,
+          libraryVariantId: item.libraryVariantId ?? null,
+          variantKey: item.variantKey ?? null,
+          variantOf: item.componentKey ?? null,
+          variantMode: item.variantMode ?? null,
+          vertical: item.vertical ?? null,
+          reusabilityScope: item.reusabilityScope ?? 'unclassified',
+        });
+        const fieldsValue = { contract: 'atoumweb_component_fields', schemaVersion: 1, fields: [] };
+        const provenanceValue = {
+          source: 'manager_plain_html',
+          libraryItemId: item.id,
+          libraryVersionId: version.id,
+          libraryVersionNumber: version.versionNumber,
+        };
+        const copiedFiles = {
+          html: addText('component/component.html', version.contentText),
+          css: null,
+          javascript: null,
+          fields: addText('component/fields.json', `${JSON.stringify(fieldsValue, null, 2)}\n`),
+          identity: addText('component/identity.json', `${JSON.stringify(identityValue, null, 2)}\n`),
+          dependencies: addText('component/dependencies.json', '[]\n'),
+          sourceAssets: addText('component/source-assets.json', '[]\n'),
+          provenance: addText('component/provenance.json', `${JSON.stringify(provenanceValue, null, 2)}\n`),
+        };
+
+        manifestComponents.push({
+          compositionItemId: compositionItem.id,
+          sortOrder: compositionItem.sortOrder,
+          displayName: compositionItem.displayName,
+          category: compositionItem.category,
+          vertical: compositionItem.vertical,
+          source: {
+            libraryItemId: compositionItem.sourceItemId,
+            libraryVersionId: compositionItem.sourceVersionId,
+            libraryVersionNumber: compositionItem.sourceVersionNumber,
+            componentFamilyId: compositionItem.componentFamilyId,
+            componentKey: compositionItem.componentKey,
+            libraryVariantId: compositionItem.libraryVariantId,
+            variantKey: compositionItem.variantKey,
+            variantMode: compositionItem.variantMode,
+          },
+          component: {
+            libraryItemId: item.id,
+            libraryVersionId: version.id,
+            libraryVersionNumber: version.versionNumber,
+            name: item.name,
+            category: item.category,
+            rootClasses: [],
+            generalized: false,
+            method: 'divi-code',
+            identity: identityValue,
+          },
+          files: copiedFiles,
+          transportAssets: [],
+          provenance: provenanceValue,
+        });
+        return;
+      }
       const copiedFiles: Record<string, { path: string; sha256: string } | null> = {};
       for (const [key, descriptor] of Object.entries(bridge.files ?? {})) {
         if (!descriptor?.path) {
