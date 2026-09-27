@@ -1,5 +1,26 @@
 # Handoff Codex MSI — AtoumWeb Manager
 
+
+## Checkpoint supplémentaire — CGV Builder intégré le 27/09/2026
+
+Le chantier parallèle `feature/quote-cgv-builder-v1` / PR #74 a été réconcilié avec Projet V2 avant de poursuivre les lots Bridge.
+
+À retenir :
+- logique CGV / clauses / snapshot contractuel intégrée ;
+- UI Builder CGV intégrée ;
+- PDF Abby accepté + onglet Contrats Client intégrés ;
+- textes brouillons des modules de prestations intégrés ;
+- migrations CGV renumérotées **44 / 45 / 46** lors de la convergence ;
+- migrations 40 à 43 restent celles du chantier Bridge / Familles / Correspondances / Composition ;
+- aucune validation juridique de production n’est implicite ;
+- validation locale MSI encore requise après synchronisation.
+
+Avant de lancer l’application sur un workspace déjà utilisé historiquement avec la branche CGV, vérifier la table `schema_migrations` afin d’écarter toute collision d’anciens IDs 40/41/42.
+
+Le prochain chantier d’architecture prévu est :
+`Devis accepté → Projet → Site → Page → Composition → occurrences de composants`.
+
+
 > État partagé au 24/09/2026. À lire avec `AGENTS.md`, `PROJECT_STATUS.md` et le document de phase concerné.
 
 ## Branche de travail à utiliser
