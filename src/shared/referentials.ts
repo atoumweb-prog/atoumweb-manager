@@ -238,6 +238,14 @@ export interface AtoumWebCompositionMoveItemInput {
   targetIndex: number;
 }
 
+export interface AtoumWebCompositionPackageExportResult {
+  compositionId: string;
+  path: string;
+  fileName: string;
+  componentCount: number;
+  createdAt: string;
+}
+
 export type AtoumWebOccurrenceReturnDecision =
   | 'keep_occurrence'
   | 'create_variant'
@@ -351,6 +359,8 @@ export interface ReferentialsApi {
     moveItem(id: string, itemId: string, input: AtoumWebCompositionMoveItemInput): Promise<AtoumWebCompositionDetail>;
     archive(id: string): Promise<AtoumWebCompositionDetail>;
     reactivate(id: string): Promise<AtoumWebCompositionDetail>;
+    exportPackage(id: string): Promise<AtoumWebCompositionPackageExportResult>;
+    showPackage(path: string): Promise<AtoumWebAssetOpenResult>;
   };
   occurrenceReturns: {
     list(): Promise<AtoumWebOccurrenceReturnSummary[]>;
