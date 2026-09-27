@@ -1,9 +1,17 @@
-import { app, dialog, ipcMain, safeStorage, shell } from 'electron';
+import { app, clipboard, dialog, ipcMain, safeStorage, shell } from 'electron';
 import type { BridgeNodeMatchDecisionInput } from '../shared/bridgeSnapshots';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { BillingInvoiceInput, BillingItemFilters, BillingItemStatus } from '../shared/billing';
 import type { ExpenseFilters, ExpenseInput, ExpenseStatus } from '../shared/expenses';
+import type {
+  ContractClauseAudience,
+  ContractClauseStatus,
+  ContractClauseTemplateInput,
+  ContractClauseVersionInput,
+  QuoteContractClauseInput,
+  QuoteContractClauseUpdate,
+} from '../shared/contractTerms';
 import type {
   CatalogFilters,
   CatalogItemInput,
@@ -368,6 +376,25 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('catalog:list-offer-components', (_event, offerVersionId: string) => database.catalog.listOfferComponents(offerVersionId));
   ipcMain.handle('catalog:set-offer-components', (_event, offerVersionId: string, components: OfferComponentInput[]) => database.catalog.setOfferComponents(offerVersionId, components));
 
+  ipcMain.handle('contract-terms:library:list', (_event, includeArchived?: boolean) => database.contractTerms.listTemplates(Boolean(includeArchived)));
+  ipcMain.handle('contract-terms:library:get', (_event, id: string) => database.contractTerms.getTemplate(id));
+  ipcMain.handle('contract-terms:library:create', (_event, input: ContractClauseTemplateInput, firstVersion: ContractClauseVersionInput) => database.contractTerms.createTemplate(input, firstVersion));
+  ipcMain.handle('contract-terms:library:create-version', (_event, clauseId: string, input: ContractClauseVersionInput) => database.contractTerms.createVersion(clauseId, input));
+  ipcMain.handle('contract-terms:library:publish-version', (_event, versionId: string) => database.contractTerms.publishVersion(versionId));
+  ipcMain.handle('contract-terms:library:set-status', (_event, id: string, status: ContractClauseStatus) => database.contractTerms.setTemplateStatus(id, status));
+  ipcMain.handle('contract-terms:library:set-audience', (_event, id: string, audience: ContractClauseAudience) => database.contractTerms.setTemplateAudience(id, audience));
+  ipcMain.handle('contract-terms:library:set-catalog-links', (_event, id: string, catalogItemIds: string[]) => database.contractTerms.setCatalogLinks(id, catalogItemIds));
+  ipcMain.handle('contract-terms:quotes:get', (_event, quoteId: string) => database.contractTerms.getQuoteBuild(quoteId));
+  ipcMain.handle('contract-terms:quotes:sync', (_event, quoteId: string) => database.contractTerms.syncQuote(quoteId));
+  ipcMain.handle('contract-terms:quotes:add-custom', (_event, quoteId: string, input: QuoteContractClauseInput) => database.contractTerms.addCustomQuoteClause(quoteId, input));
+  ipcMain.handle('contract-terms:quotes:update-clause', (_event, id: string, input: QuoteContractClauseUpdate) => database.contractTerms.updateQuoteClause(id, input));
+  ipcMain.handle('contract-terms:quotes:reset-clause', (_event, id: string) => database.contractTerms.resetQuoteClause(id));
+  ipcMain.handle('contract-terms:quotes:remove-custom', (_event, id: string) => database.contractTerms.removeCustomQuoteClause(id));
+  ipcMain.handle('contract-terms:quotes:reorder', (_event, quoteId: string, clauseIds: string[]) => database.contractTerms.reorderQuoteClauses(quoteId, clauseIds));
+  ipcMain.handle('contract-terms:copy-text', (_event, text: string) => {
+    clipboard.writeText(text);
+  });
+
   ipcMain.handle('quotes:list', (_event, filters?: QuoteFilters) => database.quotes.list(filters));
   ipcMain.handle('quotes:get', (_event, id: string) => database.quotes.get(id));
   ipcMain.handle('quotes:create-with-lines', (_event, input: QuoteInput, lines: Array<{catalogVersionId?: string; input: QuoteLineInput}>) => database.quotes.createWithLines(input,lines));
@@ -385,7 +412,43 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('quotes:refuse', (_event, id: string) => database.quotes.refuse(id));
   ipcMain.handle('quotes:expire', (_event, id: string) => database.quotes.expire(id));
   ipcMain.handle('quotes:duplicate', (_event, id: string) => database.quotes.duplicate(id));
-  ipcMain.handle('quotes:generate-pdf', async (_event, id: string) => generateQuotePdf(database.quotes.get(id), workspace));
+  ipcMain.handle('quotes:import-contract-document', async (_event, id: string, abbyReference?: string | null) => {
+    const quote = database.quotes.get(id);
+    if (quote.status !== 'accepted') throw new Error('Le devis doit être accepté avant d’importer le document contractuel.');
+    const clientId = quote.acceptedClientAccountId ?? quote.clientAccountId;
+    if (!clientId) throw new Error('Client introuvable pour ce devis.');
+    const selection = await dialog.showOpenDialog({
+      title: `Importer le devis contractuel Abby · ${quote.number}`,
+      defaultPath: database.clientDocuments.clientRoot(clientId),
+      properties: ['openFile'],
+      filters: [{ name: 'Devis / contrat PDF', extensions: ['pdf'] }],
+    });
+    if (selection.canceled || selection.filePaths.length === 0) return null;
+    const before = new Set(database.clientDocuments.list(clientId, true).map((document) => document.id));
+    const imported = database.clientDocuments.importPaths(clientId, [selection.filePaths[0]], {
+      category: 'contract',
+      title: `Devis contractuel ${quote.number}`,
+      notes: `Document Abby accepté rattaché au devis ${quote.number}.`,
+    });
+    const document = imported.find((candidate) => !before.has(candidate.id));
+    if (!document) throw new Error('Le document contractuel n’a pas pu être identifié après import.');
+    return database.quotes.attachContractDocument(id, document.id, abbyReference);
+  });
+  ipcMain.handle('quotes:open-contract-document', async (_event, id: string) => {
+    const quote = database.quotes.get(id);
+    if (!quote.contractDocumentId) throw new Error('Aucun document contractuel n’est rattaché à ce devis.');
+    const error = await shell.openPath(database.clientDocuments.absolutePath(quote.contractDocumentId));
+    if (error) throw new Error(error);
+  });
+  ipcMain.handle('quotes:update-abby-reference', (_event, id: string, abbyReference?: string | null) => database.quotes.updateAbbyReference(id, abbyReference));
+
+  ipcMain.handle('quotes:generate-pdf', async (_event, id: string) => {
+    const quote = database.quotes.get(id);
+    const contract = quote.status === 'draft' && !quote.finalizedAt
+      ? database.contractTerms.syncQuote(id)
+      : database.contractTerms.getQuoteBuild(id);
+    return generateQuotePdf({ ...quote, contractTextSnapshot: contract.snapshotText || contract.compiledText }, workspace);
+  });
 
   ipcMain.handle('projects:templates:list', () => database.projects.listTemplates());
   ipcMain.handle('projects:templates:get', (_event, id: string) => database.projects.getTemplate(id));
