@@ -588,22 +588,17 @@ export class BridgeSnapshotService {
         assets: stableStringSet(left.asset_ids_json) !== stableStringSet(right.asset_ids_json),
         dependencies: stableStringSet(left.dependency_ids_json) !== stableStringSet(right.dependency_ids_json),
       };
-      const contentChanged = changes.title
-        || changes.status
-        || changes.url
-        || changes.builder
-        || changes.rawObject;
-      const technicalChanged = !contentChanged && (
-        changes.fingerprints
-        || changes.nodes
-        || changes.sources
-        || changes.assets
-        || changes.dependencies
-      );
+      const changed = Object.values(changes).some(Boolean);
+      // Un écart est "technique" uniquement lorsqu'une évolution du scanner
+      // observe différemment une source WordPress/Divi brute strictement identique.
+      const technical = changed && before.bridgeVersion !== after.bridgeVersion
+        && Boolean(left.raw_object_ref) && left.raw_object_ref === right.raw_object_ref
+        && !changes.title && !changes.status && !changes.url && !changes.builder
+        && !changes.fingerprints && !changes.assets;
 
       return {
         sourcePageKey,
-        status: contentChanged ? 'changed' as const : technicalChanged ? 'technical' as const : 'unchanged' as const,
+        status: technical ? 'technical' as const : changed ? 'changed' as const : 'unchanged' as const,
         titleBefore: left.title,
         titleAfter: right.title,
         beforePageSnapshotId: left.page_snapshot_id,
