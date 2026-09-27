@@ -63,7 +63,7 @@ describe('migrations SQLite', () => {
         "SELECT name FROM sqlite_master WHERE type='table' AND name='bridge_snapshot_sections'",
       )).toBeUndefined();
 
-      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([37, 38, 39, 40, 41, 42]);
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([37, 38, 39, 40, 41, 42, 43]);
       expect(database.get<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='bridge_snapshot_sections'",
       )?.name).toBe('bridge_snapshot_sections');
@@ -100,7 +100,7 @@ describe('migrations SQLite', () => {
            '2026-09-24T10:00:00.000Z','2026-09-24T10:00:00.000Z',NULL)`,
       );
 
-      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([38, 39, 40, 41, 42]);
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([38, 39, 40, 41, 42, 43]);
 
       expect(database.get<{ name: string; library_category: string; vertical: string | null }>(
         "SELECT name, library_category, vertical FROM technical_items WHERE id='legacy-library-item'",
@@ -167,7 +167,7 @@ describe('migrations SQLite', () => {
         ['a'.repeat(64)],
       );
 
-      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([40, 41, 42]);
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([40, 41, 42, 43]);
       expect(database.get<{ decision: string; result_technical_item_id: string | null; result_variant_id: string | null }>(
         "SELECT decision,result_technical_item_id,result_variant_id FROM bridge_occurrence_returns WHERE id='return-before-40'",
       )).toEqual({
@@ -215,7 +215,7 @@ describe('migrations SQLite', () => {
       'catalog_project_blueprints', 'project_node_sources', 'project_node_secrets', 'expenses', 'crm_identity_assets',
       'bridge_sites', 'bridge_snapshots', 'bridge_pages', 'bridge_page_snapshots', 'bridge_nodes', 'bridge_sources',
       'bridge_assets', 'bridge_dependencies', 'bridge_relations', 'bridge_snapshot_sections', 'bridge_objects', 'bridge_occurrence_returns',
-      'atoumweb_component_families', 'atoumweb_component_variants',
+      'atoumweb_component_families', 'atoumweb_component_variants', 'atoumweb_compositions', 'atoumweb_composition_items',
     ]) {
       const row = database.get<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", [table]);
       expect(row?.name).toBe(table);
