@@ -1,6 +1,7 @@
 import {useEffect,useState} from 'react';
 import type {QuoteDetail} from '../../shared/commercial';
 import type {ProjectSummary,ProjectTemplateSummary} from '../../shared/projects';
+import {ContractTermsBuilder} from '../commercial/ContractTermsBuilder';
 import {changed,openEntity} from './DossierPanel';
 export function QuoteProjectPanel({quote}:{quote:QuoteDetail}){
   const [templates,setTemplates]=useState<ProjectTemplateSummary[]>([]),[project,setProject]=useState<ProjectSummary|null>(null),[template,setTemplate]=useState(''),[date,setDate]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
@@ -31,8 +32,25 @@ export function QuoteProjectPanel({quote}:{quote:QuoteDetail}){
   </section>;
 }
 export function QuoteConditions({quote,onSave}:{quote:QuoteDetail;onSave:(q:QuoteDetail)=>void}){
-  const [terms,setTerms]=useState(quote.specialTerms??''),[prerequisites,setPrerequisites]=useState(quote.prerequisitesText??''),[deposit,setDeposit]=useState(String(quote.depositPercent??0)),[error,setError]=useState('');
-  useEffect(()=>{setTerms(quote.specialTerms??'');setPrerequisites(quote.prerequisitesText??'');setDeposit(String(quote.depositPercent??0));},[quote.id,quote.specialTerms,quote.prerequisitesText,quote.depositPercent]);
-  if(quote.status!=='draft')return <section><h3>Conditions contractuelles</h3><p style={{whiteSpace:'pre-wrap'}}>{quote.specialTerms||'Aucune condition particulière.'}</p></section>;
-  return <form className="workflow-fields" onSubmit={e=>{e.preventDefault();window.atoumweb.quotes.updateConditions(quote.id,{specialTerms:terms,prerequisitesText:prerequisites,depositPercent:Number(deposit)}).then(q=>{onSave(q);changed();}).catch(e=>setError(String(e)));}}><h3>Conditions du devis</h3><label>Conditions commerciales<textarea value={terms} onChange={e=>setTerms(e.target.value)}/></label><label>Prérequis<textarea value={prerequisites} onChange={e=>setPrerequisites(e.target.value)}/></label><label>Acompte (%)<input type="number" min="0" max="100" value={deposit} onChange={e=>setDeposit(e.target.value)}/></label><button className="secondary-button">Enregistrer les conditions</button>{error&&<p role="alert">{error}</p>}</form>;
+  const [prerequisites,setPrerequisites]=useState(quote.prerequisitesText??''),[deposit,setDeposit]=useState(String(quote.depositPercent??0)),[audience,setAudience]=useState<'professional'|'consumer'>(quote.contractAudience??'professional'),[error,setError]=useState('');
+  useEffect(()=>{setPrerequisites(quote.prerequisitesText??'');setDeposit(String(quote.depositPercent??0));setAudience(quote.contractAudience??'professional');},[quote.id,quote.prerequisitesText,quote.depositPercent,quote.contractAudience]);
+  const editable=quote.status==='draft'&&!quote.finalizedAt;
+  return <>
+    {editable
+      ? <form className="workflow-fields" onSubmit={e=>{e.preventDefault();window.atoumweb.quotes.updateConditions(quote.id,{prerequisitesText:prerequisites,depositPercent:Number(deposit),contractAudience:audience}).then(q=>{onSave(q);changed();}).catch(e=>setError(String(e)));}}>
+          <h3>Paramètres du devis</h3>
+          <label>Type de client contractuel<select value={audience} onChange={e=>setAudience(e.target.value as 'professional'|'consumer')}><option value="professional">Professionnel</option><option value="consumer">Particulier / consommateur</option></select></label>
+          <label>Prérequis<textarea value={prerequisites} onChange={e=>setPrerequisites(e.target.value)}/></label>
+          <label>Acompte (%)<input type="number" min="0" max="100" value={deposit} onChange={e=>setDeposit(e.target.value)}/></label>
+          <button className="secondary-button">Enregistrer les paramètres</button>
+          {error&&<p role="alert">{error}</p>}
+        </form>
+      : <section className="workflow-fields">
+          <h3>Paramètres du devis</h3>
+          <p><strong>Type de client contractuel :</strong> {quote.contractAudience==='consumer'?'Particulier / consommateur':'Professionnel'}</p>
+          <p><strong>Acompte :</strong> {quote.depositPercent??0} %</p>
+          {quote.prerequisitesText&&<p style={{whiteSpace:'pre-wrap'}}><strong>Prérequis :</strong> {quote.prerequisitesText}</p>}
+        </section>}
+    <ContractTermsBuilder quote={quote}/>
+  </>;
 }
