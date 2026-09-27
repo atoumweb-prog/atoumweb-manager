@@ -2543,3 +2543,41 @@ details.aw-reusable-fields {
     grid-column: 1 / -1;
   }
 }
+
+
+.aw-composition-package-bar,
+.aw-composition-package-ready {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.aw-composition-package-bar > div,
+.aw-composition-package-ready > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.aw-composition-package-bar span,
+.aw-composition-package-ready span {
+  color: var(--muted);
+}
+
+.aw-composition-package-ready {
+  border-color: color-mix(in srgb, #198754 45%, var(--border));
+}
+
+@media (max-width: 760px) {
+  .aw-composition-package-bar,
+  .aw-composition-package-ready {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
