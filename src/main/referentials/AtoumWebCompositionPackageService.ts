@@ -6,7 +6,7 @@ import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import type { WorkspacePaths } from '../workspace';
 import { AtoumWebCompositionService } from './AtoumWebCompositionService';
 import { AtoumWebPackageService } from './AtoumWebPackageService';
-import { readZipArchive, writeZipArchive, type ZipEntryInput, type ZipEntryOutput } from './ZipArchive';
+import { readZipArchive, writeZipArchive, type ZipEntryInput } from './ZipArchive';
 
 interface ComponentPackageManifest {
   schemaVersion: number;
