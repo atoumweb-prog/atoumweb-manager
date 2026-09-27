@@ -307,6 +307,7 @@ export interface BridgeSnapshotDiff {
     unchanged: number;
     ignoredInternal: number;
   };
+  ignoredWorkbenches: { sourcePageKey: string; title: string }[];
   pages: BridgeSnapshotPageDiff[];
 }
 
@@ -332,6 +333,27 @@ export interface BridgePageNodeMatchReview {
   unmatchedBefore: string[];
   unmatchedAfter: string[];
   ambiguousBefore: string[];
+  decisions: BridgeNodeMatchDecision[];
+  history: Array<BridgeNodeMatchDecision & { reopenedAt: string }>;
+}
+
+export interface BridgeNodeMatchDecision {
+  id: string;
+  beforeOccurrenceId: string;
+  afterOccurrenceId: string;
+  decision: 'accepted' | 'rejected';
+  logicalNodeId: string | null;
+  decidedAt: string;
+  source: 'manager_human';
+  proposal: BridgeNodeMatchCandidate;
+}
+
+export interface BridgeNodeMatchDecisionInput {
+  beforePageSnapshotId: string;
+  afterPageSnapshotId: string;
+  beforeOccurrenceId: string;
+  afterOccurrenceId: string;
+  decision: 'accepted' | 'rejected' | 'pending';
 }
 
 export interface BridgeSnapshotDiagnosticExportResult {
@@ -351,5 +373,6 @@ export interface BridgeSnapshotsApi {
   getPagePreview(pageSnapshotId: string): Promise<BridgePagePreview>;
   compareSnapshots(beforeSnapshotId: string, afterSnapshotId: string): Promise<BridgeSnapshotDiff>;
   reviewPageNodeMatches(beforePageSnapshotId: string, afterPageSnapshotId: string): Promise<BridgePageNodeMatchReview>;
+  decideNodeMatch(input: BridgeNodeMatchDecisionInput): Promise<BridgePageNodeMatchReview>;
   exportDiagnostic(snapshotId: string): Promise<BridgeSnapshotDiagnosticExportResult>;
 }
