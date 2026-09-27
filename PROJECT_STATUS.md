@@ -1,5 +1,19 @@
 # AtoumWeb Manager — Suivi du projet
 
+## Lot suivant — Composition multi-composants — 27/09/2026
+
+- [x] Migration 43 : stockage dédié des compositions et de leurs occurrences de composants, sans modifier les composants Bibliothèque sources.
+- [x] Une composition possède un nom, un métier cible, un statut et un ordre explicite de composants.
+- [x] Chaque occurrence de composition mémorise l’item source, la version exacte, la famille, la variante, la catégorie et le métier au moment de l’ajout.
+- [x] Ajout, retrait et réorganisation d’occurrences implémentés ; une même source peut être utilisée plusieurs fois sans mutation de la Bibliothèque.
+- [x] Les composants Bridge marqués `ready` sans validation humaine restent refusés ; seuls les composants réellement « Prêt à réutiliser » sont composables.
+- [x] API Electron / preload ajoutée pour lister, créer et éditer les compositions.
+- [x] Bibliothèque : action **Composer un site**, création d’une composition, sélection du métier, panier ordonné et ajout de composants prêts.
+- [x] Tests unitaires ajoutés pour provenance/version figée, réorganisation, retrait, refus des composants non prêts, validation humaine Bridge et archivage.
+- [ ] Validation MSI : `npm run typecheck`, migrations, tests Composition ciblés puis recette visuelle.
+- [ ] Lot suivant après validation : **Package projet / Workbench multi-composants**. Aucun format de package projet ni publication WordPress n’est ouvert dans ce lot.
+- [ ] Les branches parallèles 40/41/42 restent volontairement hors intégration jusqu’au checkpoint final des lots.
+
 ## Correction UX — Reconnaissance des éléments et réexamen — 26/09/2026
 
 - Retour Carlos : persistance confirmée, mais la validation basée sur des IDs / scores est incompréhensible. La première recette valide le stockage, pas la pertinence des correspondances choisies.
