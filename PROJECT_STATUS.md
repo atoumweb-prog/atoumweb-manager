@@ -1,5 +1,15 @@
 # AtoumWeb Manager — Suivi du projet
 
+## Coordination Manager ↔ Bridge — 27/09/2026
+
+- [x] Note d'architecture Pages hybrides et feuille de route consignées dans [`docs/MANAGER_BRIDGE_ROADMAP.md`](docs/MANAGER_BRIDGE_ROADMAP.md), avec journal partagé des consignes/décisions pour les agents.
+- [x] Checkpoint MSI sur `4f8fa15c80da874e084648b1d643a316cbfcbcb2` : typecheck réussi et **34 tests ciblés réussis / 0 échoué** (CGV 9, devis 8, migrations 10, composition 5, package composition 2).
+- [x] Validation-MSI contrôlé en lecture seule : migrations 1–43 sans collision CGV ; 44–46 restent à appliquer dans ce workspace. Pas de lancement de l'application ni d'accès Production.
+- [ ] Recette visuelle CGV après lancement/migrations à effectuer par Carlos ; aucune suite complète ni packaging relancé pour ce checkpoint.
+- Direction proposée : Page opérationnelle existante + Site + composition facultative/partielle, Divi comme atelier, occurrences durables, provenance distincte de la destination.
+- Prochaine action : lire la feuille de route, confronter les identités/contrats au vrai plugin Bridge et confirmer les arbitrages avant d'autoriser un lot. **Aucun lot 6–9 commencé ou autorisé par la publication documentaire.**
+- La PR #74 est déjà intégrée. Les mentions historiques contraires plus bas ne constituent pas une instruction de la fusionner à nouveau. Le journal partagé contient les consignes courantes ; l'historique ci-dessous est conservé.
+
 
 ## Checkpoint — convergence CGV Builder V1 — 27/09/2026
 

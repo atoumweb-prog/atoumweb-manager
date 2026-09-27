@@ -28,6 +28,13 @@ Si une implémentation envisagée contredit le cahier des charges, ne pas improv
 
 ## Suivi obligatoire
 
+Pour le chantier Manager ↔ Bridge, lire également
+[`docs/MANAGER_BRIDGE_ROADMAP.md`](docs/MANAGER_BRIDGE_ROADMAP.md) avant toute intervention.
+Ce fichier est la feuille de route et le journal de coordination commun demandés par Carlos.
+À chaque échange significatif, y consigner les consignes, décisions, validations, blocages et prochaines actions
+selon son protocole ; distinguer proposition, autorisation et réalisation. Ne pas créer de feuille de route concurrente.
+Une publication documentaire n'autorise aucun nouveau lot de code. Respecter les autorisations de commit/push de la session.
+
 À chaque étape significative :
 
 - mettre à jour `PROJECT_STATUS.md` ;
