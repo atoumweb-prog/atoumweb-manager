@@ -1,6 +1,7 @@
 import type { BillingApi } from './billing';
 import type { ExpensesApi } from './expenses';
 import type { CatalogApi, QuoteApi } from './commercial';
+import type { ContractTermsApi } from './contractTerms';
 import type { CrmApi } from './crm';
 import type { ClientDocumentsApi } from './clientDocuments';
 import type { HourPackShortfallApi } from './hourPackShortfall';
@@ -91,6 +92,7 @@ export interface AtoumWebApi {
   billing: BillingApi;
   expenses: ExpensesApi;
   catalog: CatalogApi;
+  contractTerms: ContractTermsApi;
   quotes: QuoteApi;
   projects: ProjectsApi;
   referentials: ReferentialsApi;
