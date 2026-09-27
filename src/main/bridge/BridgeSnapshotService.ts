@@ -3,6 +3,7 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileS
 import { join, resolve, sep } from 'node:path';
 import type {
   BridgeAssetSummary,
+  BridgeNodeMatchDecisionInput,
   BridgeDependencySummary,
   BridgeNodeSummary,
   BridgeObjectPreview,
@@ -20,6 +21,7 @@ import type {
   BridgeSourceSummary,
 } from '../../shared/bridgeSnapshots';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
+import { BridgeNodeMatchDecisions } from './BridgeNodeMatchDecisions';
 import type { WorkspacePaths } from '../workspace';
 import {
   arrayOfRecords,
@@ -528,15 +530,20 @@ export class BridgeSnapshotService {
 
     const beforeRows = this.snapshotDiffPageRows(beforeSnapshotId);
     const afterRows = this.snapshotDiffPageRows(afterSnapshotId);
-    const beforeByKey = new Map(beforeRows.map((row) => [row.source_page_key, row] as const));
-    const afterByKey = new Map(afterRows.map((row) => [row.source_page_key, row] as const));
+    // Exclusion limitée aux brouillons portant le préfixe réservé de Bridge.
+    // Une page publiée ou un simple titre contenant « Workbench » reste comparé.
+    const isWorkbench = (row: SnapshotDiffPageRow) => row.post_type === 'page'
+      && row.status === 'draft' && /^AWB Workbench\s*[—–-]\s*Bibliothèque\s*[—–-]\s*\S/i.test(row.title);
+    const allRows = [...beforeRows, ...afterRows];
+    const ignoredWorkbenches = [...new Map(allRows.filter(isWorkbench)
+      .filter((row) => allRows.filter((other) => other.source_page_key === row.source_page_key).every(isWorkbench))
+      .map((row) => [row.source_page_key, { sourcePageKey: row.source_page_key, title: row.title }])).values()];
+    const ignoredKeys = new Set(ignoredWorkbenches.map((row) => row.sourcePageKey));
+    const beforeByKey = new Map(beforeRows.filter((row) => !ignoredKeys.has(row.source_page_key)).map((row) => [row.source_page_key, row] as const));
+    const afterByKey = new Map(afterRows.filter((row) => !ignoredKeys.has(row.source_page_key)).map((row) => [row.source_page_key, row] as const));
     const keys = [...new Set([...beforeByKey.keys(), ...afterByKey.keys()])].sort((left, right) => left.localeCompare(right, 'fr'));
-    const ignoredInternalKeys = keys.filter((sourcePageKey) =>
-      this.isInternalBridgePage(beforeByKey.get(sourcePageKey) ?? null)
-      || this.isInternalBridgePage(afterByKey.get(sourcePageKey) ?? null));
-    const comparableKeys = keys.filter((sourcePageKey) => !ignoredInternalKeys.includes(sourcePageKey));
 
-    const pages = comparableKeys.map((sourcePageKey) => {
+    const pages = keys.map((sourcePageKey) => {
       const beforePage = beforeByKey.get(sourcePageKey) ?? null;
       const afterPage = afterByKey.get(sourcePageKey) ?? null;
 
@@ -607,8 +614,8 @@ export class BridgeSnapshotService {
     });
 
     const warnings = snapshotDiffWarnings(before, after);
-    if (ignoredInternalKeys.length > 0) {
-      warnings.push(`${ignoredInternalKeys.length} contenu(s) interne(s) Bridge/Workbench ignoré(s) dans le bilan du site.`);
+    if (ignoredWorkbenches.length > 0) {
+      warnings.push(`${ignoredWorkbenches.length} contenu(s) interne(s) Bridge/Workbench ignoré(s) dans le bilan du site.`);
     }
 
     return {
@@ -622,9 +629,10 @@ export class BridgeSnapshotService {
         changed: pages.filter((page) => page.status === 'changed').length,
         technical: pages.filter((page) => page.status === 'technical').length,
         unchanged: pages.filter((page) => page.status === 'unchanged').length,
-        ignoredInternal: ignoredInternalKeys.length,
+        ignoredInternal: ignoredWorkbenches.length,
       },
       pages,
+      ignoredWorkbenches,
     };
   }
 
@@ -692,12 +700,9 @@ export class BridgeSnapshotService {
       }))
       .sort((left, right) => right.score - left.score || left.beforeOccurrenceId.localeCompare(right.beforeOccurrenceId));
 
-    const safelyMatchedBefore = new Set(
-      candidates.filter((candidate) => candidate.confidence !== 'low').map((candidate) => candidate.beforeOccurrenceId),
-    );
-    const safelyMatchedAfter = new Set(
-      candidates.filter((candidate) => candidate.confidence !== 'low').map((candidate) => candidate.afterOccurrenceId),
-    );
+    const decisions = new BridgeNodeMatchDecisions(this.database).list(beforePageSnapshotId, afterPageSnapshotId);
+    const safelyMatchedBefore = new Set(decisions.filter((item) => item.decision === 'accepted').map((item) => item.beforeOccurrenceId));
+    const safelyMatchedAfter = new Set(decisions.filter((item) => item.decision === 'accepted').map((item) => item.afterOccurrenceId));
 
     return {
       beforePageSnapshotId,
@@ -707,7 +712,22 @@ export class BridgeSnapshotService {
       unmatchedBefore: before.nodes.filter((node) => !safelyMatchedBefore.has(node.occurrenceId)).map((node) => node.occurrenceId),
       unmatchedAfter: after.nodes.filter((node) => !safelyMatchedAfter.has(node.occurrenceId)).map((node) => node.occurrenceId),
       ambiguousBefore: candidates.filter((candidate) => candidate.confidence === 'low').map((candidate) => candidate.beforeOccurrenceId),
+      decisions,
+      history: new BridgeNodeMatchDecisions(this.database).history(beforePageSnapshotId, afterPageSnapshotId),
     };
+  }
+
+  decideNodeMatch(input: BridgeNodeMatchDecisionInput): BridgePageNodeMatchReview {
+    if (!input || typeof input !== 'object') throw new Error('Décision de correspondance invalide.');
+    const review = this.reviewPageNodeMatches(input.beforePageSnapshotId, input.afterPageSnapshotId);
+    if (input.decision === 'pending') {
+      new BridgeNodeMatchDecisions(this.database).reopen(input);
+      return this.reviewPageNodeMatches(input.beforePageSnapshotId, input.afterPageSnapshotId);
+    }
+    const proposal = review.candidates.find((item) => item.beforeOccurrenceId === input.beforeOccurrenceId && item.afterOccurrenceId === input.afterOccurrenceId);
+    if (!proposal) throw new Error('Cette correspondance ne fait pas partie des propositions actuelles.');
+    new BridgeNodeMatchDecisions(this.database).record(input, proposal);
+    return this.reviewPageNodeMatches(input.beforePageSnapshotId, input.afterPageSnapshotId);
   }
 
   buildDiagnostic(snapshotId: string): Record<string, unknown> {
@@ -991,21 +1011,6 @@ export class BridgeSnapshotService {
        WHERE bps.snapshot_id=?`,
       [snapshotId],
     );
-  }
-
-  private isInternalBridgePage(page: SnapshotDiffPageRow | null): boolean {
-    if (!page) return false;
-    if (/^AWB Workbench\b/i.test(page.title)) return true;
-
-    const metadata = parseObject(page.metadata_json);
-    const meta = Array.isArray(metadata.meta) ? metadata.meta : [];
-    return meta.some((entry) => {
-      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return false;
-      const key = String((entry as Record<string, unknown>).key ?? '');
-      return key === '_awb_workbench'
-        || key === '_awb_site_occurrence_v1'
-        || key === '_awb_workbench_component';
-    });
   }
 
   private stablePageFingerprintSignature(page: SnapshotDiffPageRow): string {
