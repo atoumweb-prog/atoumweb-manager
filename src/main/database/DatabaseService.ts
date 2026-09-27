@@ -32,6 +32,7 @@ import { ProjectService } from '../projects/ProjectService';
 import { ProjectTechnicalLibraryService } from '../projects/ProjectTechnicalLibraryService';
 import { AtoumWebPackageService } from '../referentials/AtoumWebPackageService';
 import { AtoumWebOccurrenceReturnService } from '../referentials/AtoumWebOccurrenceReturnService';
+import { AtoumWebCompositionService } from '../referentials/AtoumWebCompositionService';
 import { AtoumWebTechnicalAssetService } from '../referentials/AtoumWebTechnicalAssetService';
 import { AtoumWebTechnicalLibraryService } from '../referentials/AtoumWebTechnicalLibraryService';
 import { ReusePreparationService } from '../referentials/ReusePreparationService';
@@ -69,6 +70,7 @@ export class DatabaseService {
   readonly reusePreparation: ReusePreparationService;
   readonly atoumWebPackages: AtoumWebPackageService;
   readonly atoumWebOccurrenceReturns: AtoumWebOccurrenceReturnService;
+  readonly atoumWebCompositions: AtoumWebCompositionService;
   readonly businessBackups: BusinessBackupService;
   readonly businessBackupAlerts: BusinessBackupAlertService;
   readonly operations: OperationsService;
@@ -107,6 +109,7 @@ export class DatabaseService {
     this.reusePreparation = new ReusePreparationService(this.database, this.workspace, this.atoumWebTechnicalLibrary, this.atoumWebTechnicalAssets);
     this.atoumWebPackages = new AtoumWebPackageService(this.database, this.workspace, this.atoumWebTechnicalLibrary, this.atoumWebTechnicalAssets);
     this.atoumWebOccurrenceReturns = new AtoumWebOccurrenceReturnService(this.database, this.workspace);
+    this.atoumWebCompositions = new AtoumWebCompositionService(this.database, this.atoumWebTechnicalLibrary);
     this.businessBackups = new BusinessBackupService(this.database);
     this.businessBackupAlerts = new BusinessBackupAlertService(this.database, this.businessBackups);
     this.operations = new OperationsService(this.database);
