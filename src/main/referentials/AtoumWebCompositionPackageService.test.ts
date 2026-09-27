@@ -31,7 +31,7 @@ beforeEach(() => {
   assets = new AtoumWebTechnicalAssetService(database, workspace);
   packages = new AtoumWebPackageService(database, workspace, library, assets);
   compositions = new AtoumWebCompositionService(database, library);
-  projectPackages = new AtoumWebCompositionPackageService(database, workspace, compositions, packages);
+  projectPackages = new AtoumWebCompositionPackageService(database, workspace, compositions, packages, library);
 });
 
 afterEach(() => {
@@ -136,7 +136,7 @@ describe('AtoumWebCompositionPackageService', () => {
     }
   });
 
-  it('refuse une composition vide et un composant sans package Workbench V1', () => {
+  it('refuse une composition vide et encapsule un composant HTML prêt sans package Workbench V1', () => {
     const empty = compositions.create({ name: 'Vide' });
     expect(() => projectPackages.exportPackage(empty.id)).toThrow(/au moins un composant/i);
 
@@ -148,6 +148,10 @@ describe('AtoumWebCompositionPackageService', () => {
     let composition = compositions.create({ name: 'Incompatible' });
     composition = compositions.addItem(composition.id, { libraryItemId: plain.id });
 
-    expect(() => projectPackages.exportPackage(composition.id)).toThrow(/Workbench Bridge V1/i);
+    const exported = projectPackages.exportPackage(composition.id);
+    const entries = readZipArchive(exported.path);
+    const manifest = JSON.parse(entries.find((entry) => entry.name === 'manifest.json')!.data.toString('utf8'));
+    expect(manifest.components[0].provenance.source).toBe('manager_plain_html');
+    expect(entries.some((entry) => entry.name === 'components/001/component/component.html')).toBe(true);
   });
 });
