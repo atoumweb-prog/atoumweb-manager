@@ -1,4 +1,5 @@
 import { app, dialog, ipcMain, safeStorage, shell } from 'electron';
+import type { BridgeNodeMatchDecisionInput } from '../shared/bridgeSnapshots';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { BillingInvoiceInput, BillingItemFilters, BillingItemStatus } from '../shared/billing';
@@ -173,6 +174,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     database.bridgeSnapshots.compareSnapshots(beforeSnapshotId, afterSnapshotId));
   ipcMain.handle('bridge:pages:review-node-matches', (_event, beforePageSnapshotId: string, afterPageSnapshotId: string) =>
     database.bridgeSnapshots.reviewPageNodeMatches(beforePageSnapshotId, afterPageSnapshotId));
+  ipcMain.handle('bridge:pages:decide-node-match', (_event, input: BridgeNodeMatchDecisionInput) =>
+    database.bridgeSnapshots.decideNodeMatch(input));
   ipcMain.handle('bridge:export-diagnostic', async (_event, snapshotId: string) => {
     const diagnostic = database.bridgeSnapshots.buildDiagnostic(snapshotId);
     const site = diagnostic.site as { name?: string } | undefined;
