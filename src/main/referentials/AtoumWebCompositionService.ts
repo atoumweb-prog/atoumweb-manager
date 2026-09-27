@@ -109,7 +109,7 @@ export class AtoumWebCompositionService {
 
     const item = this.library.get(input.libraryItemId);
     if (item.archivedAt) throw new Error('Un composant archivé ne peut pas être ajouté à une composition.');
-    if (item.reuseStatus !== 'ready') throw new Error('Seuls les composants « Prêt à réutiliser » peuvent être ajoutés à une composition.');
+    if (!this.isReadyForComposition(item)) throw new Error('Seuls les composants réellement « Prêt à réutiliser » peuvent être ajoutés à une composition.');
 
     const version = input.versionId
       ? item.versions.find((candidate) => candidate.id === input.versionId)
@@ -279,6 +279,16 @@ export class AtoumWebCompositionService {
       variantMode: row.variant_mode,
       createdAt: row.created_at,
     };
+  }
+
+  private isReadyForComposition(item: ReturnType<AtoumWebTechnicalLibraryService['get']>): boolean {
+    if (item.reuseStatus !== 'ready') return false;
+    const tags = new Set(item.tags ?? []);
+    const content = item.currentVersion?.contentText ?? '';
+    const looksBridgeReusable = tags.has('bridge')
+      || content.includes('"kind":"atoumweb-library-reusable-component"')
+      || content.includes('"kind": "atoumweb-library-reusable-component"');
+    return !looksBridgeReusable || tags.has('bridge-human-validated');
   }
 
   private requiredName(value: string): string {
