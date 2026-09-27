@@ -1,5 +1,8 @@
 import { dialog, ipcMain, shell } from 'electron';
 import type {
+  AtoumWebCompositionAddItemInput,
+  AtoumWebCompositionInput,
+  AtoumWebCompositionMoveItemInput,
   AtoumWebOccurrenceCreateFamilyInput,
   AtoumWebOccurrenceCreateVariantInput,
   AtoumWebOccurrenceUpdateVariantInput,
@@ -81,6 +84,25 @@ export function registerReferentialsIpcHandlers(database: DatabaseService): void
     shell.showItemInFolder(validated);
     return { ok: true, error: null };
   });
+
+  ipcMain.handle('referentials:compositions:list', (_event, includeArchived?: boolean) =>
+    database.atoumWebCompositions.list(Boolean(includeArchived)));
+  ipcMain.handle('referentials:compositions:get', (_event, id: string) =>
+    database.atoumWebCompositions.get(id));
+  ipcMain.handle('referentials:compositions:create', (_event, input: AtoumWebCompositionInput) =>
+    database.atoumWebCompositions.create(input));
+  ipcMain.handle('referentials:compositions:update', (_event, id: string, input: Partial<AtoumWebCompositionInput>) =>
+    database.atoumWebCompositions.update(id, input));
+  ipcMain.handle('referentials:compositions:add-item', (_event, id: string, input: AtoumWebCompositionAddItemInput) =>
+    database.atoumWebCompositions.addItem(id, input));
+  ipcMain.handle('referentials:compositions:remove-item', (_event, id: string, itemId: string) =>
+    database.atoumWebCompositions.removeItem(id, itemId));
+  ipcMain.handle('referentials:compositions:move-item', (_event, id: string, itemId: string, input: AtoumWebCompositionMoveItemInput) =>
+    database.atoumWebCompositions.moveItem(id, itemId, input));
+  ipcMain.handle('referentials:compositions:archive', (_event, id: string) =>
+    database.atoumWebCompositions.archive(id));
+  ipcMain.handle('referentials:compositions:reactivate', (_event, id: string) =>
+    database.atoumWebCompositions.reactivate(id));
 
   ipcMain.handle('referentials:occurrence-returns:list', () =>
     database.atoumWebOccurrenceReturns.list());
