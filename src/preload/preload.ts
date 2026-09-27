@@ -368,6 +368,8 @@ const api: AtoumWebApi = {
       moveItem: (id: string, itemId: string, input: AtoumWebCompositionMoveItemInput) => ipcRenderer.invoke('referentials:compositions:move-item', id, itemId, input),
       archive: (id: string) => ipcRenderer.invoke('referentials:compositions:archive', id),
       reactivate: (id: string) => ipcRenderer.invoke('referentials:compositions:reactivate', id),
+      exportPackage: (id: string) => ipcRenderer.invoke('referentials:compositions:export-package', id),
+      showPackage: (path: string) => ipcRenderer.invoke('referentials:compositions:show-package', path),
     },
     occurrenceReturns: {
       list: () => ipcRenderer.invoke('referentials:occurrence-returns:list'),
