@@ -1,3 +1,4 @@
+import type { QuoteContractAudience } from './contractTerms';
 export const CATALOG_ITEM_TYPES = ['service', 'offer'] as const;
 export const CATALOG_ITEM_STATUSES = ['active', 'inactive', 'archived'] as const;
 export const CATALOG_VERSION_STATUSES = ['draft', 'published', 'retired'] as const;
@@ -117,6 +118,7 @@ export interface QuoteInput {
   prerequisitesText?: string | null;
   specialTerms?: string | null;
   contractType?: string | null;
+  contractAudience?: QuoteContractAudience | null;
   depositPercent?: number | null;
 }
 
@@ -172,6 +174,10 @@ export interface QuoteSummary {
   finalizedAt?: string | null;
   lastExtendedAt?: string | null;
   projectReadyAt?: string | null;
+  contractCompiledAt?: string | null;
+  contractDocumentId?: string | null;
+  contractDocumentAttachedAt?: string | null;
+  abbyReference?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -182,6 +188,9 @@ export interface QuoteDetail extends QuoteSummary {
   prerequisitesText?: string | null;
   specialTerms?: string | null;
   contractType?: string | null;
+  contractAudience?: QuoteContractAudience | null;
+  contractTextSnapshot?: string | null;
+  contractSnapshotJson?: string | null;
   lines: QuoteLine[];
 }
 
@@ -215,5 +224,8 @@ export interface QuoteApi {
   refuse(id: string): Promise<QuoteDetail>;
   expire(id: string): Promise<QuoteDetail>;
   duplicate(id: string): Promise<QuoteDetail>;
+  importContractDocument(id: string, abbyReference?: string | null): Promise<QuoteDetail | null>;
+  openContractDocument(id: string): Promise<void>;
+  updateAbbyReference(id: string, abbyReference?: string | null): Promise<QuoteDetail>;
   generatePdf(id: string): Promise<QuotePdfResult>;
 }
