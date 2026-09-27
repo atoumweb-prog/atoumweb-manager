@@ -187,6 +187,57 @@ export interface AtoumWebPackageImportResult {
   importedAs: 'new_item' | 'new_version';
 }
 
+export type AtoumWebCompositionStatus = 'draft' | 'packaged' | 'archived';
+
+export interface AtoumWebCompositionInput {
+  name: string;
+  targetVertical?: string | null;
+  notes?: string | null;
+}
+
+export interface AtoumWebCompositionItem {
+  id: string;
+  compositionId: string;
+  sortOrder: number;
+  sourceItemId: string;
+  sourceVersionId: string;
+  sourceVersionNumber: number;
+  displayName: string;
+  category: AtoumWebLibraryCategory;
+  vertical: string | null;
+  componentFamilyId: string | null;
+  componentKey: string | null;
+  libraryVariantId: string | null;
+  variantKey: string | null;
+  variantMode: 'base' | 'inherit' | 'forked' | null;
+  createdAt: string;
+}
+
+export interface AtoumWebCompositionSummary {
+  id: string;
+  name: string;
+  targetVertical: string | null;
+  notes: string | null;
+  status: AtoumWebCompositionStatus;
+  itemCount: number;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt: string | null;
+}
+
+export interface AtoumWebCompositionDetail extends AtoumWebCompositionSummary {
+  items: AtoumWebCompositionItem[];
+}
+
+export interface AtoumWebCompositionAddItemInput {
+  libraryItemId: string;
+  versionId?: string | null;
+}
+
+export interface AtoumWebCompositionMoveItemInput {
+  targetIndex: number;
+}
+
 export type AtoumWebOccurrenceReturnDecision =
   | 'keep_occurrence'
   | 'create_variant'
@@ -289,6 +340,17 @@ export interface ReferentialsApi {
     inspectImport(): Promise<AtoumWebPackageInspection | null>;
     importPackage(input: AtoumWebPackageImportInput): Promise<AtoumWebPackageImportResult>;
     showExport(path: string): Promise<AtoumWebAssetOpenResult>;
+  };
+  compositions: {
+    list(includeArchived?: boolean): Promise<AtoumWebCompositionSummary[]>;
+    get(id: string): Promise<AtoumWebCompositionDetail>;
+    create(input: AtoumWebCompositionInput): Promise<AtoumWebCompositionDetail>;
+    update(id: string, input: Partial<AtoumWebCompositionInput>): Promise<AtoumWebCompositionDetail>;
+    addItem(id: string, input: AtoumWebCompositionAddItemInput): Promise<AtoumWebCompositionDetail>;
+    removeItem(id: string, itemId: string): Promise<AtoumWebCompositionDetail>;
+    moveItem(id: string, itemId: string, input: AtoumWebCompositionMoveItemInput): Promise<AtoumWebCompositionDetail>;
+    archive(id: string): Promise<AtoumWebCompositionDetail>;
+    reactivate(id: string): Promise<AtoumWebCompositionDetail>;
   };
   occurrenceReturns: {
     list(): Promise<AtoumWebOccurrenceReturnSummary[]>;
