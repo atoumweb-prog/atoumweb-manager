@@ -63,7 +63,7 @@ describe('migrations SQLite', () => {
         "SELECT name FROM sqlite_master WHERE type='table' AND name='bridge_snapshot_sections'",
       )).toBeUndefined();
 
-      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([37, 38, 39, 40, 41, 42, 43]);
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([37, 38, 39, 40, 41, 42, 43, 44, 45, 46]);
       expect(database.get<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='bridge_snapshot_sections'",
       )?.name).toBe('bridge_snapshot_sections');
@@ -100,7 +100,7 @@ describe('migrations SQLite', () => {
            '2026-09-24T10:00:00.000Z','2026-09-24T10:00:00.000Z',NULL)`,
       );
 
-      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([38, 39, 40, 41, 42, 43]);
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([38, 39, 40, 41, 42, 43, 44, 45, 46]);
 
       expect(database.get<{ name: string; library_category: string; vertical: string | null }>(
         "SELECT name, library_category, vertical FROM technical_items WHERE id='legacy-library-item'",
@@ -167,7 +167,7 @@ describe('migrations SQLite', () => {
         ['a'.repeat(64)],
       );
 
-      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([40, 41, 42, 43]);
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([40, 41, 42, 43, 44, 45, 46]);
       expect(database.get<{ decision: string; result_technical_item_id: string | null; result_variant_id: string | null }>(
         "SELECT decision,result_technical_item_id,result_variant_id FROM bridge_occurrence_returns WHERE id='return-before-40'",
       )).toEqual({
@@ -188,6 +188,69 @@ describe('migrations SQLite', () => {
          VALUES ('awvar:migration-base','awfam:migration','family-source','base','Base','base',NULL,NULL,
            '2026-09-26T01:10:00.000Z','2026-09-26T01:10:00.000Z')`,
       );
+      expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+    } finally {
+      database.close();
+    }
+  });
+
+  it('migration 46 déduit le public contractuel des devis existants', () => {
+    const database = new NodeSqliteAdapter(':memory:');
+    database.exec('PRAGMA foreign_keys = ON;');
+    try {
+      for (const migration of getPendingMigrations(database).filter((item) => item.id <= 45)) {
+        if (migration.disableForeignKeys) database.exec('PRAGMA foreign_keys = OFF;');
+        database.exec('BEGIN IMMEDIATE;');
+        try {
+          database.exec(migration.sql);
+          database.run('INSERT INTO schema_migrations (id, name, applied_at) VALUES (?, ?, ?)',
+            [migration.id, migration.name, '2026-09-27T00:00:00.000Z']);
+          database.exec('COMMIT;');
+          if (migration.disableForeignKeys) database.exec('PRAGMA foreign_keys = ON;');
+        } catch (error) {
+          database.exec('ROLLBACK;');
+          if (migration.disableForeignKeys) database.exec('PRAGMA foreign_keys = ON;');
+          throw error;
+        }
+      }
+
+      const now = '2026-09-27T12:00:00.000Z';
+      database.run(
+        `INSERT INTO organizations (id,name,created_at,updated_at) VALUES ('org-pro','Entreprise Pro',?,?)`,
+        [now, now],
+      );
+      database.run(
+        `INSERT INTO contacts (id,first_name,last_name,created_at,updated_at) VALUES ('contact-consumer','Camille','Particulier',?,?)`,
+        [now, now],
+      );
+      database.run(
+        `INSERT INTO prospects (id,organization_id,stage,temperature,origin_type,created_at,updated_at)
+         VALUES ('prospect-pro','org-pro','new','neutral','other',?,?)`,
+        [now, now],
+      );
+      database.run(
+        `INSERT INTO prospects (id,contact_id,stage,temperature,origin_type,created_at,updated_at)
+         VALUES ('prospect-consumer','contact-consumer','new','neutral','other',?,?)`,
+        [now, now],
+      );
+      database.run(
+        `INSERT INTO quotes (id,quote_number,prospect_id,subject,status,created_at,updated_at)
+         VALUES ('quote-pro','DEV-2026-901','prospect-pro','Pro','draft',?,?)`,
+        [now, now],
+      );
+      database.run(
+        `INSERT INTO quotes (id,quote_number,prospect_id,subject,status,created_at,updated_at)
+         VALUES ('quote-consumer','DEV-2026-902','prospect-consumer','Particulier','draft',?,?)`,
+        [now, now],
+      );
+
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([46]);
+      expect(database.get<{ contract_audience: string }>(
+        "SELECT contract_audience FROM quotes WHERE id='quote-pro'",
+      )?.contract_audience).toBe('professional');
+      expect(database.get<{ contract_audience: string }>(
+        "SELECT contract_audience FROM quotes WHERE id='quote-consumer'",
+      )?.contract_audience).toBe('consumer');
       expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
     } finally {
       database.close();
@@ -216,12 +279,17 @@ describe('migrations SQLite', () => {
       'bridge_sites', 'bridge_snapshots', 'bridge_pages', 'bridge_page_snapshots', 'bridge_nodes', 'bridge_sources',
       'bridge_assets', 'bridge_dependencies', 'bridge_relations', 'bridge_snapshot_sections', 'bridge_objects', 'bridge_occurrence_returns',
       'atoumweb_component_families', 'atoumweb_component_variants', 'atoumweb_compositions', 'atoumweb_composition_items',
+      'contract_clause_templates', 'contract_clause_versions', 'catalog_contract_clause_links', 'quote_contract_clauses',
     ]) {
       const row = database.get<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", [table]);
       expect(row?.name).toBe(table);
     }
 
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('quotes') WHERE name='project_id'")?.name).toBe('project_id');
+    for (const column of ['contract_text_snapshot', 'contract_snapshot_json', 'contract_compiled_at', 'contract_document_id', 'abby_reference', 'contract_document_attached_at', 'contract_audience']) {
+      expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('quotes') WHERE name='${column}'`)?.name).toBe(column);
+    }
+    expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('contract_clause_templates') WHERE name='audience'")?.name).toBe('audience');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('time_sessions') WHERE name='intervention_id'")?.name).toBe('intervention_id');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('maintenance_subscriptions') WHERE name='carryover_mode_snapshot'")?.name).toBe('carryover_mode_snapshot');
     expect(database.get<{ name: string }>("SELECT name FROM pragma_table_info('catalog_versions') WHERE name='special_terms'")?.name).toBe('special_terms');
@@ -233,7 +301,7 @@ describe('migrations SQLite', () => {
     for (const column of ['reuse_status', 'origin_technical_item_id', 'library_category', 'vertical']) {
       expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('technical_items') WHERE name='${column}'`)?.name).toBe(column);
     }
-    expect(MIGRATIONS.at(-1)?.id).toBe(43);
+    expect(MIGRATIONS.at(-1)?.id).toBe(46);
     for (const table of ['bridge_logical_nodes', 'bridge_node_match_decisions', 'bridge_node_logical_assignments', 'bridge_node_match_history']) {
       expect(database.get('SELECT name FROM sqlite_master WHERE type=\'table\' AND name=?', [table])).toEqual({ name: table });
     }
