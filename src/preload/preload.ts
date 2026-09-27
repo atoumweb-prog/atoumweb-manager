@@ -2,6 +2,14 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { BillingInvoiceInput, BillingItemFilters, BillingItemStatus } from '../shared/billing';
 import type { ExpenseFilters, ExpenseInput, ExpenseStatus } from '../shared/expenses';
 import type {
+  ContractClauseAudience,
+  ContractClauseStatus,
+  ContractClauseTemplateInput,
+  ContractClauseVersionInput,
+  QuoteContractClauseInput,
+  QuoteContractClauseUpdate,
+} from '../shared/contractTerms';
+import type {
   CatalogFilters,
   CatalogItemInput,
   CatalogItemStatus,
@@ -255,6 +263,29 @@ const api: AtoumWebApi = {
     listOfferComponents: (offerVersionId: string) => ipcRenderer.invoke('catalog:list-offer-components', offerVersionId),
     setOfferComponents: (offerVersionId: string, components: OfferComponentInput[]) => ipcRenderer.invoke('catalog:set-offer-components', offerVersionId, components),
   },
+
+  contractTerms: {
+    library: {
+      list: (includeArchived?: boolean) => ipcRenderer.invoke('contract-terms:library:list', includeArchived),
+      get: (id: string) => ipcRenderer.invoke('contract-terms:library:get', id),
+      create: (input: ContractClauseTemplateInput, firstVersion: ContractClauseVersionInput) => ipcRenderer.invoke('contract-terms:library:create', input, firstVersion),
+      createVersion: (clauseId: string, input: ContractClauseVersionInput) => ipcRenderer.invoke('contract-terms:library:create-version', clauseId, input),
+      publishVersion: (versionId: string) => ipcRenderer.invoke('contract-terms:library:publish-version', versionId),
+      setStatus: (id: string, status: ContractClauseStatus) => ipcRenderer.invoke('contract-terms:library:set-status', id, status),
+      setAudience: (id: string, audience: ContractClauseAudience) => ipcRenderer.invoke('contract-terms:library:set-audience', id, audience),
+      setCatalogLinks: (id: string, catalogItemIds: string[]) => ipcRenderer.invoke('contract-terms:library:set-catalog-links', id, catalogItemIds),
+    },
+    quotes: {
+      get: (quoteId: string) => ipcRenderer.invoke('contract-terms:quotes:get', quoteId),
+      sync: (quoteId: string) => ipcRenderer.invoke('contract-terms:quotes:sync', quoteId),
+      addCustom: (quoteId: string, input: QuoteContractClauseInput) => ipcRenderer.invoke('contract-terms:quotes:add-custom', quoteId, input),
+      updateClause: (id: string, input: QuoteContractClauseUpdate) => ipcRenderer.invoke('contract-terms:quotes:update-clause', id, input),
+      resetClause: (id: string) => ipcRenderer.invoke('contract-terms:quotes:reset-clause', id),
+      removeCustom: (id: string) => ipcRenderer.invoke('contract-terms:quotes:remove-custom', id),
+      reorder: (quoteId: string, clauseIds: string[]) => ipcRenderer.invoke('contract-terms:quotes:reorder', quoteId, clauseIds),
+    },
+    copyText: (text: string) => ipcRenderer.invoke('contract-terms:copy-text', text),
+  },
   quotes: {
     createWithLines: (input,lines) => ipcRenderer.invoke('quotes:create-with-lines',input,lines),
     list: (filters?: QuoteFilters) => ipcRenderer.invoke('quotes:list', filters),
@@ -273,6 +304,9 @@ const api: AtoumWebApi = {
     refuse: (id: string) => ipcRenderer.invoke('quotes:refuse', id),
     expire: (id: string) => ipcRenderer.invoke('quotes:expire', id),
     duplicate: (id: string) => ipcRenderer.invoke('quotes:duplicate', id),
+    importContractDocument: (id: string, abbyReference?: string | null) => ipcRenderer.invoke('quotes:import-contract-document', id, abbyReference),
+    openContractDocument: (id: string) => ipcRenderer.invoke('quotes:open-contract-document', id),
+    updateAbbyReference: (id: string, abbyReference?: string | null) => ipcRenderer.invoke('quotes:update-abby-reference', id),
     generatePdf: (id: string) => ipcRenderer.invoke('quotes:generate-pdf', id),
   },
   projects: {
