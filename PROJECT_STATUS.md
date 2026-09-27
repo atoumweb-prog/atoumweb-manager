@@ -1,5 +1,18 @@
 # AtoumWeb Manager — Suivi du projet
 
+
+## Checkpoint — convergence CGV Builder V1 — 27/09/2026
+
+- [x] Le travail de `feature/quote-cgv-builder-v1` / PR #74 a été sécurisé puis réconcilié avec le HEAD Projet V2 `51b7ca247652a85929ae4ff580beaf329c0f6b9b`.
+- [x] Les 28 fichiers fonctionnels du Builder CGV ont été repris sans supprimer les avancées Bridge / Familles / Correspondances / Composition.
+- [x] Les migrations CGV initialement numérotées 40 / 41 / 42 sur la branche parallèle sont renumérotées **44 / 45 / 46** pour conserver les migrations actuelles 40 à 43.
+- [x] Builder : bibliothèque de clauses versionnées, clauses prestation, conditions particulières, public professionnel/consommateur, snapshot contractuel et copie pour Abby.
+- [x] PDF Abby accepté rattachable au devis ; onglet Contrats côté Client conservé.
+- [x] Les brouillons `CGV_CONTENT_DRAFT.md` et `CGV_SERVICE_MODULE_TEXTS_DRAFT.md` sont intégrés ; ils ne constituent pas encore des textes juridiques de production.
+- [ ] Validation MSI obligatoire après synchronisation : `npm run typecheck`, tests migrations + ContractTerms + QuoteService, puis recette visuelle Devis/Client.
+- [ ] Avant d’ouvrir un ancien workspace ayant éventuellement servi à la branche CGV historique, contrôler `schema_migrations` : les anciens IDs 40/41/42 CGV ne doivent pas être confondus avec les migrations 40/41/42 désormais attribuées au chantier Bridge.
+- [ ] Le prochain lot d’architecture reste **Projet → Site → Page → Composition**, avant le vrai round-trip multi-composants Bridge.
+
 ## Lot suivant — Package projet / Workbench multi-composants — 27/09/2026
 
 - [x] Convention interne `atoumweb_bridge_project_package` 0.1 ajoutée sans modifier les contrats Component / Fields / Identity V1.
