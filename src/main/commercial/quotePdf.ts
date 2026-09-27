@@ -144,7 +144,7 @@ function buildQuoteHtml(quote: QuoteDetail): string {
     <h2>Conditions</h2>
     <div class="condition"><span>Délai estimé</span><strong>${escapeHtml(quote.estimatedDelay || 'À définir ensemble')}</strong></div>
     ${quote.prerequisitesText ? `<div class="condition"><span>Prérequis</span><p>${escapeHtml(quote.prerequisitesText)}</p></div>` : ''}
-    ${quote.specialTerms ? `<div class="condition"><span>Conditions particulières</span><p>${escapeHtml(quote.specialTerms)}</p></div>` : ''}
+    ${quote.contractTextSnapshot ? `<div class="condition"><span>CGV</span><p>${escapeHtml(quote.contractTextSnapshot).replace(/\n/g, '<br />')}</p></div>` : quote.specialTerms ? `<div class="condition"><span>Conditions particulières</span><p>${escapeHtml(quote.specialTerms)}</p></div>` : ''}
   </section>
   <footer><strong>AtoumWeb</strong><span>www.atoumweb.fr</span></footer>
 </body>
