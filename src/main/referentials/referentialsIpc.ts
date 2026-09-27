@@ -104,6 +104,14 @@ export function registerReferentialsIpcHandlers(database: DatabaseService): void
   ipcMain.handle('referentials:compositions:reactivate', (_event, id: string) =>
     database.atoumWebCompositions.reactivate(id));
 
+  ipcMain.handle('referentials:compositions:export-package', (_event, id: string) =>
+    database.atoumWebCompositionPackages.exportPackage(id));
+  ipcMain.handle('referentials:compositions:show-package', (_event, path: string) => {
+    const validated = database.atoumWebCompositionPackages.assertExportPath(path);
+    shell.showItemInFolder(validated);
+    return { ok: true, error: null };
+  });
+
   ipcMain.handle('referentials:occurrence-returns:list', () =>
     database.atoumWebOccurrenceReturns.list());
   ipcMain.handle('referentials:occurrence-returns:get', (_event, id: string) =>
