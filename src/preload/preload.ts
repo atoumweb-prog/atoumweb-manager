@@ -72,6 +72,9 @@ import type {
   TransformQuoteToProjectInput,
 } from '../shared/projects';
 import type {
+  AtoumWebCompositionAddItemInput,
+  AtoumWebCompositionInput,
+  AtoumWebCompositionMoveItemInput,
   AtoumWebOccurrenceCreateFamilyInput,
   AtoumWebOccurrenceCreateVariantInput,
   AtoumWebOccurrenceUpdateVariantInput,
@@ -354,6 +357,17 @@ const api: AtoumWebApi = {
       inspectImport: () => ipcRenderer.invoke('referentials:packages:inspect-import'),
       importPackage: (input: AtoumWebPackageImportInput) => ipcRenderer.invoke('referentials:packages:import', input),
       showExport: (packagePath: string) => ipcRenderer.invoke('referentials:packages:show-export', packagePath),
+    },
+    compositions: {
+      list: (includeArchived?: boolean) => ipcRenderer.invoke('referentials:compositions:list', includeArchived),
+      get: (id: string) => ipcRenderer.invoke('referentials:compositions:get', id),
+      create: (input: AtoumWebCompositionInput) => ipcRenderer.invoke('referentials:compositions:create', input),
+      update: (id: string, input: Partial<AtoumWebCompositionInput>) => ipcRenderer.invoke('referentials:compositions:update', id, input),
+      addItem: (id: string, input: AtoumWebCompositionAddItemInput) => ipcRenderer.invoke('referentials:compositions:add-item', id, input),
+      removeItem: (id: string, itemId: string) => ipcRenderer.invoke('referentials:compositions:remove-item', id, itemId),
+      moveItem: (id: string, itemId: string, input: AtoumWebCompositionMoveItemInput) => ipcRenderer.invoke('referentials:compositions:move-item', id, itemId, input),
+      archive: (id: string) => ipcRenderer.invoke('referentials:compositions:archive', id),
+      reactivate: (id: string) => ipcRenderer.invoke('referentials:compositions:reactivate', id),
     },
     occurrenceReturns: {
       list: () => ipcRenderer.invoke('referentials:occurrence-returns:list'),
