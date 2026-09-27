@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type {
   AtoumWebCompositionDetail,
+  AtoumWebCompositionPackageExportResult,
   AtoumWebCompositionSummary,
   AtoumWebLibraryCategory,
   AtoumWebOccurrenceReturnDetail,
@@ -295,6 +296,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
   const [compositionName, setCompositionName] = useState('');
   const [compositionVertical, setCompositionVertical] = useState('');
   const [compositionBusy, setCompositionBusy] = useState(false);
+  const [compositionExport, setCompositionExport] = useState<AtoumWebCompositionPackageExportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function loadVersionAssets(versionId: string): Promise<void> {
@@ -1089,12 +1091,29 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
     }
   }
 
+  async function exportActiveComposition(): Promise<void> {
+    if (!activeComposition) return;
+    setCompositionBusy(true);
+    try {
+      setError(null);
+      const result = await window.atoumweb.referentials.compositions.exportPackage(activeComposition.id);
+      setCompositionExport(result);
+      onMessage(`Package projet prêt : ${result.fileName}`);
+    } catch (reason) {
+      setCompositionExport(null);
+      setError(reason instanceof Error ? reason.message : 'Préparation du package projet impossible.');
+    } finally {
+      setCompositionBusy(false);
+    }
+  }
+
   async function addToComposition(libraryItemId: string): Promise<void> {
     if (!activeComposition) return;
     setCompositionBusy(true);
     try {
       setError(null);
       const next = await window.atoumweb.referentials.compositions.addItem(activeComposition.id, { libraryItemId });
+      setCompositionExport(null);
       setActiveComposition(next);
       setCompositions((current) => current.map((item) => item.id === next.id ? { ...item, itemCount: next.itemCount, updatedAt: next.updatedAt } : item));
     } catch (reason) {
@@ -1108,6 +1127,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
     if (!activeComposition) return;
     setCompositionBusy(true);
     try {
+      setCompositionExport(null);
       setActiveComposition(await window.atoumweb.referentials.compositions.moveItem(activeComposition.id, itemId, { targetIndex }));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Réorganisation impossible.');
@@ -1121,6 +1141,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
     setCompositionBusy(true);
     try {
       const next = await window.atoumweb.referentials.compositions.removeItem(activeComposition.id, itemId);
+      setCompositionExport(null);
       setActiveComposition(next);
       setCompositions((current) => current.map((item) => item.id === next.id ? { ...item, itemCount: next.itemCount, updatedAt: next.updatedAt } : item));
     } catch (reason) {
@@ -1206,7 +1227,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
                 <button className="primary-button" type="button" disabled={compositionBusy || !compositionName.trim()} onClick={() => void createComposition()}>Créer la composition</button>
               </div>
               <div className="aw-composition-list">
-                {compositions.map((composition) => <button type="button" className={activeComposition?.id === composition.id ? 'selected' : ''} key={composition.id} onClick={async () => setActiveComposition(await window.atoumweb.referentials.compositions.get(composition.id))}>
+                {compositions.map((composition) => <button type="button" className={activeComposition?.id === composition.id ? 'selected' : ''} key={composition.id} onClick={async () => { setCompositionExport(null); setActiveComposition(await window.atoumweb.referentials.compositions.get(composition.id)); }}>
                   <strong>{composition.name}</strong>
                   <span>{composition.itemCount} composant{composition.itemCount > 1 ? 's' : ''}{composition.targetVertical ? ` · ${verticalLabel(composition.targetVertical)}` : ''}</span>
                 </button>)}
@@ -1221,6 +1242,19 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
                       <div><span className="eyebrow">Panier de composants</span><h3>{activeComposition.name}</h3></div>
                       <span>{activeComposition.items.length} composant{activeComposition.items.length > 1 ? 's' : ''}</span>
                     </div>
+                    <div className="aw-composition-package-bar">
+                      <div>
+                        <strong>Étape suivante : Bridge</strong>
+                        <span>Prépare un ZIP unique contenant tous les composants, dans cet ordre.</span>
+                      </div>
+                      <button className="primary-button" type="button" disabled={compositionBusy || activeComposition.items.length === 0} onClick={() => void exportActiveComposition()}>
+                        <OperationIcon name="package" size={16} /> Préparer pour Bridge
+                      </button>
+                    </div>
+                    {compositionExport && <div className="aw-composition-package-ready" role="status">
+                      <div><strong>Package projet prêt</strong><span>{compositionExport.fileName} · {compositionExport.componentCount} composant{compositionExport.componentCount > 1 ? 's' : ''}</span></div>
+                      <button className="secondary-button" type="button" onClick={() => void window.atoumweb.referentials.compositions.showPackage(compositionExport.path)}>Afficher le ZIP</button>
+                    </div>}
                     <div className="aw-composition-items">
                       {activeComposition.items.map((item, index) => <div className="aw-composition-item" key={item.id}>
                         <span className="aw-composition-order">{index + 1}</span>
