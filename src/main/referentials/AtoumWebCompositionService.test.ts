@@ -95,6 +95,21 @@ describe('AtoumWebCompositionService', () => {
     expect(result.items[0].sourceVersionNumber).toBe(2);
   });
 
+  it('refuse un composant Bridge marqué ready sans validation humaine', () => {
+    const bridge = library.create(
+      { category: 'section', name: 'Bridge non validé', reuseStatus: 'ready', tags: ['bridge'] },
+      { contentType: 'json', language: 'json', contentText: '{"kind":"atoumweb-library-reusable-component"}' },
+    );
+    library.markStable(bridge.currentVersion!.id);
+    const composition = compositions.create({ name: 'Site Bridge' });
+
+    expect(() => compositions.addItem(composition.id, { libraryItemId: bridge.id })).toThrow(/réellement.*Prêt à réutiliser/i);
+
+    library.updateMetadata(bridge.id, { tags: ['bridge', 'bridge-human-validated'] });
+    const accepted = compositions.addItem(composition.id, { libraryItemId: bridge.id });
+    expect(accepted.items).toHaveLength(1);
+  });
+
   it('archive puis réactive une composition sans toucher à ses composants', () => {
     const component = library.create(
       { category: 'footer', name: 'Footer', reuseStatus: 'ready' },
