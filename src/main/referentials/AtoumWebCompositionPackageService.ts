@@ -1,0 +1,211 @@
+import { createHash } from 'node:crypto';
+import { mkdirSync } from 'node:fs';
+import { basename, join, resolve, sep } from 'node:path';
+import type { AtoumWebCompositionPackageExportResult } from '../../shared/referentials';
+import type { DatabaseAdapter } from '../database/DatabaseAdapter';
+import type { WorkspacePaths } from '../workspace';
+import { AtoumWebCompositionService } from './AtoumWebCompositionService';
+import { AtoumWebPackageService } from './AtoumWebPackageService';
+import { readZipArchive, writeZipArchive, type ZipEntryInput, type ZipEntryOutput } from './ZipArchive';
+
+interface ComponentPackageManifest {
+  schemaVersion: number;
+  purpose: string;
+  item?: Record<string, unknown>;
+  version?: Record<string, unknown>;
+  assets?: Array<Record<string, unknown>>;
+  bridgeWorkbench?: {
+    contract?: string;
+    schemaVersion?: number;
+    componentPackageContractVersion?: number;
+    fieldsContractVersion?: number;
+    identityContractVersion?: number;
+    flow?: string;
+    workbenchRequired?: boolean;
+    directProductionInjection?: boolean;
+    component?: Record<string, unknown>;
+    files?: Record<string, { path?: string; sha256?: string } | null>;
+    provenance?: Record<string, unknown>;
+  };
+}
+
+export class AtoumWebCompositionPackageService {
+  constructor(
+    private readonly database: DatabaseAdapter,
+    private readonly workspace: WorkspacePaths,
+    private readonly compositions: AtoumWebCompositionService,
+    private readonly packages: AtoumWebPackageService,
+  ) {}
+
+  exportPackage(compositionId: string): AtoumWebCompositionPackageExportResult {
+    const composition = this.compositions.get(compositionId);
+    if (composition.status === 'archived') throw new Error('Réactive la composition avant de préparer un package.');
+    if (composition.items.length === 0) throw new Error('Ajoute au moins un composant avant de préparer le package.');
+
+    const createdAt = new Date().toISOString();
+    const entries: ZipEntryInput[] = [];
+    const manifestComponents: Array<Record<string, unknown>> = [];
+
+    composition.items.forEach((compositionItem, index) => {
+      const exported = this.packages.exportItem(compositionItem.sourceItemId, compositionItem.sourceVersionId);
+      const componentEntries = readZipArchive(exported.path);
+      const byName = new Map(componentEntries.map((entry) => [entry.name, entry] as const));
+      const manifestEntry = byName.get('manifest.json');
+      if (!manifestEntry) throw new Error(`Manifest composant absent : ${compositionItem.displayName}.`);
+
+      let componentManifest: ComponentPackageManifest;
+      try {
+        componentManifest = JSON.parse(manifestEntry.data.toString('utf8')) as ComponentPackageManifest;
+      } catch {
+        throw new Error(`Manifest composant invalide : ${compositionItem.displayName}.`);
+      }
+
+      const bridge = componentManifest.bridgeWorkbench;
+      if (!bridge
+        || bridge.contract !== 'atoumweb_bridge_component_package'
+        || bridge.schemaVersion !== 1
+        || bridge.componentPackageContractVersion !== 1
+        || bridge.fieldsContractVersion !== 1
+        || bridge.identityContractVersion !== 1
+        || bridge.flow !== 'workbench_first'
+        || bridge.workbenchRequired !== true
+        || bridge.directProductionInjection !== false) {
+        throw new Error(`Le composant « ${compositionItem.displayName} » n’est pas exportable vers un Workbench Bridge V1.`);
+      }
+
+      const prefix = `components/${String(index + 1).padStart(3, '0')}`;
+      const copiedFiles: Record<string, { path: string; sha256: string } | null> = {};
+      for (const [key, descriptor] of Object.entries(bridge.files ?? {})) {
+        if (!descriptor?.path) {
+          copiedFiles[key] = null;
+          continue;
+        }
+        const sourceEntry = byName.get(descriptor.path);
+        if (!sourceEntry) throw new Error(`Fichier ${descriptor.path} absent pour « ${compositionItem.displayName} ».`);
+        const expected = String(descriptor.sha256 ?? '').replace(/^sha256:/i, '').toLowerCase();
+        const actual = this.sha256(sourceEntry.data);
+        if (!/^[0-9a-f]{64}$/.test(expected) || expected !== actual) {
+          throw new Error(`Checksum invalide pour « ${compositionItem.displayName} » : ${descriptor.path}.`);
+        }
+        const targetPath = `${prefix}/${descriptor.path}`;
+        entries.push({ name: targetPath, data: sourceEntry.data });
+        copiedFiles[key] = { path: targetPath, sha256: actual };
+      }
+
+      const copiedAssets: Array<Record<string, unknown>> = [];
+      for (const asset of componentManifest.assets ?? []) {
+        const archivePath = typeof asset.archivePath === 'string' ? asset.archivePath : null;
+        if (!archivePath) {
+          copiedAssets.push({ ...asset });
+          continue;
+        }
+        const sourceEntry = byName.get(archivePath);
+        if (!sourceEntry) throw new Error(`Asset déclaré absent pour « ${compositionItem.displayName} » : ${archivePath}.`);
+        const targetPath = `${prefix}/${archivePath}`;
+        entries.push({ name: targetPath, data: sourceEntry.data });
+        copiedAssets.push({ ...asset, archivePath: targetPath });
+      }
+
+      manifestComponents.push({
+        compositionItemId: compositionItem.id,
+        sortOrder: compositionItem.sortOrder,
+        displayName: compositionItem.displayName,
+        category: compositionItem.category,
+        vertical: compositionItem.vertical,
+        source: {
+          libraryItemId: compositionItem.sourceItemId,
+          libraryVersionId: compositionItem.sourceVersionId,
+          libraryVersionNumber: compositionItem.sourceVersionNumber,
+          componentFamilyId: compositionItem.componentFamilyId,
+          componentKey: compositionItem.componentKey,
+          libraryVariantId: compositionItem.libraryVariantId,
+          variantKey: compositionItem.variantKey,
+          variantMode: compositionItem.variantMode,
+        },
+        component: bridge.component ?? {},
+        files: copiedFiles,
+        transportAssets: copiedAssets,
+        provenance: bridge.provenance ?? {},
+      });
+    });
+
+    const manifest = {
+      contract: 'atoumweb_bridge_project_package',
+      schemaVersion: 1,
+      exportedAt: createdAt,
+      safety: {
+        flow: 'workbench_first',
+        workbenchRequired: true,
+        directProductionInjection: false,
+        sourceLibraryMutation: false,
+      },
+      composition: {
+        id: composition.id,
+        name: composition.name,
+        targetVertical: composition.targetVertical,
+        notes: composition.notes,
+      },
+      components: manifestComponents,
+    };
+
+    entries.unshift({
+      name: 'manifest.json',
+      data: Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`, 'utf8'),
+    });
+
+    const directory = join(this.workspace.exportsDirectory, 'compositions-atoumweb');
+    mkdirSync(directory, { recursive: true });
+    const fileName = `${this.safeSegment(composition.name)} - ${createdAt.replace(/[:.]/g, '-')}.zip`;
+    const destination = join(directory, fileName);
+    writeZipArchive(destination, this.deduplicateEntries(entries));
+
+    this.database.run(
+      `INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at)
+       VALUES (?,?,?,?,?,?)`,
+      [
+        'atoumweb_composition',
+        composition.id,
+        'atoumweb_composition_package_exported',
+        `Package projet préparé : ${composition.name}`,
+        JSON.stringify({ path: destination, componentCount: composition.items.length }),
+        createdAt,
+      ],
+    );
+
+    return {
+      compositionId: composition.id,
+      path: destination,
+      fileName,
+      componentCount: composition.items.length,
+      createdAt,
+    };
+  }
+
+  assertExportPath(path: string): string {
+    const root = resolve(this.workspace.exportsDirectory, 'compositions-atoumweb');
+    const candidate = resolve(path);
+    if (candidate !== root && !candidate.startsWith(root + sep)) {
+      throw new Error('Ce chemin ne correspond pas à un export de composition AtoumWeb.');
+    }
+    if (basename(candidate) === candidate) throw new Error('Chemin de package de composition invalide.');
+    return candidate;
+  }
+
+  private deduplicateEntries(entries: ZipEntryInput[]): ZipEntryInput[] {
+    const seen = new Set<string>();
+    return entries.filter((entry) => {
+      if (seen.has(entry.name)) return false;
+      seen.add(entry.name);
+      return true;
+    });
+  }
+
+  private safeSegment(value: string): string {
+    const normalized = value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+    return normalized.replace(/[^a-zA-Z0-9._ -]+/g, '').trim().replace(/\s+/g, ' ') || 'composition';
+  }
+
+  private sha256(data: Buffer): string {
+    return createHash('sha256').update(data).digest('hex');
+  }
+}
