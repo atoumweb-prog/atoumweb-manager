@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type {
+  AtoumWebCompositionDetail,
+  AtoumWebCompositionSummary,
   AtoumWebLibraryCategory,
   AtoumWebOccurrenceReturnDetail,
   AtoumWebOccurrenceReturnInspection,
@@ -287,6 +289,12 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
   const [occurrenceReturnBusy, setOccurrenceReturnBusy] = useState(false);
   const [bridgeWorkflowBusy, setBridgeWorkflowBusy] = useState(false);
   const [bridgeStageView, setBridgeStageView] = useState<BridgeStageView>('original');
+  const [compositions, setCompositions] = useState<AtoumWebCompositionSummary[]>([]);
+  const [activeComposition, setActiveComposition] = useState<AtoumWebCompositionDetail | null>(null);
+  const [compositionOpen, setCompositionOpen] = useState(false);
+  const [compositionName, setCompositionName] = useState('');
+  const [compositionVertical, setCompositionVertical] = useState('');
+  const [compositionBusy, setCompositionBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function loadVersionAssets(versionId: string): Promise<void> {
@@ -354,6 +362,10 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
 
   useEffect(() => {
     void loadOccurrenceReturns();
+  }, []);
+
+  useEffect(() => {
+    void loadCompositions();
   }, []);
 
   const summary = useMemo(() => ({
@@ -1043,6 +1055,81 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
     }
   }
 
+  async function loadCompositions(preferredId?: string | null): Promise<void> {
+    const next = await window.atoumweb.referentials.compositions.list(false);
+    setCompositions(next);
+    const id = preferredId ?? activeComposition?.id ?? next[0]?.id ?? null;
+    if (id && next.some((item) => item.id === id)) {
+      setActiveComposition(await window.atoumweb.referentials.compositions.get(id));
+    } else {
+      setActiveComposition(null);
+    }
+  }
+
+  async function createComposition(): Promise<void> {
+    if (!compositionName.trim()) {
+      setError('Donne un nom à la composition.');
+      return;
+    }
+    setCompositionBusy(true);
+    try {
+      setError(null);
+      const created = await window.atoumweb.referentials.compositions.create({
+        name: compositionName.trim(),
+        targetVertical: compositionVertical.trim() || null,
+      });
+      setCompositionName('');
+      setCompositionVertical('');
+      await loadCompositions(created.id);
+      onMessage(`Composition « ${created.name} » créée.`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Création de la composition impossible.');
+    } finally {
+      setCompositionBusy(false);
+    }
+  }
+
+  async function addToComposition(libraryItemId: string): Promise<void> {
+    if (!activeComposition) return;
+    setCompositionBusy(true);
+    try {
+      setError(null);
+      const next = await window.atoumweb.referentials.compositions.addItem(activeComposition.id, { libraryItemId });
+      setActiveComposition(next);
+      setCompositions((current) => current.map((item) => item.id === next.id ? { ...item, itemCount: next.itemCount, updatedAt: next.updatedAt } : item));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Ajout à la composition impossible.');
+    } finally {
+      setCompositionBusy(false);
+    }
+  }
+
+  async function moveCompositionItem(itemId: string, targetIndex: number): Promise<void> {
+    if (!activeComposition) return;
+    setCompositionBusy(true);
+    try {
+      setActiveComposition(await window.atoumweb.referentials.compositions.moveItem(activeComposition.id, itemId, { targetIndex }));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Réorganisation impossible.');
+    } finally {
+      setCompositionBusy(false);
+    }
+  }
+
+  async function removeCompositionItem(itemId: string): Promise<void> {
+    if (!activeComposition) return;
+    setCompositionBusy(true);
+    try {
+      const next = await window.atoumweb.referentials.compositions.removeItem(activeComposition.id, itemId);
+      setActiveComposition(next);
+      setCompositions((current) => current.map((item) => item.id === next.id ? { ...item, itemCount: next.itemCount, updatedAt: next.updatedAt } : item));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Retrait impossible.');
+    } finally {
+      setCompositionBusy(false);
+    }
+  }
+
   async function openPromotedLibraryItem(itemId: string): Promise<void> {
     setSearch('');
     setCategory('');
@@ -1095,12 +1182,70 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
             {occurrenceReturns.length > 0 && <button className="secondary-button" type="button" onClick={() => setShowOccurrenceReturns((value) => !value)} title="Ouvrir les retours Bridge déjà importés dans Manager"><OperationIcon name="repeat" size={16} /> {pendingOccurrenceReturnCount ? `À traiter · ${pendingOccurrenceReturnCount}` : `Historique · ${occurrenceReturns.length}`}</button>}
           </div>
           <div className="aw-library-action-group" aria-label="Gestion de la Bibliothèque">
+            <button className="secondary-button" type="button" onClick={() => { setCompositionOpen(true); void loadCompositions(); }} title="Assembler plusieurs composants réutilisables dans l’ordre du futur site"><OperationIcon name="package" size={16} /> Composer un site</button>
             <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void inspectPackage()} title="Importer un package de composant dans la Bibliothèque"><OperationIcon name="package" size={16} /> Importer un composant</button>
             <button className="primary-button" type="button" onClick={() => setCreating((value) => !value)}>{creating ? 'Fermer' : 'Nouveau composant'}</button>
           </div>
         </div>
       </article>
       </div>
+
+      {compositionOpen && <div className="aw-library-modal-backdrop" role="presentation" onMouseDown={(event) => {
+        if (event.currentTarget === event.target) setCompositionOpen(false);
+      }}>
+        <section className="panel aw-library-modal aw-library-composition-modal" role="dialog" aria-modal="true" aria-labelledby="aw-composition-title">
+          <div className="panel-title aw-library-modal-head">
+            <div><span className="eyebrow">Composition multi-composants</span><h2 id="aw-composition-title">Composer un futur site</h2></div>
+            <button className="secondary-button" type="button" onClick={() => setCompositionOpen(false)}>Fermer</button>
+          </div>
+          <div className="aw-library-modal-body aw-composition-layout">
+            <aside className="aw-composition-sidebar">
+              <div className="aw-library-form-grid">
+                <label>Nom du site / composition<input value={compositionName} onChange={(event) => setCompositionName(event.target.value)} placeholder="Ex. Site Fleuriste Dupont" /></label>
+                <label>Métier<input list="aw-library-vertical-options" value={compositionVertical} onChange={(event) => setCompositionVertical(event.target.value)} placeholder="Ex. fleuriste" /></label>
+                <button className="primary-button" type="button" disabled={compositionBusy || !compositionName.trim()} onClick={() => void createComposition()}>Créer la composition</button>
+              </div>
+              <div className="aw-composition-list">
+                {compositions.map((composition) => <button type="button" className={activeComposition?.id === composition.id ? 'selected' : ''} key={composition.id} onClick={async () => setActiveComposition(await window.atoumweb.referentials.compositions.get(composition.id))}>
+                  <strong>{composition.name}</strong>
+                  <span>{composition.itemCount} composant{composition.itemCount > 1 ? 's' : ''}{composition.targetVertical ? ` · ${verticalLabel(composition.targetVertical)}` : ''}</span>
+                </button>)}
+                {compositions.length === 0 && <p className="muted">Aucune composition enregistrée.</p>}
+              </div>
+            </aside>
+            <div className="aw-composition-main">
+              {!activeComposition
+                ? <div className="aw-library-empty"><strong>Crée ou sélectionne une composition.</strong><span>Les composants sources restent inchangés dans la Bibliothèque.</span></div>
+                : <>
+                    <div className="aw-library-section-title">
+                      <div><span className="eyebrow">Panier de composants</span><h3>{activeComposition.name}</h3></div>
+                      <span>{activeComposition.items.length} composant{activeComposition.items.length > 1 ? 's' : ''}</span>
+                    </div>
+                    <div className="aw-composition-items">
+                      {activeComposition.items.map((item, index) => <div className="aw-composition-item" key={item.id}>
+                        <span className="aw-composition-order">{index + 1}</span>
+                        <div><strong>{item.displayName}</strong><small>{categoryLabel(item.category)} · v{item.sourceVersionNumber}{item.variantKey ? ` · ${item.variantKey}` : ''}</small></div>
+                        <div className="button-row">
+                          <button className="secondary-button" type="button" disabled={compositionBusy || index === 0} onClick={() => void moveCompositionItem(item.id, index - 1)}>↑</button>
+                          <button className="secondary-button" type="button" disabled={compositionBusy || index === activeComposition.items.length - 1} onClick={() => void moveCompositionItem(item.id, index + 1)}>↓</button>
+                          <button className="secondary-button" type="button" disabled={compositionBusy} onClick={() => void removeCompositionItem(item.id)}>Retirer</button>
+                        </div>
+                      </div>)}
+                      {activeComposition.items.length === 0 && <p className="muted">Ajoute des composants prêts à réutiliser depuis la liste ci-dessous.</p>}
+                    </div>
+                    <div className="aw-library-section-title"><div><span className="eyebrow">Bibliothèque</span><h3>Ajouter un composant</h3></div></div>
+                    <div className="aw-composition-catalog">
+                      {items.filter((item) => !item.archivedAt && effectiveReuseStatus(item) === 'ready').map((item) => <button type="button" key={item.id} disabled={compositionBusy} onClick={() => void addToComposition(item.id)}>
+                        <span><strong>{item.name}</strong><small>{categoryLabel(item.category)}{item.variantKey ? ` · ${item.variantKey}` : ''}{item.vertical ? ` · ${verticalLabel(item.vertical)}` : ''}</small></span>
+                        <span>Ajouter</span>
+                      </button>)}
+                    </div>
+                    <p className="technical-safety-note">Chaque ligne mémorise la version, la famille et la variante choisies. La composition n’altère jamais les composants sources et ne publie rien dans WordPress.</p>
+                  </>}
+            </div>
+          </div>
+        </section>
+      </div>}
 
       {occurrenceReturnInspection && <div className="aw-library-modal-backdrop" role="presentation" onMouseDown={(event) => {
         if (event.currentTarget === event.target) {
