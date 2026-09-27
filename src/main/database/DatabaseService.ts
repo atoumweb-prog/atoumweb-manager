@@ -112,7 +112,7 @@ export class DatabaseService {
     this.atoumWebPackages = new AtoumWebPackageService(this.database, this.workspace, this.atoumWebTechnicalLibrary, this.atoumWebTechnicalAssets);
     this.atoumWebOccurrenceReturns = new AtoumWebOccurrenceReturnService(this.database, this.workspace);
     this.atoumWebCompositions = new AtoumWebCompositionService(this.database, this.atoumWebTechnicalLibrary);
-    this.atoumWebCompositionPackages = new AtoumWebCompositionPackageService(this.database, this.workspace, this.atoumWebCompositions, this.atoumWebPackages);
+    this.atoumWebCompositionPackages = new AtoumWebCompositionPackageService(this.database, this.workspace, this.atoumWebCompositions, this.atoumWebPackages, this.atoumWebTechnicalLibrary);
     this.businessBackups = new BusinessBackupService(this.database);
     this.businessBackupAlerts = new BusinessBackupAlertService(this.database, this.businessBackups);
     this.operations = new OperationsService(this.database);
