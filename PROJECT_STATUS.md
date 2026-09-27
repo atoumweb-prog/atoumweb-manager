@@ -1,5 +1,19 @@
 # AtoumWeb Manager — Suivi du projet
 
+## Lot suivant — Package projet / Workbench multi-composants — 27/09/2026
+
+- [x] Convention interne `atoumweb_bridge_project_package` 0.1 ajoutée sans modifier les contrats Component / Fields / Identity V1.
+- [x] Une composition Manager peut préparer un ZIP unique en conservant l’ordre, la version exacte, la Famille / Variante et les SHA-256 de chaque composant.
+- [x] Les Component Package V1 existants sont réutilisés comme source ; aucun composant Bibliothèque n’est réécrit.
+- [x] Bibliothèque : action **Préparer pour Bridge** + accès au ZIP généré.
+- [x] Bridge 0.8.0 : import du package projet dans **un seul Workbench Divi**, avec un module Code distinct par composant et ordre Manager conservé.
+- [x] Bridge crée une **Site Occurrence V1 distincte par composant** du Workbench projet et conserve la provenance de la composition.
+- [x] Les Workbenches projet sont distingués des Workbenches composant / production dans l’interface Bridge.
+- [ ] Validation MSI Manager : typecheck + tests Composition / Package / migrations.
+- [ ] Validation réelle Bridge 0.8.0 : installer le plugin, importer un package de composition et vérifier le Workbench Divi.
+- [ ] Lot suivant : provenance/retour multi-composants (configuration et Occurrence Return composant par composant).
+- [ ] Publication production et intégration des branches parallèles 40/41/42 restent différées.
+
 ## Lot suivant — Composition multi-composants — 27/09/2026
 
 - [x] Migration 43 : stockage dédié des compositions et de leurs occurrences de composants, sans modifier les composants Bibliothèque sources.
