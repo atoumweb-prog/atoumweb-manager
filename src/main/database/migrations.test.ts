@@ -233,7 +233,7 @@ describe('migrations SQLite', () => {
     for (const column of ['reuse_status', 'origin_technical_item_id', 'library_category', 'vertical']) {
       expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('technical_items') WHERE name='${column}'`)?.name).toBe(column);
     }
-    expect(MIGRATIONS.at(-1)?.id).toBe(42);
+    expect(MIGRATIONS.at(-1)?.id).toBe(43);
     for (const table of ['bridge_logical_nodes', 'bridge_node_match_decisions', 'bridge_node_logical_assignments', 'bridge_node_match_history']) {
       expect(database.get('SELECT name FROM sqlite_master WHERE type=\'table\' AND name=?', [table])).toEqual({ name: table });
     }
