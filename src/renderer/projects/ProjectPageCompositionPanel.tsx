@@ -25,7 +25,6 @@ const VISUAL_CATEGORIES: Array<{ id: AtoumWebLibraryCategory; label: string }> =
   { id: 'carousel', label: 'Carrousel' },
   { id: 'navigation', label: 'Navigation' },
   { id: 'divi', label: 'Module Divi' },
-  { id: 'code_snippet', label: 'Code snippet' },
 ];
 
 interface PreviewParts {
