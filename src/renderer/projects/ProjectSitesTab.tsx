@@ -8,6 +8,7 @@ import {
   type ProjectSitePageRole,
 } from '../../shared/projects';
 import type { TimeSession } from '../../shared/time';
+import { ProjectPageCompositionPanel } from './ProjectPageCompositionPanel';
 import './ProjectSitesTab.css';
 
 function formatElapsed(seconds: number): string {
@@ -563,6 +564,9 @@ export function ProjectSitesTab({
               />
             </label>
           </div>
+
+          <ProjectPageCompositionPanel page={selectedPage} onMessage={onMessage} />
+
           <div className="project-sites-note">
             <strong>Divi reste l’atelier principal.</strong>
             <span>Cette fiche décrit la destination métier de la Page. Le bouton de préparation Bridge sera ajouté dans un lot ultérieur.</span>
