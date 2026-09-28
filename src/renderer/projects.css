@@ -801,9 +801,12 @@
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
   gap: 10px;
+  width: 100%;
+  max-width: 100%;
   height: calc(100dvh - 148px);
   min-height: 620px;
   min-width: 0;
+  overflow-x: hidden;
 }
 
 .project-production-header {
