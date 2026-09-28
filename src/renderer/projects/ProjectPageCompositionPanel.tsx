@@ -13,6 +13,7 @@ import './ProjectPageCompositionPanel.css';
 
 type PanelMode = null | 'library' | 'create' | 'attach' | 'inspect' | 'preview';
 type CreateMode = 'new' | 'variant';
+type CodeInputMode = 'complete' | 'separated';
 type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
 
 const VISUAL_CATEGORIES: Array<{ id: AtoumWebLibraryCategory; label: string }> = [
@@ -139,6 +140,27 @@ function buildPreviewDocument(parts: PreviewParts, label: string): string {
 <style>${safeStyle(parts.css)}</style></head><body>${body}</body></html>`;
 }
 
+function splitCompleteCode(value: string): { html: string; css: string; javascript: string } {
+  let source = value.trim()
+    .replace(/^\`\`\`(?:html|javascript|js|css)?\s*/i, '')
+    .replace(/\s*\`\`\`$/i, '');
+  const css: string[] = [];
+  const javascript: string[] = [];
+  source = source.replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gi, (_match, content: string) => {
+    css.push(content.trim());
+    return '';
+  });
+  source = source.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, (_match, content: string) => {
+    javascript.push(content.trim());
+    return '';
+  });
+  return {
+    html: source.trim(),
+    css: css.filter(Boolean).join('\n\n'),
+    javascript: javascript.filter(Boolean).join('\n\n'),
+  };
+}
+
 function effectiveReady(item: AtoumWebTechnicalItemSummary): boolean {
   if (item.reuseStatus !== 'ready' || item.archivedAt) return false;
   const tags = new Set(item.tags ?? []);
@@ -162,6 +184,8 @@ export function ProjectPageCompositionPanel({
   const [search, setSearch] = useState('');
   const [attachId, setAttachId] = useState('');
   const [createForm, setCreateForm] = useState<CreateForm>(EMPTY_FORM);
+  const [codeInputMode, setCodeInputMode] = useState<CodeInputMode>('complete');
+  const [fullCode, setFullCode] = useState('');
   const [inspected, setInspected] = useState<{ item: AtoumWebCompositionItem; detail: AtoumWebTechnicalItemDetail; parts: PreviewParts } | null>(null);
   const [previewDoc, setPreviewDoc] = useState('');
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop');
@@ -187,11 +211,14 @@ export function ProjectPageCompositionPanel({
     );
   }, [page.id]);
 
-  const readyLibrary = useMemo(() => library.filter(effectiveReady), [library]);
+  const visualLibrary = useMemo(() => library.filter((item) =>
+    ['header','footer','hero','page','section','form','gallery','carousel','navigation','divi'].includes(item.category)
+  ), [library]);
+  const readyLibrary = useMemo(() => visualLibrary.filter(effectiveReady), [visualLibrary]);
   const filteredLibrary = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase('fr-FR');
-    if (!needle) return readyLibrary;
-    return readyLibrary.filter((item) => [
+    if (!needle) return visualLibrary;
+    return visualLibrary.filter((item) => [
       item.name,
       item.category,
       item.vertical ?? '',
@@ -199,7 +226,7 @@ export function ProjectPageCompositionPanel({
       item.variantKey ?? '',
       ...(item.tags ?? []),
     ].join(' ').toLocaleLowerCase('fr-FR').includes(needle));
-  }, [readyLibrary, search]);
+  }, [visualLibrary, search]);
 
   async function withBusy(action: () => Promise<void>): Promise<void> {
     setBusy(true);
@@ -270,7 +297,23 @@ export function ProjectPageCompositionPanel({
     });
   }
 
-  async function createAndAdd(): Promise<void> {
+  function analyzeFullCode(): void {
+    const parsed = splitCompleteCode(fullCode);
+    if (!parsed.html) {
+      onMessage('Aucun HTML détecté dans le code complet.');
+      return;
+    }
+    setCreateForm((value) => ({
+      ...value,
+      html: parsed.html,
+      css: parsed.css,
+      javascript: parsed.javascript,
+    }));
+    setCodeInputMode('separated');
+    onMessage(`Code analysé : HTML${parsed.css ? ' + CSS' : ''}${parsed.javascript ? ' + JavaScript' : ''}.`);
+  }
+
+    async function createAndAdd(): Promise<void> {
     if (!createForm.name.trim() || !createForm.html.trim()) {
       onMessage('Nom et HTML sont requis.');
       return;
@@ -300,6 +343,8 @@ export function ProjectPageCompositionPanel({
       const next = await window.atoumweb.referentials.compositions.addItem(target.id, { libraryItemId: created.id });
       setComposition(next);
       setCreateForm(EMPTY_FORM);
+      setFullCode('');
+      setCodeInputMode('complete');
       setMode(null);
       onMessage(createForm.mode === 'variant' ? 'Déclinaison créée et ajoutée à la Page.' : 'Composant créé et ajouté à la Page.');
       await reload();
@@ -392,62 +437,103 @@ export function ProjectPageCompositionPanel({
       <button className="primary-button" type="button" disabled={!attachId || busy} onClick={() => void attachExisting()}>Rattacher</button>
     </div>}
 
-    {mode === 'library' && <div className="project-page-composition-drawer">
-      <div className="project-page-composition-drawer-head">
-        <div><span className="eyebrow">Bibliothèque AtoumWeb</span><h3>Ajouter un composant</h3></div>
-        <button className="secondary-button" type="button" onClick={() => setMode(null)}>Fermer</button>
-      </div>
-      <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher un Hero, une section, une variante…" />
-      <div className="project-page-library-grid">
-        {filteredLibrary.map((item) => <button key={item.id} type="button" disabled={busy} onClick={() => void addLibraryItem(item.id)}>
-          <span><strong>{item.name}</strong><small>{item.category}{item.familyDisplayName ? ` · ${item.familyDisplayName}` : ''}{item.variantKey ? ` · ${item.variantKey}` : ''}</small></span>
-          <b>Ajouter</b>
-        </button>)}
-        {filteredLibrary.length === 0 && <p className="muted">Aucun composant réutilisable correspondant.</p>}
+    {mode === 'library' && <div className="project-page-composition-modal library-modal" role="dialog" aria-modal="true">
+      <div className="project-page-composition-modal-backdrop" onClick={() => setMode(null)} />
+      <div className="project-page-composition-modal-panel">
+        <header>
+          <div>
+            <span className="eyebrow">Bibliothèque AtoumWeb</span>
+            <h3>Ajouter un composant</h3>
+            <p>{readyLibrary.length} prêt(s) à ajouter · {visualLibrary.length} élément(s) visuel(s) dans la Bibliothèque</p>
+          </div>
+          <button className="secondary-button" type="button" onClick={() => setMode(null)}>Fermer</button>
+        </header>
+        <div className="project-page-library-modal-body">
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher un Hero, une section, une variante…" />
+          <div className="project-page-library-grid">
+            {filteredLibrary.map((item) => {
+              const ready = effectiveReady(item);
+              return <div key={item.id} className={ready ? 'project-page-library-card ready' : 'project-page-library-card not-ready'}>
+                <span>
+                  <strong>{item.name}</strong>
+                  <small>{item.category}{item.familyDisplayName ? ` · ${item.familyDisplayName}` : ''}{item.variantKey ? ` · ${item.variantKey}` : ''}</small>
+                  {!ready && <small>Statut : {item.reuseStatus === 'adapt' ? 'À adapter / valider' : 'Référence'}</small>}
+                </span>
+                <button type="button" disabled={!ready || busy} onClick={() => void addLibraryItem(item.id)}>
+                  {ready ? 'Ajouter' : 'À valider'}
+                </button>
+              </div>;
+            })}
+            {filteredLibrary.length === 0 && <p className="muted">Aucun composant correspondant.</p>}
+          </div>
+        </div>
       </div>
     </div>}
 
-    {mode === 'create' && <div className="project-page-component-editor">
-      <div className="project-page-component-editor-head">
-        <div><span className="eyebrow">Création directe</span><h3>Nouveau composant / déclinaison</h3></div>
-        <button className="secondary-button" type="button" onClick={() => setMode(null)}>Fermer</button>
-      </div>
-      <div className="project-page-component-editor-grid">
-        <div className="project-page-component-form">
-          <div className="project-page-component-mode">
-            <button type="button" className={createForm.mode === 'new' ? 'active' : ''} onClick={() => setCreateForm({ ...EMPTY_FORM, mode: 'new' })}>Nouvel élément</button>
-            <button type="button" className={createForm.mode === 'variant' ? 'active' : ''} onClick={() => setCreateForm({ ...EMPTY_FORM, mode: 'variant' })}>Déclinaison d’un modèle</button>
+    {mode === 'create' && <div className="project-page-composition-modal create-modal" role="dialog" aria-modal="true">
+      <div className="project-page-composition-modal-backdrop" onClick={() => setMode(null)} />
+      <div className="project-page-composition-modal-panel">
+        <header>
+          <div><span className="eyebrow">Création directe</span><h3>Nouveau composant / déclinaison</h3><p>Colle un code complet ou travaille champ par champ.</p></div>
+          <button className="secondary-button" type="button" onClick={() => setMode(null)}>Fermer</button>
+        </header>
+        <div className="project-page-component-editor-body">
+          <div className="project-page-component-editor-grid">
+            <div className="project-page-component-form">
+              <div className="project-page-component-mode">
+                <button type="button" className={createForm.mode === 'new' ? 'active' : ''} onClick={() => {
+                  setCreateForm({ ...EMPTY_FORM, mode: 'new' }); setFullCode(''); setCodeInputMode('complete');
+                }}>Nouvel élément</button>
+                <button type="button" className={createForm.mode === 'variant' ? 'active' : ''} onClick={() => {
+                  setCreateForm({ ...EMPTY_FORM, mode: 'variant' }); setFullCode(''); setCodeInputMode('complete');
+                }}>Déclinaison d’un modèle</button>
+              </div>
+              {createForm.mode === 'variant' && <label>Modèle source
+                <select value={createForm.sourceItemId} onChange={(event) => {
+                  const source = library.find((item) => item.id === event.target.value);
+                  setCreateForm((value) => ({
+                    ...value,
+                    sourceItemId: event.target.value,
+                    category: source?.category ?? value.category,
+                    vertical: source?.vertical ?? value.vertical,
+                  }));
+                }}>
+                  <option value="">Choisir le modèle…</option>
+                  {readyLibrary.map((item) => <option key={item.id} value={item.id}>{item.name}{item.variantKey ? ` · ${item.variantKey}` : ''}</option>)}
+                </select>
+              </label>}
+              <div className="project-page-component-form-grid">
+                <label>Nom<input value={createForm.name} onChange={(event) => setCreateForm((value) => ({ ...value, name: event.target.value }))} placeholder={createForm.mode === 'variant' ? 'Ex. Fleuriste' : 'Ex. Hero Fleuriste'} /></label>
+                {createForm.mode === 'new' && <label>Type<select value={createForm.category} onChange={(event) => setCreateForm((value) => ({ ...value, category: event.target.value as AtoumWebLibraryCategory }))}>{VISUAL_CATEGORIES.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}</select></label>}
+                <label>Métier<input value={createForm.vertical} onChange={(event) => setCreateForm((value) => ({ ...value, vertical: event.target.value }))} placeholder="Ex. fleuriste" /></label>
+              </div>
+              <label>Description<textarea rows={2} value={createForm.description} onChange={(event) => setCreateForm((value) => ({ ...value, description: event.target.value }))} /></label>
+
+              <div className="project-page-code-mode">
+                <button type="button" className={codeInputMode === 'complete' ? 'active' : ''} onClick={() => setCodeInputMode('complete')}>Code complet</button>
+                <button type="button" className={codeInputMode === 'separated' ? 'active' : ''} onClick={() => setCodeInputMode('separated')}>HTML / CSS / JS séparés</button>
+              </div>
+
+              {codeInputMode === 'complete' ? <>
+                <label>Code complet
+                  <textarea rows={22} value={fullCode} onChange={(event) => setFullCode(event.target.value)} placeholder={"<style>…</style>\n<section>…</section>\n<script>…</script>"} />
+                </label>
+                <button className="secondary-button" type="button" disabled={!fullCode.trim()} onClick={analyzeFullCode}>Analyser et répartir le code</button>
+              </> : <>
+                <label>HTML<textarea rows={10} value={createForm.html} onChange={(event) => setCreateForm((value) => ({ ...value, html: event.target.value }))} placeholder="<section>…</section>" /></label>
+                <label>CSS<textarea rows={8} value={createForm.css} onChange={(event) => setCreateForm((value) => ({ ...value, css: event.target.value }))} placeholder=".hero { … }" /></label>
+                <label>JavaScript <span>facultatif · non exécuté dans l’aperçu</span><textarea rows={5} value={createForm.javascript} onChange={(event) => setCreateForm((value) => ({ ...value, javascript: event.target.value }))} /></label>
+              </>}
+
+              <button className="primary-button" type="button" disabled={busy || !createForm.name.trim() || !createForm.html.trim() || (createForm.mode === 'variant' && !createForm.sourceItemId)} onClick={() => void createAndAdd()}>
+                {createForm.mode === 'variant' ? 'Créer la déclinaison et l’ajouter' : 'Créer le composant et l’ajouter'}
+              </button>
+            </div>
+            <div className="project-page-component-live-preview">
+              <strong>Aperçu</strong>
+              <iframe title="Aperçu du nouveau composant" sandbox="" srcDoc={createPreview} />
+            </div>
           </div>
-          {createForm.mode === 'variant' && <label>Modèle source
-            <select value={createForm.sourceItemId} onChange={(event) => {
-              const source = library.find((item) => item.id === event.target.value);
-              setCreateForm((value) => ({
-                ...value,
-                sourceItemId: event.target.value,
-                category: source?.category ?? value.category,
-                vertical: source?.vertical ?? value.vertical,
-              }));
-            }}>
-              <option value="">Choisir le modèle…</option>
-              {readyLibrary.map((item) => <option key={item.id} value={item.id}>{item.name}{item.variantKey ? ` · ${item.variantKey}` : ''}</option>)}
-            </select>
-          </label>}
-          <div className="project-page-component-form-grid">
-            <label>Nom<input value={createForm.name} onChange={(event) => setCreateForm((value) => ({ ...value, name: event.target.value }))} placeholder={createForm.mode === 'variant' ? 'Ex. Fleuriste' : 'Ex. Hero Fleuriste'} /></label>
-            {createForm.mode === 'new' && <label>Type<select value={createForm.category} onChange={(event) => setCreateForm((value) => ({ ...value, category: event.target.value as AtoumWebLibraryCategory }))}>{VISUAL_CATEGORIES.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}</select></label>}
-            <label>Métier<input value={createForm.vertical} onChange={(event) => setCreateForm((value) => ({ ...value, vertical: event.target.value }))} placeholder="Ex. fleuriste" /></label>
-          </div>
-          <label>Description<textarea rows={2} value={createForm.description} onChange={(event) => setCreateForm((value) => ({ ...value, description: event.target.value }))} /></label>
-          <label>HTML<textarea rows={10} value={createForm.html} onChange={(event) => setCreateForm((value) => ({ ...value, html: event.target.value }))} placeholder="<section>…</section>" /></label>
-          <label>CSS<textarea rows={8} value={createForm.css} onChange={(event) => setCreateForm((value) => ({ ...value, css: event.target.value }))} placeholder=".hero { … }" /></label>
-          <label>JavaScript <span>facultatif · non exécuté dans l’aperçu</span><textarea rows={5} value={createForm.javascript} onChange={(event) => setCreateForm((value) => ({ ...value, javascript: event.target.value }))} /></label>
-          <button className="primary-button" type="button" disabled={busy || !createForm.name.trim() || !createForm.html.trim() || (createForm.mode === 'variant' && !createForm.sourceItemId)} onClick={() => void createAndAdd()}>
-            {createForm.mode === 'variant' ? 'Créer la déclinaison et l’ajouter' : 'Créer le composant et l’ajouter'}
-          </button>
-        </div>
-        <div className="project-page-component-live-preview">
-          <strong>Aperçu</strong>
-          <iframe title="Aperçu du nouveau composant" sandbox="" srcDoc={createPreview} />
         </div>
       </div>
     </div>}
