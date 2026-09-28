@@ -592,3 +592,13 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Performance : prévoir un rendu paresseux/recalcul uniquement après modification de la composition ou sur demande, afin qu’une Page de nombreux composants reste fluide.
 - Hors périmètre : ne pas prétendre reproduire les wrappers/spacing Divi réels avant Bridge ; la fidélité complète à la Page Divi reste un objectif des lots 8B/8C.
 - Prochaine action : intégrer cette vue au cahier des charges détaillé 6B au moment où Carlos autorisera explicitement son démarrage.
+
+
+### 2026-09-28 — LOT6B-START-001 — Démarrage autorisé du Lot 6B
+
+- Origine : autorisation explicite de Carlos (« je te laisse continuer ») après validation des exigences DESIGN-001 et DESIGN-002.
+- Branche d’implémentation : `feature/project-page-compositions-v1`, créée depuis `feature/project-sites-v1@661485a23445d521fab3628aed20c6c3aa9c86be`.
+- Sous-checkpoint 6B.1 implémenté : migration 48 `project_page_compositions_v1` ; zéro ou une Composition par Page ; une Composition ne peut appartenir qu’à une seule Page ; anciennes compositions laissées non rattachées par défaut.
+- API 6B.1 : retrouver, créer automatiquement, rattacher ou détacher une Composition depuis un `project_node` Page.
+- Hors périmètre inchangé : aucun package Page/Bridge, aucune création WordPress/Divi, aucun Lot 7/8.
+- Étapes suivantes du même Lot : 6B.2 catalogue/réordonnancement, 6B.3 création directe/déclinaison, 6B.4 aperçu global.
