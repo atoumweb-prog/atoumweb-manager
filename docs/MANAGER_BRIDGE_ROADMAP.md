@@ -480,3 +480,16 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Simplification : aucun `occurrenceId` Manager supplémentaire ne doit être créé par défaut. Le couple de continuité visé est `compositionItemId` côté Manager puis `siteOccurrenceId` créée par Bridge, avec association persistée.
 - Lots 8A/8B/8C resserrés pour compléter l’existant au lieu de le reconstruire.
 - Prochaine action : validation explicite des arbitrages §14, en priorité 1, 4 et 5, avant autorisation de tout lot de code.
+
+
+### 2026-09-28 — LOT6A-START-001 — Autorisation et démarrage du Lot 6A
+
+- Origine : autorisation explicite de Carlos après validation de la feuille de route commune.
+- Auteur/rôle : agent ChatGPT responsable de l’implémentation du Lot 6A.
+- Type : décision + consigne d’exécution.
+- Base de départ : `feature/project-blueprints-v1@be9d936ac5fae7b5b88b0f3402bb1095da0eb531`.
+- Lot autorisé : **6A — Projet / Site / Page uniquement**.
+- Périmètre : entité Site opérationnelle, extension des nœuds Projet `displaySubtype=page`, création/édition/archivage manuel, contrôles d’appartenance Projet/Site/Page, API/UI minimale et tests ciblés.
+- Hors périmètre : composition/rattachement Bibliothèque (6B), génération automatique blueprint (7), contrat Page/Bridge et occurrences (8A+), toute modification du dépôt Bridge.
+- Stratégie Git : développement isolé sur `feature/project-sites-v1`, puis validation avant toute intégration dans `feature/project-blueprints-v1`.
+- Prochaine action : implémenter migration 47 et Lot 6A ; aucun autre lot ne doit être commencé implicitement.
