@@ -751,3 +751,19 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - bouton « Agrandir » / « Voir le module seul » ouvrant une modale grand format indépendante de l’aperçu global de Page.
 - Aucune migration supplémentaire : dernière migration = 49.
 - Validation restante : typecheck + tests ciblés puis recette visuelle du scroll complet, absence de barre horizontale, aperçu global, couleur, undo/redo/reset et module seul.
+
+
+### 2026-09-28 — LOT6B-UX-003 — Correction du conteneur global Projets et visibilité Composition
+
+- Origine : recette Carlos montrant encore une barre horizontale globale et l'absence apparente du bloc Composants AtoumWeb.
+- Diagnostic corrigé : les fixes UX-001/002 agissaient principalement dans `ProjectSitesTab`, mais la barre horizontale provenait aussi du conteneur global `.content-area` de la page Projets, qui n'avait pas de restriction `overflow-x` contrairement aux workspaces Bibliothèque/Sites.
+- Correction :
+  - ajout d'une classe `projects-content` au conteneur global lorsque la page active est Projets ;
+  - `overflow-x:hidden` appliqué à ce niveau ;
+  - `project-production-page` bornée à `width/max-width:100%` avec overflow horizontal interdit ;
+  - panneaux Site/Page bornés à 100 % de largeur ;
+  - fin de panneau remise dans le flux normal : suppression du `margin-top:auto` sur la note Divi ;
+  - chaque enfant du panneau droit reste `flex:0 0 auto`, afin que le scroll vertical atteigne réellement le dernier élément ;
+  - bloc `ProjectPageCompositionPanel` déplacé immédiatement sous le résumé Temps réel, avant les champs Page ;
+  - badge visible `6B · Composition AtoumWeb` ajouté dans l'en-tête Page pour permettre de vérifier immédiatement que le renderer courant contient bien le correctif.
+- Critère recette : après redémarrage sur ce commit, le badge 6B et le bloc Composants AtoumWeb doivent être visibles sans scroller ; aucune barre horizontale globale ne doit rester.
