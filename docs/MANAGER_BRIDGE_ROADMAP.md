@@ -493,3 +493,15 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Hors périmètre : composition/rattachement Bibliothèque (6B), génération automatique blueprint (7), contrat Page/Bridge et occurrences (8A+), toute modification du dépôt Bridge.
 - Stratégie Git : développement isolé sur `feature/project-sites-v1`, puis validation avant toute intégration dans `feature/project-blueprints-v1`.
 - Prochaine action : implémenter migration 47 et Lot 6A ; aucun autre lot ne doit être commencé implicitement.
+
+
+### 2026-09-28 — LOT6A-IMPL-001 — Implémentation du Lot 6A publiée sur branche dédiée
+
+- Auteur/rôle : agent ChatGPT, implémentation sur `feature/project-sites-v1`.
+- Type : résultat d’implémentation ; périmètre 6A uniquement.
+- Base : branche créée depuis `cc0a557beca451ffe0c7fd0bbfc3856b3eb6ff13`.
+- Implémenté : migration 47 `project_sites_pages_v1`, service Site/Page, contrôles inter-projets et subtype Page, protection contre le retypage d’une Page liée, IPC/preload/types, onglet Projet « Sites & pages », création manuelle d’un nœud Page depuis le plan et tests ciblés du service.
+- Archivage : un Site archivé reste en base et conserve ses rattachements Page ; aucune suppression de Site n’est exposée par l’UI.
+- Hors périmètre préservé : aucune composition 6B, aucun blueprint Lot 7, aucun contrat ou code Bridge 8A+.
+- Validation : code publié pour contrôle ; les tests/typecheck doivent être exécutés sur le workspace MSI avant intégration dans `feature/project-blueprints-v1`.
+- Prochaine action : checkpoint technique ciblé migration 47 + ProjectSiteService + ProjectService, puis recette visuelle Sites & pages. Ne pas lancer 6B avant validation explicite.

@@ -23,6 +23,7 @@ import {
 import { ProjectCompletionReviewPanel } from './ProjectCompletionReviewPanel';
 import { ProjectOperationsTab } from './ProjectOperationsTab';
 import { ProjectResourcesTab } from './ProjectResourcesTab';
+import { ProjectSitesTab } from './ProjectSitesTab';
 import { ProjectTechnicalLibraryTab } from './ProjectTechnicalLibraryTab';
 import { ProjectTimeTab } from './ProjectTimeTab';
 import type { TimeSession } from '../../shared/time';
@@ -166,12 +167,12 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
   const [targetDate, setTargetDate] = useState('');
   const [commercialMode, setCommercialMode] = useState<ProjectCommercialMode>('normal');
   const [saving, setSaving] = useState(false);
-  const [detailTab, setDetailTab] = useState<'summary' | 'plan' | 'prerequisites' | 'resources' | 'technical' | 'operations' | 'time' | 'commercial'>('summary');
+  const [detailTab, setDetailTab] = useState<'summary' | 'plan' | 'sites' | 'prerequisites' | 'resources' | 'technical' | 'operations' | 'time' | 'commercial'>('summary');
   const [completionReview, setCompletionReview] = useState<ProjectCompletionReview | null>(null);
   const [completionBusy, setCompletionBusy] = useState(false);
 
   const [newNodeName, setNewNodeName] = useState('');
-  const [newNodeType, setNewNodeType] = useState<'lot' | 'module' | 'task' | 'checklist'>('task');
+  const [newNodeType, setNewNodeType] = useState<'lot' | 'module' | 'page' | 'task' | 'checklist'>('task');
   const [newNodeParentId, setNewNodeParentId] = useState('');
   const [newNodeMinutes, setNewNodeMinutes] = useState('');
   const [newNodeRequired, setNewNodeRequired] = useState(true);
@@ -398,9 +399,11 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
     try {
       const minutes = newNodeMinutes.trim() ? Number(newNodeMinutes) : null;
       if (minutes != null && (!Number.isFinite(minutes) || minutes < 0)) throw new Error('Temps estimé invalide.');
+      const nodeType: ProjectNodeInput['type'] = newNodeType === 'page' ? 'module' : newNodeType;
       const updated = await window.atoumweb.projects.projects.addNode(detail.id, {
         parentId: newNodeParentId || null,
-        type: newNodeType,
+        type: nodeType,
+        displaySubtype: newNodeType === 'page' ? 'page' : null,
         name: newNodeName.trim(),
         estimatedMinutes: minutes,
         required: newNodeRequired,
@@ -667,11 +670,16 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
 
         <nav className="project-production-nav" aria-label="Sections du projet">
           <button className={detailTab === 'plan' ? 'active' : ''} type="button" onClick={() => setDetailTab('plan')}>Production</button>
+          <button className={detailTab === 'sites' ? 'active' : ''} type="button" onClick={() => setDetailTab('sites')}>Sites & pages</button>
           <button className={detailTab === 'prerequisites' ? 'active' : ''} type="button" onClick={() => setDetailTab('prerequisites')}>Prérequis</button>
           <button className={detailTab === 'operations' ? 'active' : ''} type="button" onClick={() => setDetailTab('operations')}>Interventions</button>
           <button className={detailTab === 'commercial' ? 'active' : ''} type="button" onClick={() => setDetailTab('commercial')}>Commercial</button>
           <button className={detailTab === 'summary' ? 'active' : ''} type="button" onClick={() => setDetailTab('summary')}>Résumé</button>
         </nav>
+
+        {detailTab === 'sites' && (
+          <ProjectSitesTab projectId={detail.id} nodes={detail.nodes} onMessage={onMessage} />
+        )}
 
         {detailTab === 'plan' && (
           <main
@@ -693,7 +701,7 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
                     <div className="project-node-add-grid">
                       <input value={newNodeName} onChange={(event) => setNewNodeName(event.target.value)} placeholder="Nom de la tâche / module…" />
                       <select value={newNodeType} onChange={(event) => setNewNodeType(event.target.value as typeof newNodeType)}>
-                        <option value="lot">Lot</option><option value="module">Module / Page</option><option value="task">Tâche</option><option value="checklist">Checklist</option>
+                        <option value="lot">Lot</option><option value="module">Module</option><option value="page">Page</option><option value="task">Tâche</option><option value="checklist">Checklist</option>
                       </select>
                       <select value={newNodeParentId} onChange={(event) => setNewNodeParentId(event.target.value)}>
                         <option value="">Racine du projet</option>{detail.nodes.map((node) => <option key={node.id} value={node.id}>{node.name}</option>)}

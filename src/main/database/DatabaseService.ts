@@ -30,6 +30,7 @@ import { ProjectResourceService } from '../projects/ProjectResourceService';
 import { ProjectReuseExportService } from '../projects/ProjectReuseExportService';
 import { ProjectSearchService } from '../projects/ProjectSearchService';
 import { ProjectService } from '../projects/ProjectService';
+import { ProjectSiteService } from '../projects/ProjectSiteService';
 import { ProjectTechnicalLibraryService } from '../projects/ProjectTechnicalLibraryService';
 import { AtoumWebPackageService } from '../referentials/AtoumWebPackageService';
 import { AtoumWebOccurrenceReturnService } from '../referentials/AtoumWebOccurrenceReturnService';
@@ -62,6 +63,7 @@ export class DatabaseService {
   readonly contractTerms: ContractTermsService;
   readonly quotes: QuoteService;
   readonly projects: ProjectService;
+  readonly projectSites: ProjectSiteService;
   readonly projectCompletion: ProjectCompletionService;
   readonly projectNodes: ProjectNodeArrangementService;
   readonly projectResources: ProjectResourceService;
@@ -103,6 +105,7 @@ export class DatabaseService {
     this.contractTerms = new ContractTermsService(this.database);
     this.quotes = new QuoteService(this.database, this.crm, this.contractTerms);
     this.projects = new ProjectService(this.database, this.workspace);
+    this.projectSites = new ProjectSiteService(this.database);
     this.projectCompletion = new ProjectCompletionService(this.database);
     this.projectNodes = new ProjectNodeArrangementService(this.database, this.projects);
     this.projectResources = new ProjectResourceService(this.database, this.workspace);

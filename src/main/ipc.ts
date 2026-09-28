@@ -61,6 +61,8 @@ import type {
   ProjectResourceFolder,
   ProjectResourceRole,
   ProjectResourceStatus,
+  ProjectSiteInput,
+  ProjectSitePageInput,
   ProjectStatus,
   ProjectTechnicalItemInput,
   ProjectTechnicalVersionInput,
@@ -464,6 +466,14 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('projects:create-internal', (_event, input: InternalProjectInput) => database.projects.createInternal(input));
   ipcMain.handle('projects:change-status', (_event, id: string, status: ProjectStatus) => database.projects.changeProjectStatus(id, status));
   ipcMain.handle('projects:completion-review', (_event, id: string) => database.projectCompletion.review(id));
+  ipcMain.handle('projects:sites:list', (_event, projectId: string, includeArchived?: boolean) => database.projectSites.list(projectId, Boolean(includeArchived)));
+  ipcMain.handle('projects:sites:create', (_event, projectId: string, input: ProjectSiteInput) => database.projectSites.create(projectId, input));
+  ipcMain.handle('projects:sites:update', (_event, id: string, input: Partial<ProjectSiteInput>) => database.projectSites.update(id, input));
+  ipcMain.handle('projects:sites:set-archived', (_event, id: string, archived: boolean) => database.projectSites.setArchived(id, archived));
+  ipcMain.handle('projects:sites:list-pages', (_event, projectId: string) => database.projectSites.listPages(projectId));
+  ipcMain.handle('projects:sites:link-page', (_event, siteId: string, projectNodeId: string, input?: ProjectSitePageInput) =>
+    database.projectSites.linkPage(siteId, projectNodeId, input));
+  ipcMain.handle('projects:sites:unlink-page', (_event, projectNodeId: string) => database.projectSites.unlinkPage(projectNodeId));
   ipcMain.handle('projects:add-node', (_event, projectId: string, input: ProjectNodeInput) => database.projects.addProjectNode(projectId, input));
   ipcMain.handle('projects:update-node', (_event, nodeId: string, input: Partial<ProjectNodeInput>) => database.projects.updateProjectNode(nodeId, input));
   ipcMain.handle('projects:move-node', (_event, nodeId: string, input: MoveProjectNodeInput) => database.projectNodes.move(nodeId, input));
