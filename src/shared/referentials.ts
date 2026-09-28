@@ -350,6 +350,10 @@ export interface ReferentialsApi {
     showExport(path: string): Promise<AtoumWebAssetOpenResult>;
   };
   compositions: {
+    getForProjectPage(projectNodeId: string): Promise<AtoumWebCompositionDetail | null>;
+    ensureForProjectPage(projectNodeId: string): Promise<AtoumWebCompositionDetail>;
+    attachToProjectPage(projectNodeId: string, compositionId: string): Promise<AtoumWebCompositionDetail>;
+    detachFromProjectPage(projectNodeId: string): Promise<void>;
     list(includeArchived?: boolean): Promise<AtoumWebCompositionSummary[]>;
     get(id: string): Promise<AtoumWebCompositionDetail>;
     create(input: AtoumWebCompositionInput): Promise<AtoumWebCompositionDetail>;
