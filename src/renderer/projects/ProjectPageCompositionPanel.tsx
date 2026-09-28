@@ -382,14 +382,22 @@ export function ProjectPageCompositionPanel({
           ? entry.parts.html
           : `<div class="aw-page-preview-unavailable"><strong>${escapeHtml(entry.item.displayName)}</strong><span>Aperçu indisponible</span></div>`;
         return inspect
-          ? `<section class="aw-page-preview-component"><div class="aw-page-preview-label">${index + 1}. ${escapeHtml(entry.item.displayName)}</div>${content}</section>`
-          : content;
+          ? `<section class="aw-page-preview-slice aw-page-preview-component"><div class="aw-page-preview-label">${index + 1}. ${escapeHtml(entry.item.displayName)}</div>${content}</section>`
+          : `<section class="aw-page-preview-slice">${content}</section>`;
       }).join('\n');
       const document = `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https: data:; font-src https: data:;">
-<style>html,body{margin:0;min-height:100%;background:#fff;color:#111}body{font-family:Arial,Helvetica,sans-serif}*,*::before,*::after{box-sizing:border-box}.aw-page-preview-component{position:relative;outline:2px dashed #c59a4a}.aw-page-preview-label{position:relative;z-index:20;padding:6px 10px;background:#181b20;color:#fff;font:12px Arial}.aw-page-preview-unavailable{margin:12px;padding:28px;border:2px dashed #bbb;display:grid;gap:5px}</style>
-<style>${safeStyle(css)}</style></head><body>${body}</body></html>`;
+<style>${safeStyle(css)}</style>
+<style>
+html,body{display:block!important;visibility:visible!important;opacity:1!important;margin:0!important;min-height:100%!important;background:#fff;color:#111}
+body{font-family:Arial,Helvetica,sans-serif}
+*,*::before,*::after{box-sizing:border-box}
+.aw-page-preview-slice{display:block!important;visibility:visible!important;opacity:1!important;position:relative;min-height:1px}
+.aw-page-preview-component{outline:2px dashed #c59a4a}
+.aw-page-preview-label{position:relative;z-index:2147483647;padding:6px 10px;background:#181b20;color:#fff;font:12px Arial}
+.aw-page-preview-unavailable{margin:12px;padding:28px;border:2px dashed #bbb;display:grid;gap:5px}
+</style></head><body>${body}</body></html>`;
       setPreviewDoc(document);
       setMode('preview');
     });
@@ -611,7 +619,7 @@ export function ProjectPageCompositionPanel({
           </div>
         </header>
         <div className="project-page-global-preview">
-          <div style={{ width: deviceWidth }}><iframe title={`Aperçu global ${page.name}`} sandbox="" srcDoc={previewDoc} /></div>
+          <div style={{ width: deviceWidth }}><iframe key={`${page.id}-${previewDevice}-${inspectionMode}-${previewDoc.length}`} title={`Aperçu global ${page.name}`} sandbox="" srcDoc={previewDoc} /></div>
         </div>
       </div>
     </div>}
