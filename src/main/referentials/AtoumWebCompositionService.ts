@@ -48,6 +48,79 @@ export class AtoumWebCompositionService {
     private readonly library: AtoumWebTechnicalLibraryService,
   ) {}
 
+  getForProjectPage(projectNodeId: string): AtoumWebCompositionDetail | null {
+    this.assertProjectPage(projectNodeId);
+    const link = this.database.get<{ composition_id: string }>(
+      'SELECT composition_id FROM project_page_compositions WHERE project_node_id=?',
+      [projectNodeId],
+    );
+    return link ? this.get(link.composition_id) : null;
+  }
+
+  ensureForProjectPage(projectNodeId: string): AtoumWebCompositionDetail {
+    const page = this.assertProjectPage(projectNodeId);
+    const existing = this.getForProjectPage(projectNodeId);
+    if (existing) return existing;
+
+    this.database.exec('SAVEPOINT page_composition_create;');
+    try {
+      const composition = this.create({ name: `${page.name} — composition` });
+      const now = new Date().toISOString();
+      this.database.run(
+        'INSERT INTO project_page_compositions (project_node_id,composition_id,created_at,updated_at) VALUES (?,?,?,?)',
+        [projectNodeId, composition.id, now, now],
+      );
+      this.logProject(page.project_id, 'project_page_composition_created', `Composition créée pour la Page : ${page.name}`, {
+        pageNodeId: projectNodeId,
+        compositionId: composition.id,
+      });
+      this.database.exec('RELEASE SAVEPOINT page_composition_create;');
+      return composition;
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT page_composition_create; RELEASE SAVEPOINT page_composition_create;');
+      throw error;
+    }
+  }
+
+  attachToProjectPage(projectNodeId: string, compositionId: string): AtoumWebCompositionDetail {
+    const page = this.assertProjectPage(projectNodeId);
+    const composition = this.get(compositionId);
+    if (composition.status === 'archived') throw new Error('Réactive la composition avant de la rattacher à une Page.');
+
+    const usedBy = this.database.get<{ project_node_id: string }>(
+      'SELECT project_node_id FROM project_page_compositions WHERE composition_id=? AND project_node_id<>?',
+      [compositionId, projectNodeId],
+    );
+    if (usedBy) throw new Error('Cette composition est déjà rattachée à une autre Page.');
+
+    const now = new Date().toISOString();
+    this.database.run(
+      `INSERT INTO project_page_compositions (project_node_id,composition_id,created_at,updated_at)
+       VALUES (?,?,?,?)
+       ON CONFLICT(project_node_id) DO UPDATE SET composition_id=excluded.composition_id,updated_at=excluded.updated_at`,
+      [projectNodeId, compositionId, now, now],
+    );
+    this.logProject(page.project_id, 'project_page_composition_attached', `Composition rattachée à la Page : ${page.name}`, {
+      pageNodeId: projectNodeId,
+      compositionId,
+    });
+    return this.get(compositionId);
+  }
+
+  detachFromProjectPage(projectNodeId: string): void {
+    const page = this.assertProjectPage(projectNodeId);
+    const link = this.database.get<{ composition_id: string }>(
+      'SELECT composition_id FROM project_page_compositions WHERE project_node_id=?',
+      [projectNodeId],
+    );
+    if (!link) return;
+    this.database.run('DELETE FROM project_page_compositions WHERE project_node_id=?', [projectNodeId]);
+    this.logProject(page.project_id, 'project_page_composition_detached', `Composition détachée de la Page : ${page.name}`, {
+      pageNodeId: projectNodeId,
+      compositionId: link.composition_id,
+    });
+  }
+
   list(includeArchived = false): AtoumWebCompositionSummary[] {
     return this.database.all<CompositionRow>(
       `SELECT c.*,
@@ -224,6 +297,25 @@ export class AtoumWebCompositionService {
     const now = new Date().toISOString();
     this.database.run("UPDATE atoumweb_compositions SET status='draft',archived_at=NULL,updated_at=? WHERE id=?", [now, id]);
     return this.get(id);
+  }
+
+  private assertProjectPage(projectNodeId: string): { id: string; project_id: string; name: string } {
+    const page = this.database.get<{ id: string; project_id: string; node_type: string; display_subtype: string | null; name: string }>(
+      'SELECT id,project_id,node_type,display_subtype,name FROM project_nodes WHERE id=?',
+      [projectNodeId],
+    );
+    if (!page) throw new Error('Page projet introuvable.');
+    if (page.node_type !== 'module' || page.display_subtype !== 'page') {
+      throw new Error('Seul un nœud Projet de type Page peut recevoir une composition.');
+    }
+    return { id: page.id, project_id: page.project_id, name: page.name };
+  }
+
+  private logProject(projectId: string, action: string, summary: string, metadata: Record<string, unknown>): void {
+    this.database.run(
+      'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
+      ['project', projectId, action, summary, JSON.stringify(metadata), new Date().toISOString()],
+    );
   }
 
   private resequence(compositionId: string): void {
