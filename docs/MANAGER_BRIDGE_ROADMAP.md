@@ -554,3 +554,22 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Aucune migration ni nouveau modèle de temps : réutilisation de `time_sessions.project_node_id`.
 - Hors périmètre inchangé : aucune création WordPress/Divi, aucun Lot 6B/7/8.
 - Validation restante : typecheck puis recette visuelle splitter, scrolls, temps réel et démarrage/changement de chrono.
+
+
+### 2026-09-28 — LOT6B-DESIGN-001 — Création directe de composants depuis une Page
+
+- Origine : demande métier de Carlos avant démarrage du Lot 6B.
+- Statut : décision fonctionnelle à intégrer au périmètre 6B ; **aucun développement 6B encore autorisé par cette entrée seule**.
+- Principe : depuis la fiche d’une Page dans « Sites & pages », l’utilisateur peut soit sélectionner un composant existant de la Bibliothèque AtoumWeb, soit créer directement un nouvel élément réutilisable sans quitter le contexte de la Page.
+- Cas 1 — réutilisation : « Ajouter depuis la Bibliothèque » ouvre le catalogue des éléments réutilisables et permet d’ajouter une version précise à la composition partielle de la Page.
+- Cas 2 — création : « Créer un composant / une section » ouvre un éditeur permettant de coller ou saisir un code complet (HTML/CSS/JS et métadonnées disponibles selon le type), de visualiser le rendu/code avec les capacités déjà présentes dans la Bibliothèque, puis d’enregistrer :
+  - soit comme **nouvel élément** de Bibliothèque ;
+  - soit comme **nouvelle variante / déclinaison** rattachée à un modèle/famille existant ;
+  - soit comme élément local de travail tant qu’il n’est pas promu.
+- Cas d’usage attendu : Carlos fournit les informations d’un Hero ; un agent peut produire le code complet ; ce code est collé dans l’éditeur depuis la Page ; l’utilisateur choisit ensuite « Nouveau composant » ou « Rattacher à un modèle / variante ».
+- Règle d’identité : si le code correspond à une déclinaison d’un modèle existant, conserver la famille/modèle source et créer une variante distincte plutôt qu’écraser le modèle.
+- Règle Bibliothèque : aucune création ou promotion ne doit être implicite. L’utilisateur choisit explicitement si l’élément devient réutilisable.
+- Règle Page hybride : une Page peut contenir simultanément composants AtoumWeb, éléments créés localement puis promus, et modules Divi natifs non suivis par la Bibliothèque.
+- UX cible 6B : dans la fiche Page, bloc « Composants AtoumWeb » avec liste ordonnée, aperçu/code, actions Ajouter depuis la Bibliothèque, Créer un composant/section, Réordonner, Retirer, Ouvrir la fiche Bibliothèque.
+- Hors périmètre 6B : aucune génération WordPress/Divi, aucun package `scope=page`, aucun envoi Bridge ; cela reste 8A+.
+- Prochaine action : valider explicitement le démarrage du Lot 6B avant toute modification de code.
