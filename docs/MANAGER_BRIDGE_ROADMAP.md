@@ -723,3 +723,31 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Correction : rechargement systématique de l’élément après insertion de la variante lorsqu’elle n’est pas marquée stable.
 - Aucun schéma ni contrat modifié ; migration 49 inchangée.
 - Validation attendue : typecheck + tests ciblés CompositionService / TechnicalLibraryService / migrations.
+
+
+### 2026-09-28 — LOT6B-UX-002 — Scroll colonne droite, aperçu et historique local
+
+- Origine : recette visuelle de Carlos après migration 49.
+- Défaut structurel identifié : `ProjectSitesTab` vivait dans la troisième ligne `minmax(0,1fr)` de la Page Projet tout en imposant à son workspace une hauteur propre. L’ensemble dépassait l’espace réellement disponible, ce qui coupait le bas du panneau droit et favorisait un débordement horizontal.
+- Correction structurelle :
+  - `ProjectSitesTab` devient un conteneur flex vertical occupant exactement la hauteur disponible ;
+  - `project-sites-workspace` prend uniquement l’espace restant (`flex:1; min-height:0`) au lieu d’imposer une hauteur calculée ;
+  - overflow horizontal clipsé à tous les niveaux du workspace 6B ;
+  - panneau droit avec scroll vertical indépendant, marge/scroll-padding basse et overscroll contenu ;
+  - iframes d’aperçu intégrées non interactives afin que la molette continue de piloter la colonne droite.
+- Aperçu global :
+  - chaque composant est maintenant enveloppé dans une tranche de Page ;
+  - les CSS des composants sont chargés avant les garde-fous de l’iframe ;
+  - `html`, `body` et les tranches restent forcés visibles afin qu’un CSS global d’un composant ne puisse masquer tout l’aperçu ;
+  - iframe forcée à se recharger lors du changement de device/inspection.
+- Réglages couleurs :
+  - sélecteur natif visuel à la souris pour les couleurs convertibles en hex ;
+  - pastille d’aperçu + saisie CSS manuelle conservée.
+- Historique local :
+  - boutons Annuler / Rétablir avec historique local borné ;
+  - bouton « Version Bibliothèque » pour revenir exactement à la source figée de l’occurrence.
+- Aperçu module :
+  - aperçu du module seul toujours visible dans le volet ;
+  - bouton « Agrandir » / « Voir le module seul » ouvrant une modale grand format indépendante de l’aperçu global de Page.
+- Aucune migration supplémentaire : dernière migration = 49.
+- Validation restante : typecheck + tests ciblés puis recette visuelle du scroll complet, absence de barre horizontale, aperçu global, couleur, undo/redo/reset et module seul.
