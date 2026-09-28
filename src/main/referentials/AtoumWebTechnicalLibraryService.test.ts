@@ -238,6 +238,33 @@ describe('AtoumWebTechnicalLibraryService', () => {
     expect(variant.currentVersion?.contentText).toContain('hero-fleuriste');
   });
 
+  it('crée une variante à valider sans la marquer stable lorsqu’elle vient d’une adaptation locale', () => {
+    const source = library.createReusableCode({
+      category: 'section',
+      name: 'Section modèle',
+      html: '<section>Source</section>',
+      css: '.source{color:#111111}',
+    });
+
+    const variant = library.createVariantCode({
+      sourceItemId: source.id,
+      name: 'Variante locale',
+      html: '<section>Adaptée</section>',
+      css: '.source{color:#445566}',
+      reuseStatus: 'adapt',
+      markStable: false,
+      provenanceNote: 'Promue depuis une occurrence locale de Page.',
+      tags: ['composition-promotion'],
+    });
+
+    expect(variant.reuseStatus).toBe('adapt');
+    expect(variant.currentVersion).not.toBeNull();
+    expect(variant.stableVersion).toBeNull();
+    expect(variant.tags).toEqual(expect.arrayContaining(['composition-promotion', 'manager-variant-to-review']));
+    expect(variant.tags).not.toContain('bridge-human-validated');
+    expect(variant.currentVersion?.notes).toContain('occurrence locale');
+  });
+
   it('refuse une origine globale pour préserver la notion d’origine projet', () => {
     const first = library.create(
       { category: 'note', name: 'Composant global', reuseStatus: 'reference' },
