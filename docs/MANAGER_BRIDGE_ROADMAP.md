@@ -681,3 +681,36 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Traçabilité : conserver source item/version, famille/variante d’origine, Page/Projet d’origine, date de promotion et relation « dérivée de ».
 - Intégration future Bridge : les overrides locaux devront être transportables sans réécrire la provenance de la Bibliothèque. Le mapping exact vers le contrat Page/Bridge reste réservé à 8A+.
 - Hors périmètre immédiat : ne pas inventer de modification automatique de n’importe quel CSS/HTML. Les réglages simples doivent reposer sur des champs/tokens explicitement exposés par le composant ; l’édition libre de code reste une action avancée séparée.
+
+
+### 2026-09-28 — LOT6B-LOCAL-SETTINGS-001 — Réglages locaux et promotion en variante implémentés
+
+- Origine : autorisation de Carlos de réaliser DESIGN-004 avant recette.
+- Migration : **49 — `project_page_composition_local_settings_v1`**.
+- Chaque occurrence de `atoumweb_composition_items` peut désormais conserver :
+  - HTML local préparé ;
+  - CSS local préparé ;
+  - JavaScript local préparé ;
+  - métadonnées de réglages (textes/couleurs/note) ;
+  - date de dernière adaptation locale.
+- Source de vérité préservée : `source_item_id` et `source_version_id` restent inchangés. Réinitialiser l’occurrence supprime uniquement l’adaptation locale.
+- UX : bouton repliable **« Réglages ▾ »** sur chaque occurrence.
+- Réglages rapides :
+  - détection des textes visibles simples dans le HTML ;
+  - détection des couleurs CSS simples ;
+  - modification locale avec aperçu immédiat ;
+  - note locale facultative.
+- Mode avancé : HTML/CSS/JS de l’occurrence restent éditables librement dans le volet.
+- Aperçus : « Code / aperçu » et « Aperçu de la Page » utilisent maintenant l’état local préparé lorsqu’il existe ; sinon la version Bibliothèque figée.
+- Promotion : bouton **« Envoyer vers la Bibliothèque »** depuis le volet de réglages.
+- La promotion :
+  - crée une nouvelle variante `forked` dans la famille du composant source ;
+  - ne modifie jamais le modèle source ;
+  - utilise le code local préparé ;
+  - crée l’élément Bibliothèque avec `reuseStatus='adapt'` ;
+  - ne marque pas la version stable ;
+  - ajoute le marqueur `manager-variant-to-review` ;
+  - conserve une note de provenance Projet/Page/occurrence.
+- Validation humaine obligatoire avant passage ultérieur à `ready`.
+- Hors périmètre : aucun export Page/Bridge, aucune mutation WordPress/Divi, aucun Lot 7/8.
+- Validation restante : typecheck, migrations, tests Composition/Library puis recette visuelle de Carlos sur Validation-MSI.
