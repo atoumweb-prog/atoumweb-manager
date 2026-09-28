@@ -85,6 +85,14 @@ export function registerReferentialsIpcHandlers(database: DatabaseService): void
     return { ok: true, error: null };
   });
 
+  ipcMain.handle('referentials:compositions:get-for-project-page', (_event, projectNodeId: string) =>
+    database.atoumWebCompositions.getForProjectPage(projectNodeId));
+  ipcMain.handle('referentials:compositions:ensure-for-project-page', (_event, projectNodeId: string) =>
+    database.atoumWebCompositions.ensureForProjectPage(projectNodeId));
+  ipcMain.handle('referentials:compositions:attach-to-project-page', (_event, projectNodeId: string, compositionId: string) =>
+    database.atoumWebCompositions.attachToProjectPage(projectNodeId, compositionId));
+  ipcMain.handle('referentials:compositions:detach-from-project-page', (_event, projectNodeId: string) =>
+    database.atoumWebCompositions.detachFromProjectPage(projectNodeId));
   ipcMain.handle('referentials:compositions:list', (_event, includeArchived?: boolean) =>
     database.atoumWebCompositions.list(Boolean(includeArchived)));
   ipcMain.handle('referentials:compositions:get', (_event, id: string) =>
