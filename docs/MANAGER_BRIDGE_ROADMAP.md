@@ -8,11 +8,11 @@ Date d'ouverture : 27/09/2026.
 
 - Dépôt : `atoumweb-prog/atoumweb-manager`.
 - Branche de référence : `feature/project-blueprints-v1` ; PR principale : #73.
-- Socle technique audité : `4f8fa15c80da874e084648b1d643a316cbfcbcb2`.
+- Socle Manager fonctionnel audité : `4f8fa15c80da874e084648b1d643a316cbfcbcb2` ; les commits suivants de cette roadmap sont documentaires tant qu’aucun lot n’est explicitement autorisé.
 - PR #74 / CGV Builder déjà intégrée : ne pas la fusionner à nouveau.
 - Les choix ci-dessous sont les recommandations issues de l'audit. Les arbitrages de la section 14 doivent être confirmés avant implémentation ; un lot nécessite une autorisation explicite.
 - Ce document complète le cahier des charges ; il ne remplace pas `PROJECT_STATUS.md`, qui résume l'avancement réellement vérifié.
-- Le code du plugin Bridge n'a pas été examiné dans cet audit d'architecture. Bridge 0.8.0 et ses capacités annoncées restent à confronter au code et à la recette, pas à supposer acquises.
+- Code Bridge confronté à la roadmap : dépôt `atoumweb-prog/atoumweb-bridge`, branche fonctionnelle `feature/workbench-occurrence-v1` @ `36d1076dbac1f031356632d8b95427e0ee58739c`, plugin déclaré **0.8.0**. Le `main` Bridge courant ne contient qu’un README et n’est pas la baseline fonctionnelle.
 
 ### Règle de coordination demandée par Carlos
 
@@ -38,25 +38,55 @@ Au retour, Manager doit expliquer quels composants et versions sont utilisés, c
 
 ## 2. Constat sur le code actuel
 
-| Existant vérifié côté Manager | Conséquence |
+### Manager — existant vérifié
+
+| Existant | Conséquence |
 | --- | --- |
 | Projet créé depuis un devis accepté ; prestations et références des sources conservées | Séparation commercial/opérationnel déjà amorcée. |
 | Nœuds Projet de type module et `displaySubtype=page` | Réutiliser cette identité au lieu de créer un second arbre de pages. |
 | Composition ordonnée avec version Bibliothèque précise par élément | Base adaptée à une sélection de composants, pas à la totalité d'une page. |
 | Composition sans lien Projet/Site/Page | Destination métier à ajouter. |
-| Snapshots : pages, nœuds, parents, attributs, responsive, design, classes, IDs et références de sources | Réutiliser ce socle pour observer la page réelle. |
+| Snapshots Manager : pages, nœuds, parents, attributs, responsive, design, classes, IDs et références de sources | Réutiliser ce socle pour observer la page réelle. |
 | Sources avec scope, origine, propriétaire et références de contenu | Conserver la provenance du CSS plutôt que le fusionner dans le composant. |
-| Retour d'occurrence validé, fichiers contrôlés par empreinte, décisions Famille/Variante | Prolonger le suivi de destination et des révisions locales. |
+| Retour d'occurrence V1, contrôle d’empreintes et décisions Famille/Variante | Conserver ces contrats ; compléter le cas multi-composants plutôt que les réécrire. |
 
-Limites : les semantic keys sont rapprochées à l'échelle du projet ; `pages.home` ne distingue pas deux sites. L'idempotence des retours par empreinte de package ne suffit pas à gérer les retours obsolètes ou concurrents. Les champs du Snapshot ne prouvent pas que tous les réglages Divi soient effectivement capturés.
+### Bridge 0.8.0 — existant vérifié dans le code
 
-Sources de cet audit :
+| Existant Bridge | Conséquence |
+| --- | --- |
+| Import `atoumweb_bridge_project_package` schemaVersion 1 | Le transport multi-composants existe déjà ; ne pas le reconstruire. |
+| Un Workbench WordPress/Divi unique par package projet | Base de préparation partielle déjà disponible. |
+| Un module Code distinct par composant, ordre Manager conservé | Les composants préparés restent séparés dans Divi. |
+| Une `siteOccurrenceId` créée par Bridge pour chaque composant | Conserver le principe `createdBy=bridge` des contrats V1. |
+| `compositionItemId` et ordre conservés dans les metas/provenances | Point d’ancrage Manager déjà disponible pour associer l’intention d’insertion à l’occurrence Bridge. |
+| Baseline HTML/CSS/JS conservée par occurrence | Base déjà présente pour calculer les différences. |
+| Scanner Divi 4 parent-aware : section/row/column/module, attributs, design, responsive, classes et IDs | LOT 8B doit surtout valider/compléter la couverture, pas recréer un scanner. |
+| Sources CSS/JS de page et globales, `_et_pb_custom_css`, contexte Theme Builder connu | La séparation composant/occurrence/page/site est compatible avec le scanner actuel. |
+| Workbench-first et aucune publication production automatique | Principe de sécurité déjà aligné avec la roadmap. |
+| `actionPolicy=manager_decides` sur Occurrence Return V1 | Promotion Bibliothèque volontaire déjà cohérente avec le besoin métier. |
 
-- `src/main/projects/ProjectService.ts`, `src/shared/projects.ts` et `src/main/database/projectBlueprintMigrations.ts` ;
-- `src/main/referentials/AtoumWebCompositionService.ts`, `AtoumWebCompositionPackageService.ts` et migration 43 ;
+### Écarts réellement constatés
+
+- Le package projet V1 ne connaît pas `scope=page`, `projectId`, `siteId`, `pageId` ni `exportId`.
+- L’empreinte du package est conservée mais l’import complet d’un package projet n’est pas encore idempotent : le même ZIP peut créer un nouveau Workbench.
+- La `siteOccurrenceId` est conservée en meta Bridge, mais elle n’est pas encore portée par un marqueur stable du module Divi lui-même. Déplacement/duplication exigent donc un mécanisme d’identité plus robuste.
+- `AWB_Site_Occurrence::build_return_zip()` est aujourd’hui réservé aux Workbenches `manager_library` mono-composant. Le retour individuel des occurrences d’un Workbench `manager_project` reste à implémenter.
+- Les affectations Theme Builder et les presets/couleurs/polices globaux Divi restent partiellement normalisés ; une absence observée ne doit pas être assimilée à une suppression certaine.
+- Les semantic keys Manager restent rapprochées à l’échelle du Projet ; `pages.home` ne distingue pas deux Sites.
+
+Sources Manager :
+- `src/main/projects/ProjectService.ts`, `src/shared/projects.ts`, `src/main/database/projectBlueprintMigrations.ts` ;
+- `src/main/referentials/AtoumWebCompositionService.ts`, `AtoumWebCompositionPackageService.ts`, migration 43 ;
 - `src/main/database/bridgeSnapshotMigration.ts` ;
-- `src/main/referentials/AtoumWebOccurrenceReturnService.ts` et migration 39 ;
-- `docs/ATOUMWEB_SITE_OCCURRENCE_V1.schema.json` et `docs/ATOUMWEB_OCCURRENCE_RETURN_V1.schema.json`.
+- `src/main/referentials/AtoumWebOccurrenceReturnService.ts`, migration 39 ;
+- contrats Site Occurrence / Occurrence Return V1.
+
+Sources Bridge 0.8.0 :
+- `includes/class-awb-library-importer.php` ;
+- `includes/class-awb-workbench.php` ;
+- `includes/class-awb-site-occurrence.php` ;
+- `includes/class-awb-scanner.php` ;
+- `docs/ATOUMWEB_BRIDGE_PROJECT_PACKAGE_INTAKE_V0_1.md`.
 
 ## 3. Architecture recommandée
 
@@ -85,7 +115,7 @@ Les noms ci-dessous sont des propositions, pas une instruction de créer immédi
 | `project_nodes` | Identité et nom opérationnels de la page, description, statut de travail, tâches, ordre dans le Projet. |
 | `project_site_pages` | Extension avec `project_node_id` comme clé primaire, lien Site, rôle éventuel et chemin souhaité facultatif. |
 | Composition existante | Lien facultatif vers la Page et sélection ordonnée des composants. |
-| Occurrences suivies | Identité durable, Page, élément de composition d'origine, version Bibliothèque source et révisions locales. |
+| Occurrences suivies | Association durable Page + `compositionItemId` + version Bibliothèque source + `siteOccurrenceId` créée par Bridge. Un identifiant d’occurrence supplémentaire côté Manager n’est ajouté que s’il répond à un besoin démontré. |
 | Liaisons Bridge | Association explicite avec installation WordPress, page externe et Workbench. |
 | Exports/retours | Échanges immuables, identifiants, empreintes, bases de comparaison et résultats d'application. |
 | Snapshots existants | État observé, structure et sources ; aucune Bibliothèque parallèle. |
@@ -120,12 +150,12 @@ Ajouter un composant ne doit pas nécessiter l'envoi d'une reconstruction compl�
 
 Distinctions d'identité :
 
-- `compositionItemId` : intention d'insertion préparée dans Manager ;
-- `occurrenceId` : utilisation suivie durablement dans une page ;
-- `siteOccurrenceId` V1 : identité créée par Bridge, conformément à `createdBy=bridge` ;
-- identifiant de nœud Snapshot : observation technique, potentiellement variable.
+- `compositionItemId` : intention d'insertion préparée et stable côté Manager ;
+- `siteOccurrenceId` V1 : identité de l’instance réellement créée par Bridge, conformément à `createdBy=bridge` ;
+- identifiant de nœud Snapshot : observation technique, potentiellement variable ;
+- un éventuel `managerOccurrenceId` supplémentaire est **non décidé** et ne doit pas être créé tant que `compositionItemId + siteOccurrenceId` suffit.
 
-La nouvelle enveloppe relie explicitement ces identités ; elle ne change pas silencieusement le sens du V1. Un déplacement conserve l'identité ; une duplication crée une nouvelle occurrence. Un marqueur dupliqué doit être détecté, pas accepté comme deux occurrences identiques.
+Le package sortant conserve `compositionItemId`. Bridge crée ensuite `siteOccurrenceId` et doit renvoyer/persister l’association entre les deux. Le module Divi doit disposer d’un marqueur technique stable permettant de retrouver cette `siteOccurrenceId` après déplacement. Une duplication doit produire une nouvelle occurrence ou être signalée comme ambiguë ; deux modules ne doivent jamais être acceptés silencieusement avec le même marqueur.
 
 Les modules natifs restent dans les données Snapshot/Page state existantes, avec références brutes et métadonnées utiles. Ne pas les recopier comme entités éditables d'un second builder. Un état courant affiché est une projection des observations conservées, pas une autre source du contenu.
 
@@ -158,43 +188,72 @@ Utiliser un conteneur technique de placement minimal et identifié si nécessair
 
 ## 8. Round-trip et package
 
-1. Manager prépare une Page et certaines occurrences avec versions sources précises.
-2. Il enregistre un export immuable et son empreinte.
-3. Bridge vérifie format, destination et imports antérieurs, puis prépare un Workbench.
-4. Un accusé de réception associe export, occurrences et éléments WordPress/Divi.
-5. L'utilisateur travaille librement dans Divi.
-6. Bridge observe occurrences et contexte Page, en déclarant la couverture du scan.
-7. Manager importe le retour et compare à la base connue.
-8. L'utilisateur conserve localement, examine une divergence ou prépare une promotion.
+### État réel Bridge 0.8.0 à conserver
 
-### Enveloppe page versionnée proposée
+Le flux multi-composants existe déjà :
 
-Faire évoluer `atoumweb_bridge_project_package` par une version explicite ou un contrat additionnel négocié avec Bridge. Conserver les contrats internes Component/Fields/Identity/Site Occurrence/Return V1 et Snapshot V1.
+```text
+Composition Manager
+→ atoumweb_bridge_project_package V1
+→ Bridge
+→ un Workbench Divi
+→ un module Code par composant
+→ une siteOccurrenceId Bridge par composant
+```
+
+Ce flux est **Workbench-first**, ne publie pas en production et conserve la version Bibliothèque source, la provenance, `compositionItemId`, l’ordre et les baselines HTML/CSS/JS.
+
+Limites actuelles à ne pas masquer :
+
+- le package V1 représente une composition, pas explicitement une Page ;
+- réimporter le même package complet n’est pas encore idempotent ;
+- la `siteOccurrenceId` n’est pas encore un marqueur stable directement exploitable dans le module Divi ;
+- le retour multi-composants `manager_project` n’existe pas encore ;
+- le scanner observe déjà largement la Page réelle mais sa couverture Theme Builder/presets reste partielle.
+
+Une Page sans composant Manager est valide et n’a aucun package de composition à envoyer.
+
+### Cible du round-trip
+
+1. Manager prépare éventuellement quelques composants pour une Page avec versions sources précises.
+2. Il produit un export immuable identifié par `exportId`, avec destination Projet/Site/Page et `compositionItemId`.
+3. Bridge vérifie version, destination et import antérieur, puis crée ou reconnaît le Workbench correspondant sans doublon silencieux.
+4. Pour chaque composant, Bridge crée `siteOccurrenceId`, l’associe à `compositionItemId` et inscrit un marqueur technique stable dans/avec le module Divi.
+5. L'utilisateur travaille librement dans Divi : déplacement, spacing, modules natifs, CSS Page, etc.
+6. Bridge observe occurrences et contexte Page en déclarant la couverture du scan.
+7. Le retour multi-composants référence l’export de base, la Page et chaque `siteOccurrenceId`.
+8. Manager compare base exportée, préparation actuelle et état retourné, puis laisse l’utilisateur conserver localement ou préparer volontairement une promotion.
+
+### Enveloppe Page versionnée proposée
+
+Faire évoluer `atoumweb_bridge_project_package` par **schemaVersion 2 ou contrat additionnel explicitement versionné**, sans modifier silencieusement V1. Les contrats Component/Fields/Identity/Site Occurrence/Return V1 et Snapshot V1 restent lisibles.
 
 | Groupe | Champs conceptuels |
 | --- | --- |
 | Destination | `scope=page`, `projectId`, `siteId`, `pageId` |
-| Préparation | `compositionId`, révision ou empreinte |
+| Préparation | `compositionId`, révision/empreinte |
 | Échange | `exportId`, empreinte du manifeste, versions de contrat |
-| Occurrences | `occurrenceId`, `compositionItemId`, source Bibliothèque/version, configuration |
-| Placement prévu | Ordre initial, conteneur attendu ou politique de placement |
-| Provenance | Origines des composants, séparées de la destination |
+| Composants sortants | `compositionItemId`, source Bibliothèque/version, configuration, ordre initial |
+| Placement prévu | Conteneur attendu ou politique de placement, sans prétendre décrire toute la Page |
+| Provenance | Origines Bibliothèque séparées de la destination Projet |
+| Accusé Bridge | `exportId`, Workbench, `compositionItemId ↔ siteOccurrenceId`, marqueur/nœud externe si disponible |
 
-`scope=page` désigne la destination, jamais une autorisation de remplacer toute la page. Déclarer explicitement le contenu partiel et la politique d'application. Un conteneur attendu absent est une anomalie, pas une permission de placement arbitraire.
+Le package Manager **ne fournit pas `siteOccurrenceId`** : V1 établit que Bridge la crée. `scope=page` décrit la destination et non une autorisation à remplacer toute la Page.
 
-Préférer un seul identifiant logique `exportId`, également identifiant du package, à deux UUID synonymes. L'empreinte du contenu reste distincte. Les champs imbriqués nécessaires vont dans la nouvelle enveloppe ; les schémas V1 fermés ne doivent pas recevoir des propriétés interdites.
+Préférer un seul identifiant logique `exportId` pour l’export/package, distinct de l’empreinte SHA-256 du contenu.
 
-### Retour proposé
+### Retour cible
 
-- `returnId`, export de base et révision observée ;
-- Site, Page, Workbench, occurrences et correspondances externes ;
+- `returnId`, `exportId` de base et révision observée ;
+- Projet/Site/Page/Workbench ;
+- `compositionItemId`, `siteOccurrenceId` et correspondance au module/nœud observé ;
 - configuration actuelle, changements de contenu et de placement, dépendances ;
 - références Snapshot/fichiers et empreintes ;
-- couverture, éléments non résolus et éventuelles suppressions confirmées.
+- couverture du scan, éléments non résolus et suppressions seulement si elles sont confirmées.
 
 Idempotence : même ID/même contenu = pas de doublon ; même ID/contenu différent = rejet ; retour ancien = historique conservé sans remplacer l'état récent.
 
-Comparer trois états : base exportée, préparation Manager actuelle, état Divi retourné. Détecter les conflits avant toute application. Pas de fusion automatique générale HTML/CSS. Valider/préparer les fichiers avant l'écriture définitive, conserver une importation atomique ou compensée.
+Comparer trois états : base exportée, préparation Manager actuelle, état Divi retourné. Détecter les conflits avant application. Aucun moteur général de fusion HTML/CSS ; conserver une importation atomique ou compensée.
 
 ## 9. Multi-site, blueprints et éléments globaux
 
@@ -231,20 +290,36 @@ Header/Footer/Theme Builder : réserver un type futur de cible template distinct
 
 ## 12. Ordre proposé
 
-Préalable contractuel → 6A Cibles métier → 6B Composition partielle → 7 Blueprint → 8A Identités/export → 8B Observation hybride → 8C Retours/décisions → 9 Préparation multi-pages → checkpoint final.
+Le préalable de lecture du vrai Bridge est désormais **réalisé**. Il reste deux décisions contractuelles avant 8A : format Page versionné et marqueur stable d’occurrence dans Divi.
 
-Les lots suivants sont tous **non commencés dans le cadre de cette feuille de route**. Leurs numéros sont des repères proposés, pas des autorisations.
+Ordre recommandé :
+
+```text
+6A Projet/Site/Page
+→ 6B Composition partielle
+→ 7 Squelette blueprint
+→ décision contrat Page + marqueur occurrence
+→ 8A Export Page / idempotence / association Bridge
+→ 8B Validation et compléments de l’observation hybride existante
+→ 8C Retour multi-composants et décisions
+→ 9 Préparation multi-pages
+→ checkpoint final
+```
+
+6A et 6B peuvent être conçus sans réécrire Bridge. Les lots 8A/8B/8C ne doivent pas commencer tant que les deux décisions contractuelles ci-dessus ne sont pas explicites.
+
+Tous les lots restent **non autorisés** tant que Carlos ne donne pas son accord explicite.
 
 ## 13. Lots détaillés
 
-### Préalable — Contrat partagé Manager/Bridge
+### Préalable — Contrat partagé Manager/Bridge — audit code réalisé, décisions restantes
 
-- Objectif : vérifier le vrai plugin, ses identités, la duplication Divi, sa couverture de scan et le format multi-composants.
-- Changements : exemples d'échanges et arbitrages documentés ; pas d'implémentation.
+- État : lecture du vrai Bridge 0.8.0 effectuée sur `feature/workbench-occurrence-v1@36d1076`.
+- Confirmé : package projet V1, Workbench unique multi-composants, modules Code séparés, `siteOccurrenceId` par composant, scanner large, Workbench-first.
+- Restant avant 8A : décider la forme de l’enveloppe Page V2/additive et le marqueur technique stable permettant de retrouver `siteOccurrenceId` dans Divi après déplacement/duplication.
 - Migrations : aucune.
-- Périmètre : contrats Manager, importeur/occurrences/Workbench/scanner Bridge après identification de leur état réel.
-- Validation : scénario complet d'une Page avec composants et modules natifs, cas ambigus explicités.
-- Dépendance : requis avant 8A ; doit confirmer les choix structurants de 6A.
+- Validation restante : scénario contractuel documenté avec import répété, déplacement, duplication et retour multi-composants attendu.
+- Dépendance : n’empêche pas 6A/6B ; bloque l’implémentation 8A.
 
 ### LOT 6A — Projet/Site/Page
 
@@ -273,32 +348,37 @@ Les lots suivants sont tous **non commencés dans le cadre de cette feuille de r
 - Tests/acceptation : réexécution sans doublons ; deux Sites ; changements manuels préservés ; devis intact ; Page ajoutée manuellement possible.
 - Dépendance : utilise 6A ; non bloquant pour essayer le transport sur une Page manuelle.
 
-### LOT 8A — Identités, export et réception
+### LOT 8A — Export Page, idempotence et association Bridge
 
-- Objectif : exporter une préparation partielle vers un Workbench avec associations vérifiables.
-- Changements : occurrences durables, export figé, enveloppe page versionnée, accusé de réception.
-- Migrations : occurrences/exports/liaisons strictement nécessaires ; préserver les compositions et retours historiques.
-- Périmètre : `AtoumWebCompositionPackageService`, validations partagées, importeur Bridge.
-- Tests/acceptation : réimport sans doublons ; mauvaise destination et version non supportée refusées ; source exacte conservée ; accusé complet ; échec sans état faussement terminé.
-- Dépendance : préalable + 6B. Préparation Workbench et idempotence seulement ; ne pas généraliser à un écrasement de Page modifiée.
+- Objectif : compléter l’import multi-composants existant pour qu’il représente explicitement une préparation partielle de Page et soit réimportable sans doublon silencieux.
+- À conserver : `atoumweb_bridge_project_package` V1, Workbench unique, modules Code séparés, création Bridge des `siteOccurrenceId`, baselines et provenance.
+- Changements : enveloppe Page versionnée/additive ; `exportId` ; `projectId/siteId/pageId` ; contrôle d’import antérieur ; accusé Bridge ; association `compositionItemId ↔ siteOccurrenceId` ; marqueur stable dans/avec le module Divi.
+- À ne pas ajouter sans besoin démontré : un second identifiant d’occurrence Manager faisant doublon avec `compositionItemId + siteOccurrenceId`.
+- Migrations Manager : exports/liaisons uniquement si nécessaires ; préserver compositions et retours historiques.
+- Périmètre : `AtoumWebCompositionPackageService`, validations partagées, `AWB_Library_Importer`, `AWB_Workbench`, `AWB_Site_Occurrence`.
+- Tests/acceptation : même export réimporté sans nouveau Workbench ; même `exportId` avec contenu différent refusé ; mauvaise destination/version refusée ; source exacte conservée ; déplacement conserve l’identité ; duplication ne crée pas deux modules avec la même identité silencieusement.
+- Dépendance : 6B + décisions contractuelles du préalable.
 
-### LOT 8B — Observation d'une Page hybride
+### LOT 8B — Validation et compléments de l'observation hybride
 
-- Objectif : comprendre occurrences, modules natifs, placement et contexte sans modifier la Bibliothèque.
-- Changements : associations identitaires et observations contextualisées, couverture explicite.
-- Migrations : réutiliser Snapshots ; ajouter uniquement liens/révisions manquants, sans modifier Snapshot V1.
-- Périmètre : `BridgeSnapshotService`, scanner et suivi d'occurrence Bridge.
-- Tests/acceptation : Texte/Image/Code natifs ajoutés, Hero déplacé, padding et CSS Page modifiés ; conservation des observations ; duplication détectée ; scan incomplet sans fausse suppression.
-- Dépendance : identités de 8A, base du retour 8C.
+- Objectif : exploiter le scanner existant pour comprendre occurrences, modules natifs, placement et contexte, sans transformer Manager en builder.
+- À conserver : parsing Divi 4 section/row/column/module, attributs complets, design/responsive, classes/IDs, CSS/JS Page/global, metas utiles, contexte Theme Builder déjà collecté.
+- Changements : fixtures et couverture explicite ; corrélation avec le marqueur `siteOccurrenceId` ; uniquement les métadonnées réellement manquantes.
+- Migrations : réutiliser Snapshots ; ajouter seulement les liens/révisions nécessaires, sans modifier Snapshot V1.
+- Périmètre : `BridgeSnapshotService`, `AWB_Scanner`, liaisons d’occurrence.
+- Tests/acceptation : Texte/Image/Code natifs ajoutés, Hero déplacé, marge/padding local, CSS Page, duplication, suppression, scan partiel ; aucune mutation Bibliothèque ; absence non traitée comme suppression certaine.
+- Couverture à signaler : Theme Builder/presets/couleurs/polices globales restent partiellement normalisés tant que des fixtures ne prouvent pas mieux.
+- Dépendance : 8A.
 
-### LOT 8C — Retour et décisions
+### LOT 8C — Retour multi-composants et décisions
 
-- Objectif : conserver les changements locaux, détecter les conflits et promouvoir volontairement.
-- Changements : retours révisés, ordre des observations, décisions par occurrence, entrée volontaire pour candidat natif.
-- Migrations : liens/historique d'application nécessaires, sans effacer les retours V1.
-- Périmètre : `AtoumWebOccurrenceReturnService`, Familles/Variantes, interface de revue.
-- Tests/acceptation : retour répété/ancien/concurrent ; échec compensé ; source intacte ; spacing de placement exclu par défaut d'une promotion ; élément natif jamais promu automatiquement.
-- Dépendance : utilise 8B et les fonctions Bibliothèque existantes.
+- Objectif : ajouter le retour qui manque réellement pour les Workbenches `manager_project`, occurrence par occurrence, puis conserver les décisions utilisateur.
+- À conserver : Occurrence Return V1 mono-composant existant et `actionPolicy=manager_decides`.
+- Changements : retour lié à `exportId/pageId` ; plusieurs `siteOccurrenceId` ; historique de révisions ; détection retour répété/ancien/concurrent ; changements de placement séparés des changements intrinsèques ; entrée volontaire pour candidat natif.
+- Migrations : liens/historique d’application si nécessaires, sans effacer les retours V1.
+- Périmètre : `AtoumWebOccurrenceReturnService`, `AWB_Site_Occurrence`, Familles/Variantes et interface de revue.
+- Tests/acceptation : retour multi-composants réel ; même retour sans doublon ; retour ancien conservé sans régression ; source Bibliothèque intacte ; spacing local exclu par défaut d’une promotion ; élément natif jamais promu automatiquement.
+- Dépendance : 8B et les fonctions Bibliothèque existantes.
 
 ### LOT 9 — Préparation multi-pages
 
@@ -318,21 +398,23 @@ Les lots suivants sont tous **non commencés dans le cadre de cette feuille de r
 
 Réversibilité : nouvelles relations facultatives pour l'historique, formats anciens lisibles, échanges immuables, aucun rattachement massif déduit. Numérotation des migrations à attribuer lors de l'implémentation ; ne pas réécrire 40–46.
 
-## 14. Arbitrages à confirmer avant implémentation
+## 14. Arbitrages et statut après confrontation Bridge
 
-Recommandations à examiner/valider, pas validations supposées :
+Les statuts ci-dessous distinguent **validation métier**, **compatibilité technique** et **décision encore requise**.
 
-1. Page = nœud Projet + extension, une seule identité.
-2. Composition partielle/facultative, une active par Page au départ.
-3. Site logique distinct de l'installation ; Workbench distinct de la Page finale.
-4. Occurrence durable distincte du nœud Snapshot, duplication explicitement traitée.
-5. Enveloppe page versionnée sans remplacement implicite ; contrats internes V1 préservés.
-6. Conservation locale par défaut, promotion Bibliothèque volontaire.
-7. Premier réimport limité au Workbench et à l'idempotence ; mise à jour d'une Page modifiée à cadrer séparément.
+1. **Page = nœud Projet + extension** — compatible techniquement avec Bridge ; à confirmer avant 6A.
+2. **Composition facultative et partielle** — validée comme besoin métier : Divi reste l’atelier principal ; une Page peut avoir zéro composant Manager.
+3. **Site logique Manager distinct de l’installation Bridge ; Workbench distinct de la Page finale** — compatible avec le code actuel et recommandé.
+4. **Identité d’occurrence** — ne pas créer pour l’instant un `occurrenceId` Manager supplémentaire. Utiliser `compositionItemId` avant import, puis `siteOccurrenceId` créée par Bridge. **Décision requise avant 8A : forme du marqueur stable dans Divi et règle de duplication.**
+5. **Enveloppe Page versionnée** — nécessité confirmée par le code actuel. **Décision requise avant 8A : schemaVersion 2 du package projet ou nouveau contrat additionnel.**
+6. **Conservation locale par défaut, promotion Bibliothèque volontaire** — validée métier et alignée avec `actionPolicy=manager_decides`.
+7. **Idempotence** — le package projet actuel ne la garantit pas au niveau Workbench. 8A doit définir `exportId` + comportement de réimport avant tout round-trip.
+8. **Scanner hybride** — existe déjà largement. 8B est un lot de validation/corrélation/complément, pas un nouveau scanner.
+9. **Retour multi-composants** — explicitement absent aujourd’hui pour `manager_project`; relève de 8C et ne doit pas être supposé acquis.
 
 ## 15. Recommandation d'exécution
 
-Vérifier le contrat d'identité Bridge, puis 6A/6B. Ajouter le confort de génération par blueprint avec 7. Réussir ensuite un parcours complet sur une Page hybride avant de passer au multi-pages.
+Le code Bridge ayant maintenant été vérifié, cadrer 6A/6B sans reconstruire les capacités déjà présentes. Ajouter ensuite le squelette blueprint avec 7. Avant 8A, arrêter explicitement le contrat Page versionné et le marqueur stable d’occurrence Divi. Réussir ensuite un parcours complet sur une Page hybride avant de passer au multi-pages.
 
 Recette de référence : trois composants Manager, ajouts natifs Divi, déplacement, spacing local, CSS Page, retour correctement attribué, répétition du retour sans doublon et absence de mutation Bibliothèque. Carlos réalise la navigation/recette visuelle ; les agents analysent le code et exécutent les contrôles ciblés autorisés.
 
@@ -385,3 +467,16 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Arbitrages §14 : (1) Page = nœud Projet + extension reste compatible avec Bridge ; (2) composition facultative/partielle est compatible conceptuellement ; (3) Site logique Manager doit rester distinct du `siteKey/siteUrl` de l’installation Bridge ; (4) occurrence durable est pertinente mais nécessite un marqueur stable côté Divi ; (5) enveloppe Page versionnée est nécessaire ; (6) promotion volontaire est déjà alignée ; (7) réimport Workbench/idempotence nécessite encore une vraie règle de package.
 - Blocage actuel : aucun blocage pour poursuivre la réflexion Manager 6A/6B, mais **ne pas implémenter 8A/8B/8C avant décision sur l’identité stable d’une occurrence dans le contenu Divi et sur la version du contrat Page**.
 - Prochaine action : Carlos/agents valident ou corrigent les arbitrages §14 à la lumière de ces écarts. Aucun code Manager ou Bridge à modifier sans autorisation explicite.
+
+
+### 2026-09-28 — ROADMAP-CLEAN-001 — Roadmap réalignée sur le Bridge réellement implémenté
+
+- Auteur/rôle : agent Manager/Bridge ChatGPT, sur autorisation de Carlos de nettoyer le document après BRIDGE-AUDIT-001.
+- Type : correction documentaire + clarification d’architecture ; **aucun développement autorisé ni commencé**.
+- Base avant modification : `feature/project-blueprints-v1@d7ef19827e3c9f88024355a5f73c8b4989b45b20`.
+- Action : sections 0, 2, 4, 6, 8, 12, 13, 14 et 15 réalignées sur le code réel Bridge 0.8.0.
+- Capacités désormais marquées comme existantes et à conserver : package projet V1 multi-composants, Workbench unique, modules Code séparés, `siteOccurrenceId` Bridge par composant, `compositionItemId`, baselines, scanner Divi large, Workbench-first, `manager_decides`.
+- Travaux restant explicitement isolés : destination Projet/Site/Page, enveloppe Page versionnée, `exportId` et idempotence d’import, marqueur stable d’occurrence dans Divi, validation/corrélation du scanner hybride, retour multi-composants `manager_project`.
+- Simplification : aucun `occurrenceId` Manager supplémentaire ne doit être créé par défaut. Le couple de continuité visé est `compositionItemId` côté Manager puis `siteOccurrenceId` créée par Bridge, avec association persistée.
+- Lots 8A/8B/8C resserrés pour compléter l’existant au lieu de le reconstruire.
+- Prochaine action : validation explicite des arbitrages §14, en priorité 1, 4 et 5, avant autorisation de tout lot de code.
