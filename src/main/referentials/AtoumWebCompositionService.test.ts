@@ -120,6 +120,74 @@ describe('AtoumWebCompositionService', () => {
     expect(library.get(header.id).currentVersion?.versionNumber).toBe(2);
   });
 
+  it('conserve les réglages locaux sur une occurrence sans modifier la source Bibliothèque', () => {
+    const source = library.createReusableCode({
+      category: 'section',
+      name: 'Section offres',
+      html: '<section><h2>Titre source</h2></section>',
+      css: '.section{color:#112233}',
+    });
+    const composition = compositions.create({ name: 'Accueil' });
+    const withItem = compositions.addItem(composition.id, { libraryItemId: source.id });
+    const item = withItem.items[0];
+
+    const updated = compositions.updateItemLocalCode(composition.id, item.id, {
+      html: '<section><h2>Titre client</h2></section>',
+      css: '.section{color:#445566}',
+      javascript: '',
+      settings: {
+        textEdits: [{ from: 'Titre source', to: 'Titre client' }],
+        colorEdits: [{ from: '#112233', to: '#445566' }],
+        note: 'Préparation Accueil',
+      },
+    });
+
+    expect(updated.items[0]).toMatchObject({
+      hasLocalChanges: true,
+      localHtml: '<section><h2>Titre client</h2></section>',
+      localCss: '.section{color:#445566}',
+    });
+    expect(updated.items[0].localSettings.textEdits).toEqual([{ from: 'Titre source', to: 'Titre client' }]);
+    expect(library.get(source.id).currentVersion?.contentText).toContain('Titre source');
+    expect(library.get(source.id).currentVersion?.contentText).not.toContain('Titre client');
+
+    const reset = compositions.resetItemLocalCode(composition.id, item.id);
+    expect(reset.items[0].hasLocalChanges).toBe(false);
+    expect(reset.items[0].localHtml).toBeNull();
+  });
+
+  it('promeut une adaptation locale en variante à valider sans toucher au modèle source', () => {
+    const source = library.createReusableCode({
+      category: 'hero',
+      name: 'Hero source',
+      html: '<section>Source</section>',
+      css: '.hero{color:#111111}',
+    });
+    const composition = compositions.create({ name: 'Accueil fleuriste' });
+    let result = compositions.addItem(composition.id, { libraryItemId: source.id });
+    const item = result.items[0];
+
+    result = compositions.updateItemLocalCode(composition.id, item.id, {
+      html: '<section>Fleuriste</section>',
+      css: '.hero{color:#778866}',
+      javascript: '',
+    });
+
+    const promoted = compositions.promoteItemVariant(composition.id, item.id, {
+      name: 'Fleuriste pastel',
+    });
+
+    expect(promoted.id).not.toBe(source.id);
+    expect(promoted.reuseStatus).toBe('adapt');
+    expect(promoted.stableVersion).toBeNull();
+    expect(promoted.variantMode).toBe('forked');
+    expect(promoted.variantOfId).toBe(source.libraryVariantId);
+    expect(promoted.currentVersion?.contentText).toContain('Fleuriste');
+    expect(promoted.tags).toEqual(expect.arrayContaining(['manager-variant-to-review', 'composition-promotion']));
+    expect(promoted.tags).not.toContain('bridge-human-validated');
+    expect(library.get(source.id).currentVersion?.contentText).toContain('Source');
+  });
+
   it('réordonne et retire des occurrences de composition indépendamment des sources', () => {
     const items = ['Header', 'Hero', 'Footer'].map((name, index) => {
       const item = library.create(
