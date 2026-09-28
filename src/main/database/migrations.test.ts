@@ -244,7 +244,7 @@ describe('migrations SQLite', () => {
         [now, now],
       );
 
-      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([46, 47]);
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([46, 47, 48]);
       expect(database.get<{ contract_audience: string }>(
         "SELECT contract_audience FROM quotes WHERE id='quote-pro'",
       )?.contract_audience).toBe('professional');
