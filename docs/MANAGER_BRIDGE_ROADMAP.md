@@ -767,3 +767,42 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - bloc `ProjectPageCompositionPanel` déplacé immédiatement sous le résumé Temps réel, avant les champs Page ;
   - badge visible `6B · Composition AtoumWeb` ajouté dans l'en-tête Page pour permettre de vérifier immédiatement que le renderer courant contient bien le correctif.
 - Critère recette : après redémarrage sur ce commit, le badge 6B et le bloc Composants AtoumWeb doivent être visibles sans scroller ; aucune barre horizontale globale ne doit rester.
+
+
+### 2026-09-28 — LOT6B-HANDOFF-CODEX-001 — Reprise critique UX 6B par Codex
+
+- Contexte : Carlos demande à Codex de reprendre la recette/correction UX du Lot 6B après plusieurs itérations. Ne pas considérer les diagnostics précédents comme acquis : repartir du rendu réel et du code actuel.
+- Branche canonique de travail : `feature/project-page-compositions-v1`.
+- HEAD de référence au moment du handoff : `4bdf3df31ccfc9a84a5f3d08742c002ba6467443`.
+- Dernière migration : **49**.
+- Blocage visible encore présent : **barre horizontale parasite en bas de la vue Projets / Sites & pages**, confirmée sur la dernière capture utilisateur malgré UX-001/002/003. La cause doit être retrouvée par inspection réelle du layout, pas supposée.
+- Scroll colonne droite : considéré **non validé** tant que la fin réelle du contenu n'est pas atteignable sans contournement.
+- Fonctions implémentées mais à revalider visuellement :
+  - Bibliothèque Page avec tous les éléments visuels + statut ;
+  - occurrences multiples du même composant ;
+  - création directe avec mode « Code complet » puis séparation HTML/CSS/JS ;
+  - aperçu global de Page ;
+  - réglages locaux texte/couleurs par occurrence ;
+  - aperçu du module seul ;
+  - sélecteur couleur à la souris ;
+  - Annuler / Rétablir / retour « Version Bibliothèque » ;
+  - promotion d'une adaptation locale vers la Bibliothèque comme variante `adapt`, non stable.
+- Défaut déjà signalé à revalider : l'aperçu global de Page a déjà été observé entièrement blanc. Une tentative de garde-fous CSS a été faite, mais aucune recette finale n'a confirmé la correction.
+- Règles à préserver :
+  - modèle Bibliothèque source immuable ;
+  - overrides locaux sur l'occurrence uniquement ;
+  - variante promue depuis une occurrence = `forked`, `reuseStatus='adapt'`, non stable, validation humaine requise ;
+  - zéro envoi Bridge / zéro création WordPress/Divi dans 6B ;
+  - aucune nouvelle architecture parallèle aux services Composition/Bibliothèque existants.
+- Consigne Codex :
+  1. synchroniser la branche et vérifier HEAD/working tree ;
+  2. lancer typecheck + tests ciblés avant tout changement ;
+  3. reproduire/inspecter le layout actuel et identifier la **source exacte** du scrollbar horizontal (élément DOM et règle CSS responsables) ;
+  4. corriger le scroll vertical de la colonne droite jusqu'au dernier élément ;
+  5. vérifier réellement l'affichage du bloc Composants AtoumWeb et des contrôles 6B ;
+  6. vérifier l'aperçu global avec plusieurs composants, dont deux occurrences du même CTA ;
+  7. vérifier réglages texte/couleurs, color picker, module seul, undo/redo/reset ;
+  8. vérifier création via « Code complet » et séparation ;
+  9. vérifier promotion en variante `adapt` sans mutation de la source ;
+  10. ne pas commencer Lot 7/8 ni modifier Bridge.
+- Attendu : corrections minimales et cohérentes, pas de refonte générale de ProjectsPage. Après correction, fournir HEAD, fichiers modifiés, cause racine exacte de chaque défaut, résultats typecheck/tests et checklist de recette utilisateur.
