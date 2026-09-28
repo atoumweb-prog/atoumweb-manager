@@ -470,6 +470,7 @@ export function ProjectSitesTab({
         {selectedPage && <>
           <header className="project-sites-detail-head">
             <div><span className="eyebrow">Page du Projet</span><h3>{selectedPage.name}</h3><p>{selectedSite ? selectedSite.name : 'Non rattachée à un Site'}</p></div>
+            <span className="status-pill project-sites-composition-badge">6B · Composition AtoumWeb</span>
           </header>
 
           <section className={`project-sites-page-work ${activeOnSelectedPage ? 'running' : ''}`}>
@@ -492,6 +493,8 @@ export function ProjectSitesTab({
                   </>}
             </div>
           </section>
+
+          <ProjectPageCompositionPanel page={selectedPage} onMessage={onMessage} />
 
           <div className="project-sites-detail-form">
             <label>Nom de la Page
@@ -564,8 +567,6 @@ export function ProjectSitesTab({
               />
             </label>
           </div>
-
-          <ProjectPageCompositionPanel page={selectedPage} onMessage={onMessage} />
 
           <div className="project-sites-note">
             <strong>Divi reste l’atelier principal.</strong>
