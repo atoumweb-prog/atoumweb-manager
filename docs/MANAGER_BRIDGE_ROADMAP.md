@@ -573,3 +573,22 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - UX cible 6B : dans la fiche Page, bloc « Composants AtoumWeb » avec liste ordonnée, aperçu/code, actions Ajouter depuis la Bibliothèque, Créer un composant/section, Réordonner, Retirer, Ouvrir la fiche Bibliothèque.
 - Hors périmètre 6B : aucune génération WordPress/Divi, aucun package `scope=page`, aucun envoi Bridge ; cela reste 8A+.
 - Prochaine action : valider explicitement le démarrage du Lot 6B avant toute modification de code.
+
+
+### 2026-09-28 — LOT6B-DESIGN-002 — Vue globale assemblée de la Page
+
+- Origine : demande métier de Carlos avant démarrage du Lot 6B.
+- Statut : exigence fonctionnelle à intégrer au Lot 6B ; aucun développement lancé par cette entrée seule.
+- Besoin : lorsqu’une Page contient plusieurs composants AtoumWeb (ex. 10 modules/sections), l’utilisateur doit pouvoir voir une prévisualisation globale assemblée dans l’ordre réel de la composition, sans ouvrir chaque composant séparément.
+- Réutilisation technique : la Bibliothèque possède déjà un visualiseur HTML sandboxé par iframe et les compositions connaissent pour chaque item la version source exacte. Le Lot 6B doit réutiliser ces briques, pas créer un nouveau moteur de rendu.
+- UX cible : bouton « Aperçu de la Page » ou « Voir la composition complète » depuis la fiche Page ; ouverture d’une vue large/plein écran montrant les composants concaténés dans l’ordre, avec possibilité Desktop / Tablette / Mobile et retour rapide à la liste.
+- La vue doit permettre d’identifier les limites entre composants en mode inspection, sans imposer ces repères dans l’aperçu visuel normal.
+- Sémantique importante : avant retour Bridge, cette vue est **l’aperçu de la composition AtoumWeb préparée**, pas nécessairement la Page Divi complète. Une Page hybride peut aussi contenir modules Divi natifs, spacing ou CSS ajoutés directement dans Divi et inconnus du Manager à ce stade.
+- Après scan/retour Bridge, une future vue peut distinguer clairement :
+  1. « Composition préparée par Manager » ;
+  2. « Page réelle observée dans Divi ».
+- Rendu : concaténer les HTML/CSS/JS compatibles de chaque version sélectionnée dans un document d’aperçu isolé ; éviter toute mutation du code source ou de la Bibliothèque.
+- Erreurs : un composant non prévisualisable doit apparaître comme bloc signalé dans l’aperçu/inspection plutôt que faire échouer toute la Page.
+- Performance : prévoir un rendu paresseux/recalcul uniquement après modification de la composition ou sur demande, afin qu’une Page de nombreux composants reste fluide.
+- Hors périmètre : ne pas prétendre reproduire les wrappers/spacing Divi réels avant Bridge ; la fidélité complète à la Page Divi reste un objectif des lots 8B/8C.
+- Prochaine action : intégrer cette vue au cahier des charges détaillé 6B au moment où Carlos autorisera explicitement son démarrage.
