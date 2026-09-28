@@ -505,3 +505,17 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Hors périmètre préservé : aucune composition 6B, aucun blueprint Lot 7, aucun contrat ou code Bridge 8A+.
 - Validation : code publié pour contrôle ; les tests/typecheck doivent être exécutés sur le workspace MSI avant intégration dans `feature/project-blueprints-v1`.
 - Prochaine action : checkpoint technique ciblé migration 47 + ProjectSiteService + ProjectService, puis recette visuelle Sites & pages. Ne pas lancer 6B avant validation explicite.
+
+
+### 2026-09-28 — LOT6A-TECH-VALID-001 — Checkpoint technique MSI vert
+
+- Validation exécutée localement sur MSI par Carlos.
+- Branche : `feature/project-sites-v1`.
+- HEAD validé : `e6561ab69907a32e7e255e841070dca9a45a08db`.
+- Working tree : propre avant validation.
+- `npm run typecheck` : réussi.
+- Tests ciblés exécutés : `ProjectSiteService.test.ts`, `ProjectService.test.ts`, `migrations.test.ts` ; résultat communiqué : **tout vert**.
+- Statut : socle technique du Lot 6A validé.
+- Non encore validé : application réelle des migrations 44–47 sur Validation-MSI et recette visuelle/fonctionnelle de l’onglet « Sites & pages ».
+- Hors périmètre inchangé : aucun Lot 6B, 7 ou 8 lancé.
+- Prochaine action : lancer le Manager sur le workspace Validation-MSI, confirmer les migrations 44–47, puis effectuer la recette manuelle du Lot 6A avant toute intégration.
