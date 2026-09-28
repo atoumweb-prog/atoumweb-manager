@@ -311,7 +311,13 @@ export class AtoumWebTechnicalLibraryService {
          VALUES (?,?,?,?,?,'forked',?,NULL,?,?)`,
         [variantId, family.id, created.id, variantKey, label, parent.id, now, now],
       );
-      if (created.currentVersion && markStable) created = this.markStable(created.currentVersion.id);
+      if (created.currentVersion && markStable) {
+        created = this.markStable(created.currentVersion.id);
+      } else {
+        // L'identité Famille / Variante est créée après technical_items.
+        // Recharge toujours l'élément afin de retourner variantMode / variantOfId / variantKey à jour.
+        created = this.get(created.id);
+      }
       this.refreshSearchIndex(source.id);
       this.refreshSearchIndex(created.id);
       this.database.exec('RELEASE SAVEPOINT library_direct_variant;');
