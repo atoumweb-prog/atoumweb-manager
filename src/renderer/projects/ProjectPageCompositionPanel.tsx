@@ -412,10 +412,15 @@ export function ProjectPageCompositionPanel({
     </div>}
 
     {composition && <div className="project-page-composition-list">
-      {composition.items.map((item, index) => <article key={item.id}>
+      {composition.items.map((item, index) => {
+        const occurrence = composition.items
+          .slice(0, index + 1)
+          .filter((candidate) => candidate.sourceItemId === item.sourceItemId).length;
+        const totalSameSource = composition.items.filter((candidate) => candidate.sourceItemId === item.sourceItemId).length;
+        return <article key={item.id}>
         <span className="project-page-composition-order">{index + 1}</span>
         <div className="project-page-composition-main">
-          <strong>{item.displayName}</strong>
+          <strong>{item.displayName}{totalSameSource > 1 ? ` · occurrence ${occurrence}` : ''}</strong>
           <small>{item.category} · v{item.sourceVersionNumber}{item.variantKey ? ` · ${item.variantKey}` : ''}</small>
         </div>
         <div className="project-page-composition-row-actions">
@@ -424,7 +429,8 @@ export function ProjectPageCompositionPanel({
           <button type="button" disabled={busy} onClick={() => void inspect(item)}>Code / aperçu</button>
           <button type="button" disabled={busy} onClick={() => void remove(item)}>Retirer</button>
         </div>
-      </article>)}
+      </article>;
+      })}
       {composition.items.length === 0 && <p className="muted">Composition créée, mais encore vide.</p>}
     </div>}
 
