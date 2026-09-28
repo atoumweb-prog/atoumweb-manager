@@ -9,6 +9,7 @@ import type {
   AtoumWebTechnicalItemSummary,
   AtoumWebTechnicalVersion,
 } from '../../shared/referentials';
+import { ProjectCompositionItemSettings } from './ProjectCompositionItemSettings';
 import './ProjectPageCompositionPanel.css';
 
 type PanelMode = null | 'library' | 'create' | 'attach' | 'inspect' | 'preview';
@@ -129,6 +130,17 @@ function parseParts(version?: AtoumWebTechnicalVersion | null): PreviewParts {
   return { html: '', css: '', javascript: '', previewable: false, raw };
 }
 
+function effectiveParts(item: AtoumWebCompositionItem, source: PreviewParts): PreviewParts {
+  if (!item.hasLocalChanges || !item.localHtml) return source;
+  return {
+    html: item.localHtml,
+    css: item.localCss ?? '',
+    javascript: item.localJavascript ?? '',
+    previewable: Boolean(item.localHtml.trim()),
+    raw: source.raw,
+  };
+}
+
 function buildPreviewDocument(parts: PreviewParts, label: string): string {
   const body = parts.previewable
     ? parts.html
@@ -190,6 +202,7 @@ export function ProjectPageCompositionPanel({
   const [previewDoc, setPreviewDoc] = useState('');
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop');
   const [inspectionMode, setInspectionMode] = useState(false);
+  const [settingsItemId, setSettingsItemId] = useState<string | null>(null);
 
   async function reload(): Promise<void> {
     const [nextComposition, nextCompositions, nextLibrary] = await Promise.all([
@@ -280,7 +293,8 @@ export function ProjectPageCompositionPanel({
     await withBusy(async () => {
       const detail = await window.atoumweb.referentials.library.get(item.sourceItemId);
       const version = detail.versions.find((candidate) => candidate.id === item.sourceVersionId) ?? null;
-      setInspected({ item, detail, parts: parseParts(version) });
+      const sourceParts = parseParts(version);
+      setInspected({ item, detail, parts: effectiveParts(item, sourceParts) });
       setMode('inspect');
     });
   }
@@ -358,7 +372,8 @@ export function ProjectPageCompositionPanel({
       const rendered = composition.items.map((item, index) => {
         const detail = details[index];
         const version = detail.versions.find((candidate) => candidate.id === item.sourceVersionId) ?? null;
-        const parts = parseParts(version);
+        const sourceParts = parseParts(version);
+        const parts = effectiveParts(item, sourceParts);
         return { item, parts };
       });
       const css = rendered.map((entry) => entry.parts.css).filter(Boolean).join('\n\n');
@@ -417,19 +432,37 @@ export function ProjectPageCompositionPanel({
           .slice(0, index + 1)
           .filter((candidate) => candidate.sourceItemId === item.sourceItemId).length;
         const totalSameSource = composition.items.filter((candidate) => candidate.sourceItemId === item.sourceItemId).length;
-        return <article key={item.id}>
-        <span className="project-page-composition-order">{index + 1}</span>
-        <div className="project-page-composition-main">
-          <strong>{item.displayName}{totalSameSource > 1 ? ` · occurrence ${occurrence}` : ''}</strong>
-          <small>{item.category} · v{item.sourceVersionNumber}{item.variantKey ? ` · ${item.variantKey}` : ''}</small>
-        </div>
-        <div className="project-page-composition-row-actions">
-          <button type="button" disabled={busy || index === 0} onClick={() => void move(item, -1)} title="Monter">↑</button>
-          <button type="button" disabled={busy || index === composition.items.length - 1} onClick={() => void move(item, 1)} title="Descendre">↓</button>
-          <button type="button" disabled={busy} onClick={() => void inspect(item)}>Code / aperçu</button>
-          <button type="button" disabled={busy} onClick={() => void remove(item)}>Retirer</button>
-        </div>
-      </article>;
+        return <div className="project-page-composition-item-wrap" key={item.id}>
+          <article>
+            <span className="project-page-composition-order">{index + 1}</span>
+            <div className="project-page-composition-main">
+              <strong>{item.displayName}{totalSameSource > 1 ? ` · occurrence ${occurrence}` : ''}</strong>
+              <small>
+                {item.category} · v{item.sourceVersionNumber}{item.variantKey ? ` · ${item.variantKey}` : ''}
+                {item.hasLocalChanges ? ' · préparé localement' : ''}
+              </small>
+            </div>
+            <div className="project-page-composition-row-actions">
+              <button type="button" disabled={busy || index === 0} onClick={() => void move(item, -1)} title="Monter">↑</button>
+              <button type="button" disabled={busy || index === composition.items.length - 1} onClick={() => void move(item, 1)} title="Descendre">↓</button>
+              <button
+                type="button"
+                className={settingsItemId === item.id ? 'active' : ''}
+                disabled={busy}
+                onClick={() => setSettingsItemId((current) => current === item.id ? null : item.id)}
+              >Réglages {settingsItemId === item.id ? '▴' : '▾'}</button>
+              <button type="button" disabled={busy} onClick={() => void inspect(item)}>Code / aperçu</button>
+              <button type="button" disabled={busy} onClick={() => void remove(item)}>Retirer</button>
+            </div>
+          </article>
+          {settingsItemId === item.id && <ProjectCompositionItemSettings
+            compositionId={composition.id}
+            item={item}
+            pageName={page.name}
+            onUpdated={(updated) => setComposition(updated)}
+            onMessage={onMessage}
+          />}
+        </div>;
       })}
       {composition.items.length === 0 && <p className="muted">Composition créée, mais encore vide.</p>}
     </div>}
