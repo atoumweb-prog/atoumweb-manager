@@ -519,3 +519,13 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Non encore validé : application réelle des migrations 44–47 sur Validation-MSI et recette visuelle/fonctionnelle de l’onglet « Sites & pages ».
 - Hors périmètre inchangé : aucun Lot 6B, 7 ou 8 lancé.
 - Prochaine action : lancer le Manager sur le workspace Validation-MSI, confirmer les migrations 44–47, puis effectuer la recette manuelle du Lot 6A avant toute intégration.
+
+
+### 2026-09-28 — LOT6A-UX-001 — Corrections de recette Sites & pages
+
+- Origine : recette visuelle de Carlos sur Validation-MSI après passage à 47 migrations.
+- Constats : liste de Pages non scrollable ; libellé « Domaine souhaité » ambigu ; « Chemin souhaité » ambigu alors qu’il s’agit du slug/chemin URL ; placeholder /contact trompeur sur les Pages non rattachées.
+- Correction : scrollbar interne sur la liste de Pages ; libellés « Nom de domaine prévu » et « Slug / chemin URL » ; aide par exemples ; champ slug désactivé tant que la Page n’est pas rattachée.
+- Règle métier clarifiée : une Page au rôle Accueil reçoit toujours le chemin `/`; `/` est réservé à l’Accueil.
+- Périmètre : correction Lot 6A uniquement ; aucun démarrage 6B/7/8.
+- Validation restante : typecheck + tests ciblés ProjectSiteService, puis nouvelle capture/recette visuelle.

@@ -109,15 +109,16 @@ describe('ProjectSiteService', () => {
     expect(sites.list(project.id)).toHaveLength(1);
   });
 
-  it('refuse deux chemins identiques et deux Pages d’accueil dans un même Site', () => {
+  it('réserve / à l’accueil et force ce slug quand le rôle devient Accueil', () => {
     const project = createProject('Projet chemins');
     const first = addPage(project.id, 'Accueil');
     const second = addPage(project.id, 'Contact');
     const site = sites.create(project.id, { name: 'Site unique' });
 
-    sites.linkPage(site.id, first.id, { role: 'home' });
+    const home = sites.linkPage(site.id, first.id, { role: 'home', desiredPath: '/ancien-slug' });
+    expect(home.desiredPath).toBe('/');
 
     expect(() => sites.linkPage(site.id, second.id, { role: 'home' })).toThrow(/déjà une Page d’accueil/i);
-    expect(() => sites.linkPage(site.id, second.id, { role: 'standard', desiredPath: '/' })).toThrow(/chemin/i);
+    expect(() => sites.linkPage(site.id, second.id, { role: 'standard', desiredPath: '/' })).toThrow(/réservé/i);
   });
 });

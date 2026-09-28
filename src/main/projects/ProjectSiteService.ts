@@ -175,10 +175,11 @@ export class ProjectSiteService {
   }
 
   private normalizePath(value: string | null | undefined, role: ProjectSitePageRole): string | null {
+    if (role === 'home') return '/';
     const path = clean(value);
-    if (!path) return role === 'home' ? '/' : null;
-    if (/[?#]/.test(path)) throw new Error('Le chemin souhaité doit être un chemin de Page sans query string ni ancre.');
-    if (path === '/') return '/';
+    if (!path) return null;
+    if (/[?#]/.test(path)) throw new Error('Le slug doit être un chemin de Page sans query string ni ancre.');
+    if (path === '/') throw new Error('Le chemin / est réservé à la Page d’accueil.');
     return '/' + path.replace(/^\/+|\/+$/g, '');
   }
 

@@ -90,8 +90,12 @@ export function ProjectSitesTab({
         <p>La Page reste un élément du plan Projet. Ici, tu indiques simplement à quel Site elle appartient. Aucun contenu Divi n’est dupliqué dans le Manager.</p>
       </div>
       <div className="project-site-create">
-        <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nom du site · ex. fleuriste.com" />
-        <input value={domain} onChange={(event) => setDomain(event.target.value)} placeholder="Domaine souhaité · facultatif" />
+        <label>Nom du site
+          <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex. Site principal" />
+        </label>
+        <label>Nom de domaine prévu <span>facultatif</span>
+          <input value={domain} onChange={(event) => setDomain(event.target.value)} placeholder="Ex. fleuriste.com" />
+        </label>
         <button className="primary-button" type="button" disabled={busy || !name.trim()} onClick={() => void createSite()}>Ajouter le site</button>
       </div>
     </div>
@@ -103,7 +107,7 @@ export function ProjectSitesTab({
         <div className="project-site-list">
           {sites.map((site) => <article key={site.id} className={site.archivedAt ? 'archived' : ''}>
             <div className="project-site-fields">
-              <label>Nom
+              <label>Nom du site
                 <input
                   key={`${site.id}-name-${site.updatedAt}`}
                   defaultValue={site.name}
@@ -115,7 +119,7 @@ export function ProjectSitesTab({
                   }}
                 />
               </label>
-              <label>Domaine souhaité
+              <label>Nom de domaine prévu
                 <input
                   key={`${site.id}-domain-${site.updatedAt}`}
                   defaultValue={site.desiredDomain ?? ''}
@@ -124,7 +128,7 @@ export function ProjectSitesTab({
                   onBlur={(event) => {
                     const next = event.currentTarget.value.trim() || null;
                     if (next === (site.desiredDomain ?? null)) return;
-                    void run(() => window.atoumweb.projects.sites.update(site.id, { desiredDomain: next }), 'Domaine souhaité mis à jour.');
+                    void run(() => window.atoumweb.projects.sites.update(site.id, { desiredDomain: next }), 'Nom de domaine mis à jour.');
                   }}
                 />
               </label>
@@ -146,7 +150,7 @@ export function ProjectSitesTab({
         </div>
       </section>
 
-      <section className="panel">
+      <section className="panel project-sites-pages-panel">
         <div className="panel-title"><div><span className="eyebrow">Pages du plan</span><h3>{pages.length} page{pages.length > 1 ? 's' : ''}</h3></div></div>
         {pages.length === 0 && <p className="muted">Ajoute une Page dans le plan de production pour pouvoir la rattacher à un Site.</p>}
         <div className="project-site-page-list">
@@ -182,21 +186,22 @@ export function ProjectSitesTab({
                   disabled={busy || !link || Boolean(linkedSite?.archivedAt)}
                   onChange={(event) => {
                     if (!link) return;
+                    const role = event.target.value as ProjectSitePageRole;
                     void run(() => window.atoumweb.projects.sites.linkPage(link.projectSiteId, page.id, {
-                      role: event.target.value as ProjectSitePageRole,
-                      desiredPath: link.desiredPath,
+                      role,
+                      desiredPath: role === 'home' || link.desiredPath === '/' ? null : link.desiredPath,
                     }), 'Rôle de Page mis à jour.');
                   }}
                 >
                   {PROJECT_SITE_PAGE_ROLES.map((role) => <option key={role} value={role}>{ROLE_LABELS[role]}</option>)}
                 </select>
               </label>
-              <label>Chemin souhaité
+              <label>Slug / chemin URL
                 <input
                   key={`${page.id}-${link?.projectSiteId ?? 'none'}-${link?.desiredPath ?? ''}`}
                   defaultValue={link?.desiredPath ?? ''}
-                  placeholder="/contact"
-                  disabled={busy || !link || Boolean(linkedSite?.archivedAt)}
+                  placeholder={!link ? 'Rattacher la page à un Site' : link.role === 'home' ? '/' : 'Ex. /contact'}
+                  disabled={busy || !link || link.role === 'home' || Boolean(linkedSite?.archivedAt)}
                   onBlur={(event) => {
                     if (!link) return;
                     const next = event.currentTarget.value.trim() || null;
@@ -204,7 +209,7 @@ export function ProjectSitesTab({
                     void run(() => window.atoumweb.projects.sites.linkPage(link.projectSiteId, page.id, {
                       role: link.role,
                       desiredPath: next,
-                    }), 'Chemin de Page mis à jour.');
+                    }), 'Slug de Page mis à jour.');
                   }}
                 />
               </label>

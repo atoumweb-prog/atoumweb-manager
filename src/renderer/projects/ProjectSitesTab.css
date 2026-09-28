@@ -2,9 +2,12 @@
 .project-sites-intro{display:flex;align-items:flex-end;justify-content:space-between;gap:20px}
 .project-sites-intro h2{margin:.15rem 0}
 .project-sites-intro p{max-width:760px;margin:.35rem 0 0}
-.project-site-create{display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,1fr) auto;gap:8px;min-width:min(620px,55vw)}
+.project-site-create{display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,1fr) auto;gap:8px;min-width:min(680px,58vw);align-items:end}
+.project-site-create label{display:grid;gap:5px;font-size:.82rem}.project-site-create label span{opacity:.65;font-weight:400}
 .project-sites-grid{display:grid;grid-template-columns:minmax(300px,.85fr) minmax(420px,1.4fr);gap:16px}
 .project-site-list,.project-site-page-list{display:grid;gap:10px}
+.project-sites-pages-panel{min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.project-site-page-list{min-height:0;max-height:clamp(320px,42vh,640px);overflow-y:auto;overscroll-behavior:contain;padding-right:6px;scrollbar-gutter:stable}
 .project-site-list article,.project-site-page-list article{border:1px solid var(--border-color,#d9d9d9);border-radius:12px;padding:12px}
 .project-site-list article.archived{opacity:.66}
 .project-site-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
