@@ -678,7 +678,26 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
         </nav>
 
         {detailTab === 'sites' && (
-          <ProjectSitesTab projectId={detail.id} nodes={detail.nodes} onMessage={onMessage} />
+          <ProjectSitesTab
+            projectId={detail.id}
+            nodes={detail.nodes}
+            onMessage={onMessage}
+            onProjectChanged={async (updated) => {
+              setDetail(updated);
+              await refresh();
+            }}
+            onOpenPage={(pageId) => {
+              setSelectedNodeId(pageId);
+              let cursor = detail.nodes.find((node) => node.id === pageId) ?? null;
+              let rootId: string | null = cursor?.id ?? null;
+              while (cursor?.parentId) {
+                rootId = cursor.parentId;
+                cursor = detail.nodes.find((node) => node.id === cursor?.parentId) ?? null;
+              }
+              if (rootId) setExpandedPhaseIds((current) => new Set([...current, rootId!]));
+              setDetailTab('plan');
+            }}
+          />
         )}
 
         {detailTab === 'plan' && (

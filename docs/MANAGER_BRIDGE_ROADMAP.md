@@ -529,3 +529,14 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Règle métier clarifiée : une Page au rôle Accueil reçoit toujours le chemin `/`; `/` est réservé à l’Accueil.
 - Périmètre : correction Lot 6A uniquement ; aucun démarrage 6B/7/8.
 - Validation restante : typecheck + tests ciblés ProjectSiteService, puis nouvelle capture/recette visuelle.
+
+
+### 2026-09-28 — LOT6A-UX-002 — Harmonisation UX Sites & pages avec Production
+
+- Origine : recette visuelle de Carlos ; l’écran fonctionnait mais restait trop proche d’une table d’administration et ne proposait pas d’action directe de création/ouverture d’une Page.
+- Décision : l’écran « Sites & pages » adopte la même logique d’interaction que Production : arborescence scrollable à gauche, fiche détaillée à droite.
+- Actions ajoutées : `+ Site`, `+ Page`, `+ Ajouter une Page` sous un Site et `Ouvrir dans Production` depuis la fiche Page.
+- Sémantique : `+ Page` crée uniquement un nœud Page du Projet (et peut le rattacher au Site choisi). Cela **ne crée pas encore une Page WordPress/Divi** et ne démarre pas le Lot 8A.
+- Source de vérité préservée : le nom/statut de la Page restent portés par le `project_node`; l’écran Site/Page n’en crée pas une copie.
+- Hors périmètre : aucun bouton « Préparer dans Divi » tant que le contrat Page/Bridge n’est pas développé.
+- Validation restante : typecheck puis recette visuelle création Page, rattachement Site, renommage et ouverture dans Production.
