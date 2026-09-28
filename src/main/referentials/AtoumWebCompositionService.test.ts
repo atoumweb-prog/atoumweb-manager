@@ -1,12 +1,19 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
 import { AtoumWebCompositionService } from './AtoumWebCompositionService';
 import { AtoumWebTechnicalLibraryService } from './AtoumWebTechnicalLibraryService';
+import { ProjectService } from '../projects/ProjectService';
+import { createWorkspacePaths } from '../workspace';
 
 let database: NodeSqliteAdapter;
 let library: AtoumWebTechnicalLibraryService;
 let compositions: AtoumWebCompositionService;
+let projects: ProjectService;
+let workspaceRoot: string;
 
 beforeEach(() => {
   database = new NodeSqliteAdapter(':memory:');
@@ -14,9 +21,51 @@ beforeEach(() => {
   applyPendingMigrations(database);
   library = new AtoumWebTechnicalLibraryService(database);
   compositions = new AtoumWebCompositionService(database, library);
+  workspaceRoot = mkdtempSync(join(tmpdir(), 'atoumweb-page-compositions-'));
+  projects = new ProjectService(database, createWorkspacePaths(workspaceRoot));
+});
+
+afterEach(() => {
+  database.close();
+  rmSync(workspaceRoot, { recursive: true, force: true });
 });
 
 describe('AtoumWebCompositionService', () => {
+  it('crée et retrouve une composition partielle liée à une Page du Projet', () => {
+    const project = projects.createInternal({ name: 'Projet Fleuriste', projectType: 'website' });
+    const detail = projects.addProjectNode(project.id, { type: 'module', displaySubtype: 'page', name: 'Accueil' });
+    const page = detail.nodes.find((node) => node.displaySubtype === 'page')!;
+
+    expect(compositions.getForProjectPage(page.id)).toBeNull();
+    const created = compositions.ensureForProjectPage(page.id);
+    expect(created.name).toContain('Accueil');
+    expect(compositions.getForProjectPage(page.id)?.id).toBe(created.id);
+    expect(compositions.ensureForProjectPage(page.id).id).toBe(created.id);
+  });
+
+  it('rattache une composition historique sans la dupliquer et interdit son partage entre deux Pages', () => {
+    const project = projects.createInternal({ name: 'Projet historique', projectType: 'website' });
+    let detail = projects.addProjectNode(project.id, { type: 'module', displaySubtype: 'page', name: 'Accueil' });
+    detail = projects.addProjectNode(project.id, { type: 'module', displaySubtype: 'page', name: 'Contact' });
+    const [home, contact] = detail.nodes.filter((node) => node.displaySubtype === 'page');
+    const composition = compositions.create({ name: 'Composition historique' });
+
+    expect(compositions.attachToProjectPage(home.id, composition.id).id).toBe(composition.id);
+    expect(() => compositions.attachToProjectPage(contact.id, composition.id)).toThrow(/autre Page/i);
+    compositions.detachFromProjectPage(home.id);
+    expect(compositions.getForProjectPage(home.id)).toBeNull();
+    expect(compositions.attachToProjectPage(contact.id, composition.id).id).toBe(composition.id);
+  });
+
+  it('refuse de rattacher une composition à un nœud qui n’est pas une Page', () => {
+    const project = projects.createInternal({ name: 'Projet contrôle', projectType: 'website' });
+    const detail = projects.addProjectNode(project.id, { type: 'task', name: 'Tâche' });
+    const task = detail.nodes.find((node) => node.type === 'task')!;
+    const composition = compositions.create({ name: 'Composition' });
+
+    expect(() => compositions.attachToProjectPage(task.id, composition.id)).toThrow(/type Page/i);
+  });
+
   it('compose plusieurs composants sans modifier les sources de Bibliothèque', () => {
     const header = library.create(
       { category: 'header', name: 'Header A', reuseStatus: 'ready', vertical: 'fleuriste' },
