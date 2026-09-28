@@ -3,6 +3,8 @@ import type {
   AtoumWebCompositionAddItemInput,
   AtoumWebCompositionInput,
   AtoumWebCompositionMoveItemInput,
+  AtoumWebDirectReusableCodeInput,
+  AtoumWebDirectVariantCodeInput,
   AtoumWebOccurrenceCreateFamilyInput,
   AtoumWebOccurrenceCreateVariantInput,
   AtoumWebOccurrenceUpdateVariantInput,
@@ -23,6 +25,10 @@ export function registerReferentialsIpcHandlers(database: DatabaseService): void
     database.atoumWebTechnicalLibrary.get(id));
   ipcMain.handle('referentials:library:create', (_event, item: AtoumWebTechnicalItemInput, version: AtoumWebTechnicalVersionInput) =>
     database.atoumWebTechnicalLibrary.create(item, version));
+  ipcMain.handle('referentials:library:create-reusable-code', (_event, input: AtoumWebDirectReusableCodeInput) =>
+    database.atoumWebTechnicalLibrary.createReusableCode(input));
+  ipcMain.handle('referentials:library:create-variant-code', (_event, input: AtoumWebDirectVariantCodeInput) =>
+    database.atoumWebTechnicalLibrary.createVariantCode(input));
   ipcMain.handle('referentials:library:update', (_event, id: string, input: Partial<AtoumWebTechnicalItemInput>) =>
     database.atoumWebTechnicalLibrary.updateMetadata(id, input));
   ipcMain.handle('referentials:library:create-version', (_event, itemId: string, version: AtoumWebTechnicalVersionInput) =>
