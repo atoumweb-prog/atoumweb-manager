@@ -602,3 +602,22 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - API 6B.1 : retrouver, créer automatiquement, rattacher ou détacher une Composition depuis un `project_node` Page.
 - Hors périmètre inchangé : aucun package Page/Bridge, aucune création WordPress/Divi, aucun Lot 7/8.
 - Étapes suivantes du même Lot : 6B.2 catalogue/réordonnancement, 6B.3 création directe/déclinaison, 6B.4 aperçu global.
+
+
+### 2026-09-28 — LOT6B-IMPL-001 — Composition partielle de Page implémentée sur branche dédiée
+
+- Branche : `feature/project-page-compositions-v1`.
+- Migration : **48 — `project_page_compositions_v1`**.
+- 6B.1 : une Page Projet peut avoir zéro ou une Composition AtoumWeb ; une Composition rattachée ne peut appartenir qu’à une seule Page ; les compositions historiques restent non rattachées tant que l’utilisateur ne les choisit pas.
+- 6B.2 : depuis la fiche Page, bloc « Composants AtoumWeb » avec ajout depuis la Bibliothèque, recherche, ordre, montée/descente, retrait sans mutation de la source et rattachement explicite d’une composition historique.
+- 6B.3 : éditeur direct HTML/CSS/JS avec aperçu sandboxé. Deux parcours validés :
+  - créer un **nouvel élément réutilisable** avec famille + variante base, version stable et ajout immédiat à la Page ;
+  - créer une **déclinaison complète** d’un modèle existant, sous forme de variante `forked`, sans écraser la source.
+- Règle de validation : la création directe est une action humaine explicite ; le composant est marqué prêt/stable et conserve une identité Famille/Variante.
+- Règle verticale : une famille `vertical` conserve son métier lors de la création d’une déclinaison.
+- 6B.4 : « Aperçu de la Page » assemble les versions exactes des composants dans l’ordre ; modes Desktop/Tablette/Mobile + mode Inspection ; composants non prévisualisables signalés sans faire échouer tout le rendu.
+- Sécurité aperçu : HTML/CSS rendus dans un iframe sandboxé ; JavaScript conservé/inspectable mais **non exécuté** dans l’aperçu Manager.
+- Distinction maintenue : l’aperçu est celui de la **composition préparée par Manager**, pas encore celui de la Page Divi réelle.
+- Choix de simplification : le mode « élément local hors Bibliothèque » évoqué dans DESIGN-001 n’est pas implémenté à ce stade, car il créerait une deuxième source de vérité technique. Les besoins exprimés par Carlos (« nouvel élément » ou « déclinaison ») sont couverts par le modèle versionné existant.
+- Hors périmètre : aucun export `scope=page`, aucun `exportId`, aucun envoi Bridge, aucune création WordPress/Divi, aucun Lot 7/8.
+- Validation restante : typecheck + tests ciblés migrations / CompositionService / TechnicalLibraryService, puis recette visuelle sur Validation-MSI avant intégration.
