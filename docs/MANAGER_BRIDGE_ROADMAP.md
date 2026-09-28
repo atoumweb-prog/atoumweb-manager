@@ -714,3 +714,12 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Validation humaine obligatoire avant passage ultérieur à `ready`.
 - Hors périmètre : aucun export Page/Bridge, aucune mutation WordPress/Divi, aucun Lot 7/8.
 - Validation restante : typecheck, migrations, tests Composition/Library puis recette visuelle de Carlos sur Validation-MSI.
+
+
+### 2026-09-28 — LOT6B-FIX-002 — Retour d’identité d’une variante non stable
+
+- Détecté par le checkpoint MSI après LOCAL-SETTINGS-001 : 33/34 tests réussis, échec du test de promotion locale car `variantMode` retournait `null` au lieu de `forked`.
+- Cause : `createVariantCode()` créait bien la ligne `atoumweb_component_variants`, mais lorsque `markStable=false`, l’objet retourné était encore celui chargé avant cette insertion d’identité.
+- Correction : rechargement systématique de l’élément après insertion de la variante lorsqu’elle n’est pas marquée stable.
+- Aucun schéma ni contrat modifié ; migration 49 inchangée.
+- Validation attendue : typecheck + tests ciblés CompositionService / TechnicalLibraryService / migrations.
