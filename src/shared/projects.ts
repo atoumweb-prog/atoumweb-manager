@@ -12,6 +12,7 @@ export const PROJECT_TECHNICAL_CATEGORIES = ['header', 'footer', 'hero', 'page',
 export const PROJECT_TECHNICAL_CONTENT_TYPES = ['code', 'json', 'text', 'reference'] as const;
 export const PROJECT_COMPLETION_STATES = ['ok', 'warning', 'check'] as const;
 export const PROJECT_COMPLETION_KEYS = ['required_tasks', 'prerequisites', 'final_backup', 'deliverables', 'balance', 'training', 'maintenance', 'technical_reuse'] as const;
+export const PROJECT_SITE_PAGE_ROLES = ['home', 'standard', 'legal', 'landing', 'blog', 'other'] as const;
 
 export type ProjectTemplateStatus = (typeof PROJECT_TEMPLATE_STATUSES)[number];
 export type ProjectTemplateVersionStatus = (typeof PROJECT_TEMPLATE_VERSION_STATUSES)[number];
@@ -27,6 +28,7 @@ export type ProjectTechnicalCategory = (typeof PROJECT_TECHNICAL_CATEGORIES)[num
 export type ProjectTechnicalContentType = (typeof PROJECT_TECHNICAL_CONTENT_TYPES)[number];
 export type ProjectCompletionState = (typeof PROJECT_COMPLETION_STATES)[number];
 export type ProjectCompletionKey = (typeof PROJECT_COMPLETION_KEYS)[number];
+export type ProjectSitePageRole = (typeof PROJECT_SITE_PAGE_ROLES)[number];
 
 export type ProjectWorkCardFieldType = 'text' | 'textarea' | 'check' | 'select' | 'url';
 export type ProjectCompanionAdviceKind = 'best_practice' | 'check' | 'library' | 'warning';
@@ -250,6 +252,35 @@ export interface ProjectDetail extends ProjectSummary {
   prerequisites: ProjectPrerequisite[];
 }
 
+export interface ProjectSiteInput {
+  name: string;
+  desiredDomain?: string | null;
+}
+
+export interface ProjectSite extends ProjectSiteInput {
+  id: string;
+  projectId: string;
+  name: string;
+  desiredDomain?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt?: string | null;
+}
+
+export interface ProjectSitePageInput {
+  role?: ProjectSitePageRole | null;
+  desiredPath?: string | null;
+}
+
+export interface ProjectSitePage {
+  projectNodeId: string;
+  projectSiteId: string;
+  role: ProjectSitePageRole;
+  desiredPath?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ProjectFilters {
   search?: string | null;
   status?: ProjectStatus | null;
@@ -387,6 +418,15 @@ export interface ProjectsApi {
     completePhase(nodeId: string): Promise<ProjectDetail>;
     addPrerequisite(projectId: string, input: ProjectPrerequisiteInput): Promise<ProjectDetail>;
     updatePrerequisiteStatus(id: string, status: ProjectPrerequisiteStatus): Promise<ProjectDetail>;
+  };
+  sites: {
+    list(projectId: string, includeArchived?: boolean): Promise<ProjectSite[]>;
+    create(projectId: string, input: ProjectSiteInput): Promise<ProjectSite>;
+    update(id: string, input: Partial<ProjectSiteInput>): Promise<ProjectSite>;
+    setArchived(id: string, archived: boolean): Promise<ProjectSite>;
+    listPages(projectId: string): Promise<ProjectSitePage[]>;
+    linkPage(siteId: string, projectNodeId: string, input?: ProjectSitePageInput): Promise<ProjectSitePage>;
+    unlinkPage(projectNodeId: string): Promise<void>;
   };
   secrets: {
     list(projectId: string, projectNodeId?: string | null): Promise<ProjectSecretSummary[]>;

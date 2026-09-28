@@ -26,6 +26,7 @@ import { ATOUMWEB_COMPOSITION_MIGRATION } from './atoumWebCompositionMigration';
 import { CONTRACT_TERMS_MIGRATION } from './contractTermsMigration';
 import { QUOTE_CONTRACT_DOCUMENT_MIGRATION } from './quoteContractDocumentMigration';
 import { CONTRACT_AUDIENCE_MIGRATION } from './contractAudienceMigration';
+import { PROJECT_SITE_MIGRATION } from './projectSiteMigration';
 
 export interface Migration { id: number; name: string; sql: string; disableForeignKeys?: boolean; }
 
@@ -207,6 +208,7 @@ export const MIGRATIONS: Migration[] = [
   CONTRACT_TERMS_MIGRATION,
   QUOTE_CONTRACT_DOCUMENT_MIGRATION,
   CONTRACT_AUDIENCE_MIGRATION,
+  PROJECT_SITE_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {

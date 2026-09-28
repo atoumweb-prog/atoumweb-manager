@@ -382,13 +382,21 @@ export class ProjectService {
     }
     const type = input.type ?? row.node_type; const status = input.status ?? row.status;
     if (!PROJECT_NODE_TYPES.includes(type) || !PROJECT_NODE_STATUSES.includes(status)) throw new Error('Type ou statut de tâche invalide.');
+    const displaySubtype = input.displaySubtype === undefined ? clean(row.display_subtype) : clean(input.displaySubtype);
+    const linkedSitePage = this.database.get<{ project_node_id: string }>(
+      'SELECT project_node_id FROM project_site_pages WHERE project_node_id=?',
+      [nodeId],
+    );
+    if (linkedSitePage && (type !== 'module' || displaySubtype !== 'page')) {
+      throw new Error('Cette Page est rattachée à un Site et ne peut pas être retypée silencieusement.');
+    }
     this.database.run(
       `UPDATE project_nodes
        SET parent_id=?, node_type=?, display_subtype=?, name=?, description=?, sort_order=?, estimated_minutes=?,
            is_required=?, status=?, time_category=?, semantic_key=?, work_card_json=?, advice_json=?, updated_at=?
        WHERE id=?`,
       [
-        parentId ?? null, type, clean(input.displaySubtype ?? row.display_subtype), clean(input.name ?? row.name),
+        parentId ?? null, type, displaySubtype, clean(input.name ?? row.name),
         clean(input.description ?? row.description), input.sortOrder ?? row.sort_order,
         input.estimatedMinutes === undefined ? row.estimated_minutes : input.estimatedMinutes,
         input.required === undefined ? row.is_required : input.required ? 1 : 0, status,
