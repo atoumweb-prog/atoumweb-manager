@@ -232,7 +232,7 @@ export class AtoumWebTechnicalLibraryService {
          VALUES (?,?,?,?,?,'base',NULL,NULL,?,?)`,
         [variantId, familyId, created.id, 'base', 'Base', now, now],
       );
-      if (created.currentVersion && markStable) created = this.markStable(created.currentVersion.id);
+      if (created.currentVersion) created = this.markStable(created.currentVersion.id);
       this.refreshSearchIndex(created.id);
       this.database.exec('RELEASE SAVEPOINT library_direct_component;');
       return created;
@@ -311,7 +311,7 @@ export class AtoumWebTechnicalLibraryService {
          VALUES (?,?,?,?,?,'forked',?,NULL,?,?)`,
         [variantId, family.id, created.id, variantKey, label, parent.id, now, now],
       );
-      if (created.currentVersion) created = this.markStable(created.currentVersion.id);
+      if (created.currentVersion && markStable) created = this.markStable(created.currentVersion.id);
       this.refreshSearchIndex(source.id);
       this.refreshSearchIndex(created.id);
       this.database.exec('RELEASE SAVEPOINT library_direct_variant;');
