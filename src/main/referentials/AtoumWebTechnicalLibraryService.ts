@@ -256,7 +256,10 @@ export class AtoumWebTechnicalLibraryService {
 
       const variantId = `awvar:${randomUUID()}`;
       const variantKey = this.uniqueManagedVariantKey(family.id, input.variantKey ?? label);
-      const vertical = normalizeSlug(input.vertical) ?? source.vertical ?? family.vertical;
+      const requestedVertical = normalizeSlug(input.vertical);
+      const vertical = family.reusability_scope === 'vertical'
+        ? family.vertical
+        : requestedVertical ?? source.vertical ?? family.vertical;
       const itemName = label.toLocaleLowerCase('fr-FR').startsWith(source.name.toLocaleLowerCase('fr-FR'))
         ? label
         : `${source.name} — ${label}`;
