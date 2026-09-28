@@ -621,3 +621,36 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Choix de simplification : le mode « élément local hors Bibliothèque » évoqué dans DESIGN-001 n’est pas implémenté à ce stade, car il créerait une deuxième source de vérité technique. Les besoins exprimés par Carlos (« nouvel élément » ou « déclinaison ») sont couverts par le modèle versionné existant.
 - Hors périmètre : aucun export `scope=page`, aucun `exportId`, aucun envoi Bridge, aucune création WordPress/Divi, aucun Lot 7/8.
 - Validation restante : typecheck + tests ciblés migrations / CompositionService / TechnicalLibraryService, puis recette visuelle sur Validation-MSI avant intégration.
+
+
+### 2026-09-28 — LOT6B-UX-001 — Corrections de recette Bibliothèque / éditeur direct
+
+- Origine : recette visuelle de Carlos sur la branche 6B.
+- Constats :
+  - fin de la liste de droite difficile/inaccessible ;
+  - barre horizontale parasite en bas ;
+  - Bibliothèque Page n’affichant que les éléments prêts, donnant l’impression que des composants avaient disparu ;
+  - ajout multiple du même CTA bien enregistré mais ambigu visuellement ;
+  - éditeur direct trop contraint par les trois zones HTML/CSS/JS et hauteur de fenêtre.
+- Correction :
+  - Bibliothèque ouverte dans une vraie modale scrollable ;
+  - création directe ouverte dans une vraie modale scrollable ;
+  - suppression des largeurs minimales responsables du débordement horizontal ;
+  - affichage de tous les éléments visuels de Bibliothèque avec statut ; seuls les éléments prêts restent ajoutables ;
+  - compteur « prêts / éléments visuels » ;
+  - occurrences du même composant numérotées explicitement dans la composition ;
+  - mode « Code complet » acceptant HTML + <style> + <script>, avec action « Analyser et répartir le code » vers HTML/CSS/JavaScript.
+- Le doublon CTA n’était pas perdu : le service Composition autorise plusieurs occurrences du même composant ; le problème était uniquement l’affichage/scroll.
+- Validation restante : typecheck + recette visuelle sur MSI.
+
+### 2026-09-28 — LOT6B-DESIGN-003 — Préparation locale des textes et couleurs par occurrence
+
+- Origine : proposition de Carlos pendant la recette 6B.
+- Besoin : avant passage WordPress/Divi, pouvoir préparer une occurrence de composant en modifiant ses textes, liens et couleurs, tout en gardant la Bibliothèque source intacte.
+- Direction retenue : les personnalisations appartiennent à **l’occurrence dans la Composition**, jamais au modèle source.
+- Cible UX : action « Préparer ce bloc » depuis la liste Page, avec aperçu immédiat et contrôles pour les champs explicitement configurables.
+- Champs visés en priorité : titres, textes, libellés/boutons, URLs, couleurs principales/secondaires, éventuellement images lorsque le composant les déclare.
+- Stockage cible : overrides/configuration structurés au niveau `atoumweb_composition_items`, versionnés séparément de la version Bibliothèque source.
+- Principe de sécurité : ne pas tenter une réécriture arbitraire de n’importe quel HTML/CSS. Les composants doivent déclarer des champs configurables ou des tokens explicites ; les overrides sont appliqués au rendu préparé et seront transportables plus tard vers Bridge.
+- Intérêt : partir dans Divi avec une base déjà contextualisée (textes/couleurs du client), puis n’utiliser Divi que pour le réglage final.
+- Hors périmètre immédiat de la correction UX-001 : cette personnalisation sera développée après validation du flux création directe + aperçu.
