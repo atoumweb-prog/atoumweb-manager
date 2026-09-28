@@ -91,6 +91,29 @@ export interface AtoumWebTechnicalLibraryFilters {
   includeArchived?: boolean;
 }
 
+export interface AtoumWebDirectReusableCodeInput {
+  name: string;
+  category: AtoumWebLibraryCategory;
+  description?: string | null;
+  vertical?: string | null;
+  tags?: string[];
+  html: string;
+  css?: string | null;
+  javascript?: string | null;
+}
+
+export interface AtoumWebDirectVariantCodeInput {
+  sourceItemId: string;
+  name: string;
+  variantKey?: string | null;
+  description?: string | null;
+  vertical?: string | null;
+  tags?: string[];
+  html: string;
+  css?: string | null;
+  javascript?: string | null;
+}
+
 export interface AtoumWebAssetOpenResult {
   ok: boolean;
   error?: string | null;
@@ -325,6 +348,8 @@ export interface ReferentialsApi {
     list(filters?: AtoumWebTechnicalLibraryFilters): Promise<AtoumWebTechnicalItemSummary[]>;
     get(id: string): Promise<AtoumWebTechnicalItemDetail>;
     create(item: AtoumWebTechnicalItemInput, version: AtoumWebTechnicalVersionInput): Promise<AtoumWebTechnicalItemDetail>;
+    createReusableCode(input: AtoumWebDirectReusableCodeInput): Promise<AtoumWebTechnicalItemDetail>;
+    createVariantCode(input: AtoumWebDirectVariantCodeInput): Promise<AtoumWebTechnicalItemDetail>;
     update(id: string, input: Partial<AtoumWebTechnicalItemInput>): Promise<AtoumWebTechnicalItemDetail>;
     createVersion(itemId: string, version: AtoumWebTechnicalVersionInput): Promise<AtoumWebTechnicalItemDetail>;
     markStable(versionId: string): Promise<AtoumWebTechnicalItemDetail>;
