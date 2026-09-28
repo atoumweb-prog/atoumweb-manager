@@ -141,6 +141,7 @@ button { color: inherit; }
 }
 
 .content-area { min-height: 0; overflow-y: auto; padding: 28px 30px 40px; }
+.content-area.projects-content { overflow-x: hidden; }
 .content-area.home-content {
   display: flex;
   min-height: 0;
