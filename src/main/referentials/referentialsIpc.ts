@@ -2,7 +2,9 @@ import { dialog, ipcMain, shell } from 'electron';
 import type {
   AtoumWebCompositionAddItemInput,
   AtoumWebCompositionInput,
+  AtoumWebCompositionItemLocalCodeInput,
   AtoumWebCompositionMoveItemInput,
+  AtoumWebCompositionPromoteVariantInput,
   AtoumWebDirectReusableCodeInput,
   AtoumWebDirectVariantCodeInput,
   AtoumWebOccurrenceCreateFamilyInput,
@@ -109,6 +111,12 @@ export function registerReferentialsIpcHandlers(database: DatabaseService): void
     database.atoumWebCompositions.update(id, input));
   ipcMain.handle('referentials:compositions:add-item', (_event, id: string, input: AtoumWebCompositionAddItemInput) =>
     database.atoumWebCompositions.addItem(id, input));
+  ipcMain.handle('referentials:compositions:update-item-local-code', (_event, id: string, itemId: string, input: AtoumWebCompositionItemLocalCodeInput) =>
+    database.atoumWebCompositions.updateItemLocalCode(id, itemId, input));
+  ipcMain.handle('referentials:compositions:reset-item-local-code', (_event, id: string, itemId: string) =>
+    database.atoumWebCompositions.resetItemLocalCode(id, itemId));
+  ipcMain.handle('referentials:compositions:promote-item-variant', (_event, id: string, itemId: string, input: AtoumWebCompositionPromoteVariantInput) =>
+    database.atoumWebCompositions.promoteItemVariant(id, itemId, input));
   ipcMain.handle('referentials:compositions:remove-item', (_event, id: string, itemId: string) =>
     database.atoumWebCompositions.removeItem(id, itemId));
   ipcMain.handle('referentials:compositions:move-item', (_event, id: string, itemId: string, input: AtoumWebCompositionMoveItemInput) =>
