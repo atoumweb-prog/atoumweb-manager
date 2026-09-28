@@ -1,12 +1,12 @@
-.project-sites-tab{display:grid;gap:14px;min-height:0;min-width:0;max-width:100%;overflow:hidden}
-.project-sites-intro{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.project-sites-tab{display:flex;flex:1 1 auto;flex-direction:column;gap:14px;width:100%;height:100%;min-height:0;min-width:0;max-width:100%;overflow:hidden;overflow-x:clip}
+.project-sites-intro{display:flex;flex:0 0 auto;align-items:center;justify-content:space-between;gap:20px;min-width:0}
 .project-sites-intro h2{margin:.15rem 0}
 .project-sites-intro p{max-width:840px;margin:.35rem 0 0}
 .project-sites-toolbar{display:flex;gap:8px;flex:0 0 auto}
-.project-sites-create-panel{display:grid;grid-template-columns:minmax(220px,.9fr) minmax(220px,1fr) minmax(220px,1fr) auto;gap:12px;align-items:end}
+.project-sites-create-panel{display:grid;flex:0 0 auto;grid-template-columns:minmax(220px,.9fr) minmax(220px,1fr) minmax(220px,1fr) auto;gap:12px;align-items:end;min-width:0}
 .project-sites-create-panel h3{margin:.15rem 0}.project-sites-create-panel label{display:grid;gap:5px;font-size:.82rem}
 .project-sites-create-panel label span{opacity:.65;font-weight:400}
-.project-sites-workspace{display:grid;gap:0;min-width:0;max-width:100%;min-height:430px;height:min(680px,calc(100vh - 330px));overflow:hidden}
+.project-sites-workspace{display:grid;flex:1 1 auto;gap:0;width:100%;min-width:0;max-width:100%;min-height:0;height:auto;overflow:hidden;overflow-x:clip;contain:inline-size}
 .project-sites-tree-panel,.project-sites-detail-panel{min-width:0;min-height:0;overflow:hidden}
 .project-sites-tree-panel{display:flex;flex-direction:column;padding:0}
 .project-sites-tree-head{padding:14px 16px;border-bottom:1px solid var(--border-color,#2d3238)}
@@ -25,7 +25,7 @@
 .project-sites-splitter::before{content:'';position:absolute;inset:0 -4px}
 .project-sites-splitter span{width:3px;height:72px;border-radius:999px;background:color-mix(in srgb,var(--border) 80%,var(--text-muted));transition:width .12s ease,background .12s ease}
 .project-sites-splitter:hover span,.project-sites-splitter:focus span,.project-resizing .project-sites-splitter span{width:5px;background:var(--accent)}
-.project-sites-detail-panel{display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable}
+.project-sites-detail-panel{display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-gutter:stable;padding-bottom:72px;scroll-padding-bottom:72px}
 .project-sites-detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding-bottom:14px;border-bottom:1px solid var(--border-color,#2d3238)}
 .project-sites-detail-head h3{margin:.15rem 0}.project-sites-detail-head p{margin:.2rem 0 0;opacity:.72}
 .project-sites-page-work{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:14px;padding:12px;border:1px solid color-mix(in srgb,var(--accent) 28%,var(--border));border-radius:12px;background:color-mix(in srgb,var(--accent) 5%,var(--surface))}
@@ -41,4 +41,4 @@
 .project-sites-note span,.project-sites-empty-detail p{opacity:.7}
 .project-sites-empty-detail{margin:auto;max-width:480px;text-align:center}
 @media(max-width:1100px){.project-sites-create-panel{grid-template-columns:1fr 1fr}.project-sites-page-work{align-items:flex-start;flex-direction:column}.project-sites-page-actions{justify-content:flex-start}}
-@media(max-width:760px){.project-sites-intro{align-items:stretch;flex-direction:column}.project-sites-toolbar{justify-content:flex-end}.project-sites-create-panel,.project-sites-detail-form{grid-template-columns:1fr}.project-sites-workspace{grid-template-columns:1fr!important;height:auto;overflow:visible}.project-sites-splitter{display:none}.project-sites-tree-panel{max-height:380px}.project-sites-detail-panel{min-height:360px}}
+@media(max-width:760px){.project-sites-tab{height:auto;overflow:visible}.project-sites-intro{align-items:stretch;flex-direction:column}.project-sites-toolbar{justify-content:flex-end}.project-sites-create-panel,.project-sites-detail-form{grid-template-columns:1fr}.project-sites-workspace{grid-template-columns:1fr!important;height:auto;overflow:visible}.project-sites-splitter{display:none}.project-sites-tree-panel{max-height:380px}.project-sites-detail-panel{min-height:360px}}
