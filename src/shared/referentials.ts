@@ -112,6 +112,9 @@ export interface AtoumWebDirectVariantCodeInput {
   html: string;
   css?: string | null;
   javascript?: string | null;
+  reuseStatus?: Extract<AtoumWebReuseStatus, 'adapt' | 'ready'>;
+  markStable?: boolean;
+  provenanceNote?: string | null;
 }
 
 export interface AtoumWebAssetOpenResult {
@@ -218,6 +221,25 @@ export interface AtoumWebCompositionInput {
   notes?: string | null;
 }
 
+export interface AtoumWebCompositionItemLocalSettings {
+  textEdits?: Array<{ from: string; to: string }>;
+  colorEdits?: Array<{ from: string; to: string }>;
+  note?: string | null;
+}
+
+export interface AtoumWebCompositionItemLocalCodeInput {
+  html: string;
+  css?: string | null;
+  javascript?: string | null;
+  settings?: AtoumWebCompositionItemLocalSettings | null;
+}
+
+export interface AtoumWebCompositionPromoteVariantInput {
+  name: string;
+  variantKey?: string | null;
+  description?: string | null;
+}
+
 export interface AtoumWebCompositionItem {
   id: string;
   compositionId: string;
@@ -233,6 +255,12 @@ export interface AtoumWebCompositionItem {
   libraryVariantId: string | null;
   variantKey: string | null;
   variantMode: 'base' | 'inherit' | 'forked' | null;
+  localHtml: string | null;
+  localCss: string | null;
+  localJavascript: string | null;
+  localSettings: AtoumWebCompositionItemLocalSettings;
+  localUpdatedAt: string | null;
+  hasLocalChanges: boolean;
   createdAt: string;
 }
 
@@ -384,6 +412,9 @@ export interface ReferentialsApi {
     create(input: AtoumWebCompositionInput): Promise<AtoumWebCompositionDetail>;
     update(id: string, input: Partial<AtoumWebCompositionInput>): Promise<AtoumWebCompositionDetail>;
     addItem(id: string, input: AtoumWebCompositionAddItemInput): Promise<AtoumWebCompositionDetail>;
+    updateItemLocalCode(id: string, itemId: string, input: AtoumWebCompositionItemLocalCodeInput): Promise<AtoumWebCompositionDetail>;
+    resetItemLocalCode(id: string, itemId: string): Promise<AtoumWebCompositionDetail>;
+    promoteItemVariant(id: string, itemId: string, input: AtoumWebCompositionPromoteVariantInput): Promise<AtoumWebTechnicalItemDetail>;
     removeItem(id: string, itemId: string): Promise<AtoumWebCompositionDetail>;
     moveItem(id: string, itemId: string, input: AtoumWebCompositionMoveItemInput): Promise<AtoumWebCompositionDetail>;
     archive(id: string): Promise<AtoumWebCompositionDetail>;
