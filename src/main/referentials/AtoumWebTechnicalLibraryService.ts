@@ -232,7 +232,7 @@ export class AtoumWebTechnicalLibraryService {
          VALUES (?,?,?,?,?,'base',NULL,NULL,?,?)`,
         [variantId, familyId, created.id, 'base', 'Base', now, now],
       );
-      if (created.currentVersion) created = this.markStable(created.currentVersion.id);
+      if (created.currentVersion && markStable) created = this.markStable(created.currentVersion.id);
       this.refreshSearchIndex(created.id);
       this.database.exec('RELEASE SAVEPOINT library_direct_component;');
       return created;
@@ -278,20 +278,30 @@ export class AtoumWebTechnicalLibraryService {
         note: `Déclinaison complète de « ${source.name} » créée directement dans le Manager.`,
       });
 
+      const reuseStatus = input.reuseStatus ?? 'ready';
+      const markStable = input.markStable ?? true;
+      const variantTags = this.directManagedTags([...(source.tags ?? []), ...(input.tags ?? [])]);
+      if (reuseStatus === 'adapt') {
+        const readyIndex = variantTags.indexOf('bridge-human-validated');
+        if (readyIndex >= 0) variantTags.splice(readyIndex, 1);
+        if (!variantTags.includes('manager-variant-to-review')) variantTags.push('manager-variant-to-review');
+      }
       let created = this.create(
         {
           category: source.category,
           name: itemName,
           description: input.description ?? `Déclinaison de « ${source.name} ».`,
-          tags: this.directManagedTags([...(source.tags ?? []), ...(input.tags ?? [])]),
+          tags: variantTags,
           vertical,
-          reuseStatus: 'ready',
+          reuseStatus,
         },
         {
           contentType: 'json',
           language: 'json',
           contentText: JSON.stringify(payload, null, 2),
-          notes: `Déclinaison « ${label} » du modèle « ${source.name} ».`,
+          notes: input.provenanceNote
+            ? `Déclinaison « ${label} » du modèle « ${source.name} ». ${input.provenanceNote}`
+            : `Déclinaison « ${label} » du modèle « ${source.name} ».`,
         },
       );
       const now = nowIso();
