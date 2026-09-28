@@ -66,6 +66,25 @@ describe('AtoumWebCompositionService', () => {
     expect(() => compositions.attachToProjectPage(task.id, composition.id)).toThrow(/type Page/i);
   });
 
+  it('accepte immédiatement un composant créé volontairement depuis une Page', () => {
+    const direct = library.createReusableCode({
+      category: 'hero',
+      name: 'Hero direct',
+      html: '<section class="hero-direct">Hero</section>',
+      css: '.hero-direct{padding:80px}',
+    });
+    const composition = compositions.create({ name: 'Accueil' });
+    const result = compositions.addItem(composition.id, { libraryItemId: direct.id });
+
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]).toMatchObject({
+      sourceItemId: direct.id,
+      sourceVersionId: direct.stableVersion?.id,
+      variantKey: 'base',
+      variantMode: 'base',
+    });
+  });
+
   it('compose plusieurs composants sans modifier les sources de Bibliothèque', () => {
     const header = library.create(
       { category: 'header', name: 'Header A', reuseStatus: 'ready', vertical: 'fleuriste' },
