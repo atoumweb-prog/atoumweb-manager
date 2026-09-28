@@ -307,7 +307,7 @@ export function ProjectPageCompositionPanel({
     });
   }
 
-  async function buildPagePreview(): Promise<void> {
+  async function buildPagePreview(inspect = inspectionMode): Promise<void> {
     if (!composition || composition.items.length === 0) return;
     await withBusy(async () => {
       const details = await Promise.all(composition.items.map((item) => window.atoumweb.referentials.library.get(item.sourceItemId)));
@@ -322,7 +322,7 @@ export function ProjectPageCompositionPanel({
         const content = entry.parts.previewable
           ? entry.parts.html
           : `<div class="aw-page-preview-unavailable"><strong>${escapeHtml(entry.item.displayName)}</strong><span>Aperçu indisponible</span></div>`;
-        return inspectionMode
+        return inspect
           ? `<section class="aw-page-preview-component"><div class="aw-page-preview-label">${index + 1}. ${escapeHtml(entry.item.displayName)}</div>${content}</section>`
           : content;
       }).join('\n');
@@ -479,8 +479,9 @@ export function ProjectPageCompositionPanel({
             <button type="button" className={previewDevice === 'tablet' ? 'active' : ''} onClick={() => setPreviewDevice('tablet')}>Tablette</button>
             <button type="button" className={previewDevice === 'mobile' ? 'active' : ''} onClick={() => setPreviewDevice('mobile')}>Mobile</button>
             <label><input type="checkbox" checked={inspectionMode} onChange={(event) => {
-              setInspectionMode(event.target.checked);
-              window.setTimeout(() => void buildPagePreview(), 0);
+              const next = event.target.checked;
+              setInspectionMode(next);
+              void buildPagePreview(next);
             }} /> Inspection</label>
             <button className="secondary-button" type="button" onClick={() => setMode(null)}>Fermer</button>
           </div>
