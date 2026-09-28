@@ -7,7 +7,16 @@ import {
   type ProjectSitePage,
   type ProjectSitePageRole,
 } from '../../shared/projects';
+import type { TimeSession } from '../../shared/time';
 import './ProjectSitesTab.css';
+
+function formatElapsed(seconds: number): string {
+  const safe = Math.max(0, Math.floor(seconds));
+  const hours = Math.floor(safe / 3600);
+  const minutes = Math.floor((safe % 3600) / 60);
+  if (!hours) return `${minutes} min`;
+  return minutes ? `${hours} h ${String(minutes).padStart(2, '0')}` : `${hours} h`;
+}
 
 const ROLE_LABELS: Record<ProjectSitePageRole, string> = {
   home: 'Accueil',
@@ -41,6 +50,11 @@ export function ProjectSitesTab({
   const [pageName, setPageName] = useState('');
   const [pageSiteId, setPageSiteId] = useState('');
   const [busy, setBusy] = useState(false);
+  const [splitPercent, setSplitPercent] = useState(40);
+  const [timeSessions, setTimeSessions] = useState<TimeSession[]>([]);
+  const [activeTime, setActiveTime] = useState<TimeSession | null>(null);
+  const [timeSnapshotAt, setTimeSnapshotAt] = useState(Date.now());
+  const [tick, setTick] = useState(Date.now());
 
   const pages = useMemo(
     () => nodes.filter((node) => node.type === 'module' && node.displaySubtype === 'page'),
@@ -63,9 +77,51 @@ export function ProjectSitesTab({
     }
   }
 
+  async function reloadTime(): Promise<void> {
+    const [sessions, current] = await Promise.all([
+      window.atoumweb.time.list({ projectId }),
+      window.atoumweb.time.active(),
+    ]);
+    setTimeSessions(sessions);
+    setActiveTime(current);
+    setTimeSnapshotAt(Date.now());
+  }
+
   useEffect(() => {
-    void reload().catch((error) => onMessage(error instanceof Error ? error.message : 'Impossible de charger les Sites du projet.'));
+    void Promise.all([reload(), reloadTime()]).catch((error) =>
+      onMessage(error instanceof Error ? error.message : 'Impossible de charger les Sites du projet.'),
+    );
+    const refreshTime = () => void reloadTime().catch((error) =>
+      onMessage(error instanceof Error ? error.message : 'Impossible d’actualiser le temps du projet.'),
+    );
+    window.addEventListener('atoumweb:time-changed', refreshTime);
+    return () => window.removeEventListener('atoumweb:time-changed', refreshTime);
   }, [projectId]);
+
+  useEffect(() => {
+    if (!activeTime || activeTime.paused || activeTime.endedAt) return;
+    const interval = window.setInterval(() => setTick(Date.now()), 1000);
+    return () => window.clearInterval(interval);
+  }, [activeTime?.id, activeTime?.paused, activeTime?.endedAt]);
+
+  function beginResize(): void {
+    const workspace = document.querySelector<HTMLElement>('.project-sites-workspace');
+    if (!workspace) return;
+    document.body.classList.add('project-resizing');
+    const onMove = (event: PointerEvent) => {
+      const rect = workspace.getBoundingClientRect();
+      if (!rect.width) return;
+      const ratio = ((event.clientX - rect.left) / rect.width) * 100;
+      setSplitPercent(Math.max(24, Math.min(68, ratio)));
+    };
+    const onUp = () => {
+      document.body.classList.remove('project-resizing');
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  }
 
   async function run(action: () => Promise<unknown>, success?: string): Promise<void> {
     setBusy(true);
@@ -160,6 +216,96 @@ export function ProjectSitesTab({
     setSelectedPageId(id);
   }
 
+  const selectedPageSessions = selectedPage
+    ? timeSessions.filter((session) => session.projectNodeId === selectedPage.id)
+    : [];
+  const activeOnSelectedPage = Boolean(
+    selectedPage
+    && activeTime
+    && !activeTime.endedAt
+    && activeTime.projectNodeId === selectedPage.id,
+  );
+  const selectedPageBaseSeconds = selectedPageSessions.reduce((total, session) => total + session.durationSeconds, 0);
+  const selectedPageLiveExtra = activeOnSelectedPage && activeTime && !activeTime.paused
+    ? Math.max(0, Math.floor((tick - timeSnapshotAt) / 1000))
+    : 0;
+  const selectedPageRealSeconds = selectedPageBaseSeconds + selectedPageLiveExtra;
+
+  async function startSelectedPageTimer(): Promise<void> {
+    if (!selectedPage) return;
+    setBusy(true);
+    try {
+      const current = await window.atoumweb.time.active();
+      if (current) {
+        if (current.projectNodeId === selectedPage.id) {
+          setActiveTime(current);
+          setTimeSnapshotAt(Date.now());
+          onMessage('Le chrono est déjà actif sur cette Page.');
+          return;
+        }
+        window.dispatchEvent(new CustomEvent('atoumweb:timer-context', {
+          detail: {
+            projectId,
+            nodeId: selectedPage.id,
+            activityLabel: selectedPage.name,
+            category: selectedPage.timeCategory || 'production',
+            billable: true,
+          },
+        }));
+        onMessage('Un autre chrono est en cours : confirme le changement dans le timer global.');
+        return;
+      }
+      const session = await window.atoumweb.time.start({
+        projectId,
+        projectNodeId: selectedPage.id,
+        category: (selectedPage.timeCategory || 'production') as TimeSession['category'],
+        activityLabel: selectedPage.name,
+        billable: true,
+      });
+      setActiveTime(session);
+      setTimeSnapshotAt(Date.now());
+      window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
+      onMessage(`Chrono démarré sur « ${selectedPage.name} ».`);
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible de démarrer le chrono.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function pauseOrResumeSelectedPageTimer(): Promise<void> {
+    if (!activeTime || !activeOnSelectedPage) return;
+    setBusy(true);
+    try {
+      const next = activeTime.paused
+        ? await window.atoumweb.time.resume(activeTime.id)
+        : await window.atoumweb.time.pause(activeTime.id);
+      setActiveTime(next);
+      setTimeSnapshotAt(Date.now());
+      window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible de modifier le chrono.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function stopSelectedPageTimer(): Promise<void> {
+    if (!activeTime || !activeOnSelectedPage) return;
+    setBusy(true);
+    try {
+      const stopped = await window.atoumweb.time.stop(activeTime.id);
+      setActiveTime(null);
+      setTimeSnapshotAt(Date.now());
+      window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
+      onMessage(`Chrono arrêté · ${formatElapsed(stopped.durationSeconds)}.`);
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible d’arrêter le chrono.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return <section className="project-sites-tab">
     <div className="project-sites-intro panel">
       <div>
@@ -207,7 +353,7 @@ export function ProjectSitesTab({
       </div>
     </div>}
 
-    <div className="project-sites-workspace">
+    <div className="project-sites-workspace" style={{ gridTemplateColumns: `${splitPercent}% 8px minmax(0, 1fr)` }}>
       <section className="panel project-sites-tree-panel">
         <div className="project-sites-tree-head">
           <div><span className="eyebrow">Arborescence</span><strong>{activeSites.length} Site{activeSites.length > 1 ? 's' : ''} · {pages.length} Page{pages.length > 1 ? 's' : ''}</strong></div>
@@ -254,6 +400,20 @@ export function ProjectSitesTab({
           {sites.length === 0 && pages.length === 0 && <p className="muted">Aucun Site ni Page pour le moment.</p>}
         </div>
       </section>
+
+      <div
+        className="project-sites-splitter"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Redimensionner l’arborescence et la fiche"
+        tabIndex={0}
+        onPointerDown={beginResize}
+        onDoubleClick={() => setSplitPercent(40)}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowLeft') setSplitPercent((value) => Math.max(24, value - 3));
+          if (event.key === 'ArrowRight') setSplitPercent((value) => Math.min(68, value + 3));
+        }}
+      ><span /></div>
 
       <section className="panel project-sites-detail-panel">
         {!selectedSite && !selectedPage && <div className="project-sites-empty-detail">
@@ -309,8 +469,29 @@ export function ProjectSitesTab({
         {selectedPage && <>
           <header className="project-sites-detail-head">
             <div><span className="eyebrow">Page du Projet</span><h3>{selectedPage.name}</h3><p>{selectedSite ? selectedSite.name : 'Non rattachée à un Site'}</p></div>
-            <button className="primary-button" type="button" onClick={() => onOpenPage(selectedPage.id)}>Ouvrir dans Production →</button>
           </header>
+
+          <section className={`project-sites-page-work ${activeOnSelectedPage ? 'running' : ''}`}>
+            <div className="project-sites-time-summary">
+              <span>Temps réel</span>
+              <strong>{formatElapsed(selectedPageRealSeconds)}</strong>
+              <small>{selectedPageSessions.length} session{selectedPageSessions.length > 1 ? 's' : ''}{activeOnSelectedPage ? activeTime?.paused ? ' · en pause' : ' · chrono en cours' : ''}</small>
+            </div>
+            <div className="project-sites-page-actions">
+              <button className="secondary-button" type="button" onClick={() => onOpenPage(selectedPage.id)}>Ouvrir la fiche Production →</button>
+              {!activeOnSelectedPage
+                ? <button className="primary-button" type="button" disabled={busy} onClick={() => void startSelectedPageTimer()}>
+                    ▶ Démarrer le travail sur cette Page
+                  </button>
+                : <>
+                    <button className="primary-button" type="button" disabled={busy} onClick={() => void pauseOrResumeSelectedPageTimer()}>
+                      {activeTime?.paused ? '▶ Reprendre' : 'Ⅱ Pause'}
+                    </button>
+                    <button className="secondary-button" type="button" disabled={busy} onClick={() => void stopSelectedPageTimer()}>■ Arrêter</button>
+                  </>}
+            </div>
+          </section>
+
           <div className="project-sites-detail-form">
             <label>Nom de la Page
               <input

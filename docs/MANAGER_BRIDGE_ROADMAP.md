@@ -540,3 +540,17 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Source de vérité préservée : le nom/statut de la Page restent portés par le `project_node`; l’écran Site/Page n’en crée pas une copie.
 - Hors périmètre : aucun bouton « Préparer dans Divi » tant que le contrat Page/Bridge n’est pas développé.
 - Validation restante : typecheck puis recette visuelle création Page, rattachement Site, renommage et ouverture dans Production.
+
+
+### 2026-09-28 — LOT6A-UX-003 — Splitter Production + chrono Page dans Sites & pages
+
+- Origine : recette visuelle de Carlos après UX-002.
+- Constats : absence de séparateur redimensionnable entre arborescence et fiche ; débordement horizontal visuel ; action « Ouvrir dans Production » insuffisamment mise en évidence ; absence du temps réel et du démarrage direct sur la Page.
+- Correction UX : même logique que Production avec splitter central 40/60 redimensionnable de 24 à 68 %, double-clic pour revenir à 40 %, touches gauche/droite et panneaux scrollables indépendamment.
+- Correction débordement : conteneurs `min-width:0`, overflow horizontal masqué et arborescence avec ellipsis ; suppression de la barre horizontale parasite.
+- Temps Page : la fiche affiche le temps réel cumulé des sessions rattachées au `project_node` Page et indique si son chrono est actif/en pause.
+- Actions Page : « Ouvrir la fiche Production », « Démarrer le travail sur cette Page », puis Pause/Reprendre/Arrêter si le chrono actif appartient à cette Page.
+- Cohérence globale : un seul chrono reste possible. Si une autre activité est active, le démarrage depuis Sites & pages passe par la confirmation de changement du timer global existant.
+- Aucune migration ni nouveau modèle de temps : réutilisation de `time_sessions.project_node_id`.
+- Hors périmètre inchangé : aucune création WordPress/Divi, aucun Lot 6B/7/8.
+- Validation restante : typecheck puis recette visuelle splitter, scrolls, temps réel et démarrage/changement de chrono.
