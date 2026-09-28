@@ -1,0 +1,494 @@
+import { useEffect, useMemo, useState } from 'react';
+import type { ProjectNode } from '../../shared/projects';
+import type {
+  AtoumWebCompositionDetail,
+  AtoumWebCompositionItem,
+  AtoumWebCompositionSummary,
+  AtoumWebLibraryCategory,
+  AtoumWebTechnicalItemDetail,
+  AtoumWebTechnicalItemSummary,
+  AtoumWebTechnicalVersion,
+} from '../../shared/referentials';
+import './ProjectPageCompositionPanel.css';
+
+type PanelMode = null | 'library' | 'create' | 'attach' | 'inspect' | 'preview';
+type CreateMode = 'new' | 'variant';
+type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
+
+const VISUAL_CATEGORIES: Array<{ id: AtoumWebLibraryCategory; label: string }> = [
+  { id: 'hero', label: 'Hero' },
+  { id: 'section', label: 'Section' },
+  { id: 'header', label: 'Header' },
+  { id: 'footer', label: 'Footer' },
+  { id: 'form', label: 'Formulaire' },
+  { id: 'gallery', label: 'Galerie' },
+  { id: 'carousel', label: 'Carrousel' },
+  { id: 'navigation', label: 'Navigation' },
+  { id: 'divi', label: 'Module Divi' },
+  { id: 'code_snippet', label: 'Code snippet' },
+];
+
+interface PreviewParts {
+  html: string;
+  css: string;
+  javascript: string;
+  previewable: boolean;
+  raw: string;
+}
+
+interface CreateForm {
+  mode: CreateMode;
+  name: string;
+  category: AtoumWebLibraryCategory;
+  sourceItemId: string;
+  vertical: string;
+  description: string;
+  html: string;
+  css: string;
+  javascript: string;
+}
+
+const EMPTY_FORM: CreateForm = {
+  mode: 'new',
+  name: '',
+  category: 'section',
+  sourceItemId: '',
+  vertical: '',
+  description: '',
+  html: '',
+  css: '',
+  javascript: '',
+};
+
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function safeStyle(value: string): string {
+  return value.replace(/<\/style/gi, '<\\/style');
+}
+
+function parseParts(version?: AtoumWebTechnicalVersion | null): PreviewParts {
+  if (!version?.contentText) return { html: '', css: '', javascript: '', previewable: false, raw: '' };
+  const raw = version.contentText;
+  const language = (version.language ?? '').toLowerCase();
+  if (version.contentType === 'code' && (language === 'html' || language === 'htm')) {
+    return { html: raw, css: '', javascript: '', previewable: true, raw };
+  }
+  if (version.contentType !== 'json') {
+    return { html: '', css: '', javascript: '', previewable: false, raw };
+  }
+  try {
+    const value = JSON.parse(raw) as Record<string, unknown>;
+    const reusable = value.reusable && typeof value.reusable === 'object' && !Array.isArray(value.reusable)
+      ? value.reusable as Record<string, unknown>
+      : null;
+    if (reusable) {
+      return {
+        html: typeof reusable.html === 'string' ? reusable.html : '',
+        css: typeof reusable.css === 'string' ? reusable.css : '',
+        javascript: typeof reusable.javascript === 'string' ? reusable.javascript : '',
+        previewable: typeof reusable.html === 'string' && Boolean(reusable.html.trim()),
+        raw,
+      };
+    }
+    const work = value.work && typeof value.work === 'object' && !Array.isArray(value.work)
+      ? value.work as Record<string, unknown>
+      : null;
+    if (work) {
+      return {
+        html: typeof work.html === 'string' ? work.html : '',
+        css: typeof work.css === 'string' ? work.css : '',
+        javascript: typeof work.javascript === 'string' ? work.javascript : '',
+        previewable: typeof work.html === 'string' && Boolean(work.html.trim()),
+        raw,
+      };
+    }
+    const original = value.original && typeof value.original === 'object' && !Array.isArray(value.original)
+      ? value.original as Record<string, unknown>
+      : null;
+    const prepared = value.prepared && typeof value.prepared === 'object' && !Array.isArray(value.prepared)
+      ? value.prepared as Record<string, unknown>
+      : null;
+    if (original) {
+      return {
+        html: typeof original.html === 'string' ? original.html : '',
+        css: [
+          typeof prepared?.cssGlobalUseful === 'string' ? prepared.cssGlobalUseful : '',
+          typeof prepared?.cssPageUseful === 'string' ? prepared.cssPageUseful : '',
+          typeof original.cssModule === 'string' ? original.cssModule : '',
+        ].filter(Boolean).join('\n'),
+        javascript: typeof original.javascript === 'string' ? original.javascript : '',
+        previewable: typeof original.html === 'string' && Boolean(original.html.trim()),
+        raw,
+      };
+    }
+  } catch {
+    // Le contenu brut reste visible dans l'inspecteur.
+  }
+  return { html: '', css: '', javascript: '', previewable: false, raw };
+}
+
+function buildPreviewDocument(parts: PreviewParts, label: string): string {
+  const body = parts.previewable
+    ? parts.html
+    : `<div style="padding:24px;border:2px dashed #bbb;font-family:Arial,sans-serif"><strong>${escapeHtml(label)}</strong><p>Aperçu visuel indisponible pour ce type de contenu.</p></div>`;
+  return `<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https: data:; font-src https: data:;">
+<style>html,body{margin:0;min-height:100%;background:#fff;color:#111}body{font-family:Arial,Helvetica,sans-serif}*,*::before,*::after{box-sizing:border-box}</style>
+<style>${safeStyle(parts.css)}</style></head><body>${body}</body></html>`;
+}
+
+function effectiveReady(item: AtoumWebTechnicalItemSummary): boolean {
+  if (item.reuseStatus !== 'ready' || item.archivedAt) return false;
+  const tags = new Set(item.tags ?? []);
+  const content = item.currentVersion?.contentText ?? '';
+  const bridgeReusable = tags.has('bridge') || content.includes('atoumweb-library-reusable-component');
+  return !bridgeReusable || tags.has('bridge-human-validated') || tags.has('manager-direct');
+}
+
+export function ProjectPageCompositionPanel({
+  page,
+  onMessage,
+}: {
+  page: ProjectNode;
+  onMessage: (message: string) => void;
+}) {
+  const [composition, setComposition] = useState<AtoumWebCompositionDetail | null>(null);
+  const [allCompositions, setAllCompositions] = useState<AtoumWebCompositionSummary[]>([]);
+  const [library, setLibrary] = useState<AtoumWebTechnicalItemSummary[]>([]);
+  const [mode, setMode] = useState<PanelMode>(null);
+  const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState('');
+  const [attachId, setAttachId] = useState('');
+  const [createForm, setCreateForm] = useState<CreateForm>(EMPTY_FORM);
+  const [inspected, setInspected] = useState<{ item: AtoumWebCompositionItem; detail: AtoumWebTechnicalItemDetail; parts: PreviewParts } | null>(null);
+  const [previewDoc, setPreviewDoc] = useState('');
+  const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop');
+  const [inspectionMode, setInspectionMode] = useState(false);
+
+  async function reload(): Promise<void> {
+    const [nextComposition, nextCompositions, nextLibrary] = await Promise.all([
+      window.atoumweb.referentials.compositions.getForProjectPage(page.id),
+      window.atoumweb.referentials.compositions.list(false),
+      window.atoumweb.referentials.library.list({ includeArchived: false }),
+    ]);
+    setComposition(nextComposition);
+    setAllCompositions(nextCompositions);
+    setLibrary(nextLibrary);
+  }
+
+  useEffect(() => {
+    setMode(null);
+    setInspected(null);
+    setPreviewDoc('');
+    void reload().catch((error) =>
+      onMessage(error instanceof Error ? error.message : 'Impossible de charger la composition de la Page.'),
+    );
+  }, [page.id]);
+
+  const readyLibrary = useMemo(() => library.filter(effectiveReady), [library]);
+  const filteredLibrary = useMemo(() => {
+    const needle = search.trim().toLocaleLowerCase('fr-FR');
+    if (!needle) return readyLibrary;
+    return readyLibrary.filter((item) => [
+      item.name,
+      item.category,
+      item.vertical ?? '',
+      item.familyDisplayName ?? '',
+      item.variantKey ?? '',
+      ...(item.tags ?? []),
+    ].join(' ').toLocaleLowerCase('fr-FR').includes(needle));
+  }, [readyLibrary, search]);
+
+  async function withBusy(action: () => Promise<void>): Promise<void> {
+    setBusy(true);
+    try {
+      await action();
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Opération impossible sur la composition.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function ensureComposition(): Promise<AtoumWebCompositionDetail> {
+    if (composition) return composition;
+    const created = await window.atoumweb.referentials.compositions.ensureForProjectPage(page.id);
+    setComposition(created);
+    return created;
+  }
+
+  async function addLibraryItem(itemId: string): Promise<void> {
+    await withBusy(async () => {
+      const target = await ensureComposition();
+      const next = await window.atoumweb.referentials.compositions.addItem(target.id, { libraryItemId: itemId });
+      setComposition(next);
+      setMode(null);
+      onMessage('Composant ajouté à la Page.');
+      await reload();
+    });
+  }
+
+  async function move(item: AtoumWebCompositionItem, delta: number): Promise<void> {
+    if (!composition) return;
+    const nextIndex = Math.max(0, Math.min(composition.items.length - 1, item.sortOrder + delta));
+    if (nextIndex === item.sortOrder) return;
+    await withBusy(async () => {
+      const next = await window.atoumweb.referentials.compositions.moveItem(composition.id, item.id, { targetIndex: nextIndex });
+      setComposition(next);
+    });
+  }
+
+  async function remove(item: AtoumWebCompositionItem): Promise<void> {
+    if (!composition) return;
+    await withBusy(async () => {
+      const next = await window.atoumweb.referentials.compositions.removeItem(composition.id, item.id);
+      setComposition(next);
+      onMessage('Composant retiré de la Page. La Bibliothèque source reste intacte.');
+    });
+  }
+
+  async function inspect(item: AtoumWebCompositionItem): Promise<void> {
+    await withBusy(async () => {
+      const detail = await window.atoumweb.referentials.library.get(item.sourceItemId);
+      const version = detail.versions.find((candidate) => candidate.id === item.sourceVersionId) ?? null;
+      setInspected({ item, detail, parts: parseParts(version) });
+      setMode('inspect');
+    });
+  }
+
+  async function attachExisting(): Promise<void> {
+    if (!attachId) return;
+    await withBusy(async () => {
+      const next = await window.atoumweb.referentials.compositions.attachToProjectPage(page.id, attachId);
+      setComposition(next);
+      setMode(null);
+      setAttachId('');
+      onMessage('Composition existante rattachée à la Page.');
+      await reload();
+    });
+  }
+
+  async function createAndAdd(): Promise<void> {
+    if (!createForm.name.trim() || !createForm.html.trim()) {
+      onMessage('Nom et HTML sont requis.');
+      return;
+    }
+    await withBusy(async () => {
+      const created = createForm.mode === 'variant'
+        ? await window.atoumweb.referentials.library.createVariantCode({
+            sourceItemId: createForm.sourceItemId,
+            name: createForm.name.trim(),
+            vertical: createForm.vertical.trim() || null,
+            description: createForm.description.trim() || null,
+            html: createForm.html,
+            css: createForm.css || null,
+            javascript: createForm.javascript || null,
+          })
+        : await window.atoumweb.referentials.library.createReusableCode({
+            name: createForm.name.trim(),
+            category: createForm.category,
+            vertical: createForm.vertical.trim() || null,
+            description: createForm.description.trim() || null,
+            html: createForm.html,
+            css: createForm.css || null,
+            javascript: createForm.javascript || null,
+          });
+
+      const target = await ensureComposition();
+      const next = await window.atoumweb.referentials.compositions.addItem(target.id, { libraryItemId: created.id });
+      setComposition(next);
+      setCreateForm(EMPTY_FORM);
+      setMode(null);
+      onMessage(createForm.mode === 'variant' ? 'Déclinaison créée et ajoutée à la Page.' : 'Composant créé et ajouté à la Page.');
+      await reload();
+    });
+  }
+
+  async function buildPagePreview(): Promise<void> {
+    if (!composition || composition.items.length === 0) return;
+    await withBusy(async () => {
+      const details = await Promise.all(composition.items.map((item) => window.atoumweb.referentials.library.get(item.sourceItemId)));
+      const rendered = composition.items.map((item, index) => {
+        const detail = details[index];
+        const version = detail.versions.find((candidate) => candidate.id === item.sourceVersionId) ?? null;
+        const parts = parseParts(version);
+        return { item, parts };
+      });
+      const css = rendered.map((entry) => entry.parts.css).filter(Boolean).join('\n\n');
+      const body = rendered.map((entry, index) => {
+        const content = entry.parts.previewable
+          ? entry.parts.html
+          : `<div class="aw-page-preview-unavailable"><strong>${escapeHtml(entry.item.displayName)}</strong><span>Aperçu indisponible</span></div>`;
+        return inspectionMode
+          ? `<section class="aw-page-preview-component"><div class="aw-page-preview-label">${index + 1}. ${escapeHtml(entry.item.displayName)}</div>${content}</section>`
+          : content;
+      }).join('\n');
+      const document = `<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https: data:; font-src https: data:;">
+<style>html,body{margin:0;min-height:100%;background:#fff;color:#111}body{font-family:Arial,Helvetica,sans-serif}*,*::before,*::after{box-sizing:border-box}.aw-page-preview-component{position:relative;outline:2px dashed #c59a4a}.aw-page-preview-label{position:relative;z-index:20;padding:6px 10px;background:#181b20;color:#fff;font:12px Arial}.aw-page-preview-unavailable{margin:12px;padding:28px;border:2px dashed #bbb;display:grid;gap:5px}</style>
+<style>${safeStyle(css)}</style></head><body>${body}</body></html>`;
+      setPreviewDoc(document);
+      setMode('preview');
+    });
+  }
+
+  const createPreview = buildPreviewDocument({
+    html: createForm.html,
+    css: createForm.css,
+    javascript: createForm.javascript,
+    previewable: Boolean(createForm.html.trim()),
+    raw: createForm.html,
+  }, createForm.name || 'Nouveau composant');
+
+  const availableHistorical = allCompositions.filter((candidate) => candidate.id !== composition?.id && candidate.status !== 'archived');
+  const deviceWidth = previewDevice === 'desktop' ? '100%' : previewDevice === 'tablet' ? '768px' : '390px';
+
+  return <section className="project-page-composition">
+    <header className="project-page-composition-head">
+      <div>
+        <span className="eyebrow">Composants AtoumWeb</span>
+        <h3>{composition ? `${composition.items.length} composant${composition.items.length > 1 ? 's' : ''}` : 'Composition facultative'}</h3>
+        <p>Ajoute uniquement ce que tu veux préparer depuis Manager. Le reste de la Page pourra être construit librement dans Divi.</p>
+      </div>
+      <div className="project-page-composition-actions">
+        {composition?.items.length ? <button className="secondary-button" type="button" onClick={() => void buildPagePreview()}>Aperçu de la Page</button> : null}
+        <button className="secondary-button" type="button" onClick={() => setMode(mode === 'library' ? null : 'library')}>+ Bibliothèque</button>
+        <button className="primary-button" type="button" onClick={() => setMode(mode === 'create' ? null : 'create')}>+ Créer un composant</button>
+      </div>
+    </header>
+
+    {!composition && <div className="project-page-composition-empty">
+      <strong>Aucun composant Manager pour cette Page.</strong>
+      <span>C’est valide : tu peux construire entièrement cette Page dans Divi.</span>
+      {availableHistorical.length > 0 && <button className="link-button" type="button" onClick={() => setMode('attach')}>Rattacher une composition existante</button>}
+    </div>}
+
+    {composition && <div className="project-page-composition-list">
+      {composition.items.map((item, index) => <article key={item.id}>
+        <span className="project-page-composition-order">{index + 1}</span>
+        <div className="project-page-composition-main">
+          <strong>{item.displayName}</strong>
+          <small>{item.category} · v{item.sourceVersionNumber}{item.variantKey ? ` · ${item.variantKey}` : ''}</small>
+        </div>
+        <div className="project-page-composition-row-actions">
+          <button type="button" disabled={busy || index === 0} onClick={() => void move(item, -1)} title="Monter">↑</button>
+          <button type="button" disabled={busy || index === composition.items.length - 1} onClick={() => void move(item, 1)} title="Descendre">↓</button>
+          <button type="button" disabled={busy} onClick={() => void inspect(item)}>Code / aperçu</button>
+          <button type="button" disabled={busy} onClick={() => void remove(item)}>Retirer</button>
+        </div>
+      </article>)}
+      {composition.items.length === 0 && <p className="muted">Composition créée, mais encore vide.</p>}
+    </div>}
+
+    {mode === 'attach' && <div className="project-page-composition-inline-panel">
+      <div><strong>Rattacher une composition existante</strong><span>Les compositions historiques ne sont jamais devinées à partir de leur nom.</span></div>
+      <select value={attachId} onChange={(event) => setAttachId(event.target.value)}>
+        <option value="">Choisir…</option>
+        {availableHistorical.map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name} · {candidate.itemCount} composant(s)</option>)}
+      </select>
+      <button className="primary-button" type="button" disabled={!attachId || busy} onClick={() => void attachExisting()}>Rattacher</button>
+    </div>}
+
+    {mode === 'library' && <div className="project-page-composition-drawer">
+      <div className="project-page-composition-drawer-head">
+        <div><span className="eyebrow">Bibliothèque AtoumWeb</span><h3>Ajouter un composant</h3></div>
+        <button className="secondary-button" type="button" onClick={() => setMode(null)}>Fermer</button>
+      </div>
+      <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher un Hero, une section, une variante…" />
+      <div className="project-page-library-grid">
+        {filteredLibrary.map((item) => <button key={item.id} type="button" disabled={busy} onClick={() => void addLibraryItem(item.id)}>
+          <span><strong>{item.name}</strong><small>{item.category}{item.familyDisplayName ? ` · ${item.familyDisplayName}` : ''}{item.variantKey ? ` · ${item.variantKey}` : ''}</small></span>
+          <b>Ajouter</b>
+        </button>)}
+        {filteredLibrary.length === 0 && <p className="muted">Aucun composant réutilisable correspondant.</p>}
+      </div>
+    </div>}
+
+    {mode === 'create' && <div className="project-page-component-editor">
+      <div className="project-page-component-editor-head">
+        <div><span className="eyebrow">Création directe</span><h3>Nouveau composant / déclinaison</h3></div>
+        <button className="secondary-button" type="button" onClick={() => setMode(null)}>Fermer</button>
+      </div>
+      <div className="project-page-component-editor-grid">
+        <div className="project-page-component-form">
+          <div className="project-page-component-mode">
+            <button type="button" className={createForm.mode === 'new' ? 'active' : ''} onClick={() => setCreateForm({ ...EMPTY_FORM, mode: 'new' })}>Nouvel élément</button>
+            <button type="button" className={createForm.mode === 'variant' ? 'active' : ''} onClick={() => setCreateForm({ ...EMPTY_FORM, mode: 'variant' })}>Déclinaison d’un modèle</button>
+          </div>
+          {createForm.mode === 'variant' && <label>Modèle source
+            <select value={createForm.sourceItemId} onChange={(event) => {
+              const source = library.find((item) => item.id === event.target.value);
+              setCreateForm((value) => ({
+                ...value,
+                sourceItemId: event.target.value,
+                category: source?.category ?? value.category,
+                vertical: source?.vertical ?? value.vertical,
+              }));
+            }}>
+              <option value="">Choisir le modèle…</option>
+              {readyLibrary.map((item) => <option key={item.id} value={item.id}>{item.name}{item.variantKey ? ` · ${item.variantKey}` : ''}</option>)}
+            </select>
+          </label>}
+          <div className="project-page-component-form-grid">
+            <label>Nom<input value={createForm.name} onChange={(event) => setCreateForm((value) => ({ ...value, name: event.target.value }))} placeholder={createForm.mode === 'variant' ? 'Ex. Fleuriste' : 'Ex. Hero Fleuriste'} /></label>
+            {createForm.mode === 'new' && <label>Type<select value={createForm.category} onChange={(event) => setCreateForm((value) => ({ ...value, category: event.target.value as AtoumWebLibraryCategory }))}>{VISUAL_CATEGORIES.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}</select></label>}
+            <label>Métier<input value={createForm.vertical} onChange={(event) => setCreateForm((value) => ({ ...value, vertical: event.target.value }))} placeholder="Ex. fleuriste" /></label>
+          </div>
+          <label>Description<textarea rows={2} value={createForm.description} onChange={(event) => setCreateForm((value) => ({ ...value, description: event.target.value }))} /></label>
+          <label>HTML<textarea rows={10} value={createForm.html} onChange={(event) => setCreateForm((value) => ({ ...value, html: event.target.value }))} placeholder="<section>…</section>" /></label>
+          <label>CSS<textarea rows={8} value={createForm.css} onChange={(event) => setCreateForm((value) => ({ ...value, css: event.target.value }))} placeholder=".hero { … }" /></label>
+          <label>JavaScript <span>facultatif · non exécuté dans l’aperçu</span><textarea rows={5} value={createForm.javascript} onChange={(event) => setCreateForm((value) => ({ ...value, javascript: event.target.value }))} /></label>
+          <button className="primary-button" type="button" disabled={busy || !createForm.name.trim() || !createForm.html.trim() || (createForm.mode === 'variant' && !createForm.sourceItemId)} onClick={() => void createAndAdd()}>
+            {createForm.mode === 'variant' ? 'Créer la déclinaison et l’ajouter' : 'Créer le composant et l’ajouter'}
+          </button>
+        </div>
+        <div className="project-page-component-live-preview">
+          <strong>Aperçu</strong>
+          <iframe title="Aperçu du nouveau composant" sandbox="" srcDoc={createPreview} />
+        </div>
+      </div>
+    </div>}
+
+    {mode === 'inspect' && inspected && <div className="project-page-composition-modal" role="dialog" aria-modal="true">
+      <div className="project-page-composition-modal-backdrop" onClick={() => setMode(null)} />
+      <div className="project-page-composition-modal-panel">
+        <header><div><span className="eyebrow">Composant {inspected.item.sortOrder + 1}</span><h3>{inspected.item.displayName}</h3><p>Version source figée : v{inspected.item.sourceVersionNumber}</p></div><button className="secondary-button" type="button" onClick={() => setMode(null)}>Fermer</button></header>
+        <div className="project-page-inspector-grid">
+          <iframe title={`Aperçu ${inspected.item.displayName}`} sandbox="" srcDoc={buildPreviewDocument(inspected.parts, inspected.item.displayName)} />
+          <div className="project-page-code-tabs">
+            <details open><summary>HTML</summary><pre>{inspected.parts.html || '—'}</pre></details>
+            <details><summary>CSS</summary><pre>{inspected.parts.css || '—'}</pre></details>
+            <details><summary>JavaScript</summary><pre>{inspected.parts.javascript || '—'}</pre></details>
+            {!inspected.parts.previewable && <details><summary>Contenu brut</summary><pre>{inspected.parts.raw || '—'}</pre></details>}
+          </div>
+        </div>
+      </div>
+    </div>}
+
+    {mode === 'preview' && previewDoc && <div className="project-page-composition-modal page-preview" role="dialog" aria-modal="true">
+      <div className="project-page-composition-modal-backdrop" onClick={() => setMode(null)} />
+      <div className="project-page-composition-modal-panel">
+        <header>
+          <div><span className="eyebrow">Composition préparée par Manager</span><h3>{page.name} — aperçu global</h3><p>Ce rendu n’inclut pas les modules Divi natifs ajoutés plus tard.</p></div>
+          <div className="project-page-preview-controls">
+            <button type="button" className={previewDevice === 'desktop' ? 'active' : ''} onClick={() => setPreviewDevice('desktop')}>Desktop</button>
+            <button type="button" className={previewDevice === 'tablet' ? 'active' : ''} onClick={() => setPreviewDevice('tablet')}>Tablette</button>
+            <button type="button" className={previewDevice === 'mobile' ? 'active' : ''} onClick={() => setPreviewDevice('mobile')}>Mobile</button>
+            <label><input type="checkbox" checked={inspectionMode} onChange={(event) => {
+              setInspectionMode(event.target.checked);
+              window.setTimeout(() => void buildPagePreview(), 0);
+            }} /> Inspection</label>
+            <button className="secondary-button" type="button" onClick={() => setMode(null)}>Fermer</button>
+          </div>
+        </header>
+        <div className="project-page-global-preview">
+          <div style={{ width: deviceWidth }}><iframe title={`Aperçu global ${page.name}`} sandbox="" srcDoc={previewDoc} /></div>
+        </div>
+      </div>
+    </div>}
+  </section>;
+}
