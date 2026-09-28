@@ -28,6 +28,7 @@ import { QUOTE_CONTRACT_DOCUMENT_MIGRATION } from './quoteContractDocumentMigrat
 import { CONTRACT_AUDIENCE_MIGRATION } from './contractAudienceMigration';
 import { PROJECT_SITE_MIGRATION } from './projectSiteMigration';
 import { PROJECT_PAGE_COMPOSITION_MIGRATION } from './projectPageCompositionMigration';
+import { PROJECT_PAGE_COMPOSITION_LOCAL_SETTINGS_MIGRATION } from './projectPageCompositionLocalSettingsMigration';
 
 export interface Migration { id: number; name: string; sql: string; disableForeignKeys?: boolean; }
 
@@ -211,6 +212,7 @@ export const MIGRATIONS: Migration[] = [
   CONTRACT_AUDIENCE_MIGRATION,
   PROJECT_SITE_MIGRATION,
   PROJECT_PAGE_COMPOSITION_MIGRATION,
+  PROJECT_PAGE_COMPOSITION_LOCAL_SETTINGS_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {
