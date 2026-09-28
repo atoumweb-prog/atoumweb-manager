@@ -404,6 +404,10 @@ const api: AtoumWebApi = {
       showExport: (packagePath: string) => ipcRenderer.invoke('referentials:packages:show-export', packagePath),
     },
     compositions: {
+      getForProjectPage: (projectNodeId: string) => ipcRenderer.invoke('referentials:compositions:get-for-project-page', projectNodeId),
+      ensureForProjectPage: (projectNodeId: string) => ipcRenderer.invoke('referentials:compositions:ensure-for-project-page', projectNodeId),
+      attachToProjectPage: (projectNodeId: string, compositionId: string) => ipcRenderer.invoke('referentials:compositions:attach-to-project-page', projectNodeId, compositionId),
+      detachFromProjectPage: (projectNodeId: string) => ipcRenderer.invoke('referentials:compositions:detach-from-project-page', projectNodeId),
       list: (includeArchived?: boolean) => ipcRenderer.invoke('referentials:compositions:list', includeArchived),
       get: (id: string) => ipcRenderer.invoke('referentials:compositions:get', id),
       create: (input: AtoumWebCompositionInput) => ipcRenderer.invoke('referentials:compositions:create', input),
