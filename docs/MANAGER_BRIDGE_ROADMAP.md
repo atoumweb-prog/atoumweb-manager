@@ -654,3 +654,30 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Principe de sécurité : ne pas tenter une réécriture arbitraire de n’importe quel HTML/CSS. Les composants doivent déclarer des champs configurables ou des tokens explicites ; les overrides sont appliqués au rendu préparé et seront transportables plus tard vers Bridge.
 - Intérêt : partir dans Divi avec une base déjà contextualisée (textes/couleurs du client), puis n’utiliser Divi que pour le réglage final.
 - Hors périmètre immédiat de la correction UX-001 : cette personnalisation sera développée après validation du flux création directe + aperçu.
+
+
+### 2026-09-28 — LOT6B-DESIGN-004 — Réglages locaux d’occurrence et promotion en variante
+
+- Origine : précision métier de Carlos pendant la recette 6B.
+- Besoin : une Page construite avec des blocs AtoumWeb doit pouvoir être préparée en amont avant WordPress/Divi : textes, libellés, liens, couleurs et autres valeurs simples doivent pouvoir être adaptés localement si l’utilisateur le souhaite.
+- UX : chaque occurrence de composant dans la Page possède un volet **« Réglages du bloc »** replié par défaut. L’utilisation de ce volet est facultative ; si aucun réglage n’est saisi, l’occurrence reste strictement basée sur la version Bibliothèque sélectionnée.
+- Contenu visé :
+  - textes : titre, sous-titre, paragraphes, libellés CTA ;
+  - liens : URL/bouton ;
+  - couleurs : fond, texte, accent(s), boutons, bordures lorsque le composant les expose ;
+  - médias simples lorsque le composant les déclare comme configurables ;
+  - valeurs locales supplémentaires définies explicitement par le composant.
+- Règle de source de vérité : les réglages sont stockés **sur l’occurrence de composition**, jamais dans la version Bibliothèque source. Le modèle reste immuable.
+- Aperçu : l’aperçu du composant et l’aperçu global de Page appliquent les réglages locaux afin de montrer la version préparée réellement attendue avant Divi.
+- Modification avancée : si l’utilisateur modifie le code ou réalise une adaptation qui dépasse les simples réglages, l’occurrence est considérée comme une adaptation locale dérivée du modèle source.
+- Action **« Envoyer vers la Bibliothèque comme variante »** :
+  - crée un nouvel élément/variant lié à la Famille et au modèle source ;
+  - copie le rendu/code adapté de l’occurrence ;
+  - ne modifie jamais le modèle source ;
+  - crée la variante avec un statut **à valider / non prête à réutiliser** par défaut ;
+  - demande ensuite une validation humaine explicite avant de passer la variante en « prête à réutiliser ».
+- Le bouton de promotion n’est jamais automatique : une adaptation locale peut rester uniquement dans cette Page pendant toute la vie du Projet.
+- Proposition d’état : variante créée depuis une occurrence locale → `reuseStatus='adapt'` tant qu’elle n’a pas été relue/validée ; passage à `ready` uniquement via action explicite.
+- Traçabilité : conserver source item/version, famille/variante d’origine, Page/Projet d’origine, date de promotion et relation « dérivée de ».
+- Intégration future Bridge : les overrides locaux devront être transportables sans réécrire la provenance de la Bibliothèque. Le mapping exact vers le contrat Page/Bridge reste réservé à 8A+.
+- Hors périmètre immédiat : ne pas inventer de modification automatique de n’importe quel CSS/HTML. Les réglages simples doivent reposer sur des champs/tokens explicitement exposés par le composant ; l’édition libre de code reste une action avancée séparée.
