@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { ProjectNode } from '../../shared/projects';
 import type {
   AtoumWebCompositionDetail,
@@ -170,9 +171,13 @@ function effectiveReady(item: AtoumWebTechnicalItemSummary): boolean {
 export function ProjectPageCompositionPanel({
   page,
   onMessage,
+  inspectorHostId,
+  onInspectorOpenChange,
 }: {
   page: ProjectNode;
   onMessage: (message: string) => void;
+  inspectorHostId?: string;
+  onInspectorOpenChange?: (open: boolean) => void;
 }) {
   const [composition, setComposition] = useState<AtoumWebCompositionDetail | null>(null);
   const [allCompositions, setAllCompositions] = useState<AtoumWebCompositionSummary[]>([]);
@@ -209,10 +214,15 @@ export function ProjectPageCompositionPanel({
     setInspectExpanded(false);
     setInspectDevice('desktop');
     setPreviewDoc('');
+    onInspectorOpenChange?.(false);
     void reload().catch((error) =>
       onMessage(error instanceof Error ? error.message : 'Impossible de charger la composition de la Page.'),
     );
   }, [page.id]);
+
+  useEffect(() => {
+    onInspectorOpenChange?.(Boolean(inspected));
+  }, [inspected?.item.id]);
 
   const visualLibrary = useMemo(() => library.filter((item) =>
     ['header','footer','hero','page','section','form','gallery','carousel','navigation','divi'].includes(item.category)
@@ -393,6 +403,9 @@ export function ProjectPageCompositionPanel({
   const availableHistorical = allCompositions.filter((candidate) => candidate.id !== composition?.id && candidate.status !== 'archived');
   const deviceWidth = previewDevice === 'desktop' ? '100%' : previewDevice === 'tablet' ? '768px' : '390px';
   const inspectWidth = inspectDevice === 'desktop' ? '100%' : inspectDevice === 'tablet' ? '768px' : '390px';
+  const inspectorHost = inspectorHostId && typeof document !== 'undefined'
+    ? document.getElementById(inspectorHostId)
+    : null;
 
   return <section className="project-page-composition">
     <header className="project-page-composition-head">
@@ -408,7 +421,7 @@ export function ProjectPageCompositionPanel({
       </div>
     </header>
 
-    <div className={`project-page-composition-workspace ${inspected ? 'with-inspector' : ''}`}>
+    <div className="project-page-composition-workspace">
       <div className="project-page-composition-primary">
       {!composition && <div className="project-page-composition-empty">
         <strong>Aucun composant Manager pour cette Page.</strong>
@@ -470,7 +483,10 @@ export function ProjectPageCompositionPanel({
   
         </div>
 
-      {inspected && <aside className="project-page-inspector-dock">
+    </div>
+
+    {inspected && inspectorHost && createPortal(
+      <div className="project-page-inspector-dock">
         <header>
           <div>
             <span className="eyebrow">Code / aperçu</span>
@@ -498,8 +514,9 @@ export function ProjectPageCompositionPanel({
           <details><summary>JavaScript</summary><pre>{inspected.parts.javascript || '—'}</pre></details>
           {!inspected.parts.previewable && <details><summary>Contenu brut</summary><pre>{inspected.parts.raw || '—'}</pre></details>}
         </div>
-      </aside>}
-    </div>
+      </div>,
+      inspectorHost,
+    )}
 
     {mode === 'library' && <div className="project-page-composition-modal library-modal" role="dialog" aria-modal="true">
       <div className="project-page-composition-modal-backdrop" onClick={() => setMode(null)} />
