@@ -972,3 +972,22 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Harness : seuil du timer resserré à 60 px et diagnostic de hauteur en cas d'échec.
 - Aucun changement métier, aucune migration, aucun changement Bridge.
 - Statut : correctifs poussés sur `wip/codex-6b-ui-fix`, validation typecheck + harness UI requise.
+
+
+### 2026-09-29 — LOT6B-CHECKPOINT-UI-002 — Validation UX 3 colonnes verte
+
+- Validation MSI sur HEAD `81360b574b97ec8871254ab0faffcf3303442b1f`.
+- `npm run typecheck` : réussi.
+- Harness Electron `scripts/check-project-composition-ui.cjs` : **46/46 contrôles réussis**, 0 échec.
+- La nouvelle structure est donc validée automatiquement :
+  - arborescence gauche rétractable/restaurable ;
+  - informations Page repliables au-dessus de la composition ;
+  - timer Page compact ;
+  - vraie troisième colonne indépendante `Code / aperçu` ;
+  - repli/restauration de la colonne droite ;
+  - responsive Desktop/Tablette/Mobile ;
+  - agrandissement ;
+  - réglages locaux et validation explicite ;
+  - aperçu global et isolation CSS.
+- Avertissement restant : événement Electron `console-message` déprécié dans le harness de test uniquement ; aucun impact fonctionnel sur le Manager.
+- Statut : checkpoint automatique **vert**. Étape suivante : recette visuelle Carlos dans le vrai Manager avant toute réintégration de la branche WIP.
