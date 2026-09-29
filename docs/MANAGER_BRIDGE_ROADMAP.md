@@ -1180,3 +1180,39 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - conservation du brouillon et de la synchronisation en direct.
 - Avertissement restant : dépréciation Electron `console-message` dans le harness uniquement ; aucun impact fonctionnel Manager.
 - Statut : checkpoint automatique **vert**. Étape suivante : recette visuelle finale avant réintégration de la branche WIP.
+
+
+### 2026-09-29 — LOT6B-UX-012 — Plein écran harmonisé Réglages / Code avec aperçu prioritaire
+
+- Retour de recette visuelle :
+  - le grand écran Réglages et le grand écran Code n'avaient pas la même logique de lecture ;
+  - l'aperçu Réglages était encore trop petit ;
+  - souhait d'un comportement identique entre les deux modes grand écran.
+- Arbitrage UX :
+  - en plein écran avec un seul outil ouvert, Réglages et Code utilisent désormais le même principe :
+    - **grande visualisation à gauche (~70 %)** ;
+    - **zone de travail à droite (~30 %)** ;
+    - chaque zone garde son propre scroll ;
+  - le plein écran gagne aussi quelques pixels utiles en réduisant les marges externes.
+- Réglages :
+  - ajout de Desktop / Tablette / Mobile directement dans l'aperçu Réglages ;
+  - le device sélectionné est partagé avec Code / aperçu ;
+  - aperçu scrollable dans un viewport dédié ;
+  - en grand écran, aperçu plein hauteur à gauche et contrôles scrollables à droite.
+- Code / aperçu :
+  - en grand écran, preview plein hauteur à gauche ;
+  - HTML / CSS / JavaScript restent accessibles dans une colonne de travail à droite ;
+  - Desktop / Tablette / Mobile conservés ;
+  - même ratio visuel que Réglages.
+- Cohérence :
+  - les boutons « Agrandir » internes sont masqués une fois déjà en grand écran ;
+  - « Voir le module seul » reste réservé à l'aperçu isolé du module ;
+  - l'atelier complet conserve son bouton « Quitter le grand écran ».
+- Harness UI étendu pour vérifier :
+  - responsive Desktop/Tablette/Mobile dans Réglages ;
+  - largeur tablette à 768 px ;
+  - grand écran Réglages avec visualisation dominante ;
+  - grand écran Code avec visualisation dominante ;
+  - parité de fonctionnement entre les deux outils.
+- Aucun changement métier, aucune migration, aucun changement Bridge.
+- Statut : implémenté sur `wip/codex-6b-ui-fix`, validation typecheck + harness + recette visuelle requise.
