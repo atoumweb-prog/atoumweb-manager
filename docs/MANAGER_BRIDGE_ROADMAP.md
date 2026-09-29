@@ -1054,3 +1054,38 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - repli/restauration des colonnes et timer compact.
 - Avertissement restant : dépréciation Electron `console-message` dans le harness uniquement ; aucun impact fonctionnel sur le Manager.
 - Statut : checkpoint automatique **vert**. Étape suivante : recette visuelle finale Carlos avant réintégration de la branche WIP.
+
+
+### 2026-09-29 — LOT6B-UX-008 — Repli indépendant des quatre panneaux de l’atelier
+
+- Retour de recette : le repli de l’arborescence et de l’atelier latéral est apprécié, mais la fiche Page ne disposait pas de son propre bouton et les volets Réglages / Code devaient pouvoir être réduits séparément lorsqu’ils sont affichés côte à côte.
+- Objectif : chaque panneau visible de l’écran Sites & pages dispose de son propre mécanisme de réduction / restauration, jusqu’à quatre panneaux simultanés.
+- Panneau 1 — Arborescence :
+  - comportement existant conservé ;
+  - réduction vers un rail étroit, restauration immédiate.
+- Panneau 2 — Fiche Page :
+  - ajout d’un bouton « Réduire la fiche Page » ;
+  - la fiche devient un rail de 46 px ;
+  - bouton « Afficher la fiche Page » pour la restaurer ;
+  - le grid principal redistribue l’espace libéré à l’atelier latéral lorsqu’il est ouvert.
+- Panneau 3 — Réglages :
+  - ajout d’un bouton « Réduire Réglages » dans la toolbar ;
+  - le volet reste ouvert logiquement mais se transforme en rail ;
+  - restauration via « Afficher Réglages » sans perdre le brouillon courant.
+- Panneau 4 — Code / aperçu :
+  - ajout d’un bouton « Réduire Code / aperçu » ;
+  - le volet se transforme en rail indépendant ;
+  - restauration via « Afficher Code / aperçu » sans perdre le device sélectionné ni le brouillon synchronisé.
+- Atelier latéral global :
+  - le repli global existant est conservé ;
+  - libellés renommés en « Réduire / Afficher l’atelier latéral » car le conteneur peut désormais héberger Réglages, Code / aperçu ou les deux.
+- Largeur :
+  - si l’un des deux sous-volets latéraux est réduit, l’atelier latéral peut revenir à une largeur simple ;
+  - si la fiche Page est réduite, l’atelier latéral récupère l’espace disponible.
+- Harness UI étendu pour contrôler :
+  - repli/restauration de la fiche Page ;
+  - repli/restauration individuel de Réglages ;
+  - repli/restauration individuel de Code / aperçu ;
+  - présence simultanée des quatre commandes de repli.
+- Aucun changement métier, aucune migration, aucun changement Bridge.
+- Statut : implémenté sur `wip/codex-6b-ui-fix`, typecheck + harness + recette visuelle requis.
