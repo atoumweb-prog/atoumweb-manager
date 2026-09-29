@@ -145,7 +145,20 @@ app.whenReady().then(async () => {
     await js(`document.querySelector('.project-sites-tree-restore').click()`, 'rouvrir arborescence'); await settle();
     await check('Arborescence restaurable', `!document.querySelector('.project-sites-workspace').classList.contains('tree-collapsed') && !!document.querySelector('.project-sites-tree-panel')`);
     await click('Code / aperçu');
-    await check('Code aperçu docké à droite', `!!document.querySelector('.project-page-inspector-dock') && document.querySelector('.project-page-composition-workspace').classList.contains('with-inspector')`);
+    await check('Timer Page compact', `document.querySelector('.project-sites-page-work').getBoundingClientRect().height<=72`);
+    await check('Code aperçu dans une troisième colonne indépendante', `(()=>{
+      const workspace=document.querySelector('.project-sites-workspace');
+      const detail=document.querySelector('.project-sites-detail-panel');
+      const shell=document.querySelector('.project-sites-inspector-shell');
+      const dock=document.querySelector('.project-page-inspector-dock');
+      return !!dock && workspace.classList.contains('inspector-open') && !!shell
+        && Boolean(detail.compareDocumentPosition(shell) & Node.DOCUMENT_POSITION_FOLLOWING)
+        && !document.querySelector('.project-page-composition-workspace').classList.contains('with-inspector');
+    })()`);
+    await click('Masquer Code / aperçu', "document.querySelector('.project-sites-inspector-shell')");
+    await check('Colonne Code aperçu rétractable', `document.querySelector('.project-sites-workspace').classList.contains('inspector-collapsed') && document.querySelector('.project-sites-inspector-shell').classList.contains('collapsed')`);
+    await click('Afficher Code / aperçu', "document.querySelector('.project-sites-inspector-shell')");
+    await check('Colonne Code aperçu restaurable', `!document.querySelector('.project-sites-workspace').classList.contains('inspector-collapsed') && !!document.querySelector('.project-page-inspector-dock')`);
     await click('Tablette', "document.querySelector('.project-page-inspector-dock')");
     await check('Aperçu docké tablette', `document.querySelector('.project-page-inspector-dock-preview>div')?.style.width==='768px'`);
     await click('Mobile', "document.querySelector('.project-page-inspector-dock')");
