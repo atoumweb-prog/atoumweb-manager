@@ -149,6 +149,10 @@ app.whenReady().then(async () => {
     await check('Arborescence rétractable', `document.querySelector('.project-sites-workspace').classList.contains('tree-collapsed') && !!document.querySelector('.project-sites-tree-restore')`);
     await js(`document.querySelector('.project-sites-tree-restore').click()`, 'rouvrir arborescence'); await settle();
     await check('Arborescence restaurable', `!document.querySelector('.project-sites-workspace').classList.contains('tree-collapsed') && !!document.querySelector('.project-sites-tree-panel')`);
+    await click('Réduire la fiche Page', "document.querySelector('.project-sites-detail-panel')");
+    await check('Fiche Page rétractable', `document.querySelector('.project-sites-workspace').classList.contains('detail-collapsed') && !!document.querySelector('.project-sites-detail-restore')`);
+    await click('Afficher la fiche Page');
+    await check('Fiche Page restaurable', `!document.querySelector('.project-sites-workspace').classList.contains('detail-collapsed') && !!document.querySelector('.project-sites-detail-panel')`);
     await click('Code / aperçu');
     await check('Timer Page compact', `(()=>{const height=document.querySelector('.project-sites-page-work').getBoundingClientRect().height;return height<=60?true:{height}})()`);
     await check('Code aperçu dans une troisième colonne indépendante', `(()=>{
@@ -160,10 +164,14 @@ app.whenReady().then(async () => {
         && Boolean(detail.compareDocumentPosition(shell) & Node.DOCUMENT_POSITION_FOLLOWING)
         && !document.querySelector('.project-page-composition-workspace').classList.contains('with-inspector');
     })()`);
-    await click('Masquer Code / aperçu', "document.querySelector('.project-sites-inspector-shell')");
-    await check('Colonne Code aperçu rétractable', `document.querySelector('.project-sites-workspace').classList.contains('inspector-collapsed') && document.querySelector('.project-sites-inspector-shell').classList.contains('collapsed')`);
-    await click('Afficher Code / aperçu', "document.querySelector('.project-sites-inspector-shell')");
-    await check('Colonne Code aperçu restaurable', `!document.querySelector('.project-sites-workspace').classList.contains('inspector-collapsed') && !!document.querySelector('.project-page-inspector-dock')`);
+    await click('Réduire l’atelier latéral', "document.querySelector('.project-sites-inspector-shell')");
+    await check('Atelier latéral rétractable', `document.querySelector('.project-sites-workspace').classList.contains('inspector-collapsed') && document.querySelector('.project-sites-inspector-shell').classList.contains('collapsed')`);
+    await click('Afficher l’atelier latéral', "document.querySelector('.project-sites-inspector-shell')");
+    await check('Atelier latéral restaurable', `!document.querySelector('.project-sites-workspace').classList.contains('inspector-collapsed') && !!document.querySelector('.project-page-inspector-dock')`);
+    await click('Réduire Code / aperçu', "document.querySelector('.project-page-inspector-pane.code-pane')");
+    await check('Panneau Code aperçu rétractable seul', `document.querySelector('.project-page-inspector-pane.code-pane').classList.contains('collapsed') && !!document.querySelector('.project-page-inspector-pane.code-pane .project-page-inspector-pane-restore')`);
+    await click('Afficher Code / aperçu', "document.querySelector('.project-page-inspector-pane.code-pane')");
+    await check('Panneau Code aperçu restaurable seul', `!document.querySelector('.project-page-inspector-pane.code-pane').classList.contains('collapsed') && !!document.querySelector('.project-page-inspector-dock')`);
     await click('Tablette', "document.querySelector('.project-page-inspector-dock')");
     await check('Aperçu docké tablette', `document.querySelector('.project-page-inspector-dock-preview>div')?.style.width==='768px'`);
     await click('Mobile', "document.querySelector('.project-page-inspector-dock')");
@@ -174,11 +182,19 @@ app.whenReady().then(async () => {
     await click('Fermer aperçu');
     await click('Réglages');
     await check('Réglages ouverts dans le volet latéral', `!!document.querySelector('.project-sites-inspector-host .project-component-settings-panel.docked') && !document.querySelector('.project-page-composition-item-wrap .project-component-settings-panel')`);
+    await click('Réduire Réglages', "document.querySelector('.project-page-inspector-pane.settings-pane')");
+    await check('Panneau Réglages rétractable seul', `document.querySelector('.project-page-inspector-pane.settings-pane').classList.contains('collapsed') && !!document.querySelector('.project-page-inspector-pane.settings-pane .project-page-inspector-pane-restore')`);
+    await click('Afficher Réglages', "document.querySelector('.project-page-inspector-pane.settings-pane')");
+    await check('Panneau Réglages restaurable seul', `!document.querySelector('.project-page-inspector-pane.settings-pane').classList.contains('collapsed') && !!document.querySelector('.project-component-settings-panel.docked')`);
     await check('Pas de contenu horizontal masqué dans les réglages', `[...document.querySelectorAll('.project-component-settings-panel *')].every(e=>e.matches('input,textarea')||!e.clientWidth||e.scrollWidth<=e.clientWidth+1)`);
     await check('Fin réelle de la fiche accessible', `(()=>{let e=document.querySelector('.project-sites-detail-panel');e.scrollTop=e.scrollHeight;return e.lastElementChild.getBoundingClientRect().bottom<=e.getBoundingClientRect().bottom})()`);
     await check('Aperçu Réglages interactif et scrollable', `(()=>{const frame=document.querySelector('.project-component-settings-preview iframe');const scroller=document.querySelector('.project-component-settings-panel.docked .project-component-settings-grid');return getComputedStyle(frame).pointerEvents==='auto' && ['auto','scroll'].includes(getComputedStyle(scroller).overflowY)})()`);
     await click('Code / aperçu');
-    await check('Réglages et Code côte à côte', `document.querySelector('.project-page-inspector-workbench')?.classList.contains('dual') && document.querySelectorAll('.project-page-inspector-pane').length===2`);
+    await check('Réglages et Code côte à côte', `document.querySelector('.project-page-inspector-workbench')?.classList.contains('both-open') && document.querySelectorAll('.project-page-inspector-pane').length===2`);
+    await check('Quatre panneaux disposent d’un repli indépendant', `(()=>{
+      const button=(label)=>[...document.querySelectorAll('button')].some(b=>(b.getAttribute('aria-label')||b.getAttribute('title')||'').includes(label));
+      return button('Masquer l’arborescence') && button('Réduire la fiche Page') && button('Réduire Réglages') && button('Réduire Code / aperçu');
+    })()`);
     await check('Code HTML visible dans le volet normal', `!!document.querySelector('.project-page-inspector-dock-code details[open] pre')`);
     await check('Pickers visuels disponibles pour hex, rgb et hsl', `document.querySelectorAll('input[type=color]').length===4`);
     await input('.project-component-settings-section input', 'Titre client');
