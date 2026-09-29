@@ -1255,3 +1255,23 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - en cas de nouvel échec, le harness renvoie maintenant les éléments fautifs avec tag, classe, largeur visible et largeur scrollable.
 - Aucun changement fonctionnel Manager, aucune migration, aucun changement Bridge.
 - Statut : correctif de test poussé sur `wip/codex-6b-ui-fix`, rerun harness requis.
+
+
+### 2026-09-29 — LOT6B-CHECKPOINT-UI-005 — Grand écran 75/25 validé automatiquement
+
+- Validation MSI sur HEAD `d464ad2b2d7f500a6a1443059e50f706dc244200`.
+- Harness Electron `scripts/check-project-composition-ui.cjs` : **65/65 contrôles réussis**, 0 échec.
+- Le contrôle de débordement horizontal distingue désormais correctement :
+  - les vrais contenus masqués ;
+  - les débordements volontaires contenus dans une zone scrollable (notamment preview Tablette / Mobile).
+- Sont couverts à ce checkpoint :
+  - grand écran Réglages avec aperçu dominant ;
+  - grand écran Code avec aperçu dominant ;
+  - ratio aperçu / outils verrouillé ;
+  - colonne commandes scrollable ;
+  - responsive Desktop / Tablette / Mobile ;
+  - replis persistants et indépendants ;
+  - conservation des volets lors du repli de la fiche Page ;
+  - synchro en direct du brouillon Réglages vers Code / aperçu.
+- Avertissement restant : dépréciation Electron `console-message` dans le harness uniquement ; aucun impact fonctionnel Manager.
+- Statut : checkpoint automatique **vert**. Étape suivante : recette visuelle finale avant réintégration.
