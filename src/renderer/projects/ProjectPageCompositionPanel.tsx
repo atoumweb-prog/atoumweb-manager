@@ -680,14 +680,14 @@ export function ProjectPageCompositionPanel({
         <div className="project-page-inspector-grid">
           <div className="project-page-inspector-preview-large">
             <div style={{ width: inspectWidth }}>
-              <iframe title={`Aperçu ${inspected.item.displayName}`} sandbox="" srcDoc={buildPreviewDocument(inspected.parts, inspected.item.displayName)} />
+              <iframe className="interactive-preview" title={`Aperçu ${inspected.item.displayName}`} sandbox="" srcDoc={buildPreviewDocument(liveInspectedParts ?? inspected.parts, inspected.item.displayName)} />
             </div>
           </div>
           <div className="project-page-code-tabs">
-            <details open><summary>HTML</summary><pre>{inspected.parts.html || '—'}</pre></details>
-            <details><summary>CSS</summary><pre>{inspected.parts.css || '—'}</pre></details>
-            <details><summary>JavaScript</summary><pre>{inspected.parts.javascript || '—'}</pre></details>
-            {!inspected.parts.previewable && <details><summary>Contenu brut</summary><pre>{inspected.parts.raw || '—'}</pre></details>}
+            <details open><summary>HTML</summary><pre>{(liveInspectedParts ?? inspected.parts).html || '—'}</pre></details>
+            <details><summary>CSS</summary><pre>{(liveInspectedParts ?? inspected.parts).css || '—'}</pre></details>
+            <details><summary>JavaScript</summary><pre>{(liveInspectedParts ?? inspected.parts).javascript || '—'}</pre></details>
+            {!(liveInspectedParts ?? inspected.parts).previewable && <details><summary>Contenu brut</summary><pre>{(liveInspectedParts ?? inspected.parts).raw || '—'}</pre></details>}
           </div>
         </div>
       </div>
