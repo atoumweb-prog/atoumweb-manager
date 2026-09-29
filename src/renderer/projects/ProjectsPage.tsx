@@ -158,6 +158,7 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
   const [phaseCompletionBusy, setPhaseCompletionBusy] = useState(false);
   const [productionSplitPercent, setProductionSplitPercent] = useState(40);
   const [productionTreeCollapsed, setProductionTreeCollapsed] = useState(false);
+  const [projectTopCollapsed, setProjectTopCollapsed] = useState(false);
   const [productionOverlay, setProductionOverlay] = useState<'resources' | 'technical' | 'time' | 'secrets' | null>(null);
   const [loading, setLoading] = useState(true);
   const [createMode, setCreateMode] = useState<'quote' | 'internal' | null>(null);
@@ -630,8 +631,12 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
     const nodePositions = buildProjectNodePositions(detail.nodes);
     const selectedPosition = selectedNode ? nodePositions.get(selectedNode.id) ?? null : null;
     return (
-      <div className="project-production-page">
-        <header className="project-production-header">
+      <div className={`project-production-page ${projectTopCollapsed ? 'project-top-collapsed' : ''}`}>
+        {projectTopCollapsed ? <div className="project-production-header-compact">
+          <button className="secondary-button project-production-back" type="button" onClick={closeProjectDetail}>← Projets</button>
+          <strong>{detail.number} · {detail.name}</strong>
+          <button className="secondary-button" type="button" onClick={() => setProjectTopCollapsed(false)}>↓ Afficher l’en-tête</button>
+        </div> : <header className="project-production-header">
           <div className="project-production-title">
             <button className="secondary-button project-production-back" type="button" onClick={closeProjectDetail}>← Projets</button>
             <div>
@@ -657,8 +662,9 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
                 <i><b style={{ width: `${detail.progressPercent}%` }} /></i>
               </div>
             </div>
+            <button className="secondary-button project-production-collapse-top" type="button" title="Réduire l’en-tête du Projet" onClick={() => setProjectTopCollapsed(true)}>↑ Réduire</button>
           </div>
-        </header>
+        </header>}
 
         {completionReview && <ProjectCompletionReviewPanel review={completionReview} busy={completionBusy} onConfirm={confirmProjectCompletion} onCancel={() => setCompletionReview(null)} />}
         {phaseCompletionReview && <PhaseCompletionReviewPanel
