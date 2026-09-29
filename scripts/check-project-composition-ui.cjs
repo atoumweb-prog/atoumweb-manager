@@ -178,6 +178,12 @@ app.whenReady().then(async () => {
     await check('Aperçu docké mobile', `document.querySelector('.project-page-inspector-dock-preview>div')?.style.width==='390px'`);
     await click('Agrandir', "document.querySelector('.project-page-inspector-dock')");
     await check('Atelier grand format disponible depuis Code', `document.querySelector('.project-page-inspector-workbench')?.classList.contains('expanded') && !!document.querySelector('.project-page-inspector-workbench.expanded .code-pane')`);
+    await check('Grand écran Code privilégie la visualisation', `(()=>{
+      const root=document.querySelector('.project-page-inspector-workbench.expanded .code-pane');
+      const preview=root?.querySelector('.project-page-inspector-dock-preview');
+      const tools=root?.querySelector('.project-page-inspector-dock-code');
+      return !!preview && !!tools && preview.getBoundingClientRect().width>tools.getBoundingClientRect().width*1.45;
+    })()`);
     await click('Quitter le grand écran', "document.querySelector('.project-page-inspector-workbench.expanded')");
     await click('Fermer aperçu');
     await click('Réglages');
@@ -189,6 +195,22 @@ app.whenReady().then(async () => {
     await check('Pas de contenu horizontal masqué dans les réglages', `[...document.querySelectorAll('.project-component-settings-panel *')].every(e=>e.matches('input,textarea')||!e.clientWidth||e.scrollWidth<=e.clientWidth+1)`);
     await check('Fin réelle de la fiche accessible', `(()=>{let e=document.querySelector('.project-sites-detail-panel');e.scrollTop=e.scrollHeight;return e.lastElementChild.getBoundingClientRect().bottom<=e.getBoundingClientRect().bottom})()`);
     await check('Aperçu Réglages interactif et scrollable', `(()=>{const frame=document.querySelector('.project-component-settings-preview iframe');const scroller=document.querySelector('.project-component-settings-panel.docked .project-component-settings-grid');return getComputedStyle(frame).pointerEvents==='auto' && ['auto','scroll'].includes(getComputedStyle(scroller).overflowY)})()`);
+    await check('Réglages possède Desktop Tablette Mobile', `(()=>{
+      const root=document.querySelector('.project-page-inspector-pane.settings-pane');
+      const labels=[...root.querySelectorAll('.project-component-settings-preview-devices button')].map(b=>b.textContent.trim());
+      return ['Desktop','Tablette','Mobile'].every(label=>labels.includes(label));
+    })()`);
+    await click('Tablette', "document.querySelector('.project-component-settings-preview-devices')");
+    await check('Aperçu Réglages tablette', `document.querySelector('.project-component-settings-preview-viewport>div')?.style.width==='768px'`);
+    await click('Desktop', "document.querySelector('.project-component-settings-preview-devices')");
+    await click('Agrandir l’atelier', "document.querySelector('.project-page-inspector-pane.settings-pane')");
+    await check('Grand écran Réglages utilise la même logique', `(()=>{
+      const root=document.querySelector('.project-page-inspector-workbench.expanded .settings-pane');
+      const preview=root?.querySelector('.project-component-settings-preview');
+      const tools=root?.querySelector('.project-component-settings-controls');
+      return !!preview && !!tools && preview.getBoundingClientRect().width>tools.getBoundingClientRect().width*1.45;
+    })()`);
+    await click('Quitter le grand écran', "document.querySelector('.project-page-inspector-workbench.expanded')");
     await click('Code / aperçu');
     await check('Réglages et Code côte à côte', `document.querySelector('.project-page-inspector-workbench')?.classList.contains('both-open') && document.querySelectorAll('.project-page-inspector-pane').length===2`);
     await click('Agrandir l’atelier', "document.querySelector('.project-page-inspector-pane.settings-pane')");
