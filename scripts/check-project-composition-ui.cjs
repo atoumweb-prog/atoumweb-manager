@@ -40,6 +40,8 @@ createRoot(document.getElementById('root')).render(<div className="content-area 
 app.setPath('userData', path.join(dir, 'profile'));
 app.whenReady().then(async () => {
   const checks = [];
+  let rendererGone = null;
+  const rendererConsole = [];
   try {
     await esbuild.build({stdin:{contents:entry,resolveDir:repo,loader:'tsx'},nodePaths:[repo+'/node_modules'],bundle:true,outfile:dir+'/fixture.js',jsx:'automatic',logLevel:'silent'});
     fs.writeFileSync(dir+'/fixture.html','<html><head><link rel="stylesheet" href="fixture.css"></head><body><div id="root"></div><script src="fixture.js"></script></body></html>');
@@ -55,16 +57,19 @@ app.whenReady().then(async () => {
       },
     });
     let lastLoadFailure = null;
-    let rendererGone = null;
-    const rendererConsole = [];
     win.webContents.on('did-fail-load', (_event, code, description, validatedURL, isMainFrame) => {
       if (isMainFrame) lastLoadFailure = {code,description,validatedURL};
     });
     win.webContents.on('render-process-gone', (_event, details) => {
       rendererGone = details;
     });
-    win.webContents.on('console-message', (_event, level, message, line, sourceId) => {
-      rendererConsole.push({level, message, line, sourceId});
+    win.webContents.on('console-message', (_event, details) => {
+      rendererConsole.push({
+        level: details.level,
+        message: details.message,
+        line: details.lineNumber,
+        sourceId: details.sourceId,
+      });
       if (rendererConsole.length > 80) rendererConsole.shift();
     });
     try {
