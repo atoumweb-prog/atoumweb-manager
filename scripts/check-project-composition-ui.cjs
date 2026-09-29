@@ -191,6 +191,19 @@ app.whenReady().then(async () => {
     await check('Aperçu Réglages interactif et scrollable', `(()=>{const frame=document.querySelector('.project-component-settings-preview iframe');const scroller=document.querySelector('.project-component-settings-panel.docked .project-component-settings-grid');return getComputedStyle(frame).pointerEvents==='auto' && ['auto','scroll'].includes(getComputedStyle(scroller).overflowY)})()`);
     await click('Code / aperçu');
     await check('Réglages et Code côte à côte', `document.querySelector('.project-page-inspector-workbench')?.classList.contains('both-open') && document.querySelectorAll('.project-page-inspector-pane').length===2`);
+    await click('Réduire la fiche Page', "document.querySelector('.project-sites-detail-panel')");
+    await check('Réduire Page conserve Réglages et Code', `(()=>{
+      const detail=document.querySelector('.project-sites-detail-panel');
+      const settings=document.querySelector('.project-component-settings-panel.docked');
+      const code=document.querySelector('.project-page-inspector-dock');
+      return detail.classList.contains('collapsed')
+        && !!document.querySelector('.project-sites-detail-restore')
+        && !!settings
+        && !!code
+        && !!document.querySelector('.project-page-inspector-dock-code details[open] pre');
+    })()`);
+    await click('Afficher la fiche Page', "document.querySelector('.project-sites-detail-panel')");
+    await check('Restaurer Page conserve les deux volets', `!document.querySelector('.project-sites-detail-panel').classList.contains('collapsed') && !!document.querySelector('.project-component-settings-panel.docked') && !!document.querySelector('.project-page-inspector-dock')`);
     await js(`window.__atelierWidthBeforeCollapse=document.querySelector('.project-sites-inspector-shell').getBoundingClientRect().width`, 'mémoriser largeur atelier');
     await click('Réduire Réglages', "document.querySelector('.project-page-inspector-pane.settings-pane')");
     await check('Réduire Réglages ne réduit pas Code aperçu', `(()=>{
