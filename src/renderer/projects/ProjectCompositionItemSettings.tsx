@@ -15,7 +15,7 @@ import type {
   AtoumWebTechnicalVersion,
 } from '../../shared/referentials';
 
-interface CodeParts {
+export interface CodeParts {
   html: string;
   css: string;
   javascript: string;
@@ -135,12 +135,18 @@ export function ProjectCompositionItemSettings({
   pageName,
   onUpdated,
   onMessage,
+  docked = false,
+  onClose,
+  onDraftChange,
 }: {
   compositionId: string;
   item: AtoumWebCompositionItem;
   pageName: string;
   onUpdated: (detail: AtoumWebCompositionDetail) => void;
   onMessage: (message: string) => void;
+  docked?: boolean;
+  onClose?: () => void;
+  onDraftChange?: (draft: CodeParts) => void;
 }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -216,6 +222,10 @@ export function ProjectCompositionItemSettings({
   const saved = item.hasLocalChanges ? { html: item.localHtml ?? '', css: item.localCss ?? '', javascript: item.localJavascript ?? '' } : base;
   const dirty = draft.html !== saved.html || draft.css !== saved.css || draft.javascript !== saved.javascript
     || note.trim() !== (item.localSettings.note ?? '');
+
+  useEffect(() => {
+    if (!loading) onDraftChange?.(draft);
+  }, [draft.html, draft.css, draft.javascript, loading]);
 
   function snapshot(): EditorSnapshot {
     return copySnapshot({ draft, texts, colors, visuals, note });
@@ -316,9 +326,9 @@ export function ProjectCompositionItemSettings({
     }
   }
 
-  if (loading) return <div className="project-component-settings-panel"><p className="muted">Chargement des réglages…</p></div>;
+  if (loading) return <div className={`project-component-settings-panel ${docked ? 'docked' : ''}`}><p className="muted">Chargement des réglages…</p></div>;
 
-  return <div className="project-component-settings-panel">
+  return <div className={`project-component-settings-panel ${docked ? 'docked' : ''}`}>
     <div className="project-component-settings-toolbar">
       <div>
         <strong>Préparer ce bloc</strong>
@@ -331,6 +341,7 @@ export function ProjectCompositionItemSettings({
         <button className="primary-button project-component-validate-button" type="button" disabled={busy || !dirty || !draft.html.trim()} onClick={() => void save()}>
           {dirty ? '✓ Valider les changements' : '✓ Changements validés'}
         </button>
+        {onClose && <button className="secondary-button" type="button" aria-label="Fermer les réglages" title="Fermer les réglages" onClick={onClose}>×</button>}
       </div>
     </div>
 
