@@ -156,6 +156,24 @@ describe('AtoumWebCompositionService', () => {
     expect(reset.items[0].localHtml).toBeNull();
   });
 
+  it('réinitialise une occurrence vers sa version figée même après une nouvelle version Bibliothèque', () => {
+    const source = library.createReusableCode({ category: 'hero', name: 'Hero figé', html: '<h1>Version 1</h1>' });
+    const composition = compositions.create({ name: 'Page test' });
+    const item = compositions.addItem(composition.id, { libraryItemId: source.id }).items[0];
+    const pinnedVersionId = item.sourceVersionId;
+    compositions.updateItemLocalCode(composition.id, item.id, { html: '<h1>Local</h1>', css: '', javascript: '' });
+    library.createVersion(source.id, { contentType: 'code', language: 'html', contentText: '<h1>Version 2</h1>' });
+
+    const reset = compositions.resetItemLocalCode(composition.id, item.id).items[0];
+    expect(reset.sourceItemId).toBe(source.id);
+    expect(reset.sourceVersionId).toBe(pinnedVersionId);
+    expect(reset.hasLocalChanges).toBe(false);
+    expect(reset.localHtml).toBeNull();
+    const after = library.get(source.id);
+    expect(after.currentVersion?.contentText).toBe('<h1>Version 2</h1>');
+    expect(after.versions.find((version) => version.id === pinnedVersionId)?.contentText).toContain('Version 1');
+  });
+
   it('promeut une adaptation locale en variante à valider sans toucher au modèle source', () => {
     const source = library.createReusableCode({
       category: 'hero',

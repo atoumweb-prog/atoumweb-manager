@@ -11,6 +11,7 @@ import type {
 } from '../../shared/referentials';
 import { ProjectCompositionItemSettings } from './ProjectCompositionItemSettings';
 import './ProjectPageCompositionPanel.css';
+import { buildComponentPreview } from './componentPreview';
 
 type PanelMode = null | 'library' | 'create' | 'attach' | 'inspect' | 'preview';
 type CreateMode = 'new' | 'variant';
@@ -60,14 +61,6 @@ const EMPTY_FORM: CreateForm = {
   css: '',
   javascript: '',
 };
-
-function escapeHtml(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function safeStyle(value: string): string {
-  return value.replace(/<\/style/gi, '<\\/style');
-}
 
 function parseParts(version?: AtoumWebTechnicalVersion | null): PreviewParts {
   if (!version?.contentText) return { html: '', css: '', javascript: '', previewable: false, raw: '' };
@@ -142,14 +135,7 @@ function effectiveParts(item: AtoumWebCompositionItem, source: PreviewParts): Pr
 }
 
 function buildPreviewDocument(parts: PreviewParts, label: string): string {
-  const body = parts.previewable
-    ? parts.html
-    : `<div style="padding:24px;border:2px dashed #bbb;font-family:Arial,sans-serif"><strong>${escapeHtml(label)}</strong><p>Aperçu visuel indisponible pour ce type de contenu.</p></div>`;
-  return `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https: data:; font-src https: data:;">
-<style>html,body{margin:0;min-height:100%;background:#fff;color:#111}body{font-family:Arial,Helvetica,sans-serif}*,*::before,*::after{box-sizing:border-box}</style>
-<style>${safeStyle(parts.css)}</style></head><body>${body}</body></html>`;
+  return buildComponentPreview([{ html: parts.previewable ? parts.html : '<p>Aperçu visuel indisponible.</p>', css: parts.css, label }]);
 }
 
 function splitCompleteCode(value: string): { html: string; css: string; javascript: string } {
@@ -376,29 +362,11 @@ export function ProjectPageCompositionPanel({
         const parts = effectiveParts(item, sourceParts);
         return { item, parts };
       });
-      const css = rendered.map((entry) => entry.parts.css).filter(Boolean).join('\n\n');
-      const body = rendered.map((entry, index) => {
-        const content = entry.parts.previewable
-          ? entry.parts.html
-          : `<div class="aw-page-preview-unavailable"><strong>${escapeHtml(entry.item.displayName)}</strong><span>Aperçu indisponible</span></div>`;
-        return inspect
-          ? `<section class="aw-page-preview-slice aw-page-preview-component"><div class="aw-page-preview-label">${index + 1}. ${escapeHtml(entry.item.displayName)}</div>${content}</section>`
-          : `<section class="aw-page-preview-slice">${content}</section>`;
-      }).join('\n');
-      const document = `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https: data:; font-src https: data:;">
-<style>${safeStyle(css)}</style>
-<style>
-html,body{display:block!important;visibility:visible!important;opacity:1!important;margin:0!important;min-height:100%!important;background:#fff;color:#111}
-body{font-family:Arial,Helvetica,sans-serif}
-*,*::before,*::after{box-sizing:border-box}
-.aw-page-preview-slice{display:block!important;visibility:visible!important;opacity:1!important;position:relative;min-height:1px}
-.aw-page-preview-component{outline:2px dashed #c59a4a}
-.aw-page-preview-label{position:relative;z-index:2147483647;padding:6px 10px;background:#181b20;color:#fff;font:12px Arial}
-.aw-page-preview-unavailable{margin:12px;padding:28px;border:2px dashed #bbb;display:grid;gap:5px}
-</style></head><body>${body}</body></html>`;
-      setPreviewDoc(document);
+      setPreviewDoc(buildComponentPreview(rendered.map(({item, parts}) => ({
+        label: item.displayName,
+        html: parts.previewable ? parts.html : '<p>Aperçu indisponible.</p>',
+        css: parts.css,
+      })), inspect));
       setMode('preview');
     });
   }

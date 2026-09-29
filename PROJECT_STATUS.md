@@ -1,5 +1,17 @@
 # AtoumWeb Manager — Suivi du projet
 
+## Stabilisation UX Lot 6B — 29/09/2026 — recette réelle restante
+
+- Branche `feature/project-page-compositions-v1`, base synchronisée par fast-forward : `39315436376ba81470ed5fc0cbdad92c457ce553`. Checkout initial propre à `4bdf3df31ccfc9a84a5f3d08742c002ba6467443`.
+- [x] Barre identifiée : `main.project-production-secondary` vide rendu aussi pour Sites & pages, quatrième ligne de grille. Ce n'était pas un scrollbar ; condition JSX corrigée, aucun contenu masqué.
+- [x] Débordement des réglages de promotion corrigé : colonnes adaptées à la place réelle, champ couleur CSS sur sa propre ligne. Aucun `overflow:hidden` supplémentaire.
+- [x] Aperçus isolant les styles de chaque composant (Shadow DOM déclaratif dans les iframes sandboxées), avec même rendu pour création/module/Page. JavaScript source non exécuté. Bibliothèque et code stocké inchangés.
+- [x] Picker des couleurs détectées étendu à HSL/hex alpha ; alpha conservé par le picker. Champs rapides actualisés après code avancé ; promotion d'un brouillon non enregistré empêchée et expliquée.
+- [x] Typecheck réussi ; tests Vitest ciblés **35 réussis / 0 échoué** ; contrôles Chromium isolés **31 réussis / 0 échoué** via `node scripts/check-project-composition-ui.cjs` (APIs simulées en mémoire, aucun workspace applicatif ouvert).
+- [x] Test supplémentaire de Reset vers la version figée malgré une nouvelle version Bibliothèque. Migration 49 inchangée ; aucune migration ajoutée.
+- [ ] Recette Carlos sur les composants réels : disparition de la barre, fin du panneau avec Réglages/Code avancé ouverts, picker à la souris, module seul et aperçu global dans les trois tailles. La cause exacte de l'ancien aperçu blanc n'est pas établie sur ses données ; le défaut de contamination CSS est corrigé et testé sur fixture.
+- Aucun commit/push/fusion, aucune modification Bridge ni Lot 7/8, aucune suite complète ni packaging. Détails et limites dans `docs/MANAGER_BRIDGE_ROADMAP.md`, entrée `LOT6B-MSI-STABILISATION-001`.
+
 ## Coordination Manager ↔ Bridge — 27/09/2026
 
 - [x] Note d'architecture Pages hybrides et feuille de route consignées dans [`docs/MANAGER_BRIDGE_ROADMAP.md`](docs/MANAGER_BRIDGE_ROADMAP.md), avec journal partagé des consignes/décisions pour les agents.

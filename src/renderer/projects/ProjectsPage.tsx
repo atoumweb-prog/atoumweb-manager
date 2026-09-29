@@ -805,7 +805,7 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
           </section>
         </div>}
 
-        {detailTab !== 'plan' && <main className="project-production-secondary">
+        {detailTab !== 'plan' && detailTab !== 'sites' && <main className="project-production-secondary">
           {detailTab === 'summary' && <ProjectSummaryTab project={detail} />}
           {detailTab === 'prerequisites' && (
             <div className="project-tab-content">
