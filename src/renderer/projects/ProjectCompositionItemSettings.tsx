@@ -268,7 +268,7 @@ export function ProjectCompositionItemSettings({
         },
       );
       onUpdated(updated);
-      onMessage('Réglages locaux du bloc enregistrés.');
+      onMessage('Changements du bloc validés et enregistrés localement.');
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible d’enregistrer les réglages du bloc.');
     } finally {
@@ -328,6 +328,9 @@ export function ProjectCompositionItemSettings({
         <button className="secondary-button" type="button" disabled={!undoStack.length || busy} onClick={undo} title="Annuler la dernière modification">↶ Annuler</button>
         <button className="secondary-button" type="button" disabled={!redoStack.length || busy} onClick={redo} title="Rétablir la modification">↷ Rétablir</button>
         <button className="secondary-button" type="button" disabled={busy} onClick={() => void reset()}>⟲ Version Bibliothèque</button>
+        <button className="primary-button project-component-validate-button" type="button" disabled={busy || !dirty || !draft.html.trim()} onClick={() => void save()}>
+          {dirty ? '✓ Valider les changements' : '✓ Changements validés'}
+        </button>
       </div>
     </div>
 
@@ -480,7 +483,9 @@ export function ProjectCompositionItemSettings({
         </details>
 
         <div className="project-component-settings-actions">
-          <button className="primary-button" type="button" disabled={busy || !draft.html.trim()} onClick={() => void save()}>Enregistrer les réglages</button>
+          <button className="primary-button" type="button" disabled={busy || !dirty || !draft.html.trim()} onClick={() => void save()}>
+            {dirty ? '✓ Valider les changements' : '✓ Changements validés'}
+          </button>
           <button className="secondary-button" type="button" onClick={() => setModulePreviewOpen(true)}>Voir le module seul</button>
         </div>
 
