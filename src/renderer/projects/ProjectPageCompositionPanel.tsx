@@ -536,6 +536,8 @@ export function ProjectPageCompositionPanel({
                 docked
                 onCollapse={() => setSettingsPaneCollapsed(true)}
                 onExpand={() => setInspectExpanded(true)}
+                previewDevice={inspectDevice}
+                onPreviewDeviceChange={setInspectDevice}
                 onClose={() => {
                   setSettingsItemId(null);
                   setSettingsDraft(null);
@@ -557,7 +559,7 @@ export function ProjectPageCompositionPanel({
                 <small>{settingsItemId === inspected.item.id && settingsDraft ? 'Brouillon local en direct' : `Source figée · v${inspected.item.sourceVersionNumber}`}</small>
               </div>
               <div>
-                <button className="secondary-button" type="button" onClick={() => setInspectExpanded(true)}>Agrandir</button>
+                <button className="secondary-button project-inspector-expand-action" type="button" onClick={() => setInspectExpanded(true)}>Agrandir</button>
                 <button className="secondary-button" type="button" aria-label="Réduire Code / aperçu" title="Réduire Code / aperçu" onClick={() => setCodePaneCollapsed(true)}>→</button>
                 <button className="secondary-button" type="button" aria-label="Fermer le volet Code / aperçu" onClick={() => {
                   setInspected(null);
