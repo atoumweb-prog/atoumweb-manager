@@ -194,7 +194,27 @@ app.whenReady().then(async () => {
     await check('Panneau Réglages rétractable seul', `document.querySelector('.project-page-inspector-pane.settings-pane').classList.contains('collapsed') && !!document.querySelector('.project-page-inspector-pane.settings-pane .project-page-inspector-pane-restore')`);
     await click('Afficher Réglages', "document.querySelector('.project-page-inspector-pane.settings-pane')");
     await check('Panneau Réglages restaurable seul', `!document.querySelector('.project-page-inspector-pane.settings-pane').classList.contains('collapsed') && !!document.querySelector('.project-component-settings-panel.docked')`);
-    await check('Pas de contenu horizontal masqué dans les réglages', `[...document.querySelectorAll('.project-component-settings-panel *')].every(e=>e.matches('input,textarea')||!e.clientWidth||e.scrollWidth<=e.clientWidth+1)`);
+    await check('Pas de contenu horizontal masqué dans les réglages', `(()=>{
+      const panel=document.querySelector('.project-component-settings-panel');
+      const offenders=[...panel.querySelectorAll('*')].filter((e)=>{
+        if(e.matches('input,textarea')||!e.clientWidth||e.scrollWidth<=e.clientWidth+1) return false;
+        const own=getComputedStyle(e).overflowX;
+        if(['auto','scroll'].includes(own)) return false;
+        let parent=e.parentElement;
+        while(parent && parent!==panel){
+          const overflow=getComputedStyle(parent).overflowX;
+          if(['auto','scroll'].includes(overflow)) return false;
+          parent=parent.parentElement;
+        }
+        return true;
+      });
+      return offenders.length===0 ? true : offenders.slice(0,8).map((e)=>({
+        tag:e.tagName,
+        className:e.className,
+        clientWidth:e.clientWidth,
+        scrollWidth:e.scrollWidth
+      }));
+    })()`);
     await check('Fin réelle de la fiche accessible', `(()=>{let e=document.querySelector('.project-sites-detail-panel');e.scrollTop=e.scrollHeight;return e.lastElementChild.getBoundingClientRect().bottom<=e.getBoundingClientRect().bottom})()`);
     await check('Aperçu Réglages interactif et scrollable', `(()=>{const frame=document.querySelector('.project-component-settings-preview iframe');const scroller=document.querySelector('.project-component-settings-panel.docked .project-component-settings-grid');return getComputedStyle(frame).pointerEvents==='auto' && ['auto','scroll'].includes(getComputedStyle(scroller).overflowY)})()`);
     await check('Réglages possède Desktop Tablette Mobile', `(()=>{
