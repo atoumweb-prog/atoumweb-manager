@@ -14,6 +14,9 @@ if (!process.versions.electron) {
   process.exit(child.status ?? 1);
 }
 const {app,BrowserWindow} = require('electron');
+// This hidden fixture does not need GPU rendering. Disabling hardware acceleration
+// avoids platform-specific GPU process failures on Windows dev machines.
+app.disableHardwareAcceleration();
 const dir = fs.mkdtempSync(path.join(os.tmpdir(),'atoumweb-6b-ui-'));
 const esbuild = require('esbuild');
 const css = [...fs.readFileSync(repo+'/src/renderer/main.tsx','utf8').matchAll(/import '(\.\/[^']+\.css)'/g)].map(m=>`import '${repo.replaceAll('\\','/')}/src/renderer/${m[1].slice(2)}';`).join('\n');
@@ -40,8 +43,30 @@ app.whenReady().then(async () => {
   try {
     await esbuild.build({stdin:{contents:entry,resolveDir:repo,loader:'tsx'},nodePaths:[repo+'/node_modules'],bundle:true,outfile:dir+'/fixture.js',jsx:'automatic',logLevel:'silent'});
     fs.writeFileSync(dir+'/fixture.html','<html><head><link rel="stylesheet" href="fixture.css"></head><body><div id="root"></div><script src="fixture.js"></script></body></html>');
-    const win = new BrowserWindow({show:false,width:1600,height:1000,webPreferences:{sandbox:true,backgroundThrottling:false,offscreen:true}});
-    await win.loadFile(dir+'/fixture.html');
+    const win = new BrowserWindow({
+      show:false,
+      width:1600,
+      height:1000,
+      webPreferences:{
+        sandbox:false,
+        contextIsolation:false,
+        nodeIntegration:false,
+        backgroundThrottling:false,
+      },
+    });
+    let lastLoadFailure = null;
+    let rendererGone = null;
+    win.webContents.on('did-fail-load', (_event, code, description, validatedURL, isMainFrame) => {
+      if (isMainFrame) lastLoadFailure = {code,description,validatedURL};
+    });
+    win.webContents.on('render-process-gone', (_event, details) => {
+      rendererGone = details;
+    });
+    try {
+      await win.loadFile(dir+'/fixture.html');
+    } catch (error) {
+      throw new Error(`Fixture load failed: ${error}; did-fail-load=${JSON.stringify(lastLoadFailure)}; renderer-gone=${JSON.stringify(rendererGone)}; fixture=${dir}`);
+    }
     const js = code => win.webContents.executeJavaScript(code);
     const settle = () => new Promise(resolve => setTimeout(resolve, 220));
     const check = async (name, code) => {
