@@ -674,7 +674,7 @@ export function ProjectSitesTab({
           tabIndex={inspectorOpen ? 0 : -1}
         >{inspectorCollapsed ? '←' : '→'}</button>
         <div id={inspectorHostId} className="project-sites-inspector-host" />
-      </aside>}
+      </aside>
     </div>
   </section>;
 }
