@@ -1345,3 +1345,25 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - La PR rappelle les validations acquises : typecheck vert, **65/65** harness, **35/35** tests ciblés historiques, migration 49 inchangée, recette visuelle validée.
 - Aucun merge vers la branche canonique ni vers `main` effectué.
 - Derniers gates avant intégration : statut local MSI propre, décision sur suite Vitest complète / packaging, puis rerun typecheck + harness sur la branche canonique après intégration.
+
+
+### 2026-09-29 — LOT6B-GATE-FULL-SUITE-001 — Suite complète 336/339 puis correctifs transverses
+
+- Gate de clôture lancé sur MSI après recette visuelle 6B :
+  - `git status -sb` propre sur `wip/codex-6b-ui-fix` ;
+  - `npm test` : **53 fichiers**, **339 tests**, premier passage **336 réussis / 3 échoués**.
+- Échec 1 — `StabilisationPhase19.test.ts` :
+  - test historique figé sur migrations 19→38 ;
+  - base courante 19→49 ;
+  - correction : comparaison avec la chaîne réellement retournée par `getPendingMigrations`, tout en conservant le contrôle que 19/20/21 restent les trois premières.
+- Échec 2 — `WorkflowService.test.ts` / `specialTerms` :
+  - ancien test attendait la condition catalogue « 40 % » directement dans `quote.specialTerms` ;
+  - depuis le Builder CGV, `specialTerms` est une condition particulière libre du devis et peut rester vide ;
+  - la condition catalogue reste figée dans le snapshot de ligne ;
+  - correction : vérifier `specialTerms === null` puis la présence de « 40 % » dans `lines[0].snapshot.specialTerms`.
+- Échec 3 — purge scénario e-commerce :
+  - `quote_contract_clauses` créé par la compilation CGV n'était pas inclus dans les tables métier suivies par `DemoService` ;
+  - ces lignes étaient donc vues comme « non demo » et bloquaient volontairement le reset ;
+  - correction : ajout de `quote_contract_clauses` dans `TABLES` pour héritage du batch via FK `quote_id` et suppression enfant→parent.
+- Aucun changement UX 6B, aucune migration, aucun changement Bridge.
+- Statut : correctifs poussés, **rerun complet `npm test` requis** avant clôture.
