@@ -177,8 +177,8 @@ app.whenReady().then(async () => {
     await click('Mobile', "document.querySelector('.project-page-inspector-dock')");
     await check('Aperçu docké mobile', `document.querySelector('.project-page-inspector-dock-preview>div')?.style.width==='390px'`);
     await click('Agrandir', "document.querySelector('.project-page-inspector-dock')");
-    await check('Code aperçu grand format disponible', `!!document.querySelector('.project-page-composition-modal .project-page-inspector-preview-large')`);
-    await click('Fermer', "document.querySelector('.project-page-composition-modal')");
+    await check('Atelier grand format disponible depuis Code', `document.querySelector('.project-page-inspector-workbench')?.classList.contains('expanded') && !!document.querySelector('.project-page-inspector-workbench.expanded .code-pane')`);
+    await click('Quitter le grand écran', "document.querySelector('.project-page-inspector-workbench.expanded')");
     await click('Fermer aperçu');
     await click('Réglages');
     await check('Réglages ouverts dans le volet latéral', `!!document.querySelector('.project-sites-inspector-host .project-component-settings-panel.docked') && !document.querySelector('.project-page-composition-item-wrap .project-component-settings-panel')`);
@@ -191,6 +191,16 @@ app.whenReady().then(async () => {
     await check('Aperçu Réglages interactif et scrollable', `(()=>{const frame=document.querySelector('.project-component-settings-preview iframe');const scroller=document.querySelector('.project-component-settings-panel.docked .project-component-settings-grid');return getComputedStyle(frame).pointerEvents==='auto' && ['auto','scroll'].includes(getComputedStyle(scroller).overflowY)})()`);
     await click('Code / aperçu');
     await check('Réglages et Code côte à côte', `document.querySelector('.project-page-inspector-workbench')?.classList.contains('both-open') && document.querySelectorAll('.project-page-inspector-pane').length===2`);
+    await click('Agrandir l’atelier', "document.querySelector('.project-page-inspector-pane.settings-pane')");
+    await check('Grand écran contient Réglages et Code', `(()=>{
+      const workbench=document.querySelector('.project-page-inspector-workbench.expanded');
+      return !!workbench
+        && !!workbench.querySelector('.project-component-settings-panel.docked')
+        && !!workbench.querySelector('.project-page-inspector-dock')
+        && !!workbench.querySelector('.project-component-settings-section input')
+        && !!workbench.querySelector('.project-page-inspector-dock-code');
+    })()`);
+    await click('Quitter le grand écran', "document.querySelector('.project-page-inspector-workbench.expanded')");
     await click('Réduire la fiche Page', "document.querySelector('.project-sites-detail-panel')");
     await check('Réduire Page conserve Réglages et Code', `(()=>{
       const detail=document.querySelector('.project-sites-detail-panel');
@@ -206,15 +216,15 @@ app.whenReady().then(async () => {
     await check('Restaurer Page conserve les deux volets', `!document.querySelector('.project-sites-detail-panel').classList.contains('collapsed') && !!document.querySelector('.project-component-settings-panel.docked') && !!document.querySelector('.project-page-inspector-dock')`);
     await js(`window.__atelierWidthBeforeCollapse=document.querySelector('.project-sites-inspector-shell').getBoundingClientRect().width`, 'mémoriser largeur atelier');
     await click('Réduire Réglages', "document.querySelector('.project-page-inspector-pane.settings-pane')");
-    await check('Réduire Réglages ne réduit pas Code aperçu', `(()=>{
+    await check('Réduire Réglages libère sa largeur sans fermer Code', `(()=>{
       const shell=document.querySelector('.project-sites-inspector-shell');
       const code=document.querySelector('.project-page-inspector-pane.code-pane');
       const workbench=document.querySelector('.project-page-inspector-workbench');
-      const delta=Math.abs(shell.getBoundingClientRect().width-window.__atelierWidthBeforeCollapse);
+      const gained=window.__atelierWidthBeforeCollapse-shell.getBoundingClientRect().width;
       return workbench.classList.contains('both-open')
         && workbench.classList.contains('settings-collapsed')
         && !code.classList.contains('collapsed')
-        && delta<=2;
+        && gained>=80;
     })()`);
     await click('Afficher Réglages', "document.querySelector('.project-page-inspector-pane.settings-pane')");
     await check('Quatre panneaux disposent d’un repli indépendant', `(()=>{
