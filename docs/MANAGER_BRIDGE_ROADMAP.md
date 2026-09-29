@@ -1124,3 +1124,41 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - état vide conservé avec un bouton local positionné dans la fiche.
 - Aucun changement métier, aucune migration, aucun changement Bridge.
 - Statut : correctif poussé sur `wip/codex-6b-ui-fix`, validation locale requise.
+
+
+### 2026-09-29 — LOT6B-UX-011 — Replis persistants, largeur réellement libérée et grand écran d’atelier
+
+- Retours de recette successifs :
+  - réduire la fiche Page rendait les volets Réglages / Code vides car leur composant parent était démonté ;
+  - réduire Réglages ou Code ne libérait pas complètement la largeur réservée ;
+  - le bouton « Agrandir » ouvrait seulement le visuel Code, sans donner accès aux Réglages en grand.
+- Fiche Page :
+  - la fiche n’est plus démontée lors du repli ;
+  - elle reste montée dans le DOM et son contenu est uniquement masqué derrière un rail de 46 px ;
+  - les portals Réglages / Code restent donc vivants ;
+  - brouillons, états, scrolls, device responsive et code restent accessibles pendant que la fiche Page est réduite.
+- Repli total des sous-volets :
+  - le parent reçoit désormais le nombre de volets réellement déployés ;
+  - largeur de l’atelier calculée selon 0 / 1 / 2 volets déployés ;
+  - replier un sous-volet rend réellement sa largeur à la fiche Page ;
+  - si les deux sous-volets sont réduits, l’atelier droit se limite presque aux seuls rails de restauration ;
+  - lorsqu’un seul reste ouvert, l’autre ne conserve plus une grande zone vide.
+- Grand écran :
+  - suppression de l’ancienne modale « aperçu Code seul » ;
+  - « Agrandir » passe maintenant **le même atelier latéral courant** en plein écran ;
+  - aucun remount des éditeurs : brouillon, Undo/Redo, validation et synchro en direct restent intacts ;
+  - si Réglages + Code sont ouverts, les deux apparaissent en grand ensemble ;
+  - si un seul outil est ouvert, seul celui-ci occupe le grand écran ;
+  - bouton « Agrandir » ajouté également à la barre Réglages ;
+  - bouton global « Quitter le grand écran » toujours visible ;
+  - Desktop / Tablette / Mobile et HTML/CSS/JS restent utilisables en grand.
+- Clarification UX :
+  - le bouton de l’aperçu interne Réglages est renommé « Voir le module seul » ;
+  - « Agrandir » désigne désormais uniquement l’agrandissement de l’atelier complet.
+- Harness UI mis à jour pour vérifier :
+  - Page réduite sans perte des deux volets ;
+  - gain réel de largeur lors du repli Réglages ;
+  - grand écran depuis Code ;
+  - grand écran contenant simultanément Réglages + Code.
+- Aucun changement métier, aucune migration, aucun changement Bridge.
+- Statut : implémenté sur `wip/codex-6b-ui-fix`, validation typecheck + harness + recette visuelle requise.
