@@ -839,3 +839,20 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - diagnostics `did-fail-load` et `render-process-gone` ajoutés.
 - Aucun changement métier, aucune migration, aucun changement Bridge.
 - Validation restante : Carlos tire le HEAD WIP courant, exécute typecheck + tests ciblés + `node scripts/check-project-composition-ui.cjs`. Ne pas fusionner avant ces résultats.
+
+
+### 2026-09-29 — LOT6B-REPRISE-CHATGPT-002 — Tests métier verts, harness UI encore diagnostique
+
+- Validation MSI sur HEAD `0f090e012c43bd53282925f5194b874639e171c4` :
+  - `npm run typecheck` : réussi ;
+  - Vitest ciblés : **35/35 réussis**, 4 fichiers, 0 échec ;
+  - warning Vite CJS uniquement.
+- `node scripts/check-project-composition-ui.cjs` démarre désormais Electron mais s'interrompt sur une erreur renderer générique `Script failed to execute` avant de fournir le contrôle fautif.
+- Conclusion : ne pas remettre en cause la logique métier 6B déjà couverte par les tests ; le blocage restant concerne le banc UI/renderer.
+- Harness renforcé à nouveau :
+  - chaque évaluation renderer est maintenant encapsulée et nommée ;
+  - les exceptions JavaScript et stacks renderer sont remontées ;
+  - les clics et saisies indiquent précisément l'élément absent/désactivé ;
+  - les derniers messages console renderer sont joints au diagnostic.
+- Aucun fichier métier modifié dans ce sous-lot ; uniquement le script de contrôle.
+- Prochaine action : tirer le nouveau HEAD WIP et relancer seulement `node scripts/check-project-composition-ui.cjs` afin d'identifier le premier contrôle fautif avant toute nouvelle correction fonctionnelle.
