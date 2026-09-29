@@ -46,6 +46,17 @@
 >
 # Handoff Codex MSI — AtoumWeb Manager
 
+## Chantier actif — Lot 8A Export Page Manager
+
+- Branche locale empilée : `codex/lot8a-page-export`, basée sur `codex/lot7-blueprint-sites@bfda981bb4243d8138ed862a4e1f9395e7827e6f` ; PR #76 reste ouverte et non fusionnée.
+- Nouveau contrat additionnel explicite : `atoumweb_bridge_project_package` schemaVersion 2, `scope=page`, `exportId`, destination Projet/Site/Page.
+- Le package projet générique V1 et les contrats Component/Fields/Identity V1 restent inchangés.
+- Migration 52 : historique des exports Page avec empreinte et provenance de destination.
+- Le package transporte les adaptations locales enregistrées dans l'atelier Page, sans modifier les sources Bibliothèque.
+- Validation locale : typecheck réussi ; **14/14 tests ciblés**.
+- Aucun commit/push sur le Lot 8A. L'import idempotent et le marqueur Divi nécessitent le dépôt Bridge local confirmé.
+- Dépôt Bridge désormais confirmé et synchronisé : `C:\DEV\01_PROJETS\AtoumWeb\atoumweb-bridge`, base 0.8.0 `36d1076`. L'incrément idempotent Page V2 est préparé localement sur `codex/lot8a-idempotent-page-import` en version 0.8.1, sans commit/push.
+
 ## Chantier actif — Lot 7 Squelette blueprint Sites / Pages
 
 - Branche locale : `codex/lot7-blueprint-sites`, base canonique `cf747c5855eec90df725861d22375d65f78f12db`.

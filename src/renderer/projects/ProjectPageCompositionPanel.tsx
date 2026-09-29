@@ -429,6 +429,19 @@ export function ProjectPageCompositionPanel({
     });
   }
 
+  async function exportPagePackage(): Promise<void> {
+    if (!composition?.items.length) return;
+    setBusy(true);
+    try {
+      const exported = await window.atoumweb.referentials.compositions.exportPagePackage(page.id);
+      onMessage(`Package Page prêt : ${exported.fileName}`);
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible de préparer le package Page.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const createPreview = buildPreviewDocument({
     html: createForm.html,
     css: createForm.css,
@@ -458,6 +471,7 @@ export function ProjectPageCompositionPanel({
         <p>Ajoute uniquement ce que tu veux préparer depuis Manager. Le reste de la Page pourra être construit librement dans Divi.</p>
       </div>
       <div className="project-page-composition-actions">
+        {composition?.items.length ? <button className="primary-button" type="button" disabled={busy} onClick={() => void exportPagePackage()}>Préparer pour Bridge</button> : null}
         {composition?.items.length ? <button className="secondary-button" type="button" onClick={() => void buildPagePreview()}>Aperçu de la Page</button> : null}
         <button className="secondary-button" type="button" onClick={() => setMode(mode === 'library' ? null : 'library')}>+ Bibliothèque</button>
         <button className="primary-button" type="button" onClick={() => setMode(mode === 'create' ? null : 'create')}>+ Créer un composant</button>

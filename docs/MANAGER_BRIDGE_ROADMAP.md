@@ -1466,3 +1466,27 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - La table `project_type_site_blueprints` de migration 51 reste strictement un mécanisme de reprise des anciens Projets dont le blueprint ne déclare aucune structure. Elle ne doit pas devenir la règle de création des nouveaux Projets.
 - Évolution recommandée après le Lot 7 : faire produire à chaque contribution du devis des déclarations typées et fusionnables, avec clés stables et provenance de ligne, puis appliquer l'ensemble dans une transaction idempotente. Une contribution absente ou retirée doit être distinguée d'un objet déjà modifié manuellement afin d'éviter toute suppression implicite.
 - Le Lot 7 conserve volontairement un périmètre restreint : il installe les primitives Site/Page et leur provenance, sans développer le moteur complet de composition commerciale.
+
+### 2026-09-29 — LOT8A-MANAGER-EXPORT-001 — Enveloppe Page V2
+
+- Branche locale empilée sur le Lot 7 validé : `codex/lot8a-page-export`. La PR #76 n'est pas fusionnée et `main` n'est pas touchée.
+- Décision contractuelle : conserver le package projet générique V1 et ajouter une version 2 explicite du même contrat uniquement pour une préparation de Page.
+- Champs obligatoires V2 : `scope=page`, `exportId`, puis `destination.projectId/siteId/pageId`.
+- Le Manager refuse l'export si la Page n'est pas rattachée à un Site actif ou si elle ne possède pas de composition.
+- Chaque export est enregistré comme objet immuable avec l'empreinte du ZIP en migration additive **52**.
+- Les adaptations locales HTML/CSS/JS de chaque `compositionItemId` remplacent les fichiers transportés avec checksums recalculés ; l'identité et la provenance de la version Bibliothèque source restent inchangées.
+- Bouton Page ajouté : « Préparer pour Bridge ». Aucun envoi direct et aucune publication WordPress.
+- Documentation : `docs/ATOUMWEB_PAGE_PACKAGE_V2.md` et `docs/ATOUMWEB_PAGE_PACKAGE_V2.schema.json` ; validation du manifest exécutée avant écriture.
+- Validation locale : typecheck réussi ; **14/14 tests ciblés** (package 4, migrations 10).
+- Limite explicite : le plugin Bridge n'est pas modifié dans cet incrément. Import idempotent par `exportId`, accusé `compositionItemId ↔ siteOccurrenceId` et marqueur stable Divi restent à réaliser dans son dépôt source confirmé.
+- État : local, sans commit ni push ; recette Manager du bouton d'export requise.
+
+### 2026-09-29 — LOT8A-BRIDGE-IDEMPOTENCE-001 — Dépôt Bridge confirmé et incrément 0.8.1
+
+- Dépôt local confirmé : `C:\DEV\01_PROJETS\AtoumWeb\atoumweb-bridge`.
+- Après synchronisation GitHub, la vraie base Bridge est `feature/workbench-occurrence-v1@36d1076` en version **0.8.0**. Elle contient déjà le package projet multi-composants V1, le Workbench unique, les modules Code séparés et une occurrence par `compositionItemId`.
+- Branche locale dédiée : `codex/lot8a-idempotent-page-import`, sans fusion vers `main`.
+- Incrément 0.8.1 préparé : support Page V2, mémorisation de `exportId`, empreinte et destination ; réimport identique ouvrant le Workbench existant ; même `exportId` avec contenu différent refusé.
+- L'import retourne et conserve les associations `compositionItemId ↔ siteOccurrenceId`.
+- Le flux reste Workbench-first et la publication production reste désactivée.
+- Le runtime PHP n'est pas disponible dans le `PATH` MSI : aucune installation ni recherche disque lancée. Validation syntaxique/runtime et recette réelle à effectuer avec le ZIP produit par Manager avant commit/push.

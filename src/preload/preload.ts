@@ -430,6 +430,7 @@ const api: AtoumWebApi = {
       archive: (id: string) => ipcRenderer.invoke('referentials:compositions:archive', id),
       reactivate: (id: string) => ipcRenderer.invoke('referentials:compositions:reactivate', id),
       exportPackage: (id: string) => ipcRenderer.invoke('referentials:compositions:export-package', id),
+      exportPagePackage: (projectNodeId: string) => ipcRenderer.invoke('referentials:compositions:export-page-package', projectNodeId),
       showPackage: (path: string) => ipcRenderer.invoke('referentials:compositions:show-package', path),
     },
     occurrenceReturns: {

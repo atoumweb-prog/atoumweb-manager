@@ -1,5 +1,16 @@
 # AtoumWeb Manager — Suivi du projet
 
+## Lot 8A en cours — Export Page Manager
+
+- Branche empilée : `codex/lot8a-page-export`, basée sur le HEAD validé du Lot 7 ; PR #76 non fusionnée.
+- L'export générique `atoumweb_bridge_project_package` V1 reste inchangé.
+- Une Page rattachée à un Site actif et possédant une composition peut produire une enveloppe V2 avec `scope=page`, `exportId` et destination `projectId/siteId/pageId`.
+- Migration additive **52** : historique immuable des exports Page et empreinte du ZIP.
+- Les adaptations locales HTML/CSS/JS enregistrées dans l'atelier sont transportées avec checksums recalculés ; la provenance Bibliothèque source reste intacte.
+- Contrat et schéma ajoutés : `docs/ATOUMWEB_PAGE_PACKAGE_V2.md` et `.schema.json`.
+- Typecheck réussi ; tests ciblés package/migrations : **14/14**.
+- État : modifications locales sans commit/push, recette du bouton « Préparer pour Bridge » requise. Le support d'import idempotent côté plugin Bridge reste à implémenter après confirmation de son dépôt local.
+
 ## Lot 7 en cours — Squelette blueprint Sites / Pages
 
 - Branche de travail : `codex/lot7-blueprint-sites`, créée depuis le checkpoint canonique `cf747c5855eec90df725861d22375d65f78f12db`.

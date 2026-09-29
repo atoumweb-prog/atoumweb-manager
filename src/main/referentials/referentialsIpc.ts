@@ -128,6 +128,8 @@ export function registerReferentialsIpcHandlers(database: DatabaseService): void
 
   ipcMain.handle('referentials:compositions:export-package', (_event, id: string) =>
     database.atoumWebCompositionPackages.exportPackage(id));
+  ipcMain.handle('referentials:compositions:export-page-package', (_event, projectNodeId: string) =>
+    database.atoumWebCompositionPackages.exportPagePackage(projectNodeId));
   ipcMain.handle('referentials:compositions:show-package', (_event, path: string) => {
     const validated = database.atoumWebCompositionPackages.assertExportPath(path);
     shell.showItemInFolder(validated);
