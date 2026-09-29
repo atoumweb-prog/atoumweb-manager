@@ -991,3 +991,47 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - aperçu global et isolation CSS.
 - Avertissement restant : événement Electron `console-message` déprécié dans le harness de test uniquement ; aucun impact fonctionnel sur le Manager.
 - Statut : checkpoint automatique **vert**. Étape suivante : recette visuelle Carlos dans le vrai Manager avant toute réintégration de la branche WIP.
+
+
+### 2026-09-29 — LOT6B-UX-007 — Atelier latéral unifié Réglages + Code / aperçu
+
+- Retour de recette visuelle :
+  - une bordure/ligne sticky du panneau Réglages passait visuellement au-dessus des champs ;
+  - l'aperçu du panneau Réglages n'était pas scrollable/interactif ;
+  - le volet Code / aperçu ne rendait pas HTML/CSS/JS assez accessibles en mode normal ;
+  - souhait d'une logique identique entre Réglages et Code / aperçu, avec possibilité de les comparer côte à côte.
+- Arbitrage UX :
+  - abandon du panneau Réglages inline dans la fiche Page ;
+  - Réglages et Code / aperçu utilisent désormais le **même atelier latéral indépendant** ;
+  - un seul volet peut être ouvert, ou les deux sur le même composant ;
+  - si les deux sont ouverts sur le même composant, l'atelier passe en mode **double volet côte à côte** ;
+  - sur largeur plus faible, les deux volets se réorganisent verticalement plutôt que de rendre quatre colonnes illisibles ;
+  - ouvrir un outil sur une occurrence différente ferme l'outil de l'autre occurrence pour éviter les comparaisons ambiguës.
+- Réglages dockés :
+  - toolbar non sticky dans le volet, supprimant le chevauchement des champs ;
+  - scroll propre au volet ;
+  - aperçu local placé en tête du volet ;
+  - aperçu interactif / scrollable à la souris ;
+  - validation, Undo/Redo, retour Bibliothèque et promotion conservés ;
+  - bouton de fermeture intégré.
+- Code / aperçu :
+  - aperçu interactif et scrollable ;
+  - zone HTML/CSS/JavaScript réservée et scrollable dans le volet normal, sans exiger le grand écran ;
+  - Desktop / Tablette / Mobile et Agrandir conservés.
+- Synchronisation :
+  - le brouillon des Réglages est remonté en direct ;
+  - lorsque Réglages + Code / aperçu concernent la même occurrence, le code et l'aperçu du volet Code utilisent immédiatement le brouillon non encore validé ;
+  - l'agrandissement Code / aperçu utilise également ce brouillon.
+- Largeur atelier :
+  - largeur augmentée automatiquement en mode double volet ;
+  - colonne gauche réduite en proportion sans être masquée automatiquement ;
+  - repli manuel gauche/droite conservé.
+- Harness UI étendu pour contrôler :
+  - Réglages réellement dockés ;
+  - absence de Réglages inline ;
+  - aperçu Réglages interactif et scrollable ;
+  - mode double volet ;
+  - HTML visible en mode normal ;
+  - synchronisation du brouillon Réglages vers Code / aperçu.
+- Aucun changement métier, aucune migration, aucun changement Bridge.
+- Statut : implémenté sur `wip/codex-6b-ui-fix`, typecheck + harness + recette visuelle requis.
