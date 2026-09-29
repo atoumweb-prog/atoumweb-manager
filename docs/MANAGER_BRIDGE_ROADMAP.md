@@ -1089,3 +1089,25 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - présence simultanée des quatre commandes de repli.
 - Aucun changement métier, aucune migration, aucun changement Bridge.
 - Statut : implémenté sur `wip/codex-6b-ui-fix`, typecheck + harness + recette visuelle requis.
+
+
+### 2026-09-29 — LOT6B-UX-009 — Découplage réel des replis Réglages / Code
+
+- Retour de recette : réduire un sous-panneau latéral réduisait aussi visuellement son voisin.
+- Cause :
+  - l'état parent `inspectorDual` passait à `false` dès que Réglages ou Code / aperçu était replié ;
+  - le conteneur latéral recalculait alors toute sa largeur comme un atelier simple ;
+  - le panneau voisin perdait donc lui aussi de la largeur.
+- Correction :
+  - le mode double atelier dépend désormais uniquement du fait que **Réglages et Code / aperçu sont ouverts** ;
+  - l'état replié d'un sous-panneau n'influence plus la largeur globale de l'atelier ;
+  - réduire Réglages transforme uniquement Réglages en rail ; Code / aperçu conserve l'espace latéral disponible ;
+  - réduire Code / aperçu transforme uniquement Code en rail ; Réglages conserve l'espace latéral disponible.
+- Harness UI renforcé :
+  - mesure de la largeur de l'atelier avant repli ;
+  - repli Réglages ;
+  - vérification que Code / aperçu reste ouvert ;
+  - vérification que la largeur globale de l'atelier reste stable à ±2 px ;
+  - restauration Réglages avant poursuite du parcours.
+- Aucun changement métier, aucune migration, aucun changement Bridge.
+- Statut : correctif poussé sur `wip/codex-6b-ui-fix`, validation locale requise.
