@@ -883,3 +883,48 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Avertissement restant : API `console-message` Electron dépréciée dans le harness de test uniquement ; aucun impact fonctionnel.
 - Statut : validation automatique 6B **verte**.
 - Étape suivante : recette visuelle manuelle de Carlos dans le vrai Manager avant toute réintégration de la branche WIP vers `feature/project-page-compositions-v1`.
+
+
+### 2026-09-29 — LOT6B-UX-004 — Mode atelier compact, aperçu docké et validation explicite
+
+- Origine : recette visuelle de Carlos après checkpoint automatique 33/33.
+- Objectif : libérer l'espace de travail pendant la préparation d'une Page sans supprimer les informations ni les vues de contrôle.
+- En-tête Projet :
+  - ajout d'une action **« ↑ Réduire »** ;
+  - état compact affichant seulement retour Projets, numéro/nom du Projet et **« ↓ Afficher l’en-tête »**.
+- Bandeau Sites & pages :
+  - repli/dépli via flèche haut/bas ;
+  - en mode replié, le descriptif est masqué mais les actions + Site / + Page restent accessibles.
+- Arborescence gauche :
+  - bouton **←** pour la masquer ;
+  - la fiche Page récupère alors presque toute la largeur ;
+  - rail compact **→** permanent pour restaurer l'arborescence ;
+  - séparateur de redimensionnement conservé lorsque l'arborescence est ouverte.
+- Informations Page :
+  - Nom, Site, Rôle et Slug remontés **au-dessus de la composition** ;
+  - panneau repliable « Informations de la Page » ;
+  - résumé visible même replié avec Page / Site / rôle / slug.
+- Code / aperçu d'une occurrence :
+  - n'ouvre plus immédiatement une modale ;
+  - ouvre un **volet docké à droite** de la composition ;
+  - volet avec scroll propre, aperçu direct et HTML/CSS/JavaScript ;
+  - boutons **Desktop / Tablette / Mobile** dans le volet ;
+  - bouton **Agrandir** conservé et ouvrant la vue grand format ;
+  - même sélection responsive disponible en grand format ;
+  - bouton de fermeture du volet et état actif sur l'occurrence sélectionnée.
+- Réglages locaux :
+  - barre d'actions rendue sticky ;
+  - aperçu du module rendu sticky pendant le scroll des réglages ;
+  - suppression des overflow susceptibles de casser le sticky ;
+  - action primaire explicite **« ✓ Valider les changements »** ;
+  - après sauvegarde : état **« ✓ Changements validés »** désactivé tant qu'aucune nouvelle modification n'existe ;
+  - bouton disponible en haut et en bas de l'éditeur.
+- Harness UI mis à jour pour couvrir :
+  - ordre Informations Page → Composition ;
+  - repli/restauration de l'arborescence ;
+  - volet Code / aperçu docké ;
+  - responsive Tablette/Mobile du volet ;
+  - agrandissement ;
+  - validation explicite des réglages.
+- Aucun changement métier, aucune migration supplémentaire, aucun changement Bridge.
+- Statut : implémenté sur `wip/codex-6b-ui-fix`, **validation typecheck/tests/UI et recette visuelle Carlos encore requises**.
