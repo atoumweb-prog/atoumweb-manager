@@ -1275,3 +1275,64 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - synchro en direct du brouillon Réglages vers Code / aperçu.
 - Avertissement restant : dépréciation Electron `console-message` dans le harness uniquement ; aucun impact fonctionnel Manager.
 - Statut : checkpoint automatique **vert**. Étape suivante : recette visuelle finale avant réintégration.
+
+
+### 2026-09-29 — LOT6B-RECETTE-FINALE-001 — Recette visuelle validée et préparation de clôture
+
+- Recette visuelle réelle validée par Carlos sur le Manager MSI après les itérations UX du 29/09/2026.
+- Validation finale automatisée :
+  - `npm run typecheck` : réussi ;
+  - harness Electron `scripts/check-project-composition-ui.cjs` : **65/65 contrôles réussis**, 0 échec ;
+  - tests Vitest ciblés déjà validés pendant la stabilisation : **35/35** ;
+  - migration courante inchangée : **49**, aucune migration ajoutée par la passe UX.
+- Recette visuelle validée :
+  - arborescence rétractable ;
+  - fiche Page rétractable sans démontage des outils ;
+  - Réglages rétractables/restaurables indépendamment ;
+  - Code / aperçu rétractable/restaurable indépendamment ;
+  - Réglages + Code utilisables côte à côte ;
+  - brouillon Réglages synchronisé en direct avec Code / aperçu ;
+  - aperçu scrollable ;
+  - responsive Desktop / Tablette / Mobile ;
+  - grand écran Réglages et Code harmonisé ;
+  - grand écran avec aperçu dominant (~75 %) et outils scrollables (~25 %) ;
+  - validation explicite, Undo / Redo, Version Bibliothèque et promotion en variante conservés.
+- Comparaison GitHub contrôlée avant clôture :
+  - `wip/codex-6b-ui-fix` est **84 commits devant / 0 derrière** `feature/project-page-compositions-v1` ;
+  - merge base : `39315436376ba81470ed5fc0cbdad92c457ce553` ;
+  - aucune divergence concurrente détectée entre la branche canonique 6B et la WIP ;
+  - aucun PR ouvert actuellement pour la WIP ni pour `feature/project-page-compositions-v1`.
+- Aucun changement Bridge effectué pendant cette stabilisation UX.
+
+#### Reste avant clôture officielle Lot 6B
+
+1. Sur MSI, vérifier `git status -sb` et confirmer qu'il n'existe aucune modification locale non commitée.
+2. Réintégrer `wip/codex-6b-ui-fix` dans `feature/project-page-compositions-v1` :
+   - privilégier un fast-forward si la branche canonique est toujours à la même base ;
+   - ne pas fusionner dans `main` à cette étape.
+3. Sur la branche canonique après intégration :
+   - `npm run typecheck` ;
+   - `node scripts/check-project-composition-ui.cjs` attendu **65/65** ;
+   - tests Vitest ciblés Composition / migrations / Bibliothèque ;
+   - suite complète uniquement si elle est décidée comme gate de clôture.
+4. Mettre à jour le HEAD canonique et marquer Lot 6B « clos » dans `PROJECT_STATUS.md` et ce journal.
+5. Nettoyage facultatif / faible priorité :
+   - adapter le listener Electron `console-message` du harness à la nouvelle signature pour supprimer le warning de dépréciation ;
+   - aucun impact fonctionnel Manager en l'état.
+
+#### Après Lot 6B — ordre de travail recommandé
+
+- **Lot 7 — Site / préparation Bridge** :
+  - partir de la chaîne validée `Devis accepté → Projet → Site → Page → Composition → occurrences` ;
+  - préparer l'export/package au niveau de la Page/Site sans imposer une Page 100 % issue de la Bibliothèque ;
+  - conserver Divi comme atelier principal ;
+  - ne pas casser les contrats Component / Fields / Identity existants.
+- **Lot 8 — retour d'occurrences** :
+  - retour Bridge occurrence par occurrence ;
+  - provenance immutable ;
+  - rattachement au Projet/Site/Page/composition/occurrence correct ;
+  - réanalyse et validation humaine.
+- **Lot 9 — assemblage multi-pages / livraison** :
+  - seulement après validation des Lots 7 et 8 ;
+  - aucune publication production automatique avant recette dédiée.
+- Les chantiers CGV et autres branches parallèles restent indépendants ; aucune réécriture ou renumérotation des migrations 40–49.
