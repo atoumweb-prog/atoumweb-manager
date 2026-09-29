@@ -10,7 +10,7 @@ import type {
   AtoumWebTechnicalItemSummary,
   AtoumWebTechnicalVersion,
 } from '../../shared/referentials';
-import { ProjectCompositionItemSettings } from './ProjectCompositionItemSettings';
+import { ProjectCompositionItemSettings, type CodeParts } from './ProjectCompositionItemSettings';
 import './ProjectPageCompositionPanel.css';
 import { buildComponentPreview } from './componentPreview';
 
@@ -177,7 +177,7 @@ export function ProjectPageCompositionPanel({
   page: ProjectNode;
   onMessage: (message: string) => void;
   inspectorHostId?: string;
-  onInspectorOpenChange?: (open: boolean) => void;
+  onInspectorOpenChange?: (open: boolean, dual: boolean) => void;
 }) {
   const [composition, setComposition] = useState<AtoumWebCompositionDetail | null>(null);
   const [allCompositions, setAllCompositions] = useState<AtoumWebCompositionSummary[]>([]);
@@ -194,6 +194,7 @@ export function ProjectPageCompositionPanel({
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop');
   const [inspectionMode, setInspectionMode] = useState(false);
   const [settingsItemId, setSettingsItemId] = useState<string | null>(null);
+  const [settingsDraft, setSettingsDraft] = useState<CodeParts | null>(null);
   const [inspectExpanded, setInspectExpanded] = useState(false);
   const [inspectDevice, setInspectDevice] = useState<PreviewDevice>('desktop');
 
@@ -211,18 +212,20 @@ export function ProjectPageCompositionPanel({
   useEffect(() => {
     setMode(null);
     setInspected(null);
+    setSettingsItemId(null);
+    setSettingsDraft(null);
     setInspectExpanded(false);
     setInspectDevice('desktop');
     setPreviewDoc('');
-    onInspectorOpenChange?.(false);
+    onInspectorOpenChange?.(false, false);
     void reload().catch((error) =>
       onMessage(error instanceof Error ? error.message : 'Impossible de charger la composition de la Page.'),
     );
   }, [page.id]);
 
   useEffect(() => {
-    onInspectorOpenChange?.(Boolean(inspected));
-  }, [inspected?.item.id]);
+    onInspectorOpenChange?.(Boolean(inspected || settingsItemId), Boolean(inspected && settingsItemId));
+  }, [inspected?.item.id, settingsItemId]);
 
   const visualLibrary = useMemo(() => library.filter((item) =>
     ['header','footer','hero','page','section','form','gallery','carousel','navigation','divi'].includes(item.category)
@@ -295,6 +298,10 @@ export function ProjectPageCompositionPanel({
       setInspectExpanded(false);
       return;
     }
+    if (settingsItemId && settingsItemId !== item.id) {
+      setSettingsItemId(null);
+      setSettingsDraft(null);
+    }
     await withBusy(async () => {
       const detail = await window.atoumweb.referentials.library.get(item.sourceItemId);
       const version = detail.versions.find((candidate) => candidate.id === item.sourceVersionId) ?? null;
@@ -304,6 +311,20 @@ export function ProjectPageCompositionPanel({
       setInspectExpanded(false);
       setMode(null);
     });
+  }
+
+  function toggleSettings(item: AtoumWebCompositionItem): void {
+    if (settingsItemId === item.id) {
+      setSettingsItemId(null);
+      setSettingsDraft(null);
+      return;
+    }
+    if (inspected && inspected.item.id !== item.id) {
+      setInspected(null);
+      setInspectExpanded(false);
+    }
+    setSettingsItemId(item.id);
+    setSettingsDraft(null);
   }
 
   async function attachExisting(): Promise<void> {
@@ -403,6 +424,12 @@ export function ProjectPageCompositionPanel({
   const availableHistorical = allCompositions.filter((candidate) => candidate.id !== composition?.id && candidate.status !== 'archived');
   const deviceWidth = previewDevice === 'desktop' ? '100%' : previewDevice === 'tablet' ? '768px' : '390px';
   const inspectWidth = inspectDevice === 'desktop' ? '100%' : inspectDevice === 'tablet' ? '768px' : '390px';
+  const settingsItem = composition?.items.find((item) => item.id === settingsItemId) ?? null;
+  const liveInspectedParts: PreviewParts | null = inspected
+    ? (settingsItemId === inspected.item.id && settingsDraft
+        ? { ...settingsDraft, previewable: Boolean(settingsDraft.html.trim()), raw: inspected.parts.raw }
+        : inspected.parts)
+    : null;
   const inspectorHost = inspectorHostId && typeof document !== 'undefined'
     ? document.getElementById(inspectorHostId)
     : null;
@@ -452,21 +479,14 @@ export function ProjectPageCompositionPanel({
                   type="button"
                   className={settingsItemId === item.id ? 'active' : ''}
                   disabled={busy}
-                  onClick={() => setSettingsItemId((current) => current === item.id ? null : item.id)}
-                >Réglages {settingsItemId === item.id ? '▴' : '▾'}</button>
+                  onClick={() => toggleSettings(item)}
+                >{settingsItemId === item.id ? 'Fermer réglages' : 'Réglages'}</button>
                 <button type="button" className={inspected?.item.id === item.id ? 'active' : ''} disabled={busy} onClick={() => void inspect(item)}>
                   {inspected?.item.id === item.id ? 'Fermer aperçu' : 'Code / aperçu'}
                 </button>
                 <button type="button" disabled={busy} onClick={() => void remove(item)}>Retirer</button>
               </div>
             </article>
-            {settingsItemId === item.id && <ProjectCompositionItemSettings
-              compositionId={composition.id}
-              item={item}
-              pageName={page.name}
-              onUpdated={(updated) => setComposition(updated)}
-              onMessage={onMessage}
-            />}
           </div>;
         })}
         {composition.items.length === 0 && <p className="muted">Composition créée, mais encore vide.</p>}
@@ -485,35 +505,61 @@ export function ProjectPageCompositionPanel({
 
     </div>
 
-    {inspected && inspectorHost && createPortal(
-      <div className="project-page-inspector-dock">
-        <header>
-          <div>
-            <span className="eyebrow">Code / aperçu</span>
-            <strong>{inspected.item.displayName}</strong>
-            <small>Source figée · v{inspected.item.sourceVersionNumber}</small>
+    {(settingsItem || inspected) && inspectorHost && createPortal(
+      <div className={`project-page-inspector-workbench ${settingsItem && inspected ? 'dual' : 'single'}`}>
+        {settingsItem && composition && <section className="project-page-inspector-pane settings-pane">
+          <ProjectCompositionItemSettings
+            compositionId={composition.id}
+            item={settingsItem}
+            pageName={page.name}
+            onUpdated={(updated) => setComposition(updated)}
+            onMessage={onMessage}
+            docked
+            onClose={() => {
+              setSettingsItemId(null);
+              setSettingsDraft(null);
+            }}
+            onDraftChange={setSettingsDraft}
+          />
+        </section>}
+
+        {inspected && liveInspectedParts && <section className="project-page-inspector-pane code-pane">
+          <div className="project-page-inspector-dock">
+            <header>
+              <div>
+                <span className="eyebrow">Code / aperçu</span>
+                <strong>{inspected.item.displayName}</strong>
+                <small>{settingsItemId === inspected.item.id && settingsDraft ? 'Brouillon local en direct' : `Source figée · v${inspected.item.sourceVersionNumber}`}</small>
+              </div>
+              <div>
+                <button className="secondary-button" type="button" onClick={() => setInspectExpanded(true)}>Agrandir</button>
+                <button className="secondary-button" type="button" aria-label="Fermer le volet Code / aperçu" onClick={() => setInspected(null)}>×</button>
+              </div>
+            </header>
+            <div className="project-page-preview-controls project-page-inspector-device-controls">
+              <button type="button" className={inspectDevice === 'desktop' ? 'active' : ''} onClick={() => setInspectDevice('desktop')}>Desktop</button>
+              <button type="button" className={inspectDevice === 'tablet' ? 'active' : ''} onClick={() => setInspectDevice('tablet')}>Tablette</button>
+              <button type="button" className={inspectDevice === 'mobile' ? 'active' : ''} onClick={() => setInspectDevice('mobile')}>Mobile</button>
+            </div>
+            <div className="project-page-inspector-dock-preview">
+              <div style={{ width: inspectWidth }}>
+                <iframe
+                  className="interactive-preview"
+                  tabIndex={0}
+                  title={`Aperçu direct ${inspected.item.displayName}`}
+                  sandbox=""
+                  srcDoc={buildPreviewDocument(liveInspectedParts, inspected.item.displayName)}
+                />
+              </div>
+            </div>
+            <div className="project-page-code-tabs project-page-inspector-dock-code">
+              <details open><summary>HTML</summary><pre>{liveInspectedParts.html || '—'}</pre></details>
+              <details><summary>CSS</summary><pre>{liveInspectedParts.css || '—'}</pre></details>
+              <details><summary>JavaScript</summary><pre>{liveInspectedParts.javascript || '—'}</pre></details>
+              {!liveInspectedParts.previewable && <details><summary>Contenu brut</summary><pre>{liveInspectedParts.raw || '—'}</pre></details>}
+            </div>
           </div>
-          <div>
-            <button className="secondary-button" type="button" onClick={() => setInspectExpanded(true)}>Agrandir</button>
-            <button className="secondary-button" type="button" aria-label="Fermer le volet Code / aperçu" onClick={() => setInspected(null)}>×</button>
-          </div>
-        </header>
-        <div className="project-page-preview-controls project-page-inspector-device-controls">
-          <button type="button" className={inspectDevice === 'desktop' ? 'active' : ''} onClick={() => setInspectDevice('desktop')}>Desktop</button>
-          <button type="button" className={inspectDevice === 'tablet' ? 'active' : ''} onClick={() => setInspectDevice('tablet')}>Tablette</button>
-          <button type="button" className={inspectDevice === 'mobile' ? 'active' : ''} onClick={() => setInspectDevice('mobile')}>Mobile</button>
-        </div>
-        <div className="project-page-inspector-dock-preview">
-          <div style={{ width: inspectWidth }}>
-            <iframe title={`Aperçu direct ${inspected.item.displayName}`} sandbox="" srcDoc={buildPreviewDocument(inspected.parts, inspected.item.displayName)} />
-          </div>
-        </div>
-        <div className="project-page-code-tabs project-page-inspector-dock-code">
-          <details open><summary>HTML</summary><pre>{inspected.parts.html || '—'}</pre></details>
-          <details><summary>CSS</summary><pre>{inspected.parts.css || '—'}</pre></details>
-          <details><summary>JavaScript</summary><pre>{inspected.parts.javascript || '—'}</pre></details>
-          {!inspected.parts.previewable && <details><summary>Contenu brut</summary><pre>{inspected.parts.raw || '—'}</pre></details>}
-        </div>
+        </section>}
       </div>,
       inspectorHost,
     )}
