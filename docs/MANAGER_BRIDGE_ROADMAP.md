@@ -953,3 +953,22 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - repli/restauration de la colonne Code / aperçu ;
   - conservation des modes responsive.
 - Statut : implémenté sur `wip/codex-6b-ui-fix`, validation locale requise.
+
+
+### 2026-09-29 — LOT6B-UX-006 — Stabilisation troisième colonne et timer compact
+
+- Reprise après contrôle UI : quatre échecs observés, dont deux faux négatifs du harness et un vrai défaut de cycle React sur le host de la troisième colonne.
+- Faux négatif « Informations Page placées avant la composition » : `compareDocumentPosition()` renvoyait le bitmask `4`, correct mais différent de la valeur booléenne stricte attendue. Test corrigé avec `Boolean(...)`.
+- Cause réelle de l'absence de la troisième colonne :
+  - le host DOM du portal Code / aperçu n'était créé qu'après `inspectorOpen=true` ;
+  - le composant enfant tentait donc de créer son portal avant que le host existe ;
+  - résultat : pas de dock monté, donc pas de bouton de repli.
+- Correction : le shell/host de la colonne Code / aperçu reste toujours monté dans le DOM mais est masqué via `.inactive` tant qu'aucun aperçu n'est ouvert. Le portal dispose ainsi toujours d'une destination stable.
+- Timer Page :
+  - hauteur réduite à une barre réellement compacte ;
+  - libellés raccourcis `Production →` / `▶ Démarrer` avec `title` descriptifs ;
+  - temps et sessions sur une seule ligne ;
+  - boutons non wrappés.
+- Harness : seuil du timer resserré à 60 px et diagnostic de hauteur en cas d'échec.
+- Aucun changement métier, aucune migration, aucun changement Bridge.
+- Statut : correctifs poussés sur `wip/codex-6b-ui-fix`, validation typecheck + harness UI requise.
