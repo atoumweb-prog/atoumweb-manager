@@ -856,3 +856,13 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - les derniers messages console renderer sont joints au diagnostic.
 - Aucun fichier métier modifié dans ce sous-lot ; uniquement le script de contrôle.
 - Prochaine action : tirer le nouveau HEAD WIP et relancer seulement `node scripts/check-project-composition-ui.cjs` afin d'identifier le premier contrôle fautif avant toute nouvelle correction fonctionnelle.
+
+
+### 2026-09-29 — LOT6B-RESPONSIVE-001 — Largeurs responsive déterministes
+
+- Validation du harness : 31/33 contrôles réussis ; seuls « Largeur tablette » et « Largeur mobile » échouaient.
+- Mesures : état React correct (`Tablette` / `Mobile` actifs), style inline correct (`768px` / `390px`), mais largeur mesurée intermédiaire/étirée.
+- Cause retenue : transition CSS de largeur sur le wrapper d'aperçu, rendant le contrôle déterministe impossible et produisant notamment une largeur mobile intermédiaire.
+- Correction : suppression de `transition: width .15s ease` et verrouillage du wrapper avec `flex:0 0 auto; min-width:0`.
+- Aucun changement métier ni migration.
+- Validation attendue : relancer uniquement `node scripts/check-project-composition-ui.cjs` ; cible 33/33.
