@@ -22,7 +22,7 @@
 - [x] Tests Vitest ciblés historiques : **35/35 réussis**.
 - [x] Harness Electron final : **65/65 contrôles réussis, 0 échec** sur le checkpoint `d464ad2b2d7f500a6a1443059e50f706dc244200`.
 - [x] Recette visuelle réelle Carlos validée le 29/09/2026 : replis, atelier docké, aperçu scrollable, grand écran Réglages, grand écran Code et disposition 75/25 jugés conformes.
-- [ ] Réintégrer proprement `wip/codex-6b-ui-fix` dans `feature/project-page-compositions-v1` après contrôle final de statut local.
+- [ ] PR **#75** ouverte en brouillon : `wip/codex-6b-ui-fix` → `feature/project-page-compositions-v1`. Vérifier le statut local puis intégrer uniquement après les derniers gates de clôture.
 - [ ] Relancer après intégration le typecheck + harness 65 contrôles sur la branche canonique.
 - [ ] Décider si une suite Vitest complète / packaging est requise avant de fermer officiellement le lot 6B.
 - [ ] Corriger à faible priorité l'avertissement Electron du harness `console-message` déprécié ; aucun impact fonctionnel Manager.
