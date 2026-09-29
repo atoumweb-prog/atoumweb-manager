@@ -1111,3 +1111,16 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - restauration Réglages avant poursuite du parcours.
 - Aucun changement métier, aucune migration, aucun changement Bridge.
 - Statut : correctif poussé sur `wip/codex-6b-ui-fix`, validation locale requise.
+
+
+### 2026-09-29 — LOT6B-UX-010 — Repositionnement du bouton de repli de la fiche Page
+
+- Retour de recette visuelle : le bouton de réduction de la colonne Fiche Page flottait en haut à droite et chevauchait visuellement le badge `6B · Composition AtoumWeb`.
+- Correction :
+  - suppression du positionnement sticky/flottant du bouton de repli ;
+  - intégration du bouton dans un groupe d'actions de l'en-tête de la fiche ;
+  - sur une Page : badge 6B puis bouton de repli, alignés proprement ;
+  - sur un Site : statut éventuel puis bouton de repli ;
+  - état vide conservé avec un bouton local positionné dans la fiche.
+- Aucun changement métier, aucune migration, aucun changement Bridge.
+- Statut : correctif poussé sur `wip/codex-6b-ui-fix`, validation locale requise.
