@@ -1216,3 +1216,28 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - parité de fonctionnement entre les deux outils.
 - Aucun changement métier, aucune migration, aucun changement Bridge.
 - Statut : implémenté sur `wip/codex-6b-ui-fix`, validation typecheck + harness + recette visuelle requise.
+
+
+### 2026-09-29 — LOT6B-UX-013 — Grand écran 75/25 verrouillé avec colonne outils scrollable
+
+- Retour de recette :
+  - en grand écran Réglages, la prévisualisation restait trop proche d'un partage 50/50 ;
+  - souhait d'une page nettement plus grande à gauche et d'un défilement des commandes uniquement à droite ;
+  - même demande pour la vue Code / aperçu.
+- Correction :
+  - disposition grand écran verrouillée par zones CSS explicites, afin que le contenu des formulaires ne puisse plus élargir la colonne outils ;
+  - ratio cible : **environ 75 % aperçu / 25 % outils** ;
+  - Réglages :
+    - preview à gauche sur toute la hauteur utile ;
+    - Textes / Éléments visuels / Couleurs / Code avancé / promotion dans une colonne droite indépendante ;
+    - scroll vertical uniquement sur la colonne commandes ;
+  - Code / aperçu :
+    - preview à gauche sur toute la hauteur utile ;
+    - HTML / CSS / JavaScript dans une colonne droite indépendante ;
+    - scroll vertical uniquement sur la colonne code ;
+  - responsive Desktop / Tablette / Mobile conservé dans les deux vues.
+- Harness renforcé :
+  - ratio aperçu/outils >= 2,2 en grand écran ;
+  - colonne outils explicitement scrollable dans Réglages et Code.
+- Aucun changement métier, aucune migration, aucun changement Bridge.
+- Statut : implémenté sur `wip/codex-6b-ui-fix`, validation harness + recette visuelle requise.
