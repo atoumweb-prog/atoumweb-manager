@@ -1241,3 +1241,17 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - colonne outils explicitement scrollable dans Réglages et Code.
 - Aucun changement métier, aucune migration, aucun changement Bridge.
 - Statut : implémenté sur `wip/codex-6b-ui-fix`, validation harness + recette visuelle requise.
+
+
+### 2026-09-29 — LOT6B-TEST-014 — Débordement responsive volontaire distingué des vrais masquages
+
+- Validation locale précédente : typecheck vert, harness **64/65** ; seul le contrôle « Pas de contenu horizontal masqué dans les réglages » échouait.
+- Cause :
+  - les aperçus Tablette / Mobile utilisent volontairement une largeur fixe (768 / 390 px) dans un viewport `overflow:auto` ;
+  - l’ancien contrôle considérait tout `scrollWidth > clientWidth` comme une erreur, même lorsque le débordement était explicitement scrollable.
+- Correction du harness :
+  - les éléments ou ancêtres en `overflow-x:auto|scroll` sont désormais considérés comme des zones de débordement volontaire ;
+  - les vrais débordements cachés restent détectés ;
+  - en cas de nouvel échec, le harness renvoie maintenant les éléments fautifs avec tag, classe, largeur visible et largeur scrollable.
+- Aucun changement fonctionnel Manager, aucune migration, aucun changement Bridge.
+- Statut : correctif de test poussé sur `wip/codex-6b-ui-fix`, rerun harness requis.
