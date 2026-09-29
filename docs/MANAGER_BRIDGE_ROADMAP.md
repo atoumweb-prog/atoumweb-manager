@@ -866,3 +866,20 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Correction : suppression de `transition: width .15s ease` et verrouillage du wrapper avec `flex:0 0 auto; min-width:0`.
 - Aucun changement métier ni migration.
 - Validation attendue : relancer uniquement `node scripts/check-project-composition-ui.cjs` ; cible 33/33.
+
+
+### 2026-09-29 — LOT6B-CHECKPOINT-UI-001 — Validation automatique 6B verte
+
+- Validation MSI sur le HEAD `d9d545b64608e7dc1e2b7e1584402e7fcd5ba153`.
+- `npm run typecheck` : réussi.
+- Vitest ciblés :
+  - migrations : 10/10 ;
+  - AtoumWebCompositionService : 12/12 ;
+  - AtoumWebTechnicalLibraryService : 11/11 ;
+  - AtoumWebCompositionPackageService : 2/2 ;
+  - total : **35/35**, 0 échec.
+- Harness Electron `scripts/check-project-composition-ui.cjs` : **33/33 contrôles réussis**, 0 échec.
+- Les deux derniers écarts responsive (Tablette/Mobile) ont été corrigés par suppression de la transition de largeur et verrouillage du wrapper d'aperçu.
+- Avertissement restant : API `console-message` Electron dépréciée dans le harness de test uniquement ; aucun impact fonctionnel.
+- Statut : validation automatique 6B **verte**.
+- Étape suivante : recette visuelle manuelle de Carlos dans le vrai Manager avant toute réintégration de la branche WIP vers `feature/project-page-compositions-v1`.
