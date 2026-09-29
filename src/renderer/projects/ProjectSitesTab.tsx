@@ -53,6 +53,7 @@ export function ProjectSitesTab({
   const [busy, setBusy] = useState(false);
   const [splitPercent, setSplitPercent] = useState(40);
   const [treeCollapsed, setTreeCollapsed] = useState(false);
+  const [detailCollapsed, setDetailCollapsed] = useState(false);
   const [introCollapsed, setIntroCollapsed] = useState(false);
   const [pageInfoOpen, setPageInfoOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
@@ -237,6 +238,7 @@ export function ProjectSitesTab({
   function selectSite(id: string): void {
     setSelectedPageId(null);
     setSelectedSiteId(id);
+    setDetailCollapsed(false);
     setInspectorOpen(false);
     setInspectorCollapsed(false);
   }
@@ -244,6 +246,7 @@ export function ProjectSitesTab({
   function selectPage(id: string): void {
     setSelectedSiteId(null);
     setSelectedPageId(id);
+    setDetailCollapsed(false);
     setPageInfoOpen(false);
     setInspectorOpen(false);
     setInspectorCollapsed(false);
@@ -344,20 +347,26 @@ export function ProjectSitesTab({
     ? Math.min(splitPercent, inspectorDual ? 22 : 30)
     : splitPercent;
   const workspaceColumns = (() => {
+    const detailWidth = detailCollapsed ? '46px' : 'minmax(360px, 1fr)';
     if (!inspectorOpen) {
-      return treeCollapsed ? '46px minmax(0, 1fr)' : `${effectiveLeftPercent}% 8px minmax(0, 1fr)`;
+      if (treeCollapsed) return detailCollapsed ? '46px 46px' : `46px ${detailWidth}`;
+      return detailCollapsed
+        ? 'minmax(0, 1fr) 8px 46px'
+        : `${effectiveLeftPercent}% 8px ${detailWidth}`;
     }
     if (inspectorCollapsed) {
       return treeCollapsed
-        ? '46px minmax(0, 1fr) 46px'
-        : `${effectiveLeftPercent}% 8px minmax(0, 1fr) 46px`;
+        ? `46px ${detailWidth} 46px`
+        : `${effectiveLeftPercent}% 8px ${detailWidth} 46px`;
     }
-    const rightWidth = inspectorDual
-      ? `clamp(620px, ${Math.max(inspectorPercent, 46)}%, 940px)`
-      : `clamp(340px, ${inspectorPercent}%, 680px)`;
+    const rightWidth = detailCollapsed
+      ? 'minmax(340px, 1fr)'
+      : inspectorDual
+        ? `clamp(620px, ${Math.max(inspectorPercent, 46)}%, 940px)`
+        : `clamp(340px, ${inspectorPercent}%, 680px)`;
     return treeCollapsed
-      ? `46px minmax(360px, 1fr) 8px ${rightWidth}`
-      : `${effectiveLeftPercent}% 8px minmax(360px, 1fr) 8px ${rightWidth}`;
+      ? `46px ${detailWidth} 8px ${rightWidth}`
+      : `${effectiveLeftPercent}% 8px ${detailWidth} 8px ${rightWidth}`;
   })();
 
   return <section className="project-sites-tab">
@@ -411,7 +420,7 @@ export function ProjectSitesTab({
     </div>}
 
     <div
-      className={`project-sites-workspace ${treeCollapsed ? 'tree-collapsed' : ''} ${inspectorOpen ? 'inspector-open' : ''} ${inspectorCollapsed ? 'inspector-collapsed' : ''}`}
+      className={`project-sites-workspace ${treeCollapsed ? 'tree-collapsed' : ''} ${detailCollapsed ? 'detail-collapsed' : ''} ${inspectorOpen ? 'inspector-open' : ''} ${inspectorCollapsed ? 'inspector-collapsed' : ''}`}
       style={{ gridTemplateColumns: workspaceColumns }}
     >
       {treeCollapsed ? <button className="project-sites-tree-restore" type="button" title="Afficher l’arborescence" aria-label="Afficher l’arborescence" onClick={() => setTreeCollapsed(false)}>→</button> : <section className="panel project-sites-tree-panel">
@@ -476,7 +485,10 @@ export function ProjectSitesTab({
         }}
       ><span /></div>}
 
-      <section className="panel project-sites-detail-panel">
+      {detailCollapsed
+        ? <button className="project-sites-detail-restore" type="button" title="Afficher la fiche Page" aria-label="Afficher la fiche Page" onClick={() => setDetailCollapsed(false)}>→</button>
+        : <section className="panel project-sites-detail-panel">
+        <button className="project-sites-detail-collapse" type="button" title="Réduire la fiche Page" aria-label="Réduire la fiche Page" onClick={() => setDetailCollapsed(true)}>←</button>
         {!selectedSite && !selectedPage && <div className="project-sites-empty-detail">
           <span className="eyebrow">Fiche</span>
           <h3>Sélectionne un Site ou une Page</h3>
@@ -655,7 +667,7 @@ export function ProjectSitesTab({
             <span>Cette fiche décrit la destination métier de la Page. Le bouton de préparation Bridge sera ajouté dans un lot ultérieur.</span>
           </div>
         </>}
-      </section>
+      </section>}
 
       {inspectorOpen && !inspectorCollapsed && <div
         className="project-sites-inspector-splitter"
