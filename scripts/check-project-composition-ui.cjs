@@ -173,12 +173,17 @@ app.whenReady().then(async () => {
     await click('Fermer', "document.querySelector('.project-page-composition-modal')");
     await click('Fermer aperçu');
     await click('Réglages');
+    await check('Réglages ouverts dans le volet latéral', `!!document.querySelector('.project-sites-inspector-host .project-component-settings-panel.docked') && !document.querySelector('.project-page-composition-item-wrap .project-component-settings-panel')`);
     await check('Pas de contenu horizontal masqué dans les réglages', `[...document.querySelectorAll('.project-component-settings-panel *')].every(e=>e.matches('input,textarea')||!e.clientWidth||e.scrollWidth<=e.clientWidth+1)`);
     await check('Fin réelle de la fiche accessible', `(()=>{let e=document.querySelector('.project-sites-detail-panel');e.scrollTop=e.scrollHeight;return e.lastElementChild.getBoundingClientRect().bottom<=e.getBoundingClientRect().bottom})()`);
-    await check('Aperçu intégré laisse la molette au panneau', `getComputedStyle(document.querySelector('.project-component-settings-preview iframe')).pointerEvents==='none'`);
+    await check('Aperçu Réglages interactif et scrollable', `(()=>{const frame=document.querySelector('.project-component-settings-preview iframe');const scroller=document.querySelector('.project-component-settings-panel.docked .project-component-settings-grid');return getComputedStyle(frame).pointerEvents==='auto' && ['auto','scroll'].includes(getComputedStyle(scroller).overflowY)})()`);
+    await click('Code / aperçu');
+    await check('Réglages et Code côte à côte', `document.querySelector('.project-page-inspector-workbench')?.classList.contains('dual') && document.querySelectorAll('.project-page-inspector-pane').length===2`);
+    await check('Code HTML visible dans le volet normal', `!!document.querySelector('.project-page-inspector-dock-code details[open] pre')`);
     await check('Pickers visuels disponibles pour hex, rgb et hsl', `document.querySelectorAll('input[type=color]').length===4`);
     await input('.project-component-settings-section input', 'Titre client');
     await check('Modification texte locale', `document.querySelector('.project-component-settings-section input').value==='Titre client'`);
+    await check('Code aperçu synchronisé avec le brouillon', `document.querySelector('.project-page-inspector-dock-code details[open] pre').textContent.includes('Titre client')`);
     await click('Annuler');
     await check('Undo texte', `document.querySelector('.project-component-settings-section input').value==='Titre source'`);
     await click('Rétablir');
@@ -211,6 +216,8 @@ app.whenReady().then(async () => {
     await click('Voir le module seul');
     await check('Module seul : iframe interactive de hauteur utilisable', `(()=>{let e=document.querySelector('.interactive-preview');return e.getBoundingClientRect().height>=300 && getComputedStyle(e).pointerEvents==='auto'})()`);
     await click('Fermer', "document.querySelector('.module-only-preview')");
+    await click('Fermer aperçu');
+    await click('Fermer réglages');
     await click('+ Bibliothèque');
     await check('Éléments non prêts visibles mais non ajoutables', `document.querySelectorAll('.project-page-library-card').length===2 && document.querySelector('.not-ready button').disabled`);
     await input('.library-modal input','Pas prêt');
