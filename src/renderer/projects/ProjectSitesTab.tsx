@@ -55,6 +55,9 @@ export function ProjectSitesTab({
   const [treeCollapsed, setTreeCollapsed] = useState(false);
   const [introCollapsed, setIntroCollapsed] = useState(false);
   const [pageInfoOpen, setPageInfoOpen] = useState(false);
+  const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
+  const [inspectorPercent, setInspectorPercent] = useState(34);
   const [timeSessions, setTimeSessions] = useState<TimeSession[]>([]);
   const [activeTime, setActiveTime] = useState<TimeSession | null>(null);
   const [timeSnapshotAt, setTimeSnapshotAt] = useState(Date.now());
@@ -117,6 +120,25 @@ export function ProjectSitesTab({
       if (!rect.width) return;
       const ratio = ((event.clientX - rect.left) / rect.width) * 100;
       setSplitPercent(Math.max(24, Math.min(68, ratio)));
+    };
+    const onUp = () => {
+      document.body.classList.remove('project-resizing');
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  }
+
+  function beginInspectorResize(): void {
+    const workspace = document.querySelector<HTMLElement>('.project-sites-workspace');
+    if (!workspace) return;
+    document.body.classList.add('project-resizing');
+    const onMove = (event: PointerEvent) => {
+      const rect = workspace.getBoundingClientRect();
+      if (!rect.width) return;
+      const ratio = ((rect.right - event.clientX) / rect.width) * 100;
+      setInspectorPercent(Math.max(24, Math.min(45, ratio)));
     };
     const onUp = () => {
       document.body.classList.remove('project-resizing');
@@ -213,12 +235,16 @@ export function ProjectSitesTab({
   function selectSite(id: string): void {
     setSelectedPageId(null);
     setSelectedSiteId(id);
+    setInspectorOpen(false);
+    setInspectorCollapsed(false);
   }
 
   function selectPage(id: string): void {
     setSelectedSiteId(null);
     setSelectedPageId(id);
     setPageInfoOpen(false);
+    setInspectorOpen(false);
+    setInspectorCollapsed(false);
   }
 
   const selectedPageSessions = selectedPage
@@ -311,6 +337,23 @@ export function ProjectSitesTab({
     }
   }
 
+  const inspectorHostId = 'project-sites-code-inspector-host';
+  const effectiveLeftPercent = inspectorOpen && !treeCollapsed ? Math.min(splitPercent, 30) : splitPercent;
+  const workspaceColumns = (() => {
+    if (!inspectorOpen) {
+      return treeCollapsed ? '46px minmax(0, 1fr)' : `${effectiveLeftPercent}% 8px minmax(0, 1fr)`;
+    }
+    if (inspectorCollapsed) {
+      return treeCollapsed
+        ? '46px minmax(0, 1fr) 46px'
+        : `${effectiveLeftPercent}% 8px minmax(0, 1fr) 46px`;
+    }
+    const rightWidth = `clamp(340px, ${inspectorPercent}%, 620px)`;
+    return treeCollapsed
+      ? `46px minmax(360px, 1fr) 8px ${rightWidth}`
+      : `${effectiveLeftPercent}% 8px minmax(360px, 1fr) 8px ${rightWidth}`;
+  })();
+
   return <section className="project-sites-tab">
     <div className={`project-sites-intro panel ${introCollapsed ? 'collapsed' : ''}`}>
       <div className="project-sites-intro-copy">
@@ -361,7 +404,10 @@ export function ProjectSitesTab({
       </div>
     </div>}
 
-    <div className={`project-sites-workspace ${treeCollapsed ? 'tree-collapsed' : ''}`} style={{ gridTemplateColumns: treeCollapsed ? '46px minmax(0, 1fr)' : `${splitPercent}% 8px minmax(0, 1fr)` }}>
+    <div
+      className={`project-sites-workspace ${treeCollapsed ? 'tree-collapsed' : ''} ${inspectorOpen ? 'inspector-open' : ''} ${inspectorCollapsed ? 'inspector-collapsed' : ''}`}
+      style={{ gridTemplateColumns: workspaceColumns }}
+    >
       {treeCollapsed ? <button className="project-sites-tree-restore" type="button" title="Afficher l’arborescence" aria-label="Afficher l’arborescence" onClick={() => setTreeCollapsed(false)}>→</button> : <section className="panel project-sites-tree-panel">
         <div className="project-sites-tree-head">
           <div><span className="eyebrow">Arborescence</span><strong>{activeSites.length} Site{activeSites.length > 1 ? 's' : ''} · {pages.length} Page{pages.length > 1 ? 's' : ''}</strong></div>
@@ -584,7 +630,15 @@ export function ProjectSitesTab({
             </div>}
           </section>
 
-          <ProjectPageCompositionPanel page={selectedPage} onMessage={onMessage} />
+          <ProjectPageCompositionPanel
+            page={selectedPage}
+            onMessage={onMessage}
+            inspectorHostId={inspectorHostId}
+            onInspectorOpenChange={(open) => {
+              setInspectorOpen(open);
+              if (open) setInspectorCollapsed(false);
+            }}
+          />
 
           <div className="project-sites-note">
             <strong>Divi reste l’atelier principal.</strong>
@@ -592,6 +646,31 @@ export function ProjectSitesTab({
           </div>
         </>}
       </section>
+
+      {inspectorOpen && !inspectorCollapsed && <div
+        className="project-sites-inspector-splitter"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Redimensionner la fiche et le volet Code / aperçu"
+        tabIndex={0}
+        onPointerDown={beginInspectorResize}
+        onDoubleClick={() => setInspectorPercent(34)}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowLeft') setInspectorPercent((value) => Math.min(45, value + 3));
+          if (event.key === 'ArrowRight') setInspectorPercent((value) => Math.max(24, value - 3));
+        }}
+      ><span /></div>}
+
+      {inspectorOpen && <aside className={`panel project-sites-inspector-shell ${inspectorCollapsed ? 'collapsed' : ''}`}>
+        <button
+          className="project-sites-inspector-collapse"
+          type="button"
+          title={inspectorCollapsed ? 'Afficher Code / aperçu' : 'Masquer Code / aperçu'}
+          aria-label={inspectorCollapsed ? 'Afficher Code / aperçu' : 'Masquer Code / aperçu'}
+          onClick={() => setInspectorCollapsed((value) => !value)}
+        >{inspectorCollapsed ? '←' : '→'}</button>
+        <div id={inspectorHostId} className="project-sites-inspector-host" />
+      </aside>}
     </div>
   </section>;
 }
