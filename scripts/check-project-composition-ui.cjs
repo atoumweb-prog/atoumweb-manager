@@ -115,9 +115,10 @@ app.whenReady().then(async () => {
       const hero='<section><div class="banner">Votre titre</div><div class="badge"><span>Votre titre</span></div><h1>Pour les <span>Votre titre</span><em> personnalisable</em></h1><p>Votre titre</p></section>';
       const fields=window.localEditor.extractComponentTexts(hero);
       const target=fields.find(field=>field.path.join('.')==='0.2.1.0');
-      const changed=window.localEditor.replaceComponentText(hero,target.path,"N'attendez plus");
+      const replacement="N'attendez plus";
+      const changed=window.localEditor.replaceComponentText(hero,target.path,replacement);
       const doc=new DOMParser().parseFromString(changed,'text/html');
-      return doc.querySelector('h1').innerHTML==='Pour les <span>N\'attendez plus</span><em> personnalisable</em>'
+      return doc.querySelector('h1').innerHTML===`Pour les <span>${replacement}</span><em> personnalisable</em>`
         && doc.querySelector('.banner').textContent==='Votre titre'
         && doc.querySelector('.badge').textContent==='Votre titre'
         && doc.querySelector('p').textContent==='Votre titre';
