@@ -28,20 +28,20 @@
 .project-sites-detail-panel{display:flex;flex-direction:column;align-content:flex-start;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-gutter:stable;padding-bottom:72px;scroll-padding-bottom:72px}
 .project-sites-detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding-bottom:14px;border-bottom:1px solid var(--border-color,#2d3238)}
 .project-sites-detail-head h3{margin:.15rem 0}.project-sites-detail-head p{margin:.2rem 0 0;opacity:.72}
-.project-sites-page-work{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding:7px 9px;border:1px solid color-mix(in srgb,var(--accent) 28%,var(--border));border-radius:10px;background:color-mix(in srgb,var(--accent) 5%,var(--surface))}
+.project-sites-page-work{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;padding:5px 8px;min-height:42px;border:1px solid color-mix(in srgb,var(--accent) 28%,var(--border));border-radius:9px;background:color-mix(in srgb,var(--accent) 5%,var(--surface))}
 .project-sites-page-work.running{border-color:color-mix(in srgb,var(--success) 45%,var(--border));background:color-mix(in srgb,var(--success) 7%,var(--surface))}
-.project-sites-time-summary{display:flex;align-items:baseline;flex-wrap:wrap;gap:5px 8px;min-width:0}
+.project-sites-time-summary{display:flex;align-items:baseline;flex-wrap:nowrap;gap:4px 7px;min-width:0;white-space:nowrap}
 .project-sites-time-summary>span,.project-sites-time-summary>small{color:var(--text-muted);font-size:.76rem}
-.project-sites-time-summary>strong{font-size:18px;font-variant-numeric:tabular-nums;line-height:1}
-.project-sites-page-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
-.project-sites-page-actions button{min-height:30px;padding:5px 8px;font-size:.78rem}
+.project-sites-time-summary>strong{font-size:16px;font-variant-numeric:tabular-nums;line-height:1}
+.project-sites-page-actions{display:flex;flex-wrap:nowrap;gap:5px;justify-content:flex-end;align-items:center}
+.project-sites-page-actions button{height:30px;min-height:30px;padding:4px 8px;font-size:.76rem;white-space:nowrap}
 .project-sites-detail-form{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
 .project-sites-detail-form label{display:grid;gap:6px;font-size:.84rem}
 .project-sites-detail-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
 .project-sites-note{display:grid;flex:0 0 auto;gap:5px;margin-top:18px;padding-top:18px;border-top:1px solid var(--border-color,#2d3238)}
 .project-sites-note span,.project-sites-empty-detail p{opacity:.7}
 .project-sites-empty-detail{margin:auto;max-width:480px;text-align:center}
-@media(max-width:1100px){.project-sites-create-panel{grid-template-columns:1fr 1fr}.project-sites-page-work{align-items:flex-start;flex-direction:column}.project-sites-page-actions{justify-content:flex-start}}
+@media(max-width:1100px){.project-sites-create-panel{grid-template-columns:1fr 1fr}.project-sites-page-work{align-items:center}.project-sites-time-summary>small{display:none}.project-sites-page-actions{justify-content:flex-end}}
 @media(max-width:760px){.project-sites-tab{height:auto;overflow:visible}.project-sites-intro{align-items:stretch;flex-direction:column}.project-sites-toolbar{justify-content:flex-end}.project-sites-create-panel,.project-sites-detail-form{grid-template-columns:1fr}.project-sites-workspace{grid-template-columns:1fr!important;height:auto;overflow:visible}.project-sites-splitter{display:none}.project-sites-tree-panel{max-height:380px}.project-sites-detail-panel{min-height:360px}}
 
 .project-sites-detail-panel > *{flex:0 0 auto;max-width:100%;min-width:0;box-sizing:border-box}
@@ -72,3 +72,5 @@
 .project-sites-inspector-host{min-width:0;min-height:0;height:100%;overflow:hidden}
 .project-sites-inspector-shell.collapsed .project-sites-inspector-host{display:none}
 @media(max-width:760px){.project-sites-workspace.inspector-open{grid-template-columns:1fr!important}.project-sites-inspector-splitter{display:none}.project-sites-inspector-shell{grid-template-columns:1fr;min-height:420px}.project-sites-inspector-collapse{height:34px;min-height:34px;border-right:0;border-bottom:1px solid var(--border)}.project-sites-inspector-shell.collapsed{min-height:34px}}
+
+.project-sites-inspector-shell.inactive{display:none}
