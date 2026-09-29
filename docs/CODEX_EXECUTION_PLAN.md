@@ -5,7 +5,8 @@
 > **Chantier actif : clôture du Lot 6B — Sites & pages / composition de Page.**
 >
 > - Branche de stabilisation : `wip/codex-6b-ui-fix`
-> - HEAD GitHub au moment de cette mise à jour : `454919719c547955bfffe16640184a745a9c08ec`
+> - Dernier commit fonctionnel inclus dans la validation 339/339 : `41719b006ea42051ee638607a60d9888535a4baf`
+> - Le HEAD de branche peut être plus récent à cause des commits documentaires : **toujours exécuter `git rev-parse HEAD` avant intervention**.
 > - Branche canonique cible : `feature/project-page-compositions-v1`
 > - Base canonique : `39315436376ba81470ed5fc0cbdad92c457ce553`
 > - PR de réintégration : **#75**, ouverte en **draft**
