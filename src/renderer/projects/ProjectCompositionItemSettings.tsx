@@ -524,7 +524,7 @@ export function ProjectCompositionItemSettings({
           <span className="eyebrow">Aperçu du module</span>
           <strong>{item.displayName}</strong>
           {item.hasLocalChanges && <small>Adaptation locale enregistrée</small>}
-          <button className="secondary-button" type="button" onClick={() => setModulePreviewOpen(true)}>Agrandir</button>
+          <button className="secondary-button" type="button" onClick={() => setModulePreviewOpen(true)}>Voir le module seul</button>
         </div>
         <iframe title={`Aperçu préparé ${item.displayName}`} sandbox="" srcDoc={previewDocument(draft)} />
       </div>
