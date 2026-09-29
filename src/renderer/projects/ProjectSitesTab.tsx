@@ -488,8 +488,8 @@ export function ProjectSitesTab({
       {detailCollapsed
         ? <button className="project-sites-detail-restore" type="button" title="Afficher la fiche Page" aria-label="Afficher la fiche Page" onClick={() => setDetailCollapsed(false)}>→</button>
         : <section className="panel project-sites-detail-panel">
-        <button className="project-sites-detail-collapse" type="button" title="Réduire la fiche Page" aria-label="Réduire la fiche Page" onClick={() => setDetailCollapsed(true)}>←</button>
         {!selectedSite && !selectedPage && <div className="project-sites-empty-detail">
+          <button className="project-sites-detail-collapse" type="button" title="Réduire la fiche" aria-label="Réduire la fiche" onClick={() => setDetailCollapsed(true)}>←</button>
           <span className="eyebrow">Fiche</span>
           <h3>Sélectionne un Site ou une Page</h3>
           <p>Tu pourras ensuite modifier son rattachement et ses informations.</p>
@@ -498,7 +498,10 @@ export function ProjectSitesTab({
         {selectedSite && !selectedPage && <>
           <header className="project-sites-detail-head">
             <div><span className="eyebrow">Site du Projet</span><h3>{selectedSite.name}</h3><p>{selectedSite.desiredDomain || 'Nom de domaine non renseigné'}</p></div>
-            {selectedSite.archivedAt && <span className="status-pill">Archivé</span>}
+            <div className="project-sites-detail-head-actions">
+              {selectedSite.archivedAt && <span className="status-pill">Archivé</span>}
+              <button className="project-sites-detail-collapse" type="button" title="Réduire la fiche Site" aria-label="Réduire la fiche Page" onClick={() => setDetailCollapsed(true)}>←</button>
+            </div>
           </header>
           <div className="project-sites-detail-form">
             <label>Nom du site
@@ -542,7 +545,10 @@ export function ProjectSitesTab({
         {selectedPage && <>
           <header className="project-sites-detail-head">
             <div><span className="eyebrow">Page du Projet</span><h3>{selectedPage.name}</h3><p>{selectedSite ? selectedSite.name : 'Non rattachée à un Site'}</p></div>
-            <span className="status-pill project-sites-composition-badge">6B · Composition AtoumWeb</span>
+            <div className="project-sites-detail-head-actions">
+              <span className="status-pill project-sites-composition-badge">6B · Composition AtoumWeb</span>
+              <button className="project-sites-detail-collapse" type="button" title="Réduire la fiche Page" aria-label="Réduire la fiche Page" onClick={() => setDetailCollapsed(true)}>←</button>
+            </div>
           </header>
 
           <section className={`project-sites-page-work ${activeOnSelectedPage ? 'running' : ''}`}>
