@@ -222,8 +222,16 @@ export interface AtoumWebCompositionInput {
 }
 
 export interface AtoumWebCompositionItemLocalSettings {
-  textEdits?: Array<{ from: string; to: string }>;
+  textEdits?: Array<{ from: string; to: string; target?: string }>;
   colorEdits?: Array<{ from: string; to: string }>;
+  visualEdits?: Array<{
+    target: string;
+    label?: string;
+    symbol?: string;
+    color?: string;
+    backgroundColor?: string;
+    hidden?: boolean;
+  }>;
   note?: string | null;
 }
 
