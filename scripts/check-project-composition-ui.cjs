@@ -141,7 +141,7 @@ app.whenReady().then(async () => {
     await check('Onglet Sites sans panneau secondaire vide', `!document.querySelector('.project-production-secondary')`);
     await click('Accueil', "document.querySelector('.project-site-tree-pages')");
     await check('Occurrences de même source distinctes et numérotées', `document.querySelectorAll('.project-page-composition-item-wrap').length===3 && document.querySelector('.project-page-composition-list').textContent.includes('occurrence 3')`);
-    await check('Informations Page placées avant la composition', `document.querySelector('.project-sites-page-info')?.compareDocumentPosition(document.querySelector('.project-page-composition')) & Node.DOCUMENT_POSITION_FOLLOWING`);
+    await check('Informations Page placées avant la composition', `Boolean(document.querySelector('.project-sites-page-info')?.compareDocumentPosition(document.querySelector('.project-page-composition')) & Node.DOCUMENT_POSITION_FOLLOWING)`);
     await click('Informations de la Page');
     await check('Informations Page dépliables', `document.querySelector('.project-sites-page-info').classList.contains('open') && !!document.querySelector('.project-sites-page-info .project-sites-detail-form')`);
     await click('Informations de la Page');
@@ -150,7 +150,7 @@ app.whenReady().then(async () => {
     await js(`document.querySelector('.project-sites-tree-restore').click()`, 'rouvrir arborescence'); await settle();
     await check('Arborescence restaurable', `!document.querySelector('.project-sites-workspace').classList.contains('tree-collapsed') && !!document.querySelector('.project-sites-tree-panel')`);
     await click('Code / aperçu');
-    await check('Timer Page compact', `document.querySelector('.project-sites-page-work').getBoundingClientRect().height<=72`);
+    await check('Timer Page compact', `(()=>{const height=document.querySelector('.project-sites-page-work').getBoundingClientRect().height;return height<=60?true:{height}})()`);
     await check('Code aperçu dans une troisième colonne indépendante', `(()=>{
       const workspace=document.querySelector('.project-sites-workspace');
       const detail=document.querySelector('.project-sites-detail-panel');
