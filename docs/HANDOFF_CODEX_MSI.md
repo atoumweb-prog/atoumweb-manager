@@ -1,3 +1,50 @@
+> ## ⚠️ ÉTAT ACTUEL — 29/09/2026 — À LIRE AVANT TOUT
+>
+> Ce bloc **remplace les anciennes consignes de branche/PR mentionnées plus bas** pour la reprise actuelle. L'historique est conservé volontairement.
+>
+> **Chantier actif : clôture du Lot 6B — Sites & pages / composition de Page.**
+>
+> - Branche de stabilisation : `wip/codex-6b-ui-fix`
+> - HEAD GitHub au moment de cette mise à jour : `454919719c547955bfffe16640184a745a9c08ec`
+> - Branche canonique cible : `feature/project-page-compositions-v1`
+> - Base canonique : `39315436376ba81470ed5fc0cbdad92c457ce553`
+> - PR de réintégration : **#75**, ouverte en **draft**
+> - État GitHub PR #75 : **mergeable / clean**
+> - **Ne pas fusionner vers `main`**.
+>
+> **Validation acquise du Lot 6B :**
+>
+> - recette visuelle réelle validée ;
+> - `npm run typecheck` : vert ;
+> - harness UI Electron : **65/65** ;
+> - suite complète : **53 fichiers / 339 tests, 339/339 réussis** ;
+> - `npm run package` : réussi, package **win32 x64** ;
+> - migration courante : **49**, aucune nouvelle migration introduite par la stabilisation UX ;
+> - aucun changement Bridge pendant la stabilisation 6B.
+>
+> **Trois corrections transverses intégrées après la première suite complète :**
+>
+> 1. test legacy des migrations rendu dynamique jusqu'à l'état courant au lieu d'être figé à 38 ;
+> 2. test Workflow aligné avec le Builder CGV structuré : `specialTerms` du devis n'est plus supposé contenir automatiquement les conditions catalogue ;
+> 3. `DemoService` suit désormais `quote_contract_clauses` pour permettre une purge correcte des scénarios de démonstration.
+>
+> **Ce que Codex ne doit pas refaire :**
+>
+> - ne pas reprendre la recette UX 6B depuis zéro ;
+> - ne pas modifier les replis, l'atelier Réglages / Code ou le grand écran 75/25 sauf régression démontrée ;
+> - ne pas ajouter de migration ;
+> - ne pas toucher au dépôt Bridge pour clôturer le 6B ;
+> - ne pas repartir de `main`, de la PR #73 ou d'une ancienne branche historique.
+>
+> **Dernière étape de clôture :**
+>
+> 1. vérifier `git status -sb` sur MSI ;
+> 2. si le workspace est propre, intégrer **PR #75** dans `feature/project-page-compositions-v1` uniquement sur demande explicite ;
+> 3. après intégration, rerun minimal : `npm run typecheck` + `node scripts/check-project-composition-ui.cjs` attendu **65/65** ;
+> 4. marquer ensuite le Lot 6B clos dans `PROJECT_STATUS.md` et `docs/MANAGER_BRIDGE_ROADMAP.md`.
+>
+> **Après clôture seulement :** reprendre la feuille de route Manager ↔ Bridge avec le Lot 7 (Site / préparation Bridge), puis Lot 8 (retour d'occurrences), puis Lot 9 (assemblage multi-pages / livraison), uniquement après autorisation explicite.
+>
 # Handoff Codex MSI — AtoumWeb Manager
 
 
