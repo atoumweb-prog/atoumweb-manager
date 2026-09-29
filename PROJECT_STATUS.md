@@ -24,7 +24,13 @@
 - [x] Recette visuelle réelle Carlos validée le 29/09/2026 : replis, atelier docké, aperçu scrollable, grand écran Réglages, grand écran Code et disposition 75/25 jugés conformes.
 - [ ] PR **#75** ouverte en brouillon : `wip/codex-6b-ui-fix` → `feature/project-page-compositions-v1`. Vérifier le statut local puis intégrer uniquement après les derniers gates de clôture.
 - [ ] Relancer après intégration le typecheck + harness 65 contrôles sur la branche canonique.
-- [ ] Décider si une suite Vitest complète / packaging est requise avant de fermer officiellement le lot 6B.
+- [x] Suite Vitest complète lancée le 29/09/2026 : premier passage **336/339**, 3 échecs transverses identifiés hors UX 6B.
+- [x] Correctifs poussés :
+  - test migration legacy rendu dynamique jusqu'à la migration courante ;
+  - test Workflow aligné sur le Builder CGV structuré ;
+  - `quote_contract_clauses` ajouté au tracking/purge DemoService.
+- [ ] Relancer `npm test` après ces trois correctifs ; attendu **339/339** si aucun autre écart n'apparaît.
+- [ ] `npm run package` : commande lancée côté MSI mais résultat final non encore confirmé dans le retour partagé.
 - [ ] Corriger à faible priorité l'avertissement Electron du harness `console-message` déprécié ; aucun impact fonctionnel Manager.
 - [ ] Lot suivant seulement après clôture 6B : reprendre la feuille de route Manager ↔ Bridge (Lot 7 : préparation Site / package / Workbench), sans modifier Bridge depuis le 6B.
 
