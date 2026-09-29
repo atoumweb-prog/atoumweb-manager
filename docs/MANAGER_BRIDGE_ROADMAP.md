@@ -1298,7 +1298,7 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - grand écran avec aperçu dominant (~75 %) et outils scrollables (~25 %) ;
   - validation explicite, Undo / Redo, Version Bibliothèque et promotion en variante conservés.
 - Comparaison GitHub contrôlée avant clôture :
-  - `wip/codex-6b-ui-fix` est **86 commits devant / 0 derrière** `feature/project-page-compositions-v1` ;
+  - `wip/codex-6b-ui-fix` est **strictement devant / 0 derrière** `feature/project-page-compositions-v1` ;
   - merge base : `39315436376ba81470ed5fc0cbdad92c457ce553` ;
   - aucune divergence concurrente détectée entre la branche canonique 6B et la WIP ;
   - aucun PR ouvert actuellement pour la WIP ni pour `feature/project-page-compositions-v1`.
