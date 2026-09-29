@@ -182,7 +182,9 @@ app.whenReady().then(async () => {
       const root=document.querySelector('.project-page-inspector-workbench.expanded .code-pane');
       const preview=root?.querySelector('.project-page-inspector-dock-preview');
       const tools=root?.querySelector('.project-page-inspector-dock-code');
-      return !!preview && !!tools && preview.getBoundingClientRect().width>tools.getBoundingClientRect().width*1.45;
+      const ratio=preview?.getBoundingClientRect().width/tools?.getBoundingClientRect().width;
+      const scrollable=['auto','scroll'].includes(getComputedStyle(tools).overflowY);
+      return !!preview && !!tools && ratio>=2.2 && scrollable;
     })()`);
     await click('Quitter le grand écran', "document.querySelector('.project-page-inspector-workbench.expanded')");
     await click('Fermer aperçu');
@@ -208,7 +210,9 @@ app.whenReady().then(async () => {
       const root=document.querySelector('.project-page-inspector-workbench.expanded .settings-pane');
       const preview=root?.querySelector('.project-component-settings-preview');
       const tools=root?.querySelector('.project-component-settings-controls');
-      return !!preview && !!tools && preview.getBoundingClientRect().width>tools.getBoundingClientRect().width*1.45;
+      const ratio=preview?.getBoundingClientRect().width/tools?.getBoundingClientRect().width;
+      const scrollable=['auto','scroll'].includes(getComputedStyle(tools).overflowY);
+      return !!preview && !!tools && ratio>=2.2 && scrollable;
     })()`);
     await click('Quitter le grand écran', "document.querySelector('.project-page-inspector-workbench.expanded')");
     await click('Code / aperçu');
