@@ -195,6 +195,8 @@ export function ProjectPageCompositionPanel({
   const [inspectionMode, setInspectionMode] = useState(false);
   const [settingsItemId, setSettingsItemId] = useState<string | null>(null);
   const [settingsDraft, setSettingsDraft] = useState<CodeParts | null>(null);
+  const [settingsPaneCollapsed, setSettingsPaneCollapsed] = useState(false);
+  const [codePaneCollapsed, setCodePaneCollapsed] = useState(false);
   const [inspectExpanded, setInspectExpanded] = useState(false);
   const [inspectDevice, setInspectDevice] = useState<PreviewDevice>('desktop');
 
@@ -214,6 +216,8 @@ export function ProjectPageCompositionPanel({
     setInspected(null);
     setSettingsItemId(null);
     setSettingsDraft(null);
+    setSettingsPaneCollapsed(false);
+    setCodePaneCollapsed(false);
     setInspectExpanded(false);
     setInspectDevice('desktop');
     setPreviewDoc('');
@@ -224,8 +228,11 @@ export function ProjectPageCompositionPanel({
   }, [page.id]);
 
   useEffect(() => {
-    onInspectorOpenChange?.(Boolean(inspected || settingsItemId), Boolean(inspected && settingsItemId));
-  }, [inspected?.item.id, settingsItemId]);
+    onInspectorOpenChange?.(
+      Boolean(inspected || settingsItemId),
+      Boolean(inspected && settingsItemId && !settingsPaneCollapsed && !codePaneCollapsed),
+    );
+  }, [inspected?.item.id, settingsItemId, settingsPaneCollapsed, codePaneCollapsed]);
 
   const visualLibrary = useMemo(() => library.filter((item) =>
     ['header','footer','hero','page','section','form','gallery','carousel','navigation','divi'].includes(item.category)
@@ -295,6 +302,7 @@ export function ProjectPageCompositionPanel({
   async function inspect(item: AtoumWebCompositionItem): Promise<void> {
     if (inspected?.item.id === item.id) {
       setInspected(null);
+      setCodePaneCollapsed(false);
       setInspectExpanded(false);
       return;
     }
@@ -307,6 +315,7 @@ export function ProjectPageCompositionPanel({
       const version = detail.versions.find((candidate) => candidate.id === item.sourceVersionId) ?? null;
       const sourceParts = parseParts(version);
       setInspected({ item, detail, parts: effectiveParts(item, sourceParts) });
+      setCodePaneCollapsed(false);
       setInspectDevice('desktop');
       setInspectExpanded(false);
       setMode(null);
@@ -317,6 +326,7 @@ export function ProjectPageCompositionPanel({
     if (settingsItemId === item.id) {
       setSettingsItemId(null);
       setSettingsDraft(null);
+      setSettingsPaneCollapsed(false);
       return;
     }
     if (inspected && inspected.item.id !== item.id) {
@@ -325,6 +335,7 @@ export function ProjectPageCompositionPanel({
     }
     setSettingsItemId(item.id);
     setSettingsDraft(null);
+    setSettingsPaneCollapsed(false);
   }
 
   async function attachExisting(): Promise<void> {
@@ -506,25 +517,31 @@ export function ProjectPageCompositionPanel({
     </div>
 
     {(settingsItem || inspected) && inspectorHost && createPortal(
-      <div className={`project-page-inspector-workbench ${settingsItem && inspected ? 'dual' : 'single'}`}>
-        {settingsItem && composition && <section className="project-page-inspector-pane settings-pane">
-          <ProjectCompositionItemSettings
-            compositionId={composition.id}
-            item={settingsItem}
-            pageName={page.name}
-            onUpdated={(updated) => setComposition(updated)}
-            onMessage={onMessage}
-            docked
-            onClose={() => {
-              setSettingsItemId(null);
-              setSettingsDraft(null);
-            }}
-            onDraftChange={setSettingsDraft}
-          />
+      <div className={`project-page-inspector-workbench ${settingsItem && inspected ? 'both-open' : 'single'} ${settingsPaneCollapsed ? 'settings-collapsed' : ''} ${codePaneCollapsed ? 'code-collapsed' : ''}`}>
+        {settingsItem && composition && <section className={`project-page-inspector-pane settings-pane ${settingsPaneCollapsed ? 'collapsed' : ''}`}>
+          {settingsPaneCollapsed
+            ? <button className="project-page-inspector-pane-restore settings" type="button" title="Afficher Réglages" aria-label="Afficher Réglages" onClick={() => setSettingsPaneCollapsed(false)}>→</button>
+            : <ProjectCompositionItemSettings
+                compositionId={composition.id}
+                item={settingsItem}
+                pageName={page.name}
+                onUpdated={(updated) => setComposition(updated)}
+                onMessage={onMessage}
+                docked
+                onCollapse={() => setSettingsPaneCollapsed(true)}
+                onClose={() => {
+                  setSettingsItemId(null);
+                  setSettingsDraft(null);
+                  setSettingsPaneCollapsed(false);
+                }}
+                onDraftChange={setSettingsDraft}
+              />}
         </section>}
 
-        {inspected && liveInspectedParts && <section className="project-page-inspector-pane code-pane">
-          <div className="project-page-inspector-dock">
+        {inspected && liveInspectedParts && <section className={`project-page-inspector-pane code-pane ${codePaneCollapsed ? 'collapsed' : ''}`}>
+          {codePaneCollapsed
+            ? <button className="project-page-inspector-pane-restore code" type="button" title="Afficher Code / aperçu" aria-label="Afficher Code / aperçu" onClick={() => setCodePaneCollapsed(false)}>←</button>
+            : <div className="project-page-inspector-dock">
             <header>
               <div>
                 <span className="eyebrow">Code / aperçu</span>
@@ -533,7 +550,8 @@ export function ProjectPageCompositionPanel({
               </div>
               <div>
                 <button className="secondary-button" type="button" onClick={() => setInspectExpanded(true)}>Agrandir</button>
-                <button className="secondary-button" type="button" aria-label="Fermer le volet Code / aperçu" onClick={() => setInspected(null)}>×</button>
+                <button className="secondary-button" type="button" aria-label="Réduire Code / aperçu" title="Réduire Code / aperçu" onClick={() => setCodePaneCollapsed(true)}>→</button>
+                <button className="secondary-button" type="button" aria-label="Fermer le volet Code / aperçu" onClick={() => { setInspected(null); setCodePaneCollapsed(false); }}>×</button>
               </div>
             </header>
             <div className="project-page-preview-controls project-page-inspector-device-controls">
@@ -558,7 +576,7 @@ export function ProjectPageCompositionPanel({
               <details><summary>JavaScript</summary><pre>{liveInspectedParts.javascript || '—'}</pre></details>
               {!liveInspectedParts.previewable && <details><summary>Contenu brut</summary><pre>{liveInspectedParts.raw || '—'}</pre></details>}
             </div>
-          </div>
+          </div>}
         </section>}
       </div>,
       inspectorHost,
