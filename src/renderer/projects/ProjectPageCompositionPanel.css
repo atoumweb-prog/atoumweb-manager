@@ -1,4 +1,4 @@
-.project-page-composition{display:grid;gap:12px;width:100%;max-width:100%;min-width:0;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);overflow-x:hidden}
+.project-page-composition{display:grid;gap:12px;width:100%;max-width:100%;min-width:0;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);overflow:visible;overflow-x:clip}
 .project-page-composition-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
 .project-page-composition-head h3{margin:2px 0}.project-page-composition-head p{margin:3px 0 0;color:var(--text-muted);max-width:720px}
 .project-page-composition-actions{display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-end}
@@ -80,3 +80,22 @@
 @media(max-width:760px){.project-component-settings-toolbar{align-items:flex-start;flex-direction:column}.project-component-settings-toolbar>div:last-child{justify-content:flex-start}.project-component-color-grid label>div{grid-template-columns:48px 30px minmax(0,1fr)}}
 
 .project-component-color-card input:not([type="color"]){grid-column:1 / -1;min-width:0;width:100%}
+
+.project-page-composition-workspace{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-width:0;align-items:start}
+.project-page-composition-workspace.with-inspector{grid-template-columns:minmax(0,1fr) minmax(360px,42%)}
+.project-page-composition-primary{display:grid;gap:12px;min-width:0}
+.project-page-inspector-dock{position:sticky;top:8px;display:grid;grid-template-rows:auto auto minmax(260px,42vh) auto;gap:10px;min-width:0;max-height:calc(100vh - 220px);padding:12px;border:1px solid color-mix(in srgb,var(--accent) 34%,var(--border));border-radius:12px;background:var(--surface);overflow-y:auto;overflow-x:hidden;z-index:3}
+.project-page-inspector-dock>header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.project-page-inspector-dock>header>div:first-child{display:grid;gap:2px;min-width:0}
+.project-page-inspector-dock>header>div:first-child strong,.project-page-inspector-dock>header>div:first-child small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.project-page-inspector-dock>header>div:last-child{display:flex;gap:5px;flex:0 0 auto}
+.project-page-inspector-device-controls{position:sticky;top:0;z-index:2;padding:4px 0;background:var(--surface)}
+.project-page-inspector-dock-preview{min-width:0;min-height:260px;overflow:auto;padding:8px;border:1px solid var(--border);border-radius:10px;background:#2a2d31}
+.project-page-inspector-dock-preview>div{height:100%;max-width:none;min-width:0}
+.project-page-inspector-dock-preview iframe{display:block;width:100%;height:100%;min-height:250px;border:0;background:#fff}
+.project-page-inspector-dock-code{overflow:visible}
+.project-page-inspector-preview-large{display:flex;justify-content:center;min-width:0;min-height:0;overflow:auto;padding:10px;background:#2a2d31;border-radius:10px}
+.project-page-inspector-preview-large>div{height:100%;max-width:none;min-width:0}
+.project-page-inspector-preview-large iframe{display:block;width:100%;height:100%;min-height:560px;border:0;background:#fff}
+@media(max-width:1180px){.project-page-composition-workspace.with-inspector{grid-template-columns:minmax(0,1fr) minmax(320px,45%)}}
+@media(max-width:920px){.project-page-composition-workspace.with-inspector{grid-template-columns:1fr}.project-page-inspector-dock{position:relative;top:auto;max-height:none}}
