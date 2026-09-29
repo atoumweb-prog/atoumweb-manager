@@ -177,7 +177,7 @@ export function ProjectPageCompositionPanel({
   page: ProjectNode;
   onMessage: (message: string) => void;
   inspectorHostId?: string;
-  onInspectorOpenChange?: (open: boolean, dual: boolean) => void;
+  onInspectorOpenChange?: (open: boolean, dual: boolean, expandedCount: number) => void;
 }) {
   const [composition, setComposition] = useState<AtoumWebCompositionDetail | null>(null);
   const [allCompositions, setAllCompositions] = useState<AtoumWebCompositionSummary[]>([]);
@@ -221,18 +221,23 @@ export function ProjectPageCompositionPanel({
     setInspectExpanded(false);
     setInspectDevice('desktop');
     setPreviewDoc('');
-    onInspectorOpenChange?.(false, false);
+    onInspectorOpenChange?.(false, false, 0);
     void reload().catch((error) =>
       onMessage(error instanceof Error ? error.message : 'Impossible de charger la composition de la Page.'),
     );
   }, [page.id]);
 
   useEffect(() => {
+    const activeCount = Number(Boolean(settingsItemId)) + Number(Boolean(inspected));
+    const expandedCount =
+      Number(Boolean(settingsItemId) && !settingsPaneCollapsed)
+      + Number(Boolean(inspected) && !codePaneCollapsed);
     onInspectorOpenChange?.(
-      Boolean(inspected || settingsItemId),
-      Boolean(inspected && settingsItemId),
+      activeCount > 0,
+      activeCount === 2,
+      expandedCount,
     );
-  }, [inspected?.item.id, settingsItemId]);
+  }, [inspected?.item.id, settingsItemId, settingsPaneCollapsed, codePaneCollapsed]);
 
   const visualLibrary = useMemo(() => library.filter((item) =>
     ['header','footer','hero','page','section','form','gallery','carousel','navigation','divi'].includes(item.category)
