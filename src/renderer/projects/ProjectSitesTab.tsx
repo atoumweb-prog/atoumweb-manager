@@ -52,6 +52,15 @@ export function ProjectSitesTab({
   const [pageSiteId, setPageSiteId] = useState('');
   const [busy, setBusy] = useState(false);
   const [splitPercent, setSplitPercent] = useState(40);
+  const [treeCollapsed, setTreeCollapsed] = useState(false);
+  const [detailCollapsed, setDetailCollapsed] = useState(false);
+  const [introCollapsed, setIntroCollapsed] = useState(false);
+  const [pageInfoOpen, setPageInfoOpen] = useState(false);
+  const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [inspectorDual, setInspectorDual] = useState(false);
+  const [inspectorExpandedCount, setInspectorExpandedCount] = useState(0);
+  const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
+  const [inspectorPercent, setInspectorPercent] = useState(34);
   const [timeSessions, setTimeSessions] = useState<TimeSession[]>([]);
   const [activeTime, setActiveTime] = useState<TimeSession | null>(null);
   const [timeSnapshotAt, setTimeSnapshotAt] = useState(Date.now());
@@ -114,6 +123,26 @@ export function ProjectSitesTab({
       if (!rect.width) return;
       const ratio = ((event.clientX - rect.left) / rect.width) * 100;
       setSplitPercent(Math.max(24, Math.min(68, ratio)));
+    };
+    const onUp = () => {
+      document.body.classList.remove('project-resizing');
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  }
+
+  function beginInspectorResize(): void {
+    const workspace = document.querySelector<HTMLElement>('.project-sites-workspace');
+    if (!workspace) return;
+    document.body.classList.add('project-resizing');
+    const onMove = (event: PointerEvent) => {
+      const rect = workspace.getBoundingClientRect();
+      if (!rect.width) return;
+      const ratio = ((rect.right - event.clientX) / rect.width) * 100;
+      const max = inspectorExpandedCount >= 2 ? 58 : 45;
+      setInspectorPercent(Math.max(24, Math.min(max, ratio)));
     };
     const onUp = () => {
       document.body.classList.remove('project-resizing');
@@ -210,11 +239,18 @@ export function ProjectSitesTab({
   function selectSite(id: string): void {
     setSelectedPageId(null);
     setSelectedSiteId(id);
+    setDetailCollapsed(false);
+    setInspectorOpen(false);
+    setInspectorCollapsed(false);
   }
 
   function selectPage(id: string): void {
     setSelectedSiteId(null);
     setSelectedPageId(id);
+    setDetailCollapsed(false);
+    setPageInfoOpen(false);
+    setInspectorOpen(false);
+    setInspectorCollapsed(false);
   }
 
   const selectedPageSessions = selectedPage
@@ -307,12 +343,43 @@ export function ProjectSitesTab({
     }
   }
 
+  const inspectorHostId = 'project-sites-code-inspector-host';
+  const effectiveLeftPercent = inspectorOpen && !treeCollapsed
+    ? Math.min(splitPercent, inspectorExpandedCount >= 2 ? 22 : 30)
+    : splitPercent;
+  const workspaceColumns = (() => {
+    const detailWidth = detailCollapsed ? '46px' : 'minmax(360px, 1fr)';
+    if (!inspectorOpen) {
+      if (treeCollapsed) return detailCollapsed ? '46px 46px' : `46px ${detailWidth}`;
+      return detailCollapsed
+        ? 'minmax(0, 1fr) 8px 46px'
+        : `${effectiveLeftPercent}% 8px ${detailWidth}`;
+    }
+    if (inspectorCollapsed) {
+      return treeCollapsed
+        ? `46px ${detailWidth} 46px`
+        : `${effectiveLeftPercent}% 8px ${detailWidth} 46px`;
+    }
+    const rightWidth = inspectorExpandedCount === 0
+      ? (inspectorDual ? '138px' : '88px')
+      : detailCollapsed
+        ? 'minmax(340px, 1fr)'
+        : inspectorExpandedCount >= 2
+          ? `clamp(620px, ${Math.max(inspectorPercent, 46)}%, 940px)`
+          : inspectorDual
+            ? `clamp(390px, ${Math.min(inspectorPercent, 38)}%, 730px)`
+            : `clamp(340px, ${inspectorPercent}%, 680px)`;
+    return treeCollapsed
+      ? `46px ${detailWidth} 8px ${rightWidth}`
+      : `${effectiveLeftPercent}% 8px ${detailWidth} 8px ${rightWidth}`;
+  })();
+
   return <section className="project-sites-tab">
-    <div className="project-sites-intro panel">
-      <div>
+    <div className={`project-sites-intro panel ${introCollapsed ? 'collapsed' : ''}`}>
+      <div className="project-sites-intro-copy">
         <span className="eyebrow">Destination opérationnelle</span>
         <h2>Sites & pages</h2>
-        <p>Le Projet conserve la structure métier. Divi restera l’atelier de construction : ici, on organise les Sites et les Pages avant leur préparation dans Bridge.</p>
+        {!introCollapsed && <p>Le Projet conserve la structure métier. Divi restera l’atelier de construction : ici, on organise les Sites et les Pages avant leur préparation dans Bridge.</p>}
       </div>
       <div className="project-sites-toolbar">
         <button className="secondary-button" type="button" onClick={() => setCreateMode(createMode === 'site' ? null : 'site')}>+ Site</button>
@@ -320,6 +387,9 @@ export function ProjectSitesTab({
           setCreateMode(createMode === 'page' ? null : 'page');
           if (!pageSiteId && selectedSite && !selectedSite.archivedAt) setPageSiteId(selectedSite.id);
         }}>+ Page</button>
+        <button className="secondary-button project-sites-intro-toggle" type="button" title={introCollapsed ? 'Déployer le bandeau Sites & pages' : 'Réduire le bandeau Sites & pages'} onClick={() => setIntroCollapsed((value) => !value)}>
+          {introCollapsed ? '↓' : '↑'}
+        </button>
       </div>
     </div>
 
@@ -354,10 +424,14 @@ export function ProjectSitesTab({
       </div>
     </div>}
 
-    <div className="project-sites-workspace" style={{ gridTemplateColumns: `${splitPercent}% 8px minmax(0, 1fr)` }}>
-      <section className="panel project-sites-tree-panel">
+    <div
+      className={`project-sites-workspace ${treeCollapsed ? 'tree-collapsed' : ''} ${detailCollapsed ? 'detail-collapsed' : ''} ${inspectorOpen ? 'inspector-open' : ''} ${inspectorCollapsed ? 'inspector-collapsed' : ''}`}
+      style={{ gridTemplateColumns: workspaceColumns }}
+    >
+      {treeCollapsed ? <button className="project-sites-tree-restore" type="button" title="Afficher l’arborescence" aria-label="Afficher l’arborescence" onClick={() => setTreeCollapsed(false)}>→</button> : <section className="panel project-sites-tree-panel">
         <div className="project-sites-tree-head">
           <div><span className="eyebrow">Arborescence</span><strong>{activeSites.length} Site{activeSites.length > 1 ? 's' : ''} · {pages.length} Page{pages.length > 1 ? 's' : ''}</strong></div>
+          <button className="project-tree-size-button" type="button" title="Masquer l’arborescence" aria-label="Masquer l’arborescence" onClick={() => setTreeCollapsed(true)}>←</button>
         </div>
         <div className="project-sites-tree-scroll">
           {activeSites.map((site) => {
@@ -400,9 +474,9 @@ export function ProjectSitesTab({
 
           {sites.length === 0 && pages.length === 0 && <p className="muted">Aucun Site ni Page pour le moment.</p>}
         </div>
-      </section>
+      </section>}
 
-      <div
+      {!treeCollapsed && <div
         className="project-sites-splitter"
         role="separator"
         aria-orientation="vertical"
@@ -414,10 +488,13 @@ export function ProjectSitesTab({
           if (event.key === 'ArrowLeft') setSplitPercent((value) => Math.max(24, value - 3));
           if (event.key === 'ArrowRight') setSplitPercent((value) => Math.min(68, value + 3));
         }}
-      ><span /></div>
+      ><span /></div>}
 
-      <section className="panel project-sites-detail-panel">
+      <section className={`panel project-sites-detail-panel ${detailCollapsed ? 'collapsed' : ''}`}>
+        {detailCollapsed && <button className="project-sites-detail-restore" type="button" title="Afficher la fiche Page" aria-label="Afficher la fiche Page" onClick={() => setDetailCollapsed(false)}>→</button>}
+        <div className="project-sites-detail-content" aria-hidden={detailCollapsed}>
         {!selectedSite && !selectedPage && <div className="project-sites-empty-detail">
+          <button className="project-sites-detail-collapse" type="button" title="Réduire la fiche" aria-label="Réduire la fiche" onClick={() => setDetailCollapsed(true)}>←</button>
           <span className="eyebrow">Fiche</span>
           <h3>Sélectionne un Site ou une Page</h3>
           <p>Tu pourras ensuite modifier son rattachement et ses informations.</p>
@@ -426,7 +503,10 @@ export function ProjectSitesTab({
         {selectedSite && !selectedPage && <>
           <header className="project-sites-detail-head">
             <div><span className="eyebrow">Site du Projet</span><h3>{selectedSite.name}</h3><p>{selectedSite.desiredDomain || 'Nom de domaine non renseigné'}</p></div>
-            {selectedSite.archivedAt && <span className="status-pill">Archivé</span>}
+            <div className="project-sites-detail-head-actions">
+              {selectedSite.archivedAt && <span className="status-pill">Archivé</span>}
+              <button className="project-sites-detail-collapse" type="button" title="Réduire la fiche Site" aria-label="Réduire la fiche Page" onClick={() => setDetailCollapsed(true)}>←</button>
+            </div>
           </header>
           <div className="project-sites-detail-form">
             <label>Nom du site
@@ -470,7 +550,10 @@ export function ProjectSitesTab({
         {selectedPage && <>
           <header className="project-sites-detail-head">
             <div><span className="eyebrow">Page du Projet</span><h3>{selectedPage.name}</h3><p>{selectedSite ? selectedSite.name : 'Non rattachée à un Site'}</p></div>
-            <span className="status-pill project-sites-composition-badge">6B · Composition AtoumWeb</span>
+            <div className="project-sites-detail-head-actions">
+              <span className="status-pill project-sites-composition-badge">6B · Composition AtoumWeb</span>
+              <button className="project-sites-detail-collapse" type="button" title="Réduire la fiche Page" aria-label="Réduire la fiche Page" onClick={() => setDetailCollapsed(true)}>←</button>
+            </div>
           </header>
 
           <section className={`project-sites-page-work ${activeOnSelectedPage ? 'running' : ''}`}>
@@ -480,10 +563,10 @@ export function ProjectSitesTab({
               <small>{selectedPageSessions.length} session{selectedPageSessions.length > 1 ? 's' : ''}{activeOnSelectedPage ? activeTime?.paused ? ' · en pause' : ' · chrono en cours' : ''}</small>
             </div>
             <div className="project-sites-page-actions">
-              <button className="secondary-button" type="button" onClick={() => onOpenPage(selectedPage.id)}>Ouvrir la fiche Production →</button>
+              <button className="secondary-button" type="button" title="Ouvrir la fiche Production de cette Page" onClick={() => onOpenPage(selectedPage.id)}>Production →</button>
               {!activeOnSelectedPage
-                ? <button className="primary-button" type="button" disabled={busy} onClick={() => void startSelectedPageTimer()}>
-                    ▶ Démarrer le travail sur cette Page
+                ? <button className="primary-button" type="button" title="Démarrer le travail sur cette Page" disabled={busy} onClick={() => void startSelectedPageTimer()}>
+                    ▶ Démarrer
                   </button>
                 : <>
                     <button className="primary-button" type="button" disabled={busy} onClick={() => void pauseOrResumeSelectedPageTimer()}>
@@ -494,86 +577,140 @@ export function ProjectSitesTab({
             </div>
           </section>
 
-          <ProjectPageCompositionPanel page={selectedPage} onMessage={onMessage} />
+          <section className={`project-sites-page-info ${pageInfoOpen ? 'open' : ''}`}>
+            <button className="project-sites-page-info-summary" type="button" onClick={() => setPageInfoOpen((value) => !value)}>
+              <span>
+                <span className="eyebrow">Informations de la Page</span>
+                <strong>{selectedPage.name}</strong>
+                <small>{selectedSite?.name ?? 'Non rattachée'} · {ROLE_LABELS[selectedLink?.role ?? 'standard']} · {selectedLink?.role === 'home' ? '/' : selectedLink?.desiredPath || 'slug à définir'}</small>
+              </span>
+              <b>{pageInfoOpen ? '▴' : '▾'}</b>
+            </button>
+            {pageInfoOpen && <div className="project-sites-detail-form">
+              <label>Nom de la Page
+                <input
+                  key={`${selectedPage.id}-name-${selectedPage.updatedAt}`}
+                  defaultValue={selectedPage.name}
+                  disabled={busy}
+                  onBlur={(event) => {
+                    const next = event.currentTarget.value.trim();
+                    if (!next || next === selectedPage.name) return;
+                    void run(async () => {
+                      const updated = await window.atoumweb.projects.projects.updateNode(selectedPage.id, { name: next });
+                      await onProjectChanged(updated);
+                    }, 'Page renommée.');
+                  }}
+                />
+              </label>
+              <label>Site
+                <select
+                  value={selectedLink?.projectSiteId ?? ''}
+                  disabled={busy}
+                  onChange={(event) => {
+                    const siteId = event.target.value;
+                    if (!siteId) {
+                      void run(() => window.atoumweb.projects.sites.unlinkPage(selectedPage.id), 'Page détachée du Site.');
+                      return;
+                    }
+                    void run(() => window.atoumweb.projects.sites.linkPage(siteId, selectedPage.id, {
+                      role: selectedLink?.role ?? 'standard',
+                      desiredPath: selectedLink?.desiredPath ?? null,
+                    }), 'Page rattachée au Site.');
+                  }}
+                >
+                  <option value="">Non rattachée</option>
+                  {activeSites.map((site) => <option key={site.id} value={site.id}>{site.name}</option>)}
+                  {selectedSite?.archivedAt && <option value={selectedSite.id}>{selectedSite.name} · archivé</option>}
+                </select>
+              </label>
+              <label>Rôle
+                <select
+                  value={selectedLink?.role ?? 'standard'}
+                  disabled={busy || !selectedLink || Boolean(selectedSite?.archivedAt)}
+                  onChange={(event) => {
+                    if (!selectedLink) return;
+                    const role = event.target.value as ProjectSitePageRole;
+                    void run(() => window.atoumweb.projects.sites.linkPage(selectedLink.projectSiteId, selectedPage.id, {
+                      role,
+                      desiredPath: role === 'home' || selectedLink.desiredPath === '/' ? null : selectedLink.desiredPath,
+                    }), 'Rôle de Page mis à jour.');
+                  }}
+                >
+                  {PROJECT_SITE_PAGE_ROLES.map((role) => <option key={role} value={role}>{ROLE_LABELS[role]}</option>)}
+                </select>
+              </label>
+              <label>Slug / chemin URL
+                <input
+                  key={`${selectedPage.id}-${selectedLink?.projectSiteId ?? 'none'}-${selectedLink?.desiredPath ?? ''}`}
+                  defaultValue={selectedLink?.desiredPath ?? ''}
+                  placeholder={!selectedLink ? 'Rattacher la Page à un Site' : selectedLink.role === 'home' ? '/' : 'Ex. /contact'}
+                  disabled={busy || !selectedLink || selectedLink.role === 'home' || Boolean(selectedSite?.archivedAt)}
+                  onBlur={(event) => {
+                    if (!selectedLink) return;
+                    const next = event.currentTarget.value.trim() || null;
+                    if (next === (selectedLink.desiredPath ?? null)) return;
+                    void run(() => window.atoumweb.projects.sites.linkPage(selectedLink.projectSiteId, selectedPage.id, {
+                      role: selectedLink.role,
+                      desiredPath: next,
+                    }), 'Slug de Page mis à jour.');
+                  }}
+                />
+              </label>
+            </div>}
+          </section>
 
-          <div className="project-sites-detail-form">
-            <label>Nom de la Page
-              <input
-                key={`${selectedPage.id}-name-${selectedPage.updatedAt}`}
-                defaultValue={selectedPage.name}
-                disabled={busy}
-                onBlur={(event) => {
-                  const next = event.currentTarget.value.trim();
-                  if (!next || next === selectedPage.name) return;
-                  void run(async () => {
-                    const updated = await window.atoumweb.projects.projects.updateNode(selectedPage.id, { name: next });
-                    await onProjectChanged(updated);
-                  }, 'Page renommée.');
-                }}
-              />
-            </label>
-            <label>Site
-              <select
-                value={selectedLink?.projectSiteId ?? ''}
-                disabled={busy}
-                onChange={(event) => {
-                  const siteId = event.target.value;
-                  if (!siteId) {
-                    void run(() => window.atoumweb.projects.sites.unlinkPage(selectedPage.id), 'Page détachée du Site.');
-                    return;
-                  }
-                  void run(() => window.atoumweb.projects.sites.linkPage(siteId, selectedPage.id, {
-                    role: selectedLink?.role ?? 'standard',
-                    desiredPath: selectedLink?.desiredPath ?? null,
-                  }), 'Page rattachée au Site.');
-                }}
-              >
-                <option value="">Non rattachée</option>
-                {activeSites.map((site) => <option key={site.id} value={site.id}>{site.name}</option>)}
-                {selectedSite?.archivedAt && <option value={selectedSite.id}>{selectedSite.name} · archivé</option>}
-              </select>
-            </label>
-            <label>Rôle
-              <select
-                value={selectedLink?.role ?? 'standard'}
-                disabled={busy || !selectedLink || Boolean(selectedSite?.archivedAt)}
-                onChange={(event) => {
-                  if (!selectedLink) return;
-                  const role = event.target.value as ProjectSitePageRole;
-                  void run(() => window.atoumweb.projects.sites.linkPage(selectedLink.projectSiteId, selectedPage.id, {
-                    role,
-                    desiredPath: role === 'home' || selectedLink.desiredPath === '/' ? null : selectedLink.desiredPath,
-                  }), 'Rôle de Page mis à jour.');
-                }}
-              >
-                {PROJECT_SITE_PAGE_ROLES.map((role) => <option key={role} value={role}>{ROLE_LABELS[role]}</option>)}
-              </select>
-            </label>
-            <label>Slug / chemin URL
-              <input
-                key={`${selectedPage.id}-${selectedLink?.projectSiteId ?? 'none'}-${selectedLink?.desiredPath ?? ''}`}
-                defaultValue={selectedLink?.desiredPath ?? ''}
-                placeholder={!selectedLink ? 'Rattacher la Page à un Site' : selectedLink.role === 'home' ? '/' : 'Ex. /contact'}
-                disabled={busy || !selectedLink || selectedLink.role === 'home' || Boolean(selectedSite?.archivedAt)}
-                onBlur={(event) => {
-                  if (!selectedLink) return;
-                  const next = event.currentTarget.value.trim() || null;
-                  if (next === (selectedLink.desiredPath ?? null)) return;
-                  void run(() => window.atoumweb.projects.sites.linkPage(selectedLink.projectSiteId, selectedPage.id, {
-                    role: selectedLink.role,
-                    desiredPath: next,
-                  }), 'Slug de Page mis à jour.');
-                }}
-              />
-            </label>
-          </div>
+          <ProjectPageCompositionPanel
+            page={selectedPage}
+            onMessage={onMessage}
+            inspectorHostId={inspectorHostId}
+            onInspectorOpenChange={(open, dual, expandedCount) => {
+              setInspectorOpen(open);
+              setInspectorDual(dual);
+              setInspectorExpandedCount(expandedCount);
+              if (open) {
+                setInspectorCollapsed(false);
+                if (expandedCount >= 2) setInspectorPercent((value) => Math.max(value, 46));
+              }
+            }}
+          />
 
           <div className="project-sites-note">
             <strong>Divi reste l’atelier principal.</strong>
             <span>Cette fiche décrit la destination métier de la Page. Le bouton de préparation Bridge sera ajouté dans un lot ultérieur.</span>
           </div>
         </>}
+        </div>
       </section>
+
+      {inspectorOpen && !inspectorCollapsed && <div
+        className="project-sites-inspector-splitter"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Redimensionner la fiche et l’atelier latéral"
+        tabIndex={0}
+        onPointerDown={beginInspectorResize}
+        onDoubleClick={() => setInspectorPercent(inspectorExpandedCount >= 2 ? 50 : 34)}
+        onKeyDown={(event) => {
+          const max = inspectorExpandedCount >= 2 ? 58 : 45;
+          if (event.key === 'ArrowLeft') setInspectorPercent((value) => Math.min(max, value + 3));
+          if (event.key === 'ArrowRight') setInspectorPercent((value) => Math.max(24, value - 3));
+        }}
+      ><span /></div>}
+
+      <aside
+        className={`panel project-sites-inspector-shell ${!inspectorOpen ? 'inactive' : ''} ${inspectorCollapsed ? 'collapsed' : ''}`}
+        aria-hidden={!inspectorOpen}
+      >
+        <button
+          className="project-sites-inspector-collapse"
+          type="button"
+          title={inspectorCollapsed ? 'Afficher l’atelier latéral' : 'Réduire l’atelier latéral'}
+          aria-label={inspectorCollapsed ? 'Afficher l’atelier latéral' : 'Réduire l’atelier latéral'}
+          onClick={() => setInspectorCollapsed((value) => !value)}
+          tabIndex={inspectorOpen ? 0 : -1}
+        >{inspectorCollapsed ? '←' : '→'}</button>
+        <div id={inspectorHostId} className="project-sites-inspector-host" />
+      </aside>
     </div>
   </section>;
 }

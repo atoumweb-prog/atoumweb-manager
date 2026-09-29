@@ -1,5 +1,42 @@
 # AtoumWeb Manager — Suivi du projet
 
+## Stabilisation UX Lot 6B — 29/09/2026 — recette visuelle validée
+
+- Branche de stabilisation : `wip/codex-6b-ui-fix`.
+- Branche canonique cible : `feature/project-page-compositions-v1` au commit `39315436376ba81470ed5fc0cbdad92c457ce553`.
+- Comparaison GitHub vérifiée : la WIP est **strictement devant / 0 derrière** la branche canonique ; aucune divergence concurrente détectée.
+- [x] Barre fantôme identifiée et supprimée : `main.project-production-secondary` vide n'est plus rendu sous Sites & pages.
+- [x] Structure Sites & pages stabilisée : **Arborescence | Fiche Page | Atelier latéral**.
+- [x] Replis/restaurations indépendants de l'Arborescence, de la Fiche Page, de Réglages et de Code / aperçu.
+- [x] Réduire la Fiche Page ne démonte plus Réglages / Code ; les brouillons et aperçus restent actifs.
+- [x] Réglages et Code / aperçu peuvent être ouverts seuls ou ensemble ; synchro du brouillon Réglages vers Code / aperçu en direct.
+- [x] Timer Page compact.
+- [x] Informations de Page repliables au-dessus de la composition.
+- [x] Aperçus isolés pour éviter la contamination CSS entre composants ; JavaScript source non exécuté.
+- [x] Desktop / Tablette / Mobile disponibles dans Réglages et Code / aperçu.
+- [x] Grand écran harmonisé Réglages / Code : preview dominante à gauche, outils scrollables à droite, ratio cible ~75/25.
+- [x] Validation explicite des modifications locales, Undo / Redo, retour Version Bibliothèque et promotion en variante conservés.
+- [x] Pickers couleurs étendus (hex/alpha/HSL) et réglages visuels locaux conservés.
+- [x] Migration 49 inchangée ; aucune nouvelle migration ajoutée pendant la stabilisation UX.
+- [x] `npm run typecheck` réussi sur MSI.
+- [x] Tests Vitest ciblés historiques : **35/35 réussis**.
+- [x] Harness Electron final : **65/65 contrôles réussis, 0 échec** sur le checkpoint `d464ad2b2d7f500a6a1443059e50f706dc244200`.
+- [x] Recette visuelle réelle Carlos validée le 29/09/2026 : replis, atelier docké, aperçu scrollable, grand écran Réglages, grand écran Code et disposition 75/25 jugés conformes.
+- [ ] PR **#75** ouverte en brouillon : `wip/codex-6b-ui-fix` → `feature/project-page-compositions-v1`. Vérifier le statut local puis intégrer uniquement après les derniers gates de clôture.
+- [ ] Relancer après intégration le typecheck + harness 65 contrôles sur la branche canonique.
+- [x] Suite Vitest complète lancée le 29/09/2026 : premier passage **336/339**, 3 échecs transverses identifiés hors UX 6B.
+- [x] Correctifs poussés :
+  - test migration legacy rendu dynamique jusqu'à la migration courante ;
+  - test Workflow aligné sur le Builder CGV structuré ;
+  - `quote_contract_clauses` ajouté au tracking/purge DemoService.
+- [ ] Relancer `npm test` après ces trois correctifs ; attendu **339/339** si aucun autre écart n'apparaît.
+- [ ] `npm run package` : commande lancée côté MSI mais résultat final non encore confirmé dans le retour partagé.
+- [ ] Corriger à faible priorité l'avertissement Electron du harness `console-message` déprécié ; aucun impact fonctionnel Manager.
+- [ ] Lot suivant seulement après clôture 6B : reprendre la feuille de route Manager ↔ Bridge (Lot 7 : préparation Site / package / Workbench), sans modifier Bridge depuis le 6B.
+
+Détails complets et journal de décisions : `docs/MANAGER_BRIDGE_ROADMAP.md`.
+
+
 ## Coordination Manager ↔ Bridge — 27/09/2026
 
 - [x] Note d'architecture Pages hybrides et feuille de route consignées dans [`docs/MANAGER_BRIDGE_ROADMAP.md`](docs/MANAGER_BRIDGE_ROADMAP.md), avec journal partagé des consignes/décisions pour les agents.

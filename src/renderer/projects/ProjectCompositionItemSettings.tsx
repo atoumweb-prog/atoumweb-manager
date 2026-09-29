@@ -1,3 +1,12 @@
+import { buildComponentPreview } from './componentPreview';
+import {
+  extractComponentTexts,
+  extractComponentVisuals,
+  replaceComponentText,
+  updateComponentVisual,
+  type ComponentTextField,
+  type ComponentVisualField,
+} from './componentLocalEditor';
 import { useEffect, useMemo, useState } from 'react';
 import type {
   AtoumWebCompositionDetail,
@@ -6,16 +15,13 @@ import type {
   AtoumWebTechnicalVersion,
 } from '../../shared/referentials';
 
-interface CodeParts {
+export interface CodeParts {
   html: string;
   css: string;
   javascript: string;
 }
 
-interface TextField {
-  origin: string;
-  value: string;
-}
+type SettingsPreviewDevice = 'desktop' | 'tablet' | 'mobile';
 
 interface ColorField {
   origin: string;
@@ -24,8 +30,9 @@ interface ColorField {
 
 interface EditorSnapshot {
   draft: CodeParts;
-  texts: TextField[];
+  texts: ComponentTextField[];
   colors: ColorField[];
+  visuals: ComponentVisualField[];
   note: string;
 }
 
@@ -80,52 +87,8 @@ function parseVersion(version?: AtoumWebTechnicalVersion | null): CodeParts {
   return { html: '', css: '', javascript: '' };
 }
 
-function escapeStyle(value: string): string {
-  return value.replace(/<\/style/gi, '<\\/style');
-}
-
 function previewDocument(parts: CodeParts): string {
-  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https: data:; font-src https: data:;">
-<style>${escapeStyle(parts.css)}</style>
-<style>html,body{display:block!important;visibility:visible!important;opacity:1!important;margin:0!important;min-height:100%!important;background:#fff;color:#111}*,*::before,*::after{box-sizing:border-box}</style>
-</head><body>${parts.html || '<p style="padding:20px">Aucun HTML prévisualisable.</p>'}</body></html>`;
-}
-
-function extractTexts(html: string): TextField[] {
-  if (!html.trim()) return [];
-  const doc = new DOMParser().parseFromString(html, 'text/html');
-  const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
-  const seen = new Set<string>();
-  const results: TextField[] = [];
-  let node = walker.nextNode();
-  while (node && results.length < 18) {
-    const parent = node.parentElement?.tagName.toLowerCase();
-    const value = node.nodeValue?.trim() ?? '';
-    if (value.length >= 2 && parent !== 'style' && parent !== 'script' && !seen.has(value)) {
-      seen.add(value);
-      results.push({ origin: value, value });
-    }
-    node = walker.nextNode();
-  }
-  return results;
-}
-
-function replaceText(html: string, current: string, next: string): string {
-  if (!html.trim() || current === next) return html;
-  const doc = new DOMParser().parseFromString(html, 'text/html');
-  const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
-  let node = walker.nextNode();
-  while (node) {
-    const raw = node.nodeValue ?? '';
-    if (raw.trim() === current) {
-      const leading = raw.match(/^\s*/)?.[0] ?? '';
-      const trailing = raw.match(/\s*$/)?.[0] ?? '';
-      node.nodeValue = `${leading}${next}${trailing}`;
-    }
-    node = walker.nextNode();
-  }
-  return doc.body.innerHTML;
+  return buildComponentPreview([{ ...parts, label: 'Module préparé' }]);
 }
 
 function extractColors(css: string): ColorField[] {
@@ -137,18 +100,25 @@ function replaceAll(source: string, current: string, next: string): string {
   return current === next ? source : source.split(current).join(next);
 }
 
+function colorChannels(value: string): Uint8ClampedArray | null {
+  if (!CSS.supports('color', value)) return null;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 1;
+  const context = canvas.getContext('2d');
+  if (!context) return null;
+  context.fillStyle = value;
+  context.fillRect(0, 0, 1, 1);
+  return context.getImageData(0, 0, 1, 1).data;
+}
+
 function toPickerHex(value: string): string | null {
-  const trimmed = value.trim();
-  if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) return trimmed.toLowerCase();
-  const short = trimmed.match(/^#([0-9a-fA-F]{3})$/);
-  if (short) {
-    const [r, g, b] = short[1].split('');
-    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
-  }
-  const rgb = trimmed.match(/^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})/i);
-  if (!rgb) return null;
-  const values = rgb.slice(1, 4).map((entry) => Math.max(0, Math.min(255, Number(entry))));
-  return `#${values.map((entry) => Math.round(entry).toString(16).padStart(2, '0')).join('')}`;
+  const channels = colorChannels(value);
+  return channels ? '#' + Array.from(channels.slice(0, 3)).map((v) => v.toString(16).padStart(2, '0')).join('') : null;
+}
+
+function pickedColor(current: string, hex: string): string {
+  const alpha = colorChannels(current)?.[3] ?? 255;
+  return alpha === 255 ? hex : hex + alpha.toString(16).padStart(2, '0');
 }
 
 function copySnapshot(snapshot: EditorSnapshot): EditorSnapshot {
@@ -156,6 +126,7 @@ function copySnapshot(snapshot: EditorSnapshot): EditorSnapshot {
     draft: { ...snapshot.draft },
     texts: snapshot.texts.map((entry) => ({ ...entry })),
     colors: snapshot.colors.map((entry) => ({ ...entry })),
+    visuals: snapshot.visuals.map((entry) => ({ ...entry, elementPath: [...entry.elementPath], symbolPath: entry.symbolPath && [...entry.symbolPath], labelPath: entry.labelPath && [...entry.labelPath] })),
     note: snapshot.note,
   };
 }
@@ -166,19 +137,35 @@ export function ProjectCompositionItemSettings({
   pageName,
   onUpdated,
   onMessage,
+  docked = false,
+  onClose,
+  onCollapse,
+  onExpand,
+  previewDevice = 'desktop',
+  onPreviewDeviceChange,
+  onDraftChange,
 }: {
   compositionId: string;
   item: AtoumWebCompositionItem;
   pageName: string;
   onUpdated: (detail: AtoumWebCompositionDetail) => void;
   onMessage: (message: string) => void;
+  docked?: boolean;
+  onClose?: () => void;
+  onCollapse?: () => void;
+  onExpand?: () => void;
+  previewDevice?: SettingsPreviewDevice;
+  onPreviewDeviceChange?: (device: SettingsPreviewDevice) => void;
+  onDraftChange?: (draft: CodeParts) => void;
 }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [base, setBase] = useState<CodeParts>({ html: '', css: '', javascript: '' });
   const [draft, setDraft] = useState<CodeParts>({ html: '', css: '', javascript: '' });
-  const [texts, setTexts] = useState<TextField[]>([]);
+  const [texts, setTexts] = useState<ComponentTextField[]>([]);
   const [colors, setColors] = useState<ColorField[]>([]);
+  const [visuals, setVisuals] = useState<ComponentVisualField[]>([]);
+  const [baseVisuals, setBaseVisuals] = useState<ComponentVisualField[]>([]);
   const [note, setNote] = useState(item.localSettings.note ?? '');
   const [variantName, setVariantName] = useState(`${item.displayName} — ${pageName}`);
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -202,8 +189,10 @@ export function ProjectCompositionItemSettings({
         : source;
       setBase(source);
       setDraft(effective);
-      setTexts(extractTexts(effective.html));
+      setTexts(extractComponentTexts(effective.html));
       setColors(extractColors(effective.css));
+      setBaseVisuals(extractComponentVisuals(source.html));
+      setVisuals(extractComponentVisuals(effective.html));
       setNote(item.localSettings.note ?? '');
       setUndoStack([]);
       setRedoStack([]);
@@ -220,15 +209,36 @@ export function ProjectCompositionItemSettings({
   const settings = useMemo<AtoumWebCompositionItemLocalSettings>(() => ({
     textEdits: texts
       .filter((entry) => entry.origin !== entry.value)
-      .map((entry) => ({ from: entry.origin, to: entry.value })),
+      .map((entry) => ({ from: entry.origin, to: entry.value, target: entry.id })),
     colorEdits: colors
       .filter((entry) => entry.origin !== entry.value)
       .map((entry) => ({ from: entry.origin, to: entry.value })),
+    visualEdits: visuals.flatMap((entry) => {
+      const baseEntry = baseVisuals.find((candidate) => candidate.id === entry.id);
+      if (!baseEntry) return [{ target: entry.id, label: entry.label, symbol: entry.symbol, color: entry.color, backgroundColor: entry.backgroundColor, hidden: entry.hidden }];
+      const change = {
+        target: entry.id,
+        ...(entry.label !== baseEntry.label ? { label: entry.label } : {}),
+        ...(entry.symbol !== baseEntry.symbol ? { symbol: entry.symbol } : {}),
+        ...(entry.color !== baseEntry.color ? { color: entry.color } : {}),
+        ...(entry.backgroundColor !== baseEntry.backgroundColor ? { backgroundColor: entry.backgroundColor } : {}),
+        ...(entry.hidden !== baseEntry.hidden ? { hidden: entry.hidden } : {}),
+      };
+      return Object.keys(change).length > 1 ? [change] : [];
+    }),
     note: note.trim() || null,
-  }), [texts, colors, note]);
+  }), [texts, colors, visuals, baseVisuals, note]);
+
+  const saved = item.hasLocalChanges ? { html: item.localHtml ?? '', css: item.localCss ?? '', javascript: item.localJavascript ?? '' } : base;
+  const dirty = draft.html !== saved.html || draft.css !== saved.css || draft.javascript !== saved.javascript
+    || note.trim() !== (item.localSettings.note ?? '');
+
+  useEffect(() => {
+    if (!loading) onDraftChange?.(draft);
+  }, [draft.html, draft.css, draft.javascript, loading]);
 
   function snapshot(): EditorSnapshot {
-    return copySnapshot({ draft, texts, colors, note });
+    return copySnapshot({ draft, texts, colors, visuals, note });
   }
 
   function remember(): void {
@@ -242,6 +252,7 @@ export function ProjectCompositionItemSettings({
     setDraft(next.draft);
     setTexts(next.texts);
     setColors(next.colors);
+    setVisuals(next.visuals);
     setNote(next.note);
   }
 
@@ -277,7 +288,7 @@ export function ProjectCompositionItemSettings({
         },
       );
       onUpdated(updated);
-      onMessage('Réglages locaux du bloc enregistrés.');
+      onMessage('Changements du bloc validés et enregistrés localement.');
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible d’enregistrer les réglages du bloc.');
     } finally {
@@ -291,8 +302,10 @@ export function ProjectCompositionItemSettings({
     try {
       const updated = await window.atoumweb.referentials.compositions.resetItemLocalCode(compositionId, item.id);
       setDraft(base);
-      setTexts(extractTexts(base.html));
+      setTexts(extractComponentTexts(base.html));
       setColors(extractColors(base.css));
+      setVisuals(extractComponentVisuals(base.html));
+      setBaseVisuals(extractComponentVisuals(base.html));
       setNote('');
       onUpdated(updated);
       onMessage('Bloc réinitialisé exactement à la version Bibliothèque de départ.');
@@ -323,9 +336,9 @@ export function ProjectCompositionItemSettings({
     }
   }
 
-  if (loading) return <div className="project-component-settings-panel"><p className="muted">Chargement des réglages…</p></div>;
+  if (loading) return <div className={`project-component-settings-panel ${docked ? 'docked' : ''}`}><p className="muted">Chargement des réglages…</p></div>;
 
-  return <div className="project-component-settings-panel">
+  return <div className={`project-component-settings-panel ${docked ? 'docked' : ''}`}>
     <div className="project-component-settings-toolbar">
       <div>
         <strong>Préparer ce bloc</strong>
@@ -335,6 +348,12 @@ export function ProjectCompositionItemSettings({
         <button className="secondary-button" type="button" disabled={!undoStack.length || busy} onClick={undo} title="Annuler la dernière modification">↶ Annuler</button>
         <button className="secondary-button" type="button" disabled={!redoStack.length || busy} onClick={redo} title="Rétablir la modification">↷ Rétablir</button>
         <button className="secondary-button" type="button" disabled={busy} onClick={() => void reset()}>⟲ Version Bibliothèque</button>
+        <button className="primary-button project-component-validate-button" type="button" disabled={busy || !dirty || !draft.html.trim()} onClick={() => void save()}>
+          {dirty ? '✓ Valider les changements' : '✓ Changements validés'}
+        </button>
+        {onExpand && <button className="secondary-button project-inspector-expand-action" type="button" aria-label="Agrandir l’atelier" title="Agrandir l’atelier" onClick={onExpand}>Agrandir</button>}
+        {onCollapse && <button className="secondary-button" type="button" aria-label="Réduire Réglages" title="Réduire Réglages" onClick={onCollapse}>←</button>}
+        {onClose && <button className="secondary-button" type="button" aria-label="Fermer les réglages" title="Fermer les réglages" onClick={onClose}>×</button>}
       </div>
     </div>
 
@@ -346,18 +365,74 @@ export function ProjectCompositionItemSettings({
             <p>Modifie uniquement cette occurrence. Le modèle Bibliothèque reste intact.</p>
           </div>
           {texts.length === 0 && <p className="muted">Aucun texte simple détecté automatiquement.</p>}
-          {texts.map((entry, index) => <label key={`${entry.origin}-${index}`}>
+          {texts.map((entry, index) => <label key={entry.id}>
             Texte {index + 1}
             <input value={entry.value} onChange={(event) => {
               remember();
               const next = event.target.value;
-              setDraft((current) => ({ ...current, html: replaceText(current.html, entry.value, next) }));
+              setDraft((current) => ({ ...current, html: replaceComponentText(current.html, entry.path, next) }));
               setTexts((current) => current.map((candidate, candidateIndex) =>
                 candidateIndex === index ? { ...candidate, value: next } : candidate
               ));
             }} />
             <small>{entry.origin}</small>
           </label>)}
+        </div>
+
+        <div className="project-component-settings-section project-component-visual-section">
+          <div>
+            <span className="eyebrow">Éléments visuels</span>
+            <p>Icônes et avantages détectés dans ce bloc. Ces réglages restent locaux à cette occurrence.</p>
+          </div>
+          {visuals.length === 0 && <p className="muted">Aucune icône associée à un texte n’a été détectée automatiquement.</p>}
+          <div className="project-component-visual-grid">
+            {visuals.map((visual, index) => <fieldset key={visual.id} className="project-component-visual-card">
+              <legend>Avantage {index + 1}</legend>
+              <label>Texte
+                <input value={visual.label} onChange={(event) => {
+                  remember();
+                  const next = event.target.value;
+                  setDraft((current) => ({ ...current, html: updateComponentVisual(current.html, visual, { label: next }) }));
+                  setVisuals((current) => current.map((candidate, candidateIndex) => candidateIndex === index ? { ...candidate, label: next } : candidate));
+                  if (visual.labelPath) setTexts((current) => current.map((candidate) =>
+                    candidate.path.join('.') === visual.labelPath!.join('.') ? { ...candidate, value: next } : candidate,
+                  ));
+                }} />
+              </label>
+              <label>Icône / symbole
+                <input value={visual.symbol} disabled={!visual.symbolPath} placeholder={visual.symbolPath ? 'Ex. ✓' : 'Icône CSS ou image'} onChange={(event) => {
+                  remember();
+                  const next = event.target.value;
+                  setDraft((current) => ({ ...current, html: updateComponentVisual(current.html, visual, { symbol: next }) }));
+                  setVisuals((current) => current.map((candidate, candidateIndex) => candidateIndex === index ? { ...candidate, symbol: next } : candidate));
+                }} />
+              </label>
+              <label>Couleur de l’icône
+                <input value={visual.color} placeholder="Ex. #d4b170" onChange={(event) => {
+                  remember();
+                  const next = event.target.value;
+                  setDraft((current) => ({ ...current, html: updateComponentVisual(current.html, visual, { color: next }) }));
+                  setVisuals((current) => current.map((candidate, candidateIndex) => candidateIndex === index ? { ...candidate, color: next } : candidate));
+                }} />
+              </label>
+              <label>Fond de l’icône
+                <input value={visual.backgroundColor} placeholder="Ex. #fff3c9" onChange={(event) => {
+                  remember();
+                  const next = event.target.value;
+                  setDraft((current) => ({ ...current, html: updateComponentVisual(current.html, visual, { backgroundColor: next }) }));
+                  setVisuals((current) => current.map((candidate, candidateIndex) => candidateIndex === index ? { ...candidate, backgroundColor: next } : candidate));
+                }} />
+              </label>
+              <label className="project-component-visual-toggle">
+                <input type="checkbox" checked={visual.hidden} onChange={(event) => {
+                  remember();
+                  const next = event.target.checked;
+                  setDraft((current) => ({ ...current, html: updateComponentVisual(current.html, visual, { hidden: next }) }));
+                  setVisuals((current) => current.map((candidate, candidateIndex) => candidateIndex === index ? { ...candidate, hidden: next } : candidate));
+                }} /> Masquer l’icône
+              </label>
+            </fieldset>)}
+          </div>
         </div>
 
         <div className="project-component-settings-section">
@@ -379,7 +454,7 @@ export function ProjectCompositionItemSettings({
                     title="Choisir la couleur"
                     onChange={(event) => {
                       remember();
-                      const next = event.target.value;
+                      const next = pickedColor(entry.value, event.target.value);
                       setDraft((current) => ({ ...current, css: replaceAll(current.css, entry.value, next) }));
                       setColors((current) => current.map((candidate, candidateIndex) =>
                         candidateIndex === index ? { ...candidate, value: next } : candidate
@@ -413,11 +488,16 @@ export function ProjectCompositionItemSettings({
           <summary>Code avancé</summary>
           <label>HTML<textarea rows={10} value={draft.html} onChange={(event) => {
             remember();
-            setDraft((current) => ({ ...current, html: event.target.value }));
+            const html = event.target.value;
+            setDraft((current) => ({ ...current, html }));
+            setTexts(extractComponentTexts(html));
+            setVisuals(extractComponentVisuals(html));
           }} /></label>
           <label>CSS<textarea rows={9} value={draft.css} onChange={(event) => {
             remember();
-            setDraft((current) => ({ ...current, css: event.target.value }));
+            const css = event.target.value;
+            setDraft((current) => ({ ...current, css }));
+            setColors(extractColors(css));
           }} /></label>
           <label>JavaScript<textarea rows={5} value={draft.javascript} onChange={(event) => {
             remember();
@@ -426,7 +506,9 @@ export function ProjectCompositionItemSettings({
         </details>
 
         <div className="project-component-settings-actions">
-          <button className="primary-button" type="button" disabled={busy || !draft.html.trim()} onClick={() => void save()}>Enregistrer les réglages</button>
+          <button className="primary-button" type="button" disabled={busy || !dirty || !draft.html.trim()} onClick={() => void save()}>
+            {dirty ? '✓ Valider les changements' : '✓ Changements validés'}
+          </button>
           <button className="secondary-button" type="button" onClick={() => setModulePreviewOpen(true)}>Voir le module seul</button>
         </div>
 
@@ -437,8 +519,8 @@ export function ProjectCompositionItemSettings({
             <p>La nouvelle variante sera créée en « À adapter / valider », jamais directement prête.</p>
           </div>
           <input value={variantName} onChange={(event) => setVariantName(event.target.value)} />
-          <button className="secondary-button" type="button" disabled={busy || !item.hasLocalChanges || !variantName.trim()} onClick={() => void promote()}>
-            Envoyer vers la Bibliothèque
+          <button className="secondary-button" type="button" disabled={busy || dirty || !item.hasLocalChanges || !variantName.trim()} onClick={() => void promote()}>
+            {dirty ? 'Enregistrer les réglages avant de promouvoir' : 'Envoyer vers la Bibliothèque'}
           </button>
         </div>
       </div>
@@ -448,9 +530,18 @@ export function ProjectCompositionItemSettings({
           <span className="eyebrow">Aperçu du module</span>
           <strong>{item.displayName}</strong>
           {item.hasLocalChanges && <small>Adaptation locale enregistrée</small>}
-          <button className="secondary-button" type="button" onClick={() => setModulePreviewOpen(true)}>Agrandir</button>
+          <button className="secondary-button" type="button" onClick={() => setModulePreviewOpen(true)}>Voir le module seul</button>
         </div>
-        <iframe title={`Aperçu préparé ${item.displayName}`} sandbox="" srcDoc={previewDocument(draft)} />
+        <div className="project-page-preview-controls project-component-settings-preview-devices">
+          <button type="button" className={previewDevice === 'desktop' ? 'active' : ''} onClick={() => onPreviewDeviceChange?.('desktop')}>Desktop</button>
+          <button type="button" className={previewDevice === 'tablet' ? 'active' : ''} onClick={() => onPreviewDeviceChange?.('tablet')}>Tablette</button>
+          <button type="button" className={previewDevice === 'mobile' ? 'active' : ''} onClick={() => onPreviewDeviceChange?.('mobile')}>Mobile</button>
+        </div>
+        <div className="project-component-settings-preview-viewport">
+          <div style={{ width: previewDevice === 'desktop' ? '100%' : previewDevice === 'tablet' ? '768px' : '390px' }}>
+            <iframe title={`Aperçu préparé ${item.displayName}`} sandbox="" srcDoc={previewDocument(draft)} />
+          </div>
+        </div>
       </div>
     </div>
 

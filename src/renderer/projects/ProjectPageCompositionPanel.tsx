@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { ProjectNode } from '../../shared/projects';
 import type {
   AtoumWebCompositionDetail,
@@ -9,8 +10,9 @@ import type {
   AtoumWebTechnicalItemSummary,
   AtoumWebTechnicalVersion,
 } from '../../shared/referentials';
-import { ProjectCompositionItemSettings } from './ProjectCompositionItemSettings';
+import { ProjectCompositionItemSettings, type CodeParts } from './ProjectCompositionItemSettings';
 import './ProjectPageCompositionPanel.css';
+import { buildComponentPreview } from './componentPreview';
 
 type PanelMode = null | 'library' | 'create' | 'attach' | 'inspect' | 'preview';
 type CreateMode = 'new' | 'variant';
@@ -60,14 +62,6 @@ const EMPTY_FORM: CreateForm = {
   css: '',
   javascript: '',
 };
-
-function escapeHtml(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function safeStyle(value: string): string {
-  return value.replace(/<\/style/gi, '<\\/style');
-}
 
 function parseParts(version?: AtoumWebTechnicalVersion | null): PreviewParts {
   if (!version?.contentText) return { html: '', css: '', javascript: '', previewable: false, raw: '' };
@@ -142,14 +136,7 @@ function effectiveParts(item: AtoumWebCompositionItem, source: PreviewParts): Pr
 }
 
 function buildPreviewDocument(parts: PreviewParts, label: string): string {
-  const body = parts.previewable
-    ? parts.html
-    : `<div style="padding:24px;border:2px dashed #bbb;font-family:Arial,sans-serif"><strong>${escapeHtml(label)}</strong><p>Aperçu visuel indisponible pour ce type de contenu.</p></div>`;
-  return `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https: data:; font-src https: data:;">
-<style>html,body{margin:0;min-height:100%;background:#fff;color:#111}body{font-family:Arial,Helvetica,sans-serif}*,*::before,*::after{box-sizing:border-box}</style>
-<style>${safeStyle(parts.css)}</style></head><body>${body}</body></html>`;
+  return buildComponentPreview([{ html: parts.previewable ? parts.html : '<p>Aperçu visuel indisponible.</p>', css: parts.css, label }]);
 }
 
 function splitCompleteCode(value: string): { html: string; css: string; javascript: string } {
@@ -184,9 +171,13 @@ function effectiveReady(item: AtoumWebTechnicalItemSummary): boolean {
 export function ProjectPageCompositionPanel({
   page,
   onMessage,
+  inspectorHostId,
+  onInspectorOpenChange,
 }: {
   page: ProjectNode;
   onMessage: (message: string) => void;
+  inspectorHostId?: string;
+  onInspectorOpenChange?: (open: boolean, dual: boolean, expandedCount: number) => void;
 }) {
   const [composition, setComposition] = useState<AtoumWebCompositionDetail | null>(null);
   const [allCompositions, setAllCompositions] = useState<AtoumWebCompositionSummary[]>([]);
@@ -203,6 +194,11 @@ export function ProjectPageCompositionPanel({
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop');
   const [inspectionMode, setInspectionMode] = useState(false);
   const [settingsItemId, setSettingsItemId] = useState<string | null>(null);
+  const [settingsDraft, setSettingsDraft] = useState<CodeParts | null>(null);
+  const [settingsPaneCollapsed, setSettingsPaneCollapsed] = useState(false);
+  const [codePaneCollapsed, setCodePaneCollapsed] = useState(false);
+  const [inspectExpanded, setInspectExpanded] = useState(false);
+  const [inspectDevice, setInspectDevice] = useState<PreviewDevice>('desktop');
 
   async function reload(): Promise<void> {
     const [nextComposition, nextCompositions, nextLibrary] = await Promise.all([
@@ -218,11 +214,30 @@ export function ProjectPageCompositionPanel({
   useEffect(() => {
     setMode(null);
     setInspected(null);
+    setSettingsItemId(null);
+    setSettingsDraft(null);
+    setSettingsPaneCollapsed(false);
+    setCodePaneCollapsed(false);
+    setInspectExpanded(false);
+    setInspectDevice('desktop');
     setPreviewDoc('');
+    onInspectorOpenChange?.(false, false, 0);
     void reload().catch((error) =>
       onMessage(error instanceof Error ? error.message : 'Impossible de charger la composition de la Page.'),
     );
   }, [page.id]);
+
+  useEffect(() => {
+    const activeCount = Number(Boolean(settingsItemId)) + Number(Boolean(inspected));
+    const expandedCount =
+      Number(Boolean(settingsItemId) && !settingsPaneCollapsed)
+      + Number(Boolean(inspected) && !codePaneCollapsed);
+    onInspectorOpenChange?.(
+      activeCount > 0,
+      activeCount === 2,
+      expandedCount,
+    );
+  }, [inspected?.item.id, settingsItemId, settingsPaneCollapsed, codePaneCollapsed]);
 
   const visualLibrary = useMemo(() => library.filter((item) =>
     ['header','footer','hero','page','section','form','gallery','carousel','navigation','divi'].includes(item.category)
@@ -290,13 +305,42 @@ export function ProjectPageCompositionPanel({
   }
 
   async function inspect(item: AtoumWebCompositionItem): Promise<void> {
+    if (inspected?.item.id === item.id) {
+      setInspected(null);
+      setCodePaneCollapsed(false);
+      setInspectExpanded(false);
+      return;
+    }
+    if (settingsItemId && settingsItemId !== item.id) {
+      setSettingsItemId(null);
+      setSettingsDraft(null);
+    }
     await withBusy(async () => {
       const detail = await window.atoumweb.referentials.library.get(item.sourceItemId);
       const version = detail.versions.find((candidate) => candidate.id === item.sourceVersionId) ?? null;
       const sourceParts = parseParts(version);
       setInspected({ item, detail, parts: effectiveParts(item, sourceParts) });
-      setMode('inspect');
+      setCodePaneCollapsed(false);
+      setInspectDevice('desktop');
+      setInspectExpanded(false);
+      setMode(null);
     });
+  }
+
+  function toggleSettings(item: AtoumWebCompositionItem): void {
+    if (settingsItemId === item.id) {
+      setSettingsItemId(null);
+      setSettingsDraft(null);
+      setSettingsPaneCollapsed(false);
+      return;
+    }
+    if (inspected && inspected.item.id !== item.id) {
+      setInspected(null);
+      setInspectExpanded(false);
+    }
+    setSettingsItemId(item.id);
+    setSettingsDraft(null);
+    setSettingsPaneCollapsed(false);
   }
 
   async function attachExisting(): Promise<void> {
@@ -376,29 +420,11 @@ export function ProjectPageCompositionPanel({
         const parts = effectiveParts(item, sourceParts);
         return { item, parts };
       });
-      const css = rendered.map((entry) => entry.parts.css).filter(Boolean).join('\n\n');
-      const body = rendered.map((entry, index) => {
-        const content = entry.parts.previewable
-          ? entry.parts.html
-          : `<div class="aw-page-preview-unavailable"><strong>${escapeHtml(entry.item.displayName)}</strong><span>Aperçu indisponible</span></div>`;
-        return inspect
-          ? `<section class="aw-page-preview-slice aw-page-preview-component"><div class="aw-page-preview-label">${index + 1}. ${escapeHtml(entry.item.displayName)}</div>${content}</section>`
-          : `<section class="aw-page-preview-slice">${content}</section>`;
-      }).join('\n');
-      const document = `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src https: data:; font-src https: data:;">
-<style>${safeStyle(css)}</style>
-<style>
-html,body{display:block!important;visibility:visible!important;opacity:1!important;margin:0!important;min-height:100%!important;background:#fff;color:#111}
-body{font-family:Arial,Helvetica,sans-serif}
-*,*::before,*::after{box-sizing:border-box}
-.aw-page-preview-slice{display:block!important;visibility:visible!important;opacity:1!important;position:relative;min-height:1px}
-.aw-page-preview-component{outline:2px dashed #c59a4a}
-.aw-page-preview-label{position:relative;z-index:2147483647;padding:6px 10px;background:#181b20;color:#fff;font:12px Arial}
-.aw-page-preview-unavailable{margin:12px;padding:28px;border:2px dashed #bbb;display:grid;gap:5px}
-</style></head><body>${body}</body></html>`;
-      setPreviewDoc(document);
+      setPreviewDoc(buildComponentPreview(rendered.map(({item, parts}) => ({
+        label: item.displayName,
+        html: parts.previewable ? parts.html : '<p>Aperçu indisponible.</p>',
+        css: parts.css,
+      })), inspect));
       setMode('preview');
     });
   }
@@ -413,6 +439,16 @@ body{font-family:Arial,Helvetica,sans-serif}
 
   const availableHistorical = allCompositions.filter((candidate) => candidate.id !== composition?.id && candidate.status !== 'archived');
   const deviceWidth = previewDevice === 'desktop' ? '100%' : previewDevice === 'tablet' ? '768px' : '390px';
+  const inspectWidth = inspectDevice === 'desktop' ? '100%' : inspectDevice === 'tablet' ? '768px' : '390px';
+  const settingsItem = composition?.items.find((item) => item.id === settingsItemId) ?? null;
+  const liveInspectedParts: PreviewParts | null = inspected
+    ? (settingsItemId === inspected.item.id && settingsDraft
+        ? { ...settingsDraft, previewable: Boolean(settingsDraft.html.trim()), raw: inspected.parts.raw }
+        : inspected.parts)
+    : null;
+  const inspectorHost = inspectorHostId && typeof document !== 'undefined'
+    ? document.getElementById(inspectorHostId)
+    : null;
 
   return <section className="project-page-composition">
     <header className="project-page-composition-head">
@@ -428,61 +464,137 @@ body{font-family:Arial,Helvetica,sans-serif}
       </div>
     </header>
 
-    {!composition && <div className="project-page-composition-empty">
-      <strong>Aucun composant Manager pour cette Page.</strong>
-      <span>C’est valide : tu peux construire entièrement cette Page dans Divi.</span>
-      {availableHistorical.length > 0 && <button className="link-button" type="button" onClick={() => setMode('attach')}>Rattacher une composition existante</button>}
-    </div>}
+    <div className="project-page-composition-workspace">
+      <div className="project-page-composition-primary">
+      {!composition && <div className="project-page-composition-empty">
+        <strong>Aucun composant Manager pour cette Page.</strong>
+        <span>C’est valide : tu peux construire entièrement cette Page dans Divi.</span>
+        {availableHistorical.length > 0 && <button className="link-button" type="button" onClick={() => setMode('attach')}>Rattacher une composition existante</button>}
+      </div>}
+  
+      {composition && <div className="project-page-composition-list">
+        {composition.items.map((item, index) => {
+          const occurrence = composition.items
+            .slice(0, index + 1)
+            .filter((candidate) => candidate.sourceItemId === item.sourceItemId).length;
+          const totalSameSource = composition.items.filter((candidate) => candidate.sourceItemId === item.sourceItemId).length;
+          return <div className="project-page-composition-item-wrap" key={item.id}>
+            <article>
+              <span className="project-page-composition-order">{index + 1}</span>
+              <div className="project-page-composition-main">
+                <strong>{item.displayName}{totalSameSource > 1 ? ` · occurrence ${occurrence}` : ''}</strong>
+                <small>
+                  {item.category} · v{item.sourceVersionNumber}{item.variantKey ? ` · ${item.variantKey}` : ''}
+                  {item.hasLocalChanges ? ' · préparé localement' : ''}
+                </small>
+              </div>
+              <div className="project-page-composition-row-actions">
+                <button type="button" disabled={busy || index === 0} onClick={() => void move(item, -1)} title="Monter">↑</button>
+                <button type="button" disabled={busy || index === composition.items.length - 1} onClick={() => void move(item, 1)} title="Descendre">↓</button>
+                <button
+                  type="button"
+                  className={settingsItemId === item.id ? 'active' : ''}
+                  disabled={busy}
+                  onClick={() => toggleSettings(item)}
+                >{settingsItemId === item.id ? 'Fermer réglages' : 'Réglages'}</button>
+                <button type="button" className={inspected?.item.id === item.id ? 'active' : ''} disabled={busy} onClick={() => void inspect(item)}>
+                  {inspected?.item.id === item.id ? 'Fermer aperçu' : 'Code / aperçu'}
+                </button>
+                <button type="button" disabled={busy} onClick={() => void remove(item)}>Retirer</button>
+              </div>
+            </article>
+          </div>;
+        })}
+        {composition.items.length === 0 && <p className="muted">Composition créée, mais encore vide.</p>}
+      </div>}
+  
+      {mode === 'attach' && <div className="project-page-composition-inline-panel">
+        <div><strong>Rattacher une composition existante</strong><span>Les compositions historiques ne sont jamais devinées à partir de leur nom.</span></div>
+        <select value={attachId} onChange={(event) => setAttachId(event.target.value)}>
+          <option value="">Choisir…</option>
+          {availableHistorical.map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name} · {candidate.itemCount} composant(s)</option>)}
+        </select>
+        <button className="primary-button" type="button" disabled={!attachId || busy} onClick={() => void attachExisting()}>Rattacher</button>
+      </div>}
+  
+        </div>
 
-    {composition && <div className="project-page-composition-list">
-      {composition.items.map((item, index) => {
-        const occurrence = composition.items
-          .slice(0, index + 1)
-          .filter((candidate) => candidate.sourceItemId === item.sourceItemId).length;
-        const totalSameSource = composition.items.filter((candidate) => candidate.sourceItemId === item.sourceItemId).length;
-        return <div className="project-page-composition-item-wrap" key={item.id}>
-          <article>
-            <span className="project-page-composition-order">{index + 1}</span>
-            <div className="project-page-composition-main">
-              <strong>{item.displayName}{totalSameSource > 1 ? ` · occurrence ${occurrence}` : ''}</strong>
-              <small>
-                {item.category} · v{item.sourceVersionNumber}{item.variantKey ? ` · ${item.variantKey}` : ''}
-                {item.hasLocalChanges ? ' · préparé localement' : ''}
-              </small>
-            </div>
-            <div className="project-page-composition-row-actions">
-              <button type="button" disabled={busy || index === 0} onClick={() => void move(item, -1)} title="Monter">↑</button>
-              <button type="button" disabled={busy || index === composition.items.length - 1} onClick={() => void move(item, 1)} title="Descendre">↓</button>
-              <button
-                type="button"
-                className={settingsItemId === item.id ? 'active' : ''}
-                disabled={busy}
-                onClick={() => setSettingsItemId((current) => current === item.id ? null : item.id)}
-              >Réglages {settingsItemId === item.id ? '▴' : '▾'}</button>
-              <button type="button" disabled={busy} onClick={() => void inspect(item)}>Code / aperçu</button>
-              <button type="button" disabled={busy} onClick={() => void remove(item)}>Retirer</button>
-            </div>
-          </article>
-          {settingsItemId === item.id && <ProjectCompositionItemSettings
-            compositionId={composition.id}
-            item={item}
-            pageName={page.name}
-            onUpdated={(updated) => setComposition(updated)}
-            onMessage={onMessage}
-          />}
-        </div>;
-      })}
-      {composition.items.length === 0 && <p className="muted">Composition créée, mais encore vide.</p>}
-    </div>}
+    </div>
 
-    {mode === 'attach' && <div className="project-page-composition-inline-panel">
-      <div><strong>Rattacher une composition existante</strong><span>Les compositions historiques ne sont jamais devinées à partir de leur nom.</span></div>
-      <select value={attachId} onChange={(event) => setAttachId(event.target.value)}>
-        <option value="">Choisir…</option>
-        {availableHistorical.map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name} · {candidate.itemCount} composant(s)</option>)}
-      </select>
-      <button className="primary-button" type="button" disabled={!attachId || busy} onClick={() => void attachExisting()}>Rattacher</button>
-    </div>}
+    {(settingsItem || inspected) && inspectorHost && createPortal(
+      <div className={`project-page-inspector-workbench ${settingsItem && inspected ? 'both-open' : 'single'} ${settingsPaneCollapsed ? 'settings-collapsed' : ''} ${codePaneCollapsed ? 'code-collapsed' : ''} ${inspectExpanded ? 'expanded' : ''}`}>
+        {inspectExpanded && <button className="project-page-inspector-expanded-close secondary-button" type="button" onClick={() => setInspectExpanded(false)}>↙ Quitter le grand écran</button>}
+        {settingsItem && composition && <section className={`project-page-inspector-pane settings-pane ${settingsPaneCollapsed ? 'collapsed' : ''}`}>
+          {settingsPaneCollapsed
+            ? <button className="project-page-inspector-pane-restore settings" type="button" title="Afficher Réglages" aria-label="Afficher Réglages" onClick={() => setSettingsPaneCollapsed(false)}>→</button>
+            : <ProjectCompositionItemSettings
+                compositionId={composition.id}
+                item={settingsItem}
+                pageName={page.name}
+                onUpdated={(updated) => setComposition(updated)}
+                onMessage={onMessage}
+                docked
+                onCollapse={() => setSettingsPaneCollapsed(true)}
+                onExpand={() => setInspectExpanded(true)}
+                previewDevice={inspectDevice}
+                onPreviewDeviceChange={setInspectDevice}
+                onClose={() => {
+                  setSettingsItemId(null);
+                  setSettingsDraft(null);
+                  setSettingsPaneCollapsed(false);
+                  if (!inspected) setInspectExpanded(false);
+                }}
+                onDraftChange={setSettingsDraft}
+              />}
+        </section>}
+
+        {inspected && liveInspectedParts && <section className={`project-page-inspector-pane code-pane ${codePaneCollapsed ? 'collapsed' : ''}`}>
+          {codePaneCollapsed
+            ? <button className="project-page-inspector-pane-restore code" type="button" title="Afficher Code / aperçu" aria-label="Afficher Code / aperçu" onClick={() => setCodePaneCollapsed(false)}>←</button>
+            : <div className="project-page-inspector-dock">
+            <header>
+              <div>
+                <span className="eyebrow">Code / aperçu</span>
+                <strong>{inspected.item.displayName}</strong>
+                <small>{settingsItemId === inspected.item.id && settingsDraft ? 'Brouillon local en direct' : `Source figée · v${inspected.item.sourceVersionNumber}`}</small>
+              </div>
+              <div>
+                <button className="secondary-button project-inspector-expand-action" type="button" onClick={() => setInspectExpanded(true)}>Agrandir</button>
+                <button className="secondary-button" type="button" aria-label="Réduire Code / aperçu" title="Réduire Code / aperçu" onClick={() => setCodePaneCollapsed(true)}>→</button>
+                <button className="secondary-button" type="button" aria-label="Fermer le volet Code / aperçu" onClick={() => {
+                  setInspected(null);
+                  setCodePaneCollapsed(false);
+                  if (!settingsItemId) setInspectExpanded(false);
+                }}>×</button>
+              </div>
+            </header>
+            <div className="project-page-preview-controls project-page-inspector-device-controls">
+              <button type="button" className={inspectDevice === 'desktop' ? 'active' : ''} onClick={() => setInspectDevice('desktop')}>Desktop</button>
+              <button type="button" className={inspectDevice === 'tablet' ? 'active' : ''} onClick={() => setInspectDevice('tablet')}>Tablette</button>
+              <button type="button" className={inspectDevice === 'mobile' ? 'active' : ''} onClick={() => setInspectDevice('mobile')}>Mobile</button>
+            </div>
+            <div className="project-page-inspector-dock-preview">
+              <div style={{ width: inspectWidth }}>
+                <iframe
+                  className="interactive-preview"
+                  tabIndex={0}
+                  title={`Aperçu direct ${inspected.item.displayName}`}
+                  sandbox=""
+                  srcDoc={buildPreviewDocument(liveInspectedParts, inspected.item.displayName)}
+                />
+              </div>
+            </div>
+            <div className="project-page-code-tabs project-page-inspector-dock-code">
+              <details open><summary>HTML</summary><pre>{liveInspectedParts.html || '—'}</pre></details>
+              <details><summary>CSS</summary><pre>{liveInspectedParts.css || '—'}</pre></details>
+              <details><summary>JavaScript</summary><pre>{liveInspectedParts.javascript || '—'}</pre></details>
+              {!liveInspectedParts.previewable && <details><summary>Contenu brut</summary><pre>{liveInspectedParts.raw || '—'}</pre></details>}
+            </div>
+          </div>}
+        </section>}
+      </div>,
+      inspectorHost,
+    )}
 
     {mode === 'library' && <div className="project-page-composition-modal library-modal" role="dialog" aria-modal="true">
       <div className="project-page-composition-modal-backdrop" onClick={() => setMode(null)} />
@@ -580,22 +692,6 @@ body{font-family:Arial,Helvetica,sans-serif}
               <strong>Aperçu</strong>
               <iframe title="Aperçu du nouveau composant" sandbox="" srcDoc={createPreview} />
             </div>
-          </div>
-        </div>
-      </div>
-    </div>}
-
-    {mode === 'inspect' && inspected && <div className="project-page-composition-modal" role="dialog" aria-modal="true">
-      <div className="project-page-composition-modal-backdrop" onClick={() => setMode(null)} />
-      <div className="project-page-composition-modal-panel">
-        <header><div><span className="eyebrow">Composant {inspected.item.sortOrder + 1}</span><h3>{inspected.item.displayName}</h3><p>Version source figée : v{inspected.item.sourceVersionNumber}</p></div><button className="secondary-button" type="button" onClick={() => setMode(null)}>Fermer</button></header>
-        <div className="project-page-inspector-grid">
-          <iframe title={`Aperçu ${inspected.item.displayName}`} sandbox="" srcDoc={buildPreviewDocument(inspected.parts, inspected.item.displayName)} />
-          <div className="project-page-code-tabs">
-            <details open><summary>HTML</summary><pre>{inspected.parts.html || '—'}</pre></details>
-            <details><summary>CSS</summary><pre>{inspected.parts.css || '—'}</pre></details>
-            <details><summary>JavaScript</summary><pre>{inspected.parts.javascript || '—'}</pre></details>
-            {!inspected.parts.previewable && <details><summary>Contenu brut</summary><pre>{inspected.parts.raw || '—'}</pre></details>}
           </div>
         </div>
       </div>

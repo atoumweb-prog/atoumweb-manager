@@ -2235,3 +2235,9 @@ body.project-resizing * {
   }
 }
 
+
+.project-production-header-compact{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;min-width:0;padding:8px 10px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+.project-production-header-compact strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.project-production-collapse-top{margin-left:4px}
+.project-production-page.project-top-collapsed{grid-template-rows:auto auto minmax(0,1fr)}
+@media(max-width:760px){.project-production-header-compact{grid-template-columns:auto minmax(0,1fr)}.project-production-header-compact>button:last-child{grid-column:1/-1}}

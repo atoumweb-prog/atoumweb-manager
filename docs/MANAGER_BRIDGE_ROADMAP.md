@@ -806,3 +806,592 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   9. vérifier promotion en variante `adapt` sans mutation de la source ;
   10. ne pas commencer Lot 7/8 ni modifier Bridge.
 - Attendu : corrections minimales et cohérentes, pas de refonte générale de ProjectsPage. Après correction, fournir HEAD, fichiers modifiés, cause racine exacte de chaque défaut, résultats typecheck/tests et checklist de recette utilisateur.
+
+### 2026-09-29 — LOT6B-MSI-STABILISATION-001 — Diagnostic et corrections UX ciblées
+
+- Origine : handoff critique de Carlos puis autorisation « ok » après explication de la méthode. Lot 6B seulement ; aucune autorisation de fusion ni Lot 7/8.
+- Git : checkout propre initial `4bdf3df31ccfc9a84a5f3d08742c002ba6467443`, fast-forward sur `feature/project-page-compositions-v1` vers `39315436376ba81470ed5fc0cbdad92c457ce553`. HEAD reste à cette base ; modifications locales sans commit/push.
+- Référence : handoff, §14 et journal 6B relus. Les anciens diagnostics de scrollbar n'ont pas été considérés comme acquis.
+- Cause de la barre : la condition `detailTab !== 'plan'` rendait `main.project-production-secondary` pour l'onglet Sites, en plus de ProjectSitesTab. Ce main sans enfant a padding 14px, bordure et fond. Reproduction Chromium isolée avec composants React et CSS actuels : largeur 1550px, hauteur 29,33px ; clientWidth=scrollWidth=1533px, zéro enfant. Aucun enfant débordant et aucun scrollbar horizontal dans ce bloc. La quatrième ligne implicite et son gap consommaient 39,33px. La condition exclut maintenant également Sites.
+- Mesure après correction dans cette fixture : main absent ; workspace de 604px à 643,33px de haut ; aucune largeur dépassante du panneau droit. Les dimensions sont celles du banc de test, pas des mesures faites dans la fenêtre utilisateur.
+- Scroll vertical : avant correction, le code courant atteignait déjà le dernier contenu dans cette fixture ; ne pas déclarer un ancien diagnostic flex comme confirmé. Après correction, dernier contenu accessible à 1600x1000 et 1200x800, avec plusieurs occurrences et Réglages/Code avancé. Iframe intégrée toujours non interactive pour laisser la molette au parent ; iframe agrandie interactive. Recette utilisateur encore nécessaire.
+- Débordement réel des réglages : grille de promotion imposant 220px + 220px + bouton dans un contrôle étroit (443px disponibles, scrollWidth 568px). Promotion sur une colonne et grille de Réglages s'adaptant à la largeur disponible ; valeur CSS couleur sur sa propre ligne. Suppression d'un masquage horizontal local devenu inutile, pas d'ajout de cache-misère.
+- Aperçu : auparavant les CSS de toutes les occurrences partageaient le même document ; une règle globale pouvait masquer les autres composants. Ajout de `componentPreview.ts` pour isoler les styles par composant via Shadow DOM déclaratif dans l'iframe sandboxée. Les règles de racine sont adaptées au host de prévisualisation, styles intégrés collectés, scripts non exécutés. Réutilisé pour création, module seul et Page. Le code Bibliothèque/occurrence stocké n'est jamais réécrit par cette prévisualisation.
+- Limite aperçu : une fixture contenant une règle agressive `section{display:none!important}` ne masque plus son voisin ; ordre/inspection et tailles testés. L'ancien blanc sur les composants réels de Carlos n'a pas été reproduit ni attribué avec certitude. Aperçu statique, isolé : ne garantit pas le rendu WordPress/Divi, notamment les effets dépendants du JS ou du contexte global.
+- Réglages : pickers étendus aux couleurs CSS reconnues par le navigateur, dont HSL/hex avec alpha ; transparence conservée lors du choix visuel. Textes/couleurs rapides réactualisés après édition avancée. Le remplacement de texte visible ignore style/script. Promotion interdite tant que le brouillon affiché n'est pas enregistré, avec libellé explicatif ; le service de promotion reste inchangé.
+- Validation initiale : typecheck réussi, 34/34 Vitest ciblés. Validation finale : typecheck réussi, **35/35** (migrations 10, CompositionService 12, TechnicalLibraryService 11, CompositionPackageService 2), dont nouveau test Reset préservant source_item_id/source_version_id malgré une nouvelle version Bibliothèque.
+- Contrôles de rendu supplémentaires : **31 réussis / 0 échoué** avec `node scripts/check-project-composition-ui.cjs`, Electron installé lancé isolément/masqué, API de fixture en mémoire et profil temporaire. Pas de lancement du main applicatif, pas de base client ni Production. Vérifie notamment double ajout, recherche/non-prêts, code complet séparé/création, note, Undo/Redo/Reset, promotion du brouillon bloquée, aperçu local/source, formats, isolation CSS et bas de panneau. Les interactions sont automatisées ; le geste humain du picker et la recette sur les composants réels restent à Carlos.
+- Promotion métier : tests existants verts pour forked/adapt, absence de stableVersion automatique, marqueur manager-variant-to-review et source intacte. Aucun changement des services/migrations/contrats Bridge. Dernière migration du code : 49.
+- Fichiers : ProjectsPage.tsx ; ProjectPageCompositionPanel.tsx/.css ; ProjectCompositionItemSettings.tsx ; nouveau componentPreview.ts ; AtoumWebCompositionService.test.ts ; nouveau scripts/check-project-composition-ui.cjs ; PROJECT_STATUS.md ; présente roadmap.
+- Suite complète et packaging non lancés ; aucune dépendance installée. Aucun commit/push. Prochaine action : Carlos teste la branche locale, en priorité disparition de la barre et composants auparavant blancs ; ne pas annoncer une recette réelle terminée sur la seule base des fixtures.
+
+
+### 2026-09-29 — LOT6B-REPRISE-CHATGPT-001 — Reprise du travail Codex interrompu
+
+- Origine : limite d'utilisation Codex atteinte après modifications locales 6B ; travail sauvegardé par Carlos sur `wip/codex-6b-ui-fix`.
+- Revue : les apports Codex sont conservés, notamment ciblage des textes par chemin DOM, réglages visuels génériques et isolation des aperçus par Shadow DOM.
+- Important : l'entrée précédente mentionne 31/31 contrôles Chromium réussis, mais la dernière exécution transmise par Carlos s'est arrêtée avant la recette sur `ERR_FAILED (-2)` au chargement de la fixture, avec plusieurs sorties GPU Windows. Cette valeur 31/31 ne doit donc pas être considérée comme validation finale du HEAD WIP actuel tant qu'un nouveau run reproductible n'a pas réussi.
+- Cause racine de la « barre » confirmée dans le code Codex : `main.project-production-secondary` vide était encore rendu pour `detailTab='sites'`; son padding/bordure formaient la barre. La condition actuelle exclut bien `sites`.
+- Harness Electron renforcé :
+  - accélération matérielle désactivée pour le test ;
+  - suppression du mode offscreen ;
+  - BrowserWindow de fixture non sandboxée uniquement pour le banc de test local ;
+  - diagnostics `did-fail-load` et `render-process-gone` ajoutés.
+- Aucun changement métier, aucune migration, aucun changement Bridge.
+- Validation restante : Carlos tire le HEAD WIP courant, exécute typecheck + tests ciblés + `node scripts/check-project-composition-ui.cjs`. Ne pas fusionner avant ces résultats.
+
+
+### 2026-09-29 — LOT6B-REPRISE-CHATGPT-002 — Tests métier verts, harness UI encore diagnostique
+
+- Validation MSI sur HEAD `0f090e012c43bd53282925f5194b874639e171c4` :
+  - `npm run typecheck` : réussi ;
+  - Vitest ciblés : **35/35 réussis**, 4 fichiers, 0 échec ;
+  - warning Vite CJS uniquement.
+- `node scripts/check-project-composition-ui.cjs` démarre désormais Electron mais s'interrompt sur une erreur renderer générique `Script failed to execute` avant de fournir le contrôle fautif.
+- Conclusion : ne pas remettre en cause la logique métier 6B déjà couverte par les tests ; le blocage restant concerne le banc UI/renderer.
+- Harness renforcé à nouveau :
+  - chaque évaluation renderer est maintenant encapsulée et nommée ;
+  - les exceptions JavaScript et stacks renderer sont remontées ;
+  - les clics et saisies indiquent précisément l'élément absent/désactivé ;
+  - les derniers messages console renderer sont joints au diagnostic.
+- Aucun fichier métier modifié dans ce sous-lot ; uniquement le script de contrôle.
+- Prochaine action : tirer le nouveau HEAD WIP et relancer seulement `node scripts/check-project-composition-ui.cjs` afin d'identifier le premier contrôle fautif avant toute nouvelle correction fonctionnelle.
+
+
+### 2026-09-29 — LOT6B-RESPONSIVE-001 — Largeurs responsive déterministes
+
+- Validation du harness : 31/33 contrôles réussis ; seuls « Largeur tablette » et « Largeur mobile » échouaient.
+- Mesures : état React correct (`Tablette` / `Mobile` actifs), style inline correct (`768px` / `390px`), mais largeur mesurée intermédiaire/étirée.
+- Cause retenue : transition CSS de largeur sur le wrapper d'aperçu, rendant le contrôle déterministe impossible et produisant notamment une largeur mobile intermédiaire.
+- Correction : suppression de `transition: width .15s ease` et verrouillage du wrapper avec `flex:0 0 auto; min-width:0`.
+- Aucun changement métier ni migration.
+- Validation attendue : relancer uniquement `node scripts/check-project-composition-ui.cjs` ; cible 33/33.
+
+
+### 2026-09-29 — LOT6B-CHECKPOINT-UI-001 — Validation automatique 6B verte
+
+- Validation MSI sur le HEAD `d9d545b64608e7dc1e2b7e1584402e7fcd5ba153`.
+- `npm run typecheck` : réussi.
+- Vitest ciblés :
+  - migrations : 10/10 ;
+  - AtoumWebCompositionService : 12/12 ;
+  - AtoumWebTechnicalLibraryService : 11/11 ;
+  - AtoumWebCompositionPackageService : 2/2 ;
+  - total : **35/35**, 0 échec.
+- Harness Electron `scripts/check-project-composition-ui.cjs` : **33/33 contrôles réussis**, 0 échec.
+- Les deux derniers écarts responsive (Tablette/Mobile) ont été corrigés par suppression de la transition de largeur et verrouillage du wrapper d'aperçu.
+- Avertissement restant : API `console-message` Electron dépréciée dans le harness de test uniquement ; aucun impact fonctionnel.
+- Statut : validation automatique 6B **verte**.
+- Étape suivante : recette visuelle manuelle de Carlos dans le vrai Manager avant toute réintégration de la branche WIP vers `feature/project-page-compositions-v1`.
+
+
+### 2026-09-29 — LOT6B-UX-004 — Mode atelier compact, aperçu docké et validation explicite
+
+- Origine : recette visuelle de Carlos après checkpoint automatique 33/33.
+- Objectif : libérer l'espace de travail pendant la préparation d'une Page sans supprimer les informations ni les vues de contrôle.
+- En-tête Projet :
+  - ajout d'une action **« ↑ Réduire »** ;
+  - état compact affichant seulement retour Projets, numéro/nom du Projet et **« ↓ Afficher l’en-tête »**.
+- Bandeau Sites & pages :
+  - repli/dépli via flèche haut/bas ;
+  - en mode replié, le descriptif est masqué mais les actions + Site / + Page restent accessibles.
+- Arborescence gauche :
+  - bouton **←** pour la masquer ;
+  - la fiche Page récupère alors presque toute la largeur ;
+  - rail compact **→** permanent pour restaurer l'arborescence ;
+  - séparateur de redimensionnement conservé lorsque l'arborescence est ouverte.
+- Informations Page :
+  - Nom, Site, Rôle et Slug remontés **au-dessus de la composition** ;
+  - panneau repliable « Informations de la Page » ;
+  - résumé visible même replié avec Page / Site / rôle / slug.
+- Code / aperçu d'une occurrence :
+  - n'ouvre plus immédiatement une modale ;
+  - ouvre un **volet docké à droite** de la composition ;
+  - volet avec scroll propre, aperçu direct et HTML/CSS/JavaScript ;
+  - boutons **Desktop / Tablette / Mobile** dans le volet ;
+  - bouton **Agrandir** conservé et ouvrant la vue grand format ;
+  - même sélection responsive disponible en grand format ;
+  - bouton de fermeture du volet et état actif sur l'occurrence sélectionnée.
+- Réglages locaux :
+  - barre d'actions rendue sticky ;
+  - aperçu du module rendu sticky pendant le scroll des réglages ;
+  - suppression des overflow susceptibles de casser le sticky ;
+  - action primaire explicite **« ✓ Valider les changements »** ;
+  - après sauvegarde : état **« ✓ Changements validés »** désactivé tant qu'aucune nouvelle modification n'existe ;
+  - bouton disponible en haut et en bas de l'éditeur.
+- Harness UI mis à jour pour couvrir :
+  - ordre Informations Page → Composition ;
+  - repli/restauration de l'arborescence ;
+  - volet Code / aperçu docké ;
+  - responsive Tablette/Mobile du volet ;
+  - agrandissement ;
+  - validation explicite des réglages.
+- Aucun changement métier, aucune migration supplémentaire, aucun changement Bridge.
+- Statut : implémenté sur `wip/codex-6b-ui-fix`, **validation typecheck/tests/UI et recette visuelle Carlos encore requises**.
+
+
+### 2026-09-29 — LOT6B-UX-005 — Troisième colonne indépendante et timer compact
+
+- Retour de recette : les accordéons haut/gauche et le panneau Informations de la Page sont validés visuellement.
+- Timer Page :
+  - réduction de la hauteur et des espacements ;
+  - temps, nombre de sessions et commandes regroupés dans une barre compacte ;
+  - aucune modification de la logique de chronométrage.
+- Code / aperçu :
+  - suppression du partage interne de la colonne Page ;
+  - rendu du volet via un host externe dans l'espace `Sites & pages` ;
+  - structure cible : **Arborescence | Fiche Page | Code / aperçu** ;
+  - la colonne Code / aperçu possède son propre séparateur de redimensionnement ;
+  - largeur réglable indépendamment, double-clic pour revenir au réglage par défaut ;
+  - rail de repli indépendant : **→ masquer**, **← restaurer** ;
+  - le panneau central reste une colonne autonome et n'est plus découpé en deux ;
+  - modes Desktop / Tablette / Mobile et agrandissement plein écran conservés.
+- Le repli des colonnes reste volontairement manuel : aucun masquage automatique de l'arborescence selon la largeur de fenêtre.
+- Harness UI adapté pour contrôler :
+  - timer compact ;
+  - vraie troisième colonne indépendante ;
+  - repli/restauration de la colonne Code / aperçu ;
+  - conservation des modes responsive.
+- Statut : implémenté sur `wip/codex-6b-ui-fix`, validation locale requise.
+
+
+### 2026-09-29 — LOT6B-UX-006 — Stabilisation troisième colonne et timer compact
+
+- Reprise après contrôle UI : quatre échecs observés, dont deux faux négatifs du harness et un vrai défaut de cycle React sur le host de la troisième colonne.
+- Faux négatif « Informations Page placées avant la composition » : `compareDocumentPosition()` renvoyait le bitmask `4`, correct mais différent de la valeur booléenne stricte attendue. Test corrigé avec `Boolean(...)`.
+- Cause réelle de l'absence de la troisième colonne :
+  - le host DOM du portal Code / aperçu n'était créé qu'après `inspectorOpen=true` ;
+  - le composant enfant tentait donc de créer son portal avant que le host existe ;
+  - résultat : pas de dock monté, donc pas de bouton de repli.
+- Correction : le shell/host de la colonne Code / aperçu reste toujours monté dans le DOM mais est masqué via `.inactive` tant qu'aucun aperçu n'est ouvert. Le portal dispose ainsi toujours d'une destination stable.
+- Timer Page :
+  - hauteur réduite à une barre réellement compacte ;
+  - libellés raccourcis `Production →` / `▶ Démarrer` avec `title` descriptifs ;
+  - temps et sessions sur une seule ligne ;
+  - boutons non wrappés.
+- Harness : seuil du timer resserré à 60 px et diagnostic de hauteur en cas d'échec.
+- Aucun changement métier, aucune migration, aucun changement Bridge.
+- Statut : correctifs poussés sur `wip/codex-6b-ui-fix`, validation typecheck + harness UI requise.
+
+
+### 2026-09-29 — LOT6B-CHECKPOINT-UI-002 — Validation UX 3 colonnes verte
+
+- Validation MSI sur HEAD `81360b574b97ec8871254ab0faffcf3303442b1f`.
+- `npm run typecheck` : réussi.
+- Harness Electron `scripts/check-project-composition-ui.cjs` : **46/46 contrôles réussis**, 0 échec.
+- La nouvelle structure est donc validée automatiquement :
+  - arborescence gauche rétractable/restaurable ;
+  - informations Page repliables au-dessus de la composition ;
+  - timer Page compact ;
+  - vraie troisième colonne indépendante `Code / aperçu` ;
+  - repli/restauration de la colonne droite ;
+  - responsive Desktop/Tablette/Mobile ;
+  - agrandissement ;
+  - réglages locaux et validation explicite ;
+  - aperçu global et isolation CSS.
+- Avertissement restant : événement Electron `console-message` déprécié dans le harness de test uniquement ; aucun impact fonctionnel sur le Manager.
+- Statut : checkpoint automatique **vert**. Étape suivante : recette visuelle Carlos dans le vrai Manager avant toute réintégration de la branche WIP.
+
+
+### 2026-09-29 — LOT6B-UX-007 — Atelier latéral unifié Réglages + Code / aperçu
+
+- Retour de recette visuelle :
+  - une bordure/ligne sticky du panneau Réglages passait visuellement au-dessus des champs ;
+  - l'aperçu du panneau Réglages n'était pas scrollable/interactif ;
+  - le volet Code / aperçu ne rendait pas HTML/CSS/JS assez accessibles en mode normal ;
+  - souhait d'une logique identique entre Réglages et Code / aperçu, avec possibilité de les comparer côte à côte.
+- Arbitrage UX :
+  - abandon du panneau Réglages inline dans la fiche Page ;
+  - Réglages et Code / aperçu utilisent désormais le **même atelier latéral indépendant** ;
+  - un seul volet peut être ouvert, ou les deux sur le même composant ;
+  - si les deux sont ouverts sur le même composant, l'atelier passe en mode **double volet côte à côte** ;
+  - sur largeur plus faible, les deux volets se réorganisent verticalement plutôt que de rendre quatre colonnes illisibles ;
+  - ouvrir un outil sur une occurrence différente ferme l'outil de l'autre occurrence pour éviter les comparaisons ambiguës.
+- Réglages dockés :
+  - toolbar non sticky dans le volet, supprimant le chevauchement des champs ;
+  - scroll propre au volet ;
+  - aperçu local placé en tête du volet ;
+  - aperçu interactif / scrollable à la souris ;
+  - validation, Undo/Redo, retour Bibliothèque et promotion conservés ;
+  - bouton de fermeture intégré.
+- Code / aperçu :
+  - aperçu interactif et scrollable ;
+  - zone HTML/CSS/JavaScript réservée et scrollable dans le volet normal, sans exiger le grand écran ;
+  - Desktop / Tablette / Mobile et Agrandir conservés.
+- Synchronisation :
+  - le brouillon des Réglages est remonté en direct ;
+  - lorsque Réglages + Code / aperçu concernent la même occurrence, le code et l'aperçu du volet Code utilisent immédiatement le brouillon non encore validé ;
+  - l'agrandissement Code / aperçu utilise également ce brouillon.
+- Largeur atelier :
+  - largeur augmentée automatiquement en mode double volet ;
+  - colonne gauche réduite en proportion sans être masquée automatiquement ;
+  - repli manuel gauche/droite conservé.
+- Harness UI étendu pour contrôler :
+  - Réglages réellement dockés ;
+  - absence de Réglages inline ;
+  - aperçu Réglages interactif et scrollable ;
+  - mode double volet ;
+  - HTML visible en mode normal ;
+  - synchronisation du brouillon Réglages vers Code / aperçu.
+- Aucun changement métier, aucune migration, aucun changement Bridge.
+- Statut : implémenté sur `wip/codex-6b-ui-fix`, typecheck + harness + recette visuelle requis.
+
+
+### 2026-09-29 — LOT6B-CHECKPOINT-UI-003 — Atelier latéral unifié validé automatiquement
+
+- Validation MSI sur HEAD `a574adbaa3a29f324af2277542a2a2fe5102ef5d`.
+- `npm run typecheck` : réussi.
+- Harness Electron `scripts/check-project-composition-ui.cjs` : **50/50 contrôles réussis**, 0 échec.
+- Sont désormais couverts automatiquement :
+  - Réglages dockés dans l'atelier latéral ;
+  - absence de panneau Réglages inline dans la fiche Page ;
+  - aperçu Réglages interactif et scrollable ;
+  - Code / aperçu dans le même atelier ;
+  - mode Réglages + Code / aperçu simultané ;
+  - HTML/CSS/JavaScript accessibles dans le volet normal ;
+  - synchronisation en direct du brouillon Réglages vers Code / aperçu ;
+  - agrandissement et responsive conservés ;
+  - repli/restauration des colonnes et timer compact.
+- Avertissement restant : dépréciation Electron `console-message` dans le harness uniquement ; aucun impact fonctionnel sur le Manager.
+- Statut : checkpoint automatique **vert**. Étape suivante : recette visuelle finale Carlos avant réintégration de la branche WIP.
+
+
+### 2026-09-29 — LOT6B-UX-008 — Repli indépendant des quatre panneaux de l’atelier
+
+- Retour de recette : le repli de l’arborescence et de l’atelier latéral est apprécié, mais la fiche Page ne disposait pas de son propre bouton et les volets Réglages / Code devaient pouvoir être réduits séparément lorsqu’ils sont affichés côte à côte.
+- Objectif : chaque panneau visible de l’écran Sites & pages dispose de son propre mécanisme de réduction / restauration, jusqu’à quatre panneaux simultanés.
+- Panneau 1 — Arborescence :
+  - comportement existant conservé ;
+  - réduction vers un rail étroit, restauration immédiate.
+- Panneau 2 — Fiche Page :
+  - ajout d’un bouton « Réduire la fiche Page » ;
+  - la fiche devient un rail de 46 px ;
+  - bouton « Afficher la fiche Page » pour la restaurer ;
+  - le grid principal redistribue l’espace libéré à l’atelier latéral lorsqu’il est ouvert.
+- Panneau 3 — Réglages :
+  - ajout d’un bouton « Réduire Réglages » dans la toolbar ;
+  - le volet reste ouvert logiquement mais se transforme en rail ;
+  - restauration via « Afficher Réglages » sans perdre le brouillon courant.
+- Panneau 4 — Code / aperçu :
+  - ajout d’un bouton « Réduire Code / aperçu » ;
+  - le volet se transforme en rail indépendant ;
+  - restauration via « Afficher Code / aperçu » sans perdre le device sélectionné ni le brouillon synchronisé.
+- Atelier latéral global :
+  - le repli global existant est conservé ;
+  - libellés renommés en « Réduire / Afficher l’atelier latéral » car le conteneur peut désormais héberger Réglages, Code / aperçu ou les deux.
+- Largeur :
+  - si l’un des deux sous-volets latéraux est réduit, l’atelier latéral peut revenir à une largeur simple ;
+  - si la fiche Page est réduite, l’atelier latéral récupère l’espace disponible.
+- Harness UI étendu pour contrôler :
+  - repli/restauration de la fiche Page ;
+  - repli/restauration individuel de Réglages ;
+  - repli/restauration individuel de Code / aperçu ;
+  - présence simultanée des quatre commandes de repli.
+- Aucun changement métier, aucune migration, aucun changement Bridge.
+- Statut : implémenté sur `wip/codex-6b-ui-fix`, typecheck + harness + recette visuelle requis.
+
+
+### 2026-09-29 — LOT6B-UX-009 — Découplage réel des replis Réglages / Code
+
+- Retour de recette : réduire un sous-panneau latéral réduisait aussi visuellement son voisin.
+- Cause :
+  - l'état parent `inspectorDual` passait à `false` dès que Réglages ou Code / aperçu était replié ;
+  - le conteneur latéral recalculait alors toute sa largeur comme un atelier simple ;
+  - le panneau voisin perdait donc lui aussi de la largeur.
+- Correction :
+  - le mode double atelier dépend désormais uniquement du fait que **Réglages et Code / aperçu sont ouverts** ;
+  - l'état replié d'un sous-panneau n'influence plus la largeur globale de l'atelier ;
+  - réduire Réglages transforme uniquement Réglages en rail ; Code / aperçu conserve l'espace latéral disponible ;
+  - réduire Code / aperçu transforme uniquement Code en rail ; Réglages conserve l'espace latéral disponible.
+- Harness UI renforcé :
+  - mesure de la largeur de l'atelier avant repli ;
+  - repli Réglages ;
+  - vérification que Code / aperçu reste ouvert ;
+  - vérification que la largeur globale de l'atelier reste stable à ±2 px ;
+  - restauration Réglages avant poursuite du parcours.
+- Aucun changement métier, aucune migration, aucun changement Bridge.
+- Statut : correctif poussé sur `wip/codex-6b-ui-fix`, validation locale requise.
+
+
+### 2026-09-29 — LOT6B-UX-010 — Repositionnement du bouton de repli de la fiche Page
+
+- Retour de recette visuelle : le bouton de réduction de la colonne Fiche Page flottait en haut à droite et chevauchait visuellement le badge `6B · Composition AtoumWeb`.
+- Correction :
+  - suppression du positionnement sticky/flottant du bouton de repli ;
+  - intégration du bouton dans un groupe d'actions de l'en-tête de la fiche ;
+  - sur une Page : badge 6B puis bouton de repli, alignés proprement ;
+  - sur un Site : statut éventuel puis bouton de repli ;
+  - état vide conservé avec un bouton local positionné dans la fiche.
+- Aucun changement métier, aucune migration, aucun changement Bridge.
+- Statut : correctif poussé sur `wip/codex-6b-ui-fix`, validation locale requise.
+
+
+### 2026-09-29 — LOT6B-UX-011 — Replis persistants, largeur réellement libérée et grand écran d’atelier
+
+- Retours de recette successifs :
+  - réduire la fiche Page rendait les volets Réglages / Code vides car leur composant parent était démonté ;
+  - réduire Réglages ou Code ne libérait pas complètement la largeur réservée ;
+  - le bouton « Agrandir » ouvrait seulement le visuel Code, sans donner accès aux Réglages en grand.
+- Fiche Page :
+  - la fiche n’est plus démontée lors du repli ;
+  - elle reste montée dans le DOM et son contenu est uniquement masqué derrière un rail de 46 px ;
+  - les portals Réglages / Code restent donc vivants ;
+  - brouillons, états, scrolls, device responsive et code restent accessibles pendant que la fiche Page est réduite.
+- Repli total des sous-volets :
+  - le parent reçoit désormais le nombre de volets réellement déployés ;
+  - largeur de l’atelier calculée selon 0 / 1 / 2 volets déployés ;
+  - replier un sous-volet rend réellement sa largeur à la fiche Page ;
+  - si les deux sous-volets sont réduits, l’atelier droit se limite presque aux seuls rails de restauration ;
+  - lorsqu’un seul reste ouvert, l’autre ne conserve plus une grande zone vide.
+- Grand écran :
+  - suppression de l’ancienne modale « aperçu Code seul » ;
+  - « Agrandir » passe maintenant **le même atelier latéral courant** en plein écran ;
+  - aucun remount des éditeurs : brouillon, Undo/Redo, validation et synchro en direct restent intacts ;
+  - si Réglages + Code sont ouverts, les deux apparaissent en grand ensemble ;
+  - si un seul outil est ouvert, seul celui-ci occupe le grand écran ;
+  - bouton « Agrandir » ajouté également à la barre Réglages ;
+  - bouton global « Quitter le grand écran » toujours visible ;
+  - Desktop / Tablette / Mobile et HTML/CSS/JS restent utilisables en grand.
+- Clarification UX :
+  - le bouton de l’aperçu interne Réglages est renommé « Voir le module seul » ;
+  - « Agrandir » désigne désormais uniquement l’agrandissement de l’atelier complet.
+- Harness UI mis à jour pour vérifier :
+  - Page réduite sans perte des deux volets ;
+  - gain réel de largeur lors du repli Réglages ;
+  - grand écran depuis Code ;
+  - grand écran contenant simultanément Réglages + Code.
+- Aucun changement métier, aucune migration, aucun changement Bridge.
+- Statut : implémenté sur `wip/codex-6b-ui-fix`, validation typecheck + harness + recette visuelle requise.
+
+
+### 2026-09-29 — LOT6B-CHECKPOINT-UI-004 — Replis persistants et atelier grand écran validés automatiquement
+
+- Validation MSI sur HEAD `269a96b57ffb96a9fb9e5250533d9eefbcce6e7c`.
+- `npm run typecheck` : réussi.
+- Harness Electron `scripts/check-project-composition-ui.cjs` : **61/61 contrôles réussis**, 0 échec.
+- Sont notamment couverts :
+  - fiche Page réduite sans démontage des volets latéraux ;
+  - Réglages et Code / aperçu conservés lorsque la fiche Page est réduite ;
+  - replis individuels persistants ;
+  - restitution réelle de largeur lors du repli d'un sous-volet ;
+  - atelier complet agrandissable depuis Code ;
+  - atelier complet agrandissable depuis Réglages ;
+  - grand écran contenant simultanément Réglages + Code / aperçu ;
+  - conservation du brouillon et de la synchronisation en direct.
+- Avertissement restant : dépréciation Electron `console-message` dans le harness uniquement ; aucun impact fonctionnel Manager.
+- Statut : checkpoint automatique **vert**. Étape suivante : recette visuelle finale avant réintégration de la branche WIP.
+
+
+### 2026-09-29 — LOT6B-UX-012 — Plein écran harmonisé Réglages / Code avec aperçu prioritaire
+
+- Retour de recette visuelle :
+  - le grand écran Réglages et le grand écran Code n'avaient pas la même logique de lecture ;
+  - l'aperçu Réglages était encore trop petit ;
+  - souhait d'un comportement identique entre les deux modes grand écran.
+- Arbitrage UX :
+  - en plein écran avec un seul outil ouvert, Réglages et Code utilisent désormais le même principe :
+    - **grande visualisation à gauche (~70 %)** ;
+    - **zone de travail à droite (~30 %)** ;
+    - chaque zone garde son propre scroll ;
+  - le plein écran gagne aussi quelques pixels utiles en réduisant les marges externes.
+- Réglages :
+  - ajout de Desktop / Tablette / Mobile directement dans l'aperçu Réglages ;
+  - le device sélectionné est partagé avec Code / aperçu ;
+  - aperçu scrollable dans un viewport dédié ;
+  - en grand écran, aperçu plein hauteur à gauche et contrôles scrollables à droite.
+- Code / aperçu :
+  - en grand écran, preview plein hauteur à gauche ;
+  - HTML / CSS / JavaScript restent accessibles dans une colonne de travail à droite ;
+  - Desktop / Tablette / Mobile conservés ;
+  - même ratio visuel que Réglages.
+- Cohérence :
+  - les boutons « Agrandir » internes sont masqués une fois déjà en grand écran ;
+  - « Voir le module seul » reste réservé à l'aperçu isolé du module ;
+  - l'atelier complet conserve son bouton « Quitter le grand écran ».
+- Harness UI étendu pour vérifier :
+  - responsive Desktop/Tablette/Mobile dans Réglages ;
+  - largeur tablette à 768 px ;
+  - grand écran Réglages avec visualisation dominante ;
+  - grand écran Code avec visualisation dominante ;
+  - parité de fonctionnement entre les deux outils.
+- Aucun changement métier, aucune migration, aucun changement Bridge.
+- Statut : implémenté sur `wip/codex-6b-ui-fix`, validation typecheck + harness + recette visuelle requise.
+
+
+### 2026-09-29 — LOT6B-UX-013 — Grand écran 75/25 verrouillé avec colonne outils scrollable
+
+- Retour de recette :
+  - en grand écran Réglages, la prévisualisation restait trop proche d'un partage 50/50 ;
+  - souhait d'une page nettement plus grande à gauche et d'un défilement des commandes uniquement à droite ;
+  - même demande pour la vue Code / aperçu.
+- Correction :
+  - disposition grand écran verrouillée par zones CSS explicites, afin que le contenu des formulaires ne puisse plus élargir la colonne outils ;
+  - ratio cible : **environ 75 % aperçu / 25 % outils** ;
+  - Réglages :
+    - preview à gauche sur toute la hauteur utile ;
+    - Textes / Éléments visuels / Couleurs / Code avancé / promotion dans une colonne droite indépendante ;
+    - scroll vertical uniquement sur la colonne commandes ;
+  - Code / aperçu :
+    - preview à gauche sur toute la hauteur utile ;
+    - HTML / CSS / JavaScript dans une colonne droite indépendante ;
+    - scroll vertical uniquement sur la colonne code ;
+  - responsive Desktop / Tablette / Mobile conservé dans les deux vues.
+- Harness renforcé :
+  - ratio aperçu/outils >= 2,2 en grand écran ;
+  - colonne outils explicitement scrollable dans Réglages et Code.
+- Aucun changement métier, aucune migration, aucun changement Bridge.
+- Statut : implémenté sur `wip/codex-6b-ui-fix`, validation harness + recette visuelle requise.
+
+
+### 2026-09-29 — LOT6B-TEST-014 — Débordement responsive volontaire distingué des vrais masquages
+
+- Validation locale précédente : typecheck vert, harness **64/65** ; seul le contrôle « Pas de contenu horizontal masqué dans les réglages » échouait.
+- Cause :
+  - les aperçus Tablette / Mobile utilisent volontairement une largeur fixe (768 / 390 px) dans un viewport `overflow:auto` ;
+  - l’ancien contrôle considérait tout `scrollWidth > clientWidth` comme une erreur, même lorsque le débordement était explicitement scrollable.
+- Correction du harness :
+  - les éléments ou ancêtres en `overflow-x:auto|scroll` sont désormais considérés comme des zones de débordement volontaire ;
+  - les vrais débordements cachés restent détectés ;
+  - en cas de nouvel échec, le harness renvoie maintenant les éléments fautifs avec tag, classe, largeur visible et largeur scrollable.
+- Aucun changement fonctionnel Manager, aucune migration, aucun changement Bridge.
+- Statut : correctif de test poussé sur `wip/codex-6b-ui-fix`, rerun harness requis.
+
+
+### 2026-09-29 — LOT6B-CHECKPOINT-UI-005 — Grand écran 75/25 validé automatiquement
+
+- Validation MSI sur HEAD `d464ad2b2d7f500a6a1443059e50f706dc244200`.
+- Harness Electron `scripts/check-project-composition-ui.cjs` : **65/65 contrôles réussis**, 0 échec.
+- Le contrôle de débordement horizontal distingue désormais correctement :
+  - les vrais contenus masqués ;
+  - les débordements volontaires contenus dans une zone scrollable (notamment preview Tablette / Mobile).
+- Sont couverts à ce checkpoint :
+  - grand écran Réglages avec aperçu dominant ;
+  - grand écran Code avec aperçu dominant ;
+  - ratio aperçu / outils verrouillé ;
+  - colonne commandes scrollable ;
+  - responsive Desktop / Tablette / Mobile ;
+  - replis persistants et indépendants ;
+  - conservation des volets lors du repli de la fiche Page ;
+  - synchro en direct du brouillon Réglages vers Code / aperçu.
+- Avertissement restant : dépréciation Electron `console-message` dans le harness uniquement ; aucun impact fonctionnel Manager.
+- Statut : checkpoint automatique **vert**. Étape suivante : recette visuelle finale avant réintégration.
+
+
+### 2026-09-29 — LOT6B-RECETTE-FINALE-001 — Recette visuelle validée et préparation de clôture
+
+- Recette visuelle réelle validée par Carlos sur le Manager MSI après les itérations UX du 29/09/2026.
+- Validation finale automatisée :
+  - `npm run typecheck` : réussi ;
+  - harness Electron `scripts/check-project-composition-ui.cjs` : **65/65 contrôles réussis**, 0 échec ;
+  - tests Vitest ciblés déjà validés pendant la stabilisation : **35/35** ;
+  - migration courante inchangée : **49**, aucune migration ajoutée par la passe UX.
+- Recette visuelle validée :
+  - arborescence rétractable ;
+  - fiche Page rétractable sans démontage des outils ;
+  - Réglages rétractables/restaurables indépendamment ;
+  - Code / aperçu rétractable/restaurable indépendamment ;
+  - Réglages + Code utilisables côte à côte ;
+  - brouillon Réglages synchronisé en direct avec Code / aperçu ;
+  - aperçu scrollable ;
+  - responsive Desktop / Tablette / Mobile ;
+  - grand écran Réglages et Code harmonisé ;
+  - grand écran avec aperçu dominant (~75 %) et outils scrollables (~25 %) ;
+  - validation explicite, Undo / Redo, Version Bibliothèque et promotion en variante conservés.
+- Comparaison GitHub contrôlée avant clôture :
+  - `wip/codex-6b-ui-fix` est **strictement devant / 0 derrière** `feature/project-page-compositions-v1` ;
+  - merge base : `39315436376ba81470ed5fc0cbdad92c457ce553` ;
+  - aucune divergence concurrente détectée entre la branche canonique 6B et la WIP ;
+  - aucun PR ouvert actuellement pour la WIP ni pour `feature/project-page-compositions-v1`.
+- Aucun changement Bridge effectué pendant cette stabilisation UX.
+
+#### Reste avant clôture officielle Lot 6B
+
+1. Sur MSI, vérifier `git status -sb` et confirmer qu'il n'existe aucune modification locale non commitée.
+2. Réintégrer `wip/codex-6b-ui-fix` dans `feature/project-page-compositions-v1` :
+   - privilégier un fast-forward si la branche canonique est toujours à la même base ;
+   - ne pas fusionner dans `main` à cette étape.
+3. Sur la branche canonique après intégration :
+   - `npm run typecheck` ;
+   - `node scripts/check-project-composition-ui.cjs` attendu **65/65** ;
+   - tests Vitest ciblés Composition / migrations / Bibliothèque ;
+   - suite complète uniquement si elle est décidée comme gate de clôture.
+4. Mettre à jour le HEAD canonique et marquer Lot 6B « clos » dans `PROJECT_STATUS.md` et ce journal.
+5. Nettoyage facultatif / faible priorité :
+   - adapter le listener Electron `console-message` du harness à la nouvelle signature pour supprimer le warning de dépréciation ;
+   - aucun impact fonctionnel Manager en l'état.
+
+#### Après Lot 6B — ordre de travail recommandé
+
+- **Lot 7 — Site / préparation Bridge** :
+  - partir de la chaîne validée `Devis accepté → Projet → Site → Page → Composition → occurrences` ;
+  - préparer l'export/package au niveau de la Page/Site sans imposer une Page 100 % issue de la Bibliothèque ;
+  - conserver Divi comme atelier principal ;
+  - ne pas casser les contrats Component / Fields / Identity existants.
+- **Lot 8 — retour d'occurrences** :
+  - retour Bridge occurrence par occurrence ;
+  - provenance immutable ;
+  - rattachement au Projet/Site/Page/composition/occurrence correct ;
+  - réanalyse et validation humaine.
+- **Lot 9 — assemblage multi-pages / livraison** :
+  - seulement après validation des Lots 7 et 8 ;
+  - aucune publication production automatique avant recette dédiée.
+- Les chantiers CGV et autres branches parallèles restent indépendants ; aucune réécriture ou renumérotation des migrations 40–49.
+
+
+### 2026-09-29 — LOT6B-INTEGRATION-PR-001 — PR de réintégration ouverte
+
+- PR **#75** créée en brouillon : `wip/codex-6b-ui-fix` → `feature/project-page-compositions-v1`.
+- Objet : regrouper toute la stabilisation UX 6B validée sans fusion automatique.
+- La PR rappelle les validations acquises : typecheck vert, **65/65** harness, **35/35** tests ciblés historiques, migration 49 inchangée, recette visuelle validée.
+- Aucun merge vers la branche canonique ni vers `main` effectué.
+- Derniers gates avant intégration : statut local MSI propre, décision sur suite Vitest complète / packaging, puis rerun typecheck + harness sur la branche canonique après intégration.
+
+
+### 2026-09-29 — LOT6B-GATE-FULL-SUITE-001 — Suite complète 336/339 puis correctifs transverses
+
+- Gate de clôture lancé sur MSI après recette visuelle 6B :
+  - `git status -sb` propre sur `wip/codex-6b-ui-fix` ;
+  - `npm test` : **53 fichiers**, **339 tests**, premier passage **336 réussis / 3 échoués**.
+- Échec 1 — `StabilisationPhase19.test.ts` :
+  - test historique figé sur migrations 19→38 ;
+  - base courante 19→49 ;
+  - correction : comparaison avec la chaîne réellement retournée par `getPendingMigrations`, tout en conservant le contrôle que 19/20/21 restent les trois premières.
+- Échec 2 — `WorkflowService.test.ts` / `specialTerms` :
+  - ancien test attendait la condition catalogue « 40 % » directement dans `quote.specialTerms` ;
+  - depuis le Builder CGV, `specialTerms` est une condition particulière libre du devis et peut rester vide ;
+  - la condition catalogue reste figée dans le snapshot de ligne ;
+  - correction : vérifier `specialTerms === null` puis la présence de « 40 % » dans `lines[0].snapshot.specialTerms`.
+- Échec 3 — purge scénario e-commerce :
+  - `quote_contract_clauses` créé par la compilation CGV n'était pas inclus dans les tables métier suivies par `DemoService` ;
+  - ces lignes étaient donc vues comme « non demo » et bloquaient volontairement le reset ;
+  - correction : ajout de `quote_contract_clauses` dans `TABLES` pour héritage du batch via FK `quote_id` et suppression enfant→parent.
+- Aucun changement UX 6B, aucune migration, aucun changement Bridge.
+- Statut : correctifs poussés, **rerun complet `npm test` requis** avant clôture.
+
+
+### 2026-09-29 — LOT6B-CHECKPOINT-FINAL-002 — Suite complète et packaging verts
+
+- Validation MSI après correction des trois derniers échecs transverses :
+  - `npm test` : **53 fichiers de tests réussis / 53** ;
+  - **339 tests réussis / 339** ;
+  - durée Vitest : 7,81 s ;
+  - aucune erreur de test restante.
+- Correctifs inclus avant cette validation :
+  - test de migration legacy aligné dynamiquement sur la chaîne courante jusqu'à la migration **49** ;
+  - test Workflow aligné avec le Builder CGV structuré : `specialTerms` du devis reste libre, la condition catalogue reste figée dans le snapshot de ligne ;
+  - `DemoService` suit désormais `quote_contract_clauses` afin que les scénarios de démonstration puissent être purgés sans faux positif de données non-demo.
+- Packaging :
+  - `npm run package` / `electron-forge package` : **réussi** ;
+  - bundles Vite main + preload + renderer : réussis ;
+  - package **win32 x64** généré avec succès ;
+  - hooks prePackage / postPackage : réussis.
+- Gates 6B désormais verts :
+  - typecheck ;
+  - harness UI **65/65** ;
+  - suite complète **339/339** ;
+  - packaging Windows x64 ;
+  - recette visuelle réelle validée.
+- Dernier contrôle avant intégration PR #75 :
+  - vérifier le `git status -sb` local MSI ;
+  - si propre, réintégrer dans `feature/project-page-compositions-v1`, puis rerun minimal typecheck + harness sur la branche canonique.
+- Aucun changement Bridge dans cette passe.
