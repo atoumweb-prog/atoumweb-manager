@@ -522,7 +522,8 @@ export function ProjectPageCompositionPanel({
     </div>
 
     {(settingsItem || inspected) && inspectorHost && createPortal(
-      <div className={`project-page-inspector-workbench ${settingsItem && inspected ? 'both-open' : 'single'} ${settingsPaneCollapsed ? 'settings-collapsed' : ''} ${codePaneCollapsed ? 'code-collapsed' : ''}`}>
+      <div className={`project-page-inspector-workbench ${settingsItem && inspected ? 'both-open' : 'single'} ${settingsPaneCollapsed ? 'settings-collapsed' : ''} ${codePaneCollapsed ? 'code-collapsed' : ''} ${inspectExpanded ? 'expanded' : ''}`}>
+        {inspectExpanded && <button className="project-page-inspector-expanded-close secondary-button" type="button" onClick={() => setInspectExpanded(false)}>↙ Quitter le grand écran</button>}
         {settingsItem && composition && <section className={`project-page-inspector-pane settings-pane ${settingsPaneCollapsed ? 'collapsed' : ''}`}>
           {settingsPaneCollapsed
             ? <button className="project-page-inspector-pane-restore settings" type="button" title="Afficher Réglages" aria-label="Afficher Réglages" onClick={() => setSettingsPaneCollapsed(false)}>→</button>
@@ -534,10 +535,12 @@ export function ProjectPageCompositionPanel({
                 onMessage={onMessage}
                 docked
                 onCollapse={() => setSettingsPaneCollapsed(true)}
+                onExpand={() => setInspectExpanded(true)}
                 onClose={() => {
                   setSettingsItemId(null);
                   setSettingsDraft(null);
                   setSettingsPaneCollapsed(false);
+                  if (!inspected) setInspectExpanded(false);
                 }}
                 onDraftChange={setSettingsDraft}
               />}
@@ -556,7 +559,11 @@ export function ProjectPageCompositionPanel({
               <div>
                 <button className="secondary-button" type="button" onClick={() => setInspectExpanded(true)}>Agrandir</button>
                 <button className="secondary-button" type="button" aria-label="Réduire Code / aperçu" title="Réduire Code / aperçu" onClick={() => setCodePaneCollapsed(true)}>→</button>
-                <button className="secondary-button" type="button" aria-label="Fermer le volet Code / aperçu" onClick={() => { setInspected(null); setCodePaneCollapsed(false); }}>×</button>
+                <button className="secondary-button" type="button" aria-label="Fermer le volet Code / aperçu" onClick={() => {
+                  setInspected(null);
+                  setCodePaneCollapsed(false);
+                  if (!settingsItemId) setInspectExpanded(false);
+                }}>×</button>
               </div>
             </header>
             <div className="project-page-preview-controls project-page-inspector-device-controls">
@@ -683,34 +690,6 @@ export function ProjectPageCompositionPanel({
               <strong>Aperçu</strong>
               <iframe title="Aperçu du nouveau composant" sandbox="" srcDoc={createPreview} />
             </div>
-          </div>
-        </div>
-      </div>
-    </div>}
-
-    {inspectExpanded && inspected && <div className="project-page-composition-modal" role="dialog" aria-modal="true">
-      <div className="project-page-composition-modal-backdrop" onClick={() => setInspectExpanded(false)} />
-      <div className="project-page-composition-modal-panel">
-        <header>
-          <div><span className="eyebrow">Composant {inspected.item.sortOrder + 1}</span><h3>{inspected.item.displayName}</h3><p>Version source figée : v{inspected.item.sourceVersionNumber}</p></div>
-          <div className="project-page-preview-controls">
-            <button type="button" className={inspectDevice === 'desktop' ? 'active' : ''} onClick={() => setInspectDevice('desktop')}>Desktop</button>
-            <button type="button" className={inspectDevice === 'tablet' ? 'active' : ''} onClick={() => setInspectDevice('tablet')}>Tablette</button>
-            <button type="button" className={inspectDevice === 'mobile' ? 'active' : ''} onClick={() => setInspectDevice('mobile')}>Mobile</button>
-            <button className="secondary-button" type="button" onClick={() => setInspectExpanded(false)}>Fermer</button>
-          </div>
-        </header>
-        <div className="project-page-inspector-grid">
-          <div className="project-page-inspector-preview-large">
-            <div style={{ width: inspectWidth }}>
-              <iframe className="interactive-preview" title={`Aperçu ${inspected.item.displayName}`} sandbox="" srcDoc={buildPreviewDocument(liveInspectedParts ?? inspected.parts, inspected.item.displayName)} />
-            </div>
-          </div>
-          <div className="project-page-code-tabs">
-            <details open><summary>HTML</summary><pre>{(liveInspectedParts ?? inspected.parts).html || '—'}</pre></details>
-            <details><summary>CSS</summary><pre>{(liveInspectedParts ?? inspected.parts).css || '—'}</pre></details>
-            <details><summary>JavaScript</summary><pre>{(liveInspectedParts ?? inspected.parts).javascript || '—'}</pre></details>
-            {!(liveInspectedParts ?? inspected.parts).previewable && <details><summary>Contenu brut</summary><pre>{(liveInspectedParts ?? inspected.parts).raw || '—'}</pre></details>}
           </div>
         </div>
       </div>
