@@ -1162,3 +1162,21 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - grand écran contenant simultanément Réglages + Code.
 - Aucun changement métier, aucune migration, aucun changement Bridge.
 - Statut : implémenté sur `wip/codex-6b-ui-fix`, validation typecheck + harness + recette visuelle requise.
+
+
+### 2026-09-29 — LOT6B-CHECKPOINT-UI-004 — Replis persistants et atelier grand écran validés automatiquement
+
+- Validation MSI sur HEAD `269a96b57ffb96a9fb9e5250533d9eefbcce6e7c`.
+- `npm run typecheck` : réussi.
+- Harness Electron `scripts/check-project-composition-ui.cjs` : **61/61 contrôles réussis**, 0 échec.
+- Sont notamment couverts :
+  - fiche Page réduite sans démontage des volets latéraux ;
+  - Réglages et Code / aperçu conservés lorsque la fiche Page est réduite ;
+  - replis individuels persistants ;
+  - restitution réelle de largeur lors du repli d'un sous-volet ;
+  - atelier complet agrandissable depuis Code ;
+  - atelier complet agrandissable depuis Réglages ;
+  - grand écran contenant simultanément Réglages + Code / aperçu ;
+  - conservation du brouillon et de la synchronisation en direct.
+- Avertissement restant : dépréciation Electron `console-message` dans le harness uniquement ; aucun impact fonctionnel Manager.
+- Statut : checkpoint automatique **vert**. Étape suivante : recette visuelle finale avant réintégration de la branche WIP.
