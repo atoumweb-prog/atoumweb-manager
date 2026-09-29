@@ -137,6 +137,7 @@ export function ProjectCompositionItemSettings({
   onMessage,
   docked = false,
   onClose,
+  onCollapse,
   onDraftChange,
 }: {
   compositionId: string;
@@ -146,6 +147,7 @@ export function ProjectCompositionItemSettings({
   onMessage: (message: string) => void;
   docked?: boolean;
   onClose?: () => void;
+  onCollapse?: () => void;
   onDraftChange?: (draft: CodeParts) => void;
 }) {
   const [loading, setLoading] = useState(true);
@@ -341,6 +343,7 @@ export function ProjectCompositionItemSettings({
         <button className="primary-button project-component-validate-button" type="button" disabled={busy || !dirty || !draft.html.trim()} onClick={() => void save()}>
           {dirty ? '✓ Valider les changements' : '✓ Changements validés'}
         </button>
+        {onCollapse && <button className="secondary-button" type="button" aria-label="Réduire Réglages" title="Réduire Réglages" onClick={onCollapse}>←</button>}
         {onClose && <button className="secondary-button" type="button" aria-label="Fermer les réglages" title="Fermer les réglages" onClick={onClose}>×</button>}
       </div>
     </div>
