@@ -485,9 +485,9 @@ export function ProjectSitesTab({
         }}
       ><span /></div>}
 
-      {detailCollapsed
-        ? <button className="project-sites-detail-restore" type="button" title="Afficher la fiche Page" aria-label="Afficher la fiche Page" onClick={() => setDetailCollapsed(false)}>→</button>
-        : <section className="panel project-sites-detail-panel">
+      <section className={`panel project-sites-detail-panel ${detailCollapsed ? 'collapsed' : ''}`}>
+        {detailCollapsed && <button className="project-sites-detail-restore" type="button" title="Afficher la fiche Page" aria-label="Afficher la fiche Page" onClick={() => setDetailCollapsed(false)}>→</button>}
+        <div className="project-sites-detail-content" aria-hidden={detailCollapsed}>
         {!selectedSite && !selectedPage && <div className="project-sites-empty-detail">
           <button className="project-sites-detail-collapse" type="button" title="Réduire la fiche" aria-label="Réduire la fiche" onClick={() => setDetailCollapsed(true)}>←</button>
           <span className="eyebrow">Fiche</span>
@@ -673,7 +673,8 @@ export function ProjectSitesTab({
             <span>Cette fiche décrit la destination métier de la Page. Le bouton de préparation Bridge sera ajouté dans un lot ultérieur.</span>
           </div>
         </>}
-      </section>}
+        </div>
+      </section>
 
       {inspectorOpen && !inspectorCollapsed && <div
         className="project-sites-inspector-splitter"
