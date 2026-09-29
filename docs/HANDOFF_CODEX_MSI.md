@@ -54,6 +54,7 @@
 - Configuration des Sites/Pages disponible sur les versions brouillon, recopiée lors d'une nouvelle version ; commande visible de réapplication pour les Projets historiques.
 - Migration additive 50 pour les déclarations et liaisons ; migration 51 séparée pour appliquer la compatibilité `web` / `website` aux bases où 50 a déjà été exécutée.
 - Un ancien Projet lié à un blueprint sans Site/Page reçoit le blueprint Site/Page canonique selon son type, sans changer son `template_version_id` et sans déduire quoi que ce soit de son nom.
+- Cette association par type est uniquement un filet de compatibilité legacy. La cible fonctionnelle est la composition pilotée par les lignes du devis : offre principale comme base, options/prestations comme contributions additives, puis matérialisation du blueprint final du Projet.
 - Aucun changement des contrats Manager ↔ Bridge, aucun export Page, aucun Lot 8.
 - Ne pas reprendre l'UX 6B. Ne pas fusionner vers `main`.
 - Recette réelle validée : 1 Site + 5 Pages, réapplication sans doublon, renommages conservés, ajout manuel conservé ; résultat final 1 Site / 6 Pages.

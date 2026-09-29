@@ -1456,3 +1456,13 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Résultat final observé : **1 Site / 6 Pages**.
 - Gates acquis : typecheck réussi ; **33/33 tests ciblés** réussis.
 - Lot 7 autorisé pour commit, push et ouverture d'une PR vers `feature/project-page-compositions-v1`.
+
+### 2026-09-29 — LOT7-ARCHITECTURE-DEVIS-001 — Le devis compose le blueprint final
+
+- Direction validée : **offre de base → options/prestations du devis → blueprint final du Projet**.
+- L'offre principale choisit la contribution de base. Chaque ligne optionnelle peut ajouter des Pages, des structures métier, des tâches, des prérequis, des échéances et, selon son domaine, la préparation d'un pack, contrat ou intervention.
+- Exemples attendus : Site vitrine 5 Pages comme base ; Page supplémentaire comme contribution Page ; Blog comme structure ; SEO local comme tâches/contrôles ; Maintenance comme pack/contrat/échéances ; Formation comme tâche ou intervention à planifier.
+- Le socle possède déjà les concepts utiles : `catalog_project_blueprints`, résolution `base` / `addons`, `project_node_sources` et provenance par `quote_line_id`. Ils doivent devenir la source de composition, y compris pour les déclarations Site/Page et les autres objets préparés.
+- La table `project_type_site_blueprints` de migration 51 reste strictement un mécanisme de reprise des anciens Projets dont le blueprint ne déclare aucune structure. Elle ne doit pas devenir la règle de création des nouveaux Projets.
+- Évolution recommandée après le Lot 7 : faire produire à chaque contribution du devis des déclarations typées et fusionnables, avec clés stables et provenance de ligne, puis appliquer l'ensemble dans une transaction idempotente. Une contribution absente ou retirée doit être distinguée d'un objet déjà modifié manuellement afin d'éviter toute suppression implicite.
+- Le Lot 7 conserve volontairement un périmètre restreint : il installe les primitives Site/Page et leur provenance, sans développer le moteur complet de composition commerciale.

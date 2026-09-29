@@ -12,6 +12,7 @@
 - La recette réelle de `PRO-2026-001` a révélé ce cas historique. Le fallback utilise le type du Projet, jamais son nom, conserve son blueprint d'origine et matérialise uniquement les Pages déclarées et leurs ancêtres manquants.
 - Validation locale après correction : `npm run typecheck` réussi ; tests ciblés migrations / ProjectService / ProjectSiteService **33/33 réussis**.
 - Recette réelle validée sur `PRO-2026-001` : création de 1 Site et 5 Pages, réapplication sans doublon, renommages Site/Page conservés et Page manuelle conservée ; résultat final 1 Site / 6 Pages.
+- Architecture suivante actée : le projet moderne sera composé depuis le devis (`offre de base → options/prestations → blueprint final`). Le mapping par `project_type` ajouté en migration 51 reste strictement une compatibilité legacy.
 - État : prêt pour commit, push et PR vers `feature/project-page-compositions-v1`. Le harness Electron n'a pas démarré ses contrôles lors du dernier essai, Chromium ayant arrêté son processus GPU Windows (`GPU process isn't usable`).
 
 ## Lot 6B clos — 29/09/2026 — PR #75 intégrée et contrôles post-intégration verts
