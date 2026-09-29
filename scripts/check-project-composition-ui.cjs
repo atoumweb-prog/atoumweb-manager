@@ -118,7 +118,7 @@ app.whenReady().then(async () => {
       const replacement="N'attendez plus";
       const changed=window.localEditor.replaceComponentText(hero,target.path,replacement);
       const doc=new DOMParser().parseFromString(changed,'text/html');
-      return doc.querySelector('h1').innerHTML===`Pour les <span>${replacement}</span><em> personnalisable</em>`
+      return doc.querySelector('h1').innerHTML===('Pour les <span>'+replacement+'</span><em> personnalisable</em>')
         && doc.querySelector('.banner').textContent==='Votre titre'
         && doc.querySelector('.badge').textContent==='Votre titre'
         && doc.querySelector('p').textContent==='Votre titre';
