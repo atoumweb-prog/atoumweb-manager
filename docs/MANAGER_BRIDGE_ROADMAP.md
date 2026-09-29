@@ -824,3 +824,18 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Promotion métier : tests existants verts pour forked/adapt, absence de stableVersion automatique, marqueur manager-variant-to-review et source intacte. Aucun changement des services/migrations/contrats Bridge. Dernière migration du code : 49.
 - Fichiers : ProjectsPage.tsx ; ProjectPageCompositionPanel.tsx/.css ; ProjectCompositionItemSettings.tsx ; nouveau componentPreview.ts ; AtoumWebCompositionService.test.ts ; nouveau scripts/check-project-composition-ui.cjs ; PROJECT_STATUS.md ; présente roadmap.
 - Suite complète et packaging non lancés ; aucune dépendance installée. Aucun commit/push. Prochaine action : Carlos teste la branche locale, en priorité disparition de la barre et composants auparavant blancs ; ne pas annoncer une recette réelle terminée sur la seule base des fixtures.
+
+
+### 2026-09-29 — LOT6B-REPRISE-CHATGPT-001 — Reprise du travail Codex interrompu
+
+- Origine : limite d'utilisation Codex atteinte après modifications locales 6B ; travail sauvegardé par Carlos sur `wip/codex-6b-ui-fix`.
+- Revue : les apports Codex sont conservés, notamment ciblage des textes par chemin DOM, réglages visuels génériques et isolation des aperçus par Shadow DOM.
+- Important : l'entrée précédente mentionne 31/31 contrôles Chromium réussis, mais la dernière exécution transmise par Carlos s'est arrêtée avant la recette sur `ERR_FAILED (-2)` au chargement de la fixture, avec plusieurs sorties GPU Windows. Cette valeur 31/31 ne doit donc pas être considérée comme validation finale du HEAD WIP actuel tant qu'un nouveau run reproductible n'a pas réussi.
+- Cause racine de la « barre » confirmée dans le code Codex : `main.project-production-secondary` vide était encore rendu pour `detailTab='sites'`; son padding/bordure formaient la barre. La condition actuelle exclut bien `sites`.
+- Harness Electron renforcé :
+  - accélération matérielle désactivée pour le test ;
+  - suppression du mode offscreen ;
+  - BrowserWindow de fixture non sandboxée uniquement pour le banc de test local ;
+  - diagnostics `did-fail-load` et `render-process-gone` ajoutés.
+- Aucun changement métier, aucune migration, aucun changement Bridge.
+- Validation restante : Carlos tire le HEAD WIP courant, exécute typecheck + tests ciblés + `node scripts/check-project-composition-ui.cjs`. Ne pas fusionner avant ces résultats.
