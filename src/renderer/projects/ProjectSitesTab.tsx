@@ -52,6 +52,9 @@ export function ProjectSitesTab({
   const [pageSiteId, setPageSiteId] = useState('');
   const [busy, setBusy] = useState(false);
   const [splitPercent, setSplitPercent] = useState(40);
+  const [treeCollapsed, setTreeCollapsed] = useState(false);
+  const [introCollapsed, setIntroCollapsed] = useState(false);
+  const [pageInfoOpen, setPageInfoOpen] = useState(false);
   const [timeSessions, setTimeSessions] = useState<TimeSession[]>([]);
   const [activeTime, setActiveTime] = useState<TimeSession | null>(null);
   const [timeSnapshotAt, setTimeSnapshotAt] = useState(Date.now());
@@ -215,6 +218,7 @@ export function ProjectSitesTab({
   function selectPage(id: string): void {
     setSelectedSiteId(null);
     setSelectedPageId(id);
+    setPageInfoOpen(false);
   }
 
   const selectedPageSessions = selectedPage
@@ -308,11 +312,11 @@ export function ProjectSitesTab({
   }
 
   return <section className="project-sites-tab">
-    <div className="project-sites-intro panel">
-      <div>
+    <div className={`project-sites-intro panel ${introCollapsed ? 'collapsed' : ''}`}>
+      <div className="project-sites-intro-copy">
         <span className="eyebrow">Destination opérationnelle</span>
         <h2>Sites & pages</h2>
-        <p>Le Projet conserve la structure métier. Divi restera l’atelier de construction : ici, on organise les Sites et les Pages avant leur préparation dans Bridge.</p>
+        {!introCollapsed && <p>Le Projet conserve la structure métier. Divi restera l’atelier de construction : ici, on organise les Sites et les Pages avant leur préparation dans Bridge.</p>}
       </div>
       <div className="project-sites-toolbar">
         <button className="secondary-button" type="button" onClick={() => setCreateMode(createMode === 'site' ? null : 'site')}>+ Site</button>
@@ -320,6 +324,9 @@ export function ProjectSitesTab({
           setCreateMode(createMode === 'page' ? null : 'page');
           if (!pageSiteId && selectedSite && !selectedSite.archivedAt) setPageSiteId(selectedSite.id);
         }}>+ Page</button>
+        <button className="secondary-button project-sites-intro-toggle" type="button" title={introCollapsed ? 'Déployer le bandeau Sites & pages' : 'Réduire le bandeau Sites & pages'} onClick={() => setIntroCollapsed((value) => !value)}>
+          {introCollapsed ? '↓' : '↑'}
+        </button>
       </div>
     </div>
 
@@ -354,10 +361,11 @@ export function ProjectSitesTab({
       </div>
     </div>}
 
-    <div className="project-sites-workspace" style={{ gridTemplateColumns: `${splitPercent}% 8px minmax(0, 1fr)` }}>
-      <section className="panel project-sites-tree-panel">
+    <div className={`project-sites-workspace ${treeCollapsed ? 'tree-collapsed' : ''}`} style={{ gridTemplateColumns: treeCollapsed ? '46px minmax(0, 1fr)' : `${splitPercent}% 8px minmax(0, 1fr)` }}>
+      {treeCollapsed ? <button className="project-sites-tree-restore" type="button" title="Afficher l’arborescence" aria-label="Afficher l’arborescence" onClick={() => setTreeCollapsed(false)}>→</button> : <section className="panel project-sites-tree-panel">
         <div className="project-sites-tree-head">
           <div><span className="eyebrow">Arborescence</span><strong>{activeSites.length} Site{activeSites.length > 1 ? 's' : ''} · {pages.length} Page{pages.length > 1 ? 's' : ''}</strong></div>
+          <button className="project-tree-size-button" type="button" title="Masquer l’arborescence" aria-label="Masquer l’arborescence" onClick={() => setTreeCollapsed(true)}>←</button>
         </div>
         <div className="project-sites-tree-scroll">
           {activeSites.map((site) => {
@@ -400,9 +408,9 @@ export function ProjectSitesTab({
 
           {sites.length === 0 && pages.length === 0 && <p className="muted">Aucun Site ni Page pour le moment.</p>}
         </div>
-      </section>
+      </section>}
 
-      <div
+      {!treeCollapsed && <div
         className="project-sites-splitter"
         role="separator"
         aria-orientation="vertical"
@@ -414,7 +422,7 @@ export function ProjectSitesTab({
           if (event.key === 'ArrowLeft') setSplitPercent((value) => Math.max(24, value - 3));
           if (event.key === 'ArrowRight') setSplitPercent((value) => Math.min(68, value + 3));
         }}
-      ><span /></div>
+      ><span /></div>}
 
       <section className="panel project-sites-detail-panel">
         {!selectedSite && !selectedPage && <div className="project-sites-empty-detail">
@@ -494,79 +502,89 @@ export function ProjectSitesTab({
             </div>
           </section>
 
-          <ProjectPageCompositionPanel page={selectedPage} onMessage={onMessage} />
+          <section className={`project-sites-page-info ${pageInfoOpen ? 'open' : ''}`}>
+            <button className="project-sites-page-info-summary" type="button" onClick={() => setPageInfoOpen((value) => !value)}>
+              <span>
+                <span className="eyebrow">Informations de la Page</span>
+                <strong>{selectedPage.name}</strong>
+                <small>{selectedSite?.name ?? 'Non rattachée'} · {ROLE_LABELS[selectedLink?.role ?? 'standard']} · {selectedLink?.role === 'home' ? '/' : selectedLink?.desiredPath || 'slug à définir'}</small>
+              </span>
+              <b>{pageInfoOpen ? '▴' : '▾'}</b>
+            </button>
+            {pageInfoOpen && <div className="project-sites-detail-form">
+              <label>Nom de la Page
+                <input
+                  key={`${selectedPage.id}-name-${selectedPage.updatedAt}`}
+                  defaultValue={selectedPage.name}
+                  disabled={busy}
+                  onBlur={(event) => {
+                    const next = event.currentTarget.value.trim();
+                    if (!next || next === selectedPage.name) return;
+                    void run(async () => {
+                      const updated = await window.atoumweb.projects.projects.updateNode(selectedPage.id, { name: next });
+                      await onProjectChanged(updated);
+                    }, 'Page renommée.');
+                  }}
+                />
+              </label>
+              <label>Site
+                <select
+                  value={selectedLink?.projectSiteId ?? ''}
+                  disabled={busy}
+                  onChange={(event) => {
+                    const siteId = event.target.value;
+                    if (!siteId) {
+                      void run(() => window.atoumweb.projects.sites.unlinkPage(selectedPage.id), 'Page détachée du Site.');
+                      return;
+                    }
+                    void run(() => window.atoumweb.projects.sites.linkPage(siteId, selectedPage.id, {
+                      role: selectedLink?.role ?? 'standard',
+                      desiredPath: selectedLink?.desiredPath ?? null,
+                    }), 'Page rattachée au Site.');
+                  }}
+                >
+                  <option value="">Non rattachée</option>
+                  {activeSites.map((site) => <option key={site.id} value={site.id}>{site.name}</option>)}
+                  {selectedSite?.archivedAt && <option value={selectedSite.id}>{selectedSite.name} · archivé</option>}
+                </select>
+              </label>
+              <label>Rôle
+                <select
+                  value={selectedLink?.role ?? 'standard'}
+                  disabled={busy || !selectedLink || Boolean(selectedSite?.archivedAt)}
+                  onChange={(event) => {
+                    if (!selectedLink) return;
+                    const role = event.target.value as ProjectSitePageRole;
+                    void run(() => window.atoumweb.projects.sites.linkPage(selectedLink.projectSiteId, selectedPage.id, {
+                      role,
+                      desiredPath: role === 'home' || selectedLink.desiredPath === '/' ? null : selectedLink.desiredPath,
+                    }), 'Rôle de Page mis à jour.');
+                  }}
+                >
+                  {PROJECT_SITE_PAGE_ROLES.map((role) => <option key={role} value={role}>{ROLE_LABELS[role]}</option>)}
+                </select>
+              </label>
+              <label>Slug / chemin URL
+                <input
+                  key={`${selectedPage.id}-${selectedLink?.projectSiteId ?? 'none'}-${selectedLink?.desiredPath ?? ''}`}
+                  defaultValue={selectedLink?.desiredPath ?? ''}
+                  placeholder={!selectedLink ? 'Rattacher la Page à un Site' : selectedLink.role === 'home' ? '/' : 'Ex. /contact'}
+                  disabled={busy || !selectedLink || selectedLink.role === 'home' || Boolean(selectedSite?.archivedAt)}
+                  onBlur={(event) => {
+                    if (!selectedLink) return;
+                    const next = event.currentTarget.value.trim() || null;
+                    if (next === (selectedLink.desiredPath ?? null)) return;
+                    void run(() => window.atoumweb.projects.sites.linkPage(selectedLink.projectSiteId, selectedPage.id, {
+                      role: selectedLink.role,
+                      desiredPath: next,
+                    }), 'Slug de Page mis à jour.');
+                  }}
+                />
+              </label>
+            </div>}
+          </section>
 
-          <div className="project-sites-detail-form">
-            <label>Nom de la Page
-              <input
-                key={`${selectedPage.id}-name-${selectedPage.updatedAt}`}
-                defaultValue={selectedPage.name}
-                disabled={busy}
-                onBlur={(event) => {
-                  const next = event.currentTarget.value.trim();
-                  if (!next || next === selectedPage.name) return;
-                  void run(async () => {
-                    const updated = await window.atoumweb.projects.projects.updateNode(selectedPage.id, { name: next });
-                    await onProjectChanged(updated);
-                  }, 'Page renommée.');
-                }}
-              />
-            </label>
-            <label>Site
-              <select
-                value={selectedLink?.projectSiteId ?? ''}
-                disabled={busy}
-                onChange={(event) => {
-                  const siteId = event.target.value;
-                  if (!siteId) {
-                    void run(() => window.atoumweb.projects.sites.unlinkPage(selectedPage.id), 'Page détachée du Site.');
-                    return;
-                  }
-                  void run(() => window.atoumweb.projects.sites.linkPage(siteId, selectedPage.id, {
-                    role: selectedLink?.role ?? 'standard',
-                    desiredPath: selectedLink?.desiredPath ?? null,
-                  }), 'Page rattachée au Site.');
-                }}
-              >
-                <option value="">Non rattachée</option>
-                {activeSites.map((site) => <option key={site.id} value={site.id}>{site.name}</option>)}
-                {selectedSite?.archivedAt && <option value={selectedSite.id}>{selectedSite.name} · archivé</option>}
-              </select>
-            </label>
-            <label>Rôle
-              <select
-                value={selectedLink?.role ?? 'standard'}
-                disabled={busy || !selectedLink || Boolean(selectedSite?.archivedAt)}
-                onChange={(event) => {
-                  if (!selectedLink) return;
-                  const role = event.target.value as ProjectSitePageRole;
-                  void run(() => window.atoumweb.projects.sites.linkPage(selectedLink.projectSiteId, selectedPage.id, {
-                    role,
-                    desiredPath: role === 'home' || selectedLink.desiredPath === '/' ? null : selectedLink.desiredPath,
-                  }), 'Rôle de Page mis à jour.');
-                }}
-              >
-                {PROJECT_SITE_PAGE_ROLES.map((role) => <option key={role} value={role}>{ROLE_LABELS[role]}</option>)}
-              </select>
-            </label>
-            <label>Slug / chemin URL
-              <input
-                key={`${selectedPage.id}-${selectedLink?.projectSiteId ?? 'none'}-${selectedLink?.desiredPath ?? ''}`}
-                defaultValue={selectedLink?.desiredPath ?? ''}
-                placeholder={!selectedLink ? 'Rattacher la Page à un Site' : selectedLink.role === 'home' ? '/' : 'Ex. /contact'}
-                disabled={busy || !selectedLink || selectedLink.role === 'home' || Boolean(selectedSite?.archivedAt)}
-                onBlur={(event) => {
-                  if (!selectedLink) return;
-                  const next = event.currentTarget.value.trim() || null;
-                  if (next === (selectedLink.desiredPath ?? null)) return;
-                  void run(() => window.atoumweb.projects.sites.linkPage(selectedLink.projectSiteId, selectedPage.id, {
-                    role: selectedLink.role,
-                    desiredPath: next,
-                  }), 'Slug de Page mis à jour.');
-                }}
-              />
-            </label>
-          </div>
+          <ProjectPageCompositionPanel page={selectedPage} onMessage={onMessage} />
 
           <div className="project-sites-note">
             <strong>Divi reste l’atelier principal.</strong>
