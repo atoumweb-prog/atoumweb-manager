@@ -1035,3 +1035,22 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - synchronisation du brouillon Réglages vers Code / aperçu.
 - Aucun changement métier, aucune migration, aucun changement Bridge.
 - Statut : implémenté sur `wip/codex-6b-ui-fix`, typecheck + harness + recette visuelle requis.
+
+
+### 2026-09-29 — LOT6B-CHECKPOINT-UI-003 — Atelier latéral unifié validé automatiquement
+
+- Validation MSI sur HEAD `a574adbaa3a29f324af2277542a2a2fe5102ef5d`.
+- `npm run typecheck` : réussi.
+- Harness Electron `scripts/check-project-composition-ui.cjs` : **50/50 contrôles réussis**, 0 échec.
+- Sont désormais couverts automatiquement :
+  - Réglages dockés dans l'atelier latéral ;
+  - absence de panneau Réglages inline dans la fiche Page ;
+  - aperçu Réglages interactif et scrollable ;
+  - Code / aperçu dans le même atelier ;
+  - mode Réglages + Code / aperçu simultané ;
+  - HTML/CSS/JavaScript accessibles dans le volet normal ;
+  - synchronisation en direct du brouillon Réglages vers Code / aperçu ;
+  - agrandissement et responsive conservés ;
+  - repli/restauration des colonnes et timer compact.
+- Avertissement restant : dépréciation Electron `console-message` dans le harness uniquement ; aucun impact fonctionnel sur le Manager.
+- Statut : checkpoint automatique **vert**. Étape suivante : recette visuelle finale Carlos avant réintégration de la branche WIP.
