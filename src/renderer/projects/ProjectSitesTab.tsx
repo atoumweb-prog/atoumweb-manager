@@ -56,6 +56,7 @@ export function ProjectSitesTab({
   const [introCollapsed, setIntroCollapsed] = useState(false);
   const [pageInfoOpen, setPageInfoOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [inspectorDual, setInspectorDual] = useState(false);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const [inspectorPercent, setInspectorPercent] = useState(34);
   const [timeSessions, setTimeSessions] = useState<TimeSession[]>([]);
@@ -138,7 +139,8 @@ export function ProjectSitesTab({
       const rect = workspace.getBoundingClientRect();
       if (!rect.width) return;
       const ratio = ((rect.right - event.clientX) / rect.width) * 100;
-      setInspectorPercent(Math.max(24, Math.min(45, ratio)));
+      const max = inspectorDual ? 58 : 45;
+      setInspectorPercent(Math.max(24, Math.min(max, ratio)));
     };
     const onUp = () => {
       document.body.classList.remove('project-resizing');
@@ -338,7 +340,9 @@ export function ProjectSitesTab({
   }
 
   const inspectorHostId = 'project-sites-code-inspector-host';
-  const effectiveLeftPercent = inspectorOpen && !treeCollapsed ? Math.min(splitPercent, 30) : splitPercent;
+  const effectiveLeftPercent = inspectorOpen && !treeCollapsed
+    ? Math.min(splitPercent, inspectorDual ? 22 : 30)
+    : splitPercent;
   const workspaceColumns = (() => {
     if (!inspectorOpen) {
       return treeCollapsed ? '46px minmax(0, 1fr)' : `${effectiveLeftPercent}% 8px minmax(0, 1fr)`;
@@ -348,7 +352,9 @@ export function ProjectSitesTab({
         ? '46px minmax(0, 1fr) 46px'
         : `${effectiveLeftPercent}% 8px minmax(0, 1fr) 46px`;
     }
-    const rightWidth = `clamp(340px, ${inspectorPercent}%, 620px)`;
+    const rightWidth = inspectorDual
+      ? `clamp(620px, ${Math.max(inspectorPercent, 46)}%, 940px)`
+      : `clamp(340px, ${inspectorPercent}%, 680px)`;
     return treeCollapsed
       ? `46px minmax(360px, 1fr) 8px ${rightWidth}`
       : `${effectiveLeftPercent}% 8px minmax(360px, 1fr) 8px ${rightWidth}`;
@@ -634,9 +640,13 @@ export function ProjectSitesTab({
             page={selectedPage}
             onMessage={onMessage}
             inspectorHostId={inspectorHostId}
-            onInspectorOpenChange={(open) => {
+            onInspectorOpenChange={(open, dual) => {
               setInspectorOpen(open);
-              if (open) setInspectorCollapsed(false);
+              setInspectorDual(dual);
+              if (open) {
+                setInspectorCollapsed(false);
+                if (dual) setInspectorPercent((value) => Math.max(value, 46));
+              }
             }}
           />
 
@@ -651,12 +661,13 @@ export function ProjectSitesTab({
         className="project-sites-inspector-splitter"
         role="separator"
         aria-orientation="vertical"
-        aria-label="Redimensionner la fiche et le volet Code / aperçu"
+        aria-label="Redimensionner la fiche et l’atelier latéral"
         tabIndex={0}
         onPointerDown={beginInspectorResize}
-        onDoubleClick={() => setInspectorPercent(34)}
+        onDoubleClick={() => setInspectorPercent(inspectorDual ? 50 : 34)}
         onKeyDown={(event) => {
-          if (event.key === 'ArrowLeft') setInspectorPercent((value) => Math.min(45, value + 3));
+          const max = inspectorDual ? 58 : 45;
+          if (event.key === 'ArrowLeft') setInspectorPercent((value) => Math.min(max, value + 3));
           if (event.key === 'ArrowRight') setInspectorPercent((value) => Math.max(24, value - 3));
         }}
       ><span /></div>}
