@@ -192,9 +192,27 @@ app.whenReady().then(async () => {
     await click('Aperçu de la Page');
     await check('Aperçu global : dimensions non nulles', `document.querySelector('.project-page-global-preview iframe').getBoundingClientRect().height>300`);
     await click('Tablette');
-    await check('Largeur tablette', `Math.abs(document.querySelector('.project-page-global-preview iframe').getBoundingClientRect().width-768)<2`);
+    await check('Largeur tablette', `(()=>{
+      const frame=document.querySelector('.project-page-global-preview iframe');
+      const wrapper=frame?.parentElement;
+      const active=[...document.querySelectorAll('.project-page-preview-controls button.active')].map(button=>button.textContent.trim());
+      const frameWidth=frame?.getBoundingClientRect().width ?? -1;
+      const wrapperWidth=wrapper?.getBoundingClientRect().width ?? -1;
+      const available=document.querySelector('.project-page-global-preview')?.getBoundingClientRect().width ?? -1;
+      if (Math.abs(frameWidth-768)<2 && Math.abs(wrapperWidth-768)<2 && active.includes('Tablette')) return true;
+      return {frameWidth,wrapperWidth,available,active,wrapperStyleWidth:wrapper?.style.width ?? null};
+    })()`);
     await click('Mobile');
-    await check('Largeur mobile', `Math.abs(document.querySelector('.project-page-global-preview iframe').getBoundingClientRect().width-390)<2`);
+    await check('Largeur mobile', `(()=>{
+      const frame=document.querySelector('.project-page-global-preview iframe');
+      const wrapper=frame?.parentElement;
+      const active=[...document.querySelectorAll('.project-page-preview-controls button.active')].map(button=>button.textContent.trim());
+      const frameWidth=frame?.getBoundingClientRect().width ?? -1;
+      const wrapperWidth=wrapper?.getBoundingClientRect().width ?? -1;
+      const available=document.querySelector('.project-page-global-preview')?.getBoundingClientRect().width ?? -1;
+      if (Math.abs(frameWidth-390)<2 && Math.abs(wrapperWidth-390)<2 && active.includes('Mobile')) return true;
+      return {frameWidth,wrapperWidth,available,active,wrapperStyleWidth:wrapper?.style.width ?? null};
+    })()`);
     // Test the generated document in a same-origin test frame to inspect layout.
     // Production frames keep sandbox=""; this frame never executes source scripts.
     await js(`(()=>{let f=document.createElement('iframe');f.id='test-preview';f.sandbox='allow-same-origin';f.style='position:fixed;inset:0;width:800px;height:500px';f.srcdoc=window.buildPreview([{label:'Agressif',html:'<style>section{display:none!important}</style><section>Masqué localement</section>',css:'body{background:red}*{color:red}'},{label:'Sain',html:'<section><h1>Visible indépendant</h1></section>',css:'h1{color:blue}'}],true);document.body.append(f)})()`); await settle();
