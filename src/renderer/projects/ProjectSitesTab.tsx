@@ -360,15 +360,15 @@ export function ProjectSitesTab({
         ? `46px ${detailWidth} 46px`
         : `${effectiveLeftPercent}% 8px ${detailWidth} 46px`;
     }
-    const rightWidth = detailCollapsed
-      ? 'minmax(340px, 1fr)'
-      : inspectorExpandedCount >= 2
-        ? `clamp(620px, ${Math.max(inspectorPercent, 46)}%, 940px)`
-        : inspectorExpandedCount === 1
-          ? (inspectorDual
-              ? `clamp(390px, ${Math.min(inspectorPercent, 38)}%, 730px)`
-              : `clamp(340px, ${inspectorPercent}%, 680px)`)
-          : (inspectorDual ? '138px' : '88px');
+    const rightWidth = inspectorExpandedCount === 0
+      ? (inspectorDual ? '138px' : '88px')
+      : detailCollapsed
+        ? 'minmax(340px, 1fr)'
+        : inspectorExpandedCount >= 2
+          ? `clamp(620px, ${Math.max(inspectorPercent, 46)}%, 940px)`
+          : inspectorDual
+            ? `clamp(390px, ${Math.min(inspectorPercent, 38)}%, 730px)`
+            : `clamp(340px, ${inspectorPercent}%, 680px)`;
     return treeCollapsed
       ? `46px ${detailWidth} 8px ${rightWidth}`
       : `${effectiveLeftPercent}% 8px ${detailWidth} 8px ${rightWidth}`;
