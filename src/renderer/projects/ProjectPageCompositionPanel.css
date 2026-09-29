@@ -270,3 +270,121 @@
     overflow:auto;
   }
 }
+
+
+/* LOT6B UX — grand écran 75/25 verrouillé, aperçu fixe + outils scrollables */
+@media(min-width:1100px){
+  .project-page-inspector-workbench.expanded.single .settings-pane .project-component-settings-panel.docked{
+    display:grid;
+    grid-template-rows:auto minmax(0,1fr);
+    min-height:0;
+    overflow:hidden;
+  }
+  .project-page-inspector-workbench.expanded.single .settings-pane .project-component-settings-grid{
+    display:grid;
+    grid-template-columns:minmax(0,3fr) minmax(300px,1fr)!important;
+    grid-template-rows:minmax(0,1fr);
+    grid-template-areas:"preview controls";
+    gap:14px;
+    width:100%;
+    height:100%;
+    min-width:0;
+    min-height:0;
+    padding:10px;
+    overflow:hidden!important;
+  }
+  .project-page-inspector-workbench.expanded.single .settings-pane .project-component-settings-preview{
+    grid-area:preview;
+    display:grid;
+    grid-template-rows:auto auto minmax(0,1fr);
+    width:100%;
+    height:100%!important;
+    min-width:0;
+    min-height:0!important;
+    max-height:none!important;
+    align-self:stretch;
+    overflow:hidden;
+  }
+  .project-page-inspector-workbench.expanded.single .settings-pane .project-component-settings-preview-viewport{
+    width:100%;
+    height:100%!important;
+    min-height:0!important;
+    overflow:auto;
+  }
+  .project-page-inspector-workbench.expanded.single .settings-pane .project-component-settings-preview-viewport>div{
+    height:100%!important;
+    min-height:0;
+  }
+  .project-page-inspector-workbench.expanded.single .settings-pane .project-component-settings-preview-viewport iframe{
+    width:100%;
+    height:100%!important;
+    min-height:0!important;
+    max-height:none!important;
+  }
+  .project-page-inspector-workbench.expanded.single .settings-pane .project-component-settings-controls{
+    grid-area:controls;
+    width:100%;
+    height:100%;
+    min-width:0;
+    min-height:0;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    overscroll-behavior:contain;
+    scrollbar-gutter:stable;
+    padding:0 8px 18px 0;
+  }
+
+  .project-page-inspector-workbench.expanded.single .code-pane .project-page-inspector-dock{
+    display:grid;
+    grid-template-columns:minmax(0,3fr) minmax(300px,1fr)!important;
+    grid-template-rows:auto auto minmax(0,1fr);
+    grid-template-areas:
+      "header header"
+      "devices code"
+      "preview code";
+    gap:12px;
+    width:100%;
+    height:100%;
+    min-width:0;
+    min-height:0;
+    overflow:hidden;
+  }
+  .project-page-inspector-workbench.expanded.single .code-pane .project-page-inspector-dock>header{
+    grid-area:header;
+  }
+  .project-page-inspector-workbench.expanded.single .code-pane .project-page-inspector-device-controls{
+    grid-area:devices;
+    min-width:0;
+  }
+  .project-page-inspector-workbench.expanded.single .code-pane .project-page-inspector-dock-preview{
+    grid-area:preview;
+    width:100%;
+    height:100%!important;
+    min-width:0;
+    min-height:0!important;
+    overflow:auto;
+  }
+  .project-page-inspector-workbench.expanded.single .code-pane .project-page-inspector-dock-preview>div{
+    height:100%!important;
+    min-height:0;
+  }
+  .project-page-inspector-workbench.expanded.single .code-pane .project-page-inspector-dock-preview iframe{
+    height:100%!important;
+    min-height:0!important;
+  }
+  .project-page-inspector-workbench.expanded.single .code-pane .project-page-inspector-dock-code{
+    grid-area:code;
+    width:100%;
+    height:100%;
+    min-width:0;
+    min-height:0;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    overscroll-behavior:contain;
+    scrollbar-gutter:stable;
+    padding-right:4px;
+  }
+  .project-page-inspector-workbench.expanded.single .code-pane .project-page-inspector-dock-code pre{
+    max-height:50vh;
+  }
+}
