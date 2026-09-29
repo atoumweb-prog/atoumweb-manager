@@ -534,10 +534,10 @@ export function ProjectSitesTab({
               <small>{selectedPageSessions.length} session{selectedPageSessions.length > 1 ? 's' : ''}{activeOnSelectedPage ? activeTime?.paused ? ' · en pause' : ' · chrono en cours' : ''}</small>
             </div>
             <div className="project-sites-page-actions">
-              <button className="secondary-button" type="button" onClick={() => onOpenPage(selectedPage.id)}>Ouvrir la fiche Production →</button>
+              <button className="secondary-button" type="button" title="Ouvrir la fiche Production de cette Page" onClick={() => onOpenPage(selectedPage.id)}>Production →</button>
               {!activeOnSelectedPage
-                ? <button className="primary-button" type="button" disabled={busy} onClick={() => void startSelectedPageTimer()}>
-                    ▶ Démarrer le travail sur cette Page
+                ? <button className="primary-button" type="button" title="Démarrer le travail sur cette Page" disabled={busy} onClick={() => void startSelectedPageTimer()}>
+                    ▶ Démarrer
                   </button>
                 : <>
                     <button className="primary-button" type="button" disabled={busy} onClick={() => void pauseOrResumeSelectedPageTimer()}>
@@ -661,13 +661,17 @@ export function ProjectSitesTab({
         }}
       ><span /></div>}
 
-      {inspectorOpen && <aside className={`panel project-sites-inspector-shell ${inspectorCollapsed ? 'collapsed' : ''}`}>
+      <aside
+        className={`panel project-sites-inspector-shell ${!inspectorOpen ? 'inactive' : ''} ${inspectorCollapsed ? 'collapsed' : ''}`}
+        aria-hidden={!inspectorOpen}
+      >
         <button
           className="project-sites-inspector-collapse"
           type="button"
           title={inspectorCollapsed ? 'Afficher Code / aperçu' : 'Masquer Code / aperçu'}
           aria-label={inspectorCollapsed ? 'Afficher Code / aperçu' : 'Masquer Code / aperçu'}
           onClick={() => setInspectorCollapsed((value) => !value)}
+          tabIndex={inspectorOpen ? 0 : -1}
         >{inspectorCollapsed ? '←' : '→'}</button>
         <div id={inspectorHostId} className="project-sites-inspector-host" />
       </aside>}
