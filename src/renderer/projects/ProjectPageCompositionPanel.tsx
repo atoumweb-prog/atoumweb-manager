@@ -230,9 +230,9 @@ export function ProjectPageCompositionPanel({
   useEffect(() => {
     onInspectorOpenChange?.(
       Boolean(inspected || settingsItemId),
-      Boolean(inspected && settingsItemId && !settingsPaneCollapsed && !codePaneCollapsed),
+      Boolean(inspected && settingsItemId),
     );
-  }, [inspected?.item.id, settingsItemId, settingsPaneCollapsed, codePaneCollapsed]);
+  }, [inspected?.item.id, settingsItemId]);
 
   const visualLibrary = useMemo(() => library.filter((item) =>
     ['header','footer','hero','page','section','form','gallery','carousel','navigation','divi'].includes(item.category)
