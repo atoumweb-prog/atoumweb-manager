@@ -4,7 +4,7 @@
 
 - Branche de stabilisation : `wip/codex-6b-ui-fix`.
 - Branche canonique cible : `feature/project-page-compositions-v1` au commit `39315436376ba81470ed5fc0cbdad92c457ce553`.
-- Comparaison GitHub vérifiée : la WIP est **84 commits devant / 0 derrière** la branche canonique ; aucune divergence concurrente détectée.
+- Comparaison GitHub vérifiée : la WIP est **86 commits devant / 0 derrière** la branche canonique ; aucune divergence concurrente détectée.
 - [x] Barre fantôme identifiée et supprimée : `main.project-production-secondary` vide n'est plus rendu sous Sites & pages.
 - [x] Structure Sites & pages stabilisée : **Arborescence | Fiche Page | Atelier latéral**.
 - [x] Replis/restaurations indépendants de l'Arborescence, de la Fiche Page, de Réglages et de Code / aperçu.
