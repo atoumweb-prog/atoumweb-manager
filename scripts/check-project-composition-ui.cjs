@@ -191,6 +191,19 @@ app.whenReady().then(async () => {
     await check('Aperçu Réglages interactif et scrollable', `(()=>{const frame=document.querySelector('.project-component-settings-preview iframe');const scroller=document.querySelector('.project-component-settings-panel.docked .project-component-settings-grid');return getComputedStyle(frame).pointerEvents==='auto' && ['auto','scroll'].includes(getComputedStyle(scroller).overflowY)})()`);
     await click('Code / aperçu');
     await check('Réglages et Code côte à côte', `document.querySelector('.project-page-inspector-workbench')?.classList.contains('both-open') && document.querySelectorAll('.project-page-inspector-pane').length===2`);
+    await js(`window.__atelierWidthBeforeCollapse=document.querySelector('.project-sites-inspector-shell').getBoundingClientRect().width`, 'mémoriser largeur atelier');
+    await click('Réduire Réglages', "document.querySelector('.project-page-inspector-pane.settings-pane')");
+    await check('Réduire Réglages ne réduit pas Code aperçu', `(()=>{
+      const shell=document.querySelector('.project-sites-inspector-shell');
+      const code=document.querySelector('.project-page-inspector-pane.code-pane');
+      const workbench=document.querySelector('.project-page-inspector-workbench');
+      const delta=Math.abs(shell.getBoundingClientRect().width-window.__atelierWidthBeforeCollapse);
+      return workbench.classList.contains('both-open')
+        && workbench.classList.contains('settings-collapsed')
+        && !code.classList.contains('collapsed')
+        && delta<=2;
+    })()`);
+    await click('Afficher Réglages', "document.querySelector('.project-page-inspector-pane.settings-pane')");
     await check('Quatre panneaux disposent d’un repli indépendant', `(()=>{
       const button=(label)=>[...document.querySelectorAll('button')].some(b=>(b.getAttribute('aria-label')||b.getAttribute('title')||'').includes(label));
       return button('Masquer l’arborescence') && button('Réduire la fiche Page') && button('Réduire Réglages') && button('Réduire Code / aperçu');
