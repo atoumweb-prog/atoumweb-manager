@@ -1,10 +1,10 @@
 # AtoumWeb Manager — Suivi du projet
 
-## Stabilisation UX Lot 6B — 29/09/2026 — recette visuelle validée
+## Lot 6B clos — 29/09/2026 — PR #75 intégrée et contrôles post-intégration verts
 
 - Branche de stabilisation : `wip/codex-6b-ui-fix`.
-- Branche canonique cible : `feature/project-page-compositions-v1` au commit `39315436376ba81470ed5fc0cbdad92c457ce553`.
-- Comparaison GitHub vérifiée : la WIP est **strictement devant / 0 derrière** la branche canonique ; aucune divergence concurrente détectée.
+- Branche canonique : `feature/project-page-compositions-v1` au HEAD `3df2168d7a3e662d98f68525550309ea71be0d67`.
+- Comparaison pré-intégration vérifiée : la WIP était **strictement devant / 0 derrière** la branche canonique ; aucune divergence concurrente détectée.
 - [x] Barre fantôme identifiée et supprimée : `main.project-production-secondary` vide n'est plus rendu sous Sites & pages.
 - [x] Structure Sites & pages stabilisée : **Arborescence | Fiche Page | Atelier latéral**.
 - [x] Replis/restaurations indépendants de l'Arborescence, de la Fiche Page, de Réglages et de Code / aperçu.
@@ -22,17 +22,17 @@
 - [x] Tests Vitest ciblés historiques : **35/35 réussis**.
 - [x] Harness Electron final : **65/65 contrôles réussis, 0 échec** sur le checkpoint `d464ad2b2d7f500a6a1443059e50f706dc244200`.
 - [x] Recette visuelle réelle Carlos validée le 29/09/2026 : replis, atelier docké, aperçu scrollable, grand écran Réglages, grand écran Code et disposition 75/25 jugés conformes.
-- [ ] PR **#75** ouverte en brouillon : `wip/codex-6b-ui-fix` → `feature/project-page-compositions-v1`. Vérifier le statut local puis intégrer uniquement après les derniers gates de clôture.
-- [ ] Relancer après intégration le typecheck + harness 65 contrôles sur la branche canonique.
+- [x] PR **#75** (`wip/codex-6b-ui-fix` → `feature/project-page-compositions-v1`) fusionnée le 29/09/2026 par le merge commit `3df2168d7a3e662d98f68525550309ea71be0d67` ; aucune fusion vers `main`.
+- [x] Après intégration sur le HEAD canonique `3df2168d7a3e662d98f68525550309ea71be0d67` : `npm run typecheck` réussi, harness Electron **65/65**, tests Vitest ciblés **35/35**.
 - [x] Suite Vitest complète lancée le 29/09/2026 : premier passage **336/339**, 3 échecs transverses identifiés hors UX 6B.
 - [x] Correctifs poussés :
   - test migration legacy rendu dynamique jusqu'à la migration courante ;
   - test Workflow aligné sur le Builder CGV structuré ;
   - `quote_contract_clauses` ajouté au tracking/purge DemoService.
-- [ ] Relancer `npm test` après ces trois correctifs ; attendu **339/339** si aucun autre écart n'apparaît.
-- [ ] `npm run package` : commande lancée côté MSI mais résultat final non encore confirmé dans le retour partagé.
+- [x] Suite complète relancée après ces trois correctifs : **53 fichiers / 339 tests réussis, 0 échec**.
+- [x] `npm run package` : package Windows **win32 x64** généré avec succès.
 - [ ] Corriger à faible priorité l'avertissement Electron du harness `console-message` déprécié ; aucun impact fonctionnel Manager.
-- [ ] Lot suivant seulement après clôture 6B : reprendre la feuille de route Manager ↔ Bridge (Lot 7 : préparation Site / package / Workbench), sans modifier Bridge depuis le 6B.
+- [ ] Lot suivant : Lot 7 de la feuille de route Manager ↔ Bridge (préparation Site / package / Workbench), à commencer uniquement après autorisation explicite ; aucun travail Bridge effectué pendant le Lot 6B.
 
 Détails complets et journal de décisions : `docs/MANAGER_BRIDGE_ROADMAP.md`.
 

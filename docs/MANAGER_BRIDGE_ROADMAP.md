@@ -1297,26 +1297,21 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - grand écran Réglages et Code harmonisé ;
   - grand écran avec aperçu dominant (~75 %) et outils scrollables (~25 %) ;
   - validation explicite, Undo / Redo, Version Bibliothèque et promotion en variante conservés.
-- Comparaison GitHub contrôlée avant clôture :
+- Comparaison GitHub contrôlée avant l'ouverture de la PR de réintégration :
   - `wip/codex-6b-ui-fix` est **strictement devant / 0 derrière** `feature/project-page-compositions-v1` ;
   - merge base : `39315436376ba81470ed5fc0cbdad92c457ce553` ;
   - aucune divergence concurrente détectée entre la branche canonique 6B et la WIP ;
   - aucun PR ouvert actuellement pour la WIP ni pour `feature/project-page-compositions-v1`.
 - Aucun changement Bridge effectué pendant cette stabilisation UX.
 
-#### Reste avant clôture officielle Lot 6B
+#### Clôture officielle Lot 6B — effectuée le 29/09/2026
 
-1. Sur MSI, vérifier `git status -sb` et confirmer qu'il n'existe aucune modification locale non commitée.
-2. Réintégrer `wip/codex-6b-ui-fix` dans `feature/project-page-compositions-v1` :
-   - privilégier un fast-forward si la branche canonique est toujours à la même base ;
-   - ne pas fusionner dans `main` à cette étape.
-3. Sur la branche canonique après intégration :
-   - `npm run typecheck` ;
-   - `node scripts/check-project-composition-ui.cjs` attendu **65/65** ;
-   - tests Vitest ciblés Composition / migrations / Bibliothèque ;
-   - suite complète uniquement si elle est décidée comme gate de clôture.
-4. Mettre à jour le HEAD canonique et marquer Lot 6B « clos » dans `PROJECT_STATUS.md` et ce journal.
-5. Nettoyage facultatif / faible priorité :
+1. [x] Working tree MSI propre avant intégration ; checkout synchronisé sur `feature/project-page-compositions-v1`.
+2. [x] PR **#75** intégrée le 29/09/2026 depuis `wip/codex-6b-ui-fix` ; merge commit `3df2168d7a3e662d98f68525550309ea71be0d67`.
+3. [x] Validation post-intégration sur le HEAD canonique `3df2168d7a3e662d98f68525550309ea71be0d67` : typecheck réussi, harness Electron **65/65**, tests ciblés **35/35**.
+4. [x] Gate complet et packaging confirmés : suite **53 fichiers / 339 tests réussis**, package Windows **win32 x64** réussi.
+5. [x] Lot 6B marqué clos dans `PROJECT_STATUS.md` et ce journal. Aucune fusion vers `main` ; aucun code UX repris après validation.
+6. Nettoyage facultatif / faible priorité :
    - adapter le listener Electron `console-message` du harness à la nouvelle signature pour supprimer le warning de dépréciation ;
    - aucun impact fonctionnel Manager en l'état.
 
@@ -1338,13 +1333,13 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Les chantiers CGV et autres branches parallèles restent indépendants ; aucune réécriture ou renumérotation des migrations 40–49.
 
 
-### 2026-09-29 — LOT6B-INTEGRATION-PR-001 — PR de réintégration ouverte
+### 2026-09-29 — LOT6B-INTEGRATION-PR-001 — PR de réintégration créée
 
 - PR **#75** créée en brouillon : `wip/codex-6b-ui-fix` → `feature/project-page-compositions-v1`.
 - Objet : regrouper toute la stabilisation UX 6B validée sans fusion automatique.
 - La PR rappelle les validations acquises : typecheck vert, **65/65** harness, **35/35** tests ciblés historiques, migration 49 inchangée, recette visuelle validée.
-- Aucun merge vers la branche canonique ni vers `main` effectué.
-- Derniers gates avant intégration : statut local MSI propre, décision sur suite Vitest complète / packaging, puis rerun typecheck + harness sur la branche canonique après intégration.
+- Au moment de cette entrée, la PR était en brouillon et aucun merge n'avait encore été effectué ; voir l'entrée de clôture ci-dessous pour son état final.
+- Les derniers gates documentaires (suite complète / packaging) puis les contrôles post-intégration sont désormais confirmés verts.
 
 
 ### 2026-09-29 — LOT6B-GATE-FULL-SUITE-001 — Suite complète 336/339 puis correctifs transverses
@@ -1391,7 +1386,20 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - suite complète **339/339** ;
   - packaging Windows x64 ;
   - recette visuelle réelle validée.
-- Dernier contrôle avant intégration PR #75 :
-  - vérifier le `git status -sb` local MSI ;
-  - si propre, réintégrer dans `feature/project-page-compositions-v1`, puis rerun minimal typecheck + harness sur la branche canonique.
+- La PR #75 a depuis été intégrée ; le merge et les validations post-intégration sont consignés dans `LOT6B-CLOSURE-PR-001` ci-dessous.
 - Aucun changement Bridge dans cette passe.
+
+
+### 2026-09-29 — LOT6B-CLOSURE-PR-001 — PR #75 intégrée et Lot 6B clos
+
+- PR **#75** fusionnée dans `feature/project-page-compositions-v1` le 29/09/2026 ; URL : https://github.com/atoumweb-prog/atoumweb-manager/pull/75.
+- Merge commit et nouveau HEAD canonique : `3df2168d7a3e662d98f68525550309ea71be0d67`.
+- La branche WIP `wip/codex-6b-ui-fix` a été conservée ; `main` n'a pas été touchée.
+- Carlos a synchronisé le checkout canonique par fast-forward et confirmé le HEAD attendu.
+- Contrôles post-intégration sur le HEAD canonique :
+  - `npm run typecheck` : réussi ;
+  - harness `scripts/check-project-composition-ui.cjs` : **65 réussis / 0 échec** ;
+  - tests ciblés (migrations, CompositionService, TechnicalLibraryService, CompositionPackageService) : **35 réussis / 0 échec**.
+- Gates complets déjà terminés sur le contenu fonctionnel de cette PR : `npm test` **339/339** et `npm run package` réussi pour Windows x64.
+- Seul avertissement observé : API Electron `console-message` dépréciée dans le harness ; aucun échec ni impact fonctionnel signalé.
+- Lot 6B clos. La suite de la feuille de route Manager ↔ Bridge est distincte et nécessite une autorisation explicite avant de commencer le Lot 7.

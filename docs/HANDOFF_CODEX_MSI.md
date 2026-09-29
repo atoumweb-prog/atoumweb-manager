@@ -2,15 +2,13 @@
 >
 > Ce bloc **remplace les anciennes consignes de branche/PR mentionnées plus bas** pour la reprise actuelle. L'historique est conservé volontairement.
 >
-> **Chantier actif : clôture du Lot 6B — Sites & pages / composition de Page.**
+> **État courant : Lot 6B clos — Sites & pages / composition de Page.**
 >
 > - Branche de stabilisation : `wip/codex-6b-ui-fix`
-> - Dernier commit fonctionnel inclus dans la validation 339/339 : `41719b006ea42051ee638607a60d9888535a4baf`
-> - Le HEAD de branche peut être plus récent à cause des commits documentaires : **toujours exécuter `git rev-parse HEAD` avant intervention**.
+> - Dernier HEAD canonique validé après intégration : `3df2168d7a3e662d98f68525550309ea71be0d67`
+> - Merge commit de la PR : `3df2168d7a3e662d98f68525550309ea71be0d67`
 > - Branche canonique cible : `feature/project-page-compositions-v1`
-> - Base canonique : `39315436376ba81470ed5fc0cbdad92c457ce553`
-> - PR de réintégration : **#75**, ouverte en **draft**
-> - État GitHub PR #75 : **mergeable / clean**
+> - PR de réintégration **#75** : **MERGED** le 29/09/2026 ; branche WIP conservée.
 > - **Ne pas fusionner vers `main`**.
 >
 > **Validation acquise du Lot 6B :**
@@ -20,6 +18,7 @@
 > - harness UI Electron : **65/65** ;
 > - suite complète : **53 fichiers / 339 tests, 339/339 réussis** ;
 > - `npm run package` : réussi, package **win32 x64** ;
+> - après intégration : `npm run typecheck` réussi, harness **65/65**, tests ciblés **35/35** ;
 > - migration courante : **49**, aucune nouvelle migration introduite par la stabilisation UX ;
 > - aucun changement Bridge pendant la stabilisation 6B.
 >
@@ -37,12 +36,11 @@
 > - ne pas toucher au dépôt Bridge pour clôturer le 6B ;
 > - ne pas repartir de `main`, de la PR #73 ou d'une ancienne branche historique.
 >
-> **Dernière étape de clôture :**
+> **Clôture effectuée :**
 >
-> 1. vérifier `git status -sb` sur MSI ;
-> 2. si le workspace est propre, intégrer **PR #75** dans `feature/project-page-compositions-v1` uniquement sur demande explicite ;
-> 3. après intégration, rerun minimal : `npm run typecheck` + `node scripts/check-project-composition-ui.cjs` attendu **65/65** ;
-> 4. marquer ensuite le Lot 6B clos dans `PROJECT_STATUS.md` et `docs/MANAGER_BRIDGE_ROADMAP.md`.
+> - checkout canonique synchronisé au merge commit `3df2168d7a3e662d98f68525550309ea71be0d67` ;
+> - typecheck, harness, tests ciblés, suite complète et packaging verts ;
+> - Lot 6B consigné comme clos dans `PROJECT_STATUS.md` et `docs/MANAGER_BRIDGE_ROADMAP.md`.
 >
 > **Après clôture seulement :** reprendre la feuille de route Manager ↔ Bridge avec le Lot 7 (Site / préparation Bridge), puis Lot 8 (retour d'occurrences), puis Lot 9 (assemblage multi-pages / livraison), uniquement après autorisation explicite.
 >
