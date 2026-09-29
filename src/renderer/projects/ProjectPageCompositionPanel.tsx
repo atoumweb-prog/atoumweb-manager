@@ -189,6 +189,8 @@ export function ProjectPageCompositionPanel({
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop');
   const [inspectionMode, setInspectionMode] = useState(false);
   const [settingsItemId, setSettingsItemId] = useState<string | null>(null);
+  const [inspectExpanded, setInspectExpanded] = useState(false);
+  const [inspectDevice, setInspectDevice] = useState<PreviewDevice>('desktop');
 
   async function reload(): Promise<void> {
     const [nextComposition, nextCompositions, nextLibrary] = await Promise.all([
@@ -204,6 +206,8 @@ export function ProjectPageCompositionPanel({
   useEffect(() => {
     setMode(null);
     setInspected(null);
+    setInspectExpanded(false);
+    setInspectDevice('desktop');
     setPreviewDoc('');
     void reload().catch((error) =>
       onMessage(error instanceof Error ? error.message : 'Impossible de charger la composition de la Page.'),
@@ -276,12 +280,19 @@ export function ProjectPageCompositionPanel({
   }
 
   async function inspect(item: AtoumWebCompositionItem): Promise<void> {
+    if (inspected?.item.id === item.id) {
+      setInspected(null);
+      setInspectExpanded(false);
+      return;
+    }
     await withBusy(async () => {
       const detail = await window.atoumweb.referentials.library.get(item.sourceItemId);
       const version = detail.versions.find((candidate) => candidate.id === item.sourceVersionId) ?? null;
       const sourceParts = parseParts(version);
       setInspected({ item, detail, parts: effectiveParts(item, sourceParts) });
-      setMode('inspect');
+      setInspectDevice('desktop');
+      setInspectExpanded(false);
+      setMode(null);
     });
   }
 
@@ -381,6 +392,7 @@ export function ProjectPageCompositionPanel({
 
   const availableHistorical = allCompositions.filter((candidate) => candidate.id !== composition?.id && candidate.status !== 'archived');
   const deviceWidth = previewDevice === 'desktop' ? '100%' : previewDevice === 'tablet' ? '768px' : '390px';
+  const inspectWidth = inspectDevice === 'desktop' ? '100%' : inspectDevice === 'tablet' ? '768px' : '390px';
 
   return <section className="project-page-composition">
     <header className="project-page-composition-head">
@@ -396,61 +408,98 @@ export function ProjectPageCompositionPanel({
       </div>
     </header>
 
-    {!composition && <div className="project-page-composition-empty">
-      <strong>Aucun composant Manager pour cette Page.</strong>
-      <span>C’est valide : tu peux construire entièrement cette Page dans Divi.</span>
-      {availableHistorical.length > 0 && <button className="link-button" type="button" onClick={() => setMode('attach')}>Rattacher une composition existante</button>}
-    </div>}
+    <div className={`project-page-composition-workspace ${inspected ? 'with-inspector' : ''}`}>
+      <div className="project-page-composition-primary">
+      {!composition && <div className="project-page-composition-empty">
+        <strong>Aucun composant Manager pour cette Page.</strong>
+        <span>C’est valide : tu peux construire entièrement cette Page dans Divi.</span>
+        {availableHistorical.length > 0 && <button className="link-button" type="button" onClick={() => setMode('attach')}>Rattacher une composition existante</button>}
+      </div>}
+  
+      {composition && <div className="project-page-composition-list">
+        {composition.items.map((item, index) => {
+          const occurrence = composition.items
+            .slice(0, index + 1)
+            .filter((candidate) => candidate.sourceItemId === item.sourceItemId).length;
+          const totalSameSource = composition.items.filter((candidate) => candidate.sourceItemId === item.sourceItemId).length;
+          return <div className="project-page-composition-item-wrap" key={item.id}>
+            <article>
+              <span className="project-page-composition-order">{index + 1}</span>
+              <div className="project-page-composition-main">
+                <strong>{item.displayName}{totalSameSource > 1 ? ` · occurrence ${occurrence}` : ''}</strong>
+                <small>
+                  {item.category} · v{item.sourceVersionNumber}{item.variantKey ? ` · ${item.variantKey}` : ''}
+                  {item.hasLocalChanges ? ' · préparé localement' : ''}
+                </small>
+              </div>
+              <div className="project-page-composition-row-actions">
+                <button type="button" disabled={busy || index === 0} onClick={() => void move(item, -1)} title="Monter">↑</button>
+                <button type="button" disabled={busy || index === composition.items.length - 1} onClick={() => void move(item, 1)} title="Descendre">↓</button>
+                <button
+                  type="button"
+                  className={settingsItemId === item.id ? 'active' : ''}
+                  disabled={busy}
+                  onClick={() => setSettingsItemId((current) => current === item.id ? null : item.id)}
+                >Réglages {settingsItemId === item.id ? '▴' : '▾'}</button>
+                <button type="button" className={inspected?.item.id === item.id ? 'active' : ''} disabled={busy} onClick={() => void inspect(item)}>
+                  {inspected?.item.id === item.id ? 'Fermer aperçu' : 'Code / aperçu'}
+                </button>
+                <button type="button" disabled={busy} onClick={() => void remove(item)}>Retirer</button>
+              </div>
+            </article>
+            {settingsItemId === item.id && <ProjectCompositionItemSettings
+              compositionId={composition.id}
+              item={item}
+              pageName={page.name}
+              onUpdated={(updated) => setComposition(updated)}
+              onMessage={onMessage}
+            />}
+          </div>;
+        })}
+        {composition.items.length === 0 && <p className="muted">Composition créée, mais encore vide.</p>}
+      </div>}
+  
+      {mode === 'attach' && <div className="project-page-composition-inline-panel">
+        <div><strong>Rattacher une composition existante</strong><span>Les compositions historiques ne sont jamais devinées à partir de leur nom.</span></div>
+        <select value={attachId} onChange={(event) => setAttachId(event.target.value)}>
+          <option value="">Choisir…</option>
+          {availableHistorical.map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name} · {candidate.itemCount} composant(s)</option>)}
+        </select>
+        <button className="primary-button" type="button" disabled={!attachId || busy} onClick={() => void attachExisting()}>Rattacher</button>
+      </div>}
+  
+        </div>
 
-    {composition && <div className="project-page-composition-list">
-      {composition.items.map((item, index) => {
-        const occurrence = composition.items
-          .slice(0, index + 1)
-          .filter((candidate) => candidate.sourceItemId === item.sourceItemId).length;
-        const totalSameSource = composition.items.filter((candidate) => candidate.sourceItemId === item.sourceItemId).length;
-        return <div className="project-page-composition-item-wrap" key={item.id}>
-          <article>
-            <span className="project-page-composition-order">{index + 1}</span>
-            <div className="project-page-composition-main">
-              <strong>{item.displayName}{totalSameSource > 1 ? ` · occurrence ${occurrence}` : ''}</strong>
-              <small>
-                {item.category} · v{item.sourceVersionNumber}{item.variantKey ? ` · ${item.variantKey}` : ''}
-                {item.hasLocalChanges ? ' · préparé localement' : ''}
-              </small>
-            </div>
-            <div className="project-page-composition-row-actions">
-              <button type="button" disabled={busy || index === 0} onClick={() => void move(item, -1)} title="Monter">↑</button>
-              <button type="button" disabled={busy || index === composition.items.length - 1} onClick={() => void move(item, 1)} title="Descendre">↓</button>
-              <button
-                type="button"
-                className={settingsItemId === item.id ? 'active' : ''}
-                disabled={busy}
-                onClick={() => setSettingsItemId((current) => current === item.id ? null : item.id)}
-              >Réglages {settingsItemId === item.id ? '▴' : '▾'}</button>
-              <button type="button" disabled={busy} onClick={() => void inspect(item)}>Code / aperçu</button>
-              <button type="button" disabled={busy} onClick={() => void remove(item)}>Retirer</button>
-            </div>
-          </article>
-          {settingsItemId === item.id && <ProjectCompositionItemSettings
-            compositionId={composition.id}
-            item={item}
-            pageName={page.name}
-            onUpdated={(updated) => setComposition(updated)}
-            onMessage={onMessage}
-          />}
-        </div>;
-      })}
-      {composition.items.length === 0 && <p className="muted">Composition créée, mais encore vide.</p>}
-    </div>}
-
-    {mode === 'attach' && <div className="project-page-composition-inline-panel">
-      <div><strong>Rattacher une composition existante</strong><span>Les compositions historiques ne sont jamais devinées à partir de leur nom.</span></div>
-      <select value={attachId} onChange={(event) => setAttachId(event.target.value)}>
-        <option value="">Choisir…</option>
-        {availableHistorical.map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name} · {candidate.itemCount} composant(s)</option>)}
-      </select>
-      <button className="primary-button" type="button" disabled={!attachId || busy} onClick={() => void attachExisting()}>Rattacher</button>
-    </div>}
+      {inspected && <aside className="project-page-inspector-dock">
+        <header>
+          <div>
+            <span className="eyebrow">Code / aperçu</span>
+            <strong>{inspected.item.displayName}</strong>
+            <small>Source figée · v{inspected.item.sourceVersionNumber}</small>
+          </div>
+          <div>
+            <button className="secondary-button" type="button" onClick={() => setInspectExpanded(true)}>Agrandir</button>
+            <button className="secondary-button" type="button" aria-label="Fermer le volet Code / aperçu" onClick={() => setInspected(null)}>×</button>
+          </div>
+        </header>
+        <div className="project-page-preview-controls project-page-inspector-device-controls">
+          <button type="button" className={inspectDevice === 'desktop' ? 'active' : ''} onClick={() => setInspectDevice('desktop')}>Desktop</button>
+          <button type="button" className={inspectDevice === 'tablet' ? 'active' : ''} onClick={() => setInspectDevice('tablet')}>Tablette</button>
+          <button type="button" className={inspectDevice === 'mobile' ? 'active' : ''} onClick={() => setInspectDevice('mobile')}>Mobile</button>
+        </div>
+        <div className="project-page-inspector-dock-preview">
+          <div style={{ width: inspectWidth }}>
+            <iframe title={`Aperçu direct ${inspected.item.displayName}`} sandbox="" srcDoc={buildPreviewDocument(inspected.parts, inspected.item.displayName)} />
+          </div>
+        </div>
+        <div className="project-page-code-tabs project-page-inspector-dock-code">
+          <details open><summary>HTML</summary><pre>{inspected.parts.html || '—'}</pre></details>
+          <details><summary>CSS</summary><pre>{inspected.parts.css || '—'}</pre></details>
+          <details><summary>JavaScript</summary><pre>{inspected.parts.javascript || '—'}</pre></details>
+          {!inspected.parts.previewable && <details><summary>Contenu brut</summary><pre>{inspected.parts.raw || '—'}</pre></details>}
+        </div>
+      </aside>}
+    </div>
 
     {mode === 'library' && <div className="project-page-composition-modal library-modal" role="dialog" aria-modal="true">
       <div className="project-page-composition-modal-backdrop" onClick={() => setMode(null)} />
@@ -553,12 +602,24 @@ export function ProjectPageCompositionPanel({
       </div>
     </div>}
 
-    {mode === 'inspect' && inspected && <div className="project-page-composition-modal" role="dialog" aria-modal="true">
-      <div className="project-page-composition-modal-backdrop" onClick={() => setMode(null)} />
+    {inspectExpanded && inspected && <div className="project-page-composition-modal" role="dialog" aria-modal="true">
+      <div className="project-page-composition-modal-backdrop" onClick={() => setInspectExpanded(false)} />
       <div className="project-page-composition-modal-panel">
-        <header><div><span className="eyebrow">Composant {inspected.item.sortOrder + 1}</span><h3>{inspected.item.displayName}</h3><p>Version source figée : v{inspected.item.sourceVersionNumber}</p></div><button className="secondary-button" type="button" onClick={() => setMode(null)}>Fermer</button></header>
+        <header>
+          <div><span className="eyebrow">Composant {inspected.item.sortOrder + 1}</span><h3>{inspected.item.displayName}</h3><p>Version source figée : v{inspected.item.sourceVersionNumber}</p></div>
+          <div className="project-page-preview-controls">
+            <button type="button" className={inspectDevice === 'desktop' ? 'active' : ''} onClick={() => setInspectDevice('desktop')}>Desktop</button>
+            <button type="button" className={inspectDevice === 'tablet' ? 'active' : ''} onClick={() => setInspectDevice('tablet')}>Tablette</button>
+            <button type="button" className={inspectDevice === 'mobile' ? 'active' : ''} onClick={() => setInspectDevice('mobile')}>Mobile</button>
+            <button className="secondary-button" type="button" onClick={() => setInspectExpanded(false)}>Fermer</button>
+          </div>
+        </header>
         <div className="project-page-inspector-grid">
-          <iframe title={`Aperçu ${inspected.item.displayName}`} sandbox="" srcDoc={buildPreviewDocument(inspected.parts, inspected.item.displayName)} />
+          <div className="project-page-inspector-preview-large">
+            <div style={{ width: inspectWidth }}>
+              <iframe title={`Aperçu ${inspected.item.displayName}`} sandbox="" srcDoc={buildPreviewDocument(inspected.parts, inspected.item.displayName)} />
+            </div>
+          </div>
           <div className="project-page-code-tabs">
             <details open><summary>HTML</summary><pre>{inspected.parts.html || '—'}</pre></details>
             <details><summary>CSS</summary><pre>{inspected.parts.css || '—'}</pre></details>
