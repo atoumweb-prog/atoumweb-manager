@@ -104,8 +104,8 @@ export class DatabaseService {
     this.catalog = new CatalogService(this.database);
     this.contractTerms = new ContractTermsService(this.database);
     this.quotes = new QuoteService(this.database, this.crm, this.contractTerms);
-    this.projects = new ProjectService(this.database, this.workspace);
     this.projectSites = new ProjectSiteService(this.database);
+    this.projects = new ProjectService(this.database, this.workspace, this.projectSites);
     this.projectCompletion = new ProjectCompletionService(this.database);
     this.projectNodes = new ProjectNodeArrangementService(this.database, this.projects);
     this.projectResources = new ProjectResourceService(this.database, this.workspace);

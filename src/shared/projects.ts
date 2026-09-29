@@ -281,6 +281,32 @@ export interface ProjectSitePage {
   updatedAt: string;
 }
 
+export interface ProjectTemplateSitePageInput {
+  key: string;
+  templateNodeId: string;
+  role: ProjectSitePageRole;
+  desiredPath?: string | null;
+  sortOrder?: number;
+}
+
+export interface ProjectTemplateSiteInput {
+  key: string;
+  name: string;
+  desiredDomain?: string | null;
+  sortOrder?: number;
+  pages: ProjectTemplateSitePageInput[];
+}
+
+export interface ProjectBlueprintGenerationResult {
+  projectId: string;
+  templateVersionId: string;
+  declaredSiteCount: number;
+  createdSiteIds: string[];
+  linkedPageIds: string[];
+  preservedSiteIds: string[];
+  preservedPageIds: string[];
+}
+
 export interface ProjectFilters {
   search?: string | null;
   status?: ProjectStatus | null;
@@ -403,6 +429,7 @@ export interface ProjectsApi {
     publishVersion(versionId: string): Promise<ProjectTemplateVersion>;
     addNode(versionId: string, input: ProjectTemplateNodeInput): Promise<ProjectTemplateVersion>;
     removeNode(nodeId: string): Promise<ProjectTemplateVersion>;
+    configureSites(versionId: string, sites: ProjectTemplateSiteInput[]): Promise<ProjectTemplateVersion>;
   };
   projects: {
     list(filters?: ProjectFilters): Promise<ProjectSummary[]>;
@@ -427,6 +454,7 @@ export interface ProjectsApi {
     listPages(projectId: string): Promise<ProjectSitePage[]>;
     linkPage(siteId: string, projectNodeId: string, input?: ProjectSitePageInput): Promise<ProjectSitePage>;
     unlinkPage(projectNodeId: string): Promise<void>;
+    applyBlueprint(projectId: string, templateVersionId?: string | null): Promise<ProjectBlueprintGenerationResult>;
   };
   secrets: {
     list(projectId: string, projectNodeId?: string | null): Promise<ProjectSecretSummary[]>;

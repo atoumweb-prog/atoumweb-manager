@@ -3,11 +3,13 @@ import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import type { WorkspacePaths } from '../workspace';
+import type { ProjectSiteService } from './ProjectSiteService';
 import {
   PROJECT_COMMERCIAL_MODES,
   PROJECT_NODE_STATUSES,
   PROJECT_NODE_TYPES,
   PROJECT_PREREQUISITE_STATUSES,
+  PROJECT_SITE_PAGE_ROLES,
   PROJECT_STATUSES,
   type InternalProjectInput,
   type ProjectCommercialMode,
@@ -29,6 +31,7 @@ import {
   type ProjectTemplateInput,
   type ProjectTemplateNode,
   type ProjectTemplateNodeInput,
+  type ProjectTemplateSiteInput,
   type ProjectTemplateSummary,
   type ProjectTemplateVersion,
   type ProjectWorkCard,
@@ -133,7 +136,11 @@ interface BlueprintContribution {
 
 
 export class ProjectService {
-  constructor(private readonly database: DatabaseAdapter, private readonly workspace: WorkspacePaths) {}
+  constructor(
+    private readonly database: DatabaseAdapter,
+    private readonly workspace: WorkspacePaths,
+    private readonly projectSites?: ProjectSiteService,
+  ) {}
 
   listTemplates(): ProjectTemplateSummary[] {
     return this.database.all<TemplateRow>('SELECT * FROM project_templates ORDER BY name COLLATE NOCASE').map((row) => {
@@ -172,7 +179,10 @@ export class ProjectService {
     this.database.exec('BEGIN IMMEDIATE;');
     try {
       this.database.run('INSERT INTO project_template_versions (id,template_id,version_number,status,description,created_at) VALUES (?,?,?,\'draft\',?,?)', [id, templateId, versionNumber, clean(description) ?? previous?.description ?? null, now]);
-      if (previous) this.copyTemplateNodes(previous.id, id, now);
+      if (previous) {
+        const copiedNodeIds = this.copyTemplateNodes(previous.id, id, now);
+        this.copyTemplateSites(previous.id, id, copiedNodeIds, now);
+      }
       this.database.run('UPDATE project_templates SET updated_at=? WHERE id=?', [now, templateId]);
       this.writeActivity('project_template', templateId, 'project_template_version_created', `Version v${versionNumber} créée`);
       this.database.exec('COMMIT;');
@@ -227,6 +237,64 @@ export class ProjectService {
     if (version.status !== 'draft') throw new Error('Une version publiée est figée.');
     this.database.run('DELETE FROM project_template_nodes WHERE id=?', [nodeId]);
     return this.getTemplateVersion(row.template_version_id);
+  }
+
+  configureTemplateSites(versionId: string, sites: ProjectTemplateSiteInput[]): ProjectTemplateVersion {
+    const version = this.getTemplateVersion(versionId);
+    if (version.status !== 'draft') throw new Error('Une version publiée est figée. Crée une nouvelle version.');
+    const siteKeys = new Set<string>();
+    const now = nowIso();
+    for (const site of sites) {
+      const siteKey = this.blueprintKey(site.key, 'Clé de Site');
+      if (siteKeys.has(siteKey)) throw new Error(`Clé de Site dupliquée : ${siteKey}.`);
+      siteKeys.add(siteKey);
+      if (!clean(site.name)) throw new Error('Nom du Site blueprint requis.');
+      const pageKeys = new Set<string>();
+      let homeCount = 0;
+      for (const page of site.pages) {
+        const pageKey = this.blueprintKey(page.key, 'Clé de Page');
+        if (pageKeys.has(pageKey)) throw new Error(`Clé de Page dupliquée dans ${siteKey} : ${pageKey}.`);
+        pageKeys.add(pageKey);
+        if (!PROJECT_SITE_PAGE_ROLES.includes(page.role)) throw new Error('Rôle de Page blueprint invalide.');
+        if (page.role === 'home' && ++homeCount > 1) throw new Error(`Le Site ${siteKey} ne peut déclarer qu’une Page d’accueil.`);
+        const node = this.database.get<{ template_version_id: string; node_type: string; display_subtype: string | null }>(
+          'SELECT template_version_id,node_type,display_subtype FROM project_template_nodes WHERE id=?',
+          [page.templateNodeId],
+        );
+        if (!node || node.template_version_id !== versionId || node.node_type !== 'module' || node.display_subtype !== 'page') {
+          throw new Error(`La Page blueprint ${pageKey} doit référencer un nœud Page de la même version.`);
+        }
+        this.blueprintPath(page.desiredPath, page.role);
+      }
+    }
+
+    this.database.exec('BEGIN IMMEDIATE;');
+    try {
+      this.database.run('DELETE FROM project_template_sites WHERE template_version_id=?', [versionId]);
+      for (const site of sites) {
+        const templateSiteId = randomUUID();
+        const siteKey = this.blueprintKey(site.key, 'Clé de Site');
+        this.database.run(
+          `INSERT INTO project_template_sites
+           (id,template_version_id,blueprint_key,name,desired_domain,sort_order,created_at) VALUES (?,?,?,?,?,?,?)`,
+          [templateSiteId, versionId, siteKey, clean(site.name), clean(site.desiredDomain), site.sortOrder ?? 0, now],
+        );
+        for (const page of site.pages) {
+          this.database.run(
+            `INSERT INTO project_template_site_pages
+             (id,template_site_id,blueprint_key,template_node_id,role,desired_path,sort_order,created_at)
+             VALUES (?,?,?,?,?,?,?,?)`,
+            [randomUUID(), templateSiteId, this.blueprintKey(page.key, 'Clé de Page'), page.templateNodeId,
+              page.role, this.blueprintPath(page.desiredPath, page.role), page.sortOrder ?? 0, now],
+          );
+        }
+      }
+      this.database.exec('COMMIT;');
+    } catch (error) {
+      this.database.exec('ROLLBACK;');
+      throw error;
+    }
+    return this.getTemplateVersion(versionId);
   }
 
   listProjects(filters: ProjectFilters = {}): ProjectSummary[] {
@@ -296,6 +364,7 @@ export class ProjectService {
       for (const addon of blueprintPlan.addons) {
         this.copyTemplateTreeToProject(addon.templateVersionId, id, now, addon, true);
       }
+      this.projectSites?.applyBlueprint(id, templateVersion.id, false);
 
       this.copyQuoteServicesToProject(quote.id, id, now);
       this.seedPrerequisitesFromQuote(quote.id, id, quote.prerequisites_text, now);
@@ -332,7 +401,10 @@ export class ProjectService {
          VALUES (?,?,NULL,NULL,?,?, 'internal','to_prepare','internal',?,0,0,?,?,?,?)`,
         [id, number, templateVersionId, name, input.targetDate ?? null, paths.resourceRoot, clean(input.notes), now, now],
       );
-      if (templateVersionId) this.copyTemplateTreeToProject(templateVersionId, id, now);
+      if (templateVersionId) {
+        this.copyTemplateTreeToProject(templateVersionId, id, now);
+        this.projectSites?.applyBlueprint(id, templateVersionId, false);
+      }
       this.writeActivity('project', id, 'internal_project_created', `Projet interne ${number} créé`);
       this.database.exec('COMMIT;');
     } catch (error) {
@@ -684,7 +756,7 @@ export class ProjectService {
     }));
   }
 
-  private copyTemplateNodes(fromVersionId: string, toVersionId: string, now: string): void {
+  private copyTemplateNodes(fromVersionId: string, toVersionId: string, now: string): Map<string, string> {
     const source = this.database.all<TemplateNodeRow>('SELECT * FROM project_template_nodes WHERE template_version_id=? ORDER BY sort_order, created_at', [fromVersionId]);
     const pending = [...source]; const ids = new Map<string, string>(); let guard = 0;
     while (pending.length && guard++ < source.length + 2) {
@@ -706,6 +778,51 @@ export class ProjectService {
       }
       if (!progressed) throw new Error('Arbre du modèle invalide.');
     }
+    return ids;
+  }
+
+  private copyTemplateSites(fromVersionId: string, toVersionId: string, nodeIds: Map<string, string>, now: string): void {
+    const sites = this.database.all<{ id: string; blueprint_key: string; name: string; desired_domain: string | null; sort_order: number }>(
+      'SELECT id,blueprint_key,name,desired_domain,sort_order FROM project_template_sites WHERE template_version_id=? ORDER BY sort_order,created_at',
+      [fromVersionId],
+    );
+    for (const site of sites) {
+      const newSiteId = randomUUID();
+      this.database.run(
+        `INSERT INTO project_template_sites
+         (id,template_version_id,blueprint_key,name,desired_domain,sort_order,created_at) VALUES (?,?,?,?,?,?,?)`,
+        [newSiteId, toVersionId, site.blueprint_key, site.name, site.desired_domain, site.sort_order, now],
+      );
+      const pages = this.database.all<{ blueprint_key: string; template_node_id: string; role: string; desired_path: string | null; sort_order: number }>(
+        `SELECT blueprint_key,template_node_id,role,desired_path,sort_order
+         FROM project_template_site_pages WHERE template_site_id=? ORDER BY sort_order,created_at`,
+        [site.id],
+      );
+      for (const page of pages) {
+        const newNodeId = nodeIds.get(page.template_node_id);
+        if (!newNodeId) throw new Error(`Page blueprint ${page.blueprint_key} sans nœud copié.`);
+        this.database.run(
+          `INSERT INTO project_template_site_pages
+           (id,template_site_id,blueprint_key,template_node_id,role,desired_path,sort_order,created_at)
+           VALUES (?,?,?,?,?,?,?,?)`,
+          [randomUUID(), newSiteId, page.blueprint_key, newNodeId, page.role, page.desired_path, page.sort_order, now],
+        );
+      }
+    }
+  }
+
+  private blueprintKey(value: string, label: string): string {
+    const key = clean(value);
+    if (!key || !/^[a-z0-9]+(?:[._-][a-z0-9]+)*$/.test(key)) throw new Error(`${label} invalide.`);
+    return key;
+  }
+
+  private blueprintPath(value: string | null | undefined, role: string): string | null {
+    if (role === 'home') return '/';
+    const path = clean(value);
+    if (!path) return null;
+    if (/[?#]/.test(path) || path === '/') throw new Error('Chemin de Page blueprint invalide.');
+    return '/' + path.replace(/^\/+|\/+$/g, '');
   }
 
   private resolveBlueprintPlan(quoteId: string, explicitTemplateVersionId?: string | null): { base: BlueprintContribution; addons: BlueprintContribution[] } {

@@ -1,5 +1,19 @@
 # AtoumWeb Manager — Suivi du projet
 
+## Lot 7 en cours — Squelette blueprint Sites / Pages
+
+- Branche de travail : `codex/lot7-blueprint-sites`, créée depuis le checkpoint canonique `cf747c5855eec90df725861d22375d65f78f12db`.
+- Premier incrément local : déclarations explicites Site/Page par version de blueprint, provenance durable et application idempotente lors de la création d'un Projet.
+- Les réapplications conservent les renommages, domaines, rattachements et Pages ajoutées manuellement ; elles ne créent aucun doublon ni journal d'activité supplémentaire.
+- Le blueprint vitrine V1 déclare un Site principal, une Accueil et quatre Pages complémentaires.
+- Les versions brouillon peuvent configurer cette structure via l'API de modèles ; une nouvelle version recopie les déclarations avec les nouveaux identifiants de nœuds.
+- L'écran Sites & pages expose « Initialiser depuis le blueprint » pour les Projets historiques ; un blueprint sans déclaration produit un message explicite.
+- Migrations additives prévues : **50** pour le modèle Site/Page, puis **51** pour la compatibilité explicite des anciens Projets `web` / `website` déjà liés à un blueprint sans structure Site/Page.
+- La recette réelle de `PRO-2026-001` a révélé ce cas historique. Le fallback utilise le type du Projet, jamais son nom, conserve son blueprint d'origine et matérialise uniquement les Pages déclarées et leurs ancêtres manquants.
+- Validation locale après correction : `npm run typecheck` réussi ; tests ciblés migrations / ProjectService / ProjectSiteService **33/33 réussis**.
+- Recette réelle validée sur `PRO-2026-001` : création de 1 Site et 5 Pages, réapplication sans doublon, renommages Site/Page conservés et Page manuelle conservée ; résultat final 1 Site / 6 Pages.
+- État : prêt pour commit, push et PR vers `feature/project-page-compositions-v1`. Le harness Electron n'a pas démarré ses contrôles lors du dernier essai, Chromium ayant arrêté son processus GPU Windows (`GPU process isn't usable`).
+
 ## Lot 6B clos — 29/09/2026 — PR #75 intégrée et contrôles post-intégration verts
 
 - Branche de stabilisation : `wip/codex-6b-ui-fix`.

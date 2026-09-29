@@ -68,6 +68,7 @@ import type {
   ProjectTechnicalVersionInput,
   ProjectTemplateInput,
   ProjectTemplateNodeInput,
+  ProjectTemplateSiteInput,
   TransformQuoteToProjectInput,
 } from '../shared/projects';
 import type { ManualTimeSessionInput, StartTimeSessionInput, TimePauseReason, TimeSessionFilters } from '../shared/time';
@@ -459,6 +460,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('projects:templates:publish-version', (_event, versionId: string) => database.projects.publishTemplateVersion(versionId));
   ipcMain.handle('projects:templates:add-node', (_event, versionId: string, input: ProjectTemplateNodeInput) => database.projects.addTemplateNode(versionId, input));
   ipcMain.handle('projects:templates:remove-node', (_event, nodeId: string) => database.projects.removeTemplateNode(nodeId));
+  ipcMain.handle('projects:templates:configure-sites', (_event, versionId: string, sites: ProjectTemplateSiteInput[]) =>
+    database.projects.configureTemplateSites(versionId, sites));
 
   ipcMain.handle('projects:list', (_event, filters?: ProjectFilters) => database.projects.listProjects(filters));
   ipcMain.handle('projects:get', (_event, id: string) => database.projects.getProject(id));
@@ -474,6 +477,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('projects:sites:link-page', (_event, siteId: string, projectNodeId: string, input?: ProjectSitePageInput) =>
     database.projectSites.linkPage(siteId, projectNodeId, input));
   ipcMain.handle('projects:sites:unlink-page', (_event, projectNodeId: string) => database.projectSites.unlinkPage(projectNodeId));
+  ipcMain.handle('projects:sites:apply-blueprint', (_event, projectId: string, templateVersionId?: string | null) =>
+    database.projectSites.applyBlueprint(projectId, templateVersionId));
   ipcMain.handle('projects:add-node', (_event, projectId: string, input: ProjectNodeInput) => database.projects.addProjectNode(projectId, input));
   ipcMain.handle('projects:update-node', (_event, nodeId: string, input: Partial<ProjectNodeInput>) => database.projects.updateProjectNode(nodeId, input));
   ipcMain.handle('projects:move-node', (_event, nodeId: string, input: MoveProjectNodeInput) => database.projectNodes.move(nodeId, input));

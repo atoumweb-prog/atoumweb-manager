@@ -79,6 +79,7 @@ import type {
   ProjectTechnicalVersionInput,
   ProjectTemplateInput,
   ProjectTemplateNodeInput,
+  ProjectTemplateSiteInput,
   TransformQuoteToProjectInput,
 } from '../shared/projects';
 import type {
@@ -324,6 +325,7 @@ const api: AtoumWebApi = {
       publishVersion: (versionId: string) => ipcRenderer.invoke('projects:templates:publish-version', versionId),
       addNode: (versionId: string, input: ProjectTemplateNodeInput) => ipcRenderer.invoke('projects:templates:add-node', versionId, input),
       removeNode: (nodeId: string) => ipcRenderer.invoke('projects:templates:remove-node', nodeId),
+      configureSites: (versionId: string, sites: ProjectTemplateSiteInput[]) => ipcRenderer.invoke('projects:templates:configure-sites', versionId, sites),
     },
     projects: {
       list: (filters?: ProjectFilters) => ipcRenderer.invoke('projects:list', filters),
@@ -348,6 +350,7 @@ const api: AtoumWebApi = {
       listPages: (projectId: string) => ipcRenderer.invoke('projects:sites:list-pages', projectId),
       linkPage: (siteId: string, projectNodeId: string, input?: ProjectSitePageInput) => ipcRenderer.invoke('projects:sites:link-page', siteId, projectNodeId, input),
       unlinkPage: (projectNodeId: string) => ipcRenderer.invoke('projects:sites:unlink-page', projectNodeId),
+      applyBlueprint: (projectId: string, templateVersionId?: string | null) => ipcRenderer.invoke('projects:sites:apply-blueprint', projectId, templateVersionId),
     },
     secrets: {
       list: (projectId: string, projectNodeId?: string | null) => ipcRenderer.invoke('projects:secrets:list', projectId, projectNodeId),

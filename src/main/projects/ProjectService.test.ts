@@ -9,12 +9,14 @@ import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
 import { createWorkspacePaths } from '../workspace';
 import { ProjectService } from './ProjectService';
+import { ProjectSiteService } from './ProjectSiteService';
 
 let database: NodeSqliteAdapter;
 let crm: CrmService;
 let catalog: CatalogService;
 let quotes: QuoteService;
 let projects: ProjectService;
+let sites: ProjectSiteService;
 let workspaceRoot: string;
 
 beforeEach(() => {
@@ -25,7 +27,8 @@ beforeEach(() => {
   crm = new CrmService(database);
   catalog = new CatalogService(database);
   quotes = new QuoteService(database, crm);
-  projects = new ProjectService(database, createWorkspacePaths(workspaceRoot));
+  sites = new ProjectSiteService(database);
+  projects = new ProjectService(database, createWorkspacePaths(workspaceRoot), sites);
 });
 
 afterEach(() => {
@@ -105,7 +108,8 @@ describe('ProjectService', () => {
     expect(first.id).toBe(second.id);
     expect(first.number).toMatch(/^PRO-\d{4}-001$/);
     expect(first.clientLabel).toBe('Société Test Projet');
-    expect(first.nodes).toHaveLength(4);
+    expect(first.nodes.filter((node) => template.nodes.some((source) => source.id === node.sourceTemplateNodeId))).toHaveLength(4);
+    expect(first.nodes.filter((node) => node.semanticKey?.startsWith('pages.'))).toHaveLength(5);
     expect(first.services).toHaveLength(1);
     expect(first.commercialValueCents).toBe(69900);
     expect(first.contractValueCents).toBe(69900);
@@ -156,6 +160,12 @@ describe('ProjectService', () => {
     expect(project.projectType).toBe('website');
     expect(project.templateVersionId).toBe('atoumweb-project-template-vitrine-v1');
     expect(project.nodes.length).toBeGreaterThan(15);
+    expect(sites.list(project.id)).toHaveLength(1);
+    expect(sites.listPages(project.id)).toHaveLength(5);
+    expect(database.get<{ status: string; project_id: string }>('SELECT status,project_id FROM quotes WHERE id=?', [quote.id]))
+      .toEqual({ status: 'accepted', project_id: project.id });
+    expect(database.get<{ total: number }>('SELECT COUNT(*) AS total FROM quote_lines WHERE quote_id=?', [quote.id])?.total)
+      .toBe(quote.lines.length);
 
     const hero = project.nodes.find((node) => node.semanticKey === 'pages.home.hero');
     expect(hero).toBeTruthy();

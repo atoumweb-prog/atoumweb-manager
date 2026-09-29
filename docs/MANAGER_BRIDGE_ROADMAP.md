@@ -1403,3 +1403,56 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Gates complets déjà terminés sur le contenu fonctionnel de cette PR : `npm test` **339/339** et `npm run package` réussi pour Windows x64.
 - Seul avertissement observé : API Electron `console-message` dépréciée dans le harness ; aucun échec ni impact fonctionnel signalé.
 - Lot 6B clos. La suite de la feuille de route Manager ↔ Bridge est distincte et nécessite une autorisation explicite avant de commencer le Lot 7.
+
+
+### 2026-09-29 — LOT7-BLUEPRINT-001 — Premier incrément Sites / Pages idempotent
+
+- Autorisation : Carlos demande de continuer le projet après la clôture du Lot 6B.
+- Branche dédiée : `codex/lot7-blueprint-sites`, créée depuis `feature/project-page-compositions-v1@cf747c5855eec90df725861d22375d65f78f12db`.
+- Décision de modèle : ne pas déduire les Sites ou rôles de Page depuis le nom ou `semanticKey`. Une version de blueprint porte des déclarations Site/Page explicites, avec clés stables.
+- Migration additive **50** : déclarations `project_template_sites` / `project_template_site_pages` et liaisons de provenance `project_blueprint_site_bindings` / `project_blueprint_page_bindings`.
+- Le blueprint vitrine V1 déclare un Site principal, une Page Accueil et quatre Pages complémentaires, reliés aux nœuds de modèle existants.
+- La création d'un Projet applique automatiquement le squelette. Une réapplication :
+  - reconnaît les objets par leur provenance plutôt que par leur nom ;
+  - ne crée pas de doublon ;
+  - conserve renommages, domaines, rattachements et Pages manuelles ;
+  - n'ajoute pas une nouvelle activité lorsqu'aucun changement n'est effectué.
+- API interne/IPC ajoutée pour réappliquer explicitement un blueprint figé au Projet.
+- Les versions brouillon exposent une configuration typée Site/Page ; la création d'une version recopie les déclarations en les reliant aux nouveaux identifiants de nœuds.
+- L'écran Sites & pages propose « Initialiser depuis le blueprint » pour les Projets historiques. Un blueprint sans déclaration est signalé explicitement.
+- Validation locale : typecheck réussi ; **31/31 tests ciblés** (migrations 10, ProjectService 12, ProjectSiteService 9).
+- Harness Electron 6B : essai interrompu avant exécution des contrôles par l'arrêt du processus GPU Chromium sous Windows (`GPU process isn't usable`) ; aucune erreur renderer ou assertion fonctionnelle observée.
+- Aucun contrat Bridge, export Page, `siteOccurrenceId`, retour d'occurrence ou code UX 6B modifié.
+- État : travail local non commité/non poussé ; revue finale et recette fonctionnelle ciblée requises avant intégration.
+
+### 2026-09-29 — LOT7-LEGACY-BLUEPRINT-001 — Compatibilité des anciens Projets web
+
+- Recette réelle bloquante : `PRO-2026-001 - création de site vitrine` pointait vers l'ancienne version publiée « Projet standard », contenant uniquement une tâche et aucune déclaration Site/Page. La migration 50 avait correctement enrichi le blueprint vitrine canonique, mais le Projet historique ne le référençait pas.
+- Décision : aucune déduction depuis le nom du Projet. Une table de compatibilité explicite associe les types `web` et `website` au blueprint Site/Page canonique.
+- Cette compatibilité est portée par la migration additive **51**, séparée de 50 car la recette avait déjà enregistré la migration 50 dans le workspace MSI.
+- Lorsqu'un ancien Projet n'a pas reçu les nœuds du blueprint canonique, le service matérialise seulement les cinq Pages déclarées et leurs ancêtres nécessaires, puis les rattache au Site principal.
+- Le `template_version_id` historique du Projet reste inchangé. Les tâches existantes et les ajouts manuels sont conservés.
+- La réapplication est idempotente : aucun Site, nœud Page, rattachement ou journal fonctionnel en double.
+- Un type de Projet sans compatibilité déclarée reste sans structure et conserve le message explicite existant.
+- Validation : typecheck réussi ; **33/33 tests ciblés** réussis (migrations 10, ProjectService 12, ProjectSiteService 11).
+- Aucun commit ni push. Nouvelle recette réelle attendue avant intégration.
+
+### 2026-09-29 — LOT7-RECETTE-STATE-001 — Rafraîchissement de l'arborescence après initialisation
+
+- La recette réelle a confirmé le succès backend (« 1 Site créé, 5 Pages rattachées »), mais l'arborescence affichait encore 0 Page.
+- Vérification directe en lecture seule de la base Validation-MSI : **1 Site, 5 nœuds Page et 5 rattachements** sont réellement enregistrés pour `PRO-2026-001`. Accueil possède le rôle `home` et le chemin `/`.
+- Cause : `ProjectSitesTab.reload()` rechargeait les Sites et leurs rattachements, tandis que la liste des Pages restait dérivée de `detail.nodes`, prop du parent non rafraîchie après `applyBlueprint`.
+- Correction : relire le `ProjectDetail` après application, transmettre cette version à `onProjectChanged`, puis recharger les Sites/rattachements.
+- Validation : typecheck réussi ; **33/33 tests ciblés** toujours verts.
+- Aucun commit ni push ; recette visuelle de confirmation attendue.
+
+### 2026-09-29 — LOT7-RECETTE-FINALE-001 — Recette fonctionnelle validée
+
+- Initialisation du Projet historique : **1 Site + 5 Pages** correctement affichés.
+- Réapplication : aucun doublon.
+- Renommage du Site conservé.
+- Renommage d'une Page conservé.
+- Ajout manuel d'une Page conservé.
+- Résultat final observé : **1 Site / 6 Pages**.
+- Gates acquis : typecheck réussi ; **33/33 tests ciblés** réussis.
+- Lot 7 autorisé pour commit, push et ouverture d'une PR vers `feature/project-page-compositions-v1`.
