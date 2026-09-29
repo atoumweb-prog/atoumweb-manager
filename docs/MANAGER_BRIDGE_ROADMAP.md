@@ -928,3 +928,28 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - validation explicite des réglages.
 - Aucun changement métier, aucune migration supplémentaire, aucun changement Bridge.
 - Statut : implémenté sur `wip/codex-6b-ui-fix`, **validation typecheck/tests/UI et recette visuelle Carlos encore requises**.
+
+
+### 2026-09-29 — LOT6B-UX-005 — Troisième colonne indépendante et timer compact
+
+- Retour de recette : les accordéons haut/gauche et le panneau Informations de la Page sont validés visuellement.
+- Timer Page :
+  - réduction de la hauteur et des espacements ;
+  - temps, nombre de sessions et commandes regroupés dans une barre compacte ;
+  - aucune modification de la logique de chronométrage.
+- Code / aperçu :
+  - suppression du partage interne de la colonne Page ;
+  - rendu du volet via un host externe dans l'espace `Sites & pages` ;
+  - structure cible : **Arborescence | Fiche Page | Code / aperçu** ;
+  - la colonne Code / aperçu possède son propre séparateur de redimensionnement ;
+  - largeur réglable indépendamment, double-clic pour revenir au réglage par défaut ;
+  - rail de repli indépendant : **→ masquer**, **← restaurer** ;
+  - le panneau central reste une colonne autonome et n'est plus découpé en deux ;
+  - modes Desktop / Tablette / Mobile et agrandissement plein écran conservés.
+- Le repli des colonnes reste volontairement manuel : aucun masquage automatique de l'arborescence selon la largeur de fenêtre.
+- Harness UI adapté pour contrôler :
+  - timer compact ;
+  - vraie troisième colonne indépendante ;
+  - repli/restauration de la colonne Code / aperçu ;
+  - conservation des modes responsive.
+- Statut : implémenté sur `wip/codex-6b-ui-fix`, validation locale requise.
