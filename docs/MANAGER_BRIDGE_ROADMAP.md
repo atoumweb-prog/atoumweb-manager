@@ -1336,3 +1336,12 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - seulement après validation des Lots 7 et 8 ;
   - aucune publication production automatique avant recette dédiée.
 - Les chantiers CGV et autres branches parallèles restent indépendants ; aucune réécriture ou renumérotation des migrations 40–49.
+
+
+### 2026-09-29 — LOT6B-INTEGRATION-PR-001 — PR de réintégration ouverte
+
+- PR **#75** créée en brouillon : `wip/codex-6b-ui-fix` → `feature/project-page-compositions-v1`.
+- Objet : regrouper toute la stabilisation UX 6B validée sans fusion automatique.
+- La PR rappelle les validations acquises : typecheck vert, **65/65** harness, **35/35** tests ciblés historiques, migration 49 inchangée, recette visuelle validée.
+- Aucun merge vers la branche canonique ni vers `main` effectué.
+- Derniers gates avant intégration : statut local MSI propre, décision sur suite Vitest complète / packaging, puis rerun typecheck + harness sur la branche canonique après intégration.
