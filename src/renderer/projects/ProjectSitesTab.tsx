@@ -691,8 +691,8 @@ export function ProjectSitesTab({
         <button
           className="project-sites-inspector-collapse"
           type="button"
-          title={inspectorCollapsed ? 'Afficher Code / aperçu' : 'Masquer Code / aperçu'}
-          aria-label={inspectorCollapsed ? 'Afficher Code / aperçu' : 'Masquer Code / aperçu'}
+          title={inspectorCollapsed ? 'Afficher l’atelier latéral' : 'Réduire l’atelier latéral'}
+          aria-label={inspectorCollapsed ? 'Afficher l’atelier latéral' : 'Réduire l’atelier latéral'}
           onClick={() => setInspectorCollapsed((value) => !value)}
           tabIndex={inspectorOpen ? 0 : -1}
         >{inspectorCollapsed ? '←' : '→'}</button>
