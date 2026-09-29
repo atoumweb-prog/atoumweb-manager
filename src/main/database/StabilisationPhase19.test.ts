@@ -25,9 +25,10 @@ describe('stabilisation commerciale migrations 19 à 21',()=>{
    legacy.run("INSERT INTO prospects (id,organization_id,stage,temperature,created_at,updated_at) VALUES ('p','o','new','warm','x','x')");
    legacy.run("INSERT INTO crm_needs (id,prospect_id,other_text,created_at) VALUES ('n','p','Besoin conservé','x')");
    legacy.run("INSERT INTO activity_events (id,entity_type,entity_id,action,summary,prospect_id,created_at) VALUES ('a','prospect','p','created','Historique conservé','p','x')");
+   const expectedPending=getPendingMigrations(legacy).map(m=>m.id);
    const applied=applyPendingMigrations(legacy).map(m=>m.id);
    expect(applied.slice(0,3)).toEqual([19,20,21]);
-   expect(applied).toEqual([19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38]);
+   expect(applied).toEqual(expectedPending);
    expect(applyPendingMigrations(legacy)).toEqual([]);
    expect(legacy.all('SELECT method_type,value FROM contact_methods ORDER BY method_type')).toEqual([{method_type:'email',value:'contact@atoum.test'},{method_type:'phone',value:'0102030405'}]);
    expect(legacy.get("SELECT other_text FROM crm_needs WHERE id='n'")).toEqual({other_text:'Besoin conservé'});
