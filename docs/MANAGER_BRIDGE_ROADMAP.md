@@ -1367,3 +1367,31 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
   - correction : ajout de `quote_contract_clauses` dans `TABLES` pour héritage du batch via FK `quote_id` et suppression enfant→parent.
 - Aucun changement UX 6B, aucune migration, aucun changement Bridge.
 - Statut : correctifs poussés, **rerun complet `npm test` requis** avant clôture.
+
+
+### 2026-09-29 — LOT6B-CHECKPOINT-FINAL-002 — Suite complète et packaging verts
+
+- Validation MSI après correction des trois derniers échecs transverses :
+  - `npm test` : **53 fichiers de tests réussis / 53** ;
+  - **339 tests réussis / 339** ;
+  - durée Vitest : 7,81 s ;
+  - aucune erreur de test restante.
+- Correctifs inclus avant cette validation :
+  - test de migration legacy aligné dynamiquement sur la chaîne courante jusqu'à la migration **49** ;
+  - test Workflow aligné avec le Builder CGV structuré : `specialTerms` du devis reste libre, la condition catalogue reste figée dans le snapshot de ligne ;
+  - `DemoService` suit désormais `quote_contract_clauses` afin que les scénarios de démonstration puissent être purgés sans faux positif de données non-demo.
+- Packaging :
+  - `npm run package` / `electron-forge package` : **réussi** ;
+  - bundles Vite main + preload + renderer : réussis ;
+  - package **win32 x64** généré avec succès ;
+  - hooks prePackage / postPackage : réussis.
+- Gates 6B désormais verts :
+  - typecheck ;
+  - harness UI **65/65** ;
+  - suite complète **339/339** ;
+  - packaging Windows x64 ;
+  - recette visuelle réelle validée.
+- Dernier contrôle avant intégration PR #75 :
+  - vérifier le `git status -sb` local MSI ;
+  - si propre, réintégrer dans `feature/project-page-compositions-v1`, puis rerun minimal typecheck + harness sur la branche canonique.
+- Aucun changement Bridge dans cette passe.
