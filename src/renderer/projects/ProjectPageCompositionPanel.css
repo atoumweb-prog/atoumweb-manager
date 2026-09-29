@@ -103,3 +103,64 @@
 .project-component-settings-preview iframe{max-height:calc(100vh - 300px)}
 
 @media(max-width:1280px){.project-page-inspector-workbench.both-open:not(.settings-collapsed):not(.code-collapsed){grid-template-columns:1fr}.project-page-inspector-workbench.both-open:not(.settings-collapsed):not(.code-collapsed) .project-page-inspector-pane{min-height:520px}}
+
+.project-page-inspector-workbench.expanded{
+  position:fixed;
+  inset:52px 18px 18px;
+  z-index:220;
+  width:auto;
+  height:auto;
+  max-width:none;
+  max-height:none;
+  padding:52px 14px 14px;
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:var(--surface-soft);
+  box-shadow:0 30px 100px rgba(0,0,0,.52);
+}
+.project-page-inspector-workbench.expanded::before{
+  content:'Atelier du composant';
+  position:absolute;
+  top:15px;
+  left:18px;
+  color:var(--accent);
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.project-page-inspector-expanded-close{
+  position:absolute;
+  top:10px;
+  right:14px;
+  z-index:4;
+}
+.project-page-inspector-workbench.expanded .project-page-inspector-pane{
+  min-height:0;
+  height:100%;
+}
+.project-page-inspector-workbench.expanded .project-page-inspector-dock{
+  grid-template-rows:auto auto minmax(300px,1fr) minmax(220px,.72fr);
+}
+.project-page-inspector-workbench.expanded .project-component-settings-panel.docked .project-component-settings-grid{
+  height:calc(100% - 62px);
+}
+.project-sites-workspace:has(.project-page-inspector-workbench.expanded),
+.project-sites-inspector-shell:has(.project-page-inspector-workbench.expanded),
+.project-sites-inspector-host:has(.project-page-inspector-workbench.expanded){
+  overflow:visible!important;
+  contain:none!important;
+}
+@media(min-width:1200px){
+  .project-page-inspector-workbench.expanded.single .settings-pane .project-component-settings-grid{
+    grid-template-columns:minmax(0,1.05fr) minmax(420px,.95fr);
+  }
+}
+@media(max-width:1000px){
+  .project-page-inspector-workbench.expanded.both-open:not(.settings-collapsed):not(.code-collapsed){
+    grid-template-columns:1fr;
+    overflow:auto;
+  }
+  .project-page-inspector-workbench.expanded.both-open:not(.settings-collapsed):not(.code-collapsed) .project-page-inspector-pane{
+    min-height:640px;
+  }
+}
