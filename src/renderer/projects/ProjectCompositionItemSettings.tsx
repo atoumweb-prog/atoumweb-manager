@@ -21,6 +21,8 @@ export interface CodeParts {
   javascript: string;
 }
 
+type SettingsPreviewDevice = 'desktop' | 'tablet' | 'mobile';
+
 interface ColorField {
   origin: string;
   value: string;
@@ -139,6 +141,8 @@ export function ProjectCompositionItemSettings({
   onClose,
   onCollapse,
   onExpand,
+  previewDevice = 'desktop',
+  onPreviewDeviceChange,
   onDraftChange,
 }: {
   compositionId: string;
@@ -150,6 +154,8 @@ export function ProjectCompositionItemSettings({
   onClose?: () => void;
   onCollapse?: () => void;
   onExpand?: () => void;
+  previewDevice?: SettingsPreviewDevice;
+  onPreviewDeviceChange?: (device: SettingsPreviewDevice) => void;
   onDraftChange?: (draft: CodeParts) => void;
 }) {
   const [loading, setLoading] = useState(true);
@@ -345,7 +351,7 @@ export function ProjectCompositionItemSettings({
         <button className="primary-button project-component-validate-button" type="button" disabled={busy || !dirty || !draft.html.trim()} onClick={() => void save()}>
           {dirty ? '✓ Valider les changements' : '✓ Changements validés'}
         </button>
-        {onExpand && <button className="secondary-button" type="button" aria-label="Agrandir l’atelier" title="Agrandir l’atelier" onClick={onExpand}>Agrandir</button>}
+        {onExpand && <button className="secondary-button project-inspector-expand-action" type="button" aria-label="Agrandir l’atelier" title="Agrandir l’atelier" onClick={onExpand}>Agrandir</button>}
         {onCollapse && <button className="secondary-button" type="button" aria-label="Réduire Réglages" title="Réduire Réglages" onClick={onCollapse}>←</button>}
         {onClose && <button className="secondary-button" type="button" aria-label="Fermer les réglages" title="Fermer les réglages" onClick={onClose}>×</button>}
       </div>
@@ -526,7 +532,16 @@ export function ProjectCompositionItemSettings({
           {item.hasLocalChanges && <small>Adaptation locale enregistrée</small>}
           <button className="secondary-button" type="button" onClick={() => setModulePreviewOpen(true)}>Voir le module seul</button>
         </div>
-        <iframe title={`Aperçu préparé ${item.displayName}`} sandbox="" srcDoc={previewDocument(draft)} />
+        <div className="project-page-preview-controls project-component-settings-preview-devices">
+          <button type="button" className={previewDevice === 'desktop' ? 'active' : ''} onClick={() => onPreviewDeviceChange?.('desktop')}>Desktop</button>
+          <button type="button" className={previewDevice === 'tablet' ? 'active' : ''} onClick={() => onPreviewDeviceChange?.('tablet')}>Tablette</button>
+          <button type="button" className={previewDevice === 'mobile' ? 'active' : ''} onClick={() => onPreviewDeviceChange?.('mobile')}>Mobile</button>
+        </div>
+        <div className="project-component-settings-preview-viewport">
+          <div style={{ width: previewDevice === 'desktop' ? '100%' : previewDevice === 'tablet' ? '768px' : '390px' }}>
+            <iframe title={`Aperçu préparé ${item.displayName}`} sandbox="" srcDoc={previewDocument(draft)} />
+          </div>
+        </div>
       </div>
     </div>
 
