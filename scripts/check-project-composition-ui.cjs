@@ -56,29 +56,58 @@ app.whenReady().then(async () => {
     });
     let lastLoadFailure = null;
     let rendererGone = null;
+    const rendererConsole = [];
     win.webContents.on('did-fail-load', (_event, code, description, validatedURL, isMainFrame) => {
       if (isMainFrame) lastLoadFailure = {code,description,validatedURL};
     });
     win.webContents.on('render-process-gone', (_event, details) => {
       rendererGone = details;
     });
+    win.webContents.on('console-message', (_event, level, message, line, sourceId) => {
+      rendererConsole.push({level, message, line, sourceId});
+      if (rendererConsole.length > 80) rendererConsole.shift();
+    });
     try {
       await win.loadFile(dir+'/fixture.html');
     } catch (error) {
       throw new Error(`Fixture load failed: ${error}; did-fail-load=${JSON.stringify(lastLoadFailure)}; renderer-gone=${JSON.stringify(rendererGone)}; fixture=${dir}`);
     }
-    const js = code => win.webContents.executeJavaScript(code);
+    const js = async (code, label = 'renderer-eval') => {
+      const wrapped = `(async()=>{try{
+        const value = (${code});
+        return {__awOk:true,value};
+      }catch(error){
+        return {__awOk:false,error:String(error),stack:error&&error.stack?String(error.stack):null};
+      }})()`;
+      let result;
+      try {
+        result = await win.webContents.executeJavaScript(wrapped);
+      } catch (error) {
+        throw new Error(`[${label}] Electron executeJavaScript failed: ${error}; renderer-gone=${JSON.stringify(rendererGone)}; console=${JSON.stringify(rendererConsole.slice(-12))}`);
+      }
+      if (!result || result.__awOk !== true) {
+        throw new Error(`[${label}] ${result?.error ?? 'Renderer evaluation failed'}\n${result?.stack ?? ''}\nconsole=${JSON.stringify(rendererConsole.slice(-12))}`);
+      }
+      return result.value;
+    };
     const settle = () => new Promise(resolve => setTimeout(resolve, 220));
     const check = async (name, code) => {
-      const result = await js(code);
-      checks.push({name, passed:result === true, result});
+      try {
+        const result = await js(code, name);
+        checks.push({name, passed:result === true, result});
+      } catch (error) {
+        checks.push({name, passed:false, error:String(error), stack:error?.stack});
+        throw error;
+      }
     };
     const click = async (text, scope = 'document') => {
-      await js(`(()=>{const b=[...${scope}.querySelectorAll('button')].find(b=>b.textContent.includes(${JSON.stringify(text)}));if(!b||b.disabled)throw Error('Bouton indisponible: '+${JSON.stringify(text)});b.click()})()`);
+      const label = `click ${text}`;
+      await js(`(()=>{const root=${scope};if(!root)throw Error('Scope absent');const b=[...root.querySelectorAll('button')].find(b=>b.textContent.includes(${JSON.stringify(text)}));if(!b)throw Error('Bouton absent: '+${JSON.stringify(text)});if(b.disabled)throw Error('Bouton désactivé: '+${JSON.stringify(text)});b.click();return true})()`, label);
       await settle();
     };
     const input = async (selector, value) => {
-      await js(`(()=>{let e=document.querySelector(${JSON.stringify(selector)});if(!e)throw Error('Champ absent');Object.getOwnPropertyDescriptor(e.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}))})()`);
+      const label = `input ${selector}`;
+      await js(`(()=>{let e=document.querySelector(${JSON.stringify(selector)});if(!e)throw Error('Champ absent: '+${JSON.stringify(selector)});const proto=e.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;Object.getOwnPropertyDescriptor(proto,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return true})()`, label);
       await settle();
     };
     await settle();
@@ -176,7 +205,18 @@ app.whenReady().then(async () => {
     await check('Panneau étroit : actions accessibles sans débordement', `[...document.querySelectorAll('.project-sites-detail-panel *')].filter(e=>!e.matches('input,textarea,small,strong')).every(e=>!e.clientWidth||e.scrollWidth<=e.clientWidth+1)`);
     await check('Panneau étroit : dernier contenu atteignable', `(()=>{let e=document.querySelector('.project-sites-detail-panel');e.scrollTop=e.scrollHeight;return e.lastElementChild.getBoundingClientRect().bottom<=e.getBoundingClientRect().bottom})()`);
     win.destroy();
-  } catch (error) { checks.push({name:'Parcours interrompu',passed:false,error:String(error),stack:error?.stack}); }
+  } catch (error) {
+    if (!checks.some((check) => check.error === String(error))) {
+      checks.push({
+        name:'Parcours interrompu',
+        passed:false,
+        error:String(error),
+        stack:error?.stack,
+        rendererGone,
+        rendererConsole: rendererConsole?.slice(-20),
+      });
+    }
+  }
   const report = {passed:checks.filter(c=>c.passed).length,failed:checks.filter(c=>!c.passed).length,checks};
   fs.writeFileSync(path.join(dir,'results.json'),JSON.stringify(report,null,2));
   console.log(JSON.stringify({passed:report.passed,failed:report.failed,failures:checks.filter(c=>!c.passed)},null,2));
