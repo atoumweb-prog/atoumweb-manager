@@ -37,7 +37,7 @@ export function ProjectSitesTab({
 }: {
   projectId: string;
   nodes: ProjectNode[];
-  onMessage: (message: string) => void;
+  onMessage: (message: string, action?: () => void) => void;
   onProjectChanged: (detail: ProjectDetail) => Promise<void>;
   onOpenPage: (pageId: string) => void;
 }) {

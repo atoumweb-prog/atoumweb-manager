@@ -175,7 +175,7 @@ export function ProjectPageCompositionPanel({
   onInspectorOpenChange,
 }: {
   page: ProjectNode;
-  onMessage: (message: string) => void;
+  onMessage: (message: string, action?: () => void) => void;
   inspectorHostId?: string;
   onInspectorOpenChange?: (open: boolean, dual: boolean, expandedCount: number) => void;
 }) {
@@ -434,7 +434,10 @@ export function ProjectPageCompositionPanel({
     setBusy(true);
     try {
       const exported = await window.atoumweb.referentials.compositions.exportPagePackage(page.id);
-      onMessage(`Package Page prêt : ${exported.fileName}`);
+      onMessage(
+        `Package Page prêt : ${exported.fileName}`,
+        () => void window.atoumweb.referentials.compositions.showPackage(exported.path),
+      );
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de préparer le package Page.');
     } finally {

@@ -1490,3 +1490,11 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - L'import retourne et conserve les associations `compositionItemId ↔ siteOccurrenceId`.
 - Le flux reste Workbench-first et la publication production reste désactivée.
 - Le runtime PHP n'est pas disponible dans le `PATH` MSI : aucune installation ni recherche disque lancée. Validation syntaxique/runtime et recette réelle à effectuer avec le ZIP produit par Manager avant commit/push.
+
+### 2026-09-30 — LOT8A-CHECKPOINT-001 — Recettes croisées et accès au package
+
+- Recette Manager validée : une Page rattachée contenant des composants produit un package ZIP Page V2 ; une Page vide ne propose pas l'action ; le refus sans Site actif reste couvert par le test de service.
+- Recette Bridge 0.8.1 validée : premier import réussi, rejeu strict sans doublon et refus d'un même `exportId` associé à un contenu différent.
+- Correction Bridge validée : le Workbench multi-composants conserve tous les composants, dans leur ordre, après sauvegarde et réouverture du Visual Builder.
+- Amélioration Manager : la notification « Package Page prêt » transporte une action explicite qui appelle l'IPC sécurisé existant et sélectionne le ZIP dans l'Explorateur Windows.
+- Recette visuelle validée : un clic sur la notification ouvre le dossier d'exports et sélectionne le ZIP préparé. Le typecheck est vert et l'IPC réutilisé reste borné au dossier d'exports.

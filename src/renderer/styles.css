@@ -189,6 +189,10 @@ button { color: inherit; }
 .health-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 4px color-mix(in srgb, var(--success) 14%, transparent); }
 .notice { display: flex; justify-content: space-between; gap: 20px; align-items: center; margin-bottom: 20px; padding: 11px 14px; background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border)); border-radius: 11px; color: var(--text); font-size: 12px; }
 .notice button { border: 0; background: transparent; cursor: pointer; font-size: 18px; color: var(--muted); }
+.notice .notice-action { flex: 1; display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 0; text-align: left; color: inherit; font: inherit; }
+.notice .notice-action small { color: var(--accent); font-weight: 700; white-space: nowrap; }
+.notice .notice-action:hover span { text-decoration: underline; }
+.notice .notice-close { flex: 0 0 auto; }
 
 .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px; }
 .kpi-card, .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 15px; box-shadow: var(--shadow); }
