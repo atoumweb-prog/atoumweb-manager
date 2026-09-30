@@ -7,12 +7,13 @@ Date d'ouverture : 27/09/2026.
 **Document de coordination commun. Publication de la feuille de route autorisée ; aucun lot de développement autorisé par cette publication.**
 
 - Dépôt : `atoumweb-prog/atoumweb-manager`.
-- Branche de référence : `feature/project-blueprints-v1` ; PR principale : #73.
-- Socle Manager fonctionnel audité : `4f8fa15c80da874e084648b1d643a316cbfcbcb2` ; les commits suivants de cette roadmap sont documentaires tant qu’aucun lot n’est explicitement autorisé.
+- Base canonique Manager : `feature/project-page-compositions-v1@d2898b516e94d4c577795bab8508e7a126eeb4b1`.
+- Base canonique Bridge : `feature/workbench-occurrence-v1@283829914ea74dbe756b74ca62e7f0fc1dc3867f`, plugin **0.8.1**.
+- Checkpoint Lots 7 + 8A validé : typecheck Manager, **37/37 tests ciblés**, **346/346 tests complets**, recettes Manager/Bridge et Workbench multi-composants validées. Les lots suivants restent soumis à autorisation explicite.
 - PR #74 / CGV Builder déjà intégrée : ne pas la fusionner à nouveau.
 - Les choix ci-dessous sont les recommandations issues de l'audit. Les arbitrages de la section 14 doivent être confirmés avant implémentation ; un lot nécessite une autorisation explicite.
 - Ce document complète le cahier des charges ; il ne remplace pas `PROJECT_STATUS.md`, qui résume l'avancement réellement vérifié.
-- Code Bridge confronté à la roadmap : dépôt `atoumweb-prog/atoumweb-bridge`, branche fonctionnelle `feature/workbench-occurrence-v1` @ `36d1076dbac1f031356632d8b95427e0ee58739c`, plugin déclaré **0.8.0**. Le `main` Bridge courant ne contient qu’un README et n’est pas la baseline fonctionnelle.
+- Code Bridge confronté à la roadmap : dépôt `atoumweb-prog/atoumweb-bridge`, branche fonctionnelle et base canonique indiquées ci-dessus. Le `main` Bridge n'est pas la baseline fonctionnelle.
 
 ### Règle de coordination demandée par Carlos
 
@@ -265,6 +266,38 @@ Une clé effective `site:<id-stable>:pages.home` permet de distinguer deux Accue
 
 Header/Footer/Theme Builder : réserver un type futur de cible template distinct de Page. Une occurrence globale appartient au template ; elle n'est pas copiée comme une occurrence indépendante sur chaque Page qui l'affiche. Observer les relations d'application, presets et dépendances globales. Reporter leur édition/déploiement à un lot dédié si nécessaire.
 
+### Publication contrôlée vers une Page WordPress finale
+
+La publication future reste une responsabilité Bridge et une action humaine explicite. Le parcours cible est :
+
+```text
+Workbench validé
+→ sélection explicite de la Page WordPress cible
+→ snapshot avant
+→ injection atomique ou compensée du contenu Divi
+→ installation des CSS/JS gérés dans Divi Child
+→ contrôle front
+→ snapshot après
+→ enregistrement de la provenance
+→ rollback complet disponible
+```
+
+La destination est résolue à partir des identités stables `projectId`, `siteId` et `pageId` transportées par le package Page. Le nom du Workbench, le titre WordPress, le slug ou l'URL peuvent aider l'utilisateur à reconnaître la cible, mais ne constituent jamais une preuve d'identité. Workbench et Page finale restent deux objets distincts. Aucun Workbench validé ne déclenche une écriture Production automatique.
+
+### Cycle de vie CSS/JavaScript géré par Bridge
+
+Le placement cible reste : HTML dans Divi ; CSS/JS dans le Divi Child AtoumWeb sous `assets/atoumweb/css|js/components|pages|global`. Avant toute publication Production, Bridge doit tenir un registre des assets qu'il gère avec :
+
+- un identifiant technique stable indépendant du nom de fichier affiché ;
+- un scope et un propriétaire explicites : `component`, `page` ou `global` ;
+- la provenance Manager/Bridge, la version et l'empreinte du contenu ;
+- les occurrences/Pages utilisatrices ou un comptage traçable de leurs références ;
+- un historique de révisions permettant de restaurer l'ensemble HTML/CSS/JS cohérent.
+
+Un remplacement ou retrait décrémente les références. Un asset encore référencé reste installé. À zéro utilisation, il devient `orphaned` et seulement éligible à un nettoyage explicite : prévisualisation de l'impact, contrôle de l'empreinte et confirmation humaine. Un fichier modifié manuellement, inconnu du registre ou déclaré comme override humain n'est jamais écrasé ni supprimé implicitement. Bridge distingue donc strictement les assets `managed` des fichiers/overrides non gérés.
+
+Le remplacement d'une version se prépare et se teste d'abord dans un Workbench. La publication installe le nouvel ensemble puis retire seulement les références à l'ancien. Le rollback restaure le contenu Divi **et** la révision correspondante de tous les CSS/JS gérés ; restaurer uniquement le HTML est insuffisant.
+
 ## 10. Risques
 
 - Marqueur absent/dupliqué : position et ressemblance sont des indices, jamais une preuve suffisante d'identité.
@@ -290,7 +323,7 @@ Header/Footer/Theme Builder : réserver un type futur de cible template distinct
 
 ## 12. Ordre proposé
 
-Le préalable de lecture du vrai Bridge est désormais **réalisé**. Il reste deux décisions contractuelles avant 8A : format Page versionné et marqueur stable d’occurrence dans Divi.
+Le préalable de lecture du vrai Bridge est **réalisé**. Le package Page V2 et l'idempotence sont validés dans le checkpoint 8A. La corrélation durable avec le nœud Divi réel reste à valider/compléter dans 8B.
 
 Ordre recommandé :
 
@@ -303,23 +336,25 @@ Ordre recommandé :
 → 8B Validation et compléments de l’observation hybride existante
 → 8C Retour multi-composants et décisions
 → 9 Préparation multi-pages
+→ 10 Registre et cycle de vie des assets Divi Child
+→ 11 Publication contrôlée Workbench → Page finale
 → checkpoint final
 ```
 
-6A et 6B peuvent être conçus sans réécrire Bridge. Les lots 8A/8B/8C ne doivent pas commencer tant que les deux décisions contractuelles ci-dessus ne sont pas explicites.
+Le checkpoint canonique couvre désormais 6A, 6B, 7 et 8A. Le prochain lot de code recommandé est 8B. Les Lots 10 et 11 restent futurs : le registre d'assets doit être validé avant toute première écriture contrôlée vers une Page finale.
 
 Tous les lots restent **non autorisés** tant que Carlos ne donne pas son accord explicite.
 
 ## 13. Lots détaillés
 
-### Préalable — Contrat partagé Manager/Bridge — audit code réalisé, décisions restantes
+### Préalable — Contrat partagé Manager/Bridge — réalisé
 
-- État : lecture du vrai Bridge 0.8.0 effectuée sur `feature/workbench-occurrence-v1@36d1076`.
-- Confirmé : package projet V1, Workbench unique multi-composants, modules Code séparés, `siteOccurrenceId` par composant, scanner large, Workbench-first.
-- Restant avant 8A : décider la forme de l’enveloppe Page V2/additive et le marqueur technique stable permettant de retrouver `siteOccurrenceId` dans Divi après déplacement/duplication.
+- État : checkpoint Manager/Bridge 8A validé sur les bases canoniques de la section 0.
+- Confirmé : package Page V2, `exportId`, destination Projet/Site/Page, Workbench unique multi-composants, `siteOccurrenceId` par composant, idempotence et Workbench-first.
+- Restant pour 8B : valider/compléter le marqueur technique permettant de retrouver `siteOccurrenceId` dans le nœud Divi réel après déplacement/duplication.
 - Migrations : aucune.
-- Validation restante : scénario contractuel documenté avec import répété, déplacement, duplication et retour multi-composants attendu.
-- Dépendance : n’empêche pas 6A/6B ; bloque l’implémentation 8A.
+- Validation restante : déplacement, duplication et observation du marqueur sur fixtures Divi réelles ; le retour multi-composants relève de 8C.
+- Dépendance : aucun blocage contractuel pour démarrer 8B après autorisation.
 
 ### LOT 6A — Projet/Site/Page
 
@@ -350,9 +385,10 @@ Tous les lots restent **non autorisés** tant que Carlos ne donne pas son accord
 
 ### LOT 8A — Export Page, idempotence et association Bridge
 
+- État : réalisé et validé dans le checkpoint canonique du 30/09/2026.
 - Objectif : compléter l’import multi-composants existant pour qu’il représente explicitement une préparation partielle de Page et soit réimportable sans doublon silencieux.
 - À conserver : `atoumweb_bridge_project_package` V1, Workbench unique, modules Code séparés, création Bridge des `siteOccurrenceId`, baselines et provenance.
-- Changements : enveloppe Page versionnée/additive ; `exportId` ; `projectId/siteId/pageId` ; contrôle d’import antérieur ; accusé Bridge ; association `compositionItemId ↔ siteOccurrenceId` ; marqueur stable dans/avec le module Divi.
+- Changements réalisés : enveloppe Page V2 ; `exportId` ; `projectId/siteId/pageId` ; contrôle d’import antérieur ; association `compositionItemId ↔ siteOccurrenceId`. La validation/corrélation du marqueur dans le nœud Divi réel relève de 8B.
 - À ne pas ajouter sans besoin démontré : un second identifiant d’occurrence Manager faisant doublon avec `compositionItemId + siteOccurrenceId`.
 - Migrations Manager : exports/liaisons uniquement si nécessaires ; préserver compositions et retours historiques.
 - Périmètre : `AtoumWebCompositionPackageService`, validations partagées, `AWB_Library_Importer`, `AWB_Workbench`, `AWB_Site_Occurrence`.
@@ -389,6 +425,24 @@ Tous les lots restent **non autorisés** tant que Carlos ne donne pas son accord
 - Tests/acceptation : destinations distinctes, dépendances globales visibles, absence de faux état publié, navigation compréhensible.
 - Dépendance : parcours unitaire 8C validé avant généralisation multi-pages.
 
+### LOT 10 — Registre et cycle de vie des assets Divi Child
+
+- Objectif : préparer la future publication sans accumuler de CSS/JS orphelin et sans toucher aux fichiers humains.
+- Changements : registre Bridge des assets `managed`, identité stable, scope/propriétaire, provenance/version/hash, références d'utilisation, révisions, états actif/orphelin et opération explicite de nettoyage sûre.
+- Stockage cible : `assets/atoumweb/css|js/components|pages|global`, sans revendiquer les fichiers inconnus ou overrides humains.
+- Règles : remplacement atomique ou compensé ; décrément des références ; aucune suppression à zéro référence sans contrôle d'empreinte, aperçu d'impact et confirmation ; conflit manuel signalé sans écrasement.
+- Tests/acceptation : asset partagé conservé tant qu'une Page l'utilise ; retrait final marqué orphelin ; nettoyage explicite ; fichier modifié manuellement protégé ; rollback restaurant la révision CSS/JS complète.
+- Dépendance : 8B pour l'observation fiable des usages et 9 pour les dépendances multi-pages. Prérequis du Lot 11.
+
+### LOT 11 — Publication contrôlée Workbench → Page WordPress finale
+
+- Objectif : appliquer volontairement un Workbench validé sur une Page WordPress cible, avec preuve, contrôle front et rollback complet.
+- Parcours : destination stable Projet/Site/Page → snapshot avant → injection Divi → déploiement des assets gérés par le Lot 10 → contrôle front → snapshot après → provenance → rollback.
+- Sécurité : sélection et validation humaines obligatoires ; aucune déduction depuis un nom/slug ; aucune publication automatique ; aucune confusion entre Workbench et Page finale.
+- Atomicité : en cas d'échec du contenu Divi, des assets ou du contrôle, restaurer l'état précédent ou conserver un état explicitement incomplet et réparable, jamais un succès silencieux.
+- Tests/acceptation : bonne destination malgré renommage ; mauvaise identité refusée ; snapshot avant/après ; CSS/JS cohérents avec le HTML ; rollback du triplet HTML/CSS/JS ; répétition contrôlée sans duplication ; production intacte avant confirmation.
+- Dépendance : Lots 8C, 9 et 10 validés.
+
 ### Checkpoint final
 
 - Objectif : vérifier la chaîne complète et préparer l'intégration finale.
@@ -405,16 +459,18 @@ Les statuts ci-dessous distinguent **validation métier**, **compatibilité tech
 1. **Page = nœud Projet + extension** — compatible techniquement avec Bridge ; à confirmer avant 6A.
 2. **Composition facultative et partielle** — validée comme besoin métier : Divi reste l’atelier principal ; une Page peut avoir zéro composant Manager.
 3. **Site logique Manager distinct de l’installation Bridge ; Workbench distinct de la Page finale** — compatible avec le code actuel et recommandé.
-4. **Identité d’occurrence** — ne pas créer pour l’instant un `occurrenceId` Manager supplémentaire. Utiliser `compositionItemId` avant import, puis `siteOccurrenceId` créée par Bridge. **Décision requise avant 8A : forme du marqueur stable dans Divi et règle de duplication.**
-5. **Enveloppe Page versionnée** — nécessité confirmée par le code actuel. **Décision requise avant 8A : schemaVersion 2 du package projet ou nouveau contrat additionnel.**
+4. **Identité d’occurrence** — le couple `compositionItemId` puis `siteOccurrenceId` est validé sans second identifiant Manager. Le marqueur/corrélateur dans le nœud Divi réel et la règle de duplication relèvent de 8B.
+5. **Enveloppe Page versionnée** — `atoumweb_bridge_project_package` schemaVersion 2 avec `scope=page`, `exportId` et destination Projet/Site/Page est validé par 8A.
 6. **Conservation locale par défaut, promotion Bibliothèque volontaire** — validée métier et alignée avec `actionPolicy=manager_decides`.
-7. **Idempotence** — le package projet actuel ne la garantit pas au niveau Workbench. 8A doit définir `exportId` + comportement de réimport avant tout round-trip.
+7. **Idempotence** — validée en 8A : même ZIP rouvert sans doublon ; même `exportId` avec contenu différent refusé.
 8. **Scanner hybride** — existe déjà largement. 8B est un lot de validation/corrélation/complément, pas un nouveau scanner.
 9. **Retour multi-composants** — explicitement absent aujourd’hui pour `manager_project`; relève de 8C et ne doit pas être supposé acquis.
+10. **Assets Divi Child** — registre Bridge dédié en Lot 10, avec références, historique, protection des overrides humains et nettoyage explicite uniquement.
+11. **Publication Production** — couche Bridge dédiée en Lot 11, après le multi-pages et le cycle de vie des assets ; action humaine, destination par identités stables et rollback HTML/CSS/JS.
 
 ## 15. Recommandation d'exécution
 
-Le code Bridge ayant maintenant été vérifié, cadrer 6A/6B sans reconstruire les capacités déjà présentes. Ajouter ensuite le squelette blueprint avec 7. Avant 8A, arrêter explicitement le contrat Page versionné et le marqueur stable d’occurrence Divi. Réussir ensuite un parcours complet sur une Page hybride avant de passer au multi-pages.
+Le checkpoint 7 + 8A est la base canonique. Continuer par 8B pour fiabiliser l'observation et la corrélation réelles, puis 8C pour le retour multi-composants et 9 pour la préparation multi-pages. Construire ensuite le registre d'assets du Lot 10 avant d'autoriser le parcours de publication contrôlée du Lot 11.
 
 Recette de référence : trois composants Manager, ajouts natifs Divi, déplacement, spacing local, CSS Page, retour correctement attribué, répétition du retour sans doublon et absence de mutation Bibliothèque. Carlos réalise la navigation/recette visuelle ; les agents analysent le code et exécutent les contrôles ciblés autorisés.
 
@@ -1499,5 +1555,13 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Amélioration Manager : la notification « Package Page prêt » transporte une action explicite qui appelle l'IPC sécurisé existant et sélectionne le ZIP dans l'Explorateur Windows.
 - Recette visuelle validée : un clic sur la notification ouvre le dossier d'exports et sélectionne le ZIP préparé. Le typecheck est vert et l'IPC réutilisé reste borné au dossier d'exports.
 - Intégration terminée hors `main` : PR Manager #76 puis #77 fusionnées dans `feature/project-page-compositions-v1` ; PR Bridge #2 fusionnée dans `feature/workbench-occurrence-v1`.
-- Checkpoint intégré : Manager `f82137e28986f6166e00e399905485b2bfcd1445`, Bridge `283829914ea74dbe756b74ca62e7f0fc1dc3867f`.
+- Checkpoint canonique : Manager `d2898b516e94d4c577795bab8508e7a126eeb4b1`, Bridge `283829914ea74dbe756b74ca62e7f0fc1dc3867f`.
 - Validation finale Manager : typecheck vert, **37/37 tests ciblés** et **346/346 tests complets**.
+
+### 2026-09-30 — ARCH-PRODUCTION-ASSETS-001 — Publication contrôlée et cycle de vie Divi Child
+
+- Origine : cadrage Carlos après validation du checkpoint Lot 7 + 8A ; mise à jour documentaire uniquement.
+- Décision : conserver les Lots 8B, 8C et 9 existants. Ajouter après eux le Lot 10 pour le registre/cycle de vie des assets gérés, puis le Lot 11 pour la publication contrôlée Workbench → Page finale.
+- Publication cible : sélection explicite par identités stables Projet/Site/Page, snapshot avant, injection Divi, assets Divi Child, contrôle front, snapshot après, provenance et rollback complet. Aucune écriture automatique.
+- Assets : identité stable, scope/propriétaire, provenance/version/hash, références d'utilisation, historique, état orphelin et nettoyage explicite. Les overrides humains et fichiers non gérés restent protégés.
+- Prochaine action recommandée : Lot 8B uniquement, après autorisation explicite. Aucun code 8B, 10 ou 11 commencé par cette entrée.
