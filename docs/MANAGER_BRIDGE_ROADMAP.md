@@ -1498,3 +1498,6 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Correction Bridge validée : le Workbench multi-composants conserve tous les composants, dans leur ordre, après sauvegarde et réouverture du Visual Builder.
 - Amélioration Manager : la notification « Package Page prêt » transporte une action explicite qui appelle l'IPC sécurisé existant et sélectionne le ZIP dans l'Explorateur Windows.
 - Recette visuelle validée : un clic sur la notification ouvre le dossier d'exports et sélectionne le ZIP préparé. Le typecheck est vert et l'IPC réutilisé reste borné au dossier d'exports.
+- Intégration terminée hors `main` : PR Manager #76 puis #77 fusionnées dans `feature/project-page-compositions-v1` ; PR Bridge #2 fusionnée dans `feature/workbench-occurrence-v1`.
+- Checkpoint intégré : Manager `f82137e28986f6166e00e399905485b2bfcd1445`, Bridge `283829914ea74dbe756b74ca62e7f0fc1dc3867f`.
+- Validation finale Manager : typecheck vert, **37/37 tests ciblés** et **346/346 tests complets**.
