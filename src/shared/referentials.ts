@@ -299,6 +299,10 @@ export interface AtoumWebCompositionMoveItemInput {
 
 export interface AtoumWebCompositionPackageExportResult {
   compositionId: string;
+  exportId?: string | null;
+  projectId?: string | null;
+  siteId?: string | null;
+  pageId?: string | null;
   path: string;
   fileName: string;
   componentCount: number;
@@ -428,6 +432,7 @@ export interface ReferentialsApi {
     archive(id: string): Promise<AtoumWebCompositionDetail>;
     reactivate(id: string): Promise<AtoumWebCompositionDetail>;
     exportPackage(id: string): Promise<AtoumWebCompositionPackageExportResult>;
+    exportPagePackage(projectNodeId: string): Promise<AtoumWebCompositionPackageExportResult>;
     showPackage(path: string): Promise<AtoumWebAssetOpenResult>;
   };
   occurrenceReturns: {

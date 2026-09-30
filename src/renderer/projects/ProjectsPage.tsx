@@ -141,7 +141,7 @@ function formatTimer(seconds: number): string {
   return [hours, minutes, rest].map((value) => String(value).padStart(2, '0')).join(':');
 }
 
-export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true }: { onMessage: (message: string) => void; initialProjectId?: string | null; showHoverHelp?: boolean }) {
+export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true }: { onMessage: (message: string, action?: () => void) => void; initialProjectId?: string | null; showHoverHelp?: boolean }) {
   const [view, setView] = useState<'projects' | 'templates'>('projects');
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [templates, setTemplates] = useState<ProjectTemplateSummary[]>([]);
