@@ -29,6 +29,8 @@ import { CONTRACT_AUDIENCE_MIGRATION } from './contractAudienceMigration';
 import { PROJECT_SITE_MIGRATION } from './projectSiteMigration';
 import { PROJECT_PAGE_COMPOSITION_MIGRATION } from './projectPageCompositionMigration';
 import { PROJECT_PAGE_COMPOSITION_LOCAL_SETTINGS_MIGRATION } from './projectPageCompositionLocalSettingsMigration';
+import { PROJECT_BLUEPRINT_SITE_MIGRATION } from './projectBlueprintSiteMigration';
+import { PROJECT_BLUEPRINT_SITE_COMPATIBILITY_MIGRATION } from './projectBlueprintSiteCompatibilityMigration';
 
 export interface Migration { id: number; name: string; sql: string; disableForeignKeys?: boolean; }
 
@@ -213,6 +215,8 @@ export const MIGRATIONS: Migration[] = [
   PROJECT_SITE_MIGRATION,
   PROJECT_PAGE_COMPOSITION_MIGRATION,
   PROJECT_PAGE_COMPOSITION_LOCAL_SETTINGS_MIGRATION,
+  PROJECT_BLUEPRINT_SITE_MIGRATION,
+  PROJECT_BLUEPRINT_SITE_COMPATIBILITY_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {

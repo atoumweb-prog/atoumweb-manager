@@ -46,6 +46,21 @@
 >
 # Handoff Codex MSI — AtoumWeb Manager
 
+## Chantier actif — Lot 7 Squelette blueprint Sites / Pages
+
+- Branche locale : `codex/lot7-blueprint-sites`, base canonique `cf747c5855eec90df725861d22375d65f78f12db`.
+- Objectif limité : générer les Sites et Pages déclarés par un blueprint avec des clés explicites et une provenance durable.
+- Premier incrément local validé par typecheck et **33/33 tests ciblés** après correction du cas historique réel `PRO-2026-001`.
+- Configuration des Sites/Pages disponible sur les versions brouillon, recopiée lors d'une nouvelle version ; commande visible de réapplication pour les Projets historiques.
+- Migration additive 50 pour les déclarations et liaisons ; migration 51 séparée pour appliquer la compatibilité `web` / `website` aux bases où 50 a déjà été exécutée.
+- Un ancien Projet lié à un blueprint sans Site/Page reçoit le blueprint Site/Page canonique selon son type, sans changer son `template_version_id` et sans déduire quoi que ce soit de son nom.
+- Cette association par type est uniquement un filet de compatibilité legacy. La cible fonctionnelle est la composition pilotée par les lignes du devis : offre principale comme base, options/prestations comme contributions additives, puis matérialisation du blueprint final du Projet.
+- Aucun changement des contrats Manager ↔ Bridge, aucun export Page, aucun Lot 8.
+- Ne pas reprendre l'UX 6B. Ne pas fusionner vers `main`.
+- Recette réelle validée : 1 Site + 5 Pages, réapplication sans doublon, renommages conservés, ajout manuel conservé ; résultat final 1 Site / 6 Pages.
+- Les modifications sont prêtes pour commit, push et PR vers `feature/project-page-compositions-v1`.
+- Dernier essai du harness 6B interrompu avant contrôles par Chromium/GPU Windows ; aucune régression renderer rapportée.
+
 
 ## Checkpoint supplémentaire — CGV Builder intégré le 27/09/2026
 

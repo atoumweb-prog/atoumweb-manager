@@ -166,6 +166,27 @@ export function ProjectSitesTab({
     }
   }
 
+  async function applyBlueprint(): Promise<void> {
+    setBusy(true);
+    try {
+      const result = await window.atoumweb.projects.sites.applyBlueprint(projectId);
+      const updatedProject = await window.atoumweb.projects.projects.get(projectId);
+      await onProjectChanged(updatedProject);
+      await reload();
+      const created = result.createdSiteIds.length;
+      const linked = result.linkedPageIds.length;
+      onMessage(result.declaredSiteCount === 0
+        ? 'Ce blueprint ne déclare aucun Site ni aucune Page à initialiser.'
+        : created || linked
+          ? `Blueprint appliqué : ${created} Site(s) créé(s), ${linked} Page(s) rattachée(s).`
+          : 'Blueprint déjà appliqué : aucun doublon créé, modifications manuelles conservées.');
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible d’appliquer le blueprint Sites / Pages.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function linkFor(pageId: string): ProjectSitePage | undefined {
     return links.find((link) => link.projectNodeId === pageId);
   }
@@ -382,6 +403,7 @@ export function ProjectSitesTab({
         {!introCollapsed && <p>Le Projet conserve la structure métier. Divi restera l’atelier de construction : ici, on organise les Sites et les Pages avant leur préparation dans Bridge.</p>}
       </div>
       <div className="project-sites-toolbar">
+        <button className="secondary-button" type="button" disabled={busy} title="Créer uniquement les Sites et Pages manquants prévus par le blueprint" onClick={() => void applyBlueprint()}>Initialiser depuis le blueprint</button>
         <button className="secondary-button" type="button" onClick={() => setCreateMode(createMode === 'site' ? null : 'site')}>+ Site</button>
         <button className="primary-button" type="button" onClick={() => {
           setCreateMode(createMode === 'page' ? null : 'page');
