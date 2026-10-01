@@ -352,7 +352,7 @@ export class BridgeSnapshotService {
               dependency_ids_json,relation_ids_json,raw_object_ref,content_object_ref,fingerprints_json,matching_hints_json)
              VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
             [
-              `bridge-node-${randomUUID()}`, managerPageSnapshotId, requiredString(node.occurrence_id, 'occurrence_id'), null,
+              `bridge-node-${randomUUID()}`, managerPageSnapshotId, requiredString(node.occurrence_id, 'occurrence_id'), nullableString(node.logical_node_id),
               nullableString(node.parent_occurrence_id), numberValue(node.position, 0), ordinal, numberValue(node.__depth, 0),
               requiredString(node.node_type, 'node_type'), nullableString(node.module_type), nullableString(node.label),
               nullableString(node.builder), nullableString(node.builder_generation), JSON.stringify(node.attributes ?? {}),

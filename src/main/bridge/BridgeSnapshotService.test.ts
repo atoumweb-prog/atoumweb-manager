@@ -107,6 +107,18 @@ describe('BridgeSnapshotService', () => {
     expect(service.getSite(sites[0].id).snapshots).toHaveLength(1);
   });
 
+  it('conserve la siteOccurrenceId observée comme identité logique du nœud', () => {
+    const packagePath = buildSnapshot(join(workspaceRoot, 'snapshot-occurrence-marker.zip'), 'Accueil', {
+      logicalNodeId: 'awocc:11111111-2222-4333-8444-555555555555',
+    });
+
+    const imported = service.importPackage(packagePath);
+    const page = service.listPages(imported.snapshot.id)[0];
+    const detail = service.getPage(page.pageSnapshotId);
+
+    expect(detail.nodes[0].logicalNodeId).toBe('awocc:11111111-2222-4333-8444-555555555555');
+  });
+
   it('refuse le même snapshot_id si le package a changé', () => {
     const first = buildSnapshot(join(workspaceRoot, 'snapshot-a.zip'), 'Accueil');
     const second = buildSnapshot(join(workspaceRoot, 'snapshot-b.zip'), 'Accueil modifié');
@@ -495,6 +507,7 @@ function buildSnapshot(
     includeDependency?: boolean;
     pageStatus?: string;
     duplicateNode?: boolean;
+    logicalNodeId?: string;
   } = {},
 ): string {
   const sourceInstanceId = 'awb-site:test-instance';
@@ -601,6 +614,7 @@ function buildSnapshot(
     root_nodes: [occurrenceId],
     nodes: [{
       occurrence_id: occurrenceId,
+      logical_node_id: options.logicalNodeId ?? null,
       page_snapshot_id: pageSnapshotId,
       parent_occurrence_id: null,
       position: 0,
