@@ -1,3 +1,5 @@
+import { QuoteContractPreparationService } from './QuoteContractPreparationService';
+import type { ClientDocumentService } from '../crm/ClientDocumentService';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import {
@@ -116,7 +118,7 @@ interface DesiredClause {
 }
 
 export class ContractTermsService {
-  constructor(private readonly database: DatabaseAdapter) {}
+  constructor(private readonly database: DatabaseAdapter, private readonly documents?: ClientDocumentService) {}
 
   listTemplates(includeArchived = false): ContractClauseTemplate[] {
     const rows = this.database.all<TemplateRow>(
@@ -461,20 +463,28 @@ export class ContractTermsService {
     // A timestamp/JSON (including an empty clause list) is evidence of freezing.
     // Locked legacy quotes must retain their historical absence, even with instances.
     if (this.hasSnapshot(state) || state.status !== 'draft' || state.finalized_at) return this.getQuoteBuild(quoteId);
+    const payload=new QuoteContractPreparationService(this.database, this.documents).freezePayload(quoteId);
+    this.database.exec('SAVEPOINT quote_contract_freeze;');
+    try {
     this.syncQuoteInternal(quoteId);
     const clauses = this.quoteClauses(quoteId);
     const audience = this.resolveQuoteAudience(state);
     const compiledText = this.compile(clauses);
     const included = clauses.filter((clause) => clause.enabled);
+    if(payload && !included.some(c=>c.sourceKind==='base'&&!c.isOrphaned)) throw Error('Préparation contractuelle incomplète : aucun socle publié disponible ; les brouillons ne sont pas consommés.');
+
+    if(payload && included.some(c=>!clean(c.body)||c.isOrphaned||/\[À RENSEIGNER/i.test(c.body))) throw Error('Clause incluse vide, orpheline ou incomplète : finalisation refusée.');
     const now = nowIso();
     this.database.run(
       `UPDATE quotes
        SET contract_text_snapshot=?,contract_snapshot_json=?,contract_compiled_at=?,contract_audience=?,updated_at=?
        WHERE id=?`,
-      [compiledText, JSON.stringify({ audience, clauses: included }), now, audience, now, quoteId],
+      [compiledText, JSON.stringify({ ...(payload ?? {}), audience, clauses: included, ...(payload ? {compiledAt:now,finalizationAt:now} : {}) }), now, audience, now, quoteId],
     );
     this.writeActivity('quote', quoteId, 'quote_contract_frozen', 'Version contractuelle des CGV figée');
+    this.database.exec('RELEASE quote_contract_freeze;');
     return this.getQuoteBuild(quoteId);
+    } catch(error) {this.database.exec('ROLLBACK TO quote_contract_freeze; RELEASE quote_contract_freeze;');throw error;}
   }
 
   copyQuoteCustomizations(sourceQuoteId: string, targetQuoteId: string): QuoteContractBuild {
@@ -521,7 +531,7 @@ export class ContractTermsService {
     const existingByKey = new Map(existing.map((row) => [row.source_key, row]));
     const now = nowIso();
 
-    this.database.exec('BEGIN IMMEDIATE;');
+    this.database.exec('SAVEPOINT quote_clause_sync;');
     try {
       for (const clause of desired.values()) {
         const row = existingByKey.get(clause.sourceKey);
@@ -565,9 +575,9 @@ export class ContractTermsService {
           [autoDisable ? 0 : row.enabled, now, row.id],
         );
       }
-      this.database.exec('COMMIT;');
+      this.database.exec('RELEASE quote_clause_sync;');
     } catch (error) {
-      this.database.exec('ROLLBACK;');
+      this.database.exec('ROLLBACK TO quote_clause_sync; RELEASE quote_clause_sync;');
       throw error;
     }
   }
@@ -774,6 +784,7 @@ export class ContractTermsService {
 
   private compile(clauses: QuoteContractClause[]): string {
     const included = clauses.filter((clause) => clause.enabled);
+
     if (included.length === 0) return '';
     const body = included.map((clause, index) => {
       const text = clause.body.trim();

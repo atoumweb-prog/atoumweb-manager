@@ -1,3 +1,4 @@
+import { finalizeForTest, acceptForTest } from '../testSupport/quotePreparationFixture';
 import {mkdtempSync,rmSync,existsSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
@@ -55,10 +56,10 @@ describe('Stabilisation du parcours métier',()=>{
     expect(draft.lines[0].snapshot?.specialTerms).toContain('40 %');
     expect(draft.lines).toHaveLength(4);
     quotes.updateConditions(q.id,{specialTerms:'Conditions particulières validées'});
-    quotes.finalize(q.id);
+    finalizeForTest(db,quotes,q.id);
     quotes.markSent(q.id);
     expect(workflow.dashboard().some(e=>e.group==='Devis en attente de retour'&&e.target.entityId===q.id)).toBe(true);
-    const accepted=quotes.accept(q.id);
+    const accepted=acceptForTest(db,quotes,q.id);
     expect(quotes.list({clientAccountId:accepted.clientAccountId!}).map(q=>q.id)).toContain(q.id);
     expect(quotes.list({prospectId:p.id}).map(q=>q.id)).toContain(q.id);
     expect(workflow.dashboard().some(e=>e.group==='Devis en attente de retour'&&e.target.entityId===q.id)).toBe(false);

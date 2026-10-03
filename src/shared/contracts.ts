@@ -94,6 +94,7 @@ export interface AtoumWebApi {
   catalog: CatalogApi;
   contractTerms: ContractTermsApi;
   quotes: QuoteApi;
+  quotePreparation: import('./quoteContractPreparation').QuoteContractPreparationApi;
   projects: ProjectsApi;
   referentials: ReferentialsApi;
   operations: OperationsApi;

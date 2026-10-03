@@ -1,3 +1,6 @@
+import { QuoteContractPreparationService } from '../commercial/QuoteContractPreparationService';
+import { ContractTermsService } from '../commercial/ContractTermsService';
+import { finalizeForTest, acceptForTest } from '../testSupport/quotePreparationFixture';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
@@ -22,15 +25,16 @@ beforeEach(() => {
   database.exec('PRAGMA foreign_keys=ON;');
   applyPendingMigrations(database);
   const crm = new CrmService(database);
-  quotes = new QuoteService(database, crm);
+
   documents = new ClientDocumentService(database, createWorkspacePaths(root));
+  quotes = new QuoteService(database, crm,new ContractTermsService(database,documents),new QuoteContractPreparationService(database,documents));
   const org = crm.createOrganization({ name: 'Preuve contractuelle' });
   const prospect = crm.createProspect({ organizationId: org.id, primaryNeed: 'Site' });
   quoteId = quotes.create({ prospectId: prospect.id, subject: 'PDF accepté' }).id;
   quotes.addCustomLine(quoteId, { label: 'Site', proposedUnitPriceCents: 10000 });
-  quotes.finalize(quoteId);
+  finalizeForTest(database,quotes,quoteId);
   quotes.markSent(quoteId);
-  clientId = quotes.accept(quoteId).acceptedClientAccountId!;
+  clientId = acceptForTest(database,quotes,quoteId).acceptedClientAccountId!;
 });
 
 afterEach(() => {

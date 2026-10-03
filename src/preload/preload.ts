@@ -283,7 +283,7 @@ const api: AtoumWebApi = {
       setAudience: (id: string, audience: ContractClauseAudience) => ipcRenderer.invoke('contract-terms:library:set-audience', id, audience),
       setCatalogLinks: (id: string, catalogItemIds: string[]) => ipcRenderer.invoke('contract-terms:library:set-catalog-links', id, catalogItemIds),
     },
-    quotes: {
+  quotes: {
       get: (quoteId: string) => ipcRenderer.invoke('contract-terms:quotes:get', quoteId),
       sync: (quoteId: string) => ipcRenderer.invoke('contract-terms:quotes:sync', quoteId),
       addCustom: (quoteId: string, input: QuoteContractClauseInput) => ipcRenderer.invoke('contract-terms:quotes:add-custom', quoteId, input),
@@ -293,6 +293,16 @@ const api: AtoumWebApi = {
       reorder: (quoteId: string, clauseIds: string[]) => ipcRenderer.invoke('contract-terms:quotes:reorder', quoteId, clauseIds),
     },
     copyText: (text: string) => ipcRenderer.invoke('contract-terms:copy-text', text),
+  },
+  quotePreparation: {
+    get: id => ipcRenderer.invoke('quote-preparation:get',id),
+    save: (id,input) => ipcRenderer.invoke('quote-preparation:save',id,input),
+    administration: () => ipcRenderer.invoke('quote-preparation:administration'),
+    saveAdministration: input => ipcRenderer.invoke('quote-preparation:save-administration',input),
+    attach: (id,input) => ipcRenderer.invoke('quote-preparation:attach',id,input),
+    importDocument: (id,role,provenance) => ipcRenderer.invoke('quote-preparation:import-document',id,role,provenance),
+    recordAcceptance: (id,statement,occurredAt,provenance) => ipcRenderer.invoke('quote-preparation:record-acceptance',id,statement,occurredAt,provenance),
+    openDocument: id => ipcRenderer.invoke('quote-preparation:open-document',id),
   },
   quotes: {
     createWithLines: (input,lines) => ipcRenderer.invoke('quotes:create-with-lines',input,lines),

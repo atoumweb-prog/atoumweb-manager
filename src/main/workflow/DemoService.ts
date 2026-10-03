@@ -86,6 +86,8 @@ export class DemoService {
       const quote=services.quotes.create({prospectId:prospect.id,subject:'DEMO — '+label+' — '+scenario});
       services.quotes.addCatalogLine(quote.id,services.catalog.getItem('atoumweb-'+key).currentVersion!.id);
       if(scenario==='vitrine') services.quotes.addCatalogLine(quote.id,services.catalog.getItem('atoumweb-article-seo').currentVersion!.id);
+      // Explicit demonstration sample, not a real contract. No fictitious administrative configuration or evidence.
+      this.db.run('UPDATE quotes SET contract_parameters_json=NULL WHERE id=?',[quote.id]);
       services.quotes.finalize(quote.id);
       services.quotes.markSent(quote.id);
       const accepted=services.quotes.accept(quote.id);

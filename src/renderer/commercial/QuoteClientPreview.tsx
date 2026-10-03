@@ -104,7 +104,7 @@ export function QuoteClientPreview({ quote, onClose }: { quote: QuoteDetail; onC
 
           <section className="quote-document-total">
             <div><span>Total</span><strong>{money(quote.contractValueCents)}</strong></div>
-            <div><span>Acompte à la commande ({quote.depositPercent ?? 0} %)</span><strong>{money(quote.depositCents)}</strong></div>
+            <div><span>{quote.initialPaymentQualification==='arrhes'?'Arrhes':'Acompte'} à la commande ({quote.depositPercent ?? 0} %)</span><strong>{money(quote.depositCents)}</strong></div>
             <div><span>Solde</span><strong>{money(quote.balanceCents)}</strong></div>
           </section>
 

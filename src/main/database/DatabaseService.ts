@@ -1,3 +1,4 @@
+import { QuoteContractPreparationService } from '../commercial/QuoteContractPreparationService';
 import { WorkflowService } from '../workflow/WorkflowService';
 import { DemoService } from '../workflow/DemoService';
 import { existsSync, mkdirSync } from 'node:fs';
@@ -62,6 +63,7 @@ export class DatabaseService {
   readonly catalog: CatalogService;
   readonly contractTerms: ContractTermsService;
   readonly quotes: QuoteService;
+  readonly quotePreparation: QuoteContractPreparationService;
   readonly projects: ProjectService;
   readonly projectSites: ProjectSiteService;
   readonly projectCompletion: ProjectCompletionService;
@@ -102,8 +104,9 @@ export class DatabaseService {
     this.clientDocuments = new ClientDocumentService(this.database, this.workspace);
     this.actions = new ActionService(this.database);
     this.catalog = new CatalogService(this.database);
-    this.contractTerms = new ContractTermsService(this.database);
-    this.quotes = new QuoteService(this.database, this.crm, this.contractTerms);
+    this.contractTerms = new ContractTermsService(this.database, this.clientDocuments);
+    this.quotePreparation = new QuoteContractPreparationService(this.database, this.clientDocuments);
+    this.quotes = new QuoteService(this.database, this.crm, this.contractTerms, this.quotePreparation);
     this.projectSites = new ProjectSiteService(this.database);
     this.projects = new ProjectService(this.database, this.workspace, this.projectSites);
     this.projectCompletion = new ProjectCompletionService(this.database);

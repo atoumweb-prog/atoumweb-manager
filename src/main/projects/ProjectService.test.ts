@@ -1,3 +1,4 @@
+import { finalizeForTest, acceptForTest } from '../testSupport/quotePreparationFixture';
 import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -63,9 +64,9 @@ function createAcceptedQuote() {
   catalog.publishVersion(service.versions[0].id);
   const quote = quotes.create({ prospectId: prospect.id, subject: 'Création du site vitrine', prerequisitesText: 'Accès hébergement' });
   quotes.addCatalogLine(quote.id, service.versions[0].id);
-  quotes.finalize(quote.id);
+  finalizeForTest(database,quotes,quote.id);
   quotes.markSent(quote.id);
-  return quotes.accept(quote.id);
+  return acceptForTest(database,quotes,quote.id);
 }
 
 function createAcceptedSeededVitrineQuote(extraCatalogVersionId?: string) {
@@ -74,9 +75,9 @@ function createAcceptedSeededVitrineQuote(extraCatalogVersionId?: string) {
   const quote = quotes.create({ prospectId: prospect.id, subject: 'Site vitrine Blueprint' });
   quotes.addCatalogLine(quote.id, 'atoumweb-vitrine-v1');
   if (extraCatalogVersionId) quotes.addCatalogLine(quote.id, extraCatalogVersionId);
-  quotes.finalize(quote.id);
+  finalizeForTest(database,quotes,quote.id);
   quotes.markSent(quote.id);
-  return quotes.accept(quote.id);
+  return acceptForTest(database,quotes,quote.id);
 }
 
 describe('ProjectService', () => {
@@ -191,9 +192,9 @@ describe('ProjectService', () => {
     const quote = quotes.create({ prospectId: prospect.id, subject: 'Site vitrine + page' });
     quotes.addCatalogLine(quote.id, 'atoumweb-vitrine-v1');
     quotes.addCatalogLine(quote.id, 'atoumweb-page-v1');
-    quotes.finalize(quote.id);
+    finalizeForTest(database,quotes,quote.id);
     quotes.markSent(quote.id);
-    const accepted = quotes.accept(quote.id);
+    const accepted = acceptForTest(database,quotes,quote.id);
 
     const project = projects.transformQuote({ quoteId: accepted.id, targetDate: '2026-12-12' });
 
@@ -243,9 +244,9 @@ describe('ProjectService', () => {
     const prospect = crm.createProspect({ organizationId: organization.id, primaryNeed: 'Site vitrine' });
     const quote = quotes.create({ prospectId: prospect.id, subject: 'Formule site vitrine' });
     quotes.addCatalogLine(quote.id, offerVersion.id);
-    quotes.finalize(quote.id);
+    finalizeForTest(database,quotes,quote.id);
     quotes.markSent(quote.id);
-    const accepted = quotes.accept(quote.id);
+    const accepted = acceptForTest(database,quotes,quote.id);
 
     const project = projects.transformQuote({ quoteId: accepted.id });
 

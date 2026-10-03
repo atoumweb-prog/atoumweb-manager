@@ -237,6 +237,7 @@ export interface QuoteDetail extends QuoteSummary {
   contractAudience?: QuoteContractAudience | null;
   contractTextSnapshot?: string | null;
   contractSnapshotJson?: string | null;
+  initialPaymentQualification?: 'acompte' | 'arrhes' | null;
   lines: QuoteLine[];
 }
 

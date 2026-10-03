@@ -1,3 +1,4 @@
+import { finalizeForTest, acceptForTest } from '../testSupport/quotePreparationFixture';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CrmService } from '../crm/CrmService';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
@@ -79,14 +80,16 @@ describe('ContractTermsService', () => {
 
   it('fige explicitement un snapshot vide et ne le reconstruit jamais à l’acceptation', () => {
     const quote = quotes.create({ prospectId: prospectId(), subject: 'Sans bibliothèque' });
+    // Historical draft before Lot 5: retain the Lot 1 empty snapshot regression without inventing parameters.
+    database.run('UPDATE quotes SET contract_parameters_json=NULL WHERE id=?',[quote.id]);
     quotes.addCustomLine(quote.id, { label: 'Prestation', proposedUnitPriceCents: 10000 });
-    const finalized = quotes.finalize(quote.id);
+    const finalized = finalizeForTest(database,quotes,quote.id);
     expect(finalized.contractTextSnapshot).toBe('');
     expect(finalized.contractCompiledAt).toBeTruthy();
     expect(JSON.parse(finalized.contractSnapshotJson!)).toEqual({ audience: 'professional', clauses: [] });
     publishedClause('TEST-AFTER', 'Après finalisation', 'base', 'Jamais rétroactif.');
     quotes.markSent(quote.id);
-    quotes.accept(quote.id);
+    acceptForTest(database,quotes,quote.id);
     const frozen = contractTerms.freezeQuote(quote.id);
     expect(frozen.snapshotState).toBe('frozen');
     expect(frozen.clauses).toEqual([]);
@@ -103,12 +106,12 @@ describe('ContractTermsService', () => {
     const template = publishedClause('TEST-EXACT', 'Test exact', 'base', 'Texte initial\navec ses lignes.');
     const quote = quotes.create({ prospectId: prospectId(), subject: 'Preuve exacte' });
     quotes.addCustomLine(quote.id, { label: 'Prestation', proposedUnitPriceCents: 10000 });
-    const frozen = quotes.finalize(quote.id);
+    const frozen = finalizeForTest(database,quotes,quote.id);
     const draft = contractTerms.createVersion(template.id, { body: 'Texte remplacé.' });
     contractTerms.publishVersion(draft.id);
     contractTerms.setTemplateStatus(template.id, 'inactive');
     quotes.markSent(quote.id);
-    quotes.accept(quote.id);
+    acceptForTest(database,quotes,quote.id);
     const after = quotes.get(quote.id);
     expect(after.contractTextSnapshot).toBe(frozen.contractTextSnapshot);
     expect(after.contractSnapshotJson).toBe(frozen.contractSnapshotJson);
@@ -145,8 +148,8 @@ describe('ContractTermsService', () => {
     });
     expect(database.all('SELECT * FROM quotes ORDER BY quote_number')).toEqual(before);
     expect(database.all('SELECT * FROM quote_contract_clauses')).toEqual(clausesBefore);
-    const accepted = quotes.accept(ids[1]);
-    quotes.accept(ids[1]);
+    const accepted = acceptForTest(database,quotes,ids[1]);
+    acceptForTest(database,quotes,ids[1]);
     expect(accepted.status).toBe('accepted');
     expect(accepted.contractTextSnapshot).toBeNull();
     expect(accepted.contractSnapshotJson).toBeNull();
@@ -163,7 +166,7 @@ describe('ContractTermsService', () => {
     const before = database.all('SELECT * FROM quote_contract_clauses WHERE quote_id=?', [quote.id]);
     database.run("UPDATE quotes SET status='sent',finalized_at='2026-09-20' WHERE id=?", [quote.id]);
     publishedClause('TEST-FUTURE-2', 'Nouveau socle', 'base', 'Texte ultérieur.');
-    quotes.accept(quote.id);
+    acceptForTest(database,quotes,quote.id);
     expect(database.all('SELECT * FROM quote_contract_clauses WHERE quote_id=?', [quote.id])).toEqual(before);
     expect(contractTerms.getQuoteBuild(quote.id).snapshotState).toBe('historical_missing');
     expect(quotes.get(quote.id).contractSnapshotJson).toBeNull();
@@ -298,7 +301,7 @@ describe('ContractTermsService', () => {
       body: 'Livraison prévue en deux phases.',
     });
 
-    const finalized = quotes.finalize(quote.id);
+    const finalized = finalizeForTest(database,quotes,quote.id);
     expect(finalized.contractCompiledAt).toBeTruthy();
     expect(finalized.contractTextSnapshot).toContain('Acceptation du devis');
     expect(finalized.contractTextSnapshot).toContain('Condition particulière');
@@ -320,7 +323,7 @@ describe('ContractTermsService', () => {
     const instance = build.clauses.find((clause) => clause.sourceClauseId === specific.id)!;
     contractTerms.updateQuoteClause(instance.id, { body: 'Texte négocié.' });
     contractTerms.addCustomQuoteClause(quote.id, { title: 'Cas particulier', body: 'Conserver cette clause.' });
-    quotes.finalize(quote.id);
+    finalizeForTest(database,quotes,quote.id);
     quotes.markSent(quote.id);
     quotes.refuse(quote.id);
 

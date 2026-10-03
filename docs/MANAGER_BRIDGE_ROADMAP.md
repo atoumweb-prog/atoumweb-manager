@@ -1678,3 +1678,41 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Contrôle : 21 fichiers Lot 4 attendus seulement, aucun code fonctionnel modifié après les 409/409 tests/typecheck de fermeture, historique préservé. Validation-MSI conserve le SHA validé `afaf9b8a7fa196a54dfd29e0fff881b099ad4b1d8bcc2e2da4dd8adc47bf31b8`.
 - Le message de clôture rappelle : 118 clauses BROUILLON, aucune publication contractuelle, 112 versions catalogue V1 BROUILLON, recette manuelle AtoumWeb restant à faire avant validation fonctionnelle finale, Lot 5 non commencé. Le commit contenant cette entrée sert de checkpoint local ; empreinte exacte dans le bilan hors dépôt et `git log -1 --format=%H`.
 - Aucun push/merge, démarrage Manager, modification de Validation-MSI, publication, Lot 5, Bridge ou 8C.
+
+
+### 2026-10-03 — CONTRACT-LOT5-001 — Préparation autorisée et fermeture sur copie uniquement
+
+- Feu vert AtoumWeb : implémentation locale, tests et dry-run du Lot 5 ; aucune écriture Validation-MSI, publication, Lot 6, Abby, Bridge, 8C ou merge. Checkpoint Lot 4 local 31e9df44b36f6ca0ad20fd594c904eac7b9aa8fc, non poussé, conservé.
+- Extension du moteur existant, contrat intégré au devis : paramètres structurés, échéancier/garanties/canal/qualification numérique, droits/renouvellement, B2C, RSVP minimal sans collecte sensible, administration sans valeur fictive. Snapshot enrichi transactionnel, pas de reconstruction historique.
+- Migration nouvelle 56 : paramètres nullable des devis, empreinte/provenance des fichiers, relations génériques de preuves/annexes/remplacements. SQL 1–55 conservé. PDF actif et historique protégés, SHA à l’import/rattachement et contrôle à l’ouverture ; absence historique de SHA conservée sans certification rétroactive.
+- Garde-fou service : catalogue brouillon/inactif refusé même par identifiant direct. Aucun brouillon contractuel consommé ni publié. CONS-RETRACTATION-EN-LIGNE reste un contrôle applicatif ; aucune clause textuelle ou fonctionnalité publique activée.
+- Vérifications : suite complète 59 fichiers / 443 tests / 0 échec, 34 nouveaux cas Lot 5, typecheck sortie 0, interface Electron isolée 20/20. Les tests mémoire utilisent leurs propres fixtures, jamais la base réelle.
+- Dry-run sur sauvegarde temporaire : migration 56, 98 anciennes tables/colonnes/lignes conservées, rejeu sans effet, SQLite ok/FK vide. Nouveau DEV-2026-004 uniquement sur copie, ligne libre 100,01 euros, paramètres 30/70 ; finalisation refusée pour 4 informations administratives absentes et socle publié manquant. Aucun Client ni preuve inventé.
+- 112 AW, 112 catalogue V1 BROUILLON, 118 clauses BROUILLON, 409 liens, 0 publication conservés. DEV-2026-001/002/003 et Projets inchangés ; compteur/index dérivé rafraîchis sur copie seulement.
+- Validation-MSI réelle toujours migration 55, SHA afaf9b8a7fa196a54dfd29e0fff881b099ad4b1d8bcc2e2da4dd8adc47bf31b8 ; XLSX SHA 6bc3eddaee0e1d77008c0bdc98984eea89ac54838c483c12c58b95cd3b237ad8 inchangé. Manager non démarré.
+- Bilan CONTRACTUAL_LOT5_PARAMETERS_AND_EVIDENCE.md, rapports/preuves outputs/contract-parameters-lot5. Recette manuelle AtoumWeb à faire, limites de qualification/probatoire documentées. **Arrêt avant application réelle, aucun commit Lot 5/push/merge. Attendre le feu vert.**
+
+
+### 2026-10-03 — CONTRACT-LOT5-002 — Feu vert et application réelle de migration 56 seule
+
+- AtoumWeb valide le dry-run et autorise l’application réelle sur Validation-MSI, sous verrou/sauvegarde physique/empreintes/intégrité/diff. Aucun DEV-2026-004, backfill, seed administratif, publication, changement de 409 liens, Lot 6 ou commit avant validation du bilan réel.
+- Code inchangé depuis 443/443 tests et typecheck OK ; 38 fichiers Lot 5 prévus, index vide, 332 sources applicatives hachées avant application. Pas de changement fonctionnel ni répétition inutile des suites. HEAD Lot 4 31e9df44b36f6ca0ad20fd594c904eac7b9aa8fc conservé.
+- Protocole répété sur copie jetable avec migration seule ; Manager non démarré. BEGIN EXCLUSIVE, seconde connexion d’écriture refusée ; WAL vide, SHM 32 768 octets, aucun journal actif. Backup physique immédiat C:\DEV\02_DONNEES\AtoumWeb\Validation-MSI\backups\before-lot5-2026-10-03T18-56-43-167Z.sqlite, hash identique à la base avant : afaf9b8a7fa196a54dfd29e0fff881b099ad4b1d8bcc2e2da4dd8adc47bf31b8.
+- Plan/empreintes revérifiés immédiatement avant écriture ; jeton 7e2ab1e6f4688dca9856a55857b50eadadb50c609f71330116f92c5dc9c9a865. Migration 56 seule, sous transaction englobante, SQL 1–55 inchangés. Les 98 anciennes tables/colonnes/lignes sont identiques au backup ; zéro modification de données existantes.
+- Migrations 1–56 présentes ; 112 AW, 112 versions V1 catalogue BROUILLON, 118 clauses BROUILLON, 409 liens intacts, zéro publication contractuelle. Les 44 anciennes versions catalogue publiées restent inchangées. LANDING-GESTION seule dormante, CONS-RETRACTATION-EN-LIGNE hors texte.
+- DEV-2026-001/002/003 et 2 Projets exacts, paramètres/snapshot inconnus restent NULL, aucune clause injectée, aucun DEV-2026-004. Aucun paramètre administratif seedé, table de preuves vide, aucun document maître métier importé/dupliqué, aucun invité sensible stocké.
+- Garde-fous Builder vérifiés en lecture pure : socle publié absent et informations réellement obligatoires manquantes restent bloquants. Qualification multi-indicateurs et RSVP minimal/sensible désactivé conservés.
+- integrity_check ok / FK vide. Rejeu réel aucune migration, zéro modification logique et physique ; checkpoint WAL réussi. Contre-vérification indépendante Python/SQLite read-only contre backup réussie.
+- Base après fermeture SHA 877192a41131737424fb03e808885c22faa3e876b798f54b7929a672e8459e71 ; XLSX inchangé 6bc3eddaee0e1d77008c0bdc98984eea89ac54838c483c12c58b95cd3b237ad8.
+- Preuves application-lot5-validation-msi.md/json et contre-verification-lot5.json dans outputs/contract-parameters-lot5 ; bilan CONTRACTUAL_LOT5_PARAMETERS_AND_EVIDENCE.md mis à jour. Dry-run conservé historiquement.
+- **Lot 5 appliqué, non committé. Attendre la validation du bilan réel avant commit local dédié, sans push/merge. Recette manuelle AtoumWeb à faire. Aucun Lot 6, publication, Abby, Bridge ou 8C.**
+
+
+### 2026-10-03 — CONTRACT-LOT5-003 — Validation et clôture locale dédiée
+
+- AtoumWeb valide Lot 5 et autorise le commit local dédié « Lot 5 — paramètres contractuels et preuves », sans push/merge. Ne pas commencer Lot 6.
+- Vérification : 38 fichiers Lot 5 attendus, index initialement vide, 332 sources applicatives inchangées depuis 443/443 tests/typecheck OK. Aucun code fonctionnel modifié ; seules les mentions de clôture documentaire sont ajoutées.
+- Aucun fichier parasite de simulation/sauvegarde/base/XLSX/log inclus. Les scripts de simulation et de contrôle font partie des fichiers attendus ; leurs sorties restent hors dépôt.
+- Le message rappelle : migration 56 réussie dans Validation-MSI ; aucun backfill historique, aucune publication catalogue/contractuelle, aucune donnée administrative fictive ; recette manuelle AtoumWeb à faire avant validation fonctionnelle finale ; Lot 6 non commencé.
+- Validation-MSI demeure au SHA 877192a41131737424fb03e808885c22faa3e876b798f54b7929a672e8459e71 ; 112 AW, 112 catalogue V1 brouillon, 118 clauses brouillon, 409 liens et historique inchangés par cette clôture.
+- Le commit contenant cette entrée fait foi ; SHA et liste exhaustive des fichiers dans outputs/contract-parameters-lot5/cloture-git-lot5.md/json. Aucun push/merge, démarrage Manager, écriture base, publication, Abby, Bridge, Lot 6 ou 8C.

@@ -18,14 +18,12 @@ describe('migration 53 — identité catalogue additive', () => {
       const crm = new CrmService(database);
       const organization = crm.createOrganization({ name: 'Dossier historique témoin' });
       const prospect = crm.createProspect({ organizationId: organization.id });
-      const quotes = new QuoteService(database, crm);
+      // Build an actual schema-52 fixture, without invoking a service requiring the current schema.
       for (let i = 1; i <= 3; i++) {
-        const quote = quotes.create({ prospectId: prospect.id, subject: `Historique ${i}` });
-        quotes.addCustomLine(quote.id, { label: 'Ancienne ligne', proposedUnitPriceCents: 10000 });
-        database.run('UPDATE quotes SET quote_number=?,status=?,finalized_at=? WHERE id=?',
-          [`DEV-2026-00${i}`, i === 2 ? 'sent' : 'accepted', '2026-09-14', quote.id]);
-        database.run('UPDATE quote_lines SET snapshot_json=? WHERE quote_id=?',
-          ['{"itemName":"Ancienne ligne","versionNumber":1,"specialTerms":"Ancien texte exact"}', quote.id]);
+        database.run('INSERT INTO quotes(id,quote_number,prospect_id,subject,status,finalized_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)',
+          [`legacy${i}`,`DEV-2026-00${i}`,prospect.id,`Historique ${i}`,i===2?'sent':'accepted','2026-09-14','2026-09-14','2026-09-14']);
+        database.run("INSERT INTO quote_lines(id,quote_id,source,label,proposed_unit_price_cents,snapshot_json,created_at,updated_at) VALUES(?,?,'custom',?,?,?,?,?)",
+          [`line${i}`,`legacy${i}`,'Ancienne ligne',10000,'{"itemName":"Ancienne ligne","versionNumber":1,"specialTerms":"Ancien texte exact"}','2026-09-14','2026-09-14']);
       }
       for (let i = 1; i <= 2; i++) database.run(
         "INSERT INTO projects (id,project_number,name,project_type,commercial_mode,created_at,updated_at) VALUES (?,?,?,'internal','internal',?,?)",
@@ -37,7 +35,7 @@ describe('migration 53 — identité catalogue additive', () => {
         columns: database.all<{ name: string }>(`PRAGMA table_info("${name}")`).map(({ name: column }) => column),
         rows: database.all(`SELECT * FROM "${name}" ORDER BY rowid`),
       }));
-      expect(applyPendingMigrations(database).map(({ id }) => id)).toEqual([53, 54, 55]);
+      expect(applyPendingMigrations(database).map(({ id }) => id)).toEqual([53, 54, 55, 56]);
       for (const { name, columns, rows } of before) {
         expect(database.all(`SELECT ${columns.map(column => `"${column}"`).join(',')} FROM "${name}" ORDER BY rowid`), name).toEqual(rows);
       }

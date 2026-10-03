@@ -1,3 +1,5 @@
+import { emptyContractParameters, withContractAudience } from '../../shared/quoteContractPreparation';
+import { QuoteContractPreparationService } from './QuoteContractPreparationService';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import type { CrmService } from '../crm/CrmService';
@@ -103,6 +105,8 @@ interface CatalogSnapshotRow extends CatalogIdentitySnapshotRow {
   item_name: string;
   item_type: string;
   version_number: number;
+  version_status: string;
+  item_status: string;
   description: string | null;
   inclusions_json: string;
   exclusions_json: string;
@@ -137,6 +141,7 @@ export class QuoteService {
     private readonly database: DatabaseAdapter,
     private readonly crm: CrmService,
     private readonly contractTerms: ContractTermsService = new ContractTermsService(database),
+    private readonly preparation: QuoteContractPreparationService = new QuoteContractPreparationService(database),
   ) {}
 
   list(filters: QuoteFilters = {}): QuoteSummary[] {
@@ -178,6 +183,7 @@ export class QuoteService {
       contractAudience: row.contract_audience,
       contractTextSnapshot: row.contract_text_snapshot,
       contractSnapshotJson: row.contract_snapshot_json,
+      initialPaymentQualification: this.preparation.parameters(id)?.initialPayment.qualification ?? null,
       lines,
     };
   }
@@ -229,6 +235,7 @@ export class QuoteService {
           nowString,
         ],
       );
+      this.database.run('UPDATE quotes SET contract_parameters_json=? WHERE id=?',[JSON.stringify(emptyContractParameters(contractAudience,depositPercent)),id]);
       this.writeActivity(id, 'quote_created', `Devis ${number} créé`);
       if (input.prospectId) this.database.run("UPDATE prospects SET stage='quote_to_prepare',updated_at=? WHERE id=? AND stage NOT IN ('won','lost')", [nowString, input.prospectId]);
       if (!withinTransaction) this.database.exec('COMMIT;');
@@ -258,7 +265,7 @@ export class QuoteService {
   addCatalogLine(quoteId: string, catalogVersionId: string, input: Partial<QuoteLineInput> = {}): QuoteDetail {
     this.assertEditable(quoteId);
     const source = this.database.get<CatalogSnapshotRow>(
-      `SELECT v.id AS version_id, i.id AS item_id, i.name AS item_name, i.item_type,
+      `SELECT v.id AS version_id, v.status AS version_status, i.status AS item_status, i.id AS item_id, i.name AS item_name, i.item_type,
               v.version_number, v.description, v.inclusions_json, v.exclusions_json,
               v.prerequisites_json, v.price_mode, v.price_cents, v.default_deposit_percent,
               v.contract_type, v.special_terms, i.canonical_code, i.identity_provenance_json,
@@ -269,6 +276,7 @@ export class QuoteService {
       [catalogVersionId],
     );
     if (!source) throw new Error('Version catalogue introuvable.');
+    if(source.version_status!=='published'||source.item_status!=='active')throw Error('Seule une version publiée d’une prestation active peut être ajoutée au devis.');
 
     const proposed = input.proposedUnitPriceCents ?? source.price_cents;
     if (proposed == null && source.price_mode !== 'free') throw new Error('Renseigne un prix proposé pour cette prestation sur devis.');
@@ -418,6 +426,8 @@ export class QuoteService {
     const validityDays = input.validityDays ?? this.daysUntil(current.validUntil) ?? 30;
     const contractAudience = input.contractAudience ?? current.contractAudience ?? this.inferContractAudience(current.prospectId, current.clientAccountId ?? current.acceptedClientAccountId);
     if (!['professional', 'consumer'].includes(contractAudience)) throw new Error('Type de client contractuel invalide.');
+    const storedParameters=this.preparation.get(quoteId).parameters;
+    if(storedParameters&&input.depositPercent!==undefined&&input.depositPercent!==storedParameters.payment.milestones[0]?.percent) throw Error('Modifie l’échéancier dans la préparation contractuelle ; pas d’acompte divergent.');
     const validUntil = new Date();
     validUntil.setDate(validUntil.getDate() + validityDays);
 
@@ -429,6 +439,7 @@ export class QuoteService {
         clean(input.specialTerms ?? current.specialTerms), clean(input.contractType ?? current.contractType),
         contractAudience, depositPercent, nowIso(), quoteId],
     );
+    if(storedParameters) this.preparation.save(quoteId,withContractAudience(storedParameters,contractAudience));
     this.recalculate(quoteId);
     return this.get(quoteId);
   }
@@ -447,12 +458,16 @@ export class QuoteService {
     if (quote.status !== 'draft') throw new Error('Seul un devis brouillon peut être finalisé.');
     if (quote.finalizedAt) return quote;
     if (quote.lines.length === 0) throw new Error('Ajoute au moins une ligne avant de finaliser le devis.');
+    this.database.exec('SAVEPOINT quote_finalization;');
+    try {
     this.contractTerms.freezeQuote(id);
-    const now = nowIso();
+    const now = this.get(id).contractCompiledAt ?? nowIso();
     this.database.run('UPDATE quotes SET finalized_at=?,updated_at=? WHERE id=?', [now, now, id]);
     if (quote.prospectId) this.database.run("UPDATE prospects SET stage='quote_to_send',updated_at=? WHERE id=? AND stage NOT IN ('won','lost')", [now, quote.prospectId]);
     this.writeActivity(id, 'quote_finalized', `Devis ${quote.number} finalisé et prêt à envoyer`);
+    this.database.exec('RELEASE quote_finalization;');
     return this.get(id);
+    } catch(error) {this.database.exec('ROLLBACK TO quote_finalization; RELEASE quote_finalization;');throw error;}
   }
 
   extendValidity(id: string, validUntil: string): QuoteDetail {
@@ -477,6 +492,7 @@ export class QuoteService {
     if (quote.status === 'accepted') return quote;
     if (!['sent', 'viewed'].includes(quote.status)) throw new Error('Le devis doit être envoyé avant acceptation.');
     if (quote.lines.length === 0) throw new Error('Impossible d’accepter un devis vide.');
+    this.preparation.assertAcceptance(id);
     const contract = this.contractTerms.freezeQuote(id);
 
     let clientId = quote.clientAccountId ?? quote.acceptedClientAccountId ?? null;
@@ -498,7 +514,7 @@ export class QuoteService {
     return this.get(id);
   }
 
-  attachContractDocument(id: string, documentId: string, abbyReference?: string | null): QuoteDetail {
+  attachContractDocument(id: string, documentId: string, abbyReference?: string | null, replacementReason?: string): QuoteDetail {
     const quote = this.get(id);
     if (quote.status !== 'accepted') throw new Error('Le devis doit être accepté avant de rattacher son document contractuel.');
     const clientId = quote.acceptedClientAccountId ?? quote.clientAccountId;
@@ -510,13 +526,18 @@ export class QuoteService {
     if (!document || document.client_account_id !== clientId) throw new Error('Le document sélectionné n’appartient pas au client du devis.');
     if (!['contract', 'quote'].includes(document.category)) throw new Error('Le document doit être classé comme contrat ou devis.');
 
+    this.database.exec('SAVEPOINT quote_pdf_attachment');
+    try {
+      this.preparation.attach(id,{documentId,role:'accepted_pdf',provenance:'PDF accepté rattaché explicitement au devis',replacementReason});
     const now = nowIso();
     this.database.run(
       'UPDATE quotes SET contract_document_id=?,contract_document_attached_at=?,abby_reference=?,updated_at=? WHERE id=?',
       [documentId, now, clean(abbyReference) ?? quote.abbyReference ?? null, now, id],
     );
     this.writeActivity(id, 'quote_contract_document_attached', `Document contractuel rattaché au devis ${quote.number}`);
+    this.database.exec('RELEASE quote_pdf_attachment');
     return this.get(id);
+    } catch(error) { this.database.exec('ROLLBACK TO quote_pdf_attachment; RELEASE quote_pdf_attachment;'); throw error; }
   }
 
   updateAbbyReference(id: string, abbyReference?: string | null): QuoteDetail {

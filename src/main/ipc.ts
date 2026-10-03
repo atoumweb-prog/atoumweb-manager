@@ -1,3 +1,4 @@
+import type { ContractAdministration, QuoteContractParameters, ContractDocumentLinkInput, ContractDocumentRole } from '../shared/quoteContractPreparation';
 import { app, clipboard, dialog, ipcMain, safeStorage, shell } from 'electron';
 import type { BridgeNodeMatchDecisionInput } from '../shared/bridgeSnapshots';
 import { writeFileSync } from 'node:fs';
@@ -311,7 +312,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('client-documents:update',(_event,id:string,input:ClientDocumentInput)=>database.clientDocuments.update(id,input));
   ipcMain.handle('client-documents:archive',(_event,id:string,archived?:boolean)=>database.clientDocuments.archive(id,archived));
   ipcMain.handle('client-documents:delete',async(_event,id:string)=>{const doc=database.clientDocuments.get(id);const answer=await dialog.showMessageBox({type:'warning',title:'Suppression définitive',message:`Supprimer définitivement « ${doc.title} » ?`,detail:'Le fichier physique et ses métadonnées seront supprimés. Cette action est irréversible.',buttons:['Annuler','Supprimer définitivement'],defaultId:0,cancelId:0});if(answer.response!==1)return{cancelled:true};database.clientDocuments.deletePermanently(id);return{cancelled:false};});
-  ipcMain.handle('client-documents:open-file',async(_event,id:string)=>{const error=await shell.openPath(database.clientDocuments.absolutePath(id));if(error)throw Error(error);});
+  ipcMain.handle('client-documents:open-file',async(_event,id:string)=>{const error=await shell.openPath(database.clientDocuments.verifiedPath(id));if(error)throw Error(error);});
   ipcMain.handle('client-documents:open-folder',async(_event,clientId:string)=>{const path=database.clientDocuments.clientRoot(clientId);const error=await shell.openPath(path);if(error)throw Error(error);});
 
   ipcMain.handle('billing:list', (_event, filters?: BillingItemFilters) => database.billingHandoff.list(filters));
@@ -400,6 +401,23 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     clipboard.writeText(text);
   });
 
+  ipcMain.handle('quote-preparation:get', (_event,id:string)=>database.quotePreparation.get(id));
+  ipcMain.handle('quote-preparation:save', (_event,id:string,input:QuoteContractParameters)=>database.quotePreparation.save(id,input));
+  ipcMain.handle('quote-preparation:administration', ()=>database.quotePreparation.administration());
+  ipcMain.handle('quote-preparation:save-administration', (_event,input:ContractAdministration)=>database.quotePreparation.saveAdministration(input));
+  ipcMain.handle('quote-preparation:attach', (_event,id:string,input:ContractDocumentLinkInput)=>{
+    if(input.role==='accepted_pdf')database.quotes.attachContractDocument(id,input.documentId,undefined,input.replacementReason);
+    else database.quotePreparation.attach(id,input);
+    return database.quotePreparation.get(id);
+  });
+  ipcMain.handle('quote-preparation:record-acceptance', (_event,id:string,statement:string,occurredAt:string,provenance:string)=>database.quotePreparation.recordAcceptance(id,statement,occurredAt,provenance));
+  ipcMain.handle('quote-preparation:open-document', async (_event,id:string)=>{const error=await shell.openPath(database.quotePreparation.openLinked(id));if(error)throw Error(error);});
+  ipcMain.handle('quote-preparation:import-document', async (_event,id:string,role:ContractDocumentRole,provenance:string)=>{
+    database.quotes.get(id);
+    const selection=await dialog.showOpenDialog({title:'Rattacher une annexe / preuve au devis',properties:['openFile']});
+    if(selection.canceled)return null;
+    return database.quotePreparation.importPath(id,role,provenance,selection.filePaths[0]);
+  });
   ipcMain.handle('quotes:list', (_event, filters?: QuoteFilters) => database.quotes.list(filters));
   ipcMain.handle('quotes:get', (_event, id: string) => database.quotes.get(id));
   ipcMain.handle('quotes:create-with-lines', (_event, input: QuoteInput, lines: Array<{catalogVersionId?: string; input: QuoteLineInput}>) => database.quotes.createWithLines(input,lines));
@@ -429,6 +447,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
       filters: [{ name: 'Devis / contrat PDF', extensions: ['pdf'] }],
     });
     if (selection.canceled || selection.filePaths.length === 0) return null;
+    let replacementReason: string|undefined;
+    if(quote.contractDocumentId){const answer=await dialog.showMessageBox({type:'question',title:'Remplacer le PDF contractuel',message:'Confirmer un nouveau PDF actif ? L’ancien reste relié au devis et protégé.',buttons:['Annuler','Conserver l’ancien et rattacher le nouveau'],defaultId:0,cancelId:0});if(answer.response!==1)return null;replacementReason='Remplacement confirmé explicitement dans le dialogue d’import';}
     const before = new Set(database.clientDocuments.list(clientId, true).map((document) => document.id));
     const imported = database.clientDocuments.importPaths(clientId, [selection.filePaths[0]], {
       category: 'contract',
@@ -437,12 +457,13 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     });
     const document = imported.find((candidate) => !before.has(candidate.id));
     if (!document) throw new Error('Le document contractuel n’a pas pu être identifié après import.');
-    return database.quotes.attachContractDocument(id, document.id, abbyReference);
+    return database.quotes.attachContractDocument(id, document.id, abbyReference, replacementReason);
   });
   ipcMain.handle('quotes:open-contract-document', async (_event, id: string) => {
     const quote = database.quotes.get(id);
     if (!quote.contractDocumentId) throw new Error('Aucun document contractuel n’est rattaché à ce devis.');
-    const error = await shell.openPath(database.clientDocuments.absolutePath(quote.contractDocumentId));
+    const link=database.quotePreparation.links(id).find(l=>l.role==='accepted_pdf'&&l.documentId===quote.contractDocumentId);
+    const error = await shell.openPath(link?database.quotePreparation.openLinked(link.id):database.clientDocuments.verifiedPath(quote.contractDocumentId));
     if (error) throw new Error(error);
   });
   ipcMain.handle('quotes:update-abby-reference', (_event, id: string, abbyReference?: string | null) => database.quotes.updateAbbyReference(id, abbyReference));
