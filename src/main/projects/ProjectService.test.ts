@@ -110,7 +110,9 @@ describe('ProjectService', () => {
     expect(first.number).toMatch(/^PRO-\d{4}-001$/);
     expect(first.clientLabel).toBe('Société Test Projet');
     expect(first.nodes.filter((node) => template.nodes.some((source) => source.id === node.sourceTemplateNodeId))).toHaveLength(4);
-    expect(first.nodes.filter((node) => node.semanticKey?.startsWith('pages.'))).toHaveLength(5);
+    // An explicitly chosen template without Site declarations no longer imports an unrelated type fallback.
+    expect(first.nodes.filter((node) => node.semanticKey?.startsWith('pages.'))).toHaveLength(0);
+    expect(sites.list(first.id)).toHaveLength(0);
     expect(first.services).toHaveLength(1);
     expect(first.commercialValueCents).toBe(69900);
     expect(first.contractValueCents).toBe(69900);
@@ -173,14 +175,14 @@ describe('ProjectService', () => {
     expect(hero?.name).toBe('Hero');
     expect(hero?.workCard?.fields.map((field) => field.key)).toEqual(expect.arrayContaining(['h1', 'lead', 'cta', 'visual_notes', 'code_notes']));
     expect(hero?.advice?.some((advice) => advice.kind === 'library')).toBe(true);
-    expect(hero?.sources).toEqual([
+    expect(hero?.sources).toEqual(expect.arrayContaining([
       expect.objectContaining({
         quoteLineId: quote.lines[0]?.id,
         catalogVersionId: 'atoumweb-vitrine-v1',
         templateVersionId: 'atoumweb-project-template-vitrine-v1',
         sourceRole: 'direct',
       }),
-    ]);
+    ]));
 
     const folders = ['01 Identité', '02 Textes', '03 Images & médias', '04 Documents projet', '05 Technique - Sources - Exports', '06 Livrables', '07 Archives'];
     for (const folder of folders) expect(existsSync(join(project.resourceRootPath!, folder))).toBe(true);

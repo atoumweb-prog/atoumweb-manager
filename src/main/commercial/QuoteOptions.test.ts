@@ -1,3 +1,5 @@
+import { ProjectBlueprintCompositionService } from '../projects/ProjectBlueprintCompositionService';
+import { ProjectSiteService } from '../projects/ProjectSiteService';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations, MIGRATIONS } from '../database/migrations';
@@ -180,7 +182,7 @@ describe('Lot 6 — achats optionnels explicites', () => {
   });
 
   it('rejeu migration idempotent, anciennes lignes non requalifiées', () => {
-    expect(applyPendingMigrations(db)).toEqual([]); expect(MIGRATIONS.at(-1)?.id).toBe(57);
+    expect(applyPendingMigrations(db)).toEqual([]); expect(MIGRATIONS.at(-1)?.id).toBe(58);
     const q = f.createQuote();
     expect(q.lines.every((line) => line.optionPurchase === null)).toBe(true);
     expect(db.all('PRAGMA integrity_check')).toEqual([{ integrity_check: 'ok' }]);
@@ -197,12 +199,14 @@ describe('Lot 6 — achats optionnels explicites', () => {
       'INSERT INTO catalog_project_blueprints (id,catalog_version_id,template_version_id,role,sort_order,created_at) VALUES (?,?,?,?,?,?)',
       ['test-l6-blueprint-'+i, id, templates[i].id, i === 0 ? 'base' : 'addon', 0, new Date().toISOString()],
     ));
-    // Observe the existing resolver without creating a Project/Site/Page or implementing Lot 7.
-    const resolver = projects as unknown as { resolveBlueprintPlan(id: string): { addons: Array<{quoteLineId:string}> } };
-    const q = f.createQuote(); expect(resolver.resolveBlueprintPlan(q.id).addons).toEqual([]);
+    // The composed resolver still excludes availability; a once policy does not expand this fixture.
+    const engine = new ProjectBlueprintCompositionService(db, new ProjectSiteService(db));
+    const addons = (id: string) => engine.resolveQuote(id).contributions.filter(c => c.role === 'addon');
+    const q = f.createQuote(); expect(addons(q.id)).toEqual([]);
     f.quotes.selectOfferOption(q.lines[0].id, f.components[1].id, { quantityMilli: 5000 });
-    expect(resolver.resolveBlueprintPlan(q.id).addons).toEqual([expect.objectContaining({ quoteLineId: purchased(q.id)[0].id })]);
+    expect(addons(q.id)).toEqual([expect.objectContaining({ quoteLineId: purchased(q.id)[0].id, unitCount: 1, quantityMilli: 5000 })]);
     f.quotes.deselectOfferOption(q.lines[0].id, f.components[1].id);
-    expect(resolver.resolveBlueprintPlan(q.id).addons).toEqual([]); expect(db.all('SELECT * FROM projects')).toEqual([]);
+    expect(addons(q.id)).toEqual([]); expect(db.all('SELECT * FROM projects')).toEqual([]);
+
   });
 });

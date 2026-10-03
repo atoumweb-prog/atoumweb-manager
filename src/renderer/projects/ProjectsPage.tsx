@@ -1,3 +1,4 @@
+import { ProjectBlueprintOrigins } from './ProjectBlueprintOrigins';
 import { useEffect, useMemo, useState } from 'react';
 import type { QuoteSummary } from '../../shared/commercial';
 import {
@@ -1290,6 +1291,7 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
       </div>
     </section>
 
+    <ProjectBlueprintOrigins sources={node.blueprintSources} />
     <nav className="project-workbench-nav" aria-label="Outils de la fiche">
       <button type="button" className={workbenchTab === 'form' ? 'active' : ''} onClick={() => setWorkbenchTab('form')}>Fiche</button>
       <button type="button" className={workbenchTab === 'notes' ? 'active' : ''} onClick={() => setWorkbenchTab('notes')}>Notes</button>

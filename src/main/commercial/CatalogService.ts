@@ -265,11 +265,11 @@ export class CatalogService {
         }
       }
       if (previous) {
-        const links = this.database.all<{ template_version_id: string; role: string; sort_order: number }>(
-          'SELECT template_version_id,role,sort_order FROM catalog_project_blueprints WHERE catalog_version_id=? ORDER BY sort_order,id', [previous.id]);
+        const links = this.database.all<{ template_version_id: string; role: string; sort_order: number; quantity_mode: string; site_mode: string }>(
+          'SELECT template_version_id,role,sort_order,quantity_mode,site_mode FROM catalog_project_blueprints WHERE catalog_version_id=? ORDER BY sort_order,id', [previous.id]);
         for (const link of links) this.database.run(
-          'INSERT INTO catalog_project_blueprints (id,catalog_version_id,template_version_id,role,sort_order,created_at) VALUES (?,?,?,?,?,?)',
-          [randomUUID(), version.id, link.template_version_id, link.role, link.sort_order, now]);
+          'INSERT INTO catalog_project_blueprints (id,catalog_version_id,template_version_id,role,sort_order,created_at,quantity_mode,site_mode) VALUES (?,?,?,?,?,?,?,?)',
+          [randomUUID(), version.id, link.template_version_id, link.role, link.sort_order, now, link.quantity_mode, link.site_mode]);
       }
       this.database.run('UPDATE catalog_items SET updated_at=? WHERE id=?', [now, itemId]);
       this.writeActivity(itemId, 'catalog_version_created', `Nouvelle version brouillon v${version.versionNumber}`);

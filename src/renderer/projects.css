@@ -2241,3 +2241,15 @@ body.project-resizing * {
 .project-production-collapse-top{margin-left:4px}
 .project-production-page.project-top-collapsed{grid-template-rows:auto auto minmax(0,1fr)}
 @media(max-width:760px){.project-production-header-compact{grid-template-columns:auto minmax(0,1fr)}.project-production-header-compact>button:last-child{grid-column:1/-1}}
+
+/* Lot 7: readable sold origin; technical identifiers remain in provenance data. */
+.project-blueprint-origins {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-soft);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.project-blueprint-origins strong { color: var(--accent-strong); }
+.project-blueprint-origins ul { margin: 8px 0 0; padding-left: 18px; line-height: 1.6; }

@@ -4,12 +4,14 @@ Date d'ouverture : 27/09/2026.
 
 ## 0. Statut et mode d'emploi pour les agents
 
+Checkpoint 03/10/2026 : Lot 7 techniquement validé ; commit local dédié de ses 27 fichiers autorisé sans push/merge, code identique aux 479/479 tests + typecheck OK + UI 24/24. Base Validation-MSI inchangée (ca5ab5a58af53197662000e0fb9edf27762b0c93cd606e2b49ca9391dde09db5). Audit 7B validé : préparation séparée après clôture, copies uniquement, aucun Lot 8/Abby/Bridge/8C. Les checkpoints précédents restent historiques ; recette manuelle AtoumWeb à faire.
+
 **Document de coordination commun. Publication de la feuille de route autorisée ; aucun lot de développement autorisé par cette publication.**
 
 - Dépôt : `atoumweb-prog/atoumweb-manager`.
 - Base canonique Manager après clôture 8B : `feature/project-page-compositions-v1@ef02f8d6737df14f5cc5d49ed7c5e45d8c59cf81` (vérifiée localement le 03/10/2026).
 - Base canonique Bridge après clôture 8B annoncée par AtoumWeb : `feature/workbench-occurrence-v1@d1ecf89dab4f48230269a0cb10fb796f33c60bfc`, plugin **0.8.4**. Aucun travail Bridge pendant le chantier contractuel.
-- Priorité courante : **Contrats Lot 3 — reprise du catalogue commercial**, autorisé après clôture locale des Lots 1/2. HEAD local `1d0436a961f261b6b89eb029c8e5b5a2bde4e4a9` ; Lot 3 testé mais non committé. Huit décisions métier closes : aucune reprise directe des anciens objets ambigus. Nouveau dry-run complet présenté avant toute écriture réelle ; feu vert séparé requis. Lot 4, Lot 8C et travail Bridge suspendus.
+- Priorité courante : **Contrats Lot 7 — migration 58 appliquée sur Validation-MSI**, après autorisation AtoumWeb. HEAD local Lot 6 `5cf67f796941690449fc8661fe956c0ffd3e50d1` conservé, Lot 7 non committé. Base réelle migrations 1–58, SHA `ca5ab5a58af53197662000e0fb9edf27762b0c93cd606e2b49ca9391dde09db5` ; plan et bindings vides, historique intact, aucune publication. Attendre validation du bilan réel avant commit local dédié. Le mapping commercial des blueprints reste à décider/versionner explicitement ; aucun Lot 8 opérationnel, Lot 8C, Abby ou Bridge.
 - Checkpoint Lots 7 + 8A validé : typecheck Manager, **37/37 tests ciblés**, **346/346 tests complets**, recettes Manager/Bridge et Workbench multi-composants validées. Les lots suivants restent soumis à autorisation explicite.
 - PR #74 / CGV Builder déjà intégrée : ne pas la fusionner à nouveau.
 - Les choix ci-dessous sont les recommandations issues de l'audit. Les arbitrages de la section 14 doivent être confirmés avant implémentation ; un lot nécessite une autorisation explicite.
@@ -1762,3 +1764,43 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Aucun artefact de sauvegarde/simulation/base/classeur inclus ; les scripts de simulation/contrôle prévus font partie du code Lot 6, leurs sorties demeurent hors dépôt.
 - Validation-MSI demeure au SHA **7a54bb9905b16370f3c98f9d0e5dacd88bb38a65cae5b506525e1ea6e86496d4** ; 112 AW, 112 versions catalogue V1 BROUILLON, 118 clauses BROUILLON, 409 liens, devis historiques, Projets et documents conservés.
 - **RECETTE MANUELLE ATOUMWEB TOUJOURS À FAIRE avant validation fonctionnelle finale. Lot 7 non commencé.** Aucun démarrage Manager ni écriture base pendant cette clôture. Aucun push/merge, publication, Abby, Bridge ou 8C.
+
+
+### 2026-10-03 — CONTRACT-LOT7-001 — Autorisation limitée et constat
+
+- Auteur : AtoumWeb (consigne), Codex (constat). Base locale Lot 6 `5cf67f796941690449fc8661fe956c0ffd3e50d1`, branche `feature/project-page-compositions-v1`.
+- Feu vert : Lot 7 uniquement, code/tests/UI/simulation sur copie ; aucune application Validation-MSI, publication des 112/118 brouillons, Lot 8 opérationnel, Abby, Bridge, 8C ou commit/push/merge.
+- Constat : choix silencieux de la première base, addons surtout dans l'arbre métier, Sites/Pages alimentés seulement par la base ; quantités non expansées ; prérequis inclus incomplets et copie globale susceptible de devenir fantôme après retrait.
+- Découpage : réutiliser liens base/addon, identités sémantiques et sources existantes ; ajouter politiques quantité/destination et plan figé des ventes. Aucune déduction par nom.
+
+### 2026-10-03 — CONTRACT-LOT7-002 — Préparation locale et simulation terminées
+
+- Auteur : Codex, résultat technique local **non committé**. HEAD Lot 6 inchangé.
+- Migration **58 additive**, réservée après contrôle de l'état 57 ; anciennes migrations intactes. Tables plan/bindings/prérequis, `once/per_unit` et `create/extend_base` ; pas de seed/backfill.
+- Moteur : contributions réellement vendues, achats Lot 6, quantités explicites, Pages/descendants distincts, Sites déclarés par addons, sources exactes. Plan figé et haché ; rejeu pur, manuel conservé ; bases concurrentes bloquées avant création. Choix explicite d'une seule base tracé avec les origines remplacées ; fallback historique préservé hors nouveaux plans.
+- Contrôles **479/479 tests**, 61 fichiers, 20 nouveaux tests Lot 7 ; typecheck sortie 0 ; **24/24 UI isolée**, Blanc/Noir/AtoumWeb. Recette manuelle à faire.
+- Simulation 11 observations sur copie : Site vitrine 1/5 ; Pages x2 1/7 ; Blog 1/6 ; option disponible 1/5, achetée 1/6 ; addons multiples 1/8 ; renommages et Page manuelle conservés ; quantité finale 1→3 1/8 ; plusieurs bases bloquées. Rejeux sans mutation. 100 anciennes tables préservées à la migration, historique exact, intégrité ok/FK vide, zéro création opérationnelle.
+- Source réelle jamais connectée par le simulateur : copie binaire vérifiée seulement. Validation-MSI toujours migrations 1–57, SHA `7a54bb9905b16370f3c98f9d0e5dacd88bb38a65cae5b506525e1ea6e86496d4` ; XLSX SHA `6bc3eddaee0e1d77008c0bdc98984eea89ac54838c483c12c58b95cd3b237ad8`. 112 AW/112 catalogue V1 brouillon/118 clauses brouillon/409 liens et anciens devis/Projets/documents préservés.
+- Les vrais liens répétables/destinations doivent être configurés explicitement avant recette commerciale ; aucune configuration/publication V1 sur la base réelle pendant cette préparation.
+- Bilan `docs/CONTRACTUAL_LOT7_COMPOSED_BLUEPRINTS.md` ; preuves `outputs/contract-blueprints-lot7` dans le dossier documentaire partagé.
+- **Lot 7 préparé, non appliqué/non committé. Attendre validation du bilan et autorisation réelle séparée. Ne pas démarrer Manager sur Validation-MSI (58 pendante). Aucun Lot 8, Abby, Bridge, 8C, publication, push/merge.**
+
+
+### 2026-10-03 — CONTRACT-LOT7-003 — Feu vert et application réelle de migration 58 seule
+
+Auteur : AtoumWeb (autorisation), Codex (application et contrôle).
+
+- Feu vert AtoumWeb : **application réelle du Lot 7 uniquement / migration 58**, sans backfill, reconstruction historique, politique/destination commerciale inventée, publication ou objet opérationnel. **Application terminée ; aucun commit autorisé avant validation du bilan réel.**
+- Branche `feature/project-page-compositions-v1`, HEAD Lot 6 **5cf67f796941690449fc8661fe956c0ffd3e50d1** inchangé. **27 fichiers Lot 7 attendus**, index vide ; aucun push/merge.
+- Empreintes vérifiées : 27 fichiers exacts, 336 sources applicatives et preuves validées **479/479 tests, typecheck sortie 0, UI 24/24**. Le plan d'application couvre 343 sources/fichiers de configuration ; aucun code fonctionnel changé, aucune répétition inutile de suite.
+- Manager non démarré. Base initiale **1–57**, SHA **7a54bb9905b16370f3c98f9d0e5dacd88bb38a65cae5b506525e1ea6e86496d4**, sans WAL/SHM/journal. Verrou exclusif acquis et seconde connexion d'écriture refusée ; WAL vide et SHM de verrou 32 768 octets, aucun journal actif.
+- Sauvegarde physique immédiatement avant migration sous verrou : `C:/DEV/02_DONNEES/AtoumWeb/Validation-MSI/backups/before-lot7-2026-10-03T21-01-27-408Z.sqlite`, SHA **7a54bb9905b16370f3c98f9d0e5dacd88bb38a65cae5b506525e1ea6e86496d4**, identique au checkpoint initial. Intégrité/FK vérifiées indépendamment en lecture immutable.
+- Jeton du plan **61e9e8156b3b20b28b7332584d9a54959b83f1d97022f69db31bde8177c44f4f** recalculé et empreintes revérifiées immédiatement avant le seul changement durable autorisé.
+- Migration **58 seule appliquée** : migrations **1–58** présentes ; colonnes `quantity_mode/site_mode` et tables `project_blueprint_plans`, `project_composed_node_bindings`, `project_composed_site_bindings`, `project_composed_prerequisite_sources`. Les **quatre tables sont vides**.
+- Seuls les défauts de schéma `once/create` apparaissent sur les **3 anciens liens blueprint** ; aucun mapping AW, règle de quantité ou destination commerciale renseigné. Les anciennes colonnes/valeurs de ces liens sont intactes.
+- **112 AW / 112 versions catalogue V1 BROUILLON / 118 clauses BROUILLON / 409 liens intacts / 0 publication contractuelle** ; 44 publications catalogue historiques inchangées. `quote_option_purchases` reste vide.
+- Conservation exhaustive des **100 anciennes tables/colonnes/lignes**, hors ligne de migration 58 et nouvelles colonnes techniques autorisées. **DEV-2026-001/002/003**, leurs 2 lignes chacun, les **2 Projets**, leurs Sites/Pages et documents restent exacts ; aucun plan composé historique ni instance contractuelle ajouté.
+- `integrity_check=ok`, `foreign_key_check` vide ; rejeu migrations **[]**, aucune modification logique **ni physique**. Checkpoints WAL TRUNCATE réussis, fermeture puis SHA final **ca5ab5a58af53197662000e0fb9edf27762b0c93cd606e2b49ca9391dde09db5** ; aucun WAL/SHM/journal résiduel. Contre-vérification indépendante Python/SQLite read-only immutable réussie contre la sauvegarde.
+- XLSX inchangé, SHA **6bc3eddaee0e1d77008c0bdc98984eea89ac54838c483c12c58b95cd3b237ad8**. Aucun pack/maintenance/intervention, Abby, Bridge, Lot 8 ou 8C.
+- Bilan `docs/CONTRACTUAL_LOT7_COMPOSED_BLUEPRINTS.md` ; preuves `application-lot7-validation-msi.md/json`, `contre-verification-lot7.json` et plan dans `outputs/contract-blueprints-lot7` du dossier documentaire partagé.
+- **Lot 7 appliqué, non committé. Attendre validation du résultat avant commit local dédié, sans push/merge. Recette manuelle AtoumWeb toujours à faire.** Le mapping `AW → blueprint → rôle → destination → quantité` reste à décider/configurer explicitement et à versionner dans une étape autorisée séparément.

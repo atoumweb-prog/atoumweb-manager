@@ -360,7 +360,7 @@ export class QuoteService {
     }, source.item_id, source.version_id, snapshot);
     if (firstOffer) {
       this.updateConditions(quoteId, {
-        prerequisitesText: current.prerequisitesText || this.parseJsonList(source.prerequisites_json).join('\n'),
+        prerequisitesText: current.prerequisitesText,
         contractType: current.contractType || source.contract_type,
       });
     }

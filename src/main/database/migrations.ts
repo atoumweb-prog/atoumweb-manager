@@ -1,3 +1,4 @@
+import { PROJECT_COMPOSITION_MIGRATION } from './projectCompositionMigration';
 import { QUOTE_OPTIONS_MIGRATION } from './quoteOptionsMigration';
 import { STABILISATION_MIGRATION } from './stabilisationMigration';
 import { STABILISATION_PHASE_19_MIGRATION } from './stabilisationPhase19Migration';
@@ -229,6 +230,7 @@ export const MIGRATIONS: Migration[] = [
   CONTRACT_LIBRARY_IMPORT_V1_MIGRATION,
   QUOTE_CONTRACT_PREPARATION_MIGRATION,
   QUOTE_OPTIONS_MIGRATION,
+  PROJECT_COMPOSITION_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {

@@ -178,7 +178,7 @@ export class CatalogImportService {
     if (!from) return true;
     const relations = (id: string) => ({
       components: this.database.all('SELECT service_version_id,is_optional,quantity_milli,sort_order FROM offer_components WHERE offer_version_id=? ORDER BY sort_order,service_version_id', [id]),
-      blueprints: this.database.all('SELECT template_version_id,role,sort_order FROM catalog_project_blueprints WHERE catalog_version_id=? ORDER BY sort_order,template_version_id,role', [id]),
+      blueprints: this.database.all('SELECT template_version_id,role,sort_order,quantity_mode,site_mode FROM catalog_project_blueprints WHERE catalog_version_id=? ORDER BY sort_order,template_version_id,role', [id]),
     });
     return stable(relations(from)) === stable(relations(to));
   }

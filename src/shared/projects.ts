@@ -88,6 +88,13 @@ export interface ProjectCompanionAdvice {
   body: string;
 }
 
+export interface ProjectBlueprintNodeSource {
+  contributionKey: string; unitIndex: number; sourceTemplateNodeId: string;
+  quoteLineId: string | null; catalogVersionId: string | null; componentId: string | null;
+  templateVersionId: string; role: 'base' | 'addon'; quantityMilli: number;
+  quantityMode: 'once' | 'per_unit'; label: string; optionPurchase: Record<string, unknown> | null;
+}
+
 export interface ProjectNodeSource {
   id: string;
   projectNodeId: string;
@@ -185,6 +192,7 @@ export interface ProjectNode extends ProjectNodeInput {
   paused: boolean;
   pauseReason?: string | null;
   sources: ProjectNodeSource[];
+  blueprintSources?: ProjectBlueprintNodeSource[];
   createdAt: string;
   updatedAt: string;
 }

@@ -1,3 +1,4 @@
+import { ProjectBlueprintCompositionService } from './ProjectBlueprintCompositionService';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import {
@@ -165,6 +166,9 @@ export class ProjectSiteService {
   }
 
   applyBlueprint(projectId: string, templateVersionId?: string | null, manageTransaction = true): ProjectBlueprintGenerationResult {
+    if (this.database.get('SELECT project_id FROM project_blueprint_plans WHERE project_id=?', [projectId])) {
+      return new ProjectBlueprintCompositionService(this.database, this).replay(projectId, templateVersionId, manageTransaction);
+    }
     const project = this.database.get<{ id: string; project_type: string; template_version_id: string | null }>(
       'SELECT id,project_type,template_version_id FROM projects WHERE id=?',
       [projectId],

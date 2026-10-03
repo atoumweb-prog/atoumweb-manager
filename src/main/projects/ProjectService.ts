@@ -3,7 +3,8 @@ import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import type { WorkspacePaths } from '../workspace';
-import type { ProjectSiteService } from './ProjectSiteService';
+import { ProjectSiteService } from './ProjectSiteService';
+import { ProjectBlueprintCompositionService } from './ProjectBlueprintCompositionService';
 import {
   PROJECT_COMMERCIAL_MODES,
   PROJECT_NODE_STATUSES,
@@ -336,7 +337,8 @@ export class ProjectService {
     const clientId = quote.accepted_client_account_id ?? quote.client_account_id;
     if (!clientId) throw new Error('Le devis accepté doit être rattaché à un Client.');
 
-    const blueprintPlan = this.resolveBlueprintPlan(input.quoteId, clean(input.templateVersionId));
+    const composition = new ProjectBlueprintCompositionService(this.database, this.projectSites ?? new ProjectSiteService(this.database));
+    const blueprintPlan = composition.resolveQuote(input.quoteId, clean(input.templateVersionId));
     const templateVersion = this.getTemplateVersion(blueprintPlan.base.templateVersionId);
     if (templateVersion.status !== 'published') throw new Error('Le blueprint principal doit être publié.');
     const template = this.getTemplate(templateVersion.templateId);
@@ -346,13 +348,15 @@ export class ProjectService {
     if (!PROJECT_COMMERCIAL_MODES.includes(mode)) throw new Error('Mode commercial invalide.');
 
     const id = randomUUID(); const now = nowIso(); const year = new Date().getFullYear();
-    const number = this.nextProjectNumber(year, now);
     const clientLabel = this.clientLabel(clientId);
-    const paths = this.projectPaths(clientLabel, number, name, false);
-    const existedBefore = existsSync(paths.projectDirectory);
-
+    let createdDirectory: string | null = null;
+    let existedBefore = true;
     this.database.exec('BEGIN IMMEDIATE;');
     try {
+      const number = this.nextProjectNumber(year, now);
+      const paths = this.projectPaths(clientLabel, number, name, false);
+      createdDirectory = paths.projectDirectory;
+      existedBefore = existsSync(paths.projectDirectory);
       this.createResourceFolders(paths.resourceRoot);
       this.database.run(
         `INSERT INTO projects (id,project_number,client_account_id,source_quote_id,template_version_id,name,project_type,status,commercial_mode,start_date,target_date,commercial_value_cents,contract_value_cents,resource_root_path,created_at,updated_at)
@@ -360,25 +364,19 @@ export class ProjectService {
         [id, number, clientId, quote.id, templateVersion.id, name, template.projectType, mode, null, input.targetDate ?? null, Number(quote.catalog_value_cents), Number(quote.contract_value_cents), paths.resourceRoot, now, now],
       );
 
-      this.copyTemplateTreeToProject(templateVersion.id, id, now, blueprintPlan.base, false);
-      for (const addon of blueprintPlan.addons) {
-        this.copyTemplateTreeToProject(addon.templateVersionId, id, now, addon, true);
-      }
-      this.projectSites?.applyBlueprint(id, templateVersion.id, false);
-
+      composition.create(id, blueprintPlan, now);
       this.copyQuoteServicesToProject(quote.id, id, now);
-      this.seedPrerequisitesFromQuote(quote.id, id, quote.prerequisites_text, now);
       this.database.run('UPDATE quotes SET project_id=?, updated_at=? WHERE id=?', [id, now, quote.id]);
       this.writeActivity(
         'project',
         id,
         'project_created_from_quote',
-        `Projet ${number} créé depuis ${quote.quote_number} avec blueprint ${template.name}${blueprintPlan.addons.length ? ` + ${blueprintPlan.addons.length} module(s)` : ''}`,
+        `Projet ${number} créé depuis ${quote.quote_number} avec blueprint ${template.name}${(blueprintPlan.contributions.length - 1) ? ` + ${(blueprintPlan.contributions.length - 1)} module(s)` : ''}`,
       );
       this.database.exec('COMMIT;');
     } catch (error) {
       this.database.exec('ROLLBACK;');
-      if (!existedBefore) rmSync(paths.projectDirectory, { recursive: true, force: true });
+      if (!existedBefore && createdDirectory) rmSync(createdDirectory, { recursive: true, force: true });
       throw error;
     }
     return this.getProject(id);
@@ -703,6 +701,7 @@ export class ProjectService {
   }
 
   private getProjectNodes(projectId: string): ProjectNode[] {
+    const composition = new ProjectBlueprintCompositionService(this.database, this.projectSites ?? new ProjectSiteService(this.database));
     return this.database.all<ProjectNodeRow>('SELECT * FROM project_nodes WHERE project_id=? ORDER BY sort_order, created_at', [projectId]).map((row) => ({
       id: row.id,
       projectId: row.project_id,
@@ -723,6 +722,7 @@ export class ProjectService {
       paused: Boolean(row.is_paused),
       pauseReason: row.pause_reason,
       sources: this.getProjectNodeSources(row.id),
+      blueprintSources: composition.provenance(row.project_id, row.id),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     }));
@@ -825,96 +825,6 @@ export class ProjectService {
     return '/' + path.replace(/^\/+|\/+$/g, '');
   }
 
-  private resolveBlueprintPlan(quoteId: string, explicitTemplateVersionId?: string | null): { base: BlueprintContribution; addons: BlueprintContribution[] } {
-    const lines = this.database.all<QuoteLineProjectRow>(
-      'SELECT id,catalog_item_id,catalog_version_id,label,snapshot_json,catalog_line_value_cents,contract_line_value_cents FROM quote_lines WHERE quote_id=? ORDER BY sort_order, created_at',
-      [quoteId],
-    );
-
-    let mappedBase: BlueprintContribution | null = null;
-    const addons: BlueprintContribution[] = [];
-
-    const pushAddon = (contribution: BlueprintContribution) => {
-      const duplicate = addons.some((item) =>
-        item.templateVersionId === contribution.templateVersionId
-        && item.quoteLineId === contribution.quoteLineId
-        && item.catalogVersionId === contribution.catalogVersionId,
-      );
-      if (!duplicate) addons.push(contribution);
-    };
-
-    for (const line of lines) {
-      if (line.catalog_version_id) {
-        for (const link of this.blueprintLinksForCatalogVersion(line.catalog_version_id)) {
-          const contribution: BlueprintContribution = {
-            templateVersionId: link.template_version_id,
-            quoteLineId: line.id,
-            catalogVersionId: line.catalog_version_id,
-            sourceRole: 'direct',
-          };
-          if (link.role === 'base' && !mappedBase) mappedBase = contribution;
-          if (link.role === 'addon') pushAddon(contribution);
-        }
-      }
-
-      if (!line.snapshot_json) continue;
-      let snapshot: Record<string, unknown> | null = null;
-      try {
-        const parsed = JSON.parse(line.snapshot_json) as unknown;
-        snapshot = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : null;
-      } catch {
-        snapshot = null;
-      }
-      const components = snapshot?.offerComponents;
-      if (!Array.isArray(components)) continue;
-
-      for (const raw of components) {
-        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
-        const component = raw as Record<string, unknown>;
-        if (component.isOptional === true) continue;
-        const serviceVersionId = typeof component.serviceVersionId === 'string' ? component.serviceVersionId : null;
-        if (!serviceVersionId) continue;
-        for (const link of this.blueprintLinksForCatalogVersion(serviceVersionId)) {
-          const contribution: BlueprintContribution = {
-            templateVersionId: link.template_version_id,
-            quoteLineId: line.id,
-            catalogVersionId: serviceVersionId,
-            sourceRole: 'offer_component',
-          };
-          if (link.role === 'base' && !mappedBase) mappedBase = contribution;
-          if (link.role === 'addon') pushAddon(contribution);
-        }
-      }
-    }
-
-    const explicit = clean(explicitTemplateVersionId);
-    const base: BlueprintContribution | null = explicit
-      ? { templateVersionId: explicit, quoteLineId: null, catalogVersionId: null, sourceRole: 'manual' }
-      : mappedBase;
-
-    if (!base) {
-      throw new Error('Aucun blueprint de base n’est lié à ce devis. Choisis un modèle publié ou configure le lien Catalogue → Projet.');
-    }
-
-    const baseVersion = this.getTemplateVersion(base.templateVersionId);
-    if (baseVersion.status !== 'published') throw new Error('Le blueprint de base doit être publié.');
-
-    const filteredAddons = addons.filter((addon) => addon.templateVersionId !== base.templateVersionId);
-    for (const addon of filteredAddons) {
-      const version = this.getTemplateVersion(addon.templateVersionId);
-      if (version.status !== 'published') throw new Error('Un module de production lié au devis n’est pas publié.');
-    }
-
-    return { base, addons: filteredAddons };
-  }
-
-  private blueprintLinksForCatalogVersion(catalogVersionId: string): BlueprintLinkRow[] {
-    return this.database.all<BlueprintLinkRow>(
-      'SELECT * FROM catalog_project_blueprints WHERE catalog_version_id=? ORDER BY CASE role WHEN \'base\' THEN 0 ELSE 1 END, sort_order, created_at',
-      [catalogVersionId],
-    );
-  }
-
   private copyTemplateTreeToProject(
     versionId: string,
     projectId: string,
@@ -1000,25 +910,6 @@ export class ProjectService {
         `INSERT INTO project_services (id,project_id,source_quote_line_id,catalog_item_id,catalog_version_id,label,snapshot_json,catalog_value_cents,contract_value_cents,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)`,
         [randomUUID(), projectId, line.id, line.catalog_item_id, line.catalog_version_id, line.label, line.snapshot_json, line.catalog_line_value_cents, line.contract_line_value_cents, now],
       );
-    }
-  }
-
-  private seedPrerequisitesFromQuote(quoteId: string, projectId: string, quoteText: string | null, now: string): void {
-    const labels = new Set<string>();
-    if (quoteText) quoteText.split(/\r?\n|;/).map((value) => value.trim()).filter(Boolean).forEach((value) => labels.add(value));
-    const lines = this.database.all<{ snapshot_json: string | null }>('SELECT snapshot_json FROM quote_lines WHERE quote_id=?', [quoteId]);
-    for (const line of lines) {
-      if (!line.snapshot_json) continue;
-      try {
-        const snapshot = JSON.parse(line.snapshot_json) as Record<string, unknown>;
-        const prerequisites = snapshot.prerequisites;
-        if (Array.isArray(prerequisites)) prerequisites.filter((value): value is string => typeof value === 'string').map((value) => value.trim()).filter(Boolean).forEach((value) => labels.add(value));
-      } catch { /* snapshot legacy invalide ignoré */ }
-    }
-    let order = 0;
-    for (const label of labels) {
-      this.database.run('INSERT INTO project_prerequisites (id,project_id,label,status,is_required,sort_order,created_at,updated_at) VALUES (?,?,?,\'to_request\',1,?,?,?)', [randomUUID(), projectId, label, order, now, now]);
-      order += 10;
     }
   }
 
