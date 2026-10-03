@@ -85,7 +85,19 @@ interface QuoteLineRow extends Record<string, unknown> {
   updated_at: string;
 }
 
-interface CatalogSnapshotRow extends Record<string, unknown> {
+interface CatalogIdentitySnapshotRow extends Record<string, unknown> {
+  canonical_code: string | null;
+  identity_provenance_json: string | null;
+  commercial_kind: string | null;
+  family_code: string | null;
+  abby_label: string | null;
+  unit: string | null;
+  periodicity: string | null;
+  price_basis: string;
+  provenance_json: string | null;
+}
+
+interface CatalogSnapshotRow extends CatalogIdentitySnapshotRow {
   version_id: string;
   item_id: string;
   item_name: string;
@@ -102,7 +114,7 @@ interface CatalogSnapshotRow extends Record<string, unknown> {
   contract_type: string | null;
 }
 
-interface OfferComponentSnapshotRow extends Record<string, unknown> {
+interface OfferComponentSnapshotRow extends CatalogIdentitySnapshotRow {
   service_version_id: string;
   service_item_id: string;
   service_name: string;
@@ -249,7 +261,8 @@ export class QuoteService {
       `SELECT v.id AS version_id, i.id AS item_id, i.name AS item_name, i.item_type,
               v.version_number, v.description, v.inclusions_json, v.exclusions_json,
               v.prerequisites_json, v.price_mode, v.price_cents, v.default_deposit_percent,
-              v.contract_type, v.special_terms
+              v.contract_type, v.special_terms, i.canonical_code, i.identity_provenance_json,
+              v.commercial_kind, v.family_code, v.abby_label, v.unit, v.periodicity, v.price_basis, v.provenance_json
        FROM catalog_versions v
        JOIN catalog_items i ON i.id=v.item_id
        WHERE v.id=?`,
@@ -275,6 +288,8 @@ export class QuoteService {
           sv.price_cents,
           sv.special_terms,
           sv.contract_type,
+          si.canonical_code, si.identity_provenance_json,
+          sv.commercial_kind, sv.family_code, sv.abby_label, sv.unit, sv.periodicity, sv.price_basis, sv.provenance_json,
           oc.is_optional,
           oc.quantity_milli,
           oc.sort_order
@@ -285,6 +300,7 @@ export class QuoteService {
          ORDER BY oc.sort_order, si.name COLLATE NOCASE`,
         [catalogVersionId],
       ).map((component) => ({
+        ...this.catalogIdentitySnapshot(component),
         serviceItemId: component.service_item_id,
         serviceVersionId: component.service_version_id,
         serviceName: component.service_name,
@@ -304,6 +320,7 @@ export class QuoteService {
       : [];
 
     const snapshot = {
+      ...this.catalogIdentitySnapshot(source),
       itemId: source.item_id,
       itemName: source.item_name,
       itemType: source.item_type,
@@ -338,6 +355,20 @@ export class QuoteService {
     }
     this.recalculate(quoteId);
     return this.get(quoteId);
+  }
+
+  private catalogIdentitySnapshot(source: CatalogIdentitySnapshotRow): Record<string, unknown> {
+    return {
+      canonicalCode: source.canonical_code,
+      identityProvenance: source.identity_provenance_json ? JSON.parse(source.identity_provenance_json) : null,
+      commercialKind: source.commercial_kind,
+      familyCode: source.family_code,
+      abbyLabel: source.abby_label,
+      unit: source.unit,
+      periodicity: source.periodicity,
+      priceBasis: source.price_basis,
+      provenance: source.provenance_json ? JSON.parse(source.provenance_json) : null,
+    };
   }
 
   addCustomLine(quoteId: string, input: QuoteLineInput): QuoteDetail {

@@ -1586,3 +1586,22 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Contrôles demandés avant commit local : suite complète `npm test` 356/356 (54 fichiers), typecheck sortie 0, aucun changement inattendu ; base réelle inchangée.
 - Autorisation : commit local dédié au seul Lot 1, sans push/merge. La réserve de recette doit apparaître dans son message et le bilan.
 - Après ce commit, Lot 2 — Identité catalogue V1 autorisé séparément ; arrêt et bilan avant Lot 3. Aucun travail Bridge/8C.
+
+### 2026-10-03 — CONTRACT-LOT2-001 — Identité catalogue V1, sans reprise des données
+
+- Autorisation AtoumWeb : après suite complète et typecheck Lot 1 verts, commit local Lot 1 uniquement puis implémentation du Lot 2 du plan métier en neuf lots ; arrêt avant Lot 3.
+- Lot 1 committé seul : `dedb865f4cdabd518391b63f067ed8e2647c869b`. Son message porte **VALIDÉ TECHNIQUEMENT / RECETTE MANUELLE ATOUMWEB À FAIRE PLUS TARD** ; 356/356 tests avant commit, aucune anomalie inattendue, arbre propre avant Lot 2. Aucun push.
+- Lot 2 : code AW unique et durable sur l'item ; unité, nature commerciale, famille, libellé Abby descriptif, périodicité, règle de coût tiers réel et provenance sur les versions. UUID techniques et anciennes relations conservés.
+- Attribution explicite ancien UUID → AW, atomique/idempotente avec provenance et journal d'activité. Jamais de rapprochement par nom ; aucune correspondance réelle créée dans Validation-MSI. Le catalogue reste vide de codes AW tant que les attributions ne sont pas décidées/appliquées.
+- Migration additive **53**, numéro contrôlé disponible après 52 : pas de reconstruction des tables, pas de seed/backfill et pas de modification des migrations antérieures. Testée en mémoire ; non appliquée à la base réelle.
+- Les nouvelles lignes de devis figent ces métadonnées et celles des composants d'offre ; les anciens JSON et versions ne sont pas réécrits. Aucune résolution d'options vendues ni composition de blueprint ajoutée ici.
+- Vérification : typecheck OK ; tests ciblés 45/45 ; suite complète **377/377**, 56 fichiers ; UI catalogue isolée **15/15**, Builder Lot 1 **14/14**. Empreinte réelle Validation-MSI inchangée ; zéro échec.
+- Bilan/fichiers/migration et limites : `CONTRACTUAL_LOT2_CATALOG_IDENTITY.md`. Modifications Lot 2 non committées, distinctes du commit Lot 1. Aucune publication/import contractuel, aucun travail Abby/Bridge, aucun merge `main`.
+- Suite : **arrêt et bilan avant Lot 3**, reprise contrôlée des 112 prestations seulement sur feu vert séparé. Lot 8C reste suspendu ; recette manuelle Lot 1 toujours à faire.
+
+### 2026-10-03 — CONTRACT-LOT2-002 — Validation technique et clôture locale
+
+- Décision AtoumWeb : Lot 2 validé techniquement, contrôles 377/377, typecheck OK, UI catalogue 15/15 et régression Lot 1 14/14 suffisants pour poursuivre. Recette manuelle AtoumWeb reportée, obligatoire avant validation fonctionnelle finale.
+- Autorisation : commit local Lot 2 dédié uniquement, sans push/merge, avec cette réserve dans le message. Aucun code Lot 3 dans ce commit.
+- Autorisation suivante : Lot 3 — reprise du catalogue canonique 112 AW, sur base temporaire, avec mapping ancien ID → AW → action, simulation, idempotence et historique préservé. Les huit ambiguïtés restent à soumettre ; aucun choix métier automatique par nom.
+- Arrêt avant écriture réelle dans Validation-MSI et présentation du dry-run pour feu vert séparé. Aucun Lot 4, import contractuel, Abby, Bridge ou 8C.

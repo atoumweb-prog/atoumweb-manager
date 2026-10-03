@@ -1,18 +1,18 @@
 # AtoumWeb Manager — Suivi du projet
 
-## État courant — 03/10/2026 — Contrats Lot 1 : brouillon et gel sécurisés
+## État courant — 03/10/2026 — Contrats Lot 1 committé / Lot 2 identité catalogue terminé localement
 
 Ce bloc fait foi pour la reprise actuelle ; les comptes rendus datés ci-dessous restent historiques.
 
-- Base vérifiée : `feature/project-page-compositions-v1@ef02f8d6737df14f5cc5d49ed7c5e45d8c59cf81`, arbre propre avant ce lot. Lot 8B clos et recetté ; Lot 8C suspendu.
-- Lot 1 seul autorisé après audit : enregistrement des clauses/versions en brouillon, publication séparée, gel durable même vide, absence contractuelle historique conservée, protection des documents rattachés.
-- Statut AtoumWeb : **VALIDÉ TECHNIQUEMENT / RECETTE MANUELLE ATOUMWEB À FAIRE PLUS TARD**, avant validation fonctionnelle finale. Commit local dédié autorisé ; aucun push/merge.
-- Aucune migration nouvelle ni modification des migrations 1–52.
-- Vérification avant commit : suite complète **356/356**, typecheck réussi, **43/43 tests ciblés** et **14/14 contrôles UI Chromium isolés**. Aucun changement inattendu.
-- La base réelle Validation-MSI n'a pas été ouverte par le Manager : tests SQLite en mémoire et fichiers/profil UI temporaires. Empreinte de la base inchangée, donc devis `DEV-2026-001/002/003`, Projets et versions catalogue conservés.
+- Branche : `feature/project-page-compositions-v1`. Lot 1 commit local **`dedb865f4cdabd518391b63f067ed8e2647c869b`**, après suite complète **356/356**, typecheck réussi et vérification du diff ; arbre propre entre les deux lots. Aucun push/merge.
+- Lot 1 : enregistrement des clauses/versions en brouillon, publication séparée, gel durable même vide, absence contractuelle historique conservée, protection des documents rattachés. Statut AtoumWeb : **VALIDÉ TECHNIQUEMENT / RECETTE MANUELLE ATOUMWEB À FAIRE PLUS TARD**, avant validation fonctionnelle finale ; réserve inscrite dans le commit.
+- Lot 2 **validé techniquement par AtoumWeb**, commit local dédié autorisé : code AW stable et unique, attribution explicite UUID → AW, nature commerciale, famille, libellé Abby descriptif, unité, périodicité, coût tiers réel et provenance versionnés. Aucune déduction par nom, aucune reprise des 112 prestations dans ce lot. Recette manuelle AtoumWeb à faire avant validation fonctionnelle finale.
+- Migration additive **53** ajoutée après contrôle de la séquence 1–52. Aucun SQL des migrations 1–52 modifié ; aucun seed/backfill. Migration testée en mémoire uniquement, non exécutée sur la base réelle.
+- Validation Lot 2 : suite complète **56 fichiers / 377 tests réussis / 0 échec**, typecheck réussi ; tests ciblés **45/45** ; UI catalogue isolée **15/15** et régression Builder Lot 1 **14/14**. Contrôles techniques, sans prétendre remplacer la recette manuelle.
+- La base réelle Validation-MSI n'a pas été ouverte par le Manager. SHA-256 toujours `5756168d25f3fcac9677da52919213a5953d5eb717150f3be287e7966798eb0c`, WAL absent : devis `DEV-2026-001/002/003`, Projets et anciennes versions conservés.
 - Empreinte documentaire du PDF, contrôle d'intégrité et historique des remplacements différés au Lot 5. La suppression du PDF actuellement rattaché est déjà interdite ; son archivage préserve fichier et rattachement.
-- Bilan détaillé et fichiers : `docs/CONTRACTUAL_LOT1_DRAFT_FREEZE.md`.
-- Feu vert reçu pour le Lot 2 — Identité catalogue V1, après commit local du Lot 1. Séparer les modifications des deux lots et s'arrêter avant Lot 3. Aucun import contractuel/catalogue, Abby ou travail Bridge dans le Lot 1 ; aucun merge `main`.
+- Bilans détaillés et fichiers : `docs/CONTRACTUAL_LOT1_DRAFT_FREEZE.md` et `docs/CONTRACTUAL_LOT2_CATALOG_IDENTITY.md`.
+- Autorisation suivante reçue : après commit Lot 2 seul, préparer le Lot 3 en base temporaire avec import explicite, simulation, historique préservé et ambiguïtés à soumettre. Arrêt obligatoire avant première écriture réelle et avant Lot 4. Aucun import contractuel, Abby, blueprint composé ou Bridge ; 8C suspendu. Aucun push/merge.
 
 ## Lot 8A en cours — Export Page Manager
 

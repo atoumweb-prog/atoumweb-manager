@@ -2,13 +2,15 @@
 >
 > Ce bloc remplace les anciennes consignes de reprise ci-dessous, conservées comme historique.
 >
-> - Branche vérifiée : `feature/project-page-compositions-v1` ; base `ef02f8d6737df14f5cc5d49ed7c5e45d8c59cf81`.
+> - Branche : `feature/project-page-compositions-v1` ; HEAD local Lot 1 **`dedb865f4cdabd518391b63f067ed8e2647c869b`**, basé sur `ef02f8d6737df14f5cc5d49ed7c5e45d8c59cf81`.
 > - Lot 8B clos ; Lot 8C suspendu. Aucun travail Bridge demandé.
-> - Contrats Lot 1 implémenté localement : brouillon/publication séparés, snapshot vide figé, aucune injection sur devis historiques, PDF rattaché protégé contre suppression définitive.
-> - Aucune migration ; migrations 1–52 intactes. Base réelle inchangée. Aucun seed/import des 118 clauses, 112 prestations ou 409 liens.
+> - Contrats Lot 1 committé localement : brouillon/publication séparés, snapshot vide figé, aucune injection sur devis historiques, PDF rattaché protégé contre suppression définitive. Arbre propre après commit avant Lot 2.
+> - Lot 2 validé techniquement par AtoumWeb ; commit local dédié autorisé avant tout code Lot 3. Identité AW durable, unités/nature/périodicité/provenance versionnées, manifeste d'attribution explicite par UUID, UI catalogue, snapshots des nouvelles lignes de devis. Rapport : `CONTRACTUAL_LOT2_CATALOG_IDENTITY.md`. Recette manuelle reportée avant validation fonctionnelle finale.
+> - Migration additive **53** testée en mémoire uniquement ; migrations 1–52 intactes. Base réelle inchangée. Aucun seed/import des 118 clauses, 112 prestations ou 409 liens.
 > - Lot 1 VALIDÉ TECHNIQUEMENT ; RECETTE MANUELLE ATOUMWEB À FAIRE PLUS TARD avant validation fonctionnelle finale. Suite complète 356/356, typecheck OK ; tests ciblés 43/43 ; UI isolée 14/14.
 > - Rapport : `CONTRACTUAL_LOT1_DRAFT_FREEZE.md`. Les empreintes PDF et l'historique documentaire restent au Lot 5.
-> - Commit local Lot 1 autorisé, sans push/merge. Ensuite Lot 2 — Identité catalogue V1 autorisé séparément ; arrêter avant Lot 3.
+> - Validation Lot 2 : typecheck OK, suite complète **377/377** (56 fichiers), ciblés **45/45**, UI catalogue **15/15**, régression UI Lot 1 **14/14** ; zéro échec. Recette réelle non effectuée.
+> - Feu vert Lot 3 reçu après commit Lot 2 : import testé en base temporaire et dry-run explicite. **Ne pas écrire dans Validation-MSI avant présentation de la simulation et feu vert séparé.** Ne pas résoudre seul les huit ambiguïtés. Aucun Lot 4, push/merge, travail Bridge/8C ni import/publication de clauses.
 
 > ## HISTORIQUE — 29/09/2026 — Lot 6B
 >

@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   PRICE_MODES,
+  CATALOG_COMMERCIAL_KINDS,
+  type CatalogCommercialKind,
+  type CatalogPriceBasis,
   type CatalogItemDetail,
   type CatalogItemStatus,
   type CatalogItemSummary,
@@ -27,6 +30,8 @@ const STATUS_LABELS: Record<CatalogItemStatus, string> = {
   archived: 'Archivé',
 };
 
+const KIND_LABELS: Record<CatalogCommercialKind, string> = { offer: 'Offre', service: 'Service', option: 'Option', pack: 'Pack', subscription: 'Abonnement' };
+
 const VERSION_STATUS_LABELS = {
   draft: 'Brouillon',
   published: 'Publiée',
@@ -34,6 +39,16 @@ const VERSION_STATUS_LABELS = {
 } as const;
 
 interface CatalogDraft {
+  canonicalCode: string;
+  commercialKind: CatalogCommercialKind | '';
+  familyCode: string;
+  abbyLabel: string;
+  unit: string;
+  periodicity: string;
+  priceBasis: CatalogPriceBasis;
+  sourceReference: string;
+  sourceSha256: string;
+  sourceRecordKey: string;
   type: CatalogItemType;
   name: string;
   category: string;
@@ -55,6 +70,7 @@ interface CatalogDraft {
 }
 
 const EMPTY_DRAFT: CatalogDraft = {
+  canonicalCode: '', commercialKind: '', familyCode: '', abbyLabel: '', unit: '', periodicity: '', priceBasis: 'listed', sourceReference: '', sourceSha256: '', sourceRecordKey: '',
   type: 'service',
   name: '',
   category: '',
@@ -97,6 +113,7 @@ function splitLines(value: string): string[] {
 function formatPrice(item: CatalogItemSummary): string {
   const version = item.currentVersion;
   if (!version) return 'Non tarifé';
+  if (version.priceBasis === 'actual_cost') return 'Coût tiers réel';
   if (version.priceMode === 'free') return 'Gratuit';
   if (version.priceMode === 'quote_only') return 'Sur devis';
   if (version.priceCents == null) return PRICE_LABELS[version.priceMode];
@@ -105,7 +122,7 @@ function formatPrice(item: CatalogItemSummary): string {
   if (version.priceMode === 'hourly') return `${amount}/h`;
   if (version.priceMode === 'monthly') return `${amount}/mois`;
   if (version.priceMode === 'yearly') return `${amount}/an`;
-  return amount;
+  return version.unit ? `${amount} / ${version.unit}` : amount;
 }
 
 function formatCatalogDate(value?: string | null): string {
@@ -135,6 +152,7 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
   const [componentServiceVersionId, setComponentServiceVersionId] = useState('');
   const [componentQuantity, setComponentQuantity] = useState('1');
   const [componentOptional, setComponentOptional] = useState(false);
+  const [canonicalCodeDraft, setCanonicalCodeDraft] = useState('');
 
   const publishedServices = useMemo(
     () => items.filter((item) => item.type === 'service' && item.status === 'active' && item.currentVersion?.status === 'published'),
@@ -144,6 +162,7 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
   async function loadDetail(id: string): Promise<CatalogItemDetail> {
     const nextDetail = await window.atoumweb.catalog.getItem(id);
     setDetail(nextDetail);
+    setCanonicalCodeDraft(nextDetail.canonicalCode ?? '');
     if (nextDetail.type === 'offer') {
       const target = nextDetail.versions.find((version) => version.status === 'draft') ?? nextDetail.currentVersion ?? null;
       setOfferVersionId(target?.id ?? null);
@@ -181,6 +200,11 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
       const version = item.currentVersion;
       return [
         item.name,
+        item.canonicalCode,
+        version?.familyCode,
+        version?.abbyLabel,
+        version?.unit,
+        version?.periodicity,
         item.category,
         version?.nature,
         version?.description,
@@ -236,11 +260,19 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
   function buildVersion(input: CatalogDraft): CatalogVersionInput {
     const deposit = input.depositPercent.trim() ? Number(input.depositPercent) : null;
     if (deposit != null && (!Number.isInteger(deposit) || deposit < 0 || deposit > 100)) throw new Error('Acompte invalide.');
+    if (!input.sourceReference.trim() && (input.sourceSha256.trim() || input.sourceRecordKey.trim())) throw new Error('Renseigne la référence de source avec son empreinte ou sa ligne.');
     return {
+      commercialKind: input.commercialKind || null,
+      familyCode: input.familyCode.trim() || null,
+      abbyLabel: input.abbyLabel.trim() || null,
+      unit: input.unit.trim() || null,
+      periodicity: input.periodicity.trim() || null,
+      priceBasis: input.priceBasis,
+      provenance: input.sourceReference.trim() ? { reference: input.sourceReference.trim(), sha256: input.sourceSha256.trim() || null, recordKey: input.sourceRecordKey.trim() || null } : null,
       nature: input.nature.trim() || null,
       description: input.description.trim() || null,
       priceMode: input.priceMode,
-      priceCents: input.priceMode === 'free' ? 0 : eurosToCents(input.priceEuros),
+      priceCents: input.priceMode === 'free' ? 0 : input.priceMode === 'quote_only' ? null : eurosToCents(input.priceEuros),
       recommendedPriceCents: eurosToCents(input.recommendedEuros),
       defaultDepositPercent: deposit,
       estimatedMinutes: optionalInteger(input.estimatedMinutes, 'Durée estimée'),
@@ -263,6 +295,7 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
       const created = await window.atoumweb.catalog.create(
         {
           type: draft.type,
+          canonicalCode: draft.canonicalCode.trim() || null,
           name: draft.name.trim(),
           category: draft.category.trim() || null,
           visiblePublic: draft.visiblePublic,
@@ -285,6 +318,16 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
     if (!detail?.currentVersion) return;
     const current = detail.currentVersion;
     setVersionDraft({
+      canonicalCode: detail.canonicalCode ?? '',
+      commercialKind: current.commercialKind ?? '',
+      familyCode: current.familyCode ?? '',
+      abbyLabel: current.abbyLabel ?? '',
+      unit: current.unit ?? '',
+      periodicity: current.periodicity ?? '',
+      priceBasis: current.priceBasis ?? 'listed',
+      sourceReference: current.provenance?.reference ?? '',
+      sourceSha256: current.provenance?.sha256 ?? '',
+      sourceRecordKey: current.provenance?.recordKey ?? '',
       type: detail.type,
       name: detail.name,
       category: detail.category ?? '',
@@ -330,6 +373,18 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
     await refresh();
     await openItem(detail.id);
     onMessage(`Version v${version.versionNumber} publiée. L’ancienne version reste dans l’historique.`);
+  }
+
+  async function assignCode(): Promise<void> {
+    if (!detail) return;
+    setSaving(true);
+    try {
+      await window.atoumweb.catalog.assignCanonicalCode(detail.id, canonicalCodeDraft);
+      await refresh();
+      onMessage('Code canonique attribué explicitement. Les versions et devis historiques sont conservés.');
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Attribution du code impossible.');
+    } finally { setSaving(false); }
   }
 
   async function updateStatus(status: CatalogItemStatus): Promise<void> {
@@ -446,8 +501,9 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
                   >
                     <span className="catalog-compact-heading">
                       <strong>{item.name}</strong>
-                      <span className="status-pill">{item.type === 'offer' ? 'Offre' : 'Service'}</span>
+                      <span className="status-pill">{item.currentVersion?.commercialKind ? KIND_LABELS[item.currentVersion.commercialKind] : item.type === 'offer' ? 'Offre' : 'Service'}</span>
                     </span>
+                    {item.canonicalCode && <small className="catalog-canonical-code">{item.canonicalCode}</small>}
                     <span className="catalog-compact-meta">
                       <span>{item.category || 'Sans catégorie'}</span>
                       <span>{formatPrice(item)}</span>
@@ -467,7 +523,7 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
                   <tbody>
                     {filtered.map((item) => (
                       <tr key={item.id} className={selectedId === item.id ? 'selected-row' : ''} onClick={() => void openItem(item.id)}>
-                        <td>{item.category || '—'}</td><td><strong>{item.name}</strong></td><td><span className="status-pill">{item.type === 'offer' ? 'Offre' : 'Service'}</span></td><td>{formatPrice(item)}</td><td>{item.currentVersion?.recommendedPriceCents != null ? `${(item.currentVersion.recommendedPriceCents / 100).toLocaleString('fr-FR')} €` : '—'}</td><td>{item.currentVersion ? PRICE_LABELS[item.currentVersion.priceMode] : '—'}</td><td><span className={`catalog-status catalog-${item.status}`}>{STATUS_LABELS[item.status]}</span></td><td>{item.visiblePublic ? 'Oui' : 'Non'}</td><td>{item.currentVersion ? `v${item.currentVersion.versionNumber} · ${VERSION_STATUS_LABELS[item.currentVersion.status]}` : '—'}</td>
+                        <td>{item.category || '—'}</td><td><strong>{item.name}</strong>{item.canonicalCode && <small className="catalog-canonical-code">{item.canonicalCode}</small>}</td><td><span className="status-pill">{item.currentVersion?.commercialKind ? KIND_LABELS[item.currentVersion.commercialKind] : item.type === 'offer' ? 'Offre' : 'Service'}</span></td><td>{formatPrice(item)}</td><td>{item.currentVersion?.recommendedPriceCents != null ? `${(item.currentVersion.recommendedPriceCents / 100).toLocaleString('fr-FR')} €` : '—'}</td><td>{item.currentVersion ? PRICE_LABELS[item.currentVersion.priceMode] : '—'}</td><td><span className={`catalog-status catalog-${item.status}`}>{STATUS_LABELS[item.status]}</span></td><td>{item.visiblePublic ? 'Oui' : 'Non'}</td><td>{item.currentVersion ? `v${item.currentVersion.versionNumber} · ${VERSION_STATUS_LABELS[item.currentVersion.status]}` : '—'}</td>
                       </tr>
                     ))}
                     {filtered.length === 0 && <tr><td colSpan={9}><div className="empty-table">Aucune offre ou service pour ces filtres.</div></td></tr>}
@@ -501,6 +557,13 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
                 </div>
               </div>
               <div className="detail-badges"><span className={`catalog-status catalog-${detail.status}`}>{STATUS_LABELS[detail.status]}</span><span className="status-pill">{detail.visiblePublic ? 'Visible site' : 'Interne'}</span>{detail.currentVersion && <span className="status-pill">v{detail.currentVersion.versionNumber} · {VERSION_STATUS_LABELS[detail.currentVersion.status]}</span>}</div>
+              <section className="catalog-detail-section catalog-identity-section">
+                <strong>Identité catalogue V1</strong>
+                <Summary label="Code canonique" value={detail.canonicalCode || 'Non attribué'} />
+                {detail.identityProvenance && <Summary label="Source de l’attribution" value={detail.identityProvenance.reference} />}
+                {!detail.canonicalCode && <div className="catalog-code-assignment"><label>Code AW à attribuer<input value={canonicalCodeDraft} placeholder="AW-WEB-VITRINE" onChange={(e) => setCanonicalCodeDraft(e.target.value)} /></label><button className="secondary-button" type="button" disabled={saving || !canonicalCodeDraft.trim()} onClick={() => void assignCode()}>Attribuer ce code</button></div>}
+                <p className="muted">Le code attribué est durable. Les anciens éléments peuvent rester sans code jusqu’à leur rapprochement explicite.</p>
+              </section>
 
               {detail.currentVersion && (!detail.currentVersion.nature || !detail.currentVersion.description || (detail.currentVersion.inclusions?.length ?? 0) === 0) && (
                 <div className="catalog-completeness">
@@ -521,6 +584,12 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
                     <div className="catalog-detail-section-heading"><span className="eyebrow">Repères</span><strong>Tarification, délai et cadre</strong></div>
                     <div className="catalog-summary-grid">
                       <Summary label="Tarif actuel" value={formatPrice(detail)} />
+                      <Summary label="Nature commerciale" value={detail.currentVersion.commercialKind ? KIND_LABELS[detail.currentVersion.commercialKind] : 'Non renseignée'} />
+                      <Summary label="Famille canonique" value={detail.currentVersion.familyCode || 'Non renseignée'} />
+                      <Summary label="Libellé Abby" value={detail.currentVersion.abbyLabel || 'Non renseigné'} />
+                      <Summary label="Unité" value={detail.currentVersion.unit || 'Non renseignée'} />
+                      <Summary label="Périodicité" value={detail.currentVersion.periodicity || 'Non renseignée'} />
+                      {detail.currentVersion.provenance && <Summary label="Source" value={[detail.currentVersion.provenance.reference, detail.currentVersion.provenance.recordKey, detail.currentVersion.provenance.sha256].filter(Boolean).join(' · ')} />}
                       <Summary label="Prix conseillé" value={detail.currentVersion.recommendedPriceCents != null ? `${(detail.currentVersion.recommendedPriceCents / 100).toLocaleString('fr-FR')} €` : '—'} />
                       <Summary label="Acompte par défaut" value={detail.currentVersion.defaultDepositPercent != null ? `${detail.currentVersion.defaultDepositPercent} %` : '—'} />
                       <Summary label="Durée estimée" value={detail.currentVersion.estimatedMinutes != null ? `${detail.currentVersion.estimatedMinutes} min` : '—'} />
@@ -601,6 +670,15 @@ function CatalogFields({ draft, onChange, showIdentity = false }: { draft: Catal
       <section className="catalog-field-group">
         <div className="catalog-field-group-heading"><strong>Contenu de la prestation</strong><span>Ce que tu vends réellement et ce que le projet devra reprendre.</span></div>
         <div className="catalog-fields-grid">
+          {showIdentity && <label>Code canonique AW (facultatif)<input value={draft.canonicalCode} onChange={(e) => onChange({ ...draft, canonicalCode: e.target.value })} placeholder="AW-WEB-VITRINE" /></label>}
+          <label>Nature commerciale<select value={draft.commercialKind} onChange={(e) => onChange({ ...draft, commercialKind: e.target.value as CatalogDraft['commercialKind'] })}><option value="">Non renseignée</option>{CATALOG_COMMERCIAL_KINDS.map((kind) => <option key={kind} value={kind}>{KIND_LABELS[kind]}</option>)}</select></label>
+          <label>Famille canonique<input value={draft.familyCode} onChange={(e) => onChange({ ...draft, familyCode: e.target.value })} placeholder="WEB" /></label>
+          <label>Libellé Abby<input value={draft.abbyLabel} onChange={(e) => onChange({ ...draft, abbyLabel: e.target.value })} /></label>
+          <label>Unité<input value={draft.unit} onChange={(e) => onChange({ ...draft, unit: e.target.value })} placeholder="Page, heure, produit…" /></label>
+          <label>Périodicité<input value={draft.periodicity} onChange={(e) => onChange({ ...draft, periodicity: e.target.value })} placeholder="Ponctuelle, mensuelle, annuelle…" /></label>
+          <label>Base de prix<select value={draft.priceBasis} onChange={(e) => onChange({ ...draft, priceBasis: e.target.value as CatalogPriceBasis, ...(e.target.value === 'actual_cost' ? { priceMode: 'quote_only' as const, priceEuros: '' } : {}) })}><option value="listed">Tarif catalogue</option><option value="actual_cost">Coût tiers réel</option></select></label>
+        </div>
+        <div className="catalog-fields-grid">
           <label className="catalog-wide">
             <span className="field-label-with-help">Nature de la prestation <FieldHelp text="Décris en une courte phrase le rôle de cette prestation. Exemple : rédaction d’un article de blog optimisé ou création d’une page supplémentaire." /></span>
             <input value={draft.nature} onChange={(e) => onChange({ ...draft, nature: e.target.value })} placeholder="Ex. Rédaction d’un article de blog prêt à publier" />
@@ -629,7 +707,7 @@ function CatalogFields({ draft, onChange, showIdentity = false }: { draft: Catal
         <div className="catalog-fields-grid">
           <label>
             <span className="field-label-with-help">Mode tarifaire <FieldHelp text="Détermine la façon dont le prix est présenté et calculé dans le catalogue." /></span>
-            <select value={draft.priceMode} onChange={(e) => onChange({ ...draft, priceMode: e.target.value as PriceMode })}>{PRICE_MODES.map((mode) => <option key={mode} value={mode}>{PRICE_LABELS[mode]}</option>)}</select>
+            <select disabled={draft.priceBasis === 'actual_cost'} value={draft.priceMode} onChange={(e) => onChange({ ...draft, priceMode: e.target.value as PriceMode })}>{PRICE_MODES.map((mode) => <option key={mode} value={mode}>{PRICE_LABELS[mode]}</option>)}</select>
           </label>
           <label>
             <span className="field-label-with-help">Prix AtoumWeb (€) <FieldHelp text="Prix de vente courant utilisé comme référence pour les devis." /></span>
@@ -656,6 +734,11 @@ function CatalogFields({ draft, onChange, showIdentity = false }: { draft: Catal
 
       <section className="catalog-field-group">
         <div className="catalog-field-group-heading"><strong>Cadre commercial</strong><span>Informations de contrat et conseils internes.</span></div>
+        <div className="catalog-fields-grid">
+          <label>Référence de source<input value={draft.sourceReference} onChange={(e) => onChange({ ...draft, sourceReference: e.target.value })} placeholder="Document ou référence de décision" /></label>
+          <label>Empreinte source SHA-256<input value={draft.sourceSha256} onChange={(e) => onChange({ ...draft, sourceSha256: e.target.value })} /></label>
+          <label>Ligne ou clé de source<input value={draft.sourceRecordKey} onChange={(e) => onChange({ ...draft, sourceRecordKey: e.target.value })} /></label>
+        </div>
         <div className="catalog-fields-grid">
           <label>
             <span className="field-label-with-help">Type de contrat <FieldHelp text="Type de document ou cadre contractuel recommandé pour cette prestation." /></span>

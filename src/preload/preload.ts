@@ -260,6 +260,7 @@ const api: AtoumWebApi = {
     openReceipt: (id: string) => ipcRenderer.invoke('expenses:open-receipt', id),
   },
   catalog: {
+    assignCanonicalCode: (id: string, code: string) => ipcRenderer.invoke('catalog:assign-canonical-code', id, code),
     list: (filters?: CatalogFilters) => ipcRenderer.invoke('catalog:list', filters),
     getItem: (id: string) => ipcRenderer.invoke('catalog:get-item', id),
     create: (input: CatalogItemInput, firstVersion: CatalogVersionInput) => ipcRenderer.invoke('catalog:create', input, firstVersion),
