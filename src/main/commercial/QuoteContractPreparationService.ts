@@ -130,7 +130,8 @@ export class QuoteContractPreparationService {
     const total = Number(row.contract_value_cents);
     let used=0;
     const schedule=parameters.payment.milestones.map((m,i)=>{const amountCents=i===parameters.payment.milestones.length-1?total-used:Math.round(total*m.percent/100);used+=amountCents;return{...m,amountCents};});
-    const lines = this.db.all<Record<string,unknown>>('SELECT * FROM quote_lines WHERE quote_id=? ORDER BY sort_order,created_at',[id]);
+    const lines = this.db.all<Record<string,unknown>>('SELECT * FROM quote_lines WHERE quote_id=? ORDER BY sort_order,created_at',[id])
+      .map<Record<string,unknown>>(line => ({ ...line, option_purchase: this.db.get<Record<string,unknown>>('SELECT * FROM quote_option_purchases WHERE line_id=?',[String(line.id)]) ?? null }));
     return { schemaVersion:2, parameters, schedule, lines, soldCatalogue:lines.map(l=>({lineId:l.id,itemId:l.catalog_item_id,versionId:l.catalog_version_id,quantityMilli:l.quantity_milli,catalogUnitPriceCents:l.catalog_unit_price_cents,proposedUnitPriceCents:l.proposed_unit_price_cents,lineValueCents:l.contract_line_value_cents,catalogue:l.snapshot_json==null?null:JSON.parse(String(l.snapshot_json))})), quote:{id:row.id,number:row.quote_number,subject:row.subject,validUntil:row.valid_until,estimatedDelay:row.estimated_delay,prerequisites:row.prerequisites_text,specialTerms:row.special_terms}, administration:this.administration(), documents:this.links(id), totalCents:total, acceptance:{...parameters.acceptance,proofAtFinalization:this.links(id).filter(l=>l.role==='acceptance')} };
   }
   issues(id: string, p: QuoteContractParameters | null): ContractIssue[] {

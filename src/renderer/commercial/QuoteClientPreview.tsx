@@ -84,7 +84,7 @@ export function QuoteClientPreview({ quote, onClose }: { quote: QuoteDetail; onC
           <section className="quote-document-lines">
             {quote.lines.map((line) => {
               const included = offerComponents(line).filter((component) => !component.isOptional);
-              const optional = offerComponents(line).filter((component) => Boolean(component.isOptional));
+              const optional = offerComponents(line).filter((component) => Boolean(component.isOptional) && typeof component.componentId !== 'string');
               return (
                 <div className="quote-document-line" key={line.id}>
                   <div className="quote-document-line-main">

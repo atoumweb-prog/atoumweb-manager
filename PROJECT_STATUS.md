@@ -1,6 +1,49 @@
 # AtoumWeb Manager — Suivi du projet
 
-## Checkpoint courant — 03/10/2026 — Lot 5 validé, clôture locale dédiée
+## Checkpoint courant — 03/10/2026 — Lot 6 validé, clôture locale dédiée
+
+Ce bloc fait foi ; les préparations et bilans antérieurs restent historiques.
+
+- AtoumWeb valide le bilan réel et autorise le **commit local dédié Lot 6 — options réellement achetées**, sans push ni merge. Le commit contenant ce bloc clôture localement le Lot 6 ; son SHA et la liste exhaustive des fichiers sont consignés dans outputs/contract-options-lot6/cloture-git-lot6.json.
+- Migration **57 appliquée sur Validation-MSI** ; quote_option_purchases présente et **vide**. Aucun backfill historique, aucune requalification implicite, aucune publication catalogue/contractuelle ni création de Projet/Site/Page/pack/maintenance.
+- Contrôle avant commit : **24 fichiers Lot 6 attendus uniquement**, index initialement vide ; 335 sources applicatives identiques à la fermeture validée **459/459 tests, typecheck OK et UI 20/20**. Aucun changement fonctionnel depuis ces contrôles ; seules trois documentations de suivi actualisées.
+- Aucun artefact de sauvegarde/simulation/base/classeur inclus ; les scripts de simulation/contrôle prévus font partie du code Lot 6, leurs sorties demeurent hors dépôt.
+- Validation-MSI demeure au SHA **7a54bb9905b16370f3c98f9d0e5dacd88bb38a65cae5b506525e1ea6e86496d4** ; 112 AW, 112 versions catalogue V1 BROUILLON, 118 clauses BROUILLON, 409 liens, devis historiques, Projets et documents conservés.
+- **RECETTE MANUELLE ATOUMWEB TOUJOURS À FAIRE avant validation fonctionnelle finale. Lot 7 non commencé.** Aucun démarrage Manager ni écriture base pendant cette clôture. Aucun push/merge, publication, Abby, Bridge ou 8C.
+
+
+## Historique — 03/10/2026 — Lot 6 appliqué, avant validation de clôture
+
+Ce bloc fait foi ; les préparations précédentes restent historiques.
+
+- AtoumWeb autorise l'application réelle du Lot 6 uniquement, migration **57**, après validation 459/459 tests, typecheck OK et UI 20/20. **Application terminée, aucun commit autorisé à ce stade ; attendre validation du bilan réel.**
+- Branche feature/project-page-compositions-v1, HEAD **fa52b68911d8649013a4a4e40e19d91a56d0c6e6** inchangé. Les 24 fichiers Lot 6 et leurs empreintes correspondent exactement à la fermeture validée avant écriture ; 335 sources applicatives contrôlées. Aucun code fonctionnel changé, aucune suite répétée inutilement.
+- Manager non démarré. Base initiale 1–56 au SHA **877192a41131737424fb03e808885c22faa3e876b798f54b7929a672e8459e71**, sans WAL/SHM/journal. Verrou exclusif acquis et seconde connexion d'écriture refusée ; WAL vide, SHM de verrou 32 768 octets, aucun journal actif sous verrou.
+- Sauvegarde physique immédiatement avant application sous verrou : C:/DEV/02_DONNEES/AtoumWeb/Validation-MSI/backups/before-lot6-2026-10-03T19-57-38-123Z.sqlite, SHA **877192a41131737424fb03e808885c22faa3e876b798f54b7929a672e8459e71**, identique à la base avant. Intégrité de la sauvegarde vérifiée indépendamment en lecture immutable.
+- Jeton du plan **7a5e7f86e43f15c815ec437ec102ac51f0a07d1dafd351332fea4fc5eb4d286f** revérifié juste avant migration ; empreintes du plan, de la base, du XLSX, des sources et des preuves de tests inchangées. Aucune autre migration pendante acceptée.
+- Migration **57 seule appliquée** : migrations **1–57** présentes ; quote_option_purchases et ses trois triggers créés, **0 achat**, aucun backfill/requalification historique.
+- **112 AW / 112 versions catalogue V1 BROUILLON / 118 clauses BROUILLON / 409 liens intacts**. 0 nouvelle publication ; les 44 versions catalogue publiées anciennes demeurent inchangées. 0 lien catalogue BASE, LANDING-GESTION seule dormante, CONS-RETRACTATION-EN-LIGNE hors bibliothèque.
+- Conservation exhaustive des **99 anciennes tables**, colonnes, lignes et objets de schéma : toutes les empreintes avant/après identiques, hors nouvelle ligne de migration 57. DEV-2026-001/002/003 et leurs deux lignes chacun strictement inchangés ; 0 clause rétroactive. Deux Projets et état documentaire exacts ; aucun Projet/Site/Page/pack/maintenance/objet opérationnel créé.
+- integrity_check **ok**, foreign_key_check **vide** ; rejeu migration **[]**, aucune modification logique ni physique. Checkpoints WAL TRUNCATE réussis, fermeture puis SHA final **7a54bb9905b16370f3c98f9d0e5dacd88bb38a65cae5b506525e1ea6e86496d4** ; aucun WAL/SHM/journal résiduel.
+- Contre-vérification indépendante Python/SQLite mode=ro immutable réussie contre la sauvegarde. XLSX SHA **6bc3eddaee0e1d77008c0bdc98984eea89ac54838c483c12c58b95cd3b237ad8** conservé ; aucune modification Abby, Bridge ou 8C.
+- Rapports : outputs/contract-options-lot6/application-lot6-validation-msi.md/json, contre-verification-lot6.json et fermeture-reelle/plan-application-lot6.json.
+- **Lot 6 appliqué, non committé. Recette manuelle AtoumWeb toujours à faire avant validation fonctionnelle finale. Aucun push/merge. Lot 7 non commencé. Attendre validation du bilan avant commit local.**
+
+
+## Historique — 03/10/2026 — Lot 6 préparé localement, avant autorisation réelle
+
+- Autorisation AtoumWeb : **Lot 6 — Options réellement achetées** uniquement, implémentation locale/tests/simulation sur copie. Aucun Lot 7, publication, Abby, Bridge ou 8C.
+- Base : commit Lot 5 **fa52b68911d8649013a4a4e40e19d91a56d0c6e6**, feature/project-page-compositions-v1. Lot 6 non committé ; aucun push/merge.
+- Relation additive quote_option_purchases : achat explicite par ligne persistée, origine offre/version/composant exacte, jamais par nom. Prix/remise/quantité/version du service restent dans la ligne et son snapshot.
+- Migration **57 préparée seulement**. SQL 1–56 inchangé. Validation-MSI réelle reste en **1–56**, SHA **877192a41131737424fb03e808885c22faa3e876b798f54b7929a672e8459e71**.
+- UI : services inclus, disponibles non achetés, options achetées, quantité/prix/provenance ; achat/retrait transactionnels et idempotents ; duplication brouillon sans mutation de l'original ; origine incluse dans le snapshot figé.
+- **459/459 tests**, 60 fichiers, 16 cas Lot 6, typecheck sortie 0 ; UI isolée **20/20**, trois thèmes. Recette manuelle AtoumWeb à faire ; Manager réel non démarré.
+- Simulation 3 devis fictifs : 1/2/3 lignes, 100/120/208,60 euros, 1/3/3 clauses. Quantités 3 et 2 conservées, aucun Projet/Site/Page/objet opérationnel créé. Publications exclusivement synthétiques sur copie.
+- **112 AW / 112 versions catalogue V1 BROUILLON / 118 clauses BROUILLON / 409 liens intacts** ; trois devis historiques/projets/documents exacts. XLSX SHA **6bc3eddaee0e1d77008c0bdc98984eea89ac54838c483c12c58b95cd3b237ad8** inchangé.
+- Bilan docs/CONTRACTUAL_LOT6_PURCHASED_OPTIONS.md ; outputs/contract-options-lot6. **Arrêt avant application Validation-MSI et Lot 7 ; attendre instruction distincte.**
+
+
+## Historique — 03/10/2026 — Lot 5 validé, clôture locale dédiée
 
 Ce bloc fait foi ; les préparations et bilans d’application antérieurs restent historiques.
 

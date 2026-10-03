@@ -46,7 +46,7 @@ function listHtml(values: string[]): string {
 function lineHtml(line: QuoteLine): string {
   const components = offerComponents(line);
   const included = components.filter((component) => !component.isOptional);
-  const optional = components.filter((component) => Boolean(component.isOptional));
+  const optional = components.filter((component) => Boolean(component.isOptional) && typeof component.componentId !== 'string');
   const inclusions = stringList(line.snapshot?.inclusions);
 
   return `

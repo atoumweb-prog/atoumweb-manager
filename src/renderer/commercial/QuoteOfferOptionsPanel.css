@@ -1,0 +1,11 @@
+.quote-offer-options { padding: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.quote-offer-options h3, .quote-offer-options h4 { margin: 0 0 12px; }
+.quote-offer-options p { overflow-wrap: anywhere; }
+.quote-offer-composition { margin-top: 20px; }
+.quote-offer-option { margin: 12px 0; padding: 16px; border: 1px solid var(--border); border-radius: 12px; }
+.quote-offer-option[data-purchased="true"] { border-inline-start: 4px solid var(--accent); }
+.quote-offer-option-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.quote-offer-options [role="alert"] { color: var(--danger, #b42318); }
+.quote-offer-options .quote-line-editor-grid { grid-template-columns: repeat(auto-fit,minmax(min(220px,100%),1fr)); }
+
+.quote-offer-options fieldset { padding: 0; border: 0; min-width: 0; }

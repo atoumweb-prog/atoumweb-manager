@@ -119,6 +119,7 @@ interface CatalogSnapshotRow extends CatalogIdentitySnapshotRow {
 }
 
 interface OfferComponentSnapshotRow extends CatalogIdentitySnapshotRow {
+  component_id: string;
   service_version_id: string;
   service_item_id: string;
   service_name: string;
@@ -298,6 +299,7 @@ export class QuoteService {
           sv.contract_type,
           si.canonical_code, si.identity_provenance_json,
           sv.commercial_kind, sv.family_code, sv.abby_label, sv.unit, sv.periodicity, sv.price_basis, sv.provenance_json,
+          oc.id AS component_id,
           oc.is_optional,
           oc.quantity_milli,
           oc.sort_order
@@ -309,6 +311,7 @@ export class QuoteService {
         [catalogVersionId],
       ).map((component) => ({
         ...this.catalogIdentitySnapshot(component),
+        componentId: component.component_id,
         serviceItemId: component.service_item_id,
         serviceVersionId: component.service_version_id,
         serviceName: component.service_name,
@@ -365,6 +368,63 @@ export class QuoteService {
     return this.get(quoteId);
   }
 
+  selectOfferOption(offerLineId: string, componentId: string, input: Partial<QuoteLineInput> = {}): QuoteDetail {
+    const offer = this.getOfferLine(offerLineId);
+    this.assertEditable(offer.quoteId);
+    const components = offer.snapshot?.offerComponents;
+    const component = Array.isArray(components)
+      ? components.find((c) => c && c.componentId === componentId && c.isOptional === true)
+      : null;
+    if (!component || typeof component.serviceVersionId !== 'string') {
+      throw Error('Option absente de la composition figée de cette offre. Aucune déduction historique.');
+    }
+    // Identity is the exact offer line + component, never name or position.
+    const existing = this.database.get<{line_id:string}>(
+      'SELECT line_id FROM quote_option_purchases WHERE source_offer_line_id=? AND source_component_id=?',
+      [offerLineId, componentId],
+    );
+    if (existing) return this.get(offer.quoteId);
+    this.database.exec('SAVEPOINT purchase_option;');
+    try {
+      const previousIds = new Set(this.get(offer.quoteId).lines.map((line) => line.id));
+      const quote = this.addCatalogLine(offer.quoteId, component.serviceVersionId, {
+        ...input, quantityMilli: input.quantityMilli ?? Number(component.quantityMilli ?? 1000),
+      });
+      const line = quote.lines.find((row) => !previousIds.has(row.id))!;
+      this.database.run(
+        `INSERT INTO quote_option_purchases
+        (line_id,source_offer_line_id,source_offer_item_id,source_offer_version_id,source_component_id,state,purchased_at)
+        VALUES (?,?,?,?,?,'purchased',?)`,
+        [line.id, offer.id, offer.catalogItemId!, offer.catalogVersionId!, componentId, nowIso()],
+      );
+      this.contractTerms.syncQuote(offer.quoteId);
+      this.writeActivity(offer.quoteId, 'quote_option_purchased', `Option achetée : ${line.label}`);
+      this.database.exec('RELEASE purchase_option;');
+      return this.get(offer.quoteId);
+    } catch (error) {
+      this.database.exec('ROLLBACK TO purchase_option; RELEASE purchase_option;');
+      throw error;
+    }
+  }
+
+  deselectOfferOption(offerLineId: string, componentId: string): QuoteDetail {
+    const offer = this.getOfferLine(offerLineId);
+    this.assertEditable(offer.quoteId);
+    const row = this.database.get<{line_id:string}>(
+      'SELECT line_id FROM quote_option_purchases WHERE source_offer_line_id=? AND source_component_id=?',
+      [offerLineId, componentId],
+    );
+    return row ? this.removeLine(row.line_id) : this.get(offer.quoteId);
+  }
+
+  private getOfferLine(id: string): QuoteLine {
+    const row = this.database.get<QuoteLineRow>('SELECT * FROM quote_lines WHERE id=?', [id]);
+    if (!row) throw Error('Ligne d’offre introuvable.');
+    const line = this.mapLine(row);
+    if (line.snapshot?.itemType !== 'offer') throw Error('Cette ligne ne correspond pas à une offre.');
+    return line;
+  }
+
   private catalogIdentitySnapshot(source: CatalogIdentitySnapshotRow): Record<string, unknown> {
     return {
       canonicalCode: source.canonical_code,
@@ -391,7 +451,11 @@ export class QuoteService {
     const existing = this.database.get<QuoteLineRow>('SELECT * FROM quote_lines WHERE id=?', [lineId]);
     if (!existing) throw new Error('Ligne de devis introuvable.');
     this.assertEditable(existing.quote_id);
-    const values = this.calculateLine(input);
+    if (this.mapLine(existing).optionPurchase && input.catalogUnitPriceCents != null
+      && input.catalogUnitPriceCents !== existing.catalog_unit_price_cents) {
+      throw Error('Le prix catalogue de l’option vendue est figé ; modifie le prix proposé ou la remise.');
+    }
+    const values = this.calculateLine(this.mapLine(existing).optionPurchase ? { ...input, catalogUnitPriceCents: existing.catalog_unit_price_cents } : input);
     this.database.run(
       `UPDATE quote_lines SET label=?, description=?, quantity_milli=?, catalog_unit_price_cents=?,
        proposed_unit_price_cents=?, adjustment_mode=?, adjustment_value=?, discount_reason_code=?,
@@ -411,9 +475,30 @@ export class QuoteService {
     const existing = this.database.get<{ quote_id: string }>('SELECT quote_id FROM quote_lines WHERE id=?', [lineId]);
     if (!existing) throw new Error('Ligne de devis introuvable.');
     this.assertEditable(existing.quote_id);
-    this.database.run('DELETE FROM quote_lines WHERE id=?', [lineId]);
-    this.recalculate(existing.quote_id);
-    return this.get(existing.quote_id);
+    this.database.exec('SAVEPOINT remove_quote_line;');
+    try {
+      const children = this.database.all<{line_id:string}>(
+        'SELECT line_id FROM quote_option_purchases WHERE source_offer_line_id=?', [lineId],
+      );
+      const removedIds = [...children.map((row) => row.line_id), lineId];
+      for (const id of removedIds) {
+        this.database.run('DELETE FROM quote_option_purchases WHERE line_id=?', [id]);
+        this.database.run('DELETE FROM quote_lines WHERE id=?', [id]);
+      }
+      const parameters = this.preparation.parameters(existing.quote_id);
+      if (parameters) {
+        parameters.warranties = parameters.warranties.filter((row) => !removedIds.includes(row.lineId));
+        this.database.run('UPDATE quotes SET contract_parameters_json=? WHERE id=?', [JSON.stringify(parameters), existing.quote_id]);
+      }
+      this.recalculate(existing.quote_id);
+      this.contractTerms.syncQuote(existing.quote_id);
+      this.writeActivity(existing.quote_id, 'quote_line_removed', 'Ligne et options associées retirées du brouillon');
+      this.database.exec('RELEASE remove_quote_line;');
+      return this.get(existing.quote_id);
+    } catch (error) {
+      this.database.exec('ROLLBACK TO remove_quote_line; RELEASE remove_quote_line;');
+      throw error;
+    }
   }
 
   updateConditions(quoteId: string, input: Partial<QuoteInput>): QuoteDetail {
@@ -563,39 +648,58 @@ export class QuoteService {
 
   duplicate(id: string): QuoteDetail {
     const source = this.get(id);
-    if (!['sent', 'viewed', 'refused', 'expired', 'cancelled'].includes(source.status)) throw new Error('Ce devis ne peut pas être dupliqué.');
-    const copy = this.create({
-      prospectId: source.prospectId,
-      clientAccountId: source.clientAccountId ?? source.acceptedClientAccountId,
-      subject: `${source.subject} — copie`,
-      needSummary: source.needSummary,
-      validityDays: 30,
-      estimatedDelay: source.estimatedDelay,
-      prerequisitesText: source.prerequisitesText,
-      specialTerms: source.specialTerms,
-      contractType: source.contractType,
-      contractAudience: source.contractAudience,
-      depositPercent: source.depositPercent,
-    });
-    const now = nowIso();
-    for (const line of source.lines) {
-      this.database.run(
-        `INSERT INTO quote_lines (
-          id, quote_id, sort_order, source, catalog_item_id, catalog_version_id, label, description,
-          quantity_milli, catalog_unit_price_cents, proposed_unit_price_cents, adjustment_mode,
-          adjustment_value, discount_reason_code, discount_reason_text, catalog_line_value_cents,
-          contract_line_value_cents, snapshot_json, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [randomUUID(), copy.id, line.sortOrder, line.source, line.catalogItemId ?? null, line.catalogVersionId ?? null,
-          line.label, clean(line.description), line.quantityMilli ?? 1000, line.catalogUnitPriceCents ?? null,
-          line.proposedUnitPriceCents ?? null, line.adjustmentMode ?? 'none', line.adjustmentValue ?? null,
-          line.discountReasonCode ?? null, clean(line.discountReasonText), line.catalogLineValueCents,
-          line.contractLineValueCents, line.snapshot ? JSON.stringify(line.snapshot) : null, now, now],
-      );
+    if (!['draft', 'sent', 'viewed', 'refused', 'expired', 'cancelled'].includes(source.status)) throw new Error('Ce devis ne peut pas être dupliqué.');
+    this.database.exec('SAVEPOINT duplicate_quote;');
+    try {
+      const copy = this.create({
+        prospectId: source.prospectId,
+        clientAccountId: source.clientAccountId ?? source.acceptedClientAccountId,
+        subject: `${source.subject} — copie`,
+        needSummary: source.needSummary,
+        validityDays: 30,
+        estimatedDelay: source.estimatedDelay,
+        prerequisitesText: source.prerequisitesText,
+        specialTerms: source.specialTerms,
+        contractType: source.contractType,
+        contractAudience: source.contractAudience,
+        depositPercent: source.depositPercent,
+      }, true);
+      const now = nowIso();
+      const lineIds = new Map(source.lines.map((line) => [line.id, randomUUID()]));
+      for (const line of source.lines) {
+        this.database.run(
+          `INSERT INTO quote_lines (
+            id, quote_id, sort_order, source, catalog_item_id, catalog_version_id, label, description,
+            quantity_milli, catalog_unit_price_cents, proposed_unit_price_cents, adjustment_mode,
+            adjustment_value, discount_reason_code, discount_reason_text, catalog_line_value_cents,
+            contract_line_value_cents, snapshot_json, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [lineIds.get(line.id)!, copy.id, line.sortOrder, line.source, line.catalogItemId ?? null, line.catalogVersionId ?? null,
+            line.label, clean(line.description), line.quantityMilli ?? 1000, line.catalogUnitPriceCents ?? null,
+            line.proposedUnitPriceCents ?? null, line.adjustmentMode ?? 'none', line.adjustmentValue ?? null,
+            line.discountReasonCode ?? null, clean(line.discountReasonText), line.catalogLineValueCents,
+            line.contractLineValueCents, line.snapshot ? JSON.stringify(line.snapshot) : null, now, now],
+        );
+      }
+      for (const line of source.lines) {
+        const origin = line.optionPurchase;
+        if (!origin) continue;
+        this.database.run(
+          `INSERT INTO quote_option_purchases
+          (line_id,source_offer_line_id,source_offer_item_id,source_offer_version_id,source_component_id,state,purchased_at)
+          VALUES (?,?,?,?,?,'purchased',?)`,
+          [lineIds.get(line.id)!, lineIds.get(origin.sourceOfferLineId)!, origin.sourceOfferItemId,
+            origin.sourceOfferVersionId, origin.sourceComponentId, origin.purchasedAt],
+        );
+      }
+      this.recalculate(copy.id);
+      this.contractTerms.copyQuoteCustomizations(id, copy.id);
+      this.database.exec('RELEASE duplicate_quote;');
+      return this.get(copy.id);
+    } catch (error) {
+      this.database.exec('ROLLBACK TO duplicate_quote; RELEASE duplicate_quote;');
+      throw error;
     }
-    this.recalculate(copy.id);
-    this.contractTerms.copyQuoteCustomizations(id, copy.id);
-    return this.get(copy.id);
   }
 
   private insertLine(
@@ -785,7 +889,16 @@ export class QuoteService {
     if (row.snapshot_json) {
       try { snapshot = JSON.parse(row.snapshot_json) as Record<string, unknown>; } catch { snapshot = null; }
     }
+    const purchase = this.database.get<{
+      source_offer_line_id:string;source_offer_item_id:string;source_offer_version_id:string;
+      source_component_id:string;purchased_at:string;
+    }>('SELECT * FROM quote_option_purchases WHERE line_id=?', [row.id]);
     return {
+      optionPurchase: purchase ? {
+        state: 'purchased', sourceOfferLineId: purchase.source_offer_line_id,
+        sourceOfferItemId: purchase.source_offer_item_id, sourceOfferVersionId: purchase.source_offer_version_id,
+        sourceComponentId: purchase.source_component_id, purchasedAt: purchase.purchased_at,
+      } : null,
       id: row.id,
       quoteId: row.quote_id,
       sortOrder: Number(row.sort_order),

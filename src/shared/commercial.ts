@@ -180,7 +180,18 @@ export interface QuoteLineInput {
   discountReasonText?: string | null;
 }
 
+export interface QuoteOptionPurchase {
+  state: 'purchased';
+  sourceOfferLineId: string;
+  sourceOfferItemId: string;
+  sourceOfferVersionId: string;
+  sourceComponentId: string;
+  purchasedAt: string;
+}
+
 export interface QuoteLine extends QuoteLineInput {
+  /** Null means no recorded optional origin, including historical/manual lines. */
+  optionPurchase?: QuoteOptionPurchase | null;
   adjustmentMode: QuoteAdjustmentMode;
   id: string;
   quoteId: string;
@@ -259,6 +270,8 @@ export interface QuoteApi {
   get(id: string): Promise<QuoteDetail>;
   create(input: QuoteInput): Promise<QuoteDetail>;
   addCatalogLine(quoteId: string, catalogVersionId: string, input?: Partial<QuoteLineInput>): Promise<QuoteDetail>;
+  selectOfferOption(offerLineId: string, componentId: string, input?: Partial<QuoteLineInput>): Promise<QuoteDetail>;
+  deselectOfferOption(offerLineId: string, componentId: string): Promise<QuoteDetail>;
   addCustomLine(quoteId: string, input: QuoteLineInput): Promise<QuoteDetail>;
   updateLine(lineId: string, input: QuoteLineInput): Promise<QuoteDetail>;
   removeLine(lineId: string): Promise<QuoteDetail>;
