@@ -446,7 +446,7 @@ export class QuoteService {
     if (quote.status === 'accepted') return quote;
     if (!['sent', 'viewed'].includes(quote.status)) throw new Error('Le devis doit être envoyé avant acceptation.');
     if (quote.lines.length === 0) throw new Error('Impossible d’accepter un devis vide.');
-    this.contractTerms.freezeQuote(id);
+    const contract = this.contractTerms.freezeQuote(id);
 
     let clientId = quote.clientAccountId ?? quote.acceptedClientAccountId ?? null;
     if (!clientId && quote.prospectId) {
@@ -460,6 +460,9 @@ export class QuoteService {
        accepted_at=?, snapshot_locked_at=?, project_ready_at=?, updated_at=? WHERE id=?`,
       [clientId, clientId, now, now, now, now, id],
     );
+    if (contract.snapshotState === 'historical_missing') {
+      this.writeActivity(id, 'quote_accepted_without_contract_snapshot', `Devis historique ${quote.number} accepté sans snapshot contractuel ; absence conservée, aucune clause reconstruite`);
+    }
     this.writeActivity(id, 'quote_accepted', `Devis ${quote.number} accepté`);
     return this.get(id);
   }
@@ -645,7 +648,7 @@ export class QuoteService {
     const quote = this.get(quoteId);
     if (quote.snapshotLockedAt || quote.status === 'accepted') throw new Error('Ce devis est accepté et figé.');
     if (quote.status !== 'draft') throw new Error('Repasse par une copie du devis pour modifier son contenu après envoi.');
-    if (quote.finalizedAt) throw new Error('Ce devis est finalisé et figé. Duplique-le pour modifier son contenu.');
+    if (quote.finalizedAt || quote.contractCompiledAt || quote.contractTextSnapshot != null || quote.contractSnapshotJson != null) throw new Error('Ce devis est finalisé et figé. Duplique-le pour modifier son contenu.');
   }
 
   private transition(id: string, status: QuoteStatus, timestampColumn: 'sent_at' | 'viewed_at' | 'refused_at' | 'expired_at', summary: string): QuoteDetail {

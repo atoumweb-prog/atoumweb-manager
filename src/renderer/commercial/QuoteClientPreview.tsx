@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { QuoteDetail, QuoteLine } from '../../shared/commercial';
+import { quoteContractText } from '../../shared/contractTerms';
 
 function money(cents: number): string {
   return `${(cents / 100).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} €`;
@@ -32,7 +33,7 @@ export function QuoteClientPreview({ quote, onClose }: { quote: QuoteDetail; onC
         const build = quote.status === 'draft' && !quote.finalizedAt
           ? await window.atoumweb.contractTerms.quotes.sync(quote.id)
           : await window.atoumweb.contractTerms.quotes.get(quote.id);
-        if (active) setContractText(build.snapshotText || build.compiledText || '');
+        if (active) setContractText(quoteContractText(build));
       } catch {
         if (active) setContractText(quote.contractTextSnapshot ?? '');
       }

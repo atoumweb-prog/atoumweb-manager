@@ -2,6 +2,7 @@ import { app, clipboard, dialog, ipcMain, safeStorage, shell } from 'electron';
 import type { BridgeNodeMatchDecisionInput } from '../shared/bridgeSnapshots';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { quoteContractText } from '../shared/contractTerms';
 import type { BillingInvoiceInput, BillingItemFilters, BillingItemStatus } from '../shared/billing';
 import type { ExpenseFilters, ExpenseInput, ExpenseStatus } from '../shared/expenses';
 import type {
@@ -450,7 +451,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     const contract = quote.status === 'draft' && !quote.finalizedAt
       ? database.contractTerms.syncQuote(id)
       : database.contractTerms.getQuoteBuild(id);
-    return generateQuotePdf({ ...quote, contractTextSnapshot: contract.snapshotText || contract.compiledText }, workspace);
+    return generateQuotePdf({ ...quote, contractTextSnapshot: contract.snapshotState === 'historical_missing' ? quote.contractTextSnapshot : quoteContractText(contract) }, workspace);
   });
 
   ipcMain.handle('projects:templates:list', () => database.projects.listTemplates());

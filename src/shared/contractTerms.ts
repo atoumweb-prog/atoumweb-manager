@@ -84,11 +84,19 @@ export interface QuoteContractBuild {
   quoteId: string;
   audience: QuoteContractAudience;
   locked: boolean;
+  snapshotState: 'draft' | 'frozen' | 'historical_missing';
   clauses: QuoteContractClause[];
   compiledText: string;
   snapshotText?: string | null;
   compiledAt?: string | null;
   warnings: string[];
+}
+
+/** Never substitute the current compilation for an empty or absent historical snapshot. */
+export function quoteContractText(build: QuoteContractBuild): string {
+  if (build.snapshotState === 'frozen') return build.snapshotText ?? '';
+  if (build.snapshotState === 'historical_missing') return '';
+  return build.compiledText;
 }
 
 export interface ContractTermsApi {

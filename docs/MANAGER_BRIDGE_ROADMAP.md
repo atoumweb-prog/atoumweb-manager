@@ -7,8 +7,9 @@ Date d'ouverture : 27/09/2026.
 **Document de coordination commun. Publication de la feuille de route autorisée ; aucun lot de développement autorisé par cette publication.**
 
 - Dépôt : `atoumweb-prog/atoumweb-manager`.
-- Base canonique Manager : `feature/project-page-compositions-v1@d2898b516e94d4c577795bab8508e7a126eeb4b1`.
-- Base canonique Bridge : `feature/workbench-occurrence-v1@283829914ea74dbe756b74ca62e7f0fc1dc3867f`, plugin **0.8.1**.
+- Base canonique Manager après clôture 8B : `feature/project-page-compositions-v1@ef02f8d6737df14f5cc5d49ed7c5e45d8c59cf81` (vérifiée localement le 03/10/2026).
+- Base canonique Bridge après clôture 8B annoncée par AtoumWeb : `feature/workbench-occurrence-v1@d1ecf89dab4f48230269a0cb10fb796f33c60bfc`, plugin **0.8.4**. Aucun travail Bridge pendant le chantier contractuel.
+- Priorité courante : **Contrats Lot 1 uniquement**, après audit validé. Lot 8C et lots Bridge ultérieurs suspendus ; Lot 2 contractuel soumis à feu vert distinct.
 - Checkpoint Lots 7 + 8A validé : typecheck Manager, **37/37 tests ciblés**, **346/346 tests complets**, recettes Manager/Bridge et Workbench multi-composants validées. Les lots suivants restent soumis à autorisation explicite.
 - PR #74 / CGV Builder déjà intégrée : ne pas la fusionner à nouveau.
 - Les choix ci-dessous sont les recommandations issues de l'audit. Les arbitrages de la section 14 doivent être confirmés avant implémentation ; un lot nécessite une autorisation explicite.
@@ -1565,3 +1566,23 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 - Publication cible : sélection explicite par identités stables Projet/Site/Page, snapshot avant, injection Divi, assets Divi Child, contrôle front, snapshot après, provenance et rollback complet. Aucune écriture automatique.
 - Assets : identité stable, scope/propriétaire, provenance/version/hash, références d'utilisation, historique, état orphelin et nettoyage explicite. Les overrides humains et fichiers non gérés restent protégés.
 - Prochaine action recommandée : Lot 8B uniquement, après autorisation explicite. Aucun code 8B, 10 ou 11 commencé par cette entrée.
+
+### 2026-10-03 — CONTRACT-LOT1-001 — Brouillon, gel et preuve historique
+
+- Origine : audit Manager validé par AtoumWeb et autorisation du seul Lot 1 « Sécuriser brouillon et gel ». Lot 8B clos ; 8C suspendu.
+- Base locale vérifiée propre avant travaux : branche canonique Manager, HEAD `ef02f8d6737df14f5cc5d49ed7c5e45d8c59cf81`. Les checkpoints 7/8A ci-dessus restent historiques.
+- Le Builder enregistre désormais clauses et nouvelles versions en brouillon ; la publication est une action distincte sur une version enregistrée.
+- Un snapshot vide est figé explicitement par son texte vide, JSON et date. Les lectures/copies/exports ne recalculent pas ce gel ; les textes et versions figés restent identiques après évolution de la bibliothèque.
+- Le chemin de compatibilité d'acceptation reconstruisant le contrat des anciens devis est supprimé. Absence historique visible et acceptation tracée sans injection rétroactive ; aucune modification des trois devis réels.
+- La suppression définitive d'un PDF rattaché est bloquée avant écriture disque/base. Archivage réversible, fichier et rattachement conservés ; erreur visible dans Documents Client.
+- Empreinte/intégrité PDF et conservation de l'historique des remplacements : **Lot 5**, précisément différés dans `CGV_BUILDER_V1.md` et `CONTRACTUAL_LOT1_DRAFT_FREEZE.md`.
+- Vérification : typecheck OK, 43/43 tests ciblés, 14/14 contrôles UI isolés. Bases de tests en mémoire ; base réelle inchangée. Aucune migration, aucune suite complète.
+- Statut : implémentation locale sans commit/push, aucune publication de clause réelle, aucun import catalogue/contractuel, aucun travail Abby/Bridge, aucun merge `main`.
+- Prochaine action : présentation du bilan et recette utilisateur du Lot 1 ; ne pas démarrer Lot 2 sans accord explicite.
+
+### 2026-10-03 — CONTRACT-LOT1-002 — Validation technique et recette manuelle différée
+
+- Décision AtoumWeb : **VALIDÉ TECHNIQUEMENT / RECETTE MANUELLE ATOUMWEB À FAIRE PLUS TARD**, avant validation fonctionnelle finale.
+- Contrôles demandés avant commit local : suite complète `npm test` 356/356 (54 fichiers), typecheck sortie 0, aucun changement inattendu ; base réelle inchangée.
+- Autorisation : commit local dédié au seul Lot 1, sans push/merge. La réserve de recette doit apparaître dans son message et le bilan.
+- Après ce commit, Lot 2 — Identité catalogue V1 autorisé séparément ; arrêt et bilan avant Lot 3. Aucun travail Bridge/8C.

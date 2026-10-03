@@ -1,4 +1,16 @@
-> ## ⚠️ ÉTAT ACTUEL — 29/09/2026 — À LIRE AVANT TOUT
+> ## ÉTAT ACTUEL — 03/10/2026 — À LIRE AVANT TOUT
+>
+> Ce bloc remplace les anciennes consignes de reprise ci-dessous, conservées comme historique.
+>
+> - Branche vérifiée : `feature/project-page-compositions-v1` ; base `ef02f8d6737df14f5cc5d49ed7c5e45d8c59cf81`.
+> - Lot 8B clos ; Lot 8C suspendu. Aucun travail Bridge demandé.
+> - Contrats Lot 1 implémenté localement : brouillon/publication séparés, snapshot vide figé, aucune injection sur devis historiques, PDF rattaché protégé contre suppression définitive.
+> - Aucune migration ; migrations 1–52 intactes. Base réelle inchangée. Aucun seed/import des 118 clauses, 112 prestations ou 409 liens.
+> - Lot 1 VALIDÉ TECHNIQUEMENT ; RECETTE MANUELLE ATOUMWEB À FAIRE PLUS TARD avant validation fonctionnelle finale. Suite complète 356/356, typecheck OK ; tests ciblés 43/43 ; UI isolée 14/14.
+> - Rapport : `CONTRACTUAL_LOT1_DRAFT_FREEZE.md`. Les empreintes PDF et l'historique documentaire restent au Lot 5.
+> - Commit local Lot 1 autorisé, sans push/merge. Ensuite Lot 2 — Identité catalogue V1 autorisé séparément ; arrêter avant Lot 3.
+
+> ## HISTORIQUE — 29/09/2026 — Lot 6B
 >
 > Ce bloc **remplace les anciennes consignes de branche/PR mentionnées plus bas** pour la reprise actuelle. L'historique est conservé volontairement.
 >

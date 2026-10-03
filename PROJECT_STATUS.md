@@ -1,5 +1,19 @@
 # AtoumWeb Manager — Suivi du projet
 
+## État courant — 03/10/2026 — Contrats Lot 1 : brouillon et gel sécurisés
+
+Ce bloc fait foi pour la reprise actuelle ; les comptes rendus datés ci-dessous restent historiques.
+
+- Base vérifiée : `feature/project-page-compositions-v1@ef02f8d6737df14f5cc5d49ed7c5e45d8c59cf81`, arbre propre avant ce lot. Lot 8B clos et recetté ; Lot 8C suspendu.
+- Lot 1 seul autorisé après audit : enregistrement des clauses/versions en brouillon, publication séparée, gel durable même vide, absence contractuelle historique conservée, protection des documents rattachés.
+- Statut AtoumWeb : **VALIDÉ TECHNIQUEMENT / RECETTE MANUELLE ATOUMWEB À FAIRE PLUS TARD**, avant validation fonctionnelle finale. Commit local dédié autorisé ; aucun push/merge.
+- Aucune migration nouvelle ni modification des migrations 1–52.
+- Vérification avant commit : suite complète **356/356**, typecheck réussi, **43/43 tests ciblés** et **14/14 contrôles UI Chromium isolés**. Aucun changement inattendu.
+- La base réelle Validation-MSI n'a pas été ouverte par le Manager : tests SQLite en mémoire et fichiers/profil UI temporaires. Empreinte de la base inchangée, donc devis `DEV-2026-001/002/003`, Projets et versions catalogue conservés.
+- Empreinte documentaire du PDF, contrôle d'intégrité et historique des remplacements différés au Lot 5. La suppression du PDF actuellement rattaché est déjà interdite ; son archivage préserve fichier et rattachement.
+- Bilan détaillé et fichiers : `docs/CONTRACTUAL_LOT1_DRAFT_FREEZE.md`.
+- Feu vert reçu pour le Lot 2 — Identité catalogue V1, après commit local du Lot 1. Séparer les modifications des deux lots et s'arrêter avant Lot 3. Aucun import contractuel/catalogue, Abby ou travail Bridge dans le Lot 1 ; aucun merge `main`.
+
 ## Lot 8A en cours — Export Page Manager
 
 - Branche empilée : `codex/lot8a-page-export`, basée sur le HEAD validé du Lot 7 ; PR #76 non fusionnée.

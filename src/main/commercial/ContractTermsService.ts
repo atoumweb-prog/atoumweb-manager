@@ -298,10 +298,18 @@ export class ContractTermsService {
 
   getQuoteBuild(quoteId: string): QuoteContractBuild {
     const state = this.quoteState(quoteId);
+    const frozen = this.hasSnapshot(state);
+    const locked = frozen || state.status !== 'draft' || Boolean(state.finalized_at);
+    const snapshotState = frozen ? 'frozen' : locked ? 'historical_missing' : 'draft';
     const clauses = this.quoteClauses(quoteId);
     const audience = this.resolveQuoteAudience(state);
     const compiledText = this.compile(clauses);
     const warnings: string[] = [];
+    if (snapshotState === 'historical_missing') {
+      warnings.push('Devis historique sans snapshot contractuel : cette absence est conservée. Aucune reconstruction depuis la bibliothèque actuelle.');
+    } else if (frozen && (state.contract_text_snapshot === null || state.contract_snapshot_json === null)) {
+      warnings.push('Snapshot historique incomplet : les données conservées ne sont pas recalculées.');
+    }
     if (!clauses.some((clause) => clause.sourceKind === 'base' && clause.enabled && !clause.isOrphaned)) {
       warnings.push('Aucune clause publiée du socle CGV n’est incluse.');
     }
@@ -330,7 +338,8 @@ export class ContractTermsService {
     return {
       quoteId,
       audience,
-      locked: state.status !== 'draft' || Boolean(state.finalized_at),
+      locked,
+      snapshotState,
       clauses,
       compiledText,
       snapshotText: state.contract_text_snapshot,
@@ -447,15 +456,10 @@ export class ContractTermsService {
 
   freezeQuote(quoteId: string): QuoteContractBuild {
     const state = this.quoteState(quoteId);
-    if (state.finalized_at && state.contract_compiled_at && state.contract_text_snapshot) return this.getQuoteBuild(quoteId);
-
-    const before = this.quoteClauses(quoteId);
-    if (state.status === 'draft' && !state.finalized_at) {
-      this.syncQuoteInternal(quoteId, true);
-    } else if (before.length === 0) {
-      // Compatibilité pour les anciens devis déjà envoyés avant l'arrivée du Builder CGV.
-      this.syncQuoteInternal(quoteId, true);
-    }
+    // A timestamp/JSON (including an empty clause list) is evidence of freezing.
+    // Locked legacy quotes must retain their historical absence, even with instances.
+    if (this.hasSnapshot(state) || state.status !== 'draft' || state.finalized_at) return this.getQuoteBuild(quoteId);
+    this.syncQuoteInternal(quoteId);
     const clauses = this.quoteClauses(quoteId);
     const audience = this.resolveQuoteAudience(state);
     const compiledText = this.compile(clauses);
@@ -501,9 +505,9 @@ export class ContractTermsService {
     return this.getQuoteBuild(targetQuoteId);
   }
 
-  private syncQuoteInternal(quoteId: string, allowLocked = false): void {
+  private syncQuoteInternal(quoteId: string): void {
     const state = this.quoteState(quoteId);
-    if (!allowLocked && (state.status !== 'draft' || state.finalized_at)) {
+    if (this.hasSnapshot(state) || state.status !== 'draft' || state.finalized_at) {
       throw new Error('Les CGV de ce devis sont figées. Duplique le devis pour les modifier.');
     }
 
@@ -751,9 +755,13 @@ export class ContractTermsService {
 
   private assertQuoteEditable(quoteId: string): void {
     const state = this.quoteState(quoteId);
-    if (state.status !== 'draft' || state.finalized_at) {
+    if (this.hasSnapshot(state) || state.status !== 'draft' || state.finalized_at) {
       throw new Error('Les CGV de ce devis sont figées. Duplique le devis pour les modifier.');
     }
+  }
+
+  private hasSnapshot(state: QuoteStateRow): boolean {
+    return state.contract_compiled_at !== null || state.contract_text_snapshot !== null || state.contract_snapshot_json !== null;
   }
 
   private quoteClauses(quoteId: string): QuoteContractClause[] {
