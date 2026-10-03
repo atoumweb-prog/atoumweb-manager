@@ -32,6 +32,20 @@ export interface CatalogCommercialIdentity {
   periodicity?: string | null;
   priceBasis?: CatalogPriceBasis;
   provenance?: CatalogProvenance | null;
+  commercialParameters?: CatalogCommercialParameters | null;
+}
+// Descriptive commercial data, never injected as contract clauses by this field.
+export interface CatalogCommercialParameters {
+  clientNeed?: string | null;
+  work?: string | null;
+  options?: string | null;
+  quoteRequiredWhen?: string | null;
+  deliverables?: string | null;
+  deliveryTerms?: string | null;
+  reviewTerms?: string | null;
+  correctiveWarranty?: string | null;
+  thirdPartyCosts?: string | null;
+  sourcePriceLabel?: string | null;
 }
 export interface CatalogIdentityAssignment {
   itemId: string;

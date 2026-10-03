@@ -25,9 +25,11 @@ const entry = `
 import React from 'react';
 import {createRoot} from 'react-dom/client';
 import {CatalogPage} from '${repo.replaceAll('\\', '/')}/src/renderer/commercial/CatalogPage';
+import commercialSource from '${repo.replaceAll('\\', '/')}/data/catalogue/atoumweb-catalogue-v1.json';
 const oldVersion={id:'old-v1',itemId:'legacy-id',versionNumber:1,status:'published',priceMode:'fixed',priceCents:69900,description:'Ancienne offre',inclusions:[],exclusions:[],prerequisites:[],createdAt:'2026-09-14',publishedAt:'2026-09-14'};
 const items=[{id:'legacy-id',type:'service',name:'Ancien élément témoin',category:'Web',status:'active',visiblePublic:false,canonicalCode:null,currentVersion:oldVersion,versions:[oldVersion],createdAt:'2026-09-14'}];
 window.calls={create:[],version:[],assign:[],publish:0};window.items=items;window.messages=[];
+window.importedVersion={...commercialSource.records.find(r=>r.canonicalCode==='AW-WEB-VITRINE').version,id:'legacy-import-v2',itemId:'legacy-id',versionNumber:2,status:'draft',createdAt:'2026-10-03'};
 window.atoumweb={catalog:{
   list:async()=>structuredClone(items),getItem:async(id)=>structuredClone(items.find(i=>i.id===id)),
   create:async(input,version)=>{calls.create.push({input,version});const id='new-'+calls.create.length;const v={...version,id:id+'-v1',itemId:id,versionNumber:1,status:'draft',createdAt:'2026-10-03'};const item={...input,id,status:'active',canonicalCode:input.canonicalCode?.toUpperCase()||null,currentVersion:v,versions:[v]};items.push(item);return structuredClone(item)},
@@ -82,6 +84,13 @@ app.whenReady().then(async () => {
       assert('Recherche par code canonique',document.querySelectorAll('.catalog-compact-item').length===1&&document.querySelector('.catalog-compact-item').textContent.includes('Licence de recette'));
       await fillField(search,'Licence fournisseur de recette');
       assert('Recherche par libellé Abby',document.querySelectorAll('.catalog-compact-item').length===1);
+      await fillField(search,'');items[0].versions.unshift(importedVersion);
+      const legacyRow=[...document.querySelectorAll('.catalog-compact-item')].find(r=>r.textContent.includes('Ancien élément témoin'));if(!legacyRow)throw Error('Ancien item absent de la liste');legacyRow.click();await wait();
+      assert('Brouillon importé consultable sans remplacer la version publiée',document.querySelector('.catalog-import-draft')&&document.querySelector('.catalog-current-version').textContent.includes('Ancienne offre'));
+      document.querySelector('.catalog-import-draft summary').click();await wait();
+      const importedDetail=document.querySelector('.catalog-import-draft');
+      assert('Paramètres, inclusions et provenance importés visibles',importedDetail.open&&importedDetail.textContent.includes(importedVersion.commercialParameters.reviewTerms)&&importedDetail.textContent.includes(importedVersion.provenance.recordKey)&&importedDetail.textContent.includes(importedVersion.inclusions[0]));
+      assert('Consultation du brouillon sans publication ni mutation de la version précédente',calls.publish===0&&items[0].currentVersion.id==='old-v1'&&items[0].currentVersion.priceCents===69900);
       return {passed:checks.length,failed:0,checks};
     })()`);
     console.log(JSON.stringify(result, null, 2));win.destroy();app.exit(0);

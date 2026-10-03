@@ -1,16 +1,17 @@
-> ## ÉTAT ACTUEL — 03/10/2026 — À LIRE AVANT TOUT
+> ## ÉTAT ACTUEL — 03/10/2026 — LOT 3 APPLIQUÉ, ARRÊT AVANT LOT 4
 >
 > Ce bloc remplace les anciennes consignes de reprise ci-dessous, conservées comme historique.
 >
-> - Branche : `feature/project-page-compositions-v1` ; HEAD local Lot 1 **`dedb865f4cdabd518391b63f067ed8e2647c869b`**, basé sur `ef02f8d6737df14f5cc5d49ed7c5e45d8c59cf81`.
-> - Lot 8B clos ; Lot 8C suspendu. Aucun travail Bridge demandé.
-> - Contrats Lot 1 committé localement : brouillon/publication séparés, snapshot vide figé, aucune injection sur devis historiques, PDF rattaché protégé contre suppression définitive. Arbre propre après commit avant Lot 2.
-> - Lot 2 validé techniquement par AtoumWeb ; commit local dédié autorisé avant tout code Lot 3. Identité AW durable, unités/nature/périodicité/provenance versionnées, manifeste d'attribution explicite par UUID, UI catalogue, snapshots des nouvelles lignes de devis. Rapport : `CONTRACTUAL_LOT2_CATALOG_IDENTITY.md`. Recette manuelle reportée avant validation fonctionnelle finale.
-> - Migration additive **53** testée en mémoire uniquement ; migrations 1–52 intactes. Base réelle inchangée. Aucun seed/import des 118 clauses, 112 prestations ou 409 liens.
-> - Lot 1 VALIDÉ TECHNIQUEMENT ; RECETTE MANUELLE ATOUMWEB À FAIRE PLUS TARD avant validation fonctionnelle finale. Suite complète 356/356, typecheck OK ; tests ciblés 43/43 ; UI isolée 14/14.
-> - Rapport : `CONTRACTUAL_LOT1_DRAFT_FREEZE.md`. Les empreintes PDF et l'historique documentaire restent au Lot 5.
-> - Validation Lot 2 : typecheck OK, suite complète **377/377** (56 fichiers), ciblés **45/45**, UI catalogue **15/15**, régression UI Lot 1 **14/14** ; zéro échec. Recette réelle non effectuée.
-> - Feu vert Lot 3 reçu après commit Lot 2 : import testé en base temporaire et dry-run explicite. **Ne pas écrire dans Validation-MSI avant présentation de la simulation et feu vert séparé.** Ne pas résoudre seul les huit ambiguïtés. Aucun Lot 4, push/merge, travail Bridge/8C ni import/publication de clauses.
+> - Branche `feature/project-page-compositions-v1`, HEAD local Lot 2 `1d0436a961f261b6b89eb029c8e5b5a2bde4e4a9`, Lot 1 `dedb865f4cdabd518391b63f067ed8e2647c869b`, distante 8B `ef02f8d6737df14f5cc5d49ed7c5e45d8c59cf81`. Lot 3 non committé ; aucun push/merge.
+> - Lots 1/2 validés techniquement ; recette manuelle AtoumWeb reportée avant validation fonctionnelle finale. Les empreintes PDF et l'historique documentaire restent au Lot 5.
+> - Feu vert réel reçu pour Lot 3 après fermeture : **390/390 tests complets (57 fichiers), typecheck OK**, working tree 20 fichiers Lot 3 prévus et aucun staged. Aucun changement de code après tests.
+> - Manager non démarré. Sauvegarde physique sous verrou d'écriture exclusif vérifié ; WAL vide, SHM présent, aucun journal actif. Backup : `C:\DEV\02_DONNEES\AtoumWeb\Validation-MSI\backups\before-lot3-2026-10-03T11-33-56-510Z.sqlite`, SHA `5756168d25f3fcac9677da52919213a5953d5eb717150f3be287e7966798eb0c`, intégrité vérifiée avant application.
+> - **Migrations 53 et 54 appliquées à Validation-MSI**, aucune migration 1–52 modifiée, aucun seed. Migrations et import sous transaction englobante ; jeton recalculé `a2e19182789da172c8097e796293ea1e778d7b0bfaa23edb02020275215b3bd4` égal au validé, empreintes base/XLSX/payload inchangées juste avant import.
+> - Résultat réel : **91 créations / 21 reprises / 15 archives réversibles / 9 conservations / 112 AW / 112 nouvelles versions BROUILLON**. Totaux 136 items / 157 versions / 44 anciennes publiées inchangées / 113 brouillons / 127 entrées de journal / 1 passage. Aucune publication automatique.
+> - Huit anciens objets ambigus archivés sans AW ni nouvelle version, huit cibles distinctes ; aucun matching par nom. Les versions historiques, trois devis `DEV-2026-001/002/003`, Projets, documents, compositions et tables contractuelles sont exactement préservés. Liens blueprint des 21 reprises contrôlés : 2 historiques + 1 copie = 3, rôle/ordre/version exacts.
+> - Intégrité SQLite OK, aucune violation FK. Rejeu réel **0 création / 0 reprise / 0 archive / 0 verify / 136 conservations**, toutes les tables inchangées. Contre-vérification indépendante SQLite contre le backup réussie. Base après checkpoint/fermeture SHA `81395f7ea2cd6a5c821100b3e1dc952a238a25523b73c1f32eb7af90fb111f5b` ; XLSX inchangé `3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686`.
+> - Rapport `CONTRACTUAL_LOT3_CATALOG_IMPORT.md`, preuves `C:\Users\AtoumWeb\Documents\ChatGPT\manager atoumweb+ bridge\outputs\catalogue-lot3\application-lot3-validation-msi.md/json` et `contre-verification-lecture-seule.json`. Le dry-run et les anciennes entrées de journal restent historiques : ne pas reprendre une consigne antérieure indiquant que les migrations sont pendantes.
+> - **ARRÊT AVANT LOT 4 : attendre un nouveau feu vert. Ne publier aucune version V1.** Aucun import de clauses/409 liens, travail Abby/Bridge ou Lot 8C. Aucun commit Lot 3 autorisé dans cette passe.
 
 > ## HISTORIQUE — 29/09/2026 — Lot 6B
 >
@@ -329,3 +330,5 @@ ChatGPT pilote actuellement la conception et les modifications de la branche Pro
 - incident résolu → timer arrêté, date de résolution renseignée, statut **À valider**, puis ouverture de **Conclusion & rapport de fin** ;
 - la conclusion réutilise Cause / Diagnostic / Solution / Suivi ; la Solution est obligatoire pour clôturer l’incident ;
 - les données de conclusion servent de base au futur document/PDF de fin dans Documents & Contrats.
+
+Clôture Lot 3 — 03/10/2026 : bilan réel validé par AtoumWeb ; commit local dédié autorisé, sans push ni merge. La recette manuelle AtoumWeb reste à faire avant validation fonctionnelle finale. Cette clôture ne contient aucune modification du Lot 4.

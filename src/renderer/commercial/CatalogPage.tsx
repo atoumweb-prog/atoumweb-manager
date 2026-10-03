@@ -4,6 +4,7 @@ import {
   CATALOG_COMMERCIAL_KINDS,
   type CatalogCommercialKind,
   type CatalogPriceBasis,
+  type CatalogCommercialParameters,
   type CatalogItemDetail,
   type CatalogItemStatus,
   type CatalogItemSummary,
@@ -611,6 +612,8 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
                     <Summary label="Conditions commerciales" value={detail.currentVersion.specialTerms || 'Non renseignées'} />
                   </section>
 
+                  <CommercialParametersSummary parameters={detail.currentVersion.commercialParameters} />
+
                   {detail.currentVersion.internalAdvice && <div className="catalog-internal-note"><strong>Conseil interne AtoumWeb</strong><p>{detail.currentVersion.internalAdvice}</p></div>}
                 </div>
               ) : <p className="muted">Aucune version.</p>}
@@ -635,13 +638,24 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
                 </section>
               )}
 
-              <div className="catalog-versions"><strong>Historique des versions</strong>{detail.versions.map((version) => <div className="catalog-version-row" key={version.id}><div><strong>v{version.versionNumber}</strong><span>{VERSION_STATUS_LABELS[version.status]}</span><small>{PRICE_LABELS[version.priceMode]} · {version.priceCents != null ? `${(version.priceCents / 100).toLocaleString('fr-FR')} €` : '—'} · {version.publishedAt ? `publiée le ${formatCatalogDate(version.publishedAt)}` : `créée le ${formatCatalogDate(version.createdAt)}`}</small></div>{version.status === 'draft' && <button className="primary-button compact-button" type="button" onClick={() => void publish(version.id)}>Publier</button>}</div>)}</div>
+              <div className="catalog-versions"><strong>Historique des versions</strong>{detail.versions.map((version) => <div className="catalog-version-row" key={version.id}><div><strong>v{version.versionNumber}</strong><span>{VERSION_STATUS_LABELS[version.status]}</span><small>{PRICE_LABELS[version.priceMode]} · {version.priceCents != null ? `${(version.priceCents / 100).toLocaleString('fr-FR')} €` : '—'} · {version.publishedAt ? `publiée le ${formatCatalogDate(version.publishedAt)}` : `créée le ${formatCatalogDate(version.createdAt)}`}</small>{version.status === 'draft' && version.provenance && <details className="catalog-import-draft"><summary>Consulter le brouillon importé</summary><p>Cette version n’est pas publiée. Sa consultation ne change pas la version commerciale en cours.</p><p>{version.nature}</p><p>{version.description}</p><Summary label="Code canonique" value={detail.canonicalCode || 'Non attribué'} /><Summary label="Unité / périodicité" value={[version.unit, version.periodicity].filter(Boolean).join(' / ')} /><ListSummary label="Inclus" values={version.inclusions ?? []} /><ListSummary label="Exclusions" values={version.exclusions ?? []} /><ListSummary label="Prérequis" values={version.prerequisites ?? []} /><CommercialParametersSummary parameters={version.commercialParameters} /><Summary label="Source" value={[version.provenance.reference, version.provenance.recordKey, version.provenance.sha256].filter(Boolean).join(' · ')} /></details>}</div>{version.status === 'draft' && <button className="primary-button compact-button" type="button" onClick={() => void publish(version.id)}>Publier</button>}</div>)}</div>
             </aside>
           )}
         </div>
       )}
     </div>
   );
+}
+
+function CommercialParametersSummary({ parameters }: { parameters?: CatalogCommercialParameters | null }) {
+  if (!parameters) return null;
+  const labels: Record<keyof CatalogCommercialParameters, string> = {
+    clientNeed: 'Besoin client', work: 'Travail prévu', options: 'Options / compléments',
+    quoteRequiredWhen: 'Cas nécessitant un devis', deliverables: 'Livrables', deliveryTerms: 'Modalités / délai',
+    reviewTerms: 'Corrections / recette', correctiveWarranty: 'Garantie corrective prévue',
+    thirdPartyCosts: 'Coûts tiers', sourcePriceLabel: 'Règle tarifaire de source',
+  };
+  return <section className="catalog-detail-section catalog-commercial-parameters"><strong>Paramètres commerciaux du catalogue</strong>{Object.entries(labels).map(([key, label]) => parameters[key as keyof CatalogCommercialParameters] ? <Summary key={key} label={label} value={parameters[key as keyof CatalogCommercialParameters]!} /> : null)}</section>;
 }
 
 function CatalogFields({ draft, onChange, showIdentity = false }: { draft: CatalogDraft; onChange: (draft: CatalogDraft) => void; showIdentity?: boolean }) {

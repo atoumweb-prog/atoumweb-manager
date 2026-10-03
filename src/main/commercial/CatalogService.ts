@@ -26,6 +26,7 @@ const clean = (value?: string | null): string | null => {
 };
 
 interface CatalogRow extends Record<string, unknown> {
+  commercial_parameters_json: string | null;
   canonical_code: string | null;
   identity_provenance_json: string | null;
   commercial_kind: CatalogCommercialIdentity['commercialKind'];
@@ -66,6 +67,7 @@ interface CatalogRow extends Record<string, unknown> {
 }
 
 interface VersionRow extends Record<string, unknown> {
+  commercial_parameters_json: string | null;
   commercial_kind: CatalogCommercialIdentity['commercialKind'];
   family_code: string | null;
   abby_label: string | null;
@@ -174,7 +176,7 @@ export class CatalogService {
         v.contract_type,
         v.internal_advice,
         v.special_terms,
-        v.commercial_kind, v.family_code, v.abby_label, v.unit, v.periodicity, v.price_basis, v.provenance_json,
+        v.commercial_kind, v.family_code, v.abby_label, v.unit, v.periodicity, v.price_basis, v.provenance_json, v.commercial_parameters_json,
         v.published_at,
         v.created_at AS version_created_at
        FROM catalog_items i
@@ -215,7 +217,7 @@ export class CatalogService {
 
     const id = randomUUID();
     const now = nowIso();
-    this.database.exec('BEGIN IMMEDIATE;');
+    this.database.exec('SAVEPOINT catalog_service;');
     try {
       this.database.run(
         `INSERT INTO catalog_items (
@@ -225,9 +227,9 @@ export class CatalogService {
       );
       this.insertVersion(id, 1, firstVersion, now);
       this.writeActivity(id, 'catalog_created', `${input.type === 'offer' ? 'Offre' : 'Service'} créé : ${name}`);
-      this.database.exec('COMMIT;');
+      this.database.exec('RELEASE SAVEPOINT catalog_service;');
     } catch (error) {
-      this.database.exec('ROLLBACK;');
+      this.database.exec('ROLLBACK TO SAVEPOINT catalog_service; RELEASE SAVEPOINT catalog_service;');
       throw error;
     }
     return this.getItem(id);
@@ -242,13 +244,13 @@ export class CatalogService {
     const nextVersion = Number(previous?.version_number ?? 0) + 1;
     const previousVersion = previous ? this.getVersion(previous.id) : null;
     const nextInput: CatalogVersionInput = { ...input };
-    for (const key of ['commercialKind', 'familyCode', 'abbyLabel', 'unit', 'periodicity', 'priceBasis', 'provenance'] as const) {
+    for (const key of ['commercialKind', 'familyCode', 'abbyLabel', 'unit', 'periodicity', 'priceBasis', 'provenance', 'commercialParameters'] as const) {
       if (input[key] === undefined && previousVersion) Object.assign(nextInput, { [key]: previousVersion[key] });
     }
     this.validateVersion(nextInput);
     const now = nowIso();
 
-    this.database.exec('BEGIN IMMEDIATE;');
+    this.database.exec('SAVEPOINT catalog_service;');
     try {
       const version = this.insertVersion(itemId, nextVersion, nextInput, now);
       if (item.item_type === 'offer' && previous) {
@@ -262,12 +264,19 @@ export class CatalogService {
           );
         }
       }
+      if (previous) {
+        const links = this.database.all<{ template_version_id: string; role: string; sort_order: number }>(
+          'SELECT template_version_id,role,sort_order FROM catalog_project_blueprints WHERE catalog_version_id=? ORDER BY sort_order,id', [previous.id]);
+        for (const link of links) this.database.run(
+          'INSERT INTO catalog_project_blueprints (id,catalog_version_id,template_version_id,role,sort_order,created_at) VALUES (?,?,?,?,?,?)',
+          [randomUUID(), version.id, link.template_version_id, link.role, link.sort_order, now]);
+      }
       this.database.run('UPDATE catalog_items SET updated_at=? WHERE id=?', [now, itemId]);
       this.writeActivity(itemId, 'catalog_version_created', `Nouvelle version brouillon v${version.versionNumber}`);
-      this.database.exec('COMMIT;');
+      this.database.exec('RELEASE SAVEPOINT catalog_service;');
       return version;
     } catch (error) {
-      this.database.exec('ROLLBACK;');
+      this.database.exec('ROLLBACK TO SAVEPOINT catalog_service; RELEASE SAVEPOINT catalog_service;');
       throw error;
     }
   }
@@ -291,16 +300,16 @@ export class CatalogService {
       this.assertCodeAvailable(code, entry.itemId);
       return { item, code, provenance: this.normalizeProvenance(entry.provenance) };
     });
-    this.database.exec('BEGIN IMMEDIATE;');
+    this.database.exec('SAVEPOINT catalog_service;');
     try {
       for (const { item, code, provenance } of assignments) {
         if (item.canonicalCode === code) continue;
         this.database.run('UPDATE catalog_items SET canonical_code=?,identity_provenance_json=?,updated_at=? WHERE id=?', [code, JSON.stringify(provenance), nowIso(), item.id]);
         this.writeActivity(item.id, 'catalog_canonical_code_assigned', `Code ${code} attribué explicitement à ${item.id} ; source ${provenance.reference}`);
       }
-      this.database.exec('COMMIT;');
+      this.database.exec('RELEASE SAVEPOINT catalog_service;');
     } catch (error) {
-      this.database.exec('ROLLBACK;');
+      this.database.exec('ROLLBACK TO SAVEPOINT catalog_service; RELEASE SAVEPOINT catalog_service;');
       throw error;
     }
     return assignments.map(({ item }) => this.getItem(item.id));
@@ -471,8 +480,8 @@ export class CatalogService {
         prerequisites_json, price_mode, price_cents, recommended_price_cents,
         estimated_minutes, recommended_delay_days, default_deposit_percent,
         contract_type, internal_advice, published_at, created_at, special_terms,
-        commercial_kind, family_code, abby_label, unit, periodicity, price_basis, provenance_json
-      ) VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        commercial_kind, family_code, abby_label, unit, periodicity, price_basis, provenance_json, commercial_parameters_json
+      ) VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         itemId,
@@ -499,12 +508,15 @@ export class CatalogService {
         clean(input.periodicity),
         input.priceBasis ?? 'listed',
         input.provenance ? JSON.stringify(this.normalizeProvenance(input.provenance)) : null,
+        input.commercialParameters ? JSON.stringify(input.commercialParameters) : null,
       ],
     );
     return this.getVersion(id);
   }
 
-  private validateVersion(input: CatalogVersionInput): void {
+  validateVersion(input: CatalogVersionInput): void {
+    if (input.commercialParameters != null && (typeof input.commercialParameters !== 'object' || Array.isArray(input.commercialParameters)
+      || Object.values(input.commercialParameters).some(value => value != null && typeof value !== 'string'))) throw new Error('Paramètres commerciaux descriptifs invalides.');
     if (input.commercialKind != null && !CATALOG_COMMERCIAL_KINDS.includes(input.commercialKind)) throw new Error('Nature commerciale invalide.');
     if (input.priceBasis != null && !['listed', 'actual_cost'].includes(input.priceBasis)) throw new Error('Base de prix invalide.');
     if (input.priceBasis === 'actual_cost' && (input.priceMode !== 'quote_only' || input.priceCents != null)) throw new Error('Un coût tiers réel est sans prix catalogue fixe ; utilise Sur devis.');
@@ -588,6 +600,7 @@ export class CatalogService {
         periodicity: row.periodicity,
         price_basis: row.price_basis,
         provenance_json: row.provenance_json,
+        commercial_parameters_json: row.commercial_parameters_json,
       }) : null,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
@@ -614,6 +627,7 @@ export class CatalogService {
       periodicity: row.periodicity,
       priceBasis: row.price_basis,
       provenance: this.readProvenance(row.provenance_json),
+      commercialParameters: row.commercial_parameters_json ? JSON.parse(row.commercial_parameters_json) : null,
       versionNumber: Number(row.version_number),
       status: row.status,
       nature: row.nature,
