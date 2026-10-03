@@ -11,6 +11,36 @@ export type ContractClauseStatus = (typeof CONTRACT_CLAUSE_STATUSES)[number];
 export type ContractClauseVersionStatus = (typeof CONTRACT_CLAUSE_VERSION_STATUSES)[number];
 export type QuoteContractClauseSource = (typeof QUOTE_CONTRACT_CLAUSE_SOURCES)[number];
 
+export const CONTRACT_LEGAL_REVIEW_LEVELS = [
+  'Vérifié sur sources officielles',
+  'Vérifié avec réserve',
+  'Incertitude résiduelle',
+  'Validation externe recommandée mais non prévue',
+  'Fonctionnalité à ne pas activer sans nouvelle vérification',
+] as const;
+
+/** Documentary review only: neither publication status nor an automatic lawyer approval gate. */
+export interface ContractClauseReviewMetadata {
+  level: (typeof CONTRACT_LEGAL_REVIEW_LEVELS)[number];
+  sources: string | null;
+  verifiedAt: string | null;
+  reserve: string | null;
+  risk: string | null;
+  prudence: string | null;
+  externalSupport: string | null;
+  finalReview: string | null;
+  businessDecisions: string;
+  editorialDecision: string;
+  decisionReason: string | null;
+  outsideActions: string | null;
+  editorialStatus: string;
+  origin: string;
+  parameters: string | null;
+  dependencies: string | null;
+  textSource: string | null;
+  provenance: { reference: string; sha256: string; referenceCell: string; bodyCell: string; reviewCell: string; decisionCell: string };
+}
+
 export interface ContractClauseTemplateInput {
   code: string;
   title: string;
@@ -21,6 +51,7 @@ export interface ContractClauseTemplateInput {
 
 export interface ContractClauseVersionInput {
   body: string;
+  review?: ContractClauseReviewMetadata | null;
 }
 
 export interface ContractClauseVersion {
@@ -30,6 +61,7 @@ export interface ContractClauseVersion {
   body: string;
   status: ContractClauseVersionStatus;
   publishedAt?: string | null;
+  review?: ContractClauseReviewMetadata | null;
   createdAt: string;
 }
 

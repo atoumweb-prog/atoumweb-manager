@@ -34,6 +34,7 @@ import { PROJECT_BLUEPRINT_SITE_COMPATIBILITY_MIGRATION } from './projectBluepri
 import { PROJECT_PAGE_EXPORT_MIGRATION } from './projectPageExportMigration';
 import { CATALOG_IDENTITY_V1_MIGRATION } from './catalogIdentityV1Migration';
 import { CATALOG_IMPORT_V1_MIGRATION } from './catalogImportV1Migration';
+import { CONTRACT_LIBRARY_IMPORT_V1_MIGRATION } from './contractLibraryImportV1Migration';
 
 export interface Migration { id: number; name: string; sql: string; disableForeignKeys?: boolean; }
 
@@ -223,6 +224,7 @@ export const MIGRATIONS: Migration[] = [
   PROJECT_PAGE_EXPORT_MIGRATION,
   CATALOG_IDENTITY_V1_MIGRATION,
   CATALOG_IMPORT_V1_MIGRATION,
+  CONTRACT_LIBRARY_IMPORT_V1_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {

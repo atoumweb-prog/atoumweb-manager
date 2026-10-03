@@ -397,6 +397,23 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
                 {template.versions.filter((version) => version.status === 'draft').map((version) => (
                   <div className="cgv-version-editor" key={version.id}>
                     <label>Brouillon · v{version.versionNumber}<textarea readOnly value={version.body} /></label>
+                    {version.review && <details className="cgv-review">
+                      <summary>Revue documentaire · {version.review.level}</summary>
+                      <p className="muted">Le niveau de revue décrit le brouillon ; il ne constitue ni une publication ni une déclaration de conformité juridique.</p>
+                      <dl>
+                        <dt>Dernière vérification documentée</dt><dd>{version.review.verifiedAt ?? 'Non renseignée'}</dd>
+                        <dt>Sources officielles</dt><dd style={{ whiteSpace: 'pre-wrap' }}>{version.review.sources ?? 'Non renseignées'}</dd>
+                        <dt>Réserves</dt><dd>{version.review.reserve ?? 'Non renseignées'}</dd>
+                        <dt>Risque et précautions</dt><dd>{version.review.risk} {version.review.prudence}</dd>
+                        <dt>Revue finale / appui externe</dt><dd>{version.review.finalReview} {version.review.externalSupport}</dd>
+                        <dt>Paramètres du devis</dt><dd>{version.review.parameters}</dd>
+                        <dt>Dépendances documentaires</dt><dd>{version.review.dependencies}</dd>
+                        <dt>Décisions métier</dt><dd>{version.review.businessDecisions}</dd>
+                        <dt>Suivi rédactionnel</dt><dd>{version.review.editorialDecision} · {version.review.editorialStatus}</dd>
+                        <dt>Provenance</dt><dd>{version.review.provenance.reference} · {version.review.provenance.bodyCell}</dd>
+                        <dt>Empreinte du référentiel</dt><dd style={{ overflowWrap: 'anywhere' }}>{version.review.provenance.sha256}</dd>
+                      </dl>
+                    </details>}
                     <button className="primary-button compact-button" type="button" disabled={busy || template.status === 'archived'} onClick={() => void publishDraft(version.id)}>Publier le brouillon v{version.versionNumber}</button>
                   </div>
                 ))}
@@ -409,7 +426,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
                   <button className="primary-button compact-button" type="button" disabled={busy} onClick={() => void saveDraftVersion(template)}>Enregistrer la version en brouillon</button>
                 </div>}
                 {template.scope === 'catalog' && <div className="cgv-catalog-links">
-                  <strong>Prestations qui déclenchent cette clause</strong>
+                  <strong>Prestations qui déclenchent cette clause ({template.catalogItemIds.length})</strong>
                   <div>{catalog.map((item) => <label key={item.id}><input type="checkbox" checked={template.catalogItemIds.includes(item.id)} disabled={busy} onChange={() => void toggleCatalogLink(template, item.id)} /><span>{item.type === 'offer' ? 'Offre' : 'Service'} · {item.name}</span></label>)}</div>
                 </div>}
               </div>

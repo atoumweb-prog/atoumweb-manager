@@ -5,6 +5,7 @@ import {
   CONTRACT_CLAUSE_SCOPES,
   CONTRACT_CLAUSE_STATUSES,
   type ContractClauseAudience,
+  type ContractClauseReviewMetadata,
   type ContractClauseScope,
   type ContractClauseStatus,
   type ContractClauseTemplate,
@@ -47,6 +48,7 @@ interface VersionRow extends Record<string, unknown> {
   body: string;
   status: ContractClauseVersionStatus;
   published_at: string | null;
+  review_metadata_json: string | null;
   created_at: string;
 }
 
@@ -168,7 +170,7 @@ export class ContractTermsService {
     const id = randomUUID();
     const versionId = randomUUID();
     const now = nowIso();
-    this.database.exec('BEGIN IMMEDIATE;');
+    this.database.exec('SAVEPOINT contract_library_operation;');
     try {
       this.database.run(
         `INSERT INTO contract_clause_templates
@@ -178,14 +180,14 @@ export class ContractTermsService {
       );
       this.database.run(
         `INSERT INTO contract_clause_versions
-         (id,clause_id,version_number,body,status,published_at,created_at)
-         VALUES (?,?,1,?,'draft',NULL,?)`,
-        [versionId, id, firstVersion.body ?? '', now],
+         (id,clause_id,version_number,body,status,published_at,created_at,review_metadata_json)
+         VALUES (?,?,1,?,'draft',NULL,?,?)`,
+        [versionId, id, firstVersion.body ?? '', now, firstVersion.review ? JSON.stringify(firstVersion.review) : null],
       );
       this.writeActivity('contract_clause', id, 'contract_clause_created', `Clause ${code} créée`);
-      this.database.exec('COMMIT;');
+      this.database.exec('RELEASE SAVEPOINT contract_library_operation;');
     } catch (error) {
-      this.database.exec('ROLLBACK;');
+      this.database.exec('ROLLBACK TO SAVEPOINT contract_library_operation; RELEASE SAVEPOINT contract_library_operation;');
       throw error;
     }
     return this.getTemplate(id);
@@ -202,9 +204,9 @@ export class ContractTermsService {
     const now = nowIso();
     this.database.run(
       `INSERT INTO contract_clause_versions
-       (id,clause_id,version_number,body,status,published_at,created_at)
-       VALUES (?,?,?,?, 'draft', NULL, ?)`,
-      [id, clauseId, Number(next?.next_version ?? 1), input.body ?? '', now],
+       (id,clause_id,version_number,body,status,published_at,created_at,review_metadata_json)
+       VALUES (?,?,?,?, 'draft', NULL, ?, ?)`,
+      [id, clauseId, Number(next?.next_version ?? 1), input.body ?? '', now, input.review ? JSON.stringify(input.review) : null],
     );
     this.database.run('UPDATE contract_clause_templates SET updated_at=? WHERE id=?', [now, clauseId]);
     this.writeActivity('contract_clause', clauseId, 'contract_clause_version_created', `Nouvelle version de ${template.code}`);
@@ -788,6 +790,7 @@ export class ContractTermsService {
       body: row.body,
       status: row.status,
       publishedAt: row.published_at,
+      review: row.review_metadata_json ? JSON.parse(row.review_metadata_json) as ContractClauseReviewMetadata : null,
       createdAt: row.created_at,
     };
   }

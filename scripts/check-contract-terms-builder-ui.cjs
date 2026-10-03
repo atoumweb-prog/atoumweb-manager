@@ -24,6 +24,7 @@ app.disableHardwareAcceleration();
 const dir = process.env.ATOUMWEB_CONTRACT_UI_DIR;
 if (!dir) throw Error('Lancer ce script avec node pour isoler le profil de recette.');
 app.setPath('userData', path.join(dir, 'profile'));
+const importedSource = JSON.parse(fs.readFileSync(path.join(repo, 'data/contracts/atoumweb-contract-library-v1.json'), 'utf8'));
 const entry = `
 import React from 'react';
 import {createRoot} from 'react-dom/client';
@@ -39,9 +40,14 @@ window.atoumweb={clientDocuments:{list:async()=>[{id:'doc',category:'contract',t
   createVersion:async(id,input)=>{window.calls.createVersion++;const t=templates.find(t=>t.id===id);const v={id:'v'+(t.versions.length+1),versionNumber:t.versions.length+1,status:'draft',body:input.body};t.versions.push(v);return structuredClone(v)},
   publishVersion:async(id)=>{window.calls.publish++;const t=templates.find(t=>t.versions.some(v=>v.id===id));t.versions.forEach(v=>{if(v.status==='published')v.status='retired'});const v=t.versions.find(v=>v.id===id);v.status='published';t.currentVersion=v;t.currentVersionId=v.id;return structuredClone(t)},
 },quotes:{get:async()=>structuredClone(build),sync:async()=>{window.calls.sync++;return structuredClone(build)}}}};
-window.fixture={templates,get build(){return build},setBuild(v){build={...build,...v}}};
+window.fixture={get templates(){return templates},get build(){return build},setBuild(v){build={...build,...v}}};
 window.renderQuote=(input={})=>root.render(<ContractTermsBuilder quote={{id:'q',status:'draft',...input}}/>);
 window.renderDocuments=()=>root.render(<ClientDocumentsPanel clientId="client"/>);
+window.renderImportedLibrary=()=>{
+ const source=JSON.parse(${JSON.stringify(JSON.stringify(importedSource))});
+ templates=source.records.map(r=>({id:r.code,code:r.code,title:r.title,scope:r.scope,audience:r.audience,status:'active',currentVersion:null,currentVersionId:null,catalogItemIds:source.links.filter(l=>l.clauseCode===r.code).map(l=>l.awCode),versions:[{id:r.code+'-v1',versionNumber:1,status:'draft',body:r.body,review:r.review}]}));
+ root.render(<ContractTermsBuilder key="imported" quote={{id:'q',status:'sent'}}/>);
+};
 window.renderQuote();
 `;
 app.whenReady().then(async () => {
@@ -86,6 +92,15 @@ app.whenReady().then(async () => {
       renderDocuments();await wait();await click('Supprimer définitivement');
       assert('Refus de suppression visible dans les documents Client',document.querySelector('.form-error')?.textContent.includes('suppression interdite'));
       assert('Document toujours présent après refus',document.body.textContent.includes('PDF accepté'));
+      const publishBefore=calls.publish;
+      renderImportedLibrary();await wait();await click('Bibliothèque CGV');
+      assert('118 clauses importées visibles en bibliothèque',document.querySelectorAll('.cgv-template').length===118);
+      assert('118 versions brouillon exactes',document.querySelectorAll('.cgv-version-editor textarea').length===118&&fixture.templates.every(t=>t.currentVersionId===null&&t.versions[0].status==='draft'));
+      assert('Revue et provenance présentes pour chaque brouillon',document.querySelectorAll('.cgv-review').length===118&&[...document.querySelectorAll('.cgv-review')].every(e=>e.textContent.includes('6bc3eddaee0e1d77008c0bdc98984eea89ac54838c483c12c58b95cd3b237ad8')));
+      assert('Cinq niveaux de revue distincts conservés',new Set(fixture.templates.map(t=>t.versions[0].review.level)).size===5);
+      assert('409 rattachements et clause dormante',fixture.templates.reduce((n,t)=>n+t.catalogItemIds.length,0)===409&&fixture.templates.find(t=>t.code==='LANDING-GESTION').catalogItemIds.length===0);
+      assert('Aucune publication indirecte après chargement',calls.publish===publishBefore);
+      assert('Textes brouillons chargés sans altération',fixture.templates.every(t=>[...document.querySelectorAll('.cgv-template')].find(e=>e.querySelector('summary span').textContent.startsWith(t.code+' ·')).querySelector('.cgv-version-editor textarea').value===t.versions[0].body));
       return {passed:checks.length,failed:0,checks};
     })()`);
     console.log(JSON.stringify(result, null, 2));

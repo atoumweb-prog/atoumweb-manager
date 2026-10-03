@@ -18,6 +18,7 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "scripts/simulate-catalogue-v1-import.ts",
+    "scripts/simulate-contract-library-v1-import.ts",
     "forge.config.ts",
     "vite.*.config.ts",
     "vitest.config.ts"

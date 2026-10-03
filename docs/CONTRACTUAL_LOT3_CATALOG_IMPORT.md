@@ -1,6 +1,6 @@
 # Contrats — Lot 3 : reprise commerciale V1, application réelle autorisée
 
-03/10/2026. **Application réelle Lot 3 autorisée et effectuée après fermeture technique. 112 versions nouvelles en BROUILLON, aucune publication.** Lot 3 non committé, recette manuelle restant à faire. Aucun push/merge, aucun Lot 4, Bridge ou 8C. La préparation et le dry-run ci-dessous sont conservés comme historique avant cette application ; la section finale fait foi pour l'état réel.
+03/10/2026. **Application réelle Lot 3 autorisée et effectuée après fermeture technique. 112 versions nouvelles en BROUILLON, aucune publication.** Lot 3 validé et committé seul localement : `1ed1152cc55ada1e8731d09b9f1a6c9832ba4934`, recette manuelle restant à faire. Aucun push/merge. Lot 4 désormais appliqué après autorisation séparée, uniquement en brouillon ; voir le bilan réel `CONTRACTUAL_LOT4_LIBRARY_IMPORT.md`. Aucun travail Bridge ou 8C. La préparation et le dry-run ci-dessous sont conservés comme historique avant cette application ; la section finale fait foi pour l'état réel.
 
 ## Séparation des lots
 

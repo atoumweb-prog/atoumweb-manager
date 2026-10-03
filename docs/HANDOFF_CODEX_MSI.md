@@ -1,4 +1,42 @@
-> ## ÉTAT ACTUEL — 03/10/2026 — LOT 3 APPLIQUÉ, ARRÊT AVANT LOT 4
+## Checkpoint courant — 03/10/2026 — Lot 4 validé, clôture locale dédiée
+
+Ce bloc fait foi ; les états précédents restent historiques.
+
+- AtoumWeb valide le résultat réel du Lot 4 et autorise son **commit local dédié uniquement**, intitulé `Lot 4 — import bibliothèque contractuelle V1`, sur `feature/project-page-compositions-v1`. Le commit contenant ce bloc fait foi pour le checkpoint Lot 4 ; récupérer son SHA avec `git log -1 --format=%H`. Aucun push/merge.
+- 118 clauses/versions BROUILLON et 409 liens ; aucune publication contractuelle. Les 112 versions catalogue V1 restent également BROUILLON. Textes/provenance et anciens devis/Projets préservés ; migration 55 appliquée seule, intégrité et rejeu validés.
+- **RECETTE MANUELLE ATOUMWEB À FAIRE avant validation fonctionnelle finale. Lot 5 non commencé ; attendre un feu vert séparé.** Bridge et 8C restent suspendus.
+- Avant clôture : 21 fichiers Lot 4 attendus uniquement, aucun changement fonctionnel depuis suite complète 409/409 et typecheck OK. Validation-MSI inchangée par cette clôture, SHA `afaf9b8a7fa196a54dfd29e0fff881b099ad4b1d8bcc2e2da4dd8adc47bf31b8`. Manager non démarré, aucune écriture base.
+- Rapports réels dans `outputs/contract-library-lot4` du dossier documentaire, bilan `docs/CONTRACTUAL_LOT4_LIBRARY_IMPORT.md`. Le bilan de clôture Git hors dépôt donne l'empreinte exacte du commit et la vérification de working tree propre.
+
+## Historique — 03/10/2026 — Lot 4 appliqué avant validation de clôture
+
+Ce bloc fait foi ; les blocs antérieurs et le dry-run restent historiques.
+
+- Branche `feature/project-page-compositions-v1`, HEAD local `1ed1152cc55ada1e8731d09b9f1a6c9832ba4934` (commit Lot 3). **Lot 4 non committé, aucun push/merge.** Recette manuelle AtoumWeb restant à faire avant validation fonctionnelle finale.
+- AtoumWeb valide le dry-run et autorise l'application réelle sous conditions. Fermeture sur le code exact : **58 fichiers / 409 tests / 0 échec**, typecheck sortie 0, 21 fichiers Lot 4 prévus, aucun staged. Aucun changement fonctionnel après ces tests.
+- Manager non démarré. WAL vide, SHM présent (32 768 octets), aucun journal actif ; writer concurrent bloqué sous verrou exclusif. Sauvegarde physique immédiate, intégrité OK : `C:\DEV\02_DONNEES\AtoumWeb\Validation-MSI\backups\before-lot4-2026-10-03T12-37-38-123Z.sqlite`, SHA `81395f7ea2cd6a5c821100b3e1dc952a238a25523b73c1f32eb7af90fb111f5b`.
+- Migration **55** et import sous transaction englobante, savepoints des opérations existantes ; migrations 1–54 intactes. Empreintes XLSX/extraction/manifeste/documents/base/code contrôlées, jeton recalculé immédiatement avant import identique au validé : `8f5b0c9b3ba4a08eab134fed6061de13cd32881f295c5ed6ade66c22d1323bff`.
+- Résultat réel : **118 templates / 118 versions initiales BROUILLON / 409 liens explicites** ; 19 base/99 catalog, 105 all/3 professional/10 consumer ; **0 published / 0 lien BASE**, journal 1 passage/118 entrées. LANDING-GESTION seule dormante, CONS-RETRACTATION-EN-LIGNE absent, aucun ancien alias importé.
+- Textes/revues/sources/réserves/provenance exacts au XLSX du 03/10, SHA inchangé `6bc3eddaee0e1d77008c0bdc98984eea89ac54838c483c12c58b95cd3b237ad8`. Cinq niveaux et suivi 42/52/22/2 conservés sans visa juriste automatique ; aucun arbitrage métier rouvert ni action hors clause transformée.
+- Les **112 AW et 112 versions catalogue V1 BROUILLON** restent intacts ; 44 anciennes versions publiées inchangées. Devis DEV-2026-001/002/003, Projets, anciennes versions, documents et autres tables métier identiques au backup. **0 instance de clause historique**, absence `historical_missing` conservée. Builder : 0 version courante publiée éligible, brouillons non consommés.
+- Après COMMIT : rejeu **0 création/version/lien supplémentaire**, toutes les tables identiques, activité/journal inclus. `integrity_check=ok`, FK vide, checkpoint WAL réussi. Contre-vérification indépendante SQLite en lecture seule contre backup : **96 tables historiques**, textes/revues/liens exacts.
+- Base avant/backup SHA `81395f7ea2cd6a5c821100b3e1dc952a238a25523b73c1f32eb7af90fb111f5b` ; base après checkpoint/fermeture SHA `afaf9b8a7fa196a54dfd29e0fff881b099ad4b1d8bcc2e2da4dd8adc47bf31b8`.
+- Bilan `docs/CONTRACTUAL_LOT4_LIBRARY_IMPORT.md`, preuves réelles `outputs/contract-library-lot4/application-lot4-validation-msi.md/json`, contre-vérification et fermeture conservées. **Attendre la validation du bilan réel avant commit local dédié Lot 4. Aucune publication ni Lot 5, Abby, Bridge ou 8C.**
+
+## Historique — 03/10/2026 — Lot 4 préparé, avant autorisation réelle
+
+Ce bloc fait foi ; les blocs antérieurs restent historiques.
+
+- Branche `feature/project-page-compositions-v1`, HEAD local **`1ed1152cc55ada1e8731d09b9f1a6c9832ba4934`** : commit Lot 3 dédié uniquement, aucun push/merge. Working tree propre constaté avant les modifications Lot 4. Recette manuelle AtoumWeb restant à faire avant validation fonctionnelle finale, mentionnée dans le commit.
+- Lot 3 validé : catalogue réellement importé à Validation-MSI, 112 AW, 91 créations/21 reprises/15 archives/9 conservations, versions V1 brouillon, historique et rejeu préservés. Base réelle migrations **1–54**, SHA `81395f7ea2cd6a5c821100b3e1dc952a238a25523b73c1f32eb7af90fb111f5b` inchangé pendant Lot 4.
+- Autorisation Lot 4 limitée à préparation et dry-run sur copie. Référentiel XLSX du 03/10 SHA `6bc3eddaee0e1d77008c0bdc98984eea89ac54838c483c12c58b95cd3b237ad8` ; textes exacts, huit documents juridiques préservés.
+- Migration additive **55 préparée et testée uniquement sur copie/mémoire** : revue/provenance des versions et journal d'import. Migrations 1–54 inchangées, aucun seed/import automatique. **Ne pas démarrer Manager contre Validation-MSI avant feu vert pour la migration/import.**
+- Simulation/répétition : **118 clauses / 118 versions BROUILLON / 409 liens explicites**, 19 base/99 catalog ; 105 all/3 professional/10 consumer ; zéro anomalie/publication/lien BASE. `LANDING-GESTION` seule dormante, contrôle `CONS-RETRACTATION-EN-LIGNE` exclu. Rejeu zéro changement, intégrité SQLite OK et FK vide, anciens devis/Projets/catalogue strictement préservés.
+- Suivi documentaire 42 modifier/52 inchangé/22 hors clause/2 qualifications et cinq niveaux de revue conservés, sans blocage automatique juriste. Les 16 décisions restent closes ; les 44 actions hors clause ne deviennent pas de nouvelles clauses/tables.
+- Tests ciblés **59/59**, typecheck sortie 0, UI Chromium isolée **21/21** ; recette réelle non effectuée puisque import réel interdit pour cette passe. Extraction déterministe contrôlée, empreintes DB/XLSX/documents avant/après identiques.
+- Bilan `docs/CONTRACTUAL_LOT4_LIBRARY_IMPORT.md`, dry-run exhaustif MD/CSV/JSON `outputs/contract-library-lot4` du dossier documentaire. **Arrêt avant écriture réelle, attente du feu vert AtoumWeb.** Aucun commit Lot 4, publication, Lot 5, Abby, Bridge ou 8C ; aucun push/merge.
+
+> ## HISTORIQUE — 03/10/2026 — LOT 3 APPLIQUÉ AVANT CLÔTURE LOCALE
 >
 > Ce bloc remplace les anciennes consignes de reprise ci-dessous, conservées comme historique.
 >
