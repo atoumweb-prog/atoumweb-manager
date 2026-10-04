@@ -437,6 +437,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('quotes:refuse', (_event, id: string) => database.quotes.refuse(id));
   ipcMain.handle('quotes:expire', (_event, id: string) => database.quotes.expire(id));
   ipcMain.handle('quotes:duplicate', (_event, id: string) => database.quotes.duplicate(id));
+  ipcMain.handle('quotes:commercial-revision', (_event, id: string) => database.quotes.duplicate(id,true));
   ipcMain.handle('quotes:import-contract-document', async (_event, id: string, abbyReference?: string | null) => {
     const quote = database.quotes.get(id);
     if (quote.status !== 'accepted') throw new Error('Le devis doit être accepté avant d’importer le document contractuel.');
@@ -491,6 +492,10 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('projects:list', (_event, filters?: ProjectFilters) => database.projects.listProjects(filters));
   ipcMain.handle('projects:get', (_event, id: string) => database.projects.getProject(id));
   ipcMain.handle('projects:transform-quote', (_event, input: TransformQuoteToProjectInput) => database.projects.transformQuote(input));
+  ipcMain.handle('projects:prepare-quote', (_event, input: TransformQuoteToProjectInput) => database.projects.commercial.prepare(input));
+  ipcMain.handle('projects:sync-commercial', (_event, id: string) => database.projects.commercial.sync(id));
+  ipcMain.handle('projects:commercial-scope', (_event, id: string) => database.projects.commercial.scope(id));
+  ipcMain.handle('projects:resolve-scope-conflict', (_event, id: string, conflictId: string, decision: import('../shared/projects').ProjectConflictDecision) => database.projects.commercial.resolveConflict(id,conflictId,decision));
   ipcMain.handle('projects:create-internal', (_event, input: InternalProjectInput) => database.projects.createInternal(input));
   ipcMain.handle('projects:change-status', (_event, id: string, status: ProjectStatus) => database.projects.changeProjectStatus(id, status));
   ipcMain.handle('projects:completion-review', (_event, id: string) => database.projectCompletion.review(id));

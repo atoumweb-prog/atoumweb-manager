@@ -110,7 +110,7 @@ export class ProjectSiteService {
     return this.database.all<ProjectSitePageRow>(
       `SELECT psp.* FROM project_site_pages psp
        JOIN project_nodes pn ON pn.id=psp.project_node_id
-       WHERE pn.project_id=? ORDER BY psp.created_at ASC`,
+       WHERE pn.project_id=? AND pn.archived_at IS NULL ORDER BY psp.created_at ASC`,
       [projectId],
     ).map((row) => this.mapPage(row));
   }
@@ -166,6 +166,9 @@ export class ProjectSiteService {
   }
 
   applyBlueprint(projectId: string, templateVersionId?: string | null, manageTransaction = true): ProjectBlueprintGenerationResult {
+    if (this.database.get<{commercial_state:string}>('SELECT commercial_state FROM projects WHERE id=?',[projectId])?.commercial_state==='provisional') {
+      throw new Error('Projet prévisionnel : utiliser Synchroniser le périmètre commercial.');
+    }
     if (this.database.get('SELECT project_id FROM project_blueprint_plans WHERE project_id=?', [projectId])) {
       return new ProjectBlueprintCompositionService(this.database, this).replay(projectId, templateVersionId, manageTransaction);
     }

@@ -2253,3 +2253,9 @@ body.project-resizing * {
 }
 .project-blueprint-origins strong { color: var(--accent-strong); }
 .project-blueprint-origins ul { margin: 8px 0 0; padding-left: 18px; line-height: 1.6; }
+
+.project-commercial-scope { padding: 16px; margin: 12px 0; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); font-size: 14px; }
+.project-commercial-scope p { margin: 8px 0; }
+.project-commercial-scope details { margin-top: 12px; }
+.project-scope-conflict { margin-top: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; }
+.project-scope-conflict button { margin: 4px 8px 4px 0; }

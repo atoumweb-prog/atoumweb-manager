@@ -230,6 +230,11 @@ export interface ProjectPrerequisite extends ProjectPrerequisiteInput {
 }
 
 export interface ProjectSummary {
+  prospectId?: string | null;
+  commercialState?: 'legacy' | 'provisional' | 'frozen';
+  commercialDossierId?: string | null;
+  acceptedQuoteId?: string | null;
+  scopeFrozenAt?: string | null;
   id: string;
   number: string;
   clientAccountId?: string | null;
@@ -443,6 +448,10 @@ export interface ProjectsApi {
     list(filters?: ProjectFilters): Promise<ProjectSummary[]>;
     get(id: string): Promise<ProjectDetail>;
     transformQuote(input: TransformQuoteToProjectInput): Promise<ProjectDetail>;
+    prepareQuote(input: TransformQuoteToProjectInput): Promise<ProjectDetail>;
+    syncCommercial(projectId: string): Promise<ProjectDetail>;
+    commercialScope(projectId: string): Promise<ProjectCommercialScope>;
+    resolveScopeConflict(projectId: string, conflictId: string, decision: ProjectConflictDecision): Promise<ProjectCommercialScope>;
     createInternal(input: InternalProjectInput): Promise<ProjectDetail>;
     changeStatus(id: string, status: ProjectStatus): Promise<ProjectDetail>;
     completionReview(id: string): Promise<ProjectCompletionReview>;
@@ -492,4 +501,12 @@ export interface ProjectsApi {
     prepareForReuse(itemId: string, versionId?: string | null): Promise<ProjectTechnicalReuseExportResult>;
     archive(itemId: string): Promise<ProjectTechnicalItemDetail>;
   };
+}
+
+export type ProjectConflictDecision = 'keep' | 'archive' | 'detach' | 'delete';
+export interface ProjectCommercialScope {
+  projectId: string; state: 'legacy' | 'provisional' | 'frozen'; dossierId: string | null;
+  currentQuoteId: string | null; acceptedQuoteId: string | null;
+  revisions: {id:string;quoteId:string;commercialRevision:number;sequence:number;sha256:string;createdAt:string}[];
+  conflicts: {id:string;entityKind:string;entityId:string;label:string;reason:string}[];
 }

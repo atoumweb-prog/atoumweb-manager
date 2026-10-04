@@ -9,6 +9,7 @@ import type { WorkspacePaths } from '../workspace';
 export function projectCompositionFixture(db: DatabaseAdapter, workspace: WorkspacePaths) {
   const f = quoteOptionsFixture(db), sites = new ProjectSiteService(db), projects = new ProjectService(db,workspace,sites);
   const engine = new ProjectBlueprintCompositionService(db,sites);
+  f.quotes.setProjectLifecycle(projects.commercial);
   const draft = projects.createTemplate({name:'Fixture Lot 7 — Vitrine 5 pages',projectType:'website'}).versions[0];
   const root = projects.addTemplateNode(draft.id,{type:'lot',name:'Pages',semanticKey:'pages'}).nodes[0];
   for (let i = 0; i < 5; i++) projects.addTemplateNode(draft.id,{parentId:root.id,type:'module',displaySubtype:'page',name:i?'Page '+i:'Accueil',semanticKey:'pages.'+i,sortOrder:i*10});

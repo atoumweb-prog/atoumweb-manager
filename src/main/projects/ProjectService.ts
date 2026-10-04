@@ -5,6 +5,7 @@ import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import type { WorkspacePaths } from '../workspace';
 import { ProjectSiteService } from './ProjectSiteService';
 import { ProjectBlueprintCompositionService } from './ProjectBlueprintCompositionService';
+import { ProjectCommercialService } from './ProjectCommercialService';
 import {
   PROJECT_COMMERCIAL_MODES,
   PROJECT_NODE_STATUSES,
@@ -137,11 +138,12 @@ interface BlueprintContribution {
 
 
 export class ProjectService {
+  readonly commercial: ProjectCommercialService;
   constructor(
     private readonly database: DatabaseAdapter,
     private readonly workspace: WorkspacePaths,
     private readonly projectSites?: ProjectSiteService,
-  ) {}
+  ) { this.commercial = new ProjectCommercialService(database,this,projectSites ?? new ProjectSiteService(database)); }
 
   listTemplates(): ProjectTemplateSummary[] {
     return this.database.all<TemplateRow>('SELECT * FROM project_templates ORDER BY name COLLATE NOCASE').map((row) => {
@@ -322,7 +324,43 @@ export class ProjectService {
     };
   }
 
+  createProvisionalShell(input: TransformQuoteToProjectInput, dossierId: string, templateVersionId: string): string {
+    const quote = this.database.get<Record<string,unknown>>('SELECT * FROM quotes WHERE id=?',[input.quoteId]);
+    if (!quote || (!quote.client_account_id && !quote.prospect_id)) throw new Error('Client ou Prospect requis.');
+    const id=randomUUID(),now=nowIso(),number=this.nextProjectNumber(new Date().getFullYear(),now);
+    const template=this.getTemplateVersion(templateVersionId),definition=this.getTemplate(template.templateId);
+    const name=clean(input.name) ?? String(quote.subject);
+    // Stable master location survives Prospect -> Client. No copies or implicit filesystem moves.
+    const resourceRoot=join(this.workspace.root,'projets-previsionnels',dossierId,'Ressources');
+    this.database.run(`INSERT INTO projects(id,project_number,client_account_id,prospect_id,source_quote_id,template_version_id,
+      name,project_type,status,commercial_mode,commercial_state,commercial_dossier_id,target_date,
+      commercial_value_cents,contract_value_cents,resource_root_path,created_at,updated_at)
+      VALUES(?,?,?,?,?,?,?,?,'to_prepare',?,'provisional',?,?,?,?,?,?,?)`,
+      [id,number,quote.client_account_id as string | null,quote.prospect_id as string | null,input.quoteId,templateVersionId,name,definition.projectType,
+        input.commercialMode ?? this.inferCommercialMode(Number(quote.catalog_value_cents),Number(quote.contract_value_cents)),dossierId,input.targetDate ?? null,
+        Number(quote.catalog_value_cents),Number(quote.contract_value_cents),resourceRoot,now,now]);
+    this.database.run('UPDATE quotes SET project_id=? WHERE id=?',[id,input.quoteId]);
+    this.writeActivity('project',id,'provisional_project_created',`Projet prévisionnel ${number} créé depuis le devis`);
+    return id;
+  }
+
+  ensureProvisionalFolders(id: string): void {
+    const root=this.database.get<{resource_root_path:string}>('SELECT resource_root_path FROM projects WHERE id=?',[id])?.resource_root_path;
+    if (root) this.createResourceFolders(root);
+  }
+
+  private prospectLabel(id: string): string {
+    return this.database.get<{label:string}>(`SELECT COALESCE(o.name,trim(c.first_name||' '||c.last_name),'Prospect') AS label
+      FROM prospects p LEFT JOIN organizations o ON o.id=p.organization_id LEFT JOIN contacts c ON c.id=p.contact_id WHERE p.id=?`,[id])?.label ?? 'Prospect';
+  }
+
   transformQuote(input: TransformQuoteToProjectInput): ProjectDetail {
+    const prepared = this.commercial.findProject(input.quoteId);
+    if (prepared) {
+      const project = this.getProject(prepared);
+      if (project.commercialState !== 'frozen') throw new Error('Projet prévisionnel existant : accepter la révision courante pour activer ce même Projet.');
+      return project;
+    }
     const existing = this.database.get<{ id: string }>('SELECT id FROM projects WHERE source_quote_id=?', [input.quoteId]);
     if (existing) return this.getProject(existing.id);
 
@@ -415,7 +453,9 @@ export class ProjectService {
 
   changeProjectStatus(id: string, status: ProjectStatus): ProjectDetail {
     if (!PROJECT_STATUSES.includes(status)) throw new Error('Statut projet invalide.');
-    this.getProject(id); const now = nowIso();
+    const project = this.getProject(id);
+    if (project.commercialState === 'provisional' && !['to_prepare','archived'].includes(status)) throw new Error('Projet prévisionnel : attendre l’acceptation avant activation opérationnelle.');
+    const now = nowIso();
     this.database.run('UPDATE projects SET status=?, completed_at=?, archived_at=?, updated_at=? WHERE id=?', [status, status === 'completed' ? now : null, status === 'archived' ? now : null, now, id]);
     this.writeActivity('project', id, 'project_status_changed', `Statut projet : ${status}`);
     return this.getProject(id);
@@ -689,10 +729,12 @@ export class ProjectService {
         SUM(CASE WHEN is_required=1 AND node_type IN ('task','checklist') THEN 1 ELSE 0 END) AS total_required,
         SUM(CASE WHEN is_required=1 AND node_type IN ('task','checklist') AND status='done' THEN 1 ELSE 0 END) AS done_required,
         COALESCE(SUM(CASE WHEN node_type IN ('task','checklist') THEN estimated_minutes ELSE 0 END),0) AS estimated_minutes
-       FROM project_nodes WHERE project_id=?`, [row.id]);
+       FROM project_nodes WHERE project_id=? AND archived_at IS NULL`, [row.id]);
     const total = Number(stats?.total_required ?? 0); const done = Number(stats?.done_required ?? 0);
     return {
-      id: row.id, number: row.project_number, clientAccountId: row.client_account_id, clientLabel: row.client_account_id ? this.clientLabel(row.client_account_id) : 'AtoumWeb',
+      id: row.id, number: row.project_number, clientAccountId: row.client_account_id, clientLabel: row.client_account_id ? this.clientLabel(row.client_account_id) : row.prospect_id ? this.prospectLabel(String(row.prospect_id)) : 'AtoumWeb',
+      prospectId: row.prospect_id as string | null, commercialState: row.commercial_state as ProjectSummary['commercialState'],
+      commercialDossierId: row.commercial_dossier_id as string | null, acceptedQuoteId: row.accepted_quote_id as string | null, scopeFrozenAt: row.scope_frozen_at as string | null,
       sourceQuoteId: row.source_quote_id, templateVersionId: row.template_version_id, name: row.name, projectType: row.project_type, status: row.status,
       commercialMode: row.commercial_mode, startDate: row.start_date, targetDate: row.target_date,
       commercialValueCents: Number(row.commercial_value_cents), contractValueCents: Number(row.contract_value_cents), progressPercent: total === 0 ? 0 : Math.round(done * 100 / total),
@@ -702,7 +744,7 @@ export class ProjectService {
 
   private getProjectNodes(projectId: string): ProjectNode[] {
     const composition = new ProjectBlueprintCompositionService(this.database, this.projectSites ?? new ProjectSiteService(this.database));
-    return this.database.all<ProjectNodeRow>('SELECT * FROM project_nodes WHERE project_id=? ORDER BY sort_order, created_at', [projectId]).map((row) => ({
+    return this.database.all<ProjectNodeRow>('SELECT * FROM project_nodes WHERE project_id=? AND archived_at IS NULL ORDER BY sort_order, created_at', [projectId]).map((row) => ({
       id: row.id,
       projectId: row.project_id,
       parentId: row.parent_id,
@@ -744,6 +786,12 @@ export class ProjectService {
   }
 
   private getProjectServices(projectId: string): ProjectServiceSnapshot[] {
+    const provisional = this.database.get<Record<string,unknown>>('SELECT commercial_state,commercial_dossier_id FROM projects WHERE id=?',[projectId]);
+    if (provisional?.commercial_state==='provisional') {
+      return this.database.all<QuoteLineProjectRow>(`SELECT l.* FROM quote_lines l JOIN commercial_project_dossiers d ON d.current_quote_id=l.quote_id WHERE d.id=? ORDER BY l.sort_order,l.id`,[String(provisional.commercial_dossier_id)])
+        .map(l=>({id:'provisional:'+l.id,projectId,sourceQuoteLineId:l.id,catalogItemId:l.catalog_item_id,catalogVersionId:l.catalog_version_id,label:l.label,
+          snapshot:parseJsonObject<Record<string,unknown>>(l.snapshot_json),catalogValueCents:Number(l.catalog_line_value_cents),contractValueCents:Number(l.contract_line_value_cents),createdAt:String(l.created_at)}));
+    }
     return this.database.all<ProjectServiceRow>('SELECT * FROM project_services WHERE project_id=? ORDER BY created_at', [projectId]).map((row) => {
       let snapshot: Record<string, unknown> | null = null; if (row.snapshot_json) { try { snapshot = JSON.parse(row.snapshot_json) as Record<string, unknown>; } catch { snapshot = null; } }
       return { id: row.id, projectId: row.project_id, sourceQuoteLineId: row.source_quote_line_id, catalogItemId: row.catalog_item_id, catalogVersionId: row.catalog_version_id, label: row.label, snapshot, catalogValueCents: Number(row.catalog_value_cents), contractValueCents: Number(row.contract_value_cents), createdAt: row.created_at };
@@ -751,7 +799,7 @@ export class ProjectService {
   }
 
   private getPrerequisites(projectId: string): ProjectPrerequisite[] {
-    return this.database.all<PrerequisiteRow>('SELECT * FROM project_prerequisites WHERE project_id=? ORDER BY sort_order, created_at', [projectId]).map((row) => ({
+    return this.database.all<PrerequisiteRow>('SELECT * FROM project_prerequisites WHERE project_id=? AND archived_at IS NULL ORDER BY sort_order, created_at', [projectId]).map((row) => ({
       id: row.id, projectId: row.project_id, label: row.label, description: row.description, status: row.status, required: Boolean(row.is_required), sortOrder: Number(row.sort_order), requestedAt: row.requested_at, receivedAt: row.received_at, validatedAt: row.validated_at, createdAt: row.created_at, updatedAt: row.updated_at,
     }));
   }

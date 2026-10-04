@@ -1,3 +1,4 @@
+import { ProjectCommercialScopePanel } from './ProjectCommercialScopePanel';
 import { ProjectBlueprintOrigins } from './ProjectBlueprintOrigins';
 import { useEffect, useMemo, useState } from 'react';
 import type { QuoteSummary } from '../../shared/commercial';
@@ -641,7 +642,7 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
           <div className="project-production-title">
             <button className="secondary-button project-production-back" type="button" onClick={closeProjectDetail}>← Projets</button>
             <div>
-              <span className="eyebrow">{detail.number} · Mode production</span>
+              <span className="eyebrow">{detail.number} · {detail.commercialState==='provisional'?'Projet prévisionnel':'Mode production'}</span>
               <h2>{detail.name}</h2>
               <p>{detail.clientLabel}</p>
             </div>
@@ -675,11 +676,12 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
           onCancel={() => setPhaseCompletionReview(null)}
         />}
 
+        <ProjectCommercialScopePanel key={detail.id+detail.commercialState} projectId={detail.id} onChanged={p=>{setDetail(p);void refresh();}}/>
         <nav className="project-production-nav" aria-label="Sections du projet">
           <button className={detailTab === 'plan' ? 'active' : ''} type="button" onClick={() => setDetailTab('plan')}>Production</button>
           <button className={detailTab === 'sites' ? 'active' : ''} type="button" onClick={() => setDetailTab('sites')}>Sites & pages</button>
           <button className={detailTab === 'prerequisites' ? 'active' : ''} type="button" onClick={() => setDetailTab('prerequisites')}>Prérequis</button>
-          <button className={detailTab === 'operations' ? 'active' : ''} type="button" onClick={() => setDetailTab('operations')}>Interventions</button>
+          <button className={detailTab === 'operations' ? 'active' : ''} disabled={detail.commercialState==='provisional'} title={detail.commercialState==='provisional'?'Disponible après acceptation du devis':undefined} type="button" onClick={() => setDetailTab('operations')}>Interventions</button>
           <button className={detailTab === 'commercial' ? 'active' : ''} type="button" onClick={() => setDetailTab('commercial')}>Commercial</button>
           <button className={detailTab === 'summary' ? 'active' : ''} type="button" onClick={() => setDetailTab('summary')}>Résumé</button>
         </nav>
@@ -888,7 +890,7 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
               <tbody>
                 {filtered.map((project) => (
                   <tr key={project.id} className={selectedId === project.id ? 'selected-row' : ''} onClick={() => void openProject(project.id)}>
-                    <td><strong>{project.number}</strong></td><td>{project.clientLabel}</td><td><strong>{project.name}</strong><small>{project.projectType}</small></td><td><span className={`project-status status-${project.status}`}>{PROJECT_STATUS_LABELS[project.status]}</span></td><td><div className="project-progress-cell"><span>{project.progressPercent} %</span><i><b style={{ width: `${project.progressPercent}%` }} /></i></div></td><td>{duration(project.estimatedMinutes)}</td><td>{dateLabel(project.targetDate)}</td>
+                    <td><strong>{project.number}</strong></td><td>{project.clientLabel}</td><td><strong>{project.name}</strong><small>{project.commercialState==='provisional'?'Prévisionnel · ':''}{project.projectType}</small></td><td><span className={`project-status status-${project.status}`}>{PROJECT_STATUS_LABELS[project.status]}</span></td><td><div className="project-progress-cell"><span>{project.progressPercent} %</span><i><b style={{ width: `${project.progressPercent}%` }} /></i></div></td><td>{duration(project.estimatedMinutes)}</td><td>{dateLabel(project.targetDate)}</td>
                   </tr>
                 ))}
                 {filtered.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucun projet dans cette vue.</div></td></tr>}

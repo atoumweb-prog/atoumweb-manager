@@ -207,6 +207,7 @@ export interface QuoteLine extends QuoteLineInput {
 }
 
 export interface QuoteSummary {
+  projectId?: string | null;
   id: string;
   number: string;
   prospectId?: string | null;
@@ -284,6 +285,7 @@ export interface QuoteApi {
   refuse(id: string): Promise<QuoteDetail>;
   expire(id: string): Promise<QuoteDetail>;
   duplicate(id: string): Promise<QuoteDetail>;
+  createCommercialRevision(id: string): Promise<QuoteDetail>;
   importContractDocument(id: string, abbyReference?: string | null): Promise<QuoteDetail | null>;
   openContractDocument(id: string): Promise<void>;
   updateAbbyReference(id: string, abbyReference?: string | null): Promise<QuoteDetail>;

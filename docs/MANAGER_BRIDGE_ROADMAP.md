@@ -1804,3 +1804,42 @@ Auteur : AtoumWeb (autorisation), Codex (application et contrôle).
 - XLSX inchangé, SHA **6bc3eddaee0e1d77008c0bdc98984eea89ac54838c483c12c58b95cd3b237ad8**. Aucun pack/maintenance/intervention, Abby, Bridge, Lot 8 ou 8C.
 - Bilan `docs/CONTRACTUAL_LOT7_COMPOSED_BLUEPRINTS.md` ; preuves `application-lot7-validation-msi.md/json`, `contre-verification-lot7.json` et plan dans `outputs/contract-blueprints-lot7` du dossier documentaire partagé.
 - **Lot 7 appliqué, non committé. Attendre validation du résultat avant commit local dédié, sans push/merge. Recette manuelle AtoumWeb toujours à faire.** Le mapping `AW → blueprint → rôle → destination → quantité` reste à décider/configurer explicitement et à versionner dans une étape autorisée séparément.
+
+
+### 2026-10-04 — CONTRACT-LOT7B-001 — Clôture Lot 7 et préparation autorisée du Projet prévisionnel
+
+Auteur : AtoumWeb (doctrine et autorisation limitée), Codex (réalisation locale).
+
+- Audit 7B validé ; Lot 7 techniquement terminé. Commit local **c1cc00c9934ce78909f6ccf4b9b37952657e3c50**, 27 fichiers Lot 7 uniquement, working tree propre après commit, aucun push/merge.
+- Nouvelle doctrine validée : **un Projet par dossier commercial**, possible avant acceptation sur Prospect ; révisions explicites et origines de lignes stables, aucune identité par nom. À l'acceptation : dernière synchronisation et même Projet rattaché au Client/figé, sans objet opérationnel.
+- Lot 7B autorisé uniquement en code/tests/UI/simulation sur copie. Migration **59 préparée**, 58 et toutes les anciennes migrations inchangées. Reconstruction SQLite contrôlée de projects avec anciens identifiants/colonnes intactes ; huit nouvelles tables, archivage nœuds/prérequis, révisions immuables et triggers anti-opérations prévisionnelles. Aucun historique requalifié.
+- Moteur Lot 7 réutilisé : différentiels de lignes/quantités, options achetées Lot 6 seules ; manuel conservé, conflits visibles et choix keep/archive/detach/delete si vierge. Bases/destinations ambiguës bloquées ; aucune règle commerciale AW inventée.
+- **503/503 tests**, 62 fichiers, 24 nouveaux tests 7B ; typecheck sortie 0 ; **54/54 UI isolée** Blanc/Noir/AtoumWeb ; recette manuelle AtoumWeb toujours à faire.
+- Simulation **11 observations** sur copie : un Projet Prospect 1 Site/5 Pages ; +Page ×2 →7 ; 2→1 →6 ; Blog vierge ajouté/retiré ; Blog travaillé conservé avec conflit ; Page manuelle/renommages conservés ; SEO acheté sans Page inventée ; révision et acceptation gardent les identités. Seconde acceptation/conversion/rejeu : zéro mutation. 104 tables antérieures préservées à la migration, intégrité OK/FK vide, zéro objet opérationnel.
+- Validation-MSI inchangée, migrations 1–58, SHA **ca5ab5a58af53197662000e0fb9edf27762b0c93cd606e2b49ca9391dde09db5** ; XLSX SHA **6bc3eddaee0e1d77008c0bdc98984eea89ac54838c483c12c58b95cd3b237ad8** inchangé. Source SQLite jamais ouverte par simulateur ; lecture binaire/copie seulement. 112 AW/112 catalogue V1 BROUILLON/118 clauses BROUILLON/409 liens et historique intacts.
+- Bilan `docs/CONTRACTUAL_LOT7B_PROVISIONAL_PROJECTS.md`, preuves et fichiers/empreintes dans `outputs/contract-project-provisional-lot7b` hors dépôt.
+- **Lot 7B non appliqué, non committé ; attendre validation et autorisation séparées. Ne pas démarrer Manager sur Validation-MSI (59 pendante).** Aucun Lot 8, Abby, Bridge, 8C, publication, push/merge.
+
+
+### 2026-10-04 — CONTRACT-LOT7B-002 — Application réelle autorisée de migration 59 seule
+
+Auteur : AtoumWeb (validation et feu vert limité), Codex (application contrôlée).
+
+- Les 33 fichiers exactement validés 503/503 tests/typecheck/UI 54/54 et 350 sources ont été contrôlés avant écriture. Aucune modification fonctionnelle. HEAD `c1cc00c9934ce78909f6ccf4b9b37952657e3c50` inchangé, branche `feature/project-page-compositions-v1`, index vide.
+- Sauvegarde physique sous verrou : `C:\DEV\02_DONNEES\AtoumWeb\Validation-MSI\backups\before-lot7b-2026-10-04T07-51-43-253Z.sqlite`. SHA avant = sauvegarde **ca5ab5a58af53197662000e0fb9edf27762b0c93cd606e2b49ca9391dde09db5**. Verrou confirmé par seconde connexion refusée ; aucun auxiliaire actif. Plan/jeton `8fa7d0de1b7650f425d3571197846293d4452b80ba6df488d8504340eabdef2c` vérifiés immédiatement avant migration.
+- **59 seule appliquée** sous transaction exclusive ; contraintes FK suspendues avant le rebuild, réactivées ensuite. Les 19 anciennes colonnes de projects, ses deux lignes et les 21 tables référentes sont identiques. 104 tables métier et sqlite_sequence conservées. Les indexes et `demo_track_projects` runtime ont été rejoués avec leur SQL historique exact dans la transaction pour éviter leur perte au DROP.
+- Migrations **1–59**, huit tables 7B vides. Anciens Projets legacy, nouvelles relations null. Aucun Client, Projet, plan prévisionnel, Site/Page ni objet opérationnel créé ; devis/provenances/documents historiques exacts.
+- 112 AW / 112 catalogue V1 BROUILLON / 118 clauses BROUILLON / 409 liens et achats d'options vide intacts. Aucune publication.
+- Intégrité OK/FK vide ; rejeu sans mutation logique ni physique. Checkpoints, fermeture et SHA final **c0bda21b97924758f211d463382001d24bb5872e20e2a61c5831802a942cd1fc** ; aucun WAL/SHM/journal restant. Contre-vérification indépendante Python 3.12.14/SQLite 3.53.1 immutable sauvegarde/base finale : 105 tables, 21 relations et cellules Projet exactes.
+- XLSX SHA `6bc3eddaee0e1d77008c0bdc98984eea89ac54838c483c12c58b95cd3b237ad8` inchangé. Preuves `application-lot7b-validation-msi.md/json`, `contre-verification-lot7b.json`, plan et fermeture dans `outputs/contract-project-provisional-lot7b` hors dépôt.
+- **Application terminée, aucun commit autorisé. Attendre validation du bilan réel ; recette manuelle AtoumWeb à faire. Aucun Lot 8, Abby, Bridge, 8C, push/merge.**
+
+
+### 2026-10-04 — CONTRACT-LOT7B-003 — Validation et clôture locale dédiée
+
+Auteur : AtoumWeb (validation et autorisation de commit local), Codex (clôture).
+
+- Bilan réel migration 59 validé. Commit local dédié **Lot 7B — projet prévisionnel et révisions commerciales**, uniquement les **33 fichiers 7B**, sans push/merge. Son SHA et les fichiers sont enregistrés hors dépôt dans `outputs/contract-project-provisional-lot7b/cloture-git-lot7b.json`.
+- Contrôle avant commit : 33 fichiers attendus et empreintes conformes à la fermeture après application ; code fonctionnel identique à l'état **503/503 tests, typecheck OK, UI 54/54**. Migration 59 inchangée. Seuls trois documents de suivi actualisés ; aucun artefact base/sauvegarde/classeur/JSON généré inclus.
+- Validation-MSI en migrations **1–59**, SHA **c0bda21b97924758f211d463382001d24bb5872e20e2a61c5831802a942cd1fc** conservé, aucune écriture pendant clôture. 112 AW/112 catalogue V1 BROUILLON/118 clauses BROUILLON/409 liens, achats d'options vides et historiques intacts ; huit nouvelles tables 7B vides, aucun Client/Projet/plan/objet opérationnel créé.
+- **RECETTE MANUELLE ATOUMWEB TOUJOURS À FAIRE. Lot 8 non commencé.** Aucun push/merge, publication, Abby, Bridge ou 8C. Attendre instruction séparée pour la suite.

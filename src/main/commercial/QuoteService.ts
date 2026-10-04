@@ -1,5 +1,6 @@
 import { emptyContractParameters, withContractAudience } from '../../shared/quoteContractPreparation';
 import { QuoteContractPreparationService } from './QuoteContractPreparationService';
+import type { ProjectCommercialService } from '../projects/ProjectCommercialService';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import type { CrmService } from '../crm/CrmService';
@@ -138,6 +139,8 @@ interface OfferComponentSnapshotRow extends CatalogIdentitySnapshotRow {
 }
 
 export class QuoteService {
+  private projectLifecycle?: ProjectCommercialService;
+  setProjectLifecycle(lifecycle: ProjectCommercialService): void { this.projectLifecycle = lifecycle; }
   constructor(
     private readonly database: DatabaseAdapter,
     private readonly crm: CrmService,
@@ -577,6 +580,10 @@ export class QuoteService {
     if (quote.status === 'accepted') return quote;
     if (!['sent', 'viewed'].includes(quote.status)) throw new Error('Le devis doit être envoyé avant acceptation.');
     if (quote.lines.length === 0) throw new Error('Impossible d’accepter un devis vide.');
+    this.projectLifecycle?.assertAcceptance(id);
+    if (!this.projectLifecycle && this.database.get('SELECT quote_id FROM commercial_quote_revisions WHERE quote_id=?',[id])) throw new Error('Cycle Projet prévisionnel non raccordé.');
+    this.database.exec('SAVEPOINT quote_acceptance;');
+    try {
     this.preparation.assertAcceptance(id);
     const contract = this.contractTerms.freezeQuote(id);
 
@@ -596,7 +603,10 @@ export class QuoteService {
       this.writeActivity(id, 'quote_accepted_without_contract_snapshot', `Devis historique ${quote.number} accepté sans snapshot contractuel ; absence conservée, aucune clause reconstruite`);
     }
     this.writeActivity(id, 'quote_accepted', `Devis ${quote.number} accepté`);
+    this.projectLifecycle?.accept(id,clientId);
+    this.database.exec('RELEASE quote_acceptance;');
     return this.get(id);
+    } catch(error) { this.database.exec('ROLLBACK TO quote_acceptance; RELEASE quote_acceptance;'); throw error; }
   }
 
   attachContractDocument(id: string, documentId: string, abbyReference?: string | null, replacementReason?: string): QuoteDetail {
@@ -646,7 +656,7 @@ export class QuoteService {
     return this.transition(id, 'expired', 'expired_at', 'Devis expiré');
   }
 
-  duplicate(id: string): QuoteDetail {
+  duplicate(id: string, asCommercialRevision = false): QuoteDetail {
     const source = this.get(id);
     if (!['draft', 'sent', 'viewed', 'refused', 'expired', 'cancelled'].includes(source.status)) throw new Error('Ce devis ne peut pas être dupliqué.');
     this.database.exec('SAVEPOINT duplicate_quote;');
@@ -694,6 +704,10 @@ export class QuoteService {
       }
       this.recalculate(copy.id);
       this.contractTerms.copyQuoteCustomizations(id, copy.id);
+      if (asCommercialRevision) {
+        if (!this.projectLifecycle) throw new Error('Cycle Projet prévisionnel non raccordé.');
+        this.projectLifecycle.linkRevision(id,copy.id,lineIds);
+      }
       this.database.exec('RELEASE duplicate_quote;');
       return this.get(copy.id);
     } catch (error) {
@@ -851,6 +865,7 @@ export class QuoteService {
 
   private mapSummary(row: QuoteRow): QuoteSummary {
     return {
+      projectId: this.projectLifecycle?.findProject(row.id) ?? row.project_id as string | null,
       id: row.id,
       number: row.quote_number,
       prospectId: row.prospect_id,

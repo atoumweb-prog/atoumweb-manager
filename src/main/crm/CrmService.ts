@@ -192,13 +192,13 @@ export class CrmService {
   constructor(private readonly database: DatabaseAdapter) {}
 
   private transaction<T>(work: () => T): T {
-    this.database.exec('BEGIN IMMEDIATE;');
+    this.database.exec('SAVEPOINT crm_transaction;');
     try {
       const result = work();
-      this.database.exec('COMMIT;');
+      this.database.exec('RELEASE crm_transaction;');
       return result;
     } catch (error) {
-      this.database.exec('ROLLBACK;');
+      this.database.exec('ROLLBACK TO crm_transaction; RELEASE crm_transaction;');
       throw error;
     }
   }
