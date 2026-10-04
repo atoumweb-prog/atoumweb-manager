@@ -1,3 +1,4 @@
+import { BUSINESS_TIME_CATEGORIES, type BusinessTimeCategory } from '../../shared/operational';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import {
@@ -71,8 +72,8 @@ export class TimeService {
     const id = randomUUID();
     this.database.run(
       `INSERT INTO time_sessions
-       (id,client_account_id,project_id,project_node_id,intervention_id,category,activity_label,started_at,ended_at,billable,source,note,created_at,updated_at)
-       VALUES (?,?,?,?,?,?,?,?,NULL,?,'timer',?,?,?)`,
+       (id,client_account_id,project_id,project_node_id,intervention_id,category,activity_label,started_at,ended_at,billable,source,note,created_at,updated_at,business_category)
+       VALUES (?,?,?,?,?,?,?,?,NULL,?,'timer',?,?,?,?)`,
       [
         id,
         context.clientAccountId,
@@ -86,6 +87,7 @@ export class TimeService {
         clean(input.note),
         now,
         now,
+        this.resolveBusinessCategory(input,context.projectNodeId),
       ],
     );
     return this.get(id);
@@ -221,8 +223,8 @@ export class TimeService {
     const now = this.nowIso();
     this.database.run(
       `INSERT INTO time_sessions
-       (id,client_account_id,project_id,project_node_id,intervention_id,category,activity_label,started_at,ended_at,billable,source,note,created_at,updated_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,'manual',?,?,?)`,
+       (id,client_account_id,project_id,project_node_id,intervention_id,category,activity_label,started_at,ended_at,billable,source,note,created_at,updated_at,business_category)
+       VALUES (?,?,?,?,?,?,?,?,?,?,'manual',?,?,?,?)`,
       [
         id,
         context.clientAccountId,
@@ -237,6 +239,7 @@ export class TimeService {
         clean(input.note),
         now,
         now,
+        this.resolveBusinessCategory(input,context.projectNodeId),
       ],
     );
     return this.get(id);
@@ -355,6 +358,7 @@ export class TimeService {
       interventionNumber: row.intervention_number,
       interventionLabel: row.intervention_label,
       category: row.category,
+      businessCategory: row.business_category as BusinessTimeCategory | null,
       activityLabel: row.activity_label,
       startedAt: row.started_at,
       endedAt: row.ended_at,
@@ -423,6 +427,14 @@ export class TimeService {
       projectNodeId: resolvedNodeId,
       interventionId: resolvedInterventionId,
     };
+  }
+
+  resolveBusinessCategory(input: StartTimeSessionInput, nodeId?: string | null): BusinessTimeCategory | null {
+    const category=input.businessCategory===undefined && nodeId
+      ? this.database.get<{business_category:BusinessTimeCategory|null}>('SELECT business_category FROM project_nodes WHERE id=?',[nodeId])?.business_category ?? null
+      : input.businessCategory ?? null;
+    if (category!==null && !BUSINESS_TIME_CATEGORIES.includes(category)) throw Error('Catégorie métier invalide.');
+    return category;
   }
 
   private validateInput(input: StartTimeSessionInput): void {

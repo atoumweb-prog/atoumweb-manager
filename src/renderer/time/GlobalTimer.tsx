@@ -1,3 +1,4 @@
+import { BUSINESS_TIME_CATEGORIES, type BusinessTimeCategory } from '../../shared/operational';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ProjectDetail, ProjectSummary } from '../../shared/projects';
 import {
@@ -30,6 +31,7 @@ const PAUSE_REASON_LABELS: Record<TimePauseReason, string> = {
 };
 
 interface TimerContextEvent {
+  businessCategory?:BusinessTimeCategory|null;
   interventionId?: string | null;
   projectId?: string | null;
   nodeId?: string | null;
@@ -66,6 +68,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
   const [category, setCategory] = useState<TimeCategory>('development');
   const [activityLabel, setActivityLabel] = useState('');
   const [billable, setBillable] = useState(true);
+  const [businessCategory,setBusinessCategory]=useState<BusinessTimeCategory|null>(null);
   const [snapshotAt, setSnapshotAt] = useState(Date.now());
   const [tick, setTick] = useState(Date.now());
   const [busy, setBusy] = useState(false);
@@ -154,6 +157,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
       setInterventionId(context.interventionId ?? '');
       setProjectId(context.projectId ?? '');
       setNodeId(context.nodeId ?? '');
+      setBusinessCategory(context.businessCategory ?? null);
       setActivityLabel(context.activityLabel ?? '');
       if (context.category) setCategory(context.category);
       if (typeof context.billable === 'boolean') setBillable(context.billable);
@@ -218,6 +222,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
         projectId: projectId || null,
         projectNodeId: nodeId || null,
         category,
+        businessCategory,
         activityLabel: activityLabel.trim() || null,
         billable,
       });
@@ -243,6 +248,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
         projectId: pendingSwitch.projectId ?? null,
         projectNodeId: pendingSwitch.nodeId ?? null,
         category: pendingSwitch.category ?? 'production',
+        businessCategory:pendingSwitch.businessCategory,
         activityLabel: pendingSwitch.activityLabel?.trim() || null,
         billable: pendingSwitch.billable ?? true,
       });
@@ -412,7 +418,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
             <span className="timer-label">{recovery ? 'Timer · À vérifier' : `Timer${active?.paused ? ' · Pause' : active ? ' · En cours' : ''}`}</span>
             <strong>{clock(displayedSeconds)}</strong>
           </span>
-          <span className="timer-context">{active ? contextLabel(active) : 'Aucune activité'}</span>
+          <span className="timer-context">{active ? contextLabel(active) : 'Aucune activité'}{active?.businessCategory ? ` · ${active.businessCategory}` : ''}</span>
         </span>
       </button>
 
@@ -473,9 +479,10 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
         <div className="timer-popover">
           <div><span className="eyebrow">Nouvelle session</span><strong>Que fais-tu ?</strong></div>
           <label>Projet<select value={projectId} onChange={(event) => setProjectId(event.target.value)}><option value="">AtoumWeb · sans projet</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.number} · {project.clientLabel} · {project.name}</option>)}</select></label>
-          <label>Tâche / activité du projet<select value={nodeId} onChange={(event) => setNodeId(event.target.value)} disabled={!projectDetail}><option value="">Projet entier</option>{projectDetail?.nodes.filter((node) => ['task', 'module', 'checklist'].includes(node.type)).map((node) => <option key={node.id} value={node.id}>{node.name}</option>)}</select></label>
+          <label>Tâche / activité du projet<select value={nodeId} onChange={(event) => {setNodeId(event.target.value);setBusinessCategory(projectDetail?.nodes.find(n=>n.id===event.target.value)?.businessCategory ?? null);}} disabled={!projectDetail}><option value="">Projet entier</option>{projectDetail?.nodes.filter((node) => ['task', 'module', 'checklist'].includes(node.type)).map((node) => <option key={node.id} value={node.id}>{node.name}</option>)}</select></label>
           <label>Catégorie<select value={category} onChange={(event) => setCategory(event.target.value as TimeCategory)}>{TIME_CATEGORIES.map((value) => <option key={value} value={value}>{CATEGORY_LABELS[value]}</option>)}</select></label>
           <label>Libellé<input value={activityLabel} onChange={(event) => setActivityLabel(event.target.value)} placeholder="Ex. Corrections responsive" /></label>
+          <label>Catégorie métier<select aria-label="Catégorie métier" value={businessCategory ?? ''} onChange={e=>setBusinessCategory(e.target.value as BusinessTimeCategory || null)}><option value="">Non qualifiée</option>{BUSINESS_TIME_CATEGORIES.map(c=><option key={c}>{c}</option>)}</select></label>
           <label className="timer-billable"><input type="checkbox" checked={billable} onChange={(event) => setBillable(event.target.checked)} /> Temps facturable</label>
           <div className="button-row"><button className="primary-button" type="button" disabled={busy} onClick={() => void start()}>▶ Démarrer</button><button className="secondary-button" type="button" onClick={() => setOpen(false)}>Annuler</button></div>
         </div>

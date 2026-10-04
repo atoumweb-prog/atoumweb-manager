@@ -1,3 +1,4 @@
+import type { BusinessTimeCategory, OperationalNodeInfo } from './operational';
 export const PROJECT_TEMPLATE_STATUSES = ['active', 'inactive', 'archived'] as const;
 export const PROJECT_TEMPLATE_VERSION_STATUSES = ['draft', 'published', 'retired'] as const;
 export const PROJECT_STATUSES = ['to_prepare', 'in_progress', 'waiting_client', 'blocked', 'to_validate', 'completed', 'archived'] as const;
@@ -136,6 +137,9 @@ export interface ProjectTemplateNode extends ProjectTemplateNodeInput {
 }
 
 export interface ProjectTemplateVersion {
+  operationalPurpose?: 'historical_complete' | 'structural';
+  requiresOperationalModel?: boolean;
+  operationalReady?: boolean;
   id: string;
   templateId: string;
   versionNumber: number;
@@ -162,6 +166,7 @@ export interface ProjectTemplateDetail extends ProjectTemplateSummary {
 }
 
 export interface ProjectNodeInput {
+  businessCategory?: BusinessTimeCategory | null;
   parentId?: string | null;
   type: ProjectNodeType;
   displaySubtype?: string | null;
@@ -183,6 +188,7 @@ export interface MoveProjectNodeInput {
 }
 
 export interface ProjectNode extends ProjectNodeInput {
+  operational?: OperationalNodeInfo;
   id: string;
   projectId: string;
   sourceTemplateNodeId?: string | null;
@@ -259,6 +265,7 @@ export interface ProjectSummary {
 }
 
 export interface ProjectDetail extends ProjectSummary {
+  estimationIncomplete?: boolean;
   notes?: string | null;
   nodes: ProjectNode[];
   services: ProjectServiceSnapshot[];

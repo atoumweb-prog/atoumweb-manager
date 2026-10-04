@@ -28,7 +28,7 @@ describe('migrations SQLite', () => {
         .toEqual(MIGRATIONS.map(({ id, name }) => ({ id, name })));
       expect(database.get('SELECT value_json FROM settings WHERE key=?', ['migration-sentinel']))
         .toEqual({ value_json: '"preserved"' });
-      if (version === 10) expect(database.all('SELECT * FROM time_sessions')).toEqual(sessionsBefore);
+      if (version === 10) expect(database.all('SELECT * FROM time_sessions')).toEqual(sessionsBefore.map(row=>({...row,business_category:null})));
       expect(database.all("SELECT name FROM pragma_table_info('time_sessions') WHERE name='intervention_id'"))
         .toEqual([{ name: 'intervention_id' }]);
       expect(database.all("SELECT name, desc FROM pragma_index_xinfo('idx_time_sessions_intervention') WHERE key=1 ORDER BY seqno"))
@@ -63,7 +63,7 @@ describe('migrations SQLite', () => {
         "SELECT name FROM sqlite_master WHERE type='table' AND name='bridge_snapshot_sections'",
       )).toBeUndefined();
 
-      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59]);
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60]);
       expect(database.get<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='bridge_snapshot_sections'",
       )?.name).toBe('bridge_snapshot_sections');
@@ -100,7 +100,7 @@ describe('migrations SQLite', () => {
            '2026-09-24T10:00:00.000Z','2026-09-24T10:00:00.000Z',NULL)`,
       );
 
-      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59]);
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60]);
 
       expect(database.get<{ name: string; library_category: string; vertical: string | null }>(
         "SELECT name, library_category, vertical FROM technical_items WHERE id='legacy-library-item'",
@@ -167,7 +167,7 @@ describe('migrations SQLite', () => {
         ['a'.repeat(64)],
       );
 
-      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59]);
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60]);
       expect(database.get<{ decision: string; result_technical_item_id: string | null; result_variant_id: string | null }>(
         "SELECT decision,result_technical_item_id,result_variant_id FROM bridge_occurrence_returns WHERE id='return-before-40'",
       )).toEqual({
@@ -244,7 +244,7 @@ describe('migrations SQLite', () => {
         [now, now],
       );
 
-      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59]);
+      expect(applyPendingMigrations(database).map((migration) => migration.id)).toEqual([46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60]);
       expect(database.get<{ contract_audience: string }>(
         "SELECT contract_audience FROM quotes WHERE id='quote-pro'",
       )?.contract_audience).toBe('professional');
@@ -301,7 +301,7 @@ describe('migrations SQLite', () => {
     for (const column of ['reuse_status', 'origin_technical_item_id', 'library_category', 'vertical']) {
       expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('technical_items') WHERE name='${column}'`)?.name).toBe(column);
     }
-    expect(MIGRATIONS.at(-1)?.id).toBe(59);
+    expect(MIGRATIONS.at(-1)?.id).toBe(60);
     expect(database.get<{ name: string }>("SELECT name FROM sqlite_master WHERE type='table' AND name='project_sites'")?.name).toBe('project_sites');
     expect(database.get<{ name: string }>("SELECT name FROM sqlite_master WHERE type='table' AND name='project_site_pages'")?.name).toBe('project_site_pages');
     for (const table of ['project_template_sites', 'project_template_site_pages', 'project_type_site_blueprints', 'project_blueprint_site_bindings', 'project_blueprint_page_bindings']) {

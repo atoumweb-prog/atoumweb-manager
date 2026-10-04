@@ -1,3 +1,4 @@
+import { BUSINESS_TIME_CATEGORIES, type BusinessTimeCategory } from '../../shared/operational';
 import { useEffect, useMemo, useState } from 'react';
 import type { ProjectSummary } from '../../shared/projects';
 import { OperationIcon } from '../operations/OperationIcon';
@@ -73,6 +74,7 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
   const [manualProjectId, setManualProjectId] = useState('');
   const [manualCategory, setManualCategory] = useState<TimeCategory>('production');
   const [manualActivity, setManualActivity] = useState('');
+  const [manualBusinessCategory,setManualBusinessCategory]=useState<BusinessTimeCategory|null>(null);
   const [manualBillable, setManualBillable] = useState(true);
   const [manualStart, setManualStart] = useState(() => {
     const date = new Date(); date.setMinutes(date.getMinutes() - 60); return toLocalInput(date);
@@ -154,6 +156,7 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
       const created = await window.atoumweb.time.addManual({
         projectId: manualProjectId || null,
         category: manualCategory,
+        businessCategory:manualBusinessCategory,
         activityLabel: manualActivity.trim() || null,
         billable: manualBillable,
         startedAt: new Date(manualStart).toISOString(),
@@ -195,6 +198,7 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
         projectId: editProjectId || null,
         projectNodeId: editProjectId === (editing.projectId ?? '') ? editing.projectNodeId ?? null : null,
         category: editCategory,
+        businessCategory:editing.businessCategory,
         activityLabel: editActivity.trim() || null,
         billable: editBillable,
         startedAt: new Date(editStart).toISOString(),
@@ -276,6 +280,7 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
             <label>Fin<input type="datetime-local" value={manualEnd} onChange={(event) => setManualEnd(event.target.value)} /></label>
             <label className="wide">Activité<input value={manualActivity} onChange={(event) => setManualActivity(event.target.value)} placeholder="Ex. Préparation maquette" /></label>
             <label className="wide">Note<textarea value={manualNote} onChange={(event) => setManualNote(event.target.value)} placeholder="Note facultative" /></label>
+            <label>Catégorie métier<select aria-label="Catégorie métier manuelle" value={manualBusinessCategory ?? ''} onChange={e=>setManualBusinessCategory(e.target.value as BusinessTimeCategory || null)}><option value="">Non qualifiée</option>{BUSINESS_TIME_CATEGORIES.map(c=><option key={c}>{c}</option>)}</select></label>
             <label className="time-checkbox"><input type="checkbox" checked={manualBillable} onChange={(event) => setManualBillable(event.target.checked)} /> Facturable</label>
           </div>
           <div className="button-row"><button className="primary-button" type="button" onClick={() => void addManual()}>Ajouter la session</button><button className="secondary-button" type="button" onClick={() => setManualOpen(false)}>Annuler</button></div>
@@ -307,7 +312,7 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
               <tr key={session.id}>
                 <td><span className="time-cell-value">{dateTimeLabel(session.startedAt)}</span>{!session.endedAt && <small className="time-live">En cours{session.paused ? ' · pause' : ''}</small>}</td>
                 <td><span className="time-cell-value">{session.projectNumber ? `${session.projectNumber} · ${session.projectLabel ?? ''}` : session.projectLabel || 'AtoumWeb'}</span><small>{session.projectNodeLabel || session.activityLabel || '—'}</small></td>
-                <td><span className="time-category-pill">{CATEGORY_LABELS[session.category]}</span></td>
+                <td><span className="time-category-pill">{CATEGORY_LABELS[session.category]}</span><small>{session.businessCategory ?? 'Métier non qualifié'}</small></td>
                 <td><span className="time-cell-value">{secondsLabel(session.durationSeconds)}</span></td>
                 <td><span className={`time-billable-pill ${session.billable ? 'yes' : 'no'}`}>{session.billable ? 'Oui' : 'Non'}</span></td>
                 <td><span className={`time-source-pill source-${session.source}`}><span aria-hidden="true">{session.source === 'timer' ? '◷' : session.source === 'manual' ? '✎' : '⇩'}</span>{session.source === 'timer' ? 'Timer' : session.source === 'manual' ? 'Manuel' : 'Import'}</span></td>

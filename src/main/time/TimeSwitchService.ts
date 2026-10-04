@@ -23,6 +23,7 @@ export class TimeSwitchService {
   switchTo(input: StartTimeSessionInput): TimeSession {
     if (!TIME_CATEGORIES.includes(input.category)) throw new Error('Catégorie de temps invalide.');
     const context = this.resolveContext(input.projectId ?? null, input.projectNodeId ?? null, input.interventionId ?? null);
+    const businessCategory=this.time.resolveBusinessCategory(input,context.projectNodeId);
     const current = this.time.active();
     if (!current) return this.time.start(input);
 
@@ -47,8 +48,8 @@ export class TimeSwitchService {
       );
       this.database.run(
         `INSERT INTO time_sessions
-         (id,client_account_id,project_id,project_node_id,intervention_id,category,activity_label,started_at,ended_at,billable,source,note,created_at,updated_at)
-         VALUES (?,?,?,?,?,?,?,?,NULL,?,'timer',?,?,?)`,
+         (id,client_account_id,project_id,project_node_id,intervention_id,category,activity_label,started_at,ended_at,billable,source,note,created_at,updated_at,business_category)
+         VALUES (?,?,?,?,?,?,?,?,NULL,?,'timer',?,?,?,?)`,
         [
           id,
           context.clientAccountId,
@@ -62,6 +63,7 @@ export class TimeSwitchService {
           clean(input.note),
           nowIso,
           nowIso,
+          businessCategory,
         ],
       );
       this.database.exec('COMMIT;');

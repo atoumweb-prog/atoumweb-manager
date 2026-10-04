@@ -1,3 +1,4 @@
+import { OperationalActionDetails } from './OperationalActionDetails';
 import { ProjectCommercialScopePanel } from './ProjectCommercialScopePanel';
 import { ProjectBlueprintOrigins } from './ProjectBlueprintOrigins';
 import { useEffect, useMemo, useState } from 'react';
@@ -204,6 +205,14 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
   }
 
   useEffect(() => { void refresh(); }, []);
+
+  useEffect(()=>{
+    if(!selectedId) return;
+    let current=true;
+    const changed=()=>void window.atoumweb.projects.projects.get(selectedId).then(p=>{if(current)setDetail(p);}).catch(()=>{});
+    window.addEventListener('atoumweb:time-changed',changed);
+    return ()=>{current=false;window.removeEventListener('atoumweb:time-changed',changed);};
+  },[selectedId]);
 
   useEffect(() => {
     if (!initialProjectId) return;
@@ -1048,7 +1057,7 @@ function ProjectSummaryTab({ project }: { project: ProjectDetail }) {
   const openTasks = project.nodes.filter((node) => ['task', 'checklist'].includes(node.type) && node.required && node.status !== 'done').length;
   return (
     <div className="project-tab-content">
-      <div className="project-kpis"><div><span>Progression</span><strong>{project.progressPercent} %</strong></div><div><span>Temps estimé</span><strong>{duration(project.estimatedMinutes)}</strong></div><div><span>Tâches restantes</span><strong>{openTasks}</strong></div><div><span>Prérequis à traiter</span><strong>{missingPrerequisites}</strong></div></div>
+      <div className="project-kpis"><div><span>Progression</span><strong>{project.progressPercent} %</strong></div><div><span>Temps estimé{project.estimationIncomplete?' — incomplet':''}</span><strong>{duration(project.estimatedMinutes)}</strong></div><div><span>Tâches restantes</span><strong>{openTasks}</strong></div><div><span>Prérequis à traiter</span><strong>{missingPrerequisites}</strong></div></div>
       <div className="project-summary-list"><div><span>Type</span><strong>{project.projectType}</strong></div><div><span>Mode commercial</span><strong>{COMMERCIAL_MODE_LABELS[project.commercialMode]}</strong></div><div><span>Date cible</span><strong>{dateLabel(project.targetDate)}</strong></div><div><span>Créé le</span><strong>{dateLabel(project.createdAt)}</strong></div>{project.sourceQuoteId && <div><span>Origine</span><strong>Devis accepté</strong></div>}</div>
       {project.notes && <div className="project-note"><span className="eyebrow">Notes</span><p>{project.notes}</p></div>}
     </div>
@@ -1193,7 +1202,7 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
           return;
         }
         window.dispatchEvent(new CustomEvent('atoumweb:timer-context', {
-          detail: { projectId, nodeId: node.id, activityLabel: node.name, category: node.timeCategory || 'production', billable: true },
+          detail: { projectId, nodeId: node.id, activityLabel: node.name, category: node.timeCategory || 'production', businessCategory:node.businessCategory, billable:node.businessCategory?node.businessCategory==='Supplément facturable':true },
         }));
         onMessage('Un autre chrono est en cours : confirme le changement dans le timer.');
         return;
@@ -1202,8 +1211,9 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
         projectId,
         projectNodeId: node.id,
         category: (node.timeCategory || 'production') as TimeSession['category'],
+        businessCategory:node.businessCategory,
         activityLabel: node.name,
-        billable: true,
+        billable: node.businessCategory ? node.businessCategory==='Supplément facturable' : true,
       });
       setActiveTime(session);
       window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
@@ -1293,6 +1303,7 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
       </div>
     </section>
 
+    <OperationalActionDetails node={node} onUpdate={onUpdate} />
     <ProjectBlueprintOrigins sources={node.blueprintSources} />
     <nav className="project-workbench-nav" aria-label="Outils de la fiche">
       <button type="button" className={workbenchTab === 'form' ? 'active' : ''} onClick={() => setWorkbenchTab('form')}>Fiche</button>
@@ -1740,12 +1751,12 @@ function ProjectTemplatesView({ templates, onBack, onRefresh, onMessage }: { tem
 
         <section className="panel project-template-editor">
           {!detail ? <div className="empty-table">Sélectionne ou crée un modèle.</div> : <>
-            <div className="panel-title"><div><span className="eyebrow">{detail.projectType}</span><h2>{detail.name}</h2></div><div className="button-row">{workingVersion?.status === 'published' && <button className="secondary-button" type="button" onClick={() => void createVersion()}>Créer v{workingVersion.versionNumber + 1}</button>}{workingVersion?.status === 'draft' && <button className="primary-button" type="button" onClick={() => void publish()}>Publier v{workingVersion.versionNumber} et rendre disponible</button>}</div></div>
-            {workingVersion && <div className="template-version-banner"><span>Version de travail</span><strong>v{workingVersion.versionNumber}</strong><span className={`status-pill ${workingVersion.status}`}>{workingVersion.status === 'draft' ? 'Brouillon modifiable' : 'Publiée · figée'}</span></div>}
-            {workingVersion?.status === 'draft' && <div className="template-node-add"><input value={newNodeName} onChange={(event) => setNewNodeName(event.target.value)} placeholder="Lot, page, tâche…" /><select value={newNodeType} onChange={(event) => setNewNodeType(event.target.value as typeof newNodeType)}><option value="lot">Lot</option><option value="module">Module / Page</option><option value="task">Tâche</option><option value="checklist">Checklist</option></select><select value={newNodeParent} onChange={(event) => setNewNodeParent(event.target.value)}><option value="">Racine</option>{workingVersion.nodes.map((node) => <option key={node.id} value={node.id}>{node.name}</option>)}</select><input type="number" min="0" value={newNodeMinutes} onChange={(event) => setNewNodeMinutes(event.target.value)} placeholder="Minutes" /><button className="secondary-button" type="button" onClick={() => void addNode()}>Ajouter</button></div>}
-            {workingVersion && <div className="template-tree">{renderTemplateTree(workingVersion, null, workingVersion.status === 'draft' ? removeNode : undefined)}</div>}
+            <div className="panel-title"><div><span className="eyebrow">{detail.projectType}</span><h2>{detail.name}</h2></div><div className="button-row">{(workingVersion?.status === 'published'||workingVersion?.operationalReady) && <button className="secondary-button" type="button" onClick={() => void createVersion()}>Créer v{workingVersion.versionNumber + 1}</button>}{workingVersion?.status === 'draft' && !workingVersion.operationalReady && <button className="primary-button" type="button" onClick={() => void publish()}>Publier v{workingVersion.versionNumber} et rendre disponible</button>}</div></div>
+            {workingVersion && <div className="template-version-banner"><span>Version de travail</span><strong>v{workingVersion.versionNumber}</strong><span>{workingVersion.operationalPurpose==='structural'?'Structure seule · modèle opérationnel compatible requis':'Blueprint historique complet'}</span><span className={`status-pill ${workingVersion.status}`}>{workingVersion.operationalReady ? 'Structure figée · usage opérationnel' : workingVersion.status === 'draft' ? 'Brouillon modifiable' : 'Publiée · figée'}</span></div>}
+            {workingVersion?.status === 'draft' && !workingVersion.operationalReady && <div className="template-node-add"><input value={newNodeName} onChange={(event) => setNewNodeName(event.target.value)} placeholder="Lot, page, tâche…" /><select value={newNodeType} onChange={(event) => setNewNodeType(event.target.value as typeof newNodeType)}><option value="lot">Lot</option><option value="module">Module / Page</option><option value="task">Tâche</option><option value="checklist">Checklist</option></select><select value={newNodeParent} onChange={(event) => setNewNodeParent(event.target.value)}><option value="">Racine</option>{workingVersion.nodes.map((node) => <option key={node.id} value={node.id}>{node.name}</option>)}</select><input type="number" min="0" value={newNodeMinutes} onChange={(event) => setNewNodeMinutes(event.target.value)} placeholder="Minutes" /><button className="secondary-button" type="button" onClick={() => void addNode()}>Ajouter</button></div>}
+            {workingVersion && <div className="template-tree">{renderTemplateTree(workingVersion, null, workingVersion.status === 'draft' && !workingVersion.operationalReady ? removeNode : undefined)}</div>}
             {workingVersion && workingVersion.nodes.length === 0 && <p className="muted">Cette version ne contient encore aucun lot ou tâche.</p>}
-            <div className="template-history"><strong>Historique des versions</strong>{detail.versions.map((version) => <div key={version.id}><span>v{version.versionNumber}</span><span>{version.status}</span><span>{version.nodes.length} élément{version.nodes.length > 1 ? 's' : ''}</span><span>{dateLabel(version.publishedAt || version.createdAt)}</span></div>)}</div>
+            <div className="template-history"><strong>Historique des versions</strong>{detail.versions.map((version) => <div key={version.id}><span>v{version.versionNumber}</span><span>{version.status}</span><span>{version.operationalPurpose==='structural'?'Structure seule':'Historique complet'}</span><span>{version.nodes.length} élément{version.nodes.length > 1 ? 's' : ''}</span><span>{dateLabel(version.publishedAt || version.createdAt)}</span></div>)}</div>
           </>}
         </section>
       </div>

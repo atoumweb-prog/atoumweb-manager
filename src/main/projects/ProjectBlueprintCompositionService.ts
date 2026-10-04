@@ -42,14 +42,7 @@ export class ProjectBlueprintCompositionService {
 
   resolveQuote(quoteId: string, explicitVersionId?: string | null, lineOrigins?: Map<string,string>): SoldBlueprintPlan {
     const lines = this.db.all<Row>('SELECT * FROM quote_lines WHERE quote_id=? ORDER BY sort_order,created_at,id', [quoteId]);
-    const contributions: SoldBlueprintContribution[] = [], prerequisites: Prerequisite[] = [];
-    const addPrerequisites = (value: unknown, quoteLineId: string | null, catalogVersionId: string | null, componentId: string | null) => {
-      if (!Array.isArray(value)) return;
-      for (const raw of value) if (typeof raw === 'string' && raw.trim()) {
-        const label = raw.trim(), key = hash([quoteLineId ? lineOrigins?.get(quoteLineId) ?? quoteLineId : null, catalogVersionId, componentId, label]);
-        if (!prerequisites.some(p => p.key === key)) prerequisites.push({key, label, quoteLineId, catalogVersionId, componentId});
-      }
-    };
+    const contributions: SoldBlueprintContribution[] = [], prerequisites = this.prerequisitesForQuote(quoteId,lineOrigins);
     const add = (line: Row, version: string, quantity: number, componentId: string | null, sourceRole: 'direct' | 'offer_component') => {
       const links = this.db.all<Link>('SELECT * FROM catalog_project_blueprints WHERE catalog_version_id=? ORDER BY sort_order,id', [version]);
       for (const link of links) {
@@ -65,12 +58,9 @@ export class ProjectBlueprintCompositionService {
           quantityMilli:quantity,unitCount:units,quantityMode:link.quantity_mode,siteMode:link.site_mode}));
       }
     };
-    const quote = this.db.get<Row>('SELECT prerequisites_text FROM quotes WHERE id=?', [quoteId]);
-    addPrerequisites(String(quote?.prerequisites_text ?? '').split(/\r?\n|;/), null, null, null);
     for (const line of lines) {
       const snapshot = parse(line.snapshot_json);
       const version = typeof line.catalog_version_id === 'string' ? line.catalog_version_id : null;
-      addPrerequisites(snapshot?.prerequisites, String(line.id), version, null);
       if (version) add(line, version, Number(line.quantity_milli), null, 'direct');
       const components = snapshot?.offerComponents;
       if (!Array.isArray(components)) continue;
@@ -79,7 +69,6 @@ export class ProjectBlueprintCompositionService {
         // Availability never produces a contribution or prerequisite; an option purchase has its own line.
         if (!component || component.isOptional !== false || typeof component.serviceVersionId !== 'string') continue;
         const componentId = typeof component.componentId === 'string' ? component.componentId : null;
-        addPrerequisites(component.prerequisites, String(line.id), component.serviceVersionId, componentId);
         add(line, component.serviceVersionId,
           Number(line.quantity_milli) * Number(component.quantityMilli ?? 1000) / 1000, componentId, 'offer_component');
       }
@@ -111,9 +100,38 @@ export class ProjectBlueprintCompositionService {
     return {schemaVersion:1,quoteId,base,contributions:ordered,prerequisites,explicitlyReplacedBases};
   }
 
+  hasSoldBlueprints(quoteId: string): boolean {
+    return this.db.all<Row>('SELECT * FROM quote_lines WHERE quote_id=?',[quoteId]).some(line=>{
+      const versions=[line.catalog_version_id,...(parse(line.snapshot_json)?.offerComponents as Row[] ?? [])
+        .filter(c=>c.isOptional===false).map(c=>c.serviceVersionId)];
+      return versions.some(v=>typeof v==='string' && this.db.get('SELECT id FROM catalog_project_blueprints WHERE catalog_version_id=?',[v]));
+    });
+  }
+
+  prerequisitesForQuote(quoteId: string, origins?: Map<string,string>): Prerequisite[] {
+    const result: Prerequisite[]=[];
+    const add=(value:unknown,line:string|null,version:string|null,component:string|null)=>{
+      if (!Array.isArray(value)) return;
+      for (const raw of value) if(typeof raw==='string' && raw.trim()) {
+        const label=raw.trim(),key=hash([line?origins?.get(line)??line:null,version,component,label]);
+        if(!result.some(p=>p.key===key)) result.push({key,label,quoteLineId:line,catalogVersionId:version,componentId:component});
+      }
+    };
+    const q=this.db.get<Row>('SELECT prerequisites_text FROM quotes WHERE id=?',[quoteId]);
+    add(String(q?.prerequisites_text??'').split(/\r?\n|;/),null,null,null);
+    for(const l of this.db.all<Row>('SELECT * FROM quote_lines WHERE quote_id=? ORDER BY sort_order,created_at,id',[quoteId])) {
+      const snap=parse(l.snapshot_json);add(snap?.prerequisites,String(l.id),l.catalog_version_id as string|null,null);
+      if(Array.isArray(snap?.offerComponents)) for(const raw of snap.offerComponents) {
+        const c=object(raw);if(c?.isOptional===false && typeof c.serviceVersionId==='string')
+          add(c.prerequisites,String(l.id),c.serviceVersionId,typeof c.componentId==='string'?c.componentId:null);
+      }
+    }
+    return result;
+  }
+
   private definition(c: Omit<SoldBlueprintContribution,'nodes'|'sites'|'pages'>): SoldBlueprintContribution {
     const version = this.db.get<Row>('SELECT status FROM project_template_versions WHERE id=?', [c.templateVersionId]);
-    fail(version?.status === 'published', 'Chaque blueprint de base/module lié au devis doit être publié.');
+    fail(version?.status === 'published' || this.db.get("SELECT template_version_id FROM blueprint_operational_profiles WHERE template_version_id=? AND mode='structural' AND operational_ready=1",[c.templateVersionId]), 'Chaque blueprint de base/module lié au devis doit être publié.');
     return {...c,
       nodes:this.db.all<Node>('SELECT * FROM project_template_nodes WHERE template_version_id=? ORDER BY sort_order,created_at,id',[c.templateVersionId]),
       sites:this.db.all<Site>('SELECT * FROM project_template_sites WHERE template_version_id=? ORDER BY sort_order,created_at,id',[c.templateVersionId]),

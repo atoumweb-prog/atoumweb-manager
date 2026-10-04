@@ -1843,3 +1843,42 @@ Auteur : AtoumWeb (validation et autorisation de commit local), Codex (clôture)
 - Contrôle avant commit : 33 fichiers attendus et empreintes conformes à la fermeture après application ; code fonctionnel identique à l'état **503/503 tests, typecheck OK, UI 54/54**. Migration 59 inchangée. Seuls trois documents de suivi actualisés ; aucun artefact base/sauvegarde/classeur/JSON généré inclus.
 - Validation-MSI en migrations **1–59**, SHA **c0bda21b97924758f211d463382001d24bb5872e20e2a61c5831802a942cd1fc** conservé, aucune écriture pendant clôture. 112 AW/112 catalogue V1 BROUILLON/118 clauses BROUILLON/409 liens, achats d'options vides et historiques intacts ; huit nouvelles tables 7B vides, aucun Client/Projet/plan/objet opérationnel créé.
 - **RECETTE MANUELLE ATOUMWEB TOUJOURS À FAIRE. Lot 8 non commencé.** Aucun push/merge, publication, Abby, Bridge ou 8C. Attendre instruction séparée pour la suite.
+
+### 2026-10-04 — OPERATIONAL-LOT8A-001 — Audit avant association blueprint / modèles d'actions
+
+Auteur : AtoumWeb (validation et préparation limitée), Codex (audit et proposition documentaire).
+
+- AtoumWeb autorise le Lot 8A opérationnel en préparation locale : référentiel Excel revu, une seule source de tâches de production, blueprint Vitrine structurel distinct de sa version complète historique, compatibilité persistée/versionnée, aucun rapprochement par nom. Aucune application Validation-MSI ni commit. Ce lot opérationnel est distinct des anciens lots d'export Bridge.
+- Audit complet des blueprints en base : **2 versions publiées, 14 tâches**. Vitrine V1 conserve ses 13 tâches / 525 min et ses usages ; Projet standard V1 conserve sa tâche de validation de livraison sans AW associé. Aucun blueprint de test traité comme association commerciale réelle.
+- **Point d'arrêt demandé sur les compléments** : sauvegarde avant publication `launch.backup_before` (15 min), et contrôle bandeau/consentement dans `quality.rgpd` (45 min pour l'ensemble pages légales + cookies) non explicitement couverts par les checklists A19/A21 et A12/A16. Le modèle standard est trop peu décrit pour une correspondance et reste hors associations V1. Aucune tâche retirée ou neutralisée.
+- Proposition non appliquée : faire confirmer par AtoumWeb la couverture de ces contrôles dans A19/A16 avec temps inchangés, ou arbitrer un complément explicite. Rapport et matrice 112 lignes : `outputs/operational-lot8a/audit-blueprints-et-matrice-aw-lot8a.md` dans le dossier documentaire partagé.
+- Aucune migration 60, version structurelle, modèle ou association créé. Code inchangé ; ni suite ni UI relancées pour ce seul audit. Deux fichiers de suivi documentaire mis à jour.
+- Validation-MSI **1–59**, SHA **c0bda21b97924758f211d463382001d24bb5872e20e2a61c5831802a942cd1fc** ; XLSX opérationnel **c2c5c139d66d4d9fe9d90863f3cdacb6dad617eb4ce692e6ac31cf352eeb26cf** inchangés. Aucun backfill, publication, commit/push/merge, Lot 8B, Abby, Bridge ou 8C. Attendre validation des compléments avant reprise de préparation.
+
+
+### 2026-10-04 — OPERATIONAL-LOT8A-002 — Décisions complémentaires et préparation terminée
+
+Auteur : AtoumWeb (décisions A19/A16), Codex (implémentation et simulation autorisées uniquement).
+
+- Décisions AtoumWeb appliquées au manifeste : A19 point de restauration avant publication et A16 consentement uniquement technique, 60 min chacune inchangées ; A12 pages légales, A21 sauvegarde livraison. XLSX intact. Projet standard V1 strictement historique.
+- Migration **60 préparée seulement** : cinq tables, deux colonnes métier nullable, références initiales/compatibilités immuables. Versions des modèles indépendantes des publications catalogue/clauses. Aucun backfill.
+- Audit complet : Vitrine V1 13 tâches / 525 min inchangée ; V2 structurelle simulée sans ces tâches, conteneurs/Site/5 Pages conservés. V1 publiée maintenue ; V2 draft mise en usage opérationnel explicite/figée, associations exactes versionnées. Ancienne V1 + modèle bloquée ; structure sans modèle bloquée.
+- **112 modèles / 432 actions importés en BROUILLON sur copie** : 94 refs/388 actions 8A ; 18 refs/44 actions 8B inertes ; trois packs zéro action ; 22 refs 8A à estimation obligatoire gardent estimation courante NULL. Aucun mapping réel inventé ni publication.
+- **534/534 tests (63 fichiers, 31 nouveaux), typecheck OK, UI 69/69 sur trois thèmes, simulation SQLite 209/209**, intégrité OK/FK vide. Vitrine 21 actions/24 h 30 ; +2 Pages 29/28 h ; +Blog 34/31 h ; pack 4 articles 4/13 h ; application 3/3 h indicatives, estimation finale absente.
+- Génération intégrée au Projet prévisionnel et aux révisions/acceptation ; provenance complète, versions épinglées, manuel conservé, retrait vierge et conflits travaillés. Chrono existant inchangé dans son calcul hors pauses ; cinq catégories métier historisées. Recette manuelle AtoumWeb à faire.
+- Validation-MSI **1–59**, SHA **c0bda21b97924758f211d463382001d24bb5872e20e2a61c5831802a942cd1fc**, et XLSX **c2c5c139d66d4d9fe9d90863f3cdacb6dad617eb4ce692e6ac31cf352eeb26cf** inchangés. 112 AW/112 catalogue draft/118 clauses draft/409 liens/achats vides/historiques intacts.
+- Branche `feature/project-page-compositions-v1`, HEAD **378f11568cddc462e29df6117425631e03e89b80** inchangé. Aucun commit/push/merge ni application réelle ; **ne pas démarrer Manager sur Validation-MSI (60 pendante)**. Aucun Lot 8B, Abby, Bridge ou 8C.
+- Bilan `docs/OPERATIONAL_LOT8A_ACTIONS_AND_TIME.md`, matrice exhaustive 112 et preuves dans `outputs/operational-lot8a` du dossier documentaire partagé. Les associations commerciales réelles, notamment le service historique inclus lié à Vitrine V1, restent à configurer explicitement après autorisation : les scénarios commerciaux sont synthétiques, le blueprint cloné est réel.
+
+
+### 2026-10-04 — OPERATIONAL-LOT8A-003 — Migration 60 validée et clôture locale dédiée
+
+Auteur : AtoumWeb (validation et commit local autorisé), Codex (application vérifiée et clôture).
+
+- AtoumWeb valide la migration 60 seule et autorise le commit local dédié **Lot 8A — actions opérationnelles, temps et provenance**, sans push ni merge. Le commit contenant ce bloc clôture localement le lot ; son SHA et les preuves sont consignés hors dépôt dans `outputs/operational-lot8a/cloture-git-lot8a.json`.
+- Avant commit : **36 fichiers préparés**, toutes les empreintes validées conformes, aucun artefact de base/sauvegarde/XLSX/JSON de simulation/capture inclus. Code fonctionnel et migration 60 identiques à **534/534 tests, typecheck OK, UI 69/69, simulation 209/209**. Seuls les documents de suivi et le bilan préparatoire sont actualisés pour refléter l’application et cette clôture.
+- Validation-MSI **1–60**, SHA **fdbc81cb98e20fe5f2fa862d7f8311448215dc98e99d1c3bc49d7753aee667a8** conservé sans écriture pendant clôture. Sauvegarde avant migration : **c0bda21b97924758f211d463382001d24bb5872e20e2a61c5831802a942cd1fc**, égal à la source sous verrou ; seconde écriture refusée. 113 tables historiques comparées exhaustivement et contre-vérifiées indépendamment, intégrité OK/FK vide, rejeu neutre logiquement/physiquement, aucun auxiliaire résiduel.
+- Les cinq tables `operational_import_runs`, `operational_model_versions`, `blueprint_operational_profiles`, `catalog_operational_links`, `project_action_instances` sont **vides**. Colonnes business_category historiques **NULL**. Aucun import XLSX, modèle réel, ready, Vitrine V2 réelle, association opérationnelle, recalcul ou backfill.
+- 112 AW / 112 versions catalogue V1 BROUILLON / 118 clauses BROUILLON / 409 liens / achats d’options vides intacts ; les trois devis et deux Projets, Sites/Pages, nœuds, sessions, blueprints et documents historiques conservés. Aucun objet Lot 8B.
+- **Recette manuelle AtoumWeb toujours à faire avant validation fonctionnelle finale. Raccord réel des associations commerciales non commencé.** Aucun Lot 8B, Abby, Bridge ou 8C ; aucun push/merge. Attendre une nouvelle autorisation avant import ou raccord réel.
+- Bilan préparatoire `docs/OPERATIONAL_LOT8A_ACTIONS_AND_TIME.md` ; application réelle et contre-vérification dans `outputs/operational-lot8a/application-migration60-validation-msi.md/json` et `contre-verification-migration60.json`, hors dépôt. Les manifestes préparatoires validés sont conservés historiquement sans réécriture.

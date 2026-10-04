@@ -34,12 +34,13 @@ export class TimeCorrectionService {
     this.assertPausesInsideInterval(id, started.getTime(), ended.getTime());
     const interventionId = input.interventionId === undefined ? current.interventionId ?? null : input.interventionId;
     const context = this.resolveContext(input.projectId ?? null, input.projectNodeId ?? null, interventionId);
+    const businessCategory=this.time.resolveBusinessCategory({...input,businessCategory:input.businessCategory===undefined?current.businessCategory:input.businessCategory});
     const now = new Date().toISOString();
 
     this.database.run(
       `UPDATE time_sessions
        SET client_account_id=?, project_id=?, project_node_id=?, intervention_id=?, category=?, activity_label=?,
-           started_at=?, ended_at=?, billable=?, note=?, updated_at=?
+           started_at=?, ended_at=?, billable=?, note=?, updated_at=?, business_category=?
        WHERE id=?`,
       [
         context.clientAccountId,
@@ -53,6 +54,7 @@ export class TimeCorrectionService {
         input.billable === false ? 0 : 1,
         clean(input.note),
         now,
+        businessCategory,
         id,
       ],
     );
