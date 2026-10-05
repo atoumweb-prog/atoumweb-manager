@@ -35,7 +35,7 @@ describe('migration 53 — identité catalogue additive', () => {
         columns: database.all<{ name: string }>(`PRAGMA table_info("${name}")`).map(({ name: column }) => column),
         rows: database.all(`SELECT * FROM "${name}" ORDER BY rowid`),
       }));
-      expect(applyPendingMigrations(database).map(({ id }) => id)).toEqual([53, 54, 55, 56, 57, 58, 59, 60]);
+      expect(applyPendingMigrations(database).map(({ id }) => id)).toEqual([53, 54, 55, 56, 57, 58, 59, 60, 61]);
       for (const { name, columns, rows } of before) {
         expect(database.all(`SELECT ${columns.map(column => `"${column}"`).join(',')} FROM "${name}" ORDER BY rowid`), name).toEqual(rows);
       }

@@ -5,6 +5,8 @@ export function OperationalActionDetails({node,onUpdate}: {node:ProjectNode;onUp
   const s=node.operational;
   if (!s?.action) return null;
   return <section className="project-tab-content operational-action-details" aria-label="Référence opérationnelle">
+    {s.targetIssue&&<p role="alert">{s.targetIssue} — choisir la destination dans le périmètre commercial.</p>}
+    {s.targetRequirement&&<p>Cible requise : {s.targetRequirement.target==='none'?'Aucune (cadrage)':s.targetRequirement.target} · {s.targetState==='active'?'affectée':s.targetState==='pending'?'en attente':''}</p>}
     <strong>Référence opérationnelle — {s.code}</strong>
     <p>Référence initiale : {s.referenceMinutes} min {s.estimateRequired?'(socle indicatif, estimation complète obligatoire)':''}</p>
     <p>Estimation courante : {node.estimatedMinutes==null?'À établir':`${node.estimatedMinutes} min`} · Temps réel : {Math.floor(s.actualSeconds/60)} min</p>

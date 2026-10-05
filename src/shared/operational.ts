@@ -1,3 +1,4 @@
+import type {ContributionPolicy} from './contributionTargets';
 export const BUSINESS_TIME_CATEGORIES = ['Inclus au forfait', 'Supplément facturable', 'Avant-vente', 'Interne', 'Garantie corrective'] as const;
 export type BusinessTimeCategory = typeof BUSINESS_TIME_CATEGORIES[number];
 export interface OperationalAction {
@@ -18,13 +19,15 @@ export interface OperationalActionSnapshot {
   key: string; code: string; modelVersionId: string; modelVersion: number;
   catalogVersionId: string; quoteLineId: string; lineOrigin: string; optionPurchase: Record<string, unknown> | null;
   quantityMilli: number; unitIndex: number; unitMinutes: number; referenceMinutes: number | null;
+  targetRequirement?: ContributionPolicy["actionRequirements"][string]; targetPolicy?: ContributionPolicy;
   estimateRequired: boolean; action: OperationalAction | null; phase: string;
 }
 export interface OperationalNodeInfo extends OperationalActionSnapshot {
+  targetState?: 'pending'|'active'|'invalid'; targetIssue?: string | null;
   actualSeconds: number; businessCategory: BusinessTimeCategory | null;
 }
 export interface OperationalPlan {
   schemaVersion: 1; actions: OperationalActionSnapshot[];
   excluded: { code: string; lineId: string; reason: string }[];
-  links: { linkId?:string; lineOrigin?:string; quoteLineId?:string; catalogVersionId: string; modelVersionId: string; blueprintVersionId: string | null }[];
+  links: { linkId?:string; lineOrigin?:string; quoteLineId?:string; catalogVersionId: string; modelVersionId: string; blueprintVersionId: string | null; configuration?: ContributionPolicy }[];
 }

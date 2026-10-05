@@ -1,4 +1,5 @@
-import type { BusinessTimeCategory, OperationalNodeInfo } from './operational';
+import type {ContributionTargetInput,ContributionTargetView,ContributionTargetChoices,PlannedContributionTarget} from './contributionTargets';
+import type { BusinessTimeCategory, OperationalNodeInfo, OperationalPlan } from './operational';
 export const PROJECT_TEMPLATE_STATUSES = ['active', 'inactive', 'archived'] as const;
 export const PROJECT_TEMPLATE_VERSION_STATUSES = ['draft', 'published', 'retired'] as const;
 export const PROJECT_STATUSES = ['to_prepare', 'in_progress', 'waiting_client', 'blocked', 'to_validate', 'completed', 'archived'] as const;
@@ -319,7 +320,8 @@ export interface ProjectTemplateSiteInput {
 
 export interface ProjectBlueprintGenerationResult {
   projectId: string;
-  templateVersionId: string;
+  templateVersionId: string | null;
+  contributions?: {lineOrigin: string; templateVersionId: string; role: 'base'|'addon'; unitCount: number}[];
   declaredSiteCount: number;
   createdSiteIds: string[];
   linkedPageIds: string[];
@@ -337,10 +339,16 @@ export interface ProjectFilters {
 
 export interface TransformQuoteToProjectInput {
   quoteId: string;
+  previewSHA256?: string;
   templateVersionId?: string | null;
   name?: string | null;
   targetDate?: string | null;
   commercialMode?: ProjectCommercialMode | null;
+}
+export interface ProjectCommercialPreview {
+  quoteId:string;projectId:string|null;sha256:string;schemaVersion:1|2;baseCount:number;
+  contributions:{lineOrigin:string|null;templateVersionId:string;role:'base'|'addon';unitCount:number}[];
+  operations:OperationalPlan;destinations:PlannedContributionTarget[];
 }
 
 export interface InternalProjectInput {
@@ -456,7 +464,9 @@ export interface ProjectsApi {
     get(id: string): Promise<ProjectDetail>;
     transformQuote(input: TransformQuoteToProjectInput): Promise<ProjectDetail>;
     prepareQuote(input: TransformQuoteToProjectInput): Promise<ProjectDetail>;
+    previewQuote(input: TransformQuoteToProjectInput): Promise<ProjectCommercialPreview>;
     syncCommercial(projectId: string): Promise<ProjectDetail>;
+    assignTarget(projectId:string,input:ContributionTargetInput):Promise<ProjectCommercialScope>;
     commercialScope(projectId: string): Promise<ProjectCommercialScope>;
     resolveScopeConflict(projectId: string, conflictId: string, decision: ProjectConflictDecision): Promise<ProjectCommercialScope>;
     createInternal(input: InternalProjectInput): Promise<ProjectDetail>;
@@ -512,6 +522,8 @@ export interface ProjectsApi {
 
 export type ProjectConflictDecision = 'keep' | 'archive' | 'detach' | 'delete';
 export interface ProjectCommercialScope {
+  targets?: ContributionTargetView[];
+  targetChoices?:ContributionTargetChoices;
   projectId: string; state: 'legacy' | 'provisional' | 'frozen'; dossierId: string | null;
   currentQuoteId: string | null; acceptedQuoteId: string | null;
   revisions: {id:string;quoteId:string;commercialRevision:number;sequence:number;sha256:string;createdAt:string}[];

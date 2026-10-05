@@ -1,3 +1,4 @@
+import {ProjectContributionTargetService} from '../projects/ProjectContributionTargetService';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import {
@@ -100,6 +101,7 @@ export class TimeSwitchService {
     }
 
     if (resolvedNodeId) {
+      new ProjectContributionTargetService(this.database).assertAction(resolvedNodeId);
       const node = this.database.get<{ project_id: string }>('SELECT project_id FROM project_nodes WHERE id=?', [resolvedNodeId]);
       if (!node) throw new Error('Tâche de projet introuvable.');
       if (resolvedProjectId && node.project_id !== resolvedProjectId) throw new Error('La tâche n’appartient pas au projet sélectionné.');

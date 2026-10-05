@@ -1,3 +1,4 @@
+import { PROJECT_CONTRIBUTION_TARGET_MIGRATION } from './projectContributionTargetMigration';
 import { PROJECT_OPERATIONAL_MIGRATION } from './projectOperationalMigration';
 import { PROJECT_COMPOSITION_MIGRATION } from './projectCompositionMigration';
 import { PROJECT_PROVISIONAL_MIGRATION } from './projectProvisionalMigration';
@@ -235,6 +236,7 @@ export const MIGRATIONS: Migration[] = [
   PROJECT_COMPOSITION_MIGRATION,
   PROJECT_PROVISIONAL_MIGRATION,
   PROJECT_OPERATIONAL_MIGRATION,
+  PROJECT_CONTRIBUTION_TARGET_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {

@@ -1,3 +1,4 @@
+import {readPolicy, validatePolicy} from './ContributionPolicy';
 import { createHash, randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import type { ProjectService } from './ProjectService';
@@ -94,8 +95,11 @@ export class OperationalReferenceService {
       if (profile?.mode!=='structural' || this.db.get("SELECT id FROM project_template_nodes WHERE template_version_id=? AND node_type IN ('task','checklist')",[blueprintVersionId]))
         throw Error('Blueprint historique complet avec tâches : association opérationnelle bloquée.');
     }
+    const configuration=readPolicy(JSON.stringify(provenance));
+    if(configuration) validatePolicy(configuration,JSON.parse(String(v.model_json)),blueprintVersionId,this.db);
     const previous=this.db.get<Row>('SELECT * FROM catalog_operational_links WHERE catalog_version_id=? ORDER BY revision DESC LIMIT 1',[catalogVersionId]);
-    if (previous?.model_version_id===modelVersionId && previous.blueprint_version_id===blueprintVersionId) return String(previous.id);
+    if(previous&&readPolicy(String(previous.provenance_json))&&!configuration)throw Error('Version gouvernée 8A.1 : retrait implicite de politique interdit.');
+    if (previous?.model_version_id===modelVersionId && previous.blueprint_version_id===blueprintVersionId && operationalHash(JSON.parse(String(previous.provenance_json)))===operationalHash(provenance)) return String(previous.id);
     const id=randomUUID();
     this.db.run('INSERT INTO catalog_operational_links(id,catalog_version_id,model_version_id,blueprint_version_id,revision,provenance_json,created_at) VALUES(?,?,?,?,?,?,?)',
       [id,catalogVersionId,modelVersionId,blueprintVersionId,Number(previous?.revision ?? 0)+1,JSON.stringify(provenance),new Date().toISOString()]);

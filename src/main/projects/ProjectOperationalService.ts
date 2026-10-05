@@ -1,3 +1,5 @@
+import {ProjectContributionTargetService} from './ProjectContributionTargetService';
+import {readPolicy,validatePolicy,checkQuantity} from './ContributionPolicy';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import type { OperationalModel, OperationalPlan, OperationalActionSnapshot, OperationalNodeInfo } from '../../shared/operational';
@@ -20,14 +22,16 @@ export class ProjectOperationalService {
         ? this.db.get<Row>('SELECT * FROM catalog_operational_links WHERE catalog_version_id=? AND model_version_id=? ORDER BY revision DESC LIMIT 1',[String(line.catalog_version_id),pin.modelVersionId])
         : this.db.get<Row>('SELECT * FROM catalog_operational_links WHERE catalog_version_id=? ORDER BY revision DESC LIMIT 1',[String(line.catalog_version_id)]);
       if (!link) {
-        if (this.db.get('SELECT id FROM operational_model_versions WHERE catalog_item_id=?',[String(line.catalog_item_id)]))
+        if (this.db.get('SELECT id FROM operational_model_versions WHERE catalog_item_id=?',[String(line.catalog_item_id)]) && this.db.get<Row>('SELECT id FROM catalog_versions WHERE item_id=? ORDER BY version_number DESC LIMIT 1',[String(line.catalog_item_id)])?.id===line.catalog_version_id)
           throw Error('Modèle opérationnel disponible mais compatibilité non configurée : '+String(line.canonical_code));
         continue;
       }
       const v=this.db.get<Row>('SELECT * FROM operational_model_versions WHERE id=?',[String(link.model_version_id)])!;
       if (v.status!=='ready') throw Error('Modèle opérationnel non mis en usage.');
       const m=JSON.parse(String(v.model_json)) as OperationalModel;
-      plan.links.push({linkId:String(link.id),lineOrigin:origin,quoteLineId:String(line.id),catalogVersionId:String(line.catalog_version_id),modelVersionId:String(v.id),blueprintVersionId:link.blueprint_version_id as string|null});
+      const configuration=readPolicy(String(link.provenance_json));
+      if(configuration) {validatePolicy(configuration,m,link.blueprint_version_id as string|null,this.db);checkQuantity(configuration,Number(line.quantity_milli));}
+      plan.links.push({configuration,linkId:String(link.id),lineOrigin:origin,quoteLineId:String(line.id),catalogVersionId:String(line.catalog_version_id),modelVersionId:String(v.id),blueprintVersionId:link.blueprint_version_id as string|null});
       if (m.lot==='8B') {plan.excluded.push({code:m.code,lineId:String(line.id),reason:'Lot 8B inerte : aucune action ni activation'});continue;}
       const qty=Number(line.quantity_milli),units=qty/1000;
       if (!Number.isSafeInteger(qty) || !Number.isInteger(units) || units<1 || units>500) throw Error('Quantité opérationnelle entière requise ; aucun arrondi automatique.');
@@ -46,7 +50,7 @@ export class ProjectOperationalService {
           quoteLineId:String(line.id),lineOrigin:origin,optionPurchase:this.db.get<Row>('SELECT * FROM quote_option_purchases WHERE line_id=?',[String(line.id)]) ?? null,
           quantityMilli:qty,unitIndex:unit,estimateRequired:m.estimateRequired};
         for (const phase of [...new Set(m.actions.map(a=>a.phase))]) plan.actions.push({...common,key:instanceKey(operationalHash([origin,line.catalog_version_id,unit,'phase',phase])),unitMinutes:0,referenceMinutes:null,action:null,phase});
-        for (const a of m.actions) plan.actions.push({...common,key:instanceKey(operationalHash([origin,line.catalog_version_id,unit,a.key])),unitMinutes:a.minutes,referenceMinutes:a.minutes,action:a,phase:a.phase});
+        for (const a of m.actions) plan.actions.push({...common,key:instanceKey(operationalHash([origin,line.catalog_version_id,unit,a.key])),unitMinutes:a.minutes,referenceMinutes:a.minutes,action:a,phase:a.phase,...(configuration?{targetPolicy:configuration,targetRequirement:configuration.actionRequirements[a.key]}:{})});
       }
     }
     if (plan.actions.length>10000) throw Error('Plan opérationnel trop volumineux.');
@@ -54,12 +58,19 @@ export class ProjectOperationalService {
   }
 
   checkBlueprint(plan: OperationalPlan, blueprint: SoldBlueprintPlan | null): void {
+    for(const l of plan.links) {
+      const p=l.configuration;if(!p)continue;
+      const matching=blueprint?.contributions.filter(c=>c.lineOrigin===l.lineOrigin&&c.catalogVersionId===l.catalogVersionId)??[];
+      if(p.blueprintRequired && (matching.length!==1||matching[0].templateVersionId!==l.blueprintVersionId))throw Error('Obligation structurelle non satisfaite par origine commerciale.');
+      if(['C','D'].includes(p.structureClass)&&matching.length)throw Error('C/D : aucune structure automatique autorisée.');
+      if(matching.some(c=>c.unitCount!==(p.quantity.structureMode==='per_unit'?c.quantityMilli/1000:1)))throw Error('Quantités actions/structure incohérentes.');
+    }
     if (!blueprint) {
       if (plan.links.some(l=>l.blueprintVersionId)) throw Error('Blueprint structurel requis : préparation incomplète.');
       return;
     }
     for (const c of blueprint.contributions) {
-      const link=plan.links.find(l=>l.catalogVersionId===c.catalogVersionId);
+      const link=plan.links.find(l=>l.catalogVersionId===c.catalogVersionId&&(!c.lineOrigin||l.lineOrigin===c.lineOrigin));
       const profile=this.db.get<Row>('SELECT * FROM blueprint_operational_profiles WHERE template_version_id=?',[c.templateVersionId]);
       if (profile?.mode==='structural' && (!link || link.blueprintVersionId!==c.templateVersionId)) throw Error('Blueprint structurel sans modèle opérationnel compatible : préparation bloquée.');
       if (!link) continue;
@@ -94,6 +105,9 @@ export class ProjectOperationalService {
   info(nodeId: string): OperationalNodeInfo | undefined {
     const row=this.db.get<Row>('SELECT a.initial_snapshot_json,n.business_category FROM project_action_instances a JOIN project_nodes n ON n.id=a.project_node_id WHERE a.project_node_id=?',[nodeId]);
     if (!row) return;
-    return {...JSON.parse(String(row.initial_snapshot_json)),businessCategory:row.business_category,actualSeconds:0};
+    const snapshot=JSON.parse(String(row.initial_snapshot_json)) as OperationalActionSnapshot;
+    let targetState:OperationalNodeInfo['targetState'],targetIssue:string|null=null;
+    if(snapshot.targetRequirement&&snapshot.targetRequirement.target!=='none')try{new ProjectContributionTargetService(this.db).assertAction(nodeId);targetState='active';}catch(e){targetState='pending';targetIssue=e instanceof Error?e.message:String(e);}
+    return {...snapshot,targetState,targetIssue,businessCategory:row.business_category as OperationalNodeInfo['businessCategory'],actualSeconds:0};
   }
 }

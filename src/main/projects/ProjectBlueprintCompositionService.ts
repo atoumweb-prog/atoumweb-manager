@@ -1,3 +1,6 @@
+import {readStructure} from './ContributionPolicy';
+import type {ContributionPolicy, StructureContract, PlannedContributionTarget} from '../../shared/contributionTargets';
+import type {OperationalPlan} from '../../shared/operational';
 import { createHash, randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import type { ProjectSiteService } from './ProjectSiteService';
@@ -23,10 +26,11 @@ export interface SoldBlueprintContribution {
   optionPurchase: Row | null; quantityMilli: number; unitCount: number;
   quantityMode: 'once' | 'per_unit'; siteMode: 'create' | 'extend_base';
   nodes: Node[]; sites: Site[]; pages: Page[];
+  lineOrigin?: string; configuration?: ContributionPolicy; structureContract?: StructureContract;
 }
 interface Prerequisite { key: string; label: string; quoteLineId: string | null; catalogVersionId: string | null; componentId: string | null }
 export interface SoldBlueprintPlan {
-  schemaVersion: 1; quoteId: string; base: SoldBlueprintContribution;
+  schemaVersion: 1 | 2; bases?: SoldBlueprintContribution[]; destinations?: PlannedContributionTarget[]; quoteId: string; base: SoldBlueprintContribution;
   contributions: SoldBlueprintContribution[]; prerequisites: Prerequisite[];
   explicitlyReplacedBases: SoldBlueprintContribution[];
 }
@@ -40,7 +44,7 @@ export class ProjectBlueprintCompositionService {
   private readonly provenancePlans = new Map<string,SoldBlueprintPlan>();
   constructor(private readonly db: DatabaseAdapter, private readonly sites: ProjectSiteService) {}
 
-  resolveQuote(quoteId: string, explicitVersionId?: string | null, lineOrigins?: Map<string,string>): SoldBlueprintPlan {
+  resolveQuote(quoteId: string, explicitVersionId?: string | null, lineOrigins?: Map<string,string>, operations?: OperationalPlan): SoldBlueprintPlan {
     const lines = this.db.all<Row>('SELECT * FROM quote_lines WHERE quote_id=? ORDER BY sort_order,created_at,id', [quoteId]);
     const contributions: SoldBlueprintContribution[] = [], prerequisites = this.prerequisitesForQuote(quoteId,lineOrigins);
     const add = (line: Row, version: string, quantity: number, componentId: string | null, sourceRole: 'direct' | 'offer_component') => {
@@ -73,10 +77,20 @@ export class ProjectBlueprintCompositionService {
           Number(line.quantity_milli) * Number(component.quantityMilli ?? 1000) / 1000, componentId, 'offer_component');
       }
     }
+    const configured=Boolean(operations?.links.some(l=>l.configuration));
+    if(configured) for(const c of contributions) {
+      c.lineOrigin=lineOrigins?.get(c.quoteLineId!)??c.quoteLineId!;
+      const l=operations?.links.find(l=>l.lineOrigin===c.lineOrigin&&l.catalogVersionId===c.catalogVersionId);
+      fail(c.sourceRole==='direct' && l?.configuration,'Composition v2 : association explicite par origine commerciale requise, aucun composant historique implicite.');
+      c.configuration=l!.configuration;c.structureContract=readStructure(this.db,c.templateVersionId);
+      fail(c.configuration!.structuralRole===c.role,'Rôle structurel/catalogue incohérent.');
+      fail(c.quantityMode===(c.configuration!.quantity.structureMode==='per_unit'?'per_unit':'once'),'Quantités actions/structure incohérentes.');
+    }
     let bases = contributions.filter(c => c.role === 'base');
     const origins = new Set(bases.map(c => hash([c.quoteLineId,c.templateVersionId])));
-    fail(origins.size <= 1, 'Plusieurs blueprints de base concurrents : résoudre les lignes ou liens Catalogue avant conversion.');
+    fail(configured || origins.size <= 1, 'Plusieurs blueprints de base concurrents : résoudre les lignes ou liens Catalogue avant conversion.');
     const explicitlyReplacedBases: SoldBlueprintContribution[] = [];
+    fail(!configured || !explicitVersionId || bases.length===1&&bases[0].templateVersionId===explicitVersionId,'Plan v2 : substitution manuelle de la base non autorisée.');
     if (explicitVersionId && (!bases.length || bases[0].templateVersionId !== explicitVersionId)) {
       explicitlyReplacedBases.push(...bases);
       const sold = bases[0];
@@ -85,19 +99,19 @@ export class ProjectBlueprintCompositionService {
         quantityMilli:sold?.quantityMilli ?? 1000,unitCount:sold?.unitCount ?? 1,quantityMode:sold?.quantityMode ?? 'once',siteMode:'create'});
       contributions.unshift(manual); bases = [manual];
     }
-    fail(bases.length, 'Aucun blueprint de base n’est lié à ce devis. Choisis un modèle publié ou configure le lien Catalogue → Projet.');
-    const base = bases[0];
-    fail(bases.every(c => c.unitCount === base.unitCount && c.quantityMode === base.quantityMode), 'Dimensionnements de base contradictoires.');
+    fail(bases.length || configured, 'Aucun blueprint de base n’est lié à ce devis. Choisis un modèle publié ou configure le lien Catalogue → Projet.');
+    const base = bases[0] ?? contributions[0];
+    fail(configured || bases.every(c => c.unitCount === base.unitCount && c.quantityMode === base.quantityMode), 'Dimensionnements de base contradictoires.');
     const ordered = [...bases,...contributions.filter(c => c.role === 'addon')];
     fail(ordered.reduce((n,c) => n+c.nodes.length*c.unitCount,0) <= 10000, 'Composition trop volumineuse ; réduire le périmètre.');
     for (const c of ordered) {
       fail(c.role !== 'base' || c.siteMode === 'create', 'La base doit déclarer ses propres Sites.');
-      if (c.siteMode === 'extend_base') for (const site of c.sites) {
+      if (!configured && c.siteMode === 'extend_base') for (const site of c.sites) {
         fail(base.unitCount === 1 && base.sites.some(s => s.blueprint_key === site.blueprint_key),
           'Destination addon absente ou ambiguë : une clé Site de base explicite et unique est requise.');
       }
     }
-    return {schemaVersion:1,quoteId,base,contributions:ordered,prerequisites,explicitlyReplacedBases};
+    return {schemaVersion:configured?2:1,...(configured?{bases}:{}),quoteId,base,contributions:ordered,prerequisites,explicitlyReplacedBases};
   }
 
   hasSoldBlueprints(quoteId: string): boolean {
@@ -160,7 +174,7 @@ export class ProjectBlueprintCompositionService {
     const row = this.db.get<Row>('SELECT plan_json,plan_sha256 FROM project_blueprint_plans WHERE project_id=?',[projectId]);
     fail(row, 'Projet historique sans plan composé : aucune reconstruction automatique.');
     const plan = JSON.parse(String(row!.plan_json)) as SoldBlueprintPlan;
-    fail(hash(plan) === row!.plan_sha256 && plan.schemaVersion === 1, 'Plan composé corrompu.');
+    fail(hash(plan) === row!.plan_sha256 && [1,2].includes(plan.schemaVersion), 'Plan composé corrompu.');
     fail(!requestedVersion || requestedVersion === plan.base.templateVersionId, 'Un projet composé rejoue uniquement son plan figé.');
     if (manageTransaction) this.db.exec('BEGIN IMMEDIATE');
     try {
@@ -190,21 +204,34 @@ export class ProjectBlueprintCompositionService {
 
   private apply(projectId: string, plan: SoldBlueprintPlan, now: string, prepared = false): ProjectBlueprintGenerationResult {
     const siteBindings = prepared ? 'project_prepared_site_bindings' : 'project_composed_site_bindings';
-    const result: ProjectBlueprintGenerationResult = {projectId,templateVersionId:plan.base.templateVersionId,declaredSiteCount:0,
+    const result: ProjectBlueprintGenerationResult = {projectId,...(plan.schemaVersion===2?{contributions:plan.contributions.map(c=>({lineOrigin:c.lineOrigin!,templateVersionId:c.templateVersionId,role:c.role,unitCount:c.unitCount}))}:{}),templateVersionId:plan.schemaVersion===2&&plan.bases?.length!==1?null:plan.base.templateVersionId,declaredSiteCount:0,
       createdSiteIds:[],linkedPageIds:[],preservedSiteIds:[],preservedPageIds:[]};
     const baseSites = new Map<string,string>();
     for (const c of plan.contributions) for (let unit = 1; unit <= c.unitCount; unit++) {
-      const anchors = new Set(plan.base.nodes.filter(n => n.node_type === 'lot' || (n.node_type === 'module' && n.display_subtype !== 'page')).map(n => n.semantic_key));
-      const ids = this.nodes(projectId,c,unit,now,anchors,prepared);
+      const anchors = new Set((plan.schemaVersion===2?[]:plan.base.nodes).filter(n => n.node_type === 'lot' || (n.node_type === 'module' && n.display_subtype !== 'page')).map(n => n.semantic_key));
+      const target=plan.destinations?.find(t=>t.lineOrigin===c.lineOrigin&&t.unitIndex===unit&&t.state==='active');
+      if(plan.schemaVersion===2&&!target&&(c.role==='addon'||c.configuration?.destinationSlots.some(s=>s.requiredAt==='preparation'))) continue;
+      const ids = this.nodes(projectId,c,unit,now,anchors,prepared,plan.schemaVersion===2,target?.pageNodeId??null);
+      for(const m of c.structureContract?.modules??[]) {
+        const parent=plan.destinations?.find(t=>t.lineOrigin===c.lineOrigin&&t.unitIndex===unit&&t.slot===m.parentTargetSlot)?.pageNodeId;
+        fail(parent,'Module sans Page parente explicitement identifiée.');
+        const id=ids.get(m.templateNodeId)!;
+        const previous=this.db.get<Row>('SELECT parent_id FROM project_nodes WHERE id=?',[id]);
+        if(!previous?.parent_id) this.db.run('UPDATE project_nodes SET parent_id=? WHERE id=?',[parent!,id]);
+        else fail(previous.parent_id===parent,'Page parente modifiée : décision explicite requise.');
+      }
       for (const s of c.sites) {
         const binding = this.db.get<{project_site_id:string}>(`SELECT project_site_id FROM ${siteBindings} WHERE project_id=? AND contribution_key=? AND unit_index=? AND site_key=?`,
           [projectId,c.key,unit,s.blueprint_key]);
-        const baseKey = JSON.stringify([unit,s.blueprint_key]);
+        const baseKey = JSON.stringify(plan.schemaVersion===2?[c.lineOrigin,s.blueprint_key]:[unit,s.blueprint_key]);
         let siteId = binding?.project_site_id;
         if (siteId) result.preservedSiteIds.push(siteId);
         else {
-          siteId = c.siteMode === 'extend_base' ? baseSites.get(JSON.stringify([1,s.blueprint_key]))
+          siteId = plan.schemaVersion===2 && c.role==='addon' ? target?.siteId??baseSites.get(JSON.stringify([target?.siteOwnerOrigin,target?.siteOwnerSlot]))
+            : plan.schemaVersion===2&&c.role==='base'&&target?.siteId ? target.siteId
+            : c.siteMode === 'extend_base' ? baseSites.get(JSON.stringify([1,s.blueprint_key]))
             : c.role === 'base' ? baseSites.get(baseKey) : undefined;
+          if(plan.schemaVersion===2&&c.role==='base'&&target?.siteId)fail(c.configuration?.allowedBaseSiteModes?.includes('existing')&&c.structureContract?.sites.find(x=>x.slotKey===s.blueprint_key)?.modes.includes('existing'),'Cette base ne permet pas un Site existant.');
           if (!siteId) {
             fail(c.siteMode !== 'extend_base', 'Site de destination addon introuvable.');
             let name = c.unitCount > 1 ? `${s.name} (${unit})` : s.name, suffix = 2;
@@ -242,7 +269,7 @@ export class ProjectBlueprintCompositionService {
     return result;
   }
 
-  private nodes(projectId: string, c: SoldBlueprintContribution, unit: number, now: string, anchors: Set<string | null>, prepared = false): Map<string,string> {
+  private nodes(projectId: string, c: SoldBlueprintContribution, unit: number, now: string, anchors: Set<string | null>, prepared = false, isolated = false, explicitParent: string | null = null): Map<string,string> {
     const bindings = prepared ? 'project_prepared_node_bindings' : 'project_composed_node_bindings';
     const ids = new Map<string,string>(), pending = [...c.nodes];
     while (pending.length) {
@@ -251,7 +278,7 @@ export class ProjectBlueprintCompositionService {
         const n = pending[i]; if (n.parent_id && !ids.has(n.parent_id)) continue;
         let id = this.db.get<{project_node_id:string}>(`SELECT project_node_id FROM ${bindings} WHERE project_id=? AND contribution_key=? AND unit_index=? AND template_node_id=?`,
           [projectId,c.key,unit,n.id])?.project_node_id;
-        const wasBound = Boolean(id), parentId = n.parent_id ? ids.get(n.parent_id)! : null;
+        const wasBound = Boolean(id), parentId = n.parent_id ? ids.get(n.parent_id)! : explicitParent;
         const repeated = c.quantityMode === 'per_unit';
         // Explicit semantic containers may be shared; repeated pages and their descendants are distinct.
         const isContainer = n.node_type === 'lot' || (n.node_type === 'module' && n.display_subtype !== 'page');
@@ -265,8 +292,8 @@ export class ProjectBlueprintCompositionService {
           ancestor = ancestor.parent_id ? c.nodes.find(p => p.id === ancestor!.parent_id) : undefined;
         }
         const sharedAnchor = c.role === 'addon' && c.siteMode === 'extend_base' && isContainer && !belowPage && semantic && anchors.has(semantic);
-        if ((repeated || (prepared && c.role==='addon')) && !sharedAnchor) semantic = 'sold.'+hash([c.key,unit,n.id]);
-        if (!id && c.role === 'base') {
+        if ((isolated || repeated || (prepared && c.role==='addon')) && !sharedAnchor) semantic = 'sold.'+hash([c.key,unit,n.id]);
+        if (!isolated && !id && c.role === 'base') {
           id = this.db.get<{project_node_id:string}>(`SELECT b.project_node_id FROM ${bindings} b
             WHERE b.project_id=? AND b.unit_index=? AND b.template_node_id=?`,[projectId,unit,n.id])?.project_node_id;
         }

@@ -1,3 +1,5 @@
+import {ProjectContributionTargetService} from './ProjectContributionTargetService';
+import type {ContributionTargetInput} from '../../shared/contributionTargets';
 import { ProjectOperationalService } from './ProjectOperationalService';
 import type { OperationalPlan } from '../../shared/operational';
 import { createHash, randomUUID } from 'node:crypto';
@@ -5,7 +7,7 @@ import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import type { ProjectService } from './ProjectService';
 import { ProjectBlueprintCompositionService, type SoldBlueprintPlan } from './ProjectBlueprintCompositionService';
 import type { ProjectSiteService } from './ProjectSiteService';
-import type { ProjectCommercialScope, ProjectConflictDecision, ProjectDetail, TransformQuoteToProjectInput } from '../../shared/projects';
+import type { ProjectCommercialScope, ProjectCommercialPreview, ProjectConflictDecision, ProjectDetail, TransformQuoteToProjectInput } from '../../shared/projects';
 
 type Row = Record<string, unknown>;
 type Kind = 'node' | 'site' | 'prerequisite';
@@ -37,10 +39,10 @@ export class ProjectCommercialService {
     return this.dossier(quoteId)?.project_id as string | null ?? null;
   }
 
-  private ensureDossier(quoteId: string): Row {
+  private ensureDossier(quoteId: string, accepted = false): Row {
     const existing = this.dossier(quoteId); if (existing) return existing;
     const q = this.db.get<Row>('SELECT * FROM quotes WHERE id=?',[quoteId]);
-    required(q && ['draft','sent','viewed'].includes(String(q.status)), 'Le devis ne peut pas préparer un dossier commercial.');
+    required(q && [...(accepted?['accepted']:[]),'draft','sent','viewed'].includes(String(q.status)), 'Le devis ne peut pas préparer un dossier commercial.');
     required(!q!.project_id && !this.db.get('SELECT id FROM projects WHERE source_quote_id=?',[quoteId]), 'Projet historique : aucune requalification automatique.');
     const id = randomUUID(), now = new Date().toISOString();
     this.db.run('INSERT INTO commercial_project_dossiers(id,current_quote_id,created_at) VALUES(?,?,?)',[id,quoteId,now]);
@@ -56,26 +58,48 @@ export class ProjectCommercialService {
       .map(r=>[String(r.line_id),String(r.origin_id)]));
   }
 
-  prepare(input: TransformQuoteToProjectInput): ProjectDetail {
+  prepare(input: TransformQuoteToProjectInput, accepted = false): ProjectDetail {
     const id = this.transaction(() => {
-      const dossier = this.ensureDossier(input.quoteId);
+      if(input.previewSHA256)required(this.preview(input).sha256===input.previewSHA256,'Prévisualisation périmée : recontrôler le devis, les versions et les cibles avant préparation.');
+      const dossier = this.ensureDossier(input.quoteId,accepted);
       required(!dossier.accepted_quote_id, 'Le périmètre accepté est figé.');
       required(dossier.current_quote_id === input.quoteId, 'Choisir la révision commerciale courante.');
       const q = this.db.get<Row>('SELECT * FROM quotes WHERE id=?',[input.quoteId])!;
-      required(['draft','sent','viewed'].includes(String(q.status)), 'Ce devis ne peut plus être synchronisé avant acceptation.');
+      required([...(accepted?['accepted']:[]),'draft','sent','viewed'].includes(String(q.status)), 'Ce devis ne peut plus être synchronisé avant acceptation.');
       const selected = input.templateVersionId === undefined ? dossier.explicit_template_version_id as string | null : input.templateVersionId;
       if (input.templateVersionId !== undefined) this.db.run('UPDATE commercial_project_dossiers SET explicit_template_version_id=? WHERE id=?',[selected ?? null,String(dossier.id)]);
       const plan = this.resolve(input.quoteId,selected,this.origins(input.quoteId,String(dossier.id)),dossier.project_id as string | null);
       let projectId = dossier.project_id as string | null;
       if (!projectId) {
-        projectId = this.projects.createProvisionalShell(input,String(dossier.id),plan?.base.templateVersionId ?? null);
+        projectId = this.projects.createProvisionalShell(input,String(dossier.id),plan?.schemaVersion===2&&plan.bases?.length!==1?null:plan?.base.templateVersionId ?? null);
         this.db.run('UPDATE commercial_project_dossiers SET project_id=? WHERE id=?',[projectId,String(dossier.id)]);
       }
       this.synchronize(projectId,input.quoteId,plan);
       return projectId;
     });
-    this.projects.ensureProvisionalFolders(id);
+    if(!accepted)this.projects.ensureProvisionalFolders(id);
     return this.projects.getProject(id);
+  }
+
+  /** Read-only preview, including the exact state used by the apply guard. No dossier or origin is inserted here. */
+  preview(input:TransformQuoteToProjectInput):ProjectCommercialPreview {
+    const q=this.db.get<Row>('SELECT * FROM quotes WHERE id=?',[input.quoteId]);required(q&&['draft','sent','viewed'].includes(String(q.status)),'Devis non prévisualisable.');
+    const dossier=this.dossier(input.quoteId),projectId=dossier?.project_id as string|null??null;
+    required(!dossier?.accepted_quote_id,'Projet accepté : aucun nouveau plan commercial.');
+    required(!dossier||dossier.current_quote_id===input.quoteId,'Révision commerciale non courante.');
+    const lines=this.db.all<Row>('SELECT * FROM quote_lines WHERE quote_id=? ORDER BY sort_order,id',[input.quoteId]);
+    const origins=new Map(lines.map(l=>[String(l.id),String(this.db.get<Row>('SELECT origin_id FROM commercial_quote_line_origins WHERE line_id=?',[String(l.id)])?.origin_id??l.id)]));
+    const selected=input.templateVersionId===undefined?dossier?.explicit_template_version_id as string|null:input.templateVersionId;
+    const operations=this.operations.resolve(input.quoteId,origins,projectId),plan=this.resolve(input.quoteId,selected,origins,projectId);this.operations.checkBlueprint(operations,plan);
+    const destinations=new ProjectContributionTargetService(this.db).plan(projectId,operations,plan);
+    const state={input:{...input,previewSHA256:undefined},quote:q,lines,dossier,plan,operations,destinations,
+      revisions:projectId?this.db.all('SELECT id,sequence,scope_sha256 FROM project_commercial_scope_revisions WHERE project_id=?',[projectId]):[],
+      targets:projectId?this.db.all('SELECT * FROM project_contribution_targets WHERE project_id=?',[projectId]):[],
+      nodes:projectId?this.db.all('SELECT * FROM project_nodes WHERE project_id=? ORDER BY id',[projectId]):[],
+      sites:projectId?this.db.all('SELECT * FROM project_sites WHERE project_id=? ORDER BY id',[projectId]):[],
+      pages:projectId?this.db.all('SELECT p.* FROM project_site_pages p JOIN project_nodes n ON n.id=p.project_node_id WHERE n.project_id=? ORDER BY p.project_node_id',[projectId]):[]};
+    return {quoteId:input.quoteId,projectId,sha256:digest(state),schemaVersion:plan?.schemaVersion??(operations.links.some(l=>l.configuration)?2:1),baseCount:plan?.schemaVersion===2?plan.bases!.length:plan?1:0,
+      contributions:(plan?.contributions??[]).map(c=>({lineOrigin:c.lineOrigin??c.quoteLineId,templateVersionId:c.templateVersionId,role:c.role,unitCount:c.unitCount})),operations,destinations};
   }
 
   sync(projectId: string): ProjectDetail {
@@ -127,6 +151,7 @@ export class ProjectCommercialService {
       this.synchronize(projectId,quoteId,plan);
       required(!this.db.get("SELECT id FROM project_scope_conflicts WHERE project_id=? AND status='open'",[projectId]),
         'Hors périmètre commercial — décision requise avant acceptation.');
+      new ProjectContributionTargetService(this.db).assertAcceptance(projectId);
       const now = new Date().toISOString();
       if (plan) this.engine.freezePrepared(projectId,plan,now);
       this.db.run(`UPDATE projects SET client_account_id=?,commercial_state='frozen',accepted_quote_id=?,scope_frozen_at=?,
@@ -146,7 +171,7 @@ export class ProjectCommercialService {
     if (!selected && !hasBlueprint && operations.links.length) {
       this.operations.checkBlueprint(operations,null);return null;
     }
-    return this.engine.resolveQuote(quoteId,selected,origins);
+    return this.engine.resolveQuote(quoteId,selected,origins,operations);
   }
 
   private synchronize(projectId: string, quoteId: string, plan: SoldBlueprintPlan | null): void {
@@ -155,21 +180,28 @@ export class ProjectCommercialService {
     const lines = this.db.all<Row>('SELECT * FROM quote_lines WHERE quote_id=? ORDER BY sort_order,id',[quoteId]);
     const operations=this.operations.resolve(quoteId,this.origins(quoteId,String(p!.commercial_dossier_id)),projectId);
     this.operations.checkBlueprint(operations,plan);
-    const scopePlan={...(plan ?? {schemaVersion:1,quoteId,base:null,contributions:[],prerequisites:this.engine.prerequisitesForQuote(quoteId,this.origins(quoteId,String(p!.commercial_dossier_id))),explicitlyReplacedBases:[]}),operations};
+    const targets=new ProjectContributionTargetService(this.db);
+    const destinations=targets.plan(projectId,operations,plan);
+    if(plan?.schemaVersion===2)plan.destinations=destinations;
+    const configured=operations.links.some(l=>l.configuration);
+    const scopePlan={...(plan ?? {schemaVersion:configured?2:1,...(configured?{bases:[],destinations}:{} ),quoteId,base:null,contributions:[],prerequisites:this.engine.prerequisitesForQuote(quoteId,this.origins(quoteId,String(p!.commercial_dossier_id))),explicitlyReplacedBases:[]}),operations};
     const scopeHash = digest({plan:scopePlan,lines});
     const previous = this.db.get<Row>('SELECT * FROM project_commercial_scope_revisions WHERE project_id=? ORDER BY sequence DESC LIMIT 1',[projectId]);
     if (previous?.scope_sha256 === scopeHash) return;
     const now = new Date().toISOString();
     const revision = this.db.get<Row>('SELECT revision_number FROM commercial_quote_revisions WHERE quote_id=?',[quoteId])!;
+    const sequence = Number(previous?.sequence ?? 0)+1,revisionId=randomUUID();
+    this.db.run(`INSERT INTO project_commercial_scope_revisions(id,project_id,quote_id,commercial_revision,sequence,plan_json,lines_json,scope_sha256,created_at) VALUES(?,?,?,?,?,?,?,?,?)`,[revisionId,projectId,quoteId,Number(revision.revision_number),sequence,JSON.stringify(scopePlan),JSON.stringify(lines),scopeHash,now]);
+    targets.retireObsolete(projectId,destinations);
     if (plan) {
       this.engine.applyPrepared(projectId,plan,now);
       this.retireBindings(projectId,plan);
     }
     this.syncPrerequisites(projectId,scopePlan,now);
     this.operations.apply(projectId,operations,id=>this.retire(projectId,'node',id));
-    const sequence = Number(previous?.sequence ?? 0)+1;
-    this.db.run(`INSERT INTO project_commercial_scope_revisions(id,project_id,quote_id,commercial_revision,sequence,plan_json,lines_json,scope_sha256,created_at)
-      VALUES(?,?,?,?,?,?,?,?,?)`,[randomUUID(),projectId,quoteId,Number(revision.revision_number),sequence,JSON.stringify(scopePlan),JSON.stringify(lines),scopeHash,now]);
+    targets.synchronize(projectId,revisionId,operations,plan,destinations);
+    if(scopePlan.schemaVersion===2)this.db.run('UPDATE projects SET template_version_id=? WHERE id=?',
+      [plan?.bases?.length===1?plan.bases[0].templateVersionId:null,projectId]);
     this.db.run('UPDATE projects SET commercial_value_cents=?,contract_value_cents=?,updated_at=? WHERE id=?',
       [Number(this.db.get<Row>('SELECT catalog_value_cents FROM quotes WHERE id=?',[quoteId])!.catalog_value_cents),
         Number(this.db.get<Row>('SELECT contract_value_cents FROM quotes WHERE id=?',[quoteId])!.contract_value_cents),now,projectId]);
@@ -328,10 +360,18 @@ export class ProjectCommercialService {
     return this.scope(projectId);
   }
 
+  assignTarget(projectId:string,input:ContributionTargetInput):ProjectCommercialScope {
+    this.transaction(()=>{
+      new ProjectContributionTargetService(this.db).assign(projectId,input);
+      if(this.db.get<Row>('SELECT commercial_state FROM projects WHERE id=?',[projectId])?.commercial_state==='provisional')this.sync(projectId);
+    });
+    return this.scope(projectId);
+  }
+
   scope(projectId: string): ProjectCommercialScope {
     const p=this.db.get<Row>('SELECT * FROM projects WHERE id=?',[projectId]); required(p,'Projet introuvable.');
     const d=p!.commercial_dossier_id ? this.db.get<Row>('SELECT * FROM commercial_project_dossiers WHERE id=?',[String(p!.commercial_dossier_id)]) : null;
-    return {projectId,state:p!.commercial_state as ProjectCommercialScope['state'],dossierId:d?.id as string | null ?? null,
+    return {targetChoices:new ProjectContributionTargetService(this.db).choices(projectId),targets:new ProjectContributionTargetService(this.db).views(projectId),projectId,state:p!.commercial_state as ProjectCommercialScope['state'],dossierId:d?.id as string | null ?? null,
       currentQuoteId:d?.current_quote_id as string | null ?? null,acceptedQuoteId:p!.accepted_quote_id as string | null,
       revisions:this.db.all<Row>('SELECT id,quote_id,commercial_revision,sequence,scope_sha256,created_at FROM project_commercial_scope_revisions WHERE project_id=? ORDER BY sequence',[projectId])
         .map(r=>({id:String(r.id),quoteId:String(r.quote_id),commercialRevision:Number(r.commercial_revision),sequence:Number(r.sequence),sha256:String(r.scope_sha256),createdAt:String(r.created_at)})),

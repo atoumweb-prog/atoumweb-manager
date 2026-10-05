@@ -1,3 +1,4 @@
+import {ProjectContributionTargetService} from './ProjectContributionTargetService';
 import { ProjectOperationalService } from './ProjectOperationalService';
 import { TimeService } from '../time/TimeService';
 import { BUSINESS_TIME_CATEGORIES } from '../../shared/operational';
@@ -383,6 +384,14 @@ export class ProjectService {
     const composition = new ProjectBlueprintCompositionService(this.database, this.projectSites ?? new ProjectSiteService(this.database));
     const operations=new ProjectOperationalService(this.database);
     const operationalPlan=operations.resolve(input.quoteId,new Map());
+    if(operationalPlan.links.some(l=>l.configuration)) {
+      this.database.exec('SAVEPOINT accepted_operational_project');
+      let projectId:string;
+      try{projectId=this.commercial.prepare(input,true).id;this.commercial.accept(input.quoteId,clientId);this.database.run('UPDATE quotes SET project_id=? WHERE id=?',[projectId,input.quoteId]);this.database.exec('RELEASE accepted_operational_project');}
+      catch(e){this.database.exec('ROLLBACK TO accepted_operational_project; RELEASE accepted_operational_project');throw e;}
+      this.ensureProvisionalFolders(projectId!);
+      return this.getProject(projectId!);
+    }
     const blueprintPlan=(!input.templateVersionId && !composition.hasSoldBlueprints(input.quoteId) && operationalPlan.links.length) ? null : composition.resolveQuote(input.quoteId,clean(input.templateVersionId));
     operations.checkBlueprint(operationalPlan,blueprintPlan);
     const templateVersion=blueprintPlan ? this.getTemplateVersion(blueprintPlan.base.templateVersionId) : null;
@@ -499,6 +508,10 @@ export class ProjectService {
   updateProjectNode(nodeId: string, input: Partial<ProjectNodeInput>): ProjectDetail {
     const row = this.database.get<ProjectNodeRow>('SELECT * FROM project_nodes WHERE id=?', [nodeId]);
     if (!row) throw new Error('Tâche introuvable.');
+    if(input.status && !['todo','cancelled'].includes(input.status)) {
+      const targets=new ProjectContributionTargetService(this.database);targets.assertAction(nodeId);
+      if(input.status==='done')for(const child of this.database.all<{id:string}>(`WITH RECURSIVE children(id) AS (SELECT id FROM project_nodes WHERE parent_id=? UNION ALL SELECT n.id FROM project_nodes n JOIN children c ON n.parent_id=c.id) SELECT id FROM children`,[nodeId]))targets.assertAction(child.id);
+    }
     const parentId = input.parentId === undefined ? row.parent_id : input.parentId;
     if (parentId) {
       if (parentId === nodeId) throw new Error('Un nœud ne peut pas être son propre parent.');
@@ -577,6 +590,7 @@ export class ProjectService {
       }
     }
 
+    for(const id of [phase.id,...descendants])new ProjectContributionTargetService(this.database).assertAction(id);
     const now = nowIso();
     this.database.exec('BEGIN IMMEDIATE;');
     try {

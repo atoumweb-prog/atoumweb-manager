@@ -1,3 +1,4 @@
+import {ProjectContributionTargetService} from '../projects/ProjectContributionTargetService';
 import { BUSINESS_TIME_CATEGORIES, type BusinessTimeCategory } from '../../shared/operational';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
@@ -116,6 +117,8 @@ export class TimeService {
   }
 
   resume(id: string): TimeSession {
+    const targetSession=this.get(id);
+    if(targetSession.projectNodeId)new ProjectContributionTargetService(this.database).assertAction(targetSession.projectNodeId);
     const session = this.get(id);
     if (session.endedAt) throw new Error('Cette session est déjà terminée.');
     const openPause = this.database.get<{ id: string }>(
@@ -130,6 +133,8 @@ export class TimeService {
   }
 
   recoverResume(id: string): TimeSession {
+    const targetSession=this.get(id);
+    if(targetSession.projectNodeId)new ProjectContributionTargetService(this.database).assertAction(targetSession.projectNodeId);
     const row = this.database.get<{ started_at: string; ended_at: string | null; updated_at: string }>(
       'SELECT started_at,ended_at,updated_at FROM time_sessions WHERE id=?',
       [id],
@@ -400,6 +405,7 @@ export class TimeService {
     }
 
     if (resolvedNodeId) {
+      new ProjectContributionTargetService(this.database).assertAction(resolvedNodeId);
       const node = this.database.get<{ project_id: string }>('SELECT project_id FROM project_nodes WHERE id=?', [resolvedNodeId]);
       if (!node) throw new Error('Tâche de projet introuvable.');
       if (resolvedProjectId && node.project_id !== resolvedProjectId) throw new Error('La tâche n’appartient pas au projet sélectionné.');

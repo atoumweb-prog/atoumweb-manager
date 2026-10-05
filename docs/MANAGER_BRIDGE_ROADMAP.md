@@ -1882,3 +1882,34 @@ Auteur : AtoumWeb (validation et commit local autorisé), Codex (application vé
 - 112 AW / 112 versions catalogue V1 BROUILLON / 118 clauses BROUILLON / 409 liens / achats d’options vides intacts ; les trois devis et deux Projets, Sites/Pages, nœuds, sessions, blueprints et documents historiques conservés. Aucun objet Lot 8B.
 - **Recette manuelle AtoumWeb toujours à faire avant validation fonctionnelle finale. Raccord réel des associations commerciales non commencé.** Aucun Lot 8B, Abby, Bridge ou 8C ; aucun push/merge. Attendre une nouvelle autorisation avant import ou raccord réel.
 - Bilan préparatoire `docs/OPERATIONAL_LOT8A_ACTIONS_AND_TIME.md` ; application réelle et contre-vérification dans `outputs/operational-lot8a/application-migration60-validation-msi.md/json` et `contre-verification-migration60.json`, hors dépôt. Les manifestes préparatoires validés sont conservés historiquement sans réécriture.
+
+### 2026-10-04 — OPERATIONAL-LOT8A1-001 — Cibles et invariants préparés, application suspendue
+
+Auteur : AtoumWeb (plan et précisions métier validés), Codex (implémentation locale et simulations).
+
+- Plan structurel v2 `bases[]`, occurrences isolées par origine commerciale ; politiques A/B/C/D versionnées, contrats structurels et `provides/requires` explicites. A maximum 1 par ligne, Blog maximum 1 par Site, modules dans une Page parente choisie par ID. C sans structure fictive ; Sites manuels sans capacités implicites.
+- D acceptée en pending : cadrage possible, actions dépendantes bloquées. Première affectation après acceptation journalisée comme décision opérationnelle sans changer le périmètre commercial ; aucune réaffectation silencieuse. Matrice **39 D / 146 actionKey proposée**, à valider avant activation réelle.
+- Migration **61 additive, seule table `project_contribution_targets`**, préparée et testée uniquement sur copies. SQL, triggers de protection, preview sans création de Projet et jeton de plan, sélections/conflits UI, guards chrono/clôture, conservation v1/historique décrits dans `docs/OPERATIONAL_LOT8A1_TARGETS.md`.
+- **590/590 tests, typecheck OK, UI 180/180 trois thèmes, simulation physique SQLite 971/971 et 47 scénarios**. Temps/quantités métier inchangés, modèles AW-TEST8A1 synthétiques ; recette manuelle AtoumWeb reste à faire.
+- Validation-MSI reste **1–60**, SHA **fdbc81cb98e20fe5f2fa862d7f8311448215dc98e99d1c3bc49d7753aee667a8**, tables 8A vides, historiques et XLSX intacts. Preuves sur les 117 tables existantes et résultats dans `outputs/operational-lot8a1` hors dépôt.
+- **Aucune application 61, import réel, ready, Vitrine V2 réelle, nouvelle version commerciale ou association métier ; aucun backfill/commit/push/merge. Ne pas démarrer Manager contre Validation-MSI avant autorisation de migration.** Aucun Lot 8B, Abby, Bridge ou 8C. Arrêt avant toute activation réelle.
+
+### 2026-10-04 — OPERATIONAL-LOT8A1-002 — Matrice D validée, migration 61 seule appliquée
+
+Auteur : AtoumWeb (validation et application seule autorisées), Codex (application et contre-vérification).
+
+- Matrice 39 D validée V1, **146 actionKey**, unique changement **AW-SEO-PERF-A04 none/integration → site/integration**. Répartition **59 none / 33 site / 24 page / 30 context**. Ancienne matrice conservée historiquement ; aucune activation réelle ni modification XLSX.
+- Avant écriture, **40 fichiers préparés conformes aux empreintes**, branche/HEAD inchangés (**cfe3a01f5365b885f51bdbe9b9d47fbf408f832e**). Aucun changement applicatif depuis 590/590 tests, typecheck OK, UI 180/180 et simulation 971/971. Verrou exclusif, seconde écriture refusée, sauvegarde physique SHA identique à la source. Mode WAL sans trame avant écriture, checkpoint/fermeture, aucun WAL/SHM/journal résiduel.
+- Migration **61 seulement**, désormais migrations **1–61** ; `project_contribution_targets` **0 ligne**, cinq tables 8A **0 ligne**. Source/sauvegarde **fdbc81cb98e20fe5f2fa862d7f8311448215dc98e99d1c3bc49d7753aee667a8**, après **fab939b09609a76fde90cfabc57ea38cf6ddaf353c2f4b9499c9ec072edcfc33**. Intégrité OK/FK vide ; rejeu du moteur migrations sans mutation logique/physique.
+- Comparaison des **117 tables historiques**, colonne/ligne/valeur, et contre-vérification indépendante par multiensembles de tuples typés depuis la sauvegarde. Les 60 lignes historiques du registre sont inchangées, seule l’entrée 61 est ajoutée. Catégories métier et séquences inchangées. 112 AW / 112 catalogue V1 BROUILLON / 118 clauses BROUILLON / 409 liens / achats d’options zéro, trois devis, deux Projets, trois Sites, onze Pages, 36 nœuds, six sessions et deux versions blueprint conservés.
+- Aucun import/modèle réel/ready/Vitrine V2/version commerciale/association/backfill/cible/recalcul. Aucun commit/push/merge. Aucun Lot 8B, Abby, Bridge ou 8C. Recette manuelle reste à faire. **Arrêt avant activation réelle et avant commit.**
+- Bilan et preuves hors dépôt : `outputs/operational-lot8a1/application-migration61-validation-msi.md/json`, `contre-verification-migration61.json`, `sauvegarde-migration61-sous-verrou.json`, `validation-matrice-39D.json`. Les preuves de préparation restent historiques ; les empreintes après mise à jour documentaire sont consignées séparément.
+
+### 2026-10-05 — OPERATIONAL-LOT8A1-003 — Clôture locale dédiée autorisée
+
+Auteur : AtoumWeb (migration 61 validée et commit local autorisé), Codex (vérifications et clôture).
+
+- Commit local **Lot 8A.1 — secure structural targets and contribution policies** autorisé sur `feature/project-page-compositions-v1`, parent **cfe3a01f5365b885f51bdbe9b9d47fbf408f832e**. Le commit contenant ce bloc clôture localement le lot ; SHA et preuve hors dépôt dans `outputs/operational-lot8a1/cloture-git-lot8a1.json`.
+- **40 fichiers**, empreintes code/migration 61 identiques aux contrôles **590/590, typecheck OK, UI 180/180, simulation 971/971**. Aucun artefact ajouté. Relecture des trois documents post-application : uniquement état validé, aucune nouvelle règle métier. Matrice D conservée à **59 none / 33 site / 24 page / 30 context**, seul AW-SEO-PERF-A04 corrigé ; aucune activation.
+- Base Validation-MSI toujours **1–61**, SHA **fab939b09609a76fde90cfabc57ea38cf6ddaf353c2f4b9499c9ec072edcfc33**, cibles et cinq tables 8A vides. Aucun import/modèle ready/Vitrine V2/version commerciale/raccord réel.
+- **Recette manuelle restant à faire ; aucun push/merge, aucun Lot 8B, Abby, Bridge ou 8C. Étape suivante non commencée. Arrêt après clôture locale.**

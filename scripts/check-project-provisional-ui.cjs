@@ -25,6 +25,7 @@ if(!process.versions.electron){
  const api={
  list:async()=>mode==='prepare'?[]:[project],get:async()=>project,
  commercialScope:async()=>scope,
+ previewQuote:async(input)=>({quoteId:input.quoteId,sha256:'synthetic-preview',baseCount:1,operations:{actions:[],links:[]},destinations:[]}),
  prepareQuote:async(input)=>{window.calls.push({action:'prepare',input});mode='provisional';return project;},
  syncCommercial:async(id)=>{window.calls.push({action:'sync',id});return project;},
  resolveScopeConflict:async(id,c,d)=>{window.calls.push({action:'resolve',id,c,d});if(d==='delete')throw Error('Suppression refusée : élément non vierge ou encore référencé.');scope={...scope,conflicts:[]};return scope;}
@@ -55,6 +56,10 @@ if(!process.versions.electron){
    await show(theme,'prepare');
    await check(theme+' — Préparation avant acceptation','document.body.innerText.includes("Préparer le Projet") && !!document.querySelector("button.primary-button")');
    await check(theme+' — Options disponibles exclues','document.body.innerText.includes("Les options seulement disponibles ne contribuent pas")');
+   await click('Vérifier le plan sans créer de Projet');
+   await check(theme+' — Prévisualisation sans écriture','window.calls.length===0 && !!document.querySelector("[role=status]")');
+   await check(theme+' — Occurrences et cibles visibles','document.querySelector("[role=status]").innerText.includes("occurrence(s) de base") && document.querySelector("[role=status]").innerText.includes("cible(s) à choisir")');
+   fs.writeFileSync(path.join(output,'ui-preview-'+theme+'.png'),(await win.webContents.capturePage()).toPNG());
    await click('Préparer le Projet');
    await check(theme+' — Préparation via action explicite','window.calls.length===1 && window.calls[0].action==="prepare" && window.calls[0].input.quoteId==="hidden-quote-id"');
    await check(theme+' — Même Projet accessible','document.body.innerText.includes("Ouvrir Site vitrine de Camille")');

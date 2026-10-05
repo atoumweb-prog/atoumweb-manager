@@ -1,6 +1,33 @@
 # AtoumWeb Manager — Suivi du projet
 
-## Checkpoint courant — 04/10/2026 — Lot 8A appliqué, clôture locale dédiée
+## Checkpoint courant — 05/10/2026 — Lot 8A.1, clôture locale dédiée autorisée
+
+- AtoumWeb valide la migration 61 et autorise le commit local **Lot 8A.1 — secure structural targets and contribution policies**, sans push ni merge. Le commit contenant ce bloc clôture localement le lot ; son SHA et les contrôles sont consignés hors dépôt dans `outputs/operational-lot8a1/cloture-git-lot8a1.json`.
+- Parent attendu **cfe3a01f5365b885f51bdbe9b9d47fbf408f832e**, branche `feature/project-page-compositions-v1`. **40 fichiers Lot 8A.1** vérifiés ; aucun artefact de base/sauvegarde/XLSX/capture/JSON de simulation inclus. Code fonctionnel et migration 61 identiques aux empreintes validées : **590/590 tests, typecheck OK, UI 180/180, simulation 971/971**. Les trois documents post-application ne font que refléter les décisions et résultats validés ; cette clôture ajoute uniquement leur suivi.
+- Matrice D V1 : seule correction **AW-SEO-PERF-A04 → site/integration**, répartition **59 none / 33 site / 24 page / 30 context**. Aucune activation ni modification XLSX.
+- Validation-MSI en migrations **1–61**, SHA **fab939b09609a76fde90cfabc57ea38cf6ddaf353c2f4b9499c9ec072edcfc33** conservé sans écriture pendant clôture. `project_contribution_targets` et les cinq tables Lot 8A vides ; aucun import, modèle ready, Vitrine V2, nouvelle version commerciale ou raccord réel.
+- **Recette manuelle AtoumWeb toujours à faire. Aucun push/merge, aucun Lot 8B, Abby, Bridge ou 8C. Étape suivante non commencée ; arrêt après commit.**
+
+## Historique — 04/10/2026 — Migration 61 seule appliquée, commit non autorisé
+
+- AtoumWeb valide la préparation 8A.1 et la matrice D V1 avec une correction unique : **AW-SEO-PERF-A04 none/integration → site/integration**. Répartition finale **59 none / 33 site / 24 page / 30 context = 146 actionKey** ; aucun autre mapping changé. Matrice validée mais non activée, XLSX inchangé.
+- Avant écriture : branche `feature/project-page-compositions-v1`, HEAD **cfe3a01f5365b885f51bdbe9b9d47fbf408f832e**, **40 fichiers** conformes aux empreintes du bilan, index vide. Aucun code fonctionnel modifié depuis les contrôles **590/590, typecheck OK, UI 180/180, simulation 971/971**. Verrou SQLite exclusif, seconde écriture refusée et sauvegarde physique avant migration.
+- SHA source = sauvegarde **fdbc81cb98e20fe5f2fa862d7f8311448215dc98e99d1c3bc49d7753aee667a8** ; SHA final après checkpoint/fermeture/rejeu **fab939b09609a76fde90cfabc57ea38cf6ddaf353c2f4b9499c9ec072edcfc33**. Migrations **1–61** ; `project_contribution_targets` présente et **vide**. Aucun WAL/SHM/journal résiduel. Intégrité OK/FK vide. Rejeu du point d’entrée migrations neutre logiquement et physiquement.
+- **117 tables historiques conservées cellule par cellule**, contre-vérification indépendante depuis la sauvegarde. Exception explicite attendue : `schema_migrations` conserve exactement ses lignes 1–60 et reçoit seulement la ligne 61. Séquences SQLite, schémas historiques et catégories business_category historiques inchangés/NULL.
+- Cinq tables 8A toujours vides ; 112 AW / 112 catalogue V1 BROUILLON / 118 clauses BROUILLON / 409 liens / achats d’options zéro. Trois devis, deux Projets, trois Sites, onze Pages, 36 nœuds, six sessions, deux versions blueprint conservés.
+- Aucun import, modèle réel, ready, Vitrine V2 réelle, nouvelle version commerciale, association opérationnelle, backfill, cible ou recalcul. Aucun Lot 8B, Abby, Bridge ou 8C. **Aucun commit/push/merge ; recette manuelle toujours à faire. Arrêt avant toute activation réelle.**
+- Preuves et bilan réel : `outputs/operational-lot8a1/application-migration61-validation-msi.md/json`, `contre-verification-migration61.json`, `sauvegarde-migration61-sous-verrou.json`. Les preuves de préparation antérieures sont conservées comme snapshots historiques.
+
+## Historique — 04/10/2026 — Lot 8A.1 préparé, aucune application réelle
+
+- HEAD **cfe3a01f5365b885f51bdbe9b9d47fbf408f832e** et branche `feature/project-page-compositions-v1` conservés. Aucun commit/push/merge. Préparation autorisée des politiques A/B/C/D, plan v2 multi-bases, cibles persistées et contrôles quantité/capacités.
+- Migration **61 additive préparée uniquement** : seule nouvelle table `project_contribution_targets`, quatre index, six triggers. Migrations 1–60 inchangées. Première affectation D après acceptation historisée sans révision commerciale ; actions dépendantes bloquées en pending. Sites manuels/historiques sans capacité implicite.
+- **590/590 tests, typecheck OK, UI 180/180 sur trois thèmes, simulation SQLite sur copie 971/971 (47 scénarios)**. Recette manuelle AtoumWeb à faire. Matrice **39 D / 146 actionKey proposée, non validée pour activation**.
+- Validation-MSI **1–60**, SHA **fdbc81cb98e20fe5f2fa862d7f8311448215dc98e99d1c3bc49d7753aee667a8** identique avant/après ; 117 tables existantes comparées, intégrité OK/FK vide, aucun WAL/SHM/journal. Cinq tables 8A toujours vides. 112 AW, 112 catalogue BROUILLON, 118 clauses BROUILLON, 409 liens et tout historique inchangés. XLSX opérationnel inchangé.
+- Aucun import réel, ready, Vitrine V2 réelle, nouvelle version commerciale, association métier, backfill ou objet Lot 8B. Aucun Abby, Bridge ou 8C. **Ne pas démarrer Manager sur Validation-MSI : 61 pendante.** Attendre le feu vert distinct pour toute application réelle.
+- Bilan : `docs/OPERATIONAL_LOT8A1_TARGETS.md` ; SQL exact, matrice, rapports, logs, captures et preuves dans `outputs/operational-lot8a1`, hors dépôt.
+
+## Historique — 04/10/2026 — Lot 8A appliqué, clôture locale dédiée
 
 - AtoumWeb valide la migration 60 seule et autorise le commit local dédié **Lot 8A — actions opérationnelles, temps et provenance**, sans push ni merge. Le commit contenant ce bloc clôture localement le lot ; son SHA et les preuves sont consignés hors dépôt dans `outputs/operational-lot8a/cloture-git-lot8a.json`.
 - Avant commit : **36 fichiers préparés**, toutes les empreintes validées conformes, aucun artefact de base/sauvegarde/XLSX/JSON de simulation/capture inclus. Code fonctionnel et migration 60 identiques à **534/534 tests, typecheck OK, UI 69/69, simulation 209/209**. Seuls les documents de suivi et le bilan préparatoire sont actualisés pour refléter l’application et cette clôture.
