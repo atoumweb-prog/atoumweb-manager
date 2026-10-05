@@ -10,7 +10,15 @@ export class ProjectOperationalService {
   constructor(private readonly db: DatabaseAdapter) {}
 
   resolve(quoteId: string, origins: Map<string,string>, projectId?: string | null): OperationalPlan {
-    const plan: OperationalPlan={schemaVersion:1,actions:[],excluded:[],links:[]};
+    return this.resolvePlan(quoteId,origins,projectId,false);
+  }
+
+  stageQuote(quoteId:string,origins:Map<string,string>): OperationalPlan {
+    return this.resolvePlan(quoteId,origins,null,true);
+  }
+
+  private resolvePlan(quoteId:string,origins:Map<string,string>,projectId:string|null|undefined,staging:boolean):OperationalPlan {
+    const plan: OperationalPlan={schemaVersion:1,...(staging?{mode:'staging' as const}:{}),actions:[],excluded:[],links:[]};
     const previous=projectId?this.db.get<Row>('SELECT plan_json FROM project_commercial_scope_revisions WHERE project_id=? ORDER BY sequence DESC LIMIT 1',[projectId]):null;
     const pins=previous?JSON.parse(String(previous.plan_json)).operations as OperationalPlan | undefined:undefined;
     for (const line of this.db.all<Row>('SELECT l.*,i.canonical_code FROM quote_lines l LEFT JOIN catalog_items i ON i.id=l.catalog_item_id WHERE l.quote_id=? ORDER BY l.sort_order,l.id',[quoteId])) {
@@ -18,16 +26,18 @@ export class ProjectOperationalService {
       const origin=origins.get(String(line.id)) ?? String(line.id);
       const pin=pins?.actions.find(a=>a.lineOrigin===origin && a.catalogVersionId===line.catalog_version_id);
       const pinnedLink=pins?.links.find(l=>l.lineOrigin===origin && l.catalogVersionId===line.catalog_version_id);
-      const link=pinnedLink?.linkId ? this.db.get<Row>('SELECT * FROM catalog_operational_links WHERE id=?',[pinnedLink.linkId]) : pin
-        ? this.db.get<Row>('SELECT * FROM catalog_operational_links WHERE catalog_version_id=? AND model_version_id=? ORDER BY revision DESC LIMIT 1',[String(line.catalog_version_id),pin.modelVersionId])
-        : this.db.get<Row>('SELECT * FROM catalog_operational_links WHERE catalog_version_id=? ORDER BY revision DESC LIMIT 1',[String(line.catalog_version_id)]);
+      const ready=staging?'':" AND status='ready'";
+      const link=pinnedLink?.linkId ? this.db.get<Row>('SELECT * FROM catalog_operational_links WHERE id=?'+ready,[pinnedLink.linkId]) : pin
+        ? this.db.get<Row>('SELECT * FROM catalog_operational_links WHERE catalog_version_id=? AND model_version_id=?'+ready+' ORDER BY revision DESC LIMIT 1',[String(line.catalog_version_id),pin.modelVersionId])
+        : this.db.get<Row>('SELECT * FROM catalog_operational_links WHERE catalog_version_id=?'+ready+' ORDER BY revision DESC LIMIT 1',[String(line.catalog_version_id)]);
       if (!link) {
         if (this.db.get('SELECT id FROM operational_model_versions WHERE catalog_item_id=?',[String(line.catalog_item_id)]) && this.db.get<Row>('SELECT id FROM catalog_versions WHERE item_id=? ORDER BY version_number DESC LIMIT 1',[String(line.catalog_item_id)])?.id===line.catalog_version_id)
           throw Error('Modèle opérationnel disponible mais compatibilité non configurée : '+String(line.canonical_code));
         continue;
       }
       const v=this.db.get<Row>('SELECT * FROM operational_model_versions WHERE id=?',[String(link.model_version_id)])!;
-      if (v.status!=='ready') throw Error('Modèle opérationnel non mis en usage.');
+      if (!staging && v.status!=='ready') throw Error('Modèle opérationnel non mis en usage.');
+      if(!staging && link.blueprint_version_id && !this.db.get("SELECT template_version_id FROM blueprint_operational_profiles WHERE template_version_id=? AND mode='structural' AND operational_ready=1",[String(link.blueprint_version_id)]))throw Error('Profil structurel non mis en usage.');
       const m=JSON.parse(String(v.model_json)) as OperationalModel;
       const configuration=readPolicy(String(link.provenance_json));
       if(configuration) {validatePolicy(configuration,m,link.blueprint_version_id as string|null,this.db);checkQuantity(configuration,Number(line.quantity_milli));}
@@ -80,6 +90,15 @@ export class ProjectOperationalService {
   }
 
   apply(projectId: string, plan: OperationalPlan, retire: (id:string)=>void): void {
+    if(plan.mode==='staging')throw Error('Un plan staging ne peut pas créer des actions Projet.');
+    for(const l of plan.links) {
+      const active=l.linkId?this.db.get<Row>(`SELECT a.id FROM catalog_operational_links a
+        JOIN operational_model_versions m ON m.id=a.model_version_id
+        WHERE a.id=? AND a.status='ready' AND m.status='ready'
+        AND (a.blueprint_version_id IS NULL OR EXISTS(SELECT 1 FROM blueprint_operational_profiles b
+          WHERE b.template_version_id=a.blueprint_version_id AND b.operational_ready=1))`,[l.linkId]):null;
+      if(!active)throw Error('Association opérationnelle non mise en usage.');
+    }
     const existing=this.db.all<Row>('SELECT a.*,n.parent_id FROM project_action_instances a JOIN project_nodes n ON n.id=a.project_node_id WHERE a.project_id=?',[projectId]);
     const wanted=new Set(plan.actions.map(a=>a.key));
     const obsolete=existing.filter(e=>!wanted.has(String(e.source_key)));

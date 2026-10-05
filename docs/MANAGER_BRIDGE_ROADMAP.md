@@ -1913,3 +1913,91 @@ Auteur : AtoumWeb (migration 61 validée et commit local autorisé), Codex (vér
 - **40 fichiers**, empreintes code/migration 61 identiques aux contrôles **590/590, typecheck OK, UI 180/180, simulation 971/971**. Aucun artefact ajouté. Relecture des trois documents post-application : uniquement état validé, aucune nouvelle règle métier. Matrice D conservée à **59 none / 33 site / 24 page / 30 context**, seul AW-SEO-PERF-A04 corrigé ; aucune activation.
 - Base Validation-MSI toujours **1–61**, SHA **fab939b09609a76fde90cfabc57ea38cf6ddaf353c2f4b9499c9ec072edcfc33**, cibles et cinq tables 8A vides. Aucun import/modèle ready/Vitrine V2/version commerciale/raccord réel.
 - **Recette manuelle restant à faire ; aucun push/merge, aucun Lot 8B, Abby, Bridge ou 8C. Étape suivante non commencée. Arrêt après clôture locale.**
+
+### 2026-10-05 — OPERATIONAL-LOT8A2A-001 — Import des modèles réels en BROUILLON, préparation uniquement
+
+Auteur : AtoumWeb (préparation autorisée, aucune écriture Validation-MSI), Codex (extraction et dry-run sur copie).
+
+- Working tree initial propre, HEAD **d9bbac5739310e5ed8ee1645fbad3db22f39ce79**, branche canonique inchangée. Source **1–61**, SHA **fab939b09609a76fde90cfabc57ea38cf6ddaf353c2f4b9499c9ec072edcfc33**. XLSX SHA **c2c5c139d66d4d9fe9d90863f3cdacb6dad617eb4ce692e6ac31cf352eeb26cf**, extraction identique au référentiel validé.
+- **112 modèles / 432 actions** : 94/388 8A, 18/44 8B ; temps/règles/catégories/récurrences intacts, 22 estimations obligatoires 8A et deux 8B conservées, trois packs zéro action. Compléments A16/A19 déjà validés conservés. Matrice D corrigée **59/33/24/30**, sans association ni activation ; elle reste une configuration documentaire distincte du contenu des modèles.
+- Importeur figé utilisé sur copie sans initialisation Manager : **729 contrôles réussis**, toutes les versions **draft n°1**, une provenance d'import ; seules **operational_import_runs +1 / operational_model_versions +112** changent. Aucune tâche Projet créée : les 432 actions sont les définitions dans les JSON des modèles. IDs catalogue exacts, UUID de simulation non réservés pour la base réelle.
+- Rejeu avec plan recalculé : 112 unchanged, aucune mutation logique/physique ; ancien jeton refusé. Contre-épreuves de données invalides et versionnement sur copie, rollback intégral. Historique, schéma et autres tables conservés. 18 modèles 8B inertes, zéro ready et zéro association ; garde de compatibilité bloque toute tentative non configurée sur les nouvelles versions.
+- **87/87 tests ciblés, typecheck OK** ; code fonctionnel/migrations inchangés, pas de nouvelle UI. Rapports et manifests dans `outputs/operational-lot8a2a` hors dépôt. Base réelle inchangée et six tables opérationnelles/cibles vides ; seul suivi documentaire actualisé.
+- **Arrêt avant import réel**, aucun ready/profil/blueprint V2/version commerciale/raccord/recalcul/backfill/commit/push/merge. Aucun Lot 8B activé, Abby, Bridge ou 8C. Attendre la validation du dry-run et un feu vert distinct d'écriture.
+
+### 2026-10-05 — OPERATIONAL-LOT8A2A-002 — Import réel autorisé et appliqué, BROUILLON uniquement
+
+Auteur : AtoumWeb (feu vert d'import strictement limité), Codex (application sous verrou et contre-vérification indépendante).
+
+- Branche/HEAD **feature/project-page-compositions-v1 / d9bbac5739310e5ed8ee1645fbad3db22f39ce79** inchangés, aucune modification fonctionnelle ou migration. Plan recalculé **112 create / 0 unchanged / 0 conflit** et empreintes XLSX/manifeste/canonique validées. Verrou SQLite EXCLUSIVE, écriture concurrente refusée, sauvegarde physique avant import SHA identique à la source **fab939b09609a76fde90cfabc57ea38cf6ddaf353c2f4b9499c9ec072edcfc33**.
+- Seules deux tables autorisées changent : **1 journal d'import / 112 versions opérationnelles n°1 draft / 0 ready**. ID journal réel **b76ea681-fefd-452e-872c-c39b0002fa83**. **94/388/22 Lot 8A ; 18/44/2 Lot 8B**, total 432 définitions et 24 estimations obligatoires, catégories 418/14. Les modèles 8B restent inertes, packs zéro action, aucun crédit/abonnement/intervention créé.
+- Matrice D séparée inchangée **59/33/24/30**, non activée. Quatre tables profils/liens/instances/cibles **zéro** ; aucun blueprint V2, nouvelle version commerciale, raccord, recalcul ou backfill. Trois devis historiques : zéro action opérationnelle.
+- **681 contrôles réussis sur copie et 681 sur base réelle**, intégrité OK/FK vide ; **116 autres tables identiques cellule par cellule**, schéma et séquences conservés. Contre-vérification indépendante Python depuis la sauvegarde et le baseline. Rejeu **112 unchanged**, zéro INSERT/journal supplémentaire, mutations logique/physique zéro.
+- SHA après checkpoint/fermeture **e4ae819264ef5b015368bc35b81a5ac761e0ed2a3d0e7a514898ae2e199bb607**, aucun WAL/SHM/journal. 112 AW / 112 catalogue draft / 118 clauses draft / 409 liens / options zéro, tous devis/Projets/Sites/Pages/nœuds/sessions/documents/blueprints historiques conservés.
+- Preuves et IDs réels hors dépôt dans outputs/operational-lot8a2a/application-reelle. Les livrables de préparation restent historiques. **Aucun commit/push/merge. Arrêt après import ; Lot 8A.2B non commencé.** Aucun ready/activation Lot 8B, Abby, Bridge ou 8C ; recette manuelle AtoumWeb toujours à faire.
+
+### 2026-10-05 - OPERATIONAL-LOT8A2B-001 - Candidats, aucune activation
+
+Auteur : AtoumWeb (preparation autorisee sur copies), Codex (manifeste et gardes).
+
+- HEAD d9bbac5739310e5ed8ee1645fbad3db22f39ce79 inchange, aucun code/migration/commit/push/merge. 94 candidats avec IDs reels ; 6 A / 6 B / 43 C / 39 D ; matrice D 59/33/24/30 conservee.
+- Sept structures candidates draft/operational_ready=0 sur copie, zero tache de production ; Page unique partagee Landing/Mariage, role commercial AW conserve, role SQL generique standard. Future Vitrine V3 sans composant historique preparee en JSON, non creee meme sur copie.
+- Copie : templates 2->8, versions 2->9, profils 0->7 ; 94 liens operationnels / 12 liens structurels candidats non inseres. Modeles 112 draft / 0 ready ; aucun Projet/action/cible cree. Rejeu structures neutre.
+- Deux blocages reproduits : API de liens exige ready meme pour staging ; Landing V2 contient atoumweb-web-v1 dont l apport historique est refuse par la composition v2. Propositions de staging distinct et traitement versionne Landing, pas de decision/implementation implicite.
+- 18 cas de planification, pas conversions materialisees ; 553 controles, 107/107 tests cibles, typecheck OK. Choix addon ambigu/Page parente proposes et pending. Mappings A/B candidats ; mapping D valide.
+- Validation-MSI 118 tables inchangees cellule par cellule, migrations 1-61, SHA e4ae819264ef5b015368bc35b81a5ac761e0ed2a3d0e7a514898ae2e199bb607. Aucun profil/lien/instance/cible reel. Rapports outputs/operational-lot8a2b hors depot.
+- Arret avant application reelle ; fermer les blocages et refaire un dry-run complet avant import. Aucun ready/publication/backfill/recalcul/8B/Abby/Bridge/8C.
+
+### 2026-10-05 — OPERATIONAL-LOT8A2B-002 — Staging relationnel préparé, aucune application réelle
+
+Auteur : AtoumWeb (décisions explicites et préparation seule), Codex (implémentation locale et copies).
+
+- Deux blocages du bilan précédent fermés en préparation. Migration **62 préparée seulement**, colonne SQL catalog_operational_links.status draft/ready indépendante du modèle, défaut draft. Anciennes lignes/payloads conservés avec leur comportement opérationnel ; aucune migration 1–61 modifiée.
+- Modèle ready + lien ready + profil operational_ready=1 si requis : gardes runtime/activation. Lien draft avec modèle draft enregistrable/testable seulement par staging explicite. MarkReady ne change aucun lien. Ready non rétrogradable ; contenu immuable, révision pour évolution. Plans staging non exécutables, anciennes révisions actives/épinglées conservées.
+- Landing V3, comme Vitrine V3 : sans atoumweb-web-v1 ni aucun raccord hérité, offre seule propriétaire des actions. V2, service historique, blueprints publiés et usages anciens conservés ; 409 liens contractuels exacts, sans copie par version.
+- Bases provides : Vitrine/Page unique wordpress ; Woo wordpress+woocommerce. Addons sans capacité indépendante consomment leur Site cible ; aucune capacité implicite pour Site historique/manuel.
+- Copie seule : **7 structures draft, 7 profils operational_ready=0, 2 V3 draft, 12 raccords structurels, 94 liens draft/0 ready**. Modèles **112 draft/0 ready** inchangés ; 18 modèles 8B inertes. Classes 6/6/43/39, D 59/33/24/30 exacte.
+- 18 scénarios depuis les lignes et associations persistées ; aucun Projet/action/cible matérialisé. Contre-épreuve D AW-SEO-PERF avec un vrai slot Site pending : les deux anciens intitulés D pending désignaient cadrage sans cible et application classée C ; aucun mapping métier modifié.
+- **600/600 tests, typecheck OK, 17 249 contrôles dry-run, 17 151 contre-vérifications indépendantes**. Aucun écran/thème modifié, recette manuelle à faire. Rejeu structures/raccords/liens/V3/migration neutre logique/physique.
+- Copie : anciennes cellules préservées, 108 tables identiques et dix avec ajouts seuls. Source **118/118 tables inchangées, migrations 1–61**, SHA **e4ae819264ef5b015368bc35b81a5ac761e0ed2a3d0e7a514898ae2e199bb607** ; XLSX exact. Aucune association/profil/instance/cible réel.
+- Livrables **outputs/operational-lot8a2b/staging-draft** hors dépôt ; anciens rapports conservés. Branche/HEAD inchangés. **Aucune écriture réelle, aucun commit/push/merge, aucun ready/publication/backfill/recalcul/8B/Abby/Bridge/8C.**
+- Arrêt avant application. **Ne pas lancer Manager sur Validation-MSI avec migration 62 pendante** ; application seulement sur nouvelle instruction.
+
+### 2026-10-05 — OPERATIONAL-LOT8A2B-003 — Migration 62 seule appliquée
+
+Auteur : AtoumWeb (autorisation explicite migration seule), Codex (application protégée et contre-vérification).
+
+- Branche/HEAD **feature/project-page-compositions-v1 / d9bbac5739310e5ed8ee1645fbad3db22f39ce79** inchangés ; 27 fichiers préparés, code exact des 600/600 tests et typecheck OK. Aucune modification fonctionnelle, aucun commit/push/merge.
+- Répétition sur copie réussie ; application réelle sous verrou SQLite EXCLUSIVE, deuxième écriture refusée, sauvegarde physique immédiate. SHA avant=sauvegarde **e4ae819264ef5b015368bc35b81a5ac761e0ed2a3d0e7a514898ae2e199bb607** ; SHA final **ea9869f40fcc4867b49d9efe33899fb3c567a236b0bd58760105c3519f861574**.
+- Migrations **1–62** ; uniquement status SQL draft/ready des associations, triggers/index validés. UPDATE de compatibilité ready **0 ligne**. Aucune structure/V3/association/raccord réelle.
+- **112 modèles draft/0 ready strictement inchangés** ; profils/liens/instances/cibles zéro. 112 AW / 112 catalogue V1 draft / 118 clauses draft / 409 liens exacts ; aucun achat ni action sur les trois devis historiques, deux Projets et tous autres objets historiques conservés.
+- 118 tables comparées, anciennes cellules et multiplicité conservées ; 117 tables hors ledger sans modification de données, 61 anciennes migrations + seule ligne 62. Métadonnées/schémas historiques conservés hors migration autorisée ; séquences exactes. Contre-vérification indépendante depuis la sauvegarde read-only immutable.
+- Intégrité ok, FK vide ; rejeu réel migrations [] neutre logique/physique. Checkpoint/fermeture et aucun WAL/SHM/journal.
+- Bilan/preuves dans **outputs/operational-lot8a2b/application-migration62**, hors dépôt. Préparation sur copies conservée historiquement. Recette manuelle à faire.
+- **Arrêt après migration62.** Aucun raccord/ready/structure/V3/publication/backfill/recalcul, aucun Lot8B/Abby/Bridge/8C. Aucun commit/push/merge ; suite sur instruction distincte.
+
+### 2026-10-05 — OPERATIONAL-LOT8A2B-004 — Staging réel BROUILLON seul appliqué
+
+Auteur : AtoumWeb (autorisation explicite), Codex (application protégée et vérifications).
+
+- Autorisation AtoumWeb : staging réel BROUILLON seul. Branche feature/project-page-compositions-v1, HEAD **d9bbac5739310e5ed8ee1645fbad3db22f39ce79** inchangés. 27 fichiers préparés, code exact des **600/600 tests + typecheck OK** ; aucun changement fonctionnel.
+- Empreintes base/XLSX/manifeste/configuration vérifiées ; garde et plan réel recalculés sous verrou EXCLUSIVE, deuxième écriture refusée, sauvegarde physique juste avant écriture. SHA avant=sauvegarde **ea9869f40fcc4867b49d9efe33899fb3c567a236b0bd58760105c3519f861574** ; SHA final après fermeture/rejeu **3804d50e3e87b3136c1f5c784aa8ec31125780c988f3e87b4b3e23e601f8f526**.
+- Migrations **1–62** inchangées. Ajouts seuls : templates 2→8, versions blueprint 2→9, nœuds modèles 29→59, slots Site 1→8, Pages modèles 5→17, profils 0→7, raccords catalogue-blueprint 3→15, liens opérationnels 0→94, versions catalogue 157→159.
+- Vitrine V3 et Landing V3 **draft**, zéro composant historique hérité, zéro raccord historique hérité et un nouveau raccord explicite chacune. Sept structures draft / sept profils **operational_ready=0** / 94 associations **draft, zéro ready**. UUID réels nouvellement alloués ; les IDs modèles réels sont conservés.
+- **112 modèles draft, zéro ready** ; 18 modèles 8B inertes, 432 actions exactes. Instances/cibles/achats zéro ; 112 AW / 112 catalogue V1 draft / 118 clauses draft / 409 liens conservés. Matrice D **59/33/24/30** exacte.
+- Page unique partagée Landing/trois Mariage, Landing create/existing explicite, Mariage create uniquement. Capacités selon décisions validées ; aucun Site manuel/historique qualifié, aucune tâche de production dupliquée.
+- **18/18 previews** depuis copies du staging réel et ses vrais IDs, 323 contrôles ; contre-épreuve D AW-SEO-PERF réellement pending. Vitrine 21/24h30/1Site/5Pages ; Landing 13/12h45/1/1 ; Woo 20/42h30/1/4 ; Vitrine+2Pages+Blog 34/31h/8Pages. Options disponibles non achetées sans effet. Runtime normal refuse draft ; aucun Projet/action/cible matérialisé.
+- **109/118 tables identiques**, neuf tables avec ajouts seuls ; toutes les anciennes cellules/multiplicités conservées. 17511 contrôles application ; 559 contre-vérifications Python indépendantes depuis sauvegarde. Trois devis / deux Projets / tous Sites/Pages/nœuds/sessions et blueprints historiques intacts.
+- Rejeu exact : 69 lignes structurelles, 12 raccords, deux V3, 94 liens unchanged ; aucune mutation logique ou physique. Intégrité ok, FK vide, aucun WAL/SHM/journal.
+- Bilan/SHA/94 IDs/manifeste réel/previews : **outputs/operational-lot8a2b/application-staging-reel**, hors dépôt. Préparations et conclusions historiques conservées.
+- **Arrêt après staging réel. Aucun ready, publication, commit/push/merge, backfill/recalcul, Lot 8B/Abby/Bridge/8C. Recette manuelle AtoumWeb toujours à faire.** Suite uniquement sur nouvelle instruction.
+
+### 2026-10-05 — OPERATIONAL-LOT8A2B-005 — Clôture locale dédiée autorisée
+
+Auteur : AtoumWeb (validation/commit local autorisé), Codex (contrôles Git et conservation base).
+
+- AtoumWeb valide le staging réel et autorise le commit local **Lot 8A.2B — stage operational structures and draft associations**, sans push ni merge. Le commit contenant ce bloc clôture localement le lot ; SHA et vérifications sont consignés hors dépôt dans **outputs/operational-lot8a2b/application-staging-reel/cloture-git-lot8a2b.json**.
+- Parent attendu **d9bbac5739310e5ed8ee1645fbad3db22f39ce79**, branche **feature/project-page-compositions-v1**. **27 fichiers code/doc validés** seulement ; aucun SQLite, backup, XLSX, CSV/JSON de preuves ou artefact inclus. Code fonctionnel et migration 62 inchangés depuis **600/600 tests et typecheck OK**.
+- Validation-MSI vérifiée en lecture seule : migrations **1–62**, SHA **3804d50e3e87b3136c1f5c784aa8ec31125780c988f3e87b4b3e23e601f8f526**. **112 modèles draft/0 ready ; 94 associations draft/0 ready ; 7 profils operational_ready=0 ; 0 action Projet ; 0 cible contribution**. Aucune écriture pendant cette clôture.
+- Staging réel validé, previews et contre-vérifications conservés dans le checkpoint historique suivant. Vitrine/Landing V3 et sept structures demeurent draft ; aucune activation, publication, backfill ou reconstruction historique.
+- **Recette manuelle AtoumWeb toujours à faire. Aucun push/merge, aucun Lot 8B/Abby/Bridge/8C. Arrêt après commit propre ; Lot 8A.2C non commencé.**

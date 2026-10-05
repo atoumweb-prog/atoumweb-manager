@@ -89,7 +89,7 @@ export class OperationalReferenceService {
   link(catalogVersionId: string, modelVersionId: string, blueprintVersionId: string | null, provenance: Row): string {
     const v=this.db.get<Row>('SELECT * FROM operational_model_versions WHERE id=?',[modelVersionId]);
     const catalog=this.db.get<Row>('SELECT item_id FROM catalog_versions WHERE id=?',[catalogVersionId]);
-    if (!v || !catalog || catalog.item_id!==v.catalog_item_id || v.status!=='ready') throw Error('Compatibilité catalogue/modèle invalide ou modèle non mis en usage.');
+    if (!v || !catalog || catalog.item_id!==v.catalog_item_id) throw Error('Compatibilité catalogue/modèle invalide.');
     if (blueprintVersionId) {
       const profile=this.db.get<Row>('SELECT * FROM blueprint_operational_profiles WHERE template_version_id=?',[blueprintVersionId]);
       if (profile?.mode!=='structural' || this.db.get("SELECT id FROM project_template_nodes WHERE template_version_id=? AND node_type IN ('task','checklist')",[blueprintVersionId]))
@@ -104,6 +104,31 @@ export class OperationalReferenceService {
     this.db.run('INSERT INTO catalog_operational_links(id,catalog_version_id,model_version_id,blueprint_version_id,revision,provenance_json,created_at) VALUES(?,?,?,?,?,?,?)',
       [id,catalogVersionId,modelVersionId,blueprintVersionId,Number(previous?.revision ?? 0)+1,JSON.stringify(provenance),new Date().toISOString()]);
     return id;
+  }
+
+  /** Independent explicit activation; model readiness never activates a staged link. */
+  activateLink(id:string): void {
+    this.db.exec('SAVEPOINT operational_link_activation');
+    try {
+      const l=this.db.get<Row>('SELECT * FROM catalog_operational_links WHERE id=?',[id]);
+      if(!l)throw Error('Association opérationnelle absente.');
+      const v=this.db.get<Row>('SELECT * FROM operational_model_versions WHERE id=?',[String(l.model_version_id)]);
+      if(v?.status!=='ready')throw Error('Modèle opérationnel non mis en usage.');
+      if(!this.db.get('SELECT id FROM catalog_versions WHERE id=? AND item_id=?',[String(l.catalog_version_id),String(v.catalog_item_id)]))throw Error('Compatibilité catalogue/modèle invalide.');
+      const p=readPolicy(String(l.provenance_json));
+      if(p)validatePolicy(p,JSON.parse(String(v.model_json)),l.blueprint_version_id as string|null,this.db);
+      if(l.blueprint_version_id && !this.db.get("SELECT template_version_id FROM blueprint_operational_profiles WHERE template_version_id=? AND mode='structural' AND operational_ready=1",[String(l.blueprint_version_id)]))throw Error('Profil structurel non mis en usage.');
+      for(const capability of p?.requires??[]) {
+        const providers=this.db.all<Row>(`SELECT b.provenance_json FROM catalog_operational_links a
+          JOIN operational_model_versions m ON m.id=a.model_version_id
+          JOIN blueprint_operational_profiles b ON b.template_version_id=a.blueprint_version_id
+          WHERE a.status='ready' AND m.status='ready' AND b.operational_ready=1
+          AND json_extract(a.provenance_json,'$.configuration.structuralRole')='base'`);
+        if(!providers.some(r=>JSON.parse(String(r.provenance_json)).structureContract?.sites?.some((s:{provides:string[]})=>s.provides.includes(capability))))throw Error('Capacité requise sans base opérationnelle prête : '+capability);
+      }
+      if(l.status!=='ready')this.db.run("UPDATE catalog_operational_links SET status='ready' WHERE id=? AND status='draft'",[id]);
+      this.db.exec('RELEASE operational_link_activation');
+    }catch(e){this.db.exec('ROLLBACK TO operational_link_activation; RELEASE operational_link_activation');throw e;}
   }
 
   private validate(m: OperationalModel, keys: Set<string>): void {

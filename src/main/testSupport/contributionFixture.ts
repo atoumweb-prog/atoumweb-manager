@@ -64,7 +64,7 @@ export function contributionFixture(db:DatabaseAdapter,workspace:WorkspacePaths)
       actionRequirements:Object.fromEntries(model.actions.map((a,index)=>[a.key,{target:isA?'site':isB?kind:isD&&index>0?'site':'none',...(isA?{slot:siteSlot!}:isB||isD&&index>0?{slot:'destination'}:{}),requiredAt:isA||isB?'preparation':'integration',justification:'Fixture explicite par actionKey, sans inférence runtime'}])),
       actionRequirementsReview:{status:'fixture',reference:'Synthetic test mapping only'},originPolicy:'direct_sold_line',policySource:'Fixture 8A.1 — aucune configuration réelle'};
     if(original==='AW-WEB-BLOG')policy.targetLimit={maxPerSite:1,key:'blog'};
-    policies.set(original,policy);references.link(i.versions[0].id,modelId,bp,{fixture:true,configuration:policy});
+    policies.set(original,policy);references.activateLink(references.link(i.versions[0].id,modelId,bp,{fixture:true,configuration:policy}));
   }
   const createQuote=(code='AW-WEB-VITRINE')=>{
     const prospect=f.crm.createProspect({organizationId:f.crm.createOrganization({name:'Fixture 8A.1'}).id,primaryNeed:'Test isolé'});

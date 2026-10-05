@@ -69,7 +69,7 @@ describe('Lot 8A — actions et références opérationnelles',()=>{
    const q=f.createQuote('AW-CONT-PACK4-SEO'),p=f.prepare(q.id),before=actions(p.id).map(n=>n.operational);
    const ref=structuredClone(f.reference),m=ref.models.find(m=>m.code.endsWith('PACK4-SEO'))!;m.actions[0].minutes+=10;m.referenceMinutes+=10;
    f.references.importDraft(ref,f.references.simulate(ref).planHash);const v=db.get('SELECT id FROM operational_model_versions WHERE canonical_code=? AND version_number=2',[m.code])!;
-   f.references.markReady(String(v.id));f.references.link(f.items.get('AW-CONT-PACK4-SEO')!.versions[0].id,String(v.id),null,{fixture:true});
+   f.references.markReady(String(v.id));f.references.activateLink(f.references.link(f.items.get('AW-CONT-PACK4-SEO')!.versions[0].id,String(v.id),null,{fixture:true}));
    f.prepare(q.id);expect(actions(p.id).map(n=>n.operational)).toEqual(before);expect(f.prepare(f.createQuote('AW-CONT-PACK4-SEO').id).estimatedMinutes).toBe(790);
  });
  it('import brouillon, changement versionné, rejeu sans mutation et jeton périmé refusé',()=>{

@@ -40,6 +40,7 @@ export function validatePolicy(p: ContributionPolicy, model: OperationalModel, b
   if (blueprint) {
     const contract=readStructure(db,blueprint);
     if(contract.sites.length!==1)throw Error('V1 : un seul slot Site par contribution structurelle.');
+    if(p.structureClass==='B'&&contract.sites.some(s=>s.provides.length))throw Error('Addon : aucune capacité Site indépendante, utiliser celle de la base cible.');
     if(p.structureClass==='A'&&(!p.destinationSlots.some(s=>s.key===contract.sites[0].slotKey&&s.kind==='site'&&s.requiredAt==='preparation')))throw Error('A : destination Site obligatoire dès la préparation.');
     for(const m of contract.modules)if(!slots.has(m.parentTargetSlot)||slots.get(m.parentTargetSlot)!.kind!=='page')throw Error('Module : slot Page parente explicite absent de la politique.');
   }

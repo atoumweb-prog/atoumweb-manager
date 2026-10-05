@@ -30,6 +30,7 @@ export interface SoldBlueprintContribution {
 }
 interface Prerequisite { key: string; label: string; quoteLineId: string | null; catalogVersionId: string | null; componentId: string | null }
 export interface SoldBlueprintPlan {
+  mode?: 'staging';
   schemaVersion: 1 | 2; bases?: SoldBlueprintContribution[]; destinations?: PlannedContributionTarget[]; quoteId: string; base: SoldBlueprintContribution;
   contributions: SoldBlueprintContribution[]; prerequisites: Prerequisite[];
   explicitlyReplacedBases: SoldBlueprintContribution[];
@@ -45,6 +46,16 @@ export class ProjectBlueprintCompositionService {
   constructor(private readonly db: DatabaseAdapter, private readonly sites: ProjectSiteService) {}
 
   resolveQuote(quoteId: string, explicitVersionId?: string | null, lineOrigins?: Map<string,string>, operations?: OperationalPlan): SoldBlueprintPlan {
+    if(operations?.mode==='staging')throw Error('Plan staging interdit dans la résolution runtime.');
+    return this.resolvePlan(quoteId,explicitVersionId,lineOrigins,operations,false);
+  }
+
+  stageQuote(quoteId:string,lineOrigins:Map<string,string>,operations:OperationalPlan):SoldBlueprintPlan {
+    if(operations.mode!=='staging')throw Error('Plan opérationnel staging explicite requis.');
+    return this.resolvePlan(quoteId,null,lineOrigins,operations,true);
+  }
+
+  private resolvePlan(quoteId:string,explicitVersionId:string|null|undefined,lineOrigins:Map<string,string>|undefined,operations:OperationalPlan|undefined,staging:boolean):SoldBlueprintPlan {
     const lines = this.db.all<Row>('SELECT * FROM quote_lines WHERE quote_id=? ORDER BY sort_order,created_at,id', [quoteId]);
     const contributions: SoldBlueprintContribution[] = [], prerequisites = this.prerequisitesForQuote(quoteId,lineOrigins);
     const add = (line: Row, version: string, quantity: number, componentId: string | null, sourceRole: 'direct' | 'offer_component') => {
@@ -59,7 +70,7 @@ export class ProjectBlueprintCompositionService {
         const purchase = componentId === null ? this.db.get<Row>('SELECT * FROM quote_option_purchases WHERE line_id=?', [String(line.id)]) ?? null : null;
         contributions.push(this.definition({key,label:String(line.label),linkId:link.id,templateVersionId:link.template_version_id,role:link.role,
           sourceRole,quoteLineId:String(line.id),catalogVersionId:version,componentId,optionPurchase:purchase,
-          quantityMilli:quantity,unitCount:units,quantityMode:link.quantity_mode,siteMode:link.site_mode}));
+          quantityMilli:quantity,unitCount:units,quantityMode:link.quantity_mode,siteMode:link.site_mode},staging));
       }
     };
     for (const line of lines) {
@@ -111,7 +122,7 @@ export class ProjectBlueprintCompositionService {
           'Destination addon absente ou ambiguë : une clé Site de base explicite et unique est requise.');
       }
     }
-    return {schemaVersion:configured?2:1,...(configured?{bases}:{}),quoteId,base,contributions:ordered,prerequisites,explicitlyReplacedBases};
+    return {schemaVersion:configured?2:1,...(staging?{mode:'staging' as const}:{}),...(configured?{bases}:{}),quoteId,base,contributions:ordered,prerequisites,explicitlyReplacedBases};
   }
 
   hasSoldBlueprints(quoteId: string): boolean {
@@ -143,9 +154,9 @@ export class ProjectBlueprintCompositionService {
     return result;
   }
 
-  private definition(c: Omit<SoldBlueprintContribution,'nodes'|'sites'|'pages'>): SoldBlueprintContribution {
+  private definition(c: Omit<SoldBlueprintContribution,'nodes'|'sites'|'pages'>,staging=false): SoldBlueprintContribution {
     const version = this.db.get<Row>('SELECT status FROM project_template_versions WHERE id=?', [c.templateVersionId]);
-    fail(version?.status === 'published' || this.db.get("SELECT template_version_id FROM blueprint_operational_profiles WHERE template_version_id=? AND mode='structural' AND operational_ready=1",[c.templateVersionId]), 'Chaque blueprint de base/module lié au devis doit être publié.');
+    fail(version?.status === 'published' || this.db.get("SELECT template_version_id FROM blueprint_operational_profiles WHERE template_version_id=? AND mode='structural'"+(staging?'':' AND operational_ready=1'),[c.templateVersionId]), 'Chaque blueprint de base/module lié au devis doit être publié.');
     return {...c,
       nodes:this.db.all<Node>('SELECT * FROM project_template_nodes WHERE template_version_id=? ORDER BY sort_order,created_at,id',[c.templateVersionId]),
       sites:this.db.all<Site>('SELECT * FROM project_template_sites WHERE template_version_id=? ORDER BY sort_order,created_at,id',[c.templateVersionId]),
@@ -153,6 +164,7 @@ export class ProjectBlueprintCompositionService {
   }
 
   create(projectId: string, plan: SoldBlueprintPlan, now: string): void {
+    if(plan.mode==='staging')throw Error('Un plan staging ne peut pas créer un Projet.');
     // Called inside conversion's transaction; no legacy plan is synthesised.
     this.db.run('INSERT INTO project_blueprint_plans(project_id,source_quote_id,plan_json,plan_sha256,created_at) VALUES(?,?,?,?,?)',
       [projectId,plan.quoteId,JSON.stringify(plan),hash(plan),now]);
@@ -185,6 +197,7 @@ export class ProjectBlueprintCompositionService {
   }
 
   applyPrepared(projectId: string, plan: SoldBlueprintPlan, now: string): ProjectBlueprintGenerationResult {
+    if(plan.mode==='staging')throw Error('Un plan staging ne peut pas modifier un Projet.');
     this.provenancePlans.delete(projectId);
     return this.apply(projectId, plan, now, true);
   }
@@ -203,6 +216,7 @@ export class ProjectBlueprintCompositionService {
   }
 
   private apply(projectId: string, plan: SoldBlueprintPlan, now: string, prepared = false): ProjectBlueprintGenerationResult {
+    if(plan.mode==='staging')throw Error('Un plan staging ne peut pas matérialiser une structure Projet.');
     const siteBindings = prepared ? 'project_prepared_site_bindings' : 'project_composed_site_bindings';
     const result: ProjectBlueprintGenerationResult = {projectId,...(plan.schemaVersion===2?{contributions:plan.contributions.map(c=>({lineOrigin:c.lineOrigin!,templateVersionId:c.templateVersionId,role:c.role,unitCount:c.unitCount}))}:{}),templateVersionId:plan.schemaVersion===2&&plan.bases?.length!==1?null:plan.base.templateVersionId,declaredSiteCount:0,
       createdSiteIds:[],linkedPageIds:[],preservedSiteIds:[],preservedPageIds:[]};

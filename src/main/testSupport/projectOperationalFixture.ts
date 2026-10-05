@@ -44,7 +44,7 @@ export function projectOperationalFixture(db: DatabaseAdapter, workspace: Worksp
   for(const [original,code] of sourceCodes) {
     const id=String(db.get('SELECT id FROM operational_model_versions WHERE canonical_code=? ORDER BY version_number DESC LIMIT 1',[code])!.id);
     models.set(original,id);references.markReady(id);
-    references.link(items.get(original)!.versions[0].id,id,original==='AW-WEB-VITRINE'?structure:addons.get(original)??null,{fixture:true,sourceCode:original});
+    references.activateLink(references.link(items.get(original)!.versions[0].id,id,original==='AW-WEB-VITRINE'?structure:addons.get(original)??null,{fixture:true,sourceCode:original}));
   }
   db.run('INSERT INTO catalog_project_blueprints(id,catalog_version_id,template_version_id,role,quantity_mode,site_mode,created_at) VALUES(?,?,?,\'base\',\'once\',\'create\',?)',
     ['fixture-8a-base',offer.versions[0].id,structure,'2026-10-04T00:00:00Z']);

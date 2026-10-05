@@ -82,6 +82,7 @@ export class ProjectContributionTargetService {
     }
   }
   synchronize(projectId:string,revisionId:string,operations:OperationalPlan,blueprint:SoldBlueprintPlan|null,targets:PlannedContributionTarget[]):void {
+    if(operations.mode==='staging'||blueprint?.mode==='staging')throw Error('Un plan staging ne peut pas créer de cibles Projet.');
     const now=new Date().toISOString();
     for(const t of targets) {
       const site=t.siteId??(t.siteOwnerOrigin&&blueprint?this.boundSite(projectId,t.siteOwnerOrigin,t.siteOwnerSlot!,blueprint):null);

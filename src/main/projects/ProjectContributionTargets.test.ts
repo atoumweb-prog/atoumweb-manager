@@ -32,7 +32,7 @@ describe('Lot 8A.1 — politiques explicites et destinations',()=>{
  });
  it('Landing Site existant : choix préalable explicite, aucune création Site',()=>{
   const policy=structuredClone(f.policies.get('AW-LP-BASE')!);policy.destinationSlots[0].autoSite='never';
-  f.references.link(f.items.get('AW-LP-BASE')!.versions[0].id,f.models.get('AW-LP-BASE')!,f.versions.get('AW-LP-BASE')!,{fixture:true,configuration:policy});
+  f.references.activateLink(f.references.link(f.items.get('AW-LP-BASE')!.versions[0].id,f.models.get('AW-LP-BASE')!,f.versions.get('AW-LP-BASE')!,{fixture:true,configuration:policy}));
   const q=f.createQuote('AW-LP-BASE'),p=f.prepare(q.id);expect(f.sites.list(p.id)).toHaveLength(0);
   const manual=f.sites.create(p.id,{name:'Site existant choisi'}),t=f.projects.commercial.scope(p.id).targets![0];
   f.projects.commercial.assignTarget(p.id,{lineOrigin:t.lineOrigin,slot:t.slot,unitIndex:1,author:'Test',siteId:manual.id});
@@ -40,7 +40,7 @@ describe('Lot 8A.1 — politiques explicites et destinations',()=>{
  });
  it('Base pending : choix explicite de création matérialise uniquement son occurrence',()=>{
   const policy=structuredClone(f.policies.get('AW-LP-BASE')!);policy.destinationSlots[0].autoSite='never';
-  f.references.link(f.items.get('AW-LP-BASE')!.versions[0].id,f.models.get('AW-LP-BASE')!,f.versions.get('AW-LP-BASE')!,{fixture:true,configuration:policy});
+  f.references.activateLink(f.references.link(f.items.get('AW-LP-BASE')!.versions[0].id,f.models.get('AW-LP-BASE')!,f.versions.get('AW-LP-BASE')!,{fixture:true,configuration:policy}));
   const q=f.createQuote('AW-LP-BASE'),p=f.prepare(q.id),t=f.projects.commercial.scope(p.id).targets![0];
   f.projects.commercial.assignTarget(p.id,{lineOrigin:t.lineOrigin,slot:t.slot,unitIndex:1,author:'Test',createSite:true});expect(f.sites.list(p.id)).toHaveLength(1);expect(f.sites.listPages(p.id)).toHaveLength(1);
  });
@@ -105,14 +105,14 @@ describe('Lot 8A.1 — politiques explicites et destinations',()=>{
  it('cible après effet structurel utilisée : changement refusé',()=>{const q=f.createQuote();const l=f.add(q.id,'AW-WEB-PAGE-SUP').lines.at(-1)!,p=f.prepare(q.id),manual=f.sites.create(p.id,{name:'Autre'});expect(()=>f.projects.commercial.assignTarget(p.id,{lineOrigin:l.id,slot:'destination',unitIndex:1,author:'Test',siteId:manual.id})).toThrow(/réaffectation|Capacités/);});
  it('ajout seconde base après auto-choix : confirmation explicite requise',()=>{const q=f.createQuote();const l=f.add(q.id,'AW-WEB-PAGE-SUP').lines.at(-1)!,p=f.prepare(q.id);f.add(q.id,'AW-WEB-VITRINE');expect(()=>f.prepare(q.id)).toThrow(/ambiguë/);choose(p.id,l.id,0);expect(f.sites.list(p.id)).toHaveLength(2);});
  it('renommages/ajout/estimation humains et redémarrage préservés',()=>{const q=f.createQuote(),p=f.prepare(q.id),page=f.sites.listPages(p.id)[0],a=actions(p.id)[0];f.projects.updateProjectNode(page.projectNodeId,{name:'Page humaine'});f.projects.updateProjectNode(a.id,{estimatedMinutes:333});f.sites.create(p.id,{name:'Site manuel'});const before=logical();f.prepare(q.id);expect(logical()).toBe(before);expect(f.projects.getProject(p.id).nodes.find(n=>n.id===a.id)!.estimatedMinutes).toBe(333);});
- it('révision de configuration versionnée, ancien Projet épinglé',()=>{const q=f.createQuote(),p=f.prepare(q.id),i=f.items.get('AW-WEB-VITRINE')!,policy=structuredClone(f.policies.get('AW-WEB-VITRINE')!);policy.policySource='Nouvelle configuration synthétique';f.references.link(i.versions[0].id,f.models.get('AW-WEB-VITRINE')!,f.versions.get('AW-WEB-VITRINE')!,{fixture:true,configuration:policy});const before=logical();f.prepare(q.id);expect(logical()).toBe(before);expect(db.all('SELECT * FROM catalog_operational_links WHERE catalog_version_id=?',[i.versions[0].id])).toHaveLength(2);});
+ it('révision de configuration versionnée, ancien Projet épinglé',()=>{const q=f.createQuote(),p=f.prepare(q.id),i=f.items.get('AW-WEB-VITRINE')!,policy=structuredClone(f.policies.get('AW-WEB-VITRINE')!);policy.policySource='Nouvelle configuration synthétique';f.references.activateLink(f.references.link(i.versions[0].id,f.models.get('AW-WEB-VITRINE')!,f.versions.get('AW-WEB-VITRINE')!,{fixture:true,configuration:policy}));const before=logical();f.prepare(q.id);expect(logical()).toBe(before);expect(db.all('SELECT * FROM catalog_operational_links WHERE catalog_version_id=?',[i.versions[0].id])).toHaveLength(2);});
  it('SQL : cible inter-Projet et mutation identité refusées',()=>{const p=f.prepare(f.createQuote().id),other=f.prepare(f.createQuote().id),row=db.get('SELECT * FROM project_contribution_targets WHERE project_id=?',[p.id])!;expect(()=>db.run('UPDATE project_contribution_targets SET target_site_id=? WHERE project_id=?',[f.sites.list(other.id)[0].id,p.id])).toThrow(/relations/);expect(()=>db.run('UPDATE project_contribution_targets SET line_origin_id=? WHERE project_id=?',['other',p.id])).toThrow(/identity/);expect(row.state).toBe('active');});
  it('manifeste : dry-run, idempotence et refus du jeton périmé',()=>{
   const service=new OperationalConfigurationService(db),i=f.items.get('AW-WEB-VITRINE')!;
   const manifest={schemaVersion:1 as const,sourceSHA256:f.reference.source.sha256,decisionReference:'Fixture',entries:[{code:i.canonicalCode!,catalogVersionId:i.versions[0].id,modelVersionId:f.models.get('AW-WEB-VITRINE')!,blueprintVersionId:f.versions.get('AW-WEB-VITRINE')!,configuration:f.policies.get('AW-WEB-VITRINE')!}]};
   const dry=service.simulate(manifest);expect(dry.rows[0].action).toBe('revision');service.apply(manifest,dry.planSHA256);const before=logical();const replay=service.simulate(manifest);expect(replay.rows[0].action).toBe('unchanged');service.apply(manifest,replay.planSHA256);expect(logical()).toBe(before);expect(()=>service.apply(manifest,dry.planSHA256)).toThrow(/modifié/);
  });
- it('D sans validation de mapping impossible à associer',()=>{const code='AW-DEVWP-FONCTION',p=structuredClone(f.policies.get(code)!);delete p.actionRequirementsReview;expect(()=>f.references.link(f.items.get(code)!.versions[0].id,f.models.get(code)!,null,{configuration:p})).toThrow(/non validé/);});
+ it('D sans validation de mapping impossible à associer',()=>{const code='AW-DEVWP-FONCTION',p=structuredClone(f.policies.get(code)!);delete p.actionRequirementsReview;expect(()=>f.references.activateLink(f.references.link(f.items.get(code)!.versions[0].id,f.models.get(code)!,null,{configuration:p}))).toThrow(/non validé/);});
  it('Page parente déplacée : intégration et reprise chrono bloquées, sans fallback',()=>{
   const q=f.createQuote('AW-LP-BASE'),l=f.add(q.id,'AW-LP-SECTION').lines.at(-1)!,p=f.prepare(q.id);choose(p.id,l.id,0,true);
   const action=actions(p.id).find(n=>n.operational!.lineOrigin===l.id)!,session=f.time.start({projectNodeId:action.id,category:'development'});f.time.pause(session.id,'other');
@@ -141,7 +141,7 @@ describe('Lot 8A.1 — politiques explicites et destinations',()=>{
  });
  it('A pending : même cadrage none interdit sans sa structure obligatoire',()=>{
   const code='AW-LP-BASE',policy=structuredClone(f.policies.get(code)!);policy.destinationSlots[0].autoSite='never';for(const r of Object.values(policy.actionRequirements)){r.target='none';delete r.slot;}
-  f.references.link(f.items.get(code)!.versions[0].id,f.models.get(code)!,f.versions.get(code)!,{fixture:true,configuration:policy});const p=f.prepare(f.createQuote(code).id);
+  f.references.activateLink(f.references.link(f.items.get(code)!.versions[0].id,f.models.get(code)!,f.versions.get(code)!,{fixture:true,configuration:policy}));const p=f.prepare(f.createQuote(code).id);
   expect(()=>f.time.start({projectNodeId:actions(p.id)[0].id,category:'development'})).toThrow(/Obligation structurelle/);
  });
  it('aucun déplacement silencieux d’une base dont les Pages sont déjà produites',()=>{
@@ -155,7 +155,7 @@ describe('Lot 8A.1 — politiques explicites et destinations',()=>{
  it('D avec Page ou contexte : choix exact et blocage après archivage',()=>{
   for(const kind of ['page','context'] as const){
    const code='AW-CONT-INTEG-WP',policy=structuredClone(f.policies.get(code)!);policy.destinationSlots[0].kind=kind;policy.destinationSlots[0].parentPageChoice=kind==='page'?'explicit':'none';for(const r of Object.values(policy.actionRequirements))if(r.target!=='none')r.target=kind;
-   f.references.link(f.items.get(code)!.versions[0].id,f.models.get(code)!,null,{fixture:true,configuration:policy});const q=f.createQuote(),line=f.add(q.id,code).lines.at(-1)!,p=f.prepare(q.id),s=f.sites.list(p.id)[0],page=f.sites.listPages(p.id)[0],a=actions(p.id).find(n=>n.operational!.lineOrigin===line.id&&n.operational!.targetRequirement?.target===kind)!;
+   f.references.activateLink(f.references.link(f.items.get(code)!.versions[0].id,f.models.get(code)!,null,{fixture:true,configuration:policy}));const q=f.createQuote(),line=f.add(q.id,code).lines.at(-1)!,p=f.prepare(q.id),s=f.sites.list(p.id)[0],page=f.sites.listPages(p.id)[0],a=actions(p.id).find(n=>n.operational!.lineOrigin===line.id&&n.operational!.targetRequirement?.target===kind)!;
    f.projects.commercial.assignTarget(p.id,{lineOrigin:line.id,slot:'destination',unitIndex:1,author:'Test',...(kind==='page'?{siteId:s.id,pageNodeId:page.projectNodeId}:{contextNodeId:page.projectNodeId})});
    const time=f.time.addManual({projectNodeId:a.id,category:'development',startedAt:'2026-10-04T08:00:00Z',endedAt:'2026-10-04T08:10:00Z'});
    db.run('UPDATE project_nodes SET archived_at=? WHERE id=?',['2026-10-04',page.projectNodeId]);expect(()=>f.time.start({projectNodeId:a.id,category:'development'})).toThrow(/Page parente|Contexte/);
@@ -176,18 +176,18 @@ describe('Lot 8A.1 — politiques explicites et destinations',()=>{
   const code='AW-LP-BASE',q2=f.createQuote(code),next=f.catalog.createVersion(f.items.get(code)!.id,{priceMode:'fixed',priceCents:10000});f.catalog.publishVersion(next.id);f.quotes.removeLine(q2.lines[0].id);f.quotes.addCatalogLine(q2.id,next.id);expect(()=>f.prepare(q2.id)).toThrow(/compatibilité/);
  });
  it('configuration gouvernée ne peut être rétrogradée vers un fallback historique',()=>{
-  const code='AW-LP-BASE';expect(()=>f.references.link(f.items.get(code)!.versions[0].id,f.models.get(code)!,f.versions.get(code)!,{fixture:true})).toThrow(/retrait implicite/);
+  const code='AW-LP-BASE';expect(()=>f.references.activateLink(f.references.link(f.items.get(code)!.versions[0].id,f.models.get(code)!,f.versions.get(code)!,{fixture:true}))).toThrow(/retrait implicite/);
  });
  it('modèle V2 : ancien Projet conserve exactement son snapshot et ses estimations',()=>{
   const code='AW-CONT-PACK4-SEO',q=f.createQuote(code),p=f.prepare(q.id),old=f.projects.getProject(p.id),ref=structuredClone(f.reference),model=ref.models.find(m=>m.code===f.items.get(code)!.canonicalCode)!;
-  model.actions[0].minutes+=5;model.referenceMinutes+=5;f.references.importDraft(ref,f.references.simulate(ref).planHash);const v=db.get('SELECT id FROM operational_model_versions WHERE canonical_code=? AND version_number=2',[model.code])!;f.references.markReady(String(v.id));f.references.link(f.items.get(code)!.versions[0].id,String(v.id),null,{fixture:true,configuration:f.policies.get(code)!});
+  model.actions[0].minutes+=5;model.referenceMinutes+=5;f.references.importDraft(ref,f.references.simulate(ref).planHash);const v=db.get('SELECT id FROM operational_model_versions WHERE canonical_code=? AND version_number=2',[model.code])!;f.references.markReady(String(v.id));f.references.activateLink(f.references.link(f.items.get(code)!.versions[0].id,String(v.id),null,{fixture:true,configuration:f.policies.get(code)!}));
   const before=logical();f.prepare(q.id);expect(logical()).toBe(before);expect(f.projects.getProject(p.id)).toEqual(old);expect(f.prepare(f.createQuote(code).id).estimatedMinutes).toBe(785);
  });
  it('Blog explicite puis second achat auto : même Site réel, toujours un seul Blog',()=>{
   const q=f.createQuote(),line=f.add(q.id,'AW-WEB-BLOG').lines.at(-1)!,p=f.prepare(q.id);choose(p.id,line.id,0);f.add(q.id,'AW-WEB-BLOG');const before=logical();expect(()=>f.prepare(q.id)).toThrow(/maximum 1/);expect(logical()).toBe(before);
  });
  it('D pending acceptable même si une action demande sa cible dès la préparation',()=>{
-  const code='AW-DEVWP-FONCTION',policy=structuredClone(f.policies.get(code)!);policy.destinationSlots[0].requiredAt='preparation';for(const r of Object.values(policy.actionRequirements))if(r.target!=='none')r.requiredAt='preparation';f.references.link(f.items.get(code)!.versions[0].id,f.models.get(code)!,null,{fixture:true,configuration:policy});
+  const code='AW-DEVWP-FONCTION',policy=structuredClone(f.policies.get(code)!);policy.destinationSlots[0].requiredAt='preparation';for(const r of Object.values(policy.actionRequirements))if(r.target!=='none')r.requiredAt='preparation';f.references.activateLink(f.references.link(f.items.get(code)!.versions[0].id,f.models.get(code)!,null,{fixture:true,configuration:policy}));
   const q=f.createQuote(code),p=f.prepare(q.id);finalizeForTest(db,f.quotes,q.id);f.quotes.markSent(q.id);acceptForTest(db,f.quotes,q.id);expect(f.projects.getProject(p.id).commercialState).toBe('frozen');expect(f.projects.commercial.scope(p.id).targets![0].state).toBe('pending');
  });
  it('prévisualisation sans écriture et jeton périmé : application refusée sans mutation',()=>{

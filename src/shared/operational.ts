@@ -27,6 +27,8 @@ export interface OperationalNodeInfo extends OperationalActionSnapshot {
   actualSeconds: number; businessCategory: BusinessTimeCategory | null;
 }
 export interface OperationalPlan {
+  /** A staging plan is read-only and must never reach project mutation. */
+  mode?: 'staging';
   schemaVersion: 1; actions: OperationalActionSnapshot[];
   excluded: { code: string; lineId: string; reason: string }[];
   links: { linkId?:string; lineOrigin?:string; quoteLineId?:string; catalogVersionId: string; modelVersionId: string; blueprintVersionId: string | null; configuration?: ContributionPolicy }[];
