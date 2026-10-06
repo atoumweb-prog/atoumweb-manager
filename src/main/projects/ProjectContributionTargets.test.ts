@@ -24,11 +24,18 @@ const choose=(id:string,origin:string,siteIndex=0,page=false)=>{
 describe('Lot 8A.1 — politiques explicites et destinations',()=>{
  it.each([
   ['AW-WEB-VITRINE',21,1470,5],['AW-LP-BASE',13,765,1],['AW-ECOM-BASE',20,2550,4],
-  ['AW-MARIAGE-ESS',9,630,1],['AW-MARIAGE-GRAND',10,1020,1],['AW-MARIAGE-HISTOIRE',10,1380,1],
+  ['AW-MARIAGE-ESS',9,630,1],['AW-MARIAGE-GRAND',10,1020,1],['AW-MARIAGE-HISTOIRE',10,1380,4],
  ] as const)('%s : structure et arithmétique exactes, rejeu neutre',(code,count,min,pages)=>{
   const q=f.createQuote(code),p=f.prepare(q.id);expect(actions(p.id)).toHaveLength(count);expect(p.estimatedMinutes).toBe(min);expect(f.sites.list(p.id)).toHaveLength(1);expect(f.sites.listPages(p.id)).toHaveLength(pages);
   expect(JSON.parse(String(db.get('SELECT plan_json FROM project_commercial_scope_revisions WHERE project_id=?',[p.id])!.plan_json)).schemaVersion).toBe(2);
   const before=logical();f.prepare(q.id);expect(logical()).toBe(before);
+ });
+ it('Histoire : quatre chemins distincts, sans Page RSVP/galerie/vidéo ni modification des formules one-page',()=>{
+  const q=f.createQuote('AW-MARIAGE-HISTOIRE'),p=f.prepare(q.id);
+  expect(Object.fromEntries(f.sites.listPages(p.id).map(page=>[p.nodes.find(n=>n.id===page.projectNodeId)!.name,page.desiredPath]))).toEqual({'Accueil':'/','Notre histoire':'/notre-histoire','Le Jour J':'/jour-j','Espace privé':'/espace-prive'}); // Existing project slug normalization, no engine change.
+  expect(f.versions.get('AW-MARIAGE-HISTOIRE')).not.toBe(f.versions.get('AW-MARIAGE-ESS'));
+  expect(f.versions.get('AW-MARIAGE-ESS')).toBe(f.versions.get('AW-MARIAGE-GRAND'));
+  expect(actions(p.id)).toHaveLength(10);expect(p.estimatedMinutes).toBe(1380);
  });
  it('Landing Site existant : choix préalable explicite, aucune création Site',()=>{
   const policy=structuredClone(f.policies.get('AW-LP-BASE')!);policy.destinationSlots[0].autoSite='never';

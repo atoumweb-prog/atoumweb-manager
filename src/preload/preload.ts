@@ -1,3 +1,5 @@
+import {RECIPE_FLAG} from '../shared/operationalRecipe';
+import type {OperationalRecipeApi} from '../shared/operationalRecipe';
 import { contextBridge, ipcRenderer } from 'electron';
 import type { BillingInvoiceInput, BillingItemFilters, BillingItemStatus } from '../shared/billing';
 import type { ExpenseFilters, ExpenseInput, ExpenseStatus } from '../shared/expenses';
@@ -547,4 +549,15 @@ const api: AtoumWebApi = {
   },
 };
 
-contextBridge.exposeInMainWorld('atoumweb', api);
+if (process.argv.includes(RECIPE_FLAG)) {
+  const recipe:OperationalRecipeApi = Object.freeze({
+    state:()=>ipcRenderer.invoke('operational-recipe:state'),
+    references:()=>ipcRenderer.invoke('operational-recipe:references'),
+    scenarios:()=>ipcRenderer.invoke('operational-recipe:scenarios'),
+    preview:(request:import('../shared/operationalRecipe').RecipeRequest)=>ipcRenderer.invoke('operational-recipe:preview',request),
+    close:(sessionId:string)=>ipcRenderer.invoke('operational-recipe:close',sessionId),
+  });
+  contextBridge.exposeInMainWorld('atoumwebOperationalRecipe',recipe);
+} else {
+  contextBridge.exposeInMainWorld('atoumweb', api);
+}

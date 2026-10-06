@@ -98,7 +98,8 @@ Les scénarios emploient **19 modèles sélectionnés AW-TEST8A1**, des lignes/c
 | Deux occurrences Vitrine distinctes | 42 | 49 h | 2 / 10 |
 | Landing | 13 | 12 h 45 | 1 / 1 |
 | WooCommerce | 20 | 42 h 30 | 1 / 4 |
-| Mariage Essentiel / Grand Jour / Histoire | 9 / 10 / 10 | 10 h 30 / 17 h / 23 h | chacun 1 / 1 |
+| Mariage Essentiel / Grand Jour | 9 / 10 | 10 h 30 / 17 h | chacun 1 / 1 |
+| Mariage Histoire — décision 06/10/2026 | 10 | 23 h conservées | 1 Site / 4 Pages |
 | Vitrine + 1 Page + Blog | 30 | 29 h 15 | 1 / 7 |
 | Vitrine + 2 Pages | 29 | 28 h | 1 / 7 |
 | Vitrine + option 2 Pages + Blog | 34 | 31 h | 1 / 8 |
@@ -161,3 +162,8 @@ Reste à faire après validation distincte : recette manuelle ; préparation des
 ## Clôture locale autorisée — 05/10/2026
 
 AtoumWeb valide la migration 61 et autorise le commit local dédié du Lot 8A.1, sans push ni merge. Les 40 fichiers, le code fonctionnel et la migration sont conformes aux contrôles validés ; les mises à jour documentaires ci-dessus ne créent aucune nouvelle règle métier. Le commit contenant cette section clôture le lot ; SHA et preuve dans `outputs/operational-lot8a1/cloture-git-lot8a1.json`, hors dépôt. Base conservée au SHA **fab939b09609a76fde90cfabc57ea38cf6ddaf353c2f4b9499c9ec072edcfc33**, migrations 1–61, six tables opérationnelles/cibles vides. Aucun import/ready/raccord réel ; recette manuelle à faire. Arrêt après commit, étape suivante non commencée.
+
+
+## Mise à jour 06/10/2026 — périmètre Histoire
+
+L’ancien arbitrage commun 1/1 est remplacé pour Histoire uniquement par 1/4 : Accueil, Notre histoire, Le Jour J, Espace privé. Les autres formules et les mappings A/B/C/D demeurent inchangés. Correction préparée/testée sur copies seulement ; source réelle conservée. Dix actions/23 h inchangées, revue de charge multipage à prévoir. Voir PROJECT_STATUS et le plan de recette courant.

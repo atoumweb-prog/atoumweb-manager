@@ -26,6 +26,14 @@ Si une implémentation envisagée contredit le cahier des charges, ne pas improv
 - Les modules génériques de la Bibliothèque AtoumWeb ne doivent jamais modifier automatiquement les versions utilisées par les projets clients.
 - La généralisation d'un export client vers un module AtoumWeb réutilisable n'est pas automatique : elle passe par une étape volontaire d'adaptation/nettoyage.
 
+## Environnement de développement — décision AtoumWeb du 06/10/2026
+
+Validation-MSI est une base de développement/test non productive. Les dossiers présents sont fictifs et peuvent être modifiés, remplacés ou supprimés pour les besoins de développement et recette, avec des libellés TEST explicites. Les règles de conservation ci-dessus restent des invariants du produit pour les futures données réelles ; elles ne rendent pas les données de recette intouchables.
+
+Ne pas utiliser son SHA, ses comptages ou son contenu courant comme oracle de la suite automatisée normale. Tests métier sur fixtures déterministes ; tests de migrations sur bases temporaires construites par le registre. Intégrations sur Validation-MSI opt-in, identifiées comme telles, vérifiant propriétés métier/intégrité. Pas de copie ni rollback global systématique pour la recette utilisateur. Une sauvegarde reste nécessaire avant migration ou modification destructive importante.
+
+Le banc operational-recipe reste technique, sur source maîtrisée, sans invariant Validation-MSI. La vraie recette passe par les interfaces Devis et Projet. Les gardes draft/published/ready ne doivent pas être contournés. Aucune publication ou activation n'est autorisée par un audit.
+
 ## Suivi obligatoire
 
 Pour le chantier Manager ↔ Bridge, lire également

@@ -1,3 +1,4 @@
+import histoire from '../projects/recipe/mariageHistoireStructure.json';
 import type {DatabaseAdapter} from '../database/DatabaseAdapter';
 import type {WorkspacePaths} from '../workspace';
 import type {ContributionPolicy,StructureContract} from '../../shared/contributionTargets';
@@ -31,7 +32,7 @@ export function contributionFixture(db:DatabaseAdapter,workspace:WorkspacePaths)
     const isA=aCodes.includes(original),isB=bCodes.includes(original),isD=dCodes.includes(original);
     let bp:string|null=null;
     const module=['AW-LP-SECTION','AW-ECOM-PROD-SIMPLE','AW-ECOM-PROD-VAR'].includes(original);
-    const structureKey=original.startsWith('AW-MARIAGE')||original==='AW-LP-BASE'?'one-page-base':module?'parent-page-module':original;
+    const structureKey=['AW-MARIAGE-ESS','AW-MARIAGE-GRAND','AW-LP-BASE'].includes(original)?'one-page-base':module?'parent-page-module':original;
     if(isA||isB) {
       if(sharedStructures.has(structureKey)) {bp=sharedStructures.get(structureKey)!;versions.set(original,bp);}
       else {
@@ -42,11 +43,11 @@ export function contributionFixture(db:DatabaseAdapter,workspace:WorkspacePaths)
         db.run('UPDATE project_template_nodes SET estimated_minutes=NULL WHERE template_version_id=?',[bp]);
       }else {
         bp=projects.createTemplate({name:'Fixture structure '+original,projectType:'website'}).versions[0].id;
-        const names=isA?(original==='AW-ECOM-BASE'?['Boutique','Panier','Commande','Mon compte']:['Page principale']):module?[]:[original];
+        const names=isA?(original==='AW-MARIAGE-HISTOIRE'?histoire.pages.map(p=>p.name):original==='AW-ECOM-BASE'?['Boutique','Panier','Commande','Mon compte']:['Page principale']):module?[]:[original];
         const pageIds=names.map((name,index)=>projects.addTemplateNode(bp!,{type:'module',displaySubtype:'page',name,semanticKey:'page.'+index}).nodes.find(n=>n.name===name)!.id);
         if(module)projects.addTemplateNode(bp,{type:'module',name:'Module fixture',semanticKey:'module.fixture'});
         if(original==='AW-ECOM-BASE')for(let n=1;n<=10;n++)projects.addTemplateNode(bp,{type:'module',name:'Produit initial '+n,semanticKey:'woo.initial-product.'+n,parentId:pageIds[0]});
-        projects.configureTemplateSites(bp,[{key:'main',name:'Site principal',pages:pageIds.map((id,index)=>({key:'page-'+index,templateNodeId:id,role:original==='AW-WEB-BLOG'?'blog':'standard'}))}]);
+        projects.configureTemplateSites(bp,[{key:'main',name:'Site principal',pages:pageIds.map((id,index)=>({key:'page-'+index,templateNodeId:id,role:original==='AW-MARIAGE-HISTOIRE'?(histoire.pages[index].role as 'home'|'standard'):original==='AW-WEB-BLOG'?'blog':'standard',...(original==='AW-MARIAGE-HISTOIRE'?{desiredPath:histoire.pages[index].path}:{})}))}]);
       }
       const siteRows=db.all<{id:string;blueprint_key:string}>('SELECT id,blueprint_key FROM project_template_sites WHERE template_version_id=?',[bp]);
       const contract:StructureContract={schemaVersion:1,sites:siteRows.map(s=>({slotKey:s.blueprint_key,provides:isA?['wordpress',...(original==='AW-ECOM-BASE'?['woocommerce']:[])]:[],modes:structureKey==='one-page-base'?['create','existing']:['create']})),pages:db.all<{template_node_id:string;blueprint_key:string}>(`SELECT p.template_node_id,s.blueprint_key FROM project_template_site_pages p JOIN project_template_sites s ON s.id=p.template_site_id WHERE s.template_version_id=?`,[bp]).map((p,index)=>({slotKey:'page-'+index,templateNodeId:p.template_node_id,siteSlotKey:p.blueprint_key,quota:'content'})),modules:module?db.all<{id:string}>('SELECT id FROM project_template_nodes WHERE template_version_id=?',[bp]).map(n=>({templateNodeId:n.id,parentTargetSlot:'destination'})):[]};

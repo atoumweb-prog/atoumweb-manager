@@ -2001,3 +2001,128 @@ Auteur : AtoumWeb (validation/commit local autorisé), Codex (contrôles Git et 
 - Validation-MSI vérifiée en lecture seule : migrations **1–62**, SHA **3804d50e3e87b3136c1f5c784aa8ec31125780c988f3e87b4b3e23e601f8f526**. **112 modèles draft/0 ready ; 94 associations draft/0 ready ; 7 profils operational_ready=0 ; 0 action Projet ; 0 cible contribution**. Aucune écriture pendant cette clôture.
 - Staging réel validé, previews et contre-vérifications conservés dans le checkpoint historique suivant. Vitrine/Landing V3 et sept structures demeurent draft ; aucune activation, publication, backfill ou reconstruction historique.
 - **Recette manuelle AtoumWeb toujours à faire. Aucun push/merge, aucun Lot 8B/Abby/Bridge/8C. Arrêt après commit propre ; Lot 8A.2C non commencé.**
+
+### 2026-10-05 — OPERATIONAL-LOT8A2C-001 — Plan de recette visuelle, proposition seulement
+
+Auteur : AtoumWeb (plan seulement autorisé), Codex (lecture et proposition UX/technique).
+
+- AtoumWeb autorise uniquement la préparation du plan de recette visuelle BROUILLON, depuis **c2bd002deec7e6742a24943132627c2d3a79bb5f** sur feature/project-page-compositions-v1. Working tree propre au départ. **Aucune implémentation autorisée à ce stade**.
+- Lecture ciblée des moteurs staging, bootstrap, IPC/preload et composants existants. Le staging calcule déjà les plans, mais exige des lignes persistées et n’est pas exposé à la UI. Le démarrage Manager normal reconstruit des index : une simple page sans bouton de sauvegarde ne garantit pas l’invariance physique.
+- Proposition documentée dans **docs/OPERATIONAL_LOT8A2C_PREVIEW_PLAN.md** : mode de lancement recette isolé, copie éphémère du staging réel, scénarios de lignes fictifs clairement signalés, IPC de consultation dédiée, arbre Sites/Pages/modules, actions/temps, provenance et choix logiques. Aucun changement des temps/quantités/politiques.
+- Les fixtures d’options ne sont pas présentées comme une composition réelle de Vitrine/Landing V3. Limites explicites du staging actuel : Site/Page de base projetés sélectionnables ; contexts et Sites historiques non affectables par cette API, affichés pending. Aucune extension silencieuse.
+- Scénarios prévus : 18 cas validés + vrai D pending AW-SEO-PERF ; gardes et tests envisagés pour source stable, refus de mutation, runtime draft, isolation, trois thèmes Electron et recette manuelle.
+- Validation-MSI non ouverte en écriture, SHA **3804d50e3e87b3136c1f5c784aa8ec31125780c988f3e87b4b3e23e601f8f526** recontrôlé, aucun WAL/SHM/journal. Aucun Manager lancé, aucune copie/scénario appliqué, aucun test/simulation lancé pour cette passe documentaire.
+- **Plan proposé, non validé.** Seule documentation modifiée. Aucun code, migration, ready, activation, matérialisation Projet/action/cible, commit/push/merge, Lot8B/Abby/Bridge/8C. Attendre la validation du plan avant implémentation.
+
+
+## 05/10/2026 — Lot 8A.2C réalisé, recette manuelle à faire
+
+- Plan et implémentation autorisés par AtoumWeb depuis **c2bd002deec7e6742a24943132627c2d3a79bb5f**, branche **feature/project-page-compositions-v1**. Aucun commit/push/merge.
+- Démarrage **--operational-recipe** avant workspace/restore/DatabaseService.initialize ; copie physique éphémère du staging réel, jamais de connexion en écriture à la source. Fixtures privées dans savepoint, rollback et comparaison exhaustive après chaque calcul. Moteur **OperationalStagingService.previewQuote**, adaptateur get/all uniquement.
+- Fenêtre dédiée / preload restreint : cinq opérations état, références, scénarios, preview, fermeture. API métier normale absente ; propriétaire/frame et champs contrôlés. Aucun bouton/IPC ready, activation, Projet/action/cible ou chrono.
+- UI trois thèmes, quantités/options de recette, choix logiques Site/Page, structure/actions/checklist/provenance/pending ; bandeau **BROUILLON — simulation uniquement — aucune donnée Projet créée**.
+- **625/625 tests**, typecheck OK, Chromium **133/133** avec vraie IPC/preload et cycle de fenêtre ; **19/19 scénarios** dont AW-SEO-PERF pending, A04 site/integration ; **36 captures**. Aucun changement des temps, politiques, modèles ou migrations.
+- Validation-MSI SHA avant/après **3804d50e3e87b3136c1f5c784aa8ec31125780c988f3e87b4b3e23e601f8f526** strictement identique. Python SQLite ro/immutable : **118 tables identiques**, migrations 1–62, intégrité ok, FK vide, absence WAL/SHM/journal ; 112 modèles draft/0 ready, 94 liens draft/0 ready, sept profils readiness=0, zéro action/cible/achat. Historique intact.
+- Nettoyage vérifié sur fermeture API/native et échec contrôlé d'initialisation/chargement. Rejeu déterministe, aucun résidu du scénario précédent. Refus métier de quantité/cible : rollback neutre, scénario corrigeable.
+- Limites conservées : Landing sur Site existant non validé ; contextes D et Sites historiques pending. Options fixtures signalées comme non configurées dans l'offre réelle ; aucune résolution inventée.
+- Preuves hors dépôt : **outputs/operational-lot8a2c/BILAN_LOT8A2C.md**, recette-chromium.json, source-before/after.json, journaux et captures. **16 fichiers code/doc**, aucune migration.
+- **Arrêt pour validation AtoumWeb ; recette manuelle à faire. Aucun ready/activation/publication, Lot 8B, Abby, Bridge ou 8C.**
+
+
+### 2026-10-05 — OPERATIONAL-LOT8A2C-002 — Passe UX seule autorisée et réalisée
+
+Auteur : AtoumWeb (validation technique et demande UX), Codex (présentation et contrôles).
+
+## 05/10/2026 — Lot 8A.2C, passe UX seule réalisée avant recette manuelle
+
+- Validation technique AtoumWeb reçue, puis autorisation d'une passe UX seule. Aucune nouvelle règle métier, aucune modification de moteur, scénario, temps, quantité, mapping ou association.
+- Vue principale : noms catalogue, quantités, actions/temps, Sites/Pages/modules, estimation complète/incomplète, option achetée/non achetée, destination définie/à choisir. Codes, UUID, états internes et provenance dans **Détails techniques** repliés par défaut, accessibles sur demande. Libellés accessibles des champs également simplifiés.
+- Bandeau courant : **RECETTE — simulation uniquement — aucune donnée enregistrée**. Avertissement visible : rien activé ni enregistré dans devis/projets. Message SEO Performance conforme à la demande ; aucune résolution de destination inventée. Limites Landing existant / contextes / Sites historiques conservées en langage métier.
+- **Typecheck OK ; Chromium 481/481**, 19 scénarios dans chacun des trois thèmes et quatre vues, 36 captures après + 36 captures avant conservées. **19 DTO complets strictement identiques** à la recette technique précédente. Empreintes des dix fichiers techniques protégés identiques ; état/effets/handlers UI inchangés. Suite **625/625** précédemment validée, non relancée pour cette passe de présentation uniquement.
+- Validation-MSI SHA avant/après **3804d50e3e87b3136c1f5c784aa8ec31125780c988f3e87b4b3e23e601f8f526**, 118 tables identiques, migrations 1–62, intégrité ok, FK vide, aucun WAL/SHM/journal source. Modèles/liens draft uniquement, profils inactifs, zéro action/cible/achat.
+- Première passe Chromium interrompue par sa limite de 120 s ; délai du harness adapté, passe finale complète verte. Les copies des sessions terminées et échecs contrôlés sont supprimées. Une copie du premier processus interrompu reste dans **%TEMP%/atoumweb-operational-recipe-2e23Wn** : nettoyage shell refusé par la politique automatique, y compris fichiers explicites sans récursion. Source Validation-MSI intacte ; ce reliquat est signalé, aucun nettoyage global revendiqué.
+- Passe limitée à six fichiers déjà dans le Lot 8A.2C : renderer TSX/CSS, harness UI, PROJECT_STATUS, roadmap commune et plan de recette. Preuves et galerie **outputs/operational-lot8a2c-ux/** hors dépôt. **Aucun commit/push/merge, ready, activation ou matérialisation. Arrêt pour recette manuelle AtoumWeb.**
+
+
+### 2026-10-06 — OPERATIONAL-LOT8A2C-003 — Recette sur le principe et prochaine recette métier
+
+Auteur : AtoumWeb (décisions), Codex (audit et documentation).
+
+## 06/10/2026 — Recette 8A.2C sur le principe, audit du vrai Devis
+
+- AtoumWeb termine la recette sur le principe : operational-recipe reste un banc d'essai isolé du moteur, jamais une vue métier autonome. Parcours cible Prospect → Devis/prestations/options/clauses → préparation Abby → Projet prévisionnel → même Projet actif après acceptation ; le devis signé comprend le contrat, aucun contrat indépendant.
+- Future vraie vue Projet : bloc global **Conditions avant démarrage** (devis accepté, acompte, contenus/visuels, accès, informations légales, autres prérequis), puis **Origine commerciale → Structure prévue → Affectation → Plan de travail**, ce dernier ouvert par défaut en production si pertinent. Réutiliser Sites/Pages/slug/sections/modules, actions manuelles, référence immuable/estimation courante/chrono et provenance ; ne pas ajouter ces fonctions au banc.
+- Nouvelle décision : Mariage Essentiel et Grand Jour restent chacun 1 Site/1 Page ; **Histoire devient mini-site multipage**. L'ancienne décision commune 1/1 est dépassée pour Histoire uniquement, et demeure conservée historiquement. Configuration actuelle partagée 1/1 non modifiée : nombre/liste/rôles des Pages Histoire non précisés, question à AtoumWeb en attente. Aucune structure commerciale inventée, temps 10 actions/23 h non modifié. Préparer ensuite un profil/version distinct sans toucher la Page unique des autres formules.
+- Audit maître : **docs/AUDIT_DEVIS_POST_RECETTE_8A2C.md**. Devis/option/CGV/snapshot/Client/Projet prévisionnel et moteur opérationnel existent ; principales limites : sélection privilégiant ancien publié, brouillons affichables mais refusés à l'ajout, zéro option configurée sur les V3, 118 clauses draft non consommées, runtime opérationnel exige ready, copie Abby limitée au texte contractuel, absence de taxonomie sous-catégorie et d'admin opérationnel complet.
+- Exigence future de roadmap : séparation moteur / base métier ; administration depuis Manager des AW, taxonomie, types/prix/textes Abby/commerciaux, clauses, actions/temps, structures, capacités/cibles, versions/états ; exports complets et métier éditables, réimport avec diff/version brouillon. Architecture versionnée compatible, module non développé. Ne pas confondre publication commerciale/contractuelle et états opérationnels ready.
+- Proposition minimale non démarrée : recette sur vraie UI Devis en workspace isolé avec faux dossiers explicites et consultation staging réutilisée, sans ready/publication/Projet matérialisé. Bout-en-bout acceptance/Projet V1 à cadrer séparément sans contourner les guards. Aucun nouveau gros développement.
+- **174/174 tests ciblés**, huit fichiers existants. Validation-MSI source SHA **3804d50e3e87b3136c1f5c784aa8ec31125780c988f3e87b4b3e23e601f8f526** ; contre-vérification avant/après et 118 tables inchangées dans outputs/audit-devis-post-recette-8a2c. Historique, 112 modèles draft, 94 liens draft, sept profils inactifs et zéro action/cible/achat conservés.
+- Documentation seulement dans cette passe ; aucun code fonctionnel modifié, aucun import, ready, activation, publication, base/migration, commit/push/merge ou Lot8B/Abby/Bridge/8C. **Arrêt pour validation du diagnostic et précision des Pages Histoire.**
+
+
+### 2026-10-06 — OPERATIONAL-LOT8A2C-004 — Histoire multipage : décision et correction préparatoire
+
+Auteur : AtoumWeb (quatre Pages et temps conservés), Codex (préparation/test sur copies).
+
+## 06/10/2026 — Correction préparatoire Mariage Histoire, arbitrage des quatre Pages appliqué sur copies
+
+- AtoumWeb précise Histoire : **1 Site / 4 Pages** — Accueil `/`, Notre histoire `/notre-histoire/`, Le Jour J `/jour-j/`, Espace privé `/espace-prive/`. Espace privé = protection prévue pour galerie/souvenirs, vidéo/diaporama, livre d'or, contenus post-mariage ; aucune protection activée par le plan. RSVP/galerie/vidéo restent des sections/modules selon Projet, pas des Pages supplémentaires.
+- Configuration versionnée **mariageHistoireStructure.json** ; préparation distincte du blueprint Page unique partagé, profil inactif et association candidate draft. Raccord Histoire remplacé seulement dans le savepoint de la copie de recette, puis rollback intégral. Aucun moteur normal ni schéma/migration modifié ; aucune application dans Validation-MSI.
+- Essentiel et Grand Jour restent 1/1 ; Landing inchangée. Modèle Histoire, dix textes d'actions, checklist, catégories, minutes et politiques/cibles existantes intacts : **10 actions / 1380 min = 23 h**. Aucune multiplication des actions par quatre Pages.
+- Quatre tests de non-régression ajoutés : profil distinct/draft/idempotence/rollback/historique ; refus du chemin réel ; vrai staging des trois Mariage et actions exactes ; génération synthétique des quatre slugs et conservation du partage one-page. Le moteur existant normalise les slugs de Projet sans slash final ; chemins de configuration/preview gardés comme demandés, aucune modification de ce moteur.
+- **629/629 tests complets**, typecheck OK, Chromium **485/485**, 19 scénarios × trois thèmes. Histoire 1/4/10/23h, chemins et intention de protection contrôlés ; les 18 autres DTO identiques hors exposition descriptive des chemins et descriptions. Trois captures Histoire ajoutées aux 36 captures habituelles.
+- Réserve métier avant validation de la charge : A02 architecture/navigation, A03 contenus des quatre Pages, A05 espace privé/enrichissements, A06 responsive multi-pages, A07 navigation/liens/accès protégé méritent précision/revue. Aucun intitulé n'impose une Page unique ; les 23 h ne sont ni changées ni certifiées suffisantes. Checklist protection/navigation non inventée ou ajoutée sans accord.
+- Validation-MSI avant/après **3804d50e3e87b3136c1f5c784aa8ec31125780c988f3e87b4b3e23e601f8f526**, 118 tables exactes, migrations 1–62, 112 modèles draft / 94 liens draft / sept profils inactifs / zéro action/cible/achat. Le staging réel reste au checkpoint antérieur : seule la préparation sur copies est corrigée ; application réelle sur instruction distincte.
+- Preuves : **outputs/mariage-histoire-4-pages/** hors dépôt. Aucun ready/publication/activation réelle, import/backfill, commit/push/merge, Lot8B/Abby/Bridge/8C. **Arrêt pour validation.**
+
+
+### 2026-10-06 — OPERATIONAL-LOT8A2C-005 — Revue charge Histoire, propositions seulement
+
+## 06/10/2026 — Revue métier des 23 h Histoire, propositions sans application
+
+- Structure Histoire 1 Site/4 Pages validée par AtoumWeb ; revue de charge autorisée sans modification de temps/modèle/staging/prix. Référence réelle maintenue à 10 actions/23 h et 899 €.
+- **Propositions à arbitrer** : minimum 1650 min/27 h 30/32,69 €/h ; référence recommandée 1980 min/33 h/27,24 €/h ; prudent 2400 min/40 h/22,48 €/h. Ratio brut prix/temps, pas rémunération nette ou rentabilité démontrée. Prudent = +7 h/+21,2 % sur la proposition 33 h.
+- Détail par action et hypothèses dans **docs/REVUE_CHARGE_MARIAGE_HISTOIRE.md**. Variation limitée aux A02/A03/A05/A06/A07 ; cinq autres budgets maintenus dans les propositions. Contenus fournis, solutions standard maîtrisées, protection standard sans portail membres, deux cycles bornés, une passe post-mariage bornée. Pas de montage/retouche/développement sur mesure inclus implicitement.
+- Point critique : A05 150 min actuel trop serré pour protection/galerie/vidéo/livre d'or/post-mariage ; A06/A07 doivent couvrir quatre Pages, navigation et accès négatifs. Périmètre de protection des médias directs à préciser ; aucun mécanisme choisi ou activé.
+- Aucune adoption de 33 h, marge ou réévaluation du prix. Validation-MSI SHA inchangé **3804d50e3e87b3136c1f5c784aa8ec31125780c988f3e87b4b3e23e601f8f526**. Documents de revue seulement ; aucun code, migration, modèle, temps, staging, ready/publication/activation réelle, commit/push/merge ou nouveau lot. **Arrêt pour arbitrage AtoumWeb.**
+
+
+### 2026-10-06 — OPERATIONAL-LOT8A2C-006 — Candidats Histoire, dernier arbitrage 27 h 30
+
+## 06/10/2026 — Histoire : dernier arbitrage 27 h 30 provisoires / 899 €, candidats seuls
+
+- Consigne finale AtoumWeb prioritaire : structure 1 Site/4 Pages validée ; référence interne **1650 min/27 h 30 provisoires**, à recalibrer sur les premiers temps réels. **1980 min/33 h = estimation prudente/seuil de vigilance uniquement**. Répartir selon le scénario minimum de la revue : 90/150/420/150/240/150/150/150/90/60. Essentiel 630 et Grand Jour 1020 inchangés.
+- Prix **899 € inchangé** ; aucune version à 1290 créée. Propositions 33 h standard et 1290 supersédées avant application, trace conservée. Candidat catalogue V3 draft (textes/périmètre seuls) + modèle V2 draft + structure Histoire distincte/profil inactif/association draft, dans manifeste hors dépôt ; aucune écriture réelle.
+- Doctrine : mot de passe de Page seulement, pas de promesse de protection des URLs médias ; portail/protection renforcée hors standard. Livre d'or nom/message, sans compte, avec modération. Une intervention post-mariage maximum 120 min dans les 60 jours, incluse dans A05 240 min ; au-delà complément après accord. Responsable/modalités de modération et dates à renseigner, pas d'invention.
+- Textes/checklists candidats adaptés au multipage/fonctions/tests/planification. Référence non dupliquée en durée catalogue et aucune promesse de temps Client. Aucun objet Lot8B, compteur de crédit ou facturation créé. La charge reste une hypothèse, pas un forfait de temps garanti.
+- Clauses partagées **intactes** : zéro nouveau template/version/liens. Conditions particulières Histoire proposées via Builder existant ; dérogation explicite 60 jours à la règle générale trois mois pour cette seule prestation. `specialTerms` catalogue seul ne suffit pas lorsque des templates publiés sont liés ; injection/retrait automatiques non implémentés, vérification dans le devis requise avant usage.
+- **47/47 contrôles natifs sur copie**, arithmétique/provenance/statuts/historique/rejeu/FK/integrity ; bibliothèque partagée inchangée. Aucun code moteur/UI modifié, suite complète 629 précédemment validée non relancée pour artefacts/documentation. Détail **docs/MARIAGE_HISTOIRE_REVISION_BROUILLON.md** ; manifeste/rapport dans outputs/mariage-histoire-33h-brouillon (nom de dossier historique, contenu courant 27 h 30).
+- Validation-MSI SHA inchangé **3804d50e3e87b3136c1f5c784aa8ec31125780c988f3e87b4b3e23e601f8f526**, 118 tables identiques, anciens Histoire899/23h, devis/projets/temps/sourceXLSX intacts. Doctrine/matrice/actions/sources/changelog juridiques vivants actualisés, archives de recherche conservées.
+- **Arrêt pour validation avant application.** Aucun staging réel, ready/publication/activation, migration/import réel, commit/push/merge, Lot8B/Abby/Bridge/8C.
+
+
+### 2026-10-06 — OPERATIONAL-LOT8A2C-007 — Histoire staging réel BROUILLON autorisé et appliqué
+
+## 06/10/2026 — Histoire appliqué au staging réel en BROUILLON uniquement
+
+- Autorisation AtoumWeb appliquée : Catalogue Histoire **V3 draft / 899 €**, modèle opérationnel **V2 draft / 1650 min (27 h 30 internes provisoires)**, structure distincte **1 Site / 4 Pages**, profil inactif, association draft. UUID réels nouvellement alloués ; aucune réutilisation des IDs de simulation.
+- Verrou EXCLUSIVE, sauvegarde physique SHA identique, concurrent writer refusé, plan/manifeste/code/Git recontrôlés. SHA avant=sauvegarde **3804d50e3e87b3136c1f5c784aa8ec31125780c988f3e87b4b3e23e601f8f526** ; SHA final après checkpoint/fermeture/rejeu **9aea84d704841cc8c29c2360031d10e99552514089082572441211b7dbcc65fb**. Aucun WAL/SHM/journal final.
+- **108 contrôles application**, **148 contrôles indépendants Python ro/immutable** depuis sauvegarde. Intégrité ok/FK vide, schéma/migrations1–62 exacts. Rejeu complet logique et physique neutre ; mêmes IDs, aucun import/version/lien supplémentaire.
+- Diff : quatorze tables avec ajouts seuls, sauf **catalog_items.updated_at** Histoire (une cellule de métadonnée). 104/118 tables identiques, anciennes lignes conservées. Templates8→9, versions9→10, nœuds59→64, Sites modèles8→9, Pages modèles17→21, profils7→8, catalogue159→160, raccords15→16, composants19→20, imports1→2, modèles112→113, liens94→95, activité483→484. Rapport complet hors dépôt.
+- **113 modèles draft /0 ready ;95 associations draft /0 ready ;8 profils inactifs**. Essentiel630/GrandJour1020 exacts. Anciens Histoire899 €/23h, devis/projets/Sites/Pages/nœuds/temps, clauses118/liens409 conservés. Aucune Page RSVP/galerie/vidéo implicite.
+- Conditions particulières automatiques toujours réservées au prochain lot Devis ; aucun texte de devis/contrat modifié. 33h = vigilance documentaire seulement. Aucun1290 €, ready/publication/activation, action/Projet/cible, Lot8B/Abby/Bridge/8C.
+- Premier essai refusé sans écriture par garde trop strict sur les sidecars de son propre verrou ; SHA initial conservé. Garde sous verrou limité au WAL sans frame validée, répétition puis application réussies ; trace de refus conservée.
+- Le banc operational-recipe conserve ses gardes du checkpoint antérieur et refusera la source après cette application, sans assouplissement automatique. Code fonctionnel/HEAD **c2bd002deec7e6742a24943132627c2d3a79bb5f** inchangés ; aucun commit/push/merge. **Arrêt pour validation.**
+- Preuves/backup/IDs/diff : **outputs/mariage-histoire-33h-brouillon/application-reelle/BILAN_APPLICATION_HISTOIRE.md** (nom de dossier historique ; référence réelle27h30).
+
+
+### 2026-10-06 — OPERATIONAL-LOT8A2C-008 — Validation-MSI développement et découplage autorisé
+
+## 06/10/2026 — Découplage du banc technique avant checkpoint
+
+- AtoumWeb autorise le correctif, la suite/typecheck/harness et le commit local si verts, puis l'audit exhaustif112AW ; aucun push/merge. Lot Devis et Lot8B non démarrés, aucune publication/ready pendant l'audit.
+- Nouvelle doctrine : Validation-MSI = développement/test non productif, données mutables identifiées TEST. Plus de SHA/comptages immuables ni copies systématiques pour la recette métier. Sauvegardes avant migrations/destructions importantes, intégrité et versionnement conservés. AGENTS et exclusions Git alignés.
+- Banc conservé comme diagnostic : source par défaut = fixture JSON versionnée (18 modèles/8 structures pour19scénarios), construite par les migrations et sans lecture Validation-MSI. Source explicite optionnelle pour diagnostic maîtrisé, jamais chemin de développement codé. Comptages calculés, validation par schéma/intégrité et non photographie de la base.
+- Trois tests Histoire devenus fixture-based, dont état historique23h et état courant27h30/4Pages. Empreintes de documents/packages/fixtures conservées ; empreinte du JSON de fixture documentée, aucune empreinte Validation-MSI dans la suite normale. Fenêtres/harness alimentés par fixture, répertoires temporaires propres par test. Rollback du banc uniquement pour rejouer ses scénarios ; aucun mécanisme de recette utilisateur parallèle ajouté.
+- 630/630 tests complets et typecheck OK ; harness Chromium 484/484, 19 scénarios × trois thèmes, sans source Validation-MSI. États métier du Manager, modèleHistoire appliqué et Validation-MSI non modifiés. Anciens simulateurs à SHA de checkpoint conservés comme outils historiques hors suite normale.
+- Checkpoint prévu : **Lot 8A.2C — diagnostic opérationnel et checkpoint Mariage Histoire**, sources/doc/tests/fixtures uniquement, aucun SQLite/backup/capture/output. Harness vert : checkpoint local autorisé, audit 112 AW lecture directe ensuite, sans activation ni changement des temps.
