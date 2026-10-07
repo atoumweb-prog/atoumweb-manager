@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://atoumweb.local/contracts/component-identity-v1.schema.json",
+  "title": "AtoumWeb Component Identity Contract V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "schemaVersion",
+    "classificationStatus",
+    "libraryDisplayName",
+    "componentFamilyId",
+    "componentKey",
+    "libraryVariantId",
+    "variantKey",
+    "variantOf",
+    "variantMode",
+    "vertical",
+    "reusabilityScope",
+    "tags",
+    "libraryItemId",
+    "libraryVersionId",
+    "libraryVersionNumber"
+  ],
+  "properties": {
+    "contract": { "const": "atoumweb_component_identity" },
+    "schemaVersion": { "const": 1 },
+    "classificationStatus": {
+      "enum": ["classified", "unclassified"]
+    },
+    "libraryDisplayName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "componentFamilyId": {
+      "type": ["string", "null"]
+    },
+    "componentKey": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^aw-[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        { "type": "null" }
+      ]
+    },
+    "libraryVariantId": {
+      "type": ["string", "null"]
+    },
+    "variantKey": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        { "type": "null" }
+      ]
+    },
+    "variantOf": {
+      "type": ["string", "null"]
+    },
+    "variantMode": {
+      "enum": ["base", "inherit", "forked", "none"]
+    },
+    "vertical": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        { "type": "null" }
+      ]
+    },
+    "reusabilityScope": {
+      "enum": ["generic", "vertical", "site_specific", "unclassified"]
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "libraryItemId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "libraryVersionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "libraryVersionNumber": {
+      "type": "integer",
+      "minimum": 1
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "classificationStatus": { "const": "classified" }
+        }
+      },
+      "then": {
+        "properties": {
+          "componentKey": { "type": "string" },
+          "reusabilityScope": {
+            "enum": ["generic", "vertical", "site_specific"]
+          }
+        }
+      }
+    }
+  ]
+}

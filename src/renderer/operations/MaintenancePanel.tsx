@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ClientSummary } from '../../shared/crm';
 import {
   MAINTENANCE_CHECK_STATUSES,
@@ -15,6 +15,7 @@ import {
   type MaintenanceSubscriptionStatus,
 } from '../../shared/operations';
 import type { ProjectSummary } from '../../shared/projects';
+import { OperationIcon } from './OperationIcon';
 import { MaintenanceOveragePanel } from './MaintenanceOveragePanel';
 import { MaintenanceReportPanel } from './MaintenanceReportPanel';
 
@@ -43,10 +44,11 @@ export function MaintenancePanel({ clients, projects, onMessage, onInterventionC
   const [periods, setPeriods] = useState<MaintenancePeriod[]>([]);
   const [selectedSubscriptionId, setSelectedSubscriptionId] = useState('');
   const [selectedPeriodId, setSelectedPeriodId] = useState('');
+  const [splitPercent, setSplitPercent] = useState(36);
+  const [detailExpanded, setDetailExpanded] = useState(false);
   const [createSubscriptionOpen, setCreateSubscriptionOpen] = useState(false);
   const [createPlanOpen, setCreatePlanOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const detailPanelRef = useRef<HTMLElement | null>(null);
 
   const [clientId, setClientId] = useState('');
   const [projectId, setProjectId] = useState('');
@@ -95,14 +97,15 @@ export function MaintenancePanel({ clients, projects, onMessage, onInterventionC
 
   useEffect(() => {
     if (!selectedSubscriptionId) return;
-    const closeOnOutside = (event: PointerEvent) => {
-      const target = event.target as Node | null;
-      if (!target || detailPanelRef.current?.contains(target)) return;
-      setSelectedSubscriptionId('');
-      setSelectedPeriodId('');
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSelectedSubscriptionId('');
+        setSelectedPeriodId('');
+        setDetailExpanded(false);
+      }
     };
-    document.addEventListener('pointerdown', closeOnOutside);
-    return () => document.removeEventListener('pointerdown', closeOnOutside);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
   }, [selectedSubscriptionId]);
 
   const selectedSubscription = subscriptions.find((item) => item.id === selectedSubscriptionId) ?? null;
@@ -208,8 +211,39 @@ export function MaintenancePanel({ clients, projects, onMessage, onInterventionC
   }
 
   const activeSubscriptions = useMemo(() => subscriptions.filter((item) => item.status !== 'archived'), [subscriptions]);
+  const activeCount = activeSubscriptions.filter((item) => item.status === 'active').length;
+  const suspendedCount = activeSubscriptions.filter((item) => item.status === 'suspended').length;
+  const activePlansCount = plans.filter((plan) => plan.status === 'active').length;
+  const contractValue = activeSubscriptions
+    .filter((item) => item.status === 'active')
+    .reduce((sum, item) => sum + item.contractPriceCents, 0);
+
+  function beginResize(): void {
+    const workspace = document.querySelector<HTMLElement>('.maintenance-layout.with-detail');
+    if (!workspace) return;
+    document.body.classList.add('operation-resizing');
+    const onMove = (event: PointerEvent) => {
+      const rect = workspace.getBoundingClientRect();
+      if (!rect.width) return;
+      const ratio = ((event.clientX - rect.left) / rect.width) * 100;
+      setSplitPercent(Math.max(20, Math.min(58, ratio)));
+    };
+    const onUp = () => {
+      document.body.classList.remove('operation-resizing');
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp, { once: true });
+  }
 
   return <div className="maintenance-panel-stack">
+    <section className="maintenance-dashboard" aria-label="Synthèse Maintenance">
+      <article><span className="maintenance-dashboard-icon" aria-hidden="true">✓</span><div><strong>Maintenances actives</strong><span>{activeCount}</span><small>Contrats actuellement suivis</small></div></article>
+      <article><span className="maintenance-dashboard-icon" aria-hidden="true">Ⅱ</span><div><strong>Suspendues</strong><span>{suspendedCount}</span><small>À reprendre ou à clôturer</small></div></article>
+      <article><span className="maintenance-dashboard-icon" aria-hidden="true">▤</span><div><strong>Plans actifs</strong><span>{activePlansCount}</span><small>Références disponibles</small></div></article>
+      <article><span className="maintenance-dashboard-icon" aria-hidden="true">€</span><div><strong>Valeur / période</strong><span>{euro(contractValue)}</span><small>Souscriptions actives</small></div></article>
+    </section>
     <div className="module-toolbar operations-toolbar">
       <div><strong>{activeSubscriptions.length}</strong><span> maintenance(s)</span></div>
       <div className="toolbar-controls">
@@ -234,20 +268,38 @@ export function MaintenancePanel({ clients, projects, onMessage, onInterventionC
       <label>Prix contractuel / période (€)<input type="number" min="0" step="0.01" value={contractPrice} onChange={(event) => setContractPrice(event.target.value)} /></label>
     </div><div className="button-row"><button className="primary-button" disabled={saving || !clientId || !planId} type="button" onClick={() => void createSubscription()}>Créer la souscription</button><button className="secondary-button" type="button" onClick={() => setCreateSubscriptionOpen(false)}>Annuler</button></div></section>}
 
-    <div className={selectedSubscription ? 'maintenance-layout with-detail' : 'maintenance-layout'}>
-      <section className="panel operation-list-panel"><table className="operations-table"><thead><tr><th>Client</th><th>Plan</th><th>Projet</th><th>Prix</th><th>Statut</th></tr></thead><tbody>{activeSubscriptions.map((subscription) => <tr key={subscription.id} className={selectedSubscriptionId === subscription.id ? 'selected-row' : ''} onClick={() => setSelectedSubscriptionId(subscription.id)}><td><strong>{subscription.clientLabel}</strong><small>Depuis {subscription.startDate}</small></td><td><strong>{subscription.planName}</strong><small>{FREQUENCY_LABELS[subscription.frequency]} · {subscription.includedInterventions} intervention(s)</small></td><td>{subscription.projectLabel || 'Tous / sans projet'}</td><td>{euro(subscription.contractPriceCents)}</td><td>{SUBSCRIPTION_LABELS[subscription.status]}</td></tr>)}{activeSubscriptions.length === 0 && <tr><td colSpan={5}><div className="empty-table">Aucune maintenance active.</div></td></tr>}</tbody></table></section>
+    <div
+      className={selectedSubscription ? `maintenance-layout with-detail ${detailExpanded ? 'detail-expanded' : ''}` : 'maintenance-layout'}
+      style={selectedSubscription && !detailExpanded ? { gridTemplateColumns: `${splitPercent}% 8px minmax(0, 1fr)` } : undefined}
+    >
+      {!detailExpanded && <section className="panel operation-list-panel maintenance-list-panel">
+        {selectedSubscription ? <div className="maintenance-compact-list" role="list" aria-label="Souscriptions de maintenance">
+          {activeSubscriptions.map((subscription) => <button key={subscription.id} type="button" role="listitem" className={`maintenance-compact-item ${selectedSubscriptionId === subscription.id ? 'selected' : ''}`} onClick={() => setSelectedSubscriptionId(subscription.id)}>
+            <span className="maintenance-compact-heading"><strong>{subscription.clientLabel}</strong><span className={`maintenance-status status-${subscription.status}`}>{SUBSCRIPTION_LABELS[subscription.status]}</span></span>
+            <span className="maintenance-compact-plan">{subscription.planName}</span>
+            <span className="maintenance-compact-meta"><span>{FREQUENCY_LABELS[subscription.frequency]}</span><span>{euro(subscription.contractPriceCents)}</span></span>
+            <span className="maintenance-compact-project">{subscription.projectLabel || 'Tous / sans projet'}</span>
+          </button>)}
+          {activeSubscriptions.length === 0 && <div className="empty-table">Aucune maintenance active.</div>}
+        </div> : <table className="operations-table"><thead><tr><th>Client</th><th>Plan</th><th>Projet</th><th>Prix</th><th>Statut</th></tr></thead><tbody>{activeSubscriptions.map((subscription) => <tr key={subscription.id} className={selectedSubscriptionId === subscription.id ? 'selected-row' : ''} onClick={() => { setSelectedSubscriptionId(subscription.id); setDetailExpanded(false); }}><td><strong>{subscription.clientLabel}</strong><small>Depuis {subscription.startDate}</small></td><td><strong>{subscription.planName}</strong><small>{FREQUENCY_LABELS[subscription.frequency]} · {subscription.includedInterventions} intervention(s)</small></td><td>{subscription.projectLabel || 'Tous / sans projet'}</td><td>{euro(subscription.contractPriceCents)}</td><td>{SUBSCRIPTION_LABELS[subscription.status]}</td></tr>)}{activeSubscriptions.length === 0 && <tr><td colSpan={5}><div className="empty-table">Aucune maintenance active.</div></td></tr>}</tbody></table>}
+      </section>}
 
-      {selectedSubscription && <aside ref={detailPanelRef} className="panel operation-detail-panel maintenance-detail-panel"><div className="detail-panel-heading"><div><span className="eyebrow">Maintenance</span><h2>{selectedSubscription.clientLabel}</h2><p className="muted">{selectedSubscription.planName}{selectedSubscription.projectLabel ? ` · ${selectedSubscription.projectLabel}` : ''}</p></div><button className="close-detail" type="button" onClick={() => { setSelectedSubscriptionId(''); setSelectedPeriodId(''); }}>×</button></div>
+      {selectedSubscription && !detailExpanded && <div className="operation-splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner la liste et la fiche maintenance" tabIndex={0} onPointerDown={beginResize} onDoubleClick={() => setSplitPercent(36)} onKeyDown={(event) => {
+        if (event.key === 'ArrowLeft') setSplitPercent((value) => Math.max(20, value - 3));
+        if (event.key === 'ArrowRight') setSplitPercent((value) => Math.min(58, value + 3));
+      }}><span /></div>}
+
+      {selectedSubscription && <aside className={`panel operation-detail-panel maintenance-detail-panel ${detailExpanded ? 'expanded' : ''}`}><div className="detail-panel-heading"><div><span className="eyebrow">Maintenance</span><h2>{selectedSubscription.clientLabel}</h2><p className="muted">{selectedSubscription.canonicalCode&&`${selectedSubscription.canonicalCode} · `}{selectedSubscription.planName}{selectedSubscription.projectLabel ? ` · ${selectedSubscription.projectLabel}` : ''}</p></div><div className="maintenance-detail-heading-actions"><button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={() => { setSelectedSubscriptionId(''); setSelectedPeriodId(''); setDetailExpanded(false); }}><OperationIcon name="close" size={18} /></button></div></div>
         <div className="operation-detail-grid"><div><span>Prix contractuel</span><strong>{euro(selectedSubscription.contractPriceCents)}</strong></div><div><span>Quota</span><strong>{selectedSubscription.includedInterventions} intervention(s)</strong></div></div>
-        <label>Statut<select value={selectedSubscription.status} onChange={(event) => void changeSubscriptionStatus(event.target.value as MaintenanceSubscriptionStatus)}>{MAINTENANCE_SUBSCRIPTION_STATUSES.map((status) => <option key={status} value={status}>{SUBSCRIPTION_LABELS[status]}</option>)}</select></label>
+        <p>Facturation : {selectedSubscription.billingPeriod==='yearly'?'annuelle':selectedSubscription.billingPeriod==='monthly'?'mensuelle':'selon le dossier'} · Périodes opérationnelles : {FREQUENCY_LABELS[selectedSubscription.frequency]}{selectedSubscription.periodAlignment==='anniversary'?' de date à date':''}</p><label>Statut<select value={selectedSubscription.status} onChange={(event) => void changeSubscriptionStatus(event.target.value as MaintenanceSubscriptionStatus)}>{MAINTENANCE_SUBSCRIPTION_STATUSES.map((status) => <option key={status} value={status}>{SUBSCRIPTION_LABELS[status]}</option>)}</select></label>
         <button className="secondary-button" type="button" disabled={selectedSubscription.status !== 'active'} onClick={() => void ensureCurrentPeriod()}>Générer / ouvrir la période actuelle</button>
-        <div className="maintenance-period-list"><strong>Périodes</strong>{periods.map((period) => <button key={period.id} type="button" className={period.id === selectedPeriodId ? 'selected' : ''} onClick={() => setSelectedPeriodId(period.id)}><span>{period.periodStart} → {period.periodEnd}</span><small>{PERIOD_LABELS[period.status]} · {period.usage.interventionCount}/{period.includedInterventions || '∞'} intervention(s)</small></button>)}{periods.length === 0 && <p className="muted">Aucune période générée.</p>}</div>
+        <div className="maintenance-period-list"><strong>Périodes</strong>{periods.map((period) => <button key={period.id} type="button" className={period.id === selectedPeriodId ? 'selected' : ''} onClick={() => setSelectedPeriodId(period.id)}><span>{period.periodStart} → {period.periodEnd}</span><small>{PERIOD_LABELS[period.status]} · {period.usage.interventionCount}/{period.includedInterventions || 'sans quota standard'} intervention(s)</small></button>)}{periods.length === 0 && <p className="muted">Aucune période générée.</p>}</div>
 
         {selectedPeriod && <div className="maintenance-period-detail"><div className="maintenance-usage-grid"><div><span>Interventions</span><strong>{selectedPeriod.usage.interventionCount}{selectedPeriod.includedInterventions ? ` / ${selectedPeriod.includedInterventions}` : ''}</strong></div><div><span>Temps passé</span><strong>{hours(selectedPeriod.usage.usedSeconds)}</strong></div><div className={selectedPeriod.usage.interventionsOverQuota > 0 ? 'warning' : ''}><span>Dépassement</span><strong>{selectedPeriod.usage.interventionsOverQuota || 0}</strong></div></div>
           <MaintenanceOveragePanel period={selectedPeriod} onMessage={onMessage} />
           <label>État de la période<select value={selectedPeriod.status} onChange={(event) => void changePeriodStatus(event.target.value as MaintenancePeriodStatus)}>{MAINTENANCE_PERIOD_STATUSES.map((status) => <option key={status} value={status}>{PERIOD_LABELS[status]}</option>)}</select></label>
           <button className="primary-button" type="button" disabled={selectedPeriod.status === 'closed'} onClick={() => void createMaintenanceIntervention()}>+ Intervention de maintenance</button>
-          <div className="maintenance-checklist"><strong>Checklist</strong>{selectedPeriod.checks.map((check) => <div key={check.id} className={`maintenance-check check-${check.status}`}><div><strong>{check.label}</strong>{check.description && <small>{check.description}</small>}</div><select value={check.status} disabled={selectedPeriod.status === 'closed'} onChange={(event) => void changeCheck(check.id, event.target.value as MaintenanceCheckStatus)}>{MAINTENANCE_CHECK_STATUSES.map((status) => <option key={status} value={status}>{CHECK_LABELS[status]}</option>)}</select></div>)}</div>
+          <div className="maintenance-checklist"><strong>Checklist</strong>{selectedPeriod.checks.map((check) => <div key={check.id} className={`maintenance-check check-${check.status}`}><div><strong>{check.label}</strong>{check.description && <small>{check.description}</small>}{check.referenceMinutes!=null&&<small>Référence initiale {check.estimateRequired?'indicative (estimation spécifique à renseigner)':''} : {check.referenceMinutes} min · {check.businessCategory}</small>}</div><button className="secondary-button" type="button" disabled={selectedPeriod.status==='closed'} onClick={()=>void window.atoumweb.operations.maintenance.periods.prepareRoutine(check.id).then(i=>window.atoumweb.time.start({interventionId:i.id,category:'support',activityLabel:check.label,businessCategory:check.businessCategory||'Inclus au forfait'})).then(()=>onMessage('Chrono de routine démarré, hors quota des interventions mineures.')).catch(e=>onMessage(String(e)))}>Chrono routine</button><select value={check.status} disabled={selectedPeriod.status === 'closed'} onChange={(event) => void changeCheck(check.id, event.target.value as MaintenanceCheckStatus)}>{MAINTENANCE_CHECK_STATUSES.map((status) => <option key={status} value={status}>{CHECK_LABELS[status]}</option>)}</select></div>)}</div>
           <MaintenanceReportPanel periodId={selectedPeriod.id} onMessage={onMessage} />
         </div>}
       </aside>}

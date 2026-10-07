@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://atoumweb.local/contracts/page-package-v2.schema.json",
+  "title": "AtoumWeb Bridge Page Package V2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "schemaVersion", "scope", "exportId", "exportedAt", "destination", "safety", "composition", "components"],
+  "properties": {
+    "contract": { "const": "atoumweb_bridge_project_package" },
+    "schemaVersion": { "const": 2 },
+    "scope": { "const": "page" },
+    "exportId": { "type": "string", "pattern": "^awexp:.+" },
+    "exportedAt": { "type": "string", "format": "date-time" },
+    "destination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["projectId", "siteId", "pageId"],
+      "properties": {
+        "projectId": { "type": "string", "minLength": 1 },
+        "siteId": { "type": "string", "minLength": 1 },
+        "pageId": { "type": "string", "minLength": 1 }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["flow", "workbenchRequired", "directProductionInjection", "sourceLibraryMutation"],
+      "properties": {
+        "flow": { "const": "workbench_first" },
+        "workbenchRequired": { "const": true },
+        "directProductionInjection": { "const": false },
+        "sourceLibraryMutation": { "const": false }
+      }
+    },
+    "composition": { "type": "object" },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["compositionItemId", "sortOrder", "source", "files"],
+        "properties": {
+          "compositionItemId": { "type": "string", "minLength": 1 },
+          "sortOrder": { "type": "integer", "minimum": 0 },
+          "source": { "type": "object" },
+          "files": { "type": "object" }
+        }
+      }
+    }
+  }
+}

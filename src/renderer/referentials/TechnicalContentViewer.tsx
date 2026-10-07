@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ProjectTechnicalContentType } from '../../shared/projects';
 import './TechnicalContentViewer.css';
 
@@ -25,12 +25,17 @@ export function TechnicalContentViewer({
   onToggleExpanded,
 }: Props) {
   const [jsonMode, setJsonMode] = useState<JsonMode>('structured');
-  const [viewerMode, setViewerMode] = useState<ViewerMode>('source');
+  const initialPreview = contentType === 'code' && ['html', 'htm'].includes((language ?? '').trim().toLowerCase());
+  const [viewerMode, setViewerMode] = useState<ViewerMode>(initialPreview ? 'preview' : 'source');
   const parsed = useMemo(() => parseJson(contentType, content), [contentType, content]);
   const text = content ?? '';
   const lineCount = text ? text.split(/\r?\n/).length : 0;
   const canPreviewHtml = contentType === 'code' && ['html', 'htm'].includes((language ?? '').trim().toLowerCase());
   const previewDocument = useMemo(() => canPreviewHtml ? buildHtmlPreviewDocument(text) : '', [canPreviewHtml, text]);
+
+  useEffect(() => {
+    setViewerMode(canPreviewHtml ? 'preview' : 'source');
+  }, [canPreviewHtml, content]);
 
   async function copy(): Promise<void> {
     if (!text) return;
@@ -142,14 +147,18 @@ function JsonScalar({ value }: { value: unknown }) {
 
 
 function buildHtmlPreviewDocument(content: string): string {
-  if (/<!doctype\s+html|<html[\s>]/i.test(content)) return content;
+  const policy = '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; img-src data:; font-src data:;">';
+  if (/<!doctype\s+html|<html[\s>]/i.test(content)) {
+    if (/<head[\s>]/i.test(content)) return content.replace(/<head([^>]*)>/i, `<head$1>${policy}`);
+    return content.replace(/<html([^>]*)>/i, `<html$1><head>${policy}</head>`);
+  }
   return `<!doctype html>
 <html lang="fr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <base target="_blank">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:;">
+  ${policy}
   <style>
     html, body { margin: 0; min-height: 100%; background: #fff; }
     body { font-family: Arial, Helvetica, sans-serif; }

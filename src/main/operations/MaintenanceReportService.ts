@@ -37,6 +37,7 @@ interface InterventionRow extends Record<string, unknown> {
   status: string;
   completed_at: string | null;
   total_seconds: number;
+  maintenance_usage_kind:string|null;
 }
 
 export class MaintenanceReportService {
@@ -80,7 +81,7 @@ export class MaintenanceReportService {
     }));
 
     const interventions = this.database.all<InterventionRow>(
-      `SELECT i.id,i.intervention_number,i.subject,i.intervention_type,i.status,i.completed_at,
+      `SELECT i.id,i.intervention_number,i.subject,i.intervention_type,i.status,i.completed_at,i.maintenance_usage_kind,
         COALESCE((
           SELECT SUM(MAX(0,CAST((julianday(ts.ended_at)-julianday(ts.started_at))*86400 AS INTEGER)) - COALESCE((
             SELECT SUM(MAX(0,CAST((julianday(tsp.ended_at)-julianday(tsp.started_at))*86400 AS INTEGER)))
@@ -122,7 +123,8 @@ export class MaintenanceReportService {
 
     const included = Number(period.included_interventions);
     const totalTimeSeconds = interventions.reduce((sum, intervention) => sum + intervention.durationSeconds, 0);
-    const interventionCount = interventions.length;
+    const minorRows=this.database.all<{maintenance_usage_kind:string|null}>("SELECT maintenance_usage_kind FROM interventions WHERE maintenance_period_id=? AND status NOT IN ('cancelled','archived')",[periodId]);
+    const interventionCount = minorRows.filter(row=>row.maintenance_usage_kind!=='routine').length;
 
     return {
       periodId: period.id,

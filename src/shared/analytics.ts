@@ -73,11 +73,11 @@ export const ANALYTICS_METRIC_DEFINITIONS: readonly AnalyticsMetricDefinition[] 
   },
   {
     key: 'invoiced_revenue',
-    label: 'CA facturé',
-    source: 'invoices',
-    businessDate: 'invoice_date',
-    available: false,
-    note: 'Bloqué tant que la source de vérité factures Abby / Phase 5 n’est pas intégrée.',
+    label: 'Facturé suivi (Abby)',
+    source: 'billing_items.expected_amount_cents',
+    businessDate: 'billing_items.invoiced_at',
+    available: true,
+    note: 'Factures Abby enregistrées dans le suivi Manager ; aucune déduction d’encaissement.',
   },
   {
     key: 'cash_collected',
@@ -100,8 +100,8 @@ export const ANALYTICS_METRIC_DEFINITIONS: readonly AnalyticsMetricDefinition[] 
     label: 'Dépenses',
     source: 'expenses',
     businessDate: 'expense_date',
-    available: false,
-    note: 'Bloqué tant que la source Dépenses de la Phase 5 n’est pas intégrée.',
+    available: true,
+    note: 'Dépenses enregistrées hors annulations, selon leur date de dépense ; pas uniquement les paiements.',
   },
   {
     key: 'gifted_value',

@@ -1,20 +1,25 @@
-import { WorkflowDashboard } from './workflow/WorkflowDashboard';
 import { DemoPanel } from './workflow/DemoPanel';
 import { useEffect, useState } from 'react';
 import type { BootstrapState, DisplayDensity, ThemeName } from '../shared/contracts';
 import type { SearchResult } from '../shared/crm';
 import { BusinessBackupsPage } from './backups/BusinessBackupsPage';
-import { StatisticsPage } from './analytics/StatisticsPage';
+import { BillingPage } from './billing/BillingPage';
+import { ExpensesPage } from './expenses/ExpensesPage';
+import { DocumentsPage } from './documents/DocumentsPage';
+import { DirectoryPage, type DirectorySearchTarget } from './directory/DirectoryPage';
 import { CatalogPage } from './commercial/CatalogPage';
 import { QuotesPage } from './commercial/QuotesPage';
 import { ClientsPage } from './crm/ClientsPage';
 import { GlobalSearch } from './crm/GlobalSearch';
+import { HomeDashboard } from './home/HomeDashboard';
 import { ProspectsPage } from './crm/ProspectsPage';
 import { ProspectReferenceWindow } from './crm/ProspectReferenceWindow';
-import { DashboardOperationsWatch } from './operations/DashboardOperationsWatch';
 import { OperationsPage, type OperationsSearchTarget } from './operations/OperationsPage';
+import { OperationIcon } from './operations/OperationIcon';
 import { ProjectsPage } from './projects/ProjectsPage';
 import { AtoumWebLibraryPage } from './referentials/AtoumWebLibraryPage';
+import { BridgeSitesPage } from './bridge/BridgeSitesPage';
+import { StatisticsPage } from './statistics/StatisticsPage';
 import { GlobalTimer } from './time/GlobalTimer';
 import { TimePage } from './time/TimePage';
 
@@ -31,6 +36,7 @@ const NAV_ITEMS = [
   'Dépenses',
   'Documents & Contrats',
   'Bibliothèque AtoumWeb',
+  'Sites',
   'Sauvegardes',
   'Annuaire',
   'Statistiques',
@@ -38,6 +44,8 @@ const NAV_ITEMS = [
 ] as const;
 
 type PageName = (typeof NAV_ITEMS)[number];
+type ProspectPipelineFilter = 'all' | 'relaunch' | 'overdue';
+type MessageAction = { message: string; run: () => void };
 
 const PAGE_HINTS: Record<PageName, string> = {
   Accueil: 'Vue synthétique des actions, alertes et indicateurs AtoumWeb.',
@@ -48,13 +56,14 @@ const PAGE_HINTS: Record<PageName, string> = {
   Projets: 'Lots, modules, tâches, ressources et avancement.',
   'Interventions & Maintenance': 'Demandes, interventions, maintenance et packs d’heures.',
   'Gestion des temps': 'Analyse du temps réel par client, projet et activité.',
-  Facturation: 'Éléments à facturer et suivi des factures Abby.',
-  Dépenses: 'Abonnements, dépenses et échéances AtoumWeb.',
+  Facturation: 'Éléments à facturer et archivage des PDF de factures Abby.',
+  Dépenses: 'Frais AtoumWeb, dépenses clients/projets, abonnements et justificatifs.',
   'Documents & Contrats': 'Modèles, contrats, avenants, rapports et PDF.',
   'Bibliothèque AtoumWeb': 'Composants et références techniques réutilisables.',
+  Sites: 'Copies techniques, pages et snapshots collectés par AtoumWeb Bridge.',
   Sauvegardes: 'Traçabilité des sauvegardes serveur, locales et externes.',
-  Annuaire: 'Fournisseurs, partenaires et contacts professionnels.',
-  Statistiques: 'Commercial, temps, rentabilité, clients et prestations.',
+  Annuaire: 'Organisations, contacts professionnels et relations CRM.',
+  Statistiques: 'Commercial, projets, temps, clients et repères financiers.',
   Réglages: 'Identité, apparence, stockage, modèles et préférences.',
 };
 
@@ -84,16 +93,78 @@ function App() {
   const [activePage, setActivePage] = useState<PageName>('Accueil');
   const [theme, setTheme] = useState<ThemeName>('atoumweb');
   const [displayDensity, setDisplayDensity] = useState<DisplayDensity>('comfort');
+  const [showHoverHelp, setShowHoverHelp] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [libraryHeaderCollapsed, setLibraryHeaderCollapsed] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [messageAction, setMessageAction] = useState<MessageAction | null>(null);
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [crmTarget,setCrmTarget] = useState<string|null>(null);
+  const [prospectViewTarget, setProspectViewTarget] = useState<'directory' | 'pipeline' | 'history'>('directory');
+  const [prospectPipelineFilter, setProspectPipelineFilter] = useState<ProspectPipelineFilter>('all');
   const [quoteTarget,setQuoteTarget] = useState<string|null>(null);
+  const [documentTarget, setDocumentTarget] = useState<string | null>(null);
+  const [directoryTarget, setDirectoryTarget] = useState<DirectorySearchTarget | null>(null);
   useEffect(()=>{const open=(event:Event)=>openSearchResult((event as CustomEvent<SearchResult>).detail);window.addEventListener('atoumweb:navigate',open);return()=>window.removeEventListener('atoumweb:navigate',open);},[]);
   useEffect(() => { const open = (event: Event) => setActivePage((event as CustomEvent<PageName>).detail); window.addEventListener('atoumweb:open-page', open); return () => window.removeEventListener('atoumweb:open-page', open); }, []);
+  useEffect(() => {
+    const open = (event: Event) => {
+      const detail = (event as CustomEvent<
+        | 'directory'
+        | 'pipeline'
+        | 'history'
+        | { view: 'directory' | 'pipeline' | 'history'; pipelineFilter?: ProspectPipelineFilter }
+      >).detail;
+      const view = typeof detail === 'string' ? detail : detail.view;
+      const pipelineFilter = typeof detail === 'string' ? 'all' : detail.pipelineFilter ?? 'all';
+      setProspectViewTarget(view);
+      setProspectPipelineFilter(view === 'pipeline' ? pipelineFilter : 'all');
+      setCrmTarget(null);
+      setActivePage('Prospects');
+    };
+    window.addEventListener('atoumweb:open-prospects-view', open);
+    return () => window.removeEventListener('atoumweb:open-prospects-view', open);
+  }, []);
+  useEffect(() => {
+    const openConclusion = (event: Event) => {
+      const interventionId = (event as CustomEvent<{ interventionId?: string }>).detail?.interventionId;
+      if (!interventionId) return;
+      setOperationsSearchTarget({ entityType: 'intervention', entityId: interventionId, focus: 'conclusion' });
+      setActivePage('Interventions & Maintenance');
+    };
+    window.addEventListener('atoumweb:open-intervention-conclusion', openConclusion);
+    return () => window.removeEventListener('atoumweb:open-intervention-conclusion', openConclusion);
+  }, []);
+  useEffect(() => {
+    const collapse = (event: Event) => setSidebarCollapsed(Boolean((event as CustomEvent<boolean>).detail));
+    window.addEventListener('atoumweb:sidebar-collapse', collapse);
+    return () => window.removeEventListener('atoumweb:sidebar-collapse', collapse);
+  }, []);
   const [projectSearchTarget, setProjectSearchTarget] = useState<string | null>(null);
   const [operationsSearchTarget, setOperationsSearchTarget] = useState<OperationsSearchTarget | null>(null);
   const [librarySearchTarget, setLibrarySearchTarget] = useState<string | null>(null);
   const [backupSearchTarget, setBackupSearchTarget] = useState<string | null>(null);
+
+  function showMessage(nextMessage: string, action?: () => void): void {
+    setMessage(nextMessage);
+    setMessageAction(action ? { message: nextMessage, run: action } : null);
+  }
+
+  function closeMessage(): void {
+    setMessage(null);
+    setMessageAction(null);
+  }
+
+  useEffect(() => {
+    const openLibraryItem = (event: Event) => {
+      const itemId = (event as CustomEvent<string>).detail;
+      if (!itemId) return;
+      setLibrarySearchTarget(itemId);
+      setActivePage('Bibliothèque AtoumWeb');
+    };
+    window.addEventListener('atoumweb:open-library-item', openLibraryItem);
+    return () => window.removeEventListener('atoumweb:open-library-item', openLibraryItem);
+  }, []);
 
   useEffect(() => {
     window.atoumweb.app.getBootstrap()
@@ -101,6 +172,7 @@ function App() {
         setBootstrap(state);
         setTheme(state.theme);
         setDisplayDensity(state.displayDensity);
+        setShowHoverHelp(state.showHoverHelp);
         applyTheme(state.theme);
         applyDensity(state.displayDensity);
       })
@@ -121,6 +193,12 @@ function App() {
     setDisplayDensity(savedDensity);
     applyDensity(savedDensity);
     setMessage(`Affichage « ${DENSITIES.find((item) => item.id === savedDensity)?.label ?? savedDensity} » appliqué.`);
+  }
+
+  async function updateShowHoverHelp(enabled: boolean): Promise<void> {
+    const saved = await window.atoumweb.settings.setShowHoverHelp(enabled);
+    setShowHoverHelp(saved);
+    setMessage(saved ? 'Aides contextuelles activées.' : 'Aides contextuelles masquées.');
   }
 
   async function chooseWorkspace(): Promise<void> {
@@ -153,6 +231,8 @@ function App() {
     if (page === 'Projets') setProjectSearchTarget(null);
     if (page === 'Bibliothèque AtoumWeb') setLibrarySearchTarget(null);
     if (page === 'Sauvegardes') setBackupSearchTarget(null);
+    if (page === 'Documents & Contrats') setDocumentTarget(null);
+    if (page === 'Annuaire') setDirectoryTarget(null);
     setActivePage(page);
   }
 
@@ -163,7 +243,7 @@ function App() {
 
   function openSearchResult(result: SearchResult): void {
     switch (result.entityType) {
-      case 'prospect': setCrmTarget(result.entityId); setActivePage('Prospects'); break;
+      case 'prospect': setProspectViewTarget('directory'); setCrmTarget(result.entityId); setActivePage('Prospects'); break;
       case 'catalog': setActivePage('Offres & Tarifs'); break;
       case 'quote': setQuoteTarget(result.entityId); setActivePage('Devis'); break;
       case 'project':
@@ -185,10 +265,13 @@ function App() {
         openOperationsTarget({ entityType: result.entityType, entityId: result.entityId });
         break;
       case 'client': setCrmTarget(result.entityId); setActivePage('Clients'); break;
-      case 'client_document': setCrmTarget(result.parentEntityId??result.entityId); setActivePage('Clients'); break;
+      case 'client_document': setDocumentTarget(result.entityId); setActivePage('Documents & Contrats'); break;
 
       case 'organization':
       case 'contact':
+        setDirectoryTarget({ entityType: result.entityType, entityId: result.entityId });
+        setActivePage('Annuaire');
+        break;
       default: setActivePage('Clients'); break;
     }
     setMessage(`${result.title} trouvé dans la recherche globale.`);
@@ -207,7 +290,7 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${showHoverHelp ? '' : 'help-disabled'}`}>
       <aside className="sidebar">
         <div className="brand-block"><div className="brand-mark">AW</div><div><strong>AtoumWeb</strong><span>Manager</span></div></div>
         <nav className="navigation" aria-label="Navigation principale">
@@ -217,92 +300,103 @@ function App() {
       </aside>
 
       <main className="main-area">
-        <header className="topbar">
-          <GlobalSearch onOpen={openSearchResult} />
-          <GlobalTimer onMessage={setMessage} />
+        <header className={/([\\/])Validation-MSI$/i.test(bootstrap.workspacePath)?'topbar is-development':'topbar'}>
+          <div className="topbar-left">
+            <button
+              className="sidebar-toggle"
+              type="button"
+              title={sidebarCollapsed ? 'Afficher le menu' : 'Masquer le menu'}
+              aria-label={sidebarCollapsed ? 'Afficher le menu' : 'Masquer le menu'}
+              aria-pressed={sidebarCollapsed}
+              onClick={() => setSidebarCollapsed((value) => !value)}
+            >{sidebarCollapsed ? '☰' : '‹'}</button>
+            <GlobalSearch onOpen={openSearchResult} />
+            {activePage === 'Bibliothèque AtoumWeb' && <button
+              className="sidebar-toggle library-header-topbar-toggle"
+              type="button"
+              title={libraryHeaderCollapsed ? 'Afficher le bandeau de la Bibliothèque' : 'Masquer le bandeau de la Bibliothèque'}
+              aria-label={libraryHeaderCollapsed ? 'Afficher le bandeau de la Bibliothèque' : 'Masquer le bandeau de la Bibliothèque'}
+              aria-pressed={libraryHeaderCollapsed}
+              onClick={() => setLibraryHeaderCollapsed((value) => !value)}
+            >
+              <OperationIcon name={libraryHeaderCollapsed ? 'chevron-down' : 'chevron-up'} size={20} />
+            </button>}
+          </div>
+          <div className="topbar-right">
+            <GlobalTimer onMessage={setMessage} />
+            <GlobalClock />
+          </div>
+        {/([\\/])Validation-MSI$/i.test(bootstrap.workspacePath)&&<div role="status" className="development-environment-banner">DÉVELOPPEMENT — dossiers TEST — aucune valeur contractuelle réelle</div>}
         </header>
 
-        <section className="content-area">
-          <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1>{activePage === 'Prospects' ? 'Prospection' : activePage}</h1><p>{PAGE_HINTS[activePage]}</p></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>
-          {message && <div className="notice" role="status"><span>{message}</span><button type="button" onClick={() => setMessage(null)}>×</button></div>}
+        <section className={`content-area ${activePage === 'Accueil' ? 'home-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' || activePage === 'Sites' ? 'workspace-content' : ''} ${activePage === 'Projets' ? 'projects-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' ? 'library-workspace-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' && libraryHeaderCollapsed ? 'library-header-collapsed' : ''}`}>
+          {activePage !== 'Accueil' && <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1>{activePage === 'Prospects' ? 'Prospection' : activePage}</h1><p>{PAGE_HINTS[activePage]}</p></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>}
+          {message && <div className={`notice ${messageAction?.message === message ? 'is-actionable' : ''}`} role="status">
+            {messageAction?.message === message
+              ? <button className="notice-action" type="button" onClick={messageAction.run}><span>{message}</span><small>Ouvrir dans l’Explorateur</small></button>
+              : <span>{message}</span>}
+            <button className="notice-close" type="button" aria-label="Fermer la notification" onClick={closeMessage}>×</button>
+          </div>}
 
-          {activePage === 'Accueil' && <WorkflowDashboard />}
+          {activePage === 'Accueil' && <HomeDashboard onMessage={setMessage} />}
           {activePage === 'Réglages' && <DemoPanel />}
-          {activePage === 'Accueil' && <Dashboard bootstrap={bootstrap} onOpenOperations={openOperationsTarget} onMessage={setMessage} />}
-          {activePage === 'Prospects' && <ProspectsPage key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
+          {activePage === 'Prospects' && <ProspectsPage key={`${crmTarget ?? 'none'}:${prospectViewTarget}:${prospectPipelineFilter}`} initialId={crmTarget} initialView={prospectViewTarget} initialPipelineFilter={prospectPipelineFilter} onMessage={setMessage} />}
           {activePage === 'Clients' && <ClientsPage key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
           {activePage === 'Offres & Tarifs' && <CatalogPage onMessage={setMessage} />}
           {activePage === 'Devis' && <QuotesPage key={quoteTarget} initialId={quoteTarget} onMessage={setMessage} />}
-          {activePage === 'Projets' && <ProjectsPage onMessage={setMessage} initialProjectId={projectSearchTarget} />}
+          {activePage === 'Projets' && <ProjectsPage onMessage={showMessage} initialProjectId={projectSearchTarget} showHoverHelp={showHoverHelp} />}
           {activePage === 'Interventions & Maintenance' && <OperationsPage onMessage={setMessage} initialTarget={operationsSearchTarget} />}
           {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}
-          {activePage === 'Bibliothèque AtoumWeb' && <AtoumWebLibraryPage onMessage={setMessage} initialItemId={librarySearchTarget} />}
+          {activePage === 'Facturation' && <BillingPage onMessage={setMessage} />}
+          {activePage === 'Dépenses' && <ExpensesPage onMessage={setMessage} />}
+          {activePage === 'Documents & Contrats' && <DocumentsPage onMessage={setMessage} initialDocumentId={documentTarget} />}
+          {activePage === 'Bibliothèque AtoumWeb' && <AtoumWebLibraryPage
+            onMessage={setMessage}
+            initialItemId={librarySearchTarget}
+            headerCollapsed={libraryHeaderCollapsed}
+          />}
+          {activePage === 'Sites' && <BridgeSitesPage onMessage={setMessage} />}
           {activePage === 'Sauvegardes' && <BusinessBackupsPage onMessage={setMessage} initialRecordId={backupSearchTarget} />}
+          {activePage === 'Annuaire' && <DirectoryPage onMessage={setMessage} initialTarget={directoryTarget} />}
           {activePage === 'Statistiques' && <StatisticsPage onMessage={setMessage} />}
-          {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} displayDensity={displayDensity} onThemeChange={updateTheme} onDensityChange={updateDisplayDensity} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
-          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Sauvegardes' && activePage !== 'Statistiques' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
+          {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} displayDensity={displayDensity} showHoverHelp={showHoverHelp} onThemeChange={updateTheme} onDensityChange={updateDisplayDensity} onShowHoverHelpChange={updateShowHoverHelp} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
+          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Facturation' && activePage !== 'Dépenses' && activePage !== 'Documents & Contrats' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Sites' && activePage !== 'Sauvegardes' && activePage !== 'Annuaire' && activePage !== 'Statistiques' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
         </section>
       </main>
     </div>
   );
 }
 
-function Dashboard({ bootstrap, onOpenOperations, onMessage }: {
-  bootstrap: BootstrapState;
-  onOpenOperations: (target: OperationsSearchTarget) => void;
-  onMessage: (message: string) => void;
-}) {
-  const [prospectCount, setProspectCount] = useState<number | null>(null);
-  const [clientCount, setClientCount] = useState<number | null>(null);
-  const [projectCount, setProjectCount] = useState<number | null>(null);
-  const [monthTime, setMonthTime] = useState<number | null>(null);
+
+function GlobalClock() {
+  const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-    void Promise.all([
-      window.atoumweb.crm.prospects.list(),
-      window.atoumweb.crm.clients.list(),
-      window.atoumweb.projects.projects.list(),
-      window.atoumweb.time.summary({ from: start.toISOString(), to: end.toISOString() }),
-    ]).then(([prospects, clients, projects, timeSummary]) => {
-      setProspectCount(prospects.filter((prospect) => prospect.stage !== 'won' && prospect.stage !== 'lost').length);
-      setClientCount(clients.length);
-      setProjectCount(projects.filter((project) => !['completed', 'archived'].includes(project.status)).length);
-      setMonthTime(timeSummary.totalSeconds);
-    });
+    const timer = window.setInterval(() => setNow(new Date()), 30_000);
+    return () => window.clearInterval(timer);
   }, []);
 
-  return (
-    <>
-      <div className="kpi-grid">
-        <KpiCard label="Prospects actifs" value={prospectCount == null ? '…' : String(prospectCount)} detail="Pipeline commercial" />
-        <KpiCard label="Projets en cours" value={projectCount == null ? '…' : String(projectCount)} detail={`${clientCount ?? 0} client${clientCount === 1 ? '' : 's'} enregistré${clientCount === 1 ? '' : 's'}`} />
-        <KpiCard label="CA encaissé ce mois" value="0 €" detail="Suivi Abby à venir" />
-        <KpiCard label="Temps travaillé ce mois" value={monthTime == null ? '…' : formatDashboardTime(monthTime)} detail="Calculé depuis les sessions" />
-      </div>
-      <div className="dashboard-grid">
-        <DashboardOperationsWatch onOpen={onOpenOperations} onMessage={onMessage} />
-        <article className="panel panel-large"><div className="panel-title"><div><span className="eyebrow">Socle métier</span><h2>CRM + Commercial + Projets + Opérations</h2></div><span className="status-pill">Phase 4 en cours</span></div><div className="foundation-list"><FoundationRow label="Workspace local" value={bootstrap.workspacePath} /><FoundationRow label="Base SQLite" value={bootstrap.databasePath} /><FoundationRow label="CRM" value="Organisations · Contacts · Prospects · Clients" /><FoundationRow label="Commercial" value="Catalogue · Devis · Snapshots" /><FoundationRow label="Production" value="Projets · Modèles · Plans · Ressources · Temps" /><FoundationRow label="Opérations" value="Demandes · Interventions · Maintenance · Packs d’heures" /></div></article>
-        <article className="panel"><span className="eyebrow">Aujourd’hui</span><h2>{prospectCount ? `${prospectCount} prospect${prospectCount > 1 ? 's' : ''} actif${prospectCount > 1 ? 's' : ''}` : 'Pipeline à jour'}</h2><p className="muted">Les actions commerciales et le travail projet alimentent progressivement cette vue.</p></article>
-        <article className="panel"><span className="eyebrow">Production</span><h2>{projectCount ?? 0} projet{projectCount === 1 ? '' : 's'} actif{projectCount === 1 ? '' : 's'}</h2><p className="muted">Le temps réel est maintenant issu exclusivement des sessions du timer et des saisies manuelles.</p></article>
-      </div>
-    </>
-  );
+  const hour = now.getHours();
+  const isDay = hour >= 7 && hour < 20;
+  const greeting = hour < 18 ? 'Bonjour !' : 'Bonsoir !';
+  const time = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const date = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+  return <div className="global-clock" title={isDay ? 'Période de jour' : 'Période de nuit'} aria-label={`${greeting} ${date}, ${time}`}>
+    <span className="global-clock-icon"><OperationIcon name={isDay ? 'sun' : 'moon'} size={20} /></span>
+    <span className="global-clock-copy"><strong>{greeting}</strong><small>{date}</small></span>
+    <b>{time}</b>
+  </div>;
 }
 
-function formatDashboardTime(seconds: number): string {
-  const hours = seconds / 3600;
-  return hours < 10 ? `${hours.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} h` : `${Math.round(hours)} h`;
-}
-
-function SettingsPage({ bootstrap, theme, displayDensity, onThemeChange, onDensityChange, onChooseWorkspace, onCreateBackup, onRestoreBackup }: {
+function SettingsPage({ bootstrap, theme, displayDensity, showHoverHelp, onThemeChange, onDensityChange, onShowHoverHelpChange, onChooseWorkspace, onCreateBackup, onRestoreBackup }: {
   bootstrap: BootstrapState;
   theme: ThemeName;
   displayDensity: DisplayDensity;
+  showHoverHelp: boolean;
   onThemeChange: (theme: ThemeName) => Promise<void>;
   onDensityChange: (density: DisplayDensity) => Promise<void>;
+  onShowHoverHelpChange: (enabled: boolean) => Promise<void>;
   onChooseWorkspace: () => Promise<void>;
   onCreateBackup: () => Promise<void>;
   onRestoreBackup: () => Promise<void>;
@@ -316,6 +410,17 @@ function SettingsPage({ bootstrap, theme, displayDensity, onThemeChange, onDensi
           <div><span className="eyebrow">Lisibilité</span><h2>Densité d’affichage</h2><p className="muted">Adapte la taille des textes, les espacements et les zones cliquables à ton confort de travail.</p></div>
           <div className="density-grid">{DENSITIES.map((item) => <button className={`density-card ${displayDensity === item.id ? 'selected' : ''}`} key={item.id} type="button" onClick={() => void onDensityChange(item.id)}><strong>{item.label}</strong><span>{item.description}</span></button>)}</div>
         </div>
+        <div className="settings-help-row">
+          <div>
+            <span className="eyebrow">Aide contextuelle</span>
+            <h2>Conseils au survol</h2>
+            <p className="muted">Affiche de courtes explications sur les champs de production quand tu passes la souris dessus.</p>
+          </div>
+          <label className="settings-switch">
+            <input type="checkbox" checked={showHoverHelp} onChange={(event) => void onShowHoverHelpChange(event.target.checked)} />
+            <span>{showHoverHelp ? 'Activée' : 'Désactivée'}</span>
+          </label>
+        </div>
       </article>
       <article className="panel"><span className="eyebrow">Stockage</span><h2>Workspace local</h2><p className="path-value">{bootstrap.workspacePath}</p><button className="primary-button" type="button" onClick={() => void onChooseWorkspace()}>Choisir un autre dossier</button></article>
       <article className="panel"><span className="eyebrow">Sécurité</span><h2>Sauvegarde de la base</h2><p className="muted">Une sauvegarde automatique est créée chaque jour. Une copie de sécurité est aussi créée avant toute restauration.</p><div className="button-row"><button className="secondary-button" type="button" onClick={() => void onCreateBackup()}>Sauvegarder maintenant</button><button className="secondary-button" type="button" onClick={() => void onRestoreBackup()}>Restaurer une sauvegarde</button></div></article>
@@ -325,14 +430,6 @@ function SettingsPage({ bootstrap, theme, displayDensity, onThemeChange, onDensi
 
 function ModulePlaceholder({ page }: { page: PageName }) {
   return <article className="panel empty-module"><span className="module-number">V1</span><h2>{page}</h2><p>{PAGE_HINTS[page]}</p><span className="status-pill">Conception validée · Développement à venir</span></article>;
-}
-
-function KpiCard({ label, value, detail }: { label: string; value: string; detail: string }) {
-  return <article className="kpi-card"><span>{label}</span><strong>{value}</strong><small>{detail}</small></article>;
-}
-
-function FoundationRow({ label, value }: { label: string; value: string }) {
-  return <div className="foundation-row"><span>{label}</span><strong>{value}</strong></div>;
 }
 
 export default App;

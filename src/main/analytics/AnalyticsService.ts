@@ -256,7 +256,18 @@ export class AnalyticsService {
        project_estimates AS (
          SELECT pn.project_id, SUM(COALESCE(pn.estimated_minutes,0) * 60) AS estimated_seconds
          FROM project_nodes pn
-         WHERE NOT EXISTS (SELECT 1 FROM project_nodes child WHERE child.parent_id = pn.id)
+         WHERE pn.archived_at IS NULL AND (
+           (EXISTS (SELECT 1 FROM project_action_instances a WHERE a.project_id=pn.project_id)
+             AND pn.node_type IN ('task','checklist'))
+           OR (NOT EXISTS (SELECT 1 FROM project_action_instances a WHERE a.project_id=pn.project_id)
+             AND NOT EXISTS (SELECT 1 FROM project_nodes child WHERE child.parent_id=pn.id AND child.archived_at IS NULL))
+         )
+         AND NOT EXISTS (
+           SELECT 1 FROM project_action_instances a JOIN project_nodes n ON n.id=a.project_node_id
+           WHERE a.project_id=pn.project_id AND n.archived_at IS NULL
+             AND json_extract(a.initial_snapshot_json,'$.estimateRequired')=1
+             AND json_extract(a.initial_snapshot_json,'$.action') IS NOT NULL AND n.estimated_minutes IS NULL
+         )
          GROUP BY pn.project_id
        ),
        completed AS (
@@ -509,9 +520,17 @@ export class AnalyticsService {
         return projects + interventions;
       }
       case 'invoiced_revenue':
+        return this.sum(
+          `SELECT COALESCE(SUM(expected_amount_cents),0) AS total FROM billing_items
+           WHERE status='invoiced' AND date(invoiced_at) BETWEEN date(?) AND date(?)`, [from,to],
+        );
+      case 'expenses':
+        return this.sum(
+          `SELECT COALESCE(SUM(amount_cents),0) AS total FROM expenses
+           WHERE status<>'cancelled' AND date(expense_date) BETWEEN date(?) AND date(?)`, [from,to],
+        );
       case 'cash_collected':
       case 'outstanding_revenue':
-      case 'expenses':
         return 0;
       default: {
         const exhaustive: never = metric;

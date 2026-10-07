@@ -1,3 +1,4 @@
+import {ProjectContributionTargetService} from '../projects/ProjectContributionTargetService';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import {
@@ -23,6 +24,7 @@ export class TimeSwitchService {
   switchTo(input: StartTimeSessionInput): TimeSession {
     if (!TIME_CATEGORIES.includes(input.category)) throw new Error('Catégorie de temps invalide.');
     const context = this.resolveContext(input.projectId ?? null, input.projectNodeId ?? null, input.interventionId ?? null);
+    const businessCategory=this.time.resolveBusinessCategory(input,context.projectNodeId);
     const current = this.time.active();
     if (!current) return this.time.start(input);
 
@@ -47,8 +49,8 @@ export class TimeSwitchService {
       );
       this.database.run(
         `INSERT INTO time_sessions
-         (id,client_account_id,project_id,project_node_id,intervention_id,category,activity_label,started_at,ended_at,billable,source,note,created_at,updated_at)
-         VALUES (?,?,?,?,?,?,?,?,NULL,?,'timer',?,?,?)`,
+         (id,client_account_id,project_id,project_node_id,intervention_id,category,activity_label,started_at,ended_at,billable,source,note,created_at,updated_at,business_category)
+         VALUES (?,?,?,?,?,?,?,?,NULL,?,'timer',?,?,?,?)`,
         [
           id,
           context.clientAccountId,
@@ -62,6 +64,7 @@ export class TimeSwitchService {
           clean(input.note),
           nowIso,
           nowIso,
+          businessCategory,
         ],
       );
       this.database.exec('COMMIT;');
@@ -98,6 +101,7 @@ export class TimeSwitchService {
     }
 
     if (resolvedNodeId) {
+      new ProjectContributionTargetService(this.database).assertAction(resolvedNodeId);
       const node = this.database.get<{ project_id: string }>('SELECT project_id FROM project_nodes WHERE id=?', [resolvedNodeId]);
       if (!node) throw new Error('Tâche de projet introuvable.');
       if (resolvedProjectId && node.project_id !== resolvedProjectId) throw new Error('La tâche n’appartient pas au projet sélectionné.');

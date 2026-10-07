@@ -1,0 +1,699 @@
+import { createHash } from 'node:crypto';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
+import { applyPendingMigrations } from '../database/migrations';
+import { writeZipArchive, type ZipEntryInput } from '../referentials/ZipArchive';
+import { createWorkspacePaths, ensureWorkspace, type WorkspacePaths } from '../workspace';
+import { calculateBridgePackageFingerprint } from './BridgeSnapshotPackage';
+import { BridgeSnapshotService } from './BridgeSnapshotService';
+
+let database: NodeSqliteAdapter;
+let workspaceRoot: string;
+let workspace: WorkspacePaths;
+let service: BridgeSnapshotService;
+
+beforeEach(() => {
+  workspaceRoot = mkdtempSync(join(tmpdir(), 'atoumweb-bridge-manager-'));
+  workspace = ensureWorkspace(workspaceRoot);
+  database = new NodeSqliteAdapter(':memory:');
+  database.exec('PRAGMA foreign_keys = ON;');
+  applyPendingMigrations(database);
+  service = new BridgeSnapshotService(database, workspace);
+});
+
+afterEach(() => {
+  database.close();
+  rmSync(workspaceRoot, { recursive: true, force: true });
+});
+
+describe('BridgeSnapshotService', () => {
+  it('valide, importe et relit un Snapshot V1 sans dupliquer un réimport identique', () => {
+    const packagePath = buildSnapshot(join(workspaceRoot, 'snapshot-v1.zip'), 'Accueil');
+
+    const inspection = service.inspectPackage(packagePath);
+    expect(inspection.contract).toBe('atoumweb-bridge-snapshot');
+    expect(inspection.schemaVersion).toBe('1.0.0');
+    expect(inspection.counts.pages).toBe(1);
+    expect(inspection.counts.nodes).toBe(1);
+    expect(inspection.checksumsVerified).toBe(true);
+
+    const imported = service.importPackage(packagePath);
+    expect(imported.alreadyImported).toBe(false);
+    expect(imported.site.snapshotCount).toBe(1);
+    expect(imported.snapshot.counts.pages).toBe(1);
+
+    const sites = service.listSites();
+    expect(sites).toHaveLength(1);
+    const site = service.getSite(sites[0].id);
+    expect(site.snapshots).toHaveLength(1);
+
+    const pages = service.listPages(site.snapshots[0].id);
+    expect(pages).toHaveLength(1);
+    expect(pages[0].title).toBe('Accueil');
+
+    const detail = service.getPage(pages[0].pageSnapshotId);
+    expect(detail.nodes).toHaveLength(1);
+    expect(detail.nodes[0].moduleType).toBe('divi/code');
+
+    const preview = service.getObjectPreview(detail.nodes[0].rawObjectRef!);
+    expect(preview.available).toBe(true);
+    expect(preview.text).toContain('wp:divi/code');
+
+    const modulePreview = service.getModulePreview(detail.page.pageSnapshotId, detail.nodes[0].occurrenceId);
+    expect(modulePreview.html).toContain('Bonjour Bridge');
+    expect(modulePreview.htmlDerivedFromDiviSource).toBe(true);
+    expect(modulePreview.html).not.toContain('<style>');
+    expect(modulePreview.moduleCss).toContain('.atoum-home-blog-v2');
+    expect(modulePreview.pageCss).toBe('');
+    expect(modulePreview.globalCss).toBe('');
+    expect(modulePreview.javascript).toBe('');
+    expect(modulePreview.frontendValidated).toBe(false);
+    expect(modulePreview.reuse.status).toBe('ready');
+    expect(modulePreview.reuse.suggestedCategory).toBe('section');
+    expect(modulePreview.reuse.suggestedName).toBe('Section — Home Blog V2');
+
+    const pagePreview = service.getPagePreview(detail.page.pageSnapshotId);
+    expect(pagePreview.renderedModuleCount).toBe(1);
+    expect(pagePreview.totalModuleCount).toBe(1);
+    expect(pagePreview.html).toContain('Bonjour Bridge');
+
+    const diagnostic = service.buildDiagnostic(site.snapshots[0].id);
+    expect(diagnostic.actualCounts).toEqual(expect.objectContaining({
+      contents: 1,
+      nodes: 1,
+      sources: 0,
+      assets: 0,
+      dependencies: 0,
+      relations: 0,
+    }));
+    expect(diagnostic.countChecks).toEqual(expect.objectContaining({
+      contents: true,
+      nodes: true,
+      sources: true,
+      assets: true,
+      dependencies: true,
+      relations: true,
+    }));
+    expect(diagnostic.contentBreakdown).toEqual(expect.objectContaining({
+      total: 1,
+      categories: { pages: 1, posts: 0, diviLibrary: 0, themeBuilder: 0, other: 0 },
+    }));
+
+    const again = service.importPackage(packagePath);
+    expect(again.alreadyImported).toBe(true);
+    expect(service.getSite(sites[0].id).snapshots).toHaveLength(1);
+  });
+
+  it('conserve la siteOccurrenceId observée comme identité logique du nœud', () => {
+    const packagePath = buildSnapshot(join(workspaceRoot, 'snapshot-occurrence-marker.zip'), 'Accueil', {
+      logicalNodeId: 'awocc:11111111-2222-4333-8444-555555555555',
+    });
+
+    const imported = service.importPackage(packagePath);
+    const page = service.listPages(imported.snapshot.id)[0];
+    const detail = service.getPage(page.pageSnapshotId);
+
+    expect(detail.nodes[0].logicalNodeId).toBe('awocc:11111111-2222-4333-8444-555555555555');
+  });
+
+  it('refuse le même snapshot_id si le package a changé', () => {
+    const first = buildSnapshot(join(workspaceRoot, 'snapshot-a.zip'), 'Accueil');
+    const second = buildSnapshot(join(workspaceRoot, 'snapshot-b.zip'), 'Accueil modifié');
+    service.importPackage(first);
+    expect(() => service.importPackage(second)).toThrow(/package différent/i);
+  });
+
+  it('compare deux snapshots du même site sans modifier leur contenu', () => {
+    const firstPath = buildSnapshot(join(workspaceRoot, 'snapshot-diff-a.zip'), 'Accueil', {
+      snapshotId: 'awb-snap:20260924T000000Z:diff-a',
+      pageSnapshotId: 'awb-pagesnap:diff-a',
+      generatedAt: '2026-09-24T00:00:00Z',
+      heading: 'Bonjour Bridge',
+    });
+    const secondPath = buildSnapshot(join(workspaceRoot, 'snapshot-diff-b.zip'), 'Accueil refondue', {
+      snapshotId: 'awb-snap:20260925T000000Z:diff-b',
+      pageSnapshotId: 'awb-pagesnap:diff-b',
+      generatedAt: '2026-09-25T00:00:00Z',
+      heading: 'Bonjour Bridge V2',
+    });
+
+    const first = service.importPackage(firstPath).snapshot;
+    const second = service.importPackage(secondPath).snapshot;
+    const diff = service.compareSnapshots(first.id, second.id);
+
+    expect(diff.siteId).toBe(first.siteId);
+    expect(diff.before.id).toBe(first.id);
+    expect(diff.after.id).toBe(second.id);
+    expect(diff.warnings).toEqual([]);
+    expect(diff.summary).toEqual({ added: 0, removed: 0, changed: 1, technical: 0, unchanged: 0, ignoredInternal: 0 });
+    expect(diff.pages).toHaveLength(1);
+    expect(diff.pages[0]).toMatchObject({
+      sourcePageKey: 'wp-post:10',
+      status: 'changed',
+      titleBefore: 'Accueil',
+      titleAfter: 'Accueil refondue',
+    });
+    expect(diff.pages[0].changes.title).toBe(true);
+    expect(diff.pages[0].changes.rawObject).toBe(true);
+    expect(diff.pages[0].changes.nodes).toBe(true);
+
+    expect(service.listPages(first.id)[0].title).toBe('Accueil');
+    expect(service.listPages(second.id)[0].title).toBe('Accueil refondue');
+  });
+
+  it('refuse de comparer un snapshot avec lui-même', () => {
+    const imported = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-same.zip'), 'Accueil')).snapshot;
+    expect(() => service.compareSnapshots(imported.id, imported.id)).toThrow(/deux snapshots différents/i);
+  });
+
+  it('considère deux scans identiques comme inchangés malgré leurs IDs techniques différents', () => {
+    const first = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-stable-a.zip'), 'Accueil', {
+      snapshotId: 'awb-snap:stable-a',
+      pageSnapshotId: 'awb-pagesnap:stable-a',
+      generatedAt: '2026-09-24T00:00:00Z',
+      occurrenceId: 'occurrence-stable-a',
+      includeVolatileSource: true,
+    })).snapshot;
+    const second = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-stable-b.zip'), 'Accueil', {
+      snapshotId: 'awb-snap:stable-b',
+      pageSnapshotId: 'awb-pagesnap:stable-b',
+      generatedAt: '2026-09-26T11:48:00Z',
+      occurrenceId: 'occurrence-stable-b',
+      includeVolatileSource: true,
+    })).snapshot;
+
+    const diff = service.compareSnapshots(first.id, second.id);
+    expect(diff.summary).toEqual({ added: 0, removed: 0, changed: 0, technical: 0, unchanged: 1, ignoredInternal: 0 });
+    expect(diff.pages[0]).toMatchObject({
+      sourcePageKey: 'wp-post:10',
+      status: 'unchanged',
+      changes: {
+        title: false,
+        status: false,
+        url: false,
+        builder: false,
+        rawObject: false,
+        fingerprints: false,
+        nodes: false,
+        sources: false,
+        assets: false,
+        dependencies: false,
+      },
+    });
+  });
+
+  it('distingue une page supprimée et une page ajoutée entre deux snapshots', () => {
+    const before = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-pages-a.zip'), 'Ancienne page', {
+      snapshotId: 'awb-snap:pages-a',
+      pageSnapshotId: 'awb-pagesnap:pages-a',
+      generatedAt: '2026-09-24T00:00:00Z',
+      sourcePageKey: 'wp-post:10',
+      sourcePostId: 10,
+    })).snapshot;
+    const after = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-pages-b.zip'), 'Nouvelle page', {
+      snapshotId: 'awb-snap:pages-b',
+      pageSnapshotId: 'awb-pagesnap:pages-b',
+      generatedAt: '2026-09-25T00:00:00Z',
+      sourcePageKey: 'wp-post:11',
+      sourcePostId: 11,
+    })).snapshot;
+
+    const diff = service.compareSnapshots(before.id, after.id);
+    expect(diff.summary).toEqual({ added: 1, removed: 1, changed: 0, technical: 0, unchanged: 0, ignoredInternal: 0 });
+    expect(diff.pages).toEqual(expect.arrayContaining([
+      expect.objectContaining({ sourcePageKey: 'wp-post:10', status: 'removed' }),
+      expect.objectContaining({ sourcePageKey: 'wp-post:11', status: 'added' }),
+    ]));
+  });
+
+  it('classe les nouvelles extractions du scanner en écarts techniques si la source brute est identique', () => {
+    const before = service.importPackage(buildSnapshot(join(workspaceRoot, 'scanner-a.zip'), 'Accueil')).snapshot;
+    const after = service.importPackage(buildSnapshot(join(workspaceRoot, 'scanner-b.zip'), 'Accueil', {
+      snapshotId: 'awb-snap:scanner-b', pageSnapshotId: 'awb-pagesnap:scanner-b',
+      bridgeVersion: '0.7.5', nodeLabel: 'Code extrait autrement', includeVolatileSource: true, includeDependency: true,
+    })).snapshot;
+    const original = service.getPage(service.listPages(after.id)[0].pageSnapshotId);
+    const diff = service.compareSnapshots(before.id, after.id);
+    expect(diff.summary).toEqual({ added: 0, removed: 0, changed: 0, technical: 1, unchanged: 0, ignoredInternal: 0 });
+    expect(diff.pages[0]).toMatchObject({ status: 'technical', changes: { nodes: true, sources: true, dependencies: true, rawObject: false } });
+    expect(service.compareSnapshots(after.id, before.id).summary).toEqual(diff.summary);
+    expect(service.getPage(original.page.pageSnapshotId)).toEqual(original);
+  });
+
+  it.each(['source modifiée', 'titre modifié', 'même scanner', 'source absente'])(
+    'ne masque pas un changement ou une preuve insuffisante : %s', (scenario) => {
+      const before = service.importPackage(buildSnapshot(join(workspaceRoot, 'guard-a.zip'), 'Accueil')).snapshot;
+      const after = service.importPackage(buildSnapshot(join(workspaceRoot, 'guard-b.zip'), scenario === 'titre modifié' ? 'Accueil renommée' : 'Accueil', {
+        snapshotId: 'awb-snap:guard-b', pageSnapshotId: 'awb-pagesnap:guard-b',
+        bridgeVersion: scenario === 'même scanner' ? '0.4.2' : '0.7.5',
+        heading: scenario === 'source modifiée' ? 'Nouveau contenu' : undefined,
+        includeDependency: true,
+      })).snapshot;
+      if (scenario === 'source absente') database.run('UPDATE bridge_page_snapshots SET raw_object_ref=NULL WHERE snapshot_id=?', [before.id]);
+      expect(service.compareSnapshots(before.id, after.id).pages[0].status).toBe('changed');
+    },
+  );
+
+  it.each([
+    ['AWB Workbench — Bibliothèque — atoum-mariage-why', 'draft', true],
+    ['AWB Workbench — Bibliothèque — atoum-mariage-why', 'publish', false],
+    ['Présentation du Workbench', 'draft', false],
+  ])('exclut uniquement le brouillon interne : %s / %s', (title, status, ignored) => {
+    const before = service.importPackage(buildSnapshot(join(workspaceRoot, 'workbench-a.zip'), 'Accueil')).snapshot;
+    const after = service.importPackage(buildSnapshot(join(workspaceRoot, 'workbench-b.zip'), title, {
+      snapshotId: 'awb-snap:workbench-b', pageSnapshotId: 'awb-pagesnap:workbench-b',
+      sourcePostId: 3671, sourcePageKey: 'wp-post:3671', pageStatus: status,
+    })).snapshot;
+    const diff = service.compareSnapshots(before.id, after.id);
+    expect(diff.summary.added).toBe(ignored ? 0 : 1);
+    expect(diff.summary.removed).toBe(1);
+    expect(diff.summary.ignoredInternal).toBe(ignored ? 1 : 0);
+    expect(diff.ignoredWorkbenches).toEqual(ignored ? [{ sourcePageKey: 'wp-post:3671', title }] : []);
+    expect(service.listPages(after.id)).toHaveLength(1);
+    const reverse = service.compareSnapshots(after.id, before.id);
+    expect(reverse.summary.removed).toBe(ignored ? 0 : 1);
+    expect(reverse.ignoredWorkbenches).toEqual(diff.ignoredWorkbenches);
+  });
+
+  it('signale qu’un snapshot partiel rend les absences moins fiables', () => {
+    const before = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-partial-a.zip'), 'Accueil', {
+      snapshotId: 'awb-snap:partial-a',
+      pageSnapshotId: 'awb-pagesnap:partial-a',
+      generatedAt: '2026-09-24T00:00:00Z',
+    })).snapshot;
+    const after = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-partial-b.zip'), 'Accueil', {
+      snapshotId: 'awb-snap:partial-b',
+      pageSnapshotId: 'awb-pagesnap:partial-b',
+      generatedAt: '2026-09-25T00:00:00Z',
+      snapshotType: 'partial',
+      coverageMode: 'partial',
+      scanStatus: 'partial_failure',
+    })).snapshot;
+
+    const diff = service.compareSnapshots(before.id, after.id);
+    expect(diff.warnings.length).toBeGreaterThanOrEqual(2);
+    expect(diff.warnings.join(' ')).toMatch(/pas un snapshot complet/i);
+    expect(diff.warnings.join(' ')).toMatch(/couverture pages/i);
+  });
+
+  it('propose une correspondance de nœud sans écrire de logical_node_id', () => {
+    const first = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-node-a.zip'), 'Accueil', {
+      snapshotId: 'awb-snap:node-a',
+      pageSnapshotId: 'awb-pagesnap:node-a',
+      generatedAt: '2026-09-24T00:00:00Z',
+      heading: 'Contenu identique',
+      occurrenceId: 'occurrence-a',
+    })).snapshot;
+    const second = service.importPackage(buildSnapshot(join(workspaceRoot, 'snapshot-node-b.zip'), 'Accueil renommée', {
+      snapshotId: 'awb-snap:node-b',
+      pageSnapshotId: 'awb-pagesnap:node-b',
+      generatedAt: '2026-09-25T00:00:00Z',
+      heading: 'Contenu identique',
+      occurrenceId: 'occurrence-b',
+    })).snapshot;
+
+    const beforePage = service.listPages(first.id)[0];
+    const afterPage = service.listPages(second.id)[0];
+    const review = service.reviewPageNodeMatches(beforePage.pageSnapshotId, afterPage.pageSnapshotId);
+
+    expect(review.sourcePageKey).toBe('wp-post:10');
+    expect(review.candidates).toHaveLength(1);
+    expect(review.candidates[0]).toMatchObject({
+      beforeOccurrenceId: 'occurrence-a',
+      afterOccurrenceId: 'occurrence-b',
+      confidence: 'high',
+    });
+    expect(review.candidates[0].score).toBeGreaterThanOrEqual(82);
+    expect(review.unmatchedBefore).toEqual(['occurrence-a']);
+    expect(review.unmatchedAfter).toEqual(['occurrence-b']);
+    expect(review.decisions).toEqual([]);
+
+    expect(service.getPage(beforePage.pageSnapshotId).nodes[0].logicalNodeId).toBeNull();
+    expect(service.getPage(afterPage.pageSnapshotId).nodes[0].logicalNodeId).toBeNull();
+  });
+
+  it('valide et prolonge une identité Manager sans modifier les snapshots, avec reprise idempotente', () => {
+    const a = importMatchPage('a', 24);
+    const b = importMatchPage('b', 25);
+    const c = importMatchPage('c', 26);
+    const nodesBefore = database.all('SELECT * FROM bridge_nodes ORDER BY id');
+    const diffBefore = service.compareSnapshots(a.snapshotId, b.snapshotId);
+    const input = matchInput(a, b);
+    const review = service.decideNodeMatch(input);
+    expect(review.decisions[0]).toMatchObject({ decision: 'accepted', source: 'manager_human', proposal: { score: expect.any(Number) } });
+    expect(review.unmatchedBefore).toEqual([]);
+    expect(review.unmatchedAfter).toEqual([]);
+    const logicalId = review.decisions[0].logicalNodeId;
+    expect(logicalId).toMatch(/^awnode:/);
+    expect(service.decideNodeMatch(input).decisions).toEqual(review.decisions);
+    expect(service.decideNodeMatch(matchInput(b, c)).decisions[0].logicalNodeId).toBe(logicalId);
+    expect(new BridgeSnapshotService(database, workspace).reviewPageNodeMatches(a.pageSnapshotId, b.pageSnapshotId).decisions).toEqual(review.decisions);
+    expect(database.all('SELECT * FROM bridge_node_logical_assignments')).toHaveLength(3);
+    expect(database.all('SELECT * FROM bridge_nodes ORDER BY id')).toEqual(nodesBefore);
+    expect(service.compareSnapshots(a.snapshotId, b.snapshotId)).toEqual(diffBefore);
+    expect(database.all("SELECT * FROM activity_log WHERE entity_type='bridge_node_match'")).toHaveLength(2);
+  });
+
+  it('mémorise un refus sans identité et refuse de le remplacer silencieusement', () => {
+    const a = importMatchPage('a', 24);
+    const b = importMatchPage('b', 25);
+    const input = { ...matchInput(a, b), decision: 'rejected' as const };
+    const review = service.decideNodeMatch(input);
+    expect(review.decisions[0]).toMatchObject({ decision: 'rejected', logicalNodeId: null });
+    expect(review.unmatchedBefore).toEqual(['node-a']);
+    expect(service.decideNodeMatch(input).decisions).toEqual(review.decisions);
+    expect(() => service.decideNodeMatch(matchInput(a, b))).toThrow(/décision définitive/);
+    expect(database.all('SELECT * FROM bridge_logical_nodes')).toEqual([]);
+    expect(database.all('SELECT * FROM bridge_node_logical_assignments')).toEqual([]);
+  });
+
+  it('refuse deux sources vers une cible même pour des propositions ambiguës', () => {
+    const a = importMatchPage('a', 24, true);
+    const b = importMatchPage('b', 25);
+    const review = service.reviewPageNodeMatches(a.pageSnapshotId, b.pageSnapshotId);
+    expect(review.candidates).toHaveLength(2);
+    expect(review.candidates.every((item) => item.confidence === 'low')).toBe(true);
+    service.decideNodeMatch(matchInput(a, b));
+    expect(() => service.decideNodeMatch({ ...matchInput(a, b), beforeOccurrenceId: 'node-a-copy' })).toThrow(/Collision/);
+    expect(database.all('SELECT * FROM bridge_node_match_decisions')).toHaveLength(1);
+    expect(database.all('SELECT * FROM bridge_node_logical_assignments')).toHaveLength(2);
+  });
+
+  it('refuse un couple inventé, une décision inconnue et une chronologie inversée', () => {
+    const a = importMatchPage('a', 24);
+    const b = importMatchPage('b', 25);
+    expect(() => service.decideNodeMatch({ ...matchInput(a, b), afterOccurrenceId: 'missing' })).toThrow(/propositions/);
+    expect(() => service.decideNodeMatch({ ...matchInput(a, b), decision: 'automatic' as 'accepted' })).toThrow(/invalide/);
+    expect(() => service.decideNodeMatch(matchInput(b, a))).toThrow(/chronologique/);
+    expect(database.all('SELECT * FROM bridge_node_match_decisions')).toEqual([]);
+  });
+
+  it('annule toute attribution si le journal échoue pendant la décision', () => {
+    const a = importMatchPage('a', 24);
+    const b = importMatchPage('b', 25);
+    database.exec("CREATE TRIGGER fail_match_log BEFORE INSERT ON activity_log WHEN NEW.entity_type='bridge_node_match' BEGIN SELECT RAISE(ABORT, 'test journal indisponible'); END;");
+    expect(() => service.decideNodeMatch(matchInput(a, b))).toThrow(/journal indisponible/);
+    for (const table of ['bridge_logical_nodes', 'bridge_node_match_decisions', 'bridge_node_logical_assignments']) {
+      expect(database.all(`SELECT * FROM ${table}`)).toEqual([]);
+    }
+    database.exec('DROP TRIGGER fail_match_log;');
+    expect(service.decideNodeMatch(matchInput(a, b)).decisions).toHaveLength(1);
+  });
+
+  it('ne contourne pas un refus par une chaîne de correspondances', () => {
+    const a = importMatchPage('a', 24);
+    const b = importMatchPage('b', 25);
+    const c = importMatchPage('c', 26);
+    service.decideNodeMatch({ ...matchInput(a, c), decision: 'rejected' });
+    service.decideNodeMatch(matchInput(a, b));
+    expect(() => service.decideNodeMatch(matchInput(b, c))).toThrow(/refus humain antérieur/);
+    expect(database.all('SELECT * FROM bridge_node_logical_assignments')).toHaveLength(2);
+  });
+
+  it('réexamine une décision, conserve son historique et autorise une nouvelle décision', () => {
+    const a = importMatchPage('a', 24);
+    const b = importMatchPage('b', 25);
+    const original = database.all('SELECT * FROM bridge_nodes ORDER BY id');
+    const accepted = service.decideNodeMatch(matchInput(a, b)).decisions[0];
+    const pending = { ...matchInput(a, b), decision: 'pending' as const };
+    const review = service.decideNodeMatch(pending);
+    expect(review.decisions).toEqual([]);
+    expect(review.history).toEqual([expect.objectContaining({ id: accepted.id, decision: 'accepted', reopenedAt: expect.any(String) })]);
+    expect(database.all('SELECT * FROM bridge_node_logical_assignments')).toEqual([]);
+    expect(service.decideNodeMatch(pending).history).toEqual(review.history);
+    const rejected = service.decideNodeMatch({ ...matchInput(a, b), decision: 'rejected' });
+    expect(rejected.decisions[0].decision).toBe('rejected');
+    expect(service.decideNodeMatch(pending).history).toHaveLength(2);
+    expect(service.decideNodeMatch(matchInput(a, b)).decisions[0].decision).toBe('accepted');
+    expect(database.all('SELECT * FROM bridge_nodes ORDER BY id')).toEqual(original);
+  });
+
+  it('protège les validations dépendantes et permet leur réexamen dans l’ordre inverse', () => {
+    const a = importMatchPage('a', 24);
+    const b = importMatchPage('b', 25);
+    const c = importMatchPage('c', 26);
+    service.decideNodeMatch(matchInput(a, b));
+    service.decideNodeMatch(matchInput(b, c));
+    expect(() => service.decideNodeMatch({ ...matchInput(a, b), decision: 'pending' })).toThrow(/dépend/);
+    expect(database.all('SELECT * FROM bridge_node_logical_assignments')).toHaveLength(3);
+    expect(database.all('SELECT * FROM bridge_node_match_history')).toHaveLength(0);
+    service.decideNodeMatch({ ...matchInput(b, c), decision: 'pending' });
+    service.decideNodeMatch({ ...matchInput(a, b), decision: 'pending' });
+    expect(database.all('SELECT * FROM bridge_node_logical_assignments')).toHaveLength(0);
+    expect(database.all('SELECT * FROM bridge_node_match_history')).toHaveLength(2);
+  });
+
+  it('annule entièrement le réexamen si le journal ne peut pas être écrit', () => {
+    const a = importMatchPage('a', 24);
+    const b = importMatchPage('b', 25);
+    const accepted = service.decideNodeMatch(matchInput(a, b));
+    database.exec("CREATE TRIGGER fail_reopen BEFORE INSERT ON activity_log WHEN NEW.action='reopened' BEGIN SELECT RAISE(ABORT, 'test réexamen interrompu'); END;");
+    expect(() => service.decideNodeMatch({ ...matchInput(a, b), decision: 'pending' })).toThrow(/réexamen interrompu/);
+    expect(service.reviewPageNodeMatches(a.pageSnapshotId, b.pageSnapshotId)).toEqual(accepted);
+    expect(database.all('SELECT * FROM bridge_node_logical_assignments')).toHaveLength(2);
+    expect(database.all('SELECT * FROM bridge_node_match_history')).toHaveLength(0);
+  });
+
+  it('ne fusionne pas deux identités déjà validées et ne refuse pas une liaison transitive existante', () => {
+    const a = importMatchPage('a', 23);
+    const b = importMatchPage('b', 24);
+    const c = importMatchPage('c', 25);
+    const d = importMatchPage('d', 26);
+    service.decideNodeMatch(matchInput(a, b));
+    service.decideNodeMatch(matchInput(c, d));
+    expect(() => service.decideNodeMatch(matchInput(b, c))).toThrow(/identités logiques différentes/);
+    expect(database.all('SELECT * FROM bridge_logical_nodes')).toHaveLength(2);
+    const e = importMatchPage('e', 27);
+    service.decideNodeMatch(matchInput(d, e));
+    expect(() => service.decideNodeMatch({ ...matchInput(c, e), decision: 'rejected' })).toThrow(/déjà liés/);
+  });
+});
+
+function importMatchPage(suffix: string, day: number, duplicateNode = false) {
+  const snapshot = service.importPackage(buildSnapshot(join(workspaceRoot, `match-${suffix}.zip`), 'Accueil', {
+    snapshotId: `awb-snap:match-${suffix}`, pageSnapshotId: `awb-pagesnap:match-${suffix}`,
+    occurrenceId: `node-${suffix}`, generatedAt: `2026-09-${day}T00:00:00Z`, duplicateNode,
+  })).snapshot;
+  return { ...service.listPages(snapshot.id)[0], occurrenceId: `node-${suffix}` };
+}
+
+function matchInput(a: ReturnType<typeof importMatchPage>, b: ReturnType<typeof importMatchPage>) {
+  return {
+    beforePageSnapshotId: a.pageSnapshotId, afterPageSnapshotId: b.pageSnapshotId,
+    beforeOccurrenceId: a.occurrenceId, afterOccurrenceId: b.occurrenceId, decision: 'accepted' as const,
+  };
+}
+
+function buildSnapshot(
+  destination: string,
+  title: string,
+  options: {
+    snapshotId?: string;
+    pageSnapshotId?: string;
+    generatedAt?: string;
+    heading?: string;
+    occurrenceId?: string;
+    sourcePageKey?: string;
+    sourcePostId?: number;
+    snapshotType?: string;
+    coverageMode?: string;
+    scanStatus?: string;
+    includeVolatileSource?: boolean;
+    bridgeVersion?: string;
+    nodeLabel?: string;
+    includeDependency?: boolean;
+    pageStatus?: string;
+    duplicateNode?: boolean;
+    logicalNodeId?: string;
+  } = {},
+): string {
+  const sourceInstanceId = 'awb-site:test-instance';
+  const sourceSiteKey = 'wp:https://example.test/:blog:1';
+  const snapshotId = options.snapshotId ?? 'awb-snap:20260924T000000Z:test';
+  const pageSnapshotId = options.pageSnapshotId ?? 'awb-pagesnap:test';
+  const generatedAt = options.generatedAt ?? '2026-09-24T00:00:00Z';
+  const heading = options.heading ?? 'Bonjour Bridge';
+  const occurrenceId = options.occurrenceId ?? 'node_text_1';
+  const sourcePageKey = options.sourcePageKey ?? 'wp-post:10';
+  const sourcePostId = options.sourcePostId ?? 10;
+  const snapshotType = options.snapshotType ?? 'full';
+  const coverageMode = options.coverageMode ?? 'complete';
+  const scanStatus = options.scanStatus ?? 'complete_with_warnings';
+  const includeVolatileSource = options.includeVolatileSource ?? false;
+  const pageFolder = `pages/${sourcePostId}`;
+  const raw = Buffer.from(`<!-- wp:divi/code {"module":{"content":{"innerContent":{"desktop":{"value":"<section class=\\\"atoum-home-blog-v2\\\"><div class=\\\"article-card\\\"><header class=\\\"article-card__header\\\">Blog</header><h1>${heading}</h1></div></section><style>.atoum-home-blog-v2{color:red}</style>"}}}}} /-->`, 'utf8');
+  const rawHash = sha256(raw);
+  const objectRef = `sha256:${rawHash}`;
+  const objectPath = `objects/sha256/${rawHash.slice(0, 2)}/${rawHash}`;
+  const sourceId = `source_${createHash('sha256').update(`${pageSnapshotId}|page-style`).digest('hex').slice(0, 24)}`;
+
+  const manifest = {
+    contract: 'atoumweb-bridge-snapshot',
+    schema_version: '1.0.0',
+    bridge_version: options.bridgeVersion ?? '0.4.2',
+    fingerprint_profile: 'awb-json-c14n-v1',
+    generated_at: generatedAt,
+    site_id: null,
+    source_instance_id: sourceInstanceId,
+    source_site_key: sourceSiteKey,
+    snapshot_id: snapshotId,
+    snapshot_type: snapshotType,
+    scanner_capabilities: { wordpress: true, divi4: true, divi5: false },
+    observed_content: { wordpress: true, divi4: false, divi5: true },
+    coverage: { pages: { mode: coverageMode, post_types: ['page'], statuses: ['publish'], excluded: [] } },
+    scan_status: scanStatus,
+    issues: [{ code: 'FRONTEND_AUDIT_NOT_ATTACHED', severity: 'warning', scope: 'site', entity_ref: sourceSiteKey, message: 'Front non joint.' }],
+    counts: { pages: 1, nodes: options.duplicateNode ? 2 : 1, sources: includeVolatileSource ? 1 : 0, assets: 0, dependencies: options.includeDependency ? 1 : 0, relations: 0, objects: 1 },
+    security: { potential_sensitive_payloads: true, redaction_applied: true, redaction_rules_version: '1', payloads_modified: false },
+    package: { format: 'zip', root: 'snapshot/', checksums_file: 'checksums.json' },
+  };
+  const site = {
+    site_id: null,
+    source_instance_id: sourceInstanceId,
+    source_site_key: sourceSiteKey,
+    canonical_url: 'https://example.test/',
+    wordpress_site_url: 'https://example.test/',
+    wordpress_home_url: 'https://example.test/',
+    name: 'Site test',
+    environment: 'test',
+    source: { wordpress_blog_id: 1, multisite: false },
+    timezone: { name: 'Europe/Paris', utc_offset_at_scan: '+02:00' },
+  };
+  const snapshot = {
+    snapshot_id: snapshotId,
+    site_id: null,
+    source_instance_id: sourceInstanceId,
+    source_site_key: sourceSiteKey,
+    snapshot_type: snapshotType,
+    generated_at: generatedAt,
+    bridge: { version: options.bridgeVersion ?? '0.4.2', schema_version: '1.0.0', fingerprint_profile: 'awb-json-c14n-v1' },
+    environment: { wordpress_version: '7.1.2', php_version: '8.1.34', theme: 'Divi', theme_version: '5.13.1', child_theme: null },
+    fingerprints: {},
+  };
+  const page = {
+    page_id: null,
+    source_post_id: sourcePostId,
+    source_page_key: sourcePageKey,
+    page_snapshot_id: pageSnapshotId,
+    source_instance_id: sourceInstanceId,
+    source_site_key: sourceSiteKey,
+    snapshot_id: snapshotId,
+    post_type: 'page',
+    status: options.pageStatus ?? 'publish',
+    title,
+    slug: 'accueil',
+    canonical_url: 'https://example.test/',
+    wordpress_guid: null,
+    storage_format: 'divi5_serialized_blocks',
+    builder: 'divi',
+    builder_generation: '5',
+    is_divi_content: true,
+    scope: 'content',
+    audit_status: 'ready',
+    raw_source: { object_ref: objectRef, redacted: false },
+    tree_ref: `${pageFolder}/tree.json`,
+    source_ids: includeVolatileSource ? [sourceId] : [],
+    asset_ids: [],
+    dependency_ids: options.includeDependency ? ['dep-divi'] : [],
+    relation_ids: [],
+    fingerprints: {
+      page: `sha256:${createHash('sha256').update(`${snapshotId}|page`).digest('hex')}`,
+      raw_source: objectRef,
+      normalized_tree: `sha256:${createHash('sha256').update(`${pageSnapshotId}|tree`).digest('hex')}`,
+      frontend: null,
+    },
+    frontend: { checked: false, http_status: null },
+  };
+  const tree = {
+    page_snapshot_id: pageSnapshotId,
+    builder: 'divi',
+    builder_generation: '5',
+    root_nodes: [occurrenceId],
+    nodes: [{
+      occurrence_id: occurrenceId,
+      logical_node_id: options.logicalNodeId ?? null,
+      page_snapshot_id: pageSnapshotId,
+      parent_occurrence_id: null,
+      position: 0,
+      node_type: 'module',
+      builder: 'divi',
+      builder_generation: '5',
+      module_type: 'divi/code',
+      label: options.nodeLabel ?? 'Code',
+      classes: [],
+      ids: [],
+      source_ids: [],
+      asset_ids: [],
+      dependency_ids: [],
+      relation_ids: [],
+      raw_source: { object_ref: objectRef },
+      content: null,
+      fingerprints: { node: objectRef },
+      matching_hints: {},
+      attributes: {},
+      responsive: {},
+      design: {},
+    }],
+    matching_hints: [],
+  };
+  const meta = { source_post_id: sourcePostId, post: { post_type: 'page', post_status: 'publish' }, meta: [] };
+  if (options.duplicateNode) {
+    tree.root_nodes.push(`${occurrenceId}-copy`);
+    tree.nodes.push({ ...tree.nodes[0], occurrence_id: `${occurrenceId}-copy` });
+  }
+
+  const relativeEntries = new Map<string, Buffer>();
+  const addJson = (name: string, value: unknown) => relativeEntries.set(name, Buffer.from(`${JSON.stringify(value, null, 2)}\n`, 'utf8'));
+  addJson('manifest.json', manifest);
+  addJson('site.json', site);
+  addJson('snapshot.json', snapshot);
+  addJson('registries/objects.json', { objects: [{ ref: objectRef, path: objectPath, content_type: 'text/plain', encoding: 'utf-8', byte_length: raw.length, serialization: 'text', compression: 'none' }] });
+  addJson('registries/sources.json', { sources: includeVolatileSource ? [{
+    source_id: sourceId,
+    kind: 'css',
+    scope: 'page',
+    origin: 'post_content',
+    owner: 'atoumweb',
+    owner_slug: null,
+    managed_externally: false,
+    source_instance_id: sourceInstanceId,
+    source_site_key: sourceSiteKey,
+    snapshot_id: snapshotId,
+    source_page_key: sourcePageKey,
+    page_snapshot_id: pageSnapshotId,
+    node_occurrence_id: null,
+    payload: { object_ref: objectRef },
+    fingerprint: objectRef,
+    lines: 1,
+    bytes: raw.length,
+    evidence: {},
+  }] : [] });
+  addJson('registries/assets.json', { assets: [] });
+  addJson('registries/dependencies.json', { dependencies: options.includeDependency ? [{ dependency_id: 'dep-divi', type: 'theme', name: 'Divi', slug: 'divi', version: '5.13.1', active: true }] : [] });
+  addJson('registries/relations.json', { relations: [] });
+  addJson(`${pageFolder}/page.json`, page);
+  addJson(`${pageFolder}/meta.json`, meta);
+  addJson(`${pageFolder}/tree.json`, tree);
+  relativeEntries.set(objectPath, raw);
+
+  const files: Record<string, string> = {};
+  for (const [name, data] of relativeEntries) files[name] = `sha256:${sha256(data)}`;
+  const checksums = {
+    algorithm: 'sha256',
+    fingerprint_profile: 'awb-json-c14n-v1',
+    files,
+    package_fingerprint: calculateBridgePackageFingerprint(files),
+  };
+  addJson('checksums.json', checksums);
+
+  const entries: ZipEntryInput[] = [...relativeEntries.entries()].map(([name, data]) => ({ name: `snapshot/${name}`, data }));
+  writeZipArchive(destination, entries);
+  return destination;
+}
+
+function sha256(data: Buffer): string {
+  return createHash('sha256').update(data).digest('hex');
+}

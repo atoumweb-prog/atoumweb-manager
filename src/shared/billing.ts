@@ -19,6 +19,10 @@ export interface BillingItem {
   dueAt?: string | null;
   status: BillingItemStatus;
   notes?: string | null;
+  invoiceDocumentId?: string | null;
+  invoiceReference?: string | null;
+  invoiceFileName?: string | null;
+  invoicedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -28,4 +32,18 @@ export interface BillingItemFilters {
   projectId?: string | null;
   sourceType?: BillingItemSourceType | null;
   status?: BillingItemStatus | null;
+}
+
+export interface BillingInvoiceInput {
+  reference?: string | null;
+  invoicedAt?: string | null;
+}
+
+export interface BillingApi {
+  list(filters?: BillingItemFilters): Promise<BillingItem[]>;
+  get(id: string): Promise<BillingItem>;
+  changeStatus(id: string, status: BillingItemStatus): Promise<BillingItem>;
+  importInvoice(id: string, input?: BillingInvoiceInput): Promise<BillingItem | null>;
+  updateInvoiceMetadata(id: string, input: BillingInvoiceInput): Promise<BillingItem>;
+  openInvoice(id: string): Promise<void>;
 }

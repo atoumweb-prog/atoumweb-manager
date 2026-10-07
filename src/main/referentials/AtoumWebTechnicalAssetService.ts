@@ -63,7 +63,7 @@ export class AtoumWebTechnicalAssetService {
     return this.map(row);
   }
 
-  importFilePaths(versionId: string, sourcePaths: string[], role: AtoumWebTechnicalAssetRole): AtoumWebTechnicalAsset[] {
+  importFilePaths(versionId: string, sourcePaths: string[], role: AtoumWebTechnicalAssetRole, createdFiles?: string[]): AtoumWebTechnicalAsset[] {
     if (!ATOUMWEB_TECHNICAL_ASSET_ROLES.includes(role)) throw new Error('Rôle de fichier Bibliothèque invalide.');
     const context = this.requireGlobalVersion(versionId);
     if (!sourcePaths.length) return this.list(versionId);
@@ -84,7 +84,10 @@ export class AtoumWebTechnicalAssetService {
 
       const sourceName = basename(source);
       const destination = this.uniqueDestination(targetDirectory, sourceName);
-      if (resolve(source) !== resolve(destination)) copyFileSync(source, destination);
+      if (resolve(source) !== resolve(destination)) {
+        createdFiles?.push(destination); // Track even a partially written copy for package rollback.
+        copyFileSync(source, destination);
+      }
       const stats = statSync(destination);
       const now = new Date().toISOString();
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import type { QuoteSummary } from '../../shared/commercial';
 import {
   PROSPECT_SOURCES,
@@ -17,6 +17,7 @@ import { FieldHelp, ProspectQualificationPanelV2 } from './ProspectQualification
 import { ProspectQuotePanel } from './ProspectQuotePanel';
 import { ProspectResearchPanel } from './ProspectResearchPanel';
 import { ProspectReferenceSummary } from './ProspectReferenceSummary';
+import { CrmIdentityAvatar } from './CrmIdentityVisual';
 
 const ACTIVE_STAGES: ProspectStage[] = ['new', 'qualifying', 'need_identified', 'quote_to_prepare', 'quote_to_send', 'quote_sent', 'follow_up', 'negotiation', 'waiting'];
 const STAGE_LABELS: Record<ProspectStage, string> = {
@@ -26,7 +27,7 @@ const STAGE_LABELS: Record<ProspectStage, string> = {
   quote_to_prepare: 'Devis à préparer',
   quote_to_send: 'Devis à envoyer',
   quote_sent: 'En attente de retour',
-  follow_up: 'À relancer',
+  follow_up: 'Attente du retour',
   negotiation: 'Négociation',
   waiting: 'En attente',
   won: 'Gagné',
@@ -83,7 +84,8 @@ const EMPTY_DRAFT: ProspectDraft = {
 };
 
 type View = 'directory' | 'pipeline' | 'history';
-type DirectoryStatusFilter = 'follow' | 'all' | 'prepare' | 'ready' | ProspectStage;
+export type ProspectPipelineFilter = 'all' | 'relaunch' | 'overdue';
+type DirectoryStatusFilter = 'follow' | 'all' | 'prepare' | 'ready' | 'relaunch' | 'overdue' | ProspectStage;
 
 const PIPELINE_GROUPS: Array<{ id: string; step: number; label: string; stages: ProspectStage[]; icon: string }> = [
   { id: 'qualify', step: 1, label: 'À qualifier', stages: ['qualifying'], icon: '1' },
@@ -138,7 +140,7 @@ function cleanBusinessError(error: unknown, fallback: string): string {
     .trim() || fallback;
 }
 function humanActivity(summary: string) {
-  return summary.replace(/\bnew\b/g, 'Nouveau contact').replace(/\bqualifying\b/g, 'À qualifier').replace(/\bneed_identified\b/g, 'Besoin à identifier').replace(/\bquote_to_prepare\b/g, 'Devis à préparer').replace(/\bquote_to_send\b/g, 'Devis à envoyer').replace(/\bquote_sent\b/g, 'En attente de retour').replace(/\bfollow_up\b/g, 'À relancer').replace(/\bnegotiation\b/g, 'Négociation').replace(/\bwaiting\b/g, 'En attente').replace(/\bwon\b/g, 'Gagné').replace(/\blost\b/g, 'Perdu');
+  return summary.replace(/\bnew\b/g, 'Nouveau contact').replace(/\bqualifying\b/g, 'À qualifier').replace(/\bneed_identified\b/g, 'Besoin à identifier').replace(/\bquote_to_prepare\b/g, 'Devis à préparer').replace(/\bquote_to_send\b/g, 'Devis à envoyer').replace(/\bquote_sent\b/g, 'En attente de retour').replace(/\bfollow_up\b/g, 'Attente du retour').replace(/\bnegotiation\b/g, 'Négociation').replace(/\bwaiting\b/g, 'En attente').replace(/\bwon\b/g, 'Gagné').replace(/\blost\b/g, 'Perdu');
 }
 function nextOpenAction(actions: CrmAction[]): CrmAction | null {
   return [...actions]
@@ -157,16 +159,17 @@ function quoteCardState(prospect: ProspectSummary, quote: QuoteSummary): string 
   if (prospect.stage === 'quote_to_send') return 'Prêt à envoyer';
   if (prospect.stage === 'quote_to_prepare') return 'Brouillon à préparer';
   if (prospect.stage === 'waiting') return 'En attente';
-  if (prospect.stage === 'follow_up') return 'Relance à effectuer';
+  if (prospect.stage === 'follow_up') return 'En attente de retour';
   return 'En attente de retour';
 }
 
-export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: string) => void; initialId?: string | null }) {
+export function ProspectsPage({ onMessage, initialId, initialView = 'directory', initialPipelineFilter = 'all' }: { onMessage: (message: string) => void; initialId?: string | null; initialView?: View; initialPipelineFilter?: ProspectPipelineFilter }) {
   const [prospects, setProspects] = useState<ProspectSummary[]>([]);
   const [actions, setActions] = useState<CrmAction[]>([]);
   const [quotes, setQuotes] = useState<QuoteSummary[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
-  const [view, setView] = useState<View>('directory');
+  const [view, setView] = useState<View>(initialView);
+  const [pipelineFilter, setPipelineFilter] = useState<ProspectPipelineFilter>(initialPipelineFilter);
   const [directorySearch, setDirectorySearch] = useState('');
   const [directoryIndustry, setDirectoryIndustry] = useState('');
   const [directoryCity, setDirectoryCity] = useState('');
@@ -178,6 +181,7 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(initialId ?? null);
+  const [prospectSplitPercent, setProspectSplitPercent] = useState(66);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deskModeId, setDeskModeId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -216,21 +220,51 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
   const active = useMemo(() => prospects.filter((item) => !isClosed(item)), [prospects]);
   const directory = useMemo(() => prospects.filter((item) => !item.archivedAt), [prospects]);
   const pipelineActive = useMemo(() => active.filter((item) => (item.stage ?? 'new') !== 'new'), [active]);
+  const followUpBuckets = useMemo(() => {
+    const nowTimestamp = Date.now();
+    const endOfToday = new Date();
+    endOfToday.setHours(24, 0, 0, 0);
+    const relaunch = new Set<string>();
+    const overdue = new Set<string>();
+    for (const action of actions) {
+      if (action.ownerType !== 'prospect' || action.type !== 'follow_up' || action.status !== 'open' || !action.dueAt) continue;
+      const timestamp = new Date(action.dueAt).getTime();
+      if (!Number.isFinite(timestamp) || timestamp >= endOfToday.getTime()) continue;
+      relaunch.add(action.ownerId);
+      if (timestamp < nowTimestamp) overdue.add(action.ownerId);
+    }
+    return { relaunch, overdue };
+  }, [actions]);
+  const relaunchCount = useMemo(() => pipelineActive.filter((item) => followUpBuckets.relaunch.has(item.id)).length, [pipelineActive, followUpBuckets]);
+  const overdueCount = useMemo(() => pipelineActive.filter((item) => followUpBuckets.overdue.has(item.id)).length, [pipelineActive, followUpBuckets]);
+  const pipelineFiltered = useMemo(() => {
+    if (pipelineFilter === 'relaunch') return pipelineActive.filter((item) => followUpBuckets.relaunch.has(item.id));
+    if (pipelineFilter === 'overdue') return pipelineActive.filter((item) => followUpBuckets.overdue.has(item.id));
+    return pipelineActive;
+  }, [pipelineActive, pipelineFilter, followUpBuckets]);
   const directoryIndustries = useMemo(() => [...new Set(directory.map((item) => item.organizationIndustry).filter((value): value is string => Boolean(value)))].sort((a,b) => a.localeCompare(b, 'fr')), [directory]);
   const directoryCities = useMemo(() => [...new Set(directory.map((item) => item.organizationCity).filter((value): value is string => Boolean(value)))].sort((a,b) => a.localeCompare(b, 'fr')), [directory]);
   const directoryFiltered = useMemo(() => directory.filter((item) => {
     const needle = directorySearch.trim().toLocaleLowerCase('fr-FR');
     const haystack = [item.displayName, item.secondaryLabel, item.organizationIndustry, item.organizationCity, item.organizationWebsite, item.organizationNotes, item.initialObservation, item.detectedOpportunity].filter(Boolean).join(' ').toLocaleLowerCase('fr-FR');
+    const statusMatches = directoryStatusFilter === 'relaunch'
+      ? followUpBuckets.relaunch.has(item.id)
+      : directoryStatusFilter === 'overdue'
+        ? followUpBuckets.overdue.has(item.id)
+        : matchesDirectoryStatus(item, directoryStatusFilter);
     return (!needle || haystack.includes(needle))
       && (!directoryIndustry || item.organizationIndustry === directoryIndustry)
       && (!directoryCity || item.organizationCity === directoryCity)
-      && matchesDirectoryStatus(item, directoryStatusFilter);
-  }), [directory, directorySearch, directoryIndustry, directoryCity, directoryStatusFilter]);
+      && statusMatches;
+  }), [directory, directorySearch, directoryIndustry, directoryCity, directoryStatusFilter, followUpBuckets]);
   const closed = useMemo(() => prospects.filter(isClosed), [prospects]);
   const selected = prospects.find((item) => item.id === selectedId) ?? null;
   const deskProspect = prospects.find((item) => item.id === deskModeId) ?? null;
   const selectedActions = actions.filter((item) => item.ownerId === selectedId);
-  const byStage = useMemo(() => { const map = new Map<ProspectStage, ProspectSummary[]>(); ACTIVE_STAGES.forEach((stage) => map.set(stage, [])); pipelineActive.forEach((item) => map.get(item.stage ?? 'new')?.push(item)); return map; }, [pipelineActive]);
+  const byStage = useMemo(() => { const map = new Map<ProspectStage, ProspectSummary[]>(); ACTIVE_STAGES.forEach((stage) => map.set(stage, [])); pipelineFiltered.forEach((item) => map.get(item.stage ?? 'new')?.push(item)); return map; }, [pipelineFiltered]);
+  const prospectSplitStyle = selected && !deskProspect
+    ? ({ '--prospect-list-percent': `${prospectSplitPercent}%` } as CSSProperties)
+    : undefined;
 
   async function submitProspect(event: FormEvent) {
     event.preventDefault(); setFormError('');
@@ -373,6 +407,41 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
     await changeStage(prospect, target);
   }
 
+  function beginProspectResize(splitter: HTMLElement): void {
+    const workspace = splitter.parentElement;
+    if (!workspace) return;
+    document.body.classList.add('operation-resizing');
+    const onMove = (event: PointerEvent) => {
+      const rect = workspace.getBoundingClientRect();
+      if (!rect.width) return;
+      const requested = ((event.clientX - rect.left) / rect.width) * 100;
+      const maxForDetail = ((rect.width - 328) / rect.width) * 100;
+      const maxPercent = Math.max(52, Math.min(74, maxForDetail));
+      setProspectSplitPercent(Math.max(40, Math.min(maxPercent, requested)));
+    };
+    const onUp = () => {
+      document.body.classList.remove('operation-resizing');
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp, { once: true });
+  }
+
+  const prospectSplitter = selected && !deskProspect ? <div
+    className="operation-splitter prospect-splitter"
+    role="separator"
+    aria-orientation="vertical"
+    aria-label="Redimensionner l’annuaire et la fiche prospect"
+    tabIndex={0}
+    onPointerDown={(event) => { event.stopPropagation(); beginProspectResize(event.currentTarget); }}
+    onDoubleClick={(event) => { event.stopPropagation(); setProspectSplitPercent(66); }}
+    onKeyDown={(event) => {
+      if (event.key === 'ArrowLeft') setProspectSplitPercent((value) => Math.max(40, value - 3));
+      if (event.key === 'ArrowRight') setProspectSplitPercent((value) => Math.min(74, value + 3));
+    }}
+  ><span /></div> : null;
+
   const detail = selected ? <div ref={sidePanelRef} className="prospect-side-panel-boundary"><ProspectDetailV2
     prospect={selected}
     actions={selectedActions}
@@ -392,17 +461,27 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
     const itemActions = actions.filter((a) => a.ownerId === prospect.id && a.status === 'open');
     const quoteFollowUp = isQuoteFollowUpStage(prospect.stage);
     const nextAction = nextOpenAction(itemActions);
+    const nextFollowUp = nextOpenAction(itemActions.filter((item) => item.type === 'follow_up'));
+    const followUpDueAt = nextFollowUp?.dueAt ? new Date(nextFollowUp.dueAt) : null;
+    const followUpTimestamp = followUpDueAt?.getTime() ?? Number.NaN;
+    const nowTimestamp = Date.now();
+    const tomorrowStart = new Date();
+    tomorrowStart.setHours(24, 0, 0, 0);
+    const followUpUrgency = Number.isFinite(followUpTimestamp) && followUpTimestamp < tomorrowStart.getTime()
+      ? (followUpTimestamp < nowTimestamp ? 'overdue' : 'today')
+      : null;
     const latestQuote = quotes.find((quote) => quote.prospectId === prospect.id) ?? null;
     const quoteRemaining = daysRemaining(latestQuote?.validUntil);
     const showQuoteFocus = Boolean(latestQuote && QUOTE_VISIBLE_STAGES.includes(prospect.stage ?? 'new'));
     const group = PIPELINE_GROUPS.find((item) => item.stages.includes(prospect.stage ?? 'new'));
     return <article className={`prospect-card stacked-card prospect-temperature-${prospect.temperature ?? 'neutral'} ${expanded ? 'expanded-card' : 'collapsed-card'} ${selectedId === prospect.id ? 'selected-prospect' : ''}`} key={prospect.id}>
       <div className="prospect-card-head card-drag-handle" draggable={draggable} onDragStart={(e) => { if (!draggable) return; setDraggingId(prospect.id); e.dataTransfer.setData('text/plain', prospect.id); }} onClick={() => { setSelectedId(prospect.id); setExpandedId((id) => id === prospect.id ? null : prospect.id); }}>
-        <strong>{prospect.displayName}</strong>
+        <div className="prospect-card-identity"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} /><strong>{prospect.displayName}</strong></div>
         {group && <span className="pipeline-state-icon" title={group.label}>{group.icon}</span>}
       </div>
       <div className="prospect-card-body">
         {group && <span className="prospect-card-step">Étape {group.step} · {group.label}</span>}
+        {followUpUrgency && <span className={`prospect-card-relaunch ${followUpUrgency}`}>{followUpUrgency === 'overdue' ? `Relance en retard · ${formatDate(nextFollowUp?.dueAt)}` : 'Relance à faire aujourd’hui'}</span>}
         <small>{prospect.secondaryLabel || 'Interlocuteur à préciser'}</small>
         {showQuoteFocus && latestQuote ? <div className="prospect-card-quote-focus"><span>{quoteCardState(prospect, latestQuote)}</span><strong>{latestQuote.number} · {latestQuote.subject}</strong><div className="prospect-card-quote-meta"><b>{formatMoney(latestQuote.contractValueCents)}</b>{latestQuote.sentAt && <span>Envoyé {formatDate(latestQuote.sentAt)}</span>}{latestQuote.validUntil && <span>Valide jusqu’au {formatDate(latestQuote.validUntil)}</span>}{quoteFollowUp && quoteRemaining != null && <span>{quoteRemaining < 0 ? `J+${Math.abs(quoteRemaining)} · relance dépassée` : `J-${quoteRemaining} avant échéance`}</span>}</div></div> : <><p>{prospect.primaryNeed || 'Besoin à préciser'}</p>{prospect.estimatedValueCents != null && <small>Estimation : {(prospect.estimatedValueCents / 100).toLocaleString('fr-FR')} €</small>}</>}
         {nextAction && <div className="card-action-line next-action-line"><span>Prochaine action</span><strong>{nextAction.title}</strong><small>{formatDate(nextAction.dueAt)}</small></div>}
@@ -416,7 +495,7 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
   return <div className="crm-stack prospects-v2">
     <div className="prospect-view-switch" role="tablist">
       <button className={view === 'directory' ? 'active' : ''} onClick={() => setView('directory')}>Annuaire prospects <span>{directory.length}</span></button>
-      <button className={view === 'pipeline' ? 'active' : ''} onClick={() => setView('pipeline')}>Parcours commercial <span>{pipelineActive.length}</span></button>
+      <button className={view === 'pipeline' ? 'active' : ''} onClick={() => { setView('pipeline'); setPipelineFilter('all'); }}>Parcours commercial <span>{pipelineActive.length}</span></button>
       <button className={view === 'history' ? 'active' : ''} onClick={() => setView('history')}>Historique <span>{closed.length}</span></button>
     </div>
 
@@ -439,7 +518,8 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
           <option value="quote_to_prepare">Devis à préparer</option>
           <option value="quote_to_send">Devis à envoyer</option>
           <option value="quote_sent">En attente de retour</option>
-          <option value="follow_up">À relancer</option>
+          <option value="relaunch">À relancer</option>
+          <option value="overdue">Relance en retard</option>
           <option value="negotiation">Négociation</option>
           <option value="waiting">En attente</option>
           <option value="won">Gagné</option>
@@ -449,7 +529,7 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
       {showForm && <form className="panel crm-form prospect-create-v2" onSubmit={(e) => void submitProspect(e)}><div className="panel-title"><div><span className="eyebrow">Annuaire de prospection</span><h2>Nouvelle entreprise à préparer</h2><p className="muted">Enregistre ce que tu sais déjà. Le dossier n’entre dans le parcours commercial qu’au clic sur « Démarrer le parcours commercial ».</p></div></div><div className="form-grid">
         <label>Société <FieldHelp text="Nom commercial ou nom de la structure." /><input value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} /></label>
         <label>Corps de métier / activité <FieldHelp text="Utilise un libellé stable pour pouvoir filtrer l’annuaire : restaurant, artisan, garage, profession libérale…" /><input value={draft.industry} onChange={(e) => setDraft({ ...draft, industry: e.target.value })} placeholder="Ex. restaurant" /></label>
-        <label>Site web<input type="url" value={draft.website} onChange={(e) => setDraft({ ...draft, website: e.target.value })} placeholder="https://…" /></label>
+        <label>Site web <FieldHelp text="Saisis simplement exemple.fr : https:// sera ajouté automatiquement. Tu peux écrire http:// explicitement si le site l’exige." /><input inputMode="url" value={draft.website} onChange={(e) => setDraft({ ...draft, website: e.target.value })} placeholder="exemple.fr" /></label>
         <label className="form-span-3">Présentation / notes source <FieldHelp text="Conserve ici le texte brut récupéré. Les informations importantes sont ensuite rangées dans les champs structurés ci-dessous." /><textarea value={draft.activityDescription} onChange={(e) => setDraft({ ...draft, activityDescription: e.target.value })} placeholder="Texte brut, présentation du site, informations trouvées…" /></label>
         <label className="form-span-2">Services proposés <FieldHelp text="Sépare les services par des virgules. Ils seront enregistrés dans la fiche de connaissance entreprise." /><input value={draft.services} onChange={(e) => setDraft({ ...draft, services: e.target.value })} placeholder="Ex. gardiennage, rondes, intervention sur alarme" /></label>
         <label>Clientèles visées<input value={draft.customerSegments} onChange={(e) => setDraft({ ...draft, customerSegments: e.target.value })} placeholder="Ex. entreprises, collectivités" /></label>
@@ -462,7 +542,7 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
         <label>Température commerciale<select value={draft.temperature} onChange={(e) => setDraft({ ...draft, temperature: e.target.value as ProspectTemperature })}>{PROSPECT_TEMPERATURES.map((temperature) => <option key={temperature} value={temperature}>{TEMPERATURE_LABELS[temperature]}</option>)}</select></label><label>Valeur estimée (€)<input inputMode="decimal" value={draft.estimatedValueEuros} onChange={(e) => setDraft({ ...draft, estimatedValueEuros: e.target.value })} /></label>
         <label>Première action — date<input type="date" value={draft.firstActionDate} onChange={(e) => setDraft({ ...draft, firstActionDate: e.target.value })} /></label><label className="form-span-2">Première action<input value={draft.firstActionText} onChange={(e) => setDraft({ ...draft, firstActionText: e.target.value })} placeholder="Ex. rechercher le gérant, appeler l’accueil…" /></label>
       </div>{formError && <p className="form-error" role="alert">{formError}</p>}<div className="form-actions"><button className="primary-button" disabled={saving} type="submit">{saving ? 'Création…' : 'Ajouter à l’annuaire'}</button></div></form>}
-      {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'}>
+      {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'} style={prospectSplitStyle}>
         <div className="panel table-panel prospect-directory-table-panel">
           <div className="clients-table-wrap">
             <table className="clients-table prospect-directory-table">
@@ -472,7 +552,7 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
                   const readiness = prospectReadiness(prospect);
                   const status = directoryStatus(prospect);
                   return <tr key={prospect.id} className={`prospect-temperature-${prospect.temperature ?? 'neutral'} ${selectedId === prospect.id ? 'selected-row' : ''}`} onClick={() => setSelectedId(prospect.id)}>
-                    <td><div className="client-name-cell"><span className="avatar-initials">{prospect.displayName.split(/\s+/).slice(0,2).map((part) => part[0]?.toUpperCase()).join('')}</span><div><strong>{prospect.displayName}</strong><small>{SOURCE_LABELS[prospect.source ?? 'other']}</small></div></div></td>
+                    <td><div className="client-name-cell"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} /><div><strong>{prospect.displayName}</strong><small>{SOURCE_LABELS[prospect.source ?? 'other']}</small></div></div></td>
                     <td>{prospect.organizationIndustry || <span className="muted">À compléter</span>}</td>
                     <td>{prospect.organizationCity || <span className="muted">—</span>}</td>
                     <td>{prospect.secondaryLabel || <span className="muted">À identifier</span>}</td>
@@ -485,17 +565,27 @@ export function ProspectsPage({ onMessage, initialId }: { onMessage: (message: s
             </table>
           </div>
         </div>
+        {prospectSplitter}
         {selected && !deskProspect && detail}
       </div>}
     </>}
 
     {view === 'pipeline' && <>
-      <div className="module-toolbar prospect-toolbar"><div><strong>{pipelineActive.length}</strong><span> opportunité{pipelineActive.length > 1 ? 's' : ''} commerciale{pipelineActive.length > 1 ? 's' : ''}</span></div><div className="toolbar-controls"><button className="secondary-button" onClick={() => void refresh()}>↻ Actualiser</button><button className="secondary-button" onClick={() => setView('directory')}>Annuaire prospects</button></div></div>
-      {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'}><div className="kanban-board">{PIPELINE_GROUPS.map((group) => {
+      <div className="module-toolbar prospect-toolbar">
+        <div><strong>{pipelineFiltered.length}</strong><span> opportunité{pipelineFiltered.length > 1 ? 's' : ''} commerciale{pipelineFiltered.length > 1 ? 's' : ''}{pipelineFilter === 'relaunch' ? ' à relancer' : pipelineFilter === 'overdue' ? ' en retard' : ''}</span></div>
+        <div className="toolbar-controls">
+          <button className={pipelineFilter === 'all' ? 'primary-button' : 'secondary-button'} type="button" onClick={() => setPipelineFilter('all')}>Tous · {pipelineActive.length}</button>
+          <button className={pipelineFilter === 'relaunch' ? 'primary-button' : 'secondary-button'} type="button" onClick={() => setPipelineFilter('relaunch')}>À relancer · {relaunchCount}</button>
+          <button className={pipelineFilter === 'overdue' ? 'primary-button' : 'secondary-button'} type="button" onClick={() => setPipelineFilter('overdue')}>En retard · {overdueCount}</button>
+          <button className="secondary-button" onClick={() => void refresh()}>↻ Actualiser</button>
+          <button className="secondary-button" onClick={() => setView('directory')}>Annuaire prospects</button>
+        </div>
+      </div>
+      {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'} style={prospectSplitStyle}><div className="kanban-board">{PIPELINE_GROUPS.map((group) => {
         const groupProspects = group.stages.flatMap((stage) => byStage.get(stage) ?? []);
         const targetStage = group.stages[0];
         return <section className={`kanban-column pipeline-step-column ${dropStage === targetStage ? 'drag-over' : ''}`} key={group.id} onDragOver={(e) => e.preventDefault()} onDragEnter={() => setDropStage(targetStage)} onDrop={(e) => { e.preventDefault(); void handleGroupDrop(group.stages); }}><header><div><small>Étape {group.step}</small><strong>{group.label}</strong></div><span>{groupProspects.length}</span></header><div className="kanban-cards stacked-cards">{groupProspects.map((prospect) => renderProspectCard(prospect))}{groupProspects.length === 0 && <div className="kanban-empty">Aucun dossier</div>}</div></section>;
-      })}</div>{selected && !deskProspect && detail}</div>}
+      })}</div>{prospectSplitter}{selected && !deskProspect && detail}</div>}
     </>}
 
     {view === 'history' && <HistoryView prospects={closed.filter((item) => [item.displayName, item.primaryNeed, item.lostReason].filter(Boolean).join(' ').toLocaleLowerCase('fr-FR').includes(historySearch.toLocaleLowerCase('fr-FR')))} search={historySearch} onSearch={setHistorySearch} onSelect={(item) => setSelectedId(item.id)} selected={selected} activity={activity} onClose={() => setSelectedId(null)} />}
@@ -548,8 +638,8 @@ function ProspectDetailV2({ prospect, actions, activity, mode, onRefresh, onClos
   if (mode === 'panel') {
     return <aside className={`panel prospect-detail-panel prospect-detail-v2 prospect-detail-panel prospect-temperature-${prospect.temperature ?? 'neutral'}`}>
       <div className="detail-panel-heading">
-        <div><span className="eyebrow">{prospect.stage === 'new' ? 'Fiche annuaire' : 'Fiche de travail'}</span><h2>{prospect.displayName}</h2><div className="prospect-header-meta"><span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span>{prospect.organizationIndustry && <span className="status-pill">{prospect.organizationIndustry}</span>}{prospect.organizationCity && <span className="status-pill">{prospect.organizationCity}</span>}</div></div>
-        <div className="detail-heading-actions">{onOpenDesk && <button className="secondary-button open-desk-button" type="button" onClick={onOpenDesk}>Agrandir</button>}<button className="close-detail" type="button" aria-label="Fermer la fiche prospect" onClick={onClose}>×</button></div>
+        <div className="prospect-detail-identity-head"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} size="large" /><div><span className="eyebrow">{prospect.stage === 'new' ? 'Fiche annuaire' : 'Fiche de travail'}</span><h2>{prospect.displayName}</h2><div className="prospect-header-meta"><span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span>{prospect.organizationIndustry && <span className="status-pill">{prospect.organizationIndustry}</span>}{prospect.organizationCity && <span className="status-pill">{prospect.organizationCity}</span>}</div></div></div>
+        <div className="detail-heading-actions">{onOpenDesk && <button className="secondary-button open-desk-button" type="button" aria-label="Agrandir la fiche" title="Agrandir la fiche" onClick={onOpenDesk}>⛶</button>}<button className="close-detail" type="button" aria-label="Fermer la fiche prospect" onClick={onClose}>×</button></div>
       </div>
       <div className="prospect-compact-scroll">
         {prospect.stage === 'new' && <div className={`prospect-readiness-card ${readiness.ready ? 'ready' : 'incomplete'}`}><div><span>Préparation</span><strong>{readiness.ready ? 'Prêt pour démarchage' : 'À compléter avant ou pendant le premier contact'}</strong>{!readiness.ready && <small>Manque : {readiness.missing.join(', ')}</small>}</div><button className="primary-button" type="button" onClick={onStart}>Démarrer la prospection</button></div>}
@@ -573,7 +663,7 @@ function ProspectDetailV2({ prospect, actions, activity, mode, onRefresh, onClos
 
   return <aside className={`panel prospect-detail-panel prospect-detail-v2 prospect-detail-desk prospect-temperature-${prospect.temperature ?? 'neutral'}`}>
     <div className="detail-panel-heading">
-      <div><span className="eyebrow">Fiche de travail prospect</span><h2>{prospect.displayName}</h2><div className="prospect-header-meta"><span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span>{prospect.source && <span className="status-pill">{SOURCE_LABELS[prospect.source]}{prospect.source === 'other' && prospect.sourceDetail ? ` · ${prospect.sourceDetail}` : ''}</span>}</div></div>
+      <div className="prospect-detail-identity-head"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} size="large" /><div><span className="eyebrow">Fiche de travail prospect</span><h2>{prospect.displayName}</h2><div className="prospect-header-meta"><span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span>{prospect.source && <span className="status-pill">{SOURCE_LABELS[prospect.source]}{prospect.source === 'other' && prospect.sourceDetail ? ` · ${prospect.sourceDetail}` : ''}</span>}</div></div></div>
       <div className="detail-heading-actions"><button className="secondary-button" type="button" onClick={() => void window.atoumweb.app.openProspectReferenceWindow(prospect.id)}>Détacher la référence</button><button className="close-detail" type="button" aria-label="Fermer la fiche prospect" onClick={onClose}>×</button></div>
     </div>
 

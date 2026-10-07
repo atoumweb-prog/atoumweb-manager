@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 1,
+  "decision": "AtoumWeb 2026-10-06 : raccord 18 références ; hébergement inclus avec estimation dossier spécifique ; cycles date à date validés AtoumWeb 2026-10-07, historiques calendaires conservés",
+  "policies": {
+    "AW-APP-EVOL": {
+      "schemaVersion": 1,
+      "kind": "intervention",
+      "cadence": "once",
+      "billingPeriod": "once",
+      "targetRequirement": "context",
+      "requires": [],
+      "quantityMode": "hours",
+      "minimumBillableMinutes": 60,
+      "quantityMeaning": "hours"
+    },
+    "AW-APP-MAINT": {
+      "schemaVersion": 1,
+      "kind": "recurring",
+      "cadence": "monthly",
+      "billingPeriod": "monthly",
+      "targetRequirement": "context",
+      "requires": [],
+      "periodAlignment": "anniversary",
+      "quantityMeaning": "billing_periods"
+    },
+    "AW-DATA-SUIVI-A": {
+      "schemaVersion": 1,
+      "kind": "recurring",
+      "cadence": "monthly",
+      "billingPeriod": "yearly",
+      "targetRequirement": "site",
+      "requires": [],
+      "periodAlignment": "anniversary",
+      "quantityMeaning": "billing_periods"
+    },
+    "AW-DATA-SUIVI-M": {
+      "schemaVersion": 1,
+      "kind": "recurring",
+      "cadence": "monthly",
+      "billingPeriod": "monthly",
+      "targetRequirement": "site",
+      "requires": [],
+      "periodAlignment": "anniversary",
+      "quantityMeaning": "billing_periods"
+    },
+    "AW-DEVWP-AJUST": {
+      "schemaVersion": 1,
+      "kind": "intervention",
+      "cadence": "once",
+      "billingPeriod": "once",
+      "minimumBillableMinutes": 60,
+      "targetRequirement": "site",
+      "requires": [],
+      "quantityMode": "hours",
+      "quantityMeaning": "hours"
+    },
+    "AW-MAINT-WC-A": {
+      "schemaVersion": 1,
+      "kind": "maintenance",
+      "cadence": "monthly",
+      "billingPeriod": "yearly",
+      "minorInterventions": 4,
+      "maximumMinorMinutes": 30,
+      "targetRequirement": "site",
+      "requires": [
+        "woocommerce"
+      ],
+      "periodAlignment": "anniversary",
+      "quantityMeaning": "billing_periods"
+    },
+    "AW-MAINT-WC-M": {
+      "schemaVersion": 1,
+      "kind": "maintenance",
+      "cadence": "monthly",
+      "billingPeriod": "monthly",
+      "minorInterventions": 4,
+      "maximumMinorMinutes": 30,
+      "targetRequirement": "site",
+      "requires": [
+        "woocommerce"
+      ],
+      "periodAlignment": "anniversary",
+      "quantityMeaning": "billing_periods"
+    },
+    "AW-MAINT-WP-A": {
+      "schemaVersion": 1,
+      "kind": "maintenance",
+      "cadence": "monthly",
+      "billingPeriod": "yearly",
+      "minorInterventions": 2,
+      "maximumMinorMinutes": 30,
+      "targetRequirement": "site",
+      "requires": [],
+      "periodAlignment": "anniversary",
+      "quantityMeaning": "billing_periods"
+    },
+    "AW-MAINT-WP-M": {
+      "schemaVersion": 1,
+      "kind": "maintenance",
+      "cadence": "monthly",
+      "billingPeriod": "monthly",
+      "minorInterventions": 2,
+      "maximumMinorMinutes": 30,
+      "targetRequirement": "site",
+      "requires": [],
+      "periodAlignment": "anniversary",
+      "quantityMeaning": "billing_periods"
+    },
+    "AW-MARIAGE-RENOUV": {
+      "schemaVersion": 1,
+      "kind": "recurring",
+      "cadence": "yearly",
+      "billingPeriod": "yearly",
+      "targetRequirement": "site",
+      "requires": [],
+      "quantityMeaning": "billing_periods"
+    },
+    "AW-SEO-GBP-A": {
+      "schemaVersion": 1,
+      "kind": "recurring",
+      "cadence": "monthly",
+      "billingPeriod": "yearly",
+      "targetRequirement": "context",
+      "requires": [],
+      "periodAlignment": "anniversary",
+      "quantityMeaning": "billing_periods"
+    },
+    "AW-SEO-GBP-ETAB-M": {
+      "schemaVersion": 1,
+      "kind": "recurring_addon",
+      "cadence": "monthly",
+      "billingPeriod": "monthly",
+      "targetRequirement": "context",
+      "requires": [],
+      "parentCodes": [
+        "AW-SEO-GBP-M",
+        "AW-SEO-GBP-A"
+      ],
+      "periodAlignment": "anniversary",
+      "quantityMeaning": "additional_targets"
+    },
+    "AW-SEO-GBP-M": {
+      "schemaVersion": 1,
+      "kind": "recurring",
+      "cadence": "monthly",
+      "billingPeriod": "monthly",
+      "targetRequirement": "context",
+      "requires": [],
+      "periodAlignment": "anniversary",
+      "quantityMeaning": "billing_periods"
+    },
+    "AW-TECH-DEPANNAGE": {
+      "schemaVersion": 1,
+      "kind": "intervention",
+      "cadence": "once",
+      "billingPeriod": "once",
+      "minimumBillableMinutes": 60,
+      "targetRequirement": "site",
+      "requires": [],
+      "quantityMode": "hours",
+      "quantityMeaning": "hours"
+    },
+    "AW-TECH-HEBERG-WP": {
+      "schemaVersion": 1,
+      "kind": "hosting",
+      "cadence": "monthly",
+      "billingPeriod": "yearly",
+      "setupEstimateRequired": true,
+      "targetRequirement": "site",
+      "requires": [],
+      "periodAlignment": "anniversary",
+      "quantityMeaning": "billing_periods"
+    },
+    "AW-TECH-PACK-10H": {
+      "schemaVersion": 1,
+      "kind": "hour_pack",
+      "cadence": "once",
+      "billingPeriod": "once",
+      "creditMinutes": 600,
+      "validityMonths": 12,
+      "targetRequirement": "none",
+      "requires": [],
+      "quantityMeaning": "credits"
+    },
+    "AW-TECH-PACK-3H": {
+      "schemaVersion": 1,
+      "kind": "hour_pack",
+      "cadence": "once",
+      "billingPeriod": "once",
+      "creditMinutes": 180,
+      "validityMonths": 12,
+      "targetRequirement": "none",
+      "requires": [],
+      "quantityMeaning": "credits"
+    },
+    "AW-TECH-PACK-5H": {
+      "schemaVersion": 1,
+      "kind": "hour_pack",
+      "cadence": "once",
+      "billingPeriod": "once",
+      "creditMinutes": 300,
+      "validityMonths": 12,
+      "targetRequirement": "none",
+      "requires": [],
+      "quantityMeaning": "credits"
+    }
+  }
+}

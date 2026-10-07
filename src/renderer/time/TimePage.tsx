@@ -1,5 +1,7 @@
+import { BUSINESS_TIME_CATEGORIES, type BusinessTimeCategory } from '../../shared/operational';
 import { useEffect, useMemo, useState } from 'react';
 import type { ProjectSummary } from '../../shared/projects';
+import { OperationIcon } from '../operations/OperationIcon';
 import { TIME_CATEGORIES, type TimeCategory, type TimeSession, type TimeSessionFilters, type TimeSummary } from '../../shared/time';
 
 const CATEGORY_LABELS: Record<TimeCategory, string> = {
@@ -66,10 +68,13 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [sessions, setSessions] = useState<TimeSession[]>([]);
   const [summary, setSummary] = useState<TimeSummary>({ totalSeconds: 0, billableSeconds: 0, nonBillableSeconds: 0, sessionCount: 0 });
+  const [activeSession, setActiveSession] = useState<TimeSession | null>(null);
+  const [now, setNow] = useState(() => new Date());
   const [manualOpen, setManualOpen] = useState(false);
   const [manualProjectId, setManualProjectId] = useState('');
   const [manualCategory, setManualCategory] = useState<TimeCategory>('production');
   const [manualActivity, setManualActivity] = useState('');
+  const [manualBusinessCategory,setManualBusinessCategory]=useState<BusinessTimeCategory|null>(null);
   const [manualBillable, setManualBillable] = useState(true);
   const [manualStart, setManualStart] = useState(() => {
     const date = new Date(); date.setMinutes(date.getMinutes() - 60); return toLocalInput(date);
@@ -113,14 +118,16 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
 
   async function refresh(): Promise<void> {
     try {
-      const [nextSessions, nextSummary, nextProjects] = await Promise.all([
+      const [nextSessions, nextSummary, nextProjects, nextActive] = await Promise.all([
         window.atoumweb.time.list(filters),
         window.atoumweb.time.summary(filters),
         window.atoumweb.projects.projects.list(),
+        window.atoumweb.time.active(),
       ]);
       setSessions(nextSessions);
       setSummary(nextSummary);
       setProjects(nextProjects);
+      setActiveSession(nextActive);
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de charger les temps.');
     }
@@ -138,12 +145,18 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
     };
   }, [filters]);
 
+  useEffect(() => {
+    const interval = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(interval);
+  }, []);
+
   async function addManual(): Promise<void> {
     try {
       if (!manualStart || !manualEnd) throw new Error('Renseigne le début et la fin.');
       const created = await window.atoumweb.time.addManual({
         projectId: manualProjectId || null,
         category: manualCategory,
+        businessCategory:manualBusinessCategory,
         activityLabel: manualActivity.trim() || null,
         billable: manualBillable,
         startedAt: new Date(manualStart).toISOString(),
@@ -185,6 +198,7 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
         projectId: editProjectId || null,
         projectNodeId: editProjectId === (editing.projectId ?? '') ? editing.projectNodeId ?? null : null,
         category: editCategory,
+        businessCategory:editing.businessCategory,
         activityLabel: editActivity.trim() || null,
         billable: editBillable,
         startedAt: new Date(editStart).toISOString(),
@@ -200,6 +214,10 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
       setEditBusy(false);
     }
   }
+
+  const secondsAngle = now.getSeconds() * 6;
+  const minutesAngle = now.getMinutes() * 6 + now.getSeconds() * 0.1;
+  const hoursAngle = (now.getHours() % 12) * 30 + now.getMinutes() * 0.5;
 
   return (
     <div className="time-page-stack">
@@ -222,10 +240,34 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
         </div>
       </div>
 
+      <section className={`time-visual-strip ${activeSession ? 'has-active-timer' : ''}`}>
+        <div className="time-analog-clock" aria-hidden="true">
+          <span className="time-clock-center" />
+          <span className="time-clock-hand time-clock-hour" style={{ transform: `translateX(-50%) rotate(${hoursAngle}deg)` }} />
+          <span className="time-clock-hand time-clock-minute" style={{ transform: `translateX(-50%) rotate(${minutesAngle}deg)` }} />
+          <span className="time-clock-hand time-clock-second" style={{ transform: `translateX(-50%) rotate(${secondsAngle}deg)` }} />
+          <span className="time-clock-mark mark-12">12</span>
+          <span className="time-clock-mark mark-3">3</span>
+          <span className="time-clock-mark mark-6">6</span>
+          <span className="time-clock-mark mark-9">9</span>
+        </div>
+        <div className="time-now-copy">
+          <span className="eyebrow">Maintenant</span>
+          <strong>{now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</strong>
+          <p>{activeSession
+            ? `Chrono en cours · ${activeSession.activityLabel || activeSession.projectNodeLabel || activeSession.projectLabel || 'Activité AtoumWeb'}`
+            : 'Aucun chrono actif · prêt pour une nouvelle session.'}</p>
+        </div>
+        <div className="time-visual-status">
+          <span className={`time-live-dot ${activeSession ? 'running' : ''}`} />
+          <div><strong>{activeSession ? (activeSession.paused ? 'Chrono en pause' : 'Chrono actif') : 'Disponible'}</strong><small>{activeSession ? CATEGORY_LABELS[activeSession.category] : 'Suivi du temps'}</small></div>
+        </div>
+      </section>
+
       <div className="time-kpi-grid">
-        <article className="kpi-card"><span>Temps total</span><strong>{secondsLabel(summary.totalSeconds)}</strong><small>{summary.sessionCount} session{summary.sessionCount > 1 ? 's' : ''}</small></article>
-        <article className="kpi-card"><span>Facturable</span><strong>{secondsLabel(summary.billableSeconds)}</strong><small>Calculé depuis les sessions</small></article>
-        <article className="kpi-card"><span>Non facturable</span><strong>{secondsLabel(summary.nonBillableSeconds)}</strong><small>Interne, formation, gestes…</small></article>
+        <article className="kpi-card time-kpi-card"><span className="time-kpi-icon" aria-hidden="true"><OperationIcon name="clock" size={29} /></span><div><strong className="time-kpi-label">Temps total</strong><span className="time-kpi-value">{secondsLabel(summary.totalSeconds)}</span><small>{summary.sessionCount} session{summary.sessionCount > 1 ? 's' : ''}</small></div></article>
+        <article className="kpi-card time-kpi-card"><span className="time-kpi-icon" aria-hidden="true"><OperationIcon name="euro" size={30} /></span><div><strong className="time-kpi-label">Facturable</strong><span className="time-kpi-value">{secondsLabel(summary.billableSeconds)}</span><small>Calculé depuis les sessions</small></div></article>
+        <article className="kpi-card time-kpi-card"><span className="time-kpi-icon time-kpi-icon-nonbillable" aria-hidden="true"><OperationIcon name="piggy-broken" size={31} /></span><div><strong className="time-kpi-label">Non facturable</strong><span className="time-kpi-value">{secondsLabel(summary.nonBillableSeconds)}</span><small>Interne, formation, gestes…</small></div></article>
       </div>
 
       {manualOpen && (
@@ -238,6 +280,7 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
             <label>Fin<input type="datetime-local" value={manualEnd} onChange={(event) => setManualEnd(event.target.value)} /></label>
             <label className="wide">Activité<input value={manualActivity} onChange={(event) => setManualActivity(event.target.value)} placeholder="Ex. Préparation maquette" /></label>
             <label className="wide">Note<textarea value={manualNote} onChange={(event) => setManualNote(event.target.value)} placeholder="Note facultative" /></label>
+            <label>Catégorie métier<select aria-label="Catégorie métier manuelle" value={manualBusinessCategory ?? ''} onChange={e=>setManualBusinessCategory(e.target.value as BusinessTimeCategory || null)}><option value="">Non qualifiée</option>{BUSINESS_TIME_CATEGORIES.map(c=><option key={c}>{c}</option>)}</select></label>
             <label className="time-checkbox"><input type="checkbox" checked={manualBillable} onChange={(event) => setManualBillable(event.target.checked)} /> Facturable</label>
           </div>
           <div className="button-row"><button className="primary-button" type="button" onClick={() => void addManual()}>Ajouter la session</button><button className="secondary-button" type="button" onClick={() => setManualOpen(false)}>Annuler</button></div>
@@ -267,12 +310,12 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
           <tbody>
             {sessions.map((session) => (
               <tr key={session.id}>
-                <td><strong>{dateTimeLabel(session.startedAt)}</strong>{!session.endedAt && <small className="time-live">En cours{session.paused ? ' · pause' : ''}</small>}</td>
-                <td><strong>{session.projectNumber ? `${session.projectNumber} · ${session.projectLabel ?? ''}` : session.projectLabel || 'AtoumWeb'}</strong><small>{session.projectNodeLabel || session.activityLabel || '—'}</small></td>
-                <td>{CATEGORY_LABELS[session.category]}</td>
-                <td><strong>{secondsLabel(session.durationSeconds)}</strong></td>
-                <td>{session.billable ? 'Oui' : 'Non'}</td>
-                <td>{session.source === 'timer' ? 'Timer' : session.source === 'manual' ? 'Manuel' : 'Import'}</td>
+                <td><span className="time-cell-value">{dateTimeLabel(session.startedAt)}</span>{!session.endedAt && <small className="time-live">En cours{session.paused ? ' · pause' : ''}</small>}</td>
+                <td><span className="time-cell-value">{session.projectNumber ? `${session.projectNumber} · ${session.projectLabel ?? ''}` : session.projectLabel || 'AtoumWeb'}</span><small>{session.projectNodeLabel || session.activityLabel || '—'}</small></td>
+                <td><span className="time-category-pill">{CATEGORY_LABELS[session.category]}</span><small>{session.businessCategory ?? 'Métier non qualifié'}</small></td>
+                <td><span className="time-cell-value">{secondsLabel(session.durationSeconds)}</span></td>
+                <td><span className={`time-billable-pill ${session.billable ? 'yes' : 'no'}`}>{session.billable ? 'Oui' : 'Non'}</span></td>
+                <td><span className={`time-source-pill source-${session.source}`}><span aria-hidden="true">{session.source === 'timer' ? '◷' : session.source === 'manual' ? '✎' : '⇩'}</span>{session.source === 'timer' ? 'Timer' : session.source === 'manual' ? 'Manuel' : 'Import'}</span></td>
                 <td>{session.endedAt ? <button className="text-button" type="button" onClick={() => openCorrection(session)}>Corriger</button> : <span className="muted">En cours</span>}</td>
               </tr>
             ))}

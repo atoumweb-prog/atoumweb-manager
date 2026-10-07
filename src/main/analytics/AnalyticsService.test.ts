@@ -215,14 +215,58 @@ describe('AnalyticsService', () => {
     ]);
   });
 
-  it('n invente aucun chiffre pour les sources Phase 5 absentes', () => {
+  it('n invente aucun encaissement ni reste à encaisser sans source de paiements', () => {
     const snapshot = analytics.financialSnapshot({ preset: 'month' }, new Date('2026-09-21T12:00:00.000Z'));
 
-    for (const key of ['invoiced_revenue', 'cash_collected', 'outstanding_revenue', 'expenses'] as const) {
+    for (const key of ['cash_collected', 'outstanding_revenue'] as const) {
       const metric = snapshot.metrics.find((item) => item.key === key);
       expect(metric?.available).toBe(false);
       expect(metric?.currentCents).toBeNull();
       expect(metric?.previousCents).toBeNull();
     }
+  });
+
+  it('raccorde le suivi Abby et les dépenses existants sans transformer une facture en paiement', () => {
+    for (const [id,status,amount,date] of [
+      ['invoice','invoiced',42000,'2026-09-15'],['planned','ready',90000,'2026-09-15'],
+      ['cancelled','cancelled',80000,'2026-09-15'],['previous','invoiced',10000,'2026-08-15'],
+    ] as const) database.run(`INSERT INTO billing_items
+      (id,client_account_id,source_type,source_id,source_key,description,expected_amount_cents,status,invoiced_at,created_at,updated_at)
+      VALUES(?,'client','other',?,?,?, ?,?,?,?,?)`,[id,id,id,id,amount,status,date,date,date]);
+    for(const [id,status,amount,date] of [['expense','committed',12000,'2026-09-14'],['cancel','cancelled',99000,'2026-09-14'],['past','paid',3000,'2026-08-14']] as const)
+      database.run(`INSERT INTO expenses(id,category,label,amount_cents,status,expense_date,created_at,updated_at)
+        VALUES(?,'software',?,?,?,?,?,?)`,[id,id,amount,status,date,date,date]);
+    const metrics=analytics.financialSnapshot({preset:'month'},new Date('2026-09-21T12:00:00Z')).metrics;
+    expect(metrics.find(m=>m.key==='invoiced_revenue')).toMatchObject({available:true,currentCents:42000,previousCents:10000});
+    expect(metrics.find(m=>m.key==='expenses')).toMatchObject({available:true,currentCents:12000,previousCents:3000});
+    expect(metrics.find(m=>m.key==='cash_collected')).toMatchObject({available:false,currentCents:null});
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('utilise les estimations courantes des tâches opérationnelles actives, sans conteneur ni action archivée', () => {
+    database.run(`INSERT INTO project_nodes(id,project_id,node_type,name,sort_order,estimated_minutes,is_required,status,created_at,updated_at)
+      VALUES('op-task','project-current','task','Action active',10,120,1,'done','2026-09-01','2026-09-18')`);
+    database.run(`INSERT INTO project_nodes(id,project_id,node_type,name,sort_order,estimated_minutes,is_required,status,created_at,updated_at)
+      VALUES('structure','project-current','module','Structure sans production',20,900,0,'todo','2026-09-01','2026-09-18')`);
+    database.run(`INSERT INTO project_nodes(id,project_id,node_type,name,sort_order,estimated_minutes,is_required,status,created_at,updated_at,archived_at)
+      VALUES('retired','project-current','task','Ancienne action',30,400,0,'todo','2026-09-01','2026-09-18','2026-09-18')`);
+    database.run(`INSERT INTO project_action_instances(project_id,source_key,project_node_id,initial_snapshot_json)
+      VALUES('project-current','sold-action','op-task','{"action":{},"estimateRequired":false,"referenceMinutes":60}')`);
+    database.run(`INSERT INTO time_sessions(id,project_id,category,activity_label,started_at,ended_at,billable,source,created_at,updated_at)
+      VALUES('op-time','project-current','development','Action','2026-09-18T09:00:00Z','2026-09-18T10:00:00Z',1,'manual','2026-09-18','2026-09-18')`);
+    const result=analytics.projectTimeSnapshot({preset:'month'},new Date('2026-09-21T12:00:00Z')).economics;
+    expect(result).toMatchObject({estimatedSeconds:7200,estimateTrackedSeconds:3600,estimateSample:1});
+  });
+
+  it('ne présente pas un cadrage indicatif comme estimation complète du Projet', () => {
+    database.run(`INSERT INTO project_nodes(id,project_id,node_type,name,sort_order,estimated_minutes,is_required,status,created_at,updated_at)
+      VALUES('variable','project-current','task','Action à estimer',10,NULL,1,'done','2026-09-01','2026-09-18')`);
+    database.run(`INSERT INTO project_action_instances(project_id,source_key,project_node_id,initial_snapshot_json)
+      VALUES('project-current','variable-sale','variable','{"action":{},"estimateRequired":true,"referenceMinutes":180}')`);
+    database.run(`INSERT INTO time_sessions(id,project_id,category,activity_label,started_at,ended_at,billable,source,created_at,updated_at)
+      VALUES('variable-time','project-current','development','Cadrage','2026-09-18T09:00:00Z','2026-09-18T10:00:00Z',1,'manual','2026-09-18','2026-09-18')`);
+    const result=analytics.projectTimeSnapshot({preset:'month'},new Date('2026-09-21T12:00:00Z')).economics;
+    expect(result).toMatchObject({trackedSeconds:3600,estimatedSeconds:0,estimateTrackedSeconds:0,estimateSample:0});
+    expect(result.contractHourlyCents).not.toBeNull();
   });
 });

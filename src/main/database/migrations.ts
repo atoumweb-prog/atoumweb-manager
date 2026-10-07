@@ -1,3 +1,12 @@
+import { OPERATIONAL_SALES_ADDON_MIGRATION } from './operationalSalesAddonMigration';
+import { OPERATIONAL_SALES_MIGRATION } from './operationalSalesMigration';
+import { COMMERCIAL_RULES_MIGRATION } from './commercialRulesMigration';
+import { OPERATIONAL_LINK_LIFECYCLE_MIGRATION } from './operationalLinkLifecycleMigration';
+import { PROJECT_CONTRIBUTION_TARGET_MIGRATION } from './projectContributionTargetMigration';
+import { PROJECT_OPERATIONAL_MIGRATION } from './projectOperationalMigration';
+import { PROJECT_COMPOSITION_MIGRATION } from './projectCompositionMigration';
+import { PROJECT_PROVISIONAL_MIGRATION } from './projectProvisionalMigration';
+import { QUOTE_OPTIONS_MIGRATION } from './quoteOptionsMigration';
 import { STABILISATION_MIGRATION } from './stabilisationMigration';
 import { STABILISATION_PHASE_19_MIGRATION } from './stabilisationPhase19Migration';
 import { PROSPECT_WORKFLOW_V2_MIGRATION } from './prospectWorkflowV2Migration';
@@ -9,6 +18,33 @@ import { PHASE_4_MIGRATIONS } from './phase4Migrations';
 import { PHASE_4_OVERAGE_MIGRATIONS } from './phase4OverageMigration';
 import { PHASE_4_REPORT_MIGRATIONS } from './phase4ReportMigration';
 import { PHASE_6_MIGRATIONS } from './phase6Migrations';
+import { PROJECT_BLUEPRINT_MIGRATIONS } from './projectBlueprintMigrations';
+import { CATALOG_V2_MIGRATION } from './catalogV2Migration';
+import { BILLING_INVOICE_MIGRATION } from './billingInvoiceMigration';
+import { EXPENSES_MIGRATION } from './expensesMigration';
+import { CRM_IDENTITY_ASSETS_MIGRATION } from './crmIdentityAssetsMigration';
+import { TIME_PAUSE_REASON_MIGRATION } from './timePauseReasonMigration';
+import { BRIDGE_SNAPSHOT_MIGRATION } from './bridgeSnapshotMigration';
+import { BRIDGE_SNAPSHOT_REPAIR_MIGRATION } from './bridgeSnapshotRepairMigration';
+import { ATOUMWEB_LIBRARY_VERTICAL_MIGRATION } from './atoumWebLibraryVerticalMigration';
+import { BRIDGE_OCCURRENCE_RETURN_MIGRATION } from './bridgeOccurrenceReturnMigration';
+import { ATOUMWEB_COMPONENT_FAMILY_MIGRATION } from './atoumWebComponentFamilyMigration';
+import { BRIDGE_NODE_MATCH_MIGRATION } from './bridgeNodeMatchMigration';
+import { BRIDGE_NODE_MATCH_REVIEW_MIGRATION } from './bridgeNodeMatchReviewMigration';
+import { ATOUMWEB_COMPOSITION_MIGRATION } from './atoumWebCompositionMigration';
+import { CONTRACT_TERMS_MIGRATION } from './contractTermsMigration';
+import { QUOTE_CONTRACT_DOCUMENT_MIGRATION } from './quoteContractDocumentMigration';
+import { CONTRACT_AUDIENCE_MIGRATION } from './contractAudienceMigration';
+import { PROJECT_SITE_MIGRATION } from './projectSiteMigration';
+import { PROJECT_PAGE_COMPOSITION_MIGRATION } from './projectPageCompositionMigration';
+import { PROJECT_PAGE_COMPOSITION_LOCAL_SETTINGS_MIGRATION } from './projectPageCompositionLocalSettingsMigration';
+import { PROJECT_BLUEPRINT_SITE_MIGRATION } from './projectBlueprintSiteMigration';
+import { PROJECT_BLUEPRINT_SITE_COMPATIBILITY_MIGRATION } from './projectBlueprintSiteCompatibilityMigration';
+import { PROJECT_PAGE_EXPORT_MIGRATION } from './projectPageExportMigration';
+import { CATALOG_IDENTITY_V1_MIGRATION } from './catalogIdentityV1Migration';
+import { CATALOG_IMPORT_V1_MIGRATION } from './catalogImportV1Migration';
+import { QUOTE_CONTRACT_PREPARATION_MIGRATION } from './quoteContractPreparationMigration';
+import { CONTRACT_LIBRARY_IMPORT_V1_MIGRATION } from './contractLibraryImportV1Migration';
 
 export interface Migration { id: number; name: string; sql: string; disableForeignKeys?: boolean; }
 
@@ -173,6 +209,42 @@ export const MIGRATIONS: Migration[] = [
   PROSPECT_WORKFLOW_V2_MIGRATION,
   PROSPECT_RECIPE_UX_MIGRATION,
   ...PHASE_6_MIGRATIONS,
+  ...PROJECT_BLUEPRINT_MIGRATIONS,
+  CATALOG_V2_MIGRATION,
+  BILLING_INVOICE_MIGRATION,
+  EXPENSES_MIGRATION,
+  CRM_IDENTITY_ASSETS_MIGRATION,
+  TIME_PAUSE_REASON_MIGRATION,
+  BRIDGE_SNAPSHOT_MIGRATION,
+  BRIDGE_SNAPSHOT_REPAIR_MIGRATION,
+  ATOUMWEB_LIBRARY_VERTICAL_MIGRATION,
+  BRIDGE_OCCURRENCE_RETURN_MIGRATION,
+  ATOUMWEB_COMPONENT_FAMILY_MIGRATION,
+  BRIDGE_NODE_MATCH_MIGRATION,
+  BRIDGE_NODE_MATCH_REVIEW_MIGRATION,
+  ATOUMWEB_COMPOSITION_MIGRATION,
+  CONTRACT_TERMS_MIGRATION,
+  QUOTE_CONTRACT_DOCUMENT_MIGRATION,
+  CONTRACT_AUDIENCE_MIGRATION,
+  PROJECT_SITE_MIGRATION,
+  PROJECT_PAGE_COMPOSITION_MIGRATION,
+  PROJECT_PAGE_COMPOSITION_LOCAL_SETTINGS_MIGRATION,
+  PROJECT_BLUEPRINT_SITE_MIGRATION,
+  PROJECT_BLUEPRINT_SITE_COMPATIBILITY_MIGRATION,
+  PROJECT_PAGE_EXPORT_MIGRATION,
+  CATALOG_IDENTITY_V1_MIGRATION,
+  CATALOG_IMPORT_V1_MIGRATION,
+  CONTRACT_LIBRARY_IMPORT_V1_MIGRATION,
+  QUOTE_CONTRACT_PREPARATION_MIGRATION,
+  QUOTE_OPTIONS_MIGRATION,
+  PROJECT_COMPOSITION_MIGRATION,
+  PROJECT_PROVISIONAL_MIGRATION,
+  PROJECT_OPERATIONAL_MIGRATION,
+  PROJECT_CONTRIBUTION_TARGET_MIGRATION,
+  OPERATIONAL_LINK_LIFECYCLE_MIGRATION,
+  COMMERCIAL_RULES_MIGRATION,
+  OPERATIONAL_SALES_MIGRATION,
+  OPERATIONAL_SALES_ADDON_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {

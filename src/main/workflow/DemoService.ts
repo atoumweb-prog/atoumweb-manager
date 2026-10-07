@@ -4,9 +4,12 @@ import type { DatabaseService } from '../database/DatabaseService';
 import type { DemoSummary } from '../../shared/workflow';
 
 // Only business records may be removed. Reference data and physical files are never deleted.
-const TABLES = ['organizations','contacts','client_accounts','client_contact_roles','prospects','crm_actions','crm_needs','quotes','quote_lines','projects','project_nodes','project_services','project_prerequisites','file_assets','file_asset_links','technical_items','technical_item_versions','technical_item_assets','service_requests','interventions','time_sessions','time_session_pauses','maintenance_subscriptions','maintenance_periods','maintenance_checks','hour_packs','hour_pack_movements','billing_items','maintenance_overage_decisions','maintenance_report_drafts','hour_pack_shortfall_decisions','activity_events','activity_log','search_documents'];
+const TABLES = ['organizations','contacts','client_accounts','client_contact_roles','prospects','crm_actions','crm_needs','quotes','quote_lines','quote_contract_clauses','projects','project_blueprint_plans','project_nodes','project_node_sources','project_services','project_prerequisites','project_sites','project_site_pages','project_composed_node_bindings','project_composed_site_bindings','project_composed_prerequisite_sources','file_assets','file_asset_links','technical_items','technical_item_versions','technical_item_assets','service_requests','interventions','time_sessions','time_session_pauses','maintenance_subscriptions','maintenance_periods','maintenance_checks','hour_packs','hour_pack_movements','billing_items','maintenance_overage_decisions','maintenance_report_drafts','hour_pack_shortfall_decisions','activity_events','activity_log','search_documents'];
 const ident=(name:string):string=>'"'+name.replace(/"/g,'""')+'"';
-const recordKey=(table:string)=>table==='maintenance_report_drafts'?'period_id':'id';
+const recordKey=(table:string)=>table==='maintenance_report_drafts'?'period_id'
+  : table==='project_blueprint_plans'?'project_id'
+  : table==='project_site_pages'?'project_node_id'
+  : table.startsWith('project_composed_')?'rowid':'id';
 type ForeignKey = { table: string; from: string; to: string } & Record<string,unknown>;
 export class DemoService {
   constructor(private db: DatabaseAdapter) {}
@@ -25,7 +28,7 @@ export class DemoService {
   installTracking(): void {
     for(const table of this.tables()) {
       const columns=this.db.all<{name:string}>(`PRAGMA table_info(${ident(table)})`).map(c=>c.name);
-      if(!columns.includes(recordKey(table))) throw new Error(`Marquage demo impossible : ${table}`);
+      if(recordKey(table)!=='rowid'&&!columns.includes(recordKey(table))) throw new Error(`Marquage demo impossible : ${table}`);
       const parents=this.db.all<ForeignKey>(`PRAGMA foreign_key_list(${ident(table)})`).filter(f=>TABLES.includes(f.table) && f.to==='id')
         .map(f=>`SELECT batch_id FROM demo_records WHERE table_name='${f.table}' AND record_id=CAST(NEW.${ident(f.from)} AS TEXT)`);
       for(const field of ['entity_id','source_id','intervention_id']) if(columns.includes(field)) parents.push(`SELECT batch_id FROM demo_records WHERE record_id=CAST(NEW.${ident(field)} AS TEXT)`);
@@ -86,6 +89,8 @@ export class DemoService {
       const quote=services.quotes.create({prospectId:prospect.id,subject:'DEMO — '+label+' — '+scenario});
       services.quotes.addCatalogLine(quote.id,services.catalog.getItem('atoumweb-'+key).currentVersion!.id);
       if(scenario==='vitrine') services.quotes.addCatalogLine(quote.id,services.catalog.getItem('atoumweb-article-seo').currentVersion!.id);
+      // Explicit demonstration sample, not a real contract. No fictitious administrative configuration or evidence.
+      this.db.run('UPDATE quotes SET contract_parameters_json=NULL WHERE id=?',[quote.id]);
       services.quotes.finalize(quote.id);
       services.quotes.markSent(quote.id);
       const accepted=services.quotes.accept(quote.id);

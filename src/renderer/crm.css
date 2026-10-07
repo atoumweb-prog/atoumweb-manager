@@ -125,3 +125,27 @@
 @media (max-height: 760px) and (min-width: 1281px) {
   .client-summary-panel { max-height: calc(100dvh - 94px); }
 }
+
+
+/* Recette Accueil / Pipeline — relances transversales */
+.prospect-toolbar .toolbar-controls {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.prospect-card-relaunch {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border));
+  border-radius: 999px;
+  padding: 4px 7px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  color: var(--accent-strong);
+  font-size: 9px;
+  font-weight: 750;
+}
+.prospect-card-relaunch.overdue {
+  border-color: color-mix(in srgb, #d62828 52%, var(--border));
+  background: color-mix(in srgb, #d62828 10%, var(--surface));
+  color: #d62828;
+}

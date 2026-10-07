@@ -1,4 +1,7 @@
+import type { BillingApi } from './billing';
+import type { ExpensesApi } from './expenses';
 import type { CatalogApi, QuoteApi } from './commercial';
+import type { ContractTermsApi } from './contractTerms';
 import type { CrmApi } from './crm';
 import type { ClientDocumentsApi } from './clientDocuments';
 import type { HourPackShortfallApi } from './hourPackShortfall';
@@ -12,6 +15,7 @@ import type { BusinessBackupsApi } from './businessBackups';
 import type { BusinessBackupAlertsApi } from './businessBackupAlerts';
 import type { AnalyticsApi } from './analytics';
 import type { TimeApi } from './time';
+import type { BridgeSnapshotsApi } from './bridgeSnapshots';
 
 export const THEME_NAMES = ['atoumweb', 'noir', 'blanc'] as const;
 export const DISPLAY_DENSITIES = ['compact', 'comfort', 'comfort_plus'] as const;
@@ -39,6 +43,7 @@ export interface BootstrapState {
   databasePath: string;
   theme: ThemeName;
   displayDensity: DisplayDensity;
+  showHoverHelp: boolean;
   database: DatabaseHealth;
 }
 
@@ -68,6 +73,7 @@ export interface AtoumWebApi {
   settings: {
     setTheme(theme: ThemeName): Promise<ThemeName>;
     setDisplayDensity(density: DisplayDensity): Promise<DisplayDensity>;
+    setShowHoverHelp(enabled: boolean): Promise<boolean>;
   };
   workspace: {
     choose(): Promise<WorkspaceChangeResult>;
@@ -82,10 +88,15 @@ export interface AtoumWebApi {
   database: {
     health(): Promise<DatabaseHealth>;
   };
+  bridgeSnapshots: BridgeSnapshotsApi;
   crm: CrmApi;
   clientDocuments: ClientDocumentsApi;
+  billing: BillingApi;
+  expenses: ExpensesApi;
   catalog: CatalogApi;
+  contractTerms: ContractTermsApi;
   quotes: QuoteApi;
+  quotePreparation: import('./quoteContractPreparation').QuoteContractPreparationApi;
   projects: ProjectsApi;
   referentials: ReferentialsApi;
   operations: OperationsApi;

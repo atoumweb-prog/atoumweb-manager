@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { QuoteDetail, QuoteLine } from '../../shared/commercial';
+import { quoteContractText } from '../../shared/contractTerms';
 
 function money(cents: number): string {
   return `${(cents / 100).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} €`;
@@ -23,6 +24,23 @@ export function QuoteClientPreview({ quote, onClose }: { quote: QuoteDetail; onC
   const [generating, setGenerating] = useState(false);
   const [pdfPath, setPdfPath] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [contractText, setContractText] = useState(quote.contractTextSnapshot ?? '');
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const build = quote.status === 'draft' && !quote.finalizedAt
+          ? await window.atoumweb.contractTerms.quotes.sync(quote.id)
+          : await window.atoumweb.contractTerms.quotes.get(quote.id);
+        if (active) setContractText(quoteContractText(build));
+      } catch {
+        if (active) setContractText(quote.contractTextSnapshot ?? '');
+      }
+    };
+    void load();
+    return () => { active = false; };
+  }, [quote.id, quote.status, quote.finalizedAt, quote.contractCompiledAt, quote.updatedAt, quote.contractTextSnapshot]);
 
   async function generatePdf(): Promise<void> {
     setGenerating(true);
@@ -66,7 +84,7 @@ export function QuoteClientPreview({ quote, onClose }: { quote: QuoteDetail; onC
           <section className="quote-document-lines">
             {quote.lines.map((line) => {
               const included = offerComponents(line).filter((component) => !component.isOptional);
-              const optional = offerComponents(line).filter((component) => Boolean(component.isOptional));
+              const optional = offerComponents(line).filter((component) => Boolean(component.isOptional) && typeof component.componentId !== 'string');
               return (
                 <div className="quote-document-line" key={line.id}>
                   <div className="quote-document-line-main">
@@ -86,7 +104,7 @@ export function QuoteClientPreview({ quote, onClose }: { quote: QuoteDetail; onC
 
           <section className="quote-document-total">
             <div><span>Total</span><strong>{money(quote.contractValueCents)}</strong></div>
-            <div><span>Acompte à la commande ({quote.depositPercent ?? 0} %)</span><strong>{money(quote.depositCents)}</strong></div>
+            <div><span>{quote.initialPaymentQualification==='arrhes'?'Arrhes':'Acompte'} à la commande ({quote.depositPercent ?? 0} %)</span><strong>{money(quote.depositCents)}</strong></div>
             <div><span>Solde</span><strong>{money(quote.balanceCents)}</strong></div>
           </section>
 
@@ -94,7 +112,7 @@ export function QuoteClientPreview({ quote, onClose }: { quote: QuoteDetail; onC
             <h2>Conditions</h2>
             <div><span>Délai estimé</span><strong>{quote.estimatedDelay || 'À définir ensemble'}</strong></div>
             {quote.prerequisitesText && <div><span>Prérequis</span><p>{quote.prerequisitesText}</p></div>}
-            {quote.specialTerms && <div><span>Conditions particulières</span><p>{quote.specialTerms}</p></div>}
+            {contractText && <div className="quote-document-cgv"><span>Conditions Générales de Vente</span><p style={{ whiteSpace: 'pre-wrap' }}>{contractText}</p></div>}
           </section>
 
           <footer className="quote-document-footer"><strong>AtoumWeb</strong><span>www.atoumweb.fr</span></footer>
