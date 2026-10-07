@@ -4,11 +4,12 @@ CRM / outil de gestion métier destiné à centraliser l'activité AtoumWeb : pr
 
 ## Statut
 
-**V1 — conception fonctionnelle validée, préparation de l'architecture technique.**
+**V1 — développement métier avancé. Projet V2 / atelier de production en recette sur `feature/project-blueprints-v1`.**
 
 Documents de référence :
 
-- `PROJECT_STATUS.md` — avancement réel, décisions, blocages et prochaine action ;
+- `PROJECT_STATUS.md` — avancement réel, branche active, validations et prochaine action ;
+- `docs/HANDOFF_CODEX_MSI.md` — état opérationnel à utiliser pour synchroniser Codex sur le MSI ;
 - `AGENTS.md` — règles obligatoires pour Codex et tout agent travaillant sur le dépôt ;
 - `docs/CAHIER_DES_CHARGES_FONCTIONNEL_V1.md` — périmètre fonctionnel V1 validé.
 
@@ -34,4 +35,4 @@ Une donnée métier possède une **source unique**. Les différents écrans peuv
 
 ## Développement
 
-La branche `main` doit rester stable. Les fonctionnalités applicatives seront développées dans des branches dédiées et intégrées par pull requests cohérentes.
+La branche `main` reste la référence Git historique mais elle est actuellement très en retard sur le socle fonctionnel. Le développement courant part du socle explicitement indiqué dans `PROJECT_STATUS.md`. Ne jamais choisir une ancienne branche Phase comme nouvelle base sans vérifier le suivi.

@@ -99,6 +99,172 @@ describe('AtoumWebTechnicalLibraryService', () => {
     expect(reactivated.archivedAt).toBeNull();
   });
 
+  it('classe par métier et filtre la Bibliothèque sans confondre métier et tags', () => {
+    const florist = library.create(
+      {
+        category: 'section',
+        name: 'Section bulles Fleuriste',
+        reuseStatus: 'ready',
+        vertical: 'Fleuriste',
+        tags: ['services', 'présentation'],
+      },
+      { contentType: 'code', language: 'html', contentText: '<section>Fleurs</section>' },
+    );
+    library.create(
+      {
+        category: 'section',
+        name: 'Section bulles Automobile',
+        reuseStatus: 'ready',
+        vertical: 'automobile',
+        tags: ['services'],
+      },
+      { contentType: 'code', language: 'html', contentText: '<section>Auto</section>' },
+    );
+
+    expect(library.get(florist.id).vertical).toBe('fleuriste');
+    expect(library.list({ vertical: 'fleur' }).map((item) => item.id)).toEqual([florist.id]);
+  });
+
+  it('accepte la catégorie Code snippets avec le langage porté par la version', () => {
+    const snippet = library.create(
+      {
+        category: 'code_snippet',
+        name: 'Masquer un élément au scroll',
+        reuseStatus: 'ready',
+        tags: ['scroll', 'ui'],
+      },
+      {
+        contentType: 'code',
+        language: 'javascript',
+        contentText: 'window.addEventListener("scroll", () => {});',
+      },
+    );
+
+    expect(snippet.category).toBe('code_snippet');
+    expect(snippet.currentVersion?.language).toBe('javascript');
+    expect(library.list({ category: 'code_snippet' }).map((item) => item.id)).toEqual([snippet.id]);
+  });
+
+  it('expose et recherche les métadonnées Famille / Variante', () => {
+    const item = library.create(
+      {
+        category: 'section',
+        name: 'Section mariage premium',
+        reuseStatus: 'ready',
+        vertical: 'mariage',
+        tags: ['bridge'],
+      },
+      { contentType: 'json', language: 'json', contentText: '{"kind":"atoumweb-library-reusable-component"}' },
+    );
+    const now = '2026-09-26T06:00:00.000Z';
+    database.run(
+      `INSERT INTO atoumweb_component_families
+       (id,component_key,display_name,category,vertical,reusability_scope,base_item_id,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?)`,
+      ['awfam:library-test', 'aw-section-mariage-premium', 'Famille Mariage Premium', 'section', 'mariage', 'vertical', item.id, now, now],
+    );
+    database.run(
+      `INSERT INTO atoumweb_component_variants
+       (id,family_id,technical_item_id,variant_key,display_name,variant_mode,variant_of_id,source_occurrence_return_id,created_at,updated_at)
+       VALUES (?,?,?,?,?,'base',NULL,NULL,?,?)`,
+      ['awvar:library-test-base', 'awfam:library-test', item.id, 'base', 'Base', now, now],
+    );
+
+    const detailed = library.get(item.id);
+    expect(detailed).toMatchObject({
+      componentFamilyId: 'awfam:library-test',
+      componentKey: 'aw-section-mariage-premium',
+      familyDisplayName: 'Famille Mariage Premium',
+      libraryVariantId: 'awvar:library-test-base',
+      variantKey: 'base',
+      variantMode: 'base',
+      reusabilityScope: 'vertical',
+    });
+    expect(library.list({ search: 'famille mariage premium' }).map((candidate) => candidate.id)).toContain(item.id);
+    expect(library.list({ search: 'aw-section-mariage-premium' }).map((candidate) => candidate.id)).toContain(item.id);
+
+    library.rebuildSearchIndex();
+    const indexed = database.get<{ search_text: string }>(
+      "SELECT search_text FROM search_documents WHERE entity_type='atoumweb_library' AND entity_id=?",
+      [item.id],
+    );
+    expect(indexed?.search_text).toContain('aw-section-mariage-premium');
+  });
+
+  it('crée directement un composant réutilisable stable avec identité Famille / Variante', () => {
+    const created = library.createReusableCode({
+      category: 'hero',
+      name: 'Hero Fleuriste',
+      vertical: 'fleuriste',
+      html: '<section class="hero-fleuriste"><h1>Fleuriste</h1></section>',
+      css: '.hero-fleuriste{padding:80px 24px}',
+      javascript: '',
+    });
+
+    expect(created.reuseStatus).toBe('ready');
+    expect(created.stableVersion?.id).toBe(created.currentVersion?.id);
+    expect(created.componentFamilyId).toBeTruthy();
+    expect(created.variantKey).toBe('base');
+    expect(created.variantMode).toBe('base');
+    expect(created.tags).toEqual(expect.arrayContaining(['manager-direct', 'bridge-human-validated']));
+    expect(created.currentVersion?.contentText).toContain('atoumweb-library-reusable-component');
+    expect(created.currentVersion?.contentText).toContain('hero-fleuriste');
+  });
+
+  it('crée une déclinaison complète sans écraser le modèle source', () => {
+    const source = library.createReusableCode({
+      category: 'hero',
+      name: 'Hero générique',
+      html: '<section class="hero-base">Base</section>',
+      css: '.hero-base{padding:60px}',
+    });
+
+    const variant = library.createVariantCode({
+      sourceItemId: source.id,
+      name: 'Fleuriste',
+      variantKey: 'fleuriste',
+      vertical: 'fleuriste',
+      html: '<section class="hero-fleuriste">Fleurs</section>',
+      css: '.hero-fleuriste{padding:90px}',
+    });
+
+    const reloadedSource = library.get(source.id);
+    expect(variant.id).not.toBe(source.id);
+    expect(variant.componentFamilyId).toBe(source.componentFamilyId);
+    expect(variant.variantKey).toBe('fleuriste');
+    expect(variant.variantMode).toBe('forked');
+    expect(variant.variantOfId).toBe(source.libraryVariantId);
+    expect(reloadedSource.currentVersion?.contentText).toContain('hero-base');
+    expect(variant.currentVersion?.contentText).toContain('hero-fleuriste');
+  });
+
+  it('crée une variante à valider sans la marquer stable lorsqu’elle vient d’une adaptation locale', () => {
+    const source = library.createReusableCode({
+      category: 'section',
+      name: 'Section modèle',
+      html: '<section>Source</section>',
+      css: '.source{color:#111111}',
+    });
+
+    const variant = library.createVariantCode({
+      sourceItemId: source.id,
+      name: 'Variante locale',
+      html: '<section>Adaptée</section>',
+      css: '.source{color:#445566}',
+      reuseStatus: 'adapt',
+      markStable: false,
+      provenanceNote: 'Promue depuis une occurrence locale de Page.',
+      tags: ['composition-promotion'],
+    });
+
+    expect(variant.reuseStatus).toBe('adapt');
+    expect(variant.currentVersion).not.toBeNull();
+    expect(variant.stableVersion).toBeNull();
+    expect(variant.tags).toEqual(expect.arrayContaining(['composition-promotion', 'manager-variant-to-review']));
+    expect(variant.tags).not.toContain('bridge-human-validated');
+    expect(variant.currentVersion?.notes).toContain('occurrence locale');
+  });
+
   it('refuse une origine globale pour préserver la notion d’origine projet', () => {
     const first = library.create(
       { category: 'note', name: 'Composant global', reuseStatus: 'reference' },

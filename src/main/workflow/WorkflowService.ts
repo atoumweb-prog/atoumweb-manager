@@ -117,6 +117,7 @@ export class WorkflowService {
     for(const p of this.projects.listProjects()) {
       if(!labels[p.status]) continue;
       const target={entityType:'project' as const,entityId:p.id,title:p.name,status:p.status};
+      if(p.commercialState==='provisional') { entries.push({group:'Projets prévisionnels',target}); continue; }
       entries.push({group:labels[p.status],target});
       if(p.targetDate && p.targetDate.slice(0,10)<today) entries.push({group:'Projets en retard',target});
       else if(p.targetDate && p.targetDate.slice(0,10)<=soon) entries.push({group:'Échéances proches',target});

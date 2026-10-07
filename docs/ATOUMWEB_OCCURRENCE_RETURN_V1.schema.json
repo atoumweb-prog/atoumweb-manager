@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://atoumweb.local/contracts/occurrence-return-v1.schema.json",
+  "title": "AtoumWeb Bridge Occurrence Return Contract V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "schemaVersion",
+    "occurrenceContractVersion",
+    "sourceComponentPackageContractVersion",
+    "returnedAt",
+    "actionPolicy",
+    "siteOccurrenceId",
+    "files",
+    "changes"
+  ],
+  "properties": {
+    "contract": { "const": "atoumweb_bridge_occurrence_return" },
+    "schemaVersion": { "const": 1 },
+    "occurrenceContractVersion": { "const": 1 },
+    "sourceComponentPackageContractVersion": { "const": 1 },
+    "returnedAt": { "type": "string", "format": "date-time" },
+    "actionPolicy": { "const": "manager_decides" },
+    "siteOccurrenceId": { "type": "string", "minLength": 1 },
+    "files": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["occurrence", "html", "css", "javascript", "assets", "provenance"],
+      "properties": {
+        "occurrence": { "$ref": "#/$defs/file" },
+        "html": { "$ref": "#/$defs/file" },
+        "css": {
+          "anyOf": [
+            { "$ref": "#/$defs/file" },
+            { "type": "null" }
+          ]
+        },
+        "javascript": {
+          "anyOf": [
+            { "$ref": "#/$defs/file" },
+            { "type": "null" }
+          ]
+        },
+        "assets": { "$ref": "#/$defs/file" },
+        "provenance": { "$ref": "#/$defs/file" }
+      }
+    },
+    "changes": { "$ref": "#/$defs/changes" }
+  },
+  "$defs": {
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" }
+      }
+    },
+    "changes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "changedFieldIds",
+        "changedCssVariables",
+        "changedAssetIds",
+        "htmlChanged",
+        "cssChanged",
+        "javascriptChanged",
+        "structuralChange"
+      ],
+      "properties": {
+        "changedFieldIds": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "changedCssVariables": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "changedAssetIds": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "htmlChanged": { "type": "boolean" },
+        "cssChanged": { "type": "boolean" },
+        "javascriptChanged": { "type": "boolean" },
+        "structuralChange": { "type": "boolean" }
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+.quote-contract-preparation > fieldset { display: grid; gap: 12px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.quote-contract-preparation details { border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: var(--surface-soft); min-width: 0; }
+.quote-contract-preparation summary { cursor: pointer; font-weight: 700; color: var(--text); }
+.quote-contract-preparation details[open] > summary { margin-bottom: 12px; }
+.quote-contract-preparation details label { display: grid; gap: 5px; margin: 10px 0; }
+.quote-contract-preparation details label:has(input[type="checkbox"]) { display: flex; gap: 8px; align-items: start; }
+.quote-contract-preparation input[type="checkbox"] { width: auto; }
+.quote-contract-preparation details button { margin: 6px 8px 6px 0; }
+.quote-contract-preparation fieldset:disabled { opacity: .85; }
+.quote-contract-preparation input, .quote-contract-preparation select { max-width: 100%; }
+.quote-contract-preparation p, .quote-contract-preparation li { overflow-wrap: anywhere; }
+.quote-contract-preparation [role="status"] { border-left: 3px solid var(--accent); padding-left: 12px; }
+@media(max-width: 700px) { .quote-contract-preparation .quote-three-fields { grid-template-columns: 1fr; } }

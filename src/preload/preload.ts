@@ -1,4 +1,16 @@
+import {RECIPE_FLAG} from '../shared/operationalRecipe';
+import type {OperationalRecipeApi} from '../shared/operationalRecipe';
 import { contextBridge, ipcRenderer } from 'electron';
+import type { BillingInvoiceInput, BillingItemFilters, BillingItemStatus } from '../shared/billing';
+import type { ExpenseFilters, ExpenseInput, ExpenseStatus } from '../shared/expenses';
+import type {
+  ContractClauseAudience,
+  ContractClauseStatus,
+  ContractClauseTemplateInput,
+  ContractClauseVersionInput,
+  QuoteContractClauseInput,
+  QuoteContractClauseUpdate,
+} from '../shared/contractTerms';
 import type {
   CatalogFilters,
   CatalogItemInput,
@@ -21,6 +33,8 @@ import type {
   CrmActionFilters,
   CrmActionInput,
   CompleteActionInput,
+  CrmIdentityAssetRole,
+  CrmIdentityOwnerType,
   OrganizationInput,
   ProspectFilters,
   ProspectInput,
@@ -59,14 +73,28 @@ import type {
   ProjectResourceFolder,
   ProjectResourceRole,
   ProjectResourceStatus,
+  ProjectSecretInput,
+  ProjectSiteInput,
+  ProjectSitePageInput,
   ProjectStatus,
   ProjectTechnicalItemInput,
   ProjectTechnicalVersionInput,
   ProjectTemplateInput,
   ProjectTemplateNodeInput,
+  ProjectTemplateSiteInput,
   TransformQuoteToProjectInput,
 } from '../shared/projects';
 import type {
+  AtoumWebCompositionAddItemInput,
+  AtoumWebCompositionInput,
+  AtoumWebCompositionItemLocalCodeInput,
+  AtoumWebCompositionMoveItemInput,
+  AtoumWebCompositionPromoteVariantInput,
+  AtoumWebDirectReusableCodeInput,
+  AtoumWebDirectVariantCodeInput,
+  AtoumWebOccurrenceCreateFamilyInput,
+  AtoumWebOccurrenceCreateVariantInput,
+  AtoumWebOccurrenceUpdateVariantInput,
   AtoumWebPackageImportInput,
   AtoumWebTechnicalAssetRole,
   AtoumWebTechnicalItemInput,
@@ -78,6 +106,7 @@ import type {
 import type {
   ManualTimeSessionInput,
   StartTimeSessionInput,
+  TimePauseReason,
   TimeSessionFilters,
   UpdateTimeSessionInput,
 } from '../shared/time';
@@ -90,6 +119,7 @@ const api: AtoumWebApi = {
   settings: {
     setTheme: (theme: ThemeName) => ipcRenderer.invoke('settings:set-theme', theme),
     setDisplayDensity: (density: DisplayDensity) => ipcRenderer.invoke('settings:set-display-density', density),
+    setShowHoverHelp: (enabled: boolean) => ipcRenderer.invoke('settings:set-show-hover-help', enabled),
   },
   workspace: { choose: () => ipcRenderer.invoke('workspace:choose') },
   backups: {
@@ -116,6 +146,23 @@ const api: AtoumWebApi = {
     linkExisting: (interventionId: string, backupRecordId: string, role: 'pre_intervention' | 'post_intervention' | 'reference') => ipcRenderer.invoke('business-backup-alerts:link-existing', interventionId, backupRecordId, role),
   },
   database: { health: () => ipcRenderer.invoke('database:health') },
+  bridgeSnapshots: {
+    inspectImport: () => ipcRenderer.invoke('bridge:inspect-import'),
+    importSnapshot: (packagePath: string) => ipcRenderer.invoke('bridge:import', packagePath),
+    listSites: () => ipcRenderer.invoke('bridge:sites:list'),
+    getSite: (id: string) => ipcRenderer.invoke('bridge:sites:get', id),
+    listPages: (snapshotId: string, search?: string | null) => ipcRenderer.invoke('bridge:pages:list', snapshotId, search),
+    getPage: (pageSnapshotId: string) => ipcRenderer.invoke('bridge:pages:get', pageSnapshotId),
+    getObjectPreview: (objectRef: string) => ipcRenderer.invoke('bridge:objects:preview', objectRef),
+    getModulePreview: (pageSnapshotId: string, occurrenceId: string) => ipcRenderer.invoke('bridge:modules:preview', pageSnapshotId, occurrenceId),
+    getPagePreview: (pageSnapshotId: string) => ipcRenderer.invoke('bridge:pages:preview', pageSnapshotId),
+    compareSnapshots: (beforeSnapshotId: string, afterSnapshotId: string) =>
+      ipcRenderer.invoke('bridge:snapshots:compare', beforeSnapshotId, afterSnapshotId),
+    reviewPageNodeMatches: (beforePageSnapshotId: string, afterPageSnapshotId: string) =>
+      ipcRenderer.invoke('bridge:pages:review-node-matches', beforePageSnapshotId, afterPageSnapshotId),
+    decideNodeMatch: (input) => ipcRenderer.invoke('bridge:pages:decide-node-match', input),
+    exportDiagnostic: (snapshotId: string) => ipcRenderer.invoke('bridge:export-diagnostic', snapshotId),
+  },
   workflow: {
     needs: (owner,id) => ipcRenderer.invoke('workflow:needs',owner,id),
     saveNeed: (owner,id,input,needId) => ipcRenderer.invoke('workflow:save-need',owner,id,input,needId),
@@ -131,10 +178,14 @@ const api: AtoumWebApi = {
   },
   crm: {
     organizations: {
+      list: (includeArchived?: boolean) => ipcRenderer.invoke('crm:organizations:list', includeArchived),
+      get: (id: string) => ipcRenderer.invoke('crm:organizations:get', id),
       create: (input: OrganizationInput) => ipcRenderer.invoke('crm:organizations:create', input),
       update: (id: string, input: OrganizationInput) => ipcRenderer.invoke('crm:organizations:update', id, input),
     },
     contacts: {
+      list: (includeArchived?: boolean) => ipcRenderer.invoke('crm:contacts:list', includeArchived),
+      get: (id: string) => ipcRenderer.invoke('crm:contacts:get', id),
       create: (input: ContactInput) => ipcRenderer.invoke('crm:contacts:create', input),
       update: (id: string, input: ContactInput) => ipcRenderer.invoke('crm:contacts:update', id, input),
     },
@@ -142,6 +193,12 @@ const api: AtoumWebApi = {
       list:(owner,id,includeArchived)=>ipcRenderer.invoke('crm:contact-methods:list',owner,id,includeArchived),
       save:(input,id)=>ipcRenderer.invoke('crm:contact-methods:save',input,id),
       archive:(id,archived)=>ipcRenderer.invoke('crm:contact-methods:archive',id,archived),
+    },
+    identityAssets: {
+      list: (owner: CrmIdentityOwnerType, id: string) => ipcRenderer.invoke('crm:identity-assets:list', owner, id),
+      importFile: (owner: CrmIdentityOwnerType, id: string, role: CrmIdentityAssetRole) => ipcRenderer.invoke('crm:identity-assets:import', owner, id, role),
+      preview: (assetId: string) => ipcRenderer.invoke('crm:identity-assets:preview', assetId),
+      remove: (assetId: string) => ipcRenderer.invoke('crm:identity-assets:remove', assetId),
     },
     prospects: {
       list: (filters?: ProspectFilters) => ipcRenderer.invoke('crm:prospects:list', filters),
@@ -187,7 +244,25 @@ const api: AtoumWebApi = {
     deletePermanently:id=>ipcRenderer.invoke('client-documents:delete',id),
     openFile:id=>ipcRenderer.invoke('client-documents:open-file',id),openFolder:clientId=>ipcRenderer.invoke('client-documents:open-folder',clientId),
   },
+  billing: {
+    list: (filters?: BillingItemFilters) => ipcRenderer.invoke('billing:list', filters),
+    get: (id: string) => ipcRenderer.invoke('billing:get', id),
+    changeStatus: (id: string, status: BillingItemStatus) => ipcRenderer.invoke('billing:change-status', id, status),
+    importInvoice: (id: string, input?: BillingInvoiceInput) => ipcRenderer.invoke('billing:import-invoice', id, input),
+    updateInvoiceMetadata: (id: string, input: BillingInvoiceInput) => ipcRenderer.invoke('billing:update-invoice-metadata', id, input),
+    openInvoice: (id: string) => ipcRenderer.invoke('billing:open-invoice', id),
+  },
+  expenses: {
+    list: (filters?: ExpenseFilters) => ipcRenderer.invoke('expenses:list', filters),
+    get: (id: string) => ipcRenderer.invoke('expenses:get', id),
+    create: (input: ExpenseInput) => ipcRenderer.invoke('expenses:create', input),
+    update: (id: string, input: ExpenseInput) => ipcRenderer.invoke('expenses:update', id, input),
+    changeStatus: (id: string, status: ExpenseStatus) => ipcRenderer.invoke('expenses:change-status', id, status),
+    importReceipt: (id: string) => ipcRenderer.invoke('expenses:import-receipt', id),
+    openReceipt: (id: string) => ipcRenderer.invoke('expenses:open-receipt', id),
+  },
   catalog: {
+    assignCanonicalCode: (id: string, code: string) => ipcRenderer.invoke('catalog:assign-canonical-code', id, code),
     list: (filters?: CatalogFilters) => ipcRenderer.invoke('catalog:list', filters),
     getItem: (id: string) => ipcRenderer.invoke('catalog:get-item', id),
     create: (input: CatalogItemInput, firstVersion: CatalogVersionInput) => ipcRenderer.invoke('catalog:create', input, firstVersion),
@@ -198,12 +273,52 @@ const api: AtoumWebApi = {
     listOfferComponents: (offerVersionId: string) => ipcRenderer.invoke('catalog:list-offer-components', offerVersionId),
     setOfferComponents: (offerVersionId: string, components: OfferComponentInput[]) => ipcRenderer.invoke('catalog:set-offer-components', offerVersionId, components),
   },
+
+  contractTerms: {
+    library: {
+      list: (includeArchived?: boolean) => ipcRenderer.invoke('contract-terms:library:list', includeArchived),
+      get: (id: string) => ipcRenderer.invoke('contract-terms:library:get', id),
+      create: (input: ContractClauseTemplateInput, firstVersion: ContractClauseVersionInput) => ipcRenderer.invoke('contract-terms:library:create', input, firstVersion),
+      createVersion: (clauseId: string, input: ContractClauseVersionInput) => ipcRenderer.invoke('contract-terms:library:create-version', clauseId, input),
+      publishVersion: (versionId: string) => ipcRenderer.invoke('contract-terms:library:publish-version', versionId),
+      setStatus: (id: string, status: ContractClauseStatus) => ipcRenderer.invoke('contract-terms:library:set-status', id, status),
+      setAudience: (id: string, audience: ContractClauseAudience) => ipcRenderer.invoke('contract-terms:library:set-audience', id, audience),
+      setCatalogLinks: (id: string, catalogItemIds: string[]) => ipcRenderer.invoke('contract-terms:library:set-catalog-links', id, catalogItemIds),
+    },
   quotes: {
+      get: (quoteId: string) => ipcRenderer.invoke('contract-terms:quotes:get', quoteId),
+      sync: (quoteId: string) => ipcRenderer.invoke('contract-terms:quotes:sync', quoteId),
+      addCustom: (quoteId: string, input: QuoteContractClauseInput) => ipcRenderer.invoke('contract-terms:quotes:add-custom', quoteId, input),
+      updateClause: (id: string, input: QuoteContractClauseUpdate) => ipcRenderer.invoke('contract-terms:quotes:update-clause', id, input),
+      resetClause: (id: string) => ipcRenderer.invoke('contract-terms:quotes:reset-clause', id),
+      removeCustom: (id: string) => ipcRenderer.invoke('contract-terms:quotes:remove-custom', id),
+      reorder: (quoteId: string, clauseIds: string[]) => ipcRenderer.invoke('contract-terms:quotes:reorder', quoteId, clauseIds),
+    },
+    copyText: (text: string) => ipcRenderer.invoke('contract-terms:copy-text', text),
+  },
+  quotePreparation: {
+    get: id => ipcRenderer.invoke('quote-preparation:get',id),
+    save: (id,input) => ipcRenderer.invoke('quote-preparation:save',id,input),
+    administration: () => ipcRenderer.invoke('quote-preparation:administration'),
+    saveAdministration: input => ipcRenderer.invoke('quote-preparation:save-administration',input),
+    attach: (id,input) => ipcRenderer.invoke('quote-preparation:attach',id,input),
+    importDocument: (id,role,provenance) => ipcRenderer.invoke('quote-preparation:import-document',id,role,provenance),
+    recordAcceptance: (id,statement,occurredAt,provenance) => ipcRenderer.invoke('quote-preparation:record-acceptance',id,statement,occurredAt,provenance),
+    openDocument: id => ipcRenderer.invoke('quote-preparation:open-document',id),
+  },
+  quotes: {
+    operationalSalesForClient:(id:string)=>ipcRenderer.invoke('quotes:operational-sales-for-client',id),
+    assignOperationalTarget:(id:string,input:{projectId:string;siteId?:string|null;contextNodeId?:string|null;author:string})=>ipcRenderer.invoke('quotes:assign-operational-target',id,input),
+    setLineParameters:(id:string,p:import('../shared/commercialRules').QuoteLineParameters)=>ipcRenderer.invoke('quotes:set-line-parameters',id,p),
+    preparationIssues:(id:string)=>ipcRenderer.invoke('quotes:preparation-issues',id),
+    operationalSales:(id:string)=>ipcRenderer.invoke('quotes:operational-sales',id),
     createWithLines: (input,lines) => ipcRenderer.invoke('quotes:create-with-lines',input,lines),
     list: (filters?: QuoteFilters) => ipcRenderer.invoke('quotes:list', filters),
     get: (id: string) => ipcRenderer.invoke('quotes:get', id),
     create: (input: QuoteInput) => ipcRenderer.invoke('quotes:create', input),
     addCatalogLine: (quoteId: string, catalogVersionId: string, input?: Partial<QuoteLineInput>) => ipcRenderer.invoke('quotes:add-catalog-line', quoteId, catalogVersionId, input),
+    selectOfferOption: (offerLineId: string, componentId: string, input?: Partial<QuoteLineInput>) => ipcRenderer.invoke('quotes:select-offer-option', offerLineId, componentId, input),
+    deselectOfferOption: (offerLineId: string, componentId: string) => ipcRenderer.invoke('quotes:deselect-offer-option', offerLineId, componentId),
     addCustomLine: (quoteId: string, input: QuoteLineInput) => ipcRenderer.invoke('quotes:add-custom-line', quoteId, input),
     updateLine: (lineId: string, input: QuoteLineInput) => ipcRenderer.invoke('quotes:update-line', lineId, input),
     removeLine: (lineId: string) => ipcRenderer.invoke('quotes:remove-line', lineId),
@@ -216,6 +331,10 @@ const api: AtoumWebApi = {
     refuse: (id: string) => ipcRenderer.invoke('quotes:refuse', id),
     expire: (id: string) => ipcRenderer.invoke('quotes:expire', id),
     duplicate: (id: string) => ipcRenderer.invoke('quotes:duplicate', id),
+    createCommercialRevision: (id: string) => ipcRenderer.invoke('quotes:commercial-revision', id),
+    importContractDocument: (id: string, abbyReference?: string | null) => ipcRenderer.invoke('quotes:import-contract-document', id, abbyReference),
+    openContractDocument: (id: string) => ipcRenderer.invoke('quotes:open-contract-document', id),
+    updateAbbyReference: (id: string, abbyReference?: string | null) => ipcRenderer.invoke('quotes:update-abby-reference', id),
     generatePdf: (id: string) => ipcRenderer.invoke('quotes:generate-pdf', id),
   },
   projects: {
@@ -227,19 +346,44 @@ const api: AtoumWebApi = {
       publishVersion: (versionId: string) => ipcRenderer.invoke('projects:templates:publish-version', versionId),
       addNode: (versionId: string, input: ProjectTemplateNodeInput) => ipcRenderer.invoke('projects:templates:add-node', versionId, input),
       removeNode: (nodeId: string) => ipcRenderer.invoke('projects:templates:remove-node', nodeId),
+      configureSites: (versionId: string, sites: ProjectTemplateSiteInput[]) => ipcRenderer.invoke('projects:templates:configure-sites', versionId, sites),
     },
     projects: {
       list: (filters?: ProjectFilters) => ipcRenderer.invoke('projects:list', filters),
       get: (id: string) => ipcRenderer.invoke('projects:get', id),
       transformQuote: (input: TransformQuoteToProjectInput) => ipcRenderer.invoke('projects:transform-quote', input),
+      prepareQuote: (input: TransformQuoteToProjectInput) => ipcRenderer.invoke('projects:prepare-quote', input),
+      previewQuote: (input: TransformQuoteToProjectInput) => ipcRenderer.invoke('projects:preview-quote', input),
+      syncCommercial: (id: string) => ipcRenderer.invoke('projects:sync-commercial', id),
+      assignTarget: (id:string,input:import('../shared/contributionTargets').ContributionTargetInput) => ipcRenderer.invoke('projects:assign-target',id,input),
+      commercialScope: (id: string) => ipcRenderer.invoke('projects:commercial-scope', id),
+      resolveScopeConflict: (id: string, conflictId: string, decision: import('../shared/projects').ProjectConflictDecision) => ipcRenderer.invoke('projects:resolve-scope-conflict', id, conflictId, decision),
       createInternal: (input: InternalProjectInput) => ipcRenderer.invoke('projects:create-internal', input),
       changeStatus: (id: string, status: ProjectStatus) => ipcRenderer.invoke('projects:change-status', id, status),
       completionReview: (id: string) => ipcRenderer.invoke('projects:completion-review', id),
       addNode: (projectId: string, input: ProjectNodeInput) => ipcRenderer.invoke('projects:add-node', projectId, input),
       updateNode: (nodeId: string, input: Partial<ProjectNodeInput>) => ipcRenderer.invoke('projects:update-node', nodeId, input),
       moveNode: (nodeId: string, input: MoveProjectNodeInput) => ipcRenderer.invoke('projects:move-node', nodeId, input),
+      setNodePause: (nodeId: string, paused: boolean, reason?: string | null) => ipcRenderer.invoke('projects:set-node-pause', nodeId, paused, reason),
+      completePhase: (nodeId: string) => ipcRenderer.invoke('projects:complete-phase', nodeId),
       addPrerequisite: (projectId: string, input: ProjectPrerequisiteInput) => ipcRenderer.invoke('projects:add-prerequisite', projectId, input),
       updatePrerequisiteStatus: (id: string, status: ProjectPrerequisiteStatus) => ipcRenderer.invoke('projects:update-prerequisite-status', id, status),
+    },
+    sites: {
+      list: (projectId: string, includeArchived?: boolean) => ipcRenderer.invoke('projects:sites:list', projectId, includeArchived),
+      create: (projectId: string, input: ProjectSiteInput) => ipcRenderer.invoke('projects:sites:create', projectId, input),
+      update: (id: string, input: Partial<ProjectSiteInput>) => ipcRenderer.invoke('projects:sites:update', id, input),
+      setArchived: (id: string, archived: boolean) => ipcRenderer.invoke('projects:sites:set-archived', id, archived),
+      listPages: (projectId: string) => ipcRenderer.invoke('projects:sites:list-pages', projectId),
+      linkPage: (siteId: string, projectNodeId: string, input?: ProjectSitePageInput) => ipcRenderer.invoke('projects:sites:link-page', siteId, projectNodeId, input),
+      unlinkPage: (projectNodeId: string) => ipcRenderer.invoke('projects:sites:unlink-page', projectNodeId),
+      applyBlueprint: (projectId: string, templateVersionId?: string | null) => ipcRenderer.invoke('projects:sites:apply-blueprint', projectId, templateVersionId),
+    },
+    secrets: {
+      list: (projectId: string, projectNodeId?: string | null) => ipcRenderer.invoke('projects:secrets:list', projectId, projectNodeId),
+      save: (input: ProjectSecretInput) => ipcRenderer.invoke('projects:secrets:save', input),
+      reveal: (id: string) => ipcRenderer.invoke('projects:secrets:reveal', id),
+      remove: (id: string) => ipcRenderer.invoke('projects:secrets:remove', id),
     },
     resources: {
       list: (projectId: string) => ipcRenderer.invoke('projects:resources:list', projectId),
@@ -269,6 +413,8 @@ const api: AtoumWebApi = {
       list: (filters?: AtoumWebTechnicalLibraryFilters) => ipcRenderer.invoke('referentials:library:list', filters),
       get: (id: string) => ipcRenderer.invoke('referentials:library:get', id),
       create: (item: AtoumWebTechnicalItemInput, version: AtoumWebTechnicalVersionInput) => ipcRenderer.invoke('referentials:library:create', item, version),
+      createReusableCode: (input: AtoumWebDirectReusableCodeInput) => ipcRenderer.invoke('referentials:library:create-reusable-code', input),
+      createVariantCode: (input: AtoumWebDirectVariantCodeInput) => ipcRenderer.invoke('referentials:library:create-variant-code', input),
       update: (id: string, input: Partial<AtoumWebTechnicalItemInput>) => ipcRenderer.invoke('referentials:library:update', id, input),
       createVersion: (itemId: string, version: AtoumWebTechnicalVersionInput) => ipcRenderer.invoke('referentials:library:create-version', itemId, version),
       markStable: (versionId: string) => ipcRenderer.invoke('referentials:library:mark-stable', versionId),
@@ -292,6 +438,41 @@ const api: AtoumWebApi = {
       inspectImport: () => ipcRenderer.invoke('referentials:packages:inspect-import'),
       importPackage: (input: AtoumWebPackageImportInput) => ipcRenderer.invoke('referentials:packages:import', input),
       showExport: (packagePath: string) => ipcRenderer.invoke('referentials:packages:show-export', packagePath),
+    },
+    compositions: {
+      getForProjectPage: (projectNodeId: string) => ipcRenderer.invoke('referentials:compositions:get-for-project-page', projectNodeId),
+      ensureForProjectPage: (projectNodeId: string) => ipcRenderer.invoke('referentials:compositions:ensure-for-project-page', projectNodeId),
+      attachToProjectPage: (projectNodeId: string, compositionId: string) => ipcRenderer.invoke('referentials:compositions:attach-to-project-page', projectNodeId, compositionId),
+      detachFromProjectPage: (projectNodeId: string) => ipcRenderer.invoke('referentials:compositions:detach-from-project-page', projectNodeId),
+      list: (includeArchived?: boolean) => ipcRenderer.invoke('referentials:compositions:list', includeArchived),
+      get: (id: string) => ipcRenderer.invoke('referentials:compositions:get', id),
+      create: (input: AtoumWebCompositionInput) => ipcRenderer.invoke('referentials:compositions:create', input),
+      update: (id: string, input: Partial<AtoumWebCompositionInput>) => ipcRenderer.invoke('referentials:compositions:update', id, input),
+      addItem: (id: string, input: AtoumWebCompositionAddItemInput) => ipcRenderer.invoke('referentials:compositions:add-item', id, input),
+      updateItemLocalCode: (id: string, itemId: string, input: AtoumWebCompositionItemLocalCodeInput) => ipcRenderer.invoke('referentials:compositions:update-item-local-code', id, itemId, input),
+      resetItemLocalCode: (id: string, itemId: string) => ipcRenderer.invoke('referentials:compositions:reset-item-local-code', id, itemId),
+      promoteItemVariant: (id: string, itemId: string, input: AtoumWebCompositionPromoteVariantInput) => ipcRenderer.invoke('referentials:compositions:promote-item-variant', id, itemId, input),
+      removeItem: (id: string, itemId: string) => ipcRenderer.invoke('referentials:compositions:remove-item', id, itemId),
+      moveItem: (id: string, itemId: string, input: AtoumWebCompositionMoveItemInput) => ipcRenderer.invoke('referentials:compositions:move-item', id, itemId, input),
+      archive: (id: string) => ipcRenderer.invoke('referentials:compositions:archive', id),
+      reactivate: (id: string) => ipcRenderer.invoke('referentials:compositions:reactivate', id),
+      exportPackage: (id: string) => ipcRenderer.invoke('referentials:compositions:export-package', id),
+      exportPagePackage: (projectNodeId: string) => ipcRenderer.invoke('referentials:compositions:export-page-package', projectNodeId),
+      showPackage: (path: string) => ipcRenderer.invoke('referentials:compositions:show-package', path),
+    },
+    occurrenceReturns: {
+      list: () => ipcRenderer.invoke('referentials:occurrence-returns:list'),
+      get: (id: string) => ipcRenderer.invoke('referentials:occurrence-returns:get', id),
+      inspectImport: () => ipcRenderer.invoke('referentials:occurrence-returns:inspect-import'),
+      importReturn: (packagePath: string) => ipcRenderer.invoke('referentials:occurrence-returns:import', packagePath),
+      keepOccurrence: (id: string) => ipcRenderer.invoke('referentials:occurrence-returns:keep', id),
+      listVariantTargets: (id: string) => ipcRenderer.invoke('referentials:occurrence-returns:list-variant-targets', id),
+      createVariant: (id: string, input: AtoumWebOccurrenceCreateVariantInput) =>
+        ipcRenderer.invoke('referentials:occurrence-returns:create-variant', id, input),
+      updateVariant: (id: string, input: AtoumWebOccurrenceUpdateVariantInput) =>
+        ipcRenderer.invoke('referentials:occurrence-returns:update-variant', id, input),
+      createFamily: (id: string, input: AtoumWebOccurrenceCreateFamilyInput) =>
+        ipcRenderer.invoke('referentials:occurrence-returns:create-family', id, input),
     },
   },
   operations: {
@@ -325,6 +506,7 @@ const api: AtoumWebApi = {
         changeStatus: (id: string, status: MaintenanceSubscriptionStatus) => ipcRenderer.invoke('operations:maintenance:subscriptions:change-status', id, status),
       },
       periods: {
+        prepareRoutine:(id:string)=>ipcRenderer.invoke('operations:maintenance:prepare-routine',id),
         list: (subscriptionId: string) => ipcRenderer.invoke('operations:maintenance:periods:list', subscriptionId),
         ensure: (subscriptionId: string, referenceDate?: string | null) => ipcRenderer.invoke('operations:maintenance:periods:ensure', subscriptionId, referenceDate),
         changeStatus: (id: string, status: MaintenancePeriodStatus) => ipcRenderer.invoke('operations:maintenance:periods:change-status', id, status),
@@ -361,7 +543,7 @@ const api: AtoumWebApi = {
     start: (input: StartTimeSessionInput) => ipcRenderer.invoke('time:start', input),
     switchTo: (input: StartTimeSessionInput) => ipcRenderer.invoke('time:switch', input),
     heartbeat: (id: string) => ipcRenderer.invoke('time:heartbeat', id),
-    pause: (id: string) => ipcRenderer.invoke('time:pause', id),
+    pause: (id: string, reason?: TimePauseReason | null, reasonNote?: string | null) => ipcRenderer.invoke('time:pause', id, reason, reasonNote),
     resume: (id: string) => ipcRenderer.invoke('time:resume', id),
     recoverResume: (id: string) => ipcRenderer.invoke('time:recover-resume', id),
     stop: (id: string) => ipcRenderer.invoke('time:stop', id),
@@ -373,4 +555,15 @@ const api: AtoumWebApi = {
   },
 };
 
-contextBridge.exposeInMainWorld('atoumweb', api);
+if (process.argv.includes(RECIPE_FLAG)) {
+  const recipe:OperationalRecipeApi = Object.freeze({
+    state:()=>ipcRenderer.invoke('operational-recipe:state'),
+    references:()=>ipcRenderer.invoke('operational-recipe:references'),
+    scenarios:()=>ipcRenderer.invoke('operational-recipe:scenarios'),
+    preview:(request:import('../shared/operationalRecipe').RecipeRequest)=>ipcRenderer.invoke('operational-recipe:preview',request),
+    close:(sessionId:string)=>ipcRenderer.invoke('operational-recipe:close',sessionId),
+  });
+  contextBridge.exposeInMainWorld('atoumwebOperationalRecipe',recipe);
+} else {
+  contextBridge.exposeInMainWorld('atoumweb', api);
+}

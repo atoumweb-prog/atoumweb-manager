@@ -1,7 +1,7 @@
 export const CLIENT_DOCUMENT_CATEGORIES=['contract','quote','invoice','brief','content','technical','legal','other'] as const;
 export type ClientDocumentCategory=(typeof CLIENT_DOCUMENT_CATEGORIES)[number];
 export interface ClientDocumentInput { category:ClientDocumentCategory; title:string; retentionCode?:string|null; retentionReason?:string|null; retentionUntil?:string|null; notes?:string|null; }
-export interface ClientDocument extends ClientDocumentInput { id:string;clientAccountId:string;fileName:string;relativePath:string;mimeType?:string|null;sizeBytes:number;archivedAt?:string|null;createdAt:string;updatedAt:string;missing:boolean; }
+export interface ClientDocument extends ClientDocumentInput { id:string;clientAccountId:string;fileName:string;relativePath:string;mimeType?:string|null;sizeBytes:number;archivedAt?:string|null;createdAt:string;updatedAt:string;missing:boolean; sha256?:string|null; importedFrom?:string|null; }
 export interface ClientDocumentsApi {
   list(clientId:string,includeArchived?:boolean):Promise<ClientDocument[]>;
   importFiles(clientId:string,input:ClientDocumentInput):Promise<ClientDocument[]>;

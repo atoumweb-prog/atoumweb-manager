@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { BillingItem, BillingItemFilters, BillingItemSourceType, BillingItemStatus } from '../../shared/billing';
+import { BILLING_ITEM_STATUSES, type BillingInvoiceInput, type BillingItem, type BillingItemFilters, type BillingItemSourceType, type BillingItemStatus } from '../../shared/billing';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 
 const nowIso = (): string => new Date().toISOString();
@@ -21,6 +21,10 @@ interface BillingItemRow extends Record<string, unknown> {
   due_at: string | null;
   status: BillingItemStatus;
   notes: string | null;
+  invoice_document_id: string | null;
+  invoice_reference: string | null;
+  invoiced_at: string | null;
+  invoice_file_name: string | null;
   created_at: string;
   updated_at: string;
   client_label: string;
@@ -209,15 +213,62 @@ export class BillingHandoffService {
     return this.map(row);
   }
 
+  changeStatus(id: string, status: BillingItemStatus): BillingItem {
+    if (!BILLING_ITEM_STATUSES.includes(status)) throw new Error('Statut de facturation invalide.');
+    if (status === 'invoiced') throw new Error('Importe la facture PDF pour passer cet élément à « Facturé ».');
+    const current = this.get(id);
+    if (current.invoiceDocumentId) throw new Error('Une facture PDF est déjà rattachée. Le statut Facturé est conservé.');
+    const now = nowIso();
+    this.database.run('UPDATE billing_items SET status=?,updated_at=? WHERE id=?', [status, now, id]);
+    this.writeActivity('billing_item', id, 'billing_item_status_changed', `${current.description} · ${status}`);
+    return this.get(id);
+  }
+
+  attachInvoice(id: string, documentId: string, input: BillingInvoiceInput = {}): BillingItem {
+    const current = this.get(id);
+    const document = this.database.get<{ id: string; client_account_id: string; category: string; archived_at: string | null }>(
+      'SELECT id,client_account_id,category,archived_at FROM client_documents WHERE id=?',
+      [documentId],
+    );
+    if (!document) throw new Error('Facture PDF introuvable.');
+    if (document.client_account_id !== current.clientAccountId) throw new Error('Cette facture appartient à un autre client.');
+    if (document.category !== 'invoice') throw new Error('Le document doit être classé dans la catégorie Factures.');
+    if (document.archived_at) throw new Error('Restaure la facture avant de la rattacher.');
+
+    const reference = clean(input.reference);
+    const invoicedAt = input.invoicedAt ? this.dateIso(input.invoicedAt, 'Date de facture invalide.') : nowIso();
+    const now = nowIso();
+    this.database.run(
+      "UPDATE billing_items SET invoice_document_id=?,invoice_reference=?,invoiced_at=?,status='invoiced',updated_at=? WHERE id=?",
+      [documentId, reference, invoicedAt, now, id],
+    );
+    this.writeActivity('billing_item', id, 'billing_invoice_attached', `Facture PDF rattachée : ${current.description}`);
+    return this.get(id);
+  }
+
+  updateInvoiceMetadata(id: string, input: BillingInvoiceInput): BillingItem {
+    const current = this.get(id);
+    if (!current.invoiceDocumentId) throw new Error('Aucune facture PDF n’est rattachée à cet élément.');
+    const reference = clean(input.reference);
+    const invoicedAt = input.invoicedAt ? this.dateIso(input.invoicedAt, 'Date de facture invalide.') : current.invoicedAt ?? nowIso();
+    this.database.run(
+      'UPDATE billing_items SET invoice_reference=?,invoiced_at=?,updated_at=? WHERE id=?',
+      [reference, invoicedAt, nowIso(), id],
+    );
+    this.writeActivity('billing_item', id, 'billing_invoice_metadata_updated', `Informations facture mises à jour : ${current.description}`);
+    return this.get(id);
+  }
   private select(): string {
     return `SELECT bi.*,
       COALESCE(o.name,trim(c.first_name || ' ' || c.last_name),'Client') AS client_label,
-      p.name AS project_label
+      p.name AS project_label,
+      invoice_doc.original_name AS invoice_file_name
       FROM billing_items bi
       JOIN client_accounts ca ON ca.id=bi.client_account_id
       LEFT JOIN organizations o ON o.id=ca.organization_id
       LEFT JOIN contacts c ON c.id=ca.primary_contact_id
-      LEFT JOIN projects p ON p.id=bi.project_id`;
+      LEFT JOIN projects p ON p.id=bi.project_id
+      LEFT JOIN client_documents invoice_doc ON invoice_doc.id=bi.invoice_document_id`;
   }
 
   private map(row: BillingItemRow): BillingItem {
@@ -236,11 +287,20 @@ export class BillingHandoffService {
       dueAt: row.due_at,
       status: row.status,
       notes: row.notes,
+      invoiceDocumentId: row.invoice_document_id,
+      invoiceReference: row.invoice_reference,
+      invoiceFileName: row.invoice_file_name,
+      invoicedAt: row.invoiced_at,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
   }
 
+  private dateIso(value: string, message: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) throw new Error(message);
+    return date.toISOString();
+  }
   private writeActivity(entityType: string, entityId: string, action: string, summary: string): void {
     this.database.run(
       'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,NULL,?)',

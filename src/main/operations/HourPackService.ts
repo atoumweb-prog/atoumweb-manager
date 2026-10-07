@@ -56,13 +56,13 @@ export class HourPackService {
     const expiresAt = input.expiresAt ? this.dateIso(input.expiresAt, 'Date d’expiration invalide.') : null;
     if (expiresAt && expiresAt < purchasedAt) throw new Error('L’expiration doit être postérieure à l’achat.');
     const id = randomUUID(); const now = nowIso();
-    this.database.exec('BEGIN IMMEDIATE;');
+    this.database.exec('SAVEPOINT hour_pack_create;' );
     try {
       this.database.run(`INSERT INTO hour_packs (id,client_account_id,project_id,name,purchased_seconds,contract_price_cents,purchased_at,expires_at,status,notes,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,'active',?,?,?)`, [id, clientId, projectId, name, input.purchasedSeconds, input.contractPriceCents, purchasedAt, expiresAt, clean(input.notes), now, now]);
       this.database.run(`INSERT INTO hour_pack_movements (id,pack_id,movement_type,seconds_delta,reason,source_key,created_at) VALUES (?,?,'initial_credit',?,?,?,?)`, [randomUUID(), id, input.purchasedSeconds, `Crédit initial · ${name}`, `initial:${id}`, now]);
       this.writeActivity('hour_pack', id, 'hour_pack_created', `Pack créé : ${name}`);
-      this.database.exec('COMMIT;');
-    } catch (error) { this.database.exec('ROLLBACK;'); throw error; }
+      this.database.exec('RELEASE hour_pack_create;');
+    } catch (error) { this.database.exec('ROLLBACK TO hour_pack_create; RELEASE hour_pack_create;'); throw error; }
     this.refreshDerivedStatus(id);
     return this.get(id);
   }
@@ -133,7 +133,8 @@ export class HourPackService {
     const movements = this.database.all<MovementRow>('SELECT * FROM hour_pack_movements WHERE pack_id=? ORDER BY created_at DESC,id DESC', [row.id]).map<HourPackMovement>((movement) => ({ id: movement.id, packId: movement.pack_id, interventionId: movement.intervention_id, timeSessionId: movement.time_session_id, reversalOfMovementId: movement.reversal_of_movement_id, type: movement.movement_type, secondsDelta: Number(movement.seconds_delta), reason: movement.reason, sourceKey: movement.source_key, createdAt: movement.created_at }));
     const balanceSeconds = movements.reduce((sum, movement) => sum + movement.secondsDelta, 0);
     const consumedSeconds = Math.max(0, Number(row.purchased_seconds) - balanceSeconds);
-    return { id: row.id, clientAccountId: row.client_account_id, projectId: row.project_id, name: row.name, purchasedSeconds: Number(row.purchased_seconds), contractPriceCents: Number(row.contract_price_cents), purchasedAt: row.purchased_at, expiresAt: row.expires_at, notes: row.notes, clientLabel: row.client_label, projectLabel: row.project_label, status: row.status, balanceSeconds, consumedSeconds, movements, createdAt: row.created_at, updatedAt: row.updated_at, archivedAt: row.archived_at };
+    const status:HourPackStatus=['archived','suspended'].includes(row.status)?row.status:row.expires_at&&row.expires_at<nowIso()?'expired':balanceSeconds<=0?'exhausted':'active';
+    return { id: row.id, clientAccountId: row.client_account_id, projectId: row.project_id, name: row.name, purchasedSeconds: Number(row.purchased_seconds), contractPriceCents: Number(row.contract_price_cents), purchasedAt: row.purchased_at, expiresAt: row.expires_at, notes: row.notes, clientLabel: row.client_label, projectLabel: row.project_label, status, balanceSeconds, consumedSeconds, movements, createdAt: row.created_at, updatedAt: row.updated_at, archivedAt: row.archived_at };
   }
 
   private refreshDerivedStatus(packId: string): void {

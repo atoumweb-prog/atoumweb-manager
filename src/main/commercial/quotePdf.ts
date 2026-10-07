@@ -46,7 +46,7 @@ function listHtml(values: string[]): string {
 function lineHtml(line: QuoteLine): string {
   const components = offerComponents(line);
   const included = components.filter((component) => !component.isOptional);
-  const optional = components.filter((component) => Boolean(component.isOptional));
+  const optional = components.filter((component) => Boolean(component.isOptional) && typeof component.componentId !== 'string');
   const inclusions = stringList(line.snapshot?.inclusions);
 
   return `
@@ -79,7 +79,25 @@ function lineHtml(line: QuoteLine): string {
     </section>`;
 }
 
-function buildQuoteHtml(quote: QuoteDetail): string {
+function frozenPreparationHtml(quote: QuoteDetail): string {
+  if (!quote.contractSnapshotJson) return '';
+  const snapshot=JSON.parse(quote.contractSnapshotJson) as {parameters?:import('../../shared/quoteContractPreparation').QuoteContractParameters;schedule?:{label:string;event:string;dueDate:string|null;percent:number;amountCents:number}[]};
+  if(!snapshot.parameters)return '';
+  const p=snapshot.parameters;
+  const row=(label:string,value:string)=>`<div class="condition"><span>${escapeHtml(label)}</span><p>${escapeHtml(value)}</p></div>`;
+  return `<section class="conditions"><h2>Paramètres contractuels convenus</h2>`+
+    row('Paiement initial',p.initialPayment.qualification==='acompte'?'Acompte':'Arrhes')+
+    (snapshot.schedule??[]).map(m=>row(m.label,`${m.percent} % · ${money(m.amountCents)} · ${m.dueDate ? date(m.dueDate) : m.event}`)).join('')+
+    row('Exécution',p.milestones.map(m=>`${m.label} · ${date(m.date)}`).join(' ; '))+
+    row('Conclusion',`${p.audience==='consumer'?'Consommateur':'Professionnel'} · ${p.conclusion.channel==='distance'?'À distance':p.conclusion.channel==='off_premises'?'Hors établissement':p.conclusion.channel==='on_premises'?'En établissement':p.conclusion.otherChannelReason} · ${p.conclusion.context}`)+
+    row('Prestation',p.digital.qualificationReason+' · '+p.digital.delivery)+
+    row('Validation','Validation explicite uniquement. Le silence ne vaut pas acceptation.')+
+    p.warranties.filter(w=>w.days!==null).map(w=>row('Garantie corrective',`${w.days} jours à compter de ${w.startEvent}. Sans limitation des garanties légales applicables.`)).join('')+
+    (p.rights.applicable?row('Droits et sources',`${p.rights.uses} ; durée : ${p.rights.duration} ; territoire : ${p.rights.territory} ; sources : ${p.rights.sourceDelivery} ; exclusivité : ${p.rights.exclusivity||'aucune exclusivité particulière'}`):'')+
+    (p.renewal.applicable?row('Service récurrent',`${p.renewal.mode==='express'?'Renouvellement exprès':'Mensuel sans engagement'} ; ${p.renewal.period} ; préavis : ${p.renewal.notice} ; fin de service : ${p.renewal.termination} ; restitution : ${p.renewal.restitution}`):'')+
+    '</section>';
+}
+export function buildQuoteHtml(quote: QuoteDetail): string {
   return `<!doctype html>
 <html lang="fr">
 <head>
@@ -137,15 +155,16 @@ function buildQuoteHtml(quote: QuoteDetail): string {
   <main class="lines">${quote.lines.map(lineHtml).join('')}</main>
   <section class="totals">
     <div><span>Total</span><strong>${escapeHtml(money(quote.contractValueCents))}</strong></div>
-    <div><span>Acompte (${quote.depositPercent ?? 0} %)</span><strong>${escapeHtml(money(quote.depositCents))}</strong></div>
+    <div><span>${quote.initialPaymentQualification==='arrhes'?'Arrhes':'Acompte'} (${quote.depositPercent ?? 0} %)</span><strong>${escapeHtml(money(quote.depositCents))}</strong></div>
     <div><span>Solde</span><strong>${escapeHtml(money(quote.balanceCents))}</strong></div>
   </section>
   <section class="conditions">
     <h2>Conditions</h2>
     <div class="condition"><span>Délai estimé</span><strong>${escapeHtml(quote.estimatedDelay || 'À définir ensemble')}</strong></div>
     ${quote.prerequisitesText ? `<div class="condition"><span>Prérequis</span><p>${escapeHtml(quote.prerequisitesText)}</p></div>` : ''}
-    ${quote.specialTerms ? `<div class="condition"><span>Conditions particulières</span><p>${escapeHtml(quote.specialTerms)}</p></div>` : ''}
+    ${quote.contractTextSnapshot ? `<div class="condition"><span>CGV</span><p>${escapeHtml(quote.contractTextSnapshot).replace(/\n/g, '<br />')}</p></div>` : quote.contractTextSnapshot == null && quote.specialTerms ? `<div class="condition"><span>Conditions particulières</span><p>${escapeHtml(quote.specialTerms)}</p></div>` : ''}
   </section>
+  ${frozenPreparationHtml(quote)}
   <footer><strong>AtoumWeb</strong><span>www.atoumweb.fr</span></footer>
 </body>
 </html>`;

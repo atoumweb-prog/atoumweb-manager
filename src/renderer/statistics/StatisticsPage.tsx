@@ -1,0 +1,393 @@
+
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import type { BillingItem } from '../../shared/billing';
+import type { QuoteSummary } from '../../shared/commercial';
+import type { ClientSummary, ProspectSummary } from '../../shared/crm';
+import type { Expense } from '../../shared/expenses';
+import type { Intervention } from '../../shared/operations';
+import type { ProjectSummary } from '../../shared/projects';
+import {
+  inStatisticsRange,
+  previousStatisticsPeriodRange,
+  statisticsDelta,
+  statisticsPeriodRange,
+  type StatisticsPeriod,
+  type StatisticsRange,
+} from '../../shared/statistics';
+import { TIME_CATEGORIES, type TimeCategory, type TimeSession } from '../../shared/time';
+import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
+import './StatisticsPage.css';
+
+type StatisticsTab = 'overview' | 'commercial' | 'production' | 'clients';
+
+interface StatisticsData {
+  prospects: ProspectSummary[];
+  clients: ClientSummary[];
+  quotes: QuoteSummary[];
+  projects: ProjectSummary[];
+  sessions: TimeSession[];
+  billing: BillingItem[];
+  expenses: Expense[];
+  interventions: Intervention[];
+}
+
+const CATEGORY_LABELS: Record<TimeCategory, string> = {
+  production: 'Production',
+  development: 'Développement',
+  design: 'Design',
+  meeting: 'Réunion',
+  support: 'Support',
+  client_correction: 'Correction client',
+  internal_correction: 'Correction interne',
+  research_training: 'Recherche / formation',
+  administrative: 'Administratif',
+  other: 'Autre',
+};
+
+const SOURCE_LABELS: Record<string, string> = {
+  website: 'Site web',
+  referral: 'Recommandation',
+  google: 'Google',
+  social: 'Réseaux sociaux',
+  event: 'Événement',
+  outbound: 'Prospection',
+  former_client: 'Ancien client',
+  other: 'Autre',
+};
+
+const PIPELINE = [
+  { stages: ['new'], label: 'Besoin à identifier', tone: 'blue' },
+  { stages: ['qualifying', 'need_identified'], label: 'À qualifier', tone: 'purple' },
+  { stages: ['quote_to_prepare', 'quote_to_send', 'quote_sent'], label: 'Devis', tone: 'green' },
+  { stages: ['follow_up', 'waiting'], label: 'À relancer', tone: 'yellow' },
+  { stages: ['negotiation'], label: 'Négociation', tone: 'orange' },
+];
+
+const PROJECT_STATUS_LABELS: Record<string, string> = {
+  to_prepare: 'À préparer',
+  in_progress: 'En cours',
+  waiting_client: 'Attente client',
+  blocked: 'Bloqués',
+  to_validate: 'À valider',
+  completed: 'Terminés',
+};
+
+function money(cents: number): string {
+  return (cents / 100).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' €';
+}
+
+function hours(seconds: number): string {
+  const value = seconds / 3600;
+  return value.toLocaleString('fr-FR', { maximumFractionDigits: value < 10 ? 1 : 0 }) + ' h';
+}
+
+function pct(value: number): string {
+  return value.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %';
+}
+
+function sum<T>(items: T[], selector: (item: T) => number): number {
+  return items.reduce((total, item) => total + selector(item), 0);
+}
+
+function ranged<T>(items: T[], range: StatisticsRange, selector: (item: T) => string | null | undefined): T[] {
+  return items.filter((item) => inStatisticsRange(selector(item), range));
+}
+
+function ratio(part: number, total: number): number {
+  return total > 0 ? (part / total) * 100 : 0;
+}
+
+function compare(current: number, previous: number) {
+  if (current === 0 && previous === 0) return { text: 'Aucune donnée sur les deux périodes', direction: 'same' as const };
+  const delta = statisticsDelta(current, previous);
+  if (delta === null) return { text: 'Nouveau sur la période', direction: 'new' as const };
+  if (Math.abs(delta) < .05) return { text: 'Stable vs période précédente', direction: 'same' as const };
+  return {
+    text: (delta > 0 ? '+' : '') + delta.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' % vs période précédente',
+    direction: delta > 0 ? 'up' as const : 'down' as const,
+  };
+}
+
+function countLabel(value: number, singular: string, plural: string): string {
+  return value + ' ' + (value === 1 ? singular : plural);
+}
+
+function openPage(page: string): void {
+  window.dispatchEvent(new CustomEvent('atoumweb:open-page', { detail: page }));
+}
+
+export function StatisticsPage({ onMessage }: { onMessage: (message: string) => void }) {
+  const [data, setData] = useState<StatisticsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState<StatisticsPeriod>('month');
+  const [tab, setTab] = useState<StatisticsTab>('overview');
+
+  async function load(): Promise<void> {
+    setLoading(true);
+    try {
+      const [prospects, clients, quotes, projects, sessions, billing, expenses, interventions] = await Promise.all([
+        window.atoumweb.crm.prospects.list({ includeArchived: true }),
+        window.atoumweb.crm.clients.list({ includeArchived: true }),
+        window.atoumweb.quotes.list(),
+        window.atoumweb.projects.projects.list(),
+        window.atoumweb.time.list(),
+        window.atoumweb.billing.list(),
+        window.atoumweb.expenses.list(),
+        window.atoumweb.operations.interventions.list({ includeArchived: true }),
+      ]);
+      setData({ prospects, clients, quotes, projects, sessions, billing, expenses, interventions });
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible de charger les statistiques.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void load();
+    const refresh = () => void load();
+    window.addEventListener('atoumweb:changed', refresh);
+    window.addEventListener('atoumweb:time-changed', refresh);
+    window.addEventListener('atoumweb:intervention-updated', refresh);
+    return () => {
+      window.removeEventListener('atoumweb:changed', refresh);
+      window.removeEventListener('atoumweb:time-changed', refresh);
+      window.removeEventListener('atoumweb:intervention-updated', refresh);
+    };
+  }, []);
+
+  const range = useMemo(() => statisticsPeriodRange(period), [period]);
+  const previousRange = useMemo(() => previousStatisticsPeriodRange(period), [period]);
+
+  if (loading && !data) {
+    return <div className="panel statistics-loading"><OperationIcon name="chart" size={30} /><strong>Calcul des statistiques…</strong><span>Les indicateurs sont dérivés des données métier.</span></div>;
+  }
+  if (!data) {
+    return <div className="panel statistics-loading"><OperationIcon name="alert" size={30} /><strong>Statistiques indisponibles</strong><button className="secondary-button" type="button" onClick={() => void load()}>Réessayer</button></div>;
+  }
+
+  const newProspects = ranged(data.prospects, range, (item) => item.createdAt);
+  const previousProspects = previousRange ? ranged(data.prospects, previousRange, (item) => item.createdAt) : [];
+  const won = ranged(data.prospects, range, (item) => item.wonAt);
+  const lost = ranged(data.prospects, range, (item) => item.lostAt);
+
+  const quotes = ranged(data.quotes, range, (item) => item.createdAt);
+  const previousQuotes = previousRange ? ranged(data.quotes, previousRange, (item) => item.createdAt) : [];
+  const acceptedAll = data.quotes.filter((item) => item.status === 'accepted');
+  const accepted = ranged(acceptedAll, range, (item) => item.acceptedAt);
+  const previousAccepted = previousRange ? ranged(acceptedAll, previousRange, (item) => item.acceptedAt) : [];
+  const refused = ranged(data.quotes.filter((item) => item.status === 'refused'), range, (item) => item.refusedAt);
+
+  const projectsCreated = ranged(data.projects, range, (item) => item.createdAt);
+  const previousProjects = previousRange ? ranged(data.projects, previousRange, (item) => item.createdAt) : [];
+  const projectsCompleted = ranged(data.projects.filter((item) => item.status === 'completed'), range, (item) => item.completedAt);
+  const sessions = ranged(data.sessions, range, (item) => item.startedAt);
+  const previousSessions = previousRange ? ranged(data.sessions, previousRange, (item) => item.startedAt) : [];
+  const invoices = ranged(data.billing.filter((item) => item.status === 'invoiced'), range, (item) => item.invoicedAt);
+  const previousInvoices = previousRange ? ranged(data.billing.filter((item) => item.status === 'invoiced'), previousRange, (item) => item.invoicedAt) : [];
+  const expenses = ranged(data.expenses.filter((item) => item.status !== 'cancelled'), range, (item) => item.expenseDate);
+  const newClients = ranged(data.clients.filter((item) => item.status !== 'archived'), range, (item) => item.becameClientAt);
+  const previousClients = previousRange ? ranged(data.clients.filter((item) => item.status !== 'archived'), previousRange, (item) => item.becameClientAt) : [];
+  const interventionsCompleted = ranged(data.interventions.filter((item) => item.status === 'completed'), range, (item) => item.completedAt);
+
+  const signed = sum(accepted, (item) => item.contractValueCents);
+  const previousSigned = sum(previousAccepted, (item) => item.contractValueCents);
+  const invoiced = sum(invoices, (item) => item.expectedAmountCents);
+  const previousInvoiced = sum(previousInvoices, (item) => item.expectedAmountCents);
+  const spent = sum(expenses, (item) => item.amountCents);
+  const seconds = sum(sessions, (item) => item.durationSeconds);
+  const previousSeconds = sum(previousSessions, (item) => item.durationSeconds);
+  const billableSeconds = sum(sessions.filter((item) => item.billable), (item) => item.durationSeconds);
+  const nonBillableSeconds = seconds - billableSeconds;
+  const readyBilling = data.billing.filter((item) => item.status === 'ready' || item.status === 'planned');
+  const readyAmount = sum(readyBilling, (item) => item.expectedAmountCents);
+
+  const activeProspects = data.prospects.filter((item) => !item.archivedAt && !['won', 'lost'].includes(item.stage || 'new'));
+  const activeProjects = data.projects.filter((item) => ['to_prepare', 'in_progress', 'waiting_client', 'blocked', 'to_validate'].includes(item.status));
+  const activeInterventions = data.interventions.filter((item) => ['planned', 'in_progress', 'waiting_client', 'blocked', 'to_validate'].includes(item.status));
+  const acceptanceRate = ratio(accepted.length, accepted.length + refused.length);
+  const conversionRate = ratio(won.length, won.length + lost.length);
+  const offeredValue = Math.max(0, sum(accepted, (item) => item.catalogValueCents) - signed);
+
+  const pipelineRows = PIPELINE.map((entry) => ({
+    ...entry,
+    count: activeProspects.filter((prospect) => entry.stages.includes(prospect.stage || 'new')).length,
+  }));
+
+  const sources = Object.entries(newProspects.reduce<Record<string, number>>((result, prospect) => {
+    const key = prospect.source || 'other';
+    result[key] = (result[key] || 0) + 1;
+    return result;
+  }, {})).map(([key, count]) => ({ label: SOURCE_LABELS[key] || key, count })).sort((a, b) => b.count - a.count);
+
+  const categories = TIME_CATEGORIES.map((category) => ({
+    category,
+    label: CATEGORY_LABELS[category],
+    seconds: sum(sessions.filter((item) => item.category === category), (item) => item.durationSeconds),
+  })).filter((item) => item.seconds > 0).sort((a, b) => b.seconds - a.seconds);
+
+  const projectStatuses = Object.entries(PROJECT_STATUS_LABELS).map(([status, label]) => ({
+    status,
+    label,
+    count: data.projects.filter((project) => project.status === status).length,
+  })).filter((item) => item.count > 0);
+
+  const completedIds = new Set(projectsCompleted.map((item) => item.id));
+  const completedRealSeconds = sum(data.sessions.filter((item) => item.projectId && completedIds.has(item.projectId)), (item) => item.durationSeconds);
+  const completedEstimatedSeconds = sum(projectsCompleted, (item) => item.estimatedMinutes * 60);
+
+  const clientRows = data.clients.filter((item) => item.status !== 'archived').map((client) => ({
+    id: client.id,
+    label: client.displayName,
+    seconds: sum(sessions.filter((item) => item.clientAccountId === client.id), (item) => item.durationSeconds),
+    invoiced: sum(invoices.filter((item) => item.clientAccountId === client.id), (item) => item.expectedAmountCents),
+    ready: sum(readyBilling.filter((item) => item.clientAccountId === client.id), (item) => item.expectedAmountCents),
+    projects: activeProjects.filter((item) => item.clientAccountId === client.id).length,
+    interventions: data.interventions.filter((item) => item.clientAccountId === client.id && !['archived', 'cancelled'].includes(item.status)).length,
+  })).filter((item) => item.seconds || item.invoiced || item.ready || item.projects || item.interventions)
+    .sort((a, b) => (b.seconds + b.invoiced * 20) - (a.seconds + a.invoiced * 20)).slice(0, 8);
+
+  const financial = [
+    { label: 'Contractuel signé', value: signed, display: money(signed), tone: 'blue' },
+    { label: 'Facturé (PDF Abby)', value: invoiced, display: money(invoiced), tone: 'green' },
+    { label: 'À facturer actuellement', value: readyAmount, display: money(readyAmount), tone: 'gold' },
+    { label: 'Dépenses', value: spent, display: money(spent), tone: 'red' },
+  ];
+  const maxFinancial = Math.max(1, ...financial.map((item) => item.value));
+  const hasRecordedTime = seconds > 0;
+  const billableRatio = hasRecordedTime ? ratio(billableSeconds, seconds) : 0;
+  const comparison = (current: number, previous: number) => previousRange ? compare(current, previous) : undefined;
+  const donutStyle = { '--statistics-donut-angle': Math.round((billableRatio / 100) * 360) + 'deg' } as CSSProperties;
+
+  return <section className="statistics-page">
+    <div className="statistics-toolbar">
+      <div className="statistics-tabs">
+        <Tab active={tab === 'overview'} icon="chart" label="Vue d’ensemble" onClick={() => setTab('overview')} />
+        <Tab active={tab === 'commercial'} icon="user" label="Commercial" onClick={() => setTab('commercial')} />
+        <Tab active={tab === 'production'} icon="folder" label="Projets & temps" onClick={() => setTab('production')} />
+        <Tab active={tab === 'clients'} icon="wallet" label="Clients" onClick={() => setTab('clients')} />
+      </div>
+      <div className="statistics-period">
+        <span>{range.label}</span>
+        <select value={period} onChange={(event) => setPeriod(event.target.value as StatisticsPeriod)}>
+          <option value="month">Ce mois</option>
+          <option value="quarter">Ce trimestre</option>
+          <option value="year">Cette année</option>
+          <option value="all">Toutes les données</option>
+        </select>
+        <button className="secondary-button" type="button" onClick={() => void load()}><OperationIcon name="refresh" size={16} /> Actualiser</button>
+      </div>
+    </div>
+
+    {tab === 'overview' && <>
+      <div className="statistics-kpis">
+        <Kpi icon="wallet" label="Contractuel signé" value={money(signed)} comparison={comparison(signed, previousSigned)} />
+        <Kpi icon="receipt" label="Facturé suivi" value={money(invoiced)} comparison={comparison(invoiced, previousInvoiced)} />
+        <Kpi icon="clock" label="Temps travaillé" value={hours(seconds)} comparison={comparison(seconds, previousSeconds)} />
+        <Kpi icon="user" label="Nouveaux clients" value={String(newClients.length)} comparison={comparison(newClients.length, previousClients.length)} />
+      </div>
+      <div className="statistics-main-grid">
+        <article className="panel statistics-card">
+          <CardTitle eyebrow="Finances" title="Repères de la période" action="Voir facturation →" onClick={() => openPage('Facturation')} />
+          <div className="statistics-bars">{financial.map((item) => <Bar key={item.label} {...item} max={maxFinancial} />)}</div>
+          <p className="statistics-note">« Facturé » correspond aux factures PDF Abby suivies dans le Manager. Les encaissements bancaires ne sont pas encore suivis.</p>
+        </article>
+        <article className="panel statistics-card">
+          <CardTitle eyebrow="Temps" title="Répartition facturable" action="Voir les temps →" onClick={() => openPage('Gestion des temps')} />
+          <div className="statistics-time">
+            <div className={'statistics-donut' + (hasRecordedTime ? '' : ' no-data')} style={donutStyle}><span><strong>{hasRecordedTime ? pct(billableRatio) : '0 h'}</strong><small>{hasRecordedTime ? 'facturable' : 'aucun temps'}</small></span></div>
+            <div className="statistics-legend">
+              <div><i className="billable" /><span>Facturable</span><strong>{hours(billableSeconds)}</strong></div>
+              <div><i /><span>Non facturable</span><strong>{hours(nonBillableSeconds)}</strong></div>
+              <div><OperationIcon name="piggy-broken" size={20} /><span>Dépenses</span><strong>{money(spent)}</strong></div>
+            </div>
+          </div>
+        </article>
+      </div>
+      <div className="statistics-snapshots">
+        <Snapshot icon="user" label="Prospects actifs" value={activeProspects.length} helper={countLabel(newProspects.length, 'nouveau prospect', 'nouveaux prospects') + ' sur la période'} onClick={() => openPage('Prospects')} />
+        <Snapshot icon="folder" label="Projets actifs" value={activeProjects.length} helper={countLabel(projectsCompleted.length, 'projet terminé', 'projets terminés') + ' sur la période'} onClick={() => openPage('Projets')} />
+        <Snapshot icon="wrench" label="Interventions actives" value={activeInterventions.length} helper={countLabel(interventionsCompleted.length, 'intervention terminée', 'interventions terminées') + ' sur la période'} onClick={() => openPage('Interventions & Maintenance')} />
+        <Snapshot icon="euro" label="À facturer" value={readyBilling.length} helper={money(readyAmount) + ' à préparer'} onClick={() => openPage('Facturation')} />
+      </div>
+    </>}
+
+    {tab === 'commercial' && <>
+      <div className="statistics-kpis">
+        <Kpi icon="user" label="Nouveaux prospects" value={String(newProspects.length)} comparison={comparison(newProspects.length, previousProspects.length)} />
+        <Kpi icon="file-text" label="Devis créés" value={String(quotes.length)} comparison={comparison(quotes.length, previousQuotes.length)} />
+        <Kpi icon="check-circle" label="Taux d’acceptation" value={pct(acceptanceRate)} helper={countLabel(accepted.length, 'devis accepté', 'devis acceptés') + ' · ' + countLabel(refused.length, 'devis refusé', 'devis refusés')} />
+        <Kpi icon="chart" label="Conversion prospects" value={pct(conversionRate)} helper={countLabel(won.length, 'prospect gagné', 'prospects gagnés') + ' · ' + countLabel(lost.length, 'prospect perdu', 'prospects perdus')} />
+      </div>
+      <div className="statistics-main-grid">
+        <article className="panel statistics-card">
+          <CardTitle eyebrow="Pipeline actuel" title="Répartition commerciale" action="Ouvrir le pipeline →" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:open-prospects-view', { detail: 'pipeline' }))} />
+          <div className="statistics-pipeline">{pipelineRows.map((item) => <div key={item.label} className={'tone-' + item.tone}><strong>{item.count}</strong><span>{item.label}</span></div>)}</div>
+          <div className="statistics-mini"><span><strong>{activeProspects.length}</strong> prospects actifs</span><span><strong>{money(signed)}</strong> signé</span><span><strong>{money(offeredValue)}</strong> écart catalogue / signé</span></div>
+        </article>
+        <article className="panel statistics-card">
+          <CardTitle eyebrow="Origines" title="Prospects entrés sur la période" />
+          {sources.length ? <div className="statistics-ranking">{sources.slice(0, 7).map((item, index) => <div key={item.label}><span className="rank">{index + 1}</span><span>{item.label}</span><strong>{item.count}</strong><i style={{ width: ratio(item.count, Math.max(1, newProspects.length)) + '%' }} /></div>)}</div> : <Empty label="Aucun nouveau prospect sur cette période." />}
+        </article>
+      </div>
+    </>}
+
+    {tab === 'production' && <>
+      <div className="statistics-kpis">
+        <Kpi icon="folder" label="Projets créés" value={String(projectsCreated.length)} comparison={comparison(projectsCreated.length, previousProjects.length)} />
+        <Kpi icon="check-circle" label="Projets terminés" value={String(projectsCompleted.length)} helper={countLabel(activeProjects.length, 'projet actif', 'projets actifs')} />
+        <Kpi icon="clock" label="Temps travaillé" value={hours(seconds)} comparison={comparison(seconds, previousSeconds)} />
+        <Kpi icon="wrench" label="Interventions terminées" value={String(interventionsCompleted.length)} helper={countLabel(activeInterventions.length, 'intervention active', 'interventions actives')} />
+      </div>
+      <div className="statistics-main-grid">
+        <article className="panel statistics-card">
+          <CardTitle eyebrow="Temps" title="Répartition par activité" />
+          {categories.length ? <div className="statistics-bars">{categories.slice(0, 7).map((item) => <Bar key={item.category} label={item.label} value={item.seconds} display={hours(item.seconds)} max={Math.max(1, categories[0].seconds)} tone="blue" />)}</div> : <Empty label="Aucun temps enregistré sur cette période." />}
+        </article>
+        <article className="panel statistics-card">
+          <CardTitle eyebrow="Production" title="État des projets" />
+          {projectStatuses.length ? <div className="statistics-statuses">{projectStatuses.map((item) => <div key={item.status}><strong>{item.count}</strong><span>{item.label}</span></div>)}</div> : <Empty label="Aucun projet." />}
+          <div className="statistics-estimate"><span>Projets terminés · estimé vs réel</span><strong>{projectsCompleted.length ? hours(completedEstimatedSeconds) + ' estimées · ' + hours(completedRealSeconds) + ' réelles' : 'Aucun projet terminé'}</strong><small>{projectsCompleted.length ? 'Échantillon : n = ' + projectsCompleted.length : 'La comparaison apparaîtra dès qu’un projet sera terminé.'}</small></div>
+        </article>
+      </div>
+    </>}
+
+    {tab === 'clients' && <>
+      <div className="statistics-kpis">
+        <Kpi icon="user" label="Clients actifs" value={String(data.clients.filter((item) => item.status === 'active').length)} helper={countLabel(newClients.length, 'nouveau client', 'nouveaux clients') + ' sur la période'} />
+        <Kpi icon="receipt" label="Facturé période" value={money(invoiced)} comparison={comparison(invoiced, previousInvoiced)} />
+        <Kpi icon="clock" label="Temps client" value={hours(sum(sessions.filter((item) => item.clientAccountId), (item) => item.durationSeconds))} helper="Sessions rattachées aux clients" />
+        <Kpi icon="euro" label="À facturer" value={money(readyAmount)} helper={countLabel(readyBilling.length, 'élément', 'éléments') + ' actuellement'} />
+      </div>
+      <article className="panel statistics-card statistics-client-card">
+        <CardTitle eyebrow="Clients" title="Activité sur la période" />
+        {clientRows.length ? <div className="statistics-table-wrap"><table className="statistics-table"><thead><tr><th>Client</th><th>Temps</th><th>Facturé</th><th>À facturer</th><th>Projets actifs</th><th>Interventions</th></tr></thead><tbody>{clientRows.map((row) => <tr key={row.id} onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'client', entityId: row.id, title: row.label } }))}><td><strong>{row.label}</strong></td><td>{hours(row.seconds)}</td><td>{money(row.invoiced)}</td><td>{money(row.ready)}</td><td>{row.projects}</td><td>{row.interventions}</td></tr>)}</tbody></table></div> : <Empty label="Aucune activité client sur cette période." />}
+      </article>
+    </>}
+  </section>;
+}
+
+function Tab({ active, icon, label, onClick }: { active: boolean; icon: OperationIconName; label: string; onClick: () => void }) {
+  return <button className={active ? 'active' : ''} type="button" onClick={onClick}><OperationIcon name={icon} size={17} />{label}</button>;
+}
+
+function Kpi({ icon, label, value, comparison, helper }: { icon: OperationIconName; label: string; value: string; comparison?: ReturnType<typeof compare>; helper?: string }) {
+  return <article className="statistics-kpi"><span><OperationIcon name={icon} size={28} /></span><div><strong>{label}</strong><b>{value}</b>{comparison ? <small className={'trend-' + comparison.direction}>{comparison.text}</small> : <small>{helper}</small>}</div></article>;
+}
+
+function Snapshot({ icon, label, value, helper, onClick }: { icon: OperationIconName; label: string; value: number; helper: string; onClick: () => void }) {
+  return <button className="statistics-snapshot" type="button" onClick={onClick}><span><OperationIcon name={icon} size={21} /></span><div><strong>{label}</strong><b>{value}</b><small>{helper}</small></div><em>›</em></button>;
+}
+
+function CardTitle({ eyebrow, title, action, onClick }: { eyebrow: string; title: string; action?: string; onClick?: () => void }) {
+  return <div className="statistics-card-title"><div><span className="eyebrow">{eyebrow}</span><h2>{title}</h2></div>{action && onClick && <button className="link-button" type="button" onClick={onClick}>{action}</button>}</div>;
+}
+
+function Bar({ label, value, display, max, tone }: { label: string; value: number; display: string; max: number; tone: string }) {
+  const width = value <= 0 ? 0 : Math.max(3, (value / max) * 100);
+  return <div className="statistics-bar"><div><span>{label}</span><strong>{display}</strong></div><div><i className={'tone-' + tone} style={{ width: width + '%' }} /></div></div>;
+}
+
+function Empty({ label }: { label: string }) {
+  return <div className="statistics-empty"><OperationIcon name="chart" size={28} /><strong>{label}</strong><span>Les indicateurs se rempliront automatiquement avec les données du Manager.</span></div>;
+}

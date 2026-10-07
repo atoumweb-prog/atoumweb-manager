@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import { normalizeEmail, normalizePhone } from '../../shared/contactValidation';
+import { normalizeWebUrl } from '../../shared/webUrl';
 import {
   CLIENT_STATUSES,
   PROSPECT_INTEREST_LEVELS,
@@ -14,6 +15,9 @@ import {
   type ClientStatus,
   type ClientSummary,
   type Contact,
+  type DirectoryContact,
+  type DirectoryOrganization,
+  type DirectoryRelation,
   type ContactMethod,
   type ContactMethodInput,
   type ContactInput,
@@ -25,6 +29,7 @@ import {
   type ProspectOrigin,
   type ProspectResearchSnapshot,
   type ProspectResearchSnapshotInput,
+  type ProspectResearchStructuredCheck,
   type ProspectStage,
   type ProspectSummary,
   type SearchResult,
@@ -35,6 +40,13 @@ const clean = (value?: string | null): string | null => {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
 };
+
+function directoryRelation(clientCount: number, prospectCount: number): DirectoryRelation {
+  if (clientCount > 0 && prospectCount > 0) return 'client_prospect';
+  if (clientCount > 0) return 'client';
+  if (prospectCount > 0) return 'prospect';
+  return 'external';
+}
 
 const MANUAL_PROSPECT_STAGE_TRANSITIONS: Record<ProspectStage, readonly ProspectStage[]> = {
   new: ['qualifying', 'lost'],
@@ -83,6 +95,10 @@ function assertProspectInput(input: ProspectInput): void {
 function assertClientInput(input: ClientInput): void {
   assertIdentity(input.organizationId, input.primaryContactId);
   if (input.status && !CLIENT_STATUSES.includes(input.status)) throw new Error('Statut client invalide.');
+}
+
+function normalizeResearchCheck(check?: ProspectResearchStructuredCheck): ProspectResearchStructuredCheck | undefined {
+  return check ? { ...check, url: normalizeWebUrl(check.url) } : undefined;
 }
 
 function inferOrigin(source?: ProspectSummary['source'] | null): ProspectOrigin {
@@ -176,13 +192,13 @@ export class CrmService {
   constructor(private readonly database: DatabaseAdapter) {}
 
   private transaction<T>(work: () => T): T {
-    this.database.exec('BEGIN IMMEDIATE;');
+    this.database.exec('SAVEPOINT crm_transaction;');
     try {
       const result = work();
-      this.database.exec('COMMIT;');
+      this.database.exec('RELEASE crm_transaction;');
       return result;
     } catch (error) {
-      this.database.exec('ROLLBACK;');
+      this.database.exec('ROLLBACK TO crm_transaction; RELEASE crm_transaction;');
       throw error;
     }
   }
@@ -226,7 +242,7 @@ export class CrmService {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id, name, clean(input.legalName), clean(input.siret), email, phone,
-        clean(input.website), clean(input.addressLine1), clean(input.addressLine2), clean(input.postalCode),
+        normalizeWebUrl(input.website), clean(input.addressLine1), clean(input.addressLine2), clean(input.postalCode),
         clean(input.city), clean(input.country), clean(input.industry), clean(input.notes), now, now,
       ],
     );
@@ -246,7 +262,7 @@ export class CrmService {
         postal_code=?, city=?, country=?, industry=?, notes=?, updated_at=?
        WHERE id=? AND archived_at IS NULL`,
       [
-        name, clean(input.legalName), clean(input.siret), email, phone, clean(input.website),
+        name, clean(input.legalName), clean(input.siret), email, phone, normalizeWebUrl(input.website),
         clean(input.addressLine1), clean(input.addressLine2), clean(input.postalCode), clean(input.city), clean(input.country),
         clean(input.industry), clean(input.notes), nowIso(), id,
       ],
@@ -269,6 +285,73 @@ export class CrmService {
       notes: row.notes as string | null, createdAt: String(row.created_at), updatedAt: String(row.updated_at),
       archivedAt: row.archived_at as string | null,
     };
+  }
+
+  listDirectoryOrganizations(includeArchived = false): DirectoryOrganization[] {
+    const rows = this.database.all<Record<string, unknown>>(
+      `SELECT o.*,
+        COALESCE(
+          (SELECT cm.value FROM contact_methods cm
+           WHERE cm.organization_id=o.id AND cm.method_type='email' AND cm.archived_at IS NULL
+           ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1),
+          o.email
+        ) AS resolved_email,
+        COALESCE(
+          (SELECT cm.value FROM contact_methods cm
+           WHERE cm.organization_id=o.id AND cm.method_type='phone' AND cm.archived_at IS NULL
+           ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1),
+          o.phone
+        ) AS resolved_phone,
+        (SELECT COUNT(*) FROM contacts c WHERE c.organization_id=o.id AND c.archived_at IS NULL) AS contact_count,
+        (SELECT COUNT(*) FROM prospects p
+          WHERE p.organization_id=o.id AND p.archived_at IS NULL AND p.stage NOT IN ('won','lost')) AS prospect_count,
+        (SELECT COUNT(*) FROM client_accounts ca
+          WHERE ca.organization_id=o.id AND ca.archived_at IS NULL AND ca.status<>'archived') AS client_count,
+        (SELECT p.id FROM prospects p
+          WHERE p.organization_id=o.id AND p.archived_at IS NULL AND p.stage NOT IN ('won','lost')
+          ORDER BY p.updated_at DESC LIMIT 1) AS prospect_id,
+        (SELECT ca.id FROM client_accounts ca
+          WHERE ca.organization_id=o.id AND ca.archived_at IS NULL AND ca.status<>'archived'
+          ORDER BY ca.updated_at DESC LIMIT 1) AS client_id
+       FROM organizations o
+       ${includeArchived ? '' : 'WHERE o.archived_at IS NULL'}
+       ORDER BY o.name COLLATE NOCASE`,
+    );
+    return rows.map((row) => {
+      const activeProspectCount = Number(row.prospect_count ?? 0);
+      const activeClientCount = Number(row.client_count ?? 0);
+      return {
+        id: String(row.id),
+        name: String(row.name),
+        legalName: row.legal_name as string | null,
+        siret: row.siret as string | null,
+        email: row.resolved_email as string | null,
+        phone: row.resolved_phone as string | null,
+        website: row.website as string | null,
+        addressLine1: row.address_line1 as string | null,
+        addressLine2: row.address_line2 as string | null,
+        postalCode: row.postal_code as string | null,
+        city: row.city as string | null,
+        country: row.country as string | null,
+        industry: row.industry as string | null,
+        notes: row.notes as string | null,
+        createdAt: String(row.created_at),
+        updatedAt: String(row.updated_at),
+        archivedAt: row.archived_at as string | null,
+        contactCount: Number(row.contact_count ?? 0),
+        activeProspectCount,
+        activeClientCount,
+        relation: directoryRelation(activeClientCount, activeProspectCount),
+        prospectId: row.prospect_id as string | null,
+        clientId: row.client_id as string | null,
+      };
+    });
+  }
+
+  getDirectoryOrganization(id: string): DirectoryOrganization {
+    const item = this.listDirectoryOrganizations(true).find((organization) => organization.id === id);
+    if (!item) throw new Error('Organisation introuvable.');
+    return item;
   }
 
   createContact(input: ContactInput): Contact {
@@ -324,6 +407,74 @@ export class CrmService {
       preferredChannel: row.preferred_channel as string | null, notes: row.notes as string | null,
       createdAt: String(row.created_at), updatedAt: String(row.updated_at), archivedAt: row.archived_at as string | null,
     };
+  }
+
+  listDirectoryContacts(includeArchived = false): DirectoryContact[] {
+    const rows = this.database.all<Record<string, unknown>>(
+      `SELECT c.*, o.name AS organization_name,
+        COALESCE(
+          (SELECT cm.value FROM contact_methods cm
+           WHERE cm.contact_id=c.id AND cm.method_type='email' AND cm.archived_at IS NULL
+           ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1),
+          c.email
+        ) AS resolved_email,
+        COALESCE(
+          (SELECT cm.value FROM contact_methods cm
+           WHERE cm.contact_id=c.id AND cm.method_type='phone' AND cm.archived_at IS NULL
+           ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1),
+          c.phone
+        ) AS resolved_phone,
+        (SELECT COUNT(DISTINCT p.id) FROM prospects p
+          WHERE p.archived_at IS NULL AND p.stage NOT IN ('won','lost')
+            AND (p.contact_id=c.id OR (c.organization_id IS NOT NULL AND p.organization_id=c.organization_id))) AS prospect_count,
+        (SELECT COUNT(DISTINCT ca.id) FROM client_accounts ca
+          LEFT JOIN client_contact_roles ccr ON ccr.client_account_id=ca.id
+          WHERE ca.archived_at IS NULL AND ca.status<>'archived'
+            AND (ca.primary_contact_id=c.id OR ccr.contact_id=c.id OR (c.organization_id IS NOT NULL AND ca.organization_id=c.organization_id))) AS client_count,
+        (SELECT p.id FROM prospects p
+          WHERE p.archived_at IS NULL AND p.stage NOT IN ('won','lost')
+            AND (p.contact_id=c.id OR (c.organization_id IS NOT NULL AND p.organization_id=c.organization_id))
+          ORDER BY p.updated_at DESC LIMIT 1) AS prospect_id,
+        (SELECT ca.id FROM client_accounts ca
+          LEFT JOIN client_contact_roles ccr ON ccr.client_account_id=ca.id
+          WHERE ca.archived_at IS NULL AND ca.status<>'archived'
+            AND (ca.primary_contact_id=c.id OR ccr.contact_id=c.id OR (c.organization_id IS NOT NULL AND ca.organization_id=c.organization_id))
+          ORDER BY ca.updated_at DESC LIMIT 1) AS client_id
+       FROM contacts c
+       LEFT JOIN organizations o ON o.id=c.organization_id
+       ${includeArchived ? '' : 'WHERE c.archived_at IS NULL'}
+       ORDER BY c.last_name COLLATE NOCASE, c.first_name COLLATE NOCASE`,
+    );
+    return rows.map((row) => {
+      const activeProspectCount = Number(row.prospect_count ?? 0);
+      const activeClientCount = Number(row.client_count ?? 0);
+      return {
+        id: String(row.id),
+        organizationId: row.organization_id as string | null,
+        organizationName: row.organization_name as string | null,
+        firstName: String(row.first_name),
+        lastName: String(row.last_name),
+        jobTitle: row.job_title as string | null,
+        email: row.resolved_email as string | null,
+        phone: row.resolved_phone as string | null,
+        preferredChannel: row.preferred_channel as string | null,
+        notes: row.notes as string | null,
+        createdAt: String(row.created_at),
+        updatedAt: String(row.updated_at),
+        archivedAt: row.archived_at as string | null,
+        activeProspectCount,
+        activeClientCount,
+        relation: directoryRelation(activeClientCount, activeProspectCount),
+        prospectId: row.prospect_id as string | null,
+        clientId: row.client_id as string | null,
+      };
+    });
+  }
+
+  getDirectoryContact(id: string): DirectoryContact {
+    const item = this.listDirectoryContacts(true).find((contact) => contact.id === id);
+    if (!item) throw new Error('Contact introuvable.');
+    return item;
   }
 
   listContactMethods(owner: 'organization' | 'contact', id: string, includeArchived = false): ContactMethod[] {
@@ -429,7 +580,7 @@ export class CrmService {
       clean(pick('decisionMakerRole') as string|null|undefined), decisionMakerEmail, decisionMakerPhone,
       clean(pick('projectSummary') as string|null|undefined),clean(pick('projectContext') as string|null|undefined),pick('budgetStatus')??null,
       pick('timelineStatus')??null,clean(pick('timelineNote') as string|null|undefined),pick('existingStatus')??null,
-      clean(pick('existingUrl') as string|null|undefined),clean(pick('existingNotes') as string|null|undefined),clean(pick('missingInformation') as string|null|undefined),
+      normalizeWebUrl(pick('existingUrl') as string|null|undefined),clean(pick('existingNotes') as string|null|undefined),clean(pick('missingInformation') as string|null|undefined),
       clean(pick('waitingReasonCode') as string|null|undefined),clean(pick('waitingReasonText') as string|null|undefined),
       clean(pick('waitingResumeAt') as string|null|undefined),clean(pick('lostReasonCode') as string|null|undefined),nowIso(),id]);
     this.activity({entityType:'prospect',entityId:id,action:'qualification_updated',summary:'Qualification commerciale mise à jour',prospectId:id});
@@ -682,6 +833,18 @@ export class CrmService {
     const snapshot: ProspectResearchSnapshotInput = {
       ...input,
       checkedAt,
+      sourceUrl: normalizeWebUrl(input.sourceUrl),
+      googleBusiness: input.googleBusiness ? { ...input.googleBusiness, url: normalizeWebUrl(input.googleBusiness.url) } : undefined,
+      website: input.website ? { ...input.website, url: normalizeWebUrl(input.website.url) } : undefined,
+      legalNotices: normalizeResearchCheck(input.legalNotices),
+      audits: input.audits ? {
+        privacy: normalizeResearchCheck(input.audits.privacy),
+        cookies: normalizeResearchCheck(input.audits.cookies),
+        seo: normalizeResearchCheck(input.audits.seo),
+        performance: normalizeResearchCheck(input.audits.performance),
+        mobile: normalizeResearchCheck(input.audits.mobile),
+        accessibility: normalizeResearchCheck(input.audits.accessibility),
+      } : undefined,
       services: (input.services ?? []).map((value) => value.trim()).filter(Boolean),
       products: (input.products ?? []).map((value) => value.trim()).filter(Boolean),
       customerSegments: (input.customerSegments ?? []).map((value) => value.trim()).filter(Boolean),

@@ -1,5 +1,14 @@
 # Phase 3 — Projets & Production
 
+
+## Mise à jour Projet V2 — 22/09/2026
+
+Le socle historique de cette phase reste valable pour les sources de vérité (projets, ressources, bibliothèque technique, timer), mais l'interface et la logique de production sont désormais prolongées par `feature/project-blueprints-v1` / PR #73.
+
+Projet V2 ajoute notamment : blueprints liés au catalogue, snapshot de production, phases/étapes numérotées, glisser-déposer, atelier plein écran, séparation redimensionnable, timer de fiche, notes/actions, outils en fenêtre, validation de phase, aide contextuelle et coffre d'accès chiffré.
+
+Pour l'état réel et les commandes de validation, utiliser `PROJECT_STATUS.md` et `docs/HANDOFF_CODEX_MSI.md`.
+
 ## Statut
 
 Spécification préparée en avance. Le développement de cette phase ne doit commencer qu'après validation de la Phase 2 Commercial.

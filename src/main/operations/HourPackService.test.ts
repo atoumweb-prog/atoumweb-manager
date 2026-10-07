@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CrmService } from '../crm/CrmService';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
@@ -14,6 +14,7 @@ let time: TimeService;
 let clientId: string;
 
 beforeEach(() => {
+  vi.useFakeTimers();vi.setSystemTime(new Date('2026-10-06T12:00:00Z'));
   database = new NodeSqliteAdapter(':memory:');
   database.exec('PRAGMA foreign_keys = ON;');
   applyPendingMigrations(database);
@@ -25,7 +26,7 @@ beforeEach(() => {
   clientId = crm.createClient({ organizationId: organization.id }).id;
 });
 
-afterEach(() => database.close());
+afterEach(() => {database.close();vi.useRealTimers();});
 
 function createPack(hours = 10) {
   return packs.create({
@@ -55,6 +56,13 @@ function createCompletedIntervention(packId: string, minutes: number) {
 }
 
 describe('HourPackService', () => {
+  it('calcule l’expiration à la lecture et refuse de consommer un crédit expiré sans mutation silencieuse',()=>{
+    const pack=packs.create({clientAccountId:clientId,name:'TEST expiré',purchasedSeconds:18000,contractPriceCents:29900,purchasedAt:'2020-01-01T12:00:00Z',expiresAt:'2021-01-01T12:00:00Z'});
+    database.run("UPDATE hour_packs SET status='active' WHERE id=?",[pack.id]);
+    const before=database.all('SELECT * FROM hour_packs');expect(packs.get(pack.id).status).toBe('expired');expect(database.all('SELECT * FROM hour_packs')).toEqual(before);
+    const intervention=createCompletedIntervention(pack.id,45);expect(()=>packs.debitIntervention(pack.id,intervention.id)).toThrow(/état/);
+    expect(packs.get(pack.id).balanceSeconds).toBe(18000);
+  });
   it('crée le crédit initial et calcule le solde depuis les mouvements', () => {
     const pack = createPack(10);
     expect(pack.purchasedSeconds).toBe(36_000);

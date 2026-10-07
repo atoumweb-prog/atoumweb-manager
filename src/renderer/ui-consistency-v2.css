@@ -1,0 +1,1278 @@
+/* Cohérence transverse AtoumWeb Manager — recette 22/09/2026.
+   Cette couche est volontairement chargée en dernier.
+   Elle applique aux écrans historiques les conventions validées récemment :
+   contrôles lisibles, surfaces sobres, boutons cohérents, focus visible et barres d'onglets scrollables. */
+
+.content-area,
+.content-area * {
+  box-sizing: border-box;
+}
+
+.content-area :is(
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']),
+  select,
+  textarea
+) {
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  -webkit-text-fill-color: var(--text);
+  font: inherit;
+  opacity: 1;
+}
+
+.content-area :is(
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']),
+  select
+) {
+  min-height: var(--ui-control-height);
+  padding: var(--ui-control-pad-y) var(--ui-control-pad-x);
+}
+
+.content-area textarea {
+  min-height: 84px;
+  padding: var(--ui-control-pad-y) var(--ui-control-pad-x);
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.content-area input::placeholder,
+.content-area textarea::placeholder {
+  color: var(--muted);
+  opacity: .78;
+}
+
+.content-area :is(input, select, textarea, button):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: 2px;
+}
+
+.primary-button,
+.secondary-button,
+.content-area button:not(.nav-item):not(.close-detail) {
+  border-radius: 9px;
+}
+
+.primary-button,
+.secondary-button {
+  min-height: var(--ui-control-height);
+  padding: var(--ui-control-pad-y) var(--ui-control-pad-x);
+}
+
+.close-detail {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.close-detail:hover {
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+/* Même logique d'onglets que l'atelier Production : compacte, lisible, scrollable. */
+:is(
+  .client-tabs-buttons,
+  .operations-view-tabs,
+  .time-period-tabs,
+  .project-production-nav,
+  .quote-stepper,
+  .project-detail-tabs,
+  .catalog-detail-tabs,
+  .workflow-tabs
+) {
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+:is(
+  .client-tabs-buttons,
+  .operations-view-tabs,
+  .time-period-tabs,
+  .project-production-nav,
+  .quote-stepper,
+  .project-detail-tabs,
+  .catalog-detail-tabs,
+  .workflow-tabs
+) > button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* Les listes restent lisibles et ne forcent plus toute la page à déborder. */
+:is(
+  .table-panel,
+  .projects-table-wrap,
+  .quotes-table-wrap,
+  .catalog-table-wrap,
+  .operations-table-wrap,
+  .time-table-wrap
+) {
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-gutter: stable;
+}
+
+table {
+  max-width: 100%;
+}
+
+table th,
+table td {
+  vertical-align: middle;
+}
+
+/* Cartes et panneaux secondaires : rayon commun et pas de fonds natifs noirs. */
+:is(
+  .panel,
+  .project-tab-content,
+  .quote-detail-panel,
+  .catalog-detail-panel,
+  .operation-detail-panel,
+  .timer-popover,
+  .business-backups-page article,
+  .aw-library article
+) {
+  border-radius: 12px;
+}
+
+/* Details utilisés comme menus/actions : interaction explicite sans prendre plus de place. */
+.content-area details > summary {
+  cursor: pointer;
+}
+
+/* Checkboxes sobres partout, sauf composants qui définissent volontairement leur propre rendu. */
+.content-area input[type='checkbox']:not(.toggle-input),
+.content-area input[type='radio'] {
+  accent-color: var(--accent);
+}
+
+/* Les barres d'outils se replient plutôt que de déborder. */
+.module-toolbar,
+.toolbar-controls,
+.button-row,
+.detail-actions {
+  min-width: 0;
+}
+.toolbar-controls,
+.button-row,
+.detail-actions {
+  flex-wrap: wrap;
+}
+
+/* États désactivés homogènes. */
+.content-area :is(button, input, select, textarea):disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+/* Évite les libellés coupés sur les écrans historiques. */
+.content-area :is(label, .muted, small, .status-pill) {
+  overflow-wrap: anywhere;
+}
+
+
+/* Recette CRM 22/09/2026 — hiérarchie typographique validée.
+   Titres/libellés en gras, informations en graisse normale. */
+.prospect-directory-status,
+.prospect-detail-v2 .status-pill {
+  font-size: 13px !important;
+  font-weight: 750 !important;
+  line-height: 1.15;
+}
+
+.prospect-detail-v2 {
+  font-size: 14px;
+}
+.prospect-detail-v2 .detail-panel-heading h2 {
+  font-size: 20px;
+  line-height: 1.15;
+}
+.prospect-detail-v2 .eyebrow,
+.prospect-detail-v2 .muted,
+.prospect-detail-v2 small,
+.prospect-detail-v2 label,
+.prospect-detail-v2 button,
+.prospect-detail-v2 input,
+.prospect-detail-v2 select,
+.prospect-detail-v2 textarea {
+  font-size: 14px;
+}
+
+/* Valeurs de synthèse : information = normal ; libellé = gras. */
+.prospect-detail-v2 .reference-summary-grid > div > span,
+.prospect-reference-summary .reference-summary-grid > div > span,
+.identity-summary-grid > div > span,
+.reference-priority-block > span,
+.reference-opportunity-summary > span,
+.summary-line > span {
+  font-weight: 750;
+  color: var(--text-muted);
+}
+
+.prospect-detail-v2 .reference-summary-grid > div > strong,
+.prospect-reference-summary .reference-summary-grid > div > strong,
+.identity-summary-grid > div > strong,
+.reference-priority-block > strong,
+.summary-line > strong {
+  font-weight: 450;
+  color: var(--text);
+}
+
+/* Même logique dans la fenêtre Référence indépendante. */
+.reference-window-shell {
+  font-size: 14px;
+}
+.reference-window-header h1 {
+  font-size: 26px;
+  line-height: 1.12;
+}
+.reference-window-header p,
+.reference-window-shell :is(label, input, select, textarea, button, small, .muted) {
+  font-size: 14px;
+}
+.reference-window-shell .identity-summary-grid > div > span {
+  font-weight: 750;
+}
+.reference-window-shell .identity-summary-grid > div > strong {
+  font-weight: 450;
+}
+
+/* Bouton d’agrandissement : icône carrée, sans changement de hauteur du header. */
+.prospect-detail-v2 .open-desk-button {
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 !important;
+  font-size: 17px !important;
+  line-height: 1;
+  border-radius: 9px;
+}
+
+
+/* Hiérarchie typographique CRM — règle de lecture unique.
+   1. Titres / libellés = gras.
+   2. Valeurs saisies ou métier = normal.
+   3. Aides / résumés = normal et atténué.
+   Les balises <strong> historiques ne dictent plus la graisse des valeurs. */
+
+/* Titres de blocs et libellés. */
+.prospect-detail-v2 :is(
+  .prospect-work-accordion-title,
+  .work-section-heading .eyebrow,
+  .work-section-heading > div > strong,
+  .need-selector-title > strong,
+  .reference-summary-heading .eyebrow,
+  .prospect-commercial-priority > h3,
+  .need-scope-assessment .eyebrow
+) {
+  font-weight: 750 !important;
+}
+
+.prospect-detail-v2 .workflow-fields > label,
+.prospect-detail-v2 .workflow-fields .qualification-two-fields > label,
+.prospect-detail-v2 .missing-info-add > label:not(.check-option),
+.prospect-detail-v2 .project-work-field-label {
+  font-weight: 700 !important;
+}
+
+/* Les contrôles contiennent des valeurs, jamais des titres. */
+.prospect-detail-v2 :is(input, select, textarea, option) {
+  font-weight: 400 !important;
+}
+
+/* Synthèses : libellé en gras, donnée en normal. */
+.prospect-detail-v2 .reference-summary-grid > div > span,
+.prospect-reference-summary .reference-summary-grid > div > span,
+.prospect-detail-v2 .identity-summary-grid > div > span,
+.prospect-detail-v2 .summary-line > span,
+.reference-window-shell .identity-summary-grid > div > span {
+  font-weight: 700 !important;
+}
+
+.prospect-detail-v2 .reference-summary-grid > div > strong,
+.prospect-reference-summary .reference-summary-grid > div > strong,
+.prospect-detail-v2 .identity-summary-grid > div > strong,
+.prospect-detail-v2 .summary-line > strong,
+.reference-window-shell .identity-summary-grid > div > strong {
+  font-weight: 400 !important;
+}
+
+/* Référence prospect : le commentaire est une information secondaire, pas un titre. */
+.prospect-reference-summary .reference-summary-heading > div > strong,
+.prospect-detail-v2 .reference-priority-block > strong,
+.prospect-detail-v2 .reference-priority-block > p,
+.prospect-detail-v2 .reference-opportunity-summary > div > strong {
+  font-weight: 400 !important;
+}
+
+.prospect-detail-v2 .reference-priority-block > span,
+.prospect-detail-v2 .reference-opportunity-summary > span {
+  font-weight: 700 !important;
+}
+
+/* Besoin / projet : le diagnostic est une valeur, pas un titre. */
+.prospect-detail-v2 .need-scope-assessment > strong {
+  font-weight: 400 !important;
+}
+.prospect-detail-v2 .need-scope-assessment > small,
+.prospect-detail-v2 .need-selector-title > small,
+.prospect-detail-v2 .prospect-work-accordion-summary,
+.prospect-detail-v2 .muted {
+  font-weight: 400 !important;
+}
+
+/* Questions et options : la question peut être mise en avant, l'option reste normale. */
+.prospect-detail-v2 .missing-info-row > strong {
+  font-weight: 650 !important;
+}
+.prospect-detail-v2 .check-option {
+  font-weight: 400 !important;
+}
+
+/* Les boutons restent des actions et gardent un poids intermédiaire. */
+.prospect-detail-v2 button {
+  font-weight: 650;
+}
+
+
+/* Recette transverse — boutons dimensionnés sur leur libellé.
+   Les CTA ne doivent plus s'étirer sur toute une grille simplement parce que
+   le conteneur utilise le comportement stretch par défaut. */
+.primary-button,
+.secondary-button {
+  width: fit-content;
+  max-width: 100%;
+  justify-self: start;
+}
+
+.content-area .workflow-fields > :is(.primary-button, .secondary-button),
+.content-area .inline-editor-actions > :is(.primary-button, .secondary-button),
+.content-area .button-row > :is(.primary-button, .secondary-button),
+.content-area .detail-actions > :is(.primary-button, .secondary-button) {
+  width: fit-content;
+  max-width: 100%;
+}
+
+/* Les véritables lignes/cartes cliquables restent volontairement pleine largeur. */
+.project-template-items > button,
+.maintenance-period-list > button {
+  width: 100%;
+  justify-self: stretch;
+}
+
+
+/* Passe transverse — boutons compacts, aide contextuelle et hiérarchie des formulaires. */
+.content-area :is(.primary-button, .secondary-button, .danger-button) {
+  width: fit-content !important;
+  min-width: 0;
+  max-width: 100%;
+  justify-self: start;
+  align-self: start;
+}
+
+.content-area .form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.content-area .form-actions > :is(.primary-button, .secondary-button, .danger-button) {
+  flex: 0 0 auto;
+}
+
+.field-help {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 5px;
+  border: 1px solid color-mix(in srgb, var(--text-muted) 48%, var(--border));
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: help;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.field-help:hover,
+.field-help:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+.app-shell.help-disabled .field-help {
+  display: none !important;
+}
+
+.field-label-with-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  width: fit-content;
+  max-width: 100%;
+}
+
+/* Règle transverse validée : statut et action en semi-gras, jamais en graisse forte. */
+.content-area :is(
+  .status-pill,
+  .catalog-status,
+  .quote-status,
+  .prospect-directory-status
+) {
+  font-weight: 650 !important;
+}
+
+.content-area :is(.primary-button, .secondary-button, .danger-button) {
+  font-weight: 650 !important;
+}
+
+/* Formulaires CRM : libellé = repère, saisie = donnée. */
+.crm-form label,
+.contact-inline-form label,
+.contact-form-grid label {
+  font-weight: 700 !important;
+  color: var(--text-muted);
+}
+
+.crm-form :is(input, select, textarea),
+.contact-inline-form :is(input, select, textarea),
+.contact-form-grid :is(input, select, textarea) {
+  font-weight: 400 !important;
+  color: var(--text);
+  -webkit-text-fill-color: var(--text);
+}
+
+/* Les valeurs de tableaux/catalogue ne deviennent pas des titres. */
+.catalog-table td,
+.catalog-table td strong {
+  font-weight: 400 !important;
+}
+
+.catalog-table th,
+.catalog-fields label {
+  font-weight: 700 !important;
+}
+
+.catalog-fields :is(input, select, textarea),
+.catalog-detail-actions select {
+  font-weight: 400 !important;
+}
+
+/* Thème Noir — contraste transverse CRM / Prospection.
+   Les teintes métier restent visibles mais sont calculées sur les surfaces sombres,
+   jamais sur #fff afin d'éviter texte clair + pastel clair. */
+:root[data-theme='noir'] {
+  --aw-status-green-bg: color-mix(in srgb, #55b98b 27%, var(--surface));
+  --aw-status-green-fg: #9ce3c0;
+  --aw-status-blue-bg: color-mix(in srgb, #79a9d7 29%, var(--surface));
+  --aw-status-blue-fg: #bad8f2;
+  --aw-status-yellow-bg: color-mix(in srgb, #e7b75e 28%, var(--surface));
+  --aw-status-yellow-fg: #f3d99e;
+  --aw-status-orange-bg: color-mix(in srgb, #d88946 30%, var(--surface));
+  --aw-status-orange-fg: #efbd8a;
+  --aw-status-red-bg: color-mix(in srgb, #e77a6f 28%, var(--surface));
+  --aw-status-red-fg: #f5b2ab;
+  --aw-status-purple-bg: color-mix(in srgb, #8f78bd 30%, var(--surface));
+  --aw-status-purple-fg: #c8b9e5;
+  --aw-status-neutral-bg: color-mix(in srgb, #87919e 22%, var(--surface));
+  --aw-status-neutral-fg: #c9d0d9;
+}
+
+:root[data-theme='noir'] .prospect-directory-table tbody tr.prospect-temperature-hot {
+  --prospect-temperature-pastel: var(--aw-status-red-bg);
+  --prospect-temperature-color: #e77a6f;
+}
+:root[data-theme='noir'] .prospect-directory-table tbody tr.prospect-temperature-warm {
+  --prospect-temperature-pastel: var(--aw-status-yellow-bg);
+  --prospect-temperature-color: #e7b75e;
+}
+:root[data-theme='noir'] .prospect-directory-table tbody tr.prospect-temperature-cold {
+  --prospect-temperature-pastel: var(--aw-status-blue-bg);
+  --prospect-temperature-color: #79a9d7;
+}
+:root[data-theme='noir'] .prospect-directory-table tbody tr.prospect-temperature-neutral {
+  --prospect-temperature-pastel: var(--aw-status-green-bg);
+  --prospect-temperature-color: #55b98b;
+}
+
+:root[data-theme='noir'] .prospect-directory-table tbody tr[class*='prospect-temperature-'] > td,
+:root[data-theme='noir'] .clients-table tbody tr[class*='client-relationship-'] > td {
+  color: var(--text) !important;
+}
+
+:root[data-theme='noir'] .prospect-directory-status-prepare,
+:root[data-theme='noir'] .prospect-directory-status-quote_sent,
+:root[data-theme='noir'] .prospect-directory-status-follow_up,
+:root[data-theme='noir'] .prospect-directory-status-waiting {
+  background: var(--aw-status-yellow-bg) !important;
+  color: var(--aw-status-yellow-fg) !important;
+}
+:root[data-theme='noir'] .prospect-directory-status-ready,
+:root[data-theme='noir'] .prospect-directory-status-won {
+  background: var(--aw-status-green-bg) !important;
+  color: var(--aw-status-green-fg) !important;
+}
+:root[data-theme='noir'] .prospect-directory-status-qualifying {
+  background: var(--aw-status-blue-bg) !important;
+  color: var(--aw-status-blue-fg) !important;
+}
+:root[data-theme='noir'] .prospect-directory-status-need_identified {
+  background: var(--aw-status-purple-bg) !important;
+  color: var(--aw-status-purple-fg) !important;
+}
+:root[data-theme='noir'] .prospect-directory-status-quote_to_prepare,
+:root[data-theme='noir'] .prospect-directory-status-quote_to_send,
+:root[data-theme='noir'] .prospect-directory-status-negotiation {
+  background: var(--aw-status-orange-bg) !important;
+  color: var(--aw-status-orange-fg) !important;
+}
+:root[data-theme='noir'] .prospect-directory-status-lost {
+  background: var(--aw-status-red-bg) !important;
+  color: var(--aw-status-red-fg) !important;
+}
+
+:root[data-theme='noir'] .prospect-ready-yes,
+:root[data-theme='noir'] .research-status-ok {
+  background: var(--aw-status-green-bg) !important;
+  color: var(--aw-status-green-fg) !important;
+}
+:root[data-theme='noir'] .prospect-ready-no,
+:root[data-theme='noir'] .research-status-review {
+  background: var(--aw-status-yellow-bg) !important;
+  color: var(--aw-status-yellow-fg) !important;
+}
+:root[data-theme='noir'] .research-status-missing {
+  background: var(--aw-status-red-bg) !important;
+  color: var(--aw-status-red-fg) !important;
+}
+:root[data-theme='noir'] .research-status-na {
+  background: var(--aw-status-neutral-bg) !important;
+  color: var(--aw-status-neutral-fg) !important;
+}
+
+/* Anciennes vues commerciales forçaient des cartes blanches.
+   En Noir elles réutilisent désormais les surfaces du thème. */
+:root[data-theme='noir'] .prospect-readiness-card,
+:root[data-theme='noir'] .prospect-commercial-priority,
+:root[data-theme='noir'] .prospect-reference-summary,
+:root[data-theme='noir'] .reference-tab-intro,
+:root[data-theme='noir'] .research-check-card,
+:root[data-theme='noir'] .prospect-desk-tabs button,
+:root[data-theme='noir'] .research-tabs button,
+:root[data-theme='noir'] .prospect-detail-v2 :is(
+  .inline-editor,
+  .contact-methods-panel,
+  .need-selector-v2,
+  .need-add-block,
+  .need-identification-fields,
+  .identity-decision-maker,
+  .prequote-review-body,
+  .linked-contact-row,
+  .selected-contact-summary,
+  .missing-info-row
+),
+:root[data-theme='noir'] .client-summary-panel :is(
+  .client-primary-card,
+  .client-notes,
+  .activity-preview,
+  .tab-content-stack,
+  .client-status-control,
+  .contact-inline-form,
+  .contact-card,
+  .contact-methods-panel,
+  .inline-editor
+),
+:root[data-theme='noir'] .client-relationship-menu,
+:root[data-theme='noir'] .client-relationship-choice {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+:root[data-theme='noir'] .prospect-detail-v2.prospect-temperature-hot {
+  --business-pastel: var(--aw-status-red-bg);
+  --business-ink: var(--aw-status-red-fg);
+}
+:root[data-theme='noir'] .prospect-detail-v2.prospect-temperature-warm {
+  --business-pastel: var(--aw-status-yellow-bg);
+  --business-ink: var(--aw-status-yellow-fg);
+}
+:root[data-theme='noir'] .prospect-detail-v2.prospect-temperature-cold {
+  --business-pastel: var(--aw-status-blue-bg);
+  --business-ink: var(--aw-status-blue-fg);
+}
+:root[data-theme='noir'] .prospect-detail-v2.prospect-temperature-neutral {
+  --business-pastel: var(--aw-status-green-bg);
+  --business-ink: var(--aw-status-green-fg);
+}
+:root[data-theme='noir'] .prospect-detail-v2,
+:root[data-theme='noir'] .prospect-detail-v2 .detail-panel-heading,
+:root[data-theme='noir'] .prospect-detail-v2 :is(
+  .prospect-work-section,
+  .prospect-quote-panel,
+  .activity-preview,
+  .activity-journal,
+  .linked-contacts-panel,
+  .qualification-recap,
+  .prospect-missing-actions
+) {
+  color: var(--text) !important;
+}
+:root[data-theme='noir'] .prospect-detail-v2 .prospect-temperature-control label {
+  color: var(--text) !important;
+}
+
+:root[data-theme='noir'] .client-relationship-excellent {
+  --business-color: #55b98b;
+  --business-ink: var(--aw-status-green-fg);
+  --business-pastel: var(--aw-status-green-bg);
+}
+:root[data-theme='noir'] .client-relationship-good {
+  --business-color: #79a9d7;
+  --business-ink: var(--aw-status-blue-fg);
+  --business-pastel: var(--aw-status-blue-bg);
+}
+:root[data-theme='noir'] .client-relationship-neutral {
+  --business-color: #87919e;
+  --business-ink: var(--aw-status-neutral-fg);
+  --business-pastel: var(--aw-status-neutral-bg);
+}
+:root[data-theme='noir'] .client-relationship-watch {
+  --business-color: #e7b75e;
+  --business-ink: var(--aw-status-yellow-fg);
+  --business-pastel: var(--aw-status-yellow-bg);
+}
+:root[data-theme='noir'] .client-relationship-difficult {
+  --business-color: #e77a6f;
+  --business-ink: var(--aw-status-red-fg);
+  --business-pastel: var(--aw-status-red-bg);
+}
+:root[data-theme='noir'] .client-summary-panel,
+:root[data-theme='noir'] .client-summary-panel .detail-panel-heading {
+  color: var(--text) !important;
+}
+:root[data-theme='noir'] .client-summary-panel :is(.client-since, p, span, strong, label, small, h2, h3) {
+  color: inherit;
+}
+:root[data-theme='noir'] .client-summary-panel .muted,
+:root[data-theme='noir'] .client-summary-panel small {
+  color: var(--muted) !important;
+}
+
+/* Client — une erreur de fiche ne doit jamais faire disparaître tout le Manager. */
+.client-detail-error-card,
+.client-page-error-card {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  min-height: 180px;
+  color: var(--text);
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+.client-detail-error-card h2,
+.client-page-error-card h2 {
+  margin: 0;
+}
+
+.client-detail-error-card p,
+.client-page-error-card p {
+  margin: 0;
+  color: var(--text);
+}
+
+.client-detail-error-card .button-row {
+  justify-content: flex-start;
+}
+
+:root[data-theme='noir'] .prospect-directory-table tbody tr[class*='prospect-temperature-'] > td {
+  border-color: color-mix(in srgb, var(--prospect-temperature-color) 20%, var(--border));
+}
+
+:root[data-theme='noir'] .prospect-directory-table tbody tr[class*='prospect-temperature-']:hover > td {
+  filter: brightness(1.08);
+}
+
+/* Renderer — jamais d'écran noir muet : afficher l'erreur exploitable. */
+.renderer-fatal-shell {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.renderer-fatal-card {
+  width: min(860px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.renderer-fatal-card h1,
+.renderer-fatal-card p {
+  margin: 0;
+}
+
+.renderer-fatal-card pre {
+  max-height: 42dvh;
+  overflow: auto;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-soft);
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 12px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.renderer-fatal-card .secondary-button {
+  justify-self: start;
+}
+
+
+
+/* Responsive Prospection — même logique de densité que Interventions / Maintenance. */
+
+/* La fiche latérale exploite davantage l'espace disponible sur les grands écrans. */
+.prospects-layout.with-detail {
+  grid-template-columns: minmax(0, var(--prospect-list-percent, 66%)) 8px minmax(320px, 1fr) !important;
+  gap: 0 !important;
+  align-items: start !important;
+  min-width: 0;
+}
+
+.prospect-splitter {
+  align-self: stretch;
+  min-height: 100%;
+  margin-inline: 0;
+}
+
+.prospects-layout.with-detail > * {
+  min-width: 0;
+}
+
+/* La fiche réagit à sa propre largeur : les cases ne restent plus figées. */
+.prospect-detail-panel:not(.prospect-detail-desk) {
+  container-type: inline-size;
+  container-name: prospectpanel;
+}
+
+.prospect-detail-panel:not(.prospect-detail-desk) .detail-panel-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+}
+
+.prospect-detail-panel:not(.prospect-detail-desk) .prospect-detail-identity-head {
+  min-width: 0;
+}
+
+.prospect-detail-panel:not(.prospect-detail-desk) .prospect-detail-identity-head > div {
+  min-width: 0;
+}
+
+.prospect-detail-panel:not(.prospect-detail-desk) .detail-panel-heading h2 {
+  overflow-wrap: anywhere;
+}
+
+.prospect-detail-panel:not(.prospect-detail-desk) .reference-summary-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Fiche agrandie : la synthèse utilise réellement la largeur disponible. */
+.prospect-detail-desk .reference-summary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.prospect-detail-desk .prospect-commercial-priority,
+.prospect-detail-desk .prospect-reference-summary {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Comme Interventions / Maintenance : largeur moyenne = panneau plus généreux. */
+@media (max-width: 1250px) {
+  .prospects-layout.with-detail {
+    grid-template-columns: minmax(0, var(--prospect-list-percent, 62%)) 8px minmax(300px, 1fr) !important;
+  }
+}
+
+/* Écran étroit : on arrête d'écraser la fiche, elle passe sous la liste. */
+@media (max-width: 850px) {
+  .prospects-layout.with-detail {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .prospect-splitter {
+    display: none !important;
+  }
+
+  .prospect-detail-panel:not(.prospect-detail-desk) {
+    position: static !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .prospect-directory-table-panel {
+    min-width: 0;
+  }
+}
+
+/* Mode bureau réduit : 4 colonnes -> 2. */
+@media (max-width: 980px) {
+  .prospect-detail-desk .reference-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Réagit à la largeur réelle du panneau latéral. */
+@container prospectpanel (max-width: 390px) {
+  .prospect-detail-v2 {
+    font-size: 13px;
+  }
+
+  .prospect-detail-v2 .detail-panel-heading h2 {
+    font-size: 18px;
+    line-height: 1.12;
+  }
+
+  .prospect-detail-v2 .status-pill {
+    font-size: 11px !important;
+    padding: 5px 7px;
+  }
+
+  .prospect-detail-panel:not(.prospect-detail-desk) .prospect-commercial-priority,
+  .prospect-detail-panel:not(.prospect-detail-desk) .prospect-reference-summary {
+    gap: 9px;
+    padding: 10px;
+  }
+
+  .prospect-detail-panel:not(.prospect-detail-desk) .reference-summary-grid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .prospect-detail-panel:not(.prospect-detail-desk) .reference-summary-grid > div {
+    display: grid;
+    grid-template-columns: minmax(92px, .8fr) minmax(0, 1.2fr);
+    align-items: start;
+    gap: 8px;
+    padding: 8px 9px;
+  }
+
+  .prospect-detail-panel:not(.prospect-detail-desk) .reference-summary-grid > div > span {
+    font-size: 11px !important;
+  }
+
+  .prospect-detail-panel:not(.prospect-detail-desk) .reference-summary-grid > div > strong,
+  .prospect-detail-panel:not(.prospect-detail-desk) .reference-summary-grid > div > small {
+    min-width: 0;
+    font-size: 12px !important;
+    overflow-wrap: anywhere;
+  }
+
+  .prospect-detail-panel:not(.prospect-detail-desk) .reference-summary-heading {
+    display: grid;
+    gap: 4px;
+  }
+
+  .prospect-detail-panel:not(.prospect-detail-desk) .prospect-compact-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .prospect-detail-panel:not(.prospect-detail-desk) .prospect-compact-actions > button {
+    width: 100% !important;
+    justify-self: stretch;
+  }
+}
+
+/* Très étroit : header et synthèses encore plus simples. */
+@container prospectpanel (max-width: 330px) {
+  .prospect-detail-panel:not(.prospect-detail-desk) .detail-panel-heading {
+    grid-template-columns: 1fr;
+  }
+
+  .prospect-detail-panel:not(.prospect-detail-desk) .detail-heading-actions {
+    justify-content: flex-end;
+  }
+
+  .prospect-detail-panel:not(.prospect-detail-desk) .reference-summary-grid > div {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+}
+
+
+/* Historique Prospection — layout indépendant du séparateur Annuaire/Pipeline. */
+.history-view-stack .prospects-layout.with-detail {
+  grid-template-columns: minmax(0, 1fr) clamp(320px, 32vw, 500px) !important;
+  gap: 12px !important;
+  align-items: start !important;
+}
+
+.history-view-stack .prospects-layout.with-detail > .history-prospects-panel {
+  min-width: 0;
+}
+
+.history-view-stack .prospects-layout.with-detail > .prospect-detail-panel {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+@media (max-width: 1250px) {
+  .history-view-stack .prospects-layout.with-detail {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 38%) !important;
+  }
+}
+
+@media (max-width: 850px) {
+  .history-view-stack .prospects-layout.with-detail {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .history-view-stack .prospect-detail-panel {
+    position: static !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
+
+
+/* Responsive Clients — même atelier adaptatif que Prospection / Interventions. */
+.clients-layout {
+  min-width: 0;
+}
+
+.clients-layout:not(.with-detail) {
+  grid-template-columns: 1fr !important;
+}
+
+.clients-layout.with-detail {
+  grid-template-columns: minmax(0, var(--client-list-percent, 68%)) 8px minmax(340px, 1fr) !important;
+  gap: 0 !important;
+  align-items: start !important;
+}
+
+.clients-layout.with-detail > * {
+  min-width: 0;
+}
+
+.client-splitter {
+  align-self: stretch;
+  min-height: 100%;
+  margin-inline: 0;
+}
+
+.client-summary-panel:not(.client-large-view) {
+  container-type: inline-size;
+  container-name: clientpanel;
+}
+
+.client-detail-expand {
+  flex: 0 0 34px;
+}
+
+/* Largeur moyenne : on protège davantage la fiche client. */
+@media (max-width: 1250px) {
+  .clients-layout.with-detail {
+    grid-template-columns: minmax(0, var(--client-list-percent, 62%)) 8px minmax(320px, 1fr) !important;
+  }
+}
+
+/* Comme Interventions : quand l'espace devient trop faible, la fiche passe dessous. */
+@media (max-width: 850px) {
+  .clients-layout.with-detail {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .client-splitter {
+    display: none !important;
+  }
+
+  .client-summary-panel:not(.client-large-view) {
+    position: static !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .client-summary-panel:not(.client-large-view) .client-summary-scroll {
+    overflow: visible !important;
+  }
+}
+
+/* La fiche adapte ses propres cases à sa largeur réelle. */
+@container clientpanel (max-width: 410px) {
+  .client-summary-panel .detail-panel-heading {
+    gap: 8px;
+  }
+
+  .client-summary-panel .client-summary-head {
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .client-summary-panel .client-summary-head h2 {
+    font-size: 18px;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+
+  .client-summary-panel .detail-heading-actions {
+    gap: 6px;
+  }
+
+  .client-summary-panel .client-relationship-trigger {
+    max-width: 100%;
+    white-space: normal;
+    text-align: left;
+  }
+
+  .client-summary-panel .contact-form-grid,
+  .client-summary-panel .commercial-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .client-summary-panel .summary-line {
+    grid-template-columns: minmax(92px, .8fr) minmax(0, 1.2fr);
+  }
+
+  .client-summary-panel .client-tabs-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .client-summary-panel .client-tabs-buttons button {
+    width: 100%;
+  }
+}
+
+@container clientpanel (max-width: 330px) {
+  .client-summary-panel .client-summary-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .client-summary-panel .summary-line {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+
+  .client-summary-panel .client-tabs-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .client-summary-panel .contact-tab-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+
+/* Prospection — densité verticale adaptative et tableau qui absorbe l'espace disponible. */
+.content-area:has(.prospects-v2) {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.content-area:has(.prospects-v2) > .page-heading,
+.content-area:has(.prospects-v2) > .notice {
+  flex: 0 0 auto;
+}
+
+.content-area:has(.prospects-v2) > .prospects-v2 {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.prospects-v2 {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: clamp(8px, 1.25vh, 14px);
+}
+
+.prospects-v2 > .prospects-layout {
+  flex: 1 1 360px;
+  min-height: 300px;
+}
+
+.prospects-v2 .prospect-directory-table-panel {
+  min-height: 0;
+  height: 100%;
+}
+
+.prospects-v2 .prospect-directory-table-panel > .clients-table-wrap {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.prospects-v2 .prospect-directory-table thead th {
+  position: sticky;
+  z-index: 3;
+  top: 0;
+}
+
+.prospects-v2 .prospect-view-switch,
+.prospects-v2 .prospect-directory-toolbar,
+.prospects-v2 .prospect-directory-filters {
+  flex: 0 0 auto;
+}
+
+.prospects-v2 .prospect-directory-filters {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.15fr) repeat(3, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.prospects-v2 .prospect-directory-filters > * {
+  min-width: 0 !important;
+  width: 100%;
+}
+
+/* Hauteur moyenne : on réduit l'air avant de toucher à la lisibilité. */
+@media (max-height: 900px) and (min-width: 851px) {
+  .content-area:has(.prospects-v2) {
+    padding-top: 18px;
+    padding-bottom: 18px;
+  }
+
+  .content-area:has(.prospects-v2) > .page-heading {
+    margin-bottom: 14px;
+  }
+
+  .content-area:has(.prospects-v2) > .page-heading h1 {
+    margin-top: 2px;
+    margin-bottom: 3px;
+  }
+
+  .prospects-v2 {
+    gap: 9px;
+  }
+
+  .prospects-v2 .prospect-view-switch button {
+    padding-block: 7px;
+  }
+
+  .prospects-v2 .module-toolbar {
+    min-height: 34px;
+  }
+
+  .prospects-v2 .prospect-directory-filters {
+    gap: 6px;
+  }
+
+  .prospects-v2 .prospect-directory-table th {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .prospects-v2 .prospect-directory-table td {
+    padding-top: 9px;
+    padding-bottom: 9px;
+  }
+}
+
+/* Fenêtre basse : densité renforcée, mais sans supprimer d'information. */
+@media (max-height: 760px) and (min-width: 851px) {
+  .content-area:has(.prospects-v2) {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .content-area:has(.prospects-v2) > .page-heading {
+    margin-bottom: 10px;
+  }
+
+  .content-area:has(.prospects-v2) > .page-heading .eyebrow {
+    display: none;
+  }
+
+  .content-area:has(.prospects-v2) > .page-heading h1 {
+    font-size: 26px;
+    margin: 0 0 2px;
+  }
+
+  .content-area:has(.prospects-v2) > .page-heading p {
+    font-size: 11px;
+  }
+
+  .prospects-v2 {
+    gap: 7px;
+  }
+
+  .prospects-v2 .prospect-view-switch button {
+    padding: 6px 9px;
+  }
+
+  .prospects-v2 .prospect-directory-table th {
+    padding: 7px 10px;
+  }
+
+  .prospects-v2 .prospect-directory-table td {
+    padding: 7px 10px;
+  }
+
+  .prospects-v2 .avatar-initials {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+/* Largeur plus faible : les filtres se replient progressivement. */
+@media (max-width: 1050px) {
+  .prospects-v2 .prospect-directory-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .prospects-v2 .prospect-directory-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .prospects-v2 > .prospects-layout {
+    min-height: 260px;
+  }
+}
