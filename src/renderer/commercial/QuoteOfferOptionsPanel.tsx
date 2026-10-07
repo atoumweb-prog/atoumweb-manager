@@ -49,8 +49,8 @@ export function QuoteOfferOptionsPanel({ quote, onSave }: {
         const save = (input: QuoteLineInput) => run(() => bought
           ? window.atoumweb.quotes.updateLine(bought.id, input)
           : window.atoumweb.quotes.selectOfferOption(offer.id, id!, input));
-        return <div key={key} className="quote-offer-option" data-purchased={Boolean(bought)}>
-          <div><strong>{String(component.serviceName)}</strong>
+        return <div key={key} className="quote-offer-option" data-option-version={String(component.serviceVersionId)} data-purchased={Boolean(bought)}>
+          <div><strong>{String(component.serviceName)}</strong><small>{String(component.canonicalCode||'Service inclus')} · v{String(component.serviceVersionNumber)}</small>
             <p>{bought ? `Achetée · ${Number(bought.quantityMilli) / 1000} × · ${money(bought.contractLineValueCents)}` : `Disponible · non achetée · ${price == null ? 'Sur devis' : money(price) + ' / unité'}`}</p>
             {!id && <p>Provenance optionnelle absente de cette ancienne ligne. Aucune requalification automatique.</p>}
           </div>

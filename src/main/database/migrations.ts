@@ -1,3 +1,6 @@
+import { OPERATIONAL_SALES_ADDON_MIGRATION } from './operationalSalesAddonMigration';
+import { OPERATIONAL_SALES_MIGRATION } from './operationalSalesMigration';
+import { COMMERCIAL_RULES_MIGRATION } from './commercialRulesMigration';
 import { OPERATIONAL_LINK_LIFECYCLE_MIGRATION } from './operationalLinkLifecycleMigration';
 import { PROJECT_CONTRIBUTION_TARGET_MIGRATION } from './projectContributionTargetMigration';
 import { PROJECT_OPERATIONAL_MIGRATION } from './projectOperationalMigration';
@@ -239,6 +242,9 @@ export const MIGRATIONS: Migration[] = [
   PROJECT_OPERATIONAL_MIGRATION,
   PROJECT_CONTRIBUTION_TARGET_MIGRATION,
   OPERATIONAL_LINK_LIFECYCLE_MIGRATION,
+  COMMERCIAL_RULES_MIGRATION,
+  OPERATIONAL_SALES_MIGRATION,
+  OPERATIONAL_SALES_ADDON_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {

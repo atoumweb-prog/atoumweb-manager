@@ -1,5 +1,61 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 07/10/2026 — Validation AtoumWeb et clôture locale autorisée
+
+- AtoumWeb valide la recette des 112 références, les 655 tests, le typecheck, les migrations 63–65, l’intégrité/FK et le rejeu neutre. Commit local autorisé : « Catalogue 112 — parcours Devis, contrat et opérations », limité aux 62 fichiers proposés, sur la branche courante. Aucun push ni merge autorisé.
+- Les quotas inutilisés sont perdus à la fin du cycle, sans report. Chaque nouveau cycle remet à disposition uniquement son quota prévu. Cette confirmation conserve la règle déjà implémentée et testée ; aucun changement fonctionnel supplémentaire.
+- Les durées estimées, notamment Histoire à 27 h 30, restent des références internes indicatives, ajustables au dossier et recalibrables avec les temps réels. Elles ne constituent pas des durées contractuelles figées.
+- Limites inchangées : environnement TEST, aucune validation juridique globale, Abby manuel, aucun paiement ou facturation réel, aucun travail Bridge/8C. Aucune modification de Validation-MSI pour le commit.
+- Parent du checkpoint : 111b9196a7ee17ef1d9faa494d8b24197ca1086c. La prochaine étape reste soumise à une instruction séparée après restitution du hash et de l’état Git.
+
+## 07/10/2026 — Intégration et recette des 112 références terminées
+
+- **112/112 références avec dossier TEST accepté et preuve native : 94 en 8A, 18 en 8B.** Parcours réalisés dans App, preload, IPC et services réels. Les 45 dernières références ont été rejouées après correction d’une attente du harness, sans erreur de rendu.
+- **655/655 tests déterministes dans 75 fichiers, typecheck OK, diagnostic sur fixtures 484/484 et 783 contrôles finaux en lecture seule.** Les tests normaux ne lisent pas Validation-MSI.
+- Validation-MSI en migrations 1–65, intégrité ok et FK vide. 112 modèles courants et 112 associations courantes ready, catalogue en usage TEST, 118 clauses canoniques et 409 liens. Aucun lien BASE, LANDING-GESTION dormant et contrôle consumer hors bibliothèque textuelle. Rejeu des référentiels : zéro modification.
+- 432 définitions d’actions conservées, 72 références 8A fixes et 22 variables, 24 variables tous lots. Classification 6 A / 6 B / 43 C / 39 D et mapping 59/33/24/30 intacts. Histoire : 899 €, 1650 min et 4 Pages ; Essentiel 630 min et Grand Jour 1020 min.
+- Nouveaux cycles de date à date, facturation distincte et quota par cycle. Annuel : 12 cycles puis arrêt sans renouvellement. Mensuel : poursuite jusqu’à arrêt. Les routines futures reprennent la version vendue ; le calendrier historique reste inchangé. Tests des cycles du 15 au 14, quota renouvelé, treizième cycle refusé, mois courts et résiliation.
+- Options : disponibilité sans effet ; achat de 2 Pages et Blog = 34 actions, 31 h et 8 Pages. Même Projet lors de révision et acceptation, renommage conservé et duplication sans modifier l’original. Crédits 3/5/10 h après 45 min : 135/255/555 min.
+- Les 112 dossiers sélectionnés possèdent un document maître Client et un PDF TEST importé/rattaché avec SHA. Les essais intermédiaires restent TEST. Aucune édition/signature réelle Abby ni validation juridique globale. La publication contractuelle concerne le développement seulement.
+- Rapport, matrice de 9 onglets, captures et preuves dans outputs/recette-native-112, hors Git. Limites : informations réelles et revue juridique avant production, qualification des Sites existants, administration des référentiels et ergonomie détaillée du Projet.
+- **62 fichiers code/doc proposés au commit.** HEAD 111b919 sur feature/project-page-compositions-v1, aucun nouveau commit/push/merge. Message proposé : « Catalogue 112 — parcours Devis, contrat et opérations ». Arrêt pour validation avant commit ; Bridge et 8C hors périmètre.
+
+## 07/10/2026 — Intégration112 en recette finale, migrations63–65 appliquées
+
+- Autorisation globale AtoumWeb :94 références8A +18 références8B, vrais dossiersTEST dans Validation-MSI non productive. Source Git111b919 conservée, aucun commit/push/merge nouveau.
+- Migrations63/64 appliquées après sauvegarde SQLite coordonnée. Migration65 appliquée après seconde sauvegarde et tests de conservation : ventes et cibles, crédits/mouvements, souscriptions/périodes/checks et interventions existantes conservés cellule par cellule, intégritéok/FKvide.
+-112 modèles courants et112 associations courantes mis en usage par les services réels ;118 clauses publiées **pour recette de développement seulement**, sans déclaration de conformité juridique. Versions historiques conservées.409liens contractuels intacts.
+- Raccords natifs : sélecteur AW/famille/version/prix, paramètres des lignes et suppléments rattachés, minimum détour45€ quantité réelle, minimum horaire1h sans unités fictives, particularités Histoire au Builder et snapshot, blocs Abby manuels, Projetprévisionnel/sync/acceptation même Projet, ventes8B et cibles explicites, routines/chrono/consommation.
+- Recette a fermé le blocage module/Pageparente : Site résolu ne remplace jamais un parentPage pending ; module différé, puis créé sous la Pageexplicitement choisie. Conservation des réaffectations humaines et gardes existantes.
+- Derniers compléments8B : GBP ciblé sur contexte d'établissement ; établissement supplémentaire dans **le même abonnement**, sans nouvelle souscription ; routine variable conserve la référence indicative et une estimation courante absente tant que non renseignée. Périodes futures utilisent le modèle de routines vendu, même si catalogue/plan évoluent.
+- Décision AtoumWeb07/10 : **nouveaux abonnements de date à date depuis démarrage réel**, facturation indépendante,12cycles mensuels par engagement annuel ; quotas par cycle. Mensuel jusqu'à résiliation, annuel renouvellementexprès. Historiques calendaires inchangés. Configuration versionnée, aucun défaut calendaire imposé aux nouveaux dossiers.
+-653/653 tests complets, typecheckOK au dernier état contrôlé. Recette finale112 en cours : ne pas déclarer112validés avant son résultat. Tests normaux surfixtures et bases temporaires ; bancdiagnostic maîtrisé conservé.
+- FauxPDF imprimés pour simuler la pièce externe, puis véritable import Manager vers documentmaître Client avecSHA/rattachement. Aucun connecteur ou envoiAbby. Identité/TVA/médiation/RGPD de recette explicitementTEST, sans valeur réelle.
+- Preuves : outputs/recette-native-112 horsGit. Sauvegardes physiques dans Validation-MSI/backups. Fichiers sources XLSX et référentiel contractuel canonique non réécrits ; anciens audits restent historiques.
+- À achever : recette112 finale +thèmes/scénarios, contrôle final, classeur et bilan, commitproposé seulement.
+
+## 06/10/2026 — Intégration native des 112 références autorisée, en cours
+
+- Audit exhaustif validé. AtoumWeb autorise la clôture des raccords 94 références 8A **et 18 références 8B**, puis la recette exhaustive dans la vraie interface Manager sur Validation-MSI non productive. Cette autorisation remplace la suspension du Lot 8B opérationnel ; Bridge/8C restent hors périmètre.
+- Checkpoint de départ `111b9196a7ee17ef1d9faa494d8b24197ca1086c`, branche `feature/project-page-compositions-v1`. Aucun nouveau commit/push/merge autorisé implicitement ; commit proposé à la restitution.
+- Abby définitivement manuel : bloc commercial + Builder contractuel à copier, PDF accepté référencé ; aucun connecteur.
+- Décisions conservées : Histoire899€/1650min/4Pages/33h vigilance, supplément urgent rattaché et sans production autonome, détour9€/image minimum45€ et quantité réelle, compléments checklists photo sans changement de temps, page document rattachée au principal, 22 estimations variables explicites.
+- **Arbitrage complémentaire reçu** : mise en service hébergement99€/an incluse, avec estimation spécifique du dossier à renseigner ; aucun temps standard inventé. Routine20min et renouvellement distincts.
+- Préparation code : migrations63 (règles commerciales versionnées/paramètres ligne) et64 (provenance des ventes8B/routines/quotas), non appliquées à ce stade. Réutilisation Quote/Builder/Projet, HourPack/Maintenance/Operations/Time ; pas de moteur parallèle.
+- Premiers tests ciblés règles commerciales et ventes8B verts. Première suite complète : 635/643 ; écarts identifiés sur listes de migrations attendues et fixtures variables devenues insuffisantes, en correction explicite. Ne pas présenter la recette112 comme terminée.
+- Prochaine action : terminer les raccords et contrôles, sauvegarder avant migration, mettre les référentiels nécessaires en usage par les vrais services dans cet environnement de développement, puis recette native112/112 avec dossiers TEST. Aucun prix/temps arbitraire.
+
+## 06/10/2026 — Audit exhaustif 112 AW terminé, sans activation
+
+- Checkpoint local du découplage **111b9196a7ee17ef1d9faa494d8b24197ca1086c**, branche feature/project-page-compositions-v1, 30 fichiers ; **630/630 tests, typecheck OK, Chromium 484/484**. Working tree propre au commit ; aucun push/merge. Sources/fixtures/doc uniquement, aucun artefact.
+- Audit Validation-MSI en lecture seule directe : **112 références / 432 actions effectives (388 8A, 44 8B) / 409 liens contractuels exacts**. 112 modèles validés nativement, 94 politiques 8A valides ; aucune différence non autorisée au manifeste, seul Histoire V2 applique les arbitrages validés. Aucune application Histoire rejouée.
+- Classement proposé du référentiel : **64 PRÊTE 8A / 28 À COMPLÉTER 8A / 18 LOT 8B / 2 BLOQUÉE**. Prête = données/raccords disponibles pour vente directe/base compatible, pas publiée ni recette complète. Les 28 incluent 22 estimations/plans Projet et six raccords/checklists. Deux urgences autonomes à 0 min (AW-CONT-URGENT-48/AW-TECH-URGENT) demandent clarification de portée.
+- **72 références 8A chiffrées / 22 à estimation Projet obligatoire** (24 tous lots), toutes hypothèses initiales à recalibrer. 12 références avec structure, 41 nécessitant une cible. Les 146 mappings D restent 59/33/24/30. Les définitions historiques Histoire portent le total stocké à 442 actions sur toutes versions, pas 442 actions effectives.
+- Défis transversaux : états actuels draft/inactifs, sélection publiée ancienne/lecture AW-version, options d'offres non configurées, données commerciales détaillées/bloc Abby, conditions particulières Histoire, estimation/production personnalisée et recette end-to-end réelle. **0 chaîne V1 complète utilisable actuellement**, conséquence des états et raccords, pas absence de moteur.
+- 8B : services génériques périodes/quotas/checklists, interventions, packs/mouvements/solde, consommation/dépassements/rapports déjà présents ; raccords AW/version/ligne et paramètres/calendriers restent à construire. Aucun 8B artificiellement activé dans 8A.
+- Rapport et classeur filtrable 11 onglets dans **outputs/audit-exhaustif-112-aw/**, hors Git : BILAN_AUDIT_112_AW.md et AtoumWeb_Matrice_112_References_2026-10-06.xlsx ; 432 actions détaillées/112 revues/118 clauses/409 liens, totaux calculés, aucune erreur de formule, vérification visuelle et export.
+- Aucun état, prix, temps, règle métier ou donnée de recette modifié par l'audit. Aucun lot Devis/8B démarré, aucun push/merge. **Arrêt pour validation.** Seuls PROJECT_STATUS/roadmap mis à jour après le checkpoint, non committés ; aucun changement fonctionnel après les contrôles.
+
 ## 06/10/2026 — Découplage du banc technique avant checkpoint
 
 - AtoumWeb autorise le correctif, la suite/typecheck/harness et le commit local si verts, puis l'audit exhaustif112AW ; aucun push/merge. Lot Devis et Lot8B non démarrés, aucune publication/ready pendant l'audit.

@@ -13,10 +13,11 @@ describe('migration 62 - explicit association status',()=>{
       db.run("INSERT INTO catalog_operational_links VALUES('legacy-link','atoumweb-web-v1','legacy-model',NULL,1,'{}','historical')");
       const tables=db.all<{name:string}>("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
       const before=new Map(tables.map(t=>[t.name,db.all('SELECT * FROM '+t.name)]));
-      expect(applyPendingMigrations(db).map(m=>m.id)).toEqual([62]);
+      expect(applyPendingMigrations(db).map(m=>m.id)).toEqual(MIGRATIONS.filter(m=>m.id>=62).map(m=>m.id));
       for(const [t,rows] of before) {
         const after=db.all('SELECT * FROM '+t+(t==='schema_migrations'?' WHERE id<=61':''));
-        expect(t==='catalog_operational_links'?after.map(({status,...old})=>old):after).toEqual(rows);
+        const oldColumns=rows.length?Object.keys(rows[0]):[];
+        expect(after.map(row=>Object.fromEntries(oldColumns.map(key=>[key,row[key]])))).toEqual(rows);
       }
       expect(db.get('SELECT status FROM catalog_operational_links')!.status).toBe('ready');
       db.run("INSERT INTO catalog_operational_links(id,catalog_version_id,model_version_id,revision,provenance_json,created_at) VALUES('new-link','atoumweb-web-v1','legacy-model',2,'{}','today')");

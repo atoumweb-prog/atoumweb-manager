@@ -1,3 +1,4 @@
+import { CommercialRulesService } from '../commercial/CommercialRulesService';
 import type {DatabaseAdapter} from '../database/DatabaseAdapter';
 import type {OperationalPlan, OperationalActionSnapshot} from '../../shared/operational';
 import type {ContributionTargetInput, ContributionTargetView, PlannedContributionTarget, ContributionTargetChoices} from '../../shared/contributionTargets';
@@ -142,6 +143,13 @@ export class ProjectContributionTargetService {
       const base=this.db.get<Row>("SELECT * FROM project_contribution_targets WHERE project_id=? AND line_origin_id=? AND target_slot_key=? AND unit_index=? AND state='active'",[String(row.project_id),s.lineOrigin,slot.key,s.unitIndex]);
       fail(base,'Obligation structurelle A : cible Site requise avant utilisation opérationnelle.');
       this.validate(String(row.project_id),{lineOrigin:s.lineOrigin,slot:slot.key,unitIndex:s.unitIndex,kind:slot.kind,...this.fromRow(base!)},s.targetPolicy.requires,this.current(String(row.project_id))?.blueprint??null);
+    }
+    const commercial=this.db.get<Row>('SELECT snapshot_json FROM quote_lines WHERE id=?',[s.quoteLineId]);
+    const attachment=JSON.parse(String(commercial?.snapshot_json||'{}')).commercialRules?.attachment;
+    if(attachment?.kind==='document') {
+      const parameters=new CommercialRulesService(this.db).parameters(s.quoteLineId);
+      const parent=parameters?.parentLineId?this.db.get<Row>('SELECT snapshot_json FROM quote_lines WHERE id=?',[parameters.parentLineId]):null;
+      fail(parent && attachment.compatibleCodes.includes(JSON.parse(String(parent.snapshot_json||'{}')).canonicalCode),'Action de mise en page bloquée : document principal à choisir explicitement.');
     }
     if(!r||r.target==='none')return;
     const target=this.db.get<Row>("SELECT * FROM project_contribution_targets WHERE project_id=? AND line_origin_id=? AND target_slot_key=? AND unit_index=? AND state='active'",[String(row.project_id),s.lineOrigin,r.slot!,s.unitIndex]);

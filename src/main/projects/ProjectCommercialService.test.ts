@@ -126,7 +126,7 @@ describe('Lot 7B — même Projet prévisionnel et révisions commerciales',()=>
     legacy.run("INSERT INTO project_nodes(id,project_id,node_type,name,status,created_at,updated_at) VALUES('old-node','old-project','module','Page historique','todo','fixture','fixture')");
     const tables=legacy.all<{name:string}>("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
       .map(t=>({name:t.name,columns:legacy.all<{name:string}>(`PRAGMA table_info(${t.name})`).map(c=>c.name),rows:legacy.all('SELECT * FROM '+t.name)}));
-    expect(applyPendingMigrations(legacy).map(m=>m.id)).toEqual([59,60,61,62]);
+    expect(applyPendingMigrations(legacy).map(m=>m.id)).toEqual(MIGRATIONS.filter(m=>m.id>=59).map(m=>m.id));
     for(const t of tables)if(t.name!=='schema_migrations')expect(legacy.all(`SELECT ${t.columns.join(',')} FROM ${t.name}`)).toEqual(t.rows);
     expect(legacy.all('SELECT * FROM commercial_project_dossiers')).toEqual([]);expect(legacy.all('SELECT * FROM project_commercial_scope_revisions')).toEqual([]);
     expect(legacy.get('PRAGMA integrity_check')).toEqual({integrity_check:'ok'});expect(legacy.all('PRAGMA foreign_key_check')).toEqual([]);

@@ -223,9 +223,17 @@ export class ProjectBlueprintCompositionService {
     const baseSites = new Map<string,string>();
     for (const c of plan.contributions) for (let unit = 1; unit <= c.unitCount; unit++) {
       const anchors = new Set((plan.schemaVersion===2?[]:plan.base.nodes).filter(n => n.node_type === 'lot' || (n.node_type === 'module' && n.display_subtype !== 'page')).map(n => n.semantic_key));
-      const target=plan.destinations?.find(t=>t.lineOrigin===c.lineOrigin&&t.unitIndex===unit&&t.state==='active');
+      let target=plan.destinations?.find(t=>t.lineOrigin===c.lineOrigin&&t.unitIndex===unit&&t.state==='active');
+      // A Site slot can be resolved before the Page-parent slot. It never supplies
+      // a substitute parent for a module: prepare the base and wait for the exact Page choice.
+      if(c.structureContract?.modules.length) {
+        const parents=c.structureContract.modules.map(m=>plan.destinations?.find(t=>t.lineOrigin===c.lineOrigin&&t.unitIndex===unit&&t.slot===m.parentTargetSlot&&t.state==='active'&&t.pageNodeId));
+        if(parents.some(parent=>!parent))continue;
+        target=parents[0];
+      }
       if(plan.schemaVersion===2&&!target&&(c.role==='addon'||c.configuration?.destinationSlots.some(s=>s.requiredAt==='preparation'))) continue;
-      const ids = this.nodes(projectId,c,unit,now,anchors,prepared,plan.schemaVersion===2,target?.pageNodeId??null);
+      const moduleParents=new Map((c.structureContract?.modules??[]).map(m=>[m.templateNodeId,plan.destinations!.find(t=>t.lineOrigin===c.lineOrigin&&t.unitIndex===unit&&t.slot===m.parentTargetSlot)!.pageNodeId!]));
+      const ids = this.nodes(projectId,c,unit,now,anchors,prepared,plan.schemaVersion===2,target?.pageNodeId??null,moduleParents);
       for(const m of c.structureContract?.modules??[]) {
         const parent=plan.destinations?.find(t=>t.lineOrigin===c.lineOrigin&&t.unitIndex===unit&&t.slot===m.parentTargetSlot)?.pageNodeId;
         fail(parent,'Module sans Page parente explicitement identifiée.');
@@ -283,7 +291,7 @@ export class ProjectBlueprintCompositionService {
     return result;
   }
 
-  private nodes(projectId: string, c: SoldBlueprintContribution, unit: number, now: string, anchors: Set<string | null>, prepared = false, isolated = false, explicitParent: string | null = null): Map<string,string> {
+  private nodes(projectId: string, c: SoldBlueprintContribution, unit: number, now: string, anchors: Set<string | null>, prepared = false, isolated = false, explicitParent: string | null = null, moduleParents: Map<string,string> = new Map()): Map<string,string> {
     const bindings = prepared ? 'project_prepared_node_bindings' : 'project_composed_node_bindings';
     const ids = new Map<string,string>(), pending = [...c.nodes];
     while (pending.length) {
@@ -292,7 +300,7 @@ export class ProjectBlueprintCompositionService {
         const n = pending[i]; if (n.parent_id && !ids.has(n.parent_id)) continue;
         let id = this.db.get<{project_node_id:string}>(`SELECT project_node_id FROM ${bindings} WHERE project_id=? AND contribution_key=? AND unit_index=? AND template_node_id=?`,
           [projectId,c.key,unit,n.id])?.project_node_id;
-        const wasBound = Boolean(id), parentId = n.parent_id ? ids.get(n.parent_id)! : explicitParent;
+        const wasBound = Boolean(id), parentId = moduleParents.get(n.id) ?? (n.parent_id ? ids.get(n.parent_id)! : explicitParent);
         const repeated = c.quantityMode === 'per_unit';
         // Explicit semantic containers may be shared; repeated pages and their descendants are distinct.
         const isContainer = n.node_type === 'lot' || (n.node_type === 'module' && n.display_subtype !== 'page');

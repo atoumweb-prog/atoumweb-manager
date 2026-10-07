@@ -22,6 +22,23 @@ const choose=(id:string,origin:string,siteIndex=0,page=false)=>{
  return f.projects.commercial.assignTarget(id,{lineOrigin:origin,slot:t.slot,unitIndex:t.unitIndex,author:'Fixture AtoumWeb',siteId:s.id,siteOwnerOrigin:s.ownerOrigin,siteOwnerSlot:s.ownerSlot,pageNodeId:page?scope.targetChoices!.pages.find(p=>p.siteId===s.id)!.id:null});
 };
 describe('Lot 8A.1 — politiques explicites et destinations',()=>{
+ it('module avec Site résolu et Page parente pending : base préparée, module différé puis affecté exactement',()=>{
+   db.close();db=new NodeSqliteAdapter(':memory:');db.exec('PRAGMA foreign_keys=ON');applyPendingMigrations(db);f=contributionFixture(db,createWorkspacePaths(root),{nestedModules:true});
+   const code='AW-ECOM-PROD-SIMPLE',policy=structuredClone(f.policies.get(code)!);
+   policy.destinationSlots.unshift({key:'site',kind:'site',requiredAt:'preparation',autoSite:'unique_compatible',parentPageChoice:'none'});
+   const version=f.items.get(code)!.versions[0].id;
+   const previous=db.get<Record<string,unknown>>('SELECT * FROM catalog_operational_links WHERE catalog_version_id=? ORDER BY revision DESC LIMIT 1',[version])!;
+   f.references.activateLink(f.references.link(version,String(previous.model_version_id),String(previous.blueprint_version_id),{fixture:true,configuration:policy}));
+   const q=f.createQuote('AW-ECOM-BASE'),line=f.add(q.id,code).lines.at(-1)!,project=f.prepare(q.id);
+   let scope=f.projects.commercial.scope(project.id);
+   expect(scope.targets!.find(t=>t.lineOrigin===line.id&&t.slot==='site')!.state).toBe('active');
+   expect(scope.targets!.find(t=>t.lineOrigin===line.id&&t.kind==='page')!.state).toBe('pending');
+   expect(f.projects.getProject(project.id).nodes.some(n=>n.name==='Module fixture')).toBe(false);
+   const pageTarget=scope.targets!.find(t=>t.lineOrigin===line.id&&t.kind==='page')!,site=scope.targetChoices!.sites[0],page=scope.targetChoices!.pages[0];
+   f.projects.commercial.assignTarget(project.id,{lineOrigin:line.id,slot:pageTarget.slot,unitIndex:1,siteId:site.id,siteOwnerOrigin:site.ownerOrigin,siteOwnerSlot:site.ownerSlot,pageNodeId:page.id,author:'Fixture explicite'});
+   const node=f.projects.getProject(project.id).nodes.find(n=>n.name==='Module fixture')!;expect(node.parentId).toBe(page.id);
+   expect(f.sites.listPages(project.id)).toHaveLength(4);
+ });
  it.each([
   ['AW-WEB-VITRINE',21,1470,5],['AW-LP-BASE',13,765,1],['AW-ECOM-BASE',20,2550,4],
   ['AW-MARIAGE-ESS',9,630,1],['AW-MARIAGE-GRAND',10,1020,1],['AW-MARIAGE-HISTOIRE',10,1380,4],

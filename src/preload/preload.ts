@@ -307,6 +307,11 @@ const api: AtoumWebApi = {
     openDocument: id => ipcRenderer.invoke('quote-preparation:open-document',id),
   },
   quotes: {
+    operationalSalesForClient:(id:string)=>ipcRenderer.invoke('quotes:operational-sales-for-client',id),
+    assignOperationalTarget:(id:string,input:{projectId:string;siteId?:string|null;contextNodeId?:string|null;author:string})=>ipcRenderer.invoke('quotes:assign-operational-target',id,input),
+    setLineParameters:(id:string,p:import('../shared/commercialRules').QuoteLineParameters)=>ipcRenderer.invoke('quotes:set-line-parameters',id,p),
+    preparationIssues:(id:string)=>ipcRenderer.invoke('quotes:preparation-issues',id),
+    operationalSales:(id:string)=>ipcRenderer.invoke('quotes:operational-sales',id),
     createWithLines: (input,lines) => ipcRenderer.invoke('quotes:create-with-lines',input,lines),
     list: (filters?: QuoteFilters) => ipcRenderer.invoke('quotes:list', filters),
     get: (id: string) => ipcRenderer.invoke('quotes:get', id),
@@ -501,6 +506,7 @@ const api: AtoumWebApi = {
         changeStatus: (id: string, status: MaintenanceSubscriptionStatus) => ipcRenderer.invoke('operations:maintenance:subscriptions:change-status', id, status),
       },
       periods: {
+        prepareRoutine:(id:string)=>ipcRenderer.invoke('operations:maintenance:prepare-routine',id),
         list: (subscriptionId: string) => ipcRenderer.invoke('operations:maintenance:periods:list', subscriptionId),
         ensure: (subscriptionId: string, referenceDate?: string | null) => ipcRenderer.invoke('operations:maintenance:periods:ensure', subscriptionId, referenceDate),
         changeStatus: (id: string, status: MaintenancePeriodStatus) => ipcRenderer.invoke('operations:maintenance:periods:change-status', id, status),

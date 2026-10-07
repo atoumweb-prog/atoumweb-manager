@@ -1,3 +1,7 @@
+import { OperationalSalesTargetService } from '../operations/OperationalSalesTargetService';
+import { OperationalSalesService } from '../operations/OperationalSalesService';
+import { CommercialRulesService } from './CommercialRulesService';
+import type { CommercialVersionRules } from '../../shared/commercialRules';
 import { emptyContractParameters, withContractAudience } from '../../shared/quoteContractPreparation';
 import { QuoteContractPreparationService } from './QuoteContractPreparationService';
 import type { ProjectCommercialService } from '../projects/ProjectCommercialService';
@@ -101,6 +105,7 @@ interface CatalogIdentitySnapshotRow extends Record<string, unknown> {
 }
 
 interface CatalogSnapshotRow extends CatalogIdentitySnapshotRow {
+  commercial_parameters_json: string | null;
   version_id: string;
   item_id: string;
   item_name: string;
@@ -148,6 +153,19 @@ export class QuoteService {
     private readonly preparation: QuoteContractPreparationService = new QuoteContractPreparationService(database),
   ) {}
 
+  setLineParameters(lineId:string,parameters:import('../../shared/commercialRules').QuoteLineParameters):QuoteDetail {
+    new CommercialRulesService(this.database).setParameters(lineId,parameters);
+    const row=this.database.get<{quote_id:string}>('SELECT quote_id FROM quote_lines WHERE id=?',[lineId])!;
+    return this.get(row.quote_id);
+  }
+  preparationIssues(id:string):string[] {
+    const quote=this.get(id);
+    return [...new CommercialRulesService(this.database).issues(quote),...new OperationalSalesService(this.database).issues(quote)];
+  }
+  assignOperationalTarget(id:string,input:{projectId:string;siteId?:string|null;contextNodeId?:string|null;author:string}):void {new OperationalSalesTargetService(this.database).assign(id,input);}
+  operationalSalesForClient(clientId:string):Record<string,unknown>[] {return this.database.all(`SELECT s.*,i.canonical_code,l.label FROM operational_sales s JOIN quote_lines l ON l.id=s.quote_line_id JOIN catalog_versions v ON v.id=s.catalog_version_id JOIN catalog_items i ON i.id=v.item_id WHERE s.client_account_id=?`,[clientId]);}
+  operationalSales(id:string):Record<string,unknown>[] {return new OperationalSalesService(this.database).list(id);}
+
   list(filters: QuoteFilters = {}): QuoteSummary[] {
     const where: string[] = [];
     const params: SqlValue[] = [];
@@ -176,7 +194,7 @@ export class QuoteService {
     if (!row) throw new Error('Devis introuvable.');
     const lines = this.database
       .all<QuoteLineRow>('SELECT * FROM quote_lines WHERE quote_id=? ORDER BY sort_order, created_at', [id])
-      .map((line) => this.mapLine(line));
+      .map((line) => ({...this.mapLine(line), parameters:new CommercialRulesService(this.database).parameters(line.id)}));
     return {
       ...this.mapSummary(row),
       needSummary: row.need_summary,
@@ -272,7 +290,7 @@ export class QuoteService {
       `SELECT v.id AS version_id, v.status AS version_status, i.status AS item_status, i.id AS item_id, i.name AS item_name, i.item_type,
               v.version_number, v.description, v.inclusions_json, v.exclusions_json,
               v.prerequisites_json, v.price_mode, v.price_cents, v.default_deposit_percent,
-              v.contract_type, v.special_terms, i.canonical_code, i.identity_provenance_json,
+              v.contract_type, v.special_terms, v.commercial_parameters_json, i.canonical_code, i.identity_provenance_json,
               v.commercial_kind, v.family_code, v.abby_label, v.unit, v.periodicity, v.price_basis, v.provenance_json
        FROM catalog_versions v
        JOIN catalog_items i ON i.id=v.item_id
@@ -333,6 +351,11 @@ export class QuoteService {
       }))
       : [];
 
+    const operationalLink = this.database.get<Record<string,unknown>>(`SELECT l.id,l.model_version_id,l.provenance_json,m.model_json
+      FROM catalog_operational_links l JOIN operational_model_versions m ON m.id=l.model_version_id
+      WHERE l.catalog_version_id=? AND l.status='ready' AND m.status='ready' ORDER BY l.revision DESC LIMIT 1`,[source.version_id]);
+    const operationalModel = operationalLink ? JSON.parse(String(operationalLink.model_json)) : null;
+    const operationsPolicy = operationalLink ? JSON.parse(String(operationalLink.provenance_json)).operations : null;
     const snapshot = {
       ...this.catalogIdentitySnapshot(source),
       itemId: source.item_id,
@@ -349,6 +372,9 @@ export class QuoteService {
       defaultDepositPercent: source.default_deposit_percent,
       contractType: source.contract_type,
       specialTerms: source.special_terms,
+      commercialRules: new CommercialRulesService(this.database).rules(source.version_id),
+      operational: operationalLink ? {linkId:operationalLink.id,modelVersionId:operationalLink.model_version_id,lot:operationalModel.lot,estimateRequired:operationalModel.estimateRequired,setupEstimateRequired:operationsPolicy?.setupEstimateRequired||false,parentCodes:operationsPolicy?.parentCodes||[],periodAlignment:operationsPolicy?.periodAlignment||null} : null,
+      commercialParameters: source.commercial_parameters_json ? JSON.parse(source.commercial_parameters_json) : null,
       offerComponents,
     };
 
@@ -458,7 +484,7 @@ export class QuoteService {
       && input.catalogUnitPriceCents !== existing.catalog_unit_price_cents) {
       throw Error('Le prix catalogue de l’option vendue est figé ; modifie le prix proposé ou la remise.');
     }
-    const values = this.calculateLine(this.mapLine(existing).optionPurchase ? { ...input, catalogUnitPriceCents: existing.catalog_unit_price_cents } : input);
+    const values = this.calculateLine(this.mapLine(existing).optionPurchase ? { ...input, catalogUnitPriceCents: existing.catalog_unit_price_cents } : input, this.mapLine(existing).snapshot);
     this.database.run(
       `UPDATE quote_lines SET label=?, description=?, quantity_milli=?, catalog_unit_price_cents=?,
        proposed_unit_price_cents=?, adjustment_mode=?, adjustment_value=?, discount_reason_code=?,
@@ -548,6 +574,8 @@ export class QuoteService {
     if (quote.lines.length === 0) throw new Error('Ajoute au moins une ligne avant de finaliser le devis.');
     this.database.exec('SAVEPOINT quote_finalization;');
     try {
+    const lineIssues = [...new CommercialRulesService(this.database).issues(quote), ...new OperationalSalesService(this.database).issues(quote)];
+    if (lineIssues.length) throw Error(lineIssues.join('\n'));
     this.contractTerms.freezeQuote(id);
     const now = this.get(id).contractCompiledAt ?? nowIso();
     this.database.run('UPDATE quotes SET finalized_at=?,updated_at=? WHERE id=?', [now, now, id]);
@@ -604,6 +632,7 @@ export class QuoteService {
     }
     this.writeActivity(id, 'quote_accepted', `Devis ${quote.number} accepté`);
     this.projectLifecycle?.accept(id,clientId);
+    new OperationalSalesService(this.database).provision(this.get(id));
     this.database.exec('RELEASE quote_acceptance;');
     return this.get(id);
     } catch(error) { this.database.exec('ROLLBACK TO quote_acceptance; RELEASE quote_acceptance;'); throw error; }
@@ -702,8 +731,9 @@ export class QuoteService {
             origin.sourceOfferVersionId, origin.sourceComponentId, origin.purchasedAt],
         );
       }
+      new CommercialRulesService(this.database).copyParameters(lineIds);
       this.recalculate(copy.id);
-      this.contractTerms.copyQuoteCustomizations(id, copy.id);
+      this.contractTerms.copyQuoteCustomizations(id, copy.id, lineIds);
       if (asCommercialRevision) {
         if (!this.projectLifecycle) throw new Error('Cycle Projet prévisionnel non raccordé.');
         this.projectLifecycle.linkRevision(id,copy.id,lineIds);
@@ -727,7 +757,7 @@ export class QuoteService {
     const label = clean(input.label);
     if (!label) throw new Error('Le libellé de la ligne est requis.');
     if (input.discountReasonCode && !QUOTE_DISCOUNT_REASONS.includes(input.discountReasonCode)) throw new Error('Raison commerciale invalide.');
-    const values = this.calculateLine(input);
+    const values = this.calculateLine(input, snapshot);
     const order = this.database.get<{ next_order: number }>('SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order FROM quote_lines WHERE quote_id=?', [quoteId]);
     const now = nowIso();
     this.database.run(
@@ -745,7 +775,7 @@ export class QuoteService {
     );
   }
 
-  private calculateLine(input: QuoteLineInput): {
+  private calculateLine(input: QuoteLineInput, snapshot?: Record<string, unknown> | null): {
     quantityMilli: number;
     catalogUnitPriceCents: number;
     proposedUnitPriceCents: number;
@@ -762,8 +792,9 @@ export class QuoteService {
     const mode = input.adjustmentMode ?? 'none';
     if (!QUOTE_ADJUSTMENT_MODES.includes(mode)) throw new Error('Mode de remise invalide.');
     const adjustment = input.adjustmentValue ?? null;
-    const catalogTotal = Math.round((catalogUnit * quantityMilli) / 1000);
-    const proposedTotal = Math.round((proposedUnit * quantityMilli) / 1000);
+    const minimum = (snapshot?.commercialRules as CommercialVersionRules | undefined)?.minimumLineCents ?? 0;
+    const catalogTotal = Math.max(minimum, Math.round((catalogUnit * Math.max(quantityMilli,(snapshot?.commercialRules as CommercialVersionRules | undefined)?.minimumBilledQuantityMilli??quantityMilli)) / 1000));
+    const proposedTotal = Math.max(minimum, Math.round((proposedUnit * Math.max(quantityMilli,(snapshot?.commercialRules as CommercialVersionRules | undefined)?.minimumBilledQuantityMilli??quantityMilli)) / 1000));
     let contractTotal = proposedTotal;
 
     if (mode === 'percent') {

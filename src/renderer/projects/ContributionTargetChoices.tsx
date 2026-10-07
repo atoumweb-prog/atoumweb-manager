@@ -9,9 +9,10 @@ export function ContributionTargetChoices({target,choices,busy,onAssign}:{target
   const currentSite=choices.sites.find(s=>s.id===target.siteId&&s.ownerOrigin===target.siteOwnerOrigin&&s.ownerSlot===target.siteOwnerSlot);
   const currentNode=(target.kind==='page'?choices.pages:choices.contexts).find(n=>n.id===(target.pageNodeId??target.contextNodeId));
   return <fieldset disabled={busy||target.state==='out_of_scope'||target.locked&&target.selectionMode==='explicit'} className="project-target-choice">
-    <legend>{target.code} · {target.slot} · unité {target.unitIndex}</legend>
+    <legend>{target.code} · unité {target.unitIndex}</legend>
     <p>{target.issue??'Cible conservée'} · {target.selectionMode==='auto_unique'?'Occurrence compatible unique':target.selectionMode==='explicit'?'Choix explicite':'En attente'}</p>
-    {target.state==='active'&&<p>Cible enregistrée : {currentSite?.label??target.siteId}{currentSite&&` · ${target.siteId}`}{currentNode&&` / ${currentNode.label} · ${currentNode.id}`}</p>}
+    {target.state==='active'&&<p>Cible enregistrée : {currentSite?.label??'Site à vérifier'}{currentNode&&` / ${currentNode.label}`}</p>}
+    <details><summary>Détails techniques</summary><p>Slot : {target.slot} · origine : {target.lineOrigin} · Site : {target.siteId||'aucun'} · élément : {target.pageNodeId||target.contextNodeId||'aucun'}</p></details>
     {target.requires.length>0&&<p>Capacités requises : {target.requires.join(', ')}</p>}
     {target.locked&&<p>Cible déjà utilisée : changement par un nouveau parcours explicite.</p>}
     {target.kind!=='context'&&<label>Site cible<select aria-label={'Site cible '+target.slot} value={site} onChange={e=>{setSite(e.target.value);setNode('');}}>

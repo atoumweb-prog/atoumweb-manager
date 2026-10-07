@@ -1,3 +1,4 @@
+import { validateOperationalSalePolicy } from '../../shared/commercialRules';
 import {readPolicy, validatePolicy} from './ContributionPolicy';
 import { createHash, randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
@@ -115,6 +116,8 @@ export class OperationalReferenceService {
       const v=this.db.get<Row>('SELECT * FROM operational_model_versions WHERE id=?',[String(l.model_version_id)]);
       if(v?.status!=='ready')throw Error('Modèle opérationnel non mis en usage.');
       if(!this.db.get('SELECT id FROM catalog_versions WHERE id=? AND item_id=?',[String(l.catalog_version_id),String(v.catalog_item_id)]))throw Error('Compatibilité catalogue/modèle invalide.');
+      const operations=JSON.parse(String(l.provenance_json)).operations;
+      if(operations)validateOperationalSalePolicy(operations);
       const p=readPolicy(String(l.provenance_json));
       if(p)validatePolicy(p,JSON.parse(String(v.model_json)),l.blueprint_version_id as string|null,this.db);
       if(l.blueprint_version_id && !this.db.get("SELECT template_version_id FROM blueprint_operational_profiles WHERE template_version_id=? AND mode='structural' AND operational_ready=1",[String(l.blueprint_version_id)]))throw Error('Profil structurel non mis en usage.');

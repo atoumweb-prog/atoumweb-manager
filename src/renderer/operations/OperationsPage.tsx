@@ -562,13 +562,14 @@ function InterventionDetail({ onSaved, intervention, expanded, onExpand, onClose
     </div>
 
     <div className="intervention-kpi-grid">
-      <div><strong>Temps réel</strong><span>{duration(intervention.totalTimeSeconds)}</span></div>
+      <div><strong>Temps réel</strong><span>{duration(intervention.totalTimeSeconds)}</span></div><div><strong>Référence initiale</strong><span>{intervention.referenceMinutes==null?'Non définie':`${intervention.referenceMinutes} min`}</span></div><label>Estimation actuelle (minutes)<input type="number" min="0" value={intervention.estimatedMinutes??''} disabled={locked} onChange={e=>void window.atoumweb.operations.interventions.update(intervention.id,{estimatedMinutes:e.target.value===''?null:Number(e.target.value)}).then(onSaved).catch(e=>onMessage(String(e)))}/></label>
       <div><strong>Facturable</strong><span>{money(intervention.billableAmountCents)}</span></div>
       <div><strong>Valeur théorique</strong><span>{money(intervention.theoreticalValueCents)}</span></div>
       <div><strong>Prise en charge</strong><span>{COVERAGE_LABELS[intervention.coverageMode]}</span></div>
     </div>
 
     <div className="intervention-workbench-actions">
+      {!!intervention.operationalChecklist?.length&&<details><summary>Phases et checklist de la prestation vendue</summary>{intervention.operationalChecklist.map(a=><section key={a.key}><strong>{a.phase} — {a.name} · {a.minutes} min de référence</strong><p>{a.checklist}</p></section>)}</details>}
       <button className="primary-button" type="button" disabled={locked} onClick={() => onTimer(intervention)}>▶ {intervention.totalTimeSeconds > 0 ? 'Reprendre le timer' : 'Démarrer le timer'}</button>
       <InterventionEditor intervention={intervention} onSaved={onSaved}/>
     </div>

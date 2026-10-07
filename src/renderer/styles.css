@@ -395,3 +395,10 @@ button { color: inherit; }
     padding-top: 8px;
   }
 }
+
+.development-environment-banner { padding: 8px 20px; border-bottom: 1px solid var(--border); background: var(--accent-soft); color: var(--text); font-weight: 700; font-size: 0.9rem; }
+.quote-line-parameters, .quote-abby-panel { margin: 12px 0; }
+.quote-line-parameters fieldset { margin: 10px 0; padding: 14px; border: 1px solid var(--border-color, #d6cbb7); }
+
+.topbar.is-development { position: relative; padding-bottom: 36px; }
+.topbar .development-environment-banner { position: absolute; left: 0; right: 0; bottom: 0; padding: 5px 20px; font-size: 0.82rem; }

@@ -300,7 +300,7 @@ function App() {
       </aside>
 
       <main className="main-area">
-        <header className="topbar">
+        <header className={/([\\/])Validation-MSI$/i.test(bootstrap.workspacePath)?'topbar is-development':'topbar'}>
           <div className="topbar-left">
             <button
               className="sidebar-toggle"
@@ -326,6 +326,7 @@ function App() {
             <GlobalTimer onMessage={setMessage} />
             <GlobalClock />
           </div>
+        {/([\\/])Validation-MSI$/i.test(bootstrap.workspacePath)&&<div role="status" className="development-environment-banner">DÉVELOPPEMENT — dossiers TEST — aucune valeur contractuelle réelle</div>}
         </header>
 
         <section className={`content-area ${activePage === 'Accueil' ? 'home-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' || activePage === 'Sites' ? 'workspace-content' : ''} ${activePage === 'Projets' ? 'projects-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' ? 'library-workspace-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' && libraryHeaderCollapsed ? 'library-header-collapsed' : ''}`}>

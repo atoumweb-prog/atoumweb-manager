@@ -1,3 +1,4 @@
+import type { CommercialVersionRules } from '../../shared/commercialRules';
 import { QuoteContractPreparationService } from './QuoteContractPreparationService';
 import type { ClientDocumentService } from '../crm/ClientDocumentService';
 import { randomUUID } from 'node:crypto';
@@ -487,7 +488,7 @@ export class ContractTermsService {
     } catch(error) {this.database.exec('ROLLBACK TO quote_contract_freeze; RELEASE quote_contract_freeze;');throw error;}
   }
 
-  copyQuoteCustomizations(sourceQuoteId: string, targetQuoteId: string): QuoteContractBuild {
+  copyQuoteCustomizations(sourceQuoteId: string, targetQuoteId: string, lineIds?: Map<string,string>): QuoteContractBuild {
     this.assertQuoteEditable(targetQuoteId);
     this.syncQuoteInternal(targetQuoteId);
     const source = this.quoteClauses(sourceQuoteId);
@@ -499,7 +500,8 @@ export class ContractTermsService {
         this.addCustomQuoteClause(targetQuoteId, { title: clause.title, body: clause.body, enabled: clause.enabled });
         continue;
       }
-      const match = targetByKey.get(clause.sourceKey);
+      const targetKey = clause.sourceKey.startsWith('particular-line:') && lineIds ? `particular-line:${lineIds.get(clause.sourceKey.slice('particular-line:'.length))}` : clause.sourceKey;
+      const match = targetByKey.get(targetKey);
       if (!match) continue;
       this.database.run(
         `UPDATE quote_contract_clauses
@@ -682,6 +684,16 @@ export class ContractTermsService {
         });
         index += 1;
       }
+    }
+
+    // Explicit per-version particular conditions coexist with shared modules.
+    // Source identity follows the actual sold line; existing orphan/customization rules apply.
+    for (const { row, snapshot } of lineSnapshots) {
+      const terms = (snapshot?.commercialRules as CommercialVersionRules | undefined)?.particularTerms;
+      if (!terms || !row.catalog_item_id) continue;
+      const sourceKey = `particular-line:${row.id}`;
+      desired.set(sourceKey, {sourceKey,sourceKind:'catalog',sourceClauseId:null,sourceClauseVersionId:null,
+        sourceCatalogItemIds:[row.catalog_item_id],title:terms.title,body:terms.body,sortOrder:1800+desired.size});
     }
 
     let legacyIndex = 0;

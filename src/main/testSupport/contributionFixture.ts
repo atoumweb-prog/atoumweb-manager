@@ -9,7 +9,7 @@ import {ProjectService} from '../projects/ProjectService';
 import {ProjectSiteService} from '../projects/ProjectSiteService';
 import {TimeService} from '../time/TimeService';
 
-export function contributionFixture(db:DatabaseAdapter,workspace:WorkspacePaths) {
+export function contributionFixture(db:DatabaseAdapter,workspace:WorkspacePaths,options:{nestedModules?:boolean}={}) {
   const f=quoteOptionsFixture(db),sites=new ProjectSiteService(db),projects=new ProjectService(db,workspace,sites),references=new OperationalReferenceService(db);
   f.quotes.setProjectLifecycle(projects.commercial);
   const reference=structuredClone(contributionExamples),items=new Map<string,ReturnType<typeof f.catalog.create>>(),versions=new Map<string,string>(),models=new Map<string,string>(),policies=new Map<string,ContributionPolicy>();
@@ -45,12 +45,12 @@ export function contributionFixture(db:DatabaseAdapter,workspace:WorkspacePaths)
         bp=projects.createTemplate({name:'Fixture structure '+original,projectType:'website'}).versions[0].id;
         const names=isA?(original==='AW-MARIAGE-HISTOIRE'?histoire.pages.map(p=>p.name):original==='AW-ECOM-BASE'?['Boutique','Panier','Commande','Mon compte']:['Page principale']):module?[]:[original];
         const pageIds=names.map((name,index)=>projects.addTemplateNode(bp!,{type:'module',displaySubtype:'page',name,semanticKey:'page.'+index}).nodes.find(n=>n.name===name)!.id);
-        if(module)projects.addTemplateNode(bp,{type:'module',name:'Module fixture',semanticKey:'module.fixture'});
+        if(module){const parent=options.nestedModules?projects.addTemplateNode(bp,{type:'lot',name:'Conteneur structurel',semanticKey:'module.container'}).nodes.find(n=>n.name==='Conteneur structurel')!.id:undefined;projects.addTemplateNode(bp,{type:'module',name:'Module fixture',semanticKey:'module.fixture',parentId:parent});}
         if(original==='AW-ECOM-BASE')for(let n=1;n<=10;n++)projects.addTemplateNode(bp,{type:'module',name:'Produit initial '+n,semanticKey:'woo.initial-product.'+n,parentId:pageIds[0]});
         projects.configureTemplateSites(bp,[{key:'main',name:'Site principal',pages:pageIds.map((id,index)=>({key:'page-'+index,templateNodeId:id,role:original==='AW-MARIAGE-HISTOIRE'?(histoire.pages[index].role as 'home'|'standard'):original==='AW-WEB-BLOG'?'blog':'standard',...(original==='AW-MARIAGE-HISTOIRE'?{desiredPath:histoire.pages[index].path}:{})}))}]);
       }
       const siteRows=db.all<{id:string;blueprint_key:string}>('SELECT id,blueprint_key FROM project_template_sites WHERE template_version_id=?',[bp]);
-      const contract:StructureContract={schemaVersion:1,sites:siteRows.map(s=>({slotKey:s.blueprint_key,provides:isA?['wordpress',...(original==='AW-ECOM-BASE'?['woocommerce']:[])]:[],modes:structureKey==='one-page-base'?['create','existing']:['create']})),pages:db.all<{template_node_id:string;blueprint_key:string}>(`SELECT p.template_node_id,s.blueprint_key FROM project_template_site_pages p JOIN project_template_sites s ON s.id=p.template_site_id WHERE s.template_version_id=?`,[bp]).map((p,index)=>({slotKey:'page-'+index,templateNodeId:p.template_node_id,siteSlotKey:p.blueprint_key,quota:'content'})),modules:module?db.all<{id:string}>('SELECT id FROM project_template_nodes WHERE template_version_id=?',[bp]).map(n=>({templateNodeId:n.id,parentTargetSlot:'destination'})):[]};
+      const contract:StructureContract={schemaVersion:1,sites:siteRows.map(s=>({slotKey:s.blueprint_key,provides:isA?['wordpress',...(original==='AW-ECOM-BASE'?['woocommerce']:[])]:[],modes:structureKey==='one-page-base'?['create','existing']:['create']})),pages:db.all<{template_node_id:string;blueprint_key:string}>(`SELECT p.template_node_id,s.blueprint_key FROM project_template_site_pages p JOIN project_template_sites s ON s.id=p.template_site_id WHERE s.template_version_id=?`,[bp]).map((p,index)=>({slotKey:'page-'+index,templateNodeId:p.template_node_id,siteSlotKey:p.blueprint_key,quota:'content'})),modules:module?db.all<{id:string}>("SELECT id FROM project_template_nodes WHERE template_version_id=? AND node_type='module'",[bp]).map(n=>({templateNodeId:n.id,parentTargetSlot:'destination'})):[]};
       db.run("INSERT INTO blueprint_operational_profiles(template_version_id,mode,requires_operational,provenance_json) VALUES(?,'structural',1,?)",[bp,JSON.stringify({fixture:true,structureContract:contract})]);
       references.useStructure(bp);versions.set(original,bp);sharedStructures.set(structureKey,bp);
       }

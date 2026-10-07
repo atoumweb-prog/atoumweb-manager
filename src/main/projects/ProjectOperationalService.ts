@@ -26,9 +26,11 @@ export class ProjectOperationalService {
       const origin=origins.get(String(line.id)) ?? String(line.id);
       const pin=pins?.actions.find(a=>a.lineOrigin===origin && a.catalogVersionId===line.catalog_version_id);
       const pinnedLink=pins?.links.find(l=>l.lineOrigin===origin && l.catalogVersionId===line.catalog_version_id);
+      const recordedLink=JSON.parse(String(line.snapshot_json||'{}')).operational?.linkId as string|undefined;
       const ready=staging?'':" AND status='ready'";
       const link=pinnedLink?.linkId ? this.db.get<Row>('SELECT * FROM catalog_operational_links WHERE id=?'+ready,[pinnedLink.linkId]) : pin
         ? this.db.get<Row>('SELECT * FROM catalog_operational_links WHERE catalog_version_id=? AND model_version_id=?'+ready+' ORDER BY revision DESC LIMIT 1',[String(line.catalog_version_id),pin.modelVersionId])
+        : recordedLink ? this.db.get<Row>('SELECT * FROM catalog_operational_links WHERE id=? AND catalog_version_id=?'+ready,[recordedLink,String(line.catalog_version_id)])
         : this.db.get<Row>('SELECT * FROM catalog_operational_links WHERE catalog_version_id=?'+ready+' ORDER BY revision DESC LIMIT 1',[String(line.catalog_version_id)]);
       if (!link) {
         if (this.db.get('SELECT id FROM operational_model_versions WHERE catalog_item_id=?',[String(line.catalog_item_id)]) && this.db.get<Row>('SELECT id FROM catalog_versions WHERE item_id=? ORDER BY version_number DESC LIMIT 1',[String(line.catalog_item_id)])?.id===line.catalog_version_id)
@@ -42,7 +44,9 @@ export class ProjectOperationalService {
       const configuration=readPolicy(String(link.provenance_json));
       if(configuration) {validatePolicy(configuration,m,link.blueprint_version_id as string|null,this.db);checkQuantity(configuration,Number(line.quantity_milli));}
       plan.links.push({configuration,linkId:String(link.id),lineOrigin:origin,quoteLineId:String(line.id),catalogVersionId:String(line.catalog_version_id),modelVersionId:String(v.id),blueprintVersionId:link.blueprint_version_id as string|null});
-      if (m.lot==='8B') {plan.excluded.push({code:m.code,lineId:String(line.id),reason:'Lot 8B inerte : aucune action ni activation'});continue;}
+      if (m.lot==='8B') {plan.excluded.push({code:m.code,lineId:String(line.id),reason:'Périodes, crédit ou intervention après acceptation ; aucune tâche 8A'});continue;}
+      const commercialSnapshot=JSON.parse(String(line.snapshot_json||'{}'));
+      if(commercialSnapshot.commercialRules?.attachment?.kind==='priority') {plan.excluded.push({code:m.code,lineId:String(line.id),reason:'Supplément de priorité : travail porté par la prestation principale, zéro action autonome'});continue;}
       const qty=Number(line.quantity_milli),units=qty/1000;
       if (!Number.isSafeInteger(qty) || !Number.isInteger(units) || units<1 || units>500) throw Error('Quantité opérationnelle entière requise ; aucun arrondi automatique.');
       const instanceKey=(base:string):string=>{

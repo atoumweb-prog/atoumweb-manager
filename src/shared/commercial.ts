@@ -1,3 +1,4 @@
+import type { QuoteLineParameters } from './commercialRules';
 import type { QuoteContractAudience } from './contractTerms';
 export const CATALOG_ITEM_TYPES = ['service', 'offer'] as const;
 export const CATALOG_ITEM_STATUSES = ['active', 'inactive', 'archived'] as const;
@@ -190,6 +191,7 @@ export interface QuoteOptionPurchase {
 }
 
 export interface QuoteLine extends QuoteLineInput {
+  parameters?: QuoteLineParameters | null;
   /** Null means no recorded optional origin, including historical/manual lines. */
   optionPurchase?: QuoteOptionPurchase | null;
   adjustmentMode: QuoteAdjustmentMode;
@@ -266,6 +268,11 @@ export interface QuotePdfResult {
 }
 
 export interface QuoteApi {
+  operationalSalesForClient(clientId:string):Promise<Record<string,unknown>[]>;
+  assignOperationalTarget(saleId:string,input:{projectId:string;siteId?:string|null;contextNodeId?:string|null;author:string}):Promise<void>;
+  setLineParameters(lineId:string,parameters:QuoteLineParameters):Promise<QuoteDetail>;
+  preparationIssues(id:string):Promise<string[]>;
+  operationalSales(id:string):Promise<Record<string,unknown>[]>;
   createWithLines(input: QuoteInput, lines: Array<{catalogVersionId?: string; input: QuoteLineInput}>): Promise<QuoteDetail>;
   list(filters?: QuoteFilters): Promise<QuoteSummary[]>;
   get(id: string): Promise<QuoteDetail>;

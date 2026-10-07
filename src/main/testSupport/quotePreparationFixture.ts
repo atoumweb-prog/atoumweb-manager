@@ -1,3 +1,4 @@
+import { CommercialRulesService } from '../commercial/CommercialRulesService';
 // Explicit fixtures for pre-existing lifecycle tests. Never used by production code.
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import type { QuoteService } from '../commercial/QuoteService';
@@ -7,6 +8,15 @@ import { emptyContractParameters, emptyAdministration } from '../../shared/quote
 export function prepareQuoteForTest(db:DatabaseAdapter,id:string):void {
   const row=db.get<Record<string,unknown>>('SELECT * FROM quotes WHERE id=?',[id])!;
   if(row.contract_parameters_json==null||row.finalized_at)return;
+  // An explicit dossier estimate belongs to the fixture, never an automatic production fallback.
+  for(const line of db.all<{id:string;model_json:string}>(`SELECT l.id,m.model_json FROM quote_lines l
+    JOIN catalog_operational_links a ON a.catalog_version_id=l.catalog_version_id
+    JOIN operational_model_versions m ON m.id=a.model_version_id WHERE l.quote_id=?`,[id])) {
+    if(JSON.parse(line.model_json).estimateRequired) {
+      const rules=new CommercialRulesService(db);
+      if(!rules.parameters(line.id))rules.setParameters(line.id,{scope:'Périmètre spécifique de la fixture',currentEstimateMinutes:240,productionPlan:'Production et contrôle définis pour la fixture'});
+    }
+  }
   const preparation=new QuoteContractPreparationService(db),admin=emptyAdministration();
   for(const key of ['identity','administrative','vat','complaints'] as const)admin[key]={state:'filled',value:`Fixture isolée ${key}`,reason:''};
   preparation.saveAdministration(admin);

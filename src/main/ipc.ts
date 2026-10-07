@@ -397,8 +397,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('contract-terms:quotes:reset-clause', (_event, id: string) => database.contractTerms.resetQuoteClause(id));
   ipcMain.handle('contract-terms:quotes:remove-custom', (_event, id: string) => database.contractTerms.removeCustomQuoteClause(id));
   ipcMain.handle('contract-terms:quotes:reorder', (_event, quoteId: string, clauseIds: string[]) => database.contractTerms.reorderQuoteClauses(quoteId, clauseIds));
-  ipcMain.handle('contract-terms:copy-text', (_event, text: string) => {
-    clipboard.writeText(text);
+  ipcMain.handle('contract-terms:copy-text', async (_event, text: string) => {
+    await clipboard.writeText(text);
   });
 
   ipcMain.handle('quote-preparation:get', (_event,id:string)=>database.quotePreparation.get(id));
@@ -418,6 +418,11 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     if(selection.canceled)return null;
     return database.quotePreparation.importPath(id,role,provenance,selection.filePaths[0]);
   });
+  ipcMain.handle('quotes:set-line-parameters',(_event,lineId:string,parameters:import('../shared/commercialRules').QuoteLineParameters)=>database.quotes.setLineParameters(lineId,parameters));
+  ipcMain.handle('quotes:preparation-issues',(_event,id:string)=>database.quotes.preparationIssues(id));
+  ipcMain.handle('quotes:assign-operational-target',(_event,id:string,input:{projectId:string;siteId?:string|null;contextNodeId?:string|null;author:string})=>database.quotes.assignOperationalTarget(id,input));
+  ipcMain.handle('quotes:operational-sales-for-client',(_event,id:string)=>database.quotes.operationalSalesForClient(id));
+  ipcMain.handle('quotes:operational-sales',(_event,id:string)=>database.quotes.operationalSales(id));
   ipcMain.handle('quotes:list', (_event, filters?: QuoteFilters) => database.quotes.list(filters));
   ipcMain.handle('quotes:get', (_event, id: string) => database.quotes.get(id));
   ipcMain.handle('quotes:create-with-lines', (_event, input: QuoteInput, lines: Array<{catalogVersionId?: string; input: QuoteLineInput}>) => database.quotes.createWithLines(input,lines));
