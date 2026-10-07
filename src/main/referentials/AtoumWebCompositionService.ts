@@ -4,7 +4,9 @@ import type {
   AtoumWebCompositionDetail,
   AtoumWebCompositionInput,
   AtoumWebCompositionItem,
+  AtoumWebCompositionItemLocalCodeInput,
   AtoumWebCompositionMoveItemInput,
+  AtoumWebCompositionPromoteVariantInput,
   AtoumWebCompositionStatus,
   AtoumWebCompositionSummary,
   AtoumWebLibraryCategory,
@@ -39,6 +41,11 @@ interface CompositionItemRow extends Record<string, unknown> {
   library_variant_id: string | null;
   variant_key: string | null;
   variant_mode: 'base' | 'inherit' | 'forked' | null;
+  local_html_text: string | null;
+  local_css_text: string | null;
+  local_javascript_text: string | null;
+  local_settings_json: string;
+  local_updated_at: string | null;
   created_at: string;
 }
 
@@ -47,6 +54,79 @@ export class AtoumWebCompositionService {
     private readonly database: DatabaseAdapter,
     private readonly library: AtoumWebTechnicalLibraryService,
   ) {}
+
+  getForProjectPage(projectNodeId: string): AtoumWebCompositionDetail | null {
+    this.assertProjectPage(projectNodeId);
+    const link = this.database.get<{ composition_id: string }>(
+      'SELECT composition_id FROM project_page_compositions WHERE project_node_id=?',
+      [projectNodeId],
+    );
+    return link ? this.get(link.composition_id) : null;
+  }
+
+  ensureForProjectPage(projectNodeId: string): AtoumWebCompositionDetail {
+    const page = this.assertProjectPage(projectNodeId);
+    const existing = this.getForProjectPage(projectNodeId);
+    if (existing) return existing;
+
+    this.database.exec('SAVEPOINT page_composition_create;');
+    try {
+      const composition = this.create({ name: `${page.name} — composition` });
+      const now = new Date().toISOString();
+      this.database.run(
+        'INSERT INTO project_page_compositions (project_node_id,composition_id,created_at,updated_at) VALUES (?,?,?,?)',
+        [projectNodeId, composition.id, now, now],
+      );
+      this.logProject(page.project_id, 'project_page_composition_created', `Composition créée pour la Page : ${page.name}`, {
+        pageNodeId: projectNodeId,
+        compositionId: composition.id,
+      });
+      this.database.exec('RELEASE SAVEPOINT page_composition_create;');
+      return composition;
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT page_composition_create; RELEASE SAVEPOINT page_composition_create;');
+      throw error;
+    }
+  }
+
+  attachToProjectPage(projectNodeId: string, compositionId: string): AtoumWebCompositionDetail {
+    const page = this.assertProjectPage(projectNodeId);
+    const composition = this.get(compositionId);
+    if (composition.status === 'archived') throw new Error('Réactive la composition avant de la rattacher à une Page.');
+
+    const usedBy = this.database.get<{ project_node_id: string }>(
+      'SELECT project_node_id FROM project_page_compositions WHERE composition_id=? AND project_node_id<>?',
+      [compositionId, projectNodeId],
+    );
+    if (usedBy) throw new Error('Cette composition est déjà rattachée à une autre Page.');
+
+    const now = new Date().toISOString();
+    this.database.run(
+      `INSERT INTO project_page_compositions (project_node_id,composition_id,created_at,updated_at)
+       VALUES (?,?,?,?)
+       ON CONFLICT(project_node_id) DO UPDATE SET composition_id=excluded.composition_id,updated_at=excluded.updated_at`,
+      [projectNodeId, compositionId, now, now],
+    );
+    this.logProject(page.project_id, 'project_page_composition_attached', `Composition rattachée à la Page : ${page.name}`, {
+      pageNodeId: projectNodeId,
+      compositionId,
+    });
+    return this.get(compositionId);
+  }
+
+  detachFromProjectPage(projectNodeId: string): void {
+    const page = this.assertProjectPage(projectNodeId);
+    const link = this.database.get<{ composition_id: string }>(
+      'SELECT composition_id FROM project_page_compositions WHERE project_node_id=?',
+      [projectNodeId],
+    );
+    if (!link) return;
+    this.database.run('DELETE FROM project_page_compositions WHERE project_node_id=?', [projectNodeId]);
+    this.logProject(page.project_id, 'project_page_composition_detached', `Composition détachée de la Page : ${page.name}`, {
+      pageNodeId: projectNodeId,
+      compositionId: link.composition_id,
+    });
+  }
 
   list(includeArchived = false): AtoumWebCompositionSummary[] {
     return this.database.all<CompositionRow>(
@@ -157,7 +237,106 @@ export class AtoumWebCompositionService {
     return this.get(id);
   }
 
-  removeItem(id: string, itemId: string): AtoumWebCompositionDetail {
+  updateItemLocalCode(id: string, itemId: string, input: AtoumWebCompositionItemLocalCodeInput): AtoumWebCompositionDetail {
+    const composition = this.get(id);
+    if (composition.status !== 'draft') throw new Error('Seule une composition en brouillon peut être modifiée.');
+    const item = composition.items.find((candidate) => candidate.id === itemId);
+    if (!item) throw new Error('Élément de composition introuvable.');
+
+    const html = String(input.html ?? '').trim();
+    if (!html) throw new Error('Le HTML préparé du bloc est requis.');
+    const now = new Date().toISOString();
+    this.database.run(
+      `UPDATE atoumweb_composition_items
+       SET local_html_text=?,local_css_text=?,local_javascript_text=?,local_settings_json=?,local_updated_at=?
+       WHERE id=? AND composition_id=?`,
+      [
+        html,
+        this.optionalRaw(input.css),
+        this.optionalRaw(input.javascript),
+        JSON.stringify(input.settings ?? {}),
+        now,
+        itemId,
+        id,
+      ],
+    );
+    this.touch(id);
+    this.log(id, 'atoumweb_composition_item_local_settings_saved', `Réglages locaux enregistrés : ${item.displayName}`, {
+      compositionItemId: itemId,
+      sourceItemId: item.sourceItemId,
+      sourceVersionId: item.sourceVersionId,
+    });
+    return this.get(id);
+  }
+
+  resetItemLocalCode(id: string, itemId: string): AtoumWebCompositionDetail {
+    const composition = this.get(id);
+    if (composition.status !== 'draft') throw new Error('Seule une composition en brouillon peut être modifiée.');
+    const item = composition.items.find((candidate) => candidate.id === itemId);
+    if (!item) throw new Error('Élément de composition introuvable.');
+
+    this.database.run(
+      `UPDATE atoumweb_composition_items
+       SET local_html_text=NULL,local_css_text=NULL,local_javascript_text=NULL,local_settings_json='{}',local_updated_at=NULL
+       WHERE id=? AND composition_id=?`,
+      [itemId, id],
+    );
+    this.touch(id);
+    this.log(id, 'atoumweb_composition_item_local_settings_reset', `Réglages locaux réinitialisés : ${item.displayName}`, {
+      compositionItemId: itemId,
+      sourceItemId: item.sourceItemId,
+      sourceVersionId: item.sourceVersionId,
+    });
+    return this.get(id);
+  }
+
+  promoteItemVariant(id: string, itemId: string, input: AtoumWebCompositionPromoteVariantInput) {
+    const composition = this.get(id);
+    const item = composition.items.find((candidate) => candidate.id === itemId);
+    if (!item) throw new Error('Élément de composition introuvable.');
+    if (!item.hasLocalChanges || !item.localHtml) {
+      throw new Error('Prépare d’abord ce bloc localement avant de l’envoyer comme variante.');
+    }
+    const name = this.requiredName(input.name);
+    const page = this.database.get<{ project_id: string; page_name: string }>(
+      `SELECT pn.project_id, pn.name page_name
+       FROM project_page_compositions ppc
+       JOIN project_nodes pn ON pn.id=ppc.project_node_id
+       WHERE ppc.composition_id=?`,
+      [id],
+    );
+    const promoted = this.library.createVariantCode({
+      sourceItemId: item.sourceItemId,
+      name,
+      variantKey: input.variantKey,
+      description: input.description ?? `Variante proposée depuis la composition « ${composition.name} ».`,
+      vertical: item.vertical,
+      tags: [
+        'composition-promotion',
+        `source-composition-${id}`,
+        `source-composition-item-${itemId}`,
+        ...(page ? [`source-project-${page.project_id}`] : []),
+      ],
+      html: item.localHtml,
+      css: item.localCss,
+      javascript: item.localJavascript,
+      reuseStatus: 'adapt',
+      markStable: false,
+      provenanceNote: page
+        ? `Promue depuis la Page « ${page.page_name} » du Projet ${page.project_id}, occurrence ${itemId}.`
+        : `Promue depuis la composition ${id}, occurrence ${itemId}.`,
+    });
+    this.log(id, 'atoumweb_composition_item_promoted_variant', `Adaptation envoyée vers la Bibliothèque : ${promoted.name}`, {
+      compositionItemId: itemId,
+      sourceItemId: item.sourceItemId,
+      resultItemId: promoted.id,
+      resultVariantId: promoted.libraryVariantId,
+      resultReuseStatus: promoted.reuseStatus,
+    });
+    return promoted;
+  }
+
+    removeItem(id: string, itemId: string): AtoumWebCompositionDetail {
     const composition = this.get(id);
     if (composition.status !== 'draft') throw new Error('Seule une composition en brouillon peut être modifiée.');
     const existing = this.database.get<{ id: string }>(
@@ -226,6 +405,25 @@ export class AtoumWebCompositionService {
     return this.get(id);
   }
 
+  private assertProjectPage(projectNodeId: string): { id: string; project_id: string; name: string } {
+    const page = this.database.get<{ id: string; project_id: string; node_type: string; display_subtype: string | null; name: string }>(
+      'SELECT id,project_id,node_type,display_subtype,name FROM project_nodes WHERE id=?',
+      [projectNodeId],
+    );
+    if (!page) throw new Error('Page projet introuvable.');
+    if (page.node_type !== 'module' || page.display_subtype !== 'page') {
+      throw new Error('Seul un nœud Projet de type Page peut recevoir une composition.');
+    }
+    return { id: page.id, project_id: page.project_id, name: page.name };
+  }
+
+  private logProject(projectId: string, action: string, summary: string, metadata: Record<string, unknown>): void {
+    this.database.run(
+      'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
+      ['project', projectId, action, summary, JSON.stringify(metadata), new Date().toISOString()],
+    );
+  }
+
   private resequence(compositionId: string): void {
     const ids = this.database.all<{ id: string }>(
       'SELECT id FROM atoumweb_composition_items WHERE composition_id=? ORDER BY sort_order,id',
@@ -277,6 +475,12 @@ export class AtoumWebCompositionService {
       libraryVariantId: row.library_variant_id,
       variantKey: row.variant_key,
       variantMode: row.variant_mode,
+      localHtml: row.local_html_text,
+      localCss: row.local_css_text,
+      localJavascript: row.local_javascript_text,
+      localSettings: this.parseLocalSettings(row.local_settings_json),
+      localUpdatedAt: row.local_updated_at,
+      hasLocalChanges: Boolean(row.local_updated_at),
       createdAt: row.created_at,
     };
   }
@@ -297,7 +501,22 @@ export class AtoumWebCompositionService {
     return name;
   }
 
-  private optionalText(value: string | null | undefined): string | null {
+  private parseLocalSettings(value: string | null | undefined): AtoumWebCompositionItem['localSettings'] {
+    if (!value) return {};
+    try {
+      const parsed = JSON.parse(value);
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  private optionalRaw(value: string | null | undefined): string | null {
+    if (value === null || value === undefined) return null;
+    return String(value);
+  }
+
+    private optionalText(value: string | null | undefined): string | null {
     const text = String(value ?? '').trim();
     return text || null;
   }

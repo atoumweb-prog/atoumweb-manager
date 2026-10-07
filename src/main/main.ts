@@ -1,3 +1,5 @@
+import {RECIPE_FLAG} from '../shared/operationalRecipe';
+import {createOperationalRecipeWindow} from './projects/operationalRecipeWindow';
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { join } from 'node:path';
 import { registerBusinessBackupsIpcHandlers } from './backups/businessBackupsIpc';
@@ -10,6 +12,8 @@ import { registerTimeCorrectionIpcHandler } from './time/timeIpc';
 import { resolveWorkspace } from './workspace';
 
 let mainWindow: BrowserWindow | null = null;
+let recipeWindow:ReturnType<typeof createOperationalRecipeWindow>|null=null;
+const recipeMode=process.argv.includes(RECIPE_FLAG);
 let database: DatabaseService | null = null;
 const prospectReferenceWindows = new Map<string, BrowserWindow>();
 
@@ -88,6 +92,12 @@ function createMainWindow(): void {
 }
 
 async function bootstrap(): Promise<void> {
+  if(recipeMode) {
+    recipeWindow=createOperationalRecipeWindow(join(__dirname,'preload.js'),window=>loadRendererWindow(window,{operationalRecipe:'1'}));
+    mainWindow=recipeWindow.window;
+    mainWindow.on('closed',()=>{mainWindow=null;recipeWindow=null;});
+    return;
+  }
   const workspace = resolveWorkspace();
   const restoreResult = await applyPendingDatabaseRestore(workspace);
   if (restoreResult.restored) {
@@ -112,15 +122,17 @@ app.whenReady().then(async () => {
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createMainWindow();
+      if(!recipeMode)createMainWindow();
     }
   });
 }).catch((error) => {
   console.error('Échec du démarrage AtoumWeb Manager', error);
+  recipeWindow?.dispose();recipeWindow=null;
   app.quit();
 });
 
 app.on('before-quit', () => {
+  recipeWindow?.dispose();recipeWindow=null;
   prospectReferenceWindows.clear();
   database?.close();
   database = null;

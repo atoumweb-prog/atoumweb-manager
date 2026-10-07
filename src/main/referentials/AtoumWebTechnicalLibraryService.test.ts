@@ -191,6 +191,80 @@ describe('AtoumWebTechnicalLibraryService', () => {
     expect(indexed?.search_text).toContain('aw-section-mariage-premium');
   });
 
+  it('crée directement un composant réutilisable stable avec identité Famille / Variante', () => {
+    const created = library.createReusableCode({
+      category: 'hero',
+      name: 'Hero Fleuriste',
+      vertical: 'fleuriste',
+      html: '<section class="hero-fleuriste"><h1>Fleuriste</h1></section>',
+      css: '.hero-fleuriste{padding:80px 24px}',
+      javascript: '',
+    });
+
+    expect(created.reuseStatus).toBe('ready');
+    expect(created.stableVersion?.id).toBe(created.currentVersion?.id);
+    expect(created.componentFamilyId).toBeTruthy();
+    expect(created.variantKey).toBe('base');
+    expect(created.variantMode).toBe('base');
+    expect(created.tags).toEqual(expect.arrayContaining(['manager-direct', 'bridge-human-validated']));
+    expect(created.currentVersion?.contentText).toContain('atoumweb-library-reusable-component');
+    expect(created.currentVersion?.contentText).toContain('hero-fleuriste');
+  });
+
+  it('crée une déclinaison complète sans écraser le modèle source', () => {
+    const source = library.createReusableCode({
+      category: 'hero',
+      name: 'Hero générique',
+      html: '<section class="hero-base">Base</section>',
+      css: '.hero-base{padding:60px}',
+    });
+
+    const variant = library.createVariantCode({
+      sourceItemId: source.id,
+      name: 'Fleuriste',
+      variantKey: 'fleuriste',
+      vertical: 'fleuriste',
+      html: '<section class="hero-fleuriste">Fleurs</section>',
+      css: '.hero-fleuriste{padding:90px}',
+    });
+
+    const reloadedSource = library.get(source.id);
+    expect(variant.id).not.toBe(source.id);
+    expect(variant.componentFamilyId).toBe(source.componentFamilyId);
+    expect(variant.variantKey).toBe('fleuriste');
+    expect(variant.variantMode).toBe('forked');
+    expect(variant.variantOfId).toBe(source.libraryVariantId);
+    expect(reloadedSource.currentVersion?.contentText).toContain('hero-base');
+    expect(variant.currentVersion?.contentText).toContain('hero-fleuriste');
+  });
+
+  it('crée une variante à valider sans la marquer stable lorsqu’elle vient d’une adaptation locale', () => {
+    const source = library.createReusableCode({
+      category: 'section',
+      name: 'Section modèle',
+      html: '<section>Source</section>',
+      css: '.source{color:#111111}',
+    });
+
+    const variant = library.createVariantCode({
+      sourceItemId: source.id,
+      name: 'Variante locale',
+      html: '<section>Adaptée</section>',
+      css: '.source{color:#445566}',
+      reuseStatus: 'adapt',
+      markStable: false,
+      provenanceNote: 'Promue depuis une occurrence locale de Page.',
+      tags: ['composition-promotion'],
+    });
+
+    expect(variant.reuseStatus).toBe('adapt');
+    expect(variant.currentVersion).not.toBeNull();
+    expect(variant.stableVersion).toBeNull();
+    expect(variant.tags).toEqual(expect.arrayContaining(['composition-promotion', 'manager-variant-to-review']));
+    expect(variant.tags).not.toContain('bridge-human-validated');
+    expect(variant.currentVersion?.notes).toContain('occurrence locale');
+  });
+
   it('refuse une origine globale pour préserver la notion d’origine projet', () => {
     const first = library.create(
       { category: 'note', name: 'Composant global', reuseStatus: 'reference' },

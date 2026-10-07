@@ -1,3 +1,6 @@
+import { OperationalSalesTargetService } from '../operations/OperationalSalesTargetService';
+import {ProjectContributionTargetService} from '../projects/ProjectContributionTargetService';
+import { BUSINESS_TIME_CATEGORIES, type BusinessTimeCategory } from '../../shared/operational';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import {
@@ -71,8 +74,8 @@ export class TimeService {
     const id = randomUUID();
     this.database.run(
       `INSERT INTO time_sessions
-       (id,client_account_id,project_id,project_node_id,intervention_id,category,activity_label,started_at,ended_at,billable,source,note,created_at,updated_at)
-       VALUES (?,?,?,?,?,?,?,?,NULL,?,'timer',?,?,?)`,
+       (id,client_account_id,project_id,project_node_id,intervention_id,category,activity_label,started_at,ended_at,billable,source,note,created_at,updated_at,business_category)
+       VALUES (?,?,?,?,?,?,?,?,NULL,?,'timer',?,?,?,?)`,
       [
         id,
         context.clientAccountId,
@@ -86,6 +89,7 @@ export class TimeService {
         clean(input.note),
         now,
         now,
+        this.resolveBusinessCategory(input,context.projectNodeId),
       ],
     );
     return this.get(id);
@@ -114,6 +118,9 @@ export class TimeService {
   }
 
   resume(id: string): TimeSession {
+    const targetSession=this.get(id);
+    if(targetSession.interventionId){new OperationalSalesTargetService(this.database).assertIntervention(targetSession.interventionId);new OperationalSalesTargetService(this.database).assertInterventionPeriod(targetSession.interventionId,this.nowIso());}
+    if(targetSession.projectNodeId)new ProjectContributionTargetService(this.database).assertAction(targetSession.projectNodeId);
     const session = this.get(id);
     if (session.endedAt) throw new Error('Cette session est déjà terminée.');
     const openPause = this.database.get<{ id: string }>(
@@ -128,6 +135,9 @@ export class TimeService {
   }
 
   recoverResume(id: string): TimeSession {
+    const targetSession=this.get(id);
+    if(targetSession.interventionId){new OperationalSalesTargetService(this.database).assertIntervention(targetSession.interventionId);new OperationalSalesTargetService(this.database).assertInterventionPeriod(targetSession.interventionId,this.nowIso());}
+    if(targetSession.projectNodeId)new ProjectContributionTargetService(this.database).assertAction(targetSession.projectNodeId);
     const row = this.database.get<{ started_at: string; ended_at: string | null; updated_at: string }>(
       'SELECT started_at,ended_at,updated_at FROM time_sessions WHERE id=?',
       [id],
@@ -216,13 +226,13 @@ export class TimeService {
     const ended = this.parseDate(input.endedAt, 'Date de fin invalide.');
     if (ended.getTime() <= started.getTime()) throw new Error('La fin doit être postérieure au début.');
 
-    const context = this.resolveContext(input.projectId ?? null, input.projectNodeId ?? null, input.interventionId ?? null);
+    const context = this.resolveContext(input.projectId ?? null, input.projectNodeId ?? null, input.interventionId ?? null,started.toISOString());
     const id = randomUUID();
     const now = this.nowIso();
     this.database.run(
       `INSERT INTO time_sessions
-       (id,client_account_id,project_id,project_node_id,intervention_id,category,activity_label,started_at,ended_at,billable,source,note,created_at,updated_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,'manual',?,?,?)`,
+       (id,client_account_id,project_id,project_node_id,intervention_id,category,activity_label,started_at,ended_at,billable,source,note,created_at,updated_at,business_category)
+       VALUES (?,?,?,?,?,?,?,?,?,?,'manual',?,?,?,?)`,
       [
         id,
         context.clientAccountId,
@@ -237,6 +247,7 @@ export class TimeService {
         clean(input.note),
         now,
         now,
+        this.resolveBusinessCategory(input,context.projectNodeId),
       ],
     );
     return this.get(id);
@@ -355,6 +366,7 @@ export class TimeService {
       interventionNumber: row.intervention_number,
       interventionLabel: row.intervention_label,
       category: row.category,
+      businessCategory: row.business_category as BusinessTimeCategory | null,
       activityLabel: row.activity_label,
       startedAt: row.started_at,
       endedAt: row.ended_at,
@@ -369,7 +381,7 @@ export class TimeService {
     };
   }
 
-  private resolveContext(projectId?: string | null, nodeId?: string | null, interventionId?: string | null): {
+  private resolveContext(projectId?: string | null, nodeId?: string | null, interventionId?: string | null, historicalAt?:string): {
     clientAccountId: string | null;
     projectId: string | null;
     projectNodeId: string | null;
@@ -381,6 +393,8 @@ export class TimeService {
     let interventionClientId: string | null = null;
 
     if (resolvedInterventionId) {
+      new OperationalSalesTargetService(this.database).assertIntervention(resolvedInterventionId);
+      new OperationalSalesTargetService(this.database).assertInterventionPeriod(resolvedInterventionId,historicalAt??this.nowIso(),!!historicalAt);
       const intervention = this.database.get<{
         client_account_id: string;
         project_id: string | null;
@@ -396,6 +410,7 @@ export class TimeService {
     }
 
     if (resolvedNodeId) {
+      new ProjectContributionTargetService(this.database).assertAction(resolvedNodeId);
       const node = this.database.get<{ project_id: string }>('SELECT project_id FROM project_nodes WHERE id=?', [resolvedNodeId]);
       if (!node) throw new Error('Tâche de projet introuvable.');
       if (resolvedProjectId && node.project_id !== resolvedProjectId) throw new Error('La tâche n’appartient pas au projet sélectionné.');
@@ -423,6 +438,20 @@ export class TimeService {
       projectNodeId: resolvedNodeId,
       interventionId: resolvedInterventionId,
     };
+  }
+
+  resolveBusinessCategory(input: StartTimeSessionInput, nodeId?: string | null): BusinessTimeCategory | null {
+    let category=input.businessCategory===undefined && nodeId
+      ? this.database.get<{business_category:BusinessTimeCategory|null}>('SELECT business_category FROM project_nodes WHERE id=?',[nodeId])?.business_category ?? null
+      : input.businessCategory ?? null;
+    if(category===null&&input.businessCategory===undefined&&input.interventionId){
+      const routine=this.database.get<{business_category:BusinessTimeCategory|null}>('SELECT business_category FROM maintenance_checks WHERE routine_intervention_id=?',[input.interventionId]);
+      const sale=this.database.get<{model_json:string}>(`SELECT m.model_json FROM operational_sales s JOIN operational_model_versions m ON m.id=s.model_version_id WHERE s.intervention_id=?`,[input.interventionId]);
+      const covered=this.database.get(`SELECT s.id FROM operational_sales s JOIN interventions i ON (i.hour_pack_id=s.hour_pack_id OR i.maintenance_period_id IN(SELECT id FROM maintenance_periods WHERE subscription_id=s.subscription_id)) WHERE i.id=?`,[input.interventionId]);
+      category=routine?.business_category??(sale?JSON.parse(sale.model_json).actions[0]?.category:null)??(covered?'Inclus au forfait':null);
+    }
+    if (category!==null && !BUSINESS_TIME_CATEGORIES.includes(category)) throw Error('Catégorie métier invalide.');
+    return category;
   }
 
   private validateInput(input: StartTimeSessionInput): void {

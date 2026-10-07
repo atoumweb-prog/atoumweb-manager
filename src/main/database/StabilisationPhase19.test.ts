@@ -1,3 +1,4 @@
+import { finalizeForTest, acceptForTest } from '../testSupport/quotePreparationFixture';
 import {existsSync,mkdtempSync,rmSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
@@ -25,9 +26,10 @@ describe('stabilisation commerciale migrations 19 à 21',()=>{
    legacy.run("INSERT INTO prospects (id,organization_id,stage,temperature,created_at,updated_at) VALUES ('p','o','new','warm','x','x')");
    legacy.run("INSERT INTO crm_needs (id,prospect_id,other_text,created_at) VALUES ('n','p','Besoin conservé','x')");
    legacy.run("INSERT INTO activity_events (id,entity_type,entity_id,action,summary,prospect_id,created_at) VALUES ('a','prospect','p','created','Historique conservé','p','x')");
+   const expectedPending=getPendingMigrations(legacy).map(m=>m.id);
    const applied=applyPendingMigrations(legacy).map(m=>m.id);
    expect(applied.slice(0,3)).toEqual([19,20,21]);
-   expect(applied).toEqual([19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38]);
+   expect(applied).toEqual(expectedPending);
    expect(applyPendingMigrations(legacy)).toEqual([]);
    expect(legacy.all('SELECT method_type,value FROM contact_methods ORDER BY method_type')).toEqual([{method_type:'email',value:'contact@atoum.test'},{method_type:'phone',value:'0102030405'}]);
    expect(legacy.get("SELECT other_text FROM crm_needs WHERE id='n'")).toEqual({other_text:'Besoin conservé'});
@@ -78,7 +80,7 @@ describe('stabilisation commerciale migrations 19 à 21',()=>{
    expect(identity.contacts.map(contact=>contact.id)).toEqual([primary.id]);
  });
 
- it('finalise puis envoie un devis sans déverrouiller son contenu envoyé',()=>{const org=crm.createOrganization({name:'Devis'}),p=crm.createProspect({organizationId:org.id});workflow.saveNeed('prospect',p.id,{otherText:'Mission'});const q=quotes.create({prospectId:p.id,subject:'Mission'});quotes.addCustomLine(q.id,{label:'Mission',proposedUnitPriceCents:10000});expect(quotes.finalize(q.id).status).toBe('draft');expect(crm.listProspects().find(x=>x.id===p.id)?.stage).toBe('quote_to_send');quotes.markSent(q.id);expect(crm.listProspects().find(x=>x.id===p.id)?.stage).toBe('quote_sent');expect(()=>quotes.addCustomLine(q.id,{label:'Interdit',proposedUnitPriceCents:1})).toThrow(/copie/);});
+ it('finalise puis envoie un devis sans déverrouiller son contenu envoyé',()=>{const org=crm.createOrganization({name:'Devis'}),p=crm.createProspect({organizationId:org.id});workflow.saveNeed('prospect',p.id,{otherText:'Mission'});const q=quotes.create({prospectId:p.id,subject:'Mission'});quotes.addCustomLine(q.id,{label:'Mission',proposedUnitPriceCents:10000});expect(finalizeForTest(db,quotes,q.id).status).toBe('draft');expect(crm.listProspects().find(x=>x.id===p.id)?.stage).toBe('quote_to_send');quotes.markSent(q.id);expect(crm.listProspects().find(x=>x.id===p.id)?.stage).toBe('quote_sent');expect(()=>quotes.addCustomLine(q.id,{label:'Interdit',proposedUnitPriceCents:1})).toThrow(/copie/);});
 
  it('journalise une relance structurée, crée la récurrence et conserve les documents à l’archivage client',()=>{const org=crm.createOrganization({name:'Client'}),client=crm.createClient({organizationId:org.id});const action=actions.create({ownerType:'client',ownerId:client.id,type:'follow_up',title:'Point mensuel',dueAt:'2030-01-15T09:00:00.000Z',recurrence:'monthly'});const done=actions.complete(action.id,{channel:'phone',outcome:'answered',notes:'Échange réalisé'});expect(done).toMatchObject({completionChannel:'phone',completionOutcome:'answered',completionNotes:'Échange réalisé'});expect(actions.list({ownerType:'client',ownerId:client.id,status:'open'})).toHaveLength(1);const source=join(root,'contrat.txt');writeFileSync(source,'contrat');const imported=documents.importPaths(client.id,[source],{category:'contract',title:'Contrat signé',retentionCode:'contract',retentionReason:'Preuve contractuelle',retentionUntil:'2035-01-01'});expect(imported).toHaveLength(1);crm.archiveClient(client.id);expect(documents.list(client.id)).toHaveLength(1);documents.archive(imported[0].id);documents.deletePermanently(imported[0].id);expect(existsSync(documents.absolutePath(imported[0]))).toBe(false);});
 });

@@ -1,3 +1,6 @@
+import type { CommercialVersionRules } from '../../shared/commercialRules';
+import { QuoteContractPreparationService } from './QuoteContractPreparationService';
+import type { ClientDocumentService } from '../crm/ClientDocumentService';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import {
@@ -5,6 +8,7 @@ import {
   CONTRACT_CLAUSE_SCOPES,
   CONTRACT_CLAUSE_STATUSES,
   type ContractClauseAudience,
+  type ContractClauseReviewMetadata,
   type ContractClauseScope,
   type ContractClauseStatus,
   type ContractClauseTemplate,
@@ -47,6 +51,7 @@ interface VersionRow extends Record<string, unknown> {
   body: string;
   status: ContractClauseVersionStatus;
   published_at: string | null;
+  review_metadata_json: string | null;
   created_at: string;
 }
 
@@ -114,7 +119,7 @@ interface DesiredClause {
 }
 
 export class ContractTermsService {
-  constructor(private readonly database: DatabaseAdapter) {}
+  constructor(private readonly database: DatabaseAdapter, private readonly documents?: ClientDocumentService) {}
 
   listTemplates(includeArchived = false): ContractClauseTemplate[] {
     const rows = this.database.all<TemplateRow>(
@@ -168,7 +173,7 @@ export class ContractTermsService {
     const id = randomUUID();
     const versionId = randomUUID();
     const now = nowIso();
-    this.database.exec('BEGIN IMMEDIATE;');
+    this.database.exec('SAVEPOINT contract_library_operation;');
     try {
       this.database.run(
         `INSERT INTO contract_clause_templates
@@ -178,14 +183,14 @@ export class ContractTermsService {
       );
       this.database.run(
         `INSERT INTO contract_clause_versions
-         (id,clause_id,version_number,body,status,published_at,created_at)
-         VALUES (?,?,1,?,'draft',NULL,?)`,
-        [versionId, id, firstVersion.body ?? '', now],
+         (id,clause_id,version_number,body,status,published_at,created_at,review_metadata_json)
+         VALUES (?,?,1,?,'draft',NULL,?,?)`,
+        [versionId, id, firstVersion.body ?? '', now, firstVersion.review ? JSON.stringify(firstVersion.review) : null],
       );
       this.writeActivity('contract_clause', id, 'contract_clause_created', `Clause ${code} créée`);
-      this.database.exec('COMMIT;');
+      this.database.exec('RELEASE SAVEPOINT contract_library_operation;');
     } catch (error) {
-      this.database.exec('ROLLBACK;');
+      this.database.exec('ROLLBACK TO SAVEPOINT contract_library_operation; RELEASE SAVEPOINT contract_library_operation;');
       throw error;
     }
     return this.getTemplate(id);
@@ -202,9 +207,9 @@ export class ContractTermsService {
     const now = nowIso();
     this.database.run(
       `INSERT INTO contract_clause_versions
-       (id,clause_id,version_number,body,status,published_at,created_at)
-       VALUES (?,?,?,?, 'draft', NULL, ?)`,
-      [id, clauseId, Number(next?.next_version ?? 1), input.body ?? '', now],
+       (id,clause_id,version_number,body,status,published_at,created_at,review_metadata_json)
+       VALUES (?,?,?,?, 'draft', NULL, ?, ?)`,
+      [id, clauseId, Number(next?.next_version ?? 1), input.body ?? '', now, input.review ? JSON.stringify(input.review) : null],
     );
     this.database.run('UPDATE contract_clause_templates SET updated_at=? WHERE id=?', [now, clauseId]);
     this.writeActivity('contract_clause', clauseId, 'contract_clause_version_created', `Nouvelle version de ${template.code}`);
@@ -298,10 +303,18 @@ export class ContractTermsService {
 
   getQuoteBuild(quoteId: string): QuoteContractBuild {
     const state = this.quoteState(quoteId);
+    const frozen = this.hasSnapshot(state);
+    const locked = frozen || state.status !== 'draft' || Boolean(state.finalized_at);
+    const snapshotState = frozen ? 'frozen' : locked ? 'historical_missing' : 'draft';
     const clauses = this.quoteClauses(quoteId);
     const audience = this.resolveQuoteAudience(state);
     const compiledText = this.compile(clauses);
     const warnings: string[] = [];
+    if (snapshotState === 'historical_missing') {
+      warnings.push('Devis historique sans snapshot contractuel : cette absence est conservée. Aucune reconstruction depuis la bibliothèque actuelle.');
+    } else if (frozen && (state.contract_text_snapshot === null || state.contract_snapshot_json === null)) {
+      warnings.push('Snapshot historique incomplet : les données conservées ne sont pas recalculées.');
+    }
     if (!clauses.some((clause) => clause.sourceKind === 'base' && clause.enabled && !clause.isOrphaned)) {
       warnings.push('Aucune clause publiée du socle CGV n’est incluse.');
     }
@@ -330,7 +343,8 @@ export class ContractTermsService {
     return {
       quoteId,
       audience,
-      locked: state.status !== 'draft' || Boolean(state.finalized_at),
+      locked,
+      snapshotState,
       clauses,
       compiledText,
       snapshotText: state.contract_text_snapshot,
@@ -447,31 +461,34 @@ export class ContractTermsService {
 
   freezeQuote(quoteId: string): QuoteContractBuild {
     const state = this.quoteState(quoteId);
-    if (state.finalized_at && state.contract_compiled_at && state.contract_text_snapshot) return this.getQuoteBuild(quoteId);
-
-    const before = this.quoteClauses(quoteId);
-    if (state.status === 'draft' && !state.finalized_at) {
-      this.syncQuoteInternal(quoteId, true);
-    } else if (before.length === 0) {
-      // Compatibilité pour les anciens devis déjà envoyés avant l'arrivée du Builder CGV.
-      this.syncQuoteInternal(quoteId, true);
-    }
+    // A timestamp/JSON (including an empty clause list) is evidence of freezing.
+    // Locked legacy quotes must retain their historical absence, even with instances.
+    if (this.hasSnapshot(state) || state.status !== 'draft' || state.finalized_at) return this.getQuoteBuild(quoteId);
+    const payload=new QuoteContractPreparationService(this.database, this.documents).freezePayload(quoteId);
+    this.database.exec('SAVEPOINT quote_contract_freeze;');
+    try {
+    this.syncQuoteInternal(quoteId);
     const clauses = this.quoteClauses(quoteId);
     const audience = this.resolveQuoteAudience(state);
     const compiledText = this.compile(clauses);
     const included = clauses.filter((clause) => clause.enabled);
+    if(payload && !included.some(c=>c.sourceKind==='base'&&!c.isOrphaned)) throw Error('Préparation contractuelle incomplète : aucun socle publié disponible ; les brouillons ne sont pas consommés.');
+
+    if(payload && included.some(c=>!clean(c.body)||c.isOrphaned||/\[À RENSEIGNER/i.test(c.body))) throw Error('Clause incluse vide, orpheline ou incomplète : finalisation refusée.');
     const now = nowIso();
     this.database.run(
       `UPDATE quotes
        SET contract_text_snapshot=?,contract_snapshot_json=?,contract_compiled_at=?,contract_audience=?,updated_at=?
        WHERE id=?`,
-      [compiledText, JSON.stringify({ audience, clauses: included }), now, audience, now, quoteId],
+      [compiledText, JSON.stringify({ ...(payload ?? {}), audience, clauses: included, ...(payload ? {compiledAt:now,finalizationAt:now} : {}) }), now, audience, now, quoteId],
     );
     this.writeActivity('quote', quoteId, 'quote_contract_frozen', 'Version contractuelle des CGV figée');
+    this.database.exec('RELEASE quote_contract_freeze;');
     return this.getQuoteBuild(quoteId);
+    } catch(error) {this.database.exec('ROLLBACK TO quote_contract_freeze; RELEASE quote_contract_freeze;');throw error;}
   }
 
-  copyQuoteCustomizations(sourceQuoteId: string, targetQuoteId: string): QuoteContractBuild {
+  copyQuoteCustomizations(sourceQuoteId: string, targetQuoteId: string, lineIds?: Map<string,string>): QuoteContractBuild {
     this.assertQuoteEditable(targetQuoteId);
     this.syncQuoteInternal(targetQuoteId);
     const source = this.quoteClauses(sourceQuoteId);
@@ -483,7 +500,8 @@ export class ContractTermsService {
         this.addCustomQuoteClause(targetQuoteId, { title: clause.title, body: clause.body, enabled: clause.enabled });
         continue;
       }
-      const match = targetByKey.get(clause.sourceKey);
+      const targetKey = clause.sourceKey.startsWith('particular-line:') && lineIds ? `particular-line:${lineIds.get(clause.sourceKey.slice('particular-line:'.length))}` : clause.sourceKey;
+      const match = targetByKey.get(targetKey);
       if (!match) continue;
       this.database.run(
         `UPDATE quote_contract_clauses
@@ -501,9 +519,9 @@ export class ContractTermsService {
     return this.getQuoteBuild(targetQuoteId);
   }
 
-  private syncQuoteInternal(quoteId: string, allowLocked = false): void {
+  private syncQuoteInternal(quoteId: string): void {
     const state = this.quoteState(quoteId);
-    if (!allowLocked && (state.status !== 'draft' || state.finalized_at)) {
+    if (this.hasSnapshot(state) || state.status !== 'draft' || state.finalized_at) {
       throw new Error('Les CGV de ce devis sont figées. Duplique le devis pour les modifier.');
     }
 
@@ -515,7 +533,7 @@ export class ContractTermsService {
     const existingByKey = new Map(existing.map((row) => [row.source_key, row]));
     const now = nowIso();
 
-    this.database.exec('BEGIN IMMEDIATE;');
+    this.database.exec('SAVEPOINT quote_clause_sync;');
     try {
       for (const clause of desired.values()) {
         const row = existingByKey.get(clause.sourceKey);
@@ -559,9 +577,9 @@ export class ContractTermsService {
           [autoDisable ? 0 : row.enabled, now, row.id],
         );
       }
-      this.database.exec('COMMIT;');
+      this.database.exec('RELEASE quote_clause_sync;');
     } catch (error) {
-      this.database.exec('ROLLBACK;');
+      this.database.exec('ROLLBACK TO quote_clause_sync; RELEASE quote_clause_sync;');
       throw error;
     }
   }
@@ -668,6 +686,16 @@ export class ContractTermsService {
       }
     }
 
+    // Explicit per-version particular conditions coexist with shared modules.
+    // Source identity follows the actual sold line; existing orphan/customization rules apply.
+    for (const { row, snapshot } of lineSnapshots) {
+      const terms = (snapshot?.commercialRules as CommercialVersionRules | undefined)?.particularTerms;
+      if (!terms || !row.catalog_item_id) continue;
+      const sourceKey = `particular-line:${row.id}`;
+      desired.set(sourceKey, {sourceKey,sourceKind:'catalog',sourceClauseId:null,sourceClauseVersionId:null,
+        sourceCatalogItemIds:[row.catalog_item_id],title:terms.title,body:terms.body,sortOrder:1800+desired.size});
+    }
+
     let legacyIndex = 0;
     for (const { row, snapshot } of lineSnapshots) {
       if (!row.catalog_item_id || linkedItemIds.has(row.catalog_item_id)) continue;
@@ -751,9 +779,13 @@ export class ContractTermsService {
 
   private assertQuoteEditable(quoteId: string): void {
     const state = this.quoteState(quoteId);
-    if (state.status !== 'draft' || state.finalized_at) {
+    if (this.hasSnapshot(state) || state.status !== 'draft' || state.finalized_at) {
       throw new Error('Les CGV de ce devis sont figées. Duplique le devis pour les modifier.');
     }
+  }
+
+  private hasSnapshot(state: QuoteStateRow): boolean {
+    return state.contract_compiled_at !== null || state.contract_text_snapshot !== null || state.contract_snapshot_json !== null;
   }
 
   private quoteClauses(quoteId: string): QuoteContractClause[] {
@@ -764,6 +796,7 @@ export class ContractTermsService {
 
   private compile(clauses: QuoteContractClause[]): string {
     const included = clauses.filter((clause) => clause.enabled);
+
     if (included.length === 0) return '';
     const body = included.map((clause, index) => {
       const text = clause.body.trim();
@@ -780,6 +813,7 @@ export class ContractTermsService {
       body: row.body,
       status: row.status,
       publishedAt: row.published_at,
+      review: row.review_metadata_json ? JSON.parse(row.review_metadata_json) as ContractClauseReviewMetadata : null,
       createdAt: row.created_at,
     };
   }

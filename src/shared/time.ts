@@ -1,3 +1,4 @@
+import type { BusinessTimeCategory } from './operational';
 export const TIME_CATEGORIES = [
   'production',
   'development',
@@ -20,6 +21,7 @@ export type TimeSessionSource = (typeof TIME_SESSION_SOURCES)[number];
 export type TimePauseReason = (typeof TIME_PAUSE_REASONS)[number];
 
 export interface StartTimeSessionInput {
+  businessCategory?: BusinessTimeCategory | null;
   projectId?: string | null;
   projectNodeId?: string | null;
   interventionId?: string | null;
@@ -46,6 +48,7 @@ export interface TimeSessionPause {
 }
 
 export interface TimeSession {
+  businessCategory?: BusinessTimeCategory | null;
   id: string;
   clientAccountId?: string | null;
   clientLabel?: string | null;

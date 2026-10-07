@@ -1,3 +1,4 @@
+import { BUSINESS_TIME_CATEGORIES } from '../../shared/operational';
 import { useEffect, useMemo, useState } from 'react';
 import type { ProjectNode } from '../../shared/projects';
 import type { TimeSession, TimeSummary } from '../../shared/time';
@@ -49,7 +50,8 @@ export function ProjectTimeTab({ projectId, nodes, onMessage }: {
         nodeId: node?.id ?? null,
         activityLabel: node?.name ?? null,
         category: node?.timeCategory || 'production',
-        billable: true,
+        businessCategory:node?.businessCategory,
+        billable:node?.businessCategory?node.businessCategory==='Supplément facturable':true,
       },
     }));
   }
@@ -58,8 +60,12 @@ export function ProjectTimeTab({ projectId, nodes, onMessage }: {
   const estimatedSeconds = useMemo(() => nodes
     .filter((node) => ['task', 'checklist'].includes(node.type))
     .reduce((total, node) => total + (node.estimatedMinutes ?? 0) * 60, 0), [nodes]);
-  const varianceSeconds = summary.totalSeconds - estimatedSeconds;
-  const varianceLabel = estimatedSeconds === 0
+  const incomplete=nodes.some(n=>n.operational?.action && n.operational.estimateRequired && n.estimatedMinutes==null);
+  const reference=nodes.filter(n=>n.operational?.action).reduce((v,n)=>v+(n.operational?.referenceMinutes ?? 0),0);
+  const comparableSeconds = nodes.some(n=>n.operational?.action)
+    ? sessions.filter(s=>s.businessCategory==='Inclus au forfait'||s.businessCategory==='Supplément facturable').reduce((v,s)=>v+s.durationSeconds,0) : summary.totalSeconds;
+  const varianceSeconds = comparableSeconds - estimatedSeconds;
+  const varianceLabel = incomplete ? 'Estimation incomplète : écart non calculable' : estimatedSeconds === 0
     ? 'Pas d’estimation'
     : varianceSeconds === 0
       ? 'Conforme à l’estimation'
@@ -70,13 +76,18 @@ export function ProjectTimeTab({ projectId, nodes, onMessage }: {
   return (
     <div className="project-tab-content project-time-tab">
       <div className="project-time-summary">
-        <div><span>Temps estimé</span><strong>{estimatedSeconds ? duration(estimatedSeconds) : '—'}</strong></div>
+        <div><span>Temps estimé{incomplete?' — incomplet':''}</span><strong>{estimatedSeconds ? duration(estimatedSeconds) : '—'}</strong></div>
         <div><span>Temps réel</span><strong>{duration(summary.totalSeconds)}</strong></div>
-        <div><span>Écart</span><strong>{varianceLabel}</strong></div>
+        <div><span>Écart{nodes.some(n=>n.operational?.action)?' production qualifiée':''}</span><strong>{varianceLabel}</strong></div>
         <div><span>Facturable</span><strong>{duration(summary.billableSeconds)}</strong></div>
         <div><span>Non facturable</span><strong>{duration(summary.nonBillableSeconds)}</strong></div>
       </div>
 
+      {nodes.some(n=>n.operational?.action) && <section aria-label="Temps par catégorie métier">
+        <p>Référence initiale : {duration(reference*60)}{incomplete?' · socle indicatif, estimation complète à établir':''}</p>
+        {BUSINESS_TIME_CATEGORIES.map(c=><p key={c}>{c} : {duration(sessions.filter(s=>s.businessCategory===c).reduce((v,s)=>v+s.durationSeconds,0))}</p>)}
+        <p>Temps historique non qualifié : {duration(sessions.filter(s=>!s.businessCategory).reduce((v,s)=>v+s.durationSeconds,0))}</p>
+      </section>}
       <div className="project-time-start">
         <div><strong>Démarrer le timer</strong><small>Le contexte sera prérempli dans le timer global.</small></div>
         <button className="primary-button" type="button" onClick={() => prepareTimer()}>▶ Projet entier</button>
@@ -98,7 +109,7 @@ export function ProjectTimeTab({ projectId, nodes, onMessage }: {
         <strong>Dernières sessions</strong>
         {sessions.slice(0, 10).map((session) => (
           <div key={session.id}>
-            <div><strong>{session.projectNodeLabel || session.activityLabel || 'Projet'}</strong><small>{dateLabel(session.startedAt)} · {session.category}</small></div>
+            <div><strong>{session.projectNodeLabel || session.activityLabel || 'Projet'}</strong><small>{dateLabel(session.startedAt)} · {session.category} · {session.businessCategory ?? 'Métier non qualifié'}</small></div>
             <span>{duration(session.durationSeconds)}</span>
           </div>
         ))}

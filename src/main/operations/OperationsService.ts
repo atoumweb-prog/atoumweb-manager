@@ -1,3 +1,4 @@
+import { OperationalSalesTargetService } from './OperationalSalesTargetService';
 import { randomUUID } from 'node:crypto';
 import { TimeService } from '../time/TimeService';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
@@ -49,6 +50,7 @@ interface RequestRow extends Record<string, unknown> {
 }
 
 interface InterventionRow extends Record<string, unknown> {
+  estimated_minutes:number|null;operational_checklist_json:string|null;
   id: string;
   intervention_number: string;
   client_account_id: string;
@@ -294,6 +296,7 @@ export class OperationsService {
 
   updateIntervention(id: string, input: Partial<InterventionInput>): Intervention {
     const current = this.getIntervention(id);
+    if(input.estimatedMinutes!=null && (!Number.isSafeInteger(input.estimatedMinutes)||input.estimatedMinutes<0))throw Error('Estimation invalide.');
     if (current.status === 'archived') throw new Error('Réactive l’intervention avant de la modifier.');
     const clientId = clean(input.clientAccountId ?? current.clientAccountId) as string;
     const projectId = input.projectId === undefined ? current.projectId ?? null : clean(input.projectId);
@@ -339,11 +342,13 @@ export class OperationsService {
         incident ? (input.incidentFollowUp === undefined ? current.incidentFollowUp ?? null : clean(input.incidentFollowUp)) : null,
         nowIso(), id],
     );
+    if(input.estimatedMinutes!==undefined)this.database.run('UPDATE interventions SET estimated_minutes=? WHERE id=?',[input.estimatedMinutes,id]);
     return this.getIntervention(id);
   }
 
   changeInterventionStatus(id: string, status: InterventionStatus): Intervention {
     this.assertInterventionStatus(status);
+    if(['in_progress','to_validate','completed'].includes(status))new OperationalSalesTargetService(this.database).assertIntervention(id);
     const current = this.getIntervention(id);
     const now = nowIso();
     const startedAt = status === 'in_progress' && !current.startedAt ? now : current.startedAt ?? null;
@@ -393,7 +398,9 @@ export class OperationsService {
   }
 
   private mapIntervention(row: InterventionRow): Intervention {
-    return {
+    const model=this.database.get<{model_json:string;parameters_snapshot_json:string}>(`SELECT m.model_json,s.parameters_snapshot_json FROM operational_sales s JOIN operational_model_versions m ON m.id=s.model_version_id WHERE s.intervention_id=?`,[row.id]);
+    const routine=this.database.get<{reference_minutes:number|null}>('SELECT reference_minutes FROM maintenance_checks WHERE routine_intervention_id=?',[row.id]);
+    return {estimatedMinutes:row.estimated_minutes,referenceMinutes:routine?.reference_minutes??(model?Math.round(JSON.parse(model.model_json).referenceMinutes*(JSON.parse(model.parameters_snapshot_json).quantityMilli/1000)):null),operationalChecklist:row.operational_checklist_json?JSON.parse(row.operational_checklist_json):[],
       id: row.id, number: row.intervention_number, clientAccountId: row.client_account_id, projectId: row.project_id,
       projectNodeId: row.project_node_id, sourceRequestId: row.source_request_id, maintenancePeriodId: row.maintenance_period_id,
       hourPackId: row.hour_pack_id, type: row.intervention_type, status: row.status,

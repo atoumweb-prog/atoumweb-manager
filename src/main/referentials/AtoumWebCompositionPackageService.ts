@@ -1,8 +1,10 @@
-import { createHash } from 'node:crypto';
-import { mkdirSync } from 'node:fs';
+import { createHash, randomUUID } from 'node:crypto';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { basename, join, resolve, sep } from 'node:path';
 import type { AtoumWebCompositionPackageExportResult } from '../../shared/referentials';
 import { buildComponentIdentityV1 } from '../../shared/componentIdentity';
+import pagePackageSchema from '../../../docs/ATOUMWEB_PAGE_PACKAGE_V2.schema.json';
+import { validateContractSchemaV1 } from '../../shared/contractSchemaV1';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import type { WorkspacePaths } from '../workspace';
 import { AtoumWebCompositionService } from './AtoumWebCompositionService';
@@ -31,6 +33,13 @@ interface ComponentPackageManifest {
   };
 }
 
+interface PageExportContext {
+  exportId: string;
+  projectId: string;
+  siteId: string;
+  pageId: string;
+}
+
 export class AtoumWebCompositionPackageService {
   constructor(
     private readonly database: DatabaseAdapter,
@@ -41,6 +50,45 @@ export class AtoumWebCompositionPackageService {
   ) {}
 
   exportPackage(compositionId: string): AtoumWebCompositionPackageExportResult {
+    return this.buildPackage(compositionId, null);
+  }
+
+  exportPagePackage(projectNodeId: string): AtoumWebCompositionPackageExportResult {
+    const destination = this.database.get<{
+      composition_id: string; project_id: string; project_site_id: string; project_node_id: string;
+    }>(
+      `SELECT ppc.composition_id,pn.project_id,psp.project_site_id,pn.id project_node_id
+       FROM project_page_compositions ppc
+       JOIN project_nodes pn ON pn.id=ppc.project_node_id
+       JOIN project_site_pages psp ON psp.project_node_id=pn.id
+       JOIN project_sites ps ON ps.id=psp.project_site_id AND ps.project_id=pn.project_id
+       WHERE pn.id=? AND pn.node_type='module' AND pn.display_subtype='page' AND ps.archived_at IS NULL`,
+      [projectNodeId],
+    );
+    if (!destination) {
+      throw new Error('La Page doit être rattachée à un Site actif et posséder une composition avant son export.');
+    }
+    const context: PageExportContext = {
+      exportId: `awexp:${randomUUID()}`,
+      projectId: destination.project_id,
+      siteId: destination.project_site_id,
+      pageId: destination.project_node_id,
+    };
+    const exported = this.buildPackage(destination.composition_id, context);
+    const fingerprint = this.sha256(readFileSync(exported.path));
+    this.database.run(
+      `INSERT INTO project_page_exports
+       (id,composition_id,project_id,project_site_id,project_node_id,package_fingerprint,package_path,component_count,created_at)
+       VALUES (?,?,?,?,?,?,?,?,?)`,
+      [
+        context.exportId, destination.composition_id, context.projectId, context.siteId, context.pageId,
+        fingerprint, exported.path, exported.componentCount, exported.createdAt,
+      ],
+    );
+    return { ...exported, exportId: context.exportId, projectId: context.projectId, siteId: context.siteId, pageId: context.pageId };
+  }
+
+  private buildPackage(compositionId: string, page: PageExportContext | null): AtoumWebCompositionPackageExportResult {
     const composition = this.compositions.get(compositionId);
     if (composition.status === 'archived') throw new Error('Réactive la composition avant de préparer un package.');
     if (composition.items.length === 0) throw new Error('Ajoute au moins un composant avant de préparer le package.');
@@ -110,9 +158,13 @@ export class AtoumWebCompositionPackageService {
           libraryVersionNumber: version.versionNumber,
         };
         const copiedFiles = {
-          html: addText('component/component.html', version.contentText),
-          css: null,
-          javascript: null,
+          html: addText('component/component.html', compositionItem.localHtml ?? version.contentText),
+          css: compositionItem.hasLocalChanges && compositionItem.localCss
+            ? addText('component/component.css', compositionItem.localCss)
+            : null,
+          javascript: compositionItem.hasLocalChanges && compositionItem.localJavascript
+            ? addText('component/component.js', compositionItem.localJavascript)
+            : null,
           fields: addText('component/fields.json', `${JSON.stringify(fieldsValue, null, 2)}\n`),
           identity: addText('component/identity.json', `${JSON.stringify(identityValue, null, 2)}\n`),
           dependencies: addText('component/dependencies.json', '[]\n'),
@@ -171,6 +223,27 @@ export class AtoumWebCompositionPackageService {
         copiedFiles[key] = { path: targetPath, sha256: actual };
       }
 
+      if (compositionItem.hasLocalChanges && compositionItem.localHtml) {
+        const replacePreparedFile = (key: 'html' | 'css' | 'javascript', fallbackPath: string, value: string | null): void => {
+          const current = copiedFiles[key];
+          if (current?.path) {
+            const existingIndex = entries.findIndex((entry) => entry.name === current.path);
+            if (existingIndex >= 0) entries.splice(existingIndex, 1);
+          }
+          if (!value) {
+            copiedFiles[key] = null;
+            return;
+          }
+          const data = Buffer.from(value, 'utf8');
+          const path = current?.path ?? `${prefix}/${fallbackPath}`;
+          entries.push({ name: path, data });
+          copiedFiles[key] = { path, sha256: this.sha256(data) };
+        };
+        replacePreparedFile('html', 'component/component.html', compositionItem.localHtml);
+        replacePreparedFile('css', 'component/component.css', compositionItem.localCss);
+        replacePreparedFile('javascript', 'component/component.js', compositionItem.localJavascript);
+      }
+
       const copiedAssets: Array<Record<string, unknown>> = [];
       for (const asset of componentManifest.assets ?? []) {
         const archivePath = typeof asset.archivePath === 'string' ? asset.archivePath : null;
@@ -210,7 +283,16 @@ export class AtoumWebCompositionPackageService {
 
     const manifest = {
       contract: 'atoumweb_bridge_project_package',
-      schemaVersion: 1,
+      schemaVersion: page ? 2 : 1,
+      ...(page ? {
+        scope: 'page',
+        exportId: page.exportId,
+        destination: {
+          projectId: page.projectId,
+          siteId: page.siteId,
+          pageId: page.pageId,
+        },
+      } : {}),
       exportedAt: createdAt,
       safety: {
         flow: 'workbench_first',
@@ -226,6 +308,10 @@ export class AtoumWebCompositionPackageService {
       },
       components: manifestComponents,
     };
+    if (page) {
+      const errors = validateContractSchemaV1(manifest, pagePackageSchema);
+      if (errors.length) throw new Error(`Package Page V2 invalide : ${errors.join(' ')}`);
+    }
 
     entries.unshift({
       name: 'manifest.json',
@@ -246,13 +332,21 @@ export class AtoumWebCompositionPackageService {
         composition.id,
         'atoumweb_composition_package_exported',
         `Package projet préparé : ${composition.name}`,
-        JSON.stringify({ path: destination, componentCount: composition.items.length }),
+        JSON.stringify({
+          path: destination,
+          componentCount: composition.items.length,
+          ...(page ? { exportId: page.exportId, projectId: page.projectId, siteId: page.siteId, pageId: page.pageId } : {}),
+        }),
         createdAt,
       ],
     );
 
     return {
       compositionId: composition.id,
+      exportId: page?.exportId ?? null,
+      projectId: page?.projectId ?? null,
+      siteId: page?.siteId ?? null,
+      pageId: page?.pageId ?? null,
       path: destination,
       fileName,
       componentCount: composition.items.length,

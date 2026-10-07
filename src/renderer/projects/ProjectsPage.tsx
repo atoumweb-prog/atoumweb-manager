@@ -1,3 +1,6 @@
+import { OperationalActionDetails } from './OperationalActionDetails';
+import { ProjectCommercialScopePanel } from './ProjectCommercialScopePanel';
+import { ProjectBlueprintOrigins } from './ProjectBlueprintOrigins';
 import { useEffect, useMemo, useState } from 'react';
 import type { QuoteSummary } from '../../shared/commercial';
 import {
@@ -23,6 +26,7 @@ import {
 import { ProjectCompletionReviewPanel } from './ProjectCompletionReviewPanel';
 import { ProjectOperationsTab } from './ProjectOperationsTab';
 import { ProjectResourcesTab } from './ProjectResourcesTab';
+import { ProjectSitesTab } from './ProjectSitesTab';
 import { ProjectTechnicalLibraryTab } from './ProjectTechnicalLibraryTab';
 import { ProjectTimeTab } from './ProjectTimeTab';
 import type { TimeSession } from '../../shared/time';
@@ -140,7 +144,7 @@ function formatTimer(seconds: number): string {
   return [hours, minutes, rest].map((value) => String(value).padStart(2, '0')).join(':');
 }
 
-export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true }: { onMessage: (message: string) => void; initialProjectId?: string | null; showHoverHelp?: boolean }) {
+export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true }: { onMessage: (message: string, action?: () => void) => void; initialProjectId?: string | null; showHoverHelp?: boolean }) {
   const [view, setView] = useState<'projects' | 'templates'>('projects');
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [templates, setTemplates] = useState<ProjectTemplateSummary[]>([]);
@@ -157,6 +161,7 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
   const [phaseCompletionBusy, setPhaseCompletionBusy] = useState(false);
   const [productionSplitPercent, setProductionSplitPercent] = useState(40);
   const [productionTreeCollapsed, setProductionTreeCollapsed] = useState(false);
+  const [projectTopCollapsed, setProjectTopCollapsed] = useState(false);
   const [productionOverlay, setProductionOverlay] = useState<'resources' | 'technical' | 'time' | 'secrets' | null>(null);
   const [loading, setLoading] = useState(true);
   const [createMode, setCreateMode] = useState<'quote' | 'internal' | null>(null);
@@ -166,12 +171,12 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
   const [targetDate, setTargetDate] = useState('');
   const [commercialMode, setCommercialMode] = useState<ProjectCommercialMode>('normal');
   const [saving, setSaving] = useState(false);
-  const [detailTab, setDetailTab] = useState<'summary' | 'plan' | 'prerequisites' | 'resources' | 'technical' | 'operations' | 'time' | 'commercial'>('summary');
+  const [detailTab, setDetailTab] = useState<'summary' | 'plan' | 'sites' | 'prerequisites' | 'resources' | 'technical' | 'operations' | 'time' | 'commercial'>('summary');
   const [completionReview, setCompletionReview] = useState<ProjectCompletionReview | null>(null);
   const [completionBusy, setCompletionBusy] = useState(false);
 
   const [newNodeName, setNewNodeName] = useState('');
-  const [newNodeType, setNewNodeType] = useState<'lot' | 'module' | 'task' | 'checklist'>('task');
+  const [newNodeType, setNewNodeType] = useState<'lot' | 'module' | 'page' | 'task' | 'checklist'>('task');
   const [newNodeParentId, setNewNodeParentId] = useState('');
   const [newNodeMinutes, setNewNodeMinutes] = useState('');
   const [newNodeRequired, setNewNodeRequired] = useState(true);
@@ -200,6 +205,14 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
   }
 
   useEffect(() => { void refresh(); }, []);
+
+  useEffect(()=>{
+    if(!selectedId) return;
+    let current=true;
+    const changed=()=>void window.atoumweb.projects.projects.get(selectedId).then(p=>{if(current)setDetail(p);}).catch(()=>{});
+    window.addEventListener('atoumweb:time-changed',changed);
+    return ()=>{current=false;window.removeEventListener('atoumweb:time-changed',changed);};
+  },[selectedId]);
 
   useEffect(() => {
     if (!initialProjectId) return;
@@ -398,9 +411,11 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
     try {
       const minutes = newNodeMinutes.trim() ? Number(newNodeMinutes) : null;
       if (minutes != null && (!Number.isFinite(minutes) || minutes < 0)) throw new Error('Temps estimé invalide.');
+      const nodeType: ProjectNodeInput['type'] = newNodeType === 'page' ? 'module' : newNodeType;
       const updated = await window.atoumweb.projects.projects.addNode(detail.id, {
         parentId: newNodeParentId || null,
-        type: newNodeType,
+        type: nodeType,
+        displaySubtype: newNodeType === 'page' ? 'page' : null,
         name: newNodeName.trim(),
         estimatedMinutes: minutes,
         required: newNodeRequired,
@@ -627,12 +642,16 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
     const nodePositions = buildProjectNodePositions(detail.nodes);
     const selectedPosition = selectedNode ? nodePositions.get(selectedNode.id) ?? null : null;
     return (
-      <div className="project-production-page">
-        <header className="project-production-header">
+      <div className={`project-production-page ${projectTopCollapsed ? 'project-top-collapsed' : ''}`}>
+        {projectTopCollapsed ? <div className="project-production-header-compact">
+          <button className="secondary-button project-production-back" type="button" onClick={closeProjectDetail}>← Projets</button>
+          <strong>{detail.number} · {detail.name}</strong>
+          <button className="secondary-button" type="button" onClick={() => setProjectTopCollapsed(false)}>↓ Afficher l’en-tête</button>
+        </div> : <header className="project-production-header">
           <div className="project-production-title">
             <button className="secondary-button project-production-back" type="button" onClick={closeProjectDetail}>← Projets</button>
             <div>
-              <span className="eyebrow">{detail.number} · Mode production</span>
+              <span className="eyebrow">{detail.number} · {detail.commercialState==='provisional'?'Projet prévisionnel':'Mode production'}</span>
               <h2>{detail.name}</h2>
               <p>{detail.clientLabel}</p>
             </div>
@@ -654,8 +673,9 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
                 <i><b style={{ width: `${detail.progressPercent}%` }} /></i>
               </div>
             </div>
+            <button className="secondary-button project-production-collapse-top" type="button" title="Réduire l’en-tête du Projet" onClick={() => setProjectTopCollapsed(true)}>↑ Réduire</button>
           </div>
-        </header>
+        </header>}
 
         {completionReview && <ProjectCompletionReviewPanel review={completionReview} busy={completionBusy} onConfirm={confirmProjectCompletion} onCancel={() => setCompletionReview(null)} />}
         {phaseCompletionReview && <PhaseCompletionReviewPanel
@@ -665,13 +685,38 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
           onCancel={() => setPhaseCompletionReview(null)}
         />}
 
+        <ProjectCommercialScopePanel key={detail.id+detail.commercialState} projectId={detail.id} onChanged={p=>{setDetail(p);void refresh();}}/>
         <nav className="project-production-nav" aria-label="Sections du projet">
           <button className={detailTab === 'plan' ? 'active' : ''} type="button" onClick={() => setDetailTab('plan')}>Production</button>
+          <button className={detailTab === 'sites' ? 'active' : ''} type="button" onClick={() => setDetailTab('sites')}>Sites & pages</button>
           <button className={detailTab === 'prerequisites' ? 'active' : ''} type="button" onClick={() => setDetailTab('prerequisites')}>Prérequis</button>
-          <button className={detailTab === 'operations' ? 'active' : ''} type="button" onClick={() => setDetailTab('operations')}>Interventions</button>
+          <button className={detailTab === 'operations' ? 'active' : ''} disabled={detail.commercialState==='provisional'} title={detail.commercialState==='provisional'?'Disponible après acceptation du devis':undefined} type="button" onClick={() => setDetailTab('operations')}>Interventions</button>
           <button className={detailTab === 'commercial' ? 'active' : ''} type="button" onClick={() => setDetailTab('commercial')}>Commercial</button>
           <button className={detailTab === 'summary' ? 'active' : ''} type="button" onClick={() => setDetailTab('summary')}>Résumé</button>
         </nav>
+
+        {detailTab === 'sites' && (
+          <ProjectSitesTab
+            projectId={detail.id}
+            nodes={detail.nodes}
+            onMessage={onMessage}
+            onProjectChanged={async (updated) => {
+              setDetail(updated);
+              await refresh();
+            }}
+            onOpenPage={(pageId) => {
+              setSelectedNodeId(pageId);
+              let cursor = detail.nodes.find((node) => node.id === pageId) ?? null;
+              let rootId: string | null = cursor?.id ?? null;
+              while (cursor?.parentId) {
+                rootId = cursor.parentId;
+                cursor = detail.nodes.find((node) => node.id === cursor?.parentId) ?? null;
+              }
+              if (rootId) setExpandedPhaseIds((current) => new Set([...current, rootId!]));
+              setDetailTab('plan');
+            }}
+          />
+        )}
 
         {detailTab === 'plan' && (
           <main
@@ -693,7 +738,7 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
                     <div className="project-node-add-grid">
                       <input value={newNodeName} onChange={(event) => setNewNodeName(event.target.value)} placeholder="Nom de la tâche / module…" />
                       <select value={newNodeType} onChange={(event) => setNewNodeType(event.target.value as typeof newNodeType)}>
-                        <option value="lot">Lot</option><option value="module">Module / Page</option><option value="task">Tâche</option><option value="checklist">Checklist</option>
+                        <option value="lot">Lot</option><option value="module">Module</option><option value="page">Page</option><option value="task">Tâche</option><option value="checklist">Checklist</option>
                       </select>
                       <select value={newNodeParentId} onChange={(event) => setNewNodeParentId(event.target.value)}>
                         <option value="">Racine du projet</option>{detail.nodes.map((node) => <option key={node.id} value={node.id}>{node.name}</option>)}
@@ -778,7 +823,7 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
           </section>
         </div>}
 
-        {detailTab !== 'plan' && <main className="project-production-secondary">
+        {detailTab !== 'plan' && detailTab !== 'sites' && <main className="project-production-secondary">
           {detailTab === 'summary' && <ProjectSummaryTab project={detail} />}
           {detailTab === 'prerequisites' && (
             <div className="project-tab-content">
@@ -854,7 +899,7 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
               <tbody>
                 {filtered.map((project) => (
                   <tr key={project.id} className={selectedId === project.id ? 'selected-row' : ''} onClick={() => void openProject(project.id)}>
-                    <td><strong>{project.number}</strong></td><td>{project.clientLabel}</td><td><strong>{project.name}</strong><small>{project.projectType}</small></td><td><span className={`project-status status-${project.status}`}>{PROJECT_STATUS_LABELS[project.status]}</span></td><td><div className="project-progress-cell"><span>{project.progressPercent} %</span><i><b style={{ width: `${project.progressPercent}%` }} /></i></div></td><td>{duration(project.estimatedMinutes)}</td><td>{dateLabel(project.targetDate)}</td>
+                    <td><strong>{project.number}</strong></td><td>{project.clientLabel}</td><td><strong>{project.name}</strong><small>{project.commercialState==='provisional'?'Prévisionnel · ':''}{project.projectType}</small></td><td><span className={`project-status status-${project.status}`}>{PROJECT_STATUS_LABELS[project.status]}</span></td><td><div className="project-progress-cell"><span>{project.progressPercent} %</span><i><b style={{ width: `${project.progressPercent}%` }} /></i></div></td><td>{duration(project.estimatedMinutes)}</td><td>{dateLabel(project.targetDate)}</td>
                   </tr>
                 ))}
                 {filtered.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucun projet dans cette vue.</div></td></tr>}
@@ -1012,7 +1057,7 @@ function ProjectSummaryTab({ project }: { project: ProjectDetail }) {
   const openTasks = project.nodes.filter((node) => ['task', 'checklist'].includes(node.type) && node.required && node.status !== 'done').length;
   return (
     <div className="project-tab-content">
-      <div className="project-kpis"><div><span>Progression</span><strong>{project.progressPercent} %</strong></div><div><span>Temps estimé</span><strong>{duration(project.estimatedMinutes)}</strong></div><div><span>Tâches restantes</span><strong>{openTasks}</strong></div><div><span>Prérequis à traiter</span><strong>{missingPrerequisites}</strong></div></div>
+      <div className="project-kpis"><div><span>Progression</span><strong>{project.progressPercent} %</strong></div><div><span>Temps estimé{project.estimationIncomplete?' — incomplet':''}</span><strong>{duration(project.estimatedMinutes)}</strong></div><div><span>Tâches restantes</span><strong>{openTasks}</strong></div><div><span>Prérequis à traiter</span><strong>{missingPrerequisites}</strong></div></div>
       <div className="project-summary-list"><div><span>Type</span><strong>{project.projectType}</strong></div><div><span>Mode commercial</span><strong>{COMMERCIAL_MODE_LABELS[project.commercialMode]}</strong></div><div><span>Date cible</span><strong>{dateLabel(project.targetDate)}</strong></div><div><span>Créé le</span><strong>{dateLabel(project.createdAt)}</strong></div>{project.sourceQuoteId && <div><span>Origine</span><strong>Devis accepté</strong></div>}</div>
       {project.notes && <div className="project-note"><span className="eyebrow">Notes</span><p>{project.notes}</p></div>}
     </div>
@@ -1157,7 +1202,7 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
           return;
         }
         window.dispatchEvent(new CustomEvent('atoumweb:timer-context', {
-          detail: { projectId, nodeId: node.id, activityLabel: node.name, category: node.timeCategory || 'production', billable: true },
+          detail: { projectId, nodeId: node.id, activityLabel: node.name, category: node.timeCategory || 'production', businessCategory:node.businessCategory, billable:node.businessCategory?node.businessCategory==='Supplément facturable':true },
         }));
         onMessage('Un autre chrono est en cours : confirme le changement dans le timer.');
         return;
@@ -1166,8 +1211,9 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
         projectId,
         projectNodeId: node.id,
         category: (node.timeCategory || 'production') as TimeSession['category'],
+        businessCategory:node.businessCategory,
         activityLabel: node.name,
-        billable: true,
+        billable: node.businessCategory ? node.businessCategory==='Supplément facturable' : true,
       });
       setActiveTime(session);
       window.dispatchEvent(new CustomEvent('atoumweb:time-changed'));
@@ -1257,6 +1303,8 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
       </div>
     </section>
 
+    <OperationalActionDetails node={node} onUpdate={onUpdate} />
+    <ProjectBlueprintOrigins sources={node.blueprintSources} />
     <nav className="project-workbench-nav" aria-label="Outils de la fiche">
       <button type="button" className={workbenchTab === 'form' ? 'active' : ''} onClick={() => setWorkbenchTab('form')}>Fiche</button>
       <button type="button" className={workbenchTab === 'notes' ? 'active' : ''} onClick={() => setWorkbenchTab('notes')}>Notes</button>
@@ -1703,12 +1751,12 @@ function ProjectTemplatesView({ templates, onBack, onRefresh, onMessage }: { tem
 
         <section className="panel project-template-editor">
           {!detail ? <div className="empty-table">Sélectionne ou crée un modèle.</div> : <>
-            <div className="panel-title"><div><span className="eyebrow">{detail.projectType}</span><h2>{detail.name}</h2></div><div className="button-row">{workingVersion?.status === 'published' && <button className="secondary-button" type="button" onClick={() => void createVersion()}>Créer v{workingVersion.versionNumber + 1}</button>}{workingVersion?.status === 'draft' && <button className="primary-button" type="button" onClick={() => void publish()}>Publier v{workingVersion.versionNumber} et rendre disponible</button>}</div></div>
-            {workingVersion && <div className="template-version-banner"><span>Version de travail</span><strong>v{workingVersion.versionNumber}</strong><span className={`status-pill ${workingVersion.status}`}>{workingVersion.status === 'draft' ? 'Brouillon modifiable' : 'Publiée · figée'}</span></div>}
-            {workingVersion?.status === 'draft' && <div className="template-node-add"><input value={newNodeName} onChange={(event) => setNewNodeName(event.target.value)} placeholder="Lot, page, tâche…" /><select value={newNodeType} onChange={(event) => setNewNodeType(event.target.value as typeof newNodeType)}><option value="lot">Lot</option><option value="module">Module / Page</option><option value="task">Tâche</option><option value="checklist">Checklist</option></select><select value={newNodeParent} onChange={(event) => setNewNodeParent(event.target.value)}><option value="">Racine</option>{workingVersion.nodes.map((node) => <option key={node.id} value={node.id}>{node.name}</option>)}</select><input type="number" min="0" value={newNodeMinutes} onChange={(event) => setNewNodeMinutes(event.target.value)} placeholder="Minutes" /><button className="secondary-button" type="button" onClick={() => void addNode()}>Ajouter</button></div>}
-            {workingVersion && <div className="template-tree">{renderTemplateTree(workingVersion, null, workingVersion.status === 'draft' ? removeNode : undefined)}</div>}
+            <div className="panel-title"><div><span className="eyebrow">{detail.projectType}</span><h2>{detail.name}</h2></div><div className="button-row">{(workingVersion?.status === 'published'||workingVersion?.operationalReady) && <button className="secondary-button" type="button" onClick={() => void createVersion()}>Créer v{workingVersion.versionNumber + 1}</button>}{workingVersion?.status === 'draft' && !workingVersion.operationalReady && <button className="primary-button" type="button" onClick={() => void publish()}>Publier v{workingVersion.versionNumber} et rendre disponible</button>}</div></div>
+            {workingVersion && <div className="template-version-banner"><span>Version de travail</span><strong>v{workingVersion.versionNumber}</strong><span>{workingVersion.operationalPurpose==='structural'?'Structure seule · modèle opérationnel compatible requis':'Blueprint historique complet'}</span><span className={`status-pill ${workingVersion.status}`}>{workingVersion.operationalReady ? 'Structure figée · usage opérationnel' : workingVersion.status === 'draft' ? 'Brouillon modifiable' : 'Publiée · figée'}</span></div>}
+            {workingVersion?.status === 'draft' && !workingVersion.operationalReady && <div className="template-node-add"><input value={newNodeName} onChange={(event) => setNewNodeName(event.target.value)} placeholder="Lot, page, tâche…" /><select value={newNodeType} onChange={(event) => setNewNodeType(event.target.value as typeof newNodeType)}><option value="lot">Lot</option><option value="module">Module / Page</option><option value="task">Tâche</option><option value="checklist">Checklist</option></select><select value={newNodeParent} onChange={(event) => setNewNodeParent(event.target.value)}><option value="">Racine</option>{workingVersion.nodes.map((node) => <option key={node.id} value={node.id}>{node.name}</option>)}</select><input type="number" min="0" value={newNodeMinutes} onChange={(event) => setNewNodeMinutes(event.target.value)} placeholder="Minutes" /><button className="secondary-button" type="button" onClick={() => void addNode()}>Ajouter</button></div>}
+            {workingVersion && <div className="template-tree">{renderTemplateTree(workingVersion, null, workingVersion.status === 'draft' && !workingVersion.operationalReady ? removeNode : undefined)}</div>}
             {workingVersion && workingVersion.nodes.length === 0 && <p className="muted">Cette version ne contient encore aucun lot ou tâche.</p>}
-            <div className="template-history"><strong>Historique des versions</strong>{detail.versions.map((version) => <div key={version.id}><span>v{version.versionNumber}</span><span>{version.status}</span><span>{version.nodes.length} élément{version.nodes.length > 1 ? 's' : ''}</span><span>{dateLabel(version.publishedAt || version.createdAt)}</span></div>)}</div>
+            <div className="template-history"><strong>Historique des versions</strong>{detail.versions.map((version) => <div key={version.id}><span>v{version.versionNumber}</span><span>{version.status}</span><span>{version.operationalPurpose==='structural'?'Structure seule':'Historique complet'}</span><span>{version.nodes.length} élément{version.nodes.length > 1 ? 's' : ''}</span><span>{dateLabel(version.publishedAt || version.createdAt)}</span></div>)}</div>
           </>}
         </section>
       </div>

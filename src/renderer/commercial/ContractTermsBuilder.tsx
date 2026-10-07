@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { CatalogItemSummary, QuoteDetail } from '../../shared/commercial';
+import { quoteContractText } from '../../shared/contractTerms';
 import type {
   ContractClauseAudience,
   ContractClauseScope,
@@ -44,8 +45,8 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   const [templateBody, setTemplateBody] = useState('');
   const [versionEditors, setVersionEditors] = useState<Record<string, string | undefined>>({});
 
-  const editable = quote.status === 'draft' && !quote.finalizedAt;
-  const textForAbby = (build?.snapshotText || build?.compiledText || '').trim();
+  const editable = quote.status === 'draft' && !quote.finalizedAt && !quote.contractCompiledAt && quote.contractTextSnapshot == null && quote.contractSnapshotJson == null;
+  const textForAbby = build ? quoteContractText(build) : '';
 
   const counts = useMemo(() => {
     const clauses = build?.clauses ?? [];
@@ -177,13 +178,10 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     setBusy(true);
     setError('');
     try {
-      const created = await window.atoumweb.contractTerms.library.create(
+      await window.atoumweb.contractTerms.library.create(
         { code: templateCode, title: templateTitle, scope: templateScope, audience: templateAudience },
         { body: templateBody },
       );
-      const draft = created.versions.find((version) => version.status === 'draft');
-      if (!draft) throw new Error('La première version de la clause est introuvable.');
-      await window.atoumweb.contractTerms.library.publishVersion(draft.id);
       setTemplateCode('');
       setTemplateTitle('');
       setTemplateBody('');
@@ -191,7 +189,6 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
       setTemplateAudience('all');
       setShowCreateTemplate(false);
       await refreshLibrary();
-      if (editable) setBuildAndDrafts(await window.atoumweb.contractTerms.quotes.sync(quote.id));
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
@@ -199,7 +196,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     }
   }
 
-  async function publishNewVersion(template: ContractClauseTemplate): Promise<void> {
+  async function saveDraftVersion(template: ContractClauseTemplate): Promise<void> {
     const body = versionEditors[template.id];
     if (!body?.trim()) {
       setError('Le texte de la nouvelle version est vide.');
@@ -208,9 +205,21 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     setBusy(true);
     setError('');
     try {
-      const draft = await window.atoumweb.contractTerms.library.createVersion(template.id, { body });
-      await window.atoumweb.contractTerms.library.publishVersion(draft.id);
+      await window.atoumweb.contractTerms.library.createVersion(template.id, { body });
       setVersionEditors((current) => ({ ...current, [template.id]: undefined }));
+      await refreshLibrary();
+    } catch (cause) {
+      setError(errorMessage(cause));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function publishDraft(versionId: string): Promise<void> {
+    setBusy(true);
+    setError('');
+    try {
+      await window.atoumweb.contractTerms.library.publishVersion(versionId);
       await refreshLibrary();
       if (editable) setBuildAndDrafts(await window.atoumweb.contractTerms.quotes.sync(quote.id));
     } catch (cause) {
@@ -291,7 +300,8 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
         <span><strong>{counts.catalog}</strong> prestation(s)</span>
         <span><strong>{counts.custom}</strong> particulière(s)</span>
         <span className="status-pill">{build?.audience === 'professional' ? 'Client professionnel' : 'Client particulier'}</span>
-        {build?.locked && <span className="status-pill">Version figée</span>}
+        {build?.snapshotState === 'frozen' && <span className="status-pill">Snapshot figé{build.snapshotText === '' ? ' · vide' : ''}</span>}
+        {build?.snapshotState === 'historical_missing' && <span className="status-pill">Absence historique de snapshot</span>}
       </div>
 
       {build?.warnings.map((warning) => <div className="cgv-warning" key={warning}>{warning}</div>)}
@@ -335,7 +345,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
             </details>
           );
         })}
-        {build?.clauses.length === 0 && <div className="empty-table">Aucune clause configurée. Ouvre la Bibliothèque CGV pour créer le socle AtoumWeb.</div>}
+        {build?.clauses.length === 0 && <div className="empty-table">{build.locked ? 'Aucune clause conservée pour ce devis. La bibliothèque actuelle ne sera pas appliquée rétroactivement.' : 'Aucune clause configurée. Ouvre la Bibliothèque CGV pour préparer le socle AtoumWeb.'}</div>}
       </div>
 
       {editable && <div className="cgv-particular">
@@ -350,7 +360,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
 
       <div className="cgv-output">
         <div className="cgv-output-heading">
-          <div><strong>Texte final pour Abby</strong><span>{build?.locked ? 'Snapshot contractuel figé' : 'Aperçu actuel du builder'}</span></div>
+          <div><strong>Texte final pour Abby</strong><span>{build?.snapshotState === 'historical_missing' ? 'Absence historique conservée' : build?.snapshotState === 'frozen' ? 'Snapshot contractuel figé' : 'Aperçu actuel du builder'}</span></div>
           <button className="primary-button" type="button" disabled={!textForAbby} onClick={() => void copyForAbby()}>{copied ? '✓ Copié' : '📋 Copier pour Abby'}</button>
         </div>
         <textarea readOnly value={textForAbby} placeholder="Les CGV assemblées apparaîtront ici." />
@@ -370,29 +380,53 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
             <label>Public<select value={templateAudience} onChange={(event) => setTemplateAudience(event.target.value as ContractClauseAudience)}><option value="all">Tous les clients</option><option value="professional">Professionnels</option><option value="consumer">Particuliers</option></select></label>
           </div>
           <label>Texte de la version 1<textarea value={templateBody} onChange={(event) => setTemplateBody(event.target.value)} /></label>
-          <button className="primary-button" type="button" disabled={busy} onClick={() => void createTemplate()}>Créer et publier</button>
+          <p className="muted">L’enregistrement crée un brouillon. Seule une publication explicite le rend disponible dans les devis.</p>
+          <button className="primary-button" type="button" disabled={busy} onClick={() => void createTemplate()}>Enregistrer le brouillon</button>
         </div>}
 
         <div className="cgv-template-list">
           {templates.map((template) => (
             <details className="cgv-template" key={template.id}>
               <summary>
-                <div><strong>{template.title}</strong><span>{template.code} · {template.scope === 'base' ? 'Socle commun' : 'Clause prestation'} · {template.audience === 'all' ? 'Tous clients' : template.audience === 'professional' ? 'Professionnels' : 'Particuliers'} · v{template.currentVersion?.versionNumber ?? '—'}</span></div>
+                <div><strong>{template.title}</strong><span>{template.code} · {template.scope === 'base' ? 'Socle commun' : 'Clause prestation'} · {template.audience === 'all' ? 'Tous clients' : template.audience === 'professional' ? 'Professionnels' : 'Particuliers'} · {template.currentVersion ? `v${template.currentVersion.versionNumber} publiée` : 'Brouillon · non publié'}</span></div>
                 <span className={'catalog-status status-' + template.status}>{template.status === 'active' ? 'Active' : template.status === 'inactive' ? 'Inactive' : 'Archivée'}</span>
               </summary>
               <div className="cgv-template-body">
                 <label>Public d'application<select value={template.audience} disabled={busy || template.status === 'archived'} onChange={(event) => void changeTemplateAudience(template, event.target.value as ContractClauseAudience)}><option value="all">Tous les clients</option><option value="professional">Professionnels</option><option value="consumer">Particuliers / consommateurs</option></select></label>
                 <label>Version publiée<textarea readOnly value={template.currentVersion?.body ?? 'Aucune version publiée.'} /></label>
+                {template.versions.filter((version) => version.status === 'draft').map((version) => (
+                  <div className="cgv-version-editor" key={version.id}>
+                    <label>Brouillon · v{version.versionNumber}<textarea readOnly value={version.body} /></label>
+                    {version.review && <details className="cgv-review">
+                      <summary>Revue documentaire · {version.review.level}</summary>
+                      <p className="muted">Le niveau de revue décrit le brouillon ; il ne constitue ni une publication ni une déclaration de conformité juridique.</p>
+                      <dl>
+                        <dt>Dernière vérification documentée</dt><dd>{version.review.verifiedAt ?? 'Non renseignée'}</dd>
+                        <dt>Sources officielles</dt><dd style={{ whiteSpace: 'pre-wrap' }}>{version.review.sources ?? 'Non renseignées'}</dd>
+                        <dt>Réserves</dt><dd>{version.review.reserve ?? 'Non renseignées'}</dd>
+                        <dt>Risque et précautions</dt><dd>{version.review.risk} {version.review.prudence}</dd>
+                        <dt>Revue finale / appui externe</dt><dd>{version.review.finalReview} {version.review.externalSupport}</dd>
+                        <dt>Paramètres du devis</dt><dd>{version.review.parameters}</dd>
+                        <dt>Dépendances documentaires</dt><dd>{version.review.dependencies}</dd>
+                        <dt>Décisions métier</dt><dd>{version.review.businessDecisions}</dd>
+                        <dt>Suivi rédactionnel</dt><dd>{version.review.editorialDecision} · {version.review.editorialStatus}</dd>
+                        <dt>Provenance</dt><dd>{version.review.provenance.reference} · {version.review.provenance.bodyCell}</dd>
+                        <dt>Empreinte du référentiel</dt><dd style={{ overflowWrap: 'anywhere' }}>{version.review.provenance.sha256}</dd>
+                      </dl>
+                    </details>}
+                    <button className="primary-button compact-button" type="button" disabled={busy || template.status === 'archived'} onClick={() => void publishDraft(version.id)}>Publier le brouillon v{version.versionNumber}</button>
+                  </div>
+                ))}
                 <div className="cgv-template-actions">
                   <button className="secondary-button compact-button" type="button" disabled={busy || template.status === 'archived'} onClick={() => setVersionEditors((current) => ({ ...current, [template.id]: current[template.id] === undefined ? (template.currentVersion?.body ?? '') : undefined }))}>{versionEditors[template.id] === undefined ? 'Nouvelle version' : 'Annuler la version'}</button>
                   {template.status !== 'archived' && <button className="secondary-button compact-button" type="button" disabled={busy} onClick={() => void toggleTemplateStatus(template)}>{template.status === 'active' ? 'Désactiver' : 'Réactiver'}</button>}
                 </div>
                 {versionEditors[template.id] !== undefined && <div className="cgv-version-editor">
                   <label>Nouvelle version<textarea value={versionEditors[template.id] ?? ''} onChange={(event) => setVersionEditors((current) => ({ ...current, [template.id]: event.target.value }))} /></label>
-                  <button className="primary-button compact-button" type="button" disabled={busy} onClick={() => void publishNewVersion(template)}>Publier cette version</button>
+                  <button className="primary-button compact-button" type="button" disabled={busy} onClick={() => void saveDraftVersion(template)}>Enregistrer la version en brouillon</button>
                 </div>}
                 {template.scope === 'catalog' && <div className="cgv-catalog-links">
-                  <strong>Prestations qui déclenchent cette clause</strong>
+                  <strong>Prestations qui déclenchent cette clause ({template.catalogItemIds.length})</strong>
                   <div>{catalog.map((item) => <label key={item.id}><input type="checkbox" checked={template.catalogItemIds.includes(item.id)} disabled={busy} onChange={() => void toggleCatalogLink(template, item.id)} /><span>{item.type === 'offer' ? 'Offre' : 'Service'} · {item.name}</span></label>)}</div>
                 </div>}
               </div>

@@ -4,6 +4,10 @@ import {
   CATALOG_ITEM_STATUSES,
   CATALOG_ITEM_TYPES,
   PRICE_MODES,
+  CATALOG_COMMERCIAL_KINDS,
+  type CatalogCommercialIdentity,
+  type CatalogIdentityManifest,
+  type CatalogProvenance,
   type CatalogFilters,
   type CatalogItemDetail,
   type CatalogItemInput,
@@ -22,6 +26,16 @@ const clean = (value?: string | null): string | null => {
 };
 
 interface CatalogRow extends Record<string, unknown> {
+  commercial_parameters_json: string | null;
+  canonical_code: string | null;
+  identity_provenance_json: string | null;
+  commercial_kind: CatalogCommercialIdentity['commercialKind'];
+  family_code: string | null;
+  abby_label: string | null;
+  unit: string | null;
+  periodicity: string | null;
+  price_basis: CatalogCommercialIdentity['priceBasis'];
+  provenance_json: string | null;
   id: string;
   item_type: CatalogItemSummary['type'];
   name: string;
@@ -53,6 +67,14 @@ interface CatalogRow extends Record<string, unknown> {
 }
 
 interface VersionRow extends Record<string, unknown> {
+  commercial_parameters_json: string | null;
+  commercial_kind: CatalogCommercialIdentity['commercialKind'];
+  family_code: string | null;
+  abby_label: string | null;
+  unit: string | null;
+  periodicity: string | null;
+  price_basis: CatalogCommercialIdentity['priceBasis'];
+  provenance_json: string | null;
   id: string;
   item_id: string;
   version_number: number;
@@ -129,9 +151,9 @@ export class CatalogService {
       params.push(filters.priceMode);
     }
     if (clean(filters.search)) {
-      where.push('(i.name LIKE ? COLLATE NOCASE OR COALESCE(i.category, \'\') LIKE ? COLLATE NOCASE OR COALESCE(v.nature, \'\') LIKE ? COLLATE NOCASE OR COALESCE(v.description, \'\') LIKE ? COLLATE NOCASE)');
+      where.push('(i.name LIKE ? COLLATE NOCASE OR COALESCE(i.category, \'\') LIKE ? COLLATE NOCASE OR COALESCE(v.nature, \'\') LIKE ? COLLATE NOCASE OR COALESCE(v.description, \'\') LIKE ? COLLATE NOCASE OR i.canonical_code LIKE ? COLLATE NOCASE OR v.abby_label LIKE ? COLLATE NOCASE OR v.family_code LIKE ? COLLATE NOCASE)');
       const query = `%${clean(filters.search)}%`;
-      params.push(query, query, query, query);
+      params.push(query, query, query, query, query, query, query);
     }
 
     const rows = this.database.all<CatalogRow>(
@@ -154,6 +176,7 @@ export class CatalogService {
         v.contract_type,
         v.internal_advice,
         v.special_terms,
+        v.commercial_kind, v.family_code, v.abby_label, v.unit, v.periodicity, v.price_basis, v.provenance_json, v.commercial_parameters_json,
         v.published_at,
         v.created_at AS version_created_at
        FROM catalog_items i
@@ -188,22 +211,25 @@ export class CatalogService {
     const name = clean(input.name);
     if (!name) throw new Error('Le nom est requis.');
     this.validateVersion(firstVersion);
+    const canonicalCode = clean(input.canonicalCode) ? this.normalizeCode(input.canonicalCode!) : null;
+    if (canonicalCode) this.assertCodeAvailable(canonicalCode);
+    const identityProvenance = canonicalCode ? this.normalizeProvenance(input.identityProvenance ?? { reference: 'manual' }) : null;
 
     const id = randomUUID();
     const now = nowIso();
-    this.database.exec('BEGIN IMMEDIATE;');
+    this.database.exec('SAVEPOINT catalog_service;');
     try {
       this.database.run(
         `INSERT INTO catalog_items (
-          id, item_type, name, category, status, visible_public, created_at, updated_at, archived_at
-        ) VALUES (?, ?, ?, ?, 'active', ?, ?, ?, NULL)`,
-        [id, input.type, name, clean(input.category), input.visiblePublic ? 1 : 0, now, now],
+          id, item_type, name, category, status, visible_public, created_at, updated_at, archived_at, canonical_code, identity_provenance_json
+        ) VALUES (?, ?, ?, ?, 'active', ?, ?, ?, NULL, ?, ?)`,
+        [id, input.type, name, clean(input.category), input.visiblePublic ? 1 : 0, now, now, canonicalCode, identityProvenance ? JSON.stringify(identityProvenance) : null],
       );
       this.insertVersion(id, 1, firstVersion, now);
       this.writeActivity(id, 'catalog_created', `${input.type === 'offer' ? 'Offre' : 'Service'} créé : ${name}`);
-      this.database.exec('COMMIT;');
+      this.database.exec('RELEASE SAVEPOINT catalog_service;');
     } catch (error) {
-      this.database.exec('ROLLBACK;');
+      this.database.exec('ROLLBACK TO SAVEPOINT catalog_service; RELEASE SAVEPOINT catalog_service;');
       throw error;
     }
     return this.getItem(id);
@@ -211,17 +237,24 @@ export class CatalogService {
 
   createVersion(itemId: string, input: CatalogVersionInput): CatalogVersion {
     const item = this.assertItem(itemId);
-    this.validateVersion(input);
     const previous = this.database.get<{ id: string; version_number: number }>(
       'SELECT id, version_number FROM catalog_versions WHERE item_id=? ORDER BY version_number DESC LIMIT 1',
       [itemId],
     );
     const nextVersion = Number(previous?.version_number ?? 0) + 1;
+    const previousVersion = previous ? this.getVersion(previous.id) : null;
+    const nextInput: CatalogVersionInput = { ...input };
+    for (const key of ['commercialKind', 'familyCode', 'abbyLabel', 'unit', 'periodicity', 'priceBasis', 'provenance', 'commercialParameters'] as const) {
+      if (input[key] === undefined && previousVersion) Object.assign(nextInput, { [key]: previousVersion[key] });
+    }
+    this.validateVersion(nextInput);
     const now = nowIso();
 
-    this.database.exec('BEGIN IMMEDIATE;');
+    this.database.exec('SAVEPOINT catalog_service;');
     try {
-      const version = this.insertVersion(itemId, nextVersion, input, now);
+      const version = this.insertVersion(itemId, nextVersion, nextInput, now);
+      if(previous && this.database.get("SELECT name FROM sqlite_master WHERE type='table' AND name='catalog_commercial_rules'"))this.database.run(`INSERT INTO catalog_commercial_rules(catalog_version_id,rules_json,provenance_json,updated_at)
+        SELECT ?,rules_json,provenance_json,? FROM catalog_commercial_rules WHERE catalog_version_id=?`,[version.id,now,previous.id]);
       if (item.item_type === 'offer' && previous) {
         const previousComponents = this.listOfferComponents(previous.id);
         for (const component of previousComponents) {
@@ -233,14 +266,78 @@ export class CatalogService {
           );
         }
       }
+      if (previous) {
+        const links = this.database.all<{ template_version_id: string; role: string; sort_order: number; quantity_mode: string; site_mode: string }>(
+          'SELECT template_version_id,role,sort_order,quantity_mode,site_mode FROM catalog_project_blueprints WHERE catalog_version_id=? ORDER BY sort_order,id', [previous.id]);
+        for (const link of links) this.database.run(
+          'INSERT INTO catalog_project_blueprints (id,catalog_version_id,template_version_id,role,sort_order,created_at,quantity_mode,site_mode) VALUES (?,?,?,?,?,?,?,?)',
+          [randomUUID(), version.id, link.template_version_id, link.role, link.sort_order, now, link.quantity_mode, link.site_mode]);
+      }
       this.database.run('UPDATE catalog_items SET updated_at=? WHERE id=?', [now, itemId]);
       this.writeActivity(itemId, 'catalog_version_created', `Nouvelle version brouillon v${version.versionNumber}`);
-      this.database.exec('COMMIT;');
+      this.database.exec('RELEASE SAVEPOINT catalog_service;');
       return version;
     } catch (error) {
-      this.database.exec('ROLLBACK;');
+      this.database.exec('ROLLBACK TO SAVEPOINT catalog_service; RELEASE SAVEPOINT catalog_service;');
       throw error;
     }
+  }
+
+  assignCanonicalCode(itemId: string, canonicalCode: string): CatalogItemDetail {
+    return this.applyIdentityManifest({ schemaVersion: 1, assignments: [{ itemId, canonicalCode, provenance: { reference: 'manual' } }] })[0];
+  }
+
+  /** Explicit UUID-to-code assignments only; never match names or create catalogue items. */
+  applyIdentityManifest(manifest: CatalogIdentityManifest): CatalogItemDetail[] {
+    if (manifest.schemaVersion !== 1 || !Array.isArray(manifest.assignments)) throw new Error('Manifeste d’identité catalogue invalide.');
+    const ids = new Set<string>();
+    const codes = new Set<string>();
+    const assignments = manifest.assignments.map((entry) => {
+      this.assertItem(entry.itemId);
+      const code = this.normalizeCode(entry.canonicalCode);
+      if (ids.has(entry.itemId) || codes.has(code)) throw new Error('Identifiant ou code dupliqué dans le manifeste.');
+      ids.add(entry.itemId); codes.add(code);
+      const item = this.getItem(entry.itemId);
+      if (item.canonicalCode && item.canonicalCode !== code) throw new Error('Le code canonique attribué est immuable.');
+      this.assertCodeAvailable(code, entry.itemId);
+      return { item, code, provenance: this.normalizeProvenance(entry.provenance) };
+    });
+    this.database.exec('SAVEPOINT catalog_service;');
+    try {
+      for (const { item, code, provenance } of assignments) {
+        if (item.canonicalCode === code) continue;
+        this.database.run('UPDATE catalog_items SET canonical_code=?,identity_provenance_json=?,updated_at=? WHERE id=?', [code, JSON.stringify(provenance), nowIso(), item.id]);
+        this.writeActivity(item.id, 'catalog_canonical_code_assigned', `Code ${code} attribué explicitement à ${item.id} ; source ${provenance.reference}`);
+      }
+      this.database.exec('RELEASE SAVEPOINT catalog_service;');
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT catalog_service; RELEASE SAVEPOINT catalog_service;');
+      throw error;
+    }
+    return assignments.map(({ item }) => this.getItem(item.id));
+  }
+
+  private normalizeCode(value: string): string {
+    const code = value.trim().toUpperCase();
+    if (!/^AW-[A-Z0-9]+(?:-[A-Z0-9]+)*$/.test(code)) throw new Error('Code canonique invalide : utilise un code AW-* du référentiel.');
+    return code;
+  }
+
+  private assertCodeAvailable(code: string, itemId?: string): void {
+    const existing = this.database.get<{ id: string }>('SELECT id FROM catalog_items WHERE canonical_code=? COLLATE NOCASE', [code]);
+    if (existing && existing.id !== itemId) throw new Error('Ce code canonique est déjà attribué, y compris aux éléments archivés.');
+  }
+
+  private normalizeProvenance(source: CatalogProvenance): CatalogProvenance {
+    const reference = clean(source?.reference);
+    if (!reference) throw new Error('La référence de provenance est requise.');
+    const sha256 = clean(source.sha256)?.toLowerCase() ?? null;
+    if (sha256 && !/^[a-f0-9]{64}$/.test(sha256)) throw new Error('Empreinte source SHA-256 invalide.');
+    return { reference, sha256, recordKey: clean(source.recordKey) };
+  }
+
+  private readProvenance(json: string | null): CatalogProvenance | null {
+    return json ? JSON.parse(json) as CatalogProvenance : null;
   }
 
   publishVersion(versionId: string): CatalogVersion {
@@ -384,8 +481,9 @@ export class CatalogService {
         id, item_id, version_number, status, nature, description, inclusions_json, exclusions_json,
         prerequisites_json, price_mode, price_cents, recommended_price_cents,
         estimated_minutes, recommended_delay_days, default_deposit_percent,
-        contract_type, internal_advice, published_at, created_at, special_terms
-      ) VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)`,
+        contract_type, internal_advice, published_at, created_at, special_terms,
+        commercial_kind, family_code, abby_label, unit, periodicity, price_basis, provenance_json, commercial_parameters_json
+      ) VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         itemId,
@@ -405,12 +503,26 @@ export class CatalogService {
         clean(input.internalAdvice),
         createdAt,
         clean(input.specialTerms),
+        input.commercialKind ?? null,
+        clean(input.familyCode)?.toUpperCase() ?? null,
+        clean(input.abbyLabel),
+        clean(input.unit),
+        clean(input.periodicity),
+        input.priceBasis ?? 'listed',
+        input.provenance ? JSON.stringify(this.normalizeProvenance(input.provenance)) : null,
+        input.commercialParameters ? JSON.stringify(input.commercialParameters) : null,
       ],
     );
     return this.getVersion(id);
   }
 
-  private validateVersion(input: CatalogVersionInput): void {
+  validateVersion(input: CatalogVersionInput): void {
+    if (input.commercialParameters != null && (typeof input.commercialParameters !== 'object' || Array.isArray(input.commercialParameters)
+      || Object.values(input.commercialParameters).some(value => value != null && typeof value !== 'string'))) throw new Error('Paramètres commerciaux descriptifs invalides.');
+    if (input.commercialKind != null && !CATALOG_COMMERCIAL_KINDS.includes(input.commercialKind)) throw new Error('Nature commerciale invalide.');
+    if (input.priceBasis != null && !['listed', 'actual_cost'].includes(input.priceBasis)) throw new Error('Base de prix invalide.');
+    if (input.priceBasis === 'actual_cost' && (input.priceMode !== 'quote_only' || input.priceCents != null)) throw new Error('Un coût tiers réel est sans prix catalogue fixe ; utilise Sur devis.');
+    if (input.provenance) this.normalizeProvenance(input.provenance);
     if (!PRICE_MODES.includes(input.priceMode)) throw new Error('Mode tarifaire invalide.');
     for (const [label, value] of [
       ['prix', input.priceCents],
@@ -455,6 +567,8 @@ export class CatalogService {
   private mapSummary(row: CatalogRow): CatalogItemSummary {
     return {
       id: row.id,
+      canonicalCode: row.canonical_code,
+      identityProvenance: this.readProvenance(row.identity_provenance_json),
       type: row.item_type,
       name: row.name,
       category: row.category,
@@ -481,6 +595,14 @@ export class CatalogService {
         special_terms: row.special_terms,
         published_at: row.published_at,
         created_at: row.version_created_at as string,
+        commercial_kind: row.commercial_kind,
+        family_code: row.family_code,
+        abby_label: row.abby_label,
+        unit: row.unit,
+        periodicity: row.periodicity,
+        price_basis: row.price_basis,
+        provenance_json: row.provenance_json,
+        commercial_parameters_json: row.commercial_parameters_json,
       }) : null,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
@@ -500,6 +622,14 @@ export class CatalogService {
     return {
       id: row.id,
       itemId: row.item_id,
+      commercialKind: row.commercial_kind,
+      familyCode: row.family_code,
+      abbyLabel: row.abby_label,
+      unit: row.unit,
+      periodicity: row.periodicity,
+      priceBasis: row.price_basis,
+      provenance: this.readProvenance(row.provenance_json),
+      commercialParameters: row.commercial_parameters_json ? JSON.parse(row.commercial_parameters_json) : null,
       versionNumber: Number(row.version_number),
       status: row.status,
       nature: row.nature,

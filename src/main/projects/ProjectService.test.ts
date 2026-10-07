@@ -1,3 +1,4 @@
+import { finalizeForTest, acceptForTest } from '../testSupport/quotePreparationFixture';
 import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -9,12 +10,14 @@ import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
 import { createWorkspacePaths } from '../workspace';
 import { ProjectService } from './ProjectService';
+import { ProjectSiteService } from './ProjectSiteService';
 
 let database: NodeSqliteAdapter;
 let crm: CrmService;
 let catalog: CatalogService;
 let quotes: QuoteService;
 let projects: ProjectService;
+let sites: ProjectSiteService;
 let workspaceRoot: string;
 
 beforeEach(() => {
@@ -25,7 +28,8 @@ beforeEach(() => {
   crm = new CrmService(database);
   catalog = new CatalogService(database);
   quotes = new QuoteService(database, crm);
-  projects = new ProjectService(database, createWorkspacePaths(workspaceRoot));
+  sites = new ProjectSiteService(database);
+  projects = new ProjectService(database, createWorkspacePaths(workspaceRoot), sites);
 });
 
 afterEach(() => {
@@ -60,9 +64,9 @@ function createAcceptedQuote() {
   catalog.publishVersion(service.versions[0].id);
   const quote = quotes.create({ prospectId: prospect.id, subject: 'Création du site vitrine', prerequisitesText: 'Accès hébergement' });
   quotes.addCatalogLine(quote.id, service.versions[0].id);
-  quotes.finalize(quote.id);
+  finalizeForTest(database,quotes,quote.id);
   quotes.markSent(quote.id);
-  return quotes.accept(quote.id);
+  return acceptForTest(database,quotes,quote.id);
 }
 
 function createAcceptedSeededVitrineQuote(extraCatalogVersionId?: string) {
@@ -71,9 +75,9 @@ function createAcceptedSeededVitrineQuote(extraCatalogVersionId?: string) {
   const quote = quotes.create({ prospectId: prospect.id, subject: 'Site vitrine Blueprint' });
   quotes.addCatalogLine(quote.id, 'atoumweb-vitrine-v1');
   if (extraCatalogVersionId) quotes.addCatalogLine(quote.id, extraCatalogVersionId);
-  quotes.finalize(quote.id);
+  finalizeForTest(database,quotes,quote.id);
   quotes.markSent(quote.id);
-  return quotes.accept(quote.id);
+  return acceptForTest(database,quotes,quote.id);
 }
 
 describe('ProjectService', () => {
@@ -105,7 +109,10 @@ describe('ProjectService', () => {
     expect(first.id).toBe(second.id);
     expect(first.number).toMatch(/^PRO-\d{4}-001$/);
     expect(first.clientLabel).toBe('Société Test Projet');
-    expect(first.nodes).toHaveLength(4);
+    expect(first.nodes.filter((node) => template.nodes.some((source) => source.id === node.sourceTemplateNodeId))).toHaveLength(4);
+    // An explicitly chosen template without Site declarations no longer imports an unrelated type fallback.
+    expect(first.nodes.filter((node) => node.semanticKey?.startsWith('pages.'))).toHaveLength(0);
+    expect(sites.list(first.id)).toHaveLength(0);
     expect(first.services).toHaveLength(1);
     expect(first.commercialValueCents).toBe(69900);
     expect(first.contractValueCents).toBe(69900);
@@ -156,20 +163,26 @@ describe('ProjectService', () => {
     expect(project.projectType).toBe('website');
     expect(project.templateVersionId).toBe('atoumweb-project-template-vitrine-v1');
     expect(project.nodes.length).toBeGreaterThan(15);
+    expect(sites.list(project.id)).toHaveLength(1);
+    expect(sites.listPages(project.id)).toHaveLength(5);
+    expect(database.get<{ status: string; project_id: string }>('SELECT status,project_id FROM quotes WHERE id=?', [quote.id]))
+      .toEqual({ status: 'accepted', project_id: project.id });
+    expect(database.get<{ total: number }>('SELECT COUNT(*) AS total FROM quote_lines WHERE quote_id=?', [quote.id])?.total)
+      .toBe(quote.lines.length);
 
     const hero = project.nodes.find((node) => node.semanticKey === 'pages.home.hero');
     expect(hero).toBeTruthy();
     expect(hero?.name).toBe('Hero');
     expect(hero?.workCard?.fields.map((field) => field.key)).toEqual(expect.arrayContaining(['h1', 'lead', 'cta', 'visual_notes', 'code_notes']));
     expect(hero?.advice?.some((advice) => advice.kind === 'library')).toBe(true);
-    expect(hero?.sources).toEqual([
+    expect(hero?.sources).toEqual(expect.arrayContaining([
       expect.objectContaining({
         quoteLineId: quote.lines[0]?.id,
         catalogVersionId: 'atoumweb-vitrine-v1',
         templateVersionId: 'atoumweb-project-template-vitrine-v1',
         sourceRole: 'direct',
       }),
-    ]);
+    ]));
 
     const folders = ['01 Identité', '02 Textes', '03 Images & médias', '04 Documents projet', '05 Technique - Sources - Exports', '06 Livrables', '07 Archives'];
     for (const folder of folders) expect(existsSync(join(project.resourceRootPath!, folder))).toBe(true);
@@ -181,9 +194,9 @@ describe('ProjectService', () => {
     const quote = quotes.create({ prospectId: prospect.id, subject: 'Site vitrine + page' });
     quotes.addCatalogLine(quote.id, 'atoumweb-vitrine-v1');
     quotes.addCatalogLine(quote.id, 'atoumweb-page-v1');
-    quotes.finalize(quote.id);
+    finalizeForTest(database,quotes,quote.id);
     quotes.markSent(quote.id);
-    const accepted = quotes.accept(quote.id);
+    const accepted = acceptForTest(database,quotes,quote.id);
 
     const project = projects.transformQuote({ quoteId: accepted.id, targetDate: '2026-12-12' });
 
@@ -233,9 +246,9 @@ describe('ProjectService', () => {
     const prospect = crm.createProspect({ organizationId: organization.id, primaryNeed: 'Site vitrine' });
     const quote = quotes.create({ prospectId: prospect.id, subject: 'Formule site vitrine' });
     quotes.addCatalogLine(quote.id, offerVersion.id);
-    quotes.finalize(quote.id);
+    finalizeForTest(database,quotes,quote.id);
     quotes.markSent(quote.id);
-    const accepted = quotes.accept(quote.id);
+    const accepted = acceptForTest(database,quotes,quote.id);
 
     const project = projects.transformQuote({ quoteId: accepted.id });
 

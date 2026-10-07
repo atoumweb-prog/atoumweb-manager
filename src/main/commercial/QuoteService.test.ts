@@ -1,3 +1,11 @@
+import { mkdtempSync,writeFileSync,rmSync } from 'node:fs';
+import { join,resolve,sep } from 'node:path';
+import { tmpdir } from 'node:os';
+import { ClientDocumentService } from '../crm/ClientDocumentService';
+import { createWorkspacePaths } from '../workspace';
+import { ContractTermsService } from './ContractTermsService';
+import { QuoteContractPreparationService } from './QuoteContractPreparationService';
+import { finalizeForTest, acceptForTest } from '../testSupport/quotePreparationFixture';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CrmService } from '../crm/CrmService';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
@@ -9,6 +17,8 @@ let database: NodeSqliteAdapter;
 let crm: CrmService;
 let catalog: CatalogService;
 let quotes: QuoteService;
+let documents: ClientDocumentService;
+let root: string;
 
 beforeEach(() => {
   database = new NodeSqliteAdapter(':memory:');
@@ -16,10 +26,12 @@ beforeEach(() => {
   applyPendingMigrations(database);
   crm = new CrmService(database);
   catalog = new CatalogService(database);
-  quotes = new QuoteService(database, crm);
+  root=mkdtempSync(join(tmpdir(),'atoumweb-quote-lot5-'));
+  documents=new ClientDocumentService(database,createWorkspacePaths(root));
+  quotes = new QuoteService(database, crm,new ContractTermsService(database,documents),new QuoteContractPreparationService(database,documents));
 });
 
-afterEach(() => database.close());
+afterEach(() => {database.close();const target=resolve(root);if(!target.startsWith(resolve(tmpdir())+sep)||!target.includes('atoumweb-quote-lot5-'))throw Error('Chemin invalide');rmSync(target,{recursive:true,force:true});});
 
 function createProspect() {
   const organization = crm.createOrganization({ name: 'Client test' });
@@ -124,9 +136,9 @@ describe('QuoteService', () => {
 
     expect(() => quotes.markSent(quote.id)).toThrow(/finalise/i);
 
-    const first = quotes.finalize(quote.id);
+    const first = finalizeForTest(database,quotes,quote.id);
     const firstFinalizedAt = first.finalizedAt;
-    const second = quotes.finalize(quote.id);
+    const second = finalizeForTest(database,quotes,quote.id);
     const finalizationEvents = database.all<{ count: number }>(
       "SELECT COUNT(*) AS count FROM activity_log WHERE entity_type='quote' AND entity_id=? AND action='quote_finalized'",
       [quote.id],
@@ -146,11 +158,11 @@ describe('QuoteService', () => {
     const prospect = createProspect();
     const quote = quotes.create({ prospectId: prospect.id, subject: 'Acceptation' });
     quotes.addCustomLine(quote.id, { label: 'Site', proposedUnitPriceCents: 69900 });
-    quotes.finalize(quote.id);
+    finalizeForTest(database,quotes,quote.id);
     quotes.markSent(quote.id);
 
-    const accepted = quotes.accept(quote.id);
-    const second = quotes.accept(quote.id);
+    const accepted = acceptForTest(database,quotes,quote.id);
+    const second = acceptForTest(database,quotes,quote.id);
 
     expect(accepted.status).toBe('accepted');
     expect(accepted.acceptedClientAccountId).toBeTruthy();
@@ -168,20 +180,14 @@ describe('QuoteService', () => {
 
     expect(() => quotes.attachContractDocument(quote.id, 'doc-inexistant')).toThrow(/accepté/i);
 
-    quotes.finalize(quote.id);
+    finalizeForTest(database,quotes,quote.id);
     quotes.markSent(quote.id);
-    const accepted = quotes.accept(quote.id);
+    const accepted = acceptForTest(database,quotes,quote.id);
     const clientId = accepted.acceptedClientAccountId!;
-    const now = new Date().toISOString();
-    database.run(
-      `INSERT INTO client_documents
-       (id,client_account_id,category,title,original_name,relative_path,mime_type,size_bytes,created_at,updated_at)
-       VALUES ('contract-doc',?,'contract','Devis signé','devis-signe.pdf','Clients/test/devis-signe.pdf','application/pdf',123,?,?)`,
-      [clientId, now, now],
-    );
-
-    const attached = quotes.attachContractDocument(quote.id, 'contract-doc', 'ABBY-DEV-2026-42');
-    expect(attached.contractDocumentId).toBe('contract-doc');
+    const source=join(root,'devis-signe.pdf');writeFileSync(source,'%PDF-1.4\nDocument test isolé');
+    const doc=documents.importPaths(clientId,[source],{category:'contract',title:'Devis signé'})[0];
+    const attached = quotes.attachContractDocument(quote.id, doc.id, 'ABBY-DEV-2026-42');
+    expect(attached.contractDocumentId).toBe(doc.id);
     expect(attached.abbyReference).toBe('ABBY-DEV-2026-42');
     expect(attached.contractDocumentAttachedAt).toBeTruthy();
 
@@ -193,7 +199,7 @@ describe('QuoteService', () => {
     const prospect = createProspect();
     const quote = quotes.create({ prospectId: prospect.id, subject: 'À dupliquer' });
     quotes.addCustomLine(quote.id, { label: 'Ligne libre', proposedUnitPriceCents: 50000 });
-    quotes.finalize(quote.id);
+    finalizeForTest(database,quotes,quote.id);
     quotes.markSent(quote.id);
     quotes.refuse(quote.id);
 

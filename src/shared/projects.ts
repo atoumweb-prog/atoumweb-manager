@@ -1,3 +1,5 @@
+import type {ContributionTargetInput,ContributionTargetView,ContributionTargetChoices,PlannedContributionTarget} from './contributionTargets';
+import type { BusinessTimeCategory, OperationalNodeInfo, OperationalPlan } from './operational';
 export const PROJECT_TEMPLATE_STATUSES = ['active', 'inactive', 'archived'] as const;
 export const PROJECT_TEMPLATE_VERSION_STATUSES = ['draft', 'published', 'retired'] as const;
 export const PROJECT_STATUSES = ['to_prepare', 'in_progress', 'waiting_client', 'blocked', 'to_validate', 'completed', 'archived'] as const;
@@ -12,6 +14,7 @@ export const PROJECT_TECHNICAL_CATEGORIES = ['header', 'footer', 'hero', 'page',
 export const PROJECT_TECHNICAL_CONTENT_TYPES = ['code', 'json', 'text', 'reference'] as const;
 export const PROJECT_COMPLETION_STATES = ['ok', 'warning', 'check'] as const;
 export const PROJECT_COMPLETION_KEYS = ['required_tasks', 'prerequisites', 'final_backup', 'deliverables', 'balance', 'training', 'maintenance', 'technical_reuse'] as const;
+export const PROJECT_SITE_PAGE_ROLES = ['home', 'standard', 'legal', 'landing', 'blog', 'other'] as const;
 
 export type ProjectTemplateStatus = (typeof PROJECT_TEMPLATE_STATUSES)[number];
 export type ProjectTemplateVersionStatus = (typeof PROJECT_TEMPLATE_VERSION_STATUSES)[number];
@@ -27,6 +30,7 @@ export type ProjectTechnicalCategory = (typeof PROJECT_TECHNICAL_CATEGORIES)[num
 export type ProjectTechnicalContentType = (typeof PROJECT_TECHNICAL_CONTENT_TYPES)[number];
 export type ProjectCompletionState = (typeof PROJECT_COMPLETION_STATES)[number];
 export type ProjectCompletionKey = (typeof PROJECT_COMPLETION_KEYS)[number];
+export type ProjectSitePageRole = (typeof PROJECT_SITE_PAGE_ROLES)[number];
 
 export type ProjectWorkCardFieldType = 'text' | 'textarea' | 'check' | 'select' | 'url';
 export type ProjectCompanionAdviceKind = 'best_practice' | 'check' | 'library' | 'warning';
@@ -86,6 +90,13 @@ export interface ProjectCompanionAdvice {
   body: string;
 }
 
+export interface ProjectBlueprintNodeSource {
+  contributionKey: string; unitIndex: number; sourceTemplateNodeId: string;
+  quoteLineId: string | null; catalogVersionId: string | null; componentId: string | null;
+  templateVersionId: string; role: 'base' | 'addon'; quantityMilli: number;
+  quantityMode: 'once' | 'per_unit'; label: string; optionPurchase: Record<string, unknown> | null;
+}
+
 export interface ProjectNodeSource {
   id: string;
   projectNodeId: string;
@@ -127,6 +138,9 @@ export interface ProjectTemplateNode extends ProjectTemplateNodeInput {
 }
 
 export interface ProjectTemplateVersion {
+  operationalPurpose?: 'historical_complete' | 'structural';
+  requiresOperationalModel?: boolean;
+  operationalReady?: boolean;
   id: string;
   templateId: string;
   versionNumber: number;
@@ -153,6 +167,7 @@ export interface ProjectTemplateDetail extends ProjectTemplateSummary {
 }
 
 export interface ProjectNodeInput {
+  businessCategory?: BusinessTimeCategory | null;
   parentId?: string | null;
   type: ProjectNodeType;
   displaySubtype?: string | null;
@@ -174,6 +189,7 @@ export interface MoveProjectNodeInput {
 }
 
 export interface ProjectNode extends ProjectNodeInput {
+  operational?: OperationalNodeInfo;
   id: string;
   projectId: string;
   sourceTemplateNodeId?: string | null;
@@ -183,6 +199,7 @@ export interface ProjectNode extends ProjectNodeInput {
   paused: boolean;
   pauseReason?: string | null;
   sources: ProjectNodeSource[];
+  blueprintSources?: ProjectBlueprintNodeSource[];
   createdAt: string;
   updatedAt: string;
 }
@@ -220,6 +237,11 @@ export interface ProjectPrerequisite extends ProjectPrerequisiteInput {
 }
 
 export interface ProjectSummary {
+  prospectId?: string | null;
+  commercialState?: 'legacy' | 'provisional' | 'frozen';
+  commercialDossierId?: string | null;
+  acceptedQuoteId?: string | null;
+  scopeFrozenAt?: string | null;
   id: string;
   number: string;
   clientAccountId?: string | null;
@@ -244,10 +266,67 @@ export interface ProjectSummary {
 }
 
 export interface ProjectDetail extends ProjectSummary {
+  estimationIncomplete?: boolean;
   notes?: string | null;
   nodes: ProjectNode[];
   services: ProjectServiceSnapshot[];
   prerequisites: ProjectPrerequisite[];
+}
+
+export interface ProjectSiteInput {
+  name: string;
+  desiredDomain?: string | null;
+}
+
+export interface ProjectSite extends ProjectSiteInput {
+  id: string;
+  projectId: string;
+  name: string;
+  desiredDomain?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt?: string | null;
+}
+
+export interface ProjectSitePageInput {
+  role?: ProjectSitePageRole | null;
+  desiredPath?: string | null;
+}
+
+export interface ProjectSitePage {
+  projectNodeId: string;
+  projectSiteId: string;
+  role: ProjectSitePageRole;
+  desiredPath?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProjectTemplateSitePageInput {
+  key: string;
+  templateNodeId: string;
+  role: ProjectSitePageRole;
+  desiredPath?: string | null;
+  sortOrder?: number;
+}
+
+export interface ProjectTemplateSiteInput {
+  key: string;
+  name: string;
+  desiredDomain?: string | null;
+  sortOrder?: number;
+  pages: ProjectTemplateSitePageInput[];
+}
+
+export interface ProjectBlueprintGenerationResult {
+  projectId: string;
+  templateVersionId: string | null;
+  contributions?: {lineOrigin: string; templateVersionId: string; role: 'base'|'addon'; unitCount: number}[];
+  declaredSiteCount: number;
+  createdSiteIds: string[];
+  linkedPageIds: string[];
+  preservedSiteIds: string[];
+  preservedPageIds: string[];
 }
 
 export interface ProjectFilters {
@@ -260,10 +339,16 @@ export interface ProjectFilters {
 
 export interface TransformQuoteToProjectInput {
   quoteId: string;
+  previewSHA256?: string;
   templateVersionId?: string | null;
   name?: string | null;
   targetDate?: string | null;
   commercialMode?: ProjectCommercialMode | null;
+}
+export interface ProjectCommercialPreview {
+  quoteId:string;projectId:string|null;sha256:string;schemaVersion:1|2;baseCount:number;
+  contributions:{lineOrigin:string|null;templateVersionId:string;role:'base'|'addon';unitCount:number}[];
+  operations:OperationalPlan;destinations:PlannedContributionTarget[];
 }
 
 export interface InternalProjectInput {
@@ -372,11 +457,18 @@ export interface ProjectsApi {
     publishVersion(versionId: string): Promise<ProjectTemplateVersion>;
     addNode(versionId: string, input: ProjectTemplateNodeInput): Promise<ProjectTemplateVersion>;
     removeNode(nodeId: string): Promise<ProjectTemplateVersion>;
+    configureSites(versionId: string, sites: ProjectTemplateSiteInput[]): Promise<ProjectTemplateVersion>;
   };
   projects: {
     list(filters?: ProjectFilters): Promise<ProjectSummary[]>;
     get(id: string): Promise<ProjectDetail>;
     transformQuote(input: TransformQuoteToProjectInput): Promise<ProjectDetail>;
+    prepareQuote(input: TransformQuoteToProjectInput): Promise<ProjectDetail>;
+    previewQuote(input: TransformQuoteToProjectInput): Promise<ProjectCommercialPreview>;
+    syncCommercial(projectId: string): Promise<ProjectDetail>;
+    assignTarget(projectId:string,input:ContributionTargetInput):Promise<ProjectCommercialScope>;
+    commercialScope(projectId: string): Promise<ProjectCommercialScope>;
+    resolveScopeConflict(projectId: string, conflictId: string, decision: ProjectConflictDecision): Promise<ProjectCommercialScope>;
     createInternal(input: InternalProjectInput): Promise<ProjectDetail>;
     changeStatus(id: string, status: ProjectStatus): Promise<ProjectDetail>;
     completionReview(id: string): Promise<ProjectCompletionReview>;
@@ -387,6 +479,16 @@ export interface ProjectsApi {
     completePhase(nodeId: string): Promise<ProjectDetail>;
     addPrerequisite(projectId: string, input: ProjectPrerequisiteInput): Promise<ProjectDetail>;
     updatePrerequisiteStatus(id: string, status: ProjectPrerequisiteStatus): Promise<ProjectDetail>;
+  };
+  sites: {
+    list(projectId: string, includeArchived?: boolean): Promise<ProjectSite[]>;
+    create(projectId: string, input: ProjectSiteInput): Promise<ProjectSite>;
+    update(id: string, input: Partial<ProjectSiteInput>): Promise<ProjectSite>;
+    setArchived(id: string, archived: boolean): Promise<ProjectSite>;
+    listPages(projectId: string): Promise<ProjectSitePage[]>;
+    linkPage(siteId: string, projectNodeId: string, input?: ProjectSitePageInput): Promise<ProjectSitePage>;
+    unlinkPage(projectNodeId: string): Promise<void>;
+    applyBlueprint(projectId: string, templateVersionId?: string | null): Promise<ProjectBlueprintGenerationResult>;
   };
   secrets: {
     list(projectId: string, projectNodeId?: string | null): Promise<ProjectSecretSummary[]>;
@@ -416,4 +518,14 @@ export interface ProjectsApi {
     prepareForReuse(itemId: string, versionId?: string | null): Promise<ProjectTechnicalReuseExportResult>;
     archive(itemId: string): Promise<ProjectTechnicalItemDetail>;
   };
+}
+
+export type ProjectConflictDecision = 'keep' | 'archive' | 'detach' | 'delete';
+export interface ProjectCommercialScope {
+  targets?: ContributionTargetView[];
+  targetChoices?:ContributionTargetChoices;
+  projectId: string; state: 'legacy' | 'provisional' | 'frozen'; dossierId: string | null;
+  currentQuoteId: string | null; acceptedQuoteId: string | null;
+  revisions: {id:string;quoteId:string;commercialRevision:number;sequence:number;sha256:string;createdAt:string}[];
+  conflicts: {id:string;entityKind:string;entityId:string;label:string;reason:string}[];
 }

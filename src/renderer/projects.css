@@ -801,9 +801,12 @@
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
   gap: 10px;
+  width: 100%;
+  max-width: 100%;
   height: calc(100dvh - 148px);
   min-height: 620px;
   min-width: 0;
+  overflow-x: hidden;
 }
 
 .project-production-header {
@@ -2232,3 +2235,40 @@ body.project-resizing * {
   }
 }
 
+
+.project-production-header-compact{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;min-width:0;padding:8px 10px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+.project-production-header-compact strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.project-production-collapse-top{margin-left:4px}
+.project-production-page.project-top-collapsed{grid-template-rows:auto auto minmax(0,1fr)}
+@media(max-width:760px){.project-production-header-compact{grid-template-columns:auto minmax(0,1fr)}.project-production-header-compact>button:last-child{grid-column:1/-1}}
+
+/* Lot 7: readable sold origin; technical identifiers remain in provenance data. */
+.project-blueprint-origins {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-soft);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.project-blueprint-origins strong { color: var(--accent-strong); }
+.project-blueprint-origins ul { margin: 8px 0 0; padding-left: 18px; line-height: 1.6; }
+
+.project-commercial-scope { padding: 16px; margin: 12px 0; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); font-size: 14px; }
+.project-commercial-scope p { margin: 8px 0; }
+.project-commercial-scope details { margin-top: 12px; }
+.project-scope-conflict { margin-top: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; }
+.project-scope-conflict button { margin: 4px 8px 4px 0; }
+
+.operational-action-details { padding: 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.operational-action-details p { margin: 0; overflow-wrap: anywhere; }
+.operational-action-details label { display: grid; gap: 6px; }
+.operational-action-details details p { margin-top: 6px; }
+
+.project-target-choice { display:grid; gap:10px; min-width:0; margin-top:16px; padding:14px; border:1px solid var(--border); border-radius:10px; background:var(--surface-soft); color:var(--text); }
+.project-target-choice legend { max-width:100%; overflow-wrap:anywhere; padding:0 6px; font-weight:700; }
+.project-target-choice label { display:grid; gap:6px; min-width:0; }
+.project-target-choice select, .project-target-choice input { width:100%; min-width:0; padding:10px 12px; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--text); font:inherit; }
+.project-target-choice button { justify-self:start; padding:10px 14px; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--text); font:inherit; font-weight:600; text-decoration:none; cursor:pointer; }
+.project-target-choice button:disabled { cursor:default; opacity:.55; }
+.project-target-choice:disabled { opacity:.8; }

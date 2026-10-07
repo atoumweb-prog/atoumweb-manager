@@ -68,6 +68,7 @@ export interface ServiceRequestFilters {
 }
 
 export interface InterventionInput {
+  estimatedMinutes?:number|null;
   clientAccountId: string;
   projectId?: string | null;
   projectNodeId?: string | null;
@@ -95,6 +96,8 @@ export interface InterventionInput {
 }
 
 export interface Intervention extends InterventionInput {
+  referenceMinutes?:number|null;
+  operationalChecklist?:import('./operational').OperationalAction[];
   id: string;
   number: string;
   type: InterventionType;
@@ -169,6 +172,9 @@ export interface MaintenanceSubscriptionInput {
 }
 
 export interface MaintenanceSubscription extends MaintenanceSubscriptionInput {
+  canonicalCode?:string|null;
+  billingPeriod?:'monthly'|'yearly'|'once'|null;
+  periodAlignment?: 'calendar' | 'anniversary';
   id: string;
   clientLabel: string;
   projectLabel?: string | null;
@@ -192,6 +198,11 @@ export interface MaintenanceSubscriptionFilters {
 }
 
 export interface MaintenanceCheck {
+  operationalSaleId?:string|null;
+  estimateRequired?:boolean;
+  referenceMinutes?:number|null;
+  businessCategory?:import('./operational').BusinessTimeCategory|null;
+  routineInterventionId?:string|null;
   id: string;
   periodId: string;
   templateItemId?: string | null;
@@ -205,6 +216,7 @@ export interface MaintenanceCheck {
 }
 
 export interface MaintenancePeriodUsage {
+  routineSeconds?:number;
   interventionCount: number;
   usedSeconds: number;
   remainingInterventions: number | null;
@@ -312,6 +324,7 @@ export interface OperationsApi {
       changeStatus(id: string, status: MaintenanceSubscriptionStatus): Promise<MaintenanceSubscription>;
     };
     periods: {
+      prepareRoutine(checkId:string):Promise<Intervention>;
       list(subscriptionId: string): Promise<MaintenancePeriod[]>;
       ensure(subscriptionId: string, referenceDate?: string | null): Promise<MaintenancePeriod>;
       changeStatus(id: string, status: MaintenancePeriodStatus): Promise<MaintenancePeriod>;

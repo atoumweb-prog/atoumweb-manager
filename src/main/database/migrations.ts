@@ -1,3 +1,12 @@
+import { OPERATIONAL_SALES_ADDON_MIGRATION } from './operationalSalesAddonMigration';
+import { OPERATIONAL_SALES_MIGRATION } from './operationalSalesMigration';
+import { COMMERCIAL_RULES_MIGRATION } from './commercialRulesMigration';
+import { OPERATIONAL_LINK_LIFECYCLE_MIGRATION } from './operationalLinkLifecycleMigration';
+import { PROJECT_CONTRIBUTION_TARGET_MIGRATION } from './projectContributionTargetMigration';
+import { PROJECT_OPERATIONAL_MIGRATION } from './projectOperationalMigration';
+import { PROJECT_COMPOSITION_MIGRATION } from './projectCompositionMigration';
+import { PROJECT_PROVISIONAL_MIGRATION } from './projectProvisionalMigration';
+import { QUOTE_OPTIONS_MIGRATION } from './quoteOptionsMigration';
 import { STABILISATION_MIGRATION } from './stabilisationMigration';
 import { STABILISATION_PHASE_19_MIGRATION } from './stabilisationPhase19Migration';
 import { PROSPECT_WORKFLOW_V2_MIGRATION } from './prospectWorkflowV2Migration';
@@ -26,6 +35,16 @@ import { ATOUMWEB_COMPOSITION_MIGRATION } from './atoumWebCompositionMigration';
 import { CONTRACT_TERMS_MIGRATION } from './contractTermsMigration';
 import { QUOTE_CONTRACT_DOCUMENT_MIGRATION } from './quoteContractDocumentMigration';
 import { CONTRACT_AUDIENCE_MIGRATION } from './contractAudienceMigration';
+import { PROJECT_SITE_MIGRATION } from './projectSiteMigration';
+import { PROJECT_PAGE_COMPOSITION_MIGRATION } from './projectPageCompositionMigration';
+import { PROJECT_PAGE_COMPOSITION_LOCAL_SETTINGS_MIGRATION } from './projectPageCompositionLocalSettingsMigration';
+import { PROJECT_BLUEPRINT_SITE_MIGRATION } from './projectBlueprintSiteMigration';
+import { PROJECT_BLUEPRINT_SITE_COMPATIBILITY_MIGRATION } from './projectBlueprintSiteCompatibilityMigration';
+import { PROJECT_PAGE_EXPORT_MIGRATION } from './projectPageExportMigration';
+import { CATALOG_IDENTITY_V1_MIGRATION } from './catalogIdentityV1Migration';
+import { CATALOG_IMPORT_V1_MIGRATION } from './catalogImportV1Migration';
+import { QUOTE_CONTRACT_PREPARATION_MIGRATION } from './quoteContractPreparationMigration';
+import { CONTRACT_LIBRARY_IMPORT_V1_MIGRATION } from './contractLibraryImportV1Migration';
 
 export interface Migration { id: number; name: string; sql: string; disableForeignKeys?: boolean; }
 
@@ -207,6 +226,25 @@ export const MIGRATIONS: Migration[] = [
   CONTRACT_TERMS_MIGRATION,
   QUOTE_CONTRACT_DOCUMENT_MIGRATION,
   CONTRACT_AUDIENCE_MIGRATION,
+  PROJECT_SITE_MIGRATION,
+  PROJECT_PAGE_COMPOSITION_MIGRATION,
+  PROJECT_PAGE_COMPOSITION_LOCAL_SETTINGS_MIGRATION,
+  PROJECT_BLUEPRINT_SITE_MIGRATION,
+  PROJECT_BLUEPRINT_SITE_COMPATIBILITY_MIGRATION,
+  PROJECT_PAGE_EXPORT_MIGRATION,
+  CATALOG_IDENTITY_V1_MIGRATION,
+  CATALOG_IMPORT_V1_MIGRATION,
+  CONTRACT_LIBRARY_IMPORT_V1_MIGRATION,
+  QUOTE_CONTRACT_PREPARATION_MIGRATION,
+  QUOTE_OPTIONS_MIGRATION,
+  PROJECT_COMPOSITION_MIGRATION,
+  PROJECT_PROVISIONAL_MIGRATION,
+  PROJECT_OPERATIONAL_MIGRATION,
+  PROJECT_CONTRIBUTION_TARGET_MIGRATION,
+  OPERATIONAL_LINK_LIFECYCLE_MIGRATION,
+  COMMERCIAL_RULES_MIGRATION,
+  OPERATIONAL_SALES_MIGRATION,
+  OPERATIONAL_SALES_ADDON_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {

@@ -1,10 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import type { ProjectTechnicalCategory } from '../../shared/projects';
 import { PROJECT_TECHNICAL_CONTENT_TYPES } from '../../shared/projects';
-import { normalizeSlug } from '../../shared/componentIdentity';
+import { normalizeComponentKey, normalizeSlug } from '../../shared/componentIdentity';
 import {
   ATOUMWEB_LIBRARY_CATEGORIES,
   ATOUMWEB_REUSE_STATUSES,
+  type AtoumWebDirectReusableCodeInput,
+  type AtoumWebDirectVariantCodeInput,
   type AtoumWebLibraryCategory,
   type AtoumWebTechnicalItemDetail,
   type AtoumWebTechnicalItemInput,
@@ -83,6 +85,26 @@ interface ComponentIdentityRow extends Record<string, unknown> {
   variant_of_id: string | null;
 }
 
+interface ManagedFamilyRow extends Record<string, unknown> {
+  id: string;
+  component_key: string;
+  display_name: string;
+  category: string;
+  vertical: string | null;
+  reusability_scope: 'generic' | 'vertical' | 'site_specific';
+  base_item_id: string;
+}
+
+interface ManagedVariantRow extends Record<string, unknown> {
+  id: string;
+  family_id: string;
+  technical_item_id: string;
+  variant_key: string;
+  display_name: string;
+  variant_mode: 'base' | 'inherit' | 'forked';
+  variant_of_id: string | null;
+}
+
 export class AtoumWebTechnicalLibraryService {
   constructor(private readonly database: DatabaseAdapter) {}
 
@@ -154,7 +176,159 @@ export class AtoumWebTechnicalLibraryService {
     return created;
   }
 
-  updateMetadata(id: string, input: Partial<AtoumWebTechnicalItemInput>): AtoumWebTechnicalItemDetail {
+  createReusableCode(input: AtoumWebDirectReusableCodeInput): AtoumWebTechnicalItemDetail {
+    const name = clean(input.name);
+    if (!name) throw new Error('Nom du composant requis.');
+    if (!input.html?.trim()) throw new Error('Le HTML du composant est requis.');
+
+    const familyId = `awfam:${randomUUID()}`;
+    const variantId = `awvar:${randomUUID()}`;
+    const componentKey = this.uniqueManagedComponentKey(input.category, name);
+    const vertical = normalizeSlug(input.vertical);
+    const scope = vertical ? 'vertical' as const : 'generic' as const;
+    const payload = this.buildManagedReusablePayload({
+      familyId,
+      componentKey,
+      variantId,
+      variantKey: 'base',
+      variantOfId: null,
+      variantMode: 'base',
+      vertical,
+      scope,
+      html: input.html,
+      css: input.css,
+      javascript: input.javascript,
+      note: 'Composant créé directement depuis une Page du Manager.',
+    });
+
+    this.database.exec('SAVEPOINT library_direct_component;');
+    try {
+      let created = this.create(
+        {
+          category: input.category,
+          name,
+          description: input.description,
+          tags: this.directManagedTags(input.tags),
+          vertical,
+          reuseStatus: 'ready',
+        },
+        {
+          contentType: 'json',
+          language: 'json',
+          contentText: JSON.stringify(payload, null, 2),
+          notes: 'Créé directement dans AtoumWeb Manager et validé explicitement pour réutilisation.',
+        },
+      );
+      const now = nowIso();
+      this.database.run(
+        `INSERT INTO atoumweb_component_families
+         (id,component_key,display_name,category,vertical,reusability_scope,base_item_id,created_at,updated_at)
+         VALUES (?,?,?,?,?,?,?,?,?)`,
+        [familyId, componentKey, name, input.category, vertical, scope, created.id, now, now],
+      );
+      this.database.run(
+        `INSERT INTO atoumweb_component_variants
+         (id,family_id,technical_item_id,variant_key,display_name,variant_mode,variant_of_id,source_occurrence_return_id,created_at,updated_at)
+         VALUES (?,?,?,?,?,'base',NULL,NULL,?,?)`,
+        [variantId, familyId, created.id, 'base', 'Base', now, now],
+      );
+      if (created.currentVersion) created = this.markStable(created.currentVersion.id);
+      this.refreshSearchIndex(created.id);
+      this.database.exec('RELEASE SAVEPOINT library_direct_component;');
+      return created;
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT library_direct_component; RELEASE SAVEPOINT library_direct_component;');
+      throw error;
+    }
+  }
+
+  createVariantCode(input: AtoumWebDirectVariantCodeInput): AtoumWebTechnicalItemDetail {
+    const source = this.get(input.sourceItemId);
+    const label = clean(input.name);
+    if (!label) throw new Error('Nom de la déclinaison requis.');
+    if (!input.html?.trim()) throw new Error('Le HTML de la déclinaison est requis.');
+
+    this.database.exec('SAVEPOINT library_direct_variant;');
+    try {
+      const family = this.ensureManagedFamily(source);
+      const parent = this.managedVariantForItem(source.id);
+      if (!parent || parent.family_id !== family.id) throw new Error('Variante source introuvable dans sa famille.');
+
+      const variantId = `awvar:${randomUUID()}`;
+      const variantKey = this.uniqueManagedVariantKey(family.id, input.variantKey ?? label);
+      const requestedVertical = normalizeSlug(input.vertical);
+      const vertical = family.reusability_scope === 'vertical'
+        ? family.vertical
+        : requestedVertical ?? source.vertical ?? family.vertical;
+      const itemName = label.toLocaleLowerCase('fr-FR').startsWith(source.name.toLocaleLowerCase('fr-FR'))
+        ? label
+        : `${source.name} — ${label}`;
+      const payload = this.buildManagedReusablePayload({
+        familyId: family.id,
+        componentKey: family.component_key,
+        variantId,
+        variantKey,
+        variantOfId: parent.id,
+        variantMode: 'forked',
+        vertical,
+        scope: family.reusability_scope,
+        html: input.html,
+        css: input.css,
+        javascript: input.javascript,
+        note: `Déclinaison complète de « ${source.name} » créée directement dans le Manager.`,
+      });
+
+      const reuseStatus = input.reuseStatus ?? 'ready';
+      const markStable = input.markStable ?? true;
+      const variantTags = this.directManagedTags([...(source.tags ?? []), ...(input.tags ?? [])]);
+      if (reuseStatus === 'adapt') {
+        const readyIndex = variantTags.indexOf('bridge-human-validated');
+        if (readyIndex >= 0) variantTags.splice(readyIndex, 1);
+        if (!variantTags.includes('manager-variant-to-review')) variantTags.push('manager-variant-to-review');
+      }
+      let created = this.create(
+        {
+          category: source.category,
+          name: itemName,
+          description: input.description ?? `Déclinaison de « ${source.name} ».`,
+          tags: variantTags,
+          vertical,
+          reuseStatus,
+        },
+        {
+          contentType: 'json',
+          language: 'json',
+          contentText: JSON.stringify(payload, null, 2),
+          notes: input.provenanceNote
+            ? `Déclinaison « ${label} » du modèle « ${source.name} ». ${input.provenanceNote}`
+            : `Déclinaison « ${label} » du modèle « ${source.name} ».`,
+        },
+      );
+      const now = nowIso();
+      this.database.run(
+        `INSERT INTO atoumweb_component_variants
+         (id,family_id,technical_item_id,variant_key,display_name,variant_mode,variant_of_id,source_occurrence_return_id,created_at,updated_at)
+         VALUES (?,?,?,?,?,'forked',?,NULL,?,?)`,
+        [variantId, family.id, created.id, variantKey, label, parent.id, now, now],
+      );
+      if (created.currentVersion && markStable) {
+        created = this.markStable(created.currentVersion.id);
+      } else {
+        // L'identité Famille / Variante est créée après technical_items.
+        // Recharge toujours l'élément afin de retourner variantMode / variantOfId / variantKey à jour.
+        created = this.get(created.id);
+      }
+      this.refreshSearchIndex(source.id);
+      this.refreshSearchIndex(created.id);
+      this.database.exec('RELEASE SAVEPOINT library_direct_variant;');
+      return created;
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT library_direct_variant; RELEASE SAVEPOINT library_direct_variant;');
+      throw error;
+    }
+  }
+
+    updateMetadata(id: string, input: Partial<AtoumWebTechnicalItemInput>): AtoumWebTechnicalItemDetail {
     const item = this.get(id);
     const next: AtoumWebTechnicalItemInput = {
       category: input.category ?? item.category,
@@ -398,7 +572,130 @@ export class AtoumWebTechnicalLibraryService {
     );
   }
 
-  private validateItemInput(input: AtoumWebTechnicalItemInput): void {
+  private directManagedTags(tags?: string[]): string[] {
+    return this.normalizeTags([...(tags ?? []), 'manager-direct', 'bridge-human-validated', 'bridge-family-managed']);
+  }
+
+  private buildManagedReusablePayload(input: {
+    familyId: string;
+    componentKey: string;
+    variantId: string;
+    variantKey: string;
+    variantOfId: string | null;
+    variantMode: 'base' | 'forked';
+    vertical: string | null;
+    scope: 'generic' | 'vertical' | 'site_specific';
+    html: string;
+    css?: string | null;
+    javascript?: string | null;
+    note: string;
+  }): Record<string, unknown> {
+    return {
+      schemaVersion: 1,
+      generatorRevision: 1,
+      kind: 'atoumweb-library-reusable-component',
+      origin: {
+        site: null,
+        page: 'AtoumWeb Manager',
+        pageUrl: null,
+        snapshotId: null,
+        snapshotDate: null,
+        builderGeneration: 'manager-direct',
+        occurrenceId: `manager-direct:${randomUUID()}`,
+      },
+      identity: {
+        componentFamilyId: input.familyId,
+        componentKey: input.componentKey,
+        libraryVariantId: input.variantId,
+        variantKey: input.variantKey,
+        variantOf: input.variantOfId,
+        variantMode: input.variantMode,
+        vertical: input.vertical,
+        reusabilityScope: input.scope,
+      },
+      reusable: {
+        html: input.html,
+        css: input.css ?? '',
+        javascript: input.javascript ?? '',
+        rootClasses: [],
+        method: 'divi-code',
+        instructions: [],
+        generalized: false,
+        fields: [],
+      },
+      dependencies: [],
+      assets: [],
+      checks: { remoteAssetUrls: [] },
+      notes: [input.note],
+    };
+  }
+
+  private ensureManagedFamily(item: AtoumWebTechnicalItemDetail): ManagedFamilyRow {
+    const existingVariant = this.managedVariantForItem(item.id);
+    if (existingVariant) {
+      const family = this.database.get<ManagedFamilyRow>('SELECT * FROM atoumweb_component_families WHERE id=?', [existingVariant.family_id]);
+      if (!family) throw new Error('Famille du composant source introuvable.');
+      return family;
+    }
+
+    const familyId = `awfam:${randomUUID()}`;
+    const baseVariantId = `awvar:${randomUUID()}`;
+    const componentKey = this.uniqueManagedComponentKey(item.category, item.name);
+    const scope = item.vertical ? 'vertical' as const : 'generic' as const;
+    const now = nowIso();
+    this.database.run(
+      `INSERT INTO atoumweb_component_families
+       (id,component_key,display_name,category,vertical,reusability_scope,base_item_id,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?)`,
+      [familyId, componentKey, item.name, item.category, item.vertical ?? null, scope, item.id, now, now],
+    );
+    this.database.run(
+      `INSERT INTO atoumweb_component_variants
+       (id,family_id,technical_item_id,variant_key,display_name,variant_mode,variant_of_id,source_occurrence_return_id,created_at,updated_at)
+       VALUES (?,?,?,?,?,'base',NULL,NULL,?,?)`,
+      [baseVariantId, familyId, item.id, 'base', 'Base', now, now],
+    );
+    this.refreshSearchIndex(item.id);
+    return this.database.get<ManagedFamilyRow>('SELECT * FROM atoumweb_component_families WHERE id=?', [familyId])!;
+  }
+
+  private managedVariantForItem(itemId: string): ManagedVariantRow | null {
+    return this.database.get<ManagedVariantRow>(
+      'SELECT * FROM atoumweb_component_variants WHERE technical_item_id=?',
+      [itemId],
+    ) ?? null;
+  }
+
+  private uniqueManagedVariantKey(familyId: string, value: string): string {
+    const normalized = normalizeSlug(value) ?? 'variant';
+    const base = normalized === 'base' ? 'variant' : normalized;
+    let candidate = base;
+    let suffix = 2;
+    while (this.database.get<{ id: string }>(
+      'SELECT id FROM atoumweb_component_variants WHERE family_id=? AND variant_key=?',
+      [familyId, candidate],
+    )) {
+      candidate = `${base}-${suffix}`;
+      suffix += 1;
+    }
+    return candidate;
+  }
+
+  private uniqueManagedComponentKey(category: string, name: string): string {
+    const categorySlug = normalizeSlug(category) ?? 'component';
+    const nameSlug = normalizeSlug(name) ?? 'component';
+    const stem = nameSlug === categorySlug || nameSlug.startsWith(`${categorySlug}-`) ? nameSlug : `${categorySlug}-${nameSlug}`;
+    const base = normalizeComponentKey(`aw-${stem}`) ?? 'aw-component';
+    let candidate = base;
+    let suffix = 2;
+    while (this.database.get<{ id: string }>('SELECT id FROM atoumweb_component_families WHERE component_key=?', [candidate])) {
+      candidate = `${base}-${suffix}`;
+      suffix += 1;
+    }
+    return candidate;
+  }
+
+    private validateItemInput(input: AtoumWebTechnicalItemInput): void {
     if (!ATOUMWEB_LIBRARY_CATEGORIES.includes(input.category)) throw new Error('Catégorie de Bibliothèque AtoumWeb invalide.');
     if (!ATOUMWEB_REUSE_STATUSES.includes(input.reuseStatus)) throw new Error('Statut de réutilisation invalide.');
   }

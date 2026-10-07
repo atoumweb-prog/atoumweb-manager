@@ -1,3 +1,4 @@
+import {OperationalRecipePage} from './projects/recipe/OperationalRecipePage';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
@@ -88,6 +89,6 @@ createRoot(rendererRoot, {
   onUncaughtError: (error) => showRendererFailure(error),
 }).render(
   <StrictMode>
-    <App />
+    {window.atoumwebOperationalRecipe ? <OperationalRecipePage /> : <App />}
   </StrictMode>,
 );

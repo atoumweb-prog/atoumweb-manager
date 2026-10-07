@@ -1,3 +1,4 @@
+import { finalizeForTest, acceptForTest } from '../testSupport/quotePreparationFixture';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CrmService } from '../crm/CrmService';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
@@ -5,6 +6,8 @@ import { applyPendingMigrations } from '../database/migrations';
 import { CatalogService } from './CatalogService';
 import { ContractTermsService } from './ContractTermsService';
 import { QuoteService } from './QuoteService';
+import { quoteContractText } from '../../shared/contractTerms';
+import { buildQuoteHtml } from './quotePdf';
 
 let database: NodeSqliteAdapter;
 let crm: CrmService;
@@ -49,6 +52,126 @@ function createConsumerProspect() {
 }
 
 describe('ContractTermsService', () => {
+  it('enregistre une clause en brouillon sans alimenter les devis ni publier', () => {
+    const quote = quotes.create({ prospectId: prospectId(), subject: 'Brouillon uniquement' });
+    const template = contractTerms.createTemplate({ code: 'TEST-DRAFT', title: 'Test', scope: 'base' }, { body: 'Texte non publié.' });
+    expect(template.currentVersionId).toBeNull();
+    expect(template.currentVersion).toBeNull();
+    expect(template.versions[0].status).toBe('draft');
+    expect(template.versions[0].publishedAt).toBeNull();
+    expect(contractTerms.syncQuote(quote.id).clauses).toEqual([]);
+    expect(database.all("SELECT id FROM activity_log WHERE action='contract_clause_version_published'")).toEqual([]);
+  });
+
+  it('enregistre une nouvelle version en brouillon puis la publie uniquement par action séparée', () => {
+    const template = publishedClause('TEST-VERSION', 'Test', 'base', 'Texte publié v1.');
+    const quote = quotes.create({ prospectId: prospectId(), subject: 'Deux versions' });
+    const draft = contractTerms.createVersion(template.id, { body: 'Texte brouillon v2.' });
+    expect(draft.status).toBe('draft');
+    expect(draft.publishedAt).toBeNull();
+    expect(contractTerms.getTemplate(template.id).currentVersionId).toBe(template.currentVersionId);
+    expect(contractTerms.syncQuote(quote.id).compiledText).toContain('Texte publié v1.');
+    const published = contractTerms.publishVersion(draft.id);
+    expect(published.currentVersionId).toBe(draft.id);
+    expect(published.currentVersion?.status).toBe('published');
+    expect(published.versions.find((v) => v.id === template.currentVersionId)?.status).toBe('retired');
+    expect(contractTerms.syncQuote(quote.id).compiledText).toContain('Texte brouillon v2.');
+  });
+
+  it('fige explicitement un snapshot vide et ne le reconstruit jamais à l’acceptation', () => {
+    const quote = quotes.create({ prospectId: prospectId(), subject: 'Sans bibliothèque' });
+    // Historical draft before Lot 5: retain the Lot 1 empty snapshot regression without inventing parameters.
+    database.run('UPDATE quotes SET contract_parameters_json=NULL WHERE id=?',[quote.id]);
+    quotes.addCustomLine(quote.id, { label: 'Prestation', proposedUnitPriceCents: 10000 });
+    const finalized = finalizeForTest(database,quotes,quote.id);
+    expect(finalized.contractTextSnapshot).toBe('');
+    expect(finalized.contractCompiledAt).toBeTruthy();
+    expect(JSON.parse(finalized.contractSnapshotJson!)).toEqual({ audience: 'professional', clauses: [] });
+    publishedClause('TEST-AFTER', 'Après finalisation', 'base', 'Jamais rétroactif.');
+    quotes.markSent(quote.id);
+    acceptForTest(database,quotes,quote.id);
+    const frozen = contractTerms.freezeQuote(quote.id);
+    expect(frozen.snapshotState).toBe('frozen');
+    expect(frozen.clauses).toEqual([]);
+    expect(frozen.snapshotText).toBe('');
+    expect(frozen.compiledAt).toBe(finalized.contractCompiledAt);
+    expect(quotes.get(quote.id).contractSnapshotJson).toBe(finalized.contractSnapshotJson);
+    expect(quoteContractText({ ...frozen, compiledText: 'Compilation ultérieure interdite' })).toBe('');
+    expect(buildQuoteHtml({ ...finalized, specialTerms: 'Texte exclu à ne pas réintroduire' })).not.toContain('Texte exclu à ne pas réintroduire');
+    expect(database.all("SELECT id FROM activity_log WHERE entity_id=? AND action='quote_contract_frozen'", [quote.id])).toHaveLength(1);
+    expect(() => contractTerms.syncQuote(quote.id)).toThrow(/figées/);
+  });
+
+  it('conserve le texte, la version et le JSON exacts après évolution de la bibliothèque', () => {
+    const template = publishedClause('TEST-EXACT', 'Test exact', 'base', 'Texte initial\navec ses lignes.');
+    const quote = quotes.create({ prospectId: prospectId(), subject: 'Preuve exacte' });
+    quotes.addCustomLine(quote.id, { label: 'Prestation', proposedUnitPriceCents: 10000 });
+    const frozen = finalizeForTest(database,quotes,quote.id);
+    const draft = contractTerms.createVersion(template.id, { body: 'Texte remplacé.' });
+    contractTerms.publishVersion(draft.id);
+    contractTerms.setTemplateStatus(template.id, 'inactive');
+    quotes.markSent(quote.id);
+    acceptForTest(database,quotes,quote.id);
+    const after = quotes.get(quote.id);
+    expect(after.contractTextSnapshot).toBe(frozen.contractTextSnapshot);
+    expect(after.contractSnapshotJson).toBe(frozen.contractSnapshotJson);
+    expect(after.contractCompiledAt).toBe(frozen.contractCompiledAt);
+    const build = contractTerms.freezeQuote(quote.id);
+    expect(build.clauses[0].sourceClauseVersionId).toBe(template.currentVersionId);
+    expect(build.clauses[0].body).toBe('Texte initial\navec ses lignes.');
+    expect(quoteContractText(build)).toBe(frozen.contractTextSnapshot);
+    expect(buildQuoteHtml(after)).toContain('Texte initial<br />avec ses lignes.');
+    expect(buildQuoteHtml(after)).not.toContain('Texte remplacé.');
+  });
+
+  it('préserve les trois profils historiques, puis accepte le devis envoyé sans injection rétroactive', () => {
+    const ids = [1, 2, 3].map((index) => {
+      const quote = quotes.create({ prospectId: prospectId(), subject: `Historique ${index}` });
+      quotes.addCustomLine(quote.id, { label: 'Prestation historique', proposedUnitPriceCents: 10000 });
+      database.run('UPDATE quotes SET quote_number=?,status=?,finalized_at=?,sent_at=? WHERE id=?', [
+        `DEV-2026-00${index}`, index === 2 ? 'sent' : 'accepted', index === 1 ? null : '2026-09-20T00:00:00Z', '2026-09-20T00:00:00Z', quote.id,
+      ]);
+      return quote.id;
+    });
+    const before = database.all('SELECT * FROM quotes ORDER BY quote_number');
+    const clausesBefore = database.all('SELECT * FROM quote_contract_clauses');
+    publishedClause('TEST-FUTURE', 'Future bibliothèque', 'base', 'Ne concerne pas les anciens devis.');
+    ids.forEach((id) => {
+      const build = contractTerms.freezeQuote(id);
+      expect(build.snapshotState).toBe('historical_missing');
+      expect(build.snapshotText).toBeNull();
+      expect(build.compiledAt).toBeNull();
+      expect(build.clauses).toEqual([]);
+      expect(build.warnings.join(' ')).toMatch(/historique/);
+      expect(quoteContractText({ ...build, compiledText: 'Ne pas recopier' })).toBe('');
+      expect(() => contractTerms.syncQuote(id)).toThrow(/figées/);
+    });
+    expect(database.all('SELECT * FROM quotes ORDER BY quote_number')).toEqual(before);
+    expect(database.all('SELECT * FROM quote_contract_clauses')).toEqual(clausesBefore);
+    const accepted = acceptForTest(database,quotes,ids[1]);
+    acceptForTest(database,quotes,ids[1]);
+    expect(accepted.status).toBe('accepted');
+    expect(accepted.contractTextSnapshot).toBeNull();
+    expect(accepted.contractSnapshotJson).toBeNull();
+    expect(accepted.contractCompiledAt).toBeNull();
+    expect(buildQuoteHtml({ ...accepted, specialTerms: 'Conditions particulières historiques' })).toContain('Conditions particulières historiques');
+    expect(database.all('SELECT * FROM quote_contract_clauses')).toEqual([]);
+    expect(database.all("SELECT id FROM activity_log WHERE entity_id=? AND action='quote_accepted_without_contract_snapshot'", [ids[1]])).toHaveLength(1);
+  });
+
+  it('ne transforme pas des instances historiques sans snapshot en un contrat reconstitué', () => {
+    const quote = quotes.create({ prospectId: prospectId(), subject: 'Instances historiques' });
+    quotes.addCustomLine(quote.id, { label: 'Prestation', proposedUnitPriceCents: 10000 });
+    contractTerms.addCustomQuoteClause(quote.id, { title: 'Ancien texte', body: 'Instance à préserver.' });
+    const before = database.all('SELECT * FROM quote_contract_clauses WHERE quote_id=?', [quote.id]);
+    database.run("UPDATE quotes SET status='sent',finalized_at='2026-09-20' WHERE id=?", [quote.id]);
+    publishedClause('TEST-FUTURE-2', 'Nouveau socle', 'base', 'Texte ultérieur.');
+    acceptForTest(database,quotes,quote.id);
+    expect(database.all('SELECT * FROM quote_contract_clauses WHERE quote_id=?', [quote.id])).toEqual(before);
+    expect(contractTerms.getQuoteBuild(quote.id).snapshotState).toBe('historical_missing');
+    expect(quotes.get(quote.id).contractSnapshotJson).toBeNull();
+  });
+
   it('refuse de publier une clause contenant un placeholder juridique', () => {
     const clause = contractTerms.createTemplate(
       { code: 'CONS-MEDIATION-DRAFT', title: 'Médiation', scope: 'base', audience: 'consumer' },
@@ -178,7 +301,7 @@ describe('ContractTermsService', () => {
       body: 'Livraison prévue en deux phases.',
     });
 
-    const finalized = quotes.finalize(quote.id);
+    const finalized = finalizeForTest(database,quotes,quote.id);
     expect(finalized.contractCompiledAt).toBeTruthy();
     expect(finalized.contractTextSnapshot).toContain('Acceptation du devis');
     expect(finalized.contractTextSnapshot).toContain('Condition particulière');
@@ -200,7 +323,7 @@ describe('ContractTermsService', () => {
     const instance = build.clauses.find((clause) => clause.sourceClauseId === specific.id)!;
     contractTerms.updateQuoteClause(instance.id, { body: 'Texte négocié.' });
     contractTerms.addCustomQuoteClause(quote.id, { title: 'Cas particulier', body: 'Conserver cette clause.' });
-    quotes.finalize(quote.id);
+    finalizeForTest(database,quotes,quote.id);
     quotes.markSent(quote.id);
     quotes.refuse(quote.id);
 

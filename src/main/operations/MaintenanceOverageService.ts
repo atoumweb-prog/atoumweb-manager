@@ -50,8 +50,9 @@ export class MaintenanceOverageService {
       included_interventions: number;
       subscription_id: string;
       carryover_mode_snapshot: string;
+      maximum_minor_minutes: number|null;
     }>(
-      `SELECT mp.id,mp.included_interventions,mp.subscription_id,ms.carryover_mode_snapshot
+      `SELECT mp.id,mp.included_interventions,mp.subscription_id,ms.carryover_mode_snapshot,ms.maximum_minor_minutes
        FROM maintenance_periods mp
        JOIN maintenance_subscriptions ms ON ms.id=mp.subscription_id
        WHERE mp.id=?`,
@@ -71,13 +72,13 @@ export class MaintenanceOverageService {
           WHERE ts.intervention_id=i.id AND ts.ended_at IS NOT NULL
         ),0) AS total_time_seconds
        FROM interventions i
-       WHERE i.maintenance_period_id=? AND i.status NOT IN ('cancelled','archived')
+       WHERE i.maintenance_period_id=? AND i.status NOT IN ('cancelled','archived') AND COALESCE(i.maintenance_usage_kind,'minor')='minor'
        ORDER BY i.created_at,i.id`,
       [periodId],
     );
 
     const quota = Number(period.included_interventions);
-    const overageRows = quota > 0 ? interventions.slice(quota) : [];
+    const overageRows = interventions.filter((row,index) => (quota > 0 && index >= quota) || (period.maximum_minor_minutes != null && row.total_time_seconds > period.maximum_minor_minutes * 60));
     const decisions = new Map(
       this.database.all<DecisionRow>(this.decisionSelect('WHERE mod.period_id=?'), [periodId])
         .map((row) => [row.intervention_id, this.mapDecision(row)]),

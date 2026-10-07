@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "code": "AW-MARIAGE-HISTOIRE",
+  "decision": "AtoumWeb 2026-10-06 — Histoire 1 Site / 4 Pages",
+  "key": "mariage-histoire-4-pages-v1",
+  "version": 1,
+  "siteMode": "create",
+  "provides": [
+    "wordpress"
+  ],
+  "pages": [
+    {
+      "key": "accueil",
+      "name": "Accueil",
+      "role": "home",
+      "path": "/",
+      "description": null
+    },
+    {
+      "key": "notre-histoire",
+      "name": "Notre histoire",
+      "role": "standard",
+      "path": "/notre-histoire/",
+      "description": null
+    },
+    {
+      "key": "jour-j",
+      "name": "Le Jour J",
+      "role": "standard",
+      "path": "/jour-j/",
+      "description": null
+    },
+    {
+      "key": "espace-prive",
+      "name": "Espace privé",
+      "role": "standard",
+      "path": "/espace-prive/",
+      "description": "Page protégée prévue pour galerie/souvenirs, vidéo ou diaporama, livre d’or et contenus post-mariage. Protection à réaliser ; aucune protection activée par la simulation."
+    }
+  ],
+  "nonPageContent": [
+    "RSVP",
+    "galerie",
+    "vidéo"
+  ],
+  "actionsUnchanged": 10,
+  "referenceMinutesUnchanged": 1380
+}

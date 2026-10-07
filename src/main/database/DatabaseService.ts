@@ -1,3 +1,4 @@
+import { QuoteContractPreparationService } from '../commercial/QuoteContractPreparationService';
 import { WorkflowService } from '../workflow/WorkflowService';
 import { DemoService } from '../workflow/DemoService';
 import { existsSync, mkdirSync } from 'node:fs';
@@ -30,6 +31,7 @@ import { ProjectResourceService } from '../projects/ProjectResourceService';
 import { ProjectReuseExportService } from '../projects/ProjectReuseExportService';
 import { ProjectSearchService } from '../projects/ProjectSearchService';
 import { ProjectService } from '../projects/ProjectService';
+import { ProjectSiteService } from '../projects/ProjectSiteService';
 import { ProjectTechnicalLibraryService } from '../projects/ProjectTechnicalLibraryService';
 import { AtoumWebPackageService } from '../referentials/AtoumWebPackageService';
 import { AtoumWebOccurrenceReturnService } from '../referentials/AtoumWebOccurrenceReturnService';
@@ -61,7 +63,9 @@ export class DatabaseService {
   readonly catalog: CatalogService;
   readonly contractTerms: ContractTermsService;
   readonly quotes: QuoteService;
+  readonly quotePreparation: QuoteContractPreparationService;
   readonly projects: ProjectService;
+  readonly projectSites: ProjectSiteService;
   readonly projectCompletion: ProjectCompletionService;
   readonly projectNodes: ProjectNodeArrangementService;
   readonly projectResources: ProjectResourceService;
@@ -100,9 +104,12 @@ export class DatabaseService {
     this.clientDocuments = new ClientDocumentService(this.database, this.workspace);
     this.actions = new ActionService(this.database);
     this.catalog = new CatalogService(this.database);
-    this.contractTerms = new ContractTermsService(this.database);
-    this.quotes = new QuoteService(this.database, this.crm, this.contractTerms);
-    this.projects = new ProjectService(this.database, this.workspace);
+    this.contractTerms = new ContractTermsService(this.database, this.clientDocuments);
+    this.quotePreparation = new QuoteContractPreparationService(this.database, this.clientDocuments);
+    this.quotes = new QuoteService(this.database, this.crm, this.contractTerms, this.quotePreparation);
+    this.projectSites = new ProjectSiteService(this.database);
+    this.projects = new ProjectService(this.database, this.workspace, this.projectSites);
+    this.quotes.setProjectLifecycle(this.projects.commercial);
     this.projectCompletion = new ProjectCompletionService(this.database);
     this.projectNodes = new ProjectNodeArrangementService(this.database, this.projects);
     this.projectResources = new ProjectResourceService(this.database, this.workspace);

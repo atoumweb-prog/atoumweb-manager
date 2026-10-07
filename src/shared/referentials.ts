@@ -91,6 +91,32 @@ export interface AtoumWebTechnicalLibraryFilters {
   includeArchived?: boolean;
 }
 
+export interface AtoumWebDirectReusableCodeInput {
+  name: string;
+  category: AtoumWebLibraryCategory;
+  description?: string | null;
+  vertical?: string | null;
+  tags?: string[];
+  html: string;
+  css?: string | null;
+  javascript?: string | null;
+}
+
+export interface AtoumWebDirectVariantCodeInput {
+  sourceItemId: string;
+  name: string;
+  variantKey?: string | null;
+  description?: string | null;
+  vertical?: string | null;
+  tags?: string[];
+  html: string;
+  css?: string | null;
+  javascript?: string | null;
+  reuseStatus?: Extract<AtoumWebReuseStatus, 'adapt' | 'ready'>;
+  markStable?: boolean;
+  provenanceNote?: string | null;
+}
+
 export interface AtoumWebAssetOpenResult {
   ok: boolean;
   error?: string | null;
@@ -195,6 +221,33 @@ export interface AtoumWebCompositionInput {
   notes?: string | null;
 }
 
+export interface AtoumWebCompositionItemLocalSettings {
+  textEdits?: Array<{ from: string; to: string; target?: string }>;
+  colorEdits?: Array<{ from: string; to: string }>;
+  visualEdits?: Array<{
+    target: string;
+    label?: string;
+    symbol?: string;
+    color?: string;
+    backgroundColor?: string;
+    hidden?: boolean;
+  }>;
+  note?: string | null;
+}
+
+export interface AtoumWebCompositionItemLocalCodeInput {
+  html: string;
+  css?: string | null;
+  javascript?: string | null;
+  settings?: AtoumWebCompositionItemLocalSettings | null;
+}
+
+export interface AtoumWebCompositionPromoteVariantInput {
+  name: string;
+  variantKey?: string | null;
+  description?: string | null;
+}
+
 export interface AtoumWebCompositionItem {
   id: string;
   compositionId: string;
@@ -210,6 +263,12 @@ export interface AtoumWebCompositionItem {
   libraryVariantId: string | null;
   variantKey: string | null;
   variantMode: 'base' | 'inherit' | 'forked' | null;
+  localHtml: string | null;
+  localCss: string | null;
+  localJavascript: string | null;
+  localSettings: AtoumWebCompositionItemLocalSettings;
+  localUpdatedAt: string | null;
+  hasLocalChanges: boolean;
   createdAt: string;
 }
 
@@ -240,6 +299,10 @@ export interface AtoumWebCompositionMoveItemInput {
 
 export interface AtoumWebCompositionPackageExportResult {
   compositionId: string;
+  exportId?: string | null;
+  projectId?: string | null;
+  siteId?: string | null;
+  pageId?: string | null;
   path: string;
   fileName: string;
   componentCount: number;
@@ -325,6 +388,8 @@ export interface ReferentialsApi {
     list(filters?: AtoumWebTechnicalLibraryFilters): Promise<AtoumWebTechnicalItemSummary[]>;
     get(id: string): Promise<AtoumWebTechnicalItemDetail>;
     create(item: AtoumWebTechnicalItemInput, version: AtoumWebTechnicalVersionInput): Promise<AtoumWebTechnicalItemDetail>;
+    createReusableCode(input: AtoumWebDirectReusableCodeInput): Promise<AtoumWebTechnicalItemDetail>;
+    createVariantCode(input: AtoumWebDirectVariantCodeInput): Promise<AtoumWebTechnicalItemDetail>;
     update(id: string, input: Partial<AtoumWebTechnicalItemInput>): Promise<AtoumWebTechnicalItemDetail>;
     createVersion(itemId: string, version: AtoumWebTechnicalVersionInput): Promise<AtoumWebTechnicalItemDetail>;
     markStable(versionId: string): Promise<AtoumWebTechnicalItemDetail>;
@@ -350,16 +415,24 @@ export interface ReferentialsApi {
     showExport(path: string): Promise<AtoumWebAssetOpenResult>;
   };
   compositions: {
+    getForProjectPage(projectNodeId: string): Promise<AtoumWebCompositionDetail | null>;
+    ensureForProjectPage(projectNodeId: string): Promise<AtoumWebCompositionDetail>;
+    attachToProjectPage(projectNodeId: string, compositionId: string): Promise<AtoumWebCompositionDetail>;
+    detachFromProjectPage(projectNodeId: string): Promise<void>;
     list(includeArchived?: boolean): Promise<AtoumWebCompositionSummary[]>;
     get(id: string): Promise<AtoumWebCompositionDetail>;
     create(input: AtoumWebCompositionInput): Promise<AtoumWebCompositionDetail>;
     update(id: string, input: Partial<AtoumWebCompositionInput>): Promise<AtoumWebCompositionDetail>;
     addItem(id: string, input: AtoumWebCompositionAddItemInput): Promise<AtoumWebCompositionDetail>;
+    updateItemLocalCode(id: string, itemId: string, input: AtoumWebCompositionItemLocalCodeInput): Promise<AtoumWebCompositionDetail>;
+    resetItemLocalCode(id: string, itemId: string): Promise<AtoumWebCompositionDetail>;
+    promoteItemVariant(id: string, itemId: string, input: AtoumWebCompositionPromoteVariantInput): Promise<AtoumWebTechnicalItemDetail>;
     removeItem(id: string, itemId: string): Promise<AtoumWebCompositionDetail>;
     moveItem(id: string, itemId: string, input: AtoumWebCompositionMoveItemInput): Promise<AtoumWebCompositionDetail>;
     archive(id: string): Promise<AtoumWebCompositionDetail>;
     reactivate(id: string): Promise<AtoumWebCompositionDetail>;
     exportPackage(id: string): Promise<AtoumWebCompositionPackageExportResult>;
+    exportPagePackage(projectNodeId: string): Promise<AtoumWebCompositionPackageExportResult>;
     showPackage(path: string): Promise<AtoumWebAssetOpenResult>;
   };
   occurrenceReturns: {

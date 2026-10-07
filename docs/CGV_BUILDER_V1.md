@@ -35,6 +35,18 @@ Une clause possède :
 
 Une nouvelle version ne modifie jamais les devis déjà finalisés.
 
+### Sécurisation du Lot 1 — 03/10/2026
+
+- « Enregistrer le brouillon » crée une clause et sa première version **draft**. « Enregistrer la version en brouillon » conserve la version publiée précédente. Les brouillons restent lisibles dans la bibliothèque ; seul le bouton distinct « Publier le brouillon vN » appelle la publication.
+- La finalisation fige `contract_text_snapshot`, `contract_snapshot_json` et `contract_compiled_at`, même pour un texte vide avec `clauses: []`. Un gel vide reste un gel ; aucune compilation ultérieure ne remplace ce texte.
+- Les états exposés par le Builder sont `draft`, `frozen` et `historical_missing`. Toute donnée de snapshot déjà conservée verrouille les modifications ; une preuve partielle historique est signalée et n'est jamais reconstruite automatiquement.
+- Un devis envoyé, accepté ou déjà finalisé sans snapshot conserve explicitement cette absence. La future bibliothèque ne lui apporte aucune clause, même à l'acceptation. Celle-ci trace `quote_accepted_without_contract_snapshot` dans le journal ; les instances historiques éventuelles ne sont pas modifiées.
+- La copie, l'aperçu et l'export PDF ne remplacent pas un snapshot figé vide par la compilation actuelle. L'export d'un devis historique peut conserver ses propres anciennes conditions particulières, sans les qualifier de snapshot reconstitué.
+- La suppression définitive d'un document rattaché à un devis comme preuve contractuelle est refusée avant suppression du fichier. Son archivage reste réversible et conserve le rattachement et l'ouverture depuis Client > Contrats.
+- **Lot 5** : empreinte SHA-256 à l'import/rattachement, contrôle d'intégrité à l'ouverture, historique de remplacement avec conservation des preuves antérieures et politique de conservation. Le Lot 1 ne protège pas contre une suppression/modification extérieure au Manager.
+
+Ces garanties utilisent les colonnes existantes des migrations 44/45/46. Aucune nouvelle migration ni reprise automatique des données historiques.
+
 ### 2. Associations avec le catalogue
 
 Une clause prestation peut être liée à plusieurs Services ou Offres du catalogue.

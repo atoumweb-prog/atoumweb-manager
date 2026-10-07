@@ -1,3 +1,4 @@
+import {ProjectContributionTargetService} from '../projects/ProjectContributionTargetService';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import {
   TIME_CATEGORIES,
@@ -34,12 +35,14 @@ export class TimeCorrectionService {
     this.assertPausesInsideInterval(id, started.getTime(), ended.getTime());
     const interventionId = input.interventionId === undefined ? current.interventionId ?? null : input.interventionId;
     const context = this.resolveContext(input.projectId ?? null, input.projectNodeId ?? null, interventionId);
+    if(context.projectNodeId&&context.projectNodeId!==current.projectNodeId)new ProjectContributionTargetService(this.database).assertAction(context.projectNodeId);
+    const businessCategory=this.time.resolveBusinessCategory({...input,businessCategory:input.businessCategory===undefined?current.businessCategory:input.businessCategory});
     const now = new Date().toISOString();
 
     this.database.run(
       `UPDATE time_sessions
        SET client_account_id=?, project_id=?, project_node_id=?, intervention_id=?, category=?, activity_label=?,
-           started_at=?, ended_at=?, billable=?, note=?, updated_at=?
+           started_at=?, ended_at=?, billable=?, note=?, updated_at=?, business_category=?
        WHERE id=?`,
       [
         context.clientAccountId,
@@ -53,6 +56,7 @@ export class TimeCorrectionService {
         input.billable === false ? 0 : 1,
         clean(input.note),
         now,
+        businessCategory,
         id,
       ],
     );
@@ -84,6 +88,7 @@ export class TimeCorrectionService {
     }
 
     if (resolvedNodeId) {
+
       const node = this.database.get<{ project_id: string }>('SELECT project_id FROM project_nodes WHERE id=?', [resolvedNodeId]);
       if (!node) throw new Error('Tâche de projet introuvable.');
       if (resolvedProjectId && node.project_id !== resolvedProjectId) throw new Error('La tâche n’appartient pas au projet sélectionné.');

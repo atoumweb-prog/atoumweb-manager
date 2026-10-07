@@ -1,3 +1,4 @@
+import type { QuoteLineParameters } from './commercialRules';
 import type { QuoteContractAudience } from './contractTerms';
 export const CATALOG_ITEM_TYPES = ['service', 'offer'] as const;
 export const CATALOG_ITEM_STATUSES = ['active', 'inactive', 'archived'] as const;
@@ -16,14 +17,57 @@ export type QuoteStatus = (typeof QUOTE_STATUSES)[number];
 export type QuoteAdjustmentMode = (typeof QUOTE_ADJUSTMENT_MODES)[number];
 export type QuoteDiscountReason = (typeof QUOTE_DISCOUNT_REASONS)[number];
 
+export const CATALOG_COMMERCIAL_KINDS = ['offer', 'service', 'option', 'pack', 'subscription'] as const;
+export type CatalogCommercialKind = (typeof CATALOG_COMMERCIAL_KINDS)[number];
+export type CatalogPriceBasis = 'listed' | 'actual_cost';
+export interface CatalogProvenance {
+  reference: string;
+  sha256?: string | null;
+  recordKey?: string | null;
+}
+export interface CatalogCommercialIdentity {
+  commercialKind?: CatalogCommercialKind | null;
+  familyCode?: string | null;
+  abbyLabel?: string | null;
+  unit?: string | null;
+  periodicity?: string | null;
+  priceBasis?: CatalogPriceBasis;
+  provenance?: CatalogProvenance | null;
+  commercialParameters?: CatalogCommercialParameters | null;
+}
+// Descriptive commercial data, never injected as contract clauses by this field.
+export interface CatalogCommercialParameters {
+  clientNeed?: string | null;
+  work?: string | null;
+  options?: string | null;
+  quoteRequiredWhen?: string | null;
+  deliverables?: string | null;
+  deliveryTerms?: string | null;
+  reviewTerms?: string | null;
+  correctiveWarranty?: string | null;
+  thirdPartyCosts?: string | null;
+  sourcePriceLabel?: string | null;
+}
+export interface CatalogIdentityAssignment {
+  itemId: string;
+  canonicalCode: string;
+  provenance: CatalogProvenance;
+}
+export interface CatalogIdentityManifest {
+  schemaVersion: 1;
+  assignments: CatalogIdentityAssignment[];
+}
+
 export interface CatalogItemInput {
+  canonicalCode?: string | null;
+  identityProvenance?: CatalogProvenance | null;
   type: CatalogItemType;
   name: string;
   category?: string | null;
   visiblePublic?: boolean;
 }
 
-export interface CatalogVersionInput {
+export interface CatalogVersionInput extends CatalogCommercialIdentity {
   specialTerms?: string | null;
   nature?: string | null;
   description?: string | null;
@@ -71,6 +115,8 @@ export interface OfferComponent {
 }
 
 export interface CatalogItemSummary {
+  canonicalCode?: string | null;
+  identityProvenance?: CatalogProvenance | null;
   id: string;
   type: CatalogItemType;
   name: string;
@@ -97,6 +143,7 @@ export interface CatalogFilters {
 }
 
 export interface CatalogApi {
+  assignCanonicalCode(itemId: string, canonicalCode: string): Promise<CatalogItemDetail>;
   list(filters?: CatalogFilters): Promise<CatalogItemSummary[]>;
   getItem(id: string): Promise<CatalogItemDetail>;
   create(input: CatalogItemInput, firstVersion: CatalogVersionInput): Promise<CatalogItemDetail>;
@@ -134,7 +181,19 @@ export interface QuoteLineInput {
   discountReasonText?: string | null;
 }
 
+export interface QuoteOptionPurchase {
+  state: 'purchased';
+  sourceOfferLineId: string;
+  sourceOfferItemId: string;
+  sourceOfferVersionId: string;
+  sourceComponentId: string;
+  purchasedAt: string;
+}
+
 export interface QuoteLine extends QuoteLineInput {
+  parameters?: QuoteLineParameters | null;
+  /** Null means no recorded optional origin, including historical/manual lines. */
+  optionPurchase?: QuoteOptionPurchase | null;
   adjustmentMode: QuoteAdjustmentMode;
   id: string;
   quoteId: string;
@@ -150,6 +209,7 @@ export interface QuoteLine extends QuoteLineInput {
 }
 
 export interface QuoteSummary {
+  projectId?: string | null;
   id: string;
   number: string;
   prospectId?: string | null;
@@ -191,6 +251,7 @@ export interface QuoteDetail extends QuoteSummary {
   contractAudience?: QuoteContractAudience | null;
   contractTextSnapshot?: string | null;
   contractSnapshotJson?: string | null;
+  initialPaymentQualification?: 'acompte' | 'arrhes' | null;
   lines: QuoteLine[];
 }
 
@@ -207,11 +268,18 @@ export interface QuotePdfResult {
 }
 
 export interface QuoteApi {
+  operationalSalesForClient(clientId:string):Promise<Record<string,unknown>[]>;
+  assignOperationalTarget(saleId:string,input:{projectId:string;siteId?:string|null;contextNodeId?:string|null;author:string}):Promise<void>;
+  setLineParameters(lineId:string,parameters:QuoteLineParameters):Promise<QuoteDetail>;
+  preparationIssues(id:string):Promise<string[]>;
+  operationalSales(id:string):Promise<Record<string,unknown>[]>;
   createWithLines(input: QuoteInput, lines: Array<{catalogVersionId?: string; input: QuoteLineInput}>): Promise<QuoteDetail>;
   list(filters?: QuoteFilters): Promise<QuoteSummary[]>;
   get(id: string): Promise<QuoteDetail>;
   create(input: QuoteInput): Promise<QuoteDetail>;
   addCatalogLine(quoteId: string, catalogVersionId: string, input?: Partial<QuoteLineInput>): Promise<QuoteDetail>;
+  selectOfferOption(offerLineId: string, componentId: string, input?: Partial<QuoteLineInput>): Promise<QuoteDetail>;
+  deselectOfferOption(offerLineId: string, componentId: string): Promise<QuoteDetail>;
   addCustomLine(quoteId: string, input: QuoteLineInput): Promise<QuoteDetail>;
   updateLine(lineId: string, input: QuoteLineInput): Promise<QuoteDetail>;
   removeLine(lineId: string): Promise<QuoteDetail>;
@@ -224,6 +292,7 @@ export interface QuoteApi {
   refuse(id: string): Promise<QuoteDetail>;
   expire(id: string): Promise<QuoteDetail>;
   duplicate(id: string): Promise<QuoteDetail>;
+  createCommercialRevision(id: string): Promise<QuoteDetail>;
   importContractDocument(id: string, abbyReference?: string | null): Promise<QuoteDetail | null>;
   openContractDocument(id: string): Promise<void>;
   updateAbbyReference(id: string, abbyReference?: string | null): Promise<QuoteDetail>;

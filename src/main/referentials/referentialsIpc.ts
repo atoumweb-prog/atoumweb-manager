@@ -2,7 +2,11 @@ import { dialog, ipcMain, shell } from 'electron';
 import type {
   AtoumWebCompositionAddItemInput,
   AtoumWebCompositionInput,
+  AtoumWebCompositionItemLocalCodeInput,
   AtoumWebCompositionMoveItemInput,
+  AtoumWebCompositionPromoteVariantInput,
+  AtoumWebDirectReusableCodeInput,
+  AtoumWebDirectVariantCodeInput,
   AtoumWebOccurrenceCreateFamilyInput,
   AtoumWebOccurrenceCreateVariantInput,
   AtoumWebOccurrenceUpdateVariantInput,
@@ -23,6 +27,10 @@ export function registerReferentialsIpcHandlers(database: DatabaseService): void
     database.atoumWebTechnicalLibrary.get(id));
   ipcMain.handle('referentials:library:create', (_event, item: AtoumWebTechnicalItemInput, version: AtoumWebTechnicalVersionInput) =>
     database.atoumWebTechnicalLibrary.create(item, version));
+  ipcMain.handle('referentials:library:create-reusable-code', (_event, input: AtoumWebDirectReusableCodeInput) =>
+    database.atoumWebTechnicalLibrary.createReusableCode(input));
+  ipcMain.handle('referentials:library:create-variant-code', (_event, input: AtoumWebDirectVariantCodeInput) =>
+    database.atoumWebTechnicalLibrary.createVariantCode(input));
   ipcMain.handle('referentials:library:update', (_event, id: string, input: Partial<AtoumWebTechnicalItemInput>) =>
     database.atoumWebTechnicalLibrary.updateMetadata(id, input));
   ipcMain.handle('referentials:library:create-version', (_event, itemId: string, version: AtoumWebTechnicalVersionInput) =>
@@ -85,6 +93,14 @@ export function registerReferentialsIpcHandlers(database: DatabaseService): void
     return { ok: true, error: null };
   });
 
+  ipcMain.handle('referentials:compositions:get-for-project-page', (_event, projectNodeId: string) =>
+    database.atoumWebCompositions.getForProjectPage(projectNodeId));
+  ipcMain.handle('referentials:compositions:ensure-for-project-page', (_event, projectNodeId: string) =>
+    database.atoumWebCompositions.ensureForProjectPage(projectNodeId));
+  ipcMain.handle('referentials:compositions:attach-to-project-page', (_event, projectNodeId: string, compositionId: string) =>
+    database.atoumWebCompositions.attachToProjectPage(projectNodeId, compositionId));
+  ipcMain.handle('referentials:compositions:detach-from-project-page', (_event, projectNodeId: string) =>
+    database.atoumWebCompositions.detachFromProjectPage(projectNodeId));
   ipcMain.handle('referentials:compositions:list', (_event, includeArchived?: boolean) =>
     database.atoumWebCompositions.list(Boolean(includeArchived)));
   ipcMain.handle('referentials:compositions:get', (_event, id: string) =>
@@ -95,6 +111,12 @@ export function registerReferentialsIpcHandlers(database: DatabaseService): void
     database.atoumWebCompositions.update(id, input));
   ipcMain.handle('referentials:compositions:add-item', (_event, id: string, input: AtoumWebCompositionAddItemInput) =>
     database.atoumWebCompositions.addItem(id, input));
+  ipcMain.handle('referentials:compositions:update-item-local-code', (_event, id: string, itemId: string, input: AtoumWebCompositionItemLocalCodeInput) =>
+    database.atoumWebCompositions.updateItemLocalCode(id, itemId, input));
+  ipcMain.handle('referentials:compositions:reset-item-local-code', (_event, id: string, itemId: string) =>
+    database.atoumWebCompositions.resetItemLocalCode(id, itemId));
+  ipcMain.handle('referentials:compositions:promote-item-variant', (_event, id: string, itemId: string, input: AtoumWebCompositionPromoteVariantInput) =>
+    database.atoumWebCompositions.promoteItemVariant(id, itemId, input));
   ipcMain.handle('referentials:compositions:remove-item', (_event, id: string, itemId: string) =>
     database.atoumWebCompositions.removeItem(id, itemId));
   ipcMain.handle('referentials:compositions:move-item', (_event, id: string, itemId: string, input: AtoumWebCompositionMoveItemInput) =>
@@ -106,6 +128,8 @@ export function registerReferentialsIpcHandlers(database: DatabaseService): void
 
   ipcMain.handle('referentials:compositions:export-package', (_event, id: string) =>
     database.atoumWebCompositionPackages.exportPackage(id));
+  ipcMain.handle('referentials:compositions:export-page-package', (_event, projectNodeId: string) =>
+    database.atoumWebCompositionPackages.exportPagePackage(projectNodeId));
   ipcMain.handle('referentials:compositions:show-package', (_event, path: string) => {
     const validated = database.atoumWebCompositionPackages.assertExportPath(path);
     shell.showItemInFolder(validated);

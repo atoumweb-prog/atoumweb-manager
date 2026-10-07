@@ -1,13 +1,21 @@
+import {ProjectContributionTargetService} from './ProjectContributionTargetService';
+import { ProjectOperationalService } from './ProjectOperationalService';
+import { TimeService } from '../time/TimeService';
+import { BUSINESS_TIME_CATEGORIES } from '../../shared/operational';
 import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import type { WorkspacePaths } from '../workspace';
+import { ProjectSiteService } from './ProjectSiteService';
+import { ProjectBlueprintCompositionService } from './ProjectBlueprintCompositionService';
+import { ProjectCommercialService } from './ProjectCommercialService';
 import {
   PROJECT_COMMERCIAL_MODES,
   PROJECT_NODE_STATUSES,
   PROJECT_NODE_TYPES,
   PROJECT_PREREQUISITE_STATUSES,
+  PROJECT_SITE_PAGE_ROLES,
   PROJECT_STATUSES,
   type InternalProjectInput,
   type ProjectCommercialMode,
@@ -29,6 +37,7 @@ import {
   type ProjectTemplateInput,
   type ProjectTemplateNode,
   type ProjectTemplateNodeInput,
+  type ProjectTemplateSiteInput,
   type ProjectTemplateSummary,
   type ProjectTemplateVersion,
   type ProjectWorkCard,
@@ -133,7 +142,12 @@ interface BlueprintContribution {
 
 
 export class ProjectService {
-  constructor(private readonly database: DatabaseAdapter, private readonly workspace: WorkspacePaths) {}
+  readonly commercial: ProjectCommercialService;
+  constructor(
+    private readonly database: DatabaseAdapter,
+    private readonly workspace: WorkspacePaths,
+    private readonly projectSites?: ProjectSiteService,
+  ) { this.commercial = new ProjectCommercialService(database,this,projectSites ?? new ProjectSiteService(database)); }
 
   listTemplates(): ProjectTemplateSummary[] {
     return this.database.all<TemplateRow>('SELECT * FROM project_templates ORDER BY name COLLATE NOCASE').map((row) => {
@@ -165,14 +179,17 @@ export class ProjectService {
 
   createTemplateVersion(templateId: string, description?: string | null): ProjectTemplateVersion {
     const template = this.getTemplate(templateId);
-    if (template.versions.some((version) => version.status === 'draft')) throw new Error('Ce modèle possède déjà une version brouillon.');
+    if (template.versions.some((version) => version.status === 'draft' && !version.operationalReady)) throw new Error('Ce modèle possède déjà une version brouillon.');
     const previous = template.versions[0];
     const versionNumber = (previous?.versionNumber ?? 0) + 1;
     const id = randomUUID(); const now = nowIso();
     this.database.exec('BEGIN IMMEDIATE;');
     try {
       this.database.run('INSERT INTO project_template_versions (id,template_id,version_number,status,description,created_at) VALUES (?,?,?,\'draft\',?,?)', [id, templateId, versionNumber, clean(description) ?? previous?.description ?? null, now]);
-      if (previous) this.copyTemplateNodes(previous.id, id, now);
+      if (previous) {
+        const copiedNodeIds = this.copyTemplateNodes(previous.id, id, now);
+        this.copyTemplateSites(previous.id, id, copiedNodeIds, now);
+      }
       this.database.run('UPDATE project_templates SET updated_at=? WHERE id=?', [now, templateId]);
       this.writeActivity('project_template', templateId, 'project_template_version_created', `Version v${versionNumber} créée`);
       this.database.exec('COMMIT;');
@@ -183,6 +200,7 @@ export class ProjectService {
   publishTemplateVersion(versionId: string): ProjectTemplateVersion {
     const target = this.getTemplateVersion(versionId);
     if (target.status === 'published') return target;
+    if (target.operationalPurpose==='structural') throw Error('Structure opérationnelle : utiliser la mise en usage explicite avec modèle compatible, sans retirer le blueprint historique publié.');
     const now = nowIso();
     this.database.exec('BEGIN IMMEDIATE;');
     try {
@@ -197,7 +215,7 @@ export class ProjectService {
 
   addTemplateNode(versionId: string, input: ProjectTemplateNodeInput): ProjectTemplateVersion {
     const version = this.getTemplateVersion(versionId);
-    if (version.status !== 'draft') throw new Error('Une version publiée est figée. Crée une nouvelle version.');
+    if (version.status !== 'draft' || version.operationalReady) throw new Error('Une version publiée est figée. Crée une nouvelle version.');
     this.validateNodeInput(input);
     if (input.parentId) {
       const parent = this.database.get<{ template_version_id: string }>('SELECT template_version_id FROM project_template_nodes WHERE id=?', [input.parentId]);
@@ -224,9 +242,67 @@ export class ProjectService {
     const row = this.database.get<{ template_version_id: string }>('SELECT template_version_id FROM project_template_nodes WHERE id=?', [nodeId]);
     if (!row) throw new Error('Nœud de modèle introuvable.');
     const version = this.getTemplateVersion(row.template_version_id);
-    if (version.status !== 'draft') throw new Error('Une version publiée est figée.');
+    if (version.status !== 'draft' || version.operationalReady) throw new Error('Une version publiée est figée.');
     this.database.run('DELETE FROM project_template_nodes WHERE id=?', [nodeId]);
     return this.getTemplateVersion(row.template_version_id);
+  }
+
+  configureTemplateSites(versionId: string, sites: ProjectTemplateSiteInput[]): ProjectTemplateVersion {
+    const version = this.getTemplateVersion(versionId);
+    if (version.status !== 'draft' || version.operationalReady) throw new Error('Une version publiée est figée. Crée une nouvelle version.');
+    const siteKeys = new Set<string>();
+    const now = nowIso();
+    for (const site of sites) {
+      const siteKey = this.blueprintKey(site.key, 'Clé de Site');
+      if (siteKeys.has(siteKey)) throw new Error(`Clé de Site dupliquée : ${siteKey}.`);
+      siteKeys.add(siteKey);
+      if (!clean(site.name)) throw new Error('Nom du Site blueprint requis.');
+      const pageKeys = new Set<string>();
+      let homeCount = 0;
+      for (const page of site.pages) {
+        const pageKey = this.blueprintKey(page.key, 'Clé de Page');
+        if (pageKeys.has(pageKey)) throw new Error(`Clé de Page dupliquée dans ${siteKey} : ${pageKey}.`);
+        pageKeys.add(pageKey);
+        if (!PROJECT_SITE_PAGE_ROLES.includes(page.role)) throw new Error('Rôle de Page blueprint invalide.');
+        if (page.role === 'home' && ++homeCount > 1) throw new Error(`Le Site ${siteKey} ne peut déclarer qu’une Page d’accueil.`);
+        const node = this.database.get<{ template_version_id: string; node_type: string; display_subtype: string | null }>(
+          'SELECT template_version_id,node_type,display_subtype FROM project_template_nodes WHERE id=?',
+          [page.templateNodeId],
+        );
+        if (!node || node.template_version_id !== versionId || node.node_type !== 'module' || node.display_subtype !== 'page') {
+          throw new Error(`La Page blueprint ${pageKey} doit référencer un nœud Page de la même version.`);
+        }
+        this.blueprintPath(page.desiredPath, page.role);
+      }
+    }
+
+    this.database.exec('BEGIN IMMEDIATE;');
+    try {
+      this.database.run('DELETE FROM project_template_sites WHERE template_version_id=?', [versionId]);
+      for (const site of sites) {
+        const templateSiteId = randomUUID();
+        const siteKey = this.blueprintKey(site.key, 'Clé de Site');
+        this.database.run(
+          `INSERT INTO project_template_sites
+           (id,template_version_id,blueprint_key,name,desired_domain,sort_order,created_at) VALUES (?,?,?,?,?,?,?)`,
+          [templateSiteId, versionId, siteKey, clean(site.name), clean(site.desiredDomain), site.sortOrder ?? 0, now],
+        );
+        for (const page of site.pages) {
+          this.database.run(
+            `INSERT INTO project_template_site_pages
+             (id,template_site_id,blueprint_key,template_node_id,role,desired_path,sort_order,created_at)
+             VALUES (?,?,?,?,?,?,?,?)`,
+            [randomUUID(), templateSiteId, this.blueprintKey(page.key, 'Clé de Page'), page.templateNodeId,
+              page.role, this.blueprintPath(page.desiredPath, page.role), page.sortOrder ?? 0, now],
+          );
+        }
+      }
+      this.database.exec('COMMIT;');
+    } catch (error) {
+      this.database.exec('ROLLBACK;');
+      throw error;
+    }
+    return this.getTemplateVersion(versionId);
   }
 
   listProjects(filters: ProjectFilters = {}): ProjectSummary[] {
@@ -246,6 +322,7 @@ export class ProjectService {
     if (!row) throw new Error('Projet introuvable.');
     return {
       ...this.mapProjectSummary(row),
+      estimationIncomplete: Boolean(this.database.get(`SELECT 1 FROM project_action_instances a JOIN project_nodes n ON n.id=a.project_node_id WHERE a.project_id=? AND n.archived_at IS NULL AND json_extract(a.initial_snapshot_json,'$.action') IS NOT NULL AND json_extract(a.initial_snapshot_json,'$.estimateRequired')=1 AND n.estimated_minutes IS NULL LIMIT 1`,[id])),
       notes: row.notes,
       nodes: this.getProjectNodes(id),
       services: this.getProjectServices(id),
@@ -253,7 +330,43 @@ export class ProjectService {
     };
   }
 
+  createProvisionalShell(input: TransformQuoteToProjectInput, dossierId: string, templateVersionId: string | null): string {
+    const quote = this.database.get<Record<string,unknown>>('SELECT * FROM quotes WHERE id=?',[input.quoteId]);
+    if (!quote || (!quote.client_account_id && !quote.prospect_id)) throw new Error('Client ou Prospect requis.');
+    const id=randomUUID(),now=nowIso(),number=this.nextProjectNumber(new Date().getFullYear(),now);
+    const template=templateVersionId?this.getTemplateVersion(templateVersionId):null,definition=template?this.getTemplate(template.templateId):null;
+    const name=clean(input.name) ?? String(quote.subject);
+    // Stable master location survives Prospect -> Client. No copies or implicit filesystem moves.
+    const resourceRoot=join(this.workspace.root,'projets-previsionnels',dossierId,'Ressources');
+    this.database.run(`INSERT INTO projects(id,project_number,client_account_id,prospect_id,source_quote_id,template_version_id,
+      name,project_type,status,commercial_mode,commercial_state,commercial_dossier_id,target_date,
+      commercial_value_cents,contract_value_cents,resource_root_path,created_at,updated_at)
+      VALUES(?,?,?,?,?,?,?,?,'to_prepare',?,'provisional',?,?,?,?,?,?,?)`,
+      [id,number,quote.client_account_id as string | null,quote.prospect_id as string | null,input.quoteId,templateVersionId,name,definition?.projectType ?? 'operational',
+        input.commercialMode ?? this.inferCommercialMode(Number(quote.catalog_value_cents),Number(quote.contract_value_cents)),dossierId,input.targetDate ?? null,
+        Number(quote.catalog_value_cents),Number(quote.contract_value_cents),resourceRoot,now,now]);
+    this.database.run('UPDATE quotes SET project_id=? WHERE id=?',[id,input.quoteId]);
+    this.writeActivity('project',id,'provisional_project_created',`Projet prévisionnel ${number} créé depuis le devis`);
+    return id;
+  }
+
+  ensureProvisionalFolders(id: string): void {
+    const root=this.database.get<{resource_root_path:string}>('SELECT resource_root_path FROM projects WHERE id=?',[id])?.resource_root_path;
+    if (root) this.createResourceFolders(root);
+  }
+
+  private prospectLabel(id: string): string {
+    return this.database.get<{label:string}>(`SELECT COALESCE(o.name,trim(c.first_name||' '||c.last_name),'Prospect') AS label
+      FROM prospects p LEFT JOIN organizations o ON o.id=p.organization_id LEFT JOIN contacts c ON c.id=p.contact_id WHERE p.id=?`,[id])?.label ?? 'Prospect';
+  }
+
   transformQuote(input: TransformQuoteToProjectInput): ProjectDetail {
+    const prepared = this.commercial.findProject(input.quoteId);
+    if (prepared) {
+      const project = this.getProject(prepared);
+      if (project.commercialState !== 'frozen') throw new Error('Projet prévisionnel existant : accepter la révision courante pour activer ce même Projet.');
+      return project;
+    }
     const existing = this.database.get<{ id: string }>('SELECT id FROM projects WHERE source_quote_id=?', [input.quoteId]);
     if (existing) return this.getProject(existing.id);
 
@@ -268,48 +381,63 @@ export class ProjectService {
     const clientId = quote.accepted_client_account_id ?? quote.client_account_id;
     if (!clientId) throw new Error('Le devis accepté doit être rattaché à un Client.');
 
-    const blueprintPlan = this.resolveBlueprintPlan(input.quoteId, clean(input.templateVersionId));
-    const templateVersion = this.getTemplateVersion(blueprintPlan.base.templateVersionId);
-    if (templateVersion.status !== 'published') throw new Error('Le blueprint principal doit être publié.');
-    const template = this.getTemplate(templateVersion.templateId);
+    const composition = new ProjectBlueprintCompositionService(this.database, this.projectSites ?? new ProjectSiteService(this.database));
+    const operations=new ProjectOperationalService(this.database);
+    const operationalPlan=operations.resolve(input.quoteId,new Map());
+    if(operationalPlan.links.some(l=>l.configuration)) {
+      this.database.exec('SAVEPOINT accepted_operational_project');
+      let projectId:string;
+      try{projectId=this.commercial.prepare(input,true).id;this.commercial.accept(input.quoteId,clientId);this.database.run('UPDATE quotes SET project_id=? WHERE id=?',[projectId,input.quoteId]);this.database.exec('RELEASE accepted_operational_project');}
+      catch(e){this.database.exec('ROLLBACK TO accepted_operational_project; RELEASE accepted_operational_project');throw e;}
+      this.ensureProvisionalFolders(projectId!);
+      return this.getProject(projectId!);
+    }
+    const blueprintPlan=(!input.templateVersionId && !composition.hasSoldBlueprints(input.quoteId) && operationalPlan.links.length) ? null : composition.resolveQuote(input.quoteId,clean(input.templateVersionId));
+    operations.checkBlueprint(operationalPlan,blueprintPlan);
+    const templateVersion=blueprintPlan ? this.getTemplateVersion(blueprintPlan.base.templateVersionId) : null;
+    if (templateVersion && templateVersion.status!=='published' && !templateVersion.operationalReady) throw new Error('Le blueprint principal doit être publié ou explicitement mis en usage opérationnel.');
+    const template=templateVersion ? this.getTemplate(templateVersion.templateId) : null;
 
     const name = clean(input.name) ?? quote.subject;
     const mode = input.commercialMode ?? this.inferCommercialMode(Number(quote.catalog_value_cents), Number(quote.contract_value_cents));
     if (!PROJECT_COMMERCIAL_MODES.includes(mode)) throw new Error('Mode commercial invalide.');
 
     const id = randomUUID(); const now = nowIso(); const year = new Date().getFullYear();
-    const number = this.nextProjectNumber(year, now);
     const clientLabel = this.clientLabel(clientId);
-    const paths = this.projectPaths(clientLabel, number, name, false);
-    const existedBefore = existsSync(paths.projectDirectory);
-
+    let createdDirectory: string | null = null;
+    let existedBefore = true;
     this.database.exec('BEGIN IMMEDIATE;');
     try {
+      const number = this.nextProjectNumber(year, now);
+      const paths = this.projectPaths(clientLabel, number, name, false);
+      createdDirectory = paths.projectDirectory;
+      existedBefore = existsSync(paths.projectDirectory);
       this.createResourceFolders(paths.resourceRoot);
       this.database.run(
         `INSERT INTO projects (id,project_number,client_account_id,source_quote_id,template_version_id,name,project_type,status,commercial_mode,start_date,target_date,commercial_value_cents,contract_value_cents,resource_root_path,created_at,updated_at)
          VALUES (?,?,?,?,?,?,?,'to_prepare',?,?,?,?,?,?,?,?)`,
-        [id, number, clientId, quote.id, templateVersion.id, name, template.projectType, mode, null, input.targetDate ?? null, Number(quote.catalog_value_cents), Number(quote.contract_value_cents), paths.resourceRoot, now, now],
+        [id, number, clientId, quote.id, templateVersion?.id ?? null, name, template?.projectType ?? 'operational', mode, null, input.targetDate ?? null, Number(quote.catalog_value_cents), Number(quote.contract_value_cents), paths.resourceRoot, now, now],
       );
 
-      this.copyTemplateTreeToProject(templateVersion.id, id, now, blueprintPlan.base, false);
-      for (const addon of blueprintPlan.addons) {
-        this.copyTemplateTreeToProject(addon.templateVersionId, id, now, addon, true);
+      if (blueprintPlan) composition.create(id,blueprintPlan,now);
+      else for(const pre of composition.prerequisitesForQuote(input.quoteId)) {
+        const preId=randomUUID();
+        this.database.run("INSERT INTO project_prerequisites(id,project_id,label,status,is_required,sort_order,created_at,updated_at) VALUES(?,?,?,'to_request',1,0,?,?)",[preId,id,pre.label,now,now]);
+        this.database.run('INSERT INTO project_composed_prerequisite_sources(project_prerequisite_id,source_key,provenance_json) VALUES(?,?,?)',[preId,pre.key,JSON.stringify(pre)]);
       }
-
+      operations.apply(id,operationalPlan,()=>{throw Error('Une création ne peut pas retirer une action existante.');});
       this.copyQuoteServicesToProject(quote.id, id, now);
-      this.seedPrerequisitesFromQuote(quote.id, id, quote.prerequisites_text, now);
       this.database.run('UPDATE quotes SET project_id=?, updated_at=? WHERE id=?', [id, now, quote.id]);
       this.writeActivity(
         'project',
         id,
         'project_created_from_quote',
-        `Projet ${number} créé depuis ${quote.quote_number} avec blueprint ${template.name}${blueprintPlan.addons.length ? ` + ${blueprintPlan.addons.length} module(s)` : ''}`,
+        `Projet ${number} créé depuis ${quote.quote_number} ${template ? `avec blueprint ${template.name}` : 'sans blueprint web'}${blueprintPlan && (blueprintPlan.contributions.length - 1) ? ` + ${(blueprintPlan.contributions.length - 1)} module(s)` : ''}`,
       );
       this.database.exec('COMMIT;');
     } catch (error) {
       this.database.exec('ROLLBACK;');
-      if (!existedBefore) rmSync(paths.projectDirectory, { recursive: true, force: true });
+      if (!existedBefore && createdDirectory) rmSync(createdDirectory, { recursive: true, force: true });
       throw error;
     }
     return this.getProject(id);
@@ -332,7 +460,10 @@ export class ProjectService {
          VALUES (?,?,NULL,NULL,?,?, 'internal','to_prepare','internal',?,0,0,?,?,?,?)`,
         [id, number, templateVersionId, name, input.targetDate ?? null, paths.resourceRoot, clean(input.notes), now, now],
       );
-      if (templateVersionId) this.copyTemplateTreeToProject(templateVersionId, id, now);
+      if (templateVersionId) {
+        this.copyTemplateTreeToProject(templateVersionId, id, now);
+        this.projectSites?.applyBlueprint(id, templateVersionId, false);
+      }
       this.writeActivity('project', id, 'internal_project_created', `Projet interne ${number} créé`);
       this.database.exec('COMMIT;');
     } catch (error) {
@@ -345,7 +476,9 @@ export class ProjectService {
 
   changeProjectStatus(id: string, status: ProjectStatus): ProjectDetail {
     if (!PROJECT_STATUSES.includes(status)) throw new Error('Statut projet invalide.');
-    this.getProject(id); const now = nowIso();
+    const project = this.getProject(id);
+    if (project.commercialState === 'provisional' && !['to_prepare','archived'].includes(status)) throw new Error('Projet prévisionnel : attendre l’acceptation avant activation opérationnelle.');
+    const now = nowIso();
     this.database.run('UPDATE projects SET status=?, completed_at=?, archived_at=?, updated_at=? WHERE id=?', [status, status === 'completed' ? now : null, status === 'archived' ? now : null, now, id]);
     this.writeActivity('project', id, 'project_status_changed', `Statut projet : ${status}`);
     return this.getProject(id);
@@ -353,19 +486,20 @@ export class ProjectService {
 
   addProjectNode(projectId: string, input: ProjectNodeInput): ProjectDetail {
     this.getProject(projectId); this.validateNodeInput(input);
+    if (input.businessCategory && !BUSINESS_TIME_CATEGORIES.includes(input.businessCategory)) throw Error('Catégorie métier invalide.');
     if (input.parentId) this.assertProjectParent(projectId, input.parentId);
     const now = nowIso();
     this.database.run(
       `INSERT INTO project_nodes (
          id,project_id,parent_id,source_template_node_id,node_type,display_subtype,name,description,sort_order,
-         estimated_minutes,is_required,status,time_category,created_at,updated_at,semantic_key,work_card_json,advice_json
-       ) VALUES (?,?,?,NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+         estimated_minutes,is_required,status,time_category,created_at,updated_at,semantic_key,work_card_json,advice_json,business_category
+       ) VALUES (?,?,?,NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         randomUUID(), projectId, input.parentId ?? null, input.type, clean(input.displaySubtype), clean(input.name),
         clean(input.description), input.sortOrder ?? this.nextProjectNodeOrder(projectId, input.parentId ?? null),
         input.estimatedMinutes ?? null, input.required === false ? 0 : 1, input.status ?? 'todo', clean(input.timeCategory),
         now, now, clean(input.semanticKey), input.workCard ? JSON.stringify(input.workCard) : null,
-        input.advice?.length ? JSON.stringify(input.advice) : null,
+        input.advice?.length ? JSON.stringify(input.advice) : null,input.businessCategory ?? null,
       ],
     );
     return this.getProject(projectId);
@@ -374,23 +508,37 @@ export class ProjectService {
   updateProjectNode(nodeId: string, input: Partial<ProjectNodeInput>): ProjectDetail {
     const row = this.database.get<ProjectNodeRow>('SELECT * FROM project_nodes WHERE id=?', [nodeId]);
     if (!row) throw new Error('Tâche introuvable.');
+    if(input.status && !['todo','cancelled'].includes(input.status)) {
+      const targets=new ProjectContributionTargetService(this.database);targets.assertAction(nodeId);
+      if(input.status==='done')for(const child of this.database.all<{id:string}>(`WITH RECURSIVE children(id) AS (SELECT id FROM project_nodes WHERE parent_id=? UNION ALL SELECT n.id FROM project_nodes n JOIN children c ON n.parent_id=c.id) SELECT id FROM children`,[nodeId]))targets.assertAction(child.id);
+    }
     const parentId = input.parentId === undefined ? row.parent_id : input.parentId;
     if (parentId) {
       if (parentId === nodeId) throw new Error('Un nœud ne peut pas être son propre parent.');
       this.assertProjectParent(row.project_id, parentId);
       this.assertNoCycle(nodeId, parentId);
     }
+    if (input.businessCategory != null && !BUSINESS_TIME_CATEGORIES.includes(input.businessCategory)) throw Error('Catégorie métier invalide.');
     const type = input.type ?? row.node_type; const status = input.status ?? row.status;
     if (!PROJECT_NODE_TYPES.includes(type) || !PROJECT_NODE_STATUSES.includes(status)) throw new Error('Type ou statut de tâche invalide.');
+    const displaySubtype = input.displaySubtype === undefined ? clean(row.display_subtype) : clean(input.displaySubtype);
+    const linkedSitePage = this.database.get<{ project_node_id: string }>(
+      'SELECT project_node_id FROM project_site_pages WHERE project_node_id=?',
+      [nodeId],
+    );
+    if (linkedSitePage && (type !== 'module' || displaySubtype !== 'page')) {
+      throw new Error('Cette Page est rattachée à un Site et ne peut pas être retypée silencieusement.');
+    }
     this.database.run(
       `UPDATE project_nodes
-       SET parent_id=?, node_type=?, display_subtype=?, name=?, description=?, sort_order=?, estimated_minutes=?,
+       SET parent_id=?, node_type=?, display_subtype=?, name=?, description=?, sort_order=?, estimated_minutes=?, business_category=?,
            is_required=?, status=?, time_category=?, semantic_key=?, work_card_json=?, advice_json=?, updated_at=?
        WHERE id=?`,
       [
-        parentId ?? null, type, clean(input.displaySubtype ?? row.display_subtype), clean(input.name ?? row.name),
+        parentId ?? null, type, displaySubtype, clean(input.name ?? row.name),
         clean(input.description ?? row.description), input.sortOrder ?? row.sort_order,
         input.estimatedMinutes === undefined ? row.estimated_minutes : input.estimatedMinutes,
+        input.businessCategory === undefined ? (row.business_category as string | null) : input.businessCategory,
         input.required === undefined ? row.is_required : input.required ? 1 : 0, status,
         clean(input.timeCategory ?? row.time_category),
         input.semanticKey === undefined ? row.semantic_key : clean(input.semanticKey),
@@ -399,6 +547,7 @@ export class ProjectService {
         nowIso(), nodeId,
       ],
     );
+    if (input.estimatedMinutes!==undefined && input.estimatedMinutes!==row.estimated_minutes) this.writeActivity('project',row.project_id,'project_action_estimate_changed','Estimation courante modifiée', {nodeId,old:row.estimated_minutes,current:input.estimatedMinutes});
     if (status === 'done' && row.status !== 'done') this.writeActivity('project', row.project_id, 'project_node_done', `Tâche terminée : ${input.name ?? row.name}`);
     return this.getProject(row.project_id);
   }
@@ -441,6 +590,7 @@ export class ProjectService {
       }
     }
 
+    for(const id of [phase.id,...descendants])new ProjectContributionTargetService(this.database).assertAction(id);
     const now = nowIso();
     this.database.exec('BEGIN IMMEDIATE;');
     try {
@@ -602,7 +752,8 @@ export class ProjectService {
       advice: parseJsonArray<ProjectCompanionAdvice>(node.advice_json),
       createdAt: node.created_at,
     }));
-    return { id: row.id, templateId: row.template_id, versionNumber: Number(row.version_number), status: row.status, description: row.description, publishedAt: row.published_at, createdAt: row.created_at, nodes };
+    const profile=this.database.get<{mode:'historical_complete'|'structural';requires_operational:number;operational_ready:number}>('SELECT mode,requires_operational,operational_ready FROM blueprint_operational_profiles WHERE template_version_id=?',[row.id]);
+    return { operationalReady:Boolean(profile?.operational_ready),operationalPurpose:profile?.mode ?? 'historical_complete',requiresOperationalModel:Boolean(profile?.requires_operational),id: row.id, templateId: row.template_id, versionNumber: Number(row.version_number), status: row.status, description: row.description, publishedAt: row.published_at, createdAt: row.created_at, nodes };
   }
 
   private mapProjectSummary(row: ProjectRow): ProjectSummary {
@@ -611,10 +762,12 @@ export class ProjectService {
         SUM(CASE WHEN is_required=1 AND node_type IN ('task','checklist') THEN 1 ELSE 0 END) AS total_required,
         SUM(CASE WHEN is_required=1 AND node_type IN ('task','checklist') AND status='done' THEN 1 ELSE 0 END) AS done_required,
         COALESCE(SUM(CASE WHEN node_type IN ('task','checklist') THEN estimated_minutes ELSE 0 END),0) AS estimated_minutes
-       FROM project_nodes WHERE project_id=?`, [row.id]);
+       FROM project_nodes WHERE project_id=? AND archived_at IS NULL`, [row.id]);
     const total = Number(stats?.total_required ?? 0); const done = Number(stats?.done_required ?? 0);
     return {
-      id: row.id, number: row.project_number, clientAccountId: row.client_account_id, clientLabel: row.client_account_id ? this.clientLabel(row.client_account_id) : 'AtoumWeb',
+      id: row.id, number: row.project_number, clientAccountId: row.client_account_id, clientLabel: row.client_account_id ? this.clientLabel(row.client_account_id) : row.prospect_id ? this.prospectLabel(String(row.prospect_id)) : 'AtoumWeb',
+      prospectId: row.prospect_id as string | null, commercialState: row.commercial_state as ProjectSummary['commercialState'],
+      commercialDossierId: row.commercial_dossier_id as string | null, acceptedQuoteId: row.accepted_quote_id as string | null, scopeFrozenAt: row.scope_frozen_at as string | null,
       sourceQuoteId: row.source_quote_id, templateVersionId: row.template_version_id, name: row.name, projectType: row.project_type, status: row.status,
       commercialMode: row.commercial_mode, startDate: row.start_date, targetDate: row.target_date,
       commercialValueCents: Number(row.commercial_value_cents), contractValueCents: Number(row.contract_value_cents), progressPercent: total === 0 ? 0 : Math.round(done * 100 / total),
@@ -623,7 +776,9 @@ export class ProjectService {
   }
 
   private getProjectNodes(projectId: string): ProjectNode[] {
-    return this.database.all<ProjectNodeRow>('SELECT * FROM project_nodes WHERE project_id=? ORDER BY sort_order, created_at', [projectId]).map((row) => ({
+    const composition = new ProjectBlueprintCompositionService(this.database, this.projectSites ?? new ProjectSiteService(this.database));
+    const timeSessions=new TimeService(this.database).list({projectId});
+    return this.database.all<ProjectNodeRow>('SELECT * FROM project_nodes WHERE project_id=? AND archived_at IS NULL ORDER BY sort_order, created_at', [projectId]).map((row) => ({
       id: row.id,
       projectId: row.project_id,
       parentId: row.parent_id,
@@ -643,6 +798,9 @@ export class ProjectService {
       paused: Boolean(row.is_paused),
       pauseReason: row.pause_reason,
       sources: this.getProjectNodeSources(row.id),
+      blueprintSources: composition.provenance(row.project_id, row.id),
+      businessCategory: row.business_category as ProjectNode['businessCategory'],
+      operational: (()=>{const info=new ProjectOperationalService(this.database).info(row.id);return info?{...info,actualSeconds:timeSessions.filter(s=>s.projectNodeId===row.id).reduce((n,s)=>n+s.durationSeconds,0)}:undefined;})(),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     }));
@@ -664,6 +822,12 @@ export class ProjectService {
   }
 
   private getProjectServices(projectId: string): ProjectServiceSnapshot[] {
+    const provisional = this.database.get<Record<string,unknown>>('SELECT commercial_state,commercial_dossier_id FROM projects WHERE id=?',[projectId]);
+    if (provisional?.commercial_state==='provisional') {
+      return this.database.all<QuoteLineProjectRow>(`SELECT l.* FROM quote_lines l JOIN commercial_project_dossiers d ON d.current_quote_id=l.quote_id WHERE d.id=? ORDER BY l.sort_order,l.id`,[String(provisional.commercial_dossier_id)])
+        .map(l=>({id:'provisional:'+l.id,projectId,sourceQuoteLineId:l.id,catalogItemId:l.catalog_item_id,catalogVersionId:l.catalog_version_id,label:l.label,
+          snapshot:parseJsonObject<Record<string,unknown>>(l.snapshot_json),catalogValueCents:Number(l.catalog_line_value_cents),contractValueCents:Number(l.contract_line_value_cents),createdAt:String(l.created_at)}));
+    }
     return this.database.all<ProjectServiceRow>('SELECT * FROM project_services WHERE project_id=? ORDER BY created_at', [projectId]).map((row) => {
       let snapshot: Record<string, unknown> | null = null; if (row.snapshot_json) { try { snapshot = JSON.parse(row.snapshot_json) as Record<string, unknown>; } catch { snapshot = null; } }
       return { id: row.id, projectId: row.project_id, sourceQuoteLineId: row.source_quote_line_id, catalogItemId: row.catalog_item_id, catalogVersionId: row.catalog_version_id, label: row.label, snapshot, catalogValueCents: Number(row.catalog_value_cents), contractValueCents: Number(row.contract_value_cents), createdAt: row.created_at };
@@ -671,12 +835,12 @@ export class ProjectService {
   }
 
   private getPrerequisites(projectId: string): ProjectPrerequisite[] {
-    return this.database.all<PrerequisiteRow>('SELECT * FROM project_prerequisites WHERE project_id=? ORDER BY sort_order, created_at', [projectId]).map((row) => ({
+    return this.database.all<PrerequisiteRow>('SELECT * FROM project_prerequisites WHERE project_id=? AND archived_at IS NULL ORDER BY sort_order, created_at', [projectId]).map((row) => ({
       id: row.id, projectId: row.project_id, label: row.label, description: row.description, status: row.status, required: Boolean(row.is_required), sortOrder: Number(row.sort_order), requestedAt: row.requested_at, receivedAt: row.received_at, validatedAt: row.validated_at, createdAt: row.created_at, updatedAt: row.updated_at,
     }));
   }
 
-  private copyTemplateNodes(fromVersionId: string, toVersionId: string, now: string): void {
+  private copyTemplateNodes(fromVersionId: string, toVersionId: string, now: string): Map<string, string> {
     const source = this.database.all<TemplateNodeRow>('SELECT * FROM project_template_nodes WHERE template_version_id=? ORDER BY sort_order, created_at', [fromVersionId]);
     const pending = [...source]; const ids = new Map<string, string>(); let guard = 0;
     while (pending.length && guard++ < source.length + 2) {
@@ -698,96 +862,51 @@ export class ProjectService {
       }
       if (!progressed) throw new Error('Arbre du modèle invalide.');
     }
+    return ids;
   }
 
-  private resolveBlueprintPlan(quoteId: string, explicitTemplateVersionId?: string | null): { base: BlueprintContribution; addons: BlueprintContribution[] } {
-    const lines = this.database.all<QuoteLineProjectRow>(
-      'SELECT id,catalog_item_id,catalog_version_id,label,snapshot_json,catalog_line_value_cents,contract_line_value_cents FROM quote_lines WHERE quote_id=? ORDER BY sort_order, created_at',
-      [quoteId],
+  private copyTemplateSites(fromVersionId: string, toVersionId: string, nodeIds: Map<string, string>, now: string): void {
+    const sites = this.database.all<{ id: string; blueprint_key: string; name: string; desired_domain: string | null; sort_order: number }>(
+      'SELECT id,blueprint_key,name,desired_domain,sort_order FROM project_template_sites WHERE template_version_id=? ORDER BY sort_order,created_at',
+      [fromVersionId],
     );
-
-    let mappedBase: BlueprintContribution | null = null;
-    const addons: BlueprintContribution[] = [];
-
-    const pushAddon = (contribution: BlueprintContribution) => {
-      const duplicate = addons.some((item) =>
-        item.templateVersionId === contribution.templateVersionId
-        && item.quoteLineId === contribution.quoteLineId
-        && item.catalogVersionId === contribution.catalogVersionId,
+    for (const site of sites) {
+      const newSiteId = randomUUID();
+      this.database.run(
+        `INSERT INTO project_template_sites
+         (id,template_version_id,blueprint_key,name,desired_domain,sort_order,created_at) VALUES (?,?,?,?,?,?,?)`,
+        [newSiteId, toVersionId, site.blueprint_key, site.name, site.desired_domain, site.sort_order, now],
       );
-      if (!duplicate) addons.push(contribution);
-    };
-
-    for (const line of lines) {
-      if (line.catalog_version_id) {
-        for (const link of this.blueprintLinksForCatalogVersion(line.catalog_version_id)) {
-          const contribution: BlueprintContribution = {
-            templateVersionId: link.template_version_id,
-            quoteLineId: line.id,
-            catalogVersionId: line.catalog_version_id,
-            sourceRole: 'direct',
-          };
-          if (link.role === 'base' && !mappedBase) mappedBase = contribution;
-          if (link.role === 'addon') pushAddon(contribution);
-        }
-      }
-
-      if (!line.snapshot_json) continue;
-      let snapshot: Record<string, unknown> | null = null;
-      try {
-        const parsed = JSON.parse(line.snapshot_json) as unknown;
-        snapshot = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : null;
-      } catch {
-        snapshot = null;
-      }
-      const components = snapshot?.offerComponents;
-      if (!Array.isArray(components)) continue;
-
-      for (const raw of components) {
-        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
-        const component = raw as Record<string, unknown>;
-        if (component.isOptional === true) continue;
-        const serviceVersionId = typeof component.serviceVersionId === 'string' ? component.serviceVersionId : null;
-        if (!serviceVersionId) continue;
-        for (const link of this.blueprintLinksForCatalogVersion(serviceVersionId)) {
-          const contribution: BlueprintContribution = {
-            templateVersionId: link.template_version_id,
-            quoteLineId: line.id,
-            catalogVersionId: serviceVersionId,
-            sourceRole: 'offer_component',
-          };
-          if (link.role === 'base' && !mappedBase) mappedBase = contribution;
-          if (link.role === 'addon') pushAddon(contribution);
-        }
+      const pages = this.database.all<{ blueprint_key: string; template_node_id: string; role: string; desired_path: string | null; sort_order: number }>(
+        `SELECT blueprint_key,template_node_id,role,desired_path,sort_order
+         FROM project_template_site_pages WHERE template_site_id=? ORDER BY sort_order,created_at`,
+        [site.id],
+      );
+      for (const page of pages) {
+        const newNodeId = nodeIds.get(page.template_node_id);
+        if (!newNodeId) throw new Error(`Page blueprint ${page.blueprint_key} sans nœud copié.`);
+        this.database.run(
+          `INSERT INTO project_template_site_pages
+           (id,template_site_id,blueprint_key,template_node_id,role,desired_path,sort_order,created_at)
+           VALUES (?,?,?,?,?,?,?,?)`,
+          [randomUUID(), newSiteId, page.blueprint_key, newNodeId, page.role, page.desired_path, page.sort_order, now],
+        );
       }
     }
-
-    const explicit = clean(explicitTemplateVersionId);
-    const base: BlueprintContribution | null = explicit
-      ? { templateVersionId: explicit, quoteLineId: null, catalogVersionId: null, sourceRole: 'manual' }
-      : mappedBase;
-
-    if (!base) {
-      throw new Error('Aucun blueprint de base n’est lié à ce devis. Choisis un modèle publié ou configure le lien Catalogue → Projet.');
-    }
-
-    const baseVersion = this.getTemplateVersion(base.templateVersionId);
-    if (baseVersion.status !== 'published') throw new Error('Le blueprint de base doit être publié.');
-
-    const filteredAddons = addons.filter((addon) => addon.templateVersionId !== base.templateVersionId);
-    for (const addon of filteredAddons) {
-      const version = this.getTemplateVersion(addon.templateVersionId);
-      if (version.status !== 'published') throw new Error('Un module de production lié au devis n’est pas publié.');
-    }
-
-    return { base, addons: filteredAddons };
   }
 
-  private blueprintLinksForCatalogVersion(catalogVersionId: string): BlueprintLinkRow[] {
-    return this.database.all<BlueprintLinkRow>(
-      'SELECT * FROM catalog_project_blueprints WHERE catalog_version_id=? ORDER BY CASE role WHEN \'base\' THEN 0 ELSE 1 END, sort_order, created_at',
-      [catalogVersionId],
-    );
+  private blueprintKey(value: string, label: string): string {
+    const key = clean(value);
+    if (!key || !/^[a-z0-9]+(?:[._-][a-z0-9]+)*$/.test(key)) throw new Error(`${label} invalide.`);
+    return key;
+  }
+
+  private blueprintPath(value: string | null | undefined, role: string): string | null {
+    if (role === 'home') return '/';
+    const path = clean(value);
+    if (!path) return null;
+    if (/[?#]/.test(path) || path === '/') throw new Error('Chemin de Page blueprint invalide.');
+    return '/' + path.replace(/^\/+|\/+$/g, '');
   }
 
   private copyTemplateTreeToProject(
@@ -878,25 +997,6 @@ export class ProjectService {
     }
   }
 
-  private seedPrerequisitesFromQuote(quoteId: string, projectId: string, quoteText: string | null, now: string): void {
-    const labels = new Set<string>();
-    if (quoteText) quoteText.split(/\r?\n|;/).map((value) => value.trim()).filter(Boolean).forEach((value) => labels.add(value));
-    const lines = this.database.all<{ snapshot_json: string | null }>('SELECT snapshot_json FROM quote_lines WHERE quote_id=?', [quoteId]);
-    for (const line of lines) {
-      if (!line.snapshot_json) continue;
-      try {
-        const snapshot = JSON.parse(line.snapshot_json) as Record<string, unknown>;
-        const prerequisites = snapshot.prerequisites;
-        if (Array.isArray(prerequisites)) prerequisites.filter((value): value is string => typeof value === 'string').map((value) => value.trim()).filter(Boolean).forEach((value) => labels.add(value));
-      } catch { /* snapshot legacy invalide ignoré */ }
-    }
-    let order = 0;
-    for (const label of labels) {
-      this.database.run('INSERT INTO project_prerequisites (id,project_id,label,status,is_required,sort_order,created_at,updated_at) VALUES (?,?,?,\'to_request\',1,?,?,?)', [randomUUID(), projectId, label, order, now, now]);
-      order += 10;
-    }
-  }
-
   private inferCommercialMode(catalog: number, contract: number): ProjectCommercialMode {
     if (contract === 0 && catalog > 0) return 'free';
     if (contract < catalog) return 'discounted';
@@ -970,7 +1070,7 @@ export class ProjectService {
     }
   }
 
-  private writeActivity(entityType: string, entityId: string, action: string, summary: string): void {
-    this.database.run('INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,NULL,?)', [entityType, entityId, action, summary, nowIso()]);
+  private writeActivity(entityType: string, entityId: string, action: string, summary: string, metadata?: Record<string,unknown>): void {
+    this.database.run('INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)', [entityType, entityId, action, summary, metadata?JSON.stringify(metadata):null, nowIso()]);
   }
 }

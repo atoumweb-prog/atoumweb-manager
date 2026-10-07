@@ -45,6 +45,7 @@ const NAV_ITEMS = [
 
 type PageName = (typeof NAV_ITEMS)[number];
 type ProspectPipelineFilter = 'all' | 'relaunch' | 'overdue';
+type MessageAction = { message: string; run: () => void };
 
 const PAGE_HINTS: Record<PageName, string> = {
   Accueil: 'Vue synthétique des actions, alertes et indicateurs AtoumWeb.',
@@ -96,6 +97,7 @@ function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [libraryHeaderCollapsed, setLibraryHeaderCollapsed] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [messageAction, setMessageAction] = useState<MessageAction | null>(null);
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [crmTarget,setCrmTarget] = useState<string|null>(null);
   const [prospectViewTarget, setProspectViewTarget] = useState<'directory' | 'pipeline' | 'history'>('directory');
@@ -142,6 +144,16 @@ function App() {
   const [operationsSearchTarget, setOperationsSearchTarget] = useState<OperationsSearchTarget | null>(null);
   const [librarySearchTarget, setLibrarySearchTarget] = useState<string | null>(null);
   const [backupSearchTarget, setBackupSearchTarget] = useState<string | null>(null);
+
+  function showMessage(nextMessage: string, action?: () => void): void {
+    setMessage(nextMessage);
+    setMessageAction(action ? { message: nextMessage, run: action } : null);
+  }
+
+  function closeMessage(): void {
+    setMessage(null);
+    setMessageAction(null);
+  }
 
   useEffect(() => {
     const openLibraryItem = (event: Event) => {
@@ -288,7 +300,7 @@ function App() {
       </aside>
 
       <main className="main-area">
-        <header className="topbar">
+        <header className={/([\\/])Validation-MSI$/i.test(bootstrap.workspacePath)?'topbar is-development':'topbar'}>
           <div className="topbar-left">
             <button
               className="sidebar-toggle"
@@ -314,11 +326,17 @@ function App() {
             <GlobalTimer onMessage={setMessage} />
             <GlobalClock />
           </div>
+        {/([\\/])Validation-MSI$/i.test(bootstrap.workspacePath)&&<div role="status" className="development-environment-banner">DÉVELOPPEMENT — dossiers TEST — aucune valeur contractuelle réelle</div>}
         </header>
 
-        <section className={`content-area ${activePage === 'Accueil' ? 'home-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' || activePage === 'Sites' ? 'workspace-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' ? 'library-workspace-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' && libraryHeaderCollapsed ? 'library-header-collapsed' : ''}`}>
+        <section className={`content-area ${activePage === 'Accueil' ? 'home-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' || activePage === 'Sites' ? 'workspace-content' : ''} ${activePage === 'Projets' ? 'projects-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' ? 'library-workspace-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' && libraryHeaderCollapsed ? 'library-header-collapsed' : ''}`}>
           {activePage !== 'Accueil' && <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1>{activePage === 'Prospects' ? 'Prospection' : activePage}</h1><p>{PAGE_HINTS[activePage]}</p></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>}
-          {message && <div className="notice" role="status"><span>{message}</span><button type="button" onClick={() => setMessage(null)}>×</button></div>}
+          {message && <div className={`notice ${messageAction?.message === message ? 'is-actionable' : ''}`} role="status">
+            {messageAction?.message === message
+              ? <button className="notice-action" type="button" onClick={messageAction.run}><span>{message}</span><small>Ouvrir dans l’Explorateur</small></button>
+              : <span>{message}</span>}
+            <button className="notice-close" type="button" aria-label="Fermer la notification" onClick={closeMessage}>×</button>
+          </div>}
 
           {activePage === 'Accueil' && <HomeDashboard onMessage={setMessage} />}
           {activePage === 'Réglages' && <DemoPanel />}
@@ -326,7 +344,7 @@ function App() {
           {activePage === 'Clients' && <ClientsPage key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
           {activePage === 'Offres & Tarifs' && <CatalogPage onMessage={setMessage} />}
           {activePage === 'Devis' && <QuotesPage key={quoteTarget} initialId={quoteTarget} onMessage={setMessage} />}
-          {activePage === 'Projets' && <ProjectsPage onMessage={setMessage} initialProjectId={projectSearchTarget} showHoverHelp={showHoverHelp} />}
+          {activePage === 'Projets' && <ProjectsPage onMessage={showMessage} initialProjectId={projectSearchTarget} showHoverHelp={showHoverHelp} />}
           {activePage === 'Interventions & Maintenance' && <OperationsPage onMessage={setMessage} initialTarget={operationsSearchTarget} />}
           {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}
           {activePage === 'Facturation' && <BillingPage onMessage={setMessage} />}

@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
 import { createWorkspacePaths, type WorkspacePaths } from '../workspace';
+import { ProjectService } from '../projects/ProjectService';
+import { ProjectSiteService } from '../projects/ProjectSiteService';
 import { AtoumWebCompositionPackageService } from './AtoumWebCompositionPackageService';
 import { AtoumWebCompositionService } from './AtoumWebCompositionService';
 import { AtoumWebPackageService } from './AtoumWebPackageService';
@@ -20,6 +22,8 @@ let assets: AtoumWebTechnicalAssetService;
 let packages: AtoumWebPackageService;
 let compositions: AtoumWebCompositionService;
 let projectPackages: AtoumWebCompositionPackageService;
+let projectService: ProjectService;
+let projectSites: ProjectSiteService;
 
 beforeEach(() => {
   workspaceRoot = mkdtempSync(join(tmpdir(), 'atoumweb-composition-package-'));
@@ -32,6 +36,8 @@ beforeEach(() => {
   packages = new AtoumWebPackageService(database, workspace, library, assets);
   compositions = new AtoumWebCompositionService(database, library);
   projectPackages = new AtoumWebCompositionPackageService(database, workspace, compositions, packages, library);
+  projectSites = new ProjectSiteService(database);
+  projectService = new ProjectService(database, workspace, projectSites);
 });
 
 afterEach(() => {
@@ -93,6 +99,58 @@ function reusable(name: string, category: 'header' | 'hero' | 'section' | 'foote
 }
 
 describe('AtoumWebCompositionPackageService', () => {
+  it('exporte une préparation de Page V2 avec une destination et un exportId immuables', () => {
+    const hero = reusable('Hero Fleuriste', 'hero', 'page-hero');
+    const project = projectService.createInternal({ name: 'Projet export Page' });
+    const updated = projectService.addProjectNode(project.id, {
+      type: 'module', displaySubtype: 'page', name: 'Accueil', semanticKey: 'pages.home',
+    });
+    const page = updated.nodes.find((node) => node.semanticKey === 'pages.home')!;
+    const site = projectSites.create(project.id, { name: 'Site principal' });
+    projectSites.linkPage(site.id, page.id, { role: 'home' });
+    let composition = compositions.ensureForProjectPage(page.id);
+    composition = compositions.addItem(composition.id, { libraryItemId: hero.id });
+    composition = compositions.updateItemLocalCode(composition.id, composition.items[0].id, {
+      html: '<section class="prepared-hero">Hero préparé pour cette Page</section>',
+      css: '.prepared-hero{color:#123456}',
+      javascript: '',
+    });
+
+    const exported = projectPackages.exportPagePackage(page.id);
+    const entries = readZipArchive(exported.path);
+    const manifest = JSON.parse(entries.find((entry) => entry.name === 'manifest.json')!.data.toString('utf8'));
+
+    expect(exported).toMatchObject({
+      compositionId: composition.id,
+      projectId: project.id,
+      siteId: site.id,
+      pageId: page.id,
+      componentCount: 1,
+    });
+    expect(exported.exportId).toMatch(/^awexp:/);
+    expect(manifest).toMatchObject({
+      contract: 'atoumweb_bridge_project_package',
+      schemaVersion: 2,
+      scope: 'page',
+      exportId: exported.exportId,
+      destination: { projectId: project.id, siteId: site.id, pageId: page.id },
+    });
+    expect(manifest.components[0].compositionItemId).toBe(composition.items[0].id);
+    const preparedHtml = entries.find((entry) => entry.name === manifest.components[0].files.html.path)!;
+    const preparedCss = entries.find((entry) => entry.name === manifest.components[0].files.css.path)!;
+    expect(preparedHtml.data.toString('utf8')).toContain('Hero préparé pour cette Page');
+    expect(preparedCss.data.toString('utf8')).toBe('.prepared-hero{color:#123456}');
+    expect(manifest.components[0].files.javascript).toBeNull();
+    expect(database.get<{ total: number }>('SELECT COUNT(*) total FROM project_page_exports WHERE id=?', [exported.exportId!])?.total).toBe(1);
+  });
+
+  it('refuse un export Page sans Site actif ou sans composition', () => {
+    const project = projectService.createInternal({ name: 'Projet incomplet' });
+    const updated = projectService.addProjectNode(project.id, { type: 'module', displaySubtype: 'page', name: 'Page isolée' });
+    const page = updated.nodes.find((node) => node.displaySubtype === 'page')!;
+    expect(() => projectPackages.exportPagePackage(page.id)).toThrow(/Site actif.*composition/i);
+  });
+
   it('exporte un package projet ordonné contenant plusieurs Component Package V1', () => {
     const header = reusable('Header Fleuriste', 'header', 'header');
     const hero = reusable('Hero Fleuriste', 'hero', 'hero');
