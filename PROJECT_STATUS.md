@@ -1,5 +1,17 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 08/10/2026 — Port sélectif du réemploi guidé depuis la PR #62
+
+- Instruction AtoumWeb : ne merger ni #62 ni #68. #68 reste un prototype historique hors consolidation ; port du seul parcours UI guidé de #62 sur fix/pre-phase5-commercial-ux@1f7dafc, sans nouvelle migration ni reprise de service ancien.
+- Panneau ajouté à la Bibliothèque technique du Projet actuel : choix de version source, copie de travail indépendante, adaptation du contenu/métadonnées et création volontaire d’une brique globale avec provenance. Backend ReusePreparationService et API prepareProjectItem/createGlobal/openPackage inchangés.
+- Catégories actuelles reprises, dont code_snippet par défaut pour les snippets PHP/JavaScript. État cible par défaut « À adapter », verticale facultative. Relecture humaine requise avant création et réinitialisée après modification ; création réussie non rejouée par le panneau.
+- Export simple conservé et libellé distinct, nouvelles versions, liens aux ressources, stabilité, historique et archivage conservés dans le nouvel écran. Aucune généralisation, création globale ou modification du Projet automatique ; seules les étapes explicites sont journalisées.
+- Typecheck OK ; 56/56 tests ciblés de réemploi/référentiels ; 670/670 tests complets dans 77 fichiers. Un test de version source ancienne et code_snippet ajouté.
+- Recette native App/preload/IPC : 55/55 contrôles sur AtoumWeb, Noir et Blanc. Préparation sans création globale, contenu/version exacts, adaptation humaine, création explicite unique, provenance et conservation des lignes/versions/fichiers Projet vérifiées. Ouverture OS capturée par le harness, chemin réel contrôlé ; services métier non simulés.
+- Migrations exactement 1–65, aucune modification de leur code. Intégrité/FK vérifiées sur fixture et Validation-MSI en lecture seule. Aucun import réel, aucune réécriture du référentiel ou donnée client de Validation-MSI. Captures et rapports hors Git.
+- Commit local dédié proposé ; arrêt avant push, fusion de PR ou consolidation vers main. Aucune fonctionnalité de packs commerciaux .atoum V0.2 reprise et aucun travail Bridge/8C.
+
+
 ## 07/10/2026 — Réalignement local Phase 7 sur le Manager consolidé
 
 - Autorisation AtoumWeb : intégrer le HEAD de fix/pre-phase5-commercial-ux par merge normal dans feature/phase-7-analytics-v1, sans rebase, push ni fusion de PR #71. Source distante Phase 7 : 14da58bb2cc5c7bfe47f6000c670a8fd131bd8a3 ; cible intégrée : 4ada08050bd4ee40f9094b475dab04ec7083a1db. Les 44 commits spécifiques Phase 7 restent dans l’historique.

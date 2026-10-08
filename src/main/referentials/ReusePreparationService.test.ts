@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
-import { applyPendingMigrations } from '../database/migrations';
+import { applyPendingMigrations, MIGRATIONS } from '../database/migrations';
 import { ProjectResourceService } from '../projects/ProjectResourceService';
 import { ProjectService } from '../projects/ProjectService';
 import { ProjectTechnicalLibraryService } from '../projects/ProjectTechnicalLibraryService';
@@ -42,6 +42,30 @@ afterEach(() => {
 });
 
 describe('ReusePreparationService', () => {
+  it('préserve la version Projet sélectionnée et sa source lors de la création humaine d’un code_snippet adapté', () => {
+    const project=projects.createInternal({name:'TEST réemploi sélectif'});
+    const original=projectLibrary.create(project.id,{name:'Snippet client',category:'php'},
+      {contentType:'code',language:'php',contentText:'<?php echo "CLIENT";'});
+    const versionId=original.currentVersion!.id;
+    projectLibrary.markStable(versionId);
+    projectLibrary.createVersion(original.id,{contentType:'code',language:'php',contentText:'<?php echo "CLIENT V2";'});
+    const before=projectLibrary.get(original.id);
+    const preparation=reuse.prepareProjectItem({itemId:original.id,versionId,adaptationNotes:'Adapter le texte client.'});
+    expect(preparation.versionNumber).toBe(1);
+    expect(globalLibrary.list()).toHaveLength(0);
+    expect(readFileSync(preparation.contentPath!,'utf8')).toContain('CLIENT');
+    writeFileSync(preparation.contentPath!,'<?php echo $label;', 'utf8');
+    expect(projectLibrary.get(original.id)).toEqual(before);
+    const created=reuse.createGlobal({preparation,item:{name:'Snippet configurable',category:'code_snippet',reuseStatus:'adapt'},
+      version:{contentType:'code',language:'php',contentText:'<?php echo $label;',notes:'Adaptation humaine'} });
+    expect(created).toMatchObject({category:'code_snippet',reuseStatus:'adapt',originTechnicalItemId:original.id});
+    expect(created.currentVersion!.contentText).toBe('<?php echo $label;');
+    expect(projectLibrary.get(original.id)).toEqual(before);
+    expect(database.all('SELECT id FROM schema_migrations ORDER BY id').map(r=>r.id)).toEqual(MIGRATIONS.map(m=>m.id));
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+    expect(database.get('PRAGMA integrity_check')?.integrity_check).toBe('ok');
+  });
+
   it('prépare le cas Cazor en paquet indépendant puis crée volontairement une Galerie dynamique ACF', () => {
     const project = projects.createInternal({ name: 'Cazor Auto Passion', projectType: 'site-vitrine' });
     const sourceItem = projectLibrary.create(

@@ -4,6 +4,10 @@ Date d'ouverture : 27/09/2026.
 
 ## 0. Statut et mode d'emploi pour les agents
 
+### Port sélectif du réemploi guidé — 08/10/2026
+
+Décision AtoumWeb : #68 reste prototype historique non bloquant ; ne merger ni #68 ni #62. Le parcours guidé de #62 est porté seul dans la Bibliothèque Projet actuelle, avec backend/API existants, copie indépendante, adaptation/relecture humaine et création volontaire avec provenance. Export simple et fonctions récentes conservés ; code_snippet compatible. Typecheck OK, ciblés 56/56, complets 670/670, UI native 55/55 sur trois thèmes. Migrations 1–65 inchangées, intégrité/FK correctes, Validation-MSI contrôlée en lecture seule. Arrêt avant push et PR finale main ; aucun packs commercial V0.2 ou travail Bridge/8C.
+
 ### Réalignement Phase 7 vérifié le 07/10/2026
 
 La reprise de PR #71 est autorisée localement : merge normal de fix/pre-phase5-commercial-ux@4ada080 dans feature/phase-7-analytics-v1@14da58b, sans push. Trois conflits de raccord résolus, Manager consolidé conservé et Phase 7 accessible dans les Statistiques. 669 tests/typecheck OK, 35 contrôles UI sur trois thèmes. Migrations 1–65 conservées ; Validation-MSI vérifiée en lecture seule, intégrité/FK correctes. Arrêt après commit de merge local pour validation.
@@ -492,6 +496,14 @@ Recette de référence : trois composants Manager, ajouts natifs Divi, déplacem
 Critère métier : terminer librement une Page dans Divi, puis comprendre dans Manager ce qui a changé, où et pourquoi, sans reconstruire la Page ni interpréter des UUID.
 
 ## 16. Journal partagé des consignes, décisions et validations
+
+### 08/10/2026 — Port sélectif de la réutilisation guidée, sans merge #62/#68
+
+- Autorisation : UI seule depuis la référence #62, backend et schéma consolidés conservés. Prototype #68 explicitement maintenu hors de la consolidation.
+- Réalisation : panneau guidé dans l’écran actuel, sélection d’une version, copie indépendante, édition humaine, catégorie code_snippet et création globale explicite/provenance. Export simple conservé ; aucune création ou modification automatique du Projet.
+- Contrôles : typecheck OK, 56/56 ciblés, 670/670 complets et 55/55 UI sur trois thèmes. Schéma 1–65 et intégrité/FK validés ; base de développement en lecture seule, tests sur fixtures temporaires. Pas de nouvelle migration ou reprise de backend.
+- Suite : commit local dédié au port et bilan ; attendre validation avant push ou PR main. Aucune fusion des anciennes branches, aucun Bridge/8C et aucun code .atoum V0.2.
+
 
 ### 07/10/2026 — Réalignement local PR #71
 

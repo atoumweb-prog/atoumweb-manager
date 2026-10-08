@@ -285,3 +285,19 @@
     justify-content: flex-start;
   }
 }
+.reuse-preparation-panel {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  min-width: 0;
+}
+.reuse-fields { display: grid; gap: 12px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.reuse-fields legend { font-weight: 700; margin-bottom: 12px; }
+.reuse-fields label { display: grid; gap: 6px; }
+.reuse-fields .reuse-review { display: flex; align-items: flex-start; gap: 8px; }
+.reuse-review input { width: auto; flex: 0 0 auto; margin-top: 4px; }
+.reuse-package-summary { display: grid; gap: 8px; min-width: 0; overflow-wrap: anywhere; }
+.reuse-package-summary details { color: var(--text-muted); }

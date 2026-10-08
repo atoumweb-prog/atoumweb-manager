@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { ProjectReusePreparationPanel } from './ProjectReusePreparationPanel';
 import {
   PROJECT_TECHNICAL_CATEGORIES,
   PROJECT_TECHNICAL_CONTENT_TYPES,
@@ -52,6 +53,7 @@ export function ProjectTechnicalLibraryTab({ projectId, onMessage }: {
   const [creating, setCreating] = useState(false);
   const [newVersion, setNewVersion] = useState(false);
   const [reuseBusy, setReuseBusy] = useState(false);
+  const [reuseOpen, setReuseOpen] = useState(false);
 
   const [name, setName] = useState('');
   const [category, setCategory] = useState<ProjectTechnicalCategory>('note');
@@ -99,6 +101,7 @@ export function ProjectTechnicalLibraryTab({ projectId, onMessage }: {
       setSelectedId(id);
       setDetail(await window.atoumweb.projects.technicalLibrary.get(id));
       setNewVersion(false);
+      setReuseOpen(false);
       setResourceId('');
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Élément technique introuvable.');
@@ -149,6 +152,7 @@ export function ProjectTechnicalLibraryTab({ projectId, onMessage }: {
     setContent(detail.currentVersion.contentText ?? '');
     setNotes('');
     setNewVersion(true);
+    setReuseOpen(false);
   }
 
   async function createNextVersion(): Promise<void> {
@@ -262,8 +266,10 @@ export function ProjectTechnicalLibraryTab({ projectId, onMessage }: {
           {!detail ? <div className="empty-table">Sélectionne un élément technique.</div> : <>
             <div className="technical-detail-heading">
               <div><span className="eyebrow">{CATEGORY_LABELS[detail.category]}</span><h3>{detail.name}</h3>{detail.description && <p className="muted">{detail.description}</p>}</div>
-              <div className="button-row"><button className="secondary-button" type="button" disabled={reuseBusy} onClick={() => void prepareForReuse()}>{reuseBusy ? 'Préparation…' : 'Préparer pour réutilisation'}</button><button className="secondary-button" type="button" onClick={startNewVersion}>Nouvelle version</button><button className="secondary-button danger-outline" type="button" onClick={() => void archive()}>Archiver</button></div>
+              <div className="button-row"><button className="secondary-button" type="button" onClick={() => {setReuseOpen(v=>!v);setNewVersion(false);}}>Préparer pour réutilisation</button><button className="secondary-button" type="button" disabled={reuseBusy} onClick={() => void prepareForReuse()}>{reuseBusy ? 'Export…' : 'Exporter le paquet simple'}</button><button className="secondary-button" type="button" onClick={startNewVersion}>Nouvelle version</button><button className="secondary-button danger-outline" type="button" onClick={() => void archive()}>Archiver</button></div>
             </div>
+
+            {reuseOpen&&<ProjectReusePreparationPanel key={detail.id} detail={detail} onMessage={onMessage} onClose={()=>setReuseOpen(false)}/>}
 
             {detail.tags && detail.tags.length > 0 && <div className="technical-tags">{detail.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>}
 
@@ -289,7 +295,7 @@ export function ProjectTechnicalLibraryTab({ projectId, onMessage }: {
               ))}
             </div>
 
-            <p className="technical-safety-note">Le contenu est conservé comme donnée de référence. AtoumWeb Manager ne l’exécute jamais automatiquement. « Préparer pour réutilisation » crée seulement un paquet d’adaptation dans les Ressources du projet et ne modifie pas la Bibliothèque AtoumWeb globale.</p>
+            <p className="technical-safety-note">Le contenu est conservé comme donnée de référence et n’est jamais exécuté automatiquement. L’export simple reste dans les Ressources. Le parcours guidé crée une copie de travail indépendante ; une brique globale n’est créée qu’après adaptation et action explicite.</p>
           </>}
         </div>
       </div>
