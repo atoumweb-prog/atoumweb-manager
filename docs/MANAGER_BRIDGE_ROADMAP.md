@@ -2,13 +2,26 @@
 
 Date d'ouverture : 27/09/2026.
 
-## 0. Statut et mode d'emploi pour les agents
+## 0. État courant et lecture de la roadmap — 08/10/2026
 
-### Port sélectif du réemploi guidé — 08/10/2026
+**Manager consolidé : `fix/pre-phase5-commercial-ux`, checkpoint fonctionnel validé `8662c3fbeaf2e3b26a68cffa779422f395edd400`.** Phase 7 est intégrée. Projet V2, Sites/Pages/compositions, contrats/Builder CGV, Catalogue 112, opérations et statistiques/rentabilité sont présents ; migrations **1–65**.
+
+Dernière validation après port : **typecheck OK, 56/56 ciblés, 670/670 complets, 55/55 UI sur trois thèmes, intégrité SQLite OK, foreign_key_check vide**. Le réemploi guidé Projet → copie indépendante → adaptation humaine → création volontaire avec provenance est porté sur le backend actuel ; #62 ne doit pas être fusionnée. #68 reste un prototype commercial .atoum V0.2 historique non intégré, distinct des packages techniques actuels et non bloquant.
+
+Abby reste manuel et les clauses n’ont aucune validation juridique globale. Validation-MSI est TEST/non productive. Bridge WordPress, Lot 8C et les futurs lots restent séparés du Manager consolidé ; cette synchronisation n’autorise aucun travail plugin.
+
+**Prochaine étape Git : PR finale `fix/pre-phase5-commercial-ux` → `main`**, après accord de push. Aucun push, création de PR ou merge dans cette passe documentaire. README, HANDOFF MSI, PROJECT_STATUS et AGENTS définissent la reprise actuelle.
+
+Les checkpoints qui suivent conservent l’historique. Les anciens SHA, branches actives, migrations et consignes valent à leur date uniquement. Les sections d’architecture décrivent les décisions successives et ne donnent pas une nouvelle autorisation de développement.
+
+### Historique des checkpoints antérieurs
+
+
+### Historique — port du réemploi guidé, 08/10/2026
 
 Décision AtoumWeb : #68 reste prototype historique non bloquant ; ne merger ni #68 ni #62. Le parcours guidé de #62 est porté seul dans la Bibliothèque Projet actuelle, avec backend/API existants, copie indépendante, adaptation/relecture humaine et création volontaire avec provenance. Export simple et fonctions récentes conservés ; code_snippet compatible. Typecheck OK, ciblés 56/56, complets 670/670, UI native 55/55 sur trois thèmes. Migrations 1–65 inchangées, intégrité/FK correctes, Validation-MSI contrôlée en lecture seule. Arrêt avant push et PR finale main ; aucun packs commercial V0.2 ou travail Bridge/8C.
 
-### Réalignement Phase 7 vérifié le 07/10/2026
+### Historique — réalignement Phase 7, 07/10/2026
 
 La reprise de PR #71 est autorisée localement : merge normal de fix/pre-phase5-commercial-ux@4ada080 dans feature/phase-7-analytics-v1@14da58b, sans push. Trois conflits de raccord résolus, Manager consolidé conservé et Phase 7 accessible dans les Statistiques. 669 tests/typecheck OK, 35 contrôles UI sur trois thèmes. Migrations 1–65 conservées ; Validation-MSI vérifiée en lecture seule, intégrité/FK correctes. Arrêt après commit de merge local pour validation.
 
@@ -25,9 +38,9 @@ Checkpoint 03/10/2026 : Lot 7 techniquement validé ; commit local dédié de se
 **Document de coordination commun. Publication de la feuille de route autorisée ; aucun lot de développement autorisé par cette publication.**
 
 - Dépôt : `atoumweb-prog/atoumweb-manager`.
-- Base canonique Manager après clôture 8B : `feature/project-page-compositions-v1@ef02f8d6737df14f5cc5d49ed7c5e45d8c59cf81` (vérifiée localement le 03/10/2026).
-- Base canonique Bridge après clôture 8B annoncée par AtoumWeb : `feature/workbench-occurrence-v1@d1ecf89dab4f48230269a0cb10fb796f33c60bfc`, plugin **0.8.4**. Aucun travail Bridge pendant le chantier contractuel.
-- Priorité courante : **Contrats Lot 7 — migration 58 appliquée sur Validation-MSI**, après autorisation AtoumWeb. HEAD local Lot 6 `5cf67f796941690449fc8661fe956c0ffd3e50d1` conservé, Lot 7 non committé. Base réelle migrations 1–58, SHA `ca5ab5a58af53197662000e0fb9edf27762b0c93cd606e2b49ca9391dde09db5` ; plan et bindings vides, historique intact, aucune publication. Attendre validation du bilan réel avant commit local dédié. Le mapping commercial des blueprints reste à décider/versionner explicitement ; aucun Lot 8 opérationnel, Lot 8C, Abby ou Bridge.
+- Base historique Manager au checkpoint de clôture 8B : `feature/project-page-compositions-v1@ef02f8d6737df14f5cc5d49ed7c5e45d8c59cf81` (vérifiée localement le 03/10/2026).
+- Base historique Bridge annoncée par AtoumWeb au checkpoint de clôture 8B : `feature/workbench-occurrence-v1@d1ecf89dab4f48230269a0cb10fb796f33c60bfc`, plugin **0.8.4**. Aucun travail Bridge pendant le chantier contractuel.
+- Priorité à ce checkpoint historique : **Contrats Lot 7 — migration 58 appliquée sur Validation-MSI**, après autorisation AtoumWeb. HEAD local Lot 6 `5cf67f796941690449fc8661fe956c0ffd3e50d1` conservé, Lot 7 non committé. Base réelle migrations 1–58, SHA `ca5ab5a58af53197662000e0fb9edf27762b0c93cd606e2b49ca9391dde09db5` ; plan et bindings vides, historique intact, aucune publication. Attendre validation du bilan réel avant commit local dédié. Le mapping commercial des blueprints reste à décider/versionner explicitement ; aucun Lot 8 opérationnel, Lot 8C, Abby ou Bridge.
 - Checkpoint Lots 7 + 8A validé : typecheck Manager, **37/37 tests ciblés**, **346/346 tests complets**, recettes Manager/Bridge et Workbench multi-composants validées. Les lots suivants restent soumis à autorisation explicite.
 - PR #74 / CGV Builder déjà intégrée : ne pas la fusionner à nouveau.
 - Les choix ci-dessous sont les recommandations issues de l'audit. Les arbitrages de la section 14 doivent être confirmés avant implémentation ; un lot nécessite une autorisation explicite.
@@ -496,6 +509,14 @@ Recette de référence : trois composants Manager, ajouts natifs Divi, déplacem
 Critère métier : terminer librement une Page dans Divi, puis comprendre dans Manager ce qui a changé, où et pourquoi, sans reconstruire la Page ni interpréter des UUID.
 
 ## 16. Journal partagé des consignes, décisions et validations
+
+### 08/10/2026 — Synchronisation documentaire avant PR finale main
+
+- Instruction : documentation seule, commit séparé, aucun code fonctionnel ni push. Port de réemploi validé au commit 8662c3f ; branche active fix/pre-phase5-commercial-ux.
+- État courant harmonisé en tête du README, du HANDOFF MSI, de PROJECT_STATUS et de cette roadmap : Phase 7 et Manager consolidé intégrés, schéma 1–65, typecheck OK, 56/56 ciblés, 670/670 complets, UI 55/55, intégrité/FK correctes. AGENTS vérifié cohérent et laissé inchangé.
+- Réemploi guidé porté sélectivement ; ne pas merger #62. #68 prototype commercial V0.2 conservé hors périmètre et non bloquant. Abby manuel, aucune validation juridique globale, séparation des futurs travaux Bridge WordPress/8C maintenue.
+- Historique conservé avec étiquettes explicites ; anciennes branches/checkpoints ne sont plus des instructions de reprise. Prochaine étape : accord de push puis PR finale fix/pre-phase5-commercial-ux vers main ; aucun push/PR/merge réalisé ici.
+
 
 ### 08/10/2026 — Port sélectif de la réutilisation guidée, sans merge #62/#68
 

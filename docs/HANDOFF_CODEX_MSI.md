@@ -1,4 +1,68 @@
-## Checkpoint courant — 04/10/2026 — Lot 8A appliqué, clôture locale dédiée
+# Handoff Codex MSI — AtoumWeb Manager
+
+## État courant — 08/10/2026
+
+- Dépôt : `C:\DEV\01_PROJETS\AtoumWeb\atoumweb-manager`.
+- **Branche consolidée active : `fix/pre-phase5-commercial-ux`.** `feature/project-blueprints-v1` et les branches de Phase ne sont plus les bases de travail actuelles.
+- Checkpoint fonctionnel validé : **`8662c3fbeaf2e3b26a68cffa779422f395edd400`**. Son parent `1f7dafc8e90c78aec3871ee19917adb56f43a511` intègre Phase 7 ; le commit de port ajoute seulement le parcours guidé de réemploi et ses contrôles.
+- **Projet V2, Sites/Pages/compositions, Devis/contrats/Builder CGV, Catalogue 112, opérations et Phase 7 Statistiques/Rentabilité intégrés.**
+- **Migrations SQLite exactement 1–65**. Le checkpoint migration 60 et ses tables vides décrivent l’historique, pas l’état actuel.
+
+| Validation du checkpoint fonctionnel | Résultat |
+|---|---|
+| Typecheck | OK |
+| Tests ciblés réemploi/référentiels | 56/56 |
+| Suite complète | 670/670 dans 77 fichiers |
+| Recette UI sur les trois thèmes | 55/55 |
+| integrity_check | OK |
+| foreign_key_check | Vide |
+
+Les résultats sont ceux du port de réemploi validé par AtoumWeb. La synchronisation documentaire qui suit ne modifie aucun code fonctionnel et ne constitue pas une nouvelle recette.
+
+## Doctrine de reprise
+
+Validation-MSI (`C:\DEV\02_DONNEES\AtoumWeb\Validation-MSI`) reste une **base mutable de développement/test**, non productive. Les dossiers sont identifiés TEST ; ne pas transformer son SHA ou ses comptages en oracle de tests. Sauvegarder avant une migration ou une modification destructive importante ; maintenir intégrité, relations et migrations rejouables.
+
+Ne pas réimporter ou remettre à zéro les référentiels déjà configurés pour la recette, ni réappliquer les anciens lots pour reproduire leurs anciennes empreintes. Les publications et mises en usage constatées concernent les dossiers TEST. Les informations administratives fictives ne permettent aucun usage productif.
+
+Les parcours actuels restent fondés sur les sources existantes : lignes réellement vendues et options persistées, clauses/snapshot figé, même Projet prévisionnel puis accepté, actions/temps/provenance, objets récurrents ou crédits propres aux opérations. Nouveaux cycles de date à date avec quotas sans report ; version vendue conservée ; moteur calendaire historique non migré silencieusement. Estimations internes indicatives et ajustables, dont Mariage Histoire à 27 h 30 provisoires.
+
+## Réutilisation guidée portée
+
+`Projet → Bibliothèque technique → Préparer pour réutilisation → copie indépendante → adaptation humaine → création volontaire d’une brique AtoumWeb avec provenance`.
+
+Le backend `ReusePreparationService` et les API `referentials.reuse.prepareProjectItem`, `createGlobal`, `openPackage` restent la référence. Le panneau est adapté aux catégories actuelles, dont `code_snippet`, avec relecture humaine avant création. Export simple, versions, ressources, stabilité et archivage existants sont conservés. Aucun code n’est exécuté ou généralisé automatiquement ; le Projet source reste inchangé, les étapes explicites sont journalisées.
+
+- **Ne pas fusionner la PR #62** : seul son parcours UI utile a été porté ; aucune ancienne migration/service/écran complet repris.
+- **Ne pas fusionner la PR #68** : son import de packs commerciaux `.atoum` V0.2 reste un prototype historique non intégré, distinct des packages techniques actuels. Il ne bloque pas la PR finale Manager.
+
+## Limites et chantiers distincts
+
+- Abby manuel : préparation et copie des blocs, édition/signature externes, import du PDF accepté. Aucun connecteur ni envoi automatique.
+- Aucune validation juridique globale des clauses. Les réserves et données réelles à renseigner restent applicables.
+- Statistiques/rendement et suivi facturé/dépenses intégrés ; pas de suivi réel d’encaissements bancaires implicite.
+- Bridge WordPress, Lot 8C et futurs lots séparés. Ne pas confondre les échanges/imports existants côté Manager avec une autorisation de modifier le plugin WordPress.
+
+## Reprise Git et prochaine étape
+
+Vérifier d’abord le checkout, les commits locaux et le suivi ; ne pas réinitialiser le travail local :
+
+```powershell
+cd C:\DEV\01_PROJETS\AtoumWeb\atoumweb-manager
+git status -sb
+git branch --show-current
+git log -2 --oneline
+```
+
+La branche attendue est `fix/pre-phase5-commercial-ux`. Le checkpoint fonctionnel à conserver est `8662c3f…`, suivi du commit documentaire de synchronisation. Les deux restent locaux tant qu’AtoumWeb n’autorise pas leur push.
+
+**Prochaine étape : PR finale `fix/pre-phase5-commercial-ux` → `main`, après autorisation de push.** Ne créer ni PR ni merge sans instruction distincte. La CI actuelle vise un runner self-hosted Windows X64 ; son absence constatée lors de l’audit doit être contrôlée au moment du contrôle final.
+
+## Archives de reprise — ne pas les utiliser comme état courant
+
+Les blocs ci-dessous conservent les checkpoints, preuves et consignes à leurs dates respectives. Les anciennes mentions de tables vides, migration 60, branches actives, SHA figés ou « prochain lot » ne décrivent plus le présent. Les anciennes commandes sont conservées comme texte d’archive et ne doivent pas servir à une synchronisation actuelle. Pour l’état présent, les sections précédentes font foi, en cohérence avec README, PROJECT_STATUS, roadmap et AGENTS.
+
+## Historique — checkpoint du 04/10/2026 — Lot 8A appliqué, clôture locale dédiée
 
 - AtoumWeb valide la migration 60 seule et autorise le commit local dédié **Lot 8A — actions opérationnelles, temps et provenance**, sans push ni merge. Le commit contenant ce bloc clôture localement le lot ; son SHA et les preuves sont consignés hors dépôt dans `outputs/operational-lot8a/cloture-git-lot8a.json`.
 - Avant commit : **36 fichiers préparés**, toutes les empreintes validées conformes, aucun artefact de base/sauvegarde/XLSX/JSON de simulation/capture inclus. Code fonctionnel et migration 60 identiques à **534/534 tests, typecheck OK, UI 69/69, simulation 209/209**. Seuls les documents de suivi et le bilan préparatoire sont actualisés pour refléter l’application et cette clôture.
@@ -22,7 +86,7 @@
 
 ## Historique — 03/10/2026 — Lot 5 validé, clôture locale dédiée
 
-Ce bloc fait foi ; les préparations et bilans d’application antérieurs restent historiques.
+Ce bloc faisait foi à sa date ; les préparations et bilans d’application antérieurs restent historiques.
 
 - AtoumWeb valide le bilan réel et autorise le commit local dédié **Lot 5 — paramètres contractuels et preuves**, sans push ni merge, sur feature/project-page-compositions-v1. Le commit contenant ce bloc constitue le checkpoint Lot 5 ; son SHA exact figure dans outputs/contract-parameters-lot5/cloture-git-lot5.json et git log -1.
 - Migration **56 appliquée avec succès sur Validation-MSI**, aucun backfill des anciens devis, aucune publication catalogue ou contractuelle, aucune donnée administrative fictive.
@@ -35,7 +99,7 @@ Ce bloc fait foi ; les préparations et bilans d’application antérieurs reste
 
 ## Historique — 03/10/2026 — Lot 5 appliqué, avant validation de clôture
 
-Ce bloc fait foi ; les préparations et checkpoints précédents restent historiques.
+Ce bloc faisait foi à sa date ; les préparations et checkpoints précédents restent historiques.
 
 - AtoumWeb valide le dry-run et autorise l’application réelle du Lot 5, migration 56 seule, sans backfill, devis de simulation, administration fictive ni publication. **Application terminée ; aucun commit Lot 5 autorisé avant validation du résultat.**
 - Branche feature/project-page-compositions-v1, HEAD local Lot 4 **31e9df44b36f6ca0ad20fd594c904eac7b9aa8fc** conservé. 38 fichiers Lot 5 attendus, index vide, aucun push/merge. Recette manuelle AtoumWeb toujours à faire avant validation fonctionnelle finale.
@@ -52,7 +116,7 @@ Ce bloc fait foi ; les préparations et checkpoints précédents restent histori
 
 ## Historique — 03/10/2026 — Lot 5 préparé, simulation uniquement
 
-Ce bloc fait foi pour l’état actuel ; les checkpoints antérieurs restent historiques.
+Ce bloc faisait foi pour l’état de son checkpoint ; les checkpoints antérieurs restent historiques.
 
 - AtoumWeb autorise uniquement l’implémentation locale, les tests et le dry-run du Lot 5 — Paramètres contractuels du devis et preuves. **Aucune écriture Validation-MSI ni commit Lot 5 autorisé pour cette passe.**
 - Branche feature/project-page-compositions-v1, HEAD local Lot 4 **31e9df44b36f6ca0ad20fd594c904eac7b9aa8fc** conservé, aucun push/merge. Recette manuelle AtoumWeb à faire avant validation fonctionnelle finale.
@@ -67,7 +131,7 @@ Ce bloc fait foi pour l’état actuel ; les checkpoints antérieurs restent his
 
 ## Historique — 03/10/2026 — Lot 4 validé, clôture locale dédiée
 
-Ce bloc fait foi ; les états précédents restent historiques.
+Ce bloc faisait foi à sa date ; les états précédents restent historiques.
 
 - AtoumWeb valide le résultat réel du Lot 4 et autorise son **commit local dédié uniquement**, intitulé `Lot 4 — import bibliothèque contractuelle V1`, sur `feature/project-page-compositions-v1`. Le commit contenant ce bloc fait foi pour le checkpoint Lot 4 ; récupérer son SHA avec `git log -1 --format=%H`. Aucun push/merge.
 - 118 clauses/versions BROUILLON et 409 liens ; aucune publication contractuelle. Les 112 versions catalogue V1 restent également BROUILLON. Textes/provenance et anciens devis/Projets préservés ; migration 55 appliquée seule, intégrité et rejeu validés.
@@ -77,7 +141,7 @@ Ce bloc fait foi ; les états précédents restent historiques.
 
 ## Historique — 03/10/2026 — Lot 4 appliqué avant validation de clôture
 
-Ce bloc fait foi ; les blocs antérieurs et le dry-run restent historiques.
+Ce bloc faisait foi à sa date ; les blocs antérieurs et le dry-run restent historiques.
 
 - Branche `feature/project-page-compositions-v1`, HEAD local `1ed1152cc55ada1e8731d09b9f1a6c9832ba4934` (commit Lot 3). **Lot 4 non committé, aucun push/merge.** Recette manuelle AtoumWeb restant à faire avant validation fonctionnelle finale.
 - AtoumWeb valide le dry-run et autorise l'application réelle sous conditions. Fermeture sur le code exact : **58 fichiers / 409 tests / 0 échec**, typecheck sortie 0, 21 fichiers Lot 4 prévus, aucun staged. Aucun changement fonctionnel après ces tests.
@@ -92,7 +156,7 @@ Ce bloc fait foi ; les blocs antérieurs et le dry-run restent historiques.
 
 ## Historique — 03/10/2026 — Lot 4 préparé, avant autorisation réelle
 
-Ce bloc fait foi ; les blocs antérieurs restent historiques.
+Ce bloc faisait foi à sa date ; les blocs antérieurs restent historiques.
 
 - Branche `feature/project-page-compositions-v1`, HEAD local **`1ed1152cc55ada1e8731d09b9f1a6c9832ba4934`** : commit Lot 3 dédié uniquement, aucun push/merge. Working tree propre constaté avant les modifications Lot 4. Recette manuelle AtoumWeb restant à faire avant validation fonctionnelle finale, mentionnée dans le commit.
 - Lot 3 validé : catalogue réellement importé à Validation-MSI, 112 AW, 91 créations/21 reprises/15 archives/9 conservations, versions V1 brouillon, historique et rejeu préservés. Base réelle migrations **1–54**, SHA `81395f7ea2cd6a5c821100b3e1dc952a238a25523b73c1f32eb7af90fb111f5b` inchangé pendant Lot 4.
@@ -122,7 +186,7 @@ Ce bloc fait foi ; les blocs antérieurs restent historiques.
 >
 > Ce bloc **remplace les anciennes consignes de branche/PR mentionnées plus bas** pour la reprise actuelle. L'historique est conservé volontairement.
 >
-> **État courant : Lot 6B clos — Sites & pages / composition de Page.**
+> **État de ce checkpoint historique : Lot 6B clos — Sites & pages / composition de Page.**
 >
 > - Branche de stabilisation : `wip/codex-6b-ui-fix`
 > - Dernier HEAD canonique validé après intégration : `3df2168d7a3e662d98f68525550309ea71be0d67`
@@ -164,9 +228,9 @@ Ce bloc fait foi ; les blocs antérieurs restent historiques.
 >
 > **Après clôture seulement :** reprendre la feuille de route Manager ↔ Bridge avec le Lot 7 (Site / préparation Bridge), puis Lot 8 (retour d'occurrences), puis Lot 9 (assemblage multi-pages / livraison), uniquement après autorisation explicite.
 >
-# Handoff Codex MSI — AtoumWeb Manager
+## Historique — handoff initial Manager
 
-## Chantier actif — Lot 8A Export Page Manager
+## Historique — chantier alors actif — Lot 8A Export Page Manager
 
 - Branche locale empilée : `codex/lot8a-page-export`, basée sur `codex/lot7-blueprint-sites@bfda981bb4243d8138ed862a4e1f9395e7827e6f` ; PR #76 reste ouverte et non fusionnée.
 - Nouveau contrat additionnel explicite : `atoumweb_bridge_project_package` schemaVersion 2, `scope=page`, `exportId`, destination Projet/Site/Page.
@@ -177,7 +241,7 @@ Ce bloc fait foi ; les blocs antérieurs restent historiques.
 - Aucun commit/push sur le Lot 8A. L'import idempotent et le marqueur Divi nécessitent le dépôt Bridge local confirmé.
 - Dépôt Bridge désormais confirmé et synchronisé : `C:\DEV\01_PROJETS\AtoumWeb\atoumweb-bridge`, base 0.8.0 `36d1076`. L'incrément idempotent Page V2 est préparé localement sur `codex/lot8a-idempotent-page-import` en version 0.8.1, sans commit/push.
 
-## Chantier actif — Lot 7 Squelette blueprint Sites / Pages
+## Historique — chantier alors actif — Lot 7 Squelette blueprint Sites / Pages
 
 - Branche locale : `codex/lot7-blueprint-sites`, base canonique `cf747c5855eec90df725861d22375d65f78f12db`.
 - Objectif limité : générer les Sites et Pages déclarés par un blueprint avec des clés explicites et une provenance durable.
@@ -193,7 +257,7 @@ Ce bloc fait foi ; les blocs antérieurs restent historiques.
 - Dernier essai du harness 6B interrompu avant contrôles par Chromium/GPU Windows ; aucune régression renderer rapportée.
 
 
-## Checkpoint supplémentaire — CGV Builder intégré le 27/09/2026
+## Historique — Checkpoint supplémentaire — CGV Builder intégré le 27/09/2026
 
 Le chantier parallèle `feature/quote-cgv-builder-v1` / PR #74 a été réconcilié avec Projet V2 avant de poursuivre les lots Bridge.
 
@@ -215,10 +279,10 @@ Le prochain chantier d’architecture prévu est :
 
 > État partagé au 24/09/2026. À lire avec `AGENTS.md`, `PROJECT_STATUS.md` et le document de phase concerné.
 
-## Branche de travail à utiliser
+## Historique — branche utilisée au checkpoint du 24/09/2026
 
 - Dépôt : `atoumweb-prog/atoumweb-manager`
-- Branche de travail active : `feature/project-blueprints-v1`
+- Branche de travail à ce checkpoint : `feature/project-blueprints-v1`
 - PR : **#73 — Projet V2 — Blueprints de production et atelier AtoumWeb**
 - Base de la PR : `fix/pre-phase5-commercial-ux`
 - Ne pas travailler directement sur `main`.
@@ -226,7 +290,7 @@ Le prochain chantier d’architecture prévu est :
 
 Synchronisation MSI :
 
-```powershell
+```text
 cd C:\DEV\01_PROJETS\AtoumWeb\atoumweb-manager
 git fetch --all --prune
 git switch feature/project-blueprints-v1
@@ -235,7 +299,7 @@ git pull --ff-only
 
 Pour détecter un travail local non poussé avant toute modification :
 
-```powershell
+```text
 git status -sb
 git branch -vv
 git log --oneline --decorate --branches --not --remotes
@@ -245,7 +309,7 @@ Si la dernière commande ne retourne rien, aucun commit local n'attend d'être p
 
 Contrôle local recommandé :
 
-```powershell
+```text
 npm run typecheck
 npm test
 npm run package
@@ -258,7 +322,7 @@ Le workspace de validation reste :
 
 Ne jamais utiliser la base Production pour une recette.
 
-## État fonctionnel actuel
+## Historique — état fonctionnel à cette date
 
 Le socle utilisé par l'application contient les phases CRM, Commercial, Projets, Opérations, Référentiels et les correctifs UX validés avant Phase 5. La Phase 5 Administration/Finance reste volontairement différée.
 
@@ -282,7 +346,7 @@ Le chantier actif est **Projet V2 / atelier de production** :
 - coffre d'accès projet/étape chiffré par Electron `safeStorage` ;
 - couche UI transverse appliquée aux écrans historiques : champs, boutons, onglets, focus, débordements et lisibilité.
 
-## Migrations
+## Historique — Migrations
 
 La branche Projet V2 porte désormais **36 migrations SQLite**.
 
@@ -304,7 +368,7 @@ La migration 36 ajoute le stockage AtoumWeb Bridge Snapshot V1 : sites, snapshot
 
 Les mots de passe / clés ne doivent jamais être stockés en clair dans SQLite, les logs ou les documents de suivi.
 
-## Validation
+## Historique — Validation
 
 La recette locale précédente a confirmé typecheck/tests verts avant le dernier lot « aide / actions / coffre sécurisé / cohérence UI globale ».
 
@@ -318,7 +382,7 @@ Le **HEAD actuel doit donc être revalidé** sur MSI avec :
 - test du coffre avec une fausse clé, jamais une vraie
 - vérification rapide des anciens écrans après la nouvelle couche UI globale.
 
-## AtoumWeb Bridge Snapshot V1
+## Historique — AtoumWeb Bridge Snapshot V1
 
 Le contrat `atoumweb-bridge-snapshot` **1.0.0** est gelé. Le premier snapshot réel d’AtoumWeb.fr a été produit par **AtoumWeb Bridge 0.4.2** et vérifié avant l’implémentation Manager.
 
@@ -339,7 +403,7 @@ Le premier snapshot réel observé contient **82 pages, 1 507 nœuds, 1 114 sour
 
 Le diff Snapshot A / B et l’attribution historique des `logical_node_id` restent pour le lot suivant, après réception d’un deuxième snapshot réel.
 
-## Phase 7
+## Historique — Phase 7
 
 La branche `feature/phase-7-analytics-v1` / PR #71 existe toujours comme chantier historique d’analytique avancée.
 
@@ -347,13 +411,13 @@ Une première page **Statistiques V1** est désormais intégrée directement dan
 
 La branche Phase 7 historique ne doit pas être fusionnée telle quelle. Elle reste utile pour reprendre plus tard les fonctions non encore intégrées : encaissements/paiements, rentabilité avancée, statistiques par prestation, exports et pilotage approfondi.
 
-## Branches historiques
+## Historique — Branches historiques
 
 De nombreuses branches `feature/phase-*`, `feature/atoum-v02-*` et anciennes branches de recette sont encore présentes sur GitHub. Elles servent d'historique mais ne doivent pas être choisies comme nouvelle base de travail.
 
 Avant toute nouvelle branche, partir de la branche fonctionnelle explicitement indiquée dans `PROJECT_STATUS.md`.
 
-## Règles UI désormais transverses
+## Historique — Règles UI désormais transverses
 
 - aucun texte fonctionnel sous 14 px ;
 - contrôles lisibles avec fond cohérent avec le thème ;
@@ -366,14 +430,14 @@ Avant toute nouvelle branche, partir de la branche fonctionnelle explicitement i
 - fermeture des fenêtres secondaires par × / clic extérieur / Échap quand le composant le permet ;
 - couleur utilisée pour l'état et la progression, pas pour surcharger l'écran.
 
-## Règle de coordination ChatGPT / Codex
+## Historique — Règle de coordination ChatGPT / Codex
 
 ChatGPT pilote actuellement la conception et les modifications de la branche Projet V2. Codex MSI peut auditer, tester, diagnostiquer ou appliquer un lot explicitement demandé, mais ne doit pas lancer une refonte parallèle ni repartir d'une branche historique sans instruction.
-## Recette visuelle continue
+## Historique — Recette visuelle continue
 
 > Je vais continuer à t’envoyer des captures page par page. Prends-les comme une recette visuelle continue et garde les corrections cohérentes avec les précédentes.
 
-## Facturation sans API Abby
+## Historique — Facturation sans API Abby
 
 - Abby reste l’outil qui produit la facture réglementaire.
 - AtoumWeb Manager ne dépend d’aucune API Abby payante.
@@ -382,7 +446,7 @@ ChatGPT pilote actuellement la conception et les modifications de la branche Pro
 - Le PDF est classé dans les Documents du client, catégorie Factures (`03 Factures`), et reste ouvrable depuis Facturation.
 - Les packs d’heures payants alimentent automatiquement la file des éléments à facturer.
 
-## Dépenses et frais engagés
+## Historique — Dépenses et frais engagés
 
 - page Dépenses dédiée, sans logiciel comptable externe ;
 - dépenses ponctuelles ou récurrentes ;
@@ -395,7 +459,7 @@ ChatGPT pilote actuellement la conception et les modifications de la branche Pro
 - justificatif client classé sous `Documents/09 Depenses`, avec sous-dossier projet si disponible ;
 - dashboard : engagé ce mois, à payer, payé ce mois, récurrent mensuel équivalent.
 
-## Identité visuelle CRM & thème Noir
+## Historique — Identité visuelle CRM & thème Noir
 
 - le thème Noir doit conserver les codes couleur métier sans utiliser de fonds pastel clairs ;
 - Prospection et Clients utilisent des teintes sémantiques recalculées sur les surfaces sombres ;
@@ -406,7 +470,7 @@ ChatGPT pilote actuellement la conception et les modifications de la branche Pro
 - conversion Prospect → Client : l’identité visuelle est conservée automatiquement car elle appartient à l’entreprise/contact, pas au statut commercial ;
 - URL CRM : saisir `atoumweb.fr` suffit ; le backend stocke `https://atoumweb.fr`. Un `http://` saisi explicitement est conservé.
 
-## Ergonomie transverse — ateliers liste / fiche
+## Historique — Ergonomie transverse — ateliers liste / fiche
 
 - Facturation et Dépenses utilisent les pictos SVG communs, une liste compacte lorsqu’une fiche est ouverte, un splitter redimensionnable, un mode fiche agrandie et un comportement responsive.
 - Bibliothèque AtoumWeb et Sauvegardes utilisent désormais la même logique : liste à gauche, barre centrale redimensionnable, fiche à droite, agrandissement `⛶`, réduction, fermeture explicite et empilement responsive sur petite largeur.
@@ -414,7 +478,7 @@ ChatGPT pilote actuellement la conception et les modifications de la branche Pro
 - Annuaire suit la même logique liste / fiche : Organisations et Contacts, splitter redimensionnable, agrandissement, responsive, identité visuelle et accès direct aux fiches Client / Prospect liées.
 - Statistiques reste une page de lecture compacte : pictos, KPI, graphiques CSS simples et onglets courts ; les chiffres restent dérivés des sources métier et ne deviennent jamais une nouvelle source de vérité.
 
-## Derniers correctifs de recette — 23/09/2026
+## Historique — Derniers correctifs de recette — 23/09/2026
 
 - une protection renderer globale a été ajoutée : si React rencontre une erreur non interceptée, le Manager affiche maintenant l’erreur exacte au lieu d’une fenêtre noire vide ;
 - la page Clients possède une barrière d’erreur dédiée, calquée sur la protection déjà validée de la fenêtre Référence Prospect ;
@@ -424,7 +488,7 @@ ChatGPT pilote actuellement la conception et les modifications de la branche Pro
 - l’utilisateur a confirmé juste après relance que **Gestion des temps fonctionne de nouveau** ;
 - ce retour est une validation visuelle ciblée, pas une validation complète `typecheck / tests / package`.
 
-## Timer Intervention / Incident
+## Historique — Timer Intervention / Incident
 
 - une session démarrée depuis une Intervention conserve réellement `interventionId` ;
 - démarrer/reprendre le timer place l’Intervention en **En cours** ;

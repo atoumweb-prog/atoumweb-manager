@@ -1,5 +1,18 @@
 # AtoumWeb Manager — Suivi du projet
 
+## État courant — 08/10/2026 — Manager consolidé, documentation synchronisée
+
+- Branche consolidée active : **`fix/pre-phase5-commercial-ux`**. Checkpoint fonctionnel validé : **`8662c3fbeaf2e3b26a68cffa779422f395edd400`**, après intégration de Phase 7 dans son parent `1f7dafc…` et port sélectif du réemploi guidé.
+- Projet V2, Sites/Pages/compositions, Devis/contrats/Builder CGV, Catalogue 112, opérations et Phase 7 Statistiques/Rentabilité intégrés. **Migrations 1–65** ; aucun nouveau schéma pour le port.
+- Dernière validation acquise : **typecheck OK, ciblés 56/56, complets 670/670, UI 55/55 sur trois thèmes, intégrité SQLite OK et foreign_key_check vide**. Les durées restent indicatives et les dossiers de Validation-MSI sont TEST/non productifs.
+- Le parcours Projet → préparation indépendante → adaptation humaine → création volontaire d’une brique AtoumWeb avec provenance est désormais disponible sur les services actuels. **Ne pas fusionner #62** : seul ce parcours utile a été porté. **#68 reste un prototype historique de packs commerciaux .atoum V0.2**, non intégré et non bloquant ; ne pas le présenter comme fonctionnalité actuelle.
+- Abby manuel ; aucune validation juridique globale des clauses ; Bridge WordPress, Lot 8C et futurs lots restent distincts. Les échanges déjà présents côté Manager sont conservés sans nouveau développement plugin.
+- README et HANDOFF MSI remis à jour ; cohérence vérifiée avec ce suivi, la roadmap et AGENTS, dont les règles restent inchangées. Cette passe modifie uniquement la documentation ; les validations fonctionnelles ci-dessus restent celles du checkpoint 8662c3f.
+- **Prochaine étape Git : PR finale `fix/pre-phase5-commercial-ux` → `main`**, après autorisation de push des commits locaux. Commit documentaire séparé autorisé, aucun push/PR/merge pendant cette synchronisation.
+
+Les entrées datées suivantes sont le journal historique. Une ancienne mention de branche active, checkpoint, migration ou étape à venir ne remplace pas l’état courant ci-dessus.
+
+
 ## 08/10/2026 — Port sélectif du réemploi guidé depuis la PR #62
 
 - Instruction AtoumWeb : ne merger ni #62 ni #68. #68 reste un prototype historique hors consolidation ; port du seul parcours UI guidé de #62 sur fix/pre-phase5-commercial-ux@1f7dafc, sans nouvelle migration ni reprise de service ancien.
