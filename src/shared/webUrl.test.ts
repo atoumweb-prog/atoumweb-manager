@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { displayWebUrl, normalizeWebUrl } from './webUrl';
 
 describe('webUrl', () => {
+  it('accepte une adresse non renseignée sans la rendre obligatoire',()=>{for(const v of [undefined,null,'','   '])expect(normalizeWebUrl(v)).toBeNull();});
   it('ajoute https par défaut', () => {
     expect(normalizeWebUrl('atoumweb.fr')).toBe('https://atoumweb.fr');
     expect(normalizeWebUrl('www.atoumweb.fr/contact')).toBe('https://www.atoumweb.fr/contact');

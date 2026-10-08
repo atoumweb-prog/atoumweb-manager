@@ -1,3 +1,4 @@
+import { CatalogContractPanel } from './CatalogContractPanel';
 import { useEffect, useMemo, useState } from 'react';
 import {
   PRICE_MODES,
@@ -132,7 +133,7 @@ function formatCatalogDate(value?: string | null): string {
   return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('fr-FR');
 }
 
-export function CatalogPage({ onMessage }: { onMessage: (message: string) => void }) {
+export function CatalogPage({ onMessage, initialId }: { onMessage: (message: string) => void; initialId?:string|null }) {
   const [items, setItems] = useState<CatalogItemSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
@@ -191,6 +192,7 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
   }
 
   useEffect(() => { void refresh(); }, []);
+  useEffect(()=>{if(initialId){setSelectedId(initialId);void loadDetail(initialId).catch(e=>onMessage(String(e)));}},[initialId]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase('fr-FR');
@@ -595,7 +597,7 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
                       <Summary label="Acompte par défaut" value={detail.currentVersion.defaultDepositPercent != null ? `${detail.currentVersion.defaultDepositPercent} %` : '—'} />
                       <Summary label="Durée estimée" value={detail.currentVersion.estimatedMinutes != null ? `${detail.currentVersion.estimatedMinutes} min` : '—'} />
                       <Summary label="Délai recommandé" value={detail.currentVersion.recommendedDelayDays != null ? `${detail.currentVersion.recommendedDelayDays} jours` : '—'} />
-                      <Summary label="Type de contrat" value={detail.currentVersion.contractType || '—'} />
+                      <Summary label="Ancien libellé contractuel (legacy)" value={detail.currentVersion.contractType || '—'} />
                       <Summary label={detail.currentVersion.publishedAt ? 'Publiée le' : 'Créée le'} value={formatCatalogDate(detail.currentVersion.publishedAt ?? detail.currentVersion.createdAt)} />
                     </div>
                   </section>
@@ -620,6 +622,7 @@ export function CatalogPage({ onMessage }: { onMessage: (message: string) => voi
 
               <div className="catalog-detail-actions"><button className="secondary-button" type="button" onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select value={detail.status} onChange={(e) => void updateStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion} onClick={prepareNewVersion}>Modifier via une nouvelle version</button></div>
 
+              <CatalogContractPanel key={detail.id+detail.versions.length} item={detail}/>
               {versionMode && <form className="catalog-version-editor" onSubmit={(event) => void createVersion(event)}><strong>Nouvelle version</strong><CatalogFields draft={versionDraft} onChange={setVersionDraft} /><div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => setVersionMode(false)}>Annuler</button><button className="primary-button" disabled={saving} type="submit">Créer v{(detail.versions[0]?.versionNumber ?? 0) + 1}</button></div></form>}
 
               {detail.type === 'offer' && offerCompositionVersion && (
@@ -754,10 +757,7 @@ function CatalogFields({ draft, onChange, showIdentity = false }: { draft: Catal
           <label>Ligne ou clé de source<input value={draft.sourceRecordKey} onChange={(e) => onChange({ ...draft, sourceRecordKey: e.target.value })} /></label>
         </div>
         <div className="catalog-fields-grid">
-          <label>
-            <span className="field-label-with-help">Type de contrat <FieldHelp text="Type de document ou cadre contractuel recommandé pour cette prestation." /></span>
-            <input value={draft.contractType} onChange={(e) => onChange({ ...draft, contractType: e.target.value })} placeholder="Ex. Création de contenu" />
-          </label>
+          <details className="contract-legacy"><summary>Ancien libellé contractuel (legacy)</summary><p>Conservé pour compatibilité uniquement. Les types structurés se choisissent dans les références contractuelles de la version Catalogue.</p><input readOnly value={draft.contractType} aria-label="Ancien libellé contractuel legacy" /></details>
           <label className="catalog-wide">
             <span className="field-label-with-help">Conditions commerciales <FieldHelp text="Conditions particulières à reprendre dans le devis lorsque cette prestation est utilisée." /></span>
             <textarea value={draft.specialTerms} onChange={(e) => onChange({ ...draft, specialTerms: e.target.value })} />

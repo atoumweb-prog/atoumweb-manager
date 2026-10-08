@@ -1,13 +1,20 @@
-import { useState } from 'react';
-import type { QuoteDetail, QuoteLine, QuoteLineInput } from '../../shared/commercial';
+import { useEffect,useState } from 'react';
+import type { CatalogVersion,QuoteDetail, QuoteLine, QuoteLineInput } from '../../shared/commercial';
 import { QuoteLineEditor } from './QuoteLineEditor';
 import './QuoteOfferOptionsPanel.css';
+import {CommercialScope} from './CommercialScope';
 
 function components(line: QuoteLine): Array<Record<string, unknown>> {
   const value = line.snapshot?.offerComponents;
   return Array.isArray(value) ? value.filter((c) => c && typeof c === 'object') : [];
 }
 const money = (value: number) => `${(value / 100).toLocaleString('fr-FR')} €`;
+function OptionScope({component,bought}:{component:Record<string,unknown>;bought:QuoteLine|undefined}) {
+  const [version,setVersion]=useState<CatalogVersion|null>(null);
+  useEffect(()=>{let active=true;setVersion(null);if(!bought&&typeof component.serviceItemId==='string'&&typeof component.serviceVersionId==='string')void window.atoumweb.catalog.getItem(component.serviceItemId).then(item=>{if(active)setVersion(item.versions.find(v=>v.id===component.serviceVersionId)??null);}).catch(()=>{});return()=>{active=false;};},[bought?.id,component.serviceItemId,component.serviceVersionId]);
+  // Always the option's saved commercial version, never the current replacement version.
+  return <CommercialScope version={bought?.snapshot??version??component}/>;
+}
 
 export function QuoteOfferOptionsPanel({ quote, onSave }: {
   quote: QuoteDetail; onSave: (quote: QuoteDetail) => void;
@@ -31,6 +38,7 @@ export function QuoteOfferOptionsPanel({ quote, onSave }: {
     {error && <p role="alert">{error}</p>}
     {offers.map((offer) => <div key={offer.id} className="quote-offer-composition">
       <h4>{offer.label} · v{String(offer.snapshot?.versionNumber ?? '—')}</h4>
+      <details><summary>Intérêt client, contenu de l’offre et exclusions</summary><CommercialScope version={offer.snapshot}/></details>
       <strong>Services obligatoires inclus</strong>
       <ul>{components(offer).filter((c) => !c.isOptional).map((c, i) => <li key={String(c.componentId ?? i)}>{String(c.serviceName)} · {Number(c.quantityMilli ?? 1000) / 1000} × inclus</li>)}</ul>
       <strong>Options disponibles / achetées</strong>
@@ -54,6 +62,7 @@ export function QuoteOfferOptionsPanel({ quote, onSave }: {
             <p>{bought ? `Achetée · ${Number(bought.quantityMilli) / 1000} × · ${money(bought.contractLineValueCents)}` : `Disponible · non achetée · ${price == null ? 'Sur devis' : money(price) + ' / unité'}`}</p>
             {!id && <p>Provenance optionnelle absente de cette ancienne ligne. Aucune requalification automatique.</p>}
           </div>
+          <OptionScope component={component} bought={bought}/>
           {bought && <details><summary>Origine de l’option achetée</summary>
             <p>Offre : {offer.label} · v{String(offer.snapshot?.versionNumber)}. Service : {String(bought.snapshot?.canonicalCode ?? bought.label)} · v{String(bought.snapshot?.versionNumber)}.</p>
             <p>Prix catalogue : {money(bought.catalogUnitPriceCents ?? 0)}. Prix proposé : {money(bought.proposedUnitPriceCents ?? 0)}. Remise : {bought.adjustmentMode}.</p>

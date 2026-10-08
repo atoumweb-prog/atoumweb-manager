@@ -1,3 +1,4 @@
+import { ContractLibraryPage } from '../commercial/ContractLibraryPage';
 import { useEffect, useMemo, useState } from 'react';
 import type { ClientSummary } from '../../shared/crm';
 import {
@@ -95,7 +96,9 @@ function retentionNeedsAttention(item: ClientDocument): boolean {
   return new Date(item.retentionUntil).getTime() <= limit.getTime();
 }
 
-export function DocumentsPage({ onMessage, initialDocumentId }: { onMessage: (message: string) => void; initialDocumentId?: string | null }) {
+export function DocumentsPage({ onMessage, initialDocumentId, initialContractTypeId }: { onMessage: (message: string) => void; initialDocumentId?: string | null; initialContractTypeId?: string | null }) {
+  const [libraryOpen,setLibraryOpen]=useState(!!initialContractTypeId);
+  useEffect(()=>{if(initialContractTypeId)setLibraryOpen(true);},[initialContractTypeId]);
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [items, setItems] = useState<DocumentWithClient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -274,7 +277,9 @@ export function DocumentsPage({ onMessage, initialDocumentId }: { onMessage: (me
 
   const showDetail = Boolean(selected || createOpen);
 
+  if(libraryOpen)return <ContractLibraryPage onClose={()=>setLibraryOpen(false)} initialTypeId={initialContractTypeId==='all'?null:initialContractTypeId} onMessage={onMessage}/>;
   return <div className="documents-page-stack">
+    <button type="button" className="primary-button" onClick={()=>setLibraryOpen(true)}>Bibliothèque contractuelle</button>
     <div className="documents-kpi-grid">
       <DocumentKpi icon="folder" label="Documents actifs" value={activeItems.length} helper="Tous les fichiers clients" />
       <DocumentKpi icon="file-text" label="Contrats" value={contractCount} helper="Documents contractuels" />

@@ -1,8 +1,24 @@
 # AtoumWeb Manager
 
+## État courant — 09/10/2026
+
+La branche officielle et active est **main** depuis la fusion normale de la PR #79 (8e05a47296d478587b11841e36ca5acb2e936726). Le commit contenant cette documentation ajoute la Bibliothèque contractuelle versionnée et les corrections de la recette manuelle Prospect / Devis. Consulter git log -1 pour son identifiant.
+
+**SQLite : migrations 1–66.** La migration 66 est additive : types, versions, compositions référencées aux clauses existantes, rattachements aux versions Catalogue. Validation-MSI a reçu après autorisation 13 types/compositions en brouillon et 112 rattachements ; 118 clauses et 409 liens Catalogue → clauses conservés. Aucune publication automatique de type.
+
+La Bibliothèque contractuelle permet de consulter les 13 socles sans créer un devis. Le devis propose Contrat & CGV lisible, copies Abby/contrat/tout et PDF depuis une source commune ; les snapshots acceptés restent figés. Corrections UX : Site facultatif/absence explicite, Offres/Services, contenus repliables, décisionnaire dans Qualification, contrôle avant devis indépendant, défilement et raccourcis vers les champs contractuels. Aucune décision juridique ni date de livraison inventée.
+
+Derniers contrôles : **typecheck OK, 695/695 tests (79 fichiers), UI 134 natifs +37 Prospection +21 préparation +20 options, trois thèmes**. Intégrité/FK correctes ; tests déterministes sur fixtures ou bases temporaires. La recette manuelle globale AtoumWeb est en cours et reste à valider.
+
+### Lancer la recette MSI actuelle
+
+Le lanceur local **C:/DEV/Lanceurs/AtoumWeb-Recette-Validation-MSI.cmd** lance le code du checkout par npm start. Il contrôle que le profil de développement utilise le workspace existant **C:/DEV/02_DONNEES/AtoumWeb/Validation-MSI** ; aucune réinitialisation. Enregistrer la saisie avant un redémarrage.
+
+L’ancien AtoumWeb-Validation-MSI.cmd lance le package généré le 29/09/2026 : **il ne contient pas ces correctifs**. Aucun nouveau package/installateur livré par ce checkpoint Git. Le lanceur de recette est local à la machine MSI et hors Git.
+
 CRM local AtoumWeb : Prospects, Clients, Catalogue, Devis, Projets, temps, interventions, maintenance, bibliothèques, documents, préparation manuelle Abby et statistiques.
 
-## État courant — 08/10/2026
+## Historique — consolidation du 08/10/2026
 
 **Manager consolidé sur `fix/pre-phase5-commercial-ux`.** Phase 7 est intégrée, ainsi que Projet V2, Sites/Pages/compositions, contrats et Builder CGV, Catalogue 112, opérations et statistiques/rentabilité.
 
@@ -44,8 +60,8 @@ La PR #68, consacrée aux **packs commerciaux `.atoum` V0.2**, reste un prototyp
 - `AGENTS.md` : règles de travail ; ne pas dupliquer les sources métier ni réécrire les historiques réels.
 - `docs/CAHIER_DES_CHARGES_FONCTIONNEL_V1.md` : périmètre fonctionnel initial, à lire avec les décisions datées du suivi.
 
-## Prochaine étape Git
+## Reprise Git et prochaine étape
 
-**PR finale `fix/pre-phase5-commercial-ux` → `main`.** Les commits locaux validés restent à pousser après autorisation AtoumWeb. Aucun push, création de PR ou merge n’est autorisé par ce document.
+Travailler sur **main**, préserver les modifications locales avant toute synchronisation et utiliser des mises à jour normales sans reset destructif ni force-push. L’autorisation AtoumWeb du 09/10 couvre le commit/push de l’évolution contractuelle, des corrections UX validées techniquement et des fichiers de liaison. La consolidation vers main est déjà réalisée : ne pas recréer la PR #79.
 
-Utiliser la branche consolidée actuelle pour la reprise, et non une ancienne branche de Phase ou `feature/project-blueprints-v1`. Les références anciennes restent des checkpoints historiques. Sauvegarde avant migration ou modification destructive importante ; tests déterministes sur fixtures et schéma temporaire, sans SHA/comptages immuables de Validation-MSI.
+Prochaine étape métier : poursuivre la recette manuelle AtoumWeb avec le lanceur de développement et la base existante. Le checkpoint technique ne vaut pas validation juridique globale ni validation finale de cette recette. Aucun travail Bridge/8C ou nouvelle activation des référentiels n’est autorisé par cette publication.

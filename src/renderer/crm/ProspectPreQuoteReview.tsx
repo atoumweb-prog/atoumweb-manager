@@ -3,6 +3,14 @@ import type { CatalogItemSummary, QuoteLineInput } from '../../shared/commercial
 import type { ProspectSummary } from '../../shared/crm';
 import type { Need, WorkflowIdentity } from '../../shared/workflow';
 import { parseProspectInformation } from '../../shared/prospectInformation';
+import {CommercialScope} from '../commercial/CommercialScope';
+
+/** Independent from the collapsible need form: reducing it never hides the final review. */
+export function ProspectPreQuoteReviewPanel({prospect,onChanged}:{prospect:ProspectSummary;onChanged:()=>void}) {
+  const [data,setData]=useState<{needs:Need[];catalog:CatalogItemSummary[]}|null>(null),[error,setError]=useState('');
+  useEffect(()=>{let active=true;const load=()=>{void Promise.all([window.atoumweb.workflow.needs('prospect',prospect.id),window.atoumweb.catalog.list({status:'active'})]).then(([needs,catalog])=>{if(active){setData({needs,catalog});setError('');}}).catch(e=>{if(active)setError(cleanError(e));});};load();window.addEventListener('atoumweb:changed',load);return()=>{active=false;window.removeEventListener('atoumweb:changed',load);};},[prospect.id,prospect.updatedAt]);
+  return error?<p role="alert">{error}</p>:data?<ProspectPreQuoteReview prospect={prospect} {...data} onChanged={onChanged}/>:null;
+}
 
 function cleanError(error: unknown): string {
   if (!(error instanceof Error)) return 'Une erreur est survenue.';
@@ -145,7 +153,7 @@ export function ProspectPreQuoteReview({ prospect, needs, catalog, onChanged }: 
         {prospect.projectContext && <div className="prequote-wide"><span>Contexte / hors socle / contraintes</span><strong>{prospect.projectContext}</strong></div>}
       </div>
 
-      <div className="prequote-solutions"><span className="eyebrow">Solution retenue</span>{solutionRows.map(({ need, item }) => <div key={need.id} className="prequote-solution-row"><div><strong>{need.label}</strong><small>{item?.currentVersion?.priceCents != null ? money(item.currentVersion.priceCents) : item?.currentVersion?.priceMode === 'free' ? 'Gratuit' : 'Prix à saisir dans le devis'}</small></div>{item?.currentVersion?.inclusions && item.currentVersion.inclusions.length > 0 && <div className="prequote-inclusions">{item.currentVersion.inclusions.map((entry) => <small key={entry}>✓ {entry}</small>)}</div>}</div>)}</div>
+      <div className="prequote-solutions"><span className="eyebrow">Solution retenue</span>{solutionRows.map(({ need, item }) => <div key={need.id} className="prequote-solution-row"><div><strong>{need.label}</strong><small>{item?.currentVersion?.priceCents != null ? money(item.currentVersion.priceCents) : item?.currentVersion?.priceMode === 'free' ? 'Gratuit' : 'Prix à saisir dans le devis'}</small></div><details><summary>Contenu et compléments possibles</summary><CommercialScope version={item?.currentVersion}/></details></div>)}</div>
 
       {blockers.length > 0 && <div className="prequote-blockers"><strong>À compléter avant de passer au devis</strong>{blockers.map((entry) => <span key={entry}>• {entry}</span>)}</div>}
       {laterInformation.length > 0 && <div className="prequote-warning"><strong>À obtenir plus tard — non bloquant</strong>{laterInformation.map((item) => <span key={item.id}>• {item.label}{item.answer ? ` — ${item.answer}` : ''}</span>)}</div>}

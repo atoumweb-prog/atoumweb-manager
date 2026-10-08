@@ -80,6 +80,7 @@ export interface CatalogVersionInput extends CatalogCommercialIdentity {
   estimatedMinutes?: number | null;
   recommendedDelayDays?: number | null;
   defaultDepositPercent?: number | null;
+  /** Historical free-text label only; structured types are versioned references. */
   contractType?: string | null;
   internalAdvice?: string | null;
 }
@@ -164,6 +165,7 @@ export interface QuoteInput {
   estimatedDelay?: string | null;
   prerequisitesText?: string | null;
   specialTerms?: string | null;
+  /** Historical free-text label only; structured types are versioned references. */
   contractType?: string | null;
   contractAudience?: QuoteContractAudience | null;
   depositPercent?: number | null;
@@ -247,6 +249,7 @@ export interface QuoteDetail extends QuoteSummary {
   estimatedDelay?: string | null;
   prerequisitesText?: string | null;
   specialTerms?: string | null;
+  /** Historical free-text label only; structured types are versioned references. */
   contractType?: string | null;
   contractAudience?: QuoteContractAudience | null;
   contractTextSnapshot?: string | null;

@@ -1,3 +1,4 @@
+import { CONTRACT_TYPES_MIGRATION } from './contractTypesMigration';
 import { OPERATIONAL_SALES_ADDON_MIGRATION } from './operationalSalesAddonMigration';
 import { OPERATIONAL_SALES_MIGRATION } from './operationalSalesMigration';
 import { COMMERCIAL_RULES_MIGRATION } from './commercialRulesMigration';
@@ -245,6 +246,7 @@ export const MIGRATIONS: Migration[] = [
   COMMERCIAL_RULES_MIGRATION,
   OPERATIONAL_SALES_MIGRATION,
   OPERATIONAL_SALES_ADDON_MIGRATION,
+  CONTRACT_TYPES_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {

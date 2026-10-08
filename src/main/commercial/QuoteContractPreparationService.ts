@@ -1,3 +1,4 @@
+import { deriveQuoteContractDefaults } from '../../shared/quoteContractDefaults';
 import { CommercialRulesService } from './CommercialRulesService';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
@@ -31,7 +32,13 @@ export class QuoteContractPreparationService {
     const row=this.quote(id);
     const frozen=row.contract_compiled_at!=null||row.contract_text_snapshot!=null||row.contract_snapshot_json!=null;
     if(frozen)return row.contract_snapshot_json==null?null:(JSON.parse(String(row.contract_snapshot_json)).parameters as QuoteContractParameters|undefined)??null;
-    return row.contract_parameters_json==null?null:JSON.parse(String(row.contract_parameters_json)) as QuoteContractParameters;
+    if(row.contract_parameters_json==null)return null;
+    const stored=JSON.parse(String(row.contract_parameters_json)) as QuoteContractParameters;
+    return row.status==='draft'&&!row.finalized_at?this.defaults(id,stored).parameters:stored;
+  }
+  private defaults(id:string,p:QuoteContractParameters){
+    const row=this.quote(id),lines=this.db.all<Record<string,unknown>>('SELECT id,label,snapshot_json FROM quote_lines WHERE quote_id=? ORDER BY sort_order,created_at',[id]).map(l=>({id:String(l.id),label:String(l.label),snapshot:l.snapshot_json?JSON.parse(String(l.snapshot_json)):null}));
+    return deriveQuoteContractDefaults({subject:String(row.subject),needSummary:row.need_summary as string|null,estimatedDelay:row.estimated_delay as string|null,lines},p);
   }
   get(id: string): QuoteContractPreparation {
     const row = this.quote(id);
@@ -39,7 +46,8 @@ export class QuoteContractPreparationService {
     const frozen = row.contract_compiled_at != null || row.contract_text_snapshot != null || row.contract_snapshot_json != null;
     const locked = frozen || row.status !== 'draft' || row.finalized_at != null;
     const parameters = this.parameters(id);
-    return { parameters, state: frozen ? 'frozen' : locked ? 'historical_missing' : 'draft', snapshot, documents: this.links(id), issues: locked ? parameters ? [{code:'LEGAL_REVIEW',severity:'warning',message:'Snapshot conservé ; sa complétude technique ne démontre pas une conformité juridique.'}] : [{code:'HISTORICAL_PARAMETERS_MISSING',severity:'warning',message:'Absence historique de paramètres structurés conservée ; aucun recalcul.'}] : this.issues(id,parameters) };
+    const defaults=!locked&&row.contract_parameters_json?this.defaults(id,JSON.parse(String(row.contract_parameters_json))):null;
+    return { parameters,...(defaults?{defaults:{facts:defaults.facts,includedBenefits:defaults.includedBenefits,marriage:defaults.marriage}}:{}), state: frozen ? 'frozen' : locked ? 'historical_missing' : 'draft', snapshot, documents: this.links(id), issues: locked ? parameters ? [{code:'LEGAL_REVIEW',severity:'warning',message:'Snapshot conservé ; sa complétude technique ne démontre pas une conformité juridique.'}] : [{code:'HISTORICAL_PARAMETERS_MISSING',severity:'warning',message:'Absence historique de paramètres structurés conservée ; aucun recalcul.'}] : this.issues(id,parameters) };
   }
   save(id: string, parameters: QuoteContractParameters): QuoteContractPreparation {
     this.assertEditable(id);
@@ -124,7 +132,7 @@ export class QuoteContractPreparationService {
   freezePayload(id: string): Record<string,unknown> | null {
     const row = this.quote(id);
     if (row.contract_parameters_json == null) return null; // no legacy synthesis
-    const parameters = JSON.parse(String(row.contract_parameters_json)) as QuoteContractParameters;
+    const parameters = this.parameters(id)!;
     this.validate(parameters);
     const blocking = this.issues(id,parameters).filter(i=>i.severity==='blocking');
     if (blocking.length) throw Error(`Préparation contractuelle incomplète : ${blocking.map(i=>i.message).join(' ; ')}`);
@@ -142,22 +150,25 @@ export class QuoteContractPreparationService {
     const admin=this.administration(), links=this.links(id);
     check(Boolean(this.db.get("SELECT t.id FROM contract_clause_templates t JOIN contract_clause_versions v ON v.id=t.current_version_id WHERE t.scope='base' AND t.status='active' AND v.status='published' AND t.audience IN ('all',?) LIMIT 1",[p.audience])),'PUBLISHED_BASE_MISSING','Aucun socle contractuel publié disponible ; les brouillons ne sont pas consommés');
     const hasRole=(role:ContractDocumentLink['role'])=>links.some(l=>l.role===role);
+    if(this.documents&&!this.documents.isDevelopmentWorkspace())for(const key of ADMIN_CONTRACT_KEYS)check(!/^TEST\s*[—-]|\bTEST\b.*fictif/i.test(admin[key].value),`ADMIN_${key.toUpperCase()}_TEST`,`Valeur administrative TEST interdite hors environnement de développement : ${key}`);
     for (const key of ['identity','administrative','vat','complaints'] as const) check(admin[key].state==='filled'&&present(admin[key].value),`ADMIN_${key.toUpperCase()}`,`Informations AtoumWeb à renseigner/vérifier : ${key}`);
     check(Boolean(p.conclusion.channel)&&present(p.conclusion.context)&&present(p.conclusion.purchasePurpose),'CONCLUSION','Canal, contexte et finalité à confirmer');
     check(p.conclusion.channel!=='other'||present(p.conclusion.otherChannelReason),'OTHER_CHANNEL','Précise le canal particulier');
     check(p.digital.kinds.length>0&&p.digital.supply!==null&&present(p.digital.delivery)&&present(p.digital.qualificationReason),'DIGITAL_QUALIFICATION','Qualification de la prestation et livraison à préciser');
     check(p.payment.milestones.every(m=>Boolean(m.dueDate)||present(m.event)),'PAYMENT_DATES','Dates ou événements objectifs de chaque échéance à renseigner');
     check(Boolean(p.initialPayment.dueDate)||present(p.payment.milestones[0]?.event),'INITIAL_DUE','Échéance du paiement initial à renseigner');
-    check(p.milestones.length>0,'DELIVERY_MILESTONE','Au moins un jalon/date d’exécution convenu à renseigner');
+    check(p.milestones.length>0&&p.milestones.every(m=>present(m.label)&&(Boolean(m.date)||present(m.event))),'DELIVERY_MILESTONE','Au moins un jalon d’exécution avec date ou événement objectif convenu à renseigner');
     const lineIds=this.db.all<{id:string}>('SELECT id FROM quote_lines WHERE quote_id=?',[id]).map(l=>l.id);
     check(lineIds.every(lineId=>p.warranties.some(w=>w.lineId===lineId)),'WARRANTY_COVERAGE','Qualification de garantie corrective requise pour chaque ligne, y compris non applicable');
     check(p.warranties.every(w=>lineIds.includes(w.lineId)),'WARRANTY_LINE','Une garantie référence une ligne retirée');
+    check(p.warranties.every(w=>w.days===null||present(w.startEvent)),'WARRANTY_START','Point de départ de la garantie corrective à préciser');
     check(p.rights.reviewed,'RIGHTS_REVIEW','Besoin de droits/licences à évaluer explicitement');
     check(p.renewal.reviewed,'RENEWAL_REVIEW','Besoin de renouvellement/fin de service à évaluer explicitement');
     check(!p.rights.applicable||[p.rights.uses,p.rights.duration,p.rights.territory,p.rights.sourceDelivery].every(present),'RIGHTS','Usages, durée, territoire et livraison des sources à renseigner');
     check(!p.renewal.applicable||[p.renewal.period,p.renewal.notice,p.renewal.termination,p.renewal.restitution].every(present),'RENEWAL','Modalités de renouvellement, résiliation et restitution à renseigner');
     check(!p.rsvp.applicable||present(p.rsvp.roles),'RSVP_ROLES','Fonctionnement réel et rôles RGPD RSVP à vérifier, sans présomption');
-    if (p.digital.hosting||p.rsvp.applicable||p.annexes.some(a=>a.role==='data_processing')) {
+    const hostingIncluded=this.defaults(id,p).includedBenefits.some(x=>x.includes('Hébergement WordPress'));
+    if (p.digital.hosting||hostingIncluded||p.rsvp.applicable||p.annexes.some(a=>a.role==='data_processing')) {
       check(admin.providers.state==='filled'&&present(admin.providers.value),'PROVIDERS','Prestataires/hébergeurs réellement utilisés à renseigner');
       check(admin.gdpr.state==='filled'&&present(admin.gdpr.value),'GDPR','Dispositif RGPD réel à renseigner (rôles, conservation, sous-traitants, localisation, restitution)');
     }
@@ -221,9 +232,9 @@ export class QuoteContractPreparationService {
     if(Math.abs(p.payment.milestones.reduce((n,m)=>n+m.percent,0)-100)>0.000001)throw Error('L’échéancier doit totaliser exactement 100 %.');
     const expected=p.payment.preset==='order_100'?[100]:p.payment.preset==='30_70'?[30,70]:p.payment.preset==='30_40_30'?[30,40,30]:null;
     if(expected&&JSON.stringify(expected)!==JSON.stringify(p.payment.milestones.map(m=>m.percent)))fail();
-    for(const m of p.milestones){keys(m,['label','date']);if(!present(m.label)||!isoDate(m.date))fail();}
+    for(const m of p.milestones){keys(m,m.event===undefined?['label','date']:['label','date','event']);if(typeof m.label!=='string'||typeof m.date!=='string'||m.date!==''&&!isoDate(m.date)||m.event!==undefined&&typeof m.event!=='string')fail();}
     const durations={small_adjustment:30,wordpress_custom:60,business_app:90,not_applicable:null};
-    for(const w of p.warranties){keys(w,['lineId','kind','days','startEvent','statutoryRightsUnaffected']);if(!present(w.lineId)||!Object.hasOwn(durations,w.kind)||w.days!==durations[w.kind]||w.statutoryRightsUnaffected!==true||typeof w.startEvent!=='string'||w.days!==null&&!present(w.startEvent))fail();}
+    for(const w of p.warranties){keys(w,['lineId','kind','days','startEvent','statutoryRightsUnaffected']);if(!present(w.lineId)||!Object.hasOwn(durations,w.kind)||w.days!==durations[w.kind]||w.statutoryRightsUnaffected!==true||typeof w.startEvent!=='string')fail();}
     if(new Set(p.warranties.map(w=>w.lineId)).size!==p.warranties.length)fail();
     for(const a of p.annexes){keys(a,['role','required','documentId']);if(!DOCUMENT_ROLES.includes(a.role)||typeof a.required!=='boolean'||a.documentId!==null&&!present(a.documentId))fail();}
   }

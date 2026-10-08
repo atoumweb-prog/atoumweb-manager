@@ -387,6 +387,16 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('catalog:list-offer-components', (_event, offerVersionId: string) => database.catalog.listOfferComponents(offerVersionId));
   ipcMain.handle('catalog:set-offer-components', (_event, offerVersionId: string, components: OfferComponentInput[]) => database.catalog.setOfferComponents(offerVersionId, components));
 
+  ipcMain.handle('contract-types:list', (_event, archived?: boolean) => database.contractTypes.list(archived));
+  ipcMain.handle('contract-types:get', (_event, id: string) => database.contractTypes.get(id));
+  ipcMain.handle('contract-types:create', (_event, code: string, input: import('../shared/contractTypes').ContractTypeVersionInput) => database.contractTypes.create(code,input));
+  ipcMain.handle('contract-types:create-version', (_event, id: string, input: import('../shared/contractTypes').ContractTypeVersionInput) => database.contractTypes.createVersion(id,input));
+  ipcMain.handle('contract-types:update-draft', (_event, id: string, input: import('../shared/contractTypes').ContractTypeVersionInput) => database.contractTypes.updateDraft(id,input));
+  ipcMain.handle('contract-types:publish', (_event, id: string) => database.contractTypes.publish(id));
+  ipcMain.handle('contract-types:status', (_event, id: string, status: ContractClauseStatus) => database.contractTypes.setStatus(id,status));
+  ipcMain.handle('contract-types:catalog', (_event, id: string) => database.contractTypes.catalog(id));
+  ipcMain.handle('contract-types:set-catalog', (_event, id: string, ids: string[]) => database.contractTypes.setCatalog(id,ids));
+  ipcMain.handle('contract-types:initialize', () => database.contractTypes.initialize());
   ipcMain.handle('contract-terms:library:list', (_event, includeArchived?: boolean) => database.contractTerms.listTemplates(Boolean(includeArchived)));
   ipcMain.handle('contract-terms:library:get', (_event, id: string) => database.contractTerms.getTemplate(id));
   ipcMain.handle('contract-terms:library:create', (_event, input: ContractClauseTemplateInput, firstVersion: ContractClauseVersionInput) => database.contractTerms.createTemplate(input, firstVersion));
@@ -395,6 +405,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('contract-terms:library:set-status', (_event, id: string, status: ContractClauseStatus) => database.contractTerms.setTemplateStatus(id, status));
   ipcMain.handle('contract-terms:library:set-audience', (_event, id: string, audience: ContractClauseAudience) => database.contractTerms.setTemplateAudience(id, audience));
   ipcMain.handle('contract-terms:library:set-catalog-links', (_event, id: string, catalogItemIds: string[]) => database.contractTerms.setCatalogLinks(id, catalogItemIds));
+  ipcMain.handle('contract-terms:quotes:presentation', (_event, id: string) => database.contractTerms.presentation(id));
   ipcMain.handle('contract-terms:quotes:get', (_event, quoteId: string) => database.contractTerms.getQuoteBuild(quoteId));
   ipcMain.handle('contract-terms:quotes:sync', (_event, quoteId: string) => database.contractTerms.syncQuote(quoteId));
   ipcMain.handle('contract-terms:quotes:add-custom', (_event, quoteId: string, input: QuoteContractClauseInput) => database.contractTerms.addCustomQuoteClause(quoteId, input));
@@ -402,6 +413,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('contract-terms:quotes:reset-clause', (_event, id: string) => database.contractTerms.resetQuoteClause(id));
   ipcMain.handle('contract-terms:quotes:remove-custom', (_event, id: string) => database.contractTerms.removeCustomQuoteClause(id));
   ipcMain.handle('contract-terms:quotes:reorder', (_event, quoteId: string, clauseIds: string[]) => database.contractTerms.reorderQuoteClauses(quoteId, clauseIds));
+  ipcMain.handle('contract-terms:preview-reference', (_event,typeId:string,typeVersionId:string,versionId:string,audience:import('../shared/contractTerms').QuoteContractAudience) => database.contractTerms.previewReference(typeId,typeVersionId,versionId,audience));
   ipcMain.handle('contract-terms:copy-text', async (_event, text: string) => {
     await clipboard.writeText(text);
   });
@@ -486,7 +498,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     const contract = quote.status === 'draft' && !quote.finalizedAt
       ? database.contractTerms.syncQuote(id)
       : database.contractTerms.getQuoteBuild(id);
-    return generateQuotePdf({ ...quote, contractTextSnapshot: contract.snapshotState === 'historical_missing' ? quote.contractTextSnapshot : quoteContractText(contract) }, workspace);
+    return generateQuotePdf({ ...quote, contractTextSnapshot: contract.snapshotState === 'historical_missing' ? quote.contractTextSnapshot : quoteContractText(contract) }, workspace, database.contractTerms.presentation(id));
   });
 
   ipcMain.handle('projects:templates:list', () => database.projects.listTemplates());

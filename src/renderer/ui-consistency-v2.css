@@ -1276,3 +1276,40 @@ table td {
     min-height: 260px;
   }
 }
+
+/* Recette métier 08/10 : fenêtres et listes possèdent une zone de défilement bornée. */
+.reference-window-shell { height:100dvh; min-height:0; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; }
+.reference-window-shell > * { min-width:0; }
+.reference-window-shell .reference-window-header { background:var(--business-pastel,var(--surface-soft)); color:var(--text); }
+.prospects-v2 .prospect-directory-table-panel { overflow:hidden; }
+.prospects-v2 .prospect-directory-table-panel > .clients-table-wrap { height:clamp(300px,55dvh,760px); overflow:auto; }
+.prospects-v2 .prospect-directory-table { min-width:800px; max-width:none; }
+.prospect-compact-scroll { max-height:calc(100dvh - 300px); overflow-y:auto; }
+.need-solution-card .need-name { font-size:18px; line-height:1.4; }
+.need-solution-card .need-price { font-size:16px; font-weight:700; }
+.need-description > summary { cursor:pointer; margin-top:8px; font-weight:600; }
+.commercial-scope { display:grid; gap:8px; white-space:pre-line; font-size:14px; line-height:1.5; min-width:0; }
+.commercial-scope p { margin:5px 0; }
+.commercial-scope ul { margin:5px 0; padding-left:24px; }
+.prospect-decision-editor { display:grid; gap:8px; }
+.quote-offer-option strong { font-size:16px; margin-right:10px; }
+.quote-offer-option small { display:block; color:var(--muted); }
+.quote-contract-preparation [data-contract-field]:focus { outline:3px solid var(--accent); outline-offset:3px; scroll-margin:100px 0; }
+.quote-contract-preparation button:not(:disabled) { cursor:pointer; border:1px solid var(--border); border-radius:9px; background:var(--surface); color:var(--text); padding:8px 12px; }
+.quote-contract-preparation .primary-button { background:var(--accent); color:var(--accent-contrast,#fff); }
+.quote-contract-preparation .contract-issue-link { background:transparent; border:0; text-decoration:underline; }
+@media(max-width:850px){.prospect-compact-scroll{max-height:none;}.prospects-v2 .prospect-directory-table-panel > .clients-table-wrap{height:360px;}}
+
+.quote-lines > strong,.quote-add-line > strong {font-size:16px;}
+.quote-line strong {font-size:17px;line-height:1.4;}
+.quote-line small {font-size:12px;color:var(--muted);display:block;margin-top:4px;}
+.quote-line > span,.quote-totals strong {font-size:17px;font-weight:750;}
+.quote-totals span {font-size:15px;}
+.quote-total-main strong {font-size:22px;}
+
+/* Supplanter les tailles historiques de 8/9 px dans les cartes commerciales. */
+.prospect-detail-v2 .need-solution-card .need-name {font-size:18px !important;line-height:1.4;}
+.prospect-detail-v2 .need-solution-card .need-price {font-size:16px !important;}
+.quote-line strong {font-size:17px !important;}
+.quote-totals strong {font-size:17px !important;}
+.quote-total-main strong {font-size:22px !important;}

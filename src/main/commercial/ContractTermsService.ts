@@ -1,3 +1,9 @@
+import { CatalogService } from './CatalogService';
+import { CommercialRulesService } from './CommercialRulesService';
+import { ContractTypeService } from './ContractTypeService';
+import { formatContractPresentation, type ContractPresentation } from '../../shared/contractPresentation';
+import type { ContractAdministration, QuoteContractParameters } from '../../shared/quoteContractPreparation';
+import type { ContractTypeReference } from '../../shared/contractTypes';
 import type { CommercialVersionRules } from '../../shared/commercialRules';
 import { QuoteContractPreparationService } from './QuoteContractPreparationService';
 import type { ClientDocumentService } from '../crm/ClientDocumentService';
@@ -340,6 +346,7 @@ export class ContractTermsService {
         ? 'Aucune clause dédiée aux particuliers / consommateurs n’est incluse.'
         : 'Aucune clause dédiée aux clients professionnels n’est incluse.');
     }
+    if(snapshotState==='draft')warnings.push(...new ContractTypeService(this.database).orderWarnings(new ContractTypeService(this.database).quoteReferences(quoteId),new Set(clauses.filter(c=>c.enabled&&c.sourceClauseId).map(c=>c.sourceClauseId!))));
     return {
       quoteId,
       audience,
@@ -350,7 +357,59 @@ export class ContractTermsService {
       snapshotText: state.contract_text_snapshot,
       compiledAt: state.contract_compiled_at,
       warnings,
+      types: frozen ? (state.contract_snapshot_json ? JSON.parse(state.contract_snapshot_json).types ?? [] : []) : locked ? [] : new ContractTypeService(this.database).quoteReferences(quoteId),
     };
+  }
+
+  /** Contract-type reading without persisting a quote, line, parameter or snapshot. Same applicability resolver as a quote. */
+  previewReference(typeId:string,typeVersionId:string,catalogVersionId:string,audience:QuoteContractAudience):ContractPresentation {
+    if(!['professional','consumer'].includes(audience))throw Error('Audience invalide.');
+    const type=new ContractTypeService(this.database).get(typeId),version=type.versions.find(v=>v.id===typeVersionId);
+    if(!version||!type.catalogLinks.some(l=>l.catalogVersionId===catalogVersionId))throw Error('Version ou prestation non rattachée à ce type.');
+    const catalog=new CatalogService(this.database),source=this.database.get<{item_id:string}>('SELECT item_id FROM catalog_versions WHERE id=?',[catalogVersionId]);
+    if(!source)throw Error('Version Catalogue introuvable.');
+    const item=catalog.getItem(source.item_id),v=item.versions.find(x=>x.id===catalogVersionId)!;
+    const components=item.type==='offer'?catalog.listOfferComponents(v.id).map(c=>({...c,serviceVersionId:c.serviceVersionId,specialTerms:catalog.getItem(c.serviceItemId).versions.find(x=>x.id===c.serviceVersionId)?.specialTerms})):[];
+    const row:QuoteLineSourceRow={id:'reference:'+v.id,catalog_item_id:item.id,catalog_version_id:v.id,label:item.name,
+      snapshot_json:JSON.stringify({specialTerms:v.specialTerms,offerComponents:components,commercialRules:new CommercialRulesService(this.database).rules(v.id)})};
+    const refs:ContractTypeReference[]=[{id:type.id,code:type.code,name:version.name,versionId:version.id,versionNumber:version.versionNumber,moduleIds:version.moduleIds,catalogVersionIds:[v.id]}];
+    const state:QuoteStateRow={id:'',quote_number:'',status:'draft',finalized_at:null,special_terms:null,contract_text_snapshot:null,contract_snapshot_json:null,contract_compiled_at:null,contract_audience:audience};
+    const desired=[...this.desiredClauses('',state,{lines:[row],types:refs}).values()].sort((a,b)=>a.sortOrder-b.sortOrder);
+    const clauses:QuoteContractClause[]=desired.map(c=>({id:c.sourceKey,quoteId:'',...c,enabled:true,isCustomized:false,isOrphaned:false,createdAt:'',updatedAt:''}));
+    const modules=clauses.map(c=>{const source=c.sourceClauseVersionId?this.database.get<Record<string,unknown>>('SELECT t.code,v.version_number FROM contract_clause_versions v JOIN contract_clause_templates t ON t.id=v.clause_id WHERE v.id=?',[c.sourceClauseVersionId]):null;
+      return {code:source?String(source.code):'Particulière',title:c.title,version:source?Number(source.version_number):null,source:c.sourceKind};});
+    return formatContractPresentation({template:{referenceName:item.name,referenceCode:item.canonicalCode??null,catalogueVersion:v.versionNumber,audience,inclusions:v.inclusions,exclusions:v.exclusions},state:'draft',number:'',subject:'',totalCents:0,estimatedDelay:null,prerequisites:null,compiledAt:null,clauseText:this.compile(clauses),clauses,parameters:null,administration:null,types:refs,modules});
+  }
+
+  /** Read-only presentation shared by Devis, client preview, copy and PDF. */
+  presentation(quoteId: string): ContractPresentation {
+    const build = this.getQuoteBuild(quoteId);
+    const row=this.database.get<Record<string,unknown>>('SELECT * FROM quotes WHERE id=?',[quoteId])!;
+    const snapshot=row.contract_snapshot_json ? JSON.parse(String(row.contract_snapshot_json)) : null;
+    if(build.snapshotState==='frozen' && snapshot?.presentation) return snapshot.presentation as ContractPresentation;
+    const clauses:QuoteContractClause[]=build.snapshotState==='frozen' ? snapshot?.clauses ?? [] : build.clauses;
+    const preparation=new QuoteContractPreparationService(this.database,this.documents);
+    const parameters=preparation.parameters(quoteId);
+    const administration:ContractAdministration|null=build.snapshotState==='draft'?preparation.administration():snapshot?.administration??null;
+    const types:ContractTypeReference[]=build.types??[];
+    const modules=clauses.filter(c=>c.enabled).map(c=>{
+      const source=c.sourceClauseVersionId?this.database.get<Record<string,unknown>>('SELECT t.code,v.version_number FROM contract_clause_versions v JOIN contract_clause_templates t ON t.id=v.clause_id WHERE v.id=?',[c.sourceClauseVersionId]):null;
+      return {code:source?String(source.code):'Particulière',title:c.title,version:source?Number(source.version_number):null,source:c.sourceKind};
+    });
+    const sold=build.snapshotState==='frozen'?snapshot?.soldCatalogue??[]:this.database.all<Record<string,unknown>>('SELECT id,label,quantity_milli,snapshot_json FROM quote_lines WHERE quote_id=? ORDER BY sort_order,created_at',[quoteId]).map(l=>({lineId:l.id,dossier:new CommercialRulesService(this.database).parameters(String(l.id)),quantityMilli:l.quantity_milli,catalogue:l.snapshot_json?JSON.parse(String(l.snapshot_json)):null,label:l.label}));
+    const warrantyLabels:Record<string,string>=Object.fromEntries(sold.map((l:Record<string,unknown>)=>[String(l.lineId),String((l.catalogue as Record<string,unknown>|null)?.itemName??l.label??'Prestation du devis')]));
+    const lineDetails:string[]=sold.flatMap((l:Record<string,unknown>)=>{
+      const catalogue=l.catalogue as Record<string,unknown>|null;
+      const dossier=l.dossier as Record<string,unknown>|null;
+      const description=[catalogue?.itemName??l.label,`Quantité : ${Number(l.quantityMilli??1000)/1000}`,dossier?.scope,dossier?.acceptedDeadline].filter(Boolean).join(' — ');
+      const inclusions=Array.isArray(catalogue?.inclusions)?catalogue.inclusions.filter(x=>typeof x==='string'):[];
+      const exclusions=Array.isArray(catalogue?.exclusions)?catalogue.exclusions.filter(x=>typeof x==='string'):[];
+      return description?[[description,...inclusions.map(x=>`• Inclus : ${x}`),...exclusions.map(x=>`• Non inclus : ${x}`)].join('\n')]:[];
+    });
+    const familyNames:Record<string,string>={WEB:'Site vitrine / Web',LANDING:'Landing page',ECOM:'E-commerce',CONTENU:'Contenu',IDENTITE:'Identité visuelle',PHOTO:'Photographie',DATA:'Analytics',MAINT:'Maintenance',MARIAGE:'Site mariage',APP:'Application métier',DEVWP:'Développement WordPress',TECH:'Prestations techniques',SEO:'Référencement'};
+    const itemGroups:Record<string,string>=Object.fromEntries(sold.map((l:Record<string,unknown>)=>{const c=l.catalogue as Record<string,unknown>|null;return [String(c?.itemId??l.itemId??''),familyNames[String(c?.familyCode)]??'Prestations du devis'];}));
+    const clauseGroupLabels=Object.fromEntries(clauses.map(c=>[c.id,[...new Set(c.sourceCatalogItemIds.map(id=>itemGroups[id]).filter(Boolean))].join(' / ')||'Prestations du devis']));
+    return formatContractPresentation({state:build.snapshotState,number:String(row.quote_number),subject:String(row.subject),totalCents:Number(row.contract_value_cents),estimatedDelay:row.estimated_delay as string|null,prerequisites:row.prerequisites_text as string|null,compiledAt:build.compiledAt??null,clauseText:build.snapshotState==='draft'?build.compiledText:build.snapshotText??'',clauses,parameters,administration,types,modules,lineDetails,warrantyLabels,clauseGroupLabels});
   }
 
   syncQuote(quoteId: string): QuoteContractBuild {
@@ -476,11 +535,15 @@ export class ContractTermsService {
 
     if(payload && included.some(c=>!clean(c.body)||c.isOrphaned||/\[À RENSEIGNER/i.test(c.body))) throw Error('Clause incluse vide, orpheline ou incomplète : finalisation refusée.');
     const now = nowIso();
+    const types=new ContractTypeService(this.database).quoteReferences(quoteId);
+    const orderConflicts=new ContractTypeService(this.database).orderWarnings(types,new Set(included.filter(c=>c.sourceClauseId).map(c=>c.sourceClauseId!)));
+    if(orderConflicts.length&&!this.database.get("SELECT id FROM activity_log WHERE entity_type='quote' AND entity_id=? AND action='quote_contract_reordered'",[quoteId]))throw Error(orderConflicts.join(' '));
+    const presentation=payload ? {...this.presentation(quoteId),state:'frozen' as const,compiledAt:now} : null;
     this.database.run(
       `UPDATE quotes
        SET contract_text_snapshot=?,contract_snapshot_json=?,contract_compiled_at=?,contract_audience=?,updated_at=?
        WHERE id=?`,
-      [compiledText, JSON.stringify({ ...(payload ?? {}), audience, clauses: included, ...(payload ? {compiledAt:now,finalizationAt:now} : {}) }), now, audience, now, quoteId],
+      [compiledText, JSON.stringify({ ...(payload ?? {}), audience, clauses: included, ...(payload ? {compiledAt:now,finalizationAt:now,types,presentation} : {}) }), now, audience, now, quoteId],
     );
     this.writeActivity('quote', quoteId, 'quote_contract_frozen', 'Version contractuelle des CGV figée');
     this.database.exec('RELEASE quote_contract_freeze;');
@@ -531,6 +594,7 @@ export class ContractTermsService {
       [quoteId],
     );
     const existingByKey = new Map(existing.map((row) => [row.source_key, row]));
+    const manualOrder=!!this.database.get("SELECT id FROM activity_log WHERE entity_type='quote' AND entity_id=? AND action='quote_contract_reordered' LIMIT 1",[quoteId]);
     const now = nowIso();
 
     this.database.exec('SAVEPOINT quote_clause_sync;');
@@ -542,7 +606,7 @@ export class ContractTermsService {
           this.database.run(
             `UPDATE quote_contract_clauses SET
              source_kind=?,source_clause_id=?,source_clause_version_id=?,source_catalog_item_ids_json=?,
-             title=?,body=?,enabled=?,is_orphaned=0,updated_at=? WHERE id=?`,
+             title=?,body=?,enabled=?,sort_order=?,is_orphaned=0,updated_at=? WHERE id=?`,
             [
               clause.sourceKind,
               clause.sourceClauseId,
@@ -551,6 +615,7 @@ export class ContractTermsService {
               row.is_customized ? row.title : clause.title,
               row.is_customized ? row.body : clause.body,
               reenable ? 1 : row.enabled,
+              manualOrder ? row.sort_order : clause.sortOrder,
               now,
               row.id,
             ],
@@ -584,7 +649,7 @@ export class ContractTermsService {
     }
   }
 
-  private desiredClauses(quoteId: string, state: QuoteStateRow): Map<string, DesiredClause> {
+  private desiredClauses(quoteId: string, state: QuoteStateRow, reference?:{lines:QuoteLineSourceRow[];types:ContractTypeReference[]}): Map<string, DesiredClause> {
     const desired = new Map<string, DesiredClause>();
     const audience = this.resolveQuoteAudience(state);
     const baseRows = this.database.all<PublishedTemplateRow>(
@@ -607,7 +672,7 @@ export class ContractTermsService {
       sortOrder: index * 10,
     }));
 
-    const lines = this.database.all<QuoteLineSourceRow>(
+    const lines = reference?.lines ?? this.database.all<QuoteLineSourceRow>(
       'SELECT id,catalog_item_id,catalog_version_id,label,snapshot_json FROM quote_lines WHERE quote_id=? ORDER BY sort_order,created_at',
       [quoteId],
     );
@@ -750,6 +815,13 @@ export class ContractTermsService {
         sortOrder: 2000,
       });
     }
+    // Types reorder only clauses already applicable; membership never activates an option.
+    const refs=reference?.types ?? new ContractTypeService(this.database).quoteReferences(quoteId);
+    const ranks=new Map<string,number>();
+    for(const type of refs)for(const id of type.moduleIds)if(!ranks.has(id))ranks.set(id,ranks.size);
+    let trailing=ranks.size;
+    for(const clause of desired.values())if(clause.sourceKind==='catalog'&&clause.sourceClauseId)
+      clause.sortOrder=1000+10*(ranks.get(clause.sourceClauseId)??trailing++);
     return desired;
   }
 

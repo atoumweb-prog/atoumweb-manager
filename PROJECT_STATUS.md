@@ -1,6 +1,49 @@
 # AtoumWeb Manager — Suivi du projet
 
-## État courant — 08/10/2026 — Manager consolidé, documentation synchronisée
+## 09/10/2026 — Checkpoint GitHub et fichiers de liaison autorisés
+
+- AtoumWeb autorise la publication GitHub des sources validées et la mise à jour du suivi. Branche active **main** ; parent de consolidation **8e05a47296d478587b11841e36ca5acb2e936726**, origin/main identique après fetch. Le commit contenant cette entrée est le nouveau checkpoint ; push normal, sans merge ni force.
+- Périmètre : Bibliothèque contractuelle, migration additive 66, 13 types/socles, liens versionnés Catalogue, restitution commune Devis/copies/PDF, corrections UX de la recette manuelle. **61 fichiers source/tests/documentation** ; aucune base SQLite, sauvegarde, capture, output ou donnée de recette dans Git. Anciens journaux conservés historiquement.
+- README, HANDOFF MSI et état courant de la roadmap alignés sur main /1–66 /695 tests et recette manuelle en cours. Aucun nouveau développement pendant cette publication ; garde-fous inchangés, pas de publication/activation de référentiel, Abby manuel, pas de validation juridique globale ni travail Bridge/8C.
+- Lanceur local : **C:/DEV/Lanceurs/AtoumWeb-Recette-Validation-MSI.cmd**, sources via npm start, contrôle du workspace Validation-MSI. Ancien lanceur/package du 29/09 obsolète ; aucun nouveau package livré. Aucune exécution ou remise à zéro de la base pour publier Git.
+- Derniers contrôles : **695/695 tests, typecheck OK, UI 134 natifs +37 Prospection +21 préparation +20 options sur trois thèmes**, intégrité/FK correctes. Prochaine action métier : recette manuelle AtoumWeb sur la base existante.
+
+## 09/10/2026 — Corrections de la recette manuelle Prospect / Devis / Contrat
+
+- AtoumWeb autorise la correction des points UX signalés pendant sa recette. Les contrôles contractuels incomplets sont cliquables : ouverture des rubriques/accordéons, défilement et focus sur le premier champ concerné ; bilan de finalisation près du bouton, actualisé après enregistrement.
+- Les informations connues proviennent des versions réellement vendues : objet, livrables, événements du preset de paiement, garanties explicites et hébergement/domaine inclus. Aucune qualification juridique, cession, date ou tarification de renouvellement inventée. Qualification avancée, décisions droits/renouvellement et données Catalogue absentes distinctes. Un brouillon incomplet se sauvegarde, sans autoriser sa finalisation ; un jalon peut porter une date ou un événement/délai convenu (JSON compatible, aucune migration nouvelle).
+- Contrat/copies/PDF conservent la même source : sections lisibles, groupes de modules fondés sur les familles des versions vendues et périmètre/inclusions/exclusions. Les corps/applicabilités des clauses et anciens snapshots ne sont pas réécrits. Les valeurs administratives TEST sont refusées hors workspace de développement.
+- Prospection : Site facultatif/absence explicite, Offres et Services séparés, alias de familles pour l’affichage seulement, contenus commerciaux partagés pendant le RDV et dans Devis, cartes repliables, contrôle avant devis indépendant, décisionnaire modifiable dans Qualification sur les mêmes contacts, défilement borné dans la référence détachée et l’annuaire, action de détachement dédupliquée. Noms/prix/totaux lisibles.
+- Validation : typecheck OK, **695/695 tests**, **134 contrôles natifs App/preload/IPC**, **37 contrôles UI Prospection**, **21 préparation /20 options**, trois thèmes. Fixtures/workspaces temporaires uniquement ; aucun dossier automatique créé dans Validation-MSI. Contrôles readonly : 1–66, integrity_check ok, FK vide, 118 clauses /409 liens /13 types /112 rattachements ; le Prospect et le devis de la recette manuelle sont conservés (1 chacun).
+- État de livraison : modifications locales non committées sur main, aucun push/merge/publication ni nouvelle sauvegarde. La fenêtre de recette réelle n’est pas redémarrée pendant une possible saisie non enregistrée ; le nouveau backend doit être chargé par un redémarrage normal après sauvegarde de cette saisie. Pas de recette globale automatique.
+
+## 08/10/2026 — Aperçus de contrats de base pour les 13 types
+
+- Retour AtoumWeb : lire le contrat de base sans devoir créer un Devis ; disponible pour tous les socles/types. Dans la Bibliothèque contractuelle, « Voir le contrat type assemblé » propose une référence Catalogue et le choix Professionnel/Particulier.
+- Lecture seule : même sélection de clauses que le moteur Devis, socle commun selon audience, périmètre de la référence, clauses applicables et paramètres à compléter. La composition du type n’active pas les options disponibles non achetées. Aucun prix convenu/client/délai inventé, aucun snapshot ou dossier créé.
+- Typecheck OK, 32 tests ciblés (dont 13 types et comparaison de toutes les tables avant/après aperçu), 687 tests complets, 106 contrôles natifs sur trois thèmes. Capture/cas uniquement temporaires. Validation-MSI : 13 types, 112 liens, migrations 1–66 et dossiers toujours à zéro ; aucune migration/publication/réinitialisation/sauvegarde nouvelle.
+- Redémarrage normal pour charger les nouveaux handlers IPC/preload ; pas de recette globale. Aucun commit/push/merge. Prochaine action : consultation manuelle AtoumWeb des socles et modules.
+
+## État réel — 08/10/2026 — migration 66 et types contractuels appliqués
+
+- Autorisation AtoumWeb : appliquer 66 et initialiser les 13 types/112 rattachements validés, sans nouvelle sauvegarde, publication automatique ni recette globale. Seule correction métier : « Maintenance WordPress & WooCommerce » ; code MAINTENANCE, rattachements et composition inchangés.
+- Renommage contrôlé par 15/15 tests ciblés. Les validations de préparation (684 tests complets, typecheck et UI 106/106) restent les contrôles précédents ; aucune suite globale relancée pour le libellé.
+- Validation-MSI : migrations 1–66, 13 types et 13 compositions draft, 112 rattachements à des versions Catalogue, 0 composition publiée. 118 clauses et 409 liens existants conservés, comparaison des autres références et compositions avec le plan validé ; intégrité ok/FK vide, zéro dossier de recette créé.
+- Sauvegarde existante réutilisée à la demande d’AtoumWeb ; aucune nouvelle sauvegarde. Application sous verrou, écriture concurrente refusée, rejeu 0 création /0 lien /112 inchangés. Rapport hors Git : outputs/parcours-contractuel-2026-10-08/application-reelle-66.json dans le workspace documentaire.
+- Démarrage normal du Manager autorisé sur le workspace Validation-MSI existant ; aucune navigation de recette automatique. Aucun nouveau commit/push/merge. Prochaine action : recette manuelle AtoumWeb.
+
+## Historique de préparation — 08/10/2026 — avant application de 66
+
+- Base officielle : `main@8e05a47296d478587b11841e36ca5acb2e936726`. Pas de nouveau commit/push/merge pour cette passe. AtoumWeb a demandé explicitement de travailler sur ce main pour l’évolution contractuelle.
+- Validation-MSI a été nettoyée après autorisation : dossiers commerciaux, Projets, opérations, documents et chronos fictifs retirés ; références et réglages conservés. Sauvegarde physique avant nettoyage et sauvegarde complète récupérable. Pas de nouvelle recette globale sur cette base.
+- Types de contrat : quatre tables additives préparées en migration 66, avec rattachement à `catalog_versions`, aucune copie de texte. Les versions de modules et les 409 liens existants restent la source d’applicabilité ; type/composition ordonne sans activer les options non vendues.
+- Bibliothèque contractuelle accessible depuis Documents & Contrats ; création, versions, modules, ordre, archivage et navigation bidirectionnelle Catalogue. Lecture Devis Contrat & CGV scrollable, copies Abby/contrat/tout et PDF utilisent une présentation commune ; présentation et références de types conservées dans les futurs snapshots. Les anciens snapshots restent inchangés.
+- Initialisation sur copie uniquement : 13 types / 13 compositions BROUILLON et 112 rattachements à des versions Catalogue ; aucune conversion de `contract_type` legacy, notamment « test ». Rejeu neutre, tables de référence préservées.
+- Vérification locale : typecheck OK, ciblés 85/85, suite complète 684/684, UI native ciblée 106/106 sur trois thèmes, ancien banc Builder 21/21. Tests/captures/projets uniquement temporaires. Une modification manuelle de texte ne conserve pas silencieusement la validation documentaire de l’ancienne rédaction.
+- **Migration 66 NON APPLIQUÉE sur Validation-MSI ; base toujours en 1–65, propre, intégrité/FK correctes.** Manager fermé : ne pas le relancer sur cette base avant validation AtoumWeb de l’application. La migration est inscrite dans le registre local testé, donc un démarrage normal l’appliquerait.
+- Prochaine action : restituer le bilan et obtenir validation avant application réelle. Pas de publication/activation automatique, aucun travail Bridge/8C.
+
+## Historique — 08/10/2026 — documentation avant consolidation dans main
 
 - Branche consolidée active : **`fix/pre-phase5-commercial-ux`**. Checkpoint fonctionnel validé : **`8662c3fbeaf2e3b26a68cffa779422f395edd400`**, après intégration de Phase 7 dans son parent `1f7dafc…` et port sélectif du réemploi guidé.
 - Projet V2, Sites/Pages/compositions, Devis/contrats/Builder CGV, Catalogue 112, opérations et Phase 7 Statistiques/Rentabilité intégrés. **Migrations 1–65** ; aucun nouveau schéma pour le port.

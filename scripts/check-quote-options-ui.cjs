@@ -60,7 +60,7 @@ if (!process.versions.electron) {
         assert('Quantité et remise transmises',window.calls[0].input.quantityMilli===3000&&window.calls[0].input.adjustmentValue===1000);
         assert('Option achetée visible après persistance',document.querySelectorAll('[data-purchased="true"]').length===1&&document.body.textContent.includes('48,6'));
         
-        const details=document.querySelector('details');details.open=true;await wait();assert('Provenance lisible offre/service/version',details.textContent.includes('Site vitrine')&&details.textContent.includes('AW-TEST-L6-page'));
+        const details=document.querySelector('[data-purchased="true"] details');details.open=true;await wait();assert('Provenance lisible offre/service/version',details.textContent.includes('Site vitrine')&&details.textContent.includes('AW-TEST-L6-page'));
         await click('Modifier l’option');await fill('Quantité','4');await click('Enregistrer la ligne');assert('Modification conserve la ligne achetée',window.quote.lines.length===2&&window.quote.lines[1].quantityMilli===4000&&window.calls.at(-1).method==='update');
         await click('Retirer l’option');assert('Retrait explicite retourne à disponible',window.calls.at(-1).method==='deselect'&&window.quote.lines.length===1&&!document.querySelector('[data-purchased="true"]'));
         window.reject=true;await click('Ajouter au devis');await click('Enregistrer la ligne');assert('Erreur de persistance visible, aucun achat affiché',document.querySelector('[role="alert"]').textContent.includes('non publiée')&&window.quote.lines.length===1);window.reject=false;

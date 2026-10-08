@@ -104,6 +104,14 @@ function App() {
   const [prospectPipelineFilter, setProspectPipelineFilter] = useState<ProspectPipelineFilter>('all');
   const [quoteTarget,setQuoteTarget] = useState<string|null>(null);
   const [documentTarget, setDocumentTarget] = useState<string | null>(null);
+  const [contractTypeTarget,setContractTypeTarget]=useState<string|null>(null);
+  const [catalogTarget,setCatalogTarget]=useState<string|null>(null);
+  useEffect(()=>{
+    const contract=(e:Event)=>{setContractTypeTarget((e as CustomEvent<string|null>).detail??'all');setActivePage('Documents & Contrats');};
+    const catalog=(e:Event)=>{setCatalogTarget((e as CustomEvent<string>).detail);setActivePage('Offres & Tarifs');};
+    window.addEventListener('atoumweb:open-contract-library',contract);window.addEventListener('atoumweb:open-catalog-item',catalog);
+    return()=>{window.removeEventListener('atoumweb:open-contract-library',contract);window.removeEventListener('atoumweb:open-catalog-item',catalog);};
+  },[]);
   const [directoryTarget, setDirectoryTarget] = useState<DirectorySearchTarget | null>(null);
   useEffect(()=>{const open=(event:Event)=>openSearchResult((event as CustomEvent<SearchResult>).detail);window.addEventListener('atoumweb:navigate',open);return()=>window.removeEventListener('atoumweb:navigate',open);},[]);
   useEffect(() => { const open = (event: Event) => setActivePage((event as CustomEvent<PageName>).detail); window.addEventListener('atoumweb:open-page', open); return () => window.removeEventListener('atoumweb:open-page', open); }, []);
@@ -231,7 +239,8 @@ function App() {
     if (page === 'Projets') setProjectSearchTarget(null);
     if (page === 'Bibliothèque AtoumWeb') setLibrarySearchTarget(null);
     if (page === 'Sauvegardes') setBackupSearchTarget(null);
-    if (page === 'Documents & Contrats') setDocumentTarget(null);
+    if (page === 'Documents & Contrats') {setDocumentTarget(null);setContractTypeTarget(null);}
+    if (page === 'Offres & Tarifs') setCatalogTarget(null);
     if (page === 'Annuaire') setDirectoryTarget(null);
     setActivePage(page);
   }
@@ -342,14 +351,14 @@ function App() {
           {activePage === 'Réglages' && <DemoPanel />}
           {activePage === 'Prospects' && <ProspectsPage key={`${crmTarget ?? 'none'}:${prospectViewTarget}:${prospectPipelineFilter}`} initialId={crmTarget} initialView={prospectViewTarget} initialPipelineFilter={prospectPipelineFilter} onMessage={setMessage} />}
           {activePage === 'Clients' && <ClientsPage key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
-          {activePage === 'Offres & Tarifs' && <CatalogPage onMessage={setMessage} />}
+          {activePage === 'Offres & Tarifs' && <CatalogPage onMessage={setMessage} initialId={catalogTarget}/>}
           {activePage === 'Devis' && <QuotesPage key={quoteTarget} initialId={quoteTarget} onMessage={setMessage} />}
           {activePage === 'Projets' && <ProjectsPage onMessage={showMessage} initialProjectId={projectSearchTarget} showHoverHelp={showHoverHelp} />}
           {activePage === 'Interventions & Maintenance' && <OperationsPage onMessage={setMessage} initialTarget={operationsSearchTarget} />}
           {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}
           {activePage === 'Facturation' && <BillingPage onMessage={setMessage} />}
           {activePage === 'Dépenses' && <ExpensesPage onMessage={setMessage} />}
-          {activePage === 'Documents & Contrats' && <DocumentsPage onMessage={setMessage} initialDocumentId={documentTarget} />}
+          {activePage === 'Documents & Contrats' && <DocumentsPage onMessage={setMessage} initialDocumentId={documentTarget} initialContractTypeId={contractTypeTarget}/>}
           {activePage === 'Bibliothèque AtoumWeb' && <AtoumWebLibraryPage
             onMessage={setMessage}
             initialItemId={librarySearchTarget}

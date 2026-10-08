@@ -125,6 +125,7 @@ interface CatalogSnapshotRow extends CatalogIdentitySnapshotRow {
 }
 
 interface OfferComponentSnapshotRow extends CatalogIdentitySnapshotRow {
+  commercial_parameters_json: string|null;
   component_id: string;
   service_version_id: string;
   service_item_id: string;
@@ -318,6 +319,7 @@ export class QuoteService {
           sv.price_cents,
           sv.special_terms,
           sv.contract_type,
+          sv.commercial_parameters_json,
           si.canonical_code, si.identity_provenance_json,
           sv.commercial_kind, sv.family_code, sv.abby_label, sv.unit, sv.periodicity, sv.price_basis, sv.provenance_json,
           oc.id AS component_id,
@@ -345,6 +347,7 @@ export class QuoteService {
         priceCents: component.price_cents,
         specialTerms: component.special_terms,
         contractType: component.contract_type,
+        commercialParameters:component.commercial_parameters_json?JSON.parse(component.commercial_parameters_json):null,
         isOptional: Boolean(component.is_optional),
         quantityMilli: Number(component.quantity_milli),
         sortOrder: Number(component.sort_order),

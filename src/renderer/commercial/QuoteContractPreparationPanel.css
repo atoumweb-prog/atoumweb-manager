@@ -11,3 +11,8 @@
 .quote-contract-preparation p, .quote-contract-preparation li { overflow-wrap: anywhere; }
 .quote-contract-preparation [role="status"] { border-left: 3px solid var(--accent); padding-left: 12px; }
 @media(max-width: 700px) { .quote-contract-preparation .quote-three-fields { grid-template-columns: 1fr; } }
+
+.contract-issue-link { background:transparent; color:var(--text); text-align:left; border:0; border-bottom:1px solid var(--border); padding:7px 0; cursor:pointer; font-size:inherit; }
+.contract-issue-link:hover { color:var(--accent); text-decoration:underline; }
+.quote-finalization-check { width:100%; padding:16px; border:1px solid var(--border); border-radius:10px; display:grid; gap:8px; background:var(--surface-soft); }
+.quote-finalization-check strong { font-size:16px; }

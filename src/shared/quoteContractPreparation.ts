@@ -1,3 +1,4 @@
+import type { ContractDefaultFact } from './quoteContractDefaults';
 import type { QuoteContractAudience } from './contractTerms';
 
 export const ADMIN_CONTRACT_KEYS = ['identity','administrative','vat','complaints','mediator','withdrawalRecipient','providers','gdpr'] as const;
@@ -20,7 +21,7 @@ export interface QuoteContractParameters {
   audience: QuoteContractAudience;
   initialPayment: { qualification: 'acompte' | 'arrhes'; dueDate: string | null };
   payment: { preset: PaymentPreset; milestones: PaymentMilestone[]; professionalTerms: { extraDelay: string; lateRate: 'three_times_legal'; recoveryIndemnityCents: 4000 } | null };
-  milestones: { label: string; date: string }[];
+  milestones: { label: string; date: string; event?: string }[];
   conclusion: { channel: 'distance' | 'off_premises' | 'on_premises' | 'other' | null; context: string; purchasePurpose: string; professionalConsumerRegime: 'unknown' | 'applicable' | 'not_applicable'; offPremisesControlsVerified: boolean; otherChannelReason: string };
   digital: { kinds: ('digital_content' | 'digital_service' | 'classical_service')[]; mixed: boolean; supply: 'one_off' | 'continuous' | null; delivery: string; hosting: boolean; associatedServices: string; qualificationReason: string };
   warranties: { lineId: string; kind: 'small_adjustment' | 'wordpress_custom' | 'business_app' | 'not_applicable'; days: 30 | 60 | 90 | null; startEvent: string; statutoryRightsUnaffected: true }[];
@@ -32,7 +33,7 @@ export interface QuoteContractParameters {
   rsvp: { applicable: boolean; mode: 'minimal'; sensitiveEnabled: false; sensitiveRoute: 'disabled' | 'direct_caterer'; roles: string };
 }
 export interface ContractIssue { code: string; severity: 'blocking' | 'warning'; message: string; }
-export interface QuoteContractPreparation { parameters: QuoteContractParameters | null; state: 'draft' | 'frozen' | 'historical_missing'; issues: ContractIssue[]; documents: ContractDocumentLink[]; snapshot: Record<string, unknown> | null; }
+export interface QuoteContractPreparation { parameters: QuoteContractParameters | null; state: 'draft' | 'frozen' | 'historical_missing'; issues: ContractIssue[]; defaults?:{facts:ContractDefaultFact[];includedBenefits:string[];marriage:boolean}; documents: ContractDocumentLink[]; snapshot: Record<string, unknown> | null; }
 export interface QuoteContractPreparationApi {
   get(id: string): Promise<QuoteContractPreparation>;
   save(id: string, parameters: QuoteContractParameters): Promise<QuoteContractPreparation>;
@@ -48,7 +49,7 @@ export function emptyAdministration(): ContractAdministration {
 }
 export function paymentMilestones(preset: PaymentPreset): PaymentMilestone[] {
   const percentages = preset === 'order_100' ? [100] : preset === '30_70' ? [30,70] : preset === '30_40_30' ? [30,40,30] : [];
-  return percentages.map((percent, index) => ({ label: index === 0 ? 'Commande' : index === percentages.length - 1 ? 'Livraison' : 'Jalon intermédiaire', percent, dueDate: null, event: '' }));
+  return percentages.map((percent, index) => ({ label: index === 0 ? 'Commande' : index === percentages.length - 1 ? 'Livraison' : 'Jalon intermédiaire', percent, dueDate: null, event: index===0?'Commande / acceptation du devis':index===percentages.length-1?'Livraison / mise à disposition du livrable':'Validation explicite du jalon intermédiaire' }));
 }
 export function emptyContractParameters(audience: QuoteContractAudience, depositPercent = 30): QuoteContractParameters {
   return {

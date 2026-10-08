@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {ProspectDecisionEditor} from './ProspectDecisionEditor';
 import { FieldHelp } from '../ui/FieldHelp';
 export { FieldHelp } from '../ui/FieldHelp';
 import type { ProspectInput, ProspectOrigin, ProspectSummary } from '../../shared/crm';
@@ -70,10 +71,12 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
   const [decisionMakerLabel, setDecisionMakerLabel] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const previous=useRef(prospect);
 
   useEffect(() => {
-    setDraft({ ...prospect, originType: inferOrigin(prospect) });
-  }, [prospect.updatedAt]);
+    const before=previous.current;previous.current=prospect;
+    setDraft(current=>before.id!==prospect.id?{...prospect,originType:inferOrigin(prospect)}:{...current,...Object.fromEntries(Object.entries(prospect).filter(([key])=>JSON.stringify(current[key as keyof ProspectInput])===JSON.stringify(before[key as keyof ProspectSummary])))});
+  }, [prospect.id,prospect.updatedAt]);
 
   useEffect(() => {
     let cancelled = false;
@@ -149,7 +152,8 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
     || draft.secondaryNeed?.trim()
   );
   function goToMissing(key: string) {
-    if (key === 'decision' || key === 'contact') { onGoTo?.(key); return; }
+    if(key==='decision'){const field=document.querySelector<HTMLElement>('.qualification-panel-v2 [aria-label="Situation du décisionnaire"]');field?.scrollIntoView({behavior:'smooth',block:'center'});field?.focus({preventScroll:true});return;}
+    if (key === 'contact') { onGoTo?.(key); return; }
     const labels: Record<string, string> = { target: 'Motif de ciblage', observation: 'Constat', contact_result: 'Résultat du premier contact', interest: 'Niveau d’intérêt', request: 'Demande initiale', context: 'Motif de l’échange' };
     const label = Array.from(document.querySelectorAll<HTMLElement>('.qualification-panel-v2 label')).find((item) => item.textContent?.trim().startsWith(labels[key]));
     label?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -265,8 +269,7 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
       <div className="qualification-decision-summary">
         <span className="eyebrow">Décisionnaire</span>
         <strong>{decisionSummary}</strong>
-        {!draft.decisionStatus && <button className="secondary-button" type="button" onClick={() => onGoTo?.('decision')}>Renseigner le décisionnaire</button>}
-        <small>Le décisionnaire et ses coordonnées se modifient dans « Entreprise & interlocuteur ». La qualification ne duplique plus ces informations.</small>
+        <ProspectDecisionEditor prospect={prospect} onSaved={()=>onSaved('Décisionnaire mis à jour.')} onManageContacts={()=>onGoTo?.('decision')}/>
       </div>
 
       {!allReady && <div className="qualification-recap" role="status"><strong>Qualification à compléter</strong><p>{readiness.filter((item) => item.ok).length}/{readiness.length} éléments acquis.</p><div>{missing.map((item) => <div className="missing-action" key={item.key}><span>À compléter : {item.label}</span><button type="button" className="secondary-button" onClick={() => goToMissing(item.key)}>Renseigner {item.label.toLocaleLowerCase('fr-FR')}</button></div>)}</div></div>}

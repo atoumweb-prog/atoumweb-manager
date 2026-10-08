@@ -253,6 +253,8 @@ export class CatalogService {
     this.database.exec('SAVEPOINT catalog_service;');
     try {
       const version = this.insertVersion(itemId, nextVersion, nextInput, now);
+      if(previous && this.database.get("SELECT name FROM sqlite_master WHERE type='table' AND name='catalog_contract_type_links'"))
+        this.database.run('INSERT INTO catalog_contract_type_links(catalog_version_id,contract_type_id,created_at) SELECT ?,contract_type_id,? FROM catalog_contract_type_links WHERE catalog_version_id=?',[version.id,now,previous.id]);
       if(previous && this.database.get("SELECT name FROM sqlite_master WHERE type='table' AND name='catalog_commercial_rules'"))this.database.run(`INSERT INTO catalog_commercial_rules(catalog_version_id,rules_json,provenance_json,updated_at)
         SELECT ?,rules_json,provenance_json,? FROM catalog_commercial_rules WHERE catalog_version_id=?`,[version.id,now,previous.id]);
       if (item.item_type === 'offer' && previous) {

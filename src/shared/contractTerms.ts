@@ -1,3 +1,6 @@
+import type { ContractPresentation } from './contractPresentation';
+import type { ContractTypeReference } from './contractTypes';
+
 export const CONTRACT_CLAUSE_SCOPES = ['base', 'catalog'] as const;
 export const CONTRACT_CLAUSE_AUDIENCES = ['all', 'professional', 'consumer'] as const;
 export const CONTRACT_CLAUSE_STATUSES = ['active', 'inactive', 'archived'] as const;
@@ -122,6 +125,7 @@ export interface QuoteContractBuild {
   snapshotText?: string | null;
   compiledAt?: string | null;
   warnings: string[];
+  types?: ContractTypeReference[];
 }
 
 /** Never substitute the current compilation for an empty or absent historical snapshot. */
@@ -144,6 +148,7 @@ export interface ContractTermsApi {
   };
   quotes: {
     get(quoteId: string): Promise<QuoteContractBuild>;
+    presentation(quoteId: string): Promise<ContractPresentation>;
     sync(quoteId: string): Promise<QuoteContractBuild>;
     addCustom(quoteId: string, input: QuoteContractClauseInput): Promise<QuoteContractBuild>;
     updateClause(id: string, input: QuoteContractClauseUpdate): Promise<QuoteContractBuild>;
@@ -151,5 +156,6 @@ export interface ContractTermsApi {
     removeCustom(id: string): Promise<QuoteContractBuild>;
     reorder(quoteId: string, clauseIds: string[]): Promise<QuoteContractBuild>;
   };
+  previewReference(typeId:string,typeVersionId:string,catalogVersionId:string,audience:QuoteContractAudience):Promise<ContractPresentation>;
   copyText(text: string): Promise<void>;
 }

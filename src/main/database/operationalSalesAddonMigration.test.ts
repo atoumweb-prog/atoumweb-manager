@@ -17,7 +17,7 @@ it('migration65 : chaque vente et toutes ses relations existantes conservées, r
     VALUES('sale','line','atoumweb-web-v1','link','model',?,'hour_pack',?,'{}','{}','fixture')`,[client.id,pack.id]);
   db.run("INSERT INTO operational_sale_targets(sale_id,state) VALUES('sale','active')");
   const before=db.all<{name:string}>("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'").map(t=>({name:t.name,columns:db.all<{name:string}>(`PRAGMA table_info(${t.name})`).map(c=>c.name),rows:db.all('SELECT * FROM '+t.name)}));
-  expect(applyPendingMigrations(db).map(m=>m.id)).toEqual([65]);
+  expect(applyPendingMigrations(db).map(m=>m.id)).toEqual(MIGRATIONS.filter(m=>m.id>=65).map(m=>m.id));
   for(const table of before)if(table.name!=='schema_migrations')expect(db.all(`SELECT ${table.columns.join(',')} FROM ${table.name}`)).toEqual(table.rows);
   expect(db.all('PRAGMA foreign_key_check')).toEqual([]);expect(db.get('PRAGMA integrity_check')).toEqual({integrity_check:'ok'});expect(applyPendingMigrations(db)).toEqual([]);
  }finally{db.close();}

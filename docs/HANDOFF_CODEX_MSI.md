@@ -1,6 +1,44 @@
 # Handoff Codex MSI — AtoumWeb Manager
 
-## État courant — 08/10/2026
+## État courant — 09/10/2026 — checkpoint Contrat et recette UX
+
+- Dépôt : C:/DEV/01_PROJETS/AtoumWeb/atoumweb-manager ; branche officielle/active **main**. PR #79 déjà fusionnée au commit 8e05a47296d478587b11841e36ca5acb2e936726 ; les anciennes branches de consolidation ne sont plus la base active.
+- Ce checkpoint contient l’évolution contractuelle et les corrections UX, avec publication GitHub autorisée le 09/10 par AtoumWeb. Utiliser git log -1 --oneline pour le commit contenant cette entrée ; le parent de consolidation n’est plus le HEAD après ce checkpoint.
+- **Migrations 1–66**, aucune migration supplémentaire. Validation-MSI : 13 types/compositions draft, 112 liens aux versions Catalogue, 118 clauses et 409 liens conservés. Ne pas réinitialiser, réimporter ni réappliquer les anciens lots. Aucun type publié automatiquement.
+- Bibliothèque contractuelle : types/versions/modules ordonnés, navigation Catalogue et aperçu des 13 socles sans dossier. Devis : lecture Contrat & CGV, copies Abby/contrat/tout et PDF communs ; snapshots figés. Type/composition n’active jamais une option disponible non vendue.
+- Recette UX : Site facultatif/absence explicite, Offres/Services, familles lisibles sans changement des mappings, détails repliables, contrôle avant devis indépendant, décisionnaire dans Qualification, référence défilable et couleurs cohérentes. Les points contractuels incomplets ouvrent la rubrique et focalisent le champ ; informations connues des seules versions vendues préremplies, décisions juridiques explicitement confirmées.
+- **Typecheck OK ; 695/695 tests dans 79 fichiers ; UI 134 natifs +37 Prospection +21 préparation +20 options sur trois thèmes**. Fixtures/workspaces temporaires, aucun oracle SHA/comptage Validation-MSI. Dernier contrôle readonly : intégrité OK/FK vide. Dossier humain conservé ; données mutables pour la recette autorisée.
+- **Recette manuelle globale non terminée** : laisser AtoumWeb poursuivre son Prospect/devis. Ne pas générer une masse de dossiers automatiques sur Validation-MSI. Aucun package reconstruit, publication/activation ou nouvelle sauvegarde pendant cette publication Git.
+
+### Lanceur pour cette recette
+
+**C:/DEV/Lanceurs/AtoumWeb-Recette-Validation-MSI.cmd** → code local via npm start, après contrôle du profil de développement :
+
+- profil : C:/Users/AtoumWeb/AppData/Roaming/AtoumWeb Manager/workspace.json ;
+- workspace : C:/DEV/02_DONNEES/AtoumWeb/Validation-MSI ;
+- sources : C:/DEV/01_PROJETS/AtoumWeb/atoumweb-manager.
+
+Aucune base remplacée ou recréée. Enregistrer les saisies avant un redémarrage pour charger les nouveaux handlers Electron. L’ancien C:/DEV/Lanceurs/AtoumWeb-Validation-MSI.cmd pointe sur le package du **29/09/2026**, obsolète pour cette recette. Ne pas utiliser cet ancien package pour évaluer les correctifs. Le lanceur actuel est local hors Git ; il n’a pas été exécuté par la simple remise du lien.
+
+### Reprise et limites
+
+git status -sb, git log -2 --oneline et git fetch origin avant toute mise à niveau ; préserver la saisie et le travail local. Une mise à jour Git ne met pas à niveau un package déjà généré. Ne pas ouvrir un ancien checkout sur la base 1–66 sans vérifier sa compatibilité.
+
+Abby manuel. Aucune validation juridique globale, aucun paiement/facture réel, aucun travail Bridge WordPress/8C. #62 portée sélectivement : ancienne branche non fusionnée ; #68 prototype .atoum V0.2 historique non intégré. Estimations internes recalibrables : Histoire 27 h 30 provisoires /33 h vigilance ; prix 899 €.
+
+## Historique — application 66 du 08/10/2026
+
+Validation-MSI est désormais en migrations 1–66 : 13 types/13 versions draft, 112 rattachements, aucune publication de type, 118 clauses/409 liens conservés, intégrité ok/FK vide, aucun dossier TEST créé. Correction du seul libellé : Maintenance WordPress & WooCommerce. Sauvegarde existante réutilisée, aucune nouvelle sauvegarde. Le Manager peut démarrer normalement sur le workspace existant ; ne pas relancer une recette globale. Aucun nouveau commit/push/merge.
+
+## Historique de préparation — 08/10/2026 — avant validation de 66
+
+- Dépôt sur le main officiel 8e05a47296d478587b11841e36ca5acb2e936726 ; évolution contractuelle locale non committée, pas de push.
+- Validation-MSI nettoyée, toujours migrations 1–65, aucun dossier TEST permanent. Référentiels, bibliothèques et réglages conservés.
+- Migration 66 et bibliothèque de types versionnés testées sur copies/fixtures. 13 types et 112 rattachements seulement sur copie ; aucun import réel des types.
+- Le Manager a été fermé intentionnellement. **Ne pas le lancer sur Validation-MSI avant accord d’application de 66**, car le démarrage applique les migrations pendantes.
+- Rapport/captures hors Git : workspace documentaire `outputs/parcours-contractuel-2026-10-08`. Pas de recette CRM globale à relancer sur la base propre.
+
+## Historique — consolidation avant fusion dans main (08/10/2026)
 
 - Dépôt : `C:\DEV\01_PROJETS\AtoumWeb\atoumweb-manager`.
 - **Branche consolidée active : `fix/pre-phase5-commercial-ux`.** `feature/project-blueprints-v1` et les branches de Phase ne sont plus les bases de travail actuelles.
@@ -43,7 +81,7 @@ Le backend `ReusePreparationService` et les API `referentials.reuse.prepareProje
 - Statistiques/rendement et suivi facturé/dépenses intégrés ; pas de suivi réel d’encaissements bancaires implicite.
 - Bridge WordPress, Lot 8C et futurs lots séparés. Ne pas confondre les échanges/imports existants côté Manager avec une autorisation de modifier le plugin WordPress.
 
-## Reprise Git et prochaine étape
+## Historique — prochaine étape Git avant fusion de #79
 
 Vérifier d’abord le checkout, les commits locaux et le suivi ; ne pas réinitialiser le travail local :
 

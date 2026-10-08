@@ -1,3 +1,5 @@
+import { normalizeEmail, normalizePhone } from '../../shared/contactValidation';
+import { normalizeWebUrl } from '../../shared/webUrl';
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import type { QuoteSummary } from '../../shared/commercial';
 import {
@@ -13,6 +15,7 @@ import {
 import { ProspectActionsPanel } from './ProspectActionsPanel';
 import { ProspectIdentityPanel } from './ProspectIdentityPanel';
 import { ProspectNeedsPanel } from './ProspectNeedsPanel';
+import {ProspectPreQuoteReviewPanel} from './ProspectPreQuoteReview';
 import { FieldHelp, ProspectQualificationPanelV2 } from './ProspectQualificationPanelV2';
 import { ProspectQuotePanel } from './ProspectQuotePanel';
 import { ProspectResearchPanel } from './ProspectResearchPanel';
@@ -70,7 +73,7 @@ const MANUAL_STAGE_OPTIONS: Record<ProspectStage, ProspectStage[]> = {
 };
 
 interface ProspectDraft {
-  company: string; industry: string; activityDescription: string; website: string;
+  company: string; industry: string; activityDescription: string; website: string; websitePresence?:'present'|'absent'|'review';
   addressLine1: string; addressLine2: string; postalCode: string; city: string; country: string;
   firstName: string; lastName: string; jobTitle: string; email: string; phone: string;
   source: ProspectSource; sourceDetail: string; temperature: ProspectTemperature; estimatedValueEuros: string;
@@ -78,7 +81,7 @@ interface ProspectDraft {
   services: string; customerSegments: string; differentiators: string; talkingPoints: string; approach: string;
 }
 const EMPTY_DRAFT: ProspectDraft = {
-  company: '', industry: '', activityDescription: '', website: '', addressLine1: '', addressLine2: '', postalCode: '', city: '', country: 'France',
+  company: '', industry: '', activityDescription: '', website: '', websitePresence:'review', addressLine1: '', addressLine2: '', postalCode: '', city: '', country: 'France',
   firstName: '', lastName: '', jobTitle: '', email: '', phone: '', source: 'website', sourceDetail: '', temperature: 'neutral', estimatedValueEuros: '', firstActionDate: '', firstActionText: '',
   services: '', customerSegments: '', differentiators: '', talkingPoints: '', approach: '',
 };
@@ -271,9 +274,15 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
     if (!draft.company.trim() && (!draft.firstName.trim() || !draft.lastName.trim())) { setFormError('Renseigne une société ou le prénom et le nom du contact.'); return; }
     setSaving(true);
     try {
+      // Validate shared contact rules before creating any identity record.
+      const website=draft.websitePresence==='absent'?null:normalizeWebUrl(draft.website);
+      normalizeEmail(draft.email);normalizePhone(draft.phone);
+      const normalized = draft.estimatedValueEuros.trim().replace(',', '.');
+      const estimatedValueCents = normalized ? Math.round(Number(normalized) * 100) : null;
+      if (estimatedValueCents != null && (!Number.isFinite(estimatedValueCents) || estimatedValueCents < 0)) throw new Error('Valeur estimée invalide.');
       let organizationId: string | null = null; let contactId: string | null = null;
       if (draft.company.trim()) {
-        const organization = await window.atoumweb.crm.organizations.create({ name: draft.company.trim(), industry: draft.industry.trim() || null, notes: draft.activityDescription.trim() || null, website: draft.website.trim() || null, addressLine1: draft.addressLine1.trim() || null, addressLine2: draft.addressLine2.trim() || null, postalCode: draft.postalCode.trim() || null, city: draft.city.trim() || null, country: draft.country.trim() || null });
+        const organization = await window.atoumweb.crm.organizations.create({ name: draft.company.trim(), industry: draft.industry.trim() || null, notes: draft.activityDescription.trim() || null, website, addressLine1: draft.addressLine1.trim() || null, addressLine2: draft.addressLine2.trim() || null, postalCode: draft.postalCode.trim() || null, city: draft.city.trim() || null, country: draft.country.trim() || null });
         organizationId = organization.id;
       }
       if (draft.firstName.trim() && draft.lastName.trim()) {
@@ -285,20 +294,17 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
         if (draft.email.trim()) await window.atoumweb.crm.contactMethods.save({ organizationId, type: 'email', value: draft.email.trim(), label: 'Accueil / principal', isPrimary: true });
         if (draft.phone.trim()) await window.atoumweb.crm.contactMethods.save({ organizationId, type: 'phone', value: draft.phone.trim(), label: 'Accueil / principal', isPrimary: true });
       }
-      const normalized = draft.estimatedValueEuros.trim().replace(',', '.');
-      const estimatedValueCents = normalized ? Math.round(Number(normalized) * 100) : null;
-      if (estimatedValueCents != null && (!Number.isFinite(estimatedValueCents) || estimatedValueCents < 0)) throw new Error('Valeur estimée invalide.');
       const prospect = await window.atoumweb.crm.prospects.create({ organizationId, contactId, stage: 'new', temperature: draft.temperature, source: draft.source, sourceDetail: draft.source === 'other' ? draft.sourceDetail.trim() || null : null, estimatedValueCents });
-      const structuredKnowledge = [draft.services, draft.customerSegments, draft.differentiators, draft.talkingPoints, draft.approach].some((value) => value.trim());
+      const structuredKnowledge = [draft.services, draft.customerSegments, draft.differentiators, draft.talkingPoints, draft.approach].some((value) => value.trim()) || !!website || draft.websitePresence==='absent' || draft.websitePresence==='present';
       if (structuredKnowledge) {
         await window.atoumweb.crm.prospects.research.save(prospect.id, {
           checkedAt: new Date().toISOString().slice(0, 10),
           source: 'Saisie annuaire',
-          sourceUrl: draft.website.trim() || null,
+          sourceUrl: website,
           services: splitList(draft.services),
           customerSegments: splitList(draft.customerSegments),
           differentiators: splitList(draft.differentiators),
-          website: draft.website.trim() ? { presence: 'present', url: draft.website.trim() } : { presence: 'review' },
+          website: {presence:draft.websitePresence==='absent'?'absent':website||draft.websitePresence==='present'?'present':'review',url:website},
           conversation: {
             talkingPoints: draft.talkingPoints.trim() || null,
             approach: draft.approach.trim() || null,
@@ -529,7 +535,7 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
       {showForm && <form className="panel crm-form prospect-create-v2" onSubmit={(e) => void submitProspect(e)}><div className="panel-title"><div><span className="eyebrow">Annuaire de prospection</span><h2>Nouvelle entreprise à préparer</h2><p className="muted">Enregistre ce que tu sais déjà. Le dossier n’entre dans le parcours commercial qu’au clic sur « Démarrer le parcours commercial ».</p></div></div><div className="form-grid">
         <label>Société <FieldHelp text="Nom commercial ou nom de la structure." /><input value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} /></label>
         <label>Corps de métier / activité <FieldHelp text="Utilise un libellé stable pour pouvoir filtrer l’annuaire : restaurant, artisan, garage, profession libérale…" /><input value={draft.industry} onChange={(e) => setDraft({ ...draft, industry: e.target.value })} placeholder="Ex. restaurant" /></label>
-        <label>Site web <FieldHelp text="Saisis simplement exemple.fr : https:// sera ajouté automatiquement. Tu peux écrire http:// explicitement si le site l’exige." /><input inputMode="url" value={draft.website} onChange={(e) => setDraft({ ...draft, website: e.target.value })} placeholder="exemple.fr" /></label>
+        <label>Site web — facultatif <FieldHelp text="Une adresse n’est pas nécessaire pour ajouter ce prospect. Choisis Pas de site internet si l’absence est connue ; sinon laisse Non renseigné. Une URL saisie doit être valide." /><select aria-label="Situation du site internet" value={draft.websitePresence??(draft.website.trim()?'present':'review')} onChange={e=>{const presence=e.target.value as 'present'|'absent'|'review';setDraft({...draft,websitePresence:presence,website:presence==='absent'?'':draft.website});setFormError('');}}><option value="review">Non renseigné / à vérifier</option><option value="absent">Pas de site internet</option><option value="present">Site internet existant</option></select><input aria-label="Adresse du site web facultative" inputMode="url" disabled={draft.websitePresence==='absent'} value={draft.website} onChange={e=>{setDraft({...draft,website:e.target.value,websitePresence:e.target.value.trim()?'present':'review'});setFormError('');}} placeholder={draft.websitePresence==='absent'?'Pas de site internet':'exemple.fr — facultatif'} /></label>
         <label className="form-span-3">Présentation / notes source <FieldHelp text="Conserve ici le texte brut récupéré. Les informations importantes sont ensuite rangées dans les champs structurés ci-dessous." /><textarea value={draft.activityDescription} onChange={(e) => setDraft({ ...draft, activityDescription: e.target.value })} placeholder="Texte brut, présentation du site, informations trouvées…" /></label>
         <label className="form-span-2">Services proposés <FieldHelp text="Sépare les services par des virgules. Ils seront enregistrés dans la fiche de connaissance entreprise." /><input value={draft.services} onChange={(e) => setDraft({ ...draft, services: e.target.value })} placeholder="Ex. gardiennage, rondes, intervention sur alarme" /></label>
         <label>Clientèles visées<input value={draft.customerSegments} onChange={(e) => setDraft({ ...draft, customerSegments: e.target.value })} placeholder="Ex. entreprises, collectivités" /></label>
@@ -664,7 +670,7 @@ function ProspectDetailV2({ prospect, actions, activity, mode, onRefresh, onClos
   return <aside className={`panel prospect-detail-panel prospect-detail-v2 prospect-detail-desk prospect-temperature-${prospect.temperature ?? 'neutral'}`}>
     <div className="detail-panel-heading">
       <div className="prospect-detail-identity-head"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} size="large" /><div><span className="eyebrow">Fiche de travail prospect</span><h2>{prospect.displayName}</h2><div className="prospect-header-meta"><span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span>{prospect.source && <span className="status-pill">{SOURCE_LABELS[prospect.source]}{prospect.source === 'other' && prospect.sourceDetail ? ` · ${prospect.sourceDetail}` : ''}</span>}</div></div></div>
-      <div className="detail-heading-actions"><button className="secondary-button" type="button" onClick={() => void window.atoumweb.app.openProspectReferenceWindow(prospect.id)}>Détacher la référence</button><button className="close-detail" type="button" aria-label="Fermer la fiche prospect" onClick={onClose}>×</button></div>
+      <div className="detail-heading-actions"><button className="secondary-button" type="button" onClick={() => void window.atoumweb.app.openProspectReferenceWindow(prospect.id)}>Ouvrir la référence dans une fenêtre</button><button className="close-detail" type="button" aria-label="Fermer la fiche prospect" onClick={onClose}>×</button></div>
     </div>
 
     <div className="prospect-desk-tabs" role="tablist" aria-label="Fiche prospect">
@@ -674,7 +680,7 @@ function ProspectDetailV2({ prospect, actions, activity, mode, onRefresh, onClos
 
     <div className="prospect-desk-content">
       {deskTab === 'reference' ? <>
-        <div className="reference-tab-intro"><div><strong>Connaissance entreprise</strong><span>Informations préparées dans l’annuaire, accessibles et modifiables sans quitter le suivi commercial.</span></div><button type="button" className="secondary-button" onClick={() => void window.atoumweb.app.openProspectReferenceWindow(prospect.id)}>Ouvrir sur un autre écran</button></div>
+        <div className="reference-tab-intro"><div><strong>Connaissance entreprise</strong><span>Informations préparées dans l’annuaire, accessibles et modifiables sans quitter le suivi commercial.</span></div></div>
         <ProspectWorkAccordion title="Entreprise & contacts" summary={prospect.secondaryLabel || 'Contact à compléter'} defaultOpen>
           <div id={`prospect-identity-${prospect.id}`} className="prospect-target-section"><ProspectIdentityPanel prospect={prospect} focusRequest={identityFocus} onSaved={() => onRefresh('Informations du prospect mises à jour.')} /></div>
         </ProspectWorkAccordion>
@@ -712,6 +718,8 @@ function ProspectDetailV2({ prospect, actions, activity, mode, onRefresh, onClos
         {prospect.stage === 'need_identified' && <ProspectWorkAccordion title="Besoin / projet" summary={prospect.primaryNeed || prospect.projectSummary || 'Besoin à préciser'} defaultOpen>
           <div id={`prospect-need-${prospect.id}`} className="prospect-target-section"><ProspectNeedsPanel prospectId={prospect.id} onChanged={() => onRefresh()} /></div>
         </ProspectWorkAccordion>}
+
+        {prospect.stage==='need_identified'&&<ProspectPreQuoteReviewPanel prospect={prospect} onChanged={onRefresh}/>}
 
         {quoteVisible && <ProspectWorkAccordion title="Devis" summary={STAGE_LABELS[prospect.stage ?? 'quote_to_prepare']} defaultOpen={['quote_to_prepare','quote_to_send','quote_sent','follow_up','negotiation'].includes(prospect.stage ?? '')}>
           <ProspectQuotePanel prospect={prospect} onChanged={onRefresh} />

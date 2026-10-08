@@ -281,6 +281,18 @@ const api: AtoumWebApi = {
     setOfferComponents: (offerVersionId: string, components: OfferComponentInput[]) => ipcRenderer.invoke('catalog:set-offer-components', offerVersionId, components),
   },
 
+  contractTypes: {
+    list: archived => ipcRenderer.invoke('contract-types:list',archived),
+    get: id => ipcRenderer.invoke('contract-types:get',id),
+    create: (code,input) => ipcRenderer.invoke('contract-types:create',code,input),
+    createVersion: (id,input) => ipcRenderer.invoke('contract-types:create-version',id,input),
+    updateDraft: (id,input) => ipcRenderer.invoke('contract-types:update-draft',id,input),
+    publish: id => ipcRenderer.invoke('contract-types:publish',id),
+    setStatus: (id,status) => ipcRenderer.invoke('contract-types:status',id,status),
+    catalog: id => ipcRenderer.invoke('contract-types:catalog',id),
+    setCatalog: (id,ids) => ipcRenderer.invoke('contract-types:set-catalog',id,ids),
+    initialize: () => ipcRenderer.invoke('contract-types:initialize'),
+  },
   contractTerms: {
     library: {
       list: (includeArchived?: boolean) => ipcRenderer.invoke('contract-terms:library:list', includeArchived),
@@ -294,6 +306,7 @@ const api: AtoumWebApi = {
     },
   quotes: {
       get: (quoteId: string) => ipcRenderer.invoke('contract-terms:quotes:get', quoteId),
+      presentation: quoteId => ipcRenderer.invoke('contract-terms:quotes:presentation',quoteId),
       sync: (quoteId: string) => ipcRenderer.invoke('contract-terms:quotes:sync', quoteId),
       addCustom: (quoteId: string, input: QuoteContractClauseInput) => ipcRenderer.invoke('contract-terms:quotes:add-custom', quoteId, input),
       updateClause: (id: string, input: QuoteContractClauseUpdate) => ipcRenderer.invoke('contract-terms:quotes:update-clause', id, input),
@@ -301,6 +314,7 @@ const api: AtoumWebApi = {
       removeCustom: (id: string) => ipcRenderer.invoke('contract-terms:quotes:remove-custom', id),
       reorder: (quoteId: string, clauseIds: string[]) => ipcRenderer.invoke('contract-terms:quotes:reorder', quoteId, clauseIds),
     },
+    previewReference: (typeId,typeVersionId,versionId,audience) => ipcRenderer.invoke('contract-terms:preview-reference',typeId,typeVersionId,versionId,audience),
     copyText: (text: string) => ipcRenderer.invoke('contract-terms:copy-text', text),
   },
   quotePreparation: {

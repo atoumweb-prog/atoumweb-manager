@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { QuoteDetail, QuoteLine } from '../../shared/commercial';
-import { quoteContractText } from '../../shared/contractTerms';
+import { ContractReadPanel } from './ContractReadPanel';
+import type { ContractPresentation } from '../../shared/contractPresentation';
 
 function money(cents: number): string {
   return `${(cents / 100).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} €`;
@@ -24,7 +25,7 @@ export function QuoteClientPreview({ quote, onClose }: { quote: QuoteDetail; onC
   const [generating, setGenerating] = useState(false);
   const [pdfPath, setPdfPath] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
-  const [contractText, setContractText] = useState(quote.contractTextSnapshot ?? '');
+  const [presentation,setPresentation]=useState<ContractPresentation|null>(null);
 
   useEffect(() => {
     let active = true;
@@ -33,9 +34,10 @@ export function QuoteClientPreview({ quote, onClose }: { quote: QuoteDetail; onC
         const build = quote.status === 'draft' && !quote.finalizedAt
           ? await window.atoumweb.contractTerms.quotes.sync(quote.id)
           : await window.atoumweb.contractTerms.quotes.get(quote.id);
-        if (active) setContractText(quoteContractText(build));
+        const next=await window.atoumweb.contractTerms.quotes.presentation(quote.id);
+        if (active) setPresentation(next);
       } catch {
-        if (active) setContractText(quote.contractTextSnapshot ?? '');
+        if (active) setPdfError('Consultation du contrat impossible. Aucun contenu de remplacement recalculé.');
       }
     };
     void load();
@@ -112,7 +114,7 @@ export function QuoteClientPreview({ quote, onClose }: { quote: QuoteDetail; onC
             <h2>Conditions</h2>
             <div><span>Délai estimé</span><strong>{quote.estimatedDelay || 'À définir ensemble'}</strong></div>
             {quote.prerequisitesText && <div><span>Prérequis</span><p>{quote.prerequisitesText}</p></div>}
-            {contractText && <div className="quote-document-cgv"><span>Conditions Générales de Vente</span><p style={{ whiteSpace: 'pre-wrap' }}>{contractText}</p></div>}
+            {presentation&&<ContractReadPanel presentation={presentation} copy={false}/>}
           </section>
 
           <footer className="quote-document-footer"><strong>AtoumWeb</strong><span>www.atoumweb.fr</span></footer>

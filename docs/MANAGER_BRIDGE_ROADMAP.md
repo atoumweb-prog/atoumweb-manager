@@ -2,17 +2,17 @@
 
 Date d'ouverture : 27/09/2026.
 
-## 0. État courant et lecture de la roadmap — 08/10/2026
+## 0. État courant et lecture de la roadmap — 09/10/2026
 
-**Manager consolidé : `fix/pre-phase5-commercial-ux`, checkpoint fonctionnel validé `8662c3fbeaf2e3b26a68cffa779422f395edd400`.** Phase 7 est intégrée. Projet V2, Sites/Pages/compositions, contrats/Builder CGV, Catalogue 112, opérations et statistiques/rentabilité sont présents ; migrations **1–65**.
+**Manager officiel : main.** PR #79 fusionnée normalement (8e05a47296d478587b11841e36ca5acb2e936726). Le checkpoint contenant cette entrée publie l’évolution contractuelle et les corrections UX de la recette, après autorisation AtoumWeb ; fix/pre-phase5-commercial-ux et le checkpoint 1–65 sont historiques.
 
-Dernière validation après port : **typecheck OK, 56/56 ciblés, 670/670 complets, 55/55 UI sur trois thèmes, intégrité SQLite OK, foreign_key_check vide**. Le réemploi guidé Projet → copie indépendante → adaptation humaine → création volontaire avec provenance est porté sur le backend actuel ; #62 ne doit pas être fusionnée. #68 reste un prototype commercial .atoum V0.2 historique non intégré, distinct des packages techniques actuels et non bloquant.
+Projet V2, Sites/Pages/compositions, Devis/contrats/Builder CGV, Catalogue 112, opérations et Phase 7 Statistiques/Rentabilité intégrés. **Migrations 1–66** : types/compositions versionnés et liens aux versions Catalogue, sans copie des textes ni réécriture des snapshots acceptés. Validation-MSI : 13 types draft /112 liens ; références existantes conservées.
 
-Abby reste manuel et les clauses n’ont aucune validation juridique globale. Validation-MSI est TEST/non productive. Bridge WordPress, Lot 8C et les futurs lots restent séparés du Manager consolidé ; cette synchronisation n’autorise aucun travail plugin.
+Derniers contrôles : **typecheck OK, 695/695 tests, UI 134 natifs +37 Prospection +21 préparation +20 options sur trois thèmes ; intégrité SQLite OK/FK vide**. Corrections UX dans PROJECT_STATUS ; recette manuelle AtoumWeb en cours. Lanceur local : **C:/DEV/Lanceurs/AtoumWeb-Recette-Validation-MSI.cmd**, sources via npm start. Ancien package du 29/09 obsolète ; ce push n’est pas un rebuild/installateur.
 
-**Prochaine étape Git : PR finale `fix/pre-phase5-commercial-ux` → `main`**, après accord de push. Aucun push, création de PR ou merge dans cette passe documentaire. README, HANDOFF MSI, PROJECT_STATUS et AGENTS définissent la reprise actuelle.
+Abby manuel ; aucune validation juridique globale. Validation-MSI TEST/non productive, mutable, dossier humain conservé ; tests sur fixtures/bases temporaires. Pas de nouvelle publication/activation par ce checkpoint. Réemploi #62 porté sélectivement, ancienne branche non fusionnée ; #68 .atoum V0.2 prototype historique non intégré. Bridge WordPress/8C et futurs chantiers séparés.
 
-Les checkpoints qui suivent conservent l’historique. Les anciens SHA, branches actives, migrations et consignes valent à leur date uniquement. Les sections d’architecture décrivent les décisions successives et ne donnent pas une nouvelle autorisation de développement.
+**Autorisation Git du 09/10 : commit/push sur main des sources et fichiers de liaison.** Pas de merge ni nouveau lot métier. Prochaine action : poursuivre la recette manuelle avec le bon lanceur. Les anciens checkpoints valent à leur date ; ne pas réutiliser leurs SHA/comptages comme état actuel de la base.
 
 ### Historique des checkpoints antérieurs
 
@@ -509,6 +509,35 @@ Recette de référence : trois composants Manager, ajouts natifs Divi, déplacem
 Critère métier : terminer librement une Page dans Divi, puis comprendre dans Manager ce qui a changé, où et pourquoi, sans reconstruire la Page ni interpréter des UUID.
 
 ## 16. Journal partagé des consignes, décisions et validations
+
+### 08/10/2026 — CONTRATS-APERCUS-SOCLES — retour UX et réalisation
+
+- AtoumWeb demande la consultation du contrat de base pour tous les socles, pas seulement Vitrine : CGV communes + prestation de base, modules complémentaires selon les éléments réellement vendus.
+- Aperçu générique pour les 13 types dans la Bibliothèque contractuelle, par référence Catalogue et audience, réutilisant le résolveur Devis et la restitution commune. Aucun Devis fictif persisté ou publication ; options disponibles exclues. Les textes courants consultés ne remplacent aucun snapshot accepté.
+- Typecheck OK, ciblés 32/32, complets 687/687, UI trois thèmes 106/106. Bases temporaires seulement ; Validation-MSI garde 13 types/112 rattachements, schéma 1–66, zéro dossier. Aucun travail Bridge/8C ni commit/push/merge.
+- Prochaine action : lecture des contrats types par AtoumWeb depuis le vrai Manager, après rechargement normal des API Electron ; pas de recette globale.
+
+
+
+### 08/10/2026 — CONTRATS-TYPES-66-APPLICATION — validation et réalisation
+
+- AtoumWeb valide les 13 types et les 112 rattachements avec seul renommage « Maintenance WordPress & WooCommerce », sans autre classification/composition ; interdit une nouvelle sauvegarde et demande le démarrage normal sans recette globale.
+- 15/15 tests ciblés, migration 66 appliquée sous verrou sur Validation-MSI ; 13 types/versions draft et 112 rattachements, zéro publication et zéro dossier créé. Comparaison avec la préparation : seuls le libellé validé et les nouveaux IDs/dates réels diffèrent ; 118 clauses/409 liens et anciennes références conservés.
+- Intégrité ok/FK vide, rejeu neutre. Sauvegarde existante conservée/réutilisée, aucun fichier de sauvegarde ajouté. Démarrage normal autorisé ; aucune nouvelle recette ni travail Bridge/8C. Pas de nouveau commit/push/merge.
+- Prochaine action/responsable : AtoumWeb réalise sa recette manuelle depuis les vues Devis et Bibliothèque contractuelle. L’ancienne consigne de ne pas démarrer avant application de 66 est levée par cette autorisation.
+
+
+
+### 08/10/2026 — CONTRATS-TYPES-66 — autorisation et préparation locale
+
+- Origine : AtoumWeb valide les quatre structures de types versionnés et demande la reprise des quatre fichiers locaux après interruption, sans réécriture du travail correct. Rattachement aux versions Catalogue, pas au seul article ; aucune conversion de legacy « test ».
+- Base : main@8e05a47296d478587b11841e36ca5acb2e936726. Migration 66 additive préparée/testée uniquement hors Validation-MSI ; 118 clauses et 409 liens, modèles, blueprints et anciennes données conservés sur copie. Les prestations vendues continuent seules à déclencher leurs modules, avec déduplication/orphelines et snapshot inchangé.
+- Réalisation locale : Bibliothèque contractuelle depuis Documents, navigation Catalogue, types/modules administrables et versionnés, lecture Devis et copies/PDF à partir d’une présentation commune. Aucune deuxième bibliothèque de textes, pas de contrat séparé du Devis. Initialisation depuis les familles réelles, 13 types draft et 112 rattachements préparés sur copie ; rejeu neutre.
+- Contrôles : typecheck OK, ciblés 85/85, complets 684/684, UI ciblée 106/106 sur trois thèmes, banc Builder 21/21. Capture PDF limitée au vrai endpoint système, intercepté à la frontière OS pendant le harness ; aucun lecteur externe lancé sur des fichiers utilisateur.
+- Statut/limite : Validation-MSI en 1–65, zéro dossier et SHA inchangé ; Manager fermé. Registre local contenant 66 : ne pas lancer Manager sur cette base tant que l’application n’a pas été validée séparément. Aucun commit/push/merge, aucune déclaration de conformité juridique ni travail Bridge/8C.
+- Prochaine action/responsable : bilan à AtoumWeb et validation avant migration réelle ; aucun test permanent ajouté à Validation-MSI.
+
+
 
 ### 08/10/2026 — Synchronisation documentaire avant PR finale main
 
@@ -2226,3 +2255,15 @@ Migrations63–65 appliquées après sauvegardes et tests ; état courant :112mo
 Résultats corrigés en recette : moduleWoo/section avec Siteactif mais parentPagepending diffère la matérialisation ; parent exact àcréation et préservation après usage. GBPétablissement supplémentaire réutilise la souscription principale, avec routines/provenance/cible propres. Estimation requise ne copie pas la référence du cadrage comme estimationfinale.
 
 Dernière suite complète653/653 +typecheckOK ; vraie UI, preload etIPC pour la recette112, dossiersTEST et piècesPDFfictives, compteur final encore en cours. Aucun oracle Validation-MSI ni suite normale dépendante de la base. Aucun commit/push/merge. Prochaine action : terminer la recette et rendre la matrice avec anomalies/limites et commitproposé.
+
+
+### 09/10/2026 — UX-RECETTE-PROSPECT-CONTRAT-01 (Codex, résultat local)
+
+Autorisation AtoumWeb : corriger les captures de la recette manuelle, puis rendre les contrôles juridiques incomplets navigables jusqu’au champ. Base main@8e05a472 ; migration 66 déjà validée/appliquée, aucun schéma nouveau. Prefill descriptif des seules versions vendues, décisions juridiques explicites conservées, événements convenus admis pour les jalons, brouillons incomplets sauvegardables mais non finalisables, snapshots figés. Prospection : absence de Site, Offres/Services, alias d’affichage, contenus repliables, contrôle indépendant, décisionnaire inline, fenêtre détachée cohérente et scrollable.
+
+Typecheck /695 tests OK ; UI 134 natifs +37 Prospection +21 préparation +20 options sur trois thèmes. Tests isolés ; Validation-MSI contrôlée readonly, intégrité/FK correctes, recette humaine conservée. Aucun commit/push/merge, publication, nouvelle sauvegarde ou travail Bridge/8C. Prochaine action : charger le backend corrigé par redémarrage normal après enregistrement de la saisie utilisateur, puis laisser AtoumWeb poursuivre sa recette manuelle.
+
+
+### 09/10/2026 — GIT-LIAISON-MANAGER-01 (Codex, autorisation / checkpoint)
+
+AtoumWeb demande la mise à jour GitHub et des fichiers de liaison sur l’état du Manager. Base main@8e05a472, origin/main identique après fetch ; aucune nouvelle fonctionnalité développée pendant cette publication. Checkpoint des 61 fichiers code/tests/documentation de la Bibliothèque contractuelle, migration 66 et recette UX, contrôles 695 tests/typecheck et UI trois thèmes déjà verts. README, HANDOFF MSI, PROJECT_STATUS et roadmap alignés : main, 1–66, recette humaine en cours, lanceur local npm start et package ancien obsolète. SQLite/sauvegardes/captures/outputs et données TEST exclus de Git. Push normal après revue ; aucun merge, build MSI, activation ou travail Bridge/8C. Le commit contenant cette entrée est la référence Git de reprise.

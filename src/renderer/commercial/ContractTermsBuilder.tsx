@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CatalogItemSummary, QuoteDetail } from '../../shared/commercial';
-import { quoteContractText } from '../../shared/contractTerms';
+import { commercialAbbyBlock } from '../../shared/commercialAbby';
+import { ContractReadPanel } from './ContractReadPanel';
+import type { ContractPresentation } from '../../shared/contractPresentation';
 import type {
   ContractClauseAudience,
   ContractClauseScope,
@@ -32,7 +34,8 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [copied, setCopied] = useState(false);
+  const presentationRequest=useRef(0);
+  const [presentation,setPresentation]=useState<ContractPresentation|null>(null);
   const [showLibrary, setShowLibrary] = useState(false);
   const [showCustom, setShowCustom] = useState(false);
   const [customTitle, setCustomTitle] = useState('');
@@ -46,7 +49,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   const [versionEditors, setVersionEditors] = useState<Record<string, string | undefined>>({});
 
   const editable = quote.status === 'draft' && !quote.finalizedAt && !quote.contractCompiledAt && quote.contractTextSnapshot == null && quote.contractSnapshotJson == null;
-  const textForAbby = build ? quoteContractText(build) : '';
+  const unsaved=build?.clauses.some(c=>drafts[c.id]&&(drafts[c.id].title!==c.title||drafts[c.id].body!==c.body))??false;
 
   const counts = useMemo(() => {
     const clauses = build?.clauses ?? [];
@@ -59,6 +62,9 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
 
   function setBuildAndDrafts(next: QuoteContractBuild): void {
     setBuild(next);
+    const request=++presentationRequest.current;
+    setPresentation(null);
+    void window.atoumweb.contractTerms.quotes.presentation(quote.id).then(value=>{if(request===presentationRequest.current)setPresentation(value);}).catch(e=>{if(request===presentationRequest.current)setError(errorMessage(e));});
     setDrafts(Object.fromEntries(next.clauses.map((clause) => [
       clause.id,
       { title: clause.title, body: clause.body },
@@ -153,21 +159,6 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     setCustomTitle('');
     setCustomBody('');
     setShowCustom(false);
-  }
-
-  async function copyForAbby(): Promise<void> {
-    if (!textForAbby) {
-      setError('Aucun texte de CGV à copier.');
-      return;
-    }
-    setError('');
-    try {
-      await window.atoumweb.contractTerms.copyText(textForAbby);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
-    } catch (cause) {
-      setError(errorMessage(cause));
-    }
   }
 
   async function createTemplate(): Promise<void> {
@@ -286,7 +277,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
       <div className="cgv-builder-heading">
         <div>
           <span className="eyebrow">Devis contractuel</span>
-          <h3>Builder Conditions Générales de Vente</h3>
+          <h3>Contrat & CGV du devis</h3>
           <p className="muted">Le socle AtoumWeb et les clauses liées aux prestations sont assemblés ici, puis copiés dans le champ CGV d’Abby.</p>
         </div>
         <div className="cgv-builder-heading-actions">
@@ -307,6 +298,8 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
       {build?.warnings.map((warning) => <div className="cgv-warning" key={warning}>{warning}</div>)}
       {error && <p className="form-error" role="alert">{error}</p>}
 
+      {presentation&&<ContractReadPanel presentation={presentation} commercial={commercialAbbyBlock(quote)} unsaved={unsaved}/>}
+      <details className="cgv-editing"><summary>Adapter les clauses de ce devis</summary>
       <div className="cgv-clause-list">
         {build?.clauses.map((clause, index) => {
           const draft = drafts[clause.id] ?? { title: clause.title, body: clause.body };
@@ -358,14 +351,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
             </div>}
       </div>}
 
-      <div className="cgv-output">
-        <div className="cgv-output-heading">
-          <div><strong>Texte final pour Abby</strong><span>{build?.snapshotState === 'historical_missing' ? 'Absence historique conservée' : build?.snapshotState === 'frozen' ? 'Snapshot contractuel figé' : 'Aperçu actuel du builder'}</span></div>
-          <button className="primary-button" type="button" disabled={!textForAbby} onClick={() => void copyForAbby()}>{copied ? '✓ Copié' : '📋 Copier pour Abby'}</button>
-        </div>
-        <textarea readOnly value={textForAbby} placeholder="Les CGV assemblées apparaîtront ici." />
-      </div>
-
+      </details>
       {showLibrary && <div className="cgv-library">
         <div className="cgv-library-heading">
           <div><strong>Bibliothèque CGV AtoumWeb</strong><span>Les versions publiées alimentent les devis brouillons. Les devis déjà finalisés ne changent jamais.</span></div>

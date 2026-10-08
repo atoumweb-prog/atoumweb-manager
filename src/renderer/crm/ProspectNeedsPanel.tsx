@@ -8,9 +8,9 @@ import {
   type ProspectInformationItem,
   type ProspectInformationStatus,
 } from '../../shared/prospectInformation';
-import { ProspectPreQuoteReview } from './ProspectPreQuoteReview';
+import {CommercialScope} from '../commercial/CommercialScope';
+import {catalogueFamilyLabel,catalogueIsOffer} from '../commercial/catalogDisplay';
 
-const CATEGORY_ORDER = ['Web', 'E-commerce', 'Maintenance', 'Contenu', 'SEO / Visibilité', 'Visibilité', 'Identité visuelle', 'Création', 'Applications & outils métier', 'Applications', 'Mariage'];
 
 const BUDGET_PRESETS = [
   ['not_disclosed', 'Non communiqué'],
@@ -41,25 +41,19 @@ function cleanError(error: unknown): string {
     .trim();
 }
 
-function sortedCategories(items: CatalogItemSummary[]) {
-  const values = Array.from(new Set(items.map((item) => item.category || 'Autre')));
-  return values.sort((a, b) => {
-    const ai = CATEGORY_ORDER.indexOf(a);
-    const bi = CATEGORY_ORDER.indexOf(b);
-    if (ai === -1 && bi === -1) return a.localeCompare(b, 'fr');
-    if (ai === -1) return 1;
-    if (bi === -1) return -1;
-    return ai - bi;
-  });
-}
+function sortedCategories(items:CatalogItemSummary[]){return [...new Set(items.map(catalogueFamilyLabel))].sort((a,b)=>a.localeCompare(b,'fr'));}
+function KindTabs({kind,onChange}:{kind:'offers'|'services';onChange:(kind:'offers'|'services')=>void}){return <div className="prospect-desk-tabs" role="tablist" aria-label="Type de prestation"><button type="button" role="tab" aria-selected={kind==='offers'} className={kind==='offers'?'active':''} onClick={()=>onChange('offers')}>Offres</button><button type="button" role="tab" aria-selected={kind==='services'} className={kind==='services'?'active':''} onClick={()=>onChange('services')}>Services et compléments</button></div>;}
 
 export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onChange: (next: NeedInput[]) => void }) {
   const [catalog, setCatalog] = useState<CatalogItemSummary[]>([]);
   const [category, setCategory] = useState('Web');
   const [selectedId, setSelectedId] = useState('');
   const [otherText, setOtherText] = useState('');
-  const categories = useMemo(() => sortedCategories(catalog), [catalog]);
-  const choices = useMemo(() => catalog.filter((item) => (item.category || 'Autre') === category), [catalog, category]);
+  const [kind,setKind]=useState<'offers'|'services'>('offers');
+  const availableByKind=catalog.filter(item=>catalogueIsOffer(item)===(kind==='offers'));
+  const categories=sortedCategories(availableByKind);
+  const selectedCategory=categories.includes(category)?category:categories[0]??'';
+  const choices=availableByKind.filter(item=>catalogueFamilyLabel(item)===selectedCategory).sort((a,b)=>a.name.localeCompare(b.name,'fr'));
 
   useEffect(() => { void window.atoumweb.catalog.list({ status: 'active' }).then((items) => setCatalog(items.filter((item) => Boolean(item.currentVersion)))); }, []);
 
@@ -86,8 +80,8 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
       const item = need.catalogItemId ? catalog.find((candidate) => candidate.id === need.catalogItemId) : null;
       return <span className="need-chip" key={`${need.catalogItemId ?? 'other'}-${index}`}>{item ? `${item.type === 'offer' ? 'Offre' : 'Service'} · ${item.name}` : `Autre · ${need.otherText}`}<button type="button" aria-label="Retirer" onClick={() => onChange(value.filter((_, i) => i !== index))}>×</button></span>;
     })}</div>}
-    <div className="need-add-row">
-      <label>Catégorie<select value={category} onChange={(e) => { setCategory(e.target.value); setSelectedId(''); }}>{categories.map((name) => <option key={name} value={name}>{name}</option>)}</select></label>
+    <KindTabs kind={kind} onChange={k=>{setKind(k);setCategory('');setSelectedId('');}}/><div className="need-add-row">
+      <label>Catégorie<select value={selectedCategory} onChange={(e) => { setCategory(e.target.value); setSelectedId(''); }}>{categories.map((name) => <option key={name} value={name}>{name}</option>)}</select></label>
       <label>Prestation<select value={selectedId} onChange={(e) => setSelectedId(e.target.value)}><option value="">Choisir…</option>{choices.map((item) => <option key={item.id} value={item.id}>{item.type === 'offer' ? 'Offre' : 'Service'} · {item.name}</option>)}<option value="other">Autre besoin</option></select></label>
       {selectedId === 'other' && <label>Préciser<input value={otherText} onChange={(e) => setOtherText(e.target.value)} /></label>}
       <button type="button" className="secondary-button" onClick={add} disabled={!selectedId || (selectedId === 'other' && !otherText.trim())}>Ajouter</button>
@@ -178,8 +172,11 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  const categories = useMemo(() => sortedCategories(catalog), [catalog]);
-  const choices = useMemo(() => catalog.filter((item) => (item.category || 'Autre') === category), [catalog, category]);
+  const [kind,setKind]=useState<'offers'|'services'>('offers');
+  const availableByKind=catalog.filter(item=>catalogueIsOffer(item)===(kind==='offers'));
+  const categories=sortedCategories(availableByKind);
+  const selectedCategory=categories.includes(category)?category:categories[0]??'';
+  const choices=availableByKind.filter(item=>catalogueFamilyLabel(item)===selectedCategory).sort((a,b)=>a.name.localeCompare(b.name,'fr'));
   const selectedItem = catalog.find((item) => item.id === selectedId) ?? null;
 
   async function load() {
@@ -310,7 +307,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
     setOtherText(need.otherText ?? '');
     if (need.catalogItemId) {
       const item = catalog.find((candidate) => candidate.id === need.catalogItemId);
-      if (item) setCategory(item.category || 'Autre');
+      if(item){setCategory(catalogueFamilyLabel(item));setKind(catalogueIsOffer(item)?'offers':'services');}
     }
   }
 
@@ -326,17 +323,18 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
     <div className="need-current-list">{needs.map((need) => {
       const item = need.catalogItemId ? catalog.find((candidate) => candidate.id === need.catalogItemId) : null;
       const version = item?.currentVersion;
-      return <div className="need-current-row need-solution-card" key={need.id}><div><span className="eyebrow">{item ? (item.type === 'offer' ? 'Offre envisagée' : 'Prestation envisagée') : 'Besoin spécifique'}</span><strong>{need.label}</strong>{version && <><small className="need-price">{priceLabel(version)}</small>{version.inclusions && version.inclusions.length > 0 && <div className="offer-inclusions"><span>Socle inclus</span>{version.inclusions.map((entry) => <small key={entry}>✓ {entry}</small>)}</div>}</>}</div><div className="need-row-actions"><button className="secondary-button compact-button" type="button" onClick={() => editNeed(need)}>Modifier</button><button className="secondary-button compact-button" type="button" disabled={busy} onClick={() => void remove(need.id)}>Retirer</button></div></div>;
+      return <div className="need-current-row need-solution-card" key={need.id}><div><strong className="need-name">{need.label}</strong>{version&&<small className="need-price">{priceLabel(version)}</small>}<details className="need-description"><summary>Voir le contenu et les compléments</summary><CommercialScope version={version}/></details></div><div className="need-row-actions"><button className="secondary-button compact-button" type="button" onClick={()=>editNeed(need)}>Modifier</button><button className="secondary-button compact-button" type="button" disabled={busy} onClick={()=>void remove(need.id)}>Retirer</button></div></div>;
     })}</div>
 
     <div className="need-add-block">
       <div className="need-selector-title"><strong>{editingId ? 'Modifier la solution' : 'Ajouter une offre / prestation au besoin'}</strong><small>Une sélection, un seul bouton de validation.</small></div>
+      <KindTabs kind={kind} onChange={k=>{setKind(k);setCategory('');setSelectedId('');}}/>
       <div className="need-add-row">
-        <label>Famille de solution<select value={category} onChange={(e) => { setCategory(e.target.value); setSelectedId(''); setOtherText(''); }}>{categories.map((name) => <option key={name} value={name}>{name}</option>)}</select></label>
+        <label>Famille de solution<select value={selectedCategory} onChange={(e) => { setCategory(e.target.value); setSelectedId(''); setOtherText(''); }}>{categories.map((name) => <option key={name} value={name}>{name}</option>)}</select></label>
         <label>Offre / prestation envisagée<select value={selectedId} onChange={(e) => setSelectedId(e.target.value)}><option value="">Choisir…</option>{choices.map((item) => <option key={item.id} value={item.id}>{item.name} · {priceLabel(item.currentVersion)}</option>)}<option value="other">Autre / sur mesure</option></select></label>
         {selectedId === 'other' && <label>Préciser<input value={otherText} onChange={(e) => setOtherText(e.target.value)} placeholder="Décrire le besoin spécifique" /></label>}
       </div>
-      {selectedItem?.currentVersion && <div className="selected-offer-preview"><div><span className="eyebrow">{selectedItem.type === 'offer' ? 'Offre' : 'Prestation'}</span><strong>{selectedItem.name}</strong><small>{priceLabel(selectedItem.currentVersion)}</small></div>{selectedItem.currentVersion.description && <p>{selectedItem.currentVersion.description}</p>}{selectedItem.currentVersion.inclusions && selectedItem.currentVersion.inclusions.length > 0 && <div className="offer-inclusions"><span>Ce que comprend actuellement le catalogue</span>{selectedItem.currentVersion.inclusions.map((entry) => <small key={entry}>✓ {entry}</small>)}</div>}</div>}
+      {selectedItem?.currentVersion&&<div className="selected-offer-preview"><strong>{selectedItem.name}</strong><small>{priceLabel(selectedItem.currentVersion)}</small><CommercialScope version={selectedItem.currentVersion}/></div>}
       <div className="inline-editor-actions">{editingId && <button type="button" className="secondary-button" onClick={() => { setEditingId(undefined); setSelectedId(''); setOtherText(''); }}>Annuler</button>}<button type="button" className="primary-button" disabled={busy || (!selectedId && !otherText.trim()) || (selectedId === 'other' && !otherText.trim())} onClick={() => void saveNeed()}>{editingId ? 'Enregistrer la modification' : 'Ajouter au besoin'}</button></div>
     </div>
 
@@ -382,7 +380,6 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
       </div>
     </div>
 
-    {prospect && <ProspectPreQuoteReview prospect={prospect} needs={needs} catalog={catalog} onChanged={() => { void load(); onChanged?.(); }} />}
     {needs.length === 0 && <p className="muted">Commence par sélectionner au moins une solution ou prestation envisagée. Rien n’est encore envoyé au devis à ce stade.</p>}
   </section>;
 }

@@ -1,3 +1,4 @@
+import { contractPresentationFromSnapshot, contractPresentationHtml, type ContractPresentation } from '../../shared/contractPresentation';
 import { BrowserWindow } from 'electron';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -79,25 +80,8 @@ function lineHtml(line: QuoteLine): string {
     </section>`;
 }
 
-function frozenPreparationHtml(quote: QuoteDetail): string {
-  if (!quote.contractSnapshotJson) return '';
-  const snapshot=JSON.parse(quote.contractSnapshotJson) as {parameters?:import('../../shared/quoteContractPreparation').QuoteContractParameters;schedule?:{label:string;event:string;dueDate:string|null;percent:number;amountCents:number}[]};
-  if(!snapshot.parameters)return '';
-  const p=snapshot.parameters;
-  const row=(label:string,value:string)=>`<div class="condition"><span>${escapeHtml(label)}</span><p>${escapeHtml(value)}</p></div>`;
-  return `<section class="conditions"><h2>Paramètres contractuels convenus</h2>`+
-    row('Paiement initial',p.initialPayment.qualification==='acompte'?'Acompte':'Arrhes')+
-    (snapshot.schedule??[]).map(m=>row(m.label,`${m.percent} % · ${money(m.amountCents)} · ${m.dueDate ? date(m.dueDate) : m.event}`)).join('')+
-    row('Exécution',p.milestones.map(m=>`${m.label} · ${date(m.date)}`).join(' ; '))+
-    row('Conclusion',`${p.audience==='consumer'?'Consommateur':'Professionnel'} · ${p.conclusion.channel==='distance'?'À distance':p.conclusion.channel==='off_premises'?'Hors établissement':p.conclusion.channel==='on_premises'?'En établissement':p.conclusion.otherChannelReason} · ${p.conclusion.context}`)+
-    row('Prestation',p.digital.qualificationReason+' · '+p.digital.delivery)+
-    row('Validation','Validation explicite uniquement. Le silence ne vaut pas acceptation.')+
-    p.warranties.filter(w=>w.days!==null).map(w=>row('Garantie corrective',`${w.days} jours à compter de ${w.startEvent}. Sans limitation des garanties légales applicables.`)).join('')+
-    (p.rights.applicable?row('Droits et sources',`${p.rights.uses} ; durée : ${p.rights.duration} ; territoire : ${p.rights.territory} ; sources : ${p.rights.sourceDelivery} ; exclusivité : ${p.rights.exclusivity||'aucune exclusivité particulière'}`):'')+
-    (p.renewal.applicable?row('Service récurrent',`${p.renewal.mode==='express'?'Renouvellement exprès':'Mensuel sans engagement'} ; ${p.renewal.period} ; préavis : ${p.renewal.notice} ; fin de service : ${p.renewal.termination} ; restitution : ${p.renewal.restitution}`):'')+
-    '</section>';
-}
-export function buildQuoteHtml(quote: QuoteDetail): string {
+export function buildQuoteHtml(quote: QuoteDetail, presentation?:ContractPresentation): string {
+  presentation ??= contractPresentationFromSnapshot(quote) ?? undefined;
   return `<!doctype html>
 <html lang="fr">
 <head>
@@ -162,15 +146,15 @@ export function buildQuoteHtml(quote: QuoteDetail): string {
     <h2>Conditions</h2>
     <div class="condition"><span>Délai estimé</span><strong>${escapeHtml(quote.estimatedDelay || 'À définir ensemble')}</strong></div>
     ${quote.prerequisitesText ? `<div class="condition"><span>Prérequis</span><p>${escapeHtml(quote.prerequisitesText)}</p></div>` : ''}
-    ${quote.contractTextSnapshot ? `<div class="condition"><span>CGV</span><p>${escapeHtml(quote.contractTextSnapshot).replace(/\n/g, '<br />')}</p></div>` : quote.contractTextSnapshot == null && quote.specialTerms ? `<div class="condition"><span>Conditions particulières</span><p>${escapeHtml(quote.specialTerms)}</p></div>` : ''}
+    ${presentation?contractPresentationHtml(presentation):quote.contractTextSnapshot?`<div class="condition"><span>CGV</span><p>${escapeHtml(quote.contractTextSnapshot).replace(/\n/g, '<br />')}</p></div>`:quote.contractTextSnapshot==null&&quote.specialTerms?`<div class="condition"><span>Conditions particulières historiques</span><p>${escapeHtml(quote.specialTerms)}</p></div>`:''}
   </section>
-  ${frozenPreparationHtml(quote)}
+
   <footer><strong>AtoumWeb</strong><span>www.atoumweb.fr</span></footer>
 </body>
 </html>`;
 }
 
-export async function generateQuotePdf(quote: QuoteDetail, workspace: WorkspacePaths): Promise<QuotePdfResult> {
+export async function generateQuotePdf(quote: QuoteDetail, workspace: WorkspacePaths, presentation?:ContractPresentation): Promise<QuotePdfResult> {
   if (quote.lines.length === 0) throw new Error('Impossible de générer le PDF d’un devis vide.');
 
   const directory = join(workspace.exportsDirectory, 'devis');
@@ -186,7 +170,7 @@ export async function generateQuotePdf(quote: QuoteDetail, workspace: WorkspaceP
   });
 
   try {
-    await window.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(buildQuoteHtml(quote))}`);
+    await window.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(buildQuoteHtml(quote,presentation))}`);
     const pdf = await window.webContents.printToPDF({
       pageSize: 'A4',
       printBackground: true,

@@ -18,6 +18,13 @@ afterEach(() => {
 });
 
 describe('CrmService', () => {
+  it('conserve une absence explicite de site sans fausse URL ni migration',()=>{
+    const organization=crm.createOrganization({name:'TEST fixture sans site',website:null});
+    const prospect=crm.createProspect({organizationId:organization.id,primaryNeed:'Création de site'});
+    const snapshot=crm.saveProspectResearchSnapshot(prospect.id,{source:'Saisie annuaire',website:{presence:'absent',url:null}});
+    expect(crm.getOrganization(organization.id).website).toBeNull();expect(snapshot.website?.presence).toBe('absent');expect(snapshot.website?.url).toBeNull();
+  });
+
   it('conserve la qualité de relation client et journalise ses changements', () => {
     const organization = crm.createOrganization({ name: 'Relation Test' });
     const client = crm.createClient({ organizationId: organization.id });

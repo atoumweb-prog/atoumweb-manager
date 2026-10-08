@@ -39,14 +39,14 @@ window.atoumweb={clientDocuments:{list:async()=>[{id:'doc',category:'contract',t
   create:async(input,version)=>{window.calls.create++; const t={...input,id:'t',status:'active',catalogItemIds:[],currentVersion:null,currentVersionId:null,versions:[{id:'v1',versionNumber:1,status:'draft',body:version.body}]};templates.push(t);return structuredClone(t)},
   createVersion:async(id,input)=>{window.calls.createVersion++;const t=templates.find(t=>t.id===id);const v={id:'v'+(t.versions.length+1),versionNumber:t.versions.length+1,status:'draft',body:input.body};t.versions.push(v);return structuredClone(v)},
   publishVersion:async(id)=>{window.calls.publish++;const t=templates.find(t=>t.versions.some(v=>v.id===id));t.versions.forEach(v=>{if(v.status==='published')v.status='retired'});const v=t.versions.find(v=>v.id===id);v.status='published';t.currentVersion=v;t.currentVersionId=v.id;return structuredClone(t)},
-},quotes:{get:async()=>structuredClone(build),sync:async()=>{window.calls.sync++;return structuredClone(build)}}}};
+},quotes:{presentation:async()=>({schemaVersion:1,state:build.snapshotState,compiledAt:build.compiledAt,types:[],modules:[],text:build.snapshotState==='frozen'?build.snapshotText??'':build.snapshotState==='historical_missing'?'':build.compiledText,sections:build.snapshotState==='historical_missing'||build.snapshotState==='frozen'&&!build.snapshotText?[]:[{id:'clauses',title:'Clauses',text:build.snapshotState==='frozen'?build.snapshotText:build.compiledText}]}),get:async()=>structuredClone(build),sync:async()=>{window.calls.sync++;return structuredClone(build)}}}};
 window.fixture={get templates(){return templates},get build(){return build},setBuild(v){build={...build,...v}}};
-window.renderQuote=(input={})=>root.render(<ContractTermsBuilder quote={{id:'q',status:'draft',...input}}/>);
+window.renderQuote=(input={})=>root.render(<ContractTermsBuilder quote={{id:'q',status:'draft',lines:[],number:'DEV-UI',subject:'Fixture',contractValueCents:0,...input}}/>);
 window.renderDocuments=()=>root.render(<ClientDocumentsPanel clientId="client"/>);
 window.renderImportedLibrary=()=>{
  const source=JSON.parse(${JSON.stringify(JSON.stringify(importedSource))});
  templates=source.records.map(r=>({id:r.code,code:r.code,title:r.title,scope:r.scope,audience:r.audience,status:'active',currentVersion:null,currentVersionId:null,catalogItemIds:source.links.filter(l=>l.clauseCode===r.code).map(l=>l.awCode),versions:[{id:r.code+'-v1',versionNumber:1,status:'draft',body:r.body,review:r.review}]}));
- root.render(<ContractTermsBuilder key="imported" quote={{id:'q',status:'sent'}}/>);
+ root.render(<ContractTermsBuilder key="imported" quote={{id:'q',status:'sent',lines:[],number:'DEV-UI',subject:'Fixture',contractValueCents:0}}/>);
 };
 window.renderQuote();
 `;
@@ -83,12 +83,12 @@ app.whenReady().then(async () => {
       fixture.setBuild({locked:true,snapshotState:'frozen',snapshotText:'',compiledText:'Texte futur à ne pas afficher',compiledAt:'2026-10-03'});
       renderQuote({finalizedAt:'2026-10-03',contractCompiledAt:'2026-10-03',updatedAt:'frozen'});await wait();
       assert('Snapshot vide identifié',document.body.textContent.includes('Snapshot figé · vide'));
-      assert('Aucun fallback pour snapshot vide',document.querySelector('.cgv-output textarea').value==='');
+      assert('Aucun fallback pour snapshot vide',!document.querySelector('.contract-reading-scroll').textContent.includes('Texte futur'));
       assert('Pas de synchronisation du devis figé',calls.sync===syncBefore);
       fixture.setBuild({snapshotState:'historical_missing',snapshotText:null,compiledAt:null});
       renderQuote({status:'sent',updatedAt:'historical'});await wait();
       assert('Absence historique explicite',document.body.textContent.includes('Absence historique de snapshot'));
-      assert('Pas de contrat historique reconstruit',document.querySelector('.cgv-output textarea').value===''&&calls.sync===syncBefore);
+      assert('Pas de contrat historique reconstruit',!document.querySelector('.contract-reading-scroll').textContent.includes('Texte futur')&&calls.sync===syncBefore);
       renderDocuments();await wait();await click('Supprimer définitivement');
       assert('Refus de suppression visible dans les documents Client',document.querySelector('.form-error')?.textContent.includes('suppression interdite'));
       assert('Document toujours présent après refus',document.body.textContent.includes('PDF accepté'));
