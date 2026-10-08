@@ -24,6 +24,7 @@ import type {
 import type { AtoumWebApi, DisplayDensity, ThemeName } from '../shared/contracts';
 import type { BusinessBackupFilters, BusinessBackupLocationInput, BusinessBackupRecordInput } from '../shared/businessBackups';
 import type { BusinessBackupPolicyInput, InterventionBackupRecordInput } from '../shared/businessBackupAlerts';
+import type { AnalyticsPeriodInput } from '../shared/analytics';
 import type {
   ClientContactRole,
   ClientFilters,
@@ -146,6 +147,12 @@ const api: AtoumWebApi = {
     linkExisting: (interventionId: string, backupRecordId: string, role: 'pre_intervention' | 'post_intervention' | 'reference') => ipcRenderer.invoke('business-backup-alerts:link-existing', interventionId, backupRecordId, role),
   },
   database: { health: () => ipcRenderer.invoke('database:health') },
+  analytics: {
+    financialSnapshot: (input: AnalyticsPeriodInput) => ipcRenderer.invoke('analytics:financial-snapshot', input),
+    commercialSnapshot: (input: AnalyticsPeriodInput) => ipcRenderer.invoke('analytics:commercial-snapshot', input),
+    projectTimeSnapshot: (input: AnalyticsPeriodInput) => ipcRenderer.invoke('analytics:project-time-snapshot', input),
+    definitions: () => ipcRenderer.invoke('analytics:definitions'),
+  },
   bridgeSnapshots: {
     inspectImport: () => ipcRenderer.invoke('bridge:inspect-import'),
     importSnapshot: (packagePath: string) => ipcRenderer.invoke('bridge:import', packagePath),

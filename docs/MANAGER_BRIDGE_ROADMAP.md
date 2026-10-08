@@ -4,7 +4,11 @@ Date d'ouverture : 27/09/2026.
 
 ## 0. Statut et mode d'emploi pour les agents
 
-### État courant vérifié le 07/10/2026
+### Réalignement Phase 7 vérifié le 07/10/2026
+
+La reprise de PR #71 est autorisée localement : merge normal de fix/pre-phase5-commercial-ux@4ada080 dans feature/phase-7-analytics-v1@14da58b, sans push. Trois conflits de raccord résolus, Manager consolidé conservé et Phase 7 accessible dans les Statistiques. 669 tests/typecheck OK, 35 contrôles UI sur trois thèmes. Migrations 1–65 conservées ; Validation-MSI vérifiée en lecture seule, intégrité/FK correctes. Arrêt après commit de merge local pour validation.
+
+### Checkpoint Catalogue 112 du 07/10/2026
 
 Intégration globale terminée dans Validation-MSI de développement : 94 références 8A et 18 références 8B, 112 recettes natives réussies, 655 tests et typecheck OK, diagnostic 484/484 et 783 contre-contrôles. Migrations 1–65 et rejeu des référentiels neutre. Publications et ready explicites pour TEST, aucune validation juridique globale. Codes, temps et prix convenus conservés.
 
@@ -488,6 +492,14 @@ Recette de référence : trois composants Manager, ajouts natifs Divi, déplacem
 Critère métier : terminer librement une Page dans Divi, puis comprendre dans Manager ce qui a changé, où et pourquoi, sans reconstruire la Page ni interpréter des UUID.
 
 ## 16. Journal partagé des consignes, décisions et validations
+
+### 07/10/2026 — Réalignement local PR #71
+
+- Instruction : partir de Phase 7, intégrer le nouveau HEAD cible par merge normal, préserver les fonctionnalités récentes, vérifier, puis s’arrêter avant push. Aucun rebase ou merge GitHub autorisé.
+- Réalisation : conflits ipc/preload/App résolus par conservation des raccords des deux branches. Les écrans récents restent accessibles ; ajout de l’analyse Phase 7 dans un onglet dédié, styles isolés. Sources facturation/dépenses et estimation opérationnelle adaptées sans modifier les règles commerciales, les quotas ou les durées de référence.
+- Validation technique : 669/669 tests, typecheck OK, 35/35 contrôles UI sur trois thèmes. Migrations inchangées 1–65, intégrité/FK vérifiées sur fixture et sur Validation-MSI en lecture seule. Aucune activation, nouvelle migration, modification de Validation-MSI ou travail Bridge/8C.
+- Suite : commit de merge local, bilan des conflits et état Git. Attendre la validation AtoumWeb avant push de Phase 7 ou fusion de PR #71.
+
 
 ### 07/10/2026 — Validation AtoumWeb et commit local autorisé
 

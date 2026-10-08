@@ -4,6 +4,7 @@ import { DemoService } from '../workflow/DemoService';
 import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DatabaseHealth } from '../../shared/contracts';
+import { AnalyticsService } from '../analytics/AnalyticsService';
 import { BillingHandoffService } from '../billing/BillingHandoffService';
 import { BridgeSnapshotService } from '../bridge/BridgeSnapshotService';
 import { ExpenseService } from '../expenses/ExpenseService';
@@ -53,6 +54,7 @@ export type BackupKind = 'automatic' | 'manual' | 'pre-migration';
 export class DatabaseService {
   private readonly database: DatabaseAdapter;
   private readonly existedBeforeOpen: boolean;
+  readonly analytics: AnalyticsService;
   readonly workflow: WorkflowService;
   readonly bridgeSnapshots: BridgeSnapshotService;
   readonly demo: DemoService;
@@ -99,6 +101,7 @@ export class DatabaseService {
   constructor(private readonly workspace: WorkspacePaths) {
     this.existedBeforeOpen = existsSync(workspace.databaseFile);
     this.database = new NodeSqliteAdapter(workspace.databaseFile);
+    this.analytics = new AnalyticsService(this.database);
     this.crm = new CrmService(this.database);
     this.clientContacts = new ClientContactService(this.database, this.crm);
     this.clientDocuments = new ClientDocumentService(this.database, this.workspace);

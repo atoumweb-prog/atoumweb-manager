@@ -16,9 +16,10 @@ import {
 } from '../../shared/statistics';
 import { TIME_CATEGORIES, type TimeCategory, type TimeSession } from '../../shared/time';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
+import { StatisticsPage as Phase7StatisticsPage } from '../analytics/StatisticsPage';
 import './StatisticsPage.css';
 
-type StatisticsTab = 'overview' | 'commercial' | 'production' | 'clients';
+type StatisticsTab = 'overview' | 'commercial' | 'production' | 'clients' | 'analytics';
 
 interface StatisticsData {
   prospects: ProspectSummary[];
@@ -266,8 +267,9 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         <Tab active={tab === 'commercial'} icon="user" label="Commercial" onClick={() => setTab('commercial')} />
         <Tab active={tab === 'production'} icon="folder" label="Projets & temps" onClick={() => setTab('production')} />
         <Tab active={tab === 'clients'} icon="wallet" label="Clients" onClick={() => setTab('clients')} />
+        <Tab active={tab === 'analytics'} icon="chart" label="Rentabilité & analyse détaillée" onClick={() => setTab('analytics')} />
       </div>
-      <div className="statistics-period">
+      {tab !== 'analytics' && <div className="statistics-period">
         <span>{range.label}</span>
         <select value={period} onChange={(event) => setPeriod(event.target.value as StatisticsPeriod)}>
           <option value="month">Ce mois</option>
@@ -276,8 +278,10 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
           <option value="all">Toutes les données</option>
         </select>
         <button className="secondary-button" type="button" onClick={() => void load()}><OperationIcon name="refresh" size={16} /> Actualiser</button>
-      </div>
+      </div>}
     </div>
+
+    {tab === 'analytics' && <Phase7StatisticsPage onMessage={onMessage} />}
 
     {tab === 'overview' && <>
       <div className="statistics-kpis">

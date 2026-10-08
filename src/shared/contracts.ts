@@ -13,6 +13,7 @@ import type { ProjectsApi } from './projects';
 import type { ReferentialsApi } from './referentials';
 import type { BusinessBackupsApi } from './businessBackups';
 import type { BusinessBackupAlertsApi } from './businessBackupAlerts';
+import type { AnalyticsApi } from './analytics';
 import type { TimeApi } from './time';
 import type { BridgeSnapshotsApi } from './bridgeSnapshots';
 
@@ -83,6 +84,7 @@ export interface AtoumWebApi {
   };
   businessBackups: BusinessBackupsApi;
   businessBackupAlerts: BusinessBackupAlertsApi;
+  analytics: AnalyticsApi;
   database: {
     health(): Promise<DatabaseHealth>;
   };

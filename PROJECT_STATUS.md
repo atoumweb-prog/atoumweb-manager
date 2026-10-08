@@ -1,5 +1,16 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 07/10/2026 — Réalignement local Phase 7 sur le Manager consolidé
+
+- Autorisation AtoumWeb : intégrer le HEAD de fix/pre-phase5-commercial-ux par merge normal dans feature/phase-7-analytics-v1, sans rebase, push ni fusion de PR #71. Source distante Phase 7 : 14da58bb2cc5c7bfe47f6000c670a8fd131bd8a3 ; cible intégrée : 4ada08050bd4ee40f9094b475dab04ec7083a1db. Les 44 commits spécifiques Phase 7 restent dans l’historique.
+- Trois conflits Git résolus : ipc.ts conserve Analytics et TimePauseReason ; preload.ts expose Analytics et toutes les API consolidées, dont bridgeSnapshots ; App.tsx conserve la navigation et les réglages récents. Aucun ancien écran ne remplace silencieusement un écran consolidé.
+- Les quatre vues Statistiques consolidées restent accessibles et par défaut. Phase 7 est raccordée dans « Rentabilité & analyse détaillée », avec ses périodes, comparaisons, volumes, délais, rendements et détails agrandis. Classes CSS Phase 7 isolées pour préserver les styles récents.
+- Adaptations de compatibilité : suivi facturé lu dans billing_items et dépenses dans expenses ; aucun encaissement fictif. Estimations des projets opérationnels alignées sur les tâches actives, sans conteneur ni tâche archivée, sans transformer un cadrage incomplet en estimation finale. Calcul historique conservé pour les projets sans modèle opérationnel.
+- 669/669 tests complets (77 fichiers), typecheck OK et 35/35 contrôles du vrai App/preload/IPC sur workspace temporaire, trois thèmes, sans erreur renderer. Statistiques, rendement, détails agrandis, Devis, Projets, opérations, catalogue et réglages vérifiés ; captures hors Git.
+- Migrations 1–65 identiques au Manager consolidé, aucune migration nouvelle. Validation-MSI contrôlée en lecture seule : integrity_check=ok, foreign_key_check vide, 112 AW /118 clauses /409 liens. Aucun démarrage ni modification de cette base pour la recette UI.
+- Prochaine action : clôturer le merge local puis restituer son hash, ses deux parents, le périmètre et un working tree propre. Aucun push ou merge GitHub sans nouvelle validation. Aucun travail Bridge/8C ; conservation de leurs API existantes uniquement.
+
+
 ## 07/10/2026 — Validation AtoumWeb et clôture locale autorisée
 
 - AtoumWeb valide la recette des 112 références, les 655 tests, le typecheck, les migrations 63–65, l’intégrité/FK et le rejeu neutre. Commit local autorisé : « Catalogue 112 — parcours Devis, contrat et opérations », limité aux 62 fichiers proposés, sur la branche courante. Aucun push ni merge autorisé.
