@@ -1,0 +1,319 @@
+{
+  "schemaVersion": 1,
+  "reference": "Audit Manager validé / Lot 3 / décision AtoumWeb du 03-10-2026 : nouvelles références distinctes et archives réversibles",
+  "auditDatabaseSha256": "5756168d25f3fcac9677da52919213a5953d5eb717150f3be287e7966798eb0c",
+  "entries": [
+    {
+      "itemId": "atoumweb-vitrine",
+      "canonicalCode": "AW-WEB-VITRINE",
+      "action": "update",
+      "expectedVersionId": "atoumweb-vitrine-v1"
+    },
+    {
+      "itemId": "atoumweb-landing",
+      "canonicalCode": "AW-LP-BASE",
+      "action": "update",
+      "expectedVersionId": "atoumweb-landing-v1"
+    },
+    {
+      "itemId": "atoumweb-ecommerce",
+      "canonicalCode": "AW-ECOM-BASE",
+      "action": "update",
+      "expectedVersionId": "atoumweb-ecommerce-v1"
+    },
+    {
+      "itemId": "atoumweb-mariage-essentiel",
+      "canonicalCode": "AW-MARIAGE-ESS",
+      "action": "update",
+      "expectedVersionId": "atoumweb-mariage-essentiel-v1"
+    },
+    {
+      "itemId": "atoumweb-mariage-grand-jour",
+      "canonicalCode": "AW-MARIAGE-GRAND",
+      "action": "update",
+      "expectedVersionId": "atoumweb-mariage-grand-jour-v1"
+    },
+    {
+      "itemId": "atoumweb-mariage-histoire",
+      "canonicalCode": "AW-MARIAGE-HISTOIRE",
+      "action": "update",
+      "expectedVersionId": "atoumweb-mariage-histoire-v1"
+    },
+    {
+      "itemId": "atoumweb-wordpress",
+      "canonicalCode": "AW-MAINT-WP-M",
+      "action": "update",
+      "expectedVersionId": "atoumweb-wordpress-v1"
+    },
+    {
+      "itemId": "atoumweb-woocommerce",
+      "canonicalCode": "AW-MAINT-WC-M",
+      "action": "update",
+      "expectedVersionId": "atoumweb-woocommerce-v1"
+    },
+    {
+      "itemId": "atoumweb-audit",
+      "canonicalCode": "AW-TECH-AUDIT-REPRISE",
+      "action": "update",
+      "expectedVersionId": "atoumweb-audit-v1"
+    },
+    {
+      "itemId": "atoumweb-pack10",
+      "canonicalCode": "AW-TECH-PACK-10H",
+      "action": "update",
+      "expectedVersionId": "atoumweb-pack10-v1"
+    },
+    {
+      "itemId": "atoumweb-reecriture",
+      "canonicalCode": "AW-CONT-REWRITE",
+      "action": "update",
+      "expectedVersionId": "atoumweb-reecriture-v1"
+    },
+    {
+      "itemId": "atoumweb-article",
+      "canonicalCode": "AW-CONT-ART-ESS",
+      "action": "update",
+      "expectedVersionId": "atoumweb-article-v1"
+    },
+    {
+      "itemId": "atoumweb-article-seo",
+      "canonicalCode": "AW-CONT-ART-SEO",
+      "action": "update",
+      "expectedVersionId": "atoumweb-article-seo-v1"
+    },
+    {
+      "itemId": "atoumweb-articles4",
+      "canonicalCode": "AW-CONT-PACK4-SEO",
+      "action": "update",
+      "expectedVersionId": "atoumweb-articles4-v1"
+    },
+    {
+      "itemId": "atoumweb-livre-blanc",
+      "canonicalCode": "AW-CONT-LIVRE-BLANC",
+      "action": "update",
+      "expectedVersionId": "atoumweb-livre-blanc-v1"
+    },
+    {
+      "itemId": "atoumweb-produits11",
+      "canonicalCode": "AW-ECOM-PROD-SIMPLE",
+      "action": "update",
+      "expectedVersionId": "atoumweb-produits11-v1"
+    },
+    {
+      "itemId": "atoumweb-variable-simple",
+      "canonicalCode": "AW-ECOM-PROD-VAR",
+      "action": "update",
+      "expectedVersionId": "atoumweb-variable-simple-v1"
+    },
+    {
+      "itemId": "atoumweb-paiement",
+      "canonicalCode": "AW-ECOM-PAIEMENT-ADV",
+      "action": "update",
+      "expectedVersionId": "atoumweb-paiement-v1"
+    },
+    {
+      "itemId": "atoumweb-livraison",
+      "canonicalCode": "AW-ECOM-LIVRAISON-ADV",
+      "action": "update",
+      "expectedVersionId": "atoumweb-livraison-v1"
+    },
+    {
+      "itemId": "atoumweb-import",
+      "canonicalCode": "AW-ECOM-IMPORT",
+      "action": "update",
+      "expectedVersionId": "atoumweb-import-v1"
+    },
+    {
+      "itemId": "atoumweb-redaction",
+      "canonicalCode": "AW-CONT-PAGE",
+      "action": "update",
+      "expectedVersionId": "atoumweb-redaction-v1"
+    },
+    {
+      "itemId": "atoumweb-web",
+      "canonicalCode": null,
+      "action": "keep",
+      "expectedVersionId": "atoumweb-web-v1"
+    },
+    {
+      "itemId": "atoumweb-boutique",
+      "canonicalCode": null,
+      "action": "keep",
+      "expectedVersionId": "atoumweb-boutique-v1"
+    },
+    {
+      "itemId": "atoumweb-mariage",
+      "canonicalCode": null,
+      "action": "keep",
+      "expectedVersionId": "atoumweb-mariage-v1"
+    },
+    {
+      "itemId": "atoumweb-support",
+      "canonicalCode": null,
+      "action": "keep",
+      "expectedVersionId": "atoumweb-support-v1"
+    },
+    {
+      "itemId": "atoumweb-contenu",
+      "canonicalCode": null,
+      "action": "keep",
+      "expectedVersionId": "atoumweb-contenu-v1"
+    },
+    {
+      "itemId": "atoumweb-dev",
+      "canonicalCode": null,
+      "action": "keep",
+      "expectedVersionId": "atoumweb-dev-v1"
+    },
+    {
+      "itemId": "atoumweb-seo",
+      "canonicalCode": null,
+      "action": "keep",
+      "expectedVersionId": "atoumweb-seo-v1"
+    },
+    {
+      "itemId": "atoumweb-identite",
+      "canonicalCode": null,
+      "action": "keep",
+      "expectedVersionId": "atoumweb-identite-v1"
+    },
+    {
+      "itemId": "atoumweb-photos",
+      "canonicalCode": null,
+      "action": "keep",
+      "expectedVersionId": "atoumweb-photos-v1"
+    },
+    {
+      "itemId": "atoumweb-pack20",
+      "canonicalCode": null,
+      "action": "archive",
+      "expectedVersionId": "atoumweb-pack20-v1"
+    },
+    {
+      "itemId": "atoumweb-pack30",
+      "canonicalCode": null,
+      "action": "archive",
+      "expectedVersionId": "atoumweb-pack30-v1"
+    },
+    {
+      "itemId": "atoumweb-produits21",
+      "canonicalCode": null,
+      "action": "archive",
+      "expectedVersionId": "atoumweb-produits21-v1"
+    },
+    {
+      "itemId": "atoumweb-produits51",
+      "canonicalCode": null,
+      "action": "archive",
+      "expectedVersionId": "atoumweb-produits51-v1"
+    },
+    {
+      "itemId": "atoumweb-variable-inter",
+      "canonicalCode": null,
+      "action": "archive",
+      "expectedVersionId": "atoumweb-variable-inter-v1"
+    },
+    {
+      "itemId": "atoumweb-variable-complexe",
+      "canonicalCode": null,
+      "action": "archive",
+      "expectedVersionId": "atoumweb-variable-complexe-v1"
+    },
+    {
+      "itemId": "9ad1710a-2b92-4e36-a899-005a00248cb9",
+      "canonicalCode": null,
+      "action": "archive",
+      "expectedVersionId": "5b02381c-c76a-412d-a790-5e6de8540250"
+    },
+    {
+      "itemId": "atoumweb-applications",
+      "reason": "Décision AtoumWeb validée : aucune reprise directe ; ancien ID sans code AW, archive réversible, versions et relations historiques conservées. Constat initial : Offre dès 1490 EUR avec composant générique ; cible service sur devis. Confirmer conservation historique ou reprise et type.",
+      "canonicalCode": null,
+      "action": "archive",
+      "expectedVersionId": "atoumweb-applications-v1",
+      "formerCandidates": [
+        "AW-APP-DEV"
+      ],
+      "decision": "distinct_v1_archive_legacy"
+    },
+    {
+      "itemId": "atoumweb-migration",
+      "reason": "Décision AtoumWeb validée : aucune reprise directe ; ancien ID sans code AW, archive réversible, versions et relations historiques conservées. Constat initial : Ancien service sur devis ; deux périmètres V1, 99 EUR fixe et dès 199 EUR.",
+      "canonicalCode": null,
+      "action": "archive",
+      "expectedVersionId": "atoumweb-migration-v1",
+      "formerCandidates": [
+        "AW-TECH-MIGRATION-AW",
+        "AW-TECH-MIGRATION-CPLX"
+      ],
+      "decision": "distinct_v1_archive_legacy"
+    },
+    {
+      "itemId": "atoumweb-remise",
+      "reason": "Décision AtoumWeb validée : aucune reprise directe ; ancien ID sans code AW, archive réversible, versions et relations historiques conservées. Constat initial : Ancien périmètre générique sur devis ; distinction WP dès 249 EUR / Woo dès 299 EUR à décider.",
+      "canonicalCode": null,
+      "action": "archive",
+      "expectedVersionId": "atoumweb-remise-v1",
+      "formerCandidates": [
+        "AW-TECH-REMISE-WP",
+        "AW-TECH-REMISE-WC"
+      ],
+      "decision": "distinct_v1_archive_legacy"
+    },
+    {
+      "itemId": "atoumweb-page",
+      "reason": "Décision AtoumWeb validée : aucune reprise directe ; ancien ID sans code AW, archive réversible, versions et relations historiques conservées. Constat initial : Ancienne page 99 EUR déjà vendue dans DEV-2026-003 ; V1 supplémentaire 79 EUR. Ne pas confondre automatiquement.",
+      "canonicalCode": null,
+      "action": "archive",
+      "expectedVersionId": "atoumweb-page-v1",
+      "formerCandidates": [
+        "AW-WEB-PAGE-SUP"
+      ],
+      "decision": "distinct_v1_archive_legacy"
+    },
+    {
+      "itemId": "atoumweb-produits100",
+      "reason": "Décision AtoumWeb validée : aucune reprise directe ; ancien ID sans code AW, archive réversible, versions et relations historiques conservées. Constat initial : AW-ECOM-IMPORT reprend déjà explicitement atoumweb-import. Décider le sort historique de cette seconde entrée ; aucun second item AW créé.",
+      "canonicalCode": null,
+      "action": "archive",
+      "expectedVersionId": "atoumweb-produits100-v1",
+      "formerCandidates": [
+        "AW-ECOM-IMPORT"
+      ],
+      "decision": "distinct_v1_archive_legacy"
+    },
+    {
+      "itemId": "atoumweb-page-eco",
+      "reason": "Décision AtoumWeb validée : aucune reprise directe ; ancien ID sans code AW, archive réversible, versions et relations historiques conservées. Constat initial : Page Woo 79 EUR ; confirmer si même périmètre que page Web. Collision possible avec atoumweb-page ; un seul code.",
+      "canonicalCode": null,
+      "action": "archive",
+      "expectedVersionId": "atoumweb-page-eco-v1",
+      "formerCandidates": [
+        "AW-WEB-PAGE-SUP"
+      ],
+      "decision": "distinct_v1_archive_legacy"
+    },
+    {
+      "itemId": "atoumweb-contenu-client",
+      "reason": "Décision AtoumWeb validée : aucune reprise directe ; ancien ID sans code AW, archive réversible, versions et relations historiques conservées. Constat initial : Ancienne intégration de contenu fourni par page ; V1 par contenu livré. Même prix 39 EUR insuffisant pour décider.",
+      "canonicalCode": null,
+      "action": "archive",
+      "expectedVersionId": "atoumweb-contenu-client-v1",
+      "formerCandidates": [
+        "AW-CONT-INTEG-WP"
+      ],
+      "decision": "distinct_v1_archive_legacy"
+    },
+    {
+      "itemId": "atoumweb-images",
+      "reason": "Décision AtoumWeb validée : aucune reprise directe ; ancien ID sans code AW, archive réversible, versions et relations historiques conservées. Constat initial : Recherche ancienne à 29 EUR sans quantité/optimisation précisée ; V1 trois images optimisées.",
+      "canonicalCode": null,
+      "action": "archive",
+      "expectedVersionId": "atoumweb-images-v1",
+      "formerCandidates": [
+        "AW-CONT-IMG3"
+      ],
+      "decision": "distinct_v1_archive_legacy"
+    }
+  ]
+}

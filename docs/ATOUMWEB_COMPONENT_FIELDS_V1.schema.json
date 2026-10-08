@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://atoumweb.local/contracts/component-fields-v1.schema.json",
+  "title": "AtoumWeb Component Fields Contract V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "schemaVersion", "fields"],
+  "properties": {
+    "contract": { "const": "atoumweb_component_fields" },
+    "schemaVersion": { "const": 1 },
+    "fields": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/field" }
+    }
+  },
+  "$defs": {
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "label", "default", "required", "binding", "source"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9._-]*$"
+        },
+        "type": {
+          "enum": ["text", "textarea", "rich_text", "url", "image", "color", "number", "select", "toggle", "icon"]
+        },
+        "label": { "type": "string", "minLength": 1 },
+        "description": { "type": ["string", "null"] },
+        "group": { "type": ["string", "null"] },
+        "default": {
+          "type": ["string", "number", "boolean", "null"]
+        },
+        "required": { "type": "boolean" },
+        "binding": { "$ref": "#/$defs/binding" },
+        "validation": {
+          "anyOf": [
+            { "$ref": "#/$defs/validation" },
+            { "type": "null" }
+          ]
+        },
+        "options": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": { "$ref": "#/$defs/option" }
+            },
+            { "type": "null" }
+          ]
+        },
+        "source": { "$ref": "#/$defs/source" }
+      }
+    },
+    "binding": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "selector"],
+          "properties": {
+            "type": { "const": "html_text" },
+            "selector": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "selector"],
+          "properties": {
+            "type": { "const": "html_html" },
+            "selector": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "selector", "attribute"],
+          "properties": {
+            "type": { "const": "html_attribute" },
+            "selector": { "type": "string", "minLength": 1 },
+            "attribute": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "name"],
+          "properties": {
+            "type": { "const": "css_variable" },
+            "name": {
+              "type": "string",
+              "pattern": "^--[A-Za-z0-9_-]+$"
+            },
+            "selector": { "type": ["string", "null"] }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "token"],
+          "properties": {
+            "type": { "const": "css_url" },
+            "token": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "reason"],
+          "properties": {
+            "type": { "const": "unresolved" },
+            "reason": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "minLength": { "type": "number", "minimum": 0 },
+        "maxLength": { "type": "number", "minimum": 0 },
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "step": { "type": "number", "exclusiveMinimum": 0 },
+        "pattern": { "type": "string" },
+        "allowedMimeTypes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    },
+    "option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "label"],
+      "properties": {
+        "value": { "type": "string" },
+        "label": { "type": "string" }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": { "enum": ["declared", "auto_detected"] },
+        "confidence": { "enum": ["high", "medium", "low"] },
+        "ambiguous": { "type": "boolean" },
+        "note": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

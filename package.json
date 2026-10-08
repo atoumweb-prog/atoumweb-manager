@@ -1,0 +1,39 @@
+{
+  "name": "atoumweb-manager",
+  "productName": "AtoumWeb Manager",
+  "version": "0.1.0",
+  "description": "CRM et outil de gestion métier local pour AtoumWeb",
+  "author": "AtoumWeb",
+  "license": "UNLICENSED",
+  "main": ".vite/build/main.js",
+  "private": true,
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/run-tests.cjs",
+    "test:watch": "node scripts/run-tests.cjs --watch"
+  },
+  "dependencies": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "7.11.2",
+    "@electron-forge/maker-squirrel": "7.11.2",
+    "@electron-forge/plugin-vite": "7.11.2",
+    "@electron-forge/shared-types": "7.11.2",
+    "@types/node": "^24.0.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "4.7.0",
+    "electron": "44.3.0",
+    "typescript": "5.9.2",
+    "vite": "5.4.19",
+    "vitest": "3.2.7"
+  }
+}

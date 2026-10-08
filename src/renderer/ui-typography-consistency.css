@@ -1,0 +1,229 @@
+/* Cohérence typographique globale AtoumWeb Manager.
+   Règle validée : aucun texte fonctionnel sous 14 px.
+   Cette couche est chargée en dernier pour neutraliser les anciens modules en 8–12 px. */
+
+:root {
+  --aw-font-functional: max(14px, var(--ui-font-small));
+  --aw-font-secondary: max(14px, var(--ui-font-secondary));
+  --aw-font-body: max(15px, var(--ui-font-base));
+}
+
+/* Contrôles et libellés */
+button,
+input,
+select,
+textarea,
+label {
+  font-size: var(--aw-font-functional);
+}
+
+input,
+select,
+textarea {
+  line-height: 1.35;
+}
+
+small,
+.muted,
+.eyebrow,
+.status-pill,
+.success-badge,
+.database-chip {
+  font-size: var(--aw-font-functional);
+}
+
+/* Tableaux : même lisibilité que Clients / Prospection */
+table th {
+  font-size: var(--aw-font-functional);
+}
+table td {
+  font-size: var(--aw-font-secondary);
+}
+table td strong,
+table td span,
+table td small {
+  font-size: inherit;
+}
+
+/* Titres de panneaux */
+.panel h2 {
+  font-size: 20px;
+}
+.panel h3 {
+  font-size: 16px;
+}
+
+/* Navigation et barres d’outils */
+.nav-item,
+.module-toolbar,
+.toolbar-controls,
+.operations-view-tabs button,
+.time-period-tabs button,
+.quote-stepper button,
+.client-tabs-buttons button {
+  font-size: var(--aw-font-functional);
+}
+
+/* Operations / Interventions / Maintenance / Packs */
+.operations-stack,
+.operation-create-panel,
+.operation-detail-panel,
+.operations-alerts-panel,
+.maintenance-panel,
+.hour-packs-panel,
+.intervention-backup-panel {
+  font-size: var(--aw-font-body);
+}
+.operations-table th,
+.operations-table td,
+.operation-create-grid label,
+.operation-detail-panel label,
+.operation-detail-grid span,
+.operation-detail-grid strong,
+.operation-description,
+.operation-meta,
+.operations-alert,
+.operations-alert small,
+.operations-alert p,
+.incident-watch-item,
+.incident-watch-item small,
+.incident-quick-editor label,
+.incident-quick-editor textarea,
+.incident-quick-editor input,
+.incident-quick-editor select,
+.intervention-backup-summary span,
+.intervention-backup-summary small,
+.intervention-backup-summary strong,
+.intervention-backup-alert span,
+.intervention-backup-alert strong,
+.intervention-backup-link-existing label {
+  font-size: var(--aw-font-functional);
+}
+
+/* Projets */
+.projects-stack,
+.project-detail-panel,
+.project-template-list,
+.project-tree,
+.project-resources,
+.project-technical-library {
+  font-size: var(--aw-font-body);
+}
+.projects-table th,
+.projects-table td,
+.project-detail-panel label,
+.project-detail-panel small,
+.project-tree small,
+.project-tree span,
+.project-prerequisite span,
+.project-prerequisite small {
+  font-size: var(--aw-font-functional);
+}
+
+/* Catalogue / Devis */
+.catalog-stack,
+.quotes-stack,
+.catalog-detail-panel,
+.quote-detail-panel {
+  font-size: var(--aw-font-body);
+}
+.catalog-table th,
+.catalog-table td,
+.catalog-fields label,
+.catalog-status,
+.catalog-version-row span,
+.catalog-version-row small,
+.offer-component-row span,
+.quote-table th,
+.quote-table td,
+.quote-status,
+.quote-step-content label,
+.quote-line small,
+.quote-totals span,
+.quote-preview-summary span,
+.quote-preview-summary strong {
+  font-size: var(--aw-font-functional);
+}
+
+/* Gestion des temps */
+.time-page-stack,
+.global-timer,
+.timer-popover {
+  font-size: var(--aw-font-body);
+}
+.timer-label,
+.timer-context,
+.timer-popover label,
+.manual-time-grid label,
+.time-table th,
+.time-table td,
+.time-table td small,
+.project-time-summary span,
+.project-time-start small,
+.project-time-tasks small,
+.project-time-history small {
+  font-size: var(--aw-font-functional);
+}
+
+/* Bibliothèque et sauvegardes */
+.aw-library,
+.business-backups-page {
+  font-size: var(--aw-font-body);
+}
+.aw-library-item strong,
+.aw-library-item span,
+.aw-library-create label,
+.aw-library-version-form label,
+.aw-library-metadata-editor label,
+.aw-library-asset-toolbar label,
+.aw-library-package-review label,
+.aw-library-asset span,
+.aw-library-asset strong,
+.aw-library-asset small,
+.aw-library-version p,
+.aw-library-version-flags span,
+.technical-content-toolbar strong,
+.technical-content-toolbar span,
+.technical-content-safety,
+.technical-content-empty,
+.business-backups-page label,
+.business-backups-page small,
+.business-backups-page span {
+  font-size: var(--aw-font-functional);
+}
+
+/* Le code technique reste compact mais lisible : 14 px minimum. */
+.technical-content-raw,
+.technical-json-tree {
+  font-size: var(--aw-font-functional);
+}
+
+
+/* Projet V2 — production : aucune information fonctionnelle sous 14 px. */
+.project-production-page,
+.project-production-page button,
+.project-production-page input,
+.project-production-page select,
+.project-production-page textarea,
+.project-production-page label,
+.project-production-page small,
+.project-production-page span,
+.project-production-page .project-node-kind,
+.project-production-page .project-node-name strong,
+.project-production-page .project-node-name small,
+.project-production-page .project-workbench-badges span,
+.project-production-page .project-workbench-section-title,
+.project-production-page .project-workbench-section-title span,
+.project-production-page .project-workbench-tool-grid button strong,
+.project-production-page .project-workbench-tool-grid button small,
+.project-production-page .project-companion-cards article,
+.project-production-page .project-companion-cards article p,
+.project-production-page .project-workbench-footer,
+.project-production-page .project-workbench-footer code {
+  font-size: var(--aw-font-functional);
+}
+
+.project-production-page .project-node-name strong,
+.project-production-page .project-workbench-section-title > strong {
+  font-size: var(--aw-font-secondary);
+}

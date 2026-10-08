@@ -1,0 +1,164 @@
+/* Fiches de travail : deux surfaces uniquement, couleur métier et blanc. */
+.prospect-card.prospect-temperature-hot { --card-business-color: #D62828; }
+.prospect-card.prospect-temperature-warm { --card-business-color: #F2B705; }
+.prospect-card.prospect-temperature-cold { --card-business-color: #1565C0; }
+.prospect-card.prospect-temperature-neutral { --card-business-color: #198754; }
+.prospect-card { border-left: 6px solid var(--card-business-color) !important; }
+.prospect-detail-v2.prospect-temperature-hot { --business-color: #D62828; }
+.prospect-detail-v2.prospect-temperature-warm { --business-color: #F2B705; }
+.prospect-detail-v2.prospect-temperature-cold { --business-color: #1565C0; }
+.prospect-detail-v2.prospect-temperature-neutral { --business-color: #198754; }
+.prospect-detail-v2 {
+  background: var(--business-color) !important;
+  border-color: var(--business-color) !important;
+  color: #fff;
+}
+.prospect-detail-v2 .detail-panel-heading { background: var(--business-color) !important; color: #fff; border-bottom-color: rgba(255,255,255,.35); }
+.prospect-detail-v2 .detail-panel-heading .eyebrow { color: #e6bd6a; }
+.prospect-detail-v2 .detail-panel-heading .status-pill { background: #fff; color: #18212B; }
+.prospect-detail-v2 .prospect-work-section,
+.prospect-detail-v2 .inline-editor,
+.prospect-detail-v2 .contact-methods-panel,
+.prospect-detail-v2 .need-selector-v2,
+.prospect-detail-v2 .need-add-block,
+.prospect-detail-v2 .need-identification-fields,
+.prospect-detail-v2 .identity-decision-maker,
+.prospect-detail-v2 .prequote-review-body,
+.prospect-detail-v2 .prospect-quote-panel,
+.prospect-detail-v2 .activity-preview,
+.prospect-detail-v2 .activity-journal,
+.prospect-detail-v2 .linked-contacts-panel,
+.prospect-detail-v2 .linked-contact-row,
+.prospect-detail-v2 .selected-contact-summary,
+.prospect-detail-v2 .missing-info-row,
+.prospect-detail-v2 .qualification-recap,
+.prospect-detail-v2 .prospect-missing-actions {
+  background: #fff !important;
+  color: #18212B !important;
+  backdrop-filter: none !important;
+  border-color: rgba(24,33,43,.16) !important;
+}
+.prospect-detail-v2 input,
+.prospect-detail-v2 select,
+.prospect-detail-v2 textarea { background: #fff !important; color: #18212B !important; border-color: rgba(24,33,43,.24) !important; }
+.prospect-detail-v2 .prospect-temperature-control label { color: #fff; }
+.prospect-detail-v2 .prospect-temperature-control select { color: #18212B; }
+.prospect-detail-v2 .close-detail { background: #fff; color: #18212B; }
+.prospect-detail-v2 .prospect-work-section .muted,
+.prospect-detail-v2 .activity-journal small { color: #475569; }
+.prospect-detail-v2 :is(.prospect-work-section, .inline-editor, .contact-methods-panel, .activity-journal, .prospect-missing-actions) :is(p, span, strong, label, small, legend, h3),
+.client-summary-panel :is(.client-primary-card, .client-status-control, .contact-inline-form, .contact-card, .tab-content-stack, .activity-preview) :is(p, span, strong, label, small, h3) { color: #18212B; }
+.prospect-target-section { scroll-margin-top: 96px; }
+.missing-action { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.prospect-missing-actions { display: grid; gap: 10px; padding: 14px; border: 1px solid; border-radius: 12px; margin-bottom: 12px; }
+
+/* La limite historique de 420 px amputait les fiches, surtout en grand mode. */
+.prospect-detail-panel:not(.prospect-detail-desk),
+.client-summary-panel:not(.client-large-view) { max-height: calc(100dvh - 120px) !important; }
+.prospect-detail-desk { position: static !important; height: 100% !important; max-height: none !important; overflow-y: auto !important; }
+.prospect-desk-overlay { padding: clamp(8px, 2vw, 24px); }
+.prospect-desk-shell { width: min(1680px, calc(100vw - 32px)); height: calc(100dvh - 32px); }
+
+/* La qualité de relation utilise le même vocabulaire couleur métier. */
+.client-relationship-difficult { --business-color: #D62828; }
+.client-relationship-watch { --business-color: #F2B705; }
+.client-relationship-neutral { --business-color: #1565C0; }
+.client-relationship-good,
+.client-relationship-excellent { --business-color: #198754; }
+.client-summary-panel { background: var(--business-color) !important; color: #fff; border-color: var(--business-color) !important; }
+.client-summary-panel .detail-panel-heading { position: sticky; top: 0; z-index: 10; background: var(--business-color); padding: 8px 0; }
+.client-summary-panel .detail-panel-heading .eyebrow { color: #e6bd6a; }
+.client-summary-panel .close-detail { background: #fff; color: #18212B; }
+.client-summary-panel .client-primary-card,
+.client-summary-panel .client-status-control,
+.client-summary-panel .contact-inline-form,
+.client-summary-panel .contact-card,
+.client-summary-panel .client-notes,
+.client-summary-panel .activity-preview,
+.client-summary-panel .tab-content-stack,
+.client-summary-panel .contact-methods-panel,
+.client-summary-panel .inline-editor {
+  background: #fff !important; color: #18212B !important; border: 1px solid rgba(24,33,43,.16); border-radius: 12px; padding: 14px; margin: 10px 0;
+}
+.client-summary-panel input,
+.client-summary-panel select,
+.client-summary-panel textarea { background: #fff !important; color: #18212B !important; border-color: rgba(24,33,43,.24) !important; }
+.client-primary-card h3 { margin: 0 0 10px; }
+.client-secondary-contact { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 8px 0; border-top: 1px solid rgba(24,33,43,.12); }
+.client-related-item { padding: 9px 0; border-top: 1px solid rgba(24,33,43,.12); }
+.client-summary-panel .contact-card { flex-wrap: wrap; }
+.client-summary-panel .contact-card .contact-methods-panel { flex: 1 0 100%; }
+.client-since { color: #fff; }
+.client-summary-panel .client-tabs-buttons { margin: 12px 0; }
+.client-summary-panel .client-tabs-buttons button { background: #fff; color: #18212B; }
+.client-summary-panel .client-tabs-buttons button.active { outline: 2px solid #e6bd6a; }
+.client-large-view {
+  position: fixed !important; z-index: 1200; inset: 16px; width: auto !important;
+  box-sizing: border-box; height: calc(100dvh - 32px); max-height: none !important; overflow-y: auto !important;
+  padding: clamp(14px, 2vw, 28px); box-shadow: 0 0 0 100vmax rgba(7,16,24,.65), 0 28px 90px rgba(0,0,0,.28);
+}
+@media (max-width: 760px) {
+  .prospect-desk-shell { width: calc(100vw - 12px); height: calc(100dvh - 12px); }
+  .client-large-view { inset: 6px; height: calc(100dvh - 12px); }
+}
+
+/* Teintes douces identiques aux cartes du pipeline. */
+.prospect-detail-v2.prospect-temperature-hot { --business-pastel: color-mix(in srgb, #e77a6f 16%, #fff); --business-ink: #9c3934; }
+.prospect-detail-v2.prospect-temperature-warm { --business-pastel: color-mix(in srgb, #e7b75e 17%, #fff); --business-ink: #805e21; }
+.prospect-detail-v2.prospect-temperature-cold { --business-pastel: color-mix(in srgb, #79a9d7 14%, #fff); --business-ink: #315e8c; }
+.prospect-detail-v2.prospect-temperature-neutral { --business-pastel: color-mix(in srgb, #7fbe8d 13%, #fff); --business-ink: #346d43; }
+.prospect-detail-v2 { background: var(--business-pastel) !important; color: #18212B !important; border-color: var(--business-pastel) !important; overflow-x: hidden; }
+.prospect-detail-v2 .detail-panel-heading { background: var(--business-pastel) !important; color: #18212B !important; border-bottom-color: color-mix(in srgb, var(--business-ink) 25%, transparent); }
+.prospect-detail-v2 .detail-panel-heading .eyebrow { color: var(--business-ink); }
+.prospect-detail-v2 .prospect-temperature-control label { color: #18212B; }
+.prospect-detail-v2 :is(.prospect-work-section, .prospect-quote-panel, .activity-preview, .activity-journal, .linked-contacts-panel, .qualification-recap, .prospect-missing-actions) { background: var(--business-pastel) !important; color: #18212B !important; border-color: color-mix(in srgb, var(--business-ink) 22%, transparent) !important; }
+.prospect-detail-v2 :is(.prospect-work-section, .prospect-quote-panel, .activity-journal, .qualification-recap) :is(h2, h3, legend),
+.client-summary-panel :is(h2, h3, .panel-title) { color: var(--business-ink) !important; }
+.prospect-detail-v2 :is(.inline-editor, .contact-methods-panel, .need-selector-v2, .need-add-block, .need-identification-fields, .identity-decision-maker, .prequote-review-body, .linked-contact-row, .selected-contact-summary, .missing-info-row) { background: #fff !important; }
+.prospect-detail-v2 :is(.detail-actions, .inline-editor-actions, .qualification-actions, .quote-command-actions, .action-editor-grid, .action-followup-grid, .missing-action, .prospect-work-section, .inline-editor, .contact-methods-panel) { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.prospect-detail-v2 :is(.detail-actions, .inline-editor-actions, .qualification-actions, .quote-command-actions) { flex-wrap: wrap; justify-content: flex-start; }
+.prospect-detail-v2 :is(button, input, select, textarea) { max-width: 100%; box-sizing: border-box; }
+.prospect-detail-v2 button { white-space: normal; overflow-wrap: anywhere; }
+.prospect-detail-v2 .action-editor-grid, .prospect-detail-v2 .action-followup-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 760px) { .prospect-detail-v2 .action-editor-grid, .prospect-detail-v2 .action-followup-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.client-relationship-difficult { --business-pastel: color-mix(in srgb, #e77a6f 16%, #fff); --business-ink: #9c3934; }
+.client-relationship-watch { --business-pastel: color-mix(in srgb, #e7b75e 17%, #fff); --business-ink: #805e21; }
+.client-relationship-neutral { --business-pastel: color-mix(in srgb, #79a9d7 14%, #fff); --business-ink: #315e8c; }
+.client-relationship-good, .client-relationship-excellent { --business-pastel: color-mix(in srgb, #7fbe8d 13%, #fff); --business-ink: #346d43; }
+.client-summary-panel { background: var(--business-pastel) !important; color: #18212B !important; border-color: var(--business-pastel) !important; overflow-x: hidden; }
+.client-summary-panel .detail-panel-heading { background: var(--business-pastel) !important; color: #18212B; }
+.client-summary-panel .detail-panel-heading .eyebrow { color: var(--business-ink); }
+.client-summary-panel .client-since { color: #475569; }
+.client-summary-panel :is(.client-primary-card, .client-notes, .activity-preview, .tab-content-stack) { background: var(--business-pastel) !important; border-color: color-mix(in srgb, var(--business-ink) 22%, transparent); }
+.client-summary-panel :is(.client-status-control, .contact-inline-form, .contact-card, .contact-methods-panel, .inline-editor) { background: #fff !important; }
+.client-summary-panel :is(button, input, select, textarea) { max-width: 100%; box-sizing: border-box; }
+.client-summary-panel button { white-space: normal; overflow-wrap: anywhere; }
+.clients-table tbody tr[class*='client-relationship-'] > td { background: var(--business-pastel) !important; }
+.clients-table tbody tr[class*='client-relationship-'] > td:first-child { border-left: 5px solid var(--business-ink); }
+.clients-table tbody tr[class*='client-relationship-']:hover > td { filter: brightness(.97); }
+
+/* La relation Client possède sa propre échelle, distincte du pipeline Prospect. */
+.client-relationship-excellent { --business-color: #198754; --business-ink: #198754; --business-pastel: color-mix(in srgb, #198754 14%, #fff); }
+.client-relationship-good { --business-color: #1565C0; --business-ink: #1565C0; --business-pastel: color-mix(in srgb, #1565C0 12%, #fff); }
+.client-relationship-neutral { --business-color: #6B7280; --business-ink: #6B7280; --business-pastel: color-mix(in srgb, #6B7280 12%, #fff); }
+.client-relationship-watch { --business-color: #F2B705; --business-ink: #926700; --business-pastel: color-mix(in srgb, #F2B705 17%, #fff); }
+.client-relationship-difficult { --business-color: #D62828; --business-ink: #B52222; --business-pastel: color-mix(in srgb, #D62828 13%, #fff); }
+.client-summary-panel :is(.client-primary-card, .client-notes, .activity-preview, .tab-content-stack, .client-status-control, .contact-inline-form, .contact-card, .contact-methods-panel, .inline-editor) { background: #fff !important; }
+.client-summary-panel .detail-heading-actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; min-width: 0; }
+.client-relationship-picker { position: relative; min-width: 0; }
+.client-relationship-trigger { display: inline-flex; align-items: center; gap: 7px; }
+.client-relationship-dot { display: inline-block; flex: 0 0 10px; width: 10px; height: 10px; border-radius: 50%; background: var(--business-color); }
+.client-relationship-menu { position: absolute; z-index: 30; top: calc(100% + 5px); right: 0; min-width: 180px; padding: 5px; background: #fff; border: 1px solid rgba(24,33,43,.18); border-radius: 10px; box-shadow: 0 12px 30px rgba(24,33,43,.15); }
+.client-relationship-choice { width: 100%; display: flex; align-items: center; gap: 9px; padding: 8px 10px; border: 0; border-radius: 6px; background: #fff; color: #18212B; text-align: left; cursor: pointer; }
+.client-relationship-choice:hover, .client-relationship-choice[aria-pressed='true'] { background: var(--business-pastel); }
+
+/* L'en-tête reste dans la fiche ; seul son contenu défile. */
+.client-summary-panel { display: flex; flex-direction: column; overflow: hidden !important; }
+.client-summary-panel .detail-panel-heading { position: relative !important; top: auto !important; z-index: 20; flex: 0 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; padding: 8px 0 12px; border-bottom: 1px solid color-mix(in srgb, var(--business-ink) 20%, transparent); }
+.client-summary-panel .detail-heading-actions { justify-content: flex-start; align-items: center; }
+.client-summary-panel .client-summary-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-gutter: stable; padding-top: 12px; }
+.client-summary-panel .client-summary-scroll > :first-child { margin-top: 0; }
+.client-summary-panel .client-relationship-picker { z-index: 21; }
+.client-summary-panel .client-relationship-trigger { white-space: nowrap; }
+@media (max-width: 420px) { .client-summary-panel .client-relationship-menu { left: 0; right: auto; } }

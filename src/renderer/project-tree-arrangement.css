@@ -1,0 +1,66 @@
+.project-tree-node {
+  grid-template-columns: auto minmax(0, 1fr) minmax(150px, 190px);
+}
+
+.project-node-controls {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.project-tree-node .project-node-status,
+.project-tree-node .project-node-parent {
+  width: 100%;
+  min-width: 0;
+}
+
+.project-node-arrange {
+  display: grid;
+  grid-template-columns: 28px 28px minmax(0, 1fr);
+  gap: 4px;
+  min-width: 0;
+}
+
+.project-node-arrange button {
+  min-width: 0;
+  min-height: 27px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface-soft);
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.project-node-arrange button:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  color: var(--accent);
+}
+
+.project-node-arrange button:disabled {
+  opacity: .35;
+  cursor: default;
+}
+
+.project-node-parent {
+  font-size: 8px !important;
+}
+
+@media (max-width: 1100px) {
+  .project-tree-node {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .project-node-controls {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(120px, .8fr) minmax(180px, 1.2fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .project-node-controls {
+    grid-template-columns: 1fr;
+  }
+}

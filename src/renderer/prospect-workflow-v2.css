@@ -1,0 +1,420 @@
+/* Prospect workflow V2 — pipeline, mode bureau et couleur commerciale persistante. */
+.prospect-detail-v2 {
+  --prospect-tint: transparent;
+  background: linear-gradient(var(--prospect-tint), var(--prospect-tint)), var(--surface);
+  border-color: color-mix(in srgb, var(--prospect-tint) 70%, var(--border));
+}
+.prospect-detail-v2.prospect-temperature-neutral { --prospect-tint: color-mix(in srgb, #7fbe8d 11%, transparent); }
+.prospect-detail-v2.prospect-temperature-cold { --prospect-tint: color-mix(in srgb, #79a9d7 12%, transparent); }
+.prospect-detail-v2.prospect-temperature-warm { --prospect-tint: color-mix(in srgb, #e7b75e 14%, transparent); }
+.prospect-detail-v2.prospect-temperature-hot { --prospect-tint: color-mix(in srgb, #e77a6f 13%, transparent); }
+
+.prospect-detail-v2 .prospect-work-section,
+.prospect-detail-v2 .inline-editor,
+.prospect-detail-v2 .contact-methods-panel,
+.prospect-detail-v2 .need-selector-v2,
+.prospect-detail-v2 .prospect-quote-panel,
+.prospect-detail-v2 .activity-preview {
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.prospect-header-meta { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 9px; }
+.detail-heading-actions { display: flex; align-items: center; gap: 8px; }
+.open-desk-button { white-space: nowrap; }
+
+.prospect-temperature-control {
+  display: flex;
+  justify-content: flex-end;
+  margin: 12px 0 14px;
+}
+.prospect-temperature-control label {
+  display: grid;
+  gap: 5px;
+  min-width: 190px;
+  color: var(--muted);
+  font-size: var(--ui-font-small);
+  font-weight: 750;
+}
+.prospect-temperature-control select {
+  min-height: var(--ui-control-height);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  color: var(--text);
+  padding: var(--ui-control-pad-y) var(--ui-control-pad-x);
+}
+
+.prospect-desk-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: color-mix(in srgb, #071018 62%, transparent);
+  backdrop-filter: blur(5px);
+}
+.prospect-desk-shell {
+  width: min(1180px, calc(100vw - 56px));
+  height: min(920px, calc(100dvh - 56px));
+  min-height: 0;
+}
+.prospect-detail-desk {
+  position: static;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  overflow-y: auto;
+  padding: max(var(--ui-panel-pad), 24px);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, .28);
+}
+.prospect-detail-desk .detail-panel-heading {
+  position: sticky;
+  top: calc(-1 * max(var(--ui-panel-pad), 24px));
+  z-index: 20;
+  margin: calc(-1 * max(var(--ui-panel-pad), 24px)) calc(-1 * max(var(--ui-panel-pad), 24px)) 18px;
+  padding: max(var(--ui-panel-pad), 24px);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+}
+.prospect-detail-desk .prospect-work-section,
+.prospect-detail-desk .identity-editor-v2,
+.prospect-detail-desk .contact-methods-panel,
+.prospect-detail-desk .prospect-quote-panel,
+.prospect-detail-desk .activity-preview {
+  max-width: 1040px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.quick-date-scheduler {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+}
+.quick-date-scheduler input {
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 9px;
+  background: var(--surface);
+  color: var(--text);
+}
+.card-start-button { width: 100%; }
+.next-action-line { border-color: color-mix(in srgb, var(--accent) 28%, var(--border)); }
+
+/* Entreprise, interlocuteur et décisionnaire. */
+.identity-decision-maker,
+.qualification-decision-summary {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--surface-soft) 88%, transparent);
+}
+.identity-decision-maker legend {
+  padding: 0 6px;
+  color: var(--text);
+  font-weight: 800;
+}
+.decision-maker-grid,
+.qualification-two-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.decision-summary { gap: 4px; }
+.decision-summary small,
+.qualification-decision-summary small { color: var(--muted); font-size: var(--ui-font-small); }
+.field-error { color: var(--danger, #b42318); font-weight: 700; line-height: 1.35; }
+
+/* Qualification commerciale. */
+.qualification-readiness {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.qualification-readiness span {
+  padding: 7px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: var(--ui-font-small);
+  font-weight: 750;
+}
+.qualification-readiness .ready {
+  background: color-mix(in srgb, #2e9f62 12%, var(--surface));
+  border-color: color-mix(in srgb, #2e9f62 42%, var(--border));
+}
+.qualification-readiness .missing {
+  background: color-mix(in srgb, #d49b32 11%, var(--surface));
+  border-color: color-mix(in srgb, #d49b32 38%, var(--border));
+}
+.qualification-recap {
+  display: grid;
+  gap: 7px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, #d49b32 42%, var(--border));
+  border-radius: 11px;
+  background: color-mix(in srgb, #d49b32 9%, var(--surface));
+}
+.qualification-recap.ready {
+  border-color: color-mix(in srgb, #2e9f62 42%, var(--border));
+  background: color-mix(in srgb, #2e9f62 9%, var(--surface));
+}
+.qualification-recap div { display: grid; gap: 4px; }
+.qualification-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 9px; }
+
+/* Projet & solution AtoumWeb. */
+.needs-panel-v2 { display: grid; gap: 16px; }
+.need-solution-card {
+  align-items: flex-start;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 13px;
+  background: color-mix(in srgb, var(--surface-soft) 86%, transparent);
+}
+.need-price { display: block; margin-top: 4px; color: var(--accent-strong); font-weight: 800; }
+.offer-inclusions { display: grid; gap: 3px; margin-top: 9px; }
+.offer-inclusions > span { color: var(--muted); font-size: var(--ui-font-small); font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.offer-inclusions small { color: var(--text); line-height: 1.45; }
+.need-add-block,
+.need-identification-fields {
+  display: grid;
+  gap: 12px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-soft) 82%, transparent);
+}
+.need-selector-title { display: grid; gap: 3px; }
+.need-selector-title small { color: var(--muted); }
+.selected-offer-preview {
+  display: grid;
+  gap: 8px;
+  padding: 13px;
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+.selected-offer-preview > div:first-child { display: grid; gap: 3px; }
+.selected-offer-preview p { margin: 0; color: var(--muted); }
+.need-scope-assessment {
+  display: grid;
+  gap: 5px;
+  padding: 13px;
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+}
+.need-scope-assessment small { color: var(--muted); }
+
+/* Contrôle avant devis. */
+.prequote-review {
+  display: grid;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.prequote-entry {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+.prequote-entry > div { display: grid; gap: 4px; }
+.prequote-entry p { margin: 0; color: var(--muted); }
+.prequote-review-body {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+}
+.prequote-result { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.prequote-state { padding: 7px 10px; border-radius: 999px; font-weight: 850; }
+.prequote-state.ready { background: color-mix(in srgb, #2e9f62 15%, var(--surface)); color: color-mix(in srgb, #2e9f62 75%, var(--text)); }
+.prequote-state.blocked { background: color-mix(in srgb, #d49b32 15%, var(--surface)); color: color-mix(in srgb, #b47c19 75%, var(--text)); }
+.prequote-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+.prequote-summary-grid > div {
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-soft);
+}
+.prequote-summary-grid span { color: var(--muted); font-size: var(--ui-font-small); }
+.prequote-wide { grid-column: 1 / -1; }
+.prequote-solutions { display: grid; gap: 8px; }
+.prequote-solution-row {
+  display: grid;
+  grid-template-columns: minmax(180px, .75fr) 1.5fr;
+  gap: 12px;
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+.prequote-solution-row > div:first-child { display: grid; gap: 4px; align-content: start; }
+.prequote-solution-row small { color: var(--muted); }
+.prequote-inclusions { display: grid; gap: 3px; }
+.prequote-blockers,
+.prequote-warning {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border-radius: 10px;
+}
+.prequote-blockers { border: 1px solid color-mix(in srgb, #d49b32 42%, var(--border)); background: color-mix(in srgb, #d49b32 9%, var(--surface)); }
+.prequote-warning { border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border)); background: color-mix(in srgb, var(--accent) 7%, var(--surface)); }
+.prequote-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 9px; }
+
+/* Suivi du devis : le document et sa prochaine action deviennent prioritaires après l'envoi. */
+.prospect-quote-panel { display: grid; gap: 14px; }
+.quote-command-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+.quote-command-header > div { display: grid; gap: 4px; min-width: 0; }
+.quote-command-header > div > strong { font-size: calc(var(--ui-font-base) + 2px); line-height: 1.3; }
+.quote-command-header small { color: var(--muted); }
+.quote-draft-waiting,
+.quote-refused-state,
+.quote-validity-alert {
+  display: grid;
+  gap: 5px;
+  padding: 13px 14px;
+  border-radius: 11px;
+}
+.quote-draft-waiting {
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+.quote-command-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.quote-command-summary > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-soft) 88%, transparent);
+}
+.quote-command-summary span { color: var(--muted); font-size: var(--ui-font-small); }
+.quote-command-summary strong { overflow-wrap: anywhere; }
+.quote-follow-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.quote-expiry-warning { color: #b56f00; }
+.quote-validity-alert {
+  border: 1px solid color-mix(in srgb, #d49b32 48%, var(--border));
+  background: color-mix(in srgb, #d49b32 10%, var(--surface));
+}
+.quote-command-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.quote-send-block,
+.quote-after-send {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+}
+.quote-after-send {
+  border-left: 4px solid var(--accent);
+}
+.quote-after-send-heading { display: grid; gap: 3px; }
+.quote-after-send-heading strong { font-size: calc(var(--ui-font-base) + 1px); }
+.followup-inline {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto;
+  align-items: end;
+  gap: 9px;
+}
+.followup-inline label,
+.waiting-form label { display: grid; gap: 5px; }
+.waiting-inline {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+.waiting-inline summary {
+  cursor: pointer;
+  color: var(--text);
+  font-weight: 800;
+}
+.waiting-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+  padding-top: 11px;
+}
+.quote-refused-state {
+  border: 1px solid color-mix(in srgb, #b42318 35%, var(--border));
+  background: color-mix(in srgb, #b42318 7%, var(--surface));
+}
+.quote-refused-state span { color: var(--muted); }
+.previous-quotes {
+  padding-top: 9px;
+  border-top: 1px solid var(--border);
+}
+.previous-quotes summary { cursor: pointer; font-weight: 750; }
+.previous-quotes[open] { display: grid; gap: 7px; }
+.prospect-card-quote-focus {
+  display: grid;
+  gap: 4px;
+  padding: 9px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+.prospect-card-quote-focus span { color: var(--muted); font-size: var(--ui-font-small); font-weight: 750; }
+.prospect-card-quote-focus strong { line-height: 1.3; }
+.prospect-card-quote-meta { display: flex; flex-wrap: wrap; gap: 5px 9px; color: var(--muted); font-size: var(--ui-font-small); }
+
+@media (max-width: 760px) {
+  .prospect-desk-overlay { padding: 0; }
+  .prospect-desk-shell { width: 100vw; height: 100dvh; }
+  .prospect-detail-desk { border-radius: 0; }
+  .prospect-temperature-control { justify-content: stretch; }
+  .prospect-temperature-control label { width: 100%; }
+  .quick-date-scheduler,
+  .followup-inline,
+  .waiting-form { grid-template-columns: 1fr; }
+  .decision-maker-grid,
+  .qualification-two-fields,
+  .prequote-summary-grid,
+  .prequote-solution-row,
+  .quote-command-summary,
+  .quote-follow-summary { grid-template-columns: 1fr; }
+  .prequote-entry,
+  .quote-command-header { align-items: stretch; flex-direction: column; }
+}

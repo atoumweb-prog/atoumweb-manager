@@ -2,7 +2,7 @@
 
 ## Statut
 
-**Architecture V1 décidée le 13/09/2026.**
+**Architecture V1 validée et première fondation implémentée.**
 
 L'objectif est une application Windows locale, fiable, sans serveur obligatoire, facile à sauvegarder et suffisamment moderne pour proposer les trois thèmes, la recherche globale, le timer, l'édition documentaire et la visualisation de code.
 
@@ -12,9 +12,12 @@ L'objectif est une application Windows locale, fiable, sans serveur obligatoire,
 
 - **Electron 44.x**
 - **React 19.3**
-- **TypeScript** en mode strict
-- **Electron Forge** pour le packaging Windows
-- Template Forge **Webpack + TypeScript** pour éviter de dépendre du plugin Vite encore marqué expérimental par Forge
+- **TypeScript 5.9** en mode strict
+- **Electron Forge 7.11.2** pour le cycle de développement et le packaging Windows
+- **Vite 5.4.19** pour les builds main/preload/renderer
+- **Vitest 3.2.7** pour les tests
+
+Le choix Vite 5 est volontairement conservateur : Electron Forge 7.11.2 utilise encore Vite 5 dans son template officiel. Cela limite le risque de compatibilité pendant la V1 tout en conservant une stack moderne.
 
 ### Pourquoi Electron
 
@@ -47,14 +50,6 @@ Le renderer **n'accède jamais directement** à Node.js, SQLite ou au système d
 
 Expose au renderer une API métier limitée via `contextBridge`.
 
-Exemples :
-
-- `clients.list()` ;
-- `projects.create()` ;
-- `files.pick()` ;
-- `documents.generatePdf()` ;
-- `timer.start()`.
-
 Ne jamais exposer `ipcRenderer` brut ni une API générique permettant d'exécuter arbitrairement des opérations système.
 
 ### Main process
@@ -63,10 +58,9 @@ Responsable de :
 
 - SQLite ;
 - accès fichiers ;
-- sauvegardes ;
+- sauvegardes/restaurations ;
 - génération PDF ;
 - dialogues système ;
-- ouverture sécurisée de fichiers/liens ;
 - import/export ;
 - migrations ;
 - services métier sensibles.
@@ -77,10 +71,10 @@ Obligatoire :
 
 - `contextIsolation: true` ;
 - `nodeIntegration: false` ;
-- sandbox activée lorsque compatible ;
-- Content Security Policy restrictive ;
+- `sandbox: true` ;
 - validation des arguments IPC ;
 - aucune navigation arbitraire dans la fenêtre principale ;
+- ouverture de nouvelles fenêtres refusée par défaut ;
 - aucun secret WordPress/API stocké en clair ;
 - code de bibliothèque affiché comme texte et **jamais exécuté automatiquement**.
 
@@ -88,19 +82,11 @@ Obligatoire :
 
 ### Choix
 
-**SQLite locale**, une base principale par installation/workspace.
+**SQLite locale**, une base principale par workspace.
 
 Accès V1 via le module **`node:sqlite`** fourni par la version Node embarquée dans Electron 44.
 
-Raisons :
-
-- pas de serveur de base de données ;
-- fichier facilement sauvegardable/restaurable ;
-- transactions solides ;
-- très adapté au volume attendu ;
-- pas de module natif tiers à recompiler pour Electron.
-
-`node:sqlite` est encapsulé derrière une couche `DatabaseAdapter` / repositories afin qu'un changement de driver reste possible sans réécrire la logique métier si nécessaire.
+`node:sqlite` est encapsulé derrière `DatabaseAdapter` afin qu'un changement de driver reste possible sans réécrire la logique métier si nécessaire.
 
 ### Pas d'ORM lourd en V1
 
@@ -109,26 +95,24 @@ La V1 utilise :
 - SQL explicite ;
 - repositories TypeScript par domaine ;
 - requêtes préparées ;
-- migrations SQL versionnées.
-
-Objectif : conserver un schéma lisible et éviter une dépendance structurante inutile.
+- migrations versionnées.
 
 ### Réglages SQLite
 
 À l'ouverture :
 
 - `PRAGMA foreign_keys = ON` ;
-- mode WAL si compatible ;
-- `busy_timeout` raisonnable ;
-- transactions pour les opérations multi-tables ;
-- intégrité vérifiée lors des sauvegardes/restaurations importantes.
+- `PRAGMA journal_mode = WAL` ;
+- `PRAGMA synchronous = NORMAL` ;
+- `PRAGMA busy_timeout = 5000` ;
+- transactions pour les opérations multi-tables.
 
 ## 5. Types de données
 
 Règles générales :
 
-- identifiants : UUID texte générés par l'application ;
-- timestamps : ISO 8601 UTC en `TEXT` ;
+- identifiants métier : UUID texte générés par l'application ;
+- timestamps : ISO 8601 en `TEXT` ;
 - dates métier sans heure : `YYYY-MM-DD` ;
 - montants : **centimes entiers**, jamais `REAL` ;
 - durées : secondes entières ;
@@ -137,12 +121,27 @@ Règles générales :
 
 ## 6. Migrations
 
-- dossier `src/main/db/migrations/` ;
-- fichiers SQL numérotés et immuables après publication ;
 - table `schema_migrations` ;
-- migration exécutée au démarrage avant ouverture du CRM ;
-- **sauvegarde automatique de la base avant toute migration** ;
-- en cas d'échec, la migration est annulée et l'application n'ouvre pas la base en écriture.
+- migrations numérotées et monotones ;
+- transaction par migration ;
+- sauvegarde automatique de la base existante avant migration ;
+- en cas d'échec, rollback de la migration et arrêt du démarrage.
+
+La première migration crée notamment `settings` et `activity_log`.
+
+## 6 bis. Snapshots Bridge et coffre d’assets
+
+La stratégie détaillée pour les snapshots de sites, médias locaux, déduplication SHA-256 et réutilisation en Bibliothèque est définie dans :
+
+- `docs/BRIDGE_SNAPSHOT_ASSET_STORAGE.md`
+
+Cette décision complète les règles générales de stockage : les snapshots Bridge sont historiques et les médias identiques ne doivent pas être dupliqués physiquement à chaque import.
+
+L’évolution Bridge vers le **Page Code Organizer + Workbench Divi**, ainsi que la frontière de responsabilité Bridge/Manager et le futur flux Bibliothèque → package → Workbench, sont définis dans :
+
+- `docs/BRIDGE_WORKBENCH_MANAGER_INTEGRATION.md`
+
+Cette évolution est séparée du Snapshot V1 : **Snapshot V1 reste gelé et inchangé**.
 
 ## 7. Stockage des fichiers
 
@@ -150,7 +149,7 @@ Règles générales :
 
 Le CRM possède un **dossier racine configurable**.
 
-Valeur proposée lors de la première installation :
+Valeur par défaut :
 
 `%USERPROFILE%\Documents\AtoumWeb Manager\`
 
@@ -160,48 +159,37 @@ L'utilisateur peut ensuite choisir par exemple :
 
 ### Localisateur
 
-Un petit fichier de configuration dans les données applicatives Windows conserve le chemin du workspace actif. La base métier et les fichiers restent dans le workspace afin de pouvoir réinstaller l'application puis reconnecter le même espace de travail.
+Un fichier léger dans `userData` mémorise le workspace actif. La base métier et les fichiers restent dans le workspace pour permettre une réinstallation puis une reconnexion au même espace de travail.
 
-### Arborescence de base
+### Arborescence de fondation
 
 ```text
 <workspace>/
 ├─ data/
 │  └─ atoumweb-manager.sqlite
-├─ clients/
-├─ library/
 ├─ backups/
-│  └─ crm/
-├─ exports/
-└─ temp/
+│  ├─ automatic/
+│  ├─ manual/
+│  ├─ pre-migration/
+│  └─ pre-restore/
+├─ clients/
+└─ exports/
 ```
 
-Les arborescences Client/Projet sont ensuite créées selon le cahier des charges.
+Les fichiers lourds ne sont pas stockés comme blobs dans SQLite sauf nécessité future explicitement validée.
 
-### Références de fichiers
+## 8. Sauvegarde et restauration du CRM
 
-La base conserve :
+Implémenté dès la fondation :
 
-- identifiant du stockage ;
-- chemin relatif lorsque le fichier est dans le workspace ;
-- chemin absolu/URL uniquement pour une ressource externe ;
-- nom, type MIME, taille, état ;
-- checksum SHA-256 lorsque pertinent.
-
-Le fichier lourd n'est pas dupliqué dans SQLite.
-
-## 8. Sauvegarde du CRM lui-même
-
-Le module `node:sqlite` permet une sauvegarde cohérente d'une base ouverte.
-
-V1 :
-
-- sauvegarde manuelle ;
 - sauvegarde automatique quotidienne, au maximum une fois par jour ;
-- sauvegarde obligatoire avant migration ;
-- destination par défaut : `<workspace>/backups/crm/` ;
-- rétention configurable ;
-- restauration via sélection explicite d'une sauvegarde et confirmation.
+- sauvegarde manuelle ;
+- sauvegarde avant migration ;
+- restauration via sélection explicite d'un fichier SQLite ;
+- confirmation avant restauration ;
+- restauration appliquée au redémarrage **avant ouverture de la base** ;
+- création d'une copie de sécurité cohérente de la base courante dans `backups/pre-restore/` avant remplacement ;
+- suppression des éventuels fichiers WAL/SHM de l'ancienne base avant copie de la sauvegarde.
 
 Les sauvegardes des **sites clients** restent un autre concept métier et peuvent se trouver sur serveur, PC, disque externe ou autre emplacement.
 
@@ -224,40 +212,40 @@ Organisation par domaines, et non par écrans :
 - recherche ;
 - réglages.
 
-Chaque domaine expose des services et repositories réutilisés par plusieurs écrans.
+Chaque domaine exposera des services/repositories réutilisables par plusieurs écrans.
 
 ## 10. Front-end React
 
 ### Navigation
 
-Navigation SPA locale avec routes explicites correspondant au menu principal.
+Le shell V1 affiche déjà le menu principal dans l'ordre validé.
 
 ### État
 
-- état serveur/local métier : cache de requêtes côté renderer ;
-- état UI léger : contexte/hooks dédiés ;
-- pas de gros store global contenant des copies des données métier.
+- données métier demandées via API IPC typée ;
+- état UI local via React ;
+- pas de store global contenant des copies divergentes des données métier.
 
 ### Formulaires
 
-Validation partagée :
+Validation en deux niveaux :
 
-- validation dans le renderer pour l'expérience utilisateur ;
-- revalidation dans le main process avant toute écriture sensible.
+- validation renderer pour l'expérience utilisateur ;
+- revalidation main process avant écriture sensible.
 
 ### Thèmes
 
 CSS variables + attribut `data-theme` :
 
 - `atoumweb` ;
-- `dark` ;
-- `light`.
+- `noir` ;
+- `blanc`.
 
-Le thème AtoumWeb est la valeur par défaut.
+Le thème AtoumWeb est la valeur par défaut. La sélection est déjà persistée en base.
 
 ## 11. Visualisation de code
 
-**Monaco Editor** intégré en mode lecture/édition volontaire.
+**Monaco Editor** est prévu en mode lecture/édition volontaire.
 
 Fonctions V1 :
 
@@ -268,13 +256,11 @@ Fonctions V1 :
 - agrandir ;
 - modifier puis enregistrer une nouvelle version.
 
-Aucun bouton "Exécuter".
+Aucun bouton « Exécuter ».
 
 ## 12. Documents et PDF
 
-Les documents éditables sont stockés sous forme structurée/HTML dans la base tant qu'ils sont en brouillon.
-
-Lors de la finalisation :
+Prévu :
 
 1. rendu HTML dédié ;
 2. génération PDF via `webContents.printToPDF()` ;
@@ -282,89 +268,77 @@ Lors de la finalisation :
 4. version finalisée figée en base ;
 5. checksum/fichier référencé depuis le document.
 
-Les modèles futurs peuvent utiliser un éditeur par blocs ; ce choix d'éditeur n'est pas bloquant pour le socle V1.
-
 ## 13. Recherche globale
 
-La recherche est une fonction transverse prioritaire.
+Le champ de recherche est présent dans le shell de fondation.
 
-V1 : table d'index **dérivée** `search_documents`, jamais source de vérité, alimentée transactionnellement à partir des entités métier.
+Le moteur V1 combinera :
 
-Elle contient un texte normalisé pour :
+- requêtes structurées SQLite ;
+- index dérivé/reconstruisible ;
+- noms et métadonnées des ressources/fichiers ;
+- FTS5 uniquement si cela apporte un bénéfice réel.
 
-- clients/contacts ;
-- prospects ;
-- projets ;
-- devis ;
-- interventions ;
-- documents ;
-- éléments de bibliothèque ;
-- noms et métadonnées des fichiers.
-
-Le volume prévu permet une recherche locale rapide sans moteur externe. Une migration vers FTS5 reste possible plus tard.
+L'index de recherche ne sera jamais source de vérité.
 
 ## 14. Journal d'activité
 
-Table append-only `activity_events`.
-
-Chaque événement peut référencer directement client/projet/prospect/devis/intervention afin d'afficher rapidement les timelines sans dupliquer les événements.
-
-Les modifications purement techniques internes ne doivent pas polluer la timeline métier.
+La première migration crée une table `activity_log` destinée au journal centralisé. Les timelines client/projet seront des vues filtrées de ce même journal.
 
 ## 15. Packaging Windows
 
 - Electron Forge ;
-- installateur Windows ;
+- Maker Squirrel ;
 - build x64 prioritaire ;
-- application signable plus tard ;
-- aucune dépendance à Android Studio/JDK pour AtoumWeb Manager ;
-- mises à jour automatiques hors périmètre du tout premier socle, architecture compatible pour ajout ultérieur.
+- installateur Windows ;
+- signature de code possible ultérieurement ;
+- mises à jour automatiques hors périmètre du tout premier socle.
 
 ## 16. Tests
 
-Minimum V1 :
+Fondation :
 
-- tests unitaires services métier ;
-- tests repositories sur SQLite temporaire ;
-- tests migrations ;
-- tests parcours critiques ;
-- test du timer unique ;
-- test snapshot devis ;
-- test modèles projet versionnés ;
-- test archivage/réactivation client ;
-- test sauvegarde/restauration DB ;
-- test génération PDF ;
-- CI GitHub sur pull requests.
+- test des thèmes/contrats partagés ;
+- test du moteur de migrations sur SQLite en mémoire ;
+- CI Windows configurée pour installation, typecheck et tests.
 
-## 17. Arborescence de code cible
+Puis V1 :
+
+- repositories ;
+- services métier ;
+- timer unique ;
+- snapshots devis ;
+- modèles projets versionnés ;
+- archivage/réactivation ;
+- sauvegarde/restauration ;
+- génération PDF ;
+- parcours critiques.
+
+### État de la CI au 13/09/2026
+
+Le workflow est correctement présent, mais les runs observés ont été clôturés avec `runner_id = 0` et `steps = []`. Aucune commande npm, aucun typecheck et aucun test n'ont donc réellement été exécutés par GitHub Actions. La validation doit être faite sur un runner disponible ou sur un PC Windows avant fusion dans `main`.
+
+## 17. Arborescence de code actuelle
 
 ```text
 src/
 ├─ main/
-│  ├─ db/
-│  │  ├─ migrations/
-│  │  ├─ repositories/
-│  │  └─ database.ts
-│  ├─ services/
-│  ├─ ipc/
-│  ├─ files/
-│  ├─ documents/
+│  ├─ database/
+│  ├─ ipc.ts
+│  ├─ restore.ts
+│  ├─ workspace.ts
 │  └─ main.ts
 ├─ preload/
-│  ├─ api.ts
 │  └─ preload.ts
 ├─ renderer/
-│  ├─ app/
-│  ├─ components/
-│  ├─ features/
-│  ├─ hooks/
-│  ├─ themes/
+│  ├─ App.tsx
+│  ├─ styles.css
 │  └─ main.tsx
 └─ shared/
-   ├─ contracts/
-   ├─ validation/
-   └─ types/
+   └─ contracts.ts
 ```
+
+Elle sera découpée progressivement par domaines lorsque les modules CRM seront implémentés.
 
 ## 18. Décisions explicitement écartées en V1
 
@@ -379,9 +353,9 @@ src/
 
 ## 19. Point de vigilance technique
 
-`node:sqlite` est fourni avec Node 24 mais reste classé "release candidate" à la date de cette décision. Pour limiter le risque :
+`node:sqlite` est fourni avec Node 24 mais reste classé « release candidate » à la date de cette décision. Pour limiter le risque :
 
-- Electron est verrouillé par le lockfile ;
-- toutes les requêtes passent par notre couche repository ;
+- la version Electron sera verrouillée par le lockfile ;
+- toutes les requêtes passent par notre couche d'accès ;
 - aucun code React ne dépend directement du driver ;
 - si un problème bloquant apparaît, le driver pourra être remplacé derrière `DatabaseAdapter` sans modifier le modèle métier.

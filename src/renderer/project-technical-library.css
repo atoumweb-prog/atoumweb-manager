@@ -1,0 +1,303 @@
+.technical-library-tab {
+  min-width: 0;
+}
+
+.technical-library-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.technical-library-toolbar input {
+  width: 100%;
+  min-width: 0;
+}
+
+.technical-library-layout {
+  display: grid;
+  grid-template-columns: minmax(130px, .65fr) minmax(0, 1.35fr);
+  gap: 9px;
+  min-width: 0;
+}
+
+.technical-item-list {
+  display: grid;
+  gap: 5px;
+  align-content: start;
+}
+
+.technical-item-list > button {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.technical-item-list > button.active {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: var(--accent-soft);
+}
+
+.technical-item-list strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 10px;
+}
+
+.technical-item-list small,
+.technical-category {
+  color: var(--text-muted);
+  font-size: 8px;
+}
+
+.technical-category {
+  color: var(--accent);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.technical-detail {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+}
+
+.technical-detail-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.technical-detail-heading > div:first-child {
+  min-width: 0;
+}
+
+.technical-detail-heading h3 {
+  margin: 3px 0 0;
+  font-size: 14px;
+}
+
+.technical-editor {
+  display: grid;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-soft);
+}
+
+.technical-editor > strong {
+  font-size: 10px;
+}
+
+.technical-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.technical-editor-grid label {
+  display: grid;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.technical-editor-grid input,
+.technical-editor-grid select,
+.technical-editor textarea {
+  width: 100%;
+  min-width: 0;
+}
+
+.technical-editor textarea {
+  min-height: 62px;
+  resize: vertical;
+}
+
+.technical-code-input,
+.technical-code-view {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.technical-code-input {
+  min-height: 130px !important;
+}
+
+.technical-code-view {
+  max-height: 230px;
+  margin: 0;
+  padding: 9px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.technical-version-card {
+  display: grid;
+  gap: 7px;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+}
+
+.technical-version-card.compact {
+  background: transparent;
+}
+
+.technical-version-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.technical-version-heading > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.technical-version-heading strong {
+  font-size: 10px;
+}
+
+.technical-version-heading small {
+  color: var(--text-muted);
+  font-size: 8px;
+}
+
+.technical-version-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.technical-version-badges > span,
+.technical-language {
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.technical-version-badges > span {
+  color: var(--accent);
+}
+
+.text-button {
+  border: 0;
+  padding: 2px 3px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 8px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.technical-tags,
+.technical-assets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.technical-tags span,
+.technical-asset-chip {
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  font-size: 8px;
+}
+
+.technical-asset-chip {
+  cursor: pointer;
+}
+
+.technical-assets select {
+  min-width: 145px;
+  flex: 1;
+  font-size: 8px;
+}
+
+.technical-history {
+  display: grid;
+  gap: 6px;
+}
+
+.technical-history > strong {
+  font-size: 10px;
+}
+
+.technical-safety-note {
+  margin: 0;
+  padding: 8px;
+  border-left: 3px solid var(--accent);
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  font-size: 8px;
+  line-height: 1.45;
+}
+
+@media (max-width: 1100px) {
+  .technical-library-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .technical-item-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .technical-library-toolbar,
+  .technical-editor-grid,
+  .technical-item-list {
+    grid-template-columns: 1fr;
+  }
+
+  .technical-detail-heading,
+  .technical-version-heading {
+    display: grid;
+  }
+
+  .technical-version-badges {
+    justify-content: flex-start;
+  }
+}
+.reuse-preparation-panel {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  min-width: 0;
+}
+.reuse-fields { display: grid; gap: 12px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.reuse-fields legend { font-weight: 700; margin-bottom: 12px; }
+.reuse-fields label { display: grid; gap: 6px; }
+.reuse-fields .reuse-review { display: flex; align-items: flex-start; gap: 8px; }
+.reuse-review input { width: auto; flex: 0 0 auto; margin-top: 4px; }
+.reuse-package-summary { display: grid; gap: 8px; min-width: 0; overflow-wrap: anywhere; }
+.reuse-package-summary details { color: var(--text-muted); }

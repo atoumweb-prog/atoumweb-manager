@@ -1,0 +1,84 @@
+.client-tabs-buttons { margin: 4px 0 14px; }
+.client-tabs-buttons button { border: 0; border-radius: 7px; padding: 6px 8px; background: var(--surface-soft); color: var(--muted); cursor: pointer; font-size: 8px; font-weight: 750; }
+.client-tabs-buttons button.active { color: var(--accent-strong); background: var(--accent-soft); }
+.client-status-control { display: grid; gap: 7px; margin-bottom: 14px; padding: 11px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); }
+.client-status-control label { display: grid; gap: 5px; color: var(--muted); font-size: 9px; font-weight: 750; }
+.client-status-control select { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 9px; background: var(--surface); color: var(--text); outline: none; }
+.client-status-control select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 13%, transparent); }
+.client-status-control p { margin: 0; font-size: 8px; line-height: 1.45; }
+.tab-content-stack { display: grid; gap: 12px; }
+.contact-tab-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.contact-tab-heading strong { font-size: 10px; }
+.contact-cards-list { display: grid; gap: 8px; }
+.contact-card { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); }
+.contact-card-main { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.contact-card strong { font-size: 10px; }
+.contact-card span, .contact-card small { color: var(--muted); font-size: 8px; overflow-wrap: anywhere; }
+.contact-inline-form { display: grid; gap: 10px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); }
+.contact-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.contact-inline-form label { display: grid; gap: 4px; color: var(--muted); font-size: 8px; font-weight: 700; }
+.contact-inline-form input, .contact-inline-form select { width: 100%; min-width: 0; border: 1px solid var(--border); border-radius: 7px; padding: 7px 8px; background: var(--surface); color: var(--text); outline: none; font-size: 9px; }
+.contact-inline-form input:focus, .contact-inline-form select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 13%, transparent); }
+.contact-inline-form .primary-check { display: flex; grid-template-columns: none; align-items: center; gap: 7px; }
+.contact-inline-form .primary-check input { width: auto; }
+.commercial-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.mini-kpi { display: grid; gap: 4px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); }
+.mini-kpi span { color: var(--muted); font-size: 8px; }
+.mini-kpi strong { font-size: 14px; }
+.activity-full { margin-top: 0; padding-top: 0; border-top: 0; }
+
+
+.client-contract-list {
+  display: grid;
+  gap: 10px;
+}
+
+.client-contract-card {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+}
+
+.client-contract-card-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.client-contract-card-heading > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.client-contract-card-heading small {
+  color: var(--text-muted);
+  font-size: var(--aw-font-functional, 13px);
+}
+
+.client-contract-badges,
+.client-contract-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.client-contracts-tab .contact-tab-heading > div {
+  display: grid;
+  gap: 4px;
+}
+
+.client-contracts-tab .contact-tab-heading p {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .client-contract-card-heading {
+    flex-direction: column;
+  }
+}

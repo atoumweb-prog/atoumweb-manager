@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 1,
+  "decision": "AtoumWeb 2026-10-06 — clôture des raccords 112 ; aucune modification de prix ou temps",
+  "rules": {
+    "AW-PHOTO-DETOUR": {
+      "schemaVersion": 1,
+      "minimumLineCents": 4500
+    },
+    "AW-MARIAGE-HISTOIRE": {
+      "schemaVersion": 1,
+      "particularTerms": {
+        "title": "Conditions particulières — Mariage Histoire",
+        "body": "Conditions particulières — Mariage Histoire, applicables à cette seule prestation décrite au devis.\nLe mini-site comprend les quatre Pages Accueil, Notre histoire, Le Jour J et Espace privé. RSVP, galerie et vidéo sont des sections ou modules selon le périmètre prévu, sans Page supplémentaire implicite.\nL’Espace privé utilise une protection standard par mot de passe de la Page. Cette protection ne comporte aucune promesse de protection des URLs directes des fichiers médias. Une protection renforcée des médias ou un portail à comptes utilisateurs n’est pas inclus et nécessite un périmètre et un accord distincts. Cette limite ne dispense pas AtoumWeb de ses obligations techniques et des obligations applicables à la protection des données ; les contenus et le dispositif réels doivent être adaptés au besoin.\nLe livre d’or standard permet de déposer un nom et un message, sans compte, avec modération selon les modalités et le responsable précisés au devis.\nPar dérogation au délai général des éléments post-mariage, cette prestation comprend une seule intervention après le mariage, limitée à deux heures et à réaliser dans les soixante jours suivant sa date. Elle porte sur les contenus et fonctionnalités déjà prévus. La date du mariage et la remise des éléments sont précisées au devis pour permettre cette planification. Les demandes excédant le nombre d’interventions, le temps ou cette période relèvent d’une prestation complémentaire après information et accord préalable du Client. Cette règle ne réduit pas les garanties applicables et ne permet pas de facturer au Client une correction due à un manquement imputable à AtoumWeb."
+      }
+    },
+    "AW-CONT-URGENT-48": {
+      "schemaVersion": 1,
+      "attachment": {
+        "kind": "priority",
+        "compatibleCodes": [
+          "AW-CONT-ART-ESS",
+          "AW-CONT-ART-SEO",
+          "AW-CONT-PACK4-SEO",
+          "AW-CONT-PAGE",
+          "AW-CONT-REWRITE",
+          "AW-CONT-LIVRE-BLANC",
+          "AW-CONT-MEP-ADV",
+          "AW-CONT-RECH-TECH"
+        ]
+      }
+    },
+    "AW-TECH-URGENT": {
+      "schemaVersion": 1,
+      "attachment": {
+        "kind": "priority",
+        "compatibleCodes": [
+          "AW-TECH-DEPANNAGE",
+          "AW-TECH-PLUGIN-STD",
+          "AW-TECH-MIGRATION-AW",
+          "AW-TECH-MIGRATION-CPLX",
+          "AW-TECH-REMISE-WP",
+          "AW-TECH-REMISE-WC",
+          "AW-TECH-RESPONSIVE",
+          "AW-DEVWP-AJUST",
+          "AW-DEVWP-FONCTION",
+          "AW-DEVWP-PLUGIN",
+          "AW-DEVWP-AUTO",
+          "AW-APP-EVOL"
+        ],
+        "allowIntervention": true
+      }
+    },
+    "AW-BRAND-DOC-PAGE": {
+      "schemaVersion": 1,
+      "attachment": {
+        "kind": "document",
+        "compatibleCodes": [
+          "AW-BRAND-DOC-4P",
+          "AW-CONT-MEP-ADV",
+          "AW-CONT-LIVRE-BLANC"
+        ]
+      }
+    },
+    "AW-CONT-PRIORITE": {
+      "schemaVersion": 1,
+      "attachment": {
+        "kind": "priority",
+        "compatibleCodes": [
+          "AW-CONT-ART-ESS",
+          "AW-CONT-ART-SEO",
+          "AW-CONT-PACK4-SEO",
+          "AW-CONT-PAGE",
+          "AW-CONT-REWRITE",
+          "AW-CONT-LIVRE-BLANC",
+          "AW-CONT-MEP-ADV",
+          "AW-CONT-RECH-TECH"
+        ]
+      }
+    },
+    "AW-LP-URGENT": {
+      "schemaVersion": 1,
+      "attachment": {
+        "kind": "priority",
+        "compatibleCodes": [
+          "AW-LP-BASE"
+        ]
+      }
+    },
+    "AW-BRAND-PRIORITE": {
+      "schemaVersion": 1,
+      "attachment": {
+        "kind": "priority",
+        "compatibleCodes": [
+          "AW-BRAND-LOGO",
+          "AW-BRAND-IDENTITE",
+          "AW-BRAND-DOC-4P",
+          "AW-BRAND-SOCIAL-5",
+          "AW-BRAND-SOCIAL-10",
+          "AW-BRAND-PAPETERIE",
+          "AW-BRAND-LOGO-ANIM",
+          "AW-BRAND-MOTION"
+        ]
+      }
+    },
+    "AW-APP-EVOL": {
+      "schemaVersion": 1,
+      "minimumBilledQuantityMilli": 1000
+    },
+    "AW-DEVWP-AJUST": {
+      "schemaVersion": 1,
+      "minimumBilledQuantityMilli": 1000
+    },
+    "AW-TECH-DEPANNAGE": {
+      "schemaVersion": 1,
+      "minimumBilledQuantityMilli": 1000
+    }
+  },
+  "offerOptions": {
+    "AW-WEB-VITRINE": [
+      "AW-WEB-PAGE-SUP",
+      "AW-CONT-PAGE",
+      "AW-WEB-BLOG",
+      "AW-WEB-NEWSLETTER",
+      "AW-WEB-BILINGUE",
+      "AW-WEB-LANG-SUP",
+      "AW-DATA-GA-SC",
+      "AW-WEB-AVIS-GOOGLE",
+      "AW-WEB-PORTFOLIO",
+      "AW-WEB-PORTFOLIO-ADV",
+      "AW-WEB-FORM-ADV"
+    ],
+    "AW-LP-BASE": [
+      "AW-LP-REDACTION",
+      "AW-LP-SECTION",
+      "AW-LP-MERCI",
+      "AW-LP-POPUP",
+      "AW-LP-URGENT",
+      "AW-LP-LANG-SUP"
+    ],
+    "AW-ECOM-BASE": [
+      "AW-ECOM-PROD-SIMPLE",
+      "AW-ECOM-PROD-VAR",
+      "AW-MAINT-WC-M",
+      "AW-ECOM-IMPORT",
+      "AW-ECOM-LIVRAISON-ADV",
+      "AW-ECOM-PAIEMENT-ADV",
+      "AW-ECOM-MULTILINGUE"
+    ],
+    "AW-MARIAGE-ESS": [
+      "AW-MARIAGE-DOMAINE"
+    ],
+    "AW-MARIAGE-HISTOIRE": [
+      "AW-MARIAGE-RENOUV"
+    ]
+  }
+}

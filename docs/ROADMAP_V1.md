@@ -1,5 +1,15 @@
 # Roadmap V1 — AtoumWeb Manager
 
+## Exécution actuelle — 22/09/2026
+
+- Phases 1 à 4 et Phase 6 existent dans le socle fonctionnel courant.
+- Phase 5 Administration / Finance est différée.
+- Projet V2 complète actuellement la Phase 3 avec le vrai atelier de production : blueprints, phases/étapes, fiches de travail, temps, ressources, actions, accès sécurisés et ergonomie de production.
+- Phase 7 a commencé sur une branche sœur mais doit être réalignée sur Projet V2 avant reprise afin que les statistiques de temps/rentabilité reposent sur la structure de production réelle.
+- Source de vérité d'avancement : `PROJECT_STATUS.md`.
+- Handoff machine / Codex : `docs/HANDOFF_CODEX_MSI.md`.
+
+
 Cette roadmap sera détaillée après validation de l’architecture technique et du modèle de données.
 
 ## Phase 0 — Fondation

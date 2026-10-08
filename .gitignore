@@ -1,0 +1,25 @@
+node_modules/
+.vite/
+out/
+dist/
+coverage/
+*.log
+gate0-output.txt
+.DS_Store
+Thumbs.db
+.env
+.env.*
+!.env.example
+
+# Local databases and recipe evidence are never source files.
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+*.bak
+outputs/
+backups/
+captures/
+screenshots/

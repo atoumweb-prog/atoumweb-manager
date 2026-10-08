@@ -1,0 +1,115 @@
+.prospects-layout { display: grid; gap: 16px; min-width: 0; }
+.prospects-layout.with-detail { grid-template-columns: minmax(0, 1.55fr) minmax(360px, .7fr); align-items: start; }
+.prospects-layout.with-detail .kanban-board { min-width: 0; }
+
+/* Pipeline actif lisible sans défilement horizontal. */
+.kanban-board {
+  display: grid;
+  grid-auto-flow: row;
+  grid-auto-columns: initial;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  overflow-x: visible;
+  padding: 2px;
+  scroll-snap-type: none;
+}
+.kanban-column { min-height: 260px; scroll-snap-align: unset; transition: border-color .15s ease, background .15s ease, transform .15s ease; }
+.kanban-column.drag-over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, var(--surface-soft)); transform: translateY(-2px); }
+
+/* Effet de pile : seule la tête dépasse jusqu'au clic. */
+.stacked-cards { display: flex; flex-direction: column; gap: 0; padding-bottom: 8px; }
+.stacked-card { position: relative; cursor: default; transition: margin .18s ease, transform .18s ease, box-shadow .18s ease, opacity .18s ease; }
+.stacked-card + .stacked-card { margin-top: -18px; }
+.stacked-card.collapsed-card { min-height: 48px; padding-bottom: 10px; }
+.stacked-card.collapsed-card .prospect-card-body { display: none; }
+.stacked-card.expanded-card { z-index: 30; margin-top: 8px; margin-bottom: 8px; box-shadow: 0 16px 34px color-mix(in srgb, #000 13%, transparent); }
+.stacked-card.expanded-card + .stacked-card { margin-top: -6px; }
+.card-drag-handle { cursor: grab; min-height: 28px; align-items: center; user-select: none; }
+.card-drag-handle:active { cursor: grabbing; }
+.prospect-card.dragging { opacity: .45; transform: scale(.985); }
+.prospect-card.selected-prospect { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent), 0 12px 28px color-mix(in srgb, #000 8%, transparent); }
+.prospect-card-body { display: grid; gap: 9px; padding-top: 7px; }
+.prospect-card-actions { display: grid; grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); gap: 7px; }
+
+.quick-followups { display: flex; flex-wrap: wrap; gap: 5px; }
+.quick-followups button { border: 1px solid var(--border); border-radius: 7px; padding: 5px 6px; background: var(--surface-soft); color: var(--muted); cursor: pointer; font-size: 8px; font-weight: 700; }
+.quick-followups button:hover { border-color: var(--accent); color: var(--accent-strong); }
+
+/* La fiche latérale reste intégralement exploitable, même dans une fenêtre basse. */
+.prospect-detail-panel {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-height: calc(100dvh - 124px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  align-self: start;
+}
+.prospect-detail-panel::-webkit-scrollbar { width: 9px; }
+.prospect-detail-panel::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--muted) 35%, transparent); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+.detail-panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.detail-panel-heading h2 { margin: 5px 0 0; }
+.close-detail { width: 28px; height: 28px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-soft); color: var(--muted); cursor: pointer; }
+.detail-badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 16px; }
+.detail-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+
+.inline-editor { display: grid; gap: 10px; margin-top: 14px; padding: 12px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface-soft); }
+.inline-editor > strong { font-size: 11px; }
+.inline-editor label { display: grid; gap: 5px; color: var(--muted); font-size: 9px; font-weight: 700; }
+.inline-editor input, .inline-editor textarea { width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); padding: 8px 9px; outline: none; font: inherit; }
+.inline-editor textarea { min-height: 76px; resize: vertical; }
+.inline-editor input:focus, .inline-editor textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 13%, transparent); }
+.inline-editor-actions { display: flex; justify-content: flex-end; gap: 7px; }
+.danger-editor { border-color: color-mix(in srgb, #b84b50 38%, var(--border)); }
+.danger-button { border: 1px solid #b84b50; border-radius: 8px; background: #b84b50; color: white; cursor: pointer; font-weight: 800; }
+.danger-outline { border-color: color-mix(in srgb, #b84b50 50%, var(--border)); color: #b84b50; }
+
+.prospect-toolbar-actions { flex-wrap: wrap; justify-content: flex-end; }
+.dev-button { border-style: dashed; }
+.closed-prospects-panel { display: grid; gap: 14px; }
+.closed-prospect-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.closed-prospect-card { display: grid; gap: 5px; padding: 12px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface-soft); color: var(--text); text-align: left; cursor: pointer; }
+.closed-prospect-card:hover { border-color: var(--accent); }
+.closed-prospect-card strong { font-size: 11px; }
+.closed-prospect-card span { color: var(--accent-strong); font-size: 9px; font-weight: 800; }
+.closed-prospect-card small { color: var(--muted); font-size: 9px; }
+
+@media (max-width: 1500px) {
+  .kanban-board { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .closed-prospect-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Fallback viewport : les container queries ci-dessous prennent ensuite le relais. */
+@media (max-width: 1320px) {
+  .prospects-layout.with-detail { grid-template-columns: 1fr; }
+  .prospect-detail-panel { position: static; max-height: none; overflow: visible; }
+}
+
+@media (max-width: 1050px) {
+  .kanban-board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .closed-prospect-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  .kanban-board, .closed-prospect-grid { grid-template-columns: 1fr; }
+  .prospect-toolbar { align-items: flex-start; flex-direction: column; }
+  .prospect-toolbar-actions { width: 100%; justify-content: flex-start; }
+}
+
+/* Réagit à la largeur utile de la zone centrale, pas seulement à la fenêtre entière. */
+@container maincontent (max-width: 1180px) {
+  .prospects-layout.with-detail { grid-template-columns: 1fr; }
+  .prospect-detail-panel { position: static; max-height: none; overflow: visible; }
+}
+
+@container maincontent (min-width: 1181px) and (max-width: 1450px) {
+  .prospects-layout.with-detail { grid-template-columns: minmax(0, 1.35fr) minmax(350px, .75fr); }
+}
+
+@media (max-height: 760px) and (min-width: 1321px) {
+  .prospect-detail-panel { max-height: calc(100dvh - 94px); }
+}
