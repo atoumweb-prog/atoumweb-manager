@@ -1,6 +1,6 @@
 # CI #84 — Analyse ciblée des trois timeouts de fixtures
 
-Date : 09/10/2026. Branche `codex/fix-ci-windows-hosted`, diagnostic depuis `1b069575`. Aucun nouveau run GitHub Actions, push ou merge pour cette analyse. Validation-MSI n’est pas ouverte.
+Date : 09/10/2026. Branche `codex/fix-ci-windows-hosted`, diagnostic depuis `1b069575`, correctif local `5a175eb`. Publication ensuite autorisée avec un HEAD documentaire [skip ci], sans réécriture du correctif et sans nouveau run GitHub Actions. Aucune fusion ni ouverture de Validation-MSI.
 
 ## Échec GitHub constaté
 
@@ -57,4 +57,28 @@ L’export n’a lieu qu’après préparation réussie et refuse une destinatio
 
 ## Suite
 
-Correctif local uniquement, non poussé : la CI de #84 reste sur le run échoué précédent. Un nouveau push/run nécessite le nouvel accord AtoumWeb. Le succès sur Windows hébergé reste à démontrer ; pas de recommandation de fusion avant cette vérification.
+Publication de 5a175eb dans #84 autorisée par AtoumWeb ; un commit documentaire de suivi [skip ci] est poussé avec lui pour préserver ce hash et empêcher un run automatique. Les cinq fichiers affectés restent le helper, son nouveau test, ce rapport, PROJECT_STATUS et la roadmap. Le YAML, les trois tests initialement en timeout, Vitest, migrations, données/règles métier et référentiel V2 ne changent pas dans ce correctif.
+
+Dernier rejeu prépublication : typecheck OK et 27/27 ciblés en 4,58 s, intégrité/FK, migrations 1–66, indépendance, journal DELETE/synchronous FULL, erreur sans fichier partiel et destination existante intacte. Le complet 698/698 sur les mêmes sources n’est pas répété pour des changements de documentation seulement.
+
+### Protocole du prochain run Windows hébergé — à autoriser séparément
+
+1. Vérifier HEAD de #84 et working tree, confirmer que le budget Actions 0 USD / Stop usage reste celui approuvé par AtoumWeb. Ne modifier ni budget ni moyen de paiement ; si GitHub bloque, arrêter sans retry/contournement.
+2. Après accord explicite, pousser **un nouveau commit sans skip** sur cette branche. Ne pas relancer le run 37934890745 : il reste lié à l’ancien code. Ne pas utiliser workflow_dispatch sur main, qui n’a pas encore ce workflow corrigé.
+3. Vérifier que le nouveau run pull_request est lié au nouveau HEAD contenant 5a175eb, qu’il utilise **windows-2022** et Node 24, npm ci avec le lockfile, typecheck et `npm test -- --maxWorkers=2`.
+4. Attendre sa fin effective ; conserver lien/run ID/head SHA, nom du runner, runtime Electron/Node, conclusions/durées de chaque étape, résumé Vitest et liste exacte des erreurs. Ne pas remplacer ces preuves par des résultats locaux.
+5. À contenu stable, le comptage local est 698 tests dans 80 fichiers ; constater le comptage réel dans les logs, ne pas en faire un nouvel invariant métier. Vérifier explicitement les trois scénarios précédemment en timeout et les trois tests d’export, sans retirer les autres tests.
+6. Succès = installation/typecheck/tests verts sur ce HEAD, sans skip ni retry masquant une erreur. Un échec appelle un bilan et un nouvel arbitrage avant une nouvelle exécution. Garder #84 draft/non fusionnée jusqu’à validation humaine.
+
+### Plan d’intégration #81 et #83 — aucune branche modifiée
+
+Références contrôlées : #81 `593a4611`, #83 `5b38cbe1`, toutes deux ouvertes en draft. Le plan n’exécute aucun merge, rebase, cherry-pick ou push de leurs branches.
+
+1. Après CI #84 verte et **accord de fusion séparé**, intégrer #84 dans main ; relever le HEAD exact. Cela apporte le workflow hébergé et la fixture corrigée, pas UX-03/UX-16/UX-01.
+2. Mettre ensuite à jour la branche #81 depuis ce main par **merge normal**, après autorisation. merge-tree préparatoire ne trouve que des conflits PROJECT_STATUS/roadmap : préserver les historiques, définir un état courant exact. Ne pas modifier les transactions/savepoints, contrôles de restauration, destination immuable, sauvegarde/récupération, idempotence ou modèles historiques.
+3. Contrôler localement le typecheck, la suite complète et les tests de restauration/pack/terminaison sur fixtures temporaires ; pousser pour produire un **nouveau run de #81 utilisant le nouveau YAML**. Attendre les logs CI réels, revue humaine et accord distinct de fusion. Ne pas supposer que l’ancien run en attente s’adapte.
+4. Après intégration validée de #81, mettre à jour #83 depuis main par merge normal, sur sa branche et après autorisation. Préparer le conflit `src/main/ipc.ts` : conserver destination/détail et `scheduleDatabaseRestore(sourcePath, workspace)` de #81, ainsi que confirmations dirty/pending, recontrôle après dialogue et `app.quit()` de #83. Le merge automatique de main.ts devra être revu pour conserver message de restauration refusée et cleanup seulement à will-quit.
+5. Conserver l’ensemble des commits UX-01A/B/C et de revue : brouillons indépendants/CAS/conflits, garde par éditeur, fenêtre détachée, workspace différé, archivage/suppression avant mutation et sections réduites conservées. Préserver aussi toutes les protections #81 ; aucun Enregistrer et quitter V2 ni réparation de dossiers historiques.
+6. Rejouer les tests ciblés des deux protections, typecheck/suite complète/intégrité-FK/1–66 et parcours natifs concernés sur trois thèmes dans des fixtures isolées. Pousser #83 seulement après contrôles/autorisation, attendre un nouveau run lié au bon HEAD, puis demander validation humaine avant sa fusion.
+
+La simulation Git #84→#81 et #84→#83 rencontre uniquement les deux fichiers de suivi. #81↔#83 rencontre en plus l’IPC de restauration ; leur compatibilité avait été testée sur une copie combinée temporaire, mais ce test passé ne remplace pas la validation du futur tree intégré. Les anciens runs en attente ne sont ni annulés ni relancés ici. #80/#82 et le référentiel V2 restent distincts et inchangés ; leurs éventuels merges nécessitent d’autres décisions.

@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 09/10/2026 — Publication du correctif fixtures #84 sans déclenchement CI
+
+- AtoumWeb valide 5a175eb et autorise sa publication, avec skip CI ; aucune réécriture du commit. Un commit de suivi uniquement documentaire portant [skip ci] devient le HEAD poussé avec le correctif. Même périmètre : helper/test de fixture et trois fichiers de suivi, aucun code métier/référentiel/migration/timeout global modifié.
+- Dernier contrôle avant push : typecheck et **27/27 ciblés** verts, intégrité/FK/migrations 1–66, journal/durabilité inchangés, isolation/échecs/nettoyage vérifiés. Suite complète 698/698 déjà verte sur les mêmes sources. Aucun budget ou Validation-MSI touché.
+- [Protocole CI et plan d’intégration](docs/CI_RECIPE_FIXTURE_TIMEOUT_ANALYSIS.md) préparés ; aucune modification des branches #81/#83. merge-tree en lecture : #84 contre chacune ne rencontre que les journaux de suivi ; #81 contre #83 nécessite aussi une résolution IPC conservant les protections des deux. Aucun merge réel.
+- Attendre accord séparé pour un nouveau commit sans skip/run hébergé ; les résultats locaux ne valident pas GitHub. La publication avec skip ne remplace pas le premier run échoué par un succès. Aucun merge automatique.
+
 ## 09/10/2026 — Diagnostic et correctif local des timeouts CI #84
 
 - Analyse des trois timeouts réels : 26–27 s par cas Histoire, 56 s pour deux sessions, délai 5 s. Profilage du helper : 176 autocommit/68 fins de transactions-savepoints sur disque par fixture ; preview ~12 ms. Stockage Windows hébergé probablement amplificateur, sans diagnostic certain CPU/antivirus/fsync à distance. [Analyse, mesures et limites](docs/CI_RECIPE_FIXTURE_TIMEOUT_ANALYSIS.md).
