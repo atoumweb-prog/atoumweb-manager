@@ -1,5 +1,21 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 09/10/2026 — UX-16 / UX-03 : corrections fonctionnelles isolées
+
+- Validation AtoumWeb reçue : implémentation des deux corrections, tests permanents, commits et PR dédiée sans fusion sur `codex/fix-manager-integrity-ux16-ux03`. Base `main@eb252d5c` ; PR documentaire #80 inchangée, UX/UI V2 séparé.
+- UX-16 : destination canonique/identité épinglées, empreinte source, compatibilité schéma/migrations/intégrité/FK, copie indépendante et contraintes vérifiées avant remplacement ; ancienne demande ambiguë ou interrompue non exécutée. Copie de sécurité validée, remplacement transactionnel SQLite, refus explicites et récupération volontaire, aucun WAL/SHM supprimé manuellement.
+- UX-03 : terminaison et débit sous savepoints imbriquables, rollback des statuts/mouvements/solde/timestamps/activités, gardes/facturation/idempotence inchangés, aucune réparation historique automatique.
+- Validation finale : **57/57 ciblés, 744/744 complets (80 fichiers), typecheck OK**. Windows : casse/séparateurs/jonctions/hardlinks, writers DELETE/WAL, échec de copie/remplacement, récupération depuis pre-restore et rejeu ; erreurs multiétapes de débit/journaux, transactions parentes et autres couvertures. Fixtures uniquement ; schéma toujours 1–66, intégrité/FK/replay verts, aucun accès Validation-MSI ni lancement Manager.
+- 11 fichiers code/tests/suivi ; aucune navigation/React/CSS/règle commerciale/migration changée. [Bilan et limites](docs/FUNCTIONAL_INTEGRITY_UX16_UX03.md). Deux fixtures de premiers tests interrompus restent dans TEMP, suppression native refusée par revue automatique ; aucun contournement, aucun artefact dans Git. Prochaine action : revue de la PR corrective, aucune fusion automatique ; UX-01/04/05/02 ultérieurs.
+
+## 09/10/2026 — UX-16 / UX-03 : diagnostic isolé avant correction
+
+- AtoumWeb autorise un chantier fonctionnel distinct de la PR documentaire #80 et de la conception UX/UI V2 ; commencer par restauration/workspace et terminaison d'intervention, présenter les corrections avant changement risqué. Branche dédiée `codex/fix-manager-integrity-ux16-ux03`, depuis `main@eb252d5cbd0e95137eafa2b4759fcbcfd7263eda`.
+- **UX-16 reproduit** : restauration programmée dans A appliquée à B après changement de workspace. La sauvegarde pré-restauration préserve B mais n'empêche pas le remplacement incorrect. Une source non SQLite existante est aussi acceptée et rend la destination temporaire illisible.
+- **UX-03 reproduit** : sans temps terminé, erreur mais statut devenu `to_validate` ; erreur tardive injectée sur le journal, statut intermédiaire et pack déjà débité. Nominal répété : un seul débit. Propositions : cible de restauration épinglée/validée et terminaison transactionnelle avec débit imbriquable.
+- Six probes sur fixtures isolées, 8/8 tests existants ciblés verts ; ces tests n'incluent pas les défauts. Intégrité/FK des fixtures valides correctes, migrations mémoire 1–66, nettoyage effectué. Aucun accès à Validation-MSI, démarrage du Manager ou modification de code/migration/UI.
+- Diagnostic, tests à ajouter, limites et fichiers envisagés : [FUNCTIONAL_INTEGRITY_UX16_UX03.md](docs/FUNCTIONAL_INTEGRITY_UX16_UX03.md). **Corrections proposées, non implémentées** ; arrêt pour validation, aucun commit/push/merge. Autres anomalies ensuite, sans refonte graphique.
+
 ## 09/10/2026 — Checkpoint GitHub et fichiers de liaison autorisés
 
 - AtoumWeb autorise la publication GitHub des sources validées et la mise à jour du suivi. Branche active **main** ; parent de consolidation **8e05a47296d478587b11841e36ca5acb2e936726**, origin/main identique après fetch. Le commit contenant cette entrée est le nouveau checkpoint ; push normal, sans merge ni force.

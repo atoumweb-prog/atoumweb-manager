@@ -4,6 +4,8 @@ Date d'ouverture : 27/09/2026.
 
 ## 0. État courant et lecture de la roadmap — 09/10/2026
 
+**Chantier fonctionnel UX-16 / UX-03 validé et implémenté**, sur `codex/fix-manager-integrity-ux16-ux03`, base `main@eb252d5c`. Destination de restauration épinglée/validée et copie transactionnelle ; terminaison atomique et débit imbriquable. **57/57 ciblés, 744/744 complets, typecheck OK** ; tests physiques temporaires Windows et fixtures mémoire, schéma 1–66 inchangé. Aucun accès Validation-MSI, réparation historique, nouvelle migration ou refonte d'écran. [Bilan et limites](FUNCTIONAL_INTEGRITY_UX16_UX03.md). AtoumWeb autorise commits et PR corrective dédiée sans fusion ; PR #80 documentaire inchangée, conception UX/UI V2 séparée. Prochaine action : revue de la PR corrective ; UX-01/04/05/02 restent ultérieurs.
+
 **Manager officiel : main.** PR #79 fusionnée normalement (8e05a47296d478587b11841e36ca5acb2e936726). Le checkpoint contenant cette entrée publie l’évolution contractuelle et les corrections UX de la recette, après autorisation AtoumWeb ; fix/pre-phase5-commercial-ux et le checkpoint 1–65 sont historiques.
 
 Projet V2, Sites/Pages/compositions, Devis/contrats/Builder CGV, Catalogue 112, opérations et Phase 7 Statistiques/Rentabilité intégrés. **Migrations 1–66** : types/compositions versionnés et liens aux versions Catalogue, sans copie des textes ni réécriture des snapshots acceptés. Validation-MSI : 13 types draft /112 liens ; références existantes conservées.
@@ -2263,6 +2265,20 @@ Autorisation AtoumWeb : corriger les captures de la recette manuelle, puis rendr
 
 Typecheck /695 tests OK ; UI 134 natifs +37 Prospection +21 préparation +20 options sur trois thèmes. Tests isolés ; Validation-MSI contrôlée readonly, intégrité/FK correctes, recette humaine conservée. Aucun commit/push/merge, publication, nouvelle sauvegarde ou travail Bridge/8C. Prochaine action : charger le backend corrigé par redémarrage normal après enregistrement de la saisie utilisateur, puis laisser AtoumWeb poursuivre sa recette manuelle.
 
+
+### 09/10/2026 — INTEGRITE-UX16-UX03-02 (Codex, autorisation / réalisation)
+
+AtoumWeb valide UX-16/03 et précise : source réellement Manager compatible, schéma/migrations/intégrité/FK, cible immuable, ancienne demande ambiguë refusée, copie sûre/récupération, Windows/fichiers occupés/rejeu ; transaction englobant statuts, débit, solde, timestamps et journaux, erreurs multiétapes et autres couvertures, aucun rattrapage historique. Commits/PR corrective autorisés, aucune fusion automatique ; pas de changement destructif/migration/règle imprévue sans arbitrage.
+
+Implémentation : source readonly et copie indépendante vérifiée y compris CHECK, destination canonique/identité, empreinte, consommation des demandes avant application, sauvegarde pre-restore vérifiée, SQLite Backup API transactionnelle et erreurs natives explicites. Clôture sous savepoint avec débit imbriquable, statut dérivé et activité dans la transaction. 57 tests ciblés, 744 complets/typecheck verts ; Windows temporaires, intégrité/FK/replay, récupération et idempotence. 11 fichiers source/tests/suivi, aucun React/CSS, schéma 1–66 inchangé ; aucun accès/démarrage Validation-MSI, publication métier ou travail UX V2/Bridge/8C. Deux anciennes fixtures TEMP interrompues non supprimées après refus automatique d'approbation, pas de contournement ; exécutions finales nettoyées et aucun artefact committé. Prochaine action : PR corrective vers main, revue humaine avant fusion.
+
+### 09/10/2026 — INTEGRITE-UX16-UX03-01 (Codex, diagnostic / proposition)
+
+Instruction AtoumWeb : traiter les anomalies fonctionnelles de l'audit #80 en lots indépendants, sans refonte UX/UI V2 ni modification de Validation-MSI. Commencer UX-16/03 et présenter le diagnostic avant changement risqué. Branche `codex/fix-manager-integrity-ux16-ux03` créée depuis main@eb252d5c ; PR documentaire non modifiée.
+
+Résultats isolés : restauration A appliquée à B après changement de workspace, source non SQLite acceptée ; terminaison sans temps terminé laissant `to_validate`, erreur tardive injectée laissant aussi le débit engagé. Cas nominaux vérifiés. Six probes sur bases/profil temporaires ou mémoire, nettoyés/fermés ; intégrité des fixtures lisibles OK/FK vide, registre mémoire 1–66. Tests existants ciblés 8/8 verts mais incomplets.
+
+Propositions : épingler/contrôler la destination et la source de restauration, refuser les marqueurs legacy ambiguës, sécuriser les échecs de remplacement ; transaction commune de terminaison et savepoint de débit incluant statut dérivé/journal. Aucun changement fonctionnel réalisé, aucune migration, aucun démarrage Manager/accès Validation-MSI, commit/push/merge. Rapport lié depuis PROJECT_STATUS ; prochaine action : validation AtoumWeb puis lots séparés avec tests de non-régression. UX-01/04/05/02 restent ultérieurs.
 
 ### 09/10/2026 — GIT-LIAISON-MANAGER-01 (Codex, autorisation / checkpoint)
 
