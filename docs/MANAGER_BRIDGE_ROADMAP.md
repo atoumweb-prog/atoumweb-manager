@@ -2281,3 +2281,10 @@ Actions autorisé, accès dépôt admin/push, runner local absent. Facturation p
 ### 09/10/2026 — CI-HOSTED-TRY-01 (AtoumWeb, autorisation / premier essai)
 
 AtoumWeb confirme dans la session le budget Actions 0 USD avec Stop usage = Yes et autorise un premier run #84 dans le quota gratuit disponible. Nouveau commit sans skip sur codex/fix-ci-windows-hosted, workflow inchangé ; relever typecheck/tests/durée et erreur éventuelle depuis GitHub réel. Aucun changement de budget, paiement ou droit ; si blocage GitHub, ne pas relancer ni contourner. Pas de merge, UX V2, migration ou Validation-MSI. Le résultat est accessible sur le run du commit de cette entrée et dans le bilan PR, sans déclencher un deuxième run par un commit de résultat.
+
+
+### 09/10/2026 — CI-FIXTURE-TIMEOUT-01 (Codex, diagnostic et correctif local autorisés)
+
+AtoumWeb demande analyse des trois timeouts #84, correction ciblée sans délai global accru ni tests masqués ; diagnostics/tests locaux isolés autorisés, pas de nouveau run Actions/push/merge sans nouvel accord. Logs run 37934890745 : 26–27 s Histoire, 56 s deux sessions, 5 s limite. Profilage local : fixture 176 autocommit/68 fins de transactions-savepoints disque, preview ~12 ms ; latence disque hébergée probable, détail CPU/antivirus/fsync non mesuré à distance. Simulation locale de délai par commit confirme la sensibilité, pas présentée comme preuve GitHub.
+
+Helper testSupport construit migrations et mêmes références en mémoire puis export SQLite complet unique ; aucune modification moteur/règle/migration/temps/FK/durabilité/global timeout. Assertions des trois tests inchangées ; trois tests d’export ajoutés (données/intégrité/indépendance, erreur sans fichier partiel, destination intacte). Typecheck/27 ciblés/698 complets (80 fichiers,72,02 s) verts. Deux sessions ~0,44 s, Histoire ~0,24/0,30 s. Fixtures et instrumentation TEMP nettoyées ; Validation-MSI non ouverte, workflow/Vitest et autres PR inchangés. Commit local non poussé ; CI distante reste échouée, attendre accord AtoumWeb avant nouveau push/run et succès réel avant fusion.

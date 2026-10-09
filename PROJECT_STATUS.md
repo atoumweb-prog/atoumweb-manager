@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 09/10/2026 — Diagnostic et correctif local des timeouts CI #84
+
+- Analyse des trois timeouts réels : 26–27 s par cas Histoire, 56 s pour deux sessions, délai 5 s. Profilage du helper : 176 autocommit/68 fins de transactions-savepoints sur disque par fixture ; preview ~12 ms. Stockage Windows hébergé probablement amplificateur, sans diagnostic certain CPU/antivirus/fsync à distance. [Analyse, mesures et limites](docs/CI_RECIPE_FIXTURE_TIMEOUT_ANALYSIS.md).
+- Correctif limité à testSupport : vraies migrations/références construites en SQLite mémoire puis export complet VACUUM INTO une fois ; aucune durabilité/FK/timeout/assertion désactivée, pas de cache partagé. Modèles/actions/temps/blueprints inchangés, variante historique conservée. Fichiers persistants indépendants utilisés normalement ensuite par le banc technique et les tests.
+- Typecheck OK, **27/27 ciblés**, **698/698 complets /80 fichiers /72,02 s**. Les trois tests d’origine sont inchangés ; test deux sessions ~0,44 s, Histoire ~0,24/0,30 s. Nouveaux contrôles d’export : intégrité/FK/migrations/modèles, isolation, journal DELETE/synchronous FULL, absence de fichier partiel après erreur et préservation d’une destination existante.
+- Fixtures/instruments locaux supprimés, aucune ouverture Validation-MSI, aucune installation ni changement de workflow, de configuration Vitest ou des autres PR. Correctif local non poussé ; run GitHub précédent toujours échoué, aucun nouveau run/merge. Attendre nouvel accord AtoumWeb avant push et vérification réelle sur Windows hébergé.
+
 ## 09/10/2026 — Premier essai GitHub Actions autorisé sur #84
 
 - AtoumWeb confirme avoir vérifié le budget Actions : 0 USD, Stop usage = Yes ; dépassements payants bloqués. Autorise un seul premier essai de quality dans le quota gratuit disponible, par nouveau commit sans skip. Aucun budget, paiement ou paramètre de facturation modifié par Codex.
