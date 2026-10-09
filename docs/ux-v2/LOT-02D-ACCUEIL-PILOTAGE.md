@@ -55,7 +55,7 @@ Les **sept intitulés visuels validés** :
 ### Projection candidate **NON VALIDÉE comme règle métier**
 | Étape visuelle | États candidats (à auditer et confirmer) | Décision non encore prouvée |
 |---|---|---|
-| À qualifier | `new`, `qualifying` | La V1 cache `new` dans son pipeline. Doit-il compter dans « À qualifier » ou seulement dans l'annuaire « non traité » ? |
+| À qualifier | **`qualifying` uniquement** | **E72 DÉCIDÉ :** `new` reste dans l’Annuaire tant que « Démarrer la prospection » n’a pas été déclenché ; aucune carte ou compteur pipeline pour `new`. |
 | Besoins | `need_identified` | En l'absence d'une étape technique autonome « besoins », ceci est le seul état évident. |
 | Préparer le devis | `quote_to_prepare`, `quote_to_send` | Éviter confusion devis créé / devis prêt à être envoyé. |
 | Attente du retour | `quote_sent`, `follow_up`, `waiting` | Préserver relances dues comme **filtre transversal**, pas colonne supplémentaire. |
@@ -63,7 +63,7 @@ Les **sept intitulés visuels validés** :
 | Finalisation | **DÉCIDÉ MÉTIER : accord commercial de principe obtenu, dernières formalités/signature en attente.** Aucun `ProspectStage=finalization` existant. | Il faut un **signal tracé et volontaire** de cet accord (capacité existante à auditer), pas de dérivation de `quotes.finalize`, `sent` ou `viewed` ; pas de statut backend inventé. |
 | Conversion | **DÉCIDÉ** : historique des **Prospects effectivement convertis en Clients**, établi par un lien/événement de conversion vérifiable ; `won` seul ne suffit pas si aucune conversion Client n'est prouvée. | **Pas une étape du pipeline actif** : la vue est historique et consultable, lien vers fiche Client et fiche/historique Prospect si conservé ; `lost` exclu, une conversion comptée une seule fois. Période et affichage du compteur à préciser avant implémentation. |
 
-**Arbitrage validé par AtoumWeb : « Conversion » affiche l'historique des Prospects réellement convertis en Clients, et non des dossiers encore actifs.** Ne pas inventer d'autres règles E59 : l'inclusion de `new` et le **marqueur de Finalisation** restent ouverts ; sa définition métier est désormais validée. Séparer expressément dans le visuel/compteur les **étapes 1–6 du pipeline actif** de l'**historique des conversions** ; une période/calcul comparables devront être explicités. Le lien de conversion Client doit être vérifiable dans le service, sans créer de nouvelle étape SQL ni doublon. Cadrer avec Lot 03 CRM avant code.
+**Arbitrage validé par AtoumWeb : « Conversion » affiche l'historique des Prospects réellement convertis en Clients, et non des dossiers encore actifs.** Ne pas inventer d'autres règles E59 : l’exclusion de `new` du pipeline est décidée (E72) ; le **marqueur de Finalisation** reste ouvert ; sa définition métier est désormais validée. Séparer expressément dans le visuel/compteur les **étapes 1–6 du pipeline actif** de l'**historique des conversions** ; une période/calcul comparables devront être explicités. Le lien de conversion Client doit être vérifiable dans le service, sans créer de nouvelle étape SQL ni doublon. Cadrer avec Lot 03 CRM avant code.
 
 ## 5. Alertes et confiance dans les données
 - Afficher l'horodatage/source ou signal de fraîcheur lorsque service disponible ; distinguer *chargé*, *en cours*, *échec*, *partiel* ; ne pas transformer l'échec d'une des huit sources en zéro alerte.
@@ -122,7 +122,7 @@ Les **sept intitulés visuels validés** :
 | R02D-22 | Recette UI, typecheck, suite complète et reprise après erreur | Preuves datées/SHA, Validation-MSI jamais touchée |
 
 ## 10. Questions de conception restant ouvertes
-- **E59 — Mapping 7 colonnes, partiellement tranché** : **Conversion validée comme historique consultable des conversions Client réelles, non comme étape active**. Restent ouverts **techniquement** : inclusion de `new` dans « À qualifier », choix du marqueur traçable pour « Finalisation » (définition métier validée), et période d'affichage des conversions. Aucun nouveau statut technique.
+- **E59 — Mapping 7 colonnes, partiellement tranché** : **Conversion validée comme historique consultable des conversions Client réelles, non comme étape active**. Restent ouverts **techniquement** : choix du marqueur traçable pour « Finalisation » (définition métier validée), et période d'affichage des conversions. Aucun nouveau statut technique.
 - **E60 — Disponibilité vraie des KPI ciblés** : les sources filtres doivent correspondre à la population des compteurs, sinon revoir libellés/cibles.
 - **E61 — Hiérarchie des alertes** : quelles catégories sont réellement « critiques » et doivent rester visibles hors widget ; inspecter `operationsAlerts` avant tout automatisme.
 - **E62 — Niveau de personnalisation d'Accueil** : masquer/ordonner obligatoire ; dimensions et grilles adaptatives à prototyper.
@@ -149,7 +149,7 @@ Les **sept intitulés visuels validés** :
 
 **Alternative non retenue comme objectif produit :** Finalisation peut devoir afficher une absence de dossiers tant qu'aucun signal fiable n'existe, mais son sens métier est validé. Ne pas afficher un compteur inventé. La mise en œuvre du rail, de la recherche et de l'en-tête ne dépend pas de cet arbitrage.
 
-**État : E59 Conversion et Finalisation = sens métier validés ; étude du marqueur et projection de `new` encore ouvertes.**
+**État : E59 Conversion et Finalisation = sens métier validés ; E72 (`new` uniquement Annuaire jusqu’au démarrage) validée ; marqueur d’accord de principe encore à définir.**
 
 ## 12. Décision métier E59 Finalisation du 09/10/2026
 **Validée par AtoumWeb :** « Finalisation » désigne un **accord commercial de principe** avec signature/dernières formalités en attente. Elle n'est **ni** l'état `quotes.finalizedAt` (« devis prêt à envoyer »), **ni** un pré-projet qui existerait, **ni** une confirmation d'acceptation. Le **marqueur source** de l'accord de principe reste à instruire pour projeter ce groupe sans ajouter un statut backend arbitraire ; ne pas affecter toute proposition `sent/viewed` automatiquement en Finalisation.
