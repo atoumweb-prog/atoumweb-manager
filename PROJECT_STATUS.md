@@ -1,5 +1,10 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 09/10/2026 — Reprise #81 après fusion normale de #84
+
+- #84 fusionnée après contrôle du HEAD f4bc0197 et du run réel #589 vert (698 tests) : main/origin/main **2b3906328d237b962f053acdf25b1ebeeba1222c**, tree identique au HEAD validé. Mise à jour locale de main en fast-forward, puis intégration normale de ce main dans la branche #81.
+- Seuls conflits : PROJECT_STATUS et roadmap ; historiques conservés. Aucun changement des services de restauration/terminaison/packs, des assertions ou délais par cette intégration. Correctif RPC de cycle de test autorisé ensuite, à isoler dans un commit distinct ; contrôles locaux et préparation CI avant toute validation de fusion #81. #82/#83 inchangées par Codex, aucune intervention Validation-MSI, aucun budget modifié.
+
 ## 09/10/2026 — UX-16 / UX-03 : corrections fonctionnelles isolées
 
 - Validation AtoumWeb reçue : implémentation des deux corrections, tests permanents, commits et PR dédiée sans fusion sur `codex/fix-manager-integrity-ux16-ux03`. Base `main@eb252d5c` ; PR documentaire #80 inchangée, UX/UI V2 séparé.
@@ -15,6 +20,36 @@
 - **UX-03 reproduit** : sans temps terminé, erreur mais statut devenu `to_validate` ; erreur tardive injectée sur le journal, statut intermédiaire et pack déjà débité. Nominal répété : un seul débit. Propositions : cible de restauration épinglée/validée et terminaison transactionnelle avec débit imbriquable.
 - Six probes sur fixtures isolées, 8/8 tests existants ciblés verts ; ces tests n'incluent pas les défauts. Intégrité/FK des fixtures valides correctes, migrations mémoire 1–66, nettoyage effectué. Aucun accès à Validation-MSI, démarrage du Manager ou modification de code/migration/UI.
 - Diagnostic, tests à ajouter, limites et fichiers envisagés : [FUNCTIONAL_INTEGRITY_UX16_UX03.md](docs/FUNCTIONAL_INTEGRITY_UX16_UX03.md). **Corrections proposées, non implémentées** ; arrêt pour validation, aucun commit/push/merge. Autres anomalies ensuite, sans refonte graphique.
+
+## 09/10/2026 — Validation GitHub unique du correctif fixtures autorisée
+
+- AtoumWeb autorise un seul nouveau run #84 avec 5a175eb conservé ; workflow Windows 2022/Node 24/npm ci/typecheck/complet deux workers inchangé. Budget 0 USD/Stop usage confirmé dans la session ; API quota toujours inaccessible (scope user absent), aucun solde gratuit inventé ni budget/paiement modifié. Si refus ou échec : pas de nouvelle relance sans accord.
+- Commit sans skip déclenche l’essai ; relever depuis les logs les trois anciens timeouts, totaux et durées réels. Si vert, simulations locales isolées et préparation technique #81 puis #83 autorisées ; aucune modification de #81/#82/#83, merge, Validation-MSI ou données réelles. Résultats sur le run du commit et le bilan PR, sans pousser un deuxième commit de résultat déclenchant Actions.
+
+## 09/10/2026 — Publication du correctif fixtures #84 sans déclenchement CI
+
+- AtoumWeb valide 5a175eb et autorise sa publication, avec skip CI ; aucune réécriture du commit. Un commit de suivi uniquement documentaire portant [skip ci] devient le HEAD poussé avec le correctif. Même périmètre : helper/test de fixture et trois fichiers de suivi, aucun code métier/référentiel/migration/timeout global modifié.
+- Dernier contrôle avant push : typecheck et **27/27 ciblés** verts, intégrité/FK/migrations 1–66, journal/durabilité inchangés, isolation/échecs/nettoyage vérifiés. Suite complète 698/698 déjà verte sur les mêmes sources. Aucun budget ou Validation-MSI touché.
+- [Protocole CI et plan d’intégration](docs/CI_RECIPE_FIXTURE_TIMEOUT_ANALYSIS.md) préparés ; aucune modification des branches #81/#83. merge-tree en lecture : #84 contre chacune ne rencontre que les journaux de suivi ; #81 contre #83 nécessite aussi une résolution IPC conservant les protections des deux. Aucun merge réel.
+- Attendre accord séparé pour un nouveau commit sans skip/run hébergé ; les résultats locaux ne valident pas GitHub. La publication avec skip ne remplace pas le premier run échoué par un succès. Aucun merge automatique.
+
+## 09/10/2026 — Diagnostic et correctif local des timeouts CI #84
+
+- Analyse des trois timeouts réels : 26–27 s par cas Histoire, 56 s pour deux sessions, délai 5 s. Profilage du helper : 176 autocommit/68 fins de transactions-savepoints sur disque par fixture ; preview ~12 ms. Stockage Windows hébergé probablement amplificateur, sans diagnostic certain CPU/antivirus/fsync à distance. [Analyse, mesures et limites](docs/CI_RECIPE_FIXTURE_TIMEOUT_ANALYSIS.md).
+- Correctif limité à testSupport : vraies migrations/références construites en SQLite mémoire puis export complet VACUUM INTO une fois ; aucune durabilité/FK/timeout/assertion désactivée, pas de cache partagé. Modèles/actions/temps/blueprints inchangés, variante historique conservée. Fichiers persistants indépendants utilisés normalement ensuite par le banc technique et les tests.
+- Typecheck OK, **27/27 ciblés**, **698/698 complets /80 fichiers /72,02 s**. Les trois tests d’origine sont inchangés ; test deux sessions ~0,44 s, Histoire ~0,24/0,30 s. Nouveaux contrôles d’export : intégrité/FK/migrations/modèles, isolation, journal DELETE/synchronous FULL, absence de fichier partiel après erreur et préservation d’une destination existante.
+- Fixtures/instruments locaux supprimés, aucune ouverture Validation-MSI, aucune installation ni changement de workflow, de configuration Vitest ou des autres PR. Correctif local non poussé ; run GitHub précédent toujours échoué, aucun nouveau run/merge. Attendre nouvel accord AtoumWeb avant push et vérification réelle sur Windows hébergé.
+
+## 09/10/2026 — Premier essai GitHub Actions autorisé sur #84
+
+- AtoumWeb confirme avoir vérifié le budget Actions : 0 USD, Stop usage = Yes ; dépassements payants bloqués. Autorise un seul premier essai de quality dans le quota gratuit disponible, par nouveau commit sans skip. Aucun budget, paiement ou paramètre de facturation modifié par Codex.
+- Workflow Windows hébergé/Node 24/npm ci/typecheck/tests deux workers inchangé. Ce commit déclenche le run de la PR #84 ; résultat à lire dans GitHub, aucune simulation locale présentée comme CI. Si GitHub refuse pour quota/facturation, arrêt sans relance ni contournement. Aucun merge ou accès Validation-MSI.
+
+## 09/10/2026 — Préparation CI Windows hébergée, sans exécution facturable
+
+- Branche technique indépendante depuis main@eb252d5c : quality sur windows-2022, Node 24 conservé, npm ci/lockfile et tests complets avec deux workers. Aucun module métier/UX, migration ou Validation-MSI modifié ; PR #80/#81/#82/#83 conservées.
+- Vérification GitHub : Actions enabled/allowed_actions all, permissions dépôt admin/push, zéro runner local ; quatre PR draft et quality queued. Windows hébergé disponible selon GitHub ; quota/usage/budget du compte non vérifiables avec le jeton actuel (API billing 404 et scope user manquant, plan absent). Aucune modification des droits, budgets ou moyens de paiement.
+- PR technique préparée avec marqueur [skip ci] : aucune exécution automatique, aucun résultat CI revendiqué. Arrêt avant lancement jusqu’à confirmation du quota restant et d’un blocage des dépassements, ou arbitrage explicite du coût. Après cela, nouveau commit sans marqueur pour tester la PR ; après fusion autorisée de la CI, mise à jour de #81/#83 pour créer de nouveaux runs utilisant ce YAML. Relancer leurs anciens runs ne change pas le workflow de leur ancien commit.
 
 ## 09/10/2026 — Checkpoint GitHub et fichiers de liaison autorisés
 
