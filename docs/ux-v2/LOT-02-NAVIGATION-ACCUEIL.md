@@ -137,7 +137,7 @@ Lot 02 n'est « terminé » que si les 17 modules demeurent accessibles, les ré
 - **02A** [rail option A](LOT-02A-RAIL-NAVIGATION.md) — E42 **DÉCIDÉ** : Accueil + favoris + 5 groupes, 17 modules déployés.
 - **02B** [en-tête/chrono](LOT-02B-ENTETE-RACCOURCIS.md) — recherche accessible, chrono unique, raccourcis sans collision.
 - **02C** [recherche et routage](LOT-02C-RECHERCHE-ROUTAGE.md) — 14 types, exact `entityId`, garde UX-01, anti-races, 18 tests ; E51–E58.
-- **02D** [Accueil et widgets](LOT-02D-ACCUEIL-PILOTAGE.md) — 8 sources, priorités Aujourd'hui, alertes, 7 étapes visuelles, 22 tests ; **E59 projection pipeline NON tranchée**.
+- **02D** [Accueil et widgets](LOT-02D-ACCUEIL-PILOTAGE.md) — 8 sources, priorités Aujourd'hui, alertes, 7 étapes visuelles, 22 tests ; **E59 partiellement tranché** : Conversion = historique de Prospects devenus Clients ; `new` et Finalisation restent ouverts.
 - **02E** [recette transverse](LOT-02E-RECETTE-ET-MIGRATION.md) — 20 parcours de bout en bout et livraison par incréments réversibles.
 
-**Statut : documentation 02A–02E disponible dans GitHub. Aucune de ces fonctionnalités n'est livrée par la PR documentaire #82.** Relever le code et la CI intégrés avant mise en œuvre ; **E59 à valider** avant d'engager le mapping des colonnes.
+**Statut : documentation 02A–02E disponible dans GitHub. Aucune de ces fonctionnalités n'est livrée par la PR documentaire #82.** Relever le code et la CI intégrés avant mise en œuvre ; **E59 à finaliser** (`new`, « Finalisation » et fenêtre de l'historique) avant de coder le pipeline ; Conversion historique est décidée.
