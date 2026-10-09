@@ -68,3 +68,45 @@ Si une ancienne version est retirée, les devis historiques affichent leurs **do
 - Sur écran compact, afficher la fiche/infobulle avec scroll interne, sans masquer le bouton de fermeture ni l'action du Devis.
 - Contrastes et textes fonctionnels >=14px en Compact ; neuf combinaisons de thèmes/densités, modes clavier et souris.
 - Distinguer **contenu public/contractuel**, **arguments internes**, **questions de découverte** par libellés et séparateurs, non par couleur uniquement.
+
+## 7. Déroulement technique futur, après décision de développement
+| Phase | Action | Preuve |
+|---|---|---|
+| 04E.1 | Auditer `internalAdvice`, `commercialParameters` et composants `CommercialScope` dans Catalogue, Prospect, Devis et leurs snapshots | Matrice champ → source → écran → droits et non-duplication |
+| 04E.2 | Définir le schéma minimal éditable et la politique des versions, sans copier des clauses contractuelles | Contrat API/migration éventuelle, risques devis anciens |
+| 04E.3 | Concevoir éditeur d'aide, mode brouillon, prévisualisation et restauration contrôlée | Maquettes compact/confort, refus de perte de saisie |
+| 04E.4 | Afficher aide courte/complète depuis Catalogue, Prospection et Devis | `?` au clic/clavier, partage version exacte |
+| 04E.5 | Relier les motifs des recommandations 04D, sans génération de ligne ni contrat | Tests de conseils et de séparations des contenus |
+| 04E.6 | Tester annulations, copies de versions, recherche, preview et intégrité | Fixtures isolées, typecheck/tests/CI réels, revue humaine |
+
+## 8. Scénarios de recette proposés (18 cas, aucun exécuté)
+| ID | Scénario | Résultat attendu |
+|---|---|---|
+| R04E-01 | Éditer utilité/bénéfices sur une nouvelle prestation | Brouillon éditable, pas de publication automatique |
+| R04E-02 | Créer une question de découverte | Modèle d'aide enrichi, aucune réponse Prospect inventée |
+| R04E-03 | Enregistrer argumentaire/vigilance | Conseils internes distincts des textes clients |
+| R04E-04 | Ajouter une exclusion de prestation | Source unique de périmètre, pas deux versions contradictoires |
+| R04E-05 | Afficher « compléments liés » | Réutilise recommandations 04D et leurs motifs, pas un second dictionnaire |
+| R04E-06 | Taper dans une aide, fermer puis choisir Rester | Brouillon `dirty` conservé par garde UX-01 |
+| R04E-07 | Enregistrer après panne IPC | Erreur affichée, contenu gardé, aucune nouvelle version dupliquée |
+| R04E-08 | Demander restauration du contenu initial | Aperçu + confirmation, ancienne version publiée intacte |
+| R04E-09 | Comparer deux versions d'aide | Diff lisible, date/source et origine contrôlées |
+| R04E-10 | Désactiver aide au survol | `?` reste accessible au clic et au clavier |
+| R04E-11 | Lire aide dans Prospection | Intérêt, questions, inclus/exclus de version, aucun achat |
+| R04E-12 | Lire aide dans Devis | Bons éléments et version du composant, aucun ajout de ligne |
+| R04E-13 | Devis historique lié à ancienne version | Snapshot/ancienne prestation non rétroactivement modifiés |
+| R04E-14 | Aide interne contenant une vigilance | Aucune injection automatique dans CGV/PDF destiné au client |
+| R04E-15 | Mot-clé commercial français et code Abby | Recherche adéquate après indexation réelle, codes secondaires |
+| R04E-16 | Texte de conseil suggéré par IA | Marqué brouillon, relecture humaine requise, pas de validation juridique implicite |
+| R04E-17 | Écran étroit et neuf combinaisons thème/densité | Aide lisible et fermable, taille fonctionnelle >=14px |
+| R04E-18 | Tests SQLite/versions/contrats/UX-01 | Journaux sur SHA réel, rollback, Validation-MSI intacte |
+
+## 9. Questions ouvertes avant implémentation
+- **E111** : reprendre et structurer `internalAdvice` / `commercialParameters` existants ou créer une entité d'aide attachée à la version ? Éviter un modèle en doublon.
+- **E112** : définir la bonne granularité d'enregistrement de l'aide pour **ne pas multiplier les versions du Catalogue** à chaque édition.
+- **E113** : décider comment comparer/restaurer aide et version initiale avec date/auteur/provenance, sans écraser documents passés.
+- **E114** : déployer les mêmes contenus par `?` dans Catalogue, Prospect et Devis tout en respectant les snapshots de versions et les permissions.
+- **E115** : recherche par bénéfices/mots-clés **uniquement si données structurées et index réellement livrés** ; pas de promesse de moteur sémantique existant.
+- **E116** : frontières exactes entre commentaire commercial, objet du contrat, clauses CGV et Description de Devis ; aucune duplication vivante.
+
+**La conception est complète au niveau fonctionnel ; le schéma d'aide, les écrans et les tests sont encore à développer après arbitrage technique.**
