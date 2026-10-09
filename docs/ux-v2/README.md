@@ -83,3 +83,10 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 ### Lot 01C — Fiches et panneaux
 - [Spécification détaillée 01C](LOT-01C-FICHES-PANNEAUX.md) : comportements déjà repérés dans Prospection/Clients/Catalogue/Devis/Projets/Opérations, six sous-étapes de mise en œuvre, **16 scénarios de recette**, contraintes de persistance et prévention des pertes de brouillons (PR #83).
 - Points techniques E08–E11 : portée de persistance des dispositions, variété des vues agrandies, bornes et accessibilité des séparateurs, raccordement UX-01 hors Prospection/Devis. **Documentation seulement**, pas de migration d'écran.
+
+### Lot 01D — Tableaux et vues personnalisables
+- [Spécification détaillée 01D](LOT-01D-TABLEAUX-VUES.md) : inspection des listes Prospection/Clients/Catalogue/Devis/Projets/Opérations, composants cibles, recherche/tri/colonnes/vues, auto-persistance des **seules préférences d'interface**, **16 scénarios d'acceptation**. Statut **documentation**, aucune fonctionnalité 01D livrée.
+- Points E12–E16 : choix du stockage des vues, portée du tri/pagination, colonnes minimales obligatoires, exclusion de données sensibles, gestion d'une vue standard contre une vue personnelle. À instruire avant développement.
+
+### CI GitHub Actions — préparation indépendante de l'UX
+- [Diagnostic et proposition](CI-GITHUB-ACTIONS.md) : workflow `ci.yml` avec `runs-on: [self-hosted, Windows, X64]` alors qu'aucun runner enregistré n'est signalé par Codex ; recommandation `windows-2022`, `npm ci` (lockfile présent), deux workers, puis vérification réelle des PR. **Proposition non approuvée, aucune configuration modifiée**. La CI en attente n'est pas un échec de tests.
