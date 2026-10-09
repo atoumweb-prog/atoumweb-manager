@@ -1,5 +1,11 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 10/10/2026 — Recette de restauration de bout en bout préparée sur branche isolée UX-01
+
+- AtoumWeb a vérifié `prep/ux01-restore-quit-gate-v2@88efb788` sur Windows : typecheck OK, **31/31** ciblés, **801/801** tests complets dans 87 fichiers et **183/183** contrôles natifs sur les trois thèmes ; fixtures supprimées. Aucune CI GitHub ni recette d'exécutable packagé revendiquée.
+- Script additionnel `scripts/check-restore-quit-roundtrip.cjs` ajouté pour tester dans cinq processus Electron natifs (fixtures TEMP exclusivement) le vrai quit, l'application au lancement suivant, la sauvegarde `pre-restore`, l'absence de rejeu et le refus de sortie. [Protocole et limites](docs/UX01_RESTORE_QUIT_ROUNDTRIP.md). **Syntaxe du script vérifiée, mais exécution Electron Windows non réalisée pour ce nouveau script** ; les succès précédents ne le couvrent pas.
+- PR officielle #83, #82, main et Validation-MSI inchangés, ni CI ni fusion. Prochaine vérification : exécuter le nouveau script sur Windows et compléter la recette packagée avant intégration.
+
 ## 10/10/2026 — #81 fusionnée ; #83 en intégration préparatoire isolée
 
 - **État GitHub confirmé :** #81 fusionnée normalement dans `main@68bfd952e394169ade65e3f0697422d8c00c2cc7`, CI post-merge **#652 SUCCESS** au même SHA ; typecheck et 750/750 tests (35 restaurations) confirmés par le bilan de fusion. L'historique #81 ci-dessous reste relatif à ses checkpoints des 09–10/10.
