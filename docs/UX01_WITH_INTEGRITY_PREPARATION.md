@@ -1,3 +1,40 @@
+# Reprise UX-01 après la fusion de #81 — garde de restauration au quit
+
+**10/10/2026 — branche isolée `prep/ux01-restore-quit-gate-v2`. NON PRÊTE À FUSIONNER.**
+
+## Historique et intention
+
+- `main` contient #81 (merge commit `68bfd952e394169ade65e3f0697422d8c00c2cc7`), dont les protections UX-16/UX-03 restent intactes.
+- Reprise de la composition préparatoire `prep/ux01-with-integrity-v1@8a577f1`; la branche officielle de PR #83 et #82 ne sont pas modifiées.
+- Risque identifié : le flux packagé écrivait `pending-database-restore.json` avant `app.quit()`. Une confirmation de fermeture rejetée pouvait laisser un marqueur exécutable au démarrage suivant.
+
+## Modifications sur cette branche
+
+- `RestoreQuitGate` conserve uniquement en mémoire une intention de restauration avec un ticket non réutilisable. Elle n'est exécutée qu'au **`will-quit`**. Chaque veto connu du cycle de sortie (`before-quit` ou `will-prevent-unload`) annule l'intention.
+- `backups:restore` conserve la prévalidation de la source et les contrôles de brouillons ; pour le **mode packagé**, `scheduleDatabaseRestore(sourcePath, workspace)` puis `app.relaunch()` sont différés jusqu'au `will-quit`. Aucun marqueur de cette demande n'est écrit pendant l'attente de sortie. L'ancien minuteur ne peut pas fermer une nouvelle demande après annulation.
+- En **mode développement**, « Programmer la restauration » conserve son sens distinct : la demande est écrite pour un prochain démarrage manuel, sans fermeture ni relance automatique.
+- Si la vérification finale refuse la source/cible pendant `will-quit`, la relance n'est **pas** demandée : le Manager se ferme normalement avec un dialogue explicite. L'utilisateur doit le relancer et renouveler la demande. Aucun contournement des vérifications UX-16 n'est introduit.
+
+## Vérifications à ce stade
+
+- Cinq scénarios du garde isolé reproduits et réussis localement avec Node 22 / test runner natif (équivalent de la logique livrée) : commit uniquement à `will-quit`, sortie annulée, ticket périmé, échec une seule fois, deux demandes concurrentes.
+- Cinq tests permanents Vitest ajoutés dans `src/main/restoreQuitGate.test.ts`, **non exécutés dans l'environnement complet**.
+- Recette native `scripts/check-unsaved-inputs-ui.cjs` enrichie de deux contrôles de refus de quit par thème (fenêtre principale et fenêtre détachée), **non exécutée**. Syntaxe CJS analysée avec succès.
+- **Typecheck global, suite Vitest complète, recette Electron Windows et CI GitHub non exécutés** sur ce nouveau SHA. Les précédents 750/750 de #81 ne valident pas cette nouvelle combinaison.
+
+## Points de contrôle avant décision
+
+1. Tester la sortie réelle packagée acceptée et le redémarrage voulu, en plus des sorties refusées ; vérifier l'absence de marqueur au lancement suivant quand « Rester » a été choisi.
+2. Tester source invalide, cible/workspace modifiés, pending, nouvelle saisie et fenêtres détachées sur **fixtures temporaires** uniquement ; aucune ouverture de Validation-MSI.
+3. Vérifier que le runtime Electron déclenche bien `will-quit` après validation de toutes les fenêtres, et qu'aucun autre listener ne le bloque.
+4. Réconcilier `PROJECT_STATUS.md` et `docs/MANAGER_BRIDGE_ROADMAP.md` avec l'historique #83 (actuellement restés en version #81 sur la branche préliminaire).
+5. Exécuter typecheck, tests ciblés, suite complète, recette trois thèmes et une CI Windows sur le SHA définitif **après accord distinct**.
+6. Conserver #83 draft tant que ces contrôles ne sont pas verts. Aucune fusion automatique.
+
+---
+
+## Checkpoint antérieur (composition statique #81 + #83)
+
 # Préparation : intégration UX-01 avec restauration sécurisée
 
 Statut : composition statique NON TESTÉE, branche isolée ; aucune fusion dans les PR #81 ou #83.
