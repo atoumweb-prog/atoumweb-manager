@@ -59,3 +59,11 @@ Points à vérifier avant intégration :
 5. Reporter les historiques #81 et #83 dans PROJECT_STATUS et roadmap sans écraser aucune chronologie.
 
 Ce fichier prépare les tests ; il ne constitue pas une validation.
+## 10/10/2026 — Décision de préparation de l'intégration #83
+
+- **Source validée** : `prep/ux01-restore-quit-gate-v2` (HEAD à vérifier à la remise). Descend de `main@68bfd952` (#81 fusionnée) : comparaison GitHub `main..prep` = **38 commits ahead / 0 behind** au point de contrôle documentaire, **49 fichiers modifiés**, y compris les gardes UX-01, tests et preuves. La divergence historique est volontaire ; **aucun code de production `src/` n'a changé après `88efb788`**, SHA des validations Windows typecheck/801/183. Les recettes natives 12/12 (`dbfd0e2`) et packagées (2/2, `61786e1`) se sont déroulées plus tard sans modification des services métier.
+- **PR officielle historique #83** : base `main`, HEAD `5b38cbe1`, draft, GitHub `mergeable:false`. `main..#83` est **divergé : 4 ahead / 17 behind**, car #83 était issue d'une base antérieure à #81. Ne pas tenter une fusion brute de cette vieille version.
+- **Recommandation d'intégration, non exécutée** : ouvrir en temps voulu une **nouvelle PR de remplacement** de `prep/ux01-restore-quit-gate-v2` vers `main` (ou transférer explicitement ce travail dans #83 après sauvegarde de son historique), sans effacer l'ancienne PR tant que la traçabilité n'est pas assurée. La création d'une PR peut déclencher automatiquement des **GitHub Actions payantes** ; demander l'accord de l'utilisateur pour cette étape et la CI. Les documents historiques doivent être conservés.
+- **Avant fusion** : revoir la portée UX-01, obtenir la CI sur le SHA réellement destiné à `main`, conserver un retour arrière humain, confirmer que le package Forge final n'a pas été testé par la recette packagée indépendante. Pas de migration 67, pas de modification des offres/commercial/CGV/maintenance/Bridge.
+- **État** : aucune PR nouvelle créée, aucun changement de `main`, #82, de la PR officielle #83 ou de Validation-MSI. Aucun déclenchement CI.
+
