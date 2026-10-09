@@ -12,8 +12,9 @@ Statut : **DÉCIDÉ** sauf mention explicite. Ces exigences sont des cibles ; l'
 | UX2-LAY-002 | Persister automatiquement dispositions, colonnes, ordres, largeur/visibilité des panneaux, filtres/vues définis ; préférences par écran avec retour aux défauts. |
 | UX2-LAY-003 | Les préférences d'interface n'enregistrent jamais un formulaire métier. |
 | UX2-HELP-001 | Aide `?` courte, détaillée au clic et, si activée, au survol prolongé ; réglable, accessible au clavier. |
-| UX2-VIS-001 | Texte courant homogène de ~14–15 px ; trois thèmes et trois densités actuels conservés et harmonisés. |
+| UX2-VIS-001 | Échelle typographique par densité : cible de texte principal **Compact 14 px**, Confort 16 px, Confort+ 18 px ; conserver trois thèmes et trois densités et vérifier lisibilité/contrastes au rendu. |
 | UX2-VIS-002 | Identité AtoumWeb, piste visuelle de triangles imbriqués ; logo final à valider séparément. |
+| UX2-VIS-003 | **Arbitrage E01 validé le 09/10/2026** : le code Compact est actuellement à 15 px et doit viser **14 px** en V2, sans baisser les modes Confort (16 px) ni Confort+ (18 px). Texte secondaire et petit texte au minimum 14 px, hauteurs de contrôles 36/42/48 px conservées à ce stade ; recette visuelle requise avant livraison. |
 | UX2-DATA-001 | Tout éditeur métier suit les modifications non sauvées ; signal discret et protection de toute sortie destructive. |
 | UX2-DATA-002 | Lorsque l'éditeur sait enregistrer : **Enregistrer et quitter**, **Continuer la modification** (choix sûr initial), **Quitter sans enregistrer** ; quitter seulement après succès vérifié. |
 | UX2-DATA-003 | Les validations métier, publications, clôtures et destructions demandent leurs contrôles spécifiques ; enregistrer un brouillon ne publie rien. |
@@ -59,7 +60,7 @@ Statut : **DÉCIDÉ** sauf mention explicite. Ces exigences sont des cibles ; l'
 ## Arbitrages encore ouverts (pas des décisions)
 | Sujet | Point à trancher / vérifier |
 |---|---|
-| Design tokens exacts | Police, contrastes mesurés, tailles minimales par densité, espacements et logo définitif. |
+| Design tokens exacts | **E01 tranché** (Compact cible 14 px, Confort 16 px, Confort+ 18 px) ; restent à valider contrastes mesurés, exceptions CSS, espacements détaillés et logo définitif. |
 | Sauvegarde automatique des vues | Portée locale vs workspace/utilisateur ; comportement en cas de conflit entre fenêtres ou réinitialisation. |
 | Garde de sortie | Stratégie technique précise pour les éditeurs ne disposant pas d'un `save()` synchrone ou dans le cycle Electron ; UX-01 doit faire foi après fusion. |
 | Contrats | Vocabulaire réel des rubriques et ordre de référence final à aligner avec les clauses juridiquement validées ; cas des incompatibilités non résolues. |
