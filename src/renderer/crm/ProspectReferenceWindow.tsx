@@ -1,4 +1,5 @@
-import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from 'react';
+import {UnsavedGroup} from '../unsaved/unsaved';
+import { Component, useEffect, useRef, useState, type ErrorInfo, type ReactNode } from 'react';
 import type { ProspectSummary } from '../../shared/crm';
 import { ProspectIdentityPanel } from './ProspectIdentityPanel';
 import { ProspectResearchPanel } from './ProspectResearchPanel';
@@ -34,7 +35,7 @@ class ProspectReferenceErrorBoundary extends Component<
 
 export function ProspectReferenceWindow({ prospectId }: { prospectId: string }) {
   return <ProspectReferenceErrorBoundary>
-    <ProspectReferenceWindowContent prospectId={prospectId} />
+    <UnsavedGroup name={'reference:'+prospectId}><ProspectReferenceWindowContent prospectId={prospectId} /></UnsavedGroup>
   </ProspectReferenceErrorBoundary>;
 }
 
@@ -44,8 +45,9 @@ function ProspectReferenceWindowContent({ prospectId }: { prospectId: string }) 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  const loadedOnce=useRef(false);
   async function load(message?: string) {
-    setLoading(true);
+    if(!loadedOnce.current)setLoading(true);
     setLoadError(null);
     try {
       const prospects = await window.atoumweb.crm.prospects.list({ includeArchived: true });
@@ -55,7 +57,7 @@ function ProspectReferenceWindowContent({ prospectId }: { prospectId: string }) 
       setProspect(null);
       setLoadError(error instanceof Error ? error.message : String(error));
     } finally {
-      setLoading(false);
+      loadedOnce.current=true;setLoading(false);
     }
   }
 

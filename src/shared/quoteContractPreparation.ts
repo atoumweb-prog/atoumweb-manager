@@ -36,9 +36,9 @@ export interface ContractIssue { code: string; severity: 'blocking' | 'warning';
 export interface QuoteContractPreparation { parameters: QuoteContractParameters | null; state: 'draft' | 'frozen' | 'historical_missing'; issues: ContractIssue[]; defaults?:{facts:ContractDefaultFact[];includedBenefits:string[];marriage:boolean}; documents: ContractDocumentLink[]; snapshot: Record<string, unknown> | null; }
 export interface QuoteContractPreparationApi {
   get(id: string): Promise<QuoteContractPreparation>;
-  save(id: string, parameters: QuoteContractParameters): Promise<QuoteContractPreparation>;
+  save(id: string, parameters: QuoteContractParameters, expected?: {parameters: QuoteContractParameters|null}): Promise<QuoteContractPreparation>;
   administration(): Promise<ContractAdministration>;
-  saveAdministration(input: ContractAdministration): Promise<ContractAdministration>;
+  saveAdministration(input: ContractAdministration, expected?: ContractAdministration): Promise<ContractAdministration>;
   attach(id: string, input: ContractDocumentLinkInput): Promise<QuoteContractPreparation>;
   importDocument(id: string, role: ContractDocumentRole, provenance: string): Promise<QuoteContractPreparation | null>;
   recordAcceptance(id: string, statement: string, occurredAt: string, provenance: string): Promise<QuoteContractPreparation>;

@@ -1,3 +1,4 @@
+import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { useEffect, useState } from 'react';
 import type { ContactMethodType, ProspectInput, ProspectSummary } from '../../shared/crm';
 import type { WorkflowIdentity } from '../../shared/workflow';
@@ -57,6 +58,9 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const identityValue={organization:identity?.organization,contact:identity?.contact,decision,decisionContactId,primaryDraft};
+  const guard=useUnsavedDraft('Entreprise et interlocuteurs',identityValue,{ready:!!identity,pending:busy,discard:s=>{setIdentity(i=>i?{...i,organization:s.organization??null,contact:s.contact??null}:i);setDecision(s.decision);setDecisionContactId(s.decisionContactId);setPrimaryDraft(s.primaryDraft);}});
+
 
   useEffect(() => {
     if (!focusRequest) return;
@@ -85,22 +89,7 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
     };
   }
 
-  async function load() {
-    try {
-      const nextIdentity = await window.atoumweb.workflow.identity('prospect', prospect.id);
-      setIdentity(nextIdentity);
-      setPrimaryDraft(nextIdentity.contact
-        ? { firstName: nextIdentity.contact.firstName, lastName: nextIdentity.contact.lastName, role: nextIdentity.contact.jobTitle ?? '' }
-        : { firstName: '', lastName: '', role: '' });
-      const separateDecisionMaker = nextIdentity.decisionMaker && nextIdentity.decisionMaker.id !== nextIdentity.contact?.id
-        ? nextIdentity.decisionMaker
-        : null;
-      const nextDecisionContactId = prospect.decisionStatus === 'no' ? separateDecisionMaker?.id ?? '' : '';
-      setDecisionContactId(nextDecisionContactId);
-      const base = decisionFromIdentity(prospect, nextIdentity);
-      setDecision(nextDecisionContactId ? await draftFromContact(nextDecisionContactId, base, nextIdentity) : base);
-    } catch (e) { setError(cleanError(e)); }
-  }
+  async function load(){try{const next=await window.atoumweb.workflow.identity('prospect',prospect.id);const separate=next.decisionMaker&&next.decisionMaker.id!==next.contact?.id?next.decisionMaker:null;const contact=prospect.decisionStatus==='no'?separate?.id??'':'';const base=decisionFromIdentity(prospect,next);const nextDecision=contact?await draftFromContact(contact,base,next):base;const primary=next.contact?{firstName:next.contact.firstName,lastName:next.contact.lastName,role:next.contact.jobTitle??''}:{firstName:'',lastName:'',role:''};if(!guard.dirty){guard.initial({organization:next.organization,contact:next.contact,decision:nextDecision,decisionContactId:contact,primaryDraft:primary});setIdentity(next);setPrimaryDraft(primary);setDecisionContactId(contact);setDecision(nextDecision);}}catch(e){setError(cleanError(e));}}
 
   useEffect(() => { setEditing(false); void load(); }, [prospect.id]);
   useEffect(() => { if (identity) void load(); }, [prospect.updatedAt]);
@@ -212,7 +201,7 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
         decisionMakerEmail: null,
         decisionMakerPhone: null,
       });
-      setEditing(false); await load(); onSaved();
+      guard.saved();setEditing(false); await load(); onSaved();
       window.dispatchEvent(new Event('atoumweb:changed'));
     } catch (e) { setError(cleanError(e)); }
     finally { setBusy(false); }
@@ -249,26 +238,26 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
     {editing && <div className="workflow-fields identity-editor-v2">
       <div className="form-span-2"><CrmIdentityAssetEditor organizationId={identity.organization?.id} contactId={identity.contact?.id} /></div>
       {identity.organization && <>
-        <label>Société <FieldHelp text="Nom usuel de la société ou de la structure commerciale." /><input value={identity.organization.name} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, name: e.target.value } })} /></label>
-        <label>Activité / type de structure <FieldHelp text="Permet d’identifier rapidement le métier : artisan, restaurant, commerçant, association, profession libérale…" /><input value={identity.organization.industry ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, industry: e.target.value } })} placeholder="Ex. artisan cirier, restaurant, commerce…" /></label>
-        <label className="form-span-2">Description de l’activité <FieldHelp text="Quelques mots sur l’activité, le positionnement et ce que fait l’entreprise. Utile pour préparer la prospection et le devis." /><textarea value={identity.organization.notes ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, notes: e.target.value } })} /></label>
-        <label>Site web <FieldHelp text="Tu peux saisir simplement exemple.fr. Le Manager ajoute https:// automatiquement. Si le site fonctionne volontairement en http://, saisis-le explicitement." /><input inputMode="url" value={displayWebUrl(identity.organization.website)} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, website: e.target.value } })} placeholder="exemple.fr" /></label>
-        <label>Adresse<input value={identity.organization.addressLine1 ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, addressLine1: e.target.value } })} /></label>
-        <label>Complément d’adresse<input value={identity.organization.addressLine2 ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, addressLine2: e.target.value } })} /></label>
-        <label>Code postal<input value={identity.organization.postalCode ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, postalCode: e.target.value } })} /></label>
-        <label>Ville<input value={identity.organization.city ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, city: e.target.value } })} /></label>
-        <label>Pays<input value={identity.organization.country ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, country: e.target.value } })} /></label>
+        <label>Société <FieldHelp text="Nom usuel de la société ou de la structure commerciale." /><input value={identity.organization.name} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, name: e.target.value } })} disabled={busy} /></label>
+        <label>Activité / type de structure <FieldHelp text="Permet d’identifier rapidement le métier : artisan, restaurant, commerçant, association, profession libérale…" /><input value={identity.organization.industry ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, industry: e.target.value } })} placeholder="Ex. artisan cirier, restaurant, commerce…" disabled={busy} /></label>
+        <label className="form-span-2">Description de l’activité <FieldHelp text="Quelques mots sur l’activité, le positionnement et ce que fait l’entreprise. Utile pour préparer la prospection et le devis." /><textarea value={identity.organization.notes ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, notes: e.target.value } })} disabled={busy} /></label>
+        <label>Site web <FieldHelp text="Tu peux saisir simplement exemple.fr. Le Manager ajoute https:// automatiquement. Si le site fonctionne volontairement en http://, saisis-le explicitement." /><input inputMode="url" value={displayWebUrl(identity.organization.website)} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, website: e.target.value } })} placeholder="exemple.fr" disabled={busy} /></label>
+        <label>Adresse<input value={identity.organization.addressLine1 ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, addressLine1: e.target.value } })} disabled={busy} /></label>
+        <label>Complément d’adresse<input value={identity.organization.addressLine2 ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, addressLine2: e.target.value } })} disabled={busy} /></label>
+        <label>Code postal<input value={identity.organization.postalCode ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, postalCode: e.target.value } })} disabled={busy} /></label>
+        <label>Ville<input value={identity.organization.city ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, city: e.target.value } })} disabled={busy} /></label>
+        <label>Pays<input value={identity.organization.country ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, country: e.target.value } })} disabled={busy} /></label>
       </>}
 
       <div className="form-span-2"><span className="eyebrow">Interlocuteur principal</span></div>
-      <label id="prospect-contact-field">Prénom interlocuteur<input value={primaryDraft.firstName} onChange={(e) => setPrimaryDraft({ ...primaryDraft, firstName: e.target.value })} placeholder="Prénom" /></label>
-      <label>Nom interlocuteur<input value={primaryDraft.lastName} onChange={(e) => setPrimaryDraft({ ...primaryDraft, lastName: e.target.value })} placeholder="Nom" /></label>
-      <label>Fonction / rôle <FieldHelp text="Champ libre : gérant, patron, comptable, banquier, responsable communication…" /><input value={primaryDraft.role} onChange={(e) => setPrimaryDraft({ ...primaryDraft, role: e.target.value })} placeholder="Gérant, responsable…" /></label>
+      <label id="prospect-contact-field">Prénom interlocuteur<input value={primaryDraft.firstName} onChange={(e) => setPrimaryDraft({ ...primaryDraft, firstName: e.target.value })} placeholder="Prénom" disabled={busy} /></label>
+      <label>Nom interlocuteur<input value={primaryDraft.lastName} onChange={(e) => setPrimaryDraft({ ...primaryDraft, lastName: e.target.value })} placeholder="Nom" disabled={busy} /></label>
+      <label>Fonction / rôle <FieldHelp text="Champ libre : gérant, patron, comptable, banquier, responsable communication…" /><input value={primaryDraft.role} onChange={(e) => setPrimaryDraft({ ...primaryDraft, role: e.target.value })} placeholder="Gérant, responsable…" disabled={busy} /></label>
 
       <fieldset id="prospect-decision-field" className="identity-decision-maker form-span-2">
         <legend>Décisionnaire <FieldHelp text="Choisis qui peut réellement valider le devis. Le décisionnaire reste un vrai Contact réutilisable." /></legend>
         <label>Qui est le décisionnaire ?
-          <select value={decision.status ?? ''} onChange={(e) => { const status = (e.target.value || null) as ProspectInput['decisionStatus']; setDecision({ ...decision, status }); if (status !== 'no') setDecisionContactId(''); }}>
+          <select value={decision.status ?? ''} onChange={(e) => { const status = (e.target.value || null) as ProspectInput['decisionStatus']; setDecision({ ...decision, status }); if (status !== 'no') setDecisionContactId(''); }} disabled={busy}>
             <option value="">À préciser</option>
             <option value="yes">L’interlocuteur principal</option>
             <option value="no">Un autre contact</option>
@@ -277,20 +266,20 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
         </label>
         {decision.status === 'no' && <div className="decision-maker-grid">
           <label className="form-span-2">Contact décisionnaire
-            <select value={decisionContactId} onChange={(e) => void chooseDecisionContact(e.target.value)}>
+            <select value={decisionContactId} onChange={(e) => void chooseDecisionContact(e.target.value)} disabled={busy}>
               <option value="">Créer un nouveau contact…</option>
               {decisionOptions.map((contact) => <option key={contact.id} value={contact.id}>{contact.firstName} {contact.lastName}{contact.jobTitle ? ` · ${contact.jobTitle}` : ''}</option>)}
             </select>
           </label>
           {decisionContactId ? <div className="form-span-2 selected-contact-summary"><strong>{decision.firstName} {decision.lastName}</strong><small>{decision.role || 'Fonction à préciser'} · les coordonnées restent modifiables dans le bloc Coordonnées ci-dessous.</small></div> : <>
-            <label>Prénom du décisionnaire<input value={decision.firstName} onChange={(e) => setDecision({ ...decision, firstName: e.target.value })} /></label>
-            <label>Nom du décisionnaire<input value={decision.lastName} onChange={(e) => setDecision({ ...decision, lastName: e.target.value })} /></label>
-            <label>Fonction / rôle<input value={decision.role} onChange={(e) => setDecision({ ...decision, role: e.target.value })} placeholder="Gérant, associé, directeur…" /></label>
-            <label>Email<input type="email" value={decision.email} onChange={(e) => setDecision({ ...decision, email: e.target.value })} />{decision.email.trim() && !decisionEmail.valid && <small className="field-error">{decisionEmail.message}</small>}</label>
-            <label>Téléphone<input inputMode="tel" value={decision.phone} onChange={(e) => setDecision({ ...decision, phone: e.target.value })} />{decision.phone.trim() && !decisionPhone.valid && <small className="field-error">{decisionPhone.message}</small>}</label>
+            <label>Prénom du décisionnaire<input value={decision.firstName} onChange={(e) => setDecision({ ...decision, firstName: e.target.value })} disabled={busy} /></label>
+            <label>Nom du décisionnaire<input value={decision.lastName} onChange={(e) => setDecision({ ...decision, lastName: e.target.value })} disabled={busy} /></label>
+            <label>Fonction / rôle<input value={decision.role} onChange={(e) => setDecision({ ...decision, role: e.target.value })} placeholder="Gérant, associé, directeur…" disabled={busy} /></label>
+            <label>Email<input type="email" value={decision.email} onChange={(e) => setDecision({ ...decision, email: e.target.value })} disabled={busy} />{decision.email.trim() && !decisionEmail.valid && <small className="field-error">{decisionEmail.message}</small>}</label>
+            <label>Téléphone<input inputMode="tel" value={decision.phone} onChange={(e) => setDecision({ ...decision, phone: e.target.value })} disabled={busy} />{decision.phone.trim() && !decisionPhone.valid && <small className="field-error">{decisionPhone.message}</small>}</label>
           </>}
         </div>}
-        {decision.status !== 'yes' && <label>Précisions / chemin de validation<input value={decision.details} onChange={(e) => setDecision({ ...decision, details: e.target.value === 'Décisionnaire identifié dans les Contacts' ? '' : e.target.value })} placeholder="Ex. associé à consulter, responsable régional, nom à confirmer…" /></label>}
+        {decision.status !== 'yes' && <label>Précisions / chemin de validation<input value={decision.details} onChange={(e) => setDecision({ ...decision, details: e.target.value === 'Décisionnaire identifié dans les Contacts' ? '' : e.target.value })} placeholder="Ex. associé à consulter, responsable régional, nom à confirmer…" disabled={busy} /></label>}
       </fieldset>
 
       {error && <p className="form-error form-span-2">{error}</p>}

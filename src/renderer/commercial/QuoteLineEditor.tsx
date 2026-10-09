@@ -1,3 +1,4 @@
+import {useUnsavedDraft} from '../unsaved/unsaved';
 import { useState } from 'react';
 import {
   QUOTE_ADJUSTMENT_MODES,
@@ -64,6 +65,7 @@ export function QuoteLineEditor({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  useUnsavedDraft('Modification de ligne du devis',{label,description,quantity,proposedPrice,mode,adjustment,reason,reasonText},{pending:saving});
   async function save(): Promise<void> {
     setError(null);
     try {

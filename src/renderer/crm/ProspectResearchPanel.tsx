@@ -1,3 +1,4 @@
+import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { useEffect, useMemo, useState } from 'react';
 import type {
   ProspectResearchCheckStatus,
@@ -290,11 +291,14 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, onChanged 
   const [draft, setDraft] = useState<ProspectResearchSnapshotInput>(() => emptySnapshot(prospect));
   const [busy, setBusy] = useState(false);
   const [compare, setCompare] = useState(false);
+  const guard=useUnsavedDraft('Connaissance de l’entreprise',draft,{pending:busy,discard:setDraft});
+
 
   async function load() {
     const snapshots = await window.atoumweb.crm.prospects.research.list(prospect.id);
     setHistory(snapshots);
-    setDraft(snapshots[0] ? hydrateSnapshot(prospect, snapshots[0]) : emptySnapshot(prospect));
+    const next=snapshots[0] ? hydrateSnapshot(prospect, snapshots[0]) : emptySnapshot(prospect);
+    if(!guard.dirty){guard.initial(next);setDraft(next);}
   }
 
   useEffect(() => { void load(); }, [prospect.id]);
@@ -328,7 +332,7 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, onChanged 
     setBusy(true);
     try {
       await window.atoumweb.crm.prospects.research.save(prospect.id, draft);
-      await load();
+      guard.saved();await load();
       onChanged?.('Nouvelle version de la connaissance entreprise enregistrée.');
     } catch (error) {
       onChanged?.(error instanceof Error ? error.message : 'Enregistrement impossible.');
@@ -372,10 +376,10 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, onChanged 
         {tab === 'company' && <div className="research-grid research-grid-single-row">
           <fieldset className="research-card">
             <legend>Activité & offre de l’entreprise</legend>
-            <label>Services proposés <FieldHelp text="Ce que l’entreprise vend réellement. Utilise des termes concrets utilisables pendant l’appel." /><input value={csv(draft.services)} onChange={(event) => setDraft({ ...draft, services: csvList(event.target.value) })} placeholder="Ex. gardiennage, rondes, intervention sur alarme" /></label>
-            <label>Produits principaux<input value={csv(draft.products)} onChange={(event) => setDraft({ ...draft, products: csvList(event.target.value) })} /></label>
-            <label>Clientèles visées<input value={csv(draft.customerSegments)} onChange={(event) => setDraft({ ...draft, customerSegments: csvList(event.target.value) })} /></label>
-            <label>Points différenciants<input value={csv(draft.differentiators)} onChange={(event) => setDraft({ ...draft, differentiators: csvList(event.target.value) })} /></label>
+            <label>Services proposés <FieldHelp text="Ce que l’entreprise vend réellement. Utilise des termes concrets utilisables pendant l’appel." /><input value={csv(draft.services)} onChange={(event) => setDraft({ ...draft, services: csvList(event.target.value) })} placeholder="Ex. gardiennage, rondes, intervention sur alarme" disabled={busy} /></label>
+            <label>Produits principaux<input value={csv(draft.products)} onChange={(event) => setDraft({ ...draft, products: csvList(event.target.value) })} disabled={busy} /></label>
+            <label>Clientèles visées<input value={csv(draft.customerSegments)} onChange={(event) => setDraft({ ...draft, customerSegments: csvList(event.target.value) })} disabled={busy} /></label>
+            <label>Points différenciants<input value={csv(draft.differentiators)} onChange={(event) => setDraft({ ...draft, differentiators: csvList(event.target.value) })} disabled={busy} /></label>
           </fieldset>
           <fieldset className="research-card">
             <legend>Notes source</legend>
@@ -388,29 +392,29 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, onChanged 
           <fieldset className="research-card">
             <legend>Google Business Profile <FieldHelp text="Vérifier présence, catégorie, avis, horaires, photos, site lié et cohérence des coordonnées." /></legend>
             <div className="research-inline-fields">
-              <label>Présence<select value={draft.googleBusiness?.presence ?? 'review'} onChange={(event) => setDraft({ ...draft, googleBusiness: { ...(draft.googleBusiness ?? { presence: 'review' }), presence: event.target.value as 'present' | 'absent' | 'review' } })}><option value="present">Présent</option><option value="absent">Absent</option><option value="review">À vérifier</option></select></label>
-              <label>Note<input type="number" min="0" max="5" step="0.1" value={draft.googleBusiness?.rating ?? ''} onChange={(event) => setDraft({ ...draft, googleBusiness: { ...(draft.googleBusiness ?? { presence: 'review' }), rating: event.target.value === '' ? null : Number(event.target.value) } })} /></label>
-              <label>Nombre d’avis<input type="number" min="0" step="1" value={draft.googleBusiness?.reviewCount ?? ''} onChange={(event) => setDraft({ ...draft, googleBusiness: { ...(draft.googleBusiness ?? { presence: 'review' }), reviewCount: event.target.value === '' ? null : Number(event.target.value) } })} /></label>
+              <label>Présence<select value={draft.googleBusiness?.presence ?? 'review'} onChange={(event) => setDraft({ ...draft, googleBusiness: { ...(draft.googleBusiness ?? { presence: 'review' }), presence: event.target.value as 'present' | 'absent' | 'review' } })} disabled={busy}><option value="present">Présent</option><option value="absent">Absent</option><option value="review">À vérifier</option></select></label>
+              <label>Note<input type="number" min="0" max="5" step="0.1" value={draft.googleBusiness?.rating ?? ''} onChange={(event) => setDraft({ ...draft, googleBusiness: { ...(draft.googleBusiness ?? { presence: 'review' }), rating: event.target.value === '' ? null : Number(event.target.value) } })} disabled={busy} /></label>
+              <label>Nombre d’avis<input type="number" min="0" step="1" value={draft.googleBusiness?.reviewCount ?? ''} onChange={(event) => setDraft({ ...draft, googleBusiness: { ...(draft.googleBusiness ?? { presence: 'review' }), reviewCount: event.target.value === '' ? null : Number(event.target.value) } })} disabled={busy} /></label>
             </div>
-            <label>URL de la fiche<input inputMode="url" value={displayWebUrl(draft.googleBusiness?.url)} onChange={(event) => setDraft({ ...draft, googleBusiness: { ...(draft.googleBusiness ?? { presence: 'review' }), url: event.target.value } })} placeholder="google.com/…" /></label>
-            <label>Catégorie principale<input value={draft.googleBusiness?.category ?? ''} onChange={(event) => setDraft({ ...draft, googleBusiness: { ...(draft.googleBusiness ?? { presence: 'review' }), category: event.target.value } })} /></label>
+            <label>URL de la fiche<input inputMode="url" value={displayWebUrl(draft.googleBusiness?.url)} onChange={(event) => setDraft({ ...draft, googleBusiness: { ...(draft.googleBusiness ?? { presence: 'review' }), url: event.target.value } })} placeholder="google.com/…" disabled={busy} /></label>
+            <label>Catégorie principale<input value={draft.googleBusiness?.category ?? ''} onChange={(event) => setDraft({ ...draft, googleBusiness: { ...(draft.googleBusiness ?? { presence: 'review' }), category: event.target.value } })} disabled={busy} /></label>
             <div className="research-check-grid">
               <label>Horaires<CheckSelect value={draft.googleBusiness?.hoursStatus} onChange={(value) => updateGoogleStatus('hoursStatus', value)} /></label>
               <label>Photos<CheckSelect value={draft.googleBusiness?.photosStatus} onChange={(value) => updateGoogleStatus('photosStatus', value)} /></label>
               <label>Site lié<CheckSelect value={draft.googleBusiness?.websiteLinkedStatus} onChange={(value) => updateGoogleStatus('websiteLinkedStatus', value)} /></label>
               <label>Coordonnées cohérentes<CheckSelect value={draft.googleBusiness?.contactConsistencyStatus} onChange={(value) => updateGoogleStatus('contactConsistencyStatus', value)} /></label>
             </div>
-            <label>Observations<textarea value={draft.googleBusiness?.notes ?? ''} onChange={(event) => setDraft({ ...draft, googleBusiness: { ...(draft.googleBusiness ?? { presence: 'review' }), notes: event.target.value } })} /></label>
+            <label>Observations<textarea value={draft.googleBusiness?.notes ?? ''} onChange={(event) => setDraft({ ...draft, googleBusiness: { ...(draft.googleBusiness ?? { presence: 'review' }), notes: event.target.value } })} disabled={busy} /></label>
           </fieldset>
 
           <fieldset className="research-card">
             <legend>Site internet <FieldHelp text="Vérifier URL, CMS si identifiable sans intrusion, HTTPS, mobile, e-commerce, réservation, formulaire et actualités." /></legend>
             <div className="research-inline-fields">
-              <label>Présence<select value={draft.website?.presence ?? 'review'} onChange={(event) => setDraft({ ...draft, website: { ...(draft.website ?? { presence: 'review' }), presence: event.target.value as 'present' | 'absent' | 'review' } })}><option value="present">Présent</option><option value="absent">Absent</option><option value="review">À vérifier</option></select></label>
-              <label>CMS<input value={draft.website?.cms ?? ''} onChange={(event) => setDraft({ ...draft, website: { ...(draft.website ?? { presence: 'review' }), cms: event.target.value } })} /></label>
-              <label>Hébergeur<input value={draft.website?.hosting ?? ''} onChange={(event) => setDraft({ ...draft, website: { ...(draft.website ?? { presence: 'review' }), hosting: event.target.value } })} /></label>
+              <label>Présence<select value={draft.website?.presence ?? 'review'} onChange={(event) => setDraft({ ...draft, website: { ...(draft.website ?? { presence: 'review' }), presence: event.target.value as 'present' | 'absent' | 'review' } })} disabled={busy}><option value="present">Présent</option><option value="absent">Absent</option><option value="review">À vérifier</option></select></label>
+              <label>CMS<input value={draft.website?.cms ?? ''} onChange={(event) => setDraft({ ...draft, website: { ...(draft.website ?? { presence: 'review' }), cms: event.target.value } })} disabled={busy} /></label>
+              <label>Hébergeur<input value={draft.website?.hosting ?? ''} onChange={(event) => setDraft({ ...draft, website: { ...(draft.website ?? { presence: 'review' }), hosting: event.target.value } })} disabled={busy} /></label>
             </div>
-            <label>URL<input inputMode="url" value={displayWebUrl(draft.website?.url)} onChange={(event) => setDraft({ ...draft, website: { ...(draft.website ?? { presence: 'review' }), url: event.target.value } })} placeholder="exemple.fr" /></label>
+            <label>URL<input inputMode="url" value={displayWebUrl(draft.website?.url)} onChange={(event) => setDraft({ ...draft, website: { ...(draft.website ?? { presence: 'review' }), url: event.target.value } })} placeholder="exemple.fr" disabled={busy} /></label>
             <div className="research-check-grid">
               <label>HTTPS<CheckSelect value={draft.website?.httpsStatus} onChange={(value) => updateWebsiteStatus('httpsStatus', value)} /></label>
               <label>Mobile / responsive<CheckSelect value={draft.website?.responsiveStatus} onChange={(value) => updateWebsiteStatus('responsiveStatus', value)} /></label>
@@ -419,7 +423,7 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, onChanged 
               <label>Formulaire<CheckSelect value={draft.website?.contactFormStatus} onChange={(value) => updateWebsiteStatus('contactFormStatus', value)} /></label>
               <label>Blog / actualités<CheckSelect value={draft.website?.blogStatus} onChange={(value) => updateWebsiteStatus('blogStatus', value)} /></label>
             </div>
-            <label>Observations<textarea value={draft.website?.notes ?? ''} onChange={(event) => setDraft({ ...draft, website: { ...(draft.website ?? { presence: 'review' }), notes: event.target.value } })} /></label>
+            <label>Observations<textarea value={draft.website?.notes ?? ''} onChange={(event) => setDraft({ ...draft, website: { ...(draft.website ?? { presence: 'review' }), notes: event.target.value } })} disabled={busy} /></label>
           </fieldset>
         </div>}
 
@@ -432,11 +436,11 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, onChanged 
           <legend>Opportunités AtoumWeb <FieldHelp text="Transformer un constat factuel en piste commerciale sans créer automatiquement de devis." /></legend>
           <div className="research-opportunities">
             {(draft.opportunities ?? []).map((item, index) => <div className="research-opportunity-row" key={index}>
-              <label>Constat<input value={item.finding} onChange={(event) => updateOpportunity(index, { finding: event.target.value })} /></label>
-              <label>Prestation AtoumWeb<input value={item.service} onChange={(event) => updateOpportunity(index, { service: event.target.value })} /></label>
-              <label>Priorité<select value={item.priority} onChange={(event) => updateOpportunity(index, { priority: event.target.value as ProspectResearchOpportunity['priority'] })}><option value="low">Faible</option><option value="medium">Moyenne</option><option value="high">Forte</option></select></label>
-              <label>Note<input value={item.note ?? ''} onChange={(event) => updateOpportunity(index, { note: event.target.value })} /></label>
-              <label className="research-keep"><input type="checkbox" checked={item.keep} onChange={(event) => updateOpportunity(index, { keep: event.target.checked })} /> Retenir</label>
+              <label>Constat<input value={item.finding} onChange={(event) => updateOpportunity(index, { finding: event.target.value })} disabled={busy} /></label>
+              <label>Prestation AtoumWeb<input value={item.service} onChange={(event) => updateOpportunity(index, { service: event.target.value })} disabled={busy} /></label>
+              <label>Priorité<select value={item.priority} onChange={(event) => updateOpportunity(index, { priority: event.target.value as ProspectResearchOpportunity['priority'] })} disabled={busy}><option value="low">Faible</option><option value="medium">Moyenne</option><option value="high">Forte</option></select></label>
+              <label>Note<input value={item.note ?? ''} onChange={(event) => updateOpportunity(index, { note: event.target.value })} disabled={busy} /></label>
+              <label className="research-keep"><input type="checkbox" checked={item.keep} onChange={(event) => updateOpportunity(index, { keep: event.target.checked })} disabled={busy} /> Retenir</label>
               <button type="button" className="secondary-button danger-outline" onClick={() => setDraft({ ...draft, opportunities: (draft.opportunities ?? []).filter((_, itemIndex) => itemIndex !== index) })}>Supprimer</button>
             </div>)}
             {(draft.opportunities ?? []).length === 0 && <p className="muted">Aucune opportunité enregistrée.</p>}
@@ -447,12 +451,12 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, onChanged 
         {tab === 'conversation' && <fieldset className="research-card research-card-wide">
           <legend>Préparation de la conversation</legend>
           <div className="research-two-columns">
-            <label>Points forts repérés<textarea value={draft.conversation?.strengths ?? ''} onChange={(event) => setDraft({ ...draft, conversation: { ...(draft.conversation ?? {}), strengths: event.target.value } })} /></label>
-            <label>Problèmes observés<textarea value={draft.conversation?.issues ?? ''} onChange={(event) => setDraft({ ...draft, conversation: { ...(draft.conversation ?? {}), issues: event.target.value } })} /></label>
-            <label>Points à évoquer<textarea value={draft.conversation?.talkingPoints ?? ''} onChange={(event) => setDraft({ ...draft, conversation: { ...(draft.conversation ?? {}), talkingPoints: event.target.value } })} /></label>
-            <label>Angle d’approche<textarea value={draft.conversation?.approach ?? ''} onChange={(event) => setDraft({ ...draft, conversation: { ...(draft.conversation ?? {}), approach: event.target.value } })} /></label>
+            <label>Points forts repérés<textarea value={draft.conversation?.strengths ?? ''} onChange={(event) => setDraft({ ...draft, conversation: { ...(draft.conversation ?? {}), strengths: event.target.value } })} disabled={busy} /></label>
+            <label>Problèmes observés<textarea value={draft.conversation?.issues ?? ''} onChange={(event) => setDraft({ ...draft, conversation: { ...(draft.conversation ?? {}), issues: event.target.value } })} disabled={busy} /></label>
+            <label>Points à évoquer<textarea value={draft.conversation?.talkingPoints ?? ''} onChange={(event) => setDraft({ ...draft, conversation: { ...(draft.conversation ?? {}), talkingPoints: event.target.value } })} disabled={busy} /></label>
+            <label>Angle d’approche<textarea value={draft.conversation?.approach ?? ''} onChange={(event) => setDraft({ ...draft, conversation: { ...(draft.conversation ?? {}), approach: event.target.value } })} disabled={busy} /></label>
           </div>
-          <label>À ne pas oublier / notes pendant l’appel<textarea value={draft.conversation?.callNotes ?? ''} onChange={(event) => setDraft({ ...draft, conversation: { ...(draft.conversation ?? {}), callNotes: event.target.value } })} /></label>
+          <label>À ne pas oublier / notes pendant l’appel<textarea value={draft.conversation?.callNotes ?? ''} onChange={(event) => setDraft({ ...draft, conversation: { ...(draft.conversation ?? {}), callNotes: event.target.value } })} disabled={busy} /></label>
         </fieldset>}
 
         {tab === 'history' && <div className="research-history">
@@ -465,9 +469,9 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, onChanged 
 
       {tab !== 'history' && <div className="research-save-bar">
         <div className="research-save-meta">
-          <label>Date de vérification<input type="date" value={(draft.checkedAt ?? '').slice(0, 10)} onChange={(event) => setDraft({ ...draft, checkedAt: event.target.value })} /></label>
-          <label>Source générale<input value={draft.source ?? ''} onChange={(event) => setDraft({ ...draft, source: event.target.value })} /></label>
-          <label>URL source<input inputMode="url" value={displayWebUrl(draft.sourceUrl)} onChange={(event) => setDraft({ ...draft, sourceUrl: event.target.value })} placeholder="exemple.fr" /></label>
+          <label>Date de vérification<input type="date" value={(draft.checkedAt ?? '').slice(0, 10)} onChange={(event) => setDraft({ ...draft, checkedAt: event.target.value })} disabled={busy} /></label>
+          <label>Source générale<input value={draft.source ?? ''} onChange={(event) => setDraft({ ...draft, source: event.target.value })} disabled={busy} /></label>
+          <label>URL source<input inputMode="url" value={displayWebUrl(draft.sourceUrl)} onChange={(event) => setDraft({ ...draft, sourceUrl: event.target.value })} placeholder="exemple.fr" disabled={busy} /></label>
         </div>
         <button type="button" className="primary-button" disabled={busy} onClick={() => void save()}>{busy ? 'Enregistrement…' : 'Enregistrer une nouvelle version'}</button>
       </div>}

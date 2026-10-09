@@ -1,3 +1,4 @@
+import {draftFingerprint} from '../../shared/draftSection';
 import { deriveQuoteContractDefaults } from '../../shared/quoteContractDefaults';
 import { CommercialRulesService } from './CommercialRulesService';
 import { randomUUID } from 'node:crypto';
@@ -16,7 +17,8 @@ export class QuoteContractPreparationService {
     const row = this.db.get<{value_json: string}>('SELECT value_json FROM settings WHERE key=?',[configurationKey]);
     return row ? JSON.parse(row.value_json) as ContractAdministration : emptyAdministration();
   }
-  saveAdministration(input: ContractAdministration): ContractAdministration {
+  saveAdministration(input: ContractAdministration,expected?:ContractAdministration): ContractAdministration {
+    if(expected!==undefined&&draftFingerprint(expected)!==draftFingerprint(this.administration()))throw Error('Les informations communes ont changé dans une autre fenêtre. Votre brouillon est conservé ; actualisez avant de réessayer.');
     if (!input || Object.keys(input).length !== ADMIN_CONTRACT_KEYS.length) throw Error('Configuration administrative invalide.');
     for (const key of ADMIN_CONTRACT_KEYS) {
       const item = input[key];
@@ -49,8 +51,9 @@ export class QuoteContractPreparationService {
     const defaults=!locked&&row.contract_parameters_json?this.defaults(id,JSON.parse(String(row.contract_parameters_json))):null;
     return { parameters,...(defaults?{defaults:{facts:defaults.facts,includedBenefits:defaults.includedBenefits,marriage:defaults.marriage}}:{}), state: frozen ? 'frozen' : locked ? 'historical_missing' : 'draft', snapshot, documents: this.links(id), issues: locked ? parameters ? [{code:'LEGAL_REVIEW',severity:'warning',message:'Snapshot conservé ; sa complétude technique ne démontre pas une conformité juridique.'}] : [{code:'HISTORICAL_PARAMETERS_MISSING',severity:'warning',message:'Absence historique de paramètres structurés conservée ; aucun recalcul.'}] : this.issues(id,parameters) };
   }
-  save(id: string, parameters: QuoteContractParameters): QuoteContractPreparation {
+  save(id: string, parameters: QuoteContractParameters,expected?:{parameters:QuoteContractParameters|null}): QuoteContractPreparation {
     this.assertEditable(id);
+    if(expected!==undefined&&draftFingerprint(expected.parameters)!==draftFingerprint(this.parameters(id)))throw Error('Les paramètres du devis ont changé. Votre brouillon est conservé ; actualisez avant de réessayer.');
     this.validate(parameters);
     const first = parameters.payment.milestones[0]?.percent;
     this.db.run('UPDATE quotes SET contract_parameters_json=?,contract_audience=?,deposit_percent=?,deposit_cents=CAST(ROUND(contract_value_cents*?/100.0) AS INTEGER),balance_cents=contract_value_cents-CAST(ROUND(contract_value_cents*?/100.0) AS INTEGER),updated_at=? WHERE id=?',[JSON.stringify(parameters),parameters.audience,first,first,first,new Date().toISOString(),id]);

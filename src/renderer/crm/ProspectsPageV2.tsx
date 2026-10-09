@@ -1,3 +1,4 @@
+import {UnsavedGroup,useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { normalizeEmail, normalizePhone } from '../../shared/contactValidation';
 import { normalizeWebUrl } from '../../shared/webUrl';
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
@@ -166,12 +167,12 @@ function quoteCardState(prospect: ProspectSummary, quote: QuoteSummary): string 
   return 'En attente de retour';
 }
 
-export function ProspectsPage({ onMessage, initialId, initialView = 'directory', initialPipelineFilter = 'all' }: { onMessage: (message: string) => void; initialId?: string | null; initialView?: View; initialPipelineFilter?: ProspectPipelineFilter }) {
+export function ProspectsPage({ onMessage, initialId, initialView = 'directory', initialPipelineFilter = 'all', initialRequest }: { onMessage: (message: string) => void; initialId?: string | null; initialView?: View; initialPipelineFilter?: ProspectPipelineFilter;initialRequest?:number }) {
   const [prospects, setProspects] = useState<ProspectSummary[]>([]);
   const [actions, setActions] = useState<CrmAction[]>([]);
   const [quotes, setQuotes] = useState<QuoteSummary[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
-  const [view, setView] = useState<View>(initialView);
+  const [view, applyView] = useState<View>(initialView);
   const [pipelineFilter, setPipelineFilter] = useState<ProspectPipelineFilter>(initialPipelineFilter);
   const [directorySearch, setDirectorySearch] = useState('');
   const [directoryIndustry, setDirectoryIndustry] = useState('');
@@ -183,18 +184,23 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
   const [draft, setDraft] = useState<ProspectDraft>(EMPTY_DRAFT);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(initialId ?? null);
+  const [selectedId, applySelectedId] = useState<string | null>(initialId ?? null);
   const [prospectSplitPercent, setProspectSplitPercent] = useState(66);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [deskModeId, setDeskModeId] = useState<string | null>(null);
+  const [deskModeId, applyDeskModeId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  useUnsavedDraft('Nouvelle entreprise',draft,{group:'prospect:create',pending:saving,discard:saved=>setDraft(saved)});
+  function setSelectedId(id:string|null){if(id===selectedId)return true;return requestUnsavedExit(()=>applySelectedId(id),selectedId?'prospect:'+selectedId+'/panel':'prospect:none');}
+  function setDeskModeId(id:string|null){if(id===deskModeId)return;requestUnsavedExit(()=>applyDeskModeId(id),deskModeId?'prospect:'+deskModeId+'/desk':selectedId?'prospect:'+selectedId+'/panel':'prospect:none');}
+  function setView(next:View){if(next===view)return;requestUnsavedExit(()=>applyView(next),selectedId?'prospect:'+selectedId+'/panel':'prospect:none');}
+  const loadedOnce=useRef(false);
   const [dropStage, setDropStage] = useState<ProspectStage | null>(null);
   const [historySearch, setHistorySearch] = useState('');
   const [scheduleDateForId, setScheduleDateForId] = useState<string | null>(null);
   const [scheduleDate, setScheduleDate] = useState('');
 
   async function refresh() {
-    setLoading(true);
+    if(!loadedOnce.current)setLoading(true);
     try {
       const [nextProspects, nextActions, nextQuotes] = await Promise.all([
         window.atoumweb.crm.prospects.list({ includeArchived: true }),
@@ -204,9 +210,10 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
       setProspects(nextProspects); setActions(nextActions); setQuotes(nextQuotes);
       if (selectedId && !nextProspects.some((item) => item.id === selectedId)) setSelectedId(null);
       if (deskModeId && !nextProspects.some((item) => item.id === deskModeId)) setDeskModeId(null);
-    } finally { setLoading(false); }
+    } finally { loadedOnce.current=true;setLoading(false); }
   }
   useEffect(() => { void refresh(); }, []);
+  useEffect(()=>{if(initialId)setSelectedId(initialId);},[initialId,initialRequest]);
   useEffect(() => { if (!selectedId) { setActivity([]); return; } void window.atoumweb.crm.activity.list('prospect', selectedId).then(setActivity); }, [selectedId, prospects, actions]);
   useEffect(() => { const reload = () => void refresh(); window.addEventListener('atoumweb:changed', reload); return () => window.removeEventListener('atoumweb:changed', reload); }, []);
   useEffect(() => {
@@ -214,7 +221,8 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
     const closeOnOutside = (event: PointerEvent) => {
       const target = event.target as Node | null;
       if (!target || sidePanelRef.current?.contains(target)) return;
-      setSelectedId(null);
+      if(target instanceof Element&&target.closest('button,a,input,select,textarea,tr'))return;
+      requestUnsavedExit(()=>applySelectedId(null),'prospect:'+selectedId+'/panel');
     };
     document.addEventListener('pointerdown', closeOnOutside);
     return () => document.removeEventListener('pointerdown', closeOnOutside);
@@ -389,10 +397,11 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
     await scheduleAt(prospect, new Date(`${scheduleDate}T09:00:00`));
   }
 
-  async function archive(prospect: ProspectSummary) { await window.atoumweb.workflow.archiveProspect(prospect.id, true); setSelectedId(null); setDeskModeId(null); await refresh(); onMessage('Prospect archivé.'); }
+  async function archive(prospect: ProspectSummary) { if(!requestUnsavedExit(()=>{},'prospect:'+prospect.id))return;await window.atoumweb.workflow.archiveProspect(prospect.id, true); setSelectedId(null); setDeskModeId(null); await refresh(); onMessage('Prospect archivé.'); }
 
   async function markLost(prospect: ProspectSummary, reasonCode: string, reasonText: string) {
     if (!reasonText.trim()) return;
+    if(!requestUnsavedExit(()=>{},'prospect:'+prospect.id))return;
     try {
       await window.atoumweb.crm.prospects.updateQualification(prospect.id, { lostReasonCode: reasonCode });
       await window.atoumweb.crm.prospects.changeStage(prospect.id, 'lost', reasonText.trim());
@@ -481,7 +490,7 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
     const showQuoteFocus = Boolean(latestQuote && QUOTE_VISIBLE_STAGES.includes(prospect.stage ?? 'new'));
     const group = PIPELINE_GROUPS.find((item) => item.stages.includes(prospect.stage ?? 'new'));
     return <article className={`prospect-card stacked-card prospect-temperature-${prospect.temperature ?? 'neutral'} ${expanded ? 'expanded-card' : 'collapsed-card'} ${selectedId === prospect.id ? 'selected-prospect' : ''}`} key={prospect.id}>
-      <div className="prospect-card-head card-drag-handle" draggable={draggable} onDragStart={(e) => { if (!draggable) return; setDraggingId(prospect.id); e.dataTransfer.setData('text/plain', prospect.id); }} onClick={() => { setSelectedId(prospect.id); setExpandedId((id) => id === prospect.id ? null : prospect.id); }}>
+      <div className="prospect-card-head card-drag-handle" draggable={draggable} onDragStart={(e) => { if (!draggable) return; setDraggingId(prospect.id); e.dataTransfer.setData('text/plain', prospect.id); }} onClick={() => { if(!setSelectedId(prospect.id))return;setExpandedId((id) => id === prospect.id ? null : prospect.id); }}>
         <div className="prospect-card-identity"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} /><strong>{prospect.displayName}</strong></div>
         {group && <span className="pipeline-state-icon" title={group.label}>{group.icon}</span>}
       </div>
@@ -606,17 +615,19 @@ function ProspectWorkAccordion({ title, summary, defaultOpen = false, children }
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const [mounted, setMounted] = useState(defaultOpen);
   return <section className={`prospect-work-accordion ${open ? 'open' : ''}`}>
-    <button type="button" className="prospect-work-accordion-trigger" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
+    <button type="button" className="prospect-work-accordion-trigger" aria-expanded={open} onClick={() => {setMounted(true);setOpen((value) => !value);}}>
       <span className="prospect-work-accordion-arrow" aria-hidden="true">{open ? '▾' : '▸'}</span>
       <span className="prospect-work-accordion-title">{title}</span>
       {summary && <span className="prospect-work-accordion-summary">{summary}</span>}
     </button>
-    {open && <div className="prospect-work-accordion-body">{children}</div>}
+    {mounted && <div className="prospect-work-accordion-body" hidden={!open} style={open?undefined:{display:'none'}}>{children}</div>}
   </section>;
 }
 
-function ProspectDetailV2({ prospect, actions, activity, mode, onRefresh, onClose, onOpenDesk, onTemperature, onStart, onLost, onArchive }: {
+function ProspectDetailV2(props:Parameters<typeof ProspectDetailV2Inner>[0]){return <UnsavedGroup name={'prospect:'+props.prospect.id+'/'+props.mode}><ProspectDetailV2Inner {...props}/></UnsavedGroup>;}
+function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, onClose, onOpenDesk, onTemperature, onStart, onLost, onArchive }: {
   prospect: ProspectSummary;
   actions: CrmAction[];
   activity: ActivityEvent[];
@@ -630,7 +641,8 @@ function ProspectDetailV2({ prospect, actions, activity, mode, onRefresh, onClos
   onArchive: () => void;
 }) {
   const [lossOpen, setLossOpen] = useState(false);
-  const [deskTab, setDeskTab] = useState<'commercial' | 'reference'>('commercial');
+  const [deskTab, applyDeskTab] = useState<'commercial' | 'reference'>('commercial');
+  function setDeskTab(tab:'commercial'|'reference'){if(tab!==deskTab)requestUnsavedExit(()=>applyDeskTab(tab),'prospect:'+prospect.id+'/'+mode);}
   const [identityFocus, setIdentityFocus] = useState<{ target: 'decision' | 'contact'; sequence: number } | null>(null);
   const [lossCode, setLossCode] = useState('no_response');
   const [lossOther, setLossOther] = useState('');

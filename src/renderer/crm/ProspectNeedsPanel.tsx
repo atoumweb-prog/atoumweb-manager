@@ -1,3 +1,4 @@
+import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { useEffect, useMemo, useState } from 'react';
 import type { CatalogItemSummary, CatalogVersion, PriceMode } from '../../shared/commercial';
 import type { ProspectSummary } from '../../shared/crm';
@@ -50,6 +51,8 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
   const [selectedId, setSelectedId] = useState('');
   const [otherText, setOtherText] = useState('');
   const [kind,setKind]=useState<'offers'|'services'>('offers');
+  const choiceGuard=useUnsavedDraft('Prestation à ajouter',{selectedId,otherText},{discard:s=>{setSelectedId(s.selectedId);setOtherText(s.otherText);}});
+
   const availableByKind=catalog.filter(item=>catalogueIsOffer(item)===(kind==='offers'));
   const categories=sortedCategories(availableByKind);
   const selectedCategory=categories.includes(category)?category:categories[0]??'';
@@ -80,8 +83,8 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
       const item = need.catalogItemId ? catalog.find((candidate) => candidate.id === need.catalogItemId) : null;
       return <span className="need-chip" key={`${need.catalogItemId ?? 'other'}-${index}`}>{item ? `${item.type === 'offer' ? 'Offre' : 'Service'} · ${item.name}` : `Autre · ${need.otherText}`}<button type="button" aria-label="Retirer" onClick={() => onChange(value.filter((_, i) => i !== index))}>×</button></span>;
     })}</div>}
-    <KindTabs kind={kind} onChange={k=>{setKind(k);setCategory('');setSelectedId('');}}/><div className="need-add-row">
-      <label>Catégorie<select value={selectedCategory} onChange={(e) => { setCategory(e.target.value); setSelectedId(''); }}>{categories.map((name) => <option key={name} value={name}>{name}</option>)}</select></label>
+    <KindTabs kind={kind} onChange={k=>choiceGuard.request(()=>{setKind(k);setCategory('');setSelectedId('');})}/><div className="need-add-row">
+      <label>Catégorie<select value={selectedCategory} onChange={(e) => { choiceGuard.request(()=>{setCategory(e.target.value);setSelectedId('');}); }}>{categories.map((name) => <option key={name} value={name}>{name}</option>)}</select></label>
       <label>Prestation<select value={selectedId} onChange={(e) => setSelectedId(e.target.value)}><option value="">Choisir…</option>{choices.map((item) => <option key={item.id} value={item.id}>{item.type === 'offer' ? 'Offre' : 'Service'} · {item.name}</option>)}<option value="other">Autre besoin</option></select></label>
       {selectedId === 'other' && <label>Préciser<input value={otherText} onChange={(e) => setOtherText(e.target.value)} /></label>}
       <button type="button" className="secondary-button" onClick={add} disabled={!selectedId || (selectedId === 'other' && !otherText.trim())}>Ajouter</button>
@@ -173,6 +176,10 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
   const [error, setError] = useState('');
 
   const [kind,setKind]=useState<'offers'|'services'>('offers');
+  const choiceGuard=useUnsavedDraft('Prestation envisagée',{selectedId,otherText},{pending:busy,discard:s=>{setSelectedId(s.selectedId);setOtherText(s.otherText);}});
+  const infoValue={projectSummary,projectContext,budgetPreset,budgetMin,budgetMax,budgetExact,timelineStatus,targetDate,timelineNote,existingStatus,existingUrl,existingNotes,informationItems,newInformation,newInformationBlocking};
+  const infoGuard=useUnsavedDraft('Identification du besoin',infoValue,{pending:busy,discard:s=>{setProjectSummary(s.projectSummary);setProjectContext(s.projectContext);setBudgetPreset(s.budgetPreset);setBudgetMin(s.budgetMin);setBudgetMax(s.budgetMax);setBudgetExact(s.budgetExact);setTimelineStatus(s.timelineStatus);setTargetDate(s.targetDate);setTimelineNote(s.timelineNote);setExistingStatus(s.existingStatus);setExistingUrl(s.existingUrl);setExistingNotes(s.existingNotes);setInformationItems(s.informationItems);setNewInformation(s.newInformation);setNewInformationBlocking(s.newInformationBlocking);}});
+
   const availableByKind=catalog.filter(item=>catalogueIsOffer(item)===(kind==='offers'));
   const categories=sortedCategories(availableByKind);
   const selectedCategory=categories.includes(category)?category:categories[0]??'';
@@ -192,7 +199,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
       setCatalog(available);
       setProspect(current);
       if (!category || !available.some((item) => (item.category || 'Autre') === category)) setCategory(sortedCategories(available)[0] ?? 'Autre');
-      if (current) {
+      if (current&&!infoGuard.dirty) {
         setProjectSummary(current.projectSummary ?? '');
         setProjectContext(current.projectContext ?? '');
         setBudgetPreset(deriveBudgetPreset(current));
@@ -206,6 +213,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
         setExistingUrl(current.existingUrl ?? '');
         setExistingNotes(current.existingNotes ?? '');
         setInformationItems(parseProspectInformation(current.missingInformation));
+        infoGuard.initial({...infoValue,projectSummary:(current.projectSummary ?? ''),projectContext:(current.projectContext ?? ''),budgetPreset:(deriveBudgetPreset(current)),budgetMin:(current.budgetMinCents != null ? String(current.budgetMinCents / 100) : ''),budgetMax:(current.budgetMaxCents != null ? String(current.budgetMaxCents / 100) : ''),budgetExact:(current.budgetStatus === 'known' && current.budgetMinCents != null ? String(current.budgetMinCents / 100) : ''),timelineStatus:(current.timelineStatus ?? 'not_disclosed'),targetDate:(current.targetDate?.slice(0, 10) ?? ''),timelineNote:(current.timelineNote ?? ''),existingStatus:(current.existingStatus ?? 'unknown'),existingUrl:(current.existingUrl ?? ''),existingNotes:(current.existingNotes ?? ''),informationItems:(parseProspectInformation(current.missingInformation))});
       }
     } catch (e) { setError(cleanError(e)); }
   }
@@ -296,7 +304,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
         budgetMaxCents: budget.max,
         targetDate: timelineStatus === 'date' ? targetDate || null : null,
       });
-      await load(); onChanged?.(); window.dispatchEvent(new Event('atoumweb:changed'));
+      infoGuard.saved();await load(); onChanged?.(); window.dispatchEvent(new Event('atoumweb:changed'));
     } catch (e) { setError(cleanError(e)); }
     finally { setBusy(false); }
   }
@@ -330,9 +338,9 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
       <div className="need-selector-title"><strong>{editingId ? 'Modifier la solution' : 'Ajouter une offre / prestation au besoin'}</strong><small>Une sélection, un seul bouton de validation.</small></div>
       <KindTabs kind={kind} onChange={k=>{setKind(k);setCategory('');setSelectedId('');}}/>
       <div className="need-add-row">
-        <label>Famille de solution<select value={selectedCategory} onChange={(e) => { setCategory(e.target.value); setSelectedId(''); setOtherText(''); }}>{categories.map((name) => <option key={name} value={name}>{name}</option>)}</select></label>
-        <label>Offre / prestation envisagée<select value={selectedId} onChange={(e) => setSelectedId(e.target.value)}><option value="">Choisir…</option>{choices.map((item) => <option key={item.id} value={item.id}>{item.name} · {priceLabel(item.currentVersion)}</option>)}<option value="other">Autre / sur mesure</option></select></label>
-        {selectedId === 'other' && <label>Préciser<input value={otherText} onChange={(e) => setOtherText(e.target.value)} placeholder="Décrire le besoin spécifique" /></label>}
+        <label>Famille de solution<select value={selectedCategory} onChange={(e) => { setCategory(e.target.value); setSelectedId(''); setOtherText(''); }} disabled={busy}>{categories.map((name) => <option key={name} value={name}>{name}</option>)}</select></label>
+        <label>Offre / prestation envisagée<select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} disabled={busy}><option value="">Choisir…</option>{choices.map((item) => <option key={item.id} value={item.id}>{item.name} · {priceLabel(item.currentVersion)}</option>)}<option value="other">Autre / sur mesure</option></select></label>
+        {selectedId === 'other' && <label>Préciser<input value={otherText} onChange={(e) => setOtherText(e.target.value)} placeholder="Décrire le besoin spécifique" disabled={busy} /></label>}
       </div>
       {selectedItem?.currentVersion&&<div className="selected-offer-preview"><strong>{selectedItem.name}</strong><small>{priceLabel(selectedItem.currentVersion)}</small><CommercialScope version={selectedItem.currentVersion}/></div>}
       <div className="inline-editor-actions">{editingId && <button type="button" className="secondary-button" onClick={() => { setEditingId(undefined); setSelectedId(''); setOtherText(''); }}>Annuler</button>}<button type="button" className="primary-button" disabled={busy || (!selectedId && !otherText.trim()) || (selectedId === 'other' && !otherText.trim())} onClick={() => void saveNeed()}>{editingId ? 'Enregistrer la modification' : 'Ajouter au besoin'}</button></div>
@@ -341,36 +349,36 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
     <div className="need-identification-fields">
       <div className="work-section-heading"><div><span className="eyebrow">Affiner le besoin</span><strong>Périmètre nécessaire au chiffrage</strong></div></div>
       <div className="workflow-fields">
-        <label className="form-span-2">Projet / problématique<textarea value={projectSummary} onChange={(e) => setProjectSummary(e.target.value)} placeholder="Ce que le prospect veut obtenir ou résoudre" /></label>
-        <label className="form-span-2">Contexte, contraintes et éléments hors socle<textarea value={projectContext} onChange={(e) => setProjectContext(e.target.value)} placeholder="Fonctionnalité particulière, volume, intégration, contenu important, contrainte technique…" /></label>
+        <label className="form-span-2">Projet / problématique<textarea value={projectSummary} onChange={(e) => setProjectSummary(e.target.value)} placeholder="Ce que le prospect veut obtenir ou résoudre" disabled={busy} /></label>
+        <label className="form-span-2">Contexte, contraintes et éléments hors socle<textarea value={projectContext} onChange={(e) => setProjectContext(e.target.value)} placeholder="Fonctionnalité particulière, volume, intégration, contenu important, contrainte technique…" disabled={busy} /></label>
 
-        <label>Budget<select value={budgetPreset} onChange={(e) => setBudgetPreset(e.target.value as BudgetPreset)}>{BUDGET_PRESETS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-        {budgetPreset === 'custom' && <div className="qualification-two-fields form-span-2"><label>Minimum (€)<input inputMode="decimal" value={budgetMin} onChange={(e) => setBudgetMin(e.target.value)} /></label><label>Maximum (€)<input inputMode="decimal" value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)} /></label></div>}
-        {budgetPreset === 'exact' && <label>Montant précis (€)<input inputMode="decimal" value={budgetExact} onChange={(e) => setBudgetExact(e.target.value)} /></label>}
+        <label>Budget<select value={budgetPreset} onChange={(e) => setBudgetPreset(e.target.value as BudgetPreset)} disabled={busy}>{BUDGET_PRESETS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+        {budgetPreset === 'custom' && <div className="qualification-two-fields form-span-2"><label>Minimum (€)<input inputMode="decimal" value={budgetMin} onChange={(e) => setBudgetMin(e.target.value)} disabled={busy} /></label><label>Maximum (€)<input inputMode="decimal" value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)} disabled={busy} /></label></div>}
+        {budgetPreset === 'exact' && <label>Montant précis (€)<input inputMode="decimal" value={budgetExact} onChange={(e) => setBudgetExact(e.target.value)} disabled={busy} /></label>}
 
-        <label>Calendrier<select value={timelineStatus} onChange={(e) => setTimelineStatus(e.target.value as NonNullable<ProspectSummary['timelineStatus']>)}><option value="not_disclosed">Non communiqué</option><option value="date">Date cible</option><option value="note">Période / contrainte à préciser</option></select></label>
-        {timelineStatus === 'date' && <label>Date cible<input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} /></label>}
-        {timelineStatus === 'note' && <label className="form-span-2">Précision calendrier<input value={timelineNote} onChange={(e) => setTimelineNote(e.target.value)} placeholder="Ex. avant l’ouverture du restaurant, idéalement en novembre…" /></label>}
+        <label>Calendrier<select value={timelineStatus} onChange={(e) => setTimelineStatus(e.target.value as NonNullable<ProspectSummary['timelineStatus']>)} disabled={busy}><option value="not_disclosed">Non communiqué</option><option value="date">Date cible</option><option value="note">Période / contrainte à préciser</option></select></label>
+        {timelineStatus === 'date' && <label>Date cible<input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} disabled={busy} /></label>}
+        {timelineStatus === 'note' && <label className="form-span-2">Précision calendrier<input value={timelineNote} onChange={(e) => setTimelineNote(e.target.value)} placeholder="Ex. avant l’ouverture du restaurant, idéalement en novembre…" disabled={busy} /></label>}
 
-        <label>Site / outil existant<select value={existingStatus} onChange={(e) => setExistingStatus(e.target.value as NonNullable<ProspectSummary['existingStatus']>)}><option value="unknown">À vérifier</option><option value="yes">Oui</option><option value="no">Non</option></select></label>
-        {existingStatus === 'yes' && <label>URL / référence existante<input value={existingUrl} onChange={(e) => setExistingUrl(e.target.value)} placeholder="https://…" /></label>}
-        {existingStatus !== 'no' && <label className="form-span-2">Précisions sur l’existant<input value={existingNotes} onChange={(e) => setExistingNotes(e.target.value)} /></label>}
+        <label>Site / outil existant<select value={existingStatus} onChange={(e) => setExistingStatus(e.target.value as NonNullable<ProspectSummary['existingStatus']>)} disabled={busy}><option value="unknown">À vérifier</option><option value="yes">Oui</option><option value="no">Non</option></select></label>
+        {existingStatus === 'yes' && <label>URL / référence existante<input value={existingUrl} onChange={(e) => setExistingUrl(e.target.value)} placeholder="https://…" disabled={busy} /></label>}
+        {existingStatus !== 'no' && <label className="form-span-2">Précisions sur l’existant<input value={existingNotes} onChange={(e) => setExistingNotes(e.target.value)} disabled={busy} /></label>}
 
         <div className="missing-info-checklist">
           <div className="need-selector-title"><strong>Informations / points à confirmer</strong><small>Garde les questions dans le dossier. Seuls les points « À obtenir » marqués bloquants empêchent le devis.</small></div>
           {informationItems.length > 0 && <div className="missing-info-list">{informationItems.map((item) => <div className={`missing-info-row ${item.status === 'resolved' ? 'resolved' : ''}`} key={item.id}>
             <strong>{item.label}</strong>
-            <select aria-label={`État de ${item.label}`} value={item.status} onChange={(e) => updateInformation(item.id, { status: e.target.value as ProspectInformationStatus })}>
+            <select aria-label={`État de ${item.label}`} value={item.status} onChange={(e) => updateInformation(item.id, { status: e.target.value as ProspectInformationStatus })} disabled={busy}>
               <option value="open">À obtenir</option>
               <option value="resolved">Obtenu / résolu</option>
               <option value="later">À obtenir plus tard</option>
             </select>
             <label className="check-option"><input type="checkbox" checked={item.isBlocking && item.status !== 'later'} disabled={item.status === 'later' || item.status === 'resolved'} onChange={(e) => updateInformation(item.id, { isBlocking: e.target.checked })} />Bloque le devis</label>
-            <input value={item.answer ?? ''} onChange={(e) => updateInformation(item.id, { answer: e.target.value }, false)} onBlur={() => void persistInformation(informationItems)} placeholder={item.status === 'resolved' ? 'Réponse obtenue / précision' : 'Note ou réponse éventuelle'} />
+            <input value={item.answer ?? ''} onChange={(e) => updateInformation(item.id, { answer: e.target.value }, false)} onBlur={() => void persistInformation(informationItems)} placeholder={item.status === 'resolved' ? 'Réponse obtenue / précision' : 'Note ou réponse éventuelle'} disabled={busy} />
           </div>)}</div>}
           <div className="missing-info-add">
-            <label>Ajouter un point<input value={newInformation} onChange={(e) => setNewInformation(e.target.value)} placeholder="Ex. combien peuvent-ils investir ?" /></label>
-            <label className="check-option"><input type="checkbox" checked={newInformationBlocking} onChange={(e) => setNewInformationBlocking(e.target.checked)} />Bloquant avant devis</label>
+            <label>Ajouter un point<input value={newInformation} onChange={(e) => setNewInformation(e.target.value)} placeholder="Ex. combien peuvent-ils investir ?" disabled={busy} /></label>
+            <label className="check-option"><input type="checkbox" checked={newInformationBlocking} onChange={(e) => setNewInformationBlocking(e.target.checked)} disabled={busy} />Bloquant avant devis</label>
             <button type="button" className="secondary-button" disabled={!newInformation.trim()} onClick={addInformation}>Ajouter</button>
           </div>
         </div>

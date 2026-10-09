@@ -1,5 +1,6 @@
+import {requestUnsavedExit,installUnsavedLifecycleBridge} from './unsaved/unsaved';
 import { DemoPanel } from './workflow/DemoPanel';
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { BootstrapState, DisplayDensity, ThemeName } from '../shared/contracts';
 import type { SearchResult } from '../shared/crm';
 import { BusinessBackupsPage } from './backups/BusinessBackupsPage';
@@ -88,9 +89,13 @@ function applyDensity(density: DisplayDensity): void {
 }
 
 function App() {
+  useLayoutEffect(installUnsavedLifecycleBridge,[]);
   const prospectReferenceId = new URLSearchParams(window.location.search).get('prospectReference');
   const [bootstrap, setBootstrap] = useState<BootstrapState | null>(null);
   const [activePage, setActivePage] = useState<PageName>('Accueil');
+  const activePageRef=useRef(activePage);activePageRef.current=activePage;
+  const [navigationRequest,setNavigationRequest]=useState(0);
+  function requestPage(page:PageName,run:()=>void,replace=false){const transition=()=>{if((page==='Clients'||page==='Prospects')&&page!==activePageRef.current)setCrmTarget(null);run();};if(page===activePageRef.current&&!replace)transition();else requestUnsavedExit(transition);}
   const [theme, setTheme] = useState<ThemeName>('atoumweb');
   const [displayDensity, setDisplayDensity] = useState<DisplayDensity>('comfort');
   const [showHoverHelp, setShowHoverHelp] = useState(true);
@@ -103,20 +108,21 @@ function App() {
   const [prospectViewTarget, setProspectViewTarget] = useState<'directory' | 'pipeline' | 'history'>('directory');
   const [prospectPipelineFilter, setProspectPipelineFilter] = useState<ProspectPipelineFilter>('all');
   const [quoteTarget,setQuoteTarget] = useState<string|null>(null);
+  const routeKeys=useRef({crmTarget,quoteTarget,prospectViewTarget,prospectPipelineFilter});routeKeys.current={crmTarget,quoteTarget,prospectViewTarget,prospectPipelineFilter};
   const [documentTarget, setDocumentTarget] = useState<string | null>(null);
   const [contractTypeTarget,setContractTypeTarget]=useState<string|null>(null);
   const [catalogTarget,setCatalogTarget]=useState<string|null>(null);
   useEffect(()=>{
-    const contract=(e:Event)=>{setContractTypeTarget((e as CustomEvent<string|null>).detail??'all');setActivePage('Documents & Contrats');};
-    const catalog=(e:Event)=>{setCatalogTarget((e as CustomEvent<string>).detail);setActivePage('Offres & Tarifs');};
+    const contract=(e:Event)=>{requestPage('Documents & Contrats',()=>{setContractTypeTarget((e as CustomEvent<string|null>).detail??'all');setActivePage('Documents & Contrats');});};
+    const catalog=(e:Event)=>{requestPage('Offres & Tarifs',()=>{setCatalogTarget((e as CustomEvent<string>).detail);setActivePage('Offres & Tarifs');});};
     window.addEventListener('atoumweb:open-contract-library',contract);window.addEventListener('atoumweb:open-catalog-item',catalog);
     return()=>{window.removeEventListener('atoumweb:open-contract-library',contract);window.removeEventListener('atoumweb:open-catalog-item',catalog);};
   },[]);
   const [directoryTarget, setDirectoryTarget] = useState<DirectorySearchTarget | null>(null);
   useEffect(()=>{const open=(event:Event)=>openSearchResult((event as CustomEvent<SearchResult>).detail);window.addEventListener('atoumweb:navigate',open);return()=>window.removeEventListener('atoumweb:navigate',open);},[]);
-  useEffect(() => { const open = (event: Event) => setActivePage((event as CustomEvent<PageName>).detail); window.addEventListener('atoumweb:open-page', open); return () => window.removeEventListener('atoumweb:open-page', open); }, []);
+  useEffect(() => { const open = (event: Event) => {requestPage((event as CustomEvent<PageName>).detail,()=>{setActivePage((event as CustomEvent<PageName>).detail);});}; window.addEventListener('atoumweb:open-page', open); return () => window.removeEventListener('atoumweb:open-page', open); }, []);
   useEffect(() => {
-    const open = (event: Event) => {
+    const open = (event: Event) => {const target=(event as CustomEvent<'directory'|'pipeline'|'history'|{view:'directory'|'pipeline'|'history';pipelineFilter?:ProspectPipelineFilter}>).detail;const targetView=typeof target==='string'?target:target.view;const targetFilter=targetView==='pipeline'&&typeof target!=='string'?target.pipelineFilter??'all':'all';requestPage('Prospects',()=>{
       const detail = (event as CustomEvent<
         | 'directory'
         | 'pipeline'
@@ -128,18 +134,16 @@ function App() {
       setProspectViewTarget(view);
       setProspectPipelineFilter(view === 'pipeline' ? pipelineFilter : 'all');
       setCrmTarget(null);
-      setActivePage('Prospects');
-    };
+      setActivePage('Prospects');},routeKeys.current.crmTarget!==null||routeKeys.current.prospectViewTarget!==targetView||routeKeys.current.prospectPipelineFilter!==targetFilter);};
     window.addEventListener('atoumweb:open-prospects-view', open);
     return () => window.removeEventListener('atoumweb:open-prospects-view', open);
   }, []);
   useEffect(() => {
-    const openConclusion = (event: Event) => {
+    const openConclusion = (event: Event) => {requestPage('Interventions & Maintenance',()=>{
       const interventionId = (event as CustomEvent<{ interventionId?: string }>).detail?.interventionId;
       if (!interventionId) return;
       setOperationsSearchTarget({ entityType: 'intervention', entityId: interventionId, focus: 'conclusion' });
-      setActivePage('Interventions & Maintenance');
-    };
+      setActivePage('Interventions & Maintenance');});};
     window.addEventListener('atoumweb:open-intervention-conclusion', openConclusion);
     return () => window.removeEventListener('atoumweb:open-intervention-conclusion', openConclusion);
   }, []);
@@ -164,12 +168,11 @@ function App() {
   }
 
   useEffect(() => {
-    const openLibraryItem = (event: Event) => {
+    const openLibraryItem = (event: Event) => {requestPage('Bibliothèque AtoumWeb',()=>{
       const itemId = (event as CustomEvent<string>).detail;
       if (!itemId) return;
       setLibrarySearchTarget(itemId);
-      setActivePage('Bibliothèque AtoumWeb');
-    };
+      setActivePage('Bibliothèque AtoumWeb');});};
     window.addEventListener('atoumweb:open-library-item', openLibraryItem);
     return () => window.removeEventListener('atoumweb:open-library-item', openLibraryItem);
   }, []);
@@ -234,7 +237,7 @@ function App() {
     );
   }
 
-  function navigate(page: PageName): void {
+  function navigateDirect(page: PageName): void {
     if (page === 'Interventions & Maintenance') setOperationsSearchTarget(null);
     if (page === 'Projets') setProjectSearchTarget(null);
     if (page === 'Bibliothèque AtoumWeb') setLibrarySearchTarget(null);
@@ -245,12 +248,12 @@ function App() {
     setActivePage(page);
   }
 
-  function openOperationsTarget(target: OperationsSearchTarget): void {
+  function openOperationsTargetDirect(target: OperationsSearchTarget): void {
     setOperationsSearchTarget(target);
     setActivePage('Interventions & Maintenance');
   }
 
-  function openSearchResult(result: SearchResult): void {
+  function openSearchResultDirect(result: SearchResult): void {
     switch (result.entityType) {
       case 'prospect': setProspectViewTarget('directory'); setCrmTarget(result.entityId); setActivePage('Prospects'); break;
       case 'catalog': setActivePage('Offres & Tarifs'); break;
@@ -285,6 +288,10 @@ function App() {
     }
     setMessage(`${result.title} trouvé dans la recherche globale.`);
   }
+
+  function navigate(item:PageName){if(item===activePageRef.current)return;requestPage(item,()=>navigateDirect(item));}
+  function openSearchResult(result:SearchResult){const destination:PageName=({prospect:'Prospects',quote:'Devis',project:'Projets',catalog:'Offres & Tarifs',client:'Clients',client_document:'Documents & Contrats',organization:'Annuaire',contact:'Annuaire',atoumweb_library:'Bibliothèque AtoumWeb',backup_record:'Sauvegardes',service_request:'Interventions & Maintenance',intervention:'Interventions & Maintenance',maintenance:'Interventions & Maintenance',hour_pack:'Interventions & Maintenance'} as Record<string,PageName>)[result.entityType]??'Clients';requestPage(destination,()=>{setNavigationRequest(n=>n+1);openSearchResultDirect(result);},destination==='Devis'?routeKeys.current.quoteTarget!==result.entityId:destination==='Prospects'?routeKeys.current.crmTarget!==result.entityId||routeKeys.current.prospectViewTarget!=='directory':false);}
+  function openOperationsTarget(target:OperationsSearchTarget){requestPage('Interventions & Maintenance',()=>openOperationsTargetDirect(target));}
 
   if (loadingError) {
     return <div className="fatal-screen"><div className="fatal-card"><span className="eyebrow">AtoumWeb Manager</span><h1>Le démarrage a échoué</h1><p>{loadingError}</p></div></div>;
@@ -349,10 +356,10 @@ function App() {
 
           {activePage === 'Accueil' && <HomeDashboard onMessage={setMessage} />}
           {activePage === 'Réglages' && <DemoPanel />}
-          {activePage === 'Prospects' && <ProspectsPage key={`${crmTarget ?? 'none'}:${prospectViewTarget}:${prospectPipelineFilter}`} initialId={crmTarget} initialView={prospectViewTarget} initialPipelineFilter={prospectPipelineFilter} onMessage={setMessage} />}
+          {activePage === 'Prospects' && <ProspectsPage key={`${crmTarget ?? 'none'}:${prospectViewTarget}:${prospectPipelineFilter}`} initialId={crmTarget} initialRequest={navigationRequest} initialView={prospectViewTarget} initialPipelineFilter={prospectPipelineFilter} onMessage={setMessage} />}
           {activePage === 'Clients' && <ClientsPage key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
           {activePage === 'Offres & Tarifs' && <CatalogPage onMessage={setMessage} initialId={catalogTarget}/>}
-          {activePage === 'Devis' && <QuotesPage key={quoteTarget} initialId={quoteTarget} onMessage={setMessage} />}
+          {activePage === 'Devis' && <QuotesPage key={quoteTarget} initialId={quoteTarget} initialRequest={navigationRequest} onMessage={setMessage} />}
           {activePage === 'Projets' && <ProjectsPage onMessage={showMessage} initialProjectId={projectSearchTarget} showHoverHelp={showHoverHelp} />}
           {activePage === 'Interventions & Maintenance' && <OperationsPage onMessage={setMessage} initialTarget={operationsSearchTarget} />}
           {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}

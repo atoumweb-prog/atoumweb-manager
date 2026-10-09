@@ -1,3 +1,4 @@
+import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { useMemo, useState } from 'react';
 import type { Contact } from '../../shared/crm';
 import { validateEmail, validatePhone } from '../../shared/contactValidation';
@@ -31,6 +32,8 @@ export function ProspectLinkedContactsPanel({
   const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const guard=useUnsavedDraft('Nouveau contact',{firstName,lastName,role,email,phone},{pending:busy,discard:s=>{setFirstName(s.firstName);setLastName(s.lastName);setRole(s.role);setEmail(s.email);setPhone(s.phone);}});
+
   const emailValidation = validateEmail(email);
   const phoneValidation = validatePhone(phone);
 
@@ -70,11 +73,11 @@ export function ProspectLinkedContactsPanel({
     {open && <div className="inline-editor linked-contact-editor">
       <strong>Ajouter un contact de l’entreprise</strong>
       <div className="action-editor-grid">
-        <label>Prénom<input value={firstName} onChange={(e) => setFirstName(e.target.value)} /></label>
-        <label>Nom<input value={lastName} onChange={(e) => setLastName(e.target.value)} /></label>
-        <label className="span-2">Fonction / rôle <small>(champ libre)</small><input value={role} onChange={(e) => setRole(e.target.value)} placeholder="Gérant, patron, banquier, comptable…" /></label>
-        <label className="span-2">Téléphone<input inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="06 12 34 56 78" />{phone.trim() && !phoneValidation.valid && <small className="field-error">{phoneValidation.message}</small>}</label>
-        <label className="span-2">Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nom@exemple.fr" />{email.trim() && !emailValidation.valid && <small className="field-error">{emailValidation.message}</small>}</label>
+        <label>Prénom<input value={firstName} onChange={(e) => setFirstName(e.target.value)} disabled={busy} /></label>
+        <label>Nom<input value={lastName} onChange={(e) => setLastName(e.target.value)} disabled={busy} /></label>
+        <label className="span-2">Fonction / rôle <small>(champ libre)</small><input value={role} onChange={(e) => setRole(e.target.value)} placeholder="Gérant, patron, banquier, comptable…" disabled={busy} /></label>
+        <label className="span-2">Téléphone<input inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="06 12 34 56 78" disabled={busy} />{phone.trim() && !phoneValidation.valid && <small className="field-error">{phoneValidation.message}</small>}</label>
+        <label className="span-2">Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nom@exemple.fr" disabled={busy} />{email.trim() && !emailValidation.valid && <small className="field-error">{emailValidation.message}</small>}</label>
       </div>
       {error && <p className="form-error">{error}</p>}
       <div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => setOpen(false)}>Annuler</button><button className="primary-button" type="button" disabled={busy || !emailValidation.valid || !phoneValidation.valid} onClick={() => void createContact()}>{busy ? 'Ajout…' : 'Ajouter le contact'}</button></div>

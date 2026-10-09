@@ -1,3 +1,4 @@
+import {registerUnsavedConfirmationIpc,unsavedWindows} from './unsaved';
 import type { ContractAdministration, QuoteContractParameters, ContractDocumentLinkInput, ContractDocumentRole } from '../shared/quoteContractPreparation';
 import { app, clipboard, dialog, ipcMain, safeStorage, shell } from 'electron';
 import type { BridgeNodeMatchDecisionInput } from '../shared/bridgeSnapshots';
@@ -81,6 +82,7 @@ import { scheduleDatabaseRestore } from './restore';
 import { saveWorkspaceRoot, type WorkspacePaths } from './workspace';
 
 export function registerIpcHandlers(database: DatabaseService, workspace: WorkspacePaths): void {
+  registerUnsavedConfirmationIpc();
   ipcMain.handle('workflow:needs', (_event, owner, id) => database.workflow.needs(owner,id));
   ipcMain.handle('workflow:save-need', (_event, owner, id, input, needId) => database.workflow.saveNeed(owner,id,input,needId));
   ipcMain.handle('workflow:remove-need', (_event, owner, id, needId) => database.workflow.removeNeed(owner,id,needId));
@@ -128,9 +130,12 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   });
 
   ipcMain.handle('workspace:choose', async (): Promise<WorkspaceChangeResult> => {
+    const ticket=unsavedWindows.approveAll();if(!ticket)return {cancelled:true};
     const result = await dialog.showOpenDialog({ title: 'Choisir le dossier AtoumWeb Manager', defaultPath: workspace.root, properties: ['openDirectory'] });
     if (result.canceled || result.filePaths.length === 0) return { cancelled: true };
+    const currentTicket=unsavedWindows.refreshApproval(ticket);if(!currentTicket)return {cancelled:true};
     const nextWorkspace = saveWorkspaceRoot(result.filePaths[0]);
+    if(nextWorkspace.root!==workspace.root)unsavedWindows.remember(currentTicket);
     return { cancelled: false, workspacePath: nextWorkspace.root, restartRequired: nextWorkspace.root !== workspace.root };
   });
 
@@ -140,6 +145,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   });
 
   ipcMain.handle('backups:restore', async (): Promise<RestoreScheduleResult> => {
+    const ticket=unsavedWindows.approveAll();if(!ticket)return {cancelled:true};
     const selection = await dialog.showOpenDialog({ title: 'Restaurer une sauvegarde AtoumWeb Manager', defaultPath: workspace.backupsDirectory, properties: ['openFile'], filters: [{ name: 'Sauvegarde SQLite', extensions: ['sqlite', 'db'] }] });
     if (selection.canceled || selection.filePaths.length === 0) return { cancelled: true };
     const sourcePath = selection.filePaths[0];
@@ -156,9 +162,11 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
         : `Destination : ${workspace.databaseFile}\nLa base actuelle sera d’abord sauvegardée automatiquement dans le dossier pre-restore au prochain démarrage. En mode développement, ferme ensuite AtoumWeb Manager puis relance « npm start ». Un changement de workspace fera refuser cette demande.`,
     });
     if (confirmation.response !== 0) return { cancelled: true };
+    const currentTicket=unsavedWindows.refreshApproval(ticket);if(!currentTicket)return {cancelled:true};
     scheduleDatabaseRestore(sourcePath, workspace);
+    unsavedWindows.remember(currentTicket);
     if (packaged) {
-      setTimeout(() => { app.relaunch(); app.exit(0); }, 150);
+      setTimeout(() => { app.relaunch(); app.quit(); }, 150);
       return { cancelled: false, sourcePath, restartScheduled: true };
     }
     return { cancelled: false, sourcePath, restartScheduled: false };
@@ -419,9 +427,9 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   });
 
   ipcMain.handle('quote-preparation:get', (_event,id:string)=>database.quotePreparation.get(id));
-  ipcMain.handle('quote-preparation:save', (_event,id:string,input:QuoteContractParameters)=>database.quotePreparation.save(id,input));
+  ipcMain.handle('quote-preparation:save', (_event,id:string,input:QuoteContractParameters,expected?:{parameters:QuoteContractParameters|null})=>database.quotePreparation.save(id,input,expected));
   ipcMain.handle('quote-preparation:administration', ()=>database.quotePreparation.administration());
-  ipcMain.handle('quote-preparation:save-administration', (_event,input:ContractAdministration)=>database.quotePreparation.saveAdministration(input));
+  ipcMain.handle('quote-preparation:save-administration', (_event,input:ContractAdministration,expected?:ContractAdministration)=>database.quotePreparation.saveAdministration(input,expected));
   ipcMain.handle('quote-preparation:attach', (_event,id:string,input:ContractDocumentLinkInput)=>{
     if(input.role==='accepted_pdf')database.quotes.attachContractDocument(id,input.documentId,undefined,input.replacementReason);
     else database.quotePreparation.attach(id,input);

@@ -113,6 +113,7 @@ import type {
 } from '../shared/time';
 
 const api: AtoumWebApi = {
+  unsaved:{confirmExit:(labels,pending)=>ipcRenderer.sendSync('unsaved:confirm-exit',labels,pending),publishState:state=>ipcRenderer.sendSync('unsaved:state',state)},
   app: {
     getBootstrap: () => ipcRenderer.invoke('app:get-bootstrap'),
     openProspectReferenceWindow: (id: string) => ipcRenderer.invoke('app:open-prospect-reference', id),
@@ -319,9 +320,9 @@ const api: AtoumWebApi = {
   },
   quotePreparation: {
     get: id => ipcRenderer.invoke('quote-preparation:get',id),
-    save: (id,input) => ipcRenderer.invoke('quote-preparation:save',id,input),
+    save: (id,input,expected) => ipcRenderer.invoke('quote-preparation:save',id,input,expected),
     administration: () => ipcRenderer.invoke('quote-preparation:administration'),
-    saveAdministration: input => ipcRenderer.invoke('quote-preparation:save-administration',input),
+    saveAdministration: (input,expected) => ipcRenderer.invoke('quote-preparation:save-administration',input,expected),
     attach: (id,input) => ipcRenderer.invoke('quote-preparation:attach',id,input),
     importDocument: (id,role,provenance) => ipcRenderer.invoke('quote-preparation:import-document',id,role,provenance),
     recordAcceptance: (id,statement,occurredAt,provenance) => ipcRenderer.invoke('quote-preparation:record-acceptance',id,statement,occurredAt,provenance),
