@@ -83,3 +83,8 @@ Le CSS actuel `src/renderer/ui-consistency-v2.css` masque intégralement les `.f
 
 ## Proposition opérationnelle hors arbitrage UX — CI GitHub Actions
 Le rapport Codex MSI recommande un runner Windows hébergé par GitHub pour éviter la dépendance au MSI. Le dépôt contient `.github/workflows/ci.yml` avec `runs-on: [self-hosted, Windows, X64]` et un `package-lock.json`. **Statut : recommandé / décision AtoumWeb encore ouverte**. En cas d'accord explicite, PR technique isolée, `npm ci`, deux workers et vérification des CI avant fusion, sans toucher aux données réelles. Détails : [CI-GITHUB-ACTIONS.md](CI-GITHUB-ACTIONS.md).
+
+## Lot 01E — Spécification traçable (09/10/2026)
+**DÉCIDÉ :** préserver le registre UX-01 de #83 lors de l'intégration, pas de système parallèle ; affichage `modifié / enregistrement en cours / erreur / conflit / enregistré` uniquement selon un résultat réel. **DÉCIDÉ comme cible V2, non livré :** ajouter « Enregistrer et quitter » seulement quand **le formulaire concerné peut valider/sauver de façon certaine** ; « Continuer la modification » reste le défaut sûr et « Quitter sans enregistrer » une sortie explicitement destructive. **Ne jamais assimiler cette action à la finalisation d'un devis, publication contractuelle ou publication Bridge.**
+
+**À INSTRUIRE (E17–E22) :** protocole async compatible avec dialogue natif synchrone et tickets multi-fenêtres ; capacité de sauvegarde par section, gestion de baselines/conflits, type de dialogue, éditeurs non encore raccordés, récupération après crash **hors scope**. [Cahier des charges 01E](LOT-01E-FORMULAIRES-CONFIRMATIONS.md).
