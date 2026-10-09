@@ -1,4 +1,5 @@
 import {registerUnsavedConfirmationIpc,unsavedWindows} from './unsaved';
+import { restoreQuitGate } from './restoreQuitGate';
 import type { ContractAdministration, QuoteContractParameters, ContractDocumentLinkInput, ContractDocumentRole } from '../shared/quoteContractPreparation';
 import { app, clipboard, dialog, ipcMain, safeStorage, shell } from 'electron';
 import type { BridgeNodeMatchDecisionInput } from '../shared/bridgeSnapshots';
@@ -78,7 +79,7 @@ import type { ManualTimeSessionInput, StartTimeSessionInput, TimePauseReason, Ti
 import type { AnalyticsPeriodInput } from '../shared/analytics';
 import { generateQuotePdf } from './commercial/quotePdf';
 import type { DatabaseService } from './database/DatabaseService';
-import { scheduleDatabaseRestore } from './restore';
+import { scheduleDatabaseRestore, validateRestoreSource } from './restore';
 import { saveWorkspaceRoot, type WorkspacePaths } from './workspace';
 
 export function registerIpcHandlers(database: DatabaseService, workspace: WorkspacePaths): void {
@@ -163,12 +164,24 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     });
     if (confirmation.response !== 0) return { cancelled: true };
     const currentTicket=unsavedWindows.refreshApproval(ticket);if(!currentTicket)return {cancelled:true};
-    scheduleDatabaseRestore(sourcePath, workspace);
-    unsavedWindows.remember(currentTicket);
     if (packaged) {
-      setTimeout(() => { app.relaunch(); app.quit(); }, 150);
+      // Check the source while the window is still open so an invalid file
+      // does not cause the Manager to close before explaining the failure.
+      validateRestoreSource(sourcePath);
+      const quitToken = restoreQuitGate.arm(() => {
+        // Only will-quit reaches here, after before-quit and all unload guards.
+        scheduleDatabaseRestore(sourcePath, workspace);
+        app.relaunch();
+      });
+      unsavedWindows.remember(currentTicket);
+      setTimeout(() => {
+        if (restoreQuitGate.isActive(quitToken)) app.quit();
+      }, 150);
       return { cancelled: false, sourcePath, restartScheduled: true };
     }
+    // Development mode explicitly programs a restore for the next manual start.
+    scheduleDatabaseRestore(sourcePath, workspace);
+    unsavedWindows.remember(currentTicket);
     return { cancelled: false, sourcePath, restartScheduled: false };
   });
 
