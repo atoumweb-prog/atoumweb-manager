@@ -100,3 +100,10 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 - **Attention constatée dans le code** : le `DemoPanel` actuel (`src/renderer/workflow/DemoPanel.tsx`) appelle `workflow.createDemo` et `workflow.resetDemo` via l'IPC réel. Ce n'est **pas** un atelier visuel inoffensif. La démo de la V2 doit être isolée, sans accès à un workspace métier ni à Validation-MSI.
 
 **Les sous-lots 01A à 01F ont maintenant tous un cahier des charges détaillé dans la PR #82. Ils ne sont PAS implémentés ni recettés ; la matrice écran→handler→IPC→service→test reste à compléter à chaque lot métier.**
+
+### Lot 02 — Navigation et Accueil, confrontation au code
+- [Cahier des charges Lot 02](LOT-02-NAVIGATION-ACCUEIL.md) approfondi, sous-lots 02A–02E et **22 scénarios de recette**, navigation dans 17 modules, rail compact toujours visible, favoris, recherche qui ouvre le bon objet, dashboard et chrono unique.
+- [Matrice code → cible Lot 02](LOT-02-MATRICE-EXISTANT-CIBLE.md) : fichiers `App.tsx`, `GlobalSearch.tsx`, `DossierPanel.tsx`, `HomeDashboard.tsx/.css`, `GlobalTimer.tsx` ; écarts E28–E41 observés. Notamment **la recherche Catalogue n'applique pas l'identifiant**, **le pipeline Accueil présente 5 agrégats plutôt que 7 étapes visuelles**, **les boutons « + » de l'Accueil ouvrent seulement des modules**, et **la sidebar actuelle disparaît complètement au repli**. À corriger progressivement dans les lots V2, sans nouveau statut backend.
+
+### CI — PR #84, état réel
+- [PR #84](https://github.com/atoumweb-prog/atoumweb-manager/pull/84) **draft** au HEAD `3a02ff0`, workflow `windows-2022`/Node 24/`npm ci`/typecheck/tests à 2 workers. **Zéro run CI selon Codex** (`[skip ci]`) ; quota et plafond de dépassement **inconnus** car API Billing sans droits. Ne pas fusionner ni autoriser une dépense sans confirmation humaine. [Suivi CI détaillé](CI-GITHUB-ACTIONS.md).
