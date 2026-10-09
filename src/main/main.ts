@@ -1,13 +1,13 @@
 import {RECIPE_FLAG} from '../shared/operationalRecipe';
 import {createOperationalRecipeWindow} from './projects/operationalRecipeWindow';
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import { join } from 'node:path';
 import { registerBusinessBackupsIpcHandlers } from './backups/businessBackupsIpc';
 import { DatabaseService } from './database/DatabaseService';
 import { registerIpcHandlers } from './ipc';
 import { registerOperationsIpcHandlers } from './operations/operationsIpc';
 import { registerReferentialsIpcHandlers } from './referentials/referentialsIpc';
-import { applyPendingDatabaseRestore } from './restore';
+import { applyPendingDatabaseRestore, DatabaseRestoreError } from './restore';
 import { registerTimeCorrectionIpcHandler } from './time/timeIpc';
 import { resolveWorkspace } from './workspace';
 
@@ -127,6 +127,7 @@ app.whenReady().then(async () => {
   });
 }).catch((error) => {
   console.error('Échec du démarrage AtoumWeb Manager', error);
+  if (error instanceof DatabaseRestoreError) dialog.showErrorBox('Restauration refusée — AtoumWeb Manager', error.message);
   recipeWindow?.dispose();recipeWindow=null;
   app.quit();
 });

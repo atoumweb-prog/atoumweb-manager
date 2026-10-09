@@ -152,11 +152,11 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
       title: 'Confirmer la restauration',
       message: 'Restaurer cette sauvegarde ?',
       detail: packaged
-        ? 'La base actuelle sera d’abord sauvegardée automatiquement dans le dossier pre-restore, puis l’application redémarrera.'
-        : 'La base actuelle sera d’abord sauvegardée automatiquement dans le dossier pre-restore au prochain démarrage. En mode développement, ferme ensuite AtoumWeb Manager puis relance « npm start » pour appliquer la restauration.',
+        ? `Destination : ${workspace.databaseFile}\nLa base actuelle sera d’abord sauvegardée automatiquement dans le dossier pre-restore, puis l’application redémarrera. Un changement de workspace fera refuser cette demande.`
+        : `Destination : ${workspace.databaseFile}\nLa base actuelle sera d’abord sauvegardée automatiquement dans le dossier pre-restore au prochain démarrage. En mode développement, ferme ensuite AtoumWeb Manager puis relance « npm start ». Un changement de workspace fera refuser cette demande.`,
     });
     if (confirmation.response !== 0) return { cancelled: true };
-    scheduleDatabaseRestore(sourcePath);
+    scheduleDatabaseRestore(sourcePath, workspace);
     if (packaged) {
       setTimeout(() => { app.relaunch(); app.exit(0); }, 150);
       return { cancelled: false, sourcePath, restartScheduled: true };
