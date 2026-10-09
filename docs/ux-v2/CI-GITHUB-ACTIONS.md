@@ -38,3 +38,17 @@ Sur une **PR technique distincte** :
 - Politique des workflows sur les contributions externes et droits du token GitHub.
 
 **Décision enregistrée :** choix du runner **recommandé** par Codex, **pas encore validé ni appliqué par AtoumWeb**.
+
+## 6. État actualisé — PR #84 publiée le 09/10/2026
+
+**Vérification GitHub :** [PR #84](https://github.com/atoumweb-prog/atoumweb-manager/pull/84) **draft, non fusionnée**, branche `codex/fix-ci-windows-hosted`, HEAD `3a02ff0ded5d0bdaea88f013c64eee6320c8c7da`. Les fichiers déclarés dans cette PR sont `.github/workflows/ci.yml`, `PROJECT_STATUS.md` et `docs/MANAGER_BRIDGE_ROADMAP.md`.
+
+**Changement réel lu dans le workflow de #84 :** `runs-on: windows-2022`, `actions/setup-node@v4` avec Node 24, `npm ci`, `npm run typecheck`, `npm test -- --maxWorkers=2`. Les triggers existants `push`, `pull_request` et `workflow_dispatch` sont conservés.
+
+**Aucun run CI réel réussi ni échoué sur #84** d'après le bilan Codex MSI : commit initial avec `[skip ci]`, zéro run annoncé. Le contrôle statique du lockfile et des options Vitest ne démontre pas la compatibilité Windows hébergé. La tentative de consultation de facturation a été refusée (permission `user` du jeton manquante) : **quota inclus restant, budgets et dépassements actuellement inconnus**. Ne pas présumer une autorisation de dépense.
+
+**Conditions avant la première exécution** : le titulaire ou gestionnaire de facturation contrôle le quota réel et configure, si possible, un budget `Actions` avec arrêt de la consommation payante au seuil choisi. GitHub prévoit des budgets bloquants pour produits mesurés : [guide officiel](https://docs.github.com/en/billing/how-tos/set-up-budgets) ; écran de compte personnel [Billing](https://github.com/settings/billing). L'usage `windows-2022` coûte selon la grille standard Windows x64 si hors quota ; [tarif officiel](https://docs.github.com/en/billing/reference/actions-runner-pricing), à contrôler au lancement.
+
+**Après autorisation explicite uniquement :** Codex prépare un nouveau commit non exclu de la CI, relève URL/ID du run, résultat `quality`, durée et erreurs ; aucune fusion automatique. En cas de feu vert à la fusion de #84, préparer l'intégration du YAML corrigé dans #81/#83 puis de nouveaux commits de validation. Les runs passés ne prennent pas automatiquement la nouvelle définition de workflow. Respecter les conflits et la préservation des mécanismes UX-01/03/16.
+
+**Cette note remplace le simple stade « recommandation » dans l'historique ci-dessus : configuration maintenant préparée en draft #84, toujours NON exécutée et NON fusionnée.**
