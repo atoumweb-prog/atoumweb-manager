@@ -74,3 +74,9 @@ Décisions nouvelles : proposer modification par PR et demander arbitrage si cel
 
 ## Note de vérification pour l'aide contextuelle (écart E05, 09/10/2026)
 Le CSS actuel `src/renderer/ui-consistency-v2.css` masque intégralement les `.field-help` lorsque `.app-shell.help-disabled` est actif. Cela **ne doit pas devenir** le comportement V2 : l'option utilisateur ne désactive que le survol automatique, **jamais le point d'interrogation activable au clic/clavier**. Cette différence est déjà couverte par UX2-HELP-001 et documentée dans [Lot 01B](LOT-01B-COMPOSANTS-ELEMENTAIRES.md). Correction non codée.
+
+## Vérifications de conception — Lot 01C (09/10/2026)
+- **DÉCIDÉ** : premier clic = fiche rapide ; **Agrandir** = même dossier dans une vue complète ; liste+détail par défaut, ateliers spécialisés admis ; réglages de disposition mémorisés automatiquement par vue (UX2-NAV-002, UX2-LAY-001/002/003).
+- **À VÉRIFIER, pas un nouvel arbitrage métier** : E08 portée (poste/workspace/profil) de la persistance ; E09 adaptation desk/overlay/fullscreen sans re-écriture des moteurs existants ; E10 contraintes largeur/accessibilité ; E11 protections des éditeurs Clients/Catalogue/Projets/Opérations non couvertes universellement par #83.
+- **Recette impérative** : réduire/agrandir, changer de dossier, cliquer hors fiche, Échap, redimensionnement clavier/pointeur, revenir après redémarrage, fenêtre étroite et conservation du brouillon. La protection n'est pas présumée acquise pour tous les modules tant que l'implémentation n'est pas vérifiée.
+- Détails : [Lot 01C](LOT-01C-FICHES-PANNEAUX.md).
