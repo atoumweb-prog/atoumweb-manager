@@ -112,3 +112,12 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 - La page personnelle GitHub `atoumweb-prog` montre **GitHub Free**, **budget Actions 0 USD**, **Stop usage Yes**, alertes incluses **On** ; l'Overview affiche **0 USD facturable** pour octobre (0,13 USD de consommation compensée par l'allocation incluse).
 - [CI-GITHUB-ACTIONS.md](CI-GITHUB-ACTIONS.md) précise le solde gratuit **toujours non vérifié**, la limite nominale GitHub Free de 2 000 minutes/mois (source officielle) et la caveat du premier cycle de budget.
 - **PR #84 reste non exécutée et non fusionnée**. Exécution autorisée seulement après feu vert explicite AtoumWeb, même avec dépassements payants bloqués.
+
+### Lot 02A — Rail, groupes et favoris
+- [Spécification détaillée 02A](LOT-02A-RAIL-NAVIGATION.md) : carte de **17 destinations et leurs icônes proposées**, conservation des clés internes, rail visible en réduit, groupes et favoris, gardes de sortie UX-01, **18 tests proposés**. **Arbitrage E42 OUVERT** : rail réduit **A = groupes et favoris** (recommandé) ou **B = les 17 icônes directes**. Aucune option n'est acceptée implicitement.
+### Lot 02B — En-tête et raccourcis
+- [Spécification détaillée 02B](LOT-02B-ENTETE-RACCOURCIS.md) : garde du **chrono global unique**, repli de l'en-tête sans cacher le chrono ni la recherche, bandeau Bibliothèque indépendant, audit des raccourcis, **16 tests proposés**. La réduction du header est cible V2, **non existante dans le code de comparaison**.
+
+### CI GitHub Actions #84 — première exécution réelle
+- **Nouveau HEAD #84 : `1b069575891dae3b695c0afa1c76a3964890a03a`**, commit `ci: trigger first hosted Windows validation within free allowance`.
+- [Run #549](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/37934890745), job `quality` sur Windows hébergé : **install OK, typecheck OK, tests ÉCHEC : 692/695 réussis, 3 timeouts de 5000 ms** (`OperationalRecipeService.test.ts`, deux tests `mariageHistoireRecipeStructure.test.ts`). **CI NON VERTE, #84 draft NON FUSIONNÉE**. Voir [dossier CI](CI-GITHUB-ACTIONS.md). Ce run montre que le runner hébergé fonctionne, pas que la suite passe.
