@@ -160,3 +160,6 @@ Les **sept intitulés visuels validés** :
 - un Client **effectivement converti** après acceptation Abby, compté dans l'historique Conversion et non dans le pipeline actif.
 
 AtoumWeb valide en parallèle **deux options de gestion si le devis est révisé** : adapter/synchroniser le Projet courant, ou repartir de zéro par retrait sécurisé de l'ancien Projet et préparation sur les lignes révisées du devis. [Détail technique et recette](LOT-07-PROJET-PRE-SIGNATURE.md). L'ancienne mention d'une « proposition non validée » en section 11 est **historique** ; la définition métier est désormais **DÉCIDÉE**, mais l'implémentation du marqueur reste à concevoir.
+
+### Observation transversale — Lot 06, conflit E72 réel (audit du 09/10/2026)
+**La cible E72 reste validée, mais n'est pas encore garantie par le backend actuel :** dans `src/main/commercial/QuoteService.ts`, `create` fait `UPDATE prospects SET stage='quote_to_prepare'` sur les Prospects non gagnés/perdus, **y compris `new`**, sans clic « Démarrer la prospection ». Ce fait est incompatible avec « `new` reste dans l'Annuaire jusqu'au démarrage volontaire ». Corriger **le service**, couvrir `new + createWithLines`, puis contrôler les agrégations pipeline/Accueil. **Spécification et tests à venir**, rien n'est modifié ici. [Audit 06A](LOT-06A-MATRICE-DEVIS-ET-ETATS.md).
