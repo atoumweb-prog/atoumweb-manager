@@ -6,7 +6,7 @@ Statut : **spécification cible décidée**, avec valeurs indicatives marquées 
 - 3 **thèmes** et 3 **densités** existants à conserver/harmoniser ; mesurer leur couverture réelle.
 - Palette métier existante : rouge `#D62828`, jaune `#F2B705`, bleu `#1565C0`, vert `#198754`. Ne pas donner systématiquement un rôle d'état à une couleur décorative.
 - Direction de marque : triangle(s) imbriqués, lisibilité en taille d'icône, couleurs AtoumWeb. **Logo définitif non validé comme asset**.
-- **Échelle indicative** (à ajuster par tests visuels et accessibilité) : texte courant 14–15px ; titres page 22–24 ; titres section 17–18 ; légendes 12–13 ; icônes courantes 16–18 ; hauteur de boutons standards ~34–38px.
+- **Échelle validée du texte principal par densité (E01)** : **Compact 14 px (cible V2, code actuel 15 px)** ; **Confort 16 px** ; **Confort+ 18 px**. Texte secondaire : 14/15/16 px ; petites tailles : pas sous 14 px. Hauteur des contrôles conservée à ce stade : 36/42/48 px. Les titres de page ~22–24 px, titres de section ~17–18 px et icônes ~16–18 px restent indicatifs avant recette visuelle. Les anciennes suggestions de bouton 34–38 px sont remplacées par les hauteurs selon densité.
 - Les densités ajustent surtout hauteur, marges et espacement, pas une réduction agressive de taille de police.
 - Contraste et état focus ne reposent jamais uniquement sur la couleur. Marqueur Prospect `cold/neutral/warm/hot` distinct de sentiment de relation Client ; carte pipeline non recouverte de couleur.
 
@@ -59,4 +59,4 @@ Inventorier les composants réellement présents, réutiliser, ne pas introduire
 - Le résultat d'un test de service n'est pas une certification visuelle : tests React/UI et scénarios natifs en supplément.
 
 ## Confrontation initiale avec l'existant (09/10/2026)
-Voir [Lot 01 — matrice existant/cible](LOT-01-MATRICE-EXISTANT-CIBLE.md), inspection statique de `main@eb252d5c`. Les valeurs CSS **déjà implémentées** ne doivent pas être effacées par les propositions indicatives ci-dessus : compact = 15px/36px de hauteur contrôle ; Confort = 16px/42px ; Confort+ = 18px/48px. Cette divergence numérique **E01 est ouverte à arbitrage**. La protection UX-01 livrée en draft #83 offre « Rester / Quitter sans enregistrer » ; « Enregistrer et quitter » est une **cible ultérieure non livrée**, à intégrer sans deuxième registre.
+Voir [Lot 01 — matrice existant/cible](LOT-01-MATRICE-EXISTANT-CIBLE.md), inspection statique de `main@eb252d5c`. **E01 décidé le 09/10/2026 : Compact passe de 15 px existants à 14 px cible V2** ; Confort reste à 16 px et Confort+ à 18 px. Il s'agit d'une spécification documentaire et non d'une modification CSS réalisée : la recette de lisibilité reste obligatoire. La protection UX-01 livrée en draft #83 offre « Rester / Quitter sans enregistrer » ; « Enregistrer et quitter » est une **cible ultérieure non livrée**, à intégrer sans deuxième registre.
