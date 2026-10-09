@@ -232,6 +232,8 @@ if (!process.versions.electron) {
         app.once('will-quit', () => {
           try {
             assert(beforeQuitCount > 0, 'Accepted lifecycle skipped before-quit');
+            assert(willQuitCount === 1, 'Accepted lifecycle did not reach will-quit exactly once');
+            assert(testWindow.isDestroyed(), 'Accepted quit did not close the temporary BrowserWindow');
             assert(!db, 'Accepted lifecycle did not close SQLite');
             const pendingPath = marker(profile, temp);
             assert(fs.existsSync(pendingPath), 'Accepted lifecycle did not commit marker');
