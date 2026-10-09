@@ -98,7 +98,9 @@ if (!process.versions.electron) {
     console.log('Fixture cleaned:', !fs.existsSync(temp));
   }
 } else {
-  const { app } = require('electron');
+  const { app, dialog } = require('electron');
+  // Never let a native fixture spawn an unattended modal confirmation.
+  dialog.showMessageBoxSync = () => 0;
   const temp = process.env.ATOUMWEB_UX01_RESTORE_ROUNDTRIP_ROOT;
   const stageArg = process.argv.find(arg => arg.startsWith('--stage='));
   const stage = stageArg?.slice('--stage='.length);
