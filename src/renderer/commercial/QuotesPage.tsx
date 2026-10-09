@@ -45,6 +45,7 @@ export function QuotesPage({ onMessage, initialId }: { onMessage: (message: stri
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [catalog, setCatalog] = useState<CatalogItemSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const loadedOnce=useRef(false);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | QuoteStatus>('all');
   const [selectedId, setSelectedId] = useState<string | null>(initialId ?? null);
@@ -69,7 +70,7 @@ export function QuotesPage({ onMessage, initialId }: { onMessage: (message: stri
   const detailPanelRef = useRef<HTMLElement | null>(null);
 
   async function refresh(): Promise<void> {
-    setLoading(true);
+    if(!loadedOnce.current)setLoading(true);
     try {
       const [nextQuotes, nextProspects, nextClients, nextCatalog] = await Promise.all([
         window.atoumweb.quotes.list(), window.atoumweb.crm.prospects.list(), window.atoumweb.crm.clients.list(), window.atoumweb.catalog.list({ status: 'active' }),
@@ -79,7 +80,7 @@ export function QuotesPage({ onMessage, initialId }: { onMessage: (message: stri
       setClients(nextClients);
       setCatalog(nextCatalog.filter((item) => item.currentVersion?.status === 'published'));
       if (selectedId && nextQuotes.some((quote) => quote.id === selectedId)) setDetail(await window.atoumweb.quotes.get(selectedId));
-    } finally { setLoading(false); }
+    } finally { loadedOnce.current=true;setLoading(false); }
   }
 
   useEffect(() => { void refresh(); }, []);

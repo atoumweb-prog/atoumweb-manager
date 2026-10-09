@@ -30,6 +30,18 @@ function file(role:'withdrawal_form'|'acceptance'|'early_request'|'early_acknowl
 function accept(){quotes.finalize(id);quotes.markSent(id);preparation.recordAcceptance(id,'Accord explicitement reçu','2026-09-01T12:00:00Z','Courriel fixture');return quotes.accept(id);}
 function pdf(){const clientId=quotes.get(id).acceptedClientAccountId!;const source=join(root,'preuve.pdf');writeFileSync(source,'%PDF-1.4\nFixture acceptée');return docs.importPaths(clientId,[source],{category:'contract',title:'Preuve fixture'})[0];}
 describe('Lot 5 paramètres et preuves',()=>{
+  it('refuse une sauvegarde administrative périmée sans mutation ni journal',()=>{
+    const baseline=preparation.administration();const changed=structuredClone(baseline);changed.identity.value='Autre fenêtre';preparation.saveAdministration(changed,baseline);
+    const before=db.all('SELECT * FROM settings'),activities=db.all('SELECT * FROM activity_log');
+    expect(()=>preparation.saveAdministration(baseline,baseline)).toThrow(/communes ont changé/);
+    expect(db.all('SELECT * FROM settings')).toEqual(before);expect(db.all('SELECT * FROM activity_log')).toEqual(activities);
+  });
+  it('refuse un ancien brouillon de paramètres sans réécrire le devis',()=>{
+    const baseline=preparation.parameters(id)!;const changed=structuredClone(baseline);changed.conclusion.context='Enregistré ailleurs';preparation.save(id,changed,{parameters:baseline});
+    const before=db.all('SELECT * FROM quotes'),activities=db.all('SELECT * FROM activity_log');
+    expect(()=>preparation.save(id,baseline,{parameters:baseline})).toThrow(/paramètres du devis ont changé/);
+    expect(db.all('SELECT * FROM quotes')).toEqual(before);expect(db.all('SELECT * FROM activity_log')).toEqual(activities);
+  });
   it('reprend les informations de la version vendue sans écrire à la consultation ni suivre une version plus récente',()=>{
     const catalog=new CatalogService(db),item=catalog.create({name:'Site vitrine fixture',type:'offer',canonicalCode:'AW-TEST-SOLD-DEFAULTS',identityProvenance:{reference:'Fixture isolée'}},{priceMode:'fixed',priceCents:69900,familyCode:'WEB',periodicity:'ponctuelle',inclusions:['hébergement 1 an','1 domaine standard 1 an'],commercialParameters:{correctiveWarranty:'30 jours',deliverables:'Site en ligne + accès'}});
     catalog.publishVersion(item.versions[0].id);quotes.addCatalogLine(id,item.versions[0].id);

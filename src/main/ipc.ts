@@ -419,9 +419,9 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   });
 
   ipcMain.handle('quote-preparation:get', (_event,id:string)=>database.quotePreparation.get(id));
-  ipcMain.handle('quote-preparation:save', (_event,id:string,input:QuoteContractParameters)=>database.quotePreparation.save(id,input));
+  ipcMain.handle('quote-preparation:save', (_event,id:string,input:QuoteContractParameters,expected?:{parameters:QuoteContractParameters|null})=>database.quotePreparation.save(id,input,expected));
   ipcMain.handle('quote-preparation:administration', ()=>database.quotePreparation.administration());
-  ipcMain.handle('quote-preparation:save-administration', (_event,input:ContractAdministration)=>database.quotePreparation.saveAdministration(input));
+  ipcMain.handle('quote-preparation:save-administration', (_event,input:ContractAdministration,expected?:ContractAdministration)=>database.quotePreparation.saveAdministration(input,expected));
   ipcMain.handle('quote-preparation:attach', (_event,id:string,input:ContractDocumentLinkInput)=>{
     if(input.role==='accepted_pdf')database.quotes.attachContractDocument(id,input.documentId,undefined,input.replacementReason);
     else database.quotePreparation.attach(id,input);

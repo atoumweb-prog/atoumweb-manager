@@ -4,6 +4,8 @@ Date d'ouverture : 27/09/2026.
 
 ## 0. État courant et lecture de la roadmap — 09/10/2026
 
+**UX-01 : diagnostic terminé, correction non implémentée**, sur `codex/fix-manager-unsaved-inputs-ux01`, depuis `main@eb252d5c`. 13 scénarios natifs isolés : 9 pertes, 3 comportements utiles et 1 risque différé de workspace ; inventaire des 58 fichiers avec contrôles. [Proposition et lots](FUNCTIONAL_UNSAVED_INPUTS_UX01_DIAGNOSIS.md) : sections contractuelles indépendantes, registre/hook avec pilotes, cycle Electron/workspace, extensions par module. Aucun accès Validation-MSI, code fonctionnel ou UX/UI V2 modifié ; fixture nettoyée. PR #81 maintenue en draft pour CI/validation, aucun merge automatique ; #80/#81 non modifiées. Prochaine action : validation du diagnostic et des premiers petits lots, sans publication Git de cette passe.
+
 **Manager officiel : main.** PR #79 fusionnée normalement (8e05a47296d478587b11841e36ca5acb2e936726). Le checkpoint contenant cette entrée publie l’évolution contractuelle et les corrections UX de la recette, après autorisation AtoumWeb ; fix/pre-phase5-commercial-ux et le checkpoint 1–65 sont historiques.
 
 Projet V2, Sites/Pages/compositions, Devis/contrats/Builder CGV, Catalogue 112, opérations et Phase 7 Statistiques/Rentabilité intégrés. **Migrations 1–66** : types/compositions versionnés et liens aux versions Catalogue, sans copie des textes ni réécriture des snapshots acceptés. Validation-MSI : 13 types draft /112 liens ; références existantes conservées.
@@ -2264,6 +2266,19 @@ Autorisation AtoumWeb : corriger les captures de la recette manuelle, puis rendr
 Typecheck /695 tests OK ; UI 134 natifs +37 Prospection +21 préparation +20 options sur trois thèmes. Tests isolés ; Validation-MSI contrôlée readonly, intégrité/FK correctes, recette humaine conservée. Aucun commit/push/merge, publication, nouvelle sauvegarde ou travail Bridge/8C. Prochaine action : charger le backend corrigé par redémarrage normal après enregistrement de la saisie utilisateur, puis laisser AtoumWeb poursuivre sa recette manuelle.
 
 
+### 09/10/2026 — UX01-DIAG-01 (Codex, instruction / diagnostic / proposition)
+
+AtoumWeb maintient #81 en draft avant CI et validation de fusion ; aucun merge automatique. Autorise un chantier UX-01 indépendant depuis main, diagnostic/reproduction et mécanisme cohérent avant changement transversal risqué. Conservation des règles/enregistrements, pas de refonte UX V2, fixtures temporaires uniquement, Validation-MSI exclue, #80/#81 inchangées.
+
+Branche `codex/fix-manager-unsaved-inputs-ux01`, base main/origin@eb252d5c. Inspection des routes/fermetures/reset/refresh, inventaire AST 82 TSX/58 fichiers avec champs/709 déclarations/8 forms. Sonde native sur profil et SQLite isolés, renderer/services réels : 13 scénarios, 9 pertes reproduites, 3 comportements utiles et 1 risque de bascule workspace différée. Deux pertes p/admin sans navigation ; normal masquer/rouvrir Prospect conserve le draft, Annuler ligne ne mute pas le serveur, Builder bloque les copies mais pas sa fermeture. Intégrité/FK et 1–66 corrects ; fixture fermée/supprimée. Essais de mise au point de sonde distingués du run final réussi.
+
+Proposition : baselines et garde par scope, Rester/abandon sans save implicite, attente des saves, coordination native/détachée/workspace et fusion sélective des refresh. A sections contractuelles en premier, B noyau/navigation pilotes, C cycle natif, puis extensions D/E/F par module ; tests déterministes/native temporaires et trois thèmes après implémentation. Diagnostic lié dans PROJECT_STATUS. Aucun source métier/UI/test/migration modifié, trois documents locaux uniquement ; pas de commit/push/PR, aucune reprise du code #81 ni intervention sur ses checks. Responsable/prochaine action : arbitrage AtoumWeb du diagnostic/premiers lots avant implémentation.
+
 ### 09/10/2026 — GIT-LIAISON-MANAGER-01 (Codex, autorisation / checkpoint)
 
 AtoumWeb demande la mise à jour GitHub et des fichiers de liaison sur l’état du Manager. Base main@8e05a472, origin/main identique après fetch ; aucune nouvelle fonctionnalité développée pendant cette publication. Checkpoint des 61 fichiers code/tests/documentation de la Bibliothèque contractuelle, migration 66 et recette UX, contrôles 695 tests/typecheck et UI trois thèmes déjà verts. README, HANDOFF MSI, PROJECT_STATUS et roadmap alignés : main, 1–66, recette humaine en cours, lanceur local npm start et package ancien obsolète. SQLite/sauvegardes/captures/outputs et données TEST exclus de Git. Push normal après revue ; aucun merge, build MSI, activation ou travail Bridge/8C. Le commit contenant cette entrée est la référence Git de reprise.
+
+
+### 09/10/2026 — UX01-A-01 (réalisation autorisée)
+
+AtoumWeb valide A sections contractuelles, B suivi/sorties Prospection-Devis, C Electron/workspace, commits distincts et PR corrective sans merge. A réalisé : brouillons indépendants/refresh sélectif/conflits, garde de version lue avant save et maintien des éditeurs pendant refresh parent. 47 tests ciblés/typecheck et 33 contrôles natifs trois thèmes verts ; fixtures 1–66/FK/intégrité nettoyées, aucun accès Validation-MSI. B/C ensuite, pas de migration/graphisme/règle de finalisation modifiés.

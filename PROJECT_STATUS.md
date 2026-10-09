@@ -1,5 +1,19 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 09/10/2026 — UX-01A : sections contractuelles corrigées
+
+- Autorisation AtoumWeb : A/B/C sur la branche indépendante, commits distincts et PR sans fusion. A sépare les baselines des paramètres du devis et de l’administration ; refresh trois voies, conflits explicites et garde optimiste optionnelle à l’enregistrement. Règles de finalisation/snapshots inchangées, aucun schéma nouveau.
+- Cause supplémentaire reproduite et corrigée : le loading de refresh remontait tout le détail Devis, détruisant les drafts voisins. Le chargement initial est conservé ; les rafraîchissements gardent les éditeurs montés.
+- Contrôles A : 47 tests ciblés et typecheck OK ; 33 contrôles natifs sur trois thèmes, deux sens de conservation et absence de save implicite, conflit interfenêtre refusé/draft conservé/résolution explicite ; 1–66/intégrité/FK verts sur fixture nettoyée. Validation-MSI non ouverte. B/C restent à réaliser.
+
+## 09/10/2026 — UX-01 : diagnostic indépendant avant correction
+
+- AtoumWeb demande la protection des saisies, en commençant par diagnostic/reproduction/proposition, sans modification transversale risquée ni UX/UI V2. Branche `codex/fix-manager-unsaved-inputs-ux01`, depuis `main@eb252d5cbd0e95137eafa2b4759fcbcfd7263eda`, origin/main identique après fetch. PR #81 reste draft, sans fusion automatique ; PR #80 et #81 non modifiées, code non fusionné de #81 non repris.
+- Inventaire AST : 82 TSX raccordés, 58 fichiers avec contrôles/709 déclarations natives, 8 form ; filtres/readonly/helpers compris. Pas de garde commune de navigation/fermeture ; protections locales à réutiliser (Builder/copies, Qualification, dirty/undo/code, conservation de certains drafts masqués).
+- 13 scénarios natifs temporaires avec App/preload/vrais IPC : **9 pertes reproduites**, 3 comportements locaux utiles, 1 risque de workspace différé. Navigation, reload, changement de fiche, Escape/clic extérieur, fermeture native, clause malgré avertissement ; deux directions de perte entre paramètres du devis et administration lors d'un save voisin. Choix du workspace B accepté avec saisie encore dans A, sans bascule immédiate.
+- [Diagnostic, inventaire et petits lots proposés](docs/FUNCTIONAL_UNSAVED_INPUTS_UX01_DIAGNOSIS.md) : A préserver les deux sections contractuelles ; B registre/hook et navigation avec pilotes ; C natif/workspace/détaché ; D/E/F extensions progressives. Rester par défaut/abandon explicite, baselines par section, saves en cours et retours asynchrones coordonnés, aucune autosauvegarde/finalisation implicite.
+- Fixture fermée/supprimée, intégrité ok/FK vide/migrations 1–66 ; aucun accès Validation-MSI. Trois documents seulement, aucun code/test fonctionnel/graphisme/migration modifié ; tests permanents prévus après validation. Aucun commit/push/PR nouveau ; arrêt au diagnostic pour arbitrage.
+
 ## 09/10/2026 — Checkpoint GitHub et fichiers de liaison autorisés
 
 - AtoumWeb autorise la publication GitHub des sources validées et la mise à jour du suivi. Branche active **main** ; parent de consolidation **8e05a47296d478587b11841e36ca5acb2e936726**, origin/main identique après fetch. Le commit contenant cette entrée est le nouveau checkpoint ; push normal, sans merge ni force.
