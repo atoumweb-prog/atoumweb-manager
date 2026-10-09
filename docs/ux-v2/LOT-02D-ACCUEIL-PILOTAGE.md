@@ -150,3 +150,13 @@ Les **sept intitulés visuels validés** :
 **Alternative nécessitant choix d'AtoumWeb :** Finalisation peut rester une simple vue d'information sans regroupement de dossiers tant qu'aucun signal fiable n'existe. Ne pas afficher un compteur inventé. La mise en œuvre du rail, de la recherche et de l'en-tête ne dépend pas de cet arbitrage.
 
 **État : E59 Conversion = validée ; E59 Finalisation = attente de décision et d'étude du marqueur ; E59 `new` = encore ouvert.**
+
+## 12. Décision métier E59 Finalisation du 09/10/2026
+**Validée par AtoumWeb :** « Finalisation » désigne un **accord commercial de principe** avec signature/dernières formalités en attente. Elle n'est **ni** l'état `quotes.finalizedAt` (« devis prêt à envoyer »), **ni** un pré-projet qui existerait, **ni** une confirmation d'acceptation. Le **marqueur source** de l'accord de principe reste à instruire pour projeter ce groupe sans ajouter un statut backend arbitraire ; ne pas affecter toute proposition `sent/viewed` automatiquement en Finalisation.
+
+**Distinguer** :
+- un Prospect commercialement en Finalisation (accord de principe enregistré, signature non encore reçue) ;
+- un Projet prévisionnel pouvant être préparé **dès un devis non signé**, même lorsque la négociation n'est pas finie ;
+- un Client **effectivement converti** après acceptation Abby, compté dans l'historique Conversion et non dans le pipeline actif.
+
+AtoumWeb valide en parallèle **deux options de gestion si le devis est révisé** : adapter/synchroniser le Projet courant, ou repartir de zéro par retrait sécurisé de l'ancien Projet et préparation sur les lignes révisées du devis. [Détail technique et recette](LOT-07-PROJET-PRE-SIGNATURE.md). L'ancienne mention d'une « proposition non validée » en section 11 est **historique** ; la définition métier est désormais **DÉCIDÉE**, mais l'implémentation du marqueur reste à concevoir.
