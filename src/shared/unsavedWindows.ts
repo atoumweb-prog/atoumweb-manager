@@ -18,8 +18,20 @@ export class UnsavedWindows {
     state(id: number) { return this.states.get(id); }
     ticket(): ExitTicket { return new Map([...this.states].map(([id, state]) => [id, signature(state)])); }
     same(ticket: ExitTicket) { const current = this.ticket(); return ticket.size === current.size && [...ticket].every(([id, revision]) => current.get(id) === revision); }
-    approveAll(): ExitTicket | null { const states = [...this.states.values()]; const labels = [...new Set(states.flatMap(s => s.labels))], pending = states.some(s => s.pending); if ((labels.length || pending) && (!this.confirm(labels, pending) || pending))
-        return null; return this.ticket(); }
+    approveAll(): ExitTicket | null {
+        const entries = [...this.states];
+        const states = entries.map(([, state]) => state);
+        const labels = [...new Set(states.flatMap(state => state.labels))];
+        const pending = states.some(state => state.pending);
+        // A previously confirmed, unchanged ticket also approves the guarded app.quit().
+        // Any subsequent renderer edit invalidates its signature in update().
+        const previouslyApproved = !pending && entries.every(
+            ([id, state]) => !state.labels.length || this.approved.get(id) === signature(state),
+        );
+        if ((labels.length || pending) && !previouslyApproved && (!this.confirm(labels, pending) || pending))
+            return null;
+        return this.ticket();
+    }
     approveOne(id: number) {
         const state = this.states.get(id);
         if (!state)
