@@ -10,6 +10,8 @@
 
 ## Modifications sur cette branche
 
+- Base Git réalignée par **merge commit normal** de `main@68bfd952` sur la branche préparatoire après vérification de l'identité des trees `main` et HEAD validé de #81. `main` est maintenant ancêtre de la préparation, sans modification du tree par le commit de merge.
+- `PROJECT_STATUS.md` et `docs/MANAGER_BRIDGE_ROADMAP.md` réunissent maintenant les historiques de #81 et #83 en préservant les chronologies originales (ancien contenu #81 conservé, blocs #83 ajoutés).
 - `RestoreQuitGate` conserve uniquement en mémoire une intention de restauration avec un ticket non réutilisable. Elle n'est exécutée qu'au **`will-quit`**. Chaque veto connu du cycle de sortie (`before-quit` ou `will-prevent-unload`) annule l'intention.
 - `backups:restore` conserve la prévalidation de la source et les contrôles de brouillons ; pour le **mode packagé**, `scheduleDatabaseRestore(sourcePath, workspace)` puis `app.relaunch()` sont différés jusqu'au `will-quit`. Aucun marqueur de cette demande n'est écrit pendant l'attente de sortie. L'ancien minuteur ne peut pas fermer une nouvelle demande après annulation.
 - En **mode développement**, « Programmer la restauration » conserve son sens distinct : la demande est écrite pour un prochain démarrage manuel, sans fermeture ni relance automatique.
@@ -18,7 +20,8 @@
 ## Vérifications à ce stade
 
 - Cinq scénarios du garde isolé reproduits et réussis localement avec Node 22 / test runner natif (équivalent de la logique livrée) : commit uniquement à `will-quit`, sortie annulée, ticket périmé, échec une seule fois, deux demandes concurrentes.
-- Cinq tests permanents Vitest ajoutés dans `src/main/restoreQuitGate.test.ts`, **non exécutés dans l'environnement complet**.
+- Cinq tests permanents Vitest du garde ajoutés dans `src/main/restoreQuitGate.test.ts`, **non exécutés dans l'environnement complet**.
+- Cinq tests supplémentaires de raccordement `registerGuardedShutdown` / `bindUnsavedWindow` / événements Electron simulés dans `src/main/restoreQuitLifecycle.test.ts`, également **non exécutés**. Ils couvrent `before-quit`, `will-quit`, `will-prevent-unload`, pending et échec de programmation finale ; ces mocks ne remplacent pas une vraie recette Electron.
 - Recette native `scripts/check-unsaved-inputs-ui.cjs` enrichie de deux contrôles de refus de quit par thème (fenêtre principale et fenêtre détachée), **non exécutée**. Syntaxe CJS analysée avec succès.
 - **Typecheck global, suite Vitest complète, recette Electron Windows et CI GitHub non exécutés** sur ce nouveau SHA. Les précédents 750/750 de #81 ne valident pas cette nouvelle combinaison.
 
