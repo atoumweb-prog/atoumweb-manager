@@ -80,3 +80,6 @@ Le CSS actuel `src/renderer/ui-consistency-v2.css` masque intégralement les `.f
 - **À VÉRIFIER, pas un nouvel arbitrage métier** : E08 portée (poste/workspace/profil) de la persistance ; E09 adaptation desk/overlay/fullscreen sans re-écriture des moteurs existants ; E10 contraintes largeur/accessibilité ; E11 protections des éditeurs Clients/Catalogue/Projets/Opérations non couvertes universellement par #83.
 - **Recette impérative** : réduire/agrandir, changer de dossier, cliquer hors fiche, Échap, redimensionnement clavier/pointeur, revenir après redémarrage, fenêtre étroite et conservation du brouillon. La protection n'est pas présumée acquise pour tous les modules tant que l'implémentation n'est pas vérifiée.
 - Détails : [Lot 01C](LOT-01C-FICHES-PANNEAUX.md).
+
+## Proposition opérationnelle hors arbitrage UX — CI GitHub Actions
+Le rapport Codex MSI recommande un runner Windows hébergé par GitHub pour éviter la dépendance au MSI. Le dépôt contient `.github/workflows/ci.yml` avec `runs-on: [self-hosted, Windows, X64]` et un `package-lock.json`. **Statut : recommandé / décision AtoumWeb encore ouverte**. En cas d'accord explicite, PR technique isolée, `npm ci`, deux workers et vérification des CI avant fusion, sans toucher aux données réelles. Détails : [CI-GITHUB-ACTIONS.md](CI-GITHUB-ACTIONS.md).
