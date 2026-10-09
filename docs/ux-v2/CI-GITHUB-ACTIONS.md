@@ -118,3 +118,15 @@ GitHub [PR #84](https://github.com/atoumweb-prog/atoumweb-manager/pull/84) affic
 **Contrôle GitHub : aucun nouveau workflow run associé au HEAD `495775da`** au moment de cette consultation. Les succès `698/698` et `27/27` restent des **résultats locaux annoncés par Codex**, pas une CI passée. Le run #549 de l'ancien commit reste **rouge**.
 
 **Étape nécessaire :** AtoumWeb doit **autoriser explicitement un deuxième essai GitHub Actions** (dans le quota gratuit et avec budget 0 USD / Stop usage = Yes vérifiés). Alors seulement, Codex doit pousser un nouveau commit **sans skip** pour exécuter `quality` sur le correctif actuel, puis publier SHA/run/temps/typecheck/total tests. En cas d'échec, diagnostic ciblé avant toute fusion. Aucune permission donnée ici pour merge #84 ou réécrire #81/#83.
+
+## 11. Deuxième validation GitHub Actions — **RÉUSSIE** le 09/10/2026
+**Vérifié directement sur GitHub** : [run #589, ID `37945827513`](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/37945827513), commit **`f4bc0197eec8b472ab39f58673e5d7b1e17af3a1`** de la [PR #84](https://github.com/atoumweb-prog/atoumweb-manager/pull/84), job `quality` (`113871701559`), **`completed/success`**. Début **14:39:41Z**, fin **14:43:50Z** (~**4 min 09 s**).
+
+- **Node 24/checkout, `npm ci`, typecheck : succès** selon les étapes du job.
+- **Vitest : 80 fichiers de tests passés, 698 tests sur 698 passés**, durée de la commande Vitest **183,78 secondes** d'après journaux du job.
+- Les fichiers `OperationalRecipeService.test.ts` (**21 tests**, ~1,324 s selon sortie) et `mariageHistoireRecipeStructure.test.ts` (**3 tests**, ~1,466 s) **passent**, contrairement au run #549, sans augmentation de timeout dans le correctif rapporté.
+- **Aucune fusion vérifiée** : PR #84 reste **draft**, `merged=false`. **Ce succès certifie le code de #84 au SHA mentionné, PAS automatiquement #81/#83/#82 ni le MSI graphique.** Aucun budget/consommation de facturation détaillé n'a été consulté.
+
+**Conséquence décisionnelle :** la condition « vraie CI hébergée verte sur #84 » est désormais remplie. Demander la **revue du diff et de l'intégration** (éventuels warnings, permissions, changement de workflow, cohérence lockfile, sécurité des fixtures) puis une **autorisation humaine explicite** avant de fusionner #84 dans `main`. Après fusion autorisée, actualiser #81 puis #83 et valider les vraies branches/commits selon la procédure préparée par Codex ; pas de fusion automatique, aucun toucher Validation-MSI.
+
+**Note chronologique :** les états antérieurs « aucun run » et « CI rouge » ci-dessus décrivent uniquement les étapes passées du travail. L'état le plus récent de **#84** est **VERT AU RUN #589, NON FUSIONNÉ**.
