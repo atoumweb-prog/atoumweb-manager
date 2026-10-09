@@ -1,6 +1,24 @@
 # CI GitHub Actions — diagnostic et proposition d'évolution
 
-**Statut : RECOMMANDATION EN ATTENTE D'ACCORD EXPLICITE — aucune modification du workflow autorisée par ce document.**
+## ÉTAT PRIORITAIRE — 09/10/2026, après diagnostic local Codex MSI
+
+**Ce paragraphe remplace les statuts de PR historiques plus bas, sans effacer leur chronologie.**
+
+| Sujet | Statut effectif |
+|---|---|
+| **#84** | Fusionnée `main@2b3906328d237b962f053acdf25b1ebeeba1222c`. CI Windows #589 verte sur `f4bc0197`, CI post-merge #628 annoncée verte. |
+| **#81** | Draft/non fusionnée, distant `5d43e16d409afdf3a93d397bc87468ba577e2051` ; [run hébergé #649](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/37976220659) **745/748**, 3 échecs `restore.test.ts` ; typecheck OK. |
+| **Correctif #81 sur MSI** | Commit **local NON poussé `50f2b40`**; deux mocks corrigés (chemins canonicalisés), fixture migrations réelles 1–65 préparée en mémoire puis exportée sur disque ; 3/3 ciblés sur 3 répétitions, 35/35 `restore.test.ts`, typecheck OK, assertions et timeouts inchangés. **Aucune nouvelle CI sur ce contenu tant qu'il n'est pas poussé/autorisé.** |
+| **#83** | Draft/non fusionnée, conflit d'intégration `ipc.ts` et `main.ts` avec #81 à résoudre après celui-ci ; CI de la combinaison encore nécessaire. |
+| **#82** | PR de documentation UX/UI V2, commits `[skip ci]`; **aucune CI nouvelle requise pour l'écriture Markdown de consolidation**. |
+
+**Décision restante :** AtoumWeb doit **autoriser distinctement** le push de `50f2b40`, **une CI Windows** sur son nouveau SHA réel, puis, si succès et revue, la fusion de #81; ensuite la résolution/CI/fusion possible de #83. **Ne pas inférer ces autorisations** de l'état des tests locaux, du présent document ni d'une discussion sur la visibilité publique du dépôt.
+
+**Note :** le temps de préparation en mémoire et les assertions ciblées constituent des mesures du **poste MSI**, pas un succès du runner. Le dépôt public n'est **pas requis pour corriger les mocks ni le timing**. Les coûts réels des Actions restent à confirmer depuis les paramètres GitHub par le propriétaire.
+
+---
+
+**Statut du texte d'origine : HISTORIQUE avant fusion #84. Voir l'état prioritaire ci-dessus ; le workflow CI est désormais fusionné.**
 **Contexte :** PR #83 UX-01, PR #81 UX-03/16, PR #82 référentiel V2. Dernier bilan Codex MSI du 09/10/2026.
 
 ## 1. Diagnostic confirmé dans le dépôt
@@ -131,7 +149,7 @@ GitHub [PR #84](https://github.com/atoumweb-prog/atoumweb-manager/pull/84) affic
 
 **Note chronologique :** les états antérieurs « aucun run » et « CI rouge » ci-dessus décrivent uniquement les étapes passées du travail. L'état le plus récent de **#84** est **VERT AU RUN #589, NON FUSIONNÉ**.
 
-## 12. Retour Codex MSI — préparation d'intégration #81/#83 (09/10/2026)
+## 12. Historique Codex MSI — préparation #81/#83 AVANT la fusion #84
 
 **Informations du rapport communiqué par AtoumWeb ; les simulations locales ne sont pas réexécutées ici :**
 - PR [#84](https://github.com/atoumweb-prog/atoumweb-manager/pull/84) : CI Windows-hosted verte sur **`f4bc0197`**, [run réel #589](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/37945827513), **698/698** et typecheck OK. Selon Codex, **une seule nouvelle exécution** a été autorisée/déclenchée, sans blocage de facturation signalé ; **solde exact inaccessible par API**.
