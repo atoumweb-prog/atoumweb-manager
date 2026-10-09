@@ -98,3 +98,13 @@ Commits distincts pour 01A–01F, PR de travail indépendante de ce référentie
 - Vérifier les capacités de fermeture d'Electron et du garde UX-01 pour « Enregistrer et quitter » ; ne pas feindre un enregistrement si le sous-formulaire ne peut pas le faire.
 
 **Ce document est normatif sur les comportements validés et non sur les détails d'implémentation encore inconnus.**
+
+## 7. État du préalable UX-01 — PR #83
+Au 09/10/2026, Codex MSI a publié [UX-01 #83](https://github.com/atoumweb-prog/atoumweb-manager/pull/83) en **draft non fusionné**, commits `df1b6f3` (A), `80300a4` (B), `14d8f9c` (C). 75 tests ciblés, 733 tests complets à deux workers et 153 contrôles natifs sur trois thèmes ont été déclarés réussis dans la livraison ; le statut CI et la fusion restent à vérifier.
+
+Conséquences pour 01E :
+- Faire l'inventaire des APIs `draftSection`, `unsavedRegistry`, `unsavedWindows` et des hooks intégrés avant tout design.
+- La V2 souhaite proposer **Enregistrer et quitter / Continuer / Quitter sans enregistrer**, mais le comportement livré dans #83 est une garde **Rester / Quitter sans enregistrer**. **Le bouton « Enregistrer et quitter » constitue une extension future**, uniquement pour les éditeurs capables de valider/sauver et après confirmation réelle ; ne pas déclarer qu'il existe déjà.
+- Prospection, Devis et fenêtre Référence Prospect sont les seuls pilotes explicitement raccordés dans cette livraison. Étendre progressivement aux autres modules après recette, sans promettre la protection des 17 modules à ce stade.
+- Absence de récupération après crash/arrêt forcé et d'autosave durable : hors livraison #83. Ne pas confondre ce mécanisme avec des sauvegardes métier.
+- Réexaminer le lot avant son implémentation si #83 n'est pas fusionnée ou si une résolution de conflits est nécessaire avec #81.
