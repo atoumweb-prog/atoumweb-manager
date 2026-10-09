@@ -4,6 +4,8 @@ Date d'ouverture : 27/09/2026.
 
 ## 0. État courant et lecture de la roadmap — 09/10/2026
 
+**Préparation CI distincte :** quality proposé sur Windows hébergé windows-2022/Node 24/npm ci/tests deux workers. Actions autorisé, zéro runner local ; #80–#83 draft et queued. Facturation/quota non lisibles avec le jeton (scope user absent) : PR préparée avec [skip ci], aucun run hébergé déclenché ni succès CI annoncé. Attendre quota/budget ou arbitrage de dépense avant nouveau commit sans marqueur. Aucun code métier, UX V2, migration ou Validation-MSI modifié.
+
 **Manager officiel : main.** PR #79 fusionnée normalement (8e05a47296d478587b11841e36ca5acb2e936726). Le checkpoint contenant cette entrée publie l’évolution contractuelle et les corrections UX de la recette, après autorisation AtoumWeb ; fix/pre-phase5-commercial-ux et le checkpoint 1–65 sont historiques.
 
 Projet V2, Sites/Pages/compositions, Devis/contrats/Builder CGV, Catalogue 112, opérations et Phase 7 Statistiques/Rentabilité intégrés. **Migrations 1–66** : types/compositions versionnés et liens aux versions Catalogue, sans copie des textes ni réécriture des snapshots acceptés. Validation-MSI : 13 types draft /112 liens ; références existantes conservées.
@@ -2267,3 +2269,10 @@ Typecheck /695 tests OK ; UI 134 natifs +37 Prospection +21 préparation +20 opt
 ### 09/10/2026 — GIT-LIAISON-MANAGER-01 (Codex, autorisation / checkpoint)
 
 AtoumWeb demande la mise à jour GitHub et des fichiers de liaison sur l’état du Manager. Base main@8e05a472, origin/main identique après fetch ; aucune nouvelle fonctionnalité développée pendant cette publication. Checkpoint des 61 fichiers code/tests/documentation de la Bibliothèque contractuelle, migration 66 et recette UX, contrôles 695 tests/typecheck et UI trois thèmes déjà verts. README, HANDOFF MSI, PROJECT_STATUS et roadmap alignés : main, 1–66, recette humaine en cours, lanceur local npm start et package ancien obsolète. SQLite/sauvegardes/captures/outputs et données TEST exclus de Git. Push normal après revue ; aucun merge, build MSI, activation ou travail Bridge/8C. Le commit contenant cette entrée est la référence Git de reprise.
+
+
+### 09/10/2026 — CI-HOSTED-PREP-01 (Codex, préparation autorisée / exécution arrêtée)
+
+AtoumWeb autorise une branche/PR CI distinctes depuis main eb252d5c : Windows hébergé windows-2022, Node 24 conservé, npm ci avec lockfile existant, typecheck et npm test -- --maxWorkers=2. Trois lignes de workflow seulement ; option Vitest vérifiée par --help, cohérence package/lock et diff exact contrôlés sans installation. Pas de code métier, protections UX-01/UX-03/UX-16, migration, UX V2 ou Validation-MSI modifiés. #80/#81/#82/#83 toujours draft/queued, aucune mutation de ces PR.
+
+Actions autorisé, accès dépôt admin/push, runner local absent. Facturation personnelle inaccessible : API usage/actions 404 et scope user absent, plan non retourné. Aucune extension de droits ni budget/paiement changés. PR créée avec [skip ci] pour rendre le correctif reviewable sans lancement automatique ; aucune validation réelle typecheck/tests/durée CI disponible. Attendre confirmation du quota et absence de dépassement facturable ou arbitrage explicite de dépense ; nouveau commit sans marqueur ensuite pour lancer la validation. Après succès et fusion humaine autorisée de la CI, reporter le workflow corrigé sur #81/#83 ou intégrer main puis pousser pour obtenir des nouveaux runs ; leurs anciens jobs n’adoptent pas le nouveau YAML. Responsable de l’arbitrage : AtoumWeb. Aucun merge automatique.

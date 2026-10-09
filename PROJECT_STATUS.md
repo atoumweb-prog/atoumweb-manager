@@ -1,5 +1,11 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 09/10/2026 — Préparation CI Windows hébergée, sans exécution facturable
+
+- Branche technique indépendante depuis main@eb252d5c : quality sur windows-2022, Node 24 conservé, npm ci/lockfile et tests complets avec deux workers. Aucun module métier/UX, migration ou Validation-MSI modifié ; PR #80/#81/#82/#83 conservées.
+- Vérification GitHub : Actions enabled/allowed_actions all, permissions dépôt admin/push, zéro runner local ; quatre PR draft et quality queued. Windows hébergé disponible selon GitHub ; quota/usage/budget du compte non vérifiables avec le jeton actuel (API billing 404 et scope user manquant, plan absent). Aucune modification des droits, budgets ou moyens de paiement.
+- PR technique préparée avec marqueur [skip ci] : aucune exécution automatique, aucun résultat CI revendiqué. Arrêt avant lancement jusqu’à confirmation du quota restant et d’un blocage des dépassements, ou arbitrage explicite du coût. Après cela, nouveau commit sans marqueur pour tester la PR ; après fusion autorisée de la CI, mise à jour de #81/#83 pour créer de nouveaux runs utilisant ce YAML. Relancer leurs anciens runs ne change pas le workflow de leur ancien commit.
+
 ## 09/10/2026 — Checkpoint GitHub et fichiers de liaison autorisés
 
 - AtoumWeb autorise la publication GitHub des sources validées et la mise à jour du suivi. Branche active **main** ; parent de consolidation **8e05a47296d478587b11841e36ca5acb2e936726**, origin/main identique après fetch. Le commit contenant cette entrée est le nouveau checkpoint ; push normal, sans merge ni force.
