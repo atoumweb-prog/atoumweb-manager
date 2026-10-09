@@ -162,3 +162,12 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 - [04E — Aides commerciales éditables](LOT-04E-AIDES-COMMERCIALES.md) : `internalAdvice` et `CommercialScope` existants, structure utilité/bénéfices/questions/vigilance/mots-clés, aide `?` au clavier, version et restauration contrôlée ; **18 scénarios prévus**.
 - [04F — Prépublication et recette](LOT-04F-PUBLICATION-RECETTE.md) : matrice de contrôle des versions, tarifs, offres/options, CGV, blueprints et préférences, revue humaine, workflow explicitement distinct de la signature Abby ou de la production ; **25 scénarios prévus**.
 - **Bilan Catalogue 04A–04F : six sous-lots documentés**, avec 14 + 15 + 17 + 26 + 18 + 25 = **115 scénarios à exécuter** lors des futurs chantiers de code. Les modèles de catégories (E88/E95), recommandations versionnées N:N (E105) et aides structurées (E111), notamment, **ne sont pas encore livrés**.
+
+### Lot 05 — Bibliothèque contractuelle et CGV (09/10/2026)
+- [05A — Audit du système contractuel](LOT-05A-AUDIT-CONTRACTUEL-EXISTANT.md) : code de gestion des clauses/types, Devis `draft/frozen/historical_missing`, pièces et preuves ; 12 scénarios.
+- [05B — Bibliothèque et édition](LOT-05B-BIBLIOTHEQUE-EDITOR.md) : liste centrale, versions, liens canoniques, références partagées et garde des brouillons ; 15 scénarios.
+- [05C — Rubriques et conditions](LOT-05C-RUBRIQUES-CONDITIONS.md) : **classement juridique par sujet** à valider humainement, rang et collisions ; 14 scénarios.
+- [05D — Builder du Devis](LOT-05D-BUILDER-RESOLUTION.md) : synchronisation sûre, sommaire/lecture/alertes, gel immuable y compris vide et absence historique ; 16 scénarios.
+- [05E — Lecture, exports et preuves](LOT-05E-LECTURE-EXPORTS-PREUVES.md) : copie Abby, présentation client, historique/empreintes PDF Abby et **Word/DOCX futur à qualifier** ; 16 scénarios.
+- [05F — Recette transversale](LOT-05F-RECETTE-CONTRACTUELLE.md) : conditions de développement, tests multi-prestations, publics, révision et documents ; 25 scénarios.
+- **Bilan : Lot 05A–05F intégralement documenté, 98 tests à exécuter, aucun code modifié/aucun test exécuté par le référentiel**. Le moteur existant est à réutiliser ; les métadonnées de rubrique sémantique et les exports Word aller-retour ne sont pas certifiés livrés. Une **revue juridique humaine sur textes officiels** reste indépendante de la CI.
