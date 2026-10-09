@@ -140,3 +140,6 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 - [Fiche Client 03D](LOT-03D-FICHE-CLIENT.md) — cible 8 onglets / source 6, continuité Prospect → Client et Projet confirmé.
 - [Annuaire 03E](LOT-03E-ANNUAIRE-PARCOURS.md) — organisations/contacts uniques, relations, vérifications et parcours croisés.
 - **E72 à valider avec AtoumWeb :** `new` reste-t-il dans l'Annuaire jusqu'au démarrage volontaire (recommandation, actuel) ? **E73 technique** : indicateur d'accord de principe pour Finalisation. **Les cinq spécifications 03A–03E sont des documents, pas des fonctionnalités développées.**
+
+### Suivi CI #84 — correctif publié (09/10/2026)
+- GitHub confirme la publication du correctif SQLite **`5a175eb`** sur la [PR #84](https://github.com/atoumweb-prog/atoumweb-manager/pull/84), HEAD de suivi **`495775da` [skip ci]**. **Aucun run sur ce HEAD** ; les résultats `698/698` et `27/27` sont **locaux**, le dernier essai hébergé #549 reste en échec. **Deuxième run GitHub soumis à accord explicite AtoumWeb**, puis éventuelle décision de fusion. [Dossier CI](CI-GITHUB-ACTIONS.md).
