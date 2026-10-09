@@ -52,3 +52,12 @@ Sur une **PR technique distincte** :
 **Après autorisation explicite uniquement :** Codex prépare un nouveau commit non exclu de la CI, relève URL/ID du run, résultat `quality`, durée et erreurs ; aucune fusion automatique. En cas de feu vert à la fusion de #84, préparer l'intégration du YAML corrigé dans #81/#83 puis de nouveaux commits de validation. Les runs passés ne prennent pas automatiquement la nouvelle définition de workflow. Respecter les conflits et la préservation des mécanismes UX-01/03/16.
 
 **Cette note remplace le simple stade « recommandation » dans l'historique ci-dessus : configuration maintenant préparée en draft #84, toujours NON exécutée et NON fusionnée.**
+
+### Contrôle manuel du budget — marche à suivre propriétaire du compte
+1. Ouvrir la [facturation GitHub](https://github.com/settings/billing) **sur le compte qui paie les Actions pour le dépôt** (personnel ou organisation).
+2. Vérifier **l'utilisation Actions incluse encore disponible** et le contexte du plan ; ne pas interpréter une erreur `scope user` comme preuve de quota épuisé.
+3. Dans **Budgets and alerts / Budgets et alertes**, chercher un budget de **produit Actions**, idéalement limité au dépôt s'il est possible ; contrôler l'option **Stop usage when budget limit is reached** et les éventuels budgets existants cumulés. Activer les alertes d'utilisation incluse, si disponible.
+4. **Ne pas créer ni augmenter un budget payant par défaut** : choisir délibérément le montant/plafond, ou vérifier la configuration permettant de ne pas consommer hors quota. La documentation avertit que le **premier cycle d'un nouveau budget** peut ne pas couvrir rétroactivement la consommation déjà engagée ; vérifier l'historique de facturation.
+5. Confirmer explicitement au développeur le **droit de lancer un premier run** (avec ou sans dépassement accepté) seulement après ces contrôles. Sans feu vert, garder #84 en draft et CI non exécutée.
+
+Sources officielles : [Créer un budget et bloquer l'usage](https://docs.github.com/en/billing/how-tos/set-up-budgets), [Fonctionnement et limites des budgets](https://docs.github.com/fr/billing/concepts/budgets-and-alerts), [Prix runner Windows x64](https://docs.github.com/en/billing/reference/actions-runner-pricing).
