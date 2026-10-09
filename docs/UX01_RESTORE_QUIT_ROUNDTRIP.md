@@ -46,6 +46,19 @@ Cause circonscrite au harness : `DatabaseService.createBackup('manual')` utilise
 
 ## Ce que cette recette ne prouve pas
 
+## Validation Windows du 10/10/2026 — 12 contrôles réussis
+
+**Commande réellement exécutée sur `dbfd0e2f2171f6f66b222e2b7cc1256649af1490` :** `node --check scripts/check-restore-quit-roundtrip.cjs` puis `node scripts/check-restore-quit-roundtrip.cjs`.
+
+- `accepted-quit` : PASS (0,8 s), `before-quit=1`, `will-quit=1`, `sqliteClosed:true`, `markerCommitted:true`, `windowClosed:true`.
+- `accepted-restart` : PASS (0,4 s), `restored:true`, `markerAbsent:true`. Le code de test vérifie en plus la valeur de la base restaurée, les 66 migrations et la copie `pre-restore` contenant l'état précédent.
+- `accepted-restart-again` : PASS (0,2 s), `restored:false`.
+- `refused-quit` : PASS (0,8 s), `beforeQuitObserved:true`, `willQuitObserved:false`, `dbOpen:true`, `windowStillOpen:true`, `markerAbsent:true`.
+- `refused-restart` : PASS (0,2 s), `restored:false`, `markerAbsent:true` ; la vérification de la valeur de la base confirme l'absence de restauration indésirable.
+- **Bilan : `checks:12`, `failed:0`, `Fixture cleaned: true`**. Les cinq étapes ont renvoyé le code de sortie 0.
+
+**Portée :** Electron natif et services du Manager réels sur cinq processus temporaires ; pas de démonstration d'un redémarrage automatique du binaire packagé ni de la voie IPC `app.isPackaged` dans une installation finale. Ce sont les derniers points à évaluer avant une fusion ; la PR officielle #83 reste draft.
+
 **Il s'agit de cinq processus Electron natifs exerçant les services réels, mais pas de l'exécutable packagé installé.** Elle ne prétend donc pas confirmer le vrai `app.relaunch()` du MSI, la fenêtre graphique complète, ni le chemin `app.isPackaged` de l'IPC en conditions de distribution. Les 183 contrôles natifs 3 thèmes réalisés séparément couvrent les interactions React/Electron, sans constituer cette preuve packagée.
 
 La validation totale du parcours packagé exige encore un test isolé sur un exécutable généré dans un environnement temporaire, sans démarrer la distribution de production ni lire les données réelles. Ne pas fusionner #83 sur ce seul harness.
