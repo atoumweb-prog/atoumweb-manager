@@ -57,3 +57,11 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 | 10 | [Statistiques, Sauvegardes et Réglages](LOT-10-PILOTAGE-REGLAGES.md) |
 
 **Mode de travail pour la suite :** documenter systématiquement dans GitHub toute décision prise en conversation, dans le fichier de lot correspondant et le registre des décisions ; les réponses du chat seules ne font pas foi comme référentiel durable. Aucun lot n'est « prêt à coder » tant que la vérification du code actuel et sa matrice d'interactions ne sont pas terminées.
+
+## Suivi UX-01 (mise à jour du 09/10/2026)
+- [PR corrective #83](https://github.com/atoumweb-prog/atoumweb-manager/pull/83), branche `codex/fix-manager-unsaved-inputs-ux01`, HEAD `14d8f9c` : **ouverte en draft, non fusionnée** à la dernière vérification.
+- UX-01A : sections contractuelles indépendantes, conflits et sauvegardes périmées refusées.
+- UX-01B : garde par éditeur Prospection/Devis, confirmation **Rester** (défaut) ou sortie volontaire ; sous-formulaires concernés.
+- UX-01C : fermeture/rechargement/quit Electron, fenêtres détachées et programmation de changement de workspace.
+- Bilan annoncé et documenté : typecheck OK, 75/75 tests ciblés, 733/733 tests complets avec deux workers, 153/153 contrôles natifs trois thèmes, 1–66 inchangées, intégrité/FK OK.
+- **Limites** : pas de bouton « Enregistrer et quitter » universel confirmé ; pas de raccordement automatique aux autres modules, pas de récupération après crash. CI encore à confirmer avant fusion. Le Lot 01E doit **réutiliser** les composants et API validés d'UX-01 sans créer un second système.
