@@ -42,7 +42,7 @@ Faire d'**Accueil** le point de pilotage quotidien d'AtoumWeb : **Aujourd'hui**,
 
 **Proposition de mise en page** : un bloc Aujourd'hui visible dès l'ouverture, alertes sans effort de découverte, KPI et temps sous formes compactes, pipeline lisible ou défilable sans microscopie. Tester fenêtre 1280×720 et formats réels, **ne pas figer une hauteur fixe** avant recette.
 
-## 4. Pipeline — **E59 partiellement tranché : Conversion validée, autres points ouverts**
+## 4. Pipeline — **E59 : Conversion et sens de Finalisation validés ; projection technique ouverte**
 Les **sept intitulés visuels validés** :
 1. À qualifier
 2. Besoins
@@ -60,10 +60,10 @@ Les **sept intitulés visuels validés** :
 | Préparer le devis | `quote_to_prepare`, `quote_to_send` | Éviter confusion devis créé / devis prêt à être envoyé. |
 | Attente du retour | `quote_sent`, `follow_up`, `waiting` | Préserver relances dues comme **filtre transversal**, pas colonne supplémentaire. |
 | Négociation | `negotiation` | Aucune règle de migration nécessaire si statut reste stable. |
-| Finalisation | **aucun statut backend évident** parmi les cinq catégories actuelles | Représentation visuelle à préciser, sans inventer `finalization` dans la base. Peut être **vide/étape de synthèse** ou portée par un indicateur commercial existant à inspecter. |
+| Finalisation | **DÉCIDÉ MÉTIER : accord commercial de principe obtenu, dernières formalités/signature en attente.** Aucun `ProspectStage=finalization` existant. | Il faut un **signal tracé et volontaire** de cet accord (capacité existante à auditer), pas de dérivation de `quotes.finalize`, `sent` ou `viewed` ; pas de statut backend inventé. |
 | Conversion | **DÉCIDÉ** : historique des **Prospects effectivement convertis en Clients**, établi par un lien/événement de conversion vérifiable ; `won` seul ne suffit pas si aucune conversion Client n'est prouvée. | **Pas une étape du pipeline actif** : la vue est historique et consultable, lien vers fiche Client et fiche/historique Prospect si conservé ; `lost` exclu, une conversion comptée une seule fois. Période et affichage du compteur à préciser avant implémentation. |
 
-**Arbitrage validé par AtoumWeb : « Conversion » affiche l'historique des Prospects réellement convertis en Clients, et non des dossiers encore actifs.** Ne pas inventer d'autres règles E59 : l'inclusion de `new` et la nature de « Finalisation » restent ouvertes. Séparer expressément dans le visuel/compteur les **étapes 1–6 du pipeline actif** de l'**historique des conversions** ; une période/calcul comparables devront être explicités. Le lien de conversion Client doit être vérifiable dans le service, sans créer de nouvelle étape SQL ni doublon. Cadrer avec Lot 03 CRM avant code.
+**Arbitrage validé par AtoumWeb : « Conversion » affiche l'historique des Prospects réellement convertis en Clients, et non des dossiers encore actifs.** Ne pas inventer d'autres règles E59 : l'inclusion de `new` et le **marqueur de Finalisation** restent ouverts ; sa définition métier est désormais validée. Séparer expressément dans le visuel/compteur les **étapes 1–6 du pipeline actif** de l'**historique des conversions** ; une période/calcul comparables devront être explicités. Le lien de conversion Client doit être vérifiable dans le service, sans créer de nouvelle étape SQL ni doublon. Cadrer avec Lot 03 CRM avant code.
 
 ## 5. Alertes et confiance dans les données
 - Afficher l'horodatage/source ou signal de fraîcheur lorsque service disponible ; distinguer *chargé*, *en cours*, *échec*, *partiel* ; ne pas transformer l'échec d'une des huit sources en zéro alerte.
@@ -122,7 +122,7 @@ Les **sept intitulés visuels validés** :
 | R02D-22 | Recette UI, typecheck, suite complète et reprise après erreur | Preuves datées/SHA, Validation-MSI jamais touchée |
 
 ## 10. Questions de conception restant ouvertes
-- **E59 — Mapping 7 colonnes, partiellement tranché** : **Conversion validée comme historique consultable des conversions Client réelles, non comme étape active**. Restent ouverts : inclusion de `new` dans « À qualifier », représentation de « Finalisation » sans statut backend, et période d'affichage des conversions. Aucun nouveau statut technique.
+- **E59 — Mapping 7 colonnes, partiellement tranché** : **Conversion validée comme historique consultable des conversions Client réelles, non comme étape active**. Restent ouverts **techniquement** : inclusion de `new` dans « À qualifier », choix du marqueur traçable pour « Finalisation » (définition métier validée), et période d'affichage des conversions. Aucun nouveau statut technique.
 - **E60 — Disponibilité vraie des KPI ciblés** : les sources filtres doivent correspondre à la population des compteurs, sinon revoir libellés/cibles.
 - **E61 — Hiérarchie des alertes** : quelles catégories sont réellement « critiques » et doivent rester visibles hors widget ; inspecter `operationsAlerts` avant tout automatisme.
 - **E62 — Niveau de personnalisation d'Accueil** : masquer/ordonner obligatoire ; dimensions et grilles adaptatives à prototyper.
@@ -134,7 +134,7 @@ Les **sept intitulés visuels validés** :
 
 ## 11. Complément d'audit E59 — « Finalisation » (source main consultée le 09/10/2026)
 
-**Question métier en attente de validation AtoumWeb :** après « Négociation » et avant « Conversion », à quel fait mesurable doit correspondre la **colonne visuelle Finalisation** ?
+**Question métier résolue par AtoumWeb le 09/10/2026 (voir §12) :** Finalisation = accord commercial de principe, signature en attente. Reste à identifier le **signal mesurable et traçable** de ce classement.
 
 ### Signaux vérifiés dans le code
 - `src/shared/crm.ts` : `PROSPECT_STAGES` n'a **pas** de statut `finalization` ; `ProspectSummary` fournit `stage`, `clientAccountId`, `wonAt`.
@@ -144,12 +144,12 @@ Les **sept intitulés visuels validés** :
 - `src/renderer/commercial/QuotesPage.tsx` : `quotes.accept` sur devis `sent/viewed`, après validation humaine d'une acceptation/signature dans Abby, déclenche **conversion Prospect → Client**. Une fois `accepted`, le Prospect ne doit plus apparaître comme Finalisation active, mais dans **Conversion historique** (décision déjà approuvée).
 - Aucun marqueur persistant d'**accord de principe en attente de signature** n'a été attesté dans ces fichiers. **L'affichage automatique et fiable de Finalisation n'est donc pas encore démontré.**
 
-### Proposition à soumettre, **NON validée**
+### Proposition examinée, **VALIDÉE ensuite au §12**
 **Finalisation = accord commercial de principe obtenu, formalités finales / signature Abby en attente**. Le Prospect reste actif ; le devis reste `sent`/`viewed` ou autre statut métier approprié ; **aucune conversion avant `quotes.accept`**. Pour classer un dossier en Finalisation, il faudrait un **signal explicite, tracé et non destructif** (`action`/événement/indicateur commercial existant si exploitable), pas de déduction systématique depuis `finalizedAt`, `sent` ou `viewed`. La décision et la capacité réelle du signal doivent être vérifiées avant implémentation, sans ajouter un nouveau `ProspectStage` par commodité.
 
-**Alternative nécessitant choix d'AtoumWeb :** Finalisation peut rester une simple vue d'information sans regroupement de dossiers tant qu'aucun signal fiable n'existe. Ne pas afficher un compteur inventé. La mise en œuvre du rail, de la recherche et de l'en-tête ne dépend pas de cet arbitrage.
+**Alternative non retenue comme objectif produit :** Finalisation peut devoir afficher une absence de dossiers tant qu'aucun signal fiable n'existe, mais son sens métier est validé. Ne pas afficher un compteur inventé. La mise en œuvre du rail, de la recherche et de l'en-tête ne dépend pas de cet arbitrage.
 
-**État : E59 Conversion = validée ; E59 Finalisation = attente de décision et d'étude du marqueur ; E59 `new` = encore ouvert.**
+**État : E59 Conversion et Finalisation = sens métier validés ; étude du marqueur et projection de `new` encore ouvertes.**
 
 ## 12. Décision métier E59 Finalisation du 09/10/2026
 **Validée par AtoumWeb :** « Finalisation » désigne un **accord commercial de principe** avec signature/dernières formalités en attente. Elle n'est **ni** l'état `quotes.finalizedAt` (« devis prêt à envoyer »), **ni** un pré-projet qui existerait, **ni** une confirmation d'acceptation. Le **marqueur source** de l'accord de principe reste à instruire pour projeter ce groupe sans ajouter un statut backend arbitraire ; ne pas affecter toute proposition `sent/viewed` automatiquement en Finalisation.
