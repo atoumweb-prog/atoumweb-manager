@@ -2,7 +2,7 @@
 **Statut : spécification cible, non implémentée par ce document.**
 ## Prospection
 - Modes Annuaire / Pipeline / Historique, fiche rapide puis complète et éventuelle fenêtre de référence détachée.
-- **Sept colonnes visuelles** : À qualifier, Besoins, Préparer le devis, Attente du retour, Négociation, Finalisation, Conversion. Ne jamais inventer deux nouvelles valeurs backend : cartographier les états existants avant le drag & drop.
+- **Sept colonnes visuelles** : À qualifier, Besoins, Préparer le devis, Attente du retour, Négociation, Finalisation, Conversion. **Décision AtoumWeb : Conversion = historique consultable des Prospects effectivement convertis en Clients, séparé du pipeline actif** ; lien Client vérifiable, aucun `lost`, aucun doublon. Ne jamais inventer de valeurs backend nouvelles : cartographier les états existants avant le drag & drop. L'étape historique Conversion ne doit pas être une cible de drag & drop créant une conversion implicite ; celle-ci suit le parcours métier validé. `new`, Finalisation et période de l'historique restent à préciser (E59).
 - Températures `cold`, `neutral`, `warm`, `hot` ; marqueur couleur discret sans libellé imposé sur la carte, aide accessible ; transitions de phase soumises aux gardes métier.
 - Fiche Prospect : Résumé, Entreprise, Qualification, Besoins, Devis, Activités, Historique ; champs/décisionnaire et contrôle avant devis préservés.
 - Fiche besoins : accès au catalogue central (voir LOT-04), inclus/exclus, services complémentaires et aide `?`. Sélection d'un besoin **ne crée pas d'achat**.
