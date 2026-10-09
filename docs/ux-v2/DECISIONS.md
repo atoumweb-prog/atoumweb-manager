@@ -71,3 +71,6 @@ Statut : **DÉCIDÉ** sauf mention explicite. Ces exigences sont des cibles ; l'
 | Statistiques/exports | Encaissements et exports éventuels à qualifier : prévu vs disponible. |
 
 Décisions nouvelles : proposer modification par PR et demander arbitrage si cela change une règle métier, une obligation contractuelle ou une action destructive.
+
+## Note de vérification pour l'aide contextuelle (écart E05, 09/10/2026)
+Le CSS actuel `src/renderer/ui-consistency-v2.css` masque intégralement les `.field-help` lorsque `.app-shell.help-disabled` est actif. Cela **ne doit pas devenir** le comportement V2 : l'option utilisateur ne désactive que le survol automatique, **jamais le point d'interrogation activable au clic/clavier**. Cette différence est déjà couverte par UX2-HELP-001 et documentée dans [Lot 01B](LOT-01B-COMPOSANTS-ELEMENTAIRES.md). Correction non codée.
