@@ -113,6 +113,7 @@ import type {
 } from '../shared/time';
 
 const api: AtoumWebApi = {
+  unsaved:{confirmExit:(labels,pending)=>ipcRenderer.sendSync('unsaved:confirm-exit',labels,pending)},
   app: {
     getBootstrap: () => ipcRenderer.invoke('app:get-bootstrap'),
     openProspectReferenceWindow: (id: string) => ipcRenderer.invoke('app:open-prospect-reference', id),

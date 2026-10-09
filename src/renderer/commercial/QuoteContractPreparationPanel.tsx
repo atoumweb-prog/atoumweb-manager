@@ -1,3 +1,4 @@
+import {useUnsavedDraft} from '../unsaved/unsaved';
 import { focusContractField } from './contractFieldNavigation';
 import { deriveQuoteContractDefaults } from '../../shared/quoteContractDefaults';
 import './QuoteContractPreparationPanel.css';
@@ -18,6 +19,9 @@ export function QuoteContractPreparationPanel({quote,onSave}:{quote:QuoteDetail;
   const setP=parametersDraft.section.set.bind(parametersDraft.section),setAdmin=administrationDraft.section.set.bind(administrationDraft.section);
   const [build,setBuild]=useState<QuoteContractPreparation|null>(null),[role,setRole]=useState<ContractDocumentRole>('other'),[provenance,setProvenance]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[statement,setStatement]=useState(''),[occurredAt,setOccurredAt]=useState('');
   const request=useRef(0),activeQuote=useRef(quote.id);activeQuote.current=quote.id;
+  useUnsavedDraft('Paramètres contractuels du devis',p,{ready:build?.state==='draft',dirty:parametersDraft.section.dirty,pending:busy,discard:()=>parametersDraft.section.discard()});
+  useUnsavedDraft('Informations contractuelles communes',admin,{ready:!!build,dirty:administrationDraft.section.dirty,pending:busy,discard:()=>administrationDraft.section.discard()});
+  useUnsavedDraft('Pièce ou attestation à joindre',{role,provenance,statement,occurredAt},{ready:!!build,pending:busy,discard:()=>{setRole('other');setProvenance('');setStatement('');setOccurredAt('');}});
   const editable=build?.state==='draft';
   async function reload(saved?:{parameters?:QuoteContractParameters|null;administration?:ContractAdministration}){const sequence=++request.current;const [b,a]=await Promise.all([window.atoumweb.quotePreparation.get(quote.id),window.atoumweb.quotePreparation.administration()]);if(sequence!==request.current||activeQuote.current!==quote.id)return;setBuild(b);parametersDraft.section.receive(b.parameters,saved&&'parameters' in saved?{value:saved.parameters??null}:undefined);administrationDraft.section.receive(a,saved?.administration?{value:saved.administration}:undefined);}
   useEffect(()=>{setError('');setBuild(null);void reload().catch(e=>setError(String(e)));return()=>{request.current++;};},[quote.id,quote.status,quote.finalizedAt]);

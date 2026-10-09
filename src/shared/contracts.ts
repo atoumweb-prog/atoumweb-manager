@@ -66,6 +66,7 @@ export interface RestoreScheduleResult {
 }
 
 export interface AtoumWebApi {
+  unsaved: {confirmExit(labels:string[],pending:boolean):boolean;};
   workflow: import('./workflow').WorkflowApi;
   app: {
     getBootstrap(): Promise<BootstrapState>;

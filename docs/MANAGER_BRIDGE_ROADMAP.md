@@ -2282,3 +2282,8 @@ AtoumWeb demande la mise à jour GitHub et des fichiers de liaison sur l’état
 ### 09/10/2026 — UX01-A-01 (réalisation autorisée)
 
 AtoumWeb valide A sections contractuelles, B suivi/sorties Prospection-Devis, C Electron/workspace, commits distincts et PR corrective sans merge. A réalisé : brouillons indépendants/refresh sélectif/conflits, garde de version lue avant save et maintien des éditeurs pendant refresh parent. 47 tests ciblés/typecheck et 33 contrôles natifs trois thèmes verts ; fixtures 1–66/FK/intégrité nettoyées, aucun accès Validation-MSI. B/C ensuite, pas de migration/graphisme/règle de finalisation modifiés.
+
+
+### 09/10/2026 — UX01-B-01 (réalisation / séparation à la reprise)
+
+Reprise demandée sans reset : A déjà committé df1b6f3, B local et C débuté ensuite. B isolé dans l’index par sélection des blocs, aucune modification abandonnée ; tree temporaire validé typecheck/81 contrôles natifs trois thèmes. Registre par scope, confirmations Rester/abandon ciblé, saves en cours, navigation et sous-formulaires Prospection/Devis, refresh et retours tardifs Devis. 9 tests noyau, labels sans contenu de contrat/secret. C demeure en working tree pour commit distinct ; pas de migration, UX V2 ou Validation-MSI.

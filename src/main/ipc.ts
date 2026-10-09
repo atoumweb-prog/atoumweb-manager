@@ -1,3 +1,4 @@
+import {registerUnsavedConfirmationIpc} from './unsaved';
 import type { ContractAdministration, QuoteContractParameters, ContractDocumentLinkInput, ContractDocumentRole } from '../shared/quoteContractPreparation';
 import { app, clipboard, dialog, ipcMain, safeStorage, shell } from 'electron';
 import type { BridgeNodeMatchDecisionInput } from '../shared/bridgeSnapshots';
@@ -81,6 +82,7 @@ import { scheduleDatabaseRestore } from './restore';
 import { saveWorkspaceRoot, type WorkspacePaths } from './workspace';
 
 export function registerIpcHandlers(database: DatabaseService, workspace: WorkspacePaths): void {
+  registerUnsavedConfirmationIpc();
   ipcMain.handle('workflow:needs', (_event, owner, id) => database.workflow.needs(owner,id));
   ipcMain.handle('workflow:save-need', (_event, owner, id, input, needId) => database.workflow.saveNeed(owner,id,input,needId));
   ipcMain.handle('workflow:remove-need', (_event, owner, id, needId) => database.workflow.removeNeed(owner,id,needId));

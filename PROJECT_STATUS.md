@@ -1,5 +1,10 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 09/10/2026 — UX-01B : sorties par éditeur
+
+- Registre/hook par éditeur et groupe, Rester par défaut/abandon limité, attente des saves, sorties sidebar/recherche/événements/fiche/panneau et sous-formulaires Prospection/Devis. Contrôles locaux conservés ; réponses de lecture Devis tardives invalidées, refresh maintient les composants, aucun nouveau style ou serveur métier.
+- Séparation prudente à la reprise : UX-01A déjà isolé dans df1b6f3 ; B reconstruit dans l’index sans remettre à zéro le working tree C. Copie temporaire du tree B : typecheck et 81 contrôles natifs trois thèmes verts ; 9 tests de registre en plus des 8 tests de sections. Aucun accès Validation-MSI, copie contrôlée/nettoyée. C reste ensuite à committer et valider.
+
 ## 09/10/2026 — UX-01A : sections contractuelles corrigées
 
 - Autorisation AtoumWeb : A/B/C sur la branche indépendante, commits distincts et PR sans fusion. A sépare les baselines des paramètres du devis et de l’administration ; refresh trois voies, conflits explicites et garde optimiste optionnelle à l’enregistrement. Règles de finalisation/snapshots inchangées, aucun schéma nouveau.

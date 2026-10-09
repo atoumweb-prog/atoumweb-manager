@@ -1,3 +1,4 @@
+import {UnsavedGroup,useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { QuoteFinalizationPanel } from './QuoteFinalizationPanel';
 import { QuoteOperationalSalesPanel } from './QuoteOperationalSalesPanel';
 import { QuoteAbbyPanel } from './QuoteAbbyPanel';
@@ -36,7 +37,7 @@ function money(cents: number): string {
   return `${(cents / 100).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} €`;
 }
 
-export function QuotesPage({ onMessage, initialId }: { onMessage: (message: string) => void; initialId?: string | null }) {
+export function QuotesPage({ onMessage, initialId, initialRequest }: { onMessage: (message: string) => void; initialId?: string | null; initialRequest?:number }) {
   const [draftLines,setDraftLines]=useState<DraftLine[]>([]);
   const [wizardTerms,setWizardTerms]=useState('');
   const [catalogPrice,setCatalogPrice]=useState('');
@@ -49,7 +50,10 @@ export function QuotesPage({ onMessage, initialId }: { onMessage: (message: stri
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | QuoteStatus>('all');
   const [selectedId, setSelectedId] = useState<string | null>(initialId ?? null);
-  const [detail, setDetail] = useState<QuoteDetail | null>(null);
+  const [detail, applyDetail] = useState<QuoteDetail | null>(null);
+  const detailRequest=useRef(0);const selectedRef=useRef(selectedId);selectedRef.current=selectedId;
+  function setDetail(value:QuoteDetail|null){detailRequest.current++;applyDetail(value);}
+  useEffect(()=>()=>{detailRequest.current++;},[]);
   const [showWizard, setShowWizard] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
   const [wizard, setWizard] = useState<WizardDraft>(EMPTY_WIZARD);
@@ -64,12 +68,18 @@ export function QuotesPage({ onMessage, initialId }: { onMessage: (message: stri
   const catalogueLabel=(item:CatalogItemSummary)=>`${item.canonicalCode||'Sans code'} · ${item.name} · ${item.currentVersion?.familyCode||item.category||'Autre'} · v${item.currentVersion?.versionNumber} · ${item.currentVersion?.priceCents==null?'Sur devis':money(item.currentVersion.priceCents)}`;
   const [customLabel, setCustomLabel] = useState('');
   const [customPrice, setCustomPrice] = useState('');
-  const [editingLineId, setEditingLineId] = useState<string | null>(null);
+  const [editingLineId, applyEditingLineId] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [detailExpanded, setDetailExpanded] = useState(false);
+  const quoteGroup='quote:'+detail?.id;
+  useUnsavedDraft('Nouveau devis',{wizard,draftLines,wizardTerms,catalogPrice},{group:'quote:create',ready:showWizard||wizard.ownerId!==''||wizard.subject!==''||draftLines.length>0||wizardTerms!=='',pending:saving,discard:()=>{setWizard(EMPTY_WIZARD);setDraftLines([]);setWizardTerms('');setCatalogPrice('');setShowWizard(false);setWizardStep(1);}});
+  useUnsavedDraft('Ligne libre à ajouter',{customLabel,customPrice},{group:quoteGroup,ready:!!detail,pending:saving,discard:()=>{setCustomLabel('');setCustomPrice('');}});
+  useUnsavedDraft('Prestation à ajouter',{catalogToAdd,catalogPrice},{group:quoteGroup,ready:!!detail&&!showWizard,pending:saving,discard:()=>{setCatalogToAdd('');setCatalogPrice('');}});
+  function setEditingLineId(id:string|null){if(editingLineId===id)return;if(editingLineId)requestUnsavedExit(()=>applyEditingLineId(id),quoteGroup+'/line:'+editingLineId+'/editor');else applyEditingLineId(id);}
   const detailPanelRef = useRef<HTMLElement | null>(null);
 
   async function refresh(): Promise<void> {
+    const sequence=detailRequest.current;const selectedAtStart=selectedId;
     if(!loadedOnce.current)setLoading(true);
     try {
       const [nextQuotes, nextProspects, nextClients, nextCatalog] = await Promise.all([
@@ -79,12 +89,12 @@ export function QuotesPage({ onMessage, initialId }: { onMessage: (message: stri
       setProspects(nextProspects.filter((prospect) => !prospect.clientAccountId && prospect.stage !== 'won' && prospect.stage !== 'lost'));
       setClients(nextClients);
       setCatalog(nextCatalog.filter((item) => item.currentVersion?.status === 'published'));
-      if (selectedId && nextQuotes.some((quote) => quote.id === selectedId)) setDetail(await window.atoumweb.quotes.get(selectedId));
+      if(selectedAtStart&&nextQuotes.some(q=>q.id===selectedAtStart)){const next=await window.atoumweb.quotes.get(selectedAtStart);if(sequence===detailRequest.current&&selectedRef.current===selectedAtStart)applyDetail(next);}
     } finally { loadedOnce.current=true;setLoading(false); }
   }
 
   useEffect(() => { void refresh(); }, []);
-  useEffect(()=>{if(initialId){setSelectedId(initialId);void openQuote(initialId);}},[initialId]);
+  useEffect(()=>{if(initialId)void openQuote(initialId);},[initialId,initialRequest]);
 
   useEffect(() => {
     if (!detail || previewOpen) return;
@@ -100,6 +110,8 @@ export function QuotesPage({ onMessage, initialId }: { onMessage: (message: stri
     const closeOnOutside = (event: PointerEvent) => {
       const target = event.target as Node | null;
       if (!target || detailPanelRef.current?.contains(target)) return;
+      if(target instanceof Element&&target.closest('.quote-detail-backdrop'))return;
+      if(target instanceof Element&&target.closest('button,a,input,select,textarea,tr'))return;
       closeQuoteDetail();
     };
     document.addEventListener('pointerdown', closeOnOutside);
@@ -119,16 +131,19 @@ export function QuotesPage({ onMessage, initialId }: { onMessage: (message: stri
     ? prospects.map((prospect) => ({ id: prospect.id, label: prospect.displayName }))
     : clients.map((client) => ({ id: client.id, label: client.displayName }));
 
-  function closeQuoteDetail(): void {
+  function closeQuoteDetail(): void {requestUnsavedExit(closeQuoteDetailDirect,quoteGroup);}
+  function closeQuoteDetailDirect(): void {
     setDetail(null);
     setSelectedId(null);
-    setEditingLineId(null);
+    applyEditingLineId(null);
     setPreviewOpen(false);
     setDetailExpanded(false);
   }
 
   async function openQuote(id: string): Promise<void> {
-    setSelectedId(id); setEditingLineId(null); setPreviewOpen(false); setDetailExpanded(false); setDetail(await window.atoumweb.quotes.get(id));
+    if(detail?.id===id)return;
+    if(!requestUnsavedExit(()=>{},quoteGroup))return;
+    setSelectedId(id); applyEditingLineId(null); setPreviewOpen(false); setDetailExpanded(false); const sequence=++detailRequest.current;const next=await window.atoumweb.quotes.get(id);if(sequence===detailRequest.current)applyDetail(next);
   }
 
   function validateStep(step: number): boolean {
@@ -196,7 +211,7 @@ export function QuotesPage({ onMessage, initialId }: { onMessage: (message: stri
   }
 
   async function saveLine(lineId: string, input: QuoteLineInput): Promise<void> {
-    try { const next = await window.atoumweb.quotes.updateLine(lineId, input); setDetail(next); setEditingLineId(null); await refresh(); onMessage('Ligne du devis mise à jour. Les totaux ont été recalculés.'); }
+    try { const next = await window.atoumweb.quotes.updateLine(lineId, input); setDetail(next); applyEditingLineId(null); await refresh(); onMessage('Ligne du devis mise à jour. Les totaux ont été recalculés.'); }
     catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de modifier la ligne.'); throw error; }
   }
 
@@ -233,6 +248,7 @@ export function QuotesPage({ onMessage, initialId }: { onMessage: (message: stri
 
   async function transition(action: 'finalized' | 'sent' | 'viewed' | 'accepted' | 'refused' | 'expired' | 'duplicate'): Promise<void> {
     if (!detail) return;
+    if(!requestUnsavedExit(()=>{},quoteGroup))return;
     if (action === 'accepted' && !window.confirm(`Confirmer que le devis ${detail.number} a été accepté / signé dans Abby ?\n\nLe devis devient la référence contractuelle du client.`)) return;
     try {
       if (action === 'finalized') {
@@ -314,14 +330,14 @@ export function QuotesPage({ onMessage, initialId }: { onMessage: (message: stri
         </tr>;
       })}{filtered.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucun devis.</div></td></tr>}</tbody></table></div>
 
-        {detail && <><div className="quote-detail-backdrop" role="presentation" onClick={closeQuoteDetail}/><aside ref={detailPanelRef} className={`panel quote-detail-panel ${detailExpanded?'expanded':''}`}><div className="detail-panel-heading"><div><span className="eyebrow">{detail.number}</span><h2>{detail.subject}</h2><p className="muted">{detail.ownerLabel}</p></div><div className="quote-detail-heading-actions"><button className="quote-detail-expand" type="button" title={detailExpanded?'Réduire la fenêtre':'Agrandir la fenêtre'} onClick={()=>setDetailExpanded(value=>!value)}>{detailExpanded?'↙':'⛶'}</button><button className="close-detail" type="button" title="Fermer" onClick={closeQuoteDetail}>×</button></div></div><div className="detail-badges"><span className={`quote-status quote-${detail.status}`}>{STATUS_LABELS[detail.status]}</span>{detail.projectReadyAt && <span className="status-pill">Prêt pour Projet</span>}</div><button className="secondary-button quote-preview-button" type="button" onClick={() => setPreviewOpen(true)}>Prévisualiser côté client</button>
+        {detail && <UnsavedGroup name={quoteGroup}><div className="quote-detail-backdrop" role="presentation" onClick={closeQuoteDetail}/><aside ref={detailPanelRef} className={`panel quote-detail-panel ${detailExpanded?'expanded':''}`}><div className="detail-panel-heading"><div><span className="eyebrow">{detail.number}</span><h2>{detail.subject}</h2><p className="muted">{detail.ownerLabel}</p></div><div className="quote-detail-heading-actions"><button className="quote-detail-expand" type="button" title={detailExpanded?'Réduire la fenêtre':'Agrandir la fenêtre'} onClick={()=>setDetailExpanded(value=>!value)}>{detailExpanded?'↙':'⛶'}</button><button className="close-detail" type="button" title="Fermer" onClick={closeQuoteDetail}>×</button></div></div><div className="detail-badges"><span className={`quote-status quote-${detail.status}`}>{STATUS_LABELS[detail.status]}</span>{detail.projectReadyAt && <span className="status-pill">Prêt pour Projet</span>}</div><button className="secondary-button quote-preview-button" type="button" onClick={() => setPreviewOpen(true)}>Prévisualiser côté client</button>
           {detail.status==='accepted'&&<QuoteOperationalSalesPanel quote={detail}/>}
           {detail.status === 'accepted' && <QuoteContractDocumentPanel quote={detail} onSave={q=>{setDetail(q);void refresh();}} onMessage={onMessage}/>}
-          {['draft','sent','viewed','accepted'].includes(detail.status) && detail.lines.length>0 && <QuoteProjectPanel key={'project:'+detail.id} quote={detail}/>}<QuoteOfferOptionsPanel key={'options:'+detail.id} quote={detail} onSave={q=>{setDetail(q);void refresh();}}/><QuoteAbbyPanel quote={detail} onMessage={onMessage}/><QuoteConditions quote={detail} onSave={q=>{setDetail(q);void refresh();}}/><div className="quote-lines"><strong>Lignes du devis</strong>{detail.lines.map((line) => <div className="quote-line-block" key={line.id}><div className="quote-line"><div><strong>{line.label}</strong><small>{line.source === 'catalog' ? `${line.snapshot?.canonicalCode||'Catalogue'} · ${line.snapshot?.familyCode||''} · v${line.snapshot?.versionNumber||''} · ${line.snapshot?.unit||'unité'}` : 'Ligne libre'} · {(line.quantityMilli ?? 1000) / 1000} ×{line.adjustmentMode && line.adjustmentMode !== 'none' ? ` · ${line.adjustmentMode}` : ''}</small></div><span>{money(line.contractLineValueCents)}</span>{detail.status === 'draft' && !detail.finalizedAt && <div className="quote-line-actions"><button type="button" title="Modifier" onClick={() => setEditingLineId(editingLineId === line.id ? null : line.id)}>✎</button><button type="button" title="Supprimer" onClick={() => void removeLine(line.id)}>×</button></div>}</div>{detail.status === 'draft' && !detail.finalizedAt && editingLineId === line.id && <QuoteLineEditor line={line} onCancel={() => setEditingLineId(null)} onSave={(input) => saveLine(line.id, input)} />}<QuoteLineParametersPanel quote={detail} line={line} onSave={q=>setDetail(q)}/></div>)}{detail.lines.length === 0 && <p className="muted">Aucune ligne pour le moment.</p>}</div>
+          {['draft','sent','viewed','accepted'].includes(detail.status) && detail.lines.length>0 && <QuoteProjectPanel key={'project:'+detail.id} quote={detail}/>}<QuoteOfferOptionsPanel key={'options:'+detail.id} quote={detail} onSave={q=>{setDetail(q);void refresh();}}/><QuoteAbbyPanel quote={detail} onMessage={onMessage}/><QuoteConditions quote={detail} onSave={q=>{setDetail(q);void refresh();}}/><div className="quote-lines"><strong>Lignes du devis</strong>{detail.lines.map((line) => <div className="quote-line-block" key={line.id}><div className="quote-line"><div><strong>{line.label}</strong><small>{line.source === 'catalog' ? `${line.snapshot?.canonicalCode||'Catalogue'} · ${line.snapshot?.familyCode||''} · v${line.snapshot?.versionNumber||''} · ${line.snapshot?.unit||'unité'}` : 'Ligne libre'} · {(line.quantityMilli ?? 1000) / 1000} ×{line.adjustmentMode && line.adjustmentMode !== 'none' ? ` · ${line.adjustmentMode}` : ''}</small></div><span>{money(line.contractLineValueCents)}</span>{detail.status === 'draft' && !detail.finalizedAt && <div className="quote-line-actions"><button type="button" title="Modifier" onClick={() => setEditingLineId(editingLineId === line.id ? null : line.id)}>✎</button><button type="button" title="Supprimer" onClick={() => void removeLine(line.id)}>×</button></div>}</div>{detail.status === 'draft' && !detail.finalizedAt && editingLineId === line.id && <UnsavedGroup name={quoteGroup+'/line:'+line.id+'/editor'}><QuoteLineEditor line={line} onCancel={() => applyEditingLineId(null)} onSave={(input) => saveLine(line.id, input)} /></UnsavedGroup>}<QuoteLineParametersPanel quote={detail} line={line} onSave={q=>setDetail(q)}/></div>)}{detail.lines.length === 0 && <p className="muted">Aucune ligne pour le moment.</p>}</div>
           {detail.status === 'draft' && !detail.finalizedAt && <><div className="quote-add-line"><strong>Ajouter depuis le catalogue</strong><input aria-label="Rechercher dans le catalogue" placeholder="Code AW, nom, famille, catégorie" value={catalogSearch} onChange={e=>setCatalogSearch(e.target.value)}/><select value={catalogToAdd} onChange={(e) => setCatalogToAdd(e.target.value)}><option value="">Choisir…</option>{visibleCatalog.map((item) => <option key={item.id} value={item.currentVersion!.id}>{catalogueLabel(item)}</option>)}</select><input aria-label="Prix proposé pour la prestation" placeholder="Prix proposé € (facultatif sauf Sur devis)" value={catalogPrice} onChange={e=>setCatalogPrice(e.target.value)}/><button className="secondary-button" type="button" onClick={() => void addCatalogLine()}>Ajouter une ligne</button></div><div className="quote-add-line"><strong>Ligne libre</strong><input value={customLabel} onChange={(e) => setCustomLabel(e.target.value)} placeholder="Libellé" /><input inputMode="decimal" value={customPrice} onChange={(e) => setCustomPrice(e.target.value)} placeholder="Prix €" /><button className="secondary-button" type="button" onClick={() => void addCustomLine()}>Ajouter</button></div></>}
           <div className="quote-totals"><div><span>Valeur catalogue</span><strong>{money(detail.catalogValueCents)}</strong></div><div><span>Remises</span><strong>- {money(detail.discountValueCents)}</strong></div><div className="quote-total-main"><span>Total contractuel</span><strong>{money(detail.contractValueCents)}</strong></div><div><span>{detail.initialPaymentQualification==='arrhes'?'Arrhes':'Acompte'} {detail.depositPercent ?? 0} %</span><strong>{money(detail.depositCents)}</strong></div><div><span>Solde</span><strong>{money(detail.balanceCents)}</strong></div></div>
           <div className="quote-status-actions">{['draft','sent','viewed'].includes(detail.status) && <button className="secondary-button" type="button" onClick={()=>{void window.atoumweb.quotes.createCommercialRevision(detail.id).then(q=>{setDetail(q);void refresh();}).catch(e=>onMessage(e instanceof Error?e.message:String(e)));}}>Créer une révision du même dossier</button>}{detail.status === 'draft' && !detail.finalizedAt && <QuoteFinalizationPanel quote={detail} onFinalize={()=>void transition('finalized')}/>}{detail.status === 'draft' && detail.finalizedAt && <button className="primary-button" type="button" onClick={() => void transition('sent')}>Marquer envoyé</button>}{detail.status === 'sent' && <><button className="secondary-button" type="button" onClick={() => void transition('viewed')}>Marquer vu</button><button className="primary-button" type="button" onClick={() => void transition('accepted')}>Valider</button>{detail.prospectId && <button className="secondary-button" type="button" onClick={() => void negotiateQuote(detail)}>À négocier</button>}<button className="secondary-button danger-outline" type="button" onClick={() => void transition('refused')}>Refuser</button><button className="secondary-button" type="button" onClick={() => void transition('expired')}>Expirer</button></>}{detail.status === 'viewed' && <><button className="primary-button" type="button" onClick={() => void transition('accepted')}>Valider</button>{detail.prospectId && <button className="secondary-button" type="button" onClick={() => void negotiateQuote(detail)}>À négocier</button>}<button className="secondary-button danger-outline" type="button" onClick={() => void transition('refused')}>Refuser</button><button className="secondary-button" type="button" onClick={() => void transition('expired')}>Expirer</button></>}{['draft','sent','viewed','refused', 'expired', 'cancelled'].includes(detail.status) && <button className="primary-button" type="button" onClick={() => void transition('duplicate')}>Dupliquer en nouveau devis</button>}</div>
-        </aside></>}
+        </aside></UnsavedGroup>}
       </div>}
       {detail && previewOpen && <QuoteClientPreview quote={detail} onClose={() => setPreviewOpen(false)} />}
     </div>
