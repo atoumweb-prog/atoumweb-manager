@@ -79,3 +79,7 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 ### Lot 01B — Composants élémentaires
 - [Spécification 01B](LOT-01B-COMPOSANTS-ELEMENTAIRES.md) : boutons, champs, icônes, aides `?`, confirmations, notifications ; revue de code, six sous-étapes, douze scénarios de recette. **Spécification seulement**, aucune implémentation du Manager.
 - **Écart E05 constaté dans CSS `main`** : `.app-shell.help-disabled .field-help { display:none !important; }` masque actuellement l'aide entière. La V2 conservera l'icône `?` et son activation clic/clavier même si l'aide automatique au survol est désactivée.
+
+### Lot 01C — Fiches et panneaux
+- [Spécification détaillée 01C](LOT-01C-FICHES-PANNEAUX.md) : comportements déjà repérés dans Prospection/Clients/Catalogue/Devis/Projets/Opérations, six sous-étapes de mise en œuvre, **16 scénarios de recette**, contraintes de persistance et prévention des pertes de brouillons (PR #83).
+- Points techniques E08–E11 : portée de persistance des dispositions, variété des vues agrandies, bornes et accessibilité des séparateurs, raccordement UX-01 hors Prospection/Devis. **Documentation seulement**, pas de migration d'écran.
