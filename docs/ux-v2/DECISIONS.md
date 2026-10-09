@@ -110,3 +110,9 @@ La proposition de runner Windows GitHub-hosted est **développée et publiée** 
 
 ## CI #84 — statut après le premier lancement
 **VÉRIFIÉ par GitHub** : commit `1b069575`, run [#549](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/37934890745) exécuté sur le runner Windows hébergé. Installation et typecheck réussis, **3 timeouts/695 tests** (692 réussis), donc **CI en échec**. La branche #84 reste draft non fusionnée. Diagnostic ciblé requis avant fusion ; aucune hausse globale de timeout sans cause analysée. [Dossier CI](CI-GITHUB-ACTIONS.md).
+
+## Lot 02C/02D/02E — Recherche, Accueil et recette
+- **DÉCIDÉ :** les 14 types de résultats recherchables ouvrent leur entité identifiée lorsqu'elle existe ; si navigation refusée par UX-01, la palette et la saisie restent intactes. Le routeur ne transforme pas « trouvé » en « ouvert », ni un type inconnu en page Clients. [02C](LOT-02C-RECHERCHE-ROUTAGE.md).
+- **DÉCIDÉ :** Accueil donne la priorité à Aujourd'hui, alertes et actions opérantes ; widgets configurables, chrono global unique, 7 intitulés commerciaux **visuels** ; aucun nouveau statut technique. [02D](LOT-02D-ACCUEIL-PILOTAGE.md).
+- **E59 OUVERT — requiert validation métier :** projection des étapes sur les statuts existants, en particulier `new` inclus dans « À qualifier » ?, « Finalisation » dérivée de quelles données ? « Conversion » comptabilisée comme événement historique avec rattachement Client ou dans un autre cadre ? Ne pas inventer `finalization` ou dupliquer les `won` actifs.
+- [02E](LOT-02E-RECETTE-ET-MIGRATION.md) prépare vingt tests bout en bout ; ni ces tests, ni les **18+16+18+22 scénarios** détaillés des sous-lots ne sont des résultats d'exécution.
