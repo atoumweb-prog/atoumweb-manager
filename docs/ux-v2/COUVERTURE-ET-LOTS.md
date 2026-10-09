@@ -91,7 +91,7 @@ Les six spécifications **01A–01F** sont détaillées dans [Lot 01 — Fondati
 Workflow Windows GitHub-hosted publié en [PR #84](https://github.com/atoumweb-prog/atoumweb-manager/pull/84), draft non fusionnée ; **aucun run réellement effectué**, `[skip ci]`. Bloqué en attendant vérification humaine du quota Actions et des budgets de dépenses, hors portée du token Codex. Ne pas déclarer la CI verte.
 
 ## Lot 02 — Spécification des composants 02A/02B
-[02A Rail et favoris](LOT-02A-RAIL-NAVIGATION.md) : 17 modules, deux dispositions possibles pour le rail réduit (**E42 en attente d'arbitrage**), 18 cas. [02B En-tête et raccourcis](LOT-02B-ENTETE-RACCOURCIS.md) : recherche/chrono accessibles, repli du header, 16 cas. Documentation sans code applicatif ni résultats de recette. Les sous-lots 02C–02E restent à détailler.
+[02A Rail et favoris](LOT-02A-RAIL-NAVIGATION.md) : 17 modules, **rail réduit option A validée par AtoumWeb (E42 clos)** : Accueil + favoris + cinq groupes, 18 cas. [02B En-tête et raccourcis](LOT-02B-ENTETE-RACCOURCIS.md) : recherche/chrono accessibles, repli du header, 16 cas. Documentation sans code applicatif ni résultats de recette. Les sous-lots 02C–02E restent à détailler.
 
 ## CI #84 — mise à jour
 Le premier [run #549](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/37934890745) a effectivement exécuté le job `quality` sur Windows hébergé : install + typecheck OK, **3 tests timeout de 5 secondes**, 692/695 réussis ; **CI failure**, #84 draft non fusionnée. Enquête/test ciblés avant merge, détails dans [CI-GITHUB-ACTIONS.md](CI-GITHUB-ACTIONS.md).
