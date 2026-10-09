@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 09/10/2026 — #650 : diagnostic RPC local et hook commun de fin de test
+
+- CI #650 sur 50f2b40 : installation/typecheck et 748/748 assertions réussis, mais sortie en erreur RPC onTaskUpdate ; aucune validation hébergée acquise. Diagnostic local autorisé, aucun push/run/merge/#82/#83 ni accès Validation-MSI.
+- Reproduction exacte sur 60 tests SQLite synchrones isolés : 60/60 assertions mais RPC en erreur ; réponse parent immédiate, worker bloqué 66 s pour un délai RPC natif de 60 s. Cause probable de #650, dont les logs ne désignent pas le worker responsable. L'ancien hook Restore ne couvre pas les autres suites synchrones.
+- Correctif local minimal : setupFiles commun avec afterEach/setImmediate natif ; pool forks, versions, délais, assertions et code métier conservés. Même stress 60/60 sans RPC, attente maximale 66→2,2 s ; 92 tests réels verts, attente RPC 18,5→5,8 s. Deux tests ajoutés pour préserver les horloges simulées ; contrôle négatif conserve l'échec réel.
+- Typecheck OK ; ciblés 24/24 ; suite complète **750/750, 82 fichiers, 99,76 s**, sortie 0 sans RPC. Restaurations 35/35, migrations/intégrité/FK et atomicité existantes passent sur fixtures. [Diagnostic détaillé](docs/VITEST_RPC_LOCAL_DIAGNOSIS.md). Aucun timeout augmenté, test masqué ou mise à niveau majeure. Correction non publiée ; prochaine étape : décision humaine sur publication et unique confirmation Windows hébergée. Un appel synchrone unique >60 s reste une limite à profiler séparément.
+
 ## 09/10/2026 — Diagnostic #649 et correction locale ciblée de restore.test.ts
 
 - Échecs d’injection reproduits avec une jonction contrôlée : destination de production canonisée par realpathSync.native, mocks comparant un chemin brut. Ancien filtre ignore la destination réelle : pas d’erreur injectée / pas de callback concurrent. Comparaison canonisée des deux côtés, alias maintenu dans les deux cas pour prévenir la régression, nettoyage explicite de la jonction et preuve supplémentaire replacementInjected=true.
