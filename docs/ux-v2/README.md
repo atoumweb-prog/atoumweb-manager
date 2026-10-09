@@ -190,3 +190,12 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 - [07F — Bridge, Workbench et publication future](LOT-07F-BRIDGE-WORKBENCH-PUBLICATION.md) : import idempotent dans Workbench Divi **brouillon**, `exportId`/`siteOccurrenceId`, snapshots/retours, **publication WordPress non activée en Bridge 0.8.1** ; 22 scénarios.
 - [07G — Recette transversale](LOT-07G-RECETTE-ET-INTEGRATION.md) : protections Devis/Projet/temps/ressources/Pages/Bridge, 27 scénarios.
 - [07P — Projet prévisionnel avant signature (décision métier)](LOT-07-PROJET-PRE-SIGNATURE.md) : **20 cas supplémentaires**, en amont de 07A–07G. Bilan : **7 sous-lots détaillés 07A–07G = 137 scénarios futurs**, **157 avec les 20 de 07P**, **aucun de ces tests exécuté**. Le moteur sait préparer/synchroniser un Projet prévisionnel ; son **remplacement complet sûr** reste à développer. **Aucun nouveau code V2 ou publication WP**.
+
+### Lot 08 — Interventions, Maintenance, Packs et Temps (09/10/2026)
+- [08A — Audit des services et décisions UX-02/03](LOT-08A-AUDIT-REGLES-ET-PARCOURS.md) : 14 scénarios; **création manuelle maintenance non alignée date à date**, atomicité globale de terminaison à prouver.
+- [08B — Demandes et Interventions](LOT-08B-INTERVENTIONS-DEMANDES.md) : liste+fiche, incident, couvertures, clôture contrôlée, 17 scénarios.
+- [08C — Maintenance, cycles et quotas](LOT-08C-MAINTENANCE-CYCLES.md) : abonnements nouveaux **mensuels date-à-date même payés annuellement**, absence de report, conservation legacy et rapports, 18 scénarios.
+- [08D — Packs d'heures](LOT-08D-PACKS-DEBITS.md) : mouvements idempotents, débits, corrections/contrepassations, solde négatif et dépassement, 15 scénarios.
+- [08E — Chrono global, temps et rapports](LOT-08E-CHRONO-TEMPS-RAPPORTS.md) : timer unique, reprise, changement transactionnel de contexte, corrections, catégorie métier et facturabilité, 19 scénarios.
+- [08F — Recette et intégration](LOT-08F-RECETTE-ET-INTEGRATION.md) : 26 tests transversaux et contrôles SQL/métier/UX.
+- **Bilan documentaire : six sous-lots 08A–08F, 109 scénarios futurs non exécutés**, aucun code, migration, Intervention, Pack ni abonnement modifié. **UX-02/UX-03 restent des écarts à traiter**, pas des fonctionnalités déjà certifiées. Les commits documentaires utilisent `[skip ci]` pour éviter de relancer la CI sur chaque Markdown.
