@@ -1,5 +1,9 @@
 # AtoumWeb Manager
 
+## Audit UX/UI et fonctionnel
+
+[Documentation de l’état des lieux du 09/10/2026](docs/ux-audit/README.md), fondée sur main@eb252d5cbd0e95137eafa2b4759fcbcfd7263eda. Cartographie, interactions critiques, règles à préserver, preuves et limites ; aucun cahier des charges UX V2 ni développement de refonte validé par cette publication.
+
 ## État courant — 09/10/2026
 
 La branche officielle et active est **main** depuis la fusion normale de la PR #79 (8e05a47296d478587b11841e36ca5acb2e936726). Le commit contenant cette documentation ajoute la Bibliothèque contractuelle versionnée et les corrections de la recette manuelle Prospect / Devis. Consulter git log -1 pour son identifiant.

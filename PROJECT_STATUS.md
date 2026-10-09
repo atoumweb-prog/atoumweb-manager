@@ -1,5 +1,14 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 09/10/2026 — Publication documentaire de l’audit UX/UI
+
+- Autorisation AtoumWeb : centraliser l’audit dans docs/ux-audit, publier une branche documentaire et ouvrir une PR vers main, sans fusion ni refonte.
+- Code audité : **main@eb252d5cbd0e95137eafa2b4759fcbcfd7263eda**. Avant rédaction, HEAD local et origin/main identiques, working tree propre ; branche dédiée **docs/ux-audit-manager-v1** créée depuis ce commit. Les différences de ce lot sont documentaires uniquement.
+- Dix documents : index, état des lieux, cartographie, interactions/traçabilité, parcours Mermaid, registre UX-01 à UX-20, composants, règles à préserver, tests/couverture et propositions. Inventaire statique 17 entrées /84 fichiers TSX /82 raccordés /1 921 déclarations ; pas une matrice exhaustive de chaque contrôle et état.
+- Résultats de l’audit conservés comme tels : typecheck et 695/695 tests ; expériences mémoire sur cycles manuels, draft Catalogue et terminaison sur pack. Échec du banc Phase 7 sur attente 1–65 ; sonde UI adaptée non concluante. Aucun nouveau contrôle fonctionnel exécuté pour cette publication documentaire.
+- Faits code/tests, hypothèses et propositions distingués. Sources épinglées au commit ; aucun dossier client, secret, capture, log ou chemin personnel publié. Réflexion HubSpot/navigation/favoris/personnalisation/identité graphique à examiner avec ChatGPT, pas autorisation de développement.
+- Documents historiques conservés ; lien d’entrée ajouté au README et journal de coordination complété. Aucun React/CSS/service/IPC/migration, donnée Validation-MSI, publication ou activation modifié ; aucun merge de branche fonctionnelle. Prochaine action : lecture/validation documentaire et cahier des charges UX V2.
+
 ## 09/10/2026 — Checkpoint GitHub et fichiers de liaison autorisés
 
 - AtoumWeb autorise la publication GitHub des sources validées et la mise à jour du suivi. Branche active **main** ; parent de consolidation **8e05a47296d478587b11841e36ca5acb2e936726**, origin/main identique après fetch. Le commit contenant cette entrée est le nouveau checkpoint ; push normal, sans merge ni force.
