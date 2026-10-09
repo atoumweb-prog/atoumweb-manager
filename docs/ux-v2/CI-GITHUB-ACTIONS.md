@@ -61,3 +61,17 @@ Sur une **PR technique distincte** :
 5. Confirmer explicitement au développeur le **droit de lancer un premier run** (avec ou sans dépassement accepté) seulement après ces contrôles. Sans feu vert, garder #84 en draft et CI non exécutée.
 
 Sources officielles : [Créer un budget et bloquer l'usage](https://docs.github.com/en/billing/how-tos/set-up-budgets), [Fonctionnement et limites des budgets](https://docs.github.com/fr/billing/concepts/budgets-and-alerts), [Prix runner Windows x64](https://docs.github.com/en/billing/reference/actions-runner-pricing).
+
+## 7. Contrôle du compte transmis par AtoumWeb — 09/10/2026
+
+**Information vérifiée sur captures de l'interface GitHub personnelle** de `atoumweb-prog`, sans consultation API Billing : 
+- Compte **GitHub Free**.
+- Page **Budgets and alerts** : budget produit **Actions = 0 USD/mois**, **Stop usage = Yes**, dépense budgétaire indiquée **0 USD** ; alertes d'utilisation incluse **On**.
+- Page **Billing Overview** : consommation Actions brute octobre **0,13 USD** prise en charge par l'utilisation incluse (**0,13 USD de remise**) ; montant **billable = 0 USD**, prochain paiement non indiqué.
+- Selon la [documentation officielle du quota inclus](https://docs.github.com/en/billing/reference/product-usage-included), GitHub Free prévoit **2 000 minutes Actions par mois** (équivalent de facturation dépendant du runner) et 500 Mo de stockage ; **ce chiffre est le quota nominal, PAS le solde réel restant**. Les minutes Windows sont facturées/consommées à un coût différent de Linux, à confirmer dans l'écran Usage.
+- Le budget Actions `0 USD + Stop usage Yes` est le garde-fou constaté contre les consommations **payantes** après épuisement des allocations incluses, conformément à [GitHub Budgets](https://docs.github.com/en/billing/how-tos/set-up-budgets). **Attention au cas du premier cycle suivant création de budget**, où GitHub signale que des consommations antérieures au budget ne sont pas rétroactivement plafonnées. Aucune configuration ou date de création du budget n'a été vérifiée.
+- Il n'y a **pas de preuve de CI passée**, ni du solde de minutes incluses courant, ni de disponibilité effective du runner `windows-2022` à ce stade.
+
+**Conséquence :** la condition de protection contre les dépassements payants est **vérifiée dans l'interface du compte**. L'ancien blocage « budget inconnu » peut être levé pour la **préparation de la décision humaine**, mais **l'utilisateur n'a pas encore autorisé explicitement le nouveau commit et le premier run** de #84. Relever éventuellement le solde restant via `Billing and licensing > Usage > Actions`, puis demander l'accord de lancement. Ne modifier aucun budget, ne fusionner aucune PR, ne présenter aucun résultat CI sans exécution réelle.
+
+**Recommandation à Codex après feu vert uniquement :** pousser un nouveau commit sans `[skip ci]` sur #84 ; observer l'exécution réelle `quality`, remonter SHA, URL, tests, typecheck, durée, erreur éventuelle, consommation affichée. Si l'exécution se bloque à cause du budget nul, ne pas augmenter le plafond automatiquement ; expliquer la raison et demander une nouvelle décision.
