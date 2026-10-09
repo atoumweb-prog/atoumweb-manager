@@ -72,3 +72,7 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 
 ### Première fiche d'exécution détaillée
 - [Lot 01A — Tokens visuels](LOT-01A-TOKENS-VISUELS.md) : inventaire des CSS, valeurs effectivement constatées, séquence de travail, livrables et huit scénarios de recette. **Statut préparation** ; E01 validé (Compact 14 px), contrôle visuel toujours requis avant livraison.
+
+### Lot 01B — Composants élémentaires
+- [Spécification 01B](LOT-01B-COMPOSANTS-ELEMENTAIRES.md) : boutons, champs, icônes, aides `?`, confirmations, notifications ; revue de code, six sous-étapes, douze scénarios de recette. **Spécification seulement**, aucune implémentation du Manager.
+- **Écart E05 constaté dans CSS `main`** : `.app-shell.help-disabled .field-help { display:none !important; }` masque actuellement l'aide entière. La V2 conservera l'icône `?` et son activation clic/clavier même si l'aide automatique au survol est désactivée.
