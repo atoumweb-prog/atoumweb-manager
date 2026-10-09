@@ -83,6 +83,22 @@ if (!process.versions.electron) {
       child.on('error', error => {
         if (!settled) { settled = true; clearTimeout(timeout); reject(error); }
       });
+      // Windows subprocesses can keep inherited stdout/stderr pipes open
+      // after the Electron PID has exited. Log that distinction explicitly.
+      child.on('exit', (code, signal) => {
+        console.log('[UX01] Electron PID exited:', stage, { code, signal });
+        const drain = setTimeout(() => {
+          if (settled) return;
+          console.log('[UX01] Electron exited but inherited pipes stayed open; closing test streams.');
+          child.stdout.destroy();
+          child.stderr.destroy();
+          clearTimeout(timeout);
+          if (activeChild === child) activeChild = null;
+          settled = true;
+          resolve({ code, signal });
+        }, 1500);
+        drain.unref();
+      });
       child.on('close', (code, signal) => {
         clearTimeout(timeout);
         if (activeChild === child) activeChild = null;
