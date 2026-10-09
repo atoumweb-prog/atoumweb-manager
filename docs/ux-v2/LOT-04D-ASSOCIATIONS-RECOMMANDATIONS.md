@@ -64,3 +64,64 @@ Les libellés « inclus / option / recommandé » décrivent **l'UI cible**, pas
 | **Devis** | Composition figée, options disponibles et compléments pertinents | **Ajouter l'option au devis** par `selectOfferOption` ; autre complément par **`addCatalogLine`** avec version publiée et prix explicite |
 
 Les CGV spécifiques s'appliquent uniquement selon les **lignes réellement retenues et composantes contractuellement applicables**. Le Projet prévisionnel reprend **les lignes courantes** et leurs versions, pas les suggestions ignorées.
+
+## 7. Exemples pour l'atelier — illustratifs, pas ajoutés au Catalogue
+| Offre source | Complément envisageable | Contrôle préalable |
+|---|---|---|
+| Site vitrine | Création de contenu ou SEO local | Ne pas suggérer en supplément un service déjà **inclus dans la formule publiée** |
+| Site e-commerce | Fiches produits, maintenance ou accompagnement WooCommerce | S'il existe comme **option** de la version de l'Offre, utiliser la procédure d'option |
+| Site mariage | Retouche photo, adaptation de visuels | Conseil volontaire ; aucune ligne ajoutée au devis sans choix |
+| Maintenance WordPress | Pack d'heures ou intervention supplémentaire, sous réserve des offres présentes | Ne pas créer abonnement, quota, intervention ni période opérationnelle sur simple conseil |
+
+Les **tarifs, inclusions et associations réelles** proviennent du catalogue versionné, jamais d'un exemple rédigé dans ce dossier.
+
+## 8. Déroulement technique proposé après autorisation
+| Phase | Travail | Preuve demandée |
+|---|---|---|
+| 04D.1 | Inventorier composants d'offres, suggestions codées, provenances d'options, clients des API et tests | Matrice `Offre/version → Service/version → quote snapshot → action → test` |
+| 04D.2 | Proposer schéma minimal de **recommandations N:N versionnées**, distinct de `OfferComponent`, avec provenance/motif/ordre/état/compatibilité et politique de version | Migrations SQLite à blanc, contrat API, refus/rollback et conservation des historiques |
+| 04D.3 | Concevoir l'onglet Associations et simulation en prospection/devis | Maquettes 3 thèmes × 3 densités, clavier, aide `?` |
+| 04D.4 | Remplacer progressivement `SUGGESTIONS` par source catalogue éditable en Prospection | Suggestion explicable, ajout au besoin seulement, sans doublon |
+| 04D.5 | Intégrer les conseils dans Devis sans changer les options existantes | `selectOfferOption` pour composition, `addCatalogLine` pour recommandé libre ; garde idempotence |
+| 04D.6 | Vérifier CGV, révisions de Devis et Projet prévisionnel avec snapshots immuables ; recette et retour arrière | Suite de tests réels, fixtures isolées, zéro accès Validation-MSI |
+
+## 9. Matrice de recette (26 scénarios proposés, **non exécutés**)
+| ID | Scénario | Attendu |
+|---|---|---|
+| R04D-01 | Associer le même Service à deux Offres | Une identité Catalogue, deux associations ; pas de copie |
+| R04D-02 | Ajouter Service inclus à Offre brouillon | Version Service publiée, quantité/ordre, `isOptional=false` |
+| R04D-03 | Ajouter Service comme option à Offre brouillon | `isOptional=true`, visible **non acheté** |
+| R04D-04 | Éditer la composition d'une Offre publiée | Refus service, créer une nouvelle version |
+| R04D-05 | Ajouter deux versions différentes du même service à une Offre | Détecter conflit par `serviceItemId`, pas seulement par version |
+| R04D-06 | Ajouter complément recommandé avec motif | Conseil seulement, aucune composition ou vente modifiée |
+| R04D-07 | Même complément recommandé par plusieurs Offres | Une prestation affichée avec origines/motifs lisibles |
+| R04D-08 | Modifier recommandation publiée | Version/trace explicite, anciens Devis inchangés |
+| R04D-09 | Archiver service recommandé | Nouveau conseil d'achat indisponible, historique conservé |
+| R04D-10 | Prospect reçoit suggestion depuis besoin enregistré | Motif expliqué, bouton **Ajouter aux besoins** |
+| R04D-11 | Prospect lit une suggestion sans la sélectionner | Aucune ligne Devis, Client ou Projet créé |
+| R04D-12 | Cliquer deux fois sur ajout de besoin | Pas de deux besoins identiques pour le même article |
+| R04D-13 | Devis avec un Service en ligne 1 et une Offre en ligne 2 | Recommandations issues de l'Offre réellement identifiée |
+| R04D-14 | Deux Offres suggèrent même Service | Pas de doublon de proposition, raisons consultables |
+| R04D-15 | Service recommandé déjà inclus dans Offre | Badge **Inclus**, pas de double achat proposé |
+| R04D-16 | Acheter une option depuis composition d'offre | `selectOfferOption`, ID composant exact et lien d'origine |
+| R04D-17 | Rejouer le même achat d'option | Même Devis, aucune ligne optionnelle doublée |
+| R04D-18 | Retirer option sur Devis éditable | Une seule option retirée, autres lignes intactes |
+| R04D-19 | Retirer option d'un Devis figé/accepté | Refus service, aucun changement contractuel |
+| R04D-20 | Ajouter librement complément recommandé | Ligne de **version publiée exacte** uniquement après clic |
+| R04D-21 | Conseil concernant service déjà présent dans Devis | Badge **Déjà ajouté**, aucun second achat suggéré |
+| R04D-22 | Recommandation vers service inactif/version `retired` | Pas d'ajout commercial nouveau automatique |
+| R04D-23 | Ancien snapshot sans `componentId` | Pas d'origine optionnelle reconstituée artificiellement |
+| R04D-24 | Devis contenant option achetée puis pré-projet | Seules lignes retenues et composants inclus applicables sont projetés ; pas les suggestions |
+| R04D-25 | Clavier, petite fenêtre, trois thèmes × trois densités | Inclus, option et recommandé compréhensibles sans couleur seule ; Compact >=14 px |
+| R04D-26 | Tests SQLite, service, Devis, CGV et Projet sur fixtures | Intégrité/rollback, journaux et SHA réels, Validation-MSI intacte |
+
+## 10. Écarts de conception encore à instruire
+- **E104 — Dédoublonnage par prestation :** la composition actuelle vérifie `serviceVersionId`, pas une unicité par `serviceItemId` à travers les versions. Préciser le traitement voulu sans casser les Offres historiques.
+- **E105 — Structure des recommandations :** champs source offre/version, destination Service/version, motif, priorité, état, conditions, provenance. Une extension Service→Service serait une fonction distincte à auditer.
+- **E106 — Source partagée :** remplacer les `SUGGESTIONS` codées en dur par un service administrable consommé par Prospect/Devis, sans changer la signification des besoins.
+- **E107 — Offre principale :** convention technique proposée = première ligne d'Offre dans le Devis, avec gestion explicite des Devis multi-offres ; à confirmer lors du développement.
+- **E108 — Provenance d'achat :** garder `QuoteOptionPurchase` pour option de composition, et ne pas fabriquer cette origine pour un complément libre.
+- **E109 — Compatibilités et déduplication :** versions différentes du même item, inclus/option/déjà acheté, états non publiés, prix, contraintes et motifs.
+- **E110 — Versionnement et historique des conseils :** conservation des règles et éventuel motif présenté, sans transformer un conseil interne en preuve contractuelle.
+
+**Lot 04D « prêt pour développement »** uniquement après validation du modèle de recommandation, des choix E104/E107, du parcours visuel et de la migration, puis accord spécifique d'AtoumWeb. **Ce document ne modifie aucun contrat, Devis, Projet, API, test ou donnée métier.**
