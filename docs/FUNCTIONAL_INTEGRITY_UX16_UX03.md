@@ -30,9 +30,9 @@ AtoumWeb a validé les deux corrections, leur implémentation, les tests permane
 | UX-03, erreur après débit/journal | Débit conservé et statut intermédiaire | Débit, statut, solde, timestamps et activités annulés |
 | UX-03, succès répété | Un seul débit dans le cas nominal | Un seul débit, aucune cellule/activité supplémentaire ; autres couvertures conservées |
 
-- Tests permanents ciblés : **57/57**, dont 34 restauration, 17 terminaison et 6 packs. **49 tests ajoutés** par rapport à la base de 695.
-- Suite complète : **744/744, 80 fichiers de tests**. Typecheck OK ; diff sans erreur de whitespace. Registre des migrations inchangé **1–66** ; replay/intégrité/FK contrôlés dans les fixtures. Aucune migration supplémentaire.
-- Restauration : nominal/rejeu, historiques 4/65 puis migration/rejeu temporaires, A/B, demandes anciennes/incomplètes/interrompues, source modifiée/disparue, CHECK sur copie, inode remplacé, alias/hardlink, casse/séparateurs Windows et jonction, copie en échec/altérée, sauvegarde/récupération, writers DELETE/WAL, écriture concurrente pendant copie et verrou de profil.
+- Tests permanents ciblés : **58/58**, dont 35 restauration, 17 terminaison et 6 packs. **50 tests ajoutés** par rapport à la base de 695.
+- Suite complète : **745/745, 80 fichiers de tests**. Typecheck OK ; diff sans erreur de whitespace. Registre des migrations inchangé **1–66** ; replay/intégrité/FK contrôlés dans les fixtures. Aucune migration supplémentaire.
+- Restauration : succès/rejeu en DELETE **et WAL (mode du Manager)**, historiques 4/65 puis migration/rejeu temporaires, A/B, demandes anciennes/incomplètes/interrompues, source modifiée/disparue, CHECK sur copie, inode remplacé, alias/hardlink, casse/séparateurs Windows et jonction, copie en échec/altérée, sauvegarde/récupération, writers DELETE/WAL, écriture concurrente pendant copie et verrou de profil.
 - Terminaison : absence de temps, erreur avant insertion, insertion du débit, calcul du solde, journal du débit, transition finale et journal final ; retry, double appel, parent transactionnel, facturation hors forfait et maintenance, inclus Projet/interne/geste commercial.
 - Toutes les fixtures des exécutions finales sont fermées/supprimées par les tests, y compris les refus. Aucun accès à Validation-MSI, lancement du Manager ou donnée utilisateur créé par ces contrôles. Aucun changement React/CSS, navigation, prix, temps, référentiel ou règle métier.
 
@@ -49,7 +49,7 @@ UX-16 : `src/main/restore.ts`, `src/main/restore.test.ts`, `src/main/ipc.ts`, `s
 
 UX-03 : `src/main/operations/InterventionCompletionService.ts`, `src/main/operations/InterventionCompletionService.test.ts`, `src/main/operations/HourPackService.ts`, `src/main/operations/HourPackService.test.ts`.
 
-Suivi : ce document, `PROJECT_STATUS.md`, `docs/MANAGER_BRIDGE_ROADMAP.md`. **11 fichiers**, aucune base/sauvegarde/capture/output. Commits correctifs séparés, puis suivi commun ; publication sur la branche dédiée et PR vers main, sans fusion automatique.
+Suivi : ce document, `PROJECT_STATUS.md`, `docs/MANAGER_BRIDGE_ROADMAP.md`. **11 fichiers**, aucune base/sauvegarde/capture/output. Commits correctifs séparés, suivi commun et complément de test nominal WAL ; publication sur la branche dédiée et PR #81 en draft vers main, sans fusion automatique.
 
 ## Diagnostic initial — archivé, 09/10/2026
 

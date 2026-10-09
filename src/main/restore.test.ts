@@ -90,7 +90,8 @@ describe('restauration SQLite isolée UX-16', { timeout: 20000 }, () => {
     expect(fs.readdirSync(context.profile)).toEqual([]);
   });
 
-  it('restaure, conserve une sauvegarde récupérable et ne rejoue pas la demande', async () => {
+  it.each(['DELETE', 'WAL'])('restaure en mode %s, conserve une sauvegarde récupérable et ne rejoue pas la demande', async mode => {
+    modify(workspace.databaseFile, `PRAGMA journal_mode=${mode}`);
     const before = snapshot(workspace.databaseFile), sourceBefore = fs.readFileSync(sourcePath);
     scheduleDatabaseRestore(sourcePath, workspace);
     const pending = JSON.parse(fs.readFileSync(marker(), 'utf8'));
