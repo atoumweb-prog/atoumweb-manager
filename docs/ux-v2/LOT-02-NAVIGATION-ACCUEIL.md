@@ -141,3 +141,6 @@ Lot 02 n'est « terminé » que si les 17 modules demeurent accessibles, les ré
 - **02E** [recette transverse](LOT-02E-RECETTE-ET-MIGRATION.md) — 20 parcours de bout en bout et livraison par incréments réversibles.
 
 **Statut : documentation 02A–02E disponible dans GitHub. Aucune de ces fonctionnalités n'est livrée par la PR documentaire #82.** Relever le code et la CI intégrés avant mise en œuvre ; **E59 à finaliser** (`new`, « Finalisation » et fenêtre de l'historique) avant de coder le pipeline ; Conversion historique est décidée.
+
+## Raccord Lot 10 — Accueil vs analyse statistique
+[10A](LOT-10A-AUDIT-INDICATEURS.md) et [10B](LOT-10B-STATISTIQUES-NAVIGATION.md) précisent que **l'Accueil reste un tableau d'actions prioritaires** (Aujourd'hui, chrono, alertes, facturation à préparer), pas un duplicateur des vues financières. Les calculs Statistiques doivent préciser la population, les périodes et le statut `new` hors pipeline (décision E72), alors que `HomeDashboard` peut afficher séparément l'annuaire/contact si explicitement nommé. Les cartes renvoient aux vraies listes/IDs; **aucun CA encaissé n'est attesté** par les PDF Abby. La restauration SQLite de [10C](LOT-10C-SAUVEGARDES-RESTAURATION.md) n'est pas une action de la page Accueil et ne doit pas être activée sans garde UX-16.
