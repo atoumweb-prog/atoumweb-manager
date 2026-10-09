@@ -131,3 +131,22 @@ Les **sept intitulés visuels validés** :
 - **E65 — Liens commerciaux** : « ouvrir » et « créer » sont deux intentions distinctes ; vérifier formulaires et permissions existants.
 
 **Aucune modification SQL, CRM, Abby, chronométrage ou facturation n'est autorisée par ce cahier des charges. La correction de CI PR #84 reste totalement indépendante.**
+
+## 11. Complément d'audit E59 — « Finalisation » (source main consultée le 09/10/2026)
+
+**Question métier en attente de validation AtoumWeb :** après « Négociation » et avant « Conversion », à quel fait mesurable doit correspondre la **colonne visuelle Finalisation** ?
+
+### Signaux vérifiés dans le code
+- `src/shared/crm.ts` : `PROSPECT_STAGES` n'a **pas** de statut `finalization` ; `ProspectSummary` fournit `stage`, `clientAccountId`, `wonAt`.
+- `src/renderer/crm/ProspectsPageV2.tsx` : les transitions manuelles sont limitées ; `negotiation` peut rester Négociation, retourner au suivi ou à l'attente ; aucune destination manuelle « Finalisation » ni passage par glisser-déposer n'est autorisé. `won/lost` sont exclus du pipeline actif.
+- `src/shared/commercial.ts` : statuts de devis `draft/sent/viewed/accepted/refused/expired/cancelled`, champs `finalizedAt`, `sentAt`, `viewedAt`, `acceptedAt`. Ces états **ne disent pas tous** qu'un accord commercial de principe existe.
+- `src/renderer/crm/ProspectQuotePanel.tsx` : `quotes.finalize` signifie **devis prêt à envoyer** (`Devis à envoyer`), **pas** finalisation de vente. Il ne faut donc **pas** projeter `quote.finalizedAt` dans la colonne commerciale Finalisation.
+- `src/renderer/commercial/QuotesPage.tsx` : `quotes.accept` sur devis `sent/viewed`, après validation humaine d'une acceptation/signature dans Abby, déclenche **conversion Prospect → Client**. Une fois `accepted`, le Prospect ne doit plus apparaître comme Finalisation active, mais dans **Conversion historique** (décision déjà approuvée).
+- Aucun marqueur persistant d'**accord de principe en attente de signature** n'a été attesté dans ces fichiers. **L'affichage automatique et fiable de Finalisation n'est donc pas encore démontré.**
+
+### Proposition à soumettre, **NON validée**
+**Finalisation = accord commercial de principe obtenu, formalités finales / signature Abby en attente**. Le Prospect reste actif ; le devis reste `sent`/`viewed` ou autre statut métier approprié ; **aucune conversion avant `quotes.accept`**. Pour classer un dossier en Finalisation, il faudrait un **signal explicite, tracé et non destructif** (`action`/événement/indicateur commercial existant si exploitable), pas de déduction systématique depuis `finalizedAt`, `sent` ou `viewed`. La décision et la capacité réelle du signal doivent être vérifiées avant implémentation, sans ajouter un nouveau `ProspectStage` par commodité.
+
+**Alternative nécessitant choix d'AtoumWeb :** Finalisation peut rester une simple vue d'information sans regroupement de dossiers tant qu'aucun signal fiable n'existe. Ne pas afficher un compteur inventé. La mise en œuvre du rail, de la recherche et de l'en-tête ne dépend pas de cet arbitrage.
+
+**État : E59 Conversion = validée ; E59 Finalisation = attente de décision et d'étude du marqueur ; E59 `new` = encore ouvert.**
