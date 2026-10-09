@@ -1,4 +1,4 @@
-import {registerUnsavedConfirmationIpc} from './unsaved';
+import {registerUnsavedConfirmationIpc,unsavedWindows} from './unsaved';
 import type { ContractAdministration, QuoteContractParameters, ContractDocumentLinkInput, ContractDocumentRole } from '../shared/quoteContractPreparation';
 import { app, clipboard, dialog, ipcMain, safeStorage, shell } from 'electron';
 import type { BridgeNodeMatchDecisionInput } from '../shared/bridgeSnapshots';
@@ -130,9 +130,12 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   });
 
   ipcMain.handle('workspace:choose', async (): Promise<WorkspaceChangeResult> => {
+    const ticket=unsavedWindows.approveAll();if(!ticket)return {cancelled:true};
     const result = await dialog.showOpenDialog({ title: 'Choisir le dossier AtoumWeb Manager', defaultPath: workspace.root, properties: ['openDirectory'] });
     if (result.canceled || result.filePaths.length === 0) return { cancelled: true };
+    const currentTicket=unsavedWindows.refreshApproval(ticket);if(!currentTicket)return {cancelled:true};
     const nextWorkspace = saveWorkspaceRoot(result.filePaths[0]);
+    if(nextWorkspace.root!==workspace.root)unsavedWindows.remember(currentTicket);
     return { cancelled: false, workspacePath: nextWorkspace.root, restartRequired: nextWorkspace.root !== workspace.root };
   });
 
@@ -142,6 +145,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   });
 
   ipcMain.handle('backups:restore', async (): Promise<RestoreScheduleResult> => {
+    const ticket=unsavedWindows.approveAll();if(!ticket)return {cancelled:true};
     const selection = await dialog.showOpenDialog({ title: 'Restaurer une sauvegarde AtoumWeb Manager', defaultPath: workspace.backupsDirectory, properties: ['openFile'], filters: [{ name: 'Sauvegarde SQLite', extensions: ['sqlite', 'db'] }] });
     if (selection.canceled || selection.filePaths.length === 0) return { cancelled: true };
     const sourcePath = selection.filePaths[0];
@@ -158,9 +162,11 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
         : 'La base actuelle sera d’abord sauvegardée automatiquement dans le dossier pre-restore au prochain démarrage. En mode développement, ferme ensuite AtoumWeb Manager puis relance « npm start » pour appliquer la restauration.',
     });
     if (confirmation.response !== 0) return { cancelled: true };
+    const currentTicket=unsavedWindows.refreshApproval(ticket);if(!currentTicket)return {cancelled:true};
     scheduleDatabaseRestore(sourcePath);
+    unsavedWindows.remember(currentTicket);
     if (packaged) {
-      setTimeout(() => { app.relaunch(); app.exit(0); }, 150);
+      setTimeout(() => { app.relaunch(); app.quit(); }, 150);
       return { cancelled: false, sourcePath, restartScheduled: true };
     }
     return { cancelled: false, sourcePath, restartScheduled: false };

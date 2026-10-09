@@ -1,6 +1,6 @@
-import {requestUnsavedExit} from './unsaved/unsaved';
+import {requestUnsavedExit,installUnsavedLifecycleBridge} from './unsaved/unsaved';
 import { DemoPanel } from './workflow/DemoPanel';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { BootstrapState, DisplayDensity, ThemeName } from '../shared/contracts';
 import type { SearchResult } from '../shared/crm';
 import { BusinessBackupsPage } from './backups/BusinessBackupsPage';
@@ -89,7 +89,7 @@ function applyDensity(density: DisplayDensity): void {
 }
 
 function App() {
-
+  useLayoutEffect(installUnsavedLifecycleBridge,[]);
   const prospectReferenceId = new URLSearchParams(window.location.search).get('prospectReference');
   const [bootstrap, setBootstrap] = useState<BootstrapState | null>(null);
   const [activePage, setActivePage] = useState<PageName>('Accueil');

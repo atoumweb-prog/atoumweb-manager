@@ -1,3 +1,4 @@
+import {bindUnsavedWindow,registerGuardedShutdown} from './unsaved';
 import {RECIPE_FLAG} from '../shared/operationalRecipe';
 import {createOperationalRecipeWindow} from './projects/operationalRecipeWindow';
 import { app, BrowserWindow, ipcMain } from 'electron';
@@ -55,6 +56,7 @@ function openProspectReferenceWindow(prospectId: string): void {
       sandbox: true,
     },
   });
+  bindUnsavedWindow(referenceWindow);
   prospectReferenceWindows.set(id, referenceWindow);
   referenceWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   loadRendererWindow(referenceWindow, { prospectReference: id });
@@ -77,6 +79,7 @@ function createMainWindow(): void {
     },
   });
 
+  bindUnsavedWindow(mainWindow);
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   mainWindow.webContents.on('will-navigate', (event, url) => {
     if (url !== mainWindow?.webContents.getURL()) {
@@ -131,7 +134,7 @@ app.whenReady().then(async () => {
   app.quit();
 });
 
-app.on('before-quit', () => {
+registerGuardedShutdown(() => {
   recipeWindow?.dispose();recipeWindow=null;
   prospectReferenceWindows.clear();
   database?.close();

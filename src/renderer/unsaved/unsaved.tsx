@@ -38,3 +38,14 @@ export function useUnsavedDraft<T>(label: string, value: T, options: {
         return; unsavedRegistry.update({ id, group: options.group ?? inherited, label, dirty, pending: !!options.pending, discard }); return () => unsavedRegistry.remove(id); }, [id, inherited, options.group, label, dirty, options.pending, ready, current]);
     return { get dirty() { return dirtyNow(); }, saved: (next: T = value) => { baseline.current = { hash: draftFingerprint(next), value: structuredClone(next) }; notify(n => n + 1); }, initial: (next: T) => { baseline.current = { hash: draftFingerprint(next), value: structuredClone(next) }; notify(n => n + 1); }, request: (run: () => void) => requestUnsavedExit(run, [id]), discard };
 }
+export function installUnsavedLifecycleBridge() {
+    const publish = () => window.atoumweb.unsaved.publishState(unsavedRegistry.state());
+    const unsubscribe = unsavedRegistry.subscribe(publish);
+    publish();
+    const beforeUnload = (event: BeforeUnloadEvent) => { publish(); if (unsavedRegistry.active().length) {
+        event.preventDefault();
+        event.returnValue = '';
+    } };
+    window.addEventListener('beforeunload', beforeUnload);
+    return () => { unsubscribe(); window.removeEventListener('beforeunload', beforeUnload); };
+}

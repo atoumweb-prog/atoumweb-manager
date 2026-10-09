@@ -1,6 +1,8 @@
 # UX-01 — Saisies non enregistrées : diagnostic et proposition
 
-## État courant — 09/10/2026
+> Ce diagnostic est le checkpoint antérieur à l’autorisation d’implémentation. Les corrections A/B/C et leurs vérifications sont décrites dans [le bilan de livraison](FUNCTIONAL_UNSAVED_INPUTS_UX01_DELIVERY.md). Les observations ci-dessous sont conservées comme preuves avant correction.
+
+## État au diagnostic — 09/10/2026
 
 **Diagnostic terminé ; corrections non implémentées.** Branche `codex/fix-manager-unsaved-inputs-ux01` créée depuis `main@eb252d5cbd0e95137eafa2b4759fcbcfd7263eda`, identique à origin/main après fetch. Aucun commit/push/PR pour cette passe. Les PR #80 et #81 restent inchangées ; #81 reste en draft sans fusion automatique. Son code non fusionné n'est pas repris dans cette branche.
 

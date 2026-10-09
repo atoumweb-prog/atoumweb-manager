@@ -1,5 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 09/10/2026 — UX-01A/B/C : correction livrée sur branche indépendante
+
+- Branche `codex/fix-manager-unsaved-inputs-ux01` depuis `main@eb252d5c` ; commits distincts A (`df1b6f3`), B (`80300a4`) et C. [Bilan complet, fichiers, scénarios et limites](docs/FUNCTIONAL_UNSAVED_INPUTS_UX01_DELIVERY.md). Reprise du travail interrompu sans reset ; B isolé dans l’index puis vérifié dans une copie temporaire, sans perte des changements C.
+- A : brouillons contractuels indépendants, fusion des rafraîchissements avec conflits explicites, refus des enregistrements périmés et détail Devis maintenu lors des refresh. B : registre par éditeur, confirmations de sortie Prospection/Devis et sous-formulaires, annulation limitée à la saisie concernée, réponses Devis tardives ignorées. C : fermetures/rechargements/quitter Electron, fenêtre Référence Prospect détachée et choix différé de workspace ; aucun brouillon déclaré enregistré avant confirmation du serveur.
+- Validation finale : typecheck OK ; ciblés **75/75**, complets **733/733 dans 82 fichiers** (`npm test -- --maxWorkers=2`), **153 contrôles natifs** sur les trois thèmes. Premier run complet à concurrence par défaut : un timeout de fixture et timeout RPC sous charge ; fixture rejouée isolément 21/21 puis suite complète verte avec deux workers, sans changement de délai ni de règle. Snapshot B seul : typecheck et 81 contrôles natifs verts.
+- Fixtures exclusivement temporaires, supprimées après fermeture ; migrations **1–66 inchangées**, integrity_check `ok`, FK vides. **Validation-MSI non ouverte ni modifiée** ; aucune migration, réparation historique, autosauvegarde ou refonte UX/UI V2. Les autres modules ne sont pas encore raccordés au registre ; crash/arrêt forcé/récupération persistante restent hors périmètre.
+- Livraison par PR dédiée en draft, sans fusion automatique ; #80 et #81 inchangées. Prochaine action : CI puis validation AtoumWeb avant fusion. Les entrées suivantes sont les checkpoints historiques des lots.
+
 ## 09/10/2026 — UX-01B : sorties par éditeur
 
 - Registre/hook par éditeur et groupe, Rester par défaut/abandon limité, attente des saves, sorties sidebar/recherche/événements/fiche/panneau et sous-formulaires Prospection/Devis. Contrôles locaux conservés ; réponses de lecture Devis tardives invalidées, refresh maintient les composants, aucun nouveau style ou serveur métier.
