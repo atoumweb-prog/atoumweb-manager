@@ -26,14 +26,14 @@ Les couleurs de **marque/métier** `#D62828`, `#F2B705`, `#1565C0`, `#198754` so
 ## C. Densités : valeurs de référence code réel
 | Token | Compact | Confort | Confort+ |
 |---|---:|---:|---:|
-| Base texte | 15px | 16px | 18px |
+| Base texte **(code existant, non encore modifié)** | 15px | 16px | 18px |
 | Secondaire | 14px | 15px | 16px |
 | Texte de petite taille | 14px | 14px | 14px |
 | Hauteur contrôles | 36px | 42px | 48px |
 | `--ui-panel-pad` | 16px | 22px | 26px |
 | `--ui-gap` | 8px | 12px | 16px |
 
-**E01 — arbitrage nécessaire :** les propositions initiales « texte 14–15px / boutons 34–38px » sont moins lisibles que les valeurs courantes du mode Confort. Il est **proposé** de garder ce tableau comme minimum de référence, corriger les exceptions et mesurer visuellement ; ne pas réduire automatiquement.
+**E01 — décision AtoumWeb du 09/10/2026 :** la table ci-dessus décrit **l'existant**. Pour la V2, le texte principal du mode **Compact cible 14 px au lieu des 15 px actuels**. Confort **16 px** et Confort+ **18 px** sont conservés. Le texte secondaire/petit ne descend pas sous 14 px ; hauteurs de contrôles **36/42/48 px** conservées pour l'instant. **Aucune modification CSS encore effectuée** : tester la lisibilité de 14 px et les différences entre thèmes avant exécution, y compris éventuelles règles historiques contradictoires.
 
 ## D. Contrat des tokens V2 (à stabiliser après inventaire)
 Les composants utilisent des **rôles** plutôt que des couleurs codées en dur : surface, surface secondaire, texte principal/secondaire, bordure, focus, accent interactif, erreur, succès, avertissement, sélection, survol, désactivation, espacement et densité.
@@ -66,7 +66,7 @@ Les composants utilisent des **rôles** plutôt que des couleurs codées en dur 
 | ID | Scénario | Attendu |
 |---|---|---|
 | R01A-01 | Démarrer dans chaque thème | Aucun texte noir sur noir ou bordure illisible ; identité visuelle appropriée |
-| R01A-02 | Changer la densité puis relancer | Préférence et tailles restaurées ; aucune réduction anormale de texte |
+| R01A-02 | Changer la densité puis relancer | Cible de texte principal **14/16/18 px** selon Compact/Confort/Confort+ ; préférence restaurée ; aucune règle ancienne ne masque ou dégrade les champs |
 | R01A-03 | Naviguer 17 entrées après modification CSS | Navigation et boutons disponibles ; focus visible |
 | R01A-04 | Ouvrir Prospect, Devis, Projet, Intervention | Champs, panneaux, boutons sans débordements ou masquage d'action |
 | R01A-05 | Réduire fenêtre, vérifier zoom et scroll | Pas de zone de travail inaccessible sans alternative |
@@ -84,4 +84,4 @@ La preuve d'une recette est son résultat réel avec date, environnement et SHA,
 - Utiliser le workspace Validation-MSI comme environnement de recette.
 - Fusionner une PR automatiquement ou présenter #83 comme intégrée tant que son merge n'est pas vérifié.
 
-**Issue bloquante E01 : validation de la conservation des tailles existantes recommandée avant une exécution technique.**
+**E01 tranché : Compact 14 px cible, Confort 16 px, Confort+ 18 px ; implémentation et validation visuelle restant à exécuter.**
