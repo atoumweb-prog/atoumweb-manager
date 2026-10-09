@@ -1,5 +1,8 @@
 # Décisions UX/UI V2 — registre initial
 
+> **Consolidation du 09/10/2026 :** [État canonique des 10 lots](CONSOLIDATION-TRANSVERSE-10-LOTS.md), [écarts transverses](REGISTRE-ECARTS-TRANSVERSES.md), [séquence de développement](FEUILLE-DE-ROUTE-IMPLEMENTATION-UX-V2.md), [parcours de recette](MATRICE-RECETTE-ET-GATES-UX-V2.md). **1 069 scénarios projetés, aucun exécuté dans ce programme.** #84 est fusionnée ; #81 et #83 ne le sont pas. Codex MSI a signalé un **correctif #81 seulement local `50f2b40` (35/35 tests de restauration locaux)** ; le run #649 sur le SHA distant précédent reste **rouge (745/748)**. Les statuts de PR plus anciens ci-dessous appartiennent à leur date d'observation et ne valent pas décision de fusion.
+
+
 Statut : **DÉCIDÉ** sauf mention explicite. Ces exigences sont des cibles ; l'implémentation actuelle doit être vérifiée.
 
 ## Structure et interaction
