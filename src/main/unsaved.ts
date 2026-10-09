@@ -1,4 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
+import { restoreQuitGate } from './restoreQuitGate';
 import { UnsavedWindows, isUnsavedWindowState } from '../shared/unsavedWindows';
 export function confirmUnsavedExit(labels: string[], pending: boolean, window?: BrowserWindow | null): boolean {
     const options = { type: 'warning' as const, title: 'Modifications non enregistrées', message: pending ? 'Un enregistrement est en cours. Attendez sa confirmation avant de quitter.' : 'Certaines modifications ne sont pas enregistrées.', detail: [...new Set(labels)].slice(0, 20).map(label => label.slice(0, 160)).join('\n'), buttons: pending ? ['Rester'] : ['Rester', 'Quitter sans enregistrer'], defaultId: 0, cancelId: 0, noLink: true };
@@ -15,6 +16,8 @@ export function bindUnsavedWindow(window: BrowserWindow): void {
         // Electron: preventing this event overrides the renderer's unload veto.
         if (allowed)
             event.preventDefault();
+        else
+            restoreQuitGate.cancel();
     });
 }
 export function approveUnsavedQuit(): boolean { const ticket = unsavedWindows.approveAll(); if (!ticket)
@@ -32,7 +35,23 @@ export function registerUnsavedConfirmationIpc() {
     } unsavedWindows.update(window.id, state); event.returnValue = !!unsavedWindows.state(window.id); });
 }
 export function registerGuardedShutdown(cleanup: () => void): void {
-    app.on('before-quit', event => { if (!approveUnsavedQuit())
-        event.preventDefault(); });
-    app.on('will-quit', cleanup);
+    app.on('before-quit', event => {
+        if (!approveUnsavedQuit()) {
+            restoreQuitGate.cancel();
+            event.preventDefault();
+        }
+    });
+    app.on('will-quit', () => {
+        try {
+            // Every window has finished its unload checks. No marker exists before this.
+            restoreQuitGate.commitOnQuit();
+        } catch (error) {
+            // Do not relaunch or silently restore after an invalid/changed source.
+            const message = error instanceof Error ? error.message : String(error);
+            dialog.showErrorBox('Restauration non programmée — AtoumWeb Manager',
+                message + '\\nLe Manager est fermé sans restauration. Relance-le et reprogramme la demande.');
+        } finally {
+            cleanup();
+        }
+    });
 }
