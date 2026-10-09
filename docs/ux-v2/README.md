@@ -68,7 +68,7 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 
 ## Comparaison code réel / cible — Lot 01
 - [Matrice existant → V2](LOT-01-MATRICE-EXISTANT-CIBLE.md) : **19 entrées traçables** en 01A–01F, sources `main@eb252d5c` et branche non fusionnée UX-01 #83 ; décisions, risques, critères de recette et incohérences E01–E04. Ce document est une inspection statique, **pas un résultat de tests**.
-- Écart E01 à valider : tailles actuelles compact 15px, confort 16px, confort+ 18px vs indication ancienne 14–15px. Ne pas abaisser la taille des textes par automatisme.
+- **E01 tranché le 09/10/2026** : cible **Compact 14 px** au lieu de 15 px dans le code actuel ; Confort **16 px** et Confort+ **18 px** conservés. Documenté seulement, application CSS et recette visuelle à venir.
 
 ### Première fiche d'exécution détaillée
-- [Lot 01A — Tokens visuels](LOT-01A-TOKENS-VISUELS.md) : inventaire des CSS, valeurs effectivement constatées, séquence de travail, livrables et huit scénarios de recette. **Statut préparation**, arbitrage E01 requis avant application.
+- [Lot 01A — Tokens visuels](LOT-01A-TOKENS-VISUELS.md) : inventaire des CSS, valeurs effectivement constatées, séquence de travail, livrables et huit scénarios de recette. **Statut préparation** ; E01 validé (Compact 14 px), contrôle visuel toujours requis avant livraison.
