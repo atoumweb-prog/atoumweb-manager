@@ -57,3 +57,6 @@ Inventorier les composants réellement présents, réutiliser, ne pas introduire
 - Trois thèmes × trois densités, largeurs réduites et fenêtres détachées.
 - Test de navigation sans modification et avec brouillon ; validation en cours ; réponse tardive ; conflit de version ; erreur d'enregistrement ; fermeture et recharge ; retour vers fiche.
 - Le résultat d'un test de service n'est pas une certification visuelle : tests React/UI et scénarios natifs en supplément.
+
+## Confrontation initiale avec l'existant (09/10/2026)
+Voir [Lot 01 — matrice existant/cible](LOT-01-MATRICE-EXISTANT-CIBLE.md), inspection statique de `main@eb252d5c`. Les valeurs CSS **déjà implémentées** ne doivent pas être effacées par les propositions indicatives ci-dessus : compact = 15px/36px de hauteur contrôle ; Confort = 16px/42px ; Confort+ = 18px/48px. Cette divergence numérique **E01 est ouverte à arbitrage**. La protection UX-01 livrée en draft #83 offre « Rester / Quitter sans enregistrer » ; « Enregistrer et quitter » est une **cible ultérieure non livrée**, à intégrer sans deuxième registre.
