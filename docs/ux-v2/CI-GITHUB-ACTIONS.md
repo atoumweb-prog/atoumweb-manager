@@ -130,3 +130,13 @@ GitHub [PR #84](https://github.com/atoumweb-prog/atoumweb-manager/pull/84) affic
 **Conséquence décisionnelle :** la condition « vraie CI hébergée verte sur #84 » est désormais remplie. Demander la **revue du diff et de l'intégration** (éventuels warnings, permissions, changement de workflow, cohérence lockfile, sécurité des fixtures) puis une **autorisation humaine explicite** avant de fusionner #84 dans `main`. Après fusion autorisée, actualiser #81 puis #83 et valider les vraies branches/commits selon la procédure préparée par Codex ; pas de fusion automatique, aucun toucher Validation-MSI.
 
 **Note chronologique :** les états antérieurs « aucun run » et « CI rouge » ci-dessus décrivent uniquement les étapes passées du travail. L'état le plus récent de **#84** est **VERT AU RUN #589, NON FUSIONNÉ**.
+
+## 12. Retour Codex MSI — préparation d'intégration #81/#83 (09/10/2026)
+
+**Informations du rapport communiqué par AtoumWeb ; les simulations locales ne sont pas réexécutées ici :**
+- PR [#84](https://github.com/atoumweb-prog/atoumweb-manager/pull/84) : CI Windows-hosted verte sur **`f4bc0197`**, [run réel #589](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/37945827513), **698/698** et typecheck OK. Selon Codex, **une seule nouvelle exécution** a été autorisée/déclenchée, sans blocage de facturation signalé ; **solde exact inaccessible par API**.
+- Tests de restauration de [#81](https://github.com/atoumweb-prog/atoumweb-manager/pull/81) : timeout **RPC Vitest** reproduit localement même avec **un worker**, distinct des trois timeouts SQLite déjà corrigés dans #84. Codex propose de **rendre la main à la boucle d'événements après nettoyage** des tests, **sans changer assertions/timeouts**. **Correctif NON appliqué sur #81** au moment du rapport.
+- Simulations **sur copies isolées** après cette proposition : **68/68 tests ciblés, 787/787 tests combinés**, typecheck OK, **177/177 contrôles natifs sur trois thèmes**, intégrité/FK OK. **Ce ne sont pas des runs GitHub Actions sur #81 ni #83.**
+- Séquence préparée : **fusion #84 dans main UNIQUEMENT après consentement explicite AtoumWeb**, puis reprise de #81 avec correctif local et **sa propre CI réelle avant fusion**, puis #83 après résolution du conflit IPC de restauration et contrôles + **sa CI réelle**. Aucun merge/de données Validation-MSI signalé.
+
+**Vérification GitHub actuelle :** #84, #81 et #83 sont encore **draft et non fusionnées** (09/10/2026, consultation du connecteur). **Aucune autorisation de fusion déduite de la présente documentation ni du lancement du Lot 05 UX V2.**
