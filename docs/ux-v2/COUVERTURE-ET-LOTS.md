@@ -1,5 +1,8 @@
 # UX/UI V2 — Couverture fonctionnelle et stratégie de livraison
 
+> **État actuel prioritaire :** [Consolidation des 10 lots](CONSOLIDATION-TRANSVERSE-10-LOTS.md) • [Écarts transverses](REGISTRE-ECARTS-TRANSVERSES.md) • [Roadmap par dépendances](FEUILLE-DE-ROUTE-IMPLEMENTATION-UX-V2.md) • [Recette intégrée](MATRICE-RECETTE-ET-GATES-UX-V2.md). **1 069 cas projetés** dans 01A–10E et 07P, non exécutés. **#84 fusionnée**, **#81 non fusionnée (correctif local `50f2b40` en attente du push/CI autorisés)**, **#83 draft en conflit**. Les paragraphes CI plus bas documentent des étapes **historiques** et ne remplacent pas ce point de situation.
+
+
 **Référence de comparaison** : `docs/ux-audit/02-CARTOGRAPHIE-ECRANS.md`, `03-INTERACTIONS.md`, `07-REGLES-METIER-A-PRESERVER.md` sur `docs/ux-audit-manager-v1`. Audit ancré au code `eb252d5c...` ; pas certification du HEAD actuel.
 
 ## Couverture des 17 modules
@@ -78,22 +81,22 @@ L'audit a un index d'environ 84 fichiers React, **pas 84 écrans uniques**, et d
 
 En particulier : décision UX-02 nouveaux abonnements manuels ; édition Word avec fidélité des formats ; rubriques finales de CGV ; inventaire des offres/catégories existantes ; disponibilité de Bridge ; états de réouverture des interventions et projets.
 
-## Dépendance CI — rapport Codex du 09/10/2026
+## Historique CI — rapport Codex avant fusion #84 (supplanté)
 Le workflow `.github/workflows/ci.yml` du code de référence requiert un runner self-hosted Windows X64 et n'a pas de runner correspondant selon le rapport Codex. Passage recommandé **mais non validé par AtoumWeb** vers GitHub-hosted Windows (ex. `windows-2022`), `npm ci` et exécution à deux workers, dans une PR **séparée**. Voir [CI-GITHUB-ACTIONS.md](CI-GITHUB-ACTIONS.md). Les quotas/coûts du compte restent à vérifier. **Aucune fusion, installation ou configuration CI n'est autorisée par cette documentation.**
 
 ## Fondations — couverture documentaire
 Les six spécifications **01A–01F** sont détaillées dans [Lot 01 — Fondations](LOT-01-FONDATIONS.md) et ses liens. Uniquement **documentation de conception** : cette couverture ne confirme ni une implémentation, ni une recette UX des 17 modules. Le Lot 01F impose un **atelier de démonstration isolé** ; le `DemoPanel` métier existant utilise de vraies APIs de création/réinitialisation, à ne pas détourner pour une recette de composants.
 
 ## Lot 02 — État documentaire (09/10/2026)
-[Spécification Navigation/Accueil 02A–02E](LOT-02-NAVIGATION-ACCUEIL.md) et [matrice code→cible](LOT-02-MATRICE-EXISTANT-CIBLE.md) enregistrées. **22 scénarios projetés** et 14 écarts E28–E41, non exécutés. Les constats de code ciblent `main@eb252d5c` : `App.tsx`, recherche, événements globaux, HomeDashboard et CSS, GlobalTimer. Les 17 modules doivent rester accessibles ; protéger les formulaires via UX-01. Les autres lots métiers garderont leur propre inventaire écran→handler→IPC→service→test.
+[Spécification Navigation/Accueil 02A–02E](LOT-02-NAVIGATION-ACCUEIL.md) et [matrice code→cible](LOT-02-MATRICE-EXISTANT-CIBLE.md) enregistrées. **22 scénarios de synthèse dans l'ancien fichier général ; 94 dans 02A–02E (comptage consolidé sans double total)** et 14 écarts E28–E41, non exécutés. Les constats de code ciblent `main@eb252d5c` : `App.tsx`, recherche, événements globaux, HomeDashboard et CSS, GlobalTimer. Les 17 modules doivent rester accessibles ; protéger les formulaires via UX-01. Les autres lots métiers garderont leur propre inventaire écran→handler→IPC→service→test.
 
-## CI — préparation PR #84
+## Historique CI — préparation de la PR #84 (désormais fusionnée)
 Workflow Windows GitHub-hosted publié en [PR #84](https://github.com/atoumweb-prog/atoumweb-manager/pull/84), draft non fusionnée ; **aucun run réellement effectué**, `[skip ci]`. Bloqué en attendant vérification humaine du quota Actions et des budgets de dépenses, hors portée du token Codex. Ne pas déclarer la CI verte.
 
 ## Lot 02 — Spécification des composants 02A/02B
 [02A Rail et favoris](LOT-02A-RAIL-NAVIGATION.md) : 17 modules, **rail réduit option A validée par AtoumWeb (E42 clos)** : Accueil + favoris + cinq groupes, 18 cas. [02B En-tête et raccourcis](LOT-02B-ENTETE-RACCOURCIS.md) : recherche/chrono accessibles, repli du header, 16 cas. Documentation sans code applicatif ni résultats de recette. Les sous-lots 02C–02E restent à détailler.
 
-## CI #84 — mise à jour
+## Historique CI #84 — premier run avant fusion
 Le premier [run #549](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/37934890745) a effectivement exécuté le job `quality` sur Windows hébergé : install + typecheck OK, **3 tests timeout de 5 secondes**, 692/695 réussis ; **CI failure**, #84 draft non fusionnée. Enquête/test ciblés avant merge, détails dans [CI-GITHUB-ACTIONS.md](CI-GITHUB-ACTIONS.md).
 
 ## Clôture documentaire Lot 02
