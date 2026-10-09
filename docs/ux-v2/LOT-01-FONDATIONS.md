@@ -115,3 +115,6 @@ Conséquences pour 01E :
 Point **E01 à arbitrer** : le socle CSS actuel utilise 15/16/18px selon la densité et des hauteurs de contrôle 36/42/48px. Les anciennes cibles numériques 14–15px et 34–38px étaient **indicatives**, pas un ordre de réduction générale ; préserver les réglages existants en attendant validation.
 
 L'exécution ne peut pas commencer uniquement sur la base de ce fichier : vérifier les HEAD des PR #80/#81/#83, réaliser la recette comparative et arrêter E01–E04 selon leur incidence réelle.
+
+### Spécification du sous-lot 01A
+[LOT-01A-TOKENS-VISUELS.md](LOT-01A-TOKENS-VISUELS.md) : ordre d'exécution exact, mapping des fichiers CSS existants, seuils de lisibilité et critères d'acceptation, sans autorisation de développement.
