@@ -34,6 +34,16 @@ Correctif de la **recette seulement**, sans modifier `src/main` :
 
 **Hypothèses non encore départagées :** fermeture sans aucune fenêtre dans l'ancienne fixture et/ou handles de sortie Windows encore ouverts. Aucun défaut de la fermeture réelle du Manager n'est établi à ce stade. Exécution réelle de ce nouveau correctif **encore en attente**.
 
+## Deuxième résultat Windows — source SQLite annexe (10/10/2026)
+
+Sur `f42b763`, la sortie native a prouvé `before-quit=1` et `will-quit=1`. Le gestionnaire a **refusé à juste titre** la programmation avec « La source possède des fichiers SQLite annexes ». Aucun marqueur n'a été créé ; le script a échoué explicitement avec code 1 et a nettoyé sa fixture. Ce refus constitue une réussite du garde UX-16, **pas une réussite du parcours de restauration**.
+
+Cause circonscrite au harness : `DatabaseService.createBackup('manual')` utilise l'API `node:sqlite.backup` et la source retenue par le script était accompagnée d'un fichier `-wal`, `-shm` ou `-journal`. Le script n'avait pas construit la copie indépendante/autonome exigée par `validateRestoreSource`.
+
+**Correctif de recette :** créer la sauvegarde réelle, l'ouvrir via une connexion SQLite en lecture seule, exporter une **copie autonome** avec `VACUUM INTO ?`, fermer le lecteur, refuser tout fichier annexe résiduel sur la nouvelle copie, puis valider sa compatibilité via `validateRestoreSource` (66 migrations). **Aucune suppression manuelle des journaux WAL/SHM ni affaiblissement du validateur métier.** Les étapes suivantes de la recette utilisent cette copie propre, toujours sous TEMP.
+
+**Contrôles réalisés avant le prochain essai Windows :** syntaxe JavaScript du script OK ; essai isolé réel `node:sqlite` sous Node 22.16.0 : source exportée en lecture seule par `VACUUM INTO`, valeur restaurable `before`, intégrité `ok`, aucun annexe sur l'export. **Ce test isolé n'est pas la recette multi-processus Electron du Manager**, qui reste à exécuter sur ce nouveau commit.
+
 ## Ce que cette recette ne prouve pas
 
 **Il s'agit de cinq processus Electron natifs exerçant les services réels, mais pas de l'exécutable packagé installé.** Elle ne prétend donc pas confirmer le vrai `app.relaunch()` du MSI, la fenêtre graphique complète, ni le chemin `app.isPackaged` de l'IPC en conditions de distribution. Les 183 contrôles natifs 3 thèmes réalisés séparément couvrent les interactions React/Electron, sans constituer cette preuve packagée.
