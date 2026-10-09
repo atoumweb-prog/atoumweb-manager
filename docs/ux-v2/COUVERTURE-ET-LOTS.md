@@ -77,3 +77,6 @@
 L'audit a un index d'environ 84 fichiers React, **pas 84 écrans uniques**, et déclare sa matrice non exhaustive. Avant chaque lot, réaliser le relevé de ses handlers, IPC, services, retours d'erreurs, états et raccourcis, puis ajouter à ce référentiel les IDs `UX2-MODULE-NNN` correspondants. Ne pas prétendre qu'une simple liste couvre tous les boutons.
 
 En particulier : décision UX-02 nouveaux abonnements manuels ; édition Word avec fidélité des formats ; rubriques finales de CGV ; inventaire des offres/catégories existantes ; disponibilité de Bridge ; états de réouverture des interventions et projets.
+
+## Dépendance CI — rapport Codex du 09/10/2026
+Le workflow `.github/workflows/ci.yml` du code de référence requiert un runner self-hosted Windows X64 et n'a pas de runner correspondant selon le rapport Codex. Passage recommandé **mais non validé par AtoumWeb** vers GitHub-hosted Windows (ex. `windows-2022`), `npm ci` et exécution à deux workers, dans une PR **séparée**. Voir [CI-GITHUB-ACTIONS.md](CI-GITHUB-ACTIONS.md). Les quotas/coûts du compte restent à vérifier. **Aucune fusion, installation ou configuration CI n'est autorisée par cette documentation.**
