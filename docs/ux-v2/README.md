@@ -114,7 +114,7 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 - **PR #84 reste non exécutée et non fusionnée**. Exécution autorisée seulement après feu vert explicite AtoumWeb, même avec dépassements payants bloqués.
 
 ### Lot 02A — Rail, groupes et favoris
-- [Spécification détaillée 02A](LOT-02A-RAIL-NAVIGATION.md) : carte de **17 destinations et leurs icônes proposées**, conservation des clés internes, rail visible en réduit, groupes et favoris, gardes de sortie UX-01, **18 tests proposés**. **Arbitrage E42 OUVERT** : rail réduit **A = groupes et favoris** (recommandé) ou **B = les 17 icônes directes**. Aucune option n'est acceptée implicitement.
+- [Spécification détaillée 02A](LOT-02A-RAIL-NAVIGATION.md) : carte de **17 destinations et leurs icônes proposées**, conservation des clés internes, rail visible en réduit, groupes et favoris, gardes de sortie UX-01, **18 tests proposés**. **Arbitrage E42 VALIDÉ par AtoumWeb : option A**, rail réduit **Accueil + favoris + cinq groupes**, sous-navigation au clic ; accès aux 17 modules en déployé. L'option B n'est pas retenue ; la recette et les icônes précises restent à faire.
 ### Lot 02B — En-tête et raccourcis
 - [Spécification détaillée 02B](LOT-02B-ENTETE-RACCOURCIS.md) : garde du **chrono global unique**, repli de l'en-tête sans cacher le chrono ni la recherche, bandeau Bibliothèque indépendant, audit des raccourcis, **16 tests proposés**. La réduction du header est cible V2, **non existante dans le code de comparaison**.
 
