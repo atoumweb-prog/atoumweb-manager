@@ -1,6 +1,19 @@
 # UX-01 × UX-16 — Recette **packagée** isolée (`app.isPackaged` / `app.relaunch`)
 
-**Statut : préparation du harness vérifiée statiquement le 10/10/2026 ; aucune exécution packagée Windows n'a encore été réalisée.** Les résultats Windows `12/12` de la recette [multi-processus native](UX01_RESTORE_QUIT_ROUNDTRIP.md) ne prouvent pas ce nouveau parcours : les deux recettes sont complémentaires.
+**Statut : recette packagée indépendante exécutée avec succès sur Windows le 10/10/2026** au commit `61786e1f5449cf93d4272458480b302ad2dc4bde`, sans Codex ni CI GitHub. Les résultats `12/12` de la recette [multi-processus native](UX01_RESTORE_QUIT_ROUNDTRIP.md) constituent une validation distincte et complémentaire.
+
+## Résultats Windows réels — recette packagée réussie
+
+**Exécution transmise par AtoumWeb, au SHA `61786e1` :**
+
+- `[UX01 packaged runner] Packaged fixture ready. Version: 44.3.0`
+- **Scénario accepté : PASS.** Premier PID **9924** ; `isPackaged:true`, `ipc-scheduled restartScheduled:true`, `before-quit` puis `will-quit` une fois, `markerCommitted:true`, `dbOpen:false`. `app.relaunch()` a créé le **second PID 4976** ; `accepted-relaunch-pass restored:true`, `distinctPid:true`, `safetyBackup:true`.
+- **Scénario refusé : PASS.** Premier PID **27704** ; `ipc-scheduled restartScheduled:true`, `before-quit` une fois, `refused-quit-pass beforeQuitCount:1 willQuitCount:0 markerAbsent:true`. Démarrage manuel contrôlé depuis le PID **10500** : `refused-restart-pass restored:false`.
+- Bilan exact : `SUCCESS: independent packaged app, real IPC, app.relaunch, SQLite restore and refusal.` et **`Fixture cleaned: true`** ; aucun échec indiqué.
+
+**Portée démontrée :** application Electron *réellement packagée* dans TEMP, gestionnaire IPC de production, chemin `app.isPackaged`, relance automatique entre **deux PID distincts**, sauvegarde `pre-restore`, et refus de sortie sans restauration. La copie d'essai ne lance **pas** le `main.ts` complet ni la distribution Forge finale ; aucune certification de l'installateur n'en découle.
+
+**Contexte des précédentes validations Windows :** `88efb788` typecheck OK, **801/801** tests et **183/183** contrôles Electron trois thèmes ; `dbfd0e2` recette native **12/12** sur cinq étapes. Entre ces SHA et `61786e1`, pas de modification de `src/` (seulement scripts et documentation). Ne pas transformer ces validations distinctes en CI GitHub du HEAD courant.
 
 ## Exécution, sans Codex et sans GitHub Actions
 
@@ -28,7 +41,7 @@ Ce test **peut télécharger le zip Electron** via `@electron/packager` si son c
 - Les boîtes de dialogue **du test seulement** choisissent la source TEMP et autorisent la confirmation ; le code IPC métier ne change pas.
 - **Acceptation :** appel réel à `backups:restore` en mode packagé, `app.quit()` issu du timer réel, `will-quit` et programmation du marqueur, **`app.relaunch()` réel sans intervention du parent**, second PID packagé vérifié, application de la sauvegarde `before`, copie `pre-restore` contenant `after`, intégrité SQLite/FK et disparition du marqueur.
 - **Refus :** après confirmation de l'IPC, le test signale un **enregistrement pending** dans la fenêtre, avant le timer de fermeture. `before-quit` refuse alors la fermeture ; `will-quit` ne doit pas se produire, la fenêtre et SQLite restent ouvertes, et aucun marqueur n'est présent. Le parent relance ensuite volontairement le binaire de recette : `restored:false` et l'état `after` sont exigés.
-- Un résultat valide est la présence de la ligne `SUCCESS`, des deux scénarios réussis, puis de `Fixture cleaned: true` avec un code de sortie 0. **Aucun résultat d'essai n'est encore acquis.**
+- Un résultat valide est la présence de la ligne `SUCCESS`, des deux scénarios réussis, puis de `Fixture cleaned: true` avec un code de sortie 0. **Les deux scénarios sont maintenant confirmés sur Windows au commit `61786e1`.**
 
 ## Échec et nettoyage
 
@@ -40,7 +53,7 @@ Il s'agit bien d'un **exécutable temporaire réellement packagé** vérifiant `
 
 Les tests antérieurs sur `88efb788` (typecheck, **801/801**, **183/183**) et sur `dbfd0e2` (recette native **12/12**, **5/5**, cleanup) sont acquis sur Windows ; ces nouveaux fichiers de test n'étaient pas présents à ces SHA. Ne pas fusionner #83 sans vérification du nouveau test et une décision explicite sur la CI finale et la couverture du binaire de production.
 
-**Fichiers ajoutés :**
+**Fichiers du banc d'essai :**
 - `scripts/check-ux01-packaged-relaunch.cjs` — orchestrateur, packaging isolé et audit.
 - `scripts/fixtures/ux01-packaged-main.cjs` — point d'entrée de l'exécutable temporaire.
 - `scripts/fixtures/ux01-packaged-preload.cjs` — IPC minimal de la recette.
