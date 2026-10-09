@@ -1,5 +1,14 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 10/10/2026 — Validation Windows du parcours natif restauration/fermeture UX-01 × UX-16
+
+- **Révision testée :** `prep/ux01-restore-quit-gate-v2@dbfd0e2f2171f6f66b222e2b7cc1256649af1490`. Exécution PowerShell `node --check scripts/check-restore-quit-roundtrip.cjs` OK ; `node scripts/check-restore-quit-roundtrip.cjs` **12/12 contrôles, 5/5 processus Electron, 0 échec, `Fixture cleaned: true`**.
+- Quit accepté : vrais événements Electron `before-quit=1`, `will-quit=1`, fermeture de la fenêtre et de SQLite, marqueur `pending` créé seulement après acceptation. Nouveau processus : `restored:true`, source conforme 66 migrations, sauvegarde `pre-restore`, marqueur consommé. Deuxième lancement : `restored:false` sans rejeu.
+- Quit refusé pendant un enregistrement : `before-quit=1`, **pas de `will-quit`**, fenêtre et SQLite conservées, aucun marqueur ; démarrage suivant : `restored:false`, données conservées. Scripts confinés à des workspaces TEMP isolés, effacés à la fin.
+- **Comparaison Git :** depuis `88efb788` (801/801 tests, typecheck, 183/183 natifs 3 thèmes validés localement), seuls les scripts de recette et la documentation ont évolué ; aucun fichier de production `src/` ni migration changé.
+- **Limite restante :** la recette 5 processus emploie Electron natif avec les vrais services, **pas le binaire distribué en mode `app.isPackaged` et son `app.relaunch()` réel**. Pas de CI combinée sur le HEAD, ni de validation de l'exécutable packagé, ni de fusion. [Protocole / limites](docs/UX01_RESTORE_QUIT_ROUNDTRIP.md).
+- `main`, PR officielles #82/#83 et Validation-MSI non modifiés ; #83 reste draft.
+
 ## 10/10/2026 — Recette de restauration de bout en bout préparée sur branche isolée UX-01
 
 - AtoumWeb a vérifié `prep/ux01-restore-quit-gate-v2@88efb788` sur Windows : typecheck OK, **31/31** ciblés, **801/801** tests complets dans 87 fichiers et **183/183** contrôles natifs sur les trois thèmes ; fixtures supprimées. Aucune CI GitHub ni recette d'exécutable packagé revendiquée.
