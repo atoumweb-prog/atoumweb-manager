@@ -199,3 +199,12 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 - [08E — Chrono global, temps et rapports](LOT-08E-CHRONO-TEMPS-RAPPORTS.md) : timer unique, reprise, changement transactionnel de contexte, corrections, catégorie métier et facturabilité, 19 scénarios.
 - [08F — Recette et intégration](LOT-08F-RECETTE-ET-INTEGRATION.md) : 26 tests transversaux et contrôles SQL/métier/UX.
 - **Bilan documentaire : six sous-lots 08A–08F, 109 scénarios futurs non exécutés**, aucun code, migration, Intervention, Pack ni abonnement modifié. **UX-02/UX-03 restent des écarts à traiter**, pas des fonctionnalités déjà certifiées. Les commits documentaires utilisent `[skip ci]` pour éviter de relancer la CI sur chaque Markdown.
+
+### Lot 09 — Facturation, Dépenses et Documents (09/10/2026)
+- [09A — Audit du code et des sources](LOT-09A-AUDIT-FINANCES-DOCUMENTS.md) : facturation Abby, dépenses, documents/empreintes, protection des pièces, 14 scénarios.
+- [09B — Facturation et suivi Abby](LOT-09B-FACTURATION-ABBY.md) : sources et statuts réels, PDF officiel importé, référence/date, **aucun encaissement inventé**, 17 scénarios.
+- [09C — Dépenses et échéances](LOT-09C-DEPENSES-ECHEANCES.md) : formulaire progressif, fournisseurs/TVA/récurrence, justificatif et **historique de versions à développer**, 17 scénarios.
+- [09D — Documents et archives](LOT-09D-DOCUMENTS-ARCHIVES-PREUVES.md) : quatre portes de navigation cibles, conservation, recherche, SHA, suppression protégée, 18 scénarios.
+- [09E — Word, comparaison et PDF](LOT-09E-WORD-PDF-ALLER-RETOUR.md) : **aller-retour DOCX futur**, diff de brouillons et validation humaine; Devis gelés non modifiables, 17 scénarios.
+- [09F — Recette transversale](LOT-09F-RECETTE-ET-INTEGRATION.md) : 25 scénarios, tests SQLite/fichiers temporaires, UX-01 et revue humaine.
+- **Bilan : 09A–09F documentés, 108 tests FUTURS non exécutés.** Écart **E259 critique** : les PDF factures liés à billing_items ne sont pas protégés explicitement contre la suppression définitive comme les PDF de Devis; E258 versions des justificatifs Dépenses; E260 export/édition/import Word non livré. Aucun code/fichier Client/paiement modifié; commits documentaires **[skip ci]**.
