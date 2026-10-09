@@ -1,3 +1,5 @@
+import {mergeDraft} from '../../shared/draftSection';
+import {useUnsavedDraft} from '../unsaved/unsaved';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CatalogItemSummary, QuoteDetail } from '../../shared/commercial';
 import { commercialAbbyBlock } from '../../shared/commercialAbby';
@@ -51,6 +53,11 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   const editable = quote.status === 'draft' && !quote.finalizedAt && !quote.contractCompiledAt && quote.contractTextSnapshot == null && quote.contractSnapshotJson == null;
   const unsaved=build?.clauses.some(c=>drafts[c.id]&&(drafts[c.id].title!==c.title||drafts[c.id].body!==c.body))??false;
 
+  useUnsavedDraft('Clauses du contrat',drafts,{ready:!!build,dirty:unsaved,pending:busy,discard:()=>setDrafts(Object.fromEntries((build?.clauses??[]).map(c=>[c.id,{title:c.title,body:c.body}])))});
+  const customGuard=useUnsavedDraft('Nouvelle clause',{customTitle,customBody},{pending:busy,discard:s=>{setCustomTitle(s.customTitle);setCustomBody(s.customBody);}});
+  const templateGuard=useUnsavedDraft('Modèle ou version de clause',{templateCode,templateTitle,templateScope,templateAudience,templateBody},{pending:busy,discard:s=>{setTemplateCode(s.templateCode);setTemplateTitle(s.templateTitle);setTemplateScope(s.templateScope);setTemplateAudience(s.templateAudience);setTemplateBody(s.templateBody);}});
+  const changedVersionEditors=Object.fromEntries(Object.entries(versionEditors).filter(([id,body])=>body!==undefined&&body!==templates.flatMap(t=>t.versions).find(v=>v.id===id)?.body));
+  useUnsavedDraft('Version de clause',changedVersionEditors,{pending:busy,discard:()=>setVersionEditors(Object.fromEntries(Object.keys(versionEditors).map(id=>[id,templates.flatMap(t=>t.versions).find(v=>v.id===id)?.body])))});
   const counts = useMemo(() => {
     const clauses = build?.clauses ?? [];
     return {
@@ -60,14 +67,14 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     };
   }, [build]);
 
-  function setBuildAndDrafts(next: QuoteContractBuild): void {
+  function setBuildAndDrafts(next: QuoteContractBuild,saved?:{id:string;draft:ClauseDraft}): void {
     setBuild(next);
     const request=++presentationRequest.current;
     setPresentation(null);
     void window.atoumweb.contractTerms.quotes.presentation(quote.id).then(value=>{if(request===presentationRequest.current)setPresentation(value);}).catch(e=>{if(request===presentationRequest.current)setError(errorMessage(e));});
-    setDrafts(Object.fromEntries(next.clauses.map((clause) => [
+    setDrafts(current=>Object.fromEntries(next.clauses.map((clause) => [
       clause.id,
-      { title: clause.title, body: clause.body },
+      (()=>{const old=build?.clauses.find(c=>c.id===clause.id);const remote={title:clause.title,body:clause.body};const baseline=saved?.id===clause.id?saved.draft:old?{title:old.title,body:old.body}:remote;return mergeDraft(baseline,current[clause.id]??baseline,remote).value;})(),
     ])));
   }
 
@@ -100,13 +107,13 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     void load();
   }, [quote.id, quote.status, quote.finalizedAt, quote.contractCompiledAt, quote.updatedAt]);
 
-  async function run(action: () => Promise<QuoteContractBuild>): Promise<void> {
+  async function run(action: () => Promise<QuoteContractBuild>,saved?:{id:string;draft:ClauseDraft}): Promise<boolean> {
     setBusy(true);
     setError('');
     try {
-      setBuildAndDrafts(await action());
+      setBuildAndDrafts(await action(),saved);return true;
     } catch (cause) {
-      setError(errorMessage(cause));
+      setError(errorMessage(cause));return false;
     } finally {
       setBusy(false);
     }
@@ -122,7 +129,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     await run(() => window.atoumweb.contractTerms.quotes.updateClause(clause.id, {
       title: draft.title,
       body: draft.body,
-    }));
+    }),{id:clause.id,draft});
   }
 
   async function toggleClause(clause: QuoteContractClause): Promise<void> {
@@ -152,10 +159,10 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
       setError('Renseigne le titre de la clause particulière.');
       return;
     }
-    await run(() => window.atoumweb.contractTerms.quotes.addCustom(quote.id, {
+    if(!await run(() => window.atoumweb.contractTerms.quotes.addCustom(quote.id, {
       title: customTitle,
       body: customBody,
-    }));
+    })))return;
     setCustomTitle('');
     setCustomBody('');
     setShowCustom(false);
@@ -347,7 +354,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
           : <div className="cgv-custom-form">
               <label>Titre<input value={customTitle} onChange={(event) => setCustomTitle(event.target.value)} placeholder="Ex. Livraison en deux phases" /></label>
               <label>Texte<textarea value={customBody} onChange={(event) => setCustomBody(event.target.value)} /></label>
-              <div><button className="primary-button" type="button" disabled={busy} onClick={() => void addCustom()}>Ajouter au devis</button><button className="secondary-button" type="button" onClick={() => setShowCustom(false)}>Annuler</button></div>
+              <div><button className="primary-button" type="button" disabled={busy} onClick={() => void addCustom()}>Ajouter au devis</button><button className="secondary-button" type="button" onClick={() => {customGuard.discard();setShowCustom(false);}}>Annuler</button></div>
             </div>}
       </div>}
 

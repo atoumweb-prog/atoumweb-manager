@@ -1,3 +1,4 @@
+import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { useEffect, useMemo, useState } from 'react';
 import type { ActivityEvent, CrmAction, ProspectSummary } from '../../shared/crm';
 import type { WorkflowIdentity } from '../../shared/workflow';
@@ -146,6 +147,10 @@ export function ProspectActionsPanel({ prospect, actions, onChanged }: {
   const [nextNotes, setNextNotes] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [creationCycle,setCreationCycle]=useState(0);
+  const actionGuard=useUnsavedDraft('Action ou relance',{preset,title,targetContactId,reasonCode,reasonText,dueDate,dueTime,notes,recurrence},{ready:createOpen,retainWhenHidden:true,resetKey:creationCycle,pending:busy,discard:s=>{setPreset(s.preset);setTitle(s.title);setTargetContactId(s.targetContactId);setReasonCode(s.reasonCode);setReasonText(s.reasonText);setDueDate(s.dueDate);setDueTime(s.dueTime);setNotes(s.notes);setRecurrence(s.recurrence);}});
+  const completeGuard=useUnsavedDraft('Compte rendu d’action',{channel,outcome,completionNotes,programNext,nextTitle,nextTargetContactId,nextReasonCode,nextReasonText,nextDate,nextTime,nextNotes},{ready:!!completingId,resetKey:completingId,pending:busy,discard:s=>{setChannel(s.channel);setOutcome(s.outcome);setCompletionNotes(s.completionNotes);setProgramNext(s.programNext);setNextTitle(s.nextTitle);setNextTargetContactId(s.nextTargetContactId);setNextReasonCode(s.nextReasonCode);setNextReasonText(s.nextReasonText);setNextDate(s.nextDate);setNextTime(s.nextTime);setNextNotes(s.nextNotes);}});
+
 
   useEffect(() => {
     void Promise.all([
@@ -237,7 +242,7 @@ export function ProspectActionsPanel({ prospect, actions, onChanged }: {
         relatedType: quoteContext && latestQuote ? 'quote' : null,
         relatedId: quoteContext && latestQuote ? latestQuote.id : null, recurrence,
       });
-      setCreateOpen(false); setDueDate(''); setDueTime(''); setNotes(''); setReasonText(''); setRecurrence('none');
+      actionGuard.saved();setCreationCycle(n=>n+1);setCreateOpen(false); setDueDate(''); setDueTime(''); setNotes(''); setReasonText(''); setRecurrence('none');
       onChanged(followUp ? 'Rappel / relance programmé.' : 'Action commerciale ajoutée.');
       window.dispatchEvent(new Event('atoumweb:changed'));
     } catch (e) { setError(cleanError(e)); }
@@ -265,7 +270,7 @@ export function ProspectActionsPanel({ prospect, actions, onChanged }: {
         await window.atoumweb.crm.prospects.updateQualification(prospect.id, { lostReasonCode: 'categorical_refusal' });
         await window.atoumweb.crm.prospects.changeStage(prospect.id, 'lost', 'Refus catégorique');
       }
-      setCompletingId(null); setCompletionNotes(''); resetNext();
+      completeGuard.saved();setCompletingId(null); setCompletionNotes(''); resetNext();
       onChanged(outcome === 'categorical_refusal' ? 'Refus enregistré et prospect classé comme perdu.' : 'Action terminée et enregistrée dans l’historique.');
       window.dispatchEvent(new Event('atoumweb:changed'));
     } catch (e) { setError(cleanError(e)); }
@@ -292,43 +297,43 @@ export function ProspectActionsPanel({ prospect, actions, onChanged }: {
       {createOpen && <div className="inline-editor">
         <strong>Programmer une action</strong>
         <div className="action-editor-grid">
-          <label>Action<select value={preset} onChange={(e) => selectPreset(e.target.value)}>{presets.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
-          <label>À qui ?<select value={targetContactId} onChange={(e) => setTargetContactId(e.target.value)}><option value="">Prospect / entreprise</option>{contactOptions.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-          <label>Pourquoi ?<select value={reasonCode} onChange={(e) => setReasonCode(e.target.value)}>{reasons.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
-          {reasonCode === 'other' && <label>Préciser le motif<input value={reasonText} onChange={(e) => setReasonText(e.target.value)} /></label>}
-          <label className="span-2">Objet<input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Action à réaliser" /></label>
-          <label>Date<input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></label>
-          <label>Heure <small>(facultative)</small><input type="time" value={dueTime} onChange={(e) => setDueTime(e.target.value)} /></label>
-          <label className="span-all">Contexte / note<textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Ce qu’il faut savoir au moment du rappel ou de l’action…" /></label>
+          <label>Action<select value={preset} onChange={(e) => selectPreset(e.target.value)} disabled={busy}>{presets.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
+          <label>À qui ?<select value={targetContactId} onChange={(e) => setTargetContactId(e.target.value)} disabled={busy}><option value="">Prospect / entreprise</option>{contactOptions.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+          <label>Pourquoi ?<select value={reasonCode} onChange={(e) => setReasonCode(e.target.value)} disabled={busy}>{reasons.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
+          {reasonCode === 'other' && <label>Préciser le motif<input value={reasonText} onChange={(e) => setReasonText(e.target.value)} disabled={busy} /></label>}
+          <label className="span-2">Objet<input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Action à réaliser" disabled={busy} /></label>
+          <label>Date<input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} disabled={busy} /></label>
+          <label>Heure <small>(facultative)</small><input type="time" value={dueTime} onChange={(e) => setDueTime(e.target.value)} disabled={busy} /></label>
+          <label className="span-all">Contexte / note<textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Ce qu’il faut savoir au moment du rappel ou de l’action…" disabled={busy} /></label>
         </div>
         {quoteContext && latestQuote && <small className="muted">Lié à {latestQuote.number} · {latestQuote.subject}</small>}
-        <details><summary>Options avancées</summary><label>Récurrence<select value={recurrence} onChange={(e) => setRecurrence(e.target.value as typeof recurrence)}>{RECURRENCES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label></details>
-        <div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => setCreateOpen(false)}>Annuler</button><button className="primary-button" type="button" disabled={busy} onClick={() => void createAction()}>Enregistrer l’action</button></div>
+        <details><summary>Options avancées</summary><label>Récurrence<select value={recurrence} onChange={(e) => setRecurrence(e.target.value as typeof recurrence)} disabled={busy}>{RECURRENCES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label></details>
+        <div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => {actionGuard.discard();setCreateOpen(false);}}>Annuler</button><button className="primary-button" type="button" disabled={busy} onClick={() => void createAction()}>Enregistrer l’action</button></div>
       </div>}
 
       {openActions.length === 0 ? <p className="muted">Aucune action en cours.</p> : <div className="work-items">{openActions.map((action) => <div className="work-item action-work-item" key={action.id}>
-        <button className="work-check" type="button" title="Terminer" onClick={() => { const opening = completingId !== action.id; setCompletingId(opening ? action.id : null); if (opening) { setOutcome('prospect_reached'); setCompletionNotes(''); resetNext(); } }}>✓</button>
+        <button className="work-check" type="button" title="Terminer" onClick={() => completeGuard.request(() => { const opening = completingId !== action.id; setCompletingId(opening ? action.id : null); if (opening) { setOutcome('prospect_reached'); setCompletionNotes(''); resetNext(); } })}>✓</button>
         <div className="work-item-main"><strong>{action.title}</strong><small>{action.type === 'follow_up' ? 'Rappel / relance' : 'Action'} · {date(action.dueAt)} · {contactLabel(action.targetContactId)}{reasonLabel(action.reasonCode, action.reasonText) ? ` · ${reasonLabel(action.reasonCode, action.reasonText)}` : ''}{action.notes ? ` · ${action.notes}` : ''}</small></div>
         <button className="secondary-button compact-button" type="button" disabled={busy} onClick={() => void cancelAction(action)}>Annuler</button>
         {completingId === action.id && <div className="inline-editor action-completion-editor">
           <strong>Terminer : {action.title}</strong>
           <div className="action-editor-grid">
-            <label>Canal<select value={channel} onChange={(e) => setChannel(e.target.value)}>{CHANNELS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
-            <label className="span-2">Résultat<select value={outcome} onChange={(e) => selectOutcome(e.target.value, action)}>{OUTCOMES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
-            <label className="span-all">Compte rendu<textarea value={completionNotes} onChange={(e) => setCompletionNotes(e.target.value)} placeholder="Ce qui s’est passé, ce qui a été convenu, information utile…" /></label>
+            <label>Canal<select value={channel} onChange={(e) => setChannel(e.target.value)} disabled={busy}>{CHANNELS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
+            <label className="span-2">Résultat<select value={outcome} onChange={(e) => selectOutcome(e.target.value, action)} disabled={busy}>{OUTCOMES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
+            <label className="span-all">Compte rendu<textarea value={completionNotes} onChange={(e) => setCompletionNotes(e.target.value)} placeholder="Ce qui s’est passé, ce qui a été convenu, information utile…" disabled={busy} /></label>
           </div>
           {outcome === 'categorical_refusal' && <p className="form-error">Le prospect sera classé « Perdu » avec le motif « Refus catégorique ». Aucune relance ne sera créée automatiquement.</p>}
-          {outcome !== 'categorical_refusal' && <label className="check-option"><input type="checkbox" checked={programNext} onChange={(e) => setProgramNext(e.target.checked)} />Programmer une suite</label>}
+          {outcome !== 'categorical_refusal' && <label className="check-option"><input type="checkbox" checked={programNext} onChange={(e) => setProgramNext(e.target.checked)} disabled={busy} />Programmer une suite</label>}
           {programNext && outcome !== 'categorical_refusal' && <div className="action-followup-grid">
-            <label className="span-2">Action suivante<input value={nextTitle} onChange={(e) => setNextTitle(e.target.value)} placeholder="Ex. rappeler le décisionnaire" /></label>
-            <label>À qui ?<select value={nextTargetContactId} onChange={(e) => setNextTargetContactId(e.target.value)}><option value="">Prospect / entreprise</option>{contactOptions.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-            <label>Pourquoi ?<select value={nextReasonCode} onChange={(e) => setNextReasonCode(e.target.value)}>{GENERAL_REASONS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
-            {nextReasonCode === 'other' && <label className="span-2">Préciser le motif<input value={nextReasonText} onChange={(e) => setNextReasonText(e.target.value)} /></label>}
-            <label>Date<input type="date" value={nextDate} onChange={(e) => setNextDate(e.target.value)} /></label>
-            <label>Heure <small>(facultative)</small><input type="time" value={nextTime} onChange={(e) => setNextTime(e.target.value)} /></label>
-            <label className="span-all">Contexte / note<input value={nextNotes} onChange={(e) => setNextNotes(e.target.value)} placeholder="Ex. le décisionnaire revient jeudi matin" /></label>
+            <label className="span-2">Action suivante<input value={nextTitle} onChange={(e) => setNextTitle(e.target.value)} placeholder="Ex. rappeler le décisionnaire" disabled={busy} /></label>
+            <label>À qui ?<select value={nextTargetContactId} onChange={(e) => setNextTargetContactId(e.target.value)} disabled={busy}><option value="">Prospect / entreprise</option>{contactOptions.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+            <label>Pourquoi ?<select value={nextReasonCode} onChange={(e) => setNextReasonCode(e.target.value)} disabled={busy}>{GENERAL_REASONS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
+            {nextReasonCode === 'other' && <label className="span-2">Préciser le motif<input value={nextReasonText} onChange={(e) => setNextReasonText(e.target.value)} disabled={busy} /></label>}
+            <label>Date<input type="date" value={nextDate} onChange={(e) => setNextDate(e.target.value)} disabled={busy} /></label>
+            <label>Heure <small>(facultative)</small><input type="time" value={nextTime} onChange={(e) => setNextTime(e.target.value)} disabled={busy} /></label>
+            <label className="span-all">Contexte / note<input value={nextNotes} onChange={(e) => setNextNotes(e.target.value)} placeholder="Ex. le décisionnaire revient jeudi matin" disabled={busy} /></label>
           </div>}
-          <div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => setCompletingId(null)}>Annuler</button><button className="primary-button" type="button" disabled={busy} onClick={() => void completeAction(action)}>{outcome === 'categorical_refusal' ? 'Terminer et classer comme perdu' : programNext ? 'Terminer et programmer la suite' : 'Terminer l’action'}</button></div>
+          <div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => {completeGuard.discard();setCompletingId(null);}}>Annuler</button><button className="primary-button" type="button" disabled={busy} onClick={() => void completeAction(action)}>{outcome === 'categorical_refusal' ? 'Terminer et classer comme perdu' : programNext ? 'Terminer et programmer la suite' : 'Terminer l’action'}</button></div>
         </div>}
       </div>)}</div>}
       {error && <p className="form-error" role="alert">{error}</p>}

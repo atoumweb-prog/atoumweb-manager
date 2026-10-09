@@ -1,3 +1,5 @@
+import {useDraftSection} from '../unsaved/useDraftSection';
+import {useUnsavedDraft} from '../unsaved/unsaved';
 import {ProjectCommercialScopePanel} from '../projects/ProjectCommercialScopePanel';
 import { QuoteContractPreparationPanel } from '../commercial/QuoteContractPreparationPanel';
 import {useEffect,useState} from 'react';
@@ -42,11 +44,12 @@ export function QuoteProjectPanel({quote}:{quote:QuoteDetail}){
   </section>;
 }
 export function QuoteConditions({quote,onSave}:{quote:QuoteDetail;onSave:(q:QuoteDetail)=>void}){
-  const [prerequisites,setPrerequisites]=useState(quote.prerequisitesText??''),[error,setError]=useState('');
-  useEffect(()=>setPrerequisites(quote.prerequisitesText??''),[quote.id,quote.prerequisitesText]);
+  const draft=useDraftSection(quote.id,quote.prerequisitesText??'');const prerequisites=draft.value,setPrerequisites=draft.section.set.bind(draft.section);const [error,setError]=useState(''),[saving,setSaving]=useState(false);
+  useUnsavedDraft('Prérequis du devis',prerequisites,{dirty:draft.section.dirty,pending:saving,discard:()=>draft.section.discard()});
+  useEffect(()=>draft.section.receive(quote.prerequisitesText??''),[quote.id,quote.prerequisitesText]);
   const editable=quote.status==='draft'&&!quote.finalizedAt;
   return <>
-    {editable?<form className="workflow-fields" onSubmit={e=>{e.preventDefault();window.atoumweb.quotes.updateConditions(quote.id,{prerequisitesText:prerequisites}).then(q=>{onSave(q);changed();}).catch(e=>setError(String(e)));}}><label>Prérequis<textarea value={prerequisites} onChange={e=>setPrerequisites(e.target.value)}/></label><button className="secondary-button">Enregistrer les prérequis</button>{error&&<p role="alert">{error}</p>}</form>:quote.prerequisitesText&&<p>{quote.prerequisitesText}</p>}
+    {editable?<form className="workflow-fields" onSubmit={e=>{e.preventDefault();setSaving(true);const submitted=prerequisites;window.atoumweb.quotes.updateConditions(quote.id,{prerequisitesText:prerequisites}).then(q=>{draft.section.receive(q.prerequisitesText??'',{value:submitted});onSave(q);changed();}).catch(e=>setError(String(e))).finally(()=>setSaving(false));}}><label>Prérequis<textarea value={prerequisites} onChange={e=>setPrerequisites(e.target.value)}/></label><button className="secondary-button">Enregistrer les prérequis</button>{error&&<p role="alert">{error}</p>}</form>:quote.prerequisitesText&&<p>{quote.prerequisitesText}</p>}
     <QuoteContractPreparationPanel quote={quote} onSave={onSave}/>
     <ContractTermsBuilder quote={quote}/>
   </>;

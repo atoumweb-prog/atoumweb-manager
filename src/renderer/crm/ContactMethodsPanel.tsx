@@ -1,3 +1,4 @@
+import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { useEffect, useMemo, useState } from 'react';
 import type { ContactMethod, ContactMethodType } from '../../shared/crm';
 import { formatPhone, validateEmail, validatePhone } from '../../shared/contactValidation';
@@ -47,6 +48,9 @@ export function ContactMethodsPanel({
   const [value, setValue] = useState('');
   const [usage, setUsage] = useState('Portable');
   const [error, setError] = useState('');
+  const [saving,setSaving]=useState(false);
+  const guard=useUnsavedDraft('Coordonnée à ajouter',{value},{pending:saving,discard:s=>setValue(s.value)});
+
 
   async function load() {
     try {
@@ -80,7 +84,7 @@ export function ContactMethodsPanel({
     const organizationOwner = owner === 'organization';
     const ownerId = organizationOwner ? organizationId : owner;
     if (!ownerId) return;
-    setError('');
+    setError('');setSaving(true);
     try {
       const siblings = organizationOwner ? organizationItems : (contactItems[ownerId] ?? []);
       await window.atoumweb.crm.contactMethods.save({
@@ -93,7 +97,7 @@ export function ContactMethodsPanel({
       setValue('');
       await load();
       window.dispatchEvent(new Event('atoumweb:changed'));
-    } catch (e) { setError(cleanError(e)); }
+    } catch (e) { setError(cleanError(e)); } finally{setSaving(false);}
   }
 
   async function archive(id: string) {

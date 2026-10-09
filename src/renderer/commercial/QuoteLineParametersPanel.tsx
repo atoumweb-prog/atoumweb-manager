@@ -1,3 +1,4 @@
+import {useUnsavedDraft} from '../unsaved/unsaved';
 import { useEffect, useState } from 'react';
 import type { QuoteDetail, QuoteLine } from '../../shared/commercial';
 import type { CommercialVersionRules, QuoteLineParameters } from '../../shared/commercialRules';
@@ -8,6 +9,7 @@ export function QuoteLineParametersPanel({quote,line,onSave}:{quote:QuoteDetail;
   const [sites,setSites]=useState<Array<{id:string;name:string}>>([]),[interventions,setInterventions]=useState<Array<{id:string;subject:string}>>([]);
   const rules=line.snapshot?.commercialRules as CommercialVersionRules|undefined;
   const operational=line.snapshot?.operational as {lot?:string;estimateRequired?:boolean;setupEstimateRequired?:boolean;parentCodes?:string[];periodAlignment?:'calendar'|'anniversary'}|undefined;
+  const guard=useUnsavedDraft('Paramètres de la prestation',value,{group:'quote:'+quote.id+'/line:'+line.id,pending:saving,discard:setValue});
   const editable=quote.status==='draft'&&!quote.finalizedAt;
   useEffect(()=>{
     if(quote.clientAccountId&&operational?.parentCodes?.length)void window.atoumweb.quotes.operationalSalesForClient(quote.clientAccountId).then(setParentSales).catch(e=>setError(String(e)));
@@ -16,7 +18,7 @@ export function QuoteLineParametersPanel({quote,line,onSave}:{quote:QuoteDetail;
   },[quote.projectId,quote.clientAccountId]);
   const parents=quote.lines.filter(candidate=>candidate.id!==line.id && (!rules?.attachment || rules.attachment.compatibleCodes.includes(String(candidate.snapshot?.canonicalCode))));
   const update=(patch:Partial<QuoteLineParameters>)=>setValue(current=>({...current,...patch}));
-  async function save(){setSaving(true);setError('');try{onSave(await window.atoumweb.quotes.setLineParameters(line.id,value));}catch(e){setError(e instanceof Error?e.message:String(e));}finally{setSaving(false);}}
+  async function save(){setSaving(true);setError('');try{const next=await window.atoumweb.quotes.setLineParameters(line.id,value);const saved=next.lines.find(l=>l.id===line.id)?.parameters||{};guard.saved(saved);setValue(saved);onSave(next);}catch(e){setError(e instanceof Error?e.message:String(e));}finally{setSaving(false);}}
   if(!rules?.attachment&&!operational?.estimateRequired&&operational?.lot!=='8B')return null;
   return <details className="quote-line-parameters"><summary>Paramètres du dossier — {line.label}</summary><fieldset disabled={!editable||saving} className="quote-line-editor-grid">
     {rules?.attachment && <label>{rules.attachment.kind==='document'?'Document principal':'Prestation concernée'}<select aria-label={`Prestation concernée ${line.label}`} value={value.parentLineId||''} onChange={e=>update({parentLineId:e.target.value||null,parentInterventionId:null})}><option value="">À choisir</option>{parents.map(p=><option key={p.id} value={p.id}>{p.label} · {String(p.snapshot?.canonicalCode||'Ligne libre')}</option>)}</select></label>}

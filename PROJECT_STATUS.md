@@ -1,5 +1,79 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 10/10/2026 — Validation Windows de la recette packagée IPC / app.relaunch UX-01 × UX-16
+
+- **SHA réellement testé :** `prep/ux01-restore-quit-gate-v2@61786e1f5449cf93d4272458480b302ad2dc4bde`. Exécutable de recette Electron **44.3.0** packagé indépendamment sous TEMP, réutilisant le vrai gestionnaire de `backups:restore` et le cycle de vie Electron `app.isPackaged`.
+- **Acceptation : PASS**. PID 9924 programme `restartScheduled:true`, atteint `before-quit` puis `will-quit`, enregistre le marqueur et ferme SQLite ; `app.relaunch()` crée automatiquement un nouveau PID 4976, qui restaure `before`, conserve `after` sous `pre-restore`, consomme le marqueur et vérifie l'intégrité.
+- **Refus : PASS**. PID 27704 : `before-quit`, **pas de `will-quit`**, `markerAbsent:true`. Démarrage manuel contrôlé PID 10500 : `restored:false`, données préservées.
+- **Sortie exacte :** `SUCCESS: independent packaged app, real IPC, app.relaunch, SQLite restore and refusal.` / `Fixture cleaned: true`. Aucun MSI ni workspace réel ouvert.
+- **Limites :** harness de test réellement packagé, distinct de la distribution Forge/renderer/entrée `main.ts` finale ; aucune CI GitHub sur ce HEAD. Les autres validations restent celles de `88efb788` (typecheck, 801/801, 183/183) et `dbfd0e2` (12/12 natifs), sans changement de code `src/` entre ces SHAs. [Procédure / preuve détaillée](docs/UX01_PACKAGED_RELAUNCH_RECIPE.md).
+- Aucun merge ni changement `main`, PR originales #82/#83, migrations, workflows ou Validation-MSI ; #83 reste draft et conflictuelle avec main.
+
+## 10/10/2026 — Recette packagée UX-01 : vrai IPC et relancement automatique préparés
+
+- **Harness indépendant** ajouté sur `prep/ux01-restore-quit-gate-v2` : `scripts/check-ux01-packaged-relaunch.cjs` et `scripts/fixtures/ux01-packaged-{main,preload}.cjs`. Il construit un **exécutable Electron packagé temporaire** dans `%TEMP%`, et réutilise les vraies implémentations `registerIpcHandlers`, `DatabaseService`, `registerGuardedShutdown`, `restore`, `RestoreQuitGate`.
+- Acceptation : appel réel `backups:restore` sous `app.isPackaged`, quit automatique, marqueur en `will-quit`, **`app.relaunch()` déclenchant un autre PID**, restauration au démarrage et sauvegarde `pre-restore`. Refus : enregistrement pending après accord IPC, fermeture veto et vérification à un démarrage manuel ultérieur sans restauration. **Tout est sous un nouveau profil/workspace TEMP avec nonce, aucune base réelle.**
+- **Contrôle effectué :** syntaxe JavaScript des trois fichiers OK ; présence de `@electron/packager@18.4.4` confirmée dans `package-lock.json` ; assertions statiques des garde-fous. **Le test packagé n'a PAS été exécuté sous Windows à ce stade.**
+- **Périmètre :** exécutable de test indépendant utilisant le vrai IPC (pas le package final du Manager, son `main.ts` complet ni le MSI). Voir [la recette et ses limites](docs/UX01_PACKAGED_RELAUNCH_RECIPE.md). Ne pas inférer une validation Windows avant la sortie du script.
+- `main`, #82, la PR officielle #83, migrations, fichiers `src/`, workflows et Validation-MSI inchangés. Pas de CI ou fusion.
+
+## 10/10/2026 — Validation Windows du parcours natif restauration/fermeture UX-01 × UX-16
+
+- **Révision testée :** `prep/ux01-restore-quit-gate-v2@dbfd0e2f2171f6f66b222e2b7cc1256649af1490`. Exécution PowerShell `node --check scripts/check-restore-quit-roundtrip.cjs` OK ; `node scripts/check-restore-quit-roundtrip.cjs` **12/12 contrôles, 5/5 processus Electron, 0 échec, `Fixture cleaned: true`**.
+- Quit accepté : vrais événements Electron `before-quit=1`, `will-quit=1`, fermeture de la fenêtre et de SQLite, marqueur `pending` créé seulement après acceptation. Nouveau processus : `restored:true`, source conforme 66 migrations, sauvegarde `pre-restore`, marqueur consommé. Deuxième lancement : `restored:false` sans rejeu.
+- Quit refusé pendant un enregistrement : `before-quit=1`, **pas de `will-quit`**, fenêtre et SQLite conservées, aucun marqueur ; démarrage suivant : `restored:false`, données conservées. Scripts confinés à des workspaces TEMP isolés, effacés à la fin.
+- **Comparaison Git :** depuis `88efb788` (801/801 tests, typecheck, 183/183 natifs 3 thèmes validés localement), seuls les scripts de recette et la documentation ont évolué ; aucun fichier de production `src/` ni migration changé.
+- **Limite restante :** la recette 5 processus emploie Electron natif avec les vrais services, **pas le binaire distribué en mode `app.isPackaged` et son `app.relaunch()` réel**. Pas de CI combinée sur le HEAD, ni de validation de l'exécutable packagé, ni de fusion. [Protocole / limites](docs/UX01_RESTORE_QUIT_ROUNDTRIP.md).
+- `main`, PR officielles #82/#83 et Validation-MSI non modifiés ; #83 reste draft.
+
+## 10/10/2026 — Recette de restauration de bout en bout préparée sur branche isolée UX-01
+
+- AtoumWeb a vérifié `prep/ux01-restore-quit-gate-v2@88efb788` sur Windows : typecheck OK, **31/31** ciblés, **801/801** tests complets dans 87 fichiers et **183/183** contrôles natifs sur les trois thèmes ; fixtures supprimées. Aucune CI GitHub ni recette d'exécutable packagé revendiquée.
+- Script additionnel `scripts/check-restore-quit-roundtrip.cjs` ajouté pour tester dans cinq processus Electron natifs (fixtures TEMP exclusivement) le vrai quit, l'application au lancement suivant, la sauvegarde `pre-restore`, l'absence de rejeu et le refus de sortie. [Protocole et limites](docs/UX01_RESTORE_QUIT_ROUNDTRIP.md). **Syntaxe du script vérifiée, mais exécution Electron Windows non réalisée pour ce nouveau script** ; les succès précédents ne le couvrent pas.
+- PR officielle #83, #82, main et Validation-MSI inchangés, ni CI ni fusion. Prochaine vérification : exécuter le nouveau script sur Windows et compléter la recette packagée avant intégration.
+
+## 10/10/2026 — #81 fusionnée ; #83 en intégration préparatoire isolée
+
+- **État GitHub confirmé :** #81 fusionnée normalement dans `main@68bfd952e394169ade65e3f0697422d8c00c2cc7`, CI post-merge **#652 SUCCESS** au même SHA ; typecheck et 750/750 tests (35 restaurations) confirmés par le bilan de fusion. L'historique #81 ci-dessous reste relatif à ses checkpoints des 09–10/10.
+- **UX-01 / #83 :** PR originale `codex/fix-manager-unsaved-inputs-ux01@5b38cbe1` en draft, **non fusionnée**, travaux A/B/C et revue finale historique ajoutés ci-dessous. Ses anciens 734/734 tests et 177/177 natifs valident seulement sa propre branche à cette date, **pas** la combinaison actuelle avec #81.
+- **Préparation combinée dédiée :** `prep/ux01-restore-quit-gate-v2` dérivée de `prep/ux01-with-integrity-v1@8a577f1`. Les gardes de fermeture et la restauration UX-16 sont réunis : restauration packagée programmée à `will-quit` après acceptation Electron, annulation d'intention sur veto. Deux tests supplémentaires de fenêtre UX-01 déjà préparés ; cinq nouveaux tests du garde `RestoreQuitGate` et deux contrôles natifs par thème ajoutés en préparation.
+- **Contrôle réel limité :** compilation stricte et **5/5** scénarios isolés du garde sous Node 22. Le typecheck du dépôt, la suite complète, la recette native Electron et une CI de cette combinaison **ne sont pas exécutés**. Les tests cumulés 750 (#81) et 734 (#83) ne doivent jamais être présentés comme validation intégrée.
+- **Suite bloquée jusqu'à vérification :** recetter refus de quit, création/absence de marqueur au redémarrage, restauration acceptée, source/cible workspace, fenêtre détachée et enregistrement pending sur fixtures temporaires. Préserver migrations 1–66, CGV, contrats, packs, restauration #81 ; aucune ouverture de Validation-MSI ni modification de #82/#83/main.
+- [Préparation, limites et tests à réaliser](docs/UX01_WITH_INTEGRITY_PREPARATION.md).
+
+## 09/10/2026 — Revue finale UX-01 / PR #83 avant fusion
+
+- Trois pertes résiduelles reproduites puis corrigées uniquement dans UX-01 : archivage Prospect/groupe mal hiérarchisé, suppression ligne Devis avant garde, réduction d’une section Prospect démontant son draft. Garde avant mutation (également classement Perdu), groupes cohérents et conservation des sections réduites ; aucun Enregistrer et quitter V2, migration ou règle métier nouvelle.
+- Typecheck OK, **734/734 complets**, **177/177 natifs trois thèmes**, intégrité/FK et 1–66 sur fixtures supprimées. Simulation #81+#83 en copie temporaire : typecheck, **87/87 ciblés** et **177/177 natifs** verts ; conflit IPC à résoudre en conservant la destination/restauration #81 et les gardes de sortie #83. Aucun merge réel. #80 : conflits de journaux seulement ; #82 : pas de conflit, garde UX-01 réutilisable pour le futur Lot 01.
+- **CI quality toujours queued**, aucun runner enregistré, ne pas annoncer ses contrôles verts. PR prête pour revue humaine ; recommandation de fusion suspendue au succès CI et aux résolutions futures avec #81/#80. [Détail de revue](docs/FUNCTIONAL_UNSAVED_INPUTS_UX01_DELIVERY.md). Validation-MSI non ouverte, aucun dossier métier modifié, #80/#81/#82 inchangées.
+
+## 09/10/2026 — UX-01A/B/C : correction livrée sur branche indépendante
+
+- Branche `codex/fix-manager-unsaved-inputs-ux01` depuis `main@eb252d5c` ; commits distincts A (`df1b6f3`), B (`80300a4`) et C. [Bilan complet, fichiers, scénarios et limites](docs/FUNCTIONAL_UNSAVED_INPUTS_UX01_DELIVERY.md). Reprise du travail interrompu sans reset ; B isolé dans l’index puis vérifié dans une copie temporaire, sans perte des changements C.
+- A : brouillons contractuels indépendants, fusion des rafraîchissements avec conflits explicites, refus des enregistrements périmés et détail Devis maintenu lors des refresh. B : registre par éditeur, confirmations de sortie Prospection/Devis et sous-formulaires, annulation limitée à la saisie concernée, réponses Devis tardives ignorées. C : fermetures/rechargements/quitter Electron, fenêtre Référence Prospect détachée et choix différé de workspace ; aucun brouillon déclaré enregistré avant confirmation du serveur.
+- Validation finale : typecheck OK ; ciblés **75/75**, complets **733/733 dans 82 fichiers** (`npm test -- --maxWorkers=2`), **153 contrôles natifs** sur les trois thèmes. Premier run complet à concurrence par défaut : un timeout de fixture et timeout RPC sous charge ; fixture rejouée isolément 21/21 puis suite complète verte avec deux workers, sans changement de délai ni de règle. Snapshot B seul : typecheck et 81 contrôles natifs verts.
+- Fixtures exclusivement temporaires, supprimées après fermeture ; migrations **1–66 inchangées**, integrity_check `ok`, FK vides. **Validation-MSI non ouverte ni modifiée** ; aucune migration, réparation historique, autosauvegarde ou refonte UX/UI V2. Les autres modules ne sont pas encore raccordés au registre ; crash/arrêt forcé/récupération persistante restent hors périmètre.
+- Livraison par PR dédiée en draft, sans fusion automatique ; #80 et #81 inchangées. Prochaine action : CI puis validation AtoumWeb avant fusion. Les entrées suivantes sont les checkpoints historiques des lots.
+
+## 09/10/2026 — UX-01B : sorties par éditeur
+
+- Registre/hook par éditeur et groupe, Rester par défaut/abandon limité, attente des saves, sorties sidebar/recherche/événements/fiche/panneau et sous-formulaires Prospection/Devis. Contrôles locaux conservés ; réponses de lecture Devis tardives invalidées, refresh maintient les composants, aucun nouveau style ou serveur métier.
+- Séparation prudente à la reprise : UX-01A déjà isolé dans df1b6f3 ; B reconstruit dans l’index sans remettre à zéro le working tree C. Copie temporaire du tree B : typecheck et 81 contrôles natifs trois thèmes verts ; 9 tests de registre en plus des 8 tests de sections. Aucun accès Validation-MSI, copie contrôlée/nettoyée. C reste ensuite à committer et valider.
+
+## 09/10/2026 — UX-01A : sections contractuelles corrigées
+
+- Autorisation AtoumWeb : A/B/C sur la branche indépendante, commits distincts et PR sans fusion. A sépare les baselines des paramètres du devis et de l’administration ; refresh trois voies, conflits explicites et garde optimiste optionnelle à l’enregistrement. Règles de finalisation/snapshots inchangées, aucun schéma nouveau.
+- Cause supplémentaire reproduite et corrigée : le loading de refresh remontait tout le détail Devis, détruisant les drafts voisins. Le chargement initial est conservé ; les rafraîchissements gardent les éditeurs montés.
+- Contrôles A : 47 tests ciblés et typecheck OK ; 33 contrôles natifs sur trois thèmes, deux sens de conservation et absence de save implicite, conflit interfenêtre refusé/draft conservé/résolution explicite ; 1–66/intégrité/FK verts sur fixture nettoyée. Validation-MSI non ouverte. B/C restent à réaliser.
+
+## 09/10/2026 — UX-01 : diagnostic indépendant avant correction
+
+- AtoumWeb demande la protection des saisies, en commençant par diagnostic/reproduction/proposition, sans modification transversale risquée ni UX/UI V2. Branche `codex/fix-manager-unsaved-inputs-ux01`, depuis `main@eb252d5cbd0e95137eafa2b4759fcbcfd7263eda`, origin/main identique après fetch. PR #81 reste draft, sans fusion automatique ; PR #80 et #81 non modifiées, code non fusionné de #81 non repris.
+- Inventaire AST : 82 TSX raccordés, 58 fichiers avec contrôles/709 déclarations natives, 8 form ; filtres/readonly/helpers compris. Pas de garde commune de navigation/fermeture ; protections locales à réutiliser (Builder/copies, Qualification, dirty/undo/code, conservation de certains drafts masqués).
+- 13 scénarios natifs temporaires avec App/preload/vrais IPC : **9 pertes reproduites**, 3 comportements locaux utiles, 1 risque de workspace différé. Navigation, reload, changement de fiche, Escape/clic extérieur, fermeture native, clause malgré avertissement ; deux directions de perte entre paramètres du devis et administration lors d'un save voisin. Choix du workspace B accepté avec saisie encore dans A, sans bascule immédiate.
+- [Diagnostic, inventaire et petits lots proposés](docs/FUNCTIONAL_UNSAVED_INPUTS_UX01_DIAGNOSIS.md) : A préserver les deux sections contractuelles ; B registre/hook et navigation avec pilotes ; C natif/workspace/détaché ; D/E/F extensions progressives. Rester par défaut/abandon explicite, baselines par section, saves en cours et retours asynchrones coordonnés, aucune autosauvegarde/finalisation implicite.
+- Fixture fermée/supprimée, intégrité ok/FK vide/migrations 1–66 ; aucun accès Validation-MSI. Trois documents seulement, aucun code/test fonctionnel/graphisme/migration modifié ; tests permanents prévus après validation. Aucun commit/push/PR nouveau ; arrêt au diagnostic pour arbitrage.
+
 ## 09/10/2026 — #650 : diagnostic RPC local et hook commun de fin de test
 
 - CI #650 sur 50f2b40 : installation/typecheck et 748/748 assertions réussis, mais sortie en erreur RPC onTaskUpdate ; aucune validation hébergée acquise. Diagnostic local autorisé, aucun push/run/merge/#82/#83 ni accès Validation-MSI.
