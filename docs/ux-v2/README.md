@@ -1,7 +1,10 @@
 # AtoumWeb Manager — Référentiel UX/UI V2
 
-**Version documentaire : V1.0 initiale — 09/10/2026.**  
-**Statut : référentiel de conception en cours de consolidation, sans autorisation de développement.**  
+> **POINT D'ENTRÉE CANONIQUE — consolidation des 10 lots (09/10/2026).** Lire d'abord [Consolidation transversale](CONSOLIDATION-TRANSVERSE-10-LOTS.md), [Registre des écarts](REGISTRE-ECARTS-TRANSVERSES.md), [Feuille de route priorisée](FEUILLE-DE-ROUTE-IMPLEMENTATION-UX-V2.md) et [Matrice de recette](MATRICE-RECETTE-ET-GATES-UX-V2.md). **1 069 scénarios futurs dans les sous-lots ; aucun test UX V2 exécuté par ces spécifications.** États GitHub les plus récents : **#84 fusionnée**, **#81 draft et CI #649 rouge, correctif `50f2b40` local NON poussé**, **#83 draft avec conflit**, **#82 draft documentaire**. Les mentions plus bas qui décrivent #84 « draft » ou CI « non lancée » sont des **relevés historiques datés**, pas des statuts courants.
+
+
+**Version documentaire : V1.0 initiale, complétée par consolidation — 09/10/2026.**  
+**Statut : spécifications des 10 lots consolidées, non implémentées; sans autorisation de développement.**  
 **Propriétaire des arbitrages : AtoumWeb.**  
 **Base de comparaison : audit `docs/ux-audit/` sur branche `docs/ux-audit-manager-v1`, code audité `main@eb252d5cbd0e95137eafa2b4759fcbcfd7263eda`.** L'audit n'est pas encore fusionné sur `main`. Vérifier le code courant avant implémentation.
 
@@ -11,6 +14,10 @@ Source de référence **versionnée** pour AtoumWeb et Codex MSI. Traduire les a
 Ce référentiel **n'annonce aucune fonctionnalité comme livrée**, ne modifie aucune règle métier et ne remplace pas l'audit, les décisions historiques ou les tests. Il documente la cible à comparer à la réalité du dépôt au début de chaque lot.
 
 ## Sommaire
+0. [CONSOLIDATION-TRANSVERSE-10-LOTS.md](CONSOLIDATION-TRANSVERSE-10-LOTS.md) — état courant, 17 modules, comptage des scénarios.
+0. [REGISTRE-ECARTS-TRANSVERSES.md](REGISTRE-ECARTS-TRANSVERSES.md) — P0/P1/P2/P3, constats vs hypothèses.
+0. [FEUILLE-DE-ROUTE-IMPLEMENTATION-UX-V2.md](FEUILLE-DE-ROUTE-IMPLEMENTATION-UX-V2.md) — petites livraisons et dépendances.
+0. [MATRICE-RECETTE-ET-GATES-UX-V2.md](MATRICE-RECETTE-ET-GATES-UX-V2.md) — 15 parcours intégrés et portes de validation.
 1. [DECISIONS.md](DECISIONS.md) — décisions actées, invariants, frontières, arbitrages ouverts.
 2. [CATALOGUE-CGV.md](CATALOGUE-CGV.md) — catalogue administrable, parcours Prospect/Devis, aides commerciales, contrats types et CGV.
 3. [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md) — navigation, fiches, tableaux, personnalisation, formulaires, aide et accessibilité.
@@ -41,7 +48,7 @@ Ce référentiel **n'annonce aucune fonctionnalité comme livrée**, ne modifie 
 Ce dépôt contient une **première base opérationnelle**, pas encore la matrice exhaustive de chaque contrôle JSX/IPC/service ni l'inventaire complet des champs. Ces éléments devront être annexés et testés incrémentalement à partir de la cartographie d'audit.
 
 ## Spécifications de lots
-Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions, fonctions à conserver, ordre d'exécution, recette et incertitudes**. Les lots 02–10 sont des spécifications initiales à enrichir par une matrice complète contrôle→handler→IPC→service→test avant mise en œuvre.
+Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions, fonctions à conserver, ordre d'exécution, recette et incertitudes**. Les lots 01–10 comportent des sous-lots détaillés, mais requièrent toujours une matrice exhaustive contrôle→handler→IPC→service→test et un nouvel audit du HEAD avant leur mise en œuvre.
 
 | Lot | Document |
 |---|---|
