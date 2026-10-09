@@ -152,3 +152,8 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 
 ### CI Windows hébergée #84 — succès réel vérifié (09/10/2026)
 - [Run #589](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/37945827513) au SHA `f4bc0197` : **`quality` success, `npm ci` OK, typecheck OK, Vitest 80 fichiers / 698 tests réussis (183,78 s)**. Le correctif des fixtures SQLite a résolu les trois timeouts visibles au run précédent. **PR #84 toujours draft/non fusionnée** ; le succès ne couvre pas #81/#83 ni l'UX V2. [Historique complet CI](CI-GITHUB-ACTIONS.md).
+
+### Lot 04D — Associations, options et recommandations (09/10/2026)
+- [Spécification 04D](LOT-04D-ASSOCIATIONS-RECOMMANDATIONS.md) : **Inclus / Option disponible / Complément recommandé** séparés, **26 scénarios de recette**, 6 phases de développement futur ; aucun test exécuté.
+- **Constats du code vérifiés** : `CatalogService.setOfferComponents` (compositions versionnées), `QuoteService.selectOfferOption` (option ajoutée une seule fois avec provenance et snapshot), `QuoteOfferOptionsPanel` (options déjà affichées), `ProspectNeedsPanel.SUGGESTIONS` (dictionnaire actuellement codé). **Aucun référentiel N:N de recommandations éditables attesté** dans ces APIs.
+- **E104–E110 ouverts techniquement** : unicité Service malgré plusieurs versions, schéma/versionnement de recommandations, consommation Prospection/Devis, classement de l'offre principale, provenance et déduplication. Les recommandations **n'ajoutent jamais** automatiquement besoin, Devis, clause, Projet ou facture.
