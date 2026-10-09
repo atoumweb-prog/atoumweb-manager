@@ -96,3 +96,18 @@ Cette section **actualise les anciennes mentions « aucun run »** qui décrivai
 Codex a confirmé : **`npm ci` OK ; typecheck OK en ~16 s ; 692 réussis / 3 timeouts sur 695 ; durée Vitest ~3 min 42 s ; job ~4 min 45 s.** Échecs de fixtures `OperationalRecipeService.test.ts` (déterminisme entre sessions) et **2 tests** dans `mariageHistoireRecipeStructure.test.ts` (structure/staging). **Aucun échec d'assertion métier rapporté pour ces trois cas** ; cela ne prouve pas que les scénarios sont fonctionnellement corrects. **Aucun blocage quota/facturation signalé** ; zéro budget modifié. PR #84 toujours draft au dernier contrôle, aucune nouvelle relance ni merge annoncés.
 
 **Prochaine demande à Codex, sans nouvelle exécution Actions non autorisée** : mesurer séparément ces fixtures sur environnement Windows isolé, inspecter créations/copies SQLite, attente I/O et ressources, comparer les durées Linux/MSI si réellement disponibles, établir cause et correction ciblée (ou timeout local au scénario justifié), sans skip ni changement arbitraire de `testTimeout` global. Exécuter ensuite typecheck/tests locaux sur fixtures ; demander un **nouveau feu vert pour relance CI** lorsque le correctif et la consommation prévisible sont expliqués. Un test local ne constitue pas une CI verte.
+
+## 9. Correctif local de fixtures annoncé par Codex MSI — 09/10/2026, 15:45
+**Rapport transmis par AtoumWeb, non vérifié directement dans GitHub :** Codex indique avoir identifié le coût principal de préparation des fixtures SQLite : 176 écritures individuelles en autocommit, et avoir remplacé ce cycle par une préparation **en mémoire**, suivie de l'export d'une base SQLite réelle en une fois, avec les mêmes migrations et données. La cause précise de la latence sur GitHub-hosted (disque/antivirus/CPU) **reste non mesurée** ; le preview métier est annoncé à ~12 ms.
+
+| Test ciblé | Avant local | Après local |
+|---|---:|---:|
+| Sessions indépendantes | 2,17 s | 0,45 s |
+| Mariage Histoire préparation/historique/rollback | 1,14 s | ~0,24 s |
+| Mariage Histoire staging/actions | 1,13 s | 0,30 s |
+
+**Résultats rapportés, pas des tests exécutés par cette documentation :** typecheck OK, ciblés **27/27**, suite complète **698/698** (80 fichiers, **72,02 s**), intégrité/FK, séparation des bases, conservation d'un fichier existant. **Aucun test supprimé/masqué ni timeout global relevé selon Codex.**
+
+Commit Codex annoncé : **`5a175eb` local sur `codex/fix-ci-windows-hosted`** ; fichiers notamment `src/main/testSupport/operationalRecipeFixture.ts`, test de fixture, analyse `docs/CI_RECIPE_FIXTURE_TIMEOUT_ANALYSIS.md` et un quatrième fichier signalé mais non nommé dans le rapport. **Le HEAD GitHub #84 restait `1b069575` lors de la vérification : ne pas présenter ce commit local comme déjà publié/relu.**
+
+**Appréciation technique :** démarche ciblée et résultats locaux cohérents ; feu vert **pour publier et faire relire le correctif**, **pas pour déclarer la CI verte**. Instruction proposée à Codex : pousser les sources revues **avec `[skip ci]`** puis présenter le diff/HEAD et le protocole d'une nouvelle validation Windows-hosted. **Nouvelle exécution GitHub soumise à un accord séparé d'AtoumWeb**, aucune fusion, aucune hausse de budget, ni opération sur Validation-MSI.
