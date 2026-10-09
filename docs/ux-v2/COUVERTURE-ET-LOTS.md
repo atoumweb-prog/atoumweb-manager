@@ -80,3 +80,6 @@ En particulier : décision UX-02 nouveaux abonnements manuels ; édition Word av
 
 ## Dépendance CI — rapport Codex du 09/10/2026
 Le workflow `.github/workflows/ci.yml` du code de référence requiert un runner self-hosted Windows X64 et n'a pas de runner correspondant selon le rapport Codex. Passage recommandé **mais non validé par AtoumWeb** vers GitHub-hosted Windows (ex. `windows-2022`), `npm ci` et exécution à deux workers, dans une PR **séparée**. Voir [CI-GITHUB-ACTIONS.md](CI-GITHUB-ACTIONS.md). Les quotas/coûts du compte restent à vérifier. **Aucune fusion, installation ou configuration CI n'est autorisée par cette documentation.**
+
+## Fondations — couverture documentaire
+Les six spécifications **01A–01F** sont détaillées dans [Lot 01 — Fondations](LOT-01-FONDATIONS.md) et ses liens. Uniquement **documentation de conception** : cette couverture ne confirme ni une implémentation, ni une recette UX des 17 modules. Le Lot 01F impose un **atelier de démonstration isolé** ; le `DemoPanel` métier existant utilise de vraies APIs de création/réinitialisation, à ne pas détourner pour une recette de composants.
