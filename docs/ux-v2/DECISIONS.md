@@ -93,3 +93,11 @@ Le rapport Codex MSI recommande un runner Windows hébergé par GitHub pour évi
 - **DÉCIDÉ** : enregistrer automatiquement uniquement apparence, disposition, colonnes, tris/filtres et options de confort ; **jamais** une modification d'entité, une CGV, un devis, un pack ou une publication via le magasin de préférences.
 - **Constat de code** : `src/renderer/workflow/DemoPanel.tsx` utilise `workflow.createDemo` et `workflow.resetDemo` ; ce module **n'est pas** un laboratoire de composants visuels statique. La recette UX V2 requiert un atelier isolé avec fixtures synthétiques, sans écriture IPC métier ni accès à Validation-MSI.
 - **À instruire E23–E27** : source/portée exacte des settings, déploiement de l'atelier, taille des fenêtres/mesures visuelles, calendrier de migration, statut réel de CI. Détails : [Lot 01F](LOT-01F-PREFERENCES-RECETTE.md).
+
+## Lot 02 — Navigation/Accueil, constats E28–E41
+- **DÉCIDÉ :** 17 modules accessibles, rail compact **visible** même replié, groupes de présentation, favoris, recherche ouvrant le **bon dossier**, Accueil « Aujourd'hui/alertes », sept colonnes visuelles du pipeline (sans nouveau statut backend), widgets personnalisables, et **un chrono global seulement**.
+- **Observé dans `main` :** rail actuel disparaît complètement, route Catalogue via recherche n'utilise pas `entityId`, 4 raccourcis « + » de l'Accueil n'ouvrent que les pages, pipeline Accueil a 5 agrégats, certaines polices des cartes sont 10–13 px. **Ces écarts sont à corriger lors du développement V2, pas réglés par le seul référentiel.**
+- La spécification [Lot 02](LOT-02-NAVIGATION-ACCUEIL.md) et la [matrice code→cible](LOT-02-MATRICE-EXISTANT-CIBLE.md) décrivent les modes et tests ; préférences persistées en réutilisant 01F, UX-01 avant sorties destructrices.
+
+## Infrastructure — PR #84
+La proposition de runner Windows GitHub-hosted est **développée et publiée** en [PR #84](https://github.com/atoumweb-prog/atoumweb-manager/pull/84), **non fusionnée, non exécutée** (`[skip ci]`). Autorisation de lancement en attente de contrôle des minutes incluses et **budget/actions avec arrêt des dépassements** ou d'un plafond explicitement validé par AtoumWeb. L'absence de permission de l'API Billing ne vaut pas quota épuisé ni facturation autorisée. [Dossier CI](CI-GITHUB-ACTIONS.md).
