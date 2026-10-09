@@ -1,12 +1,14 @@
 # UX-01 × UX-16 — Recette native isolée de fermeture/restauration
 
-Statut au 10/10/2026 : **harness créé et syntaxe CJS contrôlée, exécution réelle Windows non encore réalisée**.
+Statut au 10/10/2026 : **harness créé, syntaxe JavaScript contrôlée, exécution réelle Windows en attente du nouveau script diagnostique**. La première version utilisait `spawnSync`, qui n'affichait pas la sortie Electron tant que le sous-processus n'était pas terminé : un utilisateur a observé une console silencieuse. La version actuelle lance les étapes en streaming et affiche des traces explicites.
 
 Commande depuis la branche `prep/ux01-restore-quit-gate-v2` (après `npm ci`) :
 
 ```powershell
 node scripts/check-restore-quit-roundtrip.cjs
 ```
+
+**Diagnostic pendant le test :** les cinq étapes sont désormais affichées au démarrage, avec les messages intermédiaires Electron. Chaque étape a une limite de 90 secondes ; en cas d'échec, le numéro d'étape et sa sortie sont conservés. Pour interrompre volontairement, **Ctrl+C**, qui arrête le sous-processus de recette ciblé et tente de nettoyer uniquement sa fixture temporaire. Ne jamais tuer tous les processus Electron du PC : d'autres instances pourraient être légitimes.
 
 Ce script est indépendant de Codex, des crédits Codex et de GitHub Actions. **Ne pas lancer directement le sous-processus Electron avec `--stage`** ; le parent Node gère les dossiers temporaires, les contrôles et la suppression.
 
