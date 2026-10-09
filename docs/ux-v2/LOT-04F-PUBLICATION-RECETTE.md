@@ -62,3 +62,59 @@ Chaque rubrique retourne **OK / À vérifier / Manquant / Non applicable**, sour
 - Les futurs sous-lots Catalogue pourront être séparés en PR de code : catégorie/référentiel de tags, recommandations N:N, éditeur d'aides, migration UI/validation ; aucun chantier ne doit **réécrire le moteur de devis et son comportement optionnel déjà vérifié**.
 - **Validation-MSI jamais utilisée pour démo, tests ou migrations**, seulement fixtures fictives isolées et restaurables.
 - Démonstration UI non mutante (pas de `DemoPanel` réel appelant `createDemo/resetDemo` dans la base utilisée en production).
+
+## 6. Ordre de développement recommandé
+| Phase | Travaux futurs | Preuves |
+|---|---|---|
+| 04F.1 | Cartographier toutes les validations existantes (`CatalogService`, contrats, Devis, blueprints) et vérifier HEAD/PR de référence | Matrice `champ → garde existante/manquante → service → test` |
+| 04F.2 | Arrêter les conditions bloquantes/avertissements **par type de prestation** avec AtoumWeb et revue juridique adéquate | Checklist métier versionnée, exclusions légales documentées |
+| 04F.3 | Construire une prévisualisation du changement, des copies de liens et de l'effet sur les futures ventes | Atelier sans écriture réelle, aperçu/versions, UI 3×3 |
+| 04F.4 | Implémenter les contrôles pertinents **au service** et les messages au front | Transaction/validation serveur, UI pas seule source d'autorisation |
+| 04F.5 | Rejouer les parcours Prospection → Devis → options/compléments → Projet prévisionnel → acceptation | Lignes/versions exactes, contrats et provenance, aucune rétroactivité |
+| 04F.6 | Typecheck, tests ciblés puis complets, recette réelle, CI du SHA d'intégration et revue humaine avant fusion | Matrice tests/logs et retour arrière, aucune mutation Validation-MSI |
+
+## 7. Recette transverse du Catalogue (25 cas proposés, **non exécutés**)
+| ID | Situation | Attendu |
+|---|---|---|
+| R04F-01 | Créer Offre puis Service depuis l'administration | Deux articles propres avec première version brouillon, aucune vente |
+| R04F-02 | Créer/renommer catégorie en français | Association non perdue, tri A–Z en FR, anciens Devis inchangés |
+| R04F-03 | Recherche dans Offres & Tarifs | Nom/besoins/mots-clés selon index réellement livré, code Abby secondaire |
+| R04F-04 | Publier une prestation prête | Version `published`, ancienne `retired`, aucune publication WordPress |
+| R04F-05 | Publier item sans modèle non applicable | Ne bloque pas injustement une prestation ne requérant pas de blueprint |
+| R04F-06 | Publier avec composant Service `draft` | Refus des références non admissibles, brouillon et versions préservés |
+| R04F-07 | Modifier prix d'une offre déjà publiée | Nouvelle version, Devis précédents inchangés |
+| R04F-08 | Editer une offre ayant des clauses CGV | Liens versionnés contrôlés ; aucun label « juridiquement conforme » sans revue |
+| R04F-09 | Ajouter Service inclus et optionnel | Les rôles sont distincts et persistants dans la composition |
+| R04F-10 | Deux versions du même Service dans la même Offre | Pas de double inclusion accidentelle après règle E104 résolue |
+| R04F-11 | Ajouter recommandation N:N avec motif | Conseil affichable en Prospect/Devis, **aucune ligne ajoutée** |
+| R04F-12 | Prospect consulte et ajoute conseil aux besoins | Un Need, pas de Devis ni de Projet créé |
+| R04F-13 | Créer Devis depuis les besoins après choix explicite | Lignes correctes avec versions et quantités ; suggestions ignorées absentes |
+| R04F-14 | Ajouter option depuis snapshot de l'Offre au Devis | `selectOfferOption` + origine composant + une seule ligne |
+| R04F-15 | Ajouter complément recommandé libre | `addCatalogLine` volontaire, bonne version, absence de doublon trompeur |
+| R04F-16 | Abandonner un devis non signé | Aucun Client/contrat accepté/projet opérationnel |
+| R04F-17 | Préparer Projet depuis devis non signé | Projet `provisional` seulement sur lignes et inclusions applicables |
+| R04F-18 | Modifier le devis en profondeur | Comparaison + adapter/repartir de zéro sécurisé (07P), zéro perte silencieuse |
+| R04F-19 | Accepter devis Abby après résolution | Client exact, Projet courant figé, CGV/versions acceptées préservées |
+| R04F-20 | Désactiver/archiver Service vendu dans ancien Devis | Pas de nouveau choix commercial, document historique toujours lisible |
+| R04F-21 | Perte de connexion au clic Publier | Pas de faux succès ni nouvelle version supplémentaire au rejeu |
+| R04F-22 | Quitter éditeur dirty par recherche ou navigation | Garde UX-01, texte et fiche conservés sur « Rester » |
+| R04F-23 | Désactiver aide au survol dans les trois thèmes | `?` disponible par clic/clavier, aide non injectée au contrat |
+| R04F-24 | Trois thèmes × trois densités, 1280×720, zoom/clavier | Tous les contrôles accessibles, Compact texte fonctionnel >=14px |
+| R04F-25 | Migrations/test suites et rollback sur fixtures | FK et intégrité, aucune donnée Validation-MSI touchée, rapport SHA |
+
+## 8. Dossier de preuves attendu à chaque PR de code
+- **SHA de base, branche, fichiers et migrations exacts**, versions de Node/Electron/SQLite, portée de l'atelier.
+- **Matrice des écrans** catalogue/Prospect/Devis/Projet/CGV et preuves que les actions sont **réellement connectées** aux services.
+- **Liste des tests exécutés** (ciblés, complets, UI 3×3, CI hébergée si requise), résultats/temps/échecs et cas non couverts. Les tableaux R04A–F sont des **tests projetés**, pas des résultats d'exécution.
+- **Mesures de compatibilité** : aucune prestation vendue ou devise acceptée mise à jour rétroactivement, signatures/CGV/historiques conservés, idempotence options et pré-projets.
+- **Sécurité/permissions**, données de tests isolées, restauration en cas d'échec et revue humaine du diff avant tout merge.
+
+## 9. Questions techniques à résoudre avant le chantier de code
+- **E117** : quelles validations catalogue doivent être bloquantes **au service** versus simple avertissement **dans l'UI**, et pour quelles familles de prestations ?
+- **E118** : comment vérifier exactement les références versions de CGV/types de contrat/blueprints recopiées sans prétendre conformité juridique automatique ?
+- **E119** : concurrence de publication et comparaison du dernier brouillon à la dernière version publiée ; gestion du retrait et rollback sur échec intermédiaire.
+- **E120** : droits de publication, réactivation et archivage selon sécurité effective de l'application, sans ACL fictives.
+- **E121** : preuves bout en bout de conservation des snapshots Devis, options achetées, relations Projet avant/après acceptation.
+- **E122** : protocole d'atelier isolé et méthode de validation de la matrice **3 thèmes × 3 densités**, sans toucher aux opérations réelles.
+
+**Statut Lot 04A–04F : la spécification détaillée est complète, la conception technique de certains modèles reste ouverte, aucune fonctionnalité V2 ni migration n'est livrée par cette PR documentaire.**
