@@ -23,10 +23,32 @@ let root: string;
 let workspace: WorkspacePaths;
 let sourcePath: string;
 let schemaFixture: Buffer | undefined;
+let workspaceAlias: string | undefined;
 const marker = () => join(context.profile, 'pending-database-restore.json');
+function useWorkspaceAlias(): void {
+  const alias = join(root, 'workspace-alias');
+  workspaceAlias = alias;
+  fs.symlinkSync(workspace.root, alias, 'junction');
+  workspace = ensureWorkspace(alias);
+}
+
+// Backup safety files may not exist yet. Compare only existing, canonical files,
+// resolving Windows short names and junctions exactly as the restoration does.
+function isWorkspaceDestination(file: unknown): boolean {
+  const candidate = resolve(String(file));
+  if (!fs.existsSync(candidate)) return false;
+  const canonical = (value: string) => {
+    const resolved = fs.realpathSync.native(resolve(value));
+    return process.platform === 'win32' ? resolved.toLowerCase() : resolved;
+  };
+  return canonical(candidate) === canonical(workspace.databaseFile);
+}
 function createFixture(file: string, label: string, version = MIGRATIONS.length): void {
-  if (version === MIGRATIONS.length && schemaFixture) fs.writeFileSync(file, schemaFixture);
-  const database = new NodeSqliteAdapter(file);
+  const cached = version === MIGRATIONS.length && schemaFixture;
+  if (cached) fs.writeFileSync(file, cached);
+  // Apply the real historical migrations in memory; only export a complete file.
+  // Existing full-schema cache remains a per-test independent file, never shared live.
+  const database = new NodeSqliteAdapter(cached ? file : ':memory:');
   try {
     if (version === MIGRATIONS.length && !schemaFixture) applyPendingMigrations(database);
     else if (version !== MIGRATIONS.length) for (const migration of getPendingMigrations(database).filter(item => item.id <= version)) {
@@ -35,6 +57,7 @@ function createFixture(file: string, label: string, version = MIGRATIONS.length)
       database.run('INSERT INTO schema_migrations VALUES (?,?,?)', [migration.id, migration.name, '2026-09-14T08:00:00Z']);
     }
     database.run('INSERT INTO settings VALUES (?,?,?) ON CONFLICT(key) DO UPDATE SET value_json=excluded.value_json', ['restore-fixture', JSON.stringify(label), '2026-09-14T08:00:00Z']);
+    if (!cached) database.run('VACUUM INTO ?', [file]);
   } finally { database.close(); }
 }
 beforeAll(() => {
@@ -79,6 +102,7 @@ afterEach(async () => {
   expect(resolve(root).startsWith(resolve(tmpdir()) + sep)).toBe(true);
   expect(fs.readdirSync(workspace.dataDirectory).filter(name => name.startsWith('.restore-') || name.endsWith('.restore-lock'))).toEqual([]);
   expect(fs.existsSync(`${marker()}.lock`)).toBe(false);
+  if (workspaceAlias) { fs.unlinkSync(workspaceAlias); workspaceAlias = undefined; }
   fs.rmSync(root, { recursive: true, force: true });
   expect(fs.existsSync(root)).toBe(false);
   await new Promise<void>(resolve => setImmediate(resolve));
@@ -255,14 +279,17 @@ describe('restauration SQLite isolée UX-16', { timeout: 20000 }, () => {
   });
 
   it('conserve une sauvegarde récupérable après échec du remplacement', async () => {
+    useWorkspaceAlias();
     const actual = await vi.importActual<typeof sqlite>('node:sqlite');
     const before = snapshot(workspace.databaseFile);
+    let replacementInjected = false;
     scheduleDatabaseRestore(sourcePath, workspace);
     vi.mocked(sqlite.backup).mockImplementation(async (database, destination, options) => {
-      if (String(destination).toLowerCase() === workspace.databaseFile.toLowerCase()) throw new Error('Remplacement indisponible');
+      if (isWorkspaceDestination(destination)) { replacementInjected = true; throw new Error('Remplacement indisponible'); }
       return actual.backup(database, destination, options);
     });
     const error = await applyPendingDatabaseRestore(workspace).catch(error => error as DatabaseRestoreError);
+    expect(replacementInjected).toBe(true);
     expect(error).toBeInstanceOf(DatabaseRestoreError);
     const failure = error as DatabaseRestoreError;
     expect(failure.message).toContain('Ancienne base récupérable');
@@ -293,11 +320,12 @@ describe('restauration SQLite isolée UX-16', { timeout: 20000 }, () => {
   });
 
   it('exclut une écriture concurrente pendant la copie transactionnelle SQLite', async () => {
+    useWorkspaceAlias();
     const actual = await vi.importActual<typeof sqlite>('node:sqlite');
     scheduleDatabaseRestore(sourcePath, workspace);
     let attempted = false, blocked = false;
     vi.mocked(sqlite.backup).mockImplementation(async (database, destination, options) => {
-      if (String(destination).toLowerCase() !== workspace.databaseFile.toLowerCase()) return actual.backup(database, destination, options);
+      if (!isWorkspaceDestination(destination)) return actual.backup(database, destination, options);
       return actual.backup(database, destination, { rate: 32, progress: () => {
         if (attempted) return; attempted = true;
         const writer = new sqlite.DatabaseSync(workspace.databaseFile, { timeout: 0 });

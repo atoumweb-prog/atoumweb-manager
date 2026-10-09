@@ -1,5 +1,54 @@
 # Intégrité fonctionnelle — UX-16 et UX-03
 
+## Diagnostic et correction locale des trois échecs #649 — 09/10/2026
+
+Base de travail #81 **5d43e16** ; run GitHub #649 : 745/748 tests verts, un timeout à 20 s et deux assertions d’injection en échec. Autorisation : diagnostiquer/corriger localement les trois cas puis tout restore.test.ts, sans nouvelle CI, push ou merge ni accès Validation-MSI. Seul fichier de code modifié : **src/main/restore.test.ts** ; suivi dans ce document, PROJECT_STATUS et la roadmap.
+
+### Causes confirmées et limites
+
+1. **Échec du remplacement non injecté.** La destination passée par la production est `realpathSync.native(resolve(file))`, en minuscules sous Windows. Le mock ne comparait que `String(destination).toLowerCase()` au chemin brut workspace.databaseFile. Deux représentations du même fichier peuvent différer : jonction, alias court/long, etc. Le filtre retourne faux et délègue à la vraie copie, d’où `restored:true` au lieu de l’erreur attendue.
+2. **Écriture concurrente non tentée.** Même filtre brut dans le deuxième mock : la branche installant le progress callback n’est pas exécutée, donc `attempted=false`. L’échec ne démontre pas un défaut du verrou SQLite : le test n’avait pas tenté l’écriture.
+3. **Historique 65 trop lent.** Le helper exécutait les vraies migrations historiques directement sur fichier, sans regroupement de leurs DDL/registre. Les commits disque de construction rendent la fixture sensible à la latence Windows hébergée. La mesure locale sépare ce coût du vrai traitement de restauration et des assertions ; la comparaison byte pour byte a également un coût CPU normal, conservé.
+
+La reproduction locale crée une jonction `workspace-alias` vers le vrai workspace-A dans le seul dossier temporaire du test. Le chemin brut/canonisé est effectivement différent ; avant correction les **deux erreurs CI sont reproduites**, sans modifier les assertions. Après canonisation des deux côtés, les mêmes cas passent avec la jonction toujours présente. La graphie précise du TEMP hébergé n’est pas imprimée dans le log #649 : on ne prétend pas démontrer un alias 8.3 particulier. Le mécanisme fautif est confirmé ; une nouvelle CI reste nécessaire pour confirmer toutes les particularités de ce runner.
+
+### Corrections limitées aux tests
+
+- `isWorkspaceDestination` : vérifier d’abord l’existence (les destinations de sauvegarde de sécurité n’existent pas encore au premier appel), comparer les deux realpathSync.native(resolve(...)), minuscules uniquement sous Windows. Aucun changement du canonicalPath ou des protections de production.
+- Les deux tests instrumentés passent systématiquement par la jonction ; cleanup la retire explicitement avant de supprimer son dossier. Le premier ajoute **replacementInjected=true** : l’erreur de remplacement a réellement été provoquée. Les assertions de sauvegarde récupérable, cible intacte, demande non rejouée et récupération volontaire restent identiques. Le second garde ses assertions **attempted=true / blocked=true** et l’égalité de toutes les cellules après copie : callback et tentative d’écriture réellement exercés.
+- Construction des fixtures non mises en cache dans SQLite **:memory:** : toutes les vraies migrations requises restent exécutées, les noms/IDs/dates historiques du registre sont conservés. Export **VACUUM INTO** vers un fichier propre à ce test ; cache actuel toujours copié dans un fichier indépendant. Aucune utilisation de Validation-MSI, version 65 non remplacée par 66, aucun schéma simplifié ni mock de restauration. Le test vérifie encore migrationCount=65, source byte-identique après restauration, données de destination égales à la source, application de la seule migration restante et replay neutre/intégrité.
+- Sondes de profilage temporaires supprimées du code final. Le test de transaction de lecture des snapshots n’apportait aucun gain et a été retiré : helper snapshot original conservé. **80 assertions originales identiques**, vérifiées par AST ; une assertion supplémentaire d’injection. Délais 20 s, configuration Vitest, workflow, services et migrations identiques au HEAD de départ.
+
+### Mesures locales / résultats
+
+| Phase historique 65 | Avant | Après |
+| --- | --- | --- |
+| Exécution des migrations pour créer la fixture | 1489 ms | 140 ms |
+| Création complète de la fixture | 1491 ms | 164–168 ms |
+| Validation de la source | 156 ms | 154–163 ms |
+| Programmation de restauration | 17 ms | 17–18 ms |
+| Restauration effective | 94 ms | 88–97 ms |
+| Lecture/comparaison des snapshots de tables | — | 17 ms |
+| Comparaison byte pour byte de la source | Conservée | 2011 ms |
+| Migration 66 restante / replay | — | 10–11 ms |
+| Intégrité finale | — | 6–7 ms |
+| Scénario complet, run de mesure | 3895 ms | 2502–2601 ms |
+
+Le timeout CI original était **23134 ms**. Il ne s’agit pas d’un avant/après hébergé : les durées après sont locales uniquement. Réduction du coût disque attendue sur ce runner grâce à un seul export, sans hausse de timeout ni réduction du véritable scénario de sécurité. Le coût des assertions n’est pas masqué.
+
+- Les trois tests, sur le code final sans sondes, sont rejoués **trois fois** à deux workers : **3/3 à chaque fois**, fichier ciblé 3,86 /3,88 /3,87 s. Historique65 : **2503 /2512 /2500 ms** ; récupération avec injection : **427 /439 /437 ms** ; concurrence réellement bloquée : **173 /187 /193 ms**.
+- Puis **tout restore.test.ts : 35/35, aucune exclusion ni erreur RPC, 63,91 s**. Historique 65 dans ce run : **2363 ms**. Typecheck OK. Aucune suite complète des 748 relancée.
+- Les 32 cas non sélectionnés pendant le ciblage ont ensuite tous été exécutés dans le run complet du fichier : aucun test supprimé ou masqué. Toutes les garanties de restauration DELETE/WAL, intégrité/FK, sources incompatibles, destination immuable/A-B, sauvegarde/récupération, fichiers occupés, verrous, alias et replay sont couvertes.
+- Deux premiers résidus de ce diagnostic liés à la jonction ont été identifiés précisément et nettoyés après retrait du lien ; aucun nettoyage global de TEMP, les anciens dossiers dont la suppression avait été refusée n’ont pas été repris. Les runs corrigés suppriment leurs fixtures dans afterEach et vérifient la disparition des dossiers.
+
+### Accès, visibilité et prochain contrôle
+
+Aucun accès GitHub supplémentaire n’est nécessaire pour ce correctif local : le dépôt privé a déjà exécuté la CI hébergée. Le manque de scope user pour la facturation personnelle, constaté précédemment, n’empêche pas la lecture des runs ni ces tests locaux ; si nécessaire le propriétaire peut consulter Billing sans élargir le jeton. Rendre le dépôt public ne corrige ni les chemins ni les fixtures : aucun changement de visibilité proposé comme contournement. Un éventuel changement nécessiterait une décision distincte et un audit de l’historique/des secrets/données confidentielles, non réalisé ici.
+
+Correctif en commit local seulement, pas de push, modification de PR #82/#83, nouvelle CI, budget, source de production ou donnée réelle. Recommandation : autoriser ensuite une seule CI complète Windows hébergée sur le contenu corrigé, vérifier particulièrement ces trois cas et les erreurs RPC, puis validation humaine avant fusion #81.
+
+Les bilans qui suivent sont historiques ; ils ne constituent pas une validation GitHub de ce correctif.
+
 ## Reprise de #81 après stabilisation CI — 09/10/2026
 
 - #84 merged normalement dans main **2b3906328d237b962f053acdf25b1ebeeba1222c**, contenu identique au HEAD f4bc0197 / run #589 vert ; run main post-merge #628 également vert. Intégration de ce main dans #81 par merge normal **e215125**, aucun rebase/squash. Conflits PROJECT_STATUS/roadmap seulement, historiques conservés.

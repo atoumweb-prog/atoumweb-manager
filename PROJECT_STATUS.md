@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 09/10/2026 — Diagnostic #649 et correction locale ciblée de restore.test.ts
+
+- Échecs d’injection reproduits avec une jonction contrôlée : destination de production canonisée par realpathSync.native, mocks comparant un chemin brut. Ancien filtre ignore la destination réelle : pas d’erreur injectée / pas de callback concurrent. Comparaison canonisée des deux côtés, alias maintenu dans les deux cas pour prévenir la régression, nettoyage explicite de la jonction et preuve supplémentaire replacementInjected=true.
+- Fixture historique 65 : vraies migrations 1–65 désormais préparées en SQLite mémoire puis export VACUUM INTO, même registre/données/source indépendante. Mesure locale création **1491→166 ms**, migrations **1489→140 ms**, restauration **94→88–97 ms**. Comparaison byte pour byte ~2 s conservée ; essai de transaction de lecture sans gain retiré. Aucune modification du service, des migrations, du YAML/Vitest ou des délais/assertions existantes.
+- Trois tests corrigés **3/3 sur trois répétitions** (65 : 2,500–2,512 s ; récupération : 0,427–0,439 s ; concurrence : 0,173–0,193 s). **35/35 restore.test.ts, 63,91 s**, aucune erreur RPC ; typecheck OK. 80 assertions initiales intactes et un contrôle supplémentaire ; sources historiques, sauvegarde/récupération, writer réellement bloqué et intégrité/FK préservés. Pas de suite complète 748 rejouée, conformément à la demande.
+- [Diagnostic et limites](docs/FUNCTIONAL_INTEGRITY_UX16_UX03.md) : graphie précise du TEMP CI non enregistrée, pas d’affirmation d’un nom 8.3 particulier ; mécanisme de comparaison confirmé par reproduction locale. Sondes retirées, fixtures finales et deux résidus de ce diagnostic nettoyés ; anciens TEMP refusés laissés intacts. Correctif committé localement seulement, aucun push/run/rerun/merge/visibilité/budget ou Validation-MSI modifié, #82/#83 non touchées. Nouvelle CI Windows hébergée à autoriser pour confirmer.
+
 ## 09/10/2026 — #81 actualisée, contrôles locaux verts, CI préparée
 
 - Main local/distant **2b3906328d237b962f053acdf25b1ebeeba1222c**, #84 merged normalement, contenu exact f4bc0197 validé par #589 ; CI post-merge **#628 /37952828225 success** sur le SHA main. #81 reprend ce main par merge normal local e215125 ; deux conflits de suivi résolus en conservant les deux historiques, aucun conflit fonctionnel.
