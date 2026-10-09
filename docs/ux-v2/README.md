@@ -39,3 +39,21 @@ Ce référentiel **n'annonce aucune fonctionnalité comme livrée**, ne modifie 
 
 ## État de ce premier dépôt
 Ce dépôt contient une **première base opérationnelle**, pas encore la matrice exhaustive de chaque contrôle JSX/IPC/service ni l'inventaire complet des champs. Ces éléments devront être annexés et testés incrémentalement à partir de la cartographie d'audit.
+
+## Spécifications de lots
+Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions, fonctions à conserver, ordre d'exécution, recette et incertitudes**. Les lots 02–10 sont des spécifications initiales à enrichir par une matrice complète contrôle→handler→IPC→service→test avant mise en œuvre.
+
+| Lot | Document |
+|---|---|
+| 01 | [Fondations UX/UI](LOT-01-FONDATIONS.md) |
+| 02 | [Navigation et Accueil](LOT-02-NAVIGATION-ACCUEIL.md) |
+| 03 | [Prospection, Clients et Annuaire](LOT-03-CRM.md) |
+| 04 | [Catalogue administrable](LOT-04-CATALOGUE.md) |
+| 05 | [Bibliothèque contractuelle et CGV](LOT-05-CONTRATS-CGV.md) |
+| 06 | [Devis et Abby](LOT-06-DEVIS-ABBY.md) |
+| 07 | [Projets, Sites & Pages et Bridge](LOT-07-PROJETS-BRIDGE.md) |
+| 08 | [Interventions, Maintenance et Temps](LOT-08-OPERATIONS-TEMPS.md) |
+| 09 | [Facturation, Dépenses et Documents](LOT-09-GESTION-DOCUMENTS.md) |
+| 10 | [Statistiques, Sauvegardes et Réglages](LOT-10-PILOTAGE-REGLAGES.md) |
+
+**Mode de travail pour la suite :** documenter systématiquement dans GitHub toute décision prise en conversation, dans le fichier de lot correspondant et le registre des décisions ; les réponses du chat seules ne font pas foi comme référentiel durable. Aucun lot n'est « prêt à coder » tant que la vérification du code actuel et sa matrice d'interactions ne sont pas terminées.
