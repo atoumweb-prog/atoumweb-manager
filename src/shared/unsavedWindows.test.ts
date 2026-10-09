@@ -6,6 +6,25 @@ describe('coordination des fenêtres et sorties différées',()=>{
  it('Rester bloque la fermeture',()=>{const c=new UnsavedWindows(()=>false);c.add(1);c.update(1,state(1));expect(c.approveOne(1)).toBe(false);expect(c.state(1)).toEqual(state(1));});
  it('accepte explicitement la fermeture avec brouillon',()=>{const c=new UnsavedWindows(()=>true);c.add(1);c.update(1,state(1));expect(c.approveOne(1)).toBe(true);});
  it('aggrège les fenêtres détachées en un seul dialogue',()=>{let calls=0;const c=new UnsavedWindows(labels=>{calls++;expect(labels).toEqual(['Contrat','Entreprise']);return true});c.add(1);c.add(2);c.update(1,state(1));c.update(2,state(1,['Entreprise']));const ticket=c.approveAll()!;expect(calls).toBe(1);c.remember(ticket);expect(c.approveOne(1)&&c.approveOne(2)).toBe(true);expect(calls).toBe(1);});
+ it('ne redemande pas Quitter lors du quit qui suit une approbation globale inchangée',()=>{
+   let calls=0;
+   const c=new UnsavedWindows(()=>{calls++;return true});
+   c.add(1);c.update(1,state(1));
+   const ticket=c.approveAll();
+   expect(ticket).not.toBeNull();
+   c.remember(ticket!);
+   expect(c.approveAll()).not.toBeNull();
+   expect(calls).toBe(1);
+ });
+ it('réexige une confirmation globale après une nouvelle modification',()=>{
+   let calls=0;
+   const c=new UnsavedWindows(()=>{calls++;return calls===1});
+   c.add(1);c.update(1,state(1));
+   c.remember(c.approveAll()!);
+   c.update(1,state(2));
+   expect(c.approveAll()).toBeNull();
+   expect(calls).toBe(2);
+ });
  it('ne ferme pas pendant un enregistrement même avec un choix positif',()=>{let pending=false;const c=new UnsavedWindows((_,p)=>{pending=p;return true});c.add(1);c.update(1,state(1,[],true));expect(c.approveAll()).toBeNull();expect(pending).toBe(true);expect(c.approveOne(1)).toBe(false);});
  it('une autorisation passée est invalidée par une nouvelle saisie',()=>{let allow=true;const c=new UnsavedWindows(()=>allow);c.add(1);c.update(1,state(1));const ticket=c.approveAll()!;c.remember(ticket);c.update(1,state(2));allow=false;expect(c.approveOne(1)).toBe(false);});
  it('annuler le sélecteur workspace ne mémorise pas une permission de fermeture',()=>{let allow=true;const c=new UnsavedWindows(()=>allow);c.add(1);c.update(1,state(1));expect(c.approveAll()).not.toBeNull();allow=false;expect(c.approveOne(1)).toBe(false);});
