@@ -121,3 +121,10 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 ### CI GitHub Actions #84 — première exécution réelle
 - **Nouveau HEAD #84 : `1b069575891dae3b695c0afa1c76a3964890a03a`**, commit `ci: trigger first hosted Windows validation within free allowance`.
 - [Run #549](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/37934890745), job `quality` sur Windows hébergé : **install OK, typecheck OK, tests ÉCHEC : 692/695 réussis, 3 timeouts de 5000 ms** (`OperationalRecipeService.test.ts`, deux tests `mariageHistoireRecipeStructure.test.ts`). **CI NON VERTE, #84 draft NON FUSIONNÉE**. Voir [dossier CI](CI-GITHUB-ACTIONS.md). Ce run montre que le runner hébergé fonctionne, pas que la suite passe.
+
+### Lot 02C — Recherche et navigation ciblée
+- [02C — spécification détaillée](LOT-02C-RECHERCHE-ROUTAGE.md) : **14 types d'entités**, ouverture par `entityId`, maintien des événements existants, erreurs IPC, UX-01 avant navigation et prévention des résultats périmés. **18 scénarios de recette** ; écarts supplémentaires E51–E58. Aucune application modifiée.
+### Lot 02D — Accueil opérationnel
+- [02D — spécification détaillée](LOT-02D-ACCUEIL-PILOTAGE.md) : **8 sources de données**, Aujourd'hui, KPI, relances, alertes, chrono unique, widgets, actions rapides réellement exécutables et **22 scénarios de recette**. **E59 ouvert** : projection correcte des 7 étapes visuelles sur les statuts backend, surtout `new`, `Finalisation` et `Conversion`.
+### Lot 02E — Recette transverse
+- [02E — intégration et recette](LOT-02E-RECETTE-ET-MIGRATION.md) : dépendances #81/#83/#84, séquence réversible, accès aux 17 modules, protection des brouillons et **20 parcours bout-en-bout**. **Lot 02A–02E : cahiers des charges maintenant complets, développement non commencé.** L'arbitrage E42 (rail option A) est validé, E59 reste à trancher avant implémenter le pipeline.
