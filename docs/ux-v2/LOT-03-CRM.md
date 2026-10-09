@@ -27,3 +27,15 @@ La décision **Conversion historique** est acquise. En revanche, aucun `Prospect
 **Finalisation (validée par AtoumWeb)** : accord de principe obtenu ; dernières formalités, notamment signature Abby, encore à accomplir. Ce **classement commercial visuel** n'est pas synonyme de devis `finalizedAt` (simple prêt à envoyer). Il faut identifier un signal de classement explicite, fiable et historisé **sans créer arbitrairement un nouveau statut Prospect** ; le mapping reste une tâche technique.
 
 **Projet prévisionnel (validé)** : pouvoir créer volontairement depuis les **lignes déjà inscrites au devis courant** même avant signature, **y compris avant l'étape Finalisation**, afin de travailler sur plan, Sites/Pages et ressources ; modifier/synchroniser ou **supprimer/remplacer de façon contrôlée** le pré-projet si le devis change fortement. Ce choix **ne transforme pas** le Prospect en Client et **ne déclenche pas** production/facturation officielle. Sur acceptation officielle, Projet retenu figé et Client créé/rattaché selon services existants. [Spécification 07P](LOT-07-PROJET-PRE-SIGNATURE.md).
+
+## 09/10/2026 — Dossiers détaillés disponibles (documentation uniquement)
+- [03A — Matrice CRM existant/cible](LOT-03A-MATRICE-CRM-EXISTANT-CIBLE.md) : service `CrmService`, statuts, Prospect/Client, Conversion, Devis → Projet prévisionnel, 18 scénarios.
+- [03B — Pipeline et Conversion](LOT-03B-PROSPECTION-PIPELINE.md) : **6 colonnes actives + 1 historique** Conversion, température distincte du stade, gardes sur drag & drop, Projet non signé, 20 scénarios.
+- [03C — Fiche Prospect et besoins](LOT-03C-FICHE-PROSPECT-BESOINS.md) : identité, qualification, sélection consultative catalogue, pré-devis, devis courant et commande explicite Préparer Projet, 18 scénarios.
+- [03D — Fiche Client](LOT-03D-FICHE-CLIENT.md) : **huit onglets cible** contre six onglets techniques actuels, relation indépendante, Client et Projet conservés après conversion, 14 scénarios.
+- [03E — Annuaire](LOT-03E-ANNUAIRE-PARCOURS.md) : organisations/contacts partagés, relation `client_prospect`, rapprochement/dernière vérification, 13 scénarios.
+
+**Statut : documentation complète 03A–03E, aucun code applicatif ni test exécuté par ces documents.**
+**E72 — choix métier encore ouvert** : les nouveaux contacts `stage='new'` restent-ils **uniquement dans l'Annuaire tant que l'utilisateur n'a pas cliqué « Démarrer la prospection »** (comportement actuel et recommandation), ou sont-ils inclus tout de suite dans « À qualifier » ? **Ne pas trancher implicitement.**
+**E73 — problème de raccord technique ouvert** : Finalisation = accord de principe (sens métier validé), mais aucun marqueur backend autonome n'existe aujourd'hui. Conception d'un signal daté/versionné et révocable à valider avant implémentation, sans nouveau `ProspectStage` arbitraire.
+**E66–E71** : préparation du projet à partir d'un devis non signé, synchronisation et régénération sécurisée déjà définies en [Lot 07P](LOT-07-PROJET-PRE-SIGNATURE.md).
