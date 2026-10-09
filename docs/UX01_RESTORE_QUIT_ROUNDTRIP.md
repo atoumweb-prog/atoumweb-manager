@@ -21,6 +21,19 @@ Ce script est indépendant de Codex, des crédits Codex et de GitHub Actions. **
 - Supprime **uniquement** son propre dossier créé dans TEMP, après vérification de son emplacement et préfixe ; ne lit ni ne modifie `Validation-MSI`, le profil ordinaire du Manager ou une autre base utilisateur.
 - Échec = code de sortie non nul ; aucune sortie `PASS` ne doit être interprétée comme validation si l'exécution complète se termine en erreur.
 
+## Incident Windows du 10/10/2026 — acceptation Electron
+
+Sur `5c0cf423`, l'exécution réelle a initialisé la base, créé la sauvegarde puis affiché le **rapport `accepted-quit` avant `app.quit()`** ; le processus n'a pas terminé et le parent a atteint la limite de 90 secondes. Le dossier temporaire a été nettoyé. **Ce rapport ne prouvait pas `will-quit` : la restauration et le redémarrage n'ont pas été validés.**
+
+Correctif de la **recette seulement**, sans modifier `src/main` :
+- ouverture d'une vraie `BrowserWindow` masquée dans la fixture et raccordement des protections de sortie UX-01 ;
+- instrumentation des événements natifs `before-quit` / `will-quit` ; pour l'acceptation, le rapport de succès n'est émis **qu'après `will-quit`**, la fermeture du service SQLite et la vérification du marqueur ;
+- si `will-quit` est absent, erreur explicite après 12 secondes de fermeture sollicitée (avant le timeout parent de 90 s) ; `app.exit(0)` utilisé uniquement dans la fixture après preuves observées ;
+- distinction entre sortie effective du **PID Electron** et flux stdout/stderr éventuellement retenus par des processus enfants sous Windows ;
+- en cas de refus, vérification de `before-quit`, absence de `will-quit`, fenêtre conservée, état SQLite inchangé et marqueur absent.
+
+**Hypothèses non encore départagées :** fermeture sans aucune fenêtre dans l'ancienne fixture et/ou handles de sortie Windows encore ouverts. Aucun défaut de la fermeture réelle du Manager n'est établi à ce stade. Exécution réelle de ce nouveau correctif **encore en attente**.
+
 ## Ce que cette recette ne prouve pas
 
 **Il s'agit de cinq processus Electron natifs exerçant les services réels, mais pas de l'exécutable packagé installé.** Elle ne prétend donc pas confirmer le vrai `app.relaunch()` du MSI, la fenêtre graphique complète, ni le chemin `app.isPackaged` de l'IPC en conditions de distribution. Les 183 contrôles natifs 3 thèmes réalisés séparément couvrent les interactions React/Electron, sans constituer cette preuve packagée.
