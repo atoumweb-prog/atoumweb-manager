@@ -135,3 +135,11 @@ La [proposition CI GitHub-hosted Windows](CI-GITHUB-ACTIONS.md) est consignée s
 
 ### Spécification du sous-lot 01E
 [LOT-01E-FORMULAIRES-CONFIRMATIONS.md](LOT-01E-FORMULAIRES-CONFIRMATIONS.md) : inspection des APIs **réelles** de PR #83 (`UnsavedGroup`, `useUnsavedDraft`, `UnsavedRegistry`, `DraftSection`, `UnsavedWindows`, garde Electron), contrat UX des éditeurs, définition **optionnelle** d'« Enregistrer et quitter », frontières async/native et **20 scénarios de recette**. Ne pas implémenter une seconde garde ; vérifier #81/#83 et CI avant toute intégration.
+
+### Spécification du sous-lot 01F
+[LOT-01F-PREFERENCES-RECETTE.md](LOT-01F-PREFERENCES-RECETTE.md) : distinction préférences visuelles/données métier, **atelier UX autonome sans IPC de mutation**, 22 scénarios de recette, état de clôture du socle. Le `DemoPanel` existant crée/réinitialise de **vraies données marquées demo via services IPC** et **ne doit pas servir** à la recette visuelle isolée sur workspace actif.
+
+### Bilan documentaire du Lot 01 au 09/10/2026
+- Spécifications complétées **01A, 01B, 01C, 01D, 01E, 01F** ; tables de correspondance code réel, décisions, cas limites et recettes publiés.
+- **Aucune implémentation du Lot 01** : pas de nouvelle UI, pas de CSS modifiée, aucun test V2 exécuté par ces ajouts.
+- Le développement nécessite décision humaine, stabilisation des dépendances pertinentes (#81/#83), et audit des véritables interactions/IPC avant toute migration métier.
