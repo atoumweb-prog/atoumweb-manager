@@ -155,9 +155,12 @@ if (!process.versions.electron) {
   }
   void main();
 } else {
-  const { app, dialog } = require('electron');
+  const { app, dialog, BrowserWindow } = require('electron');
   // Never let a native fixture spawn an unattended modal confirmation.
   dialog.showMessageBoxSync = () => 0;
+  dialog.showErrorBox = (title, message) => {
+    console.error('[UX01 child] Nonmodal Electron error:', title, message);
+  };
   const temp = process.env.ATOUMWEB_UX01_RESTORE_ROUNDTRIP_ROOT;
   const stageArg = process.argv.find(arg => arg.startsWith('--stage='));
   const stage = stageArg?.slice('--stage='.length);
@@ -171,7 +174,16 @@ if (!process.versions.electron) {
   app.setPath('userData', profilePath);
   app.on('window-all-closed', () => {});
   const S = require(path.join(temp, 'services.cjs'));
-  let db;
+  let db, testWindow;
+  let beforeQuitCount = 0, willQuitCount = 0;
+  app.on('before-quit', () => {
+    beforeQuitCount++;
+    console.log('[UX01 child] EVENT before-quit count=' + beforeQuitCount);
+  });
+  app.on('will-quit', () => {
+    willQuitCount++;
+    console.log('[UX01 child] EVENT will-quit count=' + willQuitCount);
+  });
   console.log('[UX01 child] waiting for Electron ready, stage=' + stage);
   app.whenReady().then(async () => {
     console.log('[UX01 child] Electron ready; opening TEMP workspace');
@@ -187,25 +199,68 @@ if (!process.versions.electron) {
       db.setSetting(key, 'after');
       const cleanup = () => { db?.close(); db = null; };
       S.registerGuardedShutdown(cleanup);
+      // A real (hidden) Electron window makes this an actual window shutdown,
+      // not a degenerate app.quit() path with no BrowserWindow ever created.
+      testWindow = new BrowserWindow({
+        show: false, width: 320, height: 240,
+        webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
+      });
+      S.bindUnsavedWindow(testWindow);
+      await testWindow.loadURL('data:text/html;charset=utf-8,<title>UX01 isolated quit fixture</title>');
+      console.log('[UX01 child] TEMP BrowserWindow loaded; id=' + testWindow.id);
       if (stage === 'accepted-quit') {
+        // Record only AFTER actual will-quit, when the production listener
+        // has committed the pending restore and closed the SQLite connection.
         S.restoreQuitGate.arm(() => S.scheduleDatabaseRestore(source, workspace));
-        // Real Electron lifecycle: before-quit -> will-quit -> process exit.
-        report(stage, { quitRequested: true, sourceCreated: fs.existsSync(source) });
+        let acceptedReported = false;
+        app.once('will-quit', () => {
+          try {
+            assert(beforeQuitCount > 0, 'Accepted lifecycle skipped before-quit');
+            assert(!db, 'Accepted lifecycle did not close SQLite');
+            const pendingPath = marker(profile, temp);
+            assert(fs.existsSync(pendingPath), 'Accepted lifecycle did not commit marker');
+            const data = JSON.parse(fs.readFileSync(pendingPath, 'utf8'));
+            assert(data.state === 'pending' && data.version === 2, 'Marker written incorrectly');
+            acceptedReported = true;
+            report(stage, { willQuitObserved: true, sqliteClosed: true,
+              markerCommitted: true, windowClosed: testWindow.isDestroyed(),
+              sourceCreated: fs.existsSync(source) });
+            // Exit explicitly only AFTER Electron approved will-quit.
+            // A test must not report success merely because app.quit() was called.
+            app.exit(0);
+          } catch (error) {
+            console.error('[UX01 child] Accepted lifecycle failed:', error.stack || error);
+            app.exit(1);
+          }
+        });
+        setTimeout(() => {
+          if (acceptedReported) return;
+          console.error('[UX01 child] app.quit() failed to reach will-quit;',
+            { beforeQuitCount, willQuitCount,
+              markerExists: fs.existsSync(marker(profile, temp)),
+              windowAlive: !!testWindow && !testWindow.isDestroyed() });
+          app.exit(1);
+        }, 12000);
+        console.log('[UX01 child] Requesting accepted app.quit()...');
         app.quit();
       } else {
-        // Pending saving ALWAYS vetoes quit, regardless of dialog answers.
-        S.unsavedWindows.add(991);
-        S.unsavedWindows.update(991, {
+        // A pending save must veto an actual quit, preserving the open window.
+        S.unsavedWindows.update(testWindow.id, {
           epoch: 'temporary-renderer', revision: 1,
           labels: ['Devis — fixture'], pending: true,
         });
         S.restoreQuitGate.arm(() => S.scheduleDatabaseRestore(source, workspace));
+        console.log('[UX01 child] Requesting app.quit() with pending save...');
         app.quit();
+        assert(beforeQuitCount > 0, 'Refused quit did not reach before-quit');
+        assert(willQuitCount === 0, 'Refused quit incorrectly reached will-quit');
+        assert(!testWindow.isDestroyed(), 'Refused quit unexpectedly destroyed test window');
         assert(!fs.existsSync(marker(profile, temp)), 'Quit refusal left a marker');
         assert(!S.restoreQuitGate.commitOnQuit(), 'Quit refusal left a live gate');
         assert(db.getSetting(key, null) === 'after', 'Quit refusal changed open SQLite');
-        report(stage, { quitRefused: true, dbOpen: true, markerAbsent: true });
-        S.unsavedWindows.remove(991);
+        report(stage, { quitRefused: true, beforeQuitObserved: true, willQuitObserved: false,
+          dbOpen: true, windowStillOpen: true, markerAbsent: true });
+        S.unsavedWindows.remove(testWindow.id);
         cleanup();
         app.exit(0);
       }
