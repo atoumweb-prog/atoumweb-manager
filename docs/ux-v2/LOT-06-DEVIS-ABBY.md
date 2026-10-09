@@ -18,3 +18,8 @@ Garde UX-01 : paramètres du Devis et administration contractuelle ne s'écrasen
 06A analyse 6 étapes, actions et UX-04/05/06 ; 06B liste/éditeur ; 06C picker catalogue/suggestions ; 06D builder et prévisualisation ; 06E préparation Abby/snapshot/projet ; 06F recette.
 ## Recette
 Besoins non achetés restent hors devis/CGV/blueprint ; code Abby copiable ; finalisation avec contrôles ; PDF Abby lié ; retrait d'option déclenche recomposition contrôlée ; deux brouillons distincts ne s'écrasent pas.
+
+## 09/10/2026 — Passage volontaire Devis non signé → Projet prévisionnel
+AtoumWeb valide **« Préparer le Projet » depuis le devis courant non accepté**, sur les lignes proposées du devis (pas simplement des besoins prospect). La préparation est **interne et provisoire**, sans acceptation Abby, création Client, blocage contractuel ou facturation. Une révision majeure du devis propose de **synchroniser le Projet existant** ou **repartir de zéro depuis la révision actuelle**, avec confirmation et conservation des éléments ayant déjà reçu un travail/historique. L'acceptation/signature effective du devis demeure une transition contractuelle **distincte** et fige le Projet retenu. Ne pas confondre `quotes.finalize` (prêt à envoyer) avec `quotes.accept` (signature/acceptation).
+
+Contrat et risques/recette : [Projet prévisionnel et régénération — Lot 07P](LOT-07-PROJET-PRE-SIGNATURE.md).
