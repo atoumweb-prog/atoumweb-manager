@@ -16,7 +16,7 @@ Une seule catégorie principale ; plusieurs liens offre→service, sans duplique
 ## États et sécurité
 Brouillon, publication volontaire, désactivation/archivage ; suppression uniquement sans liens historiques protégés. Édition versionnée des prix/conditions, jamais rétroactive.
 ## Ordre proposé
-[04A inventaire réel](LOT-04A-MATRICE-CATALOGUE.md) ; [04B navigation/offres/catégories](LOT-04B-NAVIGATION-CATEGORIES.md) ; [04C éditeur/versionnement/publication](LOT-04C-EDITEUR-VERSIONS.md) ; [04D associations et recommandations](LOT-04D-ASSOCIATIONS-RECOMMANDATIONS.md) ; **04E** aides éditables ; **04F** contrôles et recette. **04A–04D = documentation rédigée uniquement**, aucune migration ou fonctionnalité V2 livrée.
+[04A inventaire réel](LOT-04A-MATRICE-CATALOGUE.md) ; [04B navigation/offres/catégories](LOT-04B-NAVIGATION-CATEGORIES.md) ; [04C éditeur/versionnement/publication](LOT-04C-EDITEUR-VERSIONS.md) ; [04D associations et recommandations](LOT-04D-ASSOCIATIONS-RECOMMANDATIONS.md) ; [04E aides à la vente éditables](LOT-04E-AIDES-COMMERCIALES.md) ; [04F prépublication et recette](LOT-04F-PUBLICATION-RECETTE.md). **04A–04F = documentation entièrement rédigée, non implémentée**, aucune migration ou fonctionnalité V2 livrée.
 
 **Précision produit :** « Services complémentaires » est une **section visuelle** ; chaque service garde sa **catégorie métier principale propre**, triée avec ses pairs en A–Z français. Ne pas imposer une catégorie technique unique à tous.
 ## Recette
