@@ -94,3 +94,9 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 ### Lot 01E — Formulaires et confirmations critiques
 - [Spécification détaillée 01E](LOT-01E-FORMULAIRES-CONFIRMATIONS.md) : état réel UX-01 #83, modules pilotes et limites, indicateurs de brouillons, conflits et permissions, extension future `Enregistrer et quitter` **uniquement quand un vrai service d'enregistrement fiable existe** ; 20 tests projetés, dont les trois régressions corrigées dans #83.
 - Décisions techniques ouvertes E17–E22 : protocole async de sauvegarde avant sortie, périmètres d'éditeurs, dialogues Electron, conflit de versions, couverture réelle des modules et crash hors périmètre. **Documentation uniquement**, pas de nouveau mécanisme implémenté.
+
+### Lot 01F — Préférences et recette du socle
+- [Spécification détaillée 01F](LOT-01F-PREFERENCES-RECETTE.md) : catégories de préférences et frontière données métier, atelier UX **strictement isolé**, contrôles de thèmes/densités/accessibilité/fenêtres, six sous-étapes, **22 scénarios d'acceptation** et passage vers les lots métiers.
+- **Attention constatée dans le code** : le `DemoPanel` actuel (`src/renderer/workflow/DemoPanel.tsx`) appelle `workflow.createDemo` et `workflow.resetDemo` via l'IPC réel. Ce n'est **pas** un atelier visuel inoffensif. La démo de la V2 doit être isolée, sans accès à un workspace métier ni à Validation-MSI.
+
+**Les sous-lots 01A à 01F ont maintenant tous un cahier des charges détaillé dans la PR #82. Ils ne sont PAS implémentés ni recettés ; la matrice écran→handler→IPC→service→test reste à compléter à chaque lot métier.**
