@@ -34,7 +34,7 @@ Ce référentiel **n'annonce aucune fonctionnalité comme livrée**, ne modifie 
 ## Entrées de comparaison
 - Audit PR #80 : cartographie, interactions, parcours, écarts UX-01 à UX-20, invariants.
 - Corrections PR #81 UX-03 et UX-16 : état final à vérifier avant de se fonder dessus.
-- Chantier UX-01A/B/C : partiellement réalisé lors d'une interruption Codex ; ne pas présumer ses commits, intégration ou couverture.
+- UX-01A/B/C : développés sur la [PR #83](https://github.com/atoumweb-prog/atoumweb-manager/pull/83), dernière revue et correctif `5b38cbe` ; **toujours non fusionnée**. Voir l'état vérifié ci-dessous : la couverture reste Prospection / Devis / Référence Prospect, pas les 17 modules.
 - Code `main` et branches fusionnées : faire état des lieux au démarrage de chaque lot.
 
 ## État de ce premier dépôt
@@ -59,12 +59,15 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 **Mode de travail pour la suite :** documenter systématiquement dans GitHub toute décision prise en conversation, dans le fichier de lot correspondant et le registre des décisions ; les réponses du chat seules ne font pas foi comme référentiel durable. Aucun lot n'est « prêt à coder » tant que la vérification du code actuel et sa matrice d'interactions ne sont pas terminées.
 
 ## Suivi UX-01 (mise à jour du 09/10/2026)
-- [PR corrective #83](https://github.com/atoumweb-prog/atoumweb-manager/pull/83), branche `codex/fix-manager-unsaved-inputs-ux01`, HEAD `14d8f9c` : **ouverte en draft, non fusionnée** à la dernière vérification.
+- [PR corrective #83](https://github.com/atoumweb-prog/atoumweb-manager/pull/83), branche `codex/fix-manager-unsaved-inputs-ux01`, **HEAD `5b38cbe1e32e48aaf38154fb7c8e94bb36e2121f`**, ouverte en draft et non fusionnée à la vérification du 09/10/2026. Commits A/B/C `df1b6f3`, `80300a4`, `14d8f9c` ; revue finale correctrice `5b38cbe`.
 - UX-01A : sections contractuelles indépendantes, conflits et sauvegardes périmées refusées.
 - UX-01B : garde par éditeur Prospection/Devis, confirmation **Rester** (défaut) ou sortie volontaire ; sous-formulaires concernés.
 - UX-01C : fermeture/rechargement/quit Electron, fenêtres détachées et programmation de changement de workspace.
-- Bilan annoncé et documenté : typecheck OK, 75/75 tests ciblés, 733/733 tests complets avec deux workers, 153/153 contrôles natifs trois thèmes, 1–66 inchangées, intégrité/FK OK.
-- **Limites** : pas de bouton « Enregistrer et quitter » universel confirmé ; pas de raccordement automatique aux autres modules, pas de récupération après crash. CI encore à confirmer avant fusion. Le Lot 01E doit **réutiliser** les composants et API validés d'UX-01 sans créer un second système.
+- **Dernière revue du 09/10/2026** (bilan versionné dans la branche #83) : trois anomalies corrigées — archivage Prospect, suppression de ligne Devis avant confirmation, réduction d'une section détruisant son brouillon. Typecheck OK, **734/734 tests** (2 workers), **177/177 contrôles natifs** (trois thèmes), migrations **1–66 inchangées**, intégrité et FK conformes sur fixtures. Chiffres 75/75, 733/733, 153/153 = checkpoints **antérieurs**, ne pas les donner comme bilan final.
+- **Compatibilité PR #81** : composition simulée dans une copie temporaire, typecheck OK, **87/87 tests ciblés** et **177/177 contrôles natifs**. **Conflit réel `src/main/ipc.ts` à résoudre lors du merge** : conserver `scheduleDatabaseRestore(sourcePath, workspace)` et les détails de destination de #81, **ainsi que** les gardes de sortie et `app.quit()` de #83 ; `main.ts` doit conserver erreurs de restauration #81 et cleanup `will-quit` #83. La recette de simulation **ne vaut pas fusion effectuée**.
+- **PR #80** : conflits documentaires `PROJECT_STATUS.md`/roadmap annoncés, historiques à conserver. **PR #82** : compatibilité sans conflit rapportée sur un HEAD documentaire antérieur ; à revérifier lors des fusions ultérieures.
+- **CI GitHub Actions** : run #518 (`37927673492`) du HEAD #83 confirmé `queued` sans conclusion, donc **pas de CI verte**. Codex signale zéro runner self-hosted enregistré. Ne pas fusionner automatiquement.
+- **Limites maintenues** : pas de bouton « Enregistrer et quitter » universel, pas de raccordement automatique aux autres modules, pas de récupération après crash. Le Lot 01E doit **réutiliser** le code UX-01 final intégré sans créer un second registre ; contrôler la résolution #81/#83 et la CI avant de commencer l'intégration.
 
 ## Comparaison code réel / cible — Lot 01
 - [Matrice existant → V2](LOT-01-MATRICE-EXISTANT-CIBLE.md) : **19 entrées traçables** en 01A–01F, sources `main@eb252d5c` et branche non fusionnée UX-01 #83 ; décisions, risques, critères de recette et incohérences E01–E04. Ce document est une inspection statique, **pas un résultat de tests**.
