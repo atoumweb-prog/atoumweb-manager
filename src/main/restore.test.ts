@@ -74,13 +74,14 @@ beforeEach(async () => {
   vi.mocked(fs.copyFileSync).mockReset().mockImplementation(actualFs.copyFileSync);
   vi.mocked(sqlite.backup).mockReset().mockImplementation(actualSqlite.backup);
 });
-afterEach(() => {
+afterEach(async () => {
   // Only fixtures created by this test, never a profile/workspace supplied by users.
   expect(resolve(root).startsWith(resolve(tmpdir()) + sep)).toBe(true);
   expect(fs.readdirSync(workspace.dataDirectory).filter(name => name.startsWith('.restore-') || name.endsWith('.restore-lock'))).toEqual([]);
   expect(fs.existsSync(`${marker()}.lock`)).toBe(false);
   fs.rmSync(root, { recursive: true, force: true });
   expect(fs.existsSync(root)).toBe(false);
+  await new Promise<void>(resolve => setImmediate(resolve));
 });
 
 describe('restauration SQLite isolée UX-16', { timeout: 20000 }, () => {
