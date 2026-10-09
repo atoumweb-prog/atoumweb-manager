@@ -19,3 +19,6 @@ Organisations, contacts, recherche, catégories, dernière vérification ; entr�
 Qualification incomplète, changement phase valide/invalide, retour fiche, fermeture fenêtre détachée, synchronisation, création devis depuis besoin, conversion sans doublon, 3 thèmes/densités, garde UX-01.
 ## Arbitrages à vérifier
 Noms/codes exacts des statuts relationnels Client, transitions backend, différence libellés statistiques et pipeline (UX-09).
+
+## Dépendance E59 — sens de Finalisation (analyse technique, choix ouvert)
+La décision **Conversion historique** est acquise. En revanche, aucun `ProspectStage=finalization` n'existe ; `quotes.finalize` ne représente que **Devis à envoyer**, et `quotes.accept` sur signature réelle Abby mène à Conversion. La piste à faire valider est **accord de principe / signature en attente**, avec indicateur traçable non destructif si réalisable, sans statut backend inventé. Source et vérification détaillées : [Lot 02D](LOT-02D-ACCUEIL-PILOTAGE.md). Ne pas laisser Codex mettre en œuvre cette classification avant l'arbitrage.
