@@ -3,7 +3,7 @@
 **Version : V1 — constat documentaire du 09/10/2026.**  
 **Nature : vérification statique ciblée du dépôt GitHub, non recette exécutée.**  
 **Référence code réel inspecté : `main@eb252d5cbd0e95137eafa2b4759fcbcfd7263eda`.**  
-**Complément distinct non fusionné : PR #83, `codex/fix-manager-unsaved-inputs-ux01@14d8f9c`.**  
+**Complément distinct non fusionné : PR #83, `codex/fix-manager-unsaved-inputs-ux01@5b38cbe`**, revue corrective postérieure aux commits A/B/C. Code de base `main@eb252d5c` inchangé lors de cet inventaire.  
 **Ne jamais extrapoler ces observations à toutes les vues.**
 
 ## 1. Sources réellement examinées
@@ -73,13 +73,16 @@ Décision UX déjà actée, mais **non développée** dans la PR #83. Avant 01E 
 |---|---|---|---|
 | Déplacement de panneau | Vue modifiée, saisie intacte | Persister uniquement la disposition, pas le formulaire | Cible, future 01C/D |
 | Saisie puis changement de fiche | dirty | Avertir ; conserver saisie si « Continuer » | Pilote #83 Prospection/Devis |
-| Fermeture modal/panneau | dirty | Protéger domaine en cours uniquement | Pilote #83 |
+| Fermeture modal/panneau | dirty | Protéger domaine en cours uniquement ; **section réduite ne démonte pas ses éditeurs et conserve brouillon** | #83 revue `5b38cbe` |
 | Enregistrer A pendant édition B | dirty dans deux sections | Sauver A, préserver B, conflit explicite si même champ | #83A |
 | Refresh serveur pendant brouillon | valeur locale divergente | Pas d'écrasement silencieux ; conflit visible | #83A/B |
 | Quitter pendant sauvegarde | pending | Bloquer jusqu'à fin confirmée | #83B/C |
 | Quitter/recharger Electron | dirty dans 1+ fenêtres | Avertir une fois, autorisation liée à révision exacte | #83C |
 | Changer workspace | dirty | Garder workspace A et brouillon jusqu'au redémarrage contrôlé | #83C |
 | « Enregistrer et quitter » | dirty et éditeur validable | Valider/sauver, quitter seulement après succès | **Non livré, cible UX2-DATA-002** |
+| Archivage/classement Prospect | dirty | Garder le groupe de brouillons et avertir avant mutation destructive | #83 revue `5b38cbe` |
+| Suppression ligne Devis | dirty voisin / concerné | Avertir **avant** suppression et protéger le brouillon contractuel voisin | #83 revue `5b38cbe` |
+| Composition avec UX-16/UX-03 #81 | fusion de branches | Conserver garde UX-01 **et** protocole de restauration #81 ; conflit `src/main/ipc.ts` à résoudre explicitement | Copie de simulation 87/87 ciblés + 177/177 natifs, **pas fusion** |
 | Arrêt forcé/crash | dirty | Aucun mécanisme de récupération présumé ; hors lot | Limite #83 |
 
 ## 5. Définition de « prêt pour 01A »
