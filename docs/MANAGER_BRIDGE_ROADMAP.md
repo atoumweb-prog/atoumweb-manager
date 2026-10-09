@@ -4,6 +4,8 @@ Date d'ouverture : 27/09/2026.
 
 ## 0. État courant et lecture de la roadmap — 09/10/2026
 
+**#81 reprise et préparée pour CI :** main 2b390632 après merge normal #84 et CI post-merge #628 verte ; merge normal e215125 sur #81. Correctif RPC test-only afterEach async/setImmediate, assertions/délais/services/protections identiques au 593a4611. Typecheck/68 ciblés/748 complets verts (81 fichiers,207,78 s), schema 1–66/intégrité/FK sur fixtures nettoyées. Publication [skip ci], draft et nouveau run #81 à autoriser avant validation de fusion ; aucune CI #81 actuelle annoncée verte. #82/#83, budget et Validation-MSI non modifiés par Codex.
+
 **Reprise #81 sur main CI stabilisé :** #84 fusionnée normalement en 2b390632 (run #589 f4bc0197 vert). main local fast-forward, intégration normale dans #81 ; seuls conflits documentaires, historiques conservés. Correctif de cycle de test RPC à isoler puis contrôles locaux et préparation CI ; aucune fusion #81, modification #82/#83, budget ou Validation-MSI. Les checkpoints suivants décrivent leurs dates respectives.
 
 **Chantier fonctionnel UX-16 / UX-03 validé et implémenté**, sur `codex/fix-manager-integrity-ux16-ux03`, base `main@eb252d5c`. Destination de restauration épinglée/validée et copie transactionnelle ; terminaison atomique et débit imbriquable. **58/58 ciblés, 745/745 complets, typecheck OK** ; tests physiques temporaires Windows et fixtures mémoire, schéma 1–66 inchangé. Aucun accès Validation-MSI, réparation historique, nouvelle migration ou refonte d'écran. [Bilan et limites](FUNCTIONAL_INTEGRITY_UX16_UX03.md). AtoumWeb autorise commits et PR corrective dédiée sans fusion ; PR #80 documentaire inchangée, conception UX/UI V2 séparée. Prochaine action : revue de la PR corrective ; UX-01/04/05/02 restent ultérieurs.
@@ -2327,3 +2329,10 @@ Si vert : préparation technique des intégrations #81 593a4611 puis #83 5b38cbe
 ### 09/10/2026 — PR84-MERGE-PR81-RESUME-01 (AtoumWeb, fusion autorisée / reprise)
 
 Autorisation de fusion normale #84 après contrôle HEAD f4bc0197 et run #589 : merge main 2b3906328d237b962f053acdf25b1ebeeba1222c, tree sans différence avec le HEAD validé. main local actualisé en fast-forward ; #81 part de 593a4611, merge normal de main, conflits PROJECT_STATUS/roadmap uniquement conservant les historiques. Aucun processus Manager du dépôt trouvé avant changement de checkout. Correctif RPC afterEach async/setImmediate autorisé sur #81, assertions/délais/services conservés ; commit distinct et contrôles locaux puis préparation CI. Aucune autorisation de fusion #81, ni modification #82/#83, budget ou Validation-MSI.
+
+
+### 09/10/2026 — PR81-RPC-READY-01 (Codex, correctif autorisé et contrôles locaux)
+
+Main/origin 2b390632 et CI post-merge #628 success ; #81 merge normal e215125 puis commit de test 67aeccd9fdd6feef00a7911eb913c01f0429a3bd. Après cleanup vérifié, afterEach async/setImmediate : comparaison exacte au 593a4611, deux changements seuls, aucune assertion/durée/service/migration modifiés. Typecheck/68 ciblés deux workers (141,92 s)/748 complets deux workers (81 fichiers,207,78 s) verts, aucune erreur RPC ; toutes les protections UX-16/UX-03 et intégrité/FK/1–66/replay sur fixtures préservées.
+
+Publication de la préparation #81 avec HEAD documentaire [skip ci], draft/non fusionnée ; pas de nouveau run #81 sans accord, anciens runs non annulés ni relancés. Avant fusion : autoriser commit sans skip/run Windows-2022 Node 24 npm ci/typecheck/complet deux workers, examiner résultats réels restaurations/débits/journaux/idempotence et toute erreur worker ; validation humaine après CI verte. Aucun budget ni Validation-MSI modifié, pas d’intervention #82/#83. Les dossiers TEMP anciennement refusés au nettoyage ne sont pas repris.

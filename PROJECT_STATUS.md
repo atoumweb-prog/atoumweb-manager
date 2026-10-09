@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 09/10/2026 — #81 actualisée, contrôles locaux verts, CI préparée
+
+- Main local/distant **2b3906328d237b962f053acdf25b1ebeeba1222c**, #84 merged normalement, contenu exact f4bc0197 validé par #589 ; CI post-merge **#628 /37952828225 success** sur le SHA main. #81 reprend ce main par merge normal local e215125 ; deux conflits de suivi résolus en conservant les deux historiques, aucun conflit fonctionnel.
+- Correctif autorisé limité à src/main/restore.test.ts : afterEach async puis setImmediate après fermeture/nettoyage/vérifications. Comparaison automatique au SHA #81 initial 593a4611 : seules ces deux lignes diffèrent ; toutes les assertions/durées et les services restauration/IPC/main/terminaison/packs/migrations sont identiques. Aucun relâchement des protections ni réparation historique.
+- **Typecheck OK**, **68/68 ciblés** avec deux workers (141,92 s), **748/748 complets dans 81 fichiers** avec deux workers (207,78 s), aucune erreur RPC. Les 35 restaurations physiques isolées couvrent source/cible/migrations/intégrité/FK, backup/récupération, WAL/DELETE, alias, fichiers occupés et replay ; opérations atomiques et idempotentes, schema 1–66 inchangé. Fixtures finales fermées/supprimées ; aucun accès Validation-MSI.
+- Publication de #81 avec HEAD documentaire [skip ci] pour préparer le workflow hébergé sans nouvelle exécution #81. Draft maintenue, aucun merge #81 ; anciennes demandes CI restent liées à leurs anciens commits. Après accord de run, nouveau commit sans skip, quality Windows-2022/Node 24/npm ci/typecheck/complet deux workers sur le vrai HEAD, preuves de résultat puis validation humaine de fusion. #82/#83 non modifiées par Codex, budget inchangé.
+
 ## 09/10/2026 — Reprise #81 après fusion normale de #84
 
 - #84 fusionnée après contrôle du HEAD f4bc0197 et du run réel #589 vert (698 tests) : main/origin/main **2b3906328d237b962f053acdf25b1ebeeba1222c**, tree identique au HEAD validé. Mise à jour locale de main en fast-forward, puis intégration normale de ce main dans la branche #81.

@@ -1,5 +1,16 @@
 # Intégrité fonctionnelle — UX-16 et UX-03
 
+## Reprise de #81 après stabilisation CI — 09/10/2026
+
+- #84 merged normalement dans main **2b3906328d237b962f053acdf25b1ebeeba1222c**, contenu identique au HEAD f4bc0197 / run #589 vert ; run main post-merge #628 également vert. Intégration de ce main dans #81 par merge normal **e215125**, aucun rebase/squash. Conflits PROJECT_STATUS/roadmap seulement, historiques conservés.
+- Petit correctif de cycle de test autorisé : afterEach devient async et attend setImmediate après ses vérifications et cleanup. Les traitements applicatifs sont comparés au #81 initial **593a4611**, inchangés ; aucune assertion ni timeout modifié. La boucle d’événements peut traiter le RPC Vitest entre les cas de restauration, sans ignorer les erreurs.
+- Vérifications sur la vraie branche : typecheck OK ; **68/68 ciblés** (35 restauration +17 terminaison +6 packs +10 migrations), deux workers, **141,92 s** ; **748/748 complets, 81 fichiers, 207,78 s**, deux workers, sans erreur RPC. Le passage de 745 à 748 correspond aux trois tests d’export fixture de #84, pas à une modification des règles métier.
+- Intégrité/FK/replay sur fixtures isolées, schema **1–66** inchangé, sources historiques et tables préservées. Aucun processus Manager du dépôt trouvé avant checkout ; aucune ouverture, restauration ou migration de Validation-MSI. Toutes les fixtures finales nettoyées par les tests ; les anciens dossiers TEMP dont la suppression avait été refusée restent hors intervention.
+- #81 actualisée et publiée avec [skip ci] pour préparation CI ; **aucune exécution réelle #81 de ce nouveau code n’est encore validée**. Draft et attente d’accord de run/fusion, aucun changement de budget ni modification #82/#83. Tests locaux ne remplacent pas la CI du nouveau HEAD.
+- Avant fusion : nouveau commit sans skip seulement après autorisation ; contrôler le HEAD exact, runner windows-2022, Node 24, npm ci/typecheck/complet deux workers ; examiner les 35 tests de restauration, les tests de débit/journaux/idempotence et toute erreur worker. En cas de blocage quota ou échec, arrêter sans retry/contournement ; demander validation humaine après CI verte.
+
+Les sections suivantes sont le bilan historique avant intégration de #84 ; leurs comptages/base Git ne décrivent pas le nouveau checkpoint.
+
 ## Livraison corrective — 09/10/2026
 
 AtoumWeb a validé les deux corrections, leur implémentation, les tests permanents et une PR dédiée sans fusion. **UX-16 et UX-03 corrigés** sur `codex/fix-manager-integrity-ux16-ux03`, base `main@eb252d5c`. Aucun travail UX/UI V2 ni intervention sur la PR #80.
