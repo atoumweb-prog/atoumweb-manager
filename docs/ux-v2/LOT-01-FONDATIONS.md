@@ -112,9 +112,9 @@ Conséquences pour 01E :
 ## 8. Matrice source → cible et arbitrages avant développement
 **Document de travail détaillé : [LOT-01-MATRICE-EXISTANT-CIBLE.md](LOT-01-MATRICE-EXISTANT-CIBLE.md).** La matrice associe chaque famille du Lot 01 aux fichiers et mécanismes existants, aux précautions d'intégration et aux tests d'acceptation.
 
-Point **E01 à arbitrer** : le socle CSS actuel utilise 15/16/18px selon la densité et des hauteurs de contrôle 36/42/48px. Les anciennes cibles numériques 14–15px et 34–38px étaient **indicatives**, pas un ordre de réduction générale ; préserver les réglages existants en attendant validation.
+Point **E01 arbitré par AtoumWeb le 09/10/2026** : **Compact cible 14 px** (15 px actuellement dans le CSS), **Confort maintenu 16 px**, **Confort+ maintenu 18 px**. Hauteurs de contrôles 36/42/48 px préservées à ce stade. Le changement n'a **pas** été appliqué au code : mesurer les contrastes, la lisibilité et les conséquences d'overrides avant validation finale du sous-lot 01A.
 
-L'exécution ne peut pas commencer uniquement sur la base de ce fichier : vérifier les HEAD des PR #80/#81/#83, réaliser la recette comparative et arrêter E01–E04 selon leur incidence réelle.
+L'exécution ne peut pas commencer uniquement sur la base de ce fichier : vérifier les HEAD des PR #80/#81/#83, réaliser la recette comparative du **Compact 14 px** et traiter les questions E02–E04 selon leur incidence réelle.
 
 ### Spécification du sous-lot 01A
 [LOT-01A-TOKENS-VISUELS.md](LOT-01A-TOKENS-VISUELS.md) : ordre d'exécution exact, mapping des fichiers CSS existants, seuils de lisibilité et critères d'acceptation, sans autorisation de développement.
