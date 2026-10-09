@@ -171,3 +171,12 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 - [05E — Lecture, exports et preuves](LOT-05E-LECTURE-EXPORTS-PREUVES.md) : copie Abby, présentation client, historique/empreintes PDF Abby et **Word/DOCX futur à qualifier** ; 16 scénarios.
 - [05F — Recette transversale](LOT-05F-RECETTE-CONTRACTUELLE.md) : conditions de développement, tests multi-prestations, publics, révision et documents ; 25 scénarios.
 - **Bilan : Lot 05A–05F intégralement documenté, 98 tests à exécuter, aucun code modifié/aucun test exécuté par le référentiel**. Le moteur existant est à réutiliser ; les métadonnées de rubrique sémantique et les exports Word aller-retour ne sont pas certifiés livrés. Une **revue juridique humaine sur textes officiels** reste indépendante de la CI.
+
+### Lot 06 — Devis et Abby (spécifications documentaires, 09/10/2026)
+- [06A — Audit et matrice des états](LOT-06A-MATRICE-DEVIS-ET-ETATS.md) : assistant 6 étapes, service `QuoteService`, états, révisions, **E151–E153**, 16 cas.
+- [06B — Liste, assistant et édition](LOT-06B-ASSISTANT-LISTE-EDITION.md) : fiche rapide/agrandie, navigation, garde UX-01, six étapes, 17 cas.
+- [06C — Catalogue et lignes](LOT-06C-COMPOSITION-CATALOGUE.md) : versions, prix, remises/justifications, inclus/option disponible/recommandé, 18 cas.
+- [06D — Conditions, CGV et aperçu](LOT-06D-CONTRAT-PREVISUALISATION.md) : préparation, gel pour envoi, PDF de travail, snapshots historiques, 15 cas.
+- [06E — Abby, révisions et Projet](LOT-06E-ABBY-REVISIONS-PROJET.md) : copier/coller Abby, marquage envoyé/vu, acceptation explicite, PDF accepté, Projet avant signature, réconciliation, 18 cas.
+- [06F — Recette et intégration](LOT-06F-RECETTE-ET-INTEGRATION.md) : 25 tests transversaux et sortie sur fixtures isolées.
+- **Bilan : Lot 06A–06F documenté, 109 scénarios FUTURS (16+17+18+15+18+25), aucun test réalisé par la documentation.** Trois écarts importants constatés dans le code : **E151** preview wizard montre parfois prix Catalogue plutôt que prix proposé ; **E152** « Valider » appelle l'acceptation contractuelle ; **E153** la création d'un Devis déplace automatiquement un Prospect `new` vers `quote_to_prepare`, contraire à **E72 validée**. Préparation du Projet non signé déjà présente en UI via `QuoteProjectPanel`, mais remplacement entier sécurisé reste à concevoir.
