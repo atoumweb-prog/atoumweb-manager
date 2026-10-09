@@ -132,3 +132,6 @@ L'exécution ne peut pas commencer uniquement sur la base de ce fichier : vérif
 
 ### Infrastructure de validation
 La [proposition CI GitHub-hosted Windows](CI-GITHUB-ACTIONS.md) est consignée sans accord d'exécution. Les tests locaux réussis de #83 ne remplacent pas le job `quality` encore en attente ; avant toute fusion ou développement du socle, contrôler la situation réelle de la CI.
+
+### Spécification du sous-lot 01E
+[LOT-01E-FORMULAIRES-CONFIRMATIONS.md](LOT-01E-FORMULAIRES-CONFIRMATIONS.md) : inspection des APIs **réelles** de PR #83 (`UnsavedGroup`, `useUnsavedDraft`, `UnsavedRegistry`, `DraftSection`, `UnsavedWindows`, garde Electron), contrat UX des éditeurs, définition **optionnelle** d'« Enregistrer et quitter », frontières async/native et **20 scénarios de recette**. Ne pas implémenter une seconde garde ; vérifier #81/#83 et CI avant toute intégration.
