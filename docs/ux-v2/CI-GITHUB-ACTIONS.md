@@ -75,3 +75,19 @@ Sources officielles : [Créer un budget et bloquer l'usage](https://docs.github.
 **Conséquence :** la condition de protection contre les dépassements payants est **vérifiée dans l'interface du compte**. L'ancien blocage « budget inconnu » peut être levé pour la **préparation de la décision humaine**, mais **l'utilisateur n'a pas encore autorisé explicitement le nouveau commit et le premier run** de #84. Relever éventuellement le solde restant via `Billing and licensing > Usage > Actions`, puis demander l'accord de lancement. Ne modifier aucun budget, ne fusionner aucune PR, ne présenter aucun résultat CI sans exécution réelle.
 
 **Recommandation à Codex après feu vert uniquement :** pousser un nouveau commit sans `[skip ci]` sur #84 ; observer l'exécution réelle `quality`, remonter SHA, URL, tests, typecheck, durée, erreur éventuelle, consommation affichée. Si l'exécution se bloque à cause du budget nul, ne pas augmenter le plafond automatiquement ; expliquer la raison et demander une nouvelle décision.
+
+## 8. Première validation exécutée après autorisation AtoumWeb — 09/10/2026
+AtoumWeb a **autorisé explicitement** à Codex MSI le premier run dans la limite de l'utilisation gratuite du compte, après confirmation en capture du budget Actions 0 USD, `Stop usage = Yes`. **Ce droit ne permet pas de relever le budget ni de fusionner.**
+
+**GitHub vérifié :** [PR #84](https://github.com/atoumweb-prog/atoumweb-manager/pull/84), nouveau HEAD `1b069575891dae3b695c0afa1c76a3964890a03a` (commit « ci: trigger first hosted Windows validation within free allowance »). [Workflow #549](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/37934890745), run ID `37934890745`, job `quality` ID `113834365264`, Windows hébergé. **Début 13:09:51Z, fin 13:14:36Z**.
+
+**Étapes GitHub réellement passées :** checkout OK, Node 24 OK, `npm ci` OK, `npm run typecheck` OK. **Étape tests = FAILURE** : **692 réussis, 3 échoués sur 695**, suite à `Test timed out in 5000ms`. Les journaux identifient :
+- `src/main/projects/OperationalRecipeService.test.ts`, test à la ligne 15 ;
+- `src/main/projects/recipe/mariageHistoireRecipeStructure.test.ts`, test à la ligne 11 ;
+- le même fichier, test à la ligne 37.
+
+Ce sont **trois échecs par timeout**, non la preuve que les calculs métier sont corrects ou incorrects ; la cause exacte doit être déterminée. Deux workers configurés ; il faut diagnostiquer séparément les tests concernés sur Windows GitHub-hosted, les opérations synchrones/SQLite/fixtures et l'éventuelle pression sur les ressources. **Ne pas augmenter arbitrairement tous les délais ni masquer/skip les tests.** Rejouer les tests ciblés puis la suite complète, relever les vrais résultats et le coût constaté. Le job a fini en échec : **CI NON VERTE**, aucune fusion de #84 autorisée à ce stade.
+
+Cette section **actualise les anciennes mentions « aucun run »** qui décrivaient le stade de préparation initial de #84. Les résultats de tests de #84 (branche fondée sur `main`) ne doivent pas être confondus avec les **734 tests locaux** annoncés sur la branche différente de #83.
+
+**Alternative locale** : si les investigations sont bloquées par le runner hébergé, exécuter les tests ciblés sur une machine ou VM Windows locale de développement avec **fixtures isolées**, hors Validation-MSI. Cette solution ne vaut **pas** un succès de CI GitHub.
