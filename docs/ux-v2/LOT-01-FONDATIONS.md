@@ -123,3 +123,6 @@ L'exécution ne peut pas commencer uniquement sur la base de ce fichier : vérif
 
 ### Spécification du sous-lot 01B
 [LOT-01B-COMPOSANTS-ELEMENTAIRES.md](LOT-01B-COMPOSANTS-ELEMENTAIRES.md) : inventaire précis du code existant, adaptations compatibles, aide `?` toujours accessible (écart E05), notifications/confirmations et douze scénarios d'acceptation. Ce fichier définit la cible, sans déploiement applicatif.
+
+### Spécification du sous-lot 01C
+[LOT-01C-FICHES-PANNEAUX.md](LOT-01C-FICHES-PANNEAUX.md) : inventaire code des fiches rapides/agrandies et séparateurs, exigences de persistance automatique des dimensions, responsabilités des éditeurs et garde UX-01, **16 scénarios d'acceptation**. Conserver le schéma liste + détail par module, sans imposer un DOM unique aux écrans spécialisés.
