@@ -100,14 +100,16 @@ Commits distincts pour 01A–01F, PR de travail indépendante de ce référentie
 **Ce document est normatif sur les comportements validés et non sur les détails d'implémentation encore inconnus.**
 
 ## 7. État du préalable UX-01 — PR #83
-Au 09/10/2026, Codex MSI a publié [UX-01 #83](https://github.com/atoumweb-prog/atoumweb-manager/pull/83) en **draft non fusionné**, commits `df1b6f3` (A), `80300a4` (B), `14d8f9c` (C). 75 tests ciblés, 733 tests complets à deux workers et 153 contrôles natifs sur trois thèmes ont été déclarés réussis dans la livraison ; le statut CI et la fusion restent à vérifier.
+Au 09/10/2026, Codex MSI a publié [UX-01 #83](https://github.com/atoumweb-prog/atoumweb-manager/pull/83) en **draft non fusionné** : A `df1b6f3`, B `80300a4`, C `14d8f9c`, puis **revue finale corrective `5b38cbe`** (HEAD vérifié). Le dernier bilan annonce **typecheck OK, 734/734 tests complets, 177/177 contrôles natifs sur trois thèmes**, migrations 1–66 inchangées et intégrité/FK conformes sur bases isolées. Le HEAD est associé à une **CI en file d'attente** (run #518) : ces tests locaux ne constituent pas une CI verte.
 
 Conséquences pour 01E :
 - Faire l'inventaire des APIs `draftSection`, `unsavedRegistry`, `unsavedWindows` et des hooks intégrés avant tout design.
 - La V2 souhaite proposer **Enregistrer et quitter / Continuer / Quitter sans enregistrer**, mais le comportement livré dans #83 est une garde **Rester / Quitter sans enregistrer**. **Le bouton « Enregistrer et quitter » constitue une extension future**, uniquement pour les éditeurs capables de valider/sauver et après confirmation réelle ; ne pas déclarer qu'il existe déjà.
 - Prospection, Devis et fenêtre Référence Prospect sont les seuls pilotes explicitement raccordés dans cette livraison. Étendre progressivement aux autres modules après recette, sans promettre la protection des 17 modules à ce stade.
 - Absence de récupération après crash/arrêt forcé et d'autosave durable : hors livraison #83. Ne pas confondre ce mécanisme avec des sauvegardes métier.
-- Réexaminer le lot avant son implémentation si #83 n'est pas fusionnée ou si une résolution de conflits est nécessaire avec #81.
+- **Revue corrective de #83** : archivage Prospect, suppression anticipée de ligne Devis et effacement d'un brouillon par réduction de section ont été corrigés ; inclure ces trois parcours dans les tests de non-régression V2, avant/après l'intégration.
+- **Dépendance #81/#83 réelle** : une composition temporaire a passé typecheck, 87/87 tests ciblés et 177/177 contrôles natifs, mais `src/main/ipc.ts` a un conflit de merge à résoudre. Conserver simultanément les gardes UX-01 de #83 et le calendrier de restauration + destination de #81, puis revérifier le code fusionné ; ne jamais supposer la résolution déjà appliquée à `main`.
+- **Condition bloquante** : tant que CI `quality` #83 est en attente (runner self-hosted absent selon Codex), pas de fusion recommandée. Relever aussi l'état des PR #80/#81 et les conflits documentaires, sans écraser les historiques.
 
 ## 8. Matrice source → cible et arbitrages avant développement
 **Document de travail détaillé : [LOT-01-MATRICE-EXISTANT-CIBLE.md](LOT-01-MATRICE-EXISTANT-CIBLE.md).** La matrice associe chaque famille du Lot 01 aux fichiers et mécanismes existants, aux précautions d'intégration et aux tests d'acceptation.
