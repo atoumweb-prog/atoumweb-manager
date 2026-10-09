@@ -208,3 +208,11 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 - [09E — Word, comparaison et PDF](LOT-09E-WORD-PDF-ALLER-RETOUR.md) : **aller-retour DOCX futur**, diff de brouillons et validation humaine; Devis gelés non modifiables, 17 scénarios.
 - [09F — Recette transversale](LOT-09F-RECETTE-ET-INTEGRATION.md) : 25 scénarios, tests SQLite/fichiers temporaires, UX-01 et revue humaine.
 - **Bilan : 09A–09F documentés, 108 tests FUTURS non exécutés.** Écart **E259 critique** : les PDF factures liés à billing_items ne sont pas protégés explicitement contre la suppression définitive comme les PDF de Devis; E258 versions des justificatifs Dépenses; E260 export/édition/import Word non livré. Aucun code/fichier Client/paiement modifié; commits documentaires **[skip ci]**.
+
+### Lot 10 — Statistiques, Sauvegardes et Réglages (09/10/2026)
+- [10A — Audit des métriques](LOT-10A-AUDIT-INDICATEURS.md) : sources/définitions réelles, **deux calculateurs** et taux d'acceptation divergent, indicateurs disponibles/indisponibles, 17 scénarios.
+- [10B — Statistiques et navigation](LOT-10B-STATISTIQUES-NAVIGATION.md) : périodes unifiées, comparaison, sources, drilldown, accueil vs analyse et Classement Client par vraies unités, 17 scénarios.
+- [10C — Sauvegardes métier et restauration SQLite](LOT-10C-SAUVEGARDES-RESTAURATION.md) : registre déclaratif, contrôle d'existence/confirmation humaine, politique d'alertes, moteur distinct de restauration SQLite et protections UX-16/#81, 20 scénarios.
+- [10D — Réglages et préférences](LOT-10D-REGLAGES-PREFERENCES.md) : thèmes AtoumWeb/Noir/Blanc, trois densités, aide, workspace, préférences de vues futures et protections non désactivables, 18 scénarios.
+- [10E — Recette et intégration](LOT-10E-RECETTE-PILOTAGE-REGLAGES.md) : 30 cas transversaux, scénario de test avec les 17 modules, Windows/SQLite fictif et accès aux neuf modes.
+- **Bilan documentaire 10A–10E : 102 scénarios de recette FUTURS (17+17+20+18+30), aucun exécuté.** Principaux écarts : E290 dénominateurs des taux, E291 rendement horaire ≠ marge, E292 facturé ≠ encaissé, E293 nouveaux contacts Annuaire comptés dans prospects actifs, E297 score Client hétérogène. Backup métier déclaré ≠ backup effectué ou restauration prouvée. Aucun code ni fichier métier modifié et commits **[skip ci]**.
