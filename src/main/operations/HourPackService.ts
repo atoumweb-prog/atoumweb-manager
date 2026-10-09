@@ -106,15 +106,16 @@ export class HourPackService {
     const totalSeconds = this.interventionSeconds(interventionId);
     if (totalSeconds <= 0) throw new Error('Aucun temps terminé à débiter pour cette intervention.');
     const now = nowIso();
-    this.database.exec('BEGIN IMMEDIATE;');
+    this.database.exec('SAVEPOINT hour_pack_debit;');
     try {
       this.database.run("UPDATE interventions SET hour_pack_id=?,coverage_mode='hour_pack',updated_at=? WHERE id=?", [packId, now, interventionId]);
       this.database.run(`INSERT INTO hour_pack_movements (id,pack_id,intervention_id,movement_type,seconds_delta,reason,source_key,created_at) VALUES (?,?,?,'intervention_debit',?,?,?,?)`, [randomUUID(), packId, interventionId, -totalSeconds, `Débit ${intervention.intervention_number}`, sourceKey, now]);
-      this.database.exec('COMMIT;');
-    } catch (error) { this.database.exec('ROLLBACK;'); throw error; }
-    this.refreshDerivedStatus(packId);
-    this.writeActivity('hour_pack', packId, 'hour_pack_intervention_debited', `${intervention.intervention_number} · ${totalSeconds}s débités`);
-    return this.get(packId);
+      this.refreshDerivedStatus(packId);
+      this.writeActivity('hour_pack', packId, 'hour_pack_intervention_debited', `${intervention.intervention_number} · ${totalSeconds}s débités`);
+      const updated = this.get(packId);
+      this.database.exec('RELEASE hour_pack_debit;');
+      return updated;
+    } catch (error) { this.database.exec('ROLLBACK TO hour_pack_debit; RELEASE hour_pack_debit;'); throw error; }
   }
 
   reverseMovement(movementId: string, reason: string): HourPack {

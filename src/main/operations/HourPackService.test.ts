@@ -56,6 +56,14 @@ function createCompletedIntervention(packId: string, minutes: number) {
 }
 
 describe('HourPackService', () => {
+  it('annule également un débit direct si son journal échoue', () => {
+    const pack = createPack(1);
+    const intervention = createCompletedIntervention(pack.id, 30);
+    const before = Object.fromEntries(['hour_packs', 'hour_pack_movements', 'interventions', 'activity_log'].map(table => [table, database.all(`SELECT * FROM ${table} ORDER BY rowid`)]));
+    database.exec("CREATE TEMP TRIGGER debit_failure BEFORE INSERT ON activity_log WHEN NEW.action='hour_pack_intervention_debited' BEGIN SELECT RAISE(ABORT,'Journal indisponible'); END;");
+    expect(() => packs.debitIntervention(pack.id, intervention.id)).toThrow(/Journal indisponible/);
+    expect(Object.fromEntries(['hour_packs', 'hour_pack_movements', 'interventions', 'activity_log'].map(table => [table, database.all(`SELECT * FROM ${table} ORDER BY rowid`)]))).toEqual(before);
+  });
   it('calcule l’expiration à la lecture et refuse de consommer un crédit expiré sans mutation silencieuse',()=>{
     const pack=packs.create({clientAccountId:clientId,name:'TEST expiré',purchasedSeconds:18000,contractPriceCents:29900,purchasedAt:'2020-01-01T12:00:00Z',expiresAt:'2021-01-01T12:00:00Z'});
     database.run("UPDATE hour_packs SET status='active' WHERE id=?",[pack.id]);
