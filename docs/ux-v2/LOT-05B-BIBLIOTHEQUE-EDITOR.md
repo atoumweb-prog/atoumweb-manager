@@ -1,7 +1,7 @@
 # Lot 05B — Bibliothèque centrale et éditeur de clauses / types
 
 **Statut : UX/UI V2 documentaire, non implémentée ni testée.** Référence : audit statique `main@eb252d5c` du 09/10/2026.  
-Dépendances : [05A état réel](LOT-05A-AUDIT-CONTRACTUEL-EXISTANT.md), [05C classement](LOT-05C-METADONNEES-CLASSEMENT.md), [05D Builder](LOT-05D-BUILDER-RESOLUTION.md), [CATALOGUE-CGV](CATALOGUE-CGV.md), [01E brouillons](LOT-01E-FORMULAIRES-CONFIRMATIONS.md).
+Dépendances : [05A état réel](LOT-05A-AUDIT-CONTRACTUEL-EXISTANT.md), [05C classement](LOT-05C-RUBRIQUES-CONDITIONS.md), [05D Builder](LOT-05D-BUILDER-RESOLUTION.md), [CATALOGUE-CGV](CATALOGUE-CGV.md), [01E brouillons](LOT-01E-FORMULAIRES-CONFIRMATIONS.md).
 
 ## 1. Organisation de l'interface
 **Entrée principale** : Documents & Contrats → **Bibliothèque contractuelle** ; raccourcis contextuels depuis Offre/Service → **Contrat & CGV**, Devis → Builder, et Client → Contrats. Une seule bibliothèque d'entités canoniques.
