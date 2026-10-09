@@ -132,3 +132,11 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 ### 09/10/2026 — Nouvelle décision métier : Projet avant signature
 - **DÉCIDÉ par AtoumWeb :** dans le parcours commercial **Finalisation = accord de principe, signature en attente** ; un pré-projet peut être créé **volontairement à partir d'un devis non signé, même avant Finalisation**, pour commencer à travailler sur les lignes/versions du devis. Si la révision change fortement : **Adapter/Synchroniser le Projet** ou **Repartir de zéro** via retrait/archivage sécurisé et régénération sur devis actualisé. Sur acceptation Abby, figer le Projet courant et convertir Prospect → Client, sans doublons.
 - [Lot 07P — projet prévisionnel, synchronisation, remplacement](LOT-07-PROJET-PRE-SIGNATURE.md) : détails code, états, sauvegardes, risques (pas d'API `deleteProject` entière attestée), **20 tests à exécuter**. `ProjectCommercialService` et `ProjectsApi` offrent déjà `prepareQuote`, `previewQuote`, `syncCommercial` et `provisional`, mais l'entrée classique de la page Projets liste les **devis acceptés**. **Spécification seulement, aucun code ni suppression effectués.**
+
+### Lot 03 — CRM Prospection / Clients / Annuaire (documentation détaillée)
+- [Matrice 03A](LOT-03A-MATRICE-CRM-EXISTANT-CIBLE.md) — statuts, transitions service, conversion idempotente, Devis et Projet avant signature.
+- [Pipeline 03B](LOT-03B-PROSPECTION-PIPELINE.md) — **six colonnes commerciales actives et Conversion historique en septième position**, 20 scénarios, aucun faux statut backend.
+- [Fiche Prospect 03C](LOT-03C-FICHE-PROSPECT-BESOINS.md) — qualification/contacts/besoins/pré-devis, lancement volontaire du projet prévisionnel sur les lignes du Devis courant.
+- [Fiche Client 03D](LOT-03D-FICHE-CLIENT.md) — cible 8 onglets / source 6, continuité Prospect → Client et Projet confirmé.
+- [Annuaire 03E](LOT-03E-ANNUAIRE-PARCOURS.md) — organisations/contacts uniques, relations, vérifications et parcours croisés.
+- **E72 à valider avec AtoumWeb :** `new` reste-t-il dans l'Annuaire jusqu'au démarrage volontaire (recommandation, actuel) ? **E73 technique** : indicateur d'accord de principe pour Finalisation. **Les cinq spécifications 03A–03E sont des documents, pas des fonctionnalités développées.**
