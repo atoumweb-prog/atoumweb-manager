@@ -49,20 +49,20 @@ Les noms ci-dessous sont des **libellés UI** et les pictogrammes des **proposit
 
 **Validation visuelle restant à faire :** distinguer de petits pictogrammes proches (Prospects/Clients/Annuaire, Devis/Documents, Projets/Bibliothèque) à 16–20px sans imposer une nouvelle librairie. SVG d'icône décorative = `aria-hidden` ; bouton parent = nom accessible.
 
-## 4. Choix de composition du rail compact — **E42, à arbitrer par AtoumWeb**
+## 4. Choix de composition du rail compact — **E42 TRANCHÉ par AtoumWeb : option A**
 Deux modèles cohérents avec les décisions prises jusqu'à présent :
 
-**A — Recommandation ergonomique : rail à groupes + favoris**
+**A — DÉCISION VALIDÉE : rail à groupes + favoris**
 - En haut : Accueil, puis icônes des **favoris réellement épinglés** (0 ou plusieurs, sans doublon involontaire).
 - Ensuite : 5 icônes de groupes **Commercial / Production / Gestion / Ressources / Pilotage**.
 - Clic/touche Entrée sur une icône de groupe = panneau de sous-navigation avec intitulés des modules ; l'icône de groupe n'ouvre **aucun** module indéterminé.
 - En mode déployé : les 17 modules sont visibles sous leurs groupes avec leurs libellés, compte tenu du scroll vertical.
 
-**B — Accès direct aux 17 modules en rail replié**
+**B — Variante comparée mais NON retenue : 17 icônes en rail replié**
 - Une icône par module dans la barre, éventuellement répartie par séparateurs de groupe et favoris.
 - Avantage : un clic par module ; inconvénient : surcharge/scroll selon hauteur de fenêtre et confusion entre icônes proches.
 
-**Arbitrage attendu :** A ou B pour le **mode réduit**, sans rouvrir les décisions sur les 17 modules, les groupes et les favoris. Aucune implémentation ne doit acter A comme une validation implicite.
+**Arbitrage E42 acté le 09/10/2026 : OPTION A.** En rail réduit, afficher **Accueil + favoris épinglés + cinq groupes Commercial / Production / Gestion / Ressources / Pilotage**. Chaque groupe ouvre un panneau explicite de sous-navigation, sans changement de module au seul clic sur le groupe ; le rail déployé donne accès aux **17 modules** sous leurs rubriques. **L'option B n'est pas retenue**. Les dimensions exactes, pictogrammes définitifs et comportement petit écran restent soumis à recette (aucune validation graphique globale implicite).
 
 ## 5. Contrat d'interaction — quelle que soit l'option E42
 ### Déployer / réduire
@@ -97,7 +97,7 @@ Deux modèles cohérents avec les décisions prises jusqu'à présent :
 | Étape | Travail | Preuve demandée |
 |---|---|---|
 | 02A.1 | Inventaire `NAV_ITEMS`, événements `atoumweb:*`, chemins source→route, CSS et icônes actuelles | Matrice de sources/handlers et cas de remount |
-| 02A.2 | Arbitrer E42, faire atelier rail A/B selon thème/densité | Maquette/atelier comparatif et choix validé humainement |
+| 02A.2 | **E42 validé : concevoir et vérifier le rail option A** sous 3 thèmes × 3 densités | Maquette rail Accueil + favoris + 5 groupes / accès aux 17 modules, sans le modèle B |
 | 02A.3 | Créer modèle de présentation `moduleKey/label/group/icon/description` sans changer les clés métier | Typecheck et tests des 17 routes |
 | 02A.4 | Migrer styles/components nav avec compatibilité `sidebarCollapsed` et garde UX-01 | Test déclencheurs, ESC/focus, petites fenêtres |
 | 02A.5 | Ajouter favoris et persistance visuelle contrôlée ; réinitialiser | Tests de redémarrage / clé périmée / cas erreur |
@@ -126,7 +126,7 @@ Deux modèles cohérents avec les décisions prises jusqu'à présent :
 | R02A-18 | Rejouer tests ciblés et complets après migration | Résultats horodatés et comparés, pas de nouveau test présenté comme effectué avant exécution |
 
 ## 9. Risques et exclusions
-- **E42**, choix visuel rail replié : **en attente de validation** ; les deux approches doivent être comparées avant implémentation.
+- **E42 clos — Option A validée par AtoumWeb le 09/10/2026** ; ne plus demander le choix A/B. Reste à valider les icônes exactes, les dimensions et le comportement responsive à partir de la maquette/recette.
 - **E43**, usage réel de `atoumweb:sidebar-collapse` et persistance actuelle : inventorier les émetteurs, décider comment gérer demande temporaire vs préférence stockée.
 - **E44**, hiérarchie des favoris : s'ils pointent seulement sur des modules, ne pas laisser entendre qu'ils ouvrent une fiche identifiée ; favoris de dossiers, si un jour demandés, relèveront d'un cadrage séparé.
 - **E45**, largeur/flyout : mesurer zoom et trois densités ; les valeurs CSS actuelles 258px déployé/0px réduit sont des constats, pas la cible.
@@ -134,4 +134,4 @@ Deux modèles cohérents avec les décisions prises jusqu'à présent :
 - Aucun logo triangulaire final adopté avant validation visuelle AtoumWeb ; emplacement réservé et compatibilité avec `brand-mark` actuel.
 - **PR #84** sur CI, indépendamment de 02A : un run CI peut être lancé par Codex sur autorisation distincte ; ne pas confondre ses résultats avec ceux de ce lot.
 
-**Définition de prêt pour code 02A : arbitrage E42 validé, cartographie handlers/event CSS consolidée, atlas d'icônes approuvé, fixtures isolées, garde UX-01 intégrée ou précisément planifiée. Ce fichier seul n'autorise pas la refonte.**
+**Définition de prêt pour code 02A : E42 = option A validée ; restent cartographie handlers/event CSS consolidée, atlas d'icônes approuvé, fixtures isolées et garde UX-01 intégrée ou précisément planifiée. Ce fichier seul n'autorise pas la refonte.**
