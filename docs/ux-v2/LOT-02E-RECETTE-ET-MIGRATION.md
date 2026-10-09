@@ -9,7 +9,7 @@ Avant d'écrire du code, Codex devra :
 - Relever **les nouveaux SHAs et statuts de PR** #80 (audit), #81 (backup/restauration), #82 (référentiel V2), #83 (UX-01), #84 (CI) ; ne présumer **aucune fusion**.
 - Garantir **le registre de brouillons unique** d'UX-01 #83 s'il est intégré ; en cas de conflit avec #81, préserver également les protections de restauration/SQLite. Une validation simulée ne suffit pas à remplacer le code fusionné.
 - Fixer **E42 = option A** : rail réduit « Accueil + favoris + cinq groupes » ; le mode déployé garde les 17 modules.
-- **E59 : « Conversion » et « Finalisation » définies et validées par AtoumWeb** : historique réel des Clients convertis ; accord de principe en attente de signature. Restent à trancher **le marqueur technique Finalisation**, la projection de `new` et la période de l'historique avant de coder le pipeline à sept colonnes.
+- **E59 : « Conversion » et « Finalisation » définies et validées par AtoumWeb** : historique réel des Clients convertis ; accord de principe en attente de signature. Restent à trancher **le marqueur technique Finalisation**, la période de l’historique (E72 `new` exclu jusqu’au démarrage est décidée) avant de coder le pipeline à sept colonnes.
 - Disposer d'un atelier de démonstration **sans IPC de mutation et sans accès à Validation-MSI**, selon [01F](LOT-01F-PREFERENCES-RECETTE.md).
 - Ne pas confondre la CI lancée sur #84 (**run #549 en échec sur trois timeouts**) avec un résultat déjà passé de la V2. Les tests locaux peuvent diagnostiquer mais ne remplacent pas un run hébergé vert.
 
@@ -75,7 +75,7 @@ Les incréments sont **réversibles** et doivent conserver les modules non migr�
 
 ## 6. Restes de conception et décisions
 - **E42 clos** : option A validée, pas de nouvelles questions A/B.
-- **E59 : décisions métier closes pour Conversion et Finalisation**. Restent ouverts le marqueur technique d'accord de principe, la projection de `new` et la période du compteur historique. Ne pas bloquer les travaux du Lot 02 qui ne dépendent pas de ce mapping.
+- **E59 : décisions métier closes pour Conversion et Finalisation**. Restent ouverts le marqueur technique d'accord de principe, la période du compteur historique (E72 `new` hors pipeline décidée). Ne pas bloquer les travaux du Lot 02 qui ne dépendent pas de ce mapping.
 - Les E08/E17/E23 (portée des préférences, gestion des brouillons, sauvegarde contrôlée) sont traités par les fondations et l'intégration réelle de #83.
 - E51–E58 (routage/async) et E60–E65 (Accueil) doivent être inspectés/testés dans leur code d'exécution, ne pas inventer une migration silencieuse.
 
