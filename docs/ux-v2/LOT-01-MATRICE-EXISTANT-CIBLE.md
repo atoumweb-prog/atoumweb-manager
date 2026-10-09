@@ -94,3 +94,18 @@ Décision UX déjà actée, mais **non développée** dans la PR #83. Avant 01E 
 6. Déploiement par petits composants avec possibilité de rollback et une recette comparative.
 
 **Ce document ne fournit pas encore la cartographie intégrale de 1 921 déclarations de contrôles recensées par l'audit. La cartographie contrôle→handler→IPC→service→test sera effectuée écran par écran avant chaque lot métier.**
+
+## 6. Détail technique vérifié pour 01C (extension à la matrice)
+Voir [LOT-01C-FICHES-PANNEAUX.md](LOT-01C-FICHES-PANNEAUX.md) ; observations **statiques** sur `main@eb252d5c`, aucune recette réalisée.
+
+| Repère | Fichier | État observé | Préservation / cible |
+|---|---|---|---|
+| L01C-PROS | `src/renderer/crm/ProspectsPageV2.tsx` | `selectedId`, `deskModeId`, séparateur 66% avec pointeur, clavier, reset double-clic | Même objet/onglet après agrandir/réduire ; UX-01 #83 protège les brouillons et les sections repliées |
+| L01C-CLI | `src/renderer/crm/ClientsPage.tsx` | `largeView`, `activeTab`, séparateur 68% clavier, reset | Corréler vue rapide et grande, ne pas vider l'éditeur en changeant de sélection ; UX-01 à raccorder ultérieurement |
+| L01C-CAT | `src/renderer/commercial/CatalogPage.tsx` | `detailExpanded`, `detailSplitPercent=40`, resize au pointeur | Harmoniser la commande clavier, les bornes, l'option reset et la persistance ; versions commerciales intactes |
+| L01C-QUO | `src/renderer/commercial/QuotesPage.tsx` | Panneau latéral avec backdrop, `detailExpanded`, preview séparée | Ne pas forcer un séparateur non attesté ; conserver les gardes UX-01 et les sous-formulaires |
+| L01C-PRO | `src/renderer/projects/ProjectsPage.tsx` | `detailTab`, `productionSplitPercent=40` et atelier technique | Respecter les mises en page spécialisées et les brouillons du Projet, non couverts par #83 |
+| L01C-OPS | `src/renderer/operations/OperationsPage.tsx` | Séparateurs Demandes=38%, Interventions=34%, vues agrandies | Préférences distinctes, remise à défaut par vue ; ne pas affecter cycles/packs/chrono |
+| L01C-CSS | `prospect-detail.css`, `client-detail.css`, `commercial.css`, `projects.css`, CSS opérationnels | Breakpoints, panels sticky, scroll et CSS overrides par module | Tester petites fenêtres / zoom / scroll avant unification |
+
+**Règle :** les pourcentages ci-dessus sont **des défauts actuels locaux**, pas une valeur UX V2 unique. Préserver la possibilité de travailler en écran réduit et le réglage auto mémorisé sans saisir de contenu métier dans les préférences.
