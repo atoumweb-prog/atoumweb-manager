@@ -106,4 +106,11 @@ Le premier [run #549](https://github.com/atoumweb-prog/atoumweb-manager/actions/
 Les cinq sous-lots [03A](LOT-03A-MATRICE-CRM-EXISTANT-CIBLE.md) / [03B](LOT-03B-PROSPECTION-PIPELINE.md) / [03C](LOT-03C-FICHE-PROSPECT-BESOINS.md) / [03D](LOT-03D-FICHE-CLIENT.md) / [03E](LOT-03E-ANNUAIRE-PARCOURS.md) sont consignés. Ils décrivent Prospection/Clients/Annuaire, transitions, conversion historique, huit onglets Client, projet préparatoire avant signature et risques de perte. **Spécification seulement**, pas de migration UI ni test exécuté. **E72 CLOS** (`new` reste Annuaire, `qualifying` entre dans le pipeline seulement après « Démarrer la prospection »), **E73** (marqueur accord de principe) attend cadrage technique. La PR #84 CI est indépendante de l'UX V2.
 
 ## Lot 04 — Sous-lots documentés et reste
-Les spécifications [04A modèle existant](LOT-04A-MATRICE-CATALOGUE.md), [04B navigation/catégories](LOT-04B-NAVIGATION-CATEGORIES.md) et [04C éditeur/versions](LOT-04C-EDITEUR-VERSIONS.md) ont été confrontées au code `main@eb252d5c`. **04D recommandations / 04E aide à la vente / 04F publication et recette restent à détailler.** Aucune version métier, migration ou donnée de catalogue modifiée ; aucun scénario de validation exécuté. Points techniques E88–E103 ouverts.
+Les spécifications [04A modèle existant](LOT-04A-MATRICE-CATALOGUE.md), [04B navigation/catégories](LOT-04B-NAVIGATION-CATEGORIES.md) et [04C éditeur/versions](LOT-04C-EDITEUR-VERSIONS.md) ont été confrontées au code `main@eb252d5c`. **04D associations/options/recommandations, 04E aides éditables et 04F publication/recette sont également spécifiés** ; tous les sous-lots 04A–04F sont documentés, non implémentés. Aucune version métier, migration ou donnée de catalogue modifiée ; aucun scénario de validation exécuté. Points techniques E88–E103 ouverts.
+
+
+### Références complètes Lot 04
+- [04D — Associations et recommandations](LOT-04D-ASSOCIATIONS-RECOMMANDATIONS.md) : 26 scénarios, modèle N:N à concevoir ; options existantes préservées.
+- [04E — Aides commerciales](LOT-04E-AIDES-COMMERCIALES.md) : 18 scénarios, distinction conseil interne/description client/CGV, restauration de brouillons.
+- [04F — Contrôles de publication et recette](LOT-04F-PUBLICATION-RECETTE.md) : 25 scénarios, revue des versions, tarifs, composants, contrats et production, sans validation juridique implicite.
+**Note :** les scénarios sont projetés, aucune migration, nouvelle UI ou suite de tests V2 n'a été exécutée.
