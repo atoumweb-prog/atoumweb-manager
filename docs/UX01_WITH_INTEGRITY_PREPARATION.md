@@ -19,6 +19,7 @@
 
 ## Vérifications à ce stade
 
+- Recette multi-processus Electron `scripts/check-restore-quit-roundtrip.cjs` ajoutée, [protocole et limites](UX01_RESTORE_QUIT_ROUNDTRIP.md). Elle utilise cinq processus Electron natifs isolés, source/destination et profils TEMP, deux redémarrages contrôlés, sauvegarde pre-restore, refus de fermeture et absence de rejeu. **Syntaxe CJS vérifiée seulement ; exécution réelle sur Windows non encore faite.**
 - Cinq scénarios du garde isolé reproduits et réussis localement avec Node 22 / test runner natif (équivalent de la logique livrée) : commit uniquement à `will-quit`, sortie annulée, ticket périmé, échec une seule fois, deux demandes concurrentes.
 - Cinq tests permanents Vitest du garde ajoutés dans `src/main/restoreQuitGate.test.ts`, **non exécutés dans l'environnement complet**.
 - Cinq tests supplémentaires de raccordement `registerGuardedShutdown` / `bindUnsavedWindow` / événements Electron simulés dans `src/main/restoreQuitLifecycle.test.ts`, également **non exécutés**. Ils couvrent `before-quit`, `will-quit`, `will-prevent-unload`, pending et échec de programmation finale ; ces mocks ne remplacent pas une vraie recette Electron.
