@@ -98,3 +98,6 @@ Le premier [run #549](https://github.com/atoumweb-prog/atoumweb-manager/actions/
 
 ## Clôture documentaire Lot 02
 [02A](LOT-02A-RAIL-NAVIGATION.md), [02B](LOT-02B-ENTETE-RACCOURCIS.md), [02C](LOT-02C-RECHERCHE-ROUTAGE.md), [02D](LOT-02D-ACCUEIL-PILOTAGE.md), [02E](LOT-02E-RECETTE-ET-MIGRATION.md) sont spécifiés avec sources et conditions de recette. **E42 clos** (option A du rail), **E59 encore ouvert** sur le mapping des sept colonnes du pipeline. Leurs tests sont **projetés**, non exécutés ; aucune réécriture des 17 modules ou fusion autorisée par ces documents.
+
+## Projet prévisionnel depuis devis non signé — décision AtoumWeb du 09/10/2026
+[Spécification 07P](LOT-07-PROJET-PRE-SIGNATURE.md) : créer volontairement avant signature avec lignes présentes dans devis courant, préparer plan/Sites/Pages/ressources ; quand devis change, choisir adaptation ou remplacement contrôlé du projet, préserver travail, liens et historique. La validation officielle Abby convertit Client et fige le projet courant. **Backend partiellement déjà implémenté**, UX de création et option « repartir de zéro » à auditer et compléter, sans création de statuts ou suppression silencieuse. **20 scénarios attendus, non exécutés.**
