@@ -118,3 +118,6 @@ L'exécution ne peut pas commencer uniquement sur la base de ce fichier : vérif
 
 ### Spécification du sous-lot 01A
 [LOT-01A-TOKENS-VISUELS.md](LOT-01A-TOKENS-VISUELS.md) : ordre d'exécution exact, mapping des fichiers CSS existants, seuils de lisibilité et critères d'acceptation, sans autorisation de développement.
+
+### Spécification du sous-lot 01B
+[LOT-01B-COMPOSANTS-ELEMENTAIRES.md](LOT-01B-COMPOSANTS-ELEMENTAIRES.md) : inventaire précis du code existant, adaptations compatibles, aide `?` toujours accessible (écart E05), notifications/confirmations et douze scénarios d'acceptation. Ce fichier définit la cible, sans déploiement applicatif.
