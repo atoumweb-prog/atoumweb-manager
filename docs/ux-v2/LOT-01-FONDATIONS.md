@@ -126,3 +126,9 @@ L'exécution ne peut pas commencer uniquement sur la base de ce fichier : vérif
 
 ### Spécification du sous-lot 01C
 [LOT-01C-FICHES-PANNEAUX.md](LOT-01C-FICHES-PANNEAUX.md) : inventaire code des fiches rapides/agrandies et séparateurs, exigences de persistance automatique des dimensions, responsabilités des éditeurs et garde UX-01, **16 scénarios d'acceptation**. Conserver le schéma liste + détail par module, sans imposer un DOM unique aux écrans spécialisés.
+
+### Spécification du sous-lot 01D
+[LOT-01D-TABLEAUX-VUES.md](LOT-01D-TABLEAUX-VUES.md) : tables et filtres issus du code, colonnes configurables, tri typé, vues enregistrées automatiquement, paramètres strictement visuels, navigation fiche rapide et protection UX-01. **Six sous-étapes et 16 critères d'acceptation**, non implémentés.
+
+### Infrastructure de validation
+La [proposition CI GitHub-hosted Windows](CI-GITHUB-ACTIONS.md) est consignée sans accord d'exécution. Les tests locaux réussis de #83 ne remplacent pas le job `quality` encore en attente ; avant toute fusion ou développement du socle, contrôler la situation réelle de la CI.
