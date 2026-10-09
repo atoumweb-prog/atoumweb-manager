@@ -150,3 +150,13 @@ Le code `src/shared/crm.ts` n'a pas de statut Prospect `finalization`. **Attenti
 - **DÉCIDÉ :** en Prospection, l'ajout humain d'une suggestion devient seulement un **besoin** ; dans un Devis, option de composition achetée via `selectOfferOption`, prestation recommandée libre ajoutée via la ligne versionnée après clic. Une **suggestion ignorée** n'entraîne ni prix, ni CGV, ni blueprint, ni projet prévisionnel.
 - **EXISTANT VÉRIFIÉ :** composants inclus/optionnels déjà versionnés, snapshots d'Offre et options figés par `QuoteService`; les suggestions de `ProspectNeedsPanel` utilisent actuellement une constante `SUGGESTIONS` codée en dur.
 - **E104–E110 À INSTRUIRE TECHNIQUEMENT :** dédoublonner par service (aujourd'hui contrôle par version), concevoir le N:N recommandé éditable et versionné, contexte d'offres multiples, règles d'exclusion « Déjà inclus / Déjà acheté » et provenance des achats. **Convention proposée, non validée comme comportement existant :** première ligne d'Offre du Devis pour classer les recommandations. [Cahier des charges 04D](LOT-04D-ASSOCIATIONS-RECOMMANDATIONS.md).
+
+## Lot 04E — Aides à la vente administrables
+- **DÉCIDÉ :** conseil interne/versionné comprenant utilité, bénéfices possibles, situations pertinentes, questions, argumentaire, vigilance et mots-clés ; **une seule source** pour inclus/exclus, et motifs de recommandations provenant de 04D. Consultation par `?` au clic/clavier même avec aide au survol désactivée.
+- **DÉCIDÉ :** édition/aperçu/restauration contrôlée avec confirmation, conseils IA initialement **brouillons humains à relire**, jamais injectés automatiquement dans contrat, CGV, PDF Abby ou Projet.
+- **CODE ACTUEL :** `internalAdvice`, `commercialParameters.clientNeed/work/options/quoteRequiredWhen` et `CommercialScope` existent ; les champs structurés, leur recherche et la restauration ont besoin de raccordement. **E111–E116 ouverts**. [04E](LOT-04E-AIDES-COMMERCIALES.md).
+
+## Lot 04F — Publication et recette
+- **DÉCIDÉ :** publier un brouillon de version est **distinct** de l'activer, de le rendre visible sur site, de créer une ligne Devis et d'accepter cette vente. Revue de prix, composition, textes, références CGV et blueprints selon leur pertinence ; **aucune validation juridique automatique**.
+- **DÉCIDÉ :** opérations explicites, comparatif des versions, protection des devis historiques et erreurs IPC, tests SQLite isolés sans Validation-MSI. **E117–E122 techniques ouverts** sur les garde-fous réels et les droits. [04F](LOT-04F-PUBLICATION-RECETTE.md).
+- **ÉTAT :** Lot 04A–04F **intégralement spécifié/documenté**, aucun de ses tests V2 exécuté ni implémentation certifiée. Les 14+15+17+26+18+25 scénarios sont des **critères de recette futurs**, pas des résultats.
