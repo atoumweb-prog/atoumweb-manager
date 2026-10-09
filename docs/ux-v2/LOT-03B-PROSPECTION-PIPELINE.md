@@ -7,7 +7,7 @@
 | Vue | Usage quotidien | Population |
 |---|---|---|
 | **Annuaire Prospects** | Créer/qualifier un dossier, rechercher entreprise/ville/métier, préparer une approche et une première action ; possibilité de lire toutes les fiches ouvertes non archivées. | Inclut `new`, actifs et cas visibles selon filtres, source identité unique. |
-| **Parcours commercial** | Faire progresser **les Prospects actifs** par étapes commerciales **autorisées**, voir devis, prochaine action et relances. | Exclut gagnés effectivement convertis, perdus, archivés ; inclusion de `new` **E72 ouverte**. |
+| **Parcours commercial** | Faire progresser **les Prospects actifs** par étapes commerciales **autorisées**, voir devis, prochaine action et relances. | Exclut gagnés effectivement convertis, perdus, archivés ; `new` exclu tant que la prospection n’a pas été démarrée (**E72 décidée**). |
 | **Historique** | Consulter gagnés/convertis, perdus, clôturés et archivés ; motifs, dates, liens vers objets. | Historique conservé, jamais confusion « perdu » = « conversion ». |
 
 **La septième étape visuelle Conversion est une vue d'historique intégrée au parcours, pas un statut actif ni une cible de drag & drop.** Les six premières étapes sont actives et la septième représente les dossiers effectivement devenus Clients, avec une présentation et période distinctes.
@@ -15,7 +15,7 @@
 ## 2. Correspondance candidat — règles métier validées vs non validées
 | Colonne visuelle | Source(s) existante(s) candidates | Niveau de décision / garde |
 |---|---|---|
-| 1. **À qualifier** | `qualifying` ; option `new` à arbitrer | **E72 NON décidé** : continuité préconisée = `new` dans Annuaire, `qualifying` dans pipeline après action « Démarrer ». Ne pas compter `new` en secret. |
+| 1. **À qualifier** | `qualifying` seulement ; `new` demeure dans l’Annuaire | **E72 VALIDÉ** : `new` dans Annuaire uniquement ; `qualifying` dans le pipeline après « Démarrer la prospection » confirmé côté service. Aucun comptage implicite de `new`. |
 | 2. **Besoins** | `need_identified` | Validation qualification côté CRM et progression prévue ; nom court du groupe, pas renommage backend. |
 | 3. **Préparer le devis** | `quote_to_prepare`, `quote_to_send` | Devis en brouillon/prêt à envoyer selon workflow ; UI ne force pas une étape via drag non permis par le service. |
 | 4. **Attente du retour** | `quote_sent`, `follow_up`, `waiting` | Relances dues/retard = **filtres transversaux** qui ne créent pas une colonne ou dupliquent les cartes. |
@@ -59,14 +59,14 @@ Le bouton de préparation ne peut être invisible simplement parce que l'étape 
 - **Une carte = un Prospect actif** dans une seule colonne au maximum. Si plusieurs devis du même Prospect, utiliser **le dossier/révision commerciale courante**, pas le premier devis retourné par ordre accidentel.
 - Les filtres `relaunch` et `overdue` utilisent les actions ouvertes réelles ; un Prospect avec trois relances ne devient pas trois cartes.
 - **Conversion historique** : population `prospect.clientAccountId` vérifiée ; envisager filtre date (mois, trimestre, tout l'historique) distinct des actifs. **Période non décidée** : ne pas présenter comparaison chiffrée « pipeline aujourd'hui » contre « conversions toutes années » sans libellés.
-- `new` reste hors pipeline actuel jusqu'à démarrage ; **E72** doit être tranché avant toute nouvelle agrégation (et synchronisé avec l'Accueil Lot 02D).
+- `new` reste hors pipeline actuel jusqu'à démarrage ; **E72 est décidé et doit être respecté** par toute nouvelle agrégation (et synchronisé avec l'Accueil Lot 02D).
 - Les KPI de devis doivent distinguer « devis à préparer » (Prospect) et factures Abby ; Projet non signé ne crée pas chiffre d'affaires acquis.
 
 ## 7. Étapes de développement proposées après autorisation
 | Étape | Travail | Livrable |
 |---|---|---|
 | 03B.1 | Inventaire de tous les statuts, événements Devis/Prospect, transitions UI et service | Matrice `vue→transition→service→refus→test` |
-| 03B.2 | Trancher E72 et instruire E73 avec les champs/événements déjà existants | Projection complète sans nouveau stade backend |
+| 03B.2 | Appliquer E72 validé et instruire E73 avec les champs/événements déjà existants | Projection complète sans nouveau stade backend |
 | 03B.3 | Préparer le pipeline 6 actifs + 1 historique dans atelier fictif | Cartes, états vides, filtres/compteurs |
 | 03B.4 | Raccorder navigation Prospect → Devis → Projet prévisionnel, sans créer un deuxième Projet | Actions exactes, preview/confirmation, pas de mutation au clic |
 | 03B.5 | Raccorder Finalisation et Conversion historique avec contrôles de révisions/consentement | Traces, Client exact et refus des transitions prématurées |
@@ -97,7 +97,7 @@ Le bouton de préparation ne peut être invisible simplement parce que l'étape 
 | R03B-20 | Tests ciblés/complète, SQL, preview périmé | Résultats datés/SHA, rollback et aucune donnée Validation-MSI |
 
 ## 9. Arbitrages et limites
-- **E72 OUVERT** : destination `new`. Continuité recommandée : Annuaire uniquement avant action « Démarrer ». AtoumWeb doit valider.
+- **E72 CLOS** : `new` reste dans l’Annuaire et n’entre dans la première colonne « À qualifier » qu’après « Démarrer la prospection » et succès du service `new → qualifying`.
 - **E73 OUVERT TECHNIQUEMENT** : où et comment enregistrer un accord de principe daté/versionné/annulable sans le confondre avec `quotes.finalize` ni introduire de nouveau `ProspectStage`.
 - **Conversion historique DÉCIDÉE** ; période du compteur encore à cadrer.
 - **Projet prévisionnel et régénération DÉCIDÉS** ; UI d'accès et remplacement sûr de Projet entier pas encore livrés, voir [07P](LOT-07-PROJET-PRE-SIGNATURE.md).
