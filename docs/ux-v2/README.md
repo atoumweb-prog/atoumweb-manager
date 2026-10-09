@@ -107,3 +107,8 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 
 ### CI — PR #84, état réel
 - [PR #84](https://github.com/atoumweb-prog/atoumweb-manager/pull/84) **draft** au HEAD `3a02ff0`, workflow `windows-2022`/Node 24/`npm ci`/typecheck/tests à 2 workers. **Zéro run CI selon Codex** (`[skip ci]`) ; quota et plafond de dépassement **inconnus** car API Billing sans droits. Ne pas fusionner ni autoriser une dépense sans confirmation humaine. [Suivi CI détaillé](CI-GITHUB-ACTIONS.md).
+
+### Contrôle du budget CI — capture du 09/10/2026
+- La page personnelle GitHub `atoumweb-prog` montre **GitHub Free**, **budget Actions 0 USD**, **Stop usage Yes**, alertes incluses **On** ; l'Overview affiche **0 USD facturable** pour octobre (0,13 USD de consommation compensée par l'allocation incluse).
+- [CI-GITHUB-ACTIONS.md](CI-GITHUB-ACTIONS.md) précise le solde gratuit **toujours non vérifié**, la limite nominale GitHub Free de 2 000 minutes/mois (source officielle) et la caveat du premier cycle de budget.
+- **PR #84 reste non exécutée et non fusionnée**. Exécution autorisée seulement après feu vert explicite AtoumWeb, même avec dépassements payants bloqués.
