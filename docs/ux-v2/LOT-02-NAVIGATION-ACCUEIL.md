@@ -127,3 +127,8 @@ Accès aux 17 modules sur rail étroit et déployé, raccourcis fonctionnels, ba
 Lot 02 n'est « terminé » que si les 17 modules demeurent accessibles, les résultats de recherche ouvrent l'entité correcte, les gardes de sortie sont préservées, le chrono global n'est pas doublé, les sept étapes visuelles du pipeline respectent les statuts actuels, les actions rapides ont un effet conforme à leur libellé, les alertes critiques ne sont pas cachées et la recette 3 thèmes × 3 densités réussit sur environnement isolé.
 
 **Ce fichier remplace le simple cadrage initial. Il ne vaut ni implémentation ni certification des tests.**
+
+## 10. Spécifications détaillées des sous-lots 02A/02B
+- [LOT-02A-RAIL-NAVIGATION.md](LOT-02A-RAIL-NAVIGATION.md) : correspondance des 17 modules/icônes, favoris, commandes, accessibilité, conservation des handlers et **18 scénarios**. **E42 reste à arbitrer** entre rail réduit par *groupes + favoris* ou *17 icônes* ; ne pas choisir en développement sans validation.
+- [LOT-02B-ENTETE-RACCOURCIS.md](LOT-02B-ENTETE-RACCOURCIS.md) : barre supérieure, chrono global unique, variantes repliées, recherche accessible, raccourcis sans collision, **16 scénarios** ; aucun repli global de header n'est établi comme déjà livré.
+- **Étapes suivantes :** 02C recherche et routage précis, 02D dashboard et agrégats, 02E recette transversale. Garder la PR documentaire distincte de #84 et des correctifs UX-01.
