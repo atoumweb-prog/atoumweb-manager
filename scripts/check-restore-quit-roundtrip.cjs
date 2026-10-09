@@ -211,7 +211,26 @@ if (!process.versions.electron) {
       console.log('[UX01 child] SQLite initialized');
       db.setSetting(key, 'before');
       console.log('[UX01 child] Creating isolated manual SQLite backup...');
-      const source = await db.createBackup('manual');
+      const rawBackup = await db.createBackup('manual');
+      // The Node sqlite backup API can leave WAL/SHM sidecars around its output.
+      // NEVER delete/copy around those: read through SQLite and export a clean
+      // standalone snapshot with VACUUM INTO (same method as restore.test.ts).
+      // Both inputs and outputs exist ONLY in our temporary workspace.
+      const { DatabaseSync } = require('node:sqlite');
+      const source = path.join(workspace.backupsDirectory, 'manual', 'roundtrip-standalone.sqlite');
+      const backupReader = new DatabaseSync(rawBackup, { readOnly: true });
+      try {
+        backupReader.prepare('VACUUM INTO ?').run(source);
+      } finally {
+        backupReader.close();
+      }
+      const annexes = ['-wal', '-shm', '-journal']
+        .filter(suffix => fs.existsSync(source + suffix));
+      assert(annexes.length === 0, 'Standalone fixture source has SQLite sidecars: ' + annexes.join(', '));
+      const validation = S.validateRestoreSource(source);
+      assert(validation.migrationCount === 66, 'Standalone fixture schema is incompatible');
+      console.log('[UX01 child] Standalone restore source ready: validated',
+        validation.migrationCount, 'migrations, no SQLite sidecars');
       db.setSetting(key, 'after');
       const cleanup = () => { db?.close(); db = null; };
       S.registerGuardedShutdown(cleanup);
