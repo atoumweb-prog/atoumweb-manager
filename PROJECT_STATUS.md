@@ -1,5 +1,11 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 09/10/2026 — Revue finale UX-01 / PR #83 avant fusion
+
+- Trois pertes résiduelles reproduites puis corrigées uniquement dans UX-01 : archivage Prospect/groupe mal hiérarchisé, suppression ligne Devis avant garde, réduction d’une section Prospect démontant son draft. Garde avant mutation (également classement Perdu), groupes cohérents et conservation des sections réduites ; aucun Enregistrer et quitter V2, migration ou règle métier nouvelle.
+- Typecheck OK, **734/734 complets**, **177/177 natifs trois thèmes**, intégrité/FK et 1–66 sur fixtures supprimées. Simulation #81+#83 en copie temporaire : typecheck, **87/87 ciblés** et **177/177 natifs** verts ; conflit IPC à résoudre en conservant la destination/restauration #81 et les gardes de sortie #83. Aucun merge réel. #80 : conflits de journaux seulement ; #82 : pas de conflit, garde UX-01 réutilisable pour le futur Lot 01.
+- **CI quality toujours queued**, aucun runner enregistré, ne pas annoncer ses contrôles verts. PR prête pour revue humaine ; recommandation de fusion suspendue au succès CI et aux résolutions futures avec #81/#80. [Détail de revue](docs/FUNCTIONAL_UNSAVED_INPUTS_UX01_DELIVERY.md). Validation-MSI non ouverte, aucun dossier métier modifié, #80/#81/#82 inchangées.
+
 ## 09/10/2026 — UX-01A/B/C : correction livrée sur branche indépendante
 
 - Branche `codex/fix-manager-unsaved-inputs-ux01` depuis `main@eb252d5c` ; commits distincts A (`df1b6f3`), B (`80300a4`) et C. [Bilan complet, fichiers, scénarios et limites](docs/FUNCTIONAL_UNSAVED_INPUTS_UX01_DELIVERY.md). Reprise du travail interrompu sans reset ; B isolé dans l’index puis vérifié dans une copie temporaire, sans perte des changements C.

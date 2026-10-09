@@ -9,7 +9,7 @@ export function QuoteLineParametersPanel({quote,line,onSave}:{quote:QuoteDetail;
   const [sites,setSites]=useState<Array<{id:string;name:string}>>([]),[interventions,setInterventions]=useState<Array<{id:string;subject:string}>>([]);
   const rules=line.snapshot?.commercialRules as CommercialVersionRules|undefined;
   const operational=line.snapshot?.operational as {lot?:string;estimateRequired?:boolean;setupEstimateRequired?:boolean;parentCodes?:string[];periodAlignment?:'calendar'|'anniversary'}|undefined;
-  const guard=useUnsavedDraft('Paramètres de la prestation',value,{pending:saving,discard:setValue});
+  const guard=useUnsavedDraft('Paramètres de la prestation',value,{group:'quote:'+quote.id+'/line:'+line.id,pending:saving,discard:setValue});
   const editable=quote.status==='draft'&&!quote.finalizedAt;
   useEffect(()=>{
     if(quote.clientAccountId&&operational?.parentCodes?.length)void window.atoumweb.quotes.operationalSalesForClient(quote.clientAccountId).then(setParentSales).catch(e=>setError(String(e)));

@@ -190,9 +190,9 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
   const [deskModeId, applyDeskModeId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   useUnsavedDraft('Nouvelle entreprise',draft,{group:'prospect:create',pending:saving,discard:saved=>setDraft(saved)});
-  function setSelectedId(id:string|null){if(id===selectedId)return true;return requestUnsavedExit(()=>applySelectedId(id),selectedId?'prospect:'+selectedId+':panel':'prospect:none');}
-  function setDeskModeId(id:string|null){if(id===deskModeId)return;requestUnsavedExit(()=>applyDeskModeId(id),deskModeId?'prospect:'+deskModeId+':desk':selectedId?'prospect:'+selectedId+':panel':'prospect:none');}
-  function setView(next:View){if(next===view)return;requestUnsavedExit(()=>applyView(next),selectedId?'prospect:'+selectedId+':panel':'prospect:none');}
+  function setSelectedId(id:string|null){if(id===selectedId)return true;return requestUnsavedExit(()=>applySelectedId(id),selectedId?'prospect:'+selectedId+'/panel':'prospect:none');}
+  function setDeskModeId(id:string|null){if(id===deskModeId)return;requestUnsavedExit(()=>applyDeskModeId(id),deskModeId?'prospect:'+deskModeId+'/desk':selectedId?'prospect:'+selectedId+'/panel':'prospect:none');}
+  function setView(next:View){if(next===view)return;requestUnsavedExit(()=>applyView(next),selectedId?'prospect:'+selectedId+'/panel':'prospect:none');}
   const loadedOnce=useRef(false);
   const [dropStage, setDropStage] = useState<ProspectStage | null>(null);
   const [historySearch, setHistorySearch] = useState('');
@@ -222,7 +222,7 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
       const target = event.target as Node | null;
       if (!target || sidePanelRef.current?.contains(target)) return;
       if(target instanceof Element&&target.closest('button,a,input,select,textarea,tr'))return;
-      requestUnsavedExit(()=>applySelectedId(null),'prospect:'+selectedId+':panel');
+      requestUnsavedExit(()=>applySelectedId(null),'prospect:'+selectedId+'/panel');
     };
     document.addEventListener('pointerdown', closeOnOutside);
     return () => document.removeEventListener('pointerdown', closeOnOutside);
@@ -401,6 +401,7 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
 
   async function markLost(prospect: ProspectSummary, reasonCode: string, reasonText: string) {
     if (!reasonText.trim()) return;
+    if(!requestUnsavedExit(()=>{},'prospect:'+prospect.id))return;
     try {
       await window.atoumweb.crm.prospects.updateQualification(prospect.id, { lostReasonCode: reasonCode });
       await window.atoumweb.crm.prospects.changeStage(prospect.id, 'lost', reasonText.trim());
@@ -614,17 +615,18 @@ function ProspectWorkAccordion({ title, summary, defaultOpen = false, children }
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const [mounted, setMounted] = useState(defaultOpen);
   return <section className={`prospect-work-accordion ${open ? 'open' : ''}`}>
-    <button type="button" className="prospect-work-accordion-trigger" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
+    <button type="button" className="prospect-work-accordion-trigger" aria-expanded={open} onClick={() => {setMounted(true);setOpen((value) => !value);}}>
       <span className="prospect-work-accordion-arrow" aria-hidden="true">{open ? '▾' : '▸'}</span>
       <span className="prospect-work-accordion-title">{title}</span>
       {summary && <span className="prospect-work-accordion-summary">{summary}</span>}
     </button>
-    {open && <div className="prospect-work-accordion-body">{children}</div>}
+    {mounted && <div className="prospect-work-accordion-body" hidden={!open} style={open?undefined:{display:'none'}}>{children}</div>}
   </section>;
 }
 
-function ProspectDetailV2(props:Parameters<typeof ProspectDetailV2Inner>[0]){return <UnsavedGroup name={'prospect:'+props.prospect.id+':'+props.mode}><ProspectDetailV2Inner {...props}/></UnsavedGroup>;}
+function ProspectDetailV2(props:Parameters<typeof ProspectDetailV2Inner>[0]){return <UnsavedGroup name={'prospect:'+props.prospect.id+'/'+props.mode}><ProspectDetailV2Inner {...props}/></UnsavedGroup>;}
 function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, onClose, onOpenDesk, onTemperature, onStart, onLost, onArchive }: {
   prospect: ProspectSummary;
   actions: CrmAction[];
@@ -640,7 +642,7 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
 }) {
   const [lossOpen, setLossOpen] = useState(false);
   const [deskTab, applyDeskTab] = useState<'commercial' | 'reference'>('commercial');
-  function setDeskTab(tab:'commercial'|'reference'){if(tab!==deskTab)requestUnsavedExit(()=>applyDeskTab(tab),'prospect:'+prospect.id+':'+mode);}
+  function setDeskTab(tab:'commercial'|'reference'){if(tab!==deskTab)requestUnsavedExit(()=>applyDeskTab(tab),'prospect:'+prospect.id+'/'+mode);}
   const [identityFocus, setIdentityFocus] = useState<{ target: 'decision' | 'contact'; sequence: number } | null>(null);
   const [lossCode, setLossCode] = useState('no_response');
   const [lossOther, setLossOther] = useState('');

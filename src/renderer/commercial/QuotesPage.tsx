@@ -217,7 +217,8 @@ export function QuotesPage({ onMessage, initialId, initialRequest }: { onMessage
 
   async function removeLine(id: string): Promise<void> {
     if (!detail) return;
-    try { setDetail(await window.atoumweb.quotes.removeLine(id)); setEditingLineId(null); await refresh(); }
+    if (!requestUnsavedExit(()=>{},quoteGroup+'/line:'+id)) return;
+    try { setDetail(await window.atoumweb.quotes.removeLine(id)); if(editingLineId===id)applyEditingLineId(null); await refresh(); }
     catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de supprimer la ligne.'); }
   }
 

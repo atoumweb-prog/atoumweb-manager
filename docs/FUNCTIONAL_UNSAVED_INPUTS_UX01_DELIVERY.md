@@ -4,6 +4,20 @@ Date : 09/10/2026. Branche : `codex/fix-manager-unsaved-inputs-ux01`, depuis `ma
 
 Les trois lots autorisés sont implémentés et vérifiés, avec commits distincts. Aucun accès à Validation-MSI, aucune refonte UX/UI V2, migration nouvelle, réparation historique ou fusion automatique. Les corrections UX-16/UX-03 de #81 restent séparées ; cette branche ne reprend pas leur code. Le diagnostic de #80 et la PR #81 ne sont pas modifiés.
 
+## Revue finale de #83 — 09/10/2026
+
+Trois anomalies UX-01 supplémentaires ont été reproduites par le harness avant correction : suppression d’une ligne Devis avant la confirmation de sortie, archivage Prospect sans prise en compte du groupe de brouillons (séparateur `:` au lieu de `/`), réduction d’une section Prospect qui démontait ses éditeurs.
+
+Corrections limitées : garde de suppression avant mutation et groupe de paramètres propre à la ligne, sans fermer un éditeur voisin ; groupes Prospect hiérarchiques cohérents pour panneau/fiche/archivage et garde avant classement Perdu ; sections déjà ouvertes conservées montées lorsqu’elles sont réduites, masquées sans changer le graphisme ni sauvegarder. Les nouveaux tests vérifient Rester, abandon explicite, aucune mutation préalable et conservation du brouillon contractuel voisin.
+
+- Typecheck OK ; suite complète **734/734**, 82 fichiers (`npm test -- --maxWorkers=2`). Un test permanent de hiérarchie Prospect ajouté ; huit contrôles natifs supplémentaires par thème, soit **177/177** avec `--lot-b --lot-c --review`. Fixtures supprimées, intégrité/FK/1–66 corrects.
+- Compatibilité #81 (`593a4611`) : simulation `git merge-tree` puis tree combiné en copie temporaire, sans merge de branche. Conflit fonctionnel dans `src/main/ipc.ts` : conserver `scheduleDatabaseRestore(sourcePath, workspace)` et le détail de destination de #81, ainsi que les gardes de sortie et `app.quit()` de #83. `main.ts` combine automatiquement l’erreur de restauration #81 et le cleanup will-quit #83. **Typecheck combiné OK, 87/87 tests ciblés restauration/packs/terminaison/registre/fenêtres et 177/177 natifs combinés** ; aucune modification des sources de #81 dans la branche #83. Ce résultat valide cette résolution proposée, pas une fusion déjà faite.
+- #80 : conflits uniquement dans PROJECT_STATUS et la roadmap, à résoudre en conservant les deux historiques et un état courant exact. Aucun conflit fonctionnel. #82 (`d52a2897`) : merge-tree sans conflit, uniquement documentaire ; Lot 01 prévoit bien la réutilisation de la garde UX-01. **Enregistrer et quitter reste une extension V2 et n’est pas ajouté ici.**
+- CI `quality` : run du HEAD livré en file d’attente, non exécuté ; API runners : zéro runner enregistré. Workflow configuré pour self-hosted Windows X64, typecheck et npm test. Main non protégée au contrôle ; API protection/rulesets indisponible (403), aucune configuration GitHub modifiée. **Ne pas présenter la CI comme verte ni recommander une fusion sans son résultat.**
+- Recommandation : PR #83 prête pour revue humaine après les corrections, fusion à attendre jusqu’au succès de quality ; lors de l’intégration avec #81/#80, appliquer les résolutions décrites et revérifier le tree intégré. Validation-MSI reste fermée/intacte. La copie combinée et sa jonction node_modules sont supprimées après vérification.
+
+Les résultats des sections suivantes sont les checkpoints de livraison A/B/C antérieurs à cette revue.
+
 ## 1. Avant / après
 
 Le [diagnostic initial](FUNCTIONAL_UNSAVED_INPUTS_UX01_DIAGNOSIS.md) a reproduit neuf pertes sur treize scénarios, confirmé trois protections locales et identifié le risque du changement différé de workspace.

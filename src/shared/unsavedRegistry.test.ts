@@ -11,4 +11,5 @@ describe('protection des sorties par scope',()=>{
  it('la sélection par ID ne nettoie pas tout le groupe',()=>{const r=new UnsavedRegistry();r.update(entry('a'));r.update(entry('b'));r.request(()=>{},()=>true,['a']);expect(r.active().map(e=>e.id)).toEqual(['b']);});
  it('n’ouvre pas un second dialogue réentrant',()=>{const r=new UnsavedRegistry();r.update(entry('a'));let calls=0;r.request(()=>{},()=>{calls++;expect(r.request(()=>{},()=>{calls++;return true})).toBe(false);return false});expect(calls).toBe(1);});
  it('les scopes démontés sont retirés',()=>{const r=new UnsavedRegistry();r.update(entry('a'));r.remove('a');expect(r.active()).toEqual([]);});
+ it('l’archivage cible les sous-groupes de la fiche sans toucher un autre prospect',()=>{const r=new UnsavedRegistry();r.update(entry('qualification','prospect:one/desk'));r.update(entry('identity','prospect:one/panel'));r.update(entry('other','prospect:two/desk'));expect(r.request(()=>{throw Error('mutation interdite')},()=>false,'prospect:one')).toBe(false);r.request(()=>{},()=>true,'prospect:one');expect(r.active().map(e=>e.id)).toEqual(['other']);});
 });
