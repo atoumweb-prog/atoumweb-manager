@@ -104,3 +104,6 @@ Le bouton de préparation ne peut être invisible simplement parce que l'étape 
 - La protection UX-01 #83 n'est pas universelle sur les 17 modules ; **ne pas déclarer Clients/Projets complètement protégés** sans audit/implémentation et tests.
 
 **Ce document est une spécification : ni nouvelle colonne en code ni nouvelle base, ni conversion Client, ni copie ni suppression de Projet n'ont été effectuées.**
+
+### Observation transversale — Lot 06, conflit E72 réel (audit du 09/10/2026)
+**La cible E72 reste validée, mais n'est pas encore garantie par le backend actuel :** dans `src/main/commercial/QuoteService.ts`, `create` fait `UPDATE prospects SET stage='quote_to_prepare'` sur les Prospects non gagnés/perdus, **y compris `new`**, sans clic « Démarrer la prospection ». Ce fait est incompatible avec « `new` reste dans l'Annuaire jusqu'au démarrage volontaire ». Corriger **le service**, couvrir `new + createWithLines`, puis contrôler les agrégations pipeline/Accueil. **Spécification et tests à venir**, rien n'est modifié ici. [Audit 06A](LOT-06A-MATRICE-DEVIS-ET-ETATS.md).
