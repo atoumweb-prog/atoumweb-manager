@@ -143,3 +143,9 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 
 ### Suivi CI #84 — correctif publié (09/10/2026)
 - GitHub confirme la publication du correctif SQLite **`5a175eb`** sur la [PR #84](https://github.com/atoumweb-prog/atoumweb-manager/pull/84), HEAD de suivi **`495775da` [skip ci]**. **Aucun run sur ce HEAD** ; les résultats `698/698` et `27/27` sont **locaux**, le dernier essai hébergé #549 reste en échec. **Deuxième run GitHub soumis à accord explicite AtoumWeb**, puis éventuelle décision de fusion. [Dossier CI](CI-GITHUB-ACTIONS.md).
+
+### Lot 04 — Catalogue, état documentaire (09/10/2026)
+- [04A — Inventaire réel](LOT-04A-MATRICE-CATALOGUE.md) : `CatalogService`, types offre/service, versions, prix, statuts, composition d'offre et sources Prospection/Devis ; **14 scénarios à exécuter**.
+- [04B — Navigation et catégories](LOT-04B-NAVIGATION-CATEGORIES.md) : quatre offres principales en tête, **section visuelle Services complémentaires** avec catégories métier **uniques** triées A–Z français, recherche, codes Abby secondaires ; **15 scénarios à exécuter**.
+- [04C — Fiche complète et versions](LOT-04C-EDITEUR-VERSIONS.md) : huit onglets cibles, publication volontaire, nouveau brouillon, tarif, CGV et snapshots Devis/Projet immuables ; **17 scénarios à exécuter**.
+- **L'existant gère déjà versions `draft/published/retired`, `CatalogService.publishVersion`, `setOfferComponents`, offres/services et tarifs.** La gestion centralisée des **catégories** n'est pas attestée dans `CatalogApi` : `category` est aujourd'hui une **chaîne libre**. Les suggestions de `ProspectNeedsPanel` utilisent un dictionnaire codé. **04D–04F restent à détailler**. Aucune fonctionnalité V2 développée.
