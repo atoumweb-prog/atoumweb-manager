@@ -129,6 +129,6 @@ Lot 02 n'est « terminé » que si les 17 modules demeurent accessibles, les ré
 **Ce fichier remplace le simple cadrage initial. Il ne vaut ni implémentation ni certification des tests.**
 
 ## 10. Spécifications détaillées des sous-lots 02A/02B
-- [LOT-02A-RAIL-NAVIGATION.md](LOT-02A-RAIL-NAVIGATION.md) : correspondance des 17 modules/icônes, favoris, commandes, accessibilité, conservation des handlers et **18 scénarios**. **E42 reste à arbitrer** entre rail réduit par *groupes + favoris* ou *17 icônes* ; ne pas choisir en développement sans validation.
+- [LOT-02A-RAIL-NAVIGATION.md](LOT-02A-RAIL-NAVIGATION.md) : correspondance des 17 modules/icônes, favoris, commandes, accessibilité, conservation des handlers et **18 scénarios**. **E42 validé : rail réduit = Accueil + favoris + cinq groupes**, avec panneau de sous-navigation, plutôt que 17 icônes. Les 17 restent visibles en mode déployé ; tailles/icônes à recetter.
 - [LOT-02B-ENTETE-RACCOURCIS.md](LOT-02B-ENTETE-RACCOURCIS.md) : barre supérieure, chrono global unique, variantes repliées, recherche accessible, raccourcis sans collision, **16 scénarios** ; aucun repli global de header n'est établi comme déjà livré.
 - **Étapes suivantes :** 02C recherche et routage précis, 02D dashboard et agrégats, 02E recette transversale. Garder la PR documentaire distincte de #84 et des correctifs UX-01.
