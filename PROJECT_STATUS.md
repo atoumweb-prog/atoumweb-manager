@@ -1,5 +1,14 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 10/10/2026 — Validation Windows de la recette packagée IPC / app.relaunch UX-01 × UX-16
+
+- **SHA réellement testé :** `prep/ux01-restore-quit-gate-v2@61786e1f5449cf93d4272458480b302ad2dc4bde`. Exécutable de recette Electron **44.3.0** packagé indépendamment sous TEMP, réutilisant le vrai gestionnaire de `backups:restore` et le cycle de vie Electron `app.isPackaged`.
+- **Acceptation : PASS**. PID 9924 programme `restartScheduled:true`, atteint `before-quit` puis `will-quit`, enregistre le marqueur et ferme SQLite ; `app.relaunch()` crée automatiquement un nouveau PID 4976, qui restaure `before`, conserve `after` sous `pre-restore`, consomme le marqueur et vérifie l'intégrité.
+- **Refus : PASS**. PID 27704 : `before-quit`, **pas de `will-quit`**, `markerAbsent:true`. Démarrage manuel contrôlé PID 10500 : `restored:false`, données préservées.
+- **Sortie exacte :** `SUCCESS: independent packaged app, real IPC, app.relaunch, SQLite restore and refusal.` / `Fixture cleaned: true`. Aucun MSI ni workspace réel ouvert.
+- **Limites :** harness de test réellement packagé, distinct de la distribution Forge/renderer/entrée `main.ts` finale ; aucune CI GitHub sur ce HEAD. Les autres validations restent celles de `88efb788` (typecheck, 801/801, 183/183) et `dbfd0e2` (12/12 natifs), sans changement de code `src/` entre ces SHAs. [Procédure / preuve détaillée](docs/UX01_PACKAGED_RELAUNCH_RECIPE.md).
+- Aucun merge ni changement `main`, PR originales #82/#83, migrations, workflows ou Validation-MSI ; #83 reste draft et conflictuelle avec main.
+
 ## 10/10/2026 — Recette packagée UX-01 : vrai IPC et relancement automatique préparés
 
 - **Harness indépendant** ajouté sur `prep/ux01-restore-quit-gate-v2` : `scripts/check-ux01-packaged-relaunch.cjs` et `scripts/fixtures/ux01-packaged-{main,preload}.cjs`. Il construit un **exécutable Electron packagé temporaire** dans `%TEMP%`, et réutilise les vraies implémentations `registerIpcHandlers`, `DatabaseService`, `registerGuardedShutdown`, `restore`, `RestoreQuitGate`.
