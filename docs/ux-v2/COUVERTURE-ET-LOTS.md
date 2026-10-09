@@ -95,3 +95,6 @@ Workflow Windows GitHub-hosted publié en [PR #84](https://github.com/atoumweb-p
 
 ## CI #84 — mise à jour
 Le premier [run #549](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/37934890745) a effectivement exécuté le job `quality` sur Windows hébergé : install + typecheck OK, **3 tests timeout de 5 secondes**, 692/695 réussis ; **CI failure**, #84 draft non fusionnée. Enquête/test ciblés avant merge, détails dans [CI-GITHUB-ACTIONS.md](CI-GITHUB-ACTIONS.md).
+
+## Clôture documentaire Lot 02
+[02A](LOT-02A-RAIL-NAVIGATION.md), [02B](LOT-02B-ENTETE-RACCOURCIS.md), [02C](LOT-02C-RECHERCHE-ROUTAGE.md), [02D](LOT-02D-ACCUEIL-PILOTAGE.md), [02E](LOT-02E-RECETTE-ET-MIGRATION.md) sont spécifiés avec sources et conditions de recette. **E42 clos** (option A du rail), **E59 encore ouvert** sur le mapping des sept colonnes du pipeline. Leurs tests sont **projetés**, non exécutés ; aucune réécriture des 17 modules ou fusion autorisée par ces documents.
