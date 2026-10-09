@@ -1,5 +1,10 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 09/10/2026 — Premier essai GitHub Actions autorisé sur #84
+
+- AtoumWeb confirme avoir vérifié le budget Actions : 0 USD, Stop usage = Yes ; dépassements payants bloqués. Autorise un seul premier essai de quality dans le quota gratuit disponible, par nouveau commit sans skip. Aucun budget, paiement ou paramètre de facturation modifié par Codex.
+- Workflow Windows hébergé/Node 24/npm ci/typecheck/tests deux workers inchangé. Ce commit déclenche le run de la PR #84 ; résultat à lire dans GitHub, aucune simulation locale présentée comme CI. Si GitHub refuse pour quota/facturation, arrêt sans relance ni contournement. Aucun merge ou accès Validation-MSI.
+
 ## 09/10/2026 — Préparation CI Windows hébergée, sans exécution facturable
 
 - Branche technique indépendante depuis main@eb252d5c : quality sur windows-2022, Node 24 conservé, npm ci/lockfile et tests complets avec deux workers. Aucun module métier/UX, migration ou Validation-MSI modifié ; PR #80/#81/#82/#83 conservées.
