@@ -25,7 +25,7 @@
 | ID | Élément | Constat code/audit (niveau de preuve) | Cible V2 | Stratégie / risque | Critère testable |
 |---|---|---|---|---|---|
 | L01A-01 | Thèmes | **Vérifié source** : `THEME_NAMES = atoumweb/noir/blanc` ; `App.applyTheme` écrit `documentElement.dataset.theme`. `styles.css` définit palettes. | Conserver trois thèmes et rendre composants communs compatibles. | Réutiliser les variables, pas remplacer la charte existante en masse. | Tester composants de démonstration dans chaque thème et le répertoire des 17 vues non modifiées. |
-| L01A-02 | Densités | **Vérifié source** : `compact/comfort/comfort_plus`, via dataset et `display-density.css`. | Conserver trois densités ; lisibilité stable. | Attention à l'objectif proposé « courant 14–15px » : voir **Écart visuel E01**. | Tester neuf combinaisons, champs, actions, petits écrans. |
+| L01A-02 | Densités | **Vérifié source** : `compact/comfort/comfort_plus`, via dataset et `display-density.css` ; code actuel base 15/16/18 px. | **Décision E01 : Compact cible 14 px, Confort 16 px, Confort+ 18 px** ; trois modes conservés. | Tester la modification CSS Compact uniquement, contrastes et anciens overrides ; aucune taille fonctionnelle sous 14 px. | Tester neuf combinaisons, champs, actions, petits écrans. |
 | L01A-03 | Palette et tokens | **Vérifié source** : `--sidebar`, `--surface`, `--text`, `--accent`, `--border` et `--ui-*` ; accent actuel or `#b9965c` en thème AtoumWeb. | Palette de marque et couleurs métier maîtrisées, variantes accessibles. | **Ne pas forcer** automatiquement la palette rouge/jaune/bleu/vert comme couleurs d'interface ou renommer tous les tokens. | Tableau ancien→nouveau rôle sémantique et contraste mesuré. |
 | L01A-04 | Police/échelle | **Vérifié source** : pile Inter/system et variables de densité. | Typographie lisible sur tous les modules. | `ui-typography-consistency.css` et styles historiques peuvent se contredire ; pas de certificat visuel. | Inventaire des priorités/surcharges par capture sans changer la police avant arbitrage. |
 | L01A-05 | CSS global | **Vérifié source** : `main.tsx` importe de nombreuses feuilles, `ui-consistency-v2.css` est chargée en dernier parmi CSS globales de l'entrée. | Système de tokens progressif. | Priorité et `!important` à mesurer ; éviter explosion de `overrides`. | Tableau fichiers→tokens→effets, diffs visuels par zone. |
@@ -56,8 +56,8 @@
 
 Source CSS commentée : « aucun texte fonctionnel ne descend sous 14 px » ; **cela ne garantit pas le rendu de 100 % des anciens CSS**.
 
-### E01 — Contradiction avec une cible initiale indicative
-La V1.3 exprimait « texte courant 14–15px, bouton 34–38px », qui **ne s'aligne pas** sur Confort 16px/42px et Confort+ 18px/48px existants. **Proposition à valider** : préserver l'échelle actuelle des trois densités et harmoniser seulement les anomalies, plutôt que réduire les textes ; ne pas appliquer les anciennes valeurs indicatives comme obligation de refonte.
+### E01 — Décision validée le 09/10/2026, mise en œuvre non commencée
+La V1.3 proposait une taille courante 14–15 px. AtoumWeb a tranché pour une **cible Compact 14 px** (code actuel 15 px), tout en **conservant Confort 16 px et Confort+ 18 px**. Les hauteurs actuelles des contrôles restent 36/42/48 px. La table des valeurs ci-dessus décrit **l'existant**, pas la cible. Contrôle nécessaire : lisibilité de 14 px dans les trois thèmes, ancien CSS, zoom et petits écrans, sans descendre sous 14 px pour les textes fonctionnels.
 
 ### E02 — Logo et palette
 Direction « triangles imbriqués » retenue mais **asset et positions exactes encore non approuvés**. Le thème par défaut utilise un accent or `#b9965c` ; la palette métier `#D62828 / #F2B705 / #1565C0 / #198754` ne justifie pas le remplacement automatique de `--accent`. Valider séparément un logo et sa déclinaison ; éviter de changer les sémantiques d'état.
@@ -85,7 +85,7 @@ Décision UX déjà actée, mais **non développée** dans la PR #83. Avant 01E 
 ## 5. Définition de « prêt pour 01A »
 1. Le code de travail est identifié par SHA ; aucun diff concurrent UX-01 non fusionné n'est écrasé.
 2. Une table de tokens existants et des CSS prioritaires est documentée.
-3. **E01** est validé : préserver tailles actuelles, ou décider explicitement une autre échelle par densité.
+3. **E01 est tranché** : implémentation future Compact 14 px, Confort 16 px, Confort+ 18 px ; organiser la validation visuelle avant livraison.
 4. Maquette de l'atelier isolé prévue, sans écriture dans des dossiers métier.
 5. Captures/rendus référentiels des trois thèmes × trois densités et fenêtres compactes planifiés avant modification.
 6. Déploiement par petits composants avec possibilité de rollback et une recette comparative.
