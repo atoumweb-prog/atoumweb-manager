@@ -1,5 +1,10 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 09/10/2026 — Validation GitHub unique du correctif fixtures autorisée
+
+- AtoumWeb autorise un seul nouveau run #84 avec 5a175eb conservé ; workflow Windows 2022/Node 24/npm ci/typecheck/complet deux workers inchangé. Budget 0 USD/Stop usage confirmé dans la session ; API quota toujours inaccessible (scope user absent), aucun solde gratuit inventé ni budget/paiement modifié. Si refus ou échec : pas de nouvelle relance sans accord.
+- Commit sans skip déclenche l’essai ; relever depuis les logs les trois anciens timeouts, totaux et durées réels. Si vert, simulations locales isolées et préparation technique #81 puis #83 autorisées ; aucune modification de #81/#82/#83, merge, Validation-MSI ou données réelles. Résultats sur le run du commit et le bilan PR, sans pousser un deuxième commit de résultat déclenchant Actions.
+
 ## 09/10/2026 — Publication du correctif fixtures #84 sans déclenchement CI
 
 - AtoumWeb valide 5a175eb et autorise sa publication, avec skip CI ; aucune réécriture du commit. Un commit de suivi uniquement documentaire portant [skip ci] devient le HEAD poussé avec le correctif. Même périmètre : helper/test de fixture et trois fichiers de suivi, aucun code métier/référentiel/migration/timeout global modifié.
