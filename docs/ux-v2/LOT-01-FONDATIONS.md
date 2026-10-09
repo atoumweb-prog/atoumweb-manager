@@ -108,3 +108,10 @@ Conséquences pour 01E :
 - Prospection, Devis et fenêtre Référence Prospect sont les seuls pilotes explicitement raccordés dans cette livraison. Étendre progressivement aux autres modules après recette, sans promettre la protection des 17 modules à ce stade.
 - Absence de récupération après crash/arrêt forcé et d'autosave durable : hors livraison #83. Ne pas confondre ce mécanisme avec des sauvegardes métier.
 - Réexaminer le lot avant son implémentation si #83 n'est pas fusionnée ou si une résolution de conflits est nécessaire avec #81.
+
+## 8. Matrice source → cible et arbitrages avant développement
+**Document de travail détaillé : [LOT-01-MATRICE-EXISTANT-CIBLE.md](LOT-01-MATRICE-EXISTANT-CIBLE.md).** La matrice associe chaque famille du Lot 01 aux fichiers et mécanismes existants, aux précautions d'intégration et aux tests d'acceptation.
+
+Point **E01 à arbitrer** : le socle CSS actuel utilise 15/16/18px selon la densité et des hauteurs de contrôle 36/42/48px. Les anciennes cibles numériques 14–15px et 34–38px étaient **indicatives**, pas un ordre de réduction générale ; préserver les réglages existants en attendant validation.
+
+L'exécution ne peut pas commencer uniquement sur la base de ce fichier : vérifier les HEAD des PR #80/#81/#83, réaliser la recette comparative et arrêter E01–E04 selon leur incidence réelle.
