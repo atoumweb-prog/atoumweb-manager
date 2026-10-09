@@ -42,7 +42,7 @@ Faire d'**Accueil** le point de pilotage quotidien d'AtoumWeb : **Aujourd'hui**,
 
 **Proposition de mise en page** : un bloc Aujourd'hui visible dès l'ouverture, alertes sans effort de découverte, KPI et temps sous formes compactes, pipeline lisible ou défilable sans microscopie. Tester fenêtre 1280×720 et formats réels, **ne pas figer une hauteur fixe** avant recette.
 
-## 4. Pipeline — **point de cadrage E59** avant implémentation
+## 4. Pipeline — **E59 partiellement tranché : Conversion validée, autres points ouverts**
 Les **sept intitulés visuels validés** :
 1. À qualifier
 2. Besoins
@@ -61,9 +61,9 @@ Les **sept intitulés visuels validés** :
 | Attente du retour | `quote_sent`, `follow_up`, `waiting` | Préserver relances dues comme **filtre transversal**, pas colonne supplémentaire. |
 | Négociation | `negotiation` | Aucune règle de migration nécessaire si statut reste stable. |
 | Finalisation | **aucun statut backend évident** parmi les cinq catégories actuelles | Représentation visuelle à préciser, sans inventer `finalization` dans la base. Peut être **vide/étape de synthèse** ou portée par un indicateur commercial existant à inspecter. |
-| Conversion | `won` et création/rattachement Client, uniquement après validation | Les `won` sont **exclus** des Prospects actifs. Décider fenêtre temporelle/historique vs compteur des conversions réelles ; `lost` ne vaut jamais conversion. |
+| Conversion | **DÉCIDÉ** : historique des **Prospects effectivement convertis en Clients**, établi par un lien/événement de conversion vérifiable ; `won` seul ne suffit pas si aucune conversion Client n'est prouvée. | **Pas une étape du pipeline actif** : la vue est historique et consultable, lien vers fiche Client et fiche/historique Prospect si conservé ; `lost` exclu, une conversion comptée une seule fois. Période et affichage du compteur à préciser avant implémentation. |
 
-**Exigence impérative :** ne pas inventer les règles E59 dans le UI. Tracer chaque état dans une projection sans doublon ; clarifier si les compteurs des étapes 1–6 portent sur les **Prospects actifs** et l'étape 7 sur un **historique de conversion**. La comparaison de KPI doit afficher ses unités/périodes si elles diffèrent. Cadrer avec Lot 03 CRM et règles Prospects → Clients avant de coder la projection.
+**Arbitrage validé par AtoumWeb : « Conversion » affiche l'historique des Prospects réellement convertis en Clients, et non des dossiers encore actifs.** Ne pas inventer d'autres règles E59 : l'inclusion de `new` et la nature de « Finalisation » restent ouvertes. Séparer expressément dans le visuel/compteur les **étapes 1–6 du pipeline actif** de l'**historique des conversions** ; une période/calcul comparables devront être explicités. Le lien de conversion Client doit être vérifiable dans le service, sans créer de nouvelle étape SQL ni doublon. Cadrer avec Lot 03 CRM avant code.
 
 ## 5. Alertes et confiance dans les données
 - Afficher l'horodatage/source ou signal de fraîcheur lorsque service disponible ; distinguer *chargé*, *en cours*, *échec*, *partiel* ; ne pas transformer l'échec d'une des huit sources en zéro alerte.
@@ -107,7 +107,7 @@ Les **sept intitulés visuels validés** :
 | R02D-07 | Cliquer KPI Projets/Interventions | Cible/filtre cohérent avec le compteur, aucun mauvais état |
 | R02D-08 | Pipeline 7 colonnes avec état `new/qualifying/won/lost` | Projection **E59 validée** sans nouveaux statuts backend et sans doublons |
 | R02D-09 | Cliquer chaque étape de pipeline | Ouvre la vue/filtre correspondante lorsque pris en charge |
-| R02D-10 | Afficher conversion historique | Aucun `lost` compté comme conversion et pas de double comptage Client |
+| R02D-10 | Afficher conversion historique validée | Uniquement Prospects **réellement convertis en Clients** avec lien vérifiable ; `won` sans Client lié et `lost` non comptés ; zéro doublon ; navigation vers le Client réel |
 | R02D-11 | Deux alertes dont une critique et une non critique | Les deux accessibles, priorités fiables et bon objet |
 | R02D-12 | Masquer widget À surveiller | Signal critique **reste accessible/visible** par autre canal |
 | R02D-13 | Cliquer « + Prospect / Devis / Projet / Demande » | Vrai formulaire sans création anticipée **ou libellé changé en Ouvrir** |
@@ -122,7 +122,7 @@ Les **sept intitulés visuels validés** :
 | R02D-22 | Recette UI, typecheck, suite complète et reprise après erreur | Preuves datées/SHA, Validation-MSI jamais touchée |
 
 ## 10. Questions de conception restant ouvertes
-- **E59 — Mapping 7 colonnes** : **nécessite arbitrage**, surtout `new`, `Finalisation` sans statut backend, `Conversion` = historique vs étape active.
+- **E59 — Mapping 7 colonnes, partiellement tranché** : **Conversion validée comme historique consultable des conversions Client réelles, non comme étape active**. Restent ouverts : inclusion de `new` dans « À qualifier », représentation de « Finalisation » sans statut backend, et période d'affichage des conversions. Aucun nouveau statut technique.
 - **E60 — Disponibilité vraie des KPI ciblés** : les sources filtres doivent correspondre à la population des compteurs, sinon revoir libellés/cibles.
 - **E61 — Hiérarchie des alertes** : quelles catégories sont réellement « critiques » et doivent rester visibles hors widget ; inspecter `operationsAlerts` avant tout automatisme.
 - **E62 — Niveau de personnalisation d'Accueil** : masquer/ordonner obligatoire ; dimensions et grilles adaptatives à prototyper.
