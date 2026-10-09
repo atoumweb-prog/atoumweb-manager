@@ -47,7 +47,7 @@
 ## Lots de réalisation — cibles, pas ordre de fusion automatique
 | Lot | Contenu |
 |---|---|
-| 00 | Stabiliser UX-01, UX-03, UX-16 ; statut réel de PR/CI à vérifier ; aucun chantier en parallèle sur mêmes fichiers |
+| 00 | **UX-01 #83** revue au HEAD `5b38cbe` (734/734 tests, 177/177 natifs, draft, CI queued) ; **UX-03/UX-16 #81** restent distinctes. Résoudre conflit IPC à la future intégration (simulation 87/87 ciblés, 177/177 natifs), vérifier CI + revue humaine ; aucun chantier en parallèle sur mêmes fichiers. |
 | 01A | Audit styles/tokens, palette/typographie, trois thèmes/densités |
 | 01B | Champs, boutons, icônes, messages, aides |
 | 01C | Fiches rapides/agrandies, panneaux redimensionnables |
