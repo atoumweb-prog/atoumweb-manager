@@ -90,3 +90,7 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 
 ### CI GitHub Actions — préparation indépendante de l'UX
 - [Diagnostic et proposition](CI-GITHUB-ACTIONS.md) : workflow `ci.yml` avec `runs-on: [self-hosted, Windows, X64]` alors qu'aucun runner enregistré n'est signalé par Codex ; recommandation `windows-2022`, `npm ci` (lockfile présent), deux workers, puis vérification réelle des PR. **Proposition non approuvée, aucune configuration modifiée**. La CI en attente n'est pas un échec de tests.
+
+### Lot 01E — Formulaires et confirmations critiques
+- [Spécification détaillée 01E](LOT-01E-FORMULAIRES-CONFIRMATIONS.md) : état réel UX-01 #83, modules pilotes et limites, indicateurs de brouillons, conflits et permissions, extension future `Enregistrer et quitter` **uniquement quand un vrai service d'enregistrement fiable existe** ; 20 tests projetés, dont les trois régressions corrigées dans #83.
+- Décisions techniques ouvertes E17–E22 : protocole async de sauvegarde avant sortie, périmètres d'éditeurs, dialogues Electron, conflit de versions, couverture réelle des modules et crash hors périmètre. **Documentation uniquement**, pas de nouveau mécanisme implémenté.
