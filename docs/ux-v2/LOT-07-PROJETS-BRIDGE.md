@@ -12,7 +12,7 @@ Rechercher, examiner, copier indépendante, adapter, valider humainement, conser
 ## Bridge
 Prévoir toutes étapes d'UX : préparer/exporter, Workbench, ouvrir avec Divi, observer/comparer, valider, publication contrôlée et rollback **seulement si implémentés et capacités vérifiées**. Module autonome Sites/Bridge conservé ; site Projet ≠ snapshot WordPress. Échec Bridge ne fait pas perdre la composition Manager.
 ## Ordre proposé
-07A inventaire des sections techniques et accès ; 07B liste/projet ; 07C blueprints/targets ; 07D composition ; 07E bibliothèque ; 07F intégration capability-driven Bridge ; 07G recette.
+[07A audit et capacités réelles](LOT-07A-INVENTAIRE-PROJETS-CAPACITES.md) ; [07B liste et fiche Projet](LOT-07B-FICHE-PROJET-PRODUCTION.md) ; [07C blueprints, contributions, Projet prévisionnel et remplacement](LOT-07C-BLUEPRINTS-DOSSIER-COMMERCIAL.md) ; [07D Sites/Pages et composition](LOT-07D-SITES-PAGES-COMPOSITION.md) ; [07E Bibliothèque/réutilisation](LOT-07E-BIBLIOTHEQUE-REUTILISATION.md) ; [07F Bridge/Workbench/publication future](LOT-07F-BRIDGE-WORKBENCH-PUBLICATION.md) ; [07G recette](LOT-07G-RECETTE-ET-INTEGRATION.md) ; [07P décision pré-signature](LOT-07-PROJET-PRE-SIGNATURE.md). **07A–07G rédigés : documents, aucune fonction V2 développée.**
 ## Recette
 Site vitrine 1 Site/5 Pages sur le blueprint de référence si applicable, création sans doublon, revue composant, annuler/rétablir, temps sur bonne page, refus d'export sans cible/composition, ouverture Workbench selon capacités, aucune publication directe implicite.
 
