@@ -101,3 +101,12 @@ Le rapport Codex MSI recommande un runner Windows hébergé par GitHub pour évi
 
 ## Infrastructure — PR #84
 La proposition de runner Windows GitHub-hosted est **développée et publiée** en [PR #84](https://github.com/atoumweb-prog/atoumweb-manager/pull/84), **non fusionnée, non exécutée** (`[skip ci]`). Autorisation de lancement en attente de contrôle des minutes incluses et **budget/actions avec arrêt des dépassements** ou d'un plafond explicitement validé par AtoumWeb. L'absence de permission de l'API Billing ne vaut pas quota épuisé ni facturation autorisée. [Dossier CI](CI-GITHUB-ACTIONS.md).
+
+## Lot 02A — Choix de présentation E42 **ouvert**, pas encore tranché
+Deux options de rail réduit conformes aux décisions prises : **A, recommandation = Accueil + favoris épinglés + icônes de groupes ouvrant les sous-menus** ; **B = une icône par module (17 entrées) avec éventuel scroll**. Le mode déployé conserve toujours l'ensemble des 17 modules. **Seul AtoumWeb valide A/B** ; aucune codification implicite. [Détails 02A](LOT-02A-RAIL-NAVIGATION.md).
+
+## Lot 02B — En-tête et chrono
+**DÉCIDÉ :** en-tête compact/réductible, recherche et session de chrono toujours accessibles, **une seule session globale** ; bandeau Bibliothèque distinct ; audit clavier avant attribution de nouveaux raccourcis. [Détails 02B](LOT-02B-ENTETE-RACCOURCIS.md).
+
+## CI #84 — statut après le premier lancement
+**VÉRIFIÉ par GitHub** : commit `1b069575`, run [#549](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/37934890745) exécuté sur le runner Windows hébergé. Installation et typecheck réussis, **3 timeouts/695 tests** (692 réussis), donc **CI en échec**. La branche #84 reste draft non fusionnée. Diagnostic ciblé requis avant fusion ; aucune hausse globale de timeout sans cause analysée. [Dossier CI](CI-GITHUB-ACTIONS.md).
