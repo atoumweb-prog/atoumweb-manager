@@ -1,5 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 10/10/2026 — Recette packagée UX-01 : vrai IPC et relancement automatique préparés
+
+- **Harness indépendant** ajouté sur `prep/ux01-restore-quit-gate-v2` : `scripts/check-ux01-packaged-relaunch.cjs` et `scripts/fixtures/ux01-packaged-{main,preload}.cjs`. Il construit un **exécutable Electron packagé temporaire** dans `%TEMP%`, et réutilise les vraies implémentations `registerIpcHandlers`, `DatabaseService`, `registerGuardedShutdown`, `restore`, `RestoreQuitGate`.
+- Acceptation : appel réel `backups:restore` sous `app.isPackaged`, quit automatique, marqueur en `will-quit`, **`app.relaunch()` déclenchant un autre PID**, restauration au démarrage et sauvegarde `pre-restore`. Refus : enregistrement pending après accord IPC, fermeture veto et vérification à un démarrage manuel ultérieur sans restauration. **Tout est sous un nouveau profil/workspace TEMP avec nonce, aucune base réelle.**
+- **Contrôle effectué :** syntaxe JavaScript des trois fichiers OK ; présence de `@electron/packager@18.4.4` confirmée dans `package-lock.json` ; assertions statiques des garde-fous. **Le test packagé n'a PAS été exécuté sous Windows à ce stade.**
+- **Périmètre :** exécutable de test indépendant utilisant le vrai IPC (pas le package final du Manager, son `main.ts` complet ni le MSI). Voir [la recette et ses limites](docs/UX01_PACKAGED_RELAUNCH_RECIPE.md). Ne pas inférer une validation Windows avant la sortie du script.
+- `main`, #82, la PR officielle #83, migrations, fichiers `src/`, workflows et Validation-MSI inchangés. Pas de CI ou fusion.
+
 ## 10/10/2026 — Validation Windows du parcours natif restauration/fermeture UX-01 × UX-16
 
 - **Révision testée :** `prep/ux01-restore-quit-gate-v2@dbfd0e2f2171f6f66b222e2b7cc1256649af1490`. Exécution PowerShell `node --check scripts/check-restore-quit-roundtrip.cjs` OK ; `node scripts/check-restore-quit-roundtrip.cjs` **12/12 contrôles, 5/5 processus Electron, 0 échec, `Fixture cleaned: true`**.
