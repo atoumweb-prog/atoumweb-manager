@@ -67,3 +67,10 @@ Ce fichier prépare les tests ; il ne constitue pas une validation.
 - **Avant fusion** : revoir la portée UX-01, obtenir la CI sur le SHA réellement destiné à `main`, conserver un retour arrière humain, confirmer que le package Forge final n'a pas été testé par la recette packagée indépendante. Pas de migration 67, pas de modification des offres/commercial/CGV/maintenance/Bridge.
 - **État** : aucune PR nouvelle créée, aucun changement de `main`, #82, de la PR officielle #83 ou de Validation-MSI. Aucun déclenchement CI.
 
+
+## Vérification finale de l'intégration (PR #85)
+
+- La PR de remplacement **#85** utilise `prep/ux01-restore-quit-gate-v2` sur `main`, sans conflit GitHub. L'ancienne #83 reste conservée pour l'historique.
+- Le dernier changement avant CI est **exclusivement documentaire** ; le code de production `src/` correspond aux tests Windows vérifiés : typecheck, 801/801 tests, 183/183 UI, recette native 12/12 et relance packagée 2/2.
+- La vérification CI attendue est `quality` (Windows 2022, Node 24, `npm ci`, `npm run typecheck`, `npm test -- --maxWorkers=2`). Une validation n'est considérée acquise que si le run associé au HEAD de #85 est `completed/success`. Les logs et le SHA doivent être reportés avant la fusion.
+- Contrats : aucune modification volontaire des CGV, modèles juridiques ni migrations ; les éditeurs contractuels protègent les brouillons et contrôlent les mises à jour périmées.
