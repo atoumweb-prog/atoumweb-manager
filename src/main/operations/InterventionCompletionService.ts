@@ -15,6 +15,18 @@ export class InterventionCompletionService {
   ) {}
 
   complete(id: string): Intervention {
+    this.database.exec('SAVEPOINT intervention_complete;');
+    try {
+      const intervention = this.completeWithinTransaction(id);
+      this.database.exec('RELEASE intervention_complete;');
+      return intervention;
+    } catch (error) {
+      this.database.exec('ROLLBACK TO intervention_complete; RELEASE intervention_complete;');
+      throw error;
+    }
+  }
+
+  private completeWithinTransaction(id: string): Intervention {
     let intervention = this.operations.getIntervention(id);
     if (['cancelled', 'archived'].includes(intervention.status)) throw new Error('Cette intervention ne peut pas être terminée dans son état actuel.');
 
