@@ -65,3 +65,7 @@ Chaque lot dispose maintenant d'un fichier de travail : **objectifs, décisions,
 - UX-01C : fermeture/rechargement/quit Electron, fenêtres détachées et programmation de changement de workspace.
 - Bilan annoncé et documenté : typecheck OK, 75/75 tests ciblés, 733/733 tests complets avec deux workers, 153/153 contrôles natifs trois thèmes, 1–66 inchangées, intégrité/FK OK.
 - **Limites** : pas de bouton « Enregistrer et quitter » universel confirmé ; pas de raccordement automatique aux autres modules, pas de récupération après crash. CI encore à confirmer avant fusion. Le Lot 01E doit **réutiliser** les composants et API validés d'UX-01 sans créer un second système.
+
+## Comparaison code réel / cible — Lot 01
+- [Matrice existant → V2](LOT-01-MATRICE-EXISTANT-CIBLE.md) : **19 entrées traçables** en 01A–01F, sources `main@eb252d5c` et branche non fusionnée UX-01 #83 ; décisions, risques, critères de recette et incohérences E01–E04. Ce document est une inspection statique, **pas un résultat de tests**.
+- Écart E01 à valider : tailles actuelles compact 15px, confort 16px, confort+ 18px vs indication ancienne 14–15px. Ne pas abaisser la taille des textes par automatisme.
