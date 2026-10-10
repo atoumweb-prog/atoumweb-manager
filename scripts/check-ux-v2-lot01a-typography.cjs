@@ -116,8 +116,29 @@ if (!process.versions.electron) {
           stderr += part.toString('utf8');
           process.stderr.write(part);
         });
-        child.once('error', reject);
-        child.once('close', (code, signal) => resolve({ code, signal, stdout, stderr }));
+        let done = false;
+        const finish = (code, signal) => {
+          if (done) return;
+          done = true;
+          resolve({ code, signal, stdout, stderr });
+        };
+        child.once('error', error => {
+          if (done) return;
+          done = true;
+          reject(error);
+        });
+        // Chromium subprocesses on Windows can retain inherited pipes after
+        // the main Electron PID exits. Do not misdiagnose that as a hung test.
+        child.once('exit', (code, signal) => {
+          const drain = setTimeout(() => {
+            if (done) return;
+            child.stdout.destroy();
+            child.stderr.destroy();
+            finish(code, signal);
+          }, 1500);
+          drain.unref();
+        });
+        child.once('close', (code, signal) => finish(code, signal));
       });
       assert(!aborted && childResult.code === 0,
         'Electron CSS fixture failed (exit=' + childResult.code + ') ' + childResult.stderr);
