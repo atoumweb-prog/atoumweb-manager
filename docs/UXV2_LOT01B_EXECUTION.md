@@ -104,6 +104,27 @@ Le 10/10/2026, un extrait de PowerShell fourni par AtoumWeb se termine par :
 
 **Statut honnête :** aide E05 et TypeScript validés dans la trace disponible ; contrôle boutons/champs **sans arrêt observé mais total non vérifiable**, pas de « 100 % R01B » annoncé. La suite complète Vitest et l'atelier 01B.3+ sont toujours hors champ de cette preuve.
 
+## 01B.3 — Icônes et boutons d'action (pilotage non encore exécuté Windows)
+
+Inventaire réel dans [`UXV2_LOT01B_ICONS_CATALOG.md`](UXV2_LOT01B_ICONS_CATALOG.md) : **36 symboles `OperationIconName`** existants dans `src/renderer/operations/OperationIcon.tsx`. SVG décoratifs `aria-hidden=true`, `focusable=false`, `stroke=currentColor`, taille par défaut 20 px. **Aucun changement de cette source ni nouvelle bibliothèque d'icônes**.
+
+Règles pilotes : `AppButton` icône seule ⇒ `aria-label` obligatoire ; icône + texte ⇒ le texte décrit l'action ; indicateur métier ⇒ symbole et libellé d'état, jamais couleur/picto seul. La commande parent conserve la responsabilité de l'action métier et de sa confirmation.
+
+Nouveau `scripts/check-ux-v2-lot01b-icons.cjs` : galerie des 36 SVG et deux commandes `AppButton` réellement rendues dans React/Chromium avec les **31 CSS du renderer**, **9 combinaisons thème/densité** ; mesure taille 20×20, hauteur 36/42/48, noms accessibles des commandes, activation native par touche Entrée, focus et nettoyage de fixture `%TEMP%`. **Syntaxe JS vérifiée statiquement ; la recette n'a pas encore été lancée sur Windows**.
+
+Commande ciblée (depuis le clone indépendant propre après `git fetch` et `git switch --detach origin/feature/ux-v2-lot01b-components-v1`) :
+
+```powershell
+node --check scripts/check-ux-v2-lot01b-icons.cjs
+if ($LASTEXITCODE -ne 0) { throw "Syntaxe test icônes invalide." }
+node scripts/check-ux-v2-lot01b-icons.cjs
+if ($LASTEXITCODE -ne 0) { throw "Recette icônes échouée." }
+npm run typecheck
+if ($LASTEXITCODE -ne 0) { throw "Typecheck 01B échoué." }
+```
+
+Les composants du pilote ne sont **pas encore migrés sur les 17 modules** ; le catalogue est une carte de réemploi, pas une application automatisée.
+
 ## Non-modifications
 
 **Zéro changement métier** : aucun Devis, Catalogue, CGV, contrat, signature Abby, Projet, Bridge, CRM, migration, base SQLite, API ou droits utilisateur ; aucun remplacement des confirmations UX-01. Le composant n'intègre aucune dépendance externe. Retour arrière : revenir à la branche 01A (l'ancien `FieldHelp` et la règle `display:none` sont inchangés sur cette branche).
