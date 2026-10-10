@@ -241,6 +241,23 @@ Après correction de la grille sidebar/main-area, AtoumWeb a transmis `uxv2-01b-
 
 **Rapport détaillé** : [`docs/UXV2_LOT01B_VISUAL_REVIEW.md`](UXV2_LOT01B_VISUAL_REVIEW.md). L'échec antérieur sur `1a30744d` reste documenté plus haut ; le correctif de la structure est bien **visible dans les images reçues**, mais les preuves de non-régression Electron 17 écrans, de tests Vitest complets et de R01B restent à fournir. PR #87 toujours **draft**, sans fusion.
 
+## Atelier 01B.6 — nouvelle recette Windows et revue des neuf captures (10/10/2026)
+
+**Passage confirmé au commit `d80409ac12bb9166d19f4f9b2a0c1753891e8a98`** dans le worktree indépendant :
+
+- `Shell geometry {"sidebar":258,"main":1088,"content":1088,"contentLeft":258}` : hiérarchie du vrai Manager reproduite ; le défaut d'overflow artificiel de la tentative initiale a disparu.
+- **9/9 états thème/densité PASS** : AtoumWeb / Noir / Blanc × Compact / Confort / Confort+.
+- **`[UXV2 01B WORKSHOP] RESULT {"checks":51,"failed":0,"combinations":9,"components":5,"onlyTemp":true,"capturesVerified":9}`** ; compteur d'assertions **51/51**.
+- **`Fixture cleaned: true`** ; profil et fichiers de la recette nettoyés.
+- `npm run typecheck` → `tsc --noEmit` sans diagnostic et garde PowerShell non déclenchée ; message final **`ATELIER UX 01B VALIDE`** après création du ZIP.
+- Archive `uxv2-01b-atelier-20261010-040237.zip` transmise. **Neuf fichiers PNG**, chacun **2019 × 1377 pixels**.
+
+**Vérification indépendante des pixels de l'archive** : recalcul de la couleur de témoin de frame selon la séquence 1…9 et comparaison du pixel `(width-17, height-17)` sur les neuf PNG. **9/9 correspondances exactes**, aucune capture périmée détectée. Les neuf images ont été assemblées et comparées : les cartes des cinq composants pilotes sont présentes, thèmes distincts, densités représentées, sans coupure globale ni débordement horizontal visible. Ceci **valide le comparatif visuel de l'atelier 01B.6**, pas tous les écrans métiers.
+
+**Observations non bloquantes pour amélioration ultérieure** : le bouton pilote **icône seule** apparaît très discret (affordance visuelle à améliorer, avec état de focus à maintenir) ; l'alignement des icônes « Temps / Interventions » en Compact paraît serré. Ne pas modifier la CSS déjà testée sans nouvelle validation. Le carré coloré dans le coin inférieur droit est uniquement le témoin de synchronisation des captures, **pas un composant du Manager**.
+
+**Limites :** les images décrivent **l'atelier isolé**, pas la navigation ni les futures pages UX V2 ; aucune donnée métier réelle, confirmation destructrice ou formulaire complexe. La recette globale des **17 pages réelles**, les 12 exigences R01B et la **suite Vitest complète de la branche** restent à prouver avant tout feu vert de clôture 01B ou de fusion des PR. Le contrôle de typecheck et les 51 assertions sont ici attestés par le journal, mais aucune CI Github sur ce SHA n'est revendiquée.
+
 ## Non-modifications
 
 **Zéro changement métier** : aucun Devis, Catalogue, CGV, contrat, signature Abby, Projet, Bridge, CRM, migration, base SQLite, API ou droits utilisateur ; aucun remplacement des confirmations UX-01. Le composant n'intègre aucune dépendance externe. Retour arrière : revenir à la branche 01A (l'ancien `FieldHelp` et la règle `display:none` sont inchangés sur cette branche).
