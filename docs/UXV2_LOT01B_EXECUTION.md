@@ -59,6 +59,38 @@ npm run typecheck
 
 Après le test ciblé et le typecheck, resteront : non-régression Electron 01A adaptée, suite de tests complète, 01B.2 boutons/champs, 01B.3 icônes, 01B.5 confirmations/notifications, 01B.6 atelier, puis les **12 scénarios R01B** réellement pertinents. **Ne pas clôturer 01B avec seulement E05.**
 
+## 01B.2 — Pilotage des boutons et champs (codé, **recette non encore exécutée**)
+
+Nouveaux éléments de présentation **non branchés aux parcours métier** :
+
+| Composant | Source | Comportement et contrat | Limites |
+|---|---|---|---|
+| `AppButton` | `src/renderer/ui/AppButton.tsx` | Variantes `primary / secondary / quiet / danger`, icône + texte ou icône seule avec `aria-label` **obligatoire au type** ; bouton natif `type="button"`, ne soumet jamais implicitement un formulaire ; état `pending` externe, promesse `onAction` verrouillée contre double déclenchement, retour `onActionError`, erreur neutre `role=alert` sur rejet. | Ni enregistrement, ni transaction, ni succès implicite ; dans le pilote uniquement. Son `onAction` ne remplace pas les handlers des formulaires historiques. |
+| `AppTextField` | `src/renderer/ui/AppTextField.tsx` | Input natif contrôlé par son propriétaire : label / `htmlFor` / id, description et erreur `aria-describedby`, `aria-invalid`, `required`, aide optionnelle indépendante des valeurs. | Aucune validation métier ni sauvegarde/normalisation de données. |
+| Styles pilotes | `src/renderer/ui-consistency-v2.css` | Sélecteurs **`.aw-ui-*` exclusivement**, typographie ≥14px, tailles 36/42/48px selon densité, couleurs issues des trois thèmes, focus clavier et états d'erreur visibles. | Pas de remplacement des anciennes classes et aucune modification des autres modules. |
+
+**Recette autonome préparée** : `scripts/check-ux-v2-lot01b-controls.cjs`, vrai React dans Chromium/Electron avec les 31 CSS du renderer, **SQLite et profil utilisateur non ouverts**, environnement éphémère `%TEMP%` ; 9 variantes thème×densité, taille/texte lisibles, quatre boutons, icon-only nommé, `label/id`, description/erreur liés, double clic asynchrone bloqué, rejet d'opération signalé et nettoyage. **Syntaxe JavaScript vérifiée avant publication ; aucune réussite Windows non observée n'est annoncée.**
+
+### Validation Windows du pilote — à réaliser dans le worktree séparé
+
+```powershell
+cd "C:\DEV\01_PROJETS\AtoumWeb\atoumweb-manager-ux01-validation"
+if (git status --porcelain) { throw "Dossier de validation non propre." }
+git fetch origin
+if ($LASTEXITCODE -ne 0) { throw "Fetch échoué" }
+git switch --detach origin/feature/ux-v2-lot01b-components-v1
+if ($LASTEXITCODE -ne 0) { throw "Switch échoué" }
+git log -1 --oneline
+node --check scripts/check-ux-v2-lot01b-controls.cjs
+if ($LASTEXITCODE -ne 0) { throw "Syntaxe du test invalide" }
+node scripts/check-ux-v2-lot01b-controls.cjs
+if ($LASTEXITCODE -ne 0) { throw "Recette UI 01B.2 échouée" }
+npm run typecheck
+if ($LASTEXITCODE -ne 0) { throw "Typecheck 01B.2 échoué" }
+```
+
+Les composants sont **disponibles pour un atelier**, pas encore migrés sur un module existant. La revue d'accessibilité finale, l'atelier 01B.6 comparatif, la suite complète Vitest et les critères R01B restants demeurent exigibles avant clôture.
+
 ## Non-modifications
 
 **Zéro changement métier** : aucun Devis, Catalogue, CGV, contrat, signature Abby, Projet, Bridge, CRM, migration, base SQLite, API ou droits utilisateur ; aucun remplacement des confirmations UX-01. Le composant n'intègre aucune dépendance externe. Retour arrière : revenir à la branche 01A (l'ancien `FieldHelp` et la règle `display:none` sont inchangés sur cette branche).
