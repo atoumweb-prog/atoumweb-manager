@@ -172,6 +172,34 @@ Sur `18040b2920351b1302daa270bf515331480a61f5`, le compte rendu PowerShell montr
 
 **Portée de preuve :** critère R01B-02 sur la **touche Entrée des deux boutons pilotes**, pas tous les parcours clavier des 17 écrans. Aucun changement de production n'a été nécessaire ; seul le banc de test a été ajusté. L'archive iconographique ne vaut pas recette WCAG exhaustive ni validation de 01B complet. Les autres vérifications non exécutées (suite entière de tests sur la branche, 01B.5/6, certains cas R01B) restent ouvertes.
 
+## 01B.5 — Notifications et confirmations : inventaire et pilote limité
+
+**Constat sur le code de la branche** : `src/renderer/App.tsx` conserve un seul message global `message` et éventuellement `messageAction`. `showMessage(nextMessage, action?)` maintient l'action uniquement pour le message correspondant ; la classe CSS historique `.notice.is-actionable` porte un bouton `notice-action` contenant le libellé `Ouvrir dans l’Explorateur`, et `notice-close` ferme le message. Certaines pages passent `onMessage={setMessage}`, le volet Projets passe `showMessage`. **Les messages existants n'ont pas encore de niveau `success/info/warning/error` explicite** ; leur texte varie selon les opérations. Toute conversion automatique en « succès » serait injustifiée.
+
+**Protections de sortie :** `src/renderer/unsaved/unsaved.tsx` possède déjà `requestUnsavedExit(...)` relié à `window.atoumweb.unsaved.confirmExit(labels,pending)`, un `UnsavedRegistry` et le suivi `beforeunload`. **Aucune seconde confirmation ni suppression/remplacement de ces protections**. Le statut historique de la PR #83 n'est pas une preuve de fusion ; l'API actuelle, observée dans ce fichier, fait autorité pour 01B.
+
+### Pilote ajouté, non intégré aux écrans métier
+
+- Nouveau `src/renderer/ui/AppNotice.tsx` : quatre niveaux **`info/success/warning/error`** explicitement attribués par le seul appelant ; `error` annoncé en `role=alert`, les autres en `role=status` ; éventuellement **action avec libellé** et **bouton de fermeture** avec `aria-label`.
+- Aucun `timer`, aucune queue, ni effectuation de service ou annonce de succès automatique. **Le composant ne reçoit aucune identité de sauvegarde ni commande métier par défaut**. Un échec du service ne peut devenir « succès » que par une mauvaise classification volontaire du parent, qui reste hors responsabilité de la présentation.
+- CSS `.aw-ui-notice*` scoped dans `ui-consistency-v2.css` : trois thèmes, trois densités, couleurs existantes et bordure sémantique. La CSS historique `.notice` et le JSX du bandeau global ne sont pas modifiés.
+- Banc d'essai `scripts/check-ux-v2-lot01b-notices.cjs` : **4 messages** React, un `Ouvrir dans l’Explorateur` témoin, fermeture indépendante, sémantique `role` / `aria-live`, présence et taille dans **9 combinaisons** et preuve **zéro effet lors du rendu**. Electron/Chromium + 31 CSS réelles dans `%TEMP%`, aucune donnée ou service en production. **Syntaxe JS vérifiée avant publication ; recette Windows pas encore exécutée**.
+
+**Politique des confirmations 01B.5 :** cartographie seulement pour le moment ; conserver la garde UX-01 et les confirmateurs métier actuels jusqu'à examen des appels réels, notamment les décisions irréversibles. **Pas d'`AppDialog` ni d'éditeur commercial nouveau**. Toute confirmation future doit distinguer suppression/annulation/transition sans mutation si l'utilisateur refuse.
+
+### Commandes pilotes 01B.5 (clone Windows indépendant)
+
+```powershell
+node --check scripts/check-ux-v2-lot01b-notices.cjs
+if ($LASTEXITCODE -ne 0) { throw "Syntaxe du test notifications incorrecte." }
+node scripts/check-ux-v2-lot01b-notices.cjs
+if ($LASTEXITCODE -ne 0) { throw "Recette de notifications échouée." }
+npm run typecheck
+if ($LASTEXITCODE -ne 0) { throw "Typecheck échoué." }
+```
+
+La galerie des notifications est **une expérimentation de présentation** ; les parcours de success/error en réponse à des services réels, le comparatif de captures 01B.6, la non-régression complète des 17 écrans et la suite Vitest restent à produire. Cette PR n'est pas prête à fusionner.
+
 ## Non-modifications
 
 **Zéro changement métier** : aucun Devis, Catalogue, CGV, contrat, signature Abby, Projet, Bridge, CRM, migration, base SQLite, API ou droits utilisateur ; aucun remplacement des confirmations UX-01. Le composant n'intègre aucune dépendance externe. Retour arrière : revenir à la branche 01A (l'ancien `FieldHelp` et la règle `display:none` sont inchangés sur cette branche).
