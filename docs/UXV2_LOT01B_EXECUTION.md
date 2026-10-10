@@ -158,6 +158,20 @@ Fixture cleaned: true
 
 **Statut : code JavaScript syntaxiquement contrôlé, recette Windows comparative encore à exécuter.** Ni `AppButton.tsx`, ni `OperationIcon.tsx`, ni CSS, métier, SQLite ou migrations modifiés. Si le témoin natif échoue, il faudra revoir l'envoi du clavier par le banc avant d'incriminer l'application. S'il passe mais pas `AppButton`, le composant React devra être inspecté sans contournement artificiel.
 
+## Troisième recette Windows 01B.3 — **42/42 PASS**, cause du test clavier isolée (10/10/2026)
+
+Sur `18040b2920351b1302daa270bf515331480a61f5`, le compte rendu PowerShell montre une exécution du vrai `check-ux-v2-lot01b-icons.cjs` avec le résultat :
+
+- **9/9 configurations PASS**, 36 icônes SVG décoratives, noms accessibles et dimensions testés.
+- **Bouton HTML natif témoin** : `afterDown:false`, `usedChar:true`, `delivered:true` ; `nativeKeys:[{"key":"Enter","target":"native-reference","prevented":false,"trusted":true}]`, vrai clic `{"target":"native-reference","trusted":true,"detail":0}`, **`nativeCalls:1`**.
+- **Notre `AppButton`** : `afterDown:false`, `usedChar:true`, `delivered:true`, `nativeKeys` contient `Enter` ciblant `icon-action` avec `trusted:true`, vrai clic `{"target":"icon-action","trusted":true,"detail":0}`, **`appCalls:1`** et `labels:["expand"]`.
+- **Bilan exact** : `{"checks":42,"failed":0,"icons":36,"combinations":9,"iconSize":20,"decorativeSvg":true,"accessibleAction":true,"keyboardEnter":true,"onlyTemp":true}` ; `Fixture cleaned: true`.
+- La **barrière PowerShell finale** n'a pas échoué et a affiché `RECETTE ICONES 01B VALIDEE` **après** la sortie complète avec code retour nul.
+
+**Diagnostic résolu pour la fixture** : sous Electron 44 / Windows, l'injection utilisée nécessitait une **entrée caractère `char('\r')` via `webContents.sendInputEvent`** en plus du `keyDown` natif pour déclencher l'activation du bouton. Le bouton HTML témoin et `AppButton` réagissent **de manière identique**. Les deux échecs précédents restent archivés, mais **ne prouvent pas un dysfonctionnement du composant**.
+
+**Portée de preuve :** critère R01B-02 sur la **touche Entrée des deux boutons pilotes**, pas tous les parcours clavier des 17 écrans. Aucun changement de production n'a été nécessaire ; seul le banc de test a été ajusté. L'archive iconographique ne vaut pas recette WCAG exhaustive ni validation de 01B complet. Les autres vérifications non exécutées (suite entière de tests sur la branche, 01B.5/6, certains cas R01B) restent ouvertes.
+
 ## Non-modifications
 
 **Zéro changement métier** : aucun Devis, Catalogue, CGV, contrat, signature Abby, Projet, Bridge, CRM, migration, base SQLite, API ou droits utilisateur ; aucun remplacement des confirmations UX-01. Le composant n'intègre aucune dépendance externe. Retour arrière : revenir à la branche 01A (l'ancien `FieldHelp` et la règle `display:none` sont inchangés sur cette branche).
