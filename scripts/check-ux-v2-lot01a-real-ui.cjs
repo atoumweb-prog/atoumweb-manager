@@ -82,7 +82,7 @@ if(!process.versions.electron){
   visits++;
  };
  // Capture mode must verify the COMPOSITED FRAME, not just the React DOM.
- // Previous run: filenames were one page ahead of the actual screen (54/54).
+ // Previous visual archive had recurrent captures one page behind their filenames.
  // A temporary 40px sentinel at bottom-right is changed after each navigation.
  // Its unique pixel colour must be present in the captured bitmap before saving.
  // The sentinel never appears in normal Manager production or UI-only recipes.
