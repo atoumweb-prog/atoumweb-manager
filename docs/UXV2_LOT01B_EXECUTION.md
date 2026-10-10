@@ -125,6 +125,22 @@ if ($LASTEXITCODE -ne 0) { throw "Typecheck 01B échoué." }
 
 Les composants du pilote ne sont **pas encore migrés sur les 17 modules** ; le catalogue est une carte de réemploi, pas une application automatisée.
 
+## R01B-02 — incident Windows sur la touche Entrée (10/10/2026)
+
+**Première recette 01B.3 du SHA `3eca47951e2606ae87bf69695937d78e652eaf16` : ÉCHEC**, à conserver dans le bilan (ne pas l'interpréter comme PASS) :
+
+- `node --check scripts/check-ux-v2-lot01b-icons.cjs` : **OK** ;
+- **9/9** variantes `atoumweb/noir/blanc × compact/comfort/comfort_plus` : **PASS** du rendu des 36 SVG décoratifs et des noms accessibles vérifiés avant la simulation du clavier ;
+- **blocage** `Error: Timeout Keyboard Enter action` dans la recette `check-ux-v2-lot01b-icons.cjs`. `Electron icon gallery recipe failed status 1` ;
+- `Fixture cleaned: true` — environnement indépendant bien supprimé ;
+- après le `throw "Recette icônes échouée"`, une commande `Write-Host "RECETTE ICONES 01B OK"` lancée séparément a affiché du vert **sans modifier l'échec précédent**. Le message vert ne constitue aucune validation.
+
+**Diagnostic probable, non encore démontré :** la fenêtre Electron du banc était invisible (`show:false`), le bouton DOM recevait `focus()` **avant** `win.webContents.focus()` et l'événement natif Entrée ne provoquait pas l'action observée. Le composant `AppButton` n'est pas encore incriminé par cet échec : une erreur de focus du banc reste possible.
+
+**Correction du seul banc d'essai, sans retrait de l'assertion clavier :** `check-ux-v2-lot01b-icons.cjs` rend maintenant sa fenêtre temporaire visible pour ce test, focalise d'abord fenêtre et webContents, **puis** le bouton réel ; vérifie `document.hasFocus()`, l'élément actif et la réception du **keydown natif Enter**, exige toujours exactement **une action du bon handler**. Un diagnostic `Native keyboard failure probe` affichera `focused/active/nativeKeys/calls/labels` si l'action échoue encore. Le script conserve la fenêtre cachée pendant les 9 variantes puis l'affiche au moment du vrai contrôle clavier. Pas de simulation d'un clic à la place de la touche Entrée, pas de baisse du seuil.
+
+**Statut : correction syntaxiquement vérifiée, nouveau passage Windows À FAIRE.** Ce correctif n'affecte ni `AppButton` ni `OperationIcon`, ni les classes CSS, Devis, contrats/CGV, IPC, SQLite, schéma, base réelle ou `main`. La PR #87 reste draft et dépend de #86.
+
 ## Non-modifications
 
 **Zéro changement métier** : aucun Devis, Catalogue, CGV, contrat, signature Abby, Projet, Bridge, CRM, migration, base SQLite, API ou droits utilisateur ; aucun remplacement des confirmations UX-01. Le composant n'intègre aucune dépendance externe. Retour arrière : revenir à la branche 01A (l'ancien `FieldHelp` et la règle `display:none` sont inchangés sur cette branche).
