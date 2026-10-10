@@ -258,6 +258,21 @@ Après correction de la grille sidebar/main-area, AtoumWeb a transmis `uxv2-01b-
 
 **Limites :** les images décrivent **l'atelier isolé**, pas la navigation ni les futures pages UX V2 ; aucune donnée métier réelle, confirmation destructrice ou formulaire complexe. La recette globale des **17 pages réelles**, les 12 exigences R01B et la **suite Vitest complète de la branche** restent à prouver avant tout feu vert de clôture 01B ou de fusion des PR. Le contrôle de typecheck et les 51 assertions sont ici attestés par le journal, mais aucune CI Github sur ce SHA n'est revendiquée.
 
+## Recette transversale globale du 10/10/2026 — PASS sur le SHA exact `36ef9e8`
+
+**Source :** journal PowerShell complet fourni par l'utilisateur, exécuté dans `C:\\DEV\\01_PROJETS\\AtoumWeb\\atoumweb-manager-ux01-validation` avec worktree propre et HEAD détaché `36ef9e8f2af84e2a38922f5f0f67bf569ff81e6a`. `git fetch` et `git switch --detach` réussis avant l'ensemble des contrôles suivants ; message final `NON-REGRESSION GLOBALE 01B VALIDEE` affiché **après** toutes les gardes d'échec de la même commande PowerShell.
+
+| Commande / preuve Windows | Résultat obtenu | Portée exacte |
+|---|---|---|
+| `node scripts/check-ux-v2-lot01b-controls.cjs` | **32/32 PASS**, 9/9 thèmes × densités ; `asyncDedup:true`, `rejectionVisible:true`, `labelsAndErrors:true`, `onlyTemp:true`, `Fixture cleaned: true` | Vrais pilotes `AppButton` / `AppTextField`, états et protections dans fixture TEMP |
+| `node scripts/check-ux-v2-lot01a-real-ui.cjs` sur **branche 01B** | **300/300 PASS**, 17 destinations, 54 visites échantillons (six vues × neuf variantes), 5 visites étroites, 10 visites zoom 125/150 %, 86 visites au total, `overflowCandidates:[]`, `consoleErrors:[]`, `onlyTemp:true`, `Fixture cleaned:true` | Interface **historique réelle** en Electron/React/IPC avec SQLite temporaire ; contrôle de coexistence des CSS et du nouveau `FieldHelp` dans les 17 destinations, **pas** navigation V2 reconstruite |
+| `npm test -- --maxWorkers=2` | **87/87 fichiers PASS, 801/801 tests PASS**, durée **97,27 s** ; 35 tests `src/main/restore.test.ts` PASS. Avertissement Vite CJS déprécié, **non bloquant** | Suite Vitest au SHA testé, y compris protections métier/restauration et migrations ; aucun changement de données réelles demandé |
+| `npm run typecheck` | **PASS** : `tsc --noEmit` sans erreur, garde PowerShell non déclenchée | Typage du code actuel sur le SHA de recette |
+
+**Autres preuves de 01B déjà enregistrées à leurs SHAs exacts :** aide `FieldHelp` **37/37**, icônes avec vraie touche Enter Electron et témoin HTML **42/42**, notifications **30/30**, atelier commun **51/51** et neuf captures frame-vérifiées. Ne **pas additionner** ces scores avec les 801 tests Vitest comme s'il s'agissait d'une suite unique : ce sont des recettes indépendantes.
+
+**Conclusion technique :** **non-régression globale de la branche 01B validée** et atelier pilote recevable. Ce résultat ne prouve pas à lui seul que tous les **12 critères fonctionnels R01B** du référentiel #82 ont été exécutés dans leurs cas particuliers, ni un audit complet WCAG, ni des écrans V2 reconstruits. Les composants `AppButton/AppTextField/AppNotice` restent majoritairement **non connectés aux écrans métier**. Les comportements de confirmation UX-01 et « Copier pour Abby » doivent rester vérifiés selon leurs règles historiques avant **toute clôture formelle 01B**. La PR #87 reste **draft** dépendant de #86 ; ni fusion `main` ni CI GitHub supplémentaire effectuée.
+
 ## Non-modifications
 
 **Zéro changement métier** : aucun Devis, Catalogue, CGV, contrat, signature Abby, Projet, Bridge, CRM, migration, base SQLite, API ou droits utilisateur ; aucun remplacement des confirmations UX-01. Le composant n'intègre aucune dépendance externe. Retour arrière : revenir à la branche 01A (l'ancien `FieldHelp` et la règle `display:none` sont inchangés sur cette branche).
