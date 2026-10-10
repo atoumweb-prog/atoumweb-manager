@@ -1313,3 +1313,20 @@ table td {
 .quote-line strong {font-size:17px !important;}
 .quote-totals strong {font-size:17px !important;}
 .quote-total-main strong {font-size:22px !important;}
+
+/* UX/UI V2 — 01A / R01A-07 : contrastes mesurés en Chromium sur les états.
+   Corrige uniquement les 4 couples texte/fond sous 4,5:1 observés le 10/10/2026.
+   Les tokens --success et les couleurs métier/prospect restent inchangés. */
+:root[data-theme='atoumweb'] .success-badge,
+:root[data-theme='blanc'] .success-badge {
+  color: color-mix(in srgb, var(--success) 88%, #000);
+}
+
+/* Réutilise les encres d'états déjà validées pour les surfaces sombres. */
+:root[data-theme='noir'] .priority-high {
+  color: var(--aw-status-yellow-fg);
+}
+
+:root[data-theme='noir'] .priority-urgent {
+  color: var(--aw-status-red-fg);
+}
