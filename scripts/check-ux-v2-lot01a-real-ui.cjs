@@ -114,13 +114,66 @@ if(!process.versions.electron){
   }
   win.setSize(1024,720);await sleep(150);
   for(const page of ['Accueil','Prospection','Devis','Projets','Réglages']){await navigate(page);await inspect(page,'blanc','comfort_plus');}
+  // R01A-03: a true browser keyboard Tab traverses real focusable buttons.
+  await navigate('Réglages');
+  await evalUI('const root=document.querySelector(".content-area");'+
+    'for(let i=0;i<2;i++){const b=document.createElement("button");b.type="button";'+
+    'b.className="secondary-button ux01a-focus-probe";b.textContent="Focus TEST "+i;root.appendChild(b);}'+
+    'document.querySelectorAll(".ux01a-focus-probe")[0].focus();');
+  win.webContents.focus();
+  win.webContents.sendInputEvent({type:'keyDown',keyCode:'Tab'});
+  win.webContents.sendInputEvent({type:'keyUp',keyCode:'Tab'});
+  await sleep(120);
+  const focus=await get('({last:document.activeElement?.textContent.trim(),'+
+    'isVisible:document.activeElement?.matches(":focus-visible"),'+
+    'style:getComputedStyle(document.activeElement).outlineStyle,'+
+    'width:getComputedStyle(document.activeElement).outlineWidth})');
+  test(focus.last==='Focus TEST 1','Keyboard Tab advances to next focusable button');
+  test(focus.isVisible===true&&focus.style!=='none'&&parseFloat(focus.width)>=2,
+    'Keyboard focus ring visible at least 2px');
+  await evalUI('document.querySelectorAll(".ux01a-focus-probe").forEach(e=>e.remove());');
+
+  // R01A-08: the actual Settings checkbox persists the help preference via IPC.
+  // Only a temporary style probe is added to the page; no business record changes.
+  await evalUI('const e=document.createElement("button");e.type="button";'+
+    'e.className="field-help ux01a-help-probe";e.textContent="?";'+
+    'document.querySelector(".content-area").appendChild(e);');
+  const getHelp=()=>get('getComputedStyle(document.querySelector(".ux01a-help-probe")).display');
+  test((await getHelp())!=='none','Help marker initially displayed');
+  await evalUI('document.querySelector(".settings-help-row input[type=checkbox]").click();');
+  await wait('document.querySelector(".app-shell").classList.contains("help-disabled")',
+    'Help preference disabled in real Settings');
+  test((await getHelp())==='none','Help marker hidden by real CSS');
+  test((await get('window.atoumweb.app.getBootstrap()')).showHoverHelp===false,
+    'Help preference disabled by real IPC');
+  await evalUI('document.querySelector(".settings-help-row input[type=checkbox]").click();');
+  await wait('!document.querySelector(".app-shell").classList.contains("help-disabled")',
+    'Help preference enabled in real Settings');
+  test((await getHelp())!=='none','Help marker visible after enabling');
+  test((await get('window.atoumweb.app.getBootstrap()')).showHoverHelp===true,
+    'Help preference re-enabled by real IPC');
+  await evalUI('document.querySelector(".ux01a-help-probe").remove();');
+
+  // R01A-05: CSS viewport changes under real Chromium zoom, not a CSS mock.
+  win.setSize(1024,720);
+  for(const zoom of [1.25,1.5]){
+    win.webContents.setZoomFactor(zoom);
+    await sleep(120);
+    test((await get('window.devicePixelRatio'))>0,'Zoom renderer still has real pixel ratio '+zoom);
+    for(const page of ['Accueil','Prospection','Devis','Projets','Réglages']){
+      await navigate(page);await inspect(page,'blanc','comfort_plus');
+    }
+    console.log('[UXV2 01A LIVE] Zoom '+zoom+' checked in five real screens.');
+  }
+  win.webContents.setZoomFactor(1);
+  await navigate('Accueil');
   win.webContents.reload();
   await wait('document.querySelector(".nav-item.active")?.textContent.trim()==="Accueil"','renderer reload');
   test(await get('document.documentElement.dataset.theme==="blanc"'),'Theme restored after reload');
   test(await get('document.documentElement.dataset.density==="comfort_plus"'),'Density restored after reload');
   test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','TEMP SQLite integrity');
   test(db.database.all('PRAGMA foreign_key_check').length===0,'TEMP SQLite FK');
-  console.log('[UXV2 01A LIVE] RESULT '+JSON.stringify({passed:checks,failed:0,realPages:17,sampleVisits:54,narrowVisits:5,visits,overflowCandidates:overflow,consoleErrors,onlyTemp:true}));
+  console.log('[UXV2 01A LIVE] RESULT '+JSON.stringify({passed:checks,failed:0,realPages:17,sampleVisits:54,narrowVisits:5,zoomVisits:10,visits,overflowCandidates:overflow,consoleErrors,onlyTemp:true}));
   if(overflow.length)console.log('[UXV2 01A LIVE] Overflow candidates are observational and need review, not automatic failure.');
  }).catch(e=>{console.error('[UXV2 01A LIVE] ERROR',e.stack||e);process.exitCode=1;}).finally(()=>{try{win?.destroy();}catch{}try{db?.close();}catch{}app.exit(process.exitCode||0);});
 }
