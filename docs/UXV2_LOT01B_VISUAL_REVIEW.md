@@ -1,6 +1,6 @@
 # UX/UI V2 — Lot 01B.6 — Revue visuelle des 9 captures de l'atelier
 
-**Date de revue :** 10/10/2026. **Statut : revue visuelle des captures synchronisées ACCEPTABLE**, avec deux améliorations de présentation non bloquantes ; **les assertions Electron et le typecheck de ce passage ne sont pas prouvés par le ZIP seul**.
+**Date de revue :** 10/10/2026. **Statut : revue visuelle des captures synchronisées ACCEPTABLE**, avec deux améliorations de présentation non bloquantes. **Un journal PowerShell distinct a depuis été transmis** : il prouve 51/51 assertions Electron et le typecheck sur le SHA `d80409a`. Ces éléments n'étaient pas démontrables par le ZIP seul.
 
 ## Source examinée
 
@@ -33,7 +33,7 @@ Archive fournie dans la conversation : `uxv2-01b-atelier-20261010-040237.zip` ; 
 
 ### Prochaines barrières
 
-1. Obtenir et archiver le journal PowerShell d'exécution de `check-ux-v2-lot01b-workshop.cjs --captures` (en particulier `Shell geometry`, les neuf `CAPTURE ... VERIFIED`, `RESULT`, `Fixture cleaned`, `git log -1`, `npm run typecheck`).
+1. **Acquis par journal PowerShell distinct** : `git log -1` = `d80409a`, `Shell geometry` confirme `sidebar=258/main=1088/content=1088`, neuf `CAPTURE ... VERIFIED`, `RESULT {"checks":51,"failed":0,"combinations":9,"components":5,"onlyTemp":true,"capturesVerified":9}`, `Fixture cleaned: true`, `npm run typecheck`/`tsc --noEmit` sans erreur et message final `ATELIER UX 01B VALIDE`. La preuve complète est enregistrée dans `UXV2_LOT01B_EXECUTION.md`.
 2. Réexécuter **`node scripts/check-ux-v2-lot01a-real-ui.cjs` sur la branche 01B** pour surveiller les 17 écrans existants dans la base TEMP et la coexistence du nouveau `FieldHelp`.
 3. Rejouer la **suite Vitest complète** `npm test -- --maxWorkers=2` sur le HEAD de 01B, noter nombre de fichiers/tests et statut, sans attribuer à 01B les 801/801 obtenus sur le SHA de 01A.
 4. Réconcilier les cas **R01B-01…12** du référentiel #82 : certains cas UX-01 protégés par IPC ne sont pas prouvés par l'atelier fictif.
