@@ -43,7 +43,15 @@ node --check scripts/check-ux-v2-lot01a-typography.cjs
 node scripts/check-ux-v2-lot01a-typography.cjs
 ```
 
-**État de preuve initial :** contrôle syntaxique JavaScript effectué lors de la préparation et remplacement CSS vérifié textuellement. **Aucune recette Chromium native ou capture visuelle n'a encore été exécutée pour ce sous-lot.** Ne pas attribuer à ce commit les tests UX-01 anciens. Le contrôle typographique ne couvre pas à lui seul les huit scénarios du Lot 01A.
+**Validation Windows native du 10/10/2026 — acquise sur le SHA `466b8e45a05c0122297dcbd5eec1f7f6d6deb602`.** Exécution effective de `node scripts/check-ux-v2-lot01a-typography.cjs` dans le clone indépendant `atoumweb-manager-ux01-validation` :
+
+- Les **31 CSS réels** du renderer ont été chargés dans leur ordre de `main.tsx`.
+- **9/9 combinaisons PASS** : AtoumWeb / Noir / Blanc × Compact / Confort / Confort+.
+- **72/72** tailles calculées des conteneurs représentatifs, **9/9** hauteurs de contrôle et **9/9** contrastes de texte principal.
+- Pour les trois thèmes, **Compact 14 px**, **Confort 16 px**, **Confort+ 18 px**.
+- Contraste calculé du corps : **AtoumWeb 14,67:1**, **Noir 17,16:1**, **Blanc 13,89:1** (les valeurs sont indépendantes de la densité).
+- Sortie finale : `PASS 3 themes × 3 densities; 72 computed font checks; 9 control heights; 9 body contrasts.` puis **`Fixture cleaned: true`**.
+- **Limite :** page Chromium synthétique et styles effectivement calculés, pas de capture humaine des **17 écrans réels**, ni preuve d'ergonomie complète / persistance des réglages au redémarrage, ni des contrastes des états alertes/focus. Les huit critères R01A ne sont **pas** tous clôturés par ce test.
 
 ### Vérifications humaines et suite de 01A
 
