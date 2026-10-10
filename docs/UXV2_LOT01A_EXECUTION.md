@@ -97,6 +97,17 @@ node scripts/check-ux-v2-lot01a-real-ui.cjs
 
 Le banc d'essai crée et supprime uniquement ses propres répertoires dans `%TEMP%`. Les **textes contractuels** ne sont ni modifiés ni validés pendant le parcours en lecture seule.
 
+### Extension R01A-03, R01A-05 et R01A-08 — préparée, non encore exécutée
+
+Une nouvelle révision **`4579143aa4a8beb645afe33a0ce62d2e6dfecb53`** du **même** banc d'essai `check-ux-v2-lot01a-real-ui.cjs` ajoute, après le parcours déjà validé :
+
+- Une **vraie touche Tab envoyée par Electron** à deux boutons de vérification temporaires dans Réglages ; attente du focus sur le second et d'un anneau `:focus-visible` d'au moins **2 px**.
+- Activation/désactivation **réelle** du réglage « Conseils au survol » par sa case à cocher React, avec enregistrement par IPC ; vérification qu'un élément témoin `.field-help` est masqué puis réaffiché par la CSS existante. Le témoin est supprimé ensuite.
+- Fenêtre **1024 × 720**, zooms Electron **125 % et 150 %**, cinq écrans réels visités à chaque zoom (10 visites supplémentaires), puis retour au zoom normal.
+- Les **261 réussites** restent prouvées sur le SHA historique `3471174` ; la nouvelle extension, son compteur et ses comportements devront **être mesurés sur Windows avant d'être crédités**. Le test keyboard/focus ne certifie pas à lui seul la navigation clavier de tous les modules.
+
+Aucun `src/` supplémentaire, module métier, écran React ni CGV n'est modifié ; uniquement le script de recette et la présente documentation.
+
 ### Vérifications humaines et suite de 01A
 
 Après le test calculé, examiner la lisibilité et les débordements sur Accueil, Prospection, Devis, Projet, Interventions et Réglages, avec les **trois thèmes et trois densités** ; puis le focus/clavier/zoom, le chrono et l'aide `?`. Les adaptations de couleurs/tokens sémantiques et le catalogue complet des variables restent du travail **01A** à produire par incréments conformes au référentiel, pas de nouveaux lots.
