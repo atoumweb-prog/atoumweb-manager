@@ -223,6 +223,16 @@ if ($LASTEXITCODE -ne 0) { throw "Typecheck échoué." }
 
 **Avant clôture 01B :** recette de l'atelier dans les neuf configurations puis examen éventuel des captures, tests de non-régression Electron sur les 17 destinations réelles (avec l'assertion d'aide V2), `npm test -- --maxWorkers=2` de la branche 01B et contrôle des autres gates R01B. Les confirmations critiques ne seront pas refaites sans examen et preuve de coexistence avec l'API `requestUnsavedExit`.
 
+## Incident Windows atelier 01B.6 — débordement artificiel, correction en attente de retest
+
+**Exécution sur `1a30744d67b22df2b75c332430cba242e4ec8378` : ÉCHEC réel.** Le journal utilisateur montre `Error: Horizontal overflow atoumweb/compact` dans `check-ux-v2-lot01b-workshop.cjs`, suivi de `Electron workshop exited 1` et `Fixture cleaned: true`. Les 9 captures ne sont donc pas certifiées, et le typecheck du bloc n'a pas été exécuté après l'exception. **Ne pas déclarer l'atelier validé.**
+
+**Cause vérifiée dans la structure source CSS/HTML** : `styles.css` impose `.app-shell {display:grid;grid-template-columns:258px 1fr}` et le vrai `App.tsx` contient `<aside class="sidebar"> + <main class="main-area"> + <section class="content-area">`. Or, le premier atelier montait directement `<main class="content-area">` sous `.app-shell`, comme **premier et unique enfant** : la zone était placée dans la **colonne fixe de 258 px** destinée au menu. Son contenu débordait donc artificiellement. Ce n'est pas une preuve d'un défaut sur la vraie interface du Manager ou du composant.
+
+**Correction strictement dans `scripts/check-ux-v2-lot01b-workshop.cjs` :** fixture alignée sur le layout réel (sidebar fictive + main-area + topbar fictive + content-area), assertion sur la largeur et la position de la grille, sans application ouverte ni workspace client. Le contrôle de débordement horizontal **est conservé en échec bloquant**, et imprime désormais les largeurs et les premiers éléments débordants si le défaut persiste. **La correction n'est pas encore passée sur Windows**. Aucune CSS de production n'a été changée, et les composants `AppButton/AppTextField/FieldHelp/AppNotice/OperationIcon` sont intacts.
+
+**Décision :** refaire uniquement la recette atelier sur la dernière branche de #87 ; en cas de nouvel échec, analyser `Shell geometry` et `OVERFLOW DIAGNOSTIC`, sans supprimer le critère d'absence de débordement. La suite Vitest et la revue visuelle 01B restent en attente.
+
 ## Non-modifications
 
 **Zéro changement métier** : aucun Devis, Catalogue, CGV, contrat, signature Abby, Projet, Bridge, CRM, migration, base SQLite, API ou droits utilisateur ; aucun remplacement des confirmations UX-01. Le composant n'intègre aucune dépendance externe. Retour arrière : revenir à la branche 01A (l'ancien `FieldHelp` et la règle `display:none` sont inchangés sur cette branche).
