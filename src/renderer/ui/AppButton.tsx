@@ -3,16 +3,19 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 export type AppButtonVariant = 'primary' | 'secondary' | 'quiet' | 'danger';
 
-export type AppButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'type'> & {
-  variant?: AppButtonVariant;
-  icon?: ReactNode;
-  /** User action only. No service or business transitions in this component. */
-  onAction?: () => void | Promise<void>;
-  onActionError?: (error: unknown) => void;
-  /** An externally tracked pending operation also disables the control. */
-  pending?: boolean;
-  children?: ReactNode;
-};
+type ButtonContent =
+  | { children: ReactNode; icon?: ReactNode; 'aria-label'?: string }
+  | { children?: never; icon: ReactNode; 'aria-label': string };
+
+export type AppButtonProps =
+  Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'type' | 'children' | 'aria-label'> & {
+    variant?: AppButtonVariant;
+    /** User action only. No service or business transitions in this component. */
+    onAction?: () => void | Promise<void>;
+    onActionError?: (error: unknown) => void;
+    /** An externally tracked pending operation also disables the control. */
+    pending?: boolean;
+  } & ButtonContent;
 
 /**
  * 01B presentational button pilot.
@@ -35,7 +38,6 @@ export function AppButton({
   const [running, setRunning] = useState(false);
   const [failed, setFailed] = useState(false);
   const busy = pending || running;
-  const iconOnly = children === undefined || children === null;
 
   async function activate() {
     if (!onAction || busy || disabled || lock.current) return;
@@ -69,7 +71,7 @@ export function AppButton({
       {icon && <span className="aw-ui-button-icon" aria-hidden="true">{icon}</span>}
       {children && <span className="aw-ui-button-label">{children}</span>}
       {busy && <span className="aw-ui-button-progress" aria-hidden="true">…</span>}
-      {iconOnly && !rest['aria-label'] && <span className="aw-ui-button-missing-label" aria-hidden="true">Action</span>}
+
     </button>
     {failed && <span className="aw-ui-control-error" role="alert">L’action n’a pas abouti.</span>}
   </span>;
