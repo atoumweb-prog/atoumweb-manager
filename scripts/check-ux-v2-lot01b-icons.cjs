@@ -91,38 +91,68 @@ if(!process.versions.electron){
     console.log('[UXV2 01B ICONS] PASS '+theme+'/'+density+' 36 decorative icons, action labels');
    }
   }
-  // Real Chromium keyboard Enter must reach a focused window AND focused button.
-  // In the first Windows run the hidden window was focused *after* the DOM button;
-  // native key dispatch then timed out. This timing is the leading hypothesis.
-  // Do not replace this
-  // assertion with element.click() or a fabricated DOM KeyboardEvent.
+  // R01B-02: distinguish Electron key injection from AppButton behavior.
+  // Native <button> reference must activate via REAL Electron keyboard events.
+  // In Windows/Electron 44, keyDown and keyUp may reach the DOM without
+  // producing a character/default activation. A real 'char' input event
+  // is then sent between them (still via webContents, NEVER .click()).
   win.show();
   win.focus();
   win.webContents.focus();
   await wait('document.hasFocus()','native Electron window focus');
-  await exec('window.__iconTest.nativeKeys=[];'+
-    'document.addEventListener("keydown",e=>window.__iconTest.nativeKeys.push(e.key),true);'+
-    'document.querySelector("#icon-action").focus()');
-  const before=await get('({focused:document.hasFocus(),active:document.activeElement?.id,'+
-    'keys:window.__iconTest.nativeKeys.length})');
-  console.log('[UXV2 01B ICONS] Native keyboard focus '+JSON.stringify(before));
-  check(before.focused===true&&before.active==='icon-action',
-    'Native Electron window and the real action button must both have focus');
-  win.webContents.sendInputEvent({type:'keyDown',keyCode:'Enter'});
-  win.webContents.sendInputEvent({type:'keyUp',keyCode:'Enter'});
-  try {
-    await wait('window.__iconTest.calls===1','Keyboard Enter action');
-  } catch(error) {
-    const after=await get('({focused:document.hasFocus(),active:document.activeElement?.id,'+
-      'nativeKeys:window.__iconTest.nativeKeys,calls:window.__iconTest.calls,'+
-      'labels:window.__iconTest.labels})');
-    console.error('[UXV2 01B ICONS] Native keyboard failure probe '+JSON.stringify(after));
-    throw error;
-  }
-  check(await get('window.__iconTest.nativeKeys.includes("Enter")'),
-    'Native Chromium keydown reached the renderer');
-  check(await get('window.__iconTest.labels[0]==="expand"'),'Enter action correct');
-  check(await get('document.activeElement?.id==="icon-action"'),'Focus remains on explicit command');
+  await exec('window.__iconTest.nativeKeys=[];window.__iconTest.nativeCalls=0;'+
+    'window.__iconTest.clickEvents=[];'+
+    'document.addEventListener("keydown",e=>window.__iconTest.nativeKeys.push({'+
+       'key:e.key,target:e.target?.id,prevented:e.defaultPrevented,trusted:e.isTrusted}),true);'+
+    'document.addEventListener("click",e=>window.__iconTest.clickEvents.push({'+
+       'target:e.target?.closest("button")?.id,trusted:e.isTrusted,detail:e.detail}),true);'+
+    'const native=document.createElement("button");'+
+    'native.type="button";native.id="native-reference";'+
+    'native.textContent="Bouton HTML témoin";'+
+    'native.addEventListener("click",()=>window.__iconTest.nativeCalls++);'+
+    'document.querySelector("#icon-gallery").appendChild(native);');
+  const sendKeySequence=async(id,expectedExpr,description,useChar)=>{
+    await exec('document.querySelector('+JSON.stringify('#'+id)+').focus()');
+    const focus=await get('({focused:document.hasFocus(),active:document.activeElement?.id})');
+    check(focus.focused===true&&focus.active===id,
+      'Real native keyboard target must have focus: '+description);
+    win.webContents.sendInputEvent({type:'keyDown',keyCode:'Enter'});
+    await waitMs(120);
+    const afterDown=Boolean(await get(expectedExpr));
+    // Electron's char input represents a real translated key, not a
+    // synthetic DOM KeyboardEvent or a programmatic mouse click.
+    if(useChar && !afterDown){
+      win.webContents.sendInputEvent({type:'char',keyCode:'\r'});
+      await waitMs(120);
+    }
+    win.webContents.sendInputEvent({type:'keyUp',keyCode:'Enter'});
+    await waitMs(120);
+    const delivered=Boolean(await get(expectedExpr));
+    const probe=await get('({focused:document.hasFocus(),active:document.activeElement?.id,'+
+      'nativeKeys:window.__iconTest.nativeKeys,'+
+      'clicks:window.__iconTest.clickEvents,'+
+      'nativeCalls:window.__iconTest.nativeCalls,'+
+      'appCalls:window.__iconTest.calls,labels:window.__iconTest.labels})');
+    console.log('[UXV2 01B ICONS] Keyboard '+description+' '+
+      JSON.stringify({afterDown,usedChar:useChar&&!afterDown,delivered,probe}));
+    return {delivered,afterDown,probe};
+  };
+  const plain=await sendKeySequence('native-reference',
+    'window.__iconTest.nativeCalls===1','native-button',true);
+  check(plain.delivered&&plain.probe.nativeCalls===1,
+    'Native HTML button must activate exactly once with Electron Enter');
+  check(plain.probe.nativeKeys.some(x=>x.key==='Enter'&&x.target==='native-reference'),
+    'Trusted Electron Enter must reach native HTML button');
+  const app=await sendKeySequence('icon-action',
+    'window.__iconTest.calls===1','AppButton',true);
+  check(app.delivered&&app.probe.appCalls===1,
+    'AppButton must activate exactly once with Electron Enter');
+  check(app.probe.nativeKeys.some(x=>x.key==='Enter'&&x.target==='icon-action'),
+    'Trusted Electron Enter must reach React AppButton');
+  check(await get('window.__iconTest.labels[0]==="expand"'),
+    'Keyboard Enter invokes correct AppButton action');
+  check(await get('document.activeElement?.id==="icon-action"'),
+    'Keyboard focus remains on explicit AppButton command');
   // Programmatic click on labeled example checks same event contract.
   await exec('document.querySelector("#icon-label").click()');
   await wait('window.__iconTest.calls===2','Labeled icon button activation');
