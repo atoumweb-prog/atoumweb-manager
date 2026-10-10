@@ -203,6 +203,14 @@ L'archive `uxv2-01a-captures-20261010-031113.zip` (54 PNG, 2244 × 1434) a été
 
 La revue détaillée, les limites et les commandes de reprise figurent dans [`UXV2_LOT01A_VISUAL_REVIEW.md`](UXV2_LOT01A_VISUAL_REVIEW.md). Ne **pas** clôturer 01A ni demander un merge tant qu'une nouvelle archive **réellement synchronisée** n'a pas été examinée. Les 18/18 contrastes, les 300/300 contrôles UI, les 801/801 tests et le typecheck restent valides **dans leurs périmètres précédemment démontrés**.
 
+### Deuxième archive comparée — 54 images synchronisées (10/10/2026)
+
+Après le rejet du premier ZIP décalé, l'utilisateur a transmis `uxv2-01a-verifie-20261010-031942.zip`. **54/54 images et 54/54 pixels témoins attendus ont été vérifiés**, sans décalage de frame résiduel constaté dans les séries visuelles. Les six vues (Accueil, Prospection, Devis, Projets, Interventions & Maintenance et Réglages) présentent bien leur propre écran avec les thèmes AtoumWeb / Noir / Blanc et les densités Compact / Confort / Confort+. Aucun défaut général bloquant évident des surfaces, de la navigation ou des titres dans **ces vues vides**.
+
+**Limite essentielle :** le ZIP représente l'**interface actuelle sécurisée par 01A**, pas une nouvelle UI V2. La SQLite TEMP vide ne permet pas d'évaluer les fiches détaillées, formulaires longs, sélections/scroll internes, actions ou messages d'erreurs issus de vrais scénarios métier. L'examen visuel ne remplace pas les recettes détaillées du référentiel. Voir [`UXV2_LOT01A_VISUAL_REVIEW.md`](UXV2_LOT01A_VISUAL_REVIEW.md), §5.
+
+**État de décision :** fondations 01A validées localement (typecheck OK, 801/801, 300/300, contrastes 18/18 et captures synchronisées). **Acceptation humaine de la portée résiduelle et fusion non données** ; PR #86 reste en brouillon et l'interface V2 des lots 01B+ reste à implémenter. Aucun code de production supplémentaire n'a été modifié à l'occasion de la revue.
+
 ### Vérifications humaines et suite de 01A
 
 Après le test calculé, examiner la lisibilité et les débordements sur Accueil, Prospection, Devis, Projet, Interventions et Réglages, avec les **trois thèmes et trois densités** ; puis le focus/clavier/zoom, le chrono et l'aide `?`. Les adaptations de couleurs/tokens sémantiques et le catalogue complet des variables restent du travail **01A** à produire par incréments conformes au référentiel, pas de nouveaux lots.
