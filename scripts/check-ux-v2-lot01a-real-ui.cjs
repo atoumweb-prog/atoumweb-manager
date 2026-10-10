@@ -116,11 +116,11 @@ if(!process.versions.electron){
   for(const page of ['Accueil','Prospection','Devis','Projets','Réglages']){await navigate(page);await inspect(page,'blanc','comfort_plus');}
   // R01A-03: a true browser keyboard Tab traverses real focusable buttons.
   await navigate('Réglages');
+  win.webContents.focus();
   await evalUI('const root=document.querySelector(".content-area");'+
     'for(let i=0;i<2;i++){const b=document.createElement("button");b.type="button";'+
     'b.className="secondary-button ux01a-focus-probe";b.textContent="Focus TEST "+i;root.appendChild(b);}'+
     'document.querySelectorAll(".ux01a-focus-probe")[0].focus();');
-  win.webContents.focus();
   win.webContents.sendInputEvent({type:'keyDown',keyCode:'Tab'});
   win.webContents.sendInputEvent({type:'keyUp',keyCode:'Tab'});
   await sleep(120);
@@ -128,6 +128,7 @@ if(!process.versions.electron){
     'isVisible:document.activeElement?.matches(":focus-visible"),'+
     'style:getComputedStyle(document.activeElement).outlineStyle,'+
     'width:getComputedStyle(document.activeElement).outlineWidth})');
+  console.log('[UXV2 01A LIVE] Keyboard focus probe '+JSON.stringify(focus));
   test(focus.last==='Focus TEST 1','Keyboard Tab advances to next focusable button');
   test(focus.isVisible===true&&focus.style!=='none'&&parseFloat(focus.width)>=2,
     'Keyboard focus ring visible at least 2px');
