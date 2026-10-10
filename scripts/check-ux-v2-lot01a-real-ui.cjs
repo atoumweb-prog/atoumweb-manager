@@ -215,7 +215,7 @@ if(!process.versions.electron){
   await evalUI('document.querySelector(".settings-help-row input[type=checkbox]").click();');
   await wait('document.querySelector(".app-shell").classList.contains("help-disabled")',
     'Help preference disabled in real Settings');
-  test((await getHelp())==='none','Help marker hidden by real CSS');
+  test((await getHelp())!=='none','UX2-HELP-001: help marker stays visible even with automatic hover disabled');
   test((await get('window.atoumweb.app.getBootstrap()')).showHoverHelp===false,
     'Help preference disabled by real IPC');
   await evalUI('document.querySelector(".settings-help-row input[type=checkbox]").click();');
