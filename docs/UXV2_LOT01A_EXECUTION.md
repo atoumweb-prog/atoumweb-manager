@@ -122,9 +122,24 @@ Nouveau script `scripts/check-ux-v2-lot01a-states.cjs` (après la validation **3
 | Noir | `.priority-high` | **2,71:1** | Texte : `var(--aw-status-yellow-fg)`, rôle sombre existant |
 | Noir | `.priority-urgent` | **2,33:1** | Texte : `var(--aw-status-red-fg)`, rôle sombre existant |
 
-Les **14 autres états mesurés passaient déjà** et ne sont pas modifiés. Les fonds, les couleurs métier et les tokens globaux restent inchangés. Les calculs préalables des teintes candidates indiquent une marge au-dessus de 4,5:1, mais **seule la réexécution Chromium sur le HEAD corrigé permettra de le prouver**.
+**Nouvelle recette Windows effective du 10/10/2026 — HEAD testé `8f0ce32d1658831c0828263bd0ec01affa61c9cb` : 18/18 contrastes PASS**, 0 `issues`, `cssChain:31`, `onlyTemp:true`, `Fixture cleaned: true`.
 
-**Correctif code** : `3a75266ba53d888f660b209ad281ae1fd9e8896c`. Test Windows en attente : relancer `node scripts/check-ux-v2-lot01a-states.cjs` sur cette branche. Le premier échec était un **échec voulu de la barrière d'accessibilité**, et `Fixture cleaned: true` confirme que le répertoire temporaire a été supprimé.
+Les quatre états précédemment sous le seuil mesurent maintenant :
+
+| Thème | Élément | Avant | Après | Verdict |
+|---|---|---:|---:|---|
+| AtoumWeb | `.success-badge` | 4,39:1 | **5,36:1** | PASS |
+| Blanc | `.success-badge` | 4,41:1 | **5,39:1** | PASS |
+| Noir | `.priority-high` | 2,71:1 | **9,73:1** | PASS |
+| Noir | `.priority-urgent` | 2,33:1 | **8,95:1** | PASS |
+
+Les **14 autres états mesurés passent toujours** et ne sont pas modifiés. Les fonds, couleurs métier et tokens globaux sont inchangés. La mesure porte sur **six classes d'état × trois thèmes**, pas tous les contrastes imaginables dans chaque module.
+
+**Recette React/IPC de non-régression immédiatement rejouée sur le même SHA `8f0ce32d`** : **300/300 PASS**, **17/17** destinations, **9/9** combinaisons, **86 visites réelles** (54 échantillonnées, 5 fenêtre réduite, 10 zoom), focus clavier `2px solid`, aide contextuelle et préférences persistées ; `overflowCandidates:[]`, `consoleErrors:[]`, `onlyTemp:true` et `Fixture cleaned: true`.
+
+Le correctif de contraste est donc **validé sur Windows en rendu CSS et en parcours React réel**. Ce n'est pas une recette visuelle humaine exhaustive ni une exécution des tests unitaires complets R01A-06.
+
+**Correctif code** : `3a75266ba53d888f660b209ad281ae1fd9e8896c`. Test Windows réussi sur `8f0ce32d` : `node scripts/check-ux-v2-lot01a-states.cjs` avec **18/18 PASS**. Le premier échec était un **échec voulu de la barrière d'accessibilité**, et `Fixture cleaned: true` confirme que le répertoire temporaire a été supprimé.
 
 Commande dans le même clone de validation indépendant :
 
