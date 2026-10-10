@@ -120,7 +120,12 @@ export function FieldHelp({ text, detail }: { text: string; detail?: string }) {
     >?</button>
     {source && <span id={id} className="field-help-detail" role="dialog"
       aria-label="Détail de l’aide" style={{ left: position.left, top: position.top }}
-      data-open-source={source}>
+      data-open-source={source}
+      onClick={event => {
+        // A help panel inside a legacy <label> must not activate its field.
+        event.preventDefault();
+        event.stopPropagation();
+      }}>
       <span className="field-help-detail-text">{detail || text}</span>
       <button type="button" className="field-help-detail-close"
         aria-label="Fermer l’aide"
