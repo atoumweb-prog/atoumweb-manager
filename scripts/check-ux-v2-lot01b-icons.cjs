@@ -92,8 +92,9 @@ if(!process.versions.electron){
    }
   }
   // Real Chromium keyboard Enter must reach a focused window AND focused button.
-  // In the first Windows run the hidden window was focused *after* the DOM button,
-  // so the renderer never received a usable Enter event. Do not replace this
+  // In the first Windows run the hidden window was focused *after* the DOM button;
+  // native key dispatch then timed out. This timing is the leading hypothesis.
+  // Do not replace this
   // assertion with element.click() or a fabricated DOM KeyboardEvent.
   win.show();
   win.focus();
