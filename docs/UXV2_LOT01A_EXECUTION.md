@@ -109,6 +109,23 @@ Une nouvelle révision **`4579143aa4a8beb645afe33a0ce62d2e6dfecb53`** du **même
 
 Aucun `src/` supplémentaire, module métier, écran React ni CGV n'est modifié ; uniquement le script de recette et la présente documentation.
 
+### R01A-07 — diagnostic des contrastes d'état, à exécuter
+
+Nouveau script `scripts/check-ux-v2-lot01a-states.cjs` (après la validation **300/300**) : fenêtre Chromium/Electron TEMP, **31 vraies feuilles CSS** directement importées par `main.tsx`, **trois thèmes** et **six classes réelles d'état** (`success-badge`, `notice`, `priority-high`, `priority-urgent`, `alert-critical`, `alert-warning`). Calcule les couleurs effectivement rendues et leur rapport de contraste de texte sur le fond (composantes alpha superposées), avec seuil de contrôle de **4,5:1**.
+
+**Ce script est un diagnostic ciblé**, pas une preuve exhaustive de tous les messages et leurs icônes. Il retourne un code d'échec si des rapports sont sous le seuil ; il faut alors relever et corriger précisément les états concernés. **Non encore exécuté sur Windows**, aucun chiffre de réussite annoncé.
+
+Commande dans le même clone de validation indépendant :
+
+```powershell
+git fetch origin
+git switch --detach origin/feature/ux-v2-lot01a-typography-v1
+node --check scripts/check-ux-v2-lot01a-states.cjs
+node scripts/check-ux-v2-lot01a-states.cjs
+```
+
+Sont encore nécessaires avant la clôture complète de 01A : appréciation visuelle de captures comparatives (trois thèmes × trois densités) des écrans représentatifs, contrôle des états réels/focus et des zones de défilement, ainsi que **R01A-06** (tests de régression pertinents, dont CI au bon SHA). Aucun changement d'accent métier ni de CSS global n'est proposé sur la seule base du diagnostic préparé.
+
 ### Vérifications humaines et suite de 01A
 
 Après le test calculé, examiner la lisibilité et les débordements sur Accueil, Prospection, Devis, Projet, Interventions et Réglages, avec les **trois thèmes et trois densités** ; puis le focus/clavier/zoom, le chrono et l'aide `?`. Les adaptations de couleurs/tokens sémantiques et le catalogue complet des variables restent du travail **01A** à produire par incréments conformes au référentiel, pas de nouveaux lots.
