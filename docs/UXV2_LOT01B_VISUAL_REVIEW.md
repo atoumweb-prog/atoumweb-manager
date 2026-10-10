@@ -34,8 +34,8 @@ Archive fournie dans la conversation : `uxv2-01b-atelier-20261010-040237.zip` ; 
 ### Prochaines barrières
 
 1. **Acquis par journal PowerShell distinct** : `git log -1` = `d80409a`, `Shell geometry` confirme `sidebar=258/main=1088/content=1088`, neuf `CAPTURE ... VERIFIED`, `RESULT {"checks":51,"failed":0,"combinations":9,"components":5,"onlyTemp":true,"capturesVerified":9}`, `Fixture cleaned: true`, `npm run typecheck`/`tsc --noEmit` sans erreur et message final `ATELIER UX 01B VALIDE`. La preuve complète est enregistrée dans `UXV2_LOT01B_EXECUTION.md`.
-2. Réexécuter **`node scripts/check-ux-v2-lot01a-real-ui.cjs` sur la branche 01B** pour surveiller les 17 écrans existants dans la base TEMP et la coexistence du nouveau `FieldHelp`.
-3. Rejouer la **suite Vitest complète** `npm test -- --maxWorkers=2` sur le HEAD de 01B, noter nombre de fichiers/tests et statut, sans attribuer à 01B les 801/801 obtenus sur le SHA de 01A.
+2. **Acquis sur SHA `36ef9e8`** : `node scripts/check-ux-v2-lot01a-real-ui.cjs` exécuté sur la branche 01B — **300/300**, 17 destinations réelles, `overflowCandidates:[]`, `consoleErrors:[]`, fixture nettoyée. Cette preuve porte sur les écrans existants, pas les futures pages UX V2.
+3. **Acquis sur le même SHA** : suite complète `npm test -- --maxWorkers=2` — **87/87 fichiers, 801/801 tests** en 97,27 secondes ; `npm run typecheck` **OK** ; en complément `check-ux-v2-lot01b-controls.cjs` **32/32**. Voir la synthèse détaillée dans `UXV2_LOT01B_EXECUTION.md`.
 4. Réconcilier les cas **R01B-01…12** du référentiel #82 : certains cas UX-01 protégés par IPC ne sont pas prouvés par l'atelier fictif.
 5. Garder la PR #87 **draft** et empilée sur #86. Aucune fusion automatique ou modification de `main`, contrats, migrations, SQLite réel ou Bridge.
 
