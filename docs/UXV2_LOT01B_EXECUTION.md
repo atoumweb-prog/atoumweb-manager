@@ -91,6 +91,19 @@ if ($LASTEXITCODE -ne 0) { throw "Typecheck 01B.2 échoué" }
 
 Les composants sont **disponibles pour un atelier**, pas encore migrés sur un module existant. La revue d'accessibilité finale, l'atelier 01B.6 comparatif, la suite complète Vitest et les critères R01B restants demeurent exigibles avant clôture.
 
+## Contrôle Windows reçu après 01B.2 — preuve partielle mais concluante
+
+Le 10/10/2026, un extrait de PowerShell fourni par AtoumWeb se termine par :
+
+- `[UXV2 01B] RESULT {"checks":37,"failed":0,"themeDensityCombinations":9,"explicitHelp":true,"hoverDisabled":true,"delayedHover":true,"escapeAndFocus":true,"onlyTemp":true}` puis `Fixture cleaned: true` : **régression E05 37/37 PASS** ;
+- la commande `if ($LASTEXITCODE -ne 0) { throw "Régression aide contextuelle" }` n'a pas déclenché de refus ;
+- `npm run typecheck` affiche `tsc --noEmit` et revient sans erreur ; garde `$LASTEXITCODE` non déclenchée : **TypeScript PASS** ;
+- `Write-Host "VALIDATION CIBLEE 01B OK"` apparaît : les gardes PowerShell précédentes n'ont pas bloqué le déroulement.
+
+**Limite probante explicite :** cet extrait **ne contient ni le JSON `UXV2 01B CONTROLS`, ni le `git log`**, donc le nombre d'assertions `AppButton/AppTextField` et le SHA exact exécuté **ne peuvent pas être affirmés à partir de cet extrait**. En revanche, si les commandes ont été exécutées intégralement dans l'ordre demandé, la garde après le script boutons/champs implique un code retour zéro. La version GitHub avant cette saisie était `4c3c38205b6c489dcf5c017099be360a5efe16e7`.
+
+**Statut honnête :** aide E05 et TypeScript validés dans la trace disponible ; contrôle boutons/champs **sans arrêt observé mais total non vérifiable**, pas de « 100 % R01B » annoncé. La suite complète Vitest et l'atelier 01B.3+ sont toujours hors champ de cette preuve.
+
 ## Non-modifications
 
 **Zéro changement métier** : aucun Devis, Catalogue, CGV, contrat, signature Abby, Projet, Bridge, CRM, migration, base SQLite, API ou droits utilisateur ; aucun remplacement des confirmations UX-01. Le composant n'intègre aucune dépendance externe. Retour arrière : revenir à la branche 01A (l'ancien `FieldHelp` et la règle `display:none` sont inchangés sur cette branche).
