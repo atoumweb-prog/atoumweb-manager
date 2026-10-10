@@ -34,6 +34,6 @@ Les exemples ci-dessus sont des **patrons d'API**, pas l'intégration dans une f
 - nom d'action accessible porté par le bouton, vraie activation clavier par Entrée et déclenchement du bon callback ;
 - répertoire temporaire supprimé avec indication `Fixture cleaned: true`.
 
-**Statut honnête :** code JavaScript vérifié statiquement lors du commit, **pas encore exécuté sur Windows**. En cas d'écart, corriger le moteur de présentation/témoin, pas le sens des icônes historiques.
+**État de recette Windows :** premier passage sur `3eca479` : les neuf variantes et les SVG passent, mais **échec réel** `Timeout Keyboard Enter action` ; la recette entière est donc **NON VALIDÉE**. Hypothèse prioritaire : focus Electron de la fenêtre masquée placé après le focus DOM. Le banc a été corrigé pour ouvrir et focaliser la fenêtre avant le bouton, puis prouver la réception native de `Enter` et l'action unique ; **la correction n'a pas encore été relancée sur Windows**. Les commandes métier et les 36 SVG historiques restent inchangés. Détails et suivi dans `UXV2_LOT01B_EXECUTION.md`.
 
 **L'incrément 01B.3 reste pilote :** aucun remplacement d'icônes métier, aucun catalogue commercial modifié, aucune migration, aucun écran de production réécrit. Les tests complets, 01B.5 (notifications/confirmations), 01B.6 (atelier) et la recette des 12 cas du référentiel sont distincts.
