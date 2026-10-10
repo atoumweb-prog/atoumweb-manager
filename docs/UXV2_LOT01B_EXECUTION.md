@@ -34,7 +34,16 @@ Cette matrice couvre les **familles et parcours pilotes inspectés**, pas les **
 
 Nouveau `scripts/check-ux-v2-lot01b-help.cjs` : **React réel et FieldHelp réel** dans une fenêtre Chromium/Electron isolée, styles chargés d'après les **31 vrais imports CSS** de `main.tsx`; tests thèmes × densités, visibilité de l'icône, réglage `help-disabled`, clic explicite, contenu et `role=dialog`, Escape et retour de focus, absence d'activation du champ parent, survol court/prolongé, suppression automatique après sortie. Fixture éphémère dans `%TEMP%`, sans base ni données utilisateurs.
 
-**Ce qui est prouvé à ce stade :** syntaxe JavaScript du nouveau script contrôlée avant publication ; sources GitHub lues ; modifications CSS/React limitées à l'aide. **Le test Electron, le typecheck et la suite complète du HEAD 01B ne sont PAS encore exécutés sur Windows.** Ne pas annoncer de chiffre PASS extrapolé.
+**Recette Windows du 10/10/2026 — obtenue sur le SHA exact `2ef6e748ea067f8206ecff9081c0702113d7b183`.** Journal PowerShell transmis par AtoumWeb depuis le clone indépendant de validation :
+
+- `git log -1 --oneline` : **`2ef6e74`**, identique au HEAD de la PR #87 avant les commits documentaires ultérieurs.
+- `node --check scripts/check-ux-v2-lot01b-help.cjs` : **OK**.
+- `node scripts/check-ux-v2-lot01b-help.cjs` : **`{"checks":37,"failed":0,"themeDensityCombinations":9,"explicitHelp":true,"hoverDisabled":true,"delayedHover":true,"escapeAndFocus":true,"onlyTemp":true}`**.
+- **9/9 combinaisons** AtoumWeb / Noir / Blanc × Compact / Confort / Confort+ : icône affichée, base 14/16/18 px. Aide désactivée : icône maintenue ; détail volontaire clic et clavier / Échap / focus, non-activation du champ parent ; survol court/prolongé vérifié.
+- `Fixture cleaned: true` : **répertoire %TEMP% supprimé**.
+- `npm run typecheck` ⇒ `tsc --noEmit` **sans erreur**, code retour PowerShell OK, `PREMIERS CONTROLES 01B OK`.
+
+**Statut E05 : premier incrément validé sur Windows (37/37 + typecheck).** Ce résultat ne prouve **pas encore** la non-régression des 17 modules sur la branche 01B, la suite Vitest complète, ni tous les scénarios R01B-01…12. Les tests 01A antérieurs restent ceux de leur propre SHA et ne doivent pas être crédités à 01B.
 
 Commande à exécuter après checkout de cette branche **dans un clone de test indépendant**, sans toucher au checkout original :
 
