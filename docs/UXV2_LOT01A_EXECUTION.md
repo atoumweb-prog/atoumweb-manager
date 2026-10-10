@@ -193,6 +193,16 @@ Résultat fourni le 10/10/2026 sous forme de journal Vitest du worktree `C:\DEV\
 
 **État R01A-06** : suite de tests complète locale **VALIDÉE (801/801)** et contrôle TypeScript **VALIDÉ séparément** dans le nouveau journal PowerShell sur `2953001` : `npm run typecheck` → `tsc --noEmit` → contrôle `$LASTEXITCODE -ne 0` sans erreur → message **`TYPECHECK OK — LOT 01A`**. Le journal atteste explicitement le SHA `29530015ba4443136f2560a29b4ade17e149c0b9` et le statut du worktree propre avant `git fetch` / `git switch --detach`. Recette UI native précédente **300/300** et contrastes **18/18** acquis sur `8f0ce32d`. Il reste les captures / la revue visuelle comparative exigées par le référentiel, puis la décision de validation humaine et les contrôles de publication appropriés. Aucune commande supplémentaire sur des données métier réelles n'est nécessaire.
 
+### Revue de l'archive des 54 captures — REFUSÉE, synchronisation à corriger
+
+L'archive `uxv2-01a-captures-20261010-031113.zip` (54 PNG, 2244 × 1434) a été ouverte et analysée. Elle n'est **pas recevable comme preuve visuelle par écran** : des fichiers étiquetés `Prospection` montrent **Accueil**, `Devis` montre **Prospection**, `Projets` montre **Devis**, `Réglages` montre **Interventions**. Les copies de plusieurs thèmes/densités présentent le même décalage. D'autres captures initiales correspondent à un chargement incomplet ou à une transition d'état.
+
+**Cette anomalie est propre au processus de capture** : DOM vérifié par les 300 contrôles avant l'appel `capturePage`, mais framebuffer Chromium/Electron possiblement en retard, fenêtre d'essai jusque-là masquée. Il n'est pas démontré que la navigation applicative ait un défaut.
+
+**Correctif du banc de capture préparé dans la PR #86 :** fenêtre visible uniquement en mode captures, attente des titres/préférences/contenu, témoin colorimétrique temporaire et vérification des pixels du bitmap natif avant d'écrire chaque PNG ; refus d'un screenshot non synchronisé ; garde du total exact **54/54**. **Son succès réel Windows n'est pas encore établi.**
+
+La revue détaillée, les limites et les commandes de reprise figurent dans [`UXV2_LOT01A_VISUAL_REVIEW.md`](UXV2_LOT01A_VISUAL_REVIEW.md). Ne **pas** clôturer 01A ni demander un merge tant qu'une nouvelle archive **réellement synchronisée** n'a pas été examinée. Les 18/18 contrastes, les 300/300 contrôles UI, les 801/801 tests et le typecheck restent valides **dans leurs périmètres précédemment démontrés**.
+
 ### Vérifications humaines et suite de 01A
 
 Après le test calculé, examiner la lisibilité et les débordements sur Accueil, Prospection, Devis, Projet, Interventions et Réglages, avec les **trois thèmes et trois densités** ; puis le focus/clavier/zoom, le chrono et l'aide `?`. Les adaptations de couleurs/tokens sémantiques et le catalogue complet des variables restent du travail **01A** à produire par incréments conformes au référentiel, pas de nouveaux lots.
