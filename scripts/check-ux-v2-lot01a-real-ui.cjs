@@ -81,20 +81,91 @@ if(!process.versions.electron){
   if(x.scroll>x.client+20)overflow.push({label,pixels:x.scroll-x.client});
   visits++;
  };
- const saveScreenshot=async label=>{
-  if(captureArg<0)return;
-  const folder=path.resolve(process.argv[3]);
-  if(!fs.existsSync(folder))fs.mkdirSync(folder,{recursive:true});
-  const dest=path.join(folder,label.replace(/[^a-z0-9_-]/gi,'_')+'.png');
-  assert(!fs.existsSync(dest),'Refusing overwrite of '+dest);
-  fs.writeFileSync(dest,(await win.webContents.capturePage()).toPNG());
+ // Capture mode must verify the COMPOSITED FRAME, not just the React DOM.
+ // Previous run: filenames were one page ahead of the actual screen (54/54).
+ // A temporary 40px sentinel at bottom-right is changed after each navigation.
+ // Its unique pixel colour must be present in the captured bitmap before saving.
+ // The sentinel never appears in normal Manager production or UI-only recipes.
+ let capturesVerified=0;
+ const captureMarkerId='uxv2-01a-verified-frame';
+ const stableFrame=()=>evalUI('return await new Promise(resolve=>'+
+   'requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))));');
+ const markerColor=n=>[
+   32+(n*53)%193,32+(n*89)%193,32+(n*127)%193
+ ];
+ const pixelMatches=(image,wanted)=>{
+   const size=image.getSize();
+   const bitmap=image.toBitmap();
+   assert(size.width>100&&size.height>100,'Screenshot size unexpectedly small');
+   assert(bitmap.length===size.width*size.height*4,
+     'Unsupported native bitmap layout; refusing unverified capture');
+   const x=size.width-17,y=size.height-17;
+   const offset=(y*size.width+x)*4;
+   // NativeImage bitmap channel order is platform-dependent: compare RGB
+   // as an unordered triple. The sentinel is opaque (alpha=255).
+   const actual=[...bitmap.subarray(offset,offset+3)].sort((a,b)=>a-b);
+   const expected=[...wanted].sort((a,b)=>a-b);
+   return expected.every((v,i)=>Math.abs(actual[i]-v)<=7);
+ };
+ const saveScreenshot=async(theme,density,page)=>{
+   if(captureArg<0)return;
+   const label=theme+'-'+density+'-'+page;
+   const folder=path.resolve(process.argv[3]);
+   if(!fs.existsSync(folder))fs.mkdirSync(folder,{recursive:true});
+   const dest=path.join(folder,label.replace(/[^a-z0-9_-]/gi,'_')+'.png');
+   assert(!fs.existsSync(dest),'Refusing overwrite of '+dest);
+   // Await the page title, theme/density, and loaded dashboard before painting.
+   await wait('document.querySelector(".nav-item.active")?.textContent.trim()==='+
+     JSON.stringify(page),'capture current navigation '+label);
+   if(page==='Accueil'){
+     await wait('!!document.querySelector(".home-dashboard:not(.home-dashboard-loading)")',
+       'dashboard fully loaded '+label);
+   }else{
+     await wait('document.querySelector(".page-heading h1")?.textContent.trim()==='+
+       JSON.stringify(page),'capture heading '+label);
+   }
+   await wait('document.documentElement.dataset.theme==='+JSON.stringify(theme)+
+      ' && document.documentElement.dataset.density==='+JSON.stringify(density),
+      'capture preferences '+label);
+   const n=capturesVerified+1;
+   const rgb=markerColor(n);
+   const makeMarker='(()=>{let e=document.getElementById('+JSON.stringify(captureMarkerId)+');'+
+     'if(!e){e=document.createElement("div");e.id='+JSON.stringify(captureMarkerId)+';document.body.appendChild(e)}'+
+     'e.setAttribute("aria-hidden","true");'+
+     'e.style.cssText="position:fixed!important;right:0!important;bottom:0!important;'+
+       'width:40px!important;height:40px!important;z-index:2147483647!important;'+
+       'pointer-events:none!important;border:0!important;box-shadow:none!important;'+
+       'background:rgb('+rgb.join(',')+')!important";'+
+     'return true})()';
+   await get(makeMarker);
+   let captured=null,attempts=0;
+   for(let i=0;i<24;i++){
+     attempts=i+1;
+     await stableFrame();
+     await sleep(110);
+     const candidate=await win.webContents.capturePage();
+     if(pixelMatches(candidate,rgb)){captured=candidate;break;}
+   }
+   assert(captured,'COMPOSITOR OUT OF SYNC: refused '+label+
+     ' after '+attempts+' frames; no misleading screenshot saved');
+   // Confirm DOM did not navigate again while the screenshot was captured.
+   const final=await get('({page:document.querySelector(".nav-item.active")?.textContent.trim(),'+
+      'heading:document.querySelector(".page-heading h1")?.textContent.trim()??"Accueil",'+
+      'theme:document.documentElement.dataset.theme,'+
+      'density:document.documentElement.dataset.density})');
+   assert(final.page===page&&final.heading===page&&final.theme===theme&&final.density===density,
+     'Navigation changed during capture '+label+': '+JSON.stringify(final));
+   fs.writeFileSync(dest,captured.toPNG());
+   capturesVerified++;
+   console.log('[UXV2 01A CAPTURE] VERIFIED '+capturesVerified+'/54 '+label+
+     ' frameAttempt='+attempts);
  };
  app.whenReady().then(async()=>{
   const workspace=S.ensureWorkspace(path.join(temp,'workspace'));
   db=new S.DatabaseService(workspace);await db.initialize();
   S.registerIpcHandlers(db,workspace);S.registerOperationsIpcHandlers(db);S.registerReferentialsIpcHandlers(db);
   S.registerBusinessBackupsIpcHandlers(db);S.registerTimeCorrectionIpcHandler(db);
-  win=new BrowserWindow({show:false,width:1510,height:1030,webPreferences:{preload:path.join(temp,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:false}});
+  win=new BrowserWindow({show:captureArg>=0,title:"AtoumWeb Manager — UX 01A VISUAL TEST (TEMP)",width:1510,height:1030,webPreferences:{preload:path.join(temp,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:false}});
   win.webContents.on('console-message',e=>{if(e.level==='error'||e.level===3)consoleErrors.push(e.message);});
   await win.loadFile(path.join(temp,'index.html'));
   await wait('document.querySelectorAll(".nav-item").length===17','real Manager bootstrap');
@@ -107,7 +178,7 @@ if(!process.versions.electron){
     await select(theme,label,density,display,font,height);
     for(const page of samples){
      await navigate(page);await inspect(page,theme,density);
-     await saveScreenshot(theme+'-'+density+'-'+page);
+     await saveScreenshot(theme,density,page);
     }
     console.log('[UXV2 01A LIVE] PASS '+theme+'/'+density+' six real screens, '+font+'px / '+height+'px.');
    }
@@ -174,7 +245,8 @@ if(!process.versions.electron){
   test(await get('document.documentElement.dataset.density==="comfort_plus"'),'Density restored after reload');
   test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','TEMP SQLite integrity');
   test(db.database.all('PRAGMA foreign_key_check').length===0,'TEMP SQLite FK');
-  console.log('[UXV2 01A LIVE] RESULT '+JSON.stringify({passed:checks,failed:0,realPages:17,sampleVisits:54,narrowVisits:5,zoomVisits:10,visits,overflowCandidates:overflow,consoleErrors,onlyTemp:true}));
+  if(captureArg>=0)test(capturesVerified===54,'All 54 captured images verified against compositor');
+  console.log('[UXV2 01A LIVE] RESULT '+JSON.stringify({passed:checks,failed:0,realPages:17,sampleVisits:54,narrowVisits:5,zoomVisits:10,visits,overflowCandidates:overflow,consoleErrors,onlyTemp:true,...(captureArg>=0?{capturesVerified}:{} )}));
   if(overflow.length)console.log('[UXV2 01A LIVE] Overflow candidates are observational and need review, not automatic failure.');
  }).catch(e=>{console.error('[UXV2 01A LIVE] ERROR',e.stack||e);process.exitCode=1;}).finally(()=>{try{win?.destroy();}catch{}try{db?.close();}catch{}app.exit(process.exitCode||0);});
 }
