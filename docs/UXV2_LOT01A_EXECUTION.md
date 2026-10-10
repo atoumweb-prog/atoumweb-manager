@@ -97,14 +97,15 @@ node scripts/check-ux-v2-lot01a-real-ui.cjs
 
 Le banc d'essai crée et supprime uniquement ses propres répertoires dans `%TEMP%`. Les **textes contractuels** ne sont ni modifiés ni validés pendant le parcours en lecture seule.
 
-### Extension R01A-03, R01A-05 et R01A-08 — préparée, non encore exécutée
+### Extension R01A-03, R01A-05 et R01A-08 — validation native Windows 300/300
 
 Une nouvelle révision **`4579143aa4a8beb645afe33a0ce62d2e6dfecb53`** du **même** banc d'essai `check-ux-v2-lot01a-real-ui.cjs` ajoute, après le parcours déjà validé :
 
 - Une **vraie touche Tab envoyée par Electron** à deux boutons de vérification temporaires dans Réglages ; attente du focus sur le second et d'un anneau `:focus-visible` d'au moins **2 px**.
 - Activation/désactivation **réelle** du réglage « Conseils au survol » par sa case à cocher React, avec enregistrement par IPC ; vérification qu'un élément témoin `.field-help` est masqué puis réaffiché par la CSS existante. Le témoin est supprimé ensuite.
 - Fenêtre **1024 × 720**, zooms Electron **125 % et 150 %**, cinq écrans réels visités à chaque zoom (10 visites supplémentaires), puis retour au zoom normal.
-- Les **261 réussites** restent prouvées sur le SHA historique `3471174` ; la nouvelle extension, son compteur et ses comportements devront **être mesurés sur Windows avant d'être crédités**. Le test keyboard/focus ne certifie pas à lui seul la navigation clavier de tous les modules.
+- **Validation Windows du 10/10/2026 confirmée sur le SHA `1c8c526735c942edd08fdd661d0b48eb56a47ecd`** par exécution de `node --check scripts/check-ux-v2-lot01a-real-ui.cjs` puis `node scripts/check-ux-v2-lot01a-real-ui.cjs` dans `atoumweb-manager-ux01-validation`. Bilan exact : **`{"passed":300,"failed":0,"realPages":17,"sampleVisits":54,"narrowVisits":5,"zoomVisits":10,"visits":86,"overflowCandidates":[],"consoleErrors":[],"onlyTemp":true}`**, puis **`Fixture cleaned: true`**. Focus mesuré : `{"last":"Focus TEST 1","isVisible":true,"style":"solid","width":"2px"}`. Les 9 combinaisons thème/densité et les 10 visites supplémentaires sous zoom 125 %/150 % ont réussi. La désactivation/réactivation de l'aide contextuelle et sa persistance IPC sont comprises dans les 300 contrôles.
+- **Portée précise** : `:focus-visible` a été vérifié sur une paire de boutons temporaires de la vraie interface, et le réglage d'aide sur un témoin CSS temporaire. Cela ne certifie pas le parcours clavier intégral ni les vrais libellés `?` dans chaque module. La recette relève les débordements du conteneur, pas tous les débordements internes ou pertes d'actions visibles. L'absence de captures et de jugement visuel humain subsiste.
 
 Aucun `src/` supplémentaire, module métier, écran React ni CGV n'est modifié ; uniquement le script de recette et la présente documentation.
 
