@@ -61,6 +61,32 @@ L'inventaire source des **31 feuilles CSS** et de leurs variables déclarées/co
 
 **Nature de la preuve :** lecture directe des sources de la branche après E01, pas encore un audit visuel exhaustif des 17 écrans. Les validations natives 9/9 / 72/72 / 9/9 / 9/9 restent celles du SHA `466b8e45` ; les commits documentaires ultérieurs ne touchent pas le code exécuté.
 
+### Nouvelle recette des écrans React réels — prête, non encore exécutée
+
+Ajout de `scripts/check-ux-v2-lot01a-real-ui.cjs` sur la PR #86. À la différence de la première recette CSS synthétique (9/9), celle-ci charge **le véritable `src/renderer/main.tsx`**, le preload Electron et les IPC métier sur un **workspace SQLite TEMP créé exprès**. Elle n'ouvre jamais l'exécutable installé, le workspace courant ou Validation-MSI.
+
+- **17 destinations réelles** du menu ouvertes au moins une fois, sous AtoumWeb/Confort initial, sans créer de dossier métier.
+- **6 écrans réels** (Accueil, Prospection, Devis, Projets, Interventions & Maintenance, Réglages) contrôlés dans **3 thèmes × 3 densités**, soit **54 visites** représentatives.
+- Sur Réglages, les contrôles React de thème et de densité utilisent **les vrais IPC**, et on vérifie la sauvegarde de la préférence et les valeurs CSS calculées (14/16/18 px et 36/42/48 px).
+- **5 visites supplémentaires en fenêtre 1024 × 720**, puis rechargement du renderer et contrôle de restauration des préférences.
+- À chaque visite : rendu sans écran d'erreur fatal, menu/entête, accès recherche/chrono, bascule thème/densité, présence d'une zone de contenu. Les débordements éventuels du conteneur sont **signalés comme candidats à examiner** et ne sont pas masqués.
+- Option `--captures <CHEMIN_ABSOLU_NOUVEAU>` pour exporter **54 captures** dans un dossier neuf, **hors Validation-MSI**. Cette option est désactivée par défaut, sans chemin de sortie implicite.
+
+**État honnête :** syntaxe JavaScript vérifiée, **exécution native Windows de cette nouvelle recette à confirmer**. Les 54 visites sont le **programme du test**, pas 54 succès déjà obtenus. Cette recette automatise des comportements mais ne remplace pas une inspection humaine du zoom, de l'ergonomie, des aides `?` ni tous les scénarios R01A.
+
+Commande de recette depuis le worktree indépendant et propre :
+
+```powershell
+cd "C:\DEV\01_PROJETS\AtoumWeb\atoumweb-manager-ux01-validation"
+if (git status --porcelain) { throw "Modifications locales présentes : arrêt par sécurité." }
+git fetch origin
+git switch --detach origin/feature/ux-v2-lot01a-typography-v1
+node --check scripts/check-ux-v2-lot01a-real-ui.cjs
+node scripts/check-ux-v2-lot01a-real-ui.cjs
+```
+
+Le banc d'essai crée et supprime uniquement ses propres répertoires dans `%TEMP%`. Les **textes contractuels** ne sont ni modifiés ni validés pendant le parcours en lecture seule.
+
 ### Vérifications humaines et suite de 01A
 
 Après le test calculé, examiner la lisibilité et les débordements sur Accueil, Prospection, Devis, Projet, Interventions et Réglages, avec les **trois thèmes et trois densités** ; puis le focus/clavier/zoom, le chrono et l'aide `?`. Les adaptations de couleurs/tokens sémantiques et le catalogue complet des variables restent du travail **01A** à produire par incréments conformes au référentiel, pas de nouveaux lots.
