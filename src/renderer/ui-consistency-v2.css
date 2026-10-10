@@ -1396,3 +1396,153 @@ table td {
 :root[data-theme='noir'] .priority-urgent {
   color: var(--aw-status-red-fg);
 }
+
+/* UX/UI V2 — 01B.2 pilot presentation primitives.
+   New aw-ui-* classes only; historical module button and field classes unchanged.
+   Reuse 01A theme and density tokens, without defining business effects. */
+.aw-ui-button-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.content-area .aw-ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  min-height: var(--ui-control-height);
+  padding: var(--ui-control-pad-y) var(--ui-control-pad-x);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: max(14px, var(--ui-font-base));
+  font-weight: 650;
+  text-align: center;
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.content-area .aw-ui-button--primary {
+  background: var(--accent-soft);
+  border-color: var(--accent-strong);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--accent-strong);
+}
+
+.content-area .aw-ui-button--secondary {
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.content-area .aw-ui-button--quiet {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text);
+}
+
+.content-area .aw-ui-button--danger {
+  background: color-mix(in srgb, #d62828 8%, var(--surface));
+  border-color: color-mix(in srgb, #d62828 68%, var(--border));
+  color: var(--text);
+}
+
+.content-area .aw-ui-button:not(:disabled):hover {
+  filter: brightness(.98);
+  border-color: var(--accent-strong);
+}
+
+.content-area .aw-ui-button:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
+}
+
+.content-area .aw-ui-button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.aw-ui-button-icon {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+}
+
+.aw-ui-button-icon svg {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.aw-ui-button-progress {
+  font-weight: 800;
+  line-height: 1;
+}
+
+.aw-ui-control-error,
+.aw-ui-field-error {
+  font-size: max(14px, var(--ui-font-secondary));
+  line-height: 1.45;
+  color: var(--text);
+  border-left: 3px solid #d62828;
+  padding-left: 8px;
+  overflow-wrap: anywhere;
+}
+
+.aw-ui-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.aw-ui-field-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+
+.aw-ui-field-label {
+  color: var(--text);
+  font-size: max(14px, var(--ui-font-secondary));
+  font-weight: 700;
+}
+
+.aw-ui-required {
+  color: var(--text);
+}
+
+.aw-ui-field-hint {
+  color: var(--muted);
+  font-size: max(14px, var(--ui-font-secondary));
+  line-height: 1.4;
+}
+
+.content-area .aw-ui-field-input {
+  width: 100%;
+  max-width: 100%;
+  min-height: var(--ui-control-height);
+  font-size: max(14px, var(--ui-font-base));
+  color: var(--text);
+}
+
+.content-area .aw-ui-field-input[aria-invalid='true'] {
+  border-color: #d62828;
+}
+
+.content-area .aw-ui-field-input:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
+}
