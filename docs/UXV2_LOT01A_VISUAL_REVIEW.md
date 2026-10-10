@@ -71,3 +71,24 @@ Write-Host "54 captures vérifiées : $folder.zip" -ForegroundColor Green
 ```
 
 L'étape reste **R01A / revue visuelle**, aucun passage à 01B ni fusion automatique. **Ne jamais remplacer** la revue humaine par le seul témoin pixel : celui-ci garantit la **fraîcheur du rendu** pour la zone du témoin, puis la comparaison réelle de chaque écran doit rester une vérification distincte.
+
+## 5. Deuxième archive vérifiée — revue comparative du 10/10/2026
+
+**Archive utilisateur :** `uxv2-01a-verifie-20261010-031942.zip`, reçue après correction du banc d'essai, **54/54 PNG** (`2244 × 1434` pixels) : six vues × trois thèmes × trois densités. **Cette archive est différente de celle rejetée au §1.** Elle n'est pas versée au dépôt.
+
+### Vérification des images
+
+- Les fichiers ont été lus dans le ZIP, et le marqueur colorimétrique de la frame affichée a été recalculé d'après la numérotation attendue du banc et comparé **au pixel (largeur−17, hauteur−17)** de chaque PNG. **54/54 marqueurs exacts, zéro écart**. Ceci constitue une preuve indépendante que le garde-fou de rafraîchissement a fonctionné dans les images reçues.
+- Les montages comparatifs permettent de constater, pour les thèmes et densités inspectés, que **`Accueil` affiche le tableau de bord, `Prospection` sa liste, `Devis` sa liste, `Projets` sa liste, `Interventions & Maintenance` ses tableaux, `Réglages` ses paramètres**. Le décalage systématique du ZIP précédent n'est plus constaté.
+- Dans les images observées : navigation latérale, recherche, barre haute, timer, indicateur de base et panneaux principaux visuellement présents. **Les thèmes AtoumWeb / Noir / Blanc restent distincts et les 3 densités sont correctement indiquées**. Aucun écran noir total, panneau principal complètement masqué ni rupture grossière de disposition n'a été constaté.
+- Les **54 images représentent le Manager existant**, avec la seule modification visuelle 01A des tailles Compact et des quatre correctifs de contraste des états : **elles ne montrent pas encore l'interface UX V2 réorganisée**.
+
+### Portée exacte et réserves
+
+- **Revue visuelle des six écrans à vide : acceptable pour le socle 01A**, sans preuve de défaut bloquant visible dans les configurations examinées. La comparaison des pixels seule ne donne pas un score exhaustif WCAG ; les contrastes des six classes ont été contrôlés séparément (18/18 PASS), ainsi que le focus témoin et la navigation (300/300 PASS).
+- **Fiches détaillées non vérifiées** : la fixture SQLite est vierge, donc pas de fiche Prospect, Devis, Projet ou Intervention ouverte avec des données. Les longs formulaires, panneaux coulissants, interactions complexes, scrolls internes et états d'erreur réels restent des limites de preuve ; ne pas les marquer `PASS` par extrapolation.
+- Captures réalisées à la taille de fenêtre de la recette et **sans photographie dédiée des zooms** ; les zooms 125/150 % ne sont prouvés que par le test natif précédent (10 visites), pas par cette galerie.
+- Les captures comprennent un **carré coloré technique dans le coin inférieur droit** ; il ne fait **pas** partie du produit et doit être absent hors mode test.
+- Le ZIP n'intègre **pas en lui-même un journal `git log` ni la sortie console `capturesVerified:54`**. La correspondance des 54 marqueurs dans les PNG est établie, mais **l'attribution d'un SHA exact au ZIP nécessiterait la sortie du PowerShell**. Ne pas inventer un run CI ou l'exécution des tests sur un SHA non prouvé.
+
+**Bilan :** le **problème de preuve visuelle du §1 est résolu dans cette nouvelle archive**. La fondation visuelle des six vues sans données paraît cohérente. Cette acceptation ne signifie ni livraison de la nouvelle interface UX V2, ni recette complète des 17 vues détaillées, ni autorisation automatique de fusion vers `main`. Prochaine décision : confirmer explicitement la portée résiduelle des fiches remplies/scroll/clavier dans les critères R01A-03/04/05/08 et l'acceptation humaine de l'incrément 01A, puis seulement ouvrir 01B selon le référentiel #82.
