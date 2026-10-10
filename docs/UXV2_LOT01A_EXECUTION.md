@@ -53,6 +53,14 @@ node scripts/check-ux-v2-lot01a-typography.cjs
 - Sortie finale : `PASS 3 themes × 3 densities; 72 computed font checks; 9 control heights; 9 body contrasts.` puis **`Fixture cleaned: true`**.
 - **Limite :** page Chromium synthétique et styles effectivement calculés, pas de capture humaine des **17 écrans réels**, ni preuve d'ergonomie complète / persistance des réglages au redémarrage, ni des contrastes des états alertes/focus. Les huit critères R01A ne sont **pas** tous clôturés par ce test.
 
+### Inventaire des tokens et styles — terminé pour les imports directs de `main.tsx`
+
+L'inventaire source des **31 feuilles CSS** et de leurs variables déclarées/consommées est versionné dans [`UXV2_LOT01A_TOKENS_INVENTORY.md`](UXV2_LOT01A_TOKENS_INVENTORY.md). Il fournit les **14 rôles généraux par thème**, les **8 variables par densité**, les trois variables de compatibilité `--aw-font-*`, les propriétés contextuelles des modules, l'ordre de cascade et les feuilles riches en `!important`.
+
+**Décision conservatrice du référentiel :** les noms existants couvrent déjà les rôles de base ; aucune nouvelle palette ou migration des 31 CSS n'est engagée sans preuve d'un besoin. Les occurrences `var(--...)` hors noyau ne sont pas déclarées erronées sans analyse du sélecteur et du fallback.
+
+**Nature de la preuve :** lecture directe des sources de la branche après E01, pas encore un audit visuel exhaustif des 17 écrans. Les validations natives 9/9 / 72/72 / 9/9 / 9/9 restent celles du SHA `466b8e45` ; les commits documentaires ultérieurs ne touchent pas le code exécuté.
+
 ### Vérifications humaines et suite de 01A
 
 Après le test calculé, examiner la lisibilité et les débordements sur Accueil, Prospection, Devis, Projet, Interventions et Réglages, avec les **trois thèmes et trois densités** ; puis le focus/clavier/zoom, le chrono et l'aide `?`. Les adaptations de couleurs/tokens sémantiques et le catalogue complet des variables restent du travail **01A** à produire par incréments conformes au référentiel, pas de nouveaux lots.
