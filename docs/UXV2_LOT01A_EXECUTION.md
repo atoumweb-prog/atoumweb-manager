@@ -152,6 +152,34 @@ node scripts/check-ux-v2-lot01a-states.cjs
 
 Sont encore nécessaires avant la clôture complète de 01A : appréciation visuelle de captures comparatives (trois thèmes × trois densités) des écrans représentatifs, contrôle des états réels/focus et des zones de défilement, ainsi que **R01A-06** (tests de régression pertinents, dont CI au bon SHA). Aucun changement d'accent métier ni de CSS global n'est proposé sur la seule base du diagnostic préparé.
 
+### Portes de recette R01A — état probant au 10/10/2026
+
+| Critère du référentiel #82 | État actuel | Preuve disponible / limite exacte |
+|---|---|---|
+| **R01A-01 — Trois thèmes** | **Automatisé, revue visuelle restante** | 9 configurations React, 3 thèmes et contrastes représentatifs. Aucune comparaison de captures réelles revue humainement. |
+| **R01A-02 — Trois densités et préférence** | **Automatisé** | 14/16/18 px, contrôles 36/42/48 px ; IPC réel, sauvegarde et rechargement du renderer. Un arrêt/redémarrage complet du binaire installé n'a pas été réalisé. |
+| **R01A-03 — 17 entrées et focus** | **Partiellement automatisé** | 17 destinations ouvrent, vraie touche Tab et anneau `:focus-visible` 2 px sur deux boutons témoins. Toutes les actions par clavier ne sont pas certifiées. |
+| **R01A-04 — Fiches Prospect, Devis, Projet, Intervention** | **Partiellement automatisé** | Six pages et 9 variantes montées sur SQLite TEMP vide. Les fiches détaillées et les actions de données spécifiques ne sont pas toutes ouvertes ni évaluées au pixel près. |
+| **R01A-05 — Petite fenêtre, zoom, scroll** | **Partiellement automatisé** | 1024 × 720, zoom 125/150 %, 10 visites zoom ; `overflowCandidates:[]` concerne le conteneur principal et n'exclut pas les masquages internes. |
+| **R01A-06 — Non-régression** | **À exécuter** | 300/300 contrôles de parcours natif + 18/18 contrastes **ne remplacent pas** `npm run typecheck`, `npm test -- --maxWorkers=2` et les UI ciblés d'avant la PR prête à fusionner. |
+| **R01A-07 — États et focus** | **Partiellement automatisé, états mesurés PASS** | 6 classes d'état × 3 thèmes = **18/18 à ≥4,5:1**, focus 2 px. D'autres états/icônes et lisibilité humaine peuvent encore exister. |
+| **R01A-08 — Chrono, aide, icônes** | **Partiellement automatisé** | Chrono/recherche présents sur 86 visites, aide `?` témoin masquée/réaffichée via réglage IPC. Tous les vrais contrôles d'aide/icônes et le démarrage/arrêt chrono ne sont pas couverts. |
+
+**Décision de recette :** Correctifs CSS **validés en automatique Windows** sur `8f0ce32d` ; **sous-lot 01A non encore clos**. Le référentiel réclame des captures comparatives, les contrôles visuels/comportementaux manquants et R01A-06 avant l'autorisation de fusion puis le démarrage de 01B.
+
+### Commandes R01A-06 et captures comparatives (à exécuter sur worktree indépendant)
+
+```powershell
+# Depuis le worktree atoumweb-manager-ux01-validation, propre et détaché
+npm run typecheck
+npm test -- --maxWorkers=2
+
+# Pour revue humaine, dossier de sortie qui n'existe PAS encore :
+# node scripts/check-ux-v2-lot01a-real-ui.cjs --captures "C:\DEV\01_PROJETS\AtoumWeb\uxv2-01a-captures-10oct"
+```
+
+L'option `--captures` exporte **54 vues** pour comparaison, sans publier de fichiers utilisateur sur GitHub. Les captures ne doivent pas contenir de données métier réelles : le script travaille uniquement sur la fixture TEMP. Une erreur de test doit rester visible et ne peut pas être requalifiée comme succès. Un CI GitHub Windows final sur le HEAD courant, si nécessaire, doit être autorisé et tracé avant fusion.
+
 ### Vérifications humaines et suite de 01A
 
 Après le test calculé, examiner la lisibilité et les débordements sur Accueil, Prospection, Devis, Projet, Interventions et Réglages, avec les **trois thèmes et trois densités** ; puis le focus/clavier/zoom, le chrono et l'aide `?`. Les adaptations de couleurs/tokens sémantiques et le catalogue complet des variables restent du travail **01A** à produire par incréments conformes au référentiel, pas de nouveaux lots.
