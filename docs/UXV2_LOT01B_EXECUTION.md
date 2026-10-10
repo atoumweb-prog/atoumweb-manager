@@ -233,6 +233,14 @@ if ($LASTEXITCODE -ne 0) { throw "Typecheck échoué." }
 
 **Décision :** refaire uniquement la recette atelier sur la dernière branche de #87 ; en cas de nouvel échec, analyser `Shell geometry` et `OVERFLOW DIAGNOSTIC`, sans supprimer le critère d'absence de débordement. La suite Vitest et la revue visuelle 01B restent en attente.
 
+## Revue des 9 captures reçues — 10/10/2026, atelier 01B.6 (preuve visuelle positive)
+
+Après correction de la grille sidebar/main-area, AtoumWeb a transmis `uxv2-01b-atelier-20261010-040237.zip` (intégrité ZIP **OK**, SHA-256 `e6ce248eb23b661ee813f3f094e01690c18d1575a99f0b57c31d276555a9b0ca`) : **9/9 PNG de 2019 × 1377 px**, les trois thèmes × les trois densités. Les **9 témoins de synchronisation sont exactement ceux attendus** ; la revue comparative ne révèle plus le débordement horizontal grossier de la première fixture, et les cinq composants pilotes restent visibles.
+
+**Nuances :** contrôle visuel accepté **sur cette fenêtre d'atelier**, pas preuve autonome de la réussite de toutes les assertions ou du code retour de `npm run typecheck` (aucun journal PowerShell joint avec le ZIP). Petites finitions observées : `gap` des pictos « Temps / Interventions » et lisibilité/zone d'action du bouton icône seule `quiet` à considérer avant déploiement. Ces détails ne justifient pas de modifier les classes métier existantes.
+
+**Rapport détaillé** : [`docs/UXV2_LOT01B_VISUAL_REVIEW.md`](UXV2_LOT01B_VISUAL_REVIEW.md). L'échec antérieur sur `1a30744d` reste documenté plus haut ; le correctif de la structure est bien **visible dans les images reçues**, mais les preuves de non-régression Electron 17 écrans, de tests Vitest complets et de R01B restent à fournir. PR #87 toujours **draft**, sans fusion.
+
 ## Non-modifications
 
 **Zéro changement métier** : aucun Devis, Catalogue, CGV, contrat, signature Abby, Projet, Bridge, CRM, migration, base SQLite, API ou droits utilisateur ; aucun remplacement des confirmations UX-01. Le composant n'intègre aucune dépendance externe. Retour arrière : revenir à la branche 01A (l'ancien `FieldHelp` et la règle `display:none` sont inchangés sur cette branche).
