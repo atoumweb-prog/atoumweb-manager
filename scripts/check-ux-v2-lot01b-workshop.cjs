@@ -31,7 +31,21 @@ if(!process.versions.electron){
    '.aw-workshop-notices{display:grid;gap:8px}',
    '@media(max-width:800px){.aw-workshop-grid{grid-template-columns:1fr}}'
   ].join('\n');
-  fs.writeFileSync(path.join(temp,'index.html'),'<html lang="fr"><head><meta charset="utf-8"><style>'+css+layout+'</style></head><body><div class="app-shell"><main class="content-area"><div id="root"></div></main></div><script src="demo.js"></script></body></html>');
+  // Match the production shell's TWO-COLUMN layout: sidebar + main-area.
+  // Putting content-area directly under app-shell places it into the 258px
+  // sidebar grid track, creating artificial horizontal overflow.
+  const fixtureShell='<div class="app-shell">'+
+    '<aside class="sidebar" aria-label="Navigation fictive de l\'atelier">'+
+      '<div class="brand-block"><div class="brand-mark">AW</div>'+
+      '<div><strong>AtoumWeb</strong><span>Atelier UX 01B</span></div></div>'+
+    '</aside>'+
+    '<main class="main-area">'+
+      '<header class="topbar"><strong>Composants de présentation · validation isolée</strong></header>'+
+      '<section class="content-area"><div id="root"></div></section>'+
+    '</main>'+
+  '</div>';
+  fs.writeFileSync(path.join(temp,'index.html'),'<html lang="fr"><head><meta charset="utf-8"><style>'+css+layout+'</style></head><body>'+
+    fixtureShell+'<script src="demo.js"></script></body></html>');
   const lines=[
    "import React from 'react';",
    "import {createRoot} from 'react-dom/client';",
@@ -129,6 +143,13 @@ if(!process.versions.electron){
    webPreferences:{sandbox:true,nodeIntegration:false,contextIsolation:true,backgroundThrottling:false}});
   await win.loadFile(path.join(temp,'index.html'));
   await wait('!!document.querySelector("#ux-workshop")','React workshop');
+  const shell=await get('({sidebar:document.querySelector(".sidebar")?.getBoundingClientRect().width,'+
+    'main:document.querySelector(".main-area")?.getBoundingClientRect().width,'+
+    'content:document.querySelector(".content-area")?.getBoundingClientRect().width,'+
+    'contentLeft:document.querySelector(".content-area")?.getBoundingClientRect().left})');
+  console.log('[UXV2 01B WORKSHOP] Shell geometry '+JSON.stringify(shell));
+  check(shell.sidebar>=250&&shell.main>=500&&shell.content>=500&&shell.contentLeft>=250,
+    'Workshop must use the Manager sidebar/main-area layout, not the 258px sidebar track');
   check((await get('document.querySelectorAll(".aw-ui-button").length'))===5,'Five real AppButtons');
   check((await get('document.querySelectorAll(".aw-ui-field-input").length'))===2,'Two real AppTextFields');
   check((await get('document.querySelectorAll(".aw-ui-notice").length'))===4,'Four real notices');
@@ -149,7 +170,18 @@ if(!process.versions.electron){
     check(values.font===font,'Base density '+theme+'/'+density);
     check(values.btn>=height&&values.input>=height,'Control size '+theme+'/'+density);
     check(values.notice>=14&&values.help!=='none','Legible notice/help '+theme+'/'+density);
-    check(values.scroll<=values.client+12,'Horizontal overflow '+theme+'/'+density);
+    if(values.scroll>values.client+12){
+      const overflow=await get('(()=>{const c=document.querySelector(".content-area"),r=c.getBoundingClientRect();'+
+        'return {scrollWidth:c.scrollWidth,clientWidth:c.clientWidth,rect:[r.left,r.right],'+
+        'offenders:[...c.querySelectorAll("*")].map(e=>({name:e.tagName.toLowerCase(),'+
+        'className:typeof e.className==="string"?e.className:"svg",'+
+        'left:Math.round(e.getBoundingClientRect().left),right:Math.round(e.getBoundingClientRect().right)}))'+
+        '.filter(e=>e.right>r.right+12||e.left<r.left-12).slice(0,14)}})()');
+      console.error('[UXV2 01B WORKSHOP] OVERFLOW DIAGNOSTIC '+theme+'/'+density+' '+
+        JSON.stringify(overflow));
+    }
+    check(values.scroll<=values.client+12,
+      'Horizontal overflow '+theme+'/'+density+' ('+values.scroll+' > '+values.client+'+12)');
     await save(theme,density);
     console.log('[UXV2 01B WORKSHOP] PASS '+theme+'/'+density);
    }
