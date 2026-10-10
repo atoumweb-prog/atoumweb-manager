@@ -200,6 +200,29 @@ if ($LASTEXITCODE -ne 0) { throw "Typecheck échoué." }
 
 La galerie des notifications est **une expérimentation de présentation** ; les parcours de success/error en réponse à des services réels, le comparatif de captures 01B.6, la non-régression complète des 17 écrans et la suite Vitest restent à produire. Cette PR n'est pas prête à fusionner.
 
+## 01B.6 — Atelier intégré isolé : créé, recette Windows en attente
+
+**Livrable nouveau :** `scripts/check-ux-v2-lot01b-workshop.cjs`. Il compile et affiche les **vrais composants React** de présentation (`AppButton`, `AppTextField`, `FieldHelp`, `AppNotice` et `OperationIcon`) ensemble, avec les 31 imports CSS réels de `main.tsx`. Les données, boutons et notices sont **fictifs** ; ni Main process métier ni SQLite, profil client, IPC, devis ou contrats ne sont ouverts. Tous les fichiers temporaires et le profil Electron sont dans un `%TEMP%` créé pour la recette et supprimé ensuite.
+
+**Scénarios automatisés du nouvel atelier :** cinq variantes/états de bouton, deux champs (label/description/erreur), aide `?`, quatre notifications et cinq SVG décoratifs ; 3 thèmes × 3 densités avec 14/16/18 px, hauteurs 36/42/48 px, lisibilité, absence de débordement horizontal grossier ; aucune action déclenchée à l'affichage ; clic explicite sur une action factice, fermeture de notification indépendante et aide réellement ouverte puis fermée avec focus rendu. **Le banc ne valide pas les confirmations de sortie UX-01 ni les vrais formulaires remplis**.
+
+**Mode comparatif facultatif** `--captures NEW-ABSOLUTE-FOLDER` : fenêtre Electron de recette visible uniquement dans ce mode, création de **9 PNG**, avec témoin couleur temporaire en bas à droite et **vérification pixel du compositeur** avant écriture. Le script refuse le dossier de destination existant et les chemins Validation-MSI et n'efface que sa propre fixture `%TEMP%`. Les captures ne représentent pas les nouveaux écrans V2, seulement l'atelier des composants 01B.
+
+**Statut probant actuel :** syntaxe JavaScript du script vérifiée pendant sa publication GitHub ; **la recette Electron intégrée, les captures et le typecheck au HEAD incluant cet atelier restent À EXÉCUTER sur Windows**. Aucun nombre de tests réussis annoncé par anticipation.
+
+Commandes à lancer dans le clone de validation propre et détaché :
+
+```powershell
+node --check scripts/check-ux-v2-lot01b-workshop.cjs
+if ($LASTEXITCODE -ne 0) { throw "Syntaxe atelier invalide." }
+node scripts/check-ux-v2-lot01b-workshop.cjs
+if ($LASTEXITCODE -ne 0) { throw "Atelier intégré échoué." }
+npm run typecheck
+if ($LASTEXITCODE -ne 0) { throw "Typecheck échoué." }
+```
+
+**Avant clôture 01B :** recette de l'atelier dans les neuf configurations puis examen éventuel des captures, tests de non-régression Electron sur les 17 destinations réelles (avec l'assertion d'aide V2), `npm test -- --maxWorkers=2` de la branche 01B et contrôle des autres gates R01B. Les confirmations critiques ne seront pas refaites sans examen et preuve de coexistence avec l'API `requestUnsavedExit`.
+
 ## Non-modifications
 
 **Zéro changement métier** : aucun Devis, Catalogue, CGV, contrat, signature Abby, Projet, Bridge, CRM, migration, base SQLite, API ou droits utilisateur ; aucun remplacement des confirmations UX-01. Le composant n'intègre aucune dépendance externe. Retour arrière : revenir à la branche 01A (l'ancien `FieldHelp` et la règle `display:none` sont inchangés sur cette branche).
