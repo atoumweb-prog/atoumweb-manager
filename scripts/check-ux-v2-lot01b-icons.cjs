@@ -91,12 +91,35 @@ if(!process.versions.electron){
     console.log('[UXV2 01B ICONS] PASS '+theme+'/'+density+' 36 decorative icons, action labels');
    }
   }
-  // Real Chromium keyboard Enter invokes the parent button handler.
-  await exec('document.querySelector("#icon-action").focus()');
+  // Real Chromium keyboard Enter must reach a focused window AND focused button.
+  // In the first Windows run the hidden window was focused *after* the DOM button,
+  // so the renderer never received a usable Enter event. Do not replace this
+  // assertion with element.click() or a fabricated DOM KeyboardEvent.
+  win.show();
+  win.focus();
   win.webContents.focus();
+  await wait('document.hasFocus()','native Electron window focus');
+  await exec('window.__iconTest.nativeKeys=[];'+
+    'document.addEventListener("keydown",e=>window.__iconTest.nativeKeys.push(e.key),true);'+
+    'document.querySelector("#icon-action").focus()');
+  const before=await get('({focused:document.hasFocus(),active:document.activeElement?.id,'+
+    'keys:window.__iconTest.nativeKeys.length})');
+  console.log('[UXV2 01B ICONS] Native keyboard focus '+JSON.stringify(before));
+  check(before.focused===true&&before.active==='icon-action',
+    'Native Electron window and the real action button must both have focus');
   win.webContents.sendInputEvent({type:'keyDown',keyCode:'Enter'});
   win.webContents.sendInputEvent({type:'keyUp',keyCode:'Enter'});
-  await wait('window.__iconTest.calls===1','Keyboard Enter action');
+  try {
+    await wait('window.__iconTest.calls===1','Keyboard Enter action');
+  } catch(error) {
+    const after=await get('({focused:document.hasFocus(),active:document.activeElement?.id,'+
+      'nativeKeys:window.__iconTest.nativeKeys,calls:window.__iconTest.calls,'+
+      'labels:window.__iconTest.labels})');
+    console.error('[UXV2 01B ICONS] Native keyboard failure probe '+JSON.stringify(after));
+    throw error;
+  }
+  check(await get('window.__iconTest.nativeKeys.includes("Enter")'),
+    'Native Chromium keydown reached the renderer');
   check(await get('window.__iconTest.labels[0]==="expand"'),'Enter action correct');
   check(await get('document.activeElement?.id==="icon-action"'),'Focus remains on explicit command');
   // Programmatic click on labeled example checks same event contract.
