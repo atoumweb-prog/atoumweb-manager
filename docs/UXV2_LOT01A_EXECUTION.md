@@ -113,7 +113,18 @@ Aucun `src/` supplémentaire, module métier, écran React ni CGV n'est modifié
 
 Nouveau script `scripts/check-ux-v2-lot01a-states.cjs` (après la validation **300/300**) : fenêtre Chromium/Electron TEMP, **31 vraies feuilles CSS** directement importées par `main.tsx`, **trois thèmes** et **six classes réelles d'état** (`success-badge`, `notice`, `priority-high`, `priority-urgent`, `alert-critical`, `alert-warning`). Calcule les couleurs effectivement rendues et leur rapport de contraste de texte sur le fond (composantes alpha superposées), avec seuil de contrôle de **4,5:1**.
 
-**Ce script est un diagnostic ciblé**, pas une preuve exhaustive de tous les messages et leurs icônes. Il retourne un code d'échec si des rapports sont sous le seuil ; il faut alors relever et corriger précisément les états concernés. **Non encore exécuté sur Windows**, aucun chiffre de réussite annoncé.
+**Premier diagnostic Windows exécuté le 10/10/2026 sur `05a89e76bc62f098fb0b298026068567cbc51dff` : 14/18 PASS, 4 états sous 4,5:1 (script code 1 attendu).** Détail mesuré :
+
+| Thème | Élément | Contraste avant | Correctif ciblé dans `ui-consistency-v2.css` |
+|---|---|---:|---|
+| AtoumWeb | `.success-badge` | **4,39:1** | Texte uniquement : `color-mix(in srgb, var(--success) 88%, #000)` |
+| Blanc | `.success-badge` | **4,41:1** | Même assombrissement localisé du texte, token `--success` conservé |
+| Noir | `.priority-high` | **2,71:1** | Texte : `var(--aw-status-yellow-fg)`, rôle sombre existant |
+| Noir | `.priority-urgent` | **2,33:1** | Texte : `var(--aw-status-red-fg)`, rôle sombre existant |
+
+Les **14 autres états mesurés passaient déjà** et ne sont pas modifiés. Les fonds, les couleurs métier et les tokens globaux restent inchangés. Les calculs préalables des teintes candidates indiquent une marge au-dessus de 4,5:1, mais **seule la réexécution Chromium sur le HEAD corrigé permettra de le prouver**.
+
+**Correctif code** : `3a75266ba53d888f660b209ad281ae1fd9e8896c`. Test Windows en attente : relancer `node scripts/check-ux-v2-lot01a-states.cjs` sur cette branche. Le premier échec était un **échec voulu de la barrière d'accessibilité**, et `Fixture cleaned: true` confirme que le répertoire temporaire a été supprimé.
 
 Commande dans le même clone de validation indépendant :
 
