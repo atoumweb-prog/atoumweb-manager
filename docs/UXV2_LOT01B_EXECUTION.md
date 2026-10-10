@@ -141,6 +141,23 @@ Les composants du pilote ne sont **pas encore migrés sur les 17 modules** ; le 
 
 **Statut : correction syntaxiquement vérifiée, nouveau passage Windows À FAIRE.** Ce correctif n'affecte ni `AppButton` ni `OperationIcon`, ni les classes CSS, Devis, contrats/CGV, IPC, SQLite, schéma, base réelle ou `main`. La PR #87 reste draft et dépend de #86.
 
+## Second diagnostic clavier Windows — événement reçu, action absente
+
+**Deuxième recette sur le SHA `c6ab309e9439153c5fd8e9b95bcf6a60060b610e` : ÉCHEC confirmé.** Les 9/9 combinaisons graphiques passent de nouveau, puis le nouveau journal établit :
+
+```text
+Native keyboard focus {"focused":true,"active":"icon-action","keys":0}
+Native keyboard failure probe {"focused":true,"active":"icon-action","nativeKeys":["Enter"],"calls":0,"labels":[]}
+ERROR Error: Timeout Keyboard Enter action
+Fixture cleaned: true
+```
+
+**Observation** : le focus est **correct** et le `keydown Enter` arrive bien dans le DOM ; la séquence `keyDown → keyUp` de `webContents.sendInputEvent` **ne produit pas le clic** observé par `AppButton`. Le problème n'est donc plus explicable par la seule absence de focus. Il reste à distinguer la traduction des événements clavier d'Electron et la gestion d'un bouton React.
+
+**Nouveau banc comparatif préparé** : dans **la même fenêtre Electron**, rendre un `<button type="button">` HTML témoin et le `AppButton` React ; donner le focus à chacun ; injecter une touche Entrée **uniquement via `webContents.sendInputEvent`**, mesurer les `keydown` reçus et les vrais événements `click` ; en cas de défaut d'activation après `keyDown`, injecter le `char` natif `\r` avant `keyUp`, conformément au modèle d'entrée Electron/Chromium. Réclamer **une seule activation exacte** pour chaque bouton. Le log comporte `afterDown`, `usedChar`, `delivered`, focus, cibles, `isTrusted`, nombre de clics et handlers. Pas de `element.click()` ni de `dispatchEvent(new KeyboardEvent(...))` pour réussir le critère clavier ; l'éventuel clic programmatique séparé du test original reste une vérification distincte du handler.
+
+**Statut : code JavaScript syntaxiquement contrôlé, recette Windows comparative encore à exécuter.** Ni `AppButton.tsx`, ni `OperationIcon.tsx`, ni CSS, métier, SQLite ou migrations modifiés. Si le témoin natif échoue, il faudra revoir l'envoi du clavier par le banc avant d'incriminer l'application. S'il passe mais pas `AppButton`, le composant React devra être inspecté sans contournement artificiel.
+
 ## Non-modifications
 
 **Zéro changement métier** : aucun Devis, Catalogue, CGV, contrat, signature Abby, Projet, Bridge, CRM, migration, base SQLite, API ou droits utilisateur ; aucun remplacement des confirmations UX-01. Le composant n'intègre aucune dépendance externe. Retour arrière : revenir à la branche 01A (l'ancien `FieldHelp` et la règle `display:none` sont inchangés sur cette branche).
