@@ -161,7 +161,7 @@ Sont encore nécessaires avant la clôture complète de 01A : appréciation visu
 | **R01A-03 — 17 entrées et focus** | **Partiellement automatisé** | 17 destinations ouvrent, vraie touche Tab et anneau `:focus-visible` 2 px sur deux boutons témoins. Toutes les actions par clavier ne sont pas certifiées. |
 | **R01A-04 — Fiches Prospect, Devis, Projet, Intervention** | **Partiellement automatisé** | Six pages et 9 variantes montées sur SQLite TEMP vide. Les fiches détaillées et les actions de données spécifiques ne sont pas toutes ouvertes ni évaluées au pixel près. |
 | **R01A-05 — Petite fenêtre, zoom, scroll** | **Partiellement automatisé** | 1024 × 720, zoom 125/150 %, 10 visites zoom ; `overflowCandidates:[]` concerne le conteneur principal et n'exclut pas les masquages internes. |
-| **R01A-06 — Non-régression** | **À exécuter** | 300/300 contrôles de parcours natif + 18/18 contrastes **ne remplacent pas** `npm run typecheck`, `npm test -- --maxWorkers=2` et les UI ciblés d'avant la PR prête à fusionner. |
+| **R01A-06 — Non-régression** | **Tests complets Windows réussis ; typecheck non prouvé par le rapport transmis** | `npm test -- --maxWorkers=2` : **87/87 fichiers, 801/801 tests**, 102,58 s ; **35/35 restaurations SQLite**, dont le scénario « refuse A vers B » passé (4 137 ms). La sortie `npm run typecheck` ne figure pas dans le fichier de résultats transmis : ne pas déduire son statut des tests. |
 | **R01A-07 — États et focus** | **Partiellement automatisé, états mesurés PASS** | 6 classes d'état × 3 thèmes = **18/18 à ≥4,5:1**, focus 2 px. D'autres états/icônes et lisibilité humaine peuvent encore exister. |
 | **R01A-08 — Chrono, aide, icônes** | **Partiellement automatisé** | Chrono/recherche présents sur 86 visites, aide `?` témoin masquée/réaffichée via réglage IPC. Tous les vrais contrôles d'aide/icônes et le démarrage/arrêt chrono ne sont pas couverts. |
 
@@ -179,6 +179,19 @@ npm test -- --maxWorkers=2
 ```
 
 L'option `--captures` exporte **54 vues** pour comparaison, sans publier de fichiers utilisateur sur GitHub. Les captures ne doivent pas contenir de données métier réelles : le script travaille uniquement sur la fixture TEMP. Une erreur de test doit rester visible et ne peut pas être requalifiée comme succès. Un CI GitHub Windows final sur le HEAD courant, si nécessaire, doit être autorisé et tracé avant fusion.
+
+### R01A-06 — suite complète Windows exécutée, preuve apportée par le rapport AtoumWeb
+
+Résultat fourni le 10/10/2026 sous forme de journal Vitest du worktree `C:\DEV\01_PROJETS\AtoumWeb\atoumweb-manager-ux01-validation`. Le journal contient `RUN v3.2.7`, runtime **Electron 44.3.0 / Node 24.20.0**, et :
+
+- **`Test Files 87 passed (87)` ; `Tests 801 passed (801)`**.
+- **Durée : 102,58 secondes**.
+- **`src/main/restore.test.ts` : 35 tests passés, 66 256 ms** ; « refuse A vers B avant toute copie et ne restaure pas A au démarrage suivant » **PASS, 4 137 ms**. L'échec de timeout du CI post-fusion #85 n'est donc pas reproduit **dans cette exécution locale**, sans prouver qu'il ne se reproduira jamais dans la CI.
+- Contrats / CGV : les suites `ContractLibraryImportService.test.ts` (19), `QuoteContractPreparationService.test.ts` (39), `ContractTypeService.test.ts` (17) et `ContractTermsService.test.ts` (15) sont **vertes** ; ceci ne constitue **pas** une validation juridique des textes.
+- Le message « The CJS build of Vite's Node API is deprecated » est un **avertissement non bloquant**, pas un échec de test.
+- Le journal ne contient **pas la sortie de `npm run typecheck`**, ni un nouvel identifiant de commit. La dernière référence de branche contrôlée avant le rapport était `66f1cc46d14d6a60dd0ab600a4eb9c75932ac92b` (commits postérieurs à `8f0ce32d` documentaires uniquement). Le fichier de tests n'atteste pas **à lui seul** le SHA exact exécuté. Ne pas mentionner une CI GitHub verte pour #86.
+
+**État R01A-06** : suite de tests complète locale **VALIDÉE (801/801)** ; contrôle TypeScript **non attesté par la sortie fournie** ; recette UI native précédente **300/300** et contrastes **18/18** acquis sur `8f0ce32d`. Il reste les captures / la revue visuelle comparative exigées par le référentiel, puis la décision de validation humaine et les contrôles de publication appropriés. Aucune commande supplémentaire sur des données métier réelles n'est nécessaire.
 
 ### Vérifications humaines et suite de 01A
 
