@@ -61,7 +61,7 @@ L'inventaire source des **31 feuilles CSS** et de leurs variables déclarées/co
 
 **Nature de la preuve :** lecture directe des sources de la branche après E01, pas encore un audit visuel exhaustif des 17 écrans. Les validations natives 9/9 / 72/72 / 9/9 / 9/9 restent celles du SHA `466b8e45` ; les commits documentaires ultérieurs ne touchent pas le code exécuté.
 
-### Nouvelle recette des écrans React réels — prête, non encore exécutée
+### Nouvelle recette des écrans React réels — validée sur Windows
 
 Ajout de `scripts/check-ux-v2-lot01a-real-ui.cjs` sur la PR #86. À la différence de la première recette CSS synthétique (9/9), celle-ci charge **le véritable `src/renderer/main.tsx`**, le preload Electron et les IPC métier sur un **workspace SQLite TEMP créé exprès**. Elle n'ouvre jamais l'exécutable installé, le workspace courant ou Validation-MSI.
 
@@ -72,7 +72,17 @@ Ajout de `scripts/check-ux-v2-lot01a-real-ui.cjs` sur la PR #86. À la différen
 - À chaque visite : rendu sans écran d'erreur fatal, menu/entête, accès recherche/chrono, bascule thème/densité, présence d'une zone de contenu. Les débordements éventuels du conteneur sont **signalés comme candidats à examiner** et ne sont pas masqués.
 - Option `--captures <CHEMIN_ABSOLU_NOUVEAU>` pour exporter **54 captures** dans un dossier neuf, **hors Validation-MSI**. Cette option est désactivée par défaut, sans chemin de sortie implicite.
 
-**État honnête :** syntaxe JavaScript vérifiée, **exécution native Windows de cette nouvelle recette à confirmer**. Les 54 visites sont le **programme du test**, pas 54 succès déjà obtenus. Cette recette automatise des comportements mais ne remplace pas une inspection humaine du zoom, de l'ergonomie, des aides `?` ni tous les scénarios R01A.
+**Validation Windows native du 10/10/2026 — réussie sur le SHA `347117477ea3db6c34a67a99433e4d43d0de7650`.** Exécution par AtoumWeb dans le clone de validation `atoumweb-manager-ux01-validation`, avec `node --check` et `node scripts/check-ux-v2-lot01a-real-ui.cjs` :
+
+- **261/261 contrôles réussis, 0 échec**.
+- **17/17** destinations du vrai menu React/IPC ouvertes et vérifiées.
+- **9/9** combinaisons AtoumWeb / Noir / Blanc × Compact / Confort / Confort+ validées sur **6 écrans réels** chacune, soit **54 visites représentatives**.
+- **5 visites en fenêtre 1024 × 720**, **76 visites au total**.
+- Tailles calculées confirmées : **14/16/18 px** et hauteurs de contrôles **36/42/48 px** ; préférences enregistrées par IPC et retrouvées après rechargement.
+- Bilan exact : `{"passed":261,"failed":0,"realPages":17,"sampleVisits":54,"narrowVisits":5,"visits":76,"overflowCandidates":[],"consoleErrors":[],"onlyTemp":true}`.
+- Sortie de sécurité : **`Fixture cleaned: true`** ; base SQLite et profil de test uniquement dans `%TEMP%`.
+
+**Portée :** recette native Electron/React fonctionnelle sur de vrais écrans et services, et **aucun candidat de débordement du conteneur ni erreur de console détecté**. Ne pas confondre cela avec une validation visuelle humaine exhaustive, ni avec une preuve de contraste de tous les messages d'alerte/focus, d'accès clavier, du zoom et de l'aide `?`.
 
 Commande de recette depuis le worktree indépendant et propre :
 
