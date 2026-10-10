@@ -12,7 +12,8 @@
 }
 
 :root[data-density='compact'] {
-  --ui-font-base: 15px;
+  /* UX2-VIS-003 / E01 — base Compact cible du référentiel V2. */
+  --ui-font-base: 14px;
   --ui-font-secondary: 14px;
   --ui-font-small: 14px;
   --ui-control-height: 36px;
