@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { resolveFormFeedback, type FormFeedbackInput } from './formFeedback';
+import { mergeDraft } from './draftSection';
 
 const feedback = (value: FormFeedbackInput) => resolveFormFeedback(value);
 describe('UX V2 01E — scoped form feedback, without implicit saves', () => {
@@ -51,6 +52,16 @@ describe('UX V2 01E — scoped form feedback, without implicit saves', () => {
         input.serviceConfirmed === true && !input.dirty && !input.pending && !input.error && !input.conflict,
       );
     }
+  });
+  it('preserves the local draft and records a real three-way conflict', () => {
+    const merged = mergeDraft({ note: 'baseline' }, { note: 'local edit' }, { note: 'remote edit' });
+    expect(merged.value).toEqual({ note: 'local edit' });
+    expect(merged.conflicts).toEqual(['note']);
+  });
+  it('accepts a remote note only when no local modification exists', () => {
+    const merged = mergeDraft({ note: 'baseline' }, { note: 'baseline' }, { note: 'remote edit' });
+    expect(merged.value).toEqual({ note: 'remote edit' });
+    expect(merged.conflicts).toEqual([]);
   });
   it('provides explicit messages for every state', () => {
     for (const input of [
