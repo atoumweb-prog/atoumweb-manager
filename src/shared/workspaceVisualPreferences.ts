@@ -14,7 +14,7 @@ export function normalizeVisualValue(key: string, raw: string): string {
   for (const module of modules) {
     if (key === layoutKey(`table-demo:${module}`, 'list')) return JSON.stringify({ version: 1, listPercent: readLayout(store, key, 60) });
     if (key === tableViewKey(module)) return JSON.stringify(readTableView(store, key, TABLE_DEMO_STATUSES, TABLE_DEMO_CATEGORIES));
-    if (key === personalViewsKey(module)) return JSON.stringify({ version: 1, views: readPersonalViews(store, module, TABLE_DEMO_STATUSES, TABLE_DEMO_CATEGORIES).slice(0, 50) });
+    if (key === personalViewsKey(module)) return JSON.stringify({ version: 1, views: readPersonalViews(store, module, TABLE_DEMO_STATUSES, TABLE_DEMO_CATEGORIES) });
   }
   throw Error('Clé visuelle non enregistrée.');
 }
