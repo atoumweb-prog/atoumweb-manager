@@ -89,6 +89,9 @@ if(!process.versions.electron){
   assert(await get('localStorage.getItem("atoumweb:table-workshop:dossiers:v1")')===storedBeforeFailure,'Failed preference write leaves persisted view unchanged');
   await js('Storage.prototype.setItem=window.tableSetItem');await click('Effacer les filtres');
   assert(await get('!document.querySelector(".aw-ui-notice--error")'),'Confirmed retry removes preference failure');
+  const beforeViewChange=dialogs.length;await input('#table-view','autre-vue');
+  assert(dialogs.length===beforeViewChange+1&&await get('document.querySelector("#table-view").value==="dossiers"'),'Dirty view change uses existing Stay confirmation');
+  assert(await get('document.querySelector("[data-editor-instance]").dataset.editorInstance')===visualToken&&await get('document.querySelector("#table-record-note").value==="VISUEL TEST"'),'Refused view change preserves selected mount and draft');
   await js('document.querySelector(".aw-data-table-scroll").scrollTop=0;document.querySelector(".content-area").scrollTop=0;document.scrollingElement.scrollTop=0;');
   const captures=path.join(repo,'outputs','ux-v2-lot01d-reference');fs.mkdirSync(captures,{recursive:true});
   let frame=0;for(const theme of ['atoumweb','noir','blanc'])for(const [density,font]of [['compact',14],['comfort',16],['comfort_plus',18]]){
@@ -101,7 +104,7 @@ if(!process.versions.electron){
    let shot,verified=false;for(let i=0;i<8;i++){await sleep(70);shot=await win.webContents.capturePage();const size=shot.getSize(),bitmap=shot.toBitmap(),offset=((size.height-8)*size.width+size.width-8)*4;if(bitmap[offset]===rgb[2]&&bitmap[offset+1]===rgb[1]&&bitmap[offset+2]===rgb[0]){verified=true;break;}}
    assert(verified,'Capture freshness '+theme+'/'+density);fs.writeFileSync(path.join(captures,theme+'-'+density+'.png'),shot.toPNG());
   }
-  for(const zoom of [1,1.25,1.5]){win.setSize(900,800);win.webContents.setZoomFactor(zoom);await sleep(150);assert(await get('document.querySelector(".aw-record-split").classList.contains("is-narrow")'),'Narrow fallback '+zoom);assert(await get('document.querySelector("#table-record-note").value==="VISUEL TEST"'),'Narrow zoom preserves draft '+zoom);}
+  for(const zoom of [1,1.25,1.5]){win.setSize(900,800);win.webContents.setZoomFactor(zoom);await sleep(150);assert(await get('document.querySelector(".aw-record-split").classList.contains("is-narrow")'),'Narrow fallback '+zoom);assert(await get('document.querySelector("#table-record-note").value==="VISUEL TEST"'),'Narrow zoom preserves draft '+zoom);assert(await get('[...document.querySelectorAll("#table-query,#table-status,#table-category,.aw-record-pane-actions button")].every(e=>{const r=e.getBoundingClientRect();return r.width>0&&r.left>=0&&r.right<=innerWidth+1;})'),'Narrow essential controls reachable '+zoom);}
   assert(await get('JSON.stringify(window.__tableFixtures)')===source,'No source record mutation after all interactions');
   console.log(JSON.stringify({checks,failed:0,records:120,captures:9,onlyTemp:true,businessApiExposed:false}));win.destroy();app.exit(0);
  }).catch(e=>{console.error(e.stack);win?.destroy();app.exit(1);});
