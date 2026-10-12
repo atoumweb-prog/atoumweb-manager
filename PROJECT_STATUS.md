@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 12/10/2026 — Plan de consolidation 01A/B/C et inventaire 01D.1
+
+- Plan publié pour autorisation, **aucune fusion ni CI déclenchée** : #86→main puis #87→main puis #88→main après validation de chaque étape. Chaîne actuelle linéaire (29/48/4 commits propres, zéro retard), toutes draft/mergeable ; simulations d'arbres sans conflit. Main07dde9c8 non protégée selon l'API : accord humain et checks réels explicitement exigés par la procédure. [Plan et risques](docs/UXV2_CONSOLIDATION_01ABC_PLAN.md).
+- Branche documentaire distincte `codex/ux-v2-lot01d-inventory-v1` depuis01C@0fab2ae. [Inventaire 01D.1](docs/UXV2_LOT01D_INVENTAIRE_01.md) : sept vues pilotes, colonnes/champs/identités, tris/filtres/handlers, contrats de liste, archivés et limites UX-01. Atelier défini sur120 dossiers synthétiques, réutilisant01B/01C ; aucun composant de table ou écran métier implémenté à ce stade.
+- Préserver tri catégorie/nomCatalogue, sortOrder contractuel/production, services de recherche/filtrage et commandes métier séparées de l'ouverture. Filtre masquant sélection : garder détail/brouillon montés. États01D prévus, aucun PASS anticipé. [Cadrage initial](docs/UXV2_LOT01D_CADRAGE.md) reste normatif avec le référentiel#82.
+- Publication draft sans CIhébergée via skipci, pas de retarget de86/87/88 exécuté ; Main et Validation-MSI inchangés. Recette humaine globale différée. Prochaine étape : autorisation de consolidation/CI séparée, puis types/fixtures/atelier01D.2 selon le plan, sans port simultané des17modules.
+
 ## 12/10/2026 — 01C : écriture en fin de geste, bilan technique et cadrage 01D
 
 - Observation de la revue #88 corrigée au code `01b95a4a8ded84984e908fa982324e63e83ca1ef` : affichage immédiat au pointermove, aucune écriture intermédiaire, une sauvegarde de la largeur finale au relâchement ou blur. Fin doublée ignorée ; geste immobile/annulé et changement de module sans écriture tardive. Clavier/reset conservés, aucun service métier modifié.
