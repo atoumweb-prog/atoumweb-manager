@@ -83,3 +83,14 @@ Lancement interactif volontaire, avec données fictives : `scripts/launch-ux-v2-
 **Ne pas assimiler ces vérifications locales partielles à Vitest, à un typecheck de l'application, à des tests Electron Windows ou à la recette R01E entière.** L'atelier n'est pas branché sur `App.tsx` ni sur un éditeur métier : la PR #90 reste un **pilote en cours**, aucun résultat R01E-01…20 n'est déclaré définitivement PASS.
 
 **Étape suivante** : vraie exécution Windows des commandes ci-dessus ; après corrections éventuelles, préparer les scénarios R01E-03 à 06 (sous-éditeur indépendant, réponse de sauvegarde tardive, conflit et absence de faux succès), puis le protocole de `Enregistrer et quitter` **uniquement en conception** tant que les capacités et l'autorisation métier ne sont pas validées.
+
+## Revue corrective des actions de l'atelier
+
+Sur la version du pilote publiée après son premier squelette, deux protections supplémentaires ont été codées **avant recette Windows** :
+
+1. **Conflit non effacé par la saisie** : écrire dans un champ laisse le conflit apparent ; la simulation exige un effacement explicite du conflit fictif avant de pouvoir montrer un retour positif. Ce n'est **pas** une résolution métier réelle.
+2. **Annuler une note passe par `requestUnsavedExit` sur son groupe**, avec `Rester` par défaut. Le banc comporte les deux assertions : annulation refusée = texte intact ; abandon expressément accepté = restauration de la baseline de ce formulaire uniquement.
+
+Ces changements restent limités au composant `FormFeedbackWorkshop` et à son banc ; ni `unsavedRegistry`, ni les services, ni l'éditeur de Devis/Prospect existant ne sont modifiés.
+
+Dernier HEAD consulté dans cette reprise : `feature/ux-v2-lot01e-form-feedback-v1@63f7686ba591d3273883c638e241f2640ffde9a7`. **Tests Electron, 3×3 et suite complète encore à exécuter sur ce HEAD** ; ne pas donner de score fictif.
