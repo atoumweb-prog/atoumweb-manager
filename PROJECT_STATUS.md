@@ -1,5 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 12/10/2026 — 01F : persistance par workspace et recette transversale
+
+- Branche distincte `codex/ux-v2-lot01f-preferences-v1` depuis90@4653e58. Stockage inspecté : apparence dansSQLite/settings parworkspace, bootstrapworkspace.json seulement pour choisir le dossier. Adaptateur de dispositions versionné sur le même propriétaire, sans migration ; aucun texte/id de dossier dans les préférences.
+- Atelier01A–01E autonome, injection du magasin, onglets gardant leurs éditeurs montés, notifications entre deuxfenêtres et reset limité aux dispositions. DeuxbasesTEMP, vrais handlerssettings seulement ; aucune APIbusiness exposée ni raccord App.tsx/preloadproduction. [Bilan et contrat](docs/UXV2_LOT01F_EXECUTION.md).
+- Code31ed71e (depuisfc3fc3e) : typecheckOK, ciblés49/49, complet867/867 dans94fichiers,100,46s,sansRPC ; natif76/deuxprocessus/neufcaptures/SHAexact. RégressionsE95/D126/C66/UX-01183, renderer300/17destinations aucheckpointfc3 ; B70/40/Abby25 finaux. Tables horssettings inchangées, intégrité/FK et migrations1–66 TEMP, nettoyages confirmés. Test60vues empêche troncature silencieuse.
+- [22critères](docs/UXV2_LOT01F_GATES.md) : limitesCI20 et revuehumaine22 explicitement différées. Socle technique proposé àreview, pas migration desmodules ni garantie collaborative. PRdistincte draft/base90, publicationsskipci, aucuneCIhébergée/fusion/Validation-MSI.
+- Prochaine étape : lot02 après revue/consolidation. Prospection/lot03 noncommencés ; l'ancien piloteProspection proposé aprèsD n'est plus l'étape suivante autorisée. Save-and-exit métier et crash recovery restent nonactivés.
+
 ## 12/10/2026 — 01E Windows stabilisé, suite01F autorisée
 
 - Départ90@ce8d1767 propre, base89 préservée. CastTypeScript corrigé sansaffaiblirassertions ; shelldubanc corrigé aprèscapturecompressée. Code8f52747/bancfinald4b38798 : atelierA/B, saveéchecasync/déduplication, sixétats, clavier/Escape/reload/twofenêtres viaUX-01existant.
