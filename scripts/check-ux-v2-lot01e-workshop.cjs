@@ -14,7 +14,7 @@ if(!process.versions.electron){
   fs.writeFileSync(path.join(temp,'preload.cjs'),"const {contextBridge,ipcRenderer}=require('electron');contextBridge.exposeInMainWorld('atoumweb',{unsaved:{confirmExit:(labels,pending)=>ipcRenderer.sendSync('unsaved:confirm-exit',labels,pending),publishState:state=>ipcRenderer.sendSync('unsaved:state',state)}});");
   const entry=fs.readFileSync(path.join(repo,'src/renderer/main.tsx'),'utf8');
   const css=[...entry.matchAll(/^import '\.\/([^']+\.css)';$/gm)].map(m=>fs.readFileSync(path.join(repo,'src/renderer',m[1]),'utf8')).join('\n');
-  fs.writeFileSync(path.join(temp,'index.html'),'<html lang="fr"><head><meta charset="utf-8"><title>AtoumWeb — 01E TEST</title><style>'+css+'</style><link rel="stylesheet" href="fixture.css"></head><body><div class="app-shell"><main class="main-area"><div id="root"></div></main></div><script src="fixture.js"></script></body></html>');
+  fs.writeFileSync(path.join(temp,'index.html'),'<html lang="fr"><head><meta charset="utf-8"><title>AtoumWeb — 01E TEST</title><style>'+css+'</style><link rel="stylesheet" href="fixture.css"></head><body><div class="app-shell"><aside class="sidebar">AtoumWeb — Atelier TEST</aside><main class="main-area"><section class="content-area"><div id="root"></div></section></main></div><script src="fixture.js"></script></body></html>');
   const env={...process.env,ATOUMWEB_01E_TEMP:temp};delete env.ELECTRON_RUN_AS_NODE;
   const run=spawnSync(require('electron'),[__filename,...process.argv.slice(2)],{env,windowsHide:!interactive,encoding:'utf8',maxBuffer:4*1024*1024,...(!interactive?{timeout:120000}:{})});
   process.stdout.write(run.stdout||'');process.stderr.write(run.stderr||'');
@@ -43,6 +43,7 @@ if(!process.versions.electron){
   await wait('document.querySelectorAll("article[aria-label]").length===2');
   if(interactive){console.log('Atelier 01E interactif TEST, profil TEMP uniquement.');return;}
   assert(await get('Object.keys(window.atoumweb).join(",")==="unsaved"'),'Only native UX-01 IPC exposed');
+  assert(await get('document.querySelector(".aw-form-workshop").clientWidth>=document.querySelector(".content-area").clientWidth*.8'),'Workshop uses full content width, not a collapsed shell');
   assert(await state('A')==='clean'&&await state('B')==='clean','Editors start clean independently');
   await input('A','Brouillon A');assert(await state('A')==='dirty'&&await state('B')==='clean','Editing A does not dirty B');
   await input('B','Brouillon B');assert(await state('B')==='dirty','Second editor has its own draft');
@@ -88,6 +89,7 @@ if(!process.versions.electron){
   for(const theme of ['atoumweb','noir','blanc'])for(const [density,font]of [['compact',14],['comfort',16],['comfort_plus',18]]){
    await js('document.documentElement.dataset.theme='+JSON.stringify(theme)+';document.documentElement.dataset.density='+JSON.stringify(density));await sleep(70);
    assert(await get('parseFloat(getComputedStyle(document.body).fontSize)')===font,'Theme density '+theme+'/'+density);
+   assert(await get('getComputedStyle(document.querySelector(".aw-ui-button")).borderRadius!=="0px"'),'Shared styled controls loaded '+theme+'/'+density);
    assert(await get('[...document.querySelectorAll(".aw-form-workshop-gallery [data-form-feedback]")].map(e=>e.dataset.formFeedback).join(",")==="clean,dirty,pending,error,conflict,saved"'),'Six exact scoped states in '+theme+'/'+density);
    assert(await get('document.querySelector('+JSON.stringify(sel('B')+' input')+').value==="Brouillon B"'),'Theme does not mutate draft '+theme+'/'+density);
    const rgb=[20+(++frame)*16,50+frame*11,80+frame*7];
