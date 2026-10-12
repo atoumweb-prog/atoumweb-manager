@@ -1,5 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 12/10/2026 — 01D.2 : atelier de tableaux avec fiche et brouillon protégés
+
+- Branche et PR89 existantes conservées, départ3edf5e3 ; code fbc029d, banc renforcé eda2eae. DataTable/TableFilterBar/TableColumnManager et atelier sur120 dossiers immuables : rechercher/filtrer/trier/montrer-masquer colonnes et ouvrir/agrandir une fiche avec les primitives01B/01C. Aucun écran métier ni service réel modifié.
+- Priorité vérifiée : selectedId et détail résolus depuis la source complète ; filtre/tri/colonne ne démonte ni fiche, onglet, ni brouillon. Garde UX-01 existante sur nouvel objet/vue/fermeture, pas de deuxième registre. Préférences whitelistées, query/id/note exclus ; panne de stockage sans perte de saisie.
+- TypecheckOK ; ciblés16/16 ; complet826/826 dans90fichiers,109,41s sansRPC surfbc029d ; atelier01D92/92 et neuf captures synchronisées sureda2eae ; atelier01C66/66 et UX-01183/183 verts. Migrations1–66/intégrité/FK sur fixtures uniquement, TEMP nettoyé, captures horsGit, aucune utilisation Validation-MSI.
+- [Rapport et critères partiels](docs/UXV2_LOT01D_EXECUTION.md) : 01D.2 livré, pas clôture totale01D. Vues personnelles, réordonnancement/resize de colonnes et async/pagination restent ultérieurs. Lanceur indépendant scripts/launch-ux-v2-lot01d-workshop.cmd.
+- Publication régulière PR89 draft avec skipci ; #86/#87/#88 ni reciblées ni fusionnées, aucune CI hébergée. Le plan de consolidation reste prêt, mais non exécuté dans cette mission. Recette humaine globale différée et risques de perte/mutation toujours bloquants.
+
 ## 12/10/2026 — Plan de consolidation 01A/B/C et inventaire 01D.1
 
 - Plan publié pour autorisation, **aucune fusion ni CI déclenchée** : #86→main puis #87→main puis #88→main après validation de chaque étape. Chaîne actuelle linéaire (29/48/4 commits propres, zéro retard), toutes draft/mergeable ; simulations d'arbres sans conflit. Main07dde9c8 non protégée selon l'API : accord humain et checks réels explicitement exigés par la procédure. [Plan et risques](docs/UXV2_CONSOLIDATION_01ABC_PLAN.md).

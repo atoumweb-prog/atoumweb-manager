@@ -1,5 +1,7 @@
 # 01D.1 — inventaire détaillé des listes pilotes et définition de l'atelier
 
+**État suivant :** le premier atelier01D.2 est désormais implémenté dans la même PR89, sans port métier. Voir [code, preuves et limites](UXV2_LOT01D_EXECUTION.md). L'inventaire et les propositions ci-dessous restent l'état documenté au commit3edf5e3, pas une attestation que tous les16critères sont clos.
+
 Départ : **01C@0fab2ae50b029e3a0734d6d78833686f91224295**, main distant07dde9c8. Branche dédiée `codex/ux-v2-lot01d-inventory-v1`, empilée sur #88. Référentiel #82 `docs/ux-v2/LOT-01D-TABLEAUX-VUES.md` et cadrage `UXV2_LOT01D_CADRAGE.md` lus. **Livraison documentaire de01D.1 : pas de composant de table ni écran métier implémenté.**
 
 ## Sources, données et identité — sept vues pilotes
