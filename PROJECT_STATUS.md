@@ -1,5 +1,19 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 12/10/2026 — 01C : écriture en fin de geste, bilan technique et cadrage 01D
+
+- Observation de la revue #88 corrigée au code `01b95a4a8ded84984e908fa982324e63e83ca1ef` : affichage immédiat au pointermove, aucune écriture intermédiaire, une sauvegarde de la largeur finale au relâchement ou blur. Fin doublée ignorée ; geste immobile/annulé et changement de module sans écriture tardive. Clavier/reset conservés, aucun service métier modifié.
+- Atelier **66/66**, neuf captures synchronisées hors Git, tests ciblés **19/19**, typecheck OK, suite **810/810 dans 88 fichiers, 107,08 s**, sans RPC. Préférences corrompues et reset refusé/réussi contrôlés sans perte de brouillon. Fixtures TEMP nettoyées ; aucune utilisation de Validation-MSI.
+- [Bilan final 01C au périmètre socle/atelier](docs/UXV2_LOT01C_EXECUTION.md), recette humaine globale différée. Adaptation settings/workspace et ports métier restent hors de cette clôture, pas de couverture implicite des futures fiches. [Cadrage 01D](docs/UXV2_LOT01D_CADRAGE.md) préparé depuis le référentiel #82 : aucun développement de tableau ou modification des écrans métier.
+- Publication sur la branche existante #88, messages skipci ; PR conservées draft. Aucun merge/main, CI hébergée supplémentaire, migration réelle ou Bridge. Pertes de saisie et mutations métier incorrectes restent bloquantes.
+
+## 12/10/2026 — 01B publié, premier atelier fonctionnel 01C
+
+- Autorisation AtoumWeb : clôture **technique** 01B au périmètre pilote, recette humaine globale différée à la fin V2 ; tests techniques obligatoires, pertes de saisie/mutations incorrectes toujours bloquantes. #87 publié normalement à `2d1ddb7604422850df4921e10250b6186a0094b4`, deux commits validés et16fichiers présents ; messages skipci, pas de nouvelle CI. #82 actualisé à0bb0860, #82/#86/#87 draft.
+- Branche indépendante `codex/ux-v2-lot01c-panels-v1` depuis ce HEAD01B. Inventaire des fiches/séparateurs existants, nouvelles primitives isolées ResizableSplitView/RecordPane, atelier React/Electron TEST et stockage visuel injectable. Code `f8d60c4deef5109b8179722f20e612b43d10be85`, aucune migration des17modules ni modification Main/preload/contrats/SQLite.
+- Atelier51/51, neuf captures frame-vérifiées sous outputs ignoré, typecheckOK, ciblés19/19, UX-01 natif183/183, suite **810/810 dans88fichiers,107,47s,sansRPC** sur f8d60c4. [Rapport01C](docs/UXV2_LOT01C_EXECUTION.md). Profil/banc TEMP, aucun accès Validation-MSI. Préférences uniquement visuelles ; adaptation settings/workspace et ports métier restent ultérieurs.
+- Premier incrément01C autorisé à être publié en PR distincte draft empilée sur87, sans merge. Recette humaine finale différée ; prochaine étape technique : approfondir erreurs de préférence/fenêtres détachées et préparer l'adaptateur lors des ports. Aucun développement de Enregistrer et quitter, aucune nouvelle architecture de confirmation, aucun Bridge/WordPress.
+
 ## 12/10/2026 — Reprise UX/UI V2 : lot 01B et garde Abby
 
 - Main distant `07dde9c85dab337ee0ed3a5a92034a139d7ebad2`, #81 terminée et #83 fermée sans fusion. Référentiel #82 lu à efb4fe6 ; reprise propre de #87 sur `feature/ux-v2-lot01b-components-v1@b9679c3`, base #86 toujours draft. Aucun retour aux anciennes branches ni réinitialisation.
