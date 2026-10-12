@@ -1,5 +1,11 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 12/10/2026 — 01E Windows stabilisé, suite01F autorisée
+
+- Départ90@ce8d1767 propre, base89 préservée. CastTypeScript corrigé sansaffaiblirassertions ; shelldubanc corrigé aprèscapturecompressée. Code8f52747/bancfinald4b38798 : atelierA/B, saveéchecasync/déduplication, sixétats, clavier/Escape/reload/twofenêtres viaUX-01existant.
+- TypecheckOK, ciblés52/52, complet859/859(93fichiers,100,20s,sansRPC), natif95/neufcaptures/SHAexact. UX-01183/D126/C66verts, migrations1–66/intégrité/FK TEMP, aucuneValidation-MSI. [20gates/limites](docs/UXV2_LOT01E_GATES.md).
+- Clôture technique01E.5/6 pilote proposée ; save-and-exit resteconception, aucuneactivationmétier. Suite01F autorisée dansbranche/PRdistinctes ; paslot02/03/migrationgénérale. AucuneCIhébergée/fusion, PR86–90préservées.
+
 ## 12/10/2026 — 01D.4 terminé, clôture technique du socle proposée
 
 - Code7c46651 sur PR89 draft/base88 : source complète ou page partielle simulée, tri/filtre global avant pagination, compteurs exacts, loading/erreur/retry/vide distincts. Succès et erreurs périmés ignorés ; fiche/key/onglet/brouillon conservés. Aucune API métier ni port d'écran réel.

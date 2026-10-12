@@ -1,0 +1,41 @@
+/* UX/UI V2 — 01E isolated form workshop (no impact on Manager routes). */
+.aw-form-workshop {
+  display: grid;
+  align-content: start;
+  gap: var(--ui-gap, 12px);
+  padding: var(--ui-panel-pad, 22px);
+  color: var(--text);
+  max-width: 100%;
+  min-width: 0;
+}
+.aw-form-workshop > h1 { font-size: max(18px, var(--ui-font-base, 16px)); margin: 0; }
+.aw-form-workshop-card {
+  display: grid;
+  gap: var(--ui-gap, 12px);
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: var(--ui-panel-pad, 22px);
+}
+.aw-form-workshop-card > h2 {
+  font-size: max(16px, var(--ui-font-base, 16px));
+  margin: 0;
+}
+.aw-form-workshop-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+.aw-form-workshop-actions .aw-ui-button-wrap { min-width: 0; }
+.aw-form-workshop-actions button { white-space: normal; overflow-wrap: anywhere; }
+.aw-form-workshop .aw-form-feedback { min-width: 0; max-width: 100%; }
+@media (max-width: 720px) {
+  .aw-form-workshop { padding: var(--ui-gap, 12px); }
+  .aw-form-workshop-card { padding: var(--ui-gap, 12px); }
+  .aw-form-workshop-actions .aw-ui-button-wrap { flex: 1 1 150px; }
+  .aw-form-workshop-actions button { width: 100%; }
+}
