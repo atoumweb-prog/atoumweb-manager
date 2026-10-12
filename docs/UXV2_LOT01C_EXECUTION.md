@@ -1,5 +1,17 @@
 # UX/UI V2 — 01C : socle et atelier fonctionnel, 12/10/2026
 
+## Bilan final du périmètre socle/atelier — correction de la revue #88
+
+Observation traitée : chaque pointermove appelait aussi la sauvegarde. Code corrigé au SHA **01b95a4a8ded84984e908fa982324e63e83ca1ef** : aperçu de largeur immédiat en mémoire ; une écriture de la dernière largeur au pointerup ou à la fin par blur. Geste sans déplacement : zéro écriture ; pointercancel : retour visuel, zéro écriture ; changement de module/store ou démontage : nettoyage sans écriture tardive. Clavier et reset restent des commandes ponctuelles. Aucun champ métier enregistré par le geste.
+
+Contrôle permanent du banc : trois vrais mouvements natifs, zéro write avant relâchement, affichage modifié avant la fin, exactement un write après, dernière valeur conforme à la précision de sérialisation CSS, fin doublée ignorée. Compléments : annulation, blur, changement de module en plein geste, préférence corrompue et reset refusé/réussi sans effacer le brouillon.
+
+Résultats actualisés sur ce SHA : **atelier 66/66 et neuf captures synchronisées**, ciblés **19/19**, typecheck **OK**, suite complète **810/810 dans 88 fichiers, 107,08 s**, sortie 0 et aucune erreur RPC. TEMP nettoyé. Les preuves anciennes ci-dessous restent attachées à f8d60c4 et ne doivent pas être attribuées au nouveau code.
+
+**01C techniquement livré au périmètre socle/atelier**, recette humaine globale différée. Les ports métiers et la persistance applicative/settings stable ne sont pas inclus dans cette clôture ; leur couverture future ne découle pas de66tests pilote. #88 reste draft, sans fusion ni CI hébergée. [Cadrage01D](UXV2_LOT01D_CADRAGE.md) préparé depuis #82 ; aucun écran métier01D ni nouvelle primitive de tableau implémenté.
+
+## Historique du premier incrément
+
 Branche `codex/ux-v2-lot01c-panels-v1`, empilée sur #87 à **2d1ddb7604422850df4921e10250b6186a0094b4**. Référentiel `LOT-01C-FICHES-PANNEAUX.md` lu sur #82. 01B publié et techniquement achevé au périmètre pilote ; acceptation humaine globale différée. #82/#86/#87 restent draft. Aucun merge, CI hébergée ou accès Validation-MSI.
 
 Code de cet incrément : **f8d60c4deef5109b8179722f20e612b43d10be85**. Le commit de suivi ultérieur ne modifie pas ce code. Messages `[skip ci]` ; aucun déclenchement volontaire de CI hébergée.
