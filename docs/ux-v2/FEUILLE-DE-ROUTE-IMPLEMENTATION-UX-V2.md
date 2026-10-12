@@ -62,3 +62,15 @@ Un chantier ne passe pas de `specification` à `prêt à coder` tant que sont ab
 Elle **ne** vaut pas ordre à Codex de reprendre ou modifier #81/#83, de lancer Windows Actions, de modifier le budget, de rendre le dépôt public, de changer une clause contractuelle, de restaurer SQLite ou de publier WordPress. Ces opérations exigent **une demande et une validation distinctes d'AtoumWeb**.
 
 **Prochain livrable concret après validation du plan : fiche S1 ou S2 avec vrai HEAD, récap des tests et PR ciblée, pas la V2 entière.**
+
+## Actualisation de statut pour la reprise Codex — 12/10/2026
+
+La version de cadrage du 09/10 et ses dépendances initiales sont conservées **pour l'historique**, mais leur statut d'alors est désormais dépassé. **Point de reprise impératif : [REPRISE-CODEX-2026-10-12.md](REPRISE-CODEX-2026-10-12.md).**
+
+- **#81 est maintenant fusionnée dans `main`**, alors que **#83 reste en brouillon et non fusionnable** ; examiner les causes spécifiques avant toute éventuelle décision sur #83, sans recréer la garde UX-01.
+- **#86 / Lot 01A** : développé et testé localement, **draft non fusionné** ; **#87 / Lot 01B** : composants pilotes et tests réussis sur SHA documenté, **draft empilé sur #86**.
+- **Nouvelle décision AtoumWeb du 12/10, R01B-10 : bloquer « Copier le bloc commercial pour Abby » sur modifications non enregistrées ou sauvegarde en cours concernant le devis actuel.** Première implémentation dans #87, **recette du dernier correctif pas encore validée**, conformément à la spécification 01B actualisée.
+- Les résultats déjà prouvés sur le socle historique (**300/300 UI réel, 801/801 tests, typecheck**) ne sont ni une validation des **1 069 scénarios documentaires**, ni une nouvelle refonte de navigation.
+- **Priorité immédiate :** relire la PR #87, exécuter le test isolé `check-ux-v2-lot01b-abby-guard.cjs`, corriger au besoin sur branche dédiée, passer la non-régression, puis réévaluer les critères R01B restants. **01C seulement après accord distinct**. Aucun merge ni coût CI déclenché par ce pointage.
+
+L'ancienne feuille de route reste une proposition stratégique, pas une autorisation implicite de fusion ou de migration de données.
