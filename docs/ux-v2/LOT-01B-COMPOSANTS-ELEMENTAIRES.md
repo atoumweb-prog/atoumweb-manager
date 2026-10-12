@@ -1,5 +1,11 @@
 # Lot 01B — Boutons, champs, icônes, aides, confirmations et notifications
 
+## Décision AtoumWeb — publication et clôture technique, 12/10/2026
+
+01B est **techniquement achevé au périmètre pilote** ; acceptation humaine globale différée à la fin UX/UI V2. #87 publié au HEAD `2d1ddb7604422850df4921e10250b6186a0094b4`, correctif effectivement testé `af5cdc559517e049c45f80acf551928e0dd28772` : Abby25+21, UX-01 183, contrôles40/aide70, icônes42/notices30/atelier50, interface réelle300, Vitest801/87 fichiers (108,59 s), typecheck/intégrité/FK OK. Rapports et matrice consultables dans #87. Aucune fusion ni nouvelle CI hébergée. Les états « tests ouverts » ci-dessous sont historiques.
+
+Développement 01C désormais autorisé sur une branche distincte empilée sur 01B : socle de fiches/panneaux et atelier isolé, pas migration massive des modules. Tests techniques obligatoires à chaque incrément ; arbitrage humain seulement pour conception importante/risque métier. Toute perte de saisie ou mutation incorrecte reste bloquante. #82/#86/#87 restent draft ; pas de données réelles, Bridge ou migration non autorisée.
+
 **Statut actualisé le 12/10/2026 : spécification + implémentation pilote du 01B développée dans la PR #87 (draft, base #86), avec non-régression globale validée sur `36ef9e8` ; ce référentiel reste le cahier des charges, pas une attestation d'intégration/fusion.**  
 **Code inspecté : `main@eb252d5cbd0e95137eafa2b4759fcbcfd7263eda` ; garde UX-01 spécifique à PR #83 non fusionnée au dernier pointage.**  
 **Dépendances :** [Lot 01](LOT-01-FONDATIONS.md), [01A — Tokens visuels](LOT-01A-TOKENS-VISUELS.md), [Matrice existant→V2](LOT-01-MATRICE-EXISTANT-CIBLE.md), [Design system](DESIGN-SYSTEM.md).
