@@ -34,6 +34,24 @@ describe('UX V2 01E — scoped form feedback, without implicit saves', () => {
     expect(feedback(input)).toEqual(first);
     expect(input).toEqual({ dirty: true, pending: false, serviceConfirmed: true });
   });
+  it('checks all 32 combinations: no stale save acknowledgement can mask blockers', () => {
+    const states = ['dirty', 'pending', 'error', 'conflict', 'serviceConfirmed'] as const;
+    for (let mask = 0; mask < 32; mask++) {
+      const input = Object.fromEntries(states.map((state, index) => [state, Boolean(mask & (1 << index))]))
+        as unknown as FormFeedbackInput;
+      const state = feedback(input);
+      const expected = input.conflict ? 'conflict'
+        : input.pending ? 'pending'
+        : input.error ? 'error'
+        : input.dirty ? 'dirty'
+        : input.serviceConfirmed ? 'saved'
+        : 'clean';
+      expect(state.kind, `combination #${mask}`).toBe(expected);
+      expect(state.kind === 'saved', `combination #${mask}`).toBe(
+        input.serviceConfirmed === true && !input.dirty && !input.pending && !input.error && !input.conflict,
+      );
+    }
+  });
   it('provides explicit messages for every state', () => {
     for (const input of [
       { dirty: false }, { dirty: true }, { dirty: false, pending: true },
