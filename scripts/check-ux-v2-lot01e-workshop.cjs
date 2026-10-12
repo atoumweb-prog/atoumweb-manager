@@ -80,8 +80,13 @@ if(!process.versions.electron){
    fs.writeFileSync(path.join(out,theme+'-'+density+'.png'),shot.toPNG());
   }
   for(const zoom of [1,1.25,1.5]){win.setSize(900,750);win.webContents.setZoomFactor(zoom);await sleep(140);assert(await get('document.querySelector('+JSON.stringify(sel('B')+' input')+').value==="Brouillon B"'),'Draft survives zoom '+zoom);}
-  await action('B','Annuler cette note');assert(await state('B')==='clean','Scoped discard clears B only');
-  assert(await get('document.querySelector('+JSON.stringify(sel('B')+' input')+').value===""'),'Discard restores B baseline');
+  const beforeDiscard=dialogs.length;
+  await action('B','Annuler cette note');
+  assert(dialogs.length===beforeDiscard+1&&dialogs.at(-1).defaultId===0,'Discard must request UX01 permission first');
+  assert(await get('document.querySelector('+JSON.stringify(sel('B')+' input')+').value==="Brouillon B"'),'Refused discard keeps the entire draft');
+  replies.push(1);await action('B','Annuler cette note');
+  assert(await state('B')==='clean','Explicitly accepted discard cleans B only');
+  assert(await get('document.querySelector('+JSON.stringify(sel('B')+' input')+').value===""'),'Accepted discard restores B baseline');
   console.log(JSON.stringify({checks,failed:0,captures:9,onlyTemp:true,noBusinessIpc:true}));
   win.destroy();app.exit(0);
  }).catch(e=>{console.error(e.stack);win?.destroy();app.exit(1)});
