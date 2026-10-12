@@ -39,7 +39,27 @@ if(!process.versions.electron){
   await click('Notes');await input('Pending');await click('Confirmer la note fictive');win.close();await sleep(50);assert(!win.isDestroyed()&&dialogs.at(-1).buttons.join('|')==='Rester','Pending save blocks native close');await wait('!document.querySelector("#workshop-note").disabled');
   win.focus();win.webContents.focus();await wait('document.hasFocus()');await js('document.querySelector(".aw-record-separator").focus()');await sleep(100);
   const before=await get('Number(document.querySelector(".aw-record-separator").getAttribute("aria-valuenow"))');win.webContents.sendInputEvent({type:'keyDown',keyCode:'Left'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Left'});await sleep(80);assert(await get('Number(document.querySelector(".aw-record-separator").getAttribute("aria-valuenow"))')<before,'Native keyboard resize');
-  const rect=await get('(()=>{const r=document.querySelector(".aw-record-separator").getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+20}})()');win.webContents.sendInputEvent({type:'mouseDown',x:Math.round(rect.x),y:Math.round(rect.y),button:'left',clickCount:1});win.webContents.sendInputEvent({type:'mouseMove',x:700,y:Math.round(rect.y)});win.webContents.sendInputEvent({type:'mouseUp',x:700,y:Math.round(rect.y),button:'left',clickCount:1});await sleep(100);
+  await js('window.dragWrites=[];window.dragSetItem=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){window.dragWrites.push({k,v});return window.dragSetItem.call(this,k,v);};');
+  const beforeDrag=await get('document.querySelector(".aw-record-split").style.gridTemplateColumns');
+  const rect=await get('(()=>{const r=document.querySelector(".aw-record-separator").getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+20}})()');win.webContents.sendInputEvent({type:'mouseDown',x:Math.round(rect.x),y:Math.round(rect.y),button:'left',clickCount:1});
+  for(const x of [650,700,750]){win.webContents.sendInputEvent({type:'mouseMove',x,y:Math.round(rect.y)});await sleep(60);}
+  assert(await get('window.dragWrites.length===0'),'No preference writes during pointermoves');
+  assert(await get('document.querySelector(".aw-record-split").style.gridTemplateColumns')!==beforeDrag,'Visual resize immediate before gesture ends');
+  win.webContents.sendInputEvent({type:'mouseUp',x:750,y:Math.round(rect.y),button:'left',clickCount:1});await sleep(100);
+  assert(await get('window.dragWrites.length===1'),'Exactly one preference write on gesture end');
+  // CSS serializes percentages with fewer decimal places than JSON numbers.
+  assert(await get('Math.abs(JSON.parse(window.dragWrites[0].v).listPercent-parseFloat(document.querySelector(".aw-record-split").style.gridTemplateColumns))<0.0001'),'Stored width is the final preview within CSS serialization precision');
+  await js('window.dispatchEvent(new PointerEvent("pointerup"));');assert(await get('window.dragWrites.length===1'),'Duplicate end cannot persist twice');
+  await js('window.dragWrites=[];document.querySelector(".aw-record-separator").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}));window.dispatchEvent(new PointerEvent("pointerup"));');
+  assert(await get('window.dragWrites.length===0'),'Gesture without movement does not write');
+  const beforeCancel=await get('document.querySelector(".aw-record-split").style.gridTemplateColumns');
+  await js('document.querySelector(".aw-record-separator").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}));window.dispatchEvent(new PointerEvent("pointermove",{clientX:620}));');await sleep(60);
+  await js('window.dispatchEvent(new PointerEvent("pointercancel"));window.dispatchEvent(new PointerEvent("pointerup"));');await sleep(60);
+  assert(await get('window.dragWrites.length===0'),'Canceled pointer gesture never writes');
+  assert(await get('document.querySelector(".aw-record-split").style.gridTemplateColumns')===beforeCancel,'Canceled gesture restores prior visual width');
+  await js('document.querySelector(".aw-record-separator").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}));window.dispatchEvent(new PointerEvent("pointermove",{clientX:700}));window.dispatchEvent(new Event("blur"));window.dispatchEvent(new PointerEvent("pointerup"));');await sleep(60);
+  assert(await get('window.dragWrites.length===1'),'Blur completes moved gesture once');
+  await js('Storage.prototype.setItem=window.dragSetItem');
   const saved=await get('localStorage.getItem("atoumweb:layout:prospection:records:v1")');assert(!!saved&&!saved.includes('Pending'),'Mouse resize writes only visual preference');
   await js('window.fixtureSetItem=Storage.prototype.setItem;Storage.prototype.setItem=()=>{throw Error("Fixture quota")};document.querySelector(".aw-record-separator").dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowLeft",bubbles:true}));');await sleep(80);
   assert(await get('document.querySelector(".aw-record-layout-tools [role=alert]").textContent.includes("non mémorisée")'),'Preference write refusal visible');assert(await get('document.querySelector("#workshop-note").value==="Pending"'),'Storage refusal preserves note');await js('Storage.prototype.setItem=window.fixtureSetItem');
@@ -59,6 +79,20 @@ if(!process.versions.electron){
   }
   for(const zoom of [1,1.25,1.5]){win.setSize(900,700);win.webContents.setZoomFactor(zoom);await sleep(150);assert(await get('document.querySelector(".aw-record-split").classList.contains("is-narrow")'),'Narrow fallback '+zoom);assert(await get('[...document.querySelectorAll(".aw-record-pane-actions button")].every(e=>{const r=e.getBoundingClientRect();return r.width>0&&r.right<=innerWidth;})'),'Essential actions reachable '+zoom);}
   await click('Réinitialiser les largeurs');assert(await get('localStorage.getItem("atoumweb:layout:prospection:records:v1")===null'),'Reset removes own preference only');
+  win.setSize(1500,1000);win.webContents.setZoomFactor(1);await wait('!document.querySelector(".aw-record-split").classList.contains("is-narrow")');
+  await js('window.moduleWrites=[];const original=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){window.moduleWrites.push(k);return original.call(this,k,v);};document.querySelector(".aw-record-separator").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}));window.dispatchEvent(new PointerEvent("pointermove",{clientX:650}));');await sleep(60);
+  await js('const e=document.querySelector("select");Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,"value").set.call(e,"interventions");e.dispatchEvent(new Event("change",{bubbles:true}));');await sleep(70);
+  await js('window.dispatchEvent(new PointerEvent("pointerup"));');
+  assert(await get('window.moduleWrites.length===0'),'Changing module disposes drag without stale preference write');
+  await js('localStorage.setItem("atoumweb:layout:interventions:records:v1","invalid");window.dispatchEvent(new StorageEvent("storage",{key:"atoumweb:layout:interventions:records:v1"}));');await sleep(70);
+  assert(await get('document.querySelector(".aw-record-layout-tools [role=alert]").textContent.includes("non lue")'),'Corrupt preference gives explicit fallback notice');
+  await click('TEST — Toutes les Fleurs');await click('Notes');await input('Erreur visuelle sans perte');
+  await js('window.oldRemove=Storage.prototype.removeItem;Storage.prototype.removeItem=()=>{throw Error("Reset refused")};');await click('Réinitialiser les largeurs');
+  assert(await get('document.querySelector(".aw-record-layout-tools [role=alert]").textContent.includes("Réinitialisation impossible")'),'Reset refusal visible');
+  assert(await get('document.querySelector("#workshop-note").value==="Erreur visuelle sans perte"'),'Reset refusal preserves unsaved note');
+  await js('Storage.prototype.removeItem=window.oldRemove');await click('Réinitialiser les largeurs');
+  assert(await get('!document.querySelector(".aw-record-layout-tools [role=alert]")'),'Successful visual reset clears failure');
+  assert(await get('document.querySelector("#workshop-note").value==="Erreur visuelle sans perte"'),'Successful visual reset never discards draft');
   console.log(JSON.stringify({checks,failed:0,captures:9,onlyTemp:true,quitCleaned}));win.destroy();app.exit(0);
  }).catch(e=>{console.error(e.stack);win?.destroy();app.exit(1);});
  app.on('window-all-closed',()=>{if(interactive)app.quit();});
