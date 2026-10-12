@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 12/10/2026 — 02B.3 suspendu ; consolidation86–93 préparée
+
+- HuitPR draft/mergeable, baseslinéaires ancêtres, retard0 etaucuncheck courant. Main07dde9c8 inchangé. Simulations16pairesbase/source etmain/source sansconflit, arbreségaux auxsources ; aucun merge appliqué oubasechangée.
+- Runmain38006715403 :800PASS/1timeout20s (A→Brestore). Fichiersrestore/service/config/runtime identiques àtouteslesbranches ; aucun nouveau correctif. TreecheckoutCIpréfusionverte91b6d31 identique àmain. Local3/3 ciblés4,665/4,655/4,644s puisrestore35/35 en73,59s : neprouvepas correctionhosted.
+- [Bilan/plan/autorisation](docs/UXV2_CONSOLIDATION_86_93_PREPARATION.md) publié enMarkdown dans93 ; aucunecode/UI/règlemétier modifiée. QuotaAPIinaccessible(scopeuser), budget0/StopusageYes historiquesnonreconfirmés. Sixruns premièretranche,16runs potentielschaîneentière àautoriser ; zéroCI déclenchée.
+- Avantfusion : confirmationbudget/quota, CIcandidate unique verte puisaccorddemerge parSHA, CIpostmergeverte ; retarget/actualisation normales autoriséesuneétapeàlafois. Aucun02B.3/02C/03, Validation-MSI, rebase/squash/force/suppressionbranche.
+
 ## 12/10/2026 — 02B.1–02B.2 : audit et atelier d’en-tête
 
 - Branche codex/ux-v2-lot02b-header-v1 depuis #92@893b40b, revue ChatGPT lue. [Inventaire](docs/UXV2_LOT02B_INVENTAIRE.md) du header, commandes, GlobalSearch/Timer/Clock, notifications, breakpoints et clavier. Aucun nouveau raccourci global attribué.
