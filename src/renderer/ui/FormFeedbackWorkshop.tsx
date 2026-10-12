@@ -55,7 +55,7 @@ function SimulatedForm({ id }: { id: 'a' | 'b' }) {
       <AppButton disabled={pending} onAction={() => { setError(true); setConfirmed(false); }}>Simuler un refus (TEST)</AppButton>
       <AppButton disabled={pending} onAction={() => { setConflict(true); setConfirmed(false); }}>Simuler un conflit (TEST)</AppButton>
       <AppButton disabled={pending || !conflict} onAction={() => setConflict(false)}>Effacer conflit fictif (TEST)</AppButton>
-      <AppButton disabled={pending} onAction={() => { draft.discard(); setConfirmed(false); setError(false); setConflict(false); }}>Annuler cette note</AppButton>
+      <AppButton disabled={pending} onAction={() => requestUnsavedExit(() => { setConfirmed(false); setError(false); setConflict(false); }, group)}>Annuler cette note</AppButton>
     </div>
   </article>;
 }
