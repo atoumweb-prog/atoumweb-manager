@@ -50,3 +50,36 @@ Ce premier incrément **ne prétend pas** satisfaire à lui seul R01E-01 (encore
 **Contrôles en attente de preuve Windows** : `npm run typecheck`, `npm test -- --maxWorkers=2` et nouveaux tests ciblés. Aucun résultat PASS ni HEAD de CI n'est revendiqué sans exécution. La CI Windows #86 demeure différée jusqu'à vérification du quota GitHub Actions et de `Stop usage` ; son autorisation budgétaire antérieure ne vaut pas lancement en présence de cette incertitude. Aucune fusion n'est autorisée.
 
 **Interdictions :** ne pas utiliser Validation-MSI ; ne pas modifier `main`, le processus principal, les restaurations, les abonnements ou les règles contractuelles ; ne pas créer un registre UX-01 concurrent ni annoncer « Enregistré » après simple clic.
+
+## 01E.3 — Atelier UI isolé ajouté, recette native en attente
+
+Les nouveaux fichiers `src/renderer/ui/FormFeedbackWorkshop.tsx`, `scripts/check-ux-v2-lot01e-workshop.cjs` et `scripts/launch-ux-v2-lot01e-workshop.cmd` permettent de vérifier un premier scénario réaliste **sans base de données** :
+
+- deux formulaires fictifs A/B avec `useUnsavedDraft` et groupes distincts `uxv2:form-workshop/a`, `.../b` ;
+- saisie A laissant B propre, puis deux brouillons distincts ;
+- tentative de fermeture A avec `Rester` par défaut : aucun brouillon ni formulaire supprimé ;
+- simulation explicitement identifiée comme telle d'un retour positif/erreur/conflit, sans sauvegarde IPC ;
+- refus de fermeture native Electron en `pending`, puis fermeture d'A propre sans toucher B sale ;
+- contrôles de présentation trois thèmes × trois densités et neuf captures synchronisées, zoom et conservation de B ;
+- `contextBridge` expose **seulement l'API native `unsaved`** à l'atelier ; aucun accès aux services commerciaux, projets, CGV, SQLite ni à Validation-MSI ;
+- profil `%TEMP%` identifié et nettoyé en fin d'exécution ; captures sous `outputs/ux-v2-lot01e-reference/` hors Git.
+
+Commandes de validation prévues **dans le vrai checkout Windows** :
+
+```powershell
+npm run typecheck
+npm test -- --maxWorkers=2
+node scripts/check-ux-v2-lot01e-workshop.cjs
+```
+
+Lancement interactif volontaire, avec données fictives : `scripts/launch-ux-v2-lot01e-workshop.cmd`.
+
+**Preuves exécutées lors de cette reprise ChatGPT :**
+- audit statique des APIs et des limites à partir des fichiers sur le HEAD #89 ;
+- parsing syntaxique JavaScript du banc : **OK**, sans lancement Electron ;
+- transpilation TypeScript isolée des versions contrôlées de `formFeedback.ts` et `FormFeedbackIndicator.tsx` : **OK syntaxiquement**, sans résolution des types du projet ;
+- exécution Node isolée de **18 vérifications de logique pure** (priorités des états et libellés) sur le même contenu de `formFeedback.ts` ; hash de blob Git du helper local **identique** au fichier GitHub `3fe3fccd40b88f0aa3eb6d378a5c1978885c6802`.
+
+**Ne pas assimiler ces vérifications locales partielles à Vitest, à un typecheck de l'application, à des tests Electron Windows ou à la recette R01E entière.** L'atelier n'est pas branché sur `App.tsx` ni sur un éditeur métier : la PR #90 reste un **pilote en cours**, aucun résultat R01E-01…20 n'est déclaré définitivement PASS.
+
+**Étape suivante** : vraie exécution Windows des commandes ci-dessus ; après corrections éventuelles, préparer les scénarios R01E-03 à 06 (sous-éditeur indépendant, réponse de sauvegarde tardive, conflit et absence de faux succès), puis le protocole de `Enregistrer et quitter` **uniquement en conception** tant que les capacités et l'autorisation métier ne sont pas validées.
