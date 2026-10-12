@@ -56,7 +56,7 @@ export function FoundationWorkshop({ preferences }: { preferences: FoundationPre
     {error && <AppNotice level="error"><span id="foundation-error">{error}</span></AppNotice>}
     {confirmed && !error && <p id="foundation-confirmed" role="status">{confirmed}</p>}
     <nav className="aw-foundation-tabs" aria-label="Ateliers du socle"><AppButton aria-pressed={tab === 'table'} onAction={() => setTab('table')}>Tableau et fiche</AppButton><AppButton aria-pressed={tab === 'forms'} onAction={() => setTab('forms')}>Formulaires et états</AppButton></nav>
-    <div hidden={tab !== 'table'}><TableWorkshop store={store} manageLifecycle={false}/></div>
-    <div hidden={tab !== 'forms'}><FormFeedbackWorkshop manageLifecycle={false}/></div>
+    <div hidden={tab !== 'table'}><TableWorkshop store={store} manageLifecycle={false} active={tab === 'table'}/></div>
+    <div hidden={tab !== 'forms'}><FormFeedbackWorkshop manageLifecycle={false} active={tab === 'forms'}/></div>
   </section>;
 }

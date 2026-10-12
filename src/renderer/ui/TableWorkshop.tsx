@@ -27,7 +27,7 @@ function TableRecordEditor({ record }: { record: TableWorkshopRecord }) {
   </div>;
 }
 
-export function TableWorkshop({ store = localStorage, manageLifecycle = true }: { store?: VisualPreferenceStore; manageLifecycle?: boolean } = {}) {
+export function TableWorkshop({ store = localStorage, manageLifecycle = true, active = true }: { store?: VisualPreferenceStore; manageLifecycle?: boolean; active?: boolean } = {}) {
   const [view, setView] = useState('dossiers'), [query, setQuery] = useState(''), [selectedId, setSelectedId] = useState<string | null>(null), [expanded, setExpanded] = useState(false);
   const [options, setOptions] = useState<TableViewPreference>(defaultTableView), optionsRef = useRef(options), [error, setError] = useState('');
   const [personal, setPersonal] = useState<PersonalTableView[]>([]), personalRef = useRef(personal), [personalId, setPersonalId] = useState('standard');
@@ -86,7 +86,6 @@ export function TableWorkshop({ store = localStorage, manageLifecycle = true }: 
     } catch { setError('Vue personnelle non mémorisée ; fiche et brouillon conservés.'); }
   }
   function open(id: string | null) { if (id === selectedId) return; requestUnsavedExit(() => { setSelectedId(id); setExpanded(false); }, group); }
-  useEffect(() => { const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') { event.preventDefault(); open(null); } }; window.addEventListener('keydown', escape); return () => window.removeEventListener('keydown', escape); });
   const columns: TableColumn<TableWorkshopRecord>[] = [
     { id: 'identity', label: 'Identité', required: true, sortValue: row => row.name, render: row => <><strong className="aw-table-identity">{row.name}</strong><span className="aw-table-id">{row.id}</span></> },
     { id: 'category', label: 'Catégorie', sortValue: row => row.category, render: row => row.category },
@@ -101,7 +100,10 @@ export function TableWorkshop({ store = localStorage, manageLifecycle = true }: 
   // The detail is resolved from the complete immutable source, NEVER the filtered/sorted rows.
   const record = TABLE_WORKSHOP_RECORDS.find(row => row.id === selectedId);
   const filteredOut = !!record && !rows.some(row => row.id === record.id);
-  return <><h1>Atelier 01D — tableaux et fiches</h1><AppNotice level="info">120 dossiers synthétiques. Aucun service métier, devis ou contrat n’est modifié.</AppNotice>
+  return <section className="aw-table-workshop" onKeyDown={event => {
+    if (!active || event.defaultPrevented || event.nativeEvent.isComposing || event.key !== 'Escape') return;
+    event.preventDefault(); event.stopPropagation(); open(null);
+  }}><h1>Atelier 01D — tableaux et fiches</h1><AppNotice level="info">120 dossiers synthétiques. Aucun service métier, devis ou contrat n’est modifié.</AppNotice>
     <label>Vue de démonstration<select id="table-view" value={view} onChange={e => { const next = e.target.value; requestUnsavedExit(() => { setView(next); setQuery(''); setSelectedId(null); setExpanded(false); }, group); }}><option value="dossiers">Dossiers</option><option value="autre-vue">Autre vue isolée</option></select></label>
     <SavedViewPicker views={personal} selected={personalId} onSelect={choosePersonal} onCreate={(name, duplicate) => editPersonal(duplicate ? 'duplicate' : 'create', name)} onRename={name => editPersonal('rename', name)} onDelete={() => editPersonal('delete')} onReset={() => { setPersonalId('standard'); const next = defaultTableView(); optionsRef.current = next; setOptions(next); try { writeTableView(store, key, next); setError(''); } catch { setError('Préférences non mémorisées ; fiche conservée.'); } }}/>
     <section className="aw-table-source" aria-label="Source asynchrone synthétique"><label>Portée de la source<select id="table-source-mode" value={mode} onChange={e => { setMode(e.target.value as 'complete' | 'paged'); setPage(1); }}><option value="complete">Source complète</option><option value="paged">Page partielle de la source</option></select></label>
@@ -123,5 +125,5 @@ export function TableWorkshop({ store = localStorage, manageLifecycle = true }: 
         <TableRecordEditor key={record.id} record={record}/>
       </RecordPane>}</UnsavedGroup>
     </ResizableSplitView>
-  </>;
+  </section>;
 }

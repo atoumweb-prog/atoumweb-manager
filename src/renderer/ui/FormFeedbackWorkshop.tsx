@@ -87,15 +87,16 @@ function SimulatedForm({ id }: { id: 'a' | 'b' }) {
   </article>;
 }
 
-export function FormFeedbackWorkshop({ manageLifecycle = true }: { manageLifecycle?: boolean } = {}) {
+export function FormFeedbackWorkshop({ manageLifecycle = true, active = true }: { manageLifecycle?: boolean; active?: boolean } = {}) {
   const [showA, setShowA] = useState(true);
   const [showB, setShowB] = useState(true);
   useEffect(() => manageLifecycle ? installUnsavedLifecycleBridge() : undefined, [manageLifecycle]);
   return <section className="aw-form-workshop" aria-label="Atelier 01E — formulaires fictifs" onKeyDown={event => {
-    if (event.key !== 'Escape') return;
+    if (!active || event.defaultPrevented || event.nativeEvent.isComposing || event.key !== 'Escape') return;
     const id = (event.target as HTMLElement).closest<HTMLElement>('[data-editor-id]')?.dataset.editorId;
     if (id !== 'a' && id !== 'b') return;
-    event.preventDefault(); requestUnsavedExit(() => id === 'a' ? setShowA(false) : setShowB(false), `uxv2:form-workshop/${id}`);
+    event.preventDefault(); event.stopPropagation();
+    requestUnsavedExit(() => id === 'a' ? setShowA(false) : setShowB(false), `uxv2:form-workshop/${id}`);
   }}>
     <h1>Atelier 01E — formulaires et confirmations</h1>
     <AppNotice level="warning">
