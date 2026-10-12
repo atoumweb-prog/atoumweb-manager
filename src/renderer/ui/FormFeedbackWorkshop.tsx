@@ -87,10 +87,10 @@ function SimulatedForm({ id }: { id: 'a' | 'b' }) {
   </article>;
 }
 
-export function FormFeedbackWorkshop() {
+export function FormFeedbackWorkshop({ manageLifecycle = true }: { manageLifecycle?: boolean } = {}) {
   const [showA, setShowA] = useState(true);
   const [showB, setShowB] = useState(true);
-  useEffect(() => installUnsavedLifecycleBridge(), []);
+  useEffect(() => manageLifecycle ? installUnsavedLifecycleBridge() : undefined, [manageLifecycle]);
   return <section className="aw-form-workshop" aria-label="Atelier 01E — formulaires fictifs" onKeyDown={event => {
     if (event.key !== 'Escape') return;
     const id = (event.target as HTMLElement).closest<HTMLElement>('[data-editor-id]')?.dataset.editorId;
