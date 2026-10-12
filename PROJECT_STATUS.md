@@ -1,5 +1,14 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 12/10/2026 — Reprise UX/UI V2 : lot 01B et garde Abby
+
+- Main distant `07dde9c85dab337ee0ed3a5a92034a139d7ebad2`, #81 terminée et #83 fermée sans fusion. Référentiel #82 lu à efb4fe6 ; reprise propre de #87 sur `feature/ux-v2-lot01b-components-v1@b9679c3`, base #86 toujours draft. Aucun retour aux anciennes branches ni réinitialisation.
+- Correctif local `af5cdc559517e049c45f80acf551928e0dd28772` : garde Abby existant conservé ; référence/document, options pending, mutations du détail, préparation Projet et destination opérationnelle raccordés au même registre UX-01, après reproductions. Aide longue coupée en bas de fenêtre reproduite puis corrigée ; aucune nouvelle architecture de confirmation.
+- Recettes Windows isolées : Abby 25/25 ; vrai Devis 21/21 ; UX-01 183/183 ; boutons/champs 40/40 ; aide 70/70 ; icônes 42/42 ; notifications 30/30 ; atelier 50/50 sans captures ; interface réelle 300/300. Typecheck OK, suite complète **801/801 dans 87 fichiers, 108,59 s, sans RPC** sur af5cdc5. [Rapport de reprise](docs/UXV2_LOT01B_REPRISE_2026-10-12.md). Migrations 1–66/intégrité/FK correctes sur TEMP, fixtures nettoyées, aucun accès Validation-MSI.
+- [12 critères R01B](docs/UXV2_LOT01B_GATES.md) démontrés au périmètre pilote/parcours testés ; pas une migration de toutes les fiches ni un audit WCAG global. Proposition de clôture technique après validation humaine ; prochaine étape 01C uniquement à planifier. Aucun push/CI hébergée/merge/déploiement, code métier/Main/preload/schéma/CGV/signature inchangés ; #86/#87 restent draft.
+
+Les entrées suivantes sont historiques et conservent les états GitHub annoncés à leur date.
+
 ## 10/10/2026 — Validation Windows de la recette packagée IPC / app.relaunch UX-01 × UX-16
 
 - **SHA réellement testé :** `prep/ux01-restore-quit-gate-v2@61786e1f5449cf93d4272458480b302ad2dc4bde`. Exécutable de recette Electron **44.3.0** packagé indépendamment sous TEMP, réutilisant le vrai gestionnaire de `backups:restore` et le cycle de vie Electron `app.isPackaged`.

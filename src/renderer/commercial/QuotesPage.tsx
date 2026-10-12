@@ -59,6 +59,12 @@ export function QuotesPage({ onMessage, initialId, initialRequest }: { onMessage
   const [wizard, setWizard] = useState<WizardDraft>(EMPTY_WIZARD);
   const [wizardError, setWizardError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [pendingQuoteMutations, setPendingQuoteMutations] = useState(0);
+  async function trackQuoteMutation<T>(action: () => Promise<T>): Promise<T> {
+    setPendingQuoteMutations(count => count + 1);
+    try { return await action(); }
+    finally { setPendingQuoteMutations(count => count - 1); }
+  }
   const [demoMode, setDemoMode] = useState(false);
   const [developmentMode,setDevelopmentMode]=useState(false);
   useEffect(()=>{void window.atoumweb.app.getBootstrap().then(state=>setDevelopmentMode(/([\\/])Validation-MSI$/i.test(state.workspacePath)));},[]);
@@ -74,6 +80,7 @@ export function QuotesPage({ onMessage, initialId, initialRequest }: { onMessage
   const quoteGroup='quote:'+detail?.id;
   useUnsavedDraft('Nouveau devis',{wizard,draftLines,wizardTerms,catalogPrice},{group:'quote:create',ready:showWizard||wizard.ownerId!==''||wizard.subject!==''||draftLines.length>0||wizardTerms!=='',pending:saving,discard:()=>{setWizard(EMPTY_WIZARD);setDraftLines([]);setWizardTerms('');setCatalogPrice('');setShowWizard(false);setWizardStep(1);}});
   useUnsavedDraft('Ligne libre à ajouter',{customLabel,customPrice},{group:quoteGroup,ready:!!detail,pending:saving,discard:()=>{setCustomLabel('');setCustomPrice('');}});
+  useUnsavedDraft('Enregistrement du devis', null, {group:quoteGroup,dirty:false,pending:pendingQuoteMutations>0});
   useUnsavedDraft('Prestation à ajouter',{catalogToAdd,catalogPrice},{group:quoteGroup,ready:!!detail&&!showWizard,pending:saving,discard:()=>{setCatalogToAdd('');setCatalogPrice('');}});
   function setEditingLineId(id:string|null){if(editingLineId===id)return;if(editingLineId)requestUnsavedExit(()=>applyEditingLineId(id),quoteGroup+'/line:'+editingLineId+'/editor');else applyEditingLineId(id);}
   const detailPanelRef = useRef<HTMLElement | null>(null);
@@ -197,7 +204,7 @@ export function QuotesPage({ onMessage, initialId, initialRequest }: { onMessage
 
   async function addCatalogLine(): Promise<void> {
     if (!detail || !catalogToAdd) return;
-    try { const next = await window.atoumweb.quotes.addCatalogLine(detail.id, catalogToAdd, {proposedUnitPriceCents:eurosToCents(catalogPrice)??undefined}); setCatalogToAdd(''); setCatalogPrice(''); setDetail(next); await refresh(); onMessage('Prestation catalogue ajoutée au devis avec snapshot figé.'); }
+    try { const next = await trackQuoteMutation(()=>window.atoumweb.quotes.addCatalogLine(detail.id, catalogToAdd, {proposedUnitPriceCents:eurosToCents(catalogPrice)??undefined})); setCatalogToAdd(''); setCatalogPrice(''); setDetail(next); await refresh(); onMessage('Prestation catalogue ajoutée au devis avec snapshot figé.'); }
     catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible d’ajouter la prestation.'); }
   }
 
@@ -205,20 +212,20 @@ export function QuotesPage({ onMessage, initialId, initialRequest }: { onMessage
     if (!detail || !customLabel.trim()) return;
     try {
       const cents = eurosToCents(customPrice); if (cents == null) throw new Error('Renseigne un prix.');
-      const next = await window.atoumweb.quotes.addCustomLine(detail.id, { label: customLabel.trim(), proposedUnitPriceCents: cents, catalogUnitPriceCents: cents });
+      const next = await trackQuoteMutation(()=>window.atoumweb.quotes.addCustomLine(detail.id, { label: customLabel.trim(), proposedUnitPriceCents: cents, catalogUnitPriceCents: cents }));
       setCustomLabel(''); setCustomPrice(''); setDetail(next); await refresh();
     } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible d’ajouter la ligne.'); }
   }
 
   async function saveLine(lineId: string, input: QuoteLineInput): Promise<void> {
-    try { const next = await window.atoumweb.quotes.updateLine(lineId, input); setDetail(next); applyEditingLineId(null); await refresh(); onMessage('Ligne du devis mise à jour. Les totaux ont été recalculés.'); }
+    try { const next = await trackQuoteMutation(()=>window.atoumweb.quotes.updateLine(lineId, input)); setDetail(next); applyEditingLineId(null); await refresh(); onMessage('Ligne du devis mise à jour. Les totaux ont été recalculés.'); }
     catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de modifier la ligne.'); throw error; }
   }
 
   async function removeLine(id: string): Promise<void> {
     if (!detail) return;
     if (!requestUnsavedExit(()=>{},quoteGroup+'/line:'+id)) return;
-    try { setDetail(await window.atoumweb.quotes.removeLine(id)); if(editingLineId===id)applyEditingLineId(null); await refresh(); }
+    try { setDetail(await trackQuoteMutation(()=>window.atoumweb.quotes.removeLine(id))); if(editingLineId===id)applyEditingLineId(null); await refresh(); }
     catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de supprimer la ligne.'); }
   }
 
@@ -253,25 +260,25 @@ export function QuotesPage({ onMessage, initialId, initialRequest }: { onMessage
     if (action === 'accepted' && !window.confirm(`Confirmer que le devis ${detail.number} a été accepté / signé dans Abby ?\n\nLe devis devient la référence contractuelle du client.`)) return;
     try {
       if (action === 'finalized') {
-        const review = await window.atoumweb.contractTerms.quotes.sync(detail.id);
+        const review = await trackQuoteMutation(()=>window.atoumweb.contractTerms.quotes.sync(detail.id));
         if (review.warnings.length > 0) {
           const warningText = review.warnings.map((warning) => `• ${warning}`).join('\n');
           if (!window.confirm(`Avertissements CGV avant finalisation :\n\n${warningText}\n\nFinaliser quand même le devis ?`)) return;
         }
       }
       let next: QuoteDetail;
-      if (action === 'finalized') next = await window.atoumweb.quotes.finalize(detail.id);
-      else if (action === 'sent') next = await window.atoumweb.quotes.markSent(detail.id);
-      else if (action === 'viewed') next = await window.atoumweb.quotes.markViewed(detail.id);
-      else if (action === 'accepted') next = await window.atoumweb.quotes.accept(detail.id);
-      else if (action === 'refused') next = await window.atoumweb.quotes.refuse(detail.id);
-      else if (action === 'expired') next = await window.atoumweb.quotes.expire(detail.id);
-      else next = await window.atoumweb.quotes.duplicate(detail.id);
+      if (action === 'finalized') next = await trackQuoteMutation(()=>window.atoumweb.quotes.finalize(detail.id));
+      else if (action === 'sent') next = await trackQuoteMutation(()=>window.atoumweb.quotes.markSent(detail.id));
+      else if (action === 'viewed') next = await trackQuoteMutation(()=>window.atoumweb.quotes.markViewed(detail.id));
+      else if (action === 'accepted') next = await trackQuoteMutation(()=>window.atoumweb.quotes.accept(detail.id));
+      else if (action === 'refused') next = await trackQuoteMutation(()=>window.atoumweb.quotes.refuse(detail.id));
+      else if (action === 'expired') next = await trackQuoteMutation(()=>window.atoumweb.quotes.expire(detail.id));
+      else next = await trackQuoteMutation(()=>window.atoumweb.quotes.duplicate(detail.id));
       await refresh(); await openQuote(next.id); onMessage(action === 'accepted' ? 'Devis validé : le prospect passe en « Gagné » et devient client.' : `Devis ${next.number} mis à jour.`);
     } catch (error) { onMessage(error instanceof Error ? error.message : 'Action impossible.'); }
   }
 
-  async function extendValidity():Promise<void>{if(!detail)return;const value=window.prompt('Nouvelle date de validité (AAAA-MM-JJ)',detail.validUntil?.slice(0,10)??'');if(!value)return;try{const next=await window.atoumweb.quotes.extendValidity(detail.id,value);setDetail(next);await refresh();onMessage('Validité du devis prolongée.');}catch(error){onMessage(error instanceof Error?error.message:'Date invalide.');}}
+  async function extendValidity():Promise<void>{if(!detail)return;const value=window.prompt('Nouvelle date de validité (AAAA-MM-JJ)',detail.validUntil?.slice(0,10)??'');if(!value)return;try{const next=await trackQuoteMutation(()=>window.atoumweb.quotes.extendValidity(detail.id,value));setDetail(next);await refresh();onMessage('Validité du devis prolongée.');}catch(error){onMessage(error instanceof Error?error.message:'Date invalide.');}}
 
   return (
     <div className="quotes-stack">
