@@ -1,5 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 12/10/2026 — Correctif local Échap 01E / 01F validé
+
+- Nouvelle branche codex/fix-ux-v2-01ef-escape depuis91@765f66db, code85040fb. TraitementÉchap local àl'atelieractif, événementconsommé/IMEignoré ; onglettable/formulairesrestentmontés, registreUX-01/services/migrationsinchangés. Aucunmain/90–93 modifié.
+- Lesdeuxreproductionsbloquantespassent désormais ;61assertionsElectronpermanentes couvrent compte exact1confirmation, identités/textes cachés, sensinverse, aidesimbriquées, Rester/Quitter, pending etréponsetardive, onglets etpréférences.
+- AuSHA85040fb propre : typecheckOK ; ciblés97/97 ; Vitest867/867(94fichiers,104,73s,sansRPC), restaurations35/35(A→B4,464s) ; E95/F137/D126/C66/UX-01183 verts. DeuxbasesTEMPtableshorssettingsinchangées, intégritéOK/FKvide/migrations1–66/nettoyagesconfirmés.
+- Simulationgroupéemain31167754+codecorrigé sansconflit : arbref7d7486 identique àsourcecorrigée. [Bilan, preuves etplan](docs/UXV2_CONSOLIDATION_01EF_ESCAPE_FIX.md) : prête àsoumettre àvalidation, pasuneautorisationdepublication/CI/fusion.
+- Prochainaccorddistinct : publication/branchegroupée/mergemainversbranchecorrective puisPRdraftcandidateunique ; fusionetpostCI aprèsvalidationhumaine. ZéroCI/push/PR/merge/retarget/budget ouValidation-MSI, 02B.5/02B.6/02C suspendus.
+
 ## 12/10/2026 — 01F : persistance par workspace et recette transversale
 
 - Branche distincte `codex/ux-v2-lot01f-preferences-v1` depuis90@4653e58. Stockage inspecté : apparence dansSQLite/settings parworkspace, bootstrapworkspace.json seulement pour choisir le dossier. Adaptateur de dispositions versionné sur le même propriétaire, sans migration ; aucun texte/id de dossier dans les préférences.
@@ -1534,3 +1542,4 @@ Les tests couvrent les migrations vierges et mises à niveau, les prix confirmé
 Prochaine action : validation visuelle du parcours complet et des trois thèmes sous Windows. Aucune ouverture du workspace utilisateur sans sauvegarde explicite.
 
 Clôture Lot 3 — 03/10/2026 : bilan réel validé par AtoumWeb ; commit local dédié autorisé, sans push ni merge. La recette manuelle AtoumWeb reste à faire avant validation fonctionnelle finale. Cette clôture ne contient aucune modification du Lot 4.
+
