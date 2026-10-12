@@ -1,6 +1,6 @@
 # Lot 01B — Boutons, champs, icônes, aides, confirmations et notifications
 
-**Statut : spécification détaillée à appliquer après 01A ; aucune modification du logiciel effectuée.**  
+**Statut actualisé le 12/10/2026 : spécification + implémentation pilote du 01B développée dans la PR #87 (draft, base #86), avec non-régression globale validée sur `36ef9e8` ; ce référentiel reste le cahier des charges, pas une attestation d'intégration/fusion.**  
 **Code inspecté : `main@eb252d5cbd0e95137eafa2b4759fcbcfd7263eda` ; garde UX-01 spécifique à PR #83 non fusionnée au dernier pointage.**  
 **Dépendances :** [Lot 01](LOT-01-FONDATIONS.md), [01A — Tokens visuels](LOT-01A-TOKENS-VISUELS.md), [Matrice existant→V2](LOT-01-MATRICE-EXISTANT-CIBLE.md), [Design system](DESIGN-SYSTEM.md).
 
@@ -103,3 +103,34 @@ Rendre les contrôles élémentaires **cohérents, lisibles, accessibles et réu
 La sortie n'est autorisée que lorsque les composants élémentaires sont testés dans les neuf combinaisons de thèmes/densités, que les cas E05/E06/E07 sont traités, que les handlers métier sont intacts et que le comparatif ancien→nouveau est vérifiable.
 
 **Le présent fichier est le cahier des charges, pas la preuve que 01B a été réalisé.**
+
+## G. Addendum de suivi — 12/10/2026 — transmission vers Codex
+
+**Ne pas modifier rétroactivement les critères R01B-01…12.** La vérité d'implémentation est documentée dans [la PR #87](https://github.com/atoumweb-prog/atoumweb-manager/pull/87) : `docs/UXV2_LOT01B_EXECUTION.md`, `docs/UXV2_LOT01B_GATES.md` et `docs/UXV2_LOT01B_VISUAL_REVIEW.md`. La base de #87 est **la branche 01A de #86**, pas `main`.
+
+### Réellement développé et observé sur Windows
+- PR #86, **01A**, draft, 3 thèmes × 3 densités, 14/16/18 px : **300/300** parcours UI Electron, **801/801** tests, typecheck et captures vérifiées sur SHAs documentés. **Pas de nouvelle navigation ni refonte de toutes les fiches**.
+- PR #87, **01B**, draft : `FieldHelp` corrigé (37/37), `AppButton/AppTextField` (32/32), 36 icônes avec vraie touche Entrée via Electron (42/42), `AppNotice` (30/30), atelier réuni (51/51, 9/9 captures).
+- **Non-régression d'ensemble** de 01B sur `36ef9e8f2af84e2a38922f5f0f67bf569ff81e6a` : les 17 destinations existantes **300/300**, **87/87** fichiers Vitest et **801/801** tests, typecheck **OK** ; zéro erreur console, zéro débordement candidat dans le banc. Ces chiffres sont des résultats sur **ce SHA**, pas une attestation sur tout futur commit.
+- **Les composants sont encore pilotes** ; le Manager métier actuel n'a pas été reconstruit en UX/UI V2. Ne pas prétendre « lot 01B clôturé » ni « interface V2 livrée » sans lever les gates restants de la matrice.
+
+### Décision métier R01B-10 — VALIDÉE par AtoumWeb, 12/10/2026
+
+> **« Copier le bloc commercial pour Abby » est interdit tant qu'une modification du devis concerné n'est pas enregistrée ou qu'un enregistrement de ce devis est en cours.**
+
+- Le contrôle doit être **ciblé par `quote.id`**, et ne pas bloquer un devis à cause d'un autre.
+- Réutiliser **l'actuel `UnsavedRegistry` / `UnsavedGroup` UX-01** et les signaux `dirty` / `pending`, y compris les éditeurs de lignes et de paramètres imbriqués. Ne pas reconstruire la protection ni demander l'abandon d'un brouillon pour autoriser la copie.
+- Présenter un **bouton désactivé avec une explication accessible**, **puis revalider immédiatement à la frontière de l'action** afin de refuser une copie même si React n'a pas encore repeint le bouton.
+- Enregistrer/annuler les modifications autorise à nouveau la copie ; l'action sur un devis sans brouillon doit garder son fonctionnement historique.
+- **Aucune transmission automatique à Abby**. Le succès n'est annoncé qu'après le succès réel de `contractTerms.copyText`, son rejet doit rester visible. **Ne pas retoucher prix, CGV, clauses, finalisation ou acceptation/signature.**
+- Première implémentation sur **#87 HEAD `579ca47276aae9d310011320de92f23771434667`** : `src/renderer/commercial/QuoteAbbyPanel.tsx` emploie `useSyncExternalStore` et `unsavedRegistry.active('quote:'+quote.id)`, désactivation visible, contrôle synchrone au clic ; banc Electron ciblé `scripts/check-ux-v2-lot01b-abby-guard.cjs` ajouté. **Ces changements ne sont PAS encore vérifiés par un typecheck, une recette Electron ou la suite complète Windows. Ne pas annoncer PASS avant preuve.**
+
+### Dépendances / priorités de reprise
+
+1. Codex doit **inspecter les fichiers réels et la PR #87 à son HEAD**, puis auditer l'implémentation Abby et son test (y compris course entre état du registre et activation, modifications d'un autre devis, sauvegarde pending, rejet presse-papiers). Ne pas dupliquer le code déjà en place.
+2. Sur un **checkout indépendant et propre**, effectuer `node --check scripts/check-ux-v2-lot01b-abby-guard.cjs`, `node scripts/check-ux-v2-lot01b-abby-guard.cjs`, `npm run typecheck`, `npm test -- --maxWorkers=2` et le contrôle des écrans réels sur base `%TEMP%`. Conserver SHA, logs, nombres de tests et tout échec ; aucune action de CI GitHub nécessaire.
+3. Terminer les **gates non prouvés** de `docs/UXV2_LOT01B_GATES.md` : annulation destructrice sans handler, Tab/Espace, erreurs de service, aides en fenêtre étroite. **Ne pas réécrire les garanties UX-01 existantes.**
+4. Synchroniser les rapports de #87 avec les résultats, préparer une proposition claire de clôture **sans fusion**. Le lot suivant **01C** (fiches rapides/panneaux) nécessite une instruction distincte.
+5. État des dépendances GitHub vérifié au 12/10 : **#81 est fusionnée dans `main`**, **#83 UX-01 reste en draft et indiquée non fusionnable**, **#82, #86, #87 restent draft** ; lire les HEAD réels avant toute opération sur les branches, aucune supposition de merge.
+
+**Prudence :** ne pas confondre le programme documentaire complet des **1 069 scénarios prévus** avec les **801 tests Vitest existants** ; ce sont deux ensembles distincts. Les PR sont des travaux candidats, aucune décision humaine de fusion vers `main` n'est donnée par cet addendum.
