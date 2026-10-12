@@ -3,3 +3,5 @@
 @media(max-width:760px){.aw-navigation-rail:not(.is-collapsed){position:absolute;top:0;left:0;max-width:calc(100vw - 90px);height:100dvh}.aw-rail-workshop{grid-template-columns:86px minmax(0,1fr)}.aw-rail-content{padding:12px}}@media(prefers-reduced-motion:reduce){.aw-navigation-rail{transition:none}}
 .aw-navigation-rail.is-collapsed .aw-rail-destination{justify-content:center;position:relative}.aw-navigation-rail.is-collapsed .aw-rail-active-mark{position:absolute;right:2px;bottom:2px;font-size:10px}
 .aw-rail-demo-detail{width:min(100%,900px)}.aw-rail-demo-detail.is-expanded{width:100%}
+.aw-rail-flyout{box-sizing:border-box}
+.aw-rail-content{grid-column:2}
