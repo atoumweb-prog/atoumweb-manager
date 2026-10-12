@@ -26,6 +26,29 @@ if(!process.versions.electron){
  for(const theme of ['atoumweb','noir','blanc']){
  const quote=database.quotes.create({clientAccountId:client.id,subject:'TEST '+theme});database.quotes.addCustomLine(quote.id,{label:'Prestation fixture',proposedUnitPriceCents:10000});
  win=new BrowserWindow({show:false,width:1600,height:1100,webPreferences:{preload:path.join(temp,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:false}});S.bindUnsavedWindow(win);await win.loadFile(path.join(temp,'index.html'));await wait('!!document.querySelector(".sidebar")');await js('document.documentElement.dataset.theme='+JSON.stringify(theme)+';window.dispatchEvent(new CustomEvent("atoumweb:navigate",{detail:{entityType:"quote",entityId:'+JSON.stringify(quote.id)+',title:"TEST"}}));');await wait('!!document.querySelector(".quote-contract-preparation input")');
+ if(process.argv.includes('--abby')){
+ const abby='.quote-abby-panel > button';
+ await wait('!!document.querySelector(".quote-abby-panel > button")');
+ check(theme+' saved quote permits copy',await js('return !document.querySelector('+JSON.stringify(abby)+').disabled'));
+ await input(context,'ABBY CONTEXT '+theme);
+ check(theme+' contract parameters block copy',await js('return document.querySelector('+JSON.stringify(abby)+').disabled'));
+ await click('Enregistrer la préparation');await wait('!document.querySelector('+JSON.stringify(abby)+').disabled');
+ await input(admin,'ABBY ADMIN '+theme);
+ check(theme+' common administration blocks copy',await js('return document.querySelector('+JSON.stringify(abby)+').disabled'));
+ await click('Enregistrer les informations communes');await wait('!document.querySelector('+JSON.stringify(abby)+').disabled');
+ await js('document.querySelector(".quote-line-actions button[title=Modifier]").click()');
+ await input('.quote-line-editor input','ABBY LINE '+theme);
+ check(theme+' line editor blocks copy',await js('return document.querySelector('+JSON.stringify(abby)+').disabled'));
+ await click('Annuler');await wait('!document.querySelector('+JSON.stringify(abby)+').disabled');
+ const remove=database.quotes.removeLine.bind(database.quotes);let finishRemove;
+ database.quotes.removeLine=(...args)=>new Promise(resolve=>{finishRemove=()=>resolve(remove(...args));});
+ await js('document.querySelector(".quote-line-actions button[title=Supprimer]").click()');
+ await sleep(80);
+ check(theme+' pending direct line deletion blocks copy',await js('return document.querySelector('+JSON.stringify(abby)+').disabled'));
+ finishRemove();await wait('!document.querySelector('+JSON.stringify(abby)+').disabled');
+ check(theme+' confirmed deletion reflected',database.quotes.get(quote.id).lines.length===0);
+ database.quotes.removeLine=remove;win.destroy();win=null;continue;
+ }
  await input(context,'Context '+theme);await click('Enregistrer les informations communes');check(theme+' save admin preserves parameters',await value(context)==='Context '+theme);
  await input(admin,'Identity '+theme);await click('Enregistrer la préparation');check(theme+' save parameters preserves admin',await value(admin)==='Identity '+theme);check(theme+' server parameters confirmed',database.quotePreparation.parameters(quote.id).conclusion.context==='Context '+theme);check(theme+' admin not implicitly saved',database.quotePreparation.administration().identity.value!=='Identity '+theme);
  await click('Enregistrer les informations communes');check(theme+' explicit admin confirmed',database.quotePreparation.administration().identity.value==='Identity '+theme);

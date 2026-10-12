@@ -10,6 +10,10 @@ import {changed,openEntity} from './DossierPanel';
 export function QuoteProjectPanel({quote}:{quote:QuoteDetail}){
   const [templates,setTemplates]=useState<ProjectTemplateSummary[]>([]),[project,setProject]=useState<ProjectSummary|null>(null),[template,setTemplate]=useState(''),[date,setDate]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
   const [preview,setPreview]=useState<ProjectCommercialPreview|null>(null);
+  useUnsavedDraft('Préparation du Projet depuis le devis', {template,date}, {
+    group:'quote:'+quote.id+'/project', ready:!project, pending:busy,
+    discard:()=>{setTemplate('');setDate('');setPreview(null);},
+  });
   useEffect(()=>{setTemplate('');setError('');Promise.all([window.atoumweb.projects.templates.list(),window.atoumweb.projects.projects.list()]).then(([t,p])=>{setTemplates(t.filter(t=>t.currentVersion?.status==='published'));setProject(p.find(p=>p.id===quote.projectId||p.sourceQuoteId===quote.id)??null);}).catch(e=>setError(e instanceof Error?e.message:String(e)));},[quote.id,quote.projectId,quote.status]);
   async function create(){
     setBusy(true);setError('');

@@ -430,7 +430,7 @@ function SettingsPage({ bootstrap, theme, displayDensity, showHoverHelp, onTheme
           <div>
             <span className="eyebrow">Aide contextuelle</span>
             <h2>Conseils au survol</h2>
-            <p className="muted">Affiche de courtes explications sur les champs de production quand tu passes la souris dessus.</p>
+            <p className="muted">Affiche automatiquement le détail après un survol prolongé. Même désactivée, l’aide ? reste accessible au clic et au clavier.</p>
           </div>
           <label className="settings-switch">
             <input type="checkbox" checked={showHoverHelp} onChange={(event) => void onShowHoverHelpChange(event.target.checked)} />

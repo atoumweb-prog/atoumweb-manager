@@ -1,0 +1,15 @@
+import { describe, expect, it } from 'vitest';
+import { columnWidth, defaultTableView, moveColumn, normalizeColumnOrder, readTableView, tableViewKey, writeTableView } from './tableViewPreference';
+describe('table pilot preference whitelist', () => {
+  const store = (raw: string | null) => ({ getItem: () => raw, setItem() {}, removeItem() {} });
+  it('keeps independent view keys', () => { expect(tableViewKey('dossiers')).not.toBe(tableViewKey('autre-vue')); });
+  it('defaults to all columns without a record selection', () => { expect(readTableView(store(null), 'x', [], [])).toEqual(defaultTableView()); });
+  it('restores required columns and removes unknown fields and filters', () => { expect(readTableView(store('{"version":1,"visibleColumnIds":["unknown","status"],"sort":{"columnId":"missing","direction":"asc"},"status":"forged"}'), 'x', ['demo'], [])).toEqual({ ...defaultTableView(), visibleColumnIds: ['identity', 'status', 'open'] }); });
+  it('preserves valid sort and fixture filters', () => { const view = { ...defaultTableView(), sort: { columnId: 'amount', direction: 'desc' as const }, status: 'demo', category: 'A' }; expect(readTableView(store(JSON.stringify(view)), 'x', ['demo'], ['A'])).toEqual(view); });
+  it.each(['bad', 'null', '{"version":99}'])('rejects corrupt format %s', raw => { expect(() => readTableView(store(raw), 'x', [], [])).toThrow(); });
+  it('never persists draft, free query or selected identity', () => { let raw = ''; writeTableView({ getItem: () => null, setItem: (_key, value) => { raw = value; }, removeItem() {} }, 'x', { ...defaultTableView(), selectedId: 'private', query: 'secret', draft: 'secret' } as ReturnType<typeof defaultTableView>); expect(JSON.parse(raw)).toEqual(defaultTableView()); });
+  it('migrates v1 presentation without retaining old private fields', () => { const old = { version: 1, visibleColumnIds: ['amount'], note: 'private', selectedId: 'TEST-001' }; expect(readTableView(store(JSON.stringify(old)), '', [], [])).toEqual({ ...defaultTableView(), visibleColumnIds: ['identity', 'amount', 'open'] }); });
+  it('normalizes order preserving known positions and adding new mandatory columns', () => { expect(normalizeColumnOrder(['amount','amount','removed','identity'])).toEqual(['amount','identity','category','status','date','open']); });
+  it('moves in both directions without mutating the source', () => { const order = Object.freeze(['identity','category','status','date','amount','open']); expect(moveColumn(order, 'identity','category').slice(0,2)).toEqual(['category','identity']); expect(moveColumn(order, 'amount','status').slice(0,4)).toEqual(['identity','category','amount','status']); expect(order[0]).toBe('identity'); });
+  it('bounds widths and ignores unknown keys and non numbers', () => { const view = readTableView(store(JSON.stringify({ version:2, widths:{identity:1,open:900,amount:'forged',secret:99} })), '', [], []); expect(view.widths).toEqual({identity:180,open:600}); expect(columnWidth('amount', Number.NaN)).toBe(160); });
+});

@@ -1,5 +1,56 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 12/10/2026 — 01D.4 terminé, clôture technique du socle proposée
+
+- Code7c46651 sur PR89 draft/base88 : source complète ou page partielle simulée, tri/filtre global avant pagination, compteurs exacts, loading/erreur/retry/vide distincts. Succès et erreurs périmés ignorés ; fiche/key/onglet/brouillon conservés. Aucune API métier ni port d'écran réel.
+- TypecheckOK, ciblés36/36, complet846/846 (92fichiers,121,24s,sansRPC), natif126/126/neufcaptures auSHAexact avec dirty:false. Non-régressionC66/UX-01183/B40/Abby25 ; intégrité/FK et migrations1–66 surTEMP, nettoyage confirmé. [Rapport,16critères et limites](docs/UXV2_LOT01D_EXECUTION.md).
+- Clôture technique01A–01D proposée au périmètre composants/ateliers, recette humaine globale différée. Prochain pilote proposé Annuaire prospects, adaptateur préférences profil/workspace et sources métier à qualifier ; aucune migration générale commencée.
+- Main toujours07dde9c8 ;86/87/88 drafts/cibles/HEAD inchangés. CI86 en attente quota/protections confirmés par utilisateur ; aucun run/merge/retarget, aucune Validation-MSI. Publication89 avec skipci.
+
+## 12/10/2026 — 01D.3 colonnes et vues personnelles validées techniquement
+
+- Code17499bf sur PR89 draft/base88 : ordre drag/clavier, resize borné/aperçu immédiat/écriture unique, annulation sans écriture ; vues personnelles CRUD, standard rétablissable, préférencesv2 compatiblesv1. Aucun id/note/query persisté, aucun écran métier migré.
+- TypecheckOK, ciblés27/27, complet837/837 (91fichiers,116,53s,sansRPC), natif112/112/neuf captures ; C66, UX-01183, contrôlesB40 etAbby25 verts, TEMP nettoyé, intégrité/FK/migrations1–66 TEMP. [Rapport](docs/UXV2_LOT01D_EXECUTION.md).
+- Suite autorisée01D.4 async/pagination synthétiques. Six CI de consolidation autorisées conditionnellement, lancement86 différé par demande utilisateur tant que quota/protections pas confirmés. Aucun merge, retarget86/87/88, budget ou Validation-MSI modifié.
+
+## 12/10/2026 — 01D.2 : atelier de tableaux avec fiche et brouillon protégés
+
+- Branche et PR89 existantes conservées, départ3edf5e3 ; code fbc029d, banc renforcé eda2eae. DataTable/TableFilterBar/TableColumnManager et atelier sur120 dossiers immuables : rechercher/filtrer/trier/montrer-masquer colonnes et ouvrir/agrandir une fiche avec les primitives01B/01C. Aucun écran métier ni service réel modifié.
+- Priorité vérifiée : selectedId et détail résolus depuis la source complète ; filtre/tri/colonne ne démonte ni fiche, onglet, ni brouillon. Garde UX-01 existante sur nouvel objet/vue/fermeture, pas de deuxième registre. Préférences whitelistées, query/id/note exclus ; panne de stockage sans perte de saisie.
+- TypecheckOK ; ciblés16/16 ; complet826/826 dans90fichiers,109,41s sansRPC surfbc029d ; atelier01D92/92 et neuf captures synchronisées sureda2eae ; atelier01C66/66 et UX-01183/183 verts. Migrations1–66/intégrité/FK sur fixtures uniquement, TEMP nettoyé, captures horsGit, aucune utilisation Validation-MSI.
+- [Rapport et critères partiels](docs/UXV2_LOT01D_EXECUTION.md) : 01D.2 livré, pas clôture totale01D. Vues personnelles, réordonnancement/resize de colonnes et async/pagination restent ultérieurs. Lanceur indépendant scripts/launch-ux-v2-lot01d-workshop.cmd.
+- Publication régulière PR89 draft avec skipci ; #86/#87/#88 ni reciblées ni fusionnées, aucune CI hébergée. Le plan de consolidation reste prêt, mais non exécuté dans cette mission. Recette humaine globale différée et risques de perte/mutation toujours bloquants.
+
+## 12/10/2026 — Plan de consolidation 01A/B/C et inventaire 01D.1
+
+- Plan publié pour autorisation, **aucune fusion ni CI déclenchée** : #86→main puis #87→main puis #88→main après validation de chaque étape. Chaîne actuelle linéaire (29/48/4 commits propres, zéro retard), toutes draft/mergeable ; simulations d'arbres sans conflit. Main07dde9c8 non protégée selon l'API : accord humain et checks réels explicitement exigés par la procédure. [Plan et risques](docs/UXV2_CONSOLIDATION_01ABC_PLAN.md).
+- Branche documentaire distincte `codex/ux-v2-lot01d-inventory-v1` depuis01C@0fab2ae. [Inventaire 01D.1](docs/UXV2_LOT01D_INVENTAIRE_01.md) : sept vues pilotes, colonnes/champs/identités, tris/filtres/handlers, contrats de liste, archivés et limites UX-01. Atelier défini sur120 dossiers synthétiques, réutilisant01B/01C ; aucun composant de table ou écran métier implémenté à ce stade.
+- Préserver tri catégorie/nomCatalogue, sortOrder contractuel/production, services de recherche/filtrage et commandes métier séparées de l'ouverture. Filtre masquant sélection : garder détail/brouillon montés. États01D prévus, aucun PASS anticipé. [Cadrage initial](docs/UXV2_LOT01D_CADRAGE.md) reste normatif avec le référentiel#82.
+- Publication draft sans CIhébergée via skipci, pas de retarget de86/87/88 exécuté ; Main et Validation-MSI inchangés. Recette humaine globale différée. Prochaine étape : autorisation de consolidation/CI séparée, puis types/fixtures/atelier01D.2 selon le plan, sans port simultané des17modules.
+
+## 12/10/2026 — 01C : écriture en fin de geste, bilan technique et cadrage 01D
+
+- Observation de la revue #88 corrigée au code `01b95a4a8ded84984e908fa982324e63e83ca1ef` : affichage immédiat au pointermove, aucune écriture intermédiaire, une sauvegarde de la largeur finale au relâchement ou blur. Fin doublée ignorée ; geste immobile/annulé et changement de module sans écriture tardive. Clavier/reset conservés, aucun service métier modifié.
+- Atelier **66/66**, neuf captures synchronisées hors Git, tests ciblés **19/19**, typecheck OK, suite **810/810 dans 88 fichiers, 107,08 s**, sans RPC. Préférences corrompues et reset refusé/réussi contrôlés sans perte de brouillon. Fixtures TEMP nettoyées ; aucune utilisation de Validation-MSI.
+- [Bilan final 01C au périmètre socle/atelier](docs/UXV2_LOT01C_EXECUTION.md), recette humaine globale différée. Adaptation settings/workspace et ports métier restent hors de cette clôture, pas de couverture implicite des futures fiches. [Cadrage 01D](docs/UXV2_LOT01D_CADRAGE.md) préparé depuis le référentiel #82 : aucun développement de tableau ou modification des écrans métier.
+- Publication sur la branche existante #88, messages skipci ; PR conservées draft. Aucun merge/main, CI hébergée supplémentaire, migration réelle ou Bridge. Pertes de saisie et mutations métier incorrectes restent bloquantes.
+
+## 12/10/2026 — 01B publié, premier atelier fonctionnel 01C
+
+- Autorisation AtoumWeb : clôture **technique** 01B au périmètre pilote, recette humaine globale différée à la fin V2 ; tests techniques obligatoires, pertes de saisie/mutations incorrectes toujours bloquantes. #87 publié normalement à `2d1ddb7604422850df4921e10250b6186a0094b4`, deux commits validés et16fichiers présents ; messages skipci, pas de nouvelle CI. #82 actualisé à0bb0860, #82/#86/#87 draft.
+- Branche indépendante `codex/ux-v2-lot01c-panels-v1` depuis ce HEAD01B. Inventaire des fiches/séparateurs existants, nouvelles primitives isolées ResizableSplitView/RecordPane, atelier React/Electron TEST et stockage visuel injectable. Code `f8d60c4deef5109b8179722f20e612b43d10be85`, aucune migration des17modules ni modification Main/preload/contrats/SQLite.
+- Atelier51/51, neuf captures frame-vérifiées sous outputs ignoré, typecheckOK, ciblés19/19, UX-01 natif183/183, suite **810/810 dans88fichiers,107,47s,sansRPC** sur f8d60c4. [Rapport01C](docs/UXV2_LOT01C_EXECUTION.md). Profil/banc TEMP, aucun accès Validation-MSI. Préférences uniquement visuelles ; adaptation settings/workspace et ports métier restent ultérieurs.
+- Premier incrément01C autorisé à être publié en PR distincte draft empilée sur87, sans merge. Recette humaine finale différée ; prochaine étape technique : approfondir erreurs de préférence/fenêtres détachées et préparer l'adaptateur lors des ports. Aucun développement de Enregistrer et quitter, aucune nouvelle architecture de confirmation, aucun Bridge/WordPress.
+
+## 12/10/2026 — Reprise UX/UI V2 : lot 01B et garde Abby
+
+- Main distant `07dde9c85dab337ee0ed3a5a92034a139d7ebad2`, #81 terminée et #83 fermée sans fusion. Référentiel #82 lu à efb4fe6 ; reprise propre de #87 sur `feature/ux-v2-lot01b-components-v1@b9679c3`, base #86 toujours draft. Aucun retour aux anciennes branches ni réinitialisation.
+- Correctif local `af5cdc559517e049c45f80acf551928e0dd28772` : garde Abby existant conservé ; référence/document, options pending, mutations du détail, préparation Projet et destination opérationnelle raccordés au même registre UX-01, après reproductions. Aide longue coupée en bas de fenêtre reproduite puis corrigée ; aucune nouvelle architecture de confirmation.
+- Recettes Windows isolées : Abby 25/25 ; vrai Devis 21/21 ; UX-01 183/183 ; boutons/champs 40/40 ; aide 70/70 ; icônes 42/42 ; notifications 30/30 ; atelier 50/50 sans captures ; interface réelle 300/300. Typecheck OK, suite complète **801/801 dans 87 fichiers, 108,59 s, sans RPC** sur af5cdc5. [Rapport de reprise](docs/UXV2_LOT01B_REPRISE_2026-10-12.md). Migrations 1–66/intégrité/FK correctes sur TEMP, fixtures nettoyées, aucun accès Validation-MSI.
+- [12 critères R01B](docs/UXV2_LOT01B_GATES.md) démontrés au périmètre pilote/parcours testés ; pas une migration de toutes les fiches ni un audit WCAG global. Proposition de clôture technique après validation humaine ; prochaine étape 01C uniquement à planifier. Aucun push/CI hébergée/merge/déploiement, code métier/Main/preload/schéma/CGV/signature inchangés ; #86/#87 restent draft.
+
+Les entrées suivantes sont historiques et conservent les états GitHub annoncés à leur date.
+
 ## 10/10/2026 — Validation Windows de la recette packagée IPC / app.relaunch UX-01 × UX-16
 
 - **SHA réellement testé :** `prep/ux01-restore-quit-gate-v2@61786e1f5449cf93d4272458480b302ad2dc4bde`. Exécutable de recette Electron **44.3.0** packagé indépendamment sous TEMP, réutilisant le vrai gestionnaire de `backups:restore` et le cycle de vie Electron `app.isPackaged`.
