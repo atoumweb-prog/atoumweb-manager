@@ -35,3 +35,7 @@ Observation àreprendre en02C : GlobalSearch n’incrémente pasrequestId quandq
 ## Frontière autorisée
 
 02B.1 audit et02B.2 atelier seulement. Headerprésentation reçoit un slotchrono unique, conserve celui-ci danslemême sous-arbre lorsdurepli. Préférenceheader distinctede celledu rail01F etbandeauBibliothèque. Chrono, recherche, contextefiche etnotification duprototypesontexplicitementTEST. UX-01 protègelesbrouillons etsorties ; aucunsecondregistre. Les16critères seront distingués entrepilotetesté etintégrationmétierfuture ; aucun02C/03 niApp/GlobalTimer/GlobalSearch deproduction modifié.
+
+## Actualisation 02B.3 / 02B.4 — 12/10/2026
+
+L'indépendance des états et la restitution du focus ont été renforcées dans le pilote, sans port du header de production. [Exécution et preuves finales](UXV2_LOT02B_EXECUTION.md) ; [audit clavier détaillé, priorités et risques avant port](UXV2_LOT02B_RACCOURCIS.md). Aucun accelerator global attribué. Les constats ci-dessus restent l'inventaire initial ; la frontière autorisée est désormais 02B.3 pilote et audit 02B.4, sans 02B.5/02C.

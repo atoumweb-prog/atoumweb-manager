@@ -1,5 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 12/10/2026 — 02B.3 pilote et audit clavier 02B.4
+
+- Reprise propre de #93@8b241c4, base #92 et dépendances #90/#91/#92 conservées ; main confirmé31167754 après fusion #94, CI post-fusion38273325333 SUCCESS (846/846, sansRPC). Aucun merge/retarget/CI nouveau effectué dans cette tâche.
+- Code final e78f1ee : huit états header/rail/bandeau indépendants, préférence visuelle sans données métier, garde UX-01 existante ; focus Options corrigé après reproduction, dialogues chrono TEST et brouillons conservés, mots du contexte lisibles. Aucun App/GlobalTimer/GlobalSearch/IPC/service ou migration modifié.
+- Typecheck OK ; ciblés28/28 ; complet887/887 dans96fichiers,140,15s,sansRPC ; restaurations35/35, A→B5,344s. Atelier02B167/167 en deux processus et18captures auSHAexact dirty:false. Régressions02A125/125, UX-01183/183 etrenderer300/300 sur40a40b8, sources de ces bancs inchangées par la dernière correction CSS du pilote. TEMP intégritéOK/FKvide/migrations1–66 etnettoyage confirmés.
+- [Rapport et limites](docs/UXV2_LOT02B_EXECUTION.md), [audit clavier](docs/UXV2_LOT02B_RACCOURCIS.md) : aucun nouveau raccourci global. Risques Escape hérités et pointerdown du vrai chrono à qualifier avantport ; cette validation n'est pas une certification desdialogues métier dansV2.
+- Publication #93 draft avecskipci, aucunusageValidation-MSI, budget oudonnée réelle. Suite : revue indépendante puisprochaineconsolidation avant décision02B.5 ; aucun02C/03/raccordementmassif commencé.
+
 ## 12/10/2026 — 02B.3 suspendu ; consolidation86–93 préparée
 
 - HuitPR draft/mergeable, baseslinéaires ancêtres, retard0 etaucuncheck courant. Main07dde9c8 inchangé. Simulations16pairesbase/source etmain/source sansconflit, arbreségaux auxsources ; aucun merge appliqué oubasechangée.
@@ -1555,3 +1563,4 @@ Les tests couvrent les migrations vierges et mises à niveau, les prix confirmé
 Prochaine action : validation visuelle du parcours complet et des trois thèmes sous Windows. Aucune ouverture du workspace utilisateur sans sauvegarde explicite.
 
 Clôture Lot 3 — 03/10/2026 : bilan réel validé par AtoumWeb ; commit local dédié autorisé, sans push ni merge. La recette manuelle AtoumWeb reste à faire avant validation fonctionnelle finale. Cette clôture ne contient aucune modification du Lot 4.
+
