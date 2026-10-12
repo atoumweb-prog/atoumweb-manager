@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 12/10/2026 — Préparation 02A et atelier de navigation E42
+
+- Branche `codex/ux-v2-lot02a-navigation-v1` depuis #91@765f66d ; revue ChatGPT lue. [Inventaire](docs/UXV2_LOT02A_INVENTAIRE.md) des 17 clés, événements, raccourcis, CSS, icônes et gardes avant code. PR #92 draft, base #91 ; parents préservés.
+- Option E42 A : réduit = Accueil + favoris + cinq groupes ; déployé = 17 destinations. Groupes explicites/clavier/focus, favoris ordonnés et reset confirmé, persistance visuelle 01F. Demande Projet temporaire sans écriture durable. Logo triangulaire et nouveaux pictogrammes seulement réservés ; aucun visuel définitif adopté.
+- Code final 5f8480e : typecheck OK, ciblés 18/18, suite 877/877 (95 fichiers, 112,99 s, sans RPC), natif 125/125 sur deux processus, neuf captures au SHA exact. Régressions F76 / UX-01183 / renderer300 sur 5ba1168 ; tables hors settings inchangées, intégrité/FK et migrations 1–66 TEMP, nettoyage confirmé. [Rapport et 18 critères](docs/UXV2_LOT02A_EXECUTION.md).
+- Atelier autonome ; App.tsx, GlobalTimer, routes ciblées et services métier inchangés. Raccord réel de navigation, atlas/logo final et lecteur d'écran restent à qualifier. Aucun 02B/lot03, merge, CI hébergée ni Validation-MSI. Recette humaine globale différée.
+
 ## 12/10/2026 — 01F : persistance par workspace et recette transversale
 
 - Branche distincte `codex/ux-v2-lot01f-preferences-v1` depuis90@4653e58. Stockage inspecté : apparence dansSQLite/settings parworkspace, bootstrapworkspace.json seulement pour choisir le dossier. Adaptateur de dispositions versionné sur le même propriétaire, sans migration ; aucun texte/id de dossier dans les préférences.
