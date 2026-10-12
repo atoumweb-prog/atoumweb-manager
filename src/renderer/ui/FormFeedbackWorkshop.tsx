@@ -5,6 +5,7 @@ import { AppNotice } from './AppNotice';
 import { AppTextField } from './AppTextField';
 import { FormFeedbackIndicator } from './FormFeedbackIndicator';
 import { UnsavedGroup, installUnsavedLifecycleBridge, requestUnsavedExit, useUnsavedDraft } from '../unsaved/unsaved';
+import { mergeDraft } from '../../shared/draftSection';
 
 /**
  * UX V2 01E workshop only: two unrelated fictitious editors.
@@ -43,6 +44,20 @@ function SimulatedForm({ id }: { id: 'a' | 'b' }) {
     setConfirmed(true);
   }
 
+  function mockRemoteUpdate() {
+    // Exercise the shared three-way conflict detector, not a new merge algorithm.
+    // Only a TEST server revision exists; nothing is fetched or persisted.
+    const remoteNote = `VERSION DISTANTE TEST — ${label}`;
+    const merged = mergeDraft({ note: '' }, { note: text }, { note: remoteNote });
+    if (merged.conflicts.length === 0) {
+      draft.initial(merged.value.note);
+    }
+    setText(merged.value.note);
+    setConflict(merged.conflicts.length > 0);
+    setError(false);
+    setConfirmed(false);
+  }
+
   return <article className="aw-form-workshop-card" aria-label={label}>
     <h2>{label}</h2>
     <AppTextField
@@ -55,7 +70,7 @@ function SimulatedForm({ id }: { id: 'a' | 'b' }) {
     <div className="aw-form-workshop-actions">
       <AppButton pending={pending} disabled={conflict} onAction={mockSave}>Simuler un retour positif (TEST)</AppButton>
       <AppButton disabled={pending} onAction={() => { setError(true); setConfirmed(false); }}>Simuler un refus (TEST)</AppButton>
-      <AppButton disabled={pending} onAction={() => { setConflict(true); setConfirmed(false); }}>Simuler un conflit (TEST)</AppButton>
+      <AppButton disabled={pending} onAction={mockRemoteUpdate}>Simuler une version distante (TEST)</AppButton>
       <AppButton disabled={pending || !conflict} onAction={() => setConflict(false)}>Effacer conflit fictif (TEST)</AppButton>
       <AppButton disabled={pending} onAction={() => { requestUnsavedExit(() => { setConfirmed(false); setError(false); setConflict(false); }, group); }}>Annuler cette note</AppButton>
     </div>
