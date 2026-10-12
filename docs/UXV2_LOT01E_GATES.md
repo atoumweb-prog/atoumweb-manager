@@ -1,5 +1,36 @@
 # UX/UI V2 — Lot 01E : matrice de recette (checkpoint pilote)
 
+## Validation Windows — 12/10/2026
+
+SHA testé **d4b38798d583ee57329d8e49c9e5b111b67862c9**. TypecheckOK ; ciblés52/52 (feedback13, draft8, registry10, windows21) ; complet **859/859,93fichiers,100,20s,sansRPC** ; Electron **95/95**, neufcaptures auSHAexact/dirty:false. UX-01 **183/183**, 01D **126/126**, 01C **66/66**, migrations1–66/intégritéOK/FKvide TEMP, nettoyage confirmé. Aucun accès Validation-MSI, aucun service métier modifié.
+
+| R01E | État actuel / preuve et limite |
+|---|---|
+| 01 | PASS pilote : six états/priorité32combinaisons, rendu/styling etfont dans neuf variantes. |
+| 02 | PASS pilote : fermetureA dirty refusée, champsA/B intactes, confirmation native défautRester. |
+| 03 | PASS : annulationA refusée/acceptée avecBdirty inchangé ; baselineB rétablie séparément. |
+| 04 | PASS pilote : saveA acquitte seulementA et laisseBerror/texte inchangés. |
+| 05 | PASS pilote : vrai mergeDraft propre/concurrent, conflit conservé pendant nouvelle saisie. Effacement du conflit explicitement TEST, pas une résolution métier. |
+| 06 | PASS : soumission ancienne acquittée sans effacer nouvelle saisie, sortie encore dirty, secondsave requis. |
+| 07 | PASS non-régression : repli et retour des sections Prospection/Devis sur fixture UX-01. |
+| 08 | PASS non-régression : archive/suppression ligne avant mutation, Rester/abandon ciblé, fixture UX-01. |
+| 09 | DIFFÉRÉ : save-and-exit réel non activé, protocole uniquement ; autorisation spécifique/service à qualifier. |
+| 10 | DIFFÉRÉ pour save-and-exit ; échec async ordinaire testé, saisie récente conservée, aucun déplacement. |
+| 11 | PASS pilote : aucune option save-and-exit sans capacité. Pas de couverture implicite des17modules. |
+| 12 | PASS : pending nativeclose refuse, Rester seulement ; aucune BD dans atelier. |
+| 13 | PASS : deux vraiesfenêtres dirty, quitannulé agrégé, fermeturesecondaire acceptée conserve primaire. |
+| 14 | PASS non-régression : changement workspace/refus/différé/ticket invalidé surfixture UX-01. |
+| 15 | PASS : Escape/Enter/Space/Tab/ShiftTab natifs, reloadRester ; extérieur inoffensif, backdrop métier UX-01 testé. |
+| 16 | PASS au périmètre diff : seules fixtures/présentation/tests changés ; suite métier859verte. Aucun ordre commercial/publication/signature modifié. |
+| 17 | PASS : neufvariantes avecBdraftidentique ; zoom100/125/150 conserve saisi. |
+| 18 | LIMITE assumée : pas de recoverycrash ni persistance de texte ; pas de crashTEST revendiqué. |
+| 19 | PASS provenance/pilote : #81 déjàfusionnée, #83 fermée sansfusion mais protections présentes sur base89 ; suite859/restaurations35 etnatifUX-01183 verts, pas de merge supplémentaire. |
+| 20 | PASS pilote + régression : déduplication AppButton/ref local, refus async, IPC versionpérimée réel dansUX-01 ; aucune mutation/succès surerreur. Pas de panne réseau réelle externe. |
+
+**01E.5/01E.6 stabilisés techniquement au périmètre pilote volontaire.** Recettehumaineglobale différée ; critères09/10 restentciblesfutures exclues de cette clôture, protocolenonactivé. Suiteautorisée01F dansbranche/PRdistinctes, sanslot02/03 niportsgénéraux.
+
+## Historique — avant exécution Windows
+
 **12/10/2026 — PR #90 draft.** Base #89, aucun module métier migré. Cette matrice distingue les preuves **de code** des tests **exécutés**. Elle ne transforme pas les exercices non joués en « PASS ».
 
 | Critère référentiel #82 | Statut à ce checkpoint | Preuve / reste à faire |

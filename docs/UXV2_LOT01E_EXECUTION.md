@@ -1,5 +1,19 @@
 # UX/UI V2 — Lot 01E : reprise et premier incrément non destructif
 
+## 12/10/2026 — reprise MSI et bilan technique01E.5/01E.6
+
+Départce8d17670ab43901e6cb7e79d278ca999ce8a31f confirmé parGitHub etcheckoutpropre, branche90 conservée/base89. Aucun travail local à préserver sur89. Référentiel82 relu ; aucune ancienne implémentation recommencée.
+
+Deux défauts démontrés : castTypeScript démarrant aprèsnewline dansformFeedback.test.ts (typecheckTS1434 etsuite nontransformable) ; shelldu banc sanssidebar/content-area, capturecompressée etcontrôles sansstylecontextuel. Correction syntaxique sanschangerassertions ; shellreprend structureManager etassertionsdegéométrie/styling. Premier runce8d : 846tests héritésPASS, 1suite01E nontransformée, natif50PASS maiscapturesvisuellesincorrectes. Ce n'estpasunevalidation complète.
+
+Code8f527479e1ec0c20741e854030adcd4e83c01176 : fauxsaveéchecasync/déduplicationlocalepending, Escape scoped versregistreexistant, sixétatsderéférence etbancannulationsA/B, clavier, reload, deuxfenêtres. Correctionbancfinale **d4b38798d583ee57329d8e49c9e5b111b67862c9**, validéecheckoutpropre : typecheckOK, ciblés52/52, complet **859/859 dans93fichiers,100,20s,sansRPC**, restaurations35/35. Electron **95/95**, neufcaptures synchronisées/manifesteSHA/dirt y:false (`dirty:false` dansJSON). UX-01183/183, atelierD126/126, C66/66 ; intégrité/FK/migrations1–66 TEMP, nettoyagesconfirmés. Revuevisuelle directe AtoumWeb/Confort avantcheckpoint finalbancdeproductionidentique.
+
+Lesajouts n'appellentaucunserviceclient : snapshot soumis seul acquitté, saisiependantpending conservée, erreur/refus/conflict restentvisibles ; annulation limitedgroup viaUX-01, quitagrège deuxfenêtres réelles. Aucune modificationdu registre/Main/preload métier, migrations, montants/CGV/signature ; aucuneactivationEnregistrer etquitter. Lesanciensdocumentsdeprotocolerestentconception ; [20critères etlimites](UXV2_LOT01E_GATES.md).
+
+Clôturetechniqueproposée du pilote01E.5/6, recettehumaineglobale différée. R09/R10(nonactivationmétier) etR18(crash) restentexplicitement horsfonctionnalitéslivrées. Suiteautoriséepartuser : préparation/développement01F dansbranche/PRdistinctes ; pas01F présenté commeachevéici. AucuneCIhébergée/merge/Validation-MSI, publicationsskipci.
+
+## Historique du développement ChatGPT
+
 **12/10/2026 — branche dédiée `feature/ux-v2-lot01e-form-feedback-v1`**, créée depuis **PR #89 @ `366395ad402169c985f83fd46e808d89cc2f0b19`**. Base de PR prévue : `codex/ux-v2-lot01d-inventory-v1`. Les PR #86/#87/#88/#89 ne sont pas modifiées ; aucune fusion vers `main`.
 
 ## 01E.1 — Audit réel des protections : constat, pas simulation de merge
