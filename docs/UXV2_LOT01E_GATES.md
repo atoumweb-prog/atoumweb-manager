@@ -1,0 +1,50 @@
+# UX/UI V2 — Lot 01E : matrice de recette (checkpoint pilote)
+
+**12/10/2026 — PR #90 draft.** Base #89, aucun module métier migré. Cette matrice distingue les preuves **de code** des tests **exécutés**. Elle ne transforme pas les exercices non joués en « PASS ».
+
+| Critère référentiel #82 | Statut à ce checkpoint | Preuve / reste à faire |
+|---|---|---|
+| R01E-01 — États clean/dirty/pending/error/conflict | **PARTIEL** | `resolveFormFeedback` + `AppNotice` + atelier A/B ; 32/32 combinaisons de logique pure exécutées hors dépôt. Rendu Electron neuf variantes non joué |
+| R01E-02 — Changer de fiche avec brouillon | **PARTIEL** | L'atelier appelle `requestUnsavedExit` pour fermer A, test natif rédigé avec refus ; non exécuté sur le code #90 |
+| R01E-03 — Annuler un sous-éditeur | **PARTIEL** | Deux groupes A/B ; `Annuler cette note` exige la confirmation UX-01 ; test refus/abandon rédigé, pas joué |
+| R01E-04 — Enregistrer A, modifier B | **PARTIEL** | A/B ont états et baselines indépendants ; sauvegarde simulée et assertions dans le banc ; aucune vraie API métier |
+| R01E-05 — Donnée distante et conflit | **OUVERT** | `DraftSection/mergeDraft` existants identifiés ; pas encore d'essai d'une réponse distante concurrente dans l'atelier |
+| R01E-06 — Réponse ancienne après nouvelle saisie | **PARTIEL** | `mockSave` capture le snapshot soumis, `draft.saved(submittedText)` ; bench vérifie que la saisie tardive reste dirty et ferme la sortie ; pas de run natif |
+| R01E-07 — Replier section Prospect dirty | **HÉRITÉ / À REVALIDER** | Branche source contient UX-01 ; aucune modification du composant métier dans #90 ; rejouer recette de régression |
+| R01E-08 — Archiver Prospect / supprimer ligne Devis dirty | **HÉRITÉ / À REVALIDER** | Handlers existants mappés, pas de nouveau contrôle d'exécution sur #90 |
+| R01E-09 — Save-and-exit réel | **NON IMPLÉMENTÉ** | Protocole async en conception ; aucune capability de save universelle ni troisième bouton natif |
+| R01E-10 — Save-and-exit échoué | **NON IMPLÉMENTÉ** | Le composant montre erreur/conflit ; aucune opération réelle save-and-exit |
+| R01E-11 — Éditeur sans capacité | **CONFORME AU PILOTE PAR ABSENCE** | L'atelier ne présente **aucun** bouton save-and-exit ; autres formulaires à vérifier lors de la migration |
+| R01E-12 — Pending empêche fermeture | **PARTIEL** | Native `UnsavedWindows` existante ; bench appelle `win.close()` pendant pending ; validation Windows manquante |
+| R01E-13 — Deux fenêtres dirty | **OUVERT** | API native conservée ; scénario multifenêtres non joué sur #90 |
+| R01E-14 — Changer workspace dirty | **OUVERT** | Aucune route métier ni contexte workspace dans l'atelier ; doit rester protégé par les tests existants |
+| R01E-15 — Outside / Escape / reload | **PARTIEL** | Fermeture contrôlée et native testées dans le banc écrit ; clavier Escape/reload à compléter |
+| R01E-16 — Sauvegarde ≠ publication/transition | **CONFORME AU DIFF, À REVALIDER** | #90 crée uniquement des fichiers, aucun handler métier, IPC, CGV, devis, Bridge touché |
+| R01E-17 — Changer thèmes/densités | **PARTIEL** | CSS scoped, 3×3 et captures prévus dans le banc ; tests natifs non joués |
+| R01E-18 — Crash / récupération | **LIMITE ASSUMÉE** | Aucune promesse de récupération automatique, aucune persistance de brouillon fictif |
+| R01E-19 — Interopérabilité #81/#83 | **PARTIEL** | Mécanismes UX-01 effectivement présents sur base #89 ; #83 fermée sans merge et #81 fusionnée, typecheck/suites à rejouer sur #90 |
+| R01E-20 — Erreurs IPC/save/double clic | **PARTIEL** | Erreur affichée dans atelier et verrou `AppButton` réutilisé ; pas de simulation réelle de refus IPC ou de double clic en cours de sauvegarde |
+
+## Vérifications effectivement obtenues
+
+- Comparaison sur GitHub : la branche 01E se compose **uniquement de fichiers nouveaux**, sans modification d'éditeur métier, du registre UX-01 ou du processus Main.
+- Audit statique détaillé des fonctions et services dans `docs/UXV2_LOT01E_EXECUTION.md`.
+- Logique pure `resolveFormFeedback` récupérée du dépôt exécutée sur **32 combinaisons de cinq indicateurs**, avec aucun écart dans la priorité d'état ni le message/level ; transcrite en test Vitest `formFeedback.test.ts`.
+- Vérification syntaxique JavaScript du banc Electron après correction des cas de conflit, de retour tardif et d'annulation gardée.
+- **Aucun test Electron Windows, Vitest complet, compilation TypeScript globale ou CI hébergée lancé** : les compteurs précédents 846/846 appartiennent à **01D** et ne sont **pas** des résultats 01E.
+
+## Prochain gate technique
+
+Sur un checkout Windows isolé de la branche PR #90, relever le SHA exact et travailler sans `Validation-MSI` :
+
+```powershell
+npm run typecheck
+npm test -- --maxWorkers=2
+node scripts/check-ux-v2-lot01e-workshop.cjs
+```
+
+Ne pas forcer un PASS si une dépendance, un runner ou un poste manque. Corriger chaque échec sans supprimer les assertions ni ajouter des délais arbitraires pour masquer une non-régression. Le bench natif utilise seulement des fixtures temporaires et produit des captures sous `outputs/ux-v2-lot01e-reference`.
+
+## Règle de passage à 01F
+
+01E doit atteindre une preuve technique suffisante de son **périmètre pilote** ; les critères liés aux services métier, à la synchronisation réelle multifenêtres ou à save-and-exit restent clairement différés aux étapes autorisées. La recette humaine visuelle globale sera organisée à la fin de la refonte, sans abandonner les gardes de perte de données en cours de chantier.
