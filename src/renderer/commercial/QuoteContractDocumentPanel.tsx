@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { QuoteDetail } from '../../shared/commercial';
+import { useUnsavedDraft } from '../unsaved/unsaved';
 
 export function QuoteContractDocumentPanel({
   quote,
@@ -12,6 +13,12 @@ export function QuoteContractDocumentPanel({
 }) {
   const [abbyReference, setAbbyReference] = useState(quote.abbyReference ?? '');
   const [busy, setBusy] = useState(false);
+  useUnsavedDraft('Référence et document Abby', abbyReference, {
+    group: 'quote:' + quote.id + '/abby',
+    dirty: abbyReference !== (quote.abbyReference ?? ''),
+    pending: busy,
+    discard: () => setAbbyReference(quote.abbyReference ?? ''),
+  });
 
   useEffect(() => {
     setAbbyReference(quote.abbyReference ?? '');

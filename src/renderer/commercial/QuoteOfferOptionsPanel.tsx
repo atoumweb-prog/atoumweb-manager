@@ -3,6 +3,7 @@ import type { CatalogVersion,QuoteDetail, QuoteLine, QuoteLineInput } from '../.
 import { QuoteLineEditor } from './QuoteLineEditor';
 import './QuoteOfferOptionsPanel.css';
 import {CommercialScope} from './CommercialScope';
+import {useUnsavedDraft} from '../unsaved/unsaved';
 
 function components(line: QuoteLine): Array<Record<string, unknown>> {
   const value = line.snapshot?.offerComponents;
@@ -22,6 +23,9 @@ export function QuoteOfferOptionsPanel({ quote, onSave }: {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [editing, setEditing] = useState<string | null>(null);
+  useUnsavedDraft('Enregistrement des options du devis', null, {
+    group: 'quote:' + quote.id + '/options', dirty: false, pending: busy,
+  });
   const editable = quote.status === 'draft' && !quote.finalizedAt && !quote.contractCompiledAt
     && !quote.snapshotLockedAt && quote.contractSnapshotJson == null;
   const offers = quote.lines.filter((line) => line.snapshot?.itemType === 'offer');

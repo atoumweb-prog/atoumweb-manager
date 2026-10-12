@@ -28,7 +28,7 @@ if(!process.versions.electron){
    "createRoot(document.getElementById('root')).render(",
    "  React.createElement('label', { htmlFor: 'name-field' },",
    "    'Nom commercial',",
-   "    React.createElement(FieldHelp, { text: 'Aide courte', detail: 'Détail complet et accessible.' }),",
+   "    React.createElement(FieldHelp, { text: 'Aide courte', detail: 'Détail complet et accessible. '+ 'Paragraphe long pour la lecture et le défilement. '.repeat(100) }),",
    "    React.createElement('input', { id: 'name-field', type: 'checkbox' })",
    "  )",
    ");"
@@ -122,6 +122,36 @@ if(!process.versions.electron){
     'long hover detail correctly marked as automatic');
   await evaluate('document.querySelector(".field-help-anchor").dispatchEvent(new MouseEvent("mouseout",{bubbles:true,relatedTarget:document.body}))');
   await wait('!document.querySelector(".field-help-detail")','automatic detail removed on exit');
+  win.show();win.focus();win.webContents.focus();
+  await wait('document.hasFocus()','Native help keyboard focus');
+  for(const key of ['Enter','Space']){
+   await evaluate('document.querySelector(".field-help").focus()');
+   win.webContents.sendInputEvent({type:'keyDown',keyCode:key});
+   win.webContents.sendInputEvent({type:'char',keyCode:key==='Enter'?'\r':' '});
+   win.webContents.sendInputEvent({type:'keyUp',keyCode:key});
+   await wait('!!document.querySelector(".field-help-detail")','Native '+key+' opens help');
+   check(await get('document.querySelector(".field-help-detail").dataset.openSource==="explicit"'),'Keyboard '+key+' is explicit');
+   win.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});
+   win.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});
+   await wait('!document.querySelector(".field-help-detail")','Keyboard closes help only');
+   check(await get('document.activeElement.classList.contains("field-help")'),'Keyboard restores help focus');
+   check(!(await get('document.querySelector("#name-field").checked')),'Keyboard help never toggles associated field');
+  }
+  win.setSize(680,480);
+  await evaluate('document.querySelector(".field-help-anchor").style.cssText="position:fixed;bottom:12px;right:12px"');
+  for(const theme of ['atoumweb','noir','blanc']){
+   for(const zoom of [1,1.25,1.5]){
+    win.webContents.setZoomFactor(zoom);await sleep(80);
+    await evaluate('document.documentElement.dataset.theme='+JSON.stringify(theme));
+    await activate();await sleep(50);
+    const bounds=await get('(()=>{const e=document.querySelector(".field-help-detail"),r=e.getBoundingClientRect(),c=document.querySelector(".field-help-detail-close").getBoundingClientRect();return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,w:innerWidth,h:innerHeight,scroll:e.scrollHeight>e.clientHeight,close:c.bottom<=innerHeight&&c.right<=innerWidth}})()');
+    check(bounds.left>=0&&bounds.top>=0&&bounds.right<=bounds.w&&bounds.bottom<=bounds.h,'Long help inside narrow zoom viewport '+theme+'/'+zoom+' '+JSON.stringify(bounds));
+    check(bounds.scroll&&bounds.close,'Long help scroll and close remain reachable '+theme+'/'+zoom);
+    await evaluate('document.querySelector(".field-help-detail-close").click()');
+    await wait('!document.querySelector(".field-help-detail")','Long help dismissal');
+    check(!(await get('document.querySelector("#name-field").checked')),'Narrow help never mutates field');
+   }
+  }
   console.log('[UXV2 01B] RESULT '+JSON.stringify({checks,failed:0,themeDensityCombinations:9,
    explicitHelp:true,hoverDisabled:true,delayedHover:true,escapeAndFocus:true,onlyTemp:true}));
  }).catch(e=>{console.error('[UXV2 01B] ERROR',e.stack||e);process.exitCode=1;})

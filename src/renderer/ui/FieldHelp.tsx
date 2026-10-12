@@ -31,7 +31,10 @@ export function FieldHelp({ text, detail }: { text: string; detail?: string }) {
     const left = rightSide + panelWidth <= window.innerWidth - 12
       ? rightSide
       : Math.max(12, rect.left - panelWidth - 10);
-    const top = Math.max(12, Math.min(rect.top, window.innerHeight - 120));
+    // Reserve the CSS maximum height, including for long scrollable details.
+    // A 120px allowance clipped the 240px panel near the viewport bottom.
+    const panelHeight = Math.min(240, window.innerHeight - 24);
+    const top = Math.max(12, Math.min(rect.top, window.innerHeight - panelHeight - 12));
     setPosition({ left, top });
   };
 

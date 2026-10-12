@@ -21,21 +21,21 @@ if(!process.versions.electron){
   assert(!css.includes('</style'),'Unsafe inline style fixture');
   fs.writeFileSync(path.join(temp,'index.html'),
    '<!doctype html><html lang="fr"><head><meta charset="utf-8"><style>'+css+
-   '</style></head><body><div class="app-shell"><main class="content-area"><div id="root"></div></main></div>'+
+   '</style></head><body><div class="app-shell"><aside class="sidebar">Fixture</aside><main class="main-area"><section class="content-area"><div id="root"></div></section></main></div>'+
    '<script src="fixture.js"></script></body></html>');
   const source=[
-   "import React from 'react';",
+   "import React,{useState} from 'react';",
    "import {createRoot} from 'react-dom/client';",
    "import {AppButton} from './src/renderer/ui/AppButton';",
    "import {AppTextField} from './src/renderer/ui/AppTextField';",
    "const data=window.__awControls={calls:0,failCalls:0,errors:0,resolve:null,reject:null};",
    "const pending=()=>{data.calls++;return new Promise((resolve,reject)=>{data.resolve=resolve;data.reject=reject;});};",
-   "function Demo(){return React.createElement('section',{id:'aw-demo'},",
-   "React.createElement(AppButton,{variant:'primary',onAction:pending},'Enregistrer (test)'),",
+   "function Demo(){const [value,setValue]=useState('');return React.createElement('section',{id:'aw-demo'},",
+   "React.createElement(AppButton,{id:'save-test',variant:'primary',onAction:pending},'Enregistrer (test)'),",
    "React.createElement(AppButton,{variant:'secondary',disabled:true,onAction:()=>{data.calls++}},'Désactivé'),",
-   "React.createElement(AppButton,{variant:'quiet',icon:'★','aria-label':'Ouvrir le panneau (test)',onAction:()=>{data.calls++}}),",
-   "React.createElement(AppButton,{variant:'danger',onAction:()=>{data.failCalls++;return Promise.reject(new Error('fixture refused'))},onActionError:()=>{data.errors++}},'Supprimer (test)'),",
-   "React.createElement(AppTextField,{id:'sample-name',label:'Nom du contact',description:'Information de démonstration',error:'Saisie requise',placeholder:'Exemple',onChange:()=>{}})",
+   "React.createElement(AppButton,{id:'open-test',variant:'quiet',icon:'★','aria-label':'Ouvrir le panneau (test)',onAction:()=>{data.calls++}}),",
+   "React.createElement(AppButton,{id:'reject-test',variant:'danger',onAction:()=>{data.failCalls++;return Promise.reject(new Error('fixture refused'))},onActionError:()=>{data.errors++}},'Supprimer (test)'),",
+   "React.createElement(AppTextField,{id:'sample-name',label:'Nom du contact et informations complémentaires pour identifier précisément son rôle dans ce dossier',description:'Information de démonstration',error:'Saisie requise : vérifie les informations avant de réessayer.',placeholder:'Exemple',value,onChange:e=>setValue(e.target.value)})",
    ");}",
    "createRoot(document.getElementById('root')).render(React.createElement(Demo));"
   ].join('\n');
@@ -99,11 +99,34 @@ if(!process.versions.electron){
   await wait('!document.querySelector(".aw-ui-button--primary").disabled','Promise completion');
   test((await get('window.__awControls.calls'))===1,'No implicit duplicated action');
   // Promise rejection must not be reported as a success.
+  await evaluate('const e=document.querySelector("#sample-name");Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(e,"Saisie à conserver");e.dispatchEvent(new Event("input",{bubbles:true}));');
   await evaluate('document.querySelector(".aw-ui-button--danger").click()');
   await wait('!!document.querySelector(".aw-ui-control-error")','Visible rejected result');
   test((await get('window.__awControls.errors'))===1,'Error callback propagated');
   test((await get('document.querySelector(".aw-ui-control-error").getAttribute("role")'))==='alert','Error announced');
   test((await get('window.__awControls.failCalls'))===1,'Rejected action ran exactly once');
+  test(await get('document.querySelector("#sample-name").value==="Saisie à conserver"'),'Rejected action preserves controlled input');
+  windowRef.show();windowRef.focus();windowRef.webContents.focus();
+  await wait('document.hasFocus()','Native keyboard focus');
+  await evaluate('document.querySelector("#save-test").focus()');
+  for(const id of ['open-test','reject-test','sample-name']){
+   windowRef.webContents.sendInputEvent({type:'keyDown',keyCode:'Tab'});
+   windowRef.webContents.sendInputEvent({type:'keyUp',keyCode:'Tab'});
+   await wait('document.activeElement?.id==='+JSON.stringify(id),'Native Tab order '+id);
+   test(true,'Tab order skips disabled control and reaches '+id);
+  }
+  await evaluate('document.querySelector("#open-test").focus()');
+  windowRef.webContents.sendInputEvent({type:'keyDown',keyCode:'Space'});
+  windowRef.webContents.sendInputEvent({type:'char',keyCode:' '});
+  windowRef.webContents.sendInputEvent({type:'keyUp',keyCode:'Space'});
+  await wait('window.__awControls.calls===2','Space activates AppButton');
+  test(true,'Native Space activates exactly once');
+  windowRef.setSize(880,700);
+  for(const zoom of [1,1.25,1.5]){
+   windowRef.webContents.setZoomFactor(zoom);await sleep(100);
+   const usable=await get('[...document.querySelectorAll("#aw-demo button,#sample-name,.aw-ui-field-label,.aw-ui-field-error")].every(e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1&&r.width>0;})');
+   test(usable,'Long label, error, field and essential commands fit narrow viewport at zoom '+zoom);
+  }
   console.log('[UXV2 01B CONTROLS] RESULT '+JSON.stringify({checks,failed:0,combinations:9,buttonVariants:4,
     asyncDedup:true,rejectionVisible:true,labelsAndErrors:true,onlyTemp:true}));
  }).catch(e=>{console.error('[UXV2 01B CONTROLS] ERROR',e.stack||e);process.exitCode=1;})
