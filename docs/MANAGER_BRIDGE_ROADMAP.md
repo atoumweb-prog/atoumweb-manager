@@ -1,5 +1,7 @@
 # Manager ↔ Bridge — Architecture, feuille de route et journal partagé
 
+**12/10 — checkpoint01D.4 :** code7c46651 PR89 draft/base88, source synthétique complète/paginée, filtre/tri global, exactitude des comptes, étatsloading/erreur/vide/retry, refus réponses tardives avec fiche/brouillon conservés. TypecheckOK, ciblés36, complet846/846(92fichiers,121,24s,sansRPC), atelier126/neufcaptures/SHAexact, C66/UX-01183/B40/Abby25 ; migrations/intégrité/FK TEMP, zéro service réel/Validation-MSI. [Bilan01D et proposition de clôture socle](UXV2_LOT01D_EXECUTION.md). Annuaire prospects proposé comme premier port, non commencé ; adaptationsréglages/workspace et recettehumaine restent ultérieures. CI86 différée tant quequota/protections pasconfirmés, sixruns autorisés conditionnellement, aucune fusion/CI/retarget.
+
 **12/10 — checkpoint01D.3 :** PR89/base88 préservées, code17499bf, colonnes drag/clavier et resize à écriture unique, vues personnelles et défaut sûrv2/v1 ; fiche/brouillon conservés, aucun port métier. TypecheckOK, ciblés27, complet837/837(91fichiers,116,53s,sansRPC), natif112/neufcaptures, C66/UX-01183/B40/Abby25 ; intégrité/FK TEMP, aucune Validation-MSI. [Rapport](UXV2_LOT01D_EXECUTION.md). Suite01D.4 autorisée, recette humaine différée. Six CI autorisées mais86 en attente quota/protections confirmés ; aucune CI/merge/retarget exécuté.
 
 Date d'ouverture : 27/09/2026.

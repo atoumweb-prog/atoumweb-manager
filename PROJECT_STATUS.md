@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 12/10/2026 — 01D.4 terminé, clôture technique du socle proposée
+
+- Code7c46651 sur PR89 draft/base88 : source complète ou page partielle simulée, tri/filtre global avant pagination, compteurs exacts, loading/erreur/retry/vide distincts. Succès et erreurs périmés ignorés ; fiche/key/onglet/brouillon conservés. Aucune API métier ni port d'écran réel.
+- TypecheckOK, ciblés36/36, complet846/846 (92fichiers,121,24s,sansRPC), natif126/126/neufcaptures auSHAexact avec dirty:false. Non-régressionC66/UX-01183/B40/Abby25 ; intégrité/FK et migrations1–66 surTEMP, nettoyage confirmé. [Rapport,16critères et limites](docs/UXV2_LOT01D_EXECUTION.md).
+- Clôture technique01A–01D proposée au périmètre composants/ateliers, recette humaine globale différée. Prochain pilote proposé Annuaire prospects, adaptateur préférences profil/workspace et sources métier à qualifier ; aucune migration générale commencée.
+- Main toujours07dde9c8 ;86/87/88 drafts/cibles/HEAD inchangés. CI86 en attente quota/protections confirmés par utilisateur ; aucun run/merge/retarget, aucune Validation-MSI. Publication89 avec skipci.
+
 ## 12/10/2026 — 01D.3 colonnes et vues personnelles validées techniquement
 
 - Code17499bf sur PR89 draft/base88 : ordre drag/clavier, resize borné/aperçu immédiat/écriture unique, annulation sans écriture ; vues personnelles CRUD, standard rétablissable, préférencesv2 compatiblesv1. Aucun id/note/query persisté, aucun écran métier migré.

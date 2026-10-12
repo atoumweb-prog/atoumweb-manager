@@ -1,5 +1,59 @@
 # 01D — ateliers fonctionnels de tableaux et fiches
 
+## 12/10/2026 — checkpoint 01D.4 et clôture technique proposée
+
+Code/banc **7c46651ba4c88d0780d7cac078c52ef4018c2cd4**, depuis checkpoint01D.3 c2de990. PR89 draft/base88, aucun écran métier migré. Atelier uniquement, 120 dossiers gelés ; aucune API métier, SQLite ou Validation-MSI.
+
+La source simulée applique **filtrage puis tri global stable puis pagination** ; elle annonce `scope: complete | partial-page`, `sortScope: whole-source`, total résultats, total source, page/pageCount/offset. Pages10/20/40, retour page1 lors des filtres/tri, bornage des demandes hors limite. Mode complet affiche tous les résultats ; mode paginé distingue plage affichée et total. Une page de20 ne se présente jamais comme120 lignes chargées.
+
+Chargement (aria-busy), erreur avec retry et absence de résultat sont distincts ; pendant une panne, aucun total inventé. Dernière demande seule peut publier un résultat ou une erreur ; invalidation à changement de paramètres/démontage. La fixture ne peut volontairement pas annuler ses timers, démontrant le refus des réponses tardives même sans AbortSignal. Le détail reste résolu par identité dans la source complète gelée ; loading/vide/erreur/page/tri/vue personnelle ne modifient ni selectedId, ni key, ni onglet, ni brouillon. Pas d'écriture métier ni de validation implicite.
+
+### Validation au SHA de code
+
+- Typecheck OK ; ciblés **36/36 dans4fichiers** (préférences/ordre/vues/tri/source asynchrone).
+- Atelier Electron **126/126**, neuf configurations thème×densité, captures frame-synchronisées et manifeste `outputs/ux-v2-lot01d-reference/validation.json` avec **SHA7c46651 et dirty:false**. Clavier natif, fenêtre900×800 et zoom100/125/150, même instance/onglet/note ; source avant/après inchangée. Revue visuelle directe Noir/Confort et Blanc/Confort+, plus revue AtoumWeb/Confort au checkpoint01D.3.
+- Non-régression exécutée sur ce SHA : 01C **66/66**, UX-01 **183/183**, contrôles01B **40/40**, Abby **25/25**. Migrations exactement1–66, intégritéOK et FKvide sur les fixturesTEMP UX-01 ; nettoyage confirmé.
+- Complément01B sur production identique7c46651 (seuls rapports locaux en cours d'édition) : aide **70/70**, icônes **42/42**, notifications **30/30**, atelier **50/50**, vraiDevis/Abby **21/21**. TousTEMP nettoyés, sans nouveau contrôle global humain.
+- Suite complète **846/846 dans92fichiers,121,24s**, sortie0 sansRPC, sur7c46651 ; 837tests du checkpoint01D.3 conservés et9tests source ajoutés. Restaurations35/35 vertes, aucune assertion/délai/worker modifié.
+
+Les captures sont locales, horsGit ; ce manifeste lie les neuf images au code testé. Les captures01D.2/01D.3 avaient été générées lors de ces checkpoints ; le dossier de référence courant est désormais01D.4. Ni package final ni CI hébergée du lot ne sont revendiqués.
+
+### Matrice finale R01D (périmètre atelier)
+
+| Critère | État et preuve |
+|---|---|
+| 01 | PASS : neuf variantes, fonts14/16/18, captures synchronisées. |
+| 02 | PASS : visibilité, ordre drag/clavier, identité etOuvrir imposés. |
+| 03 | PASS : largeurs bornées, clavier/gestes/reset, annulation et restauration. |
+| 04 | PASS : FR/centimes/dates/nulls/identité secondaire, tri global avant pagination. |
+| 05 | PASS : recherche, filtres conjoints13résultats, compteur global distinct des lignes affichées. |
+| 06 | PASS : résultat0 explicite, reset retourne120 ; panne distincte du vide. |
+| 07 | PASS : vues personnelles nommées/dupliquées/restaurées, whitelist ; stockage profilTEMP. |
+| 08 | PASS : standard non supprimable, défaut immuable rétablissable. |
+| 09 | PASS : anciennev1 normalisée en v2, inconnus/corruption et recovery sûr. |
+| 10 | PASS : filtre/page/chargement/erreur conserve détail, key, onglet etnote. |
+| 11 | PASS : bonne identité parOuvrir/Enter, Agrandir/Réduire même éditeur ; sortiesUX-01 conservées. |
+| 12 | PASS : source complète/page explicites, succès et erreur périmés ignorés, retry. |
+| 13 | PASS fonctionnel :120lignes, aperçu resize sans écriture au move, une au release. Aucun benchmark volumétrique global revendiqué. |
+| 14 | PASS pilote : fenêtre étroite/zoom, actions essentielles et brouillon accessibles. |
+| 15 | PASS pilote : deux modules/clés et vues personnelles indépendantes. Synchronisation multi-fenêtres à qualifier au port réel. |
+| 16 | PASS technique : typecheck,846tests et recettes natives ci-dessus ; aucune certification des17modules. |
+
+**Clôture technique du socle01A–01D proposée au périmètre composants/ateliers.** Recette humaine globale différée, aucune intégration générale ni fusion autorisée. Les adaptateurs aux réglages/workspaces réels, droits et sources métier doivent être raccordés et testés dans chaque port. Pas de nouvelle architectureUX-01, Enregistrer et quitter, règle commerciale/contractuelle ou migration SQLite.
+
+| Socle hérité / livré | Référence de branche | Contrôle et limites de clôture |
+|---|---|---|
+| 01A tokens/thèmes/densités | #86@7f5dbbf2 | Hérité sans modification, neuf configurations vérifiées dans les ateliers/B ; candidateCI encore en attente. |
+| 01B composants et gardeAbby | #87@2d1ddb76 | Rejoués contrôles/aide/icônes/notices/atelier/Abby ci-dessus ; protectionsdirty/pending conservées. |
+| 01C fiche rapide/agrandie et séparateur | #88@0fab2ae5 | Atelier66 rejoué, même éditeur et fin de geste unique conservés. |
+| 01D colonnes/vues/source | #89@17499bf puis7c46651 | 16critères validés techniquement au périmètre synthétique, comptes et preuves ci-dessus. |
+
+Ces branches restent empilées, toutesdraft. Le socle livré sur89 n'est **pas encore dansmain**, aucune autorisation de fusion déduite de cette clôture. Aucune adaptation simultanée des17écrans, synchronisation des préférences réelles ou qualification WCAG globale revendiquée.
+
+### Prochaine étape proposée : Prospection pilote
+
+Commencer par la liste **Annuaire prospects** et sa fiche rapide, en préservant pipeline/historique distincts, identifiant stable, filters/status métier et actions existantes. Réutiliser DataTable, vues et RecordPane dans un adaptateur Prospection en lecture seule ; reprendre les tris existants plutôt que les fixture enums. Choisir la portée de préférences réelles (profil/workspace, multi-fenêtres) avant raccord. Toute commande métier reste dans son service et passe par les mêmes protectionsUX-01 ; filtre et page ne doivent jamais fermer la fiche. Tests sur fixtures isolées : annulations, dirty/pending, navigation, erreurs service, droits, trois thèmes/neufvariantes, liens et historique. Ce pilote reste **proposé, non commencé**.
+
 ## 12/10/2026 — checkpoint 01D.3
 
 Code/banc **17499bf1822793e34d0895cde2dfe4c6346438ba**, depuis f458747, PR89 draft/base88 conservées. Numérotation conforme à la demande utilisateur (01D.3 colonnes/vues puis01D.4 async), distincte des étapes indicatives du référentiel.
@@ -80,6 +134,6 @@ Manipuler le pilote : **`scripts/launch-ux-v2-lot01d-workshop.cmd`**, ou `node s
 
 **01D.2 livré au périmètre demandé ; 01D entier n'est pas déclaré clos.** Suite : réordonnancement/largeurs de colonnes et vues personnelles, puis sources async/pagination et erreurs. Les migrations des modules réels restent dans leurs lots dédiés. Pas de règle métier nouvelle, d'autosave de note, de récupération crash ou d'Enregistrer et quitter.
 
-## Consolidation conservée en attente
+## Consolidation conservée en attente — historique01D.2
 
 Le plan `UXV2_CONSOLIDATION_01ABC_PLAN.md` reste prêt, accepté comme base de préparation. Aucune cible/draft de86/87/88 modifiée, aucune fusion ni CI déclenchée pour cette mission. Une note GitHub évoque une autorisation CI ailleurs ; la présente exécution respecte l'instruction directe de cette tâche : continuer01D, sans ces déclenchements. Une autorisation future explicite sera à rapprocher du plan avant exécution, pas déduite de ce rapport.
