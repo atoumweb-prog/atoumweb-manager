@@ -7,8 +7,9 @@ import {AppTextField} from './AppTextField';
 import {AppButton} from './AppButton';
 import {RecordPane} from './RecordPane';
 function DemoEditor({module,pending}:{module:NavigationModuleKey;pending:boolean}){
- const [note,setNote]=useState(''),[expanded,setExpanded]=useState(false),token=useRef(crypto.randomUUID());useUnsavedDraft(`Note TEST ${module}`,note,{pending,discard:setNote});
- return <RecordPane title={`Fiche fictive — ${module}`} expanded={expanded} onExpand={()=>setExpanded(value=>!value)} onClose={()=>requestUnsavedExit(()=>setExpanded(false),`rail-demo:${module}`)}><section data-editor-instance={token.current} data-editor-module={module}><AppTextField id="rail-demo-note" label="Brouillon fictif" value={note} onChange={event=>setNote(event.target.value)}/><p>Aucune sauvegarde métier dans cet atelier.</p></section></RecordPane>;
+ const [note,setNote]=useState(''),[expanded,setExpanded]=useState(false),[closed,setClosed]=useState(false),token=useRef(crypto.randomUUID());useUnsavedDraft(`Note TEST ${module}`,note,{pending,discard:setNote});
+ if(closed)return <AppButton onAction={()=>setClosed(false)}>Rouvrir la fiche fictive</AppButton>;
+ return <div className={`aw-rail-demo-detail ${expanded?'is-expanded':''}`}><RecordPane title={`Fiche fictive — ${module}`} expanded={expanded} onExpand={()=>setExpanded(value=>!value)} onClose={()=>requestUnsavedExit(()=>{setExpanded(false);setClosed(true);},`rail-demo:${module}`)}><section data-editor-instance={token.current} data-editor-module={module}><AppTextField id="rail-demo-note" label="Brouillon fictif" value={note} onChange={event=>setNote(event.target.value)}/><p>Aucune sauvegarde métier dans cet atelier.</p></section></RecordPane></div>;
 }
 function DemoTimer(){const started=useRef(Date.now()),token=useRef(crypto.randomUUID()),[tick,setTick]=useState(0);useEffect(()=>{const timer=setInterval(()=>setTick(Math.floor((Date.now()-started.current)/1000)),500);return()=>clearInterval(timer);},[]);return <div className="aw-rail-fixture-timer" data-timer-instance={token.current} data-timer-seconds={tick}>Chrono TEST simulé : {tick}s · reste monté hors des destinations</div>;}
 export function NavigationRailWorkshop({store,confirmReset}:{store:VisualPreferenceStore;confirmReset:()=>boolean}){
