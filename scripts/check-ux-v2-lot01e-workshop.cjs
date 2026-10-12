@@ -51,7 +51,10 @@ if(!process.versions.electron){
   assert(await get('document.querySelectorAll("article[aria-label]").length===2'),'Refused exit leaves both editors mounted');
   assert(await get('document.querySelector('+JSON.stringify(sel('A')+' input')+').value==="Brouillon A"&&document.querySelector('+JSON.stringify(sel('B')+' input')+').value==="Brouillon B"'),'Refused exit preserves both drafts');
   await action('A','Simuler un conflit (TEST)');assert(await state('A')==='conflict','A conflict visible');
+  await input('A','Brouillon A modifié pendant conflit');assert(await state('A')==='conflict','Editing never conceals an unresolved conflict');
+  assert(await get('document.querySelector('+JSON.stringify(sel('A'))+')?.querySelectorAll("button:disabled").length>0'),'Simulated save is disabled during conflict');
   await action('B','Simuler un refus (TEST)');assert(await state('B')==='error','B error visible and independent');
+  await action('A','Effacer conflit fictif (TEST)');assert(await state('A')==='dirty','Explicit fixture reset restores dirty state');
   await action('A','Simuler un retour positif (TEST)');
   await wait('document.querySelector('+JSON.stringify(sel('A'))+')?.querySelector("[data-form-feedback]")?.dataset.formFeedback==="pending"');
   win.close();await sleep(60);
