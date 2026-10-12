@@ -55,7 +55,7 @@ function SimulatedForm({ id }: { id: 'a' | 'b' }) {
       <AppButton disabled={pending} onAction={() => { setError(true); setConfirmed(false); }}>Simuler un refus (TEST)</AppButton>
       <AppButton disabled={pending} onAction={() => { setConflict(true); setConfirmed(false); }}>Simuler un conflit (TEST)</AppButton>
       <AppButton disabled={pending || !conflict} onAction={() => setConflict(false)}>Effacer conflit fictif (TEST)</AppButton>
-      <AppButton disabled={pending} onAction={() => requestUnsavedExit(() => { setConfirmed(false); setError(false); setConflict(false); }, group)}>Annuler cette note</AppButton>
+      <AppButton disabled={pending} onAction={() => { requestUnsavedExit(() => { setConfirmed(false); setError(false); setConflict(false); }, group); }}>Annuler cette note</AppButton>
     </div>
   </article>;
 }
@@ -74,8 +74,8 @@ export function FormFeedbackWorkshop() {
         <AppButton disabled={showA} onAction={() => setShowA(true)}>Ouvrir A</AppButton>
         <AppButton disabled={showB} onAction={() => setShowB(true)}>Ouvrir B</AppButton>
       </div>
-      {showA && <div><SimulatedForm id="a"/><AppButton onAction={() => requestUnsavedExit(() => setShowA(false), 'uxv2:form-workshop/a')}>Fermer A (garde UX-01)</AppButton></div>}
-      {showB && <div><SimulatedForm id="b"/><AppButton onAction={() => requestUnsavedExit(() => setShowB(false), 'uxv2:form-workshop/b')}>Fermer B (garde UX-01)</AppButton></div>}
+      {showA && <div><SimulatedForm id="a"/><AppButton onAction={() => { requestUnsavedExit(() => setShowA(false), 'uxv2:form-workshop/a'); }}>Fermer A (garde UX-01)</AppButton></div>}
+      {showB && <div><SimulatedForm id="b"/><AppButton onAction={() => { requestUnsavedExit(() => setShowB(false), 'uxv2:form-workshop/b'); }}>Fermer B (garde UX-01)</AppButton></div>}
     </UnsavedGroup>
   </section>;
 }
