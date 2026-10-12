@@ -1,4 +1,4 @@
-// Rail-only entry, no production App, database client, workflow or timer API.
+// Header/rail workshop only, no production App, client workspace or timer API.
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),{spawnSync,execFileSync}=require('node:child_process');
 const repo=path.resolve(__dirname,'..'),interactive=process.argv.includes('--interactive'),prefix='atoumweb-uxv2-02b-';const owned=p=>!!p&&path.dirname(path.resolve(p))===path.resolve(os.tmpdir())&&path.basename(p).startsWith(prefix);
 if(!process.versions.electron){const temp=fs.mkdtempSync(path.join(os.tmpdir(),prefix));try{
@@ -25,6 +25,7 @@ if(!process.versions.electron){const temp=fs.mkdtempSync(path.join(os.tmpdir(),p
   assert(await get('document.querySelector(".aw-workspace-header").dataset.headerCompact==="true"'),'Header compact preference restored across native processes');
   assert(await get('document.querySelector(".aw-navigation-rail").dataset.railCollapsed==="false"'),'Header preference does not change durable rail mode');
   assert(await get('document.querySelector("#header-note").value===""&&document.querySelector("#header-demo-search").value===""'),'No form/search/session data restored from visual preferences');
+  await choose('Bibliothèque AtoumWeb');assert(await get('!document.querySelector("#header-library-banner").hidden'),'Library banner stays local, not restored from header or rail preference');
  }else{
   const headerKey=S.HEADER_PREFERENCE_KEY;
   const timer=await get('document.querySelector("[data-header-timer]").dataset.headerTimer');
@@ -45,10 +46,17 @@ if(!process.versions.electron){const temp=fs.mkdtempSync(path.join(os.tmpdir(),p
   }
   await js('document.querySelector("#header-textarea").focus()');win.webContents.sendInputEvent({type:'keyDown',keyCode:'X'});win.webContents.sendInputEvent({type:'char',keyCode:'x'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'X'});await sleep(70);
   assert(await get('document.querySelector("#header-textarea").value.includes("x")'),'Native typing remains in textarea');
+  const beforeFormEscape=dialogs.length;win.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});await sleep(70);
+  assert(dialogs.length===beforeFormEscape&&await get('document.querySelector("[data-header-editor]").dataset.headerEditor')===editor&&await get('document.querySelector("#header-note").value==="BROUILLON HEADER TEST"'),'Escape in form never closes another layer or abandons its draft');
   await click('#header-timer-trigger');await wait('document.querySelector(".aw-header-timer-dialog")');
   await js('const e=document.querySelector("#header-timer-reason");Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value").set.call(e,"Motif en cours TEST");e.dispatchEvent(new Event("input",{bubbles:true}));');await sleep(70);await click('#header-mode');
   assert(await get('!!document.querySelector(".aw-header-timer-dialog")&&document.querySelector("#header-timer-reason").value==="Motif en cours TEST"&&document.activeElement.id==="header-timer-reason"'),'Header compaction neither closes nor defocuses timer decision');
   assert(await get('document.querySelector("[data-header-timer]").dataset.headerTimer')===timer,'Unique timer stays mounted during modal and header change');
+  await js('document.querySelector("#header-timer-refuse").focus()');await click('#header-mode');
+  assert(await get('document.activeElement.id==="header-timer-refuse"&&document.querySelector("#header-timer-reason").value==="Motif en cours TEST"'),'Header reflow retains the current timer dialog control, not just the dialog');
+  const modalHeader=prefs.getItem(headerKey);await click('.aw-header-primary button:first-child');
+  assert(prefs.getItem(headerKey)===modalHeader&&await get('document.querySelector(".aw-header-timer-dialog")&&document.activeElement.id==="header-timer-refuse"'),'Rail reflow preserves timer dialogue and header preference');
+  await click('.aw-header-primary button:first-child');await click('#header-mode');
   win.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});await sleep(70);
   assert(dialogs.at(-1).defaultId===0&&await get('!!document.querySelector(".aw-header-timer-dialog")'),'Timer Escape Stay preserves unsaved motif');
   answers.push(1);await js('[...document.querySelectorAll(".aw-header-timer-dialog button")].find(e=>e.textContent.trim()==="Annuler le dialogue").click()');await sleep(70);
@@ -56,10 +64,51 @@ if(!process.versions.electron){const temp=fs.mkdtempSync(path.join(os.tmpdir(),p
   await click('#header-timer-trigger');await click('#header-timer-refuse');await js('[...document.querySelectorAll(".aw-header-timer-dialog button")].find(e=>e.textContent.trim()==="Confirmer TEST").click()');await wait('document.querySelector(".aw-header-timer-dialog [role=alert]")');
   assert(await get('document.querySelector("[data-header-timer]").dataset.timerStatus==="running"'),'Refused simulated command leaves session state unchanged');
   await click('#header-timer-refuse');await js('[...document.querySelectorAll(".aw-header-timer-dialog button")].find(e=>e.textContent.trim()==="Confirmer TEST").click()');await wait('!document.querySelector(".aw-header-timer-dialog")');assert(await get('document.querySelector("[data-header-timer]").dataset.timerStatus==="paused"'),'Pause only after positive simulated reply');
+  assert(await get('document.activeElement.id==="header-timer-trigger"'),'Confirmed simulated timer decision returns focus to its trigger');
   await js('[...document.querySelectorAll(".aw-header-fixture-timer button")].find(e=>e.textContent.trim()==="Récupération TEST").click()');await wait('document.querySelector(".aw-header-timer-dialog")');await click('#header-mode');assert(await get('document.querySelector("[data-header-timer]").dataset.timerStatus==="recovery"&&!!document.querySelector(".aw-header-timer-dialog")'),'Recovery presentation stays visible in compact header');
   await js('[...document.querySelectorAll(".aw-header-timer-dialog button")].find(e=>e.textContent.trim()==="Confirmer TEST").click()');await wait('!document.querySelector(".aw-header-timer-dialog")');
   answers.push(1);await choose('Projets');await sleep(70);assert(await get('document.querySelector("[data-header-timer]").dataset.headerTimer')===timer,'Module change keeps same simulated global session component');
   await choose('Bibliothèque AtoumWeb');await js('[...document.querySelectorAll(".aw-header-primary button")].find(e=>e.textContent.trim()==="Options").click()');await sleep(70);const before=prefs.getItem(headerKey);await click('#header-library');assert(prefs.getItem(headerKey)===before&&await get('document.querySelector("#header-library-banner").hidden'),'Library banner is independent from header preference');
+  await js('document.querySelector("#header-library").focus()');win.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});await sleep(70);
+  assert(await get('!document.querySelector(".aw-header-secondary.is-open")&&document.activeElement.textContent.trim()==="Options"'),'Options Escape restores focus to its visible trigger');
+  await click('#header-options-trigger');await click('.aw-header-secondary .field-help');await wait('document.querySelector(".field-help-detail")');
+  win.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});await sleep(70);
+  assert(await get('!document.querySelector(".field-help-detail")&&!!document.querySelector(".aw-header-secondary.is-open")&&document.activeElement.classList.contains("field-help")'),'First Escape closes help only and restores its trigger');
+  win.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});await sleep(70);
+  assert(await get('!document.querySelector(".aw-header-secondary.is-open")&&document.activeElement.id==="header-options-trigger"'),'Second Escape closes Options only');
+  await input('INDEPENDANCE TEST');const independentEditor=await get('document.querySelector("[data-header-editor]").dataset.headerEditor');
+  const railKey=S.NAVIGATION_PREFERENCE_KEY;
+  for(const compact of [false,true])for(const collapsed of [false,true])for(const library of [false,true]){
+   const savedRail=prefs.getItem(railKey),bannerBefore=await get('document.querySelector("#header-library-banner").hidden');
+   if(await get('document.querySelector(".aw-workspace-header").dataset.headerCompact')!==String(compact))await click('#header-mode');
+   assert(prefs.getItem(railKey)===savedRail&&await get('document.querySelector("#header-library-banner").hidden')===bannerBefore,'Header toggle never changes rail preference or library state');
+   const savedHeader=prefs.getItem(headerKey);
+   if(await get('document.querySelector(".aw-navigation-rail").dataset.railCollapsed')!==String(collapsed))await click('.aw-header-primary button:first-child');
+   assert(prefs.getItem(headerKey)===savedHeader&&await get('document.querySelector("#header-library-banner").hidden')===bannerBefore,'Rail toggle never changes header preference or library state');
+   if(!await get('document.querySelector(".aw-header-secondary").classList.contains("is-open")'))await click('#header-options-trigger');
+   const beforeBannerWrites=writes;
+   if(await get('document.querySelector("#header-library-banner").hidden')!==library)await click('#header-library');
+   assert(writes===beforeBannerWrites,'Library toggle never writes a visual preference');
+   assert(await get('document.querySelector(".aw-workspace-header").dataset.headerCompact')===String(compact)&&await get('document.querySelector(".aw-navigation-rail").dataset.railCollapsed')===String(collapsed)&&await get('document.querySelector("#header-library-banner").hidden')===library,'All eight header/rail/library combinations remain independent');
+   assert(await get('document.querySelector("[data-header-editor]").dataset.headerEditor')===independentEditor&&await get('document.querySelector("#header-note").value==="INDEPENDANCE TEST"'),'Independent presentation never remounts or clears draft');
+   assert(await get('document.querySelectorAll("[data-header-timer]").length===1&&document.querySelector("[data-header-timer]").dataset.headerTimer')===timer&&await get('document.querySelector("[data-header-timer]").dataset.timerStatus==="running"'),'All presentation combinations retain the unique session');
+  }
+  await click('#header-options-trigger');await click('#header-options-trigger');await click('#header-search-trigger');
+  assert(await get('!document.querySelector(".aw-header-secondary.is-open")&&document.activeElement.id==="header-demo-search"'),'Search replaces secondary menu without discarding state');
+  await js('document.querySelector("#header-demo-search").dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true,cancelable:true}))');await sleep(70);
+  await click('#header-options-trigger');await click('#header-timer-trigger');
+  assert(await get('!document.querySelector(".aw-header-secondary.is-open")&&!document.querySelector(".aw-header-search.is-open")&&document.activeElement.id==="header-timer-reason"'),'Timer decision owns focus above presentation menus');
+  await js('[...document.querySelectorAll(".aw-header-timer-dialog button")].find(e=>e.textContent.trim()==="Annuler le dialogue").click()');await sleep(70);
+  assert(await get('document.activeElement.id==="header-timer-trigger"&&document.querySelector("#header-note").value==="INDEPENDANCE TEST"'),'Timer cancellation restores trigger without touching module draft');
+  const headerBeforeExternal=prefs.getItem(headerKey);prefs.setItem(railKey,JSON.stringify({version:1,railCollapsed:false,favoriteModuleKeys:['Clients']}));
+  await js('window.dispatchEvent(new StorageEvent("storage",{key:'+JSON.stringify(railKey)+'}))');await sleep(70);
+  assert(prefs.getItem(headerKey)===headerBeforeExternal&&await get('document.querySelector(".aw-workspace-header").dataset.headerCompact==="true"&&document.querySelector("#header-library-banner").hidden'),'External rail update cannot contaminate header/library');
+  const railBeforeExternal=prefs.getItem(railKey);prefs.setItem(headerKey,JSON.stringify({version:1,compact:false}));await js('window.dispatchEvent(new StorageEvent("storage",{key:'+JSON.stringify(headerKey)+'}))');await sleep(70);
+  assert(prefs.getItem(railKey)===railBeforeExternal&&await get('document.querySelector(".aw-navigation-rail").dataset.railCollapsed==="false"&&document.querySelector("#header-library-banner").hidden'),'External header update cannot contaminate rail/library');
+  assert(await get('document.querySelector("[data-header-editor]").dataset.headerEditor')===independentEditor&&await get('document.querySelector("#header-note").value==="INDEPENDANCE TEST"'),'External presentation updates retain editor and draft');
+  failure=true;await click('.aw-header-primary button:first-child');
+  assert(prefs.getItem(railKey)===railBeforeExternal&&prefs.getItem(headerKey)==='{"version":1,"compact":false}'&&await get('document.querySelector(".aw-rail-error").textContent.includes("non mémorisées")&&document.querySelector("#header-note").value==="INDEPENDANCE TEST"'),'Rail write failure leaves confirmed preferences and draft intact');failure=false;await click('.aw-header-primary button:first-child');
+  await input('');
   await click('.aw-ui-notice-action');assert(await get('document.querySelector("#header-notice-count").textContent.includes("1")'),'Notification action remains explicit and reachable');await click('.aw-ui-notice-close');assert(await get('!document.querySelector(".aw-header-content .aw-ui-notice")'),'Dismiss notice does not close timer or editor');
   const persisted=prefs.getItem(headerKey);failure=true;await click('#header-mode');assert(prefs.getItem(headerKey)===persisted&&await get('document.querySelector(".aw-header-error").textContent.includes("non mémorisée")'),'Header preference error visible without false persistence');failure=false;await click('#header-mode');
   await js('if(document.querySelector(".aw-header-secondary" ).classList.contains("is-open"))[...document.querySelectorAll(".aw-header-primary button")].find(e=>e.textContent.trim()==="Options").click()');await input('CAPTURE HEADER TEST');const out=path.join(repo,'outputs','ux-v2-lot02b-reference');fs.mkdirSync(out,{recursive:true});let frame=0;
