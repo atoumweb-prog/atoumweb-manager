@@ -1,12 +1,13 @@
 // Real React/Electron table pilot with frozen synthetic rows and an owned TEMP profile.
 // No SQLite, business IPC, installed Manager or Validation-MSI.
-const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),{spawnSync}=require('node:child_process');
+const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),{spawnSync,execFileSync}=require('node:child_process');
 const repo=path.resolve(__dirname,'..'),interactive=process.argv.includes('--interactive');
 const prefix='atoumweb-uxv2-01d-';
 const owned=temp=>!!temp&&path.dirname(path.resolve(temp))===path.resolve(os.tmpdir())&&path.basename(temp).startsWith(prefix);
 if(!process.versions.electron){
  const temp=fs.mkdtempSync(path.join(os.tmpdir(),prefix));
  try{
+  fs.writeFileSync(path.join(temp,'revision.json'),JSON.stringify({sha:execFileSync('git',['rev-parse','HEAD'],{cwd:repo,encoding:'utf8'}).trim(),dirty:!!execFileSync('git',['status','--porcelain'],{cwd:repo,encoding:'utf8'}).trim()}));
   const build=require('esbuild').buildSync;
   build({stdin:{contents:"import React from 'react';import {createRoot} from 'react-dom/client';import {TableWorkshop} from './src/renderer/ui/TableWorkshop';import {TABLE_WORKSHOP_RECORDS} from './src/shared/tableWorkshopFixtures';window.__tableFixtures=TABLE_WORKSHOP_RECORDS;createRoot(document.getElementById('root')).render(<TableWorkshop/>);",resolveDir:repo,loader:'tsx'},bundle:true,platform:'browser',outfile:path.join(temp,'fixture.js'),logLevel:'silent'});
   build({entryPoints:[path.join(repo,'src/main/unsaved.ts')],bundle:true,platform:'node',format:'cjs',external:['electron'],outfile:path.join(temp,'guards.cjs'),logLevel:'silent'});
@@ -128,7 +129,37 @@ if(!process.versions.electron){
   await input('#table-personal-view','standard');
   assert(await get('document.querySelector("[data-editor-instance]").dataset.editorInstance')===visualToken&&await get('document.querySelector("#table-record-note").value==="VISUEL TEST"'),'All view and column actions preserve mounted identity, tab and draft');
   assert(await get('!localStorage.getItem("atoumweb:table-workshop:dossiers:personal:v1").includes("VISUEL TEST")&&!localStorage.getItem("atoumweb:table-workshop:dossiers:personal:v1").includes("TEST-001")'),'Personal view storage excludes selected identity and draft');
-  await js('Storage.prototype.setItem=window.preferenceWriter;document.querySelector(".aw-table-columns").open=false;document.querySelector(".aw-data-table-scroll").scrollTop=0;document.querySelector(".content-area").scrollTop=0;document.scrollingElement.scrollTop=0;');
+  await js('Storage.prototype.setItem=window.preferenceWriter;document.querySelector(".aw-table-columns").open=false;');
+  // 01D.4: async complete/page contracts, errors and deliberately uncancellable responses.
+  await input('#table-source-mode','paged');await wait('document.querySelectorAll("tbody tr").length===20');
+  assert(await get('document.querySelector("#table-source-scope").textContent.includes("Page partielle")&&document.querySelector("#table-counter").textContent.startsWith("120 / 120")'),'Partial page reports global result count and scope');
+  await click('Page suivante');await wait('document.querySelector("tbody tr")?.dataset.recordId==="TEST-021"');
+  assert(await get('document.querySelector("#table-page").textContent==="Page 2 / 6"'),'Second page exact range and count');
+  assert(await get('document.querySelector("[data-editor-instance]").dataset.editorInstance')===visualToken&&await get('document.querySelector("#table-record-note").value==="VISUEL TEST"'),'Moving page never unmounts hidden selected draft');
+  await sort('amount');await sort('amount');await wait('document.querySelector("tbody tr")?.dataset.recordId==="TEST-005"');
+  assert(await get('[...document.querySelectorAll("tbody tr")].every(e=>window.__tableFixtures.find(r=>r.id===e.dataset.recordId).amountCents===25000)'),'Global sort precedes pagination rather than sorting previous page');
+  await click('Page suivante');await wait('document.querySelector("#table-page").textContent==="Page 2 / 6"');
+  assert(await get('document.querySelectorAll("tbody tr")[4].dataset.recordId==="TEST-004"'),'Page two continues globally sorted source');
+  await input('#table-query','no-results');await wait('!document.querySelector("#table-loading")');
+  assert(await get('document.querySelectorAll("tbody tr").length===0&&document.querySelector("#table-counter").textContent.startsWith("0 / 120")'),'Async empty result is not confused with unavailable source');
+  await click('Effacer les filtres');await sort('amount');
+  await js('document.querySelector("#table-slow").click()');await input('#table-query','TEST-120');
+  assert(await get('!!document.querySelector("#table-loading")&&document.querySelector(".aw-data-table-scroll").getAttribute("aria-busy")==="true"'),'Loading status explicit without stale count or rows');
+  await js('document.querySelector("#table-slow").click()');await input('#table-query','TEST-001');await wait('document.querySelector("tbody tr")?.dataset.recordId==="TEST-001"');await sleep(500);
+  assert(await get('document.querySelectorAll("tbody tr").length===1&&document.querySelector("tbody tr").dataset.recordId==="TEST-001"'),'Obsolete slow success cannot overwrite newer query');
+  await js('document.querySelector("#table-slow").click();document.querySelector("#table-fail").click()');await sleep(60);
+  await js('document.querySelector("#table-slow").click();document.querySelector("#table-fail").click()');await wait('document.querySelector("tbody tr")?.dataset.recordId==="TEST-001"');await sleep(500);
+  assert(await get('!document.querySelector("#table-source-error")'),'Obsolete slow error cannot overwrite newer success');
+  await js('document.querySelector("#table-fail").click()');await wait('document.querySelector("#table-source-error")');
+  assert(await get('document.querySelector("#table-counter").textContent.includes("indisponible")&&!document.querySelector("#table-source-scope")'),'Source failure is visible without false empty result or total');
+  await click('Réessayer le chargement');await wait('document.querySelector("#table-source-error")');
+  assert(await get('document.querySelector("[data-editor-instance]").dataset.editorInstance')===visualToken&&await get('document.querySelector("#table-record-note").value==="VISUEL TEST"'),'Error and rejected retry retain editor identity, tab and note');
+  await js('document.querySelector("#table-fail").click()');await wait('document.querySelector("tbody tr")?.dataset.recordId==="TEST-001"');
+  assert(await get('!document.querySelector("#table-source-error")'),'Current successful retry restores source');
+  await input('#table-source-mode','complete');await click('Effacer les filtres');await wait('document.querySelectorAll("tbody tr").length===120');
+  assert(await get('document.querySelector("#table-source-scope").textContent.includes("Source complète")&&!document.querySelector("#table-page")'),'Complete mode explicitly returns all source results');
+  assert(await get('document.querySelector("[data-editor-instance]").dataset.editorInstance')===visualToken,'All async states preserve same mounted editor');
+  await js('document.querySelector(".aw-data-table-scroll").scrollTop=0;document.querySelector(".content-area").scrollTop=0;document.scrollingElement.scrollTop=0;');
   const captures=path.join(repo,'outputs','ux-v2-lot01d-reference');fs.mkdirSync(captures,{recursive:true});
   let frame=0;for(const theme of ['atoumweb','noir','blanc'])for(const [density,font]of [['compact',14],['comfort',16],['comfort_plus',18]]){
    await js('document.documentElement.dataset.theme='+JSON.stringify(theme)+';document.documentElement.dataset.density='+JSON.stringify(density));await sleep(80);
@@ -149,7 +180,10 @@ if(!process.versions.electron){
   assert(await get('document.querySelectorAll("th").length===6&&document.querySelector("#table-personal-view").options.length===1'),'Invalid preferences keep safe standard view accessible');
   await click('Rétablir la vue standard');await input('#table-view-name','Vue réparée');await click('Créer une vue');
   assert(await get('!document.querySelector(".aw-ui-notice--error")&&document.querySelector("#table-personal-view").options.length===2'),'Explicit reset and create repair invalid preferences safely');
-  console.log(JSON.stringify({checks,failed:0,records:120,captures:9,onlyTemp:true,businessApiExposed:false}));win.destroy();app.exit(0);
+  const revision=JSON.parse(fs.readFileSync(path.join(temp,'revision.json'),'utf8'));
+  const report={...revision,checks,failed:0,records:120,captures:9,onlyTemp:true,businessApiExposed:false};
+  fs.writeFileSync(path.join(captures,'validation.json'),JSON.stringify(report,null,2));
+  console.log(JSON.stringify(report));win.destroy();app.exit(0);
  }).catch(e=>{console.error(e.stack);win?.destroy();app.exit(1);});
  app.on('window-all-closed',()=>{if(interactive)app.quit();});
 }

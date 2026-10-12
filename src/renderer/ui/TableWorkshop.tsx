@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { TABLE_WORKSHOP_RECORDS, TABLE_DEMO_CATEGORIES, TABLE_DEMO_STATUSES, filterWorkshopRecords, type TableWorkshopRecord } from '../../shared/tableWorkshopFixtures';
-import { nextTableSort, sortTableRows, normalizeTableColumns } from '../../shared/tablePresentation';
+import { TABLE_WORKSHOP_RECORDS, TABLE_DEMO_CATEGORIES, TABLE_DEMO_STATUSES, type TableWorkshopRecord } from '../../shared/tableWorkshopFixtures';
+import { nextTableSort, normalizeTableColumns } from '../../shared/tablePresentation';
+import { LatestTableRequest, loadWorkshop, type WorkshopResult } from '../../shared/tableWorkshopSource';
 import { defaultTableView, readTableView, tableViewKey, writeTableView, moveColumn, type TableViewPreference } from '../../shared/tableViewPreference';
 import { readPersonalViews, writePersonalViews, type PersonalTableView } from '../../shared/personalTableViews';
 import { SavedViewPicker } from './SavedViewPicker';
@@ -29,8 +30,18 @@ export function TableWorkshop() {
   const [view, setView] = useState('dossiers'), [query, setQuery] = useState(''), [selectedId, setSelectedId] = useState<string | null>(null), [expanded, setExpanded] = useState(false);
   const [options, setOptions] = useState<TableViewPreference>(defaultTableView), optionsRef = useRef(options), [error, setError] = useState('');
   const [personal, setPersonal] = useState<PersonalTableView[]>([]), personalRef = useRef(personal), [personalId, setPersonalId] = useState('standard');
+  const [mode, setMode] = useState<'complete' | 'paged'>('complete'), [page, setPage] = useState(1), [pageSize, setPageSize] = useState(20);
+  const [result, setResult] = useState<WorkshopResult | null>(null), [loading, setLoading] = useState(true), [sourceError, setSourceError] = useState('');
+  const [slow, setSlow] = useState(false), [fail, setFail] = useState(false), [retry, setRetry] = useState(0), latest = useRef(new LatestTableRequest());
   const group = `table-workshop:${view}`, key = tableViewKey(view);
   useEffect(() => installUnsavedLifecycleBridge(), []);
+  useEffect(() => {
+    setLoading(true); setSourceError(''); setResult(null);
+    const gate = latest.current;
+    void gate.run(() => loadWorkshop({ query, status: options.status, category: options.category, sort: options.sort, mode, page, pageSize }, slow ? 400 : 20, fail),
+      value => { setResult(value); setLoading(false); }, error => { setSourceError(error instanceof Error ? error.message : 'Source indisponible.'); setLoading(false); });
+    return () => gate.invalidate();
+  }, [query, options.status, options.category, options.sort?.columnId, options.sort?.direction, mode, page, pageSize, slow, fail, retry]);
   useEffect(() => {
     setPersonalId('standard');
     try { const next = readTableView(localStorage, key, TABLE_DEMO_STATUSES, TABLE_DEMO_CATEGORIES); optionsRef.current = next; setOptions(next); setError(''); }
@@ -73,20 +84,29 @@ export function TableWorkshop() {
   ];
   const visible = normalizeTableColumns(options.visibleColumnIds, columns);
   const ordered = options.columnOrder.map(id => columns.find(column => column.id === id)!).filter(Boolean);
-  const rows = sortTableRows(filterWorkshopRecords(query, options.status, options.category), columns, options.sort, row => row.id);
+  const rows = result?.rows ?? [];
   // The detail is resolved from the complete immutable source, NEVER the filtered/sorted rows.
   const record = TABLE_WORKSHOP_RECORDS.find(row => row.id === selectedId);
   const filteredOut = !!record && !rows.some(row => row.id === record.id);
   return <><h1>Atelier 01D — tableaux et fiches</h1><AppNotice level="info">120 dossiers synthétiques. Aucun service métier, devis ou contrat n’est modifié.</AppNotice>
     <label>Vue de démonstration<select id="table-view" value={view} onChange={e => { const next = e.target.value; requestUnsavedExit(() => { setView(next); setQuery(''); setSelectedId(null); setExpanded(false); }, group); }}><option value="dossiers">Dossiers</option><option value="autre-vue">Autre vue isolée</option></select></label>
     <SavedViewPicker views={personal} selected={personalId} onSelect={choosePersonal} onCreate={(name, duplicate) => editPersonal(duplicate ? 'duplicate' : 'create', name)} onRename={name => editPersonal('rename', name)} onDelete={() => editPersonal('delete')} onReset={() => { setPersonalId('standard'); const next = defaultTableView(); optionsRef.current = next; setOptions(next); try { writeTableView(localStorage, key, next); setError(''); } catch { setError('Préférences non mémorisées ; fiche conservée.'); } }}/>
-    <TableFilterBar query={query} status={options.status} category={options.category} statuses={TABLE_DEMO_STATUSES} categories={TABLE_DEMO_CATEGORIES} onQuery={setQuery} onStatus={status => update(current => ({ ...current, status }))} onCategory={category => update(current => ({ ...current, category }))} onReset={() => { setQuery(''); update(current => ({ ...current, status: '', category: '' })); }} count={rows.length} total={TABLE_WORKSHOP_RECORDS.length}/>
+    <section className="aw-table-source" aria-label="Source asynchrone synthétique"><label>Portée de la source<select id="table-source-mode" value={mode} onChange={e => { setMode(e.target.value as 'complete' | 'paged'); setPage(1); }}><option value="complete">Source complète</option><option value="paged">Page partielle de la source</option></select></label>
+      <label>Taille de page<select id="table-page-size" value={pageSize} disabled={mode === 'complete'} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}><option value="10">10</option><option value="20">20</option><option value="40">40</option></select></label>
+      <label><input id="table-slow" type="checkbox" checked={slow} onChange={e => setSlow(e.target.checked)}/>Simuler une réponse lente</label>
+      <label><input id="table-fail" type="checkbox" checked={fail} onChange={e => setFail(e.target.checked)}/>Simuler une erreur de source</label>
+    </section>
+    <TableFilterBar query={query} status={options.status} category={options.category} statuses={TABLE_DEMO_STATUSES} categories={TABLE_DEMO_CATEGORIES} onQuery={value => { setQuery(value); setPage(1); }} onStatus={status => { setPage(1); update(current => ({ ...current, status })); }} onCategory={category => { setPage(1); update(current => ({ ...current, category })); }} onReset={() => { setQuery(''); setPage(1); update(current => ({ ...current, status: '', category: '' })); }} count={result?.total ?? 0} total={TABLE_WORKSHOP_RECORDS.length} loading={loading} unavailable={!!sourceError}/>
     <TableColumnManager columns={ordered} visible={visible} onMove={(id, target) => update(current => ({ ...current, columnOrder: moveColumn(current.columnOrder, id, target) }))} onToggle={id => update(current => ({ ...current, visibleColumnIds: normalizeTableColumns(current.visibleColumnIds.includes(id) ? current.visibleColumnIds.filter(value => value !== id) : [...current.visibleColumnIds, id], columns) }))} onReset={() => update(current => ({ ...current, visibleColumnIds: columns.map(column => column.id), columnOrder: columns.map(column => column.id), widths: {} }))}/>
     {options.sort && <p>Tri de présentation : {columns.find(column => column.id === options.sort?.columnId)?.label} · {options.sort.direction === 'asc' ? 'croissant' : 'décroissant'}</p>}
     {error && <AppNotice level="error">{error}</AppNotice>}
-    <ResizableSplitView module={`table-demo:${view}`} view="list" defaultPercent={60} store={localStorage} selected={!!record} expanded={expanded} list={<DataTable preferenceScope={`${view}:${personalId}`} rows={rows} columns={ordered.filter(column => visible.includes(column.id))} widths={options.widths} onWidth={(id, width) => update(current => ({ ...current, widths: { ...current.widths, [id]: width } }))} selectedId={selectedId} getId={row => row.id} sort={options.sort} onSort={id => update(current => ({ ...current, sort: nextTableSort(current.sort, id) }))} caption="Liste complète des dossiers synthétiques filtrés"/>}>
+    {loading && <p role="status" id="table-loading">Chargement des dossiers synthétiques… La fiche ouverte reste disponible.</p>}
+    {sourceError && <AppNotice level="error"><span id="table-source-error">{sourceError}</span><AppButton onAction={() => setRetry(value => value + 1)}>Réessayer le chargement</AppButton></AppNotice>}
+    {result && <p id="table-source-scope" role="status">{result.scope === 'complete' ? 'Source complète' : 'Page partielle'} · Tri et filtres sur toute la source synthétique ({result.sourceTotal} dossiers). {result.total ? `${result.offset + 1}–${result.offset + rows.length}` : '0'} affichés sur {result.total} résultats.</p>}
+    {mode === 'paged' && <nav className="aw-table-pagination" aria-label="Pagination des dossiers"><AppButton disabled={loading || !result || result.page <= 1} onAction={() => setPage((result?.page ?? 1) - 1)}>Page précédente</AppButton><span id="table-page">{result ? `Page ${result.page} / ${result.pageCount}` : 'Page en attente'}</span><AppButton disabled={loading || !result || result.page >= result.pageCount} onAction={() => setPage((result?.page ?? 1) + 1)}>Page suivante</AppButton></nav>}
+    <ResizableSplitView module={`table-demo:${view}`} view="list" defaultPercent={60} store={localStorage} selected={!!record} expanded={expanded} list={<DataTable preferenceScope={`${view}:${personalId}`} rows={rows} columns={ordered.filter(column => visible.includes(column.id))} widths={options.widths} onWidth={(id, width) => update(current => ({ ...current, widths: { ...current.widths, [id]: width } }))} selectedId={selectedId} getId={row => row.id} sort={options.sort} onSort={id => { setPage(1); update(current => ({ ...current, sort: nextTableSort(current.sort, id) })); }} caption={mode === 'complete' ? 'Source complète — tri global des dossiers synthétiques' : 'Page partielle — tri global avant pagination'} loading={loading} unavailable={!!sourceError}/> }>
       <UnsavedGroup name={group}>{record && <RecordPane title={`${record.name} · ${record.id}`} expanded={expanded} onExpand={() => setExpanded(value => !value)} onClose={() => open(null)}>
-        {filteredOut && <p className="aw-table-outside" role="status">Ce dossier est hors du filtre actuel. Sa fiche et son brouillon restent ouverts.</p>}
+        {filteredOut && <p className="aw-table-outside" role="status">{loading || sourceError ? 'La liste est temporairement indisponible.' : 'Ce dossier est hors du filtre ou de la page actuelle.'} Sa fiche et son brouillon restent ouverts.</p>}
         <TableRecordEditor key={record.id} record={record}/>
       </RecordPane>}</UnsavedGroup>
     </ResizableSplitView>

@@ -1,13 +1,14 @@
 import { AppButton } from './AppButton';
 import { AppTextField } from './AppTextField';
-export function TableFilterBar({ query, status, category, statuses, categories, onQuery, onStatus, onCategory, onReset, count, total }: {
+export function TableFilterBar({ query, status, category, statuses, categories, onQuery, onStatus, onCategory, onReset, count, total, loading = false, unavailable = false }: {
   query: string; status: string; category: string; statuses: readonly string[]; categories: readonly string[];
   onQuery: (value: string) => void; onStatus: (value: string) => void; onCategory: (value: string) => void; onReset: () => void; count: number; total: number;
+  loading?: boolean; unavailable?: boolean;
 }) {
   return <section className="aw-table-filters" aria-label="Recherche et filtres"><AppTextField id="table-query" label="Rechercher dans les dossiers fictifs" value={query} onChange={e => onQuery(e.target.value)}/>
     <label>Statut de démonstration<select id="table-status" value={status} onChange={e => onStatus(e.target.value)}><option value="">Tous les statuts</option>{statuses.map(value => <option key={value}>{value}</option>)}</select></label>
     <label>Catégorie<select id="table-category" value={category} onChange={e => onCategory(e.target.value)}><option value="">Toutes les catégories</option>{categories.map(value => <option key={value}>{value}</option>)}</select></label>
-    <AppButton onAction={onReset}>Effacer les filtres</AppButton><p id="table-counter" role="status">{count} / {total} dossiers fictifs</p>
+    <AppButton onAction={onReset}>Effacer les filtres</AppButton><p id="table-counter" role="status">{loading ? 'Chargement…' : unavailable ? 'Nombre de résultats indisponible' : `${count} / ${total} dossiers fictifs`}</p>
     {(query || status || category) && <p className="aw-table-active-filters">Filtres actifs : {[query && `Recherche « ${query} »`, status, category].filter(Boolean).join(' · ')}</p>}
   </section>;
 }
