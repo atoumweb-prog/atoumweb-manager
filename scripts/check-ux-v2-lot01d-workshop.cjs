@@ -23,7 +23,7 @@ if(!process.versions.electron){
  const G=require(path.join(temp,'guards.cjs'));G.registerUnsavedConfirmationIpc();G.registerGuardedShutdown(()=>{});
  const answers=[],dialogs=[];if(!interactive)dialog.showMessageBoxSync=(...args)=>{dialogs.push(args.at(-1));return answers.shift()??0;};
  let win,checks=0;const sleep=ms=>new Promise(r=>setTimeout(r,ms)),assert=(ok,msg)=>{if(!ok)throw Error(msg);checks++;};
- const js=code=>win.webContents.executeJavaScript('(async()=>{'+code+'})()'),get=code=>js('return ('+code+');');
+ const js=code=>win.webContents.executeJavaScript('(async()=>{try{'+code+'}catch(e){throw new Error(e.message+" / scenario: "+'+JSON.stringify(code)+');}})()').catch(error=>{console.error('Renderer scenario:',code);throw error;}),get=code=>js('return ('+code+');');
  const wait=async code=>{for(let i=0;i<100;i++){if(await get(code))return;await sleep(30);}throw Error('Timeout '+code);};
  const click=async label=>{await js('[...document.querySelectorAll("button")].find(e=>e.textContent.trim()==='+JSON.stringify(label)+').click()');await sleep(60);};
  const input=async(selector,value)=>{await js('const e=document.querySelector('+JSON.stringify(selector)+');Object.getOwnPropertyDescriptor(e.tagName==="SELECT"?HTMLSelectElement.prototype:HTMLInputElement.prototype,"value").set.call(e,'+JSON.stringify(value)+');e.dispatchEvent(new Event(e.tagName==="SELECT"?"change":"input",{bubbles:true}));');await sleep(60);};
@@ -92,7 +92,43 @@ if(!process.versions.electron){
   const beforeViewChange=dialogs.length;await input('#table-view','autre-vue');
   assert(dialogs.length===beforeViewChange+1&&await get('document.querySelector("#table-view").value==="dossiers"'),'Dirty view change uses existing Stay confirmation');
   assert(await get('document.querySelector("[data-editor-instance]").dataset.editorInstance')===visualToken&&await get('document.querySelector("#table-record-note").value==="VISUEL TEST"'),'Refused view change preserves selected mount and draft');
-  await js('document.querySelector(".aw-data-table-scroll").scrollTop=0;document.querySelector(".content-area").scrollTop=0;document.scrollingElement.scrollTop=0;');
+  // 01D.3: real mounted draft, presentation gestures and named views.
+  await js('window.preferenceWrites=[];window.preferenceWriter=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){window.preferenceWrites.push(k);return window.preferenceWriter.call(this,k,v);};document.querySelector(".aw-table-columns").open=true;');
+  await js('document.querySelector("[data-column-order=amount] button").click()');await sleep(70);
+  assert(await get('JSON.parse(localStorage.getItem("atoumweb:table-workshop:dossiers:v1")).columnOrder[3]==="amount"'),'Accessible reorder persists visual order');
+  await js('const transfer=new DataTransfer();transfer.setData("text/x-atoumweb-column","amount");document.querySelector("[data-column-order=identity]").dispatchEvent(new DragEvent("drop",{bubbles:true,dataTransfer:transfer}));');await sleep(70);
+  assert(await get('document.querySelector("th").dataset.columnId==="amount"'),'Drag drop reorders same stable column IDs');
+  await js('window.preferenceWrites=[];const e=document.querySelector("th[data-column-id=amount] [role=separator]");e.dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,pointerId:12,button:0,clientX:100}));window.dispatchEvent(new PointerEvent("pointermove",{pointerId:12,clientX:180}));');await sleep(70);
+  assert(await get('window.preferenceWrites.length===0&&parseFloat(document.querySelector("col").style.width)===260'),'Resize previews immediately with zero writes during move');
+  await js('window.dispatchEvent(new PointerEvent("pointermove",{pointerId:12,clientX:200}));window.dispatchEvent(new PointerEvent("pointerup",{pointerId:12,clientX:200}));window.dispatchEvent(new PointerEvent("pointerup",{pointerId:12,clientX:200}));');await sleep(70);
+  assert(await get('window.preferenceWrites.length===1&&JSON.parse(localStorage.getItem("atoumweb:table-workshop:dossiers:v1")).widths.amount===280'),'Resize writes once at end even with duplicate release');
+  await js('window.preferenceWrites=[];document.querySelector("th[data-column-id=amount] [role=separator]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,pointerId:13,button:0,clientX:100}));window.dispatchEvent(new PointerEvent("pointermove",{pointerId:13,clientX:240}));window.dispatchEvent(new PointerEvent("pointercancel",{pointerId:13}));');await sleep(70);
+  assert(await get('window.preferenceWrites.length===0&&parseFloat(document.querySelector("col").style.width)===280'),'Cancelled resize restores width without write');
+  await js('document.querySelector("th[data-column-id=amount] [role=separator]").focus()');win.webContents.sendInputEvent({type:'keyDown',keyCode:'Right'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Right'});await sleep(70);
+  assert(await get('JSON.parse(localStorage.getItem("atoumweb:table-workshop:dossiers:v1")).widths.amount===300'),'Native keyboard resizes with bounded step');
+  await input('#table-view-name','Ma vue TEST');await click('Dupliquer la vue');
+  const personalId=await get('document.querySelector("#table-personal-view").value');
+  assert(personalId.startsWith('personal-')&&await get('document.querySelector("th").dataset.columnId==="amount"'),'Duplicate copies presentation without changing standard');
+  await input('#table-view-name','Vue renommée');await click('Renommer la vue');
+  assert(await get('document.querySelector("#table-personal-view").selectedOptions[0].textContent==="Vue renommée"'),'Rename personal view');
+  await input('#table-status','Clôturé');await input('#table-personal-view','standard');
+  assert(await get('document.querySelector("#table-status").value===""'),'Personal filters do not alter standard');
+  await input('#table-personal-view',personalId);assert(await get('document.querySelector("#table-status").value==="Clôturé"'),'Personal view restores own filters');
+  await click('Supprimer la vue personnelle');
+  assert(await get('document.querySelector("#table-personal-view").value==="standard"&&document.querySelector("#table-personal-view").options.length===1'),'Delete only personal preference, standard remains');
+  await input('#table-view-name','Nouvelle vue');await click('Créer une vue');
+  assert(await get('document.querySelector("th").dataset.columnId==="identity"&&document.querySelector("#table-status").value===""'),'New personal view starts with clean default presentation');
+  await click('Rétablir la vue standard');
+  assert(await get('document.querySelector("th").dataset.columnId==="identity"&&document.querySelector("#table-personal-view").value==="standard"'),'Standard default restored');
+  await js('window.preferenceWrites=[];document.querySelector("th[data-column-id=identity] [role=separator]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,pointerId:14,button:0,clientX:100}));window.dispatchEvent(new PointerEvent("pointerup",{pointerId:14,clientX:100}));');await sleep(70);
+  assert(await get('window.preferenceWrites.length===0'),'Motionless resize does not persist');
+  await js('document.querySelector("th[data-column-id=identity] [role=separator]").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,pointerId:15,button:0,clientX:100}));window.dispatchEvent(new PointerEvent("pointermove",{pointerId:15,clientX:200}));');await sleep(50);
+  const newPersonalId=await get('document.querySelector("#table-personal-view").options[1].value');await input('#table-personal-view',newPersonalId);await js('window.dispatchEvent(new PointerEvent("pointerup",{pointerId:15,clientX:200}));');await sleep(50);
+  assert(await get('window.preferenceWrites.length===0&&parseFloat(document.querySelector("col").style.width)===260'),'View change cancels pending column gesture without stale write');
+  await input('#table-personal-view','standard');
+  assert(await get('document.querySelector("[data-editor-instance]").dataset.editorInstance')===visualToken&&await get('document.querySelector("#table-record-note").value==="VISUEL TEST"'),'All view and column actions preserve mounted identity, tab and draft');
+  assert(await get('!localStorage.getItem("atoumweb:table-workshop:dossiers:personal:v1").includes("VISUEL TEST")&&!localStorage.getItem("atoumweb:table-workshop:dossiers:personal:v1").includes("TEST-001")'),'Personal view storage excludes selected identity and draft');
+  await js('Storage.prototype.setItem=window.preferenceWriter;document.querySelector(".aw-table-columns").open=false;document.querySelector(".aw-data-table-scroll").scrollTop=0;document.querySelector(".content-area").scrollTop=0;document.scrollingElement.scrollTop=0;');
   const captures=path.join(repo,'outputs','ux-v2-lot01d-reference');fs.mkdirSync(captures,{recursive:true});
   let frame=0;for(const theme of ['atoumweb','noir','blanc'])for(const [density,font]of [['compact',14],['comfort',16],['comfort_plus',18]]){
    await js('document.documentElement.dataset.theme='+JSON.stringify(theme)+';document.documentElement.dataset.density='+JSON.stringify(density));await sleep(80);
@@ -106,6 +142,13 @@ if(!process.versions.electron){
   }
   for(const zoom of [1,1.25,1.5]){win.setSize(900,800);win.webContents.setZoomFactor(zoom);await sleep(150);assert(await get('document.querySelector(".aw-record-split").classList.contains("is-narrow")'),'Narrow fallback '+zoom);assert(await get('document.querySelector("#table-record-note").value==="VISUEL TEST"'),'Narrow zoom preserves draft '+zoom);assert(await get('[...document.querySelectorAll("#table-query,#table-status,#table-category,.aw-record-pane-actions button")].every(e=>{const r=e.getBoundingClientRect();return r.width>0&&r.left>=0&&r.right<=innerWidth+1;})'),'Narrow essential controls reachable '+zoom);}
   assert(await get('JSON.stringify(window.__tableFixtures)')===source,'No source record mutation after all interactions');
+  await input('#table-record-note','');
+  await js('localStorage.setItem("atoumweb:table-workshop:dossiers:v1",JSON.stringify({version:1,visibleColumnIds:["removed","amount"],selectedId:"TEST-001",note:"private"}));');win.webContents.reload();await wait('document.querySelector("th[data-column-id=amount]")');
+  assert(await get('!!document.querySelector("th[data-column-id=identity]")&&!!document.querySelector("th[data-column-id=open]")&&!document.querySelector(".aw-record-pane")'),'Old preference restores mandatory columns without restoring private selection');
+  await js('localStorage.setItem("atoumweb:table-workshop:dossiers:v1","corrupt");localStorage.setItem("atoumweb:table-workshop:dossiers:personal:v1","corrupt");');win.webContents.reload();await wait('document.querySelector(".aw-ui-notice--error")');
+  assert(await get('document.querySelectorAll("th").length===6&&document.querySelector("#table-personal-view").options.length===1'),'Invalid preferences keep safe standard view accessible');
+  await click('Rétablir la vue standard');await input('#table-view-name','Vue réparée');await click('Créer une vue');
+  assert(await get('!document.querySelector(".aw-ui-notice--error")&&document.querySelector("#table-personal-view").options.length===2'),'Explicit reset and create repair invalid preferences safely');
   console.log(JSON.stringify({checks,failed:0,records:120,captures:9,onlyTemp:true,businessApiExposed:false}));win.destroy();app.exit(0);
  }).catch(e=>{console.error(e.stack);win?.destroy();app.exit(1);});
  app.on('window-all-closed',()=>{if(interactive)app.quit();});

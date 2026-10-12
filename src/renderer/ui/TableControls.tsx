@@ -11,8 +11,9 @@ export function TableFilterBar({ query, status, category, statuses, categories, 
     {(query || status || category) && <p className="aw-table-active-filters">Filtres actifs : {[query && `Recherche « ${query} »`, status, category].filter(Boolean).join(' · ')}</p>}
   </section>;
 }
-export function TableColumnManager({ columns, visible, onToggle, onReset }: {
+export function TableColumnManager({ columns, visible, onToggle, onReset, onMove }: {
   columns: readonly { id: string; label: string; required?: boolean }[]; visible: readonly string[]; onToggle: (id: string) => void; onReset: () => void;
+  onMove?: (id: string, target: string) => void;
 }) {
-  return <details className="aw-table-columns"><summary>Colonnes affichées</summary><div>{columns.map(column => <label key={column.id}><input type="checkbox" data-column-toggle={column.id} checked={visible.includes(column.id)} disabled={column.required} onChange={() => onToggle(column.id)}/>{column.label}{column.required ? ' (obligatoire)' : ''}</label>)}<AppButton onAction={onReset}>Réinitialiser les colonnes</AppButton></div></details>;
+  return <details className="aw-table-columns"><summary>Colonnes affichées</summary><div>{columns.map((column, index) => <div key={column.id} className="aw-column-control" draggable={!!onMove} data-column-order={column.id} onDragStart={event => event.dataTransfer.setData('text/x-atoumweb-column', column.id)} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); onMove?.(event.dataTransfer.getData('text/x-atoumweb-column'), column.id); }}><label><input type="checkbox" data-column-toggle={column.id} checked={visible.includes(column.id)} disabled={column.required} onChange={() => onToggle(column.id)}/>{column.label}{column.required ? ' (obligatoire)' : ''}</label>{onMove && <><AppButton variant="quiet" aria-label={`Avancer ${column.label}`} disabled={index === 0} onAction={() => onMove(column.id, columns[index - 1].id)}>←</AppButton><AppButton variant="quiet" aria-label={`Reculer ${column.label}`} disabled={index === columns.length - 1} onAction={() => onMove(column.id, columns[index + 1].id)}>→</AppButton></>}</div>)}<AppButton onAction={onReset}>Réinitialiser les colonnes</AppButton></div></details>;
 }
