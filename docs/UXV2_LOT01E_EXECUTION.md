@@ -116,3 +116,18 @@ Les points ci-dessous ont été relevés sur les fichiers publiés dans la base 
 **Risques de revue à enregistrer, pas de correctif métier improvisé :** sauvegardes composites partiellement appliquées avant une erreur, interactions entre rechargement serveur et brouillon encore dirty, signal de succès propre à un sous-éditeur alors que le groupe global reste dirty. Aucune de ces observations ne constitue à elle seule une preuve d'anomalie reproductible : prévoir fixtures ciblées avant tout changement métier.
 
 **Suite de 01E.2 :** inventorier les domaines Clients/Catalogue/Projets/Opérations lors des ports propres aux lots métier. Ne pas simuler une protection universelle par la seule existence du registre partagé.
+
+## 01E.5 — Premier pilote non destructif enrichi
+
+L'atelier fictif A/B réalise maintenant deux scénarios supplémentaires du référentiel, sans API métier :
+
+- **Réponse de sauvegarde tardive** : au lancement de `mockSave`, seul `submittedText` est capturé. Le champ reste modifiable en `pending`. À la réponse simulée, `draft.saved(submittedText)` met la baseline sur le snapshot réellement soumis, **jamais** sur le texte actuellement saisi. Une modification intervenue pendant l'attente demeure `dirty`, le bouton Fermer reste protégé ; une deuxième réponse positive sur le texte actuel est nécessaire pour afficher `saved`.
+- **Réception d'une version distante** : le bouton TEST appelle directement `mergeDraft` du module partagé `draftSection` en utilisant la dernière baseline confirmée. Si le formulaire est propre, la version distante devient la nouvelle baseline. Si la note locale et la version distante ont toutes deux changé, la note locale est conservée et le conflit demeure visible jusqu'à une action explicite ; aucune fusion de champ conflictuel n'est effectuée.
+
+La protection `UX-01` reste propriétaire des sorties et abandons, sans patch du registre. Le pilote dispose de règles CSS exclusivement dans `form-feedback-workshop.css` et n'est pas monté dans `App.tsx`. Il n'écrit pas de texte métier en stockage.
+
+Le banc `scripts/check-ux-v2-lot01e-workshop.cjs` contient les assertions dédiées : conflit réel issu du merge, saisie locale conservée, mise à jour distante d'un formulaire propre, sauvegarde tardive laissant `dirty`, confirmation native `Rester`, second save confirmé, abandon scoped refusé puis accepté, capture 3 thèmes × 3 densités et zoom.
+
+**Statut de preuve :** cas **codés / tests rédigés**, **non exécutés** sous Electron Windows. Une exécution automatique dans une CI hébergée n'a pas été lancée. Le test Vitest du résolveur contient désormais les 32 combinaisons de ses cinq indicateurs, plus les deux cas `mergeDraft` propre/concurrent ; son succès dans Vitest reste à confirmer sur un checkout Windows.
+
+L'ensemble du diff de #90 doit rester limité aux **nouveaux fichiers 01E** ; aucune modification des vrais écrans CRM, Devis, IPC, SQL ou `main` n'est prévue avant recette et décisions métier.
