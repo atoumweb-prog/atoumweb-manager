@@ -20,6 +20,7 @@ function SimulatedForm({ id }: { id: 'a' | 'b' }) {
   const [error, setError] = useState(false);
   const [conflict, setConflict] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const confirmedText = useRef(''); // Same confirmed baseline as the UX-01 draft, only in this TEST editor.
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mounted = useRef(true);
   useEffect(() => {
@@ -40,6 +41,7 @@ function SimulatedForm({ id }: { id: 'a' | 'b' }) {
     if (!mounted.current) return;
     // A later edit must stay dirty; only the submitted snapshot becomes the baseline.
     draft.saved(submittedText);
+    confirmedText.current = submittedText;
     setPending(false);
     setConfirmed(true);
   }
@@ -48,8 +50,9 @@ function SimulatedForm({ id }: { id: 'a' | 'b' }) {
     // Exercise the shared three-way conflict detector, not a new merge algorithm.
     // Only a TEST server revision exists; nothing is fetched or persisted.
     const remoteNote = `VERSION DISTANTE TEST — ${label}`;
-    const merged = mergeDraft({ note: '' }, { note: text }, { note: remoteNote });
+    const merged = mergeDraft({ note: confirmedText.current }, { note: text }, { note: remoteNote });
     if (merged.conflicts.length === 0) {
+      confirmedText.current = remoteNote;
       draft.initial(merged.value.note);
     }
     setText(merged.value.note);
