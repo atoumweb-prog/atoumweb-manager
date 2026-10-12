@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 12/10/2026 — 02B.1–02B.2 : audit et atelier d’en-tête
+
+- Branche codex/ux-v2-lot02b-header-v1 depuis #92@893b40b, revue ChatGPT lue. [Inventaire](docs/UXV2_LOT02B_INVENTAIRE.md) du header, commandes, GlobalSearch/Timer/Clock, notifications, breakpoints et clavier. Aucun nouveau raccourci global attribué.
+- Présentations développé/compact/étroit, slot chrono TEST unique toujours monté, motif et focus conservés au repli ; contrôles du rail02A partagés, préférence header distincte via01F, bandeau Bibliothèque indépendant. Formulaires/motifs fictifs gardés parUX-01, aucune API métier exposée.
+- Code f7099aa : typecheck OK, ciblés25/25, suite884/884 (96fichiers,117,82s,sansRPC), natif86/deuxprocessus/18captures auSHAexact ; 02A125/UX-01183/renderer300 verts. Tables horssettings intactes, intégrité/FK/migrations1–66 TEMP, nettoyage confirmé. [Rapport et16critères](docs/UXV2_LOT02B_EXECUTION.md).
+- PR93 draft/base92 ; App/GlobalTimer/GlobalSearch/GlobalClock réels inchangés. Port métier/chrono réel/routage etrecette humaine globale différés. Aucun02C/03, fusion/CIhébergée/Validation-MSI.
+
 ## 12/10/2026 — Préparation 02A et atelier de navigation E42
 
 - Branche `codex/ux-v2-lot02a-navigation-v1` depuis #91@765f66d ; revue ChatGPT lue. [Inventaire](docs/UXV2_LOT02A_INVENTAIRE.md) des 17 clés, événements, raccourcis, CSS, icônes et gardes avant code. PR #92 draft, base #91 ; parents préservés.
