@@ -1,4 +1,21 @@
-# 01D.2 — premier atelier fonctionnel de tableaux et fiches
+# 01D — ateliers fonctionnels de tableaux et fiches
+
+## 12/10/2026 — checkpoint 01D.3
+
+Code/banc **17499bf1822793e34d0895cde2dfe4c6346438ba**, depuis f458747, PR89 draft/base88 conservées. Numérotation conforme à la demande utilisateur (01D.3 colonnes/vues puis01D.4 async), distincte des étapes indicatives du référentiel.
+
+- Réordre drag/drop et boutons Avancer/Reculer accessibles ; identité/Ouvrir imposés. Largeurs bornées (identité180, action140, autres160, max600px), aperçu immédiat, une écriture à pointerup. Annulation/blur, geste immobile, double release et changement de vue sans écriture tardive ; flèches/Home/End pour resize clavier.
+- Création depuis défauts, duplication de la présentation, renommage/suppression de vues personnelles. Standard non supprimable et rétablissable. Changer de vue personnelle ne détruit pas fiche/onglet/brouillon ; changer de module/dossier conserve UX-01.
+- Préférencesv2 compatiblesv1 sous clé historique ; ordre dédupliqué, largeurs bornées, inconnus ignorés. Collection personnellev1 par module. Recherche libre/id/note exclus, erreurs stockage visibles sans faux succès, corruption avec défaut sûr/reset. Aucune migration SQLite.
+- Portée : profil atelierTEMP par module/vue, stockage injectable. Standard personnalisable localement avec défaut immuable. Synchronisation multi-fenêtres et adaptateur réglages/workspace réel à qualifier au pilote métier ; pas présentés comme livrés.
+
+Windows : typecheckOK ; ciblés **27/27** (3fichiers) ; Vitest **837/837 dans91fichiers,116,53s**, sortie0 sansRPC (production identique au commit, derniers ajouts uniquement banc natif). Atelier **112/112**, neuf captures synchronisées ; C66/66, UX-01183/183 (migrations1–66/intégrité/FK TEMP), contrôlesB40/40 etAbby25/25. Clavier natif, resize/cancel/écriture unique, CRUD et corruption/recovery vérifiés. Revue visuelle directe AtoumWeb/Confort. TEMP nettoyé ; aucune utilisation Validation-MSI.
+
+R01D-02/03/07/08/09/13 PASS atelier ; R01D-12 reste ouvert pour01D.4. Historique01D.2 ci-dessous conservé.
+
+CI86 : six runs autorisés au maximum, merges non autorisés. Actions actif, HEAD7f5dbbf2 vérifié ; quota gratuit non vérifié par l'utilisateur, API facturation inaccessible (scope user absent). **Aucun run déclenché**, attente quota/protections selon dernière consigne.
+
+## Historique 01D.2
 
 ## État livré et traçabilité
 

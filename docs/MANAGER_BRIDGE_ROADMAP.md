@@ -1,5 +1,7 @@
 # Manager ↔ Bridge — Architecture, feuille de route et journal partagé
 
+**12/10 — checkpoint01D.3 :** PR89/base88 préservées, code17499bf, colonnes drag/clavier et resize à écriture unique, vues personnelles et défaut sûrv2/v1 ; fiche/brouillon conservés, aucun port métier. TypecheckOK, ciblés27, complet837/837(91fichiers,116,53s,sansRPC), natif112/neufcaptures, C66/UX-01183/B40/Abby25 ; intégrité/FK TEMP, aucune Validation-MSI. [Rapport](UXV2_LOT01D_EXECUTION.md). Suite01D.4 autorisée, recette humaine différée. Six CI autorisées mais86 en attente quota/protections confirmés ; aucune CI/merge/retarget exécuté.
+
 Date d'ouverture : 27/09/2026.
 
 ## 0. État courant et lecture de la roadmap — 09/10/2026

@@ -1,5 +1,11 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 12/10/2026 — 01D.3 colonnes et vues personnelles validées techniquement
+
+- Code17499bf sur PR89 draft/base88 : ordre drag/clavier, resize borné/aperçu immédiat/écriture unique, annulation sans écriture ; vues personnelles CRUD, standard rétablissable, préférencesv2 compatiblesv1. Aucun id/note/query persisté, aucun écran métier migré.
+- TypecheckOK, ciblés27/27, complet837/837 (91fichiers,116,53s,sansRPC), natif112/112/neuf captures ; C66, UX-01183, contrôlesB40 etAbby25 verts, TEMP nettoyé, intégrité/FK/migrations1–66 TEMP. [Rapport](docs/UXV2_LOT01D_EXECUTION.md).
+- Suite autorisée01D.4 async/pagination synthétiques. Six CI de consolidation autorisées conditionnellement, lancement86 différé par demande utilisateur tant que quota/protections pas confirmés. Aucun merge, retarget86/87/88, budget ou Validation-MSI modifié.
+
 ## 12/10/2026 — 01D.2 : atelier de tableaux avec fiche et brouillon protégés
 
 - Branche et PR89 existantes conservées, départ3edf5e3 ; code fbc029d, banc renforcé eda2eae. DataTable/TableFilterBar/TableColumnManager et atelier sur120 dossiers immuables : rechercher/filtrer/trier/montrer-masquer colonnes et ouvrir/agrandir une fiche avec les primitives01B/01C. Aucun écran métier ni service réel modifié.
