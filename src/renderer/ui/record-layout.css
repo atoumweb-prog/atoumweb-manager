@@ -1,0 +1,10 @@
+.aw-record-workspace{min-width:0;max-width:100%}.aw-record-layout-tools,.aw-record-pane-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.aw-record-split{display:grid;min-width:0;gap:0;align-items:stretch}.aw-record-list,.aw-record-detail{min-width:0;max-width:100%;overflow:auto}
+.aw-record-list{padding-right:12px}.aw-record-pane{background:var(--surface);border:1px solid var(--border);border-radius:12px;min-width:0}
+.aw-record-pane header{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px;border-bottom:1px solid var(--border)}
+.aw-record-pane h2{overflow-wrap:anywhere}.aw-record-pane-body{padding:16px;max-height:65vh;overflow:auto;overflow-wrap:anywhere}
+.aw-record-separator{cursor:col-resize;touch-action:none;background:var(--border);border:3px solid var(--surface);min-width:10px}
+.aw-record-separator:focus-visible{outline:2px solid var(--accent-strong);outline-offset:2px}.aw-record-split.is-expanded>.aw-record-list{display:none}
+.aw-record-split.is-narrow{gap:16px}.aw-record-split.is-expanded .aw-record-pane-body{max-height:72vh}
+.aw-record-workspace [hidden]{display:none!important}.aw-record-workspace input,.aw-record-workspace textarea{max-width:100%;box-sizing:border-box}
+.aw-record-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.aw-record-workspace [aria-pressed=true]{outline:2px solid var(--accent-strong);outline-offset:2px}
