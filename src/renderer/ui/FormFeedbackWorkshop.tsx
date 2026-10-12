@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import './form-feedback-workshop.css';
 import { AppButton } from './AppButton';
 import { AppNotice } from './AppNotice';
 import { AppTextField } from './AppTextField';
@@ -42,7 +43,7 @@ function SimulatedForm({ id }: { id: 'a' | 'b' }) {
     setConfirmed(true);
   }
 
-  return <article aria-label={label}>
+  return <article className="aw-form-workshop-card" aria-label={label}>
     <h2>{label}</h2>
     <AppTextField
       label={`Note fictive — ${label}`}
@@ -51,7 +52,7 @@ function SimulatedForm({ id }: { id: 'a' | 'b' }) {
       description="Ce texte reste en mémoire dans l'atelier de démonstration."
     />
     <FormFeedbackIndicator editorLabel={label} feedback={{ dirty: draft.dirty, pending, error, conflict, serviceConfirmed: confirmed }}/>
-    <div className="aw-record-pane-actions">
+    <div className="aw-form-workshop-actions">
       <AppButton pending={pending} disabled={conflict} onAction={mockSave}>Simuler un retour positif (TEST)</AppButton>
       <AppButton disabled={pending} onAction={() => { setError(true); setConfirmed(false); }}>Simuler un refus (TEST)</AppButton>
       <AppButton disabled={pending} onAction={() => { setConflict(true); setConfirmed(false); }}>Simuler un conflit (TEST)</AppButton>
@@ -65,13 +66,13 @@ export function FormFeedbackWorkshop() {
   const [showA, setShowA] = useState(true);
   const [showB, setShowB] = useState(true);
   useEffect(() => installUnsavedLifecycleBridge(), []);
-  return <section aria-label="Atelier 01E — formulaires fictifs">
+  return <section className="aw-form-workshop" aria-label="Atelier 01E — formulaires fictifs">
     <h1>Atelier 01E — formulaires et confirmations</h1>
     <AppNotice level="warning">
       Démonstration TEST isolée : les retours de service sont simulés, rien n'est réellement enregistré.
     </AppNotice>
     <UnsavedGroup name="uxv2:form-workshop">
-      <div className="aw-record-pane-actions">
+      <div className="aw-form-workshop-actions">
         <AppButton disabled={showA} onAction={() => setShowA(true)}>Ouvrir A</AppButton>
         <AppButton disabled={showB} onAction={() => setShowB(true)}>Ouvrir B</AppButton>
       </div>
