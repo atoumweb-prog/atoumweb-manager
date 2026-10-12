@@ -7,12 +7,23 @@
 | PR | Objet / branche | État vérifié | Règle de reprise |
 |---|---|---|---|
 | **#81** | Intégrité SQLite / restauration et arrêt | **Fusionnée dans main** | Ne pas recommencer cette intégration ni tenter une seconde PR de restauration |
-| **#83** | UX-01 protections de saisie et cycle Electron | **Draft, non fusionnée, signalée non mergeable** | Examiner séparément le conflit/diff seulement si nécessaire ; ne pas fusionner automatiquement ni créer une garde concurrente |
+| **#83** | UX-01 protections de saisie et cycle Electron | **Fermée sans fusion le 10/10/2026** (`state=closed`, `merged=false`), toujours marquée draft dans ses métadonnées historiques | Ne pas rouvrir, fusionner, ni confondre la PR fermée avec la branche UX-01 indépendante ; examiner le code et ses preuves de tests dans la branche de travail actuelle avant toute intégration |
 | **#82** | Référentiel UX/UI V2, `docs/ux-v2-reference-v1` | **Draft vers main** | Source de conception, notamment `LOT-01B-COMPOSANTS-ELEMENTAIRES.md` ; la spécification comporte un addendum d'état 12/10 |
 | **#86** | 01A typographie/tokens, `feature/ux-v2-lot01a-typography-v1` | **Draft vers main** | Dépendance logicielle directe de 01B |
 | **#87** | 01B composants pilotes, `feature/ux-v2-lot01b-components-v1` | **Draft sur la branche #86** | Branche de travail cible du correctif Abby ; ne pas rebaser/fusionner sans demande |
 
 **La V2 complète de l'interface n'est PAS réalisée** : 01A change le socle visuel, 01B ajoute des pilotes de composants et modifie l'aide, mais pas les fiches des 17 modules en V2. N'ouvrir **01C** (fiches/panneaux) qu'après arbitrage explicite de l'étape suivante.
+
+## Dernière réponse de Codex avant interruption : clôture de la PR #81
+
+Le dernier compte rendu Codex transmis par AtoumWeb porte **uniquement sur #81**, et confirme :
+- fusion **par merge commit normal**, sans squash/rebase ; commit GitHub **`68bfd952e394169ade65e3f0697422d8c00c2cc7`** (les métadonnées GitHub confirment `#81 merged=true` et ce SHA de merge) ;
+- **CI post-fusion #652** : [run #37999319663](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/37999319663), **conclusion `success`** sur exactement le merge `68bfd95` ; selon le rapport Codex fourni, **750/750 tests, dont 35/35 restaurations, typecheck OK, zéro erreur RPC**, job **6 min 37 s** ;
+- la vérification pré-fusion mentionnait la **CI #651 verte**, code identique au HEAD validé ; working tree propre, #82/#83 et Validation-MSI non modifiés à cette étape. Ces détails de console pré-fusion viennent du rapport Codex transmis, pas d'une nouvelle campagne au 12/10.
+
+**Chronologie importante :** `68bfd95` était le HEAD de `main` **immédiatement après la fusion #81**. Ce n'est plus son HEAD actuel : dernier pointage via GitHub au **12/10/2026 : `main@07dde9c85dab337ee0ed3a5a92034a139d7ebad2`**. Ne pas revenir à `68bfd95`, ni faire d'update forcée. Le groupe `801/801` obtenu plus tard sur la branche UX V2 est un **autre périmètre et un autre SHA** que le `750/750` du post-merge #81.
+
+**Nouvelle information GitHub vérifiée au 12/10** : **#83 a été fermée sans fusion le 10/10/2026**, malgré l'indicateur `draft=true` encore renvoyé pour ses métadonnées. Il peut exister des tests et branches UX-01 associés, mais **la PR #83 n'est plus une PR ouverte en attente de merge**. Ne pas la rouvrir ni déduire que les protections sont absentes sur la branche active.
 
 ## Preuves locales Windows disponibles avant le dernier correctif Abby
 
