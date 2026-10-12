@@ -1,5 +1,11 @@
 # UX/UI V2 — Lot 01B.6 — Revue visuelle des 9 captures de l'atelier
 
+## Complément du 12/10/2026
+
+Les neuf captures ci-dessous restent historiques à leur SHA. Reprise locale #87 au correctif `af5cdc559517e049c45f80acf551928e0dd28772` : contrôles **40/40**, aide **70/70**, atelier **50/50 sans nouvelle capture**, interface réelle **300/300**. Mesures et interactions Electron : longs labels/erreurs, aide longue défilable, fermeture et focus, fenêtres étroites et zoom 125/150 %. Coupure d'aide reproduite puis corrigée dans le calcul vertical ; aucune CSS globale modifiée. [Preuves et limites](UXV2_LOT01B_REPRISE_2026-10-12.md). Pas de nouvelle revue d'images ni certification WCAG revendiquée ; pas de refonte des futures fiches 01C.
+
+## Historique — revue des captures du 10/10
+
 **Date de revue :** 10/10/2026. **Statut : revue visuelle des captures synchronisées ACCEPTABLE**, avec deux améliorations de présentation non bloquantes. **Un journal PowerShell distinct a depuis été transmis** : il prouve 51/51 assertions Electron et le typecheck sur le SHA `d80409a`. Ces éléments n'étaient pas démontrables par le ZIP seul.
 
 ## Source examinée

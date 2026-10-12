@@ -1,4 +1,27 @@
-# UX/UI V2 — Lot 01B — Matrice de recette R01B-01…12 au 10/10/2026
+# UX/UI V2 — Lot 01B — Matrice de recette
+
+## État vérifié du 12/10/2026 — pilote 01B
+
+Branche #87 `feature/ux-v2-lot01b-components-v1`, départ `b9679c3`, correctif local `af5cdc559517e049c45f80acf551928e0dd28772`. [Rapport complet et limites](UXV2_LOT01B_REPRISE_2026-10-12.md). #86/#87 restent draft ; aucune publication, CI hébergée ou fusion réalisée par cette reprise.
+
+| Critère | État | Preuve actuelle |
+| --- | --- | --- |
+| R01B-01 | PASS — pilote | Contrôles 40/40, atelier 50/50, trois thèmes × trois densités. |
+| R01B-02 | PASS — commandes pilotes | Tab native : ordre/saut désactivé ; Espace natif AppButton ; Entrée native icônes ; Entrée/Espace/Échap aide et retour focus. Pas un audit clavier de toutes les fiches futures. |
+| R01B-03 | PASS — pilote | Double appel async : une action ; refus visible, 40/40. |
+| R01B-04 | PASS | Aide automatique OFF sans cacher l'action explicite, 70/70 aide. |
+| R01B-05 | PASS — pilote | Titre court, temporisation 2,5 s, détail fermable ; texte long dans le viewport, zoom et champ parent intact. |
+| R01B-06 | PASS — pilote | Ouverture native Entrée/Espace, rôle/nom/contenu, Échap et focus restauré ; audit lecteur d'écran exhaustif non réalisé. |
+| R01B-07 | PASS — pilote | Notifications 30/30, fermeture sans déclencher l'action, atelier. |
+| R01B-08 | PASS — parcours testés | Vrai service administration refusant une version périmée : erreur/brouillon préservé, 183/183 ; refus service référence Abby simulé et champ préservé, 25/25 ; aucun faux succès de copie. |
+| R01B-09 | PASS — parcours testés | Vrais Devis/Prospect : « Rester » avant suppression/archivage, aucune mutation ; autorisation explicite ensuite, 183/183. Garde UX-01 existante conservée. |
+| R01B-10 | PASS — parcours testés | 25/25 panneaux + 21/21 vrai Devis trois thèmes ; dirty/pending, autre devis indépendant, reprise, refus presse-papiers. Sous-éditeurs et mutations raccordés au registre existant. |
+| R01B-11 | PASS — pilote + échantillons réels | Labels/erreurs longs, aide longue défilable, fermeture atteignable à 100/125/150 % ; 300/300 sur 17 destinations. Pas une photographie exhaustive des futures fiches remplies. |
+| R01B-12 | PASS — non-régression | 300/300 interface réelle, aucune erreur console/débordement ; suite Vitest et typecheck dans le rapport. Classes historiques conservées. |
+
+**12/12 critères démontrés au périmètre indiqué**, proposition de clôture technique du pilote seulement, à valider humainement. Les résultats des bancs indépendants ne sont pas additionnés au total Vitest. Les limites visuelles et d'accessibilité demeurent documentées ; 01C non commencé.
+
+## Historique — matrice et réserves avant la reprise
 
 **Source de vérité des attendus :** `docs/ux-v2/LOT-01B-COMPOSANTS-ELEMENTAIRES.md` sur branche de référence de la PR #82. **Branche d'implémentation :** `feature/ux-v2-lot01b-components-v1`, PR #87 **draft**, base PR #86 toujours sans fusion vers `main`. Les statuts ci-dessous concernent **l'incrément pilote 01B**, non les futurs écrans refondus.
 

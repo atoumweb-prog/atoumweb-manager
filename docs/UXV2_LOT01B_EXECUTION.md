@@ -1,5 +1,11 @@
 # UX/UI V2 — Lot 01B — Exécution incrémentale (E05 aide contextuelle)
 
+## État courant du 12/10/2026
+
+Reprise sur #87 à `b9679c3` ; correctif local `af5cdc559517e049c45f80acf551928e0dd28772`, sans push/CI/merge. Garde Abby conservé et sous-éditeurs manquants raccordés à UX-01 ; aide longue corrigée après reproduction d'une coupure en bas de fenêtre. Abby **25/25**, vrai Devis **21/21**, UX-01 **183/183**, contrôles **40/40**, aide **70/70**, icônes **42/42**, notifications **30/30**, atelier **50/50 sans captures**, interface réelle **300/300**, typecheck OK. [Résultats complets, SHA et limites](UXV2_LOT01B_REPRISE_2026-10-12.md) ; [matrice actuelle](UXV2_LOT01B_GATES.md). Clôture pilote proposée après validation humaine ; #86/#87 draft, 01C non commencé.
+
+## Historique des incréments et validations antérieures
+
 **Statut au 10/10/2026 : premier incrément codé sur branche dépendante de 01A, recette Windows encore à exécuter.**  
 **Référentiel normatif :** PR #82, `docs/ux-v2/LOT-01B-COMPOSANTS-ELEMENTAIRES.md`, `LOT-01-FONDATIONS.md`, `DECISIONS.md`, décision **UX2-HELP-001 / écart E05**.
 
