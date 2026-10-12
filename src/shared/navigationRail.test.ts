@@ -1,0 +1,13 @@
+import {readFileSync} from 'node:fs';
+import {describe,expect,it} from 'vitest';
+import {NAVIGATION_MODULES,NAVIGATION_GROUPS,defaultNavigationPreference,normalizeNavigationPreference,moveFavorite,readNavigationPreference,writeNavigationPreference} from './navigationRail';
+describe('02A navigation references and visual preference',()=>{
+ it('matches the existing 17 NAV_ITEMS keys in order without replacing the router',()=>{const source=readFileSync('src/renderer/App.tsx','utf8'),block=source.match(/const NAV_ITEMS = \[([\s\S]*?)\] as const/)![1];expect(NAVIGATION_MODULES.map(module=>module.key)).toEqual([...block.matchAll(/'([^']+)'/g)].map(match=>match[1]));expect(NAVIGATION_MODULES).toHaveLength(17);});
+ it('keeps home separate and all other destinations in exactly five groups',()=>{expect(NAVIGATION_GROUPS).toHaveLength(5);expect(NAVIGATION_MODULES.filter(module=>module.group===null).map(module=>module.key)).toEqual(['Accueil']);for(const group of NAVIGATION_GROUPS)expect(NAVIGATION_MODULES.some(module=>module.group===group)).toBe(true);expect(NAVIGATION_MODULES.find(module=>module.key==='Prospects')?.label).toBe('Prospection');});
+ it('normalizes retired keys and duplicates without losing remaining modules',()=>{expect(normalizeNavigationPreference({version:1,railCollapsed:true,favoriteModuleKeys:['Devis','retired','Devis','Accueil','Clients'],note:'secret',selectedId:'private'})).toEqual({version:1,railCollapsed:true,favoriteModuleKeys:['Devis','Clients']});});
+ it('reads an old visual schema without storing business data',()=>{expect(normalizeNavigationPreference({version:0,favorites:['Devis'],railCollapsed:true})).toEqual({version:1,railCollapsed:true,favoriteModuleKeys:['Devis']});});
+ it('preserves order while moving favorites and never mutates source',()=>{const source=Object.freeze(['Devis','Clients'] as const);expect(moveFavorite(source,'Clients',-1)).toEqual(['Clients','Devis']);expect(moveFavorite(source,'Devis',-1)).toEqual(source);expect(source[0]).toBe('Devis');});
+ it.each(['null','bad','{"version":99}'])('rejects corrupt preference %s',raw=>expect(()=>readNavigationPreference({getItem:()=>raw,setItem(){},removeItem(){}})).toThrow());
+ it('uses safe default when absent',()=>expect(readNavigationPreference({getItem:()=>null,setItem(){},removeItem(){}})).toEqual(defaultNavigationPreference()));
+ it('writes only rail mode and ordered module references',()=>{let raw='';writeNavigationPreference({getItem:()=>null,setItem:(_k,v)=>{raw=v;},removeItem(){}},{...defaultNavigationPreference(),draft:'secret',timerId:'private'} as ReturnType<typeof defaultNavigationPreference>);expect(JSON.parse(raw)).toEqual(defaultNavigationPreference());});
+});
