@@ -5,7 +5,8 @@
 :root {
   --aw-font-functional: max(14px, var(--ui-font-small));
   --aw-font-secondary: max(14px, var(--ui-font-secondary));
-  --aw-font-body: max(15px, var(--ui-font-base));
+  /* UX2-VIS-003 — ne pas relever artificiellement Compact de 14 à 15 px. */
+  --aw-font-body: max(14px, var(--ui-font-base));
 }
 
 /* Contrôles et libellés */
