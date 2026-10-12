@@ -1,0 +1,10 @@
+import { describe, expect, it } from 'vitest';
+import { personalViewsKey, readPersonalViews, writePersonalViews } from './personalTableViews';
+import { defaultTableView } from './tableViewPreference';
+describe('personal presentation views', () => {
+  it('isolates module keys and keeps absent standard available', () => { expect(personalViewsKey('a')).not.toBe(personalViewsKey('b')); expect(readPersonalViews({getItem:()=>null,setItem(){},removeItem(){}},'a',[],[])).toEqual([]); });
+  it('roundtrips independent named copies without private fields', () => { let raw=''; const store={getItem:()=>raw,setItem:(_key:string,value:string)=>{raw=value;},removeItem(){}}; const preference={...defaultTableView(), note:'secret',selectedId:'TEST-001'}; writePersonalViews(store,'a',[{id:'personal-1',name:' Première ',preference},{id:'personal-2',name:'Copie',preference:{...preference,widths:{amount:350}}}],[],[]); const views=readPersonalViews(store,'a',[],[]); expect(views).toHaveLength(2); expect(views[0].name).toBe('Première'); expect(views[0].preference.widths).toEqual({}); expect(views[1].preference.widths).toEqual({amount:350}); expect(raw).not.toMatch(/secret|TEST-001|note|selectedId/); });
+  it('skips unknown, duplicate IDs and incompatible views instead of losing standard', () => { const raw=JSON.stringify({version:1,views:[{id:'standard',name:'forged',preference:defaultTableView()},{id:'personal-1',name:'Okay',preference:defaultTableView()},{id:'personal-1',name:'Duplicate',preference:defaultTableView()},{id:'personal-2',name:'Bad',preference:{version:99}}]}); expect(readPersonalViews({getItem:()=>raw,setItem(){},removeItem(){}},'a',[],[]).map(v=>v.name)).toEqual(['Okay']); });
+  it.each(['bad','null','{"version":99}'])('refuses invalid collection %s', raw => { expect(()=>readPersonalViews({getItem:()=>raw,setItem(){},removeItem(){}},'a',[],[])).toThrow(); });
+  it('propagates storage failure rather than announcing success', () => { expect(()=>writePersonalViews({getItem:()=>null,setItem(){throw Error('quota');},removeItem(){}},'a',[],[],[])).toThrow('quota'); });
+});
