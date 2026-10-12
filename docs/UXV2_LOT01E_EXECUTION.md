@@ -94,3 +94,25 @@ Sur la version du pilote publiée après son premier squelette, deux protections
 Ces changements restent limités au composant `FormFeedbackWorkshop` et à son banc ; ni `unsavedRegistry`, ni les services, ni l'éditeur de Devis/Prospect existant ne sont modifiés.
 
 Dernier HEAD consulté dans cette reprise : `feature/ux-v2-lot01e-form-feedback-v1@63f7686ba591d3273883c638e241f2640ffde9a7`. **Tests Electron, 3×3 et suite complète encore à exécuter sur ce HEAD** ; ne pas donner de score fictif.
+
+## 01E.2 — Complément de cartographie statique : sous-éditeurs Prospect / Devis
+
+Les points ci-dessous ont été relevés sur les fichiers publiés dans la base **#89 @ `366395ad`**, et ne sont **pas** une vérification d'exécution dans les 17 modules. Chaque sous-formulaire reste maître de ses services.
+
+| Sous-formulaire / route | Groupe ou entrée UX-01 vérifié | Handler → service réel | Condition de confirmation / vigilance |
+| --- | --- | --- | --- |
+| Création Prospect (`ProspectsPageV2`) | `prospect:create`, draft + pending `saving` | Création organisation/contact/méthodes, puis `crm.prospects.create`, recherche et action initiale éventuellement | Parcours multi-écritures : **pas de save-and-exit générique** ni atomicité supposée ; erreurs conservées selon handler existant |
+| Fiche Prospect / entreprise et interlocuteurs (`ProspectIdentityPanel`) | `useUnsavedDraft` hérite du panneau actif, `ready: !!identity`, `pending: busy` | `crm.organizations.update`, `crm.contacts.update/create`, `crm.prospects.update`, `crm.prospects.updateQualification`, contacts/méthodes | `guard.saved()` après les appels attendus ; plusieurs écritures possibles, contrôle de cohérence indispensable avant toute capacité « enregistrer et quitter » |
+| Besoins Prospect (`ProspectNeedsPanel`) | Deux entrées distinctes : `Prestation envisagée` et `Identification du besoin`, `pending:busy` | `workflow.saveNeed/removeNeed` ; `crm.prospects.updateQualification` et `crm.prospects.update` | Le second enregistrement appelle `infoGuard.saved()` après **deux** mises à jour ; ne pas prétendre qu'une opération composite est atomique |
+| Nouveau Devis (`QuotesPage`) | `quote:create` avec wizard, lignes et termes | `quotes.createWithLines`, dépend du vrai propriétaire et des données | Création du dossier commercial, pas une sauvegarde d'un simple champ ; reste hors save-and-exit |
+| Détail Devis + lignes (`QuotesPage`) | `quote:<id>` ; sous-groupe `quote:<id>/line:<id>/editor` lors de l'édition | `quotes.updateLine/removeLine` puis rafraîchissement ; `QuoteLineEditor.onSave` async | Garde avant changement d'éditeur via `setEditingLineId`, suppression via `requestUnsavedExit`. Le `onCancel` direct de l'éditeur est à **examiner sur fixture** pour confirmer le contrat d'abandon ciblé |
+| Options du Devis (`QuoteOfferOptionsPanel`) | `quote:<id>/options`, pending busy ; `QuoteLineEditor` imbriqué | `quotes.updateLine/selectOfferOption/deselectOfferOption` | Confirmation du service avant `onSave`, pas avant ; sélectionner/retirer une option constitue une opération commerciale, **pas** une préférence visuelle |
+| Référence/document Abby (`QuoteContractDocumentPanel`) | `quote:<id>/abby`, `dirty` selon référence, pending busy | `quotes.updateAbbyReference`, `quotes.importContractDocument`, `quotes.openContractDocument` | Référence = modification de champ ; import du PDF accepté = **action probante distincte** et ne doit jamais se déclencher par simple save-and-exit |
+| Destination opérationnelle (`QuoteOperationalSalesPanel`) | `useUnsavedDraft` sur projet/site/contexte/auteur, pending saving | `quotes.assignOperationalTarget` puis rafraîchissement ; `guard.saved()` après réponse | Affectation de destination implique le cycle Projet / opération : pas de capacité save-and-exit implicite |
+| Transitions du Devis (`QuotesPage`) | Garde `quote:<id>` avant `transition` | `quotes.finalize/markSent/markViewed/accept/refuse/expire/duplicate` ; `contractTerms.quotes.sync` | **Actions métiers distinctes** (preuve, conversion, signature, validité, révision), jamais déclenchées par « Enregistrer » |
+
+**Conclusion E18 :** aucun de ces éditeurs n'est automatiquement déclaré éligible à `Enregistrer et quitter` du fait de la présence d'un `save()` ou de `guard.saved()`. Une compatibilité réelle suppose validation des services, de leurs versions, de la nature de la commande et du périmètre de données ; l'atelier 01E doit rester non destructif avant cette instruction.
+
+**Risques de revue à enregistrer, pas de correctif métier improvisé :** sauvegardes composites partiellement appliquées avant une erreur, interactions entre rechargement serveur et brouillon encore dirty, signal de succès propre à un sous-éditeur alors que le groupe global reste dirty. Aucune de ces observations ne constitue à elle seule une preuve d'anomalie reproductible : prévoir fixtures ciblées avant tout changement métier.
+
+**Suite de 01E.2 :** inventorier les domaines Clients/Catalogue/Projets/Opérations lors des ports propres aux lots métier. Ne pas simuler une protection universelle par la seule existence du registre partagé.
