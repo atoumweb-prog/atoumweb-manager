@@ -27,10 +27,11 @@ function SimulatedForm({ id }: { id: 'a' | 'b' }) {
   const draft = useUnsavedDraft(`Brouillon du ${label}`, text, { group, pending, discard: setText });
 
   async function mockSave() {
+    // A conflict needs an explicit resolution even in this test-only workshop.
+    if (conflict) return;
     // Deliberately test-only: the "service reply" is simulated, not persisted.
     setPending(true);
     setError(false);
-    setConflict(false);
     setConfirmed(false);
     await new Promise<void>(resolve => { timer.current = setTimeout(resolve, 240); });
     if (!mounted.current) return;
@@ -45,14 +46,15 @@ function SimulatedForm({ id }: { id: 'a' | 'b' }) {
       label={`Note fictive — ${label}`}
       value={text}
       disabled={pending}
-      onChange={event => { setText(event.target.value); setConfirmed(false); setError(false); setConflict(false); }}
+      onChange={event => { setText(event.target.value); setConfirmed(false); }}
       description="Ce texte reste en mémoire dans l'atelier de démonstration."
     />
     <FormFeedbackIndicator editorLabel={label} feedback={{ dirty: draft.dirty, pending, error, conflict, serviceConfirmed: confirmed }}/>
     <div className="aw-record-pane-actions">
-      <AppButton pending={pending} onAction={mockSave}>Simuler un retour positif (TEST)</AppButton>
+      <AppButton pending={pending} disabled={conflict} onAction={mockSave}>Simuler un retour positif (TEST)</AppButton>
       <AppButton disabled={pending} onAction={() => { setError(true); setConfirmed(false); }}>Simuler un refus (TEST)</AppButton>
       <AppButton disabled={pending} onAction={() => { setConflict(true); setConfirmed(false); }}>Simuler un conflit (TEST)</AppButton>
+      <AppButton disabled={pending || !conflict} onAction={() => setConflict(false)}>Effacer conflit fictif (TEST)</AppButton>
       <AppButton disabled={pending} onAction={() => { draft.discard(); setConfirmed(false); setError(false); setConflict(false); }}>Annuler cette note</AppButton>
     </div>
   </article>;
