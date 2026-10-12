@@ -30,12 +30,14 @@ function SimulatedForm({ id }: { id: 'a' | 'b' }) {
     // A conflict needs an explicit resolution even in this test-only workshop.
     if (conflict) return;
     // Deliberately test-only: the "service reply" is simulated, not persisted.
+    const submittedText = text; // Immutable value actually sent to the simulated service.
     setPending(true);
     setError(false);
     setConfirmed(false);
-    await new Promise<void>(resolve => { timer.current = setTimeout(resolve, 240); });
+    await new Promise<void>(resolve => { timer.current = setTimeout(resolve, 700); });
     if (!mounted.current) return;
-    draft.saved(text);
+    // A later edit must stay dirty; only the submitted snapshot becomes the baseline.
+    draft.saved(submittedText);
     setPending(false);
     setConfirmed(true);
   }
@@ -45,7 +47,6 @@ function SimulatedForm({ id }: { id: 'a' | 'b' }) {
     <AppTextField
       label={`Note fictive — ${label}`}
       value={text}
-      disabled={pending}
       onChange={event => { setText(event.target.value); setConfirmed(false); }}
       description="Ce texte reste en mémoire dans l'atelier de démonstration."
     />
