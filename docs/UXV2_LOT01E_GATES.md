@@ -8,8 +8,8 @@
 | R01E-02 — Changer de fiche avec brouillon | **PARTIEL** | L'atelier appelle `requestUnsavedExit` pour fermer A, test natif rédigé avec refus ; non exécuté sur le code #90 |
 | R01E-03 — Annuler un sous-éditeur | **PARTIEL** | Deux groupes A/B ; `Annuler cette note` exige la confirmation UX-01 ; test refus/abandon rédigé, pas joué |
 | R01E-04 — Enregistrer A, modifier B | **PARTIEL** | A/B ont états et baselines indépendants ; sauvegarde simulée et assertions dans le banc ; aucune vraie API métier |
-| R01E-05 — Donnée distante et conflit | **OUVERT** | `DraftSection/mergeDraft` existants identifiés ; pas encore d'essai d'une réponse distante concurrente dans l'atelier |
-| R01E-06 — Réponse ancienne après nouvelle saisie | **PARTIEL** | `mockSave` capture le snapshot soumis, `draft.saved(submittedText)` ; bench vérifie que la saisie tardive reste dirty et ferme la sortie ; pas de run natif |
+| R01E-05 — Donnée distante et conflit | **PARTIEL** | Atelier avec vrai `mergeDraft` partagé : version distante sur note propre mise à jour ; sur note sale, conflit affiché et texte local conservé. Assertions Electron écrites, pas encore exécutées |
+| R01E-06 — Réponse ancienne après nouvelle saisie | **PARTIEL** | L'éditeur reste modifiable pendant `pending` ; `mockSave` n'acquitte que le snapshot soumis avec `draft.saved(submittedText)` ; le banc vérifie nouveau texte conservé, fiche toujours dirty, sortie refusée puis second save. Pas de run natif |
 | R01E-07 — Replier section Prospect dirty | **HÉRITÉ / À REVALIDER** | Branche source contient UX-01 ; aucune modification du composant métier dans #90 ; rejouer recette de régression |
 | R01E-08 — Archiver Prospect / supprimer ligne Devis dirty | **HÉRITÉ / À REVALIDER** | Handlers existants mappés, pas de nouveau contrôle d'exécution sur #90 |
 | R01E-09 — Save-and-exit réel | **NON IMPLÉMENTÉ** | Protocole async en conception ; aucune capability de save universelle ni troisième bouton natif |
