@@ -50,7 +50,8 @@ if(!process.versions.electron){
   assert(dialogs.length===n+1&&dialogs.at(-1).defaultId===0,'Native Stay is safe default');
   assert(await get('document.querySelectorAll("article[aria-label]").length===2'),'Refused exit leaves both editors mounted');
   assert(await get('document.querySelector('+JSON.stringify(sel('A')+' input')+').value==="Brouillon A"&&document.querySelector('+JSON.stringify(sel('B')+' input')+').value==="Brouillon B"'),'Refused exit preserves both drafts');
-  await action('A','Simuler un conflit (TEST)');assert(await state('A')==='conflict','A conflict visible');
+  await action('A','Simuler une version distante (TEST)');assert(await state('A')==='conflict','Concurrent remote update detects a real three-way conflict');
+  assert(await get('document.querySelector('+JSON.stringify(sel('A')+' input')+').value==="Brouillon A"'),'Conflict keeps local note, never overwrites it with remote text');
   await input('A','Brouillon A modifié pendant conflit');assert(await state('A')==='conflict','Editing never conceals an unresolved conflict');
   assert(await get('document.querySelector('+JSON.stringify(sel('A'))+')?.querySelectorAll("button:disabled").length>0'),'Simulated save is disabled during conflict');
   await action('B','Simuler un refus (TEST)');assert(await state('B')==='error','B error visible and independent');
@@ -96,6 +97,9 @@ if(!process.versions.electron){
   replies.push(1);await action('B','Annuler cette note');
   assert(await state('B')==='clean','Explicitly accepted discard cleans B only');
   assert(await get('document.querySelector('+JSON.stringify(sel('B')+' input')+').value===""'),'Accepted discard restores B baseline');
+  await action('B','Simuler une version distante (TEST)');
+  assert(await get('document.querySelector('+JSON.stringify(sel('B')+' input')+').value==="VERSION DISTANTE TEST — Dossier fictif B"'),'Remote update replaces a clean editor safely');
+  assert(await state('B')==='clean','Clean remote update updates the confirmed baseline');
   console.log(JSON.stringify({checks,failed:0,captures:9,onlyTemp:true,noBusinessIpc:true}));
   win.destroy();app.exit(0);
  }).catch(e=>{console.error(e.stack);win?.destroy();app.exit(1)});
