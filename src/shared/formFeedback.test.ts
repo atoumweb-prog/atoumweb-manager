@@ -38,8 +38,7 @@ describe('UX V2 01E — scoped form feedback, without implicit saves', () => {
   it('checks all 32 combinations: no stale save acknowledgement can mask blockers', () => {
     const states = ['dirty', 'pending', 'error', 'conflict', 'serviceConfirmed'] as const;
     for (let mask = 0; mask < 32; mask++) {
-      const input = Object.fromEntries(states.map((state, index) => [state, Boolean(mask & (1 << index))]))
-        as unknown as FormFeedbackInput;
+      const input = Object.fromEntries(states.map((state, index) => [state, Boolean(mask & (1 << index))])) as unknown as FormFeedbackInput;
       const state = feedback(input);
       const expected = input.conflict ? 'conflict'
         : input.pending ? 'pending'

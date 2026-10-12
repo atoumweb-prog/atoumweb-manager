@@ -20,18 +20,22 @@ function SimulatedForm({ id }: { id: 'a' | 'b' }) {
   const [error, setError] = useState(false);
   const [conflict, setConflict] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [requests, setRequests] = useState(0);
   const confirmedText = useRef(''); // Same confirmed baseline as the UX-01 draft, only in this TEST editor.
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mounted = useRef(true);
+  const saveInFlight = useRef(false);
   useEffect(() => {
     mounted.current = true;
     return () => { mounted.current = false; if (timer.current !== null) clearTimeout(timer.current); };
   }, []);
   const draft = useUnsavedDraft(`Brouillon du ${label}`, text, { group, pending, discard: setText });
 
-  async function mockSave() {
+  async function mockSave(refused = false) {
     // A conflict needs an explicit resolution even in this test-only workshop.
-    if (conflict) return;
+    if (conflict || saveInFlight.current) return;
+    saveInFlight.current = true;
+    setRequests(value => value + 1);
     // Deliberately test-only: the "service reply" is simulated, not persisted.
     const submittedText = text; // Immutable value actually sent to the simulated service.
     setPending(true);
@@ -39,6 +43,8 @@ function SimulatedForm({ id }: { id: 'a' | 'b' }) {
     setConfirmed(false);
     await new Promise<void>(resolve => { timer.current = setTimeout(resolve, 700); });
     if (!mounted.current) return;
+    saveInFlight.current = false;
+    if (refused) { setPending(false); setError(true); return; }
     // A later edit must stay dirty; only the submitted snapshot becomes the baseline.
     draft.saved(submittedText);
     confirmedText.current = submittedText;
@@ -61,7 +67,7 @@ function SimulatedForm({ id }: { id: 'a' | 'b' }) {
     setConfirmed(false);
   }
 
-  return <article className="aw-form-workshop-card" aria-label={label}>
+  return <article className="aw-form-workshop-card" aria-label={label} data-editor-id={id} data-save-requests={requests}>
     <h2>{label}</h2>
     <AppTextField
       label={`Note fictive — ${label}`}
@@ -71,7 +77,8 @@ function SimulatedForm({ id }: { id: 'a' | 'b' }) {
     />
     <FormFeedbackIndicator editorLabel={label} feedback={{ dirty: draft.dirty, pending, error, conflict, serviceConfirmed: confirmed }}/>
     <div className="aw-form-workshop-actions">
-      <AppButton pending={pending} disabled={conflict} onAction={mockSave}>Simuler un retour positif (TEST)</AppButton>
+      <AppButton pending={pending} disabled={conflict} onAction={() => mockSave()}>Simuler un retour positif (TEST)</AppButton>
+      <AppButton disabled={pending || conflict} onAction={() => mockSave(true)}>Simuler un échec asynchrone (TEST)</AppButton>
       <AppButton disabled={pending} onAction={() => { setError(true); setConfirmed(false); }}>Simuler un refus (TEST)</AppButton>
       <AppButton disabled={pending} onAction={mockRemoteUpdate}>Simuler une version distante (TEST)</AppButton>
       <AppButton disabled={pending || !conflict} onAction={() => setConflict(false)}>Effacer conflit fictif (TEST)</AppButton>
@@ -84,11 +91,20 @@ export function FormFeedbackWorkshop() {
   const [showA, setShowA] = useState(true);
   const [showB, setShowB] = useState(true);
   useEffect(() => installUnsavedLifecycleBridge(), []);
-  return <section className="aw-form-workshop" aria-label="Atelier 01E — formulaires fictifs">
+  return <section className="aw-form-workshop" aria-label="Atelier 01E — formulaires fictifs" onKeyDown={event => {
+    if (event.key !== 'Escape') return;
+    const id = (event.target as HTMLElement).closest<HTMLElement>('[data-editor-id]')?.dataset.editorId;
+    if (id !== 'a' && id !== 'b') return;
+    event.preventDefault(); requestUnsavedExit(() => id === 'a' ? setShowA(false) : setShowB(false), `uxv2:form-workshop/${id}`);
+  }}>
     <h1>Atelier 01E — formulaires et confirmations</h1>
     <AppNotice level="warning">
       Démonstration TEST isolée : les retours de service sont simulés, rien n'est réellement enregistré.
     </AppNotice>
+    <details className="aw-form-workshop-gallery"><summary>Référence visuelle des six états (TEST)</summary>{[
+      { dirty: false }, { dirty: true }, { dirty: true, pending: true }, { dirty: true, error: true },
+      { dirty: true, conflict: true }, { dirty: false, serviceConfirmed: true },
+    ].map((feedback, index) => <FormFeedbackIndicator key={index} editorLabel="État de démonstration" feedback={feedback}/>)}</details>
     <UnsavedGroup name="uxv2:form-workshop">
       <div className="aw-form-workshop-actions">
         <AppButton disabled={showA} onAction={() => setShowA(true)}>Ouvrir A</AppButton>

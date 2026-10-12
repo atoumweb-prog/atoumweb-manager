@@ -1,12 +1,13 @@
 // UX/UI V2 01E pilot: real Electron/React guard with two fictitious editors.
 // This is an opt-in TEMP fixture. No Manager workspace, database, business IPC or MSI.
-const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),{spawnSync}=require('node:child_process');
+const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),{spawnSync,execFileSync}=require('node:child_process');
 const repo=path.resolve(__dirname,'..'),interactive=process.argv.includes('--interactive');
 const prefix='atoumweb-uxv2-01e-';
 const owned=p=>!!p&&path.dirname(path.resolve(p))===path.resolve(os.tmpdir())&&path.basename(p).startsWith(prefix);
 if(!process.versions.electron){
  const temp=fs.mkdtempSync(path.join(os.tmpdir(),prefix));
  try{
+  fs.writeFileSync(path.join(temp,'revision.json'),JSON.stringify({sha:execFileSync('git',['rev-parse','HEAD'],{cwd:repo,encoding:'utf8'}).trim(),dirty:!!execFileSync('git',['status','--porcelain'],{cwd:repo,encoding:'utf8'}).trim()}));
   const build=require('esbuild').buildSync;
   build({stdin:{contents:"import React from 'react';import {createRoot} from 'react-dom/client';import {FormFeedbackWorkshop} from './src/renderer/ui/FormFeedbackWorkshop';createRoot(document.getElementById('root')).render(<FormFeedbackWorkshop/>);",resolveDir:repo,loader:'tsx'},bundle:true,platform:'browser',outfile:path.join(temp,'fixture.js'),logLevel:'silent'});
   build({entryPoints:[path.join(repo,'src/main/unsaved.ts')],bundle:true,platform:'node',format:'cjs',external:['electron'],outfile:path.join(temp,'guards.cjs'),logLevel:'silent'});
@@ -45,6 +46,9 @@ if(!process.versions.electron){
   assert(await state('A')==='clean'&&await state('B')==='clean','Editors start clean independently');
   await input('A','Brouillon A');assert(await state('A')==='dirty'&&await state('B')==='clean','Editing A does not dirty B');
   await input('B','Brouillon B');assert(await state('B')==='dirty','Second editor has its own draft');
+  await action('A','Annuler cette note');assert(await get('document.querySelector('+JSON.stringify(sel('A')+' input')+').value==="Brouillon A"'),'Refused scoped cancellation leaves A intact');
+  replies.push(1);await action('A','Annuler cette note');assert(await state('A')==='clean'&&await state('B')==='dirty','Accepted A cancellation leaves dirty B unchanged');
+  assert(await get('document.querySelector('+JSON.stringify(sel('B')+' input')+').value==="Brouillon B"'),'Accepted scoped discard never resets sibling');await input('A','Brouillon A');
   const n=dialogs.length;
   await js('[...document.querySelectorAll("button")].find(b=>b.textContent.trim()==="Fermer A (garde UX-01)").click()');await sleep(80);
   assert(dialogs.length===n+1&&dialogs.at(-1).defaultId===0,'Native Stay is safe default');
@@ -57,6 +61,8 @@ if(!process.versions.electron){
   await action('B','Simuler un refus (TEST)');assert(await state('B')==='error','B error visible and independent');
   await action('A','Effacer conflit fictif (TEST)');assert(await state('A')==='dirty','Explicit fixture reset restores dirty state');
   await action('A','Simuler un retour positif (TEST)');
+  await js('document.querySelector('+JSON.stringify(sel('A'))+').querySelector("button").click()');
+  assert(await get('document.querySelector('+JSON.stringify(sel('A'))+').dataset.saveRequests==="1"'),'Double click while pending makes one simulated request');
   await wait('document.querySelector('+JSON.stringify(sel('A'))+')?.querySelector("[data-form-feedback]")?.dataset.formFeedback==="pending"');
   await input('A','Brouillon A modifié pendant enregistrement');
   assert(await state('A')==='pending','A newer edit during pending is never shown as saved');
@@ -82,6 +88,8 @@ if(!process.versions.electron){
   for(const theme of ['atoumweb','noir','blanc'])for(const [density,font]of [['compact',14],['comfort',16],['comfort_plus',18]]){
    await js('document.documentElement.dataset.theme='+JSON.stringify(theme)+';document.documentElement.dataset.density='+JSON.stringify(density));await sleep(70);
    assert(await get('parseFloat(getComputedStyle(document.body).fontSize)')===font,'Theme density '+theme+'/'+density);
+   assert(await get('[...document.querySelectorAll(".aw-form-workshop-gallery [data-form-feedback]")].map(e=>e.dataset.formFeedback).join(",")==="clean,dirty,pending,error,conflict,saved"'),'Six exact scoped states in '+theme+'/'+density);
+   assert(await get('document.querySelector('+JSON.stringify(sel('B')+' input')+').value==="Brouillon B"'),'Theme does not mutate draft '+theme+'/'+density);
    const rgb=[20+(++frame)*16,50+frame*11,80+frame*7];
    await js('let e=document.querySelector("#frame-marker");if(!e){e=document.createElement("div");e.id="frame-marker";document.body.appendChild(e);}e.style.cssText="position:fixed;right:0;bottom:0;width:20px;height:20px;z-index:99999;background:rgb('+rgb.join(',')+')";await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));');
    let shot,verified=false;
@@ -100,7 +108,28 @@ if(!process.versions.electron){
   await action('B','Simuler une version distante (TEST)');
   assert(await get('document.querySelector('+JSON.stringify(sel('B')+' input')+').value==="VERSION DISTANTE TEST — Dossier fictif B"'),'Remote update replaces a clean editor safely');
   assert(await state('B')==='clean','Clean remote update updates the confirmed baseline');
-  console.log(JSON.stringify({checks,failed:0,captures:9,onlyTemp:true,noBusinessIpc:true}));
+  await input('B','Brouillon clavier TEST');win.focus();win.webContents.focus();await wait('document.hasFocus()');
+  await js('document.querySelector('+JSON.stringify(sel('B')+' input')+').focus()');
+  win.webContents.sendInputEvent({type:'keyDown',keyCode:'Tab'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Tab'});await sleep(70);
+  assert(await get('document.activeElement.tagName==="BUTTON"'),'Native Tab reaches a form action');
+  win.webContents.sendInputEvent({type:'keyDown',keyCode:'Tab',modifiers:['shift']});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Tab',modifiers:['shift']});await sleep(70);
+  assert(await get('document.activeElement.tagName==="INPUT"'),'Native Shift Tab restores field focus');
+  win.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});await sleep(70);
+  assert(await get('document.querySelector('+JSON.stringify(sel('B')+' input')+').value==="Brouillon clavier TEST"'),'Escape Stay preserves scoped draft');
+  await js('[...document.querySelectorAll('+JSON.stringify(sel('B'))+'+" button")].find(b=>b.textContent.trim()==="Annuler cette note").focus()');
+  for(const key of ['Enter','Space']){const before=dialogs.length;win.webContents.sendInputEvent({type:'keyDown',keyCode:key});win.webContents.sendInputEvent({type:'char',keyCode:key==='Enter'?'\r':' '});win.webContents.sendInputEvent({type:'keyUp',keyCode:key});await sleep(70);assert(dialogs.length===before+1&&await get('document.querySelector('+JSON.stringify(sel('B')+' input')+').value==="Brouillon clavier TEST"'),'Native '+key+' cancellation Stay preserves draft');}
+  await js('document.querySelector("h1").click()');assert(await state('B')==='dirty','Outside click is not a destructive exit');
+  win.webContents.reload();await sleep(180);assert(await get('document.querySelector('+JSON.stringify(sel('B')+' input')+').value==="Brouillon clavier TEST"'),'Native reload Stay preserves current draft');
+  await action('B','Simuler un échec asynchrone (TEST)');await input('B','Saisie durant échec TEST');await wait('document.querySelector('+JSON.stringify(sel('B'))+')?.querySelector("[data-form-feedback]")?.dataset.formFeedback==="error"');
+  assert(await get('document.querySelector('+JSON.stringify(sel('B')+' input')+').value==="Saisie durant échec TEST"'),'Rejected asynchronous save does not discard later input');
+  assert(await get('![...document.querySelectorAll("button")].some(b=>b.textContent.includes("Enregistrer et quitter"))'),'No false save and exit capability');
+  const primary=win;
+  const secondary=new BrowserWindow({show:true,width:1000,height:750,webPreferences:{preload:path.join(temp,'preload.cjs'),contextIsolation:true,sandbox:true,nodeIntegration:false,backgroundThrottling:false}});G.bindUnsavedWindow(secondary);await secondary.loadFile(path.join(temp,'index.html'));win=secondary;await wait('document.querySelectorAll("article[aria-label]").length===2');await input('A','Fenêtre secondaire TEST');
+  app.quit();await sleep(100);assert(!primary.isDestroyed()&&!secondary.isDestroyed(),'Global quit Stay retains both dirty windows');
+  assert(dialogs.at(-1).detail.includes('Dossier fictif A')&&dialogs.at(-1).detail.includes('Dossier fictif B'),'Native quit aggregates scoped drafts from both windows');
+  replies.push(1);secondary.close();await sleep(100);assert(secondary.isDestroyed()&&!primary.isDestroyed(),'Accepted detached close never closes dirty primary');win=primary;
+  assert(await get('document.querySelector('+JSON.stringify(sel('B')+' input')+').value==="Saisie durant échec TEST"'),'Detached discard preserves primary draft');
+  const report={...JSON.parse(fs.readFileSync(path.join(temp,'revision.json'),'utf8')),checks,failed:0,captures:9,onlyTemp:true,noBusinessIpc:true};fs.writeFileSync(path.join(out,'validation.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report));
   win.destroy();app.exit(0);
  }).catch(e=>{console.error(e.stack);win?.destroy();app.exit(1)});
  app.on('window-all-closed',()=>{if(interactive)app.quit();});
