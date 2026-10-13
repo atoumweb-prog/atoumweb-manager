@@ -411,7 +411,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
       <button type="button" className="secondary-button" disabled={busy || savingInformation > 0} onClick={() => void reloadChecklistAfterConflict()}>
         Recharger uniquement la checklist enregistrée
       </button>
-    </div>
+    </div>}
 
     <div className="need-current-list">{needs.map((need) => {
       const item = need.catalogItemId ? catalog.find((candidate) => candidate.id === need.catalogItemId) : null;
