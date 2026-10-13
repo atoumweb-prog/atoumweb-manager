@@ -42,3 +42,27 @@ jobs:
 
       - name: Tests
         run: npm test -- --maxWorkers=2
+
+      # Recette 03B.6 sur le vrai Windows hébergé, limitée à la PR atelier.
+      # La fixture crée exclusivement ses propres fichiers et profil dans %TEMP%.
+      - name: Electron CRM 03B.6 — Windows TEMP (PR 98 only)
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 98 }}
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          $captures = Join-Path $env:RUNNER_TEMP 'lot03b6-native-captures'
+          $log = Join-Path $env:RUNNER_TEMP 'lot03b6-native.log'
+          node scripts/check-ux-v2-lot01a-real-ui.cjs --lot03b --captures $captures 2>&1 | Tee-Object -FilePath $log
+          $code = $LASTEXITCODE
+          if ($code -ne 0) { exit $code }
+
+      - name: Archive Electron 03B.6 evidence (PR 98 only)
+        if: ${{ always() && github.event_name == 'pull_request' && github.event.pull_request.number == 98 }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lot03b6-native-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/lot03b6-native.log
+            ${{ runner.temp }}/lot03b6-native-captures/*.png
+          if-no-files-found: warn
+          retention-days: 14
