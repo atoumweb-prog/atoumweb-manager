@@ -177,6 +177,13 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [savingInformation, setSavingInformation] = useState(0);
+  const [informationConflict, setInformationConflict] = useState(false);
+  const informationConflictRef = useRef(false);
+  // Revision portant exclusivement sur missing_information : une modification
+  // du budget ou du calendrier dans une autre fenêtre n'est pas un conflit de checklist.
+  const savedInformationRef = useRef<{ prospectId: string; value: string | null }>({
+    prospectId, value: null,
+  });
   const pendingInformation = useRef<Promise<void>>(Promise.resolve());
   const activeInformationWrites = useRef(0);
   const setInformationDraft = (next: ProspectInformationItem[]) => {
@@ -213,7 +220,8 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
       setCatalog(available);
       setProspect(current);
       if (!category || !available.some((item) => (item.category || 'Autre') === category)) setCategory(sortedCategories(available)[0] ?? 'Autre');
-      if (current && !infoGuard.dirty && activeInformationWrites.current === 0) {
+      if (current && !infoGuard.dirty && activeInformationWrites.current === 0 && !informationConflictRef.current) {
+        savedInformationRef.current = { prospectId, value: current.missingInformation ?? null };
         setProjectSummary(current.projectSummary ?? '');
         setProjectContext(current.projectContext ?? '');
         setBudgetPreset(deriveBudgetPreset(current));
@@ -232,7 +240,15 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
     } catch (e) { if (sequence === reloadSequence.current) setError(cleanError(e)); }
   }
 
-  useEffect(() => { setEditingId(undefined); setSelectedId(''); setOtherText(''); void load(); return () => { reloadSequence.current++; }; }, [prospectId]);
+  useEffect(() => {
+    setEditingId(undefined); setSelectedId(''); setOtherText('');
+    savedInformationRef.current = { prospectId, value: null };
+    informationConflictRef.current = false;
+    setInformationConflict(false);
+    pendingInformation.current = Promise.resolve();
+    void load();
+    return () => { reloadSequence.current++; };
+  }, [prospectId]);
 
   async function saveNeed() {
     if (!selectedId && !otherText.trim()) return;
@@ -255,26 +271,72 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
   }
 
   async function persistInformation(next: ProspectInformationItem[]) {
-    // Plusieurs réponses ou cases peuvent être saisies sans attendre l'IPC.
-    // Les écritures d'une même fiche doivent finir dans leur ordre de saisie.
+    // Plusieurs saisies rapides sont enregistrées dans le même ordre, avec
+    // une révision SQLite conditionnelle entre chaque modification.
     setInformationDraft(next);
     activeInformationWrites.current++;
     setSavingInformation((count) => count + 1);
     const ownerId = prospectId;
     const previous = pendingInformation.current;
-    const writing = previous.catch(() => {}).then(async () => {
-      const updated = await window.atoumweb.crm.prospects.updateQualification(ownerId, {
-        missingInformation: serializeProspectInformation(next),
-      });
+    const writing = previous.then(async () => {
+      if (informationConflictRef.current && ownerId === currentProspectId.current) {
+        throw new Error('Conflit : vérifie la checklist modifiée dans une autre fenêtre avant de reprendre.');
+      }
+      const snapshot = savedInformationRef.current;
+      if (snapshot.prospectId !== ownerId) {
+        throw new Error('La fiche Prospect a changé : aucune sauvegarde de cette ancienne fiche.');
+      }
+      const updated = await window.atoumweb.crm.prospects.updateMissingInformationIfUnchanged(
+        ownerId, snapshot.value, serializeProspectInformation(next),
+      );
       if (ownerId !== currentProspectId.current) return;
+      savedInformationRef.current = { prospectId: ownerId, value: updated.missingInformation ?? null };
       setProspect(updated);
       onChanged?.();
       window.dispatchEvent(new Event('atoumweb:changed'));
     });
-    pendingInformation.current = writing.catch(() => {});
+    // Important : NE PAS absorber ici un conflit, sinon les écritures
+    // suivantes écraseraient potentiellement la version d'une autre fenêtre.
+    pendingInformation.current = writing;
     try { await writing; }
-    catch (e) { setError(cleanError(e)); }
-    finally { activeInformationWrites.current = Math.max(0, activeInformationWrites.current - 1); setSavingInformation((count) => Math.max(0, count - 1)); }
+    catch (e) {
+      if (ownerId === currentProspectId.current) {
+        const message = cleanError(e);
+        if (/conflit/i.test(message)) {
+          informationConflictRef.current = true;
+          setInformationConflict(true);
+        }
+        setError(message);
+      }
+    }
+    finally {
+      activeInformationWrites.current = Math.max(0, activeInformationWrites.current - 1);
+      setSavingInformation((count) => Math.max(0, count - 1));
+    }
+  }
+
+  async function reloadChecklistAfterConflict() {
+    if (busy || activeInformationWrites.current !== 0 || !informationConflictRef.current) return;
+    if (!window.confirm('Recharger les points enregistrés dans le dossier ? Les modifications locales NON enregistrées de cette checklist seront remplacées. Les autres champs saisis resteront inchangés.')) return;
+    const ownerId = prospectId;
+    setBusy(true);
+    try {
+      const current = (await window.atoumweb.crm.prospects.list({ includeArchived: true }))
+        .find((item) => item.id === ownerId);
+      if (ownerId !== currentProspectId.current) return;
+      if (!current) throw new Error('Le Prospect n’est plus disponible.');
+      // Invalide tout chargement de la fiche ayant commencé avant cette
+      // décision explicite, sans modifier les brouillons Budget/Contexte.
+      reloadSequence.current++;
+      setInformationDraft(parseProspectInformation(current.missingInformation));
+      savedInformationRef.current = { prospectId: ownerId, value: current.missingInformation ?? null };
+      pendingInformation.current = Promise.resolve();
+      informationConflictRef.current = false;
+      setInformationConflict(false);
+      setProspect(current);
+      setError('');
+    } catch (e) { if (ownerId === currentProspectId.current) setError(cleanError(e)); }
+    finally { setBusy(false); }
   }
 
   function updateInformation(id: string, patch: Partial<ProspectInformationItem>, save = true) {
@@ -298,6 +360,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
     if (budgetPreset === 'exact' && budget.min == null) { setError('Renseigne le montant précis du budget.'); return; }
     if (budgetPreset === 'custom' && budget.min == null && budget.max == null) { setError('Renseigne au moins une borne de la fourchette budgétaire.'); return; }
     if (budget.min != null && budget.max != null && budget.min > budget.max) { setError('Le budget minimum ne peut pas dépasser le budget maximum.'); return; }
+    if (informationConflictRef.current) { setError('Conflit : recharge la checklist avant d’enregistrer ce dossier.'); return; }
     setBusy(true); setError('');
     try {
       await pendingInformation.current; // Ne pas inverser une sauvegarde de checklist en cours.
@@ -310,7 +373,6 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
         existingStatus,
         existingUrl: existingStatus === 'yes' ? existingUrl.trim() || null : null,
         existingNotes: existingStatus !== 'no' ? existingNotes.trim() || null : null,
-        missingInformation: serializeProspectInformation(informationItemsRef.current),
       });
       const current = (await window.atoumweb.crm.prospects.list({ includeArchived: true })).find((item) => item.id === prospect.id);
       if (!current) throw new Error('Prospect introuvable après la mise à jour du besoin.');
@@ -342,7 +404,14 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
   return <section className="prospect-work-section needs-panel-v2">
     <div className="work-section-heading"><div><span className="eyebrow">Besoin à identifier</span><strong>Projet & solution AtoumWeb</strong></div><span className={`status-pill ${identificationReady ? 'ready' : ''}`}>{identificationReady ? 'Base renseignée' : 'À compléter'}</span></div>
     <p className="muted">Définis ce qu’AtoumWeb doit réellement proposer. Le catalogue reste la source des noms, tarifs et éléments inclus ; le devis ne sera créé qu’après le contrôle final.</p>
-    {error && <p className="form-error">{error}</p>}
+    {error && <p className="form-error" role="alert">{error}</p>}
+    {informationConflict && <div className="prospect-checklist-conflict" role="status">
+      <strong>Conflit entre fenêtres : vos modifications locales n'ont pas été enregistrées.</strong>
+      <p>Une autre fenêtre a modifié les points à confirmer. Rien ne sera écrasé automatiquement.</p>
+      <button type="button" className="secondary-button" disabled={busy || savingInformation > 0} onClick={() => void reloadChecklistAfterConflict()}>
+        Recharger uniquement la checklist enregistrée
+      </button>
+    </div>
 
     <div className="need-current-list">{needs.map((need) => {
       const item = need.catalogItemId ? catalog.find((candidate) => candidate.id === need.catalogItemId) : null;
