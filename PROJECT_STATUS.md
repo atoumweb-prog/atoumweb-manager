@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 13/10/2026 — Complément 02C et poursuite autonome autorisés
+
+- PR #99 draft, CI initiale #720 verte. Complément local `223980eb` : Tab/Shift-Tab neuf variantes, focus conclusion d'incident depuis Accueil et sous-éditeur protégé par UX-01/DraftSection, conflits explicites et pending conservés ; aucune règle de clôture modifiée.
+- Validation complète au SHA exact : typecheck OK, 943/943 Vitest, 36 ciblés, 92/92 recherche Electron, 374 shell/63 captures, 183 UX-01 ; restaurations35, binaires6, TEMP/FK/intégrité/migrations OK et zéroRPC. Bilan [02C](docs/UXV2_LOT02C_REAL_SEARCH.md) actualisé ; publication autorisée sans fusion.
+- #98 contrôlée à4eeb5a7 : composants Prospect/Devis, projection CRM, QuoteService/IPC/preload, banc partagé en cours ; aucun de ces fichiers modifié par le complément. Rapprochement différé. Aucun Validation-MSI.
+- Prochain périmètre indépendant issu du référentiel : **02D Accueil**, huit lectures/erreurs/réponses tardives, alertes visibles, liens honnêtes, préférences de widgets ; pipeline E59 et évolutions03A–03C restent à leur propriétaire #98.
+
 ## 13/10/2026 — Publication 02C autorisée
 
 - Autorisation utilisateur : publication de `codex/ux-v2-02c-real-search`, une PR draft vers main, sans fusion ; PR #98 et chantier 03C exclus du périmètre.

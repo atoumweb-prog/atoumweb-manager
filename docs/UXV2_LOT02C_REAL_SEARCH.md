@@ -1,5 +1,15 @@
 # Lot 02C — Recherche réelle et ouvertures ciblées
 
+## Complément autonome — réserves clavier et conclusion
+
+La PR #99 est publiée en draft (première CI #720 SUCCESS, 943/943). Après autorisation de poursuite, le code local `223980eb` ajoute : Tab/Shift-Tab dans la palette sur les neuf variantes, focus natif de la conclusion d'incident depuis l'événement Accueil, idempotence de cette intention et inscription de ce sous-éditeur au registre UX-01. Son rafraîchissement utilise le `DraftSection` existant : les conflits conservent les textes et demandent une vérification explicite ; les sorties et sauvegardes pending sont protégées. Les règles de clôture et services métier sont inchangés.
+
+Validation groupée réellement rejouée sur ce SHA (manifest `outputs/02c-223980eb-1791907733013/manifest.json`) : typecheck OK, 36 ciblés, 943/943 Vitest (73,34 s), **92/92 Electron recherche**, 374/374 shell avec 63 captures, 183/183 UX-01. TEMP/intégrité/FK/migrations et nettoyages OK, sans RPC. Les erreurs de sauvegarde/conflits IPC injectés sont attendus et assertés. Aucun timeout augmenté.
+
+R02C-12 et le focus ciblé de R02C-15 sont désormais prouvés dans le banc réel. La certification universelle des sous-éditeurs reste une recette par module ; la conclusion d'incident, Catalogue, Client création et les protections Devis/Prospect ont des preuves concrètes. Ce complément ne modifie ni les fichiers en développement CRM de #98 ni sa branche. Le banc déjà modifié dans #98 constitue une dépendance de consolidation connue : notre complément ne le réécrit pas et étend uniquement sa fixture 02C séparée.
+
+Publication du complément dans #99 autorisée, une CI automatique après push normal. Fusion toujours non autorisée. Prochain périmètre indépendant : 02D Accueil, confiance dans les huit lectures, alertes, actions honnêtes et préférences ; sa projection pipeline demeure dépendante de #98 et n'est pas redéveloppée ici.
+
 ## Reprise et références — 13 octobre 2026
 
 - Branche locale : `codex/ux-v2-02c-real-search`.
