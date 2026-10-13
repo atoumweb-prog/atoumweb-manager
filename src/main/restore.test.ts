@@ -125,10 +125,10 @@ describe('restauration SQLite isolée UX-16', { timeout: 20000 }, () => {
     expect(result.restored).toBe(true);
     expect(snapshot(workspace.databaseFile)).toEqual(snapshot(sourcePath));
     expect(snapshot(result.safetyBackupPath!)).toEqual(before);
-    expect(fs.readFileSync(sourcePath)).toEqual(sourceBefore);
+    expect(fs.readFileSync(sourcePath).equals(sourceBefore)).toBe(true);
     const bytes = fs.readFileSync(workspace.databaseFile);
     expect(await applyPendingDatabaseRestore(workspace)).toEqual({ restored: false });
-    expect(fs.readFileSync(workspace.databaseFile)).toEqual(bytes);
+    expect(fs.readFileSync(workspace.databaseFile).equals(bytes)).toBe(true);
     health(workspace.databaseFile); health(result.safetyBackupPath!);
   });
 
@@ -139,7 +139,7 @@ describe('restauration SQLite isolée UX-16', { timeout: 20000 }, () => {
     scheduleDatabaseRestore(historical, workspace);
     await applyPendingDatabaseRestore(workspace);
     expect(snapshot(workspace.databaseFile)).toEqual(snapshot(historical));
-    expect(fs.readFileSync(historical)).toEqual(bytes);
+    expect(fs.readFileSync(historical).equals(bytes)).toBe(true);
     const database = new NodeSqliteAdapter(workspace.databaseFile);
     try {
       expect(applyPendingMigrations(database)).toHaveLength(MIGRATIONS.length - version);
@@ -154,7 +154,7 @@ describe('restauration SQLite isolée UX-16', { timeout: 20000 }, () => {
     const aBytes = fs.readFileSync(workspace.databaseFile), bBytes = fs.readFileSync(b.databaseFile);
     await expect(applyPendingDatabaseRestore(b)).rejects.toThrow(/workspace ou la base cible a changé/);
     expect(sqlite.backup).not.toHaveBeenCalled(); expect(fs.copyFileSync).not.toHaveBeenCalled();
-    expect(fs.readFileSync(workspace.databaseFile)).toEqual(aBytes); expect(fs.readFileSync(b.databaseFile)).toEqual(bBytes);
+    expect(fs.readFileSync(workspace.databaseFile).equals(aBytes)).toBe(true); expect(fs.readFileSync(b.databaseFile).equals(bBytes)).toBe(true);
     expect(fs.existsSync(marker())).toBe(false);
     expect(fs.readdirSync(context.profile).some(name => name.includes('.refused-'))).toBe(true);
     expect(await applyPendingDatabaseRestore(workspace)).toEqual({ restored: false });
@@ -169,7 +169,7 @@ describe('restauration SQLite isolée UX-16', { timeout: 20000 }, () => {
     if (kind === 'invalid-json') fs.writeFileSync(marker(), '{broken');
     const bytes = fs.readFileSync(workspace.databaseFile);
     await expect(applyPendingDatabaseRestore(workspace)).rejects.toBeInstanceOf(DatabaseRestoreError);
-    expect(fs.readFileSync(workspace.databaseFile)).toEqual(bytes);
+    expect(fs.readFileSync(workspace.databaseFile).equals(bytes)).toBe(true);
     expect(sqlite.backup).not.toHaveBeenCalled();
     expect(await applyPendingDatabaseRestore(workspace)).toEqual({ restored: false });
   });
@@ -199,7 +199,7 @@ describe('restauration SQLite isolée UX-16', { timeout: 20000 }, () => {
     }
     const bytes = fs.readFileSync(workspace.databaseFile);
     expect(() => scheduleDatabaseRestore(sourcePath, workspace)).toThrow();
-    expect(fs.readFileSync(workspace.databaseFile)).toEqual(bytes);
+    expect(fs.readFileSync(workspace.databaseFile).equals(bytes)).toBe(true);
     expect(fs.existsSync(marker())).toBe(false); expect(sqlite.backup).not.toHaveBeenCalled();
   });
 
@@ -211,7 +211,7 @@ describe('restauration SQLite isolée UX-16', { timeout: 20000 }, () => {
     if (kind === 'wal') fs.writeFileSync(`${sourcePath}-wal`, 'sidecar');
     const bytes = fs.readFileSync(workspace.databaseFile);
     await expect(applyPendingDatabaseRestore(workspace)).rejects.toBeInstanceOf(DatabaseRestoreError);
-    expect(fs.readFileSync(workspace.databaseFile)).toEqual(bytes);
+    expect(fs.readFileSync(workspace.databaseFile).equals(bytes)).toBe(true);
     expect(sqlite.backup).not.toHaveBeenCalled(); expect(fs.copyFileSync).not.toHaveBeenCalled();
   });
 
@@ -220,7 +220,7 @@ describe('restauration SQLite isolée UX-16', { timeout: 20000 }, () => {
     const sourceBytes = fs.readFileSync(sourcePath), targetBytes = fs.readFileSync(workspace.databaseFile);
     scheduleDatabaseRestore(sourcePath, workspace);
     await expect(applyPendingDatabaseRestore(workspace)).rejects.toThrow(/Intégrité SQLite incorrecte/);
-    expect(fs.readFileSync(sourcePath)).toEqual(sourceBytes); expect(fs.readFileSync(workspace.databaseFile)).toEqual(targetBytes);
+    expect(fs.readFileSync(sourcePath).equals(sourceBytes)).toBe(true); expect(fs.readFileSync(workspace.databaseFile).equals(targetBytes)).toBe(true);
     expect(sqlite.backup).not.toHaveBeenCalled();
   });
 
@@ -230,7 +230,7 @@ describe('restauration SQLite isolée UX-16', { timeout: 20000 }, () => {
     createFixture(workspace.databaseFile, 'different-target');
     const bytes = fs.readFileSync(workspace.databaseFile);
     await expect(applyPendingDatabaseRestore(workspace)).rejects.toThrow(/base cible a changé/);
-    expect(fs.readFileSync(workspace.databaseFile)).toEqual(bytes);
+    expect(fs.readFileSync(workspace.databaseFile).equals(bytes)).toBe(true);
   });
 
   it('refuse une source identique à la cible, même via lien physique', () => {
@@ -257,7 +257,7 @@ describe('restauration SQLite isolée UX-16', { timeout: 20000 }, () => {
     fs.unlinkSync(alias); fs.symlinkSync(b.root, alias, process.platform === 'win32' ? 'junction' : 'dir');
     const bytes = fs.readFileSync(b.databaseFile);
     await expect(applyPendingDatabaseRestore(aliasWorkspace)).rejects.toThrow(/workspace ou la base cible a changé/);
-    expect(fs.readFileSync(b.databaseFile)).toEqual(bytes);
+    expect(fs.readFileSync(b.databaseFile).equals(bytes)).toBe(true);
   });
 
   it('refuse une copie préparatoire en échec sans sauvegarde ni remplacement', async () => {
@@ -265,7 +265,7 @@ describe('restauration SQLite isolée UX-16', { timeout: 20000 }, () => {
     const bytes = fs.readFileSync(workspace.databaseFile);
     vi.mocked(fs.copyFileSync).mockImplementation(() => { throw new Error('Copie indisponible'); });
     await expect(applyPendingDatabaseRestore(workspace)).rejects.toThrow(/Copie indisponible/);
-    expect(fs.readFileSync(workspace.databaseFile)).toEqual(bytes);
+    expect(fs.readFileSync(workspace.databaseFile).equals(bytes)).toBe(true);
     expect(sqlite.backup).not.toHaveBeenCalled();
   });
 
@@ -275,7 +275,7 @@ describe('restauration SQLite isolée UX-16', { timeout: 20000 }, () => {
     const bytes = fs.readFileSync(workspace.databaseFile);
     vi.mocked(fs.copyFileSync).mockImplementation((from, to, flags) => { actualFs.copyFileSync(from, to, flags); modify(String(to), "UPDATE settings SET value_json='\"wrong copy\"' WHERE key='restore-fixture'"); });
     await expect(applyPendingDatabaseRestore(workspace)).rejects.toThrow(/copie préparée/);
-    expect(fs.readFileSync(workspace.databaseFile)).toEqual(bytes); expect(sqlite.backup).not.toHaveBeenCalled();
+    expect(fs.readFileSync(workspace.databaseFile).equals(bytes)).toBe(true); expect(sqlite.backup).not.toHaveBeenCalled();
   });
 
   it('conserve une sauvegarde récupérable après échec du remplacement', async () => {

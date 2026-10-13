@@ -1,5 +1,26 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 13/10/2026 — Correctif local tests binaires #95
+
+- Branchelocaledédiée codex/fix-95-native-buffer-assertions depuis95@b0e9bb0 ; commit66e0fc2.14comparaisonsFSBuffer.equals intégrales, sixcontrôles permanents (identique,first/middle/last,shorter/longer) surfichiersTEMP2,4Mo.35restaurations conservées, aucuneassertionSQL/timeout/service/migration/guard modifié.
+- Code66e0fc2 : typecheckOK,ciblés41/41,complet873/873(95fichiers,88,08s,sansRPC),DELETE0,371s/WAL0,264s/A→B0,067s local. [Rapport avant/après etplan](docs/UXV2_PR95_NATIVE_BUFFER_FIX.md). LespreuvesduHEADdocumentaire final sont rejouées avantlivraison etconsignéesdanslebilan.
+- Aucunpush/PR/CI/merge autorisé àcetteétape ;95resteb0e9bb0/draft/CI659échouée, main31167754 et90–93préservés, Validation-MSI intacte. Aprèsaccorddistinct :pushFFunique verssource95→synchronize→candidateunique, sansdispatch/rerun/workflow/forçage ;fusionaprèsnouvellevalidationhumaine.
+
+## 13/10/2026 — Publication groupée 01E/01F préparée, CI non autorisée
+
+- Nouvellebranche codex/consolidation-ux-v2-01ef depuiscorrectif1e593d0, merge normal00f37774 de main31167754 ; arbre ee378ea identique avant/après merge, aucunfichiermodifié. Sources/tests depuis85040fb identiques,61assertionsÉchappermanentes conservées, originales90–93 inchangées.
+- Premiercontrôle du merge00f37774 : typecheckOK,867/867(94fichiers,113,60s,sansRPC), restaurations35/35(A→B4,951s). Lesdernièrespreuves surHEADdocumentaire final serontconsignéesdans lebilanaprèsrejeu ; ne pasconfondre avec résultats antérieurs85040fb.
+- [Déclencheurs etprocédure](docs/UXV2_CONSOLIDATION_01EF_PUBLICATION.md) : pushbranche seul non ciblé ; ouverturePRdraftversmain déclencheraitquality. Publicationbranche conditionnéeauxcontrôles, **aucunePR avantautorisationCI**. Pas deskipci/retarget/changementworkflow pourcontournerlecontrôle.
+- Budget/Validation-MSI/main/PR90–93 préservés, aucuneCI/fusion/reprise02A/B/C. Aprèsaccord : PRuniqueouverte surHEADfigé, runautomaticunique sansdispatch/rerun ; postfusion sousaccorddistinct.
+
+## 12/10/2026 — Correctif local Échap 01E / 01F validé
+
+- Nouvelle branche codex/fix-ux-v2-01ef-escape depuis91@765f66db, code85040fb. TraitementÉchap local àl'atelieractif, événementconsommé/IMEignoré ; onglettable/formulairesrestentmontés, registreUX-01/services/migrationsinchangés. Aucunmain/90–93 modifié.
+- Lesdeuxreproductionsbloquantespassent désormais ;61assertionsElectronpermanentes couvrent compte exact1confirmation, identités/textes cachés, sensinverse, aidesimbriquées, Rester/Quitter, pending etréponsetardive, onglets etpréférences.
+- AuSHA85040fb propre : typecheckOK ; ciblés97/97 ; Vitest867/867(94fichiers,104,73s,sansRPC), restaurations35/35(A→B4,464s) ; E95/F137/D126/C66/UX-01183 verts. DeuxbasesTEMPtableshorssettingsinchangées, intégritéOK/FKvide/migrations1–66/nettoyagesconfirmés.
+- Simulationgroupéemain31167754+codecorrigé sansconflit : arbref7d7486 identique àsourcecorrigée. [Bilan, preuves etplan](docs/UXV2_CONSOLIDATION_01EF_ESCAPE_FIX.md) : prête àsoumettre àvalidation, pasuneautorisationdepublication/CI/fusion.
+- Prochainaccorddistinct : publication/branchegroupée/mergemainversbranchecorrective puisPRdraftcandidateunique ; fusionetpostCI aprèsvalidationhumaine. ZéroCI/push/PR/merge/retarget/budget ouValidation-MSI, 02B.5/02B.6/02C suspendus.
+
 ## 12/10/2026 — 02B.3 pilote et audit clavier 02B.4
 
 - Reprise propre de #93@8b241c4, base #92 et dépendances #90/#91/#92 conservées ; main confirmé31167754 après fusion #94, CI post-fusion38273325333 SUCCESS (846/846, sansRPC). Aucun merge/retarget/CI nouveau effectué dans cette tâche.
@@ -1563,4 +1584,7 @@ Les tests couvrent les migrations vierges et mises à niveau, les prix confirmé
 Prochaine action : validation visuelle du parcours complet et des trois thèmes sous Windows. Aucune ouverture du workspace utilisateur sans sauvegarde explicite.
 
 Clôture Lot 3 — 03/10/2026 : bilan réel validé par AtoumWeb ; commit local dédié autorisé, sans push ni merge. La recette manuelle AtoumWeb reste à faire avant validation fonctionnelle finale. Cette clôture ne contient aucune modification du Lot 4.
+
+
+
 
