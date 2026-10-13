@@ -274,6 +274,8 @@ export interface CrmApi {
     create(input: ProspectInput): Promise<ProspectSummary>;
     update(id: string, input: ProspectInput): Promise<ProspectSummary>;
     updateQualification(id: string, input: Partial<ProspectInput>): Promise<ProspectSummary>;
+    /** Atomically reject stale checklist writes from another window. */
+    updateMissingInformationIfUnchanged(id: string, expected: string | null, next: string | null): Promise<ProspectSummary>;
     changeStage(id: string, stage: ProspectStage, lostReason?: string | null, allowIncompleteQualification?: boolean): Promise<ProspectSummary>;
     setNextAction(id: string, at: string | null, text: string | null): Promise<ProspectSummary>;
     convertToClient(id: string): Promise<ConvertProspectResult>;
