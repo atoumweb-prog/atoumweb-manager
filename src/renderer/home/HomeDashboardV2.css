@@ -7,3 +7,4 @@
 .home-critical-alerts {display:flex;flex-wrap:wrap;align-items:center;}
 .home-critical-alerts > strong {flex:1 1 240px;}
 .home-critical-alerts > button {flex:1 1 260px;}
+.home-dashboard .home-kpi-copy small {display:block;white-space:normal;overflow:visible;text-overflow:clip;-webkit-line-clamp:unset;}

@@ -11,9 +11,11 @@ module.exports=async({win,db,temp,registered,evalUI:js,get,wait,navigate,test,sl
  try{
   const org=db.crm.createOrganization({name:'HOME TEMP CLIENT'}),client=db.crm.createClient({organizationId:org.id});
   const incident=db.operations.createIntervention({clientAccountId:client.id,type:'incident',priority:'urgent',incidentCriticality:'critical',status:'in_progress',coverageMode:'internal',subject:'HOME TEMP CRITICAL INCIDENT'});
-  db.hourPacks.create({clientAccountId:client.id,name:'HOME TEMP EXPIRING PACK',purchasedSeconds:36000,contractPriceCents:1000,expiresAt:new Date(Date.now()+86400000).toISOString()});
+  db.hourPacks.create({clientAccountId:client.id,name:'HOME TEMP EXPIRING PACK',purchasedSeconds:36000,contractPriceCents:1000,expiresAt:new Date(Date.now()+5*86400000).toISOString()});
   db.actions.create({ownerType:'client',ownerId:client.id,type:'follow_up',title:'HOME TEMP TODAY',dueAt:new Date(Date.now()-60000).toISOString()});
   const before=snapshot();await refresh();await ready();
+  const actualAlerts=db.operationsAlerts.get().alerts;
+  test(actualAlerts.some(alert=>alert.severity==='critical')&&actualAlerts.some(alert=>alert.severity==='warning'),'Actual service fixture includes critical and noncritical priorities');
   await js('window.__todayHome=document.querySelector("[data-home-widget=today]");window.__timerHome=document.querySelector(".global-timer")');
   test(await get('document.querySelectorAll("[data-home-critical]").length>=1'),'Actual service supplies critical incident banner');
   test(await get('document.querySelectorAll("[data-home-alert]").length>=2'),'All actual alerts accessible, not only first');
