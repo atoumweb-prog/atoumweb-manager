@@ -52,6 +52,7 @@ import type {
   ProspectFilters,
   ProspectInput,
   ProspectProjectBrief,
+  ProspectQualificationBrief,
   ProspectResearchSnapshotInput,
   ProspectStage,
   SearchResult,
@@ -271,6 +272,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   });
   ipcMain.handle('crm:prospects:update-missing-information-if-unchanged', (_event, id: string, expected: string | null, next: string | null) => database.crm.updateProspectMissingInformationIfUnchanged(id, expected, next));
   ipcMain.handle('crm:prospects:update-project-brief-if-unchanged', (_event, id: string, expected: ProspectProjectBrief, next: ProspectProjectBrief) => database.crm.updateProspectProjectBriefIfUnchanged(id, expected, next));
+  ipcMain.handle('crm:prospects:update-qualification-brief-if-unchanged', (_event, id: string, expected: ProspectQualificationBrief, next: ProspectQualificationBrief) => database.crm.updateProspectQualificationBriefIfUnchanged(id, expected, next));
   ipcMain.handle('crm:prospects:change-stage', (_event, id: string, stage: ProspectStage, lostReason?: string | null, allowIncompleteQualification?: boolean) => database.crm.changeProspectStage(id, stage, lostReason, Boolean(allowIncompleteQualification)));
   ipcMain.handle('crm:prospects:set-next-action', (_event, id: string, at: string | null, text: string | null) => database.crm.setProspectNextAction(id, at, text));
   ipcMain.handle('crm:prospects:convert-to-client', (_event, id: string) => database.crm.convertProspectToClient(id));
