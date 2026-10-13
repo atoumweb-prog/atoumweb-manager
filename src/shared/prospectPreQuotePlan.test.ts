@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CatalogItemSummary } from './commercial';
 import type { Need } from './workflow';
-import { planProspectQuoteLines } from './prospectPreQuotePlan';
+import { planProspectQuoteLines, sameProspectQuotePlan } from './prospectPreQuotePlan';
 
 const catalogItem = (id: string, priceCents: number | null, priceMode: 'fixed' | 'quote_only' | 'free' = 'fixed'): CatalogItemSummary =>
   ({
@@ -40,6 +40,21 @@ describe('03C — plan des lignes du pré-devis', () => {
     expect(result.lines[2].catalogVersionId).toBe('gift-version');
     expect(result.unpriced).toEqual(['offer','custom']);
     expect(result.missing).toEqual([]);
+  });
+
+  it('bloque un devis si le périmètre a changé après le contrôle : besoin, version ou prix', () => {
+    const reviewed = planProspectQuoteLines([need('site', 'offer')], [catalogItem('offer', 69900)]);
+    const identical = planProspectQuoteLines([need('site', 'offer')], [catalogItem('offer', 69900)]);
+    expect(sameProspectQuotePlan(reviewed, identical)).toBe(true);
+
+    const removed = planProspectQuoteLines([], [catalogItem('offer', 69900)]);
+    expect(sameProspectQuotePlan(reviewed, removed)).toBe(false);
+    const revisedCatalog = [{ ...catalogItem('offer', 79900),
+      currentVersion: { ...catalogItem('offer', 79900).currentVersion!, id: 'offer-v2' } }];
+    const revised = planProspectQuoteLines([need('site', 'offer')], revisedCatalog);
+    expect(sameProspectQuotePlan(reviewed, revised)).toBe(false);
+    const unpriced = planProspectQuoteLines([need('site', 'offer')], [catalogItem('offer', null, 'quote_only')]);
+    expect(sameProspectQuotePlan(reviewed, unpriced)).toBe(false);
   });
 
   it('ne crée aucune ligne fantôme pour un besoin texte vide', () => {
