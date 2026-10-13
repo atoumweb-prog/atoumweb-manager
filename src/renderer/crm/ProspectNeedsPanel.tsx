@@ -1,7 +1,7 @@
 import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CatalogItemSummary, CatalogVersion, PriceMode } from '../../shared/commercial';
-import type { ProspectSummary } from '../../shared/crm';
+import { prospectProjectBriefSnapshot, type ProspectProjectBrief, type ProspectSummary } from '../../shared/crm';
 import type { Need, NeedInput } from '../../shared/workflow';
 import {
   parseProspectInformation,
@@ -178,6 +178,10 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
   const [error, setError] = useState('');
   const [savingInformation, setSavingInformation] = useState(0);
   const [informationConflict, setInformationConflict] = useState(false);
+  const [projectBriefConflict, setProjectBriefConflict] = useState(false);
+  const projectBriefConflictRef = useRef(false);
+  const savedProjectBriefRef = useRef<{ prospectId: string; value: ProspectProjectBrief } | null>(null);
+  const savingProjectBriefRef = useRef(false);
   const informationConflictRef = useRef(false);
   // Revision portant exclusivement sur missing_information : une modification
   // du budget ou du calendrier dans une autre fenêtre n'est pas un conflit de checklist.
@@ -221,7 +225,8 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
       setCatalog(available);
       setProspect(current);
       if (!category || !available.some((item) => (item.category || 'Autre') === category)) setCategory(sortedCategories(available)[0] ?? 'Autre');
-      if (current && !infoGuard.dirty && activeInformationWrites.current === 0 && !informationConflictRef.current) {
+      if (current && !infoGuard.dirty && activeInformationWrites.current === 0 && !informationConflictRef.current && !projectBriefConflictRef.current) {
+        savedProjectBriefRef.current = { prospectId, value: prospectProjectBriefSnapshot(current) };
         savedInformationRef.current = { prospectId, value: current.missingInformation ?? null };
         setProjectSummary(current.projectSummary ?? '');
         setProjectContext(current.projectContext ?? '');
@@ -245,6 +250,9 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
     setEditingId(undefined); setSelectedId(''); setOtherText('');
     savedInformationRef.current = { prospectId, value: null };
     savedFormBaselineRef.current = null;
+    savedProjectBriefRef.current = null;
+    projectBriefConflictRef.current = false;
+    setProjectBriefConflict(false);
     informationConflictRef.current = false;
     setInformationConflict(false);
     pendingInformation.current = Promise.resolve();
@@ -363,38 +371,104 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
     void persistInformation(next);
   }
 
+  async function reloadProjectBriefAfterConflict() {
+    if (busy || savingProjectBriefRef.current || !projectBriefConflictRef.current) return;
+    if (!window.confirm('Recharger le projet, le budget et le calendrier enregistrés ? Les modifications locales de CES champs seront remplacées. La checklist reste inchangée.')) return;
+    const ownerId = prospectId;
+    setBusy(true);
+    try {
+      const current = (await window.atoumweb.crm.prospects.list({ includeArchived: true }))
+        .find((item) => item.id === ownerId);
+      if (ownerId !== currentProspectId.current) return;
+      if (!current) throw new Error('Le Prospect n’est plus disponible.');
+      reloadSequence.current++;
+      const restoredForm = {
+        projectSummary: current.projectSummary ?? '',
+        projectContext: current.projectContext ?? '',
+        budgetPreset: deriveBudgetPreset(current),
+        budgetMin: current.budgetMinCents != null ? String(current.budgetMinCents / 100) : '',
+        budgetMax: current.budgetMaxCents != null ? String(current.budgetMaxCents / 100) : '',
+        budgetExact: current.budgetStatus === 'known' && current.budgetMinCents != null ? String(current.budgetMinCents / 100) : '',
+        timelineStatus: current.timelineStatus ?? 'not_disclosed',
+        targetDate: current.targetDate?.slice(0, 10) ?? '',
+        timelineNote: current.timelineNote ?? '',
+        existingStatus: current.existingStatus ?? 'unknown',
+        existingUrl: current.existingUrl ?? '',
+        existingNotes: current.existingNotes ?? '',
+      };
+      setProjectSummary(restoredForm.projectSummary);
+      setProjectContext(restoredForm.projectContext);
+      setBudgetPreset(restoredForm.budgetPreset);
+      setBudgetMin(restoredForm.budgetMin);
+      setBudgetMax(restoredForm.budgetMax);
+      setBudgetExact(restoredForm.budgetExact);
+      setTimelineStatus(restoredForm.timelineStatus);
+      setTargetDate(restoredForm.targetDate);
+      setTimelineNote(restoredForm.timelineNote);
+      setExistingStatus(restoredForm.existingStatus);
+      setExistingUrl(restoredForm.existingUrl);
+      setExistingNotes(restoredForm.existingNotes);
+      savedProjectBriefRef.current = { prospectId: ownerId, value: prospectProjectBriefSnapshot(current) };
+      // Réconcilier uniquement les champs restaurés : un brouillon local
+      // non enregistré de checklist conserve sa protection UX-01.
+      if (savedFormBaselineRef.current) {
+        savedFormBaselineRef.current = { ...savedFormBaselineRef.current, ...restoredForm };
+        infoGuard.initial(savedFormBaselineRef.current);
+      }
+      projectBriefConflictRef.current = false;
+      setProjectBriefConflict(false);
+      setProspect(current);
+      setError('');
+    } catch (e) { if (ownerId === currentProspectId.current) setError(cleanError(e)); }
+    finally { setBusy(false); }
+  }
+
   async function saveIdentification() {
-    if (!prospect) return;
+    if (!prospect || savingProjectBriefRef.current) return;
     const budget = budgetValues(budgetPreset, budgetMin, budgetMax, budgetExact);
     if (budgetPreset === 'exact' && budget.min == null) { setError('Renseigne le montant précis du budget.'); return; }
     if (budgetPreset === 'custom' && budget.min == null && budget.max == null) { setError('Renseigne au moins une borne de la fourchette budgétaire.'); return; }
     if (budget.min != null && budget.max != null && budget.min > budget.max) { setError('Le budget minimum ne peut pas dépasser le budget maximum.'); return; }
     if (informationConflictRef.current) { setError('Conflit : recharge la checklist avant d’enregistrer ce dossier.'); return; }
+    if (projectBriefConflictRef.current) { setError('Conflit : recharge le projet, budget et calendrier avant d’enregistrer ce dossier.'); return; }
+    const snapshot = savedProjectBriefRef.current;
+    if (!snapshot || snapshot.prospectId !== prospect.id) { setError('Le dossier doit être chargé avant enregistrement.'); return; }
+    savingProjectBriefRef.current = true;
     setBusy(true); setError('');
     try {
       await pendingInformation.current; // Ne pas inverser une sauvegarde de checklist en cours.
-      await window.atoumweb.crm.prospects.updateQualification(prospect.id, {
+      const next: ProspectProjectBrief = {
         projectSummary: projectSummary.trim() || null,
         projectContext: projectContext.trim() || null,
         budgetStatus: budget.status,
+        budgetMinCents: budget.min,
+        budgetMaxCents: budget.max,
         timelineStatus,
+        targetDate: timelineStatus === 'date' ? targetDate || null : null,
         timelineNote: timelineStatus === 'note' ? timelineNote.trim() || null : null,
         existingStatus,
         existingUrl: existingStatus === 'yes' ? existingUrl.trim() || null : null,
         existingNotes: existingStatus !== 'no' ? existingNotes.trim() || null : null,
-      });
-      const current = (await window.atoumweb.crm.prospects.list({ includeArchived: true })).find((item) => item.id === prospect.id);
-      if (!current) throw new Error('Prospect introuvable après la mise à jour du besoin.');
-      await window.atoumweb.crm.prospects.update(prospect.id, {
-        ...current,
-        budgetMinCents: budget.min,
-        budgetMaxCents: budget.max,
-        targetDate: timelineStatus === 'date' ? targetDate || null : null,
-      });
+      };
+      const updated = await window.atoumweb.crm.prospects.updateProjectBriefIfUnchanged(
+        prospect.id, snapshot.value, next,
+      );
+      if (prospect.id !== currentProspectId.current) return;
+      savedProjectBriefRef.current = { prospectId: prospect.id, value: prospectProjectBriefSnapshot(updated) };
+      setProspect(updated);
       savedFormBaselineRef.current = { ...infoValue, informationItems: informationItemsRef.current };
-      infoGuard.saved(savedFormBaselineRef.current);await load(); onChanged?.(); window.dispatchEvent(new Event('atoumweb:changed'));
-    } catch (e) { setError(cleanError(e)); }
-    finally { setBusy(false); }
+      infoGuard.saved(savedFormBaselineRef.current);
+      await load(); onChanged?.(); window.dispatchEvent(new Event('atoumweb:changed'));
+    } catch (e) {
+      if (prospect.id === currentProspectId.current) {
+        const message = cleanError(e);
+        if (/conflit/i.test(message)) {
+          projectBriefConflictRef.current = true;
+          setProjectBriefConflict(true);
+        }
+        setError(message);
+      }
+    } finally { savingProjectBriefRef.current = false; setBusy(false); }
   }
 
   function editNeed(need: Need) {
@@ -415,6 +489,13 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
     <div className="work-section-heading"><div><span className="eyebrow">Besoin à identifier</span><strong>Projet & solution AtoumWeb</strong></div><span className={`status-pill ${identificationReady ? 'ready' : ''}`}>{identificationReady ? 'Base renseignée' : 'À compléter'}</span></div>
     <p className="muted">Définis ce qu’AtoumWeb doit réellement proposer. Le catalogue reste la source des noms, tarifs et éléments inclus ; le devis ne sera créé qu’après le contrôle final.</p>
     {error && <p className="form-error" role="alert">{error}</p>}
+    {projectBriefConflict && <div className="prospect-checklist-conflict" role="status">
+      <strong>Conflit entre fenêtres : le projet, le budget ou le calendrier a été modifié.</strong>
+      <p>Vos modifications locales sont conservées. La version d'une autre fenêtre n'a pas été écrasée.</p>
+      <button type="button" className="secondary-button" disabled={busy} onClick={() => void reloadProjectBriefAfterConflict()}>
+        Recharger uniquement le projet et le budget enregistrés
+      </button>
+    </div>}
     {informationConflict && <div className="prospect-checklist-conflict" role="status">
       <strong>Conflit entre fenêtres : vos modifications locales n'ont pas été enregistrées.</strong>
       <p>Une autre fenêtre a modifié les points à confirmer. Rien ne sera écrasé automatiquement.</p>
