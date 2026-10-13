@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { SearchResult } from '../../shared/crm';
 
-export function GlobalSearch({ onOpen }: { onOpen: (result: SearchResult) => void }) {
+export function GlobalSearch({ onOpen, onDismiss }: { onOpen: (result: SearchResult) => void; onDismiss?: () => void }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [open, setOpen] = useState(false);
@@ -35,7 +35,7 @@ export function GlobalSearch({ onOpen }: { onOpen: (result: SearchResult) => voi
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>): void {
-    if (event.key === 'Escape') { setOpen(false); setActiveIndex(-1); return; }
+    if (event.key === 'Escape' && !event.nativeEvent.isComposing) { requestId.current++; event.preventDefault(); event.stopPropagation(); if (!open) onDismiss?.(); setOpen(false); setActiveIndex(-1); return; }
     if (!open || results.length === 0) return;
     if (event.key === 'ArrowDown') { event.preventDefault(); setActiveIndex((index) => (index + 1) % results.length); return; }
     if (event.key === 'ArrowUp') { event.preventDefault(); setActiveIndex((index) => (index <= 0 ? results.length - 1 : index - 1)); return; }

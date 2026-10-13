@@ -1,0 +1,170 @@
+// Real App, GlobalTimer, preload and IPC. Called only by the owned TEMP renderer harness.
+module.exports = async ({win, db, preload, evalUI: js, get, wait, navigate, test, sleep}) => {
+  const {dialog, BrowserWindow} = require('electron');
+  const answers = [], confirmations = [], original = dialog.showMessageBoxSync;
+  dialog.showMessageBoxSync = (...args) => {confirmations.push(args.at(-1)); return answers.shift() ?? 0;};
+  const click = async selector => {await js(`const e=document.querySelector(${JSON.stringify(selector)});if(!e)throw Error('Missing control');e.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}));e.click();`); await sleep(100);};
+  const input = async (selector, value) => {await js(`const e=document.querySelector(${JSON.stringify(selector)});Object.getOwnPropertyDescriptor(e.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event('input',{bubbles:true}));e.focus();`); await sleep(80);};
+  const escape = async selector => {win.show();win.focus();win.webContents.focus();await js(`document.querySelector(${JSON.stringify(selector)}).focus()`);win.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});await sleep(120);};
+  const snapshot = () => JSON.stringify(db.database.all("SELECT name FROM sqlite_master WHERE type='table' AND name<>'settings' ORDER BY name").map(({name}) => [name, db.database.all('SELECT * FROM "'+name.replaceAll('"','""')+'" ORDER BY rowid')]));
+  let second;
+  try {
+    await js('window.__realTimer=document.querySelector(".global-timer");');
+    const before=snapshot();
+    await click('#header-mode');await click('.aw-rail-toggle');
+    test(await get('document.querySelectorAll(".global-timer").length===1&&window.__realTimer===document.querySelector(".global-timer")'),'Real timer unique and exact DOM retained during presentation');
+    test(snapshot()===before,'Header/rail gestures do not mutate any business table');
+    test(await get('document.querySelectorAll("[data-nav-group]").length===5'),'Collapsed E42 retains five groups');
+    await click('.aw-rail-toggle');
+    await click('[aria-label="Épingler Clients"]');
+    test(await get('document.querySelector("[data-nav-module=Clients][data-nav-context=favorite]")!==null'),'Real favorite references Clients');
+    const preferences=await get('window.atoumweb.visualPreferences.getItem("atoumweb:navigation:rail:v1")');
+    const rejected=await get('(()=>{try{window.atoumweb.visualPreferences.getItem("theme");return false;}catch{return true;}})()');
+    test(rejected,'Production IPC refuses arbitrary settings');
+    second=new BrowserWindow({show:false,webPreferences:{preload,contextIsolation:true,nodeIntegration:false,sandbox:true}});
+    await second.loadURL(win.webContents.getURL());
+    await sleep(500);
+    test(await second.webContents.executeJavaScript('window.atoumweb.visualPreferences.getItem("atoumweb:navigation:rail:v1")').catch(e=>{throw Error('Second-window preference: '+e.message);})===preferences,'Other native window reads same active workspace owner');
+    await click('[aria-label="Désépingler Clients"]');
+    await sleep(120);
+    test(await second.webContents.executeJavaScript('!document.querySelector("[data-nav-context=favorite]")'),'Preference changes notify second renderer');
+    second.destroy();second=null;
+
+    await navigate('Accueil');await click('.timer-start-shortcut');
+    await input('.timer-popover input[placeholder]', 'BROUILLON CHRONO TEMP');
+    const count=confirmations.length;
+    await click('#header-mode');await click('.aw-rail-toggle');
+    test(await get('document.querySelector(".timer-popover input[placeholder]").value==="BROUILLON CHRONO TEMP"'),'Real timer draft retained during native pointerdown on presentation');
+    test(confirmations.length===count,'Presentation gestures do not ask to discard drafts');
+    await escape('.timer-popover input[placeholder]');
+    test(confirmations.length===count+1&&confirmations.at(-1).defaultId===0,'Timer Escape asks exactly once with Stay default');
+    test(await get('!!document.querySelector(".timer-popover")&&document.querySelector(".timer-popover input[placeholder]").value==="BROUILLON CHRONO TEMP"'),'Stay keeps timer form and exact text');
+    const contextCount=confirmations.length;
+    await js('window.dispatchEvent(new CustomEvent("atoumweb:timer-context",{detail:{activityLabel:"REPLACEMENT TEMP"}}))');await sleep(100);
+    test(confirmations.length===contextCount+1&&await get('document.querySelector(".timer-popover input[placeholder]").value==="BROUILLON CHRONO TEMP"'),'Context command cannot overwrite an unsaved real timer form');
+    answers.push(1);await escape('.timer-popover input[placeholder]');
+    test(await get('!document.querySelector(".timer-popover")&&document.activeElement.classList.contains("timer-main-button")'),'Confirmed timer exit returns focus without time mutation');
+    test(await get('window.atoumweb.time.active()')===null,'Discard creates no session');
+
+    await click('.timer-start-shortcut');await input('.timer-popover input[placeholder]', 'SESSION CHRONO TEMP');
+    await click('.timer-popover .primary-button');await wait('document.querySelector(".global-timer.running")','real active timer');
+    const active=await get('window.atoumweb.time.active()');
+    const runningSnapshot=snapshot();
+    await click('#header-mode');await click('.aw-rail-toggle');
+    await navigate('Devis');
+    test((await get('window.atoumweb.time.active()')).id===active.id,'Repli and real module navigation keep same session');
+    test(await get('window.__realTimer===document.querySelector(".global-timer")'),'Real GlobalTimer remains mounted across module navigation');
+    test(snapshot()===runningSnapshot,'Navigation/repli does not pause/stop or duplicate time');
+    await js('window.dispatchEvent(new CustomEvent("atoumweb:timer-context",{detail:{activityLabel:"NEXT TEST",category:"development"}}))');
+    await wait('document.querySelector(".timer-switch-popover")','real switch dialog');
+    await click('#header-mode');await click('.aw-rail-toggle');
+    test(await get('!!document.querySelector(".timer-switch-popover")'),'Presentation does not cancel actual switch dialog');
+    await click('.timer-switch-popover .secondary-button');
+    test((await get('window.atoumweb.time.active()')).id===active.id,'Switch cancellation does not mutate current session');
+    await get(`window.atoumweb.time.stop(${JSON.stringify(active.id)})`);
+    await js('window.dispatchEvent(new CustomEvent("atoumweb:time-changed"))');
+    await wait('!document.querySelector(".global-timer.running")','stopped fixture timer');
+
+    // Actual intervention pause and recovery dialogs, actual TimeService on TEMP only.
+    const organization=db.crm.createOrganization({name:'CLIENT CHRONO TEMP'});
+    const client=db.crm.createClient({organizationId:organization.id});
+    const intervention=db.operations.createIntervention({clientAccountId:client.id,subject:'INTERVENTION CHRONO TEMP',coverageMode:'internal'});
+    await get(`window.atoumweb.time.start({interventionId:${JSON.stringify(intervention.id)},category:'development',billable:false})`);
+    await js('window.dispatchEvent(new CustomEvent("atoumweb:time-changed"))');await wait('document.querySelector(".global-timer.running")','intervention timer');
+    await click('.timer-actions button[title="Mettre en pause"]');await wait('document.querySelector(".timer-pause-reason")','actual pause reason');
+    await input('.timer-pause-reason textarea','MOTIF CONSERVE TEMP');
+    await click('#header-mode');await click('.aw-rail-toggle');
+    test(await get('document.querySelector(".timer-pause-reason textarea").value==="MOTIF CONSERVE TEMP"'),'Actual pause reason survives header and rail gestures');
+    const pauseCount=confirmations.length;await escape('.timer-pause-reason textarea');
+    test(confirmations.length===pauseCount+1&&await get('document.querySelector(".timer-pause-reason textarea").value==="MOTIF CONSERVE TEMP"'),'Pause Escape Stay exactly once and no draft loss');
+    const originalPause=db.time.pause.bind(db.time);let releasePause;
+    db.time.pause=(...args)=>new Promise(resolve=>{releasePause=()=>resolve(originalPause(...args));});
+    try {
+      await click('.timer-pause-reason .primary-button');
+      test(await get('document.querySelector(".timer-pause-reason textarea").disabled'),'Pending pause locks fields until persisted');
+      await escape('.timer-pause-reason');
+      test(confirmations.at(-1).buttons.length===1&&confirmations.at(-1).buttons[0]==='Rester','Actual async pause exposes only Stay until persistence '+JSON.stringify({last:confirmations.at(-1),state:await get('({focus:document.activeElement.className,help:!!document.querySelector(".field-help-detail")})')}));
+      test(await get('document.querySelector(".timer-pause-reason textarea").value==="MOTIF CONSERVE TEMP"'),'Pending pause preserves submitted draft');
+      releasePause();await wait('document.querySelector(".global-timer.paused")','actual pause saved');
+    } finally {db.time.pause=originalPause;}
+    const paused=await get('window.atoumweb.time.active()');
+    test(paused.paused,'Pause persists through original service');
+    await click('.timer-actions button[title="Reprendre"]');await wait('!document.querySelector(".global-timer.paused")','actual resume');
+    await click('.timer-actions button[title="Arrêter"]');await wait('document.querySelector(".timer-stop-decision")','actual stop decision');
+    await click('#header-mode');test(await get('!!document.querySelector(".timer-stop-decision")'),'Actual stop decision survives compaction');
+    await click('.timer-stop-decision .secondary-button:last-child');
+    test((await get('window.atoumweb.time.active()')).id===paused.id,'Stop cancellation keeps same intervention session');
+    await get(`window.atoumweb.time.stop(${JSON.stringify(paused.id)})`);await js('window.dispatchEvent(new CustomEvent("atoumweb:time-changed"))');
+    await wait('!document.querySelector(".global-timer.running")','fixture closed');
+    const recoverySession=await get("window.atoumweb.time.start({category:'development',activityLabel:'RECOVERY TEMP',billable:false})");
+    db.database.run('UPDATE time_sessions SET updated_at=? WHERE id=?',[new Date(Date.now()-3600000).toISOString(),recoverySession.id]);
+    await js('window.dispatchEvent(new CustomEvent("atoumweb:time-changed"))');await wait('document.querySelector(".timer-recovery-popover")','real recovery');
+    await click('#header-mode');await click('.aw-rail-toggle');
+    test(await get('!!document.querySelector(".timer-recovery-popover")&&window.__realTimer===document.querySelector(".global-timer")'),'Real recovery remains accessible without remount during presentation');
+    await click('.timer-recovery-popover .primary-button');await wait('!document.querySelector(".timer-recovery-popover")','real recovery resume');
+    test((await get('window.atoumweb.time.active()')).id===recoverySession.id,'Recovery reuses original session');
+    await get(`window.atoumweb.time.stop(${JSON.stringify(recoverySession.id)})`);await js('window.dispatchEvent(new CustomEvent("atoumweb:time-changed"))');
+    await wait('!document.querySelector(".global-timer.running")','recovery fixture closed');
+
+    // A module listener must not see Escape consumed by the global search layer.
+    await click('#header-search-trigger');await input('.global-search input','CLIENT');
+    await wait('document.querySelector(".search-results-panel")','real search results');
+    await js('window.__escapedModule=0;window.__escapeProbe=e=>{if(e.key==="Escape")window.__escapedModule++;};window.addEventListener("keydown",window.__escapeProbe);');
+    await escape('.global-search input');
+    test(await get('!document.querySelector(".search-results-panel")&&window.__escapedModule===0'),'Search Escape closes only results and never reaches module listener');
+    await escape('.global-search input');
+    test(await get('!document.querySelector(".aw-header-search.is-open")&&document.activeElement.id==="header-search-trigger"'),'Second Escape closes search presentation and returns focus');
+    await js('window.removeEventListener("keydown",window.__escapeProbe);');
+    const library=await get("window.atoumweb.referentials.library.create({category:'note',name:'LIBRARY SHELL TEMP',reuseStatus:'reference'},{contentType:'code',contentText:'// TEMP',language:'text'})");
+    await js(`window.dispatchEvent(new CustomEvent('atoumweb:open-library-item',{detail:${JSON.stringify(library.id)}}))`);
+    await wait('document.querySelector(".aw-library-detail")','actual library detail');
+    await js('[...document.querySelectorAll(".aw-library-detail-heading button")].find(e=>e.textContent.trim()==="Modifier").click()');
+    await input('.aw-library-metadata-editor input','LIBRARY UNSAVED TEMP');
+    const libraryCount=confirmations.length;await escape('.aw-library-metadata-editor input');
+    test(confirmations.length===libraryCount+1&&await get('document.querySelector(".aw-library-metadata-editor input").value==="LIBRARY UNSAVED TEMP"'),'Library Escape Stay protects metadata through existing UX-01');
+    await click('#header-search-trigger');await input('.global-search input','no-match');
+    await wait('document.querySelector(".search-results-panel")','empty search results');
+    const layeredCount=confirmations.length;await escape('.global-search input');
+    test(confirmations.length===layeredCount&&await get('document.querySelector(".aw-library-metadata-editor input").value==="LIBRARY UNSAVED TEMP"'),'Search Escape never closes or clears real library metadata');
+    await escape('.global-search input');
+    if(await get('document.querySelector(".aw-navigation-rail").dataset.railCollapsed==="true"'))await click('.aw-rail-toggle');
+    await click('[data-nav-module=Clients][data-nav-context=group]');
+    test(await get('!!document.querySelector(".aw-library-metadata-editor")'),'Rail Stay keeps real library editor');
+    answers.push(1);await click('[data-nav-module=Clients][data-nav-context=group]');
+    test(await get('!document.querySelector(".aw-library-detail")'),'Confirmed rail exit discards only metadata draft');
+    test((await get(`window.atoumweb.referentials.library.get(${JSON.stringify(library.id)})`)).name==='LIBRARY SHELL TEMP','Discard does not persist metadata');
+    await js(`window.dispatchEvent(new CustomEvent('atoumweb:open-library-item',{detail:${JSON.stringify(library.id)}}))`);
+    await wait('document.querySelector(".aw-library-detail")','reopen real metadata');
+    await js('[...document.querySelectorAll(".aw-library-detail-heading button")].find(e=>e.textContent.trim()==="Modifier").click();window.__metadataEditor=document.querySelector(".aw-library-metadata-editor");');
+    await input('.aw-library-metadata-editor input','SUBMITTED METADATA TEMP');
+    const originalUpdate=db.atoumWebTechnicalLibrary.updateMetadata.bind(db.atoumWebTechnicalLibrary);let releaseUpdate;
+    db.atoumWebTechnicalLibrary.updateMetadata=(...args)=>new Promise(resolve=>{releaseUpdate=()=>resolve(originalUpdate(...args));});
+    try {
+      await click('.aw-library-metadata-editor .primary-button');
+      await input('.aw-library-metadata-editor input','LATE METADATA TEMP');
+      await click('.aw-library-detail .close-detail');
+      test(confirmations.at(-1).buttons.length===1&&await get('!!document.querySelector(".aw-library-metadata-editor")'),'Pending metadata cannot close or appear saved early');
+      releaseUpdate();await wait('!document.querySelector(".aw-library-metadata-editor .primary-button").disabled','metadata commit completed');
+      test(await get('window.__metadataEditor===document.querySelector(".aw-library-metadata-editor")&&document.querySelector(".aw-library-metadata-editor input").value==="LATE METADATA TEMP"'),'Late edit and exact editor survive confirmed asynchronous metadata save');
+      test((await get(`window.atoumweb.referentials.library.get(${JSON.stringify(library.id)})`)).name==='SUBMITTED METADATA TEMP','Service persisted only submitted metadata');
+      await click('.aw-library-detail .close-detail');
+      test(await get('!!document.querySelector(".aw-library-metadata-editor")'),'Late edit remains dirty after successful earlier save');
+      answers.push(1);await click('.aw-library-detail .close-detail');
+    } finally {db.atoumWebTechnicalLibrary.updateMetadata=originalUpdate;}
+    await navigate('Bibliothèque AtoumWeb');await click('#header-options-trigger');
+    const expanded=await get('document.querySelector(".aw-workspace-header").dataset.headerCompact');
+    await click('#header-library');
+    test(await get('document.querySelector(".content-area").classList.contains("library-header-collapsed")'),'Real library banner controlled from header');
+    test(await get('document.querySelector(".aw-workspace-header").dataset.headerCompact')===expanded,'Library banner does not change header preference');
+    await click('#header-library');await escape('#header-library');
+    const optionFocus=await get('({id:document.activeElement.id,text:document.activeElement.textContent,options:document.querySelector("#header-options-panel").className,help:!!document.querySelector(".field-help-detail"),timer:!!document.querySelector(".timer-popover")})');
+    test(optionFocus.id==='header-options-trigger','Real Options Escape returns focus '+JSON.stringify(optionFocus));
+    // Leave baseline suitable for the existing nine-configuration renderer checks.
+    if(await get('document.querySelector(".aw-navigation-rail").dataset.railCollapsed==="true"'))await click('.aw-rail-toggle');
+    if(await get('document.querySelector(".aw-workspace-header").dataset.headerCompact==="true"'))await click('#header-mode');
+    test(await get('document.querySelectorAll(".global-timer").length===1&&!document.body.textContent.includes("Chrono TEST")'),'No prototype timer in real Manager');
+    test(db.database.get('PRAGMA integrity_check').integrity_check==='ok'&&db.database.all('PRAGMA foreign_key_check').length===0,'Real shell fixture SQLite integrity/FK');
+    console.log('REAL_SHELL_SCENARIOS passed');
+  } finally {second?.destroy();dialog.showMessageBoxSync=original;}
+};
+

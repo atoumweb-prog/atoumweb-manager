@@ -1,3 +1,7 @@
+import {useMemo} from 'react';
+import {NavigationRail, type NavigationRailControls} from './ui/NavigationRail';
+import {WorkspaceHeader} from './ui/WorkspaceHeader';
+import './ui/manager-shell.css';
 import {requestUnsavedExit,installUnsavedLifecycleBridge} from './unsaved/unsaved';
 import { DemoPanel } from './workflow/DemoPanel';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -100,6 +104,10 @@ function App() {
   const [displayDensity, setDisplayDensity] = useState<DisplayDensity>('comfort');
   const [showHoverHelp, setShowHoverHelp] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const railControls = useRef<NavigationRailControls>(null);
+  const [timerDialogOpen, setTimerDialogOpen] = useState(false);
+  const visualStore = useMemo(() => ({getItem: (key:string) => window.atoumweb.visualPreferences.getItem(key), setItem: (key:string,value:string) => window.atoumweb.visualPreferences.setItem(key,value), removeItem: (key:string) => window.atoumweb.visualPreferences.removeItem(key)}), []);
+  useEffect(() => window.atoumweb.visualPreferences.subscribe(key => window.dispatchEvent(new StorageEvent('storage', {key}))), []);
   const [libraryHeaderCollapsed, setLibraryHeaderCollapsed] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [messageAction, setMessageAction] = useState<MessageAction | null>(null);
@@ -146,11 +154,6 @@ function App() {
       setActivePage('Interventions & Maintenance');});};
     window.addEventListener('atoumweb:open-intervention-conclusion', openConclusion);
     return () => window.removeEventListener('atoumweb:open-intervention-conclusion', openConclusion);
-  }, []);
-  useEffect(() => {
-    const collapse = (event: Event) => setSidebarCollapsed(Boolean((event as CustomEvent<boolean>).detail));
-    window.addEventListener('atoumweb:sidebar-collapse', collapse);
-    return () => window.removeEventListener('atoumweb:sidebar-collapse', collapse);
   }, []);
   const [projectSearchTarget, setProjectSearchTarget] = useState<string | null>(null);
   const [operationsSearchTarget, setOperationsSearchTarget] = useState<OperationsSearchTarget | null>(null);
@@ -289,7 +292,7 @@ function App() {
     setMessage(`${result.title} trouvé dans la recherche globale.`);
   }
 
-  function navigate(item:PageName){if(item===activePageRef.current)return;requestPage(item,()=>navigateDirect(item));}
+  function navigate(item:PageName){if(item===activePageRef.current)return true;return requestUnsavedExit(()=>{if(item==='Clients'||item==='Prospects')setCrmTarget(null);navigateDirect(item);});}
   function openSearchResult(result:SearchResult){const destination:PageName=({prospect:'Prospects',quote:'Devis',project:'Projets',catalog:'Offres & Tarifs',client:'Clients',client_document:'Documents & Contrats',organization:'Annuaire',contact:'Annuaire',atoumweb_library:'Bibliothèque AtoumWeb',backup_record:'Sauvegardes',service_request:'Interventions & Maintenance',intervention:'Interventions & Maintenance',maintenance:'Interventions & Maintenance',hour_pack:'Interventions & Maintenance'} as Record<string,PageName>)[result.entityType]??'Clients';requestPage(destination,()=>{setNavigationRequest(n=>n+1);openSearchResultDirect(result);},destination==='Devis'?routeKeys.current.quoteTarget!==result.entityId:destination==='Prospects'?routeKeys.current.crmTarget!==result.entityId||routeKeys.current.prospectViewTarget!=='directory':false);}
   function openOperationsTarget(target:OperationsSearchTarget){requestPage('Interventions & Maintenance',()=>openOperationsTargetDirect(target));}
 
@@ -306,44 +309,17 @@ function App() {
   }
 
   return (
-    <div className={`app-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${showHoverHelp ? '' : 'help-disabled'}`}>
-      <aside className="sidebar">
-        <div className="brand-block"><div className="brand-mark">AW</div><div><strong>AtoumWeb</strong><span>Manager</span></div></div>
-        <nav className="navigation" aria-label="Navigation principale">
-          {NAV_ITEMS.map((item) => <button key={item} className={`nav-item ${activePage === item ? 'active' : ''}`} onClick={() => navigate(item)} type="button"><span className="nav-dot" /><span>{item === 'Prospects' ? 'Prospection' : item}</span></button>)}
-        </nav>
-        <div className="sidebar-footer"><span>V{bootstrap.appVersion}</span><span className="status-pill">Local</span></div>
-      </aside>
-
+    <div className={`app-shell aw-manager-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${showHoverHelp ? '' : 'help-disabled'}`}>
+      <NavigationRail appVersion={bootstrap.appVersion} active={activePage} onNavigate={navigate} store={visualStore} controlsRef={railControls} onCollapsedChange={setSidebarCollapsed} confirmReset={() => window.atoumweb.visualPreferences.confirmReset()}/>
       <main className="main-area">
-        <header className={/([\\/])Validation-MSI$/i.test(bootstrap.workspacePath)?'topbar is-development':'topbar'}>
-          <div className="topbar-left">
-            <button
-              className="sidebar-toggle"
-              type="button"
-              title={sidebarCollapsed ? 'Afficher le menu' : 'Masquer le menu'}
-              aria-label={sidebarCollapsed ? 'Afficher le menu' : 'Masquer le menu'}
-              aria-pressed={sidebarCollapsed}
-              onClick={() => setSidebarCollapsed((value) => !value)}
-            >{sidebarCollapsed ? '☰' : '‹'}</button>
-            <GlobalSearch onOpen={openSearchResult} />
-            {activePage === 'Bibliothèque AtoumWeb' && <button
-              className="sidebar-toggle library-header-topbar-toggle"
-              type="button"
-              title={libraryHeaderCollapsed ? 'Afficher le bandeau de la Bibliothèque' : 'Masquer le bandeau de la Bibliothèque'}
-              aria-label={libraryHeaderCollapsed ? 'Afficher le bandeau de la Bibliothèque' : 'Masquer le bandeau de la Bibliothèque'}
-              aria-pressed={libraryHeaderCollapsed}
-              onClick={() => setLibraryHeaderCollapsed((value) => !value)}
-            >
-              <OperationIcon name={libraryHeaderCollapsed ? 'chevron-down' : 'chevron-up'} size={20} />
-            </button>}
-          </div>
-          <div className="topbar-right">
-            <GlobalTimer onMessage={setMessage} />
-            <GlobalClock />
-          </div>
-        {/([\\/])Validation-MSI$/i.test(bootstrap.workspacePath)&&<div role="status" className="development-environment-banner">DÉVELOPPEMENT — dossiers TEST — aucune valeur contractuelle réelle</div>}
-        </header>
+        <WorkspaceHeader store={visualStore} moduleLabel={activePage === 'Prospects' ? 'Prospection' : activePage} workspaceLabel={(bootstrap.workspacePath.split(/[\\/]/).filter(Boolean).at(-1) ?? bootstrap.workspacePath) + ' · Local'}
+          railCollapsed={sidebarCollapsed} onToggleRail={() => railControls.current?.toggle()}
+          timer={<GlobalTimer onMessage={setMessage} onDialogChange={setTimerDialogOpen}/>} timerDialogOpen={timerDialogOpen}
+          search={close => <GlobalSearch onOpen={openSearchResult} onDismiss={close}/>} clock={<GlobalClock/>}
+          libraryCollapsed={libraryHeaderCollapsed} onToggleLibrary={() => setLibraryHeaderCollapsed(value=>!value)}
+          environmentBanner={/([\\/])Validation-MSI$/i.test(bootstrap.workspacePath) ? <div role="status" className="development-environment-banner">DÉVELOPPEMENT — dossiers TEST — aucune valeur contractuelle réelle</div> : undefined}/>
+
+
 
         <section className={`content-area ${activePage === 'Accueil' ? 'home-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' || activePage === 'Sites' ? 'workspace-content' : ''} ${activePage === 'Projets' ? 'projects-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' ? 'library-workspace-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' && libraryHeaderCollapsed ? 'library-header-collapsed' : ''}`}>
           {activePage !== 'Accueil' && <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1>{activePage === 'Prospects' ? 'Prospection' : activePage}</h1><p>{PAGE_HINTS[activePage]}</p></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>}

@@ -72,6 +72,7 @@ export interface AtoumWebApi {
     getBootstrap(): Promise<BootstrapState>;
     openProspectReferenceWindow(id: string): Promise<void>;
   };
+  visualPreferences: import("./shellVisualPreferences").ShellVisualPreferencesApi;
   settings: {
     setTheme(theme: ThemeName): Promise<ThemeName>;
     setDisplayDensity(density: DisplayDensity): Promise<DisplayDensity>;

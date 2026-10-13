@@ -1,3 +1,4 @@
+import {useUnsavedDraft} from '../unsaved/unsaved';
 import { BUSINESS_TIME_CATEGORIES, type BusinessTimeCategory } from '../../shared/operational';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ProjectDetail, ProjectSummary } from '../../shared/projects';
@@ -55,7 +56,7 @@ function isStaleSession(session: TimeSession | null): boolean {
   return Date.now() - updatedAt > TIME_RECOVERY_STALE_AFTER_SECONDS * 1000;
 }
 
-export function GlobalTimer({ onMessage }: { onMessage: (message: string) => void }) {
+export function GlobalTimer({ onMessage, onDialogChange }: { onMessage: (message: string) => void; onDialogChange?: (open:boolean) => void }) {
   const [active, setActive] = useState<TimeSession | null>(null);
   const [recovery, setRecovery] = useState<TimeSession | null>(null);
   const [pendingSwitch, setPendingSwitch] = useState<TimerContextEvent | null>(null);
@@ -77,6 +78,22 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
   const [pauseReason, setPauseReason] = useState<TimePauseReason>('need_information');
   const [pauseReasonNote, setPauseReasonNote] = useState('');
   const timerRef = useRef<HTMLDivElement | null>(null);
+
+  const dialogOpen = open || !!pendingSwitch || stopDecisionOpen || pauseReasonOpen || !!recovery;
+  const draft = {interventionId, projectId, nodeId, category, activityLabel, billable, businessCategory, pauseReason, pauseReasonNote};
+  const dialogGuard = useUnsavedDraft('Saisie du chrono', draft, {
+    group: 'global-timer:dialog', ready: open || pauseReasonOpen || !!pendingSwitch || stopDecisionOpen || busy, pending: busy,
+    resetKey: open ? 'start' : pauseReasonOpen ? 'pause' : pendingSwitch ? 'switch' : stopDecisionOpen ? 'stop' : 'closed',
+    discard: value => {setInterventionId(value.interventionId);setProjectId(value.projectId);setNodeId(value.nodeId);setCategory(value.category);setActivityLabel(value.activityLabel);setBillable(value.billable);setBusinessCategory(value.businessCategory);setPauseReason(value.pauseReason);setPauseReasonNote(value.pauseReasonNote);},
+  });
+  const wasDialogOpen = useRef(false);
+  useEffect(() => {if(!dialogOpen && wasDialogOpen.current && (document.activeElement===document.body || timerRef.current?.contains(document.activeElement)))timerRef.current?.querySelector<HTMLButtonElement>(".timer-main-button")?.focus();wasDialogOpen.current=dialogOpen;}, [dialogOpen]);
+  const closeDialogRef = useRef<() => void>(() => {});
+  function closeDialog() { dialogGuard.request(() => {setOpen(false);setPendingSwitch(null);setStopDecisionOpen(false);setPauseReasonOpen(false);timerRef.current?.querySelector<HTMLButtonElement>('.timer-main-button')?.focus();}); }
+  closeDialogRef.current = closeDialog;
+  useEffect(() => {if(busy)timerRef.current?.querySelector<HTMLElement>(".timer-popover")?.focus({preventScroll:true});}, [busy]);
+  useEffect(() => {onDialogChange?.(dialogOpen);}, [dialogOpen, onDialogChange]);
+  useEffect(() => {if(dialogOpen)timerRef.current?.querySelector<HTMLElement>('.timer-popover input,.timer-popover textarea,.timer-popover button')?.focus();}, [open, pauseReasonOpen, stopDecisionOpen, pendingSwitch?.interventionId, recovery?.id]);
 
   function installActive(current: TimeSession | null, announce = false): void {
     setActive(current);
@@ -141,7 +158,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
 
   useEffect(() => {
     const refreshActive = () => void loadActive();
-    const prepareContext = (event: Event) => {
+    const prepareContextDirect = (event: Event) => {
       const context = (event as CustomEvent<TimerContextEvent>).detail ?? {};
       if (active) {
         if (recovery) {
@@ -163,6 +180,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
       if (typeof context.billable === 'boolean') setBillable(context.billable);
       setOpen(true);
     };
+    const prepareContext = (event: Event) => {dialogGuard.request(() => prepareContextDirect(event));};
     window.addEventListener('atoumweb:time-changed', refreshActive);
     window.addEventListener('atoumweb:timer-context', prepareContext);
     return () => {
@@ -176,10 +194,12 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
     const closeOnOutside = (event: PointerEvent) => {
       const target = event.target as Node | null;
       if (!target || timerRef.current?.contains(target)) return;
-      setOpen(false);
-      setPendingSwitch(null);
-      setStopDecisionOpen(false);
-      setPauseReasonOpen(false);
+      if (target instanceof Element && target.closest('[data-shell-presentation],[data-nav-module]')) {
+        const focused = document.activeElement;
+        if (target.closest('[data-shell-presentation]') && focused instanceof HTMLElement && timerRef.current?.contains(focused)) requestAnimationFrame(() => {if(focused.isConnected)focused.focus({preventScroll:true});});
+        return;
+      }
+      closeDialogRef.current();
     };
     document.addEventListener('pointerdown', closeOnOutside);
     return () => document.removeEventListener('pointerdown', closeOnOutside);
@@ -206,6 +226,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
   }, [active, recovery, snapshotAt, tick]);
 
   function toggleManualTimer(): void {
+    if (open) {closeDialog(); return;}
     if (!open) {
       setInterventionId('');
       setNodeId('');
@@ -407,7 +428,7 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
     || (pendingSwitch?.category ? CATEGORY_LABELS[pendingSwitch.category] : 'Nouvelle activité');
 
   return (
-    <div ref={timerRef} className={`global-timer ${active ? 'running' : ''} ${active?.paused ? 'paused' : ''} ${recovery ? 'needs-recovery' : ''}`}>
+    <div ref={timerRef} onKeyDown={event => {if(event.key==='Escape' && dialogOpen && !event.defaultPrevented && !event.nativeEvent.isComposing){event.preventDefault();event.stopPropagation();if(!recovery)closeDialog();}}} className={`global-timer ${active ? 'running' : ''} ${active?.paused ? 'paused' : ''} ${recovery ? 'needs-recovery' : ''}`}>
       <button className="timer-main-button" type="button" onClick={() => !active && toggleManualTimer()} title={active ? contextLabel(active) : 'Démarrer une session de temps'}>
         <span className="timer-brand-icon" aria-hidden="true">
           <OperationIcon name="clock" size={20} />
@@ -427,10 +448,10 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
           <button type="button" disabled={busy || Boolean(recovery)} onClick={() => void pauseOrResume()} title={active.paused ? 'Reprendre' : 'Mettre en pause'}>{active.paused ? '▶' : 'Ⅱ'}</button>
           <button type="button" disabled={busy || Boolean(recovery)} onClick={requestStop} title="Arrêter">■</button>
         </div>
-      ) : <button className="timer-start-shortcut" type="button" onClick={() => setOpen((value) => !value)} title="Démarrer">▶</button>}
+      ) : <button className="timer-start-shortcut" type="button" onClick={toggleManualTimer} title="Démarrer">▶</button>}
 
       {recovery && (
-        <div className="timer-popover timer-recovery-popover" role="dialog" aria-label="Chrono à récupérer">
+        <div tabIndex={-1} className="timer-popover timer-recovery-popover" role="dialog" aria-label="Chrono à récupérer">
           <div><span className="eyebrow">Chrono retrouvé</span><strong>AtoumWeb Manager a été interrompu pendant cette session.</strong></div>
           <p>Le compteur est figé au dernier point connu. La période où l’application était fermée ne sera pas ajoutée automatiquement.</p>
           <div className="timer-recovery-summary"><span>Activité</span><strong>{contextLabel(recovery)}</strong><span>Dernier point connu</span><strong>{new Date(recovery.updatedAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}</strong><span>Temps conservé</span><strong>{clock(recovery.durationSeconds)}</strong></div>
@@ -443,48 +464,48 @@ export function GlobalTimer({ onMessage }: { onMessage: (message: string) => voi
       )}
 
       {stopDecisionOpen && active?.interventionId && !recovery && (
-        <div className="timer-popover timer-stop-decision" role="dialog" aria-label="Arrêter le timer d’intervention">
+        <div tabIndex={-1} className="timer-popover timer-stop-decision" role="dialog" aria-label="Arrêter le timer d’intervention">
           <div><span className="eyebrow">Arrêt du timer</span><strong>L’intervention est-elle résolue ?</strong></div>
           <p>Choisis si le travail est terminé ou si tu dois simplement interrompre l’intervention.</p>
           <div className="button-row">
             <button className="primary-button" type="button" disabled={busy} onClick={() => void resolveIntervention()}>✓ Oui · conclusion</button>
             <button className="secondary-button" type="button" disabled={busy} onClick={() => { setStopDecisionOpen(false); setPauseReasonOpen(true); }}>Ⅱ Mettre en pause</button>
-            <button className="secondary-button" type="button" disabled={busy} onClick={() => setStopDecisionOpen(false)}>Annuler</button>
+            <button className="secondary-button" type="button" disabled={busy} onClick={closeDialog}>Annuler</button>
           </div>
         </div>
       )}
 
       {pauseReasonOpen && active?.interventionId && !recovery && (
-        <div className="timer-popover timer-pause-reason" role="dialog" aria-label="Motif de pause">
+        <div tabIndex={-1} className="timer-popover timer-pause-reason" role="dialog" aria-label="Motif de pause">
           <div><span className="eyebrow">Pause intervention</span><strong>Pourquoi interromps-tu le travail ?</strong></div>
-          <label>Motif<select value={pauseReason} onChange={(event) => setPauseReason(event.target.value as TimePauseReason)}>{Object.entries(PAUSE_REASON_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-          <label>Précision facultative<textarea value={pauseReasonNote} onChange={(event) => setPauseReasonNote(event.target.value)} placeholder="Ex. attente d’un accès client, reprise demain matin…" /></label>
+          <label>Motif<select disabled={busy} value={pauseReason} onChange={(event) => setPauseReason(event.target.value as TimePauseReason)}>{Object.entries(PAUSE_REASON_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+          <label>Précision facultative<textarea disabled={busy} value={pauseReasonNote} onChange={(event) => setPauseReasonNote(event.target.value)} placeholder="Ex. attente d’un accès client, reprise demain matin…" /></label>
           <div className="button-row">
             <button className="primary-button" type="button" disabled={busy} onClick={() => void pauseIntervention()}>Enregistrer la pause</button>
-            <button className="secondary-button" type="button" disabled={busy} onClick={() => setPauseReasonOpen(false)}>Annuler</button>
+            <button className="secondary-button" type="button" disabled={busy} onClick={closeDialog}>Annuler</button>
           </div>
         </div>
       )}
 
       {pendingSwitch && active && !recovery && (
-        <div className="timer-popover timer-switch-popover" role="dialog" aria-label="Changer d’activité">
+        <div tabIndex={-1} className="timer-popover timer-switch-popover" role="dialog" aria-label="Changer d’activité">
           <div><span className="eyebrow">Changer d’activité</span><strong>Un chrono est déjà en cours.</strong></div>
           <p>La session actuelle sera terminée à l’instant du changement, puis la nouvelle activité démarrera immédiatement.</p>
           <div className="timer-switch-summary"><span>En cours</span><strong>{contextLabel(active)}</strong><span>Nouvelle activité</span><strong>{switchLabel}</strong></div>
-          <div className="button-row"><button className="primary-button" type="button" disabled={busy} onClick={() => void confirmSwitch()}>Terminer et démarrer</button><button className="secondary-button" type="button" disabled={busy} onClick={() => setPendingSwitch(null)}>Annuler</button></div>
+          <div className="button-row"><button className="primary-button" type="button" disabled={busy} onClick={() => void confirmSwitch()}>Terminer et démarrer</button><button className="secondary-button" type="button" disabled={busy} onClick={closeDialog}>Annuler</button></div>
         </div>
       )}
 
       {open && !active && (
-        <div className="timer-popover">
+        <div tabIndex={-1} className="timer-popover" role="dialog" aria-label="Nouvelle session de temps">
           <div><span className="eyebrow">Nouvelle session</span><strong>Que fais-tu ?</strong></div>
           <label>Projet<select value={projectId} onChange={(event) => setProjectId(event.target.value)}><option value="">AtoumWeb · sans projet</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.number} · {project.clientLabel} · {project.name}</option>)}</select></label>
-          <label>Tâche / activité du projet<select value={nodeId} onChange={(event) => {setNodeId(event.target.value);setBusinessCategory(projectDetail?.nodes.find(n=>n.id===event.target.value)?.businessCategory ?? null);}} disabled={!projectDetail}><option value="">Projet entier</option>{projectDetail?.nodes.filter((node) => ['task', 'module', 'checklist'].includes(node.type)).map((node) => <option key={node.id} value={node.id}>{node.name}</option>)}</select></label>
+          <label>Tâche / activité du projet<select value={nodeId} onChange={(event) => {setNodeId(event.target.value);setBusinessCategory(projectDetail?.nodes.find(n=>n.id===event.target.value)?.businessCategory ?? null);}} disabled={busy || !projectDetail}><option value="">Projet entier</option>{projectDetail?.nodes.filter((node) => ['task', 'module', 'checklist'].includes(node.type)).map((node) => <option key={node.id} value={node.id}>{node.name}</option>)}</select></label>
           <label>Catégorie<select value={category} onChange={(event) => setCategory(event.target.value as TimeCategory)}>{TIME_CATEGORIES.map((value) => <option key={value} value={value}>{CATEGORY_LABELS[value]}</option>)}</select></label>
-          <label>Libellé<input value={activityLabel} onChange={(event) => setActivityLabel(event.target.value)} placeholder="Ex. Corrections responsive" /></label>
-          <label>Catégorie métier<select aria-label="Catégorie métier" value={businessCategory ?? ''} onChange={e=>setBusinessCategory(e.target.value as BusinessTimeCategory || null)}><option value="">Non qualifiée</option>{BUSINESS_TIME_CATEGORIES.map(c=><option key={c}>{c}</option>)}</select></label>
-          <label className="timer-billable"><input type="checkbox" checked={billable} onChange={(event) => setBillable(event.target.checked)} /> Temps facturable</label>
-          <div className="button-row"><button className="primary-button" type="button" disabled={busy} onClick={() => void start()}>▶ Démarrer</button><button className="secondary-button" type="button" onClick={() => setOpen(false)}>Annuler</button></div>
+          <label>Libellé<input disabled={busy} value={activityLabel} onChange={(event) => setActivityLabel(event.target.value)} placeholder="Ex. Corrections responsive" /></label>
+          <label>Catégorie métier<select disabled={busy} aria-label="Catégorie métier" value={businessCategory ?? ''} onChange={e=>setBusinessCategory(e.target.value as BusinessTimeCategory || null)}><option value="">Non qualifiée</option>{BUSINESS_TIME_CATEGORIES.map(c=><option key={c}>{c}</option>)}</select></label>
+          <label className="timer-billable"><input disabled={busy} type="checkbox" checked={billable} onChange={(event) => setBillable(event.target.checked)} /> Temps facturable</label>
+          <div className="button-row"><button className="primary-button" type="button" disabled={busy} onClick={() => void start()}>▶ Démarrer</button><button className="secondary-button" type="button" onClick={closeDialog}>Annuler</button></div>
         </div>
       )}
     </div>

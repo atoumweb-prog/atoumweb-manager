@@ -112,11 +112,28 @@ import type {
   UpdateTimeSessionInput,
 } from '../shared/time';
 
+function visualCall(op: 'get', key: string): string | null;
+function visualCall(op: 'confirm-reset', key: string): boolean;
+function visualCall(op: 'set' | 'remove', key: string, value?: string): void;
+function visualCall(op: string, key: string, value?: string): string | null | boolean | void {
+  const result = ipcRenderer.sendSync('settings:shell-visual', op, key, value) as {ok?:boolean;error?:string;value?:unknown};
+  if (!result?.ok) throw new Error(result?.error ?? 'Préférence visuelle refusée.');
+  if(op==='confirm-reset')return result.value===true;
+  if(op==='get'){
+    if(result.value===null || typeof result.value==='string')return result.value;
+    throw new Error('Réponse de présentation invalide.');
+  }
+}
 const api: AtoumWebApi = {
   unsaved:{confirmExit:(labels,pending)=>ipcRenderer.sendSync('unsaved:confirm-exit',labels,pending),publishState:state=>ipcRenderer.sendSync('unsaved:state',state)},
   app: {
     getBootstrap: () => ipcRenderer.invoke('app:get-bootstrap'),
     openProspectReferenceWindow: (id: string) => ipcRenderer.invoke('app:open-prospect-reference', id),
+  },
+  visualPreferences: {
+    getItem: key => visualCall('get', key), setItem: (key, value) => { visualCall('set', key, value); },
+    removeItem: key => { visualCall('remove', key); }, confirmReset: () => visualCall('confirm-reset', '') === true,
+    subscribe: listener => { const handler = (_event: unknown, key: string) => listener(key); ipcRenderer.on('settings:visual-changed', handler); return () => { ipcRenderer.removeListener('settings:visual-changed', handler); }; },
   },
   settings: {
     setTheme: (theme: ThemeName) => ipcRenderer.invoke('settings:set-theme', theme),

@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 13/10/2026 — Raccord réel du shell 02A / 02B.5–02B.6, validation locale en cours
+
+- #96 fusionnée normalement à61960d5 ; CIpostfusion663SUCCESS,893/893/35restaurations/6binaires,sansRPC. Arbre1f3d6f6 identique au candidat662. #90–93 etbranches conservées.
+- Branchelocale codex/ux-v2-real-shell-02b depuismain61960d5 : NavigationRail/WorkspaceHeader raccordés àApp, véritablesGlobalTimer/GlobalSearch/GlobalClock montésuniquementunefois etservicesinchangés. Adaptateur01FavecIPCvisuelwhitelistérail/header, notificationmulti-fenêtres etconfirmationAnnuler pardéfaut ; pas migration.
+- Reproductionsnatives TEMP : pointerdownderepli effaçaitlespanneaux, Escape/requêtepérimée réouvraitla recherche, focussortaitpendantpending etEscapeBibliothèque perdaitlesmétadonnées. GardesUX-01 réutilisées pourchronoetmétadonnées, pending/refus/éditiontardive protégés ; aucunsecondregistre, aucunchangementmétier.
+- Ciblés42/42 etpremierbanc réel340/340verts. Validationcomplète de fin surSHAfigé àexécuter via scripts/check-ux-v2-real-shell.cjs ; nepasconfondreavecpreuvesantérieures. Aucunpush/PR/CIhébergée pource nouveaulot ; zéroValidation-MSI. 02Cnoncommencé, fusionssoumis àaccord.
+
 ## 13/10/2026 — Méthode accélérée, candidate groupée 02A/02B autorisée
 
 - Autonomie à intérieur du lot, ciblés pendant développement et validation complète de fin ; une candidate par lot explicitement autorisé, merges toujours humains. Consolidation depuis93, merge local db407ba de main a01c60d9 ; arbre b462dce8 exactement simulé/testé, conflit journal seul résolu sans perte. Pas de nouveau code métier ni réexécution complète pour documentation seule.

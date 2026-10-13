@@ -48,14 +48,15 @@ if(!process.versions.electron){
  const overflow=[],consoleErrors=[];
  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
  const test=(ok,description)=>{if(!ok)throw Error(description);checks++;};
- const evalUI=expression=>win.webContents.executeJavaScript('(async()=>{'+expression+'})()');
+ const evalUI=expression=>win.webContents.executeJavaScript('(async()=>{'+expression+'})()').catch(error=>{throw Error(error.message+' / '+expression);});
  const wait=async(expr,reason)=>{
   for(let i=0;i<140;i++){if(await evalUI('return Boolean('+expr+');'))return;await sleep(50);}
   throw Error('Timeout: '+reason);
  };
  const navigate=async name=>{
-  await evalUI('const el=[...document.querySelectorAll(".navigation .nav-item")].find(e=>e.textContent.trim()==='+JSON.stringify(name)+');if(!el)throw Error("Missing navigation");el.click();');
-  await wait('document.querySelector(".navigation .nav-item.active")?.textContent.trim()==='+JSON.stringify(name),'active '+name);
+  if(await get('document.querySelector(".aw-navigation-rail").dataset.railCollapsed==="true"')){await evalUI('document.querySelector(".aw-rail-toggle").click()');await sleep(75);}
+  await evalUI('const el=[...document.querySelectorAll("[data-nav-module]")].find(e=>e.getAttribute("aria-label")==='+JSON.stringify(name)+');if(!el)throw Error("Missing navigation");el.click();');
+  await wait('document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("aria-label")==='+JSON.stringify(name),'active '+name);
   await wait(name==='Accueil'?'!!document.querySelector(".home-dashboard")':'document.querySelector(".content-area .page-heading h1")?.textContent.trim()==='+JSON.stringify(name),'page '+name);
   await sleep(75);
  };
@@ -73,7 +74,7 @@ if(!process.versions.electron){
   test((await get('getComputedStyle(document.documentElement).getPropertyValue("--ui-control-height").trim()'))===height+'px','Control height '+theme+'/'+density);
  };
  const inspect=async(page,theme,density)=>{
-  const x=await get('({active:document.querySelector(".nav-item.active")?.textContent.trim(),heading:document.querySelector(".page-heading h1")?.textContent.trim(),clock:document.querySelector(".global-clock b")?.textContent.trim(),search:!!document.querySelector(".global-search input"),timer:!!document.querySelector(".global-timer,.timer-widget"),toggle:document.querySelector(".sidebar-toggle")?.getAttribute("aria-label"),fatal:!!document.querySelector(".renderer-fatal-shell,.fatal-screen"),theme:document.documentElement.dataset.theme,density:document.documentElement.dataset.density,scroll:document.querySelector(".content-area")?.scrollWidth,client:document.querySelector(".content-area")?.clientWidth})');
+  const x=await get('({active:document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("aria-label"),heading:document.querySelector(".page-heading h1")?.textContent.trim(),clock:document.querySelector(".global-clock b")?.textContent.trim(),search:!!document.querySelector(".global-search input"),timer:!!document.querySelector(".global-timer,.timer-widget"),toggle:document.querySelector(".aw-rail-toggle")?.getAttribute("aria-label"),fatal:!!document.querySelector(".renderer-fatal-shell,.fatal-screen"),theme:document.documentElement.dataset.theme,density:document.documentElement.dataset.density,scroll:document.querySelector(".content-area")?.scrollWidth,client:document.querySelector(".content-area")?.clientWidth})');
   const label=theme+'/'+density+'/'+page;
   test(x.active===page&&!x.fatal&&(page==='Accueil'||x.heading===page),'Rendered '+label);
   test(x.clock&&x.search&&x.timer&&x.toggle,'Shell visible '+label);
@@ -107,15 +108,15 @@ if(!process.versions.electron){
    const expected=[...wanted].sort((a,b)=>a-b);
    return expected.every((v,i)=>Math.abs(actual[i]-v)<=7);
  };
- const saveScreenshot=async(theme,density,page)=>{
+ const saveScreenshot=async(theme,density,page,variant="")=>{
    if(captureArg<0)return;
-   const label=theme+'-'+density+'-'+page;
+   const label=theme+'-'+density+'-'+page+(variant?'-'+variant:'');
    const folder=path.resolve(process.argv[3]);
    if(!fs.existsSync(folder))fs.mkdirSync(folder,{recursive:true});
    const dest=path.join(folder,label.replace(/[^a-z0-9_-]/gi,'_')+'.png');
    assert(!fs.existsSync(dest),'Refusing overwrite of '+dest);
    // Await the page title, theme/density, and loaded dashboard before painting.
-   await wait('document.querySelector(".nav-item.active")?.textContent.trim()==='+
+   await wait('document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("aria-label")==='+
      JSON.stringify(page),'capture current navigation '+label);
    if(page==='Accueil'){
      await wait('!!document.querySelector(".home-dashboard:not(.home-dashboard-loading)")',
@@ -149,7 +150,7 @@ if(!process.versions.electron){
    assert(captured,'COMPOSITOR OUT OF SYNC: refused '+label+
      ' after '+attempts+' frames; no misleading screenshot saved');
    // Confirm DOM did not navigate again while the screenshot was captured.
-   const final=await get('({page:document.querySelector(".nav-item.active")?.textContent.trim(),'+
+   const final=await get('({page:document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("aria-label"),'+
       'heading:document.querySelector(".page-heading h1")?.textContent.trim()??"Accueil",'+
       'theme:document.documentElement.dataset.theme,'+
       'density:document.documentElement.dataset.density})');
@@ -168,14 +169,21 @@ if(!process.versions.electron){
   win=new BrowserWindow({show:captureArg>=0,title:"AtoumWeb Manager — UX 01A VISUAL TEST (TEMP)",width:1510,height:1030,webPreferences:{preload:path.join(temp,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:false}});
   win.webContents.on('console-message',e=>{if(e.level==='error'||e.level===3)consoleErrors.push(e.message);});
   await win.loadFile(path.join(temp,'index.html'));
-  await wait('document.querySelectorAll(".nav-item").length===17','real Manager bootstrap');
-  test((await get('document.querySelectorAll(".nav-item").length'))===17,'Seventeen navigation entries');
+  await wait('document.querySelectorAll("[data-nav-module]").length===17','real Manager bootstrap');
+  test((await get('document.querySelectorAll("[data-nav-module]").length'))===17,'Seventeen navigation entries');
   test(await get('!!window.atoumweb&&!window.atoumwebOperationalRecipe'),'Real preload without synthetic UI API');
+  await require('./fixtures/real-shell-scenarios.cjs')({win, db, preload:path.join(temp,'preload.js'), evalUI, get, wait, navigate, test, sleep});
   for(const page of navLabels){await navigate(page);await inspect(page,'atoumweb','comfort');}
   console.log('[UXV2 01A LIVE] PASS all 17 real module destinations.');
   for(const [theme,label] of themes){
    for(const [density,display,font,height] of densities){
     await select(theme,label,density,display,font,height);
+    await evalUI('document.querySelector("#header-mode").click();document.querySelector(".timer-start-shortcut").click();');
+    await wait('document.querySelector(".global-timer .timer-popover")','actual timer in '+theme+'/'+density);
+    test(await get('document.querySelectorAll(".global-timer").length===1&&window.__realTimer===document.querySelector(".global-timer")'),'Same real timer in '+theme+'/'+density);
+    test(await get('(()=>{const r=document.querySelector(".timer-popover").getBoundingClientRect();return r.x>=0&&r.right<=innerWidth&&r.y>=0&&r.bottom<=innerHeight;})()'),'Timer bounds '+theme+'/'+density);
+    await saveScreenshot(theme,density,'Réglages','chrono-dialogue');
+    await evalUI('document.querySelector(".timer-popover .secondary-button").click();document.querySelector("#header-mode").click();');
     for(const page of samples){
      await navigate(page);await inspect(page,theme,density);
      await saveScreenshot(theme,density,page);
@@ -240,12 +248,12 @@ if(!process.versions.electron){
   win.webContents.setZoomFactor(1);
   await navigate('Accueil');
   win.webContents.reload();
-  await wait('document.querySelector(".nav-item.active")?.textContent.trim()==="Accueil"','renderer reload');
+  await wait('document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("aria-label")==="Accueil"','renderer reload');
   test(await get('document.documentElement.dataset.theme==="blanc"'),'Theme restored after reload');
   test(await get('document.documentElement.dataset.density==="comfort_plus"'),'Density restored after reload');
   test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','TEMP SQLite integrity');
   test(db.database.all('PRAGMA foreign_key_check').length===0,'TEMP SQLite FK');
-  if(captureArg>=0)test(capturesVerified===54,'All 54 captured images verified against compositor');
+  if(captureArg>=0)test(capturesVerified===63,'All 63 captured images verified against compositor');
   console.log('[UXV2 01A LIVE] RESULT '+JSON.stringify({passed:checks,failed:0,realPages:17,sampleVisits:54,narrowVisits:5,zoomVisits:10,visits,overflowCandidates:overflow,consoleErrors,onlyTemp:true,...(captureArg>=0?{capturesVerified}:{} )}));
   if(overflow.length)console.log('[UXV2 01A LIVE] Overflow candidates are observational and need review, not automatic failure.');
  }).catch(e=>{console.error('[UXV2 01A LIVE] ERROR',e.stack||e);process.exitCode=1;}).finally(()=>{try{win?.destroy();}catch{}try{db?.close();}catch{}app.exit(process.exitCode||0);});
