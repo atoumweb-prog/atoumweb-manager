@@ -60,7 +60,7 @@ describe('CrmService', () => {
       .toThrow(/lecture seule/);
     const otherOrg = crm.createOrganization({ name: 'Prospect archivé' });
     const archived = crm.createProspect({ organizationId: otherOrg.id });
-    crm.archiveProspect(archived.id);
+    database.run('UPDATE prospects SET archived_at=? WHERE id=?', [new Date().toISOString(), archived.id]);
     expect(() => crm.updateProspectMissingInformationIfUnchanged(archived.id, null, 'une note'))
       .toThrow(/lecture seule/);
   });
