@@ -39,3 +39,14 @@ Les listes de fichiers des PR ont trois chemins communs à #98 et #99/#100 :
 - Vérifier les écrans réels après le rapprochement, et conserver les anciennes migrations et contrats Abby sans modification.
 
 **Cette note est une cartographie de convergence, pas une autorisation de fusion et pas une validation d'intégration.**
+
+## Mise à jour du 13/10/2026 — PR #101 (02E)
+
+- **PR #101** : `codex/ux-v2-02e-transverse-shell`, HEAD `bd1985b33f56bd1e37902d4bc91af41b868806dc`, **draft**, base commune `278ff2da`. [CI #760](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38450317465) **SUCCESS** (typecheck, 963/963 tests). Le code testé `bf7eae0` est suivi du HEAD documentaire `bd1985b`.
+- #101 **contient** les incréments #99 (02C) et #100 (02D) : en cas d'autorisation de fusion, respecter l'ordre **#99 → #100 → #101**, vérifier le delta propre à chacun et les nouveaux HEAD, sans intégrer deux fois la même évolution.
+- Delta **propre 02E vs #100** : 11 fichiers, notamment `WorkspaceHeader.tsx`, `useSearchTargetConfirmation.ts`, `GlobalSearch.tsx`, scripts 02E, App et documentation. **Aucun nouveau chemin commun avec #98** : les trois chemins de recouvrement restent `scripts/check-ux-v2-lot01a-real-ui.cjs`, `QuotesPage.tsx`, `ProspectsPageV2.tsx`. Les conflits sémantiques peuvent toutefois dépasser ces fichiers.
+- Matrice Codex : `docs/ux-v2/LOT-02E-CONVERGENCE-03C-2026-10-13.md` sur #101. Ses scénarios **C01–C11** restent à exécuter sur un **commit combiné** : aucun passage réussi des CI isolées ne prouve la convergence.
+- **#98 a progressé depuis les SHA de la matrice Codex** : code de sécurité Projet/Budget validé sur `f2afd34d4c08200923c5c183e1c7efbb61cd3d88`, [CI #769](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38451894534) **SUCCESS** (943/943 Vitest, 75 Electron). Qualif. commerciale sous contrôle optimiste sur une version ultérieure en vérification.
+- La projection commerciale de l'Accueil (02D) et la certification **globale** de 02E restent bloquées par les tests combinés. Ne rien fusionner ni modifier les PR #99/#100/#101 à partir de #98.
+
+**Ce document ne constitue ni un merge, ni une rebase, ni une validation de compatibilité.**
