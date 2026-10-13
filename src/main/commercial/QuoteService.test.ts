@@ -75,7 +75,9 @@ describe('QuoteService', () => {
     expect(() => quotes.confirmPrincipleAgreement(draft.id)).toThrow(/envoyé/);
     database.run("UPDATE quotes SET status='sent' WHERE id=?", [draft.id]);
     expect(() => quotes.confirmPrincipleAgreement(draft.id)).toThrow(/vide/);
+    database.run("UPDATE quotes SET status='draft' WHERE id=?", [draft.id]);
     quotes.addCustomLine(draft.id, { label: 'Audit', proposedUnitPriceCents: 9000 });
+    database.run("UPDATE quotes SET status='sent' WHERE id=?", [draft.id]);
     expect(() => quotes.confirmPrincipleAgreement(draft.id)).toThrow(/Prospect doit être actif/);
   });
 
