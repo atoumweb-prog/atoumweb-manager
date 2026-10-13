@@ -50,16 +50,16 @@ function createPublishedService(priceCents = 10000, name = 'Service test') {
 describe('QuoteService', () => {
   it('E72 : créer un devis ne démarre pas la prospection d’un nouveau contact', () => {
     const prospect = createProspect();
-    expect(crm.getProspect(prospect.id).stage).toBe('new');
+    expect(crm.listProspects({ includeArchived: true }).find((item) => item.id === prospect.id)?.stage).toBe('new');
 
     const first = quotes.create({ prospectId: prospect.id, subject: 'Devis avant prospection' });
     expect(first.prospectId).toBe(prospect.id);
-    expect(crm.getProspect(prospect.id).stage).toBe('new');
+    expect(crm.listProspects({ includeArchived: true }).find((item) => item.id === prospect.id)?.stage).toBe('new');
 
     const second = quotes.createWithLines({ prospectId: prospect.id, subject: 'Pré-devis avec lignes' }, [{ input: { label: 'Audit', quantityMilli: 1000, proposedUnitPriceCents: 10000 } }]);
     expect(second.prospectId).toBe(prospect.id);
     expect(second.lines).toHaveLength(1);
-    expect(crm.getProspect(prospect.id).stage).toBe('new');
+    expect(crm.listProspects({ includeArchived: true }).find((item) => item.id === prospect.id)?.stage).toBe('new');
     expect(quotes.list({ prospectId: prospect.id })).toHaveLength(2);
   });
 
@@ -69,7 +69,7 @@ describe('QuoteService', () => {
     expect(started.stage).toBe('qualifying');
 
     quotes.create({ prospectId: prospect.id, subject: 'Devis après démarrage' });
-    expect(crm.getProspect(prospect.id).stage).toBe('quote_to_prepare');
+    expect(crm.listProspects({ includeArchived: true }).find((item) => item.id === prospect.id)?.stage).toBe('quote_to_prepare');
   });
 
   it('génère une numérotation annuelle unique', () => {
