@@ -230,7 +230,7 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
     const rejection = await get('window.atoumweb.crm.prospects.updateMissingInformationIfUnchanged('+
       JSON.stringify(conflictProspect.id)+',null,'+JSON.stringify(secondInformation)+
       ').then(()=>false,error=>String(error.message).includes("Conflit"))');
-    test(rejection && db.crm.getProspect(conflictProspect.id).missingInformation===firstInformation,
+    test(rejection && prospectStage(conflictProspect.id).missingInformation===firstInformation,
       'R03C-16: la seconde fenêtre en retard est refusée sans effacement');
     db.crm.updateProspectQualification(conflictProspect.id,{projectSummary:'Contexte modifié dans une autre fenêtre'});
     const refreshed = await get('window.atoumweb.crm.prospects.updateMissingInformationIfUnchanged('+
@@ -284,14 +284,14 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
       'choice.value="resolved";choice.dispatchEvent(new Event("change",{bubbles:true}));');
     await wait('!!document.querySelector(".prospect-desk-overlay .prospect-checklist-conflict")',
       'conflit visible dans la fiche de travail');
-    test(db.crm.getProspect(needProspect.id).missingInformation===concurrentChecklist,
+    test(prospectStage(needProspect.id).missingInformation===concurrentChecklist,
       'R03C-16: la saisie obsolète ne remplace pas les informations de la seconde fenêtre');
     await clickText('.prospect-checklist-conflict button','Recharger uniquement la checklist');
     await wait('!document.querySelector(".prospect-desk-overlay .prospect-checklist-conflict")',
       'rechargement explicite accepté');
     test(await get('document.querySelector(".prospect-desk-overlay .missing-info-row select")?.value==="later"'),
       'R03C-16: checklist rechargée sans écriture silencieuse');
-    test(db.crm.getProspect(needProspect.id).projectSummary==='Création de site pour commerce local',
+    test(prospectStage(needProspect.id).projectSummary==='Création de site pour commerce local',
       'R03C-16: autre champ de qualification préservé après recharge');
 
     await clickText('.prequote-entry button','Contrôler avant devis');
