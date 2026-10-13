@@ -1,11 +1,13 @@
 // One explicit local validation of a frozen lot. No GitHub operation, retry or real workspace.
 const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process');
 const repo=path.resolve(__dirname,'..');
+const nativeOnly=process.argv[2]==='--native-only';
+if(process.argv.length>3 || process.argv.length===3&&!nativeOnly)throw Error('Usage: node scripts/check-ux-v2-real-shell.cjs [--native-only]');
 const git=(...args)=>cp.execFileSync('git',args,{cwd:repo,encoding:'utf8'}).trim();
 const sha=git('rev-parse','HEAD'),tree=git('rev-parse','HEAD^{tree}');
 if(git('status','--porcelain'))throw Error('Commit local changes before producing final SHA evidence.');
 const out=path.join(repo,'outputs','real-shell-'+sha.slice(0,8)+'-'+Date.now());fs.mkdirSync(out,{recursive:true});
-const manifest={sha,tree,dirty:false,onlyTemp:true,steps:[]};
+const manifest={sha,tree,dirty:false,onlyTemp:true,mode:nativeOnly?'native-only':'complete',notExecuted:nativeOnly?['typecheck','vitest']:[],steps:[]};
 const steps=[
  ['typecheck',[require.resolve('typescript/bin/tsc'),'--noEmit']],
  ['vitest',['scripts/run-tests.cjs','--maxWorkers=2']],
@@ -16,6 +18,7 @@ const steps=[
  ['foundation01f',['scripts/check-ux-v2-lot01f-workshop.cjs']],
 ];
 for(const [name,args] of steps){
+ if(nativeOnly&&['typecheck','vitest'].includes(name))continue;
  const start=Date.now();console.log('START '+name);
  const run=cp.spawnSync(process.execPath,args,{cwd:repo,encoding:'utf8',windowsHide:true,maxBuffer:32*1024*1024});
  fs.writeFileSync(path.join(out,name+'.log'),(run.stdout||'')+(run.stderr||''));

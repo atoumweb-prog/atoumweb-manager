@@ -135,7 +135,9 @@ module.exports = async ({win, db, preload, evalUI: js, get, wait, navigate, test
     test((await get(`window.atoumweb.referentials.library.get(${JSON.stringify(library.id)})`)).name==='LIBRARY SHELL TEMP','Discard does not persist metadata');
     await js(`window.dispatchEvent(new CustomEvent('atoumweb:open-library-item',{detail:${JSON.stringify(library.id)}}))`);
     await wait('document.querySelector(".aw-library-detail")','reopen real metadata');
-    await js('[...document.querySelectorAll(".aw-library-detail-heading button")].find(e=>e.textContent.trim()==="Modifier").click();window.__metadataEditor=document.querySelector(".aw-library-metadata-editor");');
+    await js('[...document.querySelectorAll(".aw-library-detail-heading button")].find(e=>e.textContent.trim()==="Modifier").click();');
+    await wait('document.querySelector(".aw-library-metadata-editor")','metadata editor mounted before recording identity');
+    await js('window.__metadataEditor=document.querySelector(".aw-library-metadata-editor");');
     await input('.aw-library-metadata-editor input','SUBMITTED METADATA TEMP');
     const originalUpdate=db.atoumWebTechnicalLibrary.updateMetadata.bind(db.atoumWebTechnicalLibrary);let releaseUpdate;
     db.atoumWebTechnicalLibrary.updateMetadata=(...args)=>new Promise(resolve=>{releaseUpdate=()=>resolve(originalUpdate(...args));});
@@ -145,7 +147,8 @@ module.exports = async ({win, db, preload, evalUI: js, get, wait, navigate, test
       await click('.aw-library-detail .close-detail');
       test(confirmations.at(-1).buttons.length===1&&await get('!!document.querySelector(".aw-library-metadata-editor")'),'Pending metadata cannot close or appear saved early');
       releaseUpdate();await wait('!document.querySelector(".aw-library-metadata-editor .primary-button").disabled','metadata commit completed');
-      test(await get('window.__metadataEditor===document.querySelector(".aw-library-metadata-editor")&&document.querySelector(".aw-library-metadata-editor input").value==="LATE METADATA TEMP"'),'Late edit and exact editor survive confirmed asynchronous metadata save');
+      const lateMetadata=await get('({same:window.__metadataEditor===document.querySelector(".aw-library-metadata-editor"),value:document.querySelector(".aw-library-metadata-editor input")?.value})');
+      test(lateMetadata.same&&lateMetadata.value==='LATE METADATA TEMP','Late edit and exact editor survive confirmed asynchronous metadata save '+JSON.stringify(lateMetadata));
       test((await get(`window.atoumweb.referentials.library.get(${JSON.stringify(library.id)})`)).name==='SUBMITTED METADATA TEMP','Service persisted only submitted metadata');
       await click('.aw-library-detail .close-detail');
       test(await get('!!document.querySelector(".aw-library-metadata-editor")'),'Late edit remains dirty after successful earlier save');
