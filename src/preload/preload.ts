@@ -213,6 +213,7 @@ const api: AtoumWebApi = {
       get: (id: string) => ipcRenderer.invoke('crm:contacts:get', id),
       create: (input: ContactInput) => ipcRenderer.invoke('crm:contacts:create', input),
       createAndAttachPrimaryProspect: (prospectId: string, input: ContactInput) => ipcRenderer.invoke('crm:contacts:create-and-attach-primary-prospect', prospectId, input),
+      createAndAttachDecisionProspect: (prospectId: string, input: ContactInput) => ipcRenderer.invoke('crm:contacts:create-and-attach-decision-prospect', prospectId, input),
       update: (id: string, input: ContactInput) => ipcRenderer.invoke('crm:contacts:update', id, input),
     },
     contactMethods: {
