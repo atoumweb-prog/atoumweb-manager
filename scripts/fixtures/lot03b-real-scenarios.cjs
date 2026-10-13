@@ -212,6 +212,33 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
     test(db.database.get('SELECT count(*) AS n FROM contacts WHERE organization_id=?',[contactOrg.id]).n===2,
       'R03C-05: aucune duplication de Contact après replay IPC');
 
+    // 03C : deux fenêtres sur la même checklist via le véritable preload.
+    // La seconde fenêtre métier est simulée par une modification du service
+    // principal : la même condition CAS est appliquée pour toutes les IPC.
+    const conflictOrg = db.crm.createOrganization({name:'TEST 03C Checklist multifenêtre'});
+    const conflictProspect = db.crm.createProspect({organizationId:conflictOrg.id});
+    const firstInformation = JSON.stringify({version:1,items:[{
+      id:'dns',label:'Accès DNS',status:'open',isBlocking:true,
+    }]});
+    const secondInformation = JSON.stringify({version:1,items:[{
+      id:'hosting',label:'Accès hébergement',status:'resolved',isBlocking:false,
+    }]});
+    const firstChecklist = await get('window.atoumweb.crm.prospects.updateMissingInformationIfUnchanged('+
+      JSON.stringify(conflictProspect.id)+',null,'+JSON.stringify(firstInformation)+')');
+    test(firstChecklist.missingInformation===firstInformation,
+      'R03C-16: première fenêtre sauvegarde le premier snapshot via IPC');
+    const rejection = await get('window.atoumweb.crm.prospects.updateMissingInformationIfUnchanged('+
+      JSON.stringify(conflictProspect.id)+',null,'+JSON.stringify(secondInformation)+
+      ').then(()=>false,error=>String(error.message).includes("Conflit"))');
+    test(rejection && db.crm.getProspect(conflictProspect.id).missingInformation===firstInformation,
+      'R03C-16: la seconde fenêtre en retard est refusée sans effacement');
+    db.crm.updateProspectQualification(conflictProspect.id,{projectSummary:'Contexte modifié dans une autre fenêtre'});
+    const refreshed = await get('window.atoumweb.crm.prospects.updateMissingInformationIfUnchanged('+
+      JSON.stringify(conflictProspect.id)+','+JSON.stringify(firstInformation)+','+JSON.stringify(secondInformation)+')');
+    test(refreshed.missingInformation===secondInformation&&
+      refreshed.projectSummary==='Contexte modifié dans une autre fenêtre',
+      'R03C-16: relecture explicite permet de reprendre sans écraser le contexte');
+
     // 03C : besoin de texte libre réellement enregistré, sans devis implicite.
     const needOrg = db.crm.createOrganization({name:'TEST 03C Besoin Dijon'});
     const needProspect = db.crm.createProspect({organizationId:needOrg.id,primaryNeed:'Site vitrine 03C'});
