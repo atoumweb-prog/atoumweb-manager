@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { activePipelineColumn, isHistoricalConversion, projectPipeline, PROSPECT_PIPELINE_COLUMNS } from './prospectPipelineProjection';
+import { activePipelineColumn, historyOutcome, isHistoricalConversion, projectPipeline, PROSPECT_PIPELINE_COLUMNS } from './prospectPipelineProjection';
 
 describe('lot 03B — projection CRM sans mutation', () => {
   it('affiche six colonnes actives, dont Finalisation non assignable tant que E73 est ouvert', () => {
@@ -35,6 +35,14 @@ describe('lot 03B — projection CRM sans mutation', () => {
     ];
     expect(projectPipeline(prospects).conversions.map((prospect) => prospect.id)).toEqual(['converti', 'archive-converti']);
     expect(projectPipeline(prospects).columns.every((column) => column.prospects.length === 0)).toBe(true);
+  });
+
+  it('distingue un Client converti, un dossier perdu et un dossier archivé non vendu', () => {
+    expect(historyOutcome({ id: 'c', stage: 'won', clientAccountId: 'client-1' })).toEqual({ label: 'Converti en client', kind: 'converted' });
+    expect(historyOutcome({ id: 'l', stage: 'lost' })).toEqual({ label: 'Perdu', kind: 'lost' });
+    expect(historyOutcome({ id: 'a', stage: 'qualifying', archivedAt: '2026-10-13' })).toEqual({ label: 'Archivé', kind: 'archived' });
+    expect(historyOutcome({ id: 'w', stage: 'won' })).toEqual({ label: 'Gagné (sans compte client)', kind: 'won' });
+    expect(historyOutcome({ id: 'linked', stage: 'negotiation', clientAccountId: 'client-2' }).kind).toBe('converted');
   });
 
   it('compte un prospect une seule fois et réserve Conversion aux comptes clients liés', () => {
