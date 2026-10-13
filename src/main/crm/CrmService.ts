@@ -432,7 +432,7 @@ export class CrmService {
 
       const contact = this.createContact({ ...input, organizationId: prospect.organizationId ?? null });
       const result = this.database.run(
-        'UPDATE prospects SET decision_maker_contact_id=?, updated_at=? WHERE id=? AND decision_maker_contact_id IS NULL AND archived_at IS NULL AND client_account_id IS NULL',
+        'UPDATE prospects SET decision_maker_contact_id=?, decision_status=\'no\', updated_at=? WHERE id=? AND decision_maker_contact_id IS NULL AND archived_at IS NULL AND client_account_id IS NULL',
         [contact.id, nowIso(), prospectId],
       );
       if (Number(result.changes) !== 1) {
