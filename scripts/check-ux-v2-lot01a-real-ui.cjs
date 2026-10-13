@@ -158,7 +158,7 @@ if(!process.versions.electron){
      'Navigation changed during capture '+label+': '+JSON.stringify(final));
    fs.writeFileSync(dest,captured.toPNG());
    capturesVerified++;
-   console.log('[UXV2 01A CAPTURE] VERIFIED '+capturesVerified+'/54 '+label+
+   console.log('[UXV2 01A CAPTURE] VERIFIED '+capturesVerified+'/63 '+label+
      ' frameAttempt='+attempts);
  };
  app.whenReady().then(async()=>{
@@ -178,6 +178,7 @@ if(!process.versions.electron){
   for(const [theme,label] of themes){
    for(const [density,display,font,height] of densities){
     await select(theme,label,density,display,font,height);
+    test(await get('parseFloat(getComputedStyle(document.querySelector("#header-mode")).minHeight)>=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ui-control-height"))'),'Shared header control height '+theme+'/'+density);
     await evalUI('document.querySelector("#header-mode").click();document.querySelector(".timer-start-shortcut").click();');
     await wait('document.querySelector(".global-timer .timer-popover")','actual timer in '+theme+'/'+density);
     test(await get('document.querySelectorAll(".global-timer").length===1&&window.__realTimer===document.querySelector(".global-timer")'),'Same real timer in '+theme+'/'+density);
