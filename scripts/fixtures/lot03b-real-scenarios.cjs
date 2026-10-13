@@ -209,6 +209,11 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
     await clickText('.prospect-view-switch button','Parcours commercial');
     await wait('document.querySelectorAll(".pipeline-step-column").length===7',
       'pipeline 03C monté');
+    // Les fixtures sont injectées côté main APRÈS le bootstrap du renderer :
+    // forcer sa vraie synchronisation IPC plutôt que supposer un remount.
+    await js('window.dispatchEvent(new Event("atoumweb:changed"));');
+    await wait('[...document.querySelectorAll(".prospect-card-head")].some(e=>e.textContent.includes("TEST 03C Besoin Dijon"))',
+      'nouveau Prospect 03C présent après refresh');
     await clickText('.prospect-card-head','TEST 03C Besoin Dijon');
     await wait('!!document.querySelector(".prospect-detail-panel")','fiche Besoins sélectionnée');
     await clickText('.prospect-detail-panel button','Ouvrir la fiche de travail');
