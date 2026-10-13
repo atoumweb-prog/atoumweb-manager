@@ -18,6 +18,53 @@ afterEach(() => {
 });
 
 describe('CrmService', () => {
+  it('03C multifenêtre : refuse un snapshot ancien sans perdre les modifications de l’autre fenêtre', () => {
+    const org = crm.createOrganization({ name: 'Deux fenêtres' });
+    const prospect = crm.createProspect({ organizationId: org.id });
+    const secondWindow = new CrmService(database);
+    const snapshotA = crm.getProspect(prospect.id).missingInformation ?? null;
+    const snapshotB = secondWindow.getProspect(prospect.id).missingInformation ?? null;
+    const first = '{"version":1,"items":[{"id":"one","label":"Accès DNS","status":"open","isBlocking":true}]}';
+    const stale = '{"version":1,"items":[{"id":"two","label":"Identifiants","status":"open","isBlocking":true}]}';
+
+    crm.updateProspectMissingInformationIfUnchanged(prospect.id, snapshotA, first);
+    const eventsBeforeConflict = crm.listActivity('prospect', prospect.id).length;
+    expect(() => secondWindow.updateProspectMissingInformationIfUnchanged(prospect.id, snapshotB, stale))
+      .toThrow(/Conflit/);
+    expect(crm.getProspect(prospect.id).missingInformation).toBe(first);
+    expect(crm.listActivity('prospect', prospect.id)).toHaveLength(eventsBeforeConflict);
+    const latest = secondWindow.getProspect(prospect.id).missingInformation ?? null;
+    const explicit = secondWindow.updateProspectMissingInformationIfUnchanged(prospect.id, latest, stale);
+    expect(explicit.missingInformation).toBe(stale);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('03C multifenêtre : ne confond pas une édition du budget avec un conflit de checklist', () => {
+    const org = crm.createOrganization({ name: 'Champs indépendants' });
+    const prospect = crm.createProspect({ organizationId: org.id });
+    const snapshot = crm.getProspect(prospect.id).missingInformation ?? null;
+    const secondWindow = new CrmService(database);
+    secondWindow.updateProspectQualification(prospect.id, { projectSummary: 'Site avec calendrier spécifique' });
+    const saved = crm.updateProspectMissingInformationIfUnchanged(prospect.id, snapshot,
+      '{"version":1,"items":[{"id":"budget","label":"Montant","status":"open","isBlocking":true}]}');
+    expect(saved.projectSummary).toBe('Site avec calendrier spécifique');
+    expect(saved.missingInformation).toContain('"id":"budget"');
+    expect(secondWindow.getProspect(prospect.id).projectSummary).toBe('Site avec calendrier spécifique');
+  });
+
+  it('03C multifenêtre : bloque les écritures sur Prospect converti ou archivé', () => {
+    const org = crm.createOrganization({ name: 'Statut non éditable' });
+    const converted = crm.createProspect({ organizationId: org.id });
+    crm.convertProspectToClient(converted.id);
+    expect(() => crm.updateProspectMissingInformationIfUnchanged(converted.id, null, 'une note'))
+      .toThrow(/lecture seule/);
+    const otherOrg = crm.createOrganization({ name: 'Prospect archivé' });
+    const archived = crm.createProspect({ organizationId: otherOrg.id });
+    crm.archiveProspect(archived.id);
+    expect(() => crm.updateProspectMissingInformationIfUnchanged(archived.id, null, 'une note'))
+      .toThrow(/lecture seule/);
+  });
+
   it('03C.5 : crée et rattache le contact principal dans une transaction idempotente, même après reprise du service', () => {
     const organization = crm.createOrganization({ name: 'Atelier prospect 03C' });
     const prospect = crm.createProspect({ organizationId: organization.id, primaryNeed: 'Site vitrine' });
