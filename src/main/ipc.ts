@@ -240,6 +240,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('crm:contacts:list', (_event, includeArchived?: boolean) => database.crm.listDirectoryContacts(includeArchived));
   ipcMain.handle('crm:contacts:get', (_event, id: string) => database.crm.getDirectoryContact(id));
   ipcMain.handle('crm:contacts:create', (_event, input: ContactInput) => database.crm.createContact(input));
+  ipcMain.handle('crm:contacts:create-and-attach-primary-prospect', (_event, prospectId: string, input: ContactInput) => database.crm.createAndAttachPrimaryProspectContact(prospectId, input));
   ipcMain.handle('crm:contacts:update', (_event, id: string, input: ContactInput) => database.crm.updateContact(id, input));
   ipcMain.handle('crm:contact-methods:list',(_event,owner:'organization'|'contact',id:string,includeArchived?:boolean)=>database.crm.listContactMethods(owner,id,includeArchived));
   ipcMain.handle('crm:contact-methods:save',(_event,input:ContactMethodInput,id?:string)=>database.crm.saveContactMethod(input,id));
