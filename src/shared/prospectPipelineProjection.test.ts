@@ -17,6 +17,18 @@ describe('lot 03B — projection CRM sans mutation', () => {
     expect(activePipelineColumn({ id: 'converted', stage: 'negotiation', clientAccountId: 'client-1' })).toBeNull();
   });
 
+  it('E73 : seule une confirmation explicite sur le devis courant projette en Finalisation, sans convertir', () => {
+    const prospect = { id: 'p', stage: 'negotiation' as const };
+    expect(activePipelineColumn(prospect)).toBe('negotiation');
+    expect(activePipelineColumn({ ...prospect, finalizationQuoteId: 'quote-current' })).toBe('finalization');
+    expect(projectPipeline([{ ...prospect, finalizationQuoteId: 'quote-current' }]).columns.map((col) => col.prospects.length))
+      .toEqual([0, 0, 0, 0, 0, 1]);
+    expect(activePipelineColumn({ id: 'new', stage: 'new', finalizationQuoteId: 'quote' })).toBeNull();
+    expect(activePipelineColumn({ id: 'won', stage: 'won', finalizationQuoteId: 'quote' })).toBeNull();
+    expect(activePipelineColumn({ id: 'archived', stage: 'quote_sent', archivedAt: '2026-10-13', finalizationQuoteId: 'quote' })).toBeNull();
+    expect(activePipelineColumn({ id: 'unprepared', stage: 'qualifying', finalizationQuoteId: 'quote' })).toBe('qualify');
+  });
+
   it('projette les étapes backend existantes sans inventer un statut Finalisation', () => {
     expect(activePipelineColumn({ id: 'a', stage: 'qualifying' })).toBe('qualify');
     expect(activePipelineColumn({ id: 'b', stage: 'need_identified' })).toBe('needs');
