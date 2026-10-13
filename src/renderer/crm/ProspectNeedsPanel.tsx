@@ -197,6 +197,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
   const [kind,setKind]=useState<'offers'|'services'>('offers');
   const choiceGuard=useUnsavedDraft('Prestation envisagée',{selectedId,otherText},{pending:busy,discard:s=>{setSelectedId(s.selectedId);setOtherText(s.otherText);}});
   const infoValue={projectSummary,projectContext,budgetPreset,budgetMin,budgetMax,budgetExact,timelineStatus,targetDate,timelineNote,existingStatus,existingUrl,existingNotes,informationItems,newInformation,newInformationBlocking};
+  const savedFormBaselineRef = useRef<typeof infoValue | null>(null);
   const infoGuard=useUnsavedDraft('Identification du besoin',infoValue,{pending:busy || savingInformation > 0,discard:s=>{setProjectSummary(s.projectSummary);setProjectContext(s.projectContext);setBudgetPreset(s.budgetPreset);setBudgetMin(s.budgetMin);setBudgetMax(s.budgetMax);setBudgetExact(s.budgetExact);setTimelineStatus(s.timelineStatus);setTargetDate(s.targetDate);setTimelineNote(s.timelineNote);setExistingStatus(s.existingStatus);setExistingUrl(s.existingUrl);setExistingNotes(s.existingNotes);setInformationDraft(s.informationItems);setNewInformation(s.newInformation);setNewInformationBlocking(s.newInformationBlocking);}});
 
   const availableByKind=catalog.filter(item=>catalogueIsOffer(item)===(kind==='offers'));
@@ -235,7 +236,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
         setExistingUrl(current.existingUrl ?? '');
         setExistingNotes(current.existingNotes ?? '');
         setInformationDraft(parseProspectInformation(current.missingInformation));
-        infoGuard.initial({...infoValue,projectSummary:(current.projectSummary ?? ''),projectContext:(current.projectContext ?? ''),budgetPreset:(deriveBudgetPreset(current)),budgetMin:(current.budgetMinCents != null ? String(current.budgetMinCents / 100) : ''),budgetMax:(current.budgetMaxCents != null ? String(current.budgetMaxCents / 100) : ''),budgetExact:(current.budgetStatus === 'known' && current.budgetMinCents != null ? String(current.budgetMinCents / 100) : ''),timelineStatus:(current.timelineStatus ?? 'not_disclosed'),targetDate:(current.targetDate?.slice(0, 10) ?? ''),timelineNote:(current.timelineNote ?? ''),existingStatus:(current.existingStatus ?? 'unknown'),existingUrl:(current.existingUrl ?? ''),existingNotes:(current.existingNotes ?? ''),informationItems:(parseProspectInformation(current.missingInformation))});
+        const baselineValue = {...infoValue,projectSummary:(current.projectSummary ?? ''),projectContext:(current.projectContext ?? ''),budgetPreset:(deriveBudgetPreset(current)),budgetMin:(current.budgetMinCents != null ? String(current.budgetMinCents / 100) : ''),budgetMax:(current.budgetMaxCents != null ? String(current.budgetMaxCents / 100) : ''),budgetExact:(current.budgetStatus === 'known' && current.budgetMinCents != null ? String(current.budgetMinCents / 100) : ''),timelineStatus:(current.timelineStatus ?? 'not_disclosed'),targetDate:(current.targetDate?.slice(0, 10) ?? ''),timelineNote:(current.timelineNote ?? ''),existingStatus:(current.existingStatus ?? 'unknown'),existingUrl:(current.existingUrl ?? ''),existingNotes:(current.existingNotes ?? ''),informationItems:(parseProspectInformation(current.missingInformation))}; savedFormBaselineRef.current = baselineValue; infoGuard.initial(baselineValue);
       }
     } catch (e) { if (sequence === reloadSequence.current) setError(cleanError(e)); }
   }
@@ -243,6 +244,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
   useEffect(() => {
     setEditingId(undefined); setSelectedId(''); setOtherText('');
     savedInformationRef.current = { prospectId, value: null };
+    savedFormBaselineRef.current = null;
     informationConflictRef.current = false;
     setInformationConflict(false);
     pendingInformation.current = Promise.resolve();
@@ -328,8 +330,15 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
       // Invalide tout chargement de la fiche ayant commencé avant cette
       // décision explicite, sans modifier les brouillons Budget/Contexte.
       reloadSequence.current++;
-      setInformationDraft(parseProspectInformation(current.missingInformation));
+      const restored = parseProspectInformation(current.missingInformation);
+      setInformationDraft(restored);
       savedInformationRef.current = { prospectId: ownerId, value: current.missingInformation ?? null };
+      // Modifier seulement la référence sauvegardée de la checklist :
+      // les autres champs encore saisis doivent RESTER dirty pour UX-01.
+      if (savedFormBaselineRef.current) {
+        savedFormBaselineRef.current = { ...savedFormBaselineRef.current, informationItems: restored };
+        infoGuard.initial(savedFormBaselineRef.current);
+      }
       pendingInformation.current = Promise.resolve();
       informationConflictRef.current = false;
       setInformationConflict(false);
@@ -382,7 +391,8 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
         budgetMaxCents: budget.max,
         targetDate: timelineStatus === 'date' ? targetDate || null : null,
       });
-      infoGuard.saved();await load(); onChanged?.(); window.dispatchEvent(new Event('atoumweb:changed'));
+      savedFormBaselineRef.current = { ...infoValue, informationItems: informationItemsRef.current };
+      infoGuard.saved(savedFormBaselineRef.current);await load(); onChanged?.(); window.dispatchEvent(new Event('atoumweb:changed'));
     } catch (e) { setError(cleanError(e)); }
     finally { setBusy(false); }
   }
