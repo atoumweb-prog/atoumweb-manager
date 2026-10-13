@@ -39,6 +39,7 @@ import type {
   OrganizationInput,
   ProspectFilters,
   ProspectInput,
+  ProspectProjectBrief,
   ProspectResearchSnapshotInput,
   ProspectStage,
 } from '../shared/crm';
