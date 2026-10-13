@@ -1,5 +1,11 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 13/10/2026 — Correctif local tests binaires #95
+
+- Branchelocaledédiée codex/fix-95-native-buffer-assertions depuis95@b0e9bb0 ; commit66e0fc2.14comparaisonsFSBuffer.equals intégrales, sixcontrôles permanents (identique,first/middle/last,shorter/longer) surfichiersTEMP2,4Mo.35restaurations conservées, aucuneassertionSQL/timeout/service/migration/guard modifié.
+- Code66e0fc2 : typecheckOK,ciblés41/41,complet873/873(95fichiers,88,08s,sansRPC),DELETE0,371s/WAL0,264s/A→B0,067s local. [Rapport avant/après etplan](docs/UXV2_PR95_NATIVE_BUFFER_FIX.md). LespreuvesduHEADdocumentaire final sont rejouées avantlivraison etconsignéesdanslebilan.
+- Aucunpush/PR/CI/merge autorisé àcetteétape ;95resteb0e9bb0/draft/CI659échouée, main31167754 et90–93préservés, Validation-MSI intacte. Aprèsaccorddistinct :pushFFunique verssource95→synchronize→candidateunique, sansdispatch/rerun/workflow/forçage ;fusionaprèsnouvellevalidationhumaine.
+
 ## 13/10/2026 — Publication groupée 01E/01F préparée, CI non autorisée
 
 - Nouvellebranche codex/consolidation-ux-v2-01ef depuiscorrectif1e593d0, merge normal00f37774 de main31167754 ; arbre ee378ea identique avant/après merge, aucunfichiermodifié. Sources/tests depuis85040fb identiques,61assertionsÉchappermanentes conservées, originales90–93 inchangées.
@@ -1549,5 +1555,6 @@ Les tests couvrent les migrations vierges et mises à niveau, les prix confirmé
 Prochaine action : validation visuelle du parcours complet et des trois thèmes sous Windows. Aucune ouverture du workspace utilisateur sans sauvegarde explicite.
 
 Clôture Lot 3 — 03/10/2026 : bilan réel validé par AtoumWeb ; commit local dédié autorisé, sans push ni merge. La recette manuelle AtoumWeb reste à faire avant validation fonctionnelle finale. Cette clôture ne contient aucune modification du Lot 4.
+
 
 
