@@ -51,6 +51,7 @@ import type {
   OrganizationInput,
   ProspectFilters,
   ProspectInput,
+  ProspectProjectBrief,
   ProspectResearchSnapshotInput,
   ProspectStage,
   SearchResult,
