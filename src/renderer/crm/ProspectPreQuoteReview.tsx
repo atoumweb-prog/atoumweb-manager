@@ -131,7 +131,8 @@ export function ProspectPreQuoteReview({ prospect, needs, catalog, onChanged }: 
         throw new Error('Une prestation du dossier n’est plus disponible : actualise les besoins avant de préparer le devis.');
       }
       if (!sameProspectQuotePlan(quotePlan, livePlan)) {
-        throw new Error('Les besoins ou les versions du catalogue ont changé pendant le contrôle. Referme puis rouvre le contrôle avant de créer le devis.');
+        window.dispatchEvent(new Event('atoumweb:changed'));
+        throw new Error('Les besoins ou versions du catalogue ont changé. Le contrôle se réactualise : vérifie les lignes avant de confirmer un nouveau devis.');
       }
 
       const first = solutionRows[0];
