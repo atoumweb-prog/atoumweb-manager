@@ -5,7 +5,7 @@
  * Aucun profil installé, Validation-MSI, mock de service ou état commercial
  * productif n'est utilisé. Seules les confirmations natives sont pilotées.
  */
-module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep}) => {
+module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, saveScreenshot}) => {
   const {dialog} = require('electron');
   const confirmations = [];
   const originalDialog = dialog.showMessageBoxSync;
@@ -76,6 +76,10 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep})
     await clickText('.prospect-principle-agreement button','Accord de principe confirmé');
     await wait('!!document.querySelector(".prospect-principle-agreement [role=status]")','confirmation E73 affichée');
     test(Boolean(quoteStatus(quote.id).principleAgreementAt),'R03B-12: accord horodaté dans SQLite TEMP');
+    await wait('[...document.querySelectorAll(".pipeline-step-column")].find(e=>e.querySelector("header strong")?.textContent.trim()==="Finalisation")?.querySelectorAll(".prospect-card").length===1',
+      'accord affiché dans Finalisation');
+    test(await get('[...document.querySelectorAll(".pipeline-step-column")].find(e=>e.querySelector("header strong")?.textContent.trim()==="Finalisation")?.querySelector(".prospect-card-step")?.textContent.includes("Étape 6")'),
+      'R03B-12: carte accord confirmé porte bien étape 6');
     test(quoteStatus(quote.id).status==='sent','R03B-12: envoi non converti en signature');
     test(prospectStage(active.id).stage==='quote_sent'&&!prospectStage(active.id).clientAccountId,
       'R03B-12: aucun changement de stage ni Client');
@@ -85,6 +89,8 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep})
     await wait('!!document.querySelector(".prospect-principle-agreement button") && document.querySelector(".prospect-principle-agreement button").textContent.includes("Accord de principe confirmé")',
       'annulation E73 rendue');
     test(quoteStatus(quote.id).principleAgreementAt===null,'R03B-12: accord révoqué sans effacer le devis');
+    await wait('[...document.querySelectorAll(".pipeline-step-column")].find(e=>e.querySelector("header strong")?.textContent.trim()==="Finalisation")?.querySelectorAll(".prospect-card").length===0',
+      'Finalisation vide après annulation');
     const counts=db.database.all("SELECT action,count(*) AS n FROM activity_events WHERE entity_id=? AND action LIKE 'principle_agreement_%' GROUP BY action",[quote.id]);
     test(counts.length===2 && counts.every(row=>row.n===1),'R03B-12: événements de confirmation/révocation uniques');
     await js('document.querySelector(".prospect-desk-overlay .close-detail").click();');
@@ -125,6 +131,7 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep})
         'R03B-19: présentation '+theme+'/'+density);
       test(await get('document.querySelector(".kanban-board").scrollWidth>0 && document.querySelector(".kanban-board").clientWidth>0'),
         'R03B-19: colonnes mesurables '+theme+'/'+density);
+      if(saveScreenshot)await saveScreenshot(theme,density,'Prospection','pipeline-03b');
     }
     win.setSize(1024,720);
     await sleep(120);
@@ -138,7 +145,7 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep})
     test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','R03B-20: intégrité SQLite TEMP');
     test(db.database.all('PRAGMA foreign_key_check').length===0,'R03B-20: zéro FK cassée');
     console.log('[UXV2 03B LIVE] RESULT '+JSON.stringify({
-      passed:true,checks:confirmations.length,themeDensityCases:9,
+      passed:true,nativeDialogCount:confirmations.length,themeDensityCases:9,
       clientCount:recordCount('client_accounts'),onlyTemp:true,source:'real-app+preload+ipc+sqlite',
       note:'Validation native exige un lancement local ; ceci n est pas une preuve d execution par la CI.',
     }));
