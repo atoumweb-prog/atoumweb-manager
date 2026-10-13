@@ -14,6 +14,7 @@ module.exports=async({win,db,temp,registered,evalUI:js,get,wait,navigate,test,sl
   db.hourPacks.create({clientAccountId:client.id,name:'HOME TEMP EXPIRING PACK',purchasedSeconds:36000,contractPriceCents:1000,expiresAt:new Date(Date.now()+5*86400000).toISOString()});
   db.actions.create({ownerType:'client',ownerId:client.id,type:'follow_up',title:'HOME TEMP TODAY',dueAt:new Date(Date.now()-60000).toISOString()});
   const before=snapshot();await refresh();await ready();
+  test(await get('document.querySelector(".home-source-status summary").textContent.startsWith("9 sources chargées")'),'Confirmed source count includes current quotes, no obsolete hardcoded eight');
   const actualAlerts=db.operationsAlerts.get().alerts;
   test(actualAlerts.some(alert=>alert.severity==='critical')&&actualAlerts.some(alert=>alert.severity==='warning'),'Actual service fixture includes critical and noncritical priorities');
   await js('window.__todayHome=document.querySelector("[data-home-widget=today]");window.__timerHome=document.querySelector(".global-timer")');

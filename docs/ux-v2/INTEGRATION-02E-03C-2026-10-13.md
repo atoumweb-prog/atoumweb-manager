@@ -50,6 +50,8 @@ Premier checkpoint complet `737ce54` : typecheck OK, 1 020/1 020 Vitest dans 107
 
 Le complément final ajoute le clic réel de démarrage et l'erreur de liste obsolète : convergence **36 assertions**. La validation finale du HEAD documentaire/code est rejouée avant publication par :
 
+La recette complète au candidat `476945fc` a confirmé 1 020 Vitest, 36 convergence et les autres résultats ci-dessus. C01 a également été exécuté sans captures : shell défaut373 et CRM76, au même SHA. La revue visuelle des PNG a révélé le libellé Home « Huit sources chargées » devenu obsolète après raccordement : le nombre est désormais dérivé des sources réelles, avec une assertion native supplémentaire (**Home55**). Ce correctif visuel impose une candidate automatique sur son nouveau HEAD ; ce n'est pas un rerun de la première CI778. Les preuves au nouveau SHA figurent dans le manifeste final et la PR.
+
 ```text
 node scripts/check-ux-v2-integration-validate.cjs
 ```
@@ -58,7 +60,7 @@ Le manifeste `outputs/integration-<SHA>-<timestamp>/manifest.json` contient le H
 
 ## CI candidate et limites
 
-Le push de cette branche n'est pas ciblé par `push`; une unique ouverture de PR draft vers main déclenche `quality`. Aucun dispatch/rerun prévu. Le workflow maintient Windows 2022, Node 24, npm ci, typecheck et Vitest à deux workers.
+Le push initial de cette branche n'est pas ciblé par `push`; l'ouverture de PR draft vers main déclenche `quality`. Un correctif de code ultérieur déclenche `pull_request: synchronize` ; aucun dispatch/rerun prévu. Le workflow maintient Windows 2022, Node 24, npm ci, typecheck et Vitest à deux workers.
 
 Le nouveau contrôle combiné est obligatoire pour `github.head_ref == 'integration/ux-v2-02e-03c-v1'`. Il exécute les **mêmes fixtures CRM 03B/03C**, plus Recherche, Home, 02E, shell et UX-01 sur le checkout de la PR. Les anciennes étapes conditionnées à #98 restent réservées à #98 ; leur statut ignoré n'est jamais considéré comme une preuve. `--native-only` indique explicitement que typecheck et Vitest sont assurés par les étapes CI distinctes. Les captures et leurs empreintes sont produites ; l'absence de stockage d'artefacts GitHub reste une limite pour la revue visuelle distante.
 

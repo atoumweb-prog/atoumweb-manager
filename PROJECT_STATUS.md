@@ -6,6 +6,7 @@
 - Conflit unique du banc Electron résolu en conservant Recherche/CRM/captures. Confirmation des fiches et garde Projet conservées ; réponse Prospect périmée reproduite/corrigée ; erreurs Devis obsolètes et journal annulés. Accueil raccordé à la projection6+1/E73 existante et historique Conversion, sans nouveau statut ni changement de service.
 - Checkpoint737ce54 : typecheck OK,1020/1020/107fichiers/35restaurations/6binaires/sansRPC ; Electron convergence34/CRM77/Recherche92/Home54/parcours61/shell374/UX01183 ;81captures/TEMP/intégrité/FK/migrations1–66/nettoyages. Complément final convergence36 ; dernière recette complète au HEAD publié via manifeste et PR, distincte de ces preuves checkpoint.
 - [Rapport et C01–C11](docs/ux-v2/INTEGRATION-02E-03C-2026-10-13.md). Publication d'une PR draft groupée autorisée après résultats locaux verts ; CI unique opened avec recettes combinées réellement exécutées. Aucun merge main, retarget, force-push, budget, branche historique ou Validation-MSI modifié. Recette humaine globale toujours différée.
+- PR102 draft publiée à476945fc, candidate778 ; recette locale complète au même HEAD verte,36convergence. Revue visuelle : compte Home8 devenu obsolète après sourceDevis9, corrigé avec assertion native supplémentaire(Home55). Nouvelle candidate synchronize nécessaire sur ce correctif ; pas rerun ni dispatch. Résultats définitifs/HEAD et références dans la PR pour éviter une CI documentaire supplémentaire.
 
 ## 13/10/2026 — 02E indépendant : parcours réels, focus et préparation de convergence
 
