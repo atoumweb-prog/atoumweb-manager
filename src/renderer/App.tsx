@@ -315,7 +315,7 @@ function App() {
   async function openSearchResult(result:SearchResult,source:'search'|'event'='search'):Promise<SearchNavigationResult>{
     const destination=searchDestination(result);
     if(!destination){const message='Type ou identifiant de destination non pris en charge.';setMessage(message);return {status:'unsupported',message};}
-    if(visibleEntity.current?.type===result.entityType&&visibleEntity.current.id===result.entityId&&activePageRef.current===destination){cancelSearchNavigation();return {status:'opened'};}
+    if(visibleEntity.current?.type===result.entityType&&visibleEntity.current.id===result.entityId&&activePageRef.current===destination){cancelSearchNavigation();requestAnimationFrame(()=>{if(visibleEntity.current?.type===result.entityType&&visibleEntity.current.id===result.entityId)document.querySelector<HTMLElement>('[data-search-entity-id="'+CSS.escape(result.entityId)+'"][data-search-entity-type="'+result.entityType+'"]')?.focus({preventScroll:true});});return {status:'opened'};}
     cancelSearchNavigation();const epoch=navigationEpoch.current;
     try {await readSearchTarget(window.atoumweb,result,source==='event');}
     catch(error){if(epoch!==navigationEpoch.current)return {status:'cancelled',cancelledReason:'superseded'};const message=error instanceof Error?error.message:'Fiche inaccessible.';setMessage(message);return {status:'failed',message};}

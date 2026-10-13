@@ -35,7 +35,7 @@ export function GlobalSearch({onOpen,onDismiss,onCancelSelection,contextKey}:{on
       const outcome=await onOpen(result);
       if(sequence!==selectionId.current)return;
       if(outcome.status==='opened'){
-        if(currentQuery.current===submitted){setQuery('');setResults([]);setOpen(false);setActiveIndex(-1);setStatus('idle');}
+        if(currentQuery.current===submitted){setQuery('');setResults([]);setOpen(false);setActiveIndex(-1);setStatus('idle');onDismiss?.();}
       }else if(outcome.cancelledReason==='superseded'){close();}
       else{if(outcome.status!=='cancelled')setStatus('error');setError(outcome.message??(outcome.status==='cancelled'?'Navigation annulée ; recherche conservée.':'Cette fiche ne peut pas être ouverte.'));setOpen(true);outcomeFocus.current=true;input.current?.focus();outcomeFocus.current=false;}
     }catch(failure){if(sequence===selectionId.current){setError(failure instanceof Error?failure.message:'Ouverture impossible.');setStatus('error');setOpen(true);outcomeFocus.current=true;input.current?.focus();outcomeFocus.current=false;}}
