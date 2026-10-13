@@ -52,6 +52,33 @@ describe('CrmService', () => {
     expect(database.get<{ count: number }>('SELECT count(*) AS count FROM contacts')?.count).toBe(1);
   });
 
+  it('03C.5 : le décisionnaire est rattaché atomiquement, sans doubler le Contact après relance', () => {
+    const organization = crm.createOrganization({ name: 'Décideur atomique 03C' });
+    const prospect = crm.createProspect({ organizationId: organization.id });
+    const input = { organizationId: organization.id, firstName: 'Robin', lastName: 'Décision', jobTitle: 'Direction' };
+    const first = crm.createAndAttachDecisionProspectContact(prospect.id, input);
+    expect(crm.listProspects({ includeArchived: true }).find(item => item.id === prospect.id)?.decisionMakerContactId).toBe(first.id);
+    const replay = new CrmService(database).createAndAttachDecisionProspectContact(prospect.id, { ...input, lastName: 'Autre' });
+    expect(replay.id).toBe(first.id);
+    expect(replay.lastName).toBe('Décision');
+    expect(database.get<{ count: number }>('SELECT count(*) AS count FROM contacts')?.count).toBe(1);
+    expect(database.get<{ count: number }>("SELECT count(*) AS count FROM activity_events WHERE action='decision_contact_attached' AND prospect_id=?", [prospect.id])?.count).toBe(1);
+  });
+
+  it('03C.5 : annule la création du décisionnaire quand le lien SQLite échoue', () => {
+    const organization = crm.createOrganization({ name: 'Décideur refusé 03C' });
+    const prospect = crm.createProspect({ organizationId: organization.id });
+    database.exec(`CREATE TRIGGER test_reject_decision_attach BEFORE UPDATE OF decision_maker_contact_id ON prospects
+      WHEN NEW.id='${prospect.id}' BEGIN SELECT RAISE(ABORT,'fixture refuses decision attach'); END;`);
+    expect(() => crm.createAndAttachDecisionProspectContact(prospect.id, {
+      organizationId: organization.id, firstName: 'Robin', lastName: 'Décision',
+    })).toThrow(/fixture refuses decision attach/);
+    expect(database.get<{ count: number }>('SELECT count(*) AS count FROM contacts')?.count).toBe(0);
+    expect(database.get<{ count: number }>("SELECT count(*) AS count FROM activity_events WHERE entity_type='contact'")?.count).toBe(0);
+    expect(crm.listProspects({ includeArchived: true }).find(item => item.id === prospect.id)?.decisionMakerContactId).toBeFalsy();
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
   it('03C.5 : refuse un contact d’une autre organisation et réutilise celui déjà lié sans l’écraser', () => {
     const organization = crm.createOrganization({ name: 'Organisation correcte 03C' });
     const other = crm.createOrganization({ name: 'Autre organisation 03C' });
