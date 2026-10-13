@@ -25,6 +25,18 @@ describe('lot 03B — projection CRM sans mutation', () => {
     expect(activePipelineColumn({ id: 'e', stage: 'negotiation' })).toBe('negotiation');
   });
 
+  it('sépare les conversions réellement liées des dossiers perdus, gagnés sans lien et archivés non convertis', () => {
+    const prospects = [
+      { id: 'converti', stage: 'won' as const, clientAccountId: 'client-01' },
+      { id: 'archive-converti', stage: 'won' as const, clientAccountId: 'client-02', archivedAt: '2026-10-10' },
+      { id: 'gagne-sans-client', stage: 'won' as const },
+      { id: 'perdu', stage: 'lost' as const },
+      { id: 'nouveau', stage: 'new' as const },
+    ];
+    expect(projectPipeline(prospects).conversions.map((prospect) => prospect.id)).toEqual(['converti', 'archive-converti']);
+    expect(projectPipeline(prospects).columns.every((column) => column.prospects.length === 0)).toBe(true);
+  });
+
   it('compte un prospect une seule fois et réserve Conversion aux comptes clients liés', () => {
     const prospects = [
       { id: 'a', stage: 'qualifying' as const },
