@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { VisualPreferenceStore } from '../../shared/panelLayout';
 import { TABLE_WORKSHOP_RECORDS, TABLE_DEMO_CATEGORIES, TABLE_DEMO_STATUSES, type TableWorkshopRecord } from '../../shared/tableWorkshopFixtures';
 import { nextTableSort, normalizeTableColumns } from '../../shared/tablePresentation';
 import { LatestTableRequest, loadWorkshop, type WorkshopResult } from '../../shared/tableWorkshopSource';
@@ -26,7 +27,7 @@ function TableRecordEditor({ record }: { record: TableWorkshopRecord }) {
   </div>;
 }
 
-export function TableWorkshop() {
+export function TableWorkshop({ store = localStorage, manageLifecycle = true, active = true }: { store?: VisualPreferenceStore; manageLifecycle?: boolean; active?: boolean } = {}) {
   const [view, setView] = useState('dossiers'), [query, setQuery] = useState(''), [selectedId, setSelectedId] = useState<string | null>(null), [expanded, setExpanded] = useState(false);
   const [options, setOptions] = useState<TableViewPreference>(defaultTableView), optionsRef = useRef(options), [error, setError] = useState('');
   const [personal, setPersonal] = useState<PersonalTableView[]>([]), personalRef = useRef(personal), [personalId, setPersonalId] = useState('standard');
@@ -34,7 +35,7 @@ export function TableWorkshop() {
   const [result, setResult] = useState<WorkshopResult | null>(null), [loading, setLoading] = useState(true), [sourceError, setSourceError] = useState('');
   const [slow, setSlow] = useState(false), [fail, setFail] = useState(false), [retry, setRetry] = useState(0), latest = useRef(new LatestTableRequest());
   const group = `table-workshop:${view}`, key = tableViewKey(view);
-  useEffect(() => installUnsavedLifecycleBridge(), []);
+  useEffect(() => manageLifecycle ? installUnsavedLifecycleBridge() : undefined, [manageLifecycle]);
   useEffect(() => {
     setLoading(true); setSourceError(''); setResult(null);
     const gate = latest.current;
@@ -44,22 +45,34 @@ export function TableWorkshop() {
   }, [query, options.status, options.category, options.sort?.columnId, options.sort?.direction, mode, page, pageSize, slow, fail, retry]);
   useEffect(() => {
     setPersonalId('standard');
-    try { const next = readTableView(localStorage, key, TABLE_DEMO_STATUSES, TABLE_DEMO_CATEGORIES); optionsRef.current = next; setOptions(next); setError(''); }
+    try { const next = readTableView(store, key, TABLE_DEMO_STATUSES, TABLE_DEMO_CATEGORIES); optionsRef.current = next; setOptions(next); setError(''); }
     catch { const next = defaultTableView(); optionsRef.current = next; setOptions(next); setError('Préférences non lues ; vue par défaut affichée.'); }
-    try { const next = readPersonalViews(localStorage, view, TABLE_DEMO_STATUSES, TABLE_DEMO_CATEGORIES); personalRef.current = next; setPersonal(next); }
+    try { const next = readPersonalViews(store, view, TABLE_DEMO_STATUSES, TABLE_DEMO_CATEGORIES); personalRef.current = next; setPersonal(next); }
     catch { personalRef.current = []; setPersonal([]); setError('Vues personnelles non lues ; vue standard disponible.'); }
-  }, [key]);
+  }, [key, store]);
   function update(updater: (current: TableViewPreference) => TableViewPreference) {
     const next = updater(optionsRef.current); optionsRef.current = next; setOptions(next);
     try {
-      if (personalId === 'standard') writeTableView(localStorage, key, next);
+      if (personalId === 'standard') writeTableView(store, key, next);
       else persistPersonal(personalRef.current.map(saved => saved.id === personalId ? { ...saved, preference: next } : saved));
       setError('');
     } catch { setError('Préférences non mémorisées ; le dossier et ses saisies sont conservés.'); }
   }
-  function persistPersonal(next: PersonalTableView[]) { writePersonalViews(localStorage, view, next, TABLE_DEMO_STATUSES, TABLE_DEMO_CATEGORIES); personalRef.current = next; setPersonal(next); }
+  function persistPersonal(next: PersonalTableView[]) { writePersonalViews(store, view, next, TABLE_DEMO_STATUSES, TABLE_DEMO_CATEGORIES); personalRef.current = next; setPersonal(next); }
+  useEffect(() => {
+    const external = (event: StorageEvent) => {
+      if (event.key !== null && event.key !== key && event.key !== `atoumweb:table-workshop:${encodeURIComponent(view)}:personal:v1`) return;
+      try {
+        const saved = readPersonalViews(store, view, TABLE_DEMO_STATUSES, TABLE_DEMO_CATEGORIES); personalRef.current = saved; setPersonal(saved);
+        const selected = saved.find(item => item.id === personalId);
+        const next = selected?.preference ?? readTableView(store, key, TABLE_DEMO_STATUSES, TABLE_DEMO_CATEGORIES);
+        if (!selected) setPersonalId('standard'); optionsRef.current = next; setOptions(next); setError('');
+      } catch { setError('Préférences externes non lues ; fiche et brouillon conservés.'); }
+    };
+    window.addEventListener('storage', external); return () => window.removeEventListener('storage', external);
+  }, [store, key, view, personalId]);
   function choosePersonal(id: string) {
-    try { const next = id === 'standard' ? readTableView(localStorage, key, TABLE_DEMO_STATUSES, TABLE_DEMO_CATEGORIES) : personalRef.current.find(saved => saved.id === id)?.preference;
+    try { const next = id === 'standard' ? readTableView(store, key, TABLE_DEMO_STATUSES, TABLE_DEMO_CATEGORIES) : personalRef.current.find(saved => saved.id === id)?.preference;
       if (!next) return; setPersonalId(id); optionsRef.current = next; setOptions(next); setError('');
     } catch { setError('Préférences non lues ; fiche et brouillon conservés.'); }
   }
@@ -73,7 +86,6 @@ export function TableWorkshop() {
     } catch { setError('Vue personnelle non mémorisée ; fiche et brouillon conservés.'); }
   }
   function open(id: string | null) { if (id === selectedId) return; requestUnsavedExit(() => { setSelectedId(id); setExpanded(false); }, group); }
-  useEffect(() => { const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') { event.preventDefault(); open(null); } }; window.addEventListener('keydown', escape); return () => window.removeEventListener('keydown', escape); });
   const columns: TableColumn<TableWorkshopRecord>[] = [
     { id: 'identity', label: 'Identité', required: true, sortValue: row => row.name, render: row => <><strong className="aw-table-identity">{row.name}</strong><span className="aw-table-id">{row.id}</span></> },
     { id: 'category', label: 'Catégorie', sortValue: row => row.category, render: row => row.category },
@@ -88,9 +100,12 @@ export function TableWorkshop() {
   // The detail is resolved from the complete immutable source, NEVER the filtered/sorted rows.
   const record = TABLE_WORKSHOP_RECORDS.find(row => row.id === selectedId);
   const filteredOut = !!record && !rows.some(row => row.id === record.id);
-  return <><h1>Atelier 01D — tableaux et fiches</h1><AppNotice level="info">120 dossiers synthétiques. Aucun service métier, devis ou contrat n’est modifié.</AppNotice>
+  return <section className="aw-table-workshop" onKeyDown={event => {
+    if (!active || event.defaultPrevented || event.nativeEvent.isComposing || event.key !== 'Escape') return;
+    event.preventDefault(); event.stopPropagation(); open(null);
+  }}><h1>Atelier 01D — tableaux et fiches</h1><AppNotice level="info">120 dossiers synthétiques. Aucun service métier, devis ou contrat n’est modifié.</AppNotice>
     <label>Vue de démonstration<select id="table-view" value={view} onChange={e => { const next = e.target.value; requestUnsavedExit(() => { setView(next); setQuery(''); setSelectedId(null); setExpanded(false); }, group); }}><option value="dossiers">Dossiers</option><option value="autre-vue">Autre vue isolée</option></select></label>
-    <SavedViewPicker views={personal} selected={personalId} onSelect={choosePersonal} onCreate={(name, duplicate) => editPersonal(duplicate ? 'duplicate' : 'create', name)} onRename={name => editPersonal('rename', name)} onDelete={() => editPersonal('delete')} onReset={() => { setPersonalId('standard'); const next = defaultTableView(); optionsRef.current = next; setOptions(next); try { writeTableView(localStorage, key, next); setError(''); } catch { setError('Préférences non mémorisées ; fiche conservée.'); } }}/>
+    <SavedViewPicker views={personal} selected={personalId} onSelect={choosePersonal} onCreate={(name, duplicate) => editPersonal(duplicate ? 'duplicate' : 'create', name)} onRename={name => editPersonal('rename', name)} onDelete={() => editPersonal('delete')} onReset={() => { setPersonalId('standard'); const next = defaultTableView(); optionsRef.current = next; setOptions(next); try { writeTableView(store, key, next); setError(''); } catch { setError('Préférences non mémorisées ; fiche conservée.'); } }}/>
     <section className="aw-table-source" aria-label="Source asynchrone synthétique"><label>Portée de la source<select id="table-source-mode" value={mode} onChange={e => { setMode(e.target.value as 'complete' | 'paged'); setPage(1); }}><option value="complete">Source complète</option><option value="paged">Page partielle de la source</option></select></label>
       <label>Taille de page<select id="table-page-size" value={pageSize} disabled={mode === 'complete'} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}><option value="10">10</option><option value="20">20</option><option value="40">40</option></select></label>
       <label><input id="table-slow" type="checkbox" checked={slow} onChange={e => setSlow(e.target.checked)}/>Simuler une réponse lente</label>
@@ -104,11 +119,11 @@ export function TableWorkshop() {
     {sourceError && <AppNotice level="error"><span id="table-source-error">{sourceError}</span><AppButton onAction={() => setRetry(value => value + 1)}>Réessayer le chargement</AppButton></AppNotice>}
     {result && <p id="table-source-scope" role="status">{result.scope === 'complete' ? 'Source complète' : 'Page partielle'} · Tri et filtres sur toute la source synthétique ({result.sourceTotal} dossiers). {result.total ? `${result.offset + 1}–${result.offset + rows.length}` : '0'} affichés sur {result.total} résultats.</p>}
     {mode === 'paged' && <nav className="aw-table-pagination" aria-label="Pagination des dossiers"><AppButton disabled={loading || !result || result.page <= 1} onAction={() => setPage((result?.page ?? 1) - 1)}>Page précédente</AppButton><span id="table-page">{result ? `Page ${result.page} / ${result.pageCount}` : 'Page en attente'}</span><AppButton disabled={loading || !result || result.page >= result.pageCount} onAction={() => setPage((result?.page ?? 1) + 1)}>Page suivante</AppButton></nav>}
-    <ResizableSplitView module={`table-demo:${view}`} view="list" defaultPercent={60} store={localStorage} selected={!!record} expanded={expanded} list={<DataTable preferenceScope={`${view}:${personalId}`} rows={rows} columns={ordered.filter(column => visible.includes(column.id))} widths={options.widths} onWidth={(id, width) => update(current => ({ ...current, widths: { ...current.widths, [id]: width } }))} selectedId={selectedId} getId={row => row.id} sort={options.sort} onSort={id => { setPage(1); update(current => ({ ...current, sort: nextTableSort(current.sort, id) })); }} caption={mode === 'complete' ? 'Source complète — tri global des dossiers synthétiques' : 'Page partielle — tri global avant pagination'} loading={loading} unavailable={!!sourceError}/> }>
+    <ResizableSplitView module={`table-demo:${view}`} view="list" defaultPercent={60} store={store} selected={!!record} expanded={expanded} list={<DataTable preferenceScope={`${view}:${personalId}`} rows={rows} columns={ordered.filter(column => visible.includes(column.id))} widths={options.widths} onWidth={(id, width) => update(current => ({ ...current, widths: { ...current.widths, [id]: width } }))} selectedId={selectedId} getId={row => row.id} sort={options.sort} onSort={id => { setPage(1); update(current => ({ ...current, sort: nextTableSort(current.sort, id) })); }} caption={mode === 'complete' ? 'Source complète — tri global des dossiers synthétiques' : 'Page partielle — tri global avant pagination'} loading={loading} unavailable={!!sourceError}/> }>
       <UnsavedGroup name={group}>{record && <RecordPane title={`${record.name} · ${record.id}`} expanded={expanded} onExpand={() => setExpanded(value => !value)} onClose={() => open(null)}>
         {filteredOut && <p className="aw-table-outside" role="status">{loading || sourceError ? 'La liste est temporairement indisponible.' : 'Ce dossier est hors du filtre ou de la page actuelle.'} Sa fiche et son brouillon restent ouverts.</p>}
         <TableRecordEditor key={record.id} record={record}/>
       </RecordPane>}</UnsavedGroup>
     </ResizableSplitView>
-  </>;
+  </section>;
 }

@@ -10,7 +10,7 @@ export function ResizableSplitView({module,view,defaultPercent=60,store,list,chi
   const ref=useRef<HTMLDivElement>(null),cleanup=useRef<()=>void>(()=>{});
   const [width,setWidth]=useState(0),[percent,setPercent]=useState(defaultPercent),[error,setError]=useState('');
   const key=layoutKey(module,view);
-  useEffect(()=>{const read=()=>{try{setPercent(readLayout(store,key,defaultPercent));setError('');}catch{setPercent(defaultPercent);setError('Disposition non lue ; valeur par défaut utilisée.');}};read();const external=(event:StorageEvent)=>{if(event.key===key)read();};window.addEventListener('storage',external);return()=>window.removeEventListener('storage',external);},[store,key,defaultPercent]);
+  useEffect(()=>{const read=()=>{try{setPercent(readLayout(store,key,defaultPercent));setError('');}catch{setPercent(defaultPercent);setError('Disposition non lue ; valeur par défaut utilisée.');}};read();const external=(event:StorageEvent)=>{if(event.key===key||event.key===null){cleanup.current();read();}};window.addEventListener('storage',external);return()=>window.removeEventListener('storage',external);},[store,key,defaultPercent]);
   useEffect(()=>{const element=ref.current;if(!element)return;const observer=new ResizeObserver(()=>setWidth(element.getBoundingClientRect().width));observer.observe(element);return()=>{observer.disconnect();cleanup.current();};},[]);
   useEffect(()=>()=>cleanup.current(),[key,store]);
   const effective=boundedSplit(percent,width,defaultPercent),narrow=width>0&&width<760;
