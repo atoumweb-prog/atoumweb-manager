@@ -1,5 +1,7 @@
 # Consolidation GitHub 01A → 01B → 01C — proposition du 12/10/2026
 
+**Reprise de consolidation après93 :** voir le [bilan86–93](UXV2_CONSOLIDATION_86_93_PREPARATION.md), qui actualise lesHEAD/simulations, analyse le timeout20s de main etétend le plan aux huitPR. Aucun trigger/merge/retarget exécuté. Quota/Stopusage restentàconfirmer ; les6runs de principe ne sont ni un quota acquis ni l'autorisation d'exécuter16runs.
+
 **Plan seulement, aucune fusion ni CI déclenchée.** Main distant vérifié : `07dde9c85dab337ee0ed3a5a92034a139d7ebad2`. Recette humaine globale différée ; tests techniques et sûreté métier restent obligatoires.
 
 **Actualisation12/10 après01D.4 :** l'utilisateur autorise au maximum les six CI du plan, mais demande explicitement de différer tout lancement tant que quota gratuit/protections budgétaires pas confirmés. Budget0USD/StopusageYes historiquement vérifié ; quota pas encore vérifié. Jeton actuel : API usage facturation inaccessible (scopeuser absent), Actionsenabled/all. Aucune modification de jeton/budget ni tentative de contournement. Candidate86 toujours7f5dbbf2a462f652b32dd2a2c08a8039f516b778, draft/baseMain, sans check. Main toujours07dde9c8, cibles/HEAD87–88 inchangés. Prochaine actionCI : confirmation de quota puis relectureHEAD/arbres/droits, un seul trigger si nécessaire ; résultat réel à présenter avant demande de merge. **Aucun run consommé dans cette campagne, aucun merge/retarget exécuté.** Préserver les nouveaux commits01D dePR89 ; le port Prospection reste proposé séparément.

@@ -1,5 +1,16 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 13/10/2026 — Méthode accélérée, candidate groupée 02A/02B autorisée
+
+- Autonomie à intérieur du lot, ciblés pendant développement et validation complète de fin ; une candidate par lot explicitement autorisé, merges toujours humains. Consolidation depuis93, merge local db407ba de main a01c60d9 ; arbre b462dce8 exactement simulé/testé, conflit journal seul résolu sans perte. Pas de nouveau code métier ni réexécution complète pour documentation seule.
+- Publication PR draft groupée et candidate automatique opened autorisées par nouvelle méthode ; pas de dispatch/rerun ni main/90–93 modifiés. [Plan accéléré](docs/UXV2_EXECUTION_ACCELEREE_LOT02.md) : proposer raccord réel 02B.5/6 et rail en un lot, puis02C séparément ; scopes futurs restent à autoriser. ZéroValidation-MSI, pas de nouvelle architecture UX-01 ou chrono.
+
+## 13/10/2026 — Préparation locale consolidation 02A / 02B
+
+- main a01c60d9 après #95/CI661 verte, #92 893b40bc et #93 f7e2ae9b inchangées. Simulations 02A seul et groupée : conflit uniquement PROJECT_STATUS, deux historiques conservés ; aucun conflit/code métier modifié. Branche locale codex/prep-consolidation-ux-v2-02ab, candidat testé 83127f07, arbre b462dce8.
+- Typecheck OK, 893/893 (97 fichiers,82,38s), ciblés69/69, restaurations35/35, binaires6/6 sansRPC ; Electron02A125/02B167/F137 dont61 assertionsÉchap, UX-01 complet183 et sections33, troisthèmes/neufvariantes, captures synchronisées, intégrité/FK/migrations1–66 TEMP et cleanup confirmés.
+- [Rapport de préparation](docs/UXV2_CONSOLIDATION_02AB_PREPARATION.md) : groupée recommandée, deuxCI futures(candidate/postfusion), pas déclenchées. RisquesEscape hérité etpointerdown GlobalTimer àqualifier avant02B.5 ; ateliersnonraccordés, chronoTESTdistinct, 02B.5/6 et02C suspendus. Aucunpush/PR/CI/mergePR/retarget, main et90–93 préservés, zéroValidation-MSI ; attendreaccordpublication.
+
 ## 13/10/2026 — Correctif local tests binaires #95
 
 - Branchelocaledédiée codex/fix-95-native-buffer-assertions depuis95@b0e9bb0 ; commit66e0fc2.14comparaisonsFSBuffer.equals intégrales, sixcontrôles permanents (identique,first/middle/last,shorter/longer) surfichiersTEMP2,4Mo.35restaurations conservées, aucuneassertionSQL/timeout/service/migration/guard modifié.
@@ -20,6 +31,35 @@
 - AuSHA85040fb propre : typecheckOK ; ciblés97/97 ; Vitest867/867(94fichiers,104,73s,sansRPC), restaurations35/35(A→B4,464s) ; E95/F137/D126/C66/UX-01183 verts. DeuxbasesTEMPtableshorssettingsinchangées, intégritéOK/FKvide/migrations1–66/nettoyagesconfirmés.
 - Simulationgroupéemain31167754+codecorrigé sansconflit : arbref7d7486 identique àsourcecorrigée. [Bilan, preuves etplan](docs/UXV2_CONSOLIDATION_01EF_ESCAPE_FIX.md) : prête àsoumettre àvalidation, pasuneautorisationdepublication/CI/fusion.
 - Prochainaccorddistinct : publication/branchegroupée/mergemainversbranchecorrective puisPRdraftcandidateunique ; fusionetpostCI aprèsvalidationhumaine. ZéroCI/push/PR/merge/retarget/budget ouValidation-MSI, 02B.5/02B.6/02C suspendus.
+
+## 12/10/2026 — 02B.3 pilote et audit clavier 02B.4
+
+- Reprise propre de #93@8b241c4, base #92 et dépendances #90/#91/#92 conservées ; main confirmé31167754 après fusion #94, CI post-fusion38273325333 SUCCESS (846/846, sansRPC). Aucun merge/retarget/CI nouveau effectué dans cette tâche.
+- Code final e78f1ee : huit états header/rail/bandeau indépendants, préférence visuelle sans données métier, garde UX-01 existante ; focus Options corrigé après reproduction, dialogues chrono TEST et brouillons conservés, mots du contexte lisibles. Aucun App/GlobalTimer/GlobalSearch/IPC/service ou migration modifié.
+- Typecheck OK ; ciblés28/28 ; complet887/887 dans96fichiers,140,15s,sansRPC ; restaurations35/35, A→B5,344s. Atelier02B167/167 en deux processus et18captures auSHAexact dirty:false. Régressions02A125/125, UX-01183/183 etrenderer300/300 sur40a40b8, sources de ces bancs inchangées par la dernière correction CSS du pilote. TEMP intégritéOK/FKvide/migrations1–66 etnettoyage confirmés.
+- [Rapport et limites](docs/UXV2_LOT02B_EXECUTION.md), [audit clavier](docs/UXV2_LOT02B_RACCOURCIS.md) : aucun nouveau raccourci global. Risques Escape hérités et pointerdown du vrai chrono à qualifier avantport ; cette validation n'est pas une certification desdialogues métier dansV2.
+- Publication #93 draft avecskipci, aucunusageValidation-MSI, budget oudonnée réelle. Suite : revue indépendante puisprochaineconsolidation avant décision02B.5 ; aucun02C/03/raccordementmassif commencé.
+
+## 12/10/2026 — 02B.3 suspendu ; consolidation86–93 préparée
+
+- HuitPR draft/mergeable, baseslinéaires ancêtres, retard0 etaucuncheck courant. Main07dde9c8 inchangé. Simulations16pairesbase/source etmain/source sansconflit, arbreségaux auxsources ; aucun merge appliqué oubasechangée.
+- Runmain38006715403 :800PASS/1timeout20s (A→Brestore). Fichiersrestore/service/config/runtime identiques àtouteslesbranches ; aucun nouveau correctif. TreecheckoutCIpréfusionverte91b6d31 identique àmain. Local3/3 ciblés4,665/4,655/4,644s puisrestore35/35 en73,59s : neprouvepas correctionhosted.
+- [Bilan/plan/autorisation](docs/UXV2_CONSOLIDATION_86_93_PREPARATION.md) publié enMarkdown dans93 ; aucunecode/UI/règlemétier modifiée. QuotaAPIinaccessible(scopeuser), budget0/StopusageYes historiquesnonreconfirmés. Sixruns premièretranche,16runs potentielschaîneentière àautoriser ; zéroCI déclenchée.
+- Avantfusion : confirmationbudget/quota, CIcandidate unique verte puisaccorddemerge parSHA, CIpostmergeverte ; retarget/actualisation normales autoriséesuneétapeàlafois. Aucun02B.3/02C/03, Validation-MSI, rebase/squash/force/suppressionbranche.
+
+## 12/10/2026 — 02B.1–02B.2 : audit et atelier d’en-tête
+
+- Branche codex/ux-v2-lot02b-header-v1 depuis #92@893b40b, revue ChatGPT lue. [Inventaire](docs/UXV2_LOT02B_INVENTAIRE.md) du header, commandes, GlobalSearch/Timer/Clock, notifications, breakpoints et clavier. Aucun nouveau raccourci global attribué.
+- Présentations développé/compact/étroit, slot chrono TEST unique toujours monté, motif et focus conservés au repli ; contrôles du rail02A partagés, préférence header distincte via01F, bandeau Bibliothèque indépendant. Formulaires/motifs fictifs gardés parUX-01, aucune API métier exposée.
+- Code f7099aa : typecheck OK, ciblés25/25, suite884/884 (96fichiers,117,82s,sansRPC), natif86/deuxprocessus/18captures auSHAexact ; 02A125/UX-01183/renderer300 verts. Tables horssettings intactes, intégrité/FK/migrations1–66 TEMP, nettoyage confirmé. [Rapport et16critères](docs/UXV2_LOT02B_EXECUTION.md).
+- PR93 draft/base92 ; App/GlobalTimer/GlobalSearch/GlobalClock réels inchangés. Port métier/chrono réel/routage etrecette humaine globale différés. Aucun02C/03, fusion/CIhébergée/Validation-MSI.
+
+## 12/10/2026 — Préparation 02A et atelier de navigation E42
+
+- Branche `codex/ux-v2-lot02a-navigation-v1` depuis #91@765f66d ; revue ChatGPT lue. [Inventaire](docs/UXV2_LOT02A_INVENTAIRE.md) des 17 clés, événements, raccourcis, CSS, icônes et gardes avant code. PR #92 draft, base #91 ; parents préservés.
+- Option E42 A : réduit = Accueil + favoris + cinq groupes ; déployé = 17 destinations. Groupes explicites/clavier/focus, favoris ordonnés et reset confirmé, persistance visuelle 01F. Demande Projet temporaire sans écriture durable. Logo triangulaire et nouveaux pictogrammes seulement réservés ; aucun visuel définitif adopté.
+- Code final 5f8480e : typecheck OK, ciblés 18/18, suite 877/877 (95 fichiers, 112,99 s, sans RPC), natif 125/125 sur deux processus, neuf captures au SHA exact. Régressions F76 / UX-01183 / renderer300 sur 5ba1168 ; tables hors settings inchangées, intégrité/FK et migrations 1–66 TEMP, nettoyage confirmé. [Rapport et 18 critères](docs/UXV2_LOT02A_EXECUTION.md).
+- Atelier autonome ; App.tsx, GlobalTimer, routes ciblées et services métier inchangés. Raccord réel de navigation, atlas/logo final et lecteur d'écran restent à qualifier. Aucun 02B/lot03, merge, CI hébergée ni Validation-MSI. Recette humaine globale différée.
 
 ## 12/10/2026 — 01F : persistance par workspace et recette transversale
 
@@ -1555,6 +1595,7 @@ Les tests couvrent les migrations vierges et mises à niveau, les prix confirmé
 Prochaine action : validation visuelle du parcours complet et des trois thèmes sous Windows. Aucune ouverture du workspace utilisateur sans sauvegarde explicite.
 
 Clôture Lot 3 — 03/10/2026 : bilan réel validé par AtoumWeb ; commit local dédié autorisé, sans push ni merge. La recette manuelle AtoumWeb reste à faire avant validation fonctionnelle finale. Cette clôture ne contient aucune modification du Lot 4.
+
 
 
 
