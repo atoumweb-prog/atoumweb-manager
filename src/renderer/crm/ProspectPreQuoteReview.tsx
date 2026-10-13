@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
-import type { CatalogItemSummary, QuoteLineInput } from '../../shared/commercial';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { CatalogItemSummary } from '../../shared/commercial';
+import { planProspectQuoteLines } from '../../shared/prospectPreQuotePlan';
 import type { ProspectSummary } from '../../shared/crm';
 import type { Need, WorkflowIdentity } from '../../shared/workflow';
 import { parseProspectInformation } from '../../shared/prospectInformation';
@@ -8,7 +9,20 @@ import {CommercialScope} from '../commercial/CommercialScope';
 /** Independent from the collapsible need form: reducing it never hides the final review. */
 export function ProspectPreQuoteReviewPanel({prospect,onChanged}:{prospect:ProspectSummary;onChanged:()=>void}) {
   const [data,setData]=useState<{needs:Need[];catalog:CatalogItemSummary[]}|null>(null),[error,setError]=useState('');
-  useEffect(()=>{let active=true;const load=()=>{void Promise.all([window.atoumweb.workflow.needs('prospect',prospect.id),window.atoumweb.catalog.list({status:'active'})]).then(([needs,catalog])=>{if(active){setData({needs,catalog});setError('');}}).catch(e=>{if(active)setError(cleanError(e));});};load();window.addEventListener('atoumweb:changed',load);return()=>{active=false;window.removeEventListener('atoumweb:changed',load);};},[prospect.id,prospect.updatedAt]);
+  useEffect(() => {
+    let active = true, sequence = 0;
+    setData(null);
+    const load = () => {
+      const request = ++sequence;
+      void Promise.all([window.atoumweb.workflow.needs('prospect', prospect.id), window.atoumweb.catalog.list({ status: 'active' })])
+        .then(([needs, catalog]) => {
+          if (active && request === sequence) { setData({ needs, catalog }); setError(''); }
+        }).catch(e => { if (active && request === sequence) setError(cleanError(e)); });
+    };
+    load();
+    window.addEventListener('atoumweb:changed', load);
+    return () => { active = false; window.removeEventListener('atoumweb:changed', load); };
+  }, [prospect.id, prospect.updatedAt]);
   return error?<p role="alert">{error}</p>:data?<ProspectPreQuoteReview prospect={prospect} {...data} onChanged={onChanged}/>:null;
 }
 
@@ -57,15 +71,21 @@ export function ProspectPreQuoteReview({ prospect, needs, catalog, onChanged }: 
   const [identity, setIdentity] = useState<WorkflowIdentity | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-
+  const submitting = useRef(false);
   useEffect(() => {
-    void window.atoumweb.workflow.identity('prospect', prospect.id).then(setIdentity).catch((e) => setError(cleanError(e)));
+    let live = true;
+    setIdentity(null);
+    void window.atoumweb.workflow.identity('prospect', prospect.id)
+      .then(next => { if (live) { setIdentity(next); setError(''); } })
+      .catch((e) => { if (live) setError(cleanError(e)); });
+    return () => { live = false; };
   }, [prospect.id, prospect.updatedAt]);
 
   const solutionRows = useMemo(() => needs.map((need) => ({
     need,
     item: need.catalogItemId ? catalog.find((candidate) => candidate.id === need.catalogItemId) ?? null : null,
   })), [needs, catalog]);
+  const quotePlan = useMemo(() => planProspectQuoteLines(needs, catalog), [needs, catalog]);
   const informationItems = useMemo(() => parseProspectInformation(prospect.missingInformation), [prospect.missingInformation]);
   const blockingInformation = informationItems.filter((item) => item.status === 'open' && item.isBlocking);
   const laterInformation = informationItems.filter((item) => item.status !== 'resolved' && !item.isBlocking);
@@ -73,6 +93,8 @@ export function ProspectPreQuoteReview({ prospect, needs, catalog, onChanged }: 
   const blockers = useMemo(() => {
     const result: string[] = [];
     if (needs.length === 0) result.push('Sélectionner au moins une solution ou prestation.');
+    for (const missing of quotePlan.missing) result.push(`Prestation indisponible dans le catalogue publié : ${missing}. Sélectionne une version active avant de créer le devis.`);
+    if (needs.length > 0 && quotePlan.lines.length === 0 && quotePlan.missing.length === 0) result.push('Aucune ligne de devis valide ne peut être préparée.');
     if (!prospect.projectSummary?.trim()) result.push('Résumer le projet / la problématique à chiffrer.');
     if (!prospect.budgetStatus) result.push('Renseigner le budget ou indiquer « Non communiqué ».');
     if (!prospect.timelineStatus) result.push('Renseigner le calendrier ou indiquer « Non communiqué ».');
@@ -80,13 +102,14 @@ export function ProspectPreQuoteReview({ prospect, needs, catalog, onChanged }: 
     if (prospect.decisionStatus === 'no' && !prospect.decisionMakerDetails?.trim() && !identity?.decisionMaker) result.push('Identifier le décisionnaire ou le chemin de validation.');
     blockingInformation.forEach((item) => result.push(`Obtenir : ${item.label}`));
     return result;
-  }, [needs.length, prospect, identity, blockingInformation.map((item) => `${item.id}:${item.status}:${item.isBlocking}`).join('|')]);
+  }, [needs.length, prospect, identity, quotePlan, blockingInformation.map((item) => `${item.id}:${item.status}:${item.isBlocking}`).join('|')]);
 
-  const unpriced = solutionRows.filter(({ item }) => item?.currentVersion && item.currentVersion.priceCents == null && item.currentVersion.priceMode !== 'free');
+  const unpriced = quotePlan.unpriced;
   const ready = blockers.length === 0;
 
   async function createDraftAndOpen() {
-    if (!ready || busy) return;
+    if (!ready || busy || submitting.current) return;
+    submitting.current = true;
     setBusy(true); setError('');
     try {
       const existing = await window.atoumweb.quotes.list({ prospectId: prospect.id });
@@ -96,23 +119,8 @@ export function ProspectPreQuoteReview({ prospect, needs, catalog, onChanged }: 
         return;
       }
 
-      const lines: Array<{ catalogVersionId?: string; input: QuoteLineInput }> = [];
-      for (const { item } of solutionRows) {
-        const version = item?.currentVersion;
-        if (!item || !version) continue;
-        const needsManualPrice = version.priceCents == null && version.priceMode !== 'free';
-        lines.push({
-          catalogVersionId: version.id,
-          input: {
-            label: item.name,
-            ...(needsManualPrice ? { proposedUnitPriceCents: 0 } : {}),
-          },
-        });
-      }
-      const customNeeds = solutionRows.filter(({ item, need }) => !item && need.otherText?.trim());
-      for (const { need } of customNeeds) {
-        lines.push({ input: { label: need.otherText!.trim(), catalogUnitPriceCents: 0, proposedUnitPriceCents: 0 } });
-      }
+      // Le plan partagé garantit que chaque besoin retenu a une ligne réelle et une version encore disponible.
+      if (quotePlan.missing.length || !quotePlan.lines.length) throw new Error('Des prestations sont indisponibles : actualise les besoins avant de préparer le devis.');
 
       const first = solutionRows[0];
       const subject = first?.need.label || prospect.projectSummary?.trim() || `Projet ${prospect.displayName}`;
@@ -126,12 +134,12 @@ export function ProspectPreQuoteReview({ prospect, needs, catalog, onChanged }: 
         estimatedDelay: prospect.timelineStatus === 'date' && prospect.targetDate
           ? `Date cible : ${new Date(`${prospect.targetDate.slice(0, 10)}T12:00:00`).toLocaleDateString('fr-FR')}`
           : prospect.timelineNote || null,
-      }, lines);
+      }, quotePlan.lines);
       onChanged?.();
       window.dispatchEvent(new Event('atoumweb:changed'));
       window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'quote', entityId: created.id, title: created.subject } }));
     } catch (e) { setError(cleanError(e)); }
-    finally { setBusy(false); }
+    finally { submitting.current = false; setBusy(false); }
   }
 
   return <div className="prequote-review">
@@ -157,7 +165,7 @@ export function ProspectPreQuoteReview({ prospect, needs, catalog, onChanged }: 
 
       {blockers.length > 0 && <div className="prequote-blockers"><strong>À compléter avant de passer au devis</strong>{blockers.map((entry) => <span key={entry}>• {entry}</span>)}</div>}
       {laterInformation.length > 0 && <div className="prequote-warning"><strong>À obtenir plus tard — non bloquant</strong>{laterInformation.map((item) => <span key={item.id}>• {item.label}{item.answer ? ` — ${item.answer}` : ''}</span>)}</div>}
-      {unpriced.length > 0 && <div className="prequote-warning"><strong>Chiffrage à compléter dans l’éditeur</strong><span>{unpriced.map(({ need }) => need.label).join(', ')} : ces lignes seront bien reprises dans le brouillon avec leur référence catalogue, puis leur montant devra être saisi dans le devis.</span></div>}
+      {unpriced.length > 0 && <div className="prequote-warning"><strong>Chiffrage à compléter dans l’éditeur</strong><span>{unpriced.join(', ')} : ces lignes seront bien reprises dans le brouillon avec leur référence catalogue, puis leur montant devra être saisi dans le devis.</span></div>}
       {error && <p className="form-error" role="alert">{error}</p>}
       <div className="prequote-actions"><button type="button" className="secondary-button" onClick={() => setOpen(false)}>Retour au besoin</button><button type="button" className="primary-button" disabled={!ready || busy} onClick={() => void createDraftAndOpen()}>{busy ? 'Création du brouillon…' : 'Passer à l’édition du devis'}</button></div>
       <small className="muted">Le devis créé reste un brouillon modifiable. La gestion définitive du numéro officiel et de l’édition sera reprise avec l’éditeur de devis lors de la passe dédiée.</small>
