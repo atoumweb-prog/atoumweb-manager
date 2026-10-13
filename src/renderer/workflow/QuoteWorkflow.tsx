@@ -4,28 +4,35 @@ import {ProjectCommercialScopePanel} from '../projects/ProjectCommercialScopePan
 import { QuoteContractPreparationPanel } from '../commercial/QuoteContractPreparationPanel';
 import {useEffect,useState} from 'react';
 import type {QuoteDetail} from '../../shared/commercial';
+import { findCurrentQuoteProject } from '../../shared/quoteProjectEligibility';
 import type {ProjectSummary,ProjectTemplateSummary,ProjectCommercialPreview} from '../../shared/projects';
 import {ContractTermsBuilder} from '../commercial/ContractTermsBuilder';
 import {changed,openEntity} from './DossierPanel';
 export function QuoteProjectPanel({quote,requirePreviewBeforePrepare=false}:{quote:QuoteDetail;requirePreviewBeforePrepare?:boolean}){
   const [templates,setTemplates]=useState<ProjectTemplateSummary[]>([]),[project,setProject]=useState<ProjectSummary|null>(null),[template,setTemplate]=useState(''),[date,setDate]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
   const [preview,setPreview]=useState<ProjectCommercialPreview|null>(null);
-  const [loadingProject,setLoadingProject]=useState(true);
+  const [loadingProject,setLoadingProject]=useState(true),[lookupFailed,setLookupFailed]=useState(false);
   useUnsavedDraft('Préparation du Projet depuis le devis', {template,date}, {
     group:'quote:'+quote.id+'/project', ready:!project, pending:busy,
     discard:()=>{setTemplate('');setDate('');setPreview(null);},
   });
   useEffect(()=>{
     let current=true;
-    setTemplate('');setError('');setPreview(null);setProject(null);setLoadingProject(true);
+    setTemplate('');setError('');setPreview(null);setProject(null);setLoadingProject(true);setLookupFailed(false);
     Promise.all([window.atoumweb.projects.templates.list(),window.atoumweb.projects.projects.list()])
-      .then(([t,p])=>{if(!current)return;setTemplates(t.filter(item=>item.currentVersion?.status==='published'));setProject(p.find(item=>item.id===quote.projectId||item.sourceQuoteId===quote.id)??null);})
-      .catch(e=>{if(current)setError(e instanceof Error?e.message:String(e));})
+      .then(async ([t,p])=>{
+        if(!current)return;
+        const linked=await findCurrentQuoteProject(quote,p,async id=>(await window.atoumweb.projects.projects.commercialScope(id)).currentQuoteId);
+        if(!current)return;
+        setTemplates(t.filter(item=>item.currentVersion?.status==='published'));
+        setProject(linked);
+      })
+      .catch(e=>{if(current){setLookupFailed(true);setError(e instanceof Error?e.message:String(e));}})
       .finally(()=>{if(current)setLoadingProject(false);});
     return ()=>{current=false;};
   },[quote.id,quote.projectId,quote.status,quote.updatedAt]);
   async function create(){
-    if(loadingProject||project)return;
+    if(loadingProject||lookupFailed||project)return;
     if(requirePreviewBeforePrepare&&quote.status!=='accepted'&&!preview){setError('Vérifie le plan avant de confirmer la préparation du Projet.');return;}
     setBusy(true);setError('');
     try{
@@ -40,7 +47,7 @@ export function QuoteProjectPanel({quote,requirePreviewBeforePrepare=false}:{quo
   async function inspectPlan(){setBusy(true);setError('');try{setPreview(await window.atoumweb.projects.projects.previewQuote({quoteId:quote.id,templateVersionId:template||null,targetDate:date||null}));}catch(e){setPreview(null);setError(e instanceof Error?e.message:String(e));}finally{setBusy(false);}}
   return <section className="workflow-fields quote-project-create">
     <h3>{quote.status==='accepted'?'Projet du devis accepté':'Préparer le Projet'}</h3>
-    {loadingProject ? <p role="status">Vérification du Projet déjà lié au devis…</p> : project
+    {loadingProject ? <p role="status">Vérification du Projet déjà lié au devis…</p> : lookupFailed ? <p className="form-error" role="alert">Vérification du Projet impossible : {error}. Aucun nouveau Projet ne sera créé tant que le lien existant n'est pas vérifié.</p> : project
       ? <>{project.commercialState==='provisional'&&quote.status!=='accepted'&&<p role="status">Projet en préparation — devis non signé.</p>}<button type="button" className="primary-button" onClick={()=>openEntity({entityType:'project',entityId:project.id,title:project.name})}>Ouvrir {project.name}</button><ProjectCommercialScopePanel key={project.id+project.commercialState+quote.status} projectId={project.id} onChanged={setProject}/></>
       : <>
           <p>Préparer les étapes, Sites, Pages et prérequis depuis les lignes du devis. Les options seulement disponibles ne contribuent pas. L’acceptation activera et figera le même Projet.</p>
