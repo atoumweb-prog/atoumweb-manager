@@ -105,7 +105,7 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
   }
 
   useEffect(() => { void refresh(); }, []);
-  useEffect(()=>{if(initialId)void openQuote(initialId).catch((error:unknown)=>{onEntityReady?.('quote',initialId,error instanceof Error?error.message:'Devis introuvable.');onMessage(error instanceof Error?error.message:'Devis introuvable.');});},[initialId,initialRequest]);
+  useEffect(()=>{let current=true;if(initialId)void openQuote(initialId).catch((error:unknown)=>{if(!current)return;onEntityReady?.('quote',initialId,error instanceof Error?error.message:'Devis introuvable.');onMessage(error instanceof Error?error.message:'Devis introuvable.');});return()=>{current=false;};},[initialId,initialRequest]);
 
   useEffect(() => {
     if (!detail || previewOpen) return;

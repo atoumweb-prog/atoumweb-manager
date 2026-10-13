@@ -57,10 +57,10 @@ module.exports=async context=>{
   test(db.crm.listProspects().find(item=>item.id===p.id).projectSummary==='CONVERGENCE QUALIFICATION DIRTY','C08 inbound qualification project summary persisted through optimistic IPC');
   db.crm.updateProspectQualification(p.id,{projectSummary:'CONVERGENCE SITE',decisionStatus:'unknown',budgetStatus:'not_disclosed',timelineStatus:'not_disclosed'});
   db.crm.changeProspectStage(p.id,'need_identified',null,true);await emit();
-  await wait('!!document.querySelector(".need-identification-fields textarea")','actual Needs');
+  await wait('document.querySelector(".need-identification-fields textarea")?.value==="CONVERGENCE SITE"','actual Needs model loaded');
   await input('.need-identification-fields textarea','CONVERGENCE NEEDS');
   await textClick('.need-identification-fields button','Enregistrer l’identification du besoin');
-  await wait('!document.querySelector(".need-identification-fields button.primary-button").disabled','Needs save confirmed');
+  await wait(`(await window.atoumweb.crm.prospects.list()).find(p=>p.id===${JSON.stringify(p.id)})?.projectSummary==='CONVERGENCE NEEDS'&&!document.querySelector('.need-identification-fields button.primary-button').disabled`,'Needs save confirmed by persisted model');
   test(db.crm.listProspects().find(item=>item.id===p.id).projectSummary==='CONVERGENCE NEEDS','C08 actual Needs saves correct Prospect, existing quote not duplicated');
   test(db.quotes.list({prospectId:p.id}).length===1,'C08 qualification and Needs never duplicate the Quote');
   await js('document.querySelector(".prospect-desk-overlay .close-detail").click()');await sleep(80);
@@ -113,6 +113,20 @@ module.exports=async context=>{
   test(await get('document.querySelectorAll("[data-home-pipeline]").length===7&&document.querySelector("[data-home-pipeline=finalization] strong").textContent==="1"&&document.querySelector("[data-home-pipeline=conversions] strong").textContent==="1"'),'C06/C09 Home reuses real six+one projection including current E73 and historical Conversion');
   await click('[data-home-pipeline=conversions]');await wait('!!document.querySelector(".history-prospect-row")','Home Conversion navigation');
   test(await get('document.querySelector(".prospect-toolbar").textContent.includes("Conversions réelles")'),'C08 Home Conversion opens existing historical view');
+  const qa=db.quotes.create({prospectId:active.id,subject:'CONVERGENCE LATE A'}),qb=db.quotes.create({prospectId:active.id,subject:'CONVERGENCE LATE B'});
+  const realGet=db.quotes.get.bind(db.quotes);let reads=0,finish,rejectRead;
+  db.quotes.get=id=>{const value=realGet(id);if(id===qa.id&&++reads===2)return new Promise((resolve,reject)=>{finish=()=>resolve(value);rejectRead=reject;});return value;};
+  try{
+   await search('CONVERGENCE LATE A','quote',qa.id);for(let i=0;i<60&&!finish;i++)await sleep(20);
+   test(!!finish,'C03 quote detail, after successful preflight, actually delayed');
+   await search('CONVERGENCE LATE B','quote',qb.id);await loaded('quote',qb.id);finish();await sleep(100);
+   test(await get('document.querySelector(".quote-detail-panel").dataset.searchEntityId')===qb.id,'C03 obsolete Quote response cannot overwrite later exact Quote');
+   reads=0;finish=null;
+   await search('CONVERGENCE LATE A','quote',qa.id);for(let i=0;i<60&&!finish;i++)await sleep(20);
+   test(!!finish,'C03 obsolete failure actually armed');
+   await search('CONVERGENCE LATE B','quote',qb.id);await loaded('quote',qb.id);rejectRead(Error('OBSOLETE COMBINED QUOTE FAILURE'));await sleep(100);
+   test(await get('document.querySelector(".quote-detail-panel").dataset.searchEntityId')===qb.id&&!await get('document.body.textContent.includes("OBSOLETE COMBINED QUOTE FAILURE")'),'C03 obsolete Quote failure neither replaces identity nor adds false error');
+  }finally{db.quotes.get=realGet;}
   test(db.database.get('PRAGMA integrity_check').integrity_check==='ok'&&db.database.all('PRAGMA foreign_key_check').length===0,'C11 combined journey integrity and FK');
  }finally{dialog.showMessageBoxSync=originalDialog;}
 };
