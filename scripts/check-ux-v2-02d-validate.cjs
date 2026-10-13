@@ -1,9 +1,11 @@
 // Grouped local validation, frozen SHA and owned TEMP only. No network, CI dispatch or retry.
 const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process');
 const repo=path.resolve(__dirname,'..'),git=(...args)=>cp.execFileSync('git',args,{cwd:repo,encoding:'utf8'}).trim();
+const nativeOnly=process.argv[2]==='--native-only';
+if(process.argv.length>3||process.argv.length===3&&!nativeOnly)throw Error('Usage: node scripts/check-ux-v2-02d-validate.cjs [--native-only]');
 if(git('status','--porcelain'))throw Error('Commit candidate before final validation.');
 const sha=git('rev-parse','HEAD'),tree=git('rev-parse','HEAD^{tree}'),out=path.join(repo,'outputs','02d-'+sha.slice(0,8)+'-'+Date.now());fs.mkdirSync(out,{recursive:true});
-const manifest={sha,tree,dirty:false,onlyTemp:true,steps:[]};
+const manifest={sha,tree,dirty:false,onlyTemp:true,notExecuted:nativeOnly?['typecheck','targeted','vitest']:[],steps:[]};
 const steps=[
  ['typecheck',[require.resolve('typescript/bin/tsc'),'--noEmit']],
  ['targeted',['scripts/run-tests.cjs','src/shared/homeResourceLoad.test.ts','src/shared/homeWidgetPreference.test.ts','src/shared/workspaceVisualPreferences.test.ts','src/shared/shellVisualPreferences.test.ts','src/main/shellVisualPreferencesIpc.test.ts','--maxWorkers=2']],
@@ -14,6 +16,7 @@ const steps=[
  ['ux01',['scripts/check-unsaved-inputs-ui.cjs','--lot-b','--lot-c','--review']],
 ];
 for(const [name,args] of steps){
+ if(nativeOnly&&['typecheck','targeted','vitest'].includes(name))continue;
  const start=Date.now();console.log('START '+name);
  const env={...process.env};if(name==='home-real')env.ATOUMWEB_UXV2_02D_CAPTURES=path.join(out,'home-captures');
  const run=cp.spawnSync(process.execPath,args,{cwd:repo,env,encoding:'utf8',windowsHide:true,maxBuffer:32*1024*1024});

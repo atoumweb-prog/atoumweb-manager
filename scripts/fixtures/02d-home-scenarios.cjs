@@ -96,9 +96,17 @@ module.exports=async({win,db,temp,registered,evalUI:js,get,wait,navigate,test,sl
    if(captureDir){
     const color=[40+index*13,80+index*11,100+index*9];index++;
     await js(`let marker=document.getElementById('home-capture-marker');if(!marker){marker=document.createElement('div');marker.id='home-capture-marker';document.body.append(marker);}marker.style.cssText='position:fixed;bottom:0;right:0;width:40px;height:40px;z-index:999999;background:rgb(${color.join(',')})';await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));`);
-    const image=await win.webContents.capturePage(),size=image.getSize(),bitmap=image.toBitmap(),offset=((size.height-17)*size.width+size.width-17)*4;
-    const actual=[...bitmap.subarray(offset,offset+3)].sort((a,b)=>a-b),expected=[...color].sort((a,b)=>a-b);
-    test(expected.every((value,i)=>Math.abs(value-actual[i])<=7),'Synchronized composited capture '+theme+'/'+density);
+    // RAF updates DOM, but does not prove that Chromium submitted its composited frame.
+    // Same sentinel protocol as the shared harness: await the requested frame, never save an old one.
+    let image,matched=false;
+    const expected=[...color].sort((a,b)=>a-b);
+    for(let frame=0;frame<20;frame++){
+     image=await win.webContents.capturePage();const size=image.getSize(),bitmap=image.toBitmap(),offset=((size.height-17)*size.width+size.width-17)*4;
+     const actual=[...bitmap.subarray(offset,offset+3)].sort((a,b)=>a-b);
+     if(expected.every((value,i)=>Math.abs(value-actual[i])<=7)){matched=true;break;}
+     await sleep(25);
+    }
+    test(matched,'Synchronized composited capture '+theme+'/'+density);
     fs.writeFileSync(path.join(captureDir,theme+'-'+density+'-Accueil.png'),image.toPNG(),{flag:'wx'});
    }
   }
