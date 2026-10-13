@@ -41,3 +41,9 @@ export function planProspectQuoteLines(needs: readonly Need[], catalog: readonly
   }
   return { lines, missing, unpriced };
 }
+
+/** Ne pas chiffrer silencieusement un autre périmètre si besoins ou versions
+ * catalogue ont changé entre l'affichage du contrôle et le clic Créer. */
+export function sameProspectQuotePlan(expected: ProspectQuotePlan, actual: ProspectQuotePlan): boolean {
+  return JSON.stringify(expected) === JSON.stringify(actual);
+}
