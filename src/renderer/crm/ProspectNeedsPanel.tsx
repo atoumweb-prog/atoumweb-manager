@@ -177,6 +177,8 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
   const [savingInformation, setSavingInformation] = useState(0);
   const pendingInformation = useRef<Promise<void>>(Promise.resolve());
   const reloadSequence = useRef(0);
+  const currentProspectId = useRef(prospectId);
+  currentProspectId.current = prospectId;
 
   const [kind,setKind]=useState<'offers'|'services'>('offers');
   const choiceGuard=useUnsavedDraft('Prestation envisagée',{selectedId,otherText},{pending:busy,discard:s=>{setSelectedId(s.selectedId);setOtherText(s.otherText);}});
@@ -256,7 +258,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
       const updated = await window.atoumweb.crm.prospects.updateQualification(ownerId, {
         missingInformation: serializeProspectInformation(next),
       });
-      if (ownerId !== prospectId) return;
+      if (ownerId !== currentProspectId.current) return;
       setProspect(updated);
       onChanged?.();
       window.dispatchEvent(new Event('atoumweb:changed'));
