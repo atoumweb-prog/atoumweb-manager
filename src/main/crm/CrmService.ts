@@ -377,6 +377,43 @@ export class CrmService {
     return this.getContact(id);
   }
 
+  /**
+   * 03C : crée l'interlocuteur principal et rattache le Prospect dans une
+   * seule transaction SQLite. Une interruption entre les deux opérations
+   * ne laisse ni contact orphelin ni entrée d'activité fantôme.
+   *
+   * Le replay d'un IPC dont la réponse a été perdue réutilise le contact
+   * déjà rattaché, sans modifier un contact créé simultanément ailleurs.
+   */
+  createAndAttachPrimaryProspectContact(prospectId: string, input: ContactInput): Contact {
+    return this.transaction(() => {
+      const prospect = this.getProspect(prospectId);
+      if (prospect.archivedAt || prospect.clientAccountId) {
+        throw new Error('Impossible de créer un interlocuteur sur un Prospect archivé ou converti.');
+      }
+      if (input.organizationId && input.organizationId !== prospect.organizationId) {
+        throw new Error('Le contact doit appartenir à la même organisation que le Prospect.');
+      }
+      if (prospect.contactId) return this.getContact(prospect.contactId);
+
+      const contact = this.createContact({ ...input, organizationId: prospect.organizationId ?? null });
+      const result = this.database.run(
+        'UPDATE prospects SET contact_id=?, updated_at=? WHERE id=? AND contact_id IS NULL AND archived_at IS NULL AND client_account_id IS NULL',
+        [contact.id, nowIso(), prospectId],
+      );
+      if (Number(result.changes) !== 1) {
+        throw new Error('Le rattachement du contact a été modifié pendant la création. Réouvre la fiche Prospect.');
+      }
+      this.activity({
+        entityType: 'prospect', entityId: prospectId, action: 'primary_contact_attached',
+        summary: 'Interlocuteur principal créé et rattaché',
+        prospectId, organizationId: prospect.organizationId, contactId: contact.id,
+      });
+      this.indexProspect(prospectId);
+      return contact;
+    });
+  }
+
   updateContact(id: string, input: ContactInput): Contact {
     const firstName = clean(input.firstName);
     const lastName = clean(input.lastName);
