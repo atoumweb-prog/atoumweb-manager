@@ -239,6 +239,29 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
       refreshed.projectSummary==='Contexte modifié dans une autre fenêtre',
       'R03C-16: relecture explicite permet de reprendre sans écraser le contexte');
 
+    // 03C : IPC réelle de qualification conditionnelle. L'autre fenêtre
+    // conserve son projet saisi et refuse le snapshot antérieur, sans
+    // supprimer un budget / une checklist indépendante.
+    const qualificationOrg=db.crm.createOrganization({name:'TEST 03C Qualification CAS'});
+    const qualificationProspect=db.crm.createProspect({organizationId:qualificationOrg.id});
+    const qp=prospectStage(qualificationProspect.id);
+    const keys=['originType','targetingReasonCode','targetingReasonText','initialObservation',
+      'detectedOpportunity','firstContactResultCode','firstContactResultText',
+      'interestLevel','projectSummary','projectContext'];
+    const qualificationBefore=Object.fromEntries(keys.map(key=>[key,qp[key]??null]));
+    const qualificationA={...qualificationBefore,initialObservation:'Qualification fenêtre A'};
+    const qualificationB={...qualificationBefore,initialObservation:'Qualification fenêtre B'};
+    const savedQualification=await get('window.atoumweb.crm.prospects.updateQualificationBriefIfUnchanged('+
+      JSON.stringify(qualificationProspect.id)+','+JSON.stringify(qualificationBefore)+','+
+      JSON.stringify(qualificationA)+')');
+    test(savedQualification.initialObservation==='Qualification fenêtre A',
+      'R03C-16: qualification A enregistrée via IPC réel');
+    const oldQualificationRejected=await get('window.atoumweb.crm.prospects.updateQualificationBriefIfUnchanged('+
+      JSON.stringify(qualificationProspect.id)+','+JSON.stringify(qualificationBefore)+','+
+      JSON.stringify(qualificationB)+').then(()=>false,e=>String(e.message).includes("Conflit"))');
+    test(oldQualificationRejected&&prospectStage(qualificationProspect.id).initialObservation==='Qualification fenêtre A',
+      'R03C-16: qualification B obsolète refusée sans remplacement');
+
     // 03C : besoin de texte libre réellement enregistré, sans devis implicite.
     const needOrg = db.crm.createOrganization({name:'TEST 03C Besoin Dijon'});
     const needProspect = db.crm.createProspect({organizationId:needOrg.id,primaryNeed:'Site vitrine 03C'});
