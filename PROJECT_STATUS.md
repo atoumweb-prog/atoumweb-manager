@@ -1,5 +1,10 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 13/10/2026 — Méthode accélérée, candidate groupée 02A/02B autorisée
+
+- Autonomie à intérieur du lot, ciblés pendant développement et validation complète de fin ; une candidate par lot explicitement autorisé, merges toujours humains. Consolidation depuis93, merge local db407ba de main a01c60d9 ; arbre b462dce8 exactement simulé/testé, conflit journal seul résolu sans perte. Pas de nouveau code métier ni réexécution complète pour documentation seule.
+- Publication PR draft groupée et candidate automatique opened autorisées par nouvelle méthode ; pas de dispatch/rerun ni main/90–93 modifiés. [Plan accéléré](docs/UXV2_EXECUTION_ACCELEREE_LOT02.md) : proposer raccord réel 02B.5/6 et rail en un lot, puis02C séparément ; scopes futurs restent à autoriser. ZéroValidation-MSI, pas de nouvelle architecture UX-01 ou chrono.
+
 ## 13/10/2026 — Préparation locale consolidation 02A / 02B
 
 - main a01c60d9 après #95/CI661 verte, #92 893b40bc et #93 f7e2ae9b inchangées. Simulations 02A seul et groupée : conflit uniquement PROJECT_STATUS, deux historiques conservés ; aucun conflit/code métier modifié. Branche locale codex/prep-consolidation-ux-v2-02ab, candidat testé 83127f07, arbre b462dce8.
