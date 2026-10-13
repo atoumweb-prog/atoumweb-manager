@@ -1,5 +1,11 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 13/10/2026 — Préparation locale consolidation 02A / 02B
+
+- main a01c60d9 après #95/CI661 verte, #92 893b40bc et #93 f7e2ae9b inchangées. Simulations 02A seul et groupée : conflit uniquement PROJECT_STATUS, deux historiques conservés ; aucun conflit/code métier modifié. Branche locale codex/prep-consolidation-ux-v2-02ab, candidat testé 83127f07, arbre b462dce8.
+- Typecheck OK, 893/893 (97 fichiers,82,38s), ciblés69/69, restaurations35/35, binaires6/6 sansRPC ; Electron02A125/02B167/F137 dont61 assertionsÉchap, UX-01 complet183 et sections33, troisthèmes/neufvariantes, captures synchronisées, intégrité/FK/migrations1–66 TEMP et cleanup confirmés.
+- [Rapport de préparation](docs/UXV2_CONSOLIDATION_02AB_PREPARATION.md) : groupée recommandée, deuxCI futures(candidate/postfusion), pas déclenchées. RisquesEscape hérité etpointerdown GlobalTimer àqualifier avant02B.5 ; ateliersnonraccordés, chronoTESTdistinct, 02B.5/6 et02C suspendus. Aucunpush/PR/CI/mergePR/retarget, main et90–93 préservés, zéroValidation-MSI ; attendreaccordpublication.
+
 ## 13/10/2026 — Correctif local tests binaires #95
 
 - Branchelocaledédiée codex/fix-95-native-buffer-assertions depuis95@b0e9bb0 ; commit66e0fc2.14comparaisonsFSBuffer.equals intégrales, sixcontrôles permanents (identique,first/middle/last,shorter/longer) surfichiersTEMP2,4Mo.35restaurations conservées, aucuneassertionSQL/timeout/service/migration/guard modifié.
