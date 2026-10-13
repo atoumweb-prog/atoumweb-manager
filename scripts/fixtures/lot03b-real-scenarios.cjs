@@ -67,8 +67,22 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
       'R03B-15: converti absent des colonnes actives');
     test(await get('document.querySelector(".pipeline-conversion-history").textContent.includes("Conversion")'),
       'R03B-15: Conversion est une section historique');
-    test(await get('!document.querySelector(".pipeline-conversion-history").hasAttribute("ondrop")'),
-      'R03B-15: aucune destination Conversion native déclarée');
+    // Simuler un vrai dragstart Chromium, puis tenter Conversion et Finalisation :
+    // ni la section historique ni la colonne E73 n'acceptent un drop métier.
+    await js('const source=[...document.querySelectorAll(".prospect-card-head")].find(e=>e.textContent.includes("TEST 03B Actif Dijon"));'+
+      'if(!source)throw Error("Source drag absente");window.__03bDragSource=source;'+
+      'const transfer=new DataTransfer();window.__03bTransfer=transfer;'+
+      'source.dispatchEvent(new DragEvent("dragstart",{bubbles:true,cancelable:true,dataTransfer:transfer}));');
+    await sleep(90);
+    await js('document.querySelector(".pipeline-conversion-history").dispatchEvent(new DragEvent("drop",{bubbles:true,cancelable:true,dataTransfer:window.__03bTransfer}));');
+    await js('const col=[...document.querySelectorAll(".pipeline-step-column")].find(e=>e.querySelector("header strong")?.textContent.trim()==="Finalisation");'+
+      'col.dispatchEvent(new DragEvent("drop",{bubbles:true,cancelable:true,dataTransfer:window.__03bTransfer}));'+
+      'window.__03bDragSource.dispatchEvent(new DragEvent("dragend",{bubbles:true,cancelable:true,dataTransfer:window.__03bTransfer}));');
+    await sleep(80);
+    test(prospectStage(active.id).stage==='quote_sent'&&!prospectStage(active.id).clientAccountId,
+      'R03B-15: DnD Conversion et Finalisation non confirmé refusé sans écriture CRM');
+    test(recordCount('client_accounts')===1,
+      'R03B-15: DnD historique ne fabrique aucun Client');
     test(!quoteStatus(quote.id).principleAgreementAt,'R03B-13: simple envoi ne vaut pas accord');
 
     await clickText('.prospect-card-head','TEST 03B Actif Dijon');
