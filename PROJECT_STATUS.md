@@ -1,5 +1,19 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 13/10/2026 — Shell réel 02B.5/02B.6 validé localement
+
+- Main61960d5 etCI663verte aprèsmerge96normal, branches90–93inchangées. Nouveaucode8105de4 sur codex/ux-v2-real-shell-02b : rail/header réels dansApp, vraiGlobalTimerunique, recherche/horlogeexistantes, préférencesparworkspace ; pas nouveauchrono/service métier/migration.
+- Validationfinale8105de4 : typecheckOK,907/907(99fichiers,96,13s)/restaurations35/binaires6/sansRPC ; renderer réel374/374/17routes/63captures synchronisées/neufvariantes/étroitzoom ; UX-01natif183/183, intégrité/FK/migrations1–66TEMP/nettoyagesconfirmés. AteliersA125/B167/F137aucheckpointfc98e9a, héritage explicitementdistingué.
+- Pointerdown/Escape/focus/pending et métadonnéesBibliothèque sécurisésparregistreUX-01existant, régressionpermanente late-edit ; deuxerreursdefixturescorrigées sansaffaiblirlesassertions. [Bilanunique ettraçabilité](docs/UXV2_LOT02B_REAL_INTEGRATION.md). Ordonnanceurlocal sansretry/CI ; validationcomplète regroupée, contrôlesconcernésrejouésaprèséchec.
+- Lotprêtpourautorisationdepublication/PR/CI, mais zéro push/PR/CIhébergée pourlenouveaulot, pasfusion/main. Recettehumaineglobaledifférée ; 02Cnoncommencé. AucunValidation-MSI/donnée réelle/budget/branchehistorique supprimé oumodifié.
+
+## 13/10/2026 — Raccord réel du shell 02A / 02B.5–02B.6, validation locale en cours
+
+- #96 fusionnée normalement à61960d5 ; CIpostfusion663SUCCESS,893/893/35restaurations/6binaires,sansRPC. Arbre1f3d6f6 identique au candidat662. #90–93 etbranches conservées.
+- Branchelocale codex/ux-v2-real-shell-02b depuismain61960d5 : NavigationRail/WorkspaceHeader raccordés àApp, véritablesGlobalTimer/GlobalSearch/GlobalClock montésuniquementunefois etservicesinchangés. Adaptateur01FavecIPCvisuelwhitelistérail/header, notificationmulti-fenêtres etconfirmationAnnuler pardéfaut ; pas migration.
+- Reproductionsnatives TEMP : pointerdownderepli effaçaitlespanneaux, Escape/requêtepérimée réouvraitla recherche, focussortaitpendantpending etEscapeBibliothèque perdaitlesmétadonnées. GardesUX-01 réutilisées pourchronoetmétadonnées, pending/refus/éditiontardive protégés ; aucunsecondregistre, aucunchangementmétier.
+- Ciblés42/42 etpremierbanc réel340/340verts. Validationcomplète de fin surSHAfigé àexécuter via scripts/check-ux-v2-real-shell.cjs ; nepasconfondreavecpreuvesantérieures. Aucunpush/PR/CIhébergée pource nouveaulot ; zéroValidation-MSI. 02Cnoncommencé, fusionssoumis àaccord.
+
 ## 13/10/2026 — Méthode accélérée, candidate groupée 02A/02B autorisée
 
 - Autonomie à intérieur du lot, ciblés pendant développement et validation complète de fin ; une candidate par lot explicitement autorisé, merges toujours humains. Consolidation depuis93, merge local db407ba de main a01c60d9 ; arbre b462dce8 exactement simulé/testé, conflit journal seul résolu sans perte. Pas de nouveau code métier ni réexécution complète pour documentation seule.

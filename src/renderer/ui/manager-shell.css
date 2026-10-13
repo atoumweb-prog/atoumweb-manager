@@ -1,0 +1,14 @@
+.app-shell.aw-manager-shell{grid-template-columns:auto minmax(0,1fr);transition:none}
+.app-shell.aw-manager-shell.sidebar-collapsed{grid-template-columns:86px minmax(0,1fr)}
+.aw-manager-shell>.main-area{min-height:0;grid-template-rows:auto minmax(0,1fr)}
+.aw-manager-shell>.main-area>.content-area{min-height:0}
+.aw-manager-shell .aw-workspace-header{font-size:var(--ui-font-primary,16px)}
+.aw-manager-shell .aw-header-context small{overflow-wrap:anywhere;max-width:100%}
+.aw-manager-shell .aw-header-timer .timer-widget,.aw-manager-shell .aw-header-timer .global-timer{min-width:0;max-width:100%}
+.aw-manager-shell .aw-header-timer{flex:1 1 300px}
+.aw-manager-shell .aw-header-search .global-search{max-width:100%;width:100%;box-sizing:border-box}
+.aw-manager-shell .aw-header-primary .timer-popover{position:fixed;right:12px;top:12px;min-width:0;width:min(480px,calc(100vw - 24px));max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow:auto;box-sizing:border-box;z-index:50}
+.aw-manager-shell .aw-header-primary .timer-popover input,.aw-manager-shell .aw-header-primary .timer-popover textarea,.aw-manager-shell .aw-header-primary .timer-popover select{max-width:100%;box-sizing:border-box}
+.aw-manager-shell .aw-header-secondary .global-clock{min-width:0}
+.aw-manager-shell .aw-navigation-rail{font-size:var(--ui-font-primary,16px)}
+@media(max-width:760px){.app-shell.aw-manager-shell{grid-template-columns:86px minmax(0,1fr)}.aw-manager-shell>.main-area{grid-column:2}.aw-manager-shell .aw-header-timer{flex-basis:100%}}

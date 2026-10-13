@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import {useUnsavedDraft} from '../unsaved/unsaved';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   AtoumWebCompositionDetail,
   AtoumWebCompositionPackageExportResult,
@@ -268,6 +269,12 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
   const [editingMetadata, setEditingMetadata] = useState(false);
   const [form, setForm] = useState<CreationForm>(EMPTY_FORM);
   const [metadataForm, setMetadataForm] = useState<MetadataForm | null>(null);
+  const [metadataSaving, setMetadataSaving] = useState(false);
+  const metadataCurrent = useRef(metadataForm); metadataCurrent.current = metadataForm;
+  const metadataGuard = useUnsavedDraft('Métadonnées Bibliothèque', metadataForm, {
+    group:'library:metadata', ready:editingMetadata && metadataForm !== null, pending:metadataSaving,
+    resetKey:selected?.id, discard:setMetadataForm,
+  });
   const [versionForm, setVersionForm] = useState({ contentType: 'code' as ProjectTechnicalContentType, language: '', contentText: '', notes: '' });
   const [expandedVersionId, setExpandedVersionId] = useState<string | null>(null);
   const [assetVersionId, setAssetVersionId] = useState('');
@@ -321,7 +328,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
     const sameItem = selected?.id === detail.id;
     setSelected(detail);
     if (!sameItem) setDetailExpanded(false);
-    setMetadataForm(metadataFromItem(detail));
+    if (!sameItem || !metadataGuard.dirty) setMetadataForm(metadataFromItem(detail));
     setExpandedVersionId(null);
     const preferredVersion = detail.currentVersion?.id ?? detail.versions[0]?.id ?? '';
     const currentPayload = parseBridgeLibraryPayload(detail.currentVersion?.contentType, detail.currentVersion?.contentText);
@@ -344,7 +351,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
       const nextId = preferredId ?? selected?.id;
       if (nextId && next.some((item) => item.id === nextId)) {
         await setOpenedItem(await window.atoumweb.referentials.library.get(nextId));
-      } else if (selected && !next.some((item) => item.id === selected.id)) {
+      } else if (selected && !metadataGuard.dirty && !metadataSaving && !next.some((item) => item.id === selected.id)) {
         setSelected(null);
         setMetadataForm(null);
         setAssets([]);
@@ -442,6 +449,9 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
     && (selected.category !== recommendedBridgeCategory || selected.name !== recommendedBridgeName));
 
   function closeDetail(): void {
+    metadataGuard.request(closeDetailDirect);
+  }
+  function closeDetailDirect(): void {
     setSelected(null);
     setDetailExpanded(false);
     setEditingMetadata(false);
@@ -455,7 +465,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
   useEffect(() => {
     if (!selected || selectedOccurrenceReturn || occurrenceReturnInspection || showOccurrenceReturns) return;
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') closeDetail();
+      if (event.key === 'Escape' && !event.defaultPrevented && !event.isComposing) { event.preventDefault(); closeDetail(); }
     };
     window.addEventListener('keydown', closeOnEscape);
     return () => window.removeEventListener('keydown', closeOnEscape);
@@ -498,6 +508,8 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
   }
 
   async function openItem(id: string): Promise<void> {
+    if (id === selected?.id) return;
+    let allowed=false; metadataGuard.request(()=>{allowed=true;}); if(!allowed)return;
     try {
       setError(null);
       setEditingMetadata(false);
@@ -537,32 +549,35 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
   }
 
   async function saveMetadata(): Promise<void> {
-    if (!selected || !metadataForm) return;
+    if (!selected || !metadataForm || metadataSaving) return;
     if (bridgeWorkflow.original && metadataForm.reuseStatus === 'ready' && !reusableValidated) {
       setError('Pour un composant Bridge, le statut « Prêt à réutiliser » est attribué uniquement après validation humaine de la version réutilisable.');
       return;
     }
+    const submitted=structuredClone(metadataForm);
+    setMetadataSaving(true);
     try {
       setError(null);
       const changed = await window.atoumweb.referentials.library.update(selected.id, {
-        name: metadataForm.name,
-        category: metadataForm.category,
-        reuseStatus: metadataForm.reuseStatus,
-        description: metadataForm.description || null,
+        name: submitted.name,
+        category: submitted.category,
+        reuseStatus: submitted.reuseStatus,
+        description: submitted.description || null,
         tags: mergeLibraryTags(
-          metadataForm.tags.split(',').map((tag) => tag.trim()).filter((tag) => Boolean(tag) && tag !== BRIDGE_HUMAN_VALIDATION_TAG),
+          submitted.tags.split(',').map((tag) => tag.trim()).filter((tag) => Boolean(tag) && tag !== BRIDGE_HUMAN_VALIDATION_TAG),
           selected.tags?.includes(BRIDGE_HUMAN_VALIDATION_TAG) ? [BRIDGE_HUMAN_VALIDATION_TAG] : [],
         ),
-        vertical: metadataForm.vertical || null,
-        originTechnicalItemId: metadataForm.originTechnicalItemId || null,
+        vertical: submitted.vertical || null,
+        originTechnicalItemId: submitted.originTechnicalItemId || null,
       });
-      setEditingMetadata(false);
+      metadataGuard.saved(submitted);
+      if (JSON.stringify(metadataCurrent.current) === JSON.stringify(submitted)) setEditingMetadata(false);
       await load(changed.id);
       await setOpenedItem(changed);
       onMessage(`Métadonnées de « ${changed.name} » mises à jour.`);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : 'Mise à jour des métadonnées impossible.');
-    }
+    } finally {setMetadataSaving(false);}
   }
 
   async function addVersion(): Promise<void> {
@@ -1476,7 +1491,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
             <div className="panel-title aw-library-detail-heading">
               <div><span className="eyebrow">{categoryLabel(selected.category)} · {reuseStatusLabel(effectiveReuseStatus(selected))}{selected.vertical ? ` · ${verticalLabel(selected.vertical)}` : ''}</span><h2>{selected.name}</h2></div>
               <div className="button-row">
-                {!selected.archivedAt && <button className="secondary-button" type="button" onClick={() => setEditingMetadata((value) => !value)}>{editingMetadata ? 'Annuler édition' : 'Modifier'}</button>}
+                {!selected.archivedAt && <button className="secondary-button" type="button" onClick={() => {if(editingMetadata)metadataGuard.request(()=>{if(selected)setMetadataForm(metadataFromItem(selected));setEditingMetadata(false);});else setEditingMetadata(true);}}>{editingMetadata ? 'Annuler édition' : 'Modifier'}</button>}
                 <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void exportPackage()}><OperationIcon name="package" size={16} /> Exporter archive</button>
                 <button className="secondary-button" type="button" onClick={() => void toggleArchive()}><OperationIcon name="archive" size={16} /> {selected.archivedAt ? 'Réactiver' : 'Archiver'}</button>
                 <button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'collapse' : 'expand'} size={18} /></button>
@@ -1485,7 +1500,7 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
             </div>
 
             <>
-            {editingMetadata && metadataForm ? <MetadataEditor form={metadataForm} setForm={setMetadataForm} onSave={saveMetadata} /> : <>
+            {editingMetadata && metadataForm ? <MetadataEditor form={metadataForm} setForm={setMetadataForm} onSave={saveMetadata} pending={metadataSaving} /> : <>
               {selected.description && <p>{selected.description}</p>}
               {selected.vertical && <p className="muted">Métier : <strong>{verticalLabel(selected.vertical)}</strong></p>}
               <div className="aw-library-tags">{selected.tags?.map((tag) => <span key={tag}>{tag}</span>)}</div>
@@ -2925,7 +2940,7 @@ function CreationPanel({ form, setForm, onCreate }: { form: CreationForm; setFor
   </article>;
 }
 
-function MetadataEditor({ form, setForm, onSave }: { form: MetadataForm; setForm: (value: MetadataForm) => void; onSave: () => Promise<void> }) {
+function MetadataEditor({ form, setForm, onSave, pending }: { form: MetadataForm; setForm: (value: MetadataForm) => void; onSave: () => Promise<void>; pending: boolean }) {
   return <div className="aw-library-metadata-editor">
     <div className="aw-library-form-grid aw-library-metadata-main-grid">
       <label>Nom<input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>
@@ -2939,7 +2954,7 @@ function MetadataEditor({ form, setForm, onSave }: { form: MetadataForm; setForm
       <summary>Informations avancées</summary>
       <label>ID origine Bibliothèque projet<input value={form.originTechnicalItemId} onChange={(event) => setForm({ ...form, originTechnicalItemId: event.target.value })} placeholder="Optionnel · uniquement un composant projet" /></label>
     </details>
-    <button className="primary-button" type="button" onClick={() => void onSave()}>Enregistrer</button>
+    <button className="primary-button" type="button" disabled={pending} onClick={() => void onSave()}>{pending ? "Enregistrement…" : "Enregistrer"}</button>
   </div>;
 }
 

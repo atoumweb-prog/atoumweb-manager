@@ -1,3 +1,4 @@
+import { registerShellVisualPreferences } from './shellVisualPreferencesIpc';
 import {registerUnsavedConfirmationIpc,unsavedWindows} from './unsaved';
 import { restoreQuitGate } from './restoreQuitGate';
 import type { ContractAdministration, QuoteContractParameters, ContractDocumentLinkInput, ContractDocumentRole } from '../shared/quoteContractPreparation';
@@ -84,6 +85,7 @@ import { saveWorkspaceRoot, type WorkspacePaths } from './workspace';
 
 export function registerIpcHandlers(database: DatabaseService, workspace: WorkspacePaths): void {
   registerUnsavedConfirmationIpc();
+  registerShellVisualPreferences(database);
   ipcMain.handle('workflow:needs', (_event, owner, id) => database.workflow.needs(owner,id));
   ipcMain.handle('workflow:save-need', (_event, owner, id, input, needId) => database.workflow.saveNeed(owner,id,input,needId));
   ipcMain.handle('workflow:remove-need', (_event, owner, id, needId) => database.workflow.removeNeed(owner,id,needId));
