@@ -190,6 +190,28 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
     test(await get('document.querySelectorAll(".pipeline-step-column").length===7'),
       'R03B-19: colonnes toujours accessibles à zoom 125 %');
     win.webContents.setZoomFactor(1);
+    // 03C.5 : les deux chemins passent par les vrais handlers/preload. Le
+    // retry depuis le renderer doit relire un lien durable, sans nouveau contact.
+    const contactOrg = db.crm.createOrganization({name:'TEST 03C IPC Contacts'});
+    const contactProspect = db.crm.createProspect({organizationId:contactOrg.id});
+    const primaryInput = {organizationId:contactOrg.id,firstName:'Lucie',lastName:'Principale'};
+    const decisionInput = {organizationId:contactOrg.id,firstName:'Nora',lastName:'Décision'};
+    const primaryA = await get('window.atoumweb.crm.contacts.createAndAttachPrimaryProspect('+
+      JSON.stringify(contactProspect.id)+','+JSON.stringify(primaryInput)+')');
+    const primaryB = await get('window.atoumweb.crm.contacts.createAndAttachPrimaryProspect('+
+      JSON.stringify(contactProspect.id)+','+JSON.stringify(primaryInput)+')');
+    test(primaryA.id===primaryB.id && prospectStage(contactProspect.id).contactId===primaryA.id,
+      'R03C-05: interlocuteur créé/rattaché une seule fois par IPC natif');
+    const decisionA = await get('window.atoumweb.crm.contacts.createAndAttachDecisionProspect('+
+      JSON.stringify(contactProspect.id)+','+JSON.stringify(decisionInput)+')');
+    const decisionB = await get('window.atoumweb.crm.contacts.createAndAttachDecisionProspect('+
+      JSON.stringify(contactProspect.id)+','+JSON.stringify(decisionInput)+')');
+    test(decisionA.id===decisionB.id && prospectStage(contactProspect.id).decisionMakerContactId===decisionA.id,
+      'R03C-05: décisionnaire distinct lié une seule fois par IPC natif');
+    test(primaryA.id!==decisionA.id,'R03C-05: contact principal et décisionnaire distincts');
+    test(db.database.get('SELECT count(*) AS n FROM contacts WHERE organization_id=?',[contactOrg.id]).n===2,
+      'R03C-05: aucune duplication de Contact après replay IPC');
+
     // 03C : besoin de texte libre réellement enregistré, sans devis implicite.
     const needOrg = db.crm.createOrganization({name:'TEST 03C Besoin Dijon'});
     const needProspect = db.crm.createProspect({organizationId:needOrg.id,primaryNeed:'Site vitrine 03C'});
