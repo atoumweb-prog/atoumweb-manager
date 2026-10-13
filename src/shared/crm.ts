@@ -202,6 +202,35 @@ export interface ProspectSummary extends ProspectInput {
   hasContactMethod?: boolean;
   researchSnapshotCount?: number;
 }
+/** Champs éditables par le panneau Qualification 03C, isolés du décisionnaire. */
+export interface ProspectQualificationBrief {
+  originType: ProspectInput['originType'];
+  targetingReasonCode: string | null;
+  targetingReasonText: string | null;
+  initialObservation: string | null;
+  detectedOpportunity: string | null;
+  firstContactResultCode: string | null;
+  firstContactResultText: string | null;
+  interestLevel: ProspectInput['interestLevel'];
+  projectSummary: string | null;
+  projectContext: string | null;
+}
+
+export function prospectQualificationBriefSnapshot(prospect: Partial<ProspectInput>): ProspectQualificationBrief {
+  return {
+    originType: prospect.originType ?? null,
+    targetingReasonCode: prospect.targetingReasonCode ?? null,
+    targetingReasonText: prospect.targetingReasonText ?? null,
+    initialObservation: prospect.initialObservation ?? null,
+    detectedOpportunity: prospect.detectedOpportunity ?? null,
+    firstContactResultCode: prospect.firstContactResultCode ?? null,
+    firstContactResultText: prospect.firstContactResultText ?? null,
+    interestLevel: prospect.interestLevel ?? null,
+    projectSummary: prospect.projectSummary ?? null,
+    projectContext: prospect.projectContext ?? null,
+  };
+}
+
 /** Snapshot complet du formulaire 03C Besoin / Projet, distinct de la checklist. */
 export interface ProspectProjectBrief {
   projectSummary: string | null;
@@ -310,6 +339,8 @@ export interface CrmApi {
     updateMissingInformationIfUnchanged(id: string, expected: string | null, next: string | null): Promise<ProspectSummary>;
     /** CAS atomique des 11 champs du projet, budget et calendrier. */
     updateProjectBriefIfUnchanged(id: string, expected: ProspectProjectBrief, next: ProspectProjectBrief): Promise<ProspectSummary>;
+    /** Qualification avec protection des dix champs édités, y compris résumé/contexte communs. */
+    updateQualificationBriefIfUnchanged(id: string, expected: ProspectQualificationBrief, next: ProspectQualificationBrief): Promise<ProspectSummary>;
     changeStage(id: string, stage: ProspectStage, lostReason?: string | null, allowIncompleteQualification?: boolean): Promise<ProspectSummary>;
     setNextAction(id: string, at: string | null, text: string | null): Promise<ProspectSummary>;
     convertToClient(id: string): Promise<ConvertProspectResult>;
