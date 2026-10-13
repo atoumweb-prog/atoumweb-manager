@@ -94,7 +94,7 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
       'col.dispatchEvent(new DragEvent("dragover",{bubbles:true,cancelable:true,dataTransfer:window.__03bTransfer}));'+
       'col.dispatchEvent(new DragEvent("drop",{bubbles:true,cancelable:true,dataTransfer:window.__03bTransfer}));'+
       'window.__03bDragSource.dispatchEvent(new DragEvent("dragend",{bubbles:true,cancelable:true,dataTransfer:window.__03bTransfer}));');
-    await sleep(170);
+    for(let i=0;i<40&&prospectStage(active.id).stage!=='negotiation';i++)await sleep(75);
     test(prospectStage(active.id).stage==='negotiation','R03B-04: DnD autorisé persiste via CrmService');
     test(!prospectStage(active.id).clientAccountId,'R03B-04: DnD autorisé ne crée pas de Client');
 
