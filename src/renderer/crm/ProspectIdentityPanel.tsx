@@ -61,6 +61,7 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
   // Après une réponse IPC partielle, réutiliser les contacts effectivement créés
   // au lieu de relancer aveuglément crm.contacts.create lors de « Réessayer ».
   const loadSequence = useRef(0);
+  const saving = useRef(false);
   const identityValue={organization:identity?.organization,contact:identity?.contact,decision,decisionContactId,primaryDraft};
   const guard=useUnsavedDraft('Entreprise et interlocuteurs',identityValue,{ready:!!identity,pending:busy,discard:s=>{setIdentity(i=>i?{...i,organization:s.organization??null,contact:s.contact??null}:i);setDecision(s.decision);setDecisionContactId(s.decisionContactId);setPrimaryDraft(s.primaryDraft);}});
 
@@ -131,7 +132,7 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
   }
 
   async function save() {
-    if (!identity) return;
+    if (!identity || saving.current) return;
     const creatingDecisionContact = decision.status === 'no' && !decisionContactId;
     if (creatingDecisionContact && (!decisionEmail.valid || !decisionPhone.valid)) return;
     const primaryStarted = primaryDraft.firstName.trim() || primaryDraft.lastName.trim() || primaryDraft.role.trim();
@@ -148,6 +149,7 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
       return;
     }
 
+    saving.current = true;
     setBusy(true); setError('');
     try {
       if (identity.organization) await window.atoumweb.crm.organizations.update(identity.organization.id, identity.organization);
@@ -210,11 +212,14 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
       // actualisée, sans effacer les champs dirty ni prétendre que tout est enregistré.
       try {
         const latest = await window.atoumweb.workflow.identity('prospect', prospect.id);
-        setIdentity(latest);
+        setIdentity(current => current ? {
+          ...current, contact: latest.contact, decisionMaker: latest.decisionMaker,
+          contacts: latest.contacts,
+        } : latest);
       } catch { /* garde les checkpoints de ce formulaire pour la prochaine tentative */ }
       setError(cleanError(e));
     }
-    finally { setBusy(false); }
+    finally { saving.current = false; setBusy(false); }
   }
 
   if (!identity) return <section className="prospect-work-section"><p className="muted">Chargement des informations…</p></section>;
