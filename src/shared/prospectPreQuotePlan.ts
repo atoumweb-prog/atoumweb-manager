@@ -15,7 +15,7 @@ export function planProspectQuoteLines(needs: readonly Need[], catalog: readonly
   for (const need of needs) {
     if (need.catalogItemId) {
       const item = catalog.find((candidate) => candidate.id === need.catalogItemId);
-      if (!item || item.status !== 'active' || !item.currentVersion) {
+      if (!item || item.status !== 'active' || item.currentVersion?.status !== 'published') {
         missing.push(need.label || need.catalogItemId);
         continue;
       }
