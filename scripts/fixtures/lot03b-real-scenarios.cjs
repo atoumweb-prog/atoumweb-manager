@@ -249,6 +249,10 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
     });
     db.crm.changeProspectStage(needProspect.id,'need_identified',null,true);
     db.workflow.saveNeed('prospect',needProspect.id,{otherText:'Audit de référencement 03C'});
+    const startingChecklist = JSON.stringify({version:1,items:[{
+      id:'verify-dns',label:'Vérifier les accès DNS',status:'open',isBlocking:false,answer:null,
+    }]});
+    db.crm.updateProspectMissingInformationIfUnchanged(needProspect.id,null,startingChecklist);
     test(db.quotes.list({prospectId:needProspect.id}).length===0,
       'R03C-05: sélectionner un besoin ne crée aucun devis');
     test(db.database.all('SELECT id FROM projects WHERE prospect_id=?',[needProspect.id]).length===0,
@@ -268,6 +272,28 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
     await clickText('.prospect-detail-panel button','Ouvrir la fiche de travail');
     await wait('!!document.querySelector(".prospect-desk-overlay .prequote-entry button")',
       'pré-devis réel chargé depuis workflow et catalogue');
+    // La fiche de travail voit le snapshot initial ; une seconde fenêtre
+    // modifie ensuite la checklist avant qu'un utilisateur valide localement.
+    await wait('!!document.querySelector(".prospect-desk-overlay .missing-info-row select")',
+      'checklist réelle chargée dans le bureau 03C');
+    const concurrentChecklist = JSON.stringify({version:1,items:[{
+      id:'verify-dns',label:'Vérifier les accès DNS',status:'later',isBlocking:false,answer:'Revu dans la seconde fenêtre',
+    }]});
+    db.crm.updateProspectMissingInformationIfUnchanged(needProspect.id,startingChecklist,concurrentChecklist);
+    await js('const choice=document.querySelector(".prospect-desk-overlay .missing-info-row select");'+
+      'choice.value="resolved";choice.dispatchEvent(new Event("change",{bubbles:true}));');
+    await wait('!!document.querySelector(".prospect-desk-overlay .prospect-checklist-conflict")',
+      'conflit visible dans la fiche de travail');
+    test(db.crm.getProspect(needProspect.id).missingInformation===concurrentChecklist,
+      'R03C-16: la saisie obsolète ne remplace pas les informations de la seconde fenêtre');
+    await clickText('.prospect-checklist-conflict button','Recharger uniquement la checklist');
+    await wait('!document.querySelector(".prospect-desk-overlay .prospect-checklist-conflict")',
+      'rechargement explicite accepté');
+    test(await get('document.querySelector(".prospect-desk-overlay .missing-info-row select")?.value==="later"'),
+      'R03C-16: checklist rechargée sans écriture silencieuse');
+    test(db.crm.getProspect(needProspect.id).projectSummary==='Création de site pour commerce local',
+      'R03C-16: autre champ de qualification préservé après recharge');
+
     await clickText('.prequote-entry button','Contrôler avant devis');
     await wait('!!document.querySelector(".prequote-actions button.primary-button")',
       'contrôle pré-devis ouvert');
