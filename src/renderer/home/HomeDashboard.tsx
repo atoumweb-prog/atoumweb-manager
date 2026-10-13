@@ -4,6 +4,8 @@ import {HOME_WIDGET_PREFERENCE_KEY,HOME_WIDGET_KEYS,defaultHomeWidgets,normalize
 import {AppNotice} from '../ui/AppNotice';
 import {AppButton} from '../ui/AppButton';
 import type { BillingItem } from '../../shared/billing';
+import type { QuoteSummary } from '../../shared/commercial';
+import {projectPipeline,withCurrentQuoteSignal} from '../../shared/prospectPipelineProjection';
 import type { CrmAction, ProspectSummary, SearchResult } from '../../shared/crm';
 import type { Intervention } from '../../shared/operations';
 import type { OperationsAlert, OperationsAlertsSnapshot } from '../../shared/operationsAlerts';
@@ -20,6 +22,7 @@ type HomePageName = 'Prospects' | 'Devis' | 'Projets' | 'Interventions & Mainten
 interface HomeData {
   entries: DashboardEntry[];
   prospects: ProspectSummary[];
+  quotes: QuoteSummary[];
   actions: CrmAction[];
   projects: ProjectSummary[];
   interventions: Intervention[];
@@ -33,6 +36,7 @@ interface PipelineItem {
   label: string;
   count: number;
   tone: string;
+  historical?: boolean;
 }
 
 const EMPTY_TIME: TimeSummary = { totalSeconds: 0, billableSeconds: 0, nonBillableSeconds: 0, sessionCount: 0 };
@@ -81,7 +85,7 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
   const data=useMemo(()=>Object.fromEntries(Object.entries(resources).filter(([,resource])=>resource.value!==undefined).map(([key,resource])=>[key,resource.value])) as Partial<HomeData>,[resources]);
   const [preference,setPreference]=useState(defaultHomeWidgets),[preferenceError,setPreferenceError]=useState('');
   const widgetLabels:Record<HomeWidgetKey,string>={today:'Aujourd’hui',kpis:'Indicateurs',pipeline:'Pipeline commercial',time:'Temps et facturation',watch:'Alertes opérationnelles',actions:'Accès rapides'};
-  const sourceLabels:Record<keyof HomeData,string>={entries:'Dossiers du jour',prospects:'Prospects',actions:'Relances',projects:'Projets',interventions:'Interventions',time:'Temps du mois',billing:'Éléments à facturer',alerts:'Alertes opérationnelles'};
+  const sourceLabels:Record<keyof HomeData,string>={entries:'Dossiers du jour',prospects:'Prospects',quotes:'Devis du pipeline',actions:'Relances',projects:'Projets',interventions:'Interventions',time:'Temps du mois',billing:'Éléments à facturer',alerts:'Alertes opérationnelles'};
   const loading=Object.keys(resources).length===0||Object.values(resources).some(source=>source.status==='loading');
   const failed=(Object.keys(resources) as (keyof HomeData)[]).filter(key=>resources[key]?.status==='error');
   const has=(...keys:(keyof HomeData)[])=>keys.every(key=>resources[key]?.value!==undefined);
@@ -93,7 +97,7 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
     const now = new Date();
     const from = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0).toISOString();
     const to = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).toISOString();
-    await loader.load({entries:()=>window.atoumweb.workflow.dashboard(),prospects:()=>window.atoumweb.crm.prospects.list(),actions:()=>window.atoumweb.crm.actions.list({ownerType:'prospect'}),projects:()=>window.atoumweb.projects.projects.list(),interventions:()=>window.atoumweb.operations.interventions.list(),time:()=>window.atoumweb.time.summary({from,to}),billing:()=>window.atoumweb.billing.list(),alerts:()=>window.atoumweb.operationsAlerts.get()},setResources);
+    await loader.load({entries:()=>window.atoumweb.workflow.dashboard(),prospects:()=>window.atoumweb.crm.prospects.list(),quotes:()=>window.atoumweb.quotes.list(),actions:()=>window.atoumweb.crm.actions.list({ownerType:'prospect'}),projects:()=>window.atoumweb.projects.projects.list(),interventions:()=>window.atoumweb.operations.interventions.list(),time:()=>window.atoumweb.time.summary({from,to}),billing:()=>window.atoumweb.billing.list(),alerts:()=>window.atoumweb.operationsAlerts.get()},setResources);
   }
 
   useEffect(() => {
@@ -134,15 +138,10 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
   const projectsToStart = data.projects?.filter((item) => item.status === 'to_prepare').length ?? 0;
   const interventionsInProgress = data.interventions?.filter((item) => item.status === 'in_progress').length ?? 0;
 
-  const pipeline: PipelineItem[] = [
-    { key: 'qualify', label: 'À qualifier', count: pipelineProspects.filter((item) => item.stage === 'qualifying').length, tone: 'blue' },
-    { key: 'needs', label: 'Identifier les besoins', count: pipelineProspects.filter((item) => item.stage === 'need_identified').length, tone: 'purple' },
-    { key: 'quote', label: 'Préparer le devis Abby', count: pipelineProspects.filter((item) => ['quote_to_prepare', 'quote_to_send'].includes(item.stage ?? 'new')).length, tone: 'yellow' },
-    { key: 'reply', label: 'Attente du retour', count: pipelineProspects.filter((item) => ['quote_sent', 'follow_up', 'waiting'].includes(item.stage ?? 'new')).length, tone: 'orange' },
-    { key: 'negotiation', label: 'Négociation', count: pipelineProspects.filter((item) => item.stage === 'negotiation').length, tone: 'green' },
-  ];
-
-  const pipelineTotal = pipeline.reduce((sum, item) => sum + item.count, 0);
+  const projection=projectPipeline(withCurrentQuoteSignal(data.prospects??[],data.quotes??[]));
+  const pipeline:PipelineItem[]=[...projection.columns.map((column,index)=>({key:column.id,label:column.label,count:column.prospects.length,tone:['blue','purple','yellow','orange','green','blue'][index]})),{key:'conversions',label:'Conversion',count:projection.conversions.length,tone:'green',historical:true}];
+  const pipelineReady=has('prospects','quotes');
+  const pipelineTotal = pipeline.filter(item=>!item.historical).reduce((sum, item) => sum + item.count, 0);
   const time = data?.time ?? EMPTY_TIME;
   const billableRatio = time.totalSeconds > 0 ? Math.min(1, time.billableSeconds / time.totalSeconds) : 0;
   const donutStyle = { '--home-time-progress': `${Math.round(billableRatio * 360)}deg` } as CSSProperties;
@@ -171,18 +170,18 @@ today:<article className="home-card home-today-card">
 pipeline:<article className="home-card home-pipeline-card">
         <div className="home-card-title"><div><OperationIcon name="chart" size={20} /><strong>Pipeline commercial</strong></div><button type="button" onClick={() => openProspectPipeline()} aria-label="Ouvrir le pipeline commercial">›</button></div>
         <div className="home-pipeline-items">
-          {pipeline.map((item, index) => <button type="button" key={item.key} className={`home-pipeline-item tone-${item.tone}`} onClick={() => openProspectPipeline()} title={`${item.label} · ${item.count} prospect${item.count > 1 ? 's' : ''}`}>
+          {pipeline.map((item, index) => <button type="button" key={item.key} data-home-pipeline={item.key} className={`home-pipeline-item tone-${item.tone}`} onClick={() => item.historical?window.dispatchEvent(new CustomEvent('atoumweb:open-prospects-view',{detail:'conversions'})):openProspectPipeline()} title={`${item.label} · ${pipelineReady?item.count:'indisponible'} prospect${item.count > 1 ? 's' : ''}`}>
             <span className="home-pipeline-step"><i />Étape {index + 1}</span>
-            <strong>{has("prospects")?item.count:"—"}</strong>
+            <strong>{pipelineReady?item.count:"—"}</strong>
             <span className="home-pipeline-label">{item.label}</span>
-            <small>{has("prospects")?item.count:"—"} prospect{item.count > 1 ? 's' : ''}</small>
+            <small>{item.historical?'Historique · ':''}{pipelineReady?item.count:"—"} prospect{item.count > 1 ? 's' : ''}</small>
           </button>)}
         </div>
         <div className="home-pipeline-bar" aria-label="Répartition du pipeline">
-          {pipeline.map((item) => <span key={item.key} className={`tone-${item.tone}`} style={{ flexGrow: Math.max(item.count, .3) }} />)}
+          {pipeline.filter(item=>!item.historical).map((item) => <span key={item.key} className={`tone-${item.tone}`} style={{ flexGrow: Math.max(item.count, .3) }} />)}
         </div>
         <div className="home-pipeline-footer">
-          <span>{has("prospects")?pipelineTotal:"—"} prospect{pipelineTotal > 1 ? 's' : ''} dans le pipeline</span>
+          <span>{pipelineReady?pipelineTotal:"—"} prospect{pipelineTotal > 1 ? 's' : ''} dans le pipeline actif</span>
           <strong>{has('prospects','actions')?(relaunchCount ? `${relaunchCount} relance${relaunchCount > 1 ? 's' : ''} à traiter` : 'Aucune relance due'):'Relances indisponibles'}</strong>
         </div>
       </article>,

@@ -10,9 +10,8 @@ const samples=['Accueil','Prospection','Devis','Projets','Interventions & Mainte
 const assert=(ok,msg)=>{if(!ok)throw Error(msg);};
 const normalize=v=>process.platform==='win32'?v.toLowerCase():v;
 const owned=dir=>!!dir&&fs.existsSync(dir)&&path.basename(dir).startsWith(prefix)&&normalize(fs.realpathSync.native(path.dirname(dir)))===normalize(fs.realpathSync.native(os.tmpdir()));
-const captureArg=process.argv.indexOf('--captures'),lot03b=process.argv.includes('--lot03b'),searchOnly=process.argv.includes('--search-only');
-const captureFolder=captureArg>=0?process.argv[captureArg+1]:null;
-assert(!(lot03b&&searchOnly)&&((searchOnly&&process.argv.length===3)||(lot03b&&((captureArg===-1&&process.argv.length===3)||(captureArg===3&&process.argv.length===5)))||(!lot03b&&!searchOnly&&((captureArg===-1&&process.argv.length===2)||(captureArg===2&&process.argv.length===4)))),'Usage: node scripts/check-ux-v2-lot01a-real-ui.cjs [--search-only | --lot03b [--captures NEW-ABSOLUTE-FOLDER] | --captures NEW-ABSOLUTE-FOLDER]');
+const {lot03b,searchOnly,captureFolder}=require(path.join(repo,'scripts','fixtures','native-recipe-args.cjs'))(process.argv.slice(2));
+const captureArg=process.argv.indexOf('--captures');
 if(captureArg>=0){
  const folder=captureFolder;assert(path.isAbsolute(folder)&&!/validation-msi/i.test(folder)&&!fs.existsSync(folder),'Use a new absolute capture directory outside Validation-MSI.');
 }

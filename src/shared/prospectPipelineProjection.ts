@@ -1,4 +1,14 @@
 import type { ProspectStage } from './crm';
+import type { QuoteSummary } from './commercial';
+
+/** Same current-quote ordering in the Home and CRM projections. Read-only. */
+export function withCurrentQuoteSignal<T extends PipelineProspectProjection>(prospects:readonly T[],quotes:readonly Pick<QuoteSummary,'id'|'prospectId'|'createdAt'|'principleAgreementAt'>[]) {
+  const latest=new Map<string,typeof quotes[number]>();
+  for(const quote of [...quotes].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)||b.id.localeCompare(a.id))){
+    if(quote.prospectId&&!latest.has(quote.prospectId))latest.set(quote.prospectId,quote);
+  }
+  return prospects.map(prospect=>({...prospect,finalizationQuoteId:latest.get(prospect.id)?.principleAgreementAt?latest.get(prospect.id)!.id:null}));
+}
 
 /**
  * Lot 03B — projection visuelle uniquement. Ne modifie jamais le statut CRM.

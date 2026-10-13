@@ -134,7 +134,7 @@ function App() {
   const [messageAction, setMessageAction] = useState<MessageAction | null>(null);
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [crmTarget,setCrmTarget] = useState<string|null>(null);
-  const [prospectViewTarget, setProspectViewTarget] = useState<'directory' | 'pipeline' | 'history'>('directory');
+  const [prospectViewTarget, setProspectViewTarget] = useState<'directory' | 'pipeline' | 'history' | 'conversions'>('directory');
   const [prospectPipelineFilter, setProspectPipelineFilter] = useState<ProspectPipelineFilter>('all');
   const [quoteTarget,setQuoteTarget] = useState<string|null>(null);
   const routeKeys=useRef({crmTarget,quoteTarget,prospectViewTarget,prospectPipelineFilter});routeKeys.current={crmTarget,quoteTarget,prospectViewTarget,prospectPipelineFilter};
@@ -151,12 +151,13 @@ function App() {
   useEffect(()=>{const open=(event:Event)=>void openSearchResult((event as CustomEvent<SearchResult>).detail,'event');window.addEventListener('atoumweb:navigate',open);return()=>window.removeEventListener('atoumweb:navigate',open);},[]);
   useEffect(() => { const open = (event: Event) => {requestPage((event as CustomEvent<PageName>).detail,()=>{setActivePage((event as CustomEvent<PageName>).detail);});}; window.addEventListener('atoumweb:open-page', open); return () => window.removeEventListener('atoumweb:open-page', open); }, []);
   useEffect(() => {
-    const open = (event: Event) => {const target=(event as CustomEvent<'directory'|'pipeline'|'history'|{view:'directory'|'pipeline'|'history';pipelineFilter?:ProspectPipelineFilter}>).detail;const targetView=typeof target==='string'?target:target.view;const targetFilter=targetView==='pipeline'&&typeof target!=='string'?target.pipelineFilter??'all':'all';requestPage('Prospects',()=>{
+    const open = (event: Event) => {const target=(event as CustomEvent<'directory'|'pipeline'|'history'|'conversions'|{view:'directory'|'pipeline'|'history'|'conversions';pipelineFilter?:ProspectPipelineFilter}>).detail;const targetView=typeof target==='string'?target:target.view;const targetFilter=targetView==='pipeline'&&typeof target!=='string'?target.pipelineFilter??'all':'all';requestPage('Prospects',()=>{
       const detail = (event as CustomEvent<
         | 'directory'
         | 'pipeline'
         | 'history'
-        | { view: 'directory' | 'pipeline' | 'history'; pipelineFilter?: ProspectPipelineFilter }
+        | 'conversions'
+        | { view: 'directory' | 'pipeline' | 'history' | 'conversions'; pipelineFilter?: ProspectPipelineFilter }
       >).detail;
       const view = typeof detail === 'string' ? detail : detail.view;
       const pipelineFilter = typeof detail === 'string' ? 'all' : detail.pipelineFilter ?? 'all';

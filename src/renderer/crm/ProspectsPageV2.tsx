@@ -2,7 +2,7 @@ import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTarge
 import {UnsavedGroup,useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { normalizeEmail, normalizePhone } from '../../shared/contactValidation';
 import { normalizeWebUrl } from '../../shared/webUrl';
-import { historyOutcome, projectPipeline, PROSPECT_PIPELINE_COLUMNS } from '../../shared/prospectPipelineProjection';
+import { historyOutcome, projectPipeline, withCurrentQuoteSignal, PROSPECT_PIPELINE_COLUMNS } from '../../shared/prospectPipelineProjection';
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import type { QuoteSummary } from '../../shared/commercial';
 import {
@@ -195,12 +195,15 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
   function setDeskModeId(id:string|null){if(id===deskModeId)return;requestUnsavedExit(()=>applyDeskModeId(id),deskModeId?'prospect:'+deskModeId+'/desk':selectedId?'prospect:'+selectedId+'/panel':'prospect:none');}
   function setView(next:View){if(next===view)return;requestUnsavedExit(()=>applyView(next),selectedId?'prospect:'+selectedId+'/panel':'prospect:none');}
   const loadedOnce=useRef(false);
+  const refreshGeneration=useRef(0);
+  const selectionRef=useRef({selectedId,deskModeId});selectionRef.current={selectedId,deskModeId};
   const [dropStage, setDropStage] = useState<ProspectStage | null>(null);
   const [historySearch, setHistorySearch] = useState('');
   const [scheduleDateForId, setScheduleDateForId] = useState<string | null>(null);
   const [scheduleDate, setScheduleDate] = useState('');
 
   async function refresh() {
+    const generation=++refreshGeneration.current;
     if(!loadedOnce.current)setLoading(true);
     try {
       const [nextProspects, nextActions, nextQuotes] = await Promise.all([
@@ -208,15 +211,18 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
         window.atoumweb.crm.actions.list({ ownerType: 'prospect' }),
         window.atoumweb.quotes.list(),
       ]);
+      if(generation!==refreshGeneration.current)return;
       if(initialId&&!nextProspects.some(item=>item.id===initialId))onEntityReady?.('prospect',initialId,'Prospect introuvable.');
       setProspects(nextProspects); setActions(nextActions); setQuotes(nextQuotes);
-      if (selectedId && !nextProspects.some((item) => item.id === selectedId)) setSelectedId(null);
-      if (deskModeId && !nextProspects.some((item) => item.id === deskModeId)) setDeskModeId(null);
-    } finally { loadedOnce.current=true;setLoading(false); }
+      const current=selectionRef.current;
+      if (current.selectedId && !nextProspects.some((item) => item.id === current.selectedId)) requestUnsavedExit(()=>applySelectedId(null),'prospect:'+current.selectedId+'/panel');
+      if (current.deskModeId && !nextProspects.some((item) => item.id === current.deskModeId)) requestUnsavedExit(()=>applyDeskModeId(null),'prospect:'+current.deskModeId+'/desk');
+    } finally { if(generation===refreshGeneration.current){loadedOnce.current=true;setLoading(false);} }
   }
+  useEffect(()=>()=>{refreshGeneration.current++;},[]);
   useEffect(() => { void refresh().catch((error:unknown)=>{if(initialId)onEntityReady?.('prospect',initialId,error instanceof Error?error.message:'Prospect introuvable.');onMessage(error instanceof Error?error.message:'Prospection indisponible.');}); }, []);
   useEffect(()=>{if(initialId)setSelectedId(initialId);},[initialId,initialRequest]);
-  useEffect(() => { if (!selectedId) { setActivity([]); return; } void window.atoumweb.crm.activity.list('prospect', selectedId).then(setActivity); }, [selectedId, prospects, actions]);
+  useEffect(() => { let current=true;if (!selectedId) { setActivity([]); return; } void window.atoumweb.crm.activity.list('prospect', selectedId).then(value=>{if(current)setActivity(value);}).catch(error=>{if(current)onMessage(error instanceof Error?error.message:'Journal indisponible.');});return()=>{current=false;}; }, [selectedId, prospects, actions]);
   useEffect(() => { const reload = () => void refresh(); window.addEventListener('atoumweb:changed', reload); return () => window.removeEventListener('atoumweb:changed', reload); }, []);
   useEffect(() => {
     if (!selectedId || deskModeId) return;
@@ -283,11 +289,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
     }
     return mapped;
   }, [quotes]);
-  const pipelineProjection = useMemo(() => projectPipeline(pipelineFiltered.map((prospect) => ({
-    ...prospect,
-    finalizationQuoteId: latestQuotesByProspect.get(prospect.id)?.principleAgreementAt
-      ? latestQuotesByProspect.get(prospect.id)?.id : null,
-  }))), [pipelineFiltered, latestQuotesByProspect]);
+  const pipelineProjection = useMemo(() => projectPipeline(withCurrentQuoteSignal(pipelineFiltered,quotes)), [pipelineFiltered, quotes]);
   const historicalConversions = useMemo(() => projectPipeline(prospects).conversions, [prospects]);
   const historyVisible = useMemo(() => (view === 'conversions' ? historicalConversions : closed).filter((item) =>
     [item.displayName, item.primaryNeed, item.lostReason].filter(Boolean).join(' ').toLocaleLowerCase('fr-FR').includes(historySearch.toLocaleLowerCase('fr-FR')),

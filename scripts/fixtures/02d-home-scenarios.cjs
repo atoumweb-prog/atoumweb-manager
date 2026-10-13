@@ -5,7 +5,7 @@ module.exports=async({win,db,temp,registered,evalUI:js,get,wait,navigate,test,sl
  const originalSetting=db.setSetting.bind(db),originalDialog=dialog.showMessageBoxSync;let writes=0,second;
  const click=async selector=>{await js(`const e=document.querySelector(${JSON.stringify(selector)});if(!e)throw Error('Missing control');e.click()`);await sleep(60);};
  const refresh=()=>js('window.dispatchEvent(new CustomEvent("atoumweb:changed"))');
- const ready=()=>wait('document.querySelectorAll("[data-home-source][data-source-status=ready]").length===8','eight confirmed sources');
+ const ready=()=>wait('document.querySelectorAll("[data-home-source][data-source-status=ready]").length===9','nine independent confirmed sources, including current quotes');
  const snapshot=()=>JSON.stringify(db.database.all("SELECT name FROM sqlite_master WHERE type='table' AND name<>'settings' ORDER BY name").map(({name})=>[name,db.database.all('SELECT * FROM "'+name.replaceAll('"','""')+'" ORDER BY rowid')]));
  const replaceAlerts=handler=>{ipcMain.removeHandler('operations-alerts:get');ipcMain.handle('operations-alerts:get',handler);};
  try{
