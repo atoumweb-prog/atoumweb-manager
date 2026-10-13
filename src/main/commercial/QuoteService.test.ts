@@ -56,8 +56,9 @@ describe('QuoteService', () => {
     expect(first.prospectId).toBe(prospect.id);
     expect(crm.getProspect(prospect.id).stage).toBe('new');
 
-    const second = quotes.createWithLines({ prospectId: prospect.id, subject: 'Pré-devis avec lignes' }, []);
+    const second = quotes.createWithLines({ prospectId: prospect.id, subject: 'Pré-devis avec lignes' }, [{ input: { label: 'Audit', quantityMilli: 1000, proposedUnitPriceCents: 10000 } }]);
     expect(second.prospectId).toBe(prospect.id);
+    expect(second.lines).toHaveLength(1);
     expect(crm.getProspect(prospect.id).stage).toBe('new');
     expect(quotes.list({ prospectId: prospect.id })).toHaveLength(2);
   });
