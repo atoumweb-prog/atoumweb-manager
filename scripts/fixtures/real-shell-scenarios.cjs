@@ -36,6 +36,8 @@ module.exports = async ({win, db, preload, evalUI: js, get, wait, navigate, test
     await click('#header-mode');await click('.aw-rail-toggle');
     test(await get('document.querySelector(".timer-popover input[placeholder]").value==="BROUILLON CHRONO TEMP"'),'Real timer draft retained during native pointerdown on presentation');
     test(confirmations.length===count,'Presentation gestures do not ask to discard drafts');
+    await js('document.querySelector(".content-area").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}));');await sleep(60);
+    test(confirmations.length===count&&await get('document.querySelector(".timer-popover input[placeholder]").value==="BROUILLON CHRONO TEMP"'),'Outside pointer preserves dirty timer without duplicate exit confirmations');
     await escape('.timer-popover input[placeholder]');
     test(confirmations.length===count+1&&confirmations.at(-1).defaultId===0,'Timer Escape asks exactly once with Stay default');
     test(await get('!!document.querySelector(".timer-popover")&&document.querySelector(".timer-popover input[placeholder]").value==="BROUILLON CHRONO TEMP"'),'Stay keeps timer form and exact text');

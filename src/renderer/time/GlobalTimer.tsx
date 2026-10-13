@@ -89,6 +89,8 @@ export function GlobalTimer({ onMessage, onDialogChange }: { onMessage: (message
   const wasDialogOpen = useRef(false);
   useEffect(() => {if(!dialogOpen && wasDialogOpen.current && (document.activeElement===document.body || timerRef.current?.contains(document.activeElement)))timerRef.current?.querySelector<HTMLButtonElement>(".timer-main-button")?.focus();wasDialogOpen.current=dialogOpen;}, [dialogOpen]);
   const closeDialogRef = useRef<() => void>(() => {});
+  const dialogExitState = useRef({dirty:dialogGuard.dirty,pending:busy});
+  dialogExitState.current={dirty:dialogGuard.dirty,pending:busy};
   function closeDialog() { dialogGuard.request(() => {setOpen(false);setPendingSwitch(null);setStopDecisionOpen(false);setPauseReasonOpen(false);timerRef.current?.querySelector<HTMLButtonElement>('.timer-main-button')?.focus();}); }
   closeDialogRef.current = closeDialog;
   useEffect(() => {if(busy)timerRef.current?.querySelector<HTMLElement>(".timer-popover")?.focus({preventScroll:true});}, [busy]);
@@ -194,6 +196,9 @@ export function GlobalTimer({ onMessage, onDialogChange }: { onMessage: (message
     const closeOnOutside = (event: PointerEvent) => {
       const target = event.target as Node | null;
       if (!target || timerRef.current?.contains(target)) return;
+      // An outside pointer is not an explicit request to discard a draft.
+      // The clicked action can use its own UX-01 guard once, if it needs to exit.
+      if (dialogExitState.current.dirty || dialogExitState.current.pending) return;
       if (target instanceof Element && target.closest('[data-shell-presentation],[data-nav-module]')) {
         const focused = document.activeElement;
         if (target.closest('[data-shell-presentation]') && focused instanceof HTMLElement && timerRef.current?.contains(focused)) requestAnimationFrame(() => {if(focused.isConnected)focused.focus({preventScroll:true});});
