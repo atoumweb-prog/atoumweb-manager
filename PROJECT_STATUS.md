@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 13/10/2026 — Publication 02C autorisée
+
+- Autorisation utilisateur : publication de `codex/ux-v2-02c-real-search`, une PR draft vers main, sans fusion ; PR #98 et chantier 03C exclus du périmètre.
+- Références contrôlées : main `278ff2da` inchangé, working tree propre, aucun homologue distant de 02C ni PR existante ; HEAD documentaire `89a1dc9`, code testé `1b0fbb9`. Diff entre ces deux commits limité au bilan et au présent suivi.
+- Preuves locales vérifiées dans le manifeste du SHA `1b0fbb9` : typecheck, 943 Vitest, 68 Electron recherche, 374 shell, 183 UX-01. Le commit de préparation de publication ajoute uniquement ce suivi ; aucun code supplémentaire.
+- Le push de cette branche n'est pas un déclencheur du workflow ; l'ouverture de la PR vers main déclenchera une unique CI candidate. Aucun dispatch/rerun prévu. Le résultat sera consigné dans le corps de la PR pour ne pas provoquer une seconde CI documentaire. Aucune utilisation de Validation-MSI, aucune fusion ou modification du chantier 03C.
+
 ## 13/10/2026 — Reprise 02C : recherche réelle validée localement
 
 - Travail interrompu préservé à `c9fc199`, actualisation locale normale à `c149dfe` depuis main `278ff2da` (PR #97 fusionnée, CI #665 SUCCESS). Aucune branche historique modifiée.
