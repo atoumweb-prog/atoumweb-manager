@@ -7,7 +7,7 @@ const catalogItem = (id: string, priceCents: number | null, priceMode: 'fixed' |
   ({
     id, name: id, status: 'active', type: 'service', visiblePublic: false,
     createdAt: '2026-10-13', updatedAt: '2026-10-13',
-    currentVersion: { id: id + '-version', priceMode, priceCents },
+    currentVersion: { id: id + '-version', status: 'published', priceMode, priceCents },
   }) as CatalogItemSummary;
 const need = (id: string, catalogItemId: string | null, otherText: string | null = null): Need =>
   ({ id, catalogItemId, otherText, label: id, type: 'service' });
@@ -23,9 +23,11 @@ describe('03C — plan des lignes du pré-devis', () => {
 
   it('refuse les besoins retirés ou non publiés au lieu de produire un devis incomplet', () => {
     const deleted = { ...catalogItem('unpublished',9900), currentVersion: null };
-    const result = planProspectQuoteLines([need('gone','missing'),need('inactive','unpublished')], [deleted]);
+    const inactive = { ...catalogItem('inactive', 10000), status: 'inactive' as const };
+    const retired = { ...catalogItem('retired', 15000), currentVersion: { ...catalogItem('retired',15000).currentVersion!, status: 'retired' as const } };
+    const result = planProspectQuoteLines([need('gone','missing'),need('inactive','unpublished'),need('hidden','inactive'),need('retired','retired')], [deleted,inactive,retired]);
     expect(result.lines).toEqual([]);
-    expect(result.missing).toEqual(['gone','inactive']);
+    expect(result.missing).toEqual(['gone','inactive','hidden','retired']);
   });
 
   it('préserve la version catalogue, les prix à renseigner et le besoin libre', () => {
