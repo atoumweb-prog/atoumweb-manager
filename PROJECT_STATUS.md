@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 13/10/2026 — 02E indépendant : parcours réels, focus et préparation de convergence
+
+- Branche `codex/ux-v2-02e-transverse-shell` depuis#100@d3ef589. #99/#100 maintenues drafts ; main278ff2da inchangé. #98 lue à69e8904 puis46a190f, aucun merge/import/écrasement ; comparaison des trois fichiers communs et tests combinés à préparer, pas preuve de compatibilité par addition des CI.
+- Défauts reproduits/corrigés hors fichiers CRM98 : focus du vrai bouton Rechercher, recherche masquée au resize pendant frappe, fermeture seulement après ouverture confirmée, reconnaissance du panneau Historique visible. Chrono prioritaire, aucune nouvelle garde ou règle métier.
+- Codebf7eae0 validé en une recette groupée : typecheck OK,54 ciblés,963 Vitest/35 restaurations/6 binaires ; nouveaux parcours61, recherche92, Accueil54/9captures, shell374/63captures, UX-01183, en-tête167. TEMP/intégrité/FK/migrations/nettoyages OK, sansRPC.
+- [Exécution et réserves02E](docs/ux-v2/LOT-02E-EXECUTION-2026-10-13.md), [matrice de convergence et C01–C11](docs/ux-v2/LOT-02E-CONVERGENCE-03C-2026-10-13.md). Publication draft distincte autorisée ; résultat CI dans la PR sans doublon de push. Clôture globale02E/pipeline/CRM combiné encore non acquis ; prochaine porte : branche d'intégration après décision explicite. Aucune utilisation Validation-MSI.
+
 ## 13/10/2026 — 02C complément publié, Accueil02D réel validé au périmètre indépendant
 
 - #99 draft actualisée à7549770, CI #737 SUCCESS (943/943), complément natif92/92/clavier/focus/conclusion protégé. Corps de PR et bilan actualisés, aucun merge.
