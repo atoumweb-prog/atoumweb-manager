@@ -1,6 +1,7 @@
 import {UnsavedGroup,useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { normalizeEmail, normalizePhone } from '../../shared/contactValidation';
 import { normalizeWebUrl } from '../../shared/webUrl';
+import { projectPipeline, PROSPECT_PIPELINE_COLUMNS } from '../../shared/prospectPipelineProjection';
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import type { QuoteSummary } from '../../shared/commercial';
 import {
@@ -91,13 +92,11 @@ type View = 'directory' | 'pipeline' | 'history';
 export type ProspectPipelineFilter = 'all' | 'relaunch' | 'overdue';
 type DirectoryStatusFilter = 'follow' | 'all' | 'prepare' | 'ready' | 'relaunch' | 'overdue' | ProspectStage;
 
-const PIPELINE_GROUPS: Array<{ id: string; step: number; label: string; stages: ProspectStage[]; icon: string }> = [
-  { id: 'qualify', step: 1, label: 'À qualifier', stages: ['qualifying'], icon: '1' },
-  { id: 'needs', step: 2, label: 'Identifier les besoins', stages: ['need_identified'], icon: '2' },
-  { id: 'quote', step: 3, label: 'Préparer le devis Abby', stages: ['quote_to_prepare', 'quote_to_send'], icon: '3' },
-  { id: 'reply', step: 4, label: 'Attente du retour', stages: ['quote_sent', 'follow_up', 'waiting'], icon: '⏱' },
-  { id: 'negotiation', step: 5, label: 'Négociation', stages: ['negotiation'], icon: '↔' },
-];
+const PIPELINE_GROUPS: Array<{ id: string; step: number; label: string; stages: ProspectStage[]; icon: string }> =
+  PROSPECT_PIPELINE_COLUMNS.map((column, index) => ({
+    id: column.id, step: index + 1, label: column.label,
+    stages: [...column.stages], icon: String(index + 1),
+  }));
 
 function formatDate(value?: string | null) { return value ? new Date(value).toLocaleDateString('fr-FR') : 'Sans date'; }
 function formatMoney(cents: number) { return `${(cents / 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €`; }
@@ -272,7 +271,8 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
   const selected = prospects.find((item) => item.id === selectedId) ?? null;
   const deskProspect = prospects.find((item) => item.id === deskModeId) ?? null;
   const selectedActions = actions.filter((item) => item.ownerId === selectedId);
-  const byStage = useMemo(() => { const map = new Map<ProspectStage, ProspectSummary[]>(); ACTIVE_STAGES.forEach((stage) => map.set(stage, [])); pipelineFiltered.forEach((item) => map.get(item.stage ?? 'new')?.push(item)); return map; }, [pipelineFiltered]);
+  const pipelineProjection = useMemo(() => projectPipeline(pipelineFiltered), [pipelineFiltered]);
+  const historicalConversions = useMemo(() => projectPipeline(prospects).conversions, [prospects]);
   const prospectSplitStyle = selected && !deskProspect
     ? ({ '--prospect-list-percent': `${prospectSplitPercent}%` } as CSSProperties)
     : undefined;
@@ -597,10 +597,10 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
         </div>
       </div>
       {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'} style={prospectSplitStyle}><div className="kanban-board">{PIPELINE_GROUPS.map((group) => {
-        const groupProspects = group.stages.flatMap((stage) => byStage.get(stage) ?? []);
+        const groupProspects = pipelineProjection.columns.find((column) => column.id === group.id)?.prospects ?? [];
         const targetStage = group.stages[0];
-        return <section className={`kanban-column pipeline-step-column ${dropStage === targetStage ? 'drag-over' : ''}`} key={group.id} onDragOver={(e) => e.preventDefault()} onDragEnter={() => setDropStage(targetStage)} onDrop={(e) => { e.preventDefault(); void handleGroupDrop(group.stages); }}><header><div><small>Étape {group.step}</small><strong>{group.label}</strong></div><span>{groupProspects.length}</span></header><div className="kanban-cards stacked-cards">{groupProspects.map((prospect) => renderProspectCard(prospect))}{groupProspects.length === 0 && <div className="kanban-empty">Aucun dossier</div>}</div></section>;
-      })}</div>{prospectSplitter}{selected && !deskProspect && detail}</div>}
+        return <section className={`kanban-column pipeline-step-column ${targetStage && dropStage === targetStage ? 'drag-over' : ''}`} key={group.id} onDragOver={(e) => { if (targetStage) e.preventDefault(); }} onDragEnter={() => { if (targetStage) setDropStage(targetStage); }} onDrop={(e) => { if (!targetStage) return; e.preventDefault(); void handleGroupDrop(group.stages); }}><header><div><small>Étape {group.step}</small><strong>{group.label}</strong></div><span>{groupProspects.length}</span></header><div className="kanban-cards stacked-cards">{groupProspects.map((prospect) => renderProspectCard(prospect))}{groupProspects.length === 0 && <div className="kanban-empty">Aucun dossier</div>}</div></section>;
+      })}<section className="kanban-column pipeline-step-column pipeline-conversion-history" aria-label="Conversion : historique des prospects devenus clients"><header><div><small>Étape 7 · Historique</small><strong>Conversion</strong></div><span>{historicalConversions.length}</span></header><div className="kanban-cards stacked-cards"><p className="muted">Prospects réellement devenus clients. Aucune conversion par glisser-déposer.</p><button className="secondary-button" type="button" onClick={() => setView('history')}>Consulter l'historique</button></div></section></div>{prospectSplitter}{selected && !deskProspect && detail}</div>}
     </>}
 
     {view === 'history' && <HistoryView prospects={closed.filter((item) => [item.displayName, item.primaryNeed, item.lostReason].filter(Boolean).join(' ').toLocaleLowerCase('fr-FR').includes(historySearch.toLocaleLowerCase('fr-FR')))} search={historySearch} onSearch={setHistorySearch} onSelect={(item) => setSelectedId(item.id)} selected={selected} activity={activity} onClose={() => setSelectedId(null)} />}
