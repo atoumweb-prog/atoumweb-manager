@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 13/10/2026 — Publication groupée 01E/01F préparée, CI non autorisée
+
+- Nouvellebranche codex/consolidation-ux-v2-01ef depuiscorrectif1e593d0, merge normal00f37774 de main31167754 ; arbre ee378ea identique avant/après merge, aucunfichiermodifié. Sources/tests depuis85040fb identiques,61assertionsÉchappermanentes conservées, originales90–93 inchangées.
+- Premiercontrôle du merge00f37774 : typecheckOK,867/867(94fichiers,113,60s,sansRPC), restaurations35/35(A→B4,951s). Lesdernièrespreuves surHEADdocumentaire final serontconsignéesdans lebilanaprèsrejeu ; ne pasconfondre avec résultats antérieurs85040fb.
+- [Déclencheurs etprocédure](docs/UXV2_CONSOLIDATION_01EF_PUBLICATION.md) : pushbranche seul non ciblé ; ouverturePRdraftversmain déclencheraitquality. Publicationbranche conditionnéeauxcontrôles, **aucunePR avantautorisationCI**. Pas deskipci/retarget/changementworkflow pourcontournerlecontrôle.
+- Budget/Validation-MSI/main/PR90–93 préservés, aucuneCI/fusion/reprise02A/B/C. Aprèsaccord : PRuniqueouverte surHEADfigé, runautomaticunique sansdispatch/rerun ; postfusion sousaccorddistinct.
+
 ## 12/10/2026 — Correctif local Échap 01E / 01F validé
 
 - Nouvelle branche codex/fix-ux-v2-01ef-escape depuis91@765f66db, code85040fb. TraitementÉchap local àl'atelieractif, événementconsommé/IMEignoré ; onglettable/formulairesrestentmontés, registreUX-01/services/migrationsinchangés. Aucunmain/90–93 modifié.
@@ -1542,4 +1549,5 @@ Les tests couvrent les migrations vierges et mises à niveau, les prix confirmé
 Prochaine action : validation visuelle du parcours complet et des trois thèmes sous Windows. Aucune ouverture du workspace utilisateur sans sauvegarde explicite.
 
 Clôture Lot 3 — 03/10/2026 : bilan réel validé par AtoumWeb ; commit local dédié autorisé, sans push ni merge. La recette manuelle AtoumWeb reste à faire avant validation fonctionnelle finale. Cette clôture ne contient aucune modification du Lot 4.
+
 
