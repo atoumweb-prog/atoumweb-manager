@@ -28,7 +28,9 @@ module.exports=async context=>{
   await wait('!!document.querySelector(".prospect-desk-overlay")','work desk');
   test(await get('document.querySelector(".prospect-desk-overlay [data-search-entity-type=prospect]")?.dataset.searchEntityId')===p.id,'C02 work desk confirms its displayed identity');
   // Existing commercial APIs prepare deterministic fixture facts; UI never infers new rules.
-  db.crm.changeProspectStage(p.id,'qualifying');db.workflow.saveNeed('prospect',p.id,{otherText:'CONVERGENCE SITE'});await emit();await sleep(100);
+  await click('.prospect-desk-overlay .start-qualification-button');
+  await wait('!!document.querySelector(".qualification-panel-v2")','explicit UI start');
+  db.workflow.saveNeed('prospect',p.id,{otherText:'CONVERGENCE SITE'});await emit();await sleep(100);
   test(db.crm.listProspects().find(item=>item.id===p.id).stage==='qualifying','C05 explicit start is distinct from quote creation');
   test(await get('!!document.querySelector(".prospect-qualification-panel,.qualification-panel,.prospect-workspace")')||await get('document.querySelector(".prospect-desk-overlay").textContent.includes("Qualification")'),'C08 qualification available in actual desk');
   await wait('!!document.querySelector(".qualification-panel-v2 textarea")','actual qualification field');
@@ -104,6 +106,15 @@ module.exports=async context=>{
    obsolete();await sleep(100);
    test(await get('document.querySelector(".prospect-detail-panel")?.textContent.includes("CONVERGENCE LATEST")'),'C03 late refresh cannot replace current identity/details');
    test(old.some(item=>item.id===p.id),'C03 synthetic old snapshot contains same identity');
+   let rejectList;
+   await js('window.__combinedUnhandled=0;window.addEventListener("unhandledrejection",()=>window.__combinedUnhandled++)');
+   ipcMain.removeHandler('crm:prospects:list');ipcMain.handle('crm:prospects:list',()=>new Promise((_resolve,reject)=>{rejectList=reject;}));
+   await emit();for(let i=0;i<60&&!rejectList;i++)await sleep(20);test(!!rejectList,'C03 obsolete Prospect error actually armed');
+   ipcMain.removeHandler('crm:prospects:list');ipcMain.handle('crm:prospects:list',handler);
+   db.crm.updateOrganization(org.id,{name:'CONVERGENCE NEWEST'});await emit();
+   await wait('document.querySelector(".prospect-detail-panel")?.textContent.includes("CONVERGENCE NEWEST")','newer successful refresh');
+   rejectList(Error('OBSOLETE COMBINED PROSPECT FAILURE'));await sleep(100);
+   test(await get('window.__combinedUnhandled===0&&!document.body.textContent.includes("OBSOLETE COMBINED PROSPECT FAILURE")&&document.querySelector(".prospect-detail-panel").textContent.includes("CONVERGENCE NEWEST")'),'C03 obsolete list failure cannot become unhandled or replace current success');
   }finally{ipcMain.removeHandler('crm:prospects:list');ipcMain.handle('crm:prospects:list',handler);}
   const activeOrg=db.crm.createOrganization({name:'CONVERGENCE E73'}),active=db.crm.createProspect({organizationId:activeOrg.id});
   db.crm.changeProspectStage(active.id,'qualifying');db.workflow.saveNeed('prospect',active.id,{otherText:'TEMP'});

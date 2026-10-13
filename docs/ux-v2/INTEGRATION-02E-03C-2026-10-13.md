@@ -1,0 +1,65 @@
+# Intégration isolée 02C / 02D / 02E et 03A–03C
+
+## Références et historique conservé
+
+Relevé GitHub du 13 octobre 2026, avant intégration :
+
+| Référence | HEAD exact | Dernière CI contrôlée |
+|---|---|---|
+| main | 278ff2da022ba5e58ae333de11e74bc4d12a2995 | Base préservée |
+| #98 | 10933aefe52b37a98a1e18638cb29021a3b8bf69 | #777 SUCCESS, 947 Vitest et 77 assertions Electron |
+| #99 | 7549770428fcbb53d89a60fcc92dd5cb6d8f258d | #737 SUCCESS |
+| #100 | d3ef589be9090bc1a5f04cab625228d2a4aa42d7 | #741 SUCCESS |
+| #101 | bd1985b33f56bd1e37902d4bc91af41b868806dc | #760 SUCCESS |
+
+Worktree distinct `C:/DEV/01_PROJETS/AtoumWeb/manager-integration-02e-03c`, branche `integration/ux-v2-02e-03c-v1`. Merge normal `40e12e6`, parents #101 et #98. #99 et #100 sont déjà ancêtres de #101. Aucun cherry-pick, rebase, force-push, retarget, clôture de PR source ou modification de main.
+
+## Conflit et décisions de rapprochement
+
+Un seul conflit Git : `scripts/check-ux-v2-lot01a-real-ui.cjs`, parsing et sélection de fixture. Les modes défaut, captures, Recherche et CRM sont conservés. Le parser commun a 12 tests permanents : cinq modes valides, sept commandes ambiguës/incomplètes refusées. La protection des dossiers de captures existants et de Validation-MSI reste avant toute création de fixture. Le point d'extension utilisé par les recettes 02D/02E est conservé.
+
+`QuotesPage.tsx` et `ProspectsPageV2.tsx` fusionnent textuellement : confirmation des modèles réellement affichés, garde de navigation et éligibilité Projet sont conservées simultanément. Une annulation/erreur d'une ouverture Devis périmée n'ajoute plus de message sur un écran ultérieur.
+
+La nouvelle recette reproduit un remplacement du Prospect actualisé par une ancienne réponse de liste. Correction par génération de lecture, invalidation au démontage, sélection courante par référence et annulation du journal périmé. Les succès **et erreurs** obsolètes sont ignorés ; les erreurs de la lecture courante restent signalées. Aucun retry et aucun nouveau système UX-01.
+
+L'Accueil est raccordé à la projection 6+1 de #98. Une neuvième source indépendante lit les devis existants ; le signal E73 prend exactement le même devis courant, ordonné par date puis ID, dans Home et CRM. Conversion reste historique, exclue du total actif, et son bouton ouvre la vue CRM existante via la garde App. Les sources indisponibles restent explicites. Les widgets, alertes, préférences et le chrono unique sont conservés. Cinq tests permanents vérifient le signal partagé, les révisions et l'absence de mutation des entrées.
+
+Les services CRM/Devis, IPC, preload et types métier sont identiques à #98. Les migrations, restauration et règles contractuelles ne reçoivent aucun nouveau changement d'intégration. Les autres fichiers backend hérités de #101 sont conservés, notamment les tests des préférences Home. Le schéma reste 1–66.
+
+## Matrice C01–C11 sur le candidat combiné
+
+| Scénario | Preuves exécutables |
+|---|---|
+| C01 | 12 tests du parser ; shell avec 63 captures, Recherche, CRM avec 9 captures ; commandes exclusives et dossiers neufs |
+| C02 | Recherche réelle 92 ; convergence : bureau, historique Conversion, filtre masquant puis nouvelle recherche, ID et panneau visibles |
+| C03 | Convergence : liste Prospect lente puis succès récent, erreur obsolète sans rejet non géré ; Devis A lent puis B, succès et erreur tardifs ; recherche 02C et journal annulé |
+| C04 | 5 tests d'éligibilité Projet ; recette CRM ; préparation du véritable Projet depuis le Devis, même ID lors de l'acceptation |
+| C05 | E72 dans Vitest/CRM ; création de devis conserve new, clic réel « Démarrer la prospection » distinct |
+| C06 | E73, annulation et DnD refusé dans CRM ; conversion par IPC acceptation, second appel idempotent, un Client ; Home Finalisation et historique distincts |
+| C07 | CRM : contacts atomiques et contrôle optimiste Qualification/Projet/Budget/Checklist ; convergence : dirty, pending, refus de sauvegarde, instance et texte conservés ; UX-01 183 |
+| C08 | Accueil → recherche → bureau Prospect → qualification enregistrée → besoins enregistrés → Devis → Projet prévisionnel → acceptation → Client ; vrais IDs, absence de doublons ; chrono/parcours 02E |
+| C09 | Home 54 : sources indépendantes, erreurs/cache/retours tardifs, critiques et widgets ; convergence ajoute le raccordement 6+1 |
+| C10 | CRM 9 thèmes/densités, shell 17 routes/étroit/zoom, parcours 02E clavier/Échap/focus, UX-01 confirmations et dialogues réels |
+| C11 | Typecheck, suite réunie, restaurations 35, équivalence binaire 6, migrations/intégrité/FK et nettoyage TEMP |
+
+Le parcours C08 utilise les véritables interfaces pour recherche, qualification, besoins et préparation du Projet. Les données contractuelles de test sont préparées par `testSupport/quotePreparationFixture.ts`, puis l'acceptation est appelée via le vrai preload/IPC ; cela ne constitue pas une recette humaine de rédaction/signature du contrat. Les conflits multifenêtres sont reproduits par des instantanés concurrents et des IPC obsolètes ; aucune session client réelle n'est utilisée.
+
+## Résultats et traçabilité
+
+Premier checkpoint complet `737ce54` : typecheck OK, 1 020/1 020 Vitest dans 107 fichiers (74,31 s), 35 restaurations et 6 binaires ; convergence 34, CRM 77, Recherche 92, Home 54, parcours 02E 61, shell 374, UX-01 183. 81 captures synchronisées, zéro overflow observé par le shell, zéro erreur renderer inattendue ; injections de refus attendues dans les logs main. Bases TEMP : intégrité OK, FK vide, migrations 1–66, nettoyages confirmés. Aucun RPC.
+
+Le complément final ajoute le clic réel de démarrage et l'erreur de liste obsolète : convergence **36 assertions**. La validation finale du HEAD documentaire/code est rejouée avant publication par :
+
+```text
+node scripts/check-ux-v2-integration-validate.cjs
+```
+
+Le manifeste `outputs/integration-<SHA>-<timestamp>/manifest.json` contient le HEAD et l'arbre exacts, le statut Git propre, les durées, sorties, résultats et les empreintes des 81 PNG. Les logs et captures restent locaux dans ce worktree. Les résultats définitifs et le SHA publié sont consignés dans la PR, sans commit documentaire supplémentaire déclenchant une seconde CI.
+
+## CI candidate et limites
+
+Le push de cette branche n'est pas ciblé par `push`; une unique ouverture de PR draft vers main déclenche `quality`. Aucun dispatch/rerun prévu. Le workflow maintient Windows 2022, Node 24, npm ci, typecheck et Vitest à deux workers.
+
+Le nouveau contrôle combiné est obligatoire pour `github.head_ref == 'integration/ux-v2-02e-03c-v1'`. Il exécute les **mêmes fixtures CRM 03B/03C**, plus Recherche, Home, 02E, shell et UX-01 sur le checkout de la PR. Les anciennes étapes conditionnées à #98 restent réservées à #98 ; leur statut ignoré n'est jamais considéré comme une preuve. `--native-only` indique explicitement que typecheck et Vitest sont assurés par les étapes CI distinctes. Les captures et leurs empreintes sont produites ; l'absence de stockage d'artefacts GitHub reste une limite pour la revue visuelle distante.
+
+Recette humaine globale différée, pictogrammes/logo non figés, pas de certification juridique ni de migration générale des autres éditeurs. Aucun lancement Validation-MSI. Les PR #98–#101 et leurs branches doivent rester intactes jusqu'à une décision d'intégration explicite. Cette PR groupée est un candidat testable, **pas une autorisation de fusion**.

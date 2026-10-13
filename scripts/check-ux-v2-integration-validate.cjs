@@ -23,6 +23,7 @@ for(const [name,args] of steps){
  const run=cp.spawnSync(process.execPath,args,{cwd:repo,env,encoding:'utf8',windowsHide:true,maxBuffer:32*1024*1024});
  const log=(run.stdout||'')+(run.stderr||'');fs.writeFileSync(path.join(out,name+'.log'),log);
  const summaries=log.split(/\r?\n/).filter(line=>/RESULT|PASSED|Fixture cleaned|Tests\s+\d+ passed|Duration/.test(line));
+ const ux=log.split(/\r?\n/).find(line=>line.startsWith('{"checks":'));if(ux){const result=JSON.parse(ux);summaries.push(JSON.stringify({checks:result.checks,failed:result.failed}));}
  manifest.steps.push({name,exitCode:run.status,elapsedMs:Date.now()-start,error:run.error?.message,summaries});
  fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify(manifest,null,2));
  console.log('INTEGRATION END '+name+' exit='+run.status+' '+((Date.now()-start)/1000).toFixed(2)+'s');summaries.forEach(line=>console.log(line));
@@ -30,6 +31,8 @@ for(const [name,args] of steps){
 }
 if(git('status','--porcelain')||git('rev-parse','HEAD')!==sha)throw Error('Candidate changed during validation');
 manifest.validated=true;manifest.completedAt=new Date().toISOString();
+manifest.captures=['crm','home','shell'].flatMap(name=>fs.readdirSync(path.join(out,name+'-captures')).filter(file=>file.endsWith('.png')).map(file=>({name,file,sha256:require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(out,name+'-captures',file))).digest('hex')})));
+if(manifest.captures.length!==81)throw Error('Expected 9 CRM + 9 Home + 63 shell compositor-verified captures');
 fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify(manifest,null,2));
 const evidence=JSON.stringify(manifest,null,2);if(process.env.GITHUB_STEP_SUMMARY)fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'\n## Combined native evidence\n```json\n'+evidence+'\n```\n');
 console.log('INTEGRATION_COMPLETE '+out);

@@ -217,13 +217,14 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
       const current=selectionRef.current;
       if (current.selectedId && !nextProspects.some((item) => item.id === current.selectedId)) requestUnsavedExit(()=>applySelectedId(null),'prospect:'+current.selectedId+'/panel');
       if (current.deskModeId && !nextProspects.some((item) => item.id === current.deskModeId)) requestUnsavedExit(()=>applyDeskModeId(null),'prospect:'+current.deskModeId+'/desk');
-    } finally { if(generation===refreshGeneration.current){loadedOnce.current=true;setLoading(false);} }
+    } catch(error) { if(generation===refreshGeneration.current)throw error; }
+    finally { if(generation===refreshGeneration.current){loadedOnce.current=true;setLoading(false);} }
   }
   useEffect(()=>()=>{refreshGeneration.current++;},[]);
   useEffect(() => { void refresh().catch((error:unknown)=>{if(initialId)onEntityReady?.('prospect',initialId,error instanceof Error?error.message:'Prospect introuvable.');onMessage(error instanceof Error?error.message:'Prospection indisponible.');}); }, []);
   useEffect(()=>{if(initialId)setSelectedId(initialId);},[initialId,initialRequest]);
   useEffect(() => { let current=true;if (!selectedId) { setActivity([]); return; } void window.atoumweb.crm.activity.list('prospect', selectedId).then(value=>{if(current)setActivity(value);}).catch(error=>{if(current)onMessage(error instanceof Error?error.message:'Journal indisponible.');});return()=>{current=false;}; }, [selectedId, prospects, actions]);
-  useEffect(() => { const reload = () => void refresh(); window.addEventListener('atoumweb:changed', reload); return () => window.removeEventListener('atoumweb:changed', reload); }, []);
+  useEffect(() => { const reload = () => void refresh().catch(error=>onMessage(error instanceof Error?error.message:'Prospection indisponible.')); window.addEventListener('atoumweb:changed', reload); return () => window.removeEventListener('atoumweb:changed', reload); }, []);
   useEffect(() => {
     if (!selectedId || deskModeId) return;
     const closeOnOutside = (event: PointerEvent) => {
