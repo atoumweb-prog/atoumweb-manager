@@ -10,8 +10,8 @@ const samples=['Accueil','Prospection','Devis','Projets','Interventions & Mainte
 const assert=(ok,msg)=>{if(!ok)throw Error(msg);};
 const normalize=v=>process.platform==='win32'?v.toLowerCase():v;
 const owned=dir=>!!dir&&fs.existsSync(dir)&&path.basename(dir).startsWith(prefix)&&normalize(fs.realpathSync.native(path.dirname(dir)))===normalize(fs.realpathSync.native(os.tmpdir()));
-const captureArg=process.argv.indexOf('--captures');
-assert(captureArg===-1&&process.argv.length===2||captureArg===2&&process.argv.length===4,'Usage: node scripts/check-ux-v2-lot01a-real-ui.cjs [--captures NEW-ABSOLUTE-FOLDER]');
+const captureArg=process.argv.indexOf('--captures'),lot03b=process.argv.includes('--lot03b');
+assert((lot03b&&captureArg===-1&&process.argv.length===3)||(!lot03b&&((captureArg===-1&&process.argv.length===2)||(captureArg===2&&process.argv.length===4))),'Usage: node scripts/check-ux-v2-lot01a-real-ui.cjs [--captures NEW-ABSOLUTE-FOLDER | --lot03b]');
 if(captureArg===2){
  const folder=process.argv[3];assert(path.isAbsolute(folder)&&!/validation-msi/i.test(folder)&&!fs.existsSync(folder),'Use a new absolute capture directory outside Validation-MSI.');
 }
@@ -172,6 +172,11 @@ if(!process.versions.electron){
   await wait('document.querySelectorAll("[data-nav-module]").length===17','real Manager bootstrap');
   test((await get('document.querySelectorAll("[data-nav-module]").length'))===17,'Seventeen navigation entries');
   test(await get('!!window.atoumweb&&!window.atoumwebOperationalRecipe'),'Real preload without synthetic UI API');
+  if(lot03b){
+    await require('./fixtures/lot03b-real-scenarios.cjs')({win,db,evalUI,get,wait,navigate,test,sleep});
+    console.log('[UXV2 03B LIVE] PASSED '+checks+' real native assertions; TEMP only');
+    return;
+  }
   await require('./fixtures/real-shell-scenarios.cjs')({win, db, preload:path.join(temp,'preload.js'), evalUI, get, wait, navigate, test, sleep});
   for(const page of navLabels){await navigate(page);await inspect(page,'atoumweb','comfort');}
   console.log('[UXV2 01A LIVE] PASS all 17 real module destinations.');
