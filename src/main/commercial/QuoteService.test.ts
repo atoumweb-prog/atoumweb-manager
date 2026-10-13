@@ -48,6 +48,29 @@ function createPublishedService(priceCents = 10000, name = 'Service test') {
 }
 
 describe('QuoteService', () => {
+  it('E72 : créer un devis ne démarre pas la prospection d’un nouveau contact', () => {
+    const prospect = createProspect();
+    expect(crm.getProspect(prospect.id).stage).toBe('new');
+
+    const first = quotes.create({ prospectId: prospect.id, subject: 'Devis avant prospection' });
+    expect(first.prospectId).toBe(prospect.id);
+    expect(crm.getProspect(prospect.id).stage).toBe('new');
+
+    const second = quotes.createWithLines({ prospectId: prospect.id, subject: 'Pré-devis avec lignes' }, []);
+    expect(second.prospectId).toBe(prospect.id);
+    expect(crm.getProspect(prospect.id).stage).toBe('new');
+    expect(quotes.list({ prospectId: prospect.id })).toHaveLength(2);
+  });
+
+  it('E72 : après démarrage volontaire, le workflow devis existant reste actif', () => {
+    const prospect = createProspect();
+    const started = crm.changeProspectStage(prospect.id, 'qualifying');
+    expect(started.stage).toBe('qualifying');
+
+    quotes.create({ prospectId: prospect.id, subject: 'Devis après démarrage' });
+    expect(crm.getProspect(prospect.id).stage).toBe('quote_to_prepare');
+  });
+
   it('génère une numérotation annuelle unique', () => {
     const prospect = createProspect();
     const first = quotes.create({ prospectId: prospect.id, subject: 'Premier devis' });
