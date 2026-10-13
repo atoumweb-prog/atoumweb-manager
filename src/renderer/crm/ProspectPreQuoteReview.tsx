@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CatalogItemSummary } from '../../shared/commercial';
-import { planProspectQuoteLines } from '../../shared/prospectPreQuotePlan';
+import { planProspectQuoteLines, sameProspectQuotePlan } from '../../shared/prospectPreQuotePlan';
 import type { ProspectSummary } from '../../shared/crm';
 import type { Need, WorkflowIdentity } from '../../shared/workflow';
 import { parseProspectInformation } from '../../shared/prospectInformation';
@@ -119,8 +119,20 @@ export function ProspectPreQuoteReview({ prospect, needs, catalog, onChanged }: 
         return;
       }
 
-      // Le plan partagé garantit que chaque besoin retenu a une ligne réelle et une version encore disponible.
-      if (quotePlan.missing.length || !quotePlan.lines.length) throw new Error('Des prestations sont indisponibles : actualise les besoins avant de préparer le devis.');
+      // Relire les besoins et le catalogue juste avant l'unique écriture.
+      // Une modification dans une autre fenêtre ne doit pas générer un devis
+      // différent du périmètre explicitement contrôlé par l'utilisateur.
+      const [liveNeeds, liveCatalog] = await Promise.all([
+        window.atoumweb.workflow.needs('prospect', prospect.id),
+        window.atoumweb.catalog.list({ status: 'active' }),
+      ]);
+      const livePlan = planProspectQuoteLines(liveNeeds, liveCatalog);
+      if (livePlan.missing.length || !livePlan.lines.length) {
+        throw new Error('Une prestation du dossier n’est plus disponible : actualise les besoins avant de préparer le devis.');
+      }
+      if (!sameProspectQuotePlan(quotePlan, livePlan)) {
+        throw new Error('Les besoins ou les versions du catalogue ont changé pendant le contrôle. Referme puis rouvre le contrôle avant de créer le devis.');
+      }
 
       const first = solutionRows[0];
       const subject = first?.need.label || prospect.projectSummary?.trim() || `Projet ${prospect.displayName}`;
@@ -134,7 +146,7 @@ export function ProspectPreQuoteReview({ prospect, needs, catalog, onChanged }: 
         estimatedDelay: prospect.timelineStatus === 'date' && prospect.targetDate
           ? `Date cible : ${new Date(`${prospect.targetDate.slice(0, 10)}T12:00:00`).toLocaleDateString('fr-FR')}`
           : prospect.timelineNote || null,
-      }, quotePlan.lines);
+      }, livePlan.lines);
       onChanged?.();
       window.dispatchEvent(new Event('atoumweb:changed'));
       window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'quote', entityId: created.id, title: created.subject } }));
