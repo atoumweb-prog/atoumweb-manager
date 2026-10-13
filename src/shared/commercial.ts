@@ -211,6 +211,8 @@ export interface QuoteLine extends QuoteLineInput {
 }
 
 export interface QuoteSummary {
+  /** Accord de principe explicite sur cette révision, distinct de la signature et du devis finalisé pour envoi. */
+  principleAgreementAt?: string | null;
   projectId?: string | null;
   id: string;
   number: string;
@@ -288,6 +290,8 @@ export interface QuoteApi {
   removeLine(lineId: string): Promise<QuoteDetail>;
   updateConditions(quoteId: string, input: Partial<QuoteInput>): Promise<QuoteDetail>;
   markSent(id: string): Promise<QuoteDetail>;
+  confirmPrincipleAgreement(id: string): Promise<QuoteDetail>;
+  revokePrincipleAgreement(id: string): Promise<QuoteDetail>;
   finalize(id: string): Promise<QuoteDetail>;
   extendValidity(id: string, validUntil: string): Promise<QuoteDetail>;
   markViewed(id: string): Promise<QuoteDetail>;
