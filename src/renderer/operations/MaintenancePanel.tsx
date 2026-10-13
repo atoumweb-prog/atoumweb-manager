@@ -1,3 +1,4 @@
+import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { useEffect, useMemo, useState } from 'react';
 import type { ClientSummary } from '../../shared/crm';
 import {
@@ -32,12 +33,13 @@ function hours(seconds: number): string {
   return `${value.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} h`;
 }
 
-export function MaintenancePanel({ clients, projects, onMessage, onInterventionCreated, initialSubscriptionId }: {
+export function MaintenancePanel({ onEntityReady, clients, projects, onMessage, onInterventionCreated, initialSubscriptionId }: {
   clients: ClientSummary[];
   projects: ProjectSummary[];
   onMessage: (message: string) => void;
   onInterventionCreated: (intervention: Intervention) => void;
   initialSubscriptionId?: string | null;
+  onEntityReady?:EntityReady;
 }) {
   const [plans, setPlans] = useState<MaintenancePlan[]>([]);
   const [subscriptions, setSubscriptions] = useState<MaintenanceSubscription[]>([]);
@@ -109,6 +111,8 @@ export function MaintenancePanel({ clients, projects, onMessage, onInterventionC
   }, [selectedSubscriptionId]);
 
   const selectedSubscription = subscriptions.find((item) => item.id === selectedSubscriptionId) ?? null;
+  useSearchTargetConfirmation('maintenance',selectedSubscription?.id,false,onEntityReady);
+
   const selectedPeriod = periods.find((item) => item.id === selectedPeriodId) ?? null;
   const clientProjects = projects.filter((project) => project.clientAccountId === clientId && project.status !== 'archived');
   const selectedPlan = plans.find((plan) => plan.id === planId) ?? null;

@@ -1,3 +1,5 @@
+import {useCallback} from 'react';
+import {SEARCH_DESTINATIONS,searchDestination,readSearchTarget,type SearchNavigationResult} from '../shared/searchNavigation';
 import {useMemo} from 'react';
 import {NavigationRail, type NavigationRailControls} from './ui/NavigationRail';
 import {WorkspaceHeader} from './ui/WorkspaceHeader';
@@ -99,7 +101,26 @@ function App() {
   const [activePage, setActivePage] = useState<PageName>('Accueil');
   const activePageRef=useRef(activePage);activePageRef.current=activePage;
   const [navigationRequest,setNavigationRequest]=useState(0);
-  function requestPage(page:PageName,run:()=>void,replace=false){const transition=()=>{if((page==='Clients'||page==='Prospects')&&page!==activePageRef.current)setCrmTarget(null);run();};if(page===activePageRef.current&&!replace)transition();else requestUnsavedExit(transition);}
+  const navigationEpoch=useRef(0);
+  const visibleEntity=useRef<{type:SearchResult['entityType'];id:string}|null>(null);
+  const pendingSearch=useRef<{result:SearchResult;resolve:(outcome:SearchNavigationResult)=>void}|null>(null);
+  const cancelSearchNavigation=useCallback(()=>{navigationEpoch.current++;const pending=pendingSearch.current;pendingSearch.current=null;pending?.resolve({status:'cancelled',message:'Navigation remplacée ou annulée ; recherche conservée.'});},[]);
+  const markEntityReady=useCallback((type:SearchResult['entityType'],id:string|null,error?:string)=>{
+    if(SEARCH_DESTINATIONS[type]!==activePageRef.current)return;
+    const pending=pendingSearch.current;
+    if(pending){
+      if(pending.result.entityType!==type||pending.result.entityId!==id)return;
+      pendingSearch.current=null;
+      if(error){visibleEntity.current=null;pending.resolve({status:'failed',message:error});setMessage(error);return;}
+      visibleEntity.current=id?{type,id}:null;
+      pending.resolve({status:'opened'});
+      setMessage((pending.result.title||'Fiche')+' : fiche chargée.');
+      if(id)requestAnimationFrame(()=>document.querySelector<HTMLElement>('[data-search-entity-id="'+CSS.escape(id)+'"][data-search-entity-type="'+type+'"]')?.focus({preventScroll:true}));
+    }else visibleEntity.current=!error&&id?{type,id}:null;
+  },[]);
+  useEffect(()=>()=>cancelSearchNavigation(),[cancelSearchNavigation]);
+
+  function requestPage(page:PageName,run:()=>void,replace=false){const transition=()=>{cancelSearchNavigation();if(page!==activePageRef.current||replace)visibleEntity.current=null;if((page==='Clients'||page==='Prospects')&&page!==activePageRef.current)setCrmTarget(null);run();};if(page===activePageRef.current&&!replace)transition();else requestUnsavedExit(transition);}
   const [theme, setTheme] = useState<ThemeName>('atoumweb');
   const [displayDensity, setDisplayDensity] = useState<DisplayDensity>('comfort');
   const [showHoverHelp, setShowHoverHelp] = useState(true);
@@ -122,12 +143,12 @@ function App() {
   const [catalogTarget,setCatalogTarget]=useState<string|null>(null);
   useEffect(()=>{
     const contract=(e:Event)=>{requestPage('Documents & Contrats',()=>{setContractTypeTarget((e as CustomEvent<string|null>).detail??'all');setActivePage('Documents & Contrats');});};
-    const catalog=(e:Event)=>{requestPage('Offres & Tarifs',()=>{setCatalogTarget((e as CustomEvent<string>).detail);setActivePage('Offres & Tarifs');});};
+    const catalog=(e:Event)=>{void openSearchResult({entityType:'catalog',entityId:(e as CustomEvent<string>).detail,title:'Catalogue'},'event');};
     window.addEventListener('atoumweb:open-contract-library',contract);window.addEventListener('atoumweb:open-catalog-item',catalog);
     return()=>{window.removeEventListener('atoumweb:open-contract-library',contract);window.removeEventListener('atoumweb:open-catalog-item',catalog);};
   },[]);
   const [directoryTarget, setDirectoryTarget] = useState<DirectorySearchTarget | null>(null);
-  useEffect(()=>{const open=(event:Event)=>openSearchResult((event as CustomEvent<SearchResult>).detail);window.addEventListener('atoumweb:navigate',open);return()=>window.removeEventListener('atoumweb:navigate',open);},[]);
+  useEffect(()=>{const open=(event:Event)=>void openSearchResult((event as CustomEvent<SearchResult>).detail,'event');window.addEventListener('atoumweb:navigate',open);return()=>window.removeEventListener('atoumweb:navigate',open);},[]);
   useEffect(() => { const open = (event: Event) => {requestPage((event as CustomEvent<PageName>).detail,()=>{setActivePage((event as CustomEvent<PageName>).detail);});}; window.addEventListener('atoumweb:open-page', open); return () => window.removeEventListener('atoumweb:open-page', open); }, []);
   useEffect(() => {
     const open = (event: Event) => {const target=(event as CustomEvent<'directory'|'pipeline'|'history'|{view:'directory'|'pipeline'|'history';pipelineFilter?:ProspectPipelineFilter}>).detail;const targetView=typeof target==='string'?target:target.view;const targetFilter=targetView==='pipeline'&&typeof target!=='string'?target.pipelineFilter??'all':'all';requestPage('Prospects',()=>{
@@ -171,11 +192,7 @@ function App() {
   }
 
   useEffect(() => {
-    const openLibraryItem = (event: Event) => {requestPage('Bibliothèque AtoumWeb',()=>{
-      const itemId = (event as CustomEvent<string>).detail;
-      if (!itemId) return;
-      setLibrarySearchTarget(itemId);
-      setActivePage('Bibliothèque AtoumWeb');});};
+    const openLibraryItem = (event: Event) => {void openSearchResult({entityType:'atoumweb_library',entityId:(event as CustomEvent<string>).detail,title:'Bibliothèque'},'event');};
     window.addEventListener('atoumweb:open-library-item', openLibraryItem);
     return () => window.removeEventListener('atoumweb:open-library-item', openLibraryItem);
   }, []);
@@ -259,7 +276,7 @@ function App() {
   function openSearchResultDirect(result: SearchResult): void {
     switch (result.entityType) {
       case 'prospect': setProspectViewTarget('directory'); setCrmTarget(result.entityId); setActivePage('Prospects'); break;
-      case 'catalog': setActivePage('Offres & Tarifs'); break;
+      case 'catalog': setCatalogTarget(result.entityId); setActivePage('Offres & Tarifs'); break;
       case 'quote': setQuoteTarget(result.entityId); setActivePage('Devis'); break;
       case 'project':
         setProjectSearchTarget(result.entityId);
@@ -277,7 +294,7 @@ function App() {
       case 'intervention':
       case 'maintenance':
       case 'hour_pack':
-        openOperationsTarget({ entityType: result.entityType, entityId: result.entityId });
+        openOperationsTargetDirect({ entityType: result.entityType, entityId: result.entityId });
         break;
       case 'client': setCrmTarget(result.entityId); setActivePage('Clients'); break;
       case 'client_document': setDocumentTarget(result.entityId); setActivePage('Documents & Contrats'); break;
@@ -287,13 +304,29 @@ function App() {
         setDirectoryTarget({ entityType: result.entityType, entityId: result.entityId });
         setActivePage('Annuaire');
         break;
-      default: setActivePage('Clients'); break;
+      default: return;
     }
-    setMessage(`${result.title} trouvé dans la recherche globale.`);
+
   }
 
-  function navigate(item:PageName){if(item===activePageRef.current)return true;return requestUnsavedExit(()=>{if(item==='Clients'||item==='Prospects')setCrmTarget(null);navigateDirect(item);});}
-  function openSearchResult(result:SearchResult){const destination:PageName=({prospect:'Prospects',quote:'Devis',project:'Projets',catalog:'Offres & Tarifs',client:'Clients',client_document:'Documents & Contrats',organization:'Annuaire',contact:'Annuaire',atoumweb_library:'Bibliothèque AtoumWeb',backup_record:'Sauvegardes',service_request:'Interventions & Maintenance',intervention:'Interventions & Maintenance',maintenance:'Interventions & Maintenance',hour_pack:'Interventions & Maintenance'} as Record<string,PageName>)[result.entityType]??'Clients';requestPage(destination,()=>{setNavigationRequest(n=>n+1);openSearchResultDirect(result);},destination==='Devis'?routeKeys.current.quoteTarget!==result.entityId:destination==='Prospects'?routeKeys.current.crmTarget!==result.entityId||routeKeys.current.prospectViewTarget!=='directory':false);}
+  function navigate(item:PageName){if(item===activePageRef.current)return true;return requestUnsavedExit(()=>{cancelSearchNavigation();visibleEntity.current=null;if(item==='Clients'||item==='Prospects')setCrmTarget(null);navigateDirect(item);});}
+  async function openSearchResult(result:SearchResult,source:'search'|'event'='search'):Promise<SearchNavigationResult>{
+    const destination=searchDestination(result);
+    if(!destination){const message='Type ou identifiant de destination non pris en charge.';setMessage(message);return {status:'unsupported',message};}
+    if(visibleEntity.current?.type===result.entityType&&visibleEntity.current.id===result.entityId&&activePageRef.current===destination){cancelSearchNavigation();return {status:'opened'};}
+    cancelSearchNavigation();const epoch=navigationEpoch.current;
+    try {await readSearchTarget(window.atoumweb,result,source==='event');}
+    catch(error){if(epoch!==navigationEpoch.current)return {status:'cancelled'};const message=error instanceof Error?error.message:'Fiche inaccessible.';setMessage(message);return {status:'failed',message};}
+    if(epoch!==navigationEpoch.current)return {status:'cancelled'};
+    return new Promise(resolve=>{
+      const allowed=requestUnsavedExit(()=>{
+        visibleEntity.current=null;pendingSearch.current={result,resolve};
+        if(destination==='Clients'||destination==='Prospects')setCrmTarget(null);
+        setNavigationRequest(value=>value+1);openSearchResultDirect(result);
+      });
+      if(!allowed)resolve({status:'cancelled',message:'Navigation annulée ; brouillon et recherche conservés.'});
+    });
+  }
   function openOperationsTarget(target:OperationsSearchTarget){requestPage('Interventions & Maintenance',()=>openOperationsTargetDirect(target));}
 
   if (loadingError) {
@@ -315,7 +348,7 @@ function App() {
         <WorkspaceHeader store={visualStore} moduleLabel={activePage === 'Prospects' ? 'Prospection' : activePage} workspaceLabel={(bootstrap.workspacePath.split(/[\\/]/).filter(Boolean).at(-1) ?? bootstrap.workspacePath) + ' · Local'}
           railCollapsed={sidebarCollapsed} onToggleRail={() => railControls.current?.toggle()}
           timer={<GlobalTimer onMessage={setMessage} onDialogChange={setTimerDialogOpen}/>} timerDialogOpen={timerDialogOpen}
-          search={close => <GlobalSearch onOpen={openSearchResult} onDismiss={close}/>} clock={<GlobalClock/>}
+          search={close => <GlobalSearch onOpen={openSearchResult} onDismiss={close} onCancelSelection={cancelSearchNavigation} contextKey={activePage}/>} clock={<GlobalClock/>}
           libraryCollapsed={libraryHeaderCollapsed} onToggleLibrary={() => setLibraryHeaderCollapsed(value=>!value)}
           environmentBanner={/([\\/])Validation-MSI$/i.test(bootstrap.workspacePath) ? <div role="status" className="development-environment-banner">DÉVELOPPEMENT — dossiers TEST — aucune valeur contractuelle réelle</div> : undefined}/>
 
@@ -332,24 +365,24 @@ function App() {
 
           {activePage === 'Accueil' && <HomeDashboard onMessage={setMessage} />}
           {activePage === 'Réglages' && <DemoPanel />}
-          {activePage === 'Prospects' && <ProspectsPage key={`${crmTarget ?? 'none'}:${prospectViewTarget}:${prospectPipelineFilter}`} initialId={crmTarget} initialRequest={navigationRequest} initialView={prospectViewTarget} initialPipelineFilter={prospectPipelineFilter} onMessage={setMessage} />}
-          {activePage === 'Clients' && <ClientsPage key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
-          {activePage === 'Offres & Tarifs' && <CatalogPage onMessage={setMessage} initialId={catalogTarget}/>}
-          {activePage === 'Devis' && <QuotesPage key={quoteTarget} initialId={quoteTarget} initialRequest={navigationRequest} onMessage={setMessage} />}
-          {activePage === 'Projets' && <ProjectsPage onMessage={showMessage} initialProjectId={projectSearchTarget} showHoverHelp={showHoverHelp} />}
-          {activePage === 'Interventions & Maintenance' && <OperationsPage onMessage={setMessage} initialTarget={operationsSearchTarget} />}
+          {activePage === 'Prospects' && <ProspectsPage onEntityReady={markEntityReady} key={`${crmTarget ?? 'none'}:${prospectViewTarget}:${prospectPipelineFilter}`} initialId={crmTarget} initialRequest={navigationRequest} initialView={prospectViewTarget} initialPipelineFilter={prospectPipelineFilter} onMessage={setMessage} />}
+          {activePage === 'Clients' && <ClientsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
+          {activePage === 'Offres & Tarifs' && <CatalogPage onEntityReady={markEntityReady} onMessage={setMessage} initialId={catalogTarget}/>}
+          {activePage === 'Devis' && <QuotesPage onEntityReady={markEntityReady} key={quoteTarget} initialId={quoteTarget} initialRequest={navigationRequest} onMessage={setMessage} />}
+          {activePage === 'Projets' && <ProjectsPage onEntityReady={markEntityReady} onMessage={showMessage} initialProjectId={projectSearchTarget} showHoverHelp={showHoverHelp} />}
+          {activePage === 'Interventions & Maintenance' && <OperationsPage onEntityReady={markEntityReady} onMessage={setMessage} initialTarget={operationsSearchTarget} />}
           {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}
           {activePage === 'Facturation' && <BillingPage onMessage={setMessage} />}
           {activePage === 'Dépenses' && <ExpensesPage onMessage={setMessage} />}
-          {activePage === 'Documents & Contrats' && <DocumentsPage onMessage={setMessage} initialDocumentId={documentTarget} initialContractTypeId={contractTypeTarget}/>}
+          {activePage === 'Documents & Contrats' && <DocumentsPage onEntityReady={markEntityReady} onMessage={setMessage} initialDocumentId={documentTarget} initialContractTypeId={contractTypeTarget}/>}
           {activePage === 'Bibliothèque AtoumWeb' && <AtoumWebLibraryPage
             onMessage={setMessage}
             initialItemId={librarySearchTarget}
             headerCollapsed={libraryHeaderCollapsed}
           />}
           {activePage === 'Sites' && <BridgeSitesPage onMessage={setMessage} />}
-          {activePage === 'Sauvegardes' && <BusinessBackupsPage onMessage={setMessage} initialRecordId={backupSearchTarget} />}
-          {activePage === 'Annuaire' && <DirectoryPage onMessage={setMessage} initialTarget={directoryTarget} />}
+          {activePage === 'Sauvegardes' && <BusinessBackupsPage onEntityReady={markEntityReady} onMessage={setMessage} initialRecordId={backupSearchTarget} />}
+          {activePage === 'Annuaire' && <DirectoryPage onEntityReady={markEntityReady} onMessage={setMessage} initialTarget={directoryTarget} />}
           {activePage === 'Statistiques' && <StatisticsPage onMessage={setMessage} />}
           {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} displayDensity={displayDensity} showHoverHelp={showHoverHelp} onThemeChange={updateTheme} onDensityChange={updateDisplayDensity} onShowHoverHelpChange={updateShowHoverHelp} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
           {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Facturation' && activePage !== 'Dépenses' && activePage !== 'Documents & Contrats' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Sites' && activePage !== 'Sauvegardes' && activePage !== 'Annuaire' && activePage !== 'Statistiques' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}

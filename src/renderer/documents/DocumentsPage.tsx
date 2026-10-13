@@ -1,3 +1,4 @@
+import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { ContractLibraryPage } from '../commercial/ContractLibraryPage';
 import { useEffect, useMemo, useState } from 'react';
 import type { ClientSummary } from '../../shared/crm';
@@ -96,7 +97,7 @@ function retentionNeedsAttention(item: ClientDocument): boolean {
   return new Date(item.retentionUntil).getTime() <= limit.getTime();
 }
 
-export function DocumentsPage({ onMessage, initialDocumentId, initialContractTypeId }: { onMessage: (message: string) => void; initialDocumentId?: string | null; initialContractTypeId?: string | null }) {
+export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, initialContractTypeId }: { onMessage: (message: string) => void; initialDocumentId?: string | null; initialContractTypeId?: string | null;onEntityReady?:EntityReady }) {
   const [libraryOpen,setLibraryOpen]=useState(!!initialContractTypeId);
   useEffect(()=>{if(initialContractTypeId)setLibraryOpen(true);},[initialContractTypeId]);
   const [clients, setClients] = useState<ClientSummary[]>([]);
@@ -142,6 +143,8 @@ export function DocumentsPage({ onMessage, initialDocumentId, initialContractTyp
   useEffect(() => { void refresh(initialDocumentId ?? undefined); }, [initialDocumentId]);
 
   const selected = items.find((item) => item.id === selectedId) ?? null;
+  useSearchTargetConfirmation('client_document',selected?.id,loading,onEntityReady);
+
 
   useEffect(() => {
     if (!selected) return;

@@ -1,3 +1,4 @@
+import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { OperationalActionDetails } from './OperationalActionDetails';
 import { ProjectCommercialScopePanel } from './ProjectCommercialScopePanel';
 import { ProjectBlueprintOrigins } from './ProjectBlueprintOrigins';
@@ -144,7 +145,7 @@ function formatTimer(seconds: number): string {
   return [hours, minutes, rest].map((value) => String(value).padStart(2, '0')).join(':');
 }
 
-export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true }: { onMessage: (message: string, action?: () => void) => void; initialProjectId?: string | null; showHoverHelp?: boolean }) {
+export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, showHoverHelp = true }: { onMessage: (message: string, action?: () => void) => void; initialProjectId?: string | null; showHoverHelp?: boolean;onEntityReady?:EntityReady }) {
   const [view, setView] = useState<'projects' | 'templates'>('projects');
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [templates, setTemplates] = useState<ProjectTemplateSummary[]>([]);
@@ -153,6 +154,8 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
   const [statusFilter, setStatusFilter] = useState<'all' | ProjectStatus>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<ProjectDetail | null>(null);
+  useSearchTargetConfirmation('project',detail?.id,false,onEntityReady);
+
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [expandedPhaseIds, setExpandedPhaseIds] = useState<Set<string>>(() => new Set());
   const [undoStack, setUndoStack] = useState<ProjectHistoryAction[]>([]);

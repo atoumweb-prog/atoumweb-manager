@@ -1,3 +1,4 @@
+import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import {UnsavedGroup,useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { QuoteFinalizationPanel } from './QuoteFinalizationPanel';
 import { QuoteOperationalSalesPanel } from './QuoteOperationalSalesPanel';
@@ -37,7 +38,7 @@ function money(cents: number): string {
   return `${(cents / 100).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} €`;
 }
 
-export function QuotesPage({ onMessage, initialId, initialRequest }: { onMessage: (message: string) => void; initialId?: string | null; initialRequest?:number }) {
+export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest }: { onMessage: (message: string) => void; initialId?: string | null; initialRequest?:number;onEntityReady?:EntityReady }) {
   const [draftLines,setDraftLines]=useState<DraftLine[]>([]);
   const [wizardTerms,setWizardTerms]=useState('');
   const [catalogPrice,setCatalogPrice]=useState('');
@@ -84,6 +85,8 @@ export function QuotesPage({ onMessage, initialId, initialRequest }: { onMessage
   useUnsavedDraft('Prestation à ajouter',{catalogToAdd,catalogPrice},{group:quoteGroup,ready:!!detail&&!showWizard,pending:saving,discard:()=>{setCatalogToAdd('');setCatalogPrice('');}});
   function setEditingLineId(id:string|null){if(editingLineId===id)return;if(editingLineId)requestUnsavedExit(()=>applyEditingLineId(id),quoteGroup+'/line:'+editingLineId+'/editor');else applyEditingLineId(id);}
   const detailPanelRef = useRef<HTMLElement | null>(null);
+  useSearchTargetConfirmation('quote',detail?.id,loading,onEntityReady);
+
 
   async function refresh(): Promise<void> {
     const sequence=detailRequest.current;const selectedAtStart=selectedId;

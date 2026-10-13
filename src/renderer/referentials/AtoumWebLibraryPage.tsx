@@ -1,3 +1,4 @@
+import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import {useUnsavedDraft} from '../unsaved/unsaved';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
@@ -84,6 +85,7 @@ interface Props {
   onMessage: (message: string) => void;
   initialItemId?: string | null;
   headerCollapsed?: boolean;
+  onEntityReady?:EntityReady;
 }
 
 interface CreationForm {
@@ -255,7 +257,7 @@ function metadataFromItem(item: AtoumWebTechnicalItemDetail): MetadataForm {
   };
 }
 
-export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed = false }: Props) {
+export function AtoumWebLibraryPage({ onEntityReady, onMessage, initialItemId, headerCollapsed = false }: Props) {
   const [items, setItems] = useState<AtoumWebTechnicalItemSummary[]>([]);
   const [selected, setSelected] = useState<AtoumWebTechnicalItemDetail | null>(null);
   const [detailExpanded, setDetailExpanded] = useState(false);
@@ -305,6 +307,8 @@ export function AtoumWebLibraryPage({ onMessage, initialItemId, headerCollapsed 
   const [compositionBusy, setCompositionBusy] = useState(false);
   const [compositionExport, setCompositionExport] = useState<AtoumWebCompositionPackageExportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  useSearchTargetConfirmation('atoumweb_library',selected?.id,false,onEntityReady);
+
 
   async function loadVersionAssets(versionId: string): Promise<void> {
     if (!versionId) {

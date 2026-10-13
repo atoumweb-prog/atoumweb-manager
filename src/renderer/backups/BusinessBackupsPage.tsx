@@ -1,3 +1,4 @@
+import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { useEffect, useMemo, useState } from 'react';
 import type {
   BusinessBackupLocationInput,
@@ -31,9 +32,10 @@ const LOCATION_TYPES: Array<{ id: BusinessBackupLocationType; label: string }> =
 interface Props {
   onMessage: (message: string) => void;
   initialRecordId?: string | null;
+  onEntityReady?:EntityReady;
 }
 
-export function BusinessBackupsPage({ onMessage, initialRecordId }: Props) {
+export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId }: Props) {
   const [records, setRecords] = useState<BusinessBackupRecord[]>([]);
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [clients, setClients] = useState<ClientSummary[]>([]);
@@ -46,6 +48,8 @@ export function BusinessBackupsPage({ onMessage, initialRecordId }: Props) {
   const [locationFilter, setLocationFilter] = useState<BusinessBackupLocationType | ''>('');
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  useSearchTargetConfirmation('backup_record',selected?.id,false,onEntityReady);
+
   const [form, setForm] = useState({
     projectId: '', clientAccountId: '', backupType: 'complete' as BusinessBackupType,
     label: '', backupAt: '', notes: '',

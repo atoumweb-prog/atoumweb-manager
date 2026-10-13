@@ -1,3 +1,4 @@
+import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import {InterventionEditor,InterventionExtraFields} from '../workflow/InterventionFields';
 import type {InterventionInput} from '../../shared/operations';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -68,7 +69,7 @@ function projectNodeLabel(node: ProjectNode): string {
   return `${kind} · ${node.name}`;
 }
 
-export function OperationsPage({ onMessage, initialTarget }: { onMessage: (message: string) => void; initialTarget?: OperationsSearchTarget | null }) {
+export function OperationsPage({ onEntityReady, onMessage, initialTarget }: { onMessage: (message: string) => void; initialTarget?: OperationsSearchTarget | null;onEntityReady?:EntityReady }) {
   const [view, setView] = useState<OperationsView>('requests');
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [interventions, setInterventions] = useState<Intervention[]>([]);
@@ -83,6 +84,8 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
   const [requestSplitPercent, setRequestSplitPercent] = useState(38);
   const [requestExpanded, setRequestExpanded] = useState(false);
   const [selectedIntervention, setSelectedIntervention] = useState<Intervention | null>(null);
+  useSearchTargetConfirmation(view==='requests'?'service_request':'intervention',view==='requests'?selectedRequest?.id:selectedIntervention?.id,loading,view==='requests'||view==='interventions'?onEntityReady:undefined);
+
   const [interventionSplitPercent, setInterventionSplitPercent] = useState(34);
   const [interventionExpanded, setInterventionExpanded] = useState(false);
   const [conclusionInterventionId, setConclusionInterventionId] = useState<string | null>(null);
@@ -515,8 +518,8 @@ export function OperationsPage({ onMessage, initialTarget }: { onMessage: (messa
       </div>}
     </>}
 
-    {view === 'maintenance' && <MaintenancePanel clients={clients} projects={projects} onMessage={onMessage} initialSubscriptionId={initialTarget?.entityType === 'maintenance' ? initialTarget.entityId : null} onInterventionCreated={(intervention) => { setSelectedRequest(null); setSelectedIntervention(intervention); setView('interventions'); void refresh({ showLoading: false }); }} />}
-    {view === 'packs' && <HourPacksPanel clients={clients} projects={projects} interventions={interventions} onMessage={onMessage} onOperationsChanged={refresh} initialPackId={initialTarget?.entityType === 'hour_pack' ? initialTarget.entityId : null} />}
+    {view === 'maintenance' && <MaintenancePanel onEntityReady={onEntityReady} clients={clients} projects={projects} onMessage={onMessage} initialSubscriptionId={initialTarget?.entityType === 'maintenance' ? initialTarget.entityId : null} onInterventionCreated={(intervention) => { setSelectedRequest(null); setSelectedIntervention(intervention); setView('interventions'); void refresh({ showLoading: false }); }} />}
+    {view === 'packs' && <HourPacksPanel onEntityReady={onEntityReady} clients={clients} projects={projects} interventions={interventions} onMessage={onMessage} onOperationsChanged={refresh} initialPackId={initialTarget?.entityType === 'hour_pack' ? initialTarget.entityId : null} />}
   </div>;
 }
 

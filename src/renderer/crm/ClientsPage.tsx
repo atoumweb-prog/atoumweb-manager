@@ -1,3 +1,4 @@
+import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { NeedChoices, openEntity } from '../workflow/DossierPanel';
 import {ClientDocumentsPanel} from './ClientDocumentsPanel';
 import {ClientContractsPanel} from './ClientContractsPanel';
@@ -126,13 +127,13 @@ function dateInputValue(value?: string | null): string {
   return Number.isNaN(date.getTime()) ? new Date().toISOString().slice(0, 10) : date.toISOString().slice(0, 10);
 }
 
-export function ClientsPage(props: { onMessage: (message: string) => void; initialId?: string | null }) {
+export function ClientsPage(props: { onMessage: (message: string) => void; initialId?: string | null;initialRequest?:number;onEntityReady?:EntityReady }) {
   return <ClientsPageErrorBoundary>
     <ClientsPageContent {...props} />
   </ClientsPageErrorBoundary>;
 }
 
-function ClientsPageContent({ onMessage, initialId }: { onMessage: (message: string) => void; initialId?: string | null }) {
+function ClientsPageContent({ onEntityReady, onMessage, initialId, initialRequest }: { onMessage: (message: string) => void; initialId?: string | null;initialRequest?:number;onEntityReady?:EntityReady }) {
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
   const [contacts, setContacts] = useState<ClientContactLink[]>([]);
@@ -153,6 +154,9 @@ function ClientsPageContent({ onMessage, initialId }: { onMessage: (message: str
   const [selectedId, setSelectedId] = useState<string | null>(initialId ?? null);
   const [clientSplitPercent, setClientSplitPercent] = useState(68);
   const [needsDraft,setNeedsDraft] = useState<NeedInput[]>([]);
+  useEffect(()=>{if(initialId)setSelectedId(initialId);},[initialId,initialRequest]);
+  const clientDataEpoch=useRef(0),clientSelection=useRef(selectedId);clientSelection.current=selectedId;
+  useEffect(()=>()=>{clientDataEpoch.current++;},[]);
   const [activeTab, setActiveTab] = useState<ClientTab>('summary');
   const [showForm, setShowForm] = useState(false);
   const [draft, setDraft] = useState<ClientDraft>(EMPTY_DRAFT);
@@ -182,6 +186,7 @@ function ClientsPageContent({ onMessage, initialId }: { onMessage: (message: str
   }
 
   async function refreshSelectedClientData(clientId: string): Promise<void> {
+    const epoch=++clientDataEpoch.current;
     const [nextActivity, nextContacts, nextIdentity, nextQuotes, nextProjects, nextSubscriptions, nextInterventions] = await Promise.all([
       window.atoumweb.crm.activity.list('client', clientId),
       window.atoumweb.crm.clients.listContacts(clientId),
@@ -191,6 +196,7 @@ function ClientsPageContent({ onMessage, initialId }: { onMessage: (message: str
       window.atoumweb.operations.maintenance.subscriptions.list({ clientAccountId: clientId }),
       window.atoumweb.operations.interventions.list({ clientAccountId: clientId }),
     ]);
+    if(epoch!==clientDataEpoch.current||clientSelection.current!==clientId)return;
     setActivity(nextActivity);
     setContacts(nextContacts);
     setIdentity(nextIdentity); setQuotes(nextQuotes); setProjects(nextProjects);
@@ -224,6 +230,7 @@ function ClientsPageContent({ onMessage, initialId }: { onMessage: (message: str
     const closeOnOutside = (event: PointerEvent) => {
       const target = event.target as Node | null;
       if (!target || sidePanelRef.current?.contains(target)) return;
+      if(target instanceof Element&&target.closest('button,a,input,select,textarea,tr,[role=option]'))return;
       setSelectedId(null);
       setActionEditor(null);
       setArchiveCandidateId(null);
@@ -245,6 +252,8 @@ function ClientsPageContent({ onMessage, initialId }: { onMessage: (message: str
   }, [clients, query, statusFilter]);
 
   const selected = clients.find((client) => client.id === selectedId) ?? null;
+  useSearchTargetConfirmation('client',selected?.id,loading,onEntityReady);
+
   const clientSplitStyle = selected && !largeView
     ? ({ '--client-list-percent': `${clientSplitPercent}%` } as CSSProperties)
     : undefined;

@@ -1,5 +1,7 @@
+import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
+import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { CatalogContractPanel } from './CatalogContractPanel';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   PRICE_MODES,
   CATALOG_COMMERCIAL_KINDS,
@@ -133,7 +135,7 @@ function formatCatalogDate(value?: string | null): string {
   return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('fr-FR');
 }
 
-export function CatalogPage({ onMessage, initialId }: { onMessage: (message: string) => void; initialId?:string|null }) {
+export function CatalogPage({ onEntityReady, onMessage, initialId }: { onMessage: (message: string) => void; initialId?:string|null;onEntityReady?:EntityReady }) {
   const [items, setItems] = useState<CatalogItemSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
@@ -155,44 +157,54 @@ export function CatalogPage({ onMessage, initialId }: { onMessage: (message: str
   const [componentQuantity, setComponentQuantity] = useState('1');
   const [componentOptional, setComponentOptional] = useState(false);
   const [canonicalCodeDraft, setCanonicalCodeDraft] = useState('');
+  const detailEpoch=useRef(0),listEpoch=useRef(0),mounted=useRef(true),selectedRef=useRef(selectedId),detailRef=useRef(detail);
+  selectedRef.current=selectedId;detailRef.current=detail;
+  const [detailLoading,setDetailLoading]=useState(false);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;detailEpoch.current++;listEpoch.current++;};},[]);
+  useSearchTargetConfirmation('catalog',detail?.id,loading||detailLoading,onEntityReady);
+  useUnsavedDraft('Nouvelle prestation',draft,{group:'catalog:create',ready:showForm,pending:saving,discard:baseline=>{setDraft(baseline);setShowForm(false);}});
+  useUnsavedDraft('Version Catalogue',versionDraft,{group:'catalog:'+detail?.id,ready:versionMode,pending:saving,resetKey:detail?.id,discard:baseline=>{setVersionDraft(baseline);setVersionMode(false);}});
+  const identityGuard=useUnsavedDraft('Code Catalogue',canonicalCodeDraft,{group:'catalog:'+detail?.id,ready:!!detail,pending:saving,resetKey:detail?.id,discard:setCanonicalCodeDraft});
+
 
   const publishedServices = useMemo(
     () => items.filter((item) => item.type === 'service' && item.status === 'active' && item.currentVersion?.status === 'published'),
     [items],
   );
 
-  async function loadDetail(id: string): Promise<CatalogItemDetail> {
-    const nextDetail = await window.atoumweb.catalog.getItem(id);
-    setDetail(nextDetail);
-    setCanonicalCodeDraft(nextDetail.canonicalCode ?? '');
-    if (nextDetail.type === 'offer') {
-      const target = nextDetail.versions.find((version) => version.status === 'draft') ?? nextDetail.currentVersion ?? null;
-      setOfferVersionId(target?.id ?? null);
-      setOfferComponents(target ? await window.atoumweb.catalog.listOfferComponents(target.id) : []);
-    } else {
-      setOfferVersionId(null);
-      setOfferComponents([]);
-    }
-    return nextDetail;
+  async function loadDetail(id:string):Promise<CatalogItemDetail>{
+    const epoch=++detailEpoch.current;setDetailLoading(true);
+    try {
+      const next=await window.atoumweb.catalog.getItem(id);
+      if(next.id!==id)throw Error('La fiche reçue ne correspond pas à la demande.');
+      const version=next.type==='offer'?(next.versions.find(item=>item.status==='draft')??next.currentVersion??null):null;
+      const components=version?await window.atoumweb.catalog.listOfferComponents(version.id):[];
+      if(!mounted.current||epoch!==detailEpoch.current)return next;
+      if(detailRef.current?.id!==id||!identityGuard.dirty)setCanonicalCodeDraft(next.canonicalCode??'');
+      setDetail(next);setOfferVersionId(version?.id??null);setOfferComponents(components);return next;
+    }catch(error){if(mounted.current&&epoch===detailEpoch.current)onEntityReady?.('catalog',id,error instanceof Error?error.message:'Prestation introuvable.');throw error;}
+    finally{if(mounted.current&&epoch===detailEpoch.current)setDetailLoading(false);}
   }
 
   async function refresh(): Promise<void> {
+    const epoch=++listEpoch.current,selectedAtStart=selectedId;
     setLoading(true);
     try {
       const next = await window.atoumweb.catalog.list();
+      if(!mounted.current||epoch!==listEpoch.current)return;
       setItems(next);
-      if (selectedId) {
-        const selected = next.find((item) => item.id === selectedId);
+      if (selectedAtStart && selectedRef.current===selectedAtStart) {
+        const selected = next.find((item) => item.id === selectedAtStart);
         if (selected) await loadDetail(selected.id);
         else { setSelectedId(null); setDetail(null); }
       }
     } finally {
-      setLoading(false);
+      if(mounted.current&&epoch===listEpoch.current)setLoading(false);
     }
   }
 
   useEffect(() => { void refresh(); }, []);
-  useEffect(()=>{if(initialId){setSelectedId(initialId);void loadDetail(initialId).catch(e=>onMessage(String(e)));}},[initialId]);
+  useEffect(()=>{if(initialId&&detailRef.current?.id!==initialId){setSelectedId(initialId);setVersionMode(false);void loadDetail(initialId).catch(e=>onMessage(String(e)));}},[initialId]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase('fr-FR');
@@ -228,6 +240,8 @@ export function CatalogPage({ onMessage, initialId }: { onMessage: (message: str
   }, [items, query, typeFilter, statusFilter]);
 
   async function openItem(id: string): Promise<void> {
+    if(detailRef.current?.id===id)return;
+    if(!requestUnsavedExit(()=>{}))return;
     setSelectedId(id);
     setVersionMode(false);
     setDetailExpanded(false);
@@ -235,6 +249,10 @@ export function CatalogPage({ onMessage, initialId }: { onMessage: (message: str
   }
 
   function closeDetail(): void {
+    requestUnsavedExit(closeDetailDirect);
+  }
+  function closeDetailDirect(): void {
+    detailEpoch.current++;
     setSelectedId(null);
     setDetail(null);
     setVersionMode(false);
@@ -551,7 +569,7 @@ export function CatalogPage({ onMessage, initialId }: { onMessage: (message: str
           ><span /></div>}
 
           {detail && (
-            <aside className={`panel catalog-detail-panel ${detailExpanded ? 'expanded' : ''}`}>
+            <aside tabIndex={-1} data-search-entity-type="catalog" data-search-entity-id={detail.id} className={`panel catalog-detail-panel ${detailExpanded ? 'expanded' : ''}`}>
               <div className="detail-panel-heading">
                 <div><span className="eyebrow">{detail.type === 'offer' ? 'Offre' : 'Service'}</span><h2>{detail.name}</h2><p className="muted">{detail.category || 'Sans catégorie'}</p></div>
                 <div className="catalog-detail-heading-actions">

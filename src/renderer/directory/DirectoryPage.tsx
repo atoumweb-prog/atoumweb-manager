@@ -1,3 +1,4 @@
+import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { useEffect, useMemo, useState } from 'react';
 import type {
   ContactInput,
@@ -77,7 +78,7 @@ function dateLabel(value?: string | null): string {
   return value ? new Date(value).toLocaleDateString('fr-FR') : '—';
 }
 
-export function DirectoryPage({ onMessage, initialTarget }: { onMessage: (message: string) => void; initialTarget?: DirectorySearchTarget | null }) {
+export function DirectoryPage({ onEntityReady, onMessage, initialTarget }: { onMessage: (message: string) => void; initialTarget?: DirectorySearchTarget | null;onEntityReady?:EntityReady }) {
   const [organizations, setOrganizations] = useState<DirectoryOrganization[]>([]);
   const [contacts, setContacts] = useState<DirectoryContact[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,6 +95,8 @@ export function DirectoryPage({ onMessage, initialTarget }: { onMessage: (messag
   const [organizationDraft, setOrganizationDraft] = useState<OrganizationInput>(() => organizationForm());
   const [contactDraft, setContactDraft] = useState<ContactInput>(() => contactForm());
   const [busy, setBusy] = useState(false);
+  useSearchTargetConfirmation(selectedType==='contact'?'contact':'organization',selectedType==='contact'?contacts.find(item=>item.id===selectedId)?.id:organizations.find(item=>item.id===selectedId)?.id,loading,onEntityReady);
+
 
   async function refresh(preferred?: DirectorySearchTarget | null): Promise<void> {
     setLoading(true);

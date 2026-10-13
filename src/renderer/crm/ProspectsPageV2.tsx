@@ -1,3 +1,4 @@
+import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import {UnsavedGroup,useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { normalizeEmail, normalizePhone } from '../../shared/contactValidation';
 import { normalizeWebUrl } from '../../shared/webUrl';
@@ -167,7 +168,7 @@ function quoteCardState(prospect: ProspectSummary, quote: QuoteSummary): string 
   return 'En attente de retour';
 }
 
-export function ProspectsPage({ onMessage, initialId, initialView = 'directory', initialPipelineFilter = 'all', initialRequest }: { onMessage: (message: string) => void; initialId?: string | null; initialView?: View; initialPipelineFilter?: ProspectPipelineFilter;initialRequest?:number }) {
+export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView = 'directory', initialPipelineFilter = 'all', initialRequest }: { onMessage: (message: string) => void; initialId?: string | null; initialView?: View; initialPipelineFilter?: ProspectPipelineFilter;initialRequest?:number;onEntityReady?:EntityReady }) {
   const [prospects, setProspects] = useState<ProspectSummary[]>([]);
   const [actions, setActions] = useState<CrmAction[]>([]);
   const [quotes, setQuotes] = useState<QuoteSummary[]>([]);
@@ -271,6 +272,8 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
   const closed = useMemo(() => prospects.filter(isClosed), [prospects]);
   const selected = prospects.find((item) => item.id === selectedId) ?? null;
   const deskProspect = prospects.find((item) => item.id === deskModeId) ?? null;
+  useSearchTargetConfirmation('prospect',(deskProspect??selected)?.id,loading,onEntityReady);
+
   const selectedActions = actions.filter((item) => item.ownerId === selectedId);
   const byStage = useMemo(() => { const map = new Map<ProspectStage, ProspectSummary[]>(); ACTIVE_STAGES.forEach((stage) => map.set(stage, [])); pipelineFiltered.forEach((item) => map.get(item.stage ?? 'new')?.push(item)); return map; }, [pipelineFiltered]);
   const prospectSplitStyle = selected && !deskProspect
