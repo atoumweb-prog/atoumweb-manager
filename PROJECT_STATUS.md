@@ -1,5 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 13/10/2026 — 02C complément publié, Accueil02D réel validé au périmètre indépendant
+
+- #99 draft actualisée à7549770, CI #737 SUCCESS (943/943), complément natif92/92/clavier/focus/conclusion protégé. Corps de PR et bilan actualisés, aucun merge.
+- Branche `codex/ux-v2-02d-home-trust` depuis#99 : huit sources Accueil indépendantes, erreurs/cache/fraîcheur/générations, alertes complètes et critiques permanentes, actions « Ouvrir » honnêtes, disposition Home par workspace via01F, reset visuel et texte lisible. Pipeline02D2/E59 non refait, dépend de#98.
+- Typecheck/42 ciblés/963 Vitest àebf4e0d verts ; après correction de synchronisation de capture et lisibilité CSS, natifs à3343ebc verts : Home54/54/neuf captures, recherche92, shell374/63captures, UX-01183 ; TEMP/FK/intégrité/migrations/nettoyages OK. Aucun changement TS/TSX entre ces SHA ; les deux manifestes distinguent les tests réellement exécutés.
+- #98 recontrôlée à9f697b0, aucun fichier de son chantier actuel modifié par02D. Aucun service métier, contrat, migration ou donnée réelle modifié. [Audit, matrice et preuves02D](docs/ux-v2/LOT-02D-EXECUTION-2026-10-13.md).
+- Publication draft02D vers main autorisée pour une unique CI automatique existante ; parent02C explicitement inclus/dépendant, ordre#99 puisAccueil. Résultat à consigner dans la PR sans second push. Pas de fusion, budget inchangé et zéroValidation-MSI. Suite02D pipeline/02E après coordination et intégration contrôlée.
+
 ## 13/10/2026 — Complément 02C et poursuite autonome autorisés
 
 - PR #99 draft, CI initiale #720 verte. Complément local `223980eb` : Tab/Shift-Tab neuf variantes, focus conclusion d'incident depuis Accueil et sous-éditeur protégé par UX-01/DraftSection, conflits explicites et pending conservés ; aucune règle de clôture modifiée.
