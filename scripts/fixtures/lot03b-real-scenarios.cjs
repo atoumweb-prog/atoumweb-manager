@@ -8,10 +8,13 @@
 module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, saveScreenshot}) => {
   const {dialog} = require('electron');
   const confirmations = [];
+  let discardNext = false;
   const originalDialog = dialog.showMessageBoxSync;
   dialog.showMessageBoxSync = (...args) => {
     confirmations.push(args.at(-1));
-    return 0; // Rester : toute sortie de saisie dirty doit être refusée.
+    const answer = discardNext ? 1 : 0;
+    discardNext = false;
+    return answer; // Par défaut : Rester ; quitter seulement après confirmation explicite du test.
   };
   const clickText = async (selector, label) => {
     await js('const elements=[...document.querySelectorAll('+JSON.stringify(selector)+')];'+
@@ -93,8 +96,24 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
       'Finalisation vide après annulation');
     const counts=db.database.all("SELECT action,count(*) AS n FROM activity_events WHERE entity_id=? AND action LIKE 'principle_agreement_%' GROUP BY action",[quote.id]);
     test(counts.length===2 && counts.every(row=>row.n===1),'R03B-12: événements de confirmation/révocation uniques');
+    // UX-01: véritable brouillon de relance du Devis, avec refus de quitter.
+    const modalBefore=confirmations.length;
+    await js('const field=document.querySelector(".prospect-quote-panel .followup-inline input[type=date]");'+
+      'if(!field)throw Error("Champ de relance absent");'+
+      'Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(field,"2026-12-20");'+
+      'field.dispatchEvent(new Event("input",{bubbles:true}));field.dispatchEvent(new Event("change",{bubbles:true}));');
+    await wait('document.querySelector(".prospect-quote-panel .followup-inline input[type=date]")?.value==="2026-12-20"',
+      'brouillon de relance visible');
     await js('document.querySelector(".prospect-desk-overlay .close-detail").click();');
-    await wait('!document.querySelector(".prospect-desk-overlay")','retour au pipeline');
+    await sleep(90);
+    test(confirmations.length===modalBefore+1,'R03B-18: sortie dirty demande une seule confirmation');
+    test(await get('!!document.querySelector(".prospect-desk-overlay") && document.querySelector(".prospect-quote-panel .followup-inline input[type=date]")?.value==="2026-12-20"'),
+      'R03B-18: Rester garde le brouillon intact');
+    test(!db.actions.list({ownerType:'prospect',ownerId:active.id}).some(a=>a.type==='follow_up'),
+      'R03B-18: aucune relance créée en quittant un brouillon');
+    discardNext=true;
+    await js('document.querySelector(".prospect-desk-overlay .close-detail").click();');
+    await wait('!document.querySelector(".prospect-desk-overlay")','sortie explicitement confirmée');
     test(await get('document.querySelector(".kanban-board").textContent.includes("TEST 03B Actif Dijon")'),
       'R03B-12: retour à la colonne actuelle après révocation');
 
