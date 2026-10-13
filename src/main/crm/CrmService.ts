@@ -658,6 +658,35 @@ export class CrmService {
     this.indexProspect(id); return this.getProspect(id);
   }
 
+  /**
+   * 03C — écriture optimiste de la checklist. Comparer la colonne concernée
+   * (et non updated_at, également modifié par les autres sections métier)
+   * permet de conserver une qualification parallèle sans perdre ses points.
+   * SQLite effectue test et écriture en une seule instruction : deux fenêtres
+   * ne peuvent pas écraser silencieusement le même instantané.
+   */
+  updateProspectMissingInformationIfUnchanged(
+    id: string, expected: string | null, next: string | null,
+  ): ProspectSummary {
+    const current = this.getProspect(id);
+    if (current.archivedAt || current.clientAccountId) {
+      throw new Error('Checklist en lecture seule sur un Prospect archivé ou converti.');
+    }
+    const result = this.database.run(
+      'UPDATE prospects SET missing_information=?, updated_at=? WHERE id=? AND archived_at IS NULL AND client_account_id IS NULL AND missing_information IS ?',
+      [clean(next), nowIso(), id, clean(expected)],
+    );
+    if (Number(result.changes) !== 1) {
+      throw new Error('Conflit : la checklist de ce Prospect a changé dans une autre fenêtre. Vérifie les informations enregistrées avant de continuer.');
+    }
+    this.activity({
+      entityType: 'prospect', entityId: id, action: 'information_checklist_updated',
+      summary: 'Informations à confirmer actualisées', prospectId: id,
+    });
+    this.indexProspect(id);
+    return this.getProspect(id);
+  }
+
   changeProspectStage(id: string, stage: ProspectStage, lostReason?: string | null, allowIncompleteQualification = false): ProspectSummary {
     if (!PROSPECT_STAGES.includes(stage)) throw new Error('Étape prospect invalide.');
     const current = this.getProspect(id);
