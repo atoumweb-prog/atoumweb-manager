@@ -18,6 +18,59 @@ afterEach(() => {
 });
 
 describe('CrmService', () => {
+  it('03C.5 : crée et rattache le contact principal dans une transaction idempotente, même après reprise du service', () => {
+    const organization = crm.createOrganization({ name: 'Atelier prospect 03C' });
+    const prospect = crm.createProspect({ organizationId: organization.id, primaryNeed: 'Site vitrine' });
+    const input = { organizationId: organization.id, firstName: 'Camille', lastName: 'Exemple', jobTitle: 'Gérante' };
+
+    const created = crm.createAndAttachPrimaryProspectContact(prospect.id, input);
+    expect(crm.listProspects({ includeArchived: true }).find(item => item.id === prospect.id)?.contactId).toBe(created.id);
+    // Même si le renderer n'a pas reçu la réponse IPC et relance l'action.
+    const reloadedService = new CrmService(database);
+    expect(reloadedService.createAndAttachPrimaryProspectContact(prospect.id, input).id).toBe(created.id);
+    expect(database.get<{ count: number }>('SELECT count(*) AS count FROM contacts')?.count).toBe(1);
+    expect(database.get<{ count: number }>("SELECT count(*) AS count FROM activity_events WHERE action='primary_contact_attached' AND prospect_id=?", [prospect.id])?.count).toBe(1);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('03C.5 : une erreur de rattachement annule la création du contact et ses événements', () => {
+    const organization = crm.createOrganization({ name: 'Transaction refusée 03C' });
+    const prospect = crm.createProspect({ organizationId: organization.id });
+    database.exec(`CREATE TRIGGER test_reject_primary_attach BEFORE UPDATE OF contact_id ON prospects
+      WHEN NEW.id='${prospect.id}' BEGIN SELECT RAISE(ABORT,'fixture refuses attach'); END;`);
+    expect(() => crm.createAndAttachPrimaryProspectContact(prospect.id, {
+      organizationId: organization.id, firstName: 'Sam', lastName: 'Essai',
+    })).toThrow(/fixture refuses attach/);
+    expect(database.get<{ count: number }>('SELECT count(*) AS count FROM contacts')?.count).toBe(0);
+    expect(database.get<{ count: number }>("SELECT count(*) AS count FROM activity_events WHERE entity_type='contact'")?.count).toBe(0);
+    expect(crm.listProspects({ includeArchived: true }).find(item => item.id === prospect.id)?.contactId).toBeFalsy();
+    database.exec('DROP TRIGGER test_reject_primary_attach;');
+    const recovered = crm.createAndAttachPrimaryProspectContact(prospect.id, {
+      organizationId: organization.id, firstName: 'Sam', lastName: 'Essai',
+    });
+    expect(recovered.id).toBeTruthy();
+    expect(database.get<{ count: number }>('SELECT count(*) AS count FROM contacts')?.count).toBe(1);
+  });
+
+  it('03C.5 : refuse un contact d’une autre organisation et réutilise celui déjà lié sans l’écraser', () => {
+    const organization = crm.createOrganization({ name: 'Organisation correcte 03C' });
+    const other = crm.createOrganization({ name: 'Autre organisation 03C' });
+    const prospect = crm.createProspect({ organizationId: organization.id });
+    expect(() => crm.createAndAttachPrimaryProspectContact(prospect.id, {
+      organizationId: other.id, firstName: 'Faux', lastName: 'Contact',
+    })).toThrow(/même organisation/);
+    expect(database.get<{ count: number }>('SELECT count(*) AS count FROM contacts')?.count).toBe(0);
+    const created = crm.createAndAttachPrimaryProspectContact(prospect.id, {
+      organizationId: organization.id, firstName: 'Alex', lastName: 'Initial',
+    });
+    const reused = crm.createAndAttachPrimaryProspectContact(prospect.id, {
+      organizationId: organization.id, firstName: 'Alex', lastName: 'Autre saisie',
+    });
+    expect(reused.id).toBe(created.id);
+    expect(reused.lastName).toBe('Initial');
+    expect(database.get<{ count: number }>('SELECT count(*) AS count FROM contacts')?.count).toBe(1);
+  });
+
   it('conserve une absence explicite de site sans fausse URL ni migration',()=>{
     const organization=crm.createOrganization({name:'TEST fixture sans site',website:null});
     const prospect=crm.createProspect({organizationId:organization.id,primaryNeed:'Création de site'});
