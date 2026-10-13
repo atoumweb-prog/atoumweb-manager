@@ -1,5 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 13/10/2026 — Reprise 02C : recherche réelle validée localement
+
+- Travail interrompu préservé à `c9fc199`, actualisation locale normale à `c149dfe` depuis main `278ff2da` (PR #97 fusionnée, CI #665 SUCCESS). Aucune branche historique modifiée.
+- Code `1b0fbb999a90409026e8e8aa161d75e7e133a682` sur `codex/ux-v2-02c-real-search` : confirmation du chargement par ID, garde UX-01 avant changement, Catalogue ciblé, réponses tardives invalidées, erreurs/recherche conservées, focus et idempotence. Raccordement Bibliothèque manquant et course Catalogue A/B/A corrigés avec reproductions permanentes.
+- Validation finale réelle Windows : typecheck OK ; 36 ciblés conservés ; 943/943 Vitest (100 fichiers), 35 restaurations, 6 binaires, sans RPC ; recherche Electron 68/68, shell 374/374/63 captures/neuf variantes, UX-01 183/183 ; intégrité/FK/migrations TEMP et nettoyage OK. Aucun changement de services/main/preload ou données réelles.
+- [Bilan et limites de couverture](docs/UXV2_LOT02C_REAL_SEARCH.md) : comportement contractuel historique journalisé explicitement qualifié ; Tab/Shift-Tab exhaustif, focus conclusion depuis Accueil et recette complète des sous-éditeurs restent non certifiés par 02C. Recette humaine globale différée.
+- Aucun push/PR/CI 02C ni fusion. Prochaine action : revue du candidat local, puis accord distinct avant publication et validation GitHub. Validation-MSI non utilisée.
+
 ## 13/10/2026 — Shell réel 02B.5/02B.6 validé localement
 
 - Main61960d5 etCI663verte aprèsmerge96normal, branches90–93inchangées. Nouveaucode8105de4 sur codex/ux-v2-real-shell-02b : rail/header réels dansApp, vraiGlobalTimerunique, recherche/horlogeexistantes, préférencesparworkspace ; pas nouveauchrono/service métier/migration.
