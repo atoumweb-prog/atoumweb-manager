@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
 import { CrmService } from './CrmService';
+import { prospectProjectBriefSnapshot } from '../../shared/crm';
 
 let database: NodeSqliteAdapter;
 let crm: CrmService;
@@ -19,6 +20,83 @@ afterEach(() => {
 
 describe('CrmService', () => {
   const readProspect = (service: CrmService, id: string) => service.listProspects({ includeArchived: true }).find(item => item.id === id)!;
+  it('03C projet : refuse une sauvegarde budget obsolète entre deux fenêtres, puis reprend explicitement', () => {
+    const org = crm.createOrganization({ name: 'Budget deux fenêtres' });
+    const prospect = crm.createProspect({ organizationId: org.id });
+    const secondWindow = new CrmService(database);
+    const initial = prospectProjectBriefSnapshot(readProspect(crm, prospect.id));
+    const inA = { ...initial, projectSummary: 'Site catalogue A', budgetStatus: 'known' as const,
+      budgetMinCents: 69900, budgetMaxCents: 69900, timelineStatus: 'date' as const,
+      targetDate: '2026-12-10' };
+    const inB = { ...initial, projectSummary: 'Site catalogue B', budgetStatus: 'range' as const,
+      budgetMinCents: 10000, budgetMaxCents: 100000 };
+    const first = crm.updateProspectProjectBriefIfUnchanged(prospect.id, initial, inA);
+    expect(first).toMatchObject({ projectSummary: 'Site catalogue A', budgetMinCents: 69900,
+      budgetMaxCents: 69900, timelineStatus: 'date', targetDate: '2026-12-10' });
+    const events = crm.listActivity('prospect', prospect.id).length;
+    expect(() => secondWindow.updateProspectProjectBriefIfUnchanged(prospect.id, initial, inB)).toThrow(/Conflit/);
+    expect(crm.listActivity('prospect', prospect.id)).toHaveLength(events);
+    expect(readProspect(crm, prospect.id).projectSummary).toBe('Site catalogue A');
+    const fresh = prospectProjectBriefSnapshot(readProspect(secondWindow, prospect.id));
+    const changed = secondWindow.updateProspectProjectBriefIfUnchanged(prospect.id, fresh, { ...fresh,
+      projectContext: 'Cadrage adapté après relecture', existingStatus: 'yes', existingUrl: 'https://atelier.test',
+    });
+    expect(changed).toMatchObject({ projectSummary: 'Site catalogue A', projectContext: 'Cadrage adapté après relecture',
+      budgetMinCents: 69900, existingUrl: 'https://atelier.test' });
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('03C projet : budget et calendrier ne détruisent pas la checklist modifiée indépendamment', () => {
+    const org = crm.createOrganization({ name: 'Projet et checklist indépendants' });
+    const prospect = crm.createProspect({ organizationId: org.id });
+    const initial = prospectProjectBriefSnapshot(readProspect(crm, prospect.id));
+    const checklist = '{"version":1,"items":[{"id":"domain","label":"Domaine","status":"resolved","isBlocking":false}]}';
+    crm.updateProspectMissingInformationIfUnchanged(prospect.id, null, checklist);
+    const changed = new CrmService(database).updateProspectProjectBriefIfUnchanged(prospect.id, initial, {
+      ...initial, projectContext: 'Site e-commerce',
+      budgetStatus: 'range', budgetMinCents: 30000, budgetMaxCents: 50000,
+      timelineStatus: 'note', timelineNote: 'Printemps',
+    });
+    expect(changed.missingInformation).toBe(checklist);
+    expect(changed).toMatchObject({ projectContext: 'Site e-commerce', budgetMinCents: 30000,
+      budgetMaxCents: 50000, timelineNote: 'Printemps' });
+  });
+
+  it('03C projet : une erreur SQLite annule tous les champs et aucune activité fantôme', () => {
+    const org = crm.createOrganization({ name: 'Projet rejeté SQL' });
+    const prospect = crm.createProspect({ organizationId: org.id });
+    const initial = prospectProjectBriefSnapshot(readProspect(crm, prospect.id));
+    database.exec(`CREATE TRIGGER test_project_brief_abort BEFORE UPDATE OF budget_min_cents ON prospects
+      WHEN NEW.id='${prospect.id}' BEGIN SELECT RAISE(ABORT,'fixture brief rollback'); END;`);
+    const before = crm.listActivity('prospect', prospect.id).length;
+    expect(() => crm.updateProspectProjectBriefIfUnchanged(prospect.id, initial, {
+      ...initial, projectSummary: 'Nouveau contexte', budgetMinCents: 25000, budgetMaxCents: 50000,
+    })).toThrow(/fixture brief rollback/);
+    expect(prospectProjectBriefSnapshot(readProspect(crm, prospect.id))).toEqual(initial);
+    expect(crm.listActivity('prospect', prospect.id)).toHaveLength(before);
+    database.exec('DROP TRIGGER test_project_brief_abort');
+    expect(() => crm.updateProspectProjectBriefIfUnchanged(prospect.id, initial, {
+      ...initial, budgetMinCents: 50000, budgetMaxCents: 20000,
+    })).toThrow(/budget minimum/);
+  });
+
+  it('03C projet : protège les fiches converties ou archivées', () => {
+    const org = crm.createOrganization({ name: 'Projet converti' });
+    const prospect = crm.createProspect({ organizationId: org.id });
+    const old = prospectProjectBriefSnapshot(readProspect(crm, prospect.id));
+    crm.convertProspectToClient(prospect.id);
+    expect(() => crm.updateProspectProjectBriefIfUnchanged(prospect.id, old, {
+      ...old, projectSummary: 'À ne pas écrire',
+    })).toThrow(/lecture seule/);
+    const org2 = crm.createOrganization({ name: 'Projet archivé' });
+    const archived = crm.createProspect({ organizationId: org2.id });
+    const snap = prospectProjectBriefSnapshot(readProspect(crm, archived.id));
+    database.run('UPDATE prospects SET archived_at=? WHERE id=?', [new Date().toISOString(), archived.id]);
+    expect(() => crm.updateProspectProjectBriefIfUnchanged(archived.id, snap, {
+      ...snap, projectSummary: 'À ne pas écrire',
+    })).toThrow(/lecture seule/);
+  });
+
   it('03C multifenêtre : refuse un snapshot ancien sans perdre les modifications de l’autre fenêtre', () => {
     const org = crm.createOrganization({ name: 'Deux fenêtres' });
     const prospect = crm.createProspect({ organizationId: org.id });
