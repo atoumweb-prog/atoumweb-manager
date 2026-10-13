@@ -58,6 +58,7 @@ describe('CrmService', () => {
     const input = { organizationId: organization.id, firstName: 'Robin', lastName: 'Décision', jobTitle: 'Direction' };
     const first = crm.createAndAttachDecisionProspectContact(prospect.id, input);
     expect(crm.listProspects({ includeArchived: true }).find(item => item.id === prospect.id)?.decisionMakerContactId).toBe(first.id);
+    expect(crm.listProspects({ includeArchived: true }).find(item => item.id === prospect.id)?.decisionStatus).toBe('no');
     const replay = new CrmService(database).createAndAttachDecisionProspectContact(prospect.id, { ...input, lastName: 'Autre' });
     expect(replay.id).toBe(first.id);
     expect(replay.lastName).toBe('Décision');
