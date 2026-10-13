@@ -50,7 +50,7 @@ describe('lot 03B — projection CRM sans mutation', () => {
     expect(projection.columns.map((column) => column.prospects.length)).toEqual([1, 0, 0, 0, 1, 0]);
     expect(projection.conversions.map((prospect) => prospect.id)).toEqual(['c']);
     expect(isHistoricalConversion(prospects[5])).toBe(false);
-    expect(new Set(projection.columns.flatMap((column) => column.prospects.map((prospect) => prospect.id)).size).toBe(2);
+    expect(new Set(projection.columns.flatMap((column) => column.prospects.map((prospect) => prospect.id))).size).toBe(2);
     expect(prospects.map((prospect) => prospect.stage)).toEqual(['qualifying', 'negotiation', 'won', 'lost', 'new', 'won']);
   });
 });
