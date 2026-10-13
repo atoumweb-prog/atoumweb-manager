@@ -1,0 +1,44 @@
+import type { ProspectStage } from './crm';
+
+/**
+ * Lot 03B — projection visuelle uniquement. Ne modifie jamais le statut CRM.
+ * La Finalisation reste non attribuable tant que le marqueur E73 n'existe pas.
+ */
+export const PROSPECT_PIPELINE_COLUMNS = [
+  { id: 'qualify', label: 'À qualifier', stages: ['qualifying'] },
+  { id: 'needs', label: 'Besoins', stages: ['need_identified'] },
+  { id: 'quote', label: 'Préparer le devis', stages: ['quote_to_prepare', 'quote_to_send'] },
+  { id: 'reply', label: 'Attente du retour', stages: ['quote_sent', 'follow_up', 'waiting'] },
+  { id: 'negotiation', label: 'Négociation', stages: ['negotiation'] },
+  { id: 'finalization', label: 'Finalisation', stages: [] },
+] as const satisfies ReadonlyArray<{ id: string; label: string; stages: readonly ProspectStage[] }>;
+
+export interface PipelineProspectProjection {
+  id: string;
+  stage?: ProspectStage | null;
+  archivedAt?: string | null;
+  clientAccountId?: string | null;
+}
+
+/** Une seule destination au plus ; 'new', perdu, archivé et gagné restent exclus. */
+export function activePipelineColumn(prospect: PipelineProspectProjection): string | null {
+  if (prospect.archivedAt || prospect.clientAccountId || prospect.stage === 'won' || prospect.stage === 'lost') return null;
+  return PROSPECT_PIPELINE_COLUMNS.find((column) =>
+    (column.stages as readonly ProspectStage[]).includes(prospect.stage ?? 'new'),
+  )?.id ?? null;
+}
+
+/** Conversion = Prospect lié à un véritable compte Client, non colonne de drag & drop. */
+export function isHistoricalConversion(prospect: PipelineProspectProjection): boolean {
+  return Boolean(prospect.clientAccountId);
+}
+
+export function projectPipeline(prospects: readonly PipelineProspectProjection[]) {
+  const columns = PROSPECT_PIPELINE_COLUMNS.map((column) => ({
+    id: column.id,
+    label: column.label,
+    prospects: prospects.filter((prospect) => activePipelineColumn(prospect) === column.id),
+  }));
+  const conversions = prospects.filter(isHistoricalConversion);
+  return { columns, conversions };
+}
