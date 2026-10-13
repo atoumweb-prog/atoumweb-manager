@@ -60,7 +60,6 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
   const [error, setError] = useState('');
   // Après une réponse IPC partielle, réutiliser les contacts effectivement créés
   // au lieu de relancer aveuglément crm.contacts.create lors de « Réessayer ».
-  const pendingDecision = useRef<{ prospectId: string; contactId: string } | null>(null);
   const loadSequence = useRef(0);
   const identityValue={organization:identity?.organization,contact:identity?.contact,decision,decisionContactId,primaryDraft};
   const guard=useUnsavedDraft('Entreprise et interlocuteurs',identityValue,{ready:!!identity,pending:busy,discard:s=>{setIdentity(i=>i?{...i,organization:s.organization??null,contact:s.contact??null}:i);setDecision(s.decision);setDecisionContactId(s.decisionContactId);setPrimaryDraft(s.primaryDraft);}});
@@ -95,7 +94,7 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
 
   async function load(){const sequence=++loadSequence.current;try{const next=await window.atoumweb.workflow.identity('prospect',prospect.id);const separate=next.decisionMaker&&next.decisionMaker.id!==next.contact?.id?next.decisionMaker:null;const contact=prospect.decisionStatus==='no'?separate?.id??'':'';const base=decisionFromIdentity(prospect,next);const nextDecision=contact?await draftFromContact(contact,base,next):base;const primary=next.contact?{firstName:next.contact.firstName,lastName:next.contact.lastName,role:next.contact.jobTitle??''}:{firstName:'',lastName:'',role:''};if(sequence!==loadSequence.current)return;if(!guard.dirty){guard.initial({organization:next.organization,contact:next.contact,decision:nextDecision,decisionContactId:contact,primaryDraft:primary});setIdentity(next);setPrimaryDraft(primary);setDecisionContactId(contact);setDecision(nextDecision);}}catch(e){if(sequence===loadSequence.current)setError(cleanError(e));}}
 
-  useEffect(() => { setEditing(false);pendingDecision.current=null;void load();return()=>{loadSequence.current++;}; }, [prospect.id]);
+  useEffect(() => { setEditing(false);void load();return()=>{loadSequence.current++;}; }, [prospect.id]);
   useEffect(() => { if (identity) void load(); }, [prospect.updatedAt]);
 
   const decisionEmail = validateEmail(decision.email);
@@ -103,7 +102,6 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
 
   async function chooseDecisionContact(contactId: string) {
     if (!identity) return;
-    pendingDecision.current=null;
     setDecisionContactId(contactId);
     if (!contactId) {
       setDecision({ ...decision, firstName: '', lastName: '', role: '', email: '', phone: '' });
@@ -183,18 +181,10 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
         if (decisionContactId) {
           decisionMakerContactId = decisionContactId;
         } else {
-          const checkpoint = pendingDecision.current?.prospectId === prospect.id ? pendingDecision.current.contactId : null;
-          const decisionContact = checkpoint
-            ? await window.atoumweb.crm.contacts.get(checkpoint)
-            : await window.atoumweb.crm.contacts.create({
-              organizationId: identity.organization?.id ?? primaryContact?.organizationId ?? null,
-              firstName: decision.firstName.trim(), lastName: decision.lastName.trim(),
-              jobTitle: decision.role.trim() || null, email: null, phone: null,
-            });
-          pendingDecision.current = { prospectId: prospect.id, contactId: decisionContact.id };
-          if (checkpoint) await window.atoumweb.crm.contacts.update(decisionContact.id, {
-            ...decisionContact, firstName: decision.firstName.trim(),
-            lastName: decision.lastName.trim(), jobTitle: decision.role.trim() || null,
+          const decisionContact = await window.atoumweb.crm.contacts.createAndAttachDecisionProspect(prospect.id, {
+            organizationId: identity.organization?.id ?? primaryContact?.organizationId ?? null,
+            firstName: decision.firstName.trim(), lastName: decision.lastName.trim(),
+            jobTitle: decision.role.trim() || null, email: null, phone: null,
           });
           decisionMakerContactId = decisionContact.id;
           await syncPrimaryMethod(decisionContact.id, 'email', decision.email);
@@ -213,7 +203,6 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
         decisionMakerEmail: null,
         decisionMakerPhone: null,
       });
-      pendingDecision.current=null;
       guard.saved();setEditing(false); await load(); onSaved();
       window.dispatchEvent(new Event('atoumweb:changed'));
     } catch (e) {
