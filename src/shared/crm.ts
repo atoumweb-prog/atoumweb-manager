@@ -202,6 +202,38 @@ export interface ProspectSummary extends ProspectInput {
   hasContactMethod?: boolean;
   researchSnapshotCount?: number;
 }
+/** Snapshot complet du formulaire 03C Besoin / Projet, distinct de la checklist. */
+export interface ProspectProjectBrief {
+  projectSummary: string | null;
+  projectContext: string | null;
+  budgetStatus: ProspectInput['budgetStatus'];
+  budgetMinCents: number | null;
+  budgetMaxCents: number | null;
+  timelineStatus: ProspectInput['timelineStatus'];
+  targetDate: string | null;
+  timelineNote: string | null;
+  existingStatus: ProspectInput['existingStatus'];
+  existingUrl: string | null;
+  existingNotes: string | null;
+}
+
+/** Le même snapshot sert à comparer, appliquer et recharger les 11 champs. */
+export function prospectProjectBriefSnapshot(prospect: ProspectSummary): ProspectProjectBrief {
+  return {
+    projectSummary: prospect.projectSummary ?? null,
+    projectContext: prospect.projectContext ?? null,
+    budgetStatus: prospect.budgetStatus ?? null,
+    budgetMinCents: prospect.budgetMinCents ?? null,
+    budgetMaxCents: prospect.budgetMaxCents ?? null,
+    timelineStatus: prospect.timelineStatus ?? null,
+    targetDate: prospect.targetDate ?? null,
+    timelineNote: prospect.timelineNote ?? null,
+    existingStatus: prospect.existingStatus ?? null,
+    existingUrl: prospect.existingUrl ?? null,
+    existingNotes: prospect.existingNotes ?? null,
+  };
+}
+
 export interface ProspectFilters { stage?: ProspectStage | null; includeArchived?: boolean; search?: string | null; }
 
 export interface ClientInput { organizationId?: string | null; primaryContactId?: string | null; status?: ClientStatus; nextActionAt?: string | null; nextActionText?: string | null; notes?: string | null; relationshipStatus?: ClientRelationshipStatus; relationshipNote?: string | null; }
@@ -276,6 +308,8 @@ export interface CrmApi {
     updateQualification(id: string, input: Partial<ProspectInput>): Promise<ProspectSummary>;
     /** Atomically reject stale checklist writes from another window. */
     updateMissingInformationIfUnchanged(id: string, expected: string | null, next: string | null): Promise<ProspectSummary>;
+    /** CAS atomique des 11 champs du projet, budget et calendrier. */
+    updateProjectBriefIfUnchanged(id: string, expected: ProspectProjectBrief, next: ProspectProjectBrief): Promise<ProspectSummary>;
     changeStage(id: string, stage: ProspectStage, lostReason?: string | null, allowIncompleteQualification?: boolean): Promise<ProspectSummary>;
     setNextAction(id: string, at: string | null, text: string | null): Promise<ProspectSummary>;
     convertToClient(id: string): Promise<ConvertProspectResult>;
