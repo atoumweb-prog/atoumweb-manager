@@ -48,6 +48,59 @@ function createPublishedService(priceCents = 10000, name = 'Service test') {
 }
 
 describe('QuoteService', () => {
+  it('E73 : un accord de principe explicite est horodaté, idempotent et révocable sans signature ni conversion', () => {
+    const prospect = createProspect();
+    crm.changeProspectStage(prospect.id, 'qualifying');
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Accord non contractuel' });
+    quotes.addCustomLine(quote.id, { label: 'Site vitrine', proposedUnitPriceCents: 69900 });
+    database.run("UPDATE quotes SET status='sent' WHERE id=?", [quote.id]);
+    const beforeStage = crm.listProspects().find((item) => item.id === prospect.id)?.stage;
+    const accepted = quotes.confirmPrincipleAgreement(quote.id);
+    expect(accepted.principleAgreementAt).toBeTruthy();
+    expect(accepted.status).toBe('sent');
+    expect(quotes.list({ prospectId: prospect.id })[0].principleAgreementAt).toBe(accepted.principleAgreementAt);
+    expect(quotes.confirmPrincipleAgreement(quote.id).principleAgreementAt).toBe(accepted.principleAgreementAt);
+    expect(database.get<{ n: number }>("SELECT count(*) AS n FROM activity_events WHERE entity_id=? AND action='principle_agreement_confirmed'", [quote.id])?.n).toBe(1);
+    expect(crm.listProspects().find((item) => item.id === prospect.id)?.stage).toBe(beforeStage);
+    expect(crm.listProspects().find((item) => item.id === prospect.id)?.clientAccountId).toBeFalsy();
+    expect(quotes.revokePrincipleAgreement(quote.id).principleAgreementAt).toBeNull();
+    expect(quotes.revokePrincipleAgreement(quote.id).principleAgreementAt).toBeNull();
+    expect(database.get<{ n: number }>("SELECT count(*) AS n FROM activity_events WHERE entity_id=? AND action='principle_agreement_revoked'", [quote.id])?.n).toBe(1);
+    expect(quotes.confirmPrincipleAgreement(quote.id).principleAgreementAt).toBeTruthy();
+  });
+
+  it('E73 : accord refusé sur devis brouillon, vide ou Prospect hors prospection', () => {
+    const prospect = createProspect();
+    const draft = quotes.create({ prospectId: prospect.id, subject: 'Avant démarrage' });
+    expect(() => quotes.confirmPrincipleAgreement(draft.id)).toThrow(/envoyé/);
+    database.run("UPDATE quotes SET status='sent' WHERE id=?", [draft.id]);
+    expect(() => quotes.confirmPrincipleAgreement(draft.id)).toThrow(/vide/);
+    quotes.addCustomLine(draft.id, { label: 'Audit', proposedUnitPriceCents: 9000 });
+    expect(() => quotes.confirmPrincipleAgreement(draft.id)).toThrow(/Prospect doit être actif/);
+  });
+
+  it('E73 : une révision plus récente rend l’ancien accord inactif sans effacer sa trace', () => {
+    const prospect = createProspect();
+    crm.changeProspectStage(prospect.id, 'qualifying');
+    const oldQuote = quotes.create({ prospectId: prospect.id, subject: 'Révision originale' });
+    quotes.addCustomLine(oldQuote.id, { label: 'Site', proposedUnitPriceCents: 10000 });
+    database.run("UPDATE quotes SET status='sent' WHERE id=?", [oldQuote.id]);
+    quotes.confirmPrincipleAgreement(oldQuote.id);
+    const nextQuote = quotes.create({ prospectId: prospect.id, subject: 'Révision courante' });
+    quotes.addCustomLine(nextQuote.id, { label: 'Site révisé', proposedUnitPriceCents: 20000 });
+    database.run("UPDATE quotes SET status='sent' WHERE id=?", [nextQuote.id]);
+    const now = new Date().toISOString();
+    database.run('INSERT INTO commercial_project_dossiers(id,current_quote_id,created_at) VALUES(?,?,?)', ['dossier-e73', nextQuote.id, now]);
+    for (const [id, number] of [[oldQuote.id, 1], [nextQuote.id, 2]] as const) {
+      database.run('INSERT INTO commercial_quote_revisions(quote_id,dossier_id,revision_number,created_at) VALUES(?,?,?,?)',
+        [id, 'dossier-e73', number, now]);
+    }
+    expect(quotes.get(oldQuote.id).principleAgreementAt).toBeNull();
+    expect(() => quotes.confirmPrincipleAgreement(oldQuote.id)).toThrow(/révision plus récente/);
+    expect(quotes.confirmPrincipleAgreement(nextQuote.id).principleAgreementAt).toBeTruthy();
+    expect(database.get<{ n: number }>("SELECT count(*) AS n FROM activity_events WHERE entity_id=? AND action='principle_agreement_confirmed'", [oldQuote.id])?.n).toBe(1);
+  });
+
   it('E72 : créer un devis ne démarre pas la prospection d’un nouveau contact', () => {
     const prospect = createProspect();
     expect(crm.listProspects({ includeArchived: true }).find((item) => item.id === prospect.id)?.stage).toBe('new');
