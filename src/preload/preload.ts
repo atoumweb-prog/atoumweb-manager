@@ -233,6 +233,7 @@ const api: AtoumWebApi = {
       update: (id: string, input: ProspectInput) => ipcRenderer.invoke('crm:prospects:update', id, input),
       updateQualification:(id:string,input:Partial<ProspectInput>)=>ipcRenderer.invoke('crm:prospects:update-qualification',id,input),
       updateMissingInformationIfUnchanged: (id: string, expected: string | null, next: string | null) => ipcRenderer.invoke('crm:prospects:update-missing-information-if-unchanged', id, expected, next),
+      updateProjectBriefIfUnchanged: (id: string, expected: ProspectProjectBrief, next: ProspectProjectBrief) => ipcRenderer.invoke('crm:prospects:update-project-brief-if-unchanged', id, expected, next),
       changeStage: (id: string, stage: ProspectStage, lostReason?: string | null, allowIncompleteQualification?: boolean) => ipcRenderer.invoke('crm:prospects:change-stage', id, stage, lostReason, allowIncompleteQualification),
       setNextAction: (id: string, at: string | null, text: string | null) => ipcRenderer.invoke('crm:prospects:set-next-action', id, at, text),
       convertToClient: (id: string) => ipcRenderer.invoke('crm:prospects:convert-to-client', id),
