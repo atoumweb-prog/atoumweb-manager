@@ -31,6 +31,7 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
     const newProspect = db.crm.createProspect({organizationId:org.id,primaryNeed:'Refonte du site'});
     const activeOrg = db.crm.createOrganization({name:'TEST 03B Actif Dijon'});
     const active = db.crm.createProspect({organizationId:activeOrg.id,primaryNeed:'Site vitrine'});
+    db.workflow.saveNeed('prospect',active.id,{otherText:'Site vitrine'});
     db.crm.changeProspectStage(active.id,'qualifying');
     const quote = db.quotes.create({prospectId:active.id,subject:'Devis TEST 03B non signé'});
     db.quotes.addCustomLine(quote.id,{label:'Site vitrine',proposedUnitPriceCents:69900});
@@ -83,6 +84,20 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
       'R03B-15: DnD Conversion et Finalisation non confirmé refusé sans écriture CRM');
     test(recordCount('client_accounts')===1,
       'R03B-15: DnD historique ne fabrique aucun Client');
+    // Chemin autorisé : depuis Attente du retour vers Négociation, avec
+    // besoin réellement enregistré et validation par CrmService, pas par SQL.
+    await js('const source=[...document.querySelectorAll(".prospect-card-head")].find(e=>e.textContent.includes("TEST 03B Actif Dijon"));'+
+      'const transfer=new DataTransfer();window.__03bTransfer=transfer;window.__03bDragSource=source;'+
+      'source.dispatchEvent(new DragEvent("dragstart",{bubbles:true,cancelable:true,dataTransfer:transfer}));');
+    await sleep(70);
+    await js('const col=[...document.querySelectorAll(".pipeline-step-column")].find(e=>e.querySelector("header strong")?.textContent.trim()==="Négociation");'+
+      'col.dispatchEvent(new DragEvent("dragover",{bubbles:true,cancelable:true,dataTransfer:window.__03bTransfer}));'+
+      'col.dispatchEvent(new DragEvent("drop",{bubbles:true,cancelable:true,dataTransfer:window.__03bTransfer}));'+
+      'window.__03bDragSource.dispatchEvent(new DragEvent("dragend",{bubbles:true,cancelable:true,dataTransfer:window.__03bTransfer}));');
+    await sleep(170);
+    test(prospectStage(active.id).stage==='negotiation','R03B-04: DnD autorisé persiste via CrmService');
+    test(!prospectStage(active.id).clientAccountId,'R03B-04: DnD autorisé ne crée pas de Client');
+
     test(!quoteStatus(quote.id).principleAgreementAt,'R03B-13: simple envoi ne vaut pas accord');
 
     await clickText('.prospect-card-head','TEST 03B Actif Dijon');
@@ -98,8 +113,8 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
     test(await get('[...document.querySelectorAll(".pipeline-step-column")].find(e=>e.querySelector("header strong")?.textContent.trim()==="Finalisation")?.querySelector(".prospect-card-step")?.textContent.includes("Étape 6")'),
       'R03B-12: carte accord confirmé porte bien étape 6');
     test(quoteStatus(quote.id).status==='sent','R03B-12: envoi non converti en signature');
-    test(prospectStage(active.id).stage==='quote_sent'&&!prospectStage(active.id).clientAccountId,
-      'R03B-12: aucun changement de stage ni Client');
+    test(prospectStage(active.id).stage==='negotiation'&&!prospectStage(active.id).clientAccountId,
+      'R03B-12: l accord ne modifie ni l étape Négociation ni le Client');
 
     // Annulation volontaire et restitution dans la colonne correspondant au stage.
     await clickText('.prospect-principle-agreement button','Annuler l’accord de principe');
