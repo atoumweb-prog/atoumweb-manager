@@ -1,5 +1,5 @@
 import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CatalogItemSummary, CatalogVersion, PriceMode } from '../../shared/commercial';
 import type { ProspectSummary } from '../../shared/crm';
 import type { Need, NeedInput } from '../../shared/workflow';
@@ -174,11 +174,14 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
   const [newInformationBlocking, setNewInformationBlocking] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [savingInformation, setSavingInformation] = useState(0);
+  const pendingInformation = useRef<Promise<void>>(Promise.resolve());
+  const reloadSequence = useRef(0);
 
   const [kind,setKind]=useState<'offers'|'services'>('offers');
   const choiceGuard=useUnsavedDraft('Prestation envisagée',{selectedId,otherText},{pending:busy,discard:s=>{setSelectedId(s.selectedId);setOtherText(s.otherText);}});
   const infoValue={projectSummary,projectContext,budgetPreset,budgetMin,budgetMax,budgetExact,timelineStatus,targetDate,timelineNote,existingStatus,existingUrl,existingNotes,informationItems,newInformation,newInformationBlocking};
-  const infoGuard=useUnsavedDraft('Identification du besoin',infoValue,{pending:busy,discard:s=>{setProjectSummary(s.projectSummary);setProjectContext(s.projectContext);setBudgetPreset(s.budgetPreset);setBudgetMin(s.budgetMin);setBudgetMax(s.budgetMax);setBudgetExact(s.budgetExact);setTimelineStatus(s.timelineStatus);setTargetDate(s.targetDate);setTimelineNote(s.timelineNote);setExistingStatus(s.existingStatus);setExistingUrl(s.existingUrl);setExistingNotes(s.existingNotes);setInformationItems(s.informationItems);setNewInformation(s.newInformation);setNewInformationBlocking(s.newInformationBlocking);}});
+  const infoGuard=useUnsavedDraft('Identification du besoin',infoValue,{pending:busy || savingInformation > 0,discard:s=>{setProjectSummary(s.projectSummary);setProjectContext(s.projectContext);setBudgetPreset(s.budgetPreset);setBudgetMin(s.budgetMin);setBudgetMax(s.budgetMax);setBudgetExact(s.budgetExact);setTimelineStatus(s.timelineStatus);setTargetDate(s.targetDate);setTimelineNote(s.timelineNote);setExistingStatus(s.existingStatus);setExistingUrl(s.existingUrl);setExistingNotes(s.existingNotes);setInformationItems(s.informationItems);setNewInformation(s.newInformation);setNewInformationBlocking(s.newInformationBlocking);}});
 
   const availableByKind=catalog.filter(item=>catalogueIsOffer(item)===(kind==='offers'));
   const categories=sortedCategories(availableByKind);
@@ -187,12 +190,14 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
   const selectedItem = catalog.find((item) => item.id === selectedId) ?? null;
 
   async function load() {
+    const sequence = ++reloadSequence.current;
     try {
       const [nextNeeds, nextCatalog, prospects] = await Promise.all([
         window.atoumweb.workflow.needs('prospect', prospectId),
         window.atoumweb.catalog.list({ status: 'active' }),
         window.atoumweb.crm.prospects.list({ includeArchived: true }),
       ]);
+      if (sequence !== reloadSequence.current) return;
       const current = prospects.find((item) => item.id === prospectId) ?? null;
       const available = nextCatalog.filter((item) => Boolean(item.currentVersion));
       setNeeds(nextNeeds);
@@ -215,10 +220,10 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
         setInformationItems(parseProspectInformation(current.missingInformation));
         infoGuard.initial({...infoValue,projectSummary:(current.projectSummary ?? ''),projectContext:(current.projectContext ?? ''),budgetPreset:(deriveBudgetPreset(current)),budgetMin:(current.budgetMinCents != null ? String(current.budgetMinCents / 100) : ''),budgetMax:(current.budgetMaxCents != null ? String(current.budgetMaxCents / 100) : ''),budgetExact:(current.budgetStatus === 'known' && current.budgetMinCents != null ? String(current.budgetMinCents / 100) : ''),timelineStatus:(current.timelineStatus ?? 'not_disclosed'),targetDate:(current.targetDate?.slice(0, 10) ?? ''),timelineNote:(current.timelineNote ?? ''),existingStatus:(current.existingStatus ?? 'unknown'),existingUrl:(current.existingUrl ?? ''),existingNotes:(current.existingNotes ?? ''),informationItems:(parseProspectInformation(current.missingInformation))});
       }
-    } catch (e) { setError(cleanError(e)); }
+    } catch (e) { if (sequence === reloadSequence.current) setError(cleanError(e)); }
   }
 
-  useEffect(() => { setEditingId(undefined); setSelectedId(''); setOtherText(''); void load(); }, [prospectId]);
+  useEffect(() => { setEditingId(undefined); setSelectedId(''); setOtherText(''); void load(); return () => { reloadSequence.current++; }; }, [prospectId]);
 
   async function saveNeed() {
     if (!selectedId && !otherText.trim()) return;
@@ -241,16 +246,25 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
   }
 
   async function persistInformation(next: ProspectInformationItem[]) {
-    if (!prospect) return;
+    // Plusieurs réponses ou cases peuvent être saisies sans attendre l'IPC.
+    // Les écritures d'une même fiche doivent finir dans leur ordre de saisie.
     setInformationItems(next);
-    try {
-      const updated = await window.atoumweb.crm.prospects.updateQualification(prospect.id, {
+    setSavingInformation((count) => count + 1);
+    const ownerId = prospectId;
+    const previous = pendingInformation.current;
+    const writing = previous.catch(() => {}).then(async () => {
+      const updated = await window.atoumweb.crm.prospects.updateQualification(ownerId, {
         missingInformation: serializeProspectInformation(next),
       });
+      if (ownerId !== prospectId) return;
       setProspect(updated);
       onChanged?.();
       window.dispatchEvent(new Event('atoumweb:changed'));
-    } catch (e) { setError(cleanError(e)); }
+    });
+    pendingInformation.current = writing.catch(() => {});
+    try { await writing; }
+    catch (e) { setError(cleanError(e)); }
+    finally { setSavingInformation((count) => Math.max(0, count - 1)); }
   }
 
   function updateInformation(id: string, patch: Partial<ProspectInformationItem>, save = true) {
@@ -287,6 +301,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
     if (budget.min != null && budget.max != null && budget.min > budget.max) { setError('Le budget minimum ne peut pas dépasser le budget maximum.'); return; }
     setBusy(true); setError('');
     try {
+      await pendingInformation.current; // Ne pas inverser une sauvegarde de checklist en cours.
       await window.atoumweb.crm.prospects.updateQualification(prospect.id, {
         projectSummary: projectSummary.trim() || null,
         projectContext: projectContext.trim() || null,
@@ -298,8 +313,10 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
         existingNotes: existingStatus !== 'no' ? existingNotes.trim() || null : null,
         missingInformation: serializeProspectInformation(informationItems),
       });
+      const current = (await window.atoumweb.crm.prospects.list({ includeArchived: true })).find((item) => item.id === prospect.id);
+      if (!current) throw new Error('Prospect introuvable après la mise à jour du besoin.');
       await window.atoumweb.crm.prospects.update(prospect.id, {
-        ...prospect,
+        ...current,
         budgetMinCents: budget.min,
         budgetMaxCents: budget.max,
         targetDate: timelineStatus === 'date' ? targetDate || null : null,
