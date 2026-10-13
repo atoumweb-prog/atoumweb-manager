@@ -156,6 +156,7 @@ function nextOpenAction(actions: CrmAction[]): CrmAction | null {
     })[0] ?? null;
 }
 function quoteCardState(prospect: ProspectSummary, quote: QuoteSummary): string {
+  if (quote.principleAgreementAt) return 'Accord de principe confirmé · signature attendue';
   if (quote.status === 'refused') return 'Devis refusé';
   if (quote.status === 'expired') return 'Devis caduc';
   if (prospect.stage === 'negotiation') return 'À modifier · Négociation';
@@ -271,7 +272,18 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
   const selected = prospects.find((item) => item.id === selectedId) ?? null;
   const deskProspect = prospects.find((item) => item.id === deskModeId) ?? null;
   const selectedActions = actions.filter((item) => item.ownerId === selectedId);
-  const pipelineProjection = useMemo(() => projectPipeline(pipelineFiltered), [pipelineFiltered]);
+  const latestQuotesByProspect = useMemo(() => {
+    const mapped = new Map<string, QuoteSummary>();
+    for (const quote of [...quotes].sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id))) {
+      if (quote.prospectId && !mapped.has(quote.prospectId)) mapped.set(quote.prospectId, quote);
+    }
+    return mapped;
+  }, [quotes]);
+  const pipelineProjection = useMemo(() => projectPipeline(pipelineFiltered.map((prospect) => ({
+    ...prospect,
+    finalizationQuoteId: latestQuotesByProspect.get(prospect.id)?.principleAgreementAt
+      ? latestQuotesByProspect.get(prospect.id)?.id : null,
+  }))), [pipelineFiltered, latestQuotesByProspect]);
   const historicalConversions = useMemo(() => projectPipeline(prospects).conversions, [prospects]);
   const historyVisible = useMemo(() => (view === 'conversions' ? historicalConversions : closed).filter((item) =>
     [item.displayName, item.primaryNeed, item.lostReason].filter(Boolean).join(' ').toLocaleLowerCase('fr-FR').includes(historySearch.toLocaleLowerCase('fr-FR')),
@@ -374,7 +386,7 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
   async function scheduleAt(prospect: ProspectSummary, dueAt: Date) {
     try {
       const quoteFollowUp = isQuoteFollowUpStage(prospect.stage);
-      const latestQuote = quotes.find((item) => item.prospectId === prospect.id) ?? null;
+      const latestQuote = latestQuotesByProspect.get(prospect.id) ?? null;
       await window.atoumweb.crm.actions.create({
         ownerType: 'prospect',
         ownerId: prospect.id,
@@ -491,7 +503,7 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
     const followUpUrgency = Number.isFinite(followUpTimestamp) && followUpTimestamp < tomorrowStart.getTime()
       ? (followUpTimestamp < nowTimestamp ? 'overdue' : 'today')
       : null;
-    const latestQuote = quotes.find((quote) => quote.prospectId === prospect.id) ?? null;
+    const latestQuote = latestQuotesByProspect.get(prospect.id) ?? null;
     const quoteRemaining = daysRemaining(latestQuote?.validUntil);
     const showQuoteFocus = Boolean(latestQuote && QUOTE_VISIBLE_STAGES.includes(prospect.stage ?? 'new'));
     const group = PIPELINE_GROUPS.find((item) => item.stages.includes(prospect.stage ?? 'new'));
