@@ -1,5 +1,5 @@
 import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ContactMethodType, ProspectInput, ProspectSummary } from '../../shared/crm';
 import type { WorkflowIdentity } from '../../shared/workflow';
 import { validateEmail, validatePhone } from '../../shared/contactValidation';
@@ -58,6 +58,10 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // Après une réponse IPC partielle, réutiliser les contacts effectivement créés
+  // au lieu de relancer aveuglément crm.contacts.create lors de « Réessayer ».
+  const loadSequence = useRef(0);
+  const saving = useRef(false);
   const identityValue={organization:identity?.organization,contact:identity?.contact,decision,decisionContactId,primaryDraft};
   const guard=useUnsavedDraft('Entreprise et interlocuteurs',identityValue,{ready:!!identity,pending:busy,discard:s=>{setIdentity(i=>i?{...i,organization:s.organization??null,contact:s.contact??null}:i);setDecision(s.decision);setDecisionContactId(s.decisionContactId);setPrimaryDraft(s.primaryDraft);}});
 
@@ -89,9 +93,9 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
     };
   }
 
-  async function load(){try{const next=await window.atoumweb.workflow.identity('prospect',prospect.id);const separate=next.decisionMaker&&next.decisionMaker.id!==next.contact?.id?next.decisionMaker:null;const contact=prospect.decisionStatus==='no'?separate?.id??'':'';const base=decisionFromIdentity(prospect,next);const nextDecision=contact?await draftFromContact(contact,base,next):base;const primary=next.contact?{firstName:next.contact.firstName,lastName:next.contact.lastName,role:next.contact.jobTitle??''}:{firstName:'',lastName:'',role:''};if(!guard.dirty){guard.initial({organization:next.organization,contact:next.contact,decision:nextDecision,decisionContactId:contact,primaryDraft:primary});setIdentity(next);setPrimaryDraft(primary);setDecisionContactId(contact);setDecision(nextDecision);}}catch(e){setError(cleanError(e));}}
+  async function load(){const sequence=++loadSequence.current;try{const next=await window.atoumweb.workflow.identity('prospect',prospect.id);const separate=next.decisionMaker&&next.decisionMaker.id!==next.contact?.id?next.decisionMaker:null;const contact=prospect.decisionStatus==='no'?separate?.id??'':'';const base=decisionFromIdentity(prospect,next);const nextDecision=contact?await draftFromContact(contact,base,next):base;const primary=next.contact?{firstName:next.contact.firstName,lastName:next.contact.lastName,role:next.contact.jobTitle??''}:{firstName:'',lastName:'',role:''};if(sequence!==loadSequence.current)return;if(!guard.dirty){guard.initial({organization:next.organization,contact:next.contact,decision:nextDecision,decisionContactId:contact,primaryDraft:primary});setIdentity(next);setPrimaryDraft(primary);setDecisionContactId(contact);setDecision(nextDecision);}}catch(e){if(sequence===loadSequence.current)setError(cleanError(e));}}
 
-  useEffect(() => { setEditing(false); void load(); }, [prospect.id]);
+  useEffect(() => { setEditing(false);void load();return()=>{loadSequence.current++;}; }, [prospect.id]);
   useEffect(() => { if (identity) void load(); }, [prospect.updatedAt]);
 
   const decisionEmail = validateEmail(decision.email);
@@ -128,7 +132,7 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
   }
 
   async function save() {
-    if (!identity) return;
+    if (!identity || saving.current) return;
     const creatingDecisionContact = decision.status === 'no' && !decisionContactId;
     if (creatingDecisionContact && (!decisionEmail.valid || !decisionPhone.valid)) return;
     const primaryStarted = primaryDraft.firstName.trim() || primaryDraft.lastName.trim() || primaryDraft.role.trim();
@@ -145,6 +149,7 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
       return;
     }
 
+    saving.current = true;
     setBusy(true); setError('');
     try {
       if (identity.organization) await window.atoumweb.crm.organizations.update(identity.organization.id, identity.organization);
@@ -158,7 +163,10 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
           jobTitle: primaryDraft.role.trim() || null,
         });
       } else if (primaryDraft.firstName.trim() && primaryDraft.lastName.trim()) {
-        primaryContact = await window.atoumweb.crm.contacts.create({
+        // Transaction atomique côté main : si Electron se ferme après la
+        // création mais avant la réponse IPC, le retry retourne le Contact
+        // déjà rattaché, sans créer de doublon et sans écraser le Prospect.
+        primaryContact = await window.atoumweb.crm.contacts.createAndAttachPrimaryProspect(prospect.id, {
           organizationId: identity.organization?.id ?? null,
           firstName: primaryDraft.firstName.trim(),
           lastName: primaryDraft.lastName.trim(),
@@ -166,7 +174,6 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
           email: null,
           phone: null,
         });
-        await window.atoumweb.crm.prospects.update(prospect.id, { ...prospect, contactId: primaryContact.id });
       }
 
       let decisionMakerContactId: string | null = null;
@@ -176,13 +183,10 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
         if (decisionContactId) {
           decisionMakerContactId = decisionContactId;
         } else {
-          const decisionContact = await window.atoumweb.crm.contacts.create({
+          const decisionContact = await window.atoumweb.crm.contacts.createAndAttachDecisionProspect(prospect.id, {
             organizationId: identity.organization?.id ?? primaryContact?.organizationId ?? null,
-            firstName: decision.firstName.trim(),
-            lastName: decision.lastName.trim(),
-            jobTitle: decision.role.trim() || null,
-            email: null,
-            phone: null,
+            firstName: decision.firstName.trim(), lastName: decision.lastName.trim(),
+            jobTitle: decision.role.trim() || null, email: null, phone: null,
           });
           decisionMakerContactId = decisionContact.id;
           await syncPrimaryMethod(decisionContact.id, 'email', decision.email);
@@ -203,8 +207,19 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
       });
       guard.saved();setEditing(false); await load(); onSaved();
       window.dispatchEvent(new Event('atoumweb:changed'));
-    } catch (e) { setError(cleanError(e)); }
-    finally { setBusy(false); }
+    } catch (e) {
+      // Une création de contact peut déjà avoir réussi : montrer la source
+      // actualisée, sans effacer les champs dirty ni prétendre que tout est enregistré.
+      try {
+        const latest = await window.atoumweb.workflow.identity('prospect', prospect.id);
+        setIdentity(current => current ? {
+          ...current, contact: latest.contact, decisionMaker: latest.decisionMaker,
+          contacts: latest.contacts,
+        } : latest);
+      } catch { /* garde les checkpoints de ce formulaire pour la prochaine tentative */ }
+      setError(cleanError(e));
+    }
+    finally { saving.current = false; setBusy(false); }
   }
 
   if (!identity) return <section className="prospect-work-section"><p className="muted">Chargement des informations…</p></section>;

@@ -10,10 +10,11 @@ const samples=['Accueil','Prospection','Devis','Projets','Interventions & Mainte
 const assert=(ok,msg)=>{if(!ok)throw Error(msg);};
 const normalize=v=>process.platform==='win32'?v.toLowerCase():v;
 const owned=dir=>!!dir&&fs.existsSync(dir)&&path.basename(dir).startsWith(prefix)&&normalize(fs.realpathSync.native(path.dirname(dir)))===normalize(fs.realpathSync.native(os.tmpdir()));
-const captureArg=process.argv.indexOf('--captures'),searchOnly=process.argv.includes('--search-only');
-assert(captureArg===-1&&process.argv.length===2||captureArg===2&&process.argv.length===4||searchOnly&&process.argv.length===3,'Usage: node scripts/check-ux-v2-lot01a-real-ui.cjs [--captures NEW-ABSOLUTE-FOLDER]');
-if(captureArg===2){
- const folder=process.argv[3];assert(path.isAbsolute(folder)&&!/validation-msi/i.test(folder)&&!fs.existsSync(folder),'Use a new absolute capture directory outside Validation-MSI.');
+const captureArg=process.argv.indexOf('--captures'),lot03b=process.argv.includes('--lot03b'),searchOnly=process.argv.includes('--search-only');
+const captureFolder=captureArg>=0?process.argv[captureArg+1]:null;
+assert(!(lot03b&&searchOnly)&&((searchOnly&&process.argv.length===3)||(lot03b&&((captureArg===-1&&process.argv.length===3)||(captureArg===3&&process.argv.length===5)))||(!lot03b&&!searchOnly&&((captureArg===-1&&process.argv.length===2)||(captureArg===2&&process.argv.length===4)))),'Usage: node scripts/check-ux-v2-lot01a-real-ui.cjs [--search-only | --lot03b [--captures NEW-ABSOLUTE-FOLDER] | --captures NEW-ABSOLUTE-FOLDER]');
+if(captureArg>=0){
+ const folder=captureFolder;assert(path.isAbsolute(folder)&&!/validation-msi/i.test(folder)&&!fs.existsSync(folder),'Use a new absolute capture directory outside Validation-MSI.');
 }
 if(!process.versions.electron){
  const temp=fs.mkdtempSync(path.join(os.tmpdir(),prefix));
@@ -111,7 +112,7 @@ if(!process.versions.electron){
  const saveScreenshot=async(theme,density,page,variant="")=>{
    if(captureArg<0)return;
    const label=theme+'-'+density+'-'+page+(variant?'-'+variant:'');
-   const folder=path.resolve(process.argv[3]);
+   const folder=path.resolve(captureFolder);
    if(!fs.existsSync(folder))fs.mkdirSync(folder,{recursive:true});
    const dest=path.join(folder,label.replace(/[^a-z0-9_-]/gi,'_')+'.png');
    assert(!fs.existsSync(dest),'Refusing overwrite of '+dest);
@@ -158,7 +159,7 @@ if(!process.versions.electron){
      'Navigation changed during capture '+label+': '+JSON.stringify(final));
    fs.writeFileSync(dest,captured.toPNG());
    capturesVerified++;
-   console.log('[UXV2 01A CAPTURE] VERIFIED '+capturesVerified+'/63 '+label+
+   console.log('[UXV2 CAPTURE] VERIFIED '+capturesVerified+'/'+(lot03b?9:63)+' '+label+
      ' frameAttempt='+attempts);
  };
  app.whenReady().then(async()=>{
@@ -180,6 +181,12 @@ if(!process.versions.electron){
     test(db.database.all('PRAGMA foreign_key_check').length===0,'02C FK');
     test(db.database.all('SELECT id FROM schema_migrations ORDER BY id').map(row=>row.id).join(',')===Array.from({length:66},(_,index)=>index+1).join(','),'02C migrations1–66');
     console.log('02C_RESULT '+JSON.stringify({passed:checks,failed:0,consoleErrors,onlyTemp:true}));return;
+  }
+  if(lot03b){
+    await require('./fixtures/lot03b-real-scenarios.cjs')({win,db,evalUI,get,wait,navigate,test,sleep,saveScreenshot});
+    if(captureArg>=0)test(capturesVerified===9,'Nine current 03B screenshots verified by composited-frame sentinel');
+    console.log('[UXV2 03B LIVE] PASSED '+checks+' real native assertions; TEMP only');
+    return;
   }
   await require('./fixtures/real-shell-scenarios.cjs')({win, db, preload:path.join(temp,'preload.js'), evalUI, get, wait, navigate, test, sleep});
   for(const page of navLabels){await navigate(page);await inspect(page,'atoumweb','comfort');}

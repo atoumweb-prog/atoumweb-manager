@@ -2,6 +2,7 @@ import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTarge
 import {UnsavedGroup,useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { normalizeEmail, normalizePhone } from '../../shared/contactValidation';
 import { normalizeWebUrl } from '../../shared/webUrl';
+import { historyOutcome, projectPipeline, PROSPECT_PIPELINE_COLUMNS } from '../../shared/prospectPipelineProjection';
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import type { QuoteSummary } from '../../shared/commercial';
 import {
@@ -88,17 +89,15 @@ const EMPTY_DRAFT: ProspectDraft = {
   services: '', customerSegments: '', differentiators: '', talkingPoints: '', approach: '',
 };
 
-type View = 'directory' | 'pipeline' | 'history';
+type View = 'directory' | 'pipeline' | 'history' | 'conversions';
 export type ProspectPipelineFilter = 'all' | 'relaunch' | 'overdue';
 type DirectoryStatusFilter = 'follow' | 'all' | 'prepare' | 'ready' | 'relaunch' | 'overdue' | ProspectStage;
 
-const PIPELINE_GROUPS: Array<{ id: string; step: number; label: string; stages: ProspectStage[]; icon: string }> = [
-  { id: 'qualify', step: 1, label: 'À qualifier', stages: ['qualifying'], icon: '1' },
-  { id: 'needs', step: 2, label: 'Identifier les besoins', stages: ['need_identified'], icon: '2' },
-  { id: 'quote', step: 3, label: 'Préparer le devis Abby', stages: ['quote_to_prepare', 'quote_to_send'], icon: '3' },
-  { id: 'reply', step: 4, label: 'Attente du retour', stages: ['quote_sent', 'follow_up', 'waiting'], icon: '⏱' },
-  { id: 'negotiation', step: 5, label: 'Négociation', stages: ['negotiation'], icon: '↔' },
-];
+const PIPELINE_GROUPS: Array<{ id: string; step: number; label: string; stages: ProspectStage[]; icon: string }> =
+  PROSPECT_PIPELINE_COLUMNS.map((column, index) => ({
+    id: column.id, step: index + 1, label: column.label,
+    stages: [...column.stages], icon: String(index + 1),
+  }));
 
 function formatDate(value?: string | null) { return value ? new Date(value).toLocaleDateString('fr-FR') : 'Sans date'; }
 function formatMoney(cents: number) { return `${(cents / 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €`; }
@@ -158,6 +157,7 @@ function nextOpenAction(actions: CrmAction[]): CrmAction | null {
     })[0] ?? null;
 }
 function quoteCardState(prospect: ProspectSummary, quote: QuoteSummary): string {
+  if (quote.principleAgreementAt) return 'Accord de principe confirmé · signature attendue';
   if (quote.status === 'refused') return 'Devis refusé';
   if (quote.status === 'expired') return 'Devis caduc';
   if (prospect.stage === 'negotiation') return 'À modifier · Négociation';
@@ -276,7 +276,22 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
   useSearchTargetConfirmation('prospect',(deskProspect??selected)?.id,loading,onEntityReady);
 
   const selectedActions = actions.filter((item) => item.ownerId === selectedId);
-  const byStage = useMemo(() => { const map = new Map<ProspectStage, ProspectSummary[]>(); ACTIVE_STAGES.forEach((stage) => map.set(stage, [])); pipelineFiltered.forEach((item) => map.get(item.stage ?? 'new')?.push(item)); return map; }, [pipelineFiltered]);
+  const latestQuotesByProspect = useMemo(() => {
+    const mapped = new Map<string, QuoteSummary>();
+    for (const quote of [...quotes].sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id))) {
+      if (quote.prospectId && !mapped.has(quote.prospectId)) mapped.set(quote.prospectId, quote);
+    }
+    return mapped;
+  }, [quotes]);
+  const pipelineProjection = useMemo(() => projectPipeline(pipelineFiltered.map((prospect) => ({
+    ...prospect,
+    finalizationQuoteId: latestQuotesByProspect.get(prospect.id)?.principleAgreementAt
+      ? latestQuotesByProspect.get(prospect.id)?.id : null,
+  }))), [pipelineFiltered, latestQuotesByProspect]);
+  const historicalConversions = useMemo(() => projectPipeline(prospects).conversions, [prospects]);
+  const historyVisible = useMemo(() => (view === 'conversions' ? historicalConversions : closed).filter((item) =>
+    [item.displayName, item.primaryNeed, item.lostReason].filter(Boolean).join(' ').toLocaleLowerCase('fr-FR').includes(historySearch.toLocaleLowerCase('fr-FR')),
+  ), [view, historicalConversions, closed, historySearch]);
   const prospectSplitStyle = selected && !deskProspect
     ? ({ '--prospect-list-percent': `${prospectSplitPercent}%` } as CSSProperties)
     : undefined;
@@ -336,35 +351,38 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
     } catch (e) { onMessage(cleanBusinessError(e, 'Modification de la température commerciale impossible.')); }
   }
 
-  async function changeStage(prospect: ProspectSummary, stage: ProspectStage) {
-    if (stage === prospect.stage || !ACTIVE_STAGES.includes(stage)) return;
+  async function changeStage(prospect: ProspectSummary, stage: ProspectStage): Promise<boolean> {
+    if (stage === prospect.stage || !ACTIVE_STAGES.includes(stage)) return false;
     try {
       await window.atoumweb.crm.prospects.changeStage(prospect.id, stage);
       await refresh();
       onMessage(`Prospect déplacé vers « ${STAGE_LABELS[stage]} ».`);
+      return true;
     } catch (e) {
       const message = cleanBusinessError(e, 'vérifie les informations nécessaires à cette étape.');
       if (prospect.stage === 'qualifying' && stage === 'need_identified' && /qualification incomplète/i.test(message)) {
         const confirmed = window.confirm(`${message}\n\nPasser quand même à « ${STAGE_LABELS[stage]} » ?\nLes informations manquantes resteront visibles et pourront être complétées plus tard.`);
         if (!confirmed) {
           onMessage('Le prospect reste à l’étape « À qualifier ».');
-          return;
+          return false;
         }
         try {
           await window.atoumweb.crm.prospects.changeStage(prospect.id, stage, null, true);
           await refresh();
           onMessage(`Prospect déplacé vers « ${STAGE_LABELS[stage]} » malgré une qualification incomplète.`);
+          return true;
         } catch (confirmedError) {
           onMessage(`Impossible d’avancer ce prospect : ${cleanBusinessError(confirmedError, 'vérifie les informations nécessaires à cette étape.')}`);
+          return false;
         }
-        return;
       }
       onMessage(`Impossible d’avancer ce prospect : ${message}`);
+      return false;
     }
   }
 
   async function startProspecting(prospect: ProspectSummary) {
-    if (prospect.stage === 'new') await changeStage(prospect, 'qualifying');
+    if (prospect.stage === 'new' && !(await changeStage(prospect, 'qualifying'))) return;
     setSelectedId(prospect.id);
     setDeskModeId(prospect.id);
   }
@@ -372,7 +390,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
   async function scheduleAt(prospect: ProspectSummary, dueAt: Date) {
     try {
       const quoteFollowUp = isQuoteFollowUpStage(prospect.stage);
-      const latestQuote = quotes.find((item) => item.prospectId === prospect.id) ?? null;
+      const latestQuote = latestQuotesByProspect.get(prospect.id) ?? null;
       await window.atoumweb.crm.actions.create({
         ownerType: 'prospect',
         ownerId: prospect.id,
@@ -489,12 +507,14 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
     const followUpUrgency = Number.isFinite(followUpTimestamp) && followUpTimestamp < tomorrowStart.getTime()
       ? (followUpTimestamp < nowTimestamp ? 'overdue' : 'today')
       : null;
-    const latestQuote = quotes.find((quote) => quote.prospectId === prospect.id) ?? null;
+    const latestQuote = latestQuotesByProspect.get(prospect.id) ?? null;
     const quoteRemaining = daysRemaining(latestQuote?.validUntil);
     const showQuoteFocus = Boolean(latestQuote && QUOTE_VISIBLE_STAGES.includes(prospect.stage ?? 'new'));
-    const group = PIPELINE_GROUPS.find((item) => item.stages.includes(prospect.stage ?? 'new'));
+    const group = latestQuote?.principleAgreementAt && ['quote_sent','follow_up','waiting','negotiation'].includes(prospect.stage ?? 'new')
+      ? PIPELINE_GROUPS.find((item) => item.id === 'finalization')
+      : PIPELINE_GROUPS.find((item) => item.stages.includes(prospect.stage ?? 'new'));
     return <article className={`prospect-card stacked-card prospect-temperature-${prospect.temperature ?? 'neutral'} ${expanded ? 'expanded-card' : 'collapsed-card'} ${selectedId === prospect.id ? 'selected-prospect' : ''}`} key={prospect.id}>
-      <div className="prospect-card-head card-drag-handle" draggable={draggable} onDragStart={(e) => { if (!draggable) return; setDraggingId(prospect.id); e.dataTransfer.setData('text/plain', prospect.id); }} onClick={() => { if(!setSelectedId(prospect.id))return;setExpandedId((id) => id === prospect.id ? null : prospect.id); }}>
+      <div className="prospect-card-head card-drag-handle" draggable={draggable} onDragStart={(e) => { if (!draggable) return; setDraggingId(prospect.id); e.dataTransfer.setData('text/plain', prospect.id); }} onDragEnd={() => { setDraggingId(null); setDropStage(null); }} onClick={() => { if(!setSelectedId(prospect.id))return;setExpandedId((id) => id === prospect.id ? null : prospect.id); }}>
         <div className="prospect-card-identity"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} /><strong>{prospect.displayName}</strong></div>
         {group && <span className="pipeline-state-icon" title={group.label}>{group.icon}</span>}
       </div>
@@ -515,7 +535,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
     <div className="prospect-view-switch" role="tablist">
       <button className={view === 'directory' ? 'active' : ''} onClick={() => setView('directory')}>Annuaire prospects <span>{directory.length}</span></button>
       <button className={view === 'pipeline' ? 'active' : ''} onClick={() => { setView('pipeline'); setPipelineFilter('all'); }}>Parcours commercial <span>{pipelineActive.length}</span></button>
-      <button className={view === 'history' ? 'active' : ''} onClick={() => setView('history')}>Historique <span>{closed.length}</span></button>
+      <button className={view === 'history' || view === 'conversions' ? 'active' : ''} onClick={() => setView('history')}>Historique <span>{closed.length}</span></button>
     </div>
 
     {view === 'directory' && <>
@@ -601,13 +621,13 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
         </div>
       </div>
       {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'} style={prospectSplitStyle}><div className="kanban-board">{PIPELINE_GROUPS.map((group) => {
-        const groupProspects = group.stages.flatMap((stage) => byStage.get(stage) ?? []);
+        const groupProspects = pipelineProjection.columns.find((column) => column.id === group.id)?.prospects ?? [];
         const targetStage = group.stages[0];
-        return <section className={`kanban-column pipeline-step-column ${dropStage === targetStage ? 'drag-over' : ''}`} key={group.id} onDragOver={(e) => e.preventDefault()} onDragEnter={() => setDropStage(targetStage)} onDrop={(e) => { e.preventDefault(); void handleGroupDrop(group.stages); }}><header><div><small>Étape {group.step}</small><strong>{group.label}</strong></div><span>{groupProspects.length}</span></header><div className="kanban-cards stacked-cards">{groupProspects.map((prospect) => renderProspectCard(prospect))}{groupProspects.length === 0 && <div className="kanban-empty">Aucun dossier</div>}</div></section>;
-      })}</div>{prospectSplitter}{selected && !deskProspect && detail}</div>}
+        return <section className={`kanban-column pipeline-step-column ${targetStage && dropStage === targetStage ? 'drag-over' : ''}`} key={group.id} onDragOver={(e) => { if (targetStage && draggingId) e.preventDefault(); }} onDragEnter={() => { if (targetStage && draggingId) setDropStage(targetStage); }} onDrop={(e) => { if (!targetStage || !draggingId) return; e.preventDefault(); void handleGroupDrop(group.stages); }}><header><div><small>Étape {group.step}</small><strong>{group.label}</strong></div><span>{groupProspects.length}</span></header><div className="kanban-cards stacked-cards">{groupProspects.map((prospect) => renderProspectCard(prospect))}{groupProspects.length === 0 && <div className="kanban-empty">Aucun dossier</div>}</div></section>;
+      })}<section className="kanban-column pipeline-step-column pipeline-conversion-history" aria-label="Conversion : historique des prospects devenus clients"><header><div><small>Étape 7 · Historique</small><strong>Conversion</strong></div><span>{historicalConversions.length}</span></header><div className="kanban-cards stacked-cards"><p className="muted">Prospects réellement devenus clients. Aucune conversion par glisser-déposer.</p><button className="secondary-button" type="button" onClick={() => setView('conversions')}>Voir les conversions</button></div></section></div>{prospectSplitter}{selected && !deskProspect && detail}</div>}
     </>}
 
-    {view === 'history' && <HistoryView prospects={closed.filter((item) => [item.displayName, item.primaryNeed, item.lostReason].filter(Boolean).join(' ').toLocaleLowerCase('fr-FR').includes(historySearch.toLocaleLowerCase('fr-FR')))} search={historySearch} onSearch={setHistorySearch} onSelect={(item) => setSelectedId(item.id)} selected={selected} activity={activity} onClose={() => setSelectedId(null)} />}
+    {(view === 'history' || view === 'conversions') && <>{view === 'conversions' && <div className="module-toolbar prospect-toolbar"><strong>Conversions réelles · {historicalConversions.length}</strong><button className="secondary-button" type="button" onClick={() => setView('pipeline')}>Retour au parcours commercial</button></div>}<HistoryView prospects={historyVisible} search={historySearch} onSearch={setHistorySearch} onSelect={(item) => setSelectedId(item.id)} selected={selected && historyVisible.some((item) => item.id === selected.id) ? selected : null} activity={activity} onClose={() => setSelectedId(null)} /></>}
     {deskProspect && <div className="prospect-desk-overlay" role="dialog" aria-modal="true" aria-label={`Fiche de travail ${deskProspect.displayName}`}><div className="prospect-desk-shell"><ProspectDetailV2 prospect={deskProspect} actions={actions.filter((item) => item.ownerId === deskProspect.id)} activity={selectedId === deskProspect.id ? activity : []} mode="desk" onRefresh={(message) => { void refresh(); if (message) onMessage(message); }} onClose={() => setDeskModeId(null)} onTemperature={(temperature) => void updateTemperature(deskProspect, temperature)} onStart={() => void startProspecting(deskProspect)} onLost={(code, reason) => void markLost(deskProspect, code, reason)} onArchive={() => void archive(deskProspect)} /></div></div>}
   </div>;
 }
@@ -759,5 +779,5 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
 }
 
 function HistoryView({ prospects, search, onSearch, onSelect, selected, activity, onClose }: { prospects: ProspectSummary[]; search: string; onSearch: (value: string) => void; onSelect: (item: ProspectSummary) => void; selected: ProspectSummary | null; activity: ActivityEvent[]; onClose: () => void }) {
-  return <div className="history-view-stack"><div className="module-toolbar"><div><strong>{prospects.length}</strong><span> dossier(s)</span></div><input className="inline-search" value={search} onChange={(e) => onSearch(e.target.value)} placeholder="Rechercher l’historique…" /></div><div className={selected ? 'prospects-layout with-detail' : 'prospects-layout'}><section className="panel history-prospects-panel"><div className="history-prospect-list">{prospects.map((item) => <button className="history-prospect-row" key={item.id} onClick={() => onSelect(item)}><div><strong>{item.displayName}</strong><small>{item.secondaryLabel || 'Contact non renseigné'}</small></div><span className={`history-outcome ${item.stage === 'lost' ? 'lost' : 'won'}`}>{item.stage === 'lost' ? '✕ Refusé' : '✓ Validé / Client'}</span><span>{item.primaryNeed || '—'}</span><span>{item.estimatedValueCents != null ? `${item.estimatedValueCents / 100} €` : '—'}</span><span>{formatDate(item.lostAt || item.wonAt)}</span></button>)}</div></section>{selected && <aside className="panel prospect-detail-panel"><div className="detail-panel-heading"><div><span className="eyebrow">Historique</span><h2>{selected.displayName}</h2></div><button className="close-detail" onClick={onClose}>×</button></div><div className="summary-list"><div className="summary-line"><span>Issue</span><strong>{selected.stage === 'lost' ? 'Perdu' : 'Gagné / Client'}</strong></div><div className="summary-line"><span>Besoin</span><strong>{selected.primaryNeed || '—'}</strong></div>{selected.lostReason && <div className="summary-line"><span>Raison</span><strong>{selected.lostReason}</strong></div>}</div><div className="activity-preview"><strong>Journal</strong>{activity.map((event) => <div className="activity-item" key={event.id}><span className="activity-dot" /><div><p>{humanActivity(event.summary)}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div></div>)}</div></aside>}</div></div>;
+  return <div className="history-view-stack"><div className="module-toolbar"><div><strong>{prospects.length}</strong><span> dossier(s)</span></div><input className="inline-search" value={search} onChange={(e) => onSearch(e.target.value)} placeholder="Rechercher l’historique…" /></div><div className={selected ? 'prospects-layout with-detail' : 'prospects-layout'}><section className="panel history-prospects-panel"><div className="history-prospect-list">{prospects.map((item) => <button className="history-prospect-row" key={item.id} onClick={() => onSelect(item)}><div><strong>{item.displayName}</strong><small>{item.secondaryLabel || 'Contact non renseigné'}</small></div><span className={`history-outcome ${historyOutcome(item).kind}`}>{historyOutcome(item).label}</span><span>{item.primaryNeed || '—'}</span><span>{item.estimatedValueCents != null ? `${item.estimatedValueCents / 100} €` : '—'}</span><span>{formatDate(item.lostAt || item.wonAt || item.archivedAt)}</span></button>)}</div></section>{selected && <aside className="panel prospect-detail-panel"><div className="detail-panel-heading"><div><span className="eyebrow">Historique</span><h2>{selected.displayName}</h2></div><button className="close-detail" onClick={onClose}>×</button></div><div className="summary-list"><div className="summary-line"><span>Issue</span><strong>{historyOutcome(selected).label}</strong></div><div className="summary-line"><span>Besoin</span><strong>{selected.primaryNeed || '—'}</strong></div>{selected.lostReason && <div className="summary-line"><span>Raison</span><strong>{selected.lostReason}</strong></div>}</div>{selected.clientAccountId && <div className="detail-actions"><button type="button" className="primary-button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'client', entityId: selected.clientAccountId, title: selected.displayName } }))}>Ouvrir la fiche Client</button></div>}<div className="activity-preview"><strong>Journal</strong>{activity.map((event) => <div className="activity-item" key={event.id}><span className="activity-dot" /><div><p>{humanActivity(event.summary)}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div></div>)}</div></aside>}</div></div>;
 }
