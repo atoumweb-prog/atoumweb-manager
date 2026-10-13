@@ -190,6 +190,53 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
     test(await get('document.querySelectorAll(".pipeline-step-column").length===7'),
       'R03B-19: colonnes toujours accessibles à zoom 125 %');
     win.webContents.setZoomFactor(1);
+    // 03C : besoin de texte libre réellement enregistré, sans devis implicite.
+    const needOrg = db.crm.createOrganization({name:'TEST 03C Besoin Dijon'});
+    const needProspect = db.crm.createProspect({organizationId:needOrg.id,primaryNeed:'Site vitrine 03C'});
+    db.crm.changeProspectStage(needProspect.id,'qualifying');
+    db.crm.updateProspectQualification(needProspect.id,{
+      projectSummary:'Création de site pour commerce local',
+      decisionStatus:'unknown',budgetStatus:'not_disclosed',timelineStatus:'not_disclosed',
+    });
+    db.crm.changeProspectStage(needProspect.id,'need_identified',null,true);
+    db.workflow.saveNeed('prospect',needProspect.id,{otherText:'Audit de référencement 03C'});
+    test(db.quotes.list({prospectId:needProspect.id}).length===0,
+      'R03C-05: sélectionner un besoin ne crée aucun devis');
+    test(db.database.all('SELECT id FROM projects WHERE prospect_id=?',[needProspect.id]).length===0,
+      'R03C-05: sélectionner un besoin ne crée aucun Projet');
+    win.setSize(1510,1030);win.webContents.setZoomFactor(1);
+    await navigate('Prospection');
+    await clickText('.prospect-view-switch button','Parcours commercial');
+    await wait('document.querySelectorAll(".pipeline-step-column").length===7',
+      'pipeline 03C monté');
+    await clickText('.prospect-card-head','TEST 03C Besoin Dijon');
+    await wait('!!document.querySelector(".prospect-detail-panel")','fiche Besoins sélectionnée');
+    await clickText('.prospect-detail-panel button','Ouvrir la fiche de travail');
+    await wait('!!document.querySelector(".prospect-desk-overlay .prequote-entry button")',
+      'pré-devis réel chargé depuis workflow et catalogue');
+    await clickText('.prequote-entry button','Contrôler avant devis');
+    await wait('!!document.querySelector(".prequote-actions button.primary-button")',
+      'contrôle pré-devis ouvert');
+    test(await get('document.querySelector(".prequote-solutions")?.textContent.includes("Audit de référencement 03C")'),
+      'R03C-07: besoin libre présent et prix à préciser');
+    test(await get('!document.querySelector(".prequote-actions button.primary-button").disabled'),
+      'R03C-08: contrôle complet autorise la création volontaire');
+    test(db.quotes.list({prospectId:needProspect.id}).length===0,
+      'R03C-08: ouvrir le contrôle ne crée aucun devis');
+    await clickText('.prequote-actions button.primary-button','Passer à l’édition du devis');
+    for(let i=0;i<100&&db.quotes.list({prospectId:needProspect.id}).length===0;i++)await sleep(70);
+    const made = db.quotes.list({prospectId:needProspect.id});
+    test(made.length===1 && made[0].status==='draft',
+      'R03C-08: un seul devis brouillon créé après clic');
+    const full = db.quotes.get(made[0].id);
+    test(full.lines.length===1 && full.lines[0].label==='Audit de référencement 03C',
+      'R03C-08: seule la ligne libre volontaire est au devis');
+    test(!prospectStage(needProspect.id).clientAccountId && db.crm.listClients().length===1,
+      'R03C-08: préparer le devis ne convertit pas le Prospect');
+    await wait('document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("aria-label")==="Devis"',
+      'naviguer vers le véritable brouillon de devis');
+    test(db.database.get('PRAGMA integrity_check').integrity_check==='ok',
+      'R03C-18: intégrité SQLite TEMP après création devis');
     test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','R03B-20: intégrité SQLite TEMP');
     test(db.database.all('PRAGMA foreign_key_check').length===0,'R03B-20: zéro FK cassée');
     console.log('[UXV2 03B LIVE] RESULT '+JSON.stringify({
