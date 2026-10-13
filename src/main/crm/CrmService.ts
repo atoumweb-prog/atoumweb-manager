@@ -414,6 +414,40 @@ export class CrmService {
     });
   }
 
+  /**
+   * Même garde transactionnelle pour le décisionnaire distinct. Le lien
+   * durable est créé avec le Contact, avant de synchroniser les coordonnées
+   * et les informations de qualification côté interface.
+   */
+  createAndAttachDecisionProspectContact(prospectId: string, input: ContactInput): Contact {
+    return this.transaction(() => {
+      const prospect = this.getProspect(prospectId);
+      if (prospect.archivedAt || prospect.clientAccountId) {
+        throw new Error('Impossible de créer un décisionnaire sur un Prospect archivé ou converti.');
+      }
+      if (input.organizationId && input.organizationId !== prospect.organizationId) {
+        throw new Error('Le décisionnaire doit appartenir à la même organisation que le Prospect.');
+      }
+      if (prospect.decisionMakerContactId) return this.getContact(prospect.decisionMakerContactId);
+
+      const contact = this.createContact({ ...input, organizationId: prospect.organizationId ?? null });
+      const result = this.database.run(
+        'UPDATE prospects SET decision_maker_contact_id=?, updated_at=? WHERE id=? AND decision_maker_contact_id IS NULL AND archived_at IS NULL AND client_account_id IS NULL',
+        [contact.id, nowIso(), prospectId],
+      );
+      if (Number(result.changes) !== 1) {
+        throw new Error('Le rattachement du décisionnaire a été modifié. Réouvre la fiche Prospect.');
+      }
+      this.activity({
+        entityType: 'prospect', entityId: prospectId, action: 'decision_contact_attached',
+        summary: 'Décisionnaire créé et rattaché',
+        prospectId, organizationId: prospect.organizationId, contactId: contact.id,
+      });
+      this.indexProspect(prospectId);
+      return contact;
+    });
+  }
+
   updateContact(id: string, input: ContactInput): Contact {
     const firstName = clean(input.firstName);
     const lastName = clean(input.lastName);
