@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { HEADER_PREFERENCE_KEY } from '../shared/headerPresentation';
+import {HOME_WIDGET_PREFERENCE_KEY,defaultHomeWidgets} from '../shared/homeWidgetPreference';
 import { NAVIGATION_PREFERENCE_KEY } from '../shared/navigationRail';
 import { VISUAL_SETTINGS_KEY } from '../shared/workspaceVisualPreferences';
 const mocks = vi.hoisted(() => ({ handlers: new Map<string, (...args: any[]) => void>(), send: vi.fn(), choice: vi.fn((_window: unknown, _options: unknown) => 0) }));
@@ -19,6 +20,7 @@ function call(op:string,key:unknown='',raw?:unknown,child=false) {
   mocks.handlers.get('settings:shell-visual')!(event,op,key,raw); return event.returnValue;
 }
 describe('workspace-owned shell presentation IPC', () => {
+  it('stores normalized Home layout using only the visual settings owner',()=>{expect(call('set',HOME_WIDGET_PREFERENCE_KEY,JSON.stringify({...defaultHomeWidgets(),hidden:['watch'],note:'private'})).ok).toBe(true);expect(JSON.parse(call('get',HOME_WIDGET_PREFERENCE_KEY).value)).toEqual({...defaultHomeWidgets(),hidden:['watch']});expect(writes).toEqual([VISUAL_SETTINGS_KEY]);expect(mocks.send).toHaveBeenLastCalledWith('settings:visual-changed',HOME_WIDGET_PREFERENCE_KEY);});
   it('reads absent preference without mutation or notification',()=>{expect(call('get',HEADER_PREFERENCE_KEY)).toEqual({ok:true,value:null});expect(writes).toEqual([]);expect(mocks.send).not.toHaveBeenCalled();});
   it('preserves adjacent preferences and broadcasts only confirmed writes',()=>{
     expect(call('set',NAVIGATION_PREFERENCE_KEY,JSON.stringify({version:1,railCollapsed:true,favoriteModuleKeys:['Clients']})).ok).toBe(true);
