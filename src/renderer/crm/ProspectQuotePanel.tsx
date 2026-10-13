@@ -2,6 +2,8 @@ import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { useEffect, useMemo, useState } from 'react';
 import type { QuoteDetail, QuoteSummary } from '../../shared/commercial';
 import type { CrmAction, ProspectSummary } from '../../shared/crm';
+import { canAccessQuoteProject } from '../../shared/quoteProjectEligibility';
+import { QuoteProjectPanel } from '../workflow/QuoteWorkflow';
 
 const QUOTE_LABELS: Record<string, string> = {
   draft: 'Brouillon', sent: 'Envoyé', viewed: 'Vu', accepted: 'Accepté / signé', refused: 'Refusé', expired: 'Caduc', cancelled: 'Annulé',
@@ -260,5 +262,6 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
 
     {quote.status === 'refused' && <div className="quote-refused-state"><strong>Ce devis a été refusé.</strong><span>Le dossier commercial reste distinct : utilise la relance / attente si l’opportunité continue, ou le bouton « Perdu » de la fiche si tu décides de clôturer le prospect.</span></div>}
     {quotes.length > 1 && <details className="previous-quotes"><summary>Voir les {quotes.length - 1} ancien(s) devis</summary>{quotes.slice(1).map((item) => <button type="button" className="workflow-link" key={item.id} onClick={() => openQuote(item)}>{item.number} · {item.subject} · {QUOTE_LABELS[item.status] ?? item.status}</button>)}</details>}
+    {canAccessQuoteProject(quote) && <div className="prospect-quote-project-workflow"><QuoteProjectPanel key={'prospect-project:'+quote.id} quote={quote} requirePreviewBeforePrepare /></div>}
   </section>;
 }
