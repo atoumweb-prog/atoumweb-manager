@@ -84,6 +84,7 @@ const BRIDGE_HUMAN_VALIDATION_TAG = 'bridge-human-validated';
 interface Props {
   onMessage: (message: string) => void;
   initialItemId?: string | null;
+  initialRequest?:number;
   headerCollapsed?: boolean;
   onEntityReady?:EntityReady;
 }
@@ -257,7 +258,7 @@ function metadataFromItem(item: AtoumWebTechnicalItemDetail): MetadataForm {
   };
 }
 
-export function AtoumWebLibraryPage({ onEntityReady, onMessage, initialItemId, headerCollapsed = false }: Props) {
+export function AtoumWebLibraryPage({ onEntityReady, onMessage, initialItemId, initialRequest, headerCollapsed = false }: Props) {
   const [items, setItems] = useState<AtoumWebTechnicalItemSummary[]>([]);
   const [selected, setSelected] = useState<AtoumWebTechnicalItemDetail | null>(null);
   const [detailExpanded, setDetailExpanded] = useState(false);
@@ -341,7 +342,9 @@ export function AtoumWebLibraryPage({ onEntityReady, onMessage, initialItemId, h
     await loadVersionAssets(preferredVersion);
   }
 
+  const loadEpoch=useRef(0);useEffect(()=>()=>{loadEpoch.current++;},[]);
   async function load(preferredId?: string | null): Promise<void> {
+    const epoch=++loadEpoch.current;
     try {
       setError(null);
       const next = await window.atoumweb.referentials.library.list({
@@ -351,10 +354,14 @@ export function AtoumWebLibraryPage({ onEntityReady, onMessage, initialItemId, h
         vertical: vertical || null,
         includeArchived,
       });
+      if(epoch!==loadEpoch.current)return;
       setItems(next);
       const nextId = preferredId ?? selected?.id;
       if (nextId && next.some((item) => item.id === nextId)) {
-        await setOpenedItem(await window.atoumweb.referentials.library.get(nextId));
+        const nextDetail=await window.atoumweb.referentials.library.get(nextId);
+        if(epoch!==loadEpoch.current)return;
+        await setOpenedItem(nextDetail);
+      } else if (preferredId) {onEntityReady?.('atoumweb_library',preferredId,'Composant introuvable.');
       } else if (selected && !metadataGuard.dirty && !metadataSaving && !next.some((item) => item.id === selected.id)) {
         setSelected(null);
         setMetadataForm(null);
@@ -364,6 +371,8 @@ export function AtoumWebLibraryPage({ onEntityReady, onMessage, initialItemId, h
         setExpandedVersionId(null);
       }
     } catch (loadError) {
+      if(epoch!==loadEpoch.current)return;
+      if(preferredId)onEntityReady?.('atoumweb_library',preferredId,loadError instanceof Error?loadError.message:'Bibliothèque indisponible.');
       setError(loadError instanceof Error ? loadError.message : 'Impossible de charger la Bibliothèque AtoumWeb.');
     }
   }
@@ -371,7 +380,7 @@ export function AtoumWebLibraryPage({ onEntityReady, onMessage, initialItemId, h
   useEffect(() => {
     void load(initialItemId ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, category, reuseStatus, vertical, includeArchived, initialItemId]);
+  }, [search, category, reuseStatus, vertical, includeArchived, initialItemId,initialRequest]);
 
   useEffect(() => {
     void loadOccurrenceReturns();

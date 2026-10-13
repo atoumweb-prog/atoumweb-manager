@@ -33,13 +33,14 @@ function hours(seconds: number): string {
   return `${value.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} h`;
 }
 
-export function MaintenancePanel({ onEntityReady, clients, projects, onMessage, onInterventionCreated, initialSubscriptionId }: {
+export function MaintenancePanel({ onEntityReady, initialRequest, clients, projects, onMessage, onInterventionCreated, initialSubscriptionId }: {
   clients: ClientSummary[];
   projects: ProjectSummary[];
   onMessage: (message: string) => void;
   onInterventionCreated: (intervention: Intervention) => void;
   initialSubscriptionId?: string | null;
   onEntityReady?:EntityReady;
+  initialRequest?:number;
 }) {
   const [plans, setPlans] = useState<MaintenancePlan[]>([]);
   const [subscriptions, setSubscriptions] = useState<MaintenanceSubscription[]>([]);
@@ -76,6 +77,7 @@ export function MaintenancePanel({ onEntityReady, clients, projects, onMessage, 
         setSelectedPeriodId('');
       }
     } catch (error) {
+      if(initialSubscriptionId)onEntityReady?.('maintenance',initialSubscriptionId,error instanceof Error?error.message:'Impossible de charger la maintenance.');
       onMessage(error instanceof Error ? error.message : 'Impossible de charger la maintenance.');
     }
   }
@@ -95,7 +97,7 @@ export function MaintenancePanel({ onEntityReady, clients, projects, onMessage, 
   useEffect(() => { void loadPeriods(selectedSubscriptionId); }, [selectedSubscriptionId]);
   useEffect(() => {
     if (initialSubscriptionId) setSelectedSubscriptionId(initialSubscriptionId);
-  }, [initialSubscriptionId]);
+  }, [initialSubscriptionId,initialRequest]);
 
   useEffect(() => {
     if (!selectedSubscriptionId) return;

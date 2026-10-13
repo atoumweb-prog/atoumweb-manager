@@ -10,8 +10,8 @@ const samples=['Accueil','Prospection','Devis','Projets','Interventions & Mainte
 const assert=(ok,msg)=>{if(!ok)throw Error(msg);};
 const normalize=v=>process.platform==='win32'?v.toLowerCase():v;
 const owned=dir=>!!dir&&fs.existsSync(dir)&&path.basename(dir).startsWith(prefix)&&normalize(fs.realpathSync.native(path.dirname(dir)))===normalize(fs.realpathSync.native(os.tmpdir()));
-const captureArg=process.argv.indexOf('--captures');
-assert(captureArg===-1&&process.argv.length===2||captureArg===2&&process.argv.length===4,'Usage: node scripts/check-ux-v2-lot01a-real-ui.cjs [--captures NEW-ABSOLUTE-FOLDER]');
+const captureArg=process.argv.indexOf('--captures'),searchOnly=process.argv.includes('--search-only');
+assert(captureArg===-1&&process.argv.length===2||captureArg===2&&process.argv.length===4||searchOnly&&process.argv.length===3,'Usage: node scripts/check-ux-v2-lot01a-real-ui.cjs [--captures NEW-ABSOLUTE-FOLDER]');
 if(captureArg===2){
  const folder=process.argv[3];assert(path.isAbsolute(folder)&&!/validation-msi/i.test(folder)&&!fs.existsSync(folder),'Use a new absolute capture directory outside Validation-MSI.');
 }
@@ -31,7 +31,7 @@ if(!process.versions.electron){
   console.log('[UXV2 01A LIVE] Fixture cleaned: '+!fs.existsSync(temp));
  }
 }else{
- const {app,BrowserWindow}=require('electron'),temp=process.env[ENV];
+ const {app,BrowserWindow,ipcMain}=require('electron'),temp=process.env[ENV];
  assert(owned(temp),'No independent TEMP fixture; launch via Node wrapper');
  app.disableHardwareAcceleration();app.setPath('userData',path.join(temp,'profile'));app.on('window-all-closed',()=>{});
  const base=repo.split(path.sep).join('/'),esbuild=require('esbuild');
@@ -164,14 +164,23 @@ if(!process.versions.electron){
  app.whenReady().then(async()=>{
   const workspace=S.ensureWorkspace(path.join(temp,'workspace'));
   db=new S.DatabaseService(workspace);await db.initialize();
+  const registered=new Map(),realHandle=ipcMain.handle.bind(ipcMain);ipcMain.handle=(channel,handler)=>{registered.set(channel,handler);realHandle(channel,handler);};
   S.registerIpcHandlers(db,workspace);S.registerOperationsIpcHandlers(db);S.registerReferentialsIpcHandlers(db);
   S.registerBusinessBackupsIpcHandlers(db);S.registerTimeCorrectionIpcHandler(db);
-  win=new BrowserWindow({show:captureArg>=0,title:"AtoumWeb Manager — UX 01A VISUAL TEST (TEMP)",width:1510,height:1030,webPreferences:{preload:path.join(temp,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:false}});
+  ipcMain.handle=realHandle;
+  win=new BrowserWindow({show:captureArg>=0||searchOnly,title:"AtoumWeb Manager — UX 01A VISUAL TEST (TEMP)",width:1510,height:1030,webPreferences:{preload:path.join(temp,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:false}});
   win.webContents.on('console-message',e=>{if(e.level==='error'||e.level===3)consoleErrors.push(e.message);});
   await win.loadFile(path.join(temp,'index.html'));
   await wait('document.querySelectorAll("[data-nav-module]").length===17','real Manager bootstrap');
   test((await get('document.querySelectorAll("[data-nav-module]").length'))===17,'Seventeen navigation entries');
   test(await get('!!window.atoumweb&&!window.atoumwebOperationalRecipe'),'Real preload without synthetic UI API');
+  if(searchOnly){
+    await require('./fixtures/02c-search-scenarios.cjs')({win,db,temp,workspace,registered,evalUI,get,wait,navigate,test,sleep});
+    test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','02C integrity');
+    test(db.database.all('PRAGMA foreign_key_check').length===0,'02C FK');
+    test(db.database.all('SELECT id FROM schema_migrations ORDER BY id').map(row=>row.id).join(',')===Array.from({length:66},(_,index)=>index+1).join(','),'02C migrations1–66');
+    console.log('02C_RESULT '+JSON.stringify({passed:checks,failed:0,consoleErrors,onlyTemp:true}));return;
+  }
   await require('./fixtures/real-shell-scenarios.cjs')({win, db, preload:path.join(temp,'preload.js'), evalUI, get, wait, navigate, test, sleep});
   for(const page of navLabels){await navigate(page);await inspect(page,'atoumweb','comfort');}
   console.log('[UXV2 01A LIVE] PASS all 17 real module destinations.');

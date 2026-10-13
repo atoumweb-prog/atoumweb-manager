@@ -69,7 +69,7 @@ function projectNodeLabel(node: ProjectNode): string {
   return `${kind} · ${node.name}`;
 }
 
-export function OperationsPage({ onEntityReady, onMessage, initialTarget }: { onMessage: (message: string) => void; initialTarget?: OperationsSearchTarget | null;onEntityReady?:EntityReady }) {
+export function OperationsPage({ onEntityReady, onMessage, initialTarget, initialRequest }: { onMessage: (message: string) => void; initialTarget?: OperationsSearchTarget | null;initialRequest?:number;onEntityReady?:EntityReady }) {
   const [view, setView] = useState<OperationsView>('requests');
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [interventions, setInterventions] = useState<Intervention[]>([]);
@@ -179,6 +179,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget }: { on
 
   useEffect(() => {
     if (!initialTarget) return;
+    let live=true;
     setQuery('');
     setSelectedRequest(null);
     setSelectedIntervention(null);
@@ -187,30 +188,32 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget }: { on
       setView('requests');
       setRequestStatus('all');
       void window.atoumweb.operations.requests.get(initialTarget.entityId)
-        .then((request) => setSelectedRequest(request))
-        .catch((error: unknown) => onMessage(error instanceof Error ? error.message : 'Demande introuvable.'));
-      return;
+        .then((request) => {if(live)setSelectedRequest(request);})
+        .catch((error: unknown) => {if(!live)return;const message=error instanceof Error?error.message:'Demande introuvable.';onEntityReady?.('service_request',initialTarget.entityId,message);onMessage(message);});
+      return()=>{live=false;};
     }
     if (initialTarget.entityType === 'intervention') {
       setView('interventions');
       setInterventionStatus('all');
       void window.atoumweb.operations.interventions.get(initialTarget.entityId)
         .then((intervention) => {
+          if(!live)return;
           setSelectedIntervention(intervention);
           if (initialTarget.focus === 'conclusion') {
             setConclusionInterventionId(intervention.id);
             setInterventionExpanded(true);
           }
         })
-        .catch((error: unknown) => onMessage(error instanceof Error ? error.message : 'Intervention introuvable.'));
-      return;
+        .catch((error: unknown) => {if(!live)return;const message=error instanceof Error?error.message:'Intervention introuvable.';onEntityReady?.('intervention',initialTarget.entityId,message);onMessage(message);});
+      return()=>{live=false;};
     }
     if (initialTarget.entityType === 'maintenance') {
       setView('maintenance');
-      return;
+      return()=>{live=false;};
     }
     setView('packs');
-  }, [initialTarget?.entityType, initialTarget?.entityId, initialTarget?.focus]);
+    return()=>{live=false;};
+  }, [initialTarget?.entityType, initialTarget?.entityId, initialTarget?.focus,initialRequest]);
 
   useEffect(() => {
     if (!interventionProjectId) {
@@ -518,8 +521,8 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget }: { on
       </div>}
     </>}
 
-    {view === 'maintenance' && <MaintenancePanel onEntityReady={onEntityReady} clients={clients} projects={projects} onMessage={onMessage} initialSubscriptionId={initialTarget?.entityType === 'maintenance' ? initialTarget.entityId : null} onInterventionCreated={(intervention) => { setSelectedRequest(null); setSelectedIntervention(intervention); setView('interventions'); void refresh({ showLoading: false }); }} />}
-    {view === 'packs' && <HourPacksPanel onEntityReady={onEntityReady} clients={clients} projects={projects} interventions={interventions} onMessage={onMessage} onOperationsChanged={refresh} initialPackId={initialTarget?.entityType === 'hour_pack' ? initialTarget.entityId : null} />}
+    {view === 'maintenance' && <MaintenancePanel initialRequest={initialRequest} onEntityReady={onEntityReady} clients={clients} projects={projects} onMessage={onMessage} initialSubscriptionId={initialTarget?.entityType === 'maintenance' ? initialTarget.entityId : null} onInterventionCreated={(intervention) => { setSelectedRequest(null); setSelectedIntervention(intervention); setView('interventions'); void refresh({ showLoading: false }); }} />}
+    {view === 'packs' && <HourPacksPanel initialRequest={initialRequest} onEntityReady={onEntityReady} clients={clients} projects={projects} interventions={interventions} onMessage={onMessage} onOperationsChanged={refresh} initialPackId={initialTarget?.entityType === 'hour_pack' ? initialTarget.entityId : null} />}
   </div>;
 }
 

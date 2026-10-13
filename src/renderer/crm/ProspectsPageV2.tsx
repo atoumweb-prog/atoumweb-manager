@@ -208,12 +208,13 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
         window.atoumweb.crm.actions.list({ ownerType: 'prospect' }),
         window.atoumweb.quotes.list(),
       ]);
+      if(initialId&&!nextProspects.some(item=>item.id===initialId))onEntityReady?.('prospect',initialId,'Prospect introuvable.');
       setProspects(nextProspects); setActions(nextActions); setQuotes(nextQuotes);
       if (selectedId && !nextProspects.some((item) => item.id === selectedId)) setSelectedId(null);
       if (deskModeId && !nextProspects.some((item) => item.id === deskModeId)) setDeskModeId(null);
     } finally { loadedOnce.current=true;setLoading(false); }
   }
-  useEffect(() => { void refresh(); }, []);
+  useEffect(() => { void refresh().catch((error:unknown)=>{if(initialId)onEntityReady?.('prospect',initialId,error instanceof Error?error.message:'Prospect introuvable.');onMessage(error instanceof Error?error.message:'Prospection indisponible.');}); }, []);
   useEffect(()=>{if(initialId)setSelectedId(initialId);},[initialId,initialRequest]);
   useEffect(() => { if (!selectedId) { setActivity([]); return; } void window.atoumweb.crm.activity.list('prospect', selectedId).then(setActivity); }, [selectedId, prospects, actions]);
   useEffect(() => { const reload = () => void refresh(); window.addEventListener('atoumweb:changed', reload); return () => window.removeEventListener('atoumweb:changed', reload); }, []);

@@ -48,7 +48,7 @@ function packNeedsAttention(pack: HourPack): boolean {
   return pack.balanceSeconds <= 3600 || pack.balanceSeconds / pack.purchasedSeconds <= 0.2;
 }
 
-export function HourPacksPanel({ onEntityReady, clients, projects, interventions, onMessage, onOperationsChanged, initialPackId }: {
+export function HourPacksPanel({ onEntityReady, initialRequest, clients, projects, interventions, onMessage, onOperationsChanged, initialPackId }: {
   clients: ClientSummary[];
   projects: ProjectSummary[];
   interventions: Intervention[];
@@ -56,6 +56,7 @@ export function HourPacksPanel({ onEntityReady, clients, projects, interventions
   onOperationsChanged: () => Promise<void>;
   initialPackId?: string | null;
   onEntityReady?:EntityReady;
+  initialRequest?:number;
 }) {
   const [packs, setPacks] = useState<HourPack[]>([]);
   const [catalogPacks, setCatalogPacks] = useState<CatalogItemSummary[]>([]);
@@ -98,6 +99,7 @@ export function HourPacksPanel({ onEntityReady, clients, projects, interventions
         setDetailExpanded(false);
       }
     } catch (error) {
+      if(initialPackId)onEntityReady?.('hour_pack',initialPackId,error instanceof Error?error.message:'Impossible de charger les packs d’heures.');
       onMessage(error instanceof Error ? error.message : 'Impossible de charger les packs d’heures.');
     }
   }
@@ -105,7 +107,7 @@ export function HourPacksPanel({ onEntityReady, clients, projects, interventions
   useEffect(() => { void refresh(); }, []);
   useEffect(() => {
     if (initialPackId) setSelectedId(initialPackId);
-  }, [initialPackId]);
+  }, [initialPackId,initialRequest]);
 
   const selected = packs.find((pack) => pack.id === selectedId) ?? null;
   useSearchTargetConfirmation('hour_pack',selected?.id,false,onEntityReady);

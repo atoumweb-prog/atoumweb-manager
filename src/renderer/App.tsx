@@ -104,7 +104,7 @@ function App() {
   const navigationEpoch=useRef(0);
   const visibleEntity=useRef<{type:SearchResult['entityType'];id:string}|null>(null);
   const pendingSearch=useRef<{result:SearchResult;resolve:(outcome:SearchNavigationResult)=>void}|null>(null);
-  const cancelSearchNavigation=useCallback(()=>{navigationEpoch.current++;const pending=pendingSearch.current;pendingSearch.current=null;pending?.resolve({status:'cancelled',message:'Navigation remplacée ou annulée ; recherche conservée.'});},[]);
+  const cancelSearchNavigation=useCallback(()=>{navigationEpoch.current++;const pending=pendingSearch.current;pendingSearch.current=null;pending?.resolve({status:'cancelled',cancelledReason:'superseded',message:'Navigation remplacée ou annulée ; recherche conservée.'});},[]);
   const markEntityReady=useCallback((type:SearchResult['entityType'],id:string|null,error?:string)=>{
     if(SEARCH_DESTINATIONS[type]!==activePageRef.current)return;
     const pending=pendingSearch.current;
@@ -309,22 +309,22 @@ function App() {
 
   }
 
-  function navigate(item:PageName){if(item===activePageRef.current)return true;return requestUnsavedExit(()=>{cancelSearchNavigation();visibleEntity.current=null;if(item==='Clients'||item==='Prospects')setCrmTarget(null);navigateDirect(item);});}
+  function navigate(item:PageName){if(item===activePageRef.current){cancelSearchNavigation();return true;}return requestUnsavedExit(()=>{cancelSearchNavigation();visibleEntity.current=null;if(item==='Clients'||item==='Prospects')setCrmTarget(null);navigateDirect(item);});}
   async function openSearchResult(result:SearchResult,source:'search'|'event'='search'):Promise<SearchNavigationResult>{
     const destination=searchDestination(result);
     if(!destination){const message='Type ou identifiant de destination non pris en charge.';setMessage(message);return {status:'unsupported',message};}
     if(visibleEntity.current?.type===result.entityType&&visibleEntity.current.id===result.entityId&&activePageRef.current===destination){cancelSearchNavigation();return {status:'opened'};}
     cancelSearchNavigation();const epoch=navigationEpoch.current;
     try {await readSearchTarget(window.atoumweb,result,source==='event');}
-    catch(error){if(epoch!==navigationEpoch.current)return {status:'cancelled'};const message=error instanceof Error?error.message:'Fiche inaccessible.';setMessage(message);return {status:'failed',message};}
-    if(epoch!==navigationEpoch.current)return {status:'cancelled'};
+    catch(error){if(epoch!==navigationEpoch.current)return {status:'cancelled',cancelledReason:'superseded'};const message=error instanceof Error?error.message:'Fiche inaccessible.';setMessage(message);return {status:'failed',message};}
+    if(epoch!==navigationEpoch.current)return {status:'cancelled',cancelledReason:'superseded'};
     return new Promise(resolve=>{
       const allowed=requestUnsavedExit(()=>{
         visibleEntity.current=null;pendingSearch.current={result,resolve};
         if(destination==='Clients'||destination==='Prospects')setCrmTarget(null);
         setNavigationRequest(value=>value+1);openSearchResultDirect(result);
       });
-      if(!allowed)resolve({status:'cancelled',message:'Navigation annulée ; brouillon et recherche conservés.'});
+      if(!allowed)resolve({status:'cancelled',cancelledReason:'guard',message:'Navigation annulée ; brouillon et recherche conservés.'});
     });
   }
   function openOperationsTarget(target:OperationsSearchTarget){requestPage('Interventions & Maintenance',()=>openOperationsTargetDirect(target));}
@@ -367,22 +367,23 @@ function App() {
           {activePage === 'Réglages' && <DemoPanel />}
           {activePage === 'Prospects' && <ProspectsPage onEntityReady={markEntityReady} key={`${crmTarget ?? 'none'}:${prospectViewTarget}:${prospectPipelineFilter}`} initialId={crmTarget} initialRequest={navigationRequest} initialView={prospectViewTarget} initialPipelineFilter={prospectPipelineFilter} onMessage={setMessage} />}
           {activePage === 'Clients' && <ClientsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
-          {activePage === 'Offres & Tarifs' && <CatalogPage onEntityReady={markEntityReady} onMessage={setMessage} initialId={catalogTarget}/>}
+          {activePage === 'Offres & Tarifs' && <CatalogPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={setMessage} initialId={catalogTarget}/>}
           {activePage === 'Devis' && <QuotesPage onEntityReady={markEntityReady} key={quoteTarget} initialId={quoteTarget} initialRequest={navigationRequest} onMessage={setMessage} />}
-          {activePage === 'Projets' && <ProjectsPage onEntityReady={markEntityReady} onMessage={showMessage} initialProjectId={projectSearchTarget} showHoverHelp={showHoverHelp} />}
-          {activePage === 'Interventions & Maintenance' && <OperationsPage onEntityReady={markEntityReady} onMessage={setMessage} initialTarget={operationsSearchTarget} />}
+          {activePage === 'Projets' && <ProjectsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={showMessage} initialProjectId={projectSearchTarget} showHoverHelp={showHoverHelp} />}
+          {activePage === 'Interventions & Maintenance' && <OperationsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={setMessage} initialTarget={operationsSearchTarget} />}
           {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}
           {activePage === 'Facturation' && <BillingPage onMessage={setMessage} />}
           {activePage === 'Dépenses' && <ExpensesPage onMessage={setMessage} />}
-          {activePage === 'Documents & Contrats' && <DocumentsPage onEntityReady={markEntityReady} onMessage={setMessage} initialDocumentId={documentTarget} initialContractTypeId={contractTypeTarget}/>}
+          {activePage === 'Documents & Contrats' && <DocumentsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={setMessage} initialDocumentId={documentTarget} initialContractTypeId={contractTypeTarget}/>}
           {activePage === 'Bibliothèque AtoumWeb' && <AtoumWebLibraryPage
+            initialRequest={navigationRequest} onEntityReady={markEntityReady}
             onMessage={setMessage}
             initialItemId={librarySearchTarget}
             headerCollapsed={libraryHeaderCollapsed}
           />}
           {activePage === 'Sites' && <BridgeSitesPage onMessage={setMessage} />}
-          {activePage === 'Sauvegardes' && <BusinessBackupsPage onEntityReady={markEntityReady} onMessage={setMessage} initialRecordId={backupSearchTarget} />}
-          {activePage === 'Annuaire' && <DirectoryPage onEntityReady={markEntityReady} onMessage={setMessage} initialTarget={directoryTarget} />}
+          {activePage === 'Sauvegardes' && <BusinessBackupsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={setMessage} initialRecordId={backupSearchTarget} />}
+          {activePage === 'Annuaire' && <DirectoryPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={setMessage} initialTarget={directoryTarget} />}
           {activePage === 'Statistiques' && <StatisticsPage onMessage={setMessage} />}
           {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} displayDensity={displayDensity} showHoverHelp={showHoverHelp} onThemeChange={updateTheme} onDensityChange={updateDisplayDensity} onShowHoverHelpChange={updateShowHoverHelp} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
           {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Facturation' && activePage !== 'Dépenses' && activePage !== 'Documents & Contrats' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Sites' && activePage !== 'Sauvegardes' && activePage !== 'Annuaire' && activePage !== 'Statistiques' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}

@@ -7,7 +7,7 @@ export const SEARCH_DESTINATIONS: Record<SearchResult['entityType'], NavigationM
   service_request:'Interventions & Maintenance',intervention:'Interventions & Maintenance',maintenance:'Interventions & Maintenance',hour_pack:'Interventions & Maintenance',
   client_document:'Documents & Contrats',atoumweb_library:'Bibliothèque AtoumWeb',backup_record:'Sauvegardes',organization:'Annuaire',contact:'Annuaire',
 };
-export interface SearchNavigationResult {status:'opened'|'cancelled'|'failed'|'unsupported'; message?:string}
+export interface SearchNavigationResult {status:'opened'|'cancelled'|'failed'|'unsupported'; message?:string; cancelledReason?:'guard'|'superseded'}
 export function searchDestination(value: unknown): NavigationModuleKey | null {
   if (!value || typeof value!=='object') return null;
   const {entityType,entityId}=value as Record<string,unknown>;

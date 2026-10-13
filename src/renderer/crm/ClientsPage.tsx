@@ -1,4 +1,5 @@
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
+import {requestUnsavedExit,useUnsavedDraft} from '../unsaved/unsaved';
 import { NeedChoices, openEntity } from '../workflow/DossierPanel';
 import {ClientDocumentsPanel} from './ClientDocumentsPanel';
 import {ClientContractsPanel} from './ClientContractsPanel';
@@ -170,6 +171,11 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
   const [contactSaving, setContactSaving] = useState(false);
   const [actionEditor, setActionEditor] = useState<ClientActionEditor | null>(null);
   const [archiveCandidateId, setArchiveCandidateId] = useState<string | null>(null);
+  const [coordinatesSaving,setCoordinatesSaving]=useState(false);
+  const clientCreateGuard=useUnsavedDraft('Nouveau client',{draft,needsDraft,demoMode},{ready:showForm||saving,pending:saving,resetKey:showForm,discard:value=>{setDraft(value.draft);setNeedsDraft(value.needsDraft);setDemoMode(value.demoMode);setShowForm(false);}});
+  useUnsavedDraft('Coordonnées client',coordinateDraft,{ready:editingCoordinates||coordinatesSaving,pending:coordinatesSaving,resetKey:selectedId+':'+editingCoordinates,discard:value=>{setCoordinateDraft(value);setEditingCoordinates(false);}});
+  useUnsavedDraft('Contact client',contactDraft,{ready:showContactForm||contactSaving,pending:contactSaving,resetKey:selectedId+':'+editingContactId+':'+showContactForm,discard:value=>{setContactDraft(value);setShowContactForm(false);setEditingContactId(null);}});
+  useUnsavedDraft('Prochaine action client',actionEditor,{ready:!!actionEditor,resetKey:actionEditor?.clientId,discard:()=>setActionEditor(null)});
   const sidePanelRef = useRef<HTMLElement | null>(null);
 
   async function refresh(): Promise<void> {
@@ -178,6 +184,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
     try {
       setClients(await window.atoumweb.crm.clients.list({ includeArchived: true }));
     } catch (error) {
+      if(initialId)onEntityReady?.('client',initialId,error instanceof Error?error.message:'Client introuvable.');
       setClients([]);
       setLoadError(error instanceof Error ? error.message : String(error));
     } finally {
@@ -231,6 +238,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
       const target = event.target as Node | null;
       if (!target || sidePanelRef.current?.contains(target)) return;
       if(target instanceof Element&&target.closest('button,a,input,select,textarea,tr,[role=option]'))return;
+      if(!requestUnsavedExit(()=>{}))return;
       setSelectedId(null);
       setActionEditor(null);
       setArchiveCandidateId(null);
@@ -253,6 +261,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
 
   const selected = clients.find((client) => client.id === selectedId) ?? null;
   useSearchTargetConfirmation('client',selected?.id,loading,onEntityReady);
+  useEffect(()=>{if(!loading&&initialId&&!clients.some(client=>client.id===initialId))onEntityReady?.('client',initialId,loadError??'Client introuvable.');},[loading,initialId,initialRequest,clients,loadError,onEntityReady]);
 
   const clientSplitStyle = selected && !largeView
     ? ({ '--client-list-percent': `${clientSplitPercent}%` } as CSSProperties)
@@ -327,7 +336,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
       setDemoMode(false);
       setShowForm(false);
       await refresh();
-      openClient(client.id);
+      openClient(client.id,true);
       onMessage('Client créé.');
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Impossible de créer le client.');
@@ -337,7 +346,9 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
     }
   }
 
-  function openClient(id: string): void {
+  function openClient(id: string, saved=false): void {
+    if(id===selectedId)return;
+    if(!saved&&!requestUnsavedExit(()=>{}))return;
     setSelectedId(id);
     setActiveTab('summary');
     setLargeView(false);
@@ -347,6 +358,8 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
     setActionEditor(null);
     setArchiveCandidateId(null);
   }
+
+  function closeClient():void{requestUnsavedExit(()=>{setRelationshipMenuOpen(false);setLargeView(false);setSelectedId(null);setActionEditor(null);setArchiveCandidateId(null);});}
 
   function beginClientResize(splitter: HTMLElement): void {
     const workspace = splitter.parentElement;
@@ -395,6 +408,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
 
   async function saveCoordinates(): Promise<void> {
     if (!selected || !identity) return;
+    setCoordinatesSaving(true);
     try {
       if (identity.contact) await window.atoumweb.crm.contacts.update(identity.contact.id, { ...identity.contact, firstName: coordinateDraft.firstName.trim(), lastName: coordinateDraft.lastName.trim() });
       if (identity.organization) await window.atoumweb.crm.organizations.update(identity.organization.id, { ...identity.organization, website: coordinateDraft.website.trim() || null, addressLine1: coordinateDraft.addressLine1.trim() || null, addressLine2: coordinateDraft.addressLine2.trim() || null, postalCode: coordinateDraft.postalCode.trim() || null, city: coordinateDraft.city.trim() || null });
@@ -402,6 +416,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
       await refreshSelectedClientData(selected.id); await refresh();
       onMessage('Coordonnées du client mises à jour.');
     } catch (error) { onMessage(error instanceof Error ? error.message : 'Mise à jour impossible.'); }
+    finally{setCoordinatesSaving(false);}
   }
 
   async function updateStatus(client: ClientSummary, status: ClientStatus): Promise<void> {
@@ -544,7 +559,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
             <option value="inactive">Anciens clients</option>
             <option value="archived">Archivés</option>
           </select>
-          <button className="primary-button" type="button" onClick={() => setShowForm((value) => !value)}>{showForm ? 'Fermer' : '+ Nouveau client'}</button>
+          <button className="primary-button" type="button" onClick={() => showForm?clientCreateGuard.request(()=>setShowForm(false)):setShowForm(true)}>{showForm ? 'Fermer' : '+ Nouveau client'}</button>
         </div>
       </div>
 
@@ -599,7 +614,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
                   <span className="eyebrow">Fiche client</span>
                   <div className="client-summary-head"><CrmIdentityAvatar organizationId={selected.organizationId} contactId={selected.primaryContactId} name={selected.displayName} size="large" /><div><h2>{selected.displayName}</h2><span className={`client-status status-${selected.status}`}>{STATUS_LABELS[selected.status ?? 'active']}</span></div></div>
                 </div>
-                <div className="detail-heading-actions"><div className="client-relationship-picker"><button className="secondary-button client-relationship-trigger" type="button" aria-expanded={relationshipMenuOpen} aria-haspopup="true" disabled={relationshipSaving} onClick={() => setRelationshipMenuOpen((value) => !value)}><span className="client-relationship-dot" />Relation client · {RELATION_LABELS[selected.relationshipStatus ?? 'neutral']}</button>{relationshipMenuOpen && <div className="client-relationship-menu" role="group" aria-label="Qualité de la relation client">{RELATION_OPTIONS.map((option) => <button key={option} type="button" className={`client-relationship-choice client-relationship-${option}`} aria-pressed={(selected.relationshipStatus ?? 'neutral') === option} onClick={() => void updateRelationship(selected, option)}><span className="client-relationship-dot" />{RELATION_LABELS[option]}</button>)}</div>}</div><button className="operation-detail-expand client-detail-expand" type="button" title={largeView ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={largeView ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setLargeView((value) => !value)}><OperationIcon name={largeView ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" aria-label="Fermer la fiche client" onClick={() => { setRelationshipMenuOpen(false); setLargeView(false); setSelectedId(null); setActionEditor(null); setArchiveCandidateId(null); }}>×</button></div>
+                <div className="detail-heading-actions"><div className="client-relationship-picker"><button className="secondary-button client-relationship-trigger" type="button" aria-expanded={relationshipMenuOpen} aria-haspopup="true" disabled={relationshipSaving} onClick={() => setRelationshipMenuOpen((value) => !value)}><span className="client-relationship-dot" />Relation client · {RELATION_LABELS[selected.relationshipStatus ?? 'neutral']}</button>{relationshipMenuOpen && <div className="client-relationship-menu" role="group" aria-label="Qualité de la relation client">{RELATION_OPTIONS.map((option) => <button key={option} type="button" className={`client-relationship-choice client-relationship-${option}`} aria-pressed={(selected.relationshipStatus ?? 'neutral') === option} onClick={() => void updateRelationship(selected, option)}><span className="client-relationship-dot" />{RELATION_LABELS[option]}</button>)}</div>}</div><button className="operation-detail-expand client-detail-expand" type="button" title={largeView ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={largeView ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setLargeView((value) => !value)}><OperationIcon name={largeView ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" aria-label="Fermer la fiche client" onClick={closeClient}>×</button></div>
               </div>
               <div className="client-summary-scroll">
               {activeTab === 'summary' && <>

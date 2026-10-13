@@ -1,5 +1,5 @@
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   BusinessBackupLocationInput,
   BusinessBackupLocationType,
@@ -32,10 +32,11 @@ const LOCATION_TYPES: Array<{ id: BusinessBackupLocationType; label: string }> =
 interface Props {
   onMessage: (message: string) => void;
   initialRecordId?: string | null;
+  initialRequest?:number;
   onEntityReady?:EntityReady;
 }
 
-export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId }: Props) {
+export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId, initialRequest }: Props) {
   const [records, setRecords] = useState<BusinessBackupRecord[]>([]);
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [clients, setClients] = useState<ClientSummary[]>([]);
@@ -59,7 +60,9 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId 
     label: '', pathOrReference: '', notes: '',
   });
 
+  const loadEpoch=useRef(0);useEffect(()=>()=>{loadEpoch.current++;},[]);
   async function load(preferredId?: string | null): Promise<void> {
+    const epoch=++loadEpoch.current;
     try {
       setError(null);
       const [nextRecords, nextProjects, nextClients, nextOverview] = await Promise.all([
@@ -72,6 +75,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId 
         window.atoumweb.crm.clients.list({ includeArchived: true }),
         window.atoumweb.businessBackups.overview(),
       ]);
+      if(epoch!==loadEpoch.current)return;
       setRecords(nextRecords);
       setProjects(nextProjects);
       setClients(nextClients);
@@ -80,11 +84,15 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId 
       if (targetId) {
         const found = nextRecords.find((record) => record.id === targetId)
           ?? await window.atoumweb.businessBackups.get(targetId).catch(() => null);
+        if(epoch!==loadEpoch.current)return;
+        if(!found)onEntityReady?.('backup_record',targetId,'Sauvegarde introuvable.');
         setSelected(found);
       } else if (selected && !nextRecords.some((record) => record.id === selected.id)) {
         setSelected(null);
       }
     } catch (loadError) {
+      if(epoch!==loadEpoch.current)return;
+      if(preferredId)onEntityReady?.('backup_record',preferredId,loadError instanceof Error?loadError.message:'Sauvegardes indisponibles.');
       setError(loadError instanceof Error ? loadError.message : 'Impossible de charger les sauvegardes métier.');
     }
   }
@@ -92,7 +100,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId 
   useEffect(() => {
     void load(initialRecordId ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, typeFilter, locationFilter, initialRecordId]);
+  }, [search, typeFilter, locationFilter, initialRecordId,initialRequest]);
 
   useEffect(() => {
     if (!selected) return;
