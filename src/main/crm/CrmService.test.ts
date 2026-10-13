@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
 import { CrmService } from './CrmService';
-import { prospectProjectBriefSnapshot } from '../../shared/crm';
+import { prospectProjectBriefSnapshot, prospectQualificationBriefSnapshot } from '../../shared/crm';
 
 let database: NodeSqliteAdapter;
 let crm: CrmService;
@@ -20,6 +20,81 @@ afterEach(() => {
 
 describe('CrmService', () => {
   const readProspect = (service: CrmService, id: string) => service.listProspects({ includeArchived: true }).find(item => item.id === id)!;
+  it('03C qualification : détecte deux modifications concurrentes, puis reprend après lecture', () => {
+    const org = crm.createOrganization({ name: 'Qualification deux fenêtres' });
+    const prospect = crm.createProspect({ organizationId: org.id });
+    const second = new CrmService(database);
+    const initial = prospectQualificationBriefSnapshot(readProspect(crm, prospect.id));
+    const fromA = { ...initial, initialObservation: 'Site existant lent', interestLevel: 'interested' as const };
+    const fromB = { ...initial, targetingReasonText: 'Besoin de référencement' };
+    crm.updateProspectQualificationBriefIfUnchanged(prospect.id, initial, fromA);
+    const events = crm.listActivity('prospect', prospect.id).length;
+    expect(() => second.updateProspectQualificationBriefIfUnchanged(prospect.id, initial, fromB))
+      .toThrow(/Conflit/);
+    expect(crm.listActivity('prospect', prospect.id)).toHaveLength(events);
+    expect(readProspect(crm, prospect.id).initialObservation).toBe('Site existant lent');
+    expect(readProspect(crm, prospect.id).targetingReasonText).toBeFalsy();
+    const fresh = prospectQualificationBriefSnapshot(readProspect(second, prospect.id));
+    const updated = second.updateProspectQualificationBriefIfUnchanged(prospect.id, fresh, {
+      ...fresh, targetingReasonText: 'Besoin de référencement',
+    });
+    expect(updated).toMatchObject({
+      initialObservation: 'Site existant lent', targetingReasonText: 'Besoin de référencement',
+    });
+  });
+
+  it('03C qualification : conflit détecté sur contexte partagé avec le formulaire Besoins', () => {
+    const org = crm.createOrganization({ name: 'Qualification et besoin' });
+    const prospect = crm.createProspect({ organizationId: org.id });
+    const oldQualification = prospectQualificationBriefSnapshot(readProspect(crm, prospect.id));
+    const existingProject = prospectProjectBriefSnapshot(readProspect(crm, prospect.id));
+    crm.updateProspectProjectBriefIfUnchanged(prospect.id, existingProject, {
+      ...existingProject, projectSummary: 'Demande mise à jour dans Besoins',
+    });
+    expect(() => crm.updateProspectQualificationBriefIfUnchanged(prospect.id, oldQualification, {
+      ...oldQualification, projectSummary: 'Ancien formulaire',
+    })).toThrow(/Conflit/);
+    expect(readProspect(crm, prospect.id).projectSummary).toBe('Demande mise à jour dans Besoins');
+  });
+
+  it('03C qualification : ne bloque pas un budget, une checklist ou un décisionnaire indépendant', () => {
+    const org = crm.createOrganization({ name: 'Qualification indépendante' });
+    const prospect = crm.createProspect({ organizationId: org.id });
+    const snapshot = prospectQualificationBriefSnapshot(readProspect(crm, prospect.id));
+    const project = prospectProjectBriefSnapshot(readProspect(crm, prospect.id));
+    crm.updateProspectProjectBriefIfUnchanged(prospect.id, project, {
+      ...project, budgetStatus: 'known', budgetMinCents: 99000, budgetMaxCents: 99000,
+    });
+    const checklist = '{"version":1,"items":[{"id":"brief","label":"Documents","status":"open","isBlocking":false}]}';
+    crm.updateProspectMissingInformationIfUnchanged(prospect.id, null, checklist);
+    crm.updateProspectQualification(prospect.id, { decisionStatus: 'unknown' });
+    const changed = crm.updateProspectQualificationBriefIfUnchanged(prospect.id, snapshot, {
+      ...snapshot, initialObservation: 'Vitrine existante',
+    });
+    expect(changed.budgetMinCents).toBe(99000);
+    expect(changed.missingInformation).toBe(checklist);
+    expect(changed.decisionStatus).toBe('unknown');
+    expect(changed.initialObservation).toBe('Vitrine existante');
+  });
+
+  it('03C qualification : refuse les fiches closes et annule une erreur SQL', () => {
+    const org = crm.createOrganization({ name: 'Qualification SQL' });
+    const prospect = crm.createProspect({ organizationId: org.id });
+    const initial = prospectQualificationBriefSnapshot(readProspect(crm, prospect.id));
+    database.exec(`CREATE TRIGGER test_qualification_abort BEFORE UPDATE OF initial_observation ON prospects
+      WHEN NEW.id='${prospect.id}' BEGIN SELECT RAISE(ABORT,'fixture qualification refused'); END;`);
+    const before = crm.listActivity('prospect', prospect.id).length;
+    expect(() => crm.updateProspectQualificationBriefIfUnchanged(prospect.id, initial, {
+      ...initial, initialObservation: 'Ne pas écrire',
+    })).toThrow(/fixture qualification refused/);
+    expect(prospectQualificationBriefSnapshot(readProspect(crm, prospect.id))).toEqual(initial);
+    expect(crm.listActivity('prospect', prospect.id)).toHaveLength(before);
+    database.exec('DROP TRIGGER test_qualification_abort');
+    crm.convertProspectToClient(prospect.id);
+    expect(() => crm.updateProspectQualificationBriefIfUnchanged(prospect.id, initial, initial))
+      .toThrow(/lecture seule/);
+  });
+
   it('03C projet : refuse une sauvegarde budget obsolète entre deux fenêtres, puis reprend explicitement', () => {
     const org = crm.createOrganization({ name: 'Budget deux fenêtres' });
     const prospect = crm.createProspect({ organizationId: org.id });
