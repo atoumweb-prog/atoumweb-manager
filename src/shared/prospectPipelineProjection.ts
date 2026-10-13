@@ -18,11 +18,14 @@ export interface PipelineProspectProjection {
   stage?: ProspectStage | null;
   archivedAt?: string | null;
   clientAccountId?: string | null;
+  /** Signal E73 lié au devis commercial courant ; jamais un nouveau ProspectStage. */
+  finalizationQuoteId?: string | null;
 }
 
 /** Une seule destination au plus ; 'new', perdu, archivé et gagné restent exclus. */
 export function activePipelineColumn(prospect: PipelineProspectProjection): string | null {
   if (prospect.archivedAt || prospect.clientAccountId || prospect.stage === 'won' || prospect.stage === 'lost') return null;
+  if (prospect.finalizationQuoteId && ['quote_sent','follow_up','waiting','negotiation'].includes(prospect.stage ?? 'new')) return 'finalization';
   return PROSPECT_PIPELINE_COLUMNS.find((column) =>
     (column.stages as readonly ProspectStage[]).includes(prospect.stage ?? 'new'),
   )?.id ?? null;
