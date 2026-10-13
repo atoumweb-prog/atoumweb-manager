@@ -28,6 +28,7 @@ import {
   type ProspectInput,
   type ProspectOrigin,
   type ProspectProjectBrief,
+  type ProspectQualificationBrief,
   type ProspectResearchSnapshot,
   type ProspectResearchSnapshotInput,
   type ProspectResearchStructuredCheck,
@@ -657,6 +658,54 @@ export class CrmService {
       clean(pick('waitingResumeAt') as string|null|undefined),clean(pick('lostReasonCode') as string|null|undefined),nowIso(),id]);
     this.activity({entityType:'prospect',entityId:id,action:'qualification_updated',summary:'Qualification commerciale mise à jour',prospectId:id});
     this.indexProspect(id); return this.getProspect(id);
+  }
+
+  /**
+   * Qualification 03C : l'UPDATE teste les dix valeurs du panneau avant
+   * d'écrire. Une modification de résumé/contexte dans Besoins est également
+   * détectée ; budget, checklist et décisionnaire ne sont pas écrasés.
+   */
+  updateProspectQualificationBriefIfUnchanged(
+    id: string, expected: ProspectQualificationBrief, next: ProspectQualificationBrief,
+  ): ProspectSummary {
+    const current = this.getProspect(id);
+    if (current.archivedAt || current.clientAccountId) {
+      throw new Error('Qualification en lecture seule sur un Prospect archivé ou converti.');
+    }
+    if (!expected || !next) throw new Error('Instantanés de qualification requis.');
+    if (next.originType && !PROSPECT_ORIGINS.includes(next.originType)) {
+      throw new Error('Origine du Prospect invalide.');
+    }
+    if (next.interestLevel && !PROSPECT_INTEREST_LEVELS.includes(next.interestLevel)) {
+      throw new Error('Niveau d’intérêt invalide.');
+    }
+    const cols = [
+      'origin_type', 'targeting_reason_code', 'targeting_reason_text',
+      'initial_observation', 'detected_opportunity', 'first_contact_result_code',
+      'first_contact_result_text', 'interest_level', 'project_summary', 'project_context',
+    ] as const;
+    const values = (brief: ProspectQualificationBrief): SqlValue[] => [
+      brief.originType ?? null,
+      clean(brief.targetingReasonCode), clean(brief.targetingReasonText),
+      clean(brief.initialObservation), clean(brief.detectedOpportunity),
+      clean(brief.firstContactResultCode), clean(brief.firstContactResultText),
+      brief.interestLevel ?? null, clean(brief.projectSummary), clean(brief.projectContext),
+    ];
+    const result = this.database.run(
+      `UPDATE prospects SET ${cols.map(col => `${col}=?`).join(', ')}, updated_at=?
+       WHERE id=? AND archived_at IS NULL AND client_account_id IS NULL
+         AND ${cols.map(col => `${col} IS ?`).join(' AND ')}`,
+      [...values(next), nowIso(), id, ...values(expected)],
+    );
+    if (Number(result.changes) !== 1) {
+      throw new Error('Conflit : la qualification ou le contexte du projet a changé dans une autre fenêtre. Vérifie les informations enregistrées.');
+    }
+    this.activity({
+      entityType: 'prospect', entityId: id, action: 'qualification_updated',
+      summary: 'Qualification commerciale mise à jour', prospectId: id,
+    });
+    this.indexProspect(id);
+    return this.getProspect(id);
   }
 
   /**
