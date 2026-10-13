@@ -254,6 +254,8 @@ export interface CrmApi {
     create(input: ContactInput): Promise<Contact>;
     /** Atomic primary contact creation + Prospect attachment, retry-safe. */
     createAndAttachPrimaryProspect(prospectId: string, input: ContactInput): Promise<Contact>;
+    /** Atomic decision maker creation + Prospect attachment, retry-safe. */
+    createAndAttachDecisionProspect(prospectId: string, input: ContactInput): Promise<Contact>;
     update(id: string, input: ContactInput): Promise<Contact>;
   };
   contactMethods: {
