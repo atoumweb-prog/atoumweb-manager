@@ -51,3 +51,28 @@ export function serializeProspectInformation(items: ProspectInformationItem[]): 
 export function hasBlockingProspectInformation(value?: string | null): boolean {
   return parseProspectInformation(value).some((item) => item.status === 'open' && item.isBlocking);
 }
+
+/**
+ * Applique une modification sur le dernier brouillon confirmé par le renderer.
+ * Le statut et la réponse peuvent changer dans deux événements successifs
+ * avant un rerender ; aucun événement ne doit repartir d'un snapshot ancien.
+ */
+export function patchProspectInformation(
+  current: readonly ProspectInformationItem[],
+  id: string,
+  patch: Partial<ProspectInformationItem>,
+  nowIso: string,
+): ProspectInformationItem[] {
+  return current.map((item) => {
+    if (item.id !== id) return item;
+    const status = patch.status ?? item.status;
+    return {
+      ...item,
+      ...patch,
+      id: item.id,
+      status,
+      isBlocking: status === 'later' ? false : (patch.isBlocking ?? item.isBlocking),
+      resolvedAt: status === 'resolved' ? (item.resolvedAt ?? nowIso) : null,
+    };
+  });
+}
