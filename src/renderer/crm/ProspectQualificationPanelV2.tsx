@@ -195,21 +195,19 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
       setError('Renseigne au moins une information de qualification avant de passer à l’étape suivante.');
       return;
     }
+    // La dérogation doit précéder toute écriture. « Rester » conserve le brouillon
+    // exact et n'avance pas la phase ni ne déclenche un faux enregistrement.
+    if (!allReady && !window.confirm(`Il reste à préciser : ${missing.map((item) => item.label).join(', ')}.\n\nPasser quand même à « Besoin à identifier » ?\nTu pourras compléter ces informations plus tard.`)) {
+      return;
+    }
     setBusy(true); setError('');
     try {
       await persist();
-      if (!allReady) {
-        const confirmed = window.confirm(`Il reste à préciser : ${missing.map((item) => item.label).join(', ')}.\n\nPasser quand même à « Besoin à identifier » ?\nTu pourras compléter ces informations plus tard.`);
-        if (!confirmed) {
-          onSaved('Le prospect reste à l’étape « À qualifier ».');
-          return;
-        }
-        await window.atoumweb.crm.prospects.changeStage(prospect.id, 'need_identified', null, true);
-        onSaved('Prospect avancé vers « Besoin à identifier » malgré des informations encore à compléter.');
-        return;
-      }
-      await window.atoumweb.crm.prospects.changeStage(prospect.id, 'need_identified');
-      onSaved('Qualification validée : le prospect passe en « Besoin à identifier ».');
+      guard.saved(); // Le contenu vient d'être persisté, même si la transition suivante échoue.
+      await window.atoumweb.crm.prospects.changeStage(prospect.id, 'need_identified', null, !allReady);
+      onSaved(allReady
+        ? 'Qualification validée : le prospect passe en « Besoin à identifier ».'
+        : 'Prospect avancé vers « Besoin à identifier » malgré des informations encore à compléter.');
     } catch (e) { setError(cleanError(e)); }
     finally { setBusy(false); }
   }
