@@ -252,6 +252,8 @@ export interface CrmApi {
     list(includeArchived?: boolean): Promise<DirectoryContact[]>;
     get(id: string): Promise<DirectoryContact>;
     create(input: ContactInput): Promise<Contact>;
+    /** Atomic primary contact creation + Prospect attachment, retry-safe. */
+    createAndAttachPrimaryProspect(prospectId: string, input: ContactInput): Promise<Contact>;
     update(id: string, input: ContactInput): Promise<Contact>;
   };
   contactMethods: {
