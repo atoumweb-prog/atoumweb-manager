@@ -27,6 +27,7 @@ import {
   type ProspectFilters,
   type ProspectInput,
   type ProspectOrigin,
+  type ProspectProjectBrief,
   type ProspectResearchSnapshot,
   type ProspectResearchSnapshotInput,
   type ProspectResearchStructuredCheck,
@@ -682,6 +683,63 @@ export class CrmService {
     this.activity({
       entityType: 'prospect', entityId: id, action: 'information_checklist_updated',
       summary: 'Informations à confirmer actualisées', prospectId: id,
+    });
+    this.indexProspect(id);
+    return this.getProspect(id);
+  }
+
+  /**
+   * Une seule écriture atomique et conditionnelle pour le besoin/projet.
+   * Le CAS protège uniquement ses colonnes : une checklist modifiée dans
+   * une autre fenêtre ne doit pas empêcher de sauvegarder un budget.
+   */
+  updateProspectProjectBriefIfUnchanged(
+    id: string, expected: ProspectProjectBrief, next: ProspectProjectBrief,
+  ): ProspectSummary {
+    const current = this.getProspect(id);
+    if (current.archivedAt || current.clientAccountId) {
+      throw new Error('Projet en lecture seule sur un Prospect archivé ou converti.');
+    }
+    if (!expected || !next) throw new Error('Instantanés de projet requis.');
+    assertMoney(next.budgetMinCents, 'Le budget minimum');
+    assertMoney(next.budgetMaxCents, 'Le budget maximum');
+    if (next.budgetMinCents != null && next.budgetMaxCents != null && next.budgetMinCents > next.budgetMaxCents) {
+      throw new Error('Le budget minimum ne peut pas dépasser le budget maximum.');
+    }
+    if (next.budgetStatus != null && !['known', 'range', 'not_disclosed'].includes(next.budgetStatus)) {
+      throw new Error('Statut du budget invalide.');
+    }
+    if (next.timelineStatus != null && !['date', 'note', 'not_disclosed'].includes(next.timelineStatus)) {
+      throw new Error('Échéance du projet invalide.');
+    }
+    if (next.existingStatus != null && !['yes', 'no', 'unknown'].includes(next.existingStatus)) {
+      throw new Error('État du site existant invalide.');
+    }
+    const columns = [
+      'project_summary', 'project_context', 'budget_status', 'budget_min_cents',
+      'budget_max_cents', 'timeline_status', 'target_date', 'timeline_note',
+      'existing_status', 'existing_url', 'existing_notes',
+    ] as const;
+    const values = (brief: ProspectProjectBrief): SqlValue[] => [
+      clean(brief.projectSummary), clean(brief.projectContext), brief.budgetStatus ?? null,
+      brief.budgetMinCents ?? null, brief.budgetMaxCents ?? null, brief.timelineStatus ?? null,
+      clean(brief.targetDate), clean(brief.timelineNote), brief.existingStatus ?? null,
+      normalizeWebUrl(brief.existingUrl), clean(brief.existingNotes),
+    ];
+    const nextValues = values(next);
+    const expectedValues = values(expected);
+    const result = this.database.run(
+      `UPDATE prospects SET ${columns.map((column) => `${column}=?`).join(', ')}, updated_at=?
+       WHERE id=? AND archived_at IS NULL AND client_account_id IS NULL
+         AND ${columns.map((column) => `${column} IS ?`).join(' AND ')}`,
+      [...nextValues, nowIso(), id, ...expectedValues],
+    );
+    if (Number(result.changes) !== 1) {
+      throw new Error('Conflit : le projet, le budget ou le calendrier a changé dans une autre fenêtre. Vérifie les valeurs enregistrées avant de continuer.');
+    }
+    this.activity({
+      entityType: 'prospect', entityId: id, action: 'project_brief_updated',
+      summary: 'Projet, budget et calendrier mis à jour', prospectId: id,
     });
     this.indexProspect(id);
     return this.getProspect(id);
