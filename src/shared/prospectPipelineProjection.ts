@@ -33,7 +33,7 @@ export function isHistoricalConversion(prospect: PipelineProspectProjection): bo
   return Boolean(prospect.clientAccountId);
 }
 
-export function projectPipeline(prospects: readonly PipelineProspectProjection[]) {
+export function projectPipeline<T extends PipelineProspectProjection>(prospects: readonly T[]) {
   const columns = PROSPECT_PIPELINE_COLUMNS.map((column) => ({
     id: column.id,
     label: column.label,
