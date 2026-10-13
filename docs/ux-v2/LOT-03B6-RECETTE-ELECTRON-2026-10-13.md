@@ -16,7 +16,7 @@ Exécuter dans **PowerShell Windows** à partir du clone Git local, en préserva
 Set-Location 'C:\DEV\01_PROJETS\AtoumWeb\atoumweb-manager'
 git fetch origin codex/ux-v2-lot03a-crm-audit
 $head = git rev-parse 'origin/codex/ux-v2-lot03a-crm-audit'
-$worktree = Join-Path $env:TEMP ('atoumweb-03b6-validation-' + $head.Substring(0,10))
+$worktree = Join-Path $env:TEMP ('atoumweb-03b6-validation-' + $head.Substring(0,10) + '-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
 git worktree add --detach $worktree $head
 Set-Location $worktree
 npm ci
@@ -33,6 +33,7 @@ Après examen et archivage des preuves, retirer **uniquement le worktree explici
 |---|---|
 | R03B-01 | Nouveau Prospect en `new`, absent du pipeline, Client non créé |
 | R03B-03 | Six colonnes commerciales et septième section Conversion non déposable |
+| R03B-04/15 | Drag Chromium vers Conversion/Finalisation non autorisées : aucune mutation ; déplacement autorisé Attente → Négociation persisté par le vrai CrmService |
 | R03B-12 | Accord de principe E73 explicite ; état `sent` et Prospect inchangés ; carte dans Finalisation étape 6 ; annulation et retour |
 | R03B-13 | Envoi du devis seul ne place pas le Prospect en Finalisation |
 | R03B-15 | Conversion historique distincte d'une cible DnD et des actifs |
@@ -41,7 +42,7 @@ Après examen et archivage des preuves, retirer **uniquement le worktree explici
 | R03B-19 | 3 thèmes × 3 densités, neuf captures visuelles vérifiées sur fenêtre normale ; fenêtre 1024 × 720 et zoom 125 % |
 | R03B-20 | Intégrité `PRAGMA integrity_check` et zéro `foreign_key_check` sur SQLite TEMP |
 
-**Ne pas déclarer l'intégralité du lot 03B.6 validée** avec cette seule recette : restent à faire manuellement à l'écran les gestes DnD (autorisés/refusés et clavier), la qualification incomplète, un Projet prévisionnel avec véritable blueprint complet, le rapprochement des révisions commerciales et la lecture des captures sous les neuf configurations. Les tests backend associés et leurs journaux doivent être joints au bilan final.
+**Ne pas déclarer l'intégralité du lot 03B.6 validée** avec cette seule recette : restent à faire manuellement à l'écran les gestes DnD au clavier, la qualification incomplète, un Projet prévisionnel avec véritable blueprint complet, le rapprochement des révisions commerciales et la lecture des captures sous les neuf configurations. Les tests backend associés et leurs journaux doivent être joints au bilan final.
 
 ## Critères de sortie
 
