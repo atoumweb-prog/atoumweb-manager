@@ -168,11 +168,13 @@ function App() {
     return () => window.removeEventListener('atoumweb:open-prospects-view', open);
   }, []);
   useEffect(() => {
-    const openConclusion = (event: Event) => {requestPage('Interventions & Maintenance',()=>{
+    const openConclusion = (event: Event) => {
       const interventionId = (event as CustomEvent<{ interventionId?: string }>).detail?.interventionId;
       if (!interventionId) return;
-      setOperationsSearchTarget({ entityType: 'intervention', entityId: interventionId, focus: 'conclusion' });
-      setActivePage('Interventions & Maintenance');});};
+      const run=()=>{setNavigationRequest(value=>value+1);setOperationsSearchTarget({ entityType: 'intervention', entityId: interventionId, focus: 'conclusion' });setActivePage('Interventions & Maintenance');};
+      if(activePageRef.current==='Interventions & Maintenance'&&visibleEntity.current?.type==='intervention'&&visibleEntity.current.id===interventionId){cancelSearchNavigation();run();}
+      else requestPage('Interventions & Maintenance',run);
+    };
     window.addEventListener('atoumweb:open-intervention-conclusion', openConclusion);
     return () => window.removeEventListener('atoumweb:open-intervention-conclusion', openConclusion);
   }, []);

@@ -29,7 +29,7 @@ module.exports=async({win,db,temp,registered,evalUI:js,get,wait,navigate,test,sl
   const quote=db.quotes.create({clientAccountId:client.id,subject:'S2C QUOTE'});
   const project=await get("window.atoumweb.projects.projects.createInternal({name:'S2C PROJECT'})");
   const request=db.operations.createRequest({clientAccountId:client.id,subject:'S2C REQUEST',source:'email'});
-  const intervention=db.operations.createIntervention({clientAccountId:client.id,subject:'S2C INTERVENTION',coverageMode:'internal'});
+  const intervention=db.operations.createIntervention({clientAccountId:client.id,subject:'S2C INTERVENTION',type:'incident',coverageMode:'internal'});
   const plan=db.maintenance.createPlan({name:'S2C MAINTENANCE',periodicPriceCents:1000});
   const subscription=db.maintenance.createSubscription({clientAccountId:client.id,planId:plan.id,startDate:'2026-10-13'});
   const pack=db.hourPacks.create({clientAccountId:client.id,name:'S2C PACK',purchasedSeconds:3600,contractPriceCents:1000});
@@ -136,12 +136,47 @@ module.exports=async({win,db,temp,registered,evalUI:js,get,wait,navigate,test,sl
   test(dialogs.length===clientDialogs+1&&await get('window.__clientForm===document.querySelector(".crm-form")&&document.querySelector(".crm-form input").value==="S2C UNSAVED CLIENT"'),'Client search exit reuses UX01 and preserves draft and instance');
   answers.push(1);await choose('catalog',catA.id);await loaded('catalog',catA.id);
   test(dialogs.length===clientDialogs+2,'Client draft discarded only after one explicit confirmation');
+  // Historical Home shortcut must focus the conclusion, then protect its real sub-editor.
+  await navigate('Accueil');
+  await js(`window.dispatchEvent(new CustomEvent('atoumweb:open-intervention-conclusion',{detail:{interventionId:${JSON.stringify(intervention.id)}}}))`);
+  await wait('document.activeElement.matches(".intervention-conclusion-grid textarea")','Home conclusion focus');
+  await js("window.__conclusion=document.querySelector('.intervention-conclusion-panel');const e=document.querySelector('.intervention-conclusion-grid textarea');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(e,'S2C CONCLUSION DIRTY');e.dispatchEvent(new Event('input',{bubbles:true}))");await sleep(60);
+  const conclusionDialogs=dialogs.length;
+  await js(`window.dispatchEvent(new CustomEvent('atoumweb:open-intervention-conclusion',{detail:{interventionId:${JSON.stringify(intervention.id)}}}))`);await sleep(80);
+  test(dialogs.length===conclusionDialogs&&await get('window.__conclusion===document.querySelector(".intervention-conclusion-panel")&&document.querySelector(".intervention-conclusion-grid textarea").value==="S2C CONCLUSION DIRTY"'),'Same conclusion retains mounted editor and draft without prompt');
+  await search('S2C HOMONYME');await choose('catalog',catA.id);await wait('document.querySelector(".search-results-panel [role=alert]")','conclusion Stay');
+  test(dialogs.length===conclusionDialogs+1&&await get('window.__conclusion===document.querySelector(".intervention-conclusion-panel")&&document.querySelector(".intervention-conclusion-grid textarea").value==="S2C CONCLUSION DIRTY"'),'Conclusion search exit Stay retains exact editor/text');
+  const originalInterventionGet=db.operations.getIntervention.bind(db.operations);
+  try{
+   db.operations.getIntervention=id=>({...originalInterventionGet(id),...(id===intervention.id?{incidentCause:'REMOTE CAUSE'}:{})});
+   await js(`window.dispatchEvent(new CustomEvent('atoumweb:intervention-updated',{detail:{interventionId:${JSON.stringify(intervention.id)}}}))`);
+   await wait('!!document.querySelector(".intervention-conclusion-content [role=alert]")','conflict preserved');
+   test(await get('document.querySelector(".intervention-conclusion-grid textarea").value==="S2C CONCLUSION DIRTY"'),'Remote IPC refresh merges without erasing conclusion draft');
+   await click('.intervention-conclusion-content [role=alert] button');
+  }finally{db.operations.getIntervention=originalInterventionGet;}
+  const originalUpdate=db.operations.updateIntervention.bind(db.operations);let rejectConclusion;
+  try{
+   db.operations.updateIntervention=()=>new Promise((_resolve,reject)=>{rejectConclusion=reject;});
+   await js("[...document.querySelectorAll('.intervention-conclusion-content button')].find(b=>b.textContent==='Enregistrer la conclusion').click()");await wait('!!document.querySelector(".intervention-conclusion-grid[disabled]")','pending conclusion');
+   const pendingCount=dialogs.length;await input('S2C HOMONYME ');await wait('!!document.querySelector(".search-result")','search while saving');await choose('catalog',catA.id);await wait('document.querySelector(".search-results-panel [role=alert]")','pending conclusion Stay');
+   test(dialogs.length===pendingCount+1&&dialogs.at(-1).buttons.join('|')==='Rester','Pending conclusion blocks discard and navigation');
+   rejectConclusion(Error('Injected conclusion save refusal'));await wait('!document.querySelector(".intervention-conclusion-grid[disabled]")','conclusion error');
+   test(await get('document.querySelector(".intervention-conclusion-grid textarea").value==="S2C CONCLUSION DIRTY"'),'Conclusion save error retains local text');
+  }finally{db.operations.updateIntervention=originalUpdate;}
+  answers.push(1);await choose('catalog',catA.id);await loaded('catalog',catA.id);
+  test(originalInterventionGet(intervention.id).incidentCause!=='S2C CONCLUSION DIRTY','Discarded conclusion never saved');
   await js('window.__timer02c=document.querySelector(".global-timer")');
   for(const theme of ['atoumweb','noir','blanc'])for(const density of ['compact','comfort','comfort_plus']){
    await js(`document.documentElement.dataset.theme=${JSON.stringify(theme)};document.documentElement.dataset.density=${JSON.stringify(density)}`);
    await search('S2C HOMONYME');win.focus();win.webContents.focus();
    await js('document.querySelector(".global-search input").focus()');
-   const keyboardIndex=await get('(()=>{const input=document.querySelector(".global-search input");return (Number(input.getAttribute("aria-activedescendant").split("-").at(-1))+1)%document.querySelectorAll(".search-result").length;})()');
+   win.webContents.sendInputEvent({type:'keyDown',keyCode:'Tab'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Tab'});
+   await wait('!document.activeElement.matches(".global-search input")&&!document.querySelector(".search-results-panel")','Tab leaves palette without selecting');
+   test(await get('document.querySelector(".global-search input").value==="S2C HOMONYME"'),theme+' '+density+' Tab keeps query and does not open a result');
+   win.webContents.sendInputEvent({type:'keyDown',keyCode:'Tab',modifiers:['shift']});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Tab',modifiers:['shift']});
+   await wait('document.activeElement.matches(".global-search input")&&!!document.querySelector(".search-results-panel")','Shift Tab restores palette focus');
+   test(await get('document.querySelector(".global-search input").value==="S2C HOMONYME"'),theme+' '+density+' Shift Tab restores query and accessible results');
+   const keyboardIndex=await get('(()=>{const input=document.querySelector(".global-search input");return (Number(input.getAttribute("aria-activedescendant")?.split("-").at(-1)??-1)+1)%document.querySelectorAll(".search-result").length;})()');
    const keyboardId=await get(`document.querySelectorAll('.search-result')[${keyboardIndex}].dataset.searchId`);
    win.webContents.sendInputEvent({type:'keyDown',keyCode:'Down'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Down'});
    await wait(`document.querySelector('.global-search input').getAttribute('aria-activedescendant')==='global-search-result-${keyboardIndex}'`,'keyboard active option');

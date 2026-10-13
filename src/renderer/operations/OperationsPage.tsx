@@ -1,4 +1,6 @@
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
+import {requestUnsavedExit,useUnsavedDraft} from '../unsaved/unsaved';
+import {useDraftSection} from '../unsaved/useDraftSection';
 import {InterventionEditor,InterventionExtraFields} from '../workflow/InterventionFields';
 import type {InterventionInput} from '../../shared/operations';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -141,6 +143,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
     if (!selectedRequest) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        if(!requestUnsavedExit(()=>{}))return;
         setSelectedRequest(null);
         setRequestExpanded(false);
       }
@@ -153,6 +156,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
     if (!selectedIntervention) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        if(!requestUnsavedExit(()=>{}))return;
         setSelectedIntervention(null);
         setInterventionExpanded(false);
       }
@@ -180,6 +184,10 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
   useEffect(() => {
     if (!initialTarget) return;
     let live=true;
+    if(initialTarget.entityType==='intervention'&&selectedIntervention?.id===initialTarget.entityId){
+      if(initialTarget.focus==='conclusion'){setConclusionInterventionId(selectedIntervention.id);setInterventionExpanded(true);}
+      return()=>{live=false;};
+    }
     setQuery('');
     setSelectedRequest(null);
     setSelectedIntervention(null);
@@ -401,10 +409,10 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
     </section>
     <OperationsAlertsPanel refreshKey={alertRefreshKey} onNavigate={(target) => setView(target)} onMessage={onMessage} />
     <div className="operations-view-tabs">
-      <button type="button" className={view === 'requests' ? 'active' : ''} onClick={() => setView('requests')}>Demandes <span>{requests.filter((item) => !['closed', 'converted', 'archived'].includes(item.status)).length}</span></button>
-      <button type="button" className={view === 'interventions' ? 'active' : ''} onClick={() => setView('interventions')}>Interventions <span>{interventions.filter((item) => !['completed', 'cancelled', 'archived'].includes(item.status)).length}</span></button>
-      <button type="button" className={view === 'maintenance' ? 'active' : ''} onClick={() => setView('maintenance')}>Maintenance</button>
-      <button type="button" className={view === 'packs' ? 'active' : ''} onClick={() => setView('packs')}>Packs d’heures</button>
+      <button type="button" className={view === 'requests' ? 'active' : ''} onClick={() => {if(view!=='requests')requestUnsavedExit(()=>setView('requests'));}}>Demandes <span>{requests.filter((item) => !['closed', 'converted', 'archived'].includes(item.status)).length}</span></button>
+      <button type="button" className={view === 'interventions' ? 'active' : ''} onClick={() => {if(view!=='interventions')requestUnsavedExit(()=>setView('interventions'));}}>Interventions <span>{interventions.filter((item) => !['completed', 'cancelled', 'archived'].includes(item.status)).length}</span></button>
+      <button type="button" className={view === 'maintenance' ? 'active' : ''} onClick={() => {if(view!=='maintenance')requestUnsavedExit(()=>setView('maintenance'));}}>Maintenance</button>
+      <button type="button" className={view === 'packs' ? 'active' : ''} onClick={() => {if(view!=='packs')requestUnsavedExit(()=>setView('packs'));}}>Packs d’heures</button>
     </div>
 
     {(view === 'requests' || view === 'interventions') && <div className="module-toolbar operations-toolbar"><div><strong>{view === 'requests' ? filteredRequests.length : filteredInterventions.length}</strong><span>{view === 'requests' ? ' demande(s)' : ' intervention(s)'}</span></div><div className="toolbar-controls"><button className="secondary-button" type="button" onClick={() => void refresh({ showLoading: false })}><OperationIcon name="refresh" size={16} /> Actualiser</button><input className="inline-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher client, sujet, numéro…" />{view === 'requests' ? <select value={requestStatus} onChange={(event) => setRequestStatus(event.target.value as typeof requestStatus)}><option value="all">Tous les statuts</option>{SERVICE_REQUEST_STATUSES.map((status) => <option key={status} value={status}>{REQUEST_STATUS_LABELS[status]}</option>)}</select> : <select value={interventionStatus} onChange={(event) => setInterventionStatus(event.target.value as typeof interventionStatus)}><option value="all">Tous les statuts</option>{INTERVENTION_STATUSES.map((status) => <option key={status} value={status}>{INTERVENTION_STATUS_LABELS[status]}</option>)}</select>}{view === 'requests' ? <button className="primary-button" type="button" onClick={() => setCreateRequestOpen((value) => !value)}>+ Nouvelle demande</button> : <button className="primary-button" type="button" onClick={() => setCreateInterventionOpen((value) => !value)}>+ Intervention</button>}</div></div>}
@@ -422,7 +430,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
               type="button"
               role="listitem"
               className={`request-compact-item ${selectedRequest.id === request.id ? 'selected' : ''}`}
-              onClick={() => { setSelectedRequest(request); setSelectedIntervention(null); }}
+              onClick={() => requestUnsavedExit(()=>{ setSelectedRequest(request); setSelectedIntervention(null); })}
             >
               <span className="request-compact-heading"><strong>{request.subject}</strong><span className={`operation-priority priority-${request.priority}`}>{PRIORITY_LABELS[request.priority]}</span></span>
               <span className="request-compact-client">{request.clientLabel}</span>
@@ -430,7 +438,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
               <span className="request-compact-date">{dateLabel(request.receivedAt)}</span>
             </button>)}
             {filteredRequests.length === 0 && <div className="empty-table">Aucune demande dans cette vue.</div>}
-          </div> : <table className="operations-table"><thead><tr><th>Reçue</th><th>Client</th><th>Sujet</th><th>Priorité</th><th>Statut</th></tr></thead><tbody>{filteredRequests.map((request) => <tr key={request.id} onClick={() => { setSelectedRequest(request); setSelectedIntervention(null); setRequestExpanded(false); }}><td>{dateLabel(request.receivedAt)}</td><td><strong>{request.clientLabel}</strong><small>{request.projectLabel || 'Sans projet'}</small></td><td><strong>{request.subject}</strong><small>{SOURCE_LABELS[request.source]}</small></td><td><span className={`operation-priority priority-${request.priority}`}>{PRIORITY_LABELS[request.priority]}</span></td><td>{REQUEST_STATUS_LABELS[request.status]}</td></tr>)}{filteredRequests.length === 0 && <tr><td colSpan={5}><div className="empty-table">Aucune demande dans cette vue.</div></td></tr>}</tbody></table>}
+          </div> : <table className="operations-table"><thead><tr><th>Reçue</th><th>Client</th><th>Sujet</th><th>Priorité</th><th>Statut</th></tr></thead><tbody>{filteredRequests.map((request) => <tr key={request.id} onClick={() => requestUnsavedExit(()=>{ setSelectedRequest(request); setSelectedIntervention(null); setRequestExpanded(false); })}><td>{dateLabel(request.receivedAt)}</td><td><strong>{request.clientLabel}</strong><small>{request.projectLabel || 'Sans projet'}</small></td><td><strong>{request.subject}</strong><small>{SOURCE_LABELS[request.source]}</small></td><td><span className={`operation-priority priority-${request.priority}`}>{PRIORITY_LABELS[request.priority]}</span></td><td>{REQUEST_STATUS_LABELS[request.status]}</td></tr>)}{filteredRequests.length === 0 && <tr><td colSpan={5}><div className="empty-table">Aucune demande dans cette vue.</div></td></tr>}</tbody></table>}
         </section>}
         {selectedRequest && !requestExpanded && <div
           className="operation-splitter"
@@ -480,7 +488,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
               type="button"
               role="listitem"
               className={`intervention-compact-item ${selectedIntervention.id === intervention.id ? 'selected' : ''}`}
-              onClick={() => { setSelectedIntervention(intervention); setSelectedRequest(null); }}
+              onClick={() => requestUnsavedExit(()=>{ setSelectedIntervention(intervention); setSelectedRequest(null); })}
             >
               <span className="intervention-compact-heading"><strong>{intervention.number}</strong><span className={`operation-status-chip status-${intervention.status}`}>{INTERVENTION_STATUS_LABELS[intervention.status]}</span></span>
               <span className="intervention-compact-subject">{intervention.subject}</span>
@@ -489,7 +497,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
               <span className="intervention-compact-coverage">{COVERAGE_LABELS[intervention.coverageMode]}</span>
             </button>)}
             {filteredInterventions.length === 0 && <div className="empty-table">Aucune intervention dans cette vue.</div>}
-          </div> : <table className="operations-table"><thead><tr><th>Numéro</th><th>Client</th><th>Intervention</th><th>Prise en charge</th><th>Temps</th><th>Statut</th></tr></thead><tbody>{filteredInterventions.map((intervention) => <tr key={intervention.id} onClick={() => { setSelectedIntervention(intervention); setSelectedRequest(null); setInterventionExpanded(false); }}><td><strong>{intervention.number}</strong></td><td><strong>{intervention.clientLabel}</strong><small>{intervention.projectLabel || 'Sans projet'}{intervention.projectNodeLabel ? ` · ${intervention.projectNodeLabel}` : ''}</small></td><td><strong>{intervention.subject}</strong><small>{INTERVENTION_TYPE_LABELS[intervention.type]}</small></td><td>{COVERAGE_LABELS[intervention.coverageMode]}</td><td>{duration(intervention.totalTimeSeconds)}</td><td><span className={`operation-status-chip status-${intervention.status}`}>{INTERVENTION_STATUS_LABELS[intervention.status]}</span></td></tr>)}{filteredInterventions.length === 0 && <tr><td colSpan={6}><div className="empty-table">Aucune intervention dans cette vue.</div></td></tr>}</tbody></table>}
+          </div> : <table className="operations-table"><thead><tr><th>Numéro</th><th>Client</th><th>Intervention</th><th>Prise en charge</th><th>Temps</th><th>Statut</th></tr></thead><tbody>{filteredInterventions.map((intervention) => <tr key={intervention.id} onClick={() => requestUnsavedExit(()=>{ setSelectedIntervention(intervention); setSelectedRequest(null); setInterventionExpanded(false); })}><td><strong>{intervention.number}</strong></td><td><strong>{intervention.clientLabel}</strong><small>{intervention.projectLabel || 'Sans projet'}{intervention.projectNodeLabel ? ` · ${intervention.projectNodeLabel}` : ''}</small></td><td><strong>{intervention.subject}</strong><small>{INTERVENTION_TYPE_LABELS[intervention.type]}</small></td><td>{COVERAGE_LABELS[intervention.coverageMode]}</td><td>{duration(intervention.totalTimeSeconds)}</td><td><span className={`operation-status-chip status-${intervention.status}`}>{INTERVENTION_STATUS_LABELS[intervention.status]}</span></td></tr>)}{filteredInterventions.length === 0 && <tr><td colSpan={6}><div className="empty-table">Aucune intervention dans cette vue.</div></td></tr>}</tbody></table>}
         </section>}
         {selectedIntervention && !interventionExpanded && <div
           className="operation-splitter"
@@ -509,7 +517,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
           intervention={selectedIntervention}
           expanded={interventionExpanded}
           onExpand={() => setInterventionExpanded((value) => !value)}
-          onClose={() => { setSelectedIntervention(null); setInterventionExpanded(false); }}
+          onClose={() => requestUnsavedExit(()=>{ setSelectedIntervention(null); setInterventionExpanded(false); })}
           onStatus={changeInterventionStatus}
           onCoverage={changeCoverage}
           onProjectNode={changeInterventionProjectNode}
@@ -630,39 +638,46 @@ function InterventionConclusionPanel({ intervention, forceOpen, onHandled, onSav
   onMessage: (message: string) => void;
 }) {
   const [open, setOpen] = useState(forceOpen);
-  const [cause, setCause] = useState(intervention.incidentCause ?? '');
-  const [diagnosis, setDiagnosis] = useState(intervention.incidentDiagnosis ?? '');
-  const [solution, setSolution] = useState(intervention.incidentSolution ?? '');
-  const [followUp, setFollowUp] = useState(intervention.incidentFollowUp ?? '');
+  const remote={cause:intervention.incidentCause??'',diagnosis:intervention.incidentDiagnosis??'',solution:intervention.incidentSolution??'',followUp:intervention.incidentFollowUp??''};
+  const draft=useDraftSection(intervention.id,remote);
+  const {cause,diagnosis,solution,followUp}=draft.value;
+  const setCause=(value:string)=>draft.section.set(current=>({...current,cause:value}));
+  const setDiagnosis=(value:string)=>draft.section.set(current=>({...current,diagnosis:value}));
+  const setSolution=(value:string)=>draft.section.set(current=>({...current,solution:value}));
+  const setFollowUp=(value:string)=>draft.section.set(current=>({...current,followUp:value}));
   const [busy, setBusy] = useState(false);
+  const panel=useRef<HTMLElement>(null),focusRequested=useRef(forceOpen);
+  useUnsavedDraft('Conclusion intervention',draft.value,{group:'intervention:'+intervention.id+':conclusion',dirty:draft.section.dirty,pending:busy,discard:()=>draft.section.discard()});
 
   useEffect(() => {
-    setCause(intervention.incidentCause ?? '');
-    setDiagnosis(intervention.incidentDiagnosis ?? '');
-    setSolution(intervention.incidentSolution ?? '');
-    setFollowUp(intervention.incidentFollowUp ?? '');
+    draft.section.receive(remote);
   }, [intervention.id, intervention.incidentCause, intervention.incidentDiagnosis, intervention.incidentSolution, intervention.incidentFollowUp]);
 
   useEffect(() => {
     if (!forceOpen) return;
+    focusRequested.current=true;
     setOpen(true);
     onHandled();
   }, [forceOpen, intervention.id]);
+  useEffect(()=>{if(open&&focusRequested.current){focusRequested.current=false;panel.current?.querySelector<HTMLTextAreaElement>('textarea')?.focus();}},[open,forceOpen,intervention.id]);
 
   async function save(finalize: boolean): Promise<void> {
+    if(draft.conflicts.length){onMessage('Vérifiez le conflit de conclusion avant de l’enregistrer.');return;}
     if (finalize && !solution.trim()) {
       onMessage('Renseigne au minimum la solution apportée avant de clôturer l’incident.');
       return;
     }
     setBusy(true);
+    const submitted=draft.value;
     try {
-      await window.atoumweb.operations.interventions.update(intervention.id, {
+      const updated=await window.atoumweb.operations.interventions.update(intervention.id, {
         incidentResolvedAt: intervention.incidentResolvedAt ?? new Date().toISOString(),
         incidentCause: cause.trim() || null,
         incidentDiagnosis: diagnosis.trim() || null,
         incidentSolution: solution.trim() || null,
         incidentFollowUp: followUp.trim() || null,
       });
+      draft.section.receive({cause:updated.incidentCause??'',diagnosis:updated.incidentDiagnosis??'',solution:updated.incidentSolution??'',followUp:updated.incidentFollowUp??''},{value:submitted});
       onSaved();
       if (finalize) {
         await onComplete();
@@ -678,18 +693,19 @@ function InterventionConclusionPanel({ intervention, forceOpen, onHandled, onSav
     }
   }
 
-  return <section className={`intervention-conclusion-panel ${open ? 'open' : ''}`}>
+  return <section ref={panel} className={`intervention-conclusion-panel ${open ? 'open' : ''}`}>
     <button className="intervention-conclusion-toggle" type="button" onClick={() => setOpen((value) => !value)}>
       <span><span className="eyebrow">Fin d’incident</span><strong>Conclusion & rapport de fin</strong><small>{intervention.incidentResolvedAt ? `Résolution : ${dateLabel(intervention.incidentResolvedAt)}` : 'À compléter avant clôture'}</small></span>
       <span aria-hidden="true">{open ? '−' : '+'}</span>
     </button>
     {open && <div className="intervention-conclusion-content">
-      <div className="intervention-conclusion-grid">
+      {draft.conflicts.length>0&&<div role="alert">La conclusion a changé ailleurs. Votre saisie est conservée ; vérifiez les champs en conflit avant de poursuivre. <button type="button" disabled={busy} onClick={()=>draft.section.receive(draft.baseline,{value:draft.baseline})}>Conserver ma saisie après vérification</button></div>}
+      <fieldset disabled={busy} className="intervention-conclusion-grid">
         <label>Cause constatée<textarea value={cause} onChange={(event) => setCause(event.target.value)} placeholder="Origine du défaut ou cause probable…" /></label>
         <label>Diagnostic<textarea value={diagnosis} onChange={(event) => setDiagnosis(event.target.value)} placeholder="Constats, contrôles et diagnostic…" /></label>
         <label>Solution apportée <span className="required-mark">*</span><textarea value={solution} onChange={(event) => setSolution(event.target.value)} placeholder="Correction réalisée et résultat obtenu…" /></label>
         <label>Suivi / recommandation<textarea value={followUp} onChange={(event) => setFollowUp(event.target.value)} placeholder="Surveillance, action future ou recommandation…" /></label>
-      </div>
+      </fieldset>
       <div className="intervention-final-report-preview">
         <div><span className="eyebrow">Rapport de fin</span><strong>{intervention.number} · {intervention.subject}</strong></div>
         <div className="intervention-final-report-stats">
