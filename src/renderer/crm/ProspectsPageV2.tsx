@@ -514,7 +514,7 @@ export function ProspectsPage({ onMessage, initialId, initialView = 'directory',
     <div className="prospect-view-switch" role="tablist">
       <button className={view === 'directory' ? 'active' : ''} onClick={() => setView('directory')}>Annuaire prospects <span>{directory.length}</span></button>
       <button className={view === 'pipeline' ? 'active' : ''} onClick={() => { setView('pipeline'); setPipelineFilter('all'); }}>Parcours commercial <span>{pipelineActive.length}</span></button>
-      <button className={view === 'history' ? 'active' : ''} onClick={() => setView('history')}>Historique <span>{closed.length}</span></button>
+      <button className={view === 'history' || view === 'conversions' ? 'active' : ''} onClick={() => setView('history')}>Historique <span>{closed.length}</span></button>
     </div>
 
     {view === 'directory' && <>
