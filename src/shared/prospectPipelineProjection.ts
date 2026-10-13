@@ -42,3 +42,11 @@ export function projectPipeline<T extends PipelineProspectProjection>(prospects:
   const conversions = prospects.filter(isHistoricalConversion);
   return { columns, conversions };
 }
+
+/** Libellé historique basé sur le lien Client réel, sans assimiler l'archivage à une vente. */
+export function historyOutcome(prospect: PipelineProspectProjection): { label: string; kind: 'converted' | 'lost' | 'won' | 'archived' } {
+  if (prospect.clientAccountId) return { label: 'Converti en client', kind: 'converted' };
+  if (prospect.stage === 'lost') return { label: 'Perdu', kind: 'lost' };
+  if (prospect.stage === 'won') return { label: 'Gagné (sans compte client)', kind: 'won' };
+  return { label: 'Archivé', kind: 'archived' };
+}
