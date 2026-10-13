@@ -3,7 +3,7 @@ import type { CatalogItemSummary } from './commercial';
 import type { Need } from './workflow';
 import { planProspectQuoteLines } from './prospectPreQuotePlan';
 
-const catalogItem = (id: string, priceCents: number | null, priceMode: 'fixed' | 'quote' | 'free' = 'fixed'): CatalogItemSummary =>
+const catalogItem = (id: string, priceCents: number | null, priceMode: 'fixed' | 'quote_only' | 'free' = 'fixed'): CatalogItemSummary =>
   ({
     id, name: id, status: 'active', type: 'service', visiblePublic: false,
     createdAt: '2026-10-13', updatedAt: '2026-10-13',
@@ -31,7 +31,7 @@ describe('03C — plan des lignes du pré-devis', () => {
   it('préserve la version catalogue, les prix à renseigner et le besoin libre', () => {
     const result = planProspectQuoteLines([
       need('offer','quoted'),need('custom',null,'  Retouches photo  '),need('free','gift'),
-    ], [catalogItem('quoted',null,'quote'),catalogItem('gift',null,'free')]);
+    ], [catalogItem('quoted',null,'quote_only'),catalogItem('gift',null,'free')]);
     expect(result.lines).toHaveLength(3);
     expect(result.lines[0]).toEqual({ catalogVersionId:'quoted-version',input:{label:'quoted',proposedUnitPriceCents:0} });
     expect(result.lines[1]).toEqual({ input:{label:'Retouches photo',catalogUnitPriceCents:0,proposedUnitPriceCents:0} });
