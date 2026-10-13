@@ -294,6 +294,38 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
     test(prospectStage(needProspect.id).projectSummary==='Création de site pour commerce local',
       'R03C-16: autre champ de qualification préservé après recharge');
 
+    // 03C — projet/budget/calendrier : une seconde fenêtre enregistre après
+    // le chargement de cette fiche. Le formulaire doit refuser l'ancien état.
+    const beforeBrief = prospectStage(needProspect.id);
+    const snapshotBrief = {
+      projectSummary:beforeBrief.projectSummary??null,projectContext:beforeBrief.projectContext??null,
+      budgetStatus:beforeBrief.budgetStatus??null,budgetMinCents:beforeBrief.budgetMinCents??null,
+      budgetMaxCents:beforeBrief.budgetMaxCents??null,timelineStatus:beforeBrief.timelineStatus??null,
+      targetDate:beforeBrief.targetDate??null,timelineNote:beforeBrief.timelineNote??null,
+      existingStatus:beforeBrief.existingStatus??null,existingUrl:beforeBrief.existingUrl??null,
+      existingNotes:beforeBrief.existingNotes??null,
+    };
+    const concurrentBrief={...snapshotBrief,projectSummary:'Projet confirmé dans la seconde fenêtre',
+      budgetStatus:'known',budgetMinCents:75000,budgetMaxCents:75000};
+    db.crm.updateProspectProjectBriefIfUnchanged(needProspect.id,snapshotBrief,concurrentBrief);
+    await js('const area=document.querySelector(".prospect-desk-overlay .need-identification-fields textarea");'+
+      'if(!area)throw Error("Projet textarea absent");'+
+      'Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value").set.call(area,"Projet local non enregistré");'+
+      'area.dispatchEvent(new Event("input",{bubbles:true}));');
+    await clickText('.need-identification-fields button.primary-button','Enregistrer l’identification du besoin');
+    await wait('[...document.querySelectorAll(".prospect-desk-overlay .prospect-checklist-conflict")].some(e=>e.textContent.includes("le projet, le budget"))',
+      'bandeau de conflit Projet/ Budget visible');
+    test(prospectStage(needProspect.id).projectSummary==='Projet confirmé dans la seconde fenêtre'&&
+      prospectStage(needProspect.id).budgetMinCents===75000,
+      'R03C-16: sauvegarde obsolète ne remplace ni projet ni budget');
+    await clickText('.prospect-checklist-conflict button','Recharger uniquement le projet');
+    await wait('![...document.querySelectorAll(".prospect-desk-overlay .prospect-checklist-conflict")].some(e=>e.textContent.includes("le projet, le budget"))',
+      'rechargement explicite du projet terminé');
+    test(await get('document.querySelector(".prospect-desk-overlay .need-identification-fields textarea")?.value==="Projet confirmé dans la seconde fenêtre"'),
+      'R03C-16: formulaire synchronisé avec le projet réellement persisté');
+    test(prospectStage(needProspect.id).missingInformation===concurrentChecklist,
+      'R03C-16: la recharge du projet ne modifie pas la checklist');
+
     await clickText('.prequote-entry button','Contrôler avant devis');
     await wait('!!document.querySelector(".prequote-actions button.primary-button")',
       'contrôle pré-devis ouvert');
