@@ -46,3 +46,14 @@ Ce document constate le code publié et ses réserves. **Il ne vaut pas recette 
 5. **Recette visuelle humaine non réalisée** conformément à la demande expresse. Les données réelles Validation-MSI n'ont pas été ouvertes.
 
 **Conclusion :** périmètre fonctionnel du 04C codé et publié en draft, **réception technique finale en attente**, aucune fusion autorisée.
+
+
+## Dernier complément de réalisation (04C, même PR)
+
+- Les changements actif/inactif/archivé utilisent un **choix provisoire** puis un bouton « Confirmer le statut ». Aucun appel de modification avant confirmation ; Annuler ramène la valeur réellement enregistrée.
+- Les composants d'une Offre ne sont pas modifiables lorsque le formulaire de version est en cours, pour éviter une modification de composition malgré une autre saisie non sauvegardée.
+- La navigation tablist gère aussi **Flèche gauche**, **Flèche droite**, **Home**, **End** et conserve le focus de l'onglet courant, avec confirmation UX-01 si l'on quitte des rattachements contractuels sales.
+- `catalogEditorTabs.test.ts` et `scripts/check-catalog-identity-ui.cjs` contiennent désormais des scénarios pour la segmentation en huit onglets, le focus/clavier, les données persistantes en changeant d'onglet, et le cycle d'annulation/confirmation de statut. La fonction `CatalogProductionPanel` est en consultation stricte et ne configure pas de blueprint.
+- Les textes d'aide à la vente non configurés sont clairement annoncés comme tels plutôt que remplis avec des données fictives.
+
+**Résultat de contrôle externe :** CI [#985](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38570317448), sur le SHA `25baf1403fb123b932cbd619c7f3c6a9e4c8247e`, **failure sans aucune étape d'exécution (`steps=null`)**. Il ne s'agit pas d'un résultat négatif sur TypeScript ou Vitest, mais **il ne constitue pas une preuve de réussite**. Ce SHA reste en attente de vrais tests automatiques et de contrôle de convergence. Pas de revue visuelle humaine.
