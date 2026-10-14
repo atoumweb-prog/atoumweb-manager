@@ -1,5 +1,7 @@
+import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
+import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { CatalogContractPanel } from './CatalogContractPanel';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   PRICE_MODES,
   CATALOG_COMMERCIAL_KINDS,
@@ -133,7 +135,7 @@ function formatCatalogDate(value?: string | null): string {
   return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('fr-FR');
 }
 
-export function CatalogPage({ onMessage, initialId }: { onMessage: (message: string) => void; initialId?:string|null }) {
+export function CatalogPage({ onEntityReady, onMessage, initialId, initialRequest }: { onMessage: (message: string) => void; initialId?:string|null;initialRequest?:number;onEntityReady?:EntityReady }) {
   const [items, setItems] = useState<CatalogItemSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
@@ -155,44 +157,61 @@ export function CatalogPage({ onMessage, initialId }: { onMessage: (message: str
   const [componentQuantity, setComponentQuantity] = useState('1');
   const [componentOptional, setComponentOptional] = useState(false);
   const [canonicalCodeDraft, setCanonicalCodeDraft] = useState('');
+  const detailEpoch=useRef(0),listEpoch=useRef(0),mounted=useRef(true),selectedRef=useRef(selectedId),detailRef=useRef(detail);
+  selectedRef.current=selectedId;detailRef.current=detail;
+  const [detailLoading,setDetailLoading]=useState(false);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;detailEpoch.current++;listEpoch.current++;};},[]);
+  useSearchTargetConfirmation('catalog',showForm?null:detail?.id,loading||detailLoading,onEntityReady);
+  const createGuard=useUnsavedDraft('Nouvelle prestation',draft,{group:'catalog:create',ready:showForm,pending:saving,discard:baseline=>{setDraft(baseline);setShowForm(false);}});
+  const versionGuard=useUnsavedDraft('Version Catalogue',versionDraft,{group:'catalog:'+detail?.id,ready:versionMode,pending:saving,resetKey:detail?.id+':'+versionMode,discard:baseline=>{setVersionDraft(baseline);setVersionMode(false);}});
+  const identityGuard=useUnsavedDraft('Code Catalogue',canonicalCodeDraft,{group:'catalog:'+detail?.id,ready:!!detail,pending:saving,resetKey:detail?.id,discard:setCanonicalCodeDraft});
+
 
   const publishedServices = useMemo(
     () => items.filter((item) => item.type === 'service' && item.status === 'active' && item.currentVersion?.status === 'published'),
     [items],
   );
 
-  async function loadDetail(id: string): Promise<CatalogItemDetail> {
-    const nextDetail = await window.atoumweb.catalog.getItem(id);
-    setDetail(nextDetail);
-    setCanonicalCodeDraft(nextDetail.canonicalCode ?? '');
-    if (nextDetail.type === 'offer') {
-      const target = nextDetail.versions.find((version) => version.status === 'draft') ?? nextDetail.currentVersion ?? null;
-      setOfferVersionId(target?.id ?? null);
-      setOfferComponents(target ? await window.atoumweb.catalog.listOfferComponents(target.id) : []);
-    } else {
-      setOfferVersionId(null);
-      setOfferComponents([]);
-    }
-    return nextDetail;
+  async function loadDetail(id:string):Promise<CatalogItemDetail|null>{
+    const epoch=++detailEpoch.current;setDetailLoading(true);
+    try {
+      const next=await window.atoumweb.catalog.getItem(id);
+      if(next.id!==id)throw Error('La fiche reçue ne correspond pas à la demande.');
+      const version=next.type==='offer'?(next.versions.find(item=>item.status==='draft')??next.currentVersion??null):null;
+      const components=version?await window.atoumweb.catalog.listOfferComponents(version.id):[];
+      if(!mounted.current||epoch!==detailEpoch.current)return next;
+      if(detailRef.current?.id!==id||!identityGuard.dirty)setCanonicalCodeDraft(next.canonicalCode??'');
+      setDetail(next);setOfferVersionId(version?.id??null);setOfferComponents(components);return next;
+    }catch(error){if(!mounted.current||epoch!==detailEpoch.current)return null;setSelectedId(detailRef.current?.id??null);onEntityReady?.('catalog',id,error instanceof Error?error.message:'Prestation introuvable.');throw error;}
+    finally{if(mounted.current&&epoch===detailEpoch.current)setDetailLoading(false);}
   }
 
   async function refresh(): Promise<void> {
+    const epoch=++listEpoch.current,selectedAtStart=selectedId;
     setLoading(true);
     try {
       const next = await window.atoumweb.catalog.list();
+      if(!mounted.current||epoch!==listEpoch.current)return;
       setItems(next);
-      if (selectedId) {
-        const selected = next.find((item) => item.id === selectedId);
+      if (selectedAtStart && selectedRef.current===selectedAtStart) {
+        const selected = next.find((item) => item.id === selectedAtStart);
         if (selected) await loadDetail(selected.id);
-        else { setSelectedId(null); setDetail(null); }
+        else if(!identityGuard.dirty&&!versionGuard.dirty&&!saving){setSelectedId(null);setDetail(null);}
+        else onMessage('La prestation n’est plus disponible ; la saisie locale est conservée.');
       }
+    }catch(error){if(mounted.current&&epoch===listEpoch.current)onMessage(error instanceof Error?error.message:'Catalogue indisponible.');
     } finally {
-      setLoading(false);
+      if(mounted.current&&epoch===listEpoch.current)setLoading(false);
     }
   }
 
   useEffect(() => { void refresh(); }, []);
-  useEffect(()=>{if(initialId){setSelectedId(initialId);void loadDetail(initialId).catch(e=>onMessage(String(e)));}},[initialId]);
+  useEffect(()=>{
+    if(!initialId)return;
+    setSelectedId(initialId);
+    if(detailRef.current?.id===initialId){detailEpoch.current++;setDetailLoading(false);onEntityReady?.('catalog',initialId);return;}
+    setVersionMode(false);void loadDetail(initialId).catch(e=>onMessage(String(e)));
+  },[initialId,initialRequest]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase('fr-FR');
@@ -228,6 +247,8 @@ export function CatalogPage({ onMessage, initialId }: { onMessage: (message: str
   }, [items, query, typeFilter, statusFilter]);
 
   async function openItem(id: string): Promise<void> {
+    if(detailRef.current?.id===id){detailEpoch.current++;setSelectedId(id);setDetailLoading(false);return;}
+    if(!requestUnsavedExit(()=>{}))return;
     setSelectedId(id);
     setVersionMode(false);
     setDetailExpanded(false);
@@ -235,6 +256,10 @@ export function CatalogPage({ onMessage, initialId }: { onMessage: (message: str
   }
 
   function closeDetail(): void {
+    requestUnsavedExit(closeDetailDirect);
+  }
+  function closeDetailDirect(): void {
+    detailEpoch.current++;
     setSelectedId(null);
     setDetail(null);
     setVersionMode(false);
@@ -306,9 +331,10 @@ export function CatalogPage({ onMessage, initialId }: { onMessage: (message: str
         buildVersion(draft),
       );
       setDraft(EMPTY_DRAFT);
+      createGuard.saved(EMPTY_DRAFT);
       setShowForm(false);
       await refresh();
-      await openItem(created.id);
+      setSelectedId(created.id);setVersionMode(false);await loadDetail(created.id);
       onMessage(`${created.type === 'offer' ? 'Offre' : 'Service'} créé en brouillon.`);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Création impossible.');
@@ -359,6 +385,7 @@ export function CatalogPage({ onMessage, initialId }: { onMessage: (message: str
     setSaving(true);
     try {
       const version = await window.atoumweb.catalog.createVersion(detail.id, buildVersion(versionDraft));
+      versionGuard.saved(versionDraft);
       setVersionMode(false);
       await refresh();
       await openItem(detail.id);
@@ -473,14 +500,14 @@ export function CatalogPage({ onMessage, initialId }: { onMessage: (message: str
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | CatalogItemStatus)}>
             <option value="all">Tous les statuts</option><option value="active">Actifs</option><option value="inactive">Inactifs</option><option value="archived">Archivés</option>
           </select>
-          <button className="primary-button" type="button" onClick={() => setShowForm((value) => !value)}>{showForm ? 'Fermer' : '+ Service / Offre'}</button>
+          <button className="primary-button" type="button" onClick={() => showForm?createGuard.request(()=>setShowForm(false)):setShowForm(true)}>{showForm ? 'Fermer' : '+ Service / Offre'}</button>
         </div>
       </div>
 
       {showForm && (
         <form className="panel catalog-form" onSubmit={(event) => void createItem(event)}>
           <div className="panel-title"><div><span className="eyebrow">Catalogue</span><h2>Créer un Service ou une Offre</h2><p className="muted">La première version est créée en brouillon. Tu la publies après vérification.</p></div></div>
-          <CatalogFields draft={draft} onChange={setDraft} showIdentity />
+          <fieldset disabled={saving}><CatalogFields draft={draft} onChange={setDraft} showIdentity /></fieldset>
           {formError && <p className="form-error">{formError}</p>}
           <div className="form-actions"><button className="primary-button" disabled={saving} type="submit">{saving ? 'Création…' : 'Créer le brouillon'}</button></div>
         </form>
@@ -551,7 +578,7 @@ export function CatalogPage({ onMessage, initialId }: { onMessage: (message: str
           ><span /></div>}
 
           {detail && (
-            <aside className={`panel catalog-detail-panel ${detailExpanded ? 'expanded' : ''}`}>
+            <aside tabIndex={-1} data-search-entity-type="catalog" data-search-entity-id={detail.id} className={`panel catalog-detail-panel ${detailExpanded ? 'expanded' : ''}`}>
               <div className="detail-panel-heading">
                 <div><span className="eyebrow">{detail.type === 'offer' ? 'Offre' : 'Service'}</span><h2>{detail.name}</h2><p className="muted">{detail.category || 'Sans catégorie'}</p></div>
                 <div className="catalog-detail-heading-actions">
@@ -623,7 +650,7 @@ export function CatalogPage({ onMessage, initialId }: { onMessage: (message: str
               <div className="catalog-detail-actions"><button className="secondary-button" type="button" onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select value={detail.status} onChange={(e) => void updateStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion} onClick={prepareNewVersion}>Modifier via une nouvelle version</button></div>
 
               <CatalogContractPanel key={detail.id+detail.versions.length} item={detail}/>
-              {versionMode && <form className="catalog-version-editor" onSubmit={(event) => void createVersion(event)}><strong>Nouvelle version</strong><CatalogFields draft={versionDraft} onChange={setVersionDraft} /><div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => setVersionMode(false)}>Annuler</button><button className="primary-button" disabled={saving} type="submit">Créer v{(detail.versions[0]?.versionNumber ?? 0) + 1}</button></div></form>}
+              {versionMode && <form className="catalog-version-editor" onSubmit={(event) => void createVersion(event)}><strong>Nouvelle version</strong><fieldset disabled={saving}><CatalogFields draft={versionDraft} onChange={setVersionDraft} /></fieldset><div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => versionGuard.request(()=>setVersionMode(false))}>Annuler</button><button className="primary-button" disabled={saving} type="submit">Créer v{(detail.versions[0]?.versionNumber ?? 0) + 1}</button></div></form>}
 
               {detail.type === 'offer' && offerCompositionVersion && (
                 <section className="offer-composition">

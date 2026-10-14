@@ -51,6 +51,8 @@ import type {
   OrganizationInput,
   ProspectFilters,
   ProspectInput,
+  ProspectProjectBrief,
+  ProspectQualificationBrief,
   ProspectResearchSnapshotInput,
   ProspectStage,
   SearchResult,
@@ -240,6 +242,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('crm:contacts:list', (_event, includeArchived?: boolean) => database.crm.listDirectoryContacts(includeArchived));
   ipcMain.handle('crm:contacts:get', (_event, id: string) => database.crm.getDirectoryContact(id));
   ipcMain.handle('crm:contacts:create', (_event, input: ContactInput) => database.crm.createContact(input));
+  ipcMain.handle('crm:contacts:create-and-attach-primary-prospect', (_event, prospectId: string, input: ContactInput) => database.crm.createAndAttachPrimaryProspectContact(prospectId, input));
+  ipcMain.handle('crm:contacts:create-and-attach-decision-prospect', (_event, prospectId: string, input: ContactInput) => database.crm.createAndAttachDecisionProspectContact(prospectId, input));
   ipcMain.handle('crm:contacts:update', (_event, id: string, input: ContactInput) => database.crm.updateContact(id, input));
   ipcMain.handle('crm:contact-methods:list',(_event,owner:'organization'|'contact',id:string,includeArchived?:boolean)=>database.crm.listContactMethods(owner,id,includeArchived));
   ipcMain.handle('crm:contact-methods:save',(_event,input:ContactMethodInput,id?:string)=>database.crm.saveContactMethod(input,id));
@@ -266,6 +270,9 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     }
     return database.crm.updateProspectQualification(id,input);
   });
+  ipcMain.handle('crm:prospects:update-missing-information-if-unchanged', (_event, id: string, expected: string | null, next: string | null) => database.crm.updateProspectMissingInformationIfUnchanged(id, expected, next));
+  ipcMain.handle('crm:prospects:update-project-brief-if-unchanged', (_event, id: string, expected: ProspectProjectBrief, next: ProspectProjectBrief) => database.crm.updateProspectProjectBriefIfUnchanged(id, expected, next));
+  ipcMain.handle('crm:prospects:update-qualification-brief-if-unchanged', (_event, id: string, expected: ProspectQualificationBrief, next: ProspectQualificationBrief) => database.crm.updateProspectQualificationBriefIfUnchanged(id, expected, next));
   ipcMain.handle('crm:prospects:change-stage', (_event, id: string, stage: ProspectStage, lostReason?: string | null, allowIncompleteQualification?: boolean) => database.crm.changeProspectStage(id, stage, lostReason, Boolean(allowIncompleteQualification)));
   ipcMain.handle('crm:prospects:set-next-action', (_event, id: string, at: string | null, text: string | null) => database.crm.setProspectNextAction(id, at, text));
   ipcMain.handle('crm:prospects:convert-to-client', (_event, id: string) => database.crm.convertProspectToClient(id));
@@ -475,6 +482,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('quotes:remove-line', (_event, lineId: string) => database.quotes.removeLine(lineId));
   ipcMain.handle('quotes:update-conditions', (_event, quoteId: string, input: Partial<QuoteInput>) => database.quotes.updateConditions(quoteId, input));
   ipcMain.handle('quotes:mark-sent', (_event, id: string) => database.quotes.markSent(id));
+  ipcMain.handle('quotes:principle-agreement:confirm', (_event, id: string) => database.quotes.confirmPrincipleAgreement(id));
+  ipcMain.handle('quotes:principle-agreement:revoke', (_event, id: string) => database.quotes.revokePrincipleAgreement(id));
   ipcMain.handle('quotes:finalize',(_event,id:string)=>database.quotes.finalize(id));
   ipcMain.handle('quotes:extend-validity',(_event,id:string,validUntil:string)=>database.quotes.extendValidity(id,validUntil));
   ipcMain.handle('quotes:mark-viewed', (_event, id: string) => database.quotes.markViewed(id));

@@ -27,6 +27,8 @@ import {
   type ProspectFilters,
   type ProspectInput,
   type ProspectOrigin,
+  type ProspectProjectBrief,
+  type ProspectQualificationBrief,
   type ProspectResearchSnapshot,
   type ProspectResearchSnapshotInput,
   type ProspectResearchStructuredCheck,
@@ -377,6 +379,77 @@ export class CrmService {
     return this.getContact(id);
   }
 
+  /**
+   * 03C : crée l'interlocuteur principal et rattache le Prospect dans une
+   * seule transaction SQLite. Une interruption entre les deux opérations
+   * ne laisse ni contact orphelin ni entrée d'activité fantôme.
+   *
+   * Le replay d'un IPC dont la réponse a été perdue réutilise le contact
+   * déjà rattaché, sans modifier un contact créé simultanément ailleurs.
+   */
+  createAndAttachPrimaryProspectContact(prospectId: string, input: ContactInput): Contact {
+    return this.transaction(() => {
+      const prospect = this.getProspect(prospectId);
+      if (prospect.archivedAt || prospect.clientAccountId) {
+        throw new Error('Impossible de créer un interlocuteur sur un Prospect archivé ou converti.');
+      }
+      if (input.organizationId && input.organizationId !== prospect.organizationId) {
+        throw new Error('Le contact doit appartenir à la même organisation que le Prospect.');
+      }
+      if (prospect.contactId) return this.getContact(prospect.contactId);
+
+      const contact = this.createContact({ ...input, organizationId: prospect.organizationId ?? null });
+      const result = this.database.run(
+        'UPDATE prospects SET contact_id=?, updated_at=? WHERE id=? AND contact_id IS NULL AND archived_at IS NULL AND client_account_id IS NULL',
+        [contact.id, nowIso(), prospectId],
+      );
+      if (Number(result.changes) !== 1) {
+        throw new Error('Le rattachement du contact a été modifié pendant la création. Réouvre la fiche Prospect.');
+      }
+      this.activity({
+        entityType: 'prospect', entityId: prospectId, action: 'primary_contact_attached',
+        summary: 'Interlocuteur principal créé et rattaché',
+        prospectId, organizationId: prospect.organizationId, contactId: contact.id,
+      });
+      this.indexProspect(prospectId);
+      return contact;
+    });
+  }
+
+  /**
+   * Même garde transactionnelle pour le décisionnaire distinct. Le lien
+   * durable est créé avec le Contact, avant de synchroniser les coordonnées
+   * et les informations de qualification côté interface.
+   */
+  createAndAttachDecisionProspectContact(prospectId: string, input: ContactInput): Contact {
+    return this.transaction(() => {
+      const prospect = this.getProspect(prospectId);
+      if (prospect.archivedAt || prospect.clientAccountId) {
+        throw new Error('Impossible de créer un décisionnaire sur un Prospect archivé ou converti.');
+      }
+      if (input.organizationId && input.organizationId !== prospect.organizationId) {
+        throw new Error('Le décisionnaire doit appartenir à la même organisation que le Prospect.');
+      }
+      if (prospect.decisionMakerContactId) return this.getContact(prospect.decisionMakerContactId);
+
+      const contact = this.createContact({ ...input, organizationId: prospect.organizationId ?? null });
+      const result = this.database.run(
+        'UPDATE prospects SET decision_maker_contact_id=?, decision_status=\'no\', updated_at=? WHERE id=? AND decision_maker_contact_id IS NULL AND archived_at IS NULL AND client_account_id IS NULL',
+        [contact.id, nowIso(), prospectId],
+      );
+      if (Number(result.changes) !== 1) {
+        throw new Error('Le rattachement du décisionnaire a été modifié. Réouvre la fiche Prospect.');
+      }
+      this.activity({
+        entityType: 'prospect', entityId: prospectId, action: 'decision_contact_attached',
+        summary: 'Décisionnaire créé et rattaché',
+        prospectId, organizationId: prospect.organizationId, contactId: contact.id,
+      });
+      this.indexProspect(prospectId);
+      return contact;
+    });
+  }
+
   updateContact(id: string, input: ContactInput): Contact {
     const firstName = clean(input.firstName);
     const lastName = clean(input.lastName);
@@ -585,6 +658,140 @@ export class CrmService {
       clean(pick('waitingResumeAt') as string|null|undefined),clean(pick('lostReasonCode') as string|null|undefined),nowIso(),id]);
     this.activity({entityType:'prospect',entityId:id,action:'qualification_updated',summary:'Qualification commerciale mise à jour',prospectId:id});
     this.indexProspect(id); return this.getProspect(id);
+  }
+
+  /**
+   * Qualification 03C : l'UPDATE teste les dix valeurs du panneau avant
+   * d'écrire. Une modification de résumé/contexte dans Besoins est également
+   * détectée ; budget, checklist et décisionnaire ne sont pas écrasés.
+   */
+  updateProspectQualificationBriefIfUnchanged(
+    id: string, expected: ProspectQualificationBrief, next: ProspectQualificationBrief,
+  ): ProspectSummary {
+    const current = this.getProspect(id);
+    if (current.archivedAt || current.clientAccountId) {
+      throw new Error('Qualification en lecture seule sur un Prospect archivé ou converti.');
+    }
+    if (!expected || !next) throw new Error('Instantanés de qualification requis.');
+    if (next.originType && !PROSPECT_ORIGINS.includes(next.originType)) {
+      throw new Error('Origine du Prospect invalide.');
+    }
+    if (next.interestLevel && !PROSPECT_INTEREST_LEVELS.includes(next.interestLevel)) {
+      throw new Error('Niveau d’intérêt invalide.');
+    }
+    const cols = [
+      'origin_type', 'targeting_reason_code', 'targeting_reason_text',
+      'initial_observation', 'detected_opportunity', 'first_contact_result_code',
+      'first_contact_result_text', 'interest_level', 'project_summary', 'project_context',
+    ] as const;
+    const values = (brief: ProspectQualificationBrief): SqlValue[] => [
+      brief.originType ?? null,
+      clean(brief.targetingReasonCode), clean(brief.targetingReasonText),
+      clean(brief.initialObservation), clean(brief.detectedOpportunity),
+      clean(brief.firstContactResultCode), clean(brief.firstContactResultText),
+      brief.interestLevel ?? null, clean(brief.projectSummary), clean(brief.projectContext),
+    ];
+    const result = this.database.run(
+      `UPDATE prospects SET ${cols.map(col => `${col}=?`).join(', ')}, updated_at=?
+       WHERE id=? AND archived_at IS NULL AND client_account_id IS NULL
+         AND ${cols.map(col => `${col} IS ?`).join(' AND ')}`,
+      [...values(next), nowIso(), id, ...values(expected)],
+    );
+    if (Number(result.changes) !== 1) {
+      throw new Error('Conflit : la qualification ou le contexte du projet a changé dans une autre fenêtre. Vérifie les informations enregistrées.');
+    }
+    this.activity({
+      entityType: 'prospect', entityId: id, action: 'qualification_updated',
+      summary: 'Qualification commerciale mise à jour', prospectId: id,
+    });
+    this.indexProspect(id);
+    return this.getProspect(id);
+  }
+
+  /**
+   * 03C — écriture optimiste de la checklist. Comparer la colonne concernée
+   * (et non updated_at, également modifié par les autres sections métier)
+   * permet de conserver une qualification parallèle sans perdre ses points.
+   * SQLite effectue test et écriture en une seule instruction : deux fenêtres
+   * ne peuvent pas écraser silencieusement le même instantané.
+   */
+  updateProspectMissingInformationIfUnchanged(
+    id: string, expected: string | null, next: string | null,
+  ): ProspectSummary {
+    const current = this.getProspect(id);
+    if (current.archivedAt || current.clientAccountId) {
+      throw new Error('Checklist en lecture seule sur un Prospect archivé ou converti.');
+    }
+    const result = this.database.run(
+      'UPDATE prospects SET missing_information=?, updated_at=? WHERE id=? AND archived_at IS NULL AND client_account_id IS NULL AND missing_information IS ?',
+      [clean(next), nowIso(), id, clean(expected)],
+    );
+    if (Number(result.changes) !== 1) {
+      throw new Error('Conflit : la checklist de ce Prospect a changé dans une autre fenêtre. Vérifie les informations enregistrées avant de continuer.');
+    }
+    this.activity({
+      entityType: 'prospect', entityId: id, action: 'information_checklist_updated',
+      summary: 'Informations à confirmer actualisées', prospectId: id,
+    });
+    this.indexProspect(id);
+    return this.getProspect(id);
+  }
+
+  /**
+   * Une seule écriture atomique et conditionnelle pour le besoin/projet.
+   * Le CAS protège uniquement ses colonnes : une checklist modifiée dans
+   * une autre fenêtre ne doit pas empêcher de sauvegarder un budget.
+   */
+  updateProspectProjectBriefIfUnchanged(
+    id: string, expected: ProspectProjectBrief, next: ProspectProjectBrief,
+  ): ProspectSummary {
+    const current = this.getProspect(id);
+    if (current.archivedAt || current.clientAccountId) {
+      throw new Error('Projet en lecture seule sur un Prospect archivé ou converti.');
+    }
+    if (!expected || !next) throw new Error('Instantanés de projet requis.');
+    assertMoney(next.budgetMinCents, 'Le budget minimum');
+    assertMoney(next.budgetMaxCents, 'Le budget maximum');
+    if (next.budgetMinCents != null && next.budgetMaxCents != null && next.budgetMinCents > next.budgetMaxCents) {
+      throw new Error('Le budget minimum ne peut pas dépasser le budget maximum.');
+    }
+    if (next.budgetStatus != null && !['known', 'range', 'not_disclosed'].includes(next.budgetStatus)) {
+      throw new Error('Statut du budget invalide.');
+    }
+    if (next.timelineStatus != null && !['date', 'note', 'not_disclosed'].includes(next.timelineStatus)) {
+      throw new Error('Échéance du projet invalide.');
+    }
+    if (next.existingStatus != null && !['yes', 'no', 'unknown'].includes(next.existingStatus)) {
+      throw new Error('État du site existant invalide.');
+    }
+    const columns = [
+      'project_summary', 'project_context', 'budget_status', 'budget_min_cents',
+      'budget_max_cents', 'timeline_status', 'target_date', 'timeline_note',
+      'existing_status', 'existing_url', 'existing_notes',
+    ] as const;
+    const values = (brief: ProspectProjectBrief): SqlValue[] => [
+      clean(brief.projectSummary), clean(brief.projectContext), brief.budgetStatus ?? null,
+      brief.budgetMinCents ?? null, brief.budgetMaxCents ?? null, brief.timelineStatus ?? null,
+      clean(brief.targetDate), clean(brief.timelineNote), brief.existingStatus ?? null,
+      normalizeWebUrl(brief.existingUrl), clean(brief.existingNotes),
+    ];
+    const nextValues = values(next);
+    const expectedValues = values(expected);
+    const result = this.database.run(
+      `UPDATE prospects SET ${columns.map((column) => `${column}=?`).join(', ')}, updated_at=?
+       WHERE id=? AND archived_at IS NULL AND client_account_id IS NULL
+         AND ${columns.map((column) => `${column} IS ?`).join(' AND ')}`,
+      [...nextValues, nowIso(), id, ...expectedValues],
+    );
+    if (Number(result.changes) !== 1) {
+      throw new Error('Conflit : le projet, le budget ou le calendrier a changé dans une autre fenêtre. Vérifie les valeurs enregistrées avant de continuer.');
+    }
+    this.activity({
+      entityType: 'prospect', entityId: id, action: 'project_brief_updated',
+      summary: 'Projet, budget et calendrier mis à jour', prospectId: id,
+    });
+    this.indexProspect(id);
+    return this.getProspect(id);
   }
 
   changeProspectStage(id: string, stage: ProspectStage, lostReason?: string | null, allowIncompleteQualification = false): ProspectSummary {

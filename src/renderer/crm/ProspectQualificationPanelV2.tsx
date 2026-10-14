@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {ProspectDecisionEditor} from './ProspectDecisionEditor';
 import { FieldHelp } from '../ui/FieldHelp';
 export { FieldHelp } from '../ui/FieldHelp';
-import type { ProspectInput, ProspectOrigin, ProspectSummary } from '../../shared/crm';
+import { prospectQualificationBriefSnapshot, type ProspectQualificationBrief, type ProspectInput, type ProspectOrigin, type ProspectSummary } from '../../shared/crm';
 
 const TARGETING_REASONS = [
   ['no_site', 'Pas de site'],
@@ -72,6 +72,14 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
   const [decisionMakerLabel, setDecisionMakerLabel] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [qualificationConflict, setQualificationConflict] = useState(false);
+  const conflictRef = useRef(false);
+  const savingRef = useRef(false);
+  const currentProspectId = useRef(prospect.id);
+  currentProspectId.current = prospect.id;
+  const savedBriefRef = useRef<{ id: string; value: ProspectQualificationBrief }>({
+    id: prospect.id, value: prospectQualificationBriefSnapshot(prospect),
+  });
   const qualificationValue=()=>Object.fromEntries(['originType','targetingReasonCode','targetingReasonText','initialObservation','detectedOpportunity','firstContactResultCode','firstContactResultText','interestLevel','projectSummary','projectContext'].map(k=>[k,(draft as Record<string,unknown>)[k]??null]));
   const guard=useUnsavedDraft('Qualification du prospect',qualificationValue(),{pending:busy,discard:()=>setDraft({...prospect,originType:inferOrigin(prospect)})});
 
@@ -79,6 +87,14 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
 
   useEffect(() => {
     const before=previous.current;previous.current=prospect;
+    if (before.id !== prospect.id) {
+      savedBriefRef.current = { id: prospect.id, value: prospectQualificationBriefSnapshot(prospect) };
+      conflictRef.current = false;
+      setQualificationConflict(false);
+      setError('');
+    } else if (!guard.dirty && !conflictRef.current && !savingRef.current) {
+      savedBriefRef.current = { id: prospect.id, value: prospectQualificationBriefSnapshot(prospect) };
+    }
     setDraft(current=>before.id!==prospect.id?{...prospect,originType:inferOrigin(prospect)}:{...current,...Object.fromEntries(Object.entries(prospect).filter(([key])=>JSON.stringify(current[key as keyof ProspectInput])===JSON.stringify(before[key as keyof ProspectSummary])))});
   }, [prospect.id,prospect.updatedAt]);
 
@@ -165,53 +181,94 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
   }
 
   async function persist(): Promise<ProspectSummary> {
-    return window.atoumweb.crm.prospects.updateQualification(prospect.id, {
-      originType: origin,
-      targetingReasonCode: draft.targetingReasonCode ?? null,
-      targetingReasonText: draft.targetingReasonText ?? null,
-      initialObservation: draft.initialObservation ?? null,
-      detectedOpportunity: draft.detectedOpportunity ?? null,
-      firstContactResultCode: draft.firstContactResultCode ?? null,
-      firstContactResultText: draft.firstContactResultText ?? null,
-      interestLevel: draft.interestLevel ?? null,
-      projectSummary: draft.projectSummary ?? null,
-      projectContext: draft.projectContext ?? null,
-    });
+    if (conflictRef.current) throw new Error('Conflit : recharge la qualification avant de l’enregistrer.');
+    const baseline = savedBriefRef.current;
+    if (baseline.id !== prospect.id) throw new Error('La fiche Prospect a changé : aucun ancien brouillon ne sera enregistré.');
+    const next = prospectQualificationBriefSnapshot({ ...draft, originType: origin });
+    const updated = await window.atoumweb.crm.prospects.updateQualificationBriefIfUnchanged(
+      prospect.id, baseline.value, next,
+    );
+    if (prospect.id === currentProspectId.current) {
+      savedBriefRef.current = { id: prospect.id, value: prospectQualificationBriefSnapshot(updated) };
+    }
+    return updated;
   }
 
-  async function save() {
-    setBusy(true); setError('');
+  async function reloadQualificationAfterConflict() {
+    if (busy || savingRef.current || !conflictRef.current) return;
+    if (!window.confirm('Recharger la qualification enregistrée ? Les changements locaux NON sauvegardés de la qualification et du contexte seront remplacés. Les autres sections resteront inchangées.')) return;
+    const ownerId = prospect.id;
+    setBusy(true);
     try {
-      await persist();guard.saved();
-      onSaved(allReady
-        ? 'Qualification enregistrée. Tous les éléments minimums sont présents : tu peux la valider.'
-        : `Qualification enregistrée. ${missing.length} élément${missing.length > 1 ? 's' : ''} reste${missing.length > 1 ? 'nt' : ''} à compléter.`);
-    } catch (e) { setError(cleanError(e)); }
+      const current = (await window.atoumweb.crm.prospects.list({ includeArchived: true }))
+        .find(item => item.id === ownerId);
+      if (ownerId !== currentProspectId.current) return;
+      if (!current) throw new Error('Ce Prospect n’est plus disponible.');
+      const replacement = { ...current, originType: inferOrigin(current) };
+      savedBriefRef.current = { id: ownerId, value: prospectQualificationBriefSnapshot(current) };
+      setDraft(replacement);
+      guard.initial(Object.fromEntries([
+        'originType','targetingReasonCode','targetingReasonText','initialObservation',
+        'detectedOpportunity','firstContactResultCode','firstContactResultText',
+        'interestLevel','projectSummary','projectContext',
+      ].map(key => [key, (replacement as Record<string, unknown>)[key] ?? null])));
+      conflictRef.current = false;
+      setQualificationConflict(false);
+      setError('');
+    } catch (e) { if (ownerId === currentProspectId.current) setError(cleanError(e)); }
     finally { setBusy(false); }
   }
 
+  async function save() {
+    if (savingRef.current || conflictRef.current) {
+      if (conflictRef.current) setError('Conflit : recharge la qualification avant de l’enregistrer.');
+      return;
+    }
+    savingRef.current = true;
+    setBusy(true); setError('');
+    try {
+      await persist();
+      if (prospect.id !== currentProspectId.current) return;
+      guard.saved();
+      onSaved(allReady
+        ? 'Qualification enregistrée. Tous les éléments minimums sont présents : tu peux la valider.'
+        : `Qualification enregistrée. ${missing.length} élément${missing.length > 1 ? 's' : ''} reste${missing.length > 1 ? 'nt' : ''} à compléter.`);
+    } catch (e) {
+      if (prospect.id === currentProspectId.current) {
+        const message = cleanError(e);
+        if (/conflit/i.test(message)) { conflictRef.current = true; setQualificationConflict(true); }
+        setError(message);
+      }
+    } finally { savingRef.current = false; setBusy(false); }
+  }
+
   async function validateQualification() {
+    if (savingRef.current || conflictRef.current) {
+      if (conflictRef.current) setError('Conflit : recharge la qualification avant de changer d’étape.');
+      return;
+    }
     if (!qualificationStarted) {
       setError('Renseigne au moins une information de qualification avant de passer à l’étape suivante.');
       return;
     }
+    if (!allReady && !window.confirm(`Il reste à préciser : ${missing.map((item) => item.label).join(', ')}.\n\nPasser quand même à « Besoin à identifier » ?\nTu pourras compléter ces informations plus tard.`)) return;
+    savingRef.current = true;
     setBusy(true); setError('');
     try {
       await persist();
-      if (!allReady) {
-        const confirmed = window.confirm(`Il reste à préciser : ${missing.map((item) => item.label).join(', ')}.\n\nPasser quand même à « Besoin à identifier » ?\nTu pourras compléter ces informations plus tard.`);
-        if (!confirmed) {
-          onSaved('Le prospect reste à l’étape « À qualifier ».');
-          return;
-        }
-        await window.atoumweb.crm.prospects.changeStage(prospect.id, 'need_identified', null, true);
-        onSaved('Prospect avancé vers « Besoin à identifier » malgré des informations encore à compléter.');
-        return;
+      if (prospect.id !== currentProspectId.current) return;
+      guard.saved();
+      await window.atoumweb.crm.prospects.changeStage(prospect.id, 'need_identified', null, !allReady);
+      onSaved(allReady
+        ? 'Qualification validée : le prospect passe en « Besoin à identifier ».'
+        : 'Prospect avancé vers « Besoin à identifier » malgré des informations encore à compléter.');
+    } catch (e) {
+      if (prospect.id === currentProspectId.current) {
+        const message = cleanError(e);
+        if (/conflit/i.test(message)) { conflictRef.current = true; setQualificationConflict(true); }
+        setError(message);
       }
-      await window.atoumweb.crm.prospects.changeStage(prospect.id, 'need_identified');
-      onSaved('Qualification validée : le prospect passe en « Besoin à identifier ».');
-    } catch (e) { setError(cleanError(e)); }
-    finally { setBusy(false); }
+    } finally { savingRef.current = false; setBusy(false); }
   }
 
   const decisionSummary = draft.decisionStatus === 'yes'
@@ -280,6 +337,13 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
       {allReady && <div className="qualification-recap ready" role="status"><strong>Qualification prête à être validée</strong><p>Les éléments commerciaux minimums sont présents. Le besoin détaillé, le budget et le calendrier seront travaillés à l’étape suivante.</p></div>}
 
       {error && <p className="form-error" role="alert">{error}</p>}
+      {qualificationConflict && <div className="prospect-checklist-conflict" role="status">
+        <strong>Conflit entre fenêtres : qualification modifiée.</strong>
+        <p>La version enregistrée par une autre fenêtre n’a pas été écrasée. Tes modifications locales sont conservées jusqu’à ton choix.</p>
+        <button type="button" className="secondary-button" disabled={busy} onClick={() => void reloadQualificationAfterConflict()}>
+          Recharger la qualification enregistrée
+        </button>
+      </div>}
       <div className="qualification-actions"><button type="button" className="secondary-button" disabled={busy} onClick={() => void save()}>{busy ? 'Enregistrement…' : 'Enregistrer la qualification'}</button><button type="button" className="primary-button" disabled={busy || !qualificationStarted} title={!qualificationStarted ? 'Renseigne au moins une information de qualification pour continuer.' : undefined} onClick={() => void validateQualification()}>{allReady ? 'Valider la qualification → Besoin à identifier' : 'Passer à l’étape suivante…'}</button></div>
     </div>
   </section>;

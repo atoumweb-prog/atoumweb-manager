@@ -1,7 +1,8 @@
+import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { OperationalActionDetails } from './OperationalActionDetails';
 import { ProjectCommercialScopePanel } from './ProjectCommercialScopePanel';
 import { ProjectBlueprintOrigins } from './ProjectBlueprintOrigins';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { QuoteSummary } from '../../shared/commercial';
 import {
   PROJECT_COMMERCIAL_MODES,
@@ -144,7 +145,7 @@ function formatTimer(seconds: number): string {
   return [hours, minutes, rest].map((value) => String(value).padStart(2, '0')).join(':');
 }
 
-export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true }: { onMessage: (message: string, action?: () => void) => void; initialProjectId?: string | null; showHoverHelp?: boolean }) {
+export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initialRequest, showHoverHelp = true }: { onMessage: (message: string, action?: () => void) => void; initialProjectId?: string | null;initialRequest?:number; showHoverHelp?: boolean;onEntityReady?:EntityReady }) {
   const [view, setView] = useState<'projects' | 'templates'>('projects');
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [templates, setTemplates] = useState<ProjectTemplateSummary[]>([]);
@@ -153,6 +154,10 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
   const [statusFilter, setStatusFilter] = useState<'all' | ProjectStatus>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<ProjectDetail | null>(null);
+  useSearchTargetConfirmation('project',view==='projects'?detail?.id:null,false,onEntityReady);
+
+  const openEpoch=useRef(0),detailRef=useRef(detail);detailRef.current=detail;
+  useEffect(()=>()=>{openEpoch.current++;},[]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [expandedPhaseIds, setExpandedPhaseIds] = useState<Set<string>>(() => new Set());
   const [undoStack, setUndoStack] = useState<ProjectHistoryAction[]>([]);
@@ -218,7 +223,7 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
     if (!initialProjectId) return;
     setView('projects');
     void openProject(initialProjectId);
-  }, [initialProjectId]);
+  }, [initialProjectId,initialRequest]);
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('atoumweb:sidebar-collapse', { detail: Boolean(detail) }));
@@ -260,6 +265,8 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
   );
 
   async function openProject(id: string): Promise<void> {
+    const epoch=++openEpoch.current;
+    if(detailRef.current?.id===id){setSelectedId(id);onEntityReady?.('project',id);return;}
     try {
       setSelectedId(id);
       setSelectedNodeId(null);
@@ -270,9 +277,14 @@ export function ProjectsPage({ onMessage, initialProjectId, showHoverHelp = true
       setProductionOverlay(null);
       setProductionTreeCollapsed(false);
       setCompletionReview(null);
-      setDetail(await window.atoumweb.projects.projects.get(id));
+      const next=await window.atoumweb.projects.projects.get(id);
+      if(epoch!==openEpoch.current)return;
+      if(next.id!==id)throw Error('Projet reçu différent de la cible.');
+      setDetail(next);
       setDetailTab('plan');
     } catch (error) {
+      if(epoch!==openEpoch.current)return;
+      onEntityReady?.('project',id,error instanceof Error?error.message:'Projet introuvable.');
       onMessage(error instanceof Error ? error.message : 'Projet introuvable.');
     }
   }

@@ -1,5 +1,6 @@
+import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { ContractLibraryPage } from '../commercial/ContractLibraryPage';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ClientSummary } from '../../shared/crm';
 import {
   CLIENT_DOCUMENT_CATEGORIES,
@@ -96,7 +97,7 @@ function retentionNeedsAttention(item: ClientDocument): boolean {
   return new Date(item.retentionUntil).getTime() <= limit.getTime();
 }
 
-export function DocumentsPage({ onMessage, initialDocumentId, initialContractTypeId }: { onMessage: (message: string) => void; initialDocumentId?: string | null; initialContractTypeId?: string | null }) {
+export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, initialRequest, initialContractTypeId }: { onMessage: (message: string) => void; initialDocumentId?: string | null;initialRequest?:number; initialContractTypeId?: string | null;onEntityReady?:EntityReady }) {
   const [libraryOpen,setLibraryOpen]=useState(!!initialContractTypeId);
   useEffect(()=>{if(initialContractTypeId)setLibraryOpen(true);},[initialContractTypeId]);
   const [clients, setClients] = useState<ClientSummary[]>([]);
@@ -116,7 +117,9 @@ export function DocumentsPage({ onMessage, initialDocumentId, initialContractTyp
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  const refreshEpoch=useRef(0);useEffect(()=>()=>{refreshEpoch.current++;},[]);
   async function refresh(preferredId?: string): Promise<void> {
+    const epoch=++refreshEpoch.current;
     setLoading(true);
     try {
       const nextClients = await window.atoumweb.crm.clients.list({ includeArchived: true });
@@ -125,23 +128,28 @@ export function DocumentsPage({ onMessage, initialDocumentId, initialContractTyp
         return docs.map<DocumentWithClient>((document) => ({ ...document, clientLabel: client.displayName }));
       }));
       const nextItems = batches.flat().sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+      if(epoch!==refreshEpoch.current)return;
       setClients(nextClients);
       setItems(nextItems);
       const requested = preferredId ?? selectedId ?? initialDocumentId ?? '';
       if (requested && nextItems.some((item) => item.id === requested)) setSelectedId(requested);
-      else if (requested) setSelectedId('');
+      else if (requested) {setSelectedId('');onEntityReady?.('client_document',requested,'Document introuvable.');}
       const firstImportable = nextClients.find((client) => !client.archivedAt && client.status !== 'archived');
       if (!createClientId && firstImportable) setCreateClientId(firstImportable.id);
     } catch (error) {
+      if(epoch!==refreshEpoch.current)return;
+      if(preferredId)onEntityReady?.('client_document',preferredId,error instanceof Error?error.message:'Documents indisponibles.');
       onMessage(error instanceof Error ? error.message : 'Impossible de charger les documents.');
     } finally {
-      setLoading(false);
+      if(epoch===refreshEpoch.current)setLoading(false);
     }
   }
 
-  useEffect(() => { void refresh(initialDocumentId ?? undefined); }, [initialDocumentId]);
+  useEffect(() => { if(initialDocumentId){setLibraryOpen(false);setCreateOpen(false);} void refresh(initialDocumentId ?? undefined); }, [initialDocumentId,initialRequest]);
 
   const selected = items.find((item) => item.id === selectedId) ?? null;
+  useSearchTargetConfirmation('client_document',libraryOpen||createOpen?null:selected?.id,loading,onEntityReady);
+
 
   useEffect(() => {
     if (!selected) return;

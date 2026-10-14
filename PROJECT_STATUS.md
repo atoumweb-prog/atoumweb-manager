@@ -1,5 +1,64 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 14/10/2026 — Recette finale de PR102, sans fusion
+
+- Départ8d8b359a/CI779 verte, base278ff2da, worktree propre ; sources98–101 intactes. Inspection agent effective des81 PNG de référence, distincte de toute acceptation humaine métier.
+- Défauts de lisibilité reproduits : action critique Home Noir1,0336:1 ; champs historiques blancs/text-fill clair ; actions primaires et textes des fiches/chrono. Corrections CSS ciblées, sans changement de services, règles, migrations ou workflow.
+- Recette permanente complémentaire :15 scènes réellement ouvertes ×9 variantes=135 captures synchronisées ; même devis issu du Pré-devis, Projet prévisionnel, acceptation explicite TEST et Client idempotent ; qualification pending/error/draft, Tab/Shift-Tab et confirmations exactes.527 contrôles locaux de mise au point réussis ; validation finale propre/typecheck/1020 Vitest/ensemble natif à rejouer au SHA de stabilisation avant publication.
+- [Rapport final et procédure de fusion/retour arrière](docs/ux-v2/RECETTE-FINALE-PR102-2026-10-14.md). Résultats définitifs au SHA publié dans le manifeste et le corps de PR pour éviter une CI documentaire supplémentaire. PR102 reste draft, aucun merge/04A/Validation-MSI ; revue humaine et accord de fusion encore nécessaires.
+
+## 14/10/2026 — Finalisation de l'intégration 02E / 03C
+
+- PR102 reste draft ; main278ff2da, sources98–101 et références inchangés. Checkpoint74782268 local complet vert :1020tests/35restaurations/6binaires/sansRPC ; convergence37/CRM77/Recherche92/Home55/parcours62/shell374/UX01183 et81captures, TEMP/intégrité/FK/migrations/nettoyages OK.
+- Échec natif778 précisé : reproduction locale avec fenêtre initiale1050px, saisie forcée sur recherche masquée ; synchroniser Échap seul ne suffisait pas. Banc permanent aux départs1510/1050, ouverture par vrai bouton si masqué, focus/visibilité préalables vérifiés, assertion finale conservée ; parcours67 verts, délais inchangés. Aucun correctif métier/header inventé pour masquer le défaut du banc.
+- Dernier commit limité aux fixtures/preuves/docs, sourcesTS/TSX identiques à74782268. Recettes natives rejouées sur ce HEAD, puis pushFF dans102 et candidate synchronize ; résultats exacts dans le corps de PR, pas de nouvelle PR ni CI documentaire/dispatch/rerun. Aucun merge main, donnée réelle ou Validation-MSI.
+
+## 13/10/2026 — Rapprochement autorisé 02C–02E / 03A–03C
+
+- Nouveau worktree isolé et branche `integration/ux-v2-02e-03c-v1`, depuis #101 bd1985b ; merge normal #98 10933ae à40e12e6. main278ff2da et quatre branches sources préservés. Dernières CI contrôlées : #98/#777, #99/#737, #100/#741, #101/#760 SUCCESS.
+- Conflit unique du banc Electron résolu en conservant Recherche/CRM/captures. Confirmation des fiches et garde Projet conservées ; réponse Prospect périmée reproduite/corrigée ; erreurs Devis obsolètes et journal annulés. Accueil raccordé à la projection6+1/E73 existante et historique Conversion, sans nouveau statut ni changement de service.
+- Checkpoint737ce54 : typecheck OK,1020/1020/107fichiers/35restaurations/6binaires/sansRPC ; Electron convergence34/CRM77/Recherche92/Home54/parcours61/shell374/UX01183 ;81captures/TEMP/intégrité/FK/migrations1–66/nettoyages. Complément final convergence36 ; dernière recette complète au HEAD publié via manifeste et PR, distincte de ces preuves checkpoint.
+- [Rapport et C01–C11](docs/ux-v2/INTEGRATION-02E-03C-2026-10-13.md). Publication d'une PR draft groupée autorisée après résultats locaux verts ; CI unique opened avec recettes combinées réellement exécutées. Aucun merge main, retarget, force-push, budget, branche historique ou Validation-MSI modifié. Recette humaine globale toujours différée.
+- PR102 draft publiée à476945fc, candidate778 ; recette locale complète au même HEAD verte,36convergence. Revue visuelle : compte Home8 devenu obsolète après sourceDevis9, corrigé avec assertion native supplémentaire(Home55). Nouvelle candidate synchronize nécessaire sur ce correctif ; pas rerun ni dispatch. Résultats définitifs/HEAD et références dans la PR pour éviter une CI documentaire supplémentaire.
+- CI778 :1020tests/typecheck/CRM77/Recherche92/Home54/convergence36 verts, puis focus resize02E en échec. Synchronisation du scénario : attendre l'acquittement natif Échap avant la saisie suivante, assertion de focus initiale conservée, délais inchangés (02E62). Historique Conversion Home aligné sur les archivés CRM avec non-régression (convergence37). Validation complète à refaire sur le HEAD final avant pushFF unique et nouvelle candidate automatique ; pas de main/branches sources modifiés.
+
+## 13/10/2026 — 02E indépendant : parcours réels, focus et préparation de convergence
+
+- Branche `codex/ux-v2-02e-transverse-shell` depuis#100@d3ef589. #99/#100 maintenues drafts ; main278ff2da inchangé. #98 lue à69e8904 puis46a190f, aucun merge/import/écrasement ; comparaison des trois fichiers communs et tests combinés à préparer, pas preuve de compatibilité par addition des CI.
+- Défauts reproduits/corrigés hors fichiers CRM98 : focus du vrai bouton Rechercher, recherche masquée au resize pendant frappe, fermeture seulement après ouverture confirmée, reconnaissance du panneau Historique visible. Chrono prioritaire, aucune nouvelle garde ou règle métier.
+- Codebf7eae0 validé en une recette groupée : typecheck OK,54 ciblés,963 Vitest/35 restaurations/6 binaires ; nouveaux parcours61, recherche92, Accueil54/9captures, shell374/63captures, UX-01183, en-tête167. TEMP/intégrité/FK/migrations/nettoyages OK, sansRPC.
+- [Exécution et réserves02E](docs/ux-v2/LOT-02E-EXECUTION-2026-10-13.md), [matrice de convergence et C01–C11](docs/ux-v2/LOT-02E-CONVERGENCE-03C-2026-10-13.md). Publication draft distincte autorisée ; résultat CI dans la PR sans doublon de push. Clôture globale02E/pipeline/CRM combiné encore non acquis ; prochaine porte : branche d'intégration après décision explicite. Aucune utilisation Validation-MSI.
+
+## 13/10/2026 — 02C complément publié, Accueil02D réel validé au périmètre indépendant
+
+- #99 draft actualisée à7549770, CI #737 SUCCESS (943/943), complément natif92/92/clavier/focus/conclusion protégé. Corps de PR et bilan actualisés, aucun merge.
+- Branche `codex/ux-v2-02d-home-trust` depuis#99 : huit sources Accueil indépendantes, erreurs/cache/fraîcheur/générations, alertes complètes et critiques permanentes, actions « Ouvrir » honnêtes, disposition Home par workspace via01F, reset visuel et texte lisible. Pipeline02D2/E59 non refait, dépend de#98.
+- Typecheck/42 ciblés/963 Vitest àebf4e0d verts ; après correction de synchronisation de capture et lisibilité CSS, natifs à3343ebc verts : Home54/54/neuf captures, recherche92, shell374/63captures, UX-01183 ; TEMP/FK/intégrité/migrations/nettoyages OK. Aucun changement TS/TSX entre ces SHA ; les deux manifestes distinguent les tests réellement exécutés.
+- #98 recontrôlée à9f697b0, aucun fichier de son chantier actuel modifié par02D. Aucun service métier, contrat, migration ou donnée réelle modifié. [Audit, matrice et preuves02D](docs/ux-v2/LOT-02D-EXECUTION-2026-10-13.md).
+- Publication draft02D vers main autorisée pour une unique CI automatique existante ; parent02C explicitement inclus/dépendant, ordre#99 puisAccueil. Résultat à consigner dans la PR sans second push. Pas de fusion, budget inchangé et zéroValidation-MSI. Suite02D pipeline/02E après coordination et intégration contrôlée.
+
+## 13/10/2026 — Complément 02C et poursuite autonome autorisés
+
+- PR #99 draft, CI initiale #720 verte. Complément local `223980eb` : Tab/Shift-Tab neuf variantes, focus conclusion d'incident depuis Accueil et sous-éditeur protégé par UX-01/DraftSection, conflits explicites et pending conservés ; aucune règle de clôture modifiée.
+- Validation complète au SHA exact : typecheck OK, 943/943 Vitest, 36 ciblés, 92/92 recherche Electron, 374 shell/63 captures, 183 UX-01 ; restaurations35, binaires6, TEMP/FK/intégrité/migrations OK et zéroRPC. Bilan [02C](docs/UXV2_LOT02C_REAL_SEARCH.md) actualisé ; publication autorisée sans fusion.
+- #98 contrôlée à4eeb5a7 : composants Prospect/Devis, projection CRM, QuoteService/IPC/preload, banc partagé en cours ; aucun de ces fichiers modifié par le complément. Rapprochement différé. Aucun Validation-MSI.
+- Prochain périmètre indépendant issu du référentiel : **02D Accueil**, huit lectures/erreurs/réponses tardives, alertes visibles, liens honnêtes, préférences de widgets ; pipeline E59 et évolutions03A–03C restent à leur propriétaire #98.
+
+## 13/10/2026 — Publication 02C autorisée
+
+- Autorisation utilisateur : publication de `codex/ux-v2-02c-real-search`, une PR draft vers main, sans fusion ; PR #98 et chantier 03C exclus du périmètre.
+- Références contrôlées : main `278ff2da` inchangé, working tree propre, aucun homologue distant de 02C ni PR existante ; HEAD documentaire `89a1dc9`, code testé `1b0fbb9`. Diff entre ces deux commits limité au bilan et au présent suivi.
+- Preuves locales vérifiées dans le manifeste du SHA `1b0fbb9` : typecheck, 943 Vitest, 68 Electron recherche, 374 shell, 183 UX-01. Le commit de préparation de publication ajoute uniquement ce suivi ; aucun code supplémentaire.
+- Le push de cette branche n'est pas un déclencheur du workflow ; l'ouverture de la PR vers main déclenchera une unique CI candidate. Aucun dispatch/rerun prévu. Le résultat sera consigné dans le corps de la PR pour ne pas provoquer une seconde CI documentaire. Aucune utilisation de Validation-MSI, aucune fusion ou modification du chantier 03C.
+
+## 13/10/2026 — Reprise 02C : recherche réelle validée localement
+
+- Travail interrompu préservé à `c9fc199`, actualisation locale normale à `c149dfe` depuis main `278ff2da` (PR #97 fusionnée, CI #665 SUCCESS). Aucune branche historique modifiée.
+- Code `1b0fbb999a90409026e8e8aa161d75e7e133a682` sur `codex/ux-v2-02c-real-search` : confirmation du chargement par ID, garde UX-01 avant changement, Catalogue ciblé, réponses tardives invalidées, erreurs/recherche conservées, focus et idempotence. Raccordement Bibliothèque manquant et course Catalogue A/B/A corrigés avec reproductions permanentes.
+- Validation finale réelle Windows : typecheck OK ; 36 ciblés conservés ; 943/943 Vitest (100 fichiers), 35 restaurations, 6 binaires, sans RPC ; recherche Electron 68/68, shell 374/374/63 captures/neuf variantes, UX-01 183/183 ; intégrité/FK/migrations TEMP et nettoyage OK. Aucun changement de services/main/preload ou données réelles.
+- [Bilan et limites de couverture](docs/UXV2_LOT02C_REAL_SEARCH.md) : comportement contractuel historique journalisé explicitement qualifié ; Tab/Shift-Tab exhaustif, focus conclusion depuis Accueil et recette complète des sous-éditeurs restent non certifiés par 02C. Recette humaine globale différée.
+- Aucun push/PR/CI 02C ni fusion. Prochaine action : revue du candidat local, puis accord distinct avant publication et validation GitHub. Validation-MSI non utilisée.
+
 ## 13/10/2026 — Shell réel 02B.5/02B.6 validé localement
 
 - Main61960d5 etCI663verte aprèsmerge96normal, branches90–93inchangées. Nouveaucode8105de4 sur codex/ux-v2-real-shell-02b : rail/header réels dansApp, vraiGlobalTimerunique, recherche/horlogeexistantes, préférencesparworkspace ; pas nouveauchrono/service métier/migration.

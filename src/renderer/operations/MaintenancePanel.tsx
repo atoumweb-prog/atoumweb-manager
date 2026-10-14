@@ -1,3 +1,4 @@
+import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { useEffect, useMemo, useState } from 'react';
 import type { ClientSummary } from '../../shared/crm';
 import {
@@ -32,12 +33,14 @@ function hours(seconds: number): string {
   return `${value.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} h`;
 }
 
-export function MaintenancePanel({ clients, projects, onMessage, onInterventionCreated, initialSubscriptionId }: {
+export function MaintenancePanel({ onEntityReady, initialRequest, clients, projects, onMessage, onInterventionCreated, initialSubscriptionId }: {
   clients: ClientSummary[];
   projects: ProjectSummary[];
   onMessage: (message: string) => void;
   onInterventionCreated: (intervention: Intervention) => void;
   initialSubscriptionId?: string | null;
+  onEntityReady?:EntityReady;
+  initialRequest?:number;
 }) {
   const [plans, setPlans] = useState<MaintenancePlan[]>([]);
   const [subscriptions, setSubscriptions] = useState<MaintenanceSubscription[]>([]);
@@ -74,6 +77,7 @@ export function MaintenancePanel({ clients, projects, onMessage, onInterventionC
         setSelectedPeriodId('');
       }
     } catch (error) {
+      if(initialSubscriptionId)onEntityReady?.('maintenance',initialSubscriptionId,error instanceof Error?error.message:'Impossible de charger la maintenance.');
       onMessage(error instanceof Error ? error.message : 'Impossible de charger la maintenance.');
     }
   }
@@ -93,7 +97,7 @@ export function MaintenancePanel({ clients, projects, onMessage, onInterventionC
   useEffect(() => { void loadPeriods(selectedSubscriptionId); }, [selectedSubscriptionId]);
   useEffect(() => {
     if (initialSubscriptionId) setSelectedSubscriptionId(initialSubscriptionId);
-  }, [initialSubscriptionId]);
+  }, [initialSubscriptionId,initialRequest]);
 
   useEffect(() => {
     if (!selectedSubscriptionId) return;
@@ -109,6 +113,8 @@ export function MaintenancePanel({ clients, projects, onMessage, onInterventionC
   }, [selectedSubscriptionId]);
 
   const selectedSubscription = subscriptions.find((item) => item.id === selectedSubscriptionId) ?? null;
+  useSearchTargetConfirmation('maintenance',selectedSubscription?.id,false,onEntityReady);
+
   const selectedPeriod = periods.find((item) => item.id === selectedPeriodId) ?? null;
   const clientProjects = projects.filter((project) => project.clientAccountId === clientId && project.status !== 'archived');
   const selectedPlan = plans.find((plan) => plan.id === planId) ?? null;

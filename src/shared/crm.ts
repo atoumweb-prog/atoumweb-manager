@@ -202,6 +202,67 @@ export interface ProspectSummary extends ProspectInput {
   hasContactMethod?: boolean;
   researchSnapshotCount?: number;
 }
+/** Champs éditables par le panneau Qualification 03C, isolés du décisionnaire. */
+export interface ProspectQualificationBrief {
+  originType: ProspectInput['originType'];
+  targetingReasonCode: string | null;
+  targetingReasonText: string | null;
+  initialObservation: string | null;
+  detectedOpportunity: string | null;
+  firstContactResultCode: string | null;
+  firstContactResultText: string | null;
+  interestLevel: ProspectInput['interestLevel'];
+  projectSummary: string | null;
+  projectContext: string | null;
+}
+
+export function prospectQualificationBriefSnapshot(prospect: Partial<ProspectInput>): ProspectQualificationBrief {
+  return {
+    originType: prospect.originType ?? null,
+    targetingReasonCode: prospect.targetingReasonCode ?? null,
+    targetingReasonText: prospect.targetingReasonText ?? null,
+    initialObservation: prospect.initialObservation ?? null,
+    detectedOpportunity: prospect.detectedOpportunity ?? null,
+    firstContactResultCode: prospect.firstContactResultCode ?? null,
+    firstContactResultText: prospect.firstContactResultText ?? null,
+    interestLevel: prospect.interestLevel ?? null,
+    projectSummary: prospect.projectSummary ?? null,
+    projectContext: prospect.projectContext ?? null,
+  };
+}
+
+/** Snapshot complet du formulaire 03C Besoin / Projet, distinct de la checklist. */
+export interface ProspectProjectBrief {
+  projectSummary: string | null;
+  projectContext: string | null;
+  budgetStatus: ProspectInput['budgetStatus'];
+  budgetMinCents: number | null;
+  budgetMaxCents: number | null;
+  timelineStatus: ProspectInput['timelineStatus'];
+  targetDate: string | null;
+  timelineNote: string | null;
+  existingStatus: ProspectInput['existingStatus'];
+  existingUrl: string | null;
+  existingNotes: string | null;
+}
+
+/** Le même snapshot sert à comparer, appliquer et recharger les 11 champs. */
+export function prospectProjectBriefSnapshot(prospect: ProspectSummary): ProspectProjectBrief {
+  return {
+    projectSummary: prospect.projectSummary ?? null,
+    projectContext: prospect.projectContext ?? null,
+    budgetStatus: prospect.budgetStatus ?? null,
+    budgetMinCents: prospect.budgetMinCents ?? null,
+    budgetMaxCents: prospect.budgetMaxCents ?? null,
+    timelineStatus: prospect.timelineStatus ?? null,
+    targetDate: prospect.targetDate ?? null,
+    timelineNote: prospect.timelineNote ?? null,
+    existingStatus: prospect.existingStatus ?? null,
+    existingUrl: prospect.existingUrl ?? null,
+    existingNotes: prospect.existingNotes ?? null,
+  };
+}
+
 export interface ProspectFilters { stage?: ProspectStage | null; includeArchived?: boolean; search?: string | null; }
 
 export interface ClientInput { organizationId?: string | null; primaryContactId?: string | null; status?: ClientStatus; nextActionAt?: string | null; nextActionText?: string | null; notes?: string | null; relationshipStatus?: ClientRelationshipStatus; relationshipNote?: string | null; }
@@ -252,6 +313,10 @@ export interface CrmApi {
     list(includeArchived?: boolean): Promise<DirectoryContact[]>;
     get(id: string): Promise<DirectoryContact>;
     create(input: ContactInput): Promise<Contact>;
+    /** Atomic primary contact creation + Prospect attachment, retry-safe. */
+    createAndAttachPrimaryProspect(prospectId: string, input: ContactInput): Promise<Contact>;
+    /** Atomic decision maker creation + Prospect attachment, retry-safe. */
+    createAndAttachDecisionProspect(prospectId: string, input: ContactInput): Promise<Contact>;
     update(id: string, input: ContactInput): Promise<Contact>;
   };
   contactMethods: {
@@ -270,6 +335,12 @@ export interface CrmApi {
     create(input: ProspectInput): Promise<ProspectSummary>;
     update(id: string, input: ProspectInput): Promise<ProspectSummary>;
     updateQualification(id: string, input: Partial<ProspectInput>): Promise<ProspectSummary>;
+    /** Atomically reject stale checklist writes from another window. */
+    updateMissingInformationIfUnchanged(id: string, expected: string | null, next: string | null): Promise<ProspectSummary>;
+    /** CAS atomique des 11 champs du projet, budget et calendrier. */
+    updateProjectBriefIfUnchanged(id: string, expected: ProspectProjectBrief, next: ProspectProjectBrief): Promise<ProspectSummary>;
+    /** Qualification avec protection des dix champs édités, y compris résumé/contexte communs. */
+    updateQualificationBriefIfUnchanged(id: string, expected: ProspectQualificationBrief, next: ProspectQualificationBrief): Promise<ProspectSummary>;
     changeStage(id: string, stage: ProspectStage, lostReason?: string | null, allowIncompleteQualification?: boolean): Promise<ProspectSummary>;
     setNextAction(id: string, at: string | null, text: string | null): Promise<ProspectSummary>;
     convertToClient(id: string): Promise<ConvertProspectResult>;

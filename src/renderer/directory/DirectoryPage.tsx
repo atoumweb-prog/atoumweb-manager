@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   ContactInput,
   DirectoryContact,
@@ -77,7 +78,7 @@ function dateLabel(value?: string | null): string {
   return value ? new Date(value).toLocaleDateString('fr-FR') : '—';
 }
 
-export function DirectoryPage({ onMessage, initialTarget }: { onMessage: (message: string) => void; initialTarget?: DirectorySearchTarget | null }) {
+export function DirectoryPage({ onEntityReady, onMessage, initialTarget, initialRequest }: { onMessage: (message: string) => void; initialTarget?: DirectorySearchTarget | null;initialRequest?:number;onEntityReady?:EntityReady }) {
   const [organizations, setOrganizations] = useState<DirectoryOrganization[]>([]);
   const [contacts, setContacts] = useState<DirectoryContact[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,14 +95,19 @@ export function DirectoryPage({ onMessage, initialTarget }: { onMessage: (messag
   const [organizationDraft, setOrganizationDraft] = useState<OrganizationInput>(() => organizationForm());
   const [contactDraft, setContactDraft] = useState<ContactInput>(() => contactForm());
   const [busy, setBusy] = useState(false);
+  useSearchTargetConfirmation(selectedType==='contact'?'contact':'organization',selectedType==='contact'?contacts.find(item=>item.id===selectedId)?.id:organizations.find(item=>item.id===selectedId)?.id,loading,onEntityReady);
 
+
+  const refreshEpoch=useRef(0);useEffect(()=>()=>{refreshEpoch.current++;},[]);
   async function refresh(preferred?: DirectorySearchTarget | null): Promise<void> {
+    const epoch=++refreshEpoch.current;
     setLoading(true);
     try {
       const [nextOrganizations, nextContacts] = await Promise.all([
         window.atoumweb.crm.organizations.list(false),
         window.atoumweb.crm.contacts.list(false),
       ]);
+      if(epoch!==refreshEpoch.current)return;
       setOrganizations(nextOrganizations);
       setContacts(nextContacts);
       const target = preferred ?? (selectedType && selectedId ? { entityType: selectedType, entityId: selectedId } : null);
@@ -114,17 +120,20 @@ export function DirectoryPage({ onMessage, initialTarget }: { onMessage: (messag
         setSelectedType('contact');
         setSelectedId(target.entityId);
       } else if (target) {
+        onEntityReady?.(target.entityType,target.entityId,'Entrée introuvable.');
         setSelectedType(null);
         setSelectedId('');
       }
     } catch (error) {
+      if(epoch!==refreshEpoch.current)return;
+      if(preferred)onEntityReady?.(preferred.entityType,preferred.entityId,error instanceof Error?error.message:'Annuaire indisponible.');
       onMessage(error instanceof Error ? error.message : 'Impossible de charger l’annuaire.');
     } finally {
-      setLoading(false);
+      if(epoch===refreshEpoch.current)setLoading(false);
     }
   }
 
-  useEffect(() => { void refresh(initialTarget ?? null); }, [initialTarget?.entityType, initialTarget?.entityId]);
+  useEffect(() => { void refresh(initialTarget ?? null); }, [initialTarget?.entityType, initialTarget?.entityId,initialRequest]);
 
   useEffect(() => {
     const reload = () => void refresh();

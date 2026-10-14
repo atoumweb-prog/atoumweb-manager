@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
 import { CrmService } from './CrmService';
+import { prospectProjectBriefSnapshot, prospectQualificationBriefSnapshot } from '../../shared/crm';
 
 let database: NodeSqliteAdapter;
 let crm: CrmService;
@@ -18,6 +19,287 @@ afterEach(() => {
 });
 
 describe('CrmService', () => {
+  const readProspect = (service: CrmService, id: string) => service.listProspects({ includeArchived: true }).find(item => item.id === id)!;
+  it('03C qualification : détecte deux modifications concurrentes, puis reprend après lecture', () => {
+    const org = crm.createOrganization({ name: 'Qualification deux fenêtres' });
+    const prospect = crm.createProspect({ organizationId: org.id });
+    const second = new CrmService(database);
+    const initial = prospectQualificationBriefSnapshot(readProspect(crm, prospect.id));
+    const fromA = { ...initial, initialObservation: 'Site existant lent', interestLevel: 'interested' as const };
+    const fromB = { ...initial, targetingReasonText: 'Besoin de référencement' };
+    crm.updateProspectQualificationBriefIfUnchanged(prospect.id, initial, fromA);
+    const events = crm.listActivity('prospect', prospect.id).length;
+    expect(() => second.updateProspectQualificationBriefIfUnchanged(prospect.id, initial, fromB))
+      .toThrow(/Conflit/);
+    expect(crm.listActivity('prospect', prospect.id)).toHaveLength(events);
+    expect(readProspect(crm, prospect.id).initialObservation).toBe('Site existant lent');
+    expect(readProspect(crm, prospect.id).targetingReasonText).toBeFalsy();
+    const fresh = prospectQualificationBriefSnapshot(readProspect(second, prospect.id));
+    const updated = second.updateProspectQualificationBriefIfUnchanged(prospect.id, fresh, {
+      ...fresh, targetingReasonText: 'Besoin de référencement',
+    });
+    expect(updated).toMatchObject({
+      initialObservation: 'Site existant lent', targetingReasonText: 'Besoin de référencement',
+    });
+  });
+
+  it('03C qualification : conflit détecté sur contexte partagé avec le formulaire Besoins', () => {
+    const org = crm.createOrganization({ name: 'Qualification et besoin' });
+    const prospect = crm.createProspect({ organizationId: org.id });
+    const oldQualification = prospectQualificationBriefSnapshot(readProspect(crm, prospect.id));
+    const existingProject = prospectProjectBriefSnapshot(readProspect(crm, prospect.id));
+    crm.updateProspectProjectBriefIfUnchanged(prospect.id, existingProject, {
+      ...existingProject, projectSummary: 'Demande mise à jour dans Besoins',
+    });
+    expect(() => crm.updateProspectQualificationBriefIfUnchanged(prospect.id, oldQualification, {
+      ...oldQualification, projectSummary: 'Ancien formulaire',
+    })).toThrow(/Conflit/);
+    expect(readProspect(crm, prospect.id).projectSummary).toBe('Demande mise à jour dans Besoins');
+  });
+
+  it('03C qualification : ne bloque pas un budget, une checklist ou un décisionnaire indépendant', () => {
+    const org = crm.createOrganization({ name: 'Qualification indépendante' });
+    const prospect = crm.createProspect({ organizationId: org.id });
+    const snapshot = prospectQualificationBriefSnapshot(readProspect(crm, prospect.id));
+    const project = prospectProjectBriefSnapshot(readProspect(crm, prospect.id));
+    crm.updateProspectProjectBriefIfUnchanged(prospect.id, project, {
+      ...project, budgetStatus: 'known', budgetMinCents: 99000, budgetMaxCents: 99000,
+    });
+    const checklist = '{"version":1,"items":[{"id":"brief","label":"Documents","status":"open","isBlocking":false}]}';
+    crm.updateProspectMissingInformationIfUnchanged(prospect.id, null, checklist);
+    crm.updateProspectQualification(prospect.id, { decisionStatus: 'unknown' });
+    const changed = crm.updateProspectQualificationBriefIfUnchanged(prospect.id, snapshot, {
+      ...snapshot, initialObservation: 'Vitrine existante',
+    });
+    expect(changed.budgetMinCents).toBe(99000);
+    expect(changed.missingInformation).toBe(checklist);
+    expect(changed.decisionStatus).toBe('unknown');
+    expect(changed.initialObservation).toBe('Vitrine existante');
+  });
+
+  it('03C qualification : refuse les fiches closes et annule une erreur SQL', () => {
+    const org = crm.createOrganization({ name: 'Qualification SQL' });
+    const prospect = crm.createProspect({ organizationId: org.id });
+    const initial = prospectQualificationBriefSnapshot(readProspect(crm, prospect.id));
+    database.exec(`CREATE TRIGGER test_qualification_abort BEFORE UPDATE OF initial_observation ON prospects
+      WHEN NEW.id='${prospect.id}' BEGIN SELECT RAISE(ABORT,'fixture qualification refused'); END;`);
+    const before = crm.listActivity('prospect', prospect.id).length;
+    expect(() => crm.updateProspectQualificationBriefIfUnchanged(prospect.id, initial, {
+      ...initial, initialObservation: 'Ne pas écrire',
+    })).toThrow(/fixture qualification refused/);
+    expect(prospectQualificationBriefSnapshot(readProspect(crm, prospect.id))).toEqual(initial);
+    expect(crm.listActivity('prospect', prospect.id)).toHaveLength(before);
+    database.exec('DROP TRIGGER test_qualification_abort');
+    crm.convertProspectToClient(prospect.id);
+    expect(() => crm.updateProspectQualificationBriefIfUnchanged(prospect.id, initial, initial))
+      .toThrow(/lecture seule/);
+  });
+
+  it('03C projet : refuse une sauvegarde budget obsolète entre deux fenêtres, puis reprend explicitement', () => {
+    const org = crm.createOrganization({ name: 'Budget deux fenêtres' });
+    const prospect = crm.createProspect({ organizationId: org.id });
+    const secondWindow = new CrmService(database);
+    const initial = prospectProjectBriefSnapshot(readProspect(crm, prospect.id));
+    const inA = { ...initial, projectSummary: 'Site catalogue A', budgetStatus: 'known' as const,
+      budgetMinCents: 69900, budgetMaxCents: 69900, timelineStatus: 'date' as const,
+      targetDate: '2026-12-10' };
+    const inB = { ...initial, projectSummary: 'Site catalogue B', budgetStatus: 'range' as const,
+      budgetMinCents: 10000, budgetMaxCents: 100000 };
+    const first = crm.updateProspectProjectBriefIfUnchanged(prospect.id, initial, inA);
+    expect(first).toMatchObject({ projectSummary: 'Site catalogue A', budgetMinCents: 69900,
+      budgetMaxCents: 69900, timelineStatus: 'date', targetDate: '2026-12-10' });
+    const events = crm.listActivity('prospect', prospect.id).length;
+    expect(() => secondWindow.updateProspectProjectBriefIfUnchanged(prospect.id, initial, inB)).toThrow(/Conflit/);
+    expect(crm.listActivity('prospect', prospect.id)).toHaveLength(events);
+    expect(readProspect(crm, prospect.id).projectSummary).toBe('Site catalogue A');
+    const fresh = prospectProjectBriefSnapshot(readProspect(secondWindow, prospect.id));
+    const changed = secondWindow.updateProspectProjectBriefIfUnchanged(prospect.id, fresh, { ...fresh,
+      projectContext: 'Cadrage adapté après relecture', existingStatus: 'yes', existingUrl: 'https://atelier.test',
+    });
+    expect(changed).toMatchObject({ projectSummary: 'Site catalogue A', projectContext: 'Cadrage adapté après relecture',
+      budgetMinCents: 69900, existingUrl: 'https://atelier.test' });
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('03C projet : budget et calendrier ne détruisent pas la checklist modifiée indépendamment', () => {
+    const org = crm.createOrganization({ name: 'Projet et checklist indépendants' });
+    const prospect = crm.createProspect({ organizationId: org.id });
+    const initial = prospectProjectBriefSnapshot(readProspect(crm, prospect.id));
+    const checklist = '{"version":1,"items":[{"id":"domain","label":"Domaine","status":"resolved","isBlocking":false}]}';
+    crm.updateProspectMissingInformationIfUnchanged(prospect.id, null, checklist);
+    const changed = new CrmService(database).updateProspectProjectBriefIfUnchanged(prospect.id, initial, {
+      ...initial, projectContext: 'Site e-commerce',
+      budgetStatus: 'range', budgetMinCents: 30000, budgetMaxCents: 50000,
+      timelineStatus: 'note', timelineNote: 'Printemps',
+    });
+    expect(changed.missingInformation).toBe(checklist);
+    expect(changed).toMatchObject({ projectContext: 'Site e-commerce', budgetMinCents: 30000,
+      budgetMaxCents: 50000, timelineNote: 'Printemps' });
+  });
+
+  it('03C projet : une erreur SQLite annule tous les champs et aucune activité fantôme', () => {
+    const org = crm.createOrganization({ name: 'Projet rejeté SQL' });
+    const prospect = crm.createProspect({ organizationId: org.id });
+    const initial = prospectProjectBriefSnapshot(readProspect(crm, prospect.id));
+    database.exec(`CREATE TRIGGER test_project_brief_abort BEFORE UPDATE OF budget_min_cents ON prospects
+      WHEN NEW.id='${prospect.id}' BEGIN SELECT RAISE(ABORT,'fixture brief rollback'); END;`);
+    const before = crm.listActivity('prospect', prospect.id).length;
+    expect(() => crm.updateProspectProjectBriefIfUnchanged(prospect.id, initial, {
+      ...initial, projectSummary: 'Nouveau contexte', budgetMinCents: 25000, budgetMaxCents: 50000,
+    })).toThrow(/fixture brief rollback/);
+    expect(prospectProjectBriefSnapshot(readProspect(crm, prospect.id))).toEqual(initial);
+    expect(crm.listActivity('prospect', prospect.id)).toHaveLength(before);
+    database.exec('DROP TRIGGER test_project_brief_abort');
+    expect(() => crm.updateProspectProjectBriefIfUnchanged(prospect.id, initial, {
+      ...initial, budgetMinCents: 50000, budgetMaxCents: 20000,
+    })).toThrow(/budget minimum/);
+  });
+
+  it('03C projet : protège les fiches converties ou archivées', () => {
+    const org = crm.createOrganization({ name: 'Projet converti' });
+    const prospect = crm.createProspect({ organizationId: org.id });
+    const old = prospectProjectBriefSnapshot(readProspect(crm, prospect.id));
+    crm.convertProspectToClient(prospect.id);
+    expect(() => crm.updateProspectProjectBriefIfUnchanged(prospect.id, old, {
+      ...old, projectSummary: 'À ne pas écrire',
+    })).toThrow(/lecture seule/);
+    const org2 = crm.createOrganization({ name: 'Projet archivé' });
+    const archived = crm.createProspect({ organizationId: org2.id });
+    const snap = prospectProjectBriefSnapshot(readProspect(crm, archived.id));
+    database.run('UPDATE prospects SET archived_at=? WHERE id=?', [new Date().toISOString(), archived.id]);
+    expect(() => crm.updateProspectProjectBriefIfUnchanged(archived.id, snap, {
+      ...snap, projectSummary: 'À ne pas écrire',
+    })).toThrow(/lecture seule/);
+  });
+
+  it('03C multifenêtre : refuse un snapshot ancien sans perdre les modifications de l’autre fenêtre', () => {
+    const org = crm.createOrganization({ name: 'Deux fenêtres' });
+    const prospect = crm.createProspect({ organizationId: org.id });
+    const secondWindow = new CrmService(database);
+    const snapshotA = readProspect(crm, prospect.id).missingInformation ?? null;
+    const snapshotB = readProspect(secondWindow, prospect.id).missingInformation ?? null;
+    const first = '{"version":1,"items":[{"id":"one","label":"Accès DNS","status":"open","isBlocking":true}]}';
+    const stale = '{"version":1,"items":[{"id":"two","label":"Identifiants","status":"open","isBlocking":true}]}';
+
+    crm.updateProspectMissingInformationIfUnchanged(prospect.id, snapshotA, first);
+    const eventsBeforeConflict = crm.listActivity('prospect', prospect.id).length;
+    expect(() => secondWindow.updateProspectMissingInformationIfUnchanged(prospect.id, snapshotB, stale))
+      .toThrow(/Conflit/);
+    expect(readProspect(crm, prospect.id).missingInformation).toBe(first);
+    expect(crm.listActivity('prospect', prospect.id)).toHaveLength(eventsBeforeConflict);
+    const latest = readProspect(secondWindow, prospect.id).missingInformation ?? null;
+    const explicit = secondWindow.updateProspectMissingInformationIfUnchanged(prospect.id, latest, stale);
+    expect(explicit.missingInformation).toBe(stale);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('03C multifenêtre : ne confond pas une édition du budget avec un conflit de checklist', () => {
+    const org = crm.createOrganization({ name: 'Champs indépendants' });
+    const prospect = crm.createProspect({ organizationId: org.id });
+    const snapshot = readProspect(crm, prospect.id).missingInformation ?? null;
+    const secondWindow = new CrmService(database);
+    secondWindow.updateProspectQualification(prospect.id, { projectSummary: 'Site avec calendrier spécifique' });
+    const saved = crm.updateProspectMissingInformationIfUnchanged(prospect.id, snapshot,
+      '{"version":1,"items":[{"id":"budget","label":"Montant","status":"open","isBlocking":true}]}');
+    expect(saved.projectSummary).toBe('Site avec calendrier spécifique');
+    expect(saved.missingInformation).toContain('"id":"budget"');
+    expect(readProspect(secondWindow, prospect.id).projectSummary).toBe('Site avec calendrier spécifique');
+  });
+
+  it('03C multifenêtre : bloque les écritures sur Prospect converti ou archivé', () => {
+    const org = crm.createOrganization({ name: 'Statut non éditable' });
+    const converted = crm.createProspect({ organizationId: org.id });
+    crm.convertProspectToClient(converted.id);
+    expect(() => crm.updateProspectMissingInformationIfUnchanged(converted.id, null, 'une note'))
+      .toThrow(/lecture seule/);
+    const otherOrg = crm.createOrganization({ name: 'Prospect archivé' });
+    const archived = crm.createProspect({ organizationId: otherOrg.id });
+    database.run('UPDATE prospects SET archived_at=? WHERE id=?', [new Date().toISOString(), archived.id]);
+    expect(() => crm.updateProspectMissingInformationIfUnchanged(archived.id, null, 'une note'))
+      .toThrow(/lecture seule/);
+  });
+
+  it('03C.5 : crée et rattache le contact principal dans une transaction idempotente, même après reprise du service', () => {
+    const organization = crm.createOrganization({ name: 'Atelier prospect 03C' });
+    const prospect = crm.createProspect({ organizationId: organization.id, primaryNeed: 'Site vitrine' });
+    const input = { organizationId: organization.id, firstName: 'Camille', lastName: 'Exemple', jobTitle: 'Gérante' };
+
+    const created = crm.createAndAttachPrimaryProspectContact(prospect.id, input);
+    expect(crm.listProspects({ includeArchived: true }).find(item => item.id === prospect.id)?.contactId).toBe(created.id);
+    // Même si le renderer n'a pas reçu la réponse IPC et relance l'action.
+    const reloadedService = new CrmService(database);
+    expect(reloadedService.createAndAttachPrimaryProspectContact(prospect.id, input).id).toBe(created.id);
+    expect(database.get<{ count: number }>('SELECT count(*) AS count FROM contacts')?.count).toBe(1);
+    expect(database.get<{ count: number }>("SELECT count(*) AS count FROM activity_events WHERE action='primary_contact_attached' AND prospect_id=?", [prospect.id])?.count).toBe(1);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('03C.5 : une erreur de rattachement annule la création du contact et ses événements', () => {
+    const organization = crm.createOrganization({ name: 'Transaction refusée 03C' });
+    const prospect = crm.createProspect({ organizationId: organization.id });
+    database.exec(`CREATE TRIGGER test_reject_primary_attach BEFORE UPDATE OF contact_id ON prospects
+      WHEN NEW.id='${prospect.id}' BEGIN SELECT RAISE(ABORT,'fixture refuses attach'); END;`);
+    expect(() => crm.createAndAttachPrimaryProspectContact(prospect.id, {
+      organizationId: organization.id, firstName: 'Sam', lastName: 'Essai',
+    })).toThrow(/fixture refuses attach/);
+    expect(database.get<{ count: number }>('SELECT count(*) AS count FROM contacts')?.count).toBe(0);
+    expect(database.get<{ count: number }>("SELECT count(*) AS count FROM activity_events WHERE entity_type='contact'")?.count).toBe(0);
+    expect(crm.listProspects({ includeArchived: true }).find(item => item.id === prospect.id)?.contactId).toBeFalsy();
+    database.exec('DROP TRIGGER test_reject_primary_attach;');
+    const recovered = crm.createAndAttachPrimaryProspectContact(prospect.id, {
+      organizationId: organization.id, firstName: 'Sam', lastName: 'Essai',
+    });
+    expect(recovered.id).toBeTruthy();
+    expect(database.get<{ count: number }>('SELECT count(*) AS count FROM contacts')?.count).toBe(1);
+  });
+
+  it('03C.5 : le décisionnaire est rattaché atomiquement, sans doubler le Contact après relance', () => {
+    const organization = crm.createOrganization({ name: 'Décideur atomique 03C' });
+    const prospect = crm.createProspect({ organizationId: organization.id });
+    const input = { organizationId: organization.id, firstName: 'Robin', lastName: 'Décision', jobTitle: 'Direction' };
+    const first = crm.createAndAttachDecisionProspectContact(prospect.id, input);
+    expect(crm.listProspects({ includeArchived: true }).find(item => item.id === prospect.id)?.decisionMakerContactId).toBe(first.id);
+    expect(crm.listProspects({ includeArchived: true }).find(item => item.id === prospect.id)?.decisionStatus).toBe('no');
+    const replay = new CrmService(database).createAndAttachDecisionProspectContact(prospect.id, { ...input, lastName: 'Autre' });
+    expect(replay.id).toBe(first.id);
+    expect(replay.lastName).toBe('Décision');
+    expect(database.get<{ count: number }>('SELECT count(*) AS count FROM contacts')?.count).toBe(1);
+    expect(database.get<{ count: number }>("SELECT count(*) AS count FROM activity_events WHERE action='decision_contact_attached' AND prospect_id=?", [prospect.id])?.count).toBe(1);
+  });
+
+  it('03C.5 : annule la création du décisionnaire quand le lien SQLite échoue', () => {
+    const organization = crm.createOrganization({ name: 'Décideur refusé 03C' });
+    const prospect = crm.createProspect({ organizationId: organization.id });
+    database.exec(`CREATE TRIGGER test_reject_decision_attach BEFORE UPDATE OF decision_maker_contact_id ON prospects
+      WHEN NEW.id='${prospect.id}' BEGIN SELECT RAISE(ABORT,'fixture refuses decision attach'); END;`);
+    expect(() => crm.createAndAttachDecisionProspectContact(prospect.id, {
+      organizationId: organization.id, firstName: 'Robin', lastName: 'Décision',
+    })).toThrow(/fixture refuses decision attach/);
+    expect(database.get<{ count: number }>('SELECT count(*) AS count FROM contacts')?.count).toBe(0);
+    expect(database.get<{ count: number }>("SELECT count(*) AS count FROM activity_events WHERE entity_type='contact'")?.count).toBe(0);
+    expect(crm.listProspects({ includeArchived: true }).find(item => item.id === prospect.id)?.decisionMakerContactId).toBeFalsy();
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('03C.5 : refuse un contact d’une autre organisation et réutilise celui déjà lié sans l’écraser', () => {
+    const organization = crm.createOrganization({ name: 'Organisation correcte 03C' });
+    const other = crm.createOrganization({ name: 'Autre organisation 03C' });
+    const prospect = crm.createProspect({ organizationId: organization.id });
+    expect(() => crm.createAndAttachPrimaryProspectContact(prospect.id, {
+      organizationId: other.id, firstName: 'Faux', lastName: 'Contact',
+    })).toThrow(/même organisation/);
+    expect(database.get<{ count: number }>('SELECT count(*) AS count FROM contacts')?.count).toBe(0);
+    const created = crm.createAndAttachPrimaryProspectContact(prospect.id, {
+      organizationId: organization.id, firstName: 'Alex', lastName: 'Initial',
+    });
+    const reused = crm.createAndAttachPrimaryProspectContact(prospect.id, {
+      organizationId: organization.id, firstName: 'Alex', lastName: 'Autre saisie',
+    });
+    expect(reused.id).toBe(created.id);
+    expect(reused.lastName).toBe('Initial');
+    expect(database.get<{ count: number }>('SELECT count(*) AS count FROM contacts')?.count).toBe(1);
+  });
+
   it('conserve une absence explicite de site sans fausse URL ni migration',()=>{
     const organization=crm.createOrganization({name:'TEST fixture sans site',website:null});
     const prospect=crm.createProspect({organizationId:organization.id,primaryNeed:'Création de site'});

@@ -711,6 +711,37 @@ table td {
   color: var(--text) !important;
 }
 
+/* Final combined recipe: legacy !important white fields conflicted with the
+   shared dark text-fill. Keep existing layout/business tints; theme both inks. */
+:root[data-theme='noir'] :is(.prospect-detail-v2, .client-summary-panel) :is(input, select, textarea) {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  -webkit-text-fill-color: var(--text);
+  border-color: var(--border) !important;
+  color-scheme: dark;
+}
+:root[data-theme='noir'] .prospect-detail-v2 .missing-action > span { color: var(--text); }
+:root[data-theme='noir'] .prospect-detail-v2 .activity-journal :is(span, small, strong, p) { color: var(--text); }
+:root[data-theme='noir'] .prospect-detail-v2 :is(.prospect-work-section, .prospect-quote-panel, .workflow-fields) :is(p, span, strong, label, legend, h2, h3) {
+  color: var(--text);
+}
+:root[data-theme='noir'] .prospect-detail-v2 :is(.prospect-work-section, .prospect-quote-panel) :is(h2, h3, legend) {
+  color: var(--business-ink) !important;
+}
+/* Scope the measured action contrast correction to the panels under review. */
+:root :is(.prospect-detail-v2, .quote-detail-panel, .global-timer) .primary-button {
+  background: var(--accent-strong);
+  color: #fff;
+  -webkit-text-fill-color: currentColor;
+}
+:root[data-theme='atoumweb'] :is(.prospect-detail-v2, .quote-detail-panel, .global-timer) .primary-button {
+  background: color-mix(in srgb, var(--accent-strong) 97%, #000);
+  color: #fff;
+}
+:root[data-theme='noir'] :is(.prospect-detail-v2, .quote-detail-panel, .global-timer) .primary-button {
+  color: #18212b;
+}
+
 :root[data-theme='noir'] .client-relationship-excellent {
   --business-color: #55b98b;
   --business-ink: var(--aw-status-green-fg);

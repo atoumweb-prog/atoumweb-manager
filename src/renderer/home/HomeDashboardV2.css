@@ -1,0 +1,18 @@
+/* Preserve legacy cards, apply the existing global functional text floor after legacy media rules. */
+.home-dashboard :is(button, small, summary, label, .home-pipeline-label, .home-pipeline-step, .home-pipeline-footer, .home-kpi-copy > strong, .home-watch-copy strong, .home-card-title strong, .home-card-title span, .home-today-copy strong, .eyebrow) {
+  font-size: var(--ui-font-small, 14px);
+}
+.home-dashboard button {min-height:var(--ui-control-height,36px);}
+.home-widget-settings,.home-source-status {font-size:var(--ui-font-small,14px);}
+.home-critical-alerts {display:flex;flex-wrap:wrap;align-items:center;}
+.home-critical-alerts > strong {flex:1 1 240px;}
+.home-critical-alerts > button {
+  flex:1 1 260px;
+  background:var(--surface-soft);
+  color:var(--text);
+  border:1px solid var(--border);
+  border-radius:9px;
+  padding:9px 12px;
+  cursor:pointer;
+}
+.home-dashboard .home-kpi-copy small {display:block;white-space:normal;overflow:visible;text-overflow:clip;-webkit-line-clamp:unset;}

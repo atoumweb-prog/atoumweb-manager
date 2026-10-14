@@ -1,3 +1,4 @@
+import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { useEffect, useMemo, useState } from 'react';
 import type { CatalogItemSummary } from '../../shared/commercial';
 import type { ClientSummary } from '../../shared/crm';
@@ -47,13 +48,15 @@ function packNeedsAttention(pack: HourPack): boolean {
   return pack.balanceSeconds <= 3600 || pack.balanceSeconds / pack.purchasedSeconds <= 0.2;
 }
 
-export function HourPacksPanel({ clients, projects, interventions, onMessage, onOperationsChanged, initialPackId }: {
+export function HourPacksPanel({ onEntityReady, initialRequest, clients, projects, interventions, onMessage, onOperationsChanged, initialPackId }: {
   clients: ClientSummary[];
   projects: ProjectSummary[];
   interventions: Intervention[];
   onMessage: (message: string) => void;
   onOperationsChanged: () => Promise<void>;
   initialPackId?: string | null;
+  onEntityReady?:EntityReady;
+  initialRequest?:number;
 }) {
   const [packs, setPacks] = useState<HourPack[]>([]);
   const [catalogPacks, setCatalogPacks] = useState<CatalogItemSummary[]>([]);
@@ -96,6 +99,7 @@ export function HourPacksPanel({ clients, projects, interventions, onMessage, on
         setDetailExpanded(false);
       }
     } catch (error) {
+      if(initialPackId)onEntityReady?.('hour_pack',initialPackId,error instanceof Error?error.message:'Impossible de charger les packs d’heures.');
       onMessage(error instanceof Error ? error.message : 'Impossible de charger les packs d’heures.');
     }
   }
@@ -103,9 +107,11 @@ export function HourPacksPanel({ clients, projects, interventions, onMessage, on
   useEffect(() => { void refresh(); }, []);
   useEffect(() => {
     if (initialPackId) setSelectedId(initialPackId);
-  }, [initialPackId]);
+  }, [initialPackId,initialRequest]);
 
   const selected = packs.find((pack) => pack.id === selectedId) ?? null;
+  useSearchTargetConfirmation('hour_pack',selected?.id,false,onEntityReady);
+
   const clientProjects = projects.filter((project) => project.clientAccountId === clientId && project.status !== 'archived');
   const activePacks = packs.filter((pack) => pack.status === 'active');
   const attentionPacks = packs.filter(packNeedsAttention);

@@ -260,7 +260,7 @@ export class QuoteService {
       );
       this.database.run('UPDATE quotes SET contract_parameters_json=? WHERE id=?',[JSON.stringify(emptyContractParameters(contractAudience,depositPercent)),id]);
       this.writeActivity(id, 'quote_created', `Devis ${number} créé`);
-      if (input.prospectId) this.database.run("UPDATE prospects SET stage='quote_to_prepare',updated_at=? WHERE id=? AND stage NOT IN ('won','lost')", [nowString, input.prospectId]);
+      if (input.prospectId) this.database.run("UPDATE prospects SET stage='quote_to_prepare',updated_at=? WHERE id=? AND stage NOT IN ('new','won','lost')", [nowString, input.prospectId]);
       if (!withinTransaction) this.database.exec('COMMIT;');
     } catch (error) {
       if (!withinTransaction) this.database.exec('ROLLBACK;');
@@ -589,6 +589,74 @@ export class QuoteService {
     } catch(error) {this.database.exec('ROLLBACK TO quote_finalization; RELEASE quote_finalization;');throw error;}
   }
 
+  /** E73 : seule la révision commerciale courante peut porter un accord actif. */
+  private assertCurrentAgreementRevision(quoteId: string): number | null {
+    const row = this.database.get<{ current_quote_id: string; revision_number: number }>(
+      `SELECT d.current_quote_id, r.revision_number
+       FROM commercial_quote_revisions r
+       JOIN commercial_project_dossiers d ON d.id=r.dossier_id
+       WHERE r.quote_id=?`, [quoteId],
+    );
+    if (row && row.current_quote_id !== quoteId) {
+      throw new Error('Une révision plus récente du devis existe : utiliser le devis commercial courant.');
+    }
+    return row?.revision_number ?? null;
+  }
+
+  private activePrincipleAgreementAt(quoteId: string): string | null {
+    const current = this.database.get<{current_quote_id:string}>(
+      `SELECT d.current_quote_id FROM commercial_quote_revisions r
+       JOIN commercial_project_dossiers d ON d.id=r.dossier_id WHERE r.quote_id=?`, [quoteId],
+    );
+    if (current && current.current_quote_id !== quoteId) return null;
+    const event = this.database.get<{ action: string; created_at: string }>(
+      `SELECT action,created_at FROM activity_events
+       WHERE entity_type='quote' AND entity_id=?
+         AND action IN ('principle_agreement_confirmed','principle_agreement_revoked')
+       ORDER BY rowid DESC LIMIT 1`, [quoteId],
+    );
+    return event?.action === 'principle_agreement_confirmed' ? event.created_at : null;
+  }
+
+  private recordPrincipleAgreement(quoteId: string, prospectId: string, action: 'principle_agreement_confirmed' | 'principle_agreement_revoked', revision: number | null): void {
+    this.database.run(
+      `INSERT INTO activity_events
+       (id,entity_type,entity_id,action,summary,metadata_json,prospect_id,created_at)
+       VALUES (?,?,?,?,?,?,?,?)`,
+      [randomUUID(),'quote',quoteId,action,
+        action === 'principle_agreement_confirmed' ? 'Accord de principe confirmé ; signature en attente' : 'Accord de principe annulé',
+        JSON.stringify({ quoteId, commercialRevision: revision, kind: 'pre_signature', signatureConfirmed: false }),
+        prospectId,nowIso()],
+    );
+  }
+
+  confirmPrincipleAgreement(id: string): QuoteDetail {
+    const quote = this.get(id);
+    const revision = this.assertCurrentAgreementRevision(id);
+    if (!quote.prospectId || quote.clientAccountId || quote.acceptedClientAccountId) throw new Error('Accord de principe réservé à un Prospect non converti.');
+    if (!['sent','viewed'].includes(quote.status)) throw new Error('Le devis doit avoir été envoyé avant de confirmer un accord de principe.');
+    if (!quote.lines.length) throw new Error('Un devis vide ne peut pas recevoir d’accord de principe.');
+    const prospect = this.database.get<{stage:string;archived_at:string|null;client_account_id:string|null}>(
+      'SELECT stage,archived_at,client_account_id FROM prospects WHERE id=?',[quote.prospectId],
+    );
+    if (!prospect || prospect.archived_at || prospect.client_account_id || ['new','won','lost'].includes(prospect.stage)) {
+      throw new Error('Le Prospect doit être actif et non converti pour enregistrer son accord.');
+    }
+    if (quote.principleAgreementAt) return quote;
+    this.recordPrincipleAgreement(id,quote.prospectId,'principle_agreement_confirmed',revision);
+    return this.get(id);
+  }
+
+  revokePrincipleAgreement(id: string): QuoteDetail {
+    const quote = this.get(id);
+    const revision = this.assertCurrentAgreementRevision(id);
+    if (!quote.prospectId) throw new Error('Le devis n’est pas lié à un Prospect.');
+    if (!quote.principleAgreementAt) return quote;
+    if (!['sent','viewed'].includes(quote.status)) throw new Error('Un accord déjà signé ou clôturé ne peut plus être annulé ici.');
+    this.recordPrincipleAgreement(id,quote.prospectId,'principle_agreement_revoked',revision);
+    return this.get(id);
+  }
+
   extendValidity(id: string, validUntil: string): QuoteDetail {
     const quote = this.get(id);
     const date = new Date(validUntil);
@@ -900,6 +968,7 @@ export class QuoteService {
   private mapSummary(row: QuoteRow): QuoteSummary {
     return {
       projectId: this.projectLifecycle?.findProject(row.id) ?? row.project_id as string | null,
+      principleAgreementAt: ['sent', 'viewed'].includes(row.status) ? this.activePrincipleAgreementAt(row.id) : null,
       id: row.id,
       number: row.quote_number,
       prospectId: row.prospect_id,

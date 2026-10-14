@@ -2,6 +2,8 @@ import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { useEffect, useMemo, useState } from 'react';
 import type { QuoteDetail, QuoteSummary } from '../../shared/commercial';
 import type { CrmAction, ProspectSummary } from '../../shared/crm';
+import { canAccessQuoteProject } from '../../shared/quoteProjectEligibility';
+import { QuoteProjectPanel } from '../workflow/QuoteWorkflow';
 
 const QUOTE_LABELS: Record<string, string> = {
   draft: 'Brouillon', sent: 'Envoyé', viewed: 'Vu', accepted: 'Accepté / signé', refused: 'Refusé', expired: 'Caduc', cancelled: 'Annulé',
@@ -202,7 +204,7 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
   }
 
   async function accept() {
-    if (!quote) return;
+    if (!quote || !window.confirm(`Confirmer que le devis ${quote.number} a réellement été accepté / signé dans Abby ?\n\nCette action déclenche la conversion du Prospect en Client. Un simple accord de principe ne suffit pas.`)) return;
     await run(() => window.atoumweb.quotes.accept(quote.id), 'Devis accepté / signé : le prospect est converti ou rattaché au client.');
   }
 
@@ -247,6 +249,21 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
     {sent && latestDispatch?.completionNotes && <p className="muted">Note d’envoi : {latestDispatch.completionNotes}</p>}
     {sent && remaining != null && remaining >= 0 && remaining <= 7 && <div className="quote-validity-alert"><strong>Le devis arrive à expiration dans {remaining} jour{remaining > 1 ? 's' : ''}.</strong><span>Une relance est recommandée avant la fin de sa validité.</span></div>}
     {error && <p className="form-error">{error}</p>}
+    {sent && <div className="prospect-principle-agreement" aria-label="Accord de principe avant signature">
+      {quote.principleAgreementAt ? <>
+        <p role="status"><strong>Finalisation — accord de principe confirmé</strong> · {new Date(quote.principleAgreementAt).toLocaleString('fr-FR')}. La signature Abby reste à confirmer séparément.</p>
+        <button className="secondary-button" type="button" disabled={busy} onClick={() => {
+          if (!window.confirm('Annuler l’accord de principe enregistré pour ce devis ? La trace restera dans l’historique.')) return;
+          void run(() => window.atoumweb.quotes.revokePrincipleAgreement(quote.id), 'Accord de principe annulé : retour au suivi commercial.');
+        }}>Annuler l’accord de principe</button>
+      </> : <>
+        <p>Accord de principe obtenu ? Il permet de suivre les dernières formalités sans signer le devis ni convertir le Prospect.</p>
+        <button className="secondary-button" type="button" disabled={busy} onClick={() => {
+          if (!window.confirm(`Confirmer l’accord de principe pour le devis ${quote.number} ?\n\nCela ne vaut pas signature, acceptation Abby ni conversion en Client.`)) return;
+          void run(() => window.atoumweb.quotes.confirmPrincipleAgreement(quote.id), 'Accord de principe confirmé : signature encore attendue.');
+        }}>Accord de principe confirmé</button>
+      </>}
+    </div>}
 
     {canEdit && !isFinalized && <><div className="quote-command-actions"><button className="secondary-button" type="button" disabled={busy} onClick={() => openQuote(quote)}>Modifier le brouillon</button><button className="secondary-button" type="button" disabled={busy} onClick={() => setPauseOpen((value) => !value)}>Info manquante / mettre en pause</button><button className="primary-button" type="button" disabled={busy} onClick={() => void finalize()}>Valider le devis pour envoi</button></div>{pauseOpen && <div className="inline-editor"><strong>Complément nécessaire avant validation</strong><label>Motif<select value={pauseReason} onChange={(e) => setPauseReason(e.target.value)} disabled={busy}>{PAUSE_REASONS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>{pauseReason === 'other' && <label>Préciser<input value={pauseOther} onChange={(e) => setPauseOther(e.target.value)} disabled={busy} /></label>}<label>Note<textarea value={pauseNote} onChange={(e) => setPauseNote(e.target.value)} placeholder="Ce qu’il faut récupérer ou vérifier" disabled={busy} /></label><div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => setPauseOpen(false)}>Annuler</button><button className="primary-button" type="button" disabled={busy} onClick={() => void pauseQuote()}>Enregistrer l’action</button></div></div>}</>}
 
@@ -260,5 +277,6 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
 
     {quote.status === 'refused' && <div className="quote-refused-state"><strong>Ce devis a été refusé.</strong><span>Le dossier commercial reste distinct : utilise la relance / attente si l’opportunité continue, ou le bouton « Perdu » de la fiche si tu décides de clôturer le prospect.</span></div>}
     {quotes.length > 1 && <details className="previous-quotes"><summary>Voir les {quotes.length - 1} ancien(s) devis</summary>{quotes.slice(1).map((item) => <button type="button" className="workflow-link" key={item.id} onClick={() => openQuote(item)}>{item.number} · {item.subject} · {QUOTE_LABELS[item.status] ?? item.status}</button>)}</details>}
+    {canAccessQuoteProject(quote) && <div className="prospect-quote-project-workflow"><QuoteProjectPanel key={'prospect-project:'+quote.id} quote={quote} requirePreviewBeforePrepare /></div>}
   </section>;
 }
