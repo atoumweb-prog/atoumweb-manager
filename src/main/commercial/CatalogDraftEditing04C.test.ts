@@ -74,6 +74,24 @@ describe('04C / E99-E102 — sauvegarde contrôlée des versions brouillon', () 
     expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
+  it('ne republie jamais une version déjà publiée ou retirée et préserve son horodatage initial', () => {
+    const item=catalog.create({type:'service',name:'Audit de maintenance'},{
+      priceMode:'fixed',priceCents:14900,
+    });
+    const first=catalog.publishVersion(item.versions[0].id);
+    expect(first.publishedAt).toBeTruthy();
+    expect(()=>catalog.publishVersion(first.id)).toThrow(/Seule une version brouillon/);
+    expect(catalog.getItem(item.id).versions.find(v=>v.id===first.id)?.publishedAt).toBe(first.publishedAt);
+    const second=catalog.createVersion(item.id,{priceMode:'fixed',priceCents:15900});
+    catalog.publishVersion(second.id);
+    const historical=catalog.getItem(item.id).versions.find(v=>v.id===first.id)!;
+    expect(historical.status).toBe('retired');
+    expect(()=>catalog.publishVersion(first.id)).toThrow(/Seule une version brouillon/);
+    expect(catalog.getItem(item.id).versions.find(v=>v.id===first.id)?.publishedAt).toBe(first.publishedAt);
+    expect(catalog.getItem(item.id).currentVersion?.id).toBe(second.id);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
   it('rejette une modification commerciale invalide en conservant la version et ses liens', () => {
     const service=catalog.create({type:'service',name:'Formation'},{
       priceMode:'fixed',priceCents:9900,
