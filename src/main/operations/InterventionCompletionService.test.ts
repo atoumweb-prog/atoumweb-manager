@@ -3,6 +3,7 @@ import { BillingHandoffService } from '../billing/BillingHandoffService';
 import { CrmService } from '../crm/CrmService';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
+import { TimeCorrectionService } from '../time/TimeCorrectionService';
 import { TimeService } from '../time/TimeService';
 import { HourPackService } from './HourPackService';
 import { InterventionCompletionService } from './InterventionCompletionService';
@@ -170,6 +171,27 @@ describe('InterventionCompletionService', () => {
     });
     expect(operations.getIntervention(intervention.id).totalTimeSeconds).toBeGreaterThan(1800);
     completion.complete(intervention.id);
+    const movements = packs.get(pack.id).movements.filter(m => m.type === 'intervention_debit');
+    expect(movements).toHaveLength(1);
+    expect(movements[0].secondsDelta).toBe(-1800);
+    expect(packs.get(pack.id).balanceSeconds).toBe(1800);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('R08A-13 garde le débit historique unique après correction explicite du temps terminé', () => {
+    const { pack, intervention } = packIntervention();
+    completion.complete(intervention.id);
+    const session = database.get<{ id: string }>('SELECT id FROM time_sessions WHERE intervention_id=?', [intervention.id]);
+    expect(session?.id).toBeTruthy();
+    const corrections = new TimeCorrectionService(database, time);
+    corrections.update(session!.id, {
+      interventionId: intervention.id,
+      category: 'support',
+      startedAt: '2026-09-14T08:00:00Z',
+      endedAt: '2026-09-14T09:00:00Z',
+    });
+    expect(operations.getIntervention(intervention.id).totalTimeSeconds).toBe(3600);
+    expect(completion.complete(intervention.id).status).toBe('completed');
     const movements = packs.get(pack.id).movements.filter(m => m.type === 'intervention_debit');
     expect(movements).toHaveLength(1);
     expect(movements[0].secondsDelta).toBe(-1800);
