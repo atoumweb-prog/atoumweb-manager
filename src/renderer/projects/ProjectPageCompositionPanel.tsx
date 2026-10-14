@@ -424,6 +424,7 @@ export function ProjectPageCompositionPanel({
     await withBusy(async () => {
       const next = await window.atoumweb.referentials.compositions.attachToProjectPage(page.id, attachId);
       setComposition(next);
+      clearOrderHistory();
       setMode(null);
       setAttachId('');
       onMessage('Composition existante rattachée à la Page.');
@@ -477,6 +478,7 @@ export function ProjectPageCompositionPanel({
       const target = await ensureComposition();
       const next = await window.atoumweb.referentials.compositions.addItem(target.id, { libraryItemId: created.id });
       setComposition(next);
+      clearOrderHistory();
       setCreateForm(EMPTY_FORM);
       setFullCode('');
       setCodeInputMode('complete');
