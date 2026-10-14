@@ -115,4 +115,37 @@ describe('MaintenanceOverageService', () => {
     expect(items[0].status).toBe('cancelled');
     expect(overages.review(periodId).unresolvedCount).toBe(0);
   });
+
+  it('ne déclasse pas un dépassement déjà facturé après rattachement du PDF Abby', () => {
+    const candidate = overages.review(periodId).candidates[0];
+    operations.changeInterventionStatus(candidate.interventionId, 'completed');
+    overages.decide(periodId, {
+      interventionId: candidate.interventionId,
+      decision: 'bill_out_of_scope',
+      reason: 'À facturer',
+      expectedAmountCents: 7900,
+    });
+    const item = billing.list({ sourceType: 'maintenance_overage' })[0];
+    const now = '2026-10-14T09:00:00.000Z';
+    database.run(
+      `INSERT INTO client_documents
+       (id,client_account_id,category,title,original_name,relative_path,mime_type,size_bytes,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?)`,
+      ['abby-maintenance-invoice', clientId, 'invoice', 'Facture Abby', 'abby.pdf',
+        'Clients/test/Documents/03 Factures/abby.pdf', 'application/pdf', 1200, now, now],
+    );
+    billing.attachInvoice(item.id, 'abby-maintenance-invoice', { reference: 'ABBY-09B', invoicedAt: now });
+    expect(() => overages.decide(periodId, {
+      interventionId: candidate.interventionId,
+      decision: 'commercial_gesture',
+      reason: 'Changement tardif',
+    })).toThrow(/Facture PDF déjà rattachée/);
+    expect(billing.get(item.id)).toMatchObject({
+      status: 'invoiced',
+      invoiceDocumentId: 'abby-maintenance-invoice',
+      invoiceReference: 'ABBY-09B',
+      expectedAmountCents: 7900,
+    });
+  });
+
 });
