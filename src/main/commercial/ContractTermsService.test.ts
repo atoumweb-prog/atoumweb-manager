@@ -1,4 +1,4 @@
-import { finalizeForTest, acceptForTest } from '../testSupport/quotePreparationFixture';
+import { prepareQuoteForTest, finalizeForTest, acceptForTest } from '../testSupport/quotePreparationFixture';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CrmService } from '../crm/CrmService';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
@@ -53,6 +53,18 @@ function createConsumerProspect() {
 }
 
 describe('ContractTermsService', () => {
+  it('05C refuses explicit canonical finalization without approval and keeps quote draft',()=>{
+    publishedClause('REVIEW-REQUIRED','Socle non classé','base','Conditions publiées.');
+    const q=quotes.create({prospectId:prospectId(),subject:'Validation obligatoire'});
+    quotes.addCustomLine(q.id,{label:'Site',proposedUnitPriceCents:69900});
+    prepareQuoteForTest(database,q.id);
+    expect(()=>quotes.finalize(q.id,true)).toThrow(/Classement juridique incomplet/);
+    expect(quotes.get(q.id).finalizedAt).toBeNull();
+    expect(quotes.get(q.id).contractCompiledAt).toBeNull();
+    expect(quotes.get(q.id).contractTextSnapshot).toBeNull();
+    expect(quotes.finalize(q.id).finalizedAt).toBeTruthy();
+  });
+
   it('05C: finalise un devis classé et conserve ses conditions particulières personnalisées', () => {
     const base=publishedClause('REVIEW-BASE','Clauses communes','base','CGV approuvées.');
     const quote=quotes.create({prospectId:prospectId(),subject:'Contrat canonique'});
