@@ -231,6 +231,9 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
         'E225 only one persisted correction after double click');
       test(db.hourPacks.get(pack.id).balanceSeconds===1800,
         'E225 double click debits just 30 minutes, not twice');
+      await wait('document.querySelector(".hour-pack-workbench input[placeholder=\\"Motif obligatoire\\"]")?.value===""',
+        'E225 correction form reset after IPC success');
+
     } finally {
       if(releaseMove)releaseMove();
       ipcMain.removeHandler(moveChannel);
