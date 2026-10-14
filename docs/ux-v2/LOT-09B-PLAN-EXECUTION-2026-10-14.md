@@ -33,3 +33,8 @@ Référentiel de départ : `docs/ux-v2/LOT-09B-FACTURATION-ABBY.md` dans le comm
 - `DatabaseService` injecte `ClientDocumentService.fingerprint` dans `BillingHandoffService` ; toute utilisation du service de production vérifie l'intégrité physique avant de passer à `invoiced`.
 - Une instance de service créée directement en test peut conserver son fonctionnement sans vérificateur ; test explicite ajouté pour le refus par vérification.
 - À évaluer avant clôture : éviter le double contrôle d'empreinte côté IPC et couvrir la transition remplacement/échec par un test complet avec workspace temporaire.
+
+## 09B — Atomicité rattachement / journal
+- `attachInvoice` effectue la mise à jour du statut et l'écriture du journal au sein d'un SAVEPOINT SQLite. Toute erreur de journalisation annule le rattachement et conserve le statut précédent.
+- Régression : trigger SQLite volontairement en échec, vérification du rollback et des clés étrangères.
+- Gate : confirmer les résultats de typecheck/Vitest, Electron et restauration sur CI Windows.
