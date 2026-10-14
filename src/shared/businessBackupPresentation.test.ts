@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { businessBackupLocationActionLabel, businessBackupLocationStatus, filterBusinessBackupAlerts } from './businessBackupPresentation';
+import { businessBackupLocationActionLabel, businessBackupLocationStatus, businessBackupInterventionLinkIssue, filterBusinessBackupAlerts } from './businessBackupPresentation';
 import type { BusinessBackupAlert } from './businessBackupAlerts';
 
 describe('business backups evidence labels', () => {
@@ -23,6 +23,24 @@ describe('business backups evidence labels', () => {
     expect(filterBusinessBackupAlerts(rows, { clientAccountId: 'cA', projectId: 'pC' })).toEqual([]);
     expect(rows).toHaveLength(3);
   });
+  it('empêche un lien hors projet et refuse les fiches pré/post hors chronologie', () => {
+    const intervention = {
+      clientAccountId: 'C1', projectId: 'P1',
+      startedAt: '2026-10-14T10:00:00.000Z', completedAt: '2026-10-14T12:00:00.000Z',
+    };
+    const before = { id: 'B1', clientAccountId: 'C1', projectId: 'P1', backupAt: '2026-10-14T09:00:00.000Z' };
+    const after = { ...before, id: 'B2', backupAt: '2026-10-14T13:00:00.000Z' };
+    expect(businessBackupInterventionLinkIssue(before, intervention, 'pre_intervention')).toBeNull();
+    expect(businessBackupInterventionLinkIssue(after, intervention, 'post_intervention')).toBeNull();
+    expect(businessBackupInterventionLinkIssue(after, intervention, 'pre_intervention')).toMatch(/après le début/);
+    expect(businessBackupInterventionLinkIssue(before, intervention, 'post_intervention')).toMatch(/avant la clôture/);
+    expect(businessBackupInterventionLinkIssue({ ...before, projectId: null }, intervention, 'pre_intervention')).toMatch(/même projet/);
+    expect(businessBackupInterventionLinkIssue({ ...before, projectId: 'P2' }, intervention, 'pre_intervention')).toMatch(/même projet/);
+    expect(businessBackupInterventionLinkIssue({ ...before, backupAt: 'invalid' }, intervention, 'pre_intervention')).toMatch(/non valide/);
+    expect(businessBackupInterventionLinkIssue(before, { ...intervention, projectId: null }, 'pre_intervention')).toBeNull();
+    expect(businessBackupInterventionLinkIssue({ ...before, clientAccountId: 'C2' }, { ...intervention, projectId: null }, 'pre_intervention')).toMatch(/même client/);
+  });
+  
   it('ne présente jamais une confirmation distante comme restauration testée', () => {
     expect(businessBackupLocationStatus({ locationType: 'server', exists: null, verifiedAt: null }))
       .toBe('Emplacement non confirmé');

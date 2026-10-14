@@ -317,3 +317,23 @@ body.business-backups-resizing {
   .business-backups-alert { grid-template-columns: auto minmax(0, 1fr); }
   .business-backups-alert > button { grid-column: 2; justify-self: start; }
 }
+
+/* 10C — association explicite et revue avant/après intervention. */
+.business-backups-interventions { display: grid; gap: 10px; min-width: 0; padding: 14px; }
+.business-backups-interventions > label { display: grid; gap: 5px; min-width: 0; font-size: var(--aw-font-functional, 14px); }
+.business-backups-interventions > label > select { max-width: 100%; min-width: 0; }
+.business-backups-intervention-review { display: grid; gap: 10px; min-width: 0; }
+.business-backups-intervention-evidence { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.business-backups-intervention-evidence > div { display: grid; gap: 4px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); min-width: 0; }
+.business-backups-intervention-evidence strong { font-size: var(--aw-font-functional, 14px); }
+.business-backups-intervention-evidence span, .business-backups-intervention-link > p { color: var(--text-muted); font-size: 12px; overflow-wrap: anywhere; }
+.business-backups-intervention-alerts { display: grid; gap: 7px; }
+.business-backups-intervention-alerts p { margin: 0; padding: 9px; border: 1px solid var(--border); border-radius: 8px; font-size: var(--aw-font-functional, 14px); overflow-wrap: anywhere; }
+.business-backups-intervention-link { display: grid; gap: 8px; }
+.business-backups-intervention-link > p { margin: 0; }
+.business-backups-intervention-link .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.business-backups-intervention-link small { color: var(--text-muted); font-size: 12px; }
+.business-backups-link-confirmation { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border: 1px solid var(--border); background: var(--surface-soft); padding: 10px; border-radius: 10px; }
+.business-backups-link-confirmation > p { flex-basis: 100%; margin: 0; overflow-wrap: anywhere; }
+.business-backups-intervention-error { color: var(--text-muted); margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 620px) { .business-backups-intervention-evidence { grid-template-columns: 1fr; } }

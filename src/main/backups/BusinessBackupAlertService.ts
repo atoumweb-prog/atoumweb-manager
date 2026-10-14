@@ -33,6 +33,7 @@ interface InterventionRow extends Record<string, unknown> {
   intervention_type: string;
   status: string;
   subject: string;
+  started_at: string | null;
   completed_at: string | null;
 }
 
@@ -182,6 +183,21 @@ export class BusinessBackupAlertService {
     } else if (record.clientAccountId !== intervention.client_account_id) {
       throw new Error('La sauvegarde choisie n’appartient pas au client de cette intervention.');
     }
+    const backupAt = new Date(record.backupAt).getTime();
+    if (!Number.isFinite(backupAt)) throw new Error('Date de sauvegarde invalide.');
+    const startedAt = intervention.started_at ? new Date(intervention.started_at).getTime() : NaN;
+    const completedAt = intervention.completed_at ? new Date(intervention.completed_at).getTime() : NaN;
+    if (role === 'pre_intervention' && Number.isFinite(startedAt) && backupAt > startedAt) {
+      throw new Error('La sauvegarde est datée après le début de l’intervention.');
+    }
+    if (role === 'post_intervention' && Number.isFinite(completedAt) && backupAt < completedAt) {
+      throw new Error('La sauvegarde est datée avant la clôture de l’intervention.');
+    }
+    const existingLink = this.database.get<{ id: string }>(
+      'SELECT id FROM backup_intervention_links WHERE backup_record_id=? AND intervention_id=? AND link_role=?',
+      [backupRecordId, interventionId, role],
+    );
+    if (existingLink) return this.reviewIntervention(interventionId);
     this.database.run(
       `INSERT OR IGNORE INTO backup_intervention_links (id,backup_record_id,intervention_id,link_role,created_at)
        VALUES (?,?,?,?,?)`,
@@ -247,7 +263,7 @@ export class BusinessBackupAlertService {
 
   private requireIntervention(id: string): InterventionRow {
     const row = this.database.get<InterventionRow>(
-      `SELECT id,intervention_number,client_account_id,project_id,intervention_type,status,subject,completed_at
+      `SELECT id,intervention_number,client_account_id,project_id,intervention_type,status,subject,started_at,completed_at
        FROM interventions WHERE id=?`,
       [id],
     );
