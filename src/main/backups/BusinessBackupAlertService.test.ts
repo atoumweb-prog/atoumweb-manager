@@ -172,6 +172,38 @@ describe('BusinessBackupAlertService', () => {
     expect(stable.stable).toBe(true);
   });
 
+  it('rejette les références hors chronologie et rend le même lien pré/post idempotent', () => {
+    const { client, project } = createClientProject('Chronologie intervention');
+    const intervention = operations.createIntervention({
+      clientAccountId: client.id,
+      projectId: project.id,
+      type: 'modification',
+      subject: 'Correction métier chronologie',
+    });
+    database.run('UPDATE interventions SET started_at=?,completed_at=? WHERE id=?', [
+      '2026-10-14T10:00:00.000Z', '2026-10-14T12:00:00.000Z', intervention.id,
+    ]);
+    const prior = backups.create({
+      clientAccountId: client.id, projectId: project.id, backupType: 'complete',
+      label: 'Copie déclarée préalable', backupAt: '2026-10-14T09:00:00.000Z',
+    });
+    const later = backups.create({
+      clientAccountId: client.id, projectId: project.id, backupType: 'complete',
+      label: 'Copie déclarée postérieure', backupAt: '2026-10-14T13:00:00.000Z',
+    });
+    expect(() => alerts.linkExisting(intervention.id, later.id, 'pre_intervention')).toThrow(/après le début/);
+    expect(() => alerts.linkExisting(intervention.id, prior.id, 'post_intervention')).toThrow(/avant la clôture/);
+    expect(database.get<{ total: number }>('SELECT COUNT(*) AS total FROM backup_intervention_links WHERE intervention_id=?', [intervention.id])?.total).toBe(0);
+    alerts.linkExisting(intervention.id, prior.id, 'pre_intervention');
+    alerts.linkExisting(intervention.id, prior.id, 'pre_intervention');
+    alerts.linkExisting(intervention.id, later.id, 'post_intervention');
+    alerts.linkExisting(intervention.id, later.id, 'post_intervention');
+    expect(database.get<{ total: number }>('SELECT COUNT(*) AS total FROM backup_intervention_links WHERE intervention_id=?', [intervention.id])?.total).toBe(2);
+    const reviewed = alerts.reviewIntervention(intervention.id);
+    expect(reviewed.preInterventionBackup?.id).toBe(prior.id);
+    expect(reviewed.postInterventionBackup?.id).toBe(later.id);
+  });
+
   it('refuse de lier une sauvegarde provenant d’un autre projet', () => {
     const first = createClientProject('Premier client');
     const second = createClientProject('Second client');
