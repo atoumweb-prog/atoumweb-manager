@@ -69,10 +69,10 @@ if(!process.versions.electron){
  }
 
  if(process.argv.includes('--lot-b')){
+ const other=database.quotes.create({clientAccountId:client.id,subject:'TEST LENT '+theme});
  answers.length=0;await js('window.dispatchEvent(new CustomEvent("atoumweb:open-page",{detail:"Devis"}))');await sleep(120);await js('[...document.querySelectorAll("tbody tr")].find(r=>r.textContent.includes('+JSON.stringify(quote.number)+')).click()');await wait('!!document.querySelector(".quote-contract-preparation input")');
  await input(context,'BACKDROP '+theme);const prior=dialogs.length;await js('const e=document.querySelector(".quote-detail-backdrop");e.dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}));e.click()');check(theme+' backdrop one stay prompt',dialogs.length===prior+1);check(theme+' backdrop stay keeps data',await value(context)==='BACKDROP '+theme);answers.push(1);await js('document.querySelector(".quote-detail-backdrop").click()');await wait('!document.querySelector(".quote-detail-panel")');
  // 06B : A -> B -> A, réponse B retardée au niveau du service utilisé par IPC.
- const other=database.quotes.create({clientAccountId:client.id,subject:'TEST LENT '+theme});
  const originalGet=database.quotes.get.bind(database.quotes);
  let finishSlowGet;
  database.quotes.get=(id,...args)=>id===other.id?new Promise(resolve=>{finishSlowGet=()=>resolve(originalGet(id,...args));}):originalGet(id,...args);
