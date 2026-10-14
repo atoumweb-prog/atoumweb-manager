@@ -231,8 +231,8 @@ export class BillingHandoffService {
 
   attachInvoice(id: string, documentId: string, input: BillingInvoiceInput = {}): BillingItem {
     const current = this.get(id);
-    const document = this.database.get<{ id: string; client_account_id: string; category: string; mime_type: string | null; archived_at: string | null }>(
-      'SELECT id,client_account_id,category,mime_type,archived_at FROM client_documents WHERE id=?',
+    const document = this.database.get<{ id: string; client_account_id: string; category: string; mime_type: string | null; sha256: string | null; archived_at: string | null }>(
+      'SELECT id,client_account_id,category,mime_type,sha256,archived_at FROM client_documents WHERE id=?',
       [documentId],
     );
     if (!document) throw new Error('Facture PDF introuvable.');
@@ -240,6 +240,20 @@ export class BillingHandoffService {
     if (document.category !== 'invoice') throw new Error('Le document doit être classé dans la catégorie Factures.');
     if (document.mime_type !== 'application/pdf') throw new Error('Seuls les fichiers PDF peuvent être rattachés comme factures Abby.');
     if (document.archived_at) throw new Error('Restaure la facture avant de la rattacher.');
+    const alreadyLinked = this.database.get<{ id: string }>(
+      'SELECT id FROM billing_items WHERE invoice_document_id=? AND id<>? LIMIT 1',
+      [documentId, id],
+    );
+    if (alreadyLinked) throw new Error('Cette facture Abby est déjà associée à un autre élément. Le rapprochement multi-sources doit être traité explicitement.');
+    if (document.sha256) {
+      const sameBytes = this.database.get<{ id: string }>(
+        `SELECT bi.id FROM billing_items bi
+         JOIN client_documents cd ON cd.id=bi.invoice_document_id
+         WHERE bi.id<>? AND bi.client_account_id=? AND cd.sha256=? LIMIT 1`,
+        [id, current.clientAccountId, document.sha256],
+      );
+      if (sameBytes) throw new Error('Un PDF Abby identique est déjà associé à un autre élément. Le rapprochement multi-sources doit être traité explicitement.');
+    }
     // Production supplies a workspace-aware verifier; do not attest tampered or missing PDF bytes.
     this.verifyInvoiceDocument?.(documentId);
 
