@@ -18,7 +18,7 @@ const cases=[
  ['Project return only restores existing nodes',project.includes('const availableNodes = new Set(next.nodes.map(node => node.id))') && project.includes('availableNodes.has(returnContext.selectedNodeId)')],
  ['Project return retains production tree state',project.includes('returnContext?.projectId === id ? returnContext.productionTreeCollapsed : false')],
  ['Site/Page selection captured with Project return context',project.includes('sitesViewContext } } }))') && project.includes('onViewContextChange={setSitesViewContext}')],
- ['Site/Page view restores only existing Site and Page identities',sites.includes('initialViewContext?.selectedSiteId ?? null') && sites.includes('initialViewContext?.selectedPageId ?? null') && sites.includes('const siteStillExists') && sites.includes('const pageStillExists')],
+ ['Site/Page view restores only existing or freshly created identities',sites.includes('initialViewContext?.selectedSiteId ?? null') && sites.includes('initialViewContext?.selectedPageId ?? null') && sites.includes('current && nextSites.some(site => site.id === current)') && sites.includes('current && knownPageIds.has(current)')],
  ['Site/Page and timer mutations share same-tick concurrency gate',sites.includes('if (mutationPending.current) return false;') && (sites.match(/if \(!beginMutation\(\)\) return;/g) ?? []).length === 7],
  ['Late Site/Page RPC response ignored after new request',sites.includes('if (requestId !== siteRefreshEpoch.current) return;')],
  ['Late chrono RPC response ignored after new request',sites.includes('if (requestId !== timeRefreshEpoch.current) return;')],
