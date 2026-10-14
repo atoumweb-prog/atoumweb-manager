@@ -54,6 +54,7 @@ export function MaintenancePanel({ onEntityReady, initialRequest, clients, proje
   const [createPlanOpen, setCreatePlanOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const creationPending = useRef(false);
+  const periodsLoadGeneration = useRef(0);
 
   const [clientId, setClientId] = useState('');
   const [projectId, setProjectId] = useState('');
@@ -110,20 +111,36 @@ export function MaintenancePanel({ onEntityReady, initialRequest, clients, proje
   }
 
   async function loadPeriods(subscriptionId: string): Promise<void> {
+    const generation = ++periodsLoadGeneration.current;
     if (!subscriptionId) { setPeriods([]); setSelectedPeriodId(''); return; }
     try {
       const next = await window.atoumweb.operations.maintenance.periods.list(subscriptionId);
+      // Une réponse de la souscription A ne peut plus remplacer les périodes de B.
+      if (generation !== periodsLoadGeneration.current) return;
       setPeriods(next);
       setSelectedPeriodId((current) => next.some((period) => period.id === current) ? current : next[0]?.id ?? '');
     } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible de charger les périodes.');
+      if (generation === periodsLoadGeneration.current) {
+        onMessage(error instanceof Error ? error.message : 'Impossible de charger les périodes.');
+      }
     }
+  }
+
+  function selectSubscription(subscriptionId: string): void {
+    if (selectedSubscriptionId === subscriptionId) return;
+    requestUnsavedExit(() => {
+      periodsLoadGeneration.current += 1;
+      setPeriods([]);
+      setSelectedPeriodId('');
+      setSelectedSubscriptionId(subscriptionId);
+      setDetailExpanded(false);
+    });
   }
 
   useEffect(() => { void refresh(); }, []);
   useEffect(() => { void loadPeriods(selectedSubscriptionId); }, [selectedSubscriptionId]);
   useEffect(() => {
-    if (initialSubscriptionId) setSelectedSubscriptionId(initialSubscriptionId);
+    if (initialSubscriptionId) selectSubscription(initialSubscriptionId);
   }, [initialSubscriptionId,initialRequest]);
 
   useEffect(() => {
@@ -312,14 +329,14 @@ export function MaintenancePanel({ onEntityReady, initialRequest, clients, proje
     >
       {!detailExpanded && <section className="panel operation-list-panel maintenance-list-panel">
         {selectedSubscription ? <div className="maintenance-compact-list" role="list" aria-label="Souscriptions de maintenance">
-          {activeSubscriptions.map((subscription) => <button key={subscription.id} type="button" role="listitem" className={`maintenance-compact-item ${selectedSubscriptionId === subscription.id ? 'selected' : ''}`} onClick={() => setSelectedSubscriptionId(subscription.id)}>
+          {activeSubscriptions.map((subscription) => <button key={subscription.id} type="button" role="listitem" className={`maintenance-compact-item ${selectedSubscriptionId === subscription.id ? 'selected' : ''}`} onClick={() => selectSubscription(subscription.id)}>
             <span className="maintenance-compact-heading"><strong>{subscription.clientLabel}</strong><span className={`maintenance-status status-${subscription.status}`}>{SUBSCRIPTION_LABELS[subscription.status]}</span></span>
             <span className="maintenance-compact-plan">{subscription.planName}</span>
             <span className="maintenance-compact-meta"><span>{FREQUENCY_LABELS[subscription.frequency]}</span><span>{euro(subscription.contractPriceCents)}</span></span>
             <span className="maintenance-compact-project">{subscription.projectLabel || 'Tous / sans projet'}</span>
           </button>)}
           {activeSubscriptions.length === 0 && <div className="empty-table">Aucune maintenance active.</div>}
-        </div> : <table className="operations-table"><thead><tr><th>Client</th><th>Plan</th><th>Projet</th><th>Prix</th><th>Statut</th></tr></thead><tbody>{activeSubscriptions.map((subscription) => <tr key={subscription.id} className={selectedSubscriptionId === subscription.id ? 'selected-row' : ''} onClick={() => { setSelectedSubscriptionId(subscription.id); setDetailExpanded(false); }}><td><strong>{subscription.clientLabel}</strong><small>Depuis {subscription.startDate}</small></td><td><strong>{subscription.planName}</strong><small>{FREQUENCY_LABELS[subscription.frequency]} · {subscription.includedInterventions} intervention(s)</small></td><td>{subscription.projectLabel || 'Tous / sans projet'}</td><td>{euro(subscription.contractPriceCents)}</td><td>{SUBSCRIPTION_LABELS[subscription.status]}</td></tr>)}{activeSubscriptions.length === 0 && <tr><td colSpan={5}><div className="empty-table">Aucune maintenance active.</div></td></tr>}</tbody></table>}
+        </div> : <table className="operations-table"><thead><tr><th>Client</th><th>Plan</th><th>Projet</th><th>Prix</th><th>Statut</th></tr></thead><tbody>{activeSubscriptions.map((subscription) => <tr key={subscription.id} className={selectedSubscriptionId === subscription.id ? 'selected-row' : ''} onClick={() => selectSubscription(subscription.id)}><td><strong>{subscription.clientLabel}</strong><small>Depuis {subscription.startDate}</small></td><td><strong>{subscription.planName}</strong><small>{FREQUENCY_LABELS[subscription.frequency]} · {subscription.includedInterventions} intervention(s)</small></td><td>{subscription.projectLabel || 'Tous / sans projet'}</td><td>{euro(subscription.contractPriceCents)}</td><td>{SUBSCRIPTION_LABELS[subscription.status]}</td></tr>)}{activeSubscriptions.length === 0 && <tr><td colSpan={5}><div className="empty-table">Aucune maintenance active.</div></td></tr>}</tbody></table>}
       </section>}
 
       {selectedSubscription && !detailExpanded && <div className="operation-splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner la liste et la fiche maintenance" tabIndex={0} onPointerDown={beginResize} onDoubleClick={() => setSplitPercent(36)} onKeyDown={(event) => {
@@ -327,18 +344,18 @@ export function MaintenancePanel({ onEntityReady, initialRequest, clients, proje
         if (event.key === 'ArrowRight') setSplitPercent((value) => Math.min(58, value + 3));
       }}><span /></div>}
 
-      {selectedSubscription && <aside className={`panel operation-detail-panel maintenance-detail-panel ${detailExpanded ? 'expanded' : ''}`}><div className="detail-panel-heading"><div><span className="eyebrow">Maintenance</span><h2>{selectedSubscription.clientLabel}</h2><p className="muted">{selectedSubscription.canonicalCode&&`${selectedSubscription.canonicalCode} · `}{selectedSubscription.planName}{selectedSubscription.projectLabel ? ` · ${selectedSubscription.projectLabel}` : ''}</p></div><div className="maintenance-detail-heading-actions"><button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={() => { setSelectedSubscriptionId(''); setSelectedPeriodId(''); setDetailExpanded(false); }}><OperationIcon name="close" size={18} /></button></div></div>
+      {selectedSubscription && <aside className={`panel operation-detail-panel maintenance-detail-panel ${detailExpanded ? 'expanded' : ''}`}><div className="detail-panel-heading"><div><span className="eyebrow">Maintenance</span><h2>{selectedSubscription.clientLabel}</h2><p className="muted">{selectedSubscription.canonicalCode&&`${selectedSubscription.canonicalCode} · `}{selectedSubscription.planName}{selectedSubscription.projectLabel ? ` · ${selectedSubscription.projectLabel}` : ''}</p></div><div className="maintenance-detail-heading-actions"><button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={() => requestUnsavedExit(() => { periodsLoadGeneration.current += 1; setSelectedSubscriptionId(''); setPeriods([]); setSelectedPeriodId(''); setDetailExpanded(false); })}><OperationIcon name="close" size={18} /></button></div></div>
         <div className="operation-detail-grid"><div><span>Prix contractuel</span><strong>{euro(selectedSubscription.contractPriceCents)}</strong></div><div><span>Quota</span><strong>{selectedSubscription.includedInterventions} intervention(s)</strong></div></div>
         <p>Facturation : {selectedSubscription.billingPeriod==='yearly'?'annuelle':selectedSubscription.billingPeriod==='monthly'?'mensuelle':'selon le dossier'} · Périodes opérationnelles : {FREQUENCY_LABELS[selectedSubscription.frequency]}{selectedSubscription.periodAlignment==='anniversary'?' de date à date':''}</p><label>Statut<select value={selectedSubscription.status} onChange={(event) => void changeSubscriptionStatus(event.target.value as MaintenanceSubscriptionStatus)}>{MAINTENANCE_SUBSCRIPTION_STATUSES.map((status) => <option key={status} value={status}>{SUBSCRIPTION_LABELS[status]}</option>)}</select></label>
         <button className="secondary-button" type="button" disabled={selectedSubscription.status !== 'active'} onClick={() => void ensureCurrentPeriod()}>Générer / ouvrir la période actuelle</button>
-        <div className="maintenance-period-list"><strong>Périodes</strong>{periods.map((period) => <button key={period.id} type="button" className={period.id === selectedPeriodId ? 'selected' : ''} onClick={() => setSelectedPeriodId(period.id)}><span>{period.periodStart} → {period.periodEnd}</span><small>{PERIOD_LABELS[period.status]} · {period.usage.interventionCount}/{period.includedInterventions || 'sans quota standard'} intervention(s)</small></button>)}{periods.length === 0 && <p className="muted">Aucune période générée.</p>}</div>
+        <div className="maintenance-period-list"><strong>Périodes</strong>{periods.map((period) => <button key={period.id} type="button" className={period.id === selectedPeriodId ? 'selected' : ''} onClick={() => { if (period.id !== selectedPeriodId) requestUnsavedExit(() => setSelectedPeriodId(period.id)); }}><span>{period.periodStart} → {period.periodEnd}</span><small>{PERIOD_LABELS[period.status]} · {period.usage.interventionCount}/{period.includedInterventions || 'sans quota standard'} intervention(s)</small></button>)}{periods.length === 0 && <p className="muted">Aucune période générée.</p>}</div>
 
         {selectedPeriod && <div className="maintenance-period-detail"><div className="maintenance-usage-grid"><div><span>Interventions</span><strong>{selectedPeriod.usage.interventionCount}{selectedPeriod.includedInterventions ? ` / ${selectedPeriod.includedInterventions}` : ''}</strong></div><div><span>Temps réalisé (routines comprises)</span><strong>{hours(selectedPeriod.usage.usedSeconds)}</strong></div><div><span>Dont routines (hors quota mineur)</span><strong>{hours(selectedPeriod.usage.routineSeconds ?? 0)}</strong></div>{selectedPeriod.includedMinutes != null && <><div><span>Temps imputé au quota mineur</span><strong>{hours(Math.max(0, selectedPeriod.usage.usedSeconds - (selectedPeriod.usage.routineSeconds ?? 0)))}</strong></div><div><span>Solde quota mineur</span><strong>{hours(selectedPeriod.usage.remainingSeconds ?? 0)}</strong></div><div className={selectedPeriod.usage.secondsOverQuota > 0 ? 'warning' : ''}><span>Temps au-delà du quota mineur</span><strong>{hours(selectedPeriod.usage.secondsOverQuota)}</strong></div></>}<div className={selectedPeriod.usage.interventionsOverQuota > 0 ? 'warning' : ''}><span>Dépassement</span><strong>{selectedPeriod.usage.interventionsOverQuota || 0}</strong></div></div>
           <MaintenanceOveragePanel period={selectedPeriod} onMessage={onMessage} />
           <label>État de la période<select value={selectedPeriod.status} onChange={(event) => void changePeriodStatus(event.target.value as MaintenancePeriodStatus)}>{MAINTENANCE_PERIOD_STATUSES.map((status) => <option key={status} value={status}>{PERIOD_LABELS[status]}</option>)}</select></label>
           <button className="primary-button" type="button" disabled={selectedPeriod.status === 'closed'} onClick={() => void createMaintenanceIntervention()}>+ Intervention de maintenance</button>
           <div className="maintenance-checklist"><strong>Checklist</strong>{selectedPeriod.checks.map((check) => <div key={check.id} className={`maintenance-check check-${check.status}`}><div><strong>{check.label}</strong>{check.description && <small>{check.description}</small>}{check.referenceMinutes!=null&&<small>Référence initiale {check.estimateRequired?'indicative (estimation spécifique à renseigner)':''} : {check.referenceMinutes} min · {check.businessCategory}</small>}</div><button className="secondary-button" type="button" disabled={selectedPeriod.status==='closed'} onClick={()=>void window.atoumweb.operations.maintenance.periods.prepareRoutine(check.id).then(i=>window.atoumweb.time.start({interventionId:i.id,category:'support',activityLabel:check.label,businessCategory:check.businessCategory||'Inclus au forfait'})).then(()=>onMessage('Chrono de routine démarré, hors quota des interventions mineures.')).catch(e=>onMessage(String(e)))}>Chrono routine</button><select value={check.status} disabled={selectedPeriod.status === 'closed'} onChange={(event) => void changeCheck(check.id, event.target.value as MaintenanceCheckStatus)}>{MAINTENANCE_CHECK_STATUSES.map((status) => <option key={status} value={status}>{CHECK_LABELS[status]}</option>)}</select></div>)}</div>
-          <MaintenanceReportPanel periodId={selectedPeriod.id} onMessage={onMessage} />
+          <MaintenanceReportPanel key={selectedPeriod.id} periodId={selectedPeriod.id} onMessage={onMessage} />
         </div>}
       </aside>}
     </div>
