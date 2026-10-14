@@ -4,6 +4,7 @@ import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 interface VersionRow extends Record<string, unknown> {
   id: string;
   item_id: string;
+  item_type: 'offer' | 'service';
   status: 'draft' | 'published' | 'retired';
   item_status: 'active' | 'inactive' | 'archived';
 }
@@ -51,7 +52,7 @@ export class CatalogRecommendationsService {
     this.database.exec('BEGIN IMMEDIATE;');
     try {
       const version = (id:string) => this.database.get<VersionRow>(
-        `SELECT v.id,v.item_id,v.status,i.status AS item_status FROM catalog_versions v
+        `SELECT v.id,v.item_id,v.status,i.item_type,i.status AS item_status FROM catalog_versions v
         JOIN catalog_items i ON i.id=v.item_id WHERE v.id=?`,[id]);
       const source=version(sourceVersionId);
       if (!source || source.status !== 'draft') throw new Error('Seul un brouillon Catalogue peut modifier ses recommandations.');
@@ -63,7 +64,7 @@ export class CatalogRecommendationsService {
       const seen=new Set<string>();
       for (const id of targetVersionIds) {
         const target=version(id);
-        if (!target || target.status !== 'published' || target.item_status !== 'active') {
+        if (!target || target.status !== 'published' || target.item_status !== 'active' || target.item_type !== 'service') {
           throw new Error('La recommandation doit cibler une version publiée et une prestation active.');
         }
         if (source.item_id === target.item_id) throw new Error('Une prestation ne peut se recommander elle-même.');
