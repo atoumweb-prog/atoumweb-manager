@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { prepareCatalogSalesGuidance } from './catalogSalesGuidance';
+import { prepareCatalogSalesGuidance, salesGuidanceFromCatalogVersion } from './catalogSalesGuidance';
 
 describe('04E — commercial guidance belongs to a version, not a contract', () => {
   it('labels absent guidance as not configured and invents no advice', () => {
@@ -11,6 +11,15 @@ describe('04E — commercial guidance belongs to a version, not a contract', () 
     const result=prepareCatalogSalesGuidance({versionId:'v2',clientNeed:' SEO local ',salesAdvice:' Argument humain '});
     expect(result).toMatchObject({versionId:'v2',clientNeed:'SEO local',salesAdvice:'Argument humain',configured:true});
     expect('contractTerms' in result).toBe(false);
+  });
+  it('reads actual persisted commercial fields without fabricating objections', () => {
+    expect(salesGuidanceFromCatalogVersion({
+      id:'v3',commercialParameters:{clientNeed:'Site vitrine',benefits:'Présence locale'},
+      internalAdvice:'Proposer un audit',
+    })).toEqual({
+      versionId:'v3',clientNeed:'Site vitrine',benefits:'Présence locale',
+      objections:null,salesAdvice:'Proposer un audit',configured:true,
+    });
   });
   it('rejects an unbound version', () => {
     expect(()=>prepareCatalogSalesGuidance({versionId:' '})).toThrow(/version requ is|version requis/i);
