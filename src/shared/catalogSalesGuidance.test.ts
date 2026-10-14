@@ -14,11 +14,11 @@ describe('04E — commercial guidance belongs to a version, not a contract', () 
   });
   it('reads actual persisted commercial fields without fabricating objections', () => {
     expect(salesGuidanceFromCatalogVersion({
-      id:'v3',commercialParameters:{clientNeed:'Site vitrine',benefits:'Présence locale'},
+      id:'v3',commercialParameters:{clientNeed:'Site vitrine',benefits:'Présence locale',objections:'Délai trop long : présenter le planning'},
       internalAdvice:'Proposer un audit',
     })).toEqual({
       versionId:'v3',clientNeed:'Site vitrine',benefits:'Présence locale',
-      objections:null,salesAdvice:'Proposer un audit',configured:true,
+      objections:'Délai trop long : présenter le planning',salesAdvice:'Proposer un audit',configured:true,
     });
   });
   it('rejects an unbound version', () => {
