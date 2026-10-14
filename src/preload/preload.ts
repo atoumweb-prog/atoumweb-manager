@@ -300,6 +300,7 @@ const api: AtoumWebApi = {
     changeStatus: (id: string, status: ExpenseStatus) => ipcRenderer.invoke('expenses:change-status', id, status),
     importReceipt: (id: string) => ipcRenderer.invoke('expenses:import-receipt', id),
     openReceipt: (id: string) => ipcRenderer.invoke('expenses:open-receipt', id),
+    openReceiptVersion: (id: string, relativePath: string) => ipcRenderer.invoke('expenses:open-receipt-version', id, relativePath),
     listReceiptVersions: (id: string) => ipcRenderer.invoke('expenses:list-receipt-versions', id),
   },
   catalog: {
