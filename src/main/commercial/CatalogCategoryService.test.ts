@@ -78,7 +78,7 @@ describe('04B E95 — administration transactionnelle et catégories historiques
     const original = catalog.getItem(service.id).versions.map(v => ({ id: v.id, price: v.priceCents, description: v.description }));
     const group = categories.create('SEO & visibilité');
     expect(categories.reconcileLegacy('SEO', group.id, [service.id])).toBe(1);
-    const renamed = categories.rename(group.id, 'Référencement naturel', group.revision);
+    const renamed = categories.rename(group.id, 'Référencement naturel', group.revision, [service.id]);
     expect(renamed).toMatchObject({ id: group.id, name: 'Référencement naturel', revision: 2, itemCount: 1 });
     expect(catalog.getItem(service.id).category).toBe('Référencement naturel');
     expect(catalog.getItem(service.id).versions.map(v => ({ id: v.id, price: v.priceCents, description: v.description }))).toEqual(original);
@@ -90,9 +90,31 @@ describe('04B E95 — administration transactionnelle et catégories historiques
     ]);
   });
 
+  it('refuse le renommage si la liste des prestations change après son aperçu, puis accepte après relecture', () => {
+    const category=categories.create('Conseil SEO');
+    const a=create('Analyse','SEO');
+    categories.assign({
+      itemId:a.id,categoryId:category.id,expectedCategoryId:null,expectedRawValue:'SEO',
+    });
+    const snapshot=categories.list().find(c=>c.id===category.id)!;
+    const item2=create('Audit complémentaire','SEO');
+    categories.assign({
+      itemId:item2.id,categoryId:category.id,expectedCategoryId:null,expectedRawValue:'SEO',
+    });
+    expect(()=>categories.rename(category.id,'Visibilité',snapshot.revision,[a.id]))
+      .toThrow(/liste des prestations concernées a changé/);
+    expect(categories.list().find(c=>c.id===category.id)?.name).toBe('Conseil SEO');
+    const auditBefore=db.get<{n:number}>(
+      "SELECT COUNT(*) AS n FROM catalog_category_audit WHERE action='rename'")!.n;
+    const renamed=categories.rename(category.id,'Visibilité',snapshot.revision,[a.id,item2.id]);
+    expect(renamed.name).toBe('Visibilité');
+    expect(renamed.itemCount).toBe(2);
+    expect(db.get<{n:number}>("SELECT COUNT(*) AS n FROM catalog_category_audit WHERE action='rename'")!.n-auditBefore).toBe(3);
+  });
+
   it('refuse une révision ancienne sans écriture partielle ni perdre les liens', () => {
     const row = categories.create('WordPress');
-    categories.rename(row.id, 'WordPress & thèmes', row.revision);
+    categories.rename(row.id, 'WordPress & thèmes', row.revision, []);
     expect(() => categories.setStatus(row.id, 'archived', row.revision)).toThrow(/Conflit/);
     expect(categories.list()[0].status).toBe('active');
   });
@@ -168,7 +190,7 @@ describe('04B E95 — administration transactionnelle et catégories historiques
     const versionsBefore=db.all<Record<string,unknown>>('SELECT * FROM catalog_versions WHERE item_id=?',[item.id]);
     const category=categories.create('SEO et visibilité');
     categories.reconcileLegacy('SEO',category.id,[item.id]);
-    categories.rename(category.id,'Référencement naturel',category.revision);
+    categories.rename(category.id,'Référencement naturel',category.revision,[item.id]);
     expect(db.get('SELECT * FROM quotes WHERE id=?',[quote.id])).toEqual(quoteBefore);
     expect(db.all('SELECT * FROM quote_lines WHERE quote_id=? ORDER BY id',[quote.id])).toEqual(linesBefore);
     expect(db.all('SELECT * FROM catalog_versions WHERE item_id=?',[item.id])).toEqual(versionsBefore);
