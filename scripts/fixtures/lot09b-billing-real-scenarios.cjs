@@ -202,6 +202,12 @@ module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,select,test,sle
     await wait('document.querySelectorAll(".billing-table tbody tr").length===3','filters reset');
     test(await get('document.querySelectorAll(".billing-table tbody tr").length===3'),
       '09B-FILTER-07: clearing advanced filters restores list');
+    test(await get('!!document.querySelector(".billing-row-open[aria-label][type=button]")'),
+      '09B-A11Y-01: invoice records have keyboard-focusable native buttons');
+    await js('document.querySelector(".billing-row-open").click()');
+    await wait('!!document.querySelector(".billing-detail-panel")','invoice details via focusable button');
+    test(await get('!!document.querySelector(".billing-detail-heading h2")'),
+      '09B-A11Y-02: opening via native button preserves detail access');
     await sleep(70);
     console.log('[UXV2 09B] Real renderer, imported and replaced PDF with native picker fixture; original preserved.');
   } finally {
