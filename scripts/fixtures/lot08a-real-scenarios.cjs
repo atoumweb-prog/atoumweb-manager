@@ -309,6 +309,40 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
     test(db.database.all('PRAGMA foreign_key_check').length===0,'E08C/E08E temp SQLite foreign keys');
     console.log('[UXV2 08C/08E] Native period-race/report pending and dirty navigation PASS');
 
+    // 08B : la confirmation de clôture dispose désormais d'une projection
+    // fournie par le service métier, purement consultative, via le vrai preload.
+    const previewPack = db.hourPacks.create({
+      clientAccountId: client.id, name: 'E08B Projection TEMP',
+      purchasedSeconds: 3600, contractPriceCents: 12900,
+    });
+    const previewIntervention = db.operations.createIntervention({
+      clientAccountId: client.id, hourPackId: previewPack.id,
+      coverageMode: 'hour_pack', type: 'support',
+      subject: 'E08B Débit prévisible TEMP', status: 'in_progress',
+    });
+    db.time.addManual({
+      interventionId: previewIntervention.id, category: 'support',
+      startedAt: '2026-09-14T10:00:00Z', endedAt: '2026-09-14T10:30:00Z',
+    });
+    const projection=await get('window.atoumweb.operations.hourPacks.previewInterventionDebit('+
+      JSON.stringify(previewPack.id)+','+JSON.stringify(previewIntervention.id)+')');
+    test(projection.secondsToDebit===1800&&projection.balanceBeforeSeconds===3600
+      &&projection.balanceAfterSeconds===1800&&!projection.alreadyDebited,
+      'E08B actual IPC previews exact pack debit and after-balance');
+    test(db.hourPacks.get(previewPack.id).balanceSeconds===3600
+      &&db.hourPacks.get(previewPack.id).movements.filter(m=>m.type==='intervention_debit').length===0,
+      'E08B preflight did not write movement or balance');
+    db.interventionCompletion.complete(previewIntervention.id);
+    test(db.hourPacks.get(previewPack.id).balanceSeconds===projection.balanceAfterSeconds,
+      'E08B effective closure matches read-only projection');
+    const projectedAgain=await get('window.atoumweb.operations.hourPacks.previewInterventionDebit('+
+      JSON.stringify(previewPack.id)+','+JSON.stringify(previewIntervention.id)+')');
+    test(projectedAgain.alreadyDebited&&projectedAgain.secondsToDebit===0
+      &&projectedAgain.balanceAfterSeconds===1800,
+      'E08B same source key prevents any second projected debit');
+    test(db.database.all('PRAGMA foreign_key_check').length===0,'E08B preview SQLite foreign keys');
+    console.log('[UXV2 08B] Read-only pack projection / IPC / effective debit PASS');
+
     // E226 — créer un plan expose désormais la garde UX-01 commune.
     await js('document.querySelector(".maintenance-panel-stack .toolbar-controls button:nth-child(2)").click()');
     await wait('!!document.querySelector(".operation-create-panel input[placeholder]")','maintenance plan form opened');
