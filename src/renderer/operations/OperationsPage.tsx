@@ -131,8 +131,14 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
         window.atoumweb.operations.requests.list(), window.atoumweb.operations.interventions.list(), window.atoumweb.crm.clients.list(), window.atoumweb.projects.projects.list(),
       ]);
       setRequests(nextRequests); setInterventions(nextInterventions); setClients(nextClients); setProjects(nextProjects);
-      if (selectedRequest) setSelectedRequest(nextRequests.find((item) => item.id === selectedRequest.id) ?? null);
-      if (selectedIntervention) setSelectedIntervention(nextInterventions.find((item) => item.id === selectedIntervention.id) ?? null);
+      // Une réponse tardive ne doit jamais ressusciter une ancienne fiche A
+      // si l'utilisateur a déjà sélectionné B ou fermé le panneau.
+      setSelectedRequest((current) => current
+        ? nextRequests.find((item) => item.id === current.id) ?? null
+        : null);
+      setSelectedIntervention((current) => current
+        ? nextInterventions.find((item) => item.id === current.id) ?? null
+        : null);
       setAlertRefreshKey((value) => value + 1);
     } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de charger les opérations.'); }
     finally { if (showLoading) setLoading(false); }
