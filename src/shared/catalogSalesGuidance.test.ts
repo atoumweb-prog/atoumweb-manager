@@ -4,7 +4,7 @@ import { prepareCatalogSalesGuidance, salesGuidanceFromCatalogVersion } from './
 describe('04E — commercial guidance belongs to a version, not a contract', () => {
   it('labels absent guidance as not configured and invents no advice', () => {
     expect(prepareCatalogSalesGuidance({versionId:'v1'})).toEqual({
-      versionId:'v1',clientNeed:null,benefits:null,objections:null,salesAdvice:null,configured:false,
+      versionId:'v1',clientNeed:null,benefits:null,objections:null,salesPitch:null,qualificationQuestions:null,salesAdvice:null,configured:false,
     });
   });
   it('keeps authored advice scoped to the requested version', () => {
@@ -14,11 +14,11 @@ describe('04E — commercial guidance belongs to a version, not a contract', () 
   });
   it('reads actual persisted commercial fields without fabricating objections', () => {
     expect(salesGuidanceFromCatalogVersion({
-      id:'v3',commercialParameters:{clientNeed:'Site vitrine',benefits:'Présence locale',objections:'Délai trop long : présenter le planning'},
+      id:'v3',commercialParameters:{clientNeed:'Site vitrine',benefits:'Présence locale',objections:'Délai trop long : présenter le planning',salesPitch:'Site clair, prêt à présenter votre activité',qualificationQuestions:'Quels sont vos objectifs ?'},
       internalAdvice:'Proposer un audit',
     })).toEqual({
       versionId:'v3',clientNeed:'Site vitrine',benefits:'Présence locale',
-      objections:'Délai trop long : présenter le planning',salesAdvice:'Proposer un audit',configured:true,
+      objections:'Délai trop long : présenter le planning',salesPitch:'Site clair, prêt à présenter votre activité',qualificationQuestions:'Quels sont vos objectifs ?',salesAdvice:'Proposer un audit',configured:true,
     });
   });
   it('rejects an unbound version', () => {
