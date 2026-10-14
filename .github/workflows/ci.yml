@@ -43,6 +43,19 @@ jobs:
       - name: Tests
         run: npm test -- --maxWorkers=2
 
+      # Lot 08 draft PR: native shell with real Electron/IPC and UX-01 regression.
+      # Temporary fixtures only; no user profile, no Validation-MSI.
+      - name: Electron Lot 08 — Shell and UX-01 Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'feature/ux-v2-lot08a-audit-v1' }}
+        shell: pwsh
+        timeout-minutes: 20
+        run: |
+          $captures = Join-Path $env:RUNNER_TEMP 'lot08-shell-captures'
+          node scripts/check-ux-v2-lot01a-real-ui.cjs --captures $captures
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/check-unsaved-inputs-ui.cjs --lot-b --lot-c --review
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       # PR98 standalone; the combined candidate runs this same recipe below.
       # La fixture crée exclusivement ses propres fichiers et profil dans %TEMP%.
       - name: Electron CRM 03B.6 — Windows TEMP
