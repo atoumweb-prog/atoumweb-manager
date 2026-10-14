@@ -571,7 +571,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
     </>}
 
     {view === 'maintenance' && <MaintenancePanel initialRequest={initialRequest} onEntityReady={onEntityReady} clients={clients} projects={projects} onMessage={onMessage} initialSubscriptionId={initialTarget?.entityType === 'maintenance' ? initialTarget.entityId : null} onInterventionCreated={(intervention) => { setSelectedRequest(null); setSelectedIntervention(intervention); setView('interventions'); void refresh({ showLoading: false }); }} />}
-    {view === 'packs' && <HourPacksPanel initialRequest={initialRequest} onEntityReady={onEntityReady} clients={clients} projects={projects} interventions={interventions} onMessage={onMessage} onOperationsChanged={refresh} initialPackId={initialTarget?.entityType === 'hour_pack' ? initialTarget.entityId : null} />}
+    {view === 'packs' && <HourPacksPanel initialRequest={initialRequest} onEntityReady={onEntityReady} clients={clients} projects={projects} interventions={interventions} onMessage={onMessage} onOperationsChanged={async () => { await refresh({ showLoading: false }); }} initialPackId={initialTarget?.entityType === 'hour_pack' ? initialTarget.entityId : null} />}
   </div>;
 }
 
