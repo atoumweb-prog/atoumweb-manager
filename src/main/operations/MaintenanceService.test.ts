@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CrmService } from '../crm/CrmService';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
+import { TimeService } from '../time/TimeService';
+import { OperationsService } from './OperationsService';
 import { MaintenanceService } from './MaintenanceService';
 
 let database: NodeSqliteAdapter;
@@ -82,6 +84,43 @@ describe('MaintenanceService', () => {
     database.run("UPDATE maintenance_subscriptions SET period_alignment='calendar' WHERE id=?", [subscription.id]);
     const historical = maintenance.ensurePeriod(subscription.id, '2027-01-20');
     expect([historical.periodStart, historical.periodEnd]).toEqual(['2027-01-01', '2027-01-31']);
+  });
+
+  it('E224 sépare le temps réel de routine du quota mineur, y compris en dépassement', () => {
+    const plan = maintenance.createPlan({
+      name: 'Quota E224 fixture', periodicPriceCents: 4900,
+      frequency: 'monthly', includedInterventions: 1, includedMinutes: 60,
+    });
+    const subscription = maintenance.createSubscription({
+      clientAccountId: clientId, planId: plan.id, startDate: '2026-09-01',
+    });
+    const period = maintenance.ensurePeriod(subscription.id, '2026-09-14');
+    const operations = new OperationsService(database);
+    const time = new TimeService(database);
+    const addIntervention = (kind: 'minor' | 'routine', subject: string, start: string, end: string) => {
+      const intervention = operations.createIntervention({
+        clientAccountId: clientId, maintenancePeriodId: period.id,
+        coverageMode: 'maintenance', type: 'maintenance', subject,
+      });
+      database.run('UPDATE interventions SET maintenance_usage_kind=? WHERE id=?', [kind, intervention.id]);
+      time.addManual({ interventionId: intervention.id, category: 'support', startedAt: start, endedAt: end });
+    };
+    addIntervention('minor', 'Petit dépannage', '2026-09-14T08:00:00Z', '2026-09-14T08:45:00Z');
+    addIntervention('routine', 'Routine planifiée', '2026-09-14T09:00:00Z', '2026-09-14T09:30:00Z');
+    const first = maintenance.getPeriod(period.id).usage;
+    expect(first).toMatchObject({
+      interventionCount: 1, routineSeconds: 1800, usedSeconds: 4500,
+      remainingInterventions: 0, remainingSeconds: 900,
+      interventionsOverQuota: 0, secondsOverQuota: 0,
+    });
+    addIntervention('minor', 'Dépannage supplémentaire', '2026-09-14T10:00:00Z', '2026-09-14T10:30:00Z');
+    const second = maintenance.getPeriod(period.id).usage;
+    expect(second).toMatchObject({
+      interventionCount: 2, routineSeconds: 1800, usedSeconds: 6300,
+      remainingInterventions: 0, remainingSeconds: 0,
+      interventionsOverQuota: 1, secondsOverQuota: 900,
+    });
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
   it('conserve la checklist de la période même si le modèle change ensuite', () => {
