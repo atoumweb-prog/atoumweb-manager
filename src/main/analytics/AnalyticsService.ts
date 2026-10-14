@@ -17,6 +17,7 @@ import {
   type AnalyticsProjectTypeStat,
   type AnalyticsTimeCategoryStat,
 } from '../../shared/analytics';
+import { statisticsQuoteAcceptancePercent } from '../../shared/statistics';
 import { resolveAnalyticsPeriod } from './AnalyticsPeriodService';
 
 interface SumRow extends Record<string, unknown> {
@@ -147,17 +148,17 @@ export class AnalyticsService {
     );
     const quotesAccepted = this.count(
       `SELECT COUNT(*) AS total FROM quotes
-       WHERE accepted_at IS NOT NULL AND date(accepted_at) BETWEEN date(?) AND date(?)`,
+       WHERE status='accepted' AND accepted_at IS NOT NULL AND date(accepted_at) BETWEEN date(?) AND date(?)`,
       [from, to],
     );
     const quotesRefused = this.count(
       `SELECT COUNT(*) AS total FROM quotes
-       WHERE refused_at IS NOT NULL AND date(refused_at) BETWEEN date(?) AND date(?)`,
+       WHERE status='refused' AND refused_at IS NOT NULL AND date(refused_at) BETWEEN date(?) AND date(?)`,
       [from, to],
     );
     const quotesExpired = this.count(
       `SELECT COUNT(*) AS total FROM quotes
-       WHERE expired_at IS NOT NULL AND date(expired_at) BETWEEN date(?) AND date(?)`,
+       WHERE status='expired' AND expired_at IS NOT NULL AND date(expired_at) BETWEEN date(?) AND date(?)`,
       [from, to],
     );
     const quoteDecisions = quotesAccepted + quotesRefused + quotesExpired;
@@ -173,7 +174,7 @@ export class AnalyticsService {
       quotesRefused,
       quotesExpired,
       quoteDecisions,
-      quoteAcceptancePercent: quoteDecisions > 0 ? (quotesAccepted / quoteDecisions) * 100 : null,
+      quoteAcceptancePercent: statisticsQuoteAcceptancePercent(quotesAccepted, quotesRefused, quotesExpired),
     };
   }
 

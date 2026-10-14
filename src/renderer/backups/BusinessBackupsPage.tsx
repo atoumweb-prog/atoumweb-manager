@@ -10,6 +10,8 @@ import type {
 import type { ClientSummary } from '../../shared/crm';
 import type { ProjectSummary } from '../../shared/projects';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
+import { businessBackupLocationActionLabel, businessBackupLocationStatus } from '../../shared/businessBackupPresentation';
+import { useUnsavedDraft } from '../unsaved/unsaved';
 import './BusinessBackupsPage.css';
 
 const BACKUP_TYPES: Array<{ id: BusinessBackupType; label: string }> = [
@@ -49,6 +51,17 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
   const [locationFilter, setLocationFilter] = useState<BusinessBackupLocationType | ''>('');
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Le verrou ref protège dès le premier clic, avant toute mise à jour React.
+  const mutationLock = useRef(false);
+  const [mutationBusy, setMutationBusy] = useState(false);
+  async function runMutation(action: () => Promise<void>): Promise<void> {
+    if (mutationLock.current) return;
+    mutationLock.current = true;
+    setMutationBusy(true);
+    try { await action(); }
+    catch (actionError) { setError(actionError instanceof Error ? actionError.message : 'Opération indisponible.'); }
+    finally { mutationLock.current = false; setMutationBusy(false); }
+  }
   useSearchTargetConfirmation('backup_record',selected?.id,false,onEntityReady);
 
   const [form, setForm] = useState({
@@ -59,6 +72,25 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
     locationType: 'server' as BusinessBackupLocationType,
     label: '', pathOrReference: '', notes: '',
   });
+
+  const createDraft = useUnsavedDraft('Déclaration de sauvegarde métier', form, {
+    ready: creating,
+    pending: mutationBusy,
+    discard: setForm,
+  });
+  const locationDraft = useUnsavedDraft('Nouvel emplacement de sauvegarde', locationForm, {
+    ready: !!selected,
+    resetKey: selected?.id,
+    pending: mutationBusy,
+    discard: setLocationForm,
+  });
+  function changeSelected(next: BusinessBackupRecord | null): void {
+    locationDraft.request(() => {
+      setSelected(next);
+      setDetailExpanded(false);
+      setLocationForm({ locationType: 'server', label: '', pathOrReference: '', notes: '' });
+    });
+  }
 
   const loadEpoch=useRef(0);useEffect(()=>()=>{loadEpoch.current++;},[]);
   async function load(preferredId?: string | null): Promise<void> {
@@ -106,8 +138,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
     if (!selected) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setSelected(null);
-        setDetailExpanded(false);
+        if (!mutationLock.current) changeSelected(null);
       }
     };
     window.addEventListener('keydown', closeOnEscape);
@@ -129,7 +160,9 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
         notes: form.notes || null,
       });
       setCreating(false);
-      setForm({ projectId: '', clientAccountId: '', backupType: 'complete', label: '', backupAt: '', notes: '' });
+      const cleared: typeof form = { projectId: '', clientAccountId: '', backupType: 'complete', label: '', backupAt: '', notes: '' };
+      setForm(cleared);
+      createDraft.saved(cleared);
       await load(created.id);
       setSelected(created);
       onMessage(`Sauvegarde métier « ${created.label} » enregistrée.`);
@@ -149,7 +182,9 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
         notes: locationForm.notes || null,
       };
       const changed = await window.atoumweb.businessBackups.addLocation(selected.id, input);
-      setLocationForm({ locationType: 'server', label: '', pathOrReference: '', notes: '' });
+      const cleared: typeof locationForm = { locationType: 'server', label: '', pathOrReference: '', notes: '' };
+      setLocationForm(cleared);
+      locationDraft.saved(cleared);
       setSelected(changed);
       await load(changed.id);
       onMessage(`Emplacement « ${input.label} » ajouté à la sauvegarde.`);
@@ -163,7 +198,8 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
       const changed = await window.atoumweb.businessBackups.verifyLocation(locationId);
       setSelected(changed);
       await load(changed.id);
-      onMessage('État de l’emplacement vérifié et enregistré.');
+      const location = changed.locations.find((item) => item.id === locationId);
+      onMessage(location?.locationType === 'local' ? 'Présence du chemin local contrôlée (intégrité et restauration non testées).' : 'Confirmation manuelle enregistrée (restauration non testée).');
     } catch (verifyError) {
       setError(verifyError instanceof Error ? verifyError.message : 'Vérification impossible.');
     }
@@ -174,7 +210,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
       const changed = await window.atoumweb.businessBackups.relocalize(locationId);
       setSelected(changed);
       await load(changed.id);
-      onMessage('Emplacement local mis à jour.');
+      onMessage('Chemin local relocalisé ; son existence a été contrôlée, pas son intégrité.');
     } catch (relocalizeError) {
       setError(relocalizeError instanceof Error ? relocalizeError.message : 'Relocalisation impossible.');
     }
@@ -222,16 +258,18 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
         <BackupKpi icon="database" label="Sauvegardes connues" value={overview?.totalRecords ?? 0} detail={overview?.latestKnown ? dateLabel(overview.latestKnown.backupAt) : 'Aucune'} />
         <BackupKpi icon="folder" label="Copies locales présentes" value={overview?.localCopies ?? 0} detail={overview?.latestLocal ? `Dernière : ${dateLabel(overview.latestLocal.backupAt)}` : 'Aucune copie locale'} />
         <BackupKpi icon="alert" label="Copies locales manquantes" value={overview?.missingLocalCopies ?? 0} detail={overview?.missingLocalCopies ? 'À relocaliser' : 'Aucune anomalie'} />
-        <BackupKpi icon="check-circle" label="Version stable" value={overview?.latestStable ? '1' : '0'} detail={overview?.latestStable?.label ?? 'Non définie'} />
+        <BackupKpi icon="check-circle" label="Référence stable déclarée" value={overview?.latestStable ? '1' : '0'} detail={overview?.latestStable?.label ?? 'Non définie'} />
       </div>
 
-      {error && <div className="notice business-backups-error"><span>{error}</span><button type="button" onClick={() => setError(null)}>×</button></div>}
+      <p className="technical-safety-note" role="note">Ce registre recense des sauvegardes déclarées. Il ne crée pas de fichiers, ne restaure pas WordPress et ne certifie ni intégrité ni restauration testée. La sauvegarde SQLite du Manager est une opération distincte dans Réglages.</p>
+
+      {error && <div className="notice business-backups-error" role="alert"><span>{error}</span><button type="button" onClick={() => setError(null)}>×</button></div>}
 
       <article className="panel business-backups-toolbar">
         <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher une sauvegarde ou un emplacement…" />
         <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as BusinessBackupType | '')}><option value="">Tous les types</option>{BACKUP_TYPES.map((type) => <option key={type.id} value={type.id}>{type.label}</option>)}</select>
         <select value={locationFilter} onChange={(event) => setLocationFilter(event.target.value as BusinessBackupLocationType | '')}><option value="">Tous les emplacements</option>{LOCATION_TYPES.map((type) => <option key={type.id} value={type.id}>{type.label}</option>)}</select>
-        <button className="primary-button" type="button" onClick={() => setCreating((value) => !value)}>{creating ? <><OperationIcon name="close" size={16} /> Fermer</> : <><OperationIcon name="database" size={16} /> Nouvelle sauvegarde</>}</button>
+        <button className="primary-button" type="button" disabled={mutationBusy} onClick={() => { if (creating) createDraft.request(() => setCreating(false)); else setCreating(true); }}>{creating ? <><OperationIcon name="close" size={16} /> Fermer</> : <><OperationIcon name="database" size={16} /> Déclarer une sauvegarde</>}</button>
       </article>
 
       {creating && <article className="panel business-backups-create">
@@ -244,8 +282,8 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
         </div>
         <label>Libellé<input value={form.label} onChange={(event) => setForm((value) => ({ ...value, label: event.target.value }))} placeholder="Ex. Sauvegarde complète avant mise à jour WooCommerce" /></label>
         <label>Notes<textarea rows={2} value={form.notes} onChange={(event) => setForm((value) => ({ ...value, notes: event.target.value }))} /></label>
-        <p className="technical-safety-note">Cet écran enregistre la traçabilité d’une sauvegarde de site/projet. Il ne s’agit pas de la sauvegarde SQLite interne d’AtoumWeb Manager.</p>
-        <button className="primary-button" type="button" onClick={() => void createRecord()}>Créer l’enregistrement</button>
+        <p className="technical-safety-note">Cette action déclare une sauvegarde préexistante. Aucun fichier de sauvegarde WordPress n’est créé. Le registre est distinct de la sauvegarde SQLite interne du Manager.</p>
+        <button className="primary-button" type="button" disabled={mutationBusy} onClick={() => void runMutation(createRecord)}>Créer l’enregistrement</button>
       </article>}
 
       <div
@@ -255,7 +293,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
         {!detailExpanded && <article className="panel business-backups-list">
           <div className="panel-title"><div><span className="eyebrow">Historique</span><h2>Sauvegardes</h2></div><span className="status-pill">{records.length}</span></div>
           {records.length === 0 && <p className="muted">Aucune sauvegarde ne correspond aux filtres.</p>}
-          {records.map((record) => <button type="button" key={record.id} className={`business-backup-row ${selected?.id === record.id ? 'selected' : ''}`} onClick={() => { setSelected(record); setDetailExpanded(false); }}>
+          {records.map((record) => <button type="button" key={record.id} className={`business-backup-row ${selected?.id === record.id ? 'selected' : ''}`} disabled={mutationBusy} onClick={() => changeSelected(record)}>
             <div><strong>{record.label}</strong><span>{backupTypeLabel(record.backupType)} · {dateLabel(record.backupAt)}</span></div>
             <div>{record.stable && <span className="stable-badge">Stable</span>}<span>{record.locations.length} emplacement{record.locations.length > 1 ? 's' : ''}</span></div>
           </button>)}
@@ -267,11 +305,11 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
         }}><span /></div>}
 
         {selected && <article className={`panel business-backups-detail ${detailExpanded ? 'expanded' : ''}`}>
-            <div className="panel-title business-backups-detail-heading"><div><span className="eyebrow">{backupTypeLabel(selected.backupType)} · {dateLabel(selected.backupAt)}</span><h2>{selected.label}</h2></div><div className="business-backups-detail-actions">{!selected.stable && <button className="secondary-button" type="button" onClick={() => void markStable()}><OperationIcon name="check-circle" size={16} /> Marquer stable</button>}<button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={() => { setSelected(null); setDetailExpanded(false); }}><OperationIcon name="close" size={18} /></button></div></div>
+            <div className="panel-title business-backups-detail-heading"><div><span className="eyebrow">{backupTypeLabel(selected.backupType)} · {dateLabel(selected.backupAt)}</span><h2>{selected.label}</h2></div><div className="business-backups-detail-actions">{!selected.stable && <button className="secondary-button" type="button" disabled={mutationBusy} onClick={() => void runMutation(markStable)}><OperationIcon name="check-circle" size={16} /> Définir comme référence stable</button>}<button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" aria-label="Fermer" disabled={mutationBusy} onClick={() => changeSelected(null)}><OperationIcon name="close" size={18} /></button></div></div>
             <div className="business-backup-context">
               <div><span>Projet</span><strong>{selected.projectId ? projectById.get(selected.projectId)?.name ?? selected.projectId : '—'}</strong></div>
               <div><span>Client</span><strong>{selected.clientAccountId ? clientById.get(selected.clientAccountId)?.displayName ?? selected.clientAccountId : '—'}</strong></div>
-              <div><span>Version stable</span><strong>{selected.stable ? 'Oui' : 'Non'}</strong></div>
+              <div><span>Référence stable</span><strong>{selected.stable ? 'Déclarée (restauration non testée)' : 'Non définie'}</strong></div>
             </div>
             {selected.notes && <p className="muted">{selected.notes}</p>}
 
@@ -280,11 +318,11 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
               {selected.locations.length === 0 && <p className="muted">Aucun emplacement enregistré. Une sauvegarde connue sans emplacement ne constitue pas une copie locale.</p>}
               {selected.locations.map((location) => <div className={`business-backup-location ${location.locationType === 'local' && location.exists === false ? 'missing' : ''}`} key={location.id}>
                 <div><strong>{location.label}</strong><span>{locationTypeLabel(location.locationType)} · {location.pathOrReference}</span></div>
-                <div className="business-backup-location-state">{location.locationType === 'local' ? <span>{location.exists ? 'Présente' : 'Introuvable'}</span> : <span>{location.verifiedAt ? `Confirmé ${dateLabel(location.verifiedAt)}` : 'Non confirmé'}</span>}</div>
+                <div className="business-backup-location-state"><span>{businessBackupLocationStatus(location)}</span></div>
                 <div className="button-row">
-                  <button className="secondary-button" type="button" onClick={() => void verifyLocation(location.id)}><OperationIcon name="check-circle" size={16} /> {location.locationType === 'local' ? 'Vérifier' : 'Confirmer'}</button>
+                  <button className="secondary-button" type="button" disabled={mutationBusy} onClick={() => void runMutation(() => verifyLocation(location.id))}><OperationIcon name="check-circle" size={16} /> {businessBackupLocationActionLabel(location.locationType)}</button>
                   {location.locationType === 'local' && location.exists && <button className="secondary-button" type="button" onClick={() => void openLocal(location.id)}><OperationIcon name="external-link" size={16} /> Ouvrir</button>}
-                  {location.locationType === 'local' && <button className="secondary-button" type="button" onClick={() => void relocalize(location.id)}><OperationIcon name="folder" size={16} /> Relocaliser</button>}
+                  {location.locationType === 'local' && <button className="secondary-button" type="button" disabled={mutationBusy} onClick={() => void runMutation(() => relocalize(location.id))}><OperationIcon name="folder" size={16} /> Relocaliser</button>}
                 </div>
               </div>)}
             </div>
@@ -297,7 +335,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
               </div>
               <label>{locationForm.locationType === 'local' ? 'Chemin local' : 'Référence / emplacement'}<input value={locationForm.pathOrReference} onChange={(event) => setLocationForm((value) => ({ ...value, pathOrReference: event.target.value }))} placeholder={locationForm.locationType === 'local' ? 'C:\\Sauvegardes\\site.zip' : 'Snapshot hébergeur / URL / référence'} /></label>
               <label>Notes<textarea rows={2} value={locationForm.notes} onChange={(event) => setLocationForm((value) => ({ ...value, notes: event.target.value }))} /></label>
-              <button className="primary-button" type="button" onClick={() => void addLocation()}>Ajouter l’emplacement</button>
+              <button className="primary-button" type="button" disabled={mutationBusy} onClick={() => void runMutation(addLocation)}>Ajouter l’emplacement</button>
             </div>
         </article>}
       </div>

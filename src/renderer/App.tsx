@@ -1,6 +1,7 @@
 import {useCallback} from 'react';
 import {SEARCH_DESTINATIONS,searchDestination,readSearchTarget,type SearchNavigationResult} from '../shared/searchNavigation';
 import {useMemo} from 'react';
+import { settingsSectionMatches } from '../shared/settingsSearch';
 import {NavigationRail, type NavigationRailControls} from './ui/NavigationRail';
 import {WorkspaceHeader} from './ui/WorkspaceHeader';
 import './ui/manager-shell.css';
@@ -232,7 +233,7 @@ function App() {
   async function updateShowHoverHelp(enabled: boolean): Promise<void> {
     const saved = await window.atoumweb.settings.setShowHoverHelp(enabled);
     setShowHoverHelp(saved);
-    setMessage(saved ? 'Aides contextuelles activées.' : 'Aides contextuelles masquées.');
+    setMessage(saved ? 'Conseils au survol activés.' : 'Conseils au survol désactivés ; les aides ? restent accessibles.');
   }
 
   async function chooseWorkspace(): Promise<void> {
@@ -430,29 +431,72 @@ function SettingsPage({ bootstrap, theme, displayDensity, showHoverHelp, onTheme
   onCreateBackup: () => Promise<void>;
   onRestoreBackup: () => Promise<void>;
 }) {
+  const [search, setSearch] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const operationLock = useRef(false);
+  const visible = (keywords: string) => settingsSectionMatches(search, keywords);
+
+  async function runSetting(action: () => Promise<void>): Promise<void> {
+    // Le verrou est synchrone : deux clics dans le même frame ne lancent pas deux écritures.
+    if (operationLock.current) return;
+    operationLock.current = true;
+    setSaving(true);
+    setError(null);
+    try { await action(); }
+    catch (cause) { setError(cause instanceof Error ? cause.message : 'Impossible de modifier ce réglage. Le choix précédent est conservé.'); }
+    finally { operationLock.current = false; setSaving(false); }
+  }
+
+  const appearance = visible('apparence thème thèmes noir blanc atoumweb densité compact confort affichage interface lisibilité');
+  const help = visible('aide aides conseil survol ? contextuelle clavier');
+  const workspace = visible('stockage workspace dossier répertoire emplacement local changement données transfert redémarrage');
+  const security = visible('sécurité sauvegarde backup restauration restore sqlite base copie sécurité');
+
   return (
     <div className="settings-grid">
       <article className="panel panel-large">
-        <div className="panel-title"><div><span className="eyebrow">Apparence</span><h2>Thème de l’interface</h2></div>{theme !== 'atoumweb' && <button className="secondary-button" type="button" onClick={() => void onThemeChange('atoumweb')}>Rétablir le thème par défaut</button>}</div>
-        <div className="theme-grid">{THEMES.map((item) => <button className={`theme-card ${theme === item.id ? 'selected' : ''}`} key={item.id} onClick={() => void onThemeChange(item.id)} type="button"><span className={`theme-preview preview-${item.id}`}><i /><b /></span><strong>{item.label}</strong><span>{item.description}</span></button>)}</div>
+        <label htmlFor="settings-quick-search"><strong>Rechercher un réglage</strong></label>
+        <input id="settings-quick-search" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Thème, densité, aide, sauvegarde, workspace…" aria-describedby="settings-search-help" />
+        <p id="settings-search-help" className="muted">Cette recherche filtre uniquement les rubriques visibles ; elle ne modifie aucune préférence.</p>
+        {error && <p role="alert" className="notice">{error}</p>}
+        {!appearance && !help && !workspace && !security && <p role="status">Aucun réglage correspondant. Efface la recherche pour retrouver toutes les rubriques.</p>}
+      </article>
+      {appearance && <article className="panel panel-large">
+        <div className="panel-title"><div><span className="eyebrow">Apparence</span><h2>Thème de l’interface</h2></div>{theme !== 'atoumweb' && <button className="secondary-button" type="button" disabled={saving} onClick={() => void runSetting(() => onThemeChange('atoumweb'))}>Rétablir le thème par défaut</button>}</div>
+        <div className="theme-grid">{THEMES.map((item) => <button className={`theme-card ${theme === item.id ? 'selected' : ''}`} key={item.id} disabled={saving} onClick={() => void runSetting(() => onThemeChange(item.id))} type="button" aria-pressed={theme === item.id}><span className={`theme-preview preview-${item.id}`}><i /><b /></span><strong>{item.label}</strong><span>{item.description}</span></button>)}</div>
         <div className="density-settings">
           <div><span className="eyebrow">Lisibilité</span><h2>Densité d’affichage</h2><p className="muted">Adapte la taille des textes, les espacements et les zones cliquables à ton confort de travail.</p></div>
-          <div className="density-grid">{DENSITIES.map((item) => <button className={`density-card ${displayDensity === item.id ? 'selected' : ''}`} key={item.id} type="button" onClick={() => void onDensityChange(item.id)}><strong>{item.label}</strong><span>{item.description}</span></button>)}</div>
+          <div className="density-grid">{DENSITIES.map((item) => <button className={`density-card ${displayDensity === item.id ? 'selected' : ''}`} key={item.id} type="button" disabled={saving} aria-pressed={displayDensity === item.id} onClick={() => void runSetting(() => onDensityChange(item.id))}><strong>{item.label}</strong><span>{item.description}</span></button>)}</div>
         </div>
+      </article>}
+      {help && <article className="panel panel-large">
         <div className="settings-help-row">
           <div>
             <span className="eyebrow">Aide contextuelle</span>
             <h2>Conseils au survol</h2>
-            <p className="muted">Affiche automatiquement le détail après un survol prolongé. Même désactivée, l’aide ? reste accessible au clic et au clavier.</p>
+            <p className="muted">Le survol prolongé est facultatif. L’aide « ? » au clic/clavier et les avertissements de sécurité restent toujours disponibles.</p>
           </div>
           <label className="settings-switch">
-            <input type="checkbox" checked={showHoverHelp} onChange={(event) => void onShowHoverHelpChange(event.target.checked)} />
-            <span>{showHoverHelp ? 'Activée' : 'Désactivée'}</span>
+            <input type="checkbox" checked={showHoverHelp} disabled={saving} onChange={(event) => void runSetting(() => onShowHoverHelpChange(event.target.checked))} />
+            <span>{showHoverHelp ? 'Survol activé' : 'Survol désactivé'}</span>
           </label>
         </div>
-      </article>
-      <article className="panel"><span className="eyebrow">Stockage</span><h2>Workspace local</h2><p className="path-value">{bootstrap.workspacePath}</p><button className="primary-button" type="button" onClick={() => void onChooseWorkspace()}>Choisir un autre dossier</button></article>
-      <article className="panel"><span className="eyebrow">Sécurité</span><h2>Sauvegarde de la base</h2><p className="muted">Une sauvegarde automatique est créée chaque jour. Une copie de sécurité est aussi créée avant toute restauration.</p><div className="button-row"><button className="secondary-button" type="button" onClick={() => void onCreateBackup()}>Sauvegarder maintenant</button><button className="secondary-button" type="button" onClick={() => void onRestoreBackup()}>Restaurer une sauvegarde</button></div></article>
+      </article>}
+      {workspace && <article className="panel">
+        <span className="eyebrow">Stockage · workspace</span>
+        <h2>Dossier de travail actuel</h2>
+        <p className="path-value">{bootstrap.workspacePath}</p>
+        <p className="muted">Choisir un autre dossier n’y transfère pas automatiquement les Clients, Projets, documents ou fichiers de ce workspace. Un redémarrage peut être nécessaire.</p>
+        <button className="primary-button" type="button" disabled={saving} onClick={() => void runSetting(onChooseWorkspace)}>Choisir un autre dossier</button>
+      </article>}
+      {security && <article className="panel">
+        <span className="eyebrow">Sécurité · base SQLite</span>
+        <h2>Sauvegarde de la base Manager</h2>
+        <p className="muted">Une sauvegarde de la base SQLite est prévue quotidiennement et une copie de sécurité avant restauration. Ces actions ne sauvegardent ni ne restaurent automatiquement tous les documents Clients, photos, sites WordPress et fichiers Bridge.</p>
+        <p className="muted">Le registre « Sauvegardes » sert à déclarer les copies métier : ce n’est pas le moteur de sauvegarde SQLite du Manager. La restauration remplace des données et reste soumise aux vérifications de sécurité du moteur.</p>
+        <div className="button-row"><button className="secondary-button" type="button" disabled={saving} onClick={() => void runSetting(onCreateBackup)}>Sauvegarder la base maintenant</button><button className="secondary-button" type="button" disabled={saving} onClick={() => void runSetting(onRestoreBackup)}>Restaurer une sauvegarde SQLite</button></div>
+      </article>}
     </div>
   );
 }

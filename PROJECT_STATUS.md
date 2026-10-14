@@ -1,5 +1,10 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 14/10/2026 — Convergence technique UX/UI V2 lot 10, candidat isolé
+
+- Source main cc0bc679 ; 10A+10B PR #125/#126 f56cf381, 10C PR #127 33095a38 (validation de la dernière CI à vérifier), 10D PR #128 c69a0c78. Copie des blobs exacts de leurs fichiers applicatifs sur une branche de convergence dédiée ; aucun service de restauration ou schéma modifié. [Gates de recette](docs/ux-v2/LOT-10E-GATES-2026-10-14.md).
+- Aucun test ni recette du **candidat combiné** n'a été déclaré réussi. CI TypeScript/Vitest, Electron Windows/UX-01 et restore round-trip TEMP exigés au HEAD exact avant toute conclusion ou demande de fusion. Aucune donnée Validation-MSI ni workspace de production utilisée.
+
 ## 14/10/2026 — Dernier cas de focus : ligne toujours masquée
 
 - Le correctif693f6af a passé typecheck/282 natifs avec81 frames/UX-01183. Complément final : si le filtre masque encore la ligne à la fermeture, retour à la recherche et conservation de sa valeur. Deux assertions clavier supplémentaires, sans mutation métier. Nouveau candidat à recetter puis une seule actualisation corrective107/CIautomatique, aucun rerun manuel.
