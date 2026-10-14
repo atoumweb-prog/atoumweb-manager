@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { basename, extname, join, relative, resolve, sep } from 'node:path';
 import type {
   ReuseCreateGlobalInput,
@@ -333,6 +333,14 @@ export class ReusePreparationService {
 
   private copyLinkedAsset(asset: AssetRow, sourcesDirectory: string, packageDirectory: string): ReusePreparationCopiedFile {
     const source = resolve(this.workspace.root, asset.relative_path);
+    // Legacy/imported resource paths must never make a reusable package read
+    // files outside the managed workspace, even if the path is a symlink.
+    if (!this.isPathInside(resolve(this.workspace.root), source)) {
+      throw new Error('Ressource source hors de l’espace de travail AtoumWeb : export refusé.');
+    }
+    if (existsSync(source) && !this.isPathInside(realpathSync(this.workspace.root), realpathSync(source))) {
+      throw new Error('Ressource source liée hors de l’espace de travail AtoumWeb : export refusé.');
+    }
     if (!existsSync(source) || !statSync(source).isFile()) {
       return {
         resourceId: asset.id,
