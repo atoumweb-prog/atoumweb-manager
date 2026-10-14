@@ -31,8 +31,8 @@ if(!process.versions.electron){
    const selector='.quote-contract-document',saveSelector=selector+' .quote-contract-reference button',importSelector=selector+' .quote-contract-document-actions button.primary-button';
    await wait('!!document.querySelector('+JSON.stringify(selector)+')');
    check(theme+' accepted TEMP fixture shows Abby PDF panel',await js('return !!document.querySelector('+JSON.stringify(selector)+')'));
-   const originalReference=database.quotes.updateAbbyReference.bind(database.quotes);let referenceCalls=0,releaseReference;
-   database.quotes.updateAbbyReference=(...args)=>{referenceCalls++;return new Promise(resolve=>{releaseReference=()=>resolve(originalReference(...args));});};
+   const originalReference=database.quotes.updateAbbyReference.bind(database.quotes);let referenceCalls=0,releaseReference,submittedReference;
+   database.quotes.updateAbbyReference=(...args)=>{referenceCalls++;submittedReference=args[1];return new Promise(resolve=>{releaseReference=()=>resolve(originalReference(...args));});};
    await input('.quote-contract-reference input','ABBY UI '+theme);
    await js('const b=document.querySelector('+JSON.stringify(saveSelector)+');b.click();b.click()');
    for(let i=0;i<80&&!releaseReference;i++)await sleep(25);
@@ -40,7 +40,8 @@ if(!process.versions.electron){
    check(theme+' rapid reference double click sends one IPC',referenceCalls===1);
    check(theme+' reference pending disables button',await js('return document.querySelector('+JSON.stringify(saveSelector)+').disabled'));
    releaseReference();await wait('!document.querySelector('+JSON.stringify(saveSelector)+').disabled');
-   check(theme+' reference persisted exactly once',database.quotes.get(quote.id).abbyReference==='ABBY UI '+theme);
+   const persistedReference=database.quotes.get(quote.id).abbyReference,renderedReference=await value('.quote-contract-reference input');
+   check(theme+' reference persisted exactly once: submitted='+JSON.stringify(submittedReference)+' stored='+JSON.stringify(persistedReference)+' shown='+JSON.stringify(renderedReference),persistedReference==='ABBY UI '+theme);
    database.quotes.updateAbbyReference=originalReference;
    const originalOpen=dialog.showOpenDialog;let pickerCalls=0,releasePicker;
    dialog.showOpenDialog=()=>{pickerCalls++;return new Promise(resolve=>{releasePicker=()=>resolve({canceled:true,filePaths:[]});});};
