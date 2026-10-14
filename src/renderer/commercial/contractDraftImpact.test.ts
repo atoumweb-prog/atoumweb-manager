@@ -43,6 +43,12 @@ describe('05D draft contract impact preview',()=>{
   it('treats whitespace-only text changes as changes rather than silently normalizing legal text',()=>{
     expect(compareDraftContractClauses([clause('a',{body:'Paiement comptant.'})],[clause('a',{body:'Paiement comptant. '})])[0].kinds).toEqual(['edited']);
   });
+  it('rejects data from different quotes even when clause IDs match',()=>{
+    expect(()=>compareDraftContractClauses(
+      [clause('a',{quoteId:'quote-A'})],
+      [clause('a',{quoteId:'quote-B',body:'Autre contrat'})],
+    )).toThrow(/devis différents/);
+  });
   it('does not confuse unchanged snapshots with edits',()=>{
     expect(compareDraftContractClauses([clause('a')],[clause('a')])).toEqual([]);
     expect(compareDraftContractClauses([],[])).toEqual([]);
