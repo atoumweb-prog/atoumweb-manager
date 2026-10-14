@@ -25,7 +25,7 @@ module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,select,test,sle
     test(await get('document.querySelector(".expenses-kpi-grid")?.textContent.includes("sans génération automatique")'),
       '09C-UI-02: recurring expenses do not claim auto-created occurrences');
     await js('const row=[...document.querySelectorAll(".expenses-table tbody tr")].find(e=>e.textContent.includes("Frais TEST 09C 1"));if(!row)throw Error("expense row absent");row.click()');
-    await wait('document.querySelector(".expenses-detail-panel input[placeholder]")','selected expense');
+    await wait('document.querySelector(".expenses-form-grid input[placeholder]")?.value==="Frais TEST 09C 1"','selected expense form loaded');
     test(await get('document.querySelector(".expenses-detail-panel h2")?.textContent.includes("Frais TEST 09C 1")'),
       '09C-UI-03: real detail displays expense 1');
     await js('const el=document.querySelector(".expenses-form-grid input[placeholder]");el.focus();el.select();');
@@ -44,6 +44,7 @@ module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,select,test,sle
     await js('const el=[...document.querySelectorAll(".expenses-compact-item")].find(e=>e.textContent.includes("Frais TEST 09C 2"));el.click()');
     await wait('document.querySelector(".expenses-detail-panel h2")?.textContent.includes("Frais TEST 09C 2")',
       'confirmed second expense');
+    await wait('document.querySelector(".expenses-form-grid input[placeholder]")?.value==="Frais TEST 09C 2"','second form loaded');
     test(db.expenses.get(first.id).label==='Frais TEST 09C 1',
       '09C-UI-07: discard never silently saves a dirty form');
     approve=false;
