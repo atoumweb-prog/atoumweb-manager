@@ -121,6 +121,8 @@ export function registerReferentialsIpcHandlers(database: DatabaseService): void
     database.atoumWebCompositions.removeItem(id, itemId));
   ipcMain.handle('referentials:compositions:move-item', (_event, id: string, itemId: string, input: AtoumWebCompositionMoveItemInput) =>
     database.atoumWebCompositions.moveItem(id, itemId, input));
+  ipcMain.handle('referentials:compositions:restore-order', (_event, id: string, expectedIds: string[], targetIds: string[]) =>
+    database.atoumWebCompositions.restoreOrder(id, expectedIds, targetIds));
   ipcMain.handle('referentials:compositions:archive', (_event, id: string) =>
     database.atoumWebCompositions.archive(id));
   ipcMain.handle('referentials:compositions:reactivate', (_event, id: string) =>

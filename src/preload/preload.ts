@@ -510,6 +510,7 @@ const api: AtoumWebApi = {
       promoteItemVariant: (id: string, itemId: string, input: AtoumWebCompositionPromoteVariantInput) => ipcRenderer.invoke('referentials:compositions:promote-item-variant', id, itemId, input),
       removeItem: (id: string, itemId: string) => ipcRenderer.invoke('referentials:compositions:remove-item', id, itemId),
       moveItem: (id: string, itemId: string, input: AtoumWebCompositionMoveItemInput) => ipcRenderer.invoke('referentials:compositions:move-item', id, itemId, input),
+      restoreOrder: (id: string, expectedIds: string[], targetIds: string[]) => ipcRenderer.invoke('referentials:compositions:restore-order', id, expectedIds, targetIds),
       archive: (id: string) => ipcRenderer.invoke('referentials:compositions:archive', id),
       reactivate: (id: string) => ipcRenderer.invoke('referentials:compositions:reactivate', id),
       exportPackage: (id: string) => ipcRenderer.invoke('referentials:compositions:export-package', id),
