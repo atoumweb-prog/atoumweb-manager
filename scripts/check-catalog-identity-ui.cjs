@@ -114,7 +114,7 @@ app.whenReady().then(async () => {
     fs.writeFileSync(path.join(dir,'fixture.html'),
       '<!doctype html><html lang="fr"><head><meta charset="utf-8"><style>'+css+'</style></head><body>'+
       shell+'<script src="fixture.js"></script></body></html>');
-    win = new BrowserWindow({ show: false, width: 1440, height: 900, webPreferences: { contextIsolation: false, nodeIntegration: false, backgroundThrottling: false } });
+    win = new BrowserWindow({ show: Boolean(capturePath), width: 1440, height: 900, webPreferences: { contextIsolation: false, nodeIntegration: false, backgroundThrottling: false } });
     await win.loadFile(path.join(dir, 'fixture.html'));
     const result = await win.webContents.executeJavaScript(`(async()=>{
       const checks=[];const wait=()=>new Promise(resolve=>setTimeout(resolve,90));
@@ -246,8 +246,76 @@ app.whenReady().then(async () => {
         newService.input.categoryId===window.categoryRecords[0].id&&
         newService.input.category==='Contenu éditorial');
       assert('E95 première version non publiée',newService.version.priceMode==='fixed'&&window.calls.publish===0);
-      return {passed:checks.length,failed:0,checks};
+      document.querySelector('.catalog-detail-heading-actions .close-detail').click();await wait();
+      await click('Catégories existantes');
+      await waitFor('.catalog-category-management','administration catégories, recette visuelle');
+      const visualModes=[];
+      const modeDensities=[['compact',14],['comfort',16],['comfort_plus',18]];
+      for(const theme of ['atoumweb','noir','blanc']){
+        for(const [density,font] of modeDensities){
+          document.documentElement.dataset.theme=theme;
+          document.documentElement.dataset.density=density;
+          await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+          const panel=document.querySelector('.catalog-category-management');
+          const inventory=document.querySelector('.catalog-category-inventory');
+          const content=document.querySelector('.content-area');
+          const tableScroll=document.querySelector('.catalog-category-inventory-scroll');
+          const bodyFont=parseFloat(getComputedStyle(document.body).fontSize);
+          const labelFont=parseFloat(getComputedStyle(panel.querySelector('label')).fontSize);
+          const heading=panel.querySelector('h3');
+          const primary=panel.querySelector('button[type=submit]');
+          assert('04B style réel et panneau monté '+theme+'/'+density,
+            !!inventory&&!!content&&!!tableScroll&&!!heading&&!!primary);
+          assert('04B police densité '+theme+'/'+density,bodyFont===font&&labelFont>=14);
+          assert('04B controls visibles '+theme+'/'+density,
+            primary.getBoundingClientRect().height>=32&&getComputedStyle(primary).display!=='none');
+          assert('04B scroll horizontal confiné au tableau '+theme+'/'+density,
+            document.documentElement.scrollWidth<=document.documentElement.clientWidth+12&&
+            content.scrollWidth<=content.clientWidth+12);
+          visualModes.push({theme,density,font:bodyFont,labelFont,
+            bodyScroll:document.documentElement.scrollWidth,bodyWidth:document.documentElement.clientWidth,
+            tableScroll:tableScroll.scrollWidth,tableWidth:tableScroll.clientWidth});
+        }
+      }
+      window.__catalog04bModes=visualModes;
+      return {passed:checks.length,failed:0,checks,visualModes};
     })()`);
+    if(result.visualModes?.length!==9)throw Error('Visual modes incomplete');
+    if(capturePath){
+      // Paint-frame sentinel ensures every PNG corresponds to the requested theme/density.
+      const color=index=>[30+(index*41)%190,30+(index*83)%190,30+(index*117)%190];
+      const verified=(photo,rgb)=>{
+        const size=photo.getSize(),bytes=photo.toBitmap(),pos=((size.height-15)*size.width+(size.width-15))*4;
+        if(bytes.length!==size.width*size.height*4)return false;
+        const a=[...bytes.subarray(pos,pos+3)].sort((a,b)=>a-b),b=[...rgb].sort((a,b)=>a-b);
+        return a.every((x,i)=>Math.abs(x-b[i])<=7);
+      };
+      fs.mkdirSync(capturePath);
+      let n=0;
+      for(const {theme,density} of result.visualModes){
+        n++;
+        const rgb=color(n);
+        await win.webContents.executeJavaScript(`(()=>{
+          document.documentElement.dataset.theme=${JSON.stringify(theme)};
+          document.documentElement.dataset.density=${JSON.stringify(density)};
+          let marker=document.getElementById('catalog-visual-frame-marker');
+          if(!marker){marker=document.createElement('div');marker.id='catalog-visual-frame-marker';document.body.appendChild(marker);}
+          marker.style.cssText='position:fixed!important;right:0!important;bottom:0!important;width:40px!important;height:40px!important;z-index:2147483647!important;pointer-events:none!important;background:rgb(${rgb.join(',')})!important';
+        })()`);
+        let photo=null;
+        for(let attempt=0;attempt<20;attempt++){
+          await win.webContents.executeJavaScript('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
+          await new Promise(resolve=>setTimeout(resolve,80));
+          const candidate=await win.webContents.capturePage();
+          if(verified(candidate,rgb)){photo=candidate;break;}
+        }
+        if(!photo)throw Error('Stale or blank compositor frame '+theme+'/'+density);
+        const destination=path.join(capturePath,theme+'-'+density+'.png');
+        if(fs.existsSync(destination))throw Error('Screenshot already exists: '+destination);
+        fs.writeFileSync(destination,photo.toPNG());
+        console.log('[CATALOG 04B] VERIFIED CAPTURE '+n+'/9 '+theme+'/'+density);
+      }
+    }
     console.log(JSON.stringify(result, null, 2));win.destroy();app.exit(0);
   } catch (error) { console.error(error);if(win&&!win.isDestroyed())win.destroy();app.exit(1); }
 });
