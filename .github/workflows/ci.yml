@@ -15,6 +15,7 @@ on:
   pull_request:
     branches:
       - main
+      - feature/ux-v2-lot04c-editor-drafts-v1
       - feature/ux-v2-lot04b-catalogue-navigation-v1
       - foundation/electron-react-sqlite
       - feature/phase-1-crm
