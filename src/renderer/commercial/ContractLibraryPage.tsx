@@ -72,7 +72,7 @@ export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:(
     </div>
     <p>Les textes restent dans la bibliothèque de clauses existante. Le type organise les modules ; seules les prestations vendues déclenchent leurs clauses. Aucune validation juridique globale.</p>
     {error&&<p role="alert" className="form-error">{error}</p>}
-    {(typeGuard.dirty||moduleGuard.dirty||newModuleGuard.dirty)&&<p role="status" className="contract-library-unsaved">Brouillon non enregistré — confirme l'abandon avant de quitter ou de changer de fiche.</p>
+    {(typeGuard.dirty||moduleGuard.dirty||newModuleGuard.dirty)&&<p role="status" className="contract-library-unsaved">Brouillon non enregistré — confirme l'abandon avant de quitter ou de changer de fiche.</p>}
     {showNewModule&&<fieldset disabled={busy} className="contract-type-detail"><legend>Nouveau module — brouillon uniquement</legend>
       <label>Code du module<input aria-label="Code du module" value={newCode} onChange={e=>setNewCode(e.target.value)}/></label>
       <label>Titre du module<input aria-label="Titre du module" value={newTitle} onChange={e=>setNewTitle(e.target.value)}/></label>
