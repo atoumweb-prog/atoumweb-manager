@@ -116,6 +116,23 @@ app.whenReady().then(async () => {
       await settle();
     };
     await settle();
+    // R07G-27: every supported theme × density must retain legible controls
+    // and a real Site/Page workbench at desktop width, using rendered Chromium.
+    for (const theme of ['blanc','noir','atoumweb']) {
+      for (const density of ['compact','comfort','comfort_plus']) {
+        await js(`(()=>{document.documentElement.dataset.theme=${JSON.stringify(theme)};document.documentElement.dataset.density=${JSON.stringify(density)};return true})()`);
+        await check(`R07G-27 ${theme} × ${density} : lisibilité et largeur atelier`, `(()=>{
+          const body=getComputedStyle(document.body);
+          const root=document.documentElement;
+          const workspace=document.querySelector('.project-sites-workspace');
+          const font=parseFloat(body.fontSize);
+          const width=workspace?.getBoundingClientRect().width??0;
+          if(font>=14 && width>0 && root.scrollWidth<=root.clientWidth+1) return true;
+          return {font,width,viewport:root.clientWidth,scrollWidth:root.scrollWidth};
+        })()`);
+      }
+    }
+    await js("(()=>{document.documentElement.dataset.theme='atoumweb';document.documentElement.dataset.density='comfort';return true})()");
     await check('Texte ciblé : seule la feuille H1 concernée change', `(()=>{
       const hero='<section><div class="banner">Votre titre</div><div class="badge"><span>Votre titre</span></div><h1>Pour les <span>Votre titre</span><em> personnalisable</em></h1><p>Votre titre</p></section>';
       const fields=window.localEditor.extractComponentTexts(hero);
