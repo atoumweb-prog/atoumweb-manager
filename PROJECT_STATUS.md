@@ -1672,3 +1672,13 @@ Clôture Lot 3 — 03/10/2026 : bilan réel validé par AtoumWeb ; commit local 
 
 
 
+
+
+## UX/UI V2 — Lot 04D/04E — démarrage du 14/10/2026
+
+- Branche isolée `feature/ux-v2-lot04d-04e-catalogue-v1` depuis 04C `2412513b` ; aucune fusion vers `main`.
+- **04D (en cours)** : règles pures de déduplication des recommandations et exclusion des versions non publiées, cibles archivées et composants déjà inclus ; test Vitest ajouté. Persistances N:N, IPC et écran restant à réaliser.
+- **04E (en cours)** : projection de l'aide à la vente par version, sans texte inventé ni injection dans les clauses contractuelles ; test Vitest ajouté. Persistance structurée, interface et UX-01 restant à réaliser.
+- Documentation : `docs/ux-v2/LOT-04D-04E-DEMARRAGE-2026-10-14.md`.
+- **Validation : aucun test exécuté sur la nouvelle branche à la date de cette entrée ; résultats CI à attendre.** Les 1 092 tests réussis de la CI #1003 concernent exclusivement l'ancien HEAD 04C.
+- Ordre d'intégration à maintenir : `main` ← 04B ← 04C ← 04D/04E après validation de chaque convergence. Aucune fusion autorisée automatiquement.
