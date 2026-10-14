@@ -117,6 +117,41 @@ describe('InterventionCompletionService', () => {
     expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
+  it('08F relie Demande → Intervention → temps → clôture → facturation sans doublons', () => {
+    const request = operations.createRequest({
+      clientAccountId: clientId, source: 'email',
+      subject: 'Demande support 08F', description: 'Question client suivie',
+    });
+    const intervention = operations.transformRequest({
+      requestId: request.id, type: 'support', coverageMode: 'out_of_scope',
+      theoreticalValueCents: 9900, billableAmountCents: 7900,
+    });
+    const duplicateConversion = operations.transformRequest({
+      requestId: request.id, type: 'support', coverageMode: 'out_of_scope',
+      theoreticalValueCents: 9900, billableAmountCents: 7900,
+    });
+    expect(duplicateConversion.id).toBe(intervention.id);
+    expect(operations.getRequest(request.id).status).toBe('converted');
+    expect(database.all('SELECT id FROM interventions WHERE source_request_id=?', [request.id])).toHaveLength(1);
+
+    operations.changeInterventionStatus(intervention.id, 'in_progress');
+    time.addManual({
+      interventionId: intervention.id, category: 'support',
+      startedAt: '2026-09-14T08:00:00Z', endedAt: '2026-09-14T08:30:00Z',
+    });
+    expect(operations.getIntervention(intervention.id).totalTimeSeconds).toBe(1800);
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    const prepared = billing.list({ sourceType: 'intervention' });
+    expect(prepared).toHaveLength(1);
+    expect(prepared[0]).toMatchObject({
+      sourceId: intervention.id, status: 'ready', expectedAmountCents: 7900,
+    });
+    const after = snapshot();
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    expect(snapshot()).toEqual(after);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
   it('08F refuse une période de maintenance clôturée sans mutation', () => {
     const maintenance = new MaintenanceService(database);
     const plan = maintenance.createPlan({
