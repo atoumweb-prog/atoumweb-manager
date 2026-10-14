@@ -20,17 +20,22 @@ describe('cleanupExpiredReceiptPreviews', () => {
     const old = join(root, 'atoumweb-receipt-preview-expired123');
     const recent = join(root, 'atoumweb-receipt-preview-current123');
     const unrelated = join(root, 'other-app-cache');
+    const unmarked = join(root, 'atoumweb-receipt-preview-unmarked123');
     mkdirSync(old);
     mkdirSync(recent);
     mkdirSync(unrelated);
+    mkdirSync(unmarked);
+    writeFileSync(join(old, '.atoumweb-receipt-preview'), 'atoumweb-receipt-preview-v1');
     writeFileSync(join(old, 'preview.pdf'), 'old preview');
     const now = Date.now();
     const outdated = new Date(now - 40 * 24 * 60 * 60 * 1000);
     utimesSync(old, outdated, outdated);
+    utimesSync(unmarked, outdated, outdated);
     expect(cleanupExpiredReceiptPreviews(root, now)).toBe(1);
     expect(existsSync(old)).toBe(false);
     expect(existsSync(recent)).toBe(true);
     expect(existsSync(unrelated)).toBe(true);
+    expect(existsSync(unmarked)).toBe(true);
   });
 
   it('does not follow a symlink to a similarly named directory', () => {
