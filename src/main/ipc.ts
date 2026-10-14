@@ -417,6 +417,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('catalog:publish-version', (_event, versionId: string, expected?: CatalogVersion) => database.catalog.publishVersion(versionId, expected));
   ipcMain.handle('catalog:set-status', (_event, itemId: string, status: CatalogItemStatus) => database.catalog.setStatus(itemId, status));
   ipcMain.handle('catalog:set-visible-public', (_event, itemId: string, visible: boolean) => database.catalog.setVisiblePublic(itemId, visible));
+  ipcMain.handle('catalog:list-recommendations', (_event, versionId: string) => database.catalogRecommendations.list(versionId));
+  ipcMain.handle('catalog:replace-recommendations', (_event, versionId: string, targetVersionIds: string[]) => database.catalogRecommendations.replace(versionId, targetVersionIds));
   ipcMain.handle('catalog:list-offer-components', (_event, offerVersionId: string) => database.catalog.listOfferComponents(offerVersionId));
   ipcMain.handle('catalog:production-blueprints', (_event, versionId: string) => database.catalog.listProductionBlueprints(versionId));
   ipcMain.handle('catalog:set-offer-components', (_event, offerVersionId: string, components: OfferComponentInput[]) => database.catalog.setOfferComponents(offerVersionId, components));
