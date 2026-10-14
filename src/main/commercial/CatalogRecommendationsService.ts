@@ -24,7 +24,7 @@ export class CatalogRecommendationsService {
   }
 
   /** Atomic replace; references use immutable published targets. No quote is changed. */
-  replace(sourceVersionId: string, targetVersionIds: readonly string[]): CatalogRecommendationRow[] {
+  replace(sourceVersionId: string, targetVersionIds: readonly string[], expectedTargetVersionIds?: readonly string[]): CatalogRecommendationRow[] {
     this.database.exec('BEGIN IMMEDIATE;');
     try {
       const version = (id:string) => this.database.get<VersionRow>(
@@ -32,6 +32,11 @@ export class CatalogRecommendationsService {
         JOIN catalog_items i ON i.id=v.item_id WHERE v.id=?`,[id]);
       const source=version(sourceVersionId);
       if (!source || source.status !== 'draft') throw new Error('Seul un brouillon Catalogue peut modifier ses recommandations.');
+      if (expectedTargetVersionIds) {
+        const persisted = this.list(sourceVersionId).map(link => link.targetVersionId);
+        if (JSON.stringify(persisted) !== JSON.stringify(expectedTargetVersionIds))
+          throw new Error('Conflit : les recommandations ont été modifiées dans une autre fenêtre. Recharge la fiche avant de sauvegarder.');
+      }
       const seen=new Set<string>();
       for (const id of targetVersionIds) {
         const target=version(id);
