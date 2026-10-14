@@ -212,7 +212,10 @@ app.whenReady().then(async () => {
         tag:e.tagName,
         className:e.className,
         clientWidth:e.clientWidth,
-        scrollWidth:e.scrollWidth
+        scrollWidth:e.scrollWidth,
+        html:e.outerHTML.slice(0,380),
+        parentClass:e.parentElement?.className,
+        computedOverflow:getComputedStyle(e).overflowX
       }));
     })()`);
     await check('Fin réelle de la fiche accessible', `(()=>{let e=document.querySelector('.project-sites-detail-panel');e.scrollTop=e.scrollHeight;return e.lastElementChild.getBoundingClientRect().bottom<=e.getBoundingClientRect().bottom})()`);
