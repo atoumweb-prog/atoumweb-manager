@@ -3,7 +3,7 @@ export const CATALOG_EDITOR_TABS = [
   {id:'identity',label:'Identité',hint:'Identité commune et repères commerciaux'},
   {id:'pricing',label:'Tarifs & Abby',hint:'Prix, unité, périodicité et acompte'},
   {id:'scope',label:'Contenu & périmètre',hint:'Livrables, inclusions, exclusions et prérequis'},
-  {id:'associations',label:'Associations',hint:'Services inclus ou optionnels d’une offre'},
+  {id:'associations',label:'Associations',hint:'Composition des offres et recommandations complémentaires'},
   {id:'sales',label:'Aide à la vente',hint:'Bénéfices, besoins et recommandations internes'},
   {id:'contracts',label:'Contrat & CGV',hint:'Références versionnées et conditions commerciales'},
   {id:'production',label:'Production',hint:'Blueprints et préparation du travail'},
@@ -15,5 +15,7 @@ export function catalogTabHasVersionFields(tab: CatalogEditorTab): boolean {
   return CATALOG_INPUT_TABS.includes(tab);
 }
 export function catalogTabAppliesToType(tab: CatalogEditorTab,type:'offer'|'service'): boolean {
-  return tab!=='associations' || type==='offer';
+  // Les compositions restent réservées aux offres ; les recommandations 04D
+  // sont maintenant disponibles aussi sur les services.
+  return true;
 }
