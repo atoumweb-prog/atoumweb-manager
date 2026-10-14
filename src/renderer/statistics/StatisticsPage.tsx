@@ -8,6 +8,9 @@ import type { Intervention } from '../../shared/operations';
 import type { ProjectSummary } from '../../shared/projects';
 import {
   inStatisticsRange,
+  isStatisticsPipelineProspect,
+  sortStatisticsClientsByInvoiced,
+  statisticsQuoteAcceptancePercent,
   previousStatisticsPeriodRange,
   statisticsDelta,
   statisticsPeriodRange,
@@ -57,7 +60,6 @@ const SOURCE_LABELS: Record<string, string> = {
 };
 
 const PIPELINE = [
-  { stages: ['new'], label: 'Besoin à identifier', tone: 'blue' },
   { stages: ['qualifying', 'need_identified'], label: 'À qualifier', tone: 'purple' },
   { stages: ['quote_to_prepare', 'quote_to_send', 'quote_sent'], label: 'Devis', tone: 'green' },
   { stages: ['follow_up', 'waiting'], label: 'À relancer', tone: 'yellow' },
@@ -82,8 +84,8 @@ function hours(seconds: number): string {
   return value.toLocaleString('fr-FR', { maximumFractionDigits: value < 10 ? 1 : 0 }) + ' h';
 }
 
-function pct(value: number): string {
-  return value.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %';
+function pct(value: number | null): string {
+  return value === null ? '—' : value.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %';
 }
 
 function sum<T>(items: T[], selector: (item: T) => number): number {
@@ -178,6 +180,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
   const accepted = ranged(acceptedAll, range, (item) => item.acceptedAt);
   const previousAccepted = previousRange ? ranged(acceptedAll, previousRange, (item) => item.acceptedAt) : [];
   const refused = ranged(data.quotes.filter((item) => item.status === 'refused'), range, (item) => item.refusedAt);
+  const expired = ranged(data.quotes.filter((item) => item.status === 'expired'), range, (item) => item.expiredAt);
 
   const projectsCreated = ranged(data.projects, range, (item) => item.createdAt);
   const previousProjects = previousRange ? ranged(data.projects, previousRange, (item) => item.createdAt) : [];
@@ -203,12 +206,12 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
   const readyBilling = data.billing.filter((item) => item.status === 'ready' || item.status === 'planned');
   const readyAmount = sum(readyBilling, (item) => item.expectedAmountCents);
 
-  const activeProspects = data.prospects.filter((item) => !item.archivedAt && !['won', 'lost'].includes(item.stage || 'new'));
+  const activeProspects = data.prospects.filter((item) => isStatisticsPipelineProspect(item.stage, item.archivedAt));
   const activeProjects = data.projects.filter((item) => ['to_prepare', 'in_progress', 'waiting_client', 'blocked', 'to_validate'].includes(item.status));
   const activeInterventions = data.interventions.filter((item) => ['planned', 'in_progress', 'waiting_client', 'blocked', 'to_validate'].includes(item.status));
-  const acceptanceRate = ratio(accepted.length, accepted.length + refused.length);
+  const acceptanceRate = statisticsQuoteAcceptancePercent(accepted.length, refused.length, expired.length);
   const conversionRate = ratio(won.length, won.length + lost.length);
-  const offeredValue = Math.max(0, sum(accepted, (item) => item.catalogValueCents) - signed);
+  const offeredValue = sum(accepted, (item) => Math.max(0, item.catalogValueCents - item.contractValueCents));
 
   const pipelineRows = PIPELINE.map((entry) => ({
     ...entry,
@@ -245,8 +248,8 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
     ready: sum(readyBilling.filter((item) => item.clientAccountId === client.id), (item) => item.expectedAmountCents),
     projects: activeProjects.filter((item) => item.clientAccountId === client.id).length,
     interventions: data.interventions.filter((item) => item.clientAccountId === client.id && !['archived', 'cancelled'].includes(item.status)).length,
-  })).filter((item) => item.seconds || item.invoiced || item.ready || item.projects || item.interventions)
-    .sort((a, b) => (b.seconds + b.invoiced * 20) - (a.seconds + a.invoiced * 20)).slice(0, 8);
+  })).filter((item) => item.seconds || item.invoiced || item.ready || item.projects || item.interventions);
+  const rankedClientRows = sortStatisticsClientsByInvoiced(clientRows).slice(0, 8);
 
   const financial = [
     { label: 'Contractuel signé', value: signed, display: money(signed), tone: 'blue' },
@@ -267,7 +270,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         <Tab active={tab === 'commercial'} icon="user" label="Commercial" onClick={() => setTab('commercial')} />
         <Tab active={tab === 'production'} icon="folder" label="Projets & temps" onClick={() => setTab('production')} />
         <Tab active={tab === 'clients'} icon="wallet" label="Clients" onClick={() => setTab('clients')} />
-        <Tab active={tab === 'analytics'} icon="chart" label="Rentabilité & analyse détaillée" onClick={() => setTab('analytics')} />
+        <Tab active={tab === 'analytics'} icon="chart" label="Analyse financière & rendement" onClick={() => setTab('analytics')} />
       </div>
       {tab !== 'analytics' && <div className="statistics-period">
         <span>{range.label}</span>
@@ -318,19 +321,19 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
 
     {tab === 'commercial' && <>
       <div className="statistics-kpis">
-        <Kpi icon="user" label="Nouveaux prospects" value={String(newProspects.length)} comparison={comparison(newProspects.length, previousProspects.length)} />
+        <Kpi icon="user" label="Contacts créés" value={String(newProspects.length)} comparison={comparison(newProspects.length, previousProspects.length)} />
         <Kpi icon="file-text" label="Devis créés" value={String(quotes.length)} comparison={comparison(quotes.length, previousQuotes.length)} />
-        <Kpi icon="check-circle" label="Taux d’acceptation" value={pct(acceptanceRate)} helper={countLabel(accepted.length, 'devis accepté', 'devis acceptés') + ' · ' + countLabel(refused.length, 'devis refusé', 'devis refusés')} />
+        <Kpi icon="check-circle" label="Taux d’acceptation" value={pct(acceptanceRate)} helper={countLabel(accepted.length, 'devis accepté', 'devis acceptés') + ' · ' + countLabel(refused.length, 'devis refusé', 'devis refusés') + ' · ' + countLabel(expired.length, 'devis expiré', 'devis expirés')} />
         <Kpi icon="chart" label="Conversion prospects" value={pct(conversionRate)} helper={countLabel(won.length, 'prospect gagné', 'prospects gagnés') + ' · ' + countLabel(lost.length, 'prospect perdu', 'prospects perdus')} />
       </div>
       <div className="statistics-main-grid">
         <article className="panel statistics-card">
           <CardTitle eyebrow="Pipeline actuel" title="Répartition commerciale" action="Ouvrir le pipeline →" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:open-prospects-view', { detail: 'pipeline' }))} />
           <div className="statistics-pipeline">{pipelineRows.map((item) => <div key={item.label} className={'tone-' + item.tone}><strong>{item.count}</strong><span>{item.label}</span></div>)}</div>
-          <div className="statistics-mini"><span><strong>{activeProspects.length}</strong> prospects actifs</span><span><strong>{money(signed)}</strong> signé</span><span><strong>{money(offeredValue)}</strong> écart catalogue / signé</span></div>
+          <div className="statistics-mini"><span><strong>{activeProspects.length}</strong> prospects actifs (hors Annuaire)</span><span><strong>{money(signed)}</strong> signé</span><span><strong>{money(offeredValue)}</strong> écart catalogue / signé</span></div>
         </article>
         <article className="panel statistics-card">
-          <CardTitle eyebrow="Origines" title="Prospects entrés sur la période" />
+          <CardTitle eyebrow="Origines" title="Contacts créés sur la période" />
           {sources.length ? <div className="statistics-ranking">{sources.slice(0, 7).map((item, index) => <div key={item.label}><span className="rank">{index + 1}</span><span>{item.label}</span><strong>{item.count}</strong><i style={{ width: ratio(item.count, Math.max(1, newProspects.length)) + '%' }} /></div>)}</div> : <Empty label="Aucun nouveau prospect sur cette période." />}
         </article>
       </div>
@@ -364,8 +367,8 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         <Kpi icon="euro" label="À facturer" value={money(readyAmount)} helper={countLabel(readyBilling.length, 'élément', 'éléments') + ' actuellement'} />
       </div>
       <article className="panel statistics-card statistics-client-card">
-        <CardTitle eyebrow="Clients" title="Activité sur la période" />
-        {clientRows.length ? <div className="statistics-table-wrap"><table className="statistics-table"><thead><tr><th>Client</th><th>Temps</th><th>Facturé</th><th>À facturer</th><th>Projets actifs</th><th>Interventions</th></tr></thead><tbody>{clientRows.map((row) => <tr key={row.id} onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'client', entityId: row.id, title: row.label } }))}><td><strong>{row.label}</strong></td><td>{hours(row.seconds)}</td><td>{money(row.invoiced)}</td><td>{money(row.ready)}</td><td>{row.projects}</td><td>{row.interventions}</td></tr>)}</tbody></table></div> : <Empty label="Aucune activité client sur cette période." />}
+        <CardTitle eyebrow="Clients" title="Facturé suivi décroissant · temps en départage" />
+        {rankedClientRows.length ? <div className="statistics-table-wrap"><table className="statistics-table"><thead><tr><th>Client</th><th>Temps</th><th>Facturé</th><th>À facturer</th><th>Projets actifs</th><th>Interventions</th></tr></thead><tbody>{rankedClientRows.map((row) => <tr key={row.id} onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'client', entityId: row.id, title: row.label } }))}><td><strong>{row.label}</strong></td><td>{hours(row.seconds)}</td><td>{money(row.invoiced)}</td><td>{money(row.ready)}</td><td>{row.projects}</td><td>{row.interventions}</td></tr>)}</tbody></table></div> : <Empty label="Aucune activité client sur cette période." />}
       </article>
     </>}
   </section>;

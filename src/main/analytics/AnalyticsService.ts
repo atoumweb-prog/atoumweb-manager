@@ -17,6 +17,7 @@ import {
   type AnalyticsProjectTypeStat,
   type AnalyticsTimeCategoryStat,
 } from '../../shared/analytics';
+import { statisticsQuoteAcceptancePercent } from '../../shared/statistics';
 import { resolveAnalyticsPeriod } from './AnalyticsPeriodService';
 
 interface SumRow extends Record<string, unknown> {
@@ -173,7 +174,7 @@ export class AnalyticsService {
       quotesRefused,
       quotesExpired,
       quoteDecisions,
-      quoteAcceptancePercent: quoteDecisions > 0 ? (quotesAccepted / quoteDecisions) * 100 : null,
+      quoteAcceptancePercent: statisticsQuoteAcceptancePercent(quotesAccepted, quotesRefused, quotesExpired),
     };
   }
 

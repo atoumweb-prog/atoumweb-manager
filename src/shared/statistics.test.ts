@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   inStatisticsRange,
+  isStatisticsPipelineProspect,
+  sortStatisticsClientsByInvoiced,
+  statisticsQuoteAcceptancePercent,
   previousStatisticsPeriodRange,
   statisticsDelta,
   statisticsPeriodRange,
@@ -26,6 +29,33 @@ describe('statistics helpers', () => {
     expect(inStatisticsRange('2026-07-01T00:00:00', range)).toBe(true);
     expect(inStatisticsRange('2026-09-30T23:00:00', range)).toBe(true);
     expect(inStatisticsRange('2026-10-01T00:00:00', range)).toBe(false);
+  });
+
+  it('harmonise les décisions de devis en incluant les expirés et sans inventer un taux vide', () => {
+    expect(statisticsQuoteAcceptancePercent(1, 1, 1)).toBeCloseTo(33.3333, 3);
+    expect(statisticsQuoteAcceptancePercent(1, 1, 0)).toBe(50);
+    expect(statisticsQuoteAcceptancePercent(0, 0, 1)).toBe(0);
+    expect(statisticsQuoteAcceptancePercent(0, 0, 0)).toBeNull();
+  });
+
+  it('sépare les contacts Annuaire et les dossiers clos du pipeline actif', () => {
+    expect(isStatisticsPipelineProspect('new', null)).toBe(false);
+    expect(isStatisticsPipelineProspect(undefined, null)).toBe(false);
+    expect(isStatisticsPipelineProspect('qualifying', null)).toBe(true);
+    expect(isStatisticsPipelineProspect('quote_sent', null)).toBe(true);
+    expect(isStatisticsPipelineProspect('won', null)).toBe(false);
+    expect(isStatisticsPipelineProspect('lost', null)).toBe(false);
+    expect(isStatisticsPipelineProspect('negotiation', '2026-09-01T00:00:00Z')).toBe(false);
+  });
+
+  it('classe les clients par centimes sans additionner euros et secondes', () => {
+    const input = [
+      { label: 'Client B', invoiced: 0, seconds: 360000 },
+      { label: 'Client A', invoiced: 30000, seconds: 600 },
+      { label: 'Client C', invoiced: 30000, seconds: 900 },
+    ];
+    expect(sortStatisticsClientsByInvoiced(input).map((row) => row.label)).toEqual(['Client C', 'Client A', 'Client B']);
+    expect(input[0].label).toBe('Client B');
   });
 
   it('gère les variations sans fabriquer de pourcentage quand la base vaut zéro', () => {

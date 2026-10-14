@@ -405,7 +405,7 @@
 
 .statistics-pipeline {
   display: grid;
-  grid-template-columns: repeat(5, minmax(80px, 1fr));
+  grid-template-columns: repeat(4, minmax(80px, 1fr));
   gap: 7px;
   min-height: 150px;
 }
@@ -671,7 +671,7 @@
   }
 
   .statistics-pipeline {
-    grid-template-columns: repeat(5, minmax(70px, 1fr));
+    grid-template-columns: repeat(4, minmax(70px, 1fr));
   }
 }
 
