@@ -79,4 +79,31 @@ describe('BillingHandoffService', () => {
     expect(updated.invoicedAt).toBe('2026-09-24T10:00:00.000Z');
     expect(updated.status).toBe('invoiced');
   });
+
+  it('refuse une facture d’un autre client ou archivée sans modifier la préparation', () => {
+    const crm = new CrmService(database);
+    const other = crm.createOrganization({ name: 'Autre client' });
+    const otherId = crm.createClient({ organizationId: other.id }).id;
+    const now = '2026-10-14T10:00:00.000Z';
+    database.run(
+      `INSERT INTO billing_items
+       (id,client_account_id,source_type,source_id,source_key,description,expected_amount_cents,theoretical_value_cents,status,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+      ['billing-isolated', clientId, 'other', 'source-isolated', 'other:source-isolated', 'Prestation à facturer', 9900, 9900, 'ready', now, now],
+    );
+    const insertDocument = (id: string, owner: string, archivedAt: string | null) => database.run(
+      `INSERT INTO client_documents
+       (id,client_account_id,category,title,original_name,relative_path,mime_type,size_bytes,archived_at,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+      [id, owner, 'invoice', 'Facture', id + '.pdf', 'Clients/test/Documents/03 Factures/' + id + '.pdf', 'application/pdf', 1200, archivedAt, now, now],
+    );
+    insertDocument('invoice-foreign', otherId, null);
+    insertDocument('invoice-archived', clientId, now);
+    expect(() => billing.attachInvoice('billing-isolated', 'invoice-foreign')).toThrow(/autre client/);
+    expect(() => billing.attachInvoice('billing-isolated', 'invoice-archived')).toThrow(/Restaure/);
+    expect(billing.get('billing-isolated')).toMatchObject({
+      status: 'ready', invoiceDocumentId: null, invoiceReference: null,
+    });
+  });
+
 });
