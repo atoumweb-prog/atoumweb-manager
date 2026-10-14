@@ -182,7 +182,7 @@ if(!process.versions.electron){
     console.log('02C_RESULT '+JSON.stringify({passed:checks,failed:0,consoleErrors,onlyTemp:true}));return;
   }
   if(lot09b){
-    await require('./fixtures/lot09b-billing-real-scenarios.cjs')({win,db,temp,workspace,registered,evalUI,get,wait,navigate,test,sleep});
+    await require('./fixtures/lot09b-billing-real-scenarios.cjs')({win,db,temp,workspace,registered,evalUI,get,wait,navigate,select,test,sleep});
     test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','09B live SQLite integrity');
     test(db.database.all('PRAGMA foreign_key_check').length===0,'09B live SQLite foreign keys');
     console.log('[UXV2 09B LIVE] PASSED '+checks+' native assertions; isolated TEMP only');
