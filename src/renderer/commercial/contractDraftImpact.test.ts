@@ -23,6 +23,10 @@ describe('05D draft contract impact preview',()=>{
       {id:'a',title:'a',kinds:['excluded','moved','edited']},
     ]);
   });
+  it('rejects duplicate clause identities rather than hiding a change',()=>{
+    expect(()=>compareDraftContractClauses([clause('a'),clause('a')],[clause('a')])).toThrow(/dupliqués/);
+    expect(()=>compareDraftContractClauses([clause('a')],[clause('a'),clause('a')])).toThrow(/dupliqués/);
+  });
   it('does not confuse unchanged snapshots with edits',()=>{
     expect(compareDraftContractClauses([clause('a')],[clause('a')])).toEqual([]);
     expect(compareDraftContractClauses([],[])).toEqual([]);
