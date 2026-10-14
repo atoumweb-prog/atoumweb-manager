@@ -36,3 +36,20 @@
 - Correctif minimal dans `MaintenanceService.ts` : INSERT explicite `period_alignment='anniversary'` uniquement à la création manuelle. Aucune migration ni modification d'abonnements existants.
 - Test ajouté à `MaintenanceService.test.ts` : création le 15/10, cycles 15/10–14/11 et 15/11–14/12, puis contrôle du comportement `calendar` sur un enregistrement historique simulé. La règle des ventes annuelles et du quota sans report reste à vérifier séparément.
 - **Statut** : code et test publiés sur branche isolée, validation Vitest/typecheck/CI et Electron **non encore obtenue**. Ne pas fusionner sans leurs résultats.
+
+## E224 / E225 — audit ciblé sur code courant
+
+### E224 — compteur des périodes
+- `MaintenanceService.mapPeriod` calcule séparément le temps mineur et le temps routine : `usage.usedSeconds = usedSeconds + routineSeconds`, mais `remainingSeconds` et `secondsOverQuota` se fondent sur le temps mineur seulement. Cette asymétrie **est effectivement présente**. Ne pas corriger arithmétiquement `remainingSeconds` sans vérifier la règle métier : les routines peuvent être affichées dans le temps réalisé sans consommer le quota de maintenance mineure.
+- Tests à ajouter : deux sessions (mineure/routine) avec pauses, quota partiellement puis totalement consommé ; vérifier séparément temps total, routine, solde et dépassement. Confronter les libellés UI au contrat réel.
+- Décision en attente : clarifier si le temps routine doit être imputé au quota, ou uniquement affiché dans le cumul. **Aucune modification des compteurs à ce stade**.
+
+### E225 — débit, correction et inversion de pack
+- `HourPackService.debitIntervention` utilise `source_key=intervention:<pack>:<intervention>`, contrôle les rattachements et englobe son débit dans un savepoint ; sa protection contre les doublons est explicitement présente. La clôture englobante utilise également son propre savepoint (E222).
+- `reverseMovement` refuse indirectement un deuxième inverse en retrouvant `reversal_of_movement_id` ; l'inverse compense le mouvement par son delta opposé. Le solde est reconstitué depuis la somme des deltas, sans plancher silencieux à zéro.
+- **Risque à reproduire avant correction** : `addMovement` et `reverseMovement` enchaînent insertion, actualisation du statut et journal d'activité sans savepoint englobant visible. Une panne injectée après l'insertion pourrait laisser un mouvement enregistré sans journal ou statut cohérent. Prévoir tests d'injection dans `HourPackService.test.ts` et correction transactionnelle ciblée si le défaut est confirmé.
+- Tests à ajouter : échec de journal après correction manuelle / reversal, rollback exact du snapshot ; deux appels identiques de reversal ; solde négatif conservé ; mouvement opposé unique ; contrôle `PRAGMA integrity_check` et FK. Une action de correction volontaire ne doit pas être rendue idempotente à tort sans identifiant métier de demande.
+
+### CI #910 du candidat E223
+- Exécution GitHub Actions #910 / run 38561121938 : job quality **failure**. Le journal renvoyé par la connexion GitHub est indisponible (404 sur blob des logs), et les détails d'étapes ne sont pas accessibles. **Cause indéterminée ; E223 n'est pas validé.**
+- Garder #109 en draft. Ne pas modifier `main`, ni les branches 04/05 ; récupérer la cause exacte du job, corriger sur cette branche, puis obtenir la CI verte au HEAD avant toute fusion.
