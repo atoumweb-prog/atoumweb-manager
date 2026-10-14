@@ -27,6 +27,11 @@ describe('05D draft contract impact preview',()=>{
     expect(()=>compareDraftContractClauses([clause('a'),clause('a')],[clause('a')])).toThrow(/dupliqués/);
     expect(()=>compareDraftContractClauses([clause('a')],[clause('a'),clause('a')])).toThrow(/dupliqués/);
   });
+  it('reports orphan transitions separately from exclusions and content edits',()=>{
+    expect(compareDraftContractClauses([clause('a')],[clause('a',{isOrphaned:true})])[0].kinds).toEqual(['orphaned']);
+    expect(compareDraftContractClauses([clause('a',{isOrphaned:true})],[clause('a')])[0].kinds).toEqual(['restored']);
+    expect(compareDraftContractClauses([clause('a')],[clause('a',{enabled:false,isOrphaned:true})])[0].kinds).toEqual(['excluded','orphaned']);
+  });
   it('does not confuse unchanged snapshots with edits',()=>{
     expect(compareDraftContractClauses([clause('a')],[clause('a')])).toEqual([]);
     expect(compareDraftContractClauses([],[])).toEqual([]);
