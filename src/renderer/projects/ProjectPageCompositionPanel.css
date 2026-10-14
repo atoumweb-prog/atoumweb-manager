@@ -272,8 +272,8 @@
 }
 
 
-/* LOT6B UX — grand écran 75/25 verrouillé, aperçu fixe + outils scrollables */
-@media(min-width:1100px){
+/* LOT6B UX — grand écran 75/25 verrouillé, y compris viewport utile 1008px Electron */
+@media(min-width:900px){
   .project-page-inspector-workbench.expanded.single .settings-pane .project-component-settings-panel.docked{
     display:grid;
     grid-template-rows:auto minmax(0,1fr);
@@ -391,7 +391,7 @@
 
 /* UX-07C: le grand atelier avec deux panneaux actifs évite de comprimer
    chaque aperçu dans une demi-fenêtre. La zone outils conserve son scroll. */
-@media (min-width:1100px) {
+@media (min-width:900px) {
   .project-page-inspector-workbench.expanded.both-open:not(.settings-collapsed):not(.code-collapsed) {
     grid-template-columns:minmax(0,1fr);
     overflow-y:auto;
@@ -423,3 +423,8 @@
   min-width:0;
   overflow-wrap:anywhere;
 }
+
+/* UX-07C: title and explanation must wrap in the settings toolbar. */
+.project-component-settings-toolbar > div {min-width:0;overflow-wrap:anywhere;}
+.project-component-settings-toolbar > div strong,
+.project-component-settings-toolbar > div small {display:block;max-width:100%;overflow-wrap:anywhere;}
