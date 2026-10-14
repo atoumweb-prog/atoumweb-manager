@@ -363,4 +363,25 @@ describe('QuoteService', () => {
     expect(quotes.deselectOfferOption(offerLine.id, component.componentId).lines).toHaveLength(1);
   });
 
+  it('06C : option non achetée sans incidence et rejet d’une provenance inexistante', () => {
+    const prospect = createProspect();
+    const option = createPublishedService(9900, 'Option secondaire 06C');
+    const offer = catalog.create(
+      { type: 'offer', name: 'Offre isolée 06C', category: 'Tests' },
+      { priceMode: 'fixed', priceCents: 39900 },
+    );
+    catalog.setOfferComponents(offer.versions[0].id, [
+      { serviceVersionId: option.currentVersion!.id, isOptional: true },
+    ]);
+    catalog.publishVersion(offer.versions[0].id);
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Option non sélectionnée' });
+    const added = quotes.addCatalogLine(quote.id, offer.versions[0].id);
+    expect(added.lines).toHaveLength(1);
+    expect(added.contractValueCents).toBe(39900);
+    expect(() => quotes.selectOfferOption(added.lines[0].id, 'composant-inexistant'))
+      .toThrow(/Option absente/);
+    expect(quotes.get(quote.id).lines).toHaveLength(1);
+    expect(quotes.get(quote.id).contractValueCents).toBe(39900);
+  });
+
 });
