@@ -137,7 +137,9 @@ module.exports=async context=>{
    reads=0;finish=null;
    await search('CONVERGENCE LATE A','quote',qa.id);for(let i=0;i<60&&!finish;i++)await sleep(20);
    test(!!finish,'C03 obsolete failure actually armed');
-   await search('CONVERGENCE LATE B','quote',qb.id);await loaded('quote',qb.id);rejectRead(Error('OBSOLETE COMBINED QUOTE FAILURE'));await sleep(100);
+   await search('CONVERGENCE LATE B','quote',qb.id);await loaded('quote',qb.id);
+   await wait('document.querySelector(".quote-detail-panel")?.dataset.searchEntityId==='+JSON.stringify(qb.id),'C03 quote B panel ready before obsolete rejection');
+   rejectRead(Error('OBSOLETE COMBINED QUOTE FAILURE'));await sleep(100);
    const state=await get('({quote:document.querySelector(".quote-detail-panel")?.dataset.searchEntityId??null,target:document.querySelector("[data-search-entity-type=quote]")?.dataset.searchEntityId??null,visibleError:document.body.textContent.includes("OBSOLETE COMBINED QUOTE FAILURE"),panels:document.querySelectorAll(".quote-detail-panel").length})');
    test(state.quote===qb.id&&!state.visibleError,'C03 obsolete Quote failure neither replaces identity nor adds false error; observed='+JSON.stringify(state));
   }finally{db.quotes.get=realGet;}
