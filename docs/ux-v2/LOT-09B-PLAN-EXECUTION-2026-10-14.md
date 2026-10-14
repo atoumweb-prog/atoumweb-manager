@@ -18,3 +18,7 @@ Référentiel de départ : `docs/ux-v2/LOT-09B-FACTURATION-ABBY.md` dans le comm
 - Ne pas modifier les prestations et devis des lots 04–08 ; ne pas fusionner dans `main` sans autorisation.
 - Pour le développement du 09B, privilégier une branche dédiée **après coordination avec la PR #113** pour éviter qu'une PR 09B incorpore involontairement 09A non fusionné.
 - Statuts stricts : cette note **prépare** le 09B ; elle ne revendique ni exécution des scénarios ni nouvelle fonctionnalité.
+
+## 14/10 — Protection des anciennes factures Abby
+- PR #119 : journal `billing_invoice_replaced` avec ancien et nouvel identifiant, référence et date ; garde `ClientDocumentService.deletePermanently` sur les identifiants historiques ; test d'archivage puis refus de suppression d'une ancienne facture.
+- Gate : CI Windows TypeScript/Vitest à vérifier sur le nouveau commit ; aucune recette Electron 09B certifiée et aucune fusion.
