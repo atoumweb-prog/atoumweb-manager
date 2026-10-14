@@ -124,6 +124,10 @@ export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:(
                   if(!out.cancelled)onMessage('Brouillon Word exporté : '+out.fileName);
                 })}>Exporter ce brouillon en Word (.docx)</button>
                 <button type="button" disabled={busy||body!==moduleVersion.body||module.versions[0]?.id!==moduleVersion.id} onClick={()=>void run(async()=>{
+                  const out=await window.atoumweb.contractTerms.library.exportWorkingPdf(module.id,moduleVersion.id);
+                  if(!out.cancelled)onMessage('PDF de travail non officiel exporté : '+out.fileName);
+                })}>PDF de travail (non signé)</button>
+                <button type="button" disabled={busy||body!==moduleVersion.body||module.versions[0]?.id!==moduleVersion.id} onClick={()=>void run(async()=>{
                   discardWordPreview();
                   const preview=await window.atoumweb.contractTerms.library.importWordDraft(module.id,moduleVersion.id);
                   if(preview){setWordPreview(preview);setWordLimitsAccepted(false);}
