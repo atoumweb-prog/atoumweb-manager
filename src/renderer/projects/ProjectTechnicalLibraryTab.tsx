@@ -152,12 +152,13 @@ export function ProjectTechnicalLibraryTab({ projectId, onMessage }: {
   }
 
   function startNewVersion(): void {
-    if (!detail?.currentVersion) return;
+    const currentVersion = detail?.currentVersion;
+    if (!currentVersion) return;
     requestUnsavedExit(() => {
-      setContentType(detail.currentVersion.contentType);
-    setLanguage(detail.currentVersion.language ?? '');
-    setContent(detail.currentVersion.contentText ?? '');
-    setNotes('');
+      setContentType(currentVersion.contentType);
+      setLanguage(currentVersion.language ?? '');
+      setContent(currentVersion.contentText ?? '');
+      setNotes('');
       setNewVersion(true);
       setReuseOpen(false);
     }, 'project-reuse');
@@ -222,12 +223,13 @@ export function ProjectTechnicalLibraryTab({ projectId, onMessage }: {
 
   function archive(): void {
     if (!detail) return;
-    requestUnsavedExit(() => { void archiveAllowed(); }, 'project-reuse');
+    const itemId = detail.id;
+    requestUnsavedExit(() => { void archiveAllowed(itemId); }, 'project-reuse');
   }
 
-  async function archiveAllowed(): Promise<void> {
+  async function archiveAllowed(itemId: string): Promise<void> {
     try {
-      await window.atoumweb.projects.technicalLibrary.archive(detail.id);
+      await window.atoumweb.projects.technicalLibrary.archive(itemId);
       setSelectedId(null);
       setDetail(null);
       await refresh(null);
