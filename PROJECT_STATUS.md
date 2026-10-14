@@ -1,5 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 14/10/2026 — Lot 09A : clôture technique et préparation 09B
+
+- Branche isolée `audit/ux-v2-lot09-20261014`, PR #113 **draft**, sans merge. CI #1042 (run 38579044064) **SUCCESS** sur `8b57e3e` : typecheck, suite Vitest, Electron UI/SQLite TEMP et restauration/redémarrage TEMP. Contrôles 09A exécutés, sans validation humaine anticipée.
+- Sécurisé : suppression impossible d'un document de facture référencé ; copies de justificatifs versionnées et vérifiées SHA-256 ; ouverture d'un exemplaire temporaire ; purge prudente de prévisualisations anciennes appartenant au Manager. Aucun changement de migration requis.
+- **09A = Validé techniquement**, sous réserve de la recette humaine et de la revue finale d'intégration. `main` à `cc0bc679` lors du contrôle ; PR déclarée mergeable par GitHub mais aucun rebase ni merge réalisé.
+- Prochaine étape 09B : auditer les parcours sources→Abby→facture PDF, références client et états, puis introduire uniquement les corrections minimales justifiées par des tests, sans émettre de facture dans le Manager. 09C–09F restent cadrés/non livrés.
+
+
 ## 14/10/2026 — Dernier cas de focus : ligne toujours masquée
 
 - Le correctif693f6af a passé typecheck/282 natifs avec81 frames/UX-01183. Complément final : si le filtre masque encore la ligne à la fermeture, retour à la recherche et conservation de sa valeur. Deux assertions clavier supplémentaires, sans mutation métier. Nouveau candidat à recetter puis une seule actualisation corrective107/CIautomatique, aucun rerun manuel.
