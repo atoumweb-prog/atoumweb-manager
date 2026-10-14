@@ -219,6 +219,15 @@ describe('BillingHandoffService', () => {
       ['billing-repeat'],
     );
     expect(events.map((event) => event.action)).toEqual(['billing_invoice_attached']);
+    const revised = billing.attachInvoice('billing-repeat', 'invoice-repeat', { reference: 'ABBY-REPEAT-REV' });
+    expect(revised.invoiceReference).toBe('ABBY-REPEAT-REV');
+    const afterMetadata = database.all<{ action: string }>(
+      "SELECT action FROM activity_log WHERE entity_type='billing_item' AND entity_id=? AND action LIKE 'billing_invoice_%' ORDER BY id",
+      ['billing-repeat'],
+    );
+    expect(afterMetadata.map((event) => event.action)).toEqual([
+      'billing_invoice_attached', 'billing_invoice_metadata_updated',
+    ]);
   });
 
 });
