@@ -32,7 +32,7 @@ interface BillingItemRow extends Record<string, unknown> {
 }
 
 export class BillingHandoffService {
-  constructor(private readonly database: DatabaseAdapter) {}
+  constructor(private readonly database: DatabaseAdapter, private readonly verifyInvoiceDocument?: (documentId: string) => string) {}
 
   list(filters: BillingItemFilters = {}): BillingItem[] {
     const where: string[] = [];
@@ -239,6 +239,8 @@ export class BillingHandoffService {
     if (document.client_account_id !== current.clientAccountId) throw new Error('Cette facture appartient à un autre client.');
     if (document.category !== 'invoice') throw new Error('Le document doit être classé dans la catégorie Factures.');
     if (document.archived_at) throw new Error('Restaure la facture avant de la rattacher.');
+    // Production supplies a workspace-aware verifier; do not attest tampered or missing PDF bytes.
+    this.verifyInvoiceDocument?.(documentId);
 
     const reference = clean(input.reference);
     const invoicedAt = input.invoicedAt ? this.dateIso(input.invoicedAt, 'Date de facture invalide.') : nowIso();
