@@ -21,7 +21,7 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}
  let allowExit=false;const confirms=[];const confirmOriginal=dialog.showMessageBoxSync;
  dialog.showMessageBoxSync=(...args)=>{confirms.push(args.at(-1));return allowExit?1:0;};
  try{
-  await navigate('Documents');
+  await navigate('Documents & Contrats');
   await wait('document.querySelectorAll(".documents-table tbody tr").length>=2',
     'actual Documents list');
   test(await get('document.querySelectorAll(".documents-entry-grid .documents-entry").length===4'),
@@ -70,7 +70,7 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}
     'Bravo dirty draft');
   await js('document.querySelector("[data-nav-module][aria-label=Accueil]").click()');
   await sleep(75);
-  test(await get('document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("aria-label")==="Documents"'),
+  test(await get('document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("aria-label")==="Documents & Contrats"'),
     '09D-UI-10: Stay blocks module navigation');
   allowExit=true;
   await js('document.querySelector("[data-nav-module][aria-label=Accueil]").click()');
@@ -109,7 +109,7 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}
   for(const [theme,title] of [['atoumweb','AtoumWeb'],['noir','Noir'],['blanc','Blanc']]){
     for(const [density,label,font,height] of [['compact','Compact',14,36],['comfort','Confort',16,42],['comfort_plus','Confort +',18,48]]){
       await select(theme,title,density,label,font,height);
-      await navigate('Documents');
+      await navigate('Documents & Contrats');
       await wait('!!document.querySelector(".documents-entry-grid")','Documents '+theme+'/'+density);
       const state=await get('({theme:document.documentElement.dataset.theme,density:document.documentElement.dataset.density,'+
        'entries:document.querySelectorAll(".documents-entry-grid .documents-entry").length,'+
