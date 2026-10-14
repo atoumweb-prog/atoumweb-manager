@@ -7,6 +7,7 @@ describe('navigation fidèle aux cohortes statistiques', () => {
     expect(isStatisticsDrilldownRoute(route)).toBe(true);
     expect(createStatisticsDrilldown('signed', [], 'Toutes les données').destination).toBe('Devis');
     expect(createStatisticsDrilldown('time', ['s1'], 'Semaine').destination).toBe('Gestion des temps');
+    expect(createStatisticsDrilldown('decisions', ['accepted','refused','expired'], 'Semaine')).toEqual({ kind: 'decisions', destination: 'Devis', ids: ['accepted','refused','expired'], periodLabel: 'Semaine' });
   });
   it('n’élargit pas une cohorte obsolète à tous les enregistrements et compte les absences', () => {
     const route = createStatisticsDrilldown('invoiced', ['b1', 'b2'], 'Période');
