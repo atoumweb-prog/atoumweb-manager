@@ -1,4 +1,5 @@
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
+import { requestUnsavedExit } from '../unsaved/unsaved';
 import { OperationalActionDetails } from './OperationalActionDetails';
 import { ProjectCommercialScopePanel } from './ProjectCommercialScopePanel';
 import { ProjectBlueprintOrigins } from './ProjectBlueprintOrigins';
@@ -265,6 +266,11 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
   );
 
   async function openProject(id: string): Promise<void> {
+    if (detailRef.current?.id !== id && !requestUnsavedExit(() => { void openProjectAllowed(id); })) return;
+    await openProjectAllowed(id);
+  }
+
+  async function openProjectAllowed(id: string): Promise<void> {
     const epoch=++openEpoch.current;
     if(detailRef.current?.id===id){setSelectedId(id);onEntityReady?.('project',id);return;}
     try {
@@ -287,6 +293,10 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
       onEntityReady?.('project',id,error instanceof Error?error.message:'Projet introuvable.');
       onMessage(error instanceof Error ? error.message : 'Projet introuvable.');
     }
+  }
+
+  function selectProjectTab(tab: typeof detailTab): void {
+    requestUnsavedExit(() => setDetailTab(tab));
   }
 
   function beginProductionResize(): void {
@@ -318,6 +328,10 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
   }
 
   function closeProjectDetail(): void {
+    requestUnsavedExit(() => closeProjectDetailAllowed());
+  }
+
+  function closeProjectDetailAllowed(): void {
     setCompletionReview(null);
     setSelectedNodeId(null);
     setExpandedPhaseIds(new Set());
@@ -699,12 +713,12 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
 
         <ProjectCommercialScopePanel key={detail.id+detail.commercialState} projectId={detail.id} onChanged={p=>{setDetail(p);void refresh();}}/>
         <nav className="project-production-nav" aria-label="Sections du projet">
-          <button className={detailTab === 'plan' ? 'active' : ''} type="button" onClick={() => setDetailTab('plan')}>Production</button>
-          <button className={detailTab === 'sites' ? 'active' : ''} type="button" onClick={() => setDetailTab('sites')}>Sites & pages</button>
-          <button className={detailTab === 'prerequisites' ? 'active' : ''} type="button" onClick={() => setDetailTab('prerequisites')}>Prérequis</button>
-          <button className={detailTab === 'operations' ? 'active' : ''} disabled={detail.commercialState==='provisional'} title={detail.commercialState==='provisional'?'Disponible après acceptation du devis':undefined} type="button" onClick={() => setDetailTab('operations')}>Interventions</button>
-          <button className={detailTab === 'commercial' ? 'active' : ''} type="button" onClick={() => setDetailTab('commercial')}>Commercial</button>
-          <button className={detailTab === 'summary' ? 'active' : ''} type="button" onClick={() => setDetailTab('summary')}>Résumé</button>
+          <button className={detailTab === 'plan' ? 'active' : ''} type="button" onClick={() => selectProjectTab('plan')}>Production</button>
+          <button className={detailTab === 'sites' ? 'active' : ''} type="button" onClick={() => selectProjectTab('sites')}>Sites & pages</button>
+          <button className={detailTab === 'prerequisites' ? 'active' : ''} type="button" onClick={() => selectProjectTab('prerequisites')}>Prérequis</button>
+          <button className={detailTab === 'operations' ? 'active' : ''} disabled={detail.commercialState==='provisional'} title={detail.commercialState==='provisional'?'Disponible après acceptation du devis':undefined} type="button" onClick={() => selectProjectTab('operations')}>Interventions</button>
+          <button className={detailTab === 'commercial' ? 'active' : ''} type="button" onClick={() => selectProjectTab('commercial')}>Commercial</button>
+          <button className={detailTab === 'summary' ? 'active' : ''} type="button" onClick={() => selectProjectTab('summary')}>Résumé</button>
         </nav>
 
         {detailTab === 'sites' && (
@@ -716,7 +730,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
               setDetail(updated);
               await refresh();
             }}
-            onOpenPage={(pageId) => {
+            onOpenPage={(pageId) => { requestUnsavedExit(() => {
               setSelectedNodeId(pageId);
               let cursor = detail.nodes.find((node) => node.id === pageId) ?? null;
               let rootId: string | null = cursor?.id ?? null;
@@ -726,7 +740,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
               }
               if (rootId) setExpandedPhaseIds((current) => new Set([...current, rootId!]));
               setDetailTab('plan');
-            }}
+            }); }}
           />
         )}
 
