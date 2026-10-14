@@ -1,0 +1,52 @@
+import type {QuoteContractClause} from './contractTerms';
+import type {ContractSectionReview} from './contractSectionPolicy';
+import {CONTRACT_SECTION_LABELS,CONTRACT_SECTION_ORDER} from './contractSectionPolicy';
+import {planDraftContractAssembly} from './draftContractAssemblyPlan';
+import type {ContractApplicabilityContext,ContractApplicabilityRule,ContractClauseConflict} from './contractSectionPolicy';
+
+export interface ReviewedQuoteClause {
+  clause:QuoteContractClause;
+  review:ContractSectionReview;
+  applicability?:ContractApplicabilityRule;
+}
+export interface NumberedContractSection {
+  key:string;
+  title:string;
+  articles:{number:string;id:string;title:string;body:string}[];
+}
+export function assembleReviewedDraftContract(
+ entries:readonly ReviewedQuoteClause[],
+ context:ContractApplicabilityContext,
+ conflicts:readonly ContractClauseConflict[]=[],
+){
+ const selectable=entries.filter(e=>e.clause.enabled&&!e.clause.isOrphaned);
+ const ids=new Set<string>();const versions=new Set<string>();
+ const duplicateIds:string[]=[];
+ for(const e of selectable){
+   if(ids.has(e.clause.id))duplicateIds.push(e.clause.id);else ids.add(e.clause.id);
+   const vid=e.clause.sourceClauseVersionId;
+   if(vid){if(versions.has(vid))duplicateIds.push(vid);else versions.add(vid);}
+ }
+ const missing=selectable.filter(e=>!e.clause.sourceClauseVersionId);
+ const versioned=selectable.filter(e=>!!e.clause.sourceClauseVersionId);
+ const plan=planDraftContractAssembly(versioned.map(e=>({
+   id:e.clause.id,versionId:e.clause.sourceClauseVersionId!,
+   section:e.review,applicability:e.applicability,
+   clause:e.clause,
+ })),context,conflicts);
+ const sections:NumberedContractSection[]=[];
+ for(const [index,key] of CONTRACT_SECTION_ORDER.entries()){
+   const matches=plan.included.filter(e=>e.section.status==='approved'&&e.section.sectionKey===key);
+   if(!matches.length)continue;
+   sections.push({key,title:CONTRACT_SECTION_LABELS[key],articles:matches.map((e,n)=>({
+     number:`${index+1}.${n+1}`,id:e.id,title:e.clause.title,body:e.clause.body,
+   }))});
+ }
+ return {
+   ...plan,
+   sections,
+   missing:missing.map(e=>e.clause.id),
+   duplicateIds,
+   ready:plan.ready&&missing.length===0&&duplicateIds.length===0,
+ };
+}
