@@ -557,6 +557,19 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     }
   }
 
+  function selectEditorTab(next: CatalogEditorTab, focus = false): void {
+    if (next === activeTab) return;
+    const change = () => {
+      setActiveTab(next);
+      if (focus) document.getElementById(`catalog-tab-${next}`)?.focus();
+    };
+    // Version fields stay mounted in common React state; only separately edited
+    // contract links require their own unsaved-exit confirmation.
+    if (activeTab === 'contracts' && detail)
+      requestUnsavedExit(change, 'catalog:contract:' + detail.id);
+    else change();
+  }
+
   const offerCompositionVersion = detail?.type === 'offer'
     ? detail.versions.find((version) => version.id === offerVersionId) ?? null
     : null;
@@ -711,11 +724,15 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 {CATALOG_EDITOR_TABS.map(tab=><button type="button" key={tab.id} role="tab"
                   id={`catalog-tab-${tab.id}`} aria-selected={activeTab===tab.id}
                   aria-controls={`catalog-panel-${tab.id}`} title={tab.hint}
-                  onClick={()=>{
-                    if(tab.id===activeTab)return;
-                    if(activeTab==='contracts')
-                      requestUnsavedExit(()=>setActiveTab(tab.id),'catalog:contract:'+detail.id);
-                    else setActiveTab(tab.id);
+                  tabIndex={activeTab===tab.id?0:-1}
+                  onClick={()=>selectEditorTab(tab.id)}
+                  onKeyDown={event=>{
+                    if(!['ArrowRight','ArrowLeft','Home','End'].includes(event.key))return;
+                    event.preventDefault();
+                    const index=CATALOG_EDITOR_TABS.findIndex(value=>value.id===activeTab);
+                    const next=event.key==='Home'?0:event.key==='End'?CATALOG_EDITOR_TABS.length-1:
+                      (index+(event.key==='ArrowRight'?1:-1)+CATALOG_EDITOR_TABS.length)%CATALOG_EDITOR_TABS.length;
+                    selectEditorTab(CATALOG_EDITOR_TABS[next].id,true);
                   }}>{tab.label}</button>)}
               </div>
               <div role="tabpanel" id={`catalog-panel-${activeTab}`} aria-labelledby={`catalog-tab-${activeTab}`} className="catalog-editor-tab-panel">
