@@ -243,7 +243,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
         return;
       }
       if (productionOverlay) {
-        setProductionOverlay(null);
+        requestUnsavedExit(() => setProductionOverlay(null));
         return;
       }
       closeProjectDetail();
@@ -839,7 +839,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
         )}
 
         {productionOverlay && <div className="project-production-overlay" role="dialog" aria-modal="true">
-          <div className="project-production-overlay-backdrop" onClick={() => setProductionOverlay(null)} />
+          <div className="project-production-overlay-backdrop" onClick={() => requestUnsavedExit(() => setProductionOverlay(null))} />
           <section className="project-production-overlay-panel">
             <header>
               <div>
@@ -847,7 +847,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
                 <h3>{productionOverlay === 'resources' ? 'Ressources' : productionOverlay === 'technical' ? 'Technique & bibliothèque' : productionOverlay === 'time' ? 'Temps' : 'Accès sécurisés'}</h3>
                 {selectedNode && <p>{selectedNode.name}</p>}
               </div>
-              <button type="button" className="close-detail" onClick={() => setProductionOverlay(null)}>×</button>
+              <button type="button" className="close-detail" onClick={() => requestUnsavedExit(() => setProductionOverlay(null))}>×</button>
             </header>
             <div className="project-production-overlay-content">
               {productionOverlay === 'resources' && <ProjectResourcesTab projectId={detail.id} nodes={detail.nodes} resourceRootPath={detail.resourceRootPath} onMessage={onMessage} />}
