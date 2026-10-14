@@ -23,12 +23,14 @@ export class ContractSectionReviewService {
     if(!validateSectionReview(proposal))throw Error('Proposition de classement invalide.');
     this.assertVersion(versionId);
     if(this.get(versionId).status==='approved')throw Error('Classement approuvé : créer une nouvelle version ou demander une révision explicite.');
-    this.db.run(`INSERT INTO contract_clause_section_reviews
+    const result=this.db.run(`INSERT INTO contract_clause_section_reviews
       (clause_version_id,section_key,rank_in_section,status,reason,reviewer,reviewed_at,updated_at)
       VALUES (?,?,?,'proposed',?,NULL,NULL,?)
       ON CONFLICT(clause_version_id) DO UPDATE SET section_key=excluded.section_key,rank_in_section=excluded.rank_in_section,
-      status='proposed',reason=excluded.reason,reviewer=NULL,reviewed_at=NULL,updated_at=excluded.updated_at`,
+      status='proposed',reason=excluded.reason,reviewer=NULL,reviewed_at=NULL,updated_at=excluded.updated_at
+      WHERE contract_clause_section_reviews.status!='approved'`,
       [versionId,sectionKey,rankInSection,reason,new Date().toISOString()]);
+    if(Number(result.changes)!==1)throw Error('Classement approuvé en parallèle : relire la version avant modification.');
     return proposal;
   }
   approve(versionId:string,reviewer:string,reviewedAt=new Date().toISOString()):ContractSectionReview {
