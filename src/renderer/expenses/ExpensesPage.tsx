@@ -14,6 +14,7 @@ import {
 } from '../../shared/expenses';
 import type { ProjectSummary } from '../../shared/projects';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
+import { useUnsavedDraft } from '../unsaved/unsaved';
 
 const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   hosting: 'Hébergement',
@@ -181,6 +182,16 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
   useEffect(() => { void refresh(); }, []);
 
   const selected = items.find((item) => item.id === selectedId) ?? null;
+  const draft = useUnsavedDraft('Dépenses : saisie non enregistrée', form, {
+    group: 'Dépenses',
+    ready: createOpen || !!selected,
+    resetKey: createOpen ? 'creation' : selected?.id ?? null,
+    pending: busy,
+    dirty: createOpen
+      ? JSON.stringify(form) !== JSON.stringify(emptyForm())
+      : !!selected && JSON.stringify(form) !== JSON.stringify(formFromExpense(selected)),
+    discard: (baseline) => setForm(baseline),
+  });
   useEffect(() => {
     let active = true;
     setReceiptVersions([]);
@@ -378,7 +389,7 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
     <div className="module-toolbar expenses-toolbar">
       <div><strong>{filtered.length}</strong><span> dépense(s)</span></div>
       <div className="toolbar-controls">
-        <button className="secondary-button" type="button" onClick={() => void refresh()}><OperationIcon name="refresh" size={16} /> Actualiser</button>
+        <button className="secondary-button" type="button" onClick={() => draft.request(() => { void refresh(); })}><OperationIcon name="refresh" size={16} /> Actualiser</button>
         <input className="inline-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher fournisseur, client, projet…" />
         <select value={scopeFilter} onChange={(event) => setScopeFilter(event.target.value as typeof scopeFilter)}>
           <option value="all">Tous les rattachements</option>
@@ -394,7 +405,7 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
           <option value="all">Tous les statuts</option>
           {EXPENSE_STATUSES.map((status) => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}
         </select>
-        <button className="primary-button" type="button" onClick={openCreate}>+ Dépense</button>
+        <button className="primary-button" type="button" onClick={() => draft.request(openCreate)}>+ Dépense</button>
       </div>
     </div>
 
@@ -404,14 +415,14 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
     >
       {!expanded && <section className="panel expenses-list-panel">
         {detailOpen ? <div className="expenses-compact-list" role="list" aria-label="Dépenses">
-          {filtered.map((item) => <button key={item.id} type="button" role="listitem" className={'expenses-compact-item' + (selected?.id === item.id ? ' selected' : '')} onClick={() => { setCreateOpen(false); setSelectedId(item.id); }}>
+          {filtered.map((item) => <button key={item.id} type="button" role="listitem" className={'expenses-compact-item' + (selected?.id === item.id ? ' selected' : '')} onClick={() => draft.request(() => { setCreateOpen(false); setSelectedId(item.id); })}>
             <span className="expenses-compact-heading"><strong>{item.label}</strong><span className={'expense-status status-' + item.status}>{STATUS_LABELS[item.status]}</span></span>
             <span className="expenses-compact-meta"><span><OperationIcon name={CATEGORY_ICONS[item.category]} size={15} /> {CATEGORY_LABELS[item.category]}</span><span>{money(item.amountCents)}</span></span>
             <span className="expenses-compact-scope">{item.projectNumber ? item.projectNumber + ' · ' + item.projectLabel : item.clientLabel || 'AtoumWeb interne'}</span>
             <span className="expenses-compact-supplier">{item.supplier || 'Fournisseur non renseigné'}</span>
           </button>)}
           {filtered.length === 0 && <div className="empty-table">Aucune dépense dans cette vue.</div>}
-        </div> : <div className="expenses-table-wrap"><table className="expenses-table"><thead><tr><th>Date</th><th>Dépense</th><th>Catégorie</th><th>Client / Projet</th><th>Montant</th><th>Statut</th><th>Justificatif</th></tr></thead><tbody>{filtered.map((item) => <tr key={item.id} onClick={() => { setSelectedId(item.id); setCreateOpen(false); setExpanded(false); }}><td>{dateLabel(item.expenseDate)}</td><td><strong>{item.label}</strong><small>{item.supplier || '—'}</small></td><td><span className="expense-category-pill"><OperationIcon name={CATEGORY_ICONS[item.category]} size={15} /> {CATEGORY_LABELS[item.category]}</span></td><td>{item.projectNumber ? item.projectNumber + ' · ' + item.projectLabel : item.clientLabel || 'AtoumWeb interne'}</td><td>{money(item.amountCents)}</td><td><span className={'expense-status status-' + item.status}>{STATUS_LABELS[item.status]}</span></td><td>{item.receiptFileName ? <span className="expense-receipt-present"><OperationIcon name="file-text" size={14} /> Oui</span> : <span className="muted">—</span>}</td></tr>)}{filtered.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucune dépense.</div></td></tr>}</tbody></table></div>}
+        </div> : <div className="expenses-table-wrap"><table className="expenses-table"><thead><tr><th>Date</th><th>Dépense</th><th>Catégorie</th><th>Client / Projet</th><th>Montant</th><th>Statut</th><th>Justificatif</th></tr></thead><tbody>{filtered.map((item) => <tr key={item.id} onClick={() => draft.request(() => { setSelectedId(item.id); setCreateOpen(false); setExpanded(false); })}><td>{dateLabel(item.expenseDate)}</td><td><strong>{item.label}</strong><small>{item.supplier || '—'}</small></td><td><span className="expense-category-pill"><OperationIcon name={CATEGORY_ICONS[item.category]} size={15} /> {CATEGORY_LABELS[item.category]}</span></td><td>{item.projectNumber ? item.projectNumber + ' · ' + item.projectLabel : item.clientLabel || 'AtoumWeb interne'}</td><td>{money(item.amountCents)}</td><td><span className={'expense-status status-' + item.status}>{STATUS_LABELS[item.status]}</span></td><td>{item.receiptFileName ? <span className="expense-receipt-present"><OperationIcon name="file-text" size={14} /> Oui</span> : <span className="muted">—</span>}</td></tr>)}{filtered.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucune dépense.</div></td></tr>}</tbody></table></div>}
       </section>}
 
       {detailOpen && !expanded && <div className="expenses-splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner la liste et la fiche" tabIndex={0} onPointerDown={beginResize} onDoubleClick={() => setSplitPercent(38)} onKeyDown={(event) => {
@@ -422,7 +433,7 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
       {detailOpen && <aside className={'panel expenses-detail-panel' + (expanded ? ' expanded' : '')}>
         <div className="detail-panel-heading">
           <div><span className="eyebrow">{createOpen ? 'Nouvelle dépense' : 'Dépense'}</span><h2>{createOpen ? 'Enregistrer un frais' : selected?.label}</h2><p className="muted">{createOpen ? 'AtoumWeb interne, client ou projet.' : selected?.projectNumber ? selected.projectNumber + ' · ' + selected.projectLabel : selected?.clientLabel || 'AtoumWeb interne'}</p></div>
-          <div className="expenses-detail-heading-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setExpanded((value) => !value)}><OperationIcon name={expanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={() => { setCreateOpen(false); setSelectedId(''); setExpanded(false); }}><OperationIcon name="close" size={18} /></button></div>
+          <div className="expenses-detail-heading-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setExpanded((value) => !value)}><OperationIcon name={expanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={() => draft.request(() => { setCreateOpen(false); setSelectedId(''); setExpanded(false); })}><OperationIcon name="close" size={18} /></button></div>
         </div>
 
         {!createOpen && selected && <div className="expenses-detail-badges">
