@@ -99,6 +99,13 @@ jobs:
           node scripts/check-ux-v2-integration-validate.cjs --native-only
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: Matrice Lot 10 — 102 scénarios et preuves tracées
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'integration/ux-v2-lot10-candidate-v1' }}
+        shell: pwsh
+        run: |
+          node scripts/check-ux-v2-lot10-coverage.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       # Lot 10 : recette native sur le candidat dédié, jamais sur un workspace réel.
       - name: Electron UX V2 Lot 10 — parcours et UX-01 sur Windows TEMP
         if: ${{ github.event_name == 'pull_request' && github.head_ref == 'integration/ux-v2-lot10-candidate-v1' }}
