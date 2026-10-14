@@ -7,7 +7,7 @@ jobs:
   ux07ab:
     if: ${{ github.head_ref == 'integration/ux-v2-07a-07b-navigation-validation' || github.ref_name == 'integration/ux-v2-07a-07b-navigation-validation' }}
     runs-on: windows-2022
-    timeout-minutes: 35
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -35,4 +35,22 @@ jobs:
         timeout-minutes: 12
         run: |
           node scripts/check-ux-v2-07ab-navigation-native.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Project and Site/Page production native regressions
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          node scripts/check-project-provisional-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/check-project-operational-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/check-project-composition-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Blueprint and reusable technical library native regressions
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          node scripts/check-project-blueprint-origins-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/check-guided-reuse-ui.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
