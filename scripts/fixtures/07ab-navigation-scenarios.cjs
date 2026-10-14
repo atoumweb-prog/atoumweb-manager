@@ -9,7 +9,11 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
   const quote=db.quotes.create({clientAccountId:client.id,subject:'07AB DEVIS'});
   const project=db.projects.createInternal({name:'07AB PROJET'});
   db.projectSites.create(project.id,{name:'07AB SITE A'});
-  db.projectSites.create(project.id,{name:'07AB SITE B'});
+  const siteB=db.projectSites.create(project.id,{name:'07AB SITE B'});
+  const withPage=db.projects.addProjectNode(project.id,{name:'07AB TIMER PAGE',type:'module',displaySubtype:'page'});
+  const timerPage=withPage.nodes.find(node=>node.name==='07AB TIMER PAGE');
+  if(!timerPage)throw Error('Synthetic Page not created');
+  db.projectSites.linkPage(siteB.id,timerPage.id,{role:'standard',desiredPath:'/timer-test'});
   // Isolated TEMP legacy fixture with an associated source quote.
   db.database.run('UPDATE projects SET source_quote_id=? WHERE id=?',[quote.id,project.id]);
   await navigate('Projets');await wait('document.querySelector(".projects-layout")','project list');
@@ -48,6 +52,25 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
   await wait('[...document.querySelectorAll(".project-site-tree-site")].some(b=>b.textContent.includes("07AB SITE B"))','sites tree loaded');
   await js(`const b=[...document.querySelectorAll('.project-site-tree-site')].find(x=>x.textContent.includes('07AB SITE B'));if(!b)throw Error('Missing Site B');b.click()`);
   await wait('[...document.querySelectorAll(".project-site-tree-site.active")].some(b=>b.textContent.includes("07AB SITE B"))','second site selected');
+  // R07G-17, actual Electron buttons + SQLite TimeService. Not a simulated IPC.
+  await js(`const b=[...document.querySelectorAll('.project-site-tree-pages button')].find(b=>b.textContent.includes('07AB TIMER PAGE'));if(!b)throw Error('Timer Page not linked to Site B');b.click()`);
+  await wait('[...document.querySelectorAll(".project-sites-detail-head h3")].some(h=>h.textContent.includes("07AB TIMER PAGE"))','Page detail selected');
+  await click('[title="Démarrer le travail sur cette Page"]');
+  await wait('!!document.querySelector(".project-sites-page-work.running")','Page timer started');
+  test(db.time.active()?.projectNodeId===timerPage.id,'R07G-17 timer attached to exact Page');
+  test(db.time.list({projectId:project.id}).length===1,'R07G-17 one global timer session');
+  await js(`const b=[...document.querySelectorAll('.project-sites-page-actions button')].find(b=>b.textContent.includes('Pause'));if(!b||b.disabled)throw Error('Page Pause missing');b.click()`);
+  await wait('[...document.querySelectorAll(".project-sites-page-actions button")].some(b=>b.textContent.includes("Reprendre"))','timer paused');
+  test(db.time.active()?.paused===true,'R07G-17 Page timer paused');
+  await js(`const b=[...document.querySelectorAll('.project-sites-page-actions button')].find(b=>b.textContent.includes('Reprendre'));if(!b||b.disabled)throw Error('Page resume missing');b.click()`);
+  await wait('[...document.querySelectorAll(".project-sites-page-actions button")].some(b=>b.textContent.includes("Pause"))','timer resumed');
+  test(db.time.active()?.paused===false,'R07G-17 Page timer resumed');
+  await js(`const b=[...document.querySelectorAll('.project-sites-page-actions button')].find(b=>b.textContent.includes('Arrêter'));if(!b||b.disabled)throw Error('Page stop missing');b.click()`);
+  await wait('[...document.querySelectorAll(".project-sites-page-actions button")].some(b=>b.textContent.includes("Démarrer"))','timer stopped');
+  test(db.time.active()===null,'R07G-17 global timer released');
+  test(db.time.list({projectId:project.id}).filter(session=>session.projectNodeId===timerPage.id&&session.endedAt).length===1,'R07G-17 Page time recorded once');
+  await js(`const b=[...document.querySelectorAll('.project-site-tree-site')].find(x=>x.textContent.includes('07AB SITE B'));if(!b)throw Error('Site B no longer accessible');b.click()`);
+  await wait('[...document.querySelectorAll(".project-site-tree-site.active")].some(b=>b.textContent.includes("07AB SITE B"))','Site B restored after timer');
   await js('const b=[...document.querySelectorAll(".project-production-title button")].find(b=>b.textContent.includes("Ouvrir le devis"));if(!b)throw Error("Missing Quote button");b.click()');
   await wait(`document.querySelector('[data-search-entity-type="quote"][data-search-entity-id="${quote.id}"]')`,'Quote from Sites tab');
   await click('.quote-detail-heading-actions button.secondary-button');
