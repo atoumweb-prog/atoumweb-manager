@@ -327,6 +327,11 @@ const api: AtoumWebApi = {
     initialize: () => ipcRenderer.invoke('contract-types:initialize'),
   },
   contractTerms: {
+    sectionReviews: {
+      get: (versionId:string) => ipcRenderer.invoke('contract-terms:section:get',versionId),
+      propose: (versionId,sectionKey,rankInSection,reason) => ipcRenderer.invoke('contract-terms:section:propose',versionId,sectionKey,rankInSection,reason),
+      approve: (versionId,reviewer) => ipcRenderer.invoke('contract-terms:section:approve',versionId,reviewer),
+    },
     library: {
       list: (includeArchived?: boolean) => ipcRenderer.invoke('contract-terms:library:list', includeArchived),
       get: (id: string) => ipcRenderer.invoke('contract-terms:library:get', id),
