@@ -169,4 +169,30 @@ describe('BillingHandoffService', () => {
     )?.count).toBe(0);
   });
 
+
+  it('annule intégralement le rattachement si la journalisation échoue', () => {
+    const now = '2026-10-14T12:00:00.000Z';
+    database.run(
+      `INSERT INTO billing_items
+       (id,client_account_id,source_type,source_id,source_key,description,expected_amount_cents,theoretical_value_cents,status,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+      ['billing-atomic', clientId, 'other', 'source-atomic', 'other:source-atomic', 'Facture atomique', 10000, 10000, 'ready', now, now],
+    );
+    database.run(
+      `INSERT INTO client_documents
+       (id,client_account_id,category,title,original_name,relative_path,mime_type,size_bytes,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?)`,
+      ['invoice-atomic', clientId, 'invoice', 'Facture', 'atomic.pdf',
+        'Clients/test/Documents/03 Factures/atomic.pdf', 'application/pdf', 100, now, now],
+    );
+    database.exec(`CREATE TRIGGER fail_billing_activity BEFORE INSERT ON activity_log
+      WHEN NEW.entity_type='billing_item' AND NEW.entity_id='billing-atomic'
+      BEGIN SELECT RAISE(ABORT, 'journal volontairement indisponible'); END;`);
+    expect(() => billing.attachInvoice('billing-atomic', 'invoice-atomic')).toThrow(/journal volontairement indisponible/);
+    expect(billing.get('billing-atomic')).toMatchObject({
+      status: 'ready', invoiceDocumentId: null, invoiceReference: null, updatedAt: now,
+    });
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
 });
