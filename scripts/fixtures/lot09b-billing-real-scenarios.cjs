@@ -4,7 +4,7 @@
  * No production profile or files are touched. Only the native file-picker
  * response is redirected to files created by this isolated test.
  */
-module.exports = async ({db,temp,evalUI:js,get,wait,navigate,test,sleep}) => {
+module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,test,sleep}) => {
   const fs = require('node:fs');
   const path = require('node:path');
   const { dialog } = require('electron');
@@ -97,10 +97,13 @@ module.exports = async ({db,temp,evalUI:js,get,wait,navigate,test,sleep}) => {
     test(db.billingHandoff.get(id).invoiceDocumentId===revised.invoiceDocumentId,
       '09B-UI-15: tamper refusal preserves last attached invoice');
     await wait('!document.querySelector(".billing-invoice-actions button.primary-button")?.disabled','replacement settled');
-    // React input update through native value setter, not by mutating DOM state alone.
-    const editReference = value => js('const el=document.querySelector(".billing-invoice-fields input");'
-      +'const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set;'
-      +'setter.call(el,'+JSON.stringify(value)+');el.dispatchEvent(new Event("input",{bubbles:true}));');
+    // Use real Chromium text input so React's onChange and UX-01 draft registry are exercised.
+    const editReference = async value => {
+      await js('const el=document.querySelector(".billing-invoice-fields input");el.focus();el.select();');
+      await win.webContents.insertText(value);
+      await wait('document.querySelector(".billing-invoice-fields input")?.value==='+JSON.stringify(value),
+        'native text input '+value);
+    };
     await editReference('BROUILLON-09B-NON-ENREGISTRE');
     await sleep(160);
     test(await get('document.querySelector(".billing-invoice-fields input")?.value==="BROUILLON-09B-NON-ENREGISTRE"'),
