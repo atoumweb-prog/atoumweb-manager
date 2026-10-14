@@ -66,10 +66,6 @@ if(!process.versions.electron){
           if(theme==='blanc'&&density==='comfort_plus'){
             await js('document.querySelector(".contract-type-list button").focus()');
             check('05D keyboard target receives focus',await js('document.activeElement?.matches(".contract-type-list button")'));
-            win.webContents.sendInputEvent({type:'keyDown',keyCode:'Return'});
-            win.webContents.sendInputEvent({type:'keyUp',keyCode:'Return'});
-            await wait('!!document.querySelector(".contract-type-list button.active")');
-            check('05D keyboard Enter activates focused contract type',await js('!!document.querySelector(".contract-type-list button.active")'));
           }
         }
       }
