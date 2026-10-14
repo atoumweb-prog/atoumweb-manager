@@ -26,7 +26,7 @@ async function navigate(page){await evaluate('window.dispatchEvent(new CustomEve
 (async()=>{try{
  await connect();await until(()=>evaluate('!!window.atoumweb&&!!document.querySelector(".aw-manager-shell")'),'real Manager shell');
  const bootstrap=await evaluate('window.atoumweb.app.getBootstrap()');check(path.resolve(bootstrap.workspacePath)===path.resolve(workspace),'The actual Manager uses only the owned workspace');
- await evaluate('window.__packagedTimer=document.querySelector(".global-timer")');
+ await evaluate('void(window.__packagedTimer=document.querySelector(".global-timer"))');
  const pages=['Accueil','Prospects','Clients','Offres & Tarifs','Devis','Projets','Interventions & Maintenance','Gestion des temps','Facturation','Dépenses','Documents & Contrats','Bibliothèque AtoumWeb','Sites','Sauvegardes','Annuaire','Statistiques','Réglages'];
  for(const [theme,themeTitle] of [['atoumweb','AtoumWeb'],['noir','Noir'],['blanc','Blanc']])for(const [density,title] of [['compact','Compact'],['comfort','Confort'],['comfort_plus','Confort +']]){
   await navigate('Réglages');
