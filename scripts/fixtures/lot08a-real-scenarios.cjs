@@ -329,14 +329,14 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
         JSON.stringify(value)+');el.dispatchEvent(new Event("input",{bubbles:true}));');
       await sleep(80);
     };
-    await fillOverage('.maintenance-overage-item input[placeholder^="Ex."]','E08C DECISION NON ENREGISTREE');
+    await fillOverage('.maintenance-overage-item input[placeholder^=Ex]','E08C DECISION NON ENREGISTREE');
     await fillOverage('.maintenance-overage-item input[type="number"]','42');
     const beforeOverageExit=confirmations.length;
     await choosePeriod('2026-10');
     test(confirmations.length===beforeOverageExit+1,'E08C overage draft triggers UX-01 confirmation');
     test(await get('document.querySelector(".maintenance-period-list button.selected")?.textContent.includes("2026-09")')===true,
       'E08C Stay retains overage period');
-    test(await get('document.querySelector(".maintenance-overage-item input[placeholder^="Ex."]")?.value')==='E08C DECISION NON ENREGISTREE',
+    test(await get('document.querySelector(".maintenance-overage-item input[placeholder^=Ex]")?.value')==='E08C DECISION NON ENREGISTREE',
       'E08C Stay retains unrecorded overage reason');
     answers.push(1);
     await choosePeriod('2026-10');
@@ -427,7 +427,7 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
         'Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(el,'+JSON.stringify(value)+');'+
         'el.dispatchEvent(new Event("input",{bubbles:true}));');
     };
-    await setPackInput('.hour-pack-workbench input[placeholder^="Ex."]','-0.5');
+    await setPackInput('.hour-pack-workbench input[placeholder^=Ex]','-0.5');
     await setPackInput('.hour-pack-workbench input[placeholder^=Motif]','E225 DOUBLE CLIC TEMP');
     await wait('[...document.querySelectorAll(".hour-pack-workbench button")].some(b=>b.textContent==="Ajouter le mouvement"&&!b.disabled)',
       'E225 adjustment enabled');
@@ -470,7 +470,7 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
     await js('document.querySelector(".hour-pack-toolbar-controls button").click()');
     await wait('[...document.querySelectorAll(".hour-pack-compact-item, .hour-pack-list-panel .operations-table tbody tr")].some(e=>e.textContent.includes("E226 Autre pack TEMP"))',
       'E226 second pack loaded after refresh');
-    await setPackInput('.hour-pack-workbench input[placeholder^="Ex."]','-0.25');
+    await setPackInput('.hour-pack-workbench input[placeholder^=Ex]','-0.25');
     await setPackInput('.hour-pack-workbench input[placeholder^=Motif]','BROUILLON E226 AJUSTEMENT');
     await wait('document.querySelector(".hour-pack-workbench input[placeholder^=Motif]")?.value==="BROUILLON E226 AJUSTEMENT"',
       'E226 adjustment draft typed');
