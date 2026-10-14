@@ -4,10 +4,13 @@ const path = require('node:path');
 const os = require('node:os');
 const repo = path.resolve(__dirname, '..');
 if (!process.versions.electron) {
+  const args=process.argv.slice(2);
+  if(args.length!==0&&(args.length!==2||args[0]!=='--captures'))throw Error('Usage: node scripts/check-catalog-identity-ui.cjs [--captures NEW_ABSOLUTE_DIRECTORY]');
+  if(args.length===2&&(!path.isAbsolute(args[1])||fs.existsSync(args[1])||/validation-msi/i.test(args[1])))throw Error('Capture path must be a new absolute directory outside Validation-MSI.');
   const fixtureDir = fs.mkdtempSync(path.join(os.tmpdir(), 'atoumweb-catalog-ui-'));
   const env = { ...process.env, ATOUMWEB_CATALOG_UI_DIR: fixtureDir }; delete env.ELECTRON_RUN_AS_NODE;
-  const result = require('node:child_process').spawnSync(require('electron'), [__filename], {
-    cwd: repo, env, windowsHide: true, encoding: 'utf8', timeout: 45000,
+  const result = require('node:child_process').spawnSync(require('electron'), [__filename,...args], {
+    cwd: repo, env, windowsHide: true, encoding: 'utf8', timeout: args.length?140000:90000,
   });
   process.stdout.write(result.stdout || ''); process.stderr.write(result.stderr || '');
   if (result.error) console.error(result.error.message);
@@ -19,6 +22,9 @@ if (!process.versions.electron) {
 const { app, BrowserWindow } = require('electron');
 app.disableHardwareAcceleration();
 const dir = process.env.ATOUMWEB_CATALOG_UI_DIR;
+const captureIndex=process.argv.indexOf('--captures');
+const capturePath=captureIndex>=0?process.argv[captureIndex+1]:null;
+if(capturePath&&(!path.isAbsolute(capturePath)||fs.existsSync(capturePath)||/validation-msi/i.test(capturePath)))throw Error('Unsafe screenshot path.');
 if (!dir) throw Error('Lancer avec node pour isoler le profil de recette.');
 app.setPath('userData', path.join(dir, 'profile'));
 const entry = `
@@ -95,8 +101,20 @@ app.whenReady().then(async () => {
   try {
     await require('esbuild').build({ stdin: { contents: entry, resolveDir: repo, loader: 'tsx' }, bundle: true,
       nodePaths: [path.join(repo, 'node_modules')], outfile: path.join(dir, 'fixture.js'), jsx: 'automatic', logLevel: 'silent' });
-    fs.writeFileSync(path.join(dir, 'fixture.html'), '<!doctype html><html><body><div id="root"></div><script src="fixture.js"></script></body></html>');
-    win = new BrowserWindow({ show: false, webPreferences: { contextIsolation: false, nodeIntegration: false, backgroundThrottling: false } });
+    // Use the production CSS import chain and the real two-column shell, not a naked
+    // React mock that would miss theme, density and horizontal overflow regressions.
+    const main=fs.readFileSync(path.join(repo,'src/renderer/main.tsx'),'utf8');
+    const cssPaths=[...main.matchAll(/^import '\\.\/([^']+\\.css)';$/gm)].map(match=>match[1]);
+    if(cssPaths.length<25)throw Error('Production renderer CSS import chain incomplete.');
+    const css=cssPaths.map(file=>fs.readFileSync(path.join(repo,'src/renderer',file),'utf8')).join('\\n');
+    if(css.includes('</style'))throw Error('Unexpected HTML closer in stylesheet.');
+    const shell='<div class="app-shell"><aside class="sidebar"><div class="brand-block">AtoumWeb</div></aside>'+
+      '<main class="main-area"><header class="topbar"><strong>Catalogue · recette native isolée</strong></header>'+
+      '<section class="content-area"><div id="root"></div></section></main></div>';
+    fs.writeFileSync(path.join(dir,'fixture.html'),
+      '<!doctype html><html lang="fr"><head><meta charset="utf-8"><style>'+css+'</style></head><body>'+
+      shell+'<script src="fixture.js"></script></body></html>');
+    win = new BrowserWindow({ show: false, width: 1440, height: 900, webPreferences: { contextIsolation: false, nodeIntegration: false, backgroundThrottling: false } });
     await win.loadFile(path.join(dir, 'fixture.html'));
     const result = await win.webContents.executeJavaScript(`(async()=>{
       const checks=[];const wait=()=>new Promise(resolve=>setTimeout(resolve,90));
