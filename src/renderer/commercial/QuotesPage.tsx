@@ -54,9 +54,9 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
   const [statusFilter, setStatusFilter] = useState<'all' | QuoteStatus>('all');
   const [selectedId, setSelectedId] = useState<string | null>(initialId ?? null);
   const [detail, applyDetail] = useState<QuoteDetail | null>(null);
-  const detailRequest=useRef(0);const selectedRef=useRef(selectedId);selectedRef.current=selectedId;
+  const detailRequest=useRef(0);const refreshRequest=useRef(0);const selectedRef=useRef(selectedId);selectedRef.current=selectedId;
   function setDetail(value:QuoteDetail|null){detailRequest.current++;applyDetail(value);}
-  useEffect(()=>()=>{detailRequest.current++;},[]);
+  useEffect(()=>()=>{detailRequest.current++;refreshRequest.current++;},[]);
   const [showWizard, setShowWizard] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
   const [wizard, setWizard] = useState<WizardDraft>(EMPTY_WIZARD);
@@ -92,24 +92,31 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
 
 
   async function refresh(): Promise<void> {
-    const sequence=detailRequest.current;const selectedAtStart=selectedId;
+    const request=++refreshRequest.current;
+    const sequence=detailRequest.current;const selectedAtStart=selectedRef.current;
     if(!loadedOnce.current)setLoading(true);
     try {
       const [nextQuotes, nextProspects, nextClients, nextCatalog] = await Promise.all([
         window.atoumweb.quotes.list(), window.atoumweb.crm.prospects.list(), window.atoumweb.crm.clients.list(), window.atoumweb.catalog.list({ status: 'active' }),
       ]);
+      // Deux actualisations peuvent se terminer dans l'ordre inverse : seule la plus
+      // récente peut remplacer les listes, même si l'ancien appel s'est bien terminé.
+      if(request!==refreshRequest.current)return;
       setQuotes(nextQuotes);
       setProspects(nextProspects.filter((prospect) => !prospect.clientAccountId && prospect.stage !== 'won' && prospect.stage !== 'lost'));
       setClients(nextClients);
       setCatalog(nextCatalog.filter((item) => item.currentVersion?.status === 'published'));
-      if(selectedAtStart&&nextQuotes.some(q=>q.id===selectedAtStart)){const next=await window.atoumweb.quotes.get(selectedAtStart);if(sequence===detailRequest.current&&selectedRef.current===selectedAtStart)applyDetail(next);}
+      if(selectedAtStart&&nextQuotes.some(q=>q.id===selectedAtStart)){
+        const next=await window.atoumweb.quotes.get(selectedAtStart);
+        if(request===refreshRequest.current&&sequence===detailRequest.current&&selectedRef.current===selectedAtStart)applyDetail(next);
+      }
     } catch (error) {
-      // Un ancien rafraîchissement (notamment lors d'une navigation Recherche A → B)
-      // peut échouer après son démontage : ne pas laisser un rejet non géré
-      // détruire tout le renderer ni afficher une erreur sur le nouveau devis.
-      if(sequence===detailRequest.current&&selectedRef.current===selectedAtStart)
+      // Un échec obsolète ne doit pas effacer un rafraîchissement plus récent.
+      if(request===refreshRequest.current&&sequence===detailRequest.current&&selectedRef.current===selectedAtStart)
         onMessage(error instanceof Error ? error.message : 'Actualisation des devis impossible.');
-    } finally { loadedOnce.current=true;setLoading(false); }
+    } finally {
+      if(request===refreshRequest.current){loadedOnce.current=true;setLoading(false);}
+    }
   }
 
   useEffect(() => { void refresh(); }, []);
