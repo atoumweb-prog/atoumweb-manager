@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { matchingContractClauses, newModuleDraftChanged, typeDraftChanged } from './contractLibraryDrafts';
+import { filterContractClauses, matchingContractClauses, newModuleDraftChanged, typeDraftChanged } from './contractLibraryDrafts';
 
 const saved={name:'Maintenance WordPress',description:'Contrat courant',moduleIds:['a','b']};
 
@@ -35,5 +35,26 @@ describe('05B.2 — navigation lecture seule des clauses',()=>{
     expect(matchingContractClauses(clauses,'CGV-CONS').map(c=>c.id)).toEqual(['b']);
     expect(matchingContractClauses(clauses,'spécifiques').map(c=>c.id)).toEqual(['a']);
     expect(JSON.stringify(clauses)).toBe(original);
+  });
+});
+
+describe('05C — filtres de consultation des clauses',()=>{
+  const clauses=[
+    {id:'a',scope:'base' as const,audience:'all',status:'active'},
+    {id:'b',scope:'catalog' as const,audience:'professional',status:'active'},
+    {id:'c',scope:'catalog' as const,audience:'consumer',status:'archived'},
+  ];
+  it('conserve références, ordre et données sans mutation',()=>{
+    const snapshot=JSON.stringify(clauses);
+    expect(filterContractClauses(clauses,{scope:'all',audience:'all'}).map(c=>c.id)).toEqual(['a','b']);
+    expect(JSON.stringify(clauses)).toBe(snapshot);
+  });
+  it('inclut les clauses tous publics pour chaque audience',()=>{
+    expect(filterContractClauses(clauses,{audience:'professional'}).map(c=>c.id)).toEqual(['a','b']);
+    expect(filterContractClauses(clauses,{audience:'consumer',includeArchived:true}).map(c=>c.id)).toEqual(['a','c']);
+  });
+  it('combine famille, public et archivage sans modifier le stockage',()=>{
+    expect(filterContractClauses(clauses,{scope:'catalog',audience:'consumer'})).toEqual([]);
+    expect(filterContractClauses(clauses,{scope:'catalog',audience:'consumer',includeArchived:true}).map(c=>c.id)).toEqual(['c']);
   });
 });
