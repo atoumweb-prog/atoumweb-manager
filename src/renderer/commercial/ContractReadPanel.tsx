@@ -9,6 +9,19 @@ export function ContractReadPanel({presentation,commercial='',unsaved=false,copy
   const [proposedText,setProposedText]=useState('');
   // A pasted comparison must never leak into the next quote or historical snapshot.
   useEffect(()=>setProposedText(''),[presentation.text,presentation.state,presentation.compiledAt]);
+  async function loadPlainTextFile(file:File|undefined) {
+    if(!file)return;
+    if(!file.name.toLowerCase().endsWith('.txt')||file.size>1_000_000){
+      setMessage('Import refusé : sélectionner un fichier .txt de 1 Mo maximum.');
+      return;
+    }
+    try {
+      const value=await file.text();
+      if(value.length>1_000_000){setMessage('Texte trop volumineux.');return;}
+      setProposedText(value);
+      setMessage('Texte chargé pour comparaison uniquement, sans enregistrement.');
+    } catch {setMessage('Lecture du fichier impossible.');}
+  }
   const review=proposedText?reviewContractTextImport({originalText:presentation.text,importedText:proposedText,quoteState:presentation.state}):null;
   async function copyText(text:string,label:string) {
     try { await window.atoumweb.contractTerms.copyText(text);setMessage(`${label} copié.`); }
@@ -35,6 +48,9 @@ export function ContractReadPanel({presentation,commercial='',unsaved=false,copy
     {!presentation.template&&<details className="contract-module-inventory">
       <summary>Comparer un texte externe au contrat enregistré (lecture seule)</summary>
       <p className="muted">Coller uniquement du texte extrait d’un document. Ce contrôle n’importe pas un fichier DOCX et ne remplace jamais un contrat enregistré ou signé.</p>
+      <label>Charger un fichier texte (.txt, 1 Mo maximum) pour comparaison
+        <input type="file" accept=".txt,text/plain" onChange={event=>{const file=event.currentTarget.files?.[0];event.currentTarget.value='';void loadPlainTextFile(file);}} />
+      </label>
       <textarea aria-label="Texte contractuel externe à comparer" value={proposedText} onChange={event=>setProposedText(event.target.value)} maxLength={1000001} rows={5} />
       {review&&<div role="status">
         <p>{review.reason}</p>
