@@ -53,6 +53,7 @@ describe('04E — objections humaines versionnées dans le Catalogue SQLite', ()
       commercialParameters:{
         salesPitch:'Une présence web claire pour votre activité',
         qualificationQuestions:'Quels contenus avez-vous ?',
+        relevantSituations:'Site à créer',commercialCautions:'Ne pas promettre de résultat SEO',
         objections:'Budget : clarifier les livrables',
       },
     });
@@ -60,6 +61,7 @@ describe('04E — objections humaines versionnées dans le Catalogue SQLite', ()
     expect(salesGuidanceFromCatalogVersion(draft)).toMatchObject({
       salesPitch:'Une présence web claire pour votre activité',
       qualificationQuestions:'Quels contenus avez-vous ?',
+      relevantSituations:'Site à créer',commercialCautions:'Ne pas promettre de résultat SEO',
       objections:'Budget : clarifier les livrables',
     });
     catalog.publishVersion(draft.id);
