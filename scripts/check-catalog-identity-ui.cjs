@@ -212,6 +212,12 @@ app.whenReady().then(async () => {
       assert('Coût réel et nature visibles',document.body.textContent.includes('Coût tiers réel')&&document.body.textContent.includes('Abonnement'));
       await click('Reprendre le brouillon');
       assert('04C brouillon original rouvert',field('Unité').value==='licence'&&field('Périodicité').value==='annuelle'&&field('Base de prix').value==='actual_cost'&&field('Référence de source').value==='Catalogue V1 témoin');
+      await click('Aide à la vente');
+      assert('04E trois champs nouveaux éditables',
+        !!field('Argumentaire commercial')&&!!field('Questions de qualification')&&!!field('Objections et réponses'));
+      await fill('Argumentaire commercial','Présenter clairement le périmètre');
+      await fill('Questions de qualification','Quels sont vos objectifs ?');
+      await fill('Objections et réponses','Budget : décrire les livrables');
       await click('Historique');
       assert('04C publication bloquée pendant édition', [...document.querySelectorAll('.catalog-version-row button')].filter(b=>b.textContent==='Préparer la publication').every(b=>b.disabled));
       await click('Contenu & périmètre');
@@ -228,6 +234,10 @@ app.whenReady().then(async () => {
       assert('04C changement d’onglet ne perd pas la saisie',field('Description').value==='Enregistré en place, sans v2');
       await click('Enregistrer le brouillon');
       assert('04C enregistrement sans nouvelle version',calls.saveDraft.length===1&&calls.version.length===1&&calls.publish===0&&items[1].versions.length===1);
+      assert('04E argumentaire, qualification et objections sauvegardés via l’éditeur réel',
+        calls.saveDraft[0].input.commercialParameters.salesPitch==='Présenter clairement le périmètre'&&
+        calls.saveDraft[0].input.commercialParameters.qualificationQuestions==='Quels sont vos objectifs ?'&&
+        calls.saveDraft[0].input.commercialParameters.objections==='Budget : décrire les livrables');
       assert('04C même ID de version conservé',calls.saveDraft[0].id===items[1].versions[0].id&&items[1].versions[0].description==='Enregistré en place, sans v2');
       await click('Identité');await click('Reprendre le brouillon');
       await click('Contenu & périmètre');
