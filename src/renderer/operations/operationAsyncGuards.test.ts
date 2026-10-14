@@ -98,4 +98,24 @@ describe('verrou de double clôture', () => {
     releaseSecond?.();
     expect(pending.size).toBe(0);
   });
+  it('rejette une seconde tentative tant que la première promesse est en attente', async () => {
+    const inFlight = new Set<string>();
+    let finish!: () => void;
+    const pending = new Promise<void>((resolve) => { finish = resolve; });
+    const call = vi.fn(async () => { await pending; });
+    async function submit(): Promise<boolean> {
+      const release = acquireCompletionLock(inFlight, 'intervention-test');
+      if (!release) return false;
+      try { await call(); return true; } finally { release(); }
+    }
+    const first = submit();
+    expect(await submit()).toBe(false);
+    expect(call).toHaveBeenCalledTimes(1);
+    finish();
+    expect(await first).toBe(true);
+    expect(inFlight.size).toBe(0);
+    expect(await submit()).toBe(true);
+    expect(call).toHaveBeenCalledTimes(2);
+  });
+
 });
