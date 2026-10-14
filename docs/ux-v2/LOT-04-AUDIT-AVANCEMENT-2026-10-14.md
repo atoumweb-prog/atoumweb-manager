@@ -15,7 +15,7 @@ Pourcentage **indicatif de couverture fonctionnelle**, calculé à partir de rub
 | **04E** Aide à la vente | **50 % (4/8)** | **38 % (3/8)** | Non prêt | Versionnement/restauration comparée, motifs, contrôles contextuels complets | Technique |
 | **04F** Recette/intégration | **80 % (8/10)** | **70 % (7/10)** | Non prêt | Intermodules, revue humaine, convergence `main` | Dépendance + technique |
 
-**Développement global = 66 %** (39 rubriques satisfaites sur 59, arrondi ; 3+8+7+4+4+8=34, donc pour calcul global utiliser **34/50 = 68 %** plutôt que la moyenne non pondérée). **Validation globale = 58 %** (29 rubriques prouvées sur 50 : 2+7+6+4+3+7=29). **Préparation convergence = 20 %** (1/5 portes : cartographie des dépendances ; restent candidate à jour de main, conflits, CI convergée, revue de fusion). Ces ratios sont des **estimations d'acceptation**, non des certifications.
+**Développement global = 68 %** (34 rubriques fonctionnelles codées sur 50 : 3+8+7+4+4+8 ; pondération égale par rubrique, estimation prudente). **Validation globale = 58 %** (29 rubriques prouvées sur 50 : 2+7+6+4+3+7=29). **Préparation convergence = 20 %** (1/5 portes : cartographie des dépendances ; restent candidate à jour de main, conflits, CI convergée, revue de fusion). Ces ratios sont des **estimations d'acceptation**, non des certifications.
 
 ### Rubriques d'acceptation retenues (liste auditable)
 
