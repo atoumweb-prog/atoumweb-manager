@@ -121,7 +121,7 @@ export function ProjectSitesTab({
   const activeSites = sites.filter((site) => !site.archivedAt);
   const archivedSites = sites.filter((site) => Boolean(site.archivedAt));
 
-  async function reload(): Promise<void> {
+  async function reload(preferred?: {siteId?: string; pageId?: string}): Promise<void> {
     const requestId = ++siteRefreshEpoch.current;
     const [nextSites, nextLinks] = await Promise.all([
       window.atoumweb.projects.sites.list(projectId, true),
@@ -130,15 +130,21 @@ export function ProjectSitesTab({
     if (requestId !== siteRefreshEpoch.current) return;
     setSites(nextSites);
     setLinks(nextLinks);
-    // Read the current selection in functional updates, rather than the selection
-    // captured before an awaited IPC call; preserve a newly selected Site/Page.
-    const firstActiveId = nextSites.find(site => !site.archivedAt)?.id ?? null;
-    setSelectedSiteId(current =>
-      current && nextSites.some(site => site.id === current) ? current : firstActiveId
-    );
-    setSelectedPageId(current =>
-      current && pages.some(page => page.id === current) ? current : null
-    );
+    // A just-created Page may not yet be reflected in the nodes prop captured
+    // by this async handler. Retain its confirmed ID instead of clearing it.
+    const knownPageIds = new Set([
+      ...pages.map(page => page.id),
+      ...nextLinks.map(link => link.projectNodeId),
+      ...(preferred?.pageId ? [preferred.pageId] : []),
+    ]);
+    setSelectedPageId(current => current && knownPageIds.has(current) ? current : null);
+    setSelectedSiteId(current => {
+      if (preferred?.pageId) return null;
+      if (preferred?.siteId && nextSites.some(site => site.id === preferred.siteId)) return preferred.siteId;
+      if (current && nextSites.some(site => site.id === current)) return current;
+      if (selectedPageId && knownPageIds.has(selectedPageId)) return null;
+      return nextSites.find(site => !site.archivedAt)?.id ?? null;
+    });
   }
 
   async function reloadTime(): Promise<void> {
@@ -268,7 +274,7 @@ export function ProjectSitesTab({
       setCreateMode(null);
       setSelectedPageId(null);
       setSelectedSiteId(created.id);
-      await reload();
+      await reload({ siteId: created.id });
       onMessage('Site ajouté au projet.');
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de créer le Site.');
@@ -306,7 +312,7 @@ export function ProjectSitesTab({
       setSelectedSiteId(null);
       setSelectedPageId(created.id);
       await onProjectChanged(updated);
-      await reload();
+      await reload({ pageId: created.id });
       onMessage(pageSiteId ? 'Page créée et rattachée au Site.' : 'Page créée dans le Projet.');
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de créer la Page.');
