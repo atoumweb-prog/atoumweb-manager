@@ -73,6 +73,19 @@ describe('04D — versioned recommendation persistence',()=>{
     expect(recommendations.list(source.versions[0].id)).toHaveLength(1);
     expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
   });
+  it('also refuses adding an already recommended service to an offer composition',()=>{
+    const target=create('Recommended service');
+    catalog.publishVersion(target.versions[0].id);
+    const offer=catalog.create({type:'offer',name:'Offer with recommendations'},{
+      priceMode:'fixed',priceCents:20000,
+    });
+    recommendations.replace(offer.versions[0].id,[target.versions[0].id]);
+    expect(()=>catalog.setOfferComponents(offer.versions[0].id,[
+      {serviceVersionId:target.versions[0].id},
+    ])).toThrow(/déjà recommandé/);
+    expect(catalog.listOfferComponents(offer.versions[0].id)).toEqual([]);
+    expect(recommendations.list(offer.versions[0].id)).toHaveLength(1);
+  });
   it('does not duplicate a service already included in an offer',()=>{
     const target=create('Service included');
     catalog.publishVersion(target.versions[0].id);
