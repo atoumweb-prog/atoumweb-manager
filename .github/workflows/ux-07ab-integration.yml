@@ -17,8 +17,8 @@ jobs:
         run: npm ci
       - name: Typecheck
         run: npm run typecheck
-      - name: Vitest
-        run: npm test -- --maxWorkers=2
+      # The PR's separate CI/quality job already executes the complete Vitest suite on the same SHA.
+      # Keep this Windows integration job focused on native Project/Sites/Bridge regressions.
       - name: Composition workshop 07C isolated native layout gate
         shell: pwsh
         timeout-minutes: 6
