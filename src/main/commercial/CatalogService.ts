@@ -40,6 +40,7 @@ interface CatalogRow extends Record<string, unknown> {
   item_type: CatalogItemSummary['type'];
   name: string;
   category: string | null;
+  category_id: string | null;
   status: CatalogItemSummary['status'];
   visible_public: number;
   created_at: string;
@@ -574,6 +575,7 @@ export class CatalogService {
       type: row.item_type,
       name: row.name,
       category: row.category,
+      categoryId: row.category_id,
       status: row.status,
       visiblePublic: Boolean(row.visible_public),
       currentVersion: row.version_id ? this.mapVersion({
