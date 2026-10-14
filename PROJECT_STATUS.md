@@ -1,5 +1,17 @@
 # AtoumWeb Manager — Suivi du projet
 
+## Validation technique post-fusion du lot 03 — 14/10/2026
+
+- SHA réellement testé : `cc0bc679400321f5afacdbee3317ea8acc451518`, arbre `0c23141433f61230c591bcf8dc9c71aec5462c5e`. PR107 fusionnée par `575464258e3b8c88af843ea1cf34ad64ae50b7db` ; PR105 incluse par ascendance. Code `src/`, bancs et dépendances identiques au candidat c9e822d ; seul le bilan d'intégration a été ajouté ensuite.
+- [CI post-fusion #889 SUCCESS](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38557050157), événement push sur ce SHA : installation/typecheck OK, 1040/1040 tests (109 fichiers), migrations 10/10, restaurations 35/35 (13,298 s), équivalence binaire 6/6 (77 ms), aucune erreur RPC. Durée 4 min34 s. Aucun workflow supplémentaire déclenché. Les étapes Electron sont ignorées par la CI standard : leur preuve est locale, ci-dessous.
+- Rejeu Windows local complet au même SHA propre : typecheck et 1040/1040 Vitest ; 11 étapes du banc `scripts/check-ux-v2-lot03-validate.cjs` réussies. Convergence 37, CRM03A–E 284, CRM03B 77, recherche 92, Accueil 64, recette visuelle automatisée 527, parcours 67, shell 374, UX-01 183 : **1705 assertions exécutées avec recouvrements**, pas 1705 scénarios uniques.
+- **297 captures synchronisées** : 216 historiques et 81 Client/Annuaire (72+9), trois thèmes × trois densités. Pas de recette visuelle humaine revendiquée. Manifeste local : `outputs/lot03-cc0bc679-1791977993453/manifest.json` ; logs par étape et empreintes des captures conservés dans ce répertoire ignoré par Git.
+- Parcours Prospect → Qualification → Besoins → Devis → Projet prévisionnel → Client → Annuaire, vrais identifiants, contacts atomiques/idempotents, conflits d'écriture, réponses tardives, conservation des brouillons et retours de focus couverts. Chrono métier unique et protections UX-01 conservés.
+- Schéma réel des fixtures : migrations exactement 1–66 ; `integrity_check=ok`, `foreign_key_check` vide, nettoyage des fixtures/profils TEMP réussi. Aucune base réelle ni Validation-MSI ouverte. Aucune migration ou règle métier modifiée.
+- **Réserve explicite : l'archivage des identités Annuaire n'est pas exposé.** Aucune validation de cette commande absente. Recette humaine globale toujours différée.
+- Conclusion : intégration technique du périmètre livré des lots01–03 validée, sans régression détectée par ces contrôles. Cette conclusion ne constitue pas une preuve d'absence de tout défaut ni une validation humaine. Lots04/05 et PR104/106 hors périmètre, non modifiés par cette intervention et non fusionnés. La branche106 a évolué en parallèle pendant les contrôles ; aucun de ses changements n’a été récupéré ou testé ici.
+
+
 ## 14/10/2026 — Dernier cas de focus : ligne toujours masquée
 
 - Le correctif693f6af a passé typecheck/282 natifs avec81 frames/UX-01183. Complément final : si le filtre masque encore la ligne à la fermeture, retour à la recherche et conservation de sa valeur. Deux assertions clavier supplémentaires, sans mutation métier. Nouveau candidat à recetter puis une seule actualisation corrective107/CIautomatique, aucun rerun manuel.
@@ -1705,7 +1717,3 @@ Les tests couvrent les migrations vierges et mises à niveau, les prix confirmé
 Prochaine action : validation visuelle du parcours complet et des trois thèmes sous Windows. Aucune ouverture du workspace utilisateur sans sauvegarde explicite.
 
 Clôture Lot 3 — 03/10/2026 : bilan réel validé par AtoumWeb ; commit local dédié autorisé, sans push ni merge. La recette manuelle AtoumWeb reste à faire avant validation fonctionnelle finale. Cette clôture ne contient aucune modification du Lot 4.
-
-
-
-
