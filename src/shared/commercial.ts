@@ -151,6 +151,20 @@ export interface CatalogFilters {
   priceMode?: PriceMode | null;
 }
 
+/** Existing project production blueprints attached to one immutable catalogue version. */
+export interface CatalogProductionBlueprintLink {
+  id: string;
+  catalogVersionId: string;
+  templateVersionId: string;
+  templateName: string;
+  versionNumber: number;
+  templateStatus: 'draft' | 'published' | 'retired';
+  role: 'base' | 'addon';
+  sortOrder: number;
+  quantityMode: string;
+  siteMode: string;
+}
+
 export interface CatalogApi {
   assignCanonicalCode(itemId: string, canonicalCode: string): Promise<CatalogItemDetail>;
   list(filters?: CatalogFilters): Promise<CatalogItemSummary[]>;
@@ -165,6 +179,8 @@ export interface CatalogApi {
   setStatus(itemId: string, status: CatalogItemStatus): Promise<CatalogItemSummary>;
   setVisiblePublic(itemId: string, visible: boolean): Promise<CatalogItemSummary>;
   listOfferComponents(offerVersionId: string): Promise<OfferComponent[]>;
+  /** Read the real blueprint references; never create a Project on inspection. */
+  listProductionBlueprints(versionId: string): Promise<CatalogProductionBlueprintLink[]>;
   setOfferComponents(offerVersionId: string, components: OfferComponentInput[]): Promise<OfferComponent[]>;
 }
 
