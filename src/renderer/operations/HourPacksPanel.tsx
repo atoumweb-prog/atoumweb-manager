@@ -83,6 +83,8 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
   const [movementReason, setMovementReason] = useState('');
   const [movementMode, setMovementMode] = useState<'manual_correction' | 'commercial_credit'>('manual_correction');
   const [interventionId, setInterventionId] = useState('');
+  const debitPending = useRef(false);
+  const [debitBusy, setDebitBusy] = useState(false);
   const [reversalReason, setReversalReason] = useState('Correction du mouvement');
   useUnsavedDraft('Ajustement manuel de pack',
     { movementHours, movementReason, movementMode },
@@ -250,13 +252,16 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
   }
 
   async function debitIntervention(): Promise<void> {
-    if (!selected || !interventionId) return;
+    if (!selected || !interventionId || debitPending.current) return;
+    debitPending.current = true;
+    setDebitBusy(true);
     try {
       const updated = await window.atoumweb.operations.hourPacks.debitIntervention(selected.id, interventionId);
       await Promise.all([refresh(), onOperationsChanged()]);
       setSelectedId(updated.id); setInterventionId('');
       onMessage('Temps de l’intervention débité du pack.');
     } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de débiter l’intervention.'); }
+    finally { debitPending.current = false; setDebitBusy(false); }
   }
 
   async function reverseMovement(movementId: string): Promise<void> {
@@ -415,7 +420,7 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
           <div className="intervention-workbench-section-body">
             <select value={interventionId} onChange={(event) => setInterventionId(event.target.value)}><option value="">Choisir une intervention…</option>{eligibleInterventions.map((intervention) => <option key={intervention.id} value={intervention.id}>{intervention.number} · {intervention.subject} · {hours(intervention.totalTimeSeconds)}</option>)}</select>
             {eligibleInterventions.length === 0 && <p className="muted">Aucune intervention compatible à débiter pour ce client et ce projet.</p>}
-            <button className="primary-button" type="button" disabled={!interventionId} onClick={() => void debitIntervention()}>Débiter le temps réel</button>
+            <button className="primary-button" type="button" disabled={!interventionId || debitBusy} onClick={() => void debitIntervention()}>{debitBusy ? "Débit en cours…" : "Débiter le temps réel"}</button>
           </div>
         </details>
 
