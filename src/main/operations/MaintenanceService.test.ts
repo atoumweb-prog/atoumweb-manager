@@ -70,6 +70,38 @@ describe('MaintenanceService', () => {
     expect(maintenance.listPeriods(subscription.id)).toHaveLength(1);
   });
 
+  it('aligne les nouvelles souscriptions manuelles sur le jour de début, sans doublons', () => {
+    const subscription = maintenance.createSubscription({
+      clientAccountId: clientId,
+      planId: maintenance.listPlans()[0].id,
+      startDate: '2026-10-15',
+    });
+    expect(subscription.periodAlignment).toBe('anniversary');
+    const first = maintenance.ensurePeriod(subscription.id, '2026-10-20');
+    const same = maintenance.ensurePeriod(subscription.id, '2026-11-14');
+    const next = maintenance.ensurePeriod(subscription.id, '2026-11-15');
+    expect(first.periodStart).toBe('2026-10-15');
+    expect(first.periodEnd).toBe('2026-11-14');
+    expect(same.id).toBe(first.id);
+    expect(next.periodStart).toBe('2026-11-15');
+    expect(next.periodEnd).toBe('2026-12-14');
+    expect(maintenance.listPeriods(subscription.id)).toHaveLength(2);
+  });
+
+  it('préserve le découpage calendaire des souscriptions historiques', () => {
+    const subscription = maintenance.createSubscription({
+      clientAccountId: clientId,
+      planId: maintenance.listPlans()[0].id,
+      startDate: '2026-10-15',
+    });
+    database.run("UPDATE maintenance_subscriptions SET period_alignment='calendar' WHERE id=?", [subscription.id]);
+    const existing = maintenance.getSubscription(subscription.id);
+    expect(existing.periodAlignment).toBe('calendar');
+    const period = maintenance.ensurePeriod(subscription.id, '2026-10-20');
+    expect(period.periodStart).toBe('2026-10-01');
+    expect(period.periodEnd).toBe('2026-10-31');
+  });
+
   it('conserve la checklist de la période même si le modèle change ensuite', () => {
     const plan = maintenance.listPlans()[0];
     const subscription = maintenance.createSubscription({
