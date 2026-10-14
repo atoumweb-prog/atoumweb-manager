@@ -141,6 +141,11 @@ export class ExpenseService {
       'UPDATE expenses SET receipt_relative_path=?,receipt_original_name=?,receipt_mime_type=?,receipt_size_bytes=?,updated_at=? WHERE id=?',
       [relative(this.workspace.root, destination), basename(source), this.mime(destination), Number(stats.size), nowIso(), id],
     );
+    this.database.run(
+      'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
+      ['expense', id, 'expense_receipt_version', 'Historique justificatif : ' + basename(source),
+        JSON.stringify({ previousRelativePath: expense.receiptRelativePath ?? null, previousFileName: expense.receiptFileName ?? null, currentRelativePath: relative(this.workspace.root, destination), currentFileName: basename(source) }), nowIso()],
+    );
     this.log(id, 'expense_receipt_imported', 'Justificatif : ' + basename(source));
     return this.get(id);
   }
