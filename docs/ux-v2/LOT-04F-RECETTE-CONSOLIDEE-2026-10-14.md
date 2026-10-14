@@ -38,3 +38,15 @@
 ## Politique d'intégration
 
 Aucun pourcentage de clôture technique certifié tant que les critères ouverts ne sont pas traités. Les résultats de CI portent uniquement sur les SHA effectivement exécutés. Une PR draft, même verte, n'est pas une PR convergée ni autorisée à fusionner.
+
+## Actualisation de passation — CI #1619, SHA 3e7ce07
+
+**Preuve contrôlée** : [CI #1619](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38634238850) terminée **success** sur le commit complet `3e7ce07929a7d9d8ab1ff708e670d36e00c1f32b` de la PR #118. Les étapes réussies comprennent : TypeScript, Vitest complet, Electron Catalogue 04D/04E avec 9 captures automatiques, recommandations 04D, aide commerciale 04E (clavier/Escape/focus), parcours Prospect et Devis, Electron natif IPC/SQLite sur TEMP, UX-01 Catalogue et restauration/fermeture. Les jobs dédiés 04B et 04C sont **skipped** sur cette PR : leurs CI spécifiques restent les preuves séparées et non une certification intégrée.
+
+**Régression traitée** : CI #1599 a échoué sur deux fixtures de `quoteRecommendationStatus.test.ts` qui omettaient la version de leur ligne Offre ; commit correctif `bf77617f9ce92308632223d515cf673800222fc6`, CI #1614 verte. Nouveau test historique sans provenance vérifiable `3e7ce07`, certifié par CI #1619.
+
+**Préflight isolé** : `integration/ux04-preflight-20261014` a été créé au SHA `bf77617` (instantané antérieur au dernier HEAD, à **ne pas présenter comme le candidat final**). Il n'incorpore ni les 10 commits de `main` en divergence constatée au moment de sa création, ni la décision de renumérotation des migrations.
+
+**Portes restantes avant clôture 04F** : (1) arbitrage du conflit de migration 67 entre lots 04 et 05, sans renumérotation spéculative ; (2) réconciliation des branches empilées 04B→04C→04D/04E avec le `main` récent ; (3) rejouer TypeScript, Vitest, Electron Windows, UX-01 et migrations/FK sur **le SHA convergé** ; (4) inspection visuelle humaine des captures et parcours sensibles, ou réserve approuvée ; (5) dossier et autorisation explicite de fusion. Ne jamais modifier `Validation-MSI` ni une base utilisateur pour cette recette.
+
+**Décision** : développement 04D/04E validé sur son dernier HEAD par CI #1619, **lot 04F non clôturé**, aucune fusion vers `main`.
