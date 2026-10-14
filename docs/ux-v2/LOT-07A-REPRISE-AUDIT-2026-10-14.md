@@ -103,3 +103,30 @@ Les tests proches sont présents dans l'arbre : `src/main/projects/ProjectCommer
 
 ### Prochain pas testable
 Lire les tests correspondants et le chemin des gardes UX-01, identifier les assertions déjà couvertes puis réaliser les tests R07A sur fixture TEMP. Ne pas démarrer des écritures métier dans cette branche d'audit.
+
+ 
+## Cinquième passe — inspection des tests source (14/10/2026)
+Les quatre fichiers de tests ci-dessous ont été lus directement sur `main`, sans exécution de test :
+- `src/main/projects/ProjectCommercialService.test.ts` : blob `c345d06313512f8e81329e1e419c2e1fe23fb8df`. Cas déclarés : projet provisoire, idempotence, révisions, suppression conditionnelle d'éléments vierges, conflits, acceptation transactionnelle, refus d'une ancienne révision, rollback, absence d'activation opérationnelle (lignes 23–170).
+- `src/main/projects/ProjectBlueprintCompositionService.test.ts` : blob `eb5af07d4e895948778ae174a2f31ea1ae9862fc`. Cas : vitrine 1 Site/5 Pages selon offre, destinations multi-sites, rejouabilité, coexistence de prestations, contribution et provenance, rollback (lignes 16–114).
+- `src/main/referentials/AtoumWebCompositionPackageService.test.ts` : blob `1acb6cea8ccfeb3caf962db7fe0b781436694a27`. Cas : export Page V2 `exportId`, refus sans Site ou composition, ordre, refus vide (lignes 101–197).
+- `src/main/bridge/BridgeSnapshotService.test.ts` : blob `5e1377b0ce9c3a073272506c7066f3dfb1476e48`. Cas : import idempotent, identité `siteOccurrenceId`, collision, comparaison, snapshots partiels, décisions, conflits et rollback journal (lignes 32–460).
+
+### Raccord scénario 07A → couverture identifiée
+| Scénario | Tests existants candidats | Gap conservateur |
+| --- | --- | --- |
+| R07A-01/02 navigation Projet et Devis | Aucun test de routage UI identifié parmi ces 4 fichiers | Inspecter suites renderer/navigation et tester focus/identité |
+| R07A-03 Site/Page | BlueprintCompositionService tests 17,100 | Confirmer séparation objet Site métier / page WP en UI |
+| R07A-04/05 blueprint rejoué et vitrine | CommercialService tests 24,65 ; Blueprint tests 17,43 | Exécution réelle sur HEAD et cas autres templates |
+| R07A-06 composant local vs source | Aucun test explicite trouvé parmi ces quatre suites | Rechercher suite AtoumWebCompositionService et édition UI |
+| R07A-07 ressources | Aucun test identifié parmi ces quatre suites | Test permissions/inter-projets Ressources |
+| R07A-08/09 refus exports | PackageService tests 147,197 | Exécuter, confirmer erreur UI et zéro package résiduel |
+| R07A-10/11 Workbench idempotent / conflit exportId | Tests **Manager Snapshot**, pas preuve du plugin WordPress | Tests Bridge PHP séparés obligatoires |
+| R07A-12 snapshot partiel | BridgeSnapshotService test 281 | Vérifier absence de suppression UI/service sur cas partiel |
+| R07A-13 provisoire sans activation | CommercialService tests 106,101,170 | Exécuter, contrôler UI et objets opérationnels |
+| R07A-14 SHA/SQL/intégrité/non-mutation | Rollbacks testés à plusieurs niveaux | Recette TEMP + migrations + intégrité + contrôle absence Validation-MSI nécessaire |
+
+### Verdict de couverture
+La couverture statique est **substantielle sur les services**, mais ne suffit pas à solder la recette 07A. Les lacunes prioritaires sont les chemins UI, protection dirty UX-01, Ressources inter-projets et import Workbench exécuté côté plugin. Ne pas confondre `describe('Lot 7B')` dans un test historique avec la livraison de la refonte UX/UI V2 07B.
+
+**Aucun Vitest, typecheck, Electron ni test PHP n'a été exécuté lors de cette passe.** `main` et les autres branches restent hors modification.
