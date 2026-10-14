@@ -85,4 +85,5 @@ export interface ExpensesApi {
   importReceipt(id: string): Promise<Expense | null>;
   openReceipt(id: string): Promise<void>;
   listReceiptVersions(id: string): Promise<ExpenseReceiptVersion[]>;
+  openReceiptVersion(id: string, relativePath: string): Promise<void>;
 }
