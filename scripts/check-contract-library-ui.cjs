@@ -23,7 +23,7 @@ if(!process.versions.electron){
       const source=path.resolve(args[args.indexOf('--source')+1]);check('Source opt-in is Validation-MSI',path.basename(path.dirname(path.dirname(source)))==='Validation-MSI');
       check('No active WAL frames before physical copy',!fs.existsSync(source+'-wal')||fs.statSync(source+'-wal').size===0);const before=sha(source),copy=path.join(temp,'copie.sqlite');fs.copyFileSync(source,copy);dry=new S.NodeSqliteAdapter(copy);dry.exec('PRAGMA foreign_keys=ON');
       const tables=dry.all("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'").map(t=>t.name),snap=()=>Object.fromEntries(tables.filter(t=>t!=='schema_migrations').map(t=>[t,JSON.stringify(dry.all('SELECT * FROM "'+t+'"'))]));const prior=snap();
-      check('Real-copy migration applies only 66',S.applyPendingMigrations(dry).map(m=>m.id).join(',')==='66');check('Real-copy every previous table preserved',JSON.stringify(snap())===JSON.stringify(prior));
+      check('Real-copy migration applies only 66 and 67',S.applyPendingMigrations(dry).map(m=>m.id).join(',')==='66,67');check('Real-copy every previous table preserved',JSON.stringify(snap())===JSON.stringify(prior));
       const types=new S.ContractTypeService(dry),init=types.initialize();check('Real-copy 112 bindings',init.linked===112);check('Real-copy drafts only',types.list().every(t=>t.currentVersionId===null&&t.versions.every(v=>v.status==='draft')));
       const full=()=>JSON.stringify(dry.all("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").map(t=>[t.name,dry.all('SELECT * FROM "'+t.name+'"')]));const replayBefore=full();check('Real-copy initialization replay neutral',JSON.stringify(types.initialize())===JSON.stringify({created:0,linked:0,unchanged:112})&&full()===replayBefore);
       check('Real-copy migration replay empty',S.applyPendingMigrations(dry).length===0);check('Real-copy references unchanged after initialization',tables.filter(t=>!['schema_migrations','activity_log'].includes(t)).every(t=>JSON.stringify(dry.all('SELECT * FROM "'+t+'"'))===prior[t]));
@@ -46,11 +46,111 @@ if(!process.versions.electron){
     const input=async(label,value)=>{await js(`(()=>{const e=document.querySelector('[aria-label="${label}"]');if(!e)throw Error('Input missing');Object.getOwnPropertyDescriptor(e.tagName==='SELECT'?HTMLSelectElement.prototype:e.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event(e.tagName==='SELECT'?'change':'input',{bubbles:true}));})()`);await sleep(90);};
     const shot=async name=>{await sleep(120);fs.writeFileSync(path.join(output,name+'.png'),(await win.webContents.capturePage()).toPNG());};
     const go=async page=>{await js(`window.dispatchEvent(new CustomEvent('atoumweb:open-page',{detail:${JSON.stringify(page)}}))`);await sleep(100);};
-    await wait('!!window.atoumweb&&!!document.querySelector(".sidebar")');
+    await wait('!!window.atoumweb&&(!!document.querySelector(".aw-manager-shell")||!!document.querySelector(".renderer-fatal-shell"))');check('05B actual V2 shell mounted',await js('!!document.querySelector(".aw-manager-shell")'));
     for(const theme of ['atoumweb','noir','blanc']){
       await go('Réglages');await wait('!!document.querySelector(".theme-card")');await js(`[...document.querySelectorAll('.theme-card')].find(b=>b.querySelector('strong').textContent===${JSON.stringify({atoumweb:'AtoumWeb',noir:'Noir',blanc:'Blanc'}[theme])}).click()`);await wait(`document.documentElement.dataset.theme===${JSON.stringify(theme)}`);
       await go('Documents & Contrats');if(await js('!!document.querySelector(".contract-library")'))await click('Retour aux documents');await click('Bibliothèque contractuelle');check(theme+' library entry',await js('!!document.querySelector(".contract-library")'));
       if(theme==='atoumweb')await click('Initialiser depuis le Catalogue');await wait('document.querySelectorAll(".contract-type-list button").length>=5');
+      if(args.includes('--ux05b')){
+        // Capture the real library at every supported display density in all three themes.
+        for(const density of ['compact','comfort','comfort_plus']){
+          await go('Réglages');await wait('document.querySelectorAll(".density-card").length===3');
+          const label=await js(`[...document.querySelectorAll(".density-card")].find(b=>b.textContent.toLowerCase().includes(${JSON.stringify(density==='comfort'?'confort':density==='compact'?'compact':'confort +')}))?.textContent`);
+          check(theme+' '+density+' density control available',!!label);
+          await js(`[...document.querySelectorAll(".density-card")].find(b=>b.textContent===${JSON.stringify(label)}).click()`);
+          await wait(`document.documentElement.dataset.density===${JSON.stringify(density)}`);
+          await go('Documents & Contrats');if(await js('!!document.querySelector(".contract-library")'))await click('Retour aux documents');
+          await click('Bibliothèque contractuelle');await wait('!!document.querySelector(".contract-library")');
+          check(theme+' '+density+' contract library rendered',await js('!!document.querySelector(".contract-type-list")'));
+          const layout=await js('(()=>{const root=document.querySelector(".contract-library");const list=document.querySelector(".contract-type-list");if(!root||!list)return null;const viewport=window.innerWidth;const rect=root.getBoundingClientRect();const lr=list.getBoundingClientRect();return {viewport,rootLeft:rect.left,rootRight:rect.right,listLeft:lr.left,listRight:lr.right,documentWidth:document.documentElement.scrollWidth}})()');
+          check(theme+' '+density+' library stays within viewport',!!layout&&layout.rootLeft>=-2&&layout.rootRight<=layout.viewport+2);
+          check(theme+' '+density+' type list stays inside viewport',!!layout&&layout.listLeft>=-2&&layout.listRight<=layout.viewport+2);
+          check(theme+' '+density+' no document horizontal overflow',!!layout&&layout.documentWidth<=layout.viewport+2);
+          await shot('bibliotheque-'+theme+'-'+density);
+          if(theme==='blanc'&&density==='comfort_plus'){
+            await js('document.querySelector(".contract-type-list button").focus()');
+            check('05D keyboard target receives focus',await js('document.activeElement?.matches(".contract-type-list button")'));
+          }
+        }
+      }
+      if(theme==='atoumweb'&&args.includes('--ux05b')){
+        // BrowserWindow, vrai IPC UX-01, SQLite et profil TEMP. Dialogues automatises sans mutation de base client.
+        const originalDialog=dialog.showMessageBoxSync,dialogs=[];
+        let decision=0;
+        dialog.showMessageBoxSync=(...params)=>{const options=params.at(-1);if(options?.title==='Modifications non enregistrées'){dialogs.push({labels:options.detail,buttons:options.buttons});return decision;}return originalDialog(...params);};
+        try{
+          const first=await js('document.querySelector(".contract-type-list button strong")?.textContent');
+          const next=await js('document.querySelectorAll(".contract-type-list button strong")[1]?.textContent');
+          check('05B distinct contract types',!!first&&!!next&&first!==next);
+          await js('document.querySelector(".contract-type-list button").click()');
+          await wait(`document.querySelector('[aria-label="Nom du type"]')?.value===${JSON.stringify(first)}`);
+          const selected=await js('document.querySelector(".contract-type-list button.active")?.textContent');
+          const before=db.get('SELECT COUNT(*) AS n FROM contract_type_versions').n;
+          await input('Description du type','DESCRIPTION_NON_ENREGISTREE_05B');
+          await wait('!!document.querySelector(".contract-library-unsaved")');
+          decision=0;await js('document.querySelectorAll(".contract-type-list button")[1].click()');
+          check('05B stay triggers one confirmation',dialogs.length===1&&dialogs[0].buttons.join('|')==='Rester|Quitter sans enregistrer');
+          check('05B stay preserves draft',await js('document.querySelector(`[aria-label="Description du type"]`)?.value')==='DESCRIPTION_NON_ENREGISTREE_05B');
+          check('05B stay preserves selection',await js('document.querySelector(".contract-type-list button.active")?.textContent')===selected);
+          decision=1;await js('document.querySelectorAll(".contract-type-list button")[1].click()');
+          await wait(`document.querySelector('[aria-label="Nom du type"]')?.value===${JSON.stringify(next)}`);
+          check('05B quit drops unsaved type only',dialogs.length===2&&db.get('SELECT COUNT(*) AS n FROM contract_type_versions').n===before);
+          const clausesBefore=db.get('SELECT COUNT(*) AS n FROM contract_clause_templates').n;
+          await click('Nouveau module');await input('Code du module','UNSAVED-05B');
+          await wait('!!document.querySelector(".contract-library-unsaved")');
+          decision=0;await click('Nouveau module');
+          check('05B stay preserves new module',dialogs.length===3&&await js('!!document.querySelector(`[aria-label="Code du module"]`)'));
+          decision=1;await click('Nouveau module');
+          check('05B quit discards new module only',dialogs.length===4&&!await js('!!document.querySelector(`[aria-label="Code du module"]`)')&&db.get('SELECT COUNT(*) AS n FROM contract_clause_templates').n===clausesBefore);
+          await input('Consulter un module',m.id);await wait('!!document.querySelector(`[aria-label="Texte du module à versionner"]`)');
+          const oldBody=await js('document.querySelector(`[aria-label="Texte du module à versionner"]`).value');
+          await input('Texte du module à versionner','UNSAVED_BODY_05B');
+          await wait('!!document.querySelector(".contract-library-unsaved")');
+          decision=0;await input('Consulter un module',common.id);
+          check('05B stay preserves clause text',dialogs.length===5&&await js('document.querySelector(`[aria-label="Texte du module à versionner"]`)?.value')==='UNSAVED_BODY_05B');
+          decision=1;await input('Consulter un module',common.id);
+          await wait(`document.querySelector('[aria-label="Consulter un module"]')?.value===${JSON.stringify(common.id)}`);
+          check('05B quit cannot rewrite clause version',dialogs.length===6&&database.contractTerms.getTemplate(m.id).currentVersion.body===oldBody);
+          // 05B.3 : une sortie vers Catalogue ne doit pas court-circuiter UX-01.
+          const serviceLinks=await js('document.querySelectorAll(".contract-associated-services button").length');
+          check('05B.3 Catalogue link available in fixture',serviceLinks>0);
+          await js('(()=>{window.__contract05b3Events=0;window.addEventListener("atoumweb:open-catalog-item",()=>window.__contract05b3Events++);return true;})()');
+          const commonBody=await js('document.querySelector(`[aria-label="Texte du module à versionner"]`).value');
+          await input('Texte du module à versionner','UNSAVED_CATALOG_NAV_05B3');
+          await wait('!!document.querySelector(".contract-library-unsaved")');
+          decision=0;
+          await js('document.querySelector(".contract-associated-services button").click()');
+          check('05B.3 stay intercepts external Catalog navigation',dialogs.length===7&&await js('window.__contract05b3Events')===0);
+          check('05B.3 stay retains module draft',await js('document.querySelector(`[aria-label="Texte du module à versionner"]`).value')==='UNSAVED_CATALOG_NAV_05B3');
+          await input('Texte du module à versionner',commonBody);
+          await wait('!document.querySelector(".contract-library-unsaved")');
+          console.log('[05B UX-01 NATIVE] '+JSON.stringify({dialogs:dialogs.length,checks:checks.length,sqlite:'TEMP'}));
+        }finally{dialog.showMessageBoxSync=originalDialog;}
+      }
+      if(theme==='atoumweb'&&args.includes('--ux05b')){
+        check('05B.2 both library clause groups visible',await js('document.querySelectorAll(".contract-clause-navigation-group").length')===2);
+        await input('Rechercher une clause','UI-WEB');
+        check('05B.2 search by real clause code',await js('[...document.querySelectorAll(".contract-clause-navigation-entry")].length')===1);
+        await js('document.querySelector(".contract-clause-navigation-entry").click()');
+        await wait('!!document.querySelector(".contract-module-editor")');
+        check('05B.2 direct clause navigation preserves identity',await js('document.querySelector(".contract-module-editor h3")?.textContent')==='Module Vitrine fixture');
+        await input('Rechercher une clause','');
+        // 05C : filtres de lecture, sans changement des clauses en base ni navigation implicite.
+        const canonicalBefore=JSON.stringify(database.contractTerms.listTemplates(true));
+        await input('Filtrer famille de clauses','base');
+        check('05C common clauses only',await js('[...document.querySelectorAll(".contract-clause-navigation-entry")].every(e=>e.textContent.includes("UI-BASE"))'));
+        check('05C common clause visible',await js('document.querySelectorAll(".contract-clause-navigation-entry").length')===1);
+        await input('Filtrer famille de clauses','catalog');
+        check('05C service clause visible',await js('document.querySelectorAll(".contract-clause-navigation-entry").length')===1);
+        await input('Filtrer public de clauses','professional');
+        check('05C all-audience clauses remain visible for professionals',await js('document.querySelectorAll(".contract-clause-navigation-entry").length')===1);
+        await input('Filtrer public de clauses','consumer');
+        check('05C all-audience clauses remain visible for consumers',await js('document.querySelectorAll(".contract-clause-navigation-entry").length')===1);
+        await input('Filtrer famille de clauses','all');await input('Filtrer public de clauses','all');
+        check('05C all clauses restored after clearing filters',await js('document.querySelectorAll(".contract-clause-navigation-entry").length')===2);
+        check('05C no canonical clause mutation',JSON.stringify(database.contractTerms.listTemplates(true))===canonicalBefore);
+
+      }
       const names=await js('[...document.querySelectorAll(".contract-type-list button strong")].map(e=>e.textContent)');check(theme+' types alphabetical',JSON.stringify(names)===JSON.stringify([...names].sort((a,b)=>a.localeCompare(b,'fr'))));
       const initialTypes=database.contractTypes.list();
       for(const t of initialTypes){
@@ -65,6 +165,20 @@ if(!process.versions.electron){
       let module=database.contractTerms.listTemplates().find(c=>c.code==='UI-'+theme.toUpperCase());check(theme+' new module draft',module.currentVersionId===null&&module.versions[0].status==='draft');
       await wait('!!document.querySelector(`[aria-label="Texte du module à versionner"]`)');await input('Texte du module à versionner','Texte adapté '+theme);await click('Créer la nouvelle version du module');await wait('document.querySelector(`[aria-label="Version du module"]`).options.length===2');await click('Publier la version du module');
       module=database.contractTerms.getTemplate(module.id);check(theme+' module versions',module.versions.length===2&&module.currentVersion.body==='Texte adapté '+theme);
+      if(theme==='atoumweb'){
+        await wait('[...document.querySelectorAll("section")].some(e=>e.getAttribute("aria-label")==="Classement contractuel de la version")');
+        check('05C selected version initially unclassified',database.contractSectionReviews.get(module.currentVersionId).status==='unclassified');
+        await input('Rubrique de la version','finance');await input('Rang de la version','2');await input('Motif du classement','Paiement du service classé en finances');
+        await click('Enregistrer la proposition');
+        await wait('[...document.querySelectorAll("section")].some(e=>e.getAttribute("aria-label")==="Classement contractuel de la version"&&e.textContent.includes("Proposition — validation humaine nécessaire"))');
+        check('05C proposal remains unapproved',database.contractSectionReviews.get(module.currentVersionId).status==='proposed');
+        await input('Valideur du classement','Relecteur fixture');
+        await click('Approuver le classement proposé');
+        await wait('[...document.querySelectorAll("section")].some(e=>e.getAttribute("aria-label")==="Classement contractuel de la version"&&e.textContent.includes("Classement approuvé"))');
+        const review=database.contractSectionReviews.get(module.currentVersionId);
+        check('05C explicit named approval',review.status==='approved'&&review.sectionKey==='finance'&&review.rankInSection===2&&review.reviewer==='Relecteur fixture');
+        check('05C metadata cannot rewrite published version',database.contractTerms.getTemplate(module.id).currentVersion.body==='Texte adapté '+theme);
+      }
       await click('Nouveau type de contrat');await input('Code du type','UI-TYPE-'+theme.toUpperCase());await input('Nom du type','Type recette '+theme);await input('Description du type','Composition explicite');await input('Rattacher un module existant',m.id);await input('Rattacher un module existant',module.id);
       await js(`document.querySelector('[aria-label="Monter ${module.code}"]').click()`);await sleep(50);await click('Enregistrer le type en brouillon');
       let type=database.contractTypes.list().find(t=>t.code==='UI-TYPE-'+theme.toUpperCase());check(theme+' creation and module reordering',type.versions[0].moduleIds.join(',')===[module.id,m.id].join(','));
@@ -95,8 +209,37 @@ if(!process.versions.electron){
       check(theme+' shortcuts do not change quote data',JSON.stringify(db.get('SELECT contract_parameters_json FROM quotes WHERE id=?',[q.id]))===JSON.stringify(rawBefore));
       check(theme+' finalization disabled while decisions missing',await js('document.querySelector(".quote-finalization-check .primary-button").disabled'));
       await js('document.querySelector(".quote-finalization-check").scrollIntoView({block:"center"})');await shot('points-a-completer-'+theme);
-      S.prepareQuoteForTest(db,q.id);await go('Accueil');
-      await js(`window.dispatchEvent(new CustomEvent('atoumweb:navigate',{detail:{entityType:'quote',entityId:${JSON.stringify(q.id)},title:'TEST'}}))`);await wait('!!document.querySelector(".contract-reading-scroll")');await wait('document.querySelector(".contract-reading-scroll").textContent.includes("Paramètres contractuels du devis")');
+      S.prepareQuoteForTest(db,q.id);
+      let otherQuote=null;
+      if(theme==='blanc'&&args.includes('--ux05b')){
+        otherQuote=database.quotes.create({prospectId:prospect.id,subject:'DEVIS_B_ISOLE_05D'});
+        database.quotes.addCatalogLine(otherQuote.id,v.id);
+        S.prepareQuoteForTest(db,otherQuote.id);
+      }
+      await go('Accueil');
+      await js(`window.dispatchEvent(new CustomEvent('atoumweb:navigate',{detail:{entityType:'quote',entityId:${JSON.stringify(q.id)},title:'TEST'}}))`);await wait('!!document.querySelector(".contract-reading-scroll")');
+      if(otherQuote){
+        const oldDialog=dialog.showMessageBoxSync,dialogCalls=[];
+        let decision=0;
+        dialog.showMessageBoxSync=(...params)=>{const options=params.at(-1);if(options?.title==='Modifications non enregistrées'){dialogCalls.push(options.buttons);return decision;}return oldDialog(...params);};
+        try{
+          const edit=async(field,value)=>{await js(`(()=>{const e=document.querySelector('.quote-contract-preparation [data-contract-field="${field}"]');if(!e)throw Error('Missing field ${field}');for(let p=e.parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event('input',{bubbles:true}));return true})()`);await wait(`document.querySelector('.quote-contract-preparation [data-contract-field="${field}"]')?.value===${JSON.stringify(value)}`);};
+          await edit('context','BROUILLON_DEVIS_A_CONTEXTE');await edit('purpose','BROUILLON_DEVIS_A_FINALITE');
+          const selectB=`[...document.querySelectorAll('.quote-table tbody tr')].find(e=>e.textContent.includes("DEVIS_B_ISOLE_05D")).click()`;
+          decision=0;await js(selectB);
+          check('05D real quote switch stay dialog',dialogCalls.length>=1&&dialogCalls.at(-1).join('|')==='Rester|Quitter sans enregistrer');
+          check('05D stay preserves first unsaved contract field',await js('document.querySelector(\'.quote-contract-preparation [data-contract-field="context"]\')?.value')==='BROUILLON_DEVIS_A_CONTEXTE');
+          check('05D stay preserves second unsaved contract field',await js('document.querySelector(\'.quote-contract-preparation [data-contract-field="purpose"]\')?.value')==='BROUILLON_DEVIS_A_FINALITE');
+          decision=1;await js(selectB);await wait('document.querySelector(".quote-table tbody tr.selected-row")?.textContent.includes("DEVIS_B_ISOLE_05D")');
+          await wait('document.querySelector(\'.quote-contract-preparation [data-contract-field="context"]\')?.value!=="BROUILLON_DEVIS_A_CONTEXTE"');
+          check('05D quote B has no draft A context',await js('document.querySelector(\'.quote-contract-preparation [data-contract-field="context"]\')?.value')!=='BROUILLON_DEVIS_A_CONTEXTE');
+          check('05D quote B has no draft A purpose',await js('document.querySelector(\'.quote-contract-preparation [data-contract-field="purpose"]\')?.value')!=='BROUILLON_DEVIS_A_FINALITE');
+          const selectA=`[...document.querySelectorAll('.quote-table tbody tr')].find(e=>e.textContent.includes(${JSON.stringify(q.subject)})).click()`;
+          await js(selectA);await wait(`document.querySelector(".quote-table tbody tr.selected-row")?.textContent.includes(${JSON.stringify(q.subject)})`);
+          await wait('document.querySelector(\'.quote-contract-preparation [data-contract-field="context"]\')?.value!=="BROUILLON_DEVIS_A_CONTEXTE"');
+          check('05D returning to A does not resurrect discarded context',await js('document.querySelector(\'.quote-contract-preparation [data-contract-field="context"]\')?.value')!=='BROUILLON_DEVIS_A_CONTEXTE');
+        }finally{dialog.showMessageBoxSync=oldDialog;}
+      }await wait('!!document.querySelector(".contract-reading-scroll")');await wait('document.querySelector(".contract-reading-scroll")?.textContent.includes("Paramètres contractuels du devis")');
       const presentation=database.contractTerms.presentation(q.id);for(const label of ['Copier pour Abby','Copier le contrat','Copier tout']){await click(label);await wait(`document.querySelector('.contract-read-panel')?.textContent.includes(${JSON.stringify(label==='Copier pour Abby'?'Contenu pour Abby copié.':label==='Copier le contrat'?'Contrat copié.':'Bloc commercial et contrat copié.')})`);const text=await clipboard.readText();fs.writeFileSync(path.join(output,'expected-copy.txt'),presentation.text);fs.writeFileSync(path.join(output,'actual-copy.txt'),text);check(theme+' '+label,label==='Copier tout'?text.endsWith(presentation.text)&&text.includes('Total devis :'):text===presentation.text);check(theme+' copy has no presentation HTML '+label,!text.includes('<section class='));}
       await click('Copier cette section');await wait(`document.querySelector('.contract-read-panel')?.textContent.includes('Section copié.')`);check(theme+' section copy exact',await clipboard.readText()===presentation.sections[0].title+'\n\n'+presentation.sections[0].text);
       check(theme+' actual scroll overflows',await js('(()=>{const e=document.querySelector(".contract-reading-scroll");return e.scrollHeight>e.clientHeight})()'));
@@ -106,12 +249,21 @@ if(!process.versions.electron){
       const frozen=S.finalizeForTest(db,database.quotes,q.id),frozenBefore=frozen.contractSnapshotJson;database.quotes.markSent(q.id);S.acceptForTest(db,database.quotes,q.id);
       const newer=database.contractTerms.createVersion(module.id,{body:'NOUVEAU TEXTE APRES ACCEPTATION '+theme});database.contractTerms.publishVersion(newer.id);
       check(theme+' snapshot unchanged',database.quotes.get(q.id).contractSnapshotJson===frozenBefore&&database.contractTerms.presentation(q.id).text.includes('Texte adapté '+theme));
+      const acceptedQuote=database.quotes.get(q.id);
+      check(theme+' acceptance preserves frozen snapshot and timestamp',acceptedQuote.contractSnapshotJson===frozenBefore&&!!acceptedQuote.finalizedAt);
+      check(theme+' accepted contract excludes future clause library updates',!database.contractTerms.presentation(q.id).text.includes('NOUVEAU TEXTE APRES ACCEPTATION '+theme));
+      check(theme+' accepted contract remains non-editable',acceptedQuote.status!=='draft');
       const fp=database.contractTerms.presentation(q.id),pdfHtml=S.buildQuoteHtml(database.quotes.get(q.id),fp);check(theme+' PDF common presentation',fp.sections.every(s=>pdfHtml.includes(s.title))&&!pdfHtml.includes('NOUVEAU TEXTE APRES ACCEPTATION '+theme));
       const pdf=await js(`window.atoumweb.quotes.generatePdf(${JSON.stringify(q.id)})`);dialog.showOpenDialog=async()=>({canceled:false,filePaths:[pdf.path]});
       await js(`window.atoumweb.quotes.importContractDocument(${JSON.stringify(q.id)},'TEST')`);await js(`window.atoumweb.quotes.openContractDocument(${JSON.stringify(q.id)})`);check(theme+' PDF system reader endpoint exercised',opened.length>0);
       database.contractTypes.setStatus(type.id,'archived');check(theme+' archive preserves versions',database.contractTypes.list().every(t=>t.id!==type.id)&&database.contractTypes.list(true).some(t=>t.id===type.id));
     }
-    check('Fixture migrations 1–66',db.all('SELECT id FROM schema_migrations ORDER BY id').map(r=>r.id).join(',')===Array.from({length:66},(_,i)=>i+1).join(','));check('Fixture integrity',db.get('PRAGMA integrity_check').integrity_check==='ok');check('Fixture FK',db.all('PRAGMA foreign_key_check').length===0);check('No renderer errors',errors.length===0);
+    if(args.includes('--ux05b')){
+      const densityScreens=fs.readdirSync(output).filter(name=>/^bibliotheque-(atoumweb|noir|blanc)-(compact|comfort|comfort_plus)\.png$/.test(name)).sort();
+      check('05B three themes times three densities produce nine independent captures',densityScreens.length===9);
+      console.log('[05B 3x3 CAPTURES] '+JSON.stringify(densityScreens.map(name=>({name,sha256:sha(path.join(output,name))}))));
+    }
+    check('Fixture migrations 1–67',db.all('SELECT id FROM schema_migrations ORDER BY id').map(r=>r.id).join(',')===Array.from({length:67},(_,i)=>i+1).join(','));check('Fixture integrity',db.get('PRAGMA integrity_check').integrity_check==='ok');check('Fixture FK',db.all('PRAGMA foreign_key_check').length===0);check('No renderer errors',errors.length===0);
     process.stdout.write(JSON.stringify({checks:checks.length,errors})+'\n');
-  }).catch(async e=>{errors.push(e.stack||String(e));process.stderr.write(e.stack+'\n');if(win){fs.writeFileSync(path.join(output,'failed-screen.png'),(await win.webContents.capturePage()).toPNG());fs.writeFileSync(path.join(output,'failed-screen.txt'),await win.webContents.executeJavaScript('document.body.innerText'));}process.exitCode=1;}).finally(()=>{fs.writeFileSync(path.join(output,'controle-ui.json'),JSON.stringify({checks,errors,temporaryWorkspace:true,shellOpening:'Real IPC handoff intercepted at OS boundary only'},null,2));win?.destroy();dry?.close();database?.close();app.exit(process.exitCode||0);});
+  }).catch(async e=>{errors.push(e.stack||String(e));process.stderr.write(e.stack+'\n');process.stderr.write('Renderer console errors: '+JSON.stringify(errors)+'\n');if(win){try{process.stderr.write('Renderer body on failure: '+String(await win.webContents.executeJavaScript('document.body?.innerText||""')).slice(0,3200)+'\n');}catch(debugError){process.stderr.write('Cannot inspect renderer: '+String(debugError)+'\n');}fs.writeFileSync(path.join(output,'failed-screen.png'),(await win.webContents.capturePage()).toPNG());fs.writeFileSync(path.join(output,'failed-screen.txt'),await win.webContents.executeJavaScript('document.body.innerText'));}process.exitCode=1;}).finally(()=>{fs.writeFileSync(path.join(output,'controle-ui.json'),JSON.stringify({checks,errors,temporaryWorkspace:true,shellOpening:'Real IPC handoff intercepted at OS boundary only'},null,2));win?.destroy();dry?.close();database?.close();app.exit(process.exitCode||0);});
 }

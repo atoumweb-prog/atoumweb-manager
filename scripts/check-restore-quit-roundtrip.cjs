@@ -228,7 +228,7 @@ if (!process.versions.electron) {
         .filter(suffix => fs.existsSync(source + suffix));
       assert(annexes.length === 0, 'Standalone fixture source has SQLite sidecars: ' + annexes.join(', '));
       const validation = S.validateRestoreSource(source);
-      assert(validation.migrationCount === 66, 'Standalone fixture schema is incompatible');
+      assert(validation.migrationCount === 67, 'Standalone fixture schema is incompatible');
       console.log('[UX01 child] Standalone restore source ready: validated',
         validation.migrationCount, 'migrations, no SQLite sidecars');
       db.setSetting(key, 'after');
@@ -313,7 +313,7 @@ if (!process.versions.electron) {
       const live = new S.DatabaseService(workspace);
       await live.initialize();
       assert(live.getSetting(key, null) === 'before', 'Restored content differs from original backup');
-      assert(live.health().migrationCount === 66, 'Incorrect migration count');
+      assert(live.health().migrationCount === 67, 'Incorrect migration count');
       live.close();
       const { DatabaseSync } = require('node:sqlite');
       const safety = new DatabaseSync(result.safetyBackupPath, { readOnly: true });
