@@ -1,5 +1,5 @@
 /** Cohortes immuables au clic : une destination sans filtre exact est interdite. */
-export type StatisticsDrilldownKind = 'signed' | 'invoiced' | 'time';
+export type StatisticsDrilldownKind = 'signed' | 'decisions' | 'invoiced' | 'time';
 export type StatisticsDrilldownDestination = 'Devis' | 'Facturation' | 'Gestion des temps';
 export interface StatisticsDrilldownRoute {
   kind: StatisticsDrilldownKind;
@@ -8,7 +8,7 @@ export interface StatisticsDrilldownRoute {
   periodLabel: string;
 }
 const DESTINATIONS: Record<StatisticsDrilldownKind, StatisticsDrilldownDestination> = {
-  signed: 'Devis', invoiced: 'Facturation', time: 'Gestion des temps',
+  signed: 'Devis', decisions: 'Devis', invoiced: 'Facturation', time: 'Gestion des temps',
 };
 export function createStatisticsDrilldown(kind: StatisticsDrilldownKind, ids: readonly string[], periodLabel: string): StatisticsDrilldownRoute {
   if (!ids.every(id => typeof id === 'string' && id.trim().length > 0)) throw Error('Identifiants statistiques invalides.');
@@ -17,7 +17,7 @@ export function createStatisticsDrilldown(kind: StatisticsDrilldownKind, ids: re
 export function isStatisticsDrilldownRoute(value: unknown): value is StatisticsDrilldownRoute {
   if (!value || typeof value !== 'object') return false;
   const r = value as Partial<StatisticsDrilldownRoute>;
-  return (r.kind === 'signed' || r.kind === 'invoiced' || r.kind === 'time') &&
+  return (r.kind === 'signed' || r.kind === 'decisions' || r.kind === 'invoiced' || r.kind === 'time') &&
     r.destination === DESTINATIONS[r.kind] &&
     Array.isArray(r.ids) && r.ids.length <= 100000 &&
     r.ids.every(id => typeof id === 'string' && id.trim().length > 0) &&
