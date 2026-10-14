@@ -157,6 +157,8 @@ export interface CatalogApi {
   getItem(id: string): Promise<CatalogItemDetail>;
   create(input: CatalogItemInput, firstVersion: CatalogVersionInput): Promise<CatalogItemDetail>;
   createVersion(itemId: string, input: CatalogVersionInput): Promise<CatalogVersion>;
+  /** Update only an existing draft; expected is the last loaded version for optimistic concurrency. */
+  saveDraftVersion(versionId: string, expected: CatalogVersion, input: CatalogVersionInput): Promise<CatalogVersion>;
   publishVersion(versionId: string): Promise<CatalogVersion>;
   setStatus(itemId: string, status: CatalogItemStatus): Promise<CatalogItemSummary>;
   setVisiblePublic(itemId: string, visible: boolean): Promise<CatalogItemSummary>;
