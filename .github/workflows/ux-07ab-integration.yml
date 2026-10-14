@@ -104,3 +104,21 @@ jobs:
         run: |
           node scripts/check-ux-v2-07ab-navigation-native.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+  ux07c-commercial:
+    if: ${{ github.head_ref == 'integration/ux-v2-07a-07b-navigation-validation' || github.ref_name == 'integration/ux-v2-07a-07b-navigation-validation' }}
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Dependencies
+        run: npm ci
+      - name: Provisional Project revision Blueprint and rollback 07C
+        shell: pwsh
+        timeout-minutes: 12
+        run: |
+          npx vitest run src/main/projects/ProjectCommercialService.test.ts src/main/projects/ProjectBlueprintCompositionService.test.ts src/main/projects/ProjectContributionTargets.test.ts src/main/projects/OperationalCommercialPreparationService.test.ts src/main/projects/OperationalStagingService.test.ts src/main/projects/ProjectSiteService.test.ts --maxWorkers=2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
