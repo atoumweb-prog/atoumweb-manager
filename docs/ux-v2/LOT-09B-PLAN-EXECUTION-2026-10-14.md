@@ -22,3 +22,9 @@ Référentiel de départ : `docs/ux-v2/LOT-09B-FACTURATION-ABBY.md` dans le comm
 ## 14/10 — Protection des anciennes factures Abby
 - PR #119 : journal `billing_invoice_replaced` avec ancien et nouvel identifiant, référence et date ; garde `ClientDocumentService.deletePermanently` sur les identifiants historiques ; test d'archivage puis refus de suppression d'une ancienne facture.
 - Gate : CI Windows TypeScript/Vitest à vérifier sur le nouveau commit ; aucune recette Electron 09B certifiée et aucune fusion.
+
+## 09B — Gate d'intégrité des PDF Abby
+- L'IPC d'import calcule/vérifie l'empreinte SHA-256 du PDF réellement importé avant le rattachement à l'élément de facturation.
+- L'IPC d'ouverture passe par `ClientDocumentService.verifiedPath` au lieu d'un chemin non vérifié.
+- Régression sur fichier modifié ajoutée au banc `ClientDocumentService.test.ts`.
+- Limite explicite : ce contrôle IPC ne rend pas la lecture et l'ouverture atomiques, et `BillingHandoffService.attachInvoice` peut être appelé directement par des services internes sans cette vérification ; la certification complète de ces voies reste à auditer.
