@@ -172,6 +172,14 @@ describe('AtoumWebCompositionPackageService', () => {
     expect(readZipArchive(first.path).find(entry => entry.name === 'manifest.json')!.data.toString('utf8')).toBe(firstBytes);
     expect(manifest.destination).toEqual({projectId: project.id, siteId: site.id, pageId: page.id});
     expect(manifest.exportId).toBe(second.exportId);
+    // R07G-26: exported data may be imported to a draft Workbench only.
+    // This deliberately does not claim a WordPress integration or publication test.
+    expect(manifest.safety).toMatchObject({
+      flow: 'workbench_first',
+      workbenchRequired: true,
+      directProductionInjection: false,
+      sourceLibraryMutation: false,
+    });
     expect(manifest.components).toHaveLength(3);
     expect(manifest.components.map((item: {compositionItemId: string}) => item.compositionItemId))
       .toEqual(composition.items.map(item => item.id));
