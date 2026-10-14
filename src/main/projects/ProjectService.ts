@@ -482,6 +482,15 @@ export class ProjectService {
     if (!PROJECT_STATUSES.includes(status)) throw new Error('Statut projet invalide.');
     const project = this.getProject(id);
     if (project.commercialState === 'provisional' && !['to_prepare','archived'].includes(status)) throw new Error('Projet prévisionnel : attendre l’acceptation avant activation opérationnelle.');
+    if (project.commercialState === 'provisional' && status === 'to_prepare') {
+      const current = this.database.get<{ project_id: string }>(
+        'SELECT d.project_id FROM commercial_project_dossiers d JOIN projects p ON p.commercial_dossier_id=d.id WHERE p.id=?',
+        [id],
+      );
+      if (current?.project_id !== id) {
+        throw new Error('Projet prévisionnel remplacé : réactivation interdite. Ouvrir le Projet courant du dossier commercial.');
+      }
+    }
     const now = nowIso();
     this.database.run('UPDATE projects SET status=?, completed_at=?, archived_at=?, updated_at=? WHERE id=?', [status, status === 'completed' ? now : null, status === 'archived' ? now : null, now, id]);
     this.writeActivity('project', id, 'project_status_changed', `Statut projet : ${status}`);

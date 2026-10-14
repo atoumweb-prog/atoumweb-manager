@@ -72,6 +72,25 @@ describe('Lot 7B — même Projet prévisionnel et révisions commerciales',()=>
   expect(db.all('SELECT id FROM client_accounts')).toHaveLength(0);
   expect(db.all('PRAGMA foreign_key_check')).toHaveLength(0);
   expect(db.get('PRAGMA integrity_check')?.integrity_check).toBe('ok');
+  // The preserved old Project must not become actionable again. Both IPC
+  // service paths reject it without touching its historical records.
+  const oldScope=f.projects.commercial.scope(original.id);
+  expect(oldScope.dossierId).toBeNull();
+  expect(oldScope.currentQuoteId).toBeNull();
+  const beforeOldActions=state();
+  expect(()=>sync(original.id)).toThrow(/Projet prévisionnel courant/);
+  expect(()=>f.projects.changeProjectStatus(original.id,'to_prepare')).toThrow(/réactivation interdite/);
+  expect(()=>f.projects.commercial.resolveConflict(original.id,'ancien-conflit','archive'))
+    .toThrow(/Projet prévisionnel courant/);
+  expect(()=>f.projects.commercial.assignTarget(original.id,{
+    lineOrigin:'ancienne-ligne',slot:'destination',unitIndex:1,author:'Test archive',
+  })).toThrow(/Projet prévisionnel courant/);
+  expect(state()).toEqual(beforeOldActions);
+  expect(f.projects.commercial.findProject(revision.id)).toBe(next.id);
+  expect(f.projects.commercial.scope(next.id).currentQuoteId).toBe(revision.id);
+  const beforeCurrentSync=state();
+  expect(sync(next.id).id).toBe(next.id);
+  expect(state()).toEqual(beforeCurrentSync);
   expect(()=>f.projects.commercial.restart(original.id,review.sha256)).toThrow(/Projet prévisionnel actif/);
  });
  it('R07G-14 : revue périmée bloque la régénération sans aucune écriture SQL',()=>{
