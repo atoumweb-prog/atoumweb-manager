@@ -42,6 +42,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   currentQuoteId.current=quote.id;
   const loadRequest=useRef(0);
   const libraryRequest=useRef(0);
+  const quoteActionPending=useRef(false);
   const loadedQuoteId=useRef(quote.id);
   const [presentation,setPresentation]=useState<ContractPresentation|null>(null);
   const [showLibrary, setShowLibrary] = useState(false);
@@ -140,6 +141,9 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   }, [quote.id, quote.status, quote.finalizedAt, quote.contractCompiledAt, quote.updatedAt]);
 
   async function run(action: () => Promise<QuoteContractBuild>,saved?:{id:string;draft:ClauseDraft}): Promise<boolean> {
+    // Synchronous lock: a second click can arrive before React commits busy=true.
+    if(quoteActionPending.current)return false;
+    quoteActionPending.current=true;
     const quoteId=quote.id;
     setBusy(true);
     setError('');
@@ -151,6 +155,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
       if(currentQuoteId.current===quoteId)setError(errorMessage(cause));
       return false;
     } finally {
+      quoteActionPending.current=false;
       if(currentQuoteId.current===quoteId)setBusy(false);
     }
   }
