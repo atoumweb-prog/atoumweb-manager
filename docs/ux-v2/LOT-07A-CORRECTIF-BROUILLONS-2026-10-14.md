@@ -23,3 +23,11 @@ Aucun TypeScript, Vitest ou test Electron n'a été exécuté ici ; **ne pas int
 8. Rebase/convergence explicitement contrôlés avec lots 03–06 et évolutions UX-01.
 
 **Pas de fusion, pas d'intervention WordPress, pas de modification de main.**
+
+
+## Contrôle CI du 14/10 — HEAD cc6494c
+- Workflow [#38564044517](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38564044517), déclenché sur PR #111 : **failure** (12:28:22Z → 12:28:24Z).
+- Le endpoint GitHub Actions /jobs signale le job `quality` en échec avec **zéro étape renseignée** : aucune preuve d'exécution Checkout, `npm ci`, typecheck ou Vitest. La cause infrastructure exacte n'est pas démontrée par ces seules métadonnées.
+- Le workflow `.github/workflows/ci.yml` prévoit bien Windows 2022, Node 24, `npm ci`, `npm run typecheck`, `npm test -- --maxWorkers=2`. **Ne pas étiqueter cet échec comme un échec TypeScript.**
+- Validation bloquée ; ne pas multiplier les reruns GitHub Actions sans diagnostic et accord sur le budget. Une recette Windows TEMP autonome reste nécessaire.
+- Exigence avant clôture : relever la cause de l'échec du job (annotation/diagnostic GitHub), typecheck et tests réellement exécutés sur SHA courant, Electron natif et revue du comportement dirty/pending.
