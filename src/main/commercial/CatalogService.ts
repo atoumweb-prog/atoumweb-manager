@@ -353,17 +353,18 @@ export class CatalogService {
           );
         }
       }
-      // 04D: Preserve version-scoped recommendations when a new draft is created.
-      // The source remains immutable; targets keep pointing at their published snapshots.
+      // 04D: Copy immutable version-scoped references into the new draft.
       if (previous && this.database.get("SELECT name FROM sqlite_master WHERE type='table' AND name='catalog_version_recommendations'")) {
-        this.database.run(`INSERT INTO catalog_version_recommendations
-          (id,source_version_id,target_version_id,sort_order,created_at)
-          SELECT lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' ||
-                 substr(lower(hex(randomblob(2))),2) || '-a' ||
-                 substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6))),
-                 ?,target_version_id,sort_order,?
-          FROM catalog_version_recommendations WHERE source_version_id=?`,
-          [version.id,now,previous.id]);
+        const recommendations = this.database.all<{target_version_id:string;sort_order:number}>(
+          'SELECT target_version_id,sort_order FROM catalog_version_recommendations WHERE source_version_id=? ORDER BY sort_order,id',
+          [previous.id],
+        );
+        for (const recommendation of recommendations) {
+          this.database.run(
+            'INSERT INTO catalog_version_recommendations (id,source_version_id,target_version_id,sort_order,created_at) VALUES (?,?,?,?,?)',
+            [randomUUID(),version.id,recommendation.target_version_id,recommendation.sort_order,now],
+          );
+        }
       }
       if (previous) {
         const links = this.database.all<{ template_version_id: string; role: string; sort_order: number; quantity_mode: string; site_mode: string }>(
