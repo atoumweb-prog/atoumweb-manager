@@ -19,6 +19,7 @@ type PanelMode = null | 'library' | 'create' | 'attach' | 'inspect' | 'preview';
 type CreateMode = 'new' | 'variant';
 type CodeInputMode = 'complete' | 'separated';
 type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
+interface CompositionOrderStep { before: string[]; after: string[]; }
 
 const VISUAL_CATEGORIES: Array<{ id: AtoumWebLibraryCategory; label: string }> = [
   { id: 'hero', label: 'Hero' },
@@ -181,6 +182,9 @@ export function ProjectPageCompositionPanel({
   onInspectorOpenChange?: (open: boolean, dual: boolean, expandedCount: number) => void;
 }) {
   const [composition, setComposition] = useState<AtoumWebCompositionDetail | null>(null);
+  const [orderUndo, setOrderUndo] = useState<CompositionOrderStep[]>([]);
+  const [orderRedo, setOrderRedo] = useState<CompositionOrderStep[]>([]);
+  function clearOrderHistory(): void { setOrderUndo([]); setOrderRedo([]); }
   const [allCompositions, setAllCompositions] = useState<AtoumWebCompositionSummary[]>([]);
   const [library, setLibrary] = useState<AtoumWebTechnicalItemSummary[]>([]);
   const [mode, setMode] = useState<PanelMode>(null);
@@ -231,6 +235,7 @@ export function ProjectPageCompositionPanel({
     ++inspectEpoch.current;
     ++pageEpoch.current;
     setComposition(null);
+    clearOrderHistory();
     setMode(null);
     setInspected(null);
     setSettingsItemId(null);
@@ -303,6 +308,7 @@ export function ProjectPageCompositionPanel({
       const target = await ensureComposition();
       const next = await window.atoumweb.referentials.compositions.addItem(target.id, { libraryItemId: itemId });
       setComposition(next);
+      clearOrderHistory();
       setMode(null);
       onMessage('Composant ajouté à la Page.');
       await reload();
@@ -315,8 +321,35 @@ export function ProjectPageCompositionPanel({
     const nextIndex = Math.max(0, Math.min(composition.items.length - 1, item.sortOrder + delta));
     if (nextIndex === item.sortOrder) return;
     await withBusy(async () => {
+      const before = composition.items.map(entry => entry.id);
       const next = await window.atoumweb.referentials.compositions.moveItem(composition.id, item.id, { targetIndex: nextIndex });
       setComposition(next);
+      setOrderUndo(history => [...history, { before, after: next.items.map(entry=>entry.id) }].slice(-40));
+      setOrderRedo([]);
+    });
+  }
+
+  function restoreLastOrder(direction: 'undo' | 'redo'): void {
+    if(busy || !composition)return;
+    requestUnsavedExit(() => { void restoreLastOrderAllowed(direction); }, 'project-composition');
+  }
+
+  async function restoreLastOrderAllowed(direction: 'undo' | 'redo'): Promise<void> {
+    const step = (direction === 'undo' ? orderUndo : orderRedo).at(-1);
+    if (!composition || !step) return;
+    const expected = direction === 'undo' ? step.after : step.before;
+    const target = direction === 'undo' ? step.before : step.after;
+    await withBusy(async () => {
+      const next = await window.atoumweb.referentials.compositions.restoreOrder(composition.id, expected, target);
+      setComposition(next);
+      if (direction === 'undo') {
+        setOrderUndo(h => h.slice(0,-1));
+        setOrderRedo(h => [...h,step]);
+      } else {
+        setOrderRedo(h => h.slice(0,-1));
+        setOrderUndo(h => [...h,step].slice(-40));
+      }
+      onMessage(direction === 'undo' ? 'Dernier déplacement annulé.' : 'Déplacement rétabli.');
     });
   }
 
@@ -328,6 +361,7 @@ export function ProjectPageCompositionPanel({
     await withBusy(async () => {
       const next = await window.atoumweb.referentials.compositions.removeItem(composition.id, item.id);
       setComposition(next);
+      clearOrderHistory();
       onMessage('Composant retiré de la Page. La Bibliothèque source reste intacte.');
     });
   }
@@ -517,6 +551,8 @@ export function ProjectPageCompositionPanel({
         <p>Ajoute uniquement ce que tu veux préparer depuis Manager. Le reste de la Page pourra être construit librement dans Divi.</p>
       </div>
       <div className="project-page-composition-actions">
+        {composition&&<button className="secondary-button" type="button" disabled={busy||!orderUndo.length} onClick={()=>restoreLastOrder('undo')}>Annuler déplacement</button>}
+        {composition&&<button className="secondary-button" type="button" disabled={busy||!orderRedo.length} onClick={()=>restoreLastOrder('redo')}>Rétablir déplacement</button>}
         {composition?.items.length ? <button className="primary-button" type="button" disabled={busy} onClick={() => void exportPagePackage()}>Préparer pour Bridge</button> : null}
         {composition?.items.length ? <button className="secondary-button" type="button" onClick={() => void buildPagePreview()}>Aperçu de la Page</button> : null}
         <button className="secondary-button" type="button" onClick={() => changeMode(mode === 'library' ? null : 'library')}>+ Bibliothèque</button>
