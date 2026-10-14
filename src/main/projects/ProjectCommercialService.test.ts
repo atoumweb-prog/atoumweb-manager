@@ -80,6 +80,11 @@ describe('Lot 7B — même Projet prévisionnel et révisions commerciales',()=>
   const beforeOldActions=state();
   expect(()=>sync(original.id)).toThrow(/Projet prévisionnel courant/);
   expect(()=>f.projects.changeProjectStatus(original.id,'to_prepare')).toThrow(/réactivation interdite/);
+  expect(()=>f.projects.commercial.resolveConflict(original.id,'ancien-conflit','archive'))
+    .toThrow(/Projet prévisionnel courant/);
+  expect(()=>f.projects.commercial.assignTarget(original.id,{
+    lineOrigin:'ancienne-ligne',slot:'destination',unitIndex:1,author:'Test archive',
+  })).toThrow(/Projet prévisionnel courant/);
   expect(state()).toEqual(beforeOldActions);
   expect(f.projects.commercial.findProject(revision.id)).toBe(next.id);
   expect(f.projects.commercial.scope(next.id).currentQuoteId).toBe(revision.id);
