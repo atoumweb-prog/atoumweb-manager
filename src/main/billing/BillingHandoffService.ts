@@ -278,13 +278,29 @@ export class BillingHandoffService {
   updateInvoiceMetadata(id: string, input: BillingInvoiceInput): BillingItem {
     const current = this.get(id);
     if (!current.invoiceDocumentId) throw new Error('Aucune facture PDF n’est rattachée à cet élément.');
-    const reference = clean(input.reference);
+    const reference = input.reference === undefined ? current.invoiceReference : clean(input.reference);
     const invoicedAt = input.invoicedAt ? this.dateIso(input.invoicedAt, 'Date de facture invalide.') : current.invoicedAt ?? nowIso();
-    this.database.run(
-      'UPDATE billing_items SET invoice_reference=?,invoiced_at=?,updated_at=? WHERE id=?',
-      [reference, invoicedAt, nowIso(), id],
-    );
-    this.writeActivity('billing_item', id, 'billing_invoice_metadata_updated', `Informations facture mises à jour : ${current.description}`);
+    if (reference === current.invoiceReference && invoicedAt === current.invoicedAt) return current;
+    const now = nowIso();
+    this.database.exec('SAVEPOINT billing_invoice_metadata');
+    try {
+      this.database.run(
+        'UPDATE billing_items SET invoice_reference=?,invoiced_at=?,updated_at=? WHERE id=?',
+        [reference, invoicedAt, now, id],
+      );
+      this.database.run(
+        'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
+        ['billing_item', id, 'billing_invoice_metadata_updated',
+          `Informations facture mises à jour : ${current.description}`,
+          JSON.stringify({ documentId: current.invoiceDocumentId, previousReference: current.invoiceReference,
+            currentReference: reference, previousInvoicedAt: current.invoicedAt, currentInvoicedAt: invoicedAt }), now],
+      );
+      this.database.exec('RELEASE SAVEPOINT billing_invoice_metadata');
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT billing_invoice_metadata');
+      this.database.exec('RELEASE SAVEPOINT billing_invoice_metadata');
+      throw error;
+    }
     return this.get(id);
   }
   private select(): string {
