@@ -429,6 +429,7 @@ export interface ReferentialsApi {
     promoteItemVariant(id: string, itemId: string, input: AtoumWebCompositionPromoteVariantInput): Promise<AtoumWebTechnicalItemDetail>;
     removeItem(id: string, itemId: string): Promise<AtoumWebCompositionDetail>;
     moveItem(id: string, itemId: string, input: AtoumWebCompositionMoveItemInput): Promise<AtoumWebCompositionDetail>;
+    restoreOrder(id: string, expectedIds: string[], targetIds: string[]): Promise<AtoumWebCompositionDetail>;
     archive(id: string): Promise<AtoumWebCompositionDetail>;
     reactivate(id: string): Promise<AtoumWebCompositionDetail>;
     exportPackage(id: string): Promise<AtoumWebCompositionPackageExportResult>;
