@@ -21,6 +21,7 @@ import {
 import { validateAnalyticsCustomPeriod, type AnalyticsPeriodPreset } from '../../shared/analytics';
 import { TIME_CATEGORIES, type TimeCategory, type TimeSession } from '../../shared/time';
 import { buildStatisticsEvidence, statisticsEvidenceTotal, type StatisticsEvidenceKey, type StatisticsEvidenceRow } from '../../shared/statisticsEvidence';
+import { createStatisticsDrilldown, type StatisticsDrilldownKind } from '../../shared/statisticsDrilldown';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
 import { StatisticsPage as Phase7StatisticsPage } from '../analytics/StatisticsPage';
 import './StatisticsPage.css';
@@ -345,7 +346,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         <Kpi icon="user" label="Nouveaux clients" value={String(newClients.length)} comparison={comparison(newClients.length, previousClients.length)}
           expanded={expandedKpi === 'clients'} onInspect={() => setExpandedKpi((value) => value === 'clients' ? null : 'clients')} />
       </div>
-      {expandedKpi && selectedEvidence && <StatisticsEvidencePanel kind={expandedKpi} rows={selectedEvidence} />}
+      {expandedKpi && selectedEvidence && <StatisticsEvidencePanel kind={expandedKpi} rows={selectedEvidence} periodLabel={range.label} />}
       <div className="statistics-main-grid">
         <article className="panel statistics-card">
           <CardTitle eyebrow="Finances" title="Repères de la période" action="Voir facturation →" onClick={() => openPage('Facturation')} />
@@ -441,7 +442,7 @@ function Kpi({ icon, label, value, comparison, helper, onInspect, expanded }: {
   </div></article>;
 }
 
-function StatisticsEvidencePanel({ kind, rows }: { kind: StatisticsEvidenceKey; rows: StatisticsEvidenceRow[] }) {
+function StatisticsEvidencePanel({ kind, rows, periodLabel }: { kind: StatisticsEvidenceKey; rows: StatisticsEvidenceRow[]; periodLabel: string }) {
   const descriptions: Record<StatisticsEvidenceKey, { title: string; source: string; date: string }> = {
     signed: { title: 'Devis acceptés retenus', source: 'quotes · valeur contractuelle', date: 'Date d’acceptation' },
     invoiced: { title: 'Lignes de facturation suivies', source: 'billing_items · montant attendu facturé', date: 'Date facturée' },
@@ -462,7 +463,11 @@ function StatisticsEvidencePanel({ kind, rows }: { kind: StatisticsEvidenceKey; 
     <div className="statistics-evidence-heading"><div><span className="eyebrow">Traçabilité</span><h3>{description.title}</h3></div>
       <strong>{rows.length} élément{rows.length > 1 ? 's' : ''} · total {formatValue(statisticsEvidenceTotal(rows))}</strong>
     </div>
-    <p className="statistics-evidence-source">Source : {description.source}. Le détail reprend les mêmes éléments déjà filtrés pour le KPI, et ne prétend pas appliquer un filtre dans un autre module.</p>
+    <p className="statistics-evidence-source">Source : {description.source}. Période : {periodLabel}. Le détail reprend les mêmes éléments déjà filtrés pour le KPI.</p>
+    {kind !== 'clients' && <button type="button" className="secondary-button statistics-open-drilldown"
+      onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:open-statistics-drilldown', {
+        detail: createStatisticsDrilldown(kind as StatisticsDrilldownKind, rows.map(row => row.id), periodLabel),
+      }))}>Ouvrir {kind === 'signed' ? 'les devis' : kind === 'invoiced' ? 'la facturation' : 'les sessions'} avec exactement ces {rows.length} éléments →</button>}
     {rows.length === 0 ? <p className="muted">Aucun élément sur cette période.</p> : <div className="statistics-table-wrap"><table className="statistics-evidence-table">
       <thead><tr><th>Élément source</th><th>{description.date}</th><th>Valeur</th></tr></thead>
       <tbody>{firstRows.map((row) => <tr key={row.id}><td><strong>{row.label}</strong><small title={row.id}>{row.detail}</small></td><td>{dateValue(row.businessDate)}</td><td>{formatValue(row.value)}</td></tr>)}</tbody>
