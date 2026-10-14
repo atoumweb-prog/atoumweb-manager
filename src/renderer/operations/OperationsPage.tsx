@@ -335,7 +335,49 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
     if (status === 'completed' && !releaseLock) return false;
     try {
     if (status === 'completed' && !requestUnsavedExit(() => {})) return false;
-    if (status === 'completed' && !window.confirm(interventionCompletionReview(selectedIntervention))) return false;
+    if (status === 'completed') {
+      let context: string[] = [];
+      try {
+        const current = await window.atoumweb.operations.interventions.get(interventionId);
+        if (current.status === 'completed') {
+          onMessage('Cette intervention est déjà terminée. Actualise la fiche avant une nouvelle action.');
+          return false;
+        }
+        if (current.coverageMode === 'hour_pack') {
+          if (!current.hourPackId) {
+            onMessage('Aucun pack rattaché : choisis un pack avant la clôture.');
+            return false;
+          }
+          const pack = await window.atoumweb.operations.hourPacks.get(current.hourPackId);
+          context = [`Pack : ${pack.name} · état : ${pack.status} · solde actuel : ${(pack.balanceSeconds / 3600).toLocaleString('fr-FR', {maximumFractionDigits: 2})} h`];
+        } else if (current.coverageMode === 'maintenance') {
+          if (!current.maintenancePeriodId) {
+            onMessage('Aucune période de maintenance rattachée : complète la prise en charge avant la clôture.');
+            return false;
+          }
+          const subscriptions = await window.atoumweb.operations.maintenance.subscriptions.list();
+          const subscription = subscriptions.find((entry) => entry.clientAccountId === current.clientAccountId);
+          if (!subscription) {
+            onMessage('Souscription introuvable pour ce client : impossible de confirmer la prise en charge.');
+            return false;
+          }
+          const periods = await window.atoumweb.operations.maintenance.periods.list(subscription.id);
+          const period = periods.find((entry) => entry.id === current.maintenancePeriodId);
+          if (!period) {
+            onMessage('Période de maintenance introuvable : impossible de confirmer la clôture.');
+            return false;
+          }
+          context = [`Période : ${period.periodStart} → ${period.periodEnd} · état : ${period.status}`,
+            `Quota actuel : ${period.usage.interventionCount} intervention(s) · restant : ${period.usage.remainingInterventions ?? 'sans limite'} · dépassement : ${period.usage.interventionsOverQuota}`];
+        } else if (current.coverageMode === 'out_of_scope') {
+          context = [`Montant facturable enregistré : ${(current.billableAmountCents ?? 0) / 100} € (aucune facture émise automatiquement)`];
+        }
+        if (!window.confirm(interventionCompletionReview(current, context))) return false;
+      } catch (error) {
+        onMessage(error instanceof Error ? `Prévalidation impossible : ${error.message}` : 'Prévalidation impossible : données de prise en charge indisponibles.');
+        return false;
+      }
+    }
     let updated: Intervention;
     if (status === 'completed') {
       const outcome = await resolveInterventionCompletion(
