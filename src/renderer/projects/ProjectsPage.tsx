@@ -146,29 +146,42 @@ function formatTimer(seconds: number): string {
   return [hours, minutes, rest].map((value) => String(value).padStart(2, '0')).join(':');
 }
 
-export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initialRequest, showHoverHelp = true }: { onMessage: (message: string, action?: () => void) => void; initialProjectId?: string | null;initialRequest?:number; showHoverHelp?: boolean;onEntityReady?:EntityReady }) {
+export type ProjectReturnContext = {
+  projectId: string;
+  detailTab: 'summary' | 'plan' | 'sites' | 'prerequisites' | 'resources' | 'technical' | 'operations' | 'time' | 'commercial';
+  selectedNodeId: string | null;
+  expandedPhaseIds: string[];
+  query: string;
+  statusFilter: 'all' | ProjectStatus;
+  commercialFilter: 'all' | 'provisional' | 'frozen' | 'legacy';
+  projectTopCollapsed: boolean;
+  productionTreeCollapsed: boolean;
+  productionSplitPercent: number;
+};
+
+export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initialRequest, returnContext, showHoverHelp = true }: { onMessage: (message: string, action?: () => void) => void; initialProjectId?: string | null;initialRequest?:number; returnContext?: ProjectReturnContext | null; showHoverHelp?: boolean;onEntityReady?:EntityReady }) {
   const [view, setView] = useState<'projects' | 'templates'>('projects');
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [templates, setTemplates] = useState<ProjectTemplateSummary[]>([]);
   const [acceptedQuotes, setAcceptedQuotes] = useState<QuoteSummary[]>([]);
-  const [query, setQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | ProjectStatus>('all');
-  const [commercialFilter, setCommercialFilter] = useState<'all' | 'provisional' | 'frozen' | 'legacy'>('all');
+  const [query, setQuery] = useState(returnContext?.query ?? '');
+  const [statusFilter, setStatusFilter] = useState<'all' | ProjectStatus>(returnContext?.statusFilter ?? 'all');
+  const [commercialFilter, setCommercialFilter] = useState<'all' | 'provisional' | 'frozen' | 'legacy'>(returnContext?.commercialFilter ?? 'all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<ProjectDetail | null>(null);
   useSearchTargetConfirmation('project',view==='projects'?detail?.id:null,false,onEntityReady);
 
   const openEpoch=useRef(0),detailRef=useRef(detail);detailRef.current=detail;
   useEffect(()=>()=>{openEpoch.current++;},[]);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [expandedPhaseIds, setExpandedPhaseIds] = useState<Set<string>>(() => new Set());
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(returnContext?.selectedNodeId ?? null);
+  const [expandedPhaseIds, setExpandedPhaseIds] = useState<Set<string>>(() => new Set(returnContext?.expandedPhaseIds ?? []));
   const [undoStack, setUndoStack] = useState<ProjectHistoryAction[]>([]);
   const [redoStack, setRedoStack] = useState<ProjectHistoryAction[]>([]);
   const [phaseCompletionReview, setPhaseCompletionReview] = useState<PhaseCompletionReviewState | null>(null);
   const [phaseCompletionBusy, setPhaseCompletionBusy] = useState(false);
-  const [productionSplitPercent, setProductionSplitPercent] = useState(40);
-  const [productionTreeCollapsed, setProductionTreeCollapsed] = useState(false);
-  const [projectTopCollapsed, setProjectTopCollapsed] = useState(false);
+  const [productionSplitPercent, setProductionSplitPercent] = useState(returnContext?.productionSplitPercent ?? 40);
+  const [productionTreeCollapsed, setProductionTreeCollapsed] = useState(returnContext?.productionTreeCollapsed ?? false);
+  const [projectTopCollapsed, setProjectTopCollapsed] = useState(returnContext?.projectTopCollapsed ?? false);
   const [productionOverlay, setProductionOverlay] = useState<'resources' | 'technical' | 'time' | 'secrets' | null>(null);
   const [loading, setLoading] = useState(true);
   const [createMode, setCreateMode] = useState<'quote' | 'internal' | null>(null);
@@ -178,7 +191,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
   const [targetDate, setTargetDate] = useState('');
   const [commercialMode, setCommercialMode] = useState<ProjectCommercialMode>('normal');
   const [saving, setSaving] = useState(false);
-  const [detailTab, setDetailTab] = useState<'summary' | 'plan' | 'sites' | 'prerequisites' | 'resources' | 'technical' | 'operations' | 'time' | 'commercial'>('summary');
+  const [detailTab, setDetailTab] = useState<ProjectReturnContext['detailTab']>(returnContext?.detailTab ?? 'summary');
   const [completionReview, setCompletionReview] = useState<ProjectCompletionReview | null>(null);
   const [completionBusy, setCompletionBusy] = useState(false);
 
@@ -280,8 +293,8 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
     if(detailRef.current?.id===id){setSelectedId(id);onEntityReady?.('project',id);return;}
     try {
       setSelectedId(id);
-      setSelectedNodeId(null);
-      setExpandedPhaseIds(new Set());
+      setSelectedNodeId(returnContext?.projectId === id ? returnContext.selectedNodeId : null);
+      setExpandedPhaseIds(new Set(returnContext?.projectId === id ? returnContext.expandedPhaseIds : []));
       setUndoStack([]);
       setRedoStack([]);
       setPhaseCompletionReview(null);
@@ -292,7 +305,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
       if(epoch!==openEpoch.current)return;
       if(next.id!==id)throw Error('Projet reçu différent de la cible.');
       setDetail(next);
-      setDetailTab('plan');
+      setDetailTab(returnContext?.projectId === id ? returnContext.detailTab : 'plan');
     } catch (error) {
       if(epoch!==openEpoch.current)return;
       onEntityReady?.('project',id,error instanceof Error?error.message:'Projet introuvable.');
@@ -686,7 +699,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
               <span className="eyebrow">{detail.number} · {detail.commercialState === 'provisional' ? 'Projet prévisionnel · devis non signé' : detail.commercialState === 'frozen' ? 'Projet confirmé · devis accepté' : 'Projet historique'}</span>
               <h2>{detail.name}</h2>
               <p>{detail.commercialState === 'provisional' && !detail.clientAccountId ? 'Prospect : ' : 'Client / contact : '}{detail.clientLabel}</p>
-              {detail.sourceQuoteId && <p className="muted">Devis source associé <button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'quote', entityId: detail.sourceQuoteId, title: 'Devis source du Projet', parentEntityId: detail.id } }))}>Ouvrir le devis</button></p>}
+              {detail.sourceQuoteId && <p className="muted">Devis source associé <button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'quote', entityId: detail.sourceQuoteId, title: 'Devis source du Projet', parentEntityId: detail.id, projectContext: { projectId: detail.id, detailTab, selectedNodeId, expandedPhaseIds: [...expandedPhaseIds], query, statusFilter, commercialFilter, projectTopCollapsed, productionTreeCollapsed, productionSplitPercent } } }))}>Ouvrir le devis</button></p>}
               {detail.commercialState === 'provisional' && <p className="muted">Préparation interne : ce dossier n’est pas une commande acceptée.</p>}
             </div>
           </div>
