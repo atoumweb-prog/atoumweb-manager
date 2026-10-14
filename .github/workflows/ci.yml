@@ -43,6 +43,14 @@ jobs:
       - name: Tests
         run: npm test -- --maxWorkers=2
 
+      - name: UX-01 native Electron — Devis 06B (PR 112)
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 112 }}
+        shell: pwsh
+        timeout-minutes: 20
+        run: |
+          node scripts/check-unsaved-inputs-ui.cjs --lot-b --lot-c --review
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       # PR98 standalone; the combined candidate runs this same recipe below.
       # La fixture crée exclusivement ses propres fichiers et profil dans %TEMP%.
       - name: Electron CRM 03B.6 — Windows TEMP
