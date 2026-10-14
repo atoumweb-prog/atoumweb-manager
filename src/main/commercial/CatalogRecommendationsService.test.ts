@@ -96,6 +96,19 @@ describe('04D — versioned recommendation persistence',()=>{
       .toEqual([first.versions[0].id]);
     expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
   });
+  it('keeps a retired target snapshot legible without updating the recommendation',()=>{
+    const source=create('Historical source');
+    const target=create('Historical target');
+    catalog.publishVersion(target.versions[0].id);
+    recommendations.replace(source.versions[0].id,[target.versions[0].id],[]);
+    const newer=catalog.createVersion(target.id,{priceMode:'fixed',priceCents:18900});
+    catalog.publishVersion(newer.id);
+    expect(recommendations.list(source.versions[0].id)).toMatchObject([{
+      targetVersionId:target.versions[0].id,targetVersionNumber:1,
+      targetVersionStatus:'retired',targetName:'Historical target',
+    }]);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
   it('keeps historical links readable when the target item is deactivated',()=>{
     const source=create('Source with history');
     const target=create('Target later inactive');
