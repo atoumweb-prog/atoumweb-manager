@@ -55,3 +55,9 @@ Commit `77476dd` : lorsque l'ID change, vider le détail précédent avant de la
 - Cette validation inclut le code 06B antérieur à ce paragraphe documentaire. Aucun nombre précis de tests individuel n'est affirmé sans logs.
 - **À ne pas confondre** avec une recette Electron native spécifique à 06B : le workflow ne lance pas ces parcours pour la PR #112. Les scénarios A→B→A asynchrones, fermeture sur brouillon et navigation au clavier restent à confirmer dans Electron.
 - La PR #112 reste en draft. Aucun merge, et la PR #110 (06A) demeure un chantier distinct.
+
+## Recette Electron CI #1007 — preuve confirmée
+
+GitHub Actions run `38574400148` sur commit `ad426d5892ccd874d3591888e64ece73aac1b1ce` : **completed/success**. Job `quality` (`115887587830`) **success** ; étapes Checkout, Node 24, dépendances, Typecheck, Tests et `UX-01 native Electron — Devis 06B (PR 112)` toutes **success** selon le détail officiel des étapes. Les scénarios de changement rapide entre devis A/B/A ne sont pas prouvés par cette exécution et restent hors validation définitive.
+
+Le présent ajout documentaire est postérieur au SHA testé. Aucune fusion effectuée.
