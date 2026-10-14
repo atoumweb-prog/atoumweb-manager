@@ -422,7 +422,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('catalog-categories:list', () => database.catalogCategories.list());
   ipcMain.handle('catalog-categories:list-legacy', () => database.catalogCategories.listLegacy());
   ipcMain.handle('catalog-categories:create', (_event, name: string) => database.catalogCategories.create(name));
-  ipcMain.handle('catalog-categories:rename', (_event, id: string, name: string, revision: number) => database.catalogCategories.rename(id, name, revision));
+  ipcMain.handle('catalog-categories:rename', (_event, id: string, name: string, revision: number, expectedItemIds: string[]) => database.catalogCategories.rename(id, name, revision, expectedItemIds));
   ipcMain.handle('catalog-categories:set-status', (_event, id: string, status: CatalogCategoryStatus, revision: number) => database.catalogCategories.setStatus(id, status, revision));
   ipcMain.handle('catalog-categories:assign', (_event, input: CatalogCategoryAssignment) => database.catalogCategories.assign(input));
   ipcMain.handle('catalog-categories:reconcile-legacy', (_event, rawValue: string, categoryId: string, expectedItemIds: string[]) => database.catalogCategories.reconcileLegacy(rawValue, categoryId, expectedItemIds));
