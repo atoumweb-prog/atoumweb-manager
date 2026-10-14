@@ -12,7 +12,7 @@ const cases=[
  ['Quote uses context passed by shell',app.includes('returnProjectId={quoteReturnProjectId}')],
  ['Direct rail navigation clears stale source Project context',/function navigateDirect\(page: PageName\): void\s*\{\s*\/\/[^\n]*\n\s*setQuoteReturnProjectId\(null\);/.test(app)],
  ['Project context travels from source button',project.includes('projectContext: { projectId: detail.id, detailTab, selectedNodeId')],
- ['Project context stores only after approved navigation',app.includes("setProjectReturnContext(previous => {") && app.includes("context?.projectId === result.parentEntityId")],
+ ['Project context stores only after approved navigation',app.includes("setProjectReturnContext(previous => {") && app.includes("sourceContext?.projectId === result.parentEntityId") && app.includes("const fromProjectQuote = result.entityType === 'quote' && activePageRef.current === 'Projets'")],
  ['Project return restores matching source Project only',app.includes("projectReturnContext?.projectId === projectSearchTarget") && project.includes("returnContext?.projectId === id ? returnContext.detailTab : 'plan'")],
  ['Project return only restores existing nodes',project.includes('const availableNodes = new Set(next.nodes.map(node => node.id))') && project.includes('availableNodes.has(returnContext.selectedNodeId)')],
  ['Project return retains production tree state',project.includes('returnContext?.projectId === id ? returnContext.productionTreeCollapsed : false')],
