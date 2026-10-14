@@ -2,6 +2,8 @@ import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { CatalogContractPanel } from './CatalogContractPanel';
 import { CatalogPublicationReview } from './CatalogPublicationReview';
+import { CatalogProductionPanel } from './CatalogProductionPanel';
+import {CATALOG_EDITOR_TABS,catalogTabHasVersionFields,type CatalogEditorTab} from './catalogEditorTabs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   PRICE_MODES,
@@ -169,6 +171,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   const [editingDraftVersion, setEditingDraftVersion] = useState<CatalogVersion | null>(null);
   const [versionFormError, setVersionFormError] = useState<string | null>(null);
   const [publicationCandidate, setPublicationCandidate] = useState<CatalogVersion | null>(null);
+  const [activeTab,setActiveTab] = useState<CatalogEditorTab>('identity');
   const [detailSplitPercent, setDetailSplitPercent] = useState(40);
   const [detailExpanded, setDetailExpanded] = useState(false);
   const [offerComponents, setOfferComponents] = useState<OfferComponent[]>([]);
@@ -259,6 +262,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     if(!requestUnsavedExit(()=>{}))return;
     setSelectedId(id);
     setVersionMode(false);
+    setActiveTab('identity');
     setPublicationCandidate(null);
     setDetailExpanded(false);
     await loadDetail(id);
@@ -272,6 +276,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     setSelectedId(null);
     setDetail(null);
     setVersionMode(false);
+    setActiveTab('identity');
     setPublicationCandidate(null);
     setDetailExpanded(false);
   }
@@ -364,6 +369,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     const existingDraft = detail.versions.find(version => version.status === 'draft') ?? null;
     const current = existingDraft ?? detail.currentVersion;
     setEditingDraftVersion(existingDraft);
+    setActiveTab('identity');
     setPublicationCandidate(null);
     setVersionFormError(null);
     setVersionDraft({
@@ -693,15 +699,22 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 </div>
               </div>
               <div className="detail-badges"><span className={`catalog-status catalog-${detail.status}`}>{STATUS_LABELS[detail.status]}</span><span className="status-pill">{detail.visiblePublic ? 'Visible site' : 'Interne'}</span>{detail.currentVersion && <span className="status-pill">v{detail.currentVersion.versionNumber} · {VERSION_STATUS_LABELS[detail.currentVersion.status]}</span>}</div>
-              <section className="catalog-detail-section catalog-identity-section">
+              <div className="catalog-editor-tabs" role="tablist" aria-label="Éditeur des offres et services">
+                {CATALOG_EDITOR_TABS.map(tab=><button type="button" key={tab.id} role="tab"
+                  id={`catalog-tab-${tab.id}`} aria-selected={activeTab===tab.id}
+                  aria-controls={`catalog-panel-${tab.id}`} title={tab.hint}
+                  onClick={()=>setActiveTab(tab.id)}>{tab.label}</button>)}
+              </div>
+              <div role="tabpanel" id={`catalog-panel-${activeTab}`} aria-labelledby={`catalog-tab-${activeTab}`} className="catalog-editor-tab-panel">
+              {activeTab==='identity' && <section className="catalog-detail-section catalog-identity-section">
                 <strong>Identité catalogue V1</strong>
                 <Summary label="Code canonique" value={detail.canonicalCode || 'Non attribué'} />
                 {detail.identityProvenance && <Summary label="Source de l’attribution" value={detail.identityProvenance.reference} />}
                 {!detail.canonicalCode && <div className="catalog-code-assignment"><label>Code AW à attribuer<input value={canonicalCodeDraft} placeholder="AW-WEB-VITRINE" onChange={(e) => setCanonicalCodeDraft(e.target.value)} /></label><button className="secondary-button" type="button" disabled={saving || !canonicalCodeDraft.trim()} onClick={() => void assignCode()}>Attribuer ce code</button></div>}
                 <p className="muted">Le code attribué est durable. Les anciens éléments peuvent rester sans code jusqu’à leur rapprochement explicite.</p>
-              </section>
+              </section>}
 
-              {detail.currentVersion && (!detail.currentVersion.nature || !detail.currentVersion.description || (detail.currentVersion.inclusions?.length ?? 0) === 0) && (
+              {activeTab==='scope' && detail.currentVersion && (!detail.currentVersion.nature || !detail.currentVersion.description || (detail.currentVersion.inclusions?.length ?? 0) === 0) && (
                 <div className="catalog-completeness">
                   <div><strong>Fiche à compléter</strong><span>Nature, description et contenu inclus permettent de comprendre immédiatement ce qui est réellement vendu.</span></div>
                   <button className="secondary-button" type="button" disabled={versionMode || saving} onClick={prepareNewVersion}>Compléter la fiche</button>
@@ -753,21 +766,21 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 </div>
               ) : <p className="muted">Aucune version.</p>}
 
-              <div className="catalog-detail-actions"><button className="secondary-button" type="button" disabled={versionMode || saving} onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select value={detail.status} disabled={versionMode || saving} onChange={(e) => void updateStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion || versionMode || saving} onClick={prepareNewVersion}>{detail.versions.some(v => v.status === 'draft') ? 'Reprendre le brouillon' : 'Modifier via une nouvelle version'}</button></div>
+              {activeTab==='identity' && <div className="catalog-detail-actions"><button className="secondary-button" type="button" disabled={versionMode || saving} onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select value={detail.status} disabled={versionMode || saving} onChange={(e) => void updateStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion || versionMode || saving} onClick={prepareNewVersion}>{detail.versions.some(v => v.status === 'draft') ? 'Reprendre le brouillon' : 'Modifier via une nouvelle version'}</button></div>}
 
-              <CatalogContractPanel key={detail.id+detail.versions.length} item={detail}/>
-              {publicationCandidate && publicationCandidate.itemId === detail.id &&
+              {activeTab==='contracts' && <CatalogContractPanel key={detail.id+detail.versions.length} item={detail}/> }
+              {activeTab==='history' && publicationCandidate && publicationCandidate.itemId === detail.id &&
                 <CatalogPublicationReview
                   item={detail} draft={publicationCandidate}
                   components={detail.type === 'offer' && offerVersionId === publicationCandidate.id ? offerComponents : null}
                   busy={saving} onCancel={() => setPublicationCandidate(null)}
                   onConfirm={() => void publish(publicationCandidate.id)} />}
-              {versionMode && <form className="catalog-version-editor" onSubmit={(event) => void createVersion(event)}>
+              {versionMode && catalogTabHasVersionFields(activeTab) && <form className="catalog-version-editor" onSubmit={(event) => void createVersion(event)}>
                 <strong>{editingDraftVersion ? `Modifier le brouillon v${editingDraftVersion.versionNumber}` : 'Nouvelle version brouillon'}</strong>
                 <p className="muted">{editingDraftVersion
                   ? 'Enregistrer modifie seulement ce brouillon. Les versions publiées et les anciens Devis restent inchangés.'
                   : 'Créer une nouvelle version ne publie rien. Les associations existantes sont copiées et restent à vérifier.'}</p>
-                <fieldset disabled={saving}><CatalogFields draft={versionDraft} onChange={setVersionDraft} /></fieldset>
+                <fieldset disabled={saving}><CatalogFields draft={versionDraft} onChange={setVersionDraft} activeTab={activeTab} /></fieldset>
                 {versionFormError && <p className="form-error" role="alert">{versionFormError} — la saisie locale est conservée.</p>}
                 <div className="inline-editor-actions">
                   <button className="secondary-button" type="button" onClick={() => versionGuard.request(()=>{setVersionMode(false);setEditingDraftVersion(null);setVersionFormError(null);})}>Annuler</button>
@@ -775,7 +788,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 </div>
               </form>}
 
-              {detail.type === 'offer' && offerCompositionVersion && (
+              {activeTab==='associations' && detail.type === 'offer' && offerCompositionVersion && (
                 <section className="offer-composition">
                   <div className="offer-composition-heading"><div><span className="eyebrow">Composition</span><strong>Services de l’Offre · v{offerCompositionVersion.versionNumber}</strong></div><span className="status-pill">{VERSION_STATUS_LABELS[offerCompositionVersion.status]}</span></div>
                   {offerComponents.map((component) => <div className="offer-component-row" key={component.id}><div><strong>{component.serviceName}</strong><span>v{component.serviceVersionNumber} · {(component.quantityMilli / 1000).toLocaleString('fr-FR')} × · {component.isOptional ? 'Optionnel' : 'Inclus'}</span></div>{offerCompositionEditable && <button className="close-detail" type="button" onClick={() => void removeOfferComponent(component.id)}>×</button>}</div>)}
@@ -791,7 +804,10 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 </section>
               )}
 
-              <div className="catalog-versions"><strong>Historique des versions</strong>{detail.versions.map((version) => <div className="catalog-version-row" key={version.id}><div><strong>v{version.versionNumber}</strong><span>{VERSION_STATUS_LABELS[version.status]}</span><small>{PRICE_LABELS[version.priceMode]} · {version.priceCents != null ? `${(version.priceCents / 100).toLocaleString('fr-FR')} €` : '—'} · {version.publishedAt ? `publiée le ${formatCatalogDate(version.publishedAt)}` : `créée le ${formatCatalogDate(version.createdAt)}`}</small>{version.status === 'draft' && version.provenance && <details className="catalog-import-draft"><summary>Consulter le brouillon importé</summary><p>Cette version n’est pas publiée. Sa consultation ne change pas la version commerciale en cours.</p><p>{version.nature}</p><p>{version.description}</p><Summary label="Code canonique" value={detail.canonicalCode || 'Non attribué'} /><Summary label="Unité / périodicité" value={[version.unit, version.periodicity].filter(Boolean).join(' / ')} /><ListSummary label="Inclus" values={version.inclusions ?? []} /><ListSummary label="Exclusions" values={version.exclusions ?? []} /><ListSummary label="Prérequis" values={version.prerequisites ?? []} /><CommercialParametersSummary parameters={version.commercialParameters} /><Summary label="Source" value={[version.provenance.reference, version.provenance.recordKey, version.provenance.sha256].filter(Boolean).join(' · ')} /></details>}</div>{version.status === 'draft' && <button className="primary-button compact-button" type="button" disabled={versionMode || saving} title={versionMode ? 'Enregistrer ou annuler le brouillon avant publication.' : 'Préparer une confirmation distincte, sans publier le site WordPress.'} onClick={() => setPublicationCandidate(structuredClone(version))}>Préparer la publication</button>}</div>)}</div>
+              {activeTab==='production' && <CatalogProductionPanel key={detail.id} item={detail} />}
+              {activeTab==='associations' && detail.type==='service' && <p className="muted">Les associations de services concernent les Offres. Les recommandations complémentaires seront administrées dans le lot 04D.</p>}
+              {activeTab==='history' && <div className="catalog-versions"><strong>Historique des versions</strong>{detail.versions.map((version) => <div className="catalog-version-row" key={version.id}><div><strong>v{version.versionNumber}</strong><span>{VERSION_STATUS_LABELS[version.status]}</span><small>{PRICE_LABELS[version.priceMode]} · {version.priceCents != null ? `${(version.priceCents / 100).toLocaleString('fr-FR')} €` : '—'} · {version.publishedAt ? `publiée le ${formatCatalogDate(version.publishedAt)}` : `créée le ${formatCatalogDate(version.createdAt)}`}</small>{version.status === 'draft' && version.provenance && <details className="catalog-import-draft"><summary>Consulter le brouillon importé</summary><p>Cette version n’est pas publiée. Sa consultation ne change pas la version commerciale en cours.</p><p>{version.nature}</p><p>{version.description}</p><Summary label="Code canonique" value={detail.canonicalCode || 'Non attribué'} /><Summary label="Unité / périodicité" value={[version.unit, version.periodicity].filter(Boolean).join(' / ')} /><ListSummary label="Inclus" values={version.inclusions ?? []} /><ListSummary label="Exclusions" values={version.exclusions ?? []} /><ListSummary label="Prérequis" values={version.prerequisites ?? []} /><CommercialParametersSummary parameters={version.commercialParameters} /><Summary label="Source" value={[version.provenance.reference, version.provenance.recordKey, version.provenance.sha256].filter(Boolean).join(' · ')} /></details>}</div>{version.status === 'draft' && <button className="primary-button compact-button" type="button" disabled={versionMode || saving} title={versionMode ? 'Enregistrer ou annuler le brouillon avant publication.' : 'Préparer une confirmation distincte, sans publier le site WordPress.'} onClick={() => setPublicationCandidate(structuredClone(version))}>Préparer la publication</button>}</div>)}</div>}
+              </div>
             </aside>
           )}
         </div>
