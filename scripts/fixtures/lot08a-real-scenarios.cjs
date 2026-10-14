@@ -323,8 +323,8 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
     await choosePeriod('2026-09');
     await wait('!!document.querySelector(".maintenance-overage-item")','E08C overage decision editor shown');
     const fillOverage = async (selector, value) => {
-      await js('const el=document.querySelector('+JSON.stringify(selector)+');'+
-        'if(!el)throw Error("E08C overage field missing");'+
+      await js('const found=[...document.querySelectorAll('+JSON.stringify(selector)+')].filter(el=>el.getClientRects().length>0&&getComputedStyle(el).visibility!=="hidden");'+
+        'if(found.length!==1)throw Error("E08C expected exactly one visible overage field, got "+found.length);const el=found[0];'+
         'Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(el,'+
         JSON.stringify(value)+');el.dispatchEvent(new Event("input",{bubbles:true}));');
       await sleep(80);
@@ -367,13 +367,13 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
     });
     const decisionSelector = '.maintenance-overage-box[data-period-id="' + period.id + '"] .maintenance-overage-item button.secondary-button';
     try {
-      await js('const b=document.querySelector('+JSON.stringify(decisionSelector)+');if(!b)throw Error("E08C period-specific decision missing");b.click();b.click();');
+      await js('const buttons=[...document.querySelectorAll('+JSON.stringify(decisionSelector)+')].filter(el=>el.getClientRects().length>0&&getComputedStyle(el).visibility!=="hidden");if(buttons.length!==1)throw Error("E08C visible decision buttons: "+buttons.length);const b=buttons[0];b.click();b.click();');
       for(let i=0;i<90&&overageWrites===0;i++)await sleep(25);
       test(overageWrites===1,'E08C double click starts one overage-decision IPC');
       const pendingButtons=await get('[...document.querySelectorAll(".maintenance-overage-box")].map(box=>({period:box.dataset.periodId,rows:[...box.querySelectorAll(".maintenance-overage-item")].map(item=>({intervention:item.dataset.interventionId,reason:item.querySelector("input[placeholder^=Ex]")?.value,buttons:[...item.querySelectorAll("button.secondary-button")].map(b=>({disabled:b.disabled,text:b.textContent}))}))}))');
       console.log('[UXV2 E08C PENDING DOM]',JSON.stringify({targetPeriod:period.id,pendingButtons,overageWrites}));
-      await wait('document.querySelector('+JSON.stringify(decisionSelector)+')?.disabled===true',
-        'E08C saving disables exact decision button in period');
+      await wait('[...document.querySelectorAll('+JSON.stringify(decisionSelector)+')].filter(el=>el.getClientRects().length>0&&getComputedStyle(el).visibility!=="hidden").every(b=>b.disabled)',
+        'E08C saving disables visible decision button in period');
       test(await get('[...document.querySelectorAll('+JSON.stringify(decisionSelector)+')].every(b=>b.disabled)'),
         'E08C all decision buttons for the pending period are disabled');
       const beforeOveragePendingExit=confirmations.length;
