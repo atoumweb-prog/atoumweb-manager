@@ -53,3 +53,16 @@
 ### CI #910 du candidat E223
 - Exécution GitHub Actions #910 / run 38561121938 : job quality **failure**. Le journal renvoyé par la connexion GitHub est indisponible (404 sur blob des logs), et les détails d'étapes ne sont pas accessibles. **Cause indéterminée ; E223 n'est pas validé.**
 - Garder #109 en draft. Ne pas modifier `main`, ni les branches 04/05 ; récupérer la cause exacte du job, corriger sur cette branche, puis obtenir la CI verte au HEAD avant toute fusion.
+
+## E226 — première analyse de navigation / brouillons
+
+- `OperationsPage.tsx` emploie `requestUnsavedExit` pour la navigation humaine entre vues, la sélection de Demandes/Interventions, la fermeture des panneaux et Échap. Le panneau de conclusion enregistre bien un brouillon avec groupe fondé sur l'identité d'Intervention et état `pending`.
+- **Point à tester** : le `useEffect` de routage `initialTarget` réinitialise directement `setSelectedRequest(null)` et `setSelectedIntervention(null)` avant le chargement de la cible, sans garde explicite dans ce bloc. Le comportement réel dépend aussi de la garde globale de routage ; ne pas déclarer une perte de brouillon sans reproduire le parcours dans l'application réelle.
+- **Point à tester** : `refresh()` remplace la fiche sélectionnée par la réponse de liste, tandis que `useDraftSection.receive(remote)` met à jour le brouillon de conclusion. Vérifier identité A→B→A et réponses tardives pour éviter de contaminer une autre fiche.
+- Scénarios ciblés à développer : (1) saisir conclusion A, cliquer B, choisir Rester ; (2) choisir Quitter, vérifier le nettoyage limité à A ; (3) navigation externe vers B avec pending ; (4) rafraîchissement tardif de A pendant affichage B ; (5) Échap et changement de vue ; (6) rejet IPC et tentative de sauvegarde répétée. Vérifier boutons, clavier et absence de changement de chrono.
+- État : **audit statique uniquement, aucun test E226 exécuté ni correction UI validée**.
+
+## CI E225 #1077
+
+- Première tentative : Typecheck SUCCESS, Vitest 1008 réussis ; 1 suite `src/main/restore.test.ts` échoue par timeout du `beforeAll` à 10 s, avec 35 tests de restauration ignorés dans cette tentative. Ce n'est **pas une preuve d'échec métier E225** ; la première exécution n'est néanmoins pas verte.
+- Relance des jobs en échec demandée via GitHub Actions le 14/10/2026 ; résultat à examiner sur la tentative suivante. Aucune augmentation arbitraire du timeout ni modification de la recette existante avant le diagnostic.
