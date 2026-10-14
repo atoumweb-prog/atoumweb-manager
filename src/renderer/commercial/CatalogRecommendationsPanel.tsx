@@ -43,7 +43,7 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
     if(!sourceId||!editable||saving)return;
     setSaving(true);setError('');
     try{
-      const links=await window.atoumweb.catalog.replaceRecommendations(sourceId,targets);
+      const links=await window.atoumweb.catalog.replaceRecommendations(sourceId,targets,savedLinks.map(link=>link.targetVersionId));
       setSavedLinks(links);const saved=links.map(link=>link.targetVersionId);
       setTargets(saved);guard.saved(saved);
     }catch(err){setError(err instanceof Error?err.message:'Enregistrement impossible : saisie conservée.');}
