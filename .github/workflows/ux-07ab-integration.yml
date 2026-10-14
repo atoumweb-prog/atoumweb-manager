@@ -19,6 +19,12 @@ jobs:
         run: npm run typecheck
       - name: Vitest
         run: npm test -- --maxWorkers=2
+      - name: Composition workshop 07C isolated native layout gate
+        shell: pwsh
+        timeout-minutes: 6
+        run: |
+          node scripts/check-project-composition-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Native Electron UX-01 and composition 07A on combined tree
         shell: pwsh
         timeout-minutes: 15
@@ -43,8 +49,6 @@ jobs:
           node scripts/check-project-provisional-ui.cjs --output (Join-Path $env:RUNNER_TEMP 'check-project-provisional-ui')
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node scripts/check-project-operational-ui.cjs --output (Join-Path $env:RUNNER_TEMP 'check-project-operational-ui')
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          node scripts/check-project-composition-ui.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Blueprint and reusable technical library native regressions
         shell: pwsh
