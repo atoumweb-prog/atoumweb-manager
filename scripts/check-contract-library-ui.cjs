@@ -51,6 +51,20 @@ if(!process.versions.electron){
       await go('Réglages');await wait('!!document.querySelector(".theme-card")');await js(`[...document.querySelectorAll('.theme-card')].find(b=>b.querySelector('strong').textContent===${JSON.stringify({atoumweb:'AtoumWeb',noir:'Noir',blanc:'Blanc'}[theme])}).click()`);await wait(`document.documentElement.dataset.theme===${JSON.stringify(theme)}`);
       await go('Documents & Contrats');if(await js('!!document.querySelector(".contract-library")'))await click('Retour aux documents');await click('Bibliothèque contractuelle');check(theme+' library entry',await js('!!document.querySelector(".contract-library")'));
       if(theme==='atoumweb')await click('Initialiser depuis le Catalogue');await wait('document.querySelectorAll(".contract-type-list button").length>=5');
+      if(args.includes('--ux05b')){
+        // Capture the real library at every supported display density in all three themes.
+        for(const density of ['comfort','compact','spacious']){
+          await go('Réglages');await wait('document.querySelectorAll(".density-card").length===3');
+          const label=await js(`[...document.querySelectorAll(".density-card")].find(b=>b.textContent.toLowerCase().includes(${JSON.stringify(density==='comfort'?'confort':density==='compact'?'compact':'spacieux')}))?.textContent`);
+          check(theme+' '+density+' density control available',!!label);
+          await js(`[...document.querySelectorAll(".density-card")].find(b=>b.textContent===${JSON.stringify(label)}).click()`);
+          await wait(`document.documentElement.dataset.density===${JSON.stringify(density)}`);
+          await go('Documents & Contrats');if(await js('!!document.querySelector(".contract-library")'))await click('Retour aux documents');
+          await click('Bibliothèque contractuelle');await wait('!!document.querySelector(".contract-library")');
+          check(theme+' '+density+' contract library rendered',await js('!!document.querySelector(".contract-type-list")'));
+          await shot('bibliotheque-'+theme+'-'+density);
+        }
+      }
       if(theme==='atoumweb'&&args.includes('--ux05b')){
         // BrowserWindow, vrai IPC UX-01, SQLite et profil TEMP. Dialogues automatises sans mutation de base client.
         const originalDialog=dialog.showMessageBoxSync,dialogs=[];
