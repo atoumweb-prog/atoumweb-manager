@@ -419,6 +419,24 @@ app.whenReady().then(async () => {
     await check('Chrono : réponse obsolète ne remplace pas les données récentes',
       `document.querySelector('.project-sites-time-summary strong')?.textContent.trim()==='2 h'`);
 
+    await js(`(()=>{
+      window.__timerRequests=[];
+      window.lastMessage='UNCHANGED';
+      window.atoumweb.time.list=()=>new Promise((resolve,reject)=>window.__timerRequests.push({resolve,reject}));
+      window.dispatchEvent(new Event('atoumweb:time-changed'));
+      window.dispatchEvent(new Event('atoumweb:time-changed'));
+      return true;
+    })()`);
+    await check('Deux actualisations chrono avant rejet ancien', 'window.__timerRequests.length===2');
+    await js(`(()=>{
+      window.__timerRequests[1].resolve([{id:'fresh',projectNodeId:'p1',durationSeconds:7200,endedAt:'2026-10-14T11:00:00Z'}]);
+      window.__timerRequests[0].reject(new Error('STALE TIMER FAILURE'));
+      return true;
+    })()`);
+    await settle();
+    await check('Erreur IPC obsolète ignorée sans fausse alerte',
+      `window.lastMessage==='UNCHANGED'&&document.querySelector('.project-sites-time-summary strong')?.textContent.trim()==='2 h'`);
+
     win.destroy();
   } catch (error) {
     if (!checks.some((check) => check.error === String(error))) {
