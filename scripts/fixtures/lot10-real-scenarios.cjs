@@ -148,6 +148,23 @@ module.exports = async ({ win, db, evalUI: js, get, wait, navigate, test, sleep 
   test(await get('document.querySelector(".statistics-client-card th[aria-sort=descending]")?.textContent.includes("Temps")'),
     'Lot 10B: état aria-sort clavier exposé sur la bonne colonne');
 
+  // R10B-06/07 : les détails des KPI doivent partager les identifiants réellement agrégés.
+  await js("const b=[...document.querySelectorAll('.statistics-tabs button')].find(e=>e.textContent.includes('Vue d’ensemble'));if(!b)throw Error('Vue ensemble absente');b.click()");
+  await wait('!!document.querySelector(".statistics-kpi-inspect")', 'KPI inspectables');
+  await js("const card=[...document.querySelectorAll('.statistics-kpi')].find(e=>e.textContent.includes('Facturé suivi'));if(!card)throw Error('KPI facture absent');card.querySelector('button.statistics-kpi-inspect').click()");
+  await wait('document.querySelectorAll(".statistics-evidence-table tbody tr").length===2', 'facturation fictive en détail');
+  const detailIds = () => get('[...document.querySelectorAll(".statistics-evidence-table td small[title]")].map(e=>e.title)');
+  test(JSON.stringify(await detailIds().then(ids=>ids.sort()))===JSON.stringify(['lot10-billing-a','lot10-billing-b']),
+    'Lot 10B: détails facture sur les vrais ID du compteur, sans faux routage');
+  test(await get('document.querySelector(".statistics-evidence-panel")?.textContent.includes("billing_items") && document.querySelector(".statistics-evidence-panel")?.textContent.includes("Facturé")'),
+    'Lot 10B: source métier et unités explicites dans le détail');
+  await js("const card=[...document.querySelectorAll('.statistics-kpi')].find(e=>e.textContent.includes('Temps travaillé'));card.querySelector('button.statistics-kpi-inspect').click()");
+  await wait('document.querySelectorAll(".statistics-evidence-table tbody tr").length===2', 'sessions détaillées');
+  test(JSON.stringify(await detailIds().then(ids=>ids.sort()))===JSON.stringify(['lot10-time-a','lot10-time-b']),
+    'Lot 10B: détail temps avec les mêmes sessions que le KPI');
+  test(await get('document.querySelector(".statistics-evidence-panel")?.textContent.includes("Début de session")'),
+    'Lot 10B: date métier du temps explicitée');
+
   // R10C intervention : vrai IPC + SQLite TEMP, sans archive physique créée.
   const beforeIntervention = db.businessBackups.create({
     clientAccountId: firstClient.id,
