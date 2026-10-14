@@ -64,6 +64,26 @@ module.exports = async ({ win, db, evalUI: js, get, wait, navigate, test, sleep 
   await wait('document.querySelectorAll(".theme-card").length===3 && document.querySelectorAll(".density-card").length===3', 'tous les réglages restaurés');
   test(await get('!!document.querySelector(".settings-grid .path-value")'), 'Lot 10D: la recherche n’efface pas le workspace courant');
 
+  // R10D-09/10 : stockage réellement disponible, disposition Clients seulement.
+  await wait('!!document.querySelector(".settings-navigation")', 'préférences navigation dans réglages');
+  const railBefore = await get('document.querySelector(".aw-navigation-rail")?.dataset.railCollapsed');
+  await js("document.getElementById('settings-nav-collapse').click()");
+  await wait('document.querySelector(".aw-navigation-rail")?.dataset.railCollapsed!=='+JSON.stringify(railBefore), 'rail mis à jour depuis Réglages');
+  test(await get('document.querySelector(".settings-navigation")?.textContent.includes("Rail latéral")'),
+    'Lot 10D: préférence rail réellement pilotée depuis Réglages');
+  await js("document.getElementById('settings-nav-collapse').click()");
+  await wait('document.querySelector(".aw-navigation-rail")?.dataset.railCollapsed==='+JSON.stringify(railBefore), 'préférence rail restaurée');
+  await js("window.atoumweb.visualPreferences.setItem('atoumweb:layout:clients:list:v1','{\"version\":1,\"listPercent\":55}');window.atoumweb.visualPreferences.setItem('atoumweb:layout:directory:list:v1','{\"version\":1,\"listPercent\":45}')");
+  await js("const b=[...document.querySelectorAll('.settings-navigation button')].find(e=>e.textContent.includes('Largeur liste Clients'));if(!b)throw Error('Reset Clients absent');b.click()");
+  await wait('!!document.querySelector(".settings-navigation-confirm")', 'confirmation disposition liste Clients');
+  test(await get('!!window.atoumweb.visualPreferences.getItem("atoumweb:layout:clients:list:v1")'), 'Lot 10D: première étape ne réinitialise pas Clients');
+  await js("const b=[...document.querySelectorAll('.settings-navigation-confirm button')].find(e=>e.textContent.includes('Confirmer'));if(!b)throw Error('Confirmation reset absente');b.click()");
+  await wait('window.atoumweb.visualPreferences.getItem("atoumweb:layout:clients:list:v1")===null', 'préférence Clients effacée seulement');
+  test(await get('!!window.atoumweb.visualPreferences.getItem("atoumweb:layout:directory:list:v1")'),
+    'Lot 10D: réinitialisation Clients préserve disposition Annuaire');
+  test(await get('document.querySelector(".settings-navigation-confirm")===null'),
+    'Lot 10D: confirmation nettoyée après réinitialisation visuelle');
+
   // R10D-18 : débordement horizontal réel signalé à 44px sur CI précédente.
   const originalTheme = await get('document.documentElement.dataset.theme');
   const originalDensity = await get('document.documentElement.dataset.density');
