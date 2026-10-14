@@ -19,12 +19,12 @@ describe('04D — suggestions Prospect sans achat implicite',()=>{
     expect(result.map(x=>x.id)).toEqual(['b']);
     expect(catalogue[1].currentVersion?.id).toBe('b-version');
   });
-  it('uses legacy suggestions only if no valid managed version is available',()=>{
+  it('uses legacy suggestions only when no administered link exists',()=>{
     const catalogue=[item('a'),item('b'),item('c')];
     expect(resolveProspectCatalogRecommendations(catalogue,['a'],[],['c','b','c']).map(x=>x.id))
       .toEqual(['c','b']);
-    expect(resolveProspectCatalogRecommendations(catalogue,['a'],['missing'],['b']).map(x=>x.id))
-      .toEqual(['b']);
+    expect(resolveProspectCatalogRecommendations(catalogue,['a'],['missing'],['b']))
+      .toEqual([]);
   });
   it('never promotes an offer as a recommended complementary service',()=>{
     const offer={...item('bundle'),type:'offer' as const,name:'Main bundle'};
