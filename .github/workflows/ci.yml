@@ -15,6 +15,7 @@ on:
   pull_request:
     branches:
       - main
+      - feature/ux-v2-lot04b-catalogue-navigation-v1
       - foundation/electron-react-sqlite
       - feature/phase-1-crm
       - feature/phase-2-commercial
@@ -37,11 +38,37 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Lot 04C: functional Electron editor checks, without visual-human signoff.
+      - name: Electron Catalogue 04C — brouillons et conflits Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 108 }}
+        shell: pwsh
+        timeout-minutes: 6
+        run: |
+          node scripts/check-catalog-identity-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Typecheck
         run: npm run typecheck
 
       - name: Tests
         run: npm test -- --maxWorkers=2
+
+      - name: UX-01 — brouillons, confirmations et navigation (Windows TEMP)
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 108 }}
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          node scripts/check-unsaved-inputs-ui.cjs --lot-b --lot-c --review
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: UX-01 — restauration et fermeture Electron (Windows TEMP)
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 108 }}
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          node scripts/check-restore-quit-roundtrip.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
 
       # Lot 04B: real Electron renderer + mocked IPC, isolated under Windows TEMP.
       # This is deliberately scoped to the Catalogue pilot PR; no live workspace is opened.

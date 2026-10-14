@@ -1,0 +1,76 @@
+# Lot 04C.1 — Brouillons éditables sans duplication (E99/E102)
+
+**Date :** 14 octobre 2026. **Branche :** `feature/ux-v2-lot04c-editor-drafts-v1`, **PR :** #108, **base :** PR #104 / 04B. Ce document est un relevé technique du premier incrément 04C, **pas** une clôture du lot 04C complet.
+
+## Contrat métier réellement livré
+
+- `CatalogService.create` crée un nouvel item et son **premier brouillon**.
+- `CatalogService.createVersion` crée explicitement une **nouvelle version brouillon** sans publier.
+- `CatalogService.saveDraftVersion(versionId, expected, input)` modifie **exclusivement la même version draft** : même ID, numéro, date de création, pas de publication, pas de copie de nouveaux composants/clauses, historique préexistant conservé.
+- Le service compare, sous `BEGIN IMMEDIATE`, l'état attendu issu de la dernière lecture aux champs versionnés actuellement en SQLite (prix, identité commerciale, provenance, périmètre, aides, conditions, mots-clés E96). Toute différence renvoie un **conflit** sans écriture, sans créer une vN+1 et sans effacer la saisie locale.
+- Les versions `published` et `retired` sont **interdites en modification en place**, même si un snapshot `draft` périmé est fourni.
+- Le retour de l'enregistrement conserve le même `versionId`. Une interruption IPC pendant la création d'une **nouvelle version** reste un cas distinct, à sécuriser dans l'incrément E102 complet.
+- Pas de nouvelle migration : `catalog_versions` et les champs existants sont réutilisés. Pas de changement à `schema_migrations`, `QuoteService`, CGV, contrats, inventaires Client/Prospect ou production.
+
+## Raccordement interface / UX-01
+
+La fiche `CatalogPage` présente **Reprendre le brouillon** lorsqu'une version `draft` existe, au lieu de proposer automatiquement la création d'une version supplémentaire. Sinon, l'action **Modifier via une nouvelle version** préremplit le formulaire depuis la version courante, et le formulaire annonce qu'il créera une vN+1.
+
+La validation `Enregistrer le brouillon` utilise la nouvelle commande IPC atomique. Un échec CAS laisse le panneau et ses champs visibles, avec un message d'erreur dans le formulaire. La sortie de l'éditeur continue de passer par le garde UX-01 existant. Les anciennes versions de vente restent intactes.
+
+## Preuves techniques
+
+- Tests ciblés `CatalogDraftEditing04C.test.ts` : sauvegarde au même ID/numéro et sans publication, concurrence entre deux snapshots, refus publié/retiré, maintien des composants associés d'une Offre malgré une saisie invalide, préservation du prix d'une version publiée.
+- Recette Electron fonctionnelle `scripts/check-catalog-identity-ui.cjs` : clic réel dans l'éditeur, sauvegarde d'un brouillon existant, vérification de non-duplication et conservation de l'éditeur après conflit simulé.
+- Workflow CI : PR empilée #108 autorisée sur la base 04B ; étape Electron fonctionnelle spéciale #108. Bases et profils temporaires, aucune donnée MSI.
+- **Recette visuelle humaine : explicitement exclue de ce chantier à la demande de l'utilisateur**. Les assertions Electron automatiques déjà présentes dans le script ne valent pas approbation humaine.
+
+## Dépendances et suite du lot 04C
+
+- #104 (04B / registre de catégories migration 67) doit être intégré ou réconcilié avant la PR empilée #108.
+- Les PR #105/#107 CRM ont été fusionnées pendant la préparation de #108 : un **test de convergence** du nouveau `main` + #104 + #108 est indispensable avant toute fusion.
+- Restent en 04C : éditeur complet en huit onglets adaptatifs, publication/validation métier par type, comparateur publié–brouillon, contrôles CGV/blueprint réels, traitement de réponse IPC perdue à la **création d'une nouvelle version** sans doublon, navigation version historique, tests Projet/Devis après publication.
+- Lot 05 sur PR #106 est **indépendant** et ne doit pas être écrasé pour réaliser 04C.
+
+**Aucune fusion autorisée** et aucune intervention sur Validation-MSI.
+
+
+## Incrément 04C.2 — retry de création sans duplication (E102)
+
+La reprise du brouillon existant de 04C.1 ne suffit pas lorsqu'un **IPC de création** retourne une erreur après un COMMIT réel. E102 met désormais à disposition un `requestId` UUID facultatif dans `CatalogApi.createVersion` (backend/preload/renderer), qui sert également d'identifiant de la nouvelle version SQL :
+
+- Première requête : `CatalogService.createVersion(itemId,input,requestId)` enregistre le brouillon dans la transaction, ainsi que la copie existante des composants/CGV/blueprints.
+- Nouvelle requête avec le **même UUID** : le service retourne la version existante appartenant à la même prestation. Il ne génère aucune nouvelle version ni aucun lien. Si l'UUID appartient à un autre item ou à une version déjà publiée/retirée, l'opération est refusée.
+- Rejeu sous un UUID identique avec un **contenu descriptif, un prix, un périmètre ou des paramètres commerciaux différents** : conflit explicite ; l'ancienne version n'est pas réécrite.
+- Dans `CatalogPage`, le UUID et l'empreinte du payload restent en mémoire **par prestation** après une erreur IPC. Une création incertaine n'empêche pas de travailler sur les autres fiches. Un nouveau clic avec la saisie identique adresse le même brouillon. Le formulaire conserve son erreur et les champs jusqu'à retour positif ; changer la saisie après une réponse incertaine est refusé pour éviter toute fausse confirmation. Cette situation appelle une relecture de la prestation avant modification.
+- Protection supplémentaire : un éditeur déjà ouvert ne peut plus être réinitialisé par un second clic sur « Compléter la fiche » ou « Reprendre le brouillon ».
+- Pas de migration supplémentaire : l'ID UUID de `catalog_versions` fournit la clé durable ; les appels historiques sans `requestId` restent compatibles.
+
+Tests ajoutés dans `CatalogDraftEditing04C.test.ts` : rejeu même UUID, conservation des associations, conservation du nombre de versions, UUID attribué à un autre item, replay après publication, collision d'un même UUID avec tarif divergent. Recette Electron fonctionnelle : création v2 sur fiche publiée, réponse perdue simulée **après création**, second clic utilisant le même UUID sans v3.
+
+**Réserve technique :** les mises à jour de données d'un brouillon et la publication restent des actes séparés. Un processus réellement interrompu pendant que l'utilisateur quitte la fiche nécessite une relecture des données ; le protocole ne prétend pas garantir à lui seul toutes les phases de panne/crash. Aucune recette visuelle humaine réalisée à la demande de l'utilisateur. La CI sur le SHA de 04C.2 doit réussir avant validation de cet incrément.
+
+## Garde prépublication 04C/E101 — premier palier (non juridique)
+
+La fiche Catalogue refuse désormais les commandes **Publier**, **Statut** et **Visibilité site** tant que le formulaire d'édition d'une version est ouvert : il faut d'abord enregistrer ou annuler cette saisie. Une tentative de publication déclenchée autrement pendant cet état reçoit un refus clair ; les contrôles `saving` et `versionMode` empêchent les doubles gestes. La publication IPC se termine par une réponse de succès ou un message d'erreur, et le chargement demeure distinct du statut du site WordPress.
+
+Une assertion Electron fonctionnelle vérifie que le bouton Publier et le sélecteur de statut sont inactifs pendant la saisie du brouillon. Cette protection **ne certifie pas les CGV** et n'est pas une homologation de publication : les contrôles contractuels spécifiques du lot 05, les dépendances blueprint et la comparaison publiée/brouillon du 04C restent à réaliser.
+
+## Exécution CI et réserve d'infrastructure
+
+CI #897 sur l'ancien banc : Vitest **1075/1075** et typecheck **réussis**, mais étape Electron en échec à cause du helper `textarea`; correctif du helper depuis publié. Depuis #900, plusieurs workflows de ce dépôt, **y compris des branches indépendantes lots 05/08**, se terminent en quelques secondes avec jobs sans étapes et sans logs ; la cause exacte de cette impossibilité d'exécution Actions n'est pas prouvée. Ne pas qualifier un HEAD ultérieur de `CI verte` sur cette base.
+
+**Gate :** relancer une véritable CI TypeScript + Vitest + Electron fonctionnel sur le HEAD exact une fois GitHub Actions exécutable. La fusion est interdite tant que ce contrôle et la convergence CRM ne sont pas validés. Aucun accès à Validation-MSI ; recette visuelle humaine non réalisée, conformément à la demande.
+
+
+## Incrément 04C.3 — E101 comparateur et prépublication explicite
+
+**Code publié uniquement dans la PR #108 (base #104), toujours en draft.** Les contrôles sont opérationnels à ce stade **en code, sans recette humaine ni validation CI finale**.
+
+- `src/shared/catalogVersionReview.ts` : moteur pur de comparaison version publiée (ou dernière version retirée si aucune publiée) ↔ brouillon enregistré. Il compare mode/prix catalogue en **centimes sans supposer HT/TTC**, prix conseillé, description, inclus/exclus/prérequis, acompte, unité, périodicité, commercialParameters E96, conditions et provenance. Les données de l'ancien devis/version ne sont jamais mutées.
+- `CatalogPublicationReview.tsx` : affichage du diff et **revue de publication consultative**, avec erreurs techniques distinctes des alertes humaines. Alertes explicites pour nature/description/périmètre manquants et pour composition d'offre vide lorsqu'elle est chargée, **sans bloquer par principe les prestations autonomes**. CGV et blueprint ne sont **ni auto-validés juridiquement ni réputés obligatoires dans tous les cas**.
+- Sur la fiche `CatalogPage`, le bouton d'une version brouillon devient **« Préparer la publication »**. Un second acte explicite **« Confirmer la publication de ce brouillon »** est nécessaire. Il est impossible de confirmer si une erreur technique existe ou si la saisie d'une version est ouverte. Aucune publication WordPress, de devis ni d'abonnement réel.
+- `CatalogService.publishVersion(versionId,expected?)` : sous `BEGIN IMMEDIATE`, comparaison optionnelle du **snapshot de version** lu lors de la préparation. Si une seconde fenêtre modifie le brouillon, la publication refuse la révision périmée et **ne retire pas** la version publiée historique. Le service refuse également tout tarif techniquement incohérent. Ancien API sans `expected` reste rétrocompatible, et `published/retired` restent immuables.
+- Tests ajoutés `catalogVersionReview.test.ts`, `CatalogPublicationReview.test.ts` (rendu fonctionnel HTML sans inspection humaine) et cas SQLite E101 dans `CatalogDraftEditing04C.test.ts`. Ils doivent encore tourner sur la CI du **SHA final** ; ne jamais les déclarer PASS tant qu'elle ne l'a pas fait.
+
+**Réserves maintenues :** les liens CGV et blueprint ne sont pas automatiquement comparés ; le contrôle contractuel spécialisé attend son raccord au Lot 05, et les huit onglets adaptatifs de l'éditeur restent à livrer. Les échecs GitHub Actions précédents, sans exécution de steps sur plusieurs branches, rendent le dernier commit **non validé** en CI. Aucune migration supplémentaire ni accès aux données MSI.

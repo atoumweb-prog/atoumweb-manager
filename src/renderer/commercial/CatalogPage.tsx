@@ -1,6 +1,9 @@
 import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { CatalogContractPanel } from './CatalogContractPanel';
+import { CatalogPublicationReview } from './CatalogPublicationReview';
+import { CatalogProductionPanel } from './CatalogProductionPanel';
+import {CATALOG_EDITOR_TABS,catalogTabHasVersionFields,type CatalogEditorTab} from './catalogEditorTabs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   PRICE_MODES,
@@ -13,6 +16,7 @@ import {
   type CatalogItemSummary,
   type CatalogItemType,
   type CatalogVersionInput,
+  type CatalogVersion,
   type OfferComponent,
   type PriceMode,
 } from '../../shared/commercial';
@@ -162,6 +166,13 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   const [formError, setFormError] = useState<string | null>(null);
   const [versionMode, setVersionMode] = useState(false);
   const [versionDraft, setVersionDraft] = useState<CatalogDraft>(EMPTY_DRAFT);
+  // Survives a lost IPC response so an explicit retry addresses the SAME row.
+  const pendingVersionCreations = useRef(new Map<string, { requestId: string; fingerprint: string }>());
+  const [editingDraftVersion, setEditingDraftVersion] = useState<CatalogVersion | null>(null);
+  const [versionFormError, setVersionFormError] = useState<string | null>(null);
+  const [publicationCandidate, setPublicationCandidate] = useState<CatalogVersion | null>(null);
+  const [activeTab,setActiveTab] = useState<CatalogEditorTab>('identity');
+  const [pendingItemStatus,setPendingItemStatus]=useState<CatalogItemStatus|null>(null);
   const [detailSplitPercent, setDetailSplitPercent] = useState(40);
   const [detailExpanded, setDetailExpanded] = useState(false);
   const [offerComponents, setOfferComponents] = useState<OfferComponent[]>([]);
@@ -251,7 +262,10 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     if(detailRef.current?.id===id){detailEpoch.current++;setSelectedId(id);setDetailLoading(false);return;}
     if(!requestUnsavedExit(()=>{}))return;
     setSelectedId(id);
+    setPendingItemStatus(null);
     setVersionMode(false);
+    setActiveTab('identity');
+    setPublicationCandidate(null);
     setDetailExpanded(false);
     await loadDetail(id);
   }
@@ -263,7 +277,10 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     detailEpoch.current++;
     setSelectedId(null);
     setDetail(null);
+    setPendingItemStatus(null);
     setVersionMode(false);
+    setActiveTab('identity');
+    setPublicationCandidate(null);
     setDetailExpanded(false);
   }
 
@@ -339,7 +356,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
       createGuard.saved(EMPTY_DRAFT);
       setShowForm(false);
       await refresh();
-      setSelectedId(created.id);setVersionMode(false);await loadDetail(created.id);
+      setSelectedId(created.id);setPendingItemStatus(null);setVersionMode(false);setActiveTab('identity');await loadDetail(created.id);
       onMessage(`${created.type === 'offer' ? 'Offre' : 'Service'} créé en brouillon.`);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Création impossible.');
@@ -349,8 +366,14 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   }
 
   function prepareNewVersion(): void {
-    if (!detail?.currentVersion) return;
-    const current = detail.currentVersion;
+    if (!detail?.currentVersion || versionMode) return;
+    // 04C/E99: reopen the existing draft instead of generating vN+1 on
+    // every edit. A published version is only copied when no draft exists.
+    const existingDraft = detail.versions.find(version => version.status === 'draft') ?? null;
+    const current = existingDraft ?? detail.currentVersion;
+    setEditingDraftVersion(existingDraft);
+    setPublicationCandidate(null);
+    setVersionFormError(null);
     setVersionDraft({
       canonicalCode: detail.canonicalCode ?? '',
       commercialKind: current.commercialKind ?? '',
@@ -387,28 +410,76 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
 
   async function createVersion(event: React.FormEvent): Promise<void> {
     event.preventDefault();
-    if (!detail) return;
-    setSaving(true);
+    if (!detail || saving) return;
+    let payload: CatalogVersionInput;
     try {
-      const version = await window.atoumweb.catalog.createVersion(detail.id, buildVersion(versionDraft));
+      payload = buildVersion(versionDraft);
+    } catch(error) {
+      const message=error instanceof Error?error.message:'Données du brouillon invalides.';
+      setVersionFormError(message);
+      onMessage(message);
+      return;
+    }
+    const payloadFingerprint = JSON.stringify(payload);
+    const previousRequest = pendingVersionCreations.current.get(detail.id);
+    if (!editingDraftVersion && previousRequest &&
+      previousRequest.fingerprint !== payloadFingerprint) {
+      const message = 'Une création précédente a une réponse incertaine. Reprends la version envoyée sans modifier les champs, puis enregistre les changements dans le brouillon créé.';
+      setVersionFormError(message);
+      onMessage(message);
+      return;
+    }
+    if (!editingDraftVersion && !previousRequest) {
+      pendingVersionCreations.current.set(detail.id, {
+        requestId: crypto.randomUUID(), fingerprint: payloadFingerprint,
+      });
+    }
+    setSaving(true);
+    setVersionFormError(null);
+    try {
+      const version = editingDraftVersion
+        ? await window.atoumweb.catalog.saveDraftVersion(editingDraftVersion.id, editingDraftVersion, payload)
+        : await window.atoumweb.catalog.createVersion(detail.id, payload, pendingVersionCreations.current.get(detail.id)!.requestId);
       versionGuard.saved(versionDraft);
+      pendingVersionCreations.current.delete(detail.id);
       setVersionMode(false);
+      setEditingDraftVersion(null);
+      setVersionFormError(null);
       await refresh();
       await openItem(detail.id);
-      onMessage(`Version v${version.versionNumber} créée en brouillon.${detail.type === 'offer' ? ' Sa composition a été recopiée.' : ''}`);
+      onMessage(editingDraftVersion
+        ? `Brouillon v${version.versionNumber} enregistré dans la même version, sans publication.`
+        : `Version v${version.versionNumber} créée en brouillon.${detail.type === 'offer' ? ' Sa composition a été recopiée.' : ''}`);
     } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible de créer la version.');
+      const message = error instanceof Error ? error.message : 'Impossible d’enregistrer cette version.';
+      setVersionFormError(message);
+      onMessage(message);
     } finally {
       setSaving(false);
     }
   }
 
   async function publish(versionId: string): Promise<void> {
-    if (!detail) return;
-    const version = await window.atoumweb.catalog.publishVersion(versionId);
-    await refresh();
-    await openItem(detail.id);
-    onMessage(`Version v${version.versionNumber} publiée. L’ancienne version reste dans l’historique.`);
+    if (!detail || saving || !publicationCandidate || publicationCandidate.id !== versionId) return;
+    // A visible unsaved editor must NEVER publish the older persisted fields.
+    if (versionMode) {
+      const message = 'Enregistre ou annule les modifications du brouillon avant de publier sa version enregistrée.';
+      setVersionFormError(message);
+      onMessage(message);
+      return;
+    }
+    setSaving(true);
+    try {
+      const version = await window.atoumweb.catalog.publishVersion(versionId, publicationCandidate);
+      setPublicationCandidate(null);
+      await refresh();
+      await openItem(detail.id);
+      onMessage(`Version v${version.versionNumber} publiée. L’ancienne version reste dans l’historique.`);
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Publication impossible ; aucune validation juridique implicite.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function assignCode(): Promise<void> {
@@ -424,11 +495,17 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   }
 
   async function updateStatus(status: CatalogItemStatus): Promise<void> {
-    if (!detail) return;
-    await window.atoumweb.catalog.setStatus(detail.id, status);
-    await refresh();
-    await openItem(detail.id);
-    onMessage(`Statut : ${STATUS_LABELS[status]}.`);
+    if (!detail || saving || versionMode) return;
+    setSaving(true);
+    try {
+      await window.atoumweb.catalog.setStatus(detail.id, status);
+      setPendingItemStatus(null);
+      await refresh();
+      await openItem(detail.id);
+      onMessage(`Statut : ${STATUS_LABELS[status]}.`);
+    } catch(error) {
+      onMessage(error instanceof Error?error.message:'Changement de statut impossible.');
+    } finally {setSaving(false);}
   }
 
   async function toggleVisibility(): Promise<void> {
@@ -488,10 +565,23 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     }
   }
 
+  function selectEditorTab(next: CatalogEditorTab, focus = false): void {
+    if (next === activeTab) return;
+    const change = () => {
+      setActiveTab(next);
+      if (focus) document.getElementById(`catalog-tab-${next}`)?.focus();
+    };
+    // Version fields stay mounted in common React state; only separately edited
+    // contract links require their own unsaved-exit confirmation.
+    if (activeTab === 'contracts' && detail)
+      requestUnsavedExit(change, 'catalog:contract:' + detail.id);
+    else change();
+  }
+
   const offerCompositionVersion = detail?.type === 'offer'
     ? detail.versions.find((version) => version.id === offerVersionId) ?? null
     : null;
-  const offerCompositionEditable = offerCompositionVersion?.status === 'draft';
+  const offerCompositionEditable = offerCompositionVersion?.status === 'draft' && !versionMode && !saving;
 
   return (
     <div className="catalog-stack">
@@ -638,30 +728,46 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 </div>
               </div>
               <div className="detail-badges"><span className={`catalog-status catalog-${detail.status}`}>{STATUS_LABELS[detail.status]}</span><span className="status-pill">{detail.visiblePublic ? 'Visible site' : 'Interne'}</span>{detail.currentVersion && <span className="status-pill">v{detail.currentVersion.versionNumber} · {VERSION_STATUS_LABELS[detail.currentVersion.status]}</span>}</div>
-              <section className="catalog-detail-section catalog-identity-section">
+              <div className="catalog-editor-tabs" role="tablist" aria-label="Éditeur des offres et services">
+                {CATALOG_EDITOR_TABS.map(tab=><button type="button" key={tab.id} role="tab"
+                  id={`catalog-tab-${tab.id}`} aria-selected={activeTab===tab.id}
+                  aria-controls={`catalog-panel-${tab.id}`} title={tab.hint}
+                  tabIndex={activeTab===tab.id?0:-1}
+                  onClick={()=>selectEditorTab(tab.id)}
+                  onKeyDown={event=>{
+                    if(!['ArrowRight','ArrowLeft','Home','End'].includes(event.key))return;
+                    event.preventDefault();
+                    const index=CATALOG_EDITOR_TABS.findIndex(value=>value.id===activeTab);
+                    const next=event.key==='Home'?0:event.key==='End'?CATALOG_EDITOR_TABS.length-1:
+                      (index+(event.key==='ArrowRight'?1:-1)+CATALOG_EDITOR_TABS.length)%CATALOG_EDITOR_TABS.length;
+                    selectEditorTab(CATALOG_EDITOR_TABS[next].id,true);
+                  }}>{tab.label}</button>)}
+              </div>
+              <div role="tabpanel" id={`catalog-panel-${activeTab}`} aria-labelledby={`catalog-tab-${activeTab}`} className="catalog-editor-tab-panel">
+              {activeTab==='identity' && <section className="catalog-detail-section catalog-identity-section">
                 <strong>Identité catalogue V1</strong>
                 <Summary label="Code canonique" value={detail.canonicalCode || 'Non attribué'} />
                 {detail.identityProvenance && <Summary label="Source de l’attribution" value={detail.identityProvenance.reference} />}
                 {!detail.canonicalCode && <div className="catalog-code-assignment"><label>Code AW à attribuer<input value={canonicalCodeDraft} placeholder="AW-WEB-VITRINE" onChange={(e) => setCanonicalCodeDraft(e.target.value)} /></label><button className="secondary-button" type="button" disabled={saving || !canonicalCodeDraft.trim()} onClick={() => void assignCode()}>Attribuer ce code</button></div>}
                 <p className="muted">Le code attribué est durable. Les anciens éléments peuvent rester sans code jusqu’à leur rapprochement explicite.</p>
-              </section>
+              </section>}
 
-              {detail.currentVersion && (!detail.currentVersion.nature || !detail.currentVersion.description || (detail.currentVersion.inclusions?.length ?? 0) === 0) && (
+              {activeTab==='scope' && detail.currentVersion && (!detail.currentVersion.nature || !detail.currentVersion.description || (detail.currentVersion.inclusions?.length ?? 0) === 0) && (
                 <div className="catalog-completeness">
                   <div><strong>Fiche à compléter</strong><span>Nature, description et contenu inclus permettent de comprendre immédiatement ce qui est réellement vendu.</span></div>
-                  <button className="secondary-button" type="button" onClick={prepareNewVersion}>Compléter la fiche</button>
+                  <button className="secondary-button" type="button" disabled={versionMode || saving} onClick={prepareNewVersion}>Compléter la fiche</button>
                 </div>
               )}
 
-              {detail.currentVersion ? (
+              {detail.currentVersion && ['identity','pricing','scope','sales','contracts'].includes(activeTab) ? (
                 <div className="catalog-current-version">
-                  <section className="catalog-detail-section catalog-detail-overview">
+                  {(activeTab==='scope') && <section className="catalog-detail-section catalog-detail-overview">
                     <div className="catalog-detail-section-heading"><span className="eyebrow">Prestation</span><strong>Ce qui est réellement vendu</strong></div>
                     <h3>{detail.currentVersion.nature || 'Nature de la prestation à renseigner'}</h3>
                     <p>{detail.currentVersion.description || 'Description à compléter pour expliquer clairement le résultat attendu au client.'}</p>
-                  </section>
+                  </section>}
 
-                  <section className="catalog-detail-section">
+                  {(activeTab==='pricing'||activeTab==='identity') && <section className="catalog-detail-section">
                     <div className="catalog-detail-section-heading"><span className="eyebrow">Repères</span><strong>Tarification, délai et cadre</strong></div>
                     <div className="catalog-summary-grid">
                       <Summary label="Tarif actuel" value={formatPrice(detail)} />
@@ -678,32 +784,59 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                       <Summary label="Ancien libellé contractuel (legacy)" value={detail.currentVersion.contractType || '—'} />
                       <Summary label={detail.currentVersion.publishedAt ? 'Publiée le' : 'Créée le'} value={formatCatalogDate(detail.currentVersion.publishedAt ?? detail.currentVersion.createdAt)} />
                     </div>
-                  </section>
+                  </section>}
 
-                  <section className="catalog-detail-section">
+                  {(activeTab==='scope') && <section className="catalog-detail-section">
                     <div className="catalog-detail-section-heading"><span className="eyebrow">Périmètre</span><strong>Inclus, exclusions et prérequis</strong></div>
                     <ListSummary label="Inclus" values={detail.currentVersion.inclusions ?? []} />
                     <ListSummary label="Exclusions" values={detail.currentVersion.exclusions ?? []} />
                     <ListSummary label="Prérequis" values={detail.currentVersion.prerequisites ?? []} />
-                  </section>
+                  </section>}
 
-                  <section className="catalog-detail-section">
+                  {(activeTab==='contracts') && <section className="catalog-detail-section">
                     <div className="catalog-detail-section-heading"><span className="eyebrow">Conditions</span><strong>Cadre commercial</strong></div>
                     <Summary label="Conditions commerciales" value={detail.currentVersion.specialTerms || 'Non renseignées'} />
-                  </section>
+                  </section>}
 
-                  <CommercialParametersSummary parameters={detail.currentVersion.commercialParameters} />
+                  {activeTab==='sales' && <CommercialParametersSummary parameters={detail.currentVersion.commercialParameters} />}
+                  {activeTab==='sales' && !Object.values(detail.currentVersion.commercialParameters ?? {}).some(Boolean) && !detail.currentVersion.internalAdvice &&
+                    <p className="muted">Aucune aide à la vente configurée pour cette version. Les bénéfices, besoins et conseils restent à renseigner dans un brouillon.</p>}
 
-                  {detail.currentVersion.internalAdvice && <div className="catalog-internal-note"><strong>Conseil interne AtoumWeb</strong><p>{detail.currentVersion.internalAdvice}</p></div>}
+                  {activeTab==='sales' && detail.currentVersion.internalAdvice && <div className="catalog-internal-note"><strong>Conseil interne AtoumWeb</strong><p>{detail.currentVersion.internalAdvice}</p></div>}
                 </div>
-              ) : <p className="muted">Aucune version.</p>}
+              ) : !detail.currentVersion ? <p className="muted">Aucune version.</p> : null}
 
-              <div className="catalog-detail-actions"><button className="secondary-button" type="button" onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select value={detail.status} onChange={(e) => void updateStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion} onClick={prepareNewVersion}>Modifier via une nouvelle version</button></div>
+              {activeTab==='identity' && <div className="catalog-detail-actions"><button className="secondary-button" type="button" disabled={versionMode || saving} onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select aria-label="Statut de la prestation" value={pendingItemStatus ?? detail.status} disabled={versionMode || saving} onChange={(e) => setPendingItemStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion || versionMode || saving} onClick={prepareNewVersion}>{detail.versions.some(v => v.status === 'draft') ? 'Reprendre le brouillon' : 'Modifier via une nouvelle version'}</button></div>}
 
-              <CatalogContractPanel key={detail.id+detail.versions.length} item={detail}/>
-              {versionMode && <form className="catalog-version-editor" onSubmit={(event) => void createVersion(event)}><strong>Nouvelle version</strong><fieldset disabled={saving}><CatalogFields draft={versionDraft} onChange={setVersionDraft} /></fieldset><div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => versionGuard.request(()=>setVersionMode(false))}>Annuler</button><button className="primary-button" disabled={saving} type="submit">Créer v{(detail.versions[0]?.versionNumber ?? 0) + 1}</button></div></form>}
+              {activeTab==='identity' && pendingItemStatus && pendingItemStatus!==detail.status && <div className="catalog-status-confirmation" role="group" aria-label="Confirmer le statut">
+                <p>Passer la prestation à « {STATUS_LABELS[pendingItemStatus]} » ? Cette modification ne supprime ni les versions ni les Devis historiques.</p>
+                <button type="button" className="secondary-button" onClick={()=>setPendingItemStatus(null)}>Annuler le changement</button>
+                <button type="button" className="primary-button" disabled={saving||versionMode} onClick={()=>void updateStatus(pendingItemStatus)}>
+                  Confirmer le statut
+                </button>
+              </div>}
+              {activeTab==='contracts' && <CatalogContractPanel key={detail.id+detail.versions.length} item={detail}/> }
+              {activeTab==='history' && publicationCandidate && publicationCandidate.itemId === detail.id &&
+                <CatalogPublicationReview
+                  item={detail} draft={publicationCandidate}
+                  components={detail.type === 'offer' && offerVersionId === publicationCandidate.id ? offerComponents : null}
+                  busy={saving} onCancel={() => setPublicationCandidate(null)}
+                  onConfirm={() => void publish(publicationCandidate.id)} />}
+              {versionMode && !catalogTabHasVersionFields(activeTab) && <p role="status" className="muted">Brouillon d'édition conservé. Reviens dans Identité, Tarifs, Contenu, Aide à la vente ou Contrat pour enregistrer ou annuler les modifications.</p>}
+              {versionMode && catalogTabHasVersionFields(activeTab) && <form className="catalog-version-editor" onSubmit={(event) => void createVersion(event)}>
+                <strong>{editingDraftVersion ? `Modifier le brouillon v${editingDraftVersion.versionNumber}` : 'Nouvelle version brouillon'}</strong>
+                <p className="muted">{editingDraftVersion
+                  ? 'Enregistrer modifie seulement ce brouillon. Les versions publiées et les anciens Devis restent inchangés.'
+                  : 'Créer une nouvelle version ne publie rien. Les associations existantes sont copiées et restent à vérifier.'}</p>
+                <fieldset disabled={saving}><CatalogFields draft={versionDraft} onChange={setVersionDraft} activeTab={activeTab} /></fieldset>
+                {versionFormError && <p className="form-error" role="alert">{versionFormError} — la saisie locale est conservée.</p>}
+                <div className="inline-editor-actions">
+                  <button className="secondary-button" type="button" onClick={() => versionGuard.request(()=>{setVersionMode(false);setEditingDraftVersion(null);setVersionFormError(null);})}>Annuler</button>
+                  <button className="primary-button" disabled={saving} type="submit">{saving?'Enregistrement…':editingDraftVersion?'Enregistrer le brouillon':`Créer v${(detail.versions[0]?.versionNumber ?? 0) + 1}`}</button>
+                </div>
+              </form>}
 
-              {detail.type === 'offer' && offerCompositionVersion && (
+              {activeTab==='associations' && detail.type === 'offer' && offerCompositionVersion && (
                 <section className="offer-composition">
                   <div className="offer-composition-heading"><div><span className="eyebrow">Composition</span><strong>Services de l’Offre · v{offerCompositionVersion.versionNumber}</strong></div><span className="status-pill">{VERSION_STATUS_LABELS[offerCompositionVersion.status]}</span></div>
                   {offerComponents.map((component) => <div className="offer-component-row" key={component.id}><div><strong>{component.serviceName}</strong><span>v{component.serviceVersionNumber} · {(component.quantityMilli / 1000).toLocaleString('fr-FR')} × · {component.isOptional ? 'Optionnel' : 'Inclus'}</span></div>{offerCompositionEditable && <button className="close-detail" type="button" onClick={() => void removeOfferComponent(component.id)}>×</button>}</div>)}
@@ -719,7 +852,10 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 </section>
               )}
 
-              <div className="catalog-versions"><strong>Historique des versions</strong>{detail.versions.map((version) => <div className="catalog-version-row" key={version.id}><div><strong>v{version.versionNumber}</strong><span>{VERSION_STATUS_LABELS[version.status]}</span><small>{PRICE_LABELS[version.priceMode]} · {version.priceCents != null ? `${(version.priceCents / 100).toLocaleString('fr-FR')} €` : '—'} · {version.publishedAt ? `publiée le ${formatCatalogDate(version.publishedAt)}` : `créée le ${formatCatalogDate(version.createdAt)}`}</small>{version.status === 'draft' && version.provenance && <details className="catalog-import-draft"><summary>Consulter le brouillon importé</summary><p>Cette version n’est pas publiée. Sa consultation ne change pas la version commerciale en cours.</p><p>{version.nature}</p><p>{version.description}</p><Summary label="Code canonique" value={detail.canonicalCode || 'Non attribué'} /><Summary label="Unité / périodicité" value={[version.unit, version.periodicity].filter(Boolean).join(' / ')} /><ListSummary label="Inclus" values={version.inclusions ?? []} /><ListSummary label="Exclusions" values={version.exclusions ?? []} /><ListSummary label="Prérequis" values={version.prerequisites ?? []} /><CommercialParametersSummary parameters={version.commercialParameters} /><Summary label="Source" value={[version.provenance.reference, version.provenance.recordKey, version.provenance.sha256].filter(Boolean).join(' · ')} /></details>}</div>{version.status === 'draft' && <button className="primary-button compact-button" type="button" onClick={() => void publish(version.id)}>Publier</button>}</div>)}</div>
+              {activeTab==='production' && <CatalogProductionPanel key={detail.id} item={detail} />}
+              {activeTab==='associations' && detail.type==='service' && <p className="muted">Les associations de services concernent les Offres. Les recommandations complémentaires seront administrées dans le lot 04D.</p>}
+              {activeTab==='history' && <div className="catalog-versions"><strong>Historique des versions</strong>{detail.versions.map((version) => <div className="catalog-version-row" key={version.id}><div><strong>v{version.versionNumber}</strong><span>{VERSION_STATUS_LABELS[version.status]}</span><small>{PRICE_LABELS[version.priceMode]} · {version.priceCents != null ? `${(version.priceCents / 100).toLocaleString('fr-FR')} €` : '—'} · {version.publishedAt ? `publiée le ${formatCatalogDate(version.publishedAt)}` : `créée le ${formatCatalogDate(version.createdAt)}`}</small>{version.status === 'draft' && version.provenance && <details className="catalog-import-draft"><summary>Consulter le brouillon importé</summary><p>Cette version n’est pas publiée. Sa consultation ne change pas la version commerciale en cours.</p><p>{version.nature}</p><p>{version.description}</p><Summary label="Code canonique" value={detail.canonicalCode || 'Non attribué'} /><Summary label="Unité / périodicité" value={[version.unit, version.periodicity].filter(Boolean).join(' / ')} /><ListSummary label="Inclus" values={version.inclusions ?? []} /><ListSummary label="Exclusions" values={version.exclusions ?? []} /><ListSummary label="Prérequis" values={version.prerequisites ?? []} /><CommercialParametersSummary parameters={version.commercialParameters} /><Summary label="Source" value={[version.provenance.reference, version.provenance.recordKey, version.provenance.sha256].filter(Boolean).join(' · ')} /></details>}</div>{version.status === 'draft' && <button className="primary-button compact-button" type="button" disabled={versionMode || saving} title={versionMode ? 'Enregistrer ou annuler le brouillon avant publication.' : 'Préparer une confirmation distincte, sans publier le site WordPress.'} onClick={() => setPublicationCandidate(structuredClone(version))}>Préparer la publication</button>}</div>)}</div>}
+              </div>
             </aside>
           )}
         </div>
@@ -739,7 +875,8 @@ function CommercialParametersSummary({ parameters }: { parameters?: CatalogComme
   return <section className="catalog-detail-section catalog-commercial-parameters"><strong>Paramètres commerciaux du catalogue</strong>{Object.entries(labels).map(([key, label]) => parameters[key as keyof CatalogCommercialParameters] ? <Summary key={key} label={label} value={parameters[key as keyof CatalogCommercialParameters]!} /> : null)}</section>;
 }
 
-function CatalogFields({ draft, onChange, showIdentity = false }: { draft: CatalogDraft; onChange: (draft: CatalogDraft) => void; showIdentity?: boolean }) {
+function CatalogFields({ draft, onChange, showIdentity = false, activeTab }: { draft: CatalogDraft; onChange: (draft: CatalogDraft) => void; showIdentity?: boolean; activeTab?: CatalogEditorTab }) {
+  const visible = (...tabs:CatalogEditorTab[]) => !activeTab || tabs.includes(activeTab);
   const priceDisabled = draft.priceMode === 'quote_only' || draft.priceMode === 'free';
 
   return (
@@ -762,9 +899,9 @@ function CatalogFields({ draft, onChange, showIdentity = false }: { draft: Catal
         </div>
       </section>}
 
-      <section className="catalog-field-group">
-        <div className="catalog-field-group-heading"><strong>Contenu de la prestation</strong><span>Ce que tu vends réellement et ce que le projet devra reprendre.</span></div>
-        <div className="catalog-fields-grid">
+      {visible('identity','pricing','scope') && <section className="catalog-field-group">
+        <div className="catalog-field-group-heading"><strong>Fiche versionnée</strong><span>Champs modifiables de cette version uniquement.</span></div>
+        {visible('identity','pricing') && <div className="catalog-fields-grid">
           {showIdentity && <label>Code canonique AW (facultatif)<input value={draft.canonicalCode} onChange={(e) => onChange({ ...draft, canonicalCode: e.target.value })} placeholder="AW-WEB-VITRINE" /></label>}
           <label>Nature commerciale<select value={draft.commercialKind} onChange={(e) => onChange({ ...draft, commercialKind: e.target.value as CatalogDraft['commercialKind'] })}><option value="">Non renseignée</option>{CATALOG_COMMERCIAL_KINDS.map((kind) => <option key={kind} value={kind}>{KIND_LABELS[kind]}</option>)}</select></label>
           <label>Famille canonique<input value={draft.familyCode} onChange={(e) => onChange({ ...draft, familyCode: e.target.value })} placeholder="WEB" /></label>
@@ -772,8 +909,8 @@ function CatalogFields({ draft, onChange, showIdentity = false }: { draft: Catal
           <label>Unité<input value={draft.unit} onChange={(e) => onChange({ ...draft, unit: e.target.value })} placeholder="Page, heure, produit…" /></label>
           <label>Périodicité<input value={draft.periodicity} onChange={(e) => onChange({ ...draft, periodicity: e.target.value })} placeholder="Ponctuelle, mensuelle, annuelle…" /></label>
           <label>Base de prix<select value={draft.priceBasis} onChange={(e) => onChange({ ...draft, priceBasis: e.target.value as CatalogPriceBasis, ...(e.target.value === 'actual_cost' ? { priceMode: 'quote_only' as const, priceEuros: '' } : {}) })}><option value="listed">Tarif catalogue</option><option value="actual_cost">Coût tiers réel</option></select></label>
-        </div>
-        <div className="catalog-fields-grid">
+        </div>}
+        {visible('scope') && <div className="catalog-fields-grid">
           <label className="catalog-wide">
             <span className="field-label-with-help">Nature de la prestation <FieldHelp text="Décris en une courte phrase le rôle de cette prestation. Exemple : rédaction d’un article de blog optimisé ou création d’une page supplémentaire." /></span>
             <input value={draft.nature} onChange={(e) => onChange({ ...draft, nature: e.target.value })} placeholder="Ex. Rédaction d’un article de blog prêt à publier" />
@@ -794,10 +931,10 @@ function CatalogFields({ draft, onChange, showIdentity = false }: { draft: Catal
             <span className="field-label-with-help">Prérequis <FieldHelp text="Un élément par ligne. Informations, accès ou validations nécessaires avant de commencer." /></span>
             <textarea value={draft.prerequisitesText} onChange={(e) => onChange({ ...draft, prerequisitesText: e.target.value })} placeholder={"Sujet validé\nAccès WordPress"} />
           </label>
-        </div>
-      </section>
+        </div>}
+      </section>}
 
-      <section className="catalog-field-group">
+      {visible('pricing') && <section className="catalog-field-group">
         <div className="catalog-field-group-heading"><strong>Tarification & délai</strong><span>Références commerciales et estimation interne.</span></div>
         <div className="catalog-fields-grid">
           <label>
@@ -825,21 +962,23 @@ function CatalogFields({ draft, onChange, showIdentity = false }: { draft: Catal
             <input inputMode="numeric" value={draft.recommendedDelayDays} onChange={(e) => onChange({ ...draft, recommendedDelayDays: e.target.value })} />
           </label>
         </div>
-      </section>
+      </section>}
 
-      <section className="catalog-field-group">
-        <div className="catalog-field-group-heading"><strong>Cadre commercial</strong><span>Informations de contrat et conseils internes.</span></div>
-        <div className="catalog-fields-grid">
+      {visible('identity','sales','contracts') && <section className="catalog-field-group">
+        <div className="catalog-field-group-heading"><strong>Cadre et aide commerciale</strong><span>Informations versionnées, distinctes des CGV publiées.</span></div>
+        {visible('identity') && <div className="catalog-fields-grid">
           <label>Référence de source<input value={draft.sourceReference} onChange={(e) => onChange({ ...draft, sourceReference: e.target.value })} placeholder="Document ou référence de décision" /></label>
           <label>Empreinte source SHA-256<input value={draft.sourceSha256} onChange={(e) => onChange({ ...draft, sourceSha256: e.target.value })} /></label>
           <label>Ligne ou clé de source<input value={draft.sourceRecordKey} onChange={(e) => onChange({ ...draft, sourceRecordKey: e.target.value })} /></label>
-        </div>
-        <div className="catalog-fields-grid">
+        </div>}
+        {visible('contracts') && <div className="catalog-fields-grid">
           <details className="contract-legacy"><summary>Ancien libellé contractuel (legacy)</summary><p>Conservé pour compatibilité uniquement. Les types structurés se choisissent dans les références contractuelles de la version Catalogue.</p><input readOnly value={draft.contractType} aria-label="Ancien libellé contractuel legacy" /></details>
           <label className="catalog-wide">
             <span className="field-label-with-help">Conditions commerciales <FieldHelp text="Conditions particulières à reprendre dans le devis lorsque cette prestation est utilisée." /></span>
             <textarea value={draft.specialTerms} onChange={(e) => onChange({ ...draft, specialTerms: e.target.value })} />
           </label>
+        </div>}
+        {visible('sales') && <div className="catalog-fields-grid">
           <label className="catalog-wide">
             <span className="field-label-with-help">Besoin client <FieldHelp text="Formule le problème que la prestation aide à résoudre. Utilisé pour rechercher cette prestation depuis Prospects et Devis après publication." /></span>
             <textarea value={draft.commercialParameters.clientNeed ?? ''} onChange={e => onChange({
@@ -862,9 +1001,9 @@ function CatalogFields({ draft, onChange, showIdentity = false }: { draft: Catal
             <span className="field-label-with-help">Conseil interne AtoumWeb <FieldHelp text="Bonne pratique, point de vigilance ou conseil réservé à AtoumWeb. Jamais affiché automatiquement au client." /></span>
             <textarea value={draft.internalAdvice} onChange={(e) => onChange({ ...draft, internalAdvice: e.target.value })} placeholder="Ex. demander le sujet, le mot-clé principal et les visuels avant démarrage." />
           </label>
-          {showIdentity && <label className="catalog-public-check"><input type="checkbox" checked={draft.visiblePublic} onChange={(e) => onChange({ ...draft, visiblePublic: e.target.checked })} /> Visible sur le site public</label>}
-        </div>
-      </section>
+        </div>}
+        {showIdentity && <label className="catalog-public-check"><input type="checkbox" checked={draft.visiblePublic} onChange={(e) => onChange({ ...draft, visiblePublic: e.target.checked })} /> Visible sur le site public</label>}
+      </section>}
     </div>
   );
 }

@@ -34,7 +34,7 @@ import {CatalogPage} from '${repo.replaceAll('\\', '/')}/src/renderer/commercial
 import commercialSource from '${repo.replaceAll('\\', '/')}/data/catalogue/atoumweb-catalogue-v1.json';
 const oldVersion={id:'old-v1',itemId:'legacy-id',versionNumber:1,status:'published',priceMode:'fixed',priceCents:69900,description:'Ancienne offre',inclusions:[],exclusions:[],prerequisites:[],createdAt:'2026-09-14',publishedAt:'2026-09-14'};
 const items=[{id:'legacy-id',type:'service',name:'Ancien élément témoin',category:'Web',status:'active',visiblePublic:false,canonicalCode:null,currentVersion:oldVersion,versions:[oldVersion],createdAt:'2026-09-14'}];
-window.calls={create:[],version:[],assign:[],publish:0};window.items=items;window.messages=[];
+window.calls={create:[],version:[],saveDraft:[],assign:[],statuses:[],publish:0};window.items=items;window.messages=[];window.simulateLostVersionReply=false;
 window.fixtureErrors=[];window.addEventListener('error',event=>window.fixtureErrors.push(String(event.error?.stack||event.message)));window.addEventListener('unhandledrejection',event=>window.fixtureErrors.push(String(event.reason?.stack||event.reason)));
 window.importedVersion={...commercialSource.records.find(r=>r.canonicalCode==='AW-WEB-VITRINE').version,id:'legacy-import-v2',itemId:'legacy-id',versionNumber:2,status:'draft',createdAt:'2026-10-03'};
 window.categoryRecords=[];window.categoryCalls=[];window.categorySequence=0;
@@ -86,9 +86,36 @@ const categoryApi={
 window.atoumweb={catalogCategories:categoryApi,catalog:{
   list:async()=>structuredClone(items),getItem:async(id)=>structuredClone(items.find(i=>i.id===id)),
   create:async(input,version)=>{calls.create.push({input,version});const id='new-'+calls.create.length;const v={...version,id:id+'-v1',itemId:id,versionNumber:1,status:'draft',createdAt:'2026-10-03'};const item={...input,id,status:'active',canonicalCode:input.canonicalCode?.toUpperCase()||null,currentVersion:v,versions:[v]};items.push(item);return structuredClone(item)},
-  createVersion:async(id,input)=>{calls.version.push({id,input});const item=items.find(i=>i.id===id);const v={...input,id:id+'-v2',itemId:id,versionNumber:2,status:'draft',createdAt:'2026-10-03'};item.versions.unshift(v);return structuredClone(v)},
+  createVersion:async(id,input,requestId)=>{
+    const item=items.find(i=>i.id===id);
+    const previouslyCreated=item.versions.find(v=>v.id===requestId);
+    if(previouslyCreated){
+      if(previouslyCreated.priceCents!==input.priceCents)throw Error('Conflit : UUID utilisé avec contenu différent');
+      return structuredClone(previouslyCreated);
+    }
+    calls.version.push({id,input,requestId});
+    const nextVersion=Math.max(...item.versions.map(v=>v.versionNumber))+1;
+    const v={...input,id:requestId??id+'-v'+nextVersion,itemId:id,versionNumber:nextVersion,status:'draft',createdAt:'2026-10-03'};
+    item.versions.unshift(v);
+    if(item.currentVersion?.status!=='published')item.currentVersion=v;
+    if(window.simulateLostVersionReply){window.simulateLostVersionReply=false;throw Error('La réponse IPC a été perdue après écriture');}
+    return structuredClone(v);
+  },
+  saveDraftVersion:async(id,expected,input)=>{
+    const item=items.find(i=>i.versions.some(v=>v.id===id));
+    const v=item?.versions.find(v=>v.id===id);
+    if(!v||v.status!=='draft')throw Error('Version publiée ou retirée : crée un nouveau brouillon.');
+    if(JSON.stringify(v)!==JSON.stringify(expected))throw Error('Conflit : le brouillon a été modifié dans une autre fenêtre.');
+    calls.saveDraft.push({id,expected,input});
+    Object.assign(v,input);
+    if(item.currentVersion.id===id)item.currentVersion=v;
+    return structuredClone(v);
+  },
   assignCanonicalCode:async(id,code)=>{calls.assign.push({id,code});if(!/^AW-[A-Z0-9-]+$/.test(code))throw Error('Code canonique invalide');const item=items.find(i=>i.id===id);item.canonicalCode=code;item.identityProvenance={reference:'manual'};return structuredClone(item)},
   publishVersion:async()=>{calls.publish++},listOfferComponents:async()=>[],
+  listProductionBlueprints:async()=>[],
+  setStatus:async(id,status)=>{const item=items.find(x=>x.id===id);calls.statuses.push({id,status});item.status=status;return structuredClone(item)},
+  setVisiblePublic:async(id,visible)=>{const item=items.find(x=>x.id===id);item.visiblePublic=visible;return structuredClone(item)}, 
 },contractTypes:{
   list:async()=>[],catalog:async()=>[],setCatalog:async()=>[],
 },contractTerms:{library:{list:async()=>[]}},
@@ -127,7 +154,7 @@ app.whenReady().then(async () => {
       };
       const assert=(name,value)=>{checks.push({name,passed:Boolean(value)});if(!value)throw Error(name)};
       const click=async(text)=>{const b=[...document.querySelectorAll('button')].find(b=>b.textContent===text);if(!b)throw Error('Bouton absent : '+text);b.click();await wait()};
-      const fillField=async(field,value)=>{if(!field)throw Error('Champ absent');const proto=field.tagName==='SELECT'?HTMLSelectElement.prototype:HTMLInputElement.prototype;Object.getOwnPropertyDescriptor(proto,'value').set.call(field,value);field.dispatchEvent(new Event(field.tagName==='SELECT'?'change':'input',{bubbles:true}));await wait()};
+      const fillField=async(field,value)=>{if(!field)throw Error('Champ absent');const proto=field.tagName==='SELECT'?HTMLSelectElement.prototype:field.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;Object.getOwnPropertyDescriptor(proto,'value').set.call(field,value);field.dispatchEvent(new Event(field.tagName==='SELECT'?'change':'input',{bubbles:true}));await wait()};
       const field=(label)=>[...document.querySelectorAll('label')].find(l=>l.textContent.trim().startsWith(label))?.querySelector('input,select,textarea');
       const fill=async(label,value)=>fillField(field(label),value);
       await wait();
@@ -136,6 +163,16 @@ app.whenReady().then(async () => {
       assert('Tableau historique accessible',!!document.querySelector('tbody tr'));
       document.querySelector('tbody tr').click();
       const identitySection=await waitFor('.catalog-identity-section','fiche après bascule organisée → tableau');
+      assert('04C huit onglets accessibles',document.querySelectorAll('.catalog-editor-tabs [role=tab]').length===8);
+      assert('04C panneau ARIA connecté',document.querySelector('[role=tab][aria-selected=true]').getAttribute('aria-controls')===
+        document.querySelector('[role=tabpanel]').id);
+      document.querySelector('[role=tab][aria-selected=true]').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
+      await wait();
+      assert('04C navigation clavier flèche droite',document.querySelector('[role=tab][aria-selected=true]').textContent==='Tarifs & Abby'&&
+        document.activeElement===document.querySelector('[role=tab][aria-selected=true]'));
+      document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Home',bubbles:true}));
+      await wait();
+      assert('04C clavier Home revient à identité',document.querySelector('[role=tab][aria-selected=true]').textContent==='Identité');
       assert('Ancien élément sans identité inventée',identitySection.textContent.includes('Non attribué'));
       assert('Attribution désactivée sans code', [...document.querySelectorAll('button')].find(b=>b.textContent==='Attribuer ce code').disabled);
       await fill('Code AW à attribuer','invalide');await click('Attribuer ce code');
@@ -144,6 +181,21 @@ app.whenReady().then(async () => {
       assert('Attribution sur UUID explicite',calls.assign.at(-1).id==='legacy-id'&&items[0].canonicalCode==='AW-TEST-ANCIEN');
       assert('Code attribué consultable et non renommable',document.querySelector('.catalog-identity-section').textContent.includes('AW-TEST-ANCIEN')&&!field('Code AW à attribuer'));
       assert('Ancienne version préservée',items[0].versions.length===1&&items[0].currentVersion.description==='Ancienne offre');
+      await click('Modifier via une nouvelle version');
+      await click('Contenu & périmètre');
+      await fill('Description','Nouvelle proposition après publication');
+      window.simulateLostVersionReply=true;
+      await click('Créer v2');
+      assert('04C/E102 réponse IPC perdue, brouillon effectivement créé',items[0].versions.length===2&&
+        items[0].versions[0].status==='draft'&&calls.version.length===1);
+      assert('04C/E102 saisie locale et erreur conservées',!!document.querySelector('.catalog-version-editor .form-error')&&
+        [...document.querySelectorAll('.catalog-version-editor textarea')].some(t=>t.value==='Nouvelle proposition après publication'));
+      const requestId=calls.version[0].requestId;
+      assert('04C/E102 UUID présent dans demande IPC',typeof requestId==='string'&&requestId.length===36);
+      await click('Créer v2');
+      assert('04C/E102 second clic utilise le même UUID',items[0].versions.length===2&&
+        calls.version.length===1&&items[0].versions[0].id===requestId&&
+        items[0].currentVersion.description==='Ancienne offre');
       await click('+ Service / Offre');
       await fill('Nom','Licence de recette');await fill('Code canonique AW','AW-TEST-LICENCE');
       await fill('Nature commerciale','subscription');await fill('Famille canonique','TECH');
@@ -157,17 +209,43 @@ app.whenReady().then(async () => {
       assert('Unité, périodicité et provenance transmises',created.version.unit==='licence'&&created.version.periodicity==='annuelle'&&created.version.provenance.recordKey==='AW-TEST-LICENCE');
       assert('Pas de faux prix nul',created.version.priceCents===null&&created.version.priceBasis==='actual_cost');
       assert('Coût réel et nature visibles',document.body.textContent.includes('Coût tiers réel')&&document.body.textContent.includes('Abonnement'));
-      await click('Modifier via une nouvelle version');
-      assert('Métadonnées reprises dans une nouvelle version',field('Unité').value==='licence'&&field('Périodicité').value==='annuelle'&&field('Base de prix').value==='actual_cost'&&field('Référence de source').value==='Catalogue V1 témoin');
-      await click('Créer v2');
-      assert('Nouvelle version en brouillon sans publication',calls.version.length===1&&calls.publish===0&&items[1].versions[0].status==='draft');
+      await click('Reprendre le brouillon');
+      assert('04C brouillon original rouvert',field('Unité').value==='licence'&&field('Périodicité').value==='annuelle'&&field('Base de prix').value==='actual_cost'&&field('Référence de source').value==='Catalogue V1 témoin');
+      await click('Historique');
+      assert('04C publication bloquée pendant édition', [...document.querySelectorAll('.catalog-version-row button')].filter(b=>b.textContent==='Préparer la publication').every(b=>b.disabled));
+      await click('Contenu & périmètre');
+      await fill('Description','Enregistré en place, sans v2');
+      await click('Tarifs & Abby');
+      assert('04C champs tarifs réellement accessibles',!!field('Mode tarifaire')&&!!field('Prix AtoumWeb'));
+      await fill('Acompte par défaut (%)','150');
+      await click('Enregistrer le brouillon');
+      assert('04C montant invalide préserve le brouillon et ne touche pas à SQLite',
+        document.querySelector('.catalog-version-editor .form-error').textContent.includes('Acompte invalide')&&
+        window.calls.saveDraft.length===0);
+      await fill('Acompte par défaut (%)','30');
+      await click('Contenu & périmètre');
+      assert('04C changement d’onglet ne perd pas la saisie',field('Description').value==='Enregistré en place, sans v2');
+      await click('Enregistrer le brouillon');
+      assert('04C enregistrement sans nouvelle version',calls.saveDraft.length===1&&calls.version.length===1&&calls.publish===0&&items[1].versions.length===1);
+      assert('04C même ID de version conservé',calls.saveDraft[0].id===items[1].versions[0].id&&items[1].versions[0].description==='Enregistré en place, sans v2');
+      await click('Identité');await click('Reprendre le brouillon');
+      await click('Contenu & périmètre');
+      await fill('Description','Brouillon local à conserver');
+      items[1].versions[0].description='Changement fenêtre concurrente';
+      await click('Enregistrer le brouillon');
+      assert('04C conflit visible et éditeur conservé',!!document.querySelector('.catalog-version-editor .form-error')&&
+        [...document.querySelectorAll('.catalog-version-editor textarea')].some(t=>t.value==='Brouillon local à conserver'));
+      assert('04C aucune écriture concurrente ni duplication',calls.saveDraft.length===1&&items[1].versions.length===1&&
+        items[1].versions[0].description==='Changement fenêtre concurrente');
+      await click('Annuler');
       const search=document.querySelector('.inline-search');await fillField(search,'AW-TEST-LICENCE');
       assert('Recherche par code canonique',document.querySelectorAll('.catalog-compact-item').length===1&&document.querySelector('.catalog-compact-item').textContent.includes('Licence de recette'));
       await fillField(search,'Licence fournisseur de recette');
       assert('Recherche par libellé Abby',document.querySelectorAll('.catalog-compact-item').length===1);
       await fillField(search,'');items[0].versions.unshift(importedVersion);
       const legacyRow=[...document.querySelectorAll('.catalog-compact-item')].find(r=>r.textContent.includes('Ancien élément témoin'));if(!legacyRow)throw Error('Ancien item absent de la liste');legacyRow.click();await wait();
-      assert('Brouillon importé consultable sans remplacer la version publiée',document.querySelector('.catalog-import-draft')&&document.querySelector('.catalog-current-version').textContent.includes('Ancienne offre'));
+      await click('Historique');
+      assert('Brouillon importé consultable sans remplacer la version publiée',!!document.querySelector('.catalog-import-draft')&&items[0].currentVersion.description==='Ancienne offre');
       document.querySelector('.catalog-import-draft summary').click();await wait();
       const importedDetail=document.querySelector('.catalog-import-draft');
       assert('Paramètres, inclusions et provenance importés visibles',importedDetail.open&&importedDetail.textContent.includes(importedVersion.commercialParameters.reviewTerms)&&importedDetail.textContent.includes(importedVersion.provenance.recordKey)&&importedDetail.textContent.includes(importedVersion.inclusions[0]));
@@ -215,6 +293,13 @@ app.whenReady().then(async () => {
       document.querySelector('[data-catalog-item-id="test-vitrine"]').click();
       const openedFromCard=await waitFor('[data-search-entity-id="test-vitrine"]','fiche via carte 04B');
       assert('04B carte ouvre le bon item via route existante',openedFromCard.textContent.includes('Site vitrine'));
+      await click('Production');
+      assert('04C panneau production réel monté',!!document.querySelector('.catalog-production-panel'));
+      assert('04C consultation de production sans Projet créé',document.querySelector('.catalog-production-panel').textContent.includes('Aucun blueprint lié'));
+      await click('Aide à la vente');
+      assert('04C aide commerciale non configurée signalée sans faux contenu',document.querySelector('.catalog-editor-tab-panel').textContent.includes('Aucune aide à la vente configurée'));
+      await click('Historique');
+      assert('04C versions historiques accessibles',!!document.querySelector('.catalog-versions'));
       // E95: exercise React category administration with a mocked IPC contract,
       // alongside backend SQLite tests that enforce actual transactions and FK.
       document.querySelector('.catalog-detail-heading-actions .close-detail').click();await wait();
@@ -259,6 +344,15 @@ app.whenReady().then(async () => {
         newService.input.categoryId===window.categoryRecords[0].id&&
         newService.input.category==='Contenu éditorial');
       assert('E95 première version non publiée',newService.version.priceMode==='fixed'&&window.calls.publish===0);
+      await fillField(document.querySelector('select[aria-label="Statut de la prestation"]'),'archived');
+      assert('04C changement de statut non encore écrit',window.calls.statuses.length===0&&
+        window.items.at(-1).status==='active'&&!!document.querySelector('.catalog-status-confirmation'));
+      await click('Annuler le changement');
+      assert('04C annulation statut sans écriture',window.calls.statuses.length===0&&window.items.at(-1).status==='active');
+      await fillField(document.querySelector('select[aria-label="Statut de la prestation"]'),'archived');
+      await click('Confirmer le statut');
+      assert('04C confirmation statut seule déclenche l’écriture',window.calls.statuses.length===1&&
+        window.items.at(-1).status==='archived'&&window.items.at(-1).versions.length===1);
       document.querySelector('.catalog-detail-heading-actions .close-detail').click();await wait();
       await click('Catégories existantes');
       await waitFor('.catalog-category-management','administration catégories, recette visuelle');

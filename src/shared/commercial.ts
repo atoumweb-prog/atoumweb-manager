@@ -151,16 +151,36 @@ export interface CatalogFilters {
   priceMode?: PriceMode | null;
 }
 
+/** Existing project production blueprints attached to one immutable catalogue version. */
+export interface CatalogProductionBlueprintLink {
+  id: string;
+  catalogVersionId: string;
+  templateVersionId: string;
+  templateName: string;
+  versionNumber: number;
+  templateStatus: 'draft' | 'published' | 'retired';
+  role: 'base' | 'addon';
+  sortOrder: number;
+  quantityMode: string;
+  siteMode: string;
+}
+
 export interface CatalogApi {
   assignCanonicalCode(itemId: string, canonicalCode: string): Promise<CatalogItemDetail>;
   list(filters?: CatalogFilters): Promise<CatalogItemSummary[]>;
   getItem(id: string): Promise<CatalogItemDetail>;
   create(input: CatalogItemInput, firstVersion: CatalogVersionInput): Promise<CatalogItemDetail>;
-  createVersion(itemId: string, input: CatalogVersionInput): Promise<CatalogVersion>;
-  publishVersion(versionId: string): Promise<CatalogVersion>;
+  /** An optional stable request UUID makes network retries idempotent. */
+  createVersion(itemId: string, input: CatalogVersionInput, requestId?: string): Promise<CatalogVersion>;
+  /** Update only an existing draft; expected is the last loaded version for optimistic concurrency. */
+  saveDraftVersion(versionId: string, expected: CatalogVersion, input: CatalogVersionInput): Promise<CatalogVersion>;
+  /** Optional snapshot check prevents publication of a concurrently edited draft. */
+  publishVersion(versionId: string, expected?: CatalogVersion): Promise<CatalogVersion>;
   setStatus(itemId: string, status: CatalogItemStatus): Promise<CatalogItemSummary>;
   setVisiblePublic(itemId: string, visible: boolean): Promise<CatalogItemSummary>;
   listOfferComponents(offerVersionId: string): Promise<OfferComponent[]>;
+  /** Read the real blueprint references; never create a Project on inspection. */
+  listProductionBlueprints(versionId: string): Promise<CatalogProductionBlueprintLink[]>;
   setOfferComponents(offerVersionId: string, components: OfferComponentInput[]): Promise<OfferComponent[]>;
 }
 
