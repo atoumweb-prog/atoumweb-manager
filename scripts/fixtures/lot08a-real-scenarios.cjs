@@ -96,7 +96,7 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
       await js('document.querySelector(".intervention-conclusion-content .button-row button.secondary-button").click()');
       for(let i=0;i<80&&!updateStarted;i++)await sleep(30);
       test(updateStarted&&!!releaseUpdate,'E226 actual IPC save deliberately pending');
-      test(await get('!!document.querySelector(".intervention-conclusion-grid fieldset")?.disabled'),
+      test(await get('!!document.querySelector("fieldset.intervention-conclusion-grid")?.disabled'),
         'E226 pending locks the real conclusion form');
       const pendingConfirmations=confirmations.length;
       answers.push(1); // Même Quitter confirmé doit être refusé tant que pending.
@@ -107,7 +107,7 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
       test(await value()==='PENDING E226 A','E226 pending preserves draft content');
       test(db.operations.getIntervention(a.id).incidentSolution===null,'E226 pending has not committed');
       releaseUpdate();
-      await wait('!document.querySelector(".intervention-conclusion-grid fieldset")?.disabled',
+      await wait('!document.querySelector("fieldset.intervention-conclusion-grid")?.disabled',
         'E226 save resumed and form unlocked');
       test(db.operations.getIntervention(a.id).incidentSolution==='PENDING E226 A',
         'E226 completed IPC persists A only');
