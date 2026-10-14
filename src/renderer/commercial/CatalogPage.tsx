@@ -870,7 +870,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
 function CommercialParametersSummary({ parameters }: { parameters?: CatalogCommercialParameters | null }) {
   if (!parameters) return null;
   const labels: Record<keyof CatalogCommercialParameters, string> = {
-    clientNeed: 'Besoin client', benefits: 'Bénéfices client', objections: 'Objections et réponses', keywords: 'Mots-clés métier', work: 'Travail prévu', options: 'Options / compléments',
+    clientNeed: 'Besoin client', benefits: 'Bénéfices client', salesPitch: 'Argumentaire commercial', qualificationQuestions: 'Questions de qualification', objections: 'Objections et réponses', keywords: 'Mots-clés métier', work: 'Travail prévu', options: 'Options / compléments',
     quoteRequiredWhen: 'Cas nécessitant un devis', deliverables: 'Livrables', deliveryTerms: 'Modalités / délai',
     reviewTerms: 'Corrections / recette', correctiveWarranty: 'Garantie corrective prévue',
     thirdPartyCosts: 'Coûts tiers', sourcePriceLabel: 'Règle tarifaire de source',
@@ -993,6 +993,24 @@ function CatalogFields({ draft, onChange, showIdentity = false, activeTab }: { d
             <textarea value={draft.commercialParameters.benefits ?? ''} onChange={e => onChange({
               ...draft, commercialParameters: { ...draft.commercialParameters, benefits: e.target.value },
             })} placeholder="Ex. pages plus faciles à retrouver, présentation claire de l'activité" />
+          </label>
+          <label className="catalog-wide">
+            <span className="field-label-with-help">Argumentaire commercial <FieldHelp text="Présentation commerciale proposée, préparée en interne. Jamais insérée automatiquement dans un devis ni dans les CGV." /></span>
+            <textarea value={draft.commercialParameters.salesPitch ?? ''} onChange={e => onChange({
+              ...draft, commercialParameters: { ...draft.commercialParameters, salesPitch: e.target.value },
+            })} placeholder="Ex. partir du besoin et expliquer le bénéfice concret de la prestation." />
+          </label>
+          <label className="catalog-wide">
+            <span className="field-label-with-help">Questions de qualification <FieldHelp text="Questions à poser au prospect avant de recommander la prestation." /></span>
+            <textarea value={draft.commercialParameters.qualificationQuestions ?? ''} onChange={e => onChange({
+              ...draft, commercialParameters: { ...draft.commercialParameters, qualificationQuestions: e.target.value },
+            })} placeholder={"Quel est votre objectif ?\nQuel contenu possédez-vous déjà ?"} />
+          </label>
+          <label className="catalog-wide">
+            <span className="field-label-with-help">Objections et réponses <FieldHelp text="Réponses préparées aux objections fréquentes, à valider humainement. Sans modifier automatiquement les clauses CGV." /></span>
+            <textarea value={draft.commercialParameters.objections ?? ''} onChange={e => onChange({
+              ...draft, commercialParameters: { ...draft.commercialParameters, objections: e.target.value },
+            })} placeholder="Ex. Budget : expliquer le périmètre, puis proposer un devis adapté." />
           </label>
           <label className="catalog-wide">
             <span className="field-label-with-help">Mots-clés et synonymes métier <FieldHelp text="Termes réellement édités et stockés dans cette version. Sépare-les par une virgule ou une ligne. La recherche ne devine pas de synonymes absents." /></span>
