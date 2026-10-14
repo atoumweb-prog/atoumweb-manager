@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useUnsavedDraft } from '../unsaved/unsaved';
 import {
   HOUR_PACK_SHORTFALL_DECISIONS,
   type HourPackShortfallCandidate,
@@ -35,16 +36,20 @@ export function HourPackShortfallPanel({ pack, packs, onChanged, onMessage }: {
   onMessage: (message: string) => void;
 }) {
   const [review, setReview] = useState<HourPackShortfallReview | null>(null);
+  const loadGeneration = useRef(0);
 
-  async function load(): Promise<void> {
-    try {
-      setReview(await window.atoumweb.hourPackShortfalls.review(pack.id));
-    } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible de vérifier les dépassements du pack.');
-    }
-  }
-
-  useEffect(() => { void load(); }, [pack.id, pack.balanceSeconds, pack.movements.length]);
+  useEffect(() => {
+    const generation = ++loadGeneration.current;
+    setReview(null);
+    void window.atoumweb.hourPackShortfalls.review(pack.id)
+      .then(next => { if (generation === loadGeneration.current) setReview(next); })
+      .catch(error => {
+        if (generation === loadGeneration.current) {
+          onMessage(error instanceof Error ? error.message : 'Impossible de vérifier les dépassements du pack.');
+        }
+      });
+    return () => { loadGeneration.current += 1; };
+  }, [pack.id, pack.balanceSeconds, pack.movements.length]);
 
   if (!review || review.candidateCount === 0) return null;
 
@@ -90,8 +95,16 @@ function ShortfallDecisionEditor({ packId, candidate, alternatives, onResolved, 
   const [amount, setAmount] = useState('');
   const [alternativePackId, setAlternativePackId] = useState('');
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+  useUnsavedDraft('Décision de dépassement de pack', { decision, reason, amount, alternativePackId }, {
+    group: `hour-pack-shortfall:${packId}:${candidate.debitMovementId}`,
+    dirty: decision !== 'bill_complement' || !!reason.trim() || !!amount.trim() || !!alternativePackId,
+    pending: saving,
+    discard: () => { setDecision('bill_complement'); setReason(''); setAmount(''); setAlternativePackId(''); },
+  });
 
   async function submit(): Promise<void> {
+    if (savingRef.current) return;
     if (!reason.trim()) { onMessage('Indique le motif de la décision sur le dépassement du pack.'); return; }
     const parsedAmount = Number(amount.replace(',', '.'));
     const amountCents = decision === 'bill_complement' ? Math.round(parsedAmount * 100) : null;
@@ -104,6 +117,7 @@ function ShortfallDecisionEditor({ packId, candidate, alternatives, onResolved, 
       return;
     }
 
+    savingRef.current = true;
     setSaving(true);
     try {
       const next = await window.atoumweb.hourPackShortfalls.decide(packId, {
@@ -113,11 +127,18 @@ function ShortfallDecisionEditor({ packId, candidate, alternatives, onResolved, 
         expectedAmountCents: amountCents,
         alternativePackId: decision === 'use_other_pack' ? alternativePackId : null,
       });
-      await onResolved(next);
-      onMessage('Décision de dépassement du pack enregistrée.');
+      try {
+        await onResolved(next);
+        onMessage('Décision de dépassement du pack enregistrée.');
+      } catch (error) {
+        onMessage(error instanceof Error
+          ? `Décision enregistrée, mais actualisation impossible : ${error.message}`
+          : 'Décision enregistrée, mais actualisation impossible.');
+      }
     } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible d’enregistrer la décision.');
+      onMessage(error instanceof Error ? error.message : 'Impossible de confirmer l’enregistrement de la décision.');
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   }
