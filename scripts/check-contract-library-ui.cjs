@@ -184,6 +184,10 @@ if(!process.versions.electron){
       const frozen=S.finalizeForTest(db,database.quotes,q.id),frozenBefore=frozen.contractSnapshotJson;database.quotes.markSent(q.id);S.acceptForTest(db,database.quotes,q.id);
       const newer=database.contractTerms.createVersion(module.id,{body:'NOUVEAU TEXTE APRES ACCEPTATION '+theme});database.contractTerms.publishVersion(newer.id);
       check(theme+' snapshot unchanged',database.quotes.get(q.id).contractSnapshotJson===frozenBefore&&database.contractTerms.presentation(q.id).text.includes('Texte adapté '+theme));
+      const acceptedQuote=database.quotes.get(q.id);
+      check(theme+' acceptance preserves frozen snapshot and timestamp',acceptedQuote.contractSnapshotJson===frozenBefore&&!!acceptedQuote.finalizedAt);
+      check(theme+' accepted contract excludes future clause library updates',!database.contractTerms.presentation(q.id).text.includes('NOUVEAU TEXTE APRES ACCEPTATION '+theme));
+      check(theme+' accepted contract remains non-editable',acceptedQuote.status!=='draft');
       const fp=database.contractTerms.presentation(q.id),pdfHtml=S.buildQuoteHtml(database.quotes.get(q.id),fp);check(theme+' PDF common presentation',fp.sections.every(s=>pdfHtml.includes(s.title))&&!pdfHtml.includes('NOUVEAU TEXTE APRES ACCEPTATION '+theme));
       const pdf=await js(`window.atoumweb.quotes.generatePdf(${JSON.stringify(q.id)})`);dialog.showOpenDialog=async()=>({canceled:false,filePaths:[pdf.path]});
       await js(`window.atoumweb.quotes.importContractDocument(${JSON.stringify(q.id)},'TEST')`);await js(`window.atoumweb.quotes.openContractDocument(${JSON.stringify(q.id)})`);check(theme+' PDF system reader endpoint exercised',opened.length>0);
