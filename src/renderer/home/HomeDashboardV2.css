@@ -6,5 +6,13 @@
 .home-widget-settings,.home-source-status {font-size:var(--ui-font-small,14px);}
 .home-critical-alerts {display:flex;flex-wrap:wrap;align-items:center;}
 .home-critical-alerts > strong {flex:1 1 240px;}
-.home-critical-alerts > button {flex:1 1 260px;}
+.home-critical-alerts > button {
+  flex:1 1 260px;
+  background:var(--surface-soft);
+  color:var(--text);
+  border:1px solid var(--border);
+  border-radius:9px;
+  padding:9px 12px;
+  cursor:pointer;
+}
 .home-dashboard .home-kpi-copy small {display:block;white-space:normal;overflow:visible;text-overflow:clip;-webkit-line-clamp:unset;}

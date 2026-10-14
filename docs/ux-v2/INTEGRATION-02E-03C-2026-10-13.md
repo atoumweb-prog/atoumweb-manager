@@ -77,3 +77,7 @@ Le push initial de cette branche n'est pas ciblé par `push`; l'ouverture de PR 
 Le nouveau contrôle combiné est obligatoire pour `github.head_ref == 'integration/ux-v2-02e-03c-v1'`. Il exécute les **mêmes fixtures CRM 03B/03C**, plus Recherche, Home, 02E, shell et UX-01 sur le checkout de la PR. Les anciennes étapes conditionnées à #98 restent réservées à #98 ; leur statut ignoré n'est jamais considéré comme une preuve. `--native-only` indique explicitement que typecheck et Vitest sont assurés par les étapes CI distinctes. Les captures et leurs empreintes sont produites ; l'absence de stockage d'artefacts GitHub reste une limite pour la revue visuelle distante.
 
 Recette humaine globale différée, pictogrammes/logo non figés, pas de certification juridique ni de migration générale des autres éditeurs. Aucun lancement Validation-MSI. Les PR #98–#101 et leurs branches doivent rester intactes jusqu'à une décision d'intégration explicite. Cette PR groupée est un candidat testable, **pas une autorisation de fusion**.
+
+## Recette finale du 14/10/2026
+
+La suite de cette livraison et les limites de l'inspection visuelle sont décrites dans [le rapport de recette finale](RECETTE-FINALE-PR102-2026-10-14.md). Le correctif de lisibilité et ses contrôles natifs s'ajoutent à la convergence, sans remplacer les preuves C01–C11 ni attribuer la CI779 à un nouveau HEAD. Les résultats définitifs du commit de stabilisation figurent dans son manifeste et dans la PR102.

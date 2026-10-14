@@ -5,7 +5,7 @@
  * Aucun profil installé, Validation-MSI, mock de service ou état commercial
  * productif n'est utilisé. Seules les confirmations natives sont pilotées.
  */
-module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, saveScreenshot}) => {
+module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, saveScreenshot, observe = async () => {}}) => {
   const {dialog} = require('electron');
   const confirmations = [];
   let discardNext = false;
@@ -102,8 +102,10 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
 
     await clickText('.prospect-card-head','TEST 03B Actif Dijon');
     await wait('!!document.querySelector(".prospect-detail-panel")','fiche rapide');
+    await observe('prospect-rapid','.prospect-detail-panel');
     await clickText('.prospect-detail-panel button','Ouvrir la fiche de travail');
     await wait('!!document.querySelector(".prospect-desk-overlay")','fiche de travail réelle');
+    await observe('prospect-desk','.prospect-desk-overlay');
     await wait('!!document.querySelector(".prospect-principle-agreement button")','commande E73 dans le vrai devis');
     await clickText('.prospect-principle-agreement button','Accord de principe confirmé');
     await wait('!!document.querySelector(".prospect-principle-agreement [role=status]")','confirmation E73 affichée');
@@ -140,6 +142,7 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
       'R03B-18: Rester garde le brouillon intact');
     test(!db.actions.list({ownerType:'prospect',ownerId:active.id}).some(a=>a.type==='follow_up'),
       'R03B-18: aucune relance créée en quittant un brouillon');
+    await observe('quote-followup-dirty','.prospect-quote-panel .followup-inline');
     discardNext=true;
     await js('document.querySelector(".prospect-desk-overlay .close-detail").click();');
     await wait('!document.querySelector(".prospect-desk-overlay")','sortie explicitement confirmée');
@@ -307,6 +310,7 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
       'choice.value="resolved";choice.dispatchEvent(new Event("change",{bubbles:true}));');
     await wait('!!document.querySelector(".prospect-desk-overlay .prospect-checklist-conflict")',
       'conflit visible dans la fiche de travail');
+    await observe('checklist-conflict','.prospect-checklist-conflict');
     test(prospectStage(needProspect.id).missingInformation===concurrentChecklist,
       'R03C-16: la saisie obsolète ne remplace pas les informations de la seconde fenêtre');
     await clickText('.prospect-checklist-conflict button','Recharger uniquement la checklist');
@@ -338,6 +342,7 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
     await clickText('.need-identification-fields button.primary-button','Enregistrer l’identification du besoin');
     await wait('[...document.querySelectorAll(".prospect-desk-overlay .prospect-checklist-conflict")].some(e=>e.textContent.includes("le projet, le budget"))',
       'bandeau de conflit Projet/ Budget visible');
+    await observe('project-conflict','.need-identification-fields');
     test(prospectStage(needProspect.id).projectSummary==='Projet confirmé dans la seconde fenêtre'&&
       prospectStage(needProspect.id).budgetMinCents===75000,
       'R03C-16: sauvegarde obsolète ne remplace ni projet ni budget');
@@ -348,6 +353,7 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
       'R03C-16: formulaire synchronisé avec le projet réellement persisté');
     test(prospectStage(needProspect.id).missingInformation===concurrentChecklist,
       'R03C-16: la recharge du projet ne modifie pas la checklist');
+    await observe('needs-saved','.need-identification-fields');
 
     await clickText('.prequote-entry button','Contrôler avant devis');
     await wait('!!document.querySelector(".prequote-actions button.primary-button")',
@@ -358,6 +364,7 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
       'R03C-08: contrôle complet autorise la création volontaire');
     test(db.quotes.list({prospectId:needProspect.id}).length===0,
       'R03C-08: ouvrir le contrôle ne crée aucun devis');
+    await observe('prequote','.prequote-actions');
     await clickText('.prequote-actions button.primary-button','Passer à l’édition du devis');
     for(let i=0;i<100&&db.quotes.list({prospectId:needProspect.id}).length===0;i++)await sleep(70);
     const made = db.quotes.list({prospectId:needProspect.id});
@@ -370,6 +377,8 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
       'R03C-08: préparer le devis ne convertit pas le Prospect');
     await wait('document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("aria-label")==="Devis"',
       'naviguer vers le véritable brouillon de devis');
+    await wait('!!document.querySelector(".quote-detail-panel")','détail devis réel chargé');
+    await observe('quote-draft','.quote-detail-panel');
     test(db.database.get('PRAGMA integrity_check').integrity_check==='ok',
       'R03C-18: intégrité SQLite TEMP après création devis');
     test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','R03B-20: intégrité SQLite TEMP');

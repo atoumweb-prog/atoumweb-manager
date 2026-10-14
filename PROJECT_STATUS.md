@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 14/10/2026 — Recette finale de PR102, sans fusion
+
+- Départ8d8b359a/CI779 verte, base278ff2da, worktree propre ; sources98–101 intactes. Inspection agent effective des81 PNG de référence, distincte de toute acceptation humaine métier.
+- Défauts de lisibilité reproduits : action critique Home Noir1,0336:1 ; champs historiques blancs/text-fill clair ; actions primaires et textes des fiches/chrono. Corrections CSS ciblées, sans changement de services, règles, migrations ou workflow.
+- Recette permanente complémentaire :15 scènes réellement ouvertes ×9 variantes=135 captures synchronisées ; même devis issu du Pré-devis, Projet prévisionnel, acceptation explicite TEST et Client idempotent ; qualification pending/error/draft, Tab/Shift-Tab et confirmations exactes.527 contrôles locaux de mise au point réussis ; validation finale propre/typecheck/1020 Vitest/ensemble natif à rejouer au SHA de stabilisation avant publication.
+- [Rapport final et procédure de fusion/retour arrière](docs/ux-v2/RECETTE-FINALE-PR102-2026-10-14.md). Résultats définitifs au SHA publié dans le manifeste et le corps de PR pour éviter une CI documentaire supplémentaire. PR102 reste draft, aucun merge/04A/Validation-MSI ; revue humaine et accord de fusion encore nécessaires.
+
 ## 14/10/2026 — Finalisation de l'intégration 02E / 03C
 
 - PR102 reste draft ; main278ff2da, sources98–101 et références inchangés. Checkpoint74782268 local complet vert :1020tests/35restaurations/6binaires/sansRPC ; convergence37/CRM77/Recherche92/Home55/parcours62/shell374/UX01183 et81captures, TEMP/intégrité/FK/migrations/nettoyages OK.
