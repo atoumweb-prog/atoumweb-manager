@@ -69,7 +69,7 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
     saveInFlight.current=sourceId;
     setSaving(true);setError('');
     try{
-      const links=await window.atoumweb.catalog.replaceRecommendations(sourceId,targets,savedLinks.map(link=>link.targetVersionId),targets.map(id=>({targetVersionId:id,reason:'',status:'active',conditions:'',provenance:'manual',...metadata[id]})));
+      const links=await window.atoumweb.catalog.replaceRecommendations(sourceId,targets,savedLinks.map(link=>link.targetVersionId),targets.map(id=>({targetVersionId:id,reason:'',status:'active',conditions:'',provenance:'manual',...metadata[id]})),savedLinks.map(link=>({targetVersionId:link.targetVersionId,reason:link.reason??'',status:link.status??'active',conditions:link.conditions??'',provenance:link.provenance??'manual'})));
       if(sourceRef.current!==savingSourceId||requestEpoch.current!==saveEpoch)return;
       setSavedLinks(links);const saved=links.map(link=>link.targetVersionId);
       const info=Object.fromEntries(links.map(link=>[link.targetVersionId,{targetVersionId:link.targetVersionId,
