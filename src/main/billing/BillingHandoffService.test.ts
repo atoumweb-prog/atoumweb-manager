@@ -296,4 +296,32 @@ describe('BillingHandoffService', () => {
     expect(billing.get('billing-wrongmime')).toMatchObject({status:'ready',invoiceDocumentId:null});
   });
 
+
+  it('refuse le rapprochement implicite d’une facture Abby avec deux sources', () => {
+    const now='2026-10-14T14:00:00.000Z';
+    for (const id of ['bill-source-a','bill-source-b']) {
+      database.run(
+        `INSERT INTO billing_items
+         (id,client_account_id,source_type,source_id,source_key,description,expected_amount_cents,theoretical_value_cents,status,created_at,updated_at)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+        [id,clientId,'other',id,'other:'+id,id,1000,1000,'ready',now,now],
+      );
+    }
+    for (const id of ['abby-shared-a','abby-shared-b']) {
+      database.run(
+        `INSERT INTO client_documents
+         (id,client_account_id,category,title,original_name,relative_path,mime_type,size_bytes,sha256,created_at,updated_at)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+        [id,clientId,'invoice','Facture partagée',id+'.pdf',
+          'Clients/test/Documents/03 Factures/'+id+'.pdf','application/pdf',100,'a'.repeat(64),now,now],
+      );
+    }
+    billing.attachInvoice('bill-source-a','abby-shared-a',{reference:'ABBY-MULTI'});
+    expect(() => billing.attachInvoice('bill-source-b','abby-shared-a')).toThrow(/déjà associée à un autre élément/);
+    expect(() => billing.attachInvoice('bill-source-b','abby-shared-b')).toThrow(/PDF Abby identique/);
+    expect(billing.get('bill-source-a')).toMatchObject({status:'invoiced',invoiceDocumentId:'abby-shared-a'});
+    expect(billing.get('bill-source-b')).toMatchObject({status:'ready',invoiceDocumentId:null});
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
 });
