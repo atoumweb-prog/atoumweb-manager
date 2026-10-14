@@ -111,10 +111,10 @@ if(!process.versions.electron){
         button('Enregistrer les recommandations').click();
         assert('04D double save blocked',window.fixture.calls.length===number);
         window.swap();
-        await until(()=>document.body.textContent.includes('Autre fiche')||document.body.textContent.includes('Aucune recommandation'),'second version');
+        await until(()=>document.body.textContent.includes('Aucune recommandation')&&!document.querySelector('.offer-component-row'),'second version');
         window.fixture.release();
         await sleep(180);
-        assert('04D late IPC does not copy old targets to new version',!document.body.textContent.includes('Audit')&&!document.body.textContent.includes('SEO')&&window.fixture.current.id==='other');
+        assert('04D late IPC does not copy old targets to new version',document.querySelectorAll('.offer-component-row').length===0&&window.fixture.current.id==='other'&&window.fixture.store['other-draft'].length===0);
         assert('04D no renderer errors',window.fixtureErrors.length===0);
         return checks;
       }.toString()+')()');
