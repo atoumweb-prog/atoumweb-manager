@@ -31,3 +31,15 @@ Copies/exports de travail != acceptation Abby. Un PDF accepté doit rester une p
 ## Décisions et limites
 
 E128–E133 (modèle de rubriques, arbitrages de conflits et renvois), E140–E143 (stratégie DOCX/PDF et preuves) et E146–E150 sont toujours ouverts dans la référence #82. Une implémentation progressive et additive sur fixtures reste possible, mais les décisions juridiques ne doivent pas être inventées par l'agent. **Clôture globale 05A–05F non certifiée. Aucune fusion automatique.**
+
+## Arbitrages métier validés par AtoumWeb — 14/10/2026 (05C)
+
+Ces décisions remplacent les options ouvertes de la conception #82 sans valider juridiquement le contenu des textes :
+
+1. **Rubriques** : retenir les huit rubriques dans l'ordre `object`, `scope`, `execution`, `delivery`, `finance`, `rights`, `recurring`, `end`. Chaque **version** de clause aura sa rubrique (`sectionKey`) et son rang (`rankInSection`). Une version non examinée reste explicitement « À classer ».
+2. **Revue des textes** : GPT peut préparer des propositions de classement et leurs motifs ; **publication du classement seulement après validation humaine**. Aucune migration automatique des textes réels, aucune déduction à partir de la famille Catalogue.
+3. **Applicabilité** : public, prestations réellement retenues, options achetées, formule, quantité et récurrence selon paramètres explicites. Tout contexte manquant = état à résoudre, non inférence métier.
+4. **Conflits** : montrer versions, références et provenance. Avertir dans tous les cas ; **bloquer uniquement les conflits explicitement définis comme bloquants**. Ne pas choisir la dernière version ou supprimer des clauses silencieusement.
+5. **Assemblage** : ordre canonique des rubriques, rang dans la rubrique, clé stable ; numérotation recalculée uniquement pour les brouillons futurs. Les snapshots gelés et les historiques absents demeurent inchangés.
+
+**Séquence de mise en œuvre sûre :** (a) types et règles pures/testées ; (b) migration additive avec valeur non classée et provenance ; (c) écran de propositions/revue, aucune application implicite aux 112 clauses ; (d) conditions et conflits explicites ; (e) moteur d'assemblage des brouillons ; (f) recette Electron/SQLite et matrice 05F. Le présent arbitrage n'est **pas** la revue juridique requise pour publier les textes.
