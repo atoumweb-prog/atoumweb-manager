@@ -25,6 +25,15 @@ describe('statistics helpers', () => {
     expect(inStatisticsRange('2026-08-15T10:00:00', previous!)).toBe(true);
   });
 
+  it('affecte une session traversant deux mois au mois de son démarrage', () => {
+    const current = statisticsPeriodRange('month', new Date(2026, 8, 15, 12));
+    const previous = previousStatisticsPeriodRange('month', new Date(2026, 8, 15, 12));
+    // Début local le 31 août, fin ultérieure en septembre : le filtre lit startedAt.
+    expect(inStatisticsRange('2026-08-31T23:30:00', current)).toBe(false);
+    expect(inStatisticsRange('2026-08-31T23:30:00', previous!)).toBe(true);
+    expect(inStatisticsRange('2026-09-01T00:30:00', current)).toBe(true);
+  });
+
   it('calcule les trimestres calendaires', () => {
     const range = statisticsPeriodRange('quarter', now);
     expect(inStatisticsRange('2026-07-01T00:00:00', range)).toBe(true);
