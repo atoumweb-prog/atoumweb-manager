@@ -351,6 +351,11 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
       'E08C reopened period with unresolved overage');
     await fillOverage('.maintenance-overage-item input[placeholder^=Ex]','E08C DECISION UNIQUE');
     await fillOverage('.maintenance-overage-item input[type=number]','49');
+    // Avant un appel financier, prouver que la même fiche visible a réellement
+    // reçu le nouveau motif et le nouveau montant (pas un doublon DOM périmé).
+    const expectedDecisionRow='.maintenance-overage-box[data-period-id="'+period.id+'"] .maintenance-overage-item';
+    await wait('[...document.querySelectorAll('+JSON.stringify(expectedDecisionRow)+')].some(row=>row.querySelector("input[placeholder^=Ex]")?.value==="E08C DECISION UNIQUE"&&row.querySelector("input[type=number]")?.value==="49")',
+      'E08C updated decision draft is present in real period before submit');
     const overageChannel='maintenance-overages:decide';
     const originalOverage=registered.get(overageChannel);
     if(typeof originalOverage!=='function')throw Error('E08C decision IPC handler missing');
