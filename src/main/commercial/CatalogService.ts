@@ -301,6 +301,23 @@ export class CatalogService {
           const saved = this.getVersion(requestId);
           if (saved.status !== 'draft')
             throw new Error('Requête déjà traitée : cette version n’est plus un brouillon. Recharge le Catalogue.');
+          // A request ID is one immutable *intent*, not a permission to reuse
+          // the ID for a different price, scope or contract. Only accept retries
+          // whose explicitly supplied fields match the stored draft.
+          const actualFields = saved as unknown as Record<string, unknown>;
+          const submittedFields = input as unknown as Record<string, unknown>;
+          for (const [key, value] of Object.entries(submittedFields)) {
+            if (value === undefined) continue;
+            let normalized: unknown = value;
+            if (key === 'priceCents' && input.priceMode === 'free') normalized = 0;
+            else if (key === 'familyCode') normalized = clean(value as string)?.toUpperCase() ?? null;
+            else if (key === 'priceBasis') normalized = value ?? 'listed';
+            else if (key === 'provenance') normalized = value ? this.normalizeProvenance(value as CatalogProvenance) : null;
+            else if (['nature','description','contractType','internalAdvice','specialTerms','abbyLabel','unit','periodicity'].includes(key))
+              normalized = clean(value as string);
+            if (JSON.stringify(normalized ?? null) !== JSON.stringify(actualFields[key] ?? null))
+              throw new Error('Conflit : cet identifiant de création a déjà été utilisé avec un contenu différent. Recharge le Catalogue.');
+          }
           this.database.exec('RELEASE SAVEPOINT catalog_service;');
           return saved;
         }
