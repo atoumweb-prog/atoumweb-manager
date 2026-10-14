@@ -56,12 +56,6 @@ jobs:
         run: |
           node scripts/check-project-blueprint-origins-ui.cjs --output (Join-Path $env:RUNNER_TEMP 'check-project-blueprint-origins-ui')
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Bridge exports and reusable packages regression 07E 07F
-        shell: pwsh
-        timeout-minutes: 10
-        run: |
-          npx vitest run src/main/bridge/BridgeSnapshotPackage.test.ts src/main/bridge/BridgeSnapshotService.test.ts src/main/projects/ProjectReuseExportService.test.ts src/main/referentials/AtoumWebCompositionPackageService.test.ts src/main/referentials/ReusePreparationService.test.ts --maxWorkers=2
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
   ux07d-reuse:
     if: ${{ github.head_ref == 'integration/ux-v2-07a-07b-navigation-validation' || github.ref_name == 'integration/ux-v2-07a-07b-navigation-validation' }}
@@ -79,4 +73,22 @@ jobs:
         timeout-minutes: 12
         run: |
           node scripts/check-guided-reuse-ui.cjs --output (Join-Path $env:RUNNER_TEMP 'check-guided-reuse-ui')
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+  ux07e-bridge:
+    if: ${{ github.head_ref == 'integration/ux-v2-07a-07b-navigation-validation' || github.ref_name == 'integration/ux-v2-07a-07b-navigation-validation' }}
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Dependencies
+        run: npm ci
+      - name: Bridge export and reuse packages regression 07E
+        shell: pwsh
+        timeout-minutes: 10
+        run: |
+          npx vitest run src/main/bridge/BridgeSnapshotPackage.test.ts src/main/bridge/BridgeSnapshotService.test.ts src/main/projects/ProjectReuseExportService.test.ts src/main/referentials/AtoumWebCompositionPackageService.test.ts src/main/referentials/ReusePreparationService.test.ts --maxWorkers=2
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
