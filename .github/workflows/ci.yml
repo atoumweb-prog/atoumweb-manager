@@ -57,6 +57,14 @@ jobs:
           node scripts/check-catalog-identity-ui.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: Electron Recommandations 04D — interactions et UX-01 Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
+        shell: pwsh
+        timeout-minutes: 6
+        run: |
+          node scripts/check-catalog-recommendations-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: UX-01 Catalogue 04D-04E — Windows TEMP
         if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
         shell: pwsh
