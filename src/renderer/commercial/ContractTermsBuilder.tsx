@@ -1,7 +1,7 @@
 import {mergeContractClauseDrafts} from './contractClauseDraftMerge';
 import {compareClauseField} from './contractClauseFieldDiff';
 import {compareDraftContractClauses} from './contractDraftImpact';
-import {planDraftContractAssembly} from '../../shared/draftContractAssemblyPlan';
+import {assembleReviewedDraftContract, type NumberedContractSection} from '../../shared/reviewedDraftContract';
 import type {ContractSectionReview} from '../../shared/contractSectionPolicy';
 import {isCurrentContractRequest} from './contractRequestGuard';
 import {useUnsavedDraft} from '../unsaved/unsaved';
@@ -49,7 +49,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   const contractActionPending=useRef(false);
   const loadedQuoteId=useRef(quote.id);
   const [presentation,setPresentation]=useState<ContractPresentation|null>(null);
-  const [sectionReviewStatus,setSectionReviewStatus]=useState<{loading:boolean;approved:number;pending:number;unresolved:number;error:string}|null>(null);
+  const [sectionReviewStatus,setSectionReviewStatus]=useState<{loading:boolean;approved:number;pending:number;unresolved:number;sections:NumberedContractSection[];ready:boolean;duplicates:number;error:string}|null>(null);
   const sectionRequest=useRef(0);
   const clauseEditorRef=useRef<HTMLDetailsElement|null>(null);
   const clauseDetailsRefs=useRef<Record<string,HTMLDetailsElement>>({});
@@ -174,22 +174,21 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     }
     const selected=build.clauses.filter(clause=>clause.enabled&&!clause.isOrphaned);
     const versioned=selected.filter(clause=>!!clause.sourceClauseVersionId);
-    setSectionReviewStatus({loading:true,approved:0,pending:0,unresolved:0,error:''});
+    setSectionReviewStatus({loading:true,approved:0,pending:0,unresolved:0,sections:[],ready:false,duplicates:0,error:''});
     void Promise.all(versioned.map(async clause=>({
       clause,review:await window.atoumweb.contractTerms.sectionReviews.get(clause.sourceClauseVersionId!),
     }))).then(entries=>{
       if(request!==sectionRequest.current||currentQuoteId.current!==quote.id)return;
-      const plan=planDraftContractAssembly(entries.map(({clause,review})=>({
-        id:clause.id,versionId:clause.sourceClauseVersionId!,section:review,
-      })),{audience:build.audience},[]);
+      const plan=assembleReviewedDraftContract(entries.map(({clause,review})=>({clause,review})),{audience:build.audience});
       setSectionReviewStatus({
         loading:false,approved:plan.included.length,
         pending:plan.unreviewed.length+selected.length-versioned.length,
-        unresolved:plan.unresolved.length,error:'',
+        unresolved:plan.unresolved.length,sections:plan.sections,
+        ready:plan.ready&&selected.length===versioned.length,duplicates:plan.duplicateIds.length,error:'',
       });
     }).catch(error=>{
       if(request===sectionRequest.current&&currentQuoteId.current===quote.id)
-        setSectionReviewStatus({loading:false,approved:0,pending:0,unresolved:0,error:errorMessage(error)});
+        setSectionReviewStatus({loading:false,approved:0,pending:0,unresolved:0,sections:[],ready:false,duplicates:0,error:errorMessage(error)});
     });
     return ()=>{sectionRequest.current++;};
   },[quote.id,editable,build]);
@@ -440,6 +439,19 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
           (sectionReviewStatus.unresolved ? ', '+sectionReviewStatus.unresolved+' conditions non résolues' : '')}.
         Cette indication ne modifie ni l’ordre actuel, ni le texte, ni la finalisation du devis.
       </p>}
+
+       {build?.snapshotState==='draft'&&sectionReviewStatus&&!sectionReviewStatus.loading&&!sectionReviewStatus.error&&
+         <details className="cgv-editing">
+           <summary>Aperçu canonique 05C des clauses approuvées — sans remplacement du contrat du devis</summary>
+           {!sectionReviewStatus.ready&&<p className="cgv-warning" role="status">Assemblage incomplet : rubriques non approuvées ou clauses sans version classée. {sectionReviewStatus.duplicates>0?'Doublons : '+sectionReviewStatus.duplicates+'.':''} Aperçu non prêt à finaliser.</p>}
+           {sectionReviewStatus.sections.map(section=><section key={section.key}>
+             <h4>{section.title}</h4>
+             <ol>{section.articles.map(article=><li key={article.id}>
+               <button type="button" className="secondary-button compact-button" onClick={()=>showClause(article.id)}>{article.number} — {article.title}</button>
+             </li>)}</ol>
+           </section>)}
+           <p className="muted">Numérotation fondée sur les classements approuvés. La compilation finale du devis reste inchangée tant que le raccordement métier n'est pas validé.</p>
+         </details>}
       {build?.snapshotState === 'draft' && <p className="muted" role="status">Contrat en préparation : les clauses peuvent encore évoluer tant que le devis reste modifiable. La version contractuelle sera figée lors de la finalisation.</p>}
       {build?.snapshotState === 'frozen' && <p className="muted" role="status">Contrat figé : le contenu conservé avec ce devis fait foi dans le Manager. Les changements ultérieurs de la bibliothèque ne modifient pas cette version{build.snapshotText === '' ? ', même lorsque son texte est vide' : ''}.</p>}
       {build?.snapshotState === 'historical_missing' && <p className="cgv-warning" role="status">Devis historique sans snapshot contractuel conservé : aucune reconstitution automatique à partir des CGV actuelles. Vérifier les pièces contractuelles originales avant toute utilisation.</p>}
