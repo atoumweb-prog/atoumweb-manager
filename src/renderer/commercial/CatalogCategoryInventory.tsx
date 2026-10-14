@@ -1,5 +1,5 @@
 import type { CatalogItemSummary } from '../../shared/commercial';
-import { buildCatalogCategoryInventory } from './catalogCategoryInventory';
+import { buildCatalogCategoryInventory } from './catalogCategoryInventoryModel';
 
 export function CatalogCategoryInventory({
   items, onFilter, onClose,
