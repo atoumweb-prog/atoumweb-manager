@@ -40,6 +40,14 @@ describe('05C — explicit commercial applicability',()=>{
     expect(evaluateContractApplicability(rule,{...context,recurring:false})).toBe('ineligible');
     expect(evaluateContractApplicability(rule,{...context,planCode:undefined})).toBe('unresolved');
   });
+  it('never approves invalid or unknown commercial quantities',()=>{
+    const rule={minQuantity:2};
+    for(const quantity of [NaN,Infinity,-1,1.5]){
+      expect(evaluateContractApplicability(rule,{quantity})).toBe('unresolved');
+    }
+    expect(evaluateContractApplicability(rule,{quantity:0})).toBe('ineligible');
+    expect(evaluateContractApplicability(rule,{quantity:2})).toBe('eligible');
+  });
   it('leaves source selections unmodified',()=>{
     const products=['WEB'],options=['SEO'];const rule={requiredProductCodes:['WEB'],requiredOptionCodes:['SEO']};
     expect(evaluateContractApplicability(rule,{productCodes:products,optionCodes:options})).toBe('eligible');
@@ -52,6 +60,11 @@ describe('05C — explicitly reviewed conflicts',()=>{
     const conflict={id:'c',clauseVersionIds:['v1','v2'],severity:'blocking' as const,reason:'Conditions contradictoires',reviewed:false};
     expect(evaluateContractConflicts([conflict],['v1','v2']).warnings).toHaveLength(1);
     expect(evaluateContractConflicts([conflict],['v1','v2']).blocking).toHaveLength(0);
+  });
+  it('does not treat a repeated single version as a two-version conflict',()=>{
+    const duplicate={id:'duplicate',clauseVersionIds:['v1','v1'],severity:'blocking' as const,reason:'Fixture',reviewed:true};
+    expect(evaluateContractConflicts([duplicate],['v1']).warnings).toHaveLength(0);
+    expect(evaluateContractConflicts([duplicate],['v1']).blocking).toHaveLength(0);
   });
   it('blocks only an explicitly reviewed blocking rule whose versions are both included',()=>{
     const rule={id:'contradiction',clauseVersionIds:['v1','v2'],severity:'blocking' as const,reason:'Arbitrage humain requis',reviewed:true};
