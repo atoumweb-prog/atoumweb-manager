@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 jobs:
   ux07ab:
-    if: ${{ github.head_ref == 'integration/ux-v2-07a-07b-navigation-validation' || github.head_ref == 'integration/ux-v2-07c-07f-convergence-20261014' || github.ref_name == 'integration/ux-v2-07a-07b-navigation-validation' }}
+    if: ${{ github.head_ref == 'integration/ux-v2-07a-07b-navigation-validation' || github.head_ref == 'integration/ux-v2-07c-07f-convergence-20261014' || github.head_ref == 'fix/ux-v2-07c-archived-replacement-guards-20261014' || github.ref_name == 'integration/ux-v2-07a-07b-navigation-validation' }}
     runs-on: windows-2022
     timeout-minutes: 55
     steps:
@@ -53,7 +53,7 @@ jobs:
 
   ux07d-reuse:
     # Also run the real native guided-reuse guard recipe on the isolated UX-07E PR.
-    if: ${{ github.head_ref == 'integration/ux-v2-07a-07b-navigation-validation' || github.head_ref == 'integration/ux-v2-07c-07f-convergence-20261014' || github.ref_name == 'integration/ux-v2-07a-07b-navigation-validation' || github.head_ref == 'fix/ux-v2-07e-reuse-unsaved-20261014' }}
+    if: ${{ github.head_ref == 'integration/ux-v2-07a-07b-navigation-validation' || github.head_ref == 'integration/ux-v2-07c-07f-convergence-20261014' || github.head_ref == 'fix/ux-v2-07c-archived-replacement-guards-20261014' || github.ref_name == 'integration/ux-v2-07a-07b-navigation-validation' || github.head_ref == 'fix/ux-v2-07e-reuse-unsaved-20261014' }}
     runs-on: windows-2022
     timeout-minutes: 20
     steps:
@@ -71,7 +71,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
   ux07e-bridge:
-    if: ${{ github.head_ref == 'integration/ux-v2-07a-07b-navigation-validation' || github.head_ref == 'integration/ux-v2-07c-07f-convergence-20261014' || github.ref_name == 'integration/ux-v2-07a-07b-navigation-validation' }}
+    if: ${{ github.head_ref == 'integration/ux-v2-07a-07b-navigation-validation' || github.head_ref == 'integration/ux-v2-07c-07f-convergence-20261014' || github.head_ref == 'fix/ux-v2-07c-archived-replacement-guards-20261014' || github.ref_name == 'integration/ux-v2-07a-07b-navigation-validation' }}
     runs-on: windows-2022
     timeout-minutes: 20
     steps:
@@ -95,7 +95,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
   ux07b-return:
-    if: ${{ github.head_ref == 'integration/ux-v2-07a-07b-navigation-validation' || github.head_ref == 'integration/ux-v2-07c-07f-convergence-20261014' || github.ref_name == 'integration/ux-v2-07a-07b-navigation-validation' }}
+    if: ${{ github.head_ref == 'integration/ux-v2-07a-07b-navigation-validation' || github.head_ref == 'integration/ux-v2-07c-07f-convergence-20261014' || github.head_ref == 'fix/ux-v2-07c-archived-replacement-guards-20261014' || github.ref_name == 'integration/ux-v2-07a-07b-navigation-validation' }}
     runs-on: windows-2022
     timeout-minutes: 20
     steps:
@@ -113,7 +113,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
   ux07c-commercial:
-    if: ${{ github.head_ref == 'integration/ux-v2-07a-07b-navigation-validation' || github.head_ref == 'integration/ux-v2-07c-07f-convergence-20261014' || github.ref_name == 'integration/ux-v2-07a-07b-navigation-validation' }}
+    if: ${{ github.head_ref == 'integration/ux-v2-07a-07b-navigation-validation' || github.head_ref == 'integration/ux-v2-07c-07f-convergence-20261014' || github.head_ref == 'fix/ux-v2-07c-archived-replacement-guards-20261014' || github.ref_name == 'integration/ux-v2-07a-07b-navigation-validation' }}
     runs-on: windows-2022
     timeout-minutes: 20
     steps:

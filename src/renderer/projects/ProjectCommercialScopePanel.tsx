@@ -39,9 +39,15 @@ export function ProjectCommercialScopePanel({projectId,onChanged}:{projectId:str
     } finally {setBusy(false);}
   }
   if(!scope || scope.state==='legacy') return error?<p role="alert">{error}</p>:null;
+  // The archived predecessor keeps its own commercial history but no longer
+  // owns the dossier. Never expose actions belonging to the replacement.
+  const isCurrentProvisional = scope.state==='provisional' && Boolean(scope.dossierId && scope.currentQuoteId);
+  const canAssignTargets = isCurrentProvisional || scope.state==='frozen';
   return <section className="project-commercial-scope" aria-label="Périmètre commercial du Projet">
-    <strong>{scope.state==='provisional'?'Projet prévisionnel — devis non accepté':'Périmètre accepté et figé'}</strong>
-    {scope.state==='provisional' && <><p>Les étapes, Sites et Pages préparent le périmètre du devis. Aucune maintenance, intervention ou facturation n’est activée.</p>
+    <strong>{scope.state==='provisional'
+      ? isCurrentProvisional?'Projet prévisionnel — devis non accepté':'Ancien Projet prévisionnel — archive conservée, lecture seule'
+      :'Périmètre accepté et figé'}</strong>
+    {isCurrentProvisional && <><p>Les étapes, Sites et Pages préparent le périmètre du devis. Aucune maintenance, intervention ou facturation n’est activée.</p>
       <button className="secondary-button" disabled={busy} onClick={()=>void run()}>Synchroniser le périmètre commercial</button>
       <div className="project-restart-review">
         <button type="button" className="secondary-button" disabled={busy} onClick={()=>void inspectRestart()}>Examiner « Repartir de zéro »</button>
@@ -65,13 +71,13 @@ export function ProjectCommercialScopePanel({projectId,onChanged}:{projectId:str
     {scope.conflicts.map(c=><div key={c.id} className="project-scope-conflict" role="group" aria-label={c.reason}>
       <strong>{c.reason}</strong><p>{c.label} · {c.entityKind==='node'?'Étape / Page':c.entityKind==='site'?'Site':'Prérequis'} : travail conservé, choix nécessaire avant acceptation.</p>
       {([['keep','Conserver'],['archive','Archiver'],['detach','Détacher de la provenance'],['delete','Supprimer si vierge']] as [ProjectConflictDecision,string][])
-        .map(([d,label])=><button key={d} className="secondary-button" disabled={busy||scope.state!=='provisional'} onClick={()=>void run(c.id,d)}>{label}</button>)}
+        .map(([d,label])=><button key={d} className="secondary-button" disabled={busy||!isCurrentProvisional} onClick={()=>void run(c.id,d)}>{label}</button>)}
     </div>)}
-    <details open={scope.targets?.some(t=>t.state==='pending')}><summary>Affectation des prestations — {scope.targets?.filter(t=>t.state==='pending').length||0} destination(s) à choisir</summary>
+    {canAssignTargets&&<details open={scope.targets?.some(t=>t.state==='pending')}><summary>Affectation des prestations — {scope.targets?.filter(t=>t.state==='pending').length||0} destination(s) à choisir</summary>
     {scope.targets?.map(t=><ContributionTargetChoices key={JSON.stringify([t.lineOrigin,t.slot,t.unitIndex])} target={t} choices={scope.targetChoices??{sites:[],pages:[],contexts:[]}} busy={busy} onAssign={async input=>{
       setBusy(true);setError('');try{setScope(await api.assignTarget(projectId,input));onChanged?.(await api.get(projectId));}catch(e){setError(e instanceof Error?e.message:String(e));}finally{setBusy(false);}
     }} />)}
-    </details>
+    </details>}
     {error&&<p className="form-error" role="alert">{error}</p>}
   </section>;
 }
