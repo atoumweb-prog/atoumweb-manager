@@ -178,7 +178,7 @@ if(!process.versions.electron){
     await require('./fixtures/02c-search-scenarios.cjs')({win,db,temp,workspace,registered,evalUI,get,wait,navigate,test,sleep});
     test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','02C integrity');
     test(db.database.all('PRAGMA foreign_key_check').length===0,'02C FK');
-    test(db.database.all('SELECT id FROM schema_migrations ORDER BY id').map(row=>row.id).join(',')===[...Array.from({length:66},(_,index)=>index+1),69].join(','),'02C migrations1–66+69');
+    test(db.database.all('SELECT id FROM schema_migrations ORDER BY id').map(row=>row.id).join(',')===Array.from({length:70},(_,index)=>index+1).join(','),'02C exact migrations1–70');
     console.log('02C_RESULT '+JSON.stringify({passed:checks,failed:0,consoleErrors,onlyTemp:true}));return;
   }
   if(lot03b){

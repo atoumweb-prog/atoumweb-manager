@@ -290,3 +290,10 @@ jobs:
         run: |
           node scripts/check-ux-v2-integration-validate.cjs --native-only
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Windows convergence native validation — current assembled SHA
+        if: ${{ startsWith(github.head_ref, 'codex/convergence-') || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' }}
+        shell: pwsh
+        run: |
+          node scripts/check-convergence-native.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

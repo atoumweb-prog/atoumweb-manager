@@ -1,5 +1,16 @@
 # AtoumWeb Manager — Suivi du projet
 
+
+## 15/10/2026 — Convergence générale autorisée, premier candidat04+05
+
+Autorisation utilisateur explicite : intégration progressive04–10, corrections et CI/fusions après contrôles verts. Aucune autorisation de publication externe de production. Contrats/CGV et temps/historiques/rattachements intangibles ; aucun nettoyage nécessaire ni effectué.
+
+Candidat depuis maincc0bc679 : Catalogue118e549bdd7 et tardif04B57afcdae, Contrats1211404f432, garde13812730939. Registre1–70 :67 catégories,68 recommandations,69 revues contractuelles,70 détails recommandations. SQL1–66 comparé au socle sans changement. Conflits résolus par conservation des quatre migrations et des assertions des deux branches ; workflow natif désormais exécuté sur le candidat assemblé et après merge main, pas seulement sur les anciens numéros de PR.
+
+Première suite assemblée :1262 tests existants verts/typecheck. Deux régressions supplémentaires sur la conservation et la reprise après échec70 passent. Copies des bases Windows66/18/34/65 migrées vers70 : textes/versions/identifiants/timestamps et données protégées identiques ;226 sessions et6 pauses de la sauvegarde65 conservées ;29+149 fichiers de référence copiés et empreintes identiques. Sauvegardes/restaurations des copies et FK/intégrité réussies. Originaux non ouverts en écriture, aucune réinjection dans la base active. Les preuves privées restent sous outputs ignoré par Git ; pas de données contractuelles ou temporelles réelles dans la CI.
+
+Recette finale du SHA porteur à exécuter avant publication, résultats exacts dans la PR de convergence. Recette humaine finale différée ; pas de certification juridique, Word/Abby/WordPress réels ni MSI installé revendiquée.
+
 ## 14/10/2026 — Dernier cas de focus : ligne toujours masquée
 
 - Le correctif693f6af a passé typecheck/282 natifs avec81 frames/UX-01183. Complément final : si le filtre masque encore la ligne à la fermeture, retour à la recherche et conservation de sa valeur. Deux assertions clavier supplémentaires, sans mutation métier. Nouveau candidat à recetter puis une seule actualisation corrective107/CIautomatique, aucun rerun manuel.
