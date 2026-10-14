@@ -226,8 +226,6 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
       test(db.hourPacks.get(pack.id).movements.filter(m=>m.type==='manual_correction').length===0,
         'E225 no movement committed before delayed IPC');
       releaseMove();
-      await wait('window.atoumweb.operations.hourPacks.list().then(items=>items.some(p=>p.id==='+
-        JSON.stringify(pack.id)+'))','E225 movement settled');
       for(let i=0;i<80&&db.hourPacks.get(pack.id).movements.filter(m=>m.type==='manual_correction').length===0;i++)await sleep(30);
       test(db.hourPacks.get(pack.id).movements.filter(m=>m.type==='manual_correction').length===1,
         'E225 only one persisted correction after double click');
