@@ -48,6 +48,23 @@ jobs:
           node scripts/check-catalog-identity-ui.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      # Lot 04D/04E: cross-cutting Catalogue UI and UX-01 checks on Windows TEMP.
+      - name: Electron Catalogue 04D-04E — Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          node scripts/check-catalog-identity-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: UX-01 Catalogue 04D-04E — Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          node scripts/check-unsaved-inputs-ui.cjs --lot-b --lot-c --review
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Typecheck
         run: npm run typecheck
 
