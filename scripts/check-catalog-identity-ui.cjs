@@ -104,9 +104,9 @@ app.whenReady().then(async () => {
     // Use the production CSS import chain and the real two-column shell, not a naked
     // React mock that would miss theme, density and horizontal overflow regressions.
     const main=fs.readFileSync(path.join(repo,'src/renderer/main.tsx'),'utf8');
-    const cssPaths=[...main.matchAll(/^import '\\.\/([^']+\\.css)';$/gm)].map(match=>match[1]);
+    const cssPaths=[...main.matchAll(/^import '\.\/([^']+\.css)';$/gm)].map(match=>match[1]);
     if(cssPaths.length<25)throw Error('Production renderer CSS import chain incomplete.');
-    const css=cssPaths.map(file=>fs.readFileSync(path.join(repo,'src/renderer',file),'utf8')).join('\\n');
+    const css=cssPaths.map(file=>fs.readFileSync(path.join(repo,'src/renderer',file),'utf8')).join('\n');
     if(css.includes('</style'))throw Error('Unexpected HTML closer in stylesheet.');
     const shell='<div class="app-shell"><aside class="sidebar"><div class="brand-block">AtoumWeb</div></aside>'+
       '<main class="main-area"><header class="topbar"><strong>Catalogue · recette native isolée</strong></header>'+
