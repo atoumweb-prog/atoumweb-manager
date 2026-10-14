@@ -1,4 +1,5 @@
 import {mergeContractClauseDrafts} from './contractClauseDraftMerge';
+import {isCurrentContractRequest} from './contractRequestGuard';
 import {useUnsavedDraft} from '../unsaved/unsaved';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CatalogItemSummary, QuoteDetail } from '../../shared/commercial';
@@ -77,7 +78,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     setBuild(next);
     const request=++presentationRequest.current;
     setPresentation(null);
-    void window.atoumweb.contractTerms.quotes.presentation(quote.id).then(value=>{if(request===presentationRequest.current&&currentQuoteId.current===quote.id)setPresentation(value);}).catch(e=>{if(request===presentationRequest.current&&currentQuoteId.current===quote.id)setError(errorMessage(e));});
+    void window.atoumweb.contractTerms.quotes.presentation(quote.id).then(value=>{if(isCurrentContractRequest(quote.id,currentQuoteId.current,request,presentationRequest.current))setPresentation(value);}).catch(e=>{if(request===presentationRequest.current&&currentQuoteId.current===quote.id)setError(errorMessage(e));});
     setDrafts(current=>mergeContractClauseDrafts(build?.clauses??[],current,next.clauses,saved));
   }
 
@@ -93,7 +94,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   async function load(): Promise<void> {
     const quoteId=quote.id;
     const request=++loadRequest.current;
-    const isCurrent=()=>request===loadRequest.current&&currentQuoteId.current===quoteId;
+    const isCurrent=()=>isCurrentContractRequest(quoteId,currentQuoteId.current,request,loadRequest.current);
     setLoading(true);
     setError('');
     try {
