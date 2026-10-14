@@ -1354,3 +1354,12 @@ body.catalog-resizing * {
 @media (max-width: 720px) {
   .catalog-editor-tabs [role="tab"] { flex: 1 1 auto; min-height: 38px; }
 }
+
+
+.catalog-status-confirmation {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  margin: 10px 0; padding: 12px; border: 1px solid var(--border);
+  border-radius: 10px; background: var(--surface-soft);
+}
+.catalog-status-confirmation p { flex: 1 1 100%; margin: 0; }
+.catalog-status-confirmation button { min-height: 36px; }
