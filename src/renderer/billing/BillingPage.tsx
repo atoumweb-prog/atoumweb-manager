@@ -65,6 +65,11 @@ export function BillingPage({ onMessage }: { onMessage: (message: string) => voi
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | BillingItemStatus>('all');
   const [sourceFilter, setSourceFilter] = useState<'all' | BillingItemSourceType>('all');
+  const [clientFilter, setClientFilter] = useState('all');
+  const [projectFilter, setProjectFilter] = useState('all');
+  const [pdfFilter, setPdfFilter] = useState<'all' | 'with' | 'without'>('all');
+  const [exactReference, setExactReference] = useState('');
+  const [dueBefore, setDueBefore] = useState('');
   const [splitPercent, setSplitPercent] = useState(38);
   const [expanded, setExpanded] = useState(false);
   const [invoiceReference, setInvoiceReference] = useState('');
@@ -110,11 +115,24 @@ export function BillingPage({ onMessage }: { onMessage: (message: string) => voi
     setInvoiceDate(dateInput(selected?.invoicedAt));
   }, [selected?.id, selected?.invoiceReference, selected?.invoicedAt]);
 
+  const clientOptions = useMemo(() => [...new Map(items.map((item) =>
+    [item.clientAccountId, item.clientLabel] as const)).entries()]
+    .sort((a, b) => a[1].localeCompare(b[1], 'fr-FR')), [items]);
+  const projectOptions = useMemo(() => [...new Map(items.filter((item) => item.projectId)
+    .map((item) => [item.projectId as string, item.projectLabel ?? item.projectId as string] as const)).entries()]
+    .sort((a, b) => a[1].localeCompare(b[1], 'fr-FR')), [items]);
+
   const filtered = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase('fr-FR');
     return items.filter((item) => {
       if (statusFilter !== 'all' && item.status !== statusFilter) return false;
       if (sourceFilter !== 'all' && item.sourceType !== sourceFilter) return false;
+      if (clientFilter !== 'all' && item.clientAccountId !== clientFilter) return false;
+      if (projectFilter !== 'all' && item.projectId !== projectFilter) return false;
+      if (pdfFilter === 'with' && !item.invoiceDocumentId) return false;
+      if (pdfFilter === 'without' && item.invoiceDocumentId) return false;
+      if (exactReference.trim() && (item.invoiceReference ?? '').trim().toLocaleLowerCase('fr-FR') !== exactReference.trim().toLocaleLowerCase('fr-FR')) return false;
+      if (dueBefore && (!item.dueAt || item.dueAt.slice(0, 10) > dueBefore)) return false;
       if (!needle) return true;
       return [
         item.clientLabel,
@@ -126,7 +144,7 @@ export function BillingPage({ onMessage }: { onMessage: (message: string) => voi
         STATUS_LABELS[item.status],
       ].some((value) => value.toLocaleLowerCase('fr-FR').includes(needle));
     });
-  }, [items, query, sourceFilter, statusFilter]);
+  }, [items, query, sourceFilter, statusFilter, clientFilter, projectFilter, pdfFilter, exactReference, dueBefore]);
 
   const readyItems = items.filter((item) => item.status === 'ready' || item.status === 'planned');
   const invoicedItems = items.filter((item) => item.status === 'invoiced');
@@ -245,6 +263,27 @@ export function BillingPage({ onMessage }: { onMessage: (message: string) => voi
         </select>
       </div>
     </div>
+    <details className="billing-advanced-filters">
+      <summary>Filtres complémentaires — client, projet, PDF, référence et échéance</summary>
+      <div className="billing-advanced-fields">
+        <label>Client<select aria-label="Filtrer les factures par client" value={clientFilter} onChange={(event) => setClientFilter(event.target.value)}>
+          <option value="all">Tous les clients</option>
+          {clientOptions.map(([id, label]) => <option value={id} key={id}>{label}</option>)}
+        </select></label>
+        <label>Projet<select aria-label="Filtrer les factures par projet" value={projectFilter} onChange={(event) => setProjectFilter(event.target.value)}>
+          <option value="all">Tous les projets</option>
+          {projectOptions.map(([id, label]) => <option value={id} key={id}>{label}</option>)}
+        </select></label>
+        <label>PDF<select aria-label="Filtrer les factures selon la présence de PDF" value={pdfFilter} onChange={(event) => setPdfFilter(event.target.value as typeof pdfFilter)}>
+          <option value="all">Tous</option><option value="with">Avec PDF</option><option value="without">Sans PDF</option>
+        </select></label>
+        <label>Référence exacte<input aria-label="Filtrer par référence de facture exacte" value={exactReference} onChange={(event) => setExactReference(event.target.value)} placeholder="N° Abby exact" /></label>
+        <label>Échéance au plus tard<input aria-label="Filtrer par échéance maximale" type="date" value={dueBefore} onChange={(event) => setDueBefore(event.target.value)} /></label>
+        <button className="secondary-button" type="button" onClick={() => {
+          setClientFilter('all'); setProjectFilter('all'); setPdfFilter('all'); setExactReference(''); setDueBefore('');
+        }}>Réinitialiser ces filtres</button>
+      </div>
+    </details>
 
     {loading ? <section className="panel"><p className="muted">Chargement de la facturation…</p></section> : <div
       className={selected ? `billing-workspace with-detail ${expanded ? 'detail-expanded' : ''}` : 'billing-workspace'}
