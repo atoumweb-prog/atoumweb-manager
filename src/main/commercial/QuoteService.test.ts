@@ -461,6 +461,29 @@ describe('QuoteService', () => {
     expect(crm.listProspects().find(item => item.id === prospect.id)?.clientAccountId).toBeFalsy();
   });
 
+  it('R06F-10 : une copie conserve ses clauses particulières sans modifier celles du devis original', () => {
+    const prospect = createProspect();
+    const original = quotes.create({ prospectId: prospect.id, subject: 'Conditions personnalisées' });
+    quotes.addCustomLine(original.id, { label: 'Service personnalisé', proposedUnitPriceCents: 30000 });
+    const terms = new ContractTermsService(database, documents);
+    terms.addCustomQuoteClause(original.id, { title: 'Délai particulier', body: 'Délai contractuel initial' });
+
+    const copy = quotes.duplicate(original.id);
+    const rows = (quoteId: string) => database.all<{ id: string; title: string; body: string }>(
+      "SELECT id,title,body FROM quote_contract_clauses WHERE quote_id=? AND source_kind='custom' ORDER BY sort_order", [quoteId],
+    );
+    expect(rows(original.id)).toHaveLength(1);
+    expect(rows(copy.id)).toHaveLength(1);
+    expect(rows(copy.id)[0].id).not.toBe(rows(original.id)[0].id);
+    expect(rows(copy.id)[0].body).toBe('Délai contractuel initial');
+
+    terms.updateQuoteClause(rows(copy.id)[0].id, { body: 'Délai propre à la copie' });
+    expect(rows(original.id)[0].body).toBe('Délai contractuel initial');
+    expect(rows(copy.id)[0].body).toBe('Délai propre à la copie');
+    expect(quotes.get(original.id).contractValueCents).toBe(30000);
+    expect(quotes.get(copy.id).contractValueCents).toBe(30000);
+  });
+
   it('R06E-13 / R06F-21 : une révision non raccordée au Projet échoue sans copie partielle', () => {
     const prospect = createProspect();
     const original = quotes.create({ prospectId: prospect.id, subject: 'Dossier sans cycle Projet' });
