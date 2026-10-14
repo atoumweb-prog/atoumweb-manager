@@ -11,6 +11,7 @@ import type { ClientSummary } from '../../shared/crm';
 import type { ProjectSummary } from '../../shared/projects';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
 import { businessBackupLocationActionLabel, businessBackupLocationStatus } from '../../shared/businessBackupPresentation';
+import { useUnsavedDraft } from '../unsaved/unsaved';
 import './BusinessBackupsPage.css';
 
 const BACKUP_TYPES: Array<{ id: BusinessBackupType; label: string }> = [
@@ -72,6 +73,25 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
     label: '', pathOrReference: '', notes: '',
   });
 
+  const createDraft = useUnsavedDraft('Déclaration de sauvegarde métier', form, {
+    ready: creating,
+    pending: mutationBusy,
+    discard: setForm,
+  });
+  const locationDraft = useUnsavedDraft('Nouvel emplacement de sauvegarde', locationForm, {
+    ready: !!selected,
+    resetKey: selected?.id,
+    pending: mutationBusy,
+    discard: setLocationForm,
+  });
+  function changeSelected(next: BusinessBackupRecord | null): void {
+    locationDraft.request(() => {
+      setSelected(next);
+      setDetailExpanded(false);
+      setLocationForm({ locationType: 'server', label: '', pathOrReference: '', notes: '' });
+    });
+  }
+
   const loadEpoch=useRef(0);useEffect(()=>()=>{loadEpoch.current++;},[]);
   async function load(preferredId?: string | null): Promise<void> {
     const epoch=++loadEpoch.current;
@@ -118,8 +138,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
     if (!selected) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setSelected(null);
-        setDetailExpanded(false);
+        if (!mutationLock.current) changeSelected(null);
       }
     };
     window.addEventListener('keydown', closeOnEscape);
@@ -141,7 +160,9 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
         notes: form.notes || null,
       });
       setCreating(false);
-      setForm({ projectId: '', clientAccountId: '', backupType: 'complete', label: '', backupAt: '', notes: '' });
+      const cleared = { projectId: '', clientAccountId: '', backupType: 'complete', label: '', backupAt: '', notes: '' };
+      setForm(cleared);
+      createDraft.saved(cleared);
       await load(created.id);
       setSelected(created);
       onMessage(`Sauvegarde métier « ${created.label} » enregistrée.`);
@@ -161,7 +182,9 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
         notes: locationForm.notes || null,
       };
       const changed = await window.atoumweb.businessBackups.addLocation(selected.id, input);
-      setLocationForm({ locationType: 'server', label: '', pathOrReference: '', notes: '' });
+      const cleared: typeof locationForm = { locationType: 'server', label: '', pathOrReference: '', notes: '' };
+      setLocationForm(cleared);
+      locationDraft.saved(cleared);
       setSelected(changed);
       await load(changed.id);
       onMessage(`Emplacement « ${input.label} » ajouté à la sauvegarde.`);
@@ -246,7 +269,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
         <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher une sauvegarde ou un emplacement…" />
         <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as BusinessBackupType | '')}><option value="">Tous les types</option>{BACKUP_TYPES.map((type) => <option key={type.id} value={type.id}>{type.label}</option>)}</select>
         <select value={locationFilter} onChange={(event) => setLocationFilter(event.target.value as BusinessBackupLocationType | '')}><option value="">Tous les emplacements</option>{LOCATION_TYPES.map((type) => <option key={type.id} value={type.id}>{type.label}</option>)}</select>
-        <button className="primary-button" type="button" disabled={mutationBusy} onClick={() => setCreating((value) => !value)}>{creating ? <><OperationIcon name="close" size={16} /> Fermer</> : <><OperationIcon name="database" size={16} /> Déclarer une sauvegarde</>}</button>
+        <button className="primary-button" type="button" disabled={mutationBusy} onClick={() => { if (creating) createDraft.request(() => setCreating(false)); else setCreating(true); }}>{creating ? <><OperationIcon name="close" size={16} /> Fermer</> : <><OperationIcon name="database" size={16} /> Déclarer une sauvegarde</>}</button>
       </article>
 
       {creating && <article className="panel business-backups-create">
@@ -270,7 +293,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
         {!detailExpanded && <article className="panel business-backups-list">
           <div className="panel-title"><div><span className="eyebrow">Historique</span><h2>Sauvegardes</h2></div><span className="status-pill">{records.length}</span></div>
           {records.length === 0 && <p className="muted">Aucune sauvegarde ne correspond aux filtres.</p>}
-          {records.map((record) => <button type="button" key={record.id} className={`business-backup-row ${selected?.id === record.id ? 'selected' : ''}`} disabled={mutationBusy} onClick={() => { setSelected(record); setDetailExpanded(false); }}>
+          {records.map((record) => <button type="button" key={record.id} className={`business-backup-row ${selected?.id === record.id ? 'selected' : ''}`} disabled={mutationBusy} onClick={() => changeSelected(record)}>
             <div><strong>{record.label}</strong><span>{backupTypeLabel(record.backupType)} · {dateLabel(record.backupAt)}</span></div>
             <div>{record.stable && <span className="stable-badge">Stable</span>}<span>{record.locations.length} emplacement{record.locations.length > 1 ? 's' : ''}</span></div>
           </button>)}
@@ -282,7 +305,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
         }}><span /></div>}
 
         {selected && <article className={`panel business-backups-detail ${detailExpanded ? 'expanded' : ''}`}>
-            <div className="panel-title business-backups-detail-heading"><div><span className="eyebrow">{backupTypeLabel(selected.backupType)} · {dateLabel(selected.backupAt)}</span><h2>{selected.label}</h2></div><div className="business-backups-detail-actions">{!selected.stable && <button className="secondary-button" type="button" disabled={mutationBusy} onClick={() => void runMutation(markStable)}><OperationIcon name="check-circle" size={16} /> Définir comme référence stable</button>}<button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" aria-label="Fermer" disabled={mutationBusy} onClick={() => { setSelected(null); setDetailExpanded(false); }}><OperationIcon name="close" size={18} /></button></div></div>
+            <div className="panel-title business-backups-detail-heading"><div><span className="eyebrow">{backupTypeLabel(selected.backupType)} · {dateLabel(selected.backupAt)}</span><h2>{selected.label}</h2></div><div className="business-backups-detail-actions">{!selected.stable && <button className="secondary-button" type="button" disabled={mutationBusy} onClick={() => void runMutation(markStable)}><OperationIcon name="check-circle" size={16} /> Définir comme référence stable</button>}<button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" aria-label="Fermer" disabled={mutationBusy} onClick={() => changeSelected(null)}><OperationIcon name="close" size={18} /></button></div></div>
             <div className="business-backup-context">
               <div><span>Projet</span><strong>{selected.projectId ? projectById.get(selected.projectId)?.name ?? selected.projectId : '—'}</strong></div>
               <div><span>Client</span><strong>{selected.clientAccountId ? clientById.get(selected.clientAccountId)?.displayName ?? selected.clientAccountId : '—'}</strong></div>
