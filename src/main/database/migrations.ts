@@ -255,7 +255,23 @@ export function ensureMigrationTable(database: DatabaseAdapter): void {
 
 export function getPendingMigrations(database: DatabaseAdapter): Migration[] {
   ensureMigrationTable(database);
-  const rows = database.all<{ id: number }>('SELECT id FROM schema_migrations ORDER BY id');
+  const byId = new Map<number, Migration>();
+  const byName = new Map<string, Migration>();
+  for (const migration of MIGRATIONS) {
+    const existingId = byId.get(migration.id);
+    if (existingId) throw new Error(`Collision migration id ${migration.id}: ${existingId.name} / ${migration.name}`);
+    const existingName = byName.get(migration.name);
+    if (existingName) throw new Error(`Collision migration name ${migration.name}: ${existingName.id} / ${migration.id}`);
+    byId.set(migration.id, migration);
+    byName.set(migration.name, migration);
+  }
+  const rows = database.all<{ id: number; name: string }>('SELECT id, name FROM schema_migrations ORDER BY id');
+  for (const row of rows) {
+    const expected = byId.get(Number(row.id));
+    if (!expected || expected.name !== row.name) {
+      throw new Error(`Historique SQLite incompatible pour migration ${row.id}: ${row.name} (attendu: ${expected?.name ?? 'migration inconnue'})`);
+    }
+  }
   const applied = new Set(rows.map((row) => Number(row.id)));
   return MIGRATIONS.filter((migration) => !applied.has(migration.id));
 }
