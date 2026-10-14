@@ -1,3 +1,4 @@
+import { resolveAnalyticsPeriod } from './analyticsPeriod';
 import { describe, expect, it } from 'vitest';
 import {
   inStatisticsRange,
@@ -8,6 +9,7 @@ import {
   previousStatisticsPeriodRange,
   statisticsDelta,
   statisticsPeriodRange,
+  statisticsSelectionRanges,
 } from './statistics';
 
 describe('statistics helpers', () => {
@@ -68,6 +70,50 @@ describe('statistics helpers', () => {
     expect(input[0].label).toBe('Client B');
     expect(sortStatisticsClients(input, 'seconds').map((row) => row.label)).toEqual(['Client B', 'Client C', 'Client A']);
     expect(input[0].label).toBe('Client B');
+  });
+
+  it('partage exactement les bornes calendaires des statistiques SQL et simples', () => {
+    const checked = [
+      { preset: 'today' as const },
+      { preset: 'week' as const },
+      { preset: 'month' as const },
+      { preset: 'quarter' as const },
+      { preset: 'year' as const },
+      { preset: 'previous_year' as const },
+      { preset: 'custom' as const, from: '2026-08-31', to: '2026-09-02' },
+    ];
+    const today = new Date('2026-09-23T12:00:00.000Z');
+    const localDate = (isoTimestamp: string): string => {
+      const date = new Date(isoTimestamp);
+      return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+    };
+    for (const period of checked) {
+      const resolved = statisticsSelectionRanges(period, today);
+      const backend = resolveAnalyticsPeriod(period, today);
+      expect(resolved).not.toBeNull();
+      expect(localDate(resolved!.current.from!)).toBe(backend.from);
+      expect(localDate(resolved!.current.to!)).toBe(backend.to);
+      expect(localDate(resolved!.previous!.from!)).toBe(backend.comparisonFrom);
+      expect(localDate(resolved!.previous!.to!)).toBe(backend.comparisonTo);
+    }
+  });
+
+  it('respecte les deux jours inclusifs pour les dates personnalisées et préserve les cas invalides', () => {
+    const ranges = statisticsSelectionRanges({ preset: 'custom', from: '2026-09-10', to: '2026-09-12' });
+    expect(ranges).not.toBeNull();
+    expect(inStatisticsRange('2026-09-10T00:00:00', ranges!.current)).toBe(true);
+    expect(inStatisticsRange('2026-09-12T23:59:59', ranges!.current)).toBe(true);
+    expect(inStatisticsRange('2026-09-13T00:00:00', ranges!.current)).toBe(false);
+    expect(inStatisticsRange('2026-09-09T23:59:59', ranges!.previous!)).toBe(true);
+    expect(statisticsSelectionRanges({ preset: 'custom', from: '2026-09-10' })).toBeNull();
+    expect(statisticsSelectionRanges({ preset: 'custom', from: '2026-09-12', to: '2026-09-10' })).toBeNull();
+    expect(statisticsSelectionRanges({ preset: 'custom', from: '2026-02-30', to: '2026-03-02' })).toBeNull();
+  });
+
+  it('ne crée jamais une comparaison fictive pour toutes les données', () => {
+    const ranges = statisticsSelectionRanges({ preset: 'all' });
+    expect(ranges?.current.label).toBe('Toutes les données');
+    expect(ranges?.previous).toBeNull();
   });
 
   it('gère les variations sans fabriquer de pourcentage quand la base vaut zéro', () => {

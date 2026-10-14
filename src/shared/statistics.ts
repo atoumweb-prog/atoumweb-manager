@@ -1,3 +1,7 @@
+import type { AnalyticsPeriodInput } from './analytics';
+import { validateAnalyticsCustomPeriod } from './analytics';
+import { resolveAnalyticsPeriod } from './analyticsPeriod';
+
 /** Decisions prises sur la période, suivant la date propre à chaque décision. */
 export function statisticsQuoteAcceptancePercent(accepted: number, refused: number, expired: number): number | null {
   const decisions = accepted + refused + expired;
@@ -85,4 +89,34 @@ export function inStatisticsRange(value: string | null | undefined, range: Stati
 export function statisticsDelta(current: number, previous: number): number | null {
   if (previous === 0) return current === 0 ? 0 : null;
   return ((current - previous) / Math.abs(previous)) * 100;
+}
+
+/** Période canonique du module Statistiques : "all" n'est pas compatible avec les agrégats SQL comparatifs. */
+export type StatisticsPeriodSelection = AnalyticsPeriodInput | { preset: 'all' };
+
+/** Même calendrier que AnalyticsService : bornes effectives visibles dans tous les onglets. */
+export function statisticsSelectionRanges(
+  selection: StatisticsPeriodSelection,
+  now = new Date(),
+): { current: StatisticsRange; previous: StatisticsRange | null } | null {
+  if (selection.preset === 'all') {
+    return { current: statisticsPeriodRange('all', now), previous: null };
+  }
+  if (selection.preset === 'custom' && (!selection.from || !selection.to || validateAnalyticsCustomPeriod(selection))) {
+    return null;
+  }
+  const resolved = resolveAnalyticsPeriod(selection, now);
+  const toRange = (fromDate: string, toDate: string): StatisticsRange => {
+    const from = new Date(`${fromDate}T00:00:00.000`);
+    const to = new Date(`${toDate}T23:59:59.999`);
+    return {
+      from: from.toISOString(),
+      to: to.toISOString(),
+      label: `${from.toLocaleDateString('fr-FR')} → ${to.toLocaleDateString('fr-FR')}`,
+    };
+  };
+  return {
+    current: toRange(resolved.from, resolved.to),
+    previous: toRange(resolved.comparisonFrom, resolved.comparisonTo),
+  };
 }

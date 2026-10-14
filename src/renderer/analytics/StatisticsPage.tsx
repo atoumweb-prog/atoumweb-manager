@@ -126,8 +126,13 @@ function normalizedPair(metric: AnalyticsFinancialMetricValue): { current: numbe
   };
 }
 
-export function StatisticsPage({ onMessage }: { onMessage: (message: string) => void }) {
-  const [period, setPeriod] = useState<AnalyticsPeriodInput>({ preset: 'month' });
+export function StatisticsPage({ onMessage, externalPeriod, hidePeriodControls = false }: {
+  onMessage: (message: string) => void;
+  externalPeriod?: AnalyticsPeriodInput;
+  hidePeriodControls?: boolean;
+}) {
+  const [localPeriod, setPeriod] = useState<AnalyticsPeriodInput>({ preset: 'month' });
+  const period = externalPeriod ?? localPeriod;
   const requestVersion = useRef(0);
   const [snapshot, setSnapshot] = useState<AnalyticsFinancialSnapshot | null>(null);
   const [commercial, setCommercial] = useState<AnalyticsCommercialSnapshot | null>(null);
@@ -221,7 +226,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
     </section>
 
     <section className="phase7-statistics-period-panel compact">
-      <div className="phase7-statistics-quick-periods" aria-label="Période statistique">
+      {!hidePeriodControls && <div className="phase7-statistics-quick-periods" aria-label="Période statistique">
         {PRESETS.map((item) => <button
           key={item.value}
           type="button"
@@ -230,7 +235,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         >{item.short}</button>)}
       </div>
 
-      {period.preset === 'custom' && <div className="phase7-statistics-custom-dates">
+      {!hidePeriodControls && period.preset === 'custom' && <div className="phase7-statistics-custom-dates">
         <label>Du<input type="date" value={period.from ?? ''} onChange={(event) => setPeriod((current) => ({ ...current, from: event.target.value }))} /></label>
         <span>→</span>
         <label>Au<input type="date" value={period.to ?? ''} onChange={(event) => setPeriod((current) => ({ ...current, to: event.target.value }))} /></label>

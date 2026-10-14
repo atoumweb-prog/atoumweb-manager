@@ -12,12 +12,13 @@ import {
   sortStatisticsClients,
   type StatisticsClientSortColumn,
   statisticsQuoteAcceptancePercent,
-  previousStatisticsPeriodRange,
+  statisticsSelectionRanges,
   statisticsDelta,
   statisticsPeriodRange,
-  type StatisticsPeriod,
+  type StatisticsPeriodSelection,
   type StatisticsRange,
 } from '../../shared/statistics';
+import { validateAnalyticsCustomPeriod, type AnalyticsPeriodPreset } from '../../shared/analytics';
 import { TIME_CATEGORIES, type TimeCategory, type TimeSession } from '../../shared/time';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
 import { StatisticsPage as Phase7StatisticsPage } from '../analytics/StatisticsPage';
@@ -124,7 +125,8 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
   const [data, setData] = useState<StatisticsData | null>(null);
   const requestVersion = useRef(0);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<StatisticsPeriod>('month');
+  const [period, setPeriod] = useState<StatisticsPeriodSelection>({ preset: 'month' });
+  const [customDates, setCustomDates] = useState({ from: '', to: '' });
   const [tab, setTab] = useState<StatisticsTab>('overview');
   const [clientSort, setClientSort] = useState<StatisticsClientSortColumn>('invoiced');
 
@@ -165,8 +167,13 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
     };
   }, []);
 
-  const range = useMemo(() => statisticsPeriodRange(period), [period]);
-  const previousRange = useMemo(() => previousStatisticsPeriodRange(period), [period]);
+  const invalidCustomPeriod = period.preset === 'custom'
+    ? (!period.from || !period.to ? 'Renseigne les deux dates pour afficher les statistiques.' : validateAnalyticsCustomPeriod(period))
+    : null;
+  const selectedRanges = useMemo(() => statisticsSelectionRanges(period), [period]);
+  const range = selectedRanges?.current ?? statisticsPeriodRange('all');
+  const previousRange = selectedRanges?.previous ?? null;
+
 
   if (loading && !data) {
     return <div className="panel statistics-loading"><OperationIcon name="chart" size={30} /><strong>Calcul des statistiques…</strong><span>Les indicateurs sont dérivés des données métier.</span></div>;
@@ -278,21 +285,46 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         <Tab active={tab === 'clients'} icon="wallet" label="Clients" onClick={() => setTab('clients')} />
         <Tab active={tab === 'analytics'} icon="chart" label="Analyse financière & rendement" onClick={() => setTab('analytics')} />
       </div>
-      {tab !== 'analytics' && <div className="statistics-period">
-        <span>{range.label}</span>
-        <select value={period} onChange={(event) => setPeriod(event.target.value as StatisticsPeriod)}>
-          <option value="month">Ce mois</option>
-          <option value="quarter">Ce trimestre</option>
-          <option value="year">Cette année</option>
-          <option value="all">Toutes les données</option>
-        </select>
+      <div className="statistics-period">
+        <span>{invalidCustomPeriod ? 'Dates à compléter' : range.label}</span>
+        <label>Période
+          <select aria-label="Période statistique commune" value={period.preset} onChange={(event) => {
+            const value = event.target.value;
+            if (value === 'all') setPeriod({ preset: 'all' });
+            else if (value === 'custom') setPeriod({ preset: 'custom', ...customDates });
+            else setPeriod({ preset: value as AnalyticsPeriodPreset });
+          }}>
+            <option value="today">Aujourd’hui</option>
+            <option value="week">Cette semaine</option>
+            <option value="month">Ce mois</option>
+            <option value="quarter">Ce trimestre</option>
+            <option value="year">Cette année</option>
+            <option value="previous_year">Année précédente</option>
+            <option value="custom">Dates personnalisées</option>
+            <option value="all">Toutes les données</option>
+          </select>
+        </label>
+        {period.preset === 'custom' && <div className="statistics-custom-dates">
+          <label>Du<input type="date" value={period.from ?? ''} onChange={(event) => {
+            const from = event.target.value;
+            setCustomDates((current) => ({ ...current, from }));
+            setPeriod((current) => current.preset === 'custom' ? { ...current, from } : current);
+          }} /></label>
+          <label>Au<input type="date" value={period.to ?? ''} onChange={(event) => {
+            const to = event.target.value;
+            setCustomDates((current) => ({ ...current, to }));
+            setPeriod((current) => current.preset === 'custom' ? { ...current, to } : current);
+          }} /></label>
+        </div>}
         <button className="secondary-button" type="button" onClick={() => void load()}><OperationIcon name="refresh" size={16} /> Actualiser</button>
-      </div>}
+      </div>
     </div>
 
-    {tab === 'analytics' && <Phase7StatisticsPage onMessage={onMessage} />}
+    {invalidCustomPeriod && <p role="alert" className="statistics-period-warning">{invalidCustomPeriod} Aucun chiffre d'une autre période n'est présenté.</p>}
+    {!invalidCustomPeriod && tab === 'analytics' && period.preset === 'all' && <p role="status" className="statistics-period-warning">La vue analytique nécessite des dates définies pour calculer les comparaisons. Les autres onglets affichent bien toutes les données ; choisis une période datée pour ouvrir les analyses détaillées.</p>}
+    {!invalidCustomPeriod && tab === 'analytics' && period.preset !== 'all' && <Phase7StatisticsPage onMessage={onMessage} externalPeriod={period} hidePeriodControls />}
 
-    {tab === 'overview' && <>
+    {!invalidCustomPeriod && tab === 'overview' && <>
       <div className="statistics-kpis">
         <Kpi icon="wallet" label="Contractuel signé" value={money(signed)} comparison={comparison(signed, previousSigned)} />
         <Kpi icon="receipt" label="Facturé suivi" value={money(invoiced)} comparison={comparison(invoiced, previousInvoiced)} />
@@ -326,7 +358,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
       </div>
     </>}
 
-    {tab === 'commercial' && <>
+    {!invalidCustomPeriod && tab === 'commercial' && <>
       <div className="statistics-kpis">
         <Kpi icon="user" label="Contacts créés" value={String(newProspects.length)} comparison={comparison(newProspects.length, previousProspects.length)} />
         <Kpi icon="file-text" label="Devis créés" value={String(quotes.length)} comparison={comparison(quotes.length, previousQuotes.length)} />
@@ -346,7 +378,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
       </div>
     </>}
 
-    {tab === 'production' && <>
+    {!invalidCustomPeriod && tab === 'production' && <>
       <div className="statistics-kpis">
         <Kpi icon="folder" label="Projets créés" value={String(projectsCreated.length)} comparison={comparison(projectsCreated.length, previousProjects.length)} />
         <Kpi icon="check-circle" label="Projets terminés" value={String(projectsCompleted.length)} helper={countLabel(activeProjects.length, 'projet actif', 'projets actifs')} />
@@ -366,7 +398,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
       </div>
     </>}
 
-    {tab === 'clients' && <>
+    {!invalidCustomPeriod && tab === 'clients' && <>
       <div className="statistics-kpis">
         <Kpi icon="user" label="Clients actifs" value={String(data.clients.filter((item) => item.status === 'active').length)} helper={countLabel(newClients.length, 'nouveau client', 'nouveaux clients') + ' sur la période'} />
         <Kpi icon="receipt" label="Facturé période" value={money(invoiced)} comparison={comparison(invoiced, previousInvoiced)} />
