@@ -461,6 +461,27 @@ describe('QuoteService', () => {
     expect(crm.listProspects().find(item => item.id === prospect.id)?.clientAccountId).toBeFalsy();
   });
 
+  it('R06D-07 : une clause orpheline activée ne figure pas dans le contrat compilé', () => {
+    const prospect = createProspect();
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Contrat sans clause orpheline' });
+    quotes.addCustomLine(quote.id, { label: 'Prestation active', proposedUnitPriceCents: 10000 });
+    const terms = new ContractTermsService(database, documents);
+    terms.addCustomQuoteClause(quote.id, { title: 'Clause valable', body: 'Texte valable uniquement' });
+    terms.addCustomQuoteClause(quote.id, { title: 'Clause devenue orpheline', body: 'Texte à exclure du contrat' });
+    database.run(
+      "UPDATE quote_contract_clauses SET is_orphaned=1 WHERE quote_id=? AND title='Clause devenue orpheline'",
+      [quote.id],
+    );
+    const build = terms.getQuoteBuild(quote.id);
+    expect(build.compiledText).toContain('Texte valable uniquement');
+    expect(build.compiledText).not.toContain('Texte à exclure du contrat');
+    const archived = database.get<{ enabled: number; is_orphaned: number; body: string }>(
+      "SELECT enabled,is_orphaned,body FROM quote_contract_clauses WHERE quote_id=? AND title='Clause devenue orpheline'",
+      [quote.id],
+    );
+    expect(archived).toEqual({ enabled: 1, is_orphaned: 1, body: 'Texte à exclure du contrat' });
+  });
+
   it('R06C-15 : une clause de ligne personnalisée devenue orpheline conserve le choix humain', () => {
     const prospect = createProspect();
     const quote = quotes.create({ prospectId: prospect.id, subject: 'Clause orpheline personnalisée' });
