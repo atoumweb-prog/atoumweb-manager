@@ -1,5 +1,5 @@
 
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -114,6 +114,13 @@ describe('ExpenseService', () => {
     expect(versions[1].previousRelativePath).toBe(first.receiptRelativePath);
     expect(versions[1].currentRelativePath).toBe(second.receiptRelativePath);
     expect(expenses.verifiedReceiptVersionPath(item.id, first.receiptRelativePath!)).toBe(original);
+    const preview = expenses.prepareReceiptVersionPreview(item.id, first.receiptRelativePath!);
+    try {
+      expect(preview).not.toBe(original);
+      expect(readFileSync(preview)).toEqual(readFileSync(original));
+    } finally {
+      rmSync(resolve(preview, '..'), { recursive: true, force: true });
+    }
     const history = expenses.listReceiptVersions(item.id);
     expect(history).toHaveLength(2);
     expect(history.map((version) => version.integrity)).toEqual(['verified', 'verified']);
