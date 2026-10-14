@@ -39,3 +39,8 @@ Ne pas inventer des obligations légales de rétention, un classement génériqu
 | 18 | CI Windows native, 3 thèmes × 3 densités, FK/chemins TEMP, restauration ; dernière exécution à confirmer |
 
 **Clôture non prononcée** : attendre CI et recette native 09D entièrement vertes, puis examiner les éventuels écarts au référentiel.
+
+### Dernière vérification avant clôture
+- Recette Windows réelle corrigée pour l'intitulé de navigation effectivement affiché « Documents & Contrats ». Contrôles supplémentaires : absence physique d'un fichier et refus d'ouverture, conservation des métadonnées, séparation des pièces par Client, neuf modes visuels et actions accessibles.
+- Indicateur Factures limité aux documents actifs, sans assimiler facture à paiement.
+- Exécuter TypeScript, suite complète Vitest, recette Electron Documents, UX générale et restauration sur ce dernier code ; aucune clôture ni merge anticipés.
