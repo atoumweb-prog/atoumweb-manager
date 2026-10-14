@@ -355,14 +355,15 @@ export class CatalogService {
       }
       // 04D: Copy immutable version-scoped references into the new draft.
       if (previous && this.database.get("SELECT name FROM sqlite_master WHERE type='table' AND name='catalog_version_recommendations'")) {
-        const recommendations = this.database.all<{target_version_id:string;sort_order:number}>(
-          'SELECT target_version_id,sort_order FROM catalog_version_recommendations WHERE source_version_id=? ORDER BY sort_order,id',
+        const recommendations = this.database.all<{target_version_id:string;sort_order:number;reason:string;rule_status:string;conditions:string;provenance:string}>(
+          'SELECT target_version_id,sort_order,reason,rule_status,conditions,provenance FROM catalog_version_recommendations WHERE source_version_id=? ORDER BY sort_order,id',
           [previous.id],
         );
         for (const recommendation of recommendations) {
           this.database.run(
-            'INSERT INTO catalog_version_recommendations (id,source_version_id,target_version_id,sort_order,created_at) VALUES (?,?,?,?,?)',
-            [randomUUID(),version.id,recommendation.target_version_id,recommendation.sort_order,now],
+            'INSERT INTO catalog_version_recommendations (id,source_version_id,target_version_id,sort_order,created_at,reason,rule_status,conditions,provenance) VALUES (?,?,?,?,?,?,?,?,?)',
+            [randomUUID(),version.id,recommendation.target_version_id,recommendation.sort_order,now,
+              recommendation.reason,recommendation.rule_status,recommendation.conditions,recommendation.provenance],
           );
         }
       }
