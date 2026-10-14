@@ -11,6 +11,8 @@ import { CrmService } from '../crm/CrmService';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
 import { CatalogService } from './CatalogService';
+import { CatalogRecommendationsService } from './CatalogRecommendationsService';
+import { quoteRecommendationState } from '../../shared/quoteRecommendationStatus';
 import { QuoteService } from './QuoteService';
 
 let database: NodeSqliteAdapter;
@@ -76,6 +78,56 @@ describe('04E — advice never mutates an accepted or historical quote snapshot'
     expect(historical.snapshot?.commercialParameters).toEqual(originalSnapshot?.commercialParameters);
     expect(historical.catalogVersionId).toBe(previousId);
     expect(historical.catalogUnitPriceCents).toBe(14900);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+});
+
+describe('04D — recommendations across Catalogue and Quote, no implicit purchase',()=>{
+  it('keeps recommendations advisory until a deliberate separate quote-line insertion',()=>{
+    const prospect=createProspect();
+    const rec=new CatalogRecommendationsService(database);
+    const offer=catalog.create({type:'offer',name:'Offre de départ'},{
+      priceMode:'fixed',priceCents:69900,
+    });
+    const target=createPublishedService(14900,'SEO local recommandé');
+    rec.replace(offer.versions[0].id,[target.currentVersion!.id],[]);
+    catalog.publishVersion(offer.versions[0].id);
+    const quote=quotes.create({prospectId:prospect.id,subject:'Devis avec conseil'});
+    const selected=quotes.addCatalogLine(quote.id,offer.versions[0].id);
+    expect(selected.lines).toHaveLength(1);
+    expect(selected.lines[0].catalogVersionId).toBe(offer.versions[0].id);
+    expect(selected.contractValueCents).toBe(69900);
+    expect(rec.list(offer.versions[0].id)).toMatchObject([{
+      targetItemId:target.id,targetVersionId:target.currentVersion!.id,
+      targetName:'SEO local recommandé',targetVersionStatus:'published',
+    }]);
+    const state=quoteRecommendationState(selected.lines[0],rec.list(offer.versions[0].id)[0],selected.lines);
+    expect(state).toBe('recommended');
+    const added=quotes.addCatalogLine(quote.id,target.currentVersion!.id);
+    expect(added.lines).toHaveLength(2);
+    expect(added.contractValueCents).toBe(84800);
+    expect(quoteRecommendationState(added.lines[0],rec.list(offer.versions[0].id)[0],added.lines)).toBe('already-added');
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+  it('does not silently requalify a retired recommendation in an old Quote',()=>{
+    const prospect=createProspect();
+    const rec=new CatalogRecommendationsService(database);
+    const offer=catalog.create({type:'offer',name:'Offre historique'},{
+      priceMode:'fixed',priceCents:45000,
+    });
+    const service=createPublishedService(9900,'Service original');
+    rec.replace(offer.versions[0].id,[service.currentVersion!.id],[]);
+    catalog.publishVersion(offer.versions[0].id);
+    const quote=quotes.create({prospectId:prospect.id,subject:'Devis historique'});
+    const before=quotes.addCatalogLine(quote.id,offer.versions[0].id);
+    const newer=catalog.createVersion(service.id,{priceMode:'fixed',priceCents:12900});
+    catalog.publishVersion(newer.id);
+    const links=rec.list(offer.versions[0].id);
+    expect(links[0].targetVersionId).toBe(service.currentVersion!.id);
+    expect(links[0].targetVersionStatus).toBe('retired');
+    expect(quoteRecommendationState(before.lines[0],links[0],before.lines)).toBe('unavailable');
+    expect(quotes.get(quote.id).lines).toEqual(before.lines);
+    expect(()=>quotes.addCatalogLine(quote.id,service.currentVersion!.id)).toThrow(/publiée/);
     expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 });
