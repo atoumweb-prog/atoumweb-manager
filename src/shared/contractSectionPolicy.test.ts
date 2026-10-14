@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {CONTRACT_SECTION_ORDER,orderReviewedClauses,validateSectionReview,type ContractSectionReview} from './contractSectionPolicy';
+import {CONTRACT_SECTION_ORDER,orderReviewedClauses,validateSectionReview,evaluateContractApplicability,type ContractSectionReview} from './contractSectionPolicy';
 const approved=(sectionKey:typeof CONTRACT_SECTION_ORDER[number],rankInSection:number):ContractSectionReview=>({status:'approved',sectionKey,rankInSection,reviewer:'Relecteur fixture',reviewedAt:'2026-10-14T12:00:00Z'});
 describe('05C — approved semantic sections',()=>{
   it('keeps eight canonical sections in their approved order',()=>expect(CONTRACT_SECTION_ORDER).toEqual(['object','scope','execution','delivery','finance','rights','recurring','end']));
@@ -23,5 +23,26 @@ describe('05C — approved semantic sections',()=>{
     expect(validateSectionReview({status:'approved',sectionKey:'finance',rankInSection:-1,reviewer:'A',reviewedAt:'2026-10-14'})).toBe(false);
     expect(validateSectionReview({status:'approved',sectionKey:'finance',rankInSection:0,reviewer:'',reviewedAt:'2026-10-14'})).toBe(false);
     expect(validateSectionReview({status:'proposed',sectionKey:'finance',rankInSection:0,reason:' '})).toBe(false);
+  });
+});
+
+describe('05C — explicit commercial applicability',()=>{
+  it('does not infer customer audience or service/option selection',()=>{
+    expect(evaluateContractApplicability({audience:'consumer'},{})).toBe('unresolved');
+    expect(evaluateContractApplicability({requiredOptionCodes:['MAINT']},{productCodes:['WEB']})).toBe('unresolved');
+    expect(evaluateContractApplicability({requiredOptionCodes:['MAINT']},{optionCodes:[]})).toBe('ineligible');
+  });
+  it('resolves audience, plan, quantity and recurring requirements explicitly',()=>{
+    const rule={audience:'professional' as const,requiredProductCodes:['WEB'],requiredOptionCodes:['SEO'],minQuantity:2,planCode:'PLUS',recurring:true};
+    const context={audience:'professional' as const,productCodes:['WEB'],optionCodes:['SEO'],quantity:2,planCode:'PLUS',recurring:true};
+    expect(evaluateContractApplicability(rule,context)).toBe('eligible');
+    expect(evaluateContractApplicability(rule,{...context,quantity:1})).toBe('ineligible');
+    expect(evaluateContractApplicability(rule,{...context,recurring:false})).toBe('ineligible');
+    expect(evaluateContractApplicability(rule,{...context,planCode:undefined})).toBe('unresolved');
+  });
+  it('leaves source selections unmodified',()=>{
+    const products=['WEB'],options=['SEO'];const rule={requiredProductCodes:['WEB'],requiredOptionCodes:['SEO']};
+    expect(evaluateContractApplicability(rule,{productCodes:products,optionCodes:options})).toBe('eligible');
+    expect(products).toEqual(['WEB']);expect(options).toEqual(['SEO']);
   });
 });
