@@ -79,6 +79,14 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     };
   },[build]);
 
+  const clauseChanges=useMemo(()=> (build?.clauses??[]).flatMap(clause=>{
+    const draft=drafts[clause.id];
+    if(!draft)return [];
+    const titleChanged=draft.title!==clause.title;
+    const bodyChanged=draft.body!==clause.body;
+    return titleChanged||bodyChanged?[{id:clause.id,title:clause.title,titleChanged,bodyChanged}]:[];
+  }),[build,drafts]);
+
   const counts = useMemo(() => {
     const clauses = build?.clauses ?? [];
     return {
@@ -423,7 +431,13 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
         </ol>
         {clauseOverview.excluded.length>0 && <p role="status" className="cgv-warning">{clauseOverview.excluded.length} clause(s) exclue(s) du devis — contrôler leur pertinence.</p>}
         {clauseOverview.orphaned.length>0 && <p role="status" className="cgv-warning">{clauseOverview.orphaned.length} clause(s) orpheline(s) : prestation retirée — contrôler avant finalisation.</p>}
-        {unsaved && <p role="status" className="cgv-warning">{changedClauseIds.length} clause(s) modifiée(s) non enregistrée(s) : ce sommaire n’intègre pas ces brouillons locaux.</p>}
+        {unsaved && <div role="status" className="cgv-warning">
+          <strong>{clauseChanges.length} clause(s) modifiée(s) non enregistrée(s).</strong>
+          <p>Comparaison indicative avec la dernière version enregistrée (sans diffusion ni sauvegarde automatique).</p>
+          <ul>{clauseChanges.map(change=><li key={change.id}>
+            {change.title} : {change.titleChanged?'titre modifié':''}{change.titleChanged&&change.bodyChanged?' et ':''}{change.bodyChanged?'texte modifié':''}
+          </li>)}</ul>
+        </div>}
       </details>}
       {presentation&&<ContractReadPanel presentation={presentation} commercial={commercialAbbyBlock(quote)} unsaved={unsaved}/>}
       <details className="cgv-editing"><summary>Adapter les clauses de ce devis ({build?.clauses.length ?? 0})</summary>
