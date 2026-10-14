@@ -68,3 +68,12 @@ Les cas ci-dessous désignent **les tests automatisés présents** ; leur nouvel
 - Vérifier le comportement de l'interface Electron avec sélection, annulation native et double confirmation UX-01.
 - Tester et documenter les éventuelles limites métier de regroupement plusieurs sources / une facture avant une évolution dédiée ; aucune API Abby ou statut « payé » inventé.
 - Distinguer recette automatisée Windows et inspection visuelle humaine. Pas de fusion vers `main` sans autorisation.
+
+## Recette finale — vérifications avant intégration
+- CI Windows #38597433994 **SUCCESS** sur `1b141f4` : TypeScript, **111 fichiers Vitest**, **85 assertions spécifiques 09B** (vrai Electron/React/preload/IPC/SQLite TEMP), **373 assertions UX générales** (17 destinations, neuf combinaisons de thème/densité), round-trip restauration et refus.
+- La page Facturation dispose maintenant de filtres explicites Client, Projet, PDF présent/absent, référence Abby exacte et échéance ; garde la sélection et les brouillons.
+- Les KPI distinguent `planned` (À préparer), `ready` (À facturer), `invoiced` avec PDF, et `offered`/`cancelled`. Une référence PDF absente est présentée comme « Référence à vérifier », non comme l'absence de pièce ni comme un paiement.
+- Le changement de statut est transactionnel avec retour arrière sur échec du journal et idempotent si la valeur ne change pas ; contrôle dédié ajouté.
+- L'accès clavier des lignes passe par un bouton natif focusable et visible ; recette de non-régression dans la fixture dédiée.
+- Une correction de précision du scénario Electron a été publiée après #38597433994 : une **dernière CI sur le HEAD documentaire complet** est requise avant le tampon « Validé techniquement ».
+- Après cette CI, seuls restent : inspection visuelle humaine différée, revue des dépendances 09A/09B, recette de non-régression sur le `main` de destination et fusion autorisée. **Ne pas fusionner ici**.
