@@ -231,13 +231,14 @@ export class BillingHandoffService {
 
   attachInvoice(id: string, documentId: string, input: BillingInvoiceInput = {}): BillingItem {
     const current = this.get(id);
-    const document = this.database.get<{ id: string; client_account_id: string; category: string; archived_at: string | null }>(
-      'SELECT id,client_account_id,category,archived_at FROM client_documents WHERE id=?',
+    const document = this.database.get<{ id: string; client_account_id: string; category: string; mime_type: string | null; archived_at: string | null }>(
+      'SELECT id,client_account_id,category,mime_type,archived_at FROM client_documents WHERE id=?',
       [documentId],
     );
     if (!document) throw new Error('Facture PDF introuvable.');
     if (document.client_account_id !== current.clientAccountId) throw new Error('Cette facture appartient à un autre client.');
     if (document.category !== 'invoice') throw new Error('Le document doit être classé dans la catégorie Factures.');
+    if (document.mime_type !== 'application/pdf') throw new Error('Seuls les fichiers PDF peuvent être rattachés comme factures Abby.');
     if (document.archived_at) throw new Error('Restaure la facture avant de la rattacher.');
     // Production supplies a workspace-aware verifier; do not attest tampered or missing PDF bytes.
     this.verifyInvoiceDocument?.(documentId);
