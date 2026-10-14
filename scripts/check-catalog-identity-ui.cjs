@@ -34,7 +34,7 @@ import {CatalogPage} from '${repo.replaceAll('\\', '/')}/src/renderer/commercial
 import commercialSource from '${repo.replaceAll('\\', '/')}/data/catalogue/atoumweb-catalogue-v1.json';
 const oldVersion={id:'old-v1',itemId:'legacy-id',versionNumber:1,status:'published',priceMode:'fixed',priceCents:69900,description:'Ancienne offre',inclusions:[],exclusions:[],prerequisites:[],createdAt:'2026-09-14',publishedAt:'2026-09-14'};
 const items=[{id:'legacy-id',type:'service',name:'Ancien élément témoin',category:'Web',status:'active',visiblePublic:false,canonicalCode:null,currentVersion:oldVersion,versions:[oldVersion],createdAt:'2026-09-14'}];
-window.calls={create:[],version:[],saveDraft:[],assign:[],publish:0};window.items=items;window.messages=[];window.simulateLostVersionReply=false;
+window.calls={create:[],version:[],saveDraft:[],assign:[],statuses:[],publish:0};window.items=items;window.messages=[];window.simulateLostVersionReply=false;
 window.fixtureErrors=[];window.addEventListener('error',event=>window.fixtureErrors.push(String(event.error?.stack||event.message)));window.addEventListener('unhandledrejection',event=>window.fixtureErrors.push(String(event.reason?.stack||event.reason)));
 window.importedVersion={...commercialSource.records.find(r=>r.canonicalCode==='AW-WEB-VITRINE').version,id:'legacy-import-v2',itemId:'legacy-id',versionNumber:2,status:'draft',createdAt:'2026-10-03'};
 window.categoryRecords=[];window.categoryCalls=[];window.categorySequence=0;
@@ -113,7 +113,9 @@ window.atoumweb={catalogCategories:categoryApi,catalog:{
   },
   assignCanonicalCode:async(id,code)=>{calls.assign.push({id,code});if(!/^AW-[A-Z0-9-]+$/.test(code))throw Error('Code canonique invalide');const item=items.find(i=>i.id===id);item.canonicalCode=code;item.identityProvenance={reference:'manual'};return structuredClone(item)},
   publishVersion:async()=>{calls.publish++},listOfferComponents:async()=>[],
-  listProductionBlueprints:async()=>[], 
+  listProductionBlueprints:async()=>[],
+  setStatus:async(id,status)=>{const item=items.find(x=>x.id===id);calls.statuses.push({id,status});item.status=status;return structuredClone(item)},
+  setVisiblePublic:async(id,visible)=>{const item=items.find(x=>x.id===id);item.visiblePublic=visible;return structuredClone(item)}, 
 },contractTypes:{
   list:async()=>[],catalog:async()=>[],setCatalog:async()=>[],
 },contractTerms:{library:{list:async()=>[]}},
@@ -329,6 +331,15 @@ app.whenReady().then(async () => {
         newService.input.categoryId===window.categoryRecords[0].id&&
         newService.input.category==='Contenu éditorial');
       assert('E95 première version non publiée',newService.version.priceMode==='fixed'&&window.calls.publish===0);
+      await fillField(document.querySelector('select[aria-label="Statut de la prestation"]'),'archived');
+      assert('04C changement de statut non encore écrit',window.calls.statuses.length===0&&
+        window.items.at(-1).status==='active'&&!!document.querySelector('.catalog-status-confirmation'));
+      await click('Annuler le changement');
+      assert('04C annulation statut sans écriture',window.calls.statuses.length===0&&window.items.at(-1).status==='active');
+      await fillField(document.querySelector('select[aria-label="Statut de la prestation"]'),'archived');
+      await click('Confirmer le statut');
+      assert('04C confirmation statut seule déclenche l’écriture',window.calls.statuses.length===1&&
+        window.items.at(-1).status==='archived'&&window.items.at(-1).versions.length===1);
       document.querySelector('.catalog-detail-heading-actions .close-detail').click();await wait();
       await click('Catégories existantes');
       await waitFor('.catalog-category-management','administration catégories, recette visuelle');
