@@ -5,8 +5,6 @@ import { applyPendingMigrations } from '../database/migrations';
 import { TimeService } from '../time/TimeService';
 import { OperationsService } from './OperationsService';
 import { MaintenanceService } from './MaintenanceService';
-import { OperationsService } from './OperationsService';
-import { TimeService } from '../time/TimeService';
 
 let database: NodeSqliteAdapter;
 let crm: CrmService;
