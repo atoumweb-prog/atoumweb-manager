@@ -41,6 +41,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   const currentQuoteId=useRef(quote.id);
   currentQuoteId.current=quote.id;
   const loadRequest=useRef(0);
+  const libraryRequest=useRef(0);
   const loadedQuoteId=useRef(quote.id);
   const [presentation,setPresentation]=useState<ContractPresentation|null>(null);
   const [showLibrary, setShowLibrary] = useState(false);
@@ -83,10 +84,13 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   }
 
   async function refreshLibrary(): Promise<void> {
+    const quoteId = quote.id;
+    const request = ++libraryRequest.current;
     const [nextTemplates, nextCatalog] = await Promise.all([
       window.atoumweb.contractTerms.library.list(),
       window.atoumweb.catalog.list({ status: 'active' }),
     ]);
+    if (!isCurrentContractRequest(quoteId, currentQuoteId.current, request, libraryRequest.current)) return;
     setTemplates(nextTemplates);
     setCatalog(nextCatalog);
   }
@@ -120,6 +124,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   useEffect(() => {
     // A previous quote's responses must not repaint the newly selected quote.
     presentationRequest.current+=1;
+    libraryRequest.current+=1;
     if(loadedQuoteId.current!==quote.id){
       loadedQuoteId.current=quote.id;
       setBuild(null);
@@ -131,7 +136,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
       setVersionEditors({});
     }
     void load();
-    return ()=>{loadRequest.current+=1;presentationRequest.current+=1;};
+    return ()=>{loadRequest.current+=1;presentationRequest.current+=1;libraryRequest.current+=1;};
   }, [quote.id, quote.status, quote.finalizedAt, quote.contractCompiledAt, quote.updatedAt]);
 
   async function run(action: () => Promise<QuoteContractBuild>,saved?:{id:string;draft:ClauseDraft}): Promise<boolean> {
