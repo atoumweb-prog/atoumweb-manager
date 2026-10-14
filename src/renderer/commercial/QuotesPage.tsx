@@ -9,6 +9,7 @@ import {QuoteDraftLines,type DraftLine} from '../workflow/QuoteDraftLines';
 import { QuoteProjectPanel, QuoteConditions } from '../workflow/QuoteWorkflow';
 import { canAccessQuoteProject } from '../../shared/quoteProjectEligibility';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { matchStatisticsDrilldown, type StatisticsDrilldownRoute } from '../../shared/statisticsDrilldown';
 import type { CatalogItemSummary, QuoteDetail, QuoteLineInput, QuoteStatus, QuoteSummary } from '../../shared/commercial';
 import type { ClientSummary, ProspectSummary } from '../../shared/crm';
 import { QuoteClientPreview } from './QuoteClientPreview';
@@ -41,7 +42,10 @@ function money(cents: number): string {
   return `${(cents / 100).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} €`;
 }
 
-export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest, returnProjectId }: { onMessage: (message: string) => void; initialId?: string | null; initialRequest?:number; returnProjectId?: string | null;onEntityReady?:EntityReady }) {
+export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest, statisticsDrilldown, onClearStatisticsDrilldown, returnProjectId }: {
+  onMessage: (message: string) => void; initialId?: string | null; initialRequest?: number; onEntityReady?: EntityReady;
+  returnProjectId?: string | null; statisticsDrilldown?: StatisticsDrilldownRoute | null; onClearStatisticsDrilldown?: () => void;
+}) {
   const [draftLines,setDraftLines]=useState<DraftLine[]>([]);
   const [wizardTerms,setWizardTerms]=useState('');
   const [catalogPrice,setCatalogPrice]=useState('');
@@ -160,14 +164,17 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
     return () => document.removeEventListener('pointerdown', closeOnOutside);
   }, [detail?.id, previewOpen]);
 
+  const drilldown = statisticsDrilldown?.kind === 'signed' || statisticsDrilldown?.kind === 'decisions' ? statisticsDrilldown : null;
+  const drilldownMatch = drilldown ? matchStatisticsDrilldown(quotes, drilldown, quote => drilldown.kind === 'decisions' ? ['accepted', 'refused', 'expired'].includes(quote.status) : quote.status === 'accepted') : null;
   const filtered = useMemo(() => {
+    if (drilldown) return matchStatisticsDrilldown(quotes, drilldown, quote => drilldown.kind === 'decisions' ? ['accepted', 'refused', 'expired'].includes(quote.status) : quote.status === 'accepted').rows;
     const needle = query.trim().toLocaleLowerCase('fr-FR');
     return quotes.filter((quote) => {
       if (statusFilter !== 'all' && quote.status !== statusFilter) return false;
       if (!needle) return true;
       return [quote.number, quote.subject, quote.ownerLabel].some((value) => value.toLocaleLowerCase('fr-FR').includes(needle));
     });
-  }, [quotes, query, statusFilter]);
+  }, [quotes, query, statusFilter, drilldown]);
 
   const ownerOptions = wizard.ownerKind === 'prospect'
     ? prospects.map((prospect) => ({ id: prospect.id, label: prospect.displayName }))
@@ -357,7 +364,7 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
 
   return (
     <div className="quotes-stack">
-      <div className="module-toolbar quote-toolbar"><div><strong>{filtered.length}</strong><span> devis</span></div><div className="toolbar-controls quote-toolbar-controls"><button className="secondary-button" type="button" onClick={() => void refresh()}>↻ Actualiser</button><input className="inline-search" placeholder="Rechercher un devis…" value={query} onChange={(e) => setQuery(e.target.value)} /><select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | QuoteStatus)}><option value="all">Tous les statuts</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><button className="primary-button" type="button" onClick={() => { if (showWizard) { requestUnsavedExit(() => { setShowWizard(false); setWizardStep(1); setWizardError(null); }, 'quote:create'); } else { setShowWizard(true); setWizardError(null); } }}>{showWizard ? 'Fermer' : '+ Nouveau devis'}</button></div></div>
+      <div className="module-toolbar quote-toolbar"><div><strong>{filtered.length}</strong><span> devis</span></div><div className="toolbar-controls quote-toolbar-controls"><button className="secondary-button" type="button" onClick={() => void refresh()}>↻ Actualiser</button><input className="inline-search" placeholder={drilldown ? "Cohorte exacte active" : "Rechercher un devis…"} disabled={!!drilldown} value={query} onChange={(e) => setQuery(e.target.value)} /><select value={statusFilter} disabled={!!drilldown} onChange={(e) => setStatusFilter(e.target.value as 'all' | QuoteStatus)}><option value="all">Tous les statuts</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><button className="primary-button" type="button" onClick={() => { if (showWizard) { requestUnsavedExit(() => { setShowWizard(false); setWizardStep(1); setWizardError(null); }, 'quote:create'); } else { setShowWizard(true); setWizardError(null); } }}>{showWizard ? 'Fermer' : '+ Nouveau devis'}</button></div></div>
 
       {showWizard && <section className="panel quote-wizard"><div className="quote-stepper">{['Client / Prospect', 'Projet / besoin', 'Offre', 'Services / lignes', 'Conditions', 'Prévisualisation'].map((label, index) => <button key={label} type="button" className={wizardStep === index + 1 ? 'active' : wizardStep > index + 1 ? 'done' : ''} onClick={() => index + 1 < wizardStep && setWizardStep(index + 1)}><span>{index + 1}</span>{label}</button>)}</div><div className="quote-wizard-body">
         {wizardStep === 1 && <div className="quote-step-content"><h2>À qui s’adresse le devis ?</h2>{developmentMode&&<button type="button" className="secondary-button" onClick={()=>void fillTestDossier()}>Créer un faux dossier TEST</button>}<div className="quote-owner-toggle"><button type="button" className={wizard.ownerKind === 'prospect' ? 'active' : ''} onClick={() => setWizard({ ...wizard, ownerKind: 'prospect', ownerId: '' })}>Prospect</button><button type="button" className={wizard.ownerKind === 'client' ? 'active' : ''} onClick={() => setWizard({ ...wizard, ownerKind: 'client', ownerId: '' })}>Client</button></div><label>Dossier<select value={wizard.ownerId} onChange={(e) => { const ownerId=e.target.value; const source=wizard.ownerKind==='prospect'?prospects.find(item=>item.id===ownerId):clients.find(item=>item.id===ownerId); setWizard({ ...wizard, ownerId, contractAudience:source?.organizationId?'professional':'consumer' }); }}><option value="">Choisir…</option>{ownerOptions.map((owner) => <option key={owner.id} value={owner.id}>{owner.label}</option>)}</select></label></div>}
@@ -390,6 +397,12 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
         </div>}
       </div>{wizardError && <p className="form-error">{wizardError}</p>}<div className="quote-wizard-actions"><button className="secondary-button" type="button" disabled={wizardStep === 1} onClick={() => setWizardStep((step) => Math.max(1, step - 1))}>← Précédent</button>{wizardStep < 6 ? <button className="primary-button" type="button" onClick={nextWizard}>Suivant →</button> : <button className="primary-button" disabled={saving} type="button" onClick={() => void createQuote()}>{saving ? 'Création…' : 'Créer le devis'}</button>}</div></section>}
 
+      {drilldown && <section className="panel statistics-route-banner" aria-label="Filtre exact Statistiques">
+        <strong>{drilldown.kind === 'decisions' ? 'Décisions des devis' : 'Devis acceptés'} · {drilldown.periodLabel}</strong>
+        <p>Liste restreinte aux {drilldown.ids.length} devis de la population calculée dans Statistiques. Les statuts et identifiants retenus sont vérifiés à l’ouverture, pas remplacés par des devis extérieurs à la cohorte.</p>
+        {drilldownMatch && drilldownMatch.unavailable > 0 && <p role="alert">{drilldownMatch.unavailable} devis de la cohorte sont devenus indisponibles ou n’ont plus le statut attendu. Aucun autre devis n’est ajouté.</p>}
+        <button className="secondary-button" type="button" onClick={onClearStatisticsDrilldown}>Quitter ce filtre et voir tous les devis</button>
+      </section>}
       {loading ? <div className="panel"><p className="muted">Chargement des devis…</p></div> : <div className={detail ? 'quotes-layout with-detail' : 'quotes-layout'}><div className="panel quote-list-panel"><table className="quote-table"><thead><tr><th>Numéro</th><th>Destinataire</th><th>Objet</th><th>Statut</th><th>Valeur</th><th>Décision</th><th>Créé le</th></tr></thead><tbody>{filtered.map((quote) => {
         const prospect = quote.prospectId ? prospects.find((item) => item.id === quote.prospectId) ?? null : null;
         const actionable = quote.status === 'sent' || quote.status === 'viewed';

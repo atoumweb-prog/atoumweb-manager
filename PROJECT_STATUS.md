@@ -83,6 +83,10 @@ Recette finale du SHA porteur à exécuter avant publication, résultats exacts 
 - **09A = Validé techniquement**, sous réserve de la recette humaine et de la revue finale d'intégration. `main` à `cc0bc679` lors du contrôle ; PR déclarée mergeable par GitHub mais aucun rebase ni merge réalisé.
 - Prochaine étape 09B : auditer les parcours sources→Abby→facture PDF, références client et états, puis introduire uniquement les corrections minimales justifiées par des tests, sans émettre de facture dans le Manager. 09C–09F restent cadrés/non livrés.
 
+## 14/10/2026 — Convergence technique UX/UI V2 lot 10, candidat isolé
+
+- Source main cc0bc679 ; 10A+10B PR #125/#126 f56cf381, 10C PR #127 33095a38 (validation de la dernière CI à vérifier), 10D PR #128 c69a0c78. Copie des blobs exacts de leurs fichiers applicatifs sur une branche de convergence dédiée ; aucun service de restauration ou schéma modifié. [Gates de recette](docs/ux-v2/LOT-10E-GATES-2026-10-14.md).
+- Aucun test ni recette du **candidat combiné** n'a été déclaré réussi. CI TypeScript/Vitest, Electron Windows/UX-01 et restore round-trip TEMP exigés au HEAD exact avant toute conclusion ou demande de fusion. Aucune donnée Validation-MSI ni workspace de production utilisée.
 
 ## 14/10/2026 — Dernier cas de focus : ligne toujours masquée
 

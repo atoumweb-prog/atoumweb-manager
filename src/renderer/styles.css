@@ -402,3 +402,58 @@ button { color: inherit; }
 
 .topbar.is-development { position: relative; padding-bottom: 36px; }
 .topbar .development-environment-banner { position: absolute; left: 0; right: 0; bottom: 0; padding: 5px 20px; font-size: 0.82rem; }
+
+/* UX/UI V2 10D — les panneaux Réglages ne peuvent imposer une largeur minimale
+   au conteneur : le thème blanc + Confort+ gardent toutes les commandes visibles. */
+.settings-grid {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, .65fr);
+}
+.settings-grid > .panel,
+.settings-grid .theme-grid,
+.settings-grid .density-grid,
+.settings-grid .theme-card,
+.settings-grid .density-card { min-width: 0; }
+.settings-grid #settings-quick-search {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+.settings-grid .panel-title { flex-wrap: wrap; }
+.settings-grid .theme-card,
+.settings-grid .density-card { overflow-wrap: anywhere; }
+@media (max-width: 1100px) {
+  .settings-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* 10D — la remise à zéro ne concerne que les préférences de présentation enregistrées. */
+.settings-navigation { min-width: 0; }
+.settings-navigation-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin: 12px 0; }
+.settings-navigation-actions > div { flex: 1 1 210px; min-width: 0; }
+.settings-navigation-actions > div > p { margin: 4px 0; }
+.settings-navigation-layouts { display: grid; gap: 9px; border-top: 1px solid var(--border); padding-top: 14px; }
+.settings-navigation-layouts > p { margin: 0; }
+.settings-navigation-confirm { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; background: var(--surface-soft); border: 1px solid var(--border); border-radius: 10px; padding: 11px; }
+.settings-navigation-confirm > p { margin: 0; width: 100%; overflow-wrap: anywhere; }
+.settings-navigation :is(button, input) { font-size: var(--aw-font-functional, 14px); }
+
+/* Lot 10 — seuls les détails de la période source forment la route métier active. */
+.statistics-open-drilldown { justify-self: start; margin: 2px 0 4px; max-width: 100%; white-space: normal; text-align: left; }
+.statistics-route-banner { display: grid; gap: 7px; min-width: 0; margin-bottom: 12px; padding: 13px; }
+.statistics-route-banner > strong { font-size: var(--aw-font-functional, 14px); }
+.statistics-route-banner > p { margin: 0; font-size: var(--aw-font-functional, 14px); line-height: 1.5; overflow-wrap: anywhere; }
+.statistics-route-banner > p[role='alert'] { border-left: 3px solid var(--accent); padding-left: 8px; }
+.statistics-route-banner > button { justify-self: start; max-width: 100%; white-space: normal; }
+.settings-documents,.settings-advanced { display: grid; gap: 11px; min-width: 0; }
+.settings-documents > :is(h2,p),.settings-advanced > :is(h2,p) { margin: 0; }
+.settings-documents > button,.settings-advanced > button { justify-self: start; max-width: 100%; white-space: normal; }
+.settings-diagnostic-list { display: grid; gap: 8px; margin: 0; min-width: 0; }
+.settings-diagnostic-list > div { display: grid; gap: 3px; padding: 8px; border: 1px solid var(--border); border-radius: 9px; min-width: 0; }
+.settings-diagnostic-list dt { color: var(--text-muted); font-size: 12px; }
+.settings-diagnostic-list dd { margin: 0; font-size: var(--aw-font-functional, 14px); overflow-wrap: anywhere; }
+.settings-documents .path-value,.settings-advanced .path-value { min-width: 0; word-break: break-word; }
+.settings-diagnostic-error { color: var(--text-muted); overflow-wrap: anywhere; }
+
+.statistics-decision-drilldown { display: flex; gap: 9px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 11px; border: 1px solid var(--border); border-radius: 10px; }
+.statistics-decision-drilldown span { flex: 1 1 280px; font-size: var(--aw-font-functional, 14px); overflow-wrap: anywhere; }
+.statistics-decision-drilldown button { white-space: normal; text-align: left; }
