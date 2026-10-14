@@ -51,3 +51,13 @@ Commit applicatif : `3983b1ca0f11f4db6feb809f3050fafa76c5470d` sur la seule bran
 - E153 : aucun changement, correction du service métier conservée.
 - **Réserves : aucun typecheck, Vitest, contrôle Electron ou CI n'a été exécuté dans cette session.** Le comportement d'ensemble et les protections UX-01 doivent être validés sur le SHA exact avant PR/fusion. Notamment tester prix nul, zéro, arrondis, prix négatifs, saisie invalide, sortie avec brouillon et acceptation par liste/détail sur fixtures isolées.
 - Ne pas fusionner cet incrément avant validation. `main` et les chantiers 03/04/05 sont inchangés.
+
+## Incrément E151 renforcé — 14/10
+
+Commits : `f95fdcd` (fonction centrale), `6cea204` (utilisation dans assistant), `a1fe875` (quatre tests Vitest).
+
+- `src/renderer/commercial/quoteWizardPrice.ts` : calcul centimes partagé entre création et aperçu ; surcharge « 0 » conservée ; entrée non chiffrée, négative et au-delà de la précision sûre rejetée.
+- `QuotesPage.tsx` utilise le même calcul pour la ligne initiale et sa visualisation. La saisie invalide est présentée comme « Montant invalide » dans l'aperçu plutôt que de lever une exception pendant le rendu ; la création reste bloquée par l'erreur explicite.
+- `quoteWizardPrice.test.ts` : tests du repli Catalogue, surcharge explicite, absence de prix, montants invalides.
+- **Attention : ces tests sont ajoutés mais non exécutés.** Aucun dépôt local complet ni exécution GitHub Actions déclenchée ici. Typecheck, Vitest, Electron, contrôle des scénarios réels et revue UX-01 restent nécessaires.
+- La présente branche demeure indépendante de `main` et des lots 03 à 05 ; aucune opération sur les données utilisateur.
