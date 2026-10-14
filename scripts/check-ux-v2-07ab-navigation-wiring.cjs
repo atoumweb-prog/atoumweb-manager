@@ -2,7 +2,7 @@
 // Combined candidate wiring checks: these are STATIC, not a substitute for native return-navigation tests.
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');const read=p=>fs.readFileSync(path.join(root,p),'utf8');
-const app=read('src/renderer/App.tsx'),project=read('src/renderer/projects/ProjectsPage.tsx'),quote=read('src/renderer/commercial/QuotesPage.tsx'),confirm=read('src/renderer/ui/useSearchTargetConfirmation.ts');
+const app=read('src/renderer/App.tsx'),project=read('src/renderer/projects/ProjectsPage.tsx'),quote=read('src/renderer/commercial/QuotesPage.tsx'),confirm=read('src/renderer/ui/useSearchTargetConfirmation.ts'),sites=read('src/renderer/projects/ProjectSitesTab.tsx');
 const cases=[
  ['Project to quote sends exact source ID',project.includes("entityId: detail.sourceQuoteId")],
  ['Project to quote preserves parent project ID',project.includes('parentEntityId: detail.id')],
@@ -17,6 +17,8 @@ const cases=[
  ['Project navigation confirmation works outside Production tab',confirm.includes("project:'.project-production-page'") && project.includes('className={`project-production-page')],
  ['Project return only restores existing nodes',project.includes('const availableNodes = new Set(next.nodes.map(node => node.id))') && project.includes('availableNodes.has(returnContext.selectedNodeId)')],
  ['Project return retains production tree state',project.includes('returnContext?.projectId === id ? returnContext.productionTreeCollapsed : false')],
+ ['Site/Page selection captured with Project return context',project.includes('sitesViewContext } } }))') && project.includes('onViewContextChange={setSitesViewContext}')],
+ ['Site/Page view restores only existing Site and Page identities',sites.includes('initialViewContext?.selectedSiteId ?? null') && sites.includes('initialViewContext?.selectedPageId ?? null') && sites.includes('const siteStillExists') && sites.includes('const pageStillExists')],
  ['Independent page events clear stale return context',app.includes('visibleEntity.current=null;setQuoteReturnProjectId(null);setProjectReturnContext(null);')],
  ['Direct rail navigation clears Project workspace snapshot',app.includes('setProjectReturnContext(null);')],
  ['Provisional source Quote not falsely marked accepted',project.includes("project.commercialState === 'provisional' ? 'Devis non accepté'")],
