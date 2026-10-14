@@ -1,0 +1,137 @@
+# UX/UI V2 — Couverture fonctionnelle et stratégie de livraison
+
+> **État actuel prioritaire :** [Consolidation des 10 lots](CONSOLIDATION-TRANSVERSE-10-LOTS.md) • [Écarts transverses](REGISTRE-ECARTS-TRANSVERSES.md) • [Roadmap par dépendances](FEUILLE-DE-ROUTE-IMPLEMENTATION-UX-V2.md) • [Recette intégrée](MATRICE-RECETTE-ET-GATES-UX-V2.md). **1 069 cas projetés** dans 01A–10E et 07P, non exécutés. **#84 fusionnée**, **#81 non fusionnée (correctif local `50f2b40` en attente du push/CI autorisés)**, **#83 draft en conflit**. Les paragraphes CI plus bas documentent des étapes **historiques** et ne remplacent pas ce point de situation.
+
+
+**Référence de comparaison** : `docs/ux-audit/02-CARTOGRAPHIE-ECRANS.md`, `03-INTERACTIONS.md`, `07-REGLES-METIER-A-PRESERVER.md` sur `docs/ux-audit-manager-v1`. Audit ancré au code `eb252d5c...` ; pas certification du HEAD actuel.
+
+## Couverture des 17 modules
+| Entrée existante | Cible UX V2, fonctions à conserver / détailler | Vérification avant implémentation |
+|---|---|---|
+| Accueil | Dashboard compact personnalisable, priorités, chrono global, navigation vers bons objets | Agrégations et alertes |
+| Prospection | Annuaire, pipeline 7 colonnes visuelles, historique, fiche rapide/grande, qualification, besoins, contrôle pré-devis, fenêtre référence détachée | transitions, brouillons UX-01, catégories température |
+| Clients | Résumé, contacts, commercial, contrats, projets, interventions, documents, historique, avatars, états relationnels | intégrité de source commune |
+| Offres & Tarifs | Administration complète, catégories, formules, recherche sémantique/mots clés, suggestions, aides, versions, CGV | versions et droits d'édition |
+| Devis | Assistant 6 étapes, lignes, options explicites, préparation Abby, contrats, prévisualisation, révision/duplication/finalisation/acceptation | libellés vs transitions réelles, contrôles UX-04/05 |
+| Projets | Prévisionnel/réconciliation, commercial, production, prérequis, accès, ressources, sites/pages, compositions, recette, temps | blueprints, cibles, secrets et disponibilité opérationnelle |
+| Interventions & Maintenance | Demandes, incidents, interventions, packs, cycles, quotas, rapports, conclusion | UX-03, UX-02, atomicité des débits |
+| Gestion des temps | Sessions, correction manuelle, filtres et chrono global | récupération, contexte et facturabilité |
+| Facturation | Éléments à traiter, référence Abby, PDFs importés, suivi des sources et échéances | UX-14 : ne pas inventer sources |
+| Dépenses | Liste, création, édition, récurrence, justificatifs, échéances, liens client/projet | règles de suppression et statut |
+| Documents & Contrats | Archive, conservation, classement, import, restauration, preuves + bibliothèque contractuelle, édition CGV | documents figés, versions et contrôles juridiques |
+| Bibliothèque AtoumWeb | Arbre/listes, versions, stabilité, assets, original/travail/réutilisable, packages et provenance | UX-19, permissions et copies indépendantes |
+| Sites (Bridge) | Module autonome de snapshots, Pages/Articles/Divi/Theme Builder, comparaisons et actifs techniques | capacités Bridge réelles, pas de publication fictive |
+| Sauvegardes | Registre métier ≠ backup technique ; destinations, preuves, vérifier/relier, sécurité restauration | UX-16 et UX-12 selon code courant |
+| Annuaire | Organisations, personnes, coordonnées, fiches, dernière vérification | identité unique, différence Prospect |
+| Statistiques | Ensemble, Commercial, Projets & temps, Clients, Rentabilité ; définitions traçables | revenus vs encaissements inconnus |
+| Réglages | Thèmes, densités, aide, vues, workspace, backup/restauration, outils demo isolés | aucune sécurité désactivable |
+
+## Hors visibilité simplifiée, mais à conserver
+- Fenêtres détachées, menus contextuels, import/export, archivage/réactivation, récits d'erreur, états vides/chargement.
+- Distinction Sites du Projet et snapshots WordPress Bridge.
+- Distinction publication d'une version locale du catalogue et publication WordPress.
+- Prévisualisations techniques et recette opérationnelle restent des outils contrôlés, pas des boutons métier disponibles implicitement.
+- Modèles, ACL/capacités, dépendances, états ready vs operational_ready et versions source/copie.
+
+## Invariants de non-régression
+| ID | Invariant |
+|---|---|
+| NR-01 | Aucun écran/contrôle actif ne disparaît sans tableau ancienne → nouvelle destination + décision. |
+| NR-02 | Identité Prospect/Client/Contact d'origine unique, sans fiche dupliquée. |
+| NR-03 | Versions vendues, clauses et preuves contractuelles figées ; acceptation explicite distincte. |
+| NR-04 | Besoin/suggestion non acheté ne produit ni montant, ni contrat, ni blueprint. |
+| NR-05 | Un Projet prévisionnel demeure le même projet après acceptation, travail existant préservé. |
+| NR-06 | Sites/Pages cibles explicites ; ready ≠ operational_ready. |
+| NR-07 | Chrono global unique, quotas et cycles métier historiques préservés. |
+| NR-08 | Réutilisation humaine par copie indépendante et provenance ; production Bridge jamais implicite. |
+| NR-09 | Document de preuve protégé, suppression/restore/archives selon garde métier. |
+| NR-10 | Validation-MSI jamais utilisée comme fixture modifiable en tests ordinaires. |
+
+## Lots de réalisation — cibles, pas ordre de fusion automatique
+| Lot | Contenu |
+|---|---|
+| 00 | **UX-01 #83** revue au HEAD `5b38cbe` (734/734 tests, 177/177 natifs, draft, CI queued) ; **UX-03/UX-16 #81** restent distinctes. Résoudre conflit IPC à la future intégration (simulation 87/87 ciblés, 177/177 natifs), vérifier CI + revue humaine ; aucun chantier en parallèle sur mêmes fichiers. |
+| 01A | Audit styles/tokens, palette/typographie, trois thèmes/densités |
+| 01B | Champs, boutons, icônes, messages, aides |
+| 01C | Fiches rapides/agrandies, panneaux redimensionnables |
+| 01D | Tableaux/filtres/colonnes/vues persistées |
+| 01E | Intégration de la garde UX-01, sans seconde implémentation |
+| 01F | Préférences, atelier démo, recette accessible |
+| 02 | Navigation et accueil |
+| 03 | Prospection, Clients, Annuaire |
+| 04 | Catalogue, offres, formules, services, aides commerciales |
+| 05 | Types contractuels, bibliothèque clauses et builder CGV ordonné |
+| 06 | Devis et Abby |
+| 07 | Projets, Sites & Pages, bibliothèque, Bridge progressif |
+| 08 | Interventions, Maintenance et Temps |
+| 09 | Facturation, Dépenses, Documents Word/PDF |
+| 10 | Statistiques, Sauvegardes, Réglages, recette transversale |
+
+## Définition de « terminé » pour un lot
+1. État des lieux HEAD actuel et sélection des composants à **réutiliser**.
+2. Tableau `ancienne action / nouvel emplacement / action service / état d'erreur / test` par écran touché.
+3. Migration incrémentale, sans modifier les autres parcours métier.
+4. Tests unitaires/services, typecheck et suite complète ; checks SQLite/migrations/FK sur fixtures isolées.
+5. Recette UI trois thèmes × trois densités ; clavier, focus, raccourcis, fermetures, sauvegarde et petites fenêtres.
+6. Capture des régressions et de l'état des protections UX-01/03/16.
+7. Commit par incrément, PR, revue humaine avant fusion.
+
+## Travail documentaire encore nécessaire
+L'audit a un index d'environ 84 fichiers React, **pas 84 écrans uniques**, et déclare sa matrice non exhaustive. Avant chaque lot, réaliser le relevé de ses handlers, IPC, services, retours d'erreurs, états et raccourcis, puis ajouter à ce référentiel les IDs `UX2-MODULE-NNN` correspondants. Ne pas prétendre qu'une simple liste couvre tous les boutons.
+
+En particulier : décision UX-02 nouveaux abonnements manuels ; édition Word avec fidélité des formats ; rubriques finales de CGV ; inventaire des offres/catégories existantes ; disponibilité de Bridge ; états de réouverture des interventions et projets.
+
+## Historique CI — rapport Codex avant fusion #84 (supplanté)
+Le workflow `.github/workflows/ci.yml` du code de référence requiert un runner self-hosted Windows X64 et n'a pas de runner correspondant selon le rapport Codex. Passage recommandé **mais non validé par AtoumWeb** vers GitHub-hosted Windows (ex. `windows-2022`), `npm ci` et exécution à deux workers, dans une PR **séparée**. Voir [CI-GITHUB-ACTIONS.md](CI-GITHUB-ACTIONS.md). Les quotas/coûts du compte restent à vérifier. **Aucune fusion, installation ou configuration CI n'est autorisée par cette documentation.**
+
+## Fondations — couverture documentaire
+Les six spécifications **01A–01F** sont détaillées dans [Lot 01 — Fondations](LOT-01-FONDATIONS.md) et ses liens. Uniquement **documentation de conception** : cette couverture ne confirme ni une implémentation, ni une recette UX des 17 modules. Le Lot 01F impose un **atelier de démonstration isolé** ; le `DemoPanel` métier existant utilise de vraies APIs de création/réinitialisation, à ne pas détourner pour une recette de composants.
+
+## Lot 02 — État documentaire (09/10/2026)
+[Spécification Navigation/Accueil 02A–02E](LOT-02-NAVIGATION-ACCUEIL.md) et [matrice code→cible](LOT-02-MATRICE-EXISTANT-CIBLE.md) enregistrées. **22 scénarios de synthèse dans l'ancien fichier général ; 94 dans 02A–02E (comptage consolidé sans double total)** et 14 écarts E28–E41, non exécutés. Les constats de code ciblent `main@eb252d5c` : `App.tsx`, recherche, événements globaux, HomeDashboard et CSS, GlobalTimer. Les 17 modules doivent rester accessibles ; protéger les formulaires via UX-01. Les autres lots métiers garderont leur propre inventaire écran→handler→IPC→service→test.
+
+## Historique CI — préparation de la PR #84 (désormais fusionnée)
+Workflow Windows GitHub-hosted publié en [PR #84](https://github.com/atoumweb-prog/atoumweb-manager/pull/84), draft non fusionnée ; **aucun run réellement effectué**, `[skip ci]`. Bloqué en attendant vérification humaine du quota Actions et des budgets de dépenses, hors portée du token Codex. Ne pas déclarer la CI verte.
+
+## Lot 02 — Spécification des composants 02A/02B
+[02A Rail et favoris](LOT-02A-RAIL-NAVIGATION.md) : 17 modules, **rail réduit option A validée par AtoumWeb (E42 clos)** : Accueil + favoris + cinq groupes, 18 cas. [02B En-tête et raccourcis](LOT-02B-ENTETE-RACCOURCIS.md) : recherche/chrono accessibles, repli du header, 16 cas. Documentation sans code applicatif ni résultats de recette. Les sous-lots 02C–02E restent à détailler.
+
+## Historique CI #84 — premier run avant fusion
+Le premier [run #549](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/37934890745) a effectivement exécuté le job `quality` sur Windows hébergé : install + typecheck OK, **3 tests timeout de 5 secondes**, 692/695 réussis ; **CI failure**, #84 draft non fusionnée. Enquête/test ciblés avant merge, détails dans [CI-GITHUB-ACTIONS.md](CI-GITHUB-ACTIONS.md).
+
+## Clôture documentaire Lot 02
+[02A](LOT-02A-RAIL-NAVIGATION.md), [02B](LOT-02B-ENTETE-RACCOURCIS.md), [02C](LOT-02C-RECHERCHE-ROUTAGE.md), [02D](LOT-02D-ACCUEIL-PILOTAGE.md), [02E](LOT-02E-RECETTE-ET-MIGRATION.md) sont spécifiés avec sources et conditions de recette. **E42 clos** (option A du rail), **E59 encore ouvert** sur le mapping des sept colonnes du pipeline. Leurs tests sont **projetés**, non exécutés ; aucune réécriture des 17 modules ou fusion autorisée par ces documents.
+
+## Projet prévisionnel depuis devis non signé — décision AtoumWeb du 09/10/2026
+[Spécification 07P](LOT-07-PROJET-PRE-SIGNATURE.md) : créer volontairement avant signature avec lignes présentes dans devis courant, préparer plan/Sites/Pages/ressources ; quand devis change, choisir adaptation ou remplacement contrôlé du projet, préserver travail, liens et historique. La validation officielle Abby convertit Client et fige le projet courant. **Backend partiellement déjà implémenté**, UX de création et option « repartir de zéro » à auditer et compléter, sans création de statuts ou suppression silencieuse. **20 scénarios attendus, non exécutés.**
+
+## Lot 03 — Spécification détaillée CRM
+Les cinq sous-lots [03A](LOT-03A-MATRICE-CRM-EXISTANT-CIBLE.md) / [03B](LOT-03B-PROSPECTION-PIPELINE.md) / [03C](LOT-03C-FICHE-PROSPECT-BESOINS.md) / [03D](LOT-03D-FICHE-CLIENT.md) / [03E](LOT-03E-ANNUAIRE-PARCOURS.md) sont consignés. Ils décrivent Prospection/Clients/Annuaire, transitions, conversion historique, huit onglets Client, projet préparatoire avant signature et risques de perte. **Spécification seulement**, pas de migration UI ni test exécuté. **E72 CLOS** (`new` reste Annuaire, `qualifying` entre dans le pipeline seulement après « Démarrer la prospection »), **E73** (marqueur accord de principe) attend cadrage technique. La PR #84 CI est indépendante de l'UX V2.
+
+## Lot 04 — Sous-lots documentés et reste
+Les spécifications [04A modèle existant](LOT-04A-MATRICE-CATALOGUE.md), [04B navigation/catégories](LOT-04B-NAVIGATION-CATEGORIES.md) et [04C éditeur/versions](LOT-04C-EDITEUR-VERSIONS.md) ont été confrontées au code `main@eb252d5c`. **04D associations/options/recommandations, 04E aides éditables et 04F publication/recette sont également spécifiés** ; tous les sous-lots 04A–04F sont documentés, non implémentés. Aucune version métier, migration ou donnée de catalogue modifiée ; aucun scénario de validation exécuté. Points techniques E88–E103 ouverts.
+
+
+### Références complètes Lot 04
+- [04D — Associations et recommandations](LOT-04D-ASSOCIATIONS-RECOMMANDATIONS.md) : 26 scénarios, modèle N:N à concevoir ; options existantes préservées.
+- [04E — Aides commerciales](LOT-04E-AIDES-COMMERCIALES.md) : 18 scénarios, distinction conseil interne/description client/CGV, restauration de brouillons.
+- [04F — Contrôles de publication et recette](LOT-04F-PUBLICATION-RECETTE.md) : 25 scénarios, revue des versions, tarifs, composants, contrats et production, sans validation juridique implicite.
+**Note :** les scénarios sont projetés, aucune migration, nouvelle UI ou suite de tests V2 n'a été exécutée.
+
+## Lot 05 — Clôture documentaire UX V2
+[05A audit](LOT-05A-AUDIT-CONTRACTUEL-EXISTANT.md) / [05B bibliothèque et édition](LOT-05B-BIBLIOTHEQUE-EDITOR.md) / [05C rubriques juridiques](LOT-05C-RUBRIQUES-CONDITIONS.md) / [05D Builder/gel](LOT-05D-BUILDER-RESOLUTION.md) / [05E Word/PDF et preuves Abby](LOT-05E-LECTURE-EXPORTS-PREUVES.md) / [05F recette](LOT-05F-RECETTE-CONTRACTUELLE.md) sont documentés, à partir des véritables API/migrations/principes contractuels de `main@eb252d5c`. **98 scénarios prévus** (pas des résultats). L'ordre par **rubrique sémantique** et le DOCX comparé **restent à réaliser après décisions techniques** ; protéger snapshots gelés vides et `historical_missing`, clauses publiées partagées et preuves Abby. **Aucun développement V2, test ni validation juridique accomplis par ce référentiel.** Ne pas confondre Lot 05 UX avec migrations du « Lot 5 paramètres contractuels » documentées au niveau du dépôt.
+
+## Lot 06 — Spécifications Devis/Abby, 09/10/2026
+[06A audit des états et du backend](LOT-06A-MATRICE-DEVIS-ET-ETATS.md), [06B wizard et fiche](LOT-06B-ASSISTANT-LISTE-EDITION.md), [06C catalogue/remises/options](LOT-06C-COMPOSITION-CATALOGUE.md), [06D CGV/aperçu](LOT-06D-CONTRAT-PREVISUALISATION.md), [06E Abby/révision/Projet](LOT-06E-ABBY-REVISIONS-PROJET.md), [06F recette](LOT-06F-RECETTE-ET-INTEGRATION.md) : **six sous-lots entièrement documentés, 109 scénarios futurs**. Les composants et services existants doivent être conservés ; l'éditeur 6 étapes, la copie Abby, le PDF de travail, les options achetables et **Préparer Projet** existent déjà en code. **E151** : aperçu prix proposé trompeur ; **E152** : action « Valider » accepte réellement ; **E153** : `QuoteService.create` avance un Prospect `new` à `quote_to_prepare` **en contradiction avec E72 décidée**. **Spécifications seulement, tests non exécutés, aucune modification V2.**
+
+## Lot 07 — Clôture documentaire (09/10/2026)
+Les sous-lots [07A inventaire](LOT-07A-INVENTAIRE-PROJETS-CAPACITES.md), [07B fiche Projet](LOT-07B-FICHE-PROJET-PRODUCTION.md), [07C blueprint et régénération](LOT-07C-BLUEPRINTS-DOSSIER-COMMERCIAL.md), [07D Sites/Pages et composition](LOT-07D-SITES-PAGES-COMPOSITION.md), [07E Bibliothèque et réutilisation](LOT-07E-BIBLIOTHEQUE-REUTILISATION.md), [07F Bridge](LOT-07F-BRIDGE-WORKBENCH-PUBLICATION.md) et [07G recette](LOT-07G-RECETTE-ET-INTEGRATION.md) sont détaillés, en complément du [07P pré-signature](LOT-07-PROJET-PRE-SIGNATURE.md). **137 scénarios 07A–G + 20 de 07P** sont des critères **futurs et non testés**. Fonction déjà codées à préserver : `previewQuote/prepareQuote/syncCommercial`, conflits/targets, `applyBlueprint`, Site/Page/chrono, HTML/CSS/JS local, Undo/Redo de **composant**, package Page V2, réutilisation copiée et Bridge Workbench-first 0.8.1. **À concevoir : remplacement entier sûr de Projet**, Undo/Redo **global de composition**, liaison ouverture Divi/capacités et publication WordPress contrôlée avec rollback/nettoyage CSS/JS. Aucune mutation de code, fichier Client, SQL réel, PR de sécurité ni WordPress réalisée dans cette documentation.
+
+## Lot 08 — Six sous-lots détaillés (09/10/2026)
+[08A audit et choix UX-02/03](LOT-08A-AUDIT-REGLES-ET-PARCOURS.md), [08B Intervention/Demandes](LOT-08B-INTERVENTIONS-DEMANDES.md), [08C maintenance date-à-date](LOT-08C-MAINTENANCE-CYCLES.md), [08D Packs](LOT-08D-PACKS-DEBITS.md), [08E Chrono/temps/rapport](LOT-08E-CHRONO-TEMPS-RAPPORTS.md), [08F recette](LOT-08F-RECETTE-ET-INTEGRATION.md) : **109 scénarios de recette futurs**, aucun exécuté. Le code expose déjà OperationsPage, MaintenanceService, HourPackService, InterventionCompletionService, TimeService, TimeSwitchService et GlobalTimer. **Écarts à ne pas masquer :** E223 (nouveau manuel en `calendar` malgré UX-02), E222 (atomicité de fin d'Intervention interservices à prouver), E224 (définition routine/temps/quotas à expliquer) et corrections Pack après modification d'une session. **Aucun code, historique ou base réelle changé** par cette PR documentaire; maintient la séparation lot technique opérationnel 8A / Lot 08 UX V2.
+
+## Lot 09 — Clôture documentaire UX/UI V2 (09/10/2026)
+[09A audit](LOT-09A-AUDIT-FINANCES-DOCUMENTS.md), [09B facturation/Abby](LOT-09B-FACTURATION-ABBY.md), [09C dépenses](LOT-09C-DEPENSES-ECHEANCES.md), [09D documents/archives](LOT-09D-DOCUMENTS-ARCHIVES-PREUVES.md), [09E Word/PDF](LOT-09E-WORD-PDF-ALLER-RETOUR.md), [09F recette](LOT-09F-RECETTE-ET-INTEGRATION.md) : **six sous-lots spécifiés et 108 scénarios de recette futurs**. Existant : BillingHandoff/BillingPage, PDF Abby importé, ExpenseService/ExpensesPage, ClientDocumentService/DocumentsPage, ContractLibraryPage. **Reste à sécuriser en code** : E259 PDF factures liés supprimables après archivage sans garde explicite; E258 justificatif Dépense sans version historique contrôlée; E260 retour DOCX avec diff non livré. BillingItem invoiced **ne prouve pas** payé/encaissé; revenus/encaissements non inventés. Aucun test, document Client réel, migration ou paiement modifiés dans ce chantier documentaire; commits **[skip ci]**.
+
+## Lot 10 — Clôture documentaire Statistiques, Sauvegardes, Réglages (09/10/2026)
+[10A audit des métriques](LOT-10A-AUDIT-INDICATEURS.md), [10B navigation analytique](LOT-10B-STATISTIQUES-NAVIGATION.md), [10C registre de backups métier et restauration SQLite](LOT-10C-SAUVEGARDES-RESTAURATION.md), [10D Réglages et préférences](LOT-10D-REGLAGES-PREFERENCES.md) et [10E recette](LOT-10E-RECETTE-PILOTAGE-REGLAGES.md) sont détaillés, **102 scénarios futurs non exécutés**. Le code dispose déjà de deux vues calculatrices Statistiques, d'`AnalyticsService`, d'un registre BusinessBackupService et de politiques d'alerte, d'un moteur SQLite backup/restore distinct, de thèmes/densités/aide et d'un choix workspace. **Écarts à ne pas masquer** : E290 taux avec dénominateurs divergents, E291 rendement horaire ≠ marge nette, E292 facturé suivi ≠ encaissé, E293 nouveaux contacts `new` inclus comme actifs, E297 score clients hétérogène, et existence/confirmation d'une sauvegarde ≠ intégrité/restauration prouvée. #81/UX-16 est une dépendance technique à auditer au moment de la fusion, non une permission de restauration. **Aucune CI, sauvegarde ou test UX du Lot 10 réalisés.**

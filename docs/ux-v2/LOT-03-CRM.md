@@ -1,0 +1,50 @@
+# Lot 03 — Prospection, Clients et Annuaire
+**Statut : spécification cible, non implémentée par ce document.**
+## Prospection
+- Modes Annuaire / Pipeline / Historique, fiche rapide puis complète et éventuelle fenêtre de référence détachée.
+- **Sept colonnes visuelles** : À qualifier, Besoins, Préparer le devis, Attente du retour, Négociation, Finalisation, Conversion. **Décision AtoumWeb : Conversion = historique consultable des Prospects effectivement convertis en Clients, séparé du pipeline actif** ; lien Client vérifiable, aucun `lost`, aucun doublon. Ne jamais inventer de valeurs backend nouvelles : cartographier les états existants avant le drag & drop. L'étape historique Conversion ne doit pas être une cible de drag & drop créant une conversion implicite ; celle-ci suit le parcours métier validé. L’exclusion de `new` du pipeline jusqu’au démarrage volontaire est **validée (E72)** ; le **marqueur technique** de Finalisation (définition métier validée) et la période de l'historique restent à préciser (E59).
+- Températures `cold`, `neutral`, `warm`, `hot` ; marqueur couleur discret sans libellé imposé sur la carte, aide accessible ; transitions de phase soumises aux gardes métier.
+- Fiche Prospect : Résumé, Entreprise, Qualification, Besoins, Devis, Activités, Historique ; champs/décisionnaire et contrôle avant devis préservés.
+- Fiche besoins : accès au catalogue central (voir LOT-04), inclus/exclus, services complémentaires et aide `?`. Sélection d'un besoin **ne crée pas d'achat**.
+## Clients
+- Fiche Client distincte de Prospect ; ordre résumé/coordonnées → relation → devis/contrats/projets → échéances/actions ; huit onglets Résumé, Contacts, Commercial, Contrats, Projets, Interventions, Documents, Historique.
+- Résumé personnalisable, widgets et actions utiles ; relation Client (appréciation qualitative, observation datée) distincte de température Prospect.
+- Avatar logo, photo de personne ou icône ; organisation et personne physique différenciées ; coordonnées et contacts restent source unique.
+- Accès transversal aux dossiers sans recopie des données. Contrats et preuves protégés.
+## Annuaire
+Organisations, contacts, recherche, catégories, dernière vérification ; entrée d'annuaire ≠ prospect converti.
+## Ordre proposé
+03A cartographie états/handlers ; 03B listes/pipeline ; 03C fiche Prospect et besoins ; 03D fiche Client ; 03E annuaire et parcours croisés.
+## Recette
+Qualification incomplète, changement phase valide/invalide, retour fiche, fermeture fenêtre détachée, synchronisation, création devis depuis besoin, conversion sans doublon, 3 thèmes/densités, garde UX-01.
+## Arbitrages à vérifier
+Noms/codes exacts des statuts relationnels Client, transitions backend, différence libellés statistiques et pipeline (UX-09).
+
+## Dépendance E59 — technique de Finalisation (sens métier validé, marqueur ouvert)
+La décision **Conversion historique** est acquise. En revanche, aucun `ProspectStage=finalization` n'existe ; `quotes.finalize` ne représente que **Devis à envoyer**, et `quotes.accept` sur signature réelle Abby mène à Conversion. **Définition métier validée :** **accord de principe / signature en attente**, avec indicateur traçable non destructif à instruire, sans statut backend inventé. Source et vérification détaillées : [Lot 02D](LOT-02D-ACCUEIL-PILOTAGE.md). Ne pas laisser Codex mettre en œuvre cette classification tant que le marqueur technique et les transitions sûres n'ont pas été examinés.
+
+## 09/10/2026 — Finalisation validée + Projet avant signature
+**Finalisation (validée par AtoumWeb)** : accord de principe obtenu ; dernières formalités, notamment signature Abby, encore à accomplir. Ce **classement commercial visuel** n'est pas synonyme de devis `finalizedAt` (simple prêt à envoyer). Il faut identifier un signal de classement explicite, fiable et historisé **sans créer arbitrairement un nouveau statut Prospect** ; le mapping reste une tâche technique.
+
+**Projet prévisionnel (validé)** : pouvoir créer volontairement depuis les **lignes déjà inscrites au devis courant** même avant signature, **y compris avant l'étape Finalisation**, afin de travailler sur plan, Sites/Pages et ressources ; modifier/synchroniser ou **supprimer/remplacer de façon contrôlée** le pré-projet si le devis change fortement. Ce choix **ne transforme pas** le Prospect en Client et **ne déclenche pas** production/facturation officielle. Sur acceptation officielle, Projet retenu figé et Client créé/rattaché selon services existants. [Spécification 07P](LOT-07-PROJET-PRE-SIGNATURE.md).
+
+## 09/10/2026 — Dossiers détaillés disponibles (documentation uniquement)
+- [03A — Matrice CRM existant/cible](LOT-03A-MATRICE-CRM-EXISTANT-CIBLE.md) : service `CrmService`, statuts, Prospect/Client, Conversion, Devis → Projet prévisionnel, 18 scénarios.
+- [03B — Pipeline et Conversion](LOT-03B-PROSPECTION-PIPELINE.md) : **6 colonnes actives + 1 historique** Conversion, température distincte du stade, gardes sur drag & drop, Projet non signé, 20 scénarios.
+- [03C — Fiche Prospect et besoins](LOT-03C-FICHE-PROSPECT-BESOINS.md) : identité, qualification, sélection consultative catalogue, pré-devis, devis courant et commande explicite Préparer Projet, 18 scénarios.
+- [03D — Fiche Client](LOT-03D-FICHE-CLIENT.md) : **huit onglets cible** contre six onglets techniques actuels, relation indépendante, Client et Projet conservés après conversion, 14 scénarios.
+- [03E — Annuaire](LOT-03E-ANNUAIRE-PARCOURS.md) : organisations/contacts partagés, relation `client_prospect`, rapprochement/dernière vérification, 13 scénarios.
+
+**Statut : documentation complète 03A–03E, aucun code applicatif ni test exécuté par ces documents.**
+**E72 — DÉCIDÉ :** les nouveaux contacts `stage='new'` restent dans l’Annuaire. Ils rejoignent « À qualifier » uniquement lorsque l’utilisateur clique **« Démarrer la prospection »** et que le service confirme `stage='qualifying'`. La création d’un Devis ou d’un Projet préparatoire ne doit pas les faire entrer implicitement dans le pipeline.
+**E73 — problème de raccord technique ouvert** : Finalisation = accord de principe (sens métier validé), mais aucun marqueur backend autonome n'existe aujourd'hui. Conception d'un signal daté/versionné et révocable à valider avant implémentation, sans nouveau `ProspectStage` arbitraire.
+**E66–E71** : préparation du projet à partir d'un devis non signé, synchronisation et régénération sécurisée déjà définies en [Lot 07P](LOT-07-PROJET-PRE-SIGNATURE.md).
+
+## Dépendance active vers Lot 04 (09/10/2026)
+Les besoins Prospect s'appuient sur le catalogue publié **en lecture/sélection** ; les suggestions ne sont pas automatiquement achetées. Une **ligne Devis réellement créée** porte sa propre référence de version ; elle seule peut alimenter un projet prévisionnel avant signature. Le référentiel Catalogue V2 prévoit catégories métier A–Z (section Services complémentaires) et aides administrables sans modifier les identités canonique/Abby. Voir [04A](LOT-04A-MATRICE-CATALOGUE.md), [04B](LOT-04B-NAVIGATION-CATEGORIES.md), [04C](LOT-04C-EDITEUR-VERSIONS.md).
+
+## Dépendance critique Lot 06 — E72 versus effet réel de création d'un Devis
+**E72 demeure DÉCIDÉE** : contact `stage='new'` dans Annuaire jusqu'à **« Démarrer la prospection »**, puis entrée pipeline sur `qualifying`. L'audit [06A](LOT-06A-MATRICE-DEVIS-ET-ETATS.md) prouve cependant que **`QuoteService.create` modifie aujourd'hui `prospects.stage='quote_to_prepare'` lors de la création d'un Devis**, y compris quand le Prospect était `new`. **Cette transition automatique en backend est contraire à la cible E72**, même si l'UI Prospection filtre `new`. Réserver correction et tests de non-régression à la future phase de code ; ne jamais prétendre E72 implémentée à ce stade. Un Devis peut être préparé avant l'entrée dans le pipeline **sans forcer le démarrage de prospection**. [06F recette](LOT-06F-RECETTE-ET-INTEGRATION.md).
+
+## Suite Lot 07 — Projet provisoire et visualisation CRM
+Les décisions [07P](LOT-07-PROJET-PRE-SIGNATURE.md) et les contrats [07C](LOT-07C-BLUEPRINTS-DOSSIER-COMMERCIAL.md) font dépendre l'entrée en Projet des **lignes du Devis** et d'un clic volontaire de préparation, **pas** d'une conversion ou d'un accord de principe. La fiche Prospect peut afficher et ouvrir le Projet prévisionnel, sans le compter comme Client acquis. Lorsque l'acceptation Abby est réellement confirmée, **le Projet courant** rejoint la fiche Client avec ses éléments préparés, sans doublon, et la colonne Conversion reste historique. L'écart **E153** (`new` avancé lors de création du Devis) reste indépendant et à corriger avant conformité UX2.

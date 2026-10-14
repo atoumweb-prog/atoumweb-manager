@@ -1,4 +1,4 @@
-import { useEffect,useState } from 'react';
+import { useEffect,useRef,useState } from 'react';
 import type { CatalogVersion,QuoteDetail, QuoteLine, QuoteLineInput } from '../../shared/commercial';
 import { QuoteLineEditor } from './QuoteLineEditor';
 import './QuoteOfferOptionsPanel.css';
@@ -22,6 +22,7 @@ export function QuoteOfferOptionsPanel({ quote, onSave }: {
   quote: QuoteDetail; onSave: (quote: QuoteDetail) => void;
 }) {
   const [busy, setBusy] = useState(false);
+  const inFlight = useRef(false);
   const [error, setError] = useState('');
   const [editing, setEditing] = useState<string | null>(null);
   useUnsavedDraft('Enregistrement des options du devis', null, {
@@ -32,10 +33,12 @@ export function QuoteOfferOptionsPanel({ quote, onSave }: {
   const offers = quote.lines.filter((line) => line.snapshot?.itemType === 'offer');
   const catalogSources=quote.lines.filter(line=>line.source==='catalog'&&Boolean(line.catalogVersionId||line.snapshot?.versionId));
   async function run(action: () => Promise<QuoteDetail>) {
+    if (inFlight.current) return; // Stoppe les doubles clics avant le prochain rendu React.
+    inFlight.current = true;
     setBusy(true); setError('');
     try { onSave(await action()); setEditing(null); }
     catch (caught) { setError(caught instanceof Error ? caught.message : 'Option non enregistrée.'); }
-    finally { setBusy(false); }
+    finally { inFlight.current = false; setBusy(false); }
   }
   if (!offers.length&&!catalogSources.length) return null;
   return <section className="quote-offer-options" aria-label="Composition et options des offres">

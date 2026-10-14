@@ -1,15 +1,84 @@
 {
-  "phase": "04-05",
+  "phase": "06",
   "nativeChecks": [
-    ["catalogue-editor", ["scripts/check-catalog-identity-ui.cjs", "--captures", "{out}/catalogue-captures"]],
-    ["catalogue-recommendations", ["scripts/check-catalog-recommendations-ui.cjs"]],
-    ["catalogue-guidance", ["scripts/check-catalog-guidance-ui.cjs"]],
-    ["prospect-recommendations", ["scripts/check-prospect-catalog-recommendations-ui.cjs"]],
-    ["quote-recommendations", ["scripts/check-quote-catalog-recommendations-ui.cjs"]],
-    ["catalogue-native", ["scripts/check-catalog-recommendations-native.cjs"]],
-    ["contracts-native", ["scripts/check-contract-library-ui.cjs", "--output", "{out}/contract-captures", "--ux05b"]],
-    ["ux01", ["scripts/check-unsaved-inputs-ui.cjs", "--lot-b", "--lot-c", "--review"]],
-    ["restore-roundtrip", ["scripts/check-restore-quit-roundtrip.cjs"]],
-    ["shell", ["scripts/check-ux-v2-lot01a-real-ui.cjs", "--captures", "{out}/shell-captures"]]
+    [
+      "quotes-pdf",
+      [
+        "scripts/check-unsaved-inputs-ui.cjs",
+        "--lot-pdf"
+      ]
+    ],
+    [
+      "quotes-create",
+      [
+        "scripts/check-unsaved-inputs-ui.cjs",
+        "--lot-create"
+      ]
+    ],
+    [
+      "quotes-prerequisites",
+      [
+        "scripts/check-unsaved-inputs-ui.cjs",
+        "--lot-prerequisites"
+      ]
+    ],
+    [
+      "quotes-refresh",
+      [
+        "scripts/check-unsaved-inputs-ui.cjs",
+        "--lot-refresh"
+      ]
+    ],
+    [
+      "quotes-versions",
+      [
+        "scripts/check-unsaved-inputs-ui.cjs",
+        "--lot-versions"
+      ]
+    ],
+    [
+      "quotes-accept",
+      [
+        "scripts/check-unsaved-inputs-ui.cjs",
+        "--lot-accept"
+      ]
+    ],
+    [
+      "quote-recommendations",
+      [
+        "scripts/check-quote-catalog-recommendations-ui.cjs"
+      ]
+    ],
+    [
+      "contracts-native",
+      [
+        "scripts/check-contract-library-ui.cjs",
+        "--output",
+        "{out}/contract-captures",
+        "--ux05b"
+      ]
+    ],
+    [
+      "ux01",
+      [
+        "scripts/check-unsaved-inputs-ui.cjs",
+        "--lot-b",
+        "--lot-c",
+        "--review"
+      ]
+    ],
+    [
+      "restore-roundtrip",
+      [
+        "scripts/check-restore-quit-roundtrip.cjs"
+      ]
+    ],
+    [
+      "baseline-01-03",
+      [
+        "scripts/check-ux-v2-integration-validate.cjs",
+        "--native-only"
+      ]
+    ]
   ]
 }

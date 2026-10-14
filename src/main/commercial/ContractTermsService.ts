@@ -533,7 +533,8 @@ export class ContractTermsService {
     this.syncQuoteInternal(quoteId);
     const clauses = this.quoteClauses(quoteId);
     const audience = this.resolveQuoteAudience(state);
-    const included = clauses.filter((clause) => clause.enabled);
+    const included = clauses.filter((clause) => clause.enabled && !clause.isOrphaned);
+    const activeOrphans = clauses.filter((clause) => clause.enabled && clause.isOrphaned);
     // Quote finalization shares this same transaction: a failed legal review rolls back the entire freeze.
     // Only a reviewed, complete contract may replace the legacy ordering for new prepared quotes.
     let compiledText=this.compile(clauses);
@@ -560,14 +561,14 @@ export class ContractTermsService {
       if(mode==='requires_review')throw Error('Classement juridique incomplet : approbation humaine requise.');
       if(mode==='canonical'){
         usedCanonical=true;
-        const particular=clauses.filter(clause=>clause.enabled&&clause.sourceKind==='custom');
+        const particular=included.filter(clause=>clause.sourceKind==='custom');
         const append=particular.length?'\n\nCONDITIONS PARTICULIÈRES\n\n'+particular.map((clause,index)=>`${index+1}. ${clause.title.trim()}\n${clause.body.trim()}`).join('\n\n'):'';
         compiledText='CONDITIONS GÉNÉRALES DE VENTE – ATOUMWEB\n\n'+renderApprovedDraftContract(assembly)+append;
       }
     }
     if(payload && !included.some(c=>c.sourceKind==='base'&&!c.isOrphaned)) throw Error('Préparation contractuelle incomplète : aucun socle publié disponible ; les brouillons ne sont pas consommés.');
 
-    if(payload && included.some(c=>!clean(c.body)||c.isOrphaned||/\[À RENSEIGNER/i.test(c.body))) throw Error('Clause incluse vide, orpheline ou incomplète : finalisation refusée.');
+    if(payload && (activeOrphans.length > 0 || included.some(c=>!clean(c.body)||/\[À RENSEIGNER/i.test(c.body)))) throw Error('Clause incluse vide, orpheline ou incomplète : finalisation refusée.');
     const now = nowIso();
     const types=new ContractTypeService(this.database).quoteReferences(quoteId);
     const orderConflicts=new ContractTypeService(this.database).orderWarnings(types,new Set(included.filter(c=>c.sourceClauseId).map(c=>c.sourceClauseId!)));
@@ -912,7 +913,7 @@ export class ContractTermsService {
   }
 
   private compile(clauses: QuoteContractClause[]): string {
-    const included = clauses.filter((clause) => clause.enabled);
+    const included = clauses.filter((clause) => clause.enabled && !clause.isOrphaned);
 
     if (included.length === 0) return '';
     const body = included.map((clause, index) => {

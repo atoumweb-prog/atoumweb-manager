@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createSingleFlightGate } from './quoteSingleFlight';
 import type { QuoteDetail } from '../../shared/commercial';
 import { useUnsavedDraft } from '../unsaved/unsaved';
 
@@ -13,6 +14,7 @@ export function QuoteContractDocumentPanel({
 }) {
   const [abbyReference, setAbbyReference] = useState(quote.abbyReference ?? '');
   const [busy, setBusy] = useState(false);
+  const actionGate = useRef(createSingleFlightGate());
   useUnsavedDraft('Référence et document Abby', abbyReference, {
     group: 'quote:' + quote.id + '/abby',
     dirty: abbyReference !== (quote.abbyReference ?? ''),
@@ -25,31 +27,35 @@ export function QuoteContractDocumentPanel({
   }, [quote.id, quote.abbyReference]);
 
   async function saveReference(): Promise<void> {
-    setBusy(true);
-    try {
-      const next = await window.atoumweb.quotes.updateAbbyReference(quote.id, abbyReference);
-      onSave(next);
-      onMessage('Référence Abby enregistrée.');
-    } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible d’enregistrer la référence Abby.');
-    } finally {
-      setBusy(false);
-    }
+    await actionGate.current.run(async () => {
+      setBusy(true);
+      try {
+        const next = await window.atoumweb.quotes.updateAbbyReference(quote.id, abbyReference);
+        onSave(next);
+        onMessage('Référence Abby enregistrée.');
+      } catch (error) {
+        onMessage(error instanceof Error ? error.message : 'Impossible d’enregistrer la référence Abby.');
+      } finally {
+        setBusy(false);
+      }
+    });
   }
 
   async function importDocument(): Promise<void> {
-    setBusy(true);
-    try {
-      const next = await window.atoumweb.quotes.importContractDocument(quote.id, abbyReference);
-      if (!next) return;
-      setAbbyReference(next.abbyReference ?? '');
+    await actionGate.current.run(async () => {
+      setBusy(true);
+      try {
+        const next = await window.atoumweb.quotes.importContractDocument(quote.id, abbyReference);
+        if (!next) return;
+        setAbbyReference(next.abbyReference ?? '');
       onSave(next);
-      onMessage('Devis contractuel Abby importé et rattaché au client.');
-    } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible d’importer le devis contractuel Abby.');
-    } finally {
-      setBusy(false);
-    }
+        onMessage('Devis contractuel Abby importé et rattaché au client.');
+      } catch (error) {
+        onMessage(error instanceof Error ? error.message : 'Impossible d’importer le devis contractuel Abby.');
+      } finally {
+        setBusy(false);
+      }
+    });
   }
 
   async function openDocument(): Promise<void> {

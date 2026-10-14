@@ -2,7 +2,7 @@ import {useDraftSection} from '../unsaved/useDraftSection';
 import {useUnsavedDraft} from '../unsaved/unsaved';
 import {ProjectCommercialScopePanel} from '../projects/ProjectCommercialScopePanel';
 import { QuoteContractPreparationPanel } from '../commercial/QuoteContractPreparationPanel';
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import type {QuoteDetail} from '../../shared/commercial';
 import { findCurrentQuoteProject } from '../../shared/quoteProjectEligibility';
 import type {ProjectSummary,ProjectTemplateSummary,ProjectCommercialPreview} from '../../shared/projects';
@@ -66,12 +66,35 @@ export function QuoteProjectPanel({quote,requirePreviewBeforePrepare=false}:{quo
   </section>;
 }
 export function QuoteConditions({quote,onSave}:{quote:QuoteDetail;onSave:(q:QuoteDetail)=>void}){
-  const draft=useDraftSection(quote.id,quote.prerequisitesText??'');const prerequisites=draft.value,setPrerequisites=draft.section.set.bind(draft.section);const [error,setError]=useState(''),[saving,setSaving]=useState(false);
+  const draft=useDraftSection(quote.id,quote.prerequisitesText??'');
+  const prerequisites=draft.value,setPrerequisites=draft.section.set.bind(draft.section);
+  const [error,setError]=useState(''),[saving,setSaving]=useState(false);
+  const savingRef=useRef(false); // Empêche un second submit avant que React désactive le bouton.
   useUnsavedDraft('Prérequis du devis',prerequisites,{dirty:draft.section.dirty,pending:saving,discard:()=>draft.section.discard()});
   useEffect(()=>draft.section.receive(quote.prerequisitesText??''),[quote.id,quote.prerequisitesText]);
+
+  async function savePrerequisites(): Promise<void> {
+    if(savingRef.current)return;
+    savingRef.current=true;
+    setSaving(true);setError('');
+    const submitted=prerequisites;
+    try{
+      const next=await window.atoumweb.quotes.updateConditions(quote.id,{prerequisitesText:submitted});
+      draft.section.receive(next.prerequisitesText??'',{value:submitted});
+      onSave(next);changed();
+    }catch(caught){
+      setError(caught instanceof Error?caught.message:String(caught));
+    }finally{
+      savingRef.current=false;setSaving(false);
+    }
+  }
   const editable=quote.status==='draft'&&!quote.finalizedAt;
   return <>
-    {editable?<form className="workflow-fields" onSubmit={e=>{e.preventDefault();setSaving(true);const submitted=prerequisites;window.atoumweb.quotes.updateConditions(quote.id,{prerequisitesText:prerequisites}).then(q=>{draft.section.receive(q.prerequisitesText??'',{value:submitted});onSave(q);changed();}).catch(e=>setError(String(e))).finally(()=>setSaving(false));}}><label>Prérequis<textarea value={prerequisites} onChange={e=>setPrerequisites(e.target.value)}/></label><button className="secondary-button">Enregistrer les prérequis</button>{error&&<p role="alert">{error}</p>}</form>:quote.prerequisitesText&&<p>{quote.prerequisitesText}</p>}
+    {editable?<form className="workflow-fields quote-prerequisites-form" onSubmit={event=>{event.preventDefault();void savePrerequisites();}}>
+      <label>Prérequis<textarea value={prerequisites} onChange={event=>setPrerequisites(event.target.value)}/></label>
+      <button className="secondary-button" disabled={saving}>{saving?'Enregistrement…':'Enregistrer les prérequis'}</button>
+      {error&&<p role="alert">{error}</p>}
+    </form>:quote.prerequisitesText&&<p>{quote.prerequisitesText}</p>}
     <QuoteContractPreparationPanel quote={quote} onSave={onSave}/>
     <ContractTermsBuilder quote={quote}/>
   </>;
