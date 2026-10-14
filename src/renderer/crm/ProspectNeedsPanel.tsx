@@ -12,6 +12,7 @@ import {
 } from '../../shared/prospectInformation';
 import {CommercialScope} from '../commercial/CommercialScope';
 import {catalogueFamilyLabel,catalogueIsOffer} from '../commercial/catalogDisplay';
+import { catalogMatchesQuery, catalogIsSelectable } from '../../shared/catalogDiscovery';
 
 
 const BUDGET_PRESETS = [
@@ -52,14 +53,15 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
   const [selectedId, setSelectedId] = useState('');
   const [otherText, setOtherText] = useState('');
   const [kind,setKind]=useState<'offers'|'services'>('offers');
+  const [catalogQuery,setCatalogQuery]=useState('');
   const choiceGuard=useUnsavedDraft('Prestation à ajouter',{selectedId,otherText},{discard:s=>{setSelectedId(s.selectedId);setOtherText(s.otherText);}});
 
   const availableByKind=catalog.filter(item=>catalogueIsOffer(item)===(kind==='offers'));
   const categories=sortedCategories(availableByKind);
   const selectedCategory=categories.includes(category)?category:categories[0]??'';
-  const choices=availableByKind.filter(item=>catalogueFamilyLabel(item)===selectedCategory).sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+  const choices=availableByKind.filter(item=>(catalogQuery.trim() ? catalogMatchesQuery(item,catalogQuery) : catalogueFamilyLabel(item)===selectedCategory)).sort((a,b)=>a.name.localeCompare(b.name,'fr'));
 
-  useEffect(() => { void window.atoumweb.catalog.list({ status: 'active' }).then((items) => setCatalog(items.filter((item) => Boolean(item.currentVersion)))); }, []);
+  useEffect(() => { void window.atoumweb.catalog.list({ status: 'active' }).then((items) => setCatalog(items.filter(catalogIsSelectable))); }, []);
 
   function add() {
     if (selectedId === 'other') {
@@ -79,7 +81,8 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
   const suggestions = suggestionIds.map((id) => catalog.find((item) => item.id === id)).filter(Boolean) as CatalogItemSummary[];
 
   return <div className="need-selector-v2 form-span-3">
-    <div className="need-selector-title"><strong>Besoins / Offres / Services</strong><small>Choisis d’abord une catégorie pour éviter une liste interminable.</small></div>
+    <div className="need-selector-title"><strong>Besoins / Offres / Services</strong><small>Catégorie ou recherche par besoin, bénéfice ou mot-clé publié.</small></div>
+    <label>Rechercher une prestation par besoin<input aria-label="Rechercher une prestation par besoin" value={catalogQuery} onChange={e=>setCatalogQuery(e.target.value)} placeholder="visibilité Google, SEO local…" /></label>
     {value.length > 0 && <div className="need-chip-list">{value.map((need, index) => {
       const item = need.catalogItemId ? catalog.find((candidate) => candidate.id === need.catalogItemId) : null;
       return <span className="need-chip" key={`${need.catalogItemId ?? 'other'}-${index}`}>{item ? `${item.type === 'offer' ? 'Offre' : 'Service'} · ${item.name}` : `Autre · ${need.otherText}`}<button type="button" aria-label="Retirer" onClick={() => onChange(value.filter((_, i) => i !== index))}>×</button></span>;
@@ -199,6 +202,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
   currentProspectId.current = prospectId;
 
   const [kind,setKind]=useState<'offers'|'services'>('offers');
+  const [catalogQuery,setCatalogQuery]=useState('');
   const choiceGuard=useUnsavedDraft('Prestation envisagée',{selectedId,otherText},{pending:busy,discard:s=>{setSelectedId(s.selectedId);setOtherText(s.otherText);}});
   const infoValue={projectSummary,projectContext,budgetPreset,budgetMin,budgetMax,budgetExact,timelineStatus,targetDate,timelineNote,existingStatus,existingUrl,existingNotes,informationItems,newInformation,newInformationBlocking};
   const savedFormBaselineRef = useRef<typeof infoValue | null>(null);
@@ -207,7 +211,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
   const availableByKind=catalog.filter(item=>catalogueIsOffer(item)===(kind==='offers'));
   const categories=sortedCategories(availableByKind);
   const selectedCategory=categories.includes(category)?category:categories[0]??'';
-  const choices=availableByKind.filter(item=>catalogueFamilyLabel(item)===selectedCategory).sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+  const choices=availableByKind.filter(item=>(catalogQuery.trim() ? catalogMatchesQuery(item,catalogQuery) : catalogueFamilyLabel(item)===selectedCategory)).sort((a,b)=>a.name.localeCompare(b.name,'fr'));
   const selectedItem = catalog.find((item) => item.id === selectedId) ?? null;
 
   async function load() {
@@ -220,7 +224,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
       ]);
       if (sequence !== reloadSequence.current) return;
       const current = prospects.find((item) => item.id === prospectId) ?? null;
-      const available = nextCatalog.filter((item) => Boolean(item.currentVersion));
+      const available = nextCatalog.filter(catalogIsSelectable);
       setNeeds(nextNeeds);
       setCatalog(available);
       setProspect(current);
@@ -513,6 +517,11 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
     <div className="need-add-block">
       <div className="need-selector-title"><strong>{editingId ? 'Modifier la solution' : 'Ajouter une offre / prestation au besoin'}</strong><small>Une sélection, un seul bouton de validation.</small></div>
       <KindTabs kind={kind} onChange={k=>{setKind(k);setCategory('');setSelectedId('');}}/>
+      <label className="prospect-catalog-query">Rechercher par besoin ou mots-clés
+        <input aria-label="Rechercher par besoin ou mots-clés" value={catalogQuery}
+          onChange={event=>setCatalogQuery(event.target.value)}
+          placeholder="Ex. visibilité Google, boutique en ligne…" disabled={busy}/>
+      </label>
       <div className="need-add-row">
         <label>Famille de solution<select value={selectedCategory} onChange={(e) => { setCategory(e.target.value); setSelectedId(''); setOtherText(''); }} disabled={busy}>{categories.map((name) => <option key={name} value={name}>{name}</option>)}</select></label>
         <label>Offre / prestation envisagée<select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} disabled={busy}><option value="">Choisir…</option>{choices.map((item) => <option key={item.id} value={item.id}>{item.name} · {priceLabel(item.currentVersion)}</option>)}<option value="other">Autre / sur mesure</option></select></label>
