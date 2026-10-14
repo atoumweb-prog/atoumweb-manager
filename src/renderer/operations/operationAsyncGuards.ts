@@ -62,5 +62,5 @@ export function interventionCompletionReview(intervention: Intervention): string
     consequence[intervention.coverageMode],
     'Les soldes, quotas et montants définitifs ne sont pas prévisualisés ici : le service les contrôle lors de la clôture.',
     'Cette action peut modifier le pack, la maintenance et les éléments de facturation. Continuer ?',
-  ].join('\\n');
+  ].join('\n');
 }
