@@ -347,11 +347,11 @@ function CommercialSection({ snapshot, open, onToggle }: {
     <button className="phase7-statistics-section-toggle" type="button" onClick={onToggle} aria-expanded={open} aria-controls="phase7-statistics-section-commercial">
       <div>
         <span className="eyebrow">Commercial</span>
-        <h3>Prospects & devis</h3>
+        <h3>Contacts, prospects & devis</h3>
         <p>Volumes bruts d’abord, pourcentages ensuite.</p>
       </div>
       <div className="phase7-statistics-section-summary commercial">
-        <span className="phase7-statistics-summary-chip tone-blue"><i>+</i><b>{current.newProspects} prospect{current.newProspects > 1 ? 's' : ''}</b></span>
+        <span className="phase7-statistics-summary-chip tone-blue"><i>+</i><b>{current.newProspects} contact{current.newProspects > 1 ? 's' : ''} créé{current.newProspects > 1 ? 's' : ''}</b></span>
         <span className="phase7-statistics-summary-chip tone-green"><i>✓</i><b>{current.wonProspects} gagné{current.wonProspects > 1 ? 's' : ''}</b></span>
         <span className="phase7-statistics-summary-chip tone-gold"><i>%</i><b>{percent(current.conversionPercent)}</b></span>
         <span className="phase7-statistics-summary-chip tone-violet"><i>▤</i><b>{current.quotesAccepted}/{current.quoteDecisions} devis</b></span>
@@ -363,7 +363,7 @@ function CommercialSection({ snapshot, open, onToggle }: {
       <CommercialCountCard
         icon="+"
         tone="blue"
-        label="Nouveaux prospects"
+        label="Contacts créés"
         current={current.newProspects}
         previous={previous.newProspects}
       />
@@ -410,10 +410,10 @@ function CommercialInsights({ snapshot }: { snapshot: AnalyticsCommercialSnapsho
 
   return <div className="phase7-statistics-commercial-insights">
     <article className="phase7-statistics-insight-card">
-      <div className="phase7-statistics-insight-heading"><div><span className="eyebrow">Origines</span><h4>D’où viennent les prospects ?</h4></div><span>{snapshot.sources.reduce((sum, item) => sum + item.prospectCount, 0)} créés</span></div>
+      <div className="phase7-statistics-insight-heading"><div><span className="eyebrow">Origines</span><h4>D’où viennent les contacts créés ?</h4></div><span>{snapshot.sources.reduce((sum, item) => sum + item.prospectCount, 0)} créés</span></div>
       <div className="phase7-statistics-source-list">
         {snapshot.sources.length > 0 ? snapshot.sources.map((item) => <div className="phase7-statistics-source-row" key={item.source}>
-          <div><strong>{SOURCE_LABELS[item.source] ?? item.source}</strong><small>{item.prospectCount} prospect{item.prospectCount > 1 ? 's' : ''}{item.decidedCount > 0 ? ` · ${percent(item.conversionPercent)} · n=${item.decidedCount}` : ''}</small></div>
+          <div><strong>{SOURCE_LABELS[item.source] ?? item.source}</strong><small>{item.prospectCount} contact{item.prospectCount > 1 ? 's' : ''}{item.decidedCount > 0 ? ` · ${percent(item.conversionPercent)} · n=${item.decidedCount}` : ''}</small></div>
           <i><b style={{ width: `${Math.max(5, (item.prospectCount / maxSource) * 100)}%` }} /></i>
         </div>) : <p className="phase7-statistics-insight-empty">Aucune source de prospect sur la période.</p>}
       </div>
