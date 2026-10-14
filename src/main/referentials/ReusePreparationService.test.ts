@@ -185,6 +185,25 @@ describe('ReusePreparationService', () => {
     expect(existsSync(preparation.manifestPath)).toBe(true);
   });
 
+  it('retire un paquet incomplet si le journal de préparation échoue', () => {
+    const project = projects.createInternal({ name: 'Projet test' });
+    const item = projectLibrary.create(project.id, { category: 'note', name: 'Source' },
+      { contentType: 'text', contentText: 'Source préservée' });
+    const before = projectLibrary.get(item.id);
+    const originalRun = database.run.bind(database);
+    database.run = ((sql: string, params?: unknown[]) => {
+      if (sql.includes('INSERT INTO activity_log') && params?.[1] === 'technical_reuse_package_prepared') {
+        throw new Error('PREPARATION_LOG_FAILURE');
+      }
+      return originalRun(sql, params);
+    }) as typeof database.run;
+    const directory = join(workspace.exportsDirectory, 'reutilisation');
+    expect(() => reuse.prepareProjectItem({ itemId: item.id })).toThrow('PREPARATION_LOG_FAILURE');
+    expect(existsSync(directory) ? readdirSync(directory) : []).toHaveLength(0);
+    expect(projectLibrary.get(item.id)).toEqual(before);
+    expect(globalLibrary.list()).toHaveLength(0);
+  });
+
   it('R07G-20 : une panne du journal annule la promotion et les fichiers sans altérer le Projet source', () => {
     const project = projects.createInternal({ name: 'Projet origine humaine' });
     const source = projectLibrary.create(
