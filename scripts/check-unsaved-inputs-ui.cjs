@@ -71,6 +71,21 @@ if(!process.versions.electron){
  if(process.argv.includes('--lot-b')){
  answers.length=0;await js('window.dispatchEvent(new CustomEvent("atoumweb:open-page",{detail:"Devis"}))');await sleep(120);await js('[...document.querySelectorAll("tbody tr")].find(r=>r.textContent.includes('+JSON.stringify(quote.number)+')).click()');await wait('!!document.querySelector(".quote-contract-preparation input")');
  await input(context,'BACKDROP '+theme);const prior=dialogs.length;await js('const e=document.querySelector(".quote-detail-backdrop");e.dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}));e.click()');check(theme+' backdrop one stay prompt',dialogs.length===prior+1);check(theme+' backdrop stay keeps data',await value(context)==='BACKDROP '+theme);answers.push(1);await js('document.querySelector(".quote-detail-backdrop").click()');await wait('!document.querySelector(".quote-detail-panel")');
+ // 06B : A -> B -> A, réponse B retardée au niveau du service utilisé par IPC.
+ const other=database.quotes.create({clientAccountId:client.id,subject:'TEST LENT '+theme});
+ const originalGet=database.quotes.get.bind(database.quotes);
+ let finishSlowGet;
+ database.quotes.get=(id,...args)=>id===other.id?new Promise(resolve=>{finishSlowGet=()=>resolve(originalGet(id,...args));}):originalGet(id,...args);
+ const selectRow=async number=>js('[...document.querySelectorAll("tbody tr")].find(r=>r.textContent.includes('+JSON.stringify(number)+'))?.click()');
+ await selectRow(quote.number);await wait('!!document.querySelector(".quote-detail-panel")');
+ await selectRow(other.number);await wait('!document.querySelector(".quote-detail-panel")');
+ await selectRow(quote.number);await wait('!!document.querySelector(".quote-detail-panel")');
+ check(theme+' A-B-A shows A before delayed B response',await js('return document.querySelector(".quote-detail-panel .eyebrow")?.textContent==='+JSON.stringify(quote.number)));
+ check(theme+' delayed B request intercepted',typeof finishSlowGet==='function');
+ finishSlowGet();await sleep(180);
+ check(theme+' delayed B cannot overwrite final A',await js('return document.querySelector(".quote-detail-panel .eyebrow")?.textContent==='+JSON.stringify(quote.number)));
+ database.quotes.get=originalGet;
+ await js('document.querySelector(".quote-detail-backdrop").click()');await wait('!document.querySelector(".quote-detail-panel")');
  const prospect=database.crm.createProspect({organizationId:org.id,stage:'qualifying'});
  await js('window.dispatchEvent(new CustomEvent("atoumweb:navigate",{detail:{entityType:"prospect",entityId:'+JSON.stringify(prospect.id)+',title:"TEST"}}))');await wait('!!document.querySelector(".open-desk-button")');await js('document.querySelector(".open-desk-button").click()');await wait('!!document.querySelector(".prospect-desk-overlay")');await sleep(250);const before=dialogs.length;
  await js('window.dispatchEvent(new CustomEvent("atoumweb:open-page",{detail:"Clients"}))');check(theme+' fresh prospect no false prompt',dialogs.length===before);await wait('!document.querySelector(".prospect-desk-overlay")');
