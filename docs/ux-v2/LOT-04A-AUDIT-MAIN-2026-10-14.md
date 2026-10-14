@@ -90,3 +90,31 @@ Modes : `fixed`, `starting_from`, `hourly`, `monthly`, `yearly`, `quote_only`, `
 5. **Publication :** liste des conditions bloquantes vs avertissements par type d'offre ou service.
 
 **Conclusion :** le lot 04 est bien une **extension du Catalogue existant**. Le premier geste de code le moins risqué sera un **pilote de présentation 04B sur fixtures**, puis des extensions de services strictement justifiées par les écarts validés.
+
+## 8. Complément vérifié : IPC, migrations, référence Catalogue V1 et tests présents
+
+### IPC : endpoints déjà raccordés
+
+`src/main/ipc.ts` (lignes 409–418 au HEAD) raccorde `catalog:list`, `catalog:get-item`, `catalog:assign-canonical-code`, `catalog:create`, `catalog:create-version`, `catalog:publish-version`, `catalog:set-status`, `catalog:set-visible-public`, `catalog:list-offer-components` et `catalog:set-offer-components`. **Ne pas créer un second réseau IPC pour 04B.** La recherche globale `ipc.ts` utilise `database.catalog.list({ search })`.
+
+### Schéma SQLite et migrations identifiés
+
+- `src/main/database/phase2Migrations.ts` crée notamment `catalog_items` (catégorie textuelle), `catalog_versions`, `offer_components` et des références de lignes Devis ; il existe un index de catégorie `COLLATE NOCASE` et un index unique de version publiée par item.
+- `catalogIdentityV1Migration.ts` ajoute les codes canoniques immuables, la provenance, les natures commerciales, familles, libellés Abby et contrôles SQL pour le coût de tiers.
+- `src/main/database/migrations.ts` référence ces migrations : **ne pas supposer qu'un champ de catégorie libre peut être remplacé sans rétrocompatibilité ou migration contrôlée**.
+
+### Référence V1 inspectée — à ne pas confondre avec la base réelle
+
+Le fichier versionné `data/catalogue/atoumweb-catalogue-v1.json` contient **112 enregistrements** répartis dans **13 codes de catégories de la référence** : `WEB`, `LANDING`, `ECOM`, `MAINT`, `TECH`, `SEO`, `CONTENU`, `IDENTITE`, `PHOTO`, `MARIAGE`, `DATA`, `DEVWP`, `APP`. Ce sont des données de référence et **non un inventaire de la base d'exploitation**. Le pilote 04B devra présenter des intitulés français lisibles en conservant les codes et la provenance, puis confronter cette référence aux catégories réellement stockées **sur fixture isolée**.
+
+### Tests existants repérés, mais non exécutés durant cet audit
+
+- `src/main/commercial/CatalogService.test.ts` : création, publication et retrait, archivage/réactivation, filtres, composition et immutabilité.
+- `src/main/commercial/CatalogIdentityService.test.ts` : codes, provenance, coût tiers, conservation des versions et liens Devis.
+- `scripts/check-catalog-identity-ui.cjs` : recette Electron avec répertoire temporaire créé par `mkdtempSync` ; contrôle notamment création/versions/recherche et absence de publication implicite.
+- Ces contrôles constituent un **socle de non-régression à rejouer** au début des vrais développements 04B/04C ; leurs résultats historiques **ne valent pas exécution sur notre branche**.
+
+### Recommandation pour le premier incrément 04B
+
+Commencer par une **projection de présentation pure** (groupement visuel des quatre offres principales, puis services par catégories/nom avec `localeCompare('fr-FR')`), injectée dans le `CatalogPage` actuel sans modifier les identifiants, les codes Abby, les fonctions de mutation, le contrat IPC ou le schéma. Ensuite, seulement après validation des libellés issus de la référence et de l'inventaire, décider si l'administration des catégories nécessite une entité dédiée.
+
