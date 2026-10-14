@@ -44,6 +44,10 @@ export interface CatalogCommercialParameters {
   salesPitch?: string | null;
   /** Questions to qualify the client's request before proposing the service. */
   qualificationQuestions?: string | null;
+  /** Situations where proposing the offer can be appropriate, authored by a person. */
+  relevantSituations?: string | null;
+  /** Internal warnings, limits and promises to avoid; never copied into CGV. */
+  commercialCautions?: string | null;
   /** Human-authored objection handling, never contractual. */
   objections?: string | null;
   /** Admin-managed search keywords/synonyms, separated by commas, semicolons or line breaks. */
