@@ -41,7 +41,7 @@ jobs:
         run: npm run typecheck
 
       - name: Electron 05B Library UX-01 — Windows TEMP
-        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 106 }}
+        if: ${{ github.event_name == 'pull_request' && (github.event.pull_request.number == 106 || github.head_ref == 'integration/ux05-candidate-20261014') }}
         shell: pwsh
         timeout-minutes: 12
         run: |
