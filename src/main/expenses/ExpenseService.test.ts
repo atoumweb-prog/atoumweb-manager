@@ -1,5 +1,5 @@
 
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -119,6 +119,7 @@ describe('ExpenseService', () => {
       expect(preview).not.toBe(original);
       expect(readFileSync(preview)).toEqual(readFileSync(original));
     } finally {
+      chmodSync(preview, 0o666);
       rmSync(resolve(preview, '..'), { recursive: true, force: true });
     }
     const history = expenses.listReceiptVersions(item.id);
