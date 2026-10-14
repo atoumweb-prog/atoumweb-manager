@@ -2,6 +2,9 @@ import {useCallback} from 'react';
 import {SEARCH_DESTINATIONS,searchDestination,readSearchTarget,type SearchNavigationResult} from '../shared/searchNavigation';
 import {useMemo} from 'react';
 import { settingsSectionMatches } from '../shared/settingsSearch';
+import { defaultNavigationPreference, readNavigationPreference, type NavigationPreference } from '../shared/navigationRail';
+import type { VisualPreferenceStore } from '../shared/panelLayout';
+import { clearNavigationFavorites, resetRegisteredModuleLayout, saveRailCollapsed, type SupportedLayoutModule } from '../shared/settingsNavigation';
 import {NavigationRail, type NavigationRailControls} from './ui/NavigationRail';
 import {WorkspaceHeader} from './ui/WorkspaceHeader';
 import './ui/manager-shell.css';
@@ -389,7 +392,7 @@ function App() {
           {activePage === 'Sauvegardes' && <BusinessBackupsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={setMessage} initialRecordId={backupSearchTarget} />}
           {activePage === 'Annuaire' && <DirectoryPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={setMessage} initialTarget={directoryTarget} />}
           {activePage === 'Statistiques' && <StatisticsPage onMessage={setMessage} />}
-          {activePage === 'Réglages' && <SettingsPage bootstrap={bootstrap} theme={theme} displayDensity={displayDensity} showHoverHelp={showHoverHelp} onThemeChange={updateTheme} onDensityChange={updateDisplayDensity} onShowHoverHelpChange={updateShowHoverHelp} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
+          {activePage === 'Réglages' && <SettingsPage visualStore={visualStore} bootstrap={bootstrap} theme={theme} displayDensity={displayDensity} showHoverHelp={showHoverHelp} onThemeChange={updateTheme} onDensityChange={updateDisplayDensity} onShowHoverHelpChange={updateShowHoverHelp} onChooseWorkspace={chooseWorkspace} onCreateBackup={createManualBackup} onRestoreBackup={restoreBackup} />}
           {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && activePage !== 'Offres & Tarifs' && activePage !== 'Devis' && activePage !== 'Projets' && activePage !== 'Interventions & Maintenance' && activePage !== 'Gestion des temps' && activePage !== 'Facturation' && activePage !== 'Dépenses' && activePage !== 'Documents & Contrats' && activePage !== 'Bibliothèque AtoumWeb' && activePage !== 'Sites' && activePage !== 'Sauvegardes' && activePage !== 'Annuaire' && activePage !== 'Statistiques' && activePage !== 'Réglages' && <ModulePlaceholder page={activePage} />}
         </section>
       </main>
@@ -419,7 +422,8 @@ function GlobalClock() {
   </div>;
 }
 
-function SettingsPage({ bootstrap, theme, displayDensity, showHoverHelp, onThemeChange, onDensityChange, onShowHoverHelpChange, onChooseWorkspace, onCreateBackup, onRestoreBackup }: {
+function SettingsPage({ visualStore, bootstrap, theme, displayDensity, showHoverHelp, onThemeChange, onDensityChange, onShowHoverHelpChange, onChooseWorkspace, onCreateBackup, onRestoreBackup }: {
+  visualStore: VisualPreferenceStore;
   bootstrap: BootstrapState;
   theme: ThemeName;
   displayDensity: DisplayDensity;
@@ -432,6 +436,18 @@ function SettingsPage({ bootstrap, theme, displayDensity, showHoverHelp, onTheme
   onRestoreBackup: () => Promise<void>;
 }) {
   const [search, setSearch] = useState('');
+  const [navigationPreference, setNavigationPreference] = useState<NavigationPreference>(defaultNavigationPreference);
+  const [navigationError, setNavigationError] = useState<string | null>(null);
+  const [resetModuleIntent, setResetModuleIntent] = useState<SupportedLayoutModule | null>(null);
+  useEffect(() => {
+    const sync = () => {
+      try { setNavigationPreference(readNavigationPreference(visualStore)); setNavigationError(null); }
+      catch (cause) { setNavigationError(cause instanceof Error ? cause.message : 'Préférences de navigation indisponibles.'); }
+    };
+    sync();
+    window.addEventListener('storage', sync);
+    return () => window.removeEventListener('storage', sync);
+  }, [visualStore]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const operationLock = useRef(false);
@@ -449,11 +465,13 @@ function SettingsPage({ bootstrap, theme, displayDensity, showHoverHelp, onTheme
   }
 
   const appearance = visible('apparence thème thèmes noir blanc atoumweb densité compact confort affichage interface lisibilité');
+  const navigation = visible('navigation vues rail favoris modules ordre disposition largeur colonnes liste clients annuaire');
   const help = visible('aide aides conseil survol ? contextuelle clavier');
   const workspace = visible('stockage workspace dossier répertoire emplacement local changement données transfert redémarrage');
   const security = visible('sécurité sauvegarde backup restauration restore sqlite base copie sécurité');
   const shortcuts = [
     ...(appearance ? [{ label: 'Apparence et densité', id: settingsSectionMatches(search, 'densité compact confort lisibilité') ? 'settings-density-compact' : 'settings-theme-atoumweb' }] : []),
+    ...(navigation ? [{ label: 'Navigation et vues', id: 'settings-nav-collapse' }] : []),
     ...(help ? [{ label: 'Aide contextuelle', id: 'settings-hover-help' }] : []),
     ...(workspace ? [{ label: 'Workspace local', id: 'settings-choose-workspace' }] : []),
     ...(security ? [{ label: 'Sauvegarde et sécurité SQLite', id: 'settings-create-backup' }] : []),
@@ -471,7 +489,7 @@ function SettingsPage({ bootstrap, theme, displayDensity, showHoverHelp, onTheme
           </button>)}
         </nav>}
         {error && <p role="alert" className="notice">{error}</p>}
-        {!appearance && !help && !workspace && !security && <p role="status">Aucun réglage correspondant. Efface la recherche pour retrouver toutes les rubriques.</p>}
+        {!appearance && !navigation && !help && !workspace && !security && <p role="status">Aucun réglage correspondant. Efface la recherche pour retrouver toutes les rubriques.</p>}
       </article>
       {appearance && <article className="panel panel-large">
         <div className="panel-title"><div><span className="eyebrow">Apparence</span><h2>Thème de l’interface</h2></div>{theme !== 'atoumweb' && <button className="secondary-button" type="button" disabled={saving} onClick={() => void runSetting(() => onThemeChange('atoumweb'))}>Rétablir le thème par défaut</button>}</div>
@@ -479,6 +497,43 @@ function SettingsPage({ bootstrap, theme, displayDensity, showHoverHelp, onTheme
         <div className="density-settings">
           <div><span className="eyebrow">Lisibilité</span><h2>Densité d’affichage</h2><p className="muted">Adapte la taille des textes, les espacements et les zones cliquables à ton confort de travail.</p></div>
           <div className="density-grid">{DENSITIES.map((item) => <button className={`density-card ${displayDensity === item.id ? 'selected' : ''}`} key={item.id} id={item.id === 'compact' ? 'settings-density-compact' : undefined} type="button" disabled={saving} aria-pressed={displayDensity === item.id} onClick={() => void runSetting(() => onDensityChange(item.id))}><strong>{item.label}</strong><span>{item.description}</span></button>)}</div>
+        </div>
+      </article>}
+      {navigation && <article className="panel panel-large settings-navigation">
+        <div className="panel-title"><div><span className="eyebrow">Navigation et vues</span><h2>Préférences de présentation existantes</h2></div></div>
+        <p className="muted">Ces préférences sont enregistrées dans le workspace et ne modifient ni les Clients, ni les devis, ni les documents. Les dispositions disponibles ici concernent uniquement les listes Clients et Annuaire.</p>
+        {navigationError && <p role="status" className="muted">Préférences indisponibles : {navigationError}. Aucune valeur n’est réinitialisée automatiquement.</p>}
+        <div className="settings-navigation-actions">
+          <div>
+            <strong>Rail latéral</strong>
+            <p className="muted">{navigationPreference.railCollapsed ? 'Navigation réduite' : 'Navigation déployée'} · {navigationPreference.favoriteModuleKeys.length} favori(s).</p>
+          </div>
+          <button id="settings-nav-collapse" type="button" className="secondary-button" disabled={saving || !!navigationError}
+            onClick={() => void runSetting(async () => {
+              setNavigationPreference(saveRailCollapsed(visualStore, !navigationPreference.railCollapsed));
+            })}>{navigationPreference.railCollapsed ? 'Déployer le rail' : 'Réduire le rail'}</button>
+          <button type="button" className="secondary-button" disabled={saving || !!navigationError || navigationPreference.favoriteModuleKeys.length === 0}
+            onClick={() => void runSetting(async () => {
+              if (window.atoumweb.visualPreferences.confirmReset()) {
+                setNavigationPreference(clearNavigationFavorites(visualStore));
+              }
+            })}>Réinitialiser uniquement les favoris</button>
+        </div>
+        <div className="settings-navigation-layouts">
+          <strong>Réinitialiser la largeur d’une liste</strong>
+          <p className="muted">Seule la disposition de la liste indiquée revient au défaut. Les colonnes métier, les filtres enregistrés et les brouillons restent inchangés.</p>
+          <div className="button-row">
+            <button type="button" className="secondary-button" disabled={saving} onClick={() => setResetModuleIntent('clients')}>Largeur liste Clients</button>
+            <button type="button" className="secondary-button" disabled={saving} onClick={() => setResetModuleIntent('directory')}>Largeur liste Annuaire</button>
+          </div>
+          {resetModuleIntent && <div className="settings-navigation-confirm" role="group" aria-label="Confirmation de remise à zéro de la disposition">
+            <p>Réinitialiser uniquement la largeur de la liste <strong>{resetModuleIntent === 'clients' ? 'Clients' : 'Annuaire'}</strong> ? Aucune donnée métier ne sera effacée.</p>
+            <button type="button" className="primary-button" disabled={saving} onClick={() => void runSetting(async () => {
+              resetRegisteredModuleLayout(visualStore, resetModuleIntent);
+              setResetModuleIntent(null);
+            })}>Confirmer la disposition par défaut</button>
+            <button type="button" className="secondary-button" disabled={saving} onClick={() => setResetModuleIntent(null)}>Annuler</button>
+          </div>}
         </div>
       </article>}
       {help && <article className="panel panel-large">
