@@ -65,6 +65,14 @@ jobs:
           node scripts/check-catalog-recommendations-ui.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: Native 04D — Electron IPC et SQLite TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          node scripts/check-catalog-recommendations-native.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: UX-01 Catalogue 04D-04E — Windows TEMP
         if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
         shell: pwsh
