@@ -146,6 +146,7 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
   function closeQuoteDetailDirect(): void {
     detailRequest.current++;
     setDetail(null);
+    selectedRef.current=null;
     setSelectedId(null);
     applyEditingLineId(null);
     setPreviewOpen(false);
@@ -156,12 +157,13 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
     if(detail?.id===id)return;
     if(!requestUnsavedExit(()=>{},quoteGroup))return;
     const sequence=++detailRequest.current;
+    selectedRef.current=id;
     setSelectedId(id); applyEditingLineId(null); setPreviewOpen(false); setDetailExpanded(false);
     try {
       const next=await window.atoumweb.quotes.get(id);
       if(sequence===detailRequest.current&&selectedRef.current===id)applyDetail(next);
     } catch (error) {
-      if(sequence===detailRequest.current&&selectedRef.current===id){setSelectedId(null);applyDetail(null);}
+      if(sequence===detailRequest.current&&selectedRef.current===id){selectedRef.current=null;setSelectedId(null);applyDetail(null);}
       throw error;
     }
   }
