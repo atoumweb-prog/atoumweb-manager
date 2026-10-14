@@ -1,4 +1,4 @@
-import {mergeDraft} from '../../shared/draftSection';
+import {mergeContractClauseDrafts} from './contractClauseDraftMerge';
 import {useUnsavedDraft} from '../unsaved/unsaved';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CatalogItemSummary, QuoteDetail } from '../../shared/commercial';
@@ -73,10 +73,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     const request=++presentationRequest.current;
     setPresentation(null);
     void window.atoumweb.contractTerms.quotes.presentation(quote.id).then(value=>{if(request===presentationRequest.current)setPresentation(value);}).catch(e=>{if(request===presentationRequest.current)setError(errorMessage(e));});
-    setDrafts(current=>Object.fromEntries(next.clauses.map((clause) => [
-      clause.id,
-      (()=>{const old=build?.clauses.find(c=>c.id===clause.id);const remote={title:clause.title,body:clause.body};const baseline=saved?.id===clause.id?saved.draft:old?{title:old.title,body:old.body}:remote;return mergeDraft(baseline,current[clause.id]??baseline,remote).value;})(),
-    ])));
+    setDrafts(current=>mergeContractClauseDrafts(build?.clauses??[],current,next.clauses,saved));
   }
 
   async function refreshLibrary(): Promise<void> {
