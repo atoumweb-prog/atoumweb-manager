@@ -1672,3 +1672,18 @@ Clôture Lot 3 — 03/10/2026 : bilan réel validé par AtoumWeb ; commit local 
 
 
 
+
+
+## UX/UI V2 — Lot 04, préparation d'intégration (14/10/2026)
+
+**État constaté sur GitHub, sans fusion.** Ce relevé concerne la branche 04B ; il ne vaut pas certification du code convergé avec `main`.
+
+- `main` observé à `cc0bc679400321f5afacdbee3317ea8acc451518` (lot 03D/03E intégré).
+- **04B / PR #104** : HEAD initial audité `98caad750b723f29896de0c0185c3183d9e4dcae`, draft, cible `main`. CI #883 réussie sur ce HEAD. Divergence avec `main` : 109 commits d'avance, 10 de retard, base commune `b2796812ee24c9e9e824f3d66564f2c1a335bffe`. Réconciliation non réalisée.
+- **04C / PR #108** : HEAD `2412513be4fb0f2ca87602adcdef4aaa31760ea3`, draft, cible la branche #104. Avant la présente mise à jour documentaire : 77 commits d'avance et 0 de retard sur le HEAD 04B, donc 04C contient déjà le code 04B. CI #1003 **SUCCESS** sur ce HEAD : Electron Catalogue 04C Windows TEMP, typecheck, 1 092/1 092 Vitest (118 fichiers), UX-01 brouillons/navigation, restauration/fermeture Electron (12 contrôles, 0 échec).
+- Tests spécifiques du fichier `CatalogDraftEditing04C.test.ts` : 10/10 réussis dans la CI #1003, comprenant sauvegarde CAS sans nouvelle version, conflit entre snapshots de fenêtres, retry UUID sans doublon après réponse IPC perdue, conservation des prix historiques, refus d'écriture sur publié/retiré et refus de publication périmée.
+- **Limites** : aucune exécution de tests sur un merge de #104 ou #108 avec le `main` actuel ; aucune recette visuelle humaine ni essai dans un binaire Electron installé. Ne pas présenter la réussite CI des branches comme une validation de la convergence. Le clonage local du dépôt public n'a pas fonctionné dans cet environnement (résolution DNS indisponible), donc aucun test local n'y a été exécuté.
+- **Séquence exigée** : (1) convergence 04B avec `main` en worktree temporaire, revue migrations jusqu'à 67, CRM 03D/03E et garde UX-01 ; (2) tests complets TypeScript, Vitest, Electron Windows TEMP, FK, restauration, navigation ; (3) convergence 04C sur le résultat 04B, avec CAS, brouillons multi-fenêtres, publication et historiques ; (4) nouveaux tests sur les SHAs convergés ; (5) intégration **04B puis 04C**, seulement après contrôle et autorisation distincte.
+- **Préservation** : ne pas toucher aux données MSI, ni écraser les développements parallèles 05–09. L'ajout de ce relevé dans 04B crée une nouvelle tête documentaire ; recontrôler l'ascendance et le head de #108 avant toute réconciliation.
+
+**Statut : validation de branches acquise, convergence en attente, fusion non effectuée.**
