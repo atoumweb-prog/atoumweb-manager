@@ -1,5 +1,9 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 15/10/2026 — Convergence08 sur socle04–07
+
+PR131 e9f5e817 intégrée une seule fois dans le candidat isolé ; sources109/115/137 non rejouées. Projections de débit sans écriture, clôture atomique, périodes anniversaire et protections de rapport/dépassement conservées. Aucun ajout de réouverture commerciale ou de contrepassation automatique. Migrations1–70 inchangées. Recettes08, UX-01, restauration et shell exécutées par la gate de convergence sur le SHA candidat. Données persistantes intactes.
+
 
 ## 15/10/2026 — Préparation isolée07 après rapprochement04–06
 
