@@ -37,6 +37,9 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const presentationRequest=useRef(0);
+  const currentQuoteId=useRef(quote.id);
+  currentQuoteId.current=quote.id;
+  const loadRequest=useRef(0);
   const [presentation,setPresentation]=useState<ContractPresentation|null>(null);
   const [showLibrary, setShowLibrary] = useState(false);
   const [showCustom, setShowCustom] = useState(false);
@@ -69,10 +72,11 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   }, [build]);
 
   function setBuildAndDrafts(next: QuoteContractBuild,saved?:{id:string;draft:ClauseDraft}): void {
+    if(currentQuoteId.current!==quote.id)return;
     setBuild(next);
     const request=++presentationRequest.current;
     setPresentation(null);
-    void window.atoumweb.contractTerms.quotes.presentation(quote.id).then(value=>{if(request===presentationRequest.current)setPresentation(value);}).catch(e=>{if(request===presentationRequest.current)setError(errorMessage(e));});
+    void window.atoumweb.contractTerms.quotes.presentation(quote.id).then(value=>{if(request===presentationRequest.current&&currentQuoteId.current===quote.id)setPresentation(value);}).catch(e=>{if(request===presentationRequest.current&&currentQuoteId.current===quote.id)setError(errorMessage(e));});
     setDrafts(current=>mergeContractClauseDrafts(build?.clauses??[],current,next.clauses,saved));
   }
 
@@ -86,23 +90,37 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   }
 
   async function load(): Promise<void> {
+    const quoteId=quote.id;
+    const request=++loadRequest.current;
+    const isCurrent=()=>request===loadRequest.current&&currentQuoteId.current===quoteId;
     setLoading(true);
     setError('');
     try {
       const next = editable
-        ? await window.atoumweb.contractTerms.quotes.sync(quote.id)
-        : await window.atoumweb.contractTerms.quotes.get(quote.id);
+        ? await window.atoumweb.contractTerms.quotes.sync(quoteId)
+        : await window.atoumweb.contractTerms.quotes.get(quoteId);
+      if(!isCurrent())return;
       setBuildAndDrafts(next);
-      await refreshLibrary();
+      const [nextTemplates,nextCatalog]=await Promise.all([
+        window.atoumweb.contractTerms.library.list(),
+        window.atoumweb.catalog.list({status:'active'}),
+      ]);
+      if(!isCurrent())return;
+      setTemplates(nextTemplates);
+      setCatalog(nextCatalog);
     } catch (cause) {
-      setError(errorMessage(cause));
+      if(isCurrent())setError(errorMessage(cause));
     } finally {
-      setLoading(false);
+      if(isCurrent())setLoading(false);
     }
   }
 
   useEffect(() => {
+    // A previous quote's responses must not repaint the newly selected quote.
+    presentationRequest.current+=1;
+    if(build && currentQuoteId.current!==quote.id)return;
     void load();
+    return ()=>{loadRequest.current+=1;presentationRequest.current+=1;};
   }, [quote.id, quote.status, quote.finalizedAt, quote.contractCompiledAt, quote.updatedAt]);
 
   async function run(action: () => Promise<QuoteContractBuild>,saved?:{id:string;draft:ClauseDraft}): Promise<boolean> {
