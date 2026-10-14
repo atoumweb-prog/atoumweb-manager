@@ -1,0 +1,925 @@
+{
+  "schemaVersion": 1,
+  "description": "Référentiel UX/UI V2 Lot 10 — inventaire exhaustif sans certification fictive",
+  "baseline": "docs/ux-v2-reference-v1",
+  "cases": [
+    {
+      "id": "R10A-01",
+      "lot": "10A",
+      "scenario": "Valeur contrat signée",
+      "expected": "Uniquement devis acceptés",
+      "status": "trace_automatisable",
+      "evidence": "src/main/analytics/AnalyticsService.test.ts",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10A-02",
+      "lot": "10A",
+      "scenario": "Montant facturé",
+      "expected": "PDF Abby lié, pas encaissement",
+      "status": "trace_automatisable",
+      "evidence": "scripts/fixtures/lot10-real-scenarios.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10A-03",
+      "lot": "10A",
+      "scenario": "Dépenses engagées vs payées",
+      "expected": "Libellés/stats non trompeurs",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10A-04",
+      "lot": "10A",
+      "scenario": "CA encaissé indisponible",
+      "expected": "« Non disponible », pas 0 €",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10A-05",
+      "lot": "10A",
+      "scenario": "Reste à encaisser indisponible",
+      "expected": "Même règle",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10A-06",
+      "lot": "10A",
+      "scenario": "Calcul taux simple vs Analytics",
+      "expected": "Différence E290 explicitée puis définition harmonisée",
+      "status": "trace_automatisable",
+      "evidence": "src/shared/statistics.test.ts",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10A-07",
+      "lot": "10A",
+      "scenario": "Expiré dans le dénominateur",
+      "expected": "Conforme définition retenue",
+      "status": "trace_automatisable",
+      "evidence": "src/main/analytics/AnalyticsService.test.ts",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10A-08",
+      "lot": "10A",
+      "scenario": "Nouveau contact `stage=new`",
+      "expected": "Annuaire, hors Pipeline actif",
+      "status": "trace_automatisable",
+      "evidence": "src/shared/statistics.test.ts",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10A-09",
+      "lot": "10A",
+      "scenario": "Prospect qualifié volontairement",
+      "expected": "Entre au Pipeline",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10A-10",
+      "lot": "10A",
+      "scenario": "Projet prévisionnel non signé",
+      "expected": "Pas CA signé",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10A-11",
+      "lot": "10A",
+      "scenario": "Intervention `included_project`",
+      "expected": "Pas de valeur livrée comptée deux fois",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10A-12",
+      "lot": "10A",
+      "scenario": "Projet sans temps suivi",
+      "expected": "Ratio €/h indisponible, pas 0 inventé",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10A-13",
+      "lot": "10A",
+      "scenario": "Échantillon projet partiel",
+      "expected": "Taille `n` affichée",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10A-14",
+      "lot": "10A",
+      "scenario": "Stock À facturer et filtre période",
+      "expected": "Stock identifié distinct du flux",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10A-15",
+      "lot": "10A",
+      "scenario": "Session chevauchant début de période",
+      "expected": "Règle date explicite et testée",
+      "status": "trace_automatisable",
+      "evidence": "src/shared/statistics.test.ts",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10A-16",
+      "lot": "10A",
+      "scenario": "Données annulées/archivées",
+      "expected": "Exclusions auditables",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10A-17",
+      "lot": "10A",
+      "scenario": "Recalcul SQLite/test UI 3 thèmes×3 densités",
+      "expected": "Résultat traçable, Validation-MSI intacte",
+      "status": "validation_humaine_ou_integration",
+      "evidence": null,
+      "note": "Preuve humaine, Windows MSI ou intégration spécifique non certifiée."
+    },
+    {
+      "id": "R10B-01",
+      "lot": "10B",
+      "scenario": "Voir 5 onglets cibles",
+      "expected": "Un module/statut cohérent",
+      "status": "trace_automatisable",
+      "evidence": "scripts/fixtures/lot10-real-scenarios.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10B-02",
+      "lot": "10B",
+      "scenario": "Changer période simple→détaillée",
+      "expected": "Même plage répercutée",
+      "status": "trace_automatisable",
+      "evidence": "scripts/fixtures/lot10-real-scenarios.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10B-03",
+      "lot": "10B",
+      "scenario": "Plage personnalisée invalide",
+      "expected": "Refus et précision",
+      "status": "trace_automatisable",
+      "evidence": "src/shared/statistics.test.ts",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10B-04",
+      "lot": "10B",
+      "scenario": "Toutes données",
+      "expected": "Aucune comparaison fictive",
+      "status": "trace_automatisable",
+      "evidence": "src/shared/statistics.test.ts",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10B-05",
+      "lot": "10B",
+      "scenario": "Accueil→Stats→Retour",
+      "expected": "Navigation et état conservés",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10B-06",
+      "lot": "10B",
+      "scenario": "Ouvrir indicateur valeur signée",
+      "expected": "Devis acceptés exacts",
+      "status": "trace_automatisable",
+      "evidence": "src/shared/statisticsEvidence.test.ts",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10B-07",
+      "lot": "10B",
+      "scenario": "Ouvrir métrique facturation",
+      "expected": "Factures PDF réellement liées",
+      "status": "trace_automatisable",
+      "evidence": "scripts/fixtures/lot10-real-scenarios.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10B-08",
+      "lot": "10B",
+      "scenario": "Voir « CA encaissé »",
+      "expected": "Marqué indisponible",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10B-09",
+      "lot": "10B",
+      "scenario": "Projet provisoire",
+      "expected": "Ne gonfle pas la valeur acceptée",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10B-10",
+      "lot": "10B",
+      "scenario": "Pipeline avec Prospect new",
+      "expected": "N'apparaît pas actif",
+      "status": "trace_automatisable",
+      "evidence": "src/shared/statistics.test.ts",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10B-11",
+      "lot": "10B",
+      "scenario": "Taux d'acceptation sur même période",
+      "expected": "Un dénominateur canonique",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10B-12",
+      "lot": "10B",
+      "scenario": "Heure travail + facture",
+      "expected": "Mesures distinctes",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10B-13",
+      "lot": "10B",
+      "scenario": "Classement Client par €",
+      "expected": "Tri par vraie unité et bon Client",
+      "status": "trace_automatisable",
+      "evidence": "scripts/fixtures/lot10-real-scenarios.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10B-14",
+      "lot": "10B",
+      "scenario": "Changement rapide filtre pendant chargement",
+      "expected": "Résultat périmé rejeté",
+      "status": "trace_automatisable",
+      "evidence": "src/shared/analytics.test.ts",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10B-15",
+      "lot": "10B",
+      "scenario": "Graphique sans couleur",
+      "expected": "Valeurs/table accessibles",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10B-16",
+      "lot": "10B",
+      "scenario": "3 thèmes×3 densités, clavier/étroit",
+      "expected": "Lisibilité et focus",
+      "status": "validation_humaine_ou_integration",
+      "evidence": null,
+      "note": "Preuve humaine, Windows MSI ou intégration spécifique non certifiée."
+    },
+    {
+      "id": "R10B-17",
+      "lot": "10B",
+      "scenario": "SQL + test UI navigation drilldown",
+      "expected": "Lien et agrégat concordants, Validation-MSI exclue",
+      "status": "trace_automatisable",
+      "evidence": "scripts/fixtures/lot10-real-scenarios.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10C-01",
+      "lot": "10C",
+      "scenario": "Déclarer backup sans fichier",
+      "expected": "Registre créé, aucun fichier fictif",
+      "status": "trace_automatisable",
+      "evidence": "scripts/fixtures/lot10-real-scenarios.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10C-02",
+      "lot": "10C",
+      "scenario": "Rattacher Projet/Client incompatible",
+      "expected": "Refus service",
+      "status": "trace_automatisable",
+      "evidence": "src/main/backups/BusinessBackupService.test.ts",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10C-03",
+      "lot": "10C",
+      "scenario": "Ajouter emplacement local existant",
+      "expected": "Existence contrôlée, pas intégrité supposée",
+      "status": "trace_automatisable",
+      "evidence": "src/main/backups/BusinessBackupAlertService.test.ts",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10C-04",
+      "lot": "10C",
+      "scenario": "Emplacement local disparu",
+      "expected": "Alerte manquant",
+      "status": "trace_automatisable",
+      "evidence": "src/shared/businessBackupPresentation.test.ts",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10C-05",
+      "lot": "10C",
+      "scenario": "Vérifier référence serveur externe",
+      "expected": "Confirmation humaine, pas vérification à distance",
+      "status": "trace_automatisable",
+      "evidence": "src/shared/businessBackupPresentation.test.ts",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10C-06",
+      "lot": "10C",
+      "scenario": "Marquer version stable",
+      "expected": "Un seul stable par portée selon service",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10C-07",
+      "lot": "10C",
+      "scenario": "Restaurer sauvegarde métier dans WP",
+      "expected": "Action indisponible tant que moteur absent",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10C-08",
+      "lot": "10C",
+      "scenario": "Alerte avant intervention technique",
+      "expected": "Politique et source affichées",
+      "status": "trace_automatisable",
+      "evidence": "src/main/backups/BusinessBackupAlertService.test.ts",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10C-09",
+      "lot": "10C",
+      "scenario": "Alerte après changement majeur",
+      "expected": "Liste contextuelle correcte",
+      "status": "trace_automatisable",
+      "evidence": "src/main/backups/BusinessBackupAlertService.test.ts",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10C-10",
+      "lot": "10C",
+      "scenario": "Sauvegarder base SQLite manuellement",
+      "expected": "Chemin réel distinct du registre Client",
+      "status": "validation_humaine_ou_integration",
+      "evidence": null,
+      "note": "Preuve humaine, Windows MSI ou intégration spécifique non certifiée."
+    },
+    {
+      "id": "R10C-11",
+      "lot": "10C",
+      "scenario": "Choisir SQLite invalide",
+      "expected": "Refus avant remplacement",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10C-12",
+      "lot": "10C",
+      "scenario": "Choisir source égale cible via alias Windows",
+      "expected": "Refus après normalisation",
+      "status": "validation_humaine_ou_integration",
+      "evidence": null,
+      "note": "Preuve humaine, Windows MSI ou intégration spécifique non certifiée."
+    },
+    {
+      "id": "R10C-13",
+      "lot": "10C",
+      "scenario": "Restauration avec WAL/SHM",
+      "expected": "Garde/continuité selon moteur #81 validé",
+      "status": "trace_automatisable",
+      "evidence": "scripts/check-restore-quit-roundtrip.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10C-14",
+      "lot": "10C",
+      "scenario": "Échec injecté en remplacement",
+      "expected": "Ancienne base et backup de sécurité conservés",
+      "status": "validation_humaine_ou_integration",
+      "evidence": null,
+      "note": "Preuve humaine, Windows MSI ou intégration spécifique non certifiée."
+    },
+    {
+      "id": "R10C-15",
+      "lot": "10C",
+      "scenario": "Écriture concurrente pendant restauration",
+      "expected": "Refus / coordination explicite",
+      "status": "validation_humaine_ou_integration",
+      "evidence": null,
+      "note": "Preuve humaine, Windows MSI ou intégration spécifique non certifiée."
+    },
+    {
+      "id": "R10C-16",
+      "lot": "10C",
+      "scenario": "Restaurer ancien historique de migrations",
+      "expected": "Chemin de migration testé et sans perte",
+      "status": "validation_humaine_ou_integration",
+      "evidence": null,
+      "note": "Preuve humaine, Windows MSI ou intégration spécifique non certifiée."
+    },
+    {
+      "id": "R10C-17",
+      "lot": "10C",
+      "scenario": "Source backup présente mais SHA inconnu",
+      "expected": "Pas de fausse certification",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10C-18",
+      "lot": "10C",
+      "scenario": "Dossier Clients non restauré par SQLite seul",
+      "expected": "Message explicite",
+      "status": "trace_automatisable",
+      "evidence": "scripts/fixtures/lot10-real-scenarios.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10C-19",
+      "lot": "10C",
+      "scenario": "Formulaire dirty pendant demande de restauration",
+      "expected": "Garde UX-01, aucun redémarrage forcé",
+      "status": "trace_automatisable",
+      "evidence": "scripts/fixtures/lot10-real-scenarios.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10C-20",
+      "lot": "10C",
+      "scenario": "Recette Windows locale et runner avec accord, SQL fictif",
+      "expected": "Aucun accès Validation-MSI réel",
+      "status": "validation_humaine_ou_integration",
+      "evidence": null,
+      "note": "Preuve humaine, Windows MSI ou intégration spécifique non certifiée."
+    },
+    {
+      "id": "R10D-01",
+      "lot": "10D",
+      "scenario": "Sélectionner AtoumWeb",
+      "expected": "Thème enregistré et appliqué",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10D-02",
+      "lot": "10D",
+      "scenario": "Basculer Noir",
+      "expected": "Contraste, état conservé",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10D-03",
+      "lot": "10D",
+      "scenario": "Basculer Blanc",
+      "expected": "Même règle",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10D-04",
+      "lot": "10D",
+      "scenario": "Choisir Compact",
+      "expected": "Texte >=14 px, contrôles atteignables",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10D-05",
+      "lot": "10D",
+      "scenario": "Choisir Confort",
+      "expected": "Lisibilité 16 px cible, sans troncature",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10D-06",
+      "lot": "10D",
+      "scenario": "Choisir Confort+",
+      "expected": "Lisibilité 18 px cible, pas scroll cassé",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10D-07",
+      "lot": "10D",
+      "scenario": "Changer densité avec formulaire ouvert",
+      "expected": "Aucune saisie perdue",
+      "status": "validation_humaine_ou_integration",
+      "evidence": null,
+      "note": "Preuve humaine, Windows MSI ou intégration spécifique non certifiée."
+    },
+    {
+      "id": "R10D-08",
+      "lot": "10D",
+      "scenario": "Désactiver aide au survol",
+      "expected": "Aides cliquables et avertissements restent",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10D-09",
+      "lot": "10D",
+      "scenario": "Persister largeur/filtre futur",
+      "expected": "Un seul module affecté",
+      "status": "trace_automatisable",
+      "evidence": "scripts/fixtures/lot10-real-scenarios.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10D-10",
+      "lot": "10D",
+      "scenario": "Réinitialiser module",
+      "expected": "Données métier inchangées",
+      "status": "trace_automatisable",
+      "evidence": "src/shared/settingsNavigation.test.ts",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10D-11",
+      "lot": "10D",
+      "scenario": "Chercher un réglage",
+      "expected": "Focus sur bon contrôle sans écriture",
+      "status": "trace_automatisable",
+      "evidence": "scripts/fixtures/lot10-real-scenarios.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10D-12",
+      "lot": "10D",
+      "scenario": "Choisir workspace différent",
+      "expected": "Message absence de transfert automatique",
+      "status": "trace_automatisable",
+      "evidence": "scripts/fixtures/lot10-real-scenarios.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10D-13",
+      "lot": "10D",
+      "scenario": "Annuler workspace",
+      "expected": "Chemin et données inchangés",
+      "status": "trace_automatisable",
+      "evidence": "scripts/fixtures/lot10-real-scenarios.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10D-14",
+      "lot": "10D",
+      "scenario": "Enregistrer backup de base",
+      "expected": "Fichier de sauvegarde réel, distinct de registre Client",
+      "status": "validation_humaine_ou_integration",
+      "evidence": null,
+      "note": "Preuve humaine, Windows MSI ou intégration spécifique non certifiée."
+    },
+    {
+      "id": "R10D-15",
+      "lot": "10D",
+      "scenario": "Initier restore avec formulaire dirty",
+      "expected": "Garde UX-01 et contrôles UX-16",
+      "status": "validation_humaine_ou_integration",
+      "evidence": null,
+      "note": "Preuve humaine, Windows MSI ou intégration spécifique non certifiée."
+    },
+    {
+      "id": "R10D-16",
+      "lot": "10D",
+      "scenario": "Erreur IPC de préférence",
+      "expected": "Conserver état précédent",
+      "status": "validation_humaine_ou_integration",
+      "evidence": null,
+      "note": "Preuve humaine, Windows MSI ou intégration spécifique non certifiée."
+    },
+    {
+      "id": "R10D-17",
+      "lot": "10D",
+      "scenario": "Bouton dangereux non disponible",
+      "expected": "Ne pas inventer d'effacement global",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10D-18",
+      "lot": "10D",
+      "scenario": "Neuf combinaisons, clavier, 1280×720, test SQLite factice",
+      "expected": "Aucune Validation-MSI touchée",
+      "status": "trace_automatisable",
+      "evidence": "scripts/fixtures/lot10-real-scenarios.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10E-01",
+      "lot": "10E",
+      "scenario": "Signé/Facturé sur période",
+      "expected": "Agrégats sourcés différents et exacts",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10E-02",
+      "lot": "10E",
+      "scenario": "Encaissement sans table `payments`",
+      "expected": "Marqué indisponible",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10E-03",
+      "lot": "10E",
+      "scenario": "Dépenses prévues/non payées",
+      "expected": "Pas présentées comme payées",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10E-04",
+      "lot": "10E",
+      "scenario": "Taux d'acceptation UI/AnalyticsService",
+      "expected": "Même définition et même échantillon",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10E-05",
+      "lot": "10E",
+      "scenario": "Devis refusés/expirés",
+      "expected": "Dénominateur et dates conformes",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10E-06",
+      "lot": "10E",
+      "scenario": "Contacts `new` Annuaire",
+      "expected": "Hors KPI Pipeline actif",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10E-07",
+      "lot": "10E",
+      "scenario": "Projet provisoire non signé",
+      "expected": "Hors signé et chiffre acquis",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10E-08",
+      "lot": "10E",
+      "scenario": "Intervention incluse au Projet",
+      "expected": "Pas comptée deux fois en livré",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10E-09",
+      "lot": "10E",
+      "scenario": "Projet terminé sans heure",
+      "expected": "Ratio €/heure indisponible",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10E-10",
+      "lot": "10E",
+      "scenario": "Prétendue « marge » sur taux horaire",
+      "expected": "Libellé exact, aucun bénéfice net imaginé",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10E-11",
+      "lot": "10E",
+      "scenario": "Stocks `ready/planned` vs flux période",
+      "expected": "Source et fenêtre lisibles",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10E-12",
+      "lot": "10E",
+      "scenario": "Personnaliser dates puis changer onglet",
+      "expected": "Une période cohérente",
+      "status": "trace_automatisable",
+      "evidence": "scripts/fixtures/lot10-real-scenarios.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10E-13",
+      "lot": "10E",
+      "scenario": "Changement rapide de filtres",
+      "expected": "Réponse périmée non appliquée",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10E-14",
+      "lot": "10E",
+      "scenario": "Clic KPI commercial → Devis",
+      "expected": "Bonne population, navigation retour",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10E-15",
+      "lot": "10E",
+      "scenario": "Trier Clients par montant et heures",
+      "expected": "Deux colonnes/unités distinctes",
+      "status": "trace_automatisable",
+      "evidence": "scripts/fixtures/lot10-real-scenarios.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10E-16",
+      "lot": "10E",
+      "scenario": "Déclarer backup Client",
+      "expected": "Enregistrement sans fichier automatique",
+      "status": "trace_automatisable",
+      "evidence": "src/shared/businessBackupPresentation.test.ts",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10E-17",
+      "lot": "10E",
+      "scenario": "Vérifier emplacement local",
+      "expected": "Présence seulement, pas « testé »",
+      "status": "trace_automatisable",
+      "evidence": "src/shared/businessBackupPresentation.test.ts",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10E-18",
+      "lot": "10E",
+      "scenario": "Vérifier externe",
+      "expected": "Confirmation humaine seulement",
+      "status": "trace_automatisable",
+      "evidence": "src/shared/businessBackupPresentation.test.ts",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10E-19",
+      "lot": "10E",
+      "scenario": "Alerte pré/post-intervention",
+      "expected": "Bon dossier et dates de sauvegardes",
+      "status": "trace_automatisable",
+      "evidence": "scripts/fixtures/lot10-real-scenarios.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10E-20",
+      "lot": "10E",
+      "scenario": "Créer backup de base SQLite",
+      "expected": "Chemin et fichier techniques, pas registre Client",
+      "status": "validation_humaine_ou_integration",
+      "evidence": null,
+      "note": "Preuve humaine, Windows MSI ou intégration spécifique non certifiée."
+    },
+    {
+      "id": "R10E-21",
+      "lot": "10E",
+      "scenario": "Restaurer SQLite invalide",
+      "expected": "Refus sans mutation de base",
+      "status": "validation_humaine_ou_integration",
+      "evidence": null,
+      "note": "Preuve humaine, Windows MSI ou intégration spécifique non certifiée."
+    },
+    {
+      "id": "R10E-22",
+      "lot": "10E",
+      "scenario": "Restauration pendant transaction",
+      "expected": "Refus/coordination UX-16 réelle",
+      "status": "validation_humaine_ou_integration",
+      "evidence": null,
+      "note": "Preuve humaine, Windows MSI ou intégration spécifique non certifiée."
+    },
+    {
+      "id": "R10E-23",
+      "lot": "10E",
+      "scenario": "Panne restauration post-backup",
+      "expected": "Copie de sécurité récupérable",
+      "status": "trace_automatisable",
+      "evidence": "scripts/check-restore-quit-roundtrip.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10E-24",
+      "lot": "10E",
+      "scenario": "Dossier Client non inclus dans SQLite",
+      "expected": "Avertissement, aucune restauration promise",
+      "status": "trace_automatisable",
+      "evidence": "scripts/fixtures/lot10-real-scenarios.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10E-25",
+      "lot": "10E",
+      "scenario": "Choisir thème Noir/Blanc/AtoumWeb",
+      "expected": "Persistance et contrastes",
+      "status": "validation_humaine_ou_integration",
+      "evidence": null,
+      "note": "Preuve humaine, Windows MSI ou intégration spécifique non certifiée."
+    },
+    {
+      "id": "R10E-26",
+      "lot": "10E",
+      "scenario": "Compact/Confort/Confort+",
+      "expected": "Tailles cibles et aucun contrôle inaccessible",
+      "status": "validation_humaine_ou_integration",
+      "evidence": null,
+      "note": "Preuve humaine, Windows MSI ou intégration spécifique non certifiée."
+    },
+    {
+      "id": "R10E-27",
+      "lot": "10E",
+      "scenario": "Désactiver aide au survol",
+      "expected": "Aides `?` et warnings nécessaires restent",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10E-28",
+      "lot": "10E",
+      "scenario": "Changer workspace",
+      "expected": "Explication aucun transfert de données, reprise maîtrisée",
+      "status": "couverture_partielle",
+      "evidence": null,
+      "note": "Implémentation à recetter individuellement ; aucune réussite inventée."
+    },
+    {
+      "id": "R10E-29",
+      "lot": "10E",
+      "scenario": "Réinitialiser vue/module",
+      "expected": "Données métier et brouillons intacts",
+      "status": "trace_automatisable",
+      "evidence": "scripts/fixtures/lot10-real-scenarios.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    },
+    {
+      "id": "R10E-30",
+      "lot": "10E",
+      "scenario": "Navigation 17 modules, SQL tests, UI neuf modes et CI",
+      "expected": "Preuves SHA, aucune Validation-MSI",
+      "status": "trace_automatisable",
+      "evidence": "scripts/check-ux-v2-integration-validate.cjs",
+      "note": "Trace de test identifiée ; résultat valable uniquement sur le dernier HEAD dont la CI est verte."
+    }
+  ]
+}
