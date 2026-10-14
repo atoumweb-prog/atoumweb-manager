@@ -19,6 +19,7 @@ import {
   type CatalogVersionInput,
   type OfferComponent,
   type OfferComponentInput,
+  type CatalogProductionBlueprintLink,
 } from '../../shared/commercial';
 
 const nowIso = (): string => new Date().toISOString();
@@ -619,6 +620,30 @@ export class CatalogService {
     }
 
     return this.listOfferComponents(offerVersionId);
+  }
+
+  /** Existing production references only; inspecting a Catalogue version cannot create a Project. */
+  listProductionBlueprints(versionId: string): CatalogProductionBlueprintLink[] {
+    this.getVersion(versionId);
+    return this.database.all<{
+      id:string;catalog_version_id:string;template_version_id:string;
+      template_name:string;version_number:number;template_status:CatalogProductionBlueprintLink['templateStatus'];
+      role:CatalogProductionBlueprintLink['role'];sort_order:number;
+      quantity_mode:string;site_mode:string;
+    }>(`SELECT b.id,b.catalog_version_id,b.template_version_id,
+         t.name AS template_name,tv.version_number,tv.status AS template_status,
+         b.role,b.sort_order,b.quantity_mode,b.site_mode
+       FROM catalog_project_blueprints b
+       JOIN project_template_versions tv ON tv.id=b.template_version_id
+       JOIN project_templates t ON t.id=tv.template_id
+       WHERE b.catalog_version_id=?
+       ORDER BY b.sort_order,b.id`,[versionId]).map(row=>({
+      id:row.id,catalogVersionId:row.catalog_version_id,
+      templateVersionId:row.template_version_id,templateName:row.template_name,
+      versionNumber:row.version_number,templateStatus:row.template_status,
+      role:row.role,sortOrder:row.sort_order,
+      quantityMode:row.quantity_mode,siteMode:row.site_mode,
+    }));
   }
 
   private insertVersion(itemId: string, versionNumber: number, input: CatalogVersionInput, createdAt: string, explicitId?: string): CatalogVersion {
