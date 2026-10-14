@@ -49,6 +49,34 @@ function packIntervention(withTime = true) {
 }
 
 describe('InterventionCompletionService', () => {
+  it('08B projette en lecture seule le débit pack exact, puis retrouve le solde effectif', () => {
+    const { intervention, pack } = packIntervention();
+    const before = snapshot();
+    const preview = packs.previewInterventionDebit(pack.id, intervention.id);
+    expect(preview).toMatchObject({
+      packId: pack.id, interventionId: intervention.id, packName: pack.name,
+      packStatus: 'active', balanceBeforeSeconds: 3600,
+      secondsToDebit: 1800, balanceAfterSeconds: 1800, alreadyDebited: false,
+    });
+    expect(snapshot()).toEqual(before);
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    expect(packs.get(pack.id).balanceSeconds).toBe(preview.balanceAfterSeconds);
+    const after = snapshot();
+    expect(packs.previewInterventionDebit(pack.id, intervention.id)).toMatchObject({
+      alreadyDebited: true, secondsToDebit: 0,
+      balanceBeforeSeconds: 1800, balanceAfterSeconds: 1800,
+    });
+    expect(snapshot()).toEqual(after);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('08B refuse une projection trompeuse sans temps terminé et ne modifie aucune table', () => {
+    const { intervention, pack } = packIntervention(false);
+    const before = snapshot();
+    expect(() => packs.previewInterventionDebit(pack.id, intervention.id)).toThrow(/Aucun temps terminé/i);
+    expect(snapshot()).toEqual(before);
+  });
+
   it('conserve toutes les cellules et activités si aucun temps terminé ne peut être débité', () => {
     const { intervention } = packIntervention(false);
     const before = snapshot();
