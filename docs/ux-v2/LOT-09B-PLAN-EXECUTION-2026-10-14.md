@@ -1,0 +1,20 @@
+# Lot 09B — Plan d'exécution depuis la clôture technique 09A (14/10/2026)
+
+## Référentiel et statut
+Référentiel de départ : `docs/ux-v2/LOT-09B-FACTURATION-ABBY.md` dans le commit historique `0bb0860ee7618af92a53d8711b4a06edbbadc4d6` (PR #82). Ce référentiel **n'est pas encore copié sur la branche de travail** ; sa lecture ne signifie pas une validation de sa totalité.
+
+09A : PR #113 draft, CI #1042 verte, sans fusion. 09B : **cadré / en préparation**, zéro nouvelle fonctionnalité 09B livrée.
+
+## Ordre de travail
+1. Vérifier l'état actuel des modèles `BillingItem`, `BillingHandoffService`, `BillingPage` et les canaux IPC en contrôlant l'existence réelle des sources facturables (acomptes, solde, intervention, dépassement maintenance, pack, abonnement, autre).
+2. Confirmer les invariants : Abby émet le PDF réglementaire hors Manager ; le Manager n'émet aucune facture, `invoiced` exige le bon PDF/Client, aucune déduction de `paid` ni encaissement depuis `invoiced`.
+3. Reprendre les cas 09B R09B-01 à R09B-17 et les cartographier aux services, migrations et tests existants ; signaler les écarts et éviter de dupliquer les règles métiers de 09A.
+4. Prioriser les seuls écarts à risque : rattachement inter-client, statut facturé sans pièce, archive/délétion de preuve, intégrité de la pièce, idempotence des liens et absence d'écrasement silencieux.
+5. Implémenter par corrections ciblées + tests isolés ; protéger brouillons UX-01 et contextes lors des changements de facture.
+6. Rejouer CI TypeScript/Vitest et recette Electron ciblée en TEMP, puis mettre à jour `PROJECT_STATUS.md` et le suivi officiel avant clôture.
+
+## Frontières
+- Aucun import automatique depuis Abby, ni API/émission fictive, ni gestion d'encaissement créée par déduction.
+- Ne pas modifier les prestations et devis des lots 04–08 ; ne pas fusionner dans `main` sans autorisation.
+- Pour le développement du 09B, privilégier une branche dédiée **après coordination avec la PR #113** pour éviter qu'une PR 09B incorpore involontairement 09A non fusionné.
+- Statuts stricts : cette note **prépare** le 09B ; elle ne revendique ni exécution des scénarios ni nouvelle fonctionnalité.
