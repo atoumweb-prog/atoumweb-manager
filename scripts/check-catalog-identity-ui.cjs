@@ -31,7 +31,53 @@ const items=[{id:'legacy-id',type:'service',name:'Ancien élément témoin',cate
 window.calls={create:[],version:[],assign:[],publish:0};window.items=items;window.messages=[];
 window.fixtureErrors=[];window.addEventListener('error',event=>window.fixtureErrors.push(String(event.error?.stack||event.message)));window.addEventListener('unhandledrejection',event=>window.fixtureErrors.push(String(event.reason?.stack||event.reason)));
 window.importedVersion={...commercialSource.records.find(r=>r.canonicalCode==='AW-WEB-VITRINE').version,id:'legacy-import-v2',itemId:'legacy-id',versionNumber:2,status:'draft',createdAt:'2026-10-03'};
-window.atoumweb={catalog:{
+window.categoryRecords=[];window.categoryCalls=[];window.categorySequence=0;
+const legacyCategories=()=>{
+  const groups=new Map();
+  for(const item of items){
+    if(item.categoryId||!item.category||!item.category.trim())continue;
+    const bucket=groups.get(item.category)||[];bucket.push(item.id);groups.set(item.category,bucket);
+  }
+  return [...groups.entries()].map(([rawValue,itemIds])=>({rawValue,itemIds:[...itemIds].sort(),itemCount:itemIds.length}));
+};
+const normalizeCategory=val=>val.trim().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().replace(/\\s+/g,' ');
+const categoryApi={
+  list:async()=>structuredClone(window.categoryRecords),
+  listLegacy:async()=>structuredClone(legacyCategories()),
+  create:async name=>{
+    const clean=name.trim();if(!clean||window.categoryRecords.some(c=>normalizeCategory(c.name)===normalizeCategory(clean)))throw Error('Une catégorie portant ce nom existe déjà.');
+    const c={id:'cat-test-'+(++window.categorySequence),name:clean,normalizedKey:normalizeCategory(clean),
+      status:'active',revision:1,itemCount:0,createdAt:'fixture',updatedAt:'fixture',archivedAt:null};
+    window.categoryRecords.push(c);window.categoryCalls.push('create');return structuredClone(c);
+  },
+  rename:async(id,name,revision)=>{
+    const c=window.categoryRecords.find(c=>c.id===id);if(!c||c.revision!==revision)throw Error('Conflit de catégorie.');
+    const old=c.name;c.name=name.trim();c.revision++;window.categoryCalls.push('rename');
+    for(const item of items)if(item.categoryId===id)item.category=c.name;
+    return structuredClone(c);
+  },
+  setStatus:async(id,status,revision)=>{
+    const c=window.categoryRecords.find(c=>c.id===id);if(!c||c.revision!==revision)throw Error('Conflit de catégorie.');
+    c.status=status;c.revision++;window.categoryCalls.push(status);return structuredClone(c);
+  },
+  assign:async input=>{
+    const item=items.find(item=>item.id===input.itemId);
+    if(!item||item.category!==input.expectedRawValue||(item.categoryId||null)!==input.expectedCategoryId)throw Error('Conflit : recharge la fiche.');
+    const c=window.categoryRecords.find(c=>c.id===input.categoryId);
+    if(c&&c.status==='archived')throw Error('Catégorie archivée.');
+    item.category=c?.name||null;item.categoryId=c?.id||null;
+    window.categoryCalls.push('assign');return undefined;
+  },
+  reconcileLegacy:async(rawValue,categoryId,expectedItemIds)=>{
+    const actual=legacyCategories().find(x=>x.rawValue===rawValue)?.itemIds||[];
+    if(JSON.stringify([...actual].sort())!==JSON.stringify([...expectedItemIds].sort()))throw Error('Conflit historique.');
+    const c=window.categoryRecords.find(c=>c.id===categoryId);
+    if(!c||c.status!=='active')throw Error('Catégorie cible invalide.');
+    for(const item of items)if(item.category===rawValue&&!item.categoryId){item.category=c.name;item.categoryId=c.id;}
+    window.categoryCalls.push('reconcile');return actual.length;
+  },
+};
+window.atoumweb={catalogCategories:categoryApi,catalog:{
   list:async()=>structuredClone(items),getItem:async(id)=>structuredClone(items.find(i=>i.id===id)),
   create:async(input,version)=>{calls.create.push({input,version});const id='new-'+calls.create.length;const v={...version,id:id+'-v1',itemId:id,versionNumber:1,status:'draft',createdAt:'2026-10-03'};const item={...input,id,status:'active',canonicalCode:input.canonicalCode?.toUpperCase()||null,currentVersion:v,versions:[v]};items.push(item);return structuredClone(item)},
   createVersion:async(id,input)=>{calls.version.push({id,input});const item=items.find(i=>i.id===id);const v={...input,id:id+'-v2',itemId:id,versionNumber:2,status:'draft',createdAt:'2026-10-03'};item.versions.unshift(v);return structuredClone(v)},
@@ -138,6 +184,37 @@ app.whenReady().then(async () => {
       document.querySelector('[data-catalog-item-id="test-vitrine"]').click();
       const openedFromCard=await waitFor('[data-search-entity-id="test-vitrine"]','fiche via carte 04B');
       assert('04B carte ouvre le bon item via route existante',openedFromCard.textContent.includes('Site vitrine'));
+      // E95: exercise React category administration with a mocked IPC contract,
+      // alongside backend SQLite tests that enforce actual transactions and FK.
+      document.querySelector('.catalog-detail-heading-actions .close-detail').click();await wait();
+      await click('Catégories existantes');
+      await waitFor('.catalog-category-management','panneau gestion E95');
+      assert('E95 inventaire affiche valeurs historiques réelles',document.querySelector('.catalog-category-inventory-table').textContent.includes('SEO'));
+      assert('E95 valeurs historiques non assimilées en catégories',window.categoryRecords.length===0);
+      await fill('Créer une catégorie métier','Création de contenu');
+      await click('Créer la catégorie');
+      assert('E95 création volontaire d’une catégorie stable',window.categoryRecords.length===1&&window.categoryRecords[0].name==='Création de contenu');
+      assert('E95 création ne réaffecte aucune prestation',window.items.every(item=>!item.categoryId));
+      await click('Renommer');
+      await fill('Nouveau libellé','Contenu éditorial');
+      await click('Enregistrer');
+      assert('E95 renommage conserve ID et augmente révision',window.categoryRecords[0].name==='Contenu éditorial'&&window.categoryRecords[0].revision===2);
+      await click('Archiver');
+      await click('Confirmer');
+      assert('E95 archivage conserve identité stable',window.categoryRecords[0].status==='archived'&&window.categoryRecords.length===1);
+      await click('Restaurer');
+      await click('Confirmer');
+      assert('E95 restauration ne recrée pas la catégorie',window.categoryRecords[0].status==='active'&&window.categoryRecords[0].revision===4);
+      // Select a known legacy item and target explicitly, then require confirmation.
+      await fill('Prestation','test-seo');
+      await fill('Catégorie cible',window.categoryRecords[0].id);
+      await click('Préparer la réaffectation');
+      assert('E95 aucun rattachement avant confirmation',!window.items.find(i=>i.id==='test-seo').categoryId);
+      await click('Confirmer');
+      assert('E95 réaffectation seulement après confirmation',
+        window.items.find(i=>i.id==='test-seo').categoryId===window.categoryRecords[0].id);
+      assert('E95 actions natives distinguées',
+        ['create','rename','archived','active','assign'].every(action=>window.categoryCalls.includes(action)));
       return {passed:checks.length,failed:0,checks};
     })()`);
     console.log(JSON.stringify(result, null, 2));win.destroy();app.exit(0);
