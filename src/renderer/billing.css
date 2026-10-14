@@ -149,6 +149,14 @@
   flex: 0 1 auto;
 }
 
+.billing-pdf-reference-warning {
+  display: block;
+  padding: 5px 7px;
+  border-left: 3px solid var(--accent);
+  color: var(--text);
+  font-weight: 650;
+}
+
 .billing-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
