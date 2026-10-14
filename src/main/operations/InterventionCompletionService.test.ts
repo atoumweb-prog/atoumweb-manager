@@ -139,6 +139,25 @@ describe('InterventionCompletionService', () => {
     localCompletion.complete(intervention.id);
     expect(snapshot()).toEqual(after);
   });
+  it('documente E227 : une transition après clôture conserve le débit historique sans le doubler', () => {
+    const { intervention, pack } = packIntervention();
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    const firstDebit = packs.get(pack.id).movements.filter(m => m.type === 'intervention_debit');
+    expect(firstDebit).toHaveLength(1);
+    expect(packs.get(pack.id).balanceSeconds).toBe(1800);
+
+    // Observation de l'API actuelle, pas validation métier d'une réouverture.
+    const reopened = operations.changeInterventionStatus(intervention.id, 'in_progress');
+    expect(reopened.status).toBe('in_progress');
+    expect(packs.get(pack.id).balanceSeconds).toBe(1800);
+    expect(packs.get(pack.id).movements.filter(m => m.type === 'intervention_debit')).toHaveLength(1);
+
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    expect(packs.get(pack.id).balanceSeconds).toBe(1800);
+    expect(packs.get(pack.id).movements.filter(m => m.type === 'intervention_debit')).toHaveLength(1);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
   it('prépare une seule fois la facturation d’une intervention hors forfait', () => {
     const intervention = operations.createIntervention({
       clientAccountId: clientId,
