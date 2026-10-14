@@ -49,3 +49,15 @@ La reprise du brouillon existant de 04C.1 ne suffit pas lorsqu'un **IPC de créa
 Tests ajoutés dans `CatalogDraftEditing04C.test.ts` : rejeu même UUID, conservation des associations, conservation du nombre de versions, UUID attribué à un autre item, replay après publication, collision d'un même UUID avec tarif divergent. Recette Electron fonctionnelle : création v2 sur fiche publiée, réponse perdue simulée **après création**, second clic utilisant le même UUID sans v3.
 
 **Réserve technique :** les mises à jour de données d'un brouillon et la publication restent des actes séparés. Un processus réellement interrompu pendant que l'utilisateur quitte la fiche nécessite une relecture des données ; le protocole ne prétend pas garantir à lui seul toutes les phases de panne/crash. Aucune recette visuelle humaine réalisée à la demande de l'utilisateur. La CI sur le SHA de 04C.2 doit réussir avant validation de cet incrément.
+
+## Garde prépublication 04C/E101 — premier palier (non juridique)
+
+La fiche Catalogue refuse désormais les commandes **Publier**, **Statut** et **Visibilité site** tant que le formulaire d'édition d'une version est ouvert : il faut d'abord enregistrer ou annuler cette saisie. Une tentative de publication déclenchée autrement pendant cet état reçoit un refus clair ; les contrôles `saving` et `versionMode` empêchent les doubles gestes. La publication IPC se termine par une réponse de succès ou un message d'erreur, et le chargement demeure distinct du statut du site WordPress.
+
+Une assertion Electron fonctionnelle vérifie que le bouton Publier et le sélecteur de statut sont inactifs pendant la saisie du brouillon. Cette protection **ne certifie pas les CGV** et n'est pas une homologation de publication : les contrôles contractuels spécifiques du lot 05, les dépendances blueprint et la comparaison publiée/brouillon du 04C restent à réaliser.
+
+## Exécution CI et réserve d'infrastructure
+
+CI #897 sur l'ancien banc : Vitest **1075/1075** et typecheck **réussis**, mais étape Electron en échec à cause du helper `textarea`; correctif du helper depuis publié. Depuis #900, plusieurs workflows de ce dépôt, **y compris des branches indépendantes lots 05/08**, se terminent en quelques secondes avec jobs sans étapes et sans logs ; la cause exacte de cette impossibilité d'exécution Actions n'est pas prouvée. Ne pas qualifier un HEAD ultérieur de `CI verte` sur cette base.
+
+**Gate :** relancer une véritable CI TypeScript + Vitest + Electron fonctionnel sur le HEAD exact une fois GitHub Actions exécutable. La fusion est interdite tant que ce contrôle et la convergence CRM ne sont pas validés. Aucun accès à Validation-MSI ; recette visuelle humaine non réalisée, conformément à la demande.
