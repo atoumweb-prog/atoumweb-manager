@@ -81,6 +81,10 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
   test(await get(`document.querySelector('.project-sites-detail-head h3')?.textContent===${JSON.stringify(pages[1].name)}`),'Late old page response cannot replace current page');db.atoumWebCompositions.getForProjectPage=originalLoad;
   await text('.project-page-composition-actions button','Créer un composant');
   await input('.create-modal input','UNSAVED CREATION');const create=dialogs.length;await text('.create-modal button','Fermer');test(dialogs.length===create+1&&await get('document.querySelector(".create-modal input").value==="UNSAVED CREATION"'),'Creation close Stay retains form');
+  const keyboard=dialogs.length;await js('document.querySelector(".create-modal input").focus()');win.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});await sleep(100);
+  test(dialogs.length===keyboard+1&&await get('document.querySelector(".create-modal input").value==="UNSAVED CREATION"'),'Escape stays in active modal and preserves parent context once');
+  const backdrop=dialogs.length;await click('.create-modal .project-page-composition-modal-backdrop');test(dialogs.length===backdrop+1&&await get('!!document.querySelector(".create-modal")'),'Backdrop Stay preserves creation once');
+  const changeMode=dialogs.length;await text('.create-modal button','Déclinaison');test(dialogs.length===changeMode+1&&await get('document.querySelector(".create-modal input").value==="UNSAVED CREATION"'),'Mode switch Stay preserves form once');
   answers.push(1);await text('.create-modal button','Fermer');test(await get('!document.querySelector(".create-modal")'),'Creation close confirmed');
   await text('.project-page-composition-item-wrap button','Réglages');await wait('document.querySelector(".project-component-note textarea")','last editor');
   await input('.project-component-note textarea','COMPONENT TARGET DRAFT');

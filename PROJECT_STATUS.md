@@ -1,5 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
+
+## 14/10/2026 — Finalisation PR111 : brouillons Projets/Sites/Composition
+
+- Branche isolée `fix/ux-v2-07a-composition-unsaved-20261014` depuis2cc1bd2f, base maincc0bc679 ; aucune branche parallèle modifiée. Corrections de démontage des réglages, baseline par occurrence, création/modales/modes, reset/retrait, pending et réponses périmées via UX-01 existant.
+- Checkpoint e3a8942d : typecheck,1042 Vitest/109 fichiers,35 restaurations,6 binaires,10 tests migrations1–66 ;70 contrôles natifs dédiés/neuf captures,65 Composition historique,183 UX-01 ; intégrité/FK/TEMP OK. Trois régressions clavier supplémentaires passent ensuite (banc64 sans captures). Résultats/SHA définitifs du commit porteur dansPR111, sans présumer une CI verte.
+- CI38564044517 refusée avant toute étape : facturation/plafond (annotation GitHub consultée), pas erreur TypeScript. Aucun dispatch/rerun, budget ou timeout modifié. Publication normale autorisée après validation ; pas de merge.
+- [Rapport07A](docs/ux-v2/LOT-07A-CORRECTIF-BROUILLONS-2026-10-14.md). 07B non commencé ici, nécessite reprise du référentiel existant et autorisation. Recette humaine différée ; archivage identités Annuaire non exposé. Validation-MSI/données réelles/Bridge/WordPress et branches des autres lots préservés.
+
 ## 14/10/2026 — Dernier cas de focus : ligne toujours masquée
 
 - Le correctif693f6af a passé typecheck/282 natifs avec81 frames/UX-01183. Complément final : si le filtre masque encore la ligne à la fermeture, retour à la recherche et conservation de sa valeur. Deux assertions clavier supplémentaires, sans mutation métier. Nouveau candidat à recetter puis une seule actualisation corrective107/CIautomatique, aucun rerun manuel.
