@@ -1,6 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
 
+## 15/10/2026 — Préparation de convergence06, dépendance04+05 en CI
+
+06#1248cf467c3 rapproché du candidat04+05 via merge normal ; conservation conjointe des filtres Catalogue, gardes de rafraîchissement/versions/acceptation Abby et option canonique05C. Les clauses orphelines restent en historique mais sont exclues du texte, y compris des conditions particulières ; aucune modification du contenu publié. CI148 du socle04+05 attendue avant toute intégration06 dansmain. Référentiel#82 manquant importé comme documentation historique, sans écraser les rapports existants ni fusionner son ancien code.
+
+La recette06 couvre les six modes natifs Devis (PDF, création, prérequis, rafraîchissement, versions, acceptation), recommandations, bibliothèque contractuelle, UX-01, restauration et banc01–03. Chaque résultat à relever au SHA exact ; aucune assimilation des anciennesCI à la convergence actuelle.
+
+
 ## 15/10/2026 — Convergence générale autorisée, premier candidat04+05
 
 Autorisation utilisateur explicite : intégration progressive04–10, corrections et CI/fusions après contrôles verts. Aucune autorisation de publication externe de production. Contrats/CGV et temps/historiques/rattachements intangibles ; aucun nettoyage nécessaire ni effectué.
