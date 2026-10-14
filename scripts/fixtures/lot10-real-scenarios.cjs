@@ -21,6 +21,33 @@ module.exports = async ({ win, db, evalUI: js, get, wait, navigate, test, sleep 
   await js("document.querySelector('.phase7-statistics-commercial-section > button').click()");
   await wait('document.querySelector(".phase7-statistics-commercial-section")?.textContent.includes("Contacts créés")', 'contacts distincts prospection active');
   test(await get('document.querySelector(".phase7-statistics-commercial-section")?.textContent.includes("Contacts créés")'), 'Lot 10B: analytics ne confond pas nouveaux contacts et prospects actifs');
+  // R10B-02/03/04 : une seule barre et période réellement partagée entre vues SQL et simples.
+  const setStatisticsPeriod = async (value) => {
+    await js(`const e=document.querySelector('.statistics-period select');if(!e)throw Error('Période commune absente');Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event('change',{bubbles:true}));`);
+    await sleep(120);
+  };
+  test(await get('document.querySelectorAll(".statistics-period select").length===1 && !document.querySelector(".phase7-statistics-quick-periods")'), 'Lot 10B: barre canonique unique aussi en analyse avancée');
+  await setStatisticsPeriod('quarter');
+  await wait('document.querySelector(".statistics-period select")?.value==="quarter" && !!document.querySelector(".phase7-statistics-period-summary")', 'trimestre commun en analyse');
+  await js("const b=[...document.querySelectorAll('.statistics-tabs button')].find(e=>e.textContent.includes('Vue d’ensemble'));b.click()");
+  test(await get('document.querySelector(".statistics-period select")?.value==="quarter" && !!document.querySelector(".statistics-kpis")'), 'Lot 10B: le trimestre suit le retour vers la vue simple');
+  await setStatisticsPeriod('custom');
+  await wait('document.querySelectorAll(".statistics-custom-dates input").length===2', 'plage de dates commune');
+  test(await get('!!document.querySelector(".statistics-period-warning[role=alert]") && !document.querySelector(".statistics-kpis")'), 'Lot 10B: période personnalisée incomplète sans KPI périmé');
+  await nativeInput('.statistics-custom-dates label:first-child input', '2026-09-12');
+  await nativeInput('.statistics-custom-dates label:last-child input', '2026-09-10');
+  test(await get('document.querySelector(".statistics-period-warning[role=alert]")?.textContent.includes("début") && !document.querySelector(".statistics-kpis")'), 'Lot 10B: période inversée bloquée sans faux chiffre');
+  await nativeInput('.statistics-custom-dates label:last-child input', '2026-09-14');
+  await wait('!!document.querySelector(".statistics-kpis") && !document.querySelector(".statistics-period-warning[role=alert]")', 'période valide de nouveau');
+  await js("const b=[...document.querySelectorAll('.statistics-tabs button')].find(e=>e.textContent.includes('Analyse financière'));b.click()");
+  await wait('document.querySelector(".phase7-statistics-period-summary")?.textContent.includes("12/09/2026")', 'dates personnalisées transmises au SQL');
+  test(await get('document.querySelector(".statistics-period select")?.value==="custom" && document.querySelector(".phase7-statistics-period-summary")?.textContent.includes("14/09/2026")'), 'Lot 10B: dates personnalisées conservées et appliquées au SQL');
+  await setStatisticsPeriod('all');
+  await wait('!!document.querySelector(".statistics-period-warning[role=status]")', 'indisponibilité détaillée toutes données explicite');
+  test(await get('!document.querySelector(".phase7-statistics-page") && document.querySelector(".statistics-period-warning[role=status]")?.textContent.includes("comparaisons")'), 'Lot 10B: toutes données sans comparaison fictive SQL');
+  await setStatisticsPeriod('month');
+  await wait('!!document.querySelector(".phase7-statistics-page")', 'période mensuelle rétablie');
+
   await navigate('Réglages');
   test(await get('document.querySelectorAll(".theme-card").length===3 && document.querySelectorAll(".density-card").length===3'), 'Lot 10D: 3 thèmes et 3 densités réels');
   await nativeInput('#settings-quick-search', 'SÉCURITÉ');
