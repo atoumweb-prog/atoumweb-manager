@@ -100,6 +100,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
   const interventionDetailRef = useRef<HTMLDivElement | null>(null);
   const refreshGeneration = useRef(0);
   const interventionWriteGeneration = useRef(0);
+  const completionInFlight = useRef(new Set<string>());
 
   const [requestClientId, setRequestClientId] = useState('');
   const [requestProjectId, setRequestProjectId] = useState('');
@@ -330,6 +331,11 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
   async function changeInterventionStatus(status: InterventionStatus): Promise<boolean> {
     if (!selectedIntervention) return false;
     const interventionId = selectedIntervention.id;
+    if (status === 'completed') {
+      if (completionInFlight.current.has(interventionId)) return false;
+      completionInFlight.current.add(interventionId);
+    }
+    try {
     let updated: Intervention;
     if (status === 'completed') {
       const outcome = await resolveInterventionCompletion(
@@ -364,6 +370,9 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
         : `${updated.number} terminée dans les données, mais l’actualisation des listes n’a pas été confirmée. Vérifie avant toute nouvelle action.`);
     }
     return true;
+    } finally {
+      if (status === 'completed') completionInFlight.current.delete(interventionId);
+    }
   }
 
   async function changeCoverage(coverageMode: InterventionCoverageMode): Promise<void> {
