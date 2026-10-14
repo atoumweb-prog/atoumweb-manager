@@ -48,6 +48,26 @@ function createPublishedService(priceCents = 10000, name = 'Service test') {
 }
 
 describe('QuoteService', () => {
+
+  it('R06A-08 / R06E-05 : marquer vu ne signe pas le devis et ne convertit pas le prospect', () => {
+    const prospect = createProspect();
+    crm.changeProspectStage(prospect.id, 'qualifying');
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Consultation sans acceptation' });
+    quotes.addCustomLine(quote.id, { label: 'Site vitrine', proposedUnitPriceCents: 69900 });
+
+    expect(() => quotes.markViewed(quote.id)).toThrow(/envoyé/);
+    database.run("UPDATE quotes SET status='sent' WHERE id=?", [quote.id]);
+    const viewed = quotes.markViewed(quote.id);
+
+    expect(viewed.status).toBe('viewed');
+    expect(viewed.viewedAt).toBeTruthy();
+    expect(quotes.get(quote.id).status).toBe('viewed');
+    expect(quotes.get(quote.id).acceptedAt).toBeNull();
+    expect(crm.listProspects({ includeArchived: true }).find(item => item.id === prospect.id)?.clientAccountId).toBeFalsy();
+    expect(database.get<{ n: number }>("SELECT count(*) AS n FROM activity_events WHERE entity_id=? AND action='quote_accepted'", [quote.id])?.n).toBe(0);
+  });
+
+
   it('E73 : un accord de principe explicite est horodaté, idempotent et révocable sans signature ni conversion', () => {
     const prospect = createProspect();
     crm.changeProspectStage(prospect.id, 'qualifying');
