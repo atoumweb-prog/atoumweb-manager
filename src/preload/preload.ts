@@ -335,6 +335,7 @@ const api: AtoumWebApi = {
       create: (input: ContractClauseTemplateInput, firstVersion: ContractClauseVersionInput) => ipcRenderer.invoke('contract-terms:library:create', input, firstVersion),
       createVersion: (clauseId: string, input: ContractClauseVersionInput) => ipcRenderer.invoke('contract-terms:library:create-version', clauseId, input),
       exportWordDraft: (clauseId:string,versionId:string) => ipcRenderer.invoke('contract-terms:word:export',clauseId,versionId),
+      exportWorkingPdf: (clauseId:string,versionId:string) => ipcRenderer.invoke('contract-terms:word:pdf',clauseId,versionId),
       importWordDraft: (clauseId:string,versionId:string) => ipcRenderer.invoke('contract-terms:word:import',clauseId,versionId),
       approveWordDraft: (sessionId:string) => ipcRenderer.invoke('contract-terms:word:approve',sessionId),
       cancelWordDraft: (sessionId:string) => ipcRenderer.invoke('contract-terms:word:cancel',sessionId),
