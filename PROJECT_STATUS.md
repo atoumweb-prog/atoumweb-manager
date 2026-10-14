@@ -1687,3 +1687,13 @@ Clôture Lot 3 — 03/10/2026 : bilan réel validé par AtoumWeb ; commit local 
 - **Préservation** : ne pas toucher aux données MSI, ni écraser les développements parallèles 05–09. L'ajout de ce relevé dans 04B crée une nouvelle tête documentaire ; recontrôler l'ascendance et le head de #108 avant toute réconciliation.
 
 **Statut : validation de branches acquise, convergence en attente, fusion non effectuée.**
+
+
+### Audit additionnel de convergence — 14/10/2026
+
+- Récupération des métadonnées à jour : #104 HEAD `63de9f3721efe178f713e9a7026e55b1a9d53118`, #108 HEAD `2412513be4fb0f2ca87602adcdef4aaa31760ea3`, #106 lot 05 HEAD `f80a23821563a09ba5de2c8ceae64e2fe011d195`. Ces trois PR restent en draft.
+- Différence `b2796812...main` croisée avec `main...04B` : **trois fichiers modifiés des deux côtés** : `PROJECT_STATUS.md`, `src/main/ipc.ts`, `src/preload/preload.ts`. Ce sont des zones de revue, pas une preuve de conflit textuel. Inspecter particulièrement les commandes 03D/03E et le câblage Catalogue 04B lors de la fusion de test.
+- Depuis le commit documentaire de 04B, `compare 04B...04C` indique **77 commits d'avance et 1 de retard** pour 04C ; ce commit documentaire doit être reporté lors de la synchronisation, sans écraser le code 04C.
+- **Blocage d'exécution** : aucun dépôt Git local disponible dans le conteneur d'exécution ; `git ls-remote https://github.com/atoumweb-prog/atoumweb-manager.git HEAD` échoue avec `Could not resolve host: github.com`. Le connecteur GitHub permet la lecture et l'écriture de fichiers, mais pas l'exécution de `git merge`, `npm run typecheck` ou Electron Windows. Aucune convergence réelle ni nouveau test de code n'ont été exécutés dans cet environnement.
+- Résultats **déjà établis** : #883 SUCCESS pour le HEAD de code 04B antérieur au suivi documentaire et #1003 SUCCESS pour le HEAD 04C indiqué ci-dessus. Ne pas confondre ces campagnes avec des résultats sur une branche intégrée.
+- **Action bloquée à reprendre dans un vrai runner/worktree** : merge de test 04B sur main, revue des trois fichiers communs, tests TypeScript/Vitest/Windows/SQLite ; puis merge de test 04C sur 04B, mêmes tests plus parcours E99/E101/E102. N'envoyer les PR vers `main` qu'après ces preuves. Aucun merge ni rebase forcé réalisé dans cet audit.
