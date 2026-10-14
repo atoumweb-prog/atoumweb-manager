@@ -62,6 +62,12 @@ module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,select,test,sle
     await js('document.querySelector(".billing-invoice-actions button.primary-button").click()');
     await wait('!!document.querySelector(".billing-invoice-state.attached")','Abby original imported');
     test(db.billingHandoff.get(id).status==='invoiced','09B-UI-05: genuine IPC import marks item invoiced');
+    test(await get('!!document.querySelector(".billing-pdf-reference-warning")'),
+      '09B-UI-05b: PDF without Abby number shows reference verification warning');
+    test(await get('document.querySelector(".billing-kpi-grid")?.textContent.includes("Facturés avec PDF")'),
+      '09B-UI-05c: PDF-backed invoice KPI labeled without payment assumption');
+    test(await get('document.querySelector(".billing-kpi-grid")?.textContent.includes("À préparer")'),
+      '09B-UI-05d: planned status has distinct KPI from ready-to-invoice');
     const originalId = db.billingHandoff.get(id).invoiceDocumentId;
     test(!!originalId && !!fs.existsSync(db.clientDocuments.absolutePath(originalId)),
       '09B-UI-06: original PDF exists in client workspace');
@@ -170,6 +176,12 @@ module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,select,test,sle
     await wait('document.querySelectorAll(".billing-table tbody tr").length===3','billing list refreshed for advanced filters');
     test(await get('document.querySelector(".billing-advanced-filters")!==null'),
       '09B-FILTER-01: advanced billing filter controls rendered');
+    await js('document.querySelector(".billing-table tbody tr").click()');
+    await wait('!!document.querySelector(".billing-detail-panel")','billing selected after reference update');
+    test(await get('!document.querySelector(".billing-pdf-reference-warning")'),
+      '09B-FILTER-01a: verified Abby reference removes incomplete metadata warning');
+    await js('document.querySelector(".billing-detail-heading .close-detail").click()');
+    await wait('!document.querySelector(".billing-detail-panel")','billing table restored for filter assertions');
     const changeSelect = async (label,value) => js('const el=document.querySelector("select[aria-label="+JSON.stringify('+JSON.stringify(label)+')+"]");'
       +'if(!el)throw Error("Missing filter");el.value='+JSON.stringify(value)+';el.dispatchEvent(new Event("change",{bubbles:true}));');
     const changeInput = async (label,value) => js('const el=document.querySelector("input[aria-label="+JSON.stringify('+JSON.stringify(label)+')+"]");'
