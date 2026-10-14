@@ -182,7 +182,7 @@ if(!process.versions.electron){
     console.log('02C_RESULT '+JSON.stringify({passed:checks,failed:0,consoleErrors,onlyTemp:true}));return;
   }
   if(lot08a){
-    await require('./fixtures/lot08a-real-scenarios.cjs')({win,db,evalUI,get,wait,navigate,test,sleep});
+    await require('./fixtures/lot08a-real-scenarios.cjs')({win,db,registered,evalUI,get,wait,navigate,test,sleep});
     test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','08A TEMP SQLite integrity');
     test(db.database.all('PRAGMA foreign_key_check').length===0,'08A TEMP foreign keys');
     console.log('[UXV2 08A LIVE] PASSED '+checks+' native assertions; TEMP only');
