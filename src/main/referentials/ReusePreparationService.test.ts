@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -183,6 +183,49 @@ describe('ReusePreparationService', () => {
     expect(preparation.copiedFiles[0].missing).toBe(true);
     expect(preparation.copiedFiles[0].copied).toBe(false);
     expect(existsSync(preparation.manifestPath)).toBe(true);
+  });
+
+  it('R07G-20 : une panne du journal annule la promotion et les fichiers sans altérer le Projet source', () => {
+    const project = projects.createInternal({ name: 'Projet origine humaine' });
+    const source = projectLibrary.create(
+      project.id,
+      { category: 'php', name: 'Snippet Client', tags: ['source-client'] },
+      { contentType: 'code', language: 'php', contentText: '<?php echo "CLIENT";' },
+    );
+    const sourceFile = join(workspaceRoot, 'client-source.json');
+    writeFileSync(sourceFile, '{"clientOnly":true}', 'utf8');
+    const asset = resources.importFilePaths(project.id, [sourceFile], 'technical')[0];
+    projectLibrary.linkResource(source.currentVersion!.id, asset.id);
+    const before = projectLibrary.get(source.id);
+    const preparation = reuse.prepareProjectItem({ itemId: source.id, adaptationNotes: 'Retirer les informations client' });
+    const globalRoot = workspace.atoumWebLibraryDirectory;
+    const actualFiles = () => existsSync(globalRoot)
+      ? readdirSync(globalRoot, { recursive: true }).filter((entry) =>
+          statSync(join(globalRoot, String(entry))).isFile())
+      : [];
+    const beforeFiles = actualFiles();
+
+    database.exec(
+      "CREATE TRIGGER ux07g_abort_global_promotion BEFORE INSERT ON activity_log " +
+      "WHEN NEW.action='technical_reuse_promoted_to_global' " +
+      "BEGIN SELECT RAISE(ABORT, 'UX07G_PROMOTION_REJECTED'); END;",
+    );
+    expect(() => reuse.createGlobal({
+      preparation,
+      item: { category: 'code_snippet', name: 'Snippet configurable', reuseStatus: 'adapt' },
+      version: { contentType: 'code', language: 'php', contentText: '<?php echo $label;' },
+    })).toThrow('UX07G_PROMOTION_REJECTED');
+
+    expect(globalLibrary.list()).toHaveLength(0);
+    expect(database.all('SELECT id FROM atoumweb_technical_assets')).toHaveLength(0);
+    expect(actualFiles()).toEqual(beforeFiles);
+    expect(projectLibrary.get(source.id)).toEqual(before);
+    expect(existsSync(preparation.manifestPath)).toBe(true);
+    expect(existsSync(preparation.copiedFiles[0].packageRelativePath
+      ? join(preparation.packageDirectory, preparation.copiedFiles[0].packageRelativePath!)
+      : '')).toBe(true);
+    expect(database.all('PRAGMA foreign_key_check')).toHaveLength(0);
+    expect(database.get<{ integrity_check: string }>('PRAGMA integrity_check')?.integrity_check).toBe('ok');
   });
 
   it('refuse les chemins de paquet ou fichiers préparés hors exports/reutilisation', () => {
