@@ -24,6 +24,7 @@ export function quoteRecommendationState(
     if(lines.some(line=>line.optionPurchase?.state==='purchased'
       &&line.optionPurchase.sourceOfferLineId===source.id
       &&line.optionPurchase.sourceComponentId===included.componentId
+      &&(!source.catalogVersionId || line.optionPurchase.sourceOfferVersionId===source.catalogVersionId)
       &&sameItem(line)))return 'option-purchased';
     // A service already present on a separate Quote line is not an unpurchased
     // option to buy again. Preserve the original provenance of that line.
