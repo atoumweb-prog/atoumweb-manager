@@ -3,6 +3,8 @@ import { CrmService } from '../crm/CrmService';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
 import { MaintenanceService } from './MaintenanceService';
+import { OperationsService } from './OperationsService';
+import { TimeService } from '../time/TimeService';
 
 let database: NodeSqliteAdapter;
 let crm: CrmService;
@@ -100,6 +102,39 @@ describe('MaintenanceService', () => {
     const period = maintenance.ensurePeriod(subscription.id, '2026-10-20');
     expect(period.periodStart).toBe('2026-10-01');
     expect(period.periodEnd).toBe('2026-10-31');
+  });
+
+  it('distingue temps de routine affiché et consommation du quota mineur', () => {
+    const plan = maintenance.createPlan({
+      name: 'Maintenance quota TEST',
+      periodicPriceCents: 4900,
+      includedInterventions: 2,
+      includedMinutes: 120,
+    });
+    const subscription = maintenance.createSubscription({
+      clientAccountId: clientId, planId: plan.id, startDate: '2026-10-15',
+    });
+    const period = maintenance.ensurePeriod(subscription.id, '2026-10-20');
+    const operations = new OperationsService(database);
+    const time = new TimeService(database);
+    const routine = operations.createIntervention({
+      clientAccountId: clientId, maintenancePeriodId: period.id,
+      coverageMode: 'maintenance', type: 'maintenance', subject: 'Routine TEST',
+    });
+    const minor = operations.createIntervention({
+      clientAccountId: clientId, maintenancePeriodId: period.id,
+      coverageMode: 'maintenance', type: 'support', subject: 'Intervention mineure TEST',
+    });
+    database.run("UPDATE interventions SET maintenance_usage_kind='routine' WHERE id=?", [routine.id]);
+    time.addManual({ interventionId: routine.id, category: 'maintenance', startedAt: '2026-10-20T08:00:00Z', endedAt: '2026-10-20T08:30:00Z' });
+    time.addManual({ interventionId: minor.id, category: 'support', startedAt: '2026-10-20T09:00:00Z', endedAt: '2026-10-20T10:00:00Z' });
+    const usage = maintenance.getPeriod(period.id).usage;
+    expect(usage.interventionCount).toBe(1);
+    expect(usage.routineSeconds).toBe(1800);
+    expect(usage.usedSeconds).toBe(5400);
+    expect(usage.remainingSeconds).toBe(3600);
+    expect(usage.secondsOverQuota).toBe(0);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
   it('conserve la checklist de la période même si le modèle change ensuite', () => {
