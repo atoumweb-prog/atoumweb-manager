@@ -622,7 +622,7 @@ export class ContractTermsService {
       sections.push({id:'clauses',title:'Contrat contractuel approuvé',text:compiledText});
       return {
         ...currentPresentation,state:'frozen' as const,compiledAt:now,sections,
-        text:sections.map(section=>section.title.toUpperCase()+'\\n\\n'+section.text).join('\\n\\n'),
+        text:sections.map(section=>section.title.toUpperCase()+'\n\n'+section.text).join('\n\n'),
       };
     })():null;
     this.database.run(

@@ -83,6 +83,9 @@ describe('ContractTermsService', () => {
     expect(frozen.contractTextSnapshot).toContain('Condition personnalisée conservée.');
     expect(contractTerms.freezeQuote(quote.id).snapshotText).toBe(frozen.contractTextSnapshot);
     expect(contractTerms.presentation(quote.id).text).toContain(frozen.contractTextSnapshot!);
+    const presentation=contractTerms.presentation(quote.id);
+    expect(presentation.text).toBe(presentation.sections.map(section=>section.title.toUpperCase()+'\n\n'+section.text).join('\n\n'));
+    expect(presentation.text).not.toContain('\\n\\n');
     expect(contractTerms.presentation(quote.id).sections.some(section=>section.id==='clauses'&&section.text===frozen.contractTextSnapshot)).toBe(true);
   });
 
