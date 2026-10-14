@@ -74,6 +74,28 @@ describe('QuoteService', () => {
   });
 
 
+  it('R06A-15 / R06F-23 : la lecture historique ne reconstitue jamais les CGV absentes', () => {
+    const prospect = createProspect();
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Ancien devis sans archive CGV' });
+    quotes.addCustomLine(quote.id, { label: 'Prestation historique', proposedUnitPriceCents: 12000 });
+    finalizeForTest(database, quotes, quote.id);
+    // Simule uniquement une ancienne ligne persistée privée de snapshots, sans modifier le schéma.
+    database.run('UPDATE quotes SET contract_text_snapshot=NULL, contract_snapshot_json=NULL WHERE id=?', [quote.id]);
+    const before = database.get<{ contract_text_snapshot: string | null; contract_snapshot_json: string | null }>(
+      'SELECT contract_text_snapshot, contract_snapshot_json FROM quotes WHERE id=?', [quote.id],
+    );
+    const historical = quotes.get(quote.id);
+    expect(historical.finalizedAt).toBeTruthy();
+    expect(historical.contractTextSnapshot).toBeNull();
+    expect(historical.contractSnapshotJson).toBeNull();
+    expect(quotes.get(quote.id).contractTextSnapshot).toBeNull();
+    expect(quotes.get(quote.id).contractSnapshotJson).toBeNull();
+    const after = database.get<{ contract_text_snapshot: string | null; contract_snapshot_json: string | null }>(
+      'SELECT contract_text_snapshot, contract_snapshot_json FROM quotes WHERE id=?', [quote.id],
+    );
+    expect(after).toEqual(before);
+  });
+
   it('E73 : un accord de principe explicite est horodaté, idempotent et révocable sans signature ni conversion', () => {
     const prospect = createProspect();
     crm.changeProspectStage(prospect.id, 'qualifying');
