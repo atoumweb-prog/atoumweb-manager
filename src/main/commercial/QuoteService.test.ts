@@ -13,6 +13,8 @@ import { applyPendingMigrations } from '../database/migrations';
 import { CatalogService } from './CatalogService';
 import { CatalogRecommendationsService } from './CatalogRecommendationsService';
 import { quoteRecommendationState } from '../../shared/quoteRecommendationStatus';
+import { CatalogRecommendationsService } from './CatalogRecommendationsService';
+import { quoteRecommendationState } from '../../shared/quoteRecommendationStatus';
 import { QuoteService } from './QuoteService';
 
 let database: NodeSqliteAdapter;
@@ -140,7 +142,6 @@ describe('04F — traversée Catalogue recommandé → Devis réel SQLite', () =
       priceMode:'fixed',priceCents:69900,description:'Offre principale',
     });
     const offerId=offer.versions[0].id;
-    const {CatalogRecommendationsService}=require('./CatalogRecommendationsService') as typeof import('./CatalogRecommendationsService');
     const advice=new CatalogRecommendationsService(database);
     advice.replace(offerId,[extra.currentVersion!.id],[]);
     catalog.publishVersion(offerId);
@@ -149,7 +150,6 @@ describe('04F — traversée Catalogue recommandé → Devis réel SQLite', () =
     expect(withOffer.lines).toHaveLength(1);
     const source=withOffer.lines[0];
     expect(advice.list(offerId).map(row=>row.targetVersionId)).toEqual([extra.currentVersion!.id]);
-    const {quoteRecommendationState}=require('../../shared/quoteRecommendationStatus') as typeof import('../../shared/quoteRecommendationStatus');
     expect(quoteRecommendationState(source,advice.list(offerId)[0],withOffer.lines)).toBe('recommended');
     const chosen=quotes.addCatalogLine(quote.id,extra.currentVersion!.id);
     expect(chosen.lines).toHaveLength(2);
