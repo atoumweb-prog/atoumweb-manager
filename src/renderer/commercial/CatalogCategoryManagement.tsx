@@ -63,8 +63,8 @@ export function CatalogCategoryManagement({items,onChanged}: {
     return()=>{alive=false;};
   },[]);
 
-  async function run(action:()=>Promise<unknown>,success:string){
-    if(busy)return;
+  async function run(action:()=>Promise<unknown>,success:string):Promise<boolean>{
+    if(busy)return false;
     setBusy(true);setError('');setFeedback('');
     try {
       await action();
@@ -72,7 +72,8 @@ export function CatalogCategoryManagement({items,onChanged}: {
       await reload();
       setConfirmKey('');
       setFeedback(success);
-    }catch(e){setError(e instanceof Error?e.message:String(e));}
+      return true;
+    }catch(e){setError(e instanceof Error?e.message:String(e));return false;}
     finally{setBusy(false);}
   }
 
@@ -93,8 +94,8 @@ export function CatalogCategoryManagement({items,onChanged}: {
 
       <form className="catalog-category-edit-row" onSubmit={event=>{
         event.preventDefault();
-        void run(()=>window.atoumweb.catalogCategories.create(createName), 'Catégorie créée en brouillon administratif, sans affectation automatique.')
-          .then(()=>{if(!error){setCreateName('');createGuard.saved('');}});
+        void run(()=>window.atoumweb.catalogCategories.create(createName), 'Catégorie créée dans le registre, sans affectation automatique.')
+          .then(saved=>{if(saved){setCreateName('');createGuard.saved('');}});
       }}>
         <label>Créer une catégorie métier
           <input value={createName} onChange={event=>setCreateName(event.target.value)}
@@ -115,7 +116,7 @@ export function CatalogCategoryManagement({items,onChanged}: {
                 event.preventDefault();
                 void run(()=>window.atoumweb.catalogCategories.rename(category.id,renameValue,category.revision),
                   'Catégorie renommée ; les anciennes valeurs sont consignées.')
-                  .then(()=>{renameGuard.saved(renameValue);setRenameId('');});
+                  .then(saved=>{if(saved){renameGuard.saved(renameValue);setRenameId('');}});
               }}>
                 <label>Nouveau libellé
                   <input value={renameValue} onChange={event=>setRenameValue(event.target.value)}
