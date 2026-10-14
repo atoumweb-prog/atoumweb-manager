@@ -51,7 +51,7 @@ export function assembleReviewedDraftContract(
    duplicateIds,
    invalidText,
    crossQuote:quoteIds.size>1,
-   ready:plan.ready&&missing.length===0&&duplicateIds.length===0&&invalidText.length===0&&quoteIds.size<=1,
+   ready:selectable.length>0&&plan.included.length>0&&plan.ready&&missing.length===0&&duplicateIds.length===0&&invalidText.length===0&&quoteIds.size===1,
  };
 }
 
