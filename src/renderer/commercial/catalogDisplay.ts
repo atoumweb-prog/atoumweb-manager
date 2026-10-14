@@ -9,9 +9,14 @@ export function catalogueFamilyLabel(item:CatalogItemSummary):string {
 }
 export function catalogueIsOffer(item:CatalogItemSummary):boolean {return item.type==='offer';}
 
-/** Main category label for the administration view; familyCode stays independent. */
-export function cataloguePrimaryCategoryLabel(item:CatalogItemSummary):string {
-  const category=item.category?.trim();
+/** Main category display label; stored category and canonical families remain unchanged. */
+export function catalogueCategoryName(value:string|null|undefined):string {
+  const category=value?.trim();
   if (!category) return 'Sans catégorie';
   return families[legacy[category]??category]??category;
+}
+
+/** Item category (not the family's commercial/version code). */
+export function cataloguePrimaryCategoryLabel(item:CatalogItemSummary):string {
+  return catalogueCategoryName(item.category);
 }
