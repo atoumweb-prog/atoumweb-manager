@@ -10,7 +10,7 @@ const samples=['Accueil','Prospection','Devis','Projets','Interventions & Mainte
 const assert=(ok,msg)=>{if(!ok)throw Error(msg);};
 const normalize=v=>process.platform==='win32'?v.toLowerCase():v;
 const owned=dir=>!!dir&&fs.existsSync(dir)&&path.basename(dir).startsWith(prefix)&&normalize(fs.realpathSync.native(path.dirname(dir)))===normalize(fs.realpathSync.native(os.tmpdir()));
-const {lot03b,searchOnly,captureFolder}=require(path.join(repo,'scripts','fixtures','native-recipe-args.cjs'))(process.argv.slice(2));
+const {lot03b,lot09e,searchOnly,captureFolder}=require(path.join(repo,'scripts','fixtures','native-recipe-args.cjs'))(process.argv.slice(2));
 const captureArg=process.argv.indexOf('--captures');
 if(captureArg>=0){
  const folder=captureFolder;assert(path.isAbsolute(folder)&&!/validation-msi/i.test(folder)&&!fs.existsSync(folder),'Use a new absolute capture directory outside Validation-MSI.');
@@ -180,6 +180,13 @@ if(!process.versions.electron){
     test(db.database.all('PRAGMA foreign_key_check').length===0,'02C FK');
     test(db.database.all('SELECT id FROM schema_migrations ORDER BY id').map(row=>row.id).join(',')===Array.from({length:66},(_,index)=>index+1).join(','),'02C migrations1–66');
     console.log('02C_RESULT '+JSON.stringify({passed:checks,failed:0,consoleErrors,onlyTemp:true}));return;
+  }
+  if(lot09e){
+    await require('./fixtures/lot09e-word-real-scenarios.cjs')({win,db,temp,evalUI,get,wait,navigate,select,test,sleep});
+    test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','09E SQLite integrity');
+    test(db.database.all('PRAGMA foreign_key_check').length===0,'09E SQLite foreign key checks');
+    console.log('[UXV2 09E LIVE] PASSED '+checks+' native Word assertions; TEMP only');
+    return;
   }
   if(lot03b){
     await require('./fixtures/lot03b-real-scenarios.cjs')({win,db,evalUI,get,wait,navigate,test,sleep,saveScreenshot});
