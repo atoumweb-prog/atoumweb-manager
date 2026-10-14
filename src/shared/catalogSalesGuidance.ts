@@ -2,6 +2,8 @@
  * 04E — Version-scoped and human-authored sales guidance.
  * Commercial advice is never automatically added to CGV or quote terms.
  */
+import type { CatalogVersion } from './commercial';
+
 export interface CatalogSalesGuidance {
   versionId: string;
   clientNeed?: string | null;
@@ -29,4 +31,16 @@ export function prepareCatalogSalesGuidance(input: CatalogSalesGuidance): Catalo
     clientNeed, benefits, objections, salesAdvice,
     configured: [clientNeed, benefits, objections, salesAdvice].some(Boolean),
   };
+}
+
+/** Project persisted version fields into a read-only sales view. */
+export function salesGuidanceFromCatalogVersion(
+  version: Pick<CatalogVersion, 'id' | 'commercialParameters' | 'internalAdvice'>,
+): CatalogSalesGuidanceView {
+  return prepareCatalogSalesGuidance({
+    versionId: version.id,
+    clientNeed: version.commercialParameters?.clientNeed,
+    benefits: version.commercialParameters?.benefits,
+    salesAdvice: version.internalAdvice,
+  });
 }
