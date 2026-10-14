@@ -44,8 +44,8 @@ function featuredId(item: CatalogItemSummary): FeaturedId | null {
 
   if (item.type === 'offer') {
     if (code === 'AW-WEB-VITRINE' || /\bsite vitrine\b/.test(name)) return 'vitrine';
-    if (code === 'AW-ECOM-BASE' || /\b(e-commerce|woocommerce|boutique en ligne)\b/.test(name)) return 'ecommerce';
-    if (code.startsWith('AW-MARIAGE-') || /\bmariage\b/.test(name)) return 'mariage';
+    if (code === 'AW-ECOM-BASE' || /\b(site e-commerce|boutique woocommerce|boutique en ligne)\b/.test(name)) return 'ecommerce';
+    if (code.startsWith('AW-MARIAGE-') || /\bsite (de )?mariage\b/.test(name) || /^mariage (essentiel|grand jour|histoire)\b/.test(name)) return 'mariage';
     if (/\bmaintenance wordpress\b/.test(name)) return 'maintenance';
   }
 
