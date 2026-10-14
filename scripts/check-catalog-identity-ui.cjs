@@ -54,7 +54,11 @@ app.whenReady().then(async () => {
       const fillField=async(field,value)=>{if(!field)throw Error('Champ absent');const proto=field.tagName==='SELECT'?HTMLSelectElement.prototype:HTMLInputElement.prototype;Object.getOwnPropertyDescriptor(proto,'value').set.call(field,value);field.dispatchEvent(new Event(field.tagName==='SELECT'?'change':'input',{bubbles:true}));await wait()};
       const field=(label)=>[...document.querySelectorAll('label')].find(l=>l.textContent.trim().startsWith(label))?.querySelector('input,select,textarea');
       const fill=async(label,value)=>fillField(field(label),value);
-      await wait();document.querySelector('tbody tr').click();await wait();
+      await wait();
+      assert('Vue organisée Catalogue visible par défaut',!!document.querySelector('.catalog-overview')&&document.body.textContent.includes('Services complémentaires'));
+      await click("Tableau d'administration");
+      assert('Tableau historique accessible',!!document.querySelector('tbody tr'));
+      document.querySelector('tbody tr').click();await wait();
       assert('Ancien élément sans identité inventée',document.querySelector('.catalog-identity-section').textContent.includes('Non attribué'));
       assert('Attribution désactivée sans code', [...document.querySelectorAll('button')].find(b=>b.textContent==='Attribuer ce code').disabled);
       await fill('Code AW à attribuer','invalide');await click('Attribuer ce code');
