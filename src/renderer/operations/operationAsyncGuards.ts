@@ -42,7 +42,7 @@ export function acquireCompletionLock(inFlight: Set<string>, interventionId: str
 }
 
 /** Human confirmation based only on the currently returned intervention, without guessed quotas or balances. */
-export function interventionCompletionReview(intervention: Intervention): string {
+export function interventionCompletionReview(intervention: Intervention, currentCoverageDetails: string[] = []): string {
   const consequence: Record<Intervention['coverageMode'], string> = {
     maintenance: 'Maintenance : le service vérifiera la période, le quota et les éventuels dépassements.',
     hour_pack: 'Pack d’heures : le service débitera le temps réellement terminé une seule fois, sous réserve de validation.',
@@ -60,7 +60,8 @@ export function interventionCompletionReview(intervention: Intervention): string
     `Client : ${intervention.clientLabel}`,
     `Temps actuellement enregistré : ${hours} h ${minutes} min`,
     consequence[intervention.coverageMode],
-    'Les soldes, quotas et montants définitifs ne sont pas prévisualisés ici : le service les contrôle lors de la clôture.',
+    ...currentCoverageDetails,
+    'Ces données proviennent de la dernière lecture avant confirmation. Les effets définitifs restent calculés par le service lors de la clôture.',
     'Cette action peut modifier le pack, la maintenance et les éléments de facturation. Continuer ?',
   ].join('\n');
 }
