@@ -16,6 +16,11 @@ describe('05E — contract document provenance is not acceptance',()=>{
       evidence({abbyReference:null}),evidence({acceptedAt:'not a date'}),
     ])expect(assessContractEvidence(item)).toBe('acceptance_unverified');
   });
+  it('rejects ambiguous dates without timezone and impossible timestamps',()=>{
+    expect(assessContractEvidence(evidence({acceptedAt:'2026-10-14'}))).toBe('acceptance_unverified');
+    expect(assessContractEvidence(evidence({acceptedAt:'2026-10-14T12:00:00'}))).toBe('acceptance_unverified');
+    expect(assessContractEvidence(evidence({acceptedAt:'invalid'}))).toBe('acceptance_unverified');
+  });
   it('recognizes a complete evidence record without mutating it',()=>{
     const record=evidence();const snapshot=JSON.stringify(record);
     expect(assessContractEvidence(record)).toBe('evidence_metadata_complete');
