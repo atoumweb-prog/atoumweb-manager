@@ -461,6 +461,23 @@ describe('QuoteService', () => {
     expect(crm.listProspects().find(item => item.id === prospect.id)?.clientAccountId).toBeFalsy();
   });
 
+  it('R06E-13 / R06F-21 : une révision non raccordée au Projet échoue sans copie partielle', () => {
+    const prospect = createProspect();
+    const original = quotes.create({ prospectId: prospect.id, subject: 'Dossier sans cycle Projet' });
+    quotes.addCustomLine(original.id, { label: 'Service de référence', proposedUnitPriceCents: 24900 });
+    const before = quotes.list({ prospectId: prospect.id });
+    const originalBefore = quotes.get(original.id);
+
+    expect(() => quotes.duplicate(original.id, true)).toThrow(/Cycle Projet prévisionnel non raccordé/);
+
+    expect(quotes.list({ prospectId: prospect.id }).map(item => item.id)).toEqual(before.map(item => item.id));
+    const after = quotes.get(original.id);
+    expect(after.number).toBe(originalBefore.number);
+    expect(after.contractValueCents).toBe(originalBefore.contractValueCents);
+    expect(after.lines.map(line => line.id)).toEqual(originalBefore.lines.map(line => line.id));
+    expect(database.get<{ count: number }>('SELECT COUNT(*) AS count FROM quotes WHERE prospect_id=?', [prospect.id])?.count).toBe(1);
+  });
+
   it('06E : la révision par duplication garde les lignes, mais possède son propre numéro et historique', () => {
     const prospect = createProspect();
     const original = quotes.create({ prospectId: prospect.id, subject: 'Proposition historique' });
