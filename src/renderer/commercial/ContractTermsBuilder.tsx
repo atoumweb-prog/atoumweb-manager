@@ -1,5 +1,6 @@
 import {mergeContractClauseDrafts} from './contractClauseDraftMerge';
 import {compareClauseField} from './contractClauseFieldDiff';
+import {compareDraftContractClauses} from './contractDraftImpact';
 import {planDraftContractAssembly} from '../../shared/draftContractAssemblyPlan';
 import type {ContractSectionReview} from '../../shared/contractSectionPolicy';
 import {isCurrentContractRequest} from './contractRequestGuard';
@@ -98,6 +99,15 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     const bodyChanged=draft.body!==clause.body;
     return titleChanged||bodyChanged?[{id:clause.id,title:clause.title,titleChanged,bodyChanged,titleDiff:compareClauseField(clause.title,draft.title),bodyDiff:compareClauseField(clause.body,draft.body)}]:[];
   }),[build,drafts]);
+
+  const localImpact=useMemo(()=>{
+    const saved=build?.clauses??[];
+    const projected=saved.map(clause=>({...clause,
+      title:drafts[clause.id]?.title??clause.title,
+      body:drafts[clause.id]?.body??clause.body,
+    }));
+    return compareDraftContractClauses(saved,projected);
+  },[build,drafts]);
 
   const counts = useMemo(() => {
     const clauses = build?.clauses ?? [];
@@ -443,6 +453,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
         </ol>
         {clauseOverview.excluded.length>0 && <div className="cgv-warning"><p>{clauseOverview.excluded.length} clause(s) exclue(s) du devis — contrôler leur pertinence.</p><ul>{clauseOverview.excluded.map(clause=><li key={clause.id}><button type="button" className="secondary-button compact-button" onClick={()=>showClause(clause.id)}>Examiner : {clause.title}</button></li>)}</ul></div>}
         {clauseOverview.orphaned.length>0 && <div className="cgv-warning"><p>{clauseOverview.orphaned.length} clause(s) orpheline(s) : prestation retirée — contrôler avant finalisation.</p><ul>{clauseOverview.orphaned.map(clause=><li key={clause.id}><button type="button" className="secondary-button compact-button" onClick={()=>showClause(clause.id)}>Examiner : {clause.title}</button></li>)}</ul></div>}
+        {localImpact.length>0 && <p className="muted" role="status">Analyse d’impact du brouillon : {localImpact.length} clause(s) modifiée(s) par rapport aux valeurs enregistrées. Aucun changement n’est appliqué automatiquement.</p>}
         {unsaved && <div role="status" className="cgv-warning">
           <strong>{clauseChanges.length} clause(s) modifiée(s) non enregistrée(s).</strong>
           <p>Comparaison indicative avec la dernière version enregistrée (sans diffusion ni sauvegarde automatique).</p>
