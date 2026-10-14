@@ -497,6 +497,12 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
                         missing: 'Fichier manquant',
                         modified: 'Fichier modifié',
                       } as const)[version.integrity]}
+                      {version.integrity === 'verified' && selected && (
+                        <button type="button" className="secondary-button" onClick={() => {
+                          void window.atoumweb.expenses.openReceiptVersion(selected.id, version.relativePath)
+                            .catch((error) => onMessage(error instanceof Error ? error.message : 'Ouverture impossible.'));
+                        }}>Ouvrir la version</button>
+                      )}
                     </li>
                   ))}
                 </ul>
