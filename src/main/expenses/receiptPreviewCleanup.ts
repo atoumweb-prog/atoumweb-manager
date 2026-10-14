@@ -1,4 +1,4 @@
-import { lstatSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, lstatSync, readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -28,6 +28,7 @@ export function cleanupExpiredReceiptPreviews(
     try {
       const stat = lstatSync(path);
       if (!stat.isDirectory() || stat.isSymbolicLink()) continue;
+      if (!existsSync(join(path, '.atoumweb-receipt-preview'))) continue;
       if (now - stat.mtimeMs < RETENTION_MS) continue;
       rmSync(path, { recursive: true, force: true });
       removed++;
