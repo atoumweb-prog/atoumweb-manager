@@ -309,4 +309,23 @@ describe('QuoteService', () => {
     expect(quotes.get(original.id).status).toBe('refused');
   });
 
+  it('06E : duplication après refus préserve la version historique et permet une nouvelle validation autonome', () => {
+    const prospect = createProspect();
+    const first = quotes.create({ prospectId: prospect.id, subject: 'Première proposition' });
+    quotes.addCustomLine(first.id, { label: 'Site historique', proposedUnitPriceCents: 69900 });
+    finalizeForTest(database,quotes,first.id);
+    quotes.markSent(first.id);
+    quotes.refuse(first.id);
+    const revised = quotes.duplicate(first.id);
+    quotes.updateLine(revised.lines[0].id, { label: 'Site revisité', quantityMilli: 1000, proposedUnitPriceCents: 79900 });
+    const finalized = finalizeForTest(database,quotes,revised.id);
+    expect(finalized.finalizedAt).toBeTruthy();
+    expect(finalized.contractValueCents).toBe(79900);
+    expect(quotes.get(first.id).status).toBe('refused');
+    expect(quotes.get(first.id).contractValueCents).toBe(69900);
+    expect(quotes.get(first.id).finalizedAt).toBeTruthy();
+    expect(() => quotes.addCustomLine(revised.id, { label: 'Ajout tardif', proposedUnitPriceCents: 1000 }))
+      .toThrow(/figé|finalisé|copie du devis|envoi/i);
+  });
+
 });
