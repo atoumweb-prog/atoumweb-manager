@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useUnsavedDraft } from '../unsaved/unsaved';
 import type { ProjectTechnicalCategory, ProjectTechnicalContentType, ProjectTechnicalItemDetail } from '../../shared/projects';
 import {
   ATOUMWEB_LIBRARY_CATEGORIES, ATOUMWEB_REUSE_STATUSES,
@@ -41,11 +42,25 @@ export function ProjectReusePreparationPanel({detail,onClose,onMessage}: {
   const [reviewed,setReviewed]=useState(false);
   const [created,setCreated]=useState<AtoumWebTechnicalItemDetail|null>(null);
 
+  // Register the actual form with the existing UX-01 guard. A prepared
+  // package is not a saved global component: edits remain local until the
+  // explicit human-approved promotion succeeds.
+  const draft = useUnsavedDraft('Adaptation de réutilisation', {
+    adaptationNotes, name, category, reuseStatus, description, tags, vertical,
+    contentType, language, content, notes, reviewed,
+  }, {
+    group: 'project-reuse', resetKey: versionId,
+    ready: !created, pending: busy,
+  });
+
   function chooseVersion(id:string):void {
-    const version=detail.versions.find(v=>v.id===id);
-    setVersionId(id);setPreparation(null);setReviewed(false);setError(null);
-    setContentType(version?.contentType??'text');setLanguage(version?.language??'');
-    setContent(version?.contentText??'');setNotes(version?.notes??'');
+    if(id===versionId)return;
+    draft.request(()=>{
+      const version=detail.versions.find(v=>v.id===id);
+      setVersionId(id);setPreparation(null);setReviewed(false);setError(null);
+      setContentType(version?.contentType??'text');setLanguage(version?.language??'');
+      setContent(version?.contentText??'');setNotes(version?.notes??'');
+    });
   }
   function changed():void {setReviewed(false);}
   async function prepare():Promise<void> {
@@ -87,7 +102,7 @@ export function ProjectReusePreparationPanel({detail,onClose,onMessage}: {
 
   return <section className="reuse-preparation-panel" aria-label="Réutilisation guidée">
     <div className="technical-detail-heading"><div><span className="eyebrow">Copie indépendante</span><h3>Préparer pour réutilisation</h3></div>
-      <button type="button" className="secondary-button" disabled={busy} onClick={onClose}>Fermer la préparation</button></div>
+      <button type="button" className="secondary-button" disabled={busy} onClick={()=>draft.request(onClose)}>Fermer la préparation</button></div>
     <p className="technical-safety-note">Le Projet client et ses versions restent inchangés. Aucun code n’est exécuté ni généralisé automatiquement. Le journal trace les étapes effectuées.</p>
     {error&&<p className="form-error" role="alert">{error}</p>}
     <fieldset disabled={busy||!!created} className="reuse-fields">

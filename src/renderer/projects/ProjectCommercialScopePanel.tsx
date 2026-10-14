@@ -1,24 +1,64 @@
 import {ContributionTargetChoices} from './ContributionTargetChoices';
+import {requestUnsavedExit} from '../unsaved/unsaved';
 import {useEffect,useState} from 'react';
-import type {ProjectCommercialScope,ProjectConflictDecision,ProjectDetail} from '../../shared/projects';
+import type {ProjectCommercialScope,ProjectCommercialRestartPreview,ProjectConflictDecision,ProjectDetail} from '../../shared/projects';
 
 export function ProjectCommercialScopePanel({projectId,onChanged}:{projectId:string;onChanged?:(p:ProjectDetail)=>void}) {
   const [scope,setScope]=useState<ProjectCommercialScope|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+  const [restartPreview,setRestartPreview]=useState<ProjectCommercialRestartPreview|null>(null),[restartConfirmed,setRestartConfirmed]=useState(false);
   const api=window.atoumweb.projects.projects;
-  useEffect(()=>{let live=true;api.commercialScope(projectId).then(s=>{if(live)setScope(s);}).catch(e=>{if(live)setError(String(e));});return()=>{live=false;};},[projectId]);
+  useEffect(()=>{let live=true;setRestartPreview(null);setRestartConfirmed(false);api.commercialScope(projectId).then(s=>{if(live)setScope(s);}).catch(e=>{if(live)setError(String(e));});return()=>{live=false;};},[projectId]);
   async function run(conflictId?:string,decision?:ProjectConflictDecision) {
-    setBusy(true);setError('');
+    setBusy(true);setError('');setRestartPreview(null);setRestartConfirmed(false);
     try {
       if(conflictId && decision) await api.resolveScopeConflict(projectId,conflictId,decision);
       else await api.syncCommercial(projectId);
       setScope(await api.commercialScope(projectId));onChanged?.(await api.get(projectId));
     } catch(e) {setError(e instanceof Error?e.message:String(e));} finally {setBusy(false);}
   }
+  async function inspectRestart():Promise<void> {
+    if(busy)return;
+    setBusy(true);setError('');setRestartConfirmed(false);setRestartPreview(null);
+    try {setRestartPreview(await api.previewRestart(projectId));}
+    catch(e){setError(e instanceof Error?e.message:String(e));}
+    finally{setBusy(false);}
+  }
+  async function restartProject():Promise<void> {
+    if(busy||!restartPreview||!restartConfirmed)return;
+    setBusy(true);setError('');
+    try {
+      const next=await api.restartProject(projectId,restartPreview.sha256);
+      setRestartPreview(null);setRestartConfirmed(false);onChanged?.(next);
+      window.dispatchEvent(new CustomEvent('atoumweb:navigate',{detail:{
+        entityType:'project',entityId:next.id,title:next.name,
+      }}));
+    } catch(e){
+      // A stale review must never be silently reapplied; ask for a new preview.
+      setRestartPreview(null);setRestartConfirmed(false);
+      setError(e instanceof Error?e.message:String(e));
+    } finally {setBusy(false);}
+  }
   if(!scope || scope.state==='legacy') return error?<p role="alert">{error}</p>:null;
   return <section className="project-commercial-scope" aria-label="Périmètre commercial du Projet">
     <strong>{scope.state==='provisional'?'Projet prévisionnel — devis non accepté':'Périmètre accepté et figé'}</strong>
     {scope.state==='provisional' && <><p>Les étapes, Sites et Pages préparent le périmètre du devis. Aucune maintenance, intervention ou facturation n’est activée.</p>
-      <button className="secondary-button" disabled={busy} onClick={()=>void run()}>Synchroniser le périmètre commercial</button></>}
+      <button className="secondary-button" disabled={busy} onClick={()=>void run()}>Synchroniser le périmètre commercial</button>
+      <div className="project-restart-review">
+        <button type="button" className="secondary-button" disabled={busy} onClick={()=>void inspectRestart()}>Examiner « Repartir de zéro »</button>
+        {restartPreview&&<div role="group" aria-label="Impact de la régénération du Projet">
+          <strong>Remplacement du Projet prévisionnel depuis le devis courant</strong>
+          <p>Le Projet actuel sera archivé avec ses versions, Pages, fichiers, temps, secrets et exports Bridge. Aucun contenu n’est supprimé physiquement. Un nouveau Projet indépendant sera préparé et deviendra le seul Projet courant du dossier commercial.</p>
+          <p>Référence du devis : {restartPreview.quoteId}. Éléments rattachés à préserver :</p>
+          {Object.entries(restartPreview.counts).length
+            ? <ul>{Object.entries(restartPreview.counts).map(([table,count])=><li key={table}>{table} : {count}</li>)}</ul>
+            : <p>Aucune donnée enfant répertoriée. L’ancien Projet restera néanmoins archivé.</p>}
+          <label><input type="checkbox" checked={restartConfirmed} onChange={e=>setRestartConfirmed(e.target.checked)}/>
+            J’ai vérifié l’impact et je confirme l’archivage de l’ancien Projet et la création d’un nouveau Projet.</label>
+          <button type="button" className="secondary-button danger-outline" disabled={busy||!restartConfirmed}
+            onClick={()=>requestUnsavedExit(()=>{void restartProject();})}>Confirmer la régénération du Projet</button>
+          <button type="button" className="secondary-button" disabled={busy} onClick={()=>{setRestartPreview(null);setRestartConfirmed(false);}}>Annuler</button>
+        </div>}
+      </div></>}
     <details><summary>Historique du périmètre ({scope.revisions.length})</summary>
       {scope.revisions.map(r=><p key={r.id}>Synchronisation {r.sequence} · révision commerciale {r.commercialRevision} · {new Date(r.createdAt).toLocaleString('fr-FR')}</p>)}
     </details>

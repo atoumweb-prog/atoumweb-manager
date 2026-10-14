@@ -224,9 +224,17 @@ export class ReusePreparationService {
   }
 
   assertPackagePath(path: string): string {
-    const root = resolve(this.workspace.exportsDirectory, 'reutilisation');
+    const exportsRoot = resolve(this.workspace.exportsDirectory);
+    const root = resolve(exportsRoot, 'reutilisation');
     const candidate = resolve(path);
-    if (!this.isPathInside(root, candidate)) {
+    // Lexical checks alone cannot detect a symlink/junction that redirects an
+    // apparently valid package to a private folder outside the exports area.
+    const outside = !this.isPathInside(root, candidate)
+      || (existsSync(root) && (
+        !this.isPathInside(realpathSync(exportsRoot), realpathSync(root))
+        || (existsSync(candidate) && !this.isPathInside(realpathSync(root), realpathSync(candidate)))
+      ));
+    if (outside) {
       throw new Error('Ce chemin ne correspond pas à un paquet de réutilisation AtoumWeb.');
     }
     return candidate;
@@ -235,7 +243,11 @@ export class ReusePreparationService {
   private assertPathInside(rootPath: string, candidatePath: string): string {
     const root = resolve(rootPath);
     const candidate = resolve(candidatePath);
-    if (!this.isPathInside(root, candidate)) {
+    // Check both the declared path and its real destination: a copied asset,
+    // manifest or adaptation file may have been replaced by a filesystem link.
+    if (!this.isPathInside(root, candidate)
+      || (existsSync(root) && existsSync(candidate)
+        && !this.isPathInside(realpathSync(root), realpathSync(candidate)))) {
       throw new Error('Un fichier du paquet pointe en dehors du dossier de réutilisation autorisé.');
     }
     return candidate;
