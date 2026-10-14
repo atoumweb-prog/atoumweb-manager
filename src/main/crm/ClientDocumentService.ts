@@ -63,7 +63,7 @@ export class ClientDocumentService {
     const doc=this.get(id),path=this.absolutePath(doc);
     if(!existsSync(path)||!statSync(path).isFile())throw Error('Document manquant : ouverture/rattachement refusé.');
     const bytes=readFileSync(path);
-    if(doc.category==='invoice'&&!/%PDF-\\d\\.\\d/.test(bytes.subarray(0,1024).toString('latin1')))throw Error('Facture Abby invalide : signature PDF absente.');
+    if(doc.category==='invoice'&&!/%PDF-\d\.\d/.test(bytes.subarray(0,1024).toString('latin1')))throw Error('Facture Abby invalide : signature PDF absente.');
     const hash=createHash('sha256').update(bytes).digest('hex');
     if(doc.sha256&&doc.sha256!==hash)throw Error('Document modifié : empreinte SHA-256 différente, ouverture/rattachement refusé.');
     // Explicit legacy attachment only: no migration or read-time backfill.
@@ -74,7 +74,7 @@ export class ClientDocumentService {
     const doc=this.get(id),path=this.absolutePath(doc);
     if(!existsSync(path))throw Error('Document manquant : ouverture refusée.');
     const bytes=readFileSync(path);
-    if(doc.category==='invoice'&&!/%PDF-\\d\\.\\d/.test(bytes.subarray(0,1024).toString('latin1')))throw Error('Facture Abby invalide : signature PDF absente.');
+    if(doc.category==='invoice'&&!/%PDF-\d\.\d/.test(bytes.subarray(0,1024).toString('latin1')))throw Error('Facture Abby invalide : signature PDF absente.');
     const hash=createHash('sha256').update(bytes).digest('hex');
     if(doc.sha256&&doc.sha256!==hash)throw Error('Document modifié : empreinte SHA-256 différente, ouverture refusée.');
     // Historical un-hashed files stay un-hashed; never certify their past integrity.
