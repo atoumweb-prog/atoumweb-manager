@@ -65,7 +65,7 @@ export class CatalogRecommendationsService {
       for (const id of targetVersionIds) {
         const target=version(id);
         if (!target || target.status !== 'published' || target.item_status !== 'active' || target.item_type !== 'service') {
-          throw new Error('La recommandation doit cibler une version publiée et une prestation active.');
+          throw new Error('La recommandation doit cibler un Service actif avec une version publiée.');
         }
         if (source.item_id === target.item_id) throw new Error('Une prestation ne peut se recommander elle-même.');
         if (seen.has(target.item_id)) throw new Error('Une même prestation ne peut être recommandée deux fois.');
