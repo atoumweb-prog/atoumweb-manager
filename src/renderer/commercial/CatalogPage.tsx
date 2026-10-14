@@ -75,6 +75,7 @@ interface CatalogDraft {
   specialTerms: string;
   contractType: string;
   internalAdvice: string;
+  commercialParameters: CatalogCommercialParameters;
   visiblePublic: boolean;
 }
 
@@ -97,6 +98,7 @@ const EMPTY_DRAFT: CatalogDraft = {
   specialTerms: '',
   contractType: '',
   internalAdvice: '',
+  commercialParameters: {},
   visiblePublic: false,
 };
 
@@ -307,6 +309,8 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
       specialTerms: input.specialTerms.trim() || null,
       contractType: input.contractType.trim() || null,
       internalAdvice: input.internalAdvice.trim() || null,
+      commercialParameters: Object.fromEntries(Object.entries(input.commercialParameters)
+        .map(([key, value]) => [key, typeof value === 'string' ? (value.trim() || null) : value])),
       inclusions: splitLines(input.inclusionsText),
       exclusions: splitLines(input.exclusionsText),
       prerequisites: splitLines(input.prerequisitesText),
@@ -375,6 +379,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
       specialTerms: current.specialTerms ?? '',
       contractType: current.contractType ?? '',
       internalAdvice: current.internalAdvice ?? '',
+      commercialParameters: { ...current.commercialParameters },
       visiblePublic: detail.visiblePublic,
     });
     setVersionMode(true);
@@ -726,7 +731,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
 function CommercialParametersSummary({ parameters }: { parameters?: CatalogCommercialParameters | null }) {
   if (!parameters) return null;
   const labels: Record<keyof CatalogCommercialParameters, string> = {
-    clientNeed: 'Besoin client', work: 'Travail prévu', options: 'Options / compléments',
+    clientNeed: 'Besoin client', benefits: 'Bénéfices client', keywords: 'Mots-clés métier', work: 'Travail prévu', options: 'Options / compléments',
     quoteRequiredWhen: 'Cas nécessitant un devis', deliverables: 'Livrables', deliveryTerms: 'Modalités / délai',
     reviewTerms: 'Corrections / recette', correctiveWarranty: 'Garantie corrective prévue',
     thirdPartyCosts: 'Coûts tiers', sourcePriceLabel: 'Règle tarifaire de source',
@@ -834,6 +839,24 @@ function CatalogFields({ draft, onChange, showIdentity = false }: { draft: Catal
           <label className="catalog-wide">
             <span className="field-label-with-help">Conditions commerciales <FieldHelp text="Conditions particulières à reprendre dans le devis lorsque cette prestation est utilisée." /></span>
             <textarea value={draft.specialTerms} onChange={(e) => onChange({ ...draft, specialTerms: e.target.value })} />
+          </label>
+          <label className="catalog-wide">
+            <span className="field-label-with-help">Besoin client <FieldHelp text="Formule le problème que la prestation aide à résoudre. Utilisé pour rechercher cette prestation depuis Prospects et Devis après publication." /></span>
+            <textarea value={draft.commercialParameters.clientNeed ?? ''} onChange={e => onChange({
+              ...draft, commercialParameters: { ...draft.commercialParameters, clientNeed: e.target.value },
+            })} placeholder="Ex. améliorer la visibilité de l'entreprise sur Google" />
+          </label>
+          <label className="catalog-wide">
+            <span className="field-label-with-help">Bénéfices client <FieldHelp text="Bénéfices décrits pour cette version, sans promesse automatique de résultat ni création de clause CGV." /></span>
+            <textarea value={draft.commercialParameters.benefits ?? ''} onChange={e => onChange({
+              ...draft, commercialParameters: { ...draft.commercialParameters, benefits: e.target.value },
+            })} placeholder="Ex. pages plus faciles à retrouver, présentation claire de l'activité" />
+          </label>
+          <label className="catalog-wide">
+            <span className="field-label-with-help">Mots-clés et synonymes métier <FieldHelp text="Termes réellement édités et stockés dans cette version. Sépare-les par une virgule ou une ligne. La recherche ne devine pas de synonymes absents." /></span>
+            <textarea value={draft.commercialParameters.keywords ?? ''} onChange={e => onChange({
+              ...draft, commercialParameters: { ...draft.commercialParameters, keywords: e.target.value },
+            })} placeholder={"visibilité Google\nSEO local\nréférencement naturel"} />
           </label>
           <label className="catalog-wide">
             <span className="field-label-with-help">Conseil interne AtoumWeb <FieldHelp text="Bonne pratique, point de vigilance ou conseil réservé à AtoumWeb. Jamais affiché automatiquement au client." /></span>
