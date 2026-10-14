@@ -140,6 +140,7 @@ describe('MaintenanceOverageService', () => {
       decision: 'commercial_gesture',
       reason: 'Changement tardif',
     })).toThrow(/Facture PDF déjà rattachée/);
+    expect(overages.review(periodId).candidates[0].decision).toBe('bill_out_of_scope');
     expect(billing.get(item.id)).toMatchObject({
       status: 'invoiced',
       invoiceDocumentId: 'abby-maintenance-invoice',
