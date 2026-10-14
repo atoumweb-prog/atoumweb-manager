@@ -57,9 +57,44 @@
 
 .statistics-period {
   display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
   gap: 7px;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   padding: 5px;
+}
+
+.statistics-period label,
+.statistics-custom-dates label {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.statistics-custom-dates {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.statistics-custom-dates input {
+  min-width: 125px;
+  max-width: 175px;
+}
+
+.statistics-period-warning {
+  margin: 0;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: var(--aw-font-functional, 14px);
 }
 
 .statistics-period > span {
