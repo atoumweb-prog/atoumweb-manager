@@ -3,6 +3,7 @@ import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTarge
 import { CatalogContractPanel } from './CatalogContractPanel';
 import { CatalogPublicationReview } from './CatalogPublicationReview';
 import { CatalogProductionPanel } from './CatalogProductionPanel';
+import { CatalogRecommendationsPanel } from './CatalogRecommendationsPanel';
 import {CATALOG_EDITOR_TABS,catalogTabHasVersionFields,type CatalogEditorTab} from './catalogEditorTabs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -853,7 +854,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
               )}
 
               {activeTab==='production' && <CatalogProductionPanel key={detail.id} item={detail} />}
-              {activeTab==='associations' && detail.type==='service' && <p className="muted">Les associations de services concernent les Offres. Les recommandations complémentaires seront administrées dans le lot 04D.</p>}
+              {activeTab==='associations' && <CatalogRecommendationsPanel key={detail.id} item={detail} items={items} locked={versionMode || saving} />}
               {activeTab==='history' && <div className="catalog-versions"><strong>Historique des versions</strong>{detail.versions.map((version) => <div className="catalog-version-row" key={version.id}><div><strong>v{version.versionNumber}</strong><span>{VERSION_STATUS_LABELS[version.status]}</span><small>{PRICE_LABELS[version.priceMode]} · {version.priceCents != null ? `${(version.priceCents / 100).toLocaleString('fr-FR')} €` : '—'} · {version.publishedAt ? `publiée le ${formatCatalogDate(version.publishedAt)}` : `créée le ${formatCatalogDate(version.createdAt)}`}</small>{version.status === 'draft' && version.provenance && <details className="catalog-import-draft"><summary>Consulter le brouillon importé</summary><p>Cette version n’est pas publiée. Sa consultation ne change pas la version commerciale en cours.</p><p>{version.nature}</p><p>{version.description}</p><Summary label="Code canonique" value={detail.canonicalCode || 'Non attribué'} /><Summary label="Unité / périodicité" value={[version.unit, version.periodicity].filter(Boolean).join(' / ')} /><ListSummary label="Inclus" values={version.inclusions ?? []} /><ListSummary label="Exclusions" values={version.exclusions ?? []} /><ListSummary label="Prérequis" values={version.prerequisites ?? []} /><CommercialParametersSummary parameters={version.commercialParameters} /><Summary label="Source" value={[version.provenance.reference, version.provenance.recordKey, version.provenance.sha256].filter(Boolean).join(' · ')} /></details>}</div>{version.status === 'draft' && <button className="primary-button compact-button" type="button" disabled={versionMode || saving} title={versionMode ? 'Enregistrer ou annuler le brouillon avant publication.' : 'Préparer une confirmation distincte, sans publier le site WordPress.'} onClick={() => setPublicationCandidate(structuredClone(version))}>Préparer la publication</button>}</div>)}</div>}
               </div>
             </aside>
