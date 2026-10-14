@@ -493,7 +493,7 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
               <div><strong>{selected.receiptFileName || 'Aucun justificatif rattaché'}</strong><small>{selected.receiptFileName ? (selected.receiptMissing ? 'Fichier introuvable · à relocaliser manuellement.' : 'Document conservé dans le workspace AtoumWeb.') : 'PDF ou image : facture fournisseur, reçu ou ticket.'}</small></div>
             </div>
             <div className="button-row">
-              <button className="primary-button" type="button" disabled={busy} onClick={() => void importReceipt()}>{selected.receiptFileName ? '▤ Remplacer le justificatif' : '▤ Importer un justificatif'}</button>
+              <button className="primary-button" type="button" disabled={busy} onClick={() => draft.request(() => { void importReceipt(); })}>{selected.receiptFileName ? '▤ Remplacer le justificatif' : '▤ Importer un justificatif'}</button>
               {selected.receiptFileName && !selected.receiptMissing && <button className="secondary-button" type="button" onClick={() => void openReceipt()}>↗ Ouvrir</button>}
             </div>
             {receiptVersions.length > 0 && (
@@ -524,7 +524,7 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
 
         <div className="expenses-detail-actions">
           <button className="primary-button" type="button" disabled={busy || !form.label.trim() || !form.amount.trim()} onClick={() => void saveExpense()}>{createOpen ? 'Créer la dépense' : 'Enregistrer'}</button>
-          {!createOpen && selected && selected.status !== 'paid' && selected.status !== 'cancelled' && <button className="secondary-button" type="button" disabled={busy} onClick={() => void markPaid()}>✓ Marquer payé</button>}
+          {!createOpen && selected && selected.status !== 'paid' && selected.status !== 'cancelled' && <button className="secondary-button" type="button" disabled={busy} onClick={() => draft.request(() => { void markPaid(); })}>✓ Déclarer payé</button>}
         </div>
 
         {!createOpen && selected && <div className="expenses-meta"><span>Créée : {dateLabel(selected.createdAt)}</span><span>Mise à jour : {dateLabel(selected.updatedAt)}</span>{selected.paidAt && <span>Payée (déclarée) : {dateLabel(selected.paidAt)}</span>}</div>}
