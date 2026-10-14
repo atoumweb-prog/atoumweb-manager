@@ -164,7 +164,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   const [versionMode, setVersionMode] = useState(false);
   const [versionDraft, setVersionDraft] = useState<CatalogDraft>(EMPTY_DRAFT);
   // Survives a lost IPC response so an explicit retry addresses the SAME row.
-  const pendingVersionCreation = useRef<{ itemId: string; requestId: string; fingerprint: string } | null>(null);
+  const pendingVersionCreations = useRef(new Map<string, { requestId: string; fingerprint: string }>());
   const [editingDraftVersion, setEditingDraftVersion] = useState<CatalogVersion | null>(null);
   const [versionFormError, setVersionFormError] = useState<string | null>(null);
   const [detailSplitPercent, setDetailSplitPercent] = useState(40);
@@ -400,27 +400,27 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     if (!detail || saving) return;
     const payload = buildVersion(versionDraft);
     const payloadFingerprint = JSON.stringify(payload);
-    const previousRequest = pendingVersionCreation.current;
+    const previousRequest = pendingVersionCreations.current.get(detail.id);
     if (!editingDraftVersion && previousRequest &&
-      (previousRequest.itemId !== detail.id || previousRequest.fingerprint !== payloadFingerprint)) {
+      previousRequest.fingerprint !== payloadFingerprint) {
       const message = 'Une création précédente a une réponse incertaine. Reprends la version envoyée sans modifier les champs, puis enregistre les changements dans le brouillon créé.';
       setVersionFormError(message);
       onMessage(message);
       return;
     }
     if (!editingDraftVersion && !previousRequest) {
-      pendingVersionCreation.current = {
-        itemId: detail.id, requestId: crypto.randomUUID(), fingerprint: payloadFingerprint,
-      };
+      pendingVersionCreations.current.set(detail.id, {
+        requestId: crypto.randomUUID(), fingerprint: payloadFingerprint,
+      });
     }
     setSaving(true);
     setVersionFormError(null);
     try {
       const version = editingDraftVersion
         ? await window.atoumweb.catalog.saveDraftVersion(editingDraftVersion.id, editingDraftVersion, payload)
-        : await window.atoumweb.catalog.createVersion(detail.id, payload, pendingVersionCreation.current!.requestId);
+        : await window.atoumweb.catalog.createVersion(detail.id, payload, pendingVersionCreations.current.get(detail.id)!.requestId);
       versionGuard.saved(versionDraft);
-      pendingVersionCreation.current = null;
+      pendingVersionCreations.current.delete(detail.id);
       setVersionMode(false);
       setEditingDraftVersion(null);
       setVersionFormError(null);
