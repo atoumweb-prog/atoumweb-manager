@@ -5,6 +5,8 @@ import { applyPendingMigrations } from '../database/migrations';
 import { TimeService } from '../time/TimeService';
 import { OperationsService } from './OperationsService';
 import { MaintenanceService } from './MaintenanceService';
+import { OperationsService } from './OperationsService';
+import { TimeService } from '../time/TimeService';
 
 let database: NodeSqliteAdapter;
 let crm: CrmService;
@@ -120,6 +122,85 @@ describe('MaintenanceService', () => {
       remainingInterventions: 0, remainingSeconds: 0,
       interventionsOverQuota: 1, secondsOverQuota: 900,
     });
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('aligne les nouvelles souscriptions manuelles sur le jour de début, sans doublons', () => {
+    const subscription = maintenance.createSubscription({
+      clientAccountId: clientId,
+      planId: maintenance.listPlans()[0].id,
+      startDate: '2026-10-15',
+    });
+    expect(subscription.periodAlignment).toBe('anniversary');
+    const first = maintenance.ensurePeriod(subscription.id, '2026-10-20');
+    const same = maintenance.ensurePeriod(subscription.id, '2026-11-14');
+    const next = maintenance.ensurePeriod(subscription.id, '2026-11-15');
+    expect(first.periodStart).toBe('2026-10-15');
+    expect(first.periodEnd).toBe('2026-11-14');
+    expect(same.id).toBe(first.id);
+    expect(next.periodStart).toBe('2026-11-15');
+    expect(next.periodEnd).toBe('2026-12-14');
+    expect(maintenance.listPeriods(subscription.id)).toHaveLength(2);
+  });
+
+  it('préserve les bornes anniversaire lors du passage de janvier à février', () => {
+    const subscription = maintenance.createSubscription({
+      clientAccountId: clientId,
+      planId: maintenance.listPlans()[0].id,
+      startDate: '2027-01-31',
+    });
+    const january = maintenance.ensurePeriod(subscription.id, '2027-01-31');
+    const february = maintenance.ensurePeriod(subscription.id, '2027-02-28');
+    const march = maintenance.ensurePeriod(subscription.id, '2027-03-31');
+    expect([january.periodStart, january.periodEnd]).toEqual(['2027-01-31', '2027-02-27']);
+    expect([february.periodStart, february.periodEnd]).toEqual(['2027-02-28', '2027-03-30']);
+    expect([march.periodStart, march.periodEnd]).toEqual(['2027-03-31', '2027-04-29']);
+  });
+
+  it('préserve le découpage calendaire des souscriptions historiques', () => {
+    const subscription = maintenance.createSubscription({
+      clientAccountId: clientId,
+      planId: maintenance.listPlans()[0].id,
+      startDate: '2026-10-15',
+    });
+    database.run("UPDATE maintenance_subscriptions SET period_alignment='calendar' WHERE id=?", [subscription.id]);
+    const existing = maintenance.getSubscription(subscription.id);
+    expect(existing.periodAlignment).toBe('calendar');
+    const period = maintenance.ensurePeriod(subscription.id, '2026-10-20');
+    expect(period.periodStart).toBe('2026-10-15');
+    expect(period.periodEnd).toBe('2026-10-31');
+  });
+
+  it('distingue temps de routine affiché et consommation du quota mineur', () => {
+    const plan = maintenance.createPlan({
+      name: 'Maintenance quota TEST',
+      periodicPriceCents: 4900,
+      includedInterventions: 2,
+      includedMinutes: 120,
+    });
+    const subscription = maintenance.createSubscription({
+      clientAccountId: clientId, planId: plan.id, startDate: '2026-10-15',
+    });
+    const period = maintenance.ensurePeriod(subscription.id, '2026-10-20');
+    const operations = new OperationsService(database);
+    const time = new TimeService(database);
+    const routine = operations.createIntervention({
+      clientAccountId: clientId, maintenancePeriodId: period.id,
+      coverageMode: 'maintenance', type: 'maintenance', subject: 'Routine TEST',
+    });
+    const minor = operations.createIntervention({
+      clientAccountId: clientId, maintenancePeriodId: period.id,
+      coverageMode: 'maintenance', type: 'support', subject: 'Intervention mineure TEST',
+    });
+    database.run("UPDATE interventions SET maintenance_usage_kind='routine' WHERE id=?", [routine.id]);
+    time.addManual({ interventionId: routine.id, category: 'support', startedAt: '2026-10-20T08:00:00Z', endedAt: '2026-10-20T08:30:00Z' });
+    time.addManual({ interventionId: minor.id, category: 'support', startedAt: '2026-10-20T09:00:00Z', endedAt: '2026-10-20T10:00:00Z' });
+    const usage = maintenance.getPeriod(period.id).usage;
+    expect(usage.interventionCount).toBe(1);
+    expect(usage.routineSeconds).toBe(1800);
+    expect(usage.usedSeconds).toBe(5400);
+    expect(usage.remainingSeconds).toBe(3600);
+    expect(usage.secondsOverQuota).toBe(0);
     expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
