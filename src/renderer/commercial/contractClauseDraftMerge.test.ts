@@ -24,6 +24,21 @@ describe('05D.4 — brouillons indépendants lors de la synchronisation',()=>{
     const updated=[{...previous[0],title:'Titre distant'}];
     expect(mergeContractClauseDrafts(previous,local,updated).a).toEqual({title:'Titre distant',body:'A local'});
   });
+  it('conserve les deux brouillons lors d’une réponse distante tardive',()=>{
+    const local={a:{title:'Clause A',body:'Édition récente A'},b:{title:'Clause B',body:'Édition récente B'}};
+    const response=[{...previous[0],body:'Ancienne réponse A'},{...previous[1],body:'Ancienne réponse B'}];
+    const merged=mergeContractClauseDrafts(previous,local,response);
+    expect(merged.a.body).toBe('Édition récente A');
+    expect(merged.b.body).toBe('Édition récente B');
+  });
+  it('une réponse à la sauvegarde ne doit pas effacer la saisie effectuée après envoi',()=>{
+    const submitted={title:'Clause A',body:'Version envoyée'};
+    const local={a:{title:'Clause A',body:'Correction après envoi'},b:{title:'Clause B',body:'B local'}};
+    const response=[{...previous[0],body:'Version envoyée'},previous[1]];
+    const merged=mergeContractClauseDrafts(previous,local,response,{id:'a',draft:submitted});
+    expect(merged.a.body).toBe('Correction après envoi');
+    expect(merged.b.body).toBe('B local');
+  });
   it('retire les clauses absentes du résultat canonique sans les recréer',()=>{
     expect(Object.keys(mergeContractClauseDrafts(previous,{a:{title:'X',body:'Y'}},[previous[1]]))).toEqual(['b']);
   });
