@@ -40,3 +40,27 @@ export function acquireCompletionLock(inFlight: Set<string>, interventionId: str
   inFlight.add(interventionId);
   return () => { inFlight.delete(interventionId); };
 }
+
+/** Human confirmation based only on the currently returned intervention, without guessed quotas or balances. */
+export function interventionCompletionReview(intervention: Intervention): string {
+  const consequence: Record<Intervention['coverageMode'], string> = {
+    maintenance: 'Maintenance : le service vérifiera la période, le quota et les éventuels dépassements.',
+    hour_pack: 'Pack d’heures : le service débitera le temps réellement terminé une seule fois, sous réserve de validation.',
+    out_of_scope: 'Hors forfait : un élément de facturation pourra être préparé ; aucune facture Abby ne sera émise automatiquement.',
+    commercial_gesture: 'Geste commercial : la prise en charge sera enregistrée selon les règles du service.',
+    included_project: 'Inclus au projet : aucune facturation supplémentaire ne doit être présumée.',
+    internal: 'Interne : la clôture sera enregistrée sans supposer une facture client.',
+  };
+  const time = Math.max(0, Math.floor(intervention.totalTimeSeconds));
+  const hours = Math.floor(time / 3600);
+  const minutes = Math.floor((time % 3600) / 60);
+  return [
+    'Confirmer la clôture de cette intervention ?',
+    `${intervention.number} — ${intervention.subject}`,
+    `Client : ${intervention.clientLabel}`,
+    `Temps actuellement enregistré : ${hours} h ${minutes} min`,
+    consequence[intervention.coverageMode],
+    'Les soldes, quotas et montants définitifs ne sont pas prévisualisés ici : le service les contrôle lors de la clôture.',
+    'Cette action peut modifier le pack, la maintenance et les éléments de facturation. Continuer ?',
+  ].join('\\n');
+}
