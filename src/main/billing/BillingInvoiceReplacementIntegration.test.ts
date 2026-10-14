@@ -71,6 +71,13 @@ describe('09B — remplacement de facture Abby sur vrai workspace temporaire', (
       writeFileSync(docs.absolutePath(bad.id), '%PDF-1.4\nModifiée après import');
       expect(() => billing.attachInvoice('item-09b', bad.id)).toThrow(/empreinte SHA-256 différente/);
       expect(billing.get('item-09b').invoiceDocumentId).toBe(revised.id);
+      const fakePdf = join(root, 'abby-not-a-pdf.pdf');
+      writeFileSync(fakePdf, 'This is not a PDF despite the filename.');
+      const invalid = docs.importPaths(clientId, [fakePdf], { category: 'invoice', title: 'Fausse facture' })
+        .find((doc) => doc.id !== original.id && doc.id !== revised.id && doc.id !== bad.id)!;
+      expect(() => billing.attachInvoice('item-09b', invalid.id)).toThrow(/signature PDF absente/);
+      expect(() => docs.verifiedPath(invalid.id)).toThrow(/signature PDF absente/);
+      expect(billing.get('item-09b').invoiceDocumentId).toBe(revised.id);
       expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
     } finally {
       db.close();
