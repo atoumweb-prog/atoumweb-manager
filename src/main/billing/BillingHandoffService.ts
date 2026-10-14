@@ -223,9 +223,18 @@ export class BillingHandoffService {
     if (status === 'invoiced') throw new Error('Importe la facture PDF pour passer cet élément à « Facturé ».');
     const current = this.get(id);
     if (current.invoiceDocumentId) throw new Error('Une facture PDF est déjà rattachée. Le statut Facturé est conservé.');
+    if (current.status === status) return current;
     const now = nowIso();
-    this.database.run('UPDATE billing_items SET status=?,updated_at=? WHERE id=?', [status, now, id]);
-    this.writeActivity('billing_item', id, 'billing_item_status_changed', `${current.description} · ${status}`);
+    this.database.exec('SAVEPOINT billing_status_change');
+    try {
+      this.database.run('UPDATE billing_items SET status=?,updated_at=? WHERE id=?', [status, now, id]);
+      this.writeActivity('billing_item', id, 'billing_item_status_changed', `${current.description} · ${status}`);
+      this.database.exec('RELEASE SAVEPOINT billing_status_change');
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT billing_status_change');
+      this.database.exec('RELEASE SAVEPOINT billing_status_change');
+      throw error;
+    }
     return this.get(id);
   }
 
