@@ -100,6 +100,27 @@ describe('ProjectReuseExportService', () => {
     expect(database.all('PRAGMA foreign_key_check')).toHaveLength(0);
   });
 
+  it('un échec BEGIN conserve la transaction du demandeur et ne laisse aucun fichier', () => {
+    const project = projects.createInternal({ name: 'Projet transaction déjà ouverte' });
+    const item = technical.create(
+      project.id,
+      { category: 'php', name: 'Export sous verrou' },
+      { contentType: 'code', language: 'php', contentText: '<?php echo "safe";' },
+    );
+    const row = database.get<{ resource_root_path: string | null }>(
+      'SELECT resource_root_path FROM projects WHERE id=?', [project.id],
+    );
+    const directory = join(row!.resource_root_path!, '05 Technique - Sources - Exports');
+    const filesBefore = existsSync(directory) ? readdirSync(directory) : [];
+
+    database.exec('BEGIN IMMEDIATE;');
+    expect(() => reuse.prepare(item.id)).toThrow(/transaction/i);
+    // A failed nested BEGIN must not roll back the caller's transaction.
+    database.exec('ROLLBACK;');
+    expect(readdirSync(directory)).toEqual(filesBefore);
+    expect(database.get<{ integrity_check: string }>('PRAGMA integrity_check')?.integrity_check).toBe('ok');
+  });
+
   it('deux exports rapides ne réécrivent pas le même fichier', () => {
     const project = projects.createInternal({ name: 'Projet export simultané' });
     const item = technical.create(
