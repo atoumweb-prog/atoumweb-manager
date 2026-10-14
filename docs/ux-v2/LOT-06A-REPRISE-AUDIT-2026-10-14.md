@@ -61,3 +61,8 @@ Commits : `f95fdcd` (fonction centrale), `6cea204` (utilisation dans assistant),
 - `quoteWizardPrice.test.ts` : tests du repli Catalogue, surcharge explicite, absence de prix, montants invalides.
 - **Attention : ces tests sont ajoutés mais non exécutés.** Aucun dépôt local complet ni exécution GitHub Actions déclenchée ici. Typecheck, Vitest, Electron, contrôle des scénarios réels et revue UX-01 restent nécessaires.
 - La présente branche demeure indépendante de `main` et des lots 03 à 05 ; aucune opération sur les données utilisateur.
+
+
+## Recontrôle CI — 14/10/2026
+
+La CI #912 du HEAD historique `46e13a5` est en échec, sans diagnostic exploitable par le connecteur GitHub (journal `BlobNotFound`). Une nouvelle exécution sur HEAD actuel est nécessaire ; ce complément documentaire la déclenche sans toucher au comportement de l'application. Ne pas déclarer 06A validé tant que cette nouvelle CI n'est pas verte. Préserver l'ensemble des modifications de `QuotesPage.tsx` lors de la convergence avec 06B (#112).
