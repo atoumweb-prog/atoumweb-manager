@@ -1,4 +1,4 @@
-import { existsSync, lstatSync, readdirSync, rmSync } from 'node:fs';
+import { chmodSync, existsSync, lstatSync, readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -30,6 +30,11 @@ export function cleanupExpiredReceiptPreviews(
       if (!stat.isDirectory() || stat.isSymbolicLink()) continue;
       if (!existsSync(join(path, '.atoumweb-receipt-preview'))) continue;
       if (now - stat.mtimeMs < RETENTION_MS) continue;
+      // Windows may refuse to delete files marked read-only for safe previewing.
+      // Only touch direct regular files within an owned, marked temp directory.
+      for (const entry of readdirSync(path, { withFileTypes: true })) {
+        if (entry.isFile()) chmodSync(join(path, entry.name), 0o600);
+      }
       rmSync(path, { recursive: true, force: true });
       removed++;
     } catch {
