@@ -53,9 +53,9 @@ if(!process.versions.electron){
       if(theme==='atoumweb')await click('Initialiser depuis le Catalogue');await wait('document.querySelectorAll(".contract-type-list button").length>=5');
       if(args.includes('--ux05b')){
         // Capture the real library at every supported display density in all three themes.
-        for(const density of ['comfort','compact','spacious']){
+        for(const density of ['compact','comfort','comfort_plus']){
           await go('Réglages');await wait('document.querySelectorAll(".density-card").length===3');
-          const label=await js(`[...document.querySelectorAll(".density-card")].find(b=>b.textContent.toLowerCase().includes(${JSON.stringify(density==='comfort'?'confort':density==='compact'?'compact':'spacieux')}))?.textContent`);
+          const label=await js(`[...document.querySelectorAll(".density-card")].find(b=>b.textContent.toLowerCase().includes(${JSON.stringify(density==='comfort'?'confort':density==='compact'?'compact':'confort +')}))?.textContent`);
           check(theme+' '+density+' density control available',!!label);
           await js(`[...document.querySelectorAll(".density-card")].find(b=>b.textContent===${JSON.stringify(label)}).click()`);
           await wait(`document.documentElement.dataset.density===${JSON.stringify(density)}`);
