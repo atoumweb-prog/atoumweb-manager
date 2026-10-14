@@ -36,7 +36,17 @@ if(!process.versions.electron){
    database.quotes.accept=()=>{calls++;return new Promise((_resolve,reject)=>{rejectPending=()=>reject(new Error('TEMP ACCEPTANCE REJECTION'));});};
    const rowSelector='.quote-decision-actions button.primary-button',detailSelector='.quote-status-actions button.primary-button';
    await wait('!!document.querySelector('+JSON.stringify(rowSelector)+')&&!![...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()==="Confirmer accepté dans Abby")');
-   await js('window.confirm=()=>true;const row=document.querySelector('+JSON.stringify(rowSelector)+');const detail=[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()==="Confirmer accepté dans Abby");row.click();detail.click();row.click()');
+   await js('window.confirm=()=>true');
+   // L'acceptation depuis la liste doit refuser de contourner la saisie contractuelle sale.
+   const originalAdministration=await value(admin),dirtyAdministration='UNSAVED BEFORE ABBY '+theme,previousDialogs=dialogs.length;
+   await input(admin,dirtyAdministration);
+   await js('document.querySelector('+JSON.stringify(rowSelector)+').click()');
+   await sleep(100);
+   check(theme+' list acceptance asks UX-01 before discarding dirty quote data',dialogs.length===previousDialogs+1&&dialogs.at(-1)?.title==='Modifications non enregistrées');
+   check(theme+' declining dirty-exit prompt sends no acceptance',calls===0);
+   check(theme+' declining acceptance preserves dirty administration draft',await value(admin)===dirtyAdministration);
+   await input(admin,originalAdministration??'');
+   await js('const row=document.querySelector('+JSON.stringify(rowSelector)+');const detail=[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()==="Confirmer accepté dans Abby");row.click();detail.click();row.click()');
    for(let i=0;i<100&&!rejectPending;i++)await sleep(20);
    check(theme+' first Abby approval reaches IPC once',typeof rejectPending==='function');
    check(theme+' list and detail simultaneous approval result in one IPC',calls===1);
