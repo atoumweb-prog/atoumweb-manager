@@ -20,6 +20,8 @@ export class ClientDocumentService {
     const quote=this.db.get<{quote_number:string}>('SELECT quote_number FROM quotes WHERE contract_document_id=? LIMIT 1',[id]);
     const linked=this.db.get('SELECT id FROM quote_document_links WHERE document_id=? LIMIT 1',[id]);
     if(quote||linked)throw Error(`Ce document constitue une preuve contractuelle rattachée au devis ${quote?.quote_number ?? 'référencé dans son historique'}. Sa suppression définitive est interdite ; l’archivage conserve le fichier et son rattachement.`);
+    const invoiceLink=this.db.get<{id:string}>('SELECT id FROM billing_items WHERE invoice_document_id=? LIMIT 1',[id]);
+    if(invoiceLink)throw Error('Cette facture PDF est rattachée à un élément de facturation. Sa suppression définitive est interdite ; utilise l’archivage.');
     const path=this.absolutePath(current);
     if(existsSync(path))unlinkSync(path);
     this.db.run('DELETE FROM client_documents WHERE id=?',[id]);
