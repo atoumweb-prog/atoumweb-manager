@@ -155,6 +155,7 @@ export interface ContractTermsApi {
     create(input: ContractClauseTemplateInput, firstVersion: ContractClauseVersionInput): Promise<ContractClauseTemplate>;
     createVersion(clauseId: string, input: ContractClauseVersionInput): Promise<ContractClauseVersion>;
     exportWordDraft(clauseId:string,versionId:string):Promise<WordDraftExportResult>;
+    exportWorkingPdf(clauseId:string,versionId:string):Promise<WordDraftExportResult>;
     importWordDraft(clauseId:string,versionId:string):Promise<WordDraftPreview|null>;
     approveWordDraft(sessionId:string):Promise<ContractClauseVersion>;
     cancelWordDraft(sessionId:string):Promise<void>;
