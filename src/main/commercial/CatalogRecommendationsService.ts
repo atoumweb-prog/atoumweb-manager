@@ -37,6 +37,12 @@ export class CatalogRecommendationsService {
         if (JSON.stringify(persisted) !== JSON.stringify(expectedTargetVersionIds))
           throw new Error('Conflit : les recommandations ont été modifiées dans une autre fenêtre. Recharge la fiche avant de sauvegarder.');
       }
+      // Replaying the same intent must not rotate association IDs or reorder history.
+      const existingLinks = this.list(sourceVersionId);
+      if (JSON.stringify(existingLinks.map(link => link.targetVersionId)) === JSON.stringify(targetVersionIds)) {
+        this.database.exec('COMMIT;');
+        return existingLinks;
+      }
       const seen=new Set<string>();
       for (const id of targetVersionIds) {
         const target=version(id);
