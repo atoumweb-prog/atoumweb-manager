@@ -112,7 +112,7 @@ export class ProjectCommercialService {
         'Projet prévisionnel remplacé ou archivé : synchronisation interdite.');
       const q = this.db.get<Row>('SELECT * FROM quotes WHERE id=?',[String(dossier!.current_quote_id)])!;
       required(['draft','sent','viewed'].includes(String(q.status)), 'Révision non synchronisable.');
-      this.synchronize(projectId,String(q.id),this.resolve(String(q.id),dossier.explicit_template_version_id as string | null,this.origins(String(q.id),String(dossier.id)),projectId));
+      this.synchronize(projectId,String(q.id),this.resolve(String(q.id),dossier!.explicit_template_version_id as string | null,this.origins(String(q.id),String(dossier!.id)),projectId));
     });
     return this.projects.getProject(projectId);
   }
