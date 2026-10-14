@@ -3,6 +3,7 @@ import { BillingHandoffService } from '../billing/BillingHandoffService';
 import { CrmService } from '../crm/CrmService';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
+import { TimeCorrectionService } from '../time/TimeCorrectionService';
 import { TimeService } from '../time/TimeService';
 import { HourPackService } from './HourPackService';
 import { InterventionCompletionService } from './InterventionCompletionService';
@@ -48,6 +49,210 @@ function packIntervention(withTime = true) {
 }
 
 describe('InterventionCompletionService', () => {
+  it('08B projette en lecture seule le débit pack exact, puis retrouve le solde effectif', () => {
+    const { intervention, pack } = packIntervention();
+    const before = snapshot();
+    const preview = packs.previewInterventionDebit(pack.id, intervention.id);
+    expect(preview).toMatchObject({
+      packId: pack.id, interventionId: intervention.id, packName: pack.name,
+      packStatus: 'active', balanceBeforeSeconds: 3600,
+      secondsToDebit: 1800, balanceAfterSeconds: 1800, alreadyDebited: false,
+    });
+    expect(snapshot()).toEqual(before);
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    expect(packs.get(pack.id).balanceSeconds).toBe(preview.balanceAfterSeconds);
+    const after = snapshot();
+    expect(packs.previewInterventionDebit(pack.id, intervention.id)).toMatchObject({
+      alreadyDebited: true, secondsToDebit: 0,
+      balanceBeforeSeconds: 1800, balanceAfterSeconds: 1800,
+    });
+    expect(snapshot()).toEqual(after);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('08B refuse une projection trompeuse sans temps terminé et ne modifie aucune table', () => {
+    const { intervention, pack } = packIntervention(false);
+    const before = snapshot();
+    expect(() => packs.previewInterventionDebit(pack.id, intervention.id)).toThrow(/Aucun temps terminé/i);
+    expect(snapshot()).toEqual(before);
+  });
+
+  it.each(['suspended', 'archived'] as const)(
+    '08F conserve l’intervention et les mouvements quand le pack est %s', (packStatus) => {
+      const { intervention, pack } = packIntervention();
+      packs.changeStatus(pack.id, packStatus);
+      const before = snapshot();
+      expect(() => packs.previewInterventionDebit(pack.id, intervention.id))
+        .toThrow(/ne peut pas être débité/i);
+      expect(() => completion.complete(intervention.id))
+        .toThrow(/ne peut pas être utilisé/i);
+      expect(snapshot()).toEqual(before);
+      expect(operations.getIntervention(intervention.id).status).toBe('in_progress');
+      expect(packs.get(pack.id).movements.filter(m => m.type === 'intervention_debit')).toHaveLength(0);
+      expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+    },
+  );
+
+  it('08E/08D/08F conserve les pauses du vrai chrono avant le débit unique de pack', () => {
+    const { intervention, pack } = packIntervention(false);
+    let clock = new Date('2026-09-14T08:00:00.000Z');
+    const timer = new TimeService(database, () => new Date(clock));
+    const session = timer.start({
+      interventionId: intervention.id, category: 'support',
+      activityLabel: 'Support suivi au chrono', billable: true,
+    });
+    expect(timer.active()?.id).toBe(session.id);
+    expect(() => timer.start({ interventionId: intervention.id, category: 'support' }))
+      .toThrow(/déjà active/i);
+
+    clock = new Date('2026-09-14T08:20:00.000Z');
+    expect(timer.pause(session.id, 'need_information', 'Attente client').paused).toBe(true);
+    clock = new Date('2026-09-14T08:35:00.000Z');
+    expect(timer.resume(session.id).paused).toBe(false);
+    clock = new Date('2026-09-14T08:55:00.000Z');
+    const stopped = timer.stop(session.id);
+    expect(stopped.durationSeconds).toBe(2400);
+    expect(stopped.pauses).toHaveLength(1);
+    expect(stopped.pauses[0].reason).toBe('need_information');
+    expect(timer.active()).toBeNull();
+    expect(operations.getIntervention(intervention.id).totalTimeSeconds).toBe(2400);
+
+    const preview = packs.previewInterventionDebit(pack.id, intervention.id);
+    expect(preview).toMatchObject({
+      secondsToDebit: 2400, balanceBeforeSeconds: 3600,
+      balanceAfterSeconds: 1200, alreadyDebited: false,
+    });
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    const after = snapshot();
+    expect(packs.get(pack.id).balanceSeconds).toBe(1200);
+    expect(packs.get(pack.id).movements.filter(m => m.type === 'intervention_debit'))
+      .toMatchObject([{ secondsDelta: -2400 }]);
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    expect(snapshot()).toEqual(after);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('08F/09 préserve la facture PDF rattachée après une clôture répétée', () => {
+    const intervention = operations.createIntervention({
+      clientAccountId: clientId, type: 'support',
+      coverageMode: 'out_of_scope', subject: 'Support déjà facturé',
+      theoreticalValueCents: 9900, billableAmountCents: 7900,
+    });
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    const prepared = billing.list({ sourceType: 'intervention' });
+    expect(prepared).toHaveLength(1);
+    expect(prepared[0]).toMatchObject({
+      sourceId: intervention.id, status: 'ready', expectedAmountCents: 7900,
+    });
+
+    const invoicedAt = '2026-09-23T12:00:00.000Z';
+    const docId = 'invoice-08f-09';
+    database.run(
+      `INSERT INTO client_documents
+       (id,client_account_id,category,title,original_name,relative_path,mime_type,size_bytes,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?)`,
+      [docId, clientId, 'invoice', 'Facture FA-08F-001', 'FA-08F-001.pdf',
+        'Clients/test/Documents/03 Factures/FA-08F-001.pdf', 'application/pdf', 1200, invoicedAt, invoicedAt],
+    );
+    const invoiced = billing.attachInvoice(prepared[0].id, docId, {
+      reference: 'FA-08F-001', invoicedAt,
+    });
+    expect(invoiced).toMatchObject({
+      status: 'invoiced', invoiceDocumentId: docId,
+      invoiceReference: 'FA-08F-001', expectedAmountCents: 7900,
+    });
+    const after = snapshot();
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    expect(snapshot()).toEqual(after);
+    expect(billing.list({ sourceType: 'intervention' })).toHaveLength(1);
+    expect(billing.get(prepared[0].id)).toMatchObject({
+      status: 'invoiced', invoiceDocumentId: docId,
+      invoiceReference: 'FA-08F-001',
+    });
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('08F refuse un pack expiré sans transition, débit ou handoff', () => {
+    const pack = packs.create({
+      clientAccountId: clientId, name: 'Pack expiré fixture',
+      purchasedSeconds: 3600, contractPriceCents: 10000,
+      purchasedAt: '2020-01-01T00:00:00.000Z',
+      expiresAt: '2020-01-02T00:00:00.000Z',
+    });
+    const intervention = operations.createIntervention({
+      clientAccountId: clientId, hourPackId: pack.id,
+      type: 'support', coverageMode: 'hour_pack',
+      subject: 'Expiration au moment de la clôture', status: 'in_progress',
+    });
+    time.addManual({
+      interventionId: intervention.id, category: 'support',
+      startedAt: '2026-09-14T08:00:00Z', endedAt: '2026-09-14T08:30:00Z',
+    });
+    expect(packs.get(pack.id).status).toBe('expired');
+    const before = snapshot();
+    expect(() => packs.previewInterventionDebit(pack.id, intervention.id)).toThrow(/ne peut pas être débité/i);
+    expect(() => completion.complete(intervention.id)).toThrow(/ne peut pas être utilisé/i);
+    expect(snapshot()).toEqual(before);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('08F relie Demande → Intervention → temps → clôture → facturation sans doublons', () => {
+    const request = operations.createRequest({
+      clientAccountId: clientId, source: 'email',
+      subject: 'Demande support 08F', description: 'Question client suivie',
+    });
+    const intervention = operations.transformRequest({
+      requestId: request.id, type: 'support', coverageMode: 'out_of_scope',
+      theoreticalValueCents: 9900, billableAmountCents: 7900,
+    });
+    const duplicateConversion = operations.transformRequest({
+      requestId: request.id, type: 'support', coverageMode: 'out_of_scope',
+      theoreticalValueCents: 9900, billableAmountCents: 7900,
+    });
+    expect(duplicateConversion.id).toBe(intervention.id);
+    expect(operations.getRequest(request.id).status).toBe('converted');
+    expect(database.all('SELECT id FROM interventions WHERE source_request_id=?', [request.id])).toHaveLength(1);
+
+    operations.changeInterventionStatus(intervention.id, 'in_progress');
+    time.addManual({
+      interventionId: intervention.id, category: 'support',
+      startedAt: '2026-09-14T08:00:00Z', endedAt: '2026-09-14T08:30:00Z',
+    });
+    expect(operations.getIntervention(intervention.id).totalTimeSeconds).toBe(1800);
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    const prepared = billing.list({ sourceType: 'intervention' });
+    expect(prepared).toHaveLength(1);
+    expect(prepared[0]).toMatchObject({
+      sourceId: intervention.id, status: 'ready', expectedAmountCents: 7900,
+    });
+    const after = snapshot();
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    expect(snapshot()).toEqual(after);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('08F refuse une période de maintenance clôturée sans mutation', () => {
+    const maintenance = new MaintenanceService(database);
+    const plan = maintenance.createPlan({
+      name: 'Période clôturée fixture', periodicPriceCents: 4900, includedInterventions: 1,
+    });
+    const subscription = maintenance.createSubscription({
+      clientAccountId: clientId, planId: plan.id, startDate: '2026-09-01',
+    });
+    const period = maintenance.ensurePeriod(subscription.id, '2026-09-14');
+    const intervention = operations.createIntervention({
+      clientAccountId: clientId, maintenancePeriodId: period.id,
+      type: 'maintenance', coverageMode: 'maintenance', subject: 'Période close',
+    });
+    database.run("UPDATE maintenance_periods SET status='closed' WHERE id=?", [period.id]);
+    const before = snapshot();
+    expect(() => completion.complete(intervention.id)).toThrow(/déjà clôturée/i);
+    expect(snapshot()).toEqual(before);
+    expect(operations.getIntervention(intervention.id).status).toBe('to_plan');
+    expect(billing.list().filter(item => item.sourceId === intervention.id)).toHaveLength(0);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
   it('conserve toutes les cellules et activités si aucun temps terminé ne peut être débité', () => {
     const { intervention } = packIntervention(false);
     const before = snapshot();
@@ -139,6 +344,88 @@ describe('InterventionCompletionService', () => {
     localCompletion.complete(intervention.id);
     expect(snapshot()).toEqual(after);
   });
+  it('documente E227 : une transition après clôture conserve le débit historique sans le doubler', () => {
+    const { intervention, pack } = packIntervention();
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    const firstDebit = packs.get(pack.id).movements.filter(m => m.type === 'intervention_debit');
+    expect(firstDebit).toHaveLength(1);
+    expect(packs.get(pack.id).balanceSeconds).toBe(1800);
+
+    // Observation de l'API actuelle, pas validation métier d'une réouverture.
+    const reopened = operations.changeInterventionStatus(intervention.id, 'in_progress');
+    expect(reopened.status).toBe('in_progress');
+    expect(packs.get(pack.id).balanceSeconds).toBe(1800);
+    expect(packs.get(pack.id).movements.filter(m => m.type === 'intervention_debit')).toHaveLength(1);
+
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    expect(packs.get(pack.id).balanceSeconds).toBe(1800);
+    expect(packs.get(pack.id).movements.filter(m => m.type === 'intervention_debit')).toHaveLength(1);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('E227 ne débite pas implicitement le temps ajouté après une réouverture de pack', () => {
+    const { intervention, pack } = packIntervention();
+    completion.complete(intervention.id);
+    operations.changeInterventionStatus(intervention.id, 'in_progress');
+    time.addManual({
+      interventionId: intervention.id,
+      category: 'support',
+      startedAt: '2026-09-14T09:00:00Z',
+      endedAt: '2026-09-14T09:15:00Z',
+    });
+    expect(operations.getIntervention(intervention.id).totalTimeSeconds).toBeGreaterThan(1800);
+    completion.complete(intervention.id);
+    const movements = packs.get(pack.id).movements.filter(m => m.type === 'intervention_debit');
+    expect(movements).toHaveLength(1);
+    expect(movements[0].secondsDelta).toBe(-1800);
+    expect(packs.get(pack.id).balanceSeconds).toBe(1800);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('R08A-13 garde le débit historique unique après correction explicite du temps terminé', () => {
+    const { pack, intervention } = packIntervention();
+    completion.complete(intervention.id);
+    const session = database.get<{ id: string }>('SELECT id FROM time_sessions WHERE intervention_id=?', [intervention.id]);
+    expect(session?.id).toBeTruthy();
+    const corrections = new TimeCorrectionService(database, time);
+    corrections.update(session!.id, {
+      interventionId: intervention.id,
+      category: 'support',
+      startedAt: '2026-09-14T08:00:00Z',
+      endedAt: '2026-09-14T09:00:00Z',
+    });
+    expect(operations.getIntervention(intervention.id).totalTimeSeconds).toBe(3600);
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    const movements = packs.get(pack.id).movements.filter(m => m.type === 'intervention_debit');
+    expect(movements).toHaveLength(1);
+    expect(movements[0].secondsDelta).toBe(-1800);
+    expect(packs.get(pack.id).balanceSeconds).toBe(1800);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('E227 conserve une unique préparation de facturation hors forfait après réouverture et nouvelle clôture', () => {
+    const intervention = operations.createIntervention({
+      clientAccountId: clientId,
+      type: 'correction',
+      coverageMode: 'out_of_scope',
+      subject: 'Réouverture hors forfait',
+      theoreticalValueCents: 9900,
+      billableAmountCents: 7900,
+    });
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    const before = billing.list({ sourceType: 'intervention' });
+    expect(before).toHaveLength(1);
+    expect(before[0].status).toBe('ready');
+    expect(before[0].expectedAmountCents).toBe(7900);
+
+    // Reproduit une transition permise aujourd'hui, sans en faire une règle métier approuvée.
+    expect(operations.changeInterventionStatus(intervention.id, 'in_progress').status).toBe('in_progress');
+    expect(billing.list({ sourceType: 'intervention' })).toEqual(before);
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    expect(billing.list({ sourceType: 'intervention' })).toEqual(before);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
   it('prépare une seule fois la facturation d’une intervention hors forfait', () => {
     const intervention = operations.createIntervention({
       clientAccountId: clientId,

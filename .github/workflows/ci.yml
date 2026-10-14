@@ -12,6 +12,7 @@ on:
       - feature/phase-4-operations
       - fix/recette-commerciale-coherence
       - feature/prospect-workflow-v2
+      - feature/ux-v2-lot08c-maintenance-refresh-guard-20261014
   pull_request:
     branches:
       - main
@@ -199,128 +200,27 @@ jobs:
       - name: Tests
         run: npm test -- --maxWorkers=2
 
-      - name: UX-01 — brouillons, confirmations et navigation (Windows TEMP)
-        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 108 }}
-        shell: pwsh
-        timeout-minutes: 8
-        run: |
-          node scripts/check-unsaved-inputs-ui.cjs --lot-b --lot-c --review
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      - name: UX-01 — restauration et fermeture Electron (Windows TEMP)
-        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 108 }}
-        shell: pwsh
-        timeout-minutes: 8
-        run: |
-          node scripts/check-restore-quit-roundtrip.cjs
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-
-      # Lot 04B: real Electron renderer + mocked IPC, isolated under Windows TEMP.
-      # This is deliberately scoped to the Catalogue pilot PR; no live workspace is opened.
-      - name: Electron Catalogue 04B — Windows TEMP
-        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 104 }}
-        shell: pwsh
-        timeout-minutes: 6
-        run: |
-          $captures = Join-Path $env:RUNNER_TEMP 'lot04b-electron-nine-modes'
-          if (Test-Path $captures) { throw "Refusing to overwrite existing capture directory" }
-          node scripts/check-catalog-identity-ui.cjs --captures $captures
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $images = @(Get-ChildItem -LiteralPath $captures -Filter '*.png' -File)
-          if ($images.Count -ne 9) { throw "Expected exactly 9 PNG, found $($images.Count)" }
-          foreach ($file in $images) {
-            $sha = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
-            Write-Output "LOT04B VERIFIED PNG $($file.Name) size=$($file.Length) sha256=$sha"
-          }
-          Write-Output "LOT04B RESULT 9/9 renderer frames captured in Windows TEMP; no database or live workspace touched"
-      - name: Electron UX-01 lot 06 — candidat integre PR 124
-        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 124 }}
-        shell: pwsh
-        timeout-minutes: 20
-        run: |
-          node scripts/check-unsaved-inputs-ui.cjs --lot-b --lot-c --review
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          node scripts/check-unsaved-inputs-ui.cjs --lot-pdf
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          node scripts/check-unsaved-inputs-ui.cjs --lot-create
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          node scripts/check-unsaved-inputs-ui.cjs --lot-prerequisites
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          node scripts/check-unsaved-inputs-ui.cjs --lot-refresh
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          node scripts/check-unsaved-inputs-ui.cjs --lot-versions
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          node scripts/check-unsaved-inputs-ui.cjs --lot-accept
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      - name: Lot 06 — recette Electron transversale Windows TEMP (PR 124)
-        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 124 }}
-        shell: pwsh
-        timeout-minutes: 40
-        run: |
-          node scripts/check-ux-v2-integration-validate.cjs --native-only
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      # PR98 standalone; the combined candidate runs this same recipe below.
-      # La fixture crée exclusivement ses propres fichiers et profil dans %TEMP%.
-      - name: Electron CRM 03B.6 — Windows TEMP
-        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 98 }}
+      # PR109: native Windows smoke recipe on isolated TEMP profile and SQLite.
+      # This is a real Electron shell run, not the full E226 unsaved-draft interaction recipe.
+      - name: Electron 08A — real shell and operations navigation (TEMP)
+        if: ${{ (github.event_name == 'pull_request' || github.event_name == 'push') && (github.event.pull_request.number == 109 || github.head_ref == 'integration/ux-v2-lot08-109-115-convergence-20261014' || github.ref_name == 'feature/ux-v2-lot08c-maintenance-refresh-guard-20261014') }}
         shell: pwsh
         timeout-minutes: 15
         run: |
-          $captures = Join-Path $env:RUNNER_TEMP 'lot03b6-native-captures'
-          $log = Join-Path $env:RUNNER_TEMP 'lot03b6-native.log'
-          node scripts/check-ux-v2-lot01a-real-ui.cjs --lot03b --captures $captures 2>&1 | Tee-Object -FilePath $log
-          $code = $LASTEXITCODE
-          if ($code -ne 0) { exit $code }
-
-      # Stockage des artefacts saturé sur ce dépôt : conserver les preuves
-      # textuelles et les empreintes dans les logs et le résumé GitHub.
-      # Les PNG ne sont pas uploadés et la recette locale reste nécessaire
-      # pour toute inspection visuelle humaine des captures.
-      - name: Summarize Electron 03B.6 evidence
-        if: ${{ success() && github.event_name == 'pull_request' && github.event.pull_request.number == 98 }}
-        shell: pwsh
-        run: |
-          $captureDir = Join-Path $env:RUNNER_TEMP 'lot03b6-native-captures'
-          $captures = @(Get-ChildItem -LiteralPath $captureDir -Filter '*.png' -File | Sort-Object Name)
-          if ($captures.Count -ne 9) { throw "Expected 9 PNG captures, found $($captures.Count)." }
-          $log = Join-Path $env:RUNNER_TEMP 'lot03b6-native.log'
-          $native = Get-Content -LiteralPath $log -Raw
-          if ($native -notmatch 'PASSED ([0-9]+) real native assertions' -or $native -notmatch 'Fixture cleaned: true') {
-            throw 'Native assertion summary or TEMP cleanup evidence missing.'
-          }
-          $checks = [regex]::Match($native, 'PASSED ([0-9]+) real native assertions').Groups[1].Value
-          $lines = @(
-            '## AtoumWeb 03B.6 — Real Windows/Electron recipe'
-            ''
-            '- True App + preload + IPC + SQLite TEMP'
-            "- $checks native assertions passed; temporary fixture cleaned"
-            '- 9 compositor-verified captures, 3 themes × 3 densities'
-            '- Images are not uploaded: the Actions artifact storage quota is full'
-            '- Manual visual inspection requires a local Windows run'
-            ''
-            '| Capture | SHA-256 |'
-            '| --- | --- |'
-          )
-          foreach ($capture in $captures) {
-            $sha = (Get-FileHash -LiteralPath $capture.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-            $lines += "| $($capture.Name) | $sha |"
-          }
-          $lines | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
-          $lines | Write-Output
-
-      - name: Electron combined 02C 02D 02E CRM and UX-01 — Windows TEMP
-        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'integration/ux-v2-02e-03c-v1' }}
-        shell: pwsh
-        run: |
-          node scripts/check-ux-v2-integration-validate.cjs --native-only
+          node scripts/check-ux-v2-lot01a-real-ui.cjs --lot08a
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/check-ux-v2-lot01a-real-ui.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Windows convergence native validation — current assembled SHA
-        if: ${{ startsWith(github.head_ref, 'codex/convergence-') || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' }}
+      # Lot 08 draft PR: native shell with real Electron/IPC and UX-01 regression.
+      # Temporary fixtures only; no user profile, no Validation-MSI.
+      - name: Electron Lot 08 — Shell and UX-01 Windows TEMP
+        if: ${{ (github.event_name == 'pull_request' || github.event_name == 'push') && (github.head_ref == 'feature/ux-v2-lot08a-audit-v1' || github.head_ref == 'integration/ux-v2-lot08-109-115-convergence-20261014' || github.ref_name == 'feature/ux-v2-lot08c-maintenance-refresh-guard-20261014') }}
         shell: pwsh
+        timeout-minutes: 20
         run: |
-          node scripts/check-convergence-native.cjs
+          $captures = Join-Path $env:RUNNER_TEMP 'lot08-shell-captures'
+          node scripts/check-ux-v2-lot01a-real-ui.cjs --captures $captures
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/check-unsaved-inputs-ui.cjs --lot-b --lot-c --review
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
