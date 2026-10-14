@@ -44,3 +44,9 @@ La validation humaine et les vérifications de merge `main` restent séparées ;
 - Création de dépense renforcée : l'insertion et son événement `expense_created` forment une seule transaction SAVEPOINT ; un échec de journal annule la création entière.
 - Les opérations de modification de dépense, transition déclarative de paiement et remplacement de justificatif ont aussi des tests de rollback forcé.
 - Rejouer TypeScript, Vitest, Electron 09C, Electron UX général et restauration Windows sur le nouveau HEAD avant clôture ; les PR restent en brouillon.
+
+## Clôture technique 09C — CI Windows #38600849268
+- **09C validé techniquement** sur `607eb0d` : TypeScript, **110 fichiers Vitest**, **67 assertions natives Electron Dépenses**, **373 assertions UX générales**, restauration/redémarrage/refus de sortie sous Windows en TEMP. Tous les jobs SUCCESS.
+- Couverture projet-client R09C-02/03/15 : tests Client A / Client B / Projet réel, refus au mauvais Client, transfert autorisé après dissociation du Projet.
+- Les protections UX-01, les versions de justificatifs SHA-256 et les changements de dépenses/payé déclarés restent actifs et validés. Pas de recette humaine anticipée, ni de fusion.
+- Pour 09C, restent seulement la revue humaine et la convergence/intégration `main` (incluant dépendance à 09A). Le développement des 09D/09E se poursuit séparément.
