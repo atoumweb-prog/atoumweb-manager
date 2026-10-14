@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -27,6 +27,7 @@ describe('cleanupExpiredReceiptPreviews', () => {
     mkdirSync(unmarked);
     writeFileSync(join(old, '.atoumweb-receipt-preview'), 'atoumweb-receipt-preview-v1');
     writeFileSync(join(old, 'preview.pdf'), 'old preview');
+    chmodSync(join(old, 'preview.pdf'), 0o444);
     const now = Date.now();
     const outdated = new Date(now - 40 * 24 * 60 * 60 * 1000);
     utimesSync(old, outdated, outdated);
