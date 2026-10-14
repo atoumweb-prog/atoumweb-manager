@@ -54,3 +54,9 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node scripts/check-guided-reuse-ui.cjs --output (Join-Path $env:RUNNER_TEMP 'check-guided-reuse-ui')
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Bridge exports and reusable packages regression 07E 07F
+        shell: pwsh
+        timeout-minutes: 10
+        run: |
+          npx vitest run src/main/bridge/BridgeSnapshotPackage.test.ts src/main/bridge/BridgeSnapshotService.test.ts src/main/projects/ProjectReuseExportService.test.ts src/main/referentials/AtoumWebCompositionPackageService.test.ts src/main/referentials/ReusePreparationService.test.ts --maxWorkers=2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
