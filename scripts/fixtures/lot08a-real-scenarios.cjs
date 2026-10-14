@@ -124,6 +124,44 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
       ipcMain.handle(channel,originalHandler);
     }
 
+    // E224 : les compteurs visibles sont lus depuis la vraie période SQLite
+    // et différencient routine / quota mineur sans modifier la règle historique.
+    const plan = db.maintenance.createPlan({
+      name: 'E224 Quota TEMP', periodicPriceCents: 4900,
+      includedInterventions: 1, includedMinutes: 60,
+    });
+    const subscription = db.maintenance.createSubscription({
+      clientAccountId: client.id, planId: plan.id, startDate: '2026-09-01',
+    });
+    const period = db.maintenance.ensurePeriod(subscription.id, '2026-09-14');
+    const minor = db.operations.createIntervention({
+      clientAccountId: client.id, type: 'maintenance', coverageMode: 'maintenance',
+      maintenancePeriodId: period.id, subject: 'E224 Dépannage TEMP',
+    });
+    const routine = db.operations.createIntervention({
+      clientAccountId: client.id, type: 'maintenance', coverageMode: 'maintenance',
+      maintenancePeriodId: period.id, subject: 'E224 Routine TEMP',
+    });
+    db.database.run("UPDATE interventions SET maintenance_usage_kind='routine' WHERE id=?", [routine.id]);
+    db.time.addManual({ interventionId: minor.id, category: 'support',
+      startedAt: '2026-09-14T08:00:00Z', endedAt: '2026-09-14T08:45:00Z' });
+    db.time.addManual({ interventionId: routine.id, category: 'support',
+      startedAt: '2026-09-14T09:00:00Z', endedAt: '2026-09-14T09:30:00Z' });
+    await js('document.querySelector(".operations-view-tabs button:nth-child(3)").click()');
+    await wait('!!document.querySelector(".maintenance-list-panel .operations-table tbody tr")',
+      'maintenance subscriptions visible');
+    await js('const row=[...document.querySelectorAll(".maintenance-list-panel .operations-table tbody tr")].find(e=>e.textContent.includes("E224 Quota TEMP"));if(!row)throw Error("E224 subscription missing");row.click()');
+    await wait('!!document.querySelector(".maintenance-usage-grid")','E224 period usage shown');
+    const values=await get('Object.fromEntries([...document.querySelectorAll(".maintenance-usage-grid > div")].map(e=>[e.querySelector("span")?.textContent.trim(),e.querySelector("strong")?.textContent.trim()]))');
+    test(values['Temps réalisé (routines comprises)']==='1,3 h','E224 UI displays full 75-min actual time');
+    test(values['Dont routines (hors quota mineur)']==='0,5 h','E224 UI distinguishes 30-min routine');
+    test(values['Temps imputé au quota mineur']==='0,8 h','E224 UI quota counts only 45-min minor');
+    test(values['Solde quota mineur']==='0,3 h','E224 UI displays remaining 15-min minor quota');
+    test(db.maintenance.getPeriod(period.id).usage.interventionCount===1,'E224 routine does not consume intervention quota');
+    test(db.maintenance.getPeriod(period.id).usage.secondsOverQuota===0,'E224 routine does not create overage');
+    test(db.database.all('PRAGMA foreign_key_check').length===0,'E224 native SQLite foreign keys');
+    console.log('[UXV2 08A E224] Native quota display: '+JSON.stringify(values));
+
     test(db.database.all('PRAGMA foreign_key_check').length===0,'E226 SQLite foreign keys');
     console.log('[UXV2 08A E226] Native A→B→A Stay/Quit PASS; confirmations='+confirmations.length);
   } finally {
