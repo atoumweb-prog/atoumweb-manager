@@ -195,4 +195,30 @@ describe('BillingHandoffService', () => {
     expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
+
+  it('ne crée pas de faux remplacement lorsqu’un même PDF Abby est rattaché deux fois', () => {
+    const now = '2026-10-14T12:00:00.000Z';
+    database.run(
+      `INSERT INTO billing_items
+       (id,client_account_id,source_type,source_id,source_key,description,expected_amount_cents,theoretical_value_cents,status,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+      ['billing-repeat', clientId, 'other', 'source-repeat', 'other:source-repeat', 'Facture répétée', 4000, 4000, 'ready', now, now],
+    );
+    database.run(
+      `INSERT INTO client_documents
+       (id,client_account_id,category,title,original_name,relative_path,mime_type,size_bytes,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?)`,
+      ['invoice-repeat', clientId, 'invoice', 'Facture', 'repeat.pdf',
+        'Clients/test/Documents/03 Factures/repeat.pdf', 'application/pdf', 100, now, now],
+    );
+    const first = billing.attachInvoice('billing-repeat', 'invoice-repeat', { reference: 'ABBY-REPEAT', invoicedAt: now });
+    const repeat = billing.attachInvoice('billing-repeat', 'invoice-repeat');
+    expect(repeat).toEqual(first);
+    const events = database.all<{ action: string }>(
+      "SELECT action FROM activity_log WHERE entity_type='billing_item' AND entity_id=? AND action LIKE 'billing_invoice_%'",
+      ['billing-repeat'],
+    );
+    expect(events.map((event) => event.action)).toEqual(['billing_invoice_attached']);
+  });
+
 });
