@@ -16,12 +16,12 @@ export function CommercialScope({version}:{version:CatalogVersionInput|Record<st
     event.currentTarget.querySelector('summary')?.focus();
   };
   return <div className="commercial-scope">
-    {c?.clientNeed&&<p><strong>Intérêt pour le client</strong>{' '}{c.clientNeed}</p>}
-    {(c?.work||v.description)&&<p><strong>Prestation prévue</strong>{' '}{c?.work||v.description}</p>}
+    {c?.clientNeed&&<p><strong>Intérêt pour le client</strong><br/>{c.clientNeed}</p>}
+    {(c?.work||v.description)&&<p><strong>Prestation prévue</strong><br/>{c?.work||v.description}</p>}
     {inclusions.length>0&&<div><strong>Ce qui est inclus</strong><ul>{inclusions.map((x,i)=><li key={i}>{x}</li>)}</ul></div>}
     {exclusions.length>0&&<div><strong>Ce qui n’est pas inclus</strong><ul>{exclusions.map((x,i)=><li key={i}>{x}</li>)}</ul></div>}
-    {c?.options&&<p><strong>Compléments possibles</strong>{' '}{c.options}</p>}
-    {c?.quoteRequiredWhen&&<p><strong>À chiffrer séparément si</strong>{' '}{c.quoteRequiredWhen}</p>}
+    {c?.options&&<p><strong>Compléments possibles</strong><br/>{c.options}</p>}
+    {c?.quoteRequiredWhen&&<p><strong>À chiffrer séparément si</strong><br/>{c.quoteRequiredWhen}</p>}
     {hasGuidance&&<details className="catalog-sales-guidance-details" onKeyDown={closeOnEscape}>
       <summary tabIndex={0} title="Aide commerciale versionnée, sans ajout au devis">? Aide à la vente</summary>
       {c?.salesPitch&&<p><strong>Argumentaire</strong>{' '}{c.salesPitch}</p>}
