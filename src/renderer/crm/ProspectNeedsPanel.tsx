@@ -106,7 +106,7 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
     void Promise.all(recommendationSourceIds.split('|').map(id=>
       window.atoumweb.catalog.listRecommendations(id),
     )).then(groups=>{
-      if(live)setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[...new Set(groups.flatMap(links=>links.map(link=>link.targetVersionId)))],status:'ready'});
+      if(live)setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[...new Set(groups.flatMap(links=>links.filter(link=>link.status!=='paused').map(link=>link.targetVersionId)))],status:'ready'});
     }).catch(()=>{if(live)setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[],status:'error'});});
     return()=>{live=false;};
   },[recommendationSourceIds]);
