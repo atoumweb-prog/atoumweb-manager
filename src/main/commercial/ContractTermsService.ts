@@ -521,7 +521,7 @@ export class ContractTermsService {
     return this.getQuoteBuild(quoteId);
   }
 
-  freezeQuote(quoteId: string): QuoteContractBuild {
+  freezeQuote(quoteId: string, explicitCanonicalReview=false): QuoteContractBuild {
     const state = this.quoteState(quoteId);
     // A timestamp/JSON (including an empty clause list) is evidence of freezing.
     // Locked legacy quotes must retain their historical absence, even with instances.
@@ -555,7 +555,7 @@ export class ContractTermsService {
       // No incomplete canonical document may be emitted or labelled reviewed.
       const hasApprovedClassification=entries.some(({clause,review})=>
         clause.enabled&&!clause.isOrphaned&&review.status==='approved');
-      const mode=decideCanonicalContractMode({explicitOptIn:false,hasApprovedClassification,assemblyReady:assembly.ready});
+      const mode=decideCanonicalContractMode({explicitOptIn:explicitCanonicalReview,hasApprovedClassification,assemblyReady:assembly.ready});
       if(mode==='requires_review')throw Error('Classement juridique incomplet : approbation humaine requise.');
       if(mode==='canonical'){
         usedCanonical=true;
