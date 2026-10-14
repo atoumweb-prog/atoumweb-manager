@@ -285,24 +285,40 @@ export class CatalogService {
     return this.getItem(id);
   }
 
-  createVersion(itemId: string, input: CatalogVersionInput): CatalogVersion {
-    const item = this.assertItem(itemId);
-    const previous = this.database.get<{ id: string; version_number: number }>(
-      'SELECT id, version_number FROM catalog_versions WHERE item_id=? ORDER BY version_number DESC LIMIT 1',
-      [itemId],
-    );
-    const nextVersion = Number(previous?.version_number ?? 0) + 1;
-    const previousVersion = previous ? this.getVersion(previous.id) : null;
-    const nextInput: CatalogVersionInput = { ...input };
-    for (const key of ['commercialKind', 'familyCode', 'abbyLabel', 'unit', 'periodicity', 'priceBasis', 'provenance', 'commercialParameters'] as const) {
-      if (input[key] === undefined && previousVersion) Object.assign(nextInput, { [key]: previousVersion[key] });
-    }
-    this.validateVersion(nextInput);
-    const now = nowIso();
-
+  createVersion(itemId: string, input: CatalogVersionInput, requestId?: string): CatalogVersion {
+    // The caller may supply a stable UUID per user gesture. If its response is
+    // lost, retrying the SAME request returns the original row, not vN+1.
+    if (requestId !== undefined && !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(requestId))
+      throw new Error('Identifiant de création de version invalide.');
+    this.validateVersion(input);
     this.database.exec('SAVEPOINT catalog_service;');
     try {
-      const version = this.insertVersion(itemId, nextVersion, nextInput, now);
+      if (requestId) {
+        const existing = this.database.get<{item_id:string}>('SELECT item_id FROM catalog_versions WHERE id=?',[requestId]);
+        if (existing) {
+          if (existing.item_id !== itemId)
+            throw new Error('Conflit : cet identifiant de requête appartient à une autre prestation.');
+          const saved = this.getVersion(requestId);
+          if (saved.status !== 'draft')
+            throw new Error('Requête déjà traitée : cette version n’est plus un brouillon. Recharge le Catalogue.');
+          this.database.exec('RELEASE SAVEPOINT catalog_service;');
+          return saved;
+        }
+      }
+      const item = this.assertItem(itemId);
+      const previous = this.database.get<{ id: string; version_number: number }>(
+        'SELECT id, version_number FROM catalog_versions WHERE item_id=? ORDER BY version_number DESC LIMIT 1',
+        [itemId],
+      );
+      const nextVersion = Number(previous?.version_number ?? 0) + 1;
+      const previousVersion = previous ? this.getVersion(previous.id) : null;
+      const nextInput: CatalogVersionInput = { ...input };
+      for (const key of ['commercialKind', 'familyCode', 'abbyLabel', 'unit', 'periodicity', 'priceBasis', 'provenance', 'commercialParameters'] as const) {
+        if (input[key] === undefined && previousVersion) Object.assign(nextInput, { [key]: previousVersion[key] });
+      }
+      this.validateVersion(nextInput);
+      const now = nowIso();
+      const version = this.insertVersion(itemId, nextVersion, nextInput, now, requestId);
       if(previous && this.database.get("SELECT name FROM sqlite_master WHERE type='table' AND name='catalog_contract_type_links'"))
         this.database.run('INSERT INTO catalog_contract_type_links(catalog_version_id,contract_type_id,created_at) SELECT ?,contract_type_id,? FROM catalog_contract_type_links WHERE catalog_version_id=?',[version.id,now,previous.id]);
       if(previous && this.database.get("SELECT name FROM sqlite_master WHERE type='table' AND name='catalog_commercial_rules'"))this.database.run(`INSERT INTO catalog_commercial_rules(catalog_version_id,rules_json,provenance_json,updated_at)
@@ -580,8 +596,8 @@ export class CatalogService {
     return this.listOfferComponents(offerVersionId);
   }
 
-  private insertVersion(itemId: string, versionNumber: number, input: CatalogVersionInput, createdAt: string): CatalogVersion {
-    const id = randomUUID();
+  private insertVersion(itemId: string, versionNumber: number, input: CatalogVersionInput, createdAt: string, explicitId?: string): CatalogVersion {
+    const id = explicitId ?? randomUUID();
     this.database.run(
       `INSERT INTO catalog_versions (
         id, item_id, version_number, status, nature, description, inclusions_json, exclusions_json,
