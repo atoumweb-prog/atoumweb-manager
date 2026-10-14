@@ -288,4 +288,20 @@ describe('QuoteService', () => {
     expect(copy.lines).toHaveLength(1);
     expect(copy.contractValueCents).toBe(50000);
   });
+  it('06D : refuser un devis envoyé ne convertit pas le prospect ni ne prépare un projet', () => {
+    const prospect = createProspect();
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Refus sans conversion' });
+    quotes.addCustomLine(quote.id, { label: 'Prestation refusée', proposedUnitPriceCents: 15000 });
+    finalizeForTest(database,quotes,quote.id);
+    quotes.markSent(quote.id);
+    const refused = quotes.refuse(quote.id);
+    expect(refused.status).toBe('refused');
+    expect(refused.acceptedClientAccountId).toBeFalsy();
+    expect(refused.projectReadyAt).toBeFalsy();
+    expect(crm.listClients()).toHaveLength(0);
+    expect(crm.listProspects().find(item => item.id === prospect.id)?.clientAccountId).toBeFalsy();
+    expect(() => quotes.addCustomLine(quote.id, { label: 'Modification interdite', proposedUnitPriceCents: 1000 }))
+      .toThrow(/figé|refusé|brouillon/i);
+  });
+
 });
