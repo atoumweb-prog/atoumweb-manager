@@ -38,6 +38,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Lot 04C: functional Electron editor checks, without visual-human signoff.
+      - name: Electron Catalogue 04C — brouillons et conflits Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 108 }}
+        shell: pwsh
+        timeout-minutes: 6
+        run: |
+          node scripts/check-catalog-identity-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Typecheck
         run: npm run typecheck
 
@@ -62,15 +71,6 @@ jobs:
             Write-Output "LOT04B VERIFIED PNG $($file.Name) size=$($file.Length) sha256=$sha"
           }
           Write-Output "LOT04B RESULT 9/9 renderer frames captured in Windows TEMP; no database or live workspace touched"
-
-      # Lot 04C: functional Electron editor checks, without visual-human signoff.
-      - name: Electron Catalogue 04C — brouillons et conflits Windows TEMP
-        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 108 }}
-        shell: pwsh
-        timeout-minutes: 6
-        run: |
-          node scripts/check-catalog-identity-ui.cjs
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       # PR98 standalone; the combined candidate runs this same recipe below.
       # La fixture crée exclusivement ses propres fichiers et profil dans %TEMP%.
