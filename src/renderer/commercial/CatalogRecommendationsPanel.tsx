@@ -66,7 +66,13 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
     {error&&<p className="form-error" role="alert">{error}</p>}
     {!loading&&<div>
       {targets.map(id=><div className="offer-component-row" key={id}>
-        <span>{items.find(candidate=>candidate.currentVersion?.id===id)?.name??savedLinks.find(link=>link.targetVersionId===id)?.targetVersionId??id}</span>
+        <span>{savedLinks.find(link=>link.targetVersionId===id)?.targetName
+          ??items.find(candidate=>candidate.currentVersion?.id===id)?.name??id}
+          {savedLinks.find(link=>link.targetVersionId===id)?.targetVersionNumber
+            ? ' · v'+savedLinks.find(link=>link.targetVersionId===id)!.targetVersionNumber : ''}
+          {savedLinks.find(link=>link.targetVersionId===id)?.targetItemStatus==='inactive'?' · Inactif':''}
+          {savedLinks.find(link=>link.targetVersionId===id)?.targetItemStatus==='archived'?' · Archivé':''}
+        </span>
         {editable&&<button type="button" className="secondary-button" disabled={saving} onClick={()=>setTargets(values=>values.filter(value=>value!==id))}>Retirer</button>}
       </div>)}
       {!targets.length&&<p className="muted">Aucune recommandation.</p>}
