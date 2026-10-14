@@ -26,9 +26,13 @@ module.exports = async ({ win, db, evalUI: js, get, wait, navigate, test, sleep 
   await nativeInput('#settings-quick-search', 'SÉCURITÉ');
   await wait('!!document.querySelector(".settings-grid button") && !document.querySelector(".theme-grid")', 'filtre de réglages sécurité');
   test(await get('document.querySelector(".settings-grid")?.textContent.includes("Sauvegarde de la base Manager")'), 'Lot 10D: recherche insensible aux accents retrouve sauvegarde SQLite');
+  await js("const e=[...document.querySelectorAll('.settings-grid nav button')].find(e=>e.textContent.includes('Sauvegarde'));if(!e)throw Error('Accès direct sécurité introuvable');e.click()");
+  test(await get('document.activeElement?.id==="settings-create-backup"'), 'Lot 10D: raccourci recherche sécurité transfère le focus sans activer backup');
   await nativeInput('#settings-quick-search', 'aide survol');
   await wait('!!document.querySelector(".settings-help-row") && !document.querySelector(".theme-grid")', 'filtre de réglages aide');
   test(await get('document.querySelector(".settings-help-row")?.textContent.includes("clic/clavier")'), 'Lot 10D: aide toujours accessible sans survol');
+  await js("const e=[...document.querySelectorAll('.settings-grid nav button')].find(e=>e.textContent.includes('Aide contextuelle'));if(!e)throw Error('Accès direct aide introuvable');e.click()");
+  test(await get('document.activeElement?.id==="settings-hover-help"'), 'Lot 10D: raccourci aide garde focus clavier et ne bascule pas la préférence');
   await nativeInput('#settings-quick-search', '');
   await wait('document.querySelectorAll(".theme-card").length===3 && document.querySelectorAll(".density-card").length===3', 'tous les réglages restaurés');
   test(await get('!!document.querySelector(".settings-grid .path-value")'), 'Lot 10D: la recherche n’efface pas le workspace courant');
