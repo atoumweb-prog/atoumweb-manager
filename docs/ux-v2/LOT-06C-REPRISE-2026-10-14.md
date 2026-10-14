@@ -22,3 +22,7 @@ Commit `9f74daf8260faef05bdc4a475330bf29c7b62324` : dans le panneau des options,
 - Coordonner 06A PR #110 et 06B PR #112 ; ne pas fusionner ce lot à `main` avant validation et arbitrage des dépendances.
 
 **État : un correctif applicatif publié, aucune recette 06C exécutée au moment de cette rédaction.**
+
+## Tests supplémentaires — 14/10/2026
+
+La CI #1034 a réussi sur le premier code 06C (`79b23cf`). Le test métier `06C : quantité, prix proposé et remise restent attachés à la version catalogue figée` a été ajouté dans `QuoteService.test.ts` au commit `37c4fc2`. Il vérifie quantité 1,5, Catalogue 100 €, proposition 120 €, remise 10 %, total 162 € et indépendance de l'ancienne ligne après publication d'une nouvelle version à 200 €. **CI #1047 lancée sur ce nouveau test ; résultat à vérifier.** Ce scénario n'atteste pas encore la recette Electron complète des options.
