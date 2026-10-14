@@ -130,3 +130,26 @@ Les quatre fichiers de tests ci-dessous ont été lus directement sur `main`, sa
 La couverture statique est **substantielle sur les services**, mais ne suffit pas à solder la recette 07A. Les lacunes prioritaires sont les chemins UI, protection dirty UX-01, Ressources inter-projets et import Workbench exécuté côté plugin. Ne pas confondre `describe('Lot 7B')` dans un test historique avec la livraison de la refonte UX/UI V2 07B.
 
 **Aucun Vitest, typecheck, Electron ni test PHP n'a été exécuté lors de cette passe.** `main` et les autres branches restent hors modification.
+
+
+## Sixième passe — audit statique des sorties d'éditeurs (14/10/2026)
+Sources de production réellement lues sur `main` :
+- `src/renderer/projects/ProjectsPage.tsx`, blob `75e6c8b3e108f2ff4231f82c0680f8aaf4db17da`, `openProject` lignes 267–282 : reset immédiat d'une partie de l'état et de la sélection avant chargement.
+- `src/renderer/projects/ProjectSitesTab.tsx`, blob `24d93c6764204c146194f54e0e8efdee51889b0e`, `selectSite` et `selectPage` lignes 259–273 : changement direct des identifiants et fermeture inspecteur.
+- `src/renderer/projects/ProjectPageCompositionPanel.tsx`, blob `c86f732218ef55b0e07ac976e5b94bcca8eb000f`, `inspect` et `toggleSettings` lignes 306–344 : annulation immédiate de `settingsDraft` lors de certains changements, sans appel visible à `requestUnsavedExit` dans ces fonctions.
+- `src/renderer/projects/ProjectCompositionItemSettings.tsx`, blob `dffec3d39ce4fdb9ef9459df7678c6036af0208e`, lignes 233–238 : calcul `dirty` à partir des parties de code et de la note ; remontée du draft vers le parent, sans preuve dans cette plage d'une inscription au registre.
+- `src/renderer/unsaved/unsaved.tsx`, blob `83c19fd73cf1f6402d3edb726ca295c65760225d`, ligne 10 : `requestUnsavedExit` existe ; lignes 11–39 : `useUnsavedDraft` assure le raccord au registre.
+
+### Écart probable UX-01 — priorité P0
+Un clic Réglages sur un autre composant peut effacer un brouillon avant confirmation si aucune garde supérieure ne s'interpose ; le changement de Site/Page peut démonter l'éditeur par changement de sélection. Le risque est **dérivé de chemins statiques concrets**, pas encore reproduit dans Electron. Ne pas déclarer un défaut avéré de bout en bout sans scénario natif.
+
+### Critères de correctif attendu
+1. Le formulaire d'édition local s'enregistre dans le registre UX-01 avec état dirty et pending réel, sans créer un deuxième système.
+2. Toute transition pouvant démonter/vider le draft (inspecter un autre composant, replier/fermer, autre Page, Site, Projet, navigation globale) passe par une seule garde avant mutation d'état.
+3. Annuler conserve sélection, HTML/CSS/JS, note, options et focus ; confirmer applique la transition exactement une fois.
+4. Une sauvegarde réussie actualise la baseline ; une sauvegarde en cours bloque la sortie au bon niveau.
+5. Les réponses asynchrones d'inspection ignorent les résultats obsolètes, sans remplacer un brouillon plus récent.
+6. Tests natifs : modifier du code, changer composant/Page/Projet, refuser puis accepter ; trois thèmes × trois densités ; aucun test sur Validation-MSI.
+
+### Exécution
+**Inspection de fichiers uniquement : aucun test exécuté et aucun code modifié.** La suite consiste à ajouter les régressions ciblées sur une branche de développement distincte de l'audit, exécuter typecheck/Vitest/Electron TEMP puis valider le correctif.
