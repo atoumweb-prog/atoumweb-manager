@@ -1,4 +1,4 @@
-# UX/UI V2 — suivi officiel de progression
+# UX/UI V2 — suivi officiel de progression||| Partiel — recette automatisée verte | Réévaluation depuis la cible #82 : [matrice d'acceptation vérifiée](LOT-05-ETAT-VERIFIE-2026-10-14.md). CI #1220 verte sur #121, mais critères restants explicitement ouverts. 
 
 Actualisation du 14/10/2026. Complète le référentiel PR82 sans supprimer ses relevés historiques du09/10.
 
