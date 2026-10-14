@@ -144,6 +144,7 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
 
   function closeQuoteDetail(): void {requestUnsavedExit(closeQuoteDetailDirect,quoteGroup);}
   function closeQuoteDetailDirect(): void {
+    detailRequest.current++;
     setDetail(null);
     setSelectedId(null);
     applyEditingLineId(null);
@@ -154,7 +155,15 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
   async function openQuote(id: string): Promise<void> {
     if(detail?.id===id)return;
     if(!requestUnsavedExit(()=>{},quoteGroup))return;
-    setSelectedId(id); applyEditingLineId(null); setPreviewOpen(false); setDetailExpanded(false); const sequence=++detailRequest.current;const next=await window.atoumweb.quotes.get(id);if(sequence===detailRequest.current)applyDetail(next);
+    const sequence=++detailRequest.current;
+    setSelectedId(id); applyEditingLineId(null); setPreviewOpen(false); setDetailExpanded(false);
+    try {
+      const next=await window.atoumweb.quotes.get(id);
+      if(sequence===detailRequest.current&&selectedRef.current===id)applyDetail(next);
+    } catch (error) {
+      if(sequence===detailRequest.current&&selectedRef.current===id){setSelectedId(null);applyDetail(null);}
+      throw error;
+    }
   }
 
   function validateStep(step: number): boolean {
