@@ -301,7 +301,28 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
 
   if(libraryOpen)return <ContractLibraryPage onClose={()=>draft.request(() => setLibraryOpen(false))} initialTypeId={initialContractTypeId==='all'?null:initialContractTypeId} onMessage={onMessage}/>;
   return <div className="documents-page-stack">
-    <button type="button" className="primary-button" onClick={()=>draft.request(() => setLibraryOpen(true))}>Bibliothèque contractuelle</button>
+    <div className="documents-entry-grid" aria-label="Accès aux espaces documentaires">
+      <button type="button" className="documents-entry" onClick={() => draft.request(() => setLibraryOpen(true))}>
+        <OperationIcon name="file-text" size={22} />
+        <strong>Bibliothèque contractuelle</strong>
+        <small>Types, clauses et versions canoniques existants</small>
+      </button>
+      <button type="button" className="documents-entry" onClick={() => draft.request(() => setLibraryOpen(true))}>
+        <OperationIcon name="edit" size={22} />
+        <strong>Éditeur contractuel</strong>
+        <small>Brouillons et modules dans la bibliothèque existante</small>
+      </button>
+      <button type="button" className="documents-entry" onClick={() => draft.request(() => document.querySelector('.documents-toolbar')?.scrollIntoView({ block: 'start', behavior: 'smooth' }))}>
+        <OperationIcon name="folder" size={22} />
+        <strong>Documents clients</strong>
+        <small>Fichiers réels et archives, classés par client</small>
+      </button>
+      <div className="documents-entry documents-entry-unavailable" role="note">
+        <OperationIcon name="archive" size={22} />
+        <strong>Autres documents</strong>
+        <small>Dépôt général hors Client non encore disponible : aucun stockage implicite</small>
+      </div>
+    </div>
     <div className="documents-kpi-grid">
       <DocumentKpi icon="folder" label="Documents actifs" value={activeItems.length} helper="Tous les fichiers clients" />
       <DocumentKpi icon="file-text" label="Contrats" value={contractCount} helper="Documents contractuels" />
@@ -419,6 +440,7 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
         </div> : <div className="documents-info-sections">
           <section><div><span>Conservation</span><strong>{selected.retentionUntil ? dateLabel(selected.retentionUntil) : 'Aucune échéance renseignée'}</strong></div>{selected.retentionCode && <p><b>Code :</b> {selected.retentionCode}</p>}{selected.retentionReason && <p><b>Motif :</b> {selected.retentionReason}</p>}</section>
           <section><div><span>Notes</span><strong>{selected.notes || 'Aucune note'}</strong></div></section>
+          <section><div><span>Empreinte SHA-256</span><strong>{selected.sha256 ? 'Empreinte enregistrée' : 'Absente — intégrité historique non certifiée'}</strong></div>{selected.sha256 && <p className="documents-sha256" title={selected.sha256}>{selected.sha256}</p>}{selected.importedFrom && <p><b>Provenance :</b> {selected.importedFrom}</p>}</section>
           <section><div><span>Classement local</span><strong>{selected.relativePath}</strong></div></section>
         </div>}
 
