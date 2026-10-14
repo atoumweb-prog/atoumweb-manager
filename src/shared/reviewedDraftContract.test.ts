@@ -44,6 +44,15 @@ describe('05C — numbered draft contract from approved clauses',()=>{
    const incomplete=assembleReviewedDraftContract([unreviewed],{});
    expect(()=>renderApprovedDraftContract(incomplete)).toThrow(/incomplet/);
  });
+ it('never certifies an empty or entirely excluded contract as complete',()=>{
+   expect(assembleReviewedDraftContract([],{audience:'professional'}).ready).toBe(false);
+   expect(()=>renderApprovedDraftContract(assembleReviewedDraftContract([],{audience:'professional'}))).toThrow(/incomplet/);
+   const excluded=entry('excluded','vx');
+   excluded.clause.enabled=false;
+   const result=assembleReviewedDraftContract([excluded],{audience:'professional'});
+   expect(result.ready).toBe(false);
+   expect(result.sections).toEqual([]);
+ });
  it('blocks duplicate versions and missing classifications',()=>{
    const result=assembleReviewedDraftContract([entry('a','v'),entry('b','v')],{});
    expect(result.ready).toBe(false);
