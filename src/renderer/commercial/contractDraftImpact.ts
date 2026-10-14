@@ -11,6 +11,8 @@ export function compareDraftContractClauses(
   if(new Set(saved.map(c=>c.id)).size!==saved.length||new Set(next.map(c=>c.id)).size!==next.length){
     throw new Error('Identifiants de clauses dupliqués dans la comparaison contractuelle.');
   }
+  const quoteIds=new Set([...saved,...next].map(c=>c.quoteId));
+  if(quoteIds.size>1)throw new Error('Comparaison entre devis différents interdite.');
   const oldById=new Map(saved.map(c=>[c.id,c]));
   const newById=new Map(next.map(c=>[c.id,c]));
   const impacts:DraftClauseImpact[]=[];
