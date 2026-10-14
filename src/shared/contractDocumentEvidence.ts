@@ -15,6 +15,6 @@ export function assessContractEvidence(document:ContractDocumentEvidence):Contra
   // A claimed acceptance without a verifiable identity, timestamp AND fingerprint is not proof.
   if(!document.fileId.trim()||!document.sha256||!/^[a-f\d]{64}$/i.test(document.sha256)
     ||!document.abbyReference?.trim()||!document.acceptedAt
-    ||!Number.isFinite(Date.parse(document.acceptedAt)))return 'acceptance_unverified';
+    ||!/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$/.test(document.acceptedAt)\n    ||!Number.isFinite(Date.parse(document.acceptedAt)))return 'acceptance_unverified';
   return 'evidence_metadata_complete';
 }
