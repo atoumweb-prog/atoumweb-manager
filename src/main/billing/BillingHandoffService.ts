@@ -245,18 +245,26 @@ export class BillingHandoffService {
     const reference = clean(input.reference);
     const invoicedAt = input.invoicedAt ? this.dateIso(input.invoicedAt, 'Date de facture invalide.') : nowIso();
     const now = nowIso();
-    this.database.run(
-      "UPDATE billing_items SET invoice_document_id=?,invoice_reference=?,invoiced_at=?,status='invoiced',updated_at=? WHERE id=?",
-      [documentId, reference, invoicedAt, now, id],
-    );
-    this.database.run(
-      'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
-      ['billing_item', id, current.invoiceDocumentId ? 'billing_invoice_replaced' : 'billing_invoice_attached',
-        `Facture PDF ${current.invoiceDocumentId ? 'remplacée' : 'rattachée'} : ${current.description}`,
-        JSON.stringify({ previousDocumentId: current.invoiceDocumentId, currentDocumentId: documentId,
-          previousReference: current.invoiceReference, currentReference: reference,
-          previousInvoicedAt: current.invoicedAt, currentInvoicedAt: invoicedAt }), nowIso()],
-    );
+    this.database.exec('SAVEPOINT billing_invoice_attach');
+    try {
+      this.database.run(
+        "UPDATE billing_items SET invoice_document_id=?,invoice_reference=?,invoiced_at=?,status='invoiced',updated_at=? WHERE id=?",
+        [documentId, reference, invoicedAt, now, id],
+      );
+      this.database.run(
+        'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
+        ['billing_item', id, current.invoiceDocumentId ? 'billing_invoice_replaced' : 'billing_invoice_attached',
+          `Facture PDF ${current.invoiceDocumentId ? 'remplacée' : 'rattachée'} : ${current.description}`,
+          JSON.stringify({ previousDocumentId: current.invoiceDocumentId, currentDocumentId: documentId,
+            previousReference: current.invoiceReference, currentReference: reference,
+            previousInvoicedAt: current.invoicedAt, currentInvoicedAt: invoicedAt }), now],
+      );
+      this.database.exec('RELEASE SAVEPOINT billing_invoice_attach');
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT billing_invoice_attach');
+      this.database.exec('RELEASE SAVEPOINT billing_invoice_attach');
+      throw error;
+    }
     return this.get(id);
   }
 
