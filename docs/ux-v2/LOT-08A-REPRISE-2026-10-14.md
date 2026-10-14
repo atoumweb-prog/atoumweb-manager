@@ -81,3 +81,10 @@
 - Test Vitest documentaire ajouté à `InterventionCompletionService.test.ts` : une clôture pack avec débit, transition `in_progress`, puis seconde clôture ; vérifie maintien du débit historique unique et du solde ainsi que FK. **Ne vaut pas autorisation métier d'un bouton Réouvrir.**
 - Décision à cadrer séparément : conditions de réouverture, éventuel mouvement compensatoire explicite, recalcul des temps et conséquences facturation. Aucune nouvelle commande, statut ni annulation automatique ajoutés.
 - Test publié sur branche isolée, **à valider dans sa propre CI**. Le code des lots 04/05 et `main` demeure hors périmètre.
+
+## Complément E227 — préparation de facturation hors forfait
+
+- Test de non-régression supplémentaire dans `InterventionCompletionService.test.ts` : intervention hors forfait, première clôture et préparation de facturation, transition technique vers `in_progress`, puis nouvelle clôture. Le test compare la liste des préparations et vérifie qu'une seule reste associée à la source, avec son montant et son statut.
+- Ce test **ne valide pas une politique de réouverture** et ne déclenche aucune facture Abby. Il sert uniquement à empêcher le double enregistrement d'un handoff existant.
+- Contrôles à poursuivre : scénario Electron A→B→A, annulation/confirmation des brouillons pendant routage externe et gestion du `pending`, puis convergence de la branche avec `main`.
+- CI #1119 du correctif E226 : réussite typecheck/Vitest ; étapes natives réservées à d'autres PR ignorées. CI #1127 : résultat à confirmer séparément. Le dernier test E227 exige sa propre CI verte.
