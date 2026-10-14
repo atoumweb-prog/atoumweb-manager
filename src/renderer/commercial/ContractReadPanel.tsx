@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ContractPresentation } from '../../shared/contractPresentation';
 import { contractCopy } from '../../shared/contractPresentation';
 import { reviewContractTextImport } from '../../shared/contractImportReview';
@@ -7,6 +7,8 @@ import './contract-library.css';
 export function ContractReadPanel({presentation,commercial='',unsaved=false,copy=true}:{presentation:ContractPresentation;commercial?:string;unsaved?:boolean;copy?:boolean}) {
   const [message,setMessage]=useState('');
   const [proposedText,setProposedText]=useState('');
+  // A pasted comparison must never leak into the next quote or historical snapshot.
+  useEffect(()=>setProposedText(''),[presentation.text,presentation.state,presentation.compiledAt]);
   const review=proposedText?reviewContractTextImport({originalText:presentation.text,importedText:proposedText,quoteState:presentation.state}):null;
   async function copyText(text:string,label:string) {
     try { await window.atoumweb.contractTerms.copyText(text);setMessage(`${label} copié.`); }
