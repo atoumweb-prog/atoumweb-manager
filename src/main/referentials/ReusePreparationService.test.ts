@@ -1,6 +1,6 @@
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations, MIGRATIONS } from '../database/migrations';
@@ -183,6 +183,35 @@ describe('ReusePreparationService', () => {
     expect(preparation.copiedFiles[0].missing).toBe(true);
     expect(preparation.copiedFiles[0].copied).toBe(false);
     expect(existsSync(preparation.manifestPath)).toBe(true);
+  });
+
+  it('R07G-20 : refuse une ressource client falsifiée vers un fichier extérieur sans la copier', () => {
+    const project = projects.createInternal({ name: 'Projet client sécurisé' });
+    const item = projectLibrary.create(project.id,
+      { category: 'php', name: 'Source client' },
+      { contentType: 'code', language: 'php', contentText: '<?php echo "stable";' });
+    const initialFile = join(workspaceRoot, 'source-legitime.txt');
+    writeFileSync(initialFile, 'Fichier interne', 'utf8');
+    const asset = resources.importFilePaths(project.id, [initialFile], 'technical')[0];
+    projectLibrary.linkResource(item.currentVersion!.id, asset.id);
+    const sourceBefore = projectLibrary.get(item.id);
+    const outside = mkdtempSync(join(tmpdir(), 'atoumweb-reuse-outside-'));
+    try {
+      const external = join(outside, 'privé-client.txt');
+      writeFileSync(external, 'NE JAMAIS EXPORTER', 'utf8');
+      database.run('UPDATE file_assets SET relative_path=? WHERE id=?', [
+        relative(workspaceRoot, external), asset.id,
+      ]);
+      const packagesDirectory = join(workspace.exportsDirectory, 'reutilisation');
+      expect(() => reuse.prepareProjectItem({ itemId: item.id })).toThrow(/hors de l’espace de travail/);
+      expect(existsSync(packagesDirectory) ? readdirSync(packagesDirectory) : []).toHaveLength(0);
+      expect(projectLibrary.get(item.id)).toEqual(sourceBefore);
+      expect(readFileSync(external, 'utf8')).toBe('NE JAMAIS EXPORTER');
+      expect(globalLibrary.list()).toHaveLength(0);
+      expect(database.all('PRAGMA foreign_key_check')).toHaveLength(0);
+    } finally {
+      rmSync(outside, { recursive: true, force: true });
+    }
   });
 
   it('retire un paquet incomplet si le journal de préparation échoue', () => {
