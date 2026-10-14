@@ -1,7 +1,7 @@
 
 import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CrmService } from '../crm/CrmService';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
@@ -128,6 +128,31 @@ describe('ExpenseService', () => {
     writeFileSync(original, 'fichier modifié après import');
     expect(() => expenses.verifiedReceiptVersionPath(item.id, first.receiptRelativePath!)).toThrow(/intégrité/);
     expect(expenses.listReceiptVersions(item.id).map((version) => version.integrity)).toEqual(['verified', 'modified']);
+  });
+
+
+  it('restaure le justificatif précédent et nettoie la copie si la journalisation échoue', () => {
+    const item = expenses.create({
+      clientAccountId: clientId, category: 'software', label: 'Pièce atomique',
+      amountCents: 2500, expenseDate: '2026-10-14T12:00:00.000Z',
+    });
+    const sourceA = join(root, 'version-validee.pdf');
+    const sourceB = join(root, 'version-rejetee.pdf');
+    writeFileSync(sourceA, '%PDF-1.4\\nJustificatif initial');
+    writeFileSync(sourceB, '%PDF-1.4\\nJustificatif rejeté');
+    expenses.importReceipt(item.id, sourceA);
+    const before = expenses.get(item.id);
+    const original = expenses.absoluteReceiptPath(item.id);
+    const bytes = readFileSync(original);
+    database.exec(`CREATE TRIGGER fail_receipt_provenance BEFORE INSERT ON activity_log
+      WHEN NEW.entity_id='${item.id}' AND NEW.action='expense_receipt_version'
+      BEGIN SELECT RAISE(ABORT, 'historique justificatif indisponible'); END;`);
+    expect(() => expenses.importReceipt(item.id, sourceB)).toThrow(/historique justificatif indisponible/);
+    expect(expenses.get(item.id)).toEqual(before);
+    expect(readFileSync(original)).toEqual(bytes);
+    expect(existsSync(join(dirname(original), 'version-rejetee.pdf'))).toBe(false);
+    expect(expenses.listReceiptVersions(item.id)).toHaveLength(1);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
 });
