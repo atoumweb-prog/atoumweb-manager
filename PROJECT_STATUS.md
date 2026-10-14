@@ -1,5 +1,11 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 14/10/2026 — Livraison documentaire finale du lot03
+
+- Code publié préparé6e7aa15 :typecheck/280 contrôles03A–E/81 capturesCRM frame-vérifié, intégrité/FK/migrations/nettoyagesOK. Suite complète1040 et1421 natifs historiques à79197709. Dernière miseàjour documentaire seule ; aucune validation humaine anticipée. #105 draft/CI855 verte ; prochainePR03E draft dépendante, uniqueCIcandidate automatique.
+- Suivi58 sous-lots01–10 actualisé ; travaux parallèles#103/#104/#106 signalés sans modification ni réaudit. GitHub a reconnu98–101 fusionnées par ascendance de102, mêmesHEAD, aucun merge supplémentaire dansmain, branches conservées.
+- Clôture technique du périmètre03A–E proposée avec réserve d’archivage d’identité non exposé ;03D/E restent horsmain. Aucun démarrageCatalogue ni migration.
+
 ## 14/10/2026 — Validation combinée03A–03E et préparation de publication
 
 - Code79197709 propre : typecheck,1040/1040 Vitest/109 fichiers,35 restaurations/6 binaires/sansRPC ;1421 natifs historiques +280 banc combiné (avec recouvrements),297 captures compositées. Manifeste `outputs/lot03-79197709-1791974377401/manifest.json`, toutes étapes exécutées, TEMP/intégrité/FK/migrations1–66/nettoyages OK.

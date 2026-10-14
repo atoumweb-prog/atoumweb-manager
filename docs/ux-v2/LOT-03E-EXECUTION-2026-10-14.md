@@ -47,3 +47,10 @@ Toutes les étapes du banc complet ont réussi :typecheck,1040 Vitest/109 fichie
 Le commit de publication apporte la mise à jour documentaire, le libellé conservateur « Projet existant » pour legacy et le recentrage des captures sur l’éditeur Annuaire. Nouveau passage ciblé280 et typecheck requis sur ce SHA ; résultats etCIcandidate exacts dans le corps dePR sans autrepush documentaire. Aucune règle de statut Projet modifiée.
 
 État : techniquement recevable pour revue/intégration du périmètre livré, **pas fusionné**, recette humaine différée et archivage d’identité hors fonction exposée. Aucune preuve de cette commande absente n’est revendiquée.
+
+
+## Confirmation finale locale
+
+À6e7aa15ec4a59f55d6b4c0c332b828116629a84f :typecheckOK et280/280 contrôles du banc03A–E,81 capturesClient/Annuaire auframe vérifié, zéro erreurconsole inattendue, SQLite/intégrité/FK/migrations1–66/nettoyageOK. Les capturesAnnuaire sont centrées sur les vrais champs de l’éditeur. Le dernier commit documentaire ne modifie plus aucun code/test ; laCIcandidate et son SHA exact seront consignés dans laPR. La suite complète1040 et les1421 contrôles historiques ont réellement été exécutés à79197709, pas inventés sur unautreSHA.
+
+Statut des autres chantiers :103/104/106 enparallèle, non modifiés. Leurs validations ne sont pas couvertes par ce rapport. Toute fusion de105/03E reste soumise à autorisation.
