@@ -78,3 +78,28 @@ Sources lues directement dans le référentiel PR82 : `LOT-07B-FICHE-PROJET-PROD
 
 ## Prochaine porte de travail
 Localiser les chemins exacts des services, composants et tests depuis l'arbre Git, vérifier les implémentations des contrats plutôt que déduire la conformité depuis les types, puis faire la recette sur fixture isolée. Ne pas démarrer 07B avec un faux vert de 07A.
+
+
+## Quatrième passe — chemins et code de production effectivement vérifiés (14/10/2026)
+Arbre GitHub `main` lu via l'API Git Trees recursive (762 entrées, `truncated=false`). Contrairement aux hypothèses de la passe précédente, les modules sont dans les chemins suivants :
+
+| Composant réel | Blob SHA lu sur main | Preuve statique limitée |
+| --- | --- | --- |
+| `src/shared/projects.ts` | `015ae1f20897bc690ed23750f5662381cde72277` | états commerciaux et contrat des opérations Projet |
+| `src/main/projects/ProjectCommercialService.ts` | `634351705b2bf957d273d57d67c8cde05e4d17fc` | garde `provisional` pour synchronisation (ligne 108), passage `frozen` lors d'acceptation (lignes 143–158) |
+| `src/renderer/projects/ProjectSitesTab.tsx` | `24d93c6764204c146194f54e0e8efdee51889b0e` | appel au chrono commun `window.atoumweb.time.start` (ligne 316) |
+| `src/renderer/projects/ProjectPageCompositionPanel.tsx` | `c86f732218ef55b0e07ac976e5b94bcca8eb000f` | `compositions.exportPagePackage(page.id)` (ligne 436), aperçus iframe `sandbox=""` (lignes 599 et 710) |
+| `src/main/referentials/AtoumWebCompositionPackageService.ts` | `1284514a656929618b1c0d375d4cb71a520059ca` | `exportPagePackage`, `awexp:${randomUUID()}` (lignes 56,72) |
+| `src/main/bridge/BridgeSnapshotService.ts` | `0eeb7974f994ad575729fac3a6b9604a5d32cec8` | service d'observation et score de correspondance des nœuds |
+
+Les tests proches sont présents dans l'arbre : `src/main/projects/ProjectCommercialService.test.ts`, `src/main/projects/ProjectBlueprintCompositionService.test.ts`, `src/main/referentials/AtoumWebCompositionPackageService.test.ts`, `src/main/bridge/BridgeSnapshotService.test.ts`. **Leur existence ne prouve pas leur succès.**
+
+### Points désormais établis / à ne pas surinterpréter
+- Les trois fichiers demandés aux mauvais chemins lors de la troisième passe existent bien sous `src/main/projects` ou `src/renderer/projects` ; supprimer la suspicion d'absence.
+- La présence d'une garde et de la mise à jour `frozen` ne démontre pas toute l'atomicité d'acceptation ni le comportement de toutes les révisions.
+- L'appel `time.start` ne démontre pas à lui seul l'unicité de session ; tester un changement de page avec un chrono déjà actif.
+- Les aperçus sandbox et la génération `awexp:` n'attestent ni import Bridge ni publication WordPress.
+- Les tests R07A-01 à R07A-14 sont toujours **non exécutés** dans cette branche. Aucune validation Electron Windows ou Vitest n'est revendiquée.
+
+### Prochain pas testable
+Lire les tests correspondants et le chemin des gardes UX-01, identifier les assertions déjà couvertes puis réaliser les tests R07A sur fixture TEMP. Ne pas démarrer des écritures métier dans cette branche d'audit.
