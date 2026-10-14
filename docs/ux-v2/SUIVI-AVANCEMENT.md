@@ -1,5 +1,10 @@
 # UX/UI V2 — suivi officiel de progression
 
+## Actualisation lot 09C — 14/10/2026
+
+- 09C **Validé techniquement** — PR #129 draft, CI #38600849268 SUCCESS sur `607eb0d`, sans merge ; 09A demeure dépendance. Voir `docs/ux-v2/LOT-09C-PLAN-EXECUTION-2026-10-14.md`.
+- Contraintes préservées : paiement déclaratif uniquement, fréquence sans occurrences générées, pièces antérieures vérifiées SHA-256 et non écrasées. Validation humaine et intégration dans main différées.
+
 
 ## Actualisation lot 09A — 14/10/2026
 
@@ -75,7 +80,7 @@ Le statut d'intégration n'est pas une validation humaine. Tous les sous-lots ci
 | 08F | [Lot 08F — Recette transversale et plan d'intégration Interventions / Maintenance / Packs / Temps](https://github.com/atoumweb-prog/atoumweb-manager/blob/0bb0860ee7618af92a53d8711b4a06edbbadc4d6/docs/ux-v2/LOT-08F-RECETTE-ET-INTEGRATION.md) | Cadré | Spécification préparée dans #82 ; aucune livraison complète de ce sous-lot V2 démontrée. |
 | 09A | [Lot 09A — Audit réel Facturation, Dépenses et Documents](https://github.com/atoumweb-prog/atoumweb-manager/blob/0bb0860ee7618af92a53d8711b4a06edbbadc4d6/docs/ux-v2/LOT-09A-AUDIT-FINANCES-DOCUMENTS.md) | Validé techniquement | Audit existant + protections document facture, justificatifs versionnés et prévisualisation TEMP ; PR #113 draft, CI #1042 verte (TypeScript, Vitest, Electron UI/SQLite, restauration). Validation humaine et intégration dans main différées ; historique Word non inclus. |
 | 09B | [Lot 09B — Facturation : suivi des sources, PDF Abby, rapprochement et états fiables](https://github.com/atoumweb-prog/atoumweb-manager/blob/0bb0860ee7618af92a53d8711b4a06edbbadc4d6/docs/ux-v2/LOT-09B-FACTURATION-ABBY.md) | Cadré | Spécification préparée dans #82 ; aucune livraison complète de ce sous-lot V2 démontrée. |
-| 09C | [Lot 09C — Dépenses, échéances et justificatifs](https://github.com/atoumweb-prog/atoumweb-manager/blob/0bb0860ee7618af92a53d8711b4a06edbbadc4d6/docs/ux-v2/LOT-09C-DEPENSES-ECHEANCES.md) | Cadré | Spécification préparée dans #82 ; aucune livraison complète de ce sous-lot V2 démontrée. |
+| 09C | [Lot 09C — Dépenses, échéances et justificatifs](https://github.com/atoumweb-prog/atoumweb-manager/blob/0bb0860ee7618af92a53d8711b4a06edbbadc4d6/docs/ux-v2/LOT-09C-DEPENSES-ECHEANCES.md) | Validé techniquement | PR #129 draft (base 09A) ; CI Windows #38600849268 verte sur `607eb0d` : TypeScript, 110 fichiers Vitest, 67 assertions natives Dépenses, 373 assertions UX globales, restauration. R09C-01 à 17, sauvegarde et historique des reçus, cohérence Client/Projet, protection UX-01. Recette humaine et intégration main seules différées. |
 | 09D | [Lot 09D — Documents, archives, preuves et navigation](https://github.com/atoumweb-prog/atoumweb-manager/blob/0bb0860ee7618af92a53d8711b4a06edbbadc4d6/docs/ux-v2/LOT-09D-DOCUMENTS-ARCHIVES-PREUVES.md) | Cadré | Spécification préparée dans #82 ; aucune livraison complète de ce sous-lot V2 démontrée. |
 | 09E | [Lot 09E — Textes éditables, aller-retour Word et exports PDF](https://github.com/atoumweb-prog/atoumweb-manager/blob/0bb0860ee7618af92a53d8711b4a06edbbadc4d6/docs/ux-v2/LOT-09E-WORD-PDF-ALLER-RETOUR.md) | Cadré | Spécification préparée dans #82 ; aucune livraison complète de ce sous-lot V2 démontrée. |
 | 09F | [Lot 09F — Recette transverse et livraison Facturation / Dépenses / Documents / Word](https://github.com/atoumweb-prog/atoumweb-manager/blob/0bb0860ee7618af92a53d8711b4a06edbbadc4d6/docs/ux-v2/LOT-09F-RECETTE-ET-INTEGRATION.md) | Cadré | Spécification préparée dans #82 ; aucune livraison complète de ce sous-lot V2 démontrée. |
