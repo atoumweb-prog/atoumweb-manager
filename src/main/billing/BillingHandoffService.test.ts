@@ -145,4 +145,28 @@ describe('BillingHandoffService', () => {
     expect(database.get<{ id: string }>('SELECT id FROM client_documents WHERE id=?', ['abby-original'])?.id).toBe('abby-original');
   });
 
+  it('refuse une facture dont la vérification physique échoue avant tout rattachement', () => {
+    const now = '2026-10-14T11:00:00.000Z';
+    database.run(
+      `INSERT INTO billing_items
+       (id,client_account_id,source_type,source_id,source_key,description,expected_amount_cents,theoretical_value_cents,status,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+      ['billing-unverified', clientId, 'other', 'source-unverified', 'other:source-unverified', 'Facture à vérifier', 5000, 5000, 'ready', now, now],
+    );
+    database.run(
+      `INSERT INTO client_documents
+       (id,client_account_id,category,title,original_name,relative_path,mime_type,size_bytes,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?)`,
+      ['invoice-unverified', clientId, 'invoice', 'Facture', 'invoice.pdf',
+        'Clients/test/Documents/03 Factures/invoice.pdf', 'application/pdf', 100, now, now],
+    );
+    const secured = new BillingHandoffService(database, () => { throw new Error('Document modifié : empreinte SHA-256 différente'); });
+    expect(() => secured.attachInvoice('billing-unverified', 'invoice-unverified')).toThrow(/empreinte SHA-256 différente/);
+    expect(billing.get('billing-unverified')).toMatchObject({ status: 'ready', invoiceDocumentId: null });
+    expect(database.get<{ count: number }>(
+      "SELECT COUNT(*) AS count FROM activity_log WHERE entity_id=? AND action='billing_invoice_attached'",
+      ['billing-unverified'],
+    )?.count).toBe(0);
+  });
+
 });
