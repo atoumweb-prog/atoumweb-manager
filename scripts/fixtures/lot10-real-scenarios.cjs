@@ -209,6 +209,9 @@ module.exports = async ({ win, db, evalUI: js, get, wait, navigate, test, sleep 
   );
   // Ne pas actualiser Statistiques : cet ajout est volontairement postérieur au snapshot utilisateur.
   await js("document.querySelector('.statistics-open-drilldown').click()");
+  await sleep(900);
+  const routeDebug = await get('({ page:document.querySelector(".page-heading h1")?.textContent ?? null, banner:document.querySelector(".statistics-route-banner")?.textContent?.slice(0,160) ?? null, notice:document.querySelector(".notice")?.textContent?.slice(0,160) ?? null, app:!!document.querySelector(".billing-page-stack"), prompt:!!document.querySelector("[role=dialog]") })');
+  if (!routeDebug.app || !routeDebug.banner) throw Error('R10B_ROUTE_DIAGNOSTIC '+JSON.stringify(routeDebug));
   await wait('document.querySelector(".statistics-route-banner")?.textContent.includes("Facturation suivie")', 'route Facturation à filtre exact');
   test(await get('document.querySelectorAll(".billing-list-panel tbody tr").length===2'), 'R10B-17 : seulement deux factures dans la route malgré la troisième nouvellement enregistrée');
   test(await get('!document.querySelector(".billing-list-panel")?.textContent.includes("LOT10 facture hors cohorte affichée")'), 'R10B-17 : aucun élargissement silencieux du filtre facturé');
