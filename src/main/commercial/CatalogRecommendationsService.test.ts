@@ -28,6 +28,18 @@ describe('04D — versioned recommendation persistence',()=>{
       .toMatchObject([{sourceVersionId:source.versions[0].id,targetVersionId:target.versions[0].id}]);
     expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
   });
+  it('replays an identical save without regenerating association IDs',()=>{
+    const source=create('Stable source');
+    const target=create('Stable target');
+    catalog.publishVersion(target.versions[0].id);
+    const versionId=source.versions[0].id;
+    const targetId=target.versions[0].id;
+    const original=recommendations.replace(versionId,[targetId],[]);
+    const retry=recommendations.replace(versionId,[targetId],[targetId]);
+    expect(retry).toEqual(original);
+    expect(recommendations.list(versionId)).toEqual(original);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
   it('rejects stale edits from another window and preserves committed links',()=>{
     const source=create('Source');
     const first=create('First');
