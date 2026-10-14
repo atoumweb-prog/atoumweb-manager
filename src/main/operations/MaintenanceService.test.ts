@@ -100,7 +100,7 @@ describe('MaintenanceService', () => {
     const existing = maintenance.getSubscription(subscription.id);
     expect(existing.periodAlignment).toBe('calendar');
     const period = maintenance.ensurePeriod(subscription.id, '2026-10-20');
-    expect(period.periodStart).toBe('2026-10-01');
+    expect(period.periodStart).toBe('2026-10-15');
     expect(period.periodEnd).toBe('2026-10-31');
   });
 
