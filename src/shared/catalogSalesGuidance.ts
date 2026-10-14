@@ -9,6 +9,8 @@ export interface CatalogSalesGuidance {
   clientNeed?: string | null;
   benefits?: string | null;
   objections?: string | null;
+  salesPitch?: string | null;
+  qualificationQuestions?: string | null;
   salesAdvice?: string | null;
 }
 export interface CatalogSalesGuidanceView {
@@ -16,6 +18,8 @@ export interface CatalogSalesGuidanceView {
   clientNeed: string | null;
   benefits: string | null;
   objections: string | null;
+  salesPitch: string | null;
+  qualificationQuestions: string | null;
   salesAdvice: string | null;
   configured: boolean;
 }
@@ -25,11 +29,13 @@ export function prepareCatalogSalesGuidance(input: CatalogSalesGuidance): Catalo
   const clientNeed = trim(input.clientNeed);
   const benefits = trim(input.benefits);
   const objections = trim(input.objections);
+  const salesPitch = trim(input.salesPitch);
+  const qualificationQuestions = trim(input.qualificationQuestions);
   const salesAdvice = trim(input.salesAdvice);
   return {
     versionId: input.versionId,
-    clientNeed, benefits, objections, salesAdvice,
-    configured: [clientNeed, benefits, objections, salesAdvice].some(Boolean),
+    clientNeed, benefits, objections, salesPitch, qualificationQuestions, salesAdvice,
+    configured: [clientNeed, benefits, objections, salesPitch, qualificationQuestions, salesAdvice].some(Boolean),
   };
 }
 
@@ -42,6 +48,8 @@ export function salesGuidanceFromCatalogVersion(
     clientNeed: version.commercialParameters?.clientNeed,
     benefits: version.commercialParameters?.benefits,
     objections: version.commercialParameters?.objections,
+    salesPitch: version.commercialParameters?.salesPitch,
+    qualificationQuestions: version.commercialParameters?.qualificationQuestions,
     salesAdvice: version.internalAdvice,
   });
 }
