@@ -25,3 +25,16 @@ export function newModuleDraftChanged(draft: NewModuleDraft): boolean {
   return draft.newCode.length>0 || draft.newTitle.length>0 || draft.newBody.length>0
     || draft.newScope!=='catalog' || draft.newAudience!=='all';
 }
+
+/** Recherche française sur les clauses canoniques (aucun changement du texte ni des liens). */
+export function matchingContractClauses<T extends {
+  title:string; code:string; scope:'base'|'catalog'; audience:string;
+}>(clauses:readonly T[],query:string):T[]{
+  const fold=(value:string)=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('fr-FR').trim();
+  const term=fold(query);
+  if(!term)return [...clauses];
+  return clauses.filter(clause=>fold([
+    clause.title,clause.code,clause.scope==='base'?'CGV communes':'Clauses spécifiques prestations',
+    clause.audience,clause.audience==='consumer'?'consommateur particulier':'professionnel tous publics'
+  ].join(' ')).includes(term));
+}

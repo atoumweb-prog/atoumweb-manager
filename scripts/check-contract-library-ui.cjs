@@ -92,6 +92,15 @@ if(!process.versions.electron){
           console.log('[05B UX-01 NATIVE] '+JSON.stringify({dialogs:dialogs.length,checks:checks.length,sqlite:'TEMP'}));
         }finally{dialog.showMessageBoxSync=originalDialog;}
       }
+      if(theme==='atoumweb'&&args.includes('--ux05b')){
+        check('05B.2 both library clause groups visible',await js('document.querySelectorAll(".contract-clause-navigation-group").length')===2);
+        await input('Rechercher une clause','UI-WEB');
+        check('05B.2 search by real clause code',await js('[...document.querySelectorAll(".contract-clause-navigation-entry")].length')===1);
+        await js('document.querySelector(".contract-clause-navigation-entry").click()');
+        await wait('!!document.querySelector(".contract-module-editor")');
+        check('05B.2 direct clause navigation preserves identity',await js('document.querySelector(".contract-module-editor h3")?.textContent')==='Module Vitrine fixture');
+        await input('Rechercher une clause','');
+      }
       const names=await js('[...document.querySelectorAll(".contract-type-list button strong")].map(e=>e.textContent)');check(theme+' types alphabetical',JSON.stringify(names)===JSON.stringify([...names].sort((a,b)=>a.localeCompare(b,'fr'))));
       const initialTypes=database.contractTypes.list();
       for(const t of initialTypes){

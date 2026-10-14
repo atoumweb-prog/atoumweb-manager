@@ -2,7 +2,7 @@ import { ContractReadPanel } from './ContractReadPanel';
 import type { ContractPresentation } from '../../shared/contractPresentation';
 import { useEffect, useId, useState } from 'react';
 import { requestUnsavedExit, useUnsavedDraft } from '../unsaved/unsaved';
-import { newModuleDraftChanged, typeDraftChanged } from './contractLibraryDrafts';
+import { matchingContractClauses, newModuleDraftChanged, typeDraftChanged } from './contractLibraryDrafts';
 import type { ContractType, ContractTypeVersionInput } from '../../shared/contractTypes';
 import type { ContractClauseTemplate, ContractClauseScope, ContractClauseAudience } from '../../shared/contractTerms';
 import type { CatalogItemSummary } from '../../shared/commercial';
@@ -14,7 +14,7 @@ const label=(t:ContractType)=>(t.currentVersion??t.versions[0])?.name??t.code;
 
 export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:()=>void;initialTypeId?:string|null;onMessage:(s:string)=>void}) {
   const [types,setTypes]=useState<ContractType[]>([]),[clauses,setClauses]=useState<ContractClauseTemplate[]>([]),[catalog,setCatalog]=useState<CatalogItemSummary[]>([]);
-  const [query,setQuery]=useState(''),[archived,setArchived]=useState(false),[id,setId]=useState(initialTypeId??''),[versionId,setVersionId]=useState('');
+  const [query,setQuery]=useState(''),[clauseQuery,setClauseQuery]=useState(''),[archived,setArchived]=useState(false),[id,setId]=useState(initialTypeId??''),[versionId,setVersionId]=useState('');
   const [input,setInput]=useState<ContractTypeVersionInput>(empty),[creating,setCreating]=useState(false),[code,setCode]=useState('');
   const [moduleId,setModuleId]=useState(''),[moduleVersionId,setModuleVersionId]=useState(''),[body,setBody]=useState('');
   const [showNewModule,setShowNewModule]=useState(false),[newCode,setNewCode]=useState(''),[newTitle,setNewTitle]=useState(''),[newBody,setNewBody]=useState('');
@@ -25,6 +25,7 @@ export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:(
   const type=types.find(t=>t.id===id),version=type?.versions.find(v=>v.id===versionId)??type?.currentVersion??type?.versions[0];
   const editable=creating||!!(version?.status==='draft'&&type?.status!=='archived');
   const module=clauses.find(c=>c.id===moduleId),moduleVersion=module?.versions.find(v=>v.id===moduleVersionId)??module?.currentVersion??module?.versions[0];
+  const shownClauses=matchingContractClauses(clauses,clauseQuery);
   // Le périmètre est propre à cette instance : aucun abandon d'un brouillon d'un autre écran.
   const unsavedScope='contract-library/'+useId();
   const typeGuard=useUnsavedDraft('Type de contrat',{code,input},{
@@ -83,10 +84,27 @@ export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:(
     </fieldset>}
     <div className="contract-toolbar"><input aria-label="Rechercher un type de contrat" placeholder="Rechercher un type de contrat…" value={query} onChange={e=>setQuery(e.target.value)}/><label><input type="checkbox" checked={archived} onChange={e=>setArchived(e.target.checked)}/> Inclure les types archivés</label></div>
     <div className="contract-library-grid">
+      <div className="contract-library-navigation">
       <aside className="contract-type-list" aria-label="Types de contrats par ordre alphabétique">
         {types.filter(t=>(archived||t.status!=='archived')&&[t.code,label(t)].join(' ').toLocaleLowerCase('fr').includes(query.toLocaleLowerCase('fr'))).map(t=><button type="button" key={t.id} className={id===t.id?'active':''} disabled={busy} onClick={()=>guardedNavigation(()=>{setId(t.id);setVersionId(t.currentVersionId??t.versions[0]?.id??'');setCreating(false);setModuleId('');})}><strong>{label(t)}</strong><span>{t.code} · {statusLabel(t.status)} · v{(t.currentVersion??t.versions[0])?.versionNumber} · {statusLabel((t.currentVersion??t.versions[0])?.status??'draft')}</span></button>)}
         {!types.length&&<p>Aucun type structuré. L’initialisation proposée utilise les familles du Catalogue, jamais le libellé legacy.</p>}
       </aside>
+      <section className="contract-clause-navigation" aria-label="Accès direct aux clauses contractuelles">
+        <h3>Clauses de la bibliothèque</h3>
+        <label>Rechercher une clause<input aria-label="Rechercher une clause" value={clauseQuery} onChange={e=>setClauseQuery(e.target.value)} placeholder="Titre, code ou public…" /></label>
+        {([
+          {scope:'base',title:'CGV communes'},
+          {scope:'catalog',title:'Clauses spécifiques aux prestations'}
+        ] as const).map(group=><div className="contract-clause-navigation-group" key={group.scope}>
+          <h4>{group.title} <span>({shownClauses.filter(c=>c.scope===group.scope).length})</span></h4>
+          {shownClauses.filter(c=>c.scope===group.scope).map(c=><button type="button" key={c.id} className="contract-clause-navigation-entry" data-contract-clause-id={c.id} aria-current={moduleId===c.id?'true':undefined} disabled={busy}
+            onClick={()=>guardedNavigation(()=>openModule(c.id))}>
+            <strong>{c.title}</strong><span>{c.code} · {statusLabel(c.status)} · {c.audience==='all'?'Tous publics':c.audience==='consumer'?'Consommateurs':'Professionnels'}</span>
+          </button>)}
+          {!shownClauses.some(c=>c.scope===group.scope)&&<p>Aucune clause correspondante.</p>}
+        </div>)}
+      </section>
+      </div>
       <div className="contract-type-detail">
         {(type||creating)&&<>
           <h3>{creating?'Nouveau type de contrat':label(type!)}</h3>
