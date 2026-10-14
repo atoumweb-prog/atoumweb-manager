@@ -1,4 +1,7 @@
-import {mergeDraft} from '../../shared/draftSection';
+import {mergeContractClauseDrafts} from './contractClauseDraftMerge';
+import {planDraftContractAssembly} from '../../shared/draftContractAssemblyPlan';
+import type {ContractSectionReview} from '../../shared/contractSectionPolicy';
+import {isCurrentContractRequest} from './contractRequestGuard';
 import {useUnsavedDraft} from '../unsaved/unsaved';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CatalogItemSummary, QuoteDetail } from '../../shared/commercial';
@@ -37,7 +40,15 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const presentationRequest=useRef(0);
+  const currentQuoteId=useRef(quote.id);
+  currentQuoteId.current=quote.id;
+  const loadRequest=useRef(0);
+  const libraryRequest=useRef(0);
+  const contractActionPending=useRef(false);
+  const loadedQuoteId=useRef(quote.id);
   const [presentation,setPresentation]=useState<ContractPresentation|null>(null);
+  const [sectionReviewStatus,setSectionReviewStatus]=useState<{loading:boolean;approved:number;pending:number;unresolved:number;error:string}|null>(null);
+  const sectionRequest=useRef(0);
   const [showLibrary, setShowLibrary] = useState(false);
   const [showCustom, setShowCustom] = useState(false);
   const [customTitle, setCustomTitle] = useState('');
@@ -51,13 +62,31 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   const [versionEditors, setVersionEditors] = useState<Record<string, string | undefined>>({});
 
   const editable = quote.status === 'draft' && !quote.finalizedAt && !quote.contractCompiledAt && quote.contractTextSnapshot == null && quote.contractSnapshotJson == null;
-  const unsaved=build?.clauses.some(c=>drafts[c.id]&&(drafts[c.id].title!==c.title||drafts[c.id].body!==c.body))??false;
+  const changedClauseIds=build?.clauses.filter(c=>drafts[c.id]&&(drafts[c.id].title!==c.title||drafts[c.id].body!==c.body)).map(c=>c.id)??[];
+  const unsaved=changedClauseIds.length>0;
 
   useUnsavedDraft('Clauses du contrat',drafts,{ready:!!build,dirty:unsaved,pending:busy,discard:()=>setDrafts(Object.fromEntries((build?.clauses??[]).map(c=>[c.id,{title:c.title,body:c.body}])))});
   const customGuard=useUnsavedDraft('Nouvelle clause',{customTitle,customBody},{pending:busy,discard:s=>{setCustomTitle(s.customTitle);setCustomBody(s.customBody);}});
   const templateGuard=useUnsavedDraft('Modèle ou version de clause',{templateCode,templateTitle,templateScope,templateAudience,templateBody},{pending:busy,discard:s=>{setTemplateCode(s.templateCode);setTemplateTitle(s.templateTitle);setTemplateScope(s.templateScope);setTemplateAudience(s.templateAudience);setTemplateBody(s.templateBody);}});
   const changedVersionEditors=Object.fromEntries(Object.entries(versionEditors).filter(([id,body])=>body!==undefined&&body!==templates.flatMap(t=>t.versions).find(v=>v.id===id)?.body));
   useUnsavedDraft('Version de clause',changedVersionEditors,{pending:busy,discard:()=>setVersionEditors(Object.fromEntries(Object.keys(versionEditors).map(id=>[id,templates.flatMap(t=>t.versions).find(v=>v.id===id)?.body])))});
+  const clauseOverview = useMemo(() => {
+    const clauses=build?.clauses??[];
+    return {
+      included:clauses.filter(c=>c.enabled&&!c.isOrphaned),
+      excluded:clauses.filter(c=>!c.enabled&&!c.isOrphaned),
+      orphaned:clauses.filter(c=>c.isOrphaned),
+    };
+  },[build]);
+
+  const clauseChanges=useMemo(()=> (build?.clauses??[]).flatMap(clause=>{
+    const draft=drafts[clause.id];
+    if(!draft)return [];
+    const titleChanged=draft.title!==clause.title;
+    const bodyChanged=draft.body!==clause.body;
+    return titleChanged||bodyChanged?[{id:clause.id,title:clause.title,titleChanged,bodyChanged}]:[];
+  }),[build,drafts]);
+
   const counts = useMemo(() => {
     const clauses = build?.clauses ?? [];
     return {
@@ -68,54 +97,115 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   }, [build]);
 
   function setBuildAndDrafts(next: QuoteContractBuild,saved?:{id:string;draft:ClauseDraft}): void {
+    if(currentQuoteId.current!==quote.id)return;
     setBuild(next);
     const request=++presentationRequest.current;
     setPresentation(null);
-    void window.atoumweb.contractTerms.quotes.presentation(quote.id).then(value=>{if(request===presentationRequest.current)setPresentation(value);}).catch(e=>{if(request===presentationRequest.current)setError(errorMessage(e));});
-    setDrafts(current=>Object.fromEntries(next.clauses.map((clause) => [
-      clause.id,
-      (()=>{const old=build?.clauses.find(c=>c.id===clause.id);const remote={title:clause.title,body:clause.body};const baseline=saved?.id===clause.id?saved.draft:old?{title:old.title,body:old.body}:remote;return mergeDraft(baseline,current[clause.id]??baseline,remote).value;})(),
-    ])));
+    void window.atoumweb.contractTerms.quotes.presentation(quote.id).then(value=>{if(isCurrentContractRequest(quote.id,currentQuoteId.current,request,presentationRequest.current))setPresentation(value);}).catch(e=>{if(request===presentationRequest.current&&currentQuoteId.current===quote.id)setError(errorMessage(e));});
+    setDrafts(current=>mergeContractClauseDrafts(build?.clauses??[],current,next.clauses,saved));
   }
 
   async function refreshLibrary(): Promise<void> {
+    const quoteId = quote.id;
+    const request = ++libraryRequest.current;
     const [nextTemplates, nextCatalog] = await Promise.all([
       window.atoumweb.contractTerms.library.list(),
       window.atoumweb.catalog.list({ status: 'active' }),
     ]);
+    if (!isCurrentContractRequest(quoteId, currentQuoteId.current, request, libraryRequest.current)) return;
     setTemplates(nextTemplates);
     setCatalog(nextCatalog);
   }
 
   async function load(): Promise<void> {
+    const quoteId=quote.id;
+    const request=++loadRequest.current;
+    const isCurrent=()=>isCurrentContractRequest(quoteId,currentQuoteId.current,request,loadRequest.current);
     setLoading(true);
     setError('');
     try {
       const next = editable
-        ? await window.atoumweb.contractTerms.quotes.sync(quote.id)
-        : await window.atoumweb.contractTerms.quotes.get(quote.id);
+        ? await window.atoumweb.contractTerms.quotes.sync(quoteId)
+        : await window.atoumweb.contractTerms.quotes.get(quoteId);
+      if(!isCurrent())return;
       setBuildAndDrafts(next);
-      await refreshLibrary();
+      const [nextTemplates,nextCatalog]=await Promise.all([
+        window.atoumweb.contractTerms.library.list(),
+        window.atoumweb.catalog.list({status:'active'}),
+      ]);
+      if(!isCurrent())return;
+      setTemplates(nextTemplates);
+      setCatalog(nextCatalog);
     } catch (cause) {
-      setError(errorMessage(cause));
+      if(isCurrent())setError(errorMessage(cause));
     } finally {
-      setLoading(false);
+      if(isCurrent())setLoading(false);
     }
   }
 
   useEffect(() => {
+    const request=++sectionRequest.current;
+    if(!editable||build?.snapshotState!=='draft'||build.quoteId!==quote.id){
+      setSectionReviewStatus(null);
+      return ()=>{sectionRequest.current++;};
+    }
+    const selected=build.clauses.filter(clause=>clause.enabled&&!clause.isOrphaned);
+    const versioned=selected.filter(clause=>!!clause.sourceClauseVersionId);
+    setSectionReviewStatus({loading:true,approved:0,pending:0,unresolved:0,error:''});
+    void Promise.all(versioned.map(async clause=>({
+      clause,review:await window.atoumweb.contractTerms.sectionReviews.get(clause.sourceClauseVersionId!),
+    }))).then(entries=>{
+      if(request!==sectionRequest.current||currentQuoteId.current!==quote.id)return;
+      const plan=planDraftContractAssembly(entries.map(({clause,review})=>({
+        id:clause.id,versionId:clause.sourceClauseVersionId!,section:review,
+      })),{audience:build.audience},[]);
+      setSectionReviewStatus({
+        loading:false,approved:plan.included.length,
+        pending:plan.unreviewed.length+selected.length-versioned.length,
+        unresolved:plan.unresolved.length,error:'',
+      });
+    }).catch(error=>{
+      if(request===sectionRequest.current&&currentQuoteId.current===quote.id)
+        setSectionReviewStatus({loading:false,approved:0,pending:0,unresolved:0,error:errorMessage(error)});
+    });
+    return ()=>{sectionRequest.current++;};
+  },[quote.id,editable,build]);
+
+  useEffect(() => {
+    // A previous quote's responses must not repaint the newly selected quote.
+    presentationRequest.current+=1;
+    libraryRequest.current+=1;
+    if(loadedQuoteId.current!==quote.id){
+      loadedQuoteId.current=quote.id;
+      setBuild(null);
+      setPresentation(null);
+      setBusy(false);
+      setDrafts({});
+      setTemplates([]);
+      setCatalog([]);
+      setVersionEditors({});
+    }
     void load();
+    return ()=>{loadRequest.current+=1;presentationRequest.current+=1;libraryRequest.current+=1;};
   }, [quote.id, quote.status, quote.finalizedAt, quote.contractCompiledAt, quote.updatedAt]);
 
   async function run(action: () => Promise<QuoteContractBuild>,saved?:{id:string;draft:ClauseDraft}): Promise<boolean> {
+    // Synchronous lock: a second click can arrive before React commits busy=true.
+    if(contractActionPending.current)return false;
+    contractActionPending.current=true;
+    const quoteId=quote.id;
     setBusy(true);
     setError('');
     try {
-      setBuildAndDrafts(await action(),saved);return true;
+      const result=await action();
+      if(currentQuoteId.current!==quoteId)return false;
+      setBuildAndDrafts(result,saved);return true;
     } catch (cause) {
-      setError(errorMessage(cause));return false;
+      if(currentQuoteId.current===quoteId)setError(errorMessage(cause));
+      return false;
     } finally {
-      setBusy(false);
+      contractActionPending.current=false;
+      if(currentQuoteId.current===quoteId)setBusy(false);
     }
   }
 
@@ -173,6 +263,8 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
       setError('Code, titre et texte sont requis pour créer une clause.');
       return;
     }
+    if(contractActionPending.current)return;
+    contractActionPending.current=true;
     setBusy(true);
     setError('');
     try {
@@ -190,6 +282,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
+      contractActionPending.current=false;
       setBusy(false);
     }
   }
@@ -200,6 +293,8 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
       setError('Le texte de la nouvelle version est vide.');
       return;
     }
+    if(contractActionPending.current)return;
+    contractActionPending.current=true;
     setBusy(true);
     setError('');
     try {
@@ -209,11 +304,14 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
+      contractActionPending.current=false;
       setBusy(false);
     }
   }
 
   async function publishDraft(versionId: string): Promise<void> {
+    if(contractActionPending.current)return;
+    contractActionPending.current=true;
     setBusy(true);
     setError('');
     try {
@@ -223,6 +321,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
+      contractActionPending.current=false;
       setBusy(false);
     }
   }
@@ -231,6 +330,8 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     const next = template.catalogItemIds.includes(itemId)
       ? template.catalogItemIds.filter((id) => id !== itemId)
       : [...template.catalogItemIds, itemId];
+    if(contractActionPending.current)return;
+    contractActionPending.current=true;
     setBusy(true);
     setError('');
     try {
@@ -240,11 +341,14 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
+      contractActionPending.current=false;
       setBusy(false);
     }
   }
 
   async function changeTemplateAudience(template: ContractClauseTemplate, audience: ContractClauseAudience): Promise<void> {
+    if(contractActionPending.current)return;
+    contractActionPending.current=true;
     setBusy(true);
     setError('');
     try {
@@ -254,11 +358,14 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
+      contractActionPending.current=false;
       setBusy(false);
     }
   }
 
   async function toggleTemplateStatus(template: ContractClauseTemplate): Promise<void> {
+    if(contractActionPending.current)return;
+    contractActionPending.current=true;
     setBusy(true);
     setError('');
     try {
@@ -271,6 +378,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
+      contractActionPending.current=false;
       setBusy(false);
     }
   }
@@ -302,11 +410,39 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
         {build?.snapshotState === 'historical_missing' && <span className="status-pill">Absence historique de snapshot</span>}
       </div>
 
+      {build?.snapshotState === 'draft' && sectionReviewStatus && <p role="status" className="muted">
+        Classement 05C (lecture seule) : {sectionReviewStatus.loading ? 'vérification des versions…' :
+          sectionReviewStatus.error ? 'classement indisponible — '+sectionReviewStatus.error :
+          sectionReviewStatus.approved+' version(s) approuvée(s), '+sectionReviewStatus.pending+' à examiner'+
+          (sectionReviewStatus.unresolved ? ', '+sectionReviewStatus.unresolved+' conditions non résolues' : '')}.
+        Cette indication ne modifie ni l’ordre actuel, ni le texte, ni la finalisation du devis.
+      </p>}
+      {build?.snapshotState === 'draft' && <p className="muted" role="status">Contrat en préparation : les clauses peuvent encore évoluer tant que le devis reste modifiable. La version contractuelle sera figée lors de la finalisation.</p>}
+      {build?.snapshotState === 'frozen' && <p className="muted" role="status">Contrat figé : le contenu conservé avec ce devis fait foi dans le Manager. Les changements ultérieurs de la bibliothèque ne modifient pas cette version{build.snapshotText === '' ? ', même lorsque son texte est vide' : ''}.</p>}
+      {build?.snapshotState === 'historical_missing' && <p className="cgv-warning" role="status">Devis historique sans snapshot contractuel conservé : aucune reconstitution automatique à partir des CGV actuelles. Vérifier les pièces contractuelles originales avant toute utilisation.</p>}
       {build?.warnings.map((warning) => <div className="cgv-warning" key={warning}>{warning}</div>)}
       {error && <p className="form-error" role="alert">{error}</p>}
 
+      {build?.snapshotState==='draft' && <details className="cgv-editing">
+        <summary>Sommaire et points de vigilance du brouillon ({clauseOverview.included.length} incluse(s))</summary>
+        <p className="muted">Vue informative basée sur les clauses actuellement enregistrées. Le classement canonique 05C reste en préparation ; aucun nouvel ordre n’est appliqué au contrat.</p>
+        <ol>
+          {clauseOverview.included.map(clause=><li key={clause.id}>{clause.title}{clause.isCustomized?' · adaptée pour ce devis':''}</li>)}
+        </ol>
+        {clauseOverview.excluded.length>0 && <p role="status" className="cgv-warning">{clauseOverview.excluded.length} clause(s) exclue(s) du devis — contrôler leur pertinence.</p>}
+        {clauseOverview.orphaned.length>0 && <p role="status" className="cgv-warning">{clauseOverview.orphaned.length} clause(s) orpheline(s) : prestation retirée — contrôler avant finalisation.</p>}
+        {unsaved && <div role="status" className="cgv-warning">
+          <strong>{clauseChanges.length} clause(s) modifiée(s) non enregistrée(s).</strong>
+          <p>Comparaison indicative avec la dernière version enregistrée (sans diffusion ni sauvegarde automatique).</p>
+          <ul>{clauseChanges.map(change=><li key={change.id}>
+            {change.title} : {change.titleChanged?'titre modifié':''}{change.titleChanged&&change.bodyChanged?' et ':''}{change.bodyChanged?'texte modifié':''}
+          </li>)}</ul>
+        </div>}
+      </details>}
       {presentation&&<ContractReadPanel presentation={presentation} commercial={commercialAbbyBlock(quote)} unsaved={unsaved}/>}
-      <details className="cgv-editing"><summary>Adapter les clauses de ce devis</summary>
+      <details className="cgv-editing"><summary>Adapter les clauses de ce devis ({build?.clauses.length ?? 0})</summary>
+      <p className="muted">Les clauses sont présentées dans l’ordre contractuel du devis. Socle : commun et non modifiable ici ; prestation : déclenchée par une prestation ; particulière : propre à ce devis. Les clauses exclues et orphelines restent visibles pour contrôle.</p>
+      {unsaved && <p role="status" className="cgv-warning">{changedClauseIds.length} clause(s) modifiée(s) non enregistrée(s) : enregistre chaque clause concernée avant la finalisation ou la sortie.</p>}
       <div className="cgv-clause-list">
         {build?.clauses.map((clause, index) => {
           const draft = drafts[clause.id] ?? { title: clause.title, body: clause.body };
@@ -318,6 +454,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
                   <span className={'cgv-source source-' + clause.sourceKind}>{sourceLabel(clause)}</span>
                   <strong>{clause.title}</strong>
                   {clause.isCustomized && <small>Modifiée pour ce devis</small>}
+                  {changedClauseIds.includes(clause.id) && <small>Modifications non enregistrées</small>}
                   {clause.isOrphaned && <small>Prestation retirée · clause désactivée automatiquement</small>}
                 </div>
                 <div className="cgv-clause-summary-actions">

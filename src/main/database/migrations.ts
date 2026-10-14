@@ -1,3 +1,4 @@
+import { CONTRACT_SECTION_REVIEW_MIGRATION } from './contractSectionReviewMigration';
 import { CONTRACT_TYPES_MIGRATION } from './contractTypesMigration';
 import { OPERATIONAL_SALES_ADDON_MIGRATION } from './operationalSalesAddonMigration';
 import { OPERATIONAL_SALES_MIGRATION } from './operationalSalesMigration';
@@ -247,6 +248,7 @@ export const MIGRATIONS: Migration[] = [
   OPERATIONAL_SALES_MIGRATION,
   OPERATIONAL_SALES_ADDON_MIGRATION,
   CONTRACT_TYPES_MIGRATION,
+  CONTRACT_SECTION_REVIEW_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {

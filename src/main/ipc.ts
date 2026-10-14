@@ -443,6 +443,9 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('contract-types:catalog', (_event, id: string) => database.contractTypes.catalog(id));
   ipcMain.handle('contract-types:set-catalog', (_event, id: string, ids: string[]) => database.contractTypes.setCatalog(id,ids));
   ipcMain.handle('contract-types:initialize', () => database.contractTypes.initialize());
+  ipcMain.handle('contract-terms:section:get', (_event, versionId:string) => database.contractSectionReviews.get(versionId));
+  ipcMain.handle('contract-terms:section:propose', (_event, versionId:string, sectionKey:import('../shared/contractSectionPolicy').ContractSectionKey, rankInSection:number, reason:string) => database.contractSectionReviews.propose(versionId,sectionKey,rankInSection,reason));
+  ipcMain.handle('contract-terms:section:approve', (_event, versionId:string, reviewer:string) => database.contractSectionReviews.approve(versionId,reviewer));
   ipcMain.handle('contract-terms:library:list', (_event, includeArchived?: boolean) => database.contractTerms.listTemplates(Boolean(includeArchived)));
   ipcMain.handle('contract-terms:library:get', (_event, id: string) => database.contractTerms.getTemplate(id));
   ipcMain.handle('contract-terms:library:create', (_event, input: ContractClauseTemplateInput, firstVersion: ContractClauseVersionInput) => database.contractTerms.createTemplate(input, firstVersion));

@@ -1,3 +1,4 @@
+import type {ContractSectionKey,ContractSectionReview} from './contractSectionPolicy';
 import type { ContractPresentation } from './contractPresentation';
 import type { ContractTypeReference } from './contractTypes';
 
@@ -149,6 +150,11 @@ export interface WordDraftPreview {
 export interface WordDraftExportResult { cancelled:boolean;fileName?:string; }
 
 export interface ContractTermsApi {
+  sectionReviews: {
+    get(versionId:string):Promise<ContractSectionReview>;
+    propose(versionId:string,sectionKey:ContractSectionKey,rankInSection:number,reason:string):Promise<ContractSectionReview>;
+    approve(versionId:string,reviewer:string):Promise<ContractSectionReview>;
+  };
   library: {
     list(includeArchived?: boolean): Promise<ContractClauseTemplate[]>;
     get(id: string): Promise<ContractClauseTemplate>;
