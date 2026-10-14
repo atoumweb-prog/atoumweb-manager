@@ -209,6 +209,8 @@ module.exports=async context=>{
   await click('.directory-verification button');await wait('document.querySelector(".directory-verification [role=alert]")','unsaved method refuses verification');
   test(db.crm.directoryVerification('organization',other.id).verifiedAt===null&&await get('document.querySelector(".contact-method-add input").value==="0612345678"'),'Unsaved coordinate never becomes a human verification event');
   answers.push(1);await click('.directory-detail-panel .close-detail');
+  await click(`[data-directory-id="${other.id}"]`);await input('.directory-toolbar input','NO MATCH LAST');await js('document.querySelector(".directory-detail-panel .close-detail").focus()');await click('.directory-detail-panel .close-detail');
+  await wait('document.activeElement.matches(".directory-toolbar .inline-search")','filtered Directory close focus');test(await get('document.activeElement.value')==='NO MATCH LAST','Closing Directory hidden by filter restores query focus without erasing it');
   test(await get('document.querySelectorAll(".global-timer").length===1')&&db.database.get('SELECT count(*) n FROM time_sessions').n===timerSessions,'Client and Directory preserve unique real timer without starting a session');
   console.log('DIRECTORY03E_EVIDENCE '+JSON.stringify({captures,dialogs:dialogs.length,convertedClientId:converted.id,organizationId:org.id,onlyTemp:true}));
 

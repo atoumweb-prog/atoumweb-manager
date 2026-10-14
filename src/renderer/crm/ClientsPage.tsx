@@ -401,7 +401,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
     setArchiveCandidateId(null);
   }
 
-  function closeClient():void{requestUnsavedExit(()=>{setRelationshipMenuOpen(false);setLargeView(false);setSelectedId(null);setActionEditor(null);setArchiveCandidateId(null);requestAnimationFrame(()=>{if(clientSelection.current)return;const button=selectedId?document.querySelector<HTMLElement>('[data-client-id="'+CSS.escape(selectedId)+'"] button'):null;if(button)button.focus();else if(opener.current?.isConnected)opener.current.focus();});});}
+  function closeClient():void{requestUnsavedExit(()=>{setRelationshipMenuOpen(false);setLargeView(false);setSelectedId(null);setActionEditor(null);setArchiveCandidateId(null);requestAnimationFrame(()=>{if(clientSelection.current)return;const button=selectedId?document.querySelector<HTMLElement>('[data-client-id="'+CSS.escape(selectedId)+'"] button'):null;if(button)button.focus();else if(opener.current?.isConnected)opener.current.focus();else document.querySelector<HTMLInputElement>('.client-toolbar .inline-search')?.focus();});});}
 
   function beginClientResize(splitter: HTMLElement): void {
     const workspace = splitter.parentElement;

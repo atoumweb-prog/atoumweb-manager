@@ -1,5 +1,9 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 14/10/2026 — Dernier cas de focus : ligne toujours masquée
+
+- Le correctif693f6af a passé typecheck/282 natifs avec81 frames/UX-01183. Complément final : si le filtre masque encore la ligne à la fermeture, retour à la recherche et conservation de sa valeur. Deux assertions clavier supplémentaires, sans mutation métier. Nouveau candidat à recetter puis une seule actualisation corrective107/CIautomatique, aucun rerun manuel.
+
 ## 14/10/2026 — PR107 et contrôle de focus complémentaire
 
 - #107 draft publiée à7c770efd, dépendante105 ;CI873 SUCCESS/typecheck/1040 Vitest. Une assertion clavier ajoutée après publication a néanmoins reproduit le retour de focus perdu sur la liste Annuaire reconstruite.

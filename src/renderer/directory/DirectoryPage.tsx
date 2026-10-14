@@ -210,7 +210,7 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
   const showDetail = Boolean(selectedOrganization || selectedContact || createMode);
 
   function closeDirectory():void {
-    requestUnsavedExit(()=>{refreshEpoch.current++;setLoading(false);setCreateMode(null);setSelectedType(null);setSelectedId('');setExpanded(false);setEditing(false);requestAnimationFrame(()=>{if(selectedIdentityRef.current)return;const row=selectedId?document.querySelector<HTMLElement>('[data-directory-id="'+CSS.escape(selectedId)+'"]'):null;if(row)row.focus();else if(directoryOpener.current?.isConnected)directoryOpener.current.focus();});});
+    requestUnsavedExit(()=>{refreshEpoch.current++;setLoading(false);setCreateMode(null);setSelectedType(null);setSelectedId('');setExpanded(false);setEditing(false);requestAnimationFrame(()=>{if(selectedIdentityRef.current)return;const row=selectedId?document.querySelector<HTMLElement>('[data-directory-id="'+CSS.escape(selectedId)+'"]'):null;if(row)row.focus();else if(directoryOpener.current?.isConnected)directoryOpener.current.focus();else document.querySelector<HTMLInputElement>('.directory-toolbar .inline-search')?.focus();});});
   }
   function toggleEdit():void {
     if(editing){editorGuard.request(()=>setEditing(false));return;}

@@ -78,6 +78,8 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
   test(db.crm.listActivity('client',client.id).some(e=>e.action==='relationship_note_changed'),'Relationship note change has dated history');
   await textClick('.clients-table tr',second.displayName);await wait(`document.querySelector('.client-summary-panel')?.dataset.searchEntityId===${JSON.stringify(second.id)}`,'second Client');
   test(await get('!document.querySelector("#client-panel-contacts .contact-inline-form")'),'Changing Client never reassigns former draft');
+  await input('.client-toolbar .inline-search','NO MATCH LAST');await js('document.querySelector(".client-summary-panel .close-detail").focus()');await click('.client-summary-panel .close-detail');
+  await wait('document.activeElement.matches(".client-toolbar .inline-search")','filtered Client close focus');test(await get('document.activeElement.value')==='NO MATCH LAST','Closing Client hidden by filter restores query focus without erasing it');await input('.client-toolbar .inline-search','');
   console.log('CLIENT03D_EVIDENCE '+JSON.stringify({captures,dialogs:dialogs.length,onlyTemp:true}));
  }finally{db.quotes.list=originalQuotes;dialog.showMessageBoxSync=originalDialog;}
 };
