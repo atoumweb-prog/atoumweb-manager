@@ -55,6 +55,7 @@ export function MaintenancePanel({ onEntityReady, initialRequest, clients, proje
   const [saving, setSaving] = useState(false);
   const creationPending = useRef(false);
   const periodsLoadGeneration = useRef(0);
+  const subscriptionsRefreshGeneration = useRef(0);
 
   const [clientId, setClientId] = useState('');
   const [projectId, setProjectId] = useState('');
@@ -93,18 +94,21 @@ export function MaintenancePanel({ onEntityReady, initialRequest, clients, proje
 
 
   async function refresh(): Promise<void> {
+    const generation = ++subscriptionsRefreshGeneration.current;
     try {
       const [nextPlans, nextSubscriptions] = await Promise.all([
         window.atoumweb.operations.maintenance.plans.list(),
         window.atoumweb.operations.maintenance.subscriptions.list(),
       ]);
+      // Ne pas appliquer une réponse plus ancienne que le dernier refresh.
+      if (generation !== subscriptionsRefreshGeneration.current) return;
       setPlans(nextPlans);
       setSubscriptions(nextSubscriptions);
-      if (selectedSubscriptionId && !nextSubscriptions.some((item) => item.id === selectedSubscriptionId)) {
-        setSelectedSubscriptionId('');
-        setSelectedPeriodId('');
-      }
+      // Évaluer la sélection au moment de la réponse, pas à l'appel.
+      setSelectedSubscriptionId((current) =>
+        current && !nextSubscriptions.some((item) => item.id === current) ? '' : current);
     } catch (error) {
+      if (generation !== subscriptionsRefreshGeneration.current) return;
       if(initialSubscriptionId)onEntityReady?.('maintenance',initialSubscriptionId,error instanceof Error?error.message:'Impossible de charger la maintenance.');
       onMessage(error instanceof Error ? error.message : 'Impossible de charger la maintenance.');
     }
