@@ -461,6 +461,32 @@ describe('QuoteService', () => {
     expect(crm.listProspects().find(item => item.id === prospect.id)?.clientAccountId).toBeFalsy();
   });
 
+  it('R06C-15 : une clause de ligne personnalisée devenue orpheline conserve le choix humain', () => {
+    const prospect = createProspect();
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Clause orpheline personnalisée' });
+    const first = quotes.addCustomLine(quote.id, { label: 'Service supprimé', proposedUnitPriceCents: 20000 });
+    const lineId = first.lines[0].id;
+    quotes.addCustomLine(quote.id, { label: 'Service conservé', proposedUnitPriceCents: 10000 });
+    database.run(
+      `INSERT INTO quote_contract_clauses
+       (id,quote_id,source_key,source_kind,source_clause_id,source_clause_version_id,source_catalog_item_ids_json,
+        title,body,sort_order,enabled,is_customized,is_orphaned,created_at,updated_at)
+       VALUES (?,?,?,'catalog',NULL,NULL,'[]',?,?,1800,1,1,0,datetime('now'),datetime('now'))`,
+      ['customized-orphan-clause',quote.id,`particular-line:${lineId}`,'Titre ajusté humainement','Contenu contractuel personnalisé'],
+    );
+    const changed = quotes.removeLine(lineId);
+    const preserved = database.get<{ enabled: number; is_customized: number; is_orphaned: number; title: string; body: string }>(
+      'SELECT enabled,is_customized,is_orphaned,title,body FROM quote_contract_clauses WHERE id=?',
+      ['customized-orphan-clause'],
+    );
+    expect(changed.lines).toHaveLength(1);
+    expect(changed.contractValueCents).toBe(10000);
+    expect(preserved).toEqual({
+      enabled: 1, is_customized: 1, is_orphaned: 1,
+      title: 'Titre ajusté humainement', body: 'Contenu contractuel personnalisé',
+    });
+  });
+
   it('R06C-15 : une clause liée à une ligne retirée devient orpheline et désactivée', () => {
     const prospect = createProspect();
     const quote = quotes.create({ prospectId: prospect.id, subject: 'Clause de prestation retirée' });
