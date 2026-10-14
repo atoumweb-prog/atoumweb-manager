@@ -26,7 +26,33 @@ if(!process.versions.electron){
  for(const theme of ['atoumweb','noir','blanc']){
  const quote=database.quotes.create({clientAccountId:client.id,subject:'TEST '+theme});database.quotes.addCustomLine(quote.id,{label:'Prestation fixture',proposedUnitPriceCents:10000});
  if(process.argv.includes('--lot-pdf'))database.database.run("UPDATE quotes SET status='accepted' WHERE id=?",[quote.id]); // Fixture TEMP d'interface uniquement, sans simuler l'acceptation métier.
+ if(process.argv.includes('--lot-accept')){const now=new Date().toISOString();database.database.run("UPDATE quotes SET status='sent', finalized_at=?,sent_at=? WHERE id=?",[now,now,quote.id]);} // Uniquement pour tester la protection UI, sans simuler la preuve Abby.
  win=new BrowserWindow({show:false,width:1600,height:1100,webPreferences:{preload:path.join(temp,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:false}});S.bindUnsavedWindow(win);await win.loadFile(path.join(temp,'index.html'));await wait('!!document.querySelector(".aw-navigation-rail")');await js('document.documentElement.dataset.theme='+JSON.stringify(theme)+';window.dispatchEvent(new CustomEvent("atoumweb:navigate",{detail:{entityType:"quote",entityId:'+JSON.stringify(quote.id)+',title:"TEST"}}));');await wait('!!document.querySelector(".quote-contract-preparation input")');
+ if(process.argv.includes('--lot-accept')){
+   const initialStatus=database.quotes.get(quote.id).status;
+   check(theme+' accept fixture starts from sent state',initialStatus==='sent');
+   const originalAccept=database.quotes.accept.bind(database.quotes);
+   let calls=0,rejectPending;
+   database.quotes.accept=()=>{calls++;return new Promise((_resolve,reject)=>{rejectPending=()=>reject(new Error('TEMP ACCEPTANCE REJECTION'));});};
+   const rowSelector='.quote-decision-actions button.primary-button',detailSelector='.quote-status-actions button.primary-button';
+   await wait('!!document.querySelector('+JSON.stringify(rowSelector)+')&&!![...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()==="Confirmer accepté dans Abby")');
+   await js('window.confirm=()=>true;const row=document.querySelector('+JSON.stringify(rowSelector)+');const detail=[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()==="Confirmer accepté dans Abby");row.click();detail.click();row.click()');
+   for(let i=0;i<100&&!rejectPending;i++)await sleep(20);
+   check(theme+' first Abby approval reaches IPC once',typeof rejectPending==='function');
+   check(theme+' list and detail simultaneous approval result in one IPC',calls===1);
+   check(theme+' list and detail approval controls disabled while pending',await js('return document.querySelector('+JSON.stringify(rowSelector)+')?.disabled===true&&[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()==="Confirmer accepté dans Abby")?.disabled===true'));
+   rejectPending();
+   await wait('document.querySelector('+JSON.stringify(rowSelector)+')?.disabled===false&&[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()==="Confirmer accepté dans Abby")?.disabled===false');
+   check(theme+' rejected Abby approval keeps status unchanged',database.quotes.get(quote.id).status==='sent');
+   database.quotes.accept=()=>{calls++;return Promise.reject(new Error('TEMP ACCEPTANCE RETRY FAILURE'));};
+   await js('[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()==="Confirmer accepté dans Abby").click()');
+   for(let i=0;i<100&&calls<2;i++)await sleep(20);
+   check(theme+' detail action can retry after rejected list action',calls===2);
+   await wait('document.querySelector('+JSON.stringify(rowSelector)+')?.disabled===false');
+   database.quotes.accept=originalAccept;
+   check(theme+' failed approval has not converted or accepted quote',database.quotes.get(quote.id).status==='sent');
+   win.destroy();win=null;continue;
+ }
  if(process.argv.includes('--lot-versions')){
    const originalDuplicate=database.quotes.duplicate.bind(database.quotes);
    let copyCalls=0,releaseCopy;
