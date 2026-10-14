@@ -118,11 +118,22 @@ export class CatalogCategoryService {
     });
   }
 
-  rename(id: string, name: string, expectedRevision: number): CatalogCategoryRecord {
+  rename(id: string, name: string, expectedRevision: number, expectedItemIds: string[]): CatalogCategoryRecord {
     const input=normalizeCatalogCategory(name);
     return this.transaction(()=>{
       const previous=this.category(id);
       this.assertRevision(previous,expectedRevision);
+      if (!Array.isArray(expectedItemIds) ||
+          expectedItemIds.some(itemId => typeof itemId!=='string'||!itemId.trim()) ||
+          new Set(expectedItemIds).size!==expectedItemIds.length)
+        throw new Error('Liste exacte des prestations requise pour renommer.');
+      // Comparing IDs inside the same BEGIN IMMEDIATE transaction prevents a
+      // category gaining or losing members after the human impact preview.
+      const links=this.db.all<ItemRow>(
+        'SELECT id,category,category_id FROM catalog_items WHERE category_id=? ORDER BY id',[id]);
+      const expected=[...expectedItemIds].sort();
+      if(links.length!==expected.length||links.some((item,index)=>item.id!==expected[index]))
+        throw new Error('Conflit : la liste des prestations concernées a changé. Actualise les catégories.');
       if (previous.name===input.label) return this.map(previous);
       const duplicate=this.db.get<{id:string}>('SELECT id FROM catalog_categories WHERE normalized_key=? AND id<>?',[input.normalizedKey,id]);
       if(duplicate) throw new Error('Une autre catégorie porte déjà ce nom.');
@@ -131,7 +142,6 @@ export class CatalogCategoryService {
         [input.label,input.normalizedKey,date,id]);
       // Keep old CatalogService filters, Prospect and Devis presentation compatible.
       // Snapshot objects/versions/quotes are not touched; old item values enter audit.
-      const links=this.db.all<ItemRow>('SELECT id,category,category_id FROM catalog_items WHERE category_id=?',[id]);
       for (const item of links) {
         this.db.run('UPDATE catalog_items SET category=?,updated_at=? WHERE id=?',
           [input.label,date,item.id]);
