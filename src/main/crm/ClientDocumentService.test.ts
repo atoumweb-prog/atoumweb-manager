@@ -116,4 +116,18 @@ describe('preuve contractuelle rattachée', () => {
     expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
+
+  it('détecte une facture modifiée après son empreinte et refuse son ouverture', () => {
+    const source = join(root, 'facture-integrite.pdf');
+    writeFileSync(source, '%PDF-1.4\\nFacture Abby de test');
+    const document = documents.importPaths(clientId, [source], { category: 'invoice', title: 'Facture à contrôler' })[0];
+    const original = documents.absolutePath(document);
+    expect(documents.fingerprint(document.id)).toMatch(/^[a-f0-9]{64}$/);
+    expect(documents.verifiedPath(document.id)).toBe(original);
+    writeFileSync(original, '%PDF-1.4\\nContenu modifié');
+    expect(() => documents.fingerprint(document.id)).toThrow(/empreinte SHA-256 différente/);
+    expect(() => documents.verifiedPath(document.id)).toThrow(/empreinte SHA-256 différente/);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
 });
