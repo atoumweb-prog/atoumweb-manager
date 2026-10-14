@@ -1,3 +1,4 @@
+import {ContractSectionReviewPanel} from './ContractSectionReviewPanel';
 import { ContractReadPanel } from './ContractReadPanel';
 import type { ContractPresentation } from '../../shared/contractPresentation';
 import { useEffect, useId, useState } from 'react';
@@ -158,6 +159,7 @@ export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:(
           <h3>{module.title}</h3><p>{module.code} · {module.scope==='base'?'CGV communes':'Clause de prestation'} · {statusLabel(module.status)}</p>
           <label>Version du module<select aria-label="Version du module" value={moduleVersion?.id??''} onChange={e=>{const next=e.target.value;guardedNavigation(()=>setModuleVersionId(next));}}>{module.versions.map(v=><option key={v.id} value={v.id}>v{v.versionNumber} — {statusLabel(v.status)}</option>)}</select></label>
           <div className="contract-module-text contract-paragraph">{moduleVersion?.body}</div>
+          {moduleVersion&&<ContractSectionReviewPanel key={moduleVersion.id} versionId={moduleVersion.id} group={unsavedScope}/>}
           {moduleVersion?.review&&<details><summary>Revue documentaire et réserves — {moduleVersion.review.level}</summary><p>Aucune validation juridique globale. Publication et revue documentaire sont distinctes.</p><dl><dt>Sources conservées</dt><dd className="contract-paragraph">{moduleVersion.review.sources??'Non renseignées'}</dd><dt>Dernière vérification documentée</dt><dd>{moduleVersion.review.verifiedAt??'À vérifier pour cette rédaction'}</dd><dt>Réserves</dt><dd>{moduleVersion.review.reserve??'Non renseignées'}</dd><dt>Provenance</dt><dd className="contract-paragraph">{moduleVersion.review.provenance.reference} · {moduleVersion.review.provenance.sha256}</dd></dl></details>}
           <label>Texte à préparer dans une nouvelle version<textarea aria-label="Texte du module à versionner" value={body} onChange={e=>setBody(e.target.value)}/></label>
           <button type="button" disabled={busy||module.status==='archived'} onClick={()=>void run(async()=>{const previousReview=moduleVersion?.review;
