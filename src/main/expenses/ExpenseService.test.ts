@@ -81,4 +81,13 @@ describe('ExpenseService', () => {
     expect(paid.status).toBe('paid');
     expect(paid.paidAt).toBeTruthy();
   });
+  it('refuse un chemin justificatif hors du workspace même avec un préfixe commun', () => {
+    const item = expenses.create({
+      clientAccountId: clientId, category: 'software', label: 'Pièce à contrôler',
+      amountCents: 1200, expenseDate: '2026-09-23T12:00:00.000Z',
+    });
+    database.run('UPDATE expenses SET receipt_relative_path=? WHERE id=?', ['../atoumweb-expenses-external/facture.pdf', item.id]);
+    expect(() => expenses.absoluteReceiptPath(item.id)).toThrow(/Chemin de justificatif invalide/);
+  });
+
 });
