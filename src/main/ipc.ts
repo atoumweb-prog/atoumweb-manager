@@ -412,7 +412,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('catalog:get-item', (_event, id: string) => database.catalog.getItem(id));
   ipcMain.handle('catalog:assign-canonical-code', (_event, id: string, code: string) => database.catalog.assignCanonicalCode(id, code));
   ipcMain.handle('catalog:create', (_event, input: CatalogItemInput, firstVersion: CatalogVersionInput) => database.catalog.create(input, firstVersion));
-  ipcMain.handle('catalog:create-version', (_event, itemId: string, input: CatalogVersionInput) => database.catalog.createVersion(itemId, input));
+  ipcMain.handle('catalog:create-version', (_event, itemId: string, input: CatalogVersionInput, requestId?: string) => database.catalog.createVersion(itemId, input, requestId));
   ipcMain.handle('catalog:save-draft-version', (_event, versionId: string, expected: CatalogVersion, input: CatalogVersionInput) => database.catalog.saveDraftVersion(versionId, expected, input));
   ipcMain.handle('catalog:publish-version', (_event, versionId: string) => database.catalog.publishVersion(versionId));
   ipcMain.handle('catalog:set-status', (_event, itemId: string, status: CatalogItemStatus) => database.catalog.setStatus(itemId, status));
