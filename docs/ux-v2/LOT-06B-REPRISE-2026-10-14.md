@@ -37,3 +37,9 @@ Commencer par relever précisément `closeQuoteDetail`, `openQuote`, les événe
 Commit `62a9b2823734dbe5440d1fb76558b2c49986a39b` : le bouton Fermer de l'assistant utilise maintenant `requestUnsavedExit` pour le groupe `quote:create` au lieu de masquer immédiatement l'assistant en remettant l'étape à 1. Ouverture sans réinitialisation forcée de l'étape. La garde native UX-01 conserve le choix de rester, et l'abandon confirmé utilise les entrées `discard` du registre.
 
 **Vérifications à exécuter :** fermeture avec/sans brouillon, confirmation refusée, saisie sur six étapes, clôture pendant enregistrement, nouveau devis après abandon, `npm run typecheck`, tests Vitest, Electron neuf variantes. Ces tests n'ont pas encore été exécutés sur ce commit ; aucune fusion permise. Le comportement de changement de devis et des réponses tardives reste à auditer avant toute autre correction.
+
+## Reprise navigation asynchrone — 14/10/2026
+
+Commits applicatifs `f2584a4` et `5d46a15` : séquence `detailRequest` et référence `selectedRef` synchronisées lors du changement et de la fermeture. Une réponse de `quotes.get(id)` périmée ne doit pas écraser le devis devenu actif. En cas d'échec du chargement courant seulement, remise à zéro de la sélection ; les erreurs obsolètes ne doivent pas effacer une sélection récente. Le contrôle UX-01 existant demeure avant tout changement.
+
+Scénarios restant à exécuter : A→B avec A résolu après B, A en échec après B réussi, fermeture pendant chargement, refus de quitter un brouillon, ouverture par navigation externe, typecheck et Vitest, vraie fenêtre Electron, thèmes/densités, vérification des effets de `refresh`. **Tests non exécutés ; ne pas déclarer ce lot validé ni fusionner.**
