@@ -15,7 +15,9 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}
   {body:'Titre des CGV\n'+initial+'\nTroisième paragraphe'},
  );
  const original=clause.versions[0];
- const realSave=dialog.showSaveDialog,realOpen=dialog.showOpenDialog;
+ const realSave=dialog.showSaveDialog,realOpen=dialog.showOpenDialog,realConfirm=dialog.showMessageBoxSync;
+ let confirmAnswer=0;const confirmations=[];
+ dialog.showMessageBoxSync=(...args)=>{confirmations.push(args.at(-1));return confirmAnswer;};
  dialog.showSaveDialog=async options=>({canceled:false,filePath:options?.filters?.[0]?.extensions?.includes('pdf')?pdfPath:exportPath});
  let selectionPath=exportPath,cancelNext=false;
  dialog.showOpenDialog=async()=>cancelNext?(cancelNext=false,{canceled:true,filePaths:[]}):
@@ -70,6 +72,23 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}
    '09E-UI-09: explicit acceptance of Word formatting limits is required');
   test(db.contractTerms.getTemplate(clause.id).versions.length===1,
    '09E-UI-10: preview cannot silently modify clause');
+  const beforeConfirm=confirmations.length;
+  await js('document.querySelector(".contract-library .contract-toolbar button").click()');
+  await sleep(80);
+  test(confirmations.length===beforeConfirm+1&&confirmations.at(-1).defaultId===0,'09E-convergence: one native confirmation defaults to Stay');
+  test(await get('document.querySelector(".aw-word-diff")?.textContent.includes('+JSON.stringify(corrected)+')'),'09E-convergence: Stay preserves imported text and review');
+  test(db.contractTerms.getTemplate(clause.id).versions.length===1,'09E-convergence: denied exit writes no clause');
+  confirmAnswer=1;
+  await js('document.querySelector(".contract-library .contract-toolbar button").click()');
+  await wait('!document.querySelector(".contract-library")','Word review explicitly discarded');
+  test(confirmations.length===beforeConfirm+2,'09E-convergence: explicit discard prompts once');
+  test(db.contractTerms.getTemplate(clause.id).versions.length===1,'09E-convergence: discarding Word review preserves persisted version');
+  confirmAnswer=0;
+  await js('const entry=[...document.querySelectorAll(".documents-page-stack button")].find(e=>e.textContent.includes("Bibliothèque contractuelle"));entry.click()');
+  await wait('!!document.querySelector("select[aria-label=\\"Consulter un module\\"]")','library reopened after discard');
+  await js('const el=document.querySelector("select[aria-label=\\"Consulter un module\\"]");el.value='+JSON.stringify(clause.id)+';el.dispatchEvent(new Event("change",{bubbles:true}));');
+  await button('Réimporter un Word');
+  await wait('!!document.querySelector(".aw-word-review")','Word review explicitly reimported');
   await js('document.querySelector(".aw-word-review input[type=checkbox]").click()');
   await wait('!document.querySelector(".aw-word-review button:first-of-type")?.disabled','Word reviewed');
   await button('Valider et créer une nouvelle version');
@@ -101,5 +120,5 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}
    }
   }
   console.log('[UXV2 09E] True DOCX export/edit/import/preview/approve/concurrency verified in TEMP.');
- }finally{dialog.showSaveDialog=realSave;dialog.showOpenDialog=realOpen;}
+ }finally{dialog.showSaveDialog=realSave;dialog.showOpenDialog=realOpen;dialog.showMessageBoxSync=realConfirm;}
 };

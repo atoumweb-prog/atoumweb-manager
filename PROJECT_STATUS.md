@@ -1,5 +1,9 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 15/10/2026 — Convergence09 et protection de revue Word
+
+Source134 11631769 incorporée avec historique09A–E ; branches de coexistence135/136 non fusionnées. Bibliothèque05 (classement huit rubriques, UX-01, versions) préservée conjointement au DOCX de brouillon09E. Revue Word modifiée désormais protégée par la garde UX-01 existante : Rester conserve la comparaison, Quitter abandonne seulement le brouillon non approuvé, aucune publication implicite. Nouvelles assertions Electron explicites. Aucun texte juridique ni migration modifié. Source Abby reste externe et facturé ne signifie pas payé.
+
 ## 15/10/2026 — Convergence08 sur socle04–07
 
 PR131 e9f5e817 intégrée une seule fois dans le candidat isolé ; sources109/115/137 non rejouées. Projections de débit sans écriture, clôture atomique, périodes anniversaire et protections de rapport/dépassement conservées. Aucun ajout de réouverture commerciale ou de contrepassation automatique. Migrations1–70 inchangées. Recettes08, UX-01, restauration et shell exécutées par la gate de convergence sur le SHA candidat. Données persistantes intactes.
