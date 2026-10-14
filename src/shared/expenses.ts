@@ -69,6 +69,13 @@ export interface ExpenseFilters {
   status?: ExpenseStatus | null;
 }
 
+export interface ExpenseReceiptVersion {
+  relativePath: string;
+  fileName: string;
+  sha256: string | null;
+  integrity: 'verified' | 'unknown' | 'missing' | 'modified';
+}
+
 export interface ExpensesApi {
   list(filters?: ExpenseFilters): Promise<Expense[]>;
   get(id: string): Promise<Expense>;
@@ -77,4 +84,6 @@ export interface ExpensesApi {
   changeStatus(id: string, status: ExpenseStatus): Promise<Expense>;
   importReceipt(id: string): Promise<Expense | null>;
   openReceipt(id: string): Promise<void>;
+  listReceiptVersions(id: string): Promise<ExpenseReceiptVersion[]>;
+  openReceiptVersion(id: string, relativePath: string): Promise<void>;
 }

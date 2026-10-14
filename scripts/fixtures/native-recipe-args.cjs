@@ -1,8 +1,12 @@
 'use strict';
 module.exports=args=>{
- const searchOnly=args[0]==='--search-only',lot03b=args[0]==='--lot03b',lot08a=args[0]==='--lot08a';
+ const first=args[0]||'';
+ const searchOnly=first==='--search-only',lot03b=first==='--lot03b',lot08a=first==='--lot08a';
+ const lot09b=first==='--lot09b',lot09c=first==='--lot09c';
+ const lot09d=first==='--lot09d',lot09e=first==='--lot09e';
+ const direct=searchOnly||lot08a||lot09b||lot09c||lot09d||lot09e;
  const captureIndex=lot03b?1:0,capture=args[captureIndex]==='--captures';
- const valid=searchOnly?args.length===1:lot08a?args.length===1:lot03b?(args.length===1||(capture&&args.length===3)):(args.length===0||(capture&&args.length===2));
- if(!valid)throw Error('Usage: node scripts/check-ux-v2-lot01a-real-ui.cjs [--search-only | --lot08a | --lot03b [--captures NEW-ABSOLUTE-FOLDER] | --captures NEW-ABSOLUTE-FOLDER]');
- return {searchOnly,lot03b,lot08a,captureFolder:capture?args[captureIndex+1]:null};
+ const valid=direct?args.length===1:lot03b?(args.length===1||(capture&&args.length===3)):(args.length===0||(capture&&args.length===2));
+ if(!valid)throw Error('Usage: check-ux-v2-lot01a-real-ui.cjs [--search-only | --lot03b [--captures NEW-FOLDER] | --lot08a | --lot09b | --lot09c | --lot09d | --lot09e | --captures NEW-FOLDER]');
+ return {searchOnly,lot03b,lot08a,lot09b,lot09c,lot09d,lot09e,captureFolder:capture?args[captureIndex+1]:null};
 };

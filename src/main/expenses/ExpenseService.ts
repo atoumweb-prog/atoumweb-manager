@@ -1,7 +1,8 @@
 
-import { randomUUID } from 'node:crypto';
-import { copyFileSync, existsSync, mkdirSync, statSync } from 'node:fs';
-import { basename, extname, join, relative, resolve } from 'node:path';
+import { createHash, randomUUID } from 'node:crypto';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, chmodSync, rmSync, writeFileSync } from 'node:fs';
+import { basename, extname, join, relative, resolve, sep } from 'node:path';
+import { tmpdir } from 'node:os';
 import {
   EXPENSE_CATEGORIES,
   EXPENSE_FREQUENCIES,
@@ -13,6 +14,7 @@ import {
 } from '../../shared/expenses';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import type { WorkspacePaths } from '../workspace';
+import { cleanupExpiredReceiptPreviews } from './receiptPreviewCleanup';
 
 const nowIso = (): string => new Date().toISOString();
 const clean = (value?: string | null): string | null => value?.trim() || null;
@@ -90,41 +92,84 @@ export class ExpenseService {
     const normalized = this.normalize(input);
     const id = randomUUID();
     const now = nowIso();
-    this.database.run(
-      'INSERT INTO expenses (id,client_account_id,project_id,category,supplier,label,amount_cents,vat_cents,status,expense_date,due_at,paid_at,frequency,next_due_at,notes,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-      [
-        id, normalized.clientAccountId, normalized.projectId, normalized.category, normalized.supplier,
-        normalized.label, normalized.amountCents, normalized.vatCents, normalized.status,
-        normalized.expenseDate, normalized.dueAt, normalized.paidAt, normalized.frequency,
-        normalized.nextDueAt, normalized.notes, now, now,
-      ],
-    );
-    this.log(id, 'expense_created', normalized.label + ' · ' + (normalized.amountCents / 100) + ' €');
+    this.database.exec('SAVEPOINT expense_create');
+    try {
+      this.database.run(
+        'INSERT INTO expenses (id,client_account_id,project_id,category,supplier,label,amount_cents,vat_cents,status,expense_date,due_at,paid_at,frequency,next_due_at,notes,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        [
+          id, normalized.clientAccountId, normalized.projectId, normalized.category, normalized.supplier,
+          normalized.label, normalized.amountCents, normalized.vatCents, normalized.status,
+          normalized.expenseDate, normalized.dueAt, normalized.paidAt, normalized.frequency,
+          normalized.nextDueAt, normalized.notes, now, now,
+        ],
+      );
+      this.log(id, 'expense_created', normalized.label + ' · ' + (normalized.amountCents / 100) + ' €');
+      this.database.exec('RELEASE SAVEPOINT expense_create');
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT expense_create');
+      this.database.exec('RELEASE SAVEPOINT expense_create');
+      throw error;
+    }
     return this.get(id);
   }
 
   update(id: string, input: ExpenseInput): Expense {
-    this.get(id);
+    const before = this.get(id);
     const normalized = this.normalize(input);
-    this.database.run(
-      'UPDATE expenses SET client_account_id=?,project_id=?,category=?,supplier=?,label=?,amount_cents=?,vat_cents=?,status=?,expense_date=?,due_at=?,paid_at=?,frequency=?,next_due_at=?,notes=?,updated_at=? WHERE id=?',
-      [
-        normalized.clientAccountId, normalized.projectId, normalized.category, normalized.supplier,
-        normalized.label, normalized.amountCents, normalized.vatCents, normalized.status,
-        normalized.expenseDate, normalized.dueAt, normalized.paidAt, normalized.frequency,
-        normalized.nextDueAt, normalized.notes, nowIso(), id,
-      ],
-    );
-    this.log(id, 'expense_updated', normalized.label);
+    const now = nowIso();
+    this.database.exec('SAVEPOINT expense_update');
+    try {
+      this.database.run(
+        'UPDATE expenses SET client_account_id=?,project_id=?,category=?,supplier=?,label=?,amount_cents=?,vat_cents=?,status=?,expense_date=?,due_at=?,paid_at=?,frequency=?,next_due_at=?,notes=?,updated_at=? WHERE id=?',
+        [
+          normalized.clientAccountId, normalized.projectId, normalized.category, normalized.supplier,
+          normalized.label, normalized.amountCents, normalized.vatCents, normalized.status,
+          normalized.expenseDate, normalized.dueAt, normalized.paidAt, normalized.frequency,
+          normalized.nextDueAt, normalized.notes, now, id,
+        ],
+      );
+      this.database.run(
+        'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
+        ['expense', id, 'expense_updated', normalized.label,
+          JSON.stringify({
+            previousStatus: before.status, currentStatus: normalized.status,
+            previousAmountCents: before.amountCents, currentAmountCents: normalized.amountCents,
+            previousPaidAt: before.paidAt, currentPaidAt: normalized.paidAt,
+            previousClientAccountId: before.clientAccountId, currentClientAccountId: normalized.clientAccountId,
+            previousProjectId: before.projectId, currentProjectId: normalized.projectId,
+            paymentVerifiedByBank: false,
+          }), now],
+      );
+      this.database.exec('RELEASE SAVEPOINT expense_update');
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT expense_update');
+      this.database.exec('RELEASE SAVEPOINT expense_update');
+      throw error;
+    }
     return this.get(id);
   }
 
   changeStatus(id: string, status: ExpenseStatus): Expense {
     if (!EXPENSE_STATUSES.includes(status)) throw new Error('Statut de dépense invalide.');
     const current = this.get(id);
-    const paidAt = status === 'paid' ? current.paidAt ?? nowIso() : null;
-    this.database.run('UPDATE expenses SET status=?,paid_at=?,updated_at=? WHERE id=?', [status, paidAt, nowIso(), id]);
-    this.log(id, 'expense_status_changed', current.label + ' · ' + status);
+    if (current.status === status) return current;
+    const now = nowIso();
+    const paidAt = status === 'paid' ? current.paidAt ?? now : null;
+    this.database.exec('SAVEPOINT expense_status_update');
+    try {
+      this.database.run('UPDATE expenses SET status=?,paid_at=?,updated_at=? WHERE id=?', [status, paidAt, now, id]);
+      this.database.run(
+        'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
+        ['expense', id, 'expense_status_changed', current.label + ' · ' + status,
+          JSON.stringify({ previousStatus: current.status, currentStatus: status,
+            previousPaidAt: current.paidAt, currentPaidAt: paidAt, paymentVerifiedByBank: false }), now],
+      );
+      this.database.exec('RELEASE SAVEPOINT expense_status_update');
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT expense_status_update');
+      this.database.exec('RELEASE SAVEPOINT expense_status_update');
+      throw error;
+    }
     return this.get(id);
   }
 
@@ -135,23 +180,100 @@ export class ExpenseService {
     const directory = this.receiptDirectory(expense);
     mkdirSync(directory, { recursive: true });
     const destination = this.uniqueDestination(directory, basename(source));
-    if (resolve(source) !== resolve(destination)) copyFileSync(source, destination);
-    const stats = statSync(destination);
-    this.database.run(
-      'UPDATE expenses SET receipt_relative_path=?,receipt_original_name=?,receipt_mime_type=?,receipt_size_bytes=?,updated_at=? WHERE id=?',
-      [relative(this.workspace.root, destination), basename(source), this.mime(destination), Number(stats.size), nowIso(), id],
-    );
-    this.log(id, 'expense_receipt_imported', 'Justificatif : ' + basename(source));
-    return this.get(id);
+    const copied = source !== resolve(destination);
+    let committed = false;
+    try {
+      if (copied) copyFileSync(source, destination);
+      const stats = statSync(destination);
+      const now = nowIso();
+      const storedPath = relative(this.workspace.root, destination);
+      const sha256 = createHash('sha256').update(readFileSync(destination)).digest('hex');
+      this.database.exec('SAVEPOINT expense_receipt_import');
+      try {
+        this.database.run(
+          'UPDATE expenses SET receipt_relative_path=?,receipt_original_name=?,receipt_mime_type=?,receipt_size_bytes=?,updated_at=? WHERE id=?',
+          [storedPath, basename(source), this.mime(destination), Number(stats.size), now, id],
+        );
+        this.database.run(
+          'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
+          ['expense', id, 'expense_receipt_version', 'Historique justificatif : ' + basename(source),
+            JSON.stringify({ previousRelativePath: expense.receiptRelativePath ?? null, previousFileName: expense.receiptFileName ?? null,
+              currentRelativePath: storedPath, currentFileName: basename(source), currentSha256: sha256 }), now],
+        );
+        this.log(id, 'expense_receipt_imported', 'Justificatif : ' + basename(source));
+        this.database.exec('RELEASE SAVEPOINT expense_receipt_import');
+        committed = true;
+      } catch (error) {
+        this.database.exec('ROLLBACK TO SAVEPOINT expense_receipt_import');
+        this.database.exec('RELEASE SAVEPOINT expense_receipt_import');
+        throw error;
+      }
+      return this.get(id);
+    } catch (error) {
+      // A rejected update must not leave a new, unattached receipt copy behind.
+      // Never delete the source or a pre-existing receipt version.
+      if (copied && !committed) rmSync(destination, { force: true });
+      throw error;
+    }
   }
 
   absoluteReceiptPath(id: string): string {
     const expense = this.get(id);
     if (!expense.receiptRelativePath) throw new Error('Aucun justificatif rattaché à cette dépense.');
     const absolute = resolve(this.workspace.root, expense.receiptRelativePath);
-    if (!absolute.startsWith(resolve(this.workspace.root))) throw new Error('Chemin de justificatif invalide.');
+    if (!absolute.startsWith(resolve(this.workspace.root) + sep)) throw new Error('Chemin de justificatif invalide.');
     if (!existsSync(absolute)) throw new Error('Le fichier justificatif est introuvable.');
     return absolute;
+  }
+
+  listReceiptVersions(id: string): Array<{ relativePath: string; fileName: string; sha256: string | null; integrity: 'verified' | 'unknown' | 'missing' | 'modified' }> {
+    this.get(id);
+    const rows = this.database.all<{ metadata_json: string | null }>(
+      "SELECT metadata_json FROM activity_log WHERE entity_type='expense' AND entity_id=? AND action='expense_receipt_version' ORDER BY id DESC",
+      [id],
+    );
+    return rows.flatMap<{ relativePath: string; fileName: string; sha256: string | null; integrity: 'verified' | 'unknown' | 'missing' | 'modified' }>((row) => {
+      if (!row.metadata_json) return [];
+      let value: { currentRelativePath?: string; currentFileName?: string; currentSha256?: string };
+      try { value = JSON.parse(row.metadata_json); } catch { return []; }
+      if (!value.currentRelativePath || !value.currentFileName) return [];
+      const absolute = resolve(this.workspace.root, value.currentRelativePath);
+      if (!absolute.startsWith(resolve(this.workspace.root) + sep)) return [];
+      if (!existsSync(absolute)) return [{ relativePath: value.currentRelativePath, fileName: value.currentFileName, sha256: value.currentSha256 ?? null, integrity: 'missing' as const }];
+      const sha256 = value.currentSha256 ?? null;
+      const integrity = !sha256 ? 'unknown' as const : createHash('sha256').update(readFileSync(absolute)).digest('hex') === sha256 ? 'verified' as const : 'modified' as const;
+      return [{ relativePath: value.currentRelativePath, fileName: value.currentFileName, sha256, integrity }];
+    });
+  }
+
+  verifiedReceiptVersionPath(id: string, relativePath: string): string {
+    const version = this.listReceiptVersions(id).find((item) => item.relativePath === relativePath);
+    if (!version) throw new Error('Version de justificatif introuvable dans l’historique.');
+    if (version.integrity !== 'verified') throw new Error('Ouverture refusée : intégrité de cette version non vérifiée.');
+    const absolute = resolve(this.workspace.root, relativePath);
+    if (!absolute.startsWith(resolve(this.workspace.root) + sep)) throw new Error('Chemin de justificatif invalide.');
+    return absolute;
+  }
+
+  prepareReceiptVersionPreview(id: string, relativePath: string): string {
+    const original = this.verifiedReceiptVersionPath(id, relativePath);
+    const version = this.listReceiptVersions(id).find((item) => item.relativePath === relativePath);
+    if (!version?.sha256) throw new Error('Version sans empreinte vérifiée.');
+    cleanupExpiredReceiptPreviews();
+    const directory = mkdtempSync(join(tmpdir(), 'atoumweb-receipt-preview-'));
+    try {
+      writeFileSync(join(directory, '.atoumweb-receipt-preview'), 'atoumweb-receipt-preview-v1');
+      const copy = join(directory, randomUUID() + extname(original));
+      copyFileSync(original, copy);
+      if (createHash('sha256').update(readFileSync(copy)).digest('hex') !== version.sha256) {
+        throw new Error('Copie du justificatif altérée pendant la préparation.');
+      }
+      chmodSync(copy, 0o444);
+      return copy;
+    } catch (error) {
+      rmSync(directory, { recursive: true, force: true });
+      throw error;
+    }
   }
 
   private normalize(input: ExpenseInput): NormalizedExpenseInput {

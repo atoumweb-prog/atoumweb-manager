@@ -143,7 +143,7 @@ export class DatabaseService {
     this.operations = new OperationsService(this.database);
     this.maintenance = new MaintenanceService(this.database);
     this.hourPacks = new HourPackService(this.database);
-    this.billingHandoff = new BillingHandoffService(this.database);
+    this.billingHandoff = new BillingHandoffService(this.database, (documentId) => this.clientDocuments.fingerprint(documentId));
     this.expenses = new ExpenseService(this.database, this.workspace);
     this.crmIdentityAssets = new CrmIdentityAssetService(this.database, this.workspace);
     this.hourPackShortfalls = new HourPackShortfallService(this.database, this.hourPacks, this.billingHandoff);

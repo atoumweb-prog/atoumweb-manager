@@ -5,7 +5,7 @@ import { useEffect, useId, useState } from 'react';
 import { requestUnsavedExit, useUnsavedDraft } from '../unsaved/unsaved';
 import { filterContractClauses, matchingContractClauses, newModuleDraftChanged, typeDraftChanged } from './contractLibraryDrafts';
 import type { ContractType, ContractTypeVersionInput } from '../../shared/contractTypes';
-import type { ContractClauseTemplate, ContractClauseScope, ContractClauseAudience } from '../../shared/contractTerms';
+import type { ContractClauseTemplate, ContractClauseScope, ContractClauseAudience, WordDraftPreview } from '../../shared/contractTerms';
 import type { CatalogItemSummary } from '../../shared/commercial';
 import './contract-library.css';
 
@@ -18,6 +18,8 @@ export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:(
   const [query,setQuery]=useState(''),[clauseQuery,setClauseQuery]=useState(''),[clauseScope,setClauseScope]=useState<'all'|'base'|'catalog'>('all'),[clauseAudience,setClauseAudience]=useState<'all'|'professional'|'consumer'>('all'),[includeArchivedClauses,setIncludeArchivedClauses]=useState(false),[archived,setArchived]=useState(false),[id,setId]=useState(initialTypeId??''),[versionId,setVersionId]=useState('');
   const [input,setInput]=useState<ContractTypeVersionInput>(empty),[creating,setCreating]=useState(false),[code,setCode]=useState('');
   const [moduleId,setModuleId]=useState(''),[moduleVersionId,setModuleVersionId]=useState(''),[body,setBody]=useState('');
+  const [wordPreview,setWordPreview]=useState<WordDraftPreview|null>(null);
+  const [wordLimitsAccepted,setWordLimitsAccepted]=useState(false);
   const [showNewModule,setShowNewModule]=useState(false),[newCode,setNewCode]=useState(''),[newTitle,setNewTitle]=useState(''),[newBody,setNewBody]=useState('');
   const [newScope,setNewScope]=useState<ContractClauseScope>('catalog'),[newAudience,setNewAudience]=useState<ContractClauseAudience>('all');
   const [busy,setBusy]=useState(false),[error,setError]=useState('');
@@ -79,7 +81,14 @@ export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:(
     catch(e){setError(e instanceof Error?e.message:String(e));}finally{setBusy(false);}
   }
   function move(index:number,delta:number){const ids=[...input.moduleIds];[ids[index],ids[index+delta]]=[ids[index+delta],ids[index]];setInput({...input,moduleIds:ids});}
-  function openModule(id:string){setModuleId(id);setModuleVersionId('');setEditServices(false);setServiceQuery('');}
+  function discardWordPreview(){
+    if(wordPreview)void window.atoumweb.contractTerms.library.cancelWordDraft(wordPreview.sessionId);
+    setWordPreview(null);setWordLimitsAccepted(false);
+  }
+  function openModule(id:string){
+    discardWordPreview();setModuleId(id);setModuleVersionId('');
+    setEditServices(false);setServiceQuery('');
+  }
   function openCatalogItem(itemId:string){
     guardedNavigation(()=>window.dispatchEvent(new CustomEvent('atoumweb:open-catalog-item',{detail:itemId})));
   }
@@ -157,9 +166,55 @@ export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:(
         <details open={!type&&!creating}><summary>Tous les modules de la bibliothèque</summary><select aria-label="Consulter un module" value={moduleId} onChange={e=>{const next=e.target.value;guardedNavigation(()=>openModule(next));}}><option value="">Choisir un paragraphe…</option>{clauses.map(c=><option key={c.id} value={c.id}>{c.title} · {c.code} · {statusLabel(c.status)}</option>)}</select></details>
         {module&&<section className="contract-type-detail contract-module-editor">
           <h3>{module.title}</h3><p>{module.code} · {module.scope==='base'?'CGV communes':'Clause de prestation'} · {statusLabel(module.status)}</p>
-          <label>Version du module<select aria-label="Version du module" value={moduleVersion?.id??''} onChange={e=>{const next=e.target.value;guardedNavigation(()=>setModuleVersionId(next));}}>{module.versions.map(v=><option key={v.id} value={v.id}>v{v.versionNumber} — {statusLabel(v.status)}</option>)}</select></label>
+          <label>Version du module<select aria-label="Version du module" value={moduleVersion?.id??''} onChange={e=>{const next=e.target.value;guardedNavigation(()=>{discardWordPreview();setModuleVersionId(next);});}}>{module.versions.map(v=><option key={v.id} value={v.id}>v{v.versionNumber} — {statusLabel(v.status)}</option>)}</select></label>
           <div className="contract-module-text contract-paragraph">{moduleVersion?.body}</div>
           {moduleVersion&&<ContractSectionReviewPanel key={moduleVersion.id} versionId={moduleVersion.id} group={unsavedScope}/>}
+          <section className="aw-word-draft-panel">
+            <h4>Aller-retour Word — brouillon de clause</h4>
+            <p>Exporte une version brouillon éditable, modifie-la dans Word puis réimporte-la pour comparer. La validation crée <strong>une nouvelle version brouillon</strong> ; elle ne publie rien.</p>
+            {moduleVersion?.status!=='draft'||module.status==='archived'
+              ? <p className="muted">Version publiée, retirée ou archivée : aucune modification Word directe. Crée d'abord un brouillon distinct.</p>
+              : <>
+              {body!==moduleVersion.body&&<p className="form-error">Enregistre d'abord les changements du champ texte local dans un nouveau brouillon avant d'utiliser Word.</p>}
+              <div className="contract-toolbar">
+                <button type="button" disabled={busy||body!==moduleVersion.body||module.versions[0]?.id!==moduleVersion.id} onClick={()=>void run(async()=>{
+                  const out=await window.atoumweb.contractTerms.library.exportWordDraft(module.id,moduleVersion.id);
+                  if(!out.cancelled)onMessage('Brouillon Word exporté : '+out.fileName);
+                })}>Exporter ce brouillon en Word (.docx)</button>
+                <button type="button" disabled={busy||body!==moduleVersion.body||module.versions[0]?.id!==moduleVersion.id} onClick={()=>void run(async()=>{
+                  const out=await window.atoumweb.contractTerms.library.exportWorkingPdf(module.id,moduleVersion.id);
+                  if(!out.cancelled)onMessage('PDF de travail non officiel exporté : '+out.fileName);
+                })}>PDF de travail (non signé)</button>
+                <button type="button" disabled={busy||body!==moduleVersion.body||module.versions[0]?.id!==moduleVersion.id} onClick={()=>void run(async()=>{
+                  discardWordPreview();
+                  const preview=await window.atoumweb.contractTerms.library.importWordDraft(module.id,moduleVersion.id);
+                  if(preview){setWordPreview(preview);setWordLimitsAccepted(false);}
+                })}>Réimporter un Word et comparer</button>
+              </div>
+              {wordPreview&&wordPreview.clauseId===module.id&&wordPreview.sourceVersionId===moduleVersion.id&&
+                <div className="aw-word-review">
+                  <h4>Comparaison : {wordPreview.importedFileName}</h4>
+                  <p>{wordPreview.changed?'Modifications textuelles proposées — aucune écriture effectuée.':'Aucune modification textuelle détectée : il n’y a rien à enregistrer.'}</p>
+                  <div className="aw-word-diff" aria-label="Différences Word avant validation">
+                    {wordPreview.paragraphs.map((p,i)=><div key={i} className={'aw-word-diff-'+p.kind}>
+                      <strong>{p.kind==='added'?'+ Ajout':p.kind==='removed'?'− Suppression':'= Inchangé'} :</strong> {p.text||'(paragraphe vide)'}
+                    </div>)}
+                  </div>
+                  <p className="muted">Limites de restitution :</p>
+                  <ul>{wordPreview.warnings.map((warning,i)=><li key={i}>{warning}</li>)}</ul>
+                  <label><input type="checkbox" checked={wordLimitsAccepted} onChange={e=>setWordLimitsAccepted(e.target.checked)}/> J'ai examiné toutes les différences et accepte les limites de mise en forme.</label>
+                  <div className="contract-toolbar">
+                    <button type="button" disabled={busy||!wordPreview.changed||!wordLimitsAccepted} onClick={()=>void run(async()=>{
+                      const result=await window.atoumweb.contractTerms.library.approveWordDraft(wordPreview.sessionId);
+                      setModuleVersionId(result.id);
+                      setWordPreview(null);setWordLimitsAccepted(false);
+                      onMessage('Révision Word approuvée : une nouvelle version brouillon a été créée, sans publication.');
+                    })}>Valider et créer une nouvelle version brouillon</button>
+                    <button type="button" disabled={busy} onClick={()=>discardWordPreview()}>Annuler sans enregistrer</button>
+                  </div>
+                </div>}
+              </>}
+          </section>
           {moduleVersion?.review&&<details><summary>Revue documentaire et réserves — {moduleVersion.review.level}</summary><p>Aucune validation juridique globale. Publication et revue documentaire sont distinctes.</p><dl><dt>Sources conservées</dt><dd className="contract-paragraph">{moduleVersion.review.sources??'Non renseignées'}</dd><dt>Dernière vérification documentée</dt><dd>{moduleVersion.review.verifiedAt??'À vérifier pour cette rédaction'}</dd><dt>Réserves</dt><dd>{moduleVersion.review.reserve??'Non renseignées'}</dd><dt>Provenance</dt><dd className="contract-paragraph">{moduleVersion.review.provenance.reference} · {moduleVersion.review.provenance.sha256}</dd></dl></details>}
           <label>Texte à préparer dans une nouvelle version<textarea aria-label="Texte du module à versionner" value={body} onChange={e=>setBody(e.target.value)}/></label>
           <button type="button" disabled={busy||module.status==='archived'} onClick={()=>void run(async()=>{const previousReview=moduleVersion?.review;
