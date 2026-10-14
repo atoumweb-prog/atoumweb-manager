@@ -721,15 +721,15 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 </div>
               )}
 
-              {detail.currentVersion ? (
+              {detail.currentVersion && ['identity','pricing','scope','sales','contracts'].includes(activeTab) ? (
                 <div className="catalog-current-version">
-                  <section className="catalog-detail-section catalog-detail-overview">
+                  {(activeTab==='scope') && <section className="catalog-detail-section catalog-detail-overview">
                     <div className="catalog-detail-section-heading"><span className="eyebrow">Prestation</span><strong>Ce qui est réellement vendu</strong></div>
                     <h3>{detail.currentVersion.nature || 'Nature de la prestation à renseigner'}</h3>
                     <p>{detail.currentVersion.description || 'Description à compléter pour expliquer clairement le résultat attendu au client.'}</p>
-                  </section>
+                  </section>}
 
-                  <section className="catalog-detail-section">
+                  {(activeTab==='pricing'||activeTab==='identity') && <section className="catalog-detail-section">
                     <div className="catalog-detail-section-heading"><span className="eyebrow">Repères</span><strong>Tarification, délai et cadre</strong></div>
                     <div className="catalog-summary-grid">
                       <Summary label="Tarif actuel" value={formatPrice(detail)} />
@@ -746,25 +746,25 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                       <Summary label="Ancien libellé contractuel (legacy)" value={detail.currentVersion.contractType || '—'} />
                       <Summary label={detail.currentVersion.publishedAt ? 'Publiée le' : 'Créée le'} value={formatCatalogDate(detail.currentVersion.publishedAt ?? detail.currentVersion.createdAt)} />
                     </div>
-                  </section>
+                  </section>}
 
-                  <section className="catalog-detail-section">
+                  {(activeTab==='scope') && <section className="catalog-detail-section">
                     <div className="catalog-detail-section-heading"><span className="eyebrow">Périmètre</span><strong>Inclus, exclusions et prérequis</strong></div>
                     <ListSummary label="Inclus" values={detail.currentVersion.inclusions ?? []} />
                     <ListSummary label="Exclusions" values={detail.currentVersion.exclusions ?? []} />
                     <ListSummary label="Prérequis" values={detail.currentVersion.prerequisites ?? []} />
-                  </section>
+                  </section>}
 
-                  <section className="catalog-detail-section">
+                  {(activeTab==='contracts') && <section className="catalog-detail-section">
                     <div className="catalog-detail-section-heading"><span className="eyebrow">Conditions</span><strong>Cadre commercial</strong></div>
                     <Summary label="Conditions commerciales" value={detail.currentVersion.specialTerms || 'Non renseignées'} />
-                  </section>
+                  </section>}
 
-                  <CommercialParametersSummary parameters={detail.currentVersion.commercialParameters} />
+                  {activeTab==='sales' && <CommercialParametersSummary parameters={detail.currentVersion.commercialParameters} />}
 
-                  {detail.currentVersion.internalAdvice && <div className="catalog-internal-note"><strong>Conseil interne AtoumWeb</strong><p>{detail.currentVersion.internalAdvice}</p></div>}
+                  {activeTab==='sales' && detail.currentVersion.internalAdvice && <div className="catalog-internal-note"><strong>Conseil interne AtoumWeb</strong><p>{detail.currentVersion.internalAdvice}</p></div>}
                 </div>
-              ) : <p className="muted">Aucune version.</p>}
+              ) : !detail.currentVersion ? <p className="muted">Aucune version.</p> : null}
 
               {activeTab==='identity' && <div className="catalog-detail-actions"><button className="secondary-button" type="button" disabled={versionMode || saving} onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select value={detail.status} disabled={versionMode || saving} onChange={(e) => void updateStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion || versionMode || saving} onClick={prepareNewVersion}>{detail.versions.some(v => v.status === 'draft') ? 'Reprendre le brouillon' : 'Modifier via une nouvelle version'}</button></div>}
 
@@ -775,6 +775,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                   components={detail.type === 'offer' && offerVersionId === publicationCandidate.id ? offerComponents : null}
                   busy={saving} onCancel={() => setPublicationCandidate(null)}
                   onConfirm={() => void publish(publicationCandidate.id)} />}
+              {versionMode && !catalogTabHasVersionFields(activeTab) && <p role="status" className="muted">Brouillon d'édition conservé. Reviens dans Identité, Tarifs, Contenu, Aide à la vente ou Contrat pour enregistrer ou annuler les modifications.</p>}
               {versionMode && catalogTabHasVersionFields(activeTab) && <form className="catalog-version-editor" onSubmit={(event) => void createVersion(event)}>
                 <strong>{editingDraftVersion ? `Modifier le brouillon v${editingDraftVersion.versionNumber}` : 'Nouvelle version brouillon'}</strong>
                 <p className="muted">{editingDraftVersion
