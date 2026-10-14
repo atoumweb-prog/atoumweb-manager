@@ -159,6 +159,117 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
     test(values['Solde quota mineur']==='0,3 h','E224 UI displays remaining 15-min minor quota');
     test(db.maintenance.getPeriod(period.id).usage.interventionCount===1,'E224 routine does not consume intervention quota');
     test(db.maintenance.getPeriod(period.id).usage.secondsOverQuota===0,'E224 routine does not create overage');
+    // 08C/08E : deux abonnements sur la véritable interface, réponses IPC
+    // volontairement inversées et sauvegarde de rapport avec double clic.
+    const planB = db.maintenance.createPlan({
+      name: 'E08C B TEMP', periodicPriceCents: 9900,
+      includedInterventions: 2, includedMinutes: 120,
+    });
+    const subscriptionB = db.maintenance.createSubscription({
+      clientAccountId: client.id, planId: planB.id, startDate: '2026-10-01',
+    });
+    const periodB = db.maintenance.ensurePeriod(subscriptionB.id, '2026-10-14');
+    await js('document.querySelector(".maintenance-panel-stack .toolbar-controls button").click()');
+    await wait('[...document.querySelectorAll(".maintenance-compact-item, .maintenance-list-panel .operations-table tbody tr")].some(e=>e.textContent.includes("E08C B TEMP"))',
+      'E08C second subscription visible');
+    const chooseSubscription = (name) => js(
+      'const row=[...document.querySelectorAll(".maintenance-compact-item, .maintenance-list-panel .operations-table tbody tr")].find(e=>e.textContent.includes('+
+        JSON.stringify(name)+'));if(!row)throw Error("E08C missing subscription");row.click();');
+    const periodChannel='operations:maintenance:periods:list';
+    const originalPeriods=registered.get(periodChannel);
+    if(typeof originalPeriods!=='function')throw Error('E08C real period IPC missing');
+    let holdA=false,releaseA=null;
+    ipcMain.removeHandler(periodChannel);
+    ipcMain.handle(periodChannel,(...args)=>{
+      if(holdA&&args[1]===subscription.id){
+        holdA=false;
+        return new Promise(resolve=>{releaseA=()=>resolve(originalPeriods(...args));});
+      }
+      return originalPeriods(...args);
+    });
+    try {
+      await chooseSubscription('E08C B TEMP');
+      await wait('document.querySelector(".maintenance-compact-item.selected")?.textContent.includes("E08C B TEMP")',
+        'E08C B selected first');
+      await wait('document.querySelector(".maintenance-period-list")?.textContent.includes("2026-10")',
+        'E08C B period displayed');
+      holdA=true;
+      await chooseSubscription('E224 Quota TEMP');
+      for(let i=0;i<90&&!releaseA;i++)await sleep(25);
+      test(typeof releaseA==='function','E08C delayed period A request started');
+      await chooseSubscription('E08C B TEMP');
+      await wait('document.querySelector(".maintenance-period-list")?.textContent.includes("2026-10")',
+        'E08C B period reloaded');
+      releaseA();
+      await sleep(180);
+      test(await get('document.querySelector(".maintenance-compact-item.selected")?.textContent.includes("E08C B TEMP")')===true,
+        'E08C late A response does not reopen subscription A');
+      test(await get('document.querySelector(".maintenance-period-list")?.textContent.includes("2026-10")')===true,
+        'E08C stale period A does not replace period B');
+    } finally {
+      if(releaseA)releaseA();
+      ipcMain.removeHandler(periodChannel);
+      ipcMain.handle(periodChannel,originalPeriods);
+    }
+
+    await js('document.querySelector(".maintenance-report-toggle").click()');
+    await wait('!!document.querySelector(".maintenance-report-fields textarea")',
+      'E08E report B loaded from real service');
+    await input('.maintenance-report-fields textarea','E08E SAUVEGARDE TEMP B');
+    const reportChannel='maintenance-reports:update-draft';
+    const originalReport=registered.get(reportChannel);
+    if(typeof originalReport!=='function')throw Error('E08E report update handler missing');
+    let reportWrites=0,releaseReport=null;
+    ipcMain.removeHandler(reportChannel);
+    ipcMain.handle(reportChannel,(...args)=>{
+      reportWrites++;
+      return new Promise(resolve=>{releaseReport=()=>resolve(originalReport(...args));});
+    });
+    try {
+      await js('const b=document.querySelector(".maintenance-report-content .button-row button.primary-button");if(!b)throw Error("E08E save button missing");b.click();b.click();');
+      for(let i=0;i<90&&reportWrites===0;i++)await sleep(25);
+      test(reportWrites===1,'E08E double save click sends exactly one IPC');
+      test(await get('document.querySelector(".maintenance-report-content .button-row button.primary-button")?.disabled')===true,
+        'E08E pending report save disables UI');
+      const beforeReportExit=confirmations.length;
+      answers.push(1);
+      await chooseSubscription('E224 Quota TEMP');
+      test(confirmations.length===beforeReportExit+1,'E08E pending report prompts once');
+      test(await get('document.querySelector(".maintenance-compact-item.selected")?.textContent.includes("E08C B TEMP")')===true,
+        'E08E pending report cannot leave B');
+      releaseReport();
+      for(let i=0;i<90&&db.maintenanceReports.get(periodB.id).clientSummary!=='E08E SAUVEGARDE TEMP B';i++)await sleep(25);
+      test(db.maintenanceReports.get(periodB.id).clientSummary==='E08E SAUVEGARDE TEMP B',
+        'E08E resumed IPC saved only report B');
+      await wait('document.querySelector(".maintenance-report-content .button-row button.primary-button")?.disabled===false',
+        'E08E report save settled');
+    } finally {
+      if(releaseReport)releaseReport();
+      ipcMain.removeHandler(reportChannel);
+      ipcMain.handle(reportChannel,originalReport);
+    }
+    await input('.maintenance-report-fields textarea','E08E BROUILLON ABANDONNE B');
+    const beforeDirtyReportExit=confirmations.length;
+    await chooseSubscription('E224 Quota TEMP');
+    test(confirmations.length===beforeDirtyReportExit+1,'E08E dirty report navigation guarded');
+    test(await get('document.querySelector(".maintenance-report-fields textarea")?.value')==='E08E BROUILLON ABANDONNE B',
+      'E08E Stay retains unsaved report B');
+    answers.push(1);
+    await chooseSubscription('E224 Quota TEMP');
+    await wait('document.querySelector(".maintenance-compact-item.selected")?.textContent.includes("E224 Quota TEMP")',
+      'E08E confirmed navigation to report A');
+    await wait('document.querySelector(".maintenance-period-list")?.textContent.includes("2026-09")',
+      'E08E period A restored');
+    await js('document.querySelector(".maintenance-report-toggle").click()');
+    await wait('!!document.querySelector(".maintenance-report-fields textarea")',
+      'E08E report A loaded');
+    test(await get('document.querySelector(".maintenance-report-fields textarea")?.value')!=='E08E SAUVEGARDE TEMP B',
+      'E08E saved B content never appears in A report');
+    test(db.maintenanceReports.get(periodB.id).clientSummary==='E08E SAUVEGARDE TEMP B',
+      'E08E discarded later edits do not overwrite B saved version');
+    test(db.database.all('PRAGMA foreign_key_check').length===0,'E08C/E08E temp SQLite foreign keys');
+    console.log('[UXV2 08C/08E] Native period-race/report pending and dirty navigation PASS');
+
     // E226 — créer un plan expose désormais la garde UX-01 commune.
     await js('document.querySelector(".maintenance-panel-stack .toolbar-controls button:nth-child(2)").click()');
     await wait('!!document.querySelector(".operation-create-panel input[placeholder]")','maintenance plan form opened');
