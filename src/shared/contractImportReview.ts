@@ -16,6 +16,13 @@ export interface ContractImportResult {
 }
 export function reviewContractTextImport(input:ContractImportReview):ContractImportResult {
   const diff=compareClauseField(input.originalText,input.importedText,120);
+  // Block pathological text payloads before suggesting any interactive revision.
+  const MAX_CONTRACT_TEXT_LENGTH=1_000_000;
+  if(input.originalText.length>MAX_CONTRACT_TEXT_LENGTH||input.importedText.length>MAX_CONTRACT_TEXT_LENGTH)return {
+    mayProposeDraft:false,changed:diff.changed,
+    reason:'Document trop volumineux pour une proposition automatique : révision manuelle nécessaire.',
+    removedExcerpt:diff.removedExcerpt,addedExcerpt:diff.addedExcerpt,
+  };
   if(input.quoteState!=='draft')return {
     mayProposeDraft:false,changed:diff.changed,
     reason:'Document figé ou historique : import en écriture interdit.',
