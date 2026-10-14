@@ -244,7 +244,7 @@ export class BillingHandoffService {
 
     // Reattaching the same document is not a new Abby invoice replacement.
     if (current.invoiceDocumentId === documentId) {
-      const reference = input.reference === undefined ? current.invoiceReference : clean(input.reference);
+      const reference = input.reference === undefined ? (current.invoiceReference ?? null) : clean(input.reference);
       const invoicedAt = input.invoicedAt ? this.dateIso(input.invoicedAt, 'Date de facture invalide.') : current.invoicedAt;
       if (reference === current.invoiceReference && invoicedAt === current.invoicedAt) return current;
       return this.updateInvoiceMetadata(id, { reference, invoicedAt });
@@ -278,7 +278,7 @@ export class BillingHandoffService {
   updateInvoiceMetadata(id: string, input: BillingInvoiceInput): BillingItem {
     const current = this.get(id);
     if (!current.invoiceDocumentId) throw new Error('Aucune facture PDF n’est rattachée à cet élément.');
-    const reference = input.reference === undefined ? current.invoiceReference : clean(input.reference);
+    const reference = input.reference === undefined ? (current.invoiceReference ?? null) : clean(input.reference);
     const invoicedAt = input.invoicedAt ? this.dateIso(input.invoicedAt, 'Date de facture invalide.') : current.invoicedAt ?? nowIso();
     if (reference === current.invoiceReference && invoicedAt === current.invoicedAt) return current;
     const now = nowIso();
