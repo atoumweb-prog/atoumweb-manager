@@ -1682,3 +1682,5 @@ Clôture Lot 3 — 03/10/2026 : bilan réel validé par AtoumWeb ; commit local 
 - Documentation : `docs/ux-v2/LOT-04D-04E-DEMARRAGE-2026-10-14.md`.
 - **Validation : aucun test exécuté sur la nouvelle branche à la date de cette entrée ; résultats CI à attendre.** Les 1 092 tests réussis de la CI #1003 concernent exclusivement l'ancien HEAD 04C.
 - Ordre d'intégration à maintenir : `main` ← 04B ← 04C ← 04D/04E après validation de chaque convergence. Aucune fusion autorisée automatiquement.
+
+- **Complément 04E** : projection `salesGuidanceFromCatalogVersion` branchée sur les champs commerciaux déjà versionnés (`commercialParameters.clientNeed`, `benefits`, `internalAdvice`) ; test additionnel écrit. Aucun contrat modifié. Les objections structurées restent une extension non persistée ; UI/IPC non livrés. Les tests de ce nouvel HEAD restent à exécuter.
