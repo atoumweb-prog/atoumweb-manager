@@ -16,5 +16,5 @@ const cases=[
  ['Project panel protects closing',project.includes('requestUnsavedExit(() => closeProjectDetailAllowed())')],
  ['Project overlay backdrop uses UX-01 guard',project.includes('project-production-overlay-backdrop" onClick={() => requestUnsavedExit(() => setProductionOverlay(null))}')],
  ['Project overlay close button uses UX-01 guard',project.includes('className="close-detail" onClick={() => requestUnsavedExit(() => setProductionOverlay(null))}')],
- ['Project overlay Escape uses UX-01 guard',project.includes('if (productionOverlay) {\n        requestUnsavedExit(() => setProductionOverlay(null));')],
+ ['Project overlay Escape uses UX-01 guard',/if \(productionOverlay\)\s*\{\s*requestUnsavedExit\(\(\) => setProductionOverlay\(null\)\);/.test(project)],
 ];for(const [name,condition] of cases){assert.ok(condition,name);console.log('PASS '+name)}console.log('PASS '+cases.length+' static navigation wiring checks (not Electron interactions)');
