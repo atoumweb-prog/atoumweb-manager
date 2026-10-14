@@ -228,6 +228,19 @@ describe('BillingHandoffService', () => {
     expect(afterMetadata.map((event) => event.action)).toEqual([
       'billing_invoice_attached', 'billing_invoice_metadata_updated',
     ]);
+    expect(billing.updateInvoiceMetadata('billing-repeat', {})).toMatchObject({ invoiceReference: 'ABBY-REPEAT-REV' });
+    const trace = database.get<{ metadata_json: string }>(
+      "SELECT metadata_json FROM activity_log WHERE entity_id=? AND action='billing_invoice_metadata_updated' ORDER BY id DESC LIMIT 1",
+      ['billing-repeat'],
+    );
+    expect(JSON.parse(trace!.metadata_json)).toMatchObject({
+      documentId: 'invoice-repeat', previousReference: 'ABBY-REPEAT', currentReference: 'ABBY-REPEAT-REV',
+    });
+    const eventCount = database.get<{ n: number }>(
+      "SELECT COUNT(*) AS n FROM activity_log WHERE entity_id=? AND action='billing_invoice_metadata_updated'",
+      ['billing-repeat'],
+    );
+    expect(eventCount?.n).toBe(1);
   });
 
 });
