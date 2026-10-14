@@ -361,8 +361,19 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
             onMessage('Aucun pack rattaché : choisis un pack avant la clôture.');
             return false;
           }
-          const pack = await window.atoumweb.operations.hourPacks.get(current.hourPackId);
-          context = [`Pack : ${pack.name} · état : ${pack.status} · solde actuel : ${(pack.balanceSeconds / 3600).toLocaleString('fr-FR', {maximumFractionDigits: 2})} h`];
+          const preview = await window.atoumweb.operations.hourPacks.previewInterventionDebit(current.hourPackId, current.id);
+          const formatSeconds = (seconds: number): string => {
+            const count = Math.abs(Math.trunc(seconds));
+            const sign = seconds < 0 ? '−' : '';
+            return `${sign}${Math.floor(count / 3600)} h ${Math.floor((count % 3600) / 60)} min ${count % 60} s`;
+          };
+          context = [
+            `Pack : ${preview.packName} · état : ${preview.packStatus}`,
+            preview.alreadyDebited
+              ? 'Débit déjà enregistré pour cette intervention : aucun second débit automatique.'
+              : `Temps terminé débitable : ${formatSeconds(preview.secondsToDebit)} · solde actuel : ${formatSeconds(preview.balanceBeforeSeconds)} · solde projeté : ${formatSeconds(preview.balanceAfterSeconds)}`,
+            'Projection en lecture seule : les montants et le temps seront vérifiés à nouveau par le service au moment de la clôture.',
+          ];
         } else if (current.coverageMode === 'maintenance') {
           if (!current.maintenancePeriodId) {
             onMessage('Aucune période de maintenance rattachée : complète la prise en charge avant la clôture.');
