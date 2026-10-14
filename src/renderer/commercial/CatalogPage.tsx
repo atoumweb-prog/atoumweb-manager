@@ -765,6 +765,8 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                   </section>}
 
                   {activeTab==='sales' && <CommercialParametersSummary parameters={detail.currentVersion.commercialParameters} />}
+                  {activeTab==='sales' && !Object.values(detail.currentVersion.commercialParameters ?? {}).some(Boolean) && !detail.currentVersion.internalAdvice &&
+                    <p className="muted">Aucune aide à la vente configurée pour cette version. Les bénéfices, besoins et conseils restent à renseigner dans un brouillon.</p>}
 
                   {activeTab==='sales' && detail.currentVersion.internalAdvice && <div className="catalog-internal-note"><strong>Conseil interne AtoumWeb</strong><p>{detail.currentVersion.internalAdvice}</p></div>}
                 </div>
