@@ -107,7 +107,7 @@ app.whenReady().then(async () => {
     };
     const click = async (text, scope = 'document') => {
       const label = `click ${text}`;
-      await js(`(()=>{const root=${scope};if(!root)throw Error('Scope absent');const wanted=${JSON.stringify(text)};const b=[...root.querySelectorAll('button')].find(b=>[b.textContent||'',b.getAttribute('aria-label')||'',b.getAttribute('title')||''].some(value=>value.includes(wanted)));if(!b)throw Error('Bouton absent: '+wanted);if(b.disabled)throw Error('Bouton désactivé: '+wanted);b.click();return true})()`, label);
+      await js(`(()=>{const root=${scope};if(!root)throw Error('Scope absent');const wanted=${JSON.stringify(text)};const all=[...root.querySelectorAll('button')];const labels=b=>[b.textContent||'',b.getAttribute('aria-label')||'',b.getAttribute('title')||''];const b=all.find(b=>!b.disabled&&labels(b).some(value=>value.trim()===wanted))??all.find(b=>!b.disabled&&labels(b).some(value=>value.includes(wanted)));if(!b)throw Error('Bouton absent: '+wanted);if(b.disabled)throw Error('Bouton désactivé: '+wanted);b.click();return true})()`, label);
       await settle();
     };
     const input = async (selector, value) => {
