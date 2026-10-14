@@ -187,6 +187,59 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
     test(db.database.all('PRAGMA foreign_key_check').length===0,'E224 native SQLite foreign keys');
     console.log('[UXV2 08A E224] Native quota display: '+JSON.stringify(values));
 
+    // E225 : même lorsque deux clics surviennent avant un aller-retour React,
+    // un ajustement manuel ne peut créer qu'un seul mouvement SQLite.
+    const pack = db.hourPacks.create({
+      clientAccountId: client.id, name: 'E225 Pack TEMP',
+      purchasedSeconds: 3600, contractPriceCents: 10000,
+    });
+    await js('document.querySelector(".operations-view-tabs button:nth-child(4)").click()');
+    await wait('!!document.querySelector(".hour-pack-list-panel .operations-table tbody tr")','E225 packs shown');
+    await js('const row=[...document.querySelectorAll(".hour-pack-list-panel .operations-table tbody tr")].find(e=>e.textContent.includes("E225 Pack TEMP"));if(!row)throw Error("E225 pack missing");row.click()');
+    await wait('!!document.querySelector(".hour-pack-workbench")','E225 pack workbench');
+    await js('const section=[...document.querySelectorAll(".hour-pack-workbench details")].find(e=>e.querySelector("summary")?.textContent.includes("Ajustement manuel"));if(!section)throw Error("E225 adjustment missing");section.open=true;');
+    const setPackInput = async (selector, value) => {
+      await js('const el=document.querySelector('+JSON.stringify(selector)+');'+
+        'if(!el)throw Error("E225 missing input");'+
+        'Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(el,'+JSON.stringify(value)+');'+
+        'el.dispatchEvent(new Event("input",{bubbles:true}));');
+    };
+    await setPackInput('.hour-pack-workbench input[placeholder^="Ex."]','-0.5');
+    await setPackInput('.hour-pack-workbench input[placeholder="Motif obligatoire"]','E225 DOUBLE CLIC TEMP');
+    await wait('[...document.querySelectorAll(".hour-pack-workbench button")].some(b=>b.textContent==="Ajouter le mouvement"&&!b.disabled)',
+      'E225 adjustment enabled');
+    const moveChannel='operations:hour-packs:add-movement';
+    const originalMove=registered.get(moveChannel);
+    if(typeof originalMove!=='function')throw Error('E225 real movement IPC handler missing');
+    let releaseMove=null, moveCount=0;
+    ipcMain.removeHandler(moveChannel);
+    ipcMain.handle(moveChannel,(...args)=>{
+      moveCount++;
+      return new Promise(resolve=>{releaseMove=()=>resolve(originalMove(...args));});
+    });
+    try {
+      await js('const b=[...document.querySelectorAll(".hour-pack-workbench button")].find(e=>e.textContent==="Ajouter le mouvement");if(!b)throw Error("E225 movement button missing");b.click();b.click();');
+      for(let i=0;i<80&&moveCount===0;i++)await sleep(30);
+      test(moveCount===1,'E225 double click invokes only one actual movement IPC');
+      test(await get('[...document.querySelectorAll(".hour-pack-workbench button")].some(b=>b.textContent.includes("Enregistrement")&&b.disabled)'),
+        'E225 correction button disabled while real IPC pending');
+      test(db.hourPacks.get(pack.id).movements.filter(m=>m.type==='manual_correction').length===0,
+        'E225 no movement committed before delayed IPC');
+      releaseMove();
+      await wait('window.atoumweb.operations.hourPacks.list().then(items=>items.some(p=>p.id==='+
+        JSON.stringify(pack.id)+'))','E225 movement settled');
+      for(let i=0;i<80&&db.hourPacks.get(pack.id).movements.filter(m=>m.type==='manual_correction').length===0;i++)await sleep(30);
+      test(db.hourPacks.get(pack.id).movements.filter(m=>m.type==='manual_correction').length===1,
+        'E225 only one persisted correction after double click');
+      test(db.hourPacks.get(pack.id).balanceSeconds===1800,
+        'E225 double click debits just 30 minutes, not twice');
+    } finally {
+      if(releaseMove)releaseMove();
+      ipcMain.removeHandler(moveChannel);
+      ipcMain.handle(moveChannel,originalMove);
+    }
+    test(db.database.all('PRAGMA foreign_key_check').length===0,'E225 native SQLite foreign keys');
+
     test(db.database.all('PRAGMA foreign_key_check').length===0,'E226 SQLite foreign keys');
     console.log('[UXV2 08A E226] Native A→B→A Stay/Quit PASS; confirmations='+confirmations.length);
   } finally {
