@@ -153,6 +153,19 @@ describe('Lot 04B — vue organisée du catalogue, projection sans écriture', (
     expect(out.otherOffers.map((entry) => entry.id)).toEqual(['m', 'w']);
   });
 
+  it('n’agrège pas silencieusement deux catégories historiques portant le même alias', () => {
+    const out = buildCataloguePresentation([
+      item('a', 'Audit', { category: 'SEO' }),
+      item('b', 'Visibilité', { category: 'SEO / Visibilité' }),
+    ]);
+    expect(out.serviceCategories).toHaveLength(2);
+    expect(out.serviceCategories.map(group => group.id)).toEqual(['SEO', 'SEO / Visibilité']);
+    expect(out.serviceCategories.map(group => group.title)).toEqual([
+      'Référencement et visibilité · SEO',
+      'Référencement et visibilité · SEO / Visibilité',
+    ]);
+  });
+
   it('préserve l’ordre et les contenus d’entrée sans modifier le tableau original', () => {
     const a = item('a', 'Zèbre', { category: 'CONTENU' });
     const b = item('b', 'Article', { category: 'CONTENU' });
