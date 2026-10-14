@@ -99,8 +99,10 @@ app.whenReady().then(async () => {
       // with synthetic, non-persisted entries only after all the historical identity assertions.
       document.querySelector('.catalog-detail-heading-actions .close-detail').click();await wait();
       const addV2Fixture=(id,name,code,category,type,kind,inclusions=[])=>{
-        const v={...oldVersion,id:id+'-v1',itemId:id,status:'published',versionNumber:1,
-          description:'Description publiée '+name,inclusions,commercialKind:kind};
+        const v={id:id+'-v1',itemId:id,status:'published',versionNumber:1,
+          priceMode:'fixed',priceCents:69900,description:'Description publiée '+name,
+          inclusions,exclusions:[],prerequisites:[],commercialKind:kind,
+          createdAt:'2026-10-14',publishedAt:'2026-10-14'};
         window.items.push({id,name,canonicalCode:code,category,type,status:'active',visiblePublic:false,
           createdAt:'2026-10-14',updatedAt:'2026-10-14',currentVersion:v,versions:[v]});
       };
