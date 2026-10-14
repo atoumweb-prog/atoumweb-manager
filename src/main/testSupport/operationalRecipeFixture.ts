@@ -1,4 +1,5 @@
 import {createHash} from 'node:crypto';
+import {performance} from 'node:perf_hooks';
 import {NodeSqliteAdapter} from '../database/NodeSqliteAdapter';
 import {applyPendingMigrations} from '../database/migrations';
 import type {SqlValue} from '../database/DatabaseAdapter';
@@ -11,10 +12,12 @@ export const recipeFixtureFingerprint=createHash('sha256').update(JSON.stringify
 /** Controlled source only: migrate/seed in memory, then export one complete SQLite file.
  * This avoids hundreds of durable disk commits on Windows CI, without relaxing SQLite checks.
  * Every caller still receives its own database; no shared cache or development workspace. */
-export function createOperationalRecipeFixture(file:string,legacyHistoire=false) {
+export function createOperationalRecipeFixture(file:string,legacyHistoire=false,onPhase?:(phase:string,elapsedMs:number)=>void) {
+ let lastPhase=performance.now();
+ const mark=(phase:string)=>{const now=performance.now();onPhase?.(phase,Math.round(now-lastPhase));lastPhase=now;};
  const db=new NodeSqliteAdapter(':memory:'),now='2026-10-06T00:00:00.000Z';
  try {
-  db.exec('PRAGMA foreign_keys=ON');applyPendingMigrations(db);
+  db.exec('PRAGMA foreign_keys=ON');applyPendingMigrations(db);mark('migrations');
   const insert=(table:string,row:Record<string,unknown>)=>db.run(`INSERT INTO ${table}(${Object.keys(row).join(',')}) VALUES(${Object.keys(row).map(()=>'?').join(',')})`,Object.values(row) as SqlValue[]);
   for(const [key,blueprint] of Object.entries(data.blueprints)) {
    if(legacyHistoire&&key===data.models.find(m=>m.model.code==='AW-MARIAGE-HISTOIRE')!.blueprintKey)continue;
@@ -35,9 +38,11 @@ export function createOperationalRecipeFixture(file:string,legacyHistoire=false)
   }
   const crm=new CrmService(db),org=crm.createOrganization({name:'TEST — Fixture recette'}),prospect=crm.createProspect({organizationId:org.id,primaryNeed:'Fixture déterministe'}),quotes=new QuoteService(db,crm);
   const quote=quotes.create({prospectId:prospect.id,subject:'TEST — Donneur de lignes synthétiques'});quotes.addCustomLine(quote.id,{label:'Ligne donneuse',quantityMilli:1000,proposedUnitPriceCents:100});
+  mark('seed');
   if(db.get('PRAGMA integrity_check')?.integrity_check!=='ok'||db.all('PRAGMA foreign_key_check').length)throw Error('Fixture incohérente');
+  mark('source-integrity');
   // Export only after successful seeding and integrity/FK checks. VACUUM INTO refuses
   // an existing non-empty destination; never change durability settings or overwrite it.
-  db.run('VACUUM INTO ?',[file]);
+  db.run('VACUUM INTO ?',[file]);mark('vacuum-into');
  }finally{db.close()}
 }
