@@ -282,4 +282,24 @@ describe('ExpenseService', () => {
     expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
+
+  it('annule la création complète lorsque son historique ne peut pas être enregistré', () => {
+    const countBefore = expenses.list().length;
+    database.exec(`CREATE TRIGGER reject_expense_create BEFORE INSERT ON activity_log
+      WHEN NEW.entity_type='expense' AND NEW.action='expense_created'
+      BEGIN SELECT RAISE(ABORT, 'journal création indisponible'); END;`);
+    expect(() => expenses.create({
+      category: 'software', label: 'Création impossible', amountCents: 2200,
+      expenseDate: '2026-10-14T12:00:00.000Z',
+    })).toThrow(/journal création indisponible/);
+    expect(expenses.list()).toHaveLength(countBefore);
+    database.exec('DROP TRIGGER reject_expense_create');
+    const saved = expenses.create({
+      category: 'software', label: 'Création effective', amountCents: 2200,
+      expenseDate: '2026-10-14T12:00:00.000Z',
+    });
+    expect(expenses.get(saved.id).label).toBe('Création effective');
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
 });
