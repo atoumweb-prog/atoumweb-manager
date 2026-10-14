@@ -548,6 +548,9 @@ export class ContractTermsService {
       // classification. Do not break their existing finalization path.
       // Once a quote elects reviewed 05C classification, all selected clauses
       // must pass the approved canonical assembly gate.
+      // A quote with a partially approved existing library remains on the
+      // historical compiler until a complete human-approved set is available.
+      // No incomplete canonical document may be emitted or labelled reviewed.
       const hasApprovedClassification=entries.some(({clause,review})=>
         clause.enabled&&!clause.isOrphaned&&review.status==='approved');
       if(hasApprovedClassification&&assembly.ready){
