@@ -37,12 +37,6 @@ export class CatalogRecommendationsService {
         if (JSON.stringify(persisted) !== JSON.stringify(expectedTargetVersionIds))
           throw new Error('Conflit : les recommandations ont été modifiées dans une autre fenêtre. Recharge la fiche avant de sauvegarder.');
       }
-      // Replaying the same intent must not rotate association IDs or reorder history.
-      const existingLinks = this.list(sourceVersionId);
-      if (JSON.stringify(existingLinks.map(link => link.targetVersionId)) === JSON.stringify(targetVersionIds)) {
-        this.database.exec('COMMIT;');
-        return existingLinks;
-      }
       const seen=new Set<string>();
       for (const id of targetVersionIds) {
         const target=version(id);
@@ -56,6 +50,12 @@ export class CatalogRecommendationsService {
           JOIN catalog_versions v ON v.id=c.service_version_id
           WHERE c.offer_version_id=? AND v.item_id=?`,[sourceVersionId,target.item_id]);
         if ((included?.n ?? 0)>0) throw new Error('Ce service est déjà inclus dans la composition de l’offre.');
+      }
+      // Replaying the same intent must not rotate association IDs or reorder history.
+      const existingLinks = this.list(sourceVersionId);
+      if (JSON.stringify(existingLinks.map(link => link.targetVersionId)) === JSON.stringify(targetVersionIds)) {
+        this.database.exec('COMMIT;');
+        return existingLinks;
       }
       this.database.run('DELETE FROM catalog_version_recommendations WHERE source_version_id=?',[sourceVersionId]);
       const createdAt=new Date().toISOString();
