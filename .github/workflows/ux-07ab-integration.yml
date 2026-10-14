@@ -30,3 +30,9 @@ jobs:
         run: |
           node scripts/check-ux-v2-07ab-navigation-wiring.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Native Electron Project Quote return draft guard and focus
+        shell: pwsh
+        timeout-minutes: 12
+        run: |
+          node scripts/check-ux-v2-07ab-navigation-native.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
