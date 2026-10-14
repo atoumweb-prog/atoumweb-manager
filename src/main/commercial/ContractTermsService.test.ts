@@ -68,6 +68,8 @@ describe('ContractTermsService', () => {
     expect(frozen.contractTextSnapshot).toContain('CONDITIONS PARTICULIÈRES');
     expect(frozen.contractTextSnapshot).toContain('Condition personnalisée conservée.');
     expect(contractTerms.freezeQuote(quote.id).snapshotText).toBe(frozen.contractTextSnapshot);
+    expect(contractTerms.presentation(quote.id).text).toContain(frozen.contractTextSnapshot!);
+    expect(contractTerms.presentation(quote.id).sections.some(section=>section.id==='clauses'&&section.text===frozen.contractTextSnapshot)).toBe(true);
   });
 
   it('enregistre une clause en brouillon sans alimenter les devis ni publier', () => {
