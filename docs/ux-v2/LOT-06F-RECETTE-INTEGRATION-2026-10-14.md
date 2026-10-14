@@ -20,3 +20,18 @@ Branche indépendante issue de main ; aucune fusion réalisée.
 6. Aucune fusion dans main sans décision explicite.
 
 Ce document décrit une recette à exécuter : il ne constitue pas une preuve de validation consolidée.
+
+## Vérification des HEAD et CI du 14/10/2026
+
+| Sous-lot | PR | HEAD | GitHub Actions | Contrôle |
+| --- | --- | --- | --- | --- |
+| 06A | #110 | `46e13a5` | #912 | **Échec** ; journal indisponible (BlobNotFound), ne pas valider |
+| 06B | #112 | `959f25d` | #1022 | Réussite, Electron UX-01 et A→B→A |
+| 06C | #117 | `f48a242` | #1060 | Réussite |
+| 06D | #120 | `01ab32c` | #1070 | Réussite |
+| 06E | #122 | `80868c9` | #1075 | Réussite |
+| 06F | #123 | `f7b1f5f` | #1080 | En cours à la vérification |
+
+Les comparaisons GitHub de chaque branche avec `main` indiquent zéro commit de retard au contrôle, mais cela ne certifie **pas** la compatibilité des branches entre elles. Surfaces communes : `QuotesPage.tsx` (06A/06B) et `QuoteService.test.ts` (06C/06D/06E). Les changements doivent être réunis avec contrôle de la compilation puis exécution des tests après consolidation. Éviter une simple substitution de fichier par un autre.
+
+Action prioritaire : nouvelle exécution diagnostique de 06A, puis préparation d'un candidat combiné distinct de `main` ; les CI individuelles ne constituent pas une preuve de recette 06F.
