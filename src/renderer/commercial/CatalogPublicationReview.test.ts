@@ -12,7 +12,7 @@ const version=(id:string,status:'draft'|'published',price:number|null=69900):Cat
 const item=(draft:CatalogVersion,old?:CatalogVersion):CatalogItemDetail=>({
   id:'offer1',name:'Site vitrine',type:'offer',status:'active',visiblePublic:false,
   createdAt:'2026-10-14',updatedAt:'2026-10-14',
-  currentVersion:old??draft,versions:[draft,...old?[old]:[]],
+  currentVersion:old??draft,versions:old ? [draft,old] : [draft],
 });
 
 describe('04C prépublication React sans recette graphique',()=>{
