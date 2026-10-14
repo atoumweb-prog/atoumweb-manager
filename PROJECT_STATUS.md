@@ -1,5 +1,14 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 14/10/2026 — Lot 10B : premier incrément statistiques isolé
+
+- Branche dépendante `feature/ux-v2-lot10b-statistics-load-v1`, basée sur le code 10A draft #125 ; protection des réponses tardives (statistiques simples et avancées), identification visible des chiffres d'une période précédente, tests purs d'identité de sélection. [Reprise 10B](docs/ux-v2/LOT-10B-REPRISE-2026-10-14.md). **Aucun typecheck, Vitest ni Electron 10B encore exécuté**, aucune fusion ni Validation-MSI. Suivant : contrôles techniques de cette branche puis extension 10B des périodes/drilldowns.
+
+## 14/10/2026 — Démarrage UX/UI V2 lot 10A : métriques (branche indépendante)
+
+- `feature/ux-v2-lot10a-metrics-v1` créée depuis `main@cc0bc679` pour traiter E290/E293/E297 sans toucher aux lots 04–09. Le pipeline exclut les contacts Annuaire `stage=new`; taux de devis unifié avec expirés et échantillon vide indéfini ; classement Clients désormais en centimes facturés suivis, temps seulement en départage. La valeur offerte suit la somme des écarts positifs par devis, l'onglet analytique ne promet plus la marge nette.
+- Tests unitaires ajoutés mais **pas encore exécutés** ; pas de CI, Electron Windows, Validation-MSI, fusion ni impact sur sauvegardes. [Bilan 10A](docs/ux-v2/LOT-10A-REPRISE-2026-10-14.md). Prochaine étape : PR draft/CI TypeScript+Vitest au HEAD, recette native et poursuite 10A → 10B.
+
 ## 14/10/2026 — Dernier cas de focus : ligne toujours masquée
 
 - Le correctif693f6af a passé typecheck/282 natifs avec81 frames/UX-01183. Complément final : si le filtre masque encore la ligne à la fermeture, retour à la recherche et conservation de sa valeur. Deux assertions clavier supplémentaires, sans mutation métier. Nouveau candidat à recetter puis une seule actualisation corrective107/CIautomatique, aucun rerun manuel.

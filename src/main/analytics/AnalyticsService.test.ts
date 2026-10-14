@@ -152,6 +152,40 @@ describe('AnalyticsService', () => {
     expect(snapshot.previousDelays.prospectToQuoteSample).toBe(1);
   });
 
+  it('ne compte pas une expiration historique en plus de la décision finale acceptée', () => {
+    database.run(
+      `INSERT INTO quotes (
+        id,quote_number,prospect_id,subject,status,catalog_value_cents,discount_value_cents,contract_value_cents,
+        deposit_cents,balance_cents,accepted_at,expired_at,created_at,updated_at
+      ) VALUES ('q-transition','DEV-2026-TRANS','prospect','Anciennement expiré','accepted',20000,0,20000,0,20000,
+        '2026-09-19T11:00:00.000Z','2026-09-14T11:00:00.000Z','2026-09-01T11:00:00.000Z','2026-09-19T11:00:00.000Z')`,
+    );
+    const current = analytics.commercialSnapshot({ preset: 'month' }, new Date('2026-09-21T12:00:00.000Z')).current;
+    expect(current.quotesAccepted).toBe(2);
+    expect(current.quotesRefused).toBe(0);
+    expect(current.quotesExpired).toBe(0);
+    expect(current.quoteDecisions).toBe(2);
+    expect(current.quoteAcceptancePercent).toBe(100);
+  });
+
+  it('ne double pas une décision Prospect perdu après un ancien état gagné', () => {
+    database.run(
+      `INSERT INTO prospects
+       (id,organization_id,stage,temperature,source,won_at,lost_at,lost_reason,created_at,updated_at)
+       VALUES ('p-transition','org','lost','neutral','outbound',
+       '2026-09-12T10:00:00.000Z','2026-09-18T10:00:00.000Z','Budget',
+       '2026-09-01T10:00:00.000Z','2026-09-18T10:00:00.000Z')`,
+    );
+    const snapshot = analytics.commercialSnapshot({ preset: 'month' }, new Date('2026-09-21T12:00:00.000Z'));
+    expect(snapshot.current.wonProspects).toBe(0);
+    expect(snapshot.current.lostProspects).toBe(1);
+    expect(snapshot.current.decidedProspects).toBe(1);
+    expect(snapshot.current.conversionPercent).toBe(0);
+    const outbound = snapshot.sources.find((source) => source.source === 'outbound');
+    expect(outbound).toMatchObject({ wonCount: 0, lostCount: 1, decidedCount: 1, conversionPercent: 0 });
+    expect(snapshot.lostReasons).toEqual([{ reason: 'Budget', count: 1 }]);
+  });
+
   it('calcule projets temps pauses estimation et rendement sur un échantillon cohérent', () => {
     database.run(
       `UPDATE projects

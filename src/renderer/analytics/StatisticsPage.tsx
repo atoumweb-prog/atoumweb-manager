@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   AnalyticsCommercialSnapshot,
   AnalyticsFinancialMetric,
@@ -8,6 +8,7 @@ import type {
   AnalyticsPeriodInput,
   AnalyticsPeriodPreset,
 } from '../../shared/analytics';
+import { analyticsSnapshotMatchesSelection, validateAnalyticsCustomPeriod } from '../../shared/analytics';
 
 const PRESETS: Array<{ value: AnalyticsPeriodPreset; short: string }> = [
   { value: 'today', short: 'Jour' },
@@ -125,8 +126,14 @@ function normalizedPair(metric: AnalyticsFinancialMetricValue): { current: numbe
   };
 }
 
-export function StatisticsPage({ onMessage }: { onMessage: (message: string) => void }) {
-  const [period, setPeriod] = useState<AnalyticsPeriodInput>({ preset: 'month' });
+export function StatisticsPage({ onMessage, externalPeriod, hidePeriodControls = false }: {
+  onMessage: (message: string) => void;
+  externalPeriod?: AnalyticsPeriodInput;
+  hidePeriodControls?: boolean;
+}) {
+  const [localPeriod, setPeriod] = useState<AnalyticsPeriodInput>({ preset: 'month' });
+  const period = externalPeriod ?? localPeriod;
+  const requestVersion = useRef(0);
   const [snapshot, setSnapshot] = useState<AnalyticsFinancialSnapshot | null>(null);
   const [commercial, setCommercial] = useState<AnalyticsCommercialSnapshot | null>(null);
   const [projectTime, setProjectTime] = useState<AnalyticsProjectTimeSnapshot | null>(null);
@@ -142,8 +149,15 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
     return period;
   }, [period]);
 
+  const invalidCustomPeriod = validateAnalyticsCustomPeriod(effectivePeriod);
+
   async function load(): Promise<void> {
-    if (effectivePeriod.preset === 'custom' && (!effectivePeriod.from || !effectivePeriod.to)) return;
+    // Une réponse antérieure ne doit ni changer la période visible ni masquer une erreur récente.
+    const request = ++requestVersion.current;
+    if (invalidCustomPeriod || (effectivePeriod.preset === 'custom' && (!effectivePeriod.from || !effectivePeriod.to))) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const [financialSnapshot, commercialSnapshot, projectTimeSnapshot] = await Promise.all([
@@ -151,17 +165,21 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         window.atoumweb.analytics.commercialSnapshot(effectivePeriod),
         window.atoumweb.analytics.projectTimeSnapshot(effectivePeriod),
       ]);
+      if (request !== requestVersion.current) return;
       setSnapshot(financialSnapshot);
       setCommercial(commercialSnapshot);
       setProjectTime(projectTimeSnapshot);
     } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible de calculer les statistiques.');
+      if (request === requestVersion.current) onMessage(error instanceof Error ? error.message : 'Impossible de calculer les statistiques.');
     } finally {
-      setLoading(false);
+      if (request === requestVersion.current) setLoading(false);
     }
   }
 
-  useEffect(() => { void load(); }, [effectivePeriod.preset, effectivePeriod.from, effectivePeriod.to]);
+  useEffect(() => {
+    void load();
+    return () => { requestVersion.current += 1; };
+  }, [effectivePeriod.preset, effectivePeriod.from, effectivePeriod.to]);
 
   useEffect(() => {
     if (!expandedMetricKey) return;
@@ -180,6 +198,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
   const primaryMetrics = PRIMARY_METRICS.map((key) => metricMap.get(key)).filter(Boolean) as AnalyticsFinancialMetricValue[];
   const flowMetrics = FLOW_METRICS.map((key) => metricMap.get(key)).filter(Boolean) as AnalyticsFinancialMetricValue[];
   const availableCount = snapshot?.metrics.filter((metric) => metric.available).length ?? 0;
+  const showingPreviousPeriod = !!snapshot && !analyticsSnapshotMatchesSelection(effectivePeriod, snapshot.period);
   const signed = metricMap.get('contract_signed');
   const delivered = metricMap.get('commercial_delivered');
   const gifted = metricMap.get('gifted_value');
@@ -207,20 +226,22 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
     </section>
 
     <section className="phase7-statistics-period-panel compact">
-      <div className="phase7-statistics-quick-periods" aria-label="Période statistique">
+      {!hidePeriodControls && <div className="phase7-statistics-quick-periods" aria-label="Période statistique">
         {PRESETS.map((item) => <button
           key={item.value}
           type="button"
           className={period.preset === item.value ? 'active' : ''}
           onClick={() => setPeriod({ preset: item.value })}
         >{item.short}</button>)}
-      </div>
+      </div>}
 
-      {period.preset === 'custom' && <div className="phase7-statistics-custom-dates">
+      {!hidePeriodControls && period.preset === 'custom' && <div className="phase7-statistics-custom-dates">
         <label>Du<input type="date" value={period.from ?? ''} onChange={(event) => setPeriod((current) => ({ ...current, from: event.target.value }))} /></label>
         <span>→</span>
         <label>Au<input type="date" value={period.to ?? ''} onChange={(event) => setPeriod((current) => ({ ...current, to: event.target.value }))} /></label>
       </div>}
+
+      {invalidCustomPeriod && <p role="alert" className="phase7-statistics-comparability-note">{invalidCustomPeriod}</p>}
 
       {snapshot && <div className="phase7-statistics-period-summary">
         <div><span>Période</span><strong>{dateFr(snapshot.period.from)} → {dateFr(snapshot.period.to)}</strong></div>
@@ -228,6 +249,8 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         <div><span>Comparaison</span><strong>{dateFr(snapshot.period.comparisonFrom)} → {dateFr(snapshot.period.comparisonTo)}</strong></div>
       </div>}
     </section>
+
+    {showingPreviousPeriod && <p role="status" className="phase7-statistics-comparability-note">Période en cours de sélection : les chiffres ci-dessous correspondent encore à la dernière période calculée, indiquée ci-dessus.</p>}
 
     {snapshot && <section className="phase7-statistics-overview-grid">
       <div className="phase7-statistics-glance compact">
@@ -329,11 +352,11 @@ function CommercialSection({ snapshot, open, onToggle }: {
     <button className="phase7-statistics-section-toggle" type="button" onClick={onToggle} aria-expanded={open} aria-controls="phase7-statistics-section-commercial">
       <div>
         <span className="eyebrow">Commercial</span>
-        <h3>Prospects & devis</h3>
+        <h3>Contacts, prospects & devis</h3>
         <p>Volumes bruts d’abord, pourcentages ensuite.</p>
       </div>
       <div className="phase7-statistics-section-summary commercial">
-        <span className="phase7-statistics-summary-chip tone-blue"><i>+</i><b>{current.newProspects} prospect{current.newProspects > 1 ? 's' : ''}</b></span>
+        <span className="phase7-statistics-summary-chip tone-blue"><i>+</i><b>{current.newProspects} contact{current.newProspects > 1 ? 's' : ''} créé{current.newProspects > 1 ? 's' : ''}</b></span>
         <span className="phase7-statistics-summary-chip tone-green"><i>✓</i><b>{current.wonProspects} gagné{current.wonProspects > 1 ? 's' : ''}</b></span>
         <span className="phase7-statistics-summary-chip tone-gold"><i>%</i><b>{percent(current.conversionPercent)}</b></span>
         <span className="phase7-statistics-summary-chip tone-violet"><i>▤</i><b>{current.quotesAccepted}/{current.quoteDecisions} devis</b></span>
@@ -345,7 +368,7 @@ function CommercialSection({ snapshot, open, onToggle }: {
       <CommercialCountCard
         icon="+"
         tone="blue"
-        label="Nouveaux prospects"
+        label="Contacts créés"
         current={current.newProspects}
         previous={previous.newProspects}
       />
@@ -392,10 +415,10 @@ function CommercialInsights({ snapshot }: { snapshot: AnalyticsCommercialSnapsho
 
   return <div className="phase7-statistics-commercial-insights">
     <article className="phase7-statistics-insight-card">
-      <div className="phase7-statistics-insight-heading"><div><span className="eyebrow">Origines</span><h4>D’où viennent les prospects ?</h4></div><span>{snapshot.sources.reduce((sum, item) => sum + item.prospectCount, 0)} créés</span></div>
+      <div className="phase7-statistics-insight-heading"><div><span className="eyebrow">Origines</span><h4>D’où viennent les contacts créés ?</h4></div><span>{snapshot.sources.reduce((sum, item) => sum + item.prospectCount, 0)} créés</span></div>
       <div className="phase7-statistics-source-list">
         {snapshot.sources.length > 0 ? snapshot.sources.map((item) => <div className="phase7-statistics-source-row" key={item.source}>
-          <div><strong>{SOURCE_LABELS[item.source] ?? item.source}</strong><small>{item.prospectCount} prospect{item.prospectCount > 1 ? 's' : ''}{item.decidedCount > 0 ? ` · ${percent(item.conversionPercent)} · n=${item.decidedCount}` : ''}</small></div>
+          <div><strong>{SOURCE_LABELS[item.source] ?? item.source}</strong><small>{item.prospectCount} contact{item.prospectCount > 1 ? 's' : ''}{item.decidedCount > 0 ? ` · ${percent(item.conversionPercent)} · n=${item.decidedCount}` : ''}</small></div>
           <i><b style={{ width: `${Math.max(5, (item.prospectCount / maxSource) * 100)}%` }} /></i>
         </div>) : <p className="phase7-statistics-insight-empty">Aucune source de prospect sur la période.</p>}
       </div>
