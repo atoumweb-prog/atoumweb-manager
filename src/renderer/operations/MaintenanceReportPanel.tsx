@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { MaintenanceReportData } from '../../shared/maintenanceReport';
+import { requestUnsavedExit, useUnsavedDraft } from '../unsaved/unsaved';
 import './MaintenanceReportPanel.css';
 
 function duration(seconds: number): string {
@@ -16,6 +17,15 @@ export function MaintenanceReportPanel({ periodId, onMessage }: { periodId: stri
   const [anomalies, setAnomalies] = useState('');
   const [recommendations, setRecommendations] = useState('');
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState({ summary: '', anomalies: '', recommendations: '' });
+  const draft = { summary, anomalies, recommendations };
+  const dirty = summary !== saved.summary || anomalies !== saved.anomalies || recommendations !== saved.recommendations;
+  useUnsavedDraft('Rapport de maintenance', draft, {
+    group: `maintenance-report:${periodId}`,
+    dirty,
+    pending: saving,
+    discard: () => { setSummary(saved.summary); setAnomalies(saved.anomalies); setRecommendations(saved.recommendations); },
+  });
 
   async function load(): Promise<void> {
     try {
@@ -24,6 +34,7 @@ export function MaintenanceReportPanel({ periodId, onMessage }: { periodId: stri
       setSummary(next.clientSummary ?? '');
       setAnomalies(next.anomaliesActions ?? '');
       setRecommendations(next.recommendations ?? '');
+      setSaved({ summary: next.clientSummary ?? '', anomalies: next.anomaliesActions ?? '', recommendations: next.recommendations ?? '' });
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de préparer le rapport de maintenance.');
     }
@@ -32,6 +43,8 @@ export function MaintenanceReportPanel({ periodId, onMessage }: { periodId: stri
   useEffect(() => { if (open) void load(); }, [periodId, open]);
 
   async function save(): Promise<void> {
+    if (saving) return;
+    const submitted = { summary, anomalies, recommendations };
     setSaving(true);
     try {
       const next = await window.atoumweb.maintenanceReports.updateDraft(periodId, {
@@ -40,6 +53,7 @@ export function MaintenanceReportPanel({ periodId, onMessage }: { periodId: stri
         recommendations,
       });
       setReport(next);
+      setSaved(submitted);
       onMessage('Brouillon du rapport client enregistré.');
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible d’enregistrer le rapport.');
@@ -49,7 +63,7 @@ export function MaintenanceReportPanel({ periodId, onMessage }: { periodId: stri
   }
 
   return <section className="maintenance-report-box">
-    <button className="maintenance-report-toggle" type="button" onClick={() => setOpen((value) => !value)}>
+    <button className="maintenance-report-toggle" type="button" onClick={() => { if (open) requestUnsavedExit(() => setOpen(false)); else setOpen(true); }}>
       <span><span className="eyebrow">Rapport client</span><strong>Rapport de maintenance de la période</strong></span>
       <span aria-hidden="true">{open ? '−' : '+'}</span>
     </button>
