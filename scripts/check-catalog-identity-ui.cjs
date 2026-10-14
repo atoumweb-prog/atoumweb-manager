@@ -265,6 +265,28 @@ app.whenReady().then(async () => {
       const importedDetail=document.querySelector('.catalog-import-draft');
       assert('Paramètres, inclusions et provenance importés visibles',importedDetail.open&&importedDetail.textContent.includes(importedVersion.commercialParameters.reviewTerms)&&importedDetail.textContent.includes(importedVersion.provenance.recordKey)&&importedDetail.textContent.includes(importedVersion.inclusions[0]));
       assert('Consultation du brouillon sans publication ni mutation de la version précédente',calls.publish===0&&items[0].currentVersion.id==='old-v1'&&items[0].currentVersion.priceCents===69900);
+      // 04C/04E: history comparison and explicit restoration remain non-mutating until Save.
+      const historyV1=[...document.querySelectorAll('.catalog-version-row')]
+        .find(row=>row.textContent.includes('v1'));
+      assert('04C historique version v1 disponible pour comparer',!!historyV1);
+      historyV1.querySelector('button').click();await wait();
+      assert('04C/04E comparateur historique commercial et aide visible',
+        !!document.querySelector('[aria-label="Comparer les versions du Catalogue"]')&&
+        document.body.textContent.includes('Aides à la vente'));
+      await click('Fermer la comparaison');
+      const oldConfirm=window.confirm;window.confirm=()=>true;
+      const restoreButton=[...historyV1.querySelectorAll('button')]
+        .find(button=>button.textContent==='Reprendre dans un brouillon');
+      restoreButton.click();await wait();window.confirm=oldConfirm;
+      assert('04C restauration historique prépare un brouillon sans publication',
+        !!document.querySelector('.catalog-version-editor')&&
+        calls.publish===0&&items[0].currentVersion.id==='old-v1'&&
+        items[0].currentVersion.description==='Ancienne offre');
+      await click('Contenu & périmètre');
+      assert('04C contenu ancien repris localement',field('Description').value==='Ancienne offre');
+      await click('Annuler');await click('Historique');
+      assert('04E aucune écriture lors de la comparaison et restauration non sauvée',
+        items[0].versions.find(version=>version.id==='old-v1').description==='Ancienne offre');
       // Lot 04B: the existing catalogue editor is still usable; exercise the new organized view
       // with synthetic, non-persisted entries only after all the historical identity assertions.
       document.querySelector('.catalog-detail-heading-actions .close-detail').click();await wait();
