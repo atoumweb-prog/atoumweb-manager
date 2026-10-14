@@ -6,6 +6,7 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}
  const {dialog}=require('electron');
  const repack=require('./lot09e-repack-word.cjs');
  const exportPath=path.join(temp,'09e-brouillon-word.docx');
+ const pdfPath=path.join(temp,'09e-travail-non-signe.pdf');
  const editedPath=path.join(temp,'09e-corrige-word.docx');
  const initial='Un texte Word original 09E';
  const corrected='Un texte Word corrigé 09E';
@@ -15,7 +16,7 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}
  );
  const original=clause.versions[0];
  const realSave=dialog.showSaveDialog,realOpen=dialog.showOpenDialog;
- dialog.showSaveDialog=async()=>({canceled:false,filePath:exportPath});
+ dialog.showSaveDialog=async options=>({canceled:false,filePath:options?.filters?.[0]?.extensions?.includes('pdf')?pdfPath:exportPath});
  let selectionPath=exportPath,cancelNext=false;
  dialog.showOpenDialog=async()=>cancelNext?(cancelNext=false,{canceled:true,filePaths:[]}):
   ({canceled:false,filePaths:[selectionPath]});
@@ -30,6 +31,10 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}
   await wait('document.querySelector("textarea[aria-label=\\"Texte du module à versionner\\"]")?.value.includes('+JSON.stringify(initial)+')','original draft hydration');
   test(await get('document.querySelector(".aw-word-draft-panel")?.textContent.includes("nouvelle version brouillon")'),
    '09E-UI-01: source is visibly draft-only');
+  await button('PDF de travail');
+  for(let i=0;i<80&&!fs.existsSync(pdfPath);i++)await sleep(50);
+  test(fs.existsSync(pdfPath)&&fs.readFileSync(pdfPath).subarray(0,5).toString()==='%PDF-',
+   '09E-UI-PDF: genuine sandboxed non-official working PDF rendered in TEMP');
   await button('Exporter ce brouillon');
   for(let i=0;i<80&&!fs.existsSync(exportPath);i++)await sleep(50);
   test(fs.existsSync(exportPath),'09E-UI-02: native save dialog produced a real DOCX in TEMP');
