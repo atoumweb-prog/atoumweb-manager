@@ -21,9 +21,12 @@ export function quoteRecommendationState(
   const included=offerComponents(source).find(c=>c.serviceItemId===target.targetItemId);
   if(included && !included.isOptional)return 'included';
   if(included?.isOptional) {
-    return lines.some(line=>line.optionPurchase?.sourceOfferLineId===source.id
-      &&line.optionPurchase.sourceComponentId===included.componentId)
-      ?'option-purchased':'option-available';
+    if(lines.some(line=>line.optionPurchase?.sourceOfferLineId===source.id
+      &&line.optionPurchase.sourceComponentId===included.componentId))return 'option-purchased';
+    // A service already present on a separate Quote line is not an unpurchased
+    // option to buy again. Preserve the original provenance of that line.
+    if(lines.some(line=>line.id!==source.id&&sameItem(line)))return 'already-added';
+    return 'option-available';
   }
   if(lines.some(line=>line.id!==source.id&&sameItem(line)))return 'already-added';
   if(target.targetVersionStatus!=='published'||target.targetItemStatus!=='active')
