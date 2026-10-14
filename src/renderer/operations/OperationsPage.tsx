@@ -97,6 +97,8 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
   const [interventionDemoMode, setInterventionDemoMode] = useState(false);
   const requestDetailRef = useRef<HTMLDivElement | null>(null);
   const interventionDetailRef = useRef<HTMLDivElement | null>(null);
+  const refreshGeneration = useRef(0);
+  const interventionWriteGeneration = useRef(0);
 
   const [requestClientId, setRequestClientId] = useState('');
   const [requestProjectId, setRequestProjectId] = useState('');
@@ -125,18 +127,21 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
 
   async function refresh(options: { showLoading?: boolean } = {}): Promise<boolean> {
     const showLoading = options.showLoading ?? true;
+    const generation = ++refreshGeneration.current;
+    const writeAtStart = interventionWriteGeneration.current;
     if (showLoading) setLoading(true);
     try {
       const [nextRequests, nextInterventions, nextClients, nextProjects] = await Promise.all([
         window.atoumweb.operations.requests.list(), window.atoumweb.operations.interventions.list(), window.atoumweb.crm.clients.list(), window.atoumweb.projects.projects.list(),
       ]);
+      if (generation !== refreshGeneration.current || writeAtStart !== interventionWriteGeneration.current) return false;
       setRequests(nextRequests); setInterventions(nextInterventions); setClients(nextClients); setProjects(nextProjects);
-      if (selectedRequest) setSelectedRequest(nextRequests.find((item) => item.id === selectedRequest.id) ?? null);
-      if (selectedIntervention) setSelectedIntervention(nextInterventions.find((item) => item.id === selectedIntervention.id) ?? null);
+      setSelectedRequest((current) => current ? nextRequests.find((item) => item.id === current.id) ?? null : null);
+      setSelectedIntervention((current) => current ? nextInterventions.find((item) => item.id === current.id) ?? current : null);
       setAlertRefreshKey((value) => value + 1);
       return true;
-    } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de charger les opérations.'); return false; }
-    finally { if (showLoading) setLoading(false); }
+    } catch (error) { if (generation === refreshGeneration.current) onMessage(error instanceof Error ? error.message : 'Impossible de charger les opérations.'); return false; }
+    finally { if (showLoading && generation === refreshGeneration.current) setLoading(false); }
   }
 
   useEffect(() => { void refresh({ showLoading: true }); }, []);
@@ -323,20 +328,39 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
 
   async function changeInterventionStatus(status: InterventionStatus): Promise<boolean> {
     if (!selectedIntervention) return false;
+    const interventionId = selectedIntervention.id;
+    let updated: Intervention;
     try {
-      const updated = status === 'completed'
-        ? await window.atoumweb.operations.interventions.complete(selectedIntervention.id)
-        : await window.atoumweb.operations.interventions.changeStatus(selectedIntervention.id, status);
-      setSelectedIntervention(updated);
-      setInterventions((current) => current.map((item) => item.id === updated.id ? updated : item));
-      const refreshed = await refresh({ showLoading: false });
-      if (status === 'completed') {
-        onMessage(refreshed
-          ? `${updated.number} terminée · prise en charge traitée.`
-          : `${updated.number} terminée dans les données, mais l’actualisation des listes a échoué. Vérifie les données avant toute nouvelle action.`);
+      updated = status === 'completed'
+        ? await window.atoumweb.operations.interventions.complete(interventionId)
+        : await window.atoumweb.operations.interventions.changeStatus(interventionId, status);
+    } catch (error) {
+      if (status !== 'completed') {
+        onMessage(error instanceof Error ? error.message : 'Impossible de modifier le statut.');
+        return false;
       }
-      return true;
-    } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de modifier le statut.'); return false; }
+      try {
+        const current = await window.atoumweb.operations.interventions.get(interventionId);
+        if (current.status !== 'completed') {
+          onMessage(`Clôture non confirmée : ${current.number} est toujours « ${INTERVENTION_STATUS_LABELS[current.status]} ». Vérifie avant de relancer.`);
+          return false;
+        }
+        updated = current;
+      } catch {
+        onMessage('Résultat de clôture inconnu : la confirmation et la relecture ont échoué. Vérifie le statut avant toute nouvelle tentative.');
+        return false;
+      }
+    }
+    interventionWriteGeneration.current += 1;
+    setSelectedIntervention((current) => current?.id === updated.id ? updated : current);
+    setInterventions((current) => current.map((item) => item.id === updated.id ? updated : item));
+    const refreshed = await refresh({ showLoading: false });
+    if (status === 'completed') {
+      onMessage(refreshed
+        ? `${updated.number} terminée · prise en charge traitée.`
+        : `${updated.number} terminée dans les données, mais l’actualisation des listes n’a pas été confirmée. Vérifie avant toute nouvelle action.`);
+    }
+    return true;
   }
 
   async function changeCoverage(coverageMode: InterventionCoverageMode): Promise<void> {
