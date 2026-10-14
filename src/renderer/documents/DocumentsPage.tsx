@@ -308,7 +308,7 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
         <small>Types, clauses et versions canoniques existants</small>
       </button>
       <button type="button" className="documents-entry" onClick={() => draft.request(() => setLibraryOpen(true))}>
-        <OperationIcon name="edit" size={22} />
+        <OperationIcon name="code" size={22} />
         <strong>Éditeur contractuel</strong>
         <small>Brouillons et modules dans la bibliothèque existante</small>
       </button>
