@@ -65,3 +65,25 @@ Proposition privilégiée **A — registre `catalog_categories` avec identifiant
 `src/shared/catalogCategoryRules.ts` contient les règles pures de normalisation et l'inventaire des collisions ; `catalogCategoryRules.test.ts` en définit les assertions. Elles n'ont **aucun effet sur la base**.
 
 **Décision en attente :** valider le registre avec identité stable et le mécanisme de réconciliation, après mesure des collisions réelles sur fixtures. Le 04B n'est pas « terminé » tant que cette décision et R04B-03 à R04B-06 ne sont pas couvertes.
+
+## 7. Incrément de mise en œuvre du 14/10 — à recetter
+
+La proposition du présent document est désormais **partiellement implémentée dans la PR #104, toujours draft**, et ne doit plus être lue comme un schéma encore purement théorique. Aucune migration réelle n'a été appliquée à Validation-MSI.
+
+- Migration **67** `src/main/database/catalogCategoryAdminMigration.ts` : registre des catégories administrées à identité stable, lien nullable `catalog_items.category_id`, journal détaillé. **Pas de backfill automatique** ; le champ brut `category` n'est pas supprimé.
+- `CatalogCategoryService.ts` : CRUD gouverné, CAS de révision, refus des catégories archivées pour les affectations, conservation des anciennes catégories non rapprochées et réconciliation sur liste complète d'IDs validés, transactionnelle et auditée.
+- `src/shared/catalogCategoryAdministration.ts`, `src/main/ipc.ts`, `src/preload/preload.ts` : contrats et chemins typés, aucune nouvelle surface exposée aux modules Devis/Prospect en écriture.
+- `CatalogCategoryManagement.tsx` et `CatalogCategoryInventory.tsx` : opérations confirmées, erreurs visibles et garde UX-01 pour les saisies ; aperçu des prestations concernées par renommage et maintien des associations à l'archivage.
+- **R04B-03** : création Service/Offre dans une catégorie enregistrée via `CatalogPage` et `CatalogService.create`, sous le **même savepoint SQLite que le premier brouillon** ; le champ libre préexistant reste disponible pour l'historique. Refus de catégorie introuvable, renommée ou archivée, sans création partielle.
+- Tests dans `CatalogCategoryService.test.ts` : doublons normalisés, conservation ID/version, CAS, détection des changements, archives/restauration, rollback, absence de réconciliation silencieuse, FK, préservation des lignes/snapshots des Devis dans une fixture in-memory.
+- Recette Electron `scripts/check-catalog-identity-ui.cjs` : tests d'ouverture et cycle E95 à partir de services IPC **mockés**, distincts des tests SQLite du véritable backend, puis test de création dans une catégorie sélectionnée.
+
+### Distinguer les validations et le périmètre des preuves
+
+- **CI #820** : verte sur le socle de présentation **avant** migration et administration E95.
+- **CI #842** : verte sur l'éditeur E95 et la recette Electron mockée **avant** l'extension R04B-03 de création atomique.
+- Les commits ultérieurs (création atomique, compatibilité de schéma pré-67, test de non-réécriture des Devis) **doivent disposer de leur propre CI verte** sur le SHA final.
+- Les scénarios complets Prospect, Devis accepté réel → Projet et les **3 thèmes × 3 densités** avec captures humaines restent à certifier.
+- L'identifiant de migration **67 n'est valable que sur le `main@b2796812` actuel** : toute convergence avec les travaux Codex 03D/03E doit vérifier les collisions de numérotation et rejouer migrations/FK sur le merge exact.
+
+**Ce dossier est un historique de conception et mise en œuvre, pas une autorisation de fusion ni un procès-verbal de recette complète.**
