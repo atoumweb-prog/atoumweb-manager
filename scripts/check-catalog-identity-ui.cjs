@@ -113,6 +113,7 @@ window.atoumweb={catalogCategories:categoryApi,catalog:{
   },
   assignCanonicalCode:async(id,code)=>{calls.assign.push({id,code});if(!/^AW-[A-Z0-9-]+$/.test(code))throw Error('Code canonique invalide');const item=items.find(i=>i.id===id);item.canonicalCode=code;item.identityProvenance={reference:'manual'};return structuredClone(item)},
   publishVersion:async()=>{calls.publish++},listOfferComponents:async()=>[],
+  listRecommendations:async()=>[],replaceRecommendations:async()=>[],
   listProductionBlueprints:async()=>[],
   setStatus:async(id,status)=>{const item=items.find(x=>x.id===id);calls.statuses.push({id,status});item.status=status;return structuredClone(item)},
   setVisiblePublic:async(id,visible)=>{const item=items.find(x=>x.id===id);item.visiblePublic=visible;return structuredClone(item)}, 
