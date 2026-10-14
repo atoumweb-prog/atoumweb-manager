@@ -6,6 +6,7 @@ import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
 import { CatalogService } from './CatalogService';
 import { CatalogRecommendationsService } from './CatalogRecommendationsService';
+import { resolveProspectCatalogRecommendations } from '../../shared/catalogProspectRecommendations';
 
 let db:NodeSqliteAdapter;
 let catalog:CatalogService;
@@ -43,6 +44,23 @@ describe('04D — versioned recommendation persistence',()=>{
       restored?.close();
       rmSync(dir,{recursive:true,force:true});
     }
+  });
+  it('offers a published service to Prospect needs without creating a Devis or Project',()=>{
+    const source=catalog.create({type:'offer',name:'Pack principal'},{
+      priceMode:'fixed',priceCents:69900,
+    });
+    const target=create('SEO additionnel');
+    catalog.publishVersion(target.versions[0].id);
+    recommendations.replace(source.versions[0].id,[target.versions[0].id],[]);
+    catalog.publishVersion(source.versions[0].id);
+    const managedLinks=recommendations.list(source.versions[0].id);
+    const suggested=resolveProspectCatalogRecommendations(
+      catalog.list({status:'active'}),[source.id],
+      managedLinks.map(link=>link.targetVersionId),[],
+    );
+    expect(suggested.map(item=>item.id)).toEqual([target.id]);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+    expect(db.get<{n:number}>('SELECT count(*) AS n FROM quotes')?.n).toBe(0);
   });
   it('saves recommendations in the source draft only, referencing published versions',()=>{
     const source=create('Source');
