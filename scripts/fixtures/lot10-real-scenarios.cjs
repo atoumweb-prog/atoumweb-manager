@@ -148,6 +148,41 @@ module.exports = async ({ win, db, evalUI: js, get, wait, navigate, test, sleep 
   test(await get('document.querySelector(".statistics-client-card th[aria-sort=descending]")?.textContent.includes("Temps")'),
     'Lot 10B: état aria-sort clavier exposé sur la bonne colonne');
 
+  // R10C intervention : vrai IPC + SQLite TEMP, sans archive physique créée.
+  const beforeIntervention = db.businessBackups.create({
+    clientAccountId: firstClient.id,
+    backupType: 'complete',
+    label: 'LOT10 RÉFÉRENCE EXISTANTE AVANT',
+    backupAt: new Date(Date.now() - 86400000).toISOString(),
+  });
+  const intervention = db.operations.createIntervention({
+    clientAccountId: firstClient.id,
+    type: 'modification',
+    subject: 'LOT10 CONTRÔLE PRÉVENTIF',
+  });
+  await navigate('Sauvegardes');
+  await wait('!![...document.querySelectorAll(".business-backups-interventions select option")].find(e=>e.value==='+JSON.stringify(intervention.id)+')', 'intervention de la fixture disponible');
+  await js(`const s=document.querySelector(".business-backups-interventions select");Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,"value").set.call(s,${JSON.stringify(intervention.id)});s.dispatchEvent(new Event("change",{bubbles:true}));`);
+  await wait('document.querySelector(".business-backups-intervention-review")?.textContent.includes("Sauvegarde avant intervention à confirmer")', 'alerte avant intervention réelle');
+  test(await get('document.querySelector(".business-backups-intervention-evidence")?.textContent.includes("Aucune référence associée")'), 'Lot 10C: référence avant intervention initialement absente');
+  await js("const b=[...document.querySelectorAll('.business-backup-row')].find(e=>e.textContent.includes('LOT10 RÉFÉRENCE EXISTANTE AVANT'));if(!b)throw Error('Fiche préexistante absente');b.click();");
+  await wait('!!document.querySelector(".business-backups-intervention-link")', 'fiche existante sélectionnée');
+  await js("const b=[...document.querySelectorAll('.business-backups-intervention-link button')].find(e=>e.textContent.includes('Associer avant'));if(!b||b.disabled)throw Error('Association avant inaccessible');b.click()");
+  await wait('!!document.querySelector(".business-backups-link-confirmation")', 'confirmation préalable au lien');
+  test(db.database.get('SELECT COUNT(*) AS total FROM backup_intervention_links WHERE intervention_id=?',[intervention.id]).total === 0, 'Lot 10C: premier clic sans modification de lien SQLite');
+  await js("const b=[...document.querySelectorAll('.business-backups-link-confirmation button')].find(e=>e.textContent.includes('Confirmer'));if(!b)throw Error('Confirmation absente');b.click()");
+  await wait('document.querySelector(".business-backups-intervention-evidence")?.textContent.includes("LOT10 RÉFÉRENCE EXISTANTE AVANT")', 'association pré-intervention visible');
+  test(db.businessBackupAlerts.reviewIntervention(intervention.id).preInterventionBackup?.id === beforeIntervention.id, 'Lot 10C: liaison sauvegarde avant enregistrée dans SQL TEMP');
+  test(db.database.get('SELECT COUNT(*) AS total FROM backup_intervention_links WHERE intervention_id=?',[intervention.id]).total === 1, 'Lot 10C: association sans duplication');
+  test(db.businessBackups.get(beforeIntervention.id).locations.length === 0, 'Lot 10C: la liaison ne crée aucune copie physique');
+  db.operations.changeInterventionStatus(intervention.id,'completed');
+  await navigate('Réglages');
+  await navigate('Sauvegardes');
+  await wait('!![...document.querySelectorAll(".business-backups-interventions select option")].find(e=>e.value==='+JSON.stringify(intervention.id)+')', 'intervention clôturée dans la liste');
+  await js(`const s=document.querySelector(".business-backups-interventions select");Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,"value").set.call(s,${JSON.stringify(intervention.id)});s.dispatchEvent(new Event("change",{bubbles:true}));`);
+  await wait('document.querySelector(".business-backups-intervention-review")?.textContent.includes("Nouvelle version stable à envisager")', 'alerte post-validation réelle');
+  test(await get('document.querySelector(".business-backups-intervention-evidence")?.textContent.includes("Aucune référence associée")'), 'Lot 10C: avertissement post-intervention distinct du lien avant');
+
   test(db.database.get('PRAGMA integrity_check').integrity_check === 'ok', 'Lot 10: intégrité SQLite du fixture');
   test(db.database.all('PRAGMA foreign_key_check').length === 0, 'Lot 10: clés étrangères du fixture');
 };
