@@ -64,6 +64,23 @@ module.exports = async ({ win, db, evalUI: js, get, wait, navigate, test, sleep 
   await wait('document.querySelectorAll(".theme-card").length===3 && document.querySelectorAll(".density-card").length===3', 'tous les réglages restaurés');
   test(await get('!!document.querySelector(".settings-grid .path-value")'), 'Lot 10D: la recherche n’efface pas le workspace courant');
 
+  // R10D-E309 Documents & Avancé : chemins du workspace et diagnostic IPC en lecture seule.
+  test(await get('document.querySelector(".settings-documents")?.textContent.includes("clients") && document.querySelector(".settings-documents")?.textContent.includes("exports")'),
+    'Lot 10D: sous-dossiers Documents réels décrits sans inventer une conservation globale');
+  test(await get('document.querySelector(".settings-advanced")?.textContent.includes("Migrations appliquées") && document.querySelector(".settings-advanced")?.textContent.includes("lecture seule")'),
+    'Lot 10D: états et version exposés sans opération SQLite mutable');
+  const beforeRead = db.database.get('SELECT COUNT(*) AS total FROM backup_records').total;
+  await js("document.getElementById('settings-read-diagnostics').click()");
+  await wait('document.querySelector(".settings-advanced")?.textContent.includes("Migrations à la dernière lecture")', 'diagnostic SQLite IPC actuel');
+  test(await get('!document.querySelector(".settings-diagnostic-error")'),
+    'Lot 10D: diagnostic IPC lu sans erreur affichée');
+  test(db.database.get('SELECT COUNT(*) AS total FROM backup_records').total === beforeRead,
+    'Lot 10D: le diagnostic n’ajoute aucun enregistrement de sauvegarde');
+  await js("document.getElementById('settings-open-documents').click()");
+  await wait('document.querySelector(".page-heading h1")?.textContent==="Documents & Contrats"', 'navigation Documents depuis Réglages');
+  await navigate('Réglages');
+  await wait('!!document.querySelector(".settings-documents")', 'retour Réglages après Documents');
+
   // R10D-09/10 : stockage réellement disponible, disposition Clients seulement.
   await wait('!!document.querySelector(".settings-navigation")', 'préférences navigation dans réglages');
   const railBefore = await get('document.querySelector(".aw-navigation-rail")?.dataset.railCollapsed');
