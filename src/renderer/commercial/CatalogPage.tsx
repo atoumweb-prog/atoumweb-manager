@@ -19,6 +19,7 @@ import {
 import { FieldHelp } from '../ui/FieldHelp';
 import { CatalogOverview } from './CatalogOverview';
 import { CatalogCategoryInventory } from './CatalogCategoryInventory';
+import type { CatalogCategoryRecord } from '../../shared/catalogCategoryAdministration';
 import { catalogAdminCategories, catalogAdminFiltered } from './catalogAdminFilters';
 import { catalogueCategoryName } from './catalogDisplay';
 
@@ -152,6 +153,9 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   const [detail, setDetail] = useState<CatalogItemDetail | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [draft, setDraft] = useState<CatalogDraft>(EMPTY_DRAFT);
+  const [createCategoryId, setCreateCategoryId] = useState('');
+  const [createCategoryChoices, setCreateCategoryChoices] = useState<CatalogCategoryRecord[]>([]);
+  const [createCategoryLoadError, setCreateCategoryLoadError] = useState('');
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [versionMode, setVersionMode] = useState(false);
@@ -213,6 +217,16 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   }
 
   useEffect(() => { void refresh(); }, []);
+  useEffect(() => {
+    if (!showForm) return;
+    let alive = true;
+    window.atoumweb.catalogCategories.list().then(list => {
+      if (alive) { setCreateCategoryChoices(list); setCreateCategoryLoadError(''); }
+    }).catch(error => {
+      if (alive) { setCreateCategoryChoices([]); setCreateCategoryLoadError(error instanceof Error ? error.message : 'Catégories administrées indisponibles.'); }
+    });
+    return () => { alive = false; };
+  }, [showForm]);
   useEffect(()=>{
     if(!initialId)return;
     setSelectedId(initialId);
@@ -311,11 +325,13 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
           canonicalCode: draft.canonicalCode.trim() || null,
           name: draft.name.trim(),
           category: draft.category.trim() || null,
+          categoryId: createCategoryId || null,
           visiblePublic: draft.visiblePublic,
         },
         buildVersion(draft),
       );
       setDraft(EMPTY_DRAFT);
+      setCreateCategoryId('');
       createGuard.saved(EMPTY_DRAFT);
       setShowForm(false);
       await refresh();
@@ -514,7 +530,27 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
       {showForm && (
         <form className="panel catalog-form" onSubmit={(event) => void createItem(event)}>
           <div className="panel-title"><div><span className="eyebrow">Catalogue</span><h2>Créer un Service ou une Offre</h2><p className="muted">La première version est créée en brouillon. Tu la publies après vérification.</p></div></div>
-          <fieldset disabled={saving}><CatalogFields draft={draft} onChange={setDraft} showIdentity /></fieldset>
+          <fieldset disabled={saving}>
+            <label className="catalog-category-create-choice">Catégorie métier administrée
+              <select aria-label="Catégorie métier administrée" value={createCategoryId} onChange={event => {
+                const id = event.target.value;
+                const selected = createCategoryChoices.find(category => category.id === id);
+                setCreateCategoryId(id);
+                if (selected) setDraft(current => ({ ...current, category: selected.name }));
+              }}>
+                <option value="">Choisir une catégorie existante (facultatif)</option>
+                {createCategoryChoices.filter(category => category.status === 'active').map(category => (
+                  <option key={category.id} value={category.id}>{category.name}</option>
+                ))}
+              </select>
+            </label>
+            {createCategoryLoadError && <p className="muted" role="status">Registre indisponible : {createCategoryLoadError}. La catégorie libre reste utilisable.</p>}
+            <CatalogFields draft={draft} onChange={next => {
+              if (createCategoryId && next.category !== draft.category) setCreateCategoryId('');
+              setDraft(next);
+            }} showIdentity />
+            {createCategoryId && <p className="muted">Catégorie stable sélectionnée : le service et son brouillon seront créés dans une seule transaction.</p>}
+          </fieldset>
           {formError && <p className="form-error">{formError}</p>}
           <div className="form-actions"><button className="primary-button" disabled={saving} type="submit">{saving ? 'Création…' : 'Créer le brouillon'}</button></div>
         </form>
