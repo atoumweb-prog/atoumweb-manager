@@ -144,6 +144,60 @@ describe('AtoumWebCompositionPackageService', () => {
     expect(database.get<{ total: number }>('SELECT COUNT(*) total FROM project_page_exports WHERE id=?', [exported.exportId!])?.total).toBe(1);
   });
 
+  it('R07G-22 exporte trois occurrences ordonnées, destination exacte et nouveaux exportId sans écrasement', () => {
+    const sources = [
+      reusable('En-tête', 'header', 'r07g-header'),
+      reusable('Hero', 'hero', 'r07g-hero'),
+      reusable('Pied de page', 'footer', 'r07g-footer'),
+    ];
+    const project = projectService.createInternal({ name: 'R07G trois composants' });
+    const updated = projectService.addProjectNode(project.id, {
+      type: 'module', displaySubtype: 'page', name: 'Accueil', semanticKey: 'r07g.home',
+    });
+    const page = updated.nodes.find(node => node.semanticKey === 'r07g.home')!;
+    const site = projectSites.create(project.id, { name: 'Site R07G' });
+    projectSites.linkPage(site.id, page.id, { role: 'home' });
+    let composition = compositions.ensureForProjectPage(page.id);
+    for (const item of sources) composition = compositions.addItem(composition.id, { libraryItemId: item.id });
+
+    const first = projectPackages.exportPagePackage(page.id);
+    const firstBytes = readZipArchive(first.path).find(entry => entry.name === 'manifest.json')!.data.toString('utf8');
+    const second = projectPackages.exportPagePackage(page.id);
+    const manifest = JSON.parse(readZipArchive(second.path).find(entry => entry.name === 'manifest.json')!.data.toString('utf8'));
+
+    expect(first.exportId).toMatch(/^awexp:/);
+    expect(second.exportId).toMatch(/^awexp:/);
+    expect(second.exportId).not.toBe(first.exportId);
+    expect(second.path).not.toBe(first.path);
+    expect(readZipArchive(first.path).find(entry => entry.name === 'manifest.json')!.data.toString('utf8')).toBe(firstBytes);
+    expect(manifest.destination).toEqual({projectId: project.id, siteId: site.id, pageId: page.id});
+    expect(manifest.exportId).toBe(second.exportId);
+    expect(manifest.components).toHaveLength(3);
+    expect(manifest.components.map((item: {compositionItemId: string}) => item.compositionItemId))
+      .toEqual(composition.items.map(item => item.id));
+    expect(manifest.components.map((item: {sortOrder: number}) => item.sortOrder)).toEqual([0,1,2]);
+    expect(manifest.components.map((item: {files: {html: {path:string}}}) => item.files.html.path))
+      .toEqual(['components/001/component/component.html','components/002/component/component.html','components/003/component/component.html']);
+    expect(database.all<{id:string}>(
+      'SELECT id FROM project_page_exports WHERE project_node_id=? ORDER BY created_at,id',[page.id],
+    ).map(row => row.id).sort()).toEqual([first.exportId,second.exportId].sort());
+  });
+
+  it('R07G-21 refuse aussi les Sites archivés et les compositions vides sans historique d export', () => {
+    const source = reusable('Hero refus', 'hero', 'refusal');
+    const project = projectService.createInternal({name:'R07G refus export'});
+    const updated = projectService.addProjectNode(project.id,{type:'module',displaySubtype:'page',name:'Page test'});
+    const page = updated.nodes.find(node => node.displaySubtype==='page')!;
+    const site = projectSites.create(project.id,{name:'Site à archiver'});
+    projectSites.linkPage(site.id,page.id,{role:'standard'});
+    const composition = compositions.ensureForProjectPage(page.id);
+    expect(() => projectPackages.exportPagePackage(page.id)).toThrow(/au moins un composant/);
+    projectSites.setArchived(site.id,true);
+    compositions.addItem(composition.id,{libraryItemId:source.id});
+    expect(() => projectPackages.exportPagePackage(page.id)).toThrow(/Site actif.*composition/i);
+    expect(database.all('SELECT id FROM project_page_exports WHERE project_node_id=?',[page.id])).toHaveLength(0);
+  });
+
   it('refuse un export Page sans Site actif ou sans composition', () => {
     const project = projectService.createInternal({ name: 'Projet incomplet' });
     const updated = projectService.addProjectNode(project.id, { type: 'module', displaySubtype: 'page', name: 'Page isolée' });
