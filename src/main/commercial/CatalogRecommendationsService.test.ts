@@ -108,6 +108,11 @@ describe('04D — versioned recommendation persistence',()=>{
     const rows=recommendations.replace(sourceId,[targetId],[],details);
     expect(rows).toMatchObject([{reason:details[0].reason,status:'paused',conditions:details[0].conditions,provenance:'manual'}]);
     expect(recommendations.replace(sourceId,[targetId],[targetId],details)).toEqual(rows);
+    expect(()=>recommendations.replace(sourceId,[targetId],[targetId],
+      [{...details[0],reason:'Intervenant concurrent'}],
+      [{...details[0],reason:'Ancienne valeur de motif'}]))
+      .toThrow(/Conflit/);
+    expect(recommendations.list(sourceId)[0].reason).toBe(details[0].reason);
     expect(db.get<{n:number}>('SELECT count(*) AS n FROM quotes')?.n).toBe(0);
     expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
     const next=catalog.createVersion(source.id,{priceMode:'fixed',priceCents:9900});
