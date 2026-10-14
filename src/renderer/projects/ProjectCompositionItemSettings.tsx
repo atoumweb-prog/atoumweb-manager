@@ -1,4 +1,5 @@
 import { buildComponentPreview } from './componentPreview';
+import { useUnsavedDraft } from '../unsaved/unsaved';
 import {
   extractComponentTexts,
   extractComponentVisuals,
@@ -232,6 +233,12 @@ export function ProjectCompositionItemSettings({
   const saved = item.hasLocalChanges ? { html: item.localHtml ?? '', css: item.localCss ?? '', javascript: item.localJavascript ?? '' } : base;
   const dirty = draft.html !== saved.html || draft.css !== saved.css || draft.javascript !== saved.javascript
     || note.trim() !== (item.localSettings.note ?? '');
+  const unsaved = useUnsavedDraft('Réglages de composant', { draft, note }, {
+    group: 'project-composition',
+    ready: !loading,
+    pending: busy,
+    dirty,
+  });
 
   useEffect(() => {
     if (!loading) onDraftChange?.(draft);
@@ -287,6 +294,7 @@ export function ProjectCompositionItemSettings({
           settings,
         },
       );
+      unsaved.saved({ draft, note });
       onUpdated(updated);
       onMessage('Changements du bloc validés et enregistrés localement.');
     } catch (error) {
@@ -307,6 +315,7 @@ export function ProjectCompositionItemSettings({
       setVisuals(extractComponentVisuals(base.html));
       setBaseVisuals(extractComponentVisuals(base.html));
       setNote('');
+      unsaved.saved({ draft: base, note: '' });
       onUpdated(updated);
       onMessage('Bloc réinitialisé exactement à la version Bibliothèque de départ.');
     } catch (error) {
