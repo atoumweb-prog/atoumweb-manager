@@ -73,3 +73,24 @@
 5. Finaliser R04B-01 à R04B-15 et réaliser la revue métier humaine ; **ne pas fusionner en l'état**.
 
 **Document de traçabilité : il ne vaut pas rapport de recette exécutée.**
+
+## 6. Incrément E94 — inventaire réel des catégories (suite du 14/10)
+
+L'inventaire est désormais intégré dans **Offres & Tarifs** via le bouton **Catégories existantes**, en lecture seule. Il utilise le tableau chargé par le service déjà présent et n'introduit ni appel IPC ni effet SQL. Il indique les valeurs persistées **sans les normaliser de force** : `SEO` et ` SEO ` restent distinctes, même si elles peuvent être candidates à une réconciliation. Des alertes explicites signalent les collisions par normalisation et celles dues aux alias d'affichage.
+
+- `src/renderer/commercial/catalogCategoryInventory.ts` : comptage par valeur brute et statut, recensement des collisions et des éléments sans catégorie, projection pure.
+- `src/renderer/commercial/CatalogCategoryInventory.tsx` : panneau consultable, tableau, statut, avertissements, bouton « Voir les prestations » qui réutilise le filtrage existant.
+- `CatalogPage.tsx` : bascule de panneau sans démonter la fiche ou effacer les saisies en cours ; filtre de catégorie par **valeur brute**, libellé affiché avec le code d'origine pour lever l'ambiguïté.
+- `catalogSections.ts`, `catalogAdminFilters.ts` : ne fusionnent plus implicitement les libellés bruts qui ne diffèrent que par des espaces.
+- `CatalogCategoryInventory.test.tsx` : couverture du compteur actif/archivé, alias, valeurs brutes et rendu informatif sans faux bouton de modification.
+
+**Ne pas confondre ceci avec E95 terminé :** créer/renommer/archiver/restaurer des catégories demeure absent, conformément à la nécessité d'un schéma contrôlé et d'un arbitrage métier avant migration.
+
+### Observations CI, distinctions impératives
+
+- CI #797/#799/#800/#802 : échecs documentés de la **vieille fixture Electron Catalogue** après ouverture de fiche. Typecheck/Vitest passaient ; la fixture a été complétée avec les mocks CGV et UX-01 nécessaires, sans neutralisation des vérifications.
+- CI #808 : un test de tri des variantes `Contenu/contenu` attendait un ordre inexact ; assertion corrigée.
+- CI #809 : timeout ponctuel (5 s) dans `src/main/projects/OperationalRecipeService.test.ts`, **sans modification de ce module par la branche 04B**. À confirmer par rejeu sur SHA identique ; ne pas masquer en relevant globalement les timeouts.
+- Recette native et contrôle 3 thèmes × 3 densités **restent non acquises** tant que les logs du HEAD final ne montrent pas explicitement leur succès.
+
+**Aucun merge vers `main` sans bilan de recette sur SHA exact et validation humaine.**
