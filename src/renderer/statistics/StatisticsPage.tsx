@@ -177,8 +177,8 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
 
   const newProspects = ranged(data.prospects, range, (item) => item.createdAt);
   const previousProspects = previousRange ? ranged(data.prospects, previousRange, (item) => item.createdAt) : [];
-  const won = ranged(data.prospects, range, (item) => item.wonAt);
-  const lost = ranged(data.prospects, range, (item) => item.lostAt);
+  const won = ranged(data.prospects.filter((item) => item.stage === 'won'), range, (item) => item.wonAt);
+  const lost = ranged(data.prospects.filter((item) => item.stage === 'lost'), range, (item) => item.lostAt);
 
   const quotes = ranged(data.quotes, range, (item) => item.createdAt);
   const previousQuotes = previousRange ? ranged(data.quotes, previousRange, (item) => item.createdAt) : [];
