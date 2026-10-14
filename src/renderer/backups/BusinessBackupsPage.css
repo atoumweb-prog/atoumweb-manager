@@ -293,3 +293,27 @@ body.business-backups-resizing {
 
 /* 10C — filtres de contexte, sans débordement aux densités élevées. */
 .business-backups-toolbar > :is(input,select,button) { min-width: 0; }
+
+/* 10C : alertes déduites des politiques métier, sans supposer un backup physique. */
+.business-backups-alerts { display: grid; gap: 9px; min-width: 0; padding: 14px; }
+.business-backups-alert-list { display: grid; gap: 8px; min-width: 0; }
+.business-backups-alert {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--surface-soft);
+  min-width: 0;
+}
+.business-backups-alert > svg { color: var(--accent); }
+.business-backups-alert > div { min-width: 0; }
+.business-backups-alert strong { font-size: var(--aw-font-functional, 14px); }
+.business-backups-alert p { margin: 3px 0 0; color: var(--text-muted); font-size: 12px; overflow-wrap: anywhere; }
+.business-backups-alerts-note { margin: 0; font-size: 12px; }
+@media (max-width: 760px) {
+  .business-backups-alert { grid-template-columns: auto minmax(0, 1fr); }
+  .business-backups-alert > button { grid-column: 2; justify-self: start; }
+}
