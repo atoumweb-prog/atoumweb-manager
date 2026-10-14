@@ -118,6 +118,13 @@ export function CatalogCategoryManagement({items,onChanged}: {
                   'Catégorie renommée ; les anciennes valeurs sont consignées.')
                   .then(saved=>{if(saved){renameGuard.saved(renameValue);setRenameId('');}});
               }}>
+                {category.itemCount > 0 && (
+                  <p className="catalog-category-affected" role="note">
+                    {category.itemCount} prestation(s) concernée(s). Leurs versions et anciens Devis resteront inchangés.
+                    {' '}Exemples : {items.filter(item => item.categoryId === category.id)
+                      .slice(0, 8).map(item => item.name).join(' · ')}
+                  </p>
+                )}
                 <label>Nouveau libellé
                   <input value={renameValue} onChange={event=>setRenameValue(event.target.value)}
                     maxLength={80} required disabled={busy}/>
@@ -134,7 +141,7 @@ export function CatalogCategoryManagement({items,onChanged}: {
                 </button>
                 {confirmKey===`status:${category.id}` ? (
                   <>
-                    <span>Confirmer {category.status==='active'?'l’archivage':'la restauration'} ?</span>
+                    <span>Confirmer {category.status==='active'?'l’archivage':'la restauration'} ? {category.itemCount} prestation(s) liées restent conservées.</span>
                     <button type="button" className="primary-button" disabled={busy} onClick={()=>void run(
                       ()=>window.atoumweb.catalogCategories.setStatus(category.id,
                         category.status==='active'?'archived':'active',category.revision),
