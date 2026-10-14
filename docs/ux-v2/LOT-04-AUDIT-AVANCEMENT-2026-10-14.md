@@ -71,6 +71,9 @@ Pourcentage **indicatif de couverture fonctionnelle**, calculé à partir de rub
 
 **Codex indispensable à ce stade : NON.** Les modifications de code, lecture GitHub et CI restent possibles avec les outils GPT. **Fusion dans `main` : INTERDITE sans autorisation explicite**, même si la candidate future est verte.
 
+
+- **Complément 04D post-audit** : le sélecteur de besoins Prospect préfère les liens administrés publiés et actifs, avec déduplication et protection contre les réponses tardives ; la liste historique `SUGGESTIONS` reste un repli **transitoire**, notamment faute de distinguer absence de configuration et intention de ne recommander personne (à décider avant suppression du repli). Tests purs de sélection et contrôle SQLite « pas de Devis créé » ajoutés. Le service retourne maintenant le statut de la **version cible**, et le panneau distingue une version retirée d'une prestation inactive. Test de conservation des cibles retirées ajouté. **Ces nouveaux commits ne sont pas encore certifiés par CI sur dernier HEAD**.
+
 ## Risques ouverts
 
 1. Concurrence des PR parallèles et migrations identiques dans des branches différentes ; migration 67/68 non certifiée sur `main` convergé.
