@@ -125,6 +125,22 @@ interface VersionIdentityRow extends Record<string, unknown> {
   status: CatalogVersion['status'];
 }
 
+const VERSION_EDITABLE_KEYS = [
+  'commercialKind', 'familyCode', 'abbyLabel', 'unit', 'periodicity',
+  'priceBasis', 'provenance', 'commercialParameters',
+  'nature', 'description', 'inclusions', 'exclusions', 'prerequisites',
+  'priceMode', 'priceCents', 'recommendedPriceCents',
+  'estimatedMinutes', 'recommendedDelayDays', 'defaultDepositPercent',
+  'contractType', 'internalAdvice', 'specialTerms',
+] as const satisfies readonly (keyof CatalogVersionInput)[];
+
+function sameVersionSnapshot(actual: CatalogVersion, expected: CatalogVersion): boolean {
+  return expected.id === actual.id && expected.itemId === actual.itemId &&
+    expected.versionNumber === actual.versionNumber && expected.status === actual.status &&
+    VERSION_EDITABLE_KEYS.every(key =>
+      JSON.stringify(actual[key] ?? null) === JSON.stringify(expected[key] ?? null));
+}
+
 export class CatalogService {
   constructor(private readonly database: DatabaseAdapter) {}
 
@@ -374,6 +390,55 @@ export class CatalogService {
 
   private readProvenance(json: string | null): CatalogProvenance | null {
     return json ? JSON.parse(json) as CatalogProvenance : null;
+  }
+
+  /**
+   * E99/E102 — Save the SAME draft ID, never increment a version number.
+   * The persisted snapshot must match the editor's last loaded state, including
+   * all versioned commercial fields. BEGIN IMMEDIATE serializes concurrent writers.
+   * Published/retired versions and their accepted quote snapshots are immutable.
+   */
+  saveDraftVersion(versionId: string, expected: CatalogVersion, input: CatalogVersionInput): CatalogVersion {
+    this.validateVersion(input);
+    this.database.exec('BEGIN IMMEDIATE;');
+    try {
+      const actual = this.getVersion(versionId);
+      if (actual.status !== 'draft' || expected.status !== 'draft')
+        throw new Error('Version publiée ou retirée : crée un nouveau brouillon pour la modifier.');
+      if (!sameVersionSnapshot(actual, expected))
+        throw new Error('Conflit : le brouillon a été modifié dans une autre fenêtre. Recharge-le avant de sauvegarder.');
+      this.database.run(
+        `UPDATE catalog_versions SET
+          nature=?, description=?, inclusions_json=?, exclusions_json=?, prerequisites_json=?,
+          price_mode=?, price_cents=?, recommended_price_cents=?, estimated_minutes=?,
+          recommended_delay_days=?, default_deposit_percent=?, contract_type=?, internal_advice=?,
+          special_terms=?, commercial_kind=?, family_code=?, abby_label=?, unit=?,
+          periodicity=?, price_basis=?, provenance_json=?, commercial_parameters_json=?
+         WHERE id=? AND status='draft'`,
+        [
+          clean(input.nature),clean(input.description),
+          JSON.stringify(input.inclusions ?? []),JSON.stringify(input.exclusions ?? []),
+          JSON.stringify(input.prerequisites ?? []),input.priceMode,
+          input.priceMode === 'free' ? 0 : input.priceCents ?? null,
+          input.recommendedPriceCents ?? null,input.estimatedMinutes ?? null,
+          input.recommendedDelayDays ?? null,input.defaultDepositPercent ?? null,
+          clean(input.contractType),clean(input.internalAdvice),clean(input.specialTerms),
+          input.commercialKind ?? null,clean(input.familyCode)?.toUpperCase() ?? null,
+          clean(input.abbyLabel),clean(input.unit),clean(input.periodicity),
+          input.priceBasis ?? 'listed',
+          input.provenance ? JSON.stringify(this.normalizeProvenance(input.provenance)) : null,
+          input.commercialParameters ? JSON.stringify(input.commercialParameters) : null,
+          versionId,
+        ],
+      );
+      this.database.run('UPDATE catalog_items SET updated_at=? WHERE id=?',[nowIso(), actual.itemId]);
+      this.writeActivity(actual.itemId,'catalog_draft_saved',`Brouillon v${actual.versionNumber} enregistré sans création d'une nouvelle version`);
+      this.database.exec('COMMIT;');
+    } catch(error) {
+      this.database.exec('ROLLBACK;');
+      throw error;
+    }
+    return this.getVersion(versionId);
   }
 
   publishVersion(versionId: string): CatalogVersion {
