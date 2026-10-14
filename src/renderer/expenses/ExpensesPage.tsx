@@ -85,6 +85,11 @@ function todayInput(): string {
   return dateInput(new Date().toISOString());
 }
 
+function isOverdue(item: Expense): boolean {
+  return (item.status === 'planned' || item.status === 'committed')
+    && !!item.dueAt && dateInput(item.dueAt) < todayInput();
+}
+
 interface ExpenseFormState {
   clientAccountId: string;
   projectId: string;
@@ -416,13 +421,13 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
       {!expanded && <section className="panel expenses-list-panel">
         {detailOpen ? <div className="expenses-compact-list" role="list" aria-label="Dépenses">
           {filtered.map((item) => <button key={item.id} type="button" role="listitem" className={'expenses-compact-item' + (selected?.id === item.id ? ' selected' : '')} onClick={() => draft.request(() => { setCreateOpen(false); setSelectedId(item.id); })}>
-            <span className="expenses-compact-heading"><strong>{item.label}</strong><span className={'expense-status status-' + item.status}>{STATUS_LABELS[item.status]}</span></span>
+            <span className="expenses-compact-heading"><strong>{item.label}</strong><span className={'expense-status status-' + item.status}>{STATUS_LABELS[item.status]}</span>{isOverdue(item) && <small className="expense-overdue-indicator">Échéance dépassée</small>}</span>
             <span className="expenses-compact-meta"><span><OperationIcon name={CATEGORY_ICONS[item.category]} size={15} /> {CATEGORY_LABELS[item.category]}</span><span>{money(item.amountCents)}</span></span>
             <span className="expenses-compact-scope">{item.projectNumber ? item.projectNumber + ' · ' + item.projectLabel : item.clientLabel || 'AtoumWeb interne'}</span>
             <span className="expenses-compact-supplier">{item.supplier || 'Fournisseur non renseigné'}</span>
           </button>)}
           {filtered.length === 0 && <div className="empty-table">Aucune dépense dans cette vue.</div>}
-        </div> : <div className="expenses-table-wrap"><table className="expenses-table"><thead><tr><th>Date</th><th>Dépense</th><th>Catégorie</th><th>Client / Projet</th><th>Montant</th><th>Statut</th><th>Justificatif</th></tr></thead><tbody>{filtered.map((item) => <tr key={item.id} onClick={() => draft.request(() => { setSelectedId(item.id); setCreateOpen(false); setExpanded(false); })}><td>{dateLabel(item.expenseDate)}</td><td><strong>{item.label}</strong><small>{item.supplier || '—'}</small></td><td><span className="expense-category-pill"><OperationIcon name={CATEGORY_ICONS[item.category]} size={15} /> {CATEGORY_LABELS[item.category]}</span></td><td>{item.projectNumber ? item.projectNumber + ' · ' + item.projectLabel : item.clientLabel || 'AtoumWeb interne'}</td><td>{money(item.amountCents)}</td><td><span className={'expense-status status-' + item.status}>{STATUS_LABELS[item.status]}</span></td><td>{item.receiptFileName ? <span className="expense-receipt-present"><OperationIcon name="file-text" size={14} /> Oui</span> : <span className="muted">—</span>}</td></tr>)}{filtered.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucune dépense.</div></td></tr>}</tbody></table></div>}
+        </div> : <div className="expenses-table-wrap"><table className="expenses-table"><thead><tr><th>Date</th><th>Dépense</th><th>Catégorie</th><th>Client / Projet</th><th>Montant</th><th>Statut</th><th>Justificatif</th></tr></thead><tbody>{filtered.map((item) => <tr key={item.id} onClick={() => draft.request(() => { setSelectedId(item.id); setCreateOpen(false); setExpanded(false); })}><td>{dateLabel(item.expenseDate)}</td><td><strong>{item.label}</strong><small>{item.supplier || '—'}</small></td><td><span className="expense-category-pill"><OperationIcon name={CATEGORY_ICONS[item.category]} size={15} /> {CATEGORY_LABELS[item.category]}</span></td><td>{item.projectNumber ? item.projectNumber + ' · ' + item.projectLabel : item.clientLabel || 'AtoumWeb interne'}</td><td>{money(item.amountCents)}</td><td><span className={'expense-status status-' + item.status}>{STATUS_LABELS[item.status]}</span>{isOverdue(item) && <small className="expense-overdue-indicator">Échéance dépassée</small>}</td><td>{item.receiptFileName ? <span className="expense-receipt-present"><OperationIcon name="file-text" size={14} /> Oui</span> : <span className="muted">—</span>}</td></tr>)}{filtered.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucune dépense.</div></td></tr>}</tbody></table></div>}
       </section>}
 
       {detailOpen && !expanded && <div className="expenses-splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner la liste et la fiche" tabIndex={0} onPointerDown={beginResize} onDoubleClick={() => setSplitPercent(38)} onKeyDown={(event) => {
@@ -441,6 +446,10 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
           <span className="expense-category-pill">{CATEGORY_ICONS[selected.category]} {CATEGORY_LABELS[selected.category]}</span>
           {selected.frequency !== 'none' && <span className="status-pill"><OperationIcon name="repeat" size={14} /> {FREQUENCY_LABELS[selected.frequency]}</span>}
         </div>}
+
+        {!createOpen && selected && isOverdue(selected) && <p className="expense-overdue-warning" role="status">
+          Échéance dépassée — dépense non déclarée payée. Aucune nouvelle occurrence ni paiement n'est créé automatiquement.
+        </p>}
 
         {!createOpen && selected && <div className="expenses-summary-grid">
           <div><strong>Montant</strong><span>{money(selected.amountCents)}</span></div>
