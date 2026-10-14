@@ -50,8 +50,17 @@ jobs:
         shell: pwsh
         timeout-minutes: 6
         run: |
-          node scripts/check-catalog-identity-ui.cjs
+          $captures = Join-Path $env:RUNNER_TEMP 'lot04b-electron-nine-modes'
+          if (Test-Path $captures) { throw "Refusing to overwrite existing capture directory" }
+          node scripts/check-catalog-identity-ui.cjs --captures $captures
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $images = @(Get-ChildItem -LiteralPath $captures -Filter '*.png' -File)
+          if ($images.Count -ne 9) { throw "Expected exactly 9 PNG, found $($images.Count)" }
+          foreach ($file in $images) {
+            $sha = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
+            Write-Output "LOT04B VERIFIED PNG $($file.Name) size=$($file.Length) sha256=$sha"
+          }
+          Write-Output "LOT04B RESULT 9/9 renderer frames captured in Windows TEMP; no database or live workspace touched"
 
       # PR98 standalone; the combined candidate runs this same recipe below.
       # La fixture crée exclusivement ses propres fichiers et profil dans %TEMP%.
