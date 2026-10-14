@@ -8,18 +8,18 @@ Pourcentage **indicatif de couverture fonctionnelle**, calculé à partir de rub
 
 | Sous-lot | Développement (rubriques satisfaites) | Tests/validation (rubriques prouvées) | Intégration | Écart principal | Blocage |
 |---|---:|---:|---|---|---|
-| **04A** Audit et reprise | **50 % (3/6)** | **33 % (2/6)** | Non prêt | Inventaire de données de catégorie sur fixture et audit sur dernier main non clos | Dépendance |
+| **04A** Audit et reprise | **67 % (4/6)** | **33 % (2/6)** | Non prêt | Inventaire de données de catégorie sur fixture et audit sur dernier main non clos | Dépendance |
 | **04B** Catégories/navigation | **89 % (8/9)** | **78 % (7/9)** | Prêt sur branche, non convergé | Revue visuelle humaine et épreuves sur candidat convergé | Dépendance |
 | **04C** Édition/versions/brouillons | **78 % (7/9)** | **67 % (6/9)** | Prêt sur branche, non convergé | Certaines comparaisons/restaurations ciblées et recette consolidée | Technique |
 | **04D** Associations/recommandations | **50 % (4/8)** | **50 % (4/8)** | Non prêt | Motif/priorité/état, recommandations en Prospect/Devis, recette intermodules | Technique + métier |
 | **04E** Aide à la vente | **50 % (4/8)** | **38 % (3/8)** | Non prêt | Versionnement/restauration comparée, motifs, contrôles contextuels complets | Technique |
 | **04F** Recette/intégration | **80 % (8/10)** | **70 % (7/10)** | Non prêt | Intermodules, revue humaine, convergence `main` | Dépendance + technique |
 
-**Développement global = 68 %** (34 rubriques fonctionnelles codées sur 50 : 3+8+7+4+4+8 ; pondération égale par rubrique, estimation prudente). **Validation globale = 58 %** (29 rubriques prouvées sur 50 : 2+7+6+4+3+7=29). **Préparation convergence = 20 %** (1/5 portes : cartographie des dépendances ; restent candidate à jour de main, conflits, CI convergée, revue de fusion). Ces ratios sont des **estimations d'acceptation**, non des certifications.
+**Développement global = 70 %** (35 rubriques fonctionnelles codées sur 50 : 4+8+7+4+4+8 ; pondération égale par rubrique, estimation prudente). **Validation globale = 58 %** (29 rubriques prouvées sur 50 : 2+7+6+4+3+7=29). **Préparation convergence = 20 %** (1/5 portes : cartographie des dépendances ; restent candidate à jour de main, conflits, CI convergée, revue de fusion). Ces ratios sont des **estimations d'acceptation**, non des certifications.
 
 ### Rubriques d'acceptation retenues (liste auditable)
 
-- **04A (6)** : cartographie modèle et invariants ✅ ; composants/pages/usages ✅ ; frontières CGV/devis/projets ✅ ; inventaire catégories de fixture ☐ ; revue du code sur main courant ☐ ; recette indépendante du diagnostic 04A ☐.
+- **04A (6)** : cartographie modèle et invariants ✅ ; composants/pages/usages ✅ ; frontières CGV/devis/projets ✅ ; inventaire catégories de fixture ✅ (112 fiches / 13 catégories ; test CI en attente) ; revue du code sur main courant ☐ ; recette indépendante du diagnostic 04A ☐.
 - **04B (9)** : offres prioritaires ✅ ; autres offres accessibles ✅ ; catégories A–Z ✅ ; administration des catégories ✅ ; recherche versionnée ✅ ; états/filtres/historique ✅ ; recherche Prospect ✅ ; recherche Devis ✅ ; revue visuelle finale ☐. Tests spécifiques cross-context encore à rapprocher du référentiel.
 - **04C (9)** : huit onglets ✅ ; édition brouillon CAS ✅ ; vN+1 idempotente ✅ ; publication contrôlée ✅ ; tarification/Abby ✅ ; références contrat/production ✅ ; historique lisible ✅ ; restauration/compare de tous champs ☐ ; recette consolidée de tous parcours avec navigation et `main` ☐.
 - **04D (8)** : stockage N:N/version et migrations ✅ ; validations déduplication/CAS ✅ ; copie vN+1/historique ✅ ; panneau d'administration/UX-01 ✅ ; motif/priorité/état administrables ☐ ; consommation réelle Prospect ☐ ; consommation réelle Devis ☐ ; recette cross-module complète ☐.
@@ -43,6 +43,8 @@ Pourcentage **indicatif de couverture fonctionnelle**, calculé à partir de rub
 **CI #1275** : TypeScript PASS, **1 113/1 113 Vitest**, **122/122 fichiers**, **15/15 assertions Electron 04D avec IPC simulé**, **7/7 assertions Electron natif/IPC/vrai preload/SQLite TEMP**, **FK=0**, **9 captures PNG avec SHA-256** (3 thèmes × 3 densités), recettes UX-01 et restauration exécutées. Les captures ont été créées et contrôlées par empreinte, **pas examinées visuellement par un humain**.
 
 **Écart avec `main` constaté sur SHA `261a12b3`** : `main@cc0bc679400321f5afacdbee3317ea8acc451518`, branche 04D/04E **296 commits devant / 10 derrière**, ancêtre commun `b2796812ee24c9e9e824f3d66564f2c1a335bffe`, 69 fichiers différents. La PR #108 est également divergente de la tête mise à jour de la branche #104 (**77 devant / 2 derrière**). Le candidat n'est **pas convergé**. Fichiers transverses sensibles : `CatalogService.ts`, `ipc.ts`, `preload.ts`, `CatalogPage.tsx`, workflows CI, migrations.
+
+**04A — contrôle de fixture ajouté** : `docs/ux-v2/LOT-04A-INVENTAIRE-FIXTURE-2026-10-14.md` documente **112 fiches (6 offres, 106 services), 13 catégories techniques**, aucune collision normalisée sur noms/categories/codes de la fixture ; nouveau test `CatalogInventory04A.test.ts`. **Il ne s'agit pas d'une inspection de données réelles.** Résultat CI de ce nouvel incrément à confirmer.
 
 ### Incréments correctifs réalisés pendant l'audit
 
