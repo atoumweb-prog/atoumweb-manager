@@ -105,3 +105,35 @@
 2. E227 : règles d'autorisation de réouverture, régularisation explicite de temps et handoff ; les régressions empêchent le double débit ou la double préparation, sans créer une nouvelle règle commerciale.
 3. Inspection visuelle humaine du Manager Electron différée ; les tests natifs ne prouvent pas l'aspect visuel subjectif.
 4. Actualiser la branche avec `main` récent puis refaire typecheck, suite complète, recettes natives et contrôler les migrations/fixtures avant toute proposition de fusion. Aucune fusion autorisée à ce stade.
+
+## E224 — comptage démontré, affichage explicité (incrément 14/10)
+
+- Audit des requêtes : `MaintenanceService.mapPeriod` et `MaintenanceOverageService.review` comptent explicitement les interventions de type `maintenance_usage_kind='minor'` pour les quotas et dépassements. Les routines sont comptées séparément : elles entrent dans le **temps réellement réalisé**, mais pas dans le **quota de maintenance mineure**.
+- Test `MaintenanceService.test.ts` ajouté : 45 min mineures et 30 min de routine sous quota d'une heure / une intervention, puis une deuxième intervention mineure de 30 min. Attendus : 75 min de temps total pour la première période, 30 min de routine, 15 min de quota restant ; ensuite 105 min total, 15 min de dépassement mineur et une intervention mineure au-delà du quota. Le test vérifie les clés étrangères SQLite.
+- `MaintenancePanel.tsx` affiche sans ambiguïté **temps réalisé**, **dont routines**, **temps imputé au quota mineur**, **solde** et **dépassement de temps** si un quota de minutes existe. **Aucune formule métier ni donnée historique n'est modifiée.**
+- La recette native `--lot08a` inclut désormais la création d'une souscription SQLite TEMP et la lecture réelle des cinq indicateurs de l'interface, en plus de la recette brouillons A→B→A.
+- **Réserve métier** : toute volonté future d'inclure les routines dans le quota constituerait un changement du contrat et de l'algorithme de dépassement, hors de ce correctif UX. Ne pas le réaliser implicitement.
+
+## E226 — couverture de sortie complémentaire
+
+- `OperationsAlertsPanel` pouvait appeler directement `setView`; son `onNavigate` utilise maintenant `requestUnsavedExit`, comme les clics des onglets et des listes.
+- `OperationsPage.refresh` met à jour la sélection via un callback fonctionnel ; l'identité actuelle est évaluée **au moment de la réponse**, afin de ne pas ressusciter une ancienne fiche après navigation.
+- Tests unitaires historiques UX-01 conservés. Test réel Electron Windows de routage, brouillons, IPC pending, confirmations « Rester / Quitter » et contrôle TEMP : CI #1195 verte sur `230e6181`.
+- Gate du nouvel incrément E224 et de la correction d'alerte : nouvelle CI verte **requise au dernier HEAD**. Ne pas confondre la validation #1195 du candidat antérieur et celle des modifications de ce document.
+
+## Bilan intermédiaire et conditions de clôture du sous-lot 08A
+
+| ID | Conclusion ou preuve | État |
+|---|---|---|
+| R08A-01 / 02 | Demandes, conversion et création directe : services existants, pas de nouvelle modification de règles | À reprendre dans recette transverse si non couverts par banc historique |
+| R08A-03 / 04 | Débit unique et rollback complet : `InterventionCompletionService.test.ts` et savepoints existants | Validé par CI #1201, nouvelle CI attendue |
+| R08A-05 | Handoff hors forfait unique : tests E227 et E222 ; aucune émission Abby réelle | Validé par CI #1201, nouvelle CI attendue |
+| R08A-06 / 08 | Périodes manuelles de date à date ; historiques `calendar` intacts | Validé par CI #1201 |
+| R08A-07 / 09 | Ventes annuelles, mensualité opérationnelle et non-report : règles historiques conservées | Re-vérification ciblée à documenter |
+| R08A-10 | Dépassements : routines hors quota mineur ; décision humaine de facturation conservée | Test E224 ajouté ; CI attendue |
+| R08A-11 / 12 / 13 | Chrono global unique, reprise, corrections : aucune modification des services temps, banc shell natif préexistant | Native shell verte #1201 ; régression spécifique 13 à revoir |
+| R08A-14 | SQLite %TEMP%, intégrité FK, nettoyage fixture, typecheck/Vitest et véritable Electron Windows | CI #1201 verte ; nouveau HEAD à valider |
+
+**Réserve métier E227** : `changeInterventionStatus` autorise techniquement certains retours de `completed` vers `in_progress`, sans procédure dédiée et sans mouvement de contrepassation. Les tests garantissent l'absence de double débit/de double handoff, **pas** la légitimité commerciale ou juridique de la réouverture. Une évolution de politique nécessite un arbitrage distinct avant tout nouveau bouton ou automatisme.
+
+**Aucune fusion dans `main`** ni intervention sur Validation-MSI, PR #104 / #106 ou autres lots.
