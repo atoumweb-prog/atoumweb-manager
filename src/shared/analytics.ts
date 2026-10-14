@@ -24,6 +24,12 @@ export interface AnalyticsDateRange {
   comparisonTo: string;
 }
 
+/** Permet d'identifier des chiffres d'une sélection précédente sans les attribuer au nouveau filtre. */
+export function analyticsSnapshotMatchesSelection(input: AnalyticsPeriodInput, actual: AnalyticsDateRange): boolean {
+  if (input.preset !== actual.preset) return false;
+  return input.preset !== 'custom' || (input.from === actual.from && input.to === actual.to);
+}
+
 export const ANALYTICS_FINANCIAL_METRICS = [
   'commercial_signed',
   'contract_signed',
