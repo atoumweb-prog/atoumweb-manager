@@ -29,43 +29,64 @@ const ROLE_LABELS: Record<ProjectSitePageRole, string> = {
   other: 'Autre',
 };
 
+/** UI-only navigation context; never persists drafts or modifies server state. */
+export type ProjectSitesViewContext = {
+  selectedSiteId: string | null;
+  selectedPageId: string | null;
+  splitPercent: number;
+  treeCollapsed: boolean;
+  detailCollapsed: boolean;
+  introCollapsed: boolean;
+  pageInfoOpen: boolean;
+  inspectorCollapsed: boolean;
+  inspectorPercent: number;
+};
+
 export function ProjectSitesTab({
   projectId,
   nodes,
   onMessage,
   onProjectChanged,
   onOpenPage,
+  initialViewContext,
+  onViewContextChange,
 }: {
   projectId: string;
   nodes: ProjectNode[];
   onMessage: (message: string, action?: () => void) => void;
   onProjectChanged: (detail: ProjectDetail) => Promise<void>;
   onOpenPage: (pageId: string) => void;
+  initialViewContext?: ProjectSitesViewContext | null;
+  onViewContextChange?: (view: ProjectSitesViewContext) => void;
 }) {
   const [sites, setSites] = useState<ProjectSite[]>([]);
   const [links, setLinks] = useState<ProjectSitePage[]>([]);
-  const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
-  const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
+  const [selectedSiteId, setSelectedSiteId] = useState<string | null>(initialViewContext?.selectedSiteId ?? null);
+  const [selectedPageId, setSelectedPageId] = useState<string | null>(initialViewContext?.selectedPageId ?? null);
   const [createMode, setCreateMode] = useState<'site' | 'page' | null>(null);
   const [siteName, setSiteName] = useState('');
   const [siteDomain, setSiteDomain] = useState('');
   const [pageName, setPageName] = useState('');
   const [pageSiteId, setPageSiteId] = useState('');
   const [busy, setBusy] = useState(false);
-  const [splitPercent, setSplitPercent] = useState(40);
-  const [treeCollapsed, setTreeCollapsed] = useState(false);
-  const [detailCollapsed, setDetailCollapsed] = useState(false);
-  const [introCollapsed, setIntroCollapsed] = useState(false);
-  const [pageInfoOpen, setPageInfoOpen] = useState(false);
+  const [splitPercent, setSplitPercent] = useState(initialViewContext?.splitPercent ?? 40);
+  const [treeCollapsed, setTreeCollapsed] = useState(initialViewContext?.treeCollapsed ?? false);
+  const [detailCollapsed, setDetailCollapsed] = useState(initialViewContext?.detailCollapsed ?? false);
+  const [introCollapsed, setIntroCollapsed] = useState(initialViewContext?.introCollapsed ?? false);
+  const [pageInfoOpen, setPageInfoOpen] = useState(initialViewContext?.pageInfoOpen ?? false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [inspectorDual, setInspectorDual] = useState(false);
   const [inspectorExpandedCount, setInspectorExpandedCount] = useState(0);
-  const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
-  const [inspectorPercent, setInspectorPercent] = useState(34);
+  const [inspectorCollapsed, setInspectorCollapsed] = useState(initialViewContext?.inspectorCollapsed ?? false);
+  const [inspectorPercent, setInspectorPercent] = useState(initialViewContext?.inspectorPercent ?? 34);
   const [timeSessions, setTimeSessions] = useState<TimeSession[]>([]);
   const [activeTime, setActiveTime] = useState<TimeSession | null>(null);
   const [timeSnapshotAt, setTimeSnapshotAt] = useState(Date.now());
   const [tick, setTick] = useState(Date.now());
+
+  useEffect(() => {
+    onViewContextChange?.({ selectedSiteId, selectedPageId, splitPercent, treeCollapsed, detailCollapsed, introCollapsed, pageInfoOpen, inspectorCollapsed, inspectorPercent });
+  }, [selectedSiteId, selectedPageId, splitPercent, treeCollapsed, detailCollapsed, introCollapsed, pageInfoOpen, inspectorCollapsed, inspectorPercent]);
 
   useUnsavedDraft('Opération Site/Page', null, {group:'project-composition',dirty:false,pending:busy});
   const siteDraft = useUnsavedDraft('Nouveau Site ou Page', { siteName, siteDomain, pageName, pageSiteId }, {
@@ -90,8 +111,13 @@ export function ProjectSitesTab({
     ]);
     setSites(nextSites);
     setLinks(nextLinks);
-    if (!selectedSiteId && !selectedPageId) {
-      const firstActive = nextSites.find((site) => !site.archivedAt);
+    // An old view may reference an archived/deleted Site or Page; never keep a phantom selection.
+    const siteStillExists = selectedSiteId ? nextSites.some(site => site.id === selectedSiteId) : false;
+    const pageStillExists = selectedPageId ? pages.some(page => page.id === selectedPageId) : false;
+    if (!siteStillExists) setSelectedSiteId(null);
+    if (!pageStillExists) setSelectedPageId(null);
+    if (!siteStillExists && !pageStillExists) {
+      const firstActive = nextSites.find(site => !site.archivedAt);
       if (firstActive) setSelectedSiteId(firstActive.id);
       else if (pages[0]) setSelectedPageId(pages[0].id);
     }
