@@ -20,7 +20,10 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}
  let selectionPath=exportPath,cancelNext=false;
  dialog.showOpenDialog=async()=>cancelNext?(cancelNext=false,{canceled:true,filePaths:[]}):
   ({canceled:false,filePaths:[selectionPath]});
- const button=label=>js('const button=[...document.querySelectorAll(".aw-word-draft-panel button")].find(e=>e.textContent.includes('+JSON.stringify(label)+'));if(!button)throw Error("Word action missing");button.click()');
+ const button=async label=>{
+  await wait('[...document.querySelectorAll(".aw-word-draft-panel button")].some(e=>e.textContent.includes('+JSON.stringify(label)+')&&!e.disabled)', 'Word action enabled: '+label);
+  await js('const button=[...document.querySelectorAll(".aw-word-draft-panel button")].find(e=>e.textContent.includes('+JSON.stringify(label)+')&&!e.disabled);if(!button)throw Error("Word action not available");button.click()');
+ };
  try {
   await navigate('Documents & Contrats');
   await wait('!!document.querySelector(".documents-toolbar")','Documents page');
