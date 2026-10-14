@@ -7,7 +7,7 @@ import type { Migration } from './migrations';
  * stay byte-for-byte untouched by this migration.
  */
 export const CATALOG_CATEGORY_ADMIN_MIGRATION: Migration = {
-  id: 70,
+  id: 67,
   name: 'catalog_category_registry_v1',
   sql: `
     CREATE TABLE catalog_categories (
