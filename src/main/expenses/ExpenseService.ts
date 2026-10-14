@@ -92,16 +92,24 @@ export class ExpenseService {
     const normalized = this.normalize(input);
     const id = randomUUID();
     const now = nowIso();
-    this.database.run(
-      'INSERT INTO expenses (id,client_account_id,project_id,category,supplier,label,amount_cents,vat_cents,status,expense_date,due_at,paid_at,frequency,next_due_at,notes,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-      [
-        id, normalized.clientAccountId, normalized.projectId, normalized.category, normalized.supplier,
-        normalized.label, normalized.amountCents, normalized.vatCents, normalized.status,
-        normalized.expenseDate, normalized.dueAt, normalized.paidAt, normalized.frequency,
-        normalized.nextDueAt, normalized.notes, now, now,
-      ],
-    );
-    this.log(id, 'expense_created', normalized.label + ' · ' + (normalized.amountCents / 100) + ' €');
+    this.database.exec('SAVEPOINT expense_create');
+    try {
+      this.database.run(
+        'INSERT INTO expenses (id,client_account_id,project_id,category,supplier,label,amount_cents,vat_cents,status,expense_date,due_at,paid_at,frequency,next_due_at,notes,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        [
+          id, normalized.clientAccountId, normalized.projectId, normalized.category, normalized.supplier,
+          normalized.label, normalized.amountCents, normalized.vatCents, normalized.status,
+          normalized.expenseDate, normalized.dueAt, normalized.paidAt, normalized.frequency,
+          normalized.nextDueAt, normalized.notes, now, now,
+        ],
+      );
+      this.log(id, 'expense_created', normalized.label + ' · ' + (normalized.amountCents / 100) + ' €');
+      this.database.exec('RELEASE SAVEPOINT expense_create');
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT expense_create');
+      this.database.exec('RELEASE SAVEPOINT expense_create');
+      throw error;
+    }
     return this.get(id);
   }
 
