@@ -38,3 +38,43 @@ export function orderReviewedClauses<T extends SectionedClause>(clauses:readonly
   });
   return {ordered,unreviewed};
 }
+
+/** Applicability is tri-state: missing commercial inputs are NEVER treated as true. */
+export interface ContractApplicabilityRule {
+  audience?: 'professional'|'consumer';
+  requiredProductCodes?: readonly string[];
+  requiredOptionCodes?: readonly string[];
+  minQuantity?: number;
+  planCode?: string;
+  recurring?: boolean;
+}
+export interface ContractApplicabilityContext {
+  audience?: 'professional'|'consumer';
+  productCodes?: readonly string[];
+  optionCodes?: readonly string[];
+  quantity?: number;
+  planCode?: string;
+  recurring?: boolean;
+}
+export type ContractApplicabilityResult = 'eligible'|'ineligible'|'unresolved';
+export function evaluateContractApplicability(rule:ContractApplicabilityRule,context:ContractApplicabilityContext): ContractApplicabilityResult {
+  let unknown=false;
+  const compare=(expected:unknown,actual:unknown)=>{
+    if(actual===undefined||actual===null){unknown=true;return false;}
+    return expected!==actual;
+  };
+  if(rule.audience!==undefined&&compare(rule.audience,context.audience))return 'ineligible';
+  if(rule.planCode!==undefined&&compare(rule.planCode,context.planCode))return 'ineligible';
+  if(rule.recurring!==undefined&&compare(rule.recurring,context.recurring))return 'ineligible';
+  if(rule.minQuantity!==undefined){
+    if(!Number.isSafeInteger(rule.minQuantity)||rule.minQuantity<1) return 'unresolved';
+    if(context.quantity===undefined)unknown=true;
+    else if(context.quantity<rule.minQuantity)return 'ineligible';
+  }
+  for(const [required,available] of [[rule.requiredProductCodes,context.productCodes],[rule.requiredOptionCodes,context.optionCodes]] as const){
+    if(!required?.length)continue;
+    if(available===undefined){unknown=true;continue;}
+    if(required.some(code=>!available.includes(code)))return 'ineligible';
+  }
+  return unknown?'unresolved':'eligible';
+}
