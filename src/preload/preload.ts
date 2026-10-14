@@ -15,6 +15,7 @@ import type {
   CatalogFilters,
   CatalogItemInput,
   CatalogItemStatus,
+  CatalogVersion,
   CatalogVersionInput,
   OfferComponentInput,
   QuoteFilters,
