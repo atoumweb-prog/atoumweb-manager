@@ -1,7 +1,7 @@
 import type {QuoteContractClause} from '../../shared/contractTerms';
 import {compareClauseField} from './contractClauseFieldDiff';
 
-export type DraftImpactKind='added'|'removed'|'enabled'|'excluded'|'moved'|'edited';
+export type DraftImpactKind='added'|'removed'|'enabled'|'excluded'|'moved'|'edited'|'orphaned'|'restored';
 export interface DraftClauseImpact {id:string;title:string;kinds:DraftImpactKind[];}
 /** Pure preview, never a replacement for saved/frozen contract text. */
 export function compareDraftContractClauses(
@@ -20,6 +20,7 @@ export function compareDraftContractClauses(
     const kinds:DraftImpactKind[]=[];
     if(original.enabled!==clause.enabled)kinds.push(clause.enabled?'enabled':'excluded');
     if(original.sortOrder!==clause.sortOrder)kinds.push('moved');
+    if(original.isOrphaned!==clause.isOrphaned)kinds.push(clause.isOrphaned?'orphaned':'restored');
     if(compareClauseField(original.title,clause.title).changed||compareClauseField(original.body,clause.body).changed)kinds.push('edited');
     if(kinds.length)impacts.push({id:clause.id,title:clause.title,kinds});
   }
