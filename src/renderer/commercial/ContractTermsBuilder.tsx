@@ -309,7 +309,9 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
       {error && <p className="form-error" role="alert">{error}</p>}
 
       {presentation&&<ContractReadPanel presentation={presentation} commercial={commercialAbbyBlock(quote)} unsaved={unsaved}/>}
-      <details className="cgv-editing"><summary>Adapter les clauses de ce devis</summary>
+      <details className="cgv-editing"><summary>Adapter les clauses de ce devis ({build?.clauses.length ?? 0})</summary>
+      <p className="muted">Les clauses sont présentées dans l’ordre contractuel du devis. Socle : commun et non modifiable ici ; prestation : déclenchée par une prestation ; particulière : propre à ce devis. Les clauses exclues et orphelines restent visibles pour contrôle.</p>
+      {unsaved && <p role="status" className="cgv-warning">Modifications de texte non enregistrées : enregistre chaque clause concernée avant la finalisation ou la sortie.</p>}
       <div className="cgv-clause-list">
         {build?.clauses.map((clause, index) => {
           const draft = drafts[clause.id] ?? { title: clause.title, body: clause.body };
