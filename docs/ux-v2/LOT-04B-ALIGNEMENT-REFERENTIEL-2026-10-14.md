@@ -94,3 +94,31 @@ L'inventaire est désormais intégré dans **Offres & Tarifs** via le bouton **C
 - Recette native et contrôle 3 thèmes × 3 densités **restent non acquises** tant que les logs du HEAD final ne montrent pas explicitement leur succès.
 
 **Aucun merge vers `main` sans bilan de recette sur SHA exact et validation humaine.**
+
+## 7. Recette CSS native, 3 thèmes × 3 densités (incrément suivant, 14/10)
+
+`scripts/check-catalog-identity-ui.cjs` charge à présent **la chaîne de CSS du vrai renderer** depuis `src/renderer/main.tsx`, dans une coquille Electron à deux colonnes ; les services Catalogue/catégories restent simulés, sans aucune connexion à la base réelle. Après la recette fonctionnelle, le script passe par **AtoumWeb, Noir et Blanc** × **Compact, Confort et Confort+** (neuf combinaisons) pour contrôler :
+
+- panneau d'administration réellement rendu et commandes disponibles ;
+- taille de police du thème/densité appliqué (14/16/18 px) et labels d'au moins 14 px ;
+- absence de débordement horizontal sur la page et la zone de contenu, le défilement du tableau restant contenu ;
+- contrôle positif du rendu et de la stabilité de la page après chaque changement ;
+- maintien des actions Catalogue/E95 et de la protection UX-01 dans la même recette.
+
+Pour produire **9 captures PNG vérifiées sur Windows** dans un répertoire **nouveau et absolu** en dehors de Validation-MSI :
+
+```powershell
+node scripts/check-catalog-identity-ui.cjs --captures "$env:TEMP\atoumweb-lot04b-captures-20261014"
+```
+
+Le script refuse l'écrasement d'une destination existante et exige que chaque capture corresponde à une frame réellement peinte grâce à une sentinelle de composition en bord de fenêtre. Il garde sa base/profil Electron exclusivement dans le TEMP, détruit la fixture et ne touche pas à l'application utilisateur.
+
+**Attention :** la CI peut attester des neuf vérifications CSS ; elle n'atteste **pas** à elle seule de la revue humaine des PNG. Le workflow d'autres lots signale que le stockage GitHub des artefacts PNG est saturé : ne pas présumer qu'un upload est possible. Pour la conformité R04B-14/R04B-15, il faudra produire et examiner les captures localement, consigner les observations, puis effectuer une revue humaine sur l'application Manager complète.
+
+### Corrections UX-01 additionnelles
+
+- Le panneau explique désormais correctement la distinction entre **inventaire consultable** et **administration des catégories avec confirmations**.
+- L'action « Voir les prestations » déclenche la **garde UX-01 avant la fermeture du panneau**, afin de ne pas perdre un brouillon de catégorie ou de renommage.
+
+Les 15 scénarios R04B restent ouverts tant que leurs preuves intermodules ne sont pas consolidées et que le SHA final de la PR n'a pas une CI verte.
+
