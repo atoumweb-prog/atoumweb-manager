@@ -288,4 +288,169 @@ describe('QuoteService', () => {
     expect(copy.lines).toHaveLength(1);
     expect(copy.contractValueCents).toBe(50000);
   });
+  it('06C : quantité, prix proposé et remise restent attachés à la version catalogue figée', () => {
+    const prospect = createProspect();
+    const service = createPublishedService(10000, 'Service 06C');
+    const originalVersionId = service.currentVersion!.id;
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Calcul et version immuable' });
+
+    const computed = quotes.addCatalogLine(quote.id, originalVersionId, {
+      quantityMilli: 1500,
+      proposedUnitPriceCents: 12000,
+      adjustmentMode: 'percent',
+      adjustmentValue: 1000,
+      discountReasonCode: 'commercial_gesture',
+    });
+
+    expect(computed.lines).toHaveLength(1);
+    expect(computed.lines[0].catalogVersionId).toBe(originalVersionId);
+    expect(computed.lines[0].quantityMilli).toBe(1500);
+    expect(computed.lines[0].catalogUnitPriceCents).toBe(10000);
+    expect(computed.lines[0].proposedUnitPriceCents).toBe(12000);
+    expect(computed.catalogValueCents).toBe(15000);
+    expect(computed.contractValueCents).toBe(16200);
+
+    const next = catalog.createVersion(service.id, { priceMode: 'fixed', priceCents: 20000 });
+    catalog.publishVersion(next.id);
+    const kept = quotes.get(quote.id);
+    expect(kept.lines[0].catalogVersionId).toBe(originalVersionId);
+    expect(kept.lines[0].snapshot?.versionNumber).toBe(1);
+    expect(kept.lines[0].catalogUnitPriceCents).toBe(10000);
+    expect(kept.lines[0].proposedUnitPriceCents).toBe(12000);
+    expect(kept.contractValueCents).toBe(16200);
+    expect(catalog.getItem(service.id).currentVersion?.priceCents).toBe(20000);
+  });
+
+  it('06C : achat d’option idempotent, provenance et retrait sans changer l’offre', () => {
+    const prospect = createProspect();
+    const option = createPublishedService(14900, 'Option SEO 06C');
+    const optionVersionId = option.currentVersion!.id;
+    const offer = catalog.create(
+      { type: 'offer', name: 'Pack 06C', category: 'Tests' },
+      { priceMode: 'fixed', priceCents: 69900, description: 'Pack de base' },
+    );
+    catalog.setOfferComponents(offer.versions[0].id, [
+      { serviceVersionId: optionVersionId, isOptional: true },
+    ]);
+    catalog.publishVersion(offer.versions[0].id);
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Option isolée' });
+    const initial = quotes.addCatalogLine(quote.id, offer.versions[0].id);
+    const offerLine = initial.lines[0];
+    const component = (offerLine.snapshot!.offerComponents as Array<{ componentId: string }>)[0];
+
+    expect(initial.lines).toHaveLength(1);
+    expect(initial.contractValueCents).toBe(69900);
+    const purchased = quotes.selectOfferOption(offerLine.id, component.componentId);
+    expect(purchased.lines).toHaveLength(2);
+    const purchasedLine = purchased.lines.find(line => line.id !== offerLine.id)!;
+    expect(purchasedLine.optionPurchase?.sourceOfferLineId).toBe(offerLine.id);
+    expect(purchasedLine.optionPurchase?.sourceComponentId).toBe(component.componentId);
+    expect(purchasedLine.catalogVersionId).toBe(optionVersionId);
+    expect(purchased.contractValueCents).toBe(84800);
+
+    const again = quotes.selectOfferOption(offerLine.id, component.componentId);
+    expect(again.lines).toHaveLength(2);
+    expect(again.lines.find(line => line.id !== offerLine.id)?.id).toBe(purchasedLine.id);
+
+    const next = catalog.createVersion(option.id, { priceMode: 'fixed', priceCents: 19900 });
+    catalog.publishVersion(next.id);
+    expect(quotes.get(quote.id).lines.find(line => line.id === purchasedLine.id)?.catalogVersionId).toBe(optionVersionId);
+
+    const removed = quotes.deselectOfferOption(offerLine.id, component.componentId);
+    expect(removed.lines).toHaveLength(1);
+    expect(removed.lines[0].id).toBe(offerLine.id);
+    expect(removed.contractValueCents).toBe(69900);
+    expect(quotes.deselectOfferOption(offerLine.id, component.componentId).lines).toHaveLength(1);
+  });
+
+  it('06C : option non achetée sans incidence et rejet d’une provenance inexistante', () => {
+    const prospect = createProspect();
+    const option = createPublishedService(9900, 'Option secondaire 06C');
+    const offer = catalog.create(
+      { type: 'offer', name: 'Offre isolée 06C', category: 'Tests' },
+      { priceMode: 'fixed', priceCents: 39900 },
+    );
+    catalog.setOfferComponents(offer.versions[0].id, [
+      { serviceVersionId: option.currentVersion!.id, isOptional: true },
+    ]);
+    catalog.publishVersion(offer.versions[0].id);
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Option non sélectionnée' });
+    const added = quotes.addCatalogLine(quote.id, offer.versions[0].id);
+    expect(added.lines).toHaveLength(1);
+    expect(added.contractValueCents).toBe(39900);
+    expect(() => quotes.selectOfferOption(added.lines[0].id, 'composant-inexistant'))
+      .toThrow(/Option absente/);
+    expect(quotes.get(quote.id).lines).toHaveLength(1);
+    expect(quotes.get(quote.id).contractValueCents).toBe(39900);
+  });
+
+  it('06D : refuser un devis envoyé ne convertit pas le prospect ni ne prépare un projet', () => {
+    const prospect = createProspect();
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Refus sans conversion' });
+    quotes.addCustomLine(quote.id, { label: 'Prestation refusée', proposedUnitPriceCents: 15000 });
+    finalizeForTest(database,quotes,quote.id);
+    quotes.markSent(quote.id);
+    const refused = quotes.refuse(quote.id);
+    expect(refused.status).toBe('refused');
+    expect(refused.acceptedClientAccountId).toBeFalsy();
+    expect(refused.projectReadyAt).toBeFalsy();
+    expect(crm.listClients()).toHaveLength(0);
+    expect(crm.listProspects().find(item => item.id === prospect.id)?.clientAccountId).toBeFalsy();
+    expect(() => quotes.addCustomLine(quote.id, { label: 'Modification interdite', proposedUnitPriceCents: 1000 }))
+      .toThrow(/figé|refusé|brouillon|copie du devis/i);
+  });
+
+  it('06D : un devis marqué envoyé reste sans acceptation et sans conversion', () => {
+    const prospect = createProspect();
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Envoi sans signature' });
+    quotes.addCustomLine(quote.id, { label: 'Prestation proposée', proposedUnitPriceCents: 20000 });
+    finalizeForTest(database,quotes,quote.id);
+    const sent = quotes.markSent(quote.id);
+    expect(sent.status).toBe('sent');
+    expect(sent.acceptedClientAccountId).toBeFalsy();
+    expect(sent.projectReadyAt).toBeFalsy();
+    expect(crm.listClients()).toHaveLength(0);
+    expect(crm.listProspects().find(item => item.id === prospect.id)?.clientAccountId).toBeFalsy();
+  });
+
+  it('06E : la révision par duplication garde les lignes, mais possède son propre numéro et historique', () => {
+    const prospect = createProspect();
+    const original = quotes.create({ prospectId: prospect.id, subject: 'Proposition historique' });
+    const withLine = quotes.addCustomLine(original.id, { label: 'Prestation figée', quantityMilli: 1500, proposedUnitPriceCents: 20000 });
+    finalizeForTest(database,quotes,original.id);
+    quotes.markSent(original.id);
+    quotes.refuse(original.id);
+    const revision = quotes.duplicate(original.id);
+    expect(revision.id).not.toBe(original.id);
+    expect(revision.number).not.toBe(original.number);
+    expect(revision.status).toBe('draft');
+    expect(revision.lines).toHaveLength(1);
+    expect(revision.lines[0].id).not.toBe(withLine.lines[0].id);
+    expect(revision.lines[0].quantityMilli).toBe(1500);
+    expect(revision.contractValueCents).toBe(30000);
+    quotes.updateLine(revision.lines[0].id, { label: 'Prestation révisée', quantityMilli: 1500, proposedUnitPriceCents: 24000 });
+    expect(quotes.get(revision.id).contractValueCents).toBe(36000);
+    expect(quotes.get(original.id).contractValueCents).toBe(30000);
+    expect(quotes.get(original.id).status).toBe('refused');
+  });
+
+  it('06E : duplication après refus préserve la version historique et permet une nouvelle validation autonome', () => {
+    const prospect = createProspect();
+    const first = quotes.create({ prospectId: prospect.id, subject: 'Première proposition' });
+    quotes.addCustomLine(first.id, { label: 'Site historique', proposedUnitPriceCents: 69900 });
+    finalizeForTest(database,quotes,first.id);
+    quotes.markSent(first.id);
+    quotes.refuse(first.id);
+    const revised = quotes.duplicate(first.id);
+    quotes.updateLine(revised.lines[0].id, { label: 'Site revisité', quantityMilli: 1000, proposedUnitPriceCents: 79900 });
+    const finalized = finalizeForTest(database,quotes,revised.id);
+    expect(finalized.finalizedAt).toBeTruthy();
+    expect(finalized.contractValueCents).toBe(79900);
+    expect(quotes.get(first.id).status).toBe('refused');
+    expect(quotes.get(first.id).contractValueCents).toBe(69900);
+    expect(quotes.get(first.id).finalizedAt).toBeTruthy();
+    expect(() => quotes.addCustomLine(revised.id, { label: 'Ajout tardif', proposedUnitPriceCents: 1000 }))
+      .toThrow(/figé|finalisé|copie du devis|envoi/i);
+  });
+
 });
