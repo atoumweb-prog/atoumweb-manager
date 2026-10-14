@@ -174,6 +174,11 @@ export class BillingHandoffService {
     const existing = this.database.get<{ id: string }>('SELECT id FROM billing_items WHERE source_key=?', [sourceKey]);
     const now = nowIso();
 
+    // Once Abby's invoice PDF is attached, a source sync must never demote or rewrite the billed item.
+    if (existing && this.get(existing.id).invoiceDocumentId) {
+      throw new Error('Facture PDF déjà rattachée : la décision de dépassement ne peut plus modifier cet élément facturé.');
+    }
+
     if (decision.decision !== 'bill_out_of_scope') {
       if (existing) {
         this.database.run("UPDATE billing_items SET status='cancelled',notes=?,updated_at=? WHERE id=?", [decision.reason, now, existing.id]);
