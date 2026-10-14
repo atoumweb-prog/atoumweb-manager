@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Intervention } from '../../shared/operations';
-import { isCurrentOperationsRefresh, resolveInterventionCompletion } from './operationAsyncGuards';
+import { acquireCompletionLock, isCurrentOperationsRefresh, resolveInterventionCompletion } from './operationAsyncGuards';
 
 const item = (status: Intervention['status']) => ({ id: 'intervention-test', number: 'INT-TEST', status }) as Intervention;
 
@@ -63,5 +63,39 @@ describe('fraîcheur des listes Operations', () => {
     resolveOld([item('in_progress')]);
     await oldResult;
     expect(visible.status).toBe('completed');
+  });
+});
+
+describe('verrou de double clôture', () => {
+  it('bloque immédiatement un double clic puis autorise une nouvelle tentative après libération', () => {
+    const pending = new Set<string>();
+    const release = acquireCompletionLock(pending, 'intervention-test');
+    expect(release).not.toBeNull();
+    expect(acquireCompletionLock(pending, 'intervention-test')).toBeNull();
+    expect(pending.has('intervention-test')).toBe(true);
+    release?.();
+    expect(pending.has('intervention-test')).toBe(false);
+    const retry = acquireCompletionLock(pending, 'intervention-test');
+    expect(retry).not.toBeNull();
+    retry?.();
+  });
+
+  it('isole les interventions et libère le verrou dans finally après une erreur', async () => {
+    const pending = new Set<string>();
+    const releaseFirst = acquireCompletionLock(pending, 'first');
+    const releaseSecond = acquireCompletionLock(pending, 'second');
+    expect(releaseFirst).not.toBeNull();
+    expect(releaseSecond).not.toBeNull();
+    try {
+      await Promise.reject(new Error('IPC failure'));
+    } catch {
+      // The UI's finally branch must release even after a failed IPC operation.
+    } finally {
+      releaseFirst?.();
+    }
+    expect(pending.has('first')).toBe(false);
+    expect(pending.has('second')).toBe(true);
+    releaseSecond?.();
+    expect(pending.size).toBe(0);
   });
 });
