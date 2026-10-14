@@ -576,6 +576,8 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     // contract links require their own unsaved-exit confirmation.
     if (activeTab === 'contracts' && detail)
       requestUnsavedExit(change, 'catalog:contract:' + detail.id);
+    else if (activeTab === 'associations' && detail)
+      requestUnsavedExit(change, 'catalog:' + detail.id);
     else change();
   }
 
