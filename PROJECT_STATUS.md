@@ -1,5 +1,9 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 15/10/2026 — Convergence10 et parcours statistiques
+
+Source130 fc054e73 reprise avec son historique10A–E. Cohortes exactes10B combinées aux filtres09, protections de saisie facture et retour Projet/Devis07. Préférences10D et garde workspace/restauration existante conservées. Aucun changement de migration ou de durée historique. Les102 scénarios10 restent une matrice de couverture (42 traces,43 partiels,17 humains/intégration), pas102 réussites présumées. Recettes natives, couverture, UX-01 et restauration exigées sur candidat propre.
+
 ## 15/10/2026 — Convergence09 et protection de revue Word
 
 Source134 11631769 incorporée avec historique09A–E ; branches de coexistence135/136 non fusionnées. Bibliothèque05 (classement huit rubriques, UX-01, versions) préservée conjointement au DOCX de brouillon09E. Revue Word modifiée désormais protégée par la garde UX-01 existante : Rester conserve la comparaison, Quitter abandonne seulement le brouillon non approuvé, aucune publication implicite. Nouvelles assertions Electron explicites. Aucun texte juridique ni migration modifié. Source Abby reste externe et facturé ne signifie pas payé.

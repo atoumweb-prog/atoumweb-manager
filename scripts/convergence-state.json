@@ -1,41 +1,23 @@
 {
-  "phase": "09",
+  "phase": "10",
   "nativeChecks": [
     [
-      "billing",
+      "coverage",
       [
-        "scripts/check-ux-v2-lot01a-real-ui.cjs",
-        "--lot09b"
+        "scripts/check-ux-v2-lot10-coverage.cjs"
       ]
     ],
     [
-      "expenses",
+      "statistics-settings-backups",
       [
-        "scripts/check-ux-v2-lot01a-real-ui.cjs",
-        "--lot09c"
+        "scripts/check-ux-v2-lot10-ui.cjs"
       ]
     ],
     [
-      "documents",
+      "baseline-01-03",
       [
-        "scripts/check-ux-v2-lot01a-real-ui.cjs",
-        "--lot09d"
-      ]
-    ],
-    [
-      "word-review",
-      [
-        "scripts/check-ux-v2-lot01a-real-ui.cjs",
-        "--lot09e"
-      ]
-    ],
-    [
-      "contracts-native",
-      [
-        "scripts/check-contract-library-ui.cjs",
-        "--output",
-        "{out}/contract-captures",
-        "--ux05b"
+        "scripts/check-ux-v2-integration-validate.cjs",
+        "--native-only"
       ]
     ],
     [
