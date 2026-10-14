@@ -16,6 +16,14 @@ export class ClientDocumentService {
   update(id:string,input:ClientDocumentInput):ClientDocument{
     const current=this.get(id);
     this.validate(input);
+    if(input.category!=='invoice'){
+      const activeInvoice=this.db.get<{id:string}>('SELECT id FROM billing_items WHERE invoice_document_id=? LIMIT 1',[id]);
+      const historicalInvoice=this.db.get<{id:number}>(
+        "SELECT id FROM activity_log WHERE entity_type='billing_item' AND action IN ('billing_invoice_attached','billing_invoice_replaced') AND json_valid(metadata_json) AND (json_extract(metadata_json,'$.previousDocumentId')=? OR json_extract(metadata_json,'$.currentDocumentId')=?) LIMIT 1",
+        [id,id],
+      );
+      if(activeInvoice||historicalInvoice)throw Error('Une facture Abby rattachée ou historique doit rester classée dans Factures.');
+    }
     const now=new Date().toISOString();
     this.db.exec('SAVEPOINT document_metadata_update');
     try{
