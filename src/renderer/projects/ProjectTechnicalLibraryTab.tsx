@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ProjectReusePreparationPanel } from './ProjectReusePreparationPanel';
+import { requestUnsavedExit } from '../unsaved/unsaved';
 import {
   PROJECT_TECHNICAL_CATEGORIES,
   PROJECT_TECHNICAL_CONTENT_TYPES,
@@ -96,7 +97,12 @@ export function ProjectTechnicalLibraryTab({ projectId, onMessage }: {
     return () => window.clearTimeout(timer);
   }, [query]);
 
-  async function openItem(id: string): Promise<void> {
+  function openItem(id: string): void {
+    requestUnsavedExit(() => { void openItemAllowed(id); }, 'project-reuse');
+  }
+
+  async function openItemAllowed(id: string): Promise<void> {
+    setReuseOpen(false);
     try {
       setSelectedId(id);
       setDetail(await window.atoumweb.projects.technicalLibrary.get(id));
@@ -146,13 +152,16 @@ export function ProjectTechnicalLibraryTab({ projectId, onMessage }: {
   }
 
   function startNewVersion(): void {
-    if (!detail?.currentVersion) return;
-    setContentType(detail.currentVersion.contentType);
-    setLanguage(detail.currentVersion.language ?? '');
-    setContent(detail.currentVersion.contentText ?? '');
-    setNotes('');
-    setNewVersion(true);
-    setReuseOpen(false);
+    const currentVersion = detail?.currentVersion;
+    if (!currentVersion) return;
+    requestUnsavedExit(() => {
+      setContentType(currentVersion.contentType);
+      setLanguage(currentVersion.language ?? '');
+      setContent(currentVersion.contentText ?? '');
+      setNotes('');
+      setNewVersion(true);
+      setReuseOpen(false);
+    }, 'project-reuse');
   }
 
   async function createNextVersion(): Promise<void> {
@@ -212,10 +221,15 @@ export function ProjectTechnicalLibraryTab({ projectId, onMessage }: {
     }
   }
 
-  async function archive(): Promise<void> {
+  function archive(): void {
     if (!detail) return;
+    const itemId = detail.id;
+    requestUnsavedExit(() => { void archiveAllowed(itemId); }, 'project-reuse');
+  }
+
+  async function archiveAllowed(itemId: string): Promise<void> {
     try {
-      await window.atoumweb.projects.technicalLibrary.archive(detail.id);
+      await window.atoumweb.projects.technicalLibrary.archive(itemId);
       setSelectedId(null);
       setDetail(null);
       await refresh(null);
@@ -225,12 +239,34 @@ export function ProjectTechnicalLibraryTab({ projectId, onMessage }: {
     }
   }
 
+  function toggleReuse(): void {
+    if (reuseOpen) {
+      requestUnsavedExit(() => setReuseOpen(false), 'project-reuse');
+    } else {
+      setReuseOpen(true);
+      setNewVersion(false);
+    }
+  }
+
+  function searchItems(next: string): void {
+    // Searching can replace the selected item when a result disappears.
+    // Closing the preparation first keeps the user's consent explicit.
+    if (reuseOpen) {
+      requestUnsavedExit(() => {
+        setReuseOpen(false);
+        setQuery(next);
+      }, 'project-reuse');
+    } else {
+      setQuery(next);
+    }
+  }
+
   const resourceById = useMemo(() => new Map(resources.map((resource) => [resource.id, resource])), [resources]);
 
   return (
     <div className="project-tab-content technical-library-tab">
       <div className="technical-library-toolbar">
-        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher Header, CSS, snippet, ACF…" />
+        <input value={query} onChange={(event) => searchItems(event.target.value)} placeholder="Rechercher Header, CSS, snippet, ACF…" />
         <button className="primary-button" type="button" onClick={() => setCreating((value) => !value)}>+ Élément technique</button>
       </div>
 
@@ -266,7 +302,7 @@ export function ProjectTechnicalLibraryTab({ projectId, onMessage }: {
           {!detail ? <div className="empty-table">Sélectionne un élément technique.</div> : <>
             <div className="technical-detail-heading">
               <div><span className="eyebrow">{CATEGORY_LABELS[detail.category]}</span><h3>{detail.name}</h3>{detail.description && <p className="muted">{detail.description}</p>}</div>
-              <div className="button-row"><button className="secondary-button" type="button" onClick={() => {setReuseOpen(v=>!v);setNewVersion(false);}}>Préparer pour réutilisation</button><button className="secondary-button" type="button" disabled={reuseBusy} onClick={() => void prepareForReuse()}>{reuseBusy ? 'Export…' : 'Exporter le paquet simple'}</button><button className="secondary-button" type="button" onClick={startNewVersion}>Nouvelle version</button><button className="secondary-button danger-outline" type="button" onClick={() => void archive()}>Archiver</button></div>
+              <div className="button-row"><button className="secondary-button" type="button" onClick={toggleReuse}>Préparer pour réutilisation</button><button className="secondary-button" type="button" disabled={reuseBusy} onClick={() => void prepareForReuse()}>{reuseBusy ? 'Export…' : 'Exporter le paquet simple'}</button><button className="secondary-button" type="button" onClick={startNewVersion}>Nouvelle version</button><button className="secondary-button danger-outline" type="button" onClick={() => void archive()}>Archiver</button></div>
             </div>
 
             {reuseOpen&&<ProjectReusePreparationPanel key={detail.id} detail={detail} onMessage={onMessage} onClose={()=>setReuseOpen(false)}/>}
