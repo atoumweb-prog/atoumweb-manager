@@ -159,6 +159,26 @@ export class ExpenseService {
     return absolute;
   }
 
+  listReceiptVersions(id: string): Array<{ relativePath: string; fileName: string; sha256: string | null; integrity: 'verified' | 'unknown' | 'missing' | 'modified' }> {
+    this.get(id);
+    const rows = this.database.all<{ metadata_json: string | null }>(
+      "SELECT metadata_json FROM activity_log WHERE entity_type='expense' AND entity_id=? AND action='expense_receipt_version' ORDER BY id DESC",
+      [id],
+    );
+    return rows.flatMap((row) => {
+      if (!row.metadata_json) return [];
+      let value: { currentRelativePath?: string; currentFileName?: string; currentSha256?: string };
+      try { value = JSON.parse(row.metadata_json); } catch { return []; }
+      if (!value.currentRelativePath || !value.currentFileName) return [];
+      const absolute = resolve(this.workspace.root, value.currentRelativePath);
+      if (!absolute.startsWith(resolve(this.workspace.root) + sep)) return [];
+      if (!existsSync(absolute)) return [{ relativePath: value.currentRelativePath, fileName: value.currentFileName, sha256: value.currentSha256 ?? null, integrity: 'missing' as const }];
+      const sha256 = value.currentSha256 ?? null;
+      const integrity = !sha256 ? 'unknown' as const : createHash('sha256').update(readFileSync(absolute)).digest('hex') === sha256 ? 'verified' as const : 'modified' as const;
+      return [{ relativePath: value.currentRelativePath, fileName: value.currentFileName, sha256, integrity }];
+    });
+  }
+
   private normalize(input: ExpenseInput): NormalizedExpenseInput {
     if (!EXPENSE_CATEGORIES.includes(input.category)) throw new Error('Catégorie de dépense invalide.');
     if (!EXPENSE_FREQUENCIES.includes(input.frequency ?? 'none')) throw new Error('Fréquence de dépense invalide.');
