@@ -9,6 +9,7 @@ import {
 } from '../../shared/projects';
 import type { TimeSession } from '../../shared/time';
 import { ProjectPageCompositionPanel } from './ProjectPageCompositionPanel';
+import { requestUnsavedExit } from '../unsaved/unsaved';
 import './ProjectSitesTab.css';
 
 function formatElapsed(seconds: number): string {
@@ -258,20 +259,24 @@ export function ProjectSitesTab({
     : (selectedSiteId ? sites.find((site) => site.id === selectedSiteId) ?? null : null);
 
   function selectSite(id: string): void {
+    void requestUnsavedExit(() => {
     setSelectedPageId(null);
     setSelectedSiteId(id);
     setDetailCollapsed(false);
     setInspectorOpen(false);
     setInspectorCollapsed(false);
+    }, 'project-composition');
   }
 
   function selectPage(id: string): void {
+    void requestUnsavedExit(() => {
     setSelectedSiteId(null);
     setSelectedPageId(id);
     setDetailCollapsed(false);
     setPageInfoOpen(false);
     setInspectorOpen(false);
     setInspectorCollapsed(false);
+    }, 'project-composition');
   }
 
   const selectedPageSessions = selectedPage
