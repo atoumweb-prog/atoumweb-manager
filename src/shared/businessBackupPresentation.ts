@@ -1,6 +1,6 @@
 import type { Intervention } from './operations';
 import type { BusinessBackupAlert } from './businessBackupAlerts';
-import type { BusinessBackupLocation } from './businessBackups';
+import type { BusinessBackupLocation, BusinessBackupRecord } from './businessBackups';
 
 /** Une vérification du registre n'est ni une empreinte validée, ni un test de restauration. */
 export function businessBackupLocationStatus(location: Pick<BusinessBackupLocation, 'locationType' | 'exists' | 'verifiedAt'>): string {
