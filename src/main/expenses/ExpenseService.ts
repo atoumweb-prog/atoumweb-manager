@@ -1,6 +1,6 @@
 
-import { randomUUID } from 'node:crypto';
-import { copyFileSync, existsSync, mkdirSync, statSync } from 'node:fs';
+import { createHash, randomUUID } from 'node:crypto';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync } from 'node:fs';
 import { basename, extname, join, relative, resolve, sep } from 'node:path';
 import {
   EXPENSE_CATEGORIES,
@@ -144,7 +144,7 @@ export class ExpenseService {
     this.database.run(
       'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
       ['expense', id, 'expense_receipt_version', 'Historique justificatif : ' + basename(source),
-        JSON.stringify({ previousRelativePath: expense.receiptRelativePath ?? null, previousFileName: expense.receiptFileName ?? null, currentRelativePath: relative(this.workspace.root, destination), currentFileName: basename(source) }), nowIso()],
+        JSON.stringify({ previousRelativePath: expense.receiptRelativePath ?? null, previousFileName: expense.receiptFileName ?? null, currentRelativePath: relative(this.workspace.root, destination), currentFileName: basename(source), currentSha256: createHash('sha256').update(readFileSync(destination)).digest('hex') }), nowIso()],
     );
     this.log(id, 'expense_receipt_imported', 'Justificatif : ' + basename(source));
     return this.get(id);
