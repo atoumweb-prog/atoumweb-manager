@@ -41,7 +41,8 @@ jobs:
         if: ${{ github.event_name == 'pull_request' && github.head_ref == 'integration/ux05-candidate-20261014' }}
         shell: pwsh
         run: |
-          git fetch origin main --depth=100
+          if (Test-Path (git rev-parse --git-path shallow)) { git fetch --unshallow origin }
+          git fetch origin main:refs/remotes/origin/main
           git merge-base --is-ancestor origin/main HEAD
           if ($LASTEXITCODE -ne 0) { throw 'Integration candidate is behind or diverged from main; rebuild and retest.' }
           Write-Output 'UX 05 candidate contains current origin/main.'
