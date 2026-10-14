@@ -306,6 +306,16 @@ const api: AtoumWebApi = {
     setOfferComponents: (offerVersionId: string, components: OfferComponentInput[]) => ipcRenderer.invoke('catalog:set-offer-components', offerVersionId, components),
   },
 
+  catalogCategories: {
+    list: () => ipcRenderer.invoke('catalog-categories:list'),
+    listLegacy: () => ipcRenderer.invoke('catalog-categories:list-legacy'),
+    create: (name: string) => ipcRenderer.invoke('catalog-categories:create', name),
+    rename: (id: string, name: string, revision: number) => ipcRenderer.invoke('catalog-categories:rename', id, name, revision),
+    setStatus: (id: string, status: import('../shared/catalogCategoryAdministration').CatalogCategoryStatus, revision: number) => ipcRenderer.invoke('catalog-categories:set-status', id, status, revision),
+    assign: (input: import('../shared/catalogCategoryAdministration').CatalogCategoryAssignment) => ipcRenderer.invoke('catalog-categories:assign', input),
+    reconcileLegacy: (rawValue: string, categoryId: string, expectedItemIds: string[]) => ipcRenderer.invoke('catalog-categories:reconcile-legacy', rawValue, categoryId, expectedItemIds),
+  },
+
   contractTypes: {
     list: archived => ipcRenderer.invoke('contract-types:list',archived),
     get: id => ipcRenderer.invoke('contract-types:get',id),
