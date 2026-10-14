@@ -28,7 +28,7 @@ export function QuoteCatalogRecommendationsPanel({quote,source,onSave}:{
     setLinks([]);setError('');setLoading(Boolean(sourceVersionId));
     if(!sourceVersionId)return;
     void window.atoumweb.catalog.listRecommendations(sourceVersionId)
-      .then(rows=>{if(request!==epoch.current)return;setLinks(rows);setLoading(false);})
+      .then(rows=>{if(request!==epoch.current)return;setLinks(rows.filter(link=>link.status!=='paused'));setLoading(false);})
       .catch(err=>{if(request!==epoch.current)return;
         setError(err instanceof Error?err.message:'Lecture des recommandations impossible.');
         setLoading(false);
