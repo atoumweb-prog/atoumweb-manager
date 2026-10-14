@@ -47,7 +47,7 @@ export function catalogAdminFiltered(items: readonly CatalogItemSummary[], filte
 }
 
 export function catalogAdminCategories(items: readonly CatalogItemSummary[]): string[] {
-  return [...new Set(items.map((item) => item.category?.trim() || '').filter(Boolean))]
+  return [...new Set(items.map((item) => item.category ?? '').filter((value) => Boolean(value.trim())))]
     .sort((a, b) => catalogueCategoryName(a)
       .localeCompare(catalogueCategoryName(b), 'fr-FR', { sensitivity: 'base' }) ||
       a.localeCompare(b, 'fr-FR', { sensitivity: 'base' }));
