@@ -60,7 +60,7 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
     });
   }
   function patch(id:string,fields:Partial<CatalogRecommendationDetails>){
-    setMetadata(current=>({...current,[id]:{targetVersionId:id,reason:'',status:'active',conditions:'',provenance:'manual',...current[id],...fields}}));
+    setMetadata(current=>({...current,[id]:{...current[id],...fields,targetVersionId:id,reason:fields.reason??current[id]?.reason??'',status:fields.status??current[id]?.status??'active',conditions:fields.conditions??current[id]?.conditions??'',provenance:fields.provenance??current[id]?.provenance??'manual'}}));
   }
   async function save(){
     if(!sourceId||!editable||saving||saveInFlight.current===sourceId)return;
@@ -69,7 +69,7 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
     saveInFlight.current=sourceId;
     setSaving(true);setError('');
     try{
-      const links=await window.atoumweb.catalog.replaceRecommendations(sourceId,targets,savedLinks.map(link=>link.targetVersionId),targets.map(id=>({targetVersionId:id,reason:'',status:'active',conditions:'',provenance:'manual',...metadata[id]})),savedLinks.map(link=>({targetVersionId:link.targetVersionId,reason:link.reason??'',status:link.status??'active',conditions:link.conditions??'',provenance:link.provenance??'manual'})));
+      const links=await window.atoumweb.catalog.replaceRecommendations(sourceId,targets,savedLinks.map(link=>link.targetVersionId),targets.map(id=>({...metadata[id],targetVersionId:id,reason:metadata[id]?.reason??'',status:metadata[id]?.status??'active',conditions:metadata[id]?.conditions??'',provenance:metadata[id]?.provenance??'manual'})),savedLinks.map(link=>({targetVersionId:link.targetVersionId,reason:link.reason??'',status:link.status??'active',conditions:link.conditions??'',provenance:link.provenance??'manual'})));
       if(sourceRef.current!==savingSourceId||requestEpoch.current!==saveEpoch)return;
       setSavedLinks(links);const saved=links.map(link=>link.targetVersionId);
       const info=Object.fromEntries(links.map(link=>[link.targetVersionId,{targetVersionId:link.targetVersionId,
