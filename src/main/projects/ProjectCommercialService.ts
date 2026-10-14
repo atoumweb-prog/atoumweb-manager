@@ -30,6 +30,17 @@ export class ProjectCommercialService {
     catch (error) { this.db.exec('ROLLBACK TO project_commercial_work; RELEASE project_commercial_work'); throw error; }
   }
 
+  /** No archived predecessor may mutate the dossier or its own history through IPC. */
+  private assertCurrentProvisional(projectId: string): void {
+    const project=this.db.get<Row>('SELECT commercial_state,status,commercial_dossier_id FROM projects WHERE id=?',[projectId]);
+    required(project?.commercial_state==='provisional' && project.status==='to_prepare',
+      'Seul le Projet prévisionnel courant peut être modifié.');
+    const dossier=this.db.get<Row>('SELECT project_id,accepted_quote_id FROM commercial_project_dossiers WHERE id=?',
+      [String(project!.commercial_dossier_id)]);
+    required(dossier?.project_id===projectId && !dossier.accepted_quote_id,
+      'Projet prévisionnel remplacé ou archivé : modification interdite.');
+  }
+
   private dossier(quoteId: string): Row | undefined {
     if (!this.db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='commercial_project_dossiers'")) return undefined;
     return this.db.get<Row>(`SELECT d.* FROM commercial_project_dossiers d JOIN commercial_quote_revisions r ON r.dossier_id=d.id WHERE r.quote_id=?`,[quoteId]);
@@ -412,7 +423,7 @@ export class ProjectCommercialService {
 
   resolveConflict(projectId: string, conflictId: string, decision: ProjectConflictDecision): ProjectCommercialScope {
     this.transaction(()=>{
-      required(this.db.get<Row>('SELECT commercial_state FROM projects WHERE id=?',[projectId])?.commercial_state==='provisional','Projet figé : résolution refusée.');
+      this.assertCurrentProvisional(projectId);
       const conflict=this.db.get<Row>("SELECT * FROM project_scope_conflicts WHERE id=? AND project_id=? AND status='open'",[conflictId,projectId]);
       required(conflict,'Conflit ouvert introuvable.');
       required(['keep','archive','detach','delete'].includes(decision),'Décision invalide.');
@@ -441,6 +452,7 @@ export class ProjectCommercialService {
 
   assignTarget(projectId:string,input:ContributionTargetInput):ProjectCommercialScope {
     this.transaction(()=>{
+      this.assertCurrentProvisional(projectId);
       new ProjectContributionTargetService(this.db).assign(projectId,input);
       if(this.db.get<Row>('SELECT commercial_state FROM projects WHERE id=?',[projectId])?.commercial_state==='provisional')this.sync(projectId);
     });
