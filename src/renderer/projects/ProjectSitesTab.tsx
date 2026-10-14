@@ -202,6 +202,10 @@ export function ProjectSitesTab({
   }
 
   async function run(action: () => Promise<unknown>, success?: string): Promise<void> {
+    if (mutationPending.current) {
+      onMessage('Une modification Site/Page est déjà en cours. Réessaie après sa confirmation.');
+      return;
+    }
     if (!beginMutation()) return;
     try {
       await action();
