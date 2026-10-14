@@ -34,7 +34,7 @@ import {CatalogPage} from '${repo.replaceAll('\\', '/')}/src/renderer/commercial
 import commercialSource from '${repo.replaceAll('\\', '/')}/data/catalogue/atoumweb-catalogue-v1.json';
 const oldVersion={id:'old-v1',itemId:'legacy-id',versionNumber:1,status:'published',priceMode:'fixed',priceCents:69900,description:'Ancienne offre',inclusions:[],exclusions:[],prerequisites:[],createdAt:'2026-09-14',publishedAt:'2026-09-14'};
 const items=[{id:'legacy-id',type:'service',name:'Ancien élément témoin',category:'Web',status:'active',visiblePublic:false,canonicalCode:null,currentVersion:oldVersion,versions:[oldVersion],createdAt:'2026-09-14'}];
-window.calls={create:[],version:[],saveDraft:[],assign:[],publish:0};window.items=items;window.messages=[];
+window.calls={create:[],version:[],saveDraft:[],assign:[],publish:0};window.items=items;window.messages=[];window.simulateLostVersionReply=false;
 window.fixtureErrors=[];window.addEventListener('error',event=>window.fixtureErrors.push(String(event.error?.stack||event.message)));window.addEventListener('unhandledrejection',event=>window.fixtureErrors.push(String(event.reason?.stack||event.reason)));
 window.importedVersion={...commercialSource.records.find(r=>r.canonicalCode==='AW-WEB-VITRINE').version,id:'legacy-import-v2',itemId:'legacy-id',versionNumber:2,status:'draft',createdAt:'2026-10-03'};
 window.categoryRecords=[];window.categoryCalls=[];window.categorySequence=0;
@@ -86,7 +86,21 @@ const categoryApi={
 window.atoumweb={catalogCategories:categoryApi,catalog:{
   list:async()=>structuredClone(items),getItem:async(id)=>structuredClone(items.find(i=>i.id===id)),
   create:async(input,version)=>{calls.create.push({input,version});const id='new-'+calls.create.length;const v={...version,id:id+'-v1',itemId:id,versionNumber:1,status:'draft',createdAt:'2026-10-03'};const item={...input,id,status:'active',canonicalCode:input.canonicalCode?.toUpperCase()||null,currentVersion:v,versions:[v]};items.push(item);return structuredClone(item)},
-  createVersion:async(id,input)=>{calls.version.push({id,input});const item=items.find(i=>i.id===id);const v={...input,id:id+'-v2',itemId:id,versionNumber:2,status:'draft',createdAt:'2026-10-03'};item.versions.unshift(v);return structuredClone(v)},
+  createVersion:async(id,input,requestId)=>{
+    const item=items.find(i=>i.id===id);
+    const previouslyCreated=item.versions.find(v=>v.id===requestId);
+    if(previouslyCreated){
+      if(previouslyCreated.priceCents!==input.priceCents)throw Error('Conflit : UUID utilisé avec contenu différent');
+      return structuredClone(previouslyCreated);
+    }
+    calls.version.push({id,input,requestId});
+    const nextVersion=Math.max(...item.versions.map(v=>v.versionNumber))+1;
+    const v={...input,id:requestId??id+'-v'+nextVersion,itemId:id,versionNumber:nextVersion,status:'draft',createdAt:'2026-10-03'};
+    item.versions.unshift(v);
+    if(item.currentVersion?.status!=='published')item.currentVersion=v;
+    if(window.simulateLostVersionReply){window.simulateLostVersionReply=false;throw Error('La réponse IPC a été perdue après écriture');}
+    return structuredClone(v);
+  },
   saveDraftVersion:async(id,expected,input)=>{
     const item=items.find(i=>i.versions.some(v=>v.id===id));
     const v=item?.versions.find(v=>v.id===id);
@@ -154,6 +168,20 @@ app.whenReady().then(async () => {
       assert('Attribution sur UUID explicite',calls.assign.at(-1).id==='legacy-id'&&items[0].canonicalCode==='AW-TEST-ANCIEN');
       assert('Code attribué consultable et non renommable',document.querySelector('.catalog-identity-section').textContent.includes('AW-TEST-ANCIEN')&&!field('Code AW à attribuer'));
       assert('Ancienne version préservée',items[0].versions.length===1&&items[0].currentVersion.description==='Ancienne offre');
+      await click('Modifier via une nouvelle version');
+      await fill('Description','Nouvelle proposition après publication');
+      window.simulateLostVersionReply=true;
+      await click('Créer v2');
+      assert('04C/E102 réponse IPC perdue, brouillon effectivement créé',items[0].versions.length===2&&
+        items[0].versions[0].status==='draft'&&calls.version.length===1);
+      assert('04C/E102 saisie locale et erreur conservées',!!document.querySelector('.catalog-version-editor .form-error')&&
+        [...document.querySelectorAll('.catalog-version-editor textarea')].some(t=>t.value==='Nouvelle proposition après publication'));
+      const requestId=calls.version[0].requestId;
+      assert('04C/E102 UUID présent dans demande IPC',typeof requestId==='string'&&requestId.length===36);
+      await click('Créer v2');
+      assert('04C/E102 second clic utilise le même UUID',items[0].versions.length===2&&
+        calls.version.length===1&&items[0].versions[0].id===requestId&&
+        items[0].currentVersion.description==='Ancienne offre');
       await click('+ Service / Offre');
       await fill('Nom','Licence de recette');await fill('Code canonique AW','AW-TEST-LICENCE');
       await fill('Nature commerciale','subscription');await fill('Famille canonique','TECH');
