@@ -40,6 +40,8 @@ export interface CatalogCommercialParameters {
   clientNeed?: string | null;
   /** Versioned commercial benefits, descriptive only and never contract clauses. */
   benefits?: string | null;
+  /** Human-authored objection handling, never contractual. */
+  objections?: string | null;
   /** Admin-managed search keywords/synonyms, separated by commas, semicolons or line breaks. */
   keywords?: string | null;
   work?: string | null;
