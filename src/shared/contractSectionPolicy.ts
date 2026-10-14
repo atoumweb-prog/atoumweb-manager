@@ -68,7 +68,7 @@ export function evaluateContractApplicability(rule:ContractApplicabilityRule,con
   if(rule.recurring!==undefined&&compare(rule.recurring,context.recurring))return 'ineligible';
   if(rule.minQuantity!==undefined){
     if(!Number.isSafeInteger(rule.minQuantity)||rule.minQuantity<1) return 'unresolved';
-    if(context.quantity===undefined)unknown=true;
+    if(context.quantity===undefined||!Number.isSafeInteger(context.quantity)||context.quantity<0)unknown=true;
     else if(context.quantity<rule.minQuantity)return 'ineligible';
   }
   for(const [required,available] of [[rule.requiredProductCodes,context.productCodes],[rule.requiredOptionCodes,context.optionCodes]] as const){
@@ -94,6 +94,7 @@ export function evaluateContractConflicts(
 ):{warnings:ContractClauseConflict[];blocking:ContractClauseConflict[]} {
   const selected=new Set(selectedVersionIds);
   const applicable=conflicts.filter(c=>c.clauseVersionIds.length>=2
+    &&new Set(c.clauseVersionIds).size===c.clauseVersionIds.length
     &&c.clauseVersionIds.every(id=>selected.has(id)));
   return {
     warnings:applicable,
