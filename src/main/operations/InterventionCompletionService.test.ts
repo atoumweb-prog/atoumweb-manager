@@ -77,6 +77,68 @@ describe('InterventionCompletionService', () => {
     expect(snapshot()).toEqual(before);
   });
 
+  it.each(['suspended', 'archived'] as const)(
+    '08F conserve l’intervention et les mouvements quand le pack est %s', (packStatus) => {
+      const { intervention, pack } = packIntervention();
+      packs.changeStatus(pack.id, packStatus);
+      const before = snapshot();
+      expect(() => packs.previewInterventionDebit(pack.id, intervention.id))
+        .toThrow(/ne peut pas être débité/i);
+      expect(() => completion.complete(intervention.id))
+        .toThrow(/ne peut pas être utilisé/i);
+      expect(snapshot()).toEqual(before);
+      expect(operations.getIntervention(intervention.id).status).toBe('in_progress');
+      expect(packs.get(pack.id).movements.filter(m => m.type === 'intervention_debit')).toHaveLength(0);
+      expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+    },
+  );
+
+  it('08F refuse un pack expiré sans transition, débit ou handoff', () => {
+    const pack = packs.create({
+      clientAccountId: clientId, name: 'Pack expiré fixture',
+      purchasedSeconds: 3600, contractPriceCents: 10000,
+      purchasedAt: '2020-01-01T00:00:00.000Z',
+      expiresAt: '2020-01-02T00:00:00.000Z',
+    });
+    const intervention = operations.createIntervention({
+      clientAccountId: clientId, hourPackId: pack.id,
+      type: 'support', coverageMode: 'hour_pack',
+      subject: 'Expiration au moment de la clôture', status: 'in_progress',
+    });
+    time.addManual({
+      interventionId: intervention.id, category: 'support',
+      startedAt: '2026-09-14T08:00:00Z', endedAt: '2026-09-14T08:30:00Z',
+    });
+    expect(packs.get(pack.id).status).toBe('expired');
+    const before = snapshot();
+    expect(() => packs.previewInterventionDebit(pack.id, intervention.id)).toThrow(/ne peut pas être débité/i);
+    expect(() => completion.complete(intervention.id)).toThrow(/ne peut pas être utilisé/i);
+    expect(snapshot()).toEqual(before);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('08F refuse une période de maintenance clôturée sans mutation', () => {
+    const maintenance = new MaintenanceService(database);
+    const plan = maintenance.createPlan({
+      name: 'Période clôturée fixture', periodicPriceCents: 4900, includedInterventions: 1,
+    });
+    const subscription = maintenance.createSubscription({
+      clientAccountId: clientId, planId: plan.id, startDate: '2026-09-01',
+    });
+    const period = maintenance.ensurePeriod(subscription.id, '2026-09-14');
+    const intervention = operations.createIntervention({
+      clientAccountId: clientId, maintenancePeriodId: period.id,
+      type: 'maintenance', coverageMode: 'maintenance', subject: 'Période close',
+    });
+    database.run("UPDATE maintenance_periods SET status='closed' WHERE id=?", [period.id]);
+    const before = snapshot();
+    expect(() => completion.complete(intervention.id)).toThrow(/déjà clôturée/i);
+    expect(snapshot()).toEqual(before);
+    expect(operations.getIntervention(intervention.id).status).toBe('to_plan');
+    expect(billing.list().filter(item => item.sourceId === intervention.id)).toHaveLength(0);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
   it('conserve toutes les cellules et activités si aucun temps terminé ne peut être débité', () => {
     const { intervention } = packIntervention(false);
     const before = snapshot();
