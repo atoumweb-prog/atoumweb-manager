@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   AnalyticsCommercialSnapshot,
   AnalyticsFinancialMetric,
@@ -127,6 +127,7 @@ function normalizedPair(metric: AnalyticsFinancialMetricValue): { current: numbe
 
 export function StatisticsPage({ onMessage }: { onMessage: (message: string) => void }) {
   const [period, setPeriod] = useState<AnalyticsPeriodInput>({ preset: 'month' });
+  const requestVersion = useRef(0);
   const [snapshot, setSnapshot] = useState<AnalyticsFinancialSnapshot | null>(null);
   const [commercial, setCommercial] = useState<AnalyticsCommercialSnapshot | null>(null);
   const [projectTime, setProjectTime] = useState<AnalyticsProjectTimeSnapshot | null>(null);
@@ -143,7 +144,12 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
   }, [period]);
 
   async function load(): Promise<void> {
-    if (effectivePeriod.preset === 'custom' && (!effectivePeriod.from || !effectivePeriod.to)) return;
+    // Une réponse antérieure ne doit ni changer la période visible ni masquer une erreur récente.
+    const request = ++requestVersion.current;
+    if (effectivePeriod.preset === 'custom' && (!effectivePeriod.from || !effectivePeriod.to)) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const [financialSnapshot, commercialSnapshot, projectTimeSnapshot] = await Promise.all([
@@ -151,17 +157,21 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         window.atoumweb.analytics.commercialSnapshot(effectivePeriod),
         window.atoumweb.analytics.projectTimeSnapshot(effectivePeriod),
       ]);
+      if (request !== requestVersion.current) return;
       setSnapshot(financialSnapshot);
       setCommercial(commercialSnapshot);
       setProjectTime(projectTimeSnapshot);
     } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible de calculer les statistiques.');
+      if (request === requestVersion.current) onMessage(error instanceof Error ? error.message : 'Impossible de calculer les statistiques.');
     } finally {
-      setLoading(false);
+      if (request === requestVersion.current) setLoading(false);
     }
   }
 
-  useEffect(() => { void load(); }, [effectivePeriod.preset, effectivePeriod.from, effectivePeriod.to]);
+  useEffect(() => {
+    void load();
+    return () => { requestVersion.current += 1; };
+  }, [effectivePeriod.preset, effectivePeriod.from, effectivePeriod.to]);
 
   useEffect(() => {
     if (!expandedMetricKey) return;
@@ -180,6 +190,8 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
   const primaryMetrics = PRIMARY_METRICS.map((key) => metricMap.get(key)).filter(Boolean) as AnalyticsFinancialMetricValue[];
   const flowMetrics = FLOW_METRICS.map((key) => metricMap.get(key)).filter(Boolean) as AnalyticsFinancialMetricValue[];
   const availableCount = snapshot?.metrics.filter((metric) => metric.available).length ?? 0;
+  const showingPreviousPeriod = !!snapshot && (snapshot.period.preset !== effectivePeriod.preset ||
+    (effectivePeriod.preset === 'custom' && (snapshot.period.from !== effectivePeriod.from || snapshot.period.to !== effectivePeriod.to)));
   const signed = metricMap.get('contract_signed');
   const delivered = metricMap.get('commercial_delivered');
   const gifted = metricMap.get('gifted_value');
@@ -228,6 +240,8 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         <div><span>Comparaison</span><strong>{dateFr(snapshot.period.comparisonFrom)} → {dateFr(snapshot.period.comparisonTo)}</strong></div>
       </div>}
     </section>
+
+    {showingPreviousPeriod && <p role="status" className="phase7-statistics-comparability-note">Période en cours de sélection : les chiffres ci-dessous correspondent encore à la dernière période calculée, indiquée ci-dessus.</p>}
 
     {snapshot && <section className="phase7-statistics-overview-grid">
       <div className="phase7-statistics-glance compact">
