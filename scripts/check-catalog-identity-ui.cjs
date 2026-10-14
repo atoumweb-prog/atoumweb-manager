@@ -282,7 +282,7 @@ app.whenReady().then(async () => {
       assert('04C panneau production réel monté',!!document.querySelector('.catalog-production-panel'));
       assert('04C consultation de production sans Projet créé',document.querySelector('.catalog-production-panel').textContent.includes('Aucun blueprint lié'));
       await click('Aide à la vente');
-      assert('04C aide commerciale versionnée en lecture',!!document.querySelector('.catalog-commercial-parameters'));
+      assert('04C aide commerciale non configurée signalée sans faux contenu',document.querySelector('.catalog-editor-tab-panel').textContent.includes('Aucune aide à la vente configurée'));
       await click('Historique');
       assert('04C versions historiques accessibles',!!document.querySelector('.catalog-versions'));
       // E95: exercise React category administration with a mocked IPC contract,
