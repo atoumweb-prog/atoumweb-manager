@@ -55,7 +55,7 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
   const [otherText, setOtherText] = useState('');
   const [kind,setKind]=useState<'offers'|'services'>('offers');
   const [catalogQuery,setCatalogQuery]=useState('');
-  const [managedRecommendations,setManagedRecommendations]=useState<{sourceKey:string;versionIds:string[]}>({sourceKey:'',versionIds:[]});
+  const [managedRecommendations,setManagedRecommendations]=useState<{sourceKey:string;versionIds:string[];status:'loading'|'ready'|'error'}>({sourceKey:'',versionIds:[],status:'ready'});
   const choiceGuard=useUnsavedDraft('Prestation à ajouter',{selectedId,otherText},{discard:s=>{setSelectedId(s.selectedId);setOtherText(s.otherText);}});
 
   const availableByKind=catalog.filter(item=>catalogueIsOffer(item)===(kind==='offers'));
@@ -85,22 +85,26 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
   // temporary fallback for historic fixtures that have no administered links.
   useEffect(()=>{
     let live=true;
-    setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[]});
+    setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[],status:recommendationSourceIds?'loading':'ready'});
     if(!recommendationSourceIds)return;
     void Promise.all(recommendationSourceIds.split('|').map(id=>
       window.atoumweb.catalog.listRecommendations(id),
     )).then(groups=>{
-      if(live)setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[...new Set(groups.flatMap(links=>links.map(link=>link.targetVersionId)))]});
-    }).catch(()=>{if(live)setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[]});});
+      if(live)setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[...new Set(groups.flatMap(links=>links.map(link=>link.targetVersionId)))],status:'ready'});
+    }).catch(()=>{if(live)setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[],status:'error'});});
     return()=>{live=false;};
   },[recommendationSourceIds]);
   const legacySuggestionIds = Array.from(new Set(selectedItems.flatMap((item) => item ? (SUGGESTIONS[item.id] ?? []) : [])));
-  const suggestions=resolveProspectCatalogRecommendations(
+  const recommendationsReady=managedRecommendations.sourceKey===recommendationSourceIds&&managedRecommendations.status==='ready';
+  const recommendationsFailed=managedRecommendations.sourceKey===recommendationSourceIds&&managedRecommendations.status==='error';
+  const administeredIds=recommendationsReady?managedRecommendations.versionIds:[];
+  const suggestions=recommendationsReady?resolveProspectCatalogRecommendations(
     catalog,
     value.flatMap(need=>need.catalogItemId?[need.catalogItemId]:[]),
-    managedRecommendations.sourceKey===recommendationSourceIds?managedRecommendations.versionIds:[],
+    administeredIds,
     legacySuggestionIds,
-  );
+  ):[];
+  const legacyFallback=administeredIds.length===0 && suggestions.length>0;
 
   return <div className="need-selector-v2 form-span-3">
     <div className="need-selector-title"><strong>Besoins / Offres / Services</strong><small>Catégorie ou recherche par besoin, bénéfice ou mot-clé publié.</small></div>
@@ -115,7 +119,9 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
       {selectedId === 'other' && <label>Préciser<input value={otherText} onChange={(e) => setOtherText(e.target.value)} /></label>}
       <button type="button" className="secondary-button" onClick={add} disabled={!selectedId || (selectedId === 'other' && !otherText.trim())}>Ajouter</button>
     </div>
-    {suggestions.length > 0 && <div className="need-suggestions"><span>Services complémentaires suggérés :</span>{suggestions.map((item) => <button type="button" key={item.id} onClick={() => onChange([...value, { catalogItemId: item.id, otherText: '' }])}>+ {item.name}</button>)}</div>}
+    {recommendationsFailed&&<p role="alert">Impossible de charger les recommandations administrées. Aucune suggestion n'est proposée tant que leur disponibilité n'est pas confirmée.</p>}
+    {recommendationSourceIds&&!recommendationsReady&&!recommendationsFailed&&<p role="status">Chargement des recommandations…</p>}
+    {suggestions.length > 0 && <div className="need-suggestions"><span>{legacyFallback?'Suggestions historiques à vérifier :':'Services complémentaires suggérés :'}</span>{suggestions.map((item) => <button type="button" key={item.id} onClick={() => onChange([...value, { catalogItemId: item.id, otherText: '' }])}>+ {item.name}</button>)}</div>}
   </div>;
 }
 
