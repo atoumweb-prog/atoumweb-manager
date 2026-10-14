@@ -44,9 +44,23 @@ export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:(
   });
   const guardedNavigation=(run:()=>void)=>requestUnsavedExit(run,unsavedScope);
   async function refresh(select?:ContractType) {
-    const [ts,cs,items]=await Promise.all([window.atoumweb.contractTypes.list(true),window.atoumweb.contractTerms.library.list(true),window.atoumweb.catalog.list()]);
-    setTypes(ts);setClauses(cs.sort((a,b)=>a.title.localeCompare(b.title,'fr')));setCatalog(items.sort((a,b)=>a.name.localeCompare(b.name,'fr')));
-    if(select){setId(select.id);setVersionId(select.versions[0]?.id??'');setCreating(false);}
+    const [typesResult,clausesResult,catalogResult]=await Promise.allSettled([
+      window.atoumweb.contractTypes.list(true),
+      window.atoumweb.contractTerms.library.list(true),
+      window.atoumweb.catalog.list(),
+    ]);
+    if(typesResult.status==='fulfilled') {
+      setTypes(typesResult.value);
+      if(select){setId(select.id);setVersionId(select.versions[0]?.id??'');setCreating(false);}
+    }
+    if(clausesResult.status==='fulfilled')setClauses([...clausesResult.value].sort((a,b)=>a.title.localeCompare(b.title,'fr')));
+    if(catalogResult.status==='fulfilled')setCatalog([...catalogResult.value].sort((a,b)=>a.name.localeCompare(b.name,'fr')));
+    const failures=[
+      typesResult.status==='rejected'?'types de contrats':null,
+      clausesResult.status==='rejected'?'clauses':null,
+      catalogResult.status==='rejected'?'prestations Catalogue':null,
+    ].filter(Boolean);
+    if(failures.length)throw new Error(`Chargement incomplet : ${failures.join(', ')}. Les autres rubriques restent disponibles.`);
   }
   useEffect(()=>{void refresh().catch(e=>setError(String(e)));},[]);
   useEffect(()=>{if(initialTypeId){setId(initialTypeId);setCreating(false);}},[initialTypeId]);
@@ -65,6 +79,9 @@ export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:(
   }
   function move(index:number,delta:number){const ids=[...input.moduleIds];[ids[index],ids[index+delta]]=[ids[index+delta],ids[index]];setInput({...input,moduleIds:ids});}
   function openModule(id:string){setModuleId(id);setModuleVersionId('');setEditServices(false);setServiceQuery('');}
+  function openCatalogItem(itemId:string){
+    guardedNavigation(()=>window.dispatchEvent(new CustomEvent('atoumweb:open-catalog-item',{detail:itemId})));
+  }
   return <section className="contract-library">
     <div className="contract-toolbar"><button type="button" className="secondary-button" disabled={busy} onClick={()=>guardedNavigation(onClose)}>Retour aux documents</button><h2>Bibliothèque contractuelle</h2>
       <button type="button" className="primary-button" disabled={busy} onClick={()=>guardedNavigation(()=>{setCreating(true);setId('');setVersionId('');setInput(empty);setCode('');})}>Nouveau type de contrat</button>
@@ -133,7 +150,7 @@ export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:(
           {editable&&<button type="button" className="primary-button" disabled={busy} onClick={()=>void run(()=>creating?window.atoumweb.contractTypes.create(code,input):window.atoumweb.contractTypes.updateDraft(version!.id,input))}>Enregistrer le type en brouillon</button>}
           {version?.status==='draft'&&type&&<button type="button" disabled={busy||JSON.stringify(input)!==JSON.stringify({name:version.name,description:version.description,moduleIds:version.moduleIds})} onClick={()=>void run(()=>window.atoumweb.contractTypes.publish(version.id))}>Publier la version du type</button>}
           <details open><summary>CGV communes — socle automatique selon le client</summary>{clauses.filter(c=>c.scope==='base'&&c.status!=='archived').map(c=><button className="secondary-button" type="button" key={c.id} onClick={()=>guardedNavigation(()=>openModule(c.id))}>{c.title} · {c.audience==='all'?'Tous clients':c.audience==='consumer'?'Particuliers':'Professionnels'}</button>)}</details>
-          {type&&<section className="contract-associated-services"><h4>Prestations concernées — versions Catalogue</h4>{type.catalogLinks.map(l=><button key={l.catalogVersionId} type="button" className="secondary-button" onClick={()=>window.dispatchEvent(new CustomEvent('atoumweb:open-catalog-item',{detail:l.itemId}))}>{l.name} · {l.canonicalCode} · v{l.versionNumber} · {statusLabel(l.status)}</button>)}</section>}
+          {type&&<section className="contract-associated-services"><h4>Prestations concernées — versions Catalogue</h4>{type.catalogLinks.map(l=><button key={l.catalogVersionId} type="button" className="secondary-button" onClick={()=>openCatalogItem(l.itemId)}>{l.name} · {l.canonicalCode} · v{l.versionNumber} · {statusLabel(l.status)}</button>)}</section>}
         </>}
         <details open={!type&&!creating}><summary>Tous les modules de la bibliothèque</summary><select aria-label="Consulter un module" value={moduleId} onChange={e=>{const next=e.target.value;guardedNavigation(()=>openModule(next));}}><option value="">Choisir un paragraphe…</option>{clauses.map(c=><option key={c.id} value={c.id}>{c.title} · {c.code} · {statusLabel(c.status)}</option>)}</select></details>
         {module&&<section className="contract-type-detail contract-module-editor">
@@ -147,7 +164,7 @@ export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:(
             const v=await window.atoumweb.contractTerms.library.createVersion(module.id,{body,review});setModuleVersionId(v.id);})}>Créer la nouvelle version du module</button>
           {moduleVersion?.status==='draft'&&<button type="button" disabled={busy||module.status==='archived'} onClick={()=>void run(()=>window.atoumweb.contractTerms.library.publishVersion(moduleVersion.id))}>Publier la version du module</button>}
           <button type="button" disabled={busy} onClick={()=>void run(()=>window.atoumweb.contractTerms.library.setStatus(module.id,module.status==='archived'?'active':'archived'))}>{module.status==='archived'?'Réactiver le module':'Archiver le module'}</button>
-          {module.scope==='catalog'&&<details open><summary>Prestations qui déclenchent ce module ({module.catalogItemIds.length})</summary><p>Ces références existantes déterminent l’application au devis, indépendamment de la composition des types.</p><button type="button" disabled={busy} onClick={()=>setEditServices(v=>!v)}>{editServices?'Terminer la modification des liens':'Modifier les prestations liées'}</button>{editServices&&<input aria-label="Rechercher une prestation liée" placeholder="Rechercher une prestation…" value={serviceQuery} onChange={e=>setServiceQuery(e.target.value)}/>} {catalog.filter(item=>(editServices||module.catalogItemIds.includes(item.id))&&[item.name,item.canonicalCode].join(' ').toLocaleLowerCase('fr').includes(serviceQuery.toLocaleLowerCase('fr'))).map(item=><label key={item.id}><input type="checkbox" disabled={!editServices||busy||module.status==='archived'} checked={module.catalogItemIds.includes(item.id)} onChange={()=>void run(()=>window.atoumweb.contractTerms.library.setCatalogLinks(module.id,module.catalogItemIds.includes(item.id)?module.catalogItemIds.filter(x=>x!==item.id):[...module.catalogItemIds,item.id]))}/>{item.name} · {item.canonicalCode}<button type="button" onClick={()=>window.dispatchEvent(new CustomEvent('atoumweb:open-catalog-item',{detail:item.id}))}>Ouvrir la prestation</button></label>)}</details>}
+          {module.scope==='catalog'&&<details open><summary>Prestations qui déclenchent ce module ({module.catalogItemIds.length})</summary><p>Ces références existantes déterminent l’application au devis, indépendamment de la composition des types.</p><button type="button" disabled={busy} onClick={()=>setEditServices(v=>!v)}>{editServices?'Terminer la modification des liens':'Modifier les prestations liées'}</button>{editServices&&<input aria-label="Rechercher une prestation liée" placeholder="Rechercher une prestation…" value={serviceQuery} onChange={e=>setServiceQuery(e.target.value)}/>} {catalog.filter(item=>(editServices||module.catalogItemIds.includes(item.id))&&[item.name,item.canonicalCode].join(' ').toLocaleLowerCase('fr').includes(serviceQuery.toLocaleLowerCase('fr'))).map(item=><label key={item.id}><input type="checkbox" disabled={!editServices||busy||module.status==='archived'} checked={module.catalogItemIds.includes(item.id)} onChange={()=>void run(()=>window.atoumweb.contractTerms.library.setCatalogLinks(module.id,module.catalogItemIds.includes(item.id)?module.catalogItemIds.filter(x=>x!==item.id):[...module.catalogItemIds,item.id]))}/>{item.name} · {item.canonicalCode}<button type="button" onClick={()=>openCatalogItem(item.id)}>Ouvrir la prestation</button></label>)}</details>}
           <p>La version d’un type conserve sa composition. Le texte de chaque module possède ses propres versions ; les devis figés conservent le texte exact utilisé.</p>
         </section>}
       </div>
