@@ -18,6 +18,7 @@ import {
 } from '../../shared/commercial';
 import { FieldHelp } from '../ui/FieldHelp';
 import { CatalogOverview } from './CatalogOverview';
+import { CatalogCategoryInventory } from './CatalogCategoryInventory';
 import { catalogAdminCategories, catalogAdminFiltered } from './catalogAdminFilters';
 import { catalogueCategoryName } from './catalogDisplay';
 
@@ -146,6 +147,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   const [statusFilter, setStatusFilter] = useState<'all' | CatalogItemStatus>('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [catalogView, setCatalogView] = useState<'organized' | 'table'>('organized');
+  const [showCategoryInventory, setShowCategoryInventory] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<CatalogItemDetail | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -488,6 +490,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
             <option value="all">Tous les statuts</option><option value="active">Actifs</option><option value="inactive">Inactifs</option><option value="archived">Archivés</option>
           </select>
           {hasFilters && <button className="secondary-button" type="button" onClick={resetFilters}>Réinitialiser les filtres</button>}
+          <button className="secondary-button" type="button" aria-expanded={showCategoryInventory} onClick={() => setShowCategoryInventory(value => !value)}>Catégories existantes</button>
           <div className="catalog-view-switch" role="group" aria-label="Présentation du catalogue">
             <button type="button" className="secondary-button" aria-pressed={catalogView === 'organized'} onClick={() => setCatalogView('organized')}>Vue organisée</button>
             <button type="button" className="secondary-button" aria-pressed={catalogView === 'table'} onClick={() => setCatalogView('table')}>Tableau d'administration</button>
@@ -495,6 +498,13 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
           <button className="primary-button" type="button" onClick={() => showForm?createGuard.request(()=>setShowForm(false)):setShowForm(true)}>{showForm ? 'Fermer' : '+ Service / Offre'}</button>
         </div>
       </div>
+
+      {showCategoryInventory && (
+        <CatalogCategoryInventory items={items} onClose={() => setShowCategoryInventory(false)} onFilter={category => {
+          setQuery(''); setTypeFilter('all'); setStatusFilter('all'); setCategoryFilter(category);
+          setShowCategoryInventory(false);
+        }} />
+      )}
 
       {showForm && (
         <form className="panel catalog-form" onSubmit={(event) => void createItem(event)}>
