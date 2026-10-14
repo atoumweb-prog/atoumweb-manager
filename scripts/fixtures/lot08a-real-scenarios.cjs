@@ -344,6 +344,47 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
       'E08C confirmed switch after overage draft');
     test(db.maintenanceOverages.review(period.id).unresolvedCount===1,
       'E08C discarding overage draft never records a financial decision');
+    // 08C : même sur deux clics synchrones et un retour IPC retardé,
+    // la décision de dépassement n'est envoyée qu'une fois.
+    await choosePeriod('2026-09');
+    await wait('!!document.querySelector(".maintenance-overage-item input[placeholder^=Ex]")',
+      'E08C reopened period with unresolved overage');
+    await fillOverage('.maintenance-overage-item input[placeholder^=Ex]','E08C DECISION UNIQUE');
+    await fillOverage('.maintenance-overage-item input[type=number]','49');
+    const overageChannel='maintenance-overages:decide';
+    const originalOverage=registered.get(overageChannel);
+    if(typeof originalOverage!=='function')throw Error('E08C decision IPC handler missing');
+    let overageWrites=0,releaseOverage=null;
+    ipcMain.removeHandler(overageChannel);
+    ipcMain.handle(overageChannel,(...args)=>{
+      overageWrites++;
+      return new Promise(resolve=>{releaseOverage=()=>resolve(originalOverage(...args));});
+    });
+    try {
+      await js('const b=document.querySelector(".maintenance-overage-item button.secondary-button");if(!b)throw Error("E08C save missing");b.click();b.click();');
+      for(let i=0;i<90&&overageWrites===0;i++)await sleep(25);
+      test(overageWrites===1,'E08C double click starts one overage-decision IPC');
+      test(await get('document.querySelector(".maintenance-overage-item button.secondary-button")?.disabled')===true,
+        'E08C saving disables decision button');
+      const beforeOveragePendingExit=confirmations.length;
+      answers.push(1);
+      await choosePeriod('2026-10');
+      test(confirmations.length===beforeOveragePendingExit+1,
+        'E08C pending decision triggers UX-01 once');
+      test(await get('document.querySelector(".maintenance-period-list button.selected")?.textContent.includes("2026-09")')===true,
+        'E08C pending refuses period change');
+      releaseOverage();
+      for(let i=0;i<90&&db.maintenanceOverages.review(period.id).unresolvedCount!==0;i++)await sleep(25);
+      const finalOverage=db.maintenanceOverages.review(period.id);
+      test(finalOverage.unresolvedCount===0&&finalOverage.candidates.length===1,
+        'E08C exactly one overage candidate resolved');
+      test(finalOverage.candidates[0].decision?.expectedAmountCents===4900,
+        'E08C one 49-euro decision saved correctly');
+    } finally {
+      if(releaseOverage)releaseOverage();
+      ipcMain.removeHandler(overageChannel);
+      ipcMain.handle(overageChannel,originalOverage);
+    }
     test(db.database.all('PRAGMA foreign_key_check').length===0,'E08C overage SQLite foreign keys');
     test(db.database.all('PRAGMA foreign_key_check').length===0,'E08C/E08E temp SQLite foreign keys');
     console.log('[UXV2 08C/08E] Native period-race/report pending and dirty navigation PASS');
