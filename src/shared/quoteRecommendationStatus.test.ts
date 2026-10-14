@@ -110,6 +110,18 @@ describe('04D — états du conseil commercial dans une ligne de Devis',()=>{
     }});
     expect(quoteRecommendationState(offer,target(),[offer,current])).toBe('option-purchased');
   });
+  it('never certifies a purchased option without any verifiable source version',()=>{
+    const offer=quoteLine('offer',{snapshot:{offerComponents:[{
+      serviceItemId:'service',componentId:'component-1',isOptional:true,
+    }]}});
+    const purchase=quoteLine('option',{catalogItemId:'service',optionPurchase:{
+      state:'purchased',sourceOfferLineId:'offer',sourceOfferItemId:'offer-item',
+      sourceOfferVersionId:'offer-v1',sourceComponentId:'component-1',purchasedAt:'2026-10-14',
+    }});
+    // Historical lines without a source version remain readable, but cannot
+    // prove a purchase for an unidentifiable version of the offer.
+    expect(quoteRecommendationState(offer,target(),[offer,purchase])).toBe('already-added');
+  });
   it('never treats an unrelated option purchase as buying this recommendation',()=>{
     const offer=quoteLine('offer',{snapshot:{offerComponents:[{
       serviceItemId:'service',componentId:'component-1',isOptional:true,
