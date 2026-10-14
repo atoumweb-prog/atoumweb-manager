@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { createRequire } from 'node:module';
+const repack=createRequire(process.cwd()+'/package.json')('./scripts/fixtures/lot09e-repack-word.cjs') as (zip:Buffer,oldText:string,newText:string)=>Buffer;
 import { makeWordDraftDocx, parseWordDraftDocx, readSafeDocx } from './wordDocxCodec';
 import { compareWordDraftText, prepareWordDraftManifest, type ClauseDraftSource } from './wordDraftReview';
 const source:ClauseDraftSource={
@@ -55,4 +57,32 @@ describe('09E — vrai DOCX OpenXML hors réseau',()=>{
   expect(result.warnings.join(' ')).toContain('listes numérotées');
   expect(result.unsupported).toBe(false);
  });
+ it('relit un DOCX effectivement édité puis localise les changements sans les enregistrer',()=>{
+  const {docx}=exported();
+  const saved=repack(docx,'Ligne finale','Ligne finale corrigée');
+  const parsed=parseWordDraftDocx(saved);
+  const diff=compareWordDraftText(parsed.manifest,source,parsed.text);
+  expect(parsed.text).toContain('Ligne finale corrigée');
+  expect(diff.paragraphs.filter(row=>row.kind==='added').map(row=>row.text)).toEqual(['Ligne finale corrigée']);
+  expect(diff.paragraphs.filter(row=>row.kind==='removed').map(row=>row.text)).toEqual(['Ligne finale']);
+  expect(source.body).toContain('Ligne finale');
+ });
+ it('refuse tableaux, révisions suivies et liens externes sans perdre de texte',()=>{
+  const {docx}=exported();
+  for(const replacement of [
+   'Ligne finale<w:tbl><w:tr/></w:tbl>',
+   'Ligne finale<w:ins><w:r/></w:ins>',
+   'Ligne finale<Relationship TargetMode="External" Target="https://example.invalid"/>',
+  ]){
+   expect(()=>parseWordDraftDocx(repack(docx,'Ligne finale',replacement))).toThrow(/tableaux|lien externe/i);
+  }
+ });
+ it('déclare la perte de mise en forme Word au lieu de la masquer',()=>{
+  const {docx}=exported();
+  const imported=parseWordDraftDocx(repack(docx,'Ligne finale','<w:b/>Ligne finale'));
+  expect(imported.text).toBe(source.body);
+  expect(imported.unsupported).toBe(true);
+  expect(imported.warnings.join(' ')).toMatch(/Styles ou fonctions Word/);
+ });
+
 });
