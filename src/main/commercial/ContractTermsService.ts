@@ -2,6 +2,7 @@ import { CatalogService } from './CatalogService';
 import { CommercialRulesService } from './CommercialRulesService';
 import { ContractTypeService } from './ContractTypeService';
 import { ContractSectionReviewService } from './ContractSectionReviewService';
+import {decideCanonicalContractMode} from '../../shared/canonicalContractMode';
 import {assembleReviewedDraftContract,renderApprovedDraftContract} from '../../shared/reviewedDraftContract';
 import { formatContractPresentation, type ContractPresentation } from '../../shared/contractPresentation';
 import type { ContractAdministration, QuoteContractParameters } from '../../shared/quoteContractPreparation';
@@ -554,7 +555,9 @@ export class ContractTermsService {
       // No incomplete canonical document may be emitted or labelled reviewed.
       const hasApprovedClassification=entries.some(({clause,review})=>
         clause.enabled&&!clause.isOrphaned&&review.status==='approved');
-      if(hasApprovedClassification&&assembly.ready){
+      const mode=decideCanonicalContractMode({explicitOptIn:false,hasApprovedClassification,assemblyReady:assembly.ready});
+      if(mode==='requires_review')throw Error('Classement juridique incomplet : approbation humaine requise.');
+      if(mode==='canonical'){
         usedCanonical=true;
         const particular=clauses.filter(clause=>clause.enabled&&clause.sourceKind==='custom');
         const append=particular.length?'\n\nCONDITIONS PARTICULIÈRES\n\n'+particular.map((clause,index)=>`${index+1}. ${clause.title.trim()}\n${clause.body.trim()}`).join('\n\n'):'';
