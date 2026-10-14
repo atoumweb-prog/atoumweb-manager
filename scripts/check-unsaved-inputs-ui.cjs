@@ -27,6 +27,36 @@ if(!process.versions.electron){
  const quote=database.quotes.create({clientAccountId:client.id,subject:'TEST '+theme});database.quotes.addCustomLine(quote.id,{label:'Prestation fixture',proposedUnitPriceCents:10000});
  if(process.argv.includes('--lot-pdf'))database.database.run("UPDATE quotes SET status='accepted' WHERE id=?",[quote.id]); // Fixture TEMP d'interface uniquement, sans simuler l'acceptation métier.
  win=new BrowserWindow({show:false,width:1600,height:1100,webPreferences:{preload:path.join(temp,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:false}});S.bindUnsavedWindow(win);await win.loadFile(path.join(temp,'index.html'));await wait('!!document.querySelector(".aw-navigation-rail")');await js('document.documentElement.dataset.theme='+JSON.stringify(theme)+';window.dispatchEvent(new CustomEvent("atoumweb:navigate",{detail:{entityType:"quote",entityId:'+JSON.stringify(quote.id)+',title:"TEST"}}));');await wait('!!document.querySelector(".quote-contract-preparation input")');
+ if(process.argv.includes('--lot-versions')){
+   const originalDuplicate=database.quotes.duplicate.bind(database.quotes);
+   let copyCalls=0,releaseCopy;
+   database.quotes.duplicate=(...args)=>{copyCalls++;return new Promise(resolve=>{releaseCopy=()=>resolve(originalDuplicate(...args));});};
+   const copySubject=database.quotes.get(quote.id).subject+' — copie';
+   await wait('[...document.querySelectorAll(".quote-status-actions button")].some(b=>b.textContent.trim()==="Dupliquer en nouveau devis")');
+   await js('const b=[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()==="Dupliquer en nouveau devis");b.click();b.click()');
+   for(let i=0;i<100&&!releaseCopy;i++)await sleep(20);
+   check(theme+' first duplicate request intercepted',typeof releaseCopy==='function');
+   check(theme+' rapid duplicate sends one request',copyCalls===1);
+   check(theme+' while duplicating both version actions disabled',await js('return ["Dupliquer en nouveau devis","Créer une révision du même dossier"].every(label=>[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()===label)?.disabled===true)'));
+   releaseCopy();
+   await wait('document.querySelector(".quote-table")?.textContent.includes('+JSON.stringify(copySubject)+')');
+   check(theme+' only one copy of source quote persisted',database.quotes.list().filter(q=>q.subject===copySubject).length===1);
+   database.quotes.duplicate=originalDuplicate;
+   let revisionCalls=0,rejectRevision;
+   database.quotes.duplicate=(id,isRevision)=>{if(!isRevision)return originalDuplicate(id);revisionCalls++;return new Promise((_resolve,reject)=>{rejectRevision=()=>reject(new Error('TEMP REVISION FAILURE'));});};
+   await wait('[...document.querySelectorAll(".quote-status-actions button")].some(b=>b.textContent.trim()==="Créer une révision du même dossier")');
+   await js('const b=[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()==="Créer une révision du même dossier");b.click();b.click()');
+   for(let i=0;i<100&&!rejectRevision;i++)await sleep(20);
+   check(theme+' commercial revision first request intercepted',typeof rejectRevision==='function');
+   check(theme+' rapid commercial revision sends one request',revisionCalls===1);
+   check(theme+' both version actions disabled while revision pending',await js('return ["Dupliquer en nouveau devis","Créer une révision du même dossier"].every(label=>[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()===label)?.disabled===true)'));
+   rejectRevision();
+   await wait('[...document.querySelectorAll(".quote-status-actions button")].every(b=>!b.disabled)');
+   check(theme+' revision failure releases version controls',revisionCalls===1);
+   database.quotes.duplicate=originalDuplicate;
+   check(theme+' revision failure did not produce a second copy',database.quotes.list().filter(q=>q.subject===copySubject).length===1);
+   win.destroy();win=null;continue;
+ }
  if(process.argv.includes('--lot-refresh')){
    const originalList=database.quotes.list.bind(database.quotes);
    const staleSnapshot=originalList();
