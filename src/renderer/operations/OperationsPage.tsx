@@ -123,7 +123,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
   const [transformProjectNodes, setTransformProjectNodes] = useState<ProjectNode[]>([]);
   const [closeReason, setCloseReason] = useState('');
 
-  async function refresh(options: { showLoading?: boolean } = {}): Promise<void> {
+  async function refresh(options: { showLoading?: boolean } = {}): Promise<boolean> {
     const showLoading = options.showLoading ?? true;
     if (showLoading) setLoading(true);
     try {
@@ -134,7 +134,8 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
       if (selectedRequest) setSelectedRequest(nextRequests.find((item) => item.id === selectedRequest.id) ?? null);
       if (selectedIntervention) setSelectedIntervention(nextInterventions.find((item) => item.id === selectedIntervention.id) ?? null);
       setAlertRefreshKey((value) => value + 1);
-    } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de charger les opérations.'); }
+      return true;
+    } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de charger les opérations.'); return false; }
     finally { if (showLoading) setLoading(false); }
   }
 
@@ -327,8 +328,13 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
         ? await window.atoumweb.operations.interventions.complete(selectedIntervention.id)
         : await window.atoumweb.operations.interventions.changeStatus(selectedIntervention.id, status);
       setSelectedIntervention(updated);
-      await refresh({ showLoading: false });
-      if (status === 'completed') onMessage(`${updated.number} terminée · prise en charge traitée.`);
+      setInterventions((current) => current.map((item) => item.id === updated.id ? updated : item));
+      const refreshed = await refresh({ showLoading: false });
+      if (status === 'completed') {
+        onMessage(refreshed
+          ? `${updated.number} terminée · prise en charge traitée.`
+          : `${updated.number} terminée dans les données, mais l’actualisation des listes a échoué. Vérifie les données avant toute nouvelle action.`);
+      }
       return true;
     } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de modifier le statut.'); return false; }
   }
