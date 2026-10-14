@@ -185,6 +185,30 @@ module.exports = async ({ win, db, evalUI: js, get, wait, navigate, test, sleep 
   test(await get('document.querySelector(".statistics-evidence-panel")?.textContent.includes("Début de session")'),
     'Lot 10B: date métier du temps explicitée');
 
+  // R10B-17 : navigation réellement filtrée par les IDs figés du calcul, pas par statut seulement.
+  db.database.run(
+    "INSERT INTO billing_items(id,client_account_id,source_type,source_id,source_key,description,expected_amount_cents,status,invoiced_at,created_at,updated_at) VALUES (?,?,'other',?,?,?,?,'invoiced',?,?,?)",
+    ['lot10-billing-outside',firstClient.id,'lot10-billing-outside','other:lot10-billing-outside','LOT10 facture hors cohorte affichée',5000,started,started,started],
+  );
+  // Ne pas actualiser Statistiques : cet ajout est volontairement postérieur au snapshot utilisateur.
+  await js("document.querySelector('.statistics-open-drilldown').click()");
+  await wait('document.querySelector(".statistics-route-banner")?.textContent.includes("Facturation suivie")', 'route Facturation à filtre exact');
+  test(await get('document.querySelectorAll(".billing-list-panel tbody tr").length===2'), 'R10B-17 : seulement deux factures dans la route malgré la troisième nouvellement enregistrée');
+  test(await get('!document.querySelector(".billing-list-panel")?.textContent.includes("LOT10 facture hors cohorte affichée")'), 'R10B-17 : aucun élargissement silencieux du filtre facturé');
+  await js("document.querySelector('.statistics-route-banner button').click()");
+  await wait('document.querySelectorAll(".billing-list-panel tbody tr").length===3', 'sortie explicite du filtre stats');
+  test(await get('!document.querySelector(".statistics-route-banner")'), 'R10B-17 : retour à la liste métier complète');
+  await navigate('Statistiques');
+  await wait('!!document.querySelector(".statistics-kpi-inspect")', 'retour Statistiques après Facturation');
+  await js("const card=[...document.querySelectorAll('.statistics-kpi')].find(e=>e.textContent.includes('Temps travaillé'));card.querySelector('button.statistics-kpi-inspect').click()");
+  await wait('document.querySelector(".statistics-open-drilldown")?.textContent.includes("sessions")', 'route Temps disponible');
+  await js("document.querySelector('.statistics-open-drilldown').click()");
+  await wait('document.querySelector(".statistics-route-banner")?.textContent.includes("Sessions de temps")', 'route sessions exacte');
+  test(await get('document.querySelectorAll(".time-table tbody tr").length===2'), 'R10B-17 : seulement les deux sessions réellement comptées');
+  test(await get('document.querySelector(".time-kpi-grid")?.textContent.includes("4 h")'), 'R10B-17 : totaux métier du Temps réconciliés avec la cohorte');
+  await js("document.querySelector('.statistics-route-banner button').click()");
+  await wait('!document.querySelector(".statistics-route-banner")', 'sortie filtrage Temps');
+
   // R10C intervention : vrai IPC + SQLite TEMP, sans archive physique créée.
   const beforeIntervention = db.businessBackups.create({
     clientAccountId: firstClient.id,
