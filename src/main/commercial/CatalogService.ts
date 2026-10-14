@@ -220,13 +220,33 @@ export class CatalogService {
     const now = nowIso();
     this.database.exec('SAVEPOINT catalog_service;');
     try {
+      // E95: the stable registry link, legacy label, first draft and audit must
+      // commit together. No automatic mapping from an approximate category name.
+      const categoryId = clean(input.categoryId);
+      let categoryLabel = clean(input.category);
+      if (categoryId) {
+        const category = this.database.get<{ name: string; status: string }>(
+          'SELECT name,status FROM catalog_categories WHERE id=?', [categoryId],
+        );
+        if (!category) throw new Error('Catégorie administrée introuvable : recharge le catalogue.');
+        if (category.status !== 'active') throw new Error('Cette catégorie est archivée : rattachement interdit.');
+        if (categoryLabel && categoryLabel !== category.name)
+          throw new Error('Le nom de catégorie a changé : vérifie le rattachement avant de créer.');
+        categoryLabel = category.name;
+      }
       this.database.run(
         `INSERT INTO catalog_items (
-          id, item_type, name, category, status, visible_public, created_at, updated_at, archived_at, canonical_code, identity_provenance_json
-        ) VALUES (?, ?, ?, ?, 'active', ?, ?, ?, NULL, ?, ?)`,
-        [id, input.type, name, clean(input.category), input.visiblePublic ? 1 : 0, now, now, canonicalCode, identityProvenance ? JSON.stringify(identityProvenance) : null],
+          id, item_type, name, category, category_id, status, visible_public, created_at, updated_at, archived_at, canonical_code, identity_provenance_json
+        ) VALUES (?, ?, ?, ?, ?, 'active', ?, ?, ?, NULL, ?, ?)`,
+        [id, input.type, name, categoryLabel, categoryId, input.visiblePublic ? 1 : 0, now, now, canonicalCode, identityProvenance ? JSON.stringify(identityProvenance) : null],
       );
       this.insertVersion(id, 1, firstVersion, now);
+      if (categoryId) this.database.run(
+        `INSERT INTO catalog_category_audit
+         (id,action,category_id,item_id,previous_name,new_name,previous_category,new_category,previous_category_id,new_category_id,created_at)
+         VALUES(?, 'assign', ?, ?, NULL, NULL, NULL, ?, NULL, ?, ?)`,
+        [randomUUID(),categoryId,id,categoryLabel,categoryId,now],
+      );
       this.writeActivity(id, 'catalog_created', `${input.type === 'offer' ? 'Offre' : 'Service'} créé : ${name}`);
       this.database.exec('RELEASE SAVEPOINT catalog_service;');
     } catch (error) {
