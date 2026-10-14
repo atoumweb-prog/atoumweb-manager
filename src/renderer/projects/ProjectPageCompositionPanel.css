@@ -282,7 +282,7 @@
   }
   .project-page-inspector-workbench.expanded.single .settings-pane .project-component-settings-grid{
     display:grid;
-    grid-template-columns:minmax(0,3fr) minmax(300px,1fr)!important;
+    grid-template-columns:minmax(0,3fr) minmax(260px,1fr)!important;
     grid-template-rows:minmax(0,1fr);
     grid-template-areas:"preview controls";
     gap:14px;
@@ -336,7 +336,7 @@
 
   .project-page-inspector-workbench.expanded.single .code-pane .project-page-inspector-dock{
     display:grid;
-    grid-template-columns:minmax(0,3fr) minmax(300px,1fr)!important;
+    grid-template-columns:minmax(0,3fr) minmax(260px,1fr)!important;
     grid-template-rows:auto auto minmax(0,1fr);
     grid-template-areas:
       "header header"
