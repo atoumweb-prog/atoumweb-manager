@@ -91,7 +91,37 @@ module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,select,test,sle
         test(state.scroll<=state.width+20,'09C-3X3: no horizontal overflow '+theme+'/'+density);
       }
     }
-    console.log('[UXV2 09C] Native receipt import, replacement, dirty guards and 3x3 UI tested in TEMP.');
+    // Correcting a paid expense requires an explicit human confirmation, not bank verification.
+    db.expenses.changeStatus(first.id,'paid');
+    await js('document.querySelector(".expenses-toolbar button.secondary-button").click()');
+    await wait('document.querySelectorAll(".expenses-table tbody tr").length===2','paid item refresh');
+    await js('const row=[...document.querySelectorAll(".expenses-table tbody tr")].find(e=>e.textContent.includes("Frais TEST 09C 1"));row.click()');
+    await wait('document.querySelector(".expenses-form-grid input[type=number]")?.value==="149"','paid expense form ready');
+    await js('window.__09cPaidPrompts=[];window.confirm=message=>{window.__09cPaidPrompts.push(message);return false;};');
+    await js('const el=document.querySelector(".expenses-form-grid input[type=number]");el.focus();el.select();');
+    await win.webContents.insertText('178.50');
+    await wait('Number(document.querySelector(".expenses-form-grid input[type=number]")?.value)===178.5','paid edit');
+    const save=()=>js('const b=[...document.querySelectorAll(".expenses-detail-panel button.primary-button")].find(e=>e.textContent.includes("Enregistrer"));if(!b)throw Error("Save button missing");b.click()');
+    await save();
+    await sleep(120);
+    test(db.expenses.get(first.id).amountCents===14900,
+      '09C-UI-14: refused correction preserves original paid amount');
+    test(await get('window.__09cPaidPrompts.length===1&&window.__09cPaidPrompts[0].includes("déclarée payée")'),
+      '09C-UI-15: paid correction asks for explicit confirmation');
+    await js('window.confirm=message=>{window.__09cPaidPrompts.push(message);return true;};');
+    await save();
+    for(let i=0;i<90&&db.expenses.get(first.id).amountCents!==17850;i++)await sleep(50);
+    test(db.expenses.get(first.id).amountCents===17850,
+      '09C-UI-16: confirmed correction updates declared-paid expense');
+    const trace=db.database.get(
+      "SELECT metadata_json FROM activity_log WHERE entity_type='expense' AND entity_id=? AND action='expense_updated' ORDER BY id DESC LIMIT 1",
+      [first.id],
+    );
+    const corrected=trace?JSON.parse(trace.metadata_json):null;
+    test(corrected?.previousAmountCents===14900&&corrected?.currentAmountCents===17850
+      &&corrected?.paymentVerifiedByBank===false,
+      '09C-UI-17: correction is audit-traced without claimed bank verification');
+    console.log('[UXV2 09C] Native receipt, dirty guards, declared-paid corrections and 3x3 UI tested in TEMP.');
   }finally{
     dialog.showOpenDialog=previousPicker;
     dialog.showMessageBoxSync=previousConfirm;
