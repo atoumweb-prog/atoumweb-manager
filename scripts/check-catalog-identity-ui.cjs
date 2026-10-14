@@ -281,6 +281,26 @@ app.whenReady().then(async () => {
       return {passed:checks.length,failed:0,checks,visualModes};
     })()`);
     if(result.visualModes?.length!==9)throw Error('Visual modes incomplete');
+    // Narrow window + native zoom: the category table may scroll inside its wrapper,
+    // but the page itself must remain navigable.
+    win.setSize(1024,720);
+    win.webContents.setZoomFactor(1.25);
+    await new Promise(resolve=>setTimeout(resolve,150));
+    const narrow=await win.webContents.executeJavaScript(`(()=>{
+      const content=document.querySelector('.content-area');
+      const list=document.querySelector('.catalog-category-inventory-scroll');
+      const field=document.querySelector('.catalog-category-management input');
+      return {width:innerWidth,scroll:document.documentElement.scrollWidth,
+        client:document.documentElement.clientWidth,contentScroll:content?.scrollWidth,
+        contentClient:content?.clientWidth,tableScroll:list?.scrollWidth,
+        tableClient:list?.clientWidth,fieldAccessible:!!field&&field.getBoundingClientRect().width>100};
+    })()`);
+    if(!narrow.fieldAccessible||narrow.scroll>narrow.client+12||
+       narrow.contentScroll>narrow.contentClient+12)
+      throw Error('04B responsive width/zoom overflow '+JSON.stringify(narrow));
+    console.log('[CATALOG 04B] RESPONSIVE ZOOM '+JSON.stringify(narrow));
+    win.webContents.setZoomFactor(1);
+    win.setSize(1440,900);
     if(capturePath){
       // Paint-frame sentinel ensures every PNG corresponds to the requested theme/density.
       const color=index=>[30+(index*41)%190,30+(index*83)%190,30+(index*117)%190];
