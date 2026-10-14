@@ -179,6 +179,15 @@ export class ExpenseService {
     });
   }
 
+  verifiedReceiptVersionPath(id: string, relativePath: string): string {
+    const version = this.listReceiptVersions(id).find((item) => item.relativePath === relativePath);
+    if (!version) throw new Error('Version de justificatif introuvable dans l’historique.');
+    if (version.integrity !== 'verified') throw new Error('Ouverture refusée : intégrité de cette version non vérifiée.');
+    const absolute = resolve(this.workspace.root, relativePath);
+    if (!absolute.startsWith(resolve(this.workspace.root) + sep)) throw new Error('Chemin de justificatif invalide.');
+    return absolute;
+  }
+
   private normalize(input: ExpenseInput): NormalizedExpenseInput {
     if (!EXPENSE_CATEGORIES.includes(input.category)) throw new Error('Catégorie de dépense invalide.');
     if (!EXPENSE_FREQUENCIES.includes(input.frequency ?? 'none')) throw new Error('Fréquence de dépense invalide.');
