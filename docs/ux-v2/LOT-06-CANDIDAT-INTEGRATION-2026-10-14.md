@@ -10,14 +10,13 @@ Date : 14 octobre 2026. Branche `integration/ux-v2-06-candidate-20261014` depuis
 - `check-unsaved-inputs-ui.cjs` : reprise du scénario Electron A → B → A de 06B.
 - `.github/workflows/ci.yml` : activation de la recette Electron UX-01 pour PR #124.
 
-## Critères restants
-- Vérifier sur le SHA courant la CI (TypeScript + Vitest + recette Electron Windows TEMP).
-- Examiner les traces du scénario A→B→A, des refus de navigation et des erreurs de chargement.
-- Contrôler la cohérence UX manuelle des écrans, y compris affichage des prix et des options dans les trois thèmes.
-- Rejouer les validations migrations/restaurations et la suite Electron transversale sur le candidat figé.
-- Contrôler les écarts avec les lots 04 et 05 et les merges concurrents éventuels avant intégration main.
+## Vérifications et réserves au 14 octobre 2026
+- **Fait :** typecheck, 1 051 tests Vitest, Electron UX-01, 3 thèmes et recette transversale Windows sur merge synthétique : CI #1194 verte sur `e4930dba7d2aef15fcb940c4acf9d4df34197c90`.
+- **Fait :** traçage A→B→A, rejet asynchrone obsolète, contrôles migration / restauration / SQLite sur fixtures TEMP ; preuves reprises ci-dessous.
+- **À faire avant la fusion :** inspection visuelle humaine, revalidation éventuelle après intégration des lots 04/05 et autorisation explicite. Pas de validation sur données réelles.
+- **Référentiel central :** [complément vérifié 06A–06F](LOT-06-DELTA-REFERENTIEL-2026-10-14.md) destiné à la PR documentaire #82 ; cette dernière conserve son référentiel historique en attendant la consolidation.
 
-**Attention :** ce document décrit un candidat réuni, pas une validation de sa CI ou son intégration finale.
+**Attention :** la CI du candidat n'autorise pas sa fusion : la PR #124 reste en brouillon.
 ## Bilan vérifié sur le code convergé (mise à jour 14/10/2026)
 
 - PR candidate [#124](https://github.com/atoumweb-prog/atoumweb-manager/pull/124), toujours en **draft**. Aucun commit fusionné dans `main`.
@@ -33,9 +32,9 @@ Date : 14 octobre 2026. Branche `integration/ux-v2-06-candidate-20261014` depuis
 
 ### Limites restantes / conditions de clôture
 
-1. **CI au HEAD documentaire le plus récent :** vérifier le résultat de la CI #1175 puis toute CI ultérieure. La réussite #1158 ne vaut pas à elle seule pour le HEAD courant.
+1. **CI du code convergé :** #1194 réussie sur `e4930db`, vérifiée sur le merge synthétique `b644917`. Toute nouvelle documentation sur le candidat déclenche une vérification de son propre HEAD ; une ancienne CI ne doit pas lui être attribuée.
 2. **Revue visuelle humaine :** comparer les captures sur vraie fenêtre Windows, notamment prix affichés, panneau contrats/CGV, boutons Abby et neuf combinaisons de thème/densité. Les 135 captures ont été produites/vérifiées automatiquement, pas approuvées visuellement par un humain.
 3. **Frontières entre lots :** le Builder CGV du lot 05 et les évolutions Catalogue/migration 67 du lot 04 sont des dépendances externes ; ne pas intégrer leurs modifications à cette PR ni en revendiquer la certification.
 4. **Pré-main uniquement :** actualiser sur la dernière base, détecter conflits 04/05, réexécuter tests sur SHA rebasé, contrôler protections GitHub et demander accord explicite. Aucune fusion automatique.
 
-Le candidat est **techniquement convergé avec recette automatisée Windows réussie sur `6494814`** ; ne déclarer la clôture sur le HEAD définitif qu'après la dernière CI verte et la qualification des réserves ci-dessus.
+Le candidat est **techniquement convergé avec recette automatisée Windows réussie sur `e4930db`** ; le référentiel central #82 n'est pas encore synchronisé avec les preuves. L'inspection visuelle humaine et les vérifications d'intégration du dernier `main` restent distinctes.
