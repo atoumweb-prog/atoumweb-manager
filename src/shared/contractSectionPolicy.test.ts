@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {CONTRACT_SECTION_ORDER,orderReviewedClauses,validateSectionReview,evaluateContractApplicability,type ContractSectionReview} from './contractSectionPolicy';
+import {CONTRACT_SECTION_ORDER,orderReviewedClauses,validateSectionReview,evaluateContractApplicability,evaluateContractConflicts,type ContractSectionReview} from './contractSectionPolicy';
 const approved=(sectionKey:typeof CONTRACT_SECTION_ORDER[number],rankInSection:number):ContractSectionReview=>({status:'approved',sectionKey,rankInSection,reviewer:'Relecteur fixture',reviewedAt:'2026-10-14T12:00:00Z'});
 describe('05C — approved semantic sections',()=>{
   it('keeps eight canonical sections in their approved order',()=>expect(CONTRACT_SECTION_ORDER).toEqual(['object','scope','execution','delivery','finance','rights','recurring','end']));
@@ -44,5 +44,19 @@ describe('05C — explicit commercial applicability',()=>{
     const products=['WEB'],options=['SEO'];const rule={requiredProductCodes:['WEB'],requiredOptionCodes:['SEO']};
     expect(evaluateContractApplicability(rule,{productCodes:products,optionCodes:options})).toBe('eligible');
     expect(products).toEqual(['WEB']);expect(options).toEqual(['SEO']);
+  });
+});
+
+describe('05C — explicitly reviewed conflicts',()=>{
+  it('warns but does not block when human review is missing',()=>{
+    const conflict={id:'c',clauseVersionIds:['v1','v2'],severity:'blocking' as const,reason:'Conditions contradictoires',reviewed:false};
+    expect(evaluateContractConflicts([conflict],['v1','v2']).warnings).toHaveLength(1);
+    expect(evaluateContractConflicts([conflict],['v1','v2']).blocking).toHaveLength(0);
+  });
+  it('blocks only an explicitly reviewed blocking rule whose versions are both included',()=>{
+    const rule={id:'contradiction',clauseVersionIds:['v1','v2'],severity:'blocking' as const,reason:'Arbitrage humain requis',reviewed:true};
+    expect(evaluateContractConflicts([rule],['v1','v2']).blocking).toHaveLength(1);
+    expect(evaluateContractConflicts([rule],['v1']).warnings).toHaveLength(0);
+    expect(evaluateContractConflicts([{...rule,severity:'warning'}],['v1','v2']).blocking).toHaveLength(0);
   });
 });
