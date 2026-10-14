@@ -7,10 +7,11 @@ import type {
   BusinessBackupRecord,
   BusinessBackupType,
 } from '../../shared/businessBackups';
+import type { BusinessBackupAlert } from '../../shared/businessBackupAlerts';
 import type { ClientSummary } from '../../shared/crm';
 import type { ProjectSummary } from '../../shared/projects';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
-import { businessBackupLocationActionLabel, businessBackupLocationStatus } from '../../shared/businessBackupPresentation';
+import { businessBackupLocationActionLabel, businessBackupLocationStatus, filterBusinessBackupAlerts } from '../../shared/businessBackupPresentation';
 import { useUnsavedDraft } from '../unsaved/unsaved';
 import './BusinessBackupsPage.css';
 
@@ -43,6 +44,8 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [overview, setOverview] = useState<BusinessBackupOverview | null>(null);
+  const [alerts, setAlerts] = useState<BusinessBackupAlert[]>([]);
+  const [alertsError, setAlertsError] = useState<string | null>(null);
   const [selected, setSelected] = useState<BusinessBackupRecord | null>(null);
   const [detailExpanded, setDetailExpanded] = useState(false);
   const [splitPercent, setSplitPercent] = useState(38);
@@ -99,7 +102,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
     const epoch=++loadEpoch.current;
     try {
       setError(null);
-      const [nextRecords, nextProjects, nextClients, nextOverview] = await Promise.all([
+      const [nextRecords, nextProjects, nextClients, nextOverview, alertResult] = await Promise.all([
         window.atoumweb.businessBackups.list({
           search: search || null,
           clientAccountId: clientFilter || null,
@@ -110,12 +113,20 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
         window.atoumweb.projects.projects.list(),
         window.atoumweb.crm.clients.list({ includeArchived: true }),
         window.atoumweb.businessBackups.overview({ clientAccountId: clientFilter || null, projectId: projectFilter || null }),
+        window.atoumweb.businessBackupAlerts.listAlerts()
+          .then((items) => ({ items, error: null as string | null }))
+          .catch((cause: unknown) => ({
+            items: [] as BusinessBackupAlert[],
+            error: cause instanceof Error ? cause.message : 'Le service d’alertes est indisponible.',
+          })),
       ]);
       if(epoch!==loadEpoch.current)return;
       setRecords(nextRecords);
       setProjects(nextProjects);
       setClients(nextClients);
       setOverview(nextOverview);
+      setAlerts(alertResult.items);
+      setAlertsError(alertResult.error);
       const targetId = preferredId ?? initialRecordId ?? selected?.id;
       if (targetId) {
         const found = nextRecords.find((record) => record.id === targetId)
@@ -151,6 +162,10 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
 
   const projectById = useMemo(() => new Map(projects.map((project) => [project.id, project])), [projects]);
   const clientById = useMemo(() => new Map(clients.map((client) => [client.id, client])), [clients]);
+  const contextAlerts = useMemo(() => filterBusinessBackupAlerts(alerts, {
+    clientAccountId: clientFilter || null,
+    projectId: projectFilter || null,
+  }), [alerts, clientFilter, projectFilter]);
 
   async function createRecord(): Promise<void> {
     try {
@@ -270,6 +285,29 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
       </div>
 
       <p className="technical-safety-note" role="note">Ce registre recense des sauvegardes déclarées. Il ne crée pas de fichiers, ne restaure pas WordPress et ne certifie ni intégrité ni restauration testée. La sauvegarde SQLite du Manager est une opération distincte dans Réglages.</p>
+
+      <section className="panel business-backups-alerts" aria-label="Alertes de sauvegarde des projets">
+        <div className="panel-title">
+          <div><span className="eyebrow">Vigilance métier</span><h2>Alertes des projets actifs</h2></div>
+          <span className="status-pill">{alertsError ? 'Indisponible' : contextAlerts.length}</span>
+        </div>
+        {alertsError
+          ? <p role="status" className="muted">Impossible de lire les alertes des sauvegardes : {alertsError}. Ce statut ne signifie pas qu’aucune alerte n’existe.</p>
+          : contextAlerts.length === 0
+            ? <p className="muted">Aucune alerte remontée pour ce contexte. Cela ne certifie ni l’existence d’une sauvegarde ni la possibilité de restaurer.</p>
+            : <div className="business-backups-alert-list">
+              {contextAlerts.slice(0, 5).map((alert) => <div className="business-backups-alert" key={alert.id}>
+                <OperationIcon name="alert" size={18} />
+                <div><strong>{alert.title}</strong><p>{alert.detail}</p></div>
+                {alert.projectId && <button className="secondary-button" type="button" onClick={() => {
+                  setClientFilter(alert.clientAccountId ?? '');
+                  setProjectFilter(alert.projectId ?? '');
+                }}>Voir ce projet</button>}
+              </div>)}
+              {contextAlerts.length > 5 && <p className="muted">{contextAlerts.length - 5} autre(s) alerte(s) : filtre par Client ou Projet pour affiner.</p>}
+            </div>}
+        <p className="muted business-backups-alerts-note">Avertissements issus des sauvegardes déclarées et des politiques existantes ; ils ne remplacent pas une vérification technique avant intervention.</p>
+      </section>
 
       {error && <div className="notice business-backups-error" role="alert"><span>{error}</span><button type="button" onClick={() => setError(null)}>×</button></div>}
 
