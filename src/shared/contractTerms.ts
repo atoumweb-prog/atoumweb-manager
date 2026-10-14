@@ -164,4 +164,5 @@ export interface ContractTermsApi {
   };
   previewReference(typeId:string,typeVersionId:string,catalogVersionId:string,audience:QuoteContractAudience):Promise<ContractPresentation>;
   copyText(text: string): Promise<void>;
+  exportWorkingDocx(quoteId:string):Promise<boolean>;
 }
