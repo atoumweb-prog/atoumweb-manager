@@ -9,6 +9,7 @@ import { basename, join } from 'node:path';
 import { quoteContractText } from '../shared/contractTerms';
 import { compareWordDraftText, prepareWordDraftManifest, type WordDraftManifest } from './commercial/wordDraftReview';
 import { makeWordDraftDocx, parseWordDraftDocx } from './commercial/wordDocxCodec';
+import { saveWordDraftWorkingPdf } from './commercial/wordDraftPdf';
 import { randomUUID } from 'node:crypto';
 import type { BillingInvoiceInput, BillingItemFilters, BillingItemStatus } from '../shared/billing';
 import type { ExpenseFilters, ExpenseInput, ExpenseStatus } from '../shared/expenses';
@@ -473,6 +474,19 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     clauseDraft(clauseId,versionId);
     const path=selection.filePath.toLowerCase().endsWith('.docx')?selection.filePath:selection.filePath+'.docx';
     writeFileSync(path,bytes);
+    return {cancelled:false,fileName:basename(path)};
+  });
+  ipcMain.handle('contract-terms:word:pdf',async(_event,clauseId:string,versionId:string)=>{
+    const {template,source}=clauseDraft(clauseId,versionId);
+    const selection=await dialog.showSaveDialog({
+      title:'Exporter un PDF de travail — NON OFFICIEL',
+      defaultPath:template.code.replace(/[^A-Za-z0-9._-]/g,'-')+'-TRAVAIL-NON-SIGNE.pdf',
+      filters:[{name:'PDF de travail, non signé',extensions:['pdf']}],
+    });
+    if(selection.canceled||!selection.filePath)return {cancelled:true};
+    clauseDraft(clauseId,versionId);
+    const path=selection.filePath.toLowerCase().endsWith('.pdf')?selection.filePath:selection.filePath+'.pdf';
+    await saveWordDraftWorkingPdf(source,template.title,path);
     return {cancelled:false,fileName:basename(path)};
   });
   ipcMain.handle('contract-terms:word:import',async(_event,clauseId:string,versionId:string)=>{
