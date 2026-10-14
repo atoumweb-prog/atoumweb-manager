@@ -8,12 +8,14 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
   const org=db.crm.createOrganization({name:'07AB ORGANISATION'}),client=db.crm.createClient({organizationId:org.id});
   const quote=db.quotes.create({clientAccountId:client.id,subject:'07AB DEVIS'});
   const project=db.projects.createInternal({name:'07AB PROJET'});
+  // Isolated TEMP legacy fixture with an associated source quote.
+  db.database.run('UPDATE projects SET source_quote_id=? WHERE id=?',[quote.id,project.id]);
   await navigate('Projets');await wait('document.querySelector(".projects-layout")','project list');
   await js(`window.dispatchEvent(new CustomEvent('atoumweb:navigate',{detail:{entityType:'project',entityId:${JSON.stringify(project.id)},title:'Projet 07AB'}}))`);
   await wait(`document.querySelector('[data-search-entity-type="project"][data-search-entity-id="${project.id}"]')`,'project identity');
   test(await get(`!!document.querySelector('[data-search-entity-id="${project.id}"]')`),'Project ID stable before navigation');
-  // The project fixture is internal, without a sourceQuoteId. Dispatch the exact event shape used by the button.
-  await js(`window.dispatchEvent(new CustomEvent('atoumweb:navigate',{detail:{entityType:'quote',entityId:${JSON.stringify(quote.id)},title:'Devis source du Projet',parentEntityId:${JSON.stringify(project.id)}}}))`);
+  await wait('[...document.querySelectorAll(".project-production-title button")].some(b=>b.textContent.includes("Ouvrir le devis"))','real source Quote button');
+  await js('const b=[...document.querySelectorAll(".project-production-title button")].find(b=>b.textContent.includes("Ouvrir le devis"));if(!b)throw Error("Missing source Quote button");b.click()');
   await wait(`document.querySelector('[data-search-entity-type="quote"][data-search-entity-id="${quote.id}"]')`,'source quote identity');
   test(await get(`!!document.querySelector('.quote-detail-heading-actions button')&&!![...document.querySelectorAll('.quote-detail-heading-actions button')].find(b=>b.textContent.includes('Retour au Projet'))`),'Quote exposes return to exact source Project');
   await input('.quote-add-line input[placeholder="Libellé"]','07AB UNSAVED DRAFT');
