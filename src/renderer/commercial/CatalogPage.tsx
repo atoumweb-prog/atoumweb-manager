@@ -13,6 +13,7 @@ import {
   type CatalogItemSummary,
   type CatalogItemType,
   type CatalogVersionInput,
+  type CatalogVersion,
   type OfferComponent,
   type PriceMode,
 } from '../../shared/commercial';
@@ -162,6 +163,8 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   const [formError, setFormError] = useState<string | null>(null);
   const [versionMode, setVersionMode] = useState(false);
   const [versionDraft, setVersionDraft] = useState<CatalogDraft>(EMPTY_DRAFT);
+  const [editingDraftVersion, setEditingDraftVersion] = useState<CatalogVersion | null>(null);
+  const [versionFormError, setVersionFormError] = useState<string | null>(null);
   const [detailSplitPercent, setDetailSplitPercent] = useState(40);
   const [detailExpanded, setDetailExpanded] = useState(false);
   const [offerComponents, setOfferComponents] = useState<OfferComponent[]>([]);
@@ -350,7 +353,12 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
 
   function prepareNewVersion(): void {
     if (!detail?.currentVersion) return;
-    const current = detail.currentVersion;
+    // 04C/E99: reopen the existing draft instead of generating vN+1 on
+    // every edit. A published version is only copied when no draft exists.
+    const existingDraft = detail.versions.find(version => version.status === 'draft') ?? null;
+    const current = existingDraft ?? detail.currentVersion;
+    setEditingDraftVersion(existingDraft);
+    setVersionFormError(null);
     setVersionDraft({
       canonicalCode: detail.canonicalCode ?? '',
       commercialKind: current.commercialKind ?? '',
@@ -389,15 +397,24 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     event.preventDefault();
     if (!detail) return;
     setSaving(true);
+    setVersionFormError(null);
     try {
-      const version = await window.atoumweb.catalog.createVersion(detail.id, buildVersion(versionDraft));
+      const version = editingDraftVersion
+        ? await window.atoumweb.catalog.saveDraftVersion(editingDraftVersion.id, editingDraftVersion, buildVersion(versionDraft))
+        : await window.atoumweb.catalog.createVersion(detail.id, buildVersion(versionDraft));
       versionGuard.saved(versionDraft);
       setVersionMode(false);
+      setEditingDraftVersion(null);
+      setVersionFormError(null);
       await refresh();
       await openItem(detail.id);
-      onMessage(`Version v${version.versionNumber} créée en brouillon.${detail.type === 'offer' ? ' Sa composition a été recopiée.' : ''}`);
+      onMessage(editingDraftVersion
+        ? `Brouillon v${version.versionNumber} enregistré dans la même version, sans publication.`
+        : `Version v${version.versionNumber} créée en brouillon.${detail.type === 'offer' ? ' Sa composition a été recopiée.' : ''}`);
     } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible de créer la version.');
+      const message = error instanceof Error ? error.message : 'Impossible d’enregistrer cette version.';
+      setVersionFormError(message);
+      onMessage(message);
     } finally {
       setSaving(false);
     }
@@ -698,10 +715,21 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 </div>
               ) : <p className="muted">Aucune version.</p>}
 
-              <div className="catalog-detail-actions"><button className="secondary-button" type="button" onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select value={detail.status} onChange={(e) => void updateStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion} onClick={prepareNewVersion}>Modifier via une nouvelle version</button></div>
+              <div className="catalog-detail-actions"><button className="secondary-button" type="button" onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select value={detail.status} onChange={(e) => void updateStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion} onClick={prepareNewVersion}>{detail.versions.some(v => v.status === 'draft') ? 'Reprendre le brouillon' : 'Modifier via une nouvelle version'}</button></div>
 
               <CatalogContractPanel key={detail.id+detail.versions.length} item={detail}/>
-              {versionMode && <form className="catalog-version-editor" onSubmit={(event) => void createVersion(event)}><strong>Nouvelle version</strong><fieldset disabled={saving}><CatalogFields draft={versionDraft} onChange={setVersionDraft} /></fieldset><div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => versionGuard.request(()=>setVersionMode(false))}>Annuler</button><button className="primary-button" disabled={saving} type="submit">Créer v{(detail.versions[0]?.versionNumber ?? 0) + 1}</button></div></form>}
+              {versionMode && <form className="catalog-version-editor" onSubmit={(event) => void createVersion(event)}>
+                <strong>{editingDraftVersion ? `Modifier le brouillon v${editingDraftVersion.versionNumber}` : 'Nouvelle version brouillon'}</strong>
+                <p className="muted">{editingDraftVersion
+                  ? 'Enregistrer modifie seulement ce brouillon. Les versions publiées et les anciens Devis restent inchangés.'
+                  : 'Créer une nouvelle version ne publie rien. Les associations existantes sont copiées et restent à vérifier.'}</p>
+                <fieldset disabled={saving}><CatalogFields draft={versionDraft} onChange={setVersionDraft} /></fieldset>
+                {versionFormError && <p className="form-error" role="alert">{versionFormError} — la saisie locale est conservée.</p>}
+                <div className="inline-editor-actions">
+                  <button className="secondary-button" type="button" onClick={() => versionGuard.request(()=>{setVersionMode(false);setEditingDraftVersion(null);setVersionFormError(null);})}>Annuler</button>
+                  <button className="primary-button" disabled={saving} type="submit">{saving?'Enregistrement…':editingDraftVersion?'Enregistrer le brouillon':`Créer v${(detail.versions[0]?.versionNumber ?? 0) + 1}`}</button>
+                </div>
+              </form>}
 
               {detail.type === 'offer' && offerCompositionVersion && (
                 <section className="offer-composition">
