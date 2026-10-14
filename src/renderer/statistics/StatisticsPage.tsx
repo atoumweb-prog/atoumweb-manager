@@ -381,6 +381,12 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         <Kpi icon="check-circle" label="Taux d’acceptation" value={pct(acceptanceRate)} helper={countLabel(accepted.length, 'devis accepté', 'devis acceptés') + ' · ' + countLabel(refused.length, 'devis refusé', 'devis refusés') + ' · ' + countLabel(expired.length, 'devis expiré', 'devis expirés')} />
         <Kpi icon="chart" label="Conversion prospects" value={pct(conversionRate)} helper={countLabel(won.length, 'prospect gagné', 'prospects gagnés') + ' · ' + countLabel(lost.length, 'prospect perdu', 'prospects perdus')} />
       </div>
+      <div className="statistics-decision-drilldown">
+        <span>Taux d’acceptation = {accepted.length} accepté(s) / {accepted.length + refused.length + expired.length} décision(s) (acceptés, refusés, expirés), sur les dates de décision de cette période.</span>
+        <button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:open-statistics-drilldown', {
+          detail: createStatisticsDrilldown('decisions', [...accepted, ...refused, ...expired].map(quote => quote.id), range.label),
+        }))}>Ouvrir les {accepted.length + refused.length + expired.length} devis de cette cohorte →</button>
+      </div>
       <div className="statistics-main-grid">
         <article className="panel statistics-card">
           <CardTitle eyebrow="Pipeline actuel" title="Répartition commerciale" action="Ouvrir le pipeline →" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:open-prospects-view', { detail: 'pipeline' }))} />
