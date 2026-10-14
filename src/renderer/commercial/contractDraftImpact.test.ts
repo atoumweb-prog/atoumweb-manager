@@ -32,6 +32,17 @@ describe('05D draft contract impact preview',()=>{
     expect(compareDraftContractClauses([clause('a',{isOrphaned:true})],[clause('a')])[0].kinds).toEqual(['restored']);
     expect(compareDraftContractClauses([clause('a')],[clause('a',{enabled:false,isOrphaned:true})])[0].kinds).toEqual(['excluded','orphaned']);
   });
+  it('identifies simultaneous movements without changing original ordering',()=>{
+    const saved=[clause('a',{sortOrder:0}),clause('b',{sortOrder:1})];
+    const next=[clause('b',{sortOrder:0}),clause('a',{sortOrder:1})];
+    const result=compareDraftContractClauses(saved,next);
+    expect(result.map(item=>item.id)).toEqual(['b','a']);
+    expect(result.every(item=>item.kinds.length===1&&item.kinds[0]==='moved')).toBe(true);
+    expect(saved.map(item=>item.id)).toEqual(['a','b']);
+  });
+  it('treats whitespace-only text changes as changes rather than silently normalizing legal text',()=>{
+    expect(compareDraftContractClauses([clause('a',{body:'Paiement comptant.'})],[clause('a',{body:'Paiement comptant. '})])[0].kinds).toEqual(['edited']);
+  });
   it('does not confuse unchanged snapshots with edits',()=>{
     expect(compareDraftContractClauses([clause('a')],[clause('a')])).toEqual([]);
     expect(compareDraftContractClauses([],[])).toEqual([]);
