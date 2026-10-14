@@ -27,6 +27,33 @@ if(!process.versions.electron){
  const quote=database.quotes.create({clientAccountId:client.id,subject:'TEST '+theme});database.quotes.addCustomLine(quote.id,{label:'Prestation fixture',proposedUnitPriceCents:10000});
  if(process.argv.includes('--lot-pdf'))database.database.run("UPDATE quotes SET status='accepted' WHERE id=?",[quote.id]); // Fixture TEMP d'interface uniquement, sans simuler l'acceptation métier.
  win=new BrowserWindow({show:false,width:1600,height:1100,webPreferences:{preload:path.join(temp,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:false}});S.bindUnsavedWindow(win);await win.loadFile(path.join(temp,'index.html'));await wait('!!document.querySelector(".aw-navigation-rail")');await js('document.documentElement.dataset.theme='+JSON.stringify(theme)+';window.dispatchEvent(new CustomEvent("atoumweb:navigate",{detail:{entityType:"quote",entityId:'+JSON.stringify(quote.id)+',title:"TEST"}}));');await wait('!!document.querySelector(".quote-contract-preparation input")');
+ if(process.argv.includes('--lot-create')){
+   const subject='UX06 UNIQUE CREATE '+theme;
+   const originalCreate=database.quotes.createWithLines.bind(database.quotes);
+   let createCalls=0,releaseCreate;
+   database.quotes.createWithLines=(...args)=>{createCalls++;return new Promise(resolve=>{releaseCreate=()=>resolve(originalCreate(...args));});};
+   await click('+ Nouveau devis');
+   await wait('!!document.querySelector(".quote-wizard")');
+   await js('document.querySelector(".quote-owner-toggle button:nth-child(2)").click()');
+   await wait('!!document.querySelector(".quote-step-content select option[value='+JSON.stringify(client.id)+']")');
+   await js('const e=document.querySelector(".quote-step-content select");e.value='+JSON.stringify(client.id)+';e.dispatchEvent(new Event("change",{bubbles:true}))');
+   await sleep(100);
+   await click('Suivant →');
+   await wait('!!document.querySelector(".quote-step-content input[placeholder]")');
+   await input('.quote-step-content input[placeholder]',subject);
+   for(let step=2;step<=5;step++)await click('Suivant →');
+   await wait('[...document.querySelectorAll(".quote-wizard-actions button")].some(b=>b.textContent.trim()==="Créer le devis")');
+   await js('const button=[...document.querySelectorAll(".quote-wizard-actions button")].find(b=>b.textContent.trim()==="Créer le devis");button.click();button.click()');
+   for(let i=0;i<100&&!releaseCreate;i++)await sleep(20);
+   check(theme+' first wizard create reaches IPC',typeof releaseCreate==='function');
+   check(theme+' rapid wizard double click only creates once',createCalls===1);
+   check(theme+' pending wizard create disabled',await js('return [...document.querySelectorAll(".quote-wizard-actions button")].some(b=>b.textContent.trim()==="Création…"&&b.disabled)'));
+   releaseCreate();
+   await wait('!document.querySelector(".quote-wizard")');
+   check(theme+' precisely one new quote persisted',database.quotes.list().filter(q=>q.subject===subject).length===1);
+   database.quotes.createWithLines=originalCreate;
+   win.destroy();win=null;continue;
+ }
  if(process.argv.includes('--lot-pdf')){
    const selector='.quote-contract-document',saveSelector=selector+' .quote-contract-reference button',importSelector=selector+' .quote-contract-document-actions button.primary-button';
    await wait('!!document.querySelector('+JSON.stringify(selector)+')');
