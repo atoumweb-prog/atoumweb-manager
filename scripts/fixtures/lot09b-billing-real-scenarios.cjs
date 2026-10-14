@@ -96,6 +96,41 @@ module.exports = async ({db,temp,evalUI:js,get,wait,navigate,test,sleep}) => {
     test(refused,'09B-UI-14: genuine preload/IPC refuses tampered invoice opening');
     test(db.billingHandoff.get(id).invoiceDocumentId===revised.invoiceDocumentId,
       '09B-UI-15: tamper refusal preserves last attached invoice');
+    await wait('!document.querySelector(".billing-invoice-actions button.primary-button")?.disabled','replacement settled');
+    // React input update through native value setter, not by mutating DOM state alone.
+    const editReference = value => js('const el=document.querySelector(".billing-invoice-fields input");'
+      +'const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set;'
+      +'setter.call(el,'+JSON.stringify(value)+');el.dispatchEvent(new Event("input",{bubbles:true}));');
+    await editReference('BROUILLON-09B-NON-ENREGISTRE');
+    await sleep(160);
+    test(await get('document.querySelector(".billing-invoice-fields input")?.value==="BROUILLON-09B-NON-ENREGISTRE"'),
+      '09B-UI-16: controlled reference field holds unsaved input');
+    await js('document.querySelector(".billing-compact-item:not(.selected)").click()');
+    await sleep(110);
+    test(confirmations.length>0&&confirmations.at(-1).message.includes('non enregistrées'),
+      '09B-UI-17: native UX-01 confirmation requested on invoice switch');
+    test(await get('document.querySelector(".billing-detail-heading h2")?.textContent.trim()==="Prestation TEST 09B"'),
+      '09B-UI-18: Stay keeps invoice selection and draft');
+    test(await get('document.querySelector(".billing-invoice-fields input")?.value==="BROUILLON-09B-NON-ENREGISTRE"'),
+      '09B-UI-19: Stay retains unsaved reference');
+    approve=true;
+    await js('document.querySelector(".billing-compact-item:not(.selected)").click()');
+    await wait('document.querySelector(".billing-detail-heading h2")?.textContent.trim()==="Deuxième prestation TEST 09B"',
+      'confirmed invoice selection');
+    test(db.billingHandoff.get(id).invoiceReference!=='BROUILLON-09B-NON-ENREGISTRE',
+      '09B-UI-20: discard does not silently save the abandoned draft');
+    approve=false;
+    await editReference('BROUILLON-NAVIGATION-09B');
+    await sleep(150);
+    await js('document.querySelector("[data-nav-module][aria-label=Accueil]").click()');
+    await sleep(90);
+    test(await get('document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("aria-label")==="Facturation"'),
+      '09B-UI-21: Stay blocks navigation with unsaved billing draft');
+    approve=true;
+    await js('document.querySelector("[data-nav-module][aria-label=Accueil]").click()');
+    await wait('document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("aria-label")==="Accueil"',
+      'confirmed navigation away from dirty invoice');
+    test(confirmations.length>=3,'09B-UI-22: both record change and module exit are guarded');
     await sleep(70);
     console.log('[UXV2 09B] Real renderer, imported and replaced PDF with native picker fixture; original preserved.');
   } finally {
