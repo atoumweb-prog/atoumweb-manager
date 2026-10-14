@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { MIGRATIONS } from './migrations';
+import { NodeSqliteAdapter } from './NodeSqliteAdapter';
+import { applyPendingMigrations, getPendingMigrations, MIGRATIONS } from './migrations';
 
 /**
  * 04F — Safety gate for stacked lot integrations.
@@ -14,6 +15,44 @@ describe('04F — migration registry convergence guard', () => {
     expect(new Set(names).size).toBe(names.length);
     expect(ids.every((id, index) => Number.isSafeInteger(id) && id > 0 &&
       (index === 0 || id > ids[index - 1]))).toBe(true);
+  });
+
+  it('upgrades a populated schema 66 fixture to 68 without losing legacy settings or foreign-key integrity', () => {
+    const database = new NodeSqliteAdapter(':memory:');
+    database.exec('PRAGMA foreign_keys = ON;');
+    try {
+      // Reconstruct only the known main baseline. Never modify a persistent
+      // database or synthesize migration history for an existing user database.
+      const baseline = getPendingMigrations(database).filter(migration => migration.id <= 66);
+      expect(baseline.length).toBe(66);
+      for (const migration of baseline) {
+        database.exec(migration.sql);
+        database.run(
+          'INSERT INTO schema_migrations (id, name, applied_at) VALUES (?, ?, ?)',
+          [migration.id, migration.name, '2026-10-14T00:00:00.000Z'],
+        );
+      }
+      database.run('INSERT INTO settings (key, value_json, updated_at) VALUES (?, ?, ?)', [
+        'lot04-migration-sentinel', '"keep-me"', '2026-10-14T00:00:00.000Z',
+      ]);
+      const before = database.get('SELECT value_json FROM settings WHERE key=?', [
+        'lot04-migration-sentinel',
+      ]);
+      expect(getPendingMigrations(database).map(migration => migration.id)).toEqual([67, 68]);
+      expect(applyPendingMigrations(database).map(migration => migration.id)).toEqual([67, 68]);
+      expect(database.get('SELECT value_json FROM settings WHERE key=?', [
+        'lot04-migration-sentinel',
+      ])).toEqual(before);
+      expect(database.all('SELECT id, name FROM schema_migrations WHERE id >= 67 ORDER BY id'))
+        .toEqual([
+          { id: 67, name: 'catalog_category_registry_v1' },
+          { id: 68, name: 'catalog_version_recommendations_v1' },
+        ]);
+      expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+      expect(applyPendingMigrations(database)).toEqual([]);
+    } finally {
+      database.close();
+    }
   });
 
   it('keeps catalogue categories before version recommendations with stable identities', () => {
