@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {assembleReviewedDraftContract,type ReviewedQuoteClause} from './reviewedDraftContract';
+import {assembleReviewedDraftContract,renderApprovedDraftContract,type ReviewedQuoteClause} from './reviewedDraftContract';
 import type {QuoteContractClause} from './contractTerms';
 const clause=(id:string,versionId:string,extra:Partial<QuoteContractClause>={}):QuoteContractClause=>({
  id,quoteId:'Q',sourceKey:id,sourceKind:'catalog',sourceClauseVersionId:versionId,
@@ -34,6 +34,15 @@ describe('05C — numbered draft contract from approved clauses',()=>{
    expect(result.ready).toBe(false);
    expect(result.invalidText).toEqual(['a']);
    expect(result.crossQuote).toBe(true);
+ });
+ it('renders only complete approved texts with stable article numbering',()=>{
+   const result=assembleReviewedDraftContract([entry('f','vf','finance'),entry('o','vo','object')],{});
+   expect(renderApprovedDraftContract(result)).toContain('1.1 — o\\nTexte o');
+   expect(renderApprovedDraftContract(result)).toContain('5.1 — f\\nTexte f');
+   const unreviewed=entry('pending','vp');
+   unreviewed.review={status:'unclassified',sectionKey:null,rankInSection:null};
+   const incomplete=assembleReviewedDraftContract([unreviewed],{});
+   expect(()=>renderApprovedDraftContract(incomplete)).toThrow(/incomplet/);
  });
  it('blocks duplicate versions and missing classifications',()=>{
    const result=assembleReviewedDraftContract([entry('a','v'),entry('b','v')],{});
