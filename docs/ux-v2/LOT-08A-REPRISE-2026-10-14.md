@@ -28,3 +28,11 @@
 ## État
 
 **08A : démarré, audit de reprise documentaire uniquement.** E222 à E227 non reproduits sur le code courant dans cet incrément ; aucune validation fonctionnelle revendiquée. Aucun impact attendu sur les autres lots.
+
+## Revue du code et incrément E223 — 14/10/2026
+
+- **E222 : audit statique actualisé.** Le service actuel `InterventionCompletionService.complete` englobe bien le parcours dans un `SAVEPOINT intervention_complete` avec `ROLLBACK TO`. Son test existant injecte six erreurs à différentes étapes, couvre une transaction parente, le hors forfait et la maintenance, et vérifie les instantanés/intégrité/FK. Cela corrige le soupçon formulé dans le référentiel historique ; **aucun rejeu de ces tests n'est revendiqué ici**.
+- **E223 : défaut confirmé à la lecture du code.** `MaintenanceService.createSubscription` n'écrivait pas `period_alignment` et héritait donc de la valeur `calendar`, contrairement à la règle validée pour les *nouvelles* souscriptions manuelles.
+- Correctif minimal dans `MaintenanceService.ts` : INSERT explicite `period_alignment='anniversary'` uniquement à la création manuelle. Aucune migration ni modification d'abonnements existants.
+- Test ajouté à `MaintenanceService.test.ts` : création le 15/10, cycles 15/10–14/11 et 15/11–14/12, puis contrôle du comportement `calendar` sur un enregistrement historique simulé. La règle des ventes annuelles et du quota sans report reste à vérifier séparément.
+- **Statut** : code et test publiés sur branche isolée, validation Vitest/typecheck/CI et Electron **non encore obtenue**. Ne pas fusionner sans leurs résultats.
