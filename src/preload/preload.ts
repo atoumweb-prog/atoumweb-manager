@@ -575,6 +575,7 @@ const api: AtoumWebApi = {
       create: (input: HourPackInput) => ipcRenderer.invoke('operations:hour-packs:create', input),
       changeStatus: (id: string, status: HourPackStatus) => ipcRenderer.invoke('operations:hour-packs:change-status', id, status),
       addMovement: (id: string, input: HourPackMovementInput) => ipcRenderer.invoke('operations:hour-packs:add-movement', id, input),
+      previewInterventionDebit: (packId: string, interventionId: string) => ipcRenderer.invoke('operations:hour-packs:preview-debit', packId, interventionId),
       debitIntervention: (packId: string, interventionId: string) => ipcRenderer.invoke('operations:hour-packs:debit-intervention', packId, interventionId),
       reverseMovement: (movementId: string, reason: string) => ipcRenderer.invoke('operations:hour-packs:reverse-movement', movementId, reason),
     },
