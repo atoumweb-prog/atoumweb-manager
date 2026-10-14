@@ -18,6 +18,8 @@ import {
 } from '../../shared/commercial';
 import { FieldHelp } from '../ui/FieldHelp';
 import { CatalogOverview } from './CatalogOverview';
+import { catalogAdminCategories, catalogAdminFiltered } from './catalogAdminFilters';
+import { catalogueCategoryName } from './catalogDisplay';
 
 const PRICE_LABELS: Record<PriceMode, string> = {
   fixed: 'Prix fixe',
@@ -142,6 +144,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | CatalogItemType>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | CatalogItemStatus>('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [catalogView, setCatalogView] = useState<'organized' | 'table'>('organized');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<CatalogItemDetail | null>(null);
@@ -215,38 +218,16 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     setVersionMode(false);void loadDetail(initialId).catch(e=>onMessage(String(e)));
   },[initialId,initialRequest]);
 
-  const filtered = useMemo(() => {
-    const needle = query.trim().toLocaleLowerCase('fr-FR');
-    return items.filter((item) => {
-      if (typeFilter !== 'all' && item.type !== typeFilter) return false;
-      if (statusFilter !== 'all' && item.status !== statusFilter) return false;
-      if (!needle) return true;
-      const version = item.currentVersion;
-      return [
-        item.name,
-        item.canonicalCode,
-        version?.familyCode,
-        version?.abbyLabel,
-        version?.unit,
-        version?.periodicity,
-        item.category,
-        version?.nature,
-        version?.description,
-        version?.contractType,
-        version?.specialTerms,
-        version?.internalAdvice,
-        ...(version?.inclusions ?? []),
-        ...(version?.exclusions ?? []),
-        ...(version?.prerequisites ?? []),
-      ]
-        .filter((value): value is string => typeof value === 'string')
-        .some((value) => value.toLocaleLowerCase('fr-FR').includes(needle));
-    }).sort((a, b) => {
-      const categoryOrder = (a.category ?? '').localeCompare(b.category ?? '', 'fr-FR', { sensitivity: 'base' });
-      if (categoryOrder !== 0) return categoryOrder;
-      return a.name.localeCompare(b.name, 'fr-FR', { sensitivity: 'base' });
-    });
-  }, [items, query, typeFilter, statusFilter]);
+  const categories = useMemo(() => catalogAdminCategories(items), [items]);
+  const effectiveCategory = categoryFilter === 'all' || categories.includes(categoryFilter) ? categoryFilter : 'all';
+  const filtered = useMemo(() => catalogAdminFiltered(items, {
+    query,
+    type: typeFilter,
+    status: statusFilter,
+    category: effectiveCategory,
+  }), [items, query, typeFilter, statusFilter, effectiveCategory]);
+  const hasFilters = Boolean(query.trim()) || typeFilter !== 'all' || statusFilter !== 'all' || effectiveCategory !== 'all';
+  const resetFilters = () => { setQuery(''); setTypeFilter('all'); setStatusFilter('all'); setCategoryFilter('all'); };
 
   async function openItem(id: string): Promise<void> {
     if(detailRef.current?.id===id){detailEpoch.current++;setSelectedId(id);setDetailLoading(false);return;}
@@ -499,9 +480,14 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
           <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as 'all' | CatalogItemType)}>
             <option value="all">Services + Offres</option><option value="service">Services</option><option value="offer">Offres</option>
           </select>
+          <select aria-label="Filtrer par catégorie" value={effectiveCategory} onChange={(e) => setCategoryFilter(e.target.value)}>
+            <option value="all">Toutes les catégories</option>
+            {categories.map((category) => <option value={category} key={category}>{catalogueCategoryName(category)}</option>)}
+          </select>
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | CatalogItemStatus)}>
             <option value="all">Tous les statuts</option><option value="active">Actifs</option><option value="inactive">Inactifs</option><option value="archived">Archivés</option>
           </select>
+          {hasFilters && <button className="secondary-button" type="button" onClick={resetFilters}>Réinitialiser les filtres</button>}
           <div className="catalog-view-switch" role="group" aria-label="Présentation du catalogue">
             <button type="button" className="secondary-button" aria-pressed={catalogView === 'organized'} onClick={() => setCatalogView('organized')}>Vue organisée</button>
             <button type="button" className="secondary-button" aria-pressed={catalogView === 'table'} onClick={() => setCatalogView('table')}>Tableau d'administration</button>
