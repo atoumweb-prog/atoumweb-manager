@@ -52,7 +52,7 @@ describe('Lot 04B — catégories réellement persistées : inventaire non destr
   it('rend une liste consultable par catégorie sans boutons de migration, renommage ou archivage', () => {
     const html = renderToStaticMarkup(createElement(CatalogCategoryInventory, {
       items: [item('x', 'SEO'), item('y', 'SEO / Visibilité'), item('z', null)],
-      onFilter: () => {}, onClose: () => {},
+      onFilter: () => {}, onClose: () => {}, onChanged: async () => {},
     }));
     expect(html).toContain('Inventaire de lecture seule');
     expect(html).toContain('À réconcilier');
