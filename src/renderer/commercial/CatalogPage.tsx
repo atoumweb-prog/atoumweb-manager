@@ -870,7 +870,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
 function CommercialParametersSummary({ parameters }: { parameters?: CatalogCommercialParameters | null }) {
   if (!parameters) return null;
   const labels: Record<keyof CatalogCommercialParameters, string> = {
-    clientNeed: 'Besoin client', benefits: 'Bénéfices client', salesPitch: 'Argumentaire commercial', qualificationQuestions: 'Questions de qualification', objections: 'Objections et réponses', keywords: 'Mots-clés métier', work: 'Travail prévu', options: 'Options / compléments',
+    clientNeed: 'Besoin client', benefits: 'Bénéfices client', salesPitch: 'Argumentaire commercial', qualificationQuestions: 'Questions de qualification', objections: 'Objections et réponses', relevantSituations: 'Situations pertinentes', commercialCautions: 'Vigilances commerciales', keywords: 'Mots-clés métier', work: 'Travail prévu', options: 'Options / compléments',
     quoteRequiredWhen: 'Cas nécessitant un devis', deliverables: 'Livrables', deliveryTerms: 'Modalités / délai',
     reviewTerms: 'Corrections / recette', correctiveWarranty: 'Garantie corrective prévue',
     thirdPartyCosts: 'Coûts tiers', sourcePriceLabel: 'Règle tarifaire de source',
@@ -1005,6 +1005,18 @@ function CatalogFields({ draft, onChange, showIdentity = false, activeTab }: { d
             <textarea value={draft.commercialParameters.qualificationQuestions ?? ''} onChange={e => onChange({
               ...draft, commercialParameters: { ...draft.commercialParameters, qualificationQuestions: e.target.value },
             })} placeholder={"Quel est votre objectif ?\nQuel contenu possédez-vous déjà ?"} />
+          </label>
+          <label className="catalog-wide">
+            <span className="field-label-with-help">Situations pertinentes <FieldHelp text="Quand proposer cette prestation, et dans quelles conditions elle n'est pas adaptée. Notes humaines internes." /></span>
+            <textarea value={draft.commercialParameters.relevantSituations ?? ''} onChange={e => onChange({
+              ...draft, commercialParameters: { ...draft.commercialParameters, relevantSituations: e.target.value },
+            })} placeholder="Ex. l'entreprise souhaite présenter ses activités avec des contenus déjà disponibles." />
+          </label>
+          <label className="catalog-wide">
+            <span className="field-label-with-help">Vigilances commerciales <FieldHelp text="Limites, dépendances ou promesses à éviter ; ces notes ne deviennent jamais des clauses CGV automatiquement." /></span>
+            <textarea value={draft.commercialParameters.commercialCautions ?? ''} onChange={e => onChange({
+              ...draft, commercialParameters: { ...draft.commercialParameters, commercialCautions: e.target.value },
+            })} placeholder="Ex. ne pas promettre une première position sur Google." />
           </label>
           <label className="catalog-wide">
             <span className="field-label-with-help">Objections et réponses <FieldHelp text="Réponses préparées aux objections fréquentes, à valider humainement. Sans modifier automatiquement les clauses CGV." /></span>
