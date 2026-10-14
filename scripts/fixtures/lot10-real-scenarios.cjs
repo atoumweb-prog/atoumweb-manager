@@ -11,6 +11,16 @@ module.exports = async ({ win, db, evalUI: js, get, wait, navigate, test, sleep 
     await js(`const e=[...document.querySelectorAll('[data-nav-module]')].find(e=>e.getAttribute('aria-label')===${JSON.stringify(name)});if(!e)throw Error('Missing '+${JSON.stringify(name)});e.click();`);
   };
 
+  await navigate('Statistiques');
+  await wait('!!document.querySelector(".statistics-tabs")', 'lot 10 statistiques avec vraies IPC');
+  await js("const b=[...document.querySelectorAll('.statistics-tabs button')].find(e=>e.textContent.includes('Commercial'));if(!b)throw Error('Onglet Commercial absent');b.click();");
+  await wait('document.querySelector(".statistics-kpis")?.textContent.includes("Contacts créés")', 'onglet statistiques commerciales');
+  test(await get('document.querySelector(".statistics-kpis")?.textContent.includes("Conversion prospects")'), 'Lot 10B: indicateurs commerciaux accessibles sur UI simple');
+  await js("const b=[...document.querySelectorAll('.statistics-tabs button')].find(e=>e.textContent.includes('Analyse financière'));if(!b)throw Error('Onglet analyse absent');b.click();");
+  await wait('!!document.querySelector(".phase7-statistics-commercial-section button")', 'analytique consolidée');
+  await js("document.querySelector('.phase7-statistics-commercial-section > button').click()");
+  await wait('document.querySelector(".phase7-statistics-commercial-section")?.textContent.includes("Contacts créés")', 'contacts distincts prospection active');
+  test(await get('document.querySelector(".phase7-statistics-commercial-section")?.textContent.includes("Contacts créés")'), 'Lot 10B: analytics ne confond pas nouveaux contacts et prospects actifs');
   await navigate('Réglages');
   test(await get('document.querySelectorAll(".theme-card").length===3 && document.querySelectorAll(".density-card").length===3'), 'Lot 10D: 3 thèmes et 3 densités réels');
   await nativeInput('#settings-quick-search', 'SÉCURITÉ');
