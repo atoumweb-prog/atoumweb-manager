@@ -4,6 +4,7 @@ import type {
   CatalogItemType,
 } from '../../shared/commercial';
 import { catalogueCategoryName, cataloguePrimaryCategoryLabel } from './catalogDisplay';
+import { catalogMatchesQuery, normalizeCatalogueQuery } from '../../shared/catalogDiscovery';
 
 export interface CatalogAdminFilters {
   query: string;
@@ -12,31 +13,17 @@ export interface CatalogAdminFilters {
   category: string | 'all';
 }
 
-/** Accent-insensitive string comparison only; not a semantic or keyword-index search. */
-export function normalizeCatalogSearch(text: string): string {
-  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr-FR').trim().replace(/\s+/g, ' ');
-}
+/** Backwards-compatible normalization helper, shared with Prospect and Devis. */
+export const normalizeCatalogSearch = normalizeCatalogueQuery;
 
-/** Existing persisted data only; version statuses and the public visibility flag are never changed. */
+/** Administrative scope may inspect drafts, archives and internal description. */
 export function catalogAdminMatches(item: CatalogItemSummary, filters: CatalogAdminFilters): boolean {
   if (filters.type !== 'all' && item.type !== filters.type) return false;
   if (filters.status !== 'all' && item.status !== filters.status) return false;
   if (filters.category !== 'all' && (item.category ?? '') !== filters.category) return false;
-  const needle = normalizeCatalogSearch(filters.query);
-  if (!needle) return true;
-  const version = item.currentVersion;
-  const parameters = version?.commercialParameters;
-  const fields = [
-    item.name, item.canonicalCode, item.category, cataloguePrimaryCategoryLabel(item),
-    version?.familyCode, version?.abbyLabel, version?.nature, version?.description,
-    version?.unit, version?.periodicity, version?.contractType, version?.specialTerms,
-    version?.internalAdvice,
-    ...(version?.inclusions ?? []), ...(version?.exclusions ?? []),
-    ...(version?.prerequisites ?? []),
-    parameters?.clientNeed, parameters?.work, parameters?.deliverables,
-    parameters?.options, parameters?.quoteRequiredWhen,
-  ];
-  return fields.some((field) => typeof field === 'string' && normalizeCatalogSearch(field).includes(needle));
+  return catalogMatchesQuery(item, filters.query, 'admin') ||
+    Boolean(filters.query.trim()) &&
+    normalizeCatalogueQuery(cataloguePrimaryCategoryLabel(item)).includes(normalizeCatalogueQuery(filters.query));
 }
 
 export function catalogAdminFiltered(items: readonly CatalogItemSummary[], filters: CatalogAdminFilters): CatalogItemSummary[] {
