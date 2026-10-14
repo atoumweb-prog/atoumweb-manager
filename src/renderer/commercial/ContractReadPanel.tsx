@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import type { ContractPresentation } from '../../shared/contractPresentation';
 import { contractCopy } from '../../shared/contractPresentation';
+import { reviewContractTextImport } from '../../shared/contractImportReview';
 import './contract-library.css';
 
 export function ContractReadPanel({presentation,commercial='',unsaved=false,copy=true}:{presentation:ContractPresentation;commercial?:string;unsaved?:boolean;copy?:boolean}) {
   const [message,setMessage]=useState('');
+  const [proposedText,setProposedText]=useState('');
+  const review=proposedText?reviewContractTextImport({originalText:presentation.text,importedText:proposedText,quoteState:presentation.state}):null;
   async function copyText(text:string,label:string) {
     try { await window.atoumweb.contractTerms.copyText(text);setMessage(`${label} copié.`); }
     catch {setMessage('Copie impossible. Le texte reste sélectionnable.');}
@@ -27,6 +30,17 @@ export function ContractReadPanel({presentation,commercial='',unsaved=false,copy
       </details>)}
       {!presentation.sections.length&&<p>Snapshot contractuel vide conservé. Aucun contenu ajouté depuis la bibliothèque actuelle.</p>}
     </div>
+    {!presentation.template&&<details className="contract-module-inventory">
+      <summary>Comparer un texte externe au contrat enregistré (lecture seule)</summary>
+      <p className="muted">Coller uniquement du texte extrait d’un document. Ce contrôle n’importe pas un fichier DOCX et ne remplace jamais un contrat enregistré ou signé.</p>
+      <textarea aria-label="Texte contractuel externe à comparer" value={proposedText} onChange={event=>setProposedText(event.target.value)} maxLength={1000001} rows={5} />
+      {review&&<div role="status">
+        <p>{review.reason}</p>
+        {review.changed&&<p>Différence (extraits limités) : supprimé «{review.removedExcerpt}» ; ajouté «{review.addedExcerpt}».</p>}
+        {review.mayProposeDraft&&<p>Proposition uniquement : aucune écriture automatique. Une validation humaine et un enregistrement explicite restent nécessaires.</p>}
+      </div>}
+      <button type="button" className="secondary-button" onClick={()=>setProposedText('')} disabled={!proposedText}>Effacer la comparaison</button>
+    </details>}
     <details className="contract-module-inventory"><summary>Modules inclus ({presentation.modules.length}) et références utilisées</summary>
       {presentation.modules.map((m,i)=><div key={i}><strong>{m.title}</strong> · {m.code}{m.version!==null?` · v${m.version}`:''} · {m.source==='base'?'Socle commun':m.source==='catalog'?'Prestation vendue':'Particulière'}</div>)}
       {presentation.types.map(t=><button type="button" key={t.id} className="secondary-button" onClick={()=>window.dispatchEvent(new CustomEvent('atoumweb:open-contract-library',{detail:t.id}))}>{t.name} · v{t.versionNumber}</button>)}
