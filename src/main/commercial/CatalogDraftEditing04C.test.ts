@@ -122,6 +122,39 @@ describe('04C / E99-E102 — sauvegarde contrôlée des versions brouillon', () 
     expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
+  it('E101 bloque une publication sur fiche devenue obsolète sans retirer la version précédente', () => {
+    const item=catalog.create({type:'service',name:'Maintenance annuelle'},{
+      priceMode:'yearly',priceCents:99000,description:'Offre existante',
+    });
+    catalog.publishVersion(item.versions[0].id);
+    const firstId=item.versions[0].id;
+    const draft=catalog.createVersion(item.id,{
+      priceMode:'yearly',priceCents:109000,description:'Nouvelle proposition',
+    });
+    const saved=catalog.saveDraftVersion(draft.id,draft,{
+      priceMode:'yearly',priceCents:119000,description:'Changement concurrent',
+    });
+    expect(()=>catalog.publishVersion(draft.id,draft)).toThrow(/Conflit/);
+    let detail=catalog.getItem(item.id);
+    expect(detail.currentVersion?.id).toBe(firstId);
+    expect(detail.versions.find(v=>v.id===draft.id)).toMatchObject({status:'draft',priceCents:119000});
+    catalog.publishVersion(saved.id,saved);
+    detail=catalog.getItem(item.id);
+    expect(detail.currentVersion).toMatchObject({id:saved.id,status:'published',priceCents:119000});
+    expect(detail.versions.find(v=>v.id===firstId)).toMatchObject({status:'retired',priceCents:99000});
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('E101 refuse un tarif techniquement corrompu sous verrou sans déclarer la conformité contractuelle', () => {
+    const item=catalog.create({type:'service',name:'Prestation témoin'},{
+      priceMode:'fixed',priceCents:7900,
+    });
+    db.run('UPDATE catalog_versions SET price_cents=NULL WHERE id=?',[item.versions[0].id]);
+    expect(()=>catalog.publishVersion(item.versions[0].id)).toThrow(/montant.*centimes/);
+    expect(catalog.getItem(item.id).versions[0].status).toBe('draft');
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
   it('ne republie jamais une version déjà publiée ou retirée et préserve son horodatage initial', () => {
     const item=catalog.create({type:'service',name:'Audit de maintenance'},{
       priceMode:'fixed',priceCents:14900,
