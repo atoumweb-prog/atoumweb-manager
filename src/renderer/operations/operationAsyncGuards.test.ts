@@ -135,7 +135,7 @@ describe('revue avant clôture', () => {
     expect(review).toContain('Client TEST');
     expect(review).toContain('1 h 30 min');
     expect(review).toContain(expected);
-    expect(review).toContain('ne sont pas prévisualisés');
+    expect(review).toContain('Les effets définitifs restent calculés par le service');
     expect(review).toContain('\n');
   });
 });
