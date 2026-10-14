@@ -106,4 +106,43 @@ describe('BillingHandoffService', () => {
     });
   });
 
+
+  it('conserve dans le journal les deux références documentaires lors du remplacement Abby', () => {
+    const now = '2026-10-14T10:00:00.000Z';
+    database.run(
+      `INSERT INTO billing_items
+       (id,client_account_id,source_type,source_id,source_key,description,expected_amount_cents,theoretical_value_cents,status,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+      ['billing-replacement', clientId, 'other', 'source-replacement', 'other:source-replacement',
+        'Facture remplacée', 10000, 10000, 'ready', now, now],
+    );
+    for (const id of ['abby-original', 'abby-corrected']) {
+      database.run(
+        `INSERT INTO client_documents
+         (id,client_account_id,category,title,original_name,relative_path,mime_type,size_bytes,created_at,updated_at)
+         VALUES (?,?,?,?,?,?,?,?,?,?)`,
+        [id, clientId, 'invoice', id, id + '.pdf', 'Clients/test/Documents/03 Factures/' + id + '.pdf',
+          'application/pdf', 1000, now, now],
+      );
+    }
+    billing.attachInvoice('billing-replacement', 'abby-original', { reference: 'ABBY-1' });
+    billing.attachInvoice('billing-replacement', 'abby-corrected', { reference: 'ABBY-2' });
+    const history = database.all<{ action: string; metadata_json: string }>(
+      "SELECT action,metadata_json FROM activity_log WHERE entity_type='billing_item' AND entity_id=? AND action IN ('billing_invoice_attached','billing_invoice_replaced') ORDER BY id",
+      ['billing-replacement'],
+    );
+    expect(history.map((entry) => entry.action)).toEqual(['billing_invoice_attached', 'billing_invoice_replaced']);
+    const replacement = JSON.parse(history[1].metadata_json) as {
+      previousDocumentId: string; currentDocumentId: string; previousReference: string; currentReference: string;
+    };
+    expect(replacement).toMatchObject({
+      previousDocumentId: 'abby-original', currentDocumentId: 'abby-corrected',
+      previousReference: 'ABBY-1', currentReference: 'ABBY-2',
+    });
+    expect(billing.get('billing-replacement')).toMatchObject({
+      status: 'invoiced', invoiceDocumentId: 'abby-corrected', invoiceReference: 'ABBY-2',
+    });
+    expect(database.get<{ id: string }>('SELECT id FROM client_documents WHERE id=?', ['abby-original'])?.id).toBe('abby-original');
+  });
+
 });
