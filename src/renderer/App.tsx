@@ -2,6 +2,7 @@ import {useCallback} from 'react';
 import {SEARCH_DESTINATIONS,searchDestination,readSearchTarget,type SearchNavigationResult} from '../shared/searchNavigation';
 import {useMemo} from 'react';
 import { settingsSectionMatches } from '../shared/settingsSearch';
+import { isStatisticsDrilldownRoute, type StatisticsDrilldownRoute } from '../shared/statisticsDrilldown';
 import { defaultNavigationPreference, readNavigationPreference, type NavigationPreference } from '../shared/navigationRail';
 import type { VisualPreferenceStore } from '../shared/panelLayout';
 import { clearNavigationFavorites, resetRegisteredModuleLayout, saveRailCollapsed, type SupportedLayoutModule } from '../shared/settingsNavigation';
@@ -143,6 +144,7 @@ function App() {
   const [quoteTarget,setQuoteTarget] = useState<string|null>(null);
   const routeKeys=useRef({crmTarget,quoteTarget,prospectViewTarget,prospectPipelineFilter});routeKeys.current={crmTarget,quoteTarget,prospectViewTarget,prospectPipelineFilter};
   const [documentTarget, setDocumentTarget] = useState<string | null>(null);
+  const [statisticsDrilldown, setStatisticsDrilldown] = useState<StatisticsDrilldownRoute | null>(null);
   const [contractTypeTarget,setContractTypeTarget]=useState<string|null>(null);
   const [catalogTarget,setCatalogTarget]=useState<string|null>(null);
   useEffect(()=>{
@@ -153,7 +155,7 @@ function App() {
   },[]);
   const [directoryTarget, setDirectoryTarget] = useState<DirectorySearchTarget | null>(null);
   useEffect(()=>{const open=(event:Event)=>void openSearchResult((event as CustomEvent<SearchResult>).detail,'event');window.addEventListener('atoumweb:navigate',open);return()=>window.removeEventListener('atoumweb:navigate',open);},[]);
-  useEffect(() => { const open = (event: Event) => {requestPage((event as CustomEvent<PageName>).detail,()=>{setActivePage((event as CustomEvent<PageName>).detail);});}; window.addEventListener('atoumweb:open-page', open); return () => window.removeEventListener('atoumweb:open-page', open); }, []);
+  useEffect(() => { const open = (event: Event) => {requestPage((event as CustomEvent<PageName>).detail,()=>{setStatisticsDrilldown(null);setActivePage((event as CustomEvent<PageName>).detail);});}; window.addEventListener('atoumweb:open-page', open); return () => window.removeEventListener('atoumweb:open-page', open); }, []);
   useEffect(() => {
     const open = (event: Event) => {const target=(event as CustomEvent<'directory'|'pipeline'|'history'|'conversions'|{view:'directory'|'pipeline'|'history'|'conversions';pipelineFilter?:ProspectPipelineFilter}>).detail;const targetView=typeof target==='string'?target:target.view;const targetFilter=targetView==='pipeline'&&typeof target!=='string'?target.pipelineFilter??'all':'all';requestPage('Prospects',()=>{
       const detail = (event as CustomEvent<
@@ -172,6 +174,20 @@ function App() {
     window.addEventListener('atoumweb:open-prospects-view', open);
     return () => window.removeEventListener('atoumweb:open-prospects-view', open);
   }, []);
+  useEffect(() => {
+    const open = (event: Event) => {
+      const route: unknown = (event as CustomEvent<unknown>).detail;
+      if (!isStatisticsDrilldownRoute(route)) { setMessage('Parcours Statistiques invalide : aucun filtre métier appliqué.'); return; }
+      requestPage(route.destination, () => {
+        setStatisticsDrilldown(route);
+        setNavigationRequest(value => value + 1);
+        setActivePage(route.destination);
+      }, true);
+    };
+    window.addEventListener('atoumweb:open-statistics-drilldown', open);
+    return () => window.removeEventListener('atoumweb:open-statistics-drilldown', open);
+  }, []);
+
   useEffect(() => {
     const openConclusion = (event: Event) => {
       const interventionId = (event as CustomEvent<{ interventionId?: string }>).detail?.interventionId;
@@ -265,6 +281,7 @@ function App() {
   }
 
   function navigateDirect(page: PageName): void {
+    setStatisticsDrilldown(null);
     if (page === 'Interventions & Maintenance') setOperationsSearchTarget(null);
     if (page === 'Projets') setProjectSearchTarget(null);
     if (page === 'Bibliothèque AtoumWeb') setLibrarySearchTarget(null);
@@ -276,11 +293,13 @@ function App() {
   }
 
   function openOperationsTargetDirect(target: OperationsSearchTarget): void {
+    setStatisticsDrilldown(null);
     setOperationsSearchTarget(target);
     setActivePage('Interventions & Maintenance');
   }
 
   function openSearchResultDirect(result: SearchResult): void {
+    setStatisticsDrilldown(null);
     switch (result.entityType) {
       case 'prospect': setProspectViewTarget('directory'); setCrmTarget(result.entityId); setActivePage('Prospects'); break;
       case 'catalog': setCatalogTarget(result.entityId); setActivePage('Offres & Tarifs'); break;
@@ -316,7 +335,7 @@ function App() {
 
   }
 
-  function navigate(item:PageName){if(item===activePageRef.current){cancelSearchNavigation();return true;}return requestUnsavedExit(()=>{cancelSearchNavigation();visibleEntity.current=null;if(item==='Clients'||item==='Prospects')setCrmTarget(null);navigateDirect(item);});}
+  function navigate(item:PageName){if(item===activePageRef.current){cancelSearchNavigation();setStatisticsDrilldown(null);return true;}return requestUnsavedExit(()=>{cancelSearchNavigation();visibleEntity.current=null;if(item==='Clients'||item==='Prospects')setCrmTarget(null);navigateDirect(item);});}
   async function openSearchResult(result:SearchResult,source:'search'|'event'='search'):Promise<SearchNavigationResult>{
     const destination=searchDestination(result);
     if(!destination){const message='Type ou identifiant de destination non pris en charge.';setMessage(message);return {status:'unsupported',message};}
@@ -375,11 +394,11 @@ function App() {
           {activePage === 'Prospects' && <ProspectsPage onEntityReady={markEntityReady} key={`${crmTarget ?? 'none'}:${prospectViewTarget}:${prospectPipelineFilter}`} initialId={crmTarget} initialRequest={navigationRequest} initialView={prospectViewTarget} initialPipelineFilter={prospectPipelineFilter} onMessage={setMessage} />}
           {activePage === 'Clients' && <ClientsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
           {activePage === 'Offres & Tarifs' && <CatalogPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={setMessage} initialId={catalogTarget}/>}
-          {activePage === 'Devis' && <QuotesPage onEntityReady={markEntityReady} key={quoteTarget} initialId={quoteTarget} initialRequest={navigationRequest} onMessage={setMessage} />}
+          {activePage === 'Devis' && <QuotesPage statisticsDrilldown={statisticsDrilldown?.kind === 'signed' ? statisticsDrilldown : null} onClearStatisticsDrilldown={() => setStatisticsDrilldown(null)} onEntityReady={markEntityReady} key={quoteTarget} initialId={quoteTarget} initialRequest={navigationRequest} onMessage={setMessage} />}
           {activePage === 'Projets' && <ProjectsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={showMessage} initialProjectId={projectSearchTarget} showHoverHelp={showHoverHelp} />}
           {activePage === 'Interventions & Maintenance' && <OperationsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={setMessage} initialTarget={operationsSearchTarget} />}
-          {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}
-          {activePage === 'Facturation' && <BillingPage onMessage={setMessage} />}
+          {activePage === 'Gestion des temps' && <TimePage statisticsDrilldown={statisticsDrilldown?.kind === 'time' ? statisticsDrilldown : null} onClearStatisticsDrilldown={() => setStatisticsDrilldown(null)} onMessage={setMessage} />}
+          {activePage === 'Facturation' && <BillingPage statisticsDrilldown={statisticsDrilldown?.kind === 'invoiced' ? statisticsDrilldown : null} onClearStatisticsDrilldown={() => setStatisticsDrilldown(null)} onMessage={setMessage} />}
           {activePage === 'Dépenses' && <ExpensesPage onMessage={setMessage} />}
           {activePage === 'Documents & Contrats' && <DocumentsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={setMessage} initialDocumentId={documentTarget} initialContractTypeId={contractTypeTarget}/>}
           {activePage === 'Bibliothèque AtoumWeb' && <AtoumWebLibraryPage
