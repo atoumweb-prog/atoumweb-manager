@@ -131,12 +131,12 @@ export class AnalyticsService {
     );
     const wonProspects = this.count(
       `SELECT COUNT(*) AS total FROM prospects
-       WHERE won_at IS NOT NULL AND date(won_at) BETWEEN date(?) AND date(?)`,
+       WHERE stage='won' AND won_at IS NOT NULL AND date(won_at) BETWEEN date(?) AND date(?)`,
       [from, to],
     );
     const lostProspects = this.count(
       `SELECT COUNT(*) AS total FROM prospects
-       WHERE lost_at IS NOT NULL AND date(lost_at) BETWEEN date(?) AND date(?)`,
+       WHERE stage='lost' AND lost_at IS NOT NULL AND date(lost_at) BETWEEN date(?) AND date(?)`,
       [from, to],
     );
     const decidedProspects = wonProspects + lostProspects;
@@ -363,13 +363,13 @@ export class AnalyticsService {
       `WITH period_prospects AS (
          SELECT
            COALESCE(NULLIF(source, ''), 'not_set') AS source,
-           CASE WHEN won_at IS NOT NULL AND date(won_at) BETWEEN date(?) AND date(?) THEN 1 ELSE 0 END AS won,
-           CASE WHEN lost_at IS NOT NULL AND date(lost_at) BETWEEN date(?) AND date(?) THEN 1 ELSE 0 END AS lost,
+           CASE WHEN stage='won' AND won_at IS NOT NULL AND date(won_at) BETWEEN date(?) AND date(?) THEN 1 ELSE 0 END AS won,
+           CASE WHEN stage='lost' AND lost_at IS NOT NULL AND date(lost_at) BETWEEN date(?) AND date(?) THEN 1 ELSE 0 END AS lost,
            CASE WHEN date(created_at) BETWEEN date(?) AND date(?) THEN 1 ELSE 0 END AS created
          FROM prospects
          WHERE date(created_at) BETWEEN date(?) AND date(?)
-            OR (won_at IS NOT NULL AND date(won_at) BETWEEN date(?) AND date(?))
-            OR (lost_at IS NOT NULL AND date(lost_at) BETWEEN date(?) AND date(?))
+            OR (stage='won' AND won_at IS NOT NULL AND date(won_at) BETWEEN date(?) AND date(?))
+            OR (stage='lost' AND lost_at IS NOT NULL AND date(lost_at) BETWEEN date(?) AND date(?))
        )
        SELECT source,
               SUM(created) AS prospect_count,
@@ -400,7 +400,7 @@ export class AnalyticsService {
     return this.database.all<ReasonRow>(
       `SELECT COALESCE(NULLIF(trim(lost_reason), ''), 'Non renseigné') AS reason, COUNT(*) AS total
        FROM prospects
-       WHERE lost_at IS NOT NULL AND date(lost_at) BETWEEN date(?) AND date(?)
+       WHERE stage='lost' AND lost_at IS NOT NULL AND date(lost_at) BETWEEN date(?) AND date(?)
        GROUP BY COALESCE(NULLIF(trim(lost_reason), ''), 'Non renseigné')
        ORDER BY total DESC, reason ASC`,
       [from, to],
@@ -430,7 +430,7 @@ export class AnalyticsService {
       `SELECT AVG((julianday(accepted_at) - julianday(created_at)) * 24.0) AS average_hours,
               COUNT(*) AS sample
        FROM quotes
-       WHERE accepted_at IS NOT NULL
+       WHERE status='accepted' AND accepted_at IS NOT NULL
          AND date(accepted_at) BETWEEN date(?) AND date(?)`,
       [from, to],
     );

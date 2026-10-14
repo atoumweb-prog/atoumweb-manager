@@ -168,6 +168,24 @@ describe('AnalyticsService', () => {
     expect(current.quoteAcceptancePercent).toBe(100);
   });
 
+  it('ne double pas une décision Prospect perdu après un ancien état gagné', () => {
+    database.run(
+      `INSERT INTO prospects
+       (id,organization_id,stage,temperature,source,won_at,lost_at,lost_reason,created_at,updated_at)
+       VALUES ('p-transition','org','lost','neutral','outbound',
+       '2026-09-12T10:00:00.000Z','2026-09-18T10:00:00.000Z','Budget',
+       '2026-09-01T10:00:00.000Z','2026-09-18T10:00:00.000Z')`,
+    );
+    const snapshot = analytics.commercialSnapshot({ preset: 'month' }, new Date('2026-09-21T12:00:00.000Z'));
+    expect(snapshot.current.wonProspects).toBe(0);
+    expect(snapshot.current.lostProspects).toBe(1);
+    expect(snapshot.current.decidedProspects).toBe(1);
+    expect(snapshot.current.conversionPercent).toBe(0);
+    const outbound = snapshot.sources.find((source) => source.source === 'outbound');
+    expect(outbound).toMatchObject({ wonCount: 0, lostCount: 1, decidedCount: 1, conversionPercent: 0 });
+    expect(snapshot.lostReasons).toEqual([{ reason: 'Budget', count: 1 }]);
+  });
+
   it('calcule projets temps pauses estimation et rendement sur un échantillon cohérent', () => {
     database.run(
       `UPDATE projects
