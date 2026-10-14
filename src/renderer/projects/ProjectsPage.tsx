@@ -293,17 +293,22 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
     if(detailRef.current?.id===id){setSelectedId(id);onEntityReady?.('project',id);return;}
     try {
       setSelectedId(id);
-      setSelectedNodeId(returnContext?.projectId === id ? returnContext.selectedNodeId : null);
-      setExpandedPhaseIds(new Set(returnContext?.projectId === id ? returnContext.expandedPhaseIds : []));
+      setSelectedNodeId(null);
+      setExpandedPhaseIds(new Set());
       setUndoStack([]);
       setRedoStack([]);
       setPhaseCompletionReview(null);
       setProductionOverlay(null);
-      setProductionTreeCollapsed(false);
+      setProductionTreeCollapsed(returnContext?.projectId === id ? returnContext.productionTreeCollapsed : false);
       setCompletionReview(null);
       const next=await window.atoumweb.projects.projects.get(id);
       if(epoch!==openEpoch.current)return;
       if(next.id!==id)throw Error('Projet reçu différent de la cible.');
+      if (returnContext?.projectId === id) {
+        const availableNodes = new Set(next.nodes.map(node => node.id));
+        setSelectedNodeId(returnContext.selectedNodeId && availableNodes.has(returnContext.selectedNodeId) ? returnContext.selectedNodeId : null);
+        setExpandedPhaseIds(new Set(returnContext.expandedPhaseIds.filter(nodeId => availableNodes.has(nodeId))));
+      }
       setDetail(next);
       setDetailTab(returnContext?.projectId === id ? returnContext.detailTab : 'plan');
     } catch (error) {
