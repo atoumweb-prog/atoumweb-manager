@@ -1,4 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
 import { CatalogService } from './CatalogService';
@@ -19,6 +22,27 @@ afterEach(()=>db.close());
 describe('04D — versioned recommendation persistence',()=>{
   const create = (name:string) => catalog.create({type:'service',name},{
     priceMode:'fixed',priceCents:9900,
+  });
+  it('restores a SQLite backup with versioned recommendations and unchanged foreign keys',async()=>{
+    const dir=mkdtempSync(join(tmpdir(),'atoumweb-04d-backup-'));
+    let restored:NodeSqliteAdapter|undefined;
+    try{
+      const source=create('Backup source');
+      const target=create('Backup target');
+      catalog.publishVersion(target.versions[0].id);
+      const saved=recommendations.replace(source.versions[0].id,[target.versions[0].id],[]);
+      const archive=join(dir,'catalogue.sqlite');
+      await db.backupTo(archive);
+      restored=new NodeSqliteAdapter(archive);
+      restored.exec('PRAGMA foreign_keys=ON;');
+      const service=new CatalogRecommendationsService(restored);
+      expect(service.list(source.versions[0].id)).toEqual(saved);
+      expect(restored.all('PRAGMA foreign_key_check')).toEqual([]);
+      expect(restored.get<{n:number}>('SELECT count(*) AS n FROM schema_migrations WHERE id=68')?.n).toBe(1);
+    }finally{
+      restored?.close();
+      rmSync(dir,{recursive:true,force:true});
+    }
   });
   it('saves recommendations in the source draft only, referencing published versions',()=>{
     const source=create('Source');
