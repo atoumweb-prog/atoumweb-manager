@@ -158,6 +158,29 @@ describe('InterventionCompletionService', () => {
     expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
+  it('E227 conserve une unique préparation de facturation hors forfait après réouverture et nouvelle clôture', () => {
+    const intervention = operations.createIntervention({
+      clientAccountId: clientId,
+      type: 'correction',
+      coverageMode: 'out_of_scope',
+      subject: 'Réouverture hors forfait',
+      theoreticalValueCents: 9900,
+      billableAmountCents: 7900,
+    });
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    const before = billing.list({ sourceType: 'intervention' });
+    expect(before).toHaveLength(1);
+    expect(before[0].status).toBe('ready');
+    expect(before[0].expectedAmountCents).toBe(7900);
+
+    // Reproduit une transition permise aujourd'hui, sans en faire une règle métier approuvée.
+    expect(operations.changeInterventionStatus(intervention.id, 'in_progress').status).toBe('in_progress');
+    expect(billing.list({ sourceType: 'intervention' })).toEqual(before);
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    expect(billing.list({ sourceType: 'intervention' })).toEqual(before);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
   it('prépare une seule fois la facturation d’une intervention hors forfait', () => {
     const intervention = operations.createIntervention({
       clientAccountId: clientId,
