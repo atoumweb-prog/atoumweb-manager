@@ -470,7 +470,7 @@ function SettingsPage({ bootstrap, theme, displayDensity, showHoverHelp, onTheme
             Aller à : {shortcut.label}
           </button>)}
         </nav>}
-        {error && <p role="alert" className="notice">{error}</p>
+        {error && <p role="alert" className="notice">{error}</p>}
         {!appearance && !help && !workspace && !security && <p role="status">Aucun réglage correspondant. Efface la recherche pour retrouver toutes les rubriques.</p>}
       </article>
       {appearance && <article className="panel panel-large">
