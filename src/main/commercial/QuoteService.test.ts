@@ -13,8 +13,6 @@ import { applyPendingMigrations } from '../database/migrations';
 import { CatalogService } from './CatalogService';
 import { CatalogRecommendationsService } from './CatalogRecommendationsService';
 import { quoteRecommendationState } from '../../shared/quoteRecommendationStatus';
-import { CatalogRecommendationsService } from './CatalogRecommendationsService';
-import { quoteRecommendationState } from '../../shared/quoteRecommendationStatus';
 import { QuoteService } from './QuoteService';
 
 let database: NodeSqliteAdapter;
