@@ -209,10 +209,12 @@ if(!process.versions.electron){
           check('05D stay preserves first unsaved contract field',await js('document.querySelector(\'.quote-contract-preparation [data-contract-field="context"]\')?.value')==='BROUILLON_DEVIS_A_CONTEXTE');
           check('05D stay preserves second unsaved contract field',await js('document.querySelector(\'.quote-contract-preparation [data-contract-field="purpose"]\')?.value')==='BROUILLON_DEVIS_A_FINALITE');
           decision=1;await js(selectB);await wait('document.querySelector(".quote-table tbody tr.selected-row")?.textContent.includes("DEVIS_B_ISOLE_05D")');
+          await wait('document.querySelector(\'.quote-contract-preparation [data-contract-field="context"]\')?.value!=="BROUILLON_DEVIS_A_CONTEXTE"');
           check('05D quote B has no draft A context',await js('document.querySelector(\'.quote-contract-preparation [data-contract-field="context"]\')?.value')!=='BROUILLON_DEVIS_A_CONTEXTE');
           check('05D quote B has no draft A purpose',await js('document.querySelector(\'.quote-contract-preparation [data-contract-field="purpose"]\')?.value')!=='BROUILLON_DEVIS_A_FINALITE');
           const selectA=`[...document.querySelectorAll('.quote-table tbody tr')].find(e=>e.textContent.includes(${JSON.stringify(q.subject)})).click()`;
           await js(selectA);await wait(`document.querySelector(".quote-table tbody tr.selected-row")?.textContent.includes(${JSON.stringify(q.subject)})`);
+          await wait('document.querySelector(\'.quote-contract-preparation [data-contract-field="context"]\')?.value!=="BROUILLON_DEVIS_A_CONTEXTE"');
           check('05D returning to A does not resurrect discarded context',await js('document.querySelector(\'.quote-contract-preparation [data-contract-field="context"]\')?.value')!=='BROUILLON_DEVIS_A_CONTEXTE');
         }finally{dialog.showMessageBoxSync=oldDialog;}
       }await wait('document.querySelector(".contract-reading-scroll").textContent.includes("Paramètres contractuels du devis")');
