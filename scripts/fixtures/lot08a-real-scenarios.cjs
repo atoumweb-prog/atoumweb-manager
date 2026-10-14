@@ -236,6 +236,28 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
       ipcMain.removeHandler(moveChannel);
       ipcMain.handle(moveChannel,originalMove);
     }
+    // E226 : quitter le formulaire de création d'un pack doit confirmer
+    // avant de supprimer le brouillon, sans créer de crédit fictif.
+    await js('const b=[...document.querySelectorAll("button")].find(e=>e.textContent.trim()==="+ Pack");if(!b)throw Error("E226 new pack command missing");b.click();');
+    await wait('!!document.querySelector(".hour-pack-create-panel")','E226 pack form visible');
+    await setPackInput('.hour-pack-create-panel input[placeholder="Ex. Forfait 10 h"]','BROUILLON PACK E226');
+    await wait('document.querySelector(".hour-pack-create-panel input[placeholder]")?.value==="BROUILLON PACK E226"',
+      'E226 pack draft typed');
+    const beforePackConfirm=confirmations.length;
+    await js('document.querySelector(".hour-pack-create-panel .button-row button.secondary-button").click()');
+    test(confirmations.length===beforePackConfirm+1,'E226 new pack cancel prompts exactly once');
+    test(await get('document.querySelector(".hour-pack-create-panel input[placeholder]")?.value')==='BROUILLON PACK E226',
+      'E226 Stay preserves new pack draft');
+    answers.push(1);
+    await js('document.querySelector(".hour-pack-create-panel .button-row button.secondary-button").click()');
+    await wait('!document.querySelector(".hour-pack-create-panel")','E226 pack form dismissed after confirmation');
+    test(!db.hourPacks.list().some(p=>p.name==='BROUILLON PACK E226'),
+      'E226 discarded pack draft creates no pack');
+    await js('const b=[...document.querySelectorAll("button")].find(e=>e.textContent.trim()==="+ Pack");if(!b)throw Error("E226 pack reopen command missing");b.click();');
+    await wait('!!document.querySelector(".hour-pack-create-panel")','E226 new pack opened fresh');
+    test(await get('document.querySelector(".hour-pack-create-panel input[placeholder]")?.value')==='',
+      'E226 pack draft cleared after confirmed exit');
+    await js('document.querySelector(".hour-pack-create-panel .button-row button.secondary-button").click()');
     test(db.database.all('PRAGMA foreign_key_check').length===0,'E225 native SQLite foreign keys');
 
     test(db.database.all('PRAGMA foreign_key_check').length===0,'E226 SQLite foreign keys');
