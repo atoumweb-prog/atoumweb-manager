@@ -114,7 +114,8 @@ export function CatalogCategoryManagement({items,onChanged}: {
             {renameId===category.id ? (
               <form className="catalog-category-edit-row" onSubmit={event=>{
                 event.preventDefault();
-                void run(()=>window.atoumweb.catalogCategories.rename(category.id,renameValue,category.revision),
+                void run(()=>window.atoumweb.catalogCategories.rename(category.id,renameValue,category.revision,
+                    items.filter(item => item.categoryId === category.id).map(item => item.id).sort()),
                   'Catégorie renommée ; les anciennes valeurs sont consignées.')
                   .then(saved=>{if(saved){renameGuard.saved(renameValue);setRenameId('');}});
               }}>
