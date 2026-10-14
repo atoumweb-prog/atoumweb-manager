@@ -668,7 +668,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
               <span className="eyebrow">{detail.number} · {detail.commercialState === 'provisional' ? 'Projet prévisionnel · devis non signé' : detail.commercialState === 'frozen' ? 'Projet confirmé · devis accepté' : 'Projet historique'}</span>
               <h2>{detail.name}</h2>
               <p>{detail.commercialState === 'provisional' && !detail.clientAccountId ? 'Prospect : ' : 'Client / contact : '}{detail.clientLabel}</p>
-              {detail.sourceQuoteId && <p className="muted">Devis source associé · référence {detail.sourceQuoteId}</p>}
+              {detail.sourceQuoteId && <p className="muted">Devis source associé <button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'quote', entityId: detail.sourceQuoteId, title: 'Devis source du Projet' } }))}>Ouvrir le devis</button></p>}
               {detail.commercialState === 'provisional' && <p className="muted">Préparation interne : ce dossier n’est pas une commande acceptée.</p>}
             </div>
           </div>
