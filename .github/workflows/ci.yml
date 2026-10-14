@@ -81,6 +81,14 @@ jobs:
           node scripts/check-catalog-guidance-ui.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: Electron Prospect 04D — erreurs, reprise et suggestion volontaire
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          node scripts/check-prospect-catalog-recommendations-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Electron Devis 04D — conseil et achat explicite Windows TEMP
         if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
         shell: pwsh
