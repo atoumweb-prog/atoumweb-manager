@@ -44,7 +44,7 @@ export function CatalogContractPanel({item}:{item:CatalogItemDetail}) {
     <h3>Références contractuelles</h3>
     <label>Version Catalogue
       <select aria-label="Version Catalogue contractuelle" value={versionId}
-        disabled={saving} onChange={e=>guard.request(()=>setVersionId(e.target.value))}>
+        disabled={saving} onChange={e=>guard.request(()=>{setLoaded(false);setVersionId(e.target.value);})}>
         {item.versions.map(v=><option key={v.id} value={v.id}>v{v.versionNumber} — {v.status==='draft'?'Brouillon':v.status==='published'?'Publiée':'Retirée'}</option>)}
       </select>
     </label>
