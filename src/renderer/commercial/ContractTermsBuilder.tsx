@@ -40,6 +40,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   const currentQuoteId=useRef(quote.id);
   currentQuoteId.current=quote.id;
   const loadRequest=useRef(0);
+  const loadedQuoteId=useRef(quote.id);
   const [presentation,setPresentation]=useState<ContractPresentation|null>(null);
   const [showLibrary, setShowLibrary] = useState(false);
   const [showCustom, setShowCustom] = useState(false);
@@ -118,20 +119,32 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   useEffect(() => {
     // A previous quote's responses must not repaint the newly selected quote.
     presentationRequest.current+=1;
-    if(build && currentQuoteId.current!==quote.id)return;
+    if(loadedQuoteId.current!==quote.id){
+      loadedQuoteId.current=quote.id;
+      setBuild(null);
+      setPresentation(null);
+      setDrafts({});
+      setTemplates([]);
+      setCatalog([]);
+      setVersionEditors({});
+    }
     void load();
     return ()=>{loadRequest.current+=1;presentationRequest.current+=1;};
   }, [quote.id, quote.status, quote.finalizedAt, quote.contractCompiledAt, quote.updatedAt]);
 
   async function run(action: () => Promise<QuoteContractBuild>,saved?:{id:string;draft:ClauseDraft}): Promise<boolean> {
+    const quoteId=quote.id;
     setBusy(true);
     setError('');
     try {
-      setBuildAndDrafts(await action(),saved);return true;
+      const result=await action();
+      if(currentQuoteId.current!==quoteId)return false;
+      setBuildAndDrafts(result,saved);return true;
     } catch (cause) {
-      setError(errorMessage(cause));return false;
+      if(currentQuoteId.current===quoteId)setError(errorMessage(cause));
+      return false;
     } finally {
-      setBusy(false);
+      if(currentQuoteId.current===quoteId)setBusy(false);
     }
   }
 
