@@ -217,8 +217,12 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
   }
 
   async function openLocal(locationId: string): Promise<void> {
-    const result = await window.atoumweb.businessBackups.openLocation(locationId);
-    if (!result.ok) setError(result.error ?? 'Impossible d’ouvrir cette copie locale.');
+    try {
+      const result = await window.atoumweb.businessBackups.openLocation(locationId);
+      if (!result.ok) setError(result.error ?? 'Impossible d’ouvrir cette copie locale.');
+    } catch (openError) {
+      setError(openError instanceof Error ? openError.message : 'Impossible d’ouvrir cet emplacement local.');
+    }
   }
 
   function beginResize(): void {
