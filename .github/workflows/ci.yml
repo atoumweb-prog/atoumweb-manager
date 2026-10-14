@@ -53,6 +53,23 @@ jobs:
       - name: Tests
         run: npm test -- --maxWorkers=2
 
+      - name: UX-01 — brouillons, confirmations et navigation (Windows TEMP)
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 108 }}
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          node scripts/check-unsaved-inputs-ui.cjs --lot-b --lot-c --review
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: UX-01 — restauration et fermeture Electron (Windows TEMP)
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 108 }}
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          node scripts/check-restore-quit-roundtrip.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+
       # Lot 04B: real Electron renderer + mocked IPC, isolated under Windows TEMP.
       # This is deliberately scoped to the Catalogue pilot PR; no live workspace is opened.
       - name: Electron Catalogue 04B — Windows TEMP
