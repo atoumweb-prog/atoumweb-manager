@@ -14,6 +14,12 @@ describe('05D — non-destructive local clause comparison',()=>{
     expect(compareClauseField('abc','ac').removedExcerpt).toBe('b');
     expect(compareClauseField('','Texte').addedExcerpt).toBe('Texte');
   });
+  it('keeps emoji and supplementary Unicode characters intact in excerpts',()=>{
+    const diff=compareClauseField('Référence 🧾 A','Référence 📄 A',1);
+    expect(diff.removedExcerpt).toBe('🧾');
+    expect(diff.addedExcerpt).toBe('📄');
+    expect(diff.truncated).toBe(false);
+  });
   it('bounds potentially long legal passages without mutating input',()=>{
     const before='a'.repeat(1000),after='b'.repeat(1000);
     const diff=compareClauseField(before,after,20);
