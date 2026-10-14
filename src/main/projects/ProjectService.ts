@@ -330,14 +330,18 @@ export class ProjectService {
     };
   }
 
-  createProvisionalShell(input: TransformQuoteToProjectInput, dossierId: string, templateVersionId: string | null): string {
+  createProvisionalShell(input: TransformQuoteToProjectInput, dossierId: string, templateVersionId: string | null, replacement = false): string {
     const quote = this.database.get<Record<string,unknown>>('SELECT * FROM quotes WHERE id=?',[input.quoteId]);
     if (!quote || (!quote.client_account_id && !quote.prospect_id)) throw new Error('Client ou Prospect requis.');
     const id=randomUUID(),now=nowIso(),number=this.nextProjectNumber(new Date().getFullYear(),now);
     const template=templateVersionId?this.getTemplateVersion(templateVersionId):null,definition=template?this.getTemplate(template.templateId):null;
     const name=clean(input.name) ?? String(quote.subject);
     // Stable master location survives Prospect -> Client. No copies or implicit filesystem moves.
-    const resourceRoot=join(this.workspace.root,'projets-previsionnels',dossierId,'Ressources');
+    // A replacement must NEVER share the prior provisional project's resource
+    // directory: its files, exported packages and human edits remain archived.
+    const resourceRoot=replacement
+      ? join(this.workspace.root,'projets-previsionnels',dossierId,'reprises',id,'Ressources')
+      : join(this.workspace.root,'projets-previsionnels',dossierId,'Ressources');
     this.database.run(`INSERT INTO projects(id,project_number,client_account_id,prospect_id,source_quote_id,template_version_id,
       name,project_type,status,commercial_mode,commercial_state,commercial_dossier_id,target_date,
       commercial_value_cents,contract_value_cents,resource_root_path,created_at,updated_at)
@@ -478,6 +482,15 @@ export class ProjectService {
     if (!PROJECT_STATUSES.includes(status)) throw new Error('Statut projet invalide.');
     const project = this.getProject(id);
     if (project.commercialState === 'provisional' && !['to_prepare','archived'].includes(status)) throw new Error('Projet prévisionnel : attendre l’acceptation avant activation opérationnelle.');
+    if (project.commercialState === 'provisional' && status === 'to_prepare') {
+      const current = this.database.get<{ project_id: string }>(
+        'SELECT d.project_id FROM commercial_project_dossiers d JOIN projects p ON p.commercial_dossier_id=d.id WHERE p.id=?',
+        [id],
+      );
+      if (current?.project_id !== id) {
+        throw new Error('Projet prévisionnel remplacé : réactivation interdite. Ouvrir le Projet courant du dossier commercial.');
+      }
+    }
     const now = nowIso();
     this.database.run('UPDATE projects SET status=?, completed_at=?, archived_at=?, updated_at=? WHERE id=?', [status, status === 'completed' ? now : null, status === 'archived' ? now : null, now, id]);
     this.writeActivity('project', id, 'project_status_changed', `Statut projet : ${status}`);

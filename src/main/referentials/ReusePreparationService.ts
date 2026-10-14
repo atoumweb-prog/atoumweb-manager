@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { basename, extname, join, relative, resolve, sep } from 'node:path';
 import type {
   ReuseCreateGlobalInput,
@@ -75,78 +75,85 @@ export class ReusePreparationService {
     const createdAt = new Date().toISOString();
 
     const packageDirectory = this.createPackageDirectory(item.name, Number(version.version_number), createdAt);
-    const contentDirectory = join(packageDirectory, 'contenu');
-    const sourcesDirectory = join(packageDirectory, 'sources');
-    mkdirSync(contentDirectory, { recursive: true });
-    mkdirSync(sourcesDirectory, { recursive: true });
-
-    const contentPath = this.writeContentFile(version, contentDirectory);
-    const copiedFiles = linkedAssets.map((asset) => this.copyLinkedAsset(asset, sourcesDirectory, packageDirectory));
-    const adaptationNotesPath = join(packageDirectory, 'notes-adaptation.md');
-    writeFileSync(adaptationNotesPath, this.adaptationNotes(project, item, version, input.adaptationNotes), 'utf8');
-
-    const resultBase = {
-      projectId: project.id,
-      itemId: item.id,
-      versionId: version.id,
-      versionNumber: Number(version.version_number),
-      packageDirectory,
-      contentPath,
-      adaptationNotesPath,
-      copiedFiles,
-      createdAt,
-    };
-    const manifestPath = join(packageDirectory, 'manifest.json');
-    const manifest = {
-      schemaVersion: 2,
-      purpose: 'assisted_manual_adaptation_for_atoumweb_library',
-      generatedAt: createdAt,
-      safety: {
-        automaticGeneralization: false,
-        automaticGlobalLibraryCreation: false,
-        automaticCodeExecution: false,
-        sourceProjectModified: false,
-        note: 'Ce paquet est une copie de travail. Toute généralisation et toute création dans la Bibliothèque AtoumWeb nécessitent une action explicite.',
-      },
-      project: {
-        id: project.id,
-        number: project.project_number,
-        name: project.name,
-      },
-      technicalItem: {
-        id: item.id,
-        category: item.category,
-        name: item.name,
-        description: item.description,
-        tags: this.parseTags(item.tags_json),
-      },
-      version: {
-        id: version.id,
-        number: Number(version.version_number),
-        current: Boolean(version.is_current),
-        stable: Boolean(version.is_stable),
-        contentType: version.content_type,
-        language: version.language,
-        notes: version.notes,
-        createdAt: version.created_at,
-        contentFile: contentPath ? relative(packageDirectory, contentPath) : null,
-      },
-      adaptation: {
-        notesFile: relative(packageDirectory, adaptationNotesPath),
-        initialNotes: input.adaptationNotes?.trim() || null,
-      },
-      linkedResources: copiedFiles,
-    };
-    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
-
-    this.writeActivity(
-      project.id,
-      'technical_reuse_package_prepared',
-      `Paquet de réutilisation préparé : ${item.name} v${Number(version.version_number)}`,
-      { itemId: item.id, versionId: version.id, manifestPath },
-    );
-
-    return { ...resultBase, manifestPath };
+    try {
+      const contentDirectory = join(packageDirectory, 'contenu');
+      const sourcesDirectory = join(packageDirectory, 'sources');
+      mkdirSync(contentDirectory, { recursive: true });
+      mkdirSync(sourcesDirectory, { recursive: true });
+  
+      const contentPath = this.writeContentFile(version, contentDirectory);
+      const copiedFiles = linkedAssets.map((asset) => this.copyLinkedAsset(asset, sourcesDirectory, packageDirectory));
+      const adaptationNotesPath = join(packageDirectory, 'notes-adaptation.md');
+      writeFileSync(adaptationNotesPath, this.adaptationNotes(project, item, version, input.adaptationNotes), 'utf8');
+  
+      const resultBase = {
+        projectId: project.id,
+        itemId: item.id,
+        versionId: version.id,
+        versionNumber: Number(version.version_number),
+        packageDirectory,
+        contentPath,
+        adaptationNotesPath,
+        copiedFiles,
+        createdAt,
+      };
+      const manifestPath = join(packageDirectory, 'manifest.json');
+      const manifest = {
+        schemaVersion: 2,
+        purpose: 'assisted_manual_adaptation_for_atoumweb_library',
+        generatedAt: createdAt,
+        safety: {
+          automaticGeneralization: false,
+          automaticGlobalLibraryCreation: false,
+          automaticCodeExecution: false,
+          sourceProjectModified: false,
+          note: 'Ce paquet est une copie de travail. Toute généralisation et toute création dans la Bibliothèque AtoumWeb nécessitent une action explicite.',
+        },
+        project: {
+          id: project.id,
+          number: project.project_number,
+          name: project.name,
+        },
+        technicalItem: {
+          id: item.id,
+          category: item.category,
+          name: item.name,
+          description: item.description,
+          tags: this.parseTags(item.tags_json),
+        },
+        version: {
+          id: version.id,
+          number: Number(version.version_number),
+          current: Boolean(version.is_current),
+          stable: Boolean(version.is_stable),
+          contentType: version.content_type,
+          language: version.language,
+          notes: version.notes,
+          createdAt: version.created_at,
+          contentFile: contentPath ? relative(packageDirectory, contentPath) : null,
+        },
+        adaptation: {
+          notesFile: relative(packageDirectory, adaptationNotesPath),
+          initialNotes: input.adaptationNotes?.trim() || null,
+        },
+        linkedResources: copiedFiles,
+      };
+      writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  
+      this.writeActivity(
+        project.id,
+        'technical_reuse_package_prepared',
+        `Paquet de réutilisation préparé : ${item.name} v${Number(version.version_number)}`,
+        { itemId: item.id, versionId: version.id, manifestPath },
+      );
+  
+      return { ...resultBase, manifestPath };
+    } catch (error) {
+      // This directory was created exclusively by this preparation call.
+      // A failed copy/manifest/log write must not leave a misleading work package.
+      rmSync(packageDirectory, { recursive: true, force: true });
+      throw error;
+    }
   }
 
   createGlobal(input: ReuseCreateGlobalInput) {
@@ -179,29 +186,55 @@ export class ReusePreparationService {
     const attachments = [manifestPath, adaptationNotesPath]
       .filter((path) => existsSync(path) && statSync(path).isFile());
 
-    const created = this.globalLibrary.create(
-      { ...input.item, originTechnicalItemId: item.id },
-      input.version,
-    );
-    const targetVersionId = created.currentVersion?.id;
-    if (!targetVersionId) throw new Error('La version initiale du composant AtoumWeb est introuvable.');
+    // A human-approved promotion must not create a global item with only some
+    // attachments when an IPC/database/file write fails midway. The global
+    // library's own SAVEPOINT nests inside this one; files need separate cleanup.
+    const createdFiles: string[] = [];
+    this.database.exec('SAVEPOINT reuse_global_promotion;');
+    try {
+      const created = this.globalLibrary.create(
+        { ...input.item, originTechnicalItemId: item.id },
+        input.version,
+      );
+      const targetVersionId = created.currentVersion?.id;
+      if (!targetVersionId) throw new Error('La version initiale du composant AtoumWeb est introuvable.');
 
-    if (sourcePaths.length) this.globalAssets.importFilePaths(targetVersionId, sourcePaths, 'source');
-    if (attachments.length) this.globalAssets.importFilePaths(targetVersionId, attachments, 'attachment');
+      if (sourcePaths.length) this.globalAssets.importFilePaths(targetVersionId, sourcePaths, 'source', createdFiles);
+      if (attachments.length) this.globalAssets.importFilePaths(targetVersionId, attachments, 'attachment', createdFiles);
 
-    this.writeActivity(
-      item.project_id,
-      'technical_reuse_promoted_to_global',
-      `Composant AtoumWeb créé volontairement depuis ${item.name} v${Number(version.version_number)} : ${created.name}`,
-      { sourceItemId: item.id, sourceVersionId: version.id, globalItemId: created.id },
-    );
-    return created;
+      this.writeActivity(
+        item.project_id,
+        'technical_reuse_promoted_to_global',
+        `Composant AtoumWeb créé volontairement depuis ${item.name} v${Number(version.version_number)} : ${created.name}`,
+        { sourceItemId: item.id, sourceVersionId: version.id, globalItemId: created.id },
+      );
+      this.database.exec('RELEASE SAVEPOINT reuse_global_promotion;');
+      return created;
+    } catch (error) {
+      try {
+        this.database.exec('ROLLBACK TO SAVEPOINT reuse_global_promotion; RELEASE SAVEPOINT reuse_global_promotion;');
+      } finally {
+        // Asset import tracks destinations before copying to include partial files.
+        for (const path of createdFiles) {
+          try { unlinkSync(path); } catch { /* preserve the initial failure */ }
+        }
+      }
+      throw error;
+    }
   }
 
   assertPackagePath(path: string): string {
-    const root = resolve(this.workspace.exportsDirectory, 'reutilisation');
+    const exportsRoot = resolve(this.workspace.exportsDirectory);
+    const root = resolve(exportsRoot, 'reutilisation');
     const candidate = resolve(path);
-    if (!this.isPathInside(root, candidate)) {
+    // Lexical checks alone cannot detect a symlink/junction that redirects an
+    // apparently valid package to a private folder outside the exports area.
+    const outside = !this.isPathInside(root, candidate)
+      || (existsSync(root) && (
+        !this.isPathInside(realpathSync(exportsRoot), realpathSync(root))
+        || (existsSync(candidate) && !this.isPathInside(realpathSync(root), realpathSync(candidate)))
+      ));
+    if (outside) {
       throw new Error('Ce chemin ne correspond pas à un paquet de réutilisation AtoumWeb.');
     }
     return candidate;
@@ -210,7 +243,11 @@ export class ReusePreparationService {
   private assertPathInside(rootPath: string, candidatePath: string): string {
     const root = resolve(rootPath);
     const candidate = resolve(candidatePath);
-    if (!this.isPathInside(root, candidate)) {
+    // Check both the declared path and its real destination: a copied asset,
+    // manifest or adaptation file may have been replaced by a filesystem link.
+    if (!this.isPathInside(root, candidate)
+      || (existsSync(root) && existsSync(candidate)
+        && !this.isPathInside(realpathSync(root), realpathSync(candidate)))) {
       throw new Error('Un fichier du paquet pointe en dehors du dossier de réutilisation autorisé.');
     }
     return candidate;
@@ -308,6 +345,14 @@ export class ReusePreparationService {
 
   private copyLinkedAsset(asset: AssetRow, sourcesDirectory: string, packageDirectory: string): ReusePreparationCopiedFile {
     const source = resolve(this.workspace.root, asset.relative_path);
+    // Legacy/imported resource paths must never make a reusable package read
+    // files outside the managed workspace, even if the path is a symlink.
+    if (!this.isPathInside(resolve(this.workspace.root), source)) {
+      throw new Error('Ressource source hors de l’espace de travail AtoumWeb : export refusé.');
+    }
+    if (existsSync(source) && !this.isPathInside(realpathSync(this.workspace.root), realpathSync(source))) {
+      throw new Error('Ressource source liée hors de l’espace de travail AtoumWeb : export refusé.');
+    }
     if (!existsSync(source) || !statSync(source).isFile()) {
       return {
         resourceId: asset.id,

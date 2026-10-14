@@ -1,4 +1,4 @@
-import {mkdtempSync,rmSync} from 'node:fs';
+import {existsSync,mkdtempSync,readFileSync,rmSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {beforeEach,afterEach,describe,it,expect} from 'vitest';
@@ -26,6 +26,97 @@ describe('Lot 7B — même Projet prévisionnel et révisions commerciales',()=>
   expect(db.all('SELECT id FROM client_accounts')).toHaveLength(0);expect(p.projectType).toBe('website');expect(p.status).toBe('to_prepare');
   expect(f.sites.list(p.id)).toHaveLength(1);expect(pages(p.id)).toHaveLength(5);expect(db.all('SELECT * FROM project_blueprint_plans')).toHaveLength(0);
   const before=state();expect(prepare(q.id).id).toBe(p.id);sync(p.id);expect(state()).toEqual(before);
+ });
+ it('R07G-05 refuse la préparation depuis une prévisualisation obsolète sans écriture',()=>{
+  const q=f.createQuote();
+  const initialPreview=f.projects.commercial.preview({quoteId:q.id});
+  pageLine(q.id,1000);
+  const currentPreview=f.projects.commercial.preview({quoteId:q.id});
+  expect(currentPreview.sha256).not.toBe(initialPreview.sha256);
+  const before=state();
+  expect(()=>f.projects.commercial.prepare({quoteId:q.id,previewSHA256:initialPreview.sha256})).toThrow(/prévisualisation périmée/i);
+  expect(state()).toEqual(before);
+  expect(db.all('SELECT id FROM projects')).toHaveLength(0);
+  const prepared=f.projects.commercial.prepare({quoteId:q.id,previewSHA256:currentPreview.sha256});
+  expect(prepared.commercialState).toBe('provisional');
+  expect(db.all('SELECT id FROM projects')).toHaveLength(1);
+ });
+ it('R07G-12/13 : nouvelle identité, ancien Projet travaillé archivé sans supprimer temps ni fichiers',()=>{
+  const q=f.createQuote(),original=prepare(q.id);
+  const originalNode=original.nodes.find(n=>n.displaySubtype==='page')!;
+  f.projects.updateProjectNode(originalNode.id,{name:'Accueil personnalisé'});
+  const evidence=join(original.resourceRootPath!,'preuve-client.txt');
+  writeFileSync(evidence,'PREUVE CLIENT A CONSERVER','utf8');
+  db.run("INSERT INTO time_sessions(id,project_id,project_node_id,category,started_at,ended_at,created_at,updated_at) VALUES('restart-time',?,?,'production','2026-10-14','2026-10-14','2026-10-14','2026-10-14')",
+    [original.id,originalNode.id]);
+  send(q.id);
+  const revision=f.quotes.duplicate(q.id,true);
+  const review=f.projects.commercial.restartPreview(original.id);
+  expect(review.quoteId).toBe(revision.id);
+  expect(review.counts.time_sessions).toBe(1);
+  const next=f.projects.commercial.restart(original.id,review.sha256);
+  expect(next.id).not.toBe(original.id);
+  expect(next.commercialState).toBe('provisional');
+  expect(next.status).toBe('to_prepare');
+  expect(f.projects.commercial.findProject(q.id)).toBe(next.id);
+  expect(f.projects.commercial.findProject(revision.id)).toBe(next.id);
+  expect(db.get('SELECT project_id FROM commercial_project_dossiers WHERE current_quote_id=?',[revision.id])?.project_id).toBe(next.id);
+  const archived=f.projects.getProject(original.id);
+  expect(archived.status).toBe('archived');
+  expect(archived.resourceRootPath).toBe(original.resourceRootPath);
+  expect(archived.nodes.some(n=>n.id===originalNode.id&&n.name==='Accueil personnalisé')).toBe(true);
+  expect(readFileSync(evidence,'utf8')).toBe('PREUVE CLIENT A CONSERVER');
+  expect(next.resourceRootPath).not.toBe(original.resourceRootPath);
+  expect(existsSync(next.resourceRootPath!)).toBe(true);
+  expect(db.all('SELECT * FROM time_sessions WHERE project_id=?',[original.id])).toHaveLength(1);
+  expect(db.all('SELECT id FROM client_accounts')).toHaveLength(0);
+  expect(db.all('PRAGMA foreign_key_check')).toHaveLength(0);
+  expect(db.get('PRAGMA integrity_check')?.integrity_check).toBe('ok');
+  // The preserved old Project must not become actionable again. Both IPC
+  // service paths reject it without touching its historical records.
+  const oldScope=f.projects.commercial.scope(original.id);
+  expect(oldScope.dossierId).toBeNull();
+  expect(oldScope.currentQuoteId).toBeNull();
+  const beforeOldActions=state();
+  expect(()=>sync(original.id)).toThrow(/Projet prévisionnel courant/);
+  expect(()=>f.projects.changeProjectStatus(original.id,'to_prepare')).toThrow(/réactivation interdite/);
+  expect(()=>f.projects.commercial.resolveConflict(original.id,'ancien-conflit','archive'))
+    .toThrow(/Projet prévisionnel courant/);
+  expect(()=>f.projects.commercial.assignTarget(original.id,{
+    lineOrigin:'ancienne-ligne',slot:'destination',unitIndex:1,author:'Test archive',
+  })).toThrow(/Projet prévisionnel courant/);
+  expect(state()).toEqual(beforeOldActions);
+  expect(f.projects.commercial.findProject(revision.id)).toBe(next.id);
+  expect(f.projects.commercial.scope(next.id).currentQuoteId).toBe(revision.id);
+  const beforeCurrentSync=state();
+  expect(sync(next.id).id).toBe(next.id);
+  expect(state()).toEqual(beforeCurrentSync);
+  expect(()=>f.projects.commercial.restart(original.id,review.sha256)).toThrow(/Projet prévisionnel actif/);
+ });
+ it('R07G-14 : revue périmée bloque la régénération sans aucune écriture SQL',()=>{
+  const q=f.createQuote(),project=prepare(q.id);
+  const review=f.projects.commercial.restartPreview(project.id);
+  const item=project.nodes[0];
+  f.projects.updateProjectNode(item.id,{name:'Intervention humaine après revue'});
+  const before=state();
+  expect(()=>f.projects.commercial.restart(project.id,review.sha256)).toThrow(/Prévisualisation périmée/);
+  expect(state()).toEqual(before);
+  expect(f.projects.commercial.findProject(q.id)).toBe(project.id);
+ });
+ it('R07G-14 : panne pendant synchronisation du nouveau Projet annule intégralement le remplacement',()=>{
+  const q=f.createQuote(),project=prepare(q.id);
+  const evidence=join(project.resourceRootPath!,'preuve-rollback.txt');
+  writeFileSync(evidence,'NE PAS DETRUIRE','utf8');
+  const review=f.projects.commercial.restartPreview(project.id);
+  const before=state();
+  db.exec("CREATE TRIGGER ux07c_restart_fail BEFORE INSERT ON project_commercial_scope_revisions BEGIN SELECT RAISE(ABORT,'SIMULATED_RESTART_FAILURE'); END;");
+  expect(()=>f.projects.commercial.restart(project.id,review.sha256)).toThrow(/SIMULATED_RESTART_FAILURE/);
+  expect(state()).toEqual(before);
+  expect(f.projects.commercial.findProject(q.id)).toBe(project.id);
+  expect(f.projects.getProject(project.id).status).toBe('to_prepare');
+  expect(readFileSync(evidence,'utf8')).toBe('NE PAS DETRUIRE');
+  expect(db.all('SELECT id FROM projects')).toHaveLength(1);
+  expect(db.all('PRAGMA foreign_key_check')).toHaveLength(0);
  });
  it('une base absente ou des bases concurrentes ne créent aucun dossier ni Projet',()=>{
   const q=f.createQuote();f.quotes.removeLine(q.lines[0].id);const before=state();expect(()=>prepare(q.id)).toThrow(/base/);expect(state()).toEqual(before);
@@ -147,6 +238,24 @@ describe('Lot 7B — même Projet prévisionnel et révisions commerciales',()=>
   blogLine(q.id);sync(p.id);expect(pages(p.id)).toHaveLength(7);expect(f.projects.getProject(p.id).nodes.some(n=>n.id===blog.id&&n.name==='À garder')).toBe(true);
   expect(f.projects.getProject(p.id).nodes.filter(n=>n.name==='Blog')).toHaveLength(1);
  });
+ it('R07G-14 : conflit Site ne permet pas d archiver un Site avec Pages actives',()=>{
+  const q=f.createQuote(),p=prepare(q.id),site=f.sites.list(p.id)[0],linked=pages(p.id);
+  expect(linked.length).toBeGreaterThan(0);
+  // Fixture contrôlée : l'ancien Site est hors contribution commerciale mais
+  // ses Pages restent réellement liées et en production.
+  db.run('DELETE FROM project_prepared_site_bindings WHERE project_id=? AND project_site_id=?',[p.id,site.id]);
+  db.run("UPDATE project_scope_entities SET state='out_of_scope' WHERE project_id=? AND entity_kind='site' AND entity_id=?",[p.id,site.id]);
+  const conflictId='ux07g-site-with-pages';
+  db.run("INSERT INTO project_scope_conflicts(id,project_id,entity_kind,entity_id,reason,created_at) VALUES(?,?,'site',?,'Site hors périmètre','2026-10-14')",[conflictId,p.id,site.id]);
+  const before=state();
+  expect(()=>f.projects.commercial.resolveConflict(p.id,conflictId,'archive')).toThrow(/Pages actives/);
+  expect(state()).toEqual(before);
+  expect(f.sites.get(site.id).archivedAt).toBeNull();
+  expect(pages(p.id).map(page=>page.projectNodeId).sort()).toEqual(linked.map(page=>page.projectNodeId).sort());
+  expect(f.projects.commercial.scope(p.id).conflicts.some(c=>c.id===conflictId)).toBe(true);
+  expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+ });
+
  it('archivage explicite conserve la ligne historique et masque la Page',()=>{
   const q=f.createQuote(),line=blogLine(q.id),p=prepare(q.id),blog=p.nodes.find(n=>n.name==='Blog')!;
   f.projects.updateProjectNode(blog.id,{name:'Archiver'});f.quotes.removeLine(line.id);sync(p.id);

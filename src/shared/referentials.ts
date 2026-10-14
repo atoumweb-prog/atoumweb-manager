@@ -297,6 +297,17 @@ export interface AtoumWebCompositionMoveItemInput {
   targetIndex: number;
 }
 
+export interface ProjectPagePackageHistoryEntry {
+  exportId: string;
+  compositionId: string;
+  projectId: string;
+  siteId: string;
+  pageId: string;
+  fingerprint: string;
+  componentCount: number;
+  createdAt: string;
+}
+
 export interface AtoumWebCompositionPackageExportResult {
   compositionId: string;
   exportId?: string | null;
@@ -429,10 +440,12 @@ export interface ReferentialsApi {
     promoteItemVariant(id: string, itemId: string, input: AtoumWebCompositionPromoteVariantInput): Promise<AtoumWebTechnicalItemDetail>;
     removeItem(id: string, itemId: string): Promise<AtoumWebCompositionDetail>;
     moveItem(id: string, itemId: string, input: AtoumWebCompositionMoveItemInput): Promise<AtoumWebCompositionDetail>;
+    restoreOrder(id: string, expectedIds: string[], targetIds: string[]): Promise<AtoumWebCompositionDetail>;
     archive(id: string): Promise<AtoumWebCompositionDetail>;
     reactivate(id: string): Promise<AtoumWebCompositionDetail>;
     exportPackage(id: string): Promise<AtoumWebCompositionPackageExportResult>;
     exportPagePackage(projectNodeId: string): Promise<AtoumWebCompositionPackageExportResult>;
+    listPageExports(projectNodeId: string): Promise<ProjectPagePackageHistoryEntry[]>;
     showPackage(path: string): Promise<AtoumWebAssetOpenResult>;
   };
   occurrenceReturns: {

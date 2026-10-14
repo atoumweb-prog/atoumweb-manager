@@ -23,7 +23,7 @@ import { ProspectsPage } from './crm/ProspectsPage';
 import { ProspectReferenceWindow } from './crm/ProspectReferenceWindow';
 import { OperationsPage, type OperationsSearchTarget } from './operations/OperationsPage';
 import { OperationIcon } from './operations/OperationIcon';
-import { ProjectsPage } from './projects/ProjectsPage';
+import { ProjectsPage, type ProjectReturnContext } from './projects/ProjectsPage';
 import { AtoumWebLibraryPage } from './referentials/AtoumWebLibraryPage';
 import { BridgeSitesPage } from './bridge/BridgeSitesPage';
 import { StatisticsPage } from './statistics/StatisticsPage';
@@ -120,7 +120,7 @@ function App() {
   },[]);
   useEffect(()=>()=>cancelSearchNavigation(),[cancelSearchNavigation]);
 
-  function requestPage(page:PageName,run:()=>void,replace=false){const transition=()=>{cancelSearchNavigation();if(page!==activePageRef.current||replace)visibleEntity.current=null;if((page==='Clients'||page==='Prospects')&&page!==activePageRef.current)setCrmTarget(null);run();};if(page===activePageRef.current&&!replace)transition();else requestUnsavedExit(transition);}
+  function requestPage(page:PageName,run:()=>void,replace=false){const transition=()=>{cancelSearchNavigation();if(page!==activePageRef.current||replace){visibleEntity.current=null;setQuoteReturnProjectId(null);setProjectReturnContext(null);}if((page==='Clients'||page==='Prospects')&&page!==activePageRef.current)setCrmTarget(null);run();};if(page===activePageRef.current&&!replace)transition();else requestUnsavedExit(transition);}
   const [theme, setTheme] = useState<ThemeName>('atoumweb');
   const [displayDensity, setDisplayDensity] = useState<DisplayDensity>('comfort');
   const [showHoverHelp, setShowHoverHelp] = useState(true);
@@ -137,6 +137,8 @@ function App() {
   const [prospectViewTarget, setProspectViewTarget] = useState<'directory' | 'pipeline' | 'history' | 'conversions'>('directory');
   const [prospectPipelineFilter, setProspectPipelineFilter] = useState<ProspectPipelineFilter>('all');
   const [quoteTarget,setQuoteTarget] = useState<string|null>(null);
+  const [quoteReturnProjectId, setQuoteReturnProjectId] = useState<string | null>(null);
+  const [projectReturnContext, setProjectReturnContext] = useState<ProjectReturnContext | null>(null);
   const routeKeys=useRef({crmTarget,quoteTarget,prospectViewTarget,prospectPipelineFilter});routeKeys.current={crmTarget,quoteTarget,prospectViewTarget,prospectPipelineFilter};
   const [documentTarget, setDocumentTarget] = useState<string | null>(null);
   const [contractTypeTarget,setContractTypeTarget]=useState<string|null>(null);
@@ -261,6 +263,9 @@ function App() {
   }
 
   function navigateDirect(page: PageName): void {
+    // Le contexte Projet/Devis ne survit pas à une navigation indépendante par le rail.
+    setQuoteReturnProjectId(null);
+    setProjectReturnContext(null);
     if (page === 'Interventions & Maintenance') setOperationsSearchTarget(null);
     if (page === 'Projets') setProjectSearchTarget(null);
     if (page === 'Bibliothèque AtoumWeb') setLibrarySearchTarget(null);
@@ -325,6 +330,15 @@ function App() {
       const allowed=requestUnsavedExit(()=>{
         visibleEntity.current=null;pendingSearch.current={result,resolve};
         if(destination==='Clients'||destination==='Prospects')setCrmTarget(null);
+        // Capturer la provenance AVANT de changer la page : un updater React différé
+        // ne doit jamais relire activePageRef lorsque cette valeur peut déjà avoir changé.
+        const fromProjectQuote = result.entityType === 'quote' && activePageRef.current === 'Projets';
+        const sourceContext = fromProjectQuote ? (result as SearchResult & { projectContext?: ProjectReturnContext }).projectContext : null;
+        setQuoteReturnProjectId(fromProjectQuote ? result.parentEntityId ?? null : null);
+        setProjectReturnContext(previous => {
+          if (fromProjectQuote) return result.parentEntityId && sourceContext?.projectId === result.parentEntityId ? sourceContext : null;
+          return result.entityType === 'project' && previous?.projectId === result.entityId ? previous : null;
+        });
         setNavigationRequest(value=>value+1);openSearchResultDirect(result);
       });
       if(!allowed)resolve({status:'cancelled',cancelledReason:'guard',message:'Navigation annulée ; brouillon et recherche conservés.'});
@@ -371,8 +385,8 @@ function App() {
           {activePage === 'Prospects' && <ProspectsPage onEntityReady={markEntityReady} key={`${crmTarget ?? 'none'}:${prospectViewTarget}:${prospectPipelineFilter}`} initialId={crmTarget} initialRequest={navigationRequest} initialView={prospectViewTarget} initialPipelineFilter={prospectPipelineFilter} onMessage={setMessage} />}
           {activePage === 'Clients' && <ClientsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
           {activePage === 'Offres & Tarifs' && <CatalogPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={setMessage} initialId={catalogTarget}/>}
-          {activePage === 'Devis' && <QuotesPage onEntityReady={markEntityReady} key={quoteTarget} initialId={quoteTarget} initialRequest={navigationRequest} onMessage={setMessage} />}
-          {activePage === 'Projets' && <ProjectsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={showMessage} initialProjectId={projectSearchTarget} showHoverHelp={showHoverHelp} />}
+          {activePage === 'Devis' && <QuotesPage onEntityReady={markEntityReady} key={quoteTarget} initialId={quoteTarget} initialRequest={navigationRequest} returnProjectId={quoteReturnProjectId} onMessage={setMessage} />}
+          {activePage === 'Projets' && <ProjectsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={showMessage} initialProjectId={projectSearchTarget} returnContext={projectSearchTarget && projectReturnContext?.projectId === projectSearchTarget ? projectReturnContext : null} showHoverHelp={showHoverHelp} />}
           {activePage === 'Interventions & Maintenance' && <OperationsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={setMessage} initialTarget={operationsSearchTarget} />}
           {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}
           {activePage === 'Facturation' && <BillingPage onMessage={setMessage} />}

@@ -85,6 +85,64 @@ describe('TimeService', () => {
     expect(() => time.resume(session.id)).not.toThrow();
   });
 
+  it('R07G-17 : chrono Page unique, pause/reprise et cumul par Page sans temps de pause', () => {
+    const project = projects.createInternal({ name: 'Projet Page chronométrée' });
+    const withPage = projects.addProjectNode(project.id, {
+      type: 'module', displaySubtype: 'page', name: 'Accueil',
+    });
+    const page = withPage.nodes.find((node) => node.name === 'Accueil')!;
+    const other = projects.addProjectNode(project.id, {
+      type: 'module', displaySubtype: 'page', name: 'Contact',
+    }).nodes.find((node) => node.name === 'Contact')!;
+
+    const first = time.start({
+      projectId: project.id,
+      projectNodeId: page.id,
+      category: 'production',
+      activityLabel: 'Travailler sur Accueil',
+      billable: true,
+    });
+    advance(12);
+    const paused = time.pause(first.id);
+    expect(paused.paused).toBe(true);
+    expect(paused.durationSeconds).toBe(720);
+    advance(25);
+    expect(time.active()?.id).toBe(first.id);
+    expect(time.active()?.durationSeconds).toBe(720);
+    expect(() => time.start({
+      projectId: project.id,
+      projectNodeId: other.id,
+      category: 'production',
+    })).toThrow(/déjà active/i);
+    expect(time.list({ projectId: project.id })).toHaveLength(1);
+
+    const resumed = time.resume(first.id);
+    expect(resumed.paused).toBe(false);
+    advance(8);
+    const stopped = time.stop(first.id);
+    expect(stopped.durationSeconds).toBe(1200);
+    expect(stopped.projectNodeId).toBe(page.id);
+    expect(time.active()).toBeNull();
+
+    const second = time.start({
+      projectId: project.id,
+      projectNodeId: page.id,
+      category: 'production',
+      activityLabel: 'Finir Accueil',
+      billable: true,
+    });
+    advance(5);
+    time.stop(second.id);
+    const pageSessions = time.list({ projectId: project.id }).filter((session) => session.projectNodeId === page.id);
+    expect(pageSessions).toHaveLength(2);
+    expect(pageSessions.reduce((sum, session) => sum + session.durationSeconds, 0)).toBe(1500);
+    expect(time.summary({ projectId: project.id })).toMatchObject({
+      sessionCount: 2, totalSeconds: 1500, billableSeconds: 1500,
+    });
+    expect(database.all('PRAGMA foreign_key_check')).toHaveLength(0);
+    expect(database.get<{ integrity_check: string }>('PRAGMA integrity_check')?.integrity_check).toBe('ok');
+  });
+
   it('refuse une deuxième session active', () => {
     const project = projects.createInternal({ name: 'Premier projet' });
     time.start({ projectId: project.id, category: 'development' });

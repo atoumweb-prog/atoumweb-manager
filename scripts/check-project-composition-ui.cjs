@@ -34,7 +34,7 @@ const source={id:'s1',name:'CTA test',category:'section',reuseStatus:'ready',tag
 const items=[1,2,3].map(i=>({id:'i'+i,sourceItemId:'s1',sourceVersionId:'v1',sourceVersionNumber:1,displayName:'CTA test',category:'section',localSettings:{},hasLocalChanges:false}));
 let composition={id:'c1',projectNodeId:'p1',status:'draft',items};
 window.fixture={source,code,items,get composition(){return composition}}; window.buildPreview=buildComponentPreview; window.localEditor={extractComponentTexts,extractComponentVisuals,replaceComponentText,updateComponentVisual};
-window.atoumweb={projects:{sites:{list:async()=>[{id:'site1',name:'fleuriste.com'}],listPages:async()=>[{projectNodeId:'p1',projectSiteId:'site1',role:'home'}]}},time:{list:async()=>[],active:async()=>null},referentials:{library:{get:async()=>source,createReusableCode:async(input)=>{window.createdInput=input;return source},createVariantCode:async(input)=>{window.createdInput=input;return source},list:async()=>[source,{...source,id:'s2',name:'Pas prêt',reuseStatus:'adapt'}]},compositions:{getForProjectPage:async()=>composition,list:async()=>[],addItem:async()=>{composition={...composition,items:[...composition.items,{...items[0],id:'added-'+composition.items.length}]};return composition},updateItemLocalCode:async(c,id,input)=>{composition={...composition,items:composition.items.map(i=>i.id===id?{...i,hasLocalChanges:true,localHtml:input.html,localCss:input.css,localJavascript:input.javascript,localSettings:input.settings}:i)};return composition},resetItemLocalCode:async(c,id)=>{composition={...composition,items:composition.items.map(i=>i.id===id?{...i,hasLocalChanges:false,localHtml:null,localCss:null,localJavascript:null,localSettings:{}}:i)};return composition}}}};
+window.atoumweb={unsaved:{confirmExit:()=>true},projects:{sites:{list:async()=>[{id:'site1',name:'fleuriste.com'}],listPages:async()=>[{projectNodeId:'p1',projectSiteId:'site1',role:'home'}]}},time:{list:async()=>[],active:async()=>null},referentials:{library:{get:async()=>source,createReusableCode:async(input)=>{window.createdInput=input;return source},createVariantCode:async(input)=>{window.createdInput=input;return source},list:async()=>[source,{...source,id:'s2',name:'Pas prêt',reuseStatus:'adapt'}]},compositions:{getForProjectPage:async()=>composition,list:async()=>[],listPageExports:async()=>[],addItem:async()=>{composition={...composition,items:[...composition.items,{...items[0],id:'added-'+composition.items.length}]};return composition},updateItemLocalCode:async(c,id,input)=>{composition={...composition,items:composition.items.map(i=>i.id===id?{...i,hasLocalChanges:true,localHtml:input.html,localCss:input.css,localJavascript:input.javascript,localSettings:input.settings}:i)};return composition},resetItemLocalCode:async(c,id)=>{composition={...composition,items:composition.items.map(i=>i.id===id?{...i,hasLocalChanges:false,localHtml:null,localCss:null,localJavascript:null,localSettings:{}}:i)};return composition}}}};
 createRoot(document.getElementById('root')).render(<div className="content-area projects-content" style={{height:'100vh'}}><div className="project-production-page"><header className="project-production-header">Projet test</header><nav className="project-production-nav">Sites et pages</nav><ProjectSitesTab projectId="p" nodes={[page]} onMessage={m=>{window.lastMessage=m}} onProjectChanged={async()=>{}} onOpenPage={()=>{}}/>${secondaryPresent?'<main className="project-production-secondary"/>':''}</div></div>);
 `;
 app.setPath('userData', path.join(dir, 'profile'));
@@ -107,7 +107,7 @@ app.whenReady().then(async () => {
     };
     const click = async (text, scope = 'document') => {
       const label = `click ${text}`;
-      await js(`(()=>{const root=${scope};if(!root)throw Error('Scope absent');const wanted=${JSON.stringify(text)};const b=[...root.querySelectorAll('button')].find(b=>[b.textContent||'',b.getAttribute('aria-label')||'',b.getAttribute('title')||''].some(value=>value.includes(wanted)));if(!b)throw Error('Bouton absent: '+wanted);if(b.disabled)throw Error('Bouton désactivé: '+wanted);b.click();return true})()`, label);
+      await js(`(()=>{const root=${scope};if(!root)throw Error('Scope absent');const wanted=${JSON.stringify(text)};const all=[...root.querySelectorAll('button')];const labels=b=>[b.textContent||'',b.getAttribute('aria-label')||'',b.getAttribute('title')||''];const b=all.find(b=>!b.disabled&&labels(b).some(value=>value.trim()===wanted))??all.find(b=>!b.disabled&&labels(b).some(value=>value.includes(wanted)));if(!b)throw Error('Bouton absent: '+wanted);if(b.disabled)throw Error('Bouton désactivé: '+wanted);b.click();return true})()`, label);
       await settle();
     };
     const input = async (selector, value) => {
@@ -116,6 +116,23 @@ app.whenReady().then(async () => {
       await settle();
     };
     await settle();
+    // R07G-27: every supported theme × density must retain legible controls
+    // and a real Site/Page workbench at desktop width, using rendered Chromium.
+    for (const theme of ['blanc','noir','atoumweb']) {
+      for (const density of ['compact','comfort','comfort_plus']) {
+        await js(`(()=>{document.documentElement.dataset.theme=${JSON.stringify(theme)};document.documentElement.dataset.density=${JSON.stringify(density)};return true})()`);
+        await check(`R07G-27 ${theme} × ${density} : lisibilité et largeur atelier`, `(()=>{
+          const body=getComputedStyle(document.body);
+          const root=document.documentElement;
+          const workspace=document.querySelector('.project-sites-workspace');
+          const font=parseFloat(body.fontSize);
+          const width=workspace?.getBoundingClientRect().width??0;
+          if(font>=14 && width>0 && root.scrollWidth<=root.clientWidth+1) return true;
+          return {font,width,viewport:root.clientWidth,scrollWidth:root.scrollWidth};
+        })()`);
+      }
+    }
+    await js("(()=>{document.documentElement.dataset.theme='atoumweb';document.documentElement.dataset.density='comfort';return true})()");
     await check('Texte ciblé : seule la feuille H1 concernée change', `(()=>{
       const hero='<section><div class="banner">Votre titre</div><div class="badge"><span>Votre titre</span></div><h1>Pour les <span>Votre titre</span><em> personnalisable</em></h1><p>Votre titre</p></section>';
       const fields=window.localEditor.extractComponentTexts(hero);
@@ -184,7 +201,7 @@ app.whenReady().then(async () => {
       const tools=root?.querySelector('.project-page-inspector-dock-code');
       const ratio=preview?.getBoundingClientRect().width/tools?.getBoundingClientRect().width;
       const scrollable=['auto','scroll'].includes(getComputedStyle(tools).overflowY);
-      return !!preview && !!tools && ratio>=2.2 && scrollable;
+      return !!preview && !!tools && ratio>=2.2 && scrollable ? true : {ratio,scrollable,rootClass:root?.className,previewWidth:preview?.getBoundingClientRect().width,toolsWidth:tools?.getBoundingClientRect().width,viewport:innerWidth,layout:root ? getComputedStyle(root).display : null};
     })()`);
     await click('Quitter le grand écran', "document.querySelector('.project-page-inspector-workbench.expanded')");
     await click('Fermer aperçu');
@@ -212,7 +229,10 @@ app.whenReady().then(async () => {
         tag:e.tagName,
         className:e.className,
         clientWidth:e.clientWidth,
-        scrollWidth:e.scrollWidth
+        scrollWidth:e.scrollWidth,
+        html:e.outerHTML.slice(0,380),
+        parentClass:e.parentElement?.className,
+        computedOverflow:getComputedStyle(e).overflowX
       }));
     })()`);
     await check('Fin réelle de la fiche accessible', `(()=>{let e=document.querySelector('.project-sites-detail-panel');e.scrollTop=e.scrollHeight;return e.lastElementChild.getBoundingClientRect().bottom<=e.getBoundingClientRect().bottom})()`);
@@ -232,7 +252,7 @@ app.whenReady().then(async () => {
       const tools=root?.querySelector('.project-component-settings-controls');
       const ratio=preview?.getBoundingClientRect().width/tools?.getBoundingClientRect().width;
       const scrollable=['auto','scroll'].includes(getComputedStyle(tools).overflowY);
-      return !!preview && !!tools && ratio>=2.2 && scrollable;
+      return !!preview && !!tools && ratio>=2.2 && scrollable ? true : {ratio,scrollable,rootClass:root?.className,previewWidth:preview?.getBoundingClientRect().width,toolsWidth:tools?.getBoundingClientRect().width,viewport:innerWidth,layout:root ? getComputedStyle(root).display : null};
     })()`);
     await click('Quitter le grand écran', "document.querySelector('.project-page-inspector-workbench.expanded')");
     await click('Code / aperçu');
@@ -366,6 +386,74 @@ app.whenReady().then(async () => {
     win.setSize(1200,800); await settle();
     await check('Panneau étroit : actions accessibles sans débordement', `[...document.querySelectorAll('.project-sites-detail-panel *')].filter(e=>!e.matches('input,textarea,small,strong')).every(e=>!e.clientWidth||e.scrollWidth<=e.clientWidth+1)`);
     await check('Panneau étroit : dernier contenu atteignable', `(()=>{let e=document.querySelector('.project-sites-detail-panel');e.scrollTop=e.scrollHeight;return e.lastElementChild.getBoundingClientRect().bottom<=e.getBoundingClientRect().bottom})()`);
+    // Double click in the same JS turn must issue a single Site IPC mutation.
+    await click('+ Site');
+    await input('.project-sites-create-panel input[placeholder="Ex. Site principal"]','SITE DOUBLE CLIC TEST');
+    await js(`(()=>{
+      window.__siteCreateCalls=0;
+      window.__siteList=[{id:'site1',name:'fleuriste.com'}];
+      window.atoumweb.projects.sites.list=async()=>window.__siteList;
+      window.atoumweb.projects.sites.create=(_projectId,data)=>{
+        window.__siteCreateCalls++;
+        return new Promise(resolve=>{window.__resolveSiteCreate=()=>{
+          const created={id:'site-created',name:data.name,archivedAt:null};
+          window.__siteList.push(created);
+          resolve(created);
+        };});
+      };
+      const b=[...document.querySelectorAll('.project-sites-create-panel button')].find(button=>button.textContent.includes('Créer le Site'));
+      if(!b||b.disabled)throw Error('Site create action absent or disabled');
+      b.click();
+      b.click();
+      return true;
+    })()`);
+    await check('Double clic Site : un seul appel IPC avant rerender', 'window.__siteCreateCalls===1');
+    await js('(()=>{if(!window.__resolveSiteCreate)throw Error("Site creation not pending");window.__resolveSiteCreate();return true})()');
+    await settle();
+    await check('Le Site créé reste sélectionné après rafraîchissement asynchrone',
+      `[...document.querySelectorAll('.project-site-tree-site.active')].some(e=>e.textContent.includes('SITE DOUBLE CLIC TEST'))`);
+    // Two asynchronous timer refreshes may finish out of order. Only the latest
+    // response is allowed to update the real-time summary of the selected Page.
+    await js(`(()=>{const b=document.querySelector('.project-site-tree-pages button');if(!b)throw Error('Page absente');b.click();return true})()`);
+    await settle();
+    await js(`(()=>{
+      window.__timerResolvers=[];
+      window.atoumweb.time.list=()=>new Promise(resolve=>window.__timerResolvers.push(resolve));
+      window.atoumweb.time.active=async()=>null;
+      window.dispatchEvent(new Event('atoumweb:time-changed'));
+      window.dispatchEvent(new Event('atoumweb:time-changed'));
+      return true;
+    })()`);
+    await check('Deux actualisations chrono concurrentes enregistrées', 'window.__timerResolvers.length===2');
+    await js(`(()=>{
+      const fresh={id:'fresh',projectNodeId:'p1',durationSeconds:7200,paused:false,endedAt:'2026-10-14T11:00:00Z'};
+      const stale={id:'stale',projectNodeId:'p1',durationSeconds:60,paused:false,endedAt:'2026-10-14T10:00:00Z'};
+      window.__timerResolvers[1]([fresh]);
+      window.__timerResolvers[0]([stale]);
+      return true;
+    })()`);
+    await settle();
+    await check('Chrono : réponse obsolète ne remplace pas les données récentes',
+      `document.querySelector('.project-sites-time-summary strong')?.textContent.trim()==='2 h'`);
+
+    await js(`(()=>{
+      window.__timerRequests=[];
+      window.lastMessage='UNCHANGED';
+      window.atoumweb.time.list=()=>new Promise((resolve,reject)=>window.__timerRequests.push({resolve,reject}));
+      window.dispatchEvent(new Event('atoumweb:time-changed'));
+      window.dispatchEvent(new Event('atoumweb:time-changed'));
+      return true;
+    })()`);
+    await check('Deux actualisations chrono avant rejet ancien', 'window.__timerRequests.length===2');
+    await js(`(()=>{
+      window.__timerRequests[1].resolve([{id:'fresh',projectNodeId:'p1',durationSeconds:7200,endedAt:'2026-10-14T11:00:00Z'}]);
+      window.__timerRequests[0].reject(new Error('STALE TIMER FAILURE'));
+      return true;
+    })()`);
+    await settle();
+    await check('Erreur IPC obsolète ignorée sans fausse alerte',
+      `window.lastMessage==='UNCHANGED'&&document.querySelector('.project-sites-time-summary strong')?.textContent.trim()==='2 h'`);
+
     win.destroy();
   } catch (error) {
     if (!checks.some((check) => check.error === String(error))) {

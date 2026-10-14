@@ -3,7 +3,7 @@ import type { SearchResult } from '../../shared/crm';
 
 export type EntityReady = (type:SearchResult['entityType'], id:string|null, error?:string) => void;
 const panels: Record<SearchResult['entityType'],string> = {
-  catalog:'.catalog-detail-panel',quote:'.quote-detail-panel',prospect:'.prospect-side-panel-boundary,.prospect-detail-panel',client:'.client-summary-panel',project:'.project-production-workspace',
+  catalog:'.catalog-detail-panel',quote:'.quote-detail-panel',prospect:'.prospect-side-panel-boundary,.prospect-detail-panel',client:'.client-summary-panel',project:'.project-production-page',
   service_request:'.operation-detail-boundary',intervention:'.operation-detail-boundary',maintenance:'.maintenance-detail-panel',hour_pack:'.hour-pack-detail',
   organization:'.directory-detail-panel',contact:'.directory-detail-panel',client_document:'.documents-detail-panel',atoumweb_library:'.aw-library-detail',backup_record:'.business-backups-detail',
 };

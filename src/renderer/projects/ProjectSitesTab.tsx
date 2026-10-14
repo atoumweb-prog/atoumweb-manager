@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   PROJECT_SITE_PAGE_ROLES,
   type ProjectDetail,
@@ -9,6 +9,7 @@ import {
 } from '../../shared/projects';
 import type { TimeSession } from '../../shared/time';
 import { ProjectPageCompositionPanel } from './ProjectPageCompositionPanel';
+import { requestUnsavedExit, useUnsavedDraft } from '../unsaved/unsaved';
 import './ProjectSitesTab.css';
 
 function formatElapsed(seconds: number): string {
@@ -28,44 +29,91 @@ const ROLE_LABELS: Record<ProjectSitePageRole, string> = {
   other: 'Autre',
 };
 
+/** UI-only navigation context; never persists drafts or modifies server state. */
+export type ProjectSitesViewContext = {
+  selectedSiteId: string | null;
+  selectedPageId: string | null;
+  splitPercent: number;
+  treeCollapsed: boolean;
+  detailCollapsed: boolean;
+  introCollapsed: boolean;
+  pageInfoOpen: boolean;
+  inspectorCollapsed: boolean;
+  inspectorPercent: number;
+};
+
 export function ProjectSitesTab({
   projectId,
   nodes,
   onMessage,
   onProjectChanged,
   onOpenPage,
+  initialViewContext,
+  onViewContextChange,
 }: {
   projectId: string;
   nodes: ProjectNode[];
   onMessage: (message: string, action?: () => void) => void;
   onProjectChanged: (detail: ProjectDetail) => Promise<void>;
   onOpenPage: (pageId: string) => void;
+  initialViewContext?: ProjectSitesViewContext | null;
+  onViewContextChange?: (view: ProjectSitesViewContext) => void;
 }) {
   const [sites, setSites] = useState<ProjectSite[]>([]);
   const [links, setLinks] = useState<ProjectSitePage[]>([]);
-  const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
-  const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
+  const [selectedSiteId, setSelectedSiteId] = useState<string | null>(initialViewContext?.selectedSiteId ?? null);
+  const [selectedPageId, setSelectedPageId] = useState<string | null>(initialViewContext?.selectedPageId ?? null);
   const [createMode, setCreateMode] = useState<'site' | 'page' | null>(null);
   const [siteName, setSiteName] = useState('');
   const [siteDomain, setSiteDomain] = useState('');
   const [pageName, setPageName] = useState('');
   const [pageSiteId, setPageSiteId] = useState('');
   const [busy, setBusy] = useState(false);
-  const [splitPercent, setSplitPercent] = useState(40);
-  const [treeCollapsed, setTreeCollapsed] = useState(false);
-  const [detailCollapsed, setDetailCollapsed] = useState(false);
-  const [introCollapsed, setIntroCollapsed] = useState(false);
-  const [pageInfoOpen, setPageInfoOpen] = useState(false);
+  // A ref blocks same-tick double clicks before the busy UI state is committed.
+  const mutationPending = useRef(false);
+  function beginMutation(): boolean {
+    if (mutationPending.current) return false;
+    mutationPending.current = true;
+    setBusy(true);
+    return true;
+  }
+  function finishMutation(): void {
+    mutationPending.current = false;
+    setBusy(false);
+  }
+  const [splitPercent, setSplitPercent] = useState(initialViewContext?.splitPercent ?? 40);
+  const [treeCollapsed, setTreeCollapsed] = useState(initialViewContext?.treeCollapsed ?? false);
+  const [detailCollapsed, setDetailCollapsed] = useState(initialViewContext?.detailCollapsed ?? false);
+  const [introCollapsed, setIntroCollapsed] = useState(initialViewContext?.introCollapsed ?? false);
+  const [pageInfoOpen, setPageInfoOpen] = useState(initialViewContext?.pageInfoOpen ?? false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [inspectorDual, setInspectorDual] = useState(false);
   const [inspectorExpandedCount, setInspectorExpandedCount] = useState(0);
-  const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
-  const [inspectorPercent, setInspectorPercent] = useState(34);
+  const [inspectorCollapsed, setInspectorCollapsed] = useState(initialViewContext?.inspectorCollapsed ?? false);
+  const [inspectorPercent, setInspectorPercent] = useState(initialViewContext?.inspectorPercent ?? 34);
   const [timeSessions, setTimeSessions] = useState<TimeSession[]>([]);
   const [activeTime, setActiveTime] = useState<TimeSession | null>(null);
   const [timeSnapshotAt, setTimeSnapshotAt] = useState(Date.now());
   const [tick, setTick] = useState(Date.now());
+  // An older IPC response must never override newer Site/Page or timer data.
+  // Incrementing both epochs on unmount also discards late responses for closed Projects.
+  const siteRefreshEpoch = useRef(0);
+  const timeRefreshEpoch = useRef(0);
 
+
+  useEffect(() => {
+    onViewContextChange?.({ selectedSiteId, selectedPageId, splitPercent, treeCollapsed, detailCollapsed, introCollapsed, pageInfoOpen, inspectorCollapsed, inspectorPercent });
+  }, [selectedSiteId, selectedPageId, splitPercent, treeCollapsed, detailCollapsed, introCollapsed, pageInfoOpen, inspectorCollapsed, inspectorPercent]);
+
+  useUnsavedDraft('Opération Site/Page', null, {group:'project-composition',dirty:false,pending:busy});
+  const siteDraft = useUnsavedDraft('Nouveau Site ou Page', { siteName, siteDomain, pageName, pageSiteId }, {
+    group:'project-composition', ready: createMode !== null, pending:busy,
+    dirty: createMode === 'site' ? !!(siteName || siteDomain) : !!pageName,
+    discard: () => {setSiteName('');setSiteDomain('');setPageName('');},
+  });
+  function changeCreateMode(next: typeof createMode): void {
+    if(next !== createMode) siteDraft.request(() => setCreateMode(next));
+  }
   const pages = useMemo(
     () => nodes.filter((node) => node.type === 'module' && node.displaySubtype === 'page'),
     [nodes],
@@ -73,25 +121,48 @@ export function ProjectSitesTab({
   const activeSites = sites.filter((site) => !site.archivedAt);
   const archivedSites = sites.filter((site) => Boolean(site.archivedAt));
 
-  async function reload(): Promise<void> {
-    const [nextSites, nextLinks] = await Promise.all([
+  async function reload(preferred?: {siteId?: string; pageId?: string}): Promise<void> {
+    const requestId = ++siteRefreshEpoch.current;
+    const response = await Promise.all([
       window.atoumweb.projects.sites.list(projectId, true),
       window.atoumweb.projects.sites.listPages(projectId),
-    ]);
+    ]).catch((error: unknown) => {
+      // Superseded reads must not display an error from an obsolete request.
+      if (requestId === siteRefreshEpoch.current) throw error;
+      return null;
+    });
+    if (!response || requestId !== siteRefreshEpoch.current) return;
+    const [nextSites, nextLinks] = response;
     setSites(nextSites);
     setLinks(nextLinks);
-    if (!selectedSiteId && !selectedPageId) {
-      const firstActive = nextSites.find((site) => !site.archivedAt);
-      if (firstActive) setSelectedSiteId(firstActive.id);
-      else if (pages[0]) setSelectedPageId(pages[0].id);
-    }
+    // A just-created Page may not yet be reflected in the nodes prop captured
+    // by this async handler. Retain its confirmed ID instead of clearing it.
+    const knownPageIds = new Set([
+      ...pages.map(page => page.id),
+      ...nextLinks.map(link => link.projectNodeId),
+      ...(preferred?.pageId ? [preferred.pageId] : []),
+    ]);
+    setSelectedPageId(current => current && knownPageIds.has(current) ? current : null);
+    setSelectedSiteId(current => {
+      if (preferred?.pageId) return null;
+      if (preferred?.siteId && nextSites.some(site => site.id === preferred.siteId)) return preferred.siteId;
+      if (current && nextSites.some(site => site.id === current)) return current;
+      if (selectedPageId && knownPageIds.has(selectedPageId)) return null;
+      return nextSites.find(site => !site.archivedAt)?.id ?? null;
+    });
   }
 
   async function reloadTime(): Promise<void> {
-    const [sessions, current] = await Promise.all([
+    const requestId = ++timeRefreshEpoch.current;
+    const response = await Promise.all([
       window.atoumweb.time.list({ projectId }),
       window.atoumweb.time.active(),
-    ]);
+    ]).catch((error: unknown) => {
+      if (requestId === timeRefreshEpoch.current) throw error;
+      return null;
+    });
+    if (!response || requestId !== timeRefreshEpoch.current) return;
+    const [sessions, current] = response;
     setTimeSessions(sessions);
     setActiveTime(current);
     setTimeSnapshotAt(Date.now());
@@ -105,7 +176,11 @@ export function ProjectSitesTab({
       onMessage(error instanceof Error ? error.message : 'Impossible d’actualiser le temps du projet.'),
     );
     window.addEventListener('atoumweb:time-changed', refreshTime);
-    return () => window.removeEventListener('atoumweb:time-changed', refreshTime);
+    return () => {
+      siteRefreshEpoch.current++;
+      timeRefreshEpoch.current++;
+      window.removeEventListener('atoumweb:time-changed', refreshTime);
+    };
   }, [projectId]);
 
   useEffect(() => {
@@ -154,7 +229,11 @@ export function ProjectSitesTab({
   }
 
   async function run(action: () => Promise<unknown>, success?: string): Promise<void> {
-    setBusy(true);
+    if (mutationPending.current) {
+      onMessage('Une modification Site/Page est déjà en cours. Réessaie après sa confirmation.');
+      return;
+    }
+    if (!beginMutation()) return;
     try {
       await action();
       await reload();
@@ -162,12 +241,12 @@ export function ProjectSitesTab({
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de modifier les Sites du projet.');
     } finally {
-      setBusy(false);
+      finishMutation();
     }
   }
 
   async function applyBlueprint(): Promise<void> {
-    setBusy(true);
+    if (!beginMutation()) return;
     try {
       const result = await window.atoumweb.projects.sites.applyBlueprint(projectId);
       const updatedProject = await window.atoumweb.projects.projects.get(projectId);
@@ -183,7 +262,7 @@ export function ProjectSitesTab({
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible d’appliquer le blueprint Sites / Pages.');
     } finally {
-      setBusy(false);
+      finishMutation();
     }
   }
 
@@ -193,7 +272,7 @@ export function ProjectSitesTab({
 
   async function createSite(): Promise<void> {
     if (!siteName.trim()) return;
-    setBusy(true);
+    if (!beginMutation()) return;
     try {
       const created = await window.atoumweb.projects.sites.create(projectId, {
         name: siteName.trim(),
@@ -204,19 +283,19 @@ export function ProjectSitesTab({
       setCreateMode(null);
       setSelectedPageId(null);
       setSelectedSiteId(created.id);
-      await reload();
+      await reload({ siteId: created.id });
       onMessage('Site ajouté au projet.');
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de créer le Site.');
     } finally {
-      setBusy(false);
+      finishMutation();
     }
   }
 
   async function createPage(): Promise<void> {
     const name = pageName.trim();
     if (!name) return;
-    setBusy(true);
+    if (!beginMutation()) return;
     try {
       const beforeIds = new Set(nodes.map((node) => node.id));
       const pageRoot = nodes.find((node) => node.semanticKey === 'pages' && !node.parentId)
@@ -242,12 +321,12 @@ export function ProjectSitesTab({
       setSelectedSiteId(null);
       setSelectedPageId(created.id);
       await onProjectChanged(updated);
-      await reload();
+      await reload({ pageId: created.id });
       onMessage(pageSiteId ? 'Page créée et rattachée au Site.' : 'Page créée dans le Projet.');
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de créer la Page.');
     } finally {
-      setBusy(false);
+      finishMutation();
     }
   }
 
@@ -258,20 +337,24 @@ export function ProjectSitesTab({
     : (selectedSiteId ? sites.find((site) => site.id === selectedSiteId) ?? null : null);
 
   function selectSite(id: string): void {
+    void requestUnsavedExit(() => {
     setSelectedPageId(null);
     setSelectedSiteId(id);
     setDetailCollapsed(false);
     setInspectorOpen(false);
     setInspectorCollapsed(false);
+    }, 'project-composition');
   }
 
   function selectPage(id: string): void {
+    void requestUnsavedExit(() => {
     setSelectedSiteId(null);
     setSelectedPageId(id);
     setDetailCollapsed(false);
     setPageInfoOpen(false);
     setInspectorOpen(false);
     setInspectorCollapsed(false);
+    }, 'project-composition');
   }
 
   const selectedPageSessions = selectedPage
@@ -291,7 +374,7 @@ export function ProjectSitesTab({
 
   async function startSelectedPageTimer(): Promise<void> {
     if (!selectedPage) return;
-    setBusy(true);
+    if (!beginMutation()) return;
     try {
       const current = await window.atoumweb.time.active();
       if (current) {
@@ -327,13 +410,13 @@ export function ProjectSitesTab({
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de démarrer le chrono.');
     } finally {
-      setBusy(false);
+      finishMutation();
     }
   }
 
   async function pauseOrResumeSelectedPageTimer(): Promise<void> {
     if (!activeTime || !activeOnSelectedPage) return;
-    setBusy(true);
+    if (!beginMutation()) return;
     try {
       const next = activeTime.paused
         ? await window.atoumweb.time.resume(activeTime.id)
@@ -344,13 +427,13 @@ export function ProjectSitesTab({
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de modifier le chrono.');
     } finally {
-      setBusy(false);
+      finishMutation();
     }
   }
 
   async function stopSelectedPageTimer(): Promise<void> {
     if (!activeTime || !activeOnSelectedPage) return;
-    setBusy(true);
+    if (!beginMutation()) return;
     try {
       const stopped = await window.atoumweb.time.stop(activeTime.id);
       setActiveTime(null);
@@ -360,7 +443,7 @@ export function ProjectSitesTab({
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible d’arrêter le chrono.');
     } finally {
-      setBusy(false);
+      finishMutation();
     }
   }
 
@@ -404,9 +487,9 @@ export function ProjectSitesTab({
       </div>
       <div className="project-sites-toolbar">
         <button className="secondary-button" type="button" disabled={busy} title="Créer uniquement les Sites et Pages manquants prévus par le blueprint" onClick={() => void applyBlueprint()}>Initialiser depuis le blueprint</button>
-        <button className="secondary-button" type="button" onClick={() => setCreateMode(createMode === 'site' ? null : 'site')}>+ Site</button>
+        <button className="secondary-button" type="button" onClick={() => changeCreateMode(createMode === 'site' ? null : 'site')}>+ Site</button>
         <button className="primary-button" type="button" onClick={() => {
-          setCreateMode(createMode === 'page' ? null : 'page');
+          changeCreateMode(createMode === 'page' ? null : 'page');
           if (!pageSiteId && selectedSite && !selectedSite.archivedAt) setPageSiteId(selectedSite.id);
         }}>+ Page</button>
         <button className="secondary-button project-sites-intro-toggle" type="button" title={introCollapsed ? 'Déployer le bandeau Sites & pages' : 'Réduire le bandeau Sites & pages'} onClick={() => setIntroCollapsed((value) => !value)}>
@@ -424,7 +507,7 @@ export function ProjectSitesTab({
         <input value={siteDomain} onChange={(event) => setSiteDomain(event.target.value)} placeholder="Ex. fleuriste.com" />
       </label>
       <div className="button-row">
-        <button className="secondary-button" type="button" onClick={() => setCreateMode(null)}>Annuler</button>
+        <button className="secondary-button" type="button" onClick={() => changeCreateMode(null)}>Annuler</button>
         <button className="primary-button" type="button" disabled={busy || !siteName.trim()} onClick={() => void createSite()}>Créer le Site</button>
       </div>
     </div>}
@@ -441,7 +524,7 @@ export function ProjectSitesTab({
         </select>
       </label>
       <div className="button-row">
-        <button className="secondary-button" type="button" onClick={() => setCreateMode(null)}>Annuler</button>
+        <button className="secondary-button" type="button" onClick={() => changeCreateMode(null)}>Annuler</button>
         <button className="primary-button" type="button" disabled={busy || !pageName.trim()} onClick={() => void createPage()}>Créer la Page</button>
       </div>
     </div>}
@@ -682,6 +765,7 @@ export function ProjectSitesTab({
           </section>
 
           <ProjectPageCompositionPanel
+            key={selectedPage.id}
             page={selectedPage}
             onMessage={onMessage}
             inspectorHostId={inspectorHostId}

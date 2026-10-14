@@ -600,6 +600,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('projects:prepare-quote', (_event, input: TransformQuoteToProjectInput) => database.projects.commercial.prepare(input));
   ipcMain.handle('projects:preview-quote', (_event, input: TransformQuoteToProjectInput) => database.projects.commercial.preview(input));
   ipcMain.handle('projects:sync-commercial', (_event, id: string) => database.projects.commercial.sync(id));
+  ipcMain.handle('projects:preview-restart', (_event, id: string) => database.projects.commercial.restartPreview(id));
+  ipcMain.handle('projects:restart', (_event, id: string, reviewedSHA256: string) => database.projects.commercial.restart(id, reviewedSHA256));
   ipcMain.handle('projects:assign-target', (_event,id:string,input:import('../shared/contributionTargets').ContributionTargetInput)=>database.projects.commercial.assignTarget(id,input));
   ipcMain.handle('projects:commercial-scope', (_event, id: string) => database.projects.commercial.scope(id));
   ipcMain.handle('projects:resolve-scope-conflict', (_event, id: string, conflictId: string, decision: import('../shared/projects').ProjectConflictDecision) => database.projects.commercial.resolveConflict(id,conflictId,decision));

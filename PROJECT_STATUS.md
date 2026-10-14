@@ -1,6 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
 
+## 15/10/2026 — Préparation isolée07 après rapprochement04–06
+
+Sources07 incorporées une seule fois :116d05ab7d7 →1454c82c077 →146fda0e6ae. Brouillons et retourProjet/Devis, Projet prévisionnel, garde remplacement/archives, ordre/undo de compositions, réutilisation et preuve de package local conservés. Les workflows07 sources restent conditionnés à leurs branches ; le nouveau candidat exécute leurs recettes dans la gate native de convergence sur son propreSHA, sans assimiler les jobs ignorés à des réussites.
+
+Registre final1–70 conservé ; fixture07A actualisée vers ce registre complet, assertions intactes. Tests métier complets et recettes réelles à exécuter sur candidat propre. Aucune intervention Bridge/WordPress, publication distante ou données réelles. Réserves WordPress/Divi4/5, MSI et recette humaine toujours explicites ; aucun moteur de publication production inventé.
+
+
 ## 15/10/2026 — Préparation de convergence06, dépendance04+05 en CI
 
 06#1248cf467c3 rapproché du candidat04+05 via merge normal ; conservation conjointe des filtres Catalogue, gardes de rafraîchissement/versions/acceptation Abby et option canonique05C. Les clauses orphelines restent en historique mais sont exclues du texte, y compris des conditions particulières ; aucune modification du contenu publié. CI148 du socle04+05 attendue avant toute intégration06 dansmain. Référentiel#82 manquant importé comme documentation historique, sans écraser les rapports existants ni fusionner son ancien code.
@@ -17,6 +24,13 @@ Candidat depuis maincc0bc679 : Catalogue118e549bdd7 et tardif04B57afcdae, Contra
 Première suite assemblée :1262 tests existants verts/typecheck. Deux régressions supplémentaires sur la conservation et la reprise après échec70 passent. Copies des bases Windows66/18/34/65 migrées vers70 : textes/versions/identifiants/timestamps et données protégées identiques ;226 sessions et6 pauses de la sauvegarde65 conservées ;29+149 fichiers de référence copiés et empreintes identiques. Sauvegardes/restaurations des copies et FK/intégrité réussies. Originaux non ouverts en écriture, aucune réinjection dans la base active. Les preuves privées restent sous outputs ignoré par Git ; pas de données contractuelles ou temporelles réelles dans la CI.
 
 Recette finale du SHA porteur à exécuter avant publication, résultats exacts dans la PR de convergence. Recette humaine finale différée ; pas de certification juridique, Word/Abby/WordPress réels ni MSI installé revendiquée.
+
+## 14/10/2026 — Finalisation PR111 : brouillons Projets/Sites/Composition
+
+- Branche isolée `fix/ux-v2-07a-composition-unsaved-20261014` depuis2cc1bd2f, base maincc0bc679 ; aucune branche parallèle modifiée. Corrections de démontage des réglages, baseline par occurrence, création/modales/modes, reset/retrait, pending et réponses périmées via UX-01 existant.
+- Checkpoint e3a8942d : typecheck,1042 Vitest/109 fichiers,35 restaurations,6 binaires,10 tests migrations1–66 ;70 contrôles natifs dédiés/neuf captures,65 Composition historique,183 UX-01 ; intégrité/FK/TEMP OK. Trois régressions clavier supplémentaires passent ensuite (banc64 sans captures). Résultats/SHA définitifs du commit porteur dansPR111, sans présumer une CI verte.
+- CI38564044517 refusée avant toute étape : facturation/plafond (annotation GitHub consultée), pas erreur TypeScript. Aucun dispatch/rerun, budget ou timeout modifié. Publication normale autorisée après validation ; pas de merge.
+- [Rapport07A](docs/ux-v2/LOT-07A-CORRECTIF-BROUILLONS-2026-10-14.md). 07B non commencé ici, nécessite reprise du référentiel existant et autorisation. Recette humaine différée ; archivage identités Annuaire non exposé. Validation-MSI/données réelles/Bridge/WordPress et branches des autres lots préservés.
 
 ## 14/10/2026 — Dernier cas de focus : ligne toujours masquée
 

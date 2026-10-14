@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ProjectNode } from '../../shared/projects';
 import type {
   AtoumWebCompositionDetail,
+  AtoumWebCompositionPackageExportResult,
+  ProjectPagePackageHistoryEntry,
   AtoumWebCompositionItem,
   AtoumWebCompositionSummary,
   AtoumWebLibraryCategory,
@@ -13,11 +15,13 @@ import type {
 import { ProjectCompositionItemSettings, type CodeParts } from './ProjectCompositionItemSettings';
 import './ProjectPageCompositionPanel.css';
 import { buildComponentPreview } from './componentPreview';
+import { requestUnsavedExit, useUnsavedDraft, unsavedRegistry } from '../unsaved/unsaved';
 
 type PanelMode = null | 'library' | 'create' | 'attach' | 'inspect' | 'preview';
 type CreateMode = 'new' | 'variant';
 type CodeInputMode = 'complete' | 'separated';
 type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
+interface CompositionOrderStep { before: string[]; after: string[]; }
 
 const VISUAL_CATEGORIES: Array<{ id: AtoumWebLibraryCategory; label: string }> = [
   { id: 'hero', label: 'Hero' },
@@ -180,6 +184,11 @@ export function ProjectPageCompositionPanel({
   onInspectorOpenChange?: (open: boolean, dual: boolean, expandedCount: number) => void;
 }) {
   const [composition, setComposition] = useState<AtoumWebCompositionDetail | null>(null);
+  const [preparedPackage, setPreparedPackage] = useState<(AtoumWebCompositionPackageExportResult & { sourceUpdatedAt: string }) | null>(null);
+  const [exportHistory, setExportHistory] = useState<ProjectPagePackageHistoryEntry[]>([]);
+  const [orderUndo, setOrderUndo] = useState<CompositionOrderStep[]>([]);
+  const [orderRedo, setOrderRedo] = useState<CompositionOrderStep[]>([]);
+  function clearOrderHistory(): void { setOrderUndo([]); setOrderRedo([]); }
   const [allCompositions, setAllCompositions] = useState<AtoumWebCompositionSummary[]>([]);
   const [library, setLibrary] = useState<AtoumWebTechnicalItemSummary[]>([]);
   const [mode, setMode] = useState<PanelMode>(null);
@@ -199,19 +208,42 @@ export function ProjectPageCompositionPanel({
   const [codePaneCollapsed, setCodePaneCollapsed] = useState(false);
   const [inspectExpanded, setInspectExpanded] = useState(false);
   const [inspectDevice, setInspectDevice] = useState<PreviewDevice>('desktop');
+  const inspectEpoch = useRef(0);
+  const pageEpoch = useRef(0);
+  const operation = useRef(false);
+  const createDraft = useUnsavedDraft('Nouveau composant', { createForm, fullCode }, {
+    group: 'project-composition', ready: mode === 'create', pending: busy,
+    dirty: JSON.stringify(createForm) !== JSON.stringify(EMPTY_FORM) || fullCode !== '',
+    discard: () => { setCreateForm(EMPTY_FORM); setFullCode(''); },
+  });
+  useUnsavedDraft('Opération de composition', null, { group:'project-composition', dirty:false, pending:busy });
+  function changeMode(next: PanelMode): void {
+    if (next === mode) return;
+    createDraft.request(() => setMode(next));
+  }
 
   async function reload(): Promise<void> {
-    const [nextComposition, nextCompositions, nextLibrary] = await Promise.all([
+    const epoch = pageEpoch.current;
+    const [nextComposition, nextCompositions, nextLibrary, nextHistory] = await Promise.all([
       window.atoumweb.referentials.compositions.getForProjectPage(page.id),
       window.atoumweb.referentials.compositions.list(false),
       window.atoumweb.referentials.library.list({ includeArchived: false }),
+      window.atoumweb.referentials.compositions.listPageExports(page.id),
     ]);
+    if (epoch !== pageEpoch.current) return;
     setComposition(nextComposition);
     setAllCompositions(nextCompositions);
     setLibrary(nextLibrary);
+    setExportHistory(nextHistory);
   }
 
   useEffect(() => {
+    ++inspectEpoch.current;
+    ++pageEpoch.current;
+    setComposition(null);
+    clearOrderHistory();
+    setPreparedPackage(null);
+    setExportHistory([]);
     setMode(null);
     setInspected(null);
     setSettingsItemId(null);
@@ -225,6 +257,7 @@ export function ProjectPageCompositionPanel({
     void reload().catch((error) =>
       onMessage(error instanceof Error ? error.message : 'Impossible de charger la composition de la Page.'),
     );
+    return () => { ++pageEpoch.current; ++inspectEpoch.current; };
   }, [page.id]);
 
   useEffect(() => {
@@ -257,12 +290,15 @@ export function ProjectPageCompositionPanel({
   }, [visualLibrary, search]);
 
   async function withBusy(action: () => Promise<void>): Promise<void> {
+    if (operation.current) return;
+    operation.current = true;
     setBusy(true);
     try {
       await action();
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Opération impossible sur la composition.');
     } finally {
+      operation.current = false;
       setBusy(false);
     }
   }
@@ -275,10 +311,12 @@ export function ProjectPageCompositionPanel({
   }
 
   async function addLibraryItem(itemId: string): Promise<void> {
+    if (busy || !requestUnsavedExit(() => {}, 'project-composition')) return;
     await withBusy(async () => {
       const target = await ensureComposition();
       const next = await window.atoumweb.referentials.compositions.addItem(target.id, { libraryItemId: itemId });
       setComposition(next);
+      clearOrderHistory();
       setMode(null);
       onMessage('Composant ajouté à la Page.');
       await reload();
@@ -286,25 +324,64 @@ export function ProjectPageCompositionPanel({
   }
 
   async function move(item: AtoumWebCompositionItem, delta: number): Promise<void> {
+    if (busy || !requestUnsavedExit(() => {}, 'project-composition')) return;
     if (!composition) return;
     const nextIndex = Math.max(0, Math.min(composition.items.length - 1, item.sortOrder + delta));
     if (nextIndex === item.sortOrder) return;
     await withBusy(async () => {
+      const before = composition.items.map(entry => entry.id);
       const next = await window.atoumweb.referentials.compositions.moveItem(composition.id, item.id, { targetIndex: nextIndex });
       setComposition(next);
+      setOrderUndo(history => [...history, { before, after: next.items.map(entry=>entry.id) }].slice(-40));
+      setOrderRedo([]);
     });
   }
 
-  async function remove(item: AtoumWebCompositionItem): Promise<void> {
+  function restoreLastOrder(direction: 'undo' | 'redo'): void {
+    if(busy || !composition)return;
+    requestUnsavedExit(() => { void restoreLastOrderAllowed(direction); }, 'project-composition');
+  }
+
+  async function restoreLastOrderAllowed(direction: 'undo' | 'redo'): Promise<void> {
+    const step = (direction === 'undo' ? orderUndo : orderRedo).at(-1);
+    if (!composition || !step) return;
+    const expected = direction === 'undo' ? step.after : step.before;
+    const target = direction === 'undo' ? step.before : step.after;
+    await withBusy(async () => {
+      const next = await window.atoumweb.referentials.compositions.restoreOrder(composition.id, expected, target);
+      setComposition(next);
+      if (direction === 'undo') {
+        setOrderUndo(h => h.slice(0,-1));
+        setOrderRedo(h => [...h,step]);
+      } else {
+        setOrderRedo(h => h.slice(0,-1));
+        setOrderUndo(h => [...h,step].slice(-40));
+      }
+      onMessage(direction === 'undo' ? 'Dernier déplacement annulé.' : 'Déplacement rétabli.');
+    });
+  }
+
+  function remove(item: AtoumWebCompositionItem): void {
+    requestUnsavedExit(() => { void removeAllowed(item); }, 'project-composition');
+  }
+  async function removeAllowed(item: AtoumWebCompositionItem): Promise<void> {
     if (!composition) return;
     await withBusy(async () => {
       const next = await window.atoumweb.referentials.compositions.removeItem(composition.id, item.id);
       setComposition(next);
+      clearOrderHistory();
       onMessage('Composant retiré de la Page. La Bibliothèque source reste intacte.');
     });
   }
 
   async function inspect(item: AtoumWebCompositionItem): Promise<void> {
+    if (unsavedRegistry.active('project-composition').some(entry => entry.pending)) return;
+    if (settingsItemId === item.id) { await inspectAllowed(item); return; }
+    requestUnsavedExit(() => { void inspectAllowed(item); }, 'project-composition');
+  }
+
+  async function inspectAllowed(item: AtoumWebCompositionItem): Promise<void> {
+    const epoch = ++inspectEpoch.current;
     if (inspected?.item.id === item.id) {
       setInspected(null);
       setCodePaneCollapsed(false);
@@ -317,6 +394,7 @@ export function ProjectPageCompositionPanel({
     }
     await withBusy(async () => {
       const detail = await window.atoumweb.referentials.library.get(item.sourceItemId);
+      if (epoch !== inspectEpoch.current) return;
       const version = detail.versions.find((candidate) => candidate.id === item.sourceVersionId) ?? null;
       const sourceParts = parseParts(version);
       setInspected({ item, detail, parts: effectiveParts(item, sourceParts) });
@@ -328,6 +406,11 @@ export function ProjectPageCompositionPanel({
   }
 
   function toggleSettings(item: AtoumWebCompositionItem): void {
+    void requestUnsavedExit(() => toggleSettingsAllowed(item), 'project-composition');
+  }
+
+  function toggleSettingsAllowed(item: AtoumWebCompositionItem): void {
+    ++inspectEpoch.current;
     if (settingsItemId === item.id) {
       setSettingsItemId(null);
       setSettingsDraft(null);
@@ -344,10 +427,12 @@ export function ProjectPageCompositionPanel({
   }
 
   async function attachExisting(): Promise<void> {
+    if (busy || !requestUnsavedExit(() => {}, 'project-composition')) return;
     if (!attachId) return;
     await withBusy(async () => {
       const next = await window.atoumweb.referentials.compositions.attachToProjectPage(page.id, attachId);
       setComposition(next);
+      clearOrderHistory();
       setMode(null);
       setAttachId('');
       onMessage('Composition existante rattachée à la Page.');
@@ -372,6 +457,7 @@ export function ProjectPageCompositionPanel({
   }
 
     async function createAndAdd(): Promise<void> {
+    if (busy || unsavedRegistry.active('project-composition').some(entry => entry.pending)) return;
     if (!createForm.name.trim() || !createForm.html.trim()) {
       onMessage('Nom et HTML sont requis.');
       return;
@@ -400,6 +486,7 @@ export function ProjectPageCompositionPanel({
       const target = await ensureComposition();
       const next = await window.atoumweb.referentials.compositions.addItem(target.id, { libraryItemId: created.id });
       setComposition(next);
+      clearOrderHistory();
       setCreateForm(EMPTY_FORM);
       setFullCode('');
       setCodeInputMode('complete');
@@ -434,8 +521,12 @@ export function ProjectPageCompositionPanel({
     setBusy(true);
     try {
       const exported = await window.atoumweb.referentials.compositions.exportPagePackage(page.id);
+      // The Manager can only prove its local ZIP; a WordPress import has not
+      // been acknowledged and must never be represented as a published Page.
+      setPreparedPackage({ ...exported, sourceUpdatedAt: composition.updatedAt });
+      setExportHistory(await window.atoumweb.referentials.compositions.listPageExports(page.id));
       onMessage(
-        `Package Page prêt : ${exported.fileName}`,
+        `Package Page préparé localement (import Bridge non confirmé) : ${exported.fileName}`,
         () => void window.atoumweb.referentials.compositions.showPackage(exported.path),
       );
     } catch (error) {
@@ -474,19 +565,41 @@ export function ProjectPageCompositionPanel({
         <p>Ajoute uniquement ce que tu veux préparer depuis Manager. Le reste de la Page pourra être construit librement dans Divi.</p>
       </div>
       <div className="project-page-composition-actions">
+        {composition&&<button className="secondary-button" type="button" disabled={busy||!orderUndo.length} onClick={()=>restoreLastOrder('undo')}>Annuler déplacement</button>}
+        {composition&&<button className="secondary-button" type="button" disabled={busy||!orderRedo.length} onClick={()=>restoreLastOrder('redo')}>Rétablir déplacement</button>}
         {composition?.items.length ? <button className="primary-button" type="button" disabled={busy} onClick={() => void exportPagePackage()}>Préparer pour Bridge</button> : null}
         {composition?.items.length ? <button className="secondary-button" type="button" onClick={() => void buildPagePreview()}>Aperçu de la Page</button> : null}
-        <button className="secondary-button" type="button" onClick={() => setMode(mode === 'library' ? null : 'library')}>+ Bibliothèque</button>
-        <button className="primary-button" type="button" onClick={() => setMode(mode === 'create' ? null : 'create')}>+ Créer un composant</button>
+        <button className="secondary-button" type="button" onClick={() => changeMode(mode === 'library' ? null : 'library')}>+ Bibliothèque</button>
+        <button className="primary-button" type="button" onClick={() => changeMode(mode === 'create' ? null : 'create')}>+ Créer un composant</button>
       </div>
     </header>
+
+    {preparedPackage&&<div className="project-page-package-status" role="status">
+      <strong>{composition?.updatedAt===preparedPackage.sourceUpdatedAt
+        ? 'Package local préparé · Import Bridge non confirmé'
+        : 'Package local antérieur · Composition modifiée depuis cet export'}</strong>
+      <p>Fichier : {preparedPackage.fileName}. Export ID : {preparedPackage.exportId??'non fourni'}.</p>
+      <p>Destination Manager : Projet {preparedPackage.projectId??'—'} · Site {preparedPackage.siteId??'—'} · Page {preparedPackage.pageId??'—'}.</p>
+      <p>Ce statut confirme seulement la création du fichier ZIP local. Aucun Workbench WordPress, import Divi, publication ou synchronisation de retour n’a été confirmé.</p>
+      <button type="button" className="secondary-button" onClick={()=>void window.atoumweb.referentials.compositions.showPackage(preparedPackage.path)}>
+        Ouvrir le package local
+      </button>
+    </div>}
+
+    {exportHistory.length>0&&<details className="project-page-package-status">
+      <summary>Historique local des exports Page ({exportHistory.length}) — aucune importation WordPress confirmée</summary>
+      {exportHistory.map(entry=><p key={entry.exportId}>
+        {new Date(entry.createdAt).toLocaleString('fr-FR')} · {entry.exportId} · {entry.componentCount} composant(s) · empreinte {entry.fingerprint.slice(0,12)}
+      </p>)}
+      <p>Ces enregistrements prouvent la préparation de fichiers locaux, pas leur import dans un Workbench ni leur publication.</p>
+    </details>}
 
     <div className="project-page-composition-workspace">
       <div className="project-page-composition-primary">
       {!composition && <div className="project-page-composition-empty">
         <strong>Aucun composant Manager pour cette Page.</strong>
         <span>C’est valide : tu peux construire entièrement cette Page dans Divi.</span>
-        {availableHistorical.length > 0 && <button className="link-button" type="button" onClick={() => setMode('attach')}>Rattacher une composition existante</button>}
+        {availableHistorical.length > 0 && <button className="link-button" type="button" onClick={() => changeMode('attach')}>Rattacher une composition existante</button>}
       </div>}
   
       {composition && <div className="project-page-composition-list">
@@ -544,7 +657,10 @@ export function ProjectPageCompositionPanel({
         {settingsItem && composition && <section className={`project-page-inspector-pane settings-pane ${settingsPaneCollapsed ? 'collapsed' : ''}`}>
           {settingsPaneCollapsed
             ? <button className="project-page-inspector-pane-restore settings" type="button" title="Afficher Réglages" aria-label="Afficher Réglages" onClick={() => setSettingsPaneCollapsed(false)}>→</button>
-            : <ProjectCompositionItemSettings
+            : null}
+            <div hidden={settingsPaneCollapsed}><ProjectCompositionItemSettings
+                key={settingsItem.id}
+                operationPending={busy}
                 compositionId={composition.id}
                 item={settingsItem}
                 pageName={page.name}
@@ -555,14 +671,14 @@ export function ProjectPageCompositionPanel({
                 onExpand={() => setInspectExpanded(true)}
                 previewDevice={inspectDevice}
                 onPreviewDeviceChange={setInspectDevice}
-                onClose={() => {
+                onClose={() => { void requestUnsavedExit(() => {
                   setSettingsItemId(null);
                   setSettingsDraft(null);
                   setSettingsPaneCollapsed(false);
                   if (!inspected) setInspectExpanded(false);
-                }}
+                }, 'project-composition'); }}
                 onDraftChange={setSettingsDraft}
-              />}
+              /></div>
         </section>}
 
         {inspected && liveInspectedParts && <section className={`project-page-inspector-pane code-pane ${codePaneCollapsed ? 'collapsed' : ''}`}>
@@ -613,8 +729,8 @@ export function ProjectPageCompositionPanel({
       inspectorHost,
     )}
 
-    {mode === 'library' && <div className="project-page-composition-modal library-modal" role="dialog" aria-modal="true">
-      <div className="project-page-composition-modal-backdrop" onClick={() => setMode(null)} />
+    {mode === 'library' && <div className="project-page-composition-modal library-modal" role="dialog" aria-modal="true" onKeyDown={(event) => { if(event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); changeMode(null); } }}>
+      <div className="project-page-composition-modal-backdrop" onClick={() => changeMode(null)} />
       <div className="project-page-composition-modal-panel">
         <header>
           <div>
@@ -622,7 +738,7 @@ export function ProjectPageCompositionPanel({
             <h3>Ajouter un composant</h3>
             <p>{readyLibrary.length} prêt(s) à ajouter · {visualLibrary.length} élément(s) visuel(s) dans la Bibliothèque</p>
           </div>
-          <button className="secondary-button" type="button" onClick={() => setMode(null)}>Fermer</button>
+          <button className="secondary-button" type="button" onClick={() => changeMode(null)}>Fermer</button>
         </header>
         <div className="project-page-library-modal-body">
           <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher un Hero, une section, une variante…" />
@@ -646,22 +762,22 @@ export function ProjectPageCompositionPanel({
       </div>
     </div>}
 
-    {mode === 'create' && <div className="project-page-composition-modal create-modal" role="dialog" aria-modal="true">
-      <div className="project-page-composition-modal-backdrop" onClick={() => setMode(null)} />
+    {mode === 'create' && <div className="project-page-composition-modal create-modal" role="dialog" aria-modal="true" onKeyDown={(event) => { if(event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); changeMode(null); } }}>
+      <div className="project-page-composition-modal-backdrop" onClick={() => changeMode(null)} />
       <div className="project-page-composition-modal-panel">
         <header>
           <div><span className="eyebrow">Création directe</span><h3>Nouveau composant / déclinaison</h3><p>Colle un code complet ou travaille champ par champ.</p></div>
-          <button className="secondary-button" type="button" onClick={() => setMode(null)}>Fermer</button>
+          <button className="secondary-button" type="button" onClick={() => changeMode(null)}>Fermer</button>
         </header>
         <div className="project-page-component-editor-body">
           <div className="project-page-component-editor-grid">
-            <div className="project-page-component-form">
+            <fieldset className="project-page-component-form" disabled={busy} style={{border:0,padding:0,margin:0,minWidth:0}}>
               <div className="project-page-component-mode">
                 <button type="button" className={createForm.mode === 'new' ? 'active' : ''} onClick={() => {
-                  setCreateForm({ ...EMPTY_FORM, mode: 'new' }); setFullCode(''); setCodeInputMode('complete');
+                  createDraft.request(() => { setCreateForm({ ...EMPTY_FORM, mode: 'new' }); setFullCode(''); setCodeInputMode('complete'); });
                 }}>Nouvel élément</button>
                 <button type="button" className={createForm.mode === 'variant' ? 'active' : ''} onClick={() => {
-                  setCreateForm({ ...EMPTY_FORM, mode: 'variant' }); setFullCode(''); setCodeInputMode('complete');
+                  createDraft.request(() => { setCreateForm({ ...EMPTY_FORM, mode: 'variant' }); setFullCode(''); setCodeInputMode('complete'); });
                 }}>Déclinaison d’un modèle</button>
               </div>
               {createForm.mode === 'variant' && <label>Modèle source
@@ -704,7 +820,7 @@ export function ProjectPageCompositionPanel({
               <button className="primary-button" type="button" disabled={busy || !createForm.name.trim() || !createForm.html.trim() || (createForm.mode === 'variant' && !createForm.sourceItemId)} onClick={() => void createAndAdd()}>
                 {createForm.mode === 'variant' ? 'Créer la déclinaison et l’ajouter' : 'Créer le composant et l’ajouter'}
               </button>
-            </div>
+            </fieldset>
             <div className="project-page-component-live-preview">
               <strong>Aperçu</strong>
               <iframe title="Aperçu du nouveau composant" sandbox="" srcDoc={createPreview} />
@@ -714,8 +830,8 @@ export function ProjectPageCompositionPanel({
       </div>
     </div>}
 
-    {mode === 'preview' && previewDoc && <div className="project-page-composition-modal page-preview" role="dialog" aria-modal="true">
-      <div className="project-page-composition-modal-backdrop" onClick={() => setMode(null)} />
+    {mode === 'preview' && previewDoc && <div className="project-page-composition-modal page-preview" role="dialog" aria-modal="true" onKeyDown={(event) => { if(event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); changeMode(null); } }}>
+      <div className="project-page-composition-modal-backdrop" onClick={() => changeMode(null)} />
       <div className="project-page-composition-modal-panel">
         <header>
           <div><span className="eyebrow">Composition préparée par Manager</span><h3>{page.name} — aperçu global</h3><p>Ce rendu n’inclut pas les modules Divi natifs ajoutés plus tard.</p></div>
@@ -728,7 +844,7 @@ export function ProjectPageCompositionPanel({
               setInspectionMode(next);
               void buildPagePreview(next);
             }} /> Inspection</label>
-            <button className="secondary-button" type="button" onClick={() => setMode(null)}>Fermer</button>
+            <button className="secondary-button" type="button" onClick={() => changeMode(null)}>Fermer</button>
           </div>
         </header>
         <div className="project-page-global-preview">

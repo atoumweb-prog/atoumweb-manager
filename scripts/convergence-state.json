@@ -1,61 +1,54 @@
 {
-  "phase": "06",
+  "phase": "07",
   "nativeChecks": [
     [
-      "quotes-pdf",
+      "composition-workshop",
       [
-        "scripts/check-unsaved-inputs-ui.cjs",
-        "--lot-pdf"
+        "scripts/check-project-composition-ui.cjs"
       ]
     ],
     [
-      "quotes-create",
+      "composition-native",
       [
-        "scripts/check-unsaved-inputs-ui.cjs",
-        "--lot-create"
+        "scripts/check-ux-v2-07a-composition.cjs"
       ]
     ],
     [
-      "quotes-prerequisites",
+      "project-quote-return",
       [
-        "scripts/check-unsaved-inputs-ui.cjs",
-        "--lot-prerequisites"
+        "scripts/check-ux-v2-07ab-navigation-native.cjs"
       ]
     ],
     [
-      "quotes-refresh",
+      "project-provisional",
       [
-        "scripts/check-unsaved-inputs-ui.cjs",
-        "--lot-refresh"
-      ]
-    ],
-    [
-      "quotes-versions",
-      [
-        "scripts/check-unsaved-inputs-ui.cjs",
-        "--lot-versions"
-      ]
-    ],
-    [
-      "quotes-accept",
-      [
-        "scripts/check-unsaved-inputs-ui.cjs",
-        "--lot-accept"
-      ]
-    ],
-    [
-      "quote-recommendations",
-      [
-        "scripts/check-quote-catalog-recommendations-ui.cjs"
-      ]
-    ],
-    [
-      "contracts-native",
-      [
-        "scripts/check-contract-library-ui.cjs",
+        "scripts/check-project-provisional-ui.cjs",
         "--output",
-        "{out}/contract-captures",
-        "--ux05b"
+        "{out}/provisional"
+      ]
+    ],
+    [
+      "project-operational",
+      [
+        "scripts/check-project-operational-ui.cjs",
+        "--output",
+        "{out}/operational"
+      ]
+    ],
+    [
+      "blueprints",
+      [
+        "scripts/check-project-blueprint-origins-ui.cjs",
+        "--output",
+        "{out}/blueprints"
+      ]
+    ],
+    [
+      "guided-reuse",
+      [
+        "scripts/check-guided-reuse-ui.cjs",
+        "--output",
+        "{out}/reuse"
       ]
     ],
     [
@@ -74,10 +67,11 @@
       ]
     ],
     [
-      "baseline-01-03",
+      "shell",
       [
-        "scripts/check-ux-v2-integration-validate.cjs",
-        "--native-only"
+        "scripts/check-ux-v2-lot01a-real-ui.cjs",
+        "--captures",
+        "{out}/shell-captures"
       ]
     ]
   ]
