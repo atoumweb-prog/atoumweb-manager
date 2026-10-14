@@ -162,6 +162,8 @@ app.whenReady().then(async () => {
       document.querySelector('tbody tr').click();
       const identitySection=await waitFor('.catalog-identity-section','fiche après bascule organisée → tableau');
       assert('04C huit onglets accessibles',document.querySelectorAll('.catalog-editor-tabs [role=tab]').length===8);
+      assert('04C panneau ARIA connecté',document.querySelector('[role=tab][aria-selected=true]').getAttribute('aria-controls')===
+        document.querySelector('[role=tabpanel]').id);
       assert('Ancien élément sans identité inventée',identitySection.textContent.includes('Non attribué'));
       assert('Attribution désactivée sans code', [...document.querySelectorAll('button')].find(b=>b.textContent==='Attribuer ce code').disabled);
       await fill('Code AW à attribuer','invalide');await click('Attribuer ce code');
@@ -204,6 +206,10 @@ app.whenReady().then(async () => {
       assert('04C publication bloquée pendant édition', [...document.querySelectorAll('.catalog-version-row button')].filter(b=>b.textContent==='Préparer la publication').every(b=>b.disabled));
       await click('Contenu & périmètre');
       await fill('Description','Enregistré en place, sans v2');
+      await click('Tarifs & Abby');
+      assert('04C champs tarifs réellement accessibles',!!field('Mode tarifaire')&&!!field('Prix AtoumWeb'));
+      await click('Contenu & périmètre');
+      assert('04C changement d’onglet ne perd pas la saisie',field('Description').value==='Enregistré en place, sans v2');
       await click('Enregistrer le brouillon');
       assert('04C enregistrement sans nouvelle version',calls.saveDraft.length===1&&calls.version.length===1&&calls.publish===0&&items[1].versions.length===1);
       assert('04C même ID de version conservé',calls.saveDraft[0].id===items[1].versions[0].id&&items[1].versions[0].description==='Enregistré en place, sans v2');
@@ -272,6 +278,13 @@ app.whenReady().then(async () => {
       document.querySelector('[data-catalog-item-id="test-vitrine"]').click();
       const openedFromCard=await waitFor('[data-search-entity-id="test-vitrine"]','fiche via carte 04B');
       assert('04B carte ouvre le bon item via route existante',openedFromCard.textContent.includes('Site vitrine'));
+      await click('Production');
+      assert('04C panneau production réel monté',!!document.querySelector('.catalog-production-panel'));
+      assert('04C consultation de production sans Projet créé',document.querySelector('.catalog-production-panel').textContent.includes('Aucun blueprint lié'));
+      await click('Aide à la vente');
+      assert('04C aide commerciale versionnée en lecture',!!document.querySelector('.catalog-commercial-parameters'));
+      await click('Historique');
+      assert('04C versions historiques accessibles',!!document.querySelector('.catalog-versions'));
       // E95: exercise React category administration with a mocked IPC contract,
       // alongside backend SQLite tests that enforce actual transactions and FK.
       document.querySelector('.catalog-detail-heading-actions .close-detail').click();await wait();
