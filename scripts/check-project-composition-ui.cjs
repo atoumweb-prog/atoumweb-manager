@@ -369,6 +369,24 @@ app.whenReady().then(async () => {
     win.setSize(1200,800); await settle();
     await check('Panneau étroit : actions accessibles sans débordement', `[...document.querySelectorAll('.project-sites-detail-panel *')].filter(e=>!e.matches('input,textarea,small,strong')).every(e=>!e.clientWidth||e.scrollWidth<=e.clientWidth+1)`);
     await check('Panneau étroit : dernier contenu atteignable', `(()=>{let e=document.querySelector('.project-sites-detail-panel');e.scrollTop=e.scrollHeight;return e.lastElementChild.getBoundingClientRect().bottom<=e.getBoundingClientRect().bottom})()`);
+    // Double click in the same JS turn must issue a single Site IPC mutation.
+    await click('+ Site');
+    await input('.project-sites-create-panel input[placeholder="Ex. Site principal"]','SITE DOUBLE CLIC TEST');
+    await js(`(()=>{
+      window.__siteCreateCalls=0;
+      window.atoumweb.projects.sites.create=(_projectId,data)=>{
+        window.__siteCreateCalls++;
+        return new Promise(resolve=>{window.__resolveSiteCreate=()=>resolve({id:'site-created',name:data.name});});
+      };
+      const b=[...document.querySelectorAll('.project-sites-create-panel button')].find(button=>button.textContent.includes('Créer le Site'));
+      if(!b||b.disabled)throw Error('Site create action absent or disabled');
+      b.click();
+      b.click();
+      return true;
+    })()`);
+    await check('Double clic Site : un seul appel IPC avant rerender', 'window.__siteCreateCalls===1');
+    await js('(()=>{if(!window.__resolveSiteCreate)throw Error("Site creation not pending");window.__resolveSiteCreate();return true})()');
+    await settle();
     win.destroy();
   } catch (error) {
     if (!checks.some((check) => check.error === String(error))) {
