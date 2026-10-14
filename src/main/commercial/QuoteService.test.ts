@@ -321,4 +321,46 @@ describe('QuoteService', () => {
     expect(catalog.getItem(service.id).currentVersion?.priceCents).toBe(20000);
   });
 
+  it('06C : achat d’option idempotent, provenance et retrait sans changer l’offre', () => {
+    const prospect = createProspect();
+    const option = createPublishedService(14900, 'Option SEO 06C');
+    const optionVersionId = option.currentVersion!.id;
+    const offer = catalog.create(
+      { type: 'offer', name: 'Pack 06C', category: 'Tests' },
+      { priceMode: 'fixed', priceCents: 69900, description: 'Pack de base' },
+    );
+    catalog.setOfferComponents(offer.versions[0].id, [
+      { serviceVersionId: optionVersionId, isOptional: true },
+    ]);
+    catalog.publishVersion(offer.versions[0].id);
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Option isolée' });
+    const initial = quotes.addCatalogLine(quote.id, offer.versions[0].id);
+    const offerLine = initial.lines[0];
+    const component = (offerLine.snapshot!.offerComponents as Array<{ componentId: string }>)[0];
+
+    expect(initial.lines).toHaveLength(1);
+    expect(initial.contractValueCents).toBe(69900);
+    const purchased = quotes.selectOfferOption(offerLine.id, component.componentId);
+    expect(purchased.lines).toHaveLength(2);
+    const purchasedLine = purchased.lines.find(line => line.id !== offerLine.id)!;
+    expect(purchasedLine.optionPurchase?.sourceOfferLineId).toBe(offerLine.id);
+    expect(purchasedLine.optionPurchase?.sourceComponentId).toBe(component.componentId);
+    expect(purchasedLine.catalogVersionId).toBe(optionVersionId);
+    expect(purchased.contractValueCents).toBe(84800);
+
+    const again = quotes.selectOfferOption(offerLine.id, component.componentId);
+    expect(again.lines).toHaveLength(2);
+    expect(again.lines.find(line => line.id !== offerLine.id)?.id).toBe(purchasedLine.id);
+
+    const next = catalog.createVersion(option.id, { priceMode: 'fixed', priceCents: 19900 });
+    catalog.publishVersion(next.id);
+    expect(quotes.get(quote.id).lines.find(line => line.id === purchasedLine.id)?.catalogVersionId).toBe(optionVersionId);
+
+    const removed = quotes.deselectOfferOption(offerLine.id, component.componentId);
+    expect(removed.lines).toHaveLength(1);
+    expect(removed.lines[0].id).toBe(offerLine.id);
+    expect(removed.contractValueCents).toBe(69900);
+    expect(quotes.deselectOfferOption(offerLine.id, component.componentId).lines).toHaveLength(1);
+  });
+
 });
