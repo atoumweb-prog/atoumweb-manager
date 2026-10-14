@@ -197,6 +197,30 @@ describe('04B E95 — administration transactionnelle et catégories historiques
     expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
+  it('R04B-13 conserve un Devis accepté après archivage de la prestation, sans nouvelle vente', () => {
+    const item=catalog.create({type:'service',name:'Prestation SEO',category:'SEO'},
+      {priceMode:'fixed',priceCents:14900,description:'Version publiée témoin'});
+    catalog.publishVersion(item.versions[0].id);
+    const crm=new CrmService(db), terms=new ContractTermsService(db);
+    const quotes=new QuoteService(db,crm,terms);
+    const organization=crm.createOrganization({name:'Client historique fixture'});
+    const prospect=crm.createProspect({organizationId:organization.id,primaryNeed:'SEO'});
+    const quote=quotes.create({prospectId:prospect.id,subject:'Contrat archivé témoin'});
+    quotes.addCatalogLine(quote.id,item.versions[0].id);
+    db.run("UPDATE quotes SET status='accepted',snapshot_locked_at='2026-10-14T08:00:00Z' WHERE id=?",[quote.id]);
+    const before=quotes.get(quote.id);
+    const category=categories.create('Référencement');
+    categories.reconcileLegacy('SEO',category.id,[item.id]);
+    catalog.setStatus(item.id,'archived');
+    expect(quotes.get(quote.id).lines).toEqual(before.lines);
+    expect(quotes.get(quote.id).status).toBe('accepted');
+    expect(categories.list().find(c=>c.id===category.id)?.itemCount).toBe(1);
+    const newQuote=quotes.create({prospectId:prospect.id,subject:'Nouvelle demande'});
+    expect(()=>quotes.addCatalogLine(newQuote.id,item.versions[0].id))
+      .toThrow(/Seule une version publiée d’une prestation active/);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
   it('toutes les opérations conservent intégrité FK, versions et tombstones', () => {
     const item=create('A','OLD');
     const version=JSON.stringify(catalog.getItem(item.id).versions);
