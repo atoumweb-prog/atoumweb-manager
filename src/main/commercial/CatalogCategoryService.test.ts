@@ -29,6 +29,40 @@ describe('04B E95 — administration transactionnelle et catégories historiques
     expect(db.get<{ category_id: string|null }>('SELECT category_id FROM catalog_items WHERE id=?', [legacy.id])?.category_id).toBeNull();
   });
 
+  it('crée atomiquement un service et un brouillon dans une catégorie administrée active', () => {
+    const group = categories.create('Référencement et visibilité');
+    const created = catalog.create(
+      { type:'service', name:'Audit de visibilité', category:group.name, categoryId:group.id },
+      { priceMode:'fixed', priceCents:14900 },
+    );
+    expect(created).toMatchObject({
+      type:'service', category:group.name, categoryId:group.id, status:'active',
+      currentVersion:{status:'draft',priceCents:14900},
+    });
+    expect(categories.list().find(x=>x.id===group.id)?.itemCount).toBe(1);
+    expect(db.get<{action:string;category_id:string}>(
+      'SELECT action,category_id FROM catalog_category_audit WHERE item_id=?',[created.id],
+    )).toEqual({action:'assign',category_id:group.id});
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('refuse catégorie disparue/archivée ou libellé concurrent sans créer d’item ni version orpheline', () => {
+    const group = categories.create('Maintenance WordPress');
+    const count=()=>({
+      items:db.get<{n:number}>('SELECT COUNT(*) AS n FROM catalog_items')!.n,
+      versions:db.get<{n:number}>('SELECT COUNT(*) AS n FROM catalog_versions')!.n,
+    });
+    const before=count();
+    const first={type:'service' as const,name:'Service de maintenance',categoryId:group.id,category:group.name};
+    const draft={priceMode:'fixed' as const,priceCents:9900};
+    expect(()=>catalog.create({...first,category:'Ancienne catégorie'},draft)).toThrow(/changé/);
+    expect(()=>catalog.create({...first,categoryId:'identifiant-inconnu'},draft)).toThrow(/introuvable/);
+    categories.setStatus(group.id,'archived',group.revision);
+    expect(()=>catalog.create(first,draft)).toThrow(/archivée/);
+    expect(count()).toEqual(before);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
   it('interdit les doublons Unicode/casse/espace, rollback et aucun second registre', () => {
     categories.create('Visibilité Google');
     expect(() => categories.create(' VISIBILITÉ   GOOGLE ')).toThrow(/existe déjà/);
