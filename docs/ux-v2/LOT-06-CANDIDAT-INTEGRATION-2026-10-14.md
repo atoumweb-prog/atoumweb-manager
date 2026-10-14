@@ -38,3 +38,28 @@ Date : 14 octobre 2026. Branche `integration/ux-v2-06-candidate-20261014` depuis
 4. **Pré-main uniquement :** actualiser sur la dernière base, détecter conflits 04/05, réexécuter tests sur SHA rebasé, contrôler protections GitHub et demander accord explicite. Aucune fusion automatique.
 
 Le candidat est **techniquement convergé avec recette automatisée Windows réussie sur `e4930db`** ; le référentiel central #82 n'est pas encore synchronisé avec les preuves. L'inspection visuelle humaine et les vérifications d'intégration du dernier `main` restent distinctes.
+
+## Passation finale Codex — audit du 14 octobre 2026
+
+### Code candidat et exécution exacte
+- **Dernier SHA de code vérifié** : `e405bc63b296f00dc67f32188edc8a70262e2636`. La présente annexe est strictement documentaire et ne modifie ni le code ni les tests ; ne pas attribuer automatiquement la CI de ce SHA à un éventuel HEAD documentaire ultérieur.
+- **CI #1645** : [run 38635697170](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38635697170), `completed/success`, job `quality` réussi. Logs examinés : TypeScript réussi, **111 fichiers / 1 063 tests Vitest réussis**.
+- **Electron/Windows sur TEMP** : UX-01 **192** contrôles, devis/Abby et parcours anti-double action testés, intégration **37/37**, CRM **77**, recherche **92**, accueil **64**, recette visuelle automatisée **527**, parcours **67**, shell **374**, `INTEGRATION_COMPLETE`. Les journaux attestent **135 captures** sur quinze scènes et neuf présentations, et **63 captures vérifiées** par la recette de shell ; ce n'est pas une revue visuelle humaine.
+- **SQLite** : tests de migration, clés étrangères et restauration sur fichiers temporaires et bases en mémoire. Aucun accès ni exécution de `SELECT id,name,applied_at FROM schema_migrations` sur une base Windows persistante. **Aucune migration nouvelle dans le lot 06** ; le registre des migrations est identique à celui de `main` à la comparaison.
+- Comparaison `main...integration/ux-v2-06-candidate-20261014` au moment de l'audit : **61 commits d'avance, zéro de retard**, 22 fichiers modifiés. À recalculer avant rebase/convergence.
+
+### Livré par sous-lot
+- **06A** : prix proposé et aperçu calculés en centimes ; confirmation externe Abby distincte des états finalisé/envoyé/vu ; test du parcours finaliser → envoyer → voir sans conversion.
+- **06B** : navigation par identifiant, brouillons UX-01, erreurs et résultats asynchrones obsolètes, verrou création unique.
+- **06C** : lignes catalogue/offres, achat/retrait explicite des options, provenance/version des composants, montant recalculé et préservation des clauses personnalisées lors d'ajout/retrait.
+- **06D** : préparation des contrats liée au moteur CGV existant, sans moteur parallèle ; clauses orphelines conservées en historique mais exclues du texte compilé ; blocage ciblé des orphelines activées lorsque la préparation exige leur résolution.
+- **06E** : copies indépendantes, révisions, protections de mutations, conservation des CGV personnalisées et absence de conversion sur refus/envoi/consultation ; rollback si cycle Projet non raccordé.
+- **06F** : recettes Windows Electron/IPC/SQLite sur TEMP et PR de convergence isolée.
+
+### Réserves qui restent réellement ouvertes
+1. **Traçabilité** : matrice des **109 exigences** rédigée antérieurement : **53 preuves partielles et 56 sans rattachement individuel**. Les tests ciblés postérieurs couvrent davantage de cas, mais la matrice n'a pas été requalifiée assertion par assertion. **Ne pas prétendre 109/109 validés.**
+2. **Dépendances** : lot 04 Catalogue, suggestions et collisions potentielles sur `QuotesPage.tsx` / scripts UX ; lot 05 CGV, classement juridique et export ; lot 07 cycle Projet, révisions et conflits. Les branches n'ont **pas** été convergées dans le candidat 06.
+3. **Validation humaine** : inspection visuelle des neuf modes, adéquation des textes juridiques, preuve d'acceptation réellement constatée dans Abby, utilisation Windows Validation-MSI et données persistantes.
+4. **Après convergence** : comparer les fichiers partagés et SHA, résoudre les conflits sans écrasement, vérifier les migrations 67/68/69 attribuées aux autres lots sur les bases **persistantes** avant toute intégration, rejouer la CI et les recettes Electron/SQLite sur l'arbre final.
+
+**Statut transmis : candidat 06 prêt pour revue et convergence Codex sur son périmètre automatisé ; pas de clôture exhaustive du référentiel, pas d'autorisation de merge, aucune base persistante modifiée.**
