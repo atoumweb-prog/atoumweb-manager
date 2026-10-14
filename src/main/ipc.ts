@@ -4,9 +4,13 @@ import { restoreQuitGate } from './restoreQuitGate';
 import type { ContractAdministration, QuoteContractParameters, ContractDocumentLinkInput, ContractDocumentRole } from '../shared/quoteContractPreparation';
 import { app, clipboard, dialog, ipcMain, safeStorage, shell } from 'electron';
 import type { BridgeNodeMatchDecisionInput } from '../shared/bridgeSnapshots';
-import { writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
 import { quoteContractText } from '../shared/contractTerms';
+import { compareWordDraftText, prepareWordDraftManifest, type WordDraftManifest } from './commercial/wordDraftReview';
+import { makeWordDraftDocx, parseWordDraftDocx } from './commercial/wordDocxCodec';
+import { saveWordDraftWorkingPdf } from './commercial/wordDraftPdf';
+import { randomUUID } from 'node:crypto';
 import type { BillingInvoiceInput, BillingItemFilters, BillingItemStatus } from '../shared/billing';
 import type { ExpenseFilters, ExpenseInput, ExpenseStatus } from '../shared/expenses';
 import type {
@@ -380,12 +384,13 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     });
     const document = imported.find((candidate) => !before.has(candidate.id));
     if (!document) throw new Error('La facture PDF n’a pas pu être identifiée après import.');
+    database.clientDocuments.fingerprint(document.id);
     return database.billingHandoff.attachInvoice(id, document.id, input);
   });
   ipcMain.handle('billing:open-invoice', async (_event, id: string) => {
     const item = database.billingHandoff.get(id);
     if (!item.invoiceDocumentId) throw new Error('Aucune facture PDF n’est rattachée à cet élément.');
-    const error = await shell.openPath(database.clientDocuments.absolutePath(item.invoiceDocumentId));
+    const error = await shell.openPath(database.clientDocuments.verifiedPath(item.invoiceDocumentId));
     if (error) throw new Error(error);
   });
 
@@ -443,6 +448,86 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('contract-terms:library:create', (_event, input: ContractClauseTemplateInput, firstVersion: ContractClauseVersionInput) => database.contractTerms.createTemplate(input, firstVersion));
   ipcMain.handle('contract-terms:library:create-version', (_event, clauseId: string, input: ContractClauseVersionInput) => database.contractTerms.createVersion(clauseId, input));
   ipcMain.handle('contract-terms:library:publish-version', (_event, versionId: string) => database.contractTerms.publishVersion(versionId));
+  // Short-lived in-memory review only: never trust a renderer-supplied Word body.
+  const wordSessions=new Map<string,{manifest:WordDraftManifest;text:string;expiresAt:number}>();
+  const clauseDraft=(clauseId:string,versionId:string)=>{
+    const template=database.contractTerms.getTemplate(clauseId);
+    const version=template.versions.find(v=>v.id===versionId);
+    if(!version||template.status==='archived'||version.status!=='draft')
+      throw Error('La version de clause sélectionnée doit être un brouillon actif.');
+    if(template.versions[0]?.id!==version.id)
+      throw Error('Un brouillon plus récent existe. Sélectionne la dernière version avant l’export Word.');
+    return {template,version,source:{kind:'contract_clause' as const,
+      clauseId,versionId,status:version.status,body:version.body}};
+  };
+  ipcMain.handle('contract-terms:word:export',async(_event,clauseId:string,versionId:string)=>{
+    const {template,source}=clauseDraft(clauseId,versionId);
+    const manifest=prepareWordDraftManifest(source);
+    const bytes=makeWordDraftDocx(source,manifest,template.title);
+    const suggested=template.code.replace(/[^A-Za-z0-9._-]/g,'-')+'-brouillon.docx';
+    const selection=await dialog.showSaveDialog({
+      title:'Exporter un brouillon contractuel éditable pour Word',
+      defaultPath:suggested,
+      filters:[{name:'Document Word (.docx)',extensions:['docx']}],
+    });
+    if(selection.canceled||!selection.filePath)return {cancelled:true};
+    // Recheck source after async dialog; data must remain the source of export.
+    clauseDraft(clauseId,versionId);
+    const path=selection.filePath.toLowerCase().endsWith('.docx')?selection.filePath:selection.filePath+'.docx';
+    writeFileSync(path,bytes);
+    return {cancelled:false,fileName:basename(path)};
+  });
+  ipcMain.handle('contract-terms:word:pdf',async(_event,clauseId:string,versionId:string)=>{
+    const {template,source}=clauseDraft(clauseId,versionId);
+    const selection=await dialog.showSaveDialog({
+      title:'Exporter un PDF de travail — NON OFFICIEL',
+      defaultPath:template.code.replace(/[^A-Za-z0-9._-]/g,'-')+'-TRAVAIL-NON-SIGNE.pdf',
+      filters:[{name:'PDF de travail, non signé',extensions:['pdf']}],
+    });
+    if(selection.canceled||!selection.filePath)return {cancelled:true};
+    clauseDraft(clauseId,versionId);
+    const path=selection.filePath.toLowerCase().endsWith('.pdf')?selection.filePath:selection.filePath+'.pdf';
+    await saveWordDraftWorkingPdf(source,template.title,path);
+    return {cancelled:false,fileName:basename(path)};
+  });
+  ipcMain.handle('contract-terms:word:import',async(_event,clauseId:string,versionId:string)=>{
+    const {source}=clauseDraft(clauseId,versionId);
+    const selection=await dialog.showOpenDialog({
+      title:'Comparer les modifications d’un brouillon Word',
+      properties:['openFile'],
+      filters:[{name:'Document Word (.docx)',extensions:['docx']}],
+    });
+    if(selection.canceled||selection.filePaths.length===0)return null;
+    if(!selection.filePaths[0].toLowerCase().endsWith('.docx'))
+      throw Error('Seuls les fichiers DOCX sont acceptés.');
+    const imported=parseWordDraftDocx(readFileSync(selection.filePaths[0]));
+    const review=compareWordDraftText(imported.manifest,source,imported.text);
+    if(imported.manifest.clauseId!==clauseId||imported.manifest.versionId!==versionId)
+      throw Error('Ce document Word provient d’un autre brouillon de clause.');
+    for(const [key,value] of wordSessions){
+      if(value.expiresAt<Date.now())wordSessions.delete(key);
+    }
+    if(wordSessions.size>=12)throw Error('Trop de comparaisons Word ouvertes : annule une revue avant de recommencer.');
+    const sessionId=randomUUID();
+    wordSessions.set(sessionId,{manifest:imported.manifest,text:imported.text,expiresAt:Date.now()+20*60_000});
+    return {sessionId,clauseId,sourceVersionId:versionId,changed:review.changed,
+      paragraphs:review.paragraphs,warnings:[...review.warnings,...imported.warnings],
+      lossy:imported.unsupported,importedFileName:basename(selection.filePaths[0])};
+  });
+  ipcMain.handle('contract-terms:word:cancel',(_event,sessionId:string)=>{
+    wordSessions.delete(sessionId);
+  });
+  ipcMain.handle('contract-terms:word:approve',(_event,sessionId:string)=>{
+    const session=wordSessions.get(sessionId);
+    if(!session||Date.now()>session.expiresAt){
+      wordSessions.delete(sessionId);
+      throw Error('La revue Word a expiré : importe à nouveau le document.');
+    }
+    const result=database.contractTerms.createReviewedWordDraft(session.manifest,session.text);
+    wordSessions.delete(sessionId);
+    return result;
+  });
+
   ipcMain.handle('contract-terms:library:set-status', (_event, id: string, status: ContractClauseStatus) => database.contractTerms.setTemplateStatus(id, status));
   ipcMain.handle('contract-terms:library:set-audience', (_event, id: string, audience: ContractClauseAudience) => database.contractTerms.setTemplateAudience(id, audience));
   ipcMain.handle('contract-terms:library:set-catalog-links', (_event, id: string, catalogItemIds: string[]) => database.contractTerms.setCatalogLinks(id, catalogItemIds));

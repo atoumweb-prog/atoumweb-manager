@@ -32,7 +32,7 @@ interface BillingItemRow extends Record<string, unknown> {
 }
 
 export class BillingHandoffService {
-  constructor(private readonly database: DatabaseAdapter) {}
+  constructor(private readonly database: DatabaseAdapter, private readonly verifyInvoiceDocument?: (documentId: string) => string) {}
 
   list(filters: BillingItemFilters = {}): BillingItem[] {
     const where: string[] = [];
@@ -174,6 +174,11 @@ export class BillingHandoffService {
     const existing = this.database.get<{ id: string }>('SELECT id FROM billing_items WHERE source_key=?', [sourceKey]);
     const now = nowIso();
 
+    // Once Abby's invoice PDF is attached, a source sync must never demote or rewrite the billed item.
+    if (existing && this.get(existing.id).invoiceDocumentId) {
+      throw new Error('Facture PDF déjà rattachée : la décision de dépassement ne peut plus modifier cet élément facturé.');
+    }
+
     if (decision.decision !== 'bill_out_of_scope') {
       if (existing) {
         this.database.run("UPDATE billing_items SET status='cancelled',notes=?,updated_at=? WHERE id=?", [decision.reason, now, existing.id]);
@@ -218,44 +223,108 @@ export class BillingHandoffService {
     if (status === 'invoiced') throw new Error('Importe la facture PDF pour passer cet élément à « Facturé ».');
     const current = this.get(id);
     if (current.invoiceDocumentId) throw new Error('Une facture PDF est déjà rattachée. Le statut Facturé est conservé.');
+    if (current.status === status) return current;
     const now = nowIso();
-    this.database.run('UPDATE billing_items SET status=?,updated_at=? WHERE id=?', [status, now, id]);
-    this.writeActivity('billing_item', id, 'billing_item_status_changed', `${current.description} · ${status}`);
+    this.database.exec('SAVEPOINT billing_status_change');
+    try {
+      this.database.run('UPDATE billing_items SET status=?,updated_at=? WHERE id=?', [status, now, id]);
+      this.writeActivity('billing_item', id, 'billing_item_status_changed', `${current.description} · ${status}`);
+      this.database.exec('RELEASE SAVEPOINT billing_status_change');
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT billing_status_change');
+      this.database.exec('RELEASE SAVEPOINT billing_status_change');
+      throw error;
+    }
     return this.get(id);
   }
 
   attachInvoice(id: string, documentId: string, input: BillingInvoiceInput = {}): BillingItem {
     const current = this.get(id);
-    const document = this.database.get<{ id: string; client_account_id: string; category: string; archived_at: string | null }>(
-      'SELECT id,client_account_id,category,archived_at FROM client_documents WHERE id=?',
+    const document = this.database.get<{ id: string; client_account_id: string; category: string; mime_type: string | null; sha256: string | null; archived_at: string | null }>(
+      'SELECT id,client_account_id,category,mime_type,sha256,archived_at FROM client_documents WHERE id=?',
       [documentId],
     );
     if (!document) throw new Error('Facture PDF introuvable.');
     if (document.client_account_id !== current.clientAccountId) throw new Error('Cette facture appartient à un autre client.');
     if (document.category !== 'invoice') throw new Error('Le document doit être classé dans la catégorie Factures.');
+    if (document.mime_type !== 'application/pdf') throw new Error('Seuls les fichiers PDF peuvent être rattachés comme factures Abby.');
     if (document.archived_at) throw new Error('Restaure la facture avant de la rattacher.');
+    const alreadyLinked = this.database.get<{ id: string }>(
+      'SELECT id FROM billing_items WHERE invoice_document_id=? AND id<>? LIMIT 1',
+      [documentId, id],
+    );
+    if (alreadyLinked) throw new Error('Cette facture Abby est déjà associée à un autre élément. Le rapprochement multi-sources doit être traité explicitement.');
+    if (document.sha256) {
+      const sameBytes = this.database.get<{ id: string }>(
+        `SELECT bi.id FROM billing_items bi
+         JOIN client_documents cd ON cd.id=bi.invoice_document_id
+         WHERE bi.id<>? AND bi.client_account_id=? AND cd.sha256=? LIMIT 1`,
+        [id, current.clientAccountId, document.sha256],
+      );
+      if (sameBytes) throw new Error('Un PDF Abby identique est déjà associé à un autre élément. Le rapprochement multi-sources doit être traité explicitement.');
+    }
+    // Production supplies a workspace-aware verifier; do not attest tampered or missing PDF bytes.
+    this.verifyInvoiceDocument?.(documentId);
 
+    // Reattaching the same document is not a new Abby invoice replacement.
+    if (current.invoiceDocumentId === documentId) {
+      const reference = input.reference === undefined ? (current.invoiceReference ?? null) : clean(input.reference);
+      const invoicedAt = input.invoicedAt ? this.dateIso(input.invoicedAt, 'Date de facture invalide.') : current.invoicedAt;
+      if (reference === current.invoiceReference && invoicedAt === current.invoicedAt) return current;
+      return this.updateInvoiceMetadata(id, { reference, invoicedAt });
+    }
     const reference = clean(input.reference);
     const invoicedAt = input.invoicedAt ? this.dateIso(input.invoicedAt, 'Date de facture invalide.') : nowIso();
     const now = nowIso();
-    this.database.run(
-      "UPDATE billing_items SET invoice_document_id=?,invoice_reference=?,invoiced_at=?,status='invoiced',updated_at=? WHERE id=?",
-      [documentId, reference, invoicedAt, now, id],
-    );
-    this.writeActivity('billing_item', id, 'billing_invoice_attached', `Facture PDF rattachée : ${current.description}`);
+    this.database.exec('SAVEPOINT billing_invoice_attach');
+    try {
+      this.database.run(
+        "UPDATE billing_items SET invoice_document_id=?,invoice_reference=?,invoiced_at=?,status='invoiced',updated_at=? WHERE id=?",
+        [documentId, reference, invoicedAt, now, id],
+      );
+      this.database.run(
+        'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
+        ['billing_item', id, current.invoiceDocumentId ? 'billing_invoice_replaced' : 'billing_invoice_attached',
+          `Facture PDF ${current.invoiceDocumentId ? 'remplacée' : 'rattachée'} : ${current.description}`,
+          JSON.stringify({ previousDocumentId: current.invoiceDocumentId, currentDocumentId: documentId,
+            previousReference: current.invoiceReference, currentReference: reference,
+            previousInvoicedAt: current.invoicedAt, currentInvoicedAt: invoicedAt }), now],
+      );
+      this.database.exec('RELEASE SAVEPOINT billing_invoice_attach');
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT billing_invoice_attach');
+      this.database.exec('RELEASE SAVEPOINT billing_invoice_attach');
+      throw error;
+    }
     return this.get(id);
   }
 
   updateInvoiceMetadata(id: string, input: BillingInvoiceInput): BillingItem {
     const current = this.get(id);
     if (!current.invoiceDocumentId) throw new Error('Aucune facture PDF n’est rattachée à cet élément.');
-    const reference = clean(input.reference);
+    const reference = input.reference === undefined ? (current.invoiceReference ?? null) : clean(input.reference);
     const invoicedAt = input.invoicedAt ? this.dateIso(input.invoicedAt, 'Date de facture invalide.') : current.invoicedAt ?? nowIso();
-    this.database.run(
-      'UPDATE billing_items SET invoice_reference=?,invoiced_at=?,updated_at=? WHERE id=?',
-      [reference, invoicedAt, nowIso(), id],
-    );
-    this.writeActivity('billing_item', id, 'billing_invoice_metadata_updated', `Informations facture mises à jour : ${current.description}`);
+    if (reference === current.invoiceReference && invoicedAt === current.invoicedAt) return current;
+    const now = nowIso();
+    this.database.exec('SAVEPOINT billing_invoice_metadata');
+    try {
+      this.database.run(
+        'UPDATE billing_items SET invoice_reference=?,invoiced_at=?,updated_at=? WHERE id=?',
+        [reference, invoicedAt, now, id],
+      );
+      this.database.run(
+        'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
+        ['billing_item', id, 'billing_invoice_metadata_updated',
+          `Informations facture mises à jour : ${current.description}`,
+          JSON.stringify({ documentId: current.invoiceDocumentId, previousReference: current.invoiceReference,
+            currentReference: reference, previousInvoicedAt: current.invoicedAt, currentInvoicedAt: invoicedAt }), now],
+      );
+      this.database.exec('RELEASE SAVEPOINT billing_invoice_metadata');
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT billing_invoice_metadata');
+      this.database.exec('RELEASE SAVEPOINT billing_invoice_metadata');
+      throw error;
+    }
     return this.get(id);
   }
   private select(): string {

@@ -1,5 +1,41 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 14/10/2026 — Lot 09F : clôture technique du candidat complet 09A–09E, sans fusion dans main
+
+- **VALIDÉ TECHNIQUEMENT** dans [PR #134](https://github.com/atoumweb-prog/atoumweb-manager/pull/134) draft. [CI Windows #38618468110](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38618468110) **SUCCESS** sur le SHA du code `8bf6d8e6f05bc1ad32d93853e2e652fb8495cf54`.
+- Un seul arbre Windows TEMP : TypeScript OK, **114 fichiers Vitest**, **85 assertions Electron Abby**, **67 Dépenses**, **73 Documents**, **65 Word/DOCX-PDF**, **373 UX générales** (soit **663 assertions Electron/UX**) et restauration/fermeture Windows OK. Contrôles d'intégrité SQLite et 3 thèmes × 3 densités inclus.
+- Conflit résolu : `ClientDocumentService` conserve la vérification de signature PDF et SHA du 09B **avec** les garde-fous historiques Abby, les transactions documentaires et l'archivage du 09D. Les tests de PDF frauduleux désormais passent sur le candidat combiné.
+- Les sous-lots 09A, 09B, 09C, 09D, 09E et 09F sont **validés techniquement sur leur périmètre livré** ; 09E ne prétend pas convertir fidèlement les tableaux, images, macros et éléments riches Word.
+- Seuls restent les contrôles liés au `main` de destination (réconciliation des lots parallèles, recette CI/Windows post-inclusion), et la recette humaine de présentation/Word/juridique. Ordre proposé : #113 (base 09A) puis #134 (candidat intégré), **pas** de fusion supplémentaire de #119/#129/#132/#133 ; aucune fusion effectuée.
+- Détails, limites et gates : `docs/ux-v2/LOT-09F-CONVERGENCE-2026-10-14.md`.
+
+## 14/10/2026 — 09D Documents : validé techniquement (périmètre isolé)
+
+- PR [#132](https://github.com/atoumweb-prog/atoumweb-manager/pull/132) draft sur 09A, sans merge. CI [#38602868964](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38602868964) **SUCCESS** sur `d708297` : typecheck, 110 fichiers de tests, 73 assertions natives Electron Documents, 373 UX générales, restauration Windows.
+- Quatre entrées documentaires avec vrais services (et dépôt hors Client honnêtement indiqué non disponible), garde UX-01 sur métadonnées, SHA et provenance visibles, fichiers manquants et modifiés refusés, archivage et correction de métadonnées atomiques.
+- Dépendance à 09B/#119 pour les anciennes factures Abby remplacées : convergence à vérifier avant `main`. Pas de validation humaine ni fusion.
+- Détails : `docs/ux-v2/LOT-09D-PLAN-EXECUTION-2026-10-14.md`.
+
+
+## 14/10/2026 — Lot 09C : validé techniquement (Dépenses/justificatifs)
+
+- PR [#129](https://github.com/atoumweb-prog/atoumweb-manager/pull/129) **draft**, base 09A/#113, indépendante de 09B/#119 ; aucun merge dans main.
+- CI Windows [#38600849268](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38600849268) **SUCCESS** sur `607eb0d` : TypeScript, 110 fichiers Vitest, 67 assertions Electron Dépenses, 373 UX générales, restauration Windows TEMP.
+- Métier : justificatifs versionnés et protégés SHA-256, sauvegardes atomiques avec rollback, corrections de dépenses payées déclarées tracées et confirmées, garde UX-01, Client/Projet cohérents, alerte d'échéance sans occurrence artificielle.
+- Matrice R09C-01 à R09C-17 couverte : `docs/ux-v2/LOT-09C-PLAN-EXECUTION-2026-10-14.md`.
+- Validation humaine et convergence des sous-lots 09A/09B/09C, puis contrôles d'intégration main, demeurent à faire. 09D ouvert séparément, sans fusion.
+
+
+## 14/10/2026 — Lot 09B : clôture technique facturation Abby (validé techniquement)
+
+- Branche `feature/ux-v2-lot09b-billing-20261014`, [PR #119](https://github.com/atoumweb-prog/atoumweb-manager/pull/119) **draft**, base PR #113/09A, sans fusion dans `main`.
+- Garanties implémentées : Client et catégorie facture contrôlés ; rejet des PDF archivés, mal typés, altérés ou sans signature PDF ; empreinte SHA-256 au niveau du service métier ; pièces anciennes conservées et protégées même après remplacement ; journal de provenance avec ancien/nouveau document et références/dates.
+- Cohérence : rattachement et journal, ainsi que modifications de métadonnées et journal, sont atomiques (SAVEPOINT SQLite) ; refus de déclasser un dépassement maintenance facturé ; idempotence même document ; prévention de l'association implicite d'un même document ou d'un même SHA à plusieurs éléments facturables.
+- UX : confirmation native « Rester / Quitter sans enregistrer » pour référence/date lors du changement de fiche, fermeture de fiche ou navigation, sans confondre `invoiced` et `paid`.
+- Recette : nouvelle fixture sur **vraie interface Facturation React + preload + IPC + SQLite et fichiers PDF TEMP**, tests d'import, remplacement, annulation du sélecteur, refus d'ouverture altérée et protections UX-01 ; smoke Electron global et restauration distincts.
+- CI Windows [38598204165](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38598204165) **SUCCESS** sur `20e0557d` : TypeScript, 111 fichiers Vitest, 85 assertions Electron dédiées Abby, 373 assertions UX globales, 3 thèmes × 3 densités et restauration Windows. **09B validé techniquement**, sans validation humaine ni fusion.
+- Matrice R09B-01 à R09B-17 : `docs/ux-v2/LOT-09B-PLAN-EXECUTION-2026-10-14.md`. Regroupement multi-sources jamais inféré automatiquement, suite métier explicite à concevoir si requis. Il ne reste pour 09B que l'inspection humaine et les vérifications d'intégration dans `main` après les autres lots.
+
 ## 14/10/2026 — Lot 09A : clôture technique et préparation 09B
 
 - Branche isolée `audit/ux-v2-lot09-20261014`, PR #113 **draft**, sans merge. CI #1042 (run 38579044064) **SUCCESS** sur `8b57e3e` : typecheck, suite Vitest, Electron UI/SQLite TEMP et restauration/redémarrage TEMP. Contrôles 09A exécutés, sans validation humaine anticipée.
