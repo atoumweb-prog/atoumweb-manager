@@ -37,8 +37,8 @@ describe('05C — numbered draft contract from approved clauses',()=>{
  });
  it('renders only complete approved texts with stable article numbering',()=>{
    const result=assembleReviewedDraftContract([entry('f','vf','finance'),entry('o','vo','object')],{});
-   expect(renderApprovedDraftContract(result)).toContain('1.1 — o\\nTexte o');
-   expect(renderApprovedDraftContract(result)).toContain('5.1 — f\\nTexte f');
+   expect(renderApprovedDraftContract(result)).toContain('1.1 — o\nTexte o');
+   expect(renderApprovedDraftContract(result)).toContain('5.1 — f\nTexte f');
    const unreviewed=entry('pending','vp');
    unreviewed.review={status:'unclassified',sectionKey:null,rankInSection:null};
    const incomplete=assembleReviewedDraftContract([unreviewed],{});
