@@ -48,7 +48,7 @@ function buildApp(directory, folder) {
   const base = directory.replaceAll('\\', '/');
   console.log(prefixLog, 'Bundling production backup/IPC/shutdown services from the test worktree...');
   esbuild.buildSync({
-    stdin: { contents: ['database/DatabaseService', 'workspace', 'restore', 'ipc', 'unsaved', 'restoreQuitGate']
+    stdin: { contents: ['database/DatabaseService', 'database/migrations', 'workspace', 'restore', 'ipc', 'unsaved', 'restoreQuitGate']
       .map(s => "export * from '" + base + '/src/main/' + s + "';").join('\n'),
       resolveDir: directory, loader: 'ts' },
     bundle: true, platform: 'node', format: 'cjs',

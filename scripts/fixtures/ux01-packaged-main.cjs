@@ -73,7 +73,7 @@ async function boot() {
     try {
       await live.initialize();
       assert(live.getSetting(key, null) === 'before', 'Packaged restore state mismatch');
-      assert(live.health().migrationCount === 66, 'Wrong migration count');
+      assert(live.health().migrationCount === S.MIGRATIONS.length, 'Wrong migration count');
     } finally { live.close(); }
     const { DatabaseSync } = require('node:sqlite');
     const safety = new DatabaseSync(restored.safetyBackupPath, { readOnly: true });
@@ -122,7 +122,7 @@ async function boot() {
   try { reader.prepare('VACUUM INTO ?').run(standalone); } finally { reader.close(); }
   assert(!['-wal', '-shm', '-journal'].some(suffix => fs.existsSync(standalone + suffix)),
     'Standalone package fixture still has SQLite sidecars');
-  assert(S.validateRestoreSource(standalone).migrationCount === 66, 'Invalid packaged fixture source');
+  assert(S.validateRestoreSource(standalone).migrationCount === S.MIGRATIONS.length, 'Invalid packaged fixture source');
   live.setSetting(key, 'after');
 
   // Directly reuse production IPC and guarded lifecycle; no fake handler.
