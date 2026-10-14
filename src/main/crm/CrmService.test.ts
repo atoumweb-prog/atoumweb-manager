@@ -26,7 +26,7 @@ describe('CrmService', () => {
     const saved=crm.updateClientRelationshipIfUnchanged(client.id,base,{status:'good',note:'Call on Friday'});
     expect(saved.notes).toBe('Business notes preserved');
     expect(()=>new CrmService(database).updateClientRelationshipIfUnchanged(client.id,base,{status:'watch',note:'Stale'})).toThrow(/Conflit/);
-    expect(crm.getClient(client.id).relationshipNote).toBe('Call on Friday');
+    expect(crm.listClients({includeArchived:true}).find(item=>item.id===client.id)!.relationshipNote).toBe('Call on Friday');
     expect(crm.listActivity('client',client.id).filter(event=>event.action==='relationship_note_changed')).toHaveLength(1);
     const cleared=crm.updateClientRelationshipIfUnchanged(client.id,{status:'good',note:'Call on Friday'},{status:'good',note:null});
     expect(cleared.relationshipNote).toBeNull();
@@ -37,8 +37,8 @@ describe('CrmService', () => {
     const count=database.all('SELECT * FROM activity_events').length;
     database.exec("CREATE TRIGGER fail_relation_history BEFORE INSERT ON activity_events WHEN NEW.action='relationship_note_changed' BEGIN SELECT RAISE(ABORT,'Injected note history failure'); END;");
     expect(()=>crm.updateClientRelationshipIfUnchanged(client.id,{status:'neutral',note:null},{status:'good',note:'New note'})).toThrow(/Injected/);
-    expect(crm.getClient(client.id).relationshipStatus).toBe('neutral');
-    expect(crm.getClient(client.id).relationshipNote).toBeNull();
+    expect(crm.listClients({includeArchived:true}).find(item=>item.id===client.id)!.relationshipStatus).toBe('neutral');
+    expect(crm.listClients({includeArchived:true}).find(item=>item.id===client.id)!.relationshipNote).toBeNull();
     expect(database.all('SELECT * FROM activity_events')).toHaveLength(count);
     expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });

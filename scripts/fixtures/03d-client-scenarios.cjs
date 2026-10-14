@@ -73,7 +73,7 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
   failQuotes=false;await textClick('.client-summary-panel [role=alert] button','Réessayer');await wait('!document.querySelector(".client-summary-panel [role=alert]")','explicit recovery');
   await click('#client-tab-summary');await textClick('#client-panel-summary button','Modifier la note de relation');
   await input('#client-panel-summary textarea','TEST03D relation dated');await textClick('#client-panel-summary button','Enregistrer la note');await wait('!document.querySelector("#client-panel-summary textarea")','relation saved');
-  test(db.crm.getClient(client.id).relationshipNote==='TEST03D relation dated','Real UI saves only relationship note');
+  test(db.crm.listClients({includeArchived:true}).find(item=>item.id===client.id).relationshipNote==='TEST03D relation dated','Real UI saves only relationship note');
   test(db.crm.listActivity('client',client.id).some(e=>e.action==='relationship_note_changed'),'Relationship note change has dated history');
   await textClick('.clients-table tr',second.displayName);await wait(`document.querySelector('.client-summary-panel')?.dataset.searchEntityId===${JSON.stringify(second.id)}`,'second Client');
   test(await get('!document.querySelector("#client-panel-contacts .contact-inline-form")'),'Changing Client never reassigns former draft');
