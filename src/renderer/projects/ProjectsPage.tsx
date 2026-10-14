@@ -236,7 +236,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
   useEffect(() => {
     if (!detail) return undefined;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
+      if (event.key !== 'Escape' || event.defaultPrevented || document.querySelector('.project-page-composition-modal')) return;
       if (phaseCompletionReview) {
         setPhaseCompletionReview(null);
         return;
@@ -335,6 +335,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
   }
 
   function closeProjectDetailAllowed(): void {
+    ++openEpoch.current;
     setCompletionReview(null);
     setSelectedNodeId(null);
     setExpandedPhaseIds(new Set());
@@ -726,6 +727,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
 
         {detailTab === 'sites' && (
           <ProjectSitesTab
+            key={detail.id}
             projectId={detail.id}
             nodes={detail.nodes}
             onMessage={onMessage}

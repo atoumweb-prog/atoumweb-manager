@@ -8,7 +8,7 @@ import {
   type ComponentTextField,
   type ComponentVisualField,
 } from './componentLocalEditor';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   AtoumWebCompositionDetail,
   AtoumWebCompositionItem,
@@ -139,6 +139,7 @@ export function ProjectCompositionItemSettings({
   onUpdated,
   onMessage,
   docked = false,
+  operationPending = false,
   onClose,
   onCollapse,
   onExpand,
@@ -152,6 +153,7 @@ export function ProjectCompositionItemSettings({
   onUpdated: (detail: AtoumWebCompositionDetail) => void;
   onMessage: (message: string) => void;
   docked?: boolean;
+  operationPending?: boolean;
   onClose?: () => void;
   onCollapse?: () => void;
   onExpand?: () => void;
@@ -159,7 +161,9 @@ export function ProjectCompositionItemSettings({
   onPreviewDeviceChange?: (device: SettingsPreviewDevice) => void;
   onDraftChange?: (draft: CodeParts) => void;
 }) {
+  const operation = useRef(false);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [base, setBase] = useState<CodeParts>({ html: '', css: '', javascript: '' });
   const [draft, setDraft] = useState<CodeParts>({ html: '', css: '', javascript: '' });
@@ -177,13 +181,15 @@ export function ProjectCompositionItemSettings({
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setLoadFailed(false);
     void window.atoumweb.referentials.library.get(item.sourceItemId).then((detail) => {
       if (cancelled) return;
       const version = detail.versions.find((candidate) => candidate.id === item.sourceVersionId) ?? null;
+      if (!version) throw new Error('Version source introuvable ; réglages non modifiables.');
       const source = parseVersion(version);
-      const effective = item.hasLocalChanges && item.localHtml
+      const effective = item.hasLocalChanges
         ? {
-            html: item.localHtml,
+            html: item.localHtml ?? '',
             css: item.localCss ?? '',
             javascript: item.localJavascript ?? '',
           }
@@ -201,6 +207,7 @@ export function ProjectCompositionItemSettings({
     }).catch((error) => {
       if (!cancelled) {
         setLoading(false);
+        setLoadFailed(true);
         onMessage(error instanceof Error ? error.message : 'Impossible de charger le composant source.');
       }
     });
@@ -235,9 +242,10 @@ export function ProjectCompositionItemSettings({
     || note.trim() !== (item.localSettings.note ?? '');
   const unsaved = useUnsavedDraft('Réglages de composant', { draft, note }, {
     group: 'project-composition',
-    ready: !loading,
+    ready: !loading && !loadFailed,
     pending: busy,
     dirty,
+    discard: (saved) => { setDraft(saved.draft); setNote(saved.note); setTexts(extractComponentTexts(saved.draft.html)); setColors(extractColors(saved.draft.css)); setVisuals(extractComponentVisuals(saved.draft.html)); },
   });
 
   useEffect(() => {
@@ -282,6 +290,8 @@ export function ProjectCompositionItemSettings({
   }
 
   async function save(): Promise<void> {
+    if (operation.current || operationPending || loadFailed) return;
+    operation.current = true;
     setBusy(true);
     try {
       const updated = await window.atoumweb.referentials.compositions.updateItemLocalCode(
@@ -300,12 +310,15 @@ export function ProjectCompositionItemSettings({
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible d’enregistrer les réglages du bloc.');
     } finally {
+      operation.current = false;
       setBusy(false);
     }
   }
 
   async function reset(): Promise<void> {
     remember();
+    if (operation.current || operationPending || loadFailed) return;
+    operation.current = true;
     setBusy(true);
     try {
       const updated = await window.atoumweb.referentials.compositions.resetItemLocalCode(compositionId, item.id);
@@ -321,12 +334,15 @@ export function ProjectCompositionItemSettings({
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de réinitialiser le bloc.');
     } finally {
+      operation.current = false;
       setBusy(false);
     }
   }
 
   async function promote(): Promise<void> {
     if (!variantName.trim()) return;
+    if (operation.current || operationPending || loadFailed) return;
+    operation.current = true;
     setBusy(true);
     try {
       const promoted = await window.atoumweb.referentials.compositions.promoteItemVariant(
@@ -341,6 +357,7 @@ export function ProjectCompositionItemSettings({
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible d’envoyer cette adaptation vers la Bibliothèque.');
     } finally {
+      operation.current = false;
       setBusy(false);
     }
   }
@@ -356,8 +373,8 @@ export function ProjectCompositionItemSettings({
       <div>
         <button className="secondary-button" type="button" disabled={!undoStack.length || busy} onClick={undo} title="Annuler la dernière modification">↶ Annuler</button>
         <button className="secondary-button" type="button" disabled={!redoStack.length || busy} onClick={redo} title="Rétablir la modification">↷ Rétablir</button>
-        <button className="secondary-button" type="button" disabled={busy} onClick={() => void reset()}>⟲ Version Bibliothèque</button>
-        <button className="primary-button project-component-validate-button" type="button" disabled={busy || !dirty || !draft.html.trim()} onClick={() => void save()}>
+        <button className="secondary-button" type="button" disabled={busy} onClick={() => unsaved.request(() => { void reset(); })}>⟲ Version Bibliothèque</button>
+        <button className="primary-button project-component-validate-button" type="button" disabled={busy || operationPending || loadFailed || !dirty || !draft.html.trim()} onClick={() => void save()}>
           {dirty ? '✓ Valider les changements' : '✓ Changements validés'}
         </button>
         {onExpand && <button className="secondary-button project-inspector-expand-action" type="button" aria-label="Agrandir l’atelier" title="Agrandir l’atelier" onClick={onExpand}>Agrandir</button>}
@@ -366,7 +383,7 @@ export function ProjectCompositionItemSettings({
       </div>
     </div>
 
-    <div className="project-component-settings-grid">
+    <fieldset disabled={busy || operationPending || loadFailed} style={{border:0,padding:0,margin:0,minWidth:0}}><div className="project-component-settings-grid">
       <div className="project-component-settings-controls">
         <div className="project-component-settings-section">
           <div>
@@ -515,7 +532,7 @@ export function ProjectCompositionItemSettings({
         </details>
 
         <div className="project-component-settings-actions">
-          <button className="primary-button" type="button" disabled={busy || !dirty || !draft.html.trim()} onClick={() => void save()}>
+          <button className="primary-button" type="button" disabled={busy || operationPending || loadFailed || !dirty || !draft.html.trim()} onClick={() => void save()}>
             {dirty ? '✓ Valider les changements' : '✓ Changements validés'}
           </button>
           <button className="secondary-button" type="button" onClick={() => setModulePreviewOpen(true)}>Voir le module seul</button>
@@ -554,6 +571,7 @@ export function ProjectCompositionItemSettings({
       </div>
     </div>
 
+    </fieldset>
     {modulePreviewOpen && <div className="project-page-composition-modal module-only-preview" role="dialog" aria-modal="true">
       <div className="project-page-composition-modal-backdrop" onClick={() => setModulePreviewOpen(false)} />
       <div className="project-page-composition-modal-panel">

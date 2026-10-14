@@ -13,3 +13,25 @@ describe('protection des sorties par scope',()=>{
  it('les scopes démontés sont retirés',()=>{const r=new UnsavedRegistry();r.update(entry('a'));r.remove('a');expect(r.active()).toEqual([]);});
  it('l’archivage cible les sous-groupes de la fiche sans toucher un autre prospect',()=>{const r=new UnsavedRegistry();r.update(entry('qualification','prospect:one/desk'));r.update(entry('identity','prospect:one/panel'));r.update(entry('other','prospect:two/desk'));expect(r.request(()=>{throw Error('mutation interdite')},()=>false,'prospect:one')).toBe(false);r.request(()=>{},()=>true,'prospect:one');expect(r.active().map(e=>e.id)).toEqual(['other']);});
 });
+
+describe('07A composition : brouillons et commande de Page indépendants',()=>{
+ it('une commande pending bloque toute sortie et tout abandon malgré confirmation',()=>{
+  const r=new UnsavedRegistry();let mutations=0,discarded=0,confirmations=0;
+  r.update(entry('html-css-js-note','project-composition',true,false,()=>discarded++));
+  r.update(entry('page-operation','project-composition',false,true));
+  expect(r.request(()=>mutations++,(_,pending)=>{confirmations++;expect(pending).toBe(true);return true;},'project-composition')).toBe(false);
+  expect([mutations,discarded,confirmations]).toEqual([0,0,1]);
+  r.update(entry('page-operation','project-composition',false,false));
+  expect(r.request(()=>mutations++,()=>true,'project-composition')).toBe(true);
+  expect([mutations,discarded]).toEqual([1,1]);
+ });
+ it('fermer la création sur Rester conserve aussi les réglages montés',()=>{
+  const r=new UnsavedRegistry();let changes=0;
+  r.update(entry('settings','project-composition',true,false,()=>changes++));
+  r.update(entry('create','project-composition',true,false,()=>changes++));
+  expect(r.request(()=>changes++,()=>false,['create'])).toBe(false);
+  expect(changes).toBe(0);expect(r.active().map(e=>e.id)).toEqual(['settings','create']);
+  expect(r.request(()=>changes++,()=>true,['create'])).toBe(true);
+  expect(changes).toBe(2);expect(r.active().map(e=>e.id)).toEqual(['settings']);
+ });
+});

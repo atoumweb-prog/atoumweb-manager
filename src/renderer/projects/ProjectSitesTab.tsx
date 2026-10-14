@@ -9,7 +9,7 @@ import {
 } from '../../shared/projects';
 import type { TimeSession } from '../../shared/time';
 import { ProjectPageCompositionPanel } from './ProjectPageCompositionPanel';
-import { requestUnsavedExit } from '../unsaved/unsaved';
+import { requestUnsavedExit, useUnsavedDraft } from '../unsaved/unsaved';
 import './ProjectSitesTab.css';
 
 function formatElapsed(seconds: number): string {
@@ -67,6 +67,15 @@ export function ProjectSitesTab({
   const [timeSnapshotAt, setTimeSnapshotAt] = useState(Date.now());
   const [tick, setTick] = useState(Date.now());
 
+  useUnsavedDraft('Opération Site/Page', null, {group:'project-composition',dirty:false,pending:busy});
+  const siteDraft = useUnsavedDraft('Nouveau Site ou Page', { siteName, siteDomain, pageName, pageSiteId }, {
+    group:'project-composition', ready: createMode !== null, pending:busy,
+    dirty: createMode === 'site' ? !!(siteName || siteDomain) : !!pageName,
+    discard: () => {setSiteName('');setSiteDomain('');setPageName('');},
+  });
+  function changeCreateMode(next: typeof createMode): void {
+    if(next !== createMode) siteDraft.request(() => setCreateMode(next));
+  }
   const pages = useMemo(
     () => nodes.filter((node) => node.type === 'module' && node.displaySubtype === 'page'),
     [nodes],
@@ -409,9 +418,9 @@ export function ProjectSitesTab({
       </div>
       <div className="project-sites-toolbar">
         <button className="secondary-button" type="button" disabled={busy} title="Créer uniquement les Sites et Pages manquants prévus par le blueprint" onClick={() => void applyBlueprint()}>Initialiser depuis le blueprint</button>
-        <button className="secondary-button" type="button" onClick={() => setCreateMode(createMode === 'site' ? null : 'site')}>+ Site</button>
+        <button className="secondary-button" type="button" onClick={() => changeCreateMode(createMode === 'site' ? null : 'site')}>+ Site</button>
         <button className="primary-button" type="button" onClick={() => {
-          setCreateMode(createMode === 'page' ? null : 'page');
+          changeCreateMode(createMode === 'page' ? null : 'page');
           if (!pageSiteId && selectedSite && !selectedSite.archivedAt) setPageSiteId(selectedSite.id);
         }}>+ Page</button>
         <button className="secondary-button project-sites-intro-toggle" type="button" title={introCollapsed ? 'Déployer le bandeau Sites & pages' : 'Réduire le bandeau Sites & pages'} onClick={() => setIntroCollapsed((value) => !value)}>
@@ -429,7 +438,7 @@ export function ProjectSitesTab({
         <input value={siteDomain} onChange={(event) => setSiteDomain(event.target.value)} placeholder="Ex. fleuriste.com" />
       </label>
       <div className="button-row">
-        <button className="secondary-button" type="button" onClick={() => setCreateMode(null)}>Annuler</button>
+        <button className="secondary-button" type="button" onClick={() => changeCreateMode(null)}>Annuler</button>
         <button className="primary-button" type="button" disabled={busy || !siteName.trim()} onClick={() => void createSite()}>Créer le Site</button>
       </div>
     </div>}
@@ -446,7 +455,7 @@ export function ProjectSitesTab({
         </select>
       </label>
       <div className="button-row">
-        <button className="secondary-button" type="button" onClick={() => setCreateMode(null)}>Annuler</button>
+        <button className="secondary-button" type="button" onClick={() => changeCreateMode(null)}>Annuler</button>
         <button className="primary-button" type="button" disabled={busy || !pageName.trim()} onClick={() => void createPage()}>Créer la Page</button>
       </div>
     </div>}
@@ -687,6 +696,7 @@ export function ProjectSitesTab({
           </section>
 
           <ProjectPageCompositionPanel
+            key={selectedPage.id}
             page={selectedPage}
             onMessage={onMessage}
             inspectorHostId={inspectorHostId}
