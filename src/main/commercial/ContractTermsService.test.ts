@@ -1,10 +1,11 @@
-import { finalizeForTest, acceptForTest } from '../testSupport/quotePreparationFixture';
+import { prepareQuoteForTest, finalizeForTest, acceptForTest } from '../testSupport/quotePreparationFixture';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CrmService } from '../crm/CrmService';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
 import { CatalogService } from './CatalogService';
 import { ContractTermsService } from './ContractTermsService';
+import {ContractSectionReviewService} from './ContractSectionReviewService';
 import { QuoteService } from './QuoteService';
 import { quoteContractText } from '../../shared/contractTerms';
 import { buildQuoteHtml } from './quotePdf';
@@ -52,6 +53,38 @@ function createConsumerProspect() {
 }
 
 describe('ContractTermsService', () => {
+  it('05C refuses explicit canonical finalization without approval and keeps quote draft',()=>{
+    publishedClause('REVIEW-REQUIRED','Socle non classé','base','Conditions publiées.');
+    const q=quotes.create({prospectId:prospectId(),subject:'Validation obligatoire'});
+    quotes.addCustomLine(q.id,{label:'Site',proposedUnitPriceCents:69900});
+    prepareQuoteForTest(database,q.id);
+    expect(()=>quotes.finalize(q.id,true)).toThrow(/Classement juridique incomplet/);
+    expect(quotes.get(q.id).finalizedAt).toBeNull();
+    expect(quotes.get(q.id).contractCompiledAt).toBeNull();
+    expect(quotes.get(q.id).contractTextSnapshot).toBeNull();
+    expect(quotes.finalize(q.id).finalizedAt).toBeTruthy();
+  });
+
+  it('05C: finalise un devis classé et conserve ses conditions particulières personnalisées', () => {
+    const base=publishedClause('REVIEW-BASE','Clauses communes','base','CGV approuvées.');
+    const quote=quotes.create({prospectId:prospectId(),subject:'Contrat canonique'});
+    quotes.addCustomLine(quote.id,{label:'Site',proposedUnitPriceCents:69900});
+    contractTerms.syncQuote(quote.id);
+    contractTerms.addCustomQuoteClause(quote.id,{title:'Clause négociée',body:'Condition personnalisée conservée.'});
+    const review=new ContractSectionReviewService(database);
+    review.propose(base.currentVersionId!,'object',0,'Classement juridique à faire approuver');
+    review.approve(base.currentVersionId!,'Relecteur humain');
+    prepareQuoteForTest(database,quote.id);
+    const frozen=quotes.finalize(quote.id,true);
+    expect(frozen.contractTextSnapshot).toContain('1.1 — Clauses communes');
+    expect(frozen.contractTextSnapshot).toContain('CGV approuvées.');
+    expect(frozen.contractTextSnapshot).toContain('CONDITIONS PARTICULIÈRES');
+    expect(frozen.contractTextSnapshot).toContain('Condition personnalisée conservée.');
+    expect(contractTerms.freezeQuote(quote.id).snapshotText).toBe(frozen.contractTextSnapshot);
+    expect(contractTerms.presentation(quote.id).text).toContain(frozen.contractTextSnapshot!);
+    expect(contractTerms.presentation(quote.id).sections.some(section=>section.id==='clauses'&&section.text===frozen.contractTextSnapshot)).toBe(true);
+  });
+
   it('enregistre une clause en brouillon sans alimenter les devis ni publier', () => {
     const quote = quotes.create({ prospectId: prospectId(), subject: 'Brouillon uniquement' });
     const template = contractTerms.createTemplate({ code: 'TEST-DRAFT', title: 'Test', scope: 'base' }, { body: 'Texte non publié.' });

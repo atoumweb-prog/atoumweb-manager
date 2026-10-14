@@ -327,6 +327,11 @@ const api: AtoumWebApi = {
     initialize: () => ipcRenderer.invoke('contract-types:initialize'),
   },
   contractTerms: {
+    sectionReviews: {
+      get: (versionId:string) => ipcRenderer.invoke('contract-terms:section:get',versionId),
+      propose: (versionId,sectionKey,rankInSection,reason) => ipcRenderer.invoke('contract-terms:section:propose',versionId,sectionKey,rankInSection,reason),
+      approve: (versionId,reviewer) => ipcRenderer.invoke('contract-terms:section:approve',versionId,reviewer),
+    },
     library: {
       list: (includeArchived?: boolean) => ipcRenderer.invoke('contract-terms:library:list', includeArchived),
       get: (id: string) => ipcRenderer.invoke('contract-terms:library:get', id),
@@ -349,6 +354,8 @@ const api: AtoumWebApi = {
     },
     previewReference: (typeId,typeVersionId,versionId,audience) => ipcRenderer.invoke('contract-terms:preview-reference',typeId,typeVersionId,versionId,audience),
     copyText: (text: string) => ipcRenderer.invoke('contract-terms:copy-text', text),
+    exportWorkingDocx: (quoteId:string) => ipcRenderer.invoke('contract-terms:export-working-docx',quoteId),
+    importDocxText: () => ipcRenderer.invoke('contract-terms:import-docx-text'),
   },
   quotePreparation: {
     get: id => ipcRenderer.invoke('quote-preparation:get',id),
@@ -380,7 +387,7 @@ const api: AtoumWebApi = {
     markSent: (id: string) => ipcRenderer.invoke('quotes:mark-sent', id),
     confirmPrincipleAgreement: (id: string) => ipcRenderer.invoke('quotes:principle-agreement:confirm', id),
     revokePrincipleAgreement: (id: string) => ipcRenderer.invoke('quotes:principle-agreement:revoke', id),
-    finalize:(id:string)=>ipcRenderer.invoke('quotes:finalize',id),
+    finalize:(id:string,canonicalReview?:boolean)=>ipcRenderer.invoke('quotes:finalize',id,canonicalReview===true),
     extendValidity:(id:string,validUntil:string)=>ipcRenderer.invoke('quotes:extend-validity',id,validUntil),
     markViewed: (id: string) => ipcRenderer.invoke('quotes:mark-viewed', id),
     accept: (id: string) => ipcRenderer.invoke('quotes:accept', id),

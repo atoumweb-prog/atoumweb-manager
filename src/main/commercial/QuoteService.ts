@@ -570,7 +570,7 @@ export class QuoteService {
     return result;
   }
 
-  finalize(id: string): QuoteDetail {
+  finalize(id: string, explicitCanonicalReview=false): QuoteDetail {
     const quote = this.get(id);
     if (quote.status !== 'draft') throw new Error('Seul un devis brouillon peut être finalisé.');
     if (quote.finalizedAt) return quote;
@@ -579,7 +579,7 @@ export class QuoteService {
     try {
     const lineIssues = [...new CommercialRulesService(this.database).issues(quote), ...new OperationalSalesService(this.database).issues(quote)];
     if (lineIssues.length) throw Error(lineIssues.join('\n'));
-    this.contractTerms.freezeQuote(id);
+    this.contractTerms.freezeQuote(id,explicitCanonicalReview);
     const now = this.get(id).contractCompiledAt ?? nowIso();
     this.database.run('UPDATE quotes SET finalized_at=?,updated_at=? WHERE id=?', [now, now, id]);
     if (quote.prospectId) this.database.run("UPDATE prospects SET stage='quote_to_send',updated_at=? WHERE id=? AND stage NOT IN ('won','lost')", [now, quote.prospectId]);
