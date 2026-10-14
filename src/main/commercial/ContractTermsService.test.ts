@@ -74,7 +74,8 @@ describe('ContractTermsService', () => {
     const review=new ContractSectionReviewService(database);
     review.propose(base.currentVersionId!,'object',0,'Classement juridique à faire approuver');
     review.approve(base.currentVersionId!,'Relecteur humain');
-    const frozen=finalizeForTest(database,quotes,quote.id);
+    prepareQuoteForTest(database,quote.id);
+    const frozen=quotes.finalize(quote.id,true);
     expect(frozen.contractTextSnapshot).toContain('1.1 — Clauses communes');
     expect(frozen.contractTextSnapshot).toContain('CGV approuvées.');
     expect(frozen.contractTextSnapshot).toContain('CONDITIONS PARTICULIÈRES');
