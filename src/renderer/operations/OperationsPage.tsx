@@ -24,7 +24,7 @@ import {
 import type { ProjectNode, ProjectSummary } from '../../shared/projects';
 import type { TimeCategory } from '../../shared/time';
 import { HourPacksPanel } from './HourPacksPanel';
-import { acquireCompletionLock, isCurrentOperationsRefresh, resolveInterventionCompletion } from './operationAsyncGuards';
+import { acquireCompletionLock, interventionCompletionReview, isCurrentOperationsRefresh, resolveInterventionCompletion } from './operationAsyncGuards';
 import { MaintenancePanel } from './MaintenancePanel';
 import { OperationsAlertsPanel } from './OperationsAlertsPanel';
 import { InterventionBackupPanel } from './InterventionBackupPanel';
@@ -334,6 +334,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
     const releaseLock = status === 'completed' ? acquireCompletionLock(completionInFlight.current, interventionId) : undefined;
     if (status === 'completed' && !releaseLock) return false;
     try {
+    if (status === 'completed' && !window.confirm(interventionCompletionReview(selectedIntervention))) return false;
     let updated: Intervention;
     if (status === 'completed') {
       const outcome = await resolveInterventionCompletion(
