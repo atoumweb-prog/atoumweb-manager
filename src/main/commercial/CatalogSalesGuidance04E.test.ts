@@ -43,7 +43,7 @@ describe('04E — objections humaines versionnées dans le Catalogue SQLite', ()
     catalog.publishVersion(prior.id);
     const next=catalog.createVersion(item.id,{priceMode:'fixed',priceCents:17900});
     expect(salesGuidanceFromCatalogVersion(next).objections).toBe('Combien de temps ? : détailler les étapes');
-    expect(salesGuidanceFromCatalogVersion(catalog.getVersion(prior.id)).objections)
+    expect(salesGuidanceFromCatalogVersion(catalog.getItem(item.id).versions.find(version => version.id === prior.id)!).objections)
       .toBe('Combien de temps ? : détailler les étapes');
     expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
   });
