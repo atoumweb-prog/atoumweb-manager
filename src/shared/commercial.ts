@@ -40,6 +40,10 @@ export interface CatalogCommercialParameters {
   clientNeed?: string | null;
   /** Versioned commercial benefits, descriptive only and never contract clauses. */
   benefits?: string | null;
+  /** Human-authored customer-facing pitch, for internal preparation only. */
+  salesPitch?: string | null;
+  /** Questions to qualify the client's request before proposing the service. */
+  qualificationQuestions?: string | null;
   /** Human-authored objection handling, never contractual. */
   objections?: string | null;
   /** Admin-managed search keywords/synonyms, separated by commas, semicolons or line breaks. */
