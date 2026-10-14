@@ -122,12 +122,12 @@ function App() {
       pending.resolve({status:'opened'});
       setMessage((pending.result.title||'Fiche')+' : fiche chargée.');
       if(id){
-        const focusOrigin=document.activeElement,epoch=navigationEpoch.current;
+        const epoch=navigationEpoch.current;
         requestAnimationFrame(()=>{
           if(epoch!==navigationEpoch.current||visibleEntity.current?.type!==type||visibleEntity.current.id!==id)return;
           const pane=document.querySelector<HTMLElement>('[data-search-entity-id="'+CSS.escape(id)+'"][data-search-entity-type="'+type+'"]');
           // A field selected after loading owns focus; a delayed search acknowledgement must not take it back.
-          if(document.activeElement!==focusOrigin||(pane?.contains(document.activeElement)&&document.activeElement!==pane))return;
+          if(pane?.contains(document.activeElement)&&document.activeElement!==pane&&document.activeElement?.matches('input,textarea,select,[contenteditable=true],[data-contract-field]'))return;
           pane?.focus({preventScroll:true});
         });
       }
