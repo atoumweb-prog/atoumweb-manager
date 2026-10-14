@@ -7,6 +7,7 @@ import {NodeSqliteAdapter} from '../database/NodeSqliteAdapter';
 import {applyPendingMigrations} from '../database/migrations';
 import {CrmService} from '../crm/CrmService';
 import {CatalogService} from '../commercial/CatalogService';
+import {catalogMatchesQuery} from '../../shared/catalogDiscovery';
 import {QuoteService} from '../commercial/QuoteService';
 import {ProjectService} from '../projects/ProjectService';
 import {OperationsService} from '../operations/OperationsService';
@@ -44,6 +45,36 @@ describe('Stabilisation du parcours métier',()=>{
     expect(workflow.identity('client',client.clientId).organization?.email).toBe('apres@example.test');
     expect(workflow.identity('prospect',p.id).organization?.email).toBe('apres@example.test');
   });
+  it('R04B-09/10/12 : besoin prospect consultatif, ajout devis volontaire, aucun Projet automatique',()=>{
+    const org=crm.createOrganization({name:'Prospect recherche métier'});
+    const prospect=crm.createProspect({organizationId:org.id});
+    const offer=catalog.getItem('atoumweb-vitrine');
+    expect(offer.currentVersion?.status).toBe('published');
+    workflow.saveNeed('prospect',prospect.id,{catalogItemId:offer.id});
+    expect(workflow.needs('prospect',prospect.id)).toHaveLength(1);
+    expect(quotes.list({prospectId:prospect.id})).toHaveLength(0);
+    const beforeProjects=db.get<{n:number}>('SELECT COUNT(*) AS n FROM projects')!.n;
+    expect(db.get<{n:number}>('SELECT COUNT(*) AS n FROM quote_lines')!.n).toBe(0);
+
+    const draft=catalog.createVersion(offer.id,{
+      priceMode:'fixed',priceCents:89900,
+      commercialParameters:{clientNeed:'Nouvelle approche locale',keywords:'nouveau mot réservé au brouillon'},
+    });
+    expect(draft.status).toBe('draft');
+    expect(catalogMatchesQuery(catalog.list().find(item=>item.id===offer.id)!,'nouveau mot réservé au brouillon')).toBe(false);
+    expect(quotes.list({prospectId:prospect.id})).toHaveLength(0);
+
+    const quote=quotes.create({prospectId:prospect.id,subject:'Devis choisi volontairement'});
+    expect(quotes.get(quote.id).lines).toHaveLength(0);
+    quotes.addCatalogLine(quote.id,offer.currentVersion!.id);
+    const result=quotes.get(quote.id);
+    expect(result.lines).toHaveLength(1);
+    expect(result.lines[0].snapshot?.versionNumber).toBe(offer.currentVersion!.versionNumber);
+    expect(workflow.needs('prospect',prospect.id)).toHaveLength(1);
+    expect(db.get<{n:number}>('SELECT COUNT(*) AS n FROM projects')!.n).toBe(beforeProjects);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
   it('raccorde devis envoyé, acceptation et projet sans modifier les snapshots',()=>{
     const org=crm.createOrganization({name:'Boutique réelle'}),p=crm.createProspect({organizationId:org.id});
     const q=quotes.create({prospectId:p.id,subject:'Boutique'});
