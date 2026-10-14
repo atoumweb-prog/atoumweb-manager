@@ -44,3 +44,9 @@ Ne pas inventer des obligations légales de rétention, un classement génériqu
 - Recette Windows réelle corrigée pour l'intitulé de navigation effectivement affiché « Documents & Contrats ». Contrôles supplémentaires : absence physique d'un fichier et refus d'ouverture, conservation des métadonnées, séparation des pièces par Client, neuf modes visuels et actions accessibles.
 - Indicateur Factures limité aux documents actifs, sans assimiler facture à paiement.
 - Exécuter TypeScript, suite complète Vitest, recette Electron Documents, UX générale et restauration sur ce dernier code ; aucune clôture ni merge anticipés.
+
+## Clôture technique isolée 09D
+- CI Windows [#38602868964](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38602868964) **SUCCESS** sur `d708297` : TypeScript, **110 fichiers Vitest**, **73 assertions natives Electron Documents**, **373 assertions UX générales**, round-trip restauration et refus Windows en TEMP.
+- Tests des fichiers manquants et du SHA modifié ; archive/restauration idempotentes, métadonnées atomiques, conservation de la preuve, documents homonymes de clients distincts, UX-01 et quatre portes documentaires honnêtes.
+- **09D validé techniquement sur son périmètre isolé**. Les protections contre la suppression des factures Abby *remplacées* relèvent de 09B/#119 et ne sont pas dupliquées ; la certification de leur combinaison avec 09D sera faite avant `main`.
+- Pas de création fictive d'un dépôt « Autres documents », pas de garantie légale automatique de rétention. Recette visuelle humaine et fusion différées.
