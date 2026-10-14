@@ -513,6 +513,90 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
     test(await get('document.querySelector(".hour-pack-create-panel input[placeholder]")?.value')==='',
       'E226 pack draft cleared after confirmed exit');
     await js('document.querySelector(".hour-pack-create-panel .button-row button.secondary-button").click()');
+    // 08D : pack en dépassement, brouillon de décision protégé et IPC
+    // volontairement retardé pour démontrer l'anti-double clic en situation réelle.
+    const shortfallPack = db.hourPacks.create({
+      clientAccountId:client.id,name:'E08D Shortfall TEMP',
+      purchasedSeconds:3600,contractPriceCents:12000,
+    });
+    const shortfallIntervention = db.operations.createIntervention({
+      clientAccountId:client.id,hourPackId:shortfallPack.id,
+      type:'support',coverageMode:'hour_pack',subject:'E08D Dépassement TEMP',
+    });
+    db.time.addManual({
+      interventionId:shortfallIntervention.id,category:'support',
+      startedAt:'2026-09-16T08:00:00Z',endedAt:'2026-09-16T09:30:00Z',
+    });
+    db.interventionCompletion.complete(shortfallIntervention.id);
+    test(db.hourPackShortfalls.review(shortfallPack.id).unresolvedCount===1,
+      'E08D real pack has one unresolved negative-balance decision');
+    await js('document.querySelector(".hour-pack-toolbar-controls button").click()');
+    await wait('[...document.querySelectorAll(".hour-pack-compact-item, .hour-pack-list-panel .operations-table tbody tr")].some(e=>e.textContent.includes("E08D Shortfall TEMP"))',
+      'E08D shortfall pack listed');
+    const chooseShortfall=()=>js('const row=[...document.querySelectorAll(".hour-pack-compact-item, .hour-pack-list-panel .operations-table tbody tr")].find(e=>e.textContent.includes("E08D Shortfall TEMP"));if(!row)throw Error("E08D pack missing");row.click()');
+    await chooseShortfall();
+    await wait('!!document.querySelector(".hour-pack-shortfall-editor textarea")',
+      'E08D real shortfall editor opened');
+    await input('.hour-pack-shortfall-editor textarea','E08D BROUILLON A CONSERVER');
+    await setPackInput('.hour-pack-shortfall-editor input[type=number]','45');
+    const beforeShortfallExit=confirmations.length;
+    await clickOtherPack();
+    test(confirmations.length===beforeShortfallExit+1,
+      'E08D shortfall draft prompts before changing pack');
+    test(await get('document.querySelector(".hour-pack-workbench h2")?.textContent')==='E08D Shortfall TEMP',
+      'E08D Stay keeps current pack');
+    test(await get('document.querySelector(".hour-pack-shortfall-editor textarea")?.value')==='E08D BROUILLON A CONSERVER',
+      'E08D Stay preserves shortfall rationale');
+    answers.push(1);
+    await clickOtherPack();
+    await wait('document.querySelector(".hour-pack-workbench h2")?.textContent==="E226 Autre pack TEMP"',
+      'E08D Quit moves away without decision');
+    test(db.hourPackShortfalls.review(shortfallPack.id).unresolvedCount===1,
+      'E08D abandoning draft does not record a decision');
+    await chooseShortfall();
+    await wait('!!document.querySelector(".hour-pack-shortfall-editor textarea")',
+      'E08D return to unresolved pack');
+    await input('.hour-pack-shortfall-editor textarea','E08D DECISION 45 EUROS');
+    await setPackInput('.hour-pack-shortfall-editor input[type=number]','45');
+    const shortfallChannel='hour-pack-shortfalls:decide';
+    const originalShortfall=registered.get(shortfallChannel);
+    if(typeof originalShortfall!=='function')throw Error('E08D decision IPC missing');
+    let shortfallCalls=0,releaseShortfall=null;
+    ipcMain.removeHandler(shortfallChannel);
+    ipcMain.handle(shortfallChannel,(...args)=>{
+      shortfallCalls++;
+      return new Promise(resolve=>{releaseShortfall=()=>resolve(originalShortfall(...args));});
+    });
+    try {
+      await js('const b=document.querySelector(".hour-pack-shortfall-editor button.primary-button");if(!b)throw Error("E08D save missing");b.click();b.click();');
+      for(let i=0;i<90&&shortfallCalls===0;i++)await sleep(25);
+      test(shortfallCalls===1,'E08D double click sends exactly one decision IPC');
+      test(await get('document.querySelector(".hour-pack-shortfall-editor button.primary-button")?.disabled')===true,
+        'E08D pending decision visibly locked');
+      const beforePendingExit=confirmations.length;
+      answers.push(1);
+      await clickOtherPack();
+      test(confirmations.length===beforePendingExit+1,
+        'E08D pending decision prompts once');
+      test(await get('document.querySelector(".hour-pack-workbench h2")?.textContent')==='E08D Shortfall TEMP',
+        'E08D pending prevents changing pack');
+      releaseShortfall();
+      for(let i=0;i<90&&db.hourPackShortfalls.review(shortfallPack.id).unresolvedCount!==0;i++)await sleep(25);
+      test(db.hourPackShortfalls.review(shortfallPack.id).unresolvedCount===0,
+        'E08D confirmed decision recorded once');
+      test(db.hourPacks.get(shortfallPack.id).balanceSeconds===0,
+        'E08D correction leaves expected zero balance');
+      const shortfallHandoffs=db.billingHandoff.list({sourceType:'hour_pack'})
+        .filter(item=>item.sourceKey.startsWith('hour_pack_shortfall:'));
+      test(shortfallHandoffs.length===1&&shortfallHandoffs[0].expectedAmountCents===4500,
+        'E08D single 45-euro billing handoff, not two');
+    } finally {
+      if(releaseShortfall)releaseShortfall();
+      ipcMain.removeHandler(shortfallChannel);
+      ipcMain.handle(shortfallChannel,originalShortfall);
+    }
+    test(db.database.all('PRAGMA foreign_key_check').length===0,'E08D native SQLite foreign keys');
+    console.log('[UXV2 08D] Native shortfall draft / double-click / handoff PASS');
     test(db.database.all('PRAGMA foreign_key_check').length===0,'E225 native SQLite foreign keys');
 
     test(db.database.all('PRAGMA foreign_key_check').length===0,'E226 SQLite foreign keys');
