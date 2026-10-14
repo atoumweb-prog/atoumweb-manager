@@ -299,6 +299,7 @@ const api: AtoumWebApi = {
     getItem: (id: string) => ipcRenderer.invoke('catalog:get-item', id),
     create: (input: CatalogItemInput, firstVersion: CatalogVersionInput) => ipcRenderer.invoke('catalog:create', input, firstVersion),
     createVersion: (itemId: string, input: CatalogVersionInput) => ipcRenderer.invoke('catalog:create-version', itemId, input),
+    saveDraftVersion: (versionId: string, expected: CatalogVersion, input: CatalogVersionInput) => ipcRenderer.invoke('catalog:save-draft-version', versionId, expected, input),
     publishVersion: (versionId: string) => ipcRenderer.invoke('catalog:publish-version', versionId),
     setStatus: (itemId: string, status: CatalogItemStatus) => ipcRenderer.invoke('catalog:set-status', itemId, status),
     setVisiblePublic: (itemId: string, visible: boolean) => ipcRenderer.invoke('catalog:set-visible-public', itemId, visible),
