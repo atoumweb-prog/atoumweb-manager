@@ -187,8 +187,35 @@ if(!process.versions.electron){
       check(theme+' shortcuts do not change quote data',JSON.stringify(db.get('SELECT contract_parameters_json FROM quotes WHERE id=?',[q.id]))===JSON.stringify(rawBefore));
       check(theme+' finalization disabled while decisions missing',await js('document.querySelector(".quote-finalization-check .primary-button").disabled'));
       await js('document.querySelector(".quote-finalization-check").scrollIntoView({block:"center"})');await shot('points-a-completer-'+theme);
-      S.prepareQuoteForTest(db,q.id);await go('Accueil');
-      await js(`window.dispatchEvent(new CustomEvent('atoumweb:navigate',{detail:{entityType:'quote',entityId:${JSON.stringify(q.id)},title:'TEST'}}))`);await wait('!!document.querySelector(".contract-reading-scroll")');await wait('document.querySelector(".contract-reading-scroll").textContent.includes("Paramètres contractuels du devis")');
+      S.prepareQuoteForTest(db,q.id);
+      let otherQuote=null;
+      if(theme==='blanc'&&args.includes('--ux05b')){
+        otherQuote=database.quotes.create({prospectId:prospect.id,subject:'DEVIS_B_ISOLE_05D'});
+        database.quotes.addCatalogLine(otherQuote.id,v.id);
+        S.prepareQuoteForTest(db,otherQuote.id);
+      }
+      await go('Accueil');
+      await js(`window.dispatchEvent(new CustomEvent('atoumweb:navigate',{detail:{entityType:'quote',entityId:${JSON.stringify(q.id)},title:'TEST'}}))`);await wait('!!document.querySelector(".contract-reading-scroll")');
+      if(otherQuote){
+        const oldDialog=dialog.showMessageBoxSync,dialogCalls=[];
+        let decision=0;
+        dialog.showMessageBoxSync=(...params)=>{const options=params.at(-1);if(options?.title==='Modifications non enregistrées'){dialogCalls.push(options.buttons);return decision;}return oldDialog(...params);};
+        try{
+          const edit=async(field,value)=>{await js(`(()=>{const e=document.querySelector('.quote-contract-preparation [data-contract-field="${field}"]');if(!e)throw Error('Missing field ${field}');for(let p=e.parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event('input',{bubbles:true}));return true})()`);await wait(`document.querySelector('.quote-contract-preparation [data-contract-field="${field}"]')?.value===${JSON.stringify(value)}`);};
+          await edit('context','BROUILLON_DEVIS_A_CONTEXTE');await edit('purpose','BROUILLON_DEVIS_A_FINALITE');
+          const selectB=`[...document.querySelectorAll('.quote-table tbody tr')].find(e=>e.textContent.includes("DEVIS_B_ISOLE_05D")).click()`;
+          decision=0;await js(selectB);
+          check('05D real quote switch stay dialog',dialogCalls.length>=1&&dialogCalls.at(-1).join('|')==='Rester|Quitter sans enregistrer');
+          check('05D stay preserves first unsaved contract field',await js('document.querySelector(\'.quote-contract-preparation [data-contract-field="context"]\')?.value')==='BROUILLON_DEVIS_A_CONTEXTE');
+          check('05D stay preserves second unsaved contract field',await js('document.querySelector(\'.quote-contract-preparation [data-contract-field="purpose"]\')?.value')==='BROUILLON_DEVIS_A_FINALITE');
+          decision=1;await js(selectB);await wait('document.querySelector(".quote-table tbody tr.selected-row")?.textContent.includes("DEVIS_B_ISOLE_05D")');
+          check('05D quote B has no draft A context',await js('document.querySelector(\'.quote-contract-preparation [data-contract-field="context"]\')?.value')!=='BROUILLON_DEVIS_A_CONTEXTE');
+          check('05D quote B has no draft A purpose',await js('document.querySelector(\'.quote-contract-preparation [data-contract-field="purpose"]\')?.value')!=='BROUILLON_DEVIS_A_FINALITE');
+          const selectA=`[...document.querySelectorAll('.quote-table tbody tr')].find(e=>e.textContent.includes(${JSON.stringify(q.subject)})).click()`;
+          await js(selectA);await wait(`document.querySelector(".quote-table tbody tr.selected-row")?.textContent.includes(${JSON.stringify(q.subject)})`);
+          check('05D returning to A does not resurrect discarded context',await js('document.querySelector(\'.quote-contract-preparation [data-contract-field="context"]\')?.value')!=='BROUILLON_DEVIS_A_CONTEXTE');
+        }finally{dialog.showMessageBoxSync=oldDialog;}
+      }await wait('document.querySelector(".contract-reading-scroll").textContent.includes("Paramètres contractuels du devis")');
       const presentation=database.contractTerms.presentation(q.id);for(const label of ['Copier pour Abby','Copier le contrat','Copier tout']){await click(label);await wait(`document.querySelector('.contract-read-panel')?.textContent.includes(${JSON.stringify(label==='Copier pour Abby'?'Contenu pour Abby copié.':label==='Copier le contrat'?'Contrat copié.':'Bloc commercial et contrat copié.')})`);const text=await clipboard.readText();fs.writeFileSync(path.join(output,'expected-copy.txt'),presentation.text);fs.writeFileSync(path.join(output,'actual-copy.txt'),text);check(theme+' '+label,label==='Copier tout'?text.endsWith(presentation.text)&&text.includes('Total devis :'):text===presentation.text);check(theme+' copy has no presentation HTML '+label,!text.includes('<section class='));}
       await click('Copier cette section');await wait(`document.querySelector('.contract-read-panel')?.textContent.includes('Section copié.')`);check(theme+' section copy exact',await clipboard.readText()===presentation.sections[0].title+'\n\n'+presentation.sections[0].text);
       check(theme+' actual scroll overflows',await js('(()=>{const e=document.querySelector(".contract-reading-scroll");return e.scrollHeight>e.clientHeight})()'));
