@@ -187,7 +187,7 @@ export interface CatalogApi {
   setVisiblePublic(itemId: string, visible: boolean): Promise<CatalogItemSummary>;
   listOfferComponents(offerVersionId: string): Promise<OfferComponent[]>;
   listRecommendations(sourceVersionId: string): Promise<CatalogRecommendationLink[]>;
-  replaceRecommendations(sourceVersionId: string, targetVersionIds: string[]): Promise<CatalogRecommendationLink[]>;
+  replaceRecommendations(sourceVersionId: string, targetVersionIds: string[], expectedTargetVersionIds?: string[]): Promise<CatalogRecommendationLink[]>;
   /** Read the real blueprint references; never create a Project on inspection. */
   listProductionBlueprints(versionId: string): Promise<CatalogProductionBlueprintLink[]>;
   setOfferComponents(offerVersionId: string, components: OfferComponentInput[]): Promise<OfferComponent[]>;
