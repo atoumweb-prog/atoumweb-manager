@@ -1,5 +1,5 @@
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CatalogItemSummary } from '../../shared/commercial';
 import type { ClientSummary } from '../../shared/crm';
 import {
@@ -63,6 +63,8 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
   const [selectedId, setSelectedId] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [movementPending, setMovementPending] = useState(false);
+  const movementPendingRef = useRef(false);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | HourPackStatus>('all');
   const [splitPercent, setSplitPercent] = useState(34);
@@ -199,17 +201,29 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
   }
 
   async function addMovement(): Promise<void> {
-    if (!selected || !movementHours.trim() || !movementReason.trim()) return;
+    // L'ajout manuel est intentionnel et n'a pas de clé source idempotente :
+    // bloquer dès l'évènement le deuxième clic pendant le premier appel IPC.
+    if (!selected || !movementHours.trim() || !movementReason.trim() || movementPendingRef.current) return;
+    movementPendingRef.current = true;
+    setMovementPending(true);
+    const sourcePackId = selected.id;
     try {
       const seconds = Math.round(Number(movementHours.replace(',', '.')) * 3600);
-      const updated = await window.atoumweb.operations.hourPacks.addMovement(selected.id, {
+      const updated = await window.atoumweb.operations.hourPacks.addMovement(sourcePackId, {
         type: movementMode,
         secondsDelta: movementMode === 'commercial_credit' ? Math.abs(seconds) : seconds,
         reason: movementReason,
       });
-      setMovementHours(''); setMovementReason(''); await refresh(); setSelectedId(updated.id);
+      setMovementHours(''); setMovementReason('');
+      await refresh();
+      setSelectedId((current) => current === sourcePackId ? updated.id : current);
       onMessage('Mouvement ajouté au pack.');
-    } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible d’ajouter le mouvement.'); }
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible d’ajouter le mouvement.');
+    } finally {
+      movementPendingRef.current = false;
+      setMovementPending(false);
+    }
   }
 
   async function debitIntervention(): Promise<void> {
@@ -388,7 +402,7 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
             <label className="hour-pack-workbench-field">Type<select value={movementMode} onChange={(event) => setMovementMode(event.target.value as typeof movementMode)}><option value="manual_correction">Correction manuelle (+ ou -)</option><option value="commercial_credit">Crédit / geste commercial</option></select></label>
             <label className="hour-pack-workbench-field">Heures<input type="number" step="0.25" value={movementHours} onChange={(event) => setMovementHours(event.target.value)} placeholder="Ex. -0,5 ou 1" /></label>
             <label className="hour-pack-workbench-field">Motif<input value={movementReason} onChange={(event) => setMovementReason(event.target.value)} placeholder="Motif obligatoire" /></label>
-            <button className="secondary-button" type="button" disabled={!movementHours || !movementReason.trim()} onClick={() => void addMovement()}>Ajouter le mouvement</button>
+            <button className="secondary-button" type="button" disabled={movementPending || !movementHours || !movementReason.trim()} onClick={() => void addMovement()}>{movementPending ? 'Enregistrement…' : 'Ajouter le mouvement'}</button>
           </div>
         </details>
 
