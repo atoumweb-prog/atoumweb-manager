@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { businessBackupLocationActionLabel, businessBackupLocationStatus } from './businessBackupPresentation';
+import { businessBackupLocationActionLabel, businessBackupLocationStatus, filterBusinessBackupAlerts } from './businessBackupPresentation';
+import type { BusinessBackupAlert } from './businessBackupAlerts';
 
 describe('business backups evidence labels', () => {
   it('sépare un chemin existant d une preuve d intégrité', () => {
@@ -9,6 +10,18 @@ describe('business backups evidence labels', () => {
       .toContain('introuvable');
     expect(businessBackupLocationStatus({ locationType: 'local', exists: null, verifiedAt: null }))
       .toContain('non contrôlé');
+  });
+  it('isole les alertes par Client et Projet sans attribuer une anomalie à un autre dossier', () => {
+    const rows: BusinessBackupAlert[] = [
+      { id: 'pA', code: 'no_backup', severity: 'warning', title: 'A', detail: '', clientAccountId: 'cA', projectId: 'pA' },
+      { id: 'pB', code: 'no_recent_local', severity: 'warning', title: 'B', detail: '', clientAccountId: 'cA', projectId: 'pB' },
+      { id: 'pC', code: 'known_too_old', severity: 'warning', title: 'C', detail: '', clientAccountId: 'cB', projectId: 'pC' },
+    ];
+    expect(filterBusinessBackupAlerts(rows, {})).toHaveLength(3);
+    expect(filterBusinessBackupAlerts(rows, { clientAccountId: 'cA' }).map((alert) => alert.id)).toEqual(['pA','pB']);
+    expect(filterBusinessBackupAlerts(rows, { projectId: 'pC' }).map((alert) => alert.id)).toEqual(['pC']);
+    expect(filterBusinessBackupAlerts(rows, { clientAccountId: 'cA', projectId: 'pC' })).toEqual([]);
+    expect(rows).toHaveLength(3);
   });
   it('ne présente jamais une confirmation distante comme restauration testée', () => {
     expect(businessBackupLocationStatus({ locationType: 'server', exists: null, verifiedAt: null }))
