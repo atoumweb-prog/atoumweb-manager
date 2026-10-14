@@ -1,5 +1,9 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 14/10/2026 — Lot 10C (isolé) : niveaux de preuve des sauvegardes métier
+
+- Audit du registre existant, correction des libellés pour distinguer existence locale/confirmation humaine/restauration testée, verrou synchrone contre actions concurrentes et nouveaux tests unitaires. Branche `feature/ux-v2-lot10c-backup-register-safe-v1` indépendante de 10A/10B. [Reprise 10C](docs/ux-v2/LOT-10C-REPRISE-2026-10-14.md). **Aucun backup, restore ni donnée réelle manipulés** ; recettes Windows/UX-16 à démontrer, pas de merge `main`.
+
 ## 14/10/2026 — Dernier cas de focus : ligne toujours masquée
 
 - Le correctif693f6af a passé typecheck/282 natifs avec81 frames/UX-01183. Complément final : si le filtre masque encore la ligne à la fermeture, retour à la recherche et conservation de sa valeur. Deux assertions clavier supplémentaires, sans mutation métier. Nouveau candidat à recetter puis une seule actualisation corrective107/CIautomatique, aucun rerun manuel.

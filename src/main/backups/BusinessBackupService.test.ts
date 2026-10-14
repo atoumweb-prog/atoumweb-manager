@@ -123,6 +123,28 @@ describe('BusinessBackupService', () => {
     expect(backups.overview({ projectId: project.id }).latestLocal).toBeNull();
   });
 
+  it('filtre Client et Projet sans mélanger les registres et les compteurs', () => {
+    database.run(
+      `INSERT INTO organizations(id,name,created_at,updated_at)
+       VALUES ('org-a','Client A','2026-10-14T08:00:00Z','2026-10-14T08:00:00Z'),
+              ('org-b','Client B','2026-10-14T08:00:00Z','2026-10-14T08:00:00Z')`,
+    );
+    database.run(
+      `INSERT INTO client_accounts(id,organization_id,status,became_client_at,created_at,updated_at)
+       VALUES ('client-a','org-a','active','2026-10-14T08:00:00Z','2026-10-14T08:00:00Z','2026-10-14T08:00:00Z'),
+              ('client-b','org-b','active','2026-10-14T08:00:00Z','2026-10-14T08:00:00Z','2026-10-14T08:00:00Z')`,
+    );
+    const first = backups.create({ clientAccountId: 'client-a', backupType: 'complete', label: 'Copie A' });
+    const second = backups.create({ clientAccountId: 'client-b', backupType: 'complete', label: 'Copie B' });
+    const project = projects.createInternal({ name: 'Projet filtré' });
+    const projectRecord = backups.create({ projectId: project.id, backupType: 'database', label: 'Copie projet' });
+    expect(backups.list({ clientAccountId: 'client-a' }).map((record) => record.id)).toEqual([first.id]);
+    expect(backups.list({ clientAccountId: 'client-b' }).map((record) => record.id)).toEqual([second.id]);
+    expect(backups.list({ projectId: project.id }).map((record) => record.id)).toEqual([projectRecord.id]);
+    expect(backups.overview({ clientAccountId: 'client-a' }).totalRecords).toBe(1);
+    expect(backups.overview({ projectId: project.id }).latestKnown?.id).toBe(projectRecord.id);
+  });
+
   it('indexe les sauvegardes dans la recherche globale sans dupliquer les données métier', () => {
     const project = projects.createInternal({ name: 'Projet index sauvegarde' });
     const backup = backups.create({ projectId: project.id, backupType: 'config_export', label: 'Export Divi stable' });
