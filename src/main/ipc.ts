@@ -5,6 +5,7 @@ import type { ContractAdministration, QuoteContractParameters, ContractDocumentL
 import { app, clipboard, dialog, ipcMain, safeStorage, shell } from 'electron';
 import type { BridgeNodeMatchDecisionInput } from '../shared/bridgeSnapshots';
 import { writeFileSync } from 'node:fs';
+import {createWorkingContractDocx} from './commercial/workingContractDocx';
 import { join } from 'node:path';
 import { quoteContractText } from '../shared/contractTerms';
 import type { BillingInvoiceInput, BillingItemFilters, BillingItemStatus } from '../shared/billing';
@@ -453,6 +454,19 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('contract-terms:quotes:remove-custom', (_event, id: string) => database.contractTerms.removeCustomQuoteClause(id));
   ipcMain.handle('contract-terms:quotes:reorder', (_event, quoteId: string, clauseIds: string[]) => database.contractTerms.reorderQuoteClauses(quoteId, clauseIds));
   ipcMain.handle('contract-terms:preview-reference', (_event,typeId:string,typeVersionId:string,versionId:string,audience:import('../shared/contractTerms').QuoteContractAudience) => database.contractTerms.previewReference(typeId,typeVersionId,versionId,audience));
+  ipcMain.handle('contract-terms:export-working-docx',async(_event,quoteId:string)=>{
+    const quote=database.quotes.get(quoteId);
+    const presentation=database.contractTerms.presentation(quoteId);
+    if(!presentation.text.trim()||presentation.state==='historical_missing')throw new Error('Aucun contrat enregistré disponible pour export.');
+    const selection=await dialog.showSaveDialog({
+      title:'Exporter une copie de travail DOCX (non signée)',
+      defaultPath:'contrat-'+quote.number.replace(/[^a-zA-Z0-9_-]/g,'-')+'-TRAVAIL.docx',
+      filters:[{name:'Document Word DOCX',extensions:['docx']}],
+    });
+    if(selection.canceled||!selection.filePath)return false;
+    writeFileSync(selection.filePath,createWorkingContractDocx(presentation.text),{flag:'wx'});
+    return true;
+  });
   ipcMain.handle('contract-terms:copy-text', async (_event, text: string) => {
     await clipboard.writeText(text);
   });
