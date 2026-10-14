@@ -11,9 +11,14 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
   // Isolated TEMP legacy fixture with an associated source quote.
   db.database.run('UPDATE projects SET source_quote_id=? WHERE id=?',[quote.id,project.id]);
   await navigate('Projets');await wait('document.querySelector(".projects-layout")','project list');
+  await input('.projects-toolbar input.inline-search','07AB');
+  await js(`const e=document.querySelector('select[aria-label="État commercial"]');e.value='legacy';e.dispatchEvent(new Event('change',{bubbles:true}))`);
+  await wait('document.querySelector(".projects-toolbar input.inline-search")?.value==="07AB"','filter before navigation');
   await js(`window.dispatchEvent(new CustomEvent('atoumweb:navigate',{detail:{entityType:'project',entityId:${JSON.stringify(project.id)},title:'Projet 07AB'}}))`);
   await wait(`document.querySelector('[data-search-entity-type="project"][data-search-entity-id="${project.id}"]')`,'project identity');
   test(await get(`!!document.querySelector('[data-search-entity-id="${project.id}"]')`),'Project ID stable before navigation');
+  await js(`const b=[...document.querySelectorAll('.project-production-nav button')].find(x=>x.textContent.trim()==='Commercial');if(!b)throw Error('Missing commercial tab');b.click()`);
+  await wait(`[...document.querySelectorAll('.project-production-nav button.active')].some(b=>b.textContent.trim()==='Commercial')`,'commercial Project tab before Quote');
   await wait('[...document.querySelectorAll(".project-production-title button")].some(b=>b.textContent.includes("Ouvrir le devis"))','real source Quote button');
   await js('const b=[...document.querySelectorAll(".project-production-title button")].find(b=>b.textContent.includes("Ouvrir le devis"));if(!b)throw Error("Missing source Quote button");b.click()');
   await wait(`document.querySelector('[data-search-entity-type="quote"][data-search-entity-id="${quote.id}"]')`,'source quote identity');
@@ -28,6 +33,7 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
   test(dialogs.length===before+1,'Confirm triggers one guarded exit prompt');
   test(await get(`!!document.querySelector('[data-search-entity-type="project"][data-search-entity-id="${project.id}"]')`),'Confirm returns to original project ID');
   test(await get(`document.activeElement?.dataset?.searchEntityId===${JSON.stringify(project.id)}`),'Return restores targeted focus to Project');
+  test(await get(`[...document.querySelectorAll('.project-production-nav button.active')].some(b=>b.textContent.trim()==='Commercial')`),'Return restores commercial Project tab');
   test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','TEMP SQLite integrity');
   test(db.database.all('PRAGMA foreign_key_check').length===0,'TEMP SQLite foreign keys');
   console.log('NAVIGATION07AB_NATIVE_EVIDENCE '+JSON.stringify({checks:'passed',projectId:project.id,quoteId:quote.id,dialogs:dialogs.length,onlyTemp:true}));
