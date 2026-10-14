@@ -47,6 +47,18 @@ describe('04D — versioned recommendation persistence',()=>{
     catalog.publishVersion(source.versions[0].id);
     expect(()=>recommendations.replace(source.versions[0].id,[target.versions[0].id])).toThrow(/brouillon/);
   });
+  it('copies associations to vN+1 without changing the previous version',()=>{
+    const source=create('Source v1');
+    const target=create('Published target');
+    catalog.publishVersion(target.versions[0].id);
+    recommendations.replace(source.versions[0].id,[target.versions[0].id]);
+    catalog.publishVersion(source.versions[0].id);
+    const copy=catalog.createVersion(source.id,{priceMode:'fixed',priceCents:11900});
+    expect(recommendations.list(copy.id).map(x=>x.targetVersionId))
+      .toEqual([target.versions[0].id]);
+    expect(recommendations.list(source.versions[0].id)).toHaveLength(1);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
   it('does not duplicate a service already included in an offer',()=>{
     const target=create('Service included');
     catalog.publishVersion(target.versions[0].id);
