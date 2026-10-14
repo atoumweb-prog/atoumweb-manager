@@ -93,13 +93,13 @@ if(!process.versions.electron){
           const serviceLinks=await js('document.querySelectorAll(".contract-associated-services button").length');
           check('05B.3 Catalogue link available in fixture',serviceLinks>0);
           await js('window.__contract05b3Events=0;window.addEventListener("atoumweb:open-catalog-item",()=>window.__contract05b3Events++)');
-          const commonBody=await js('document.querySelector("[aria-label=\"Texte du module à versionner\"]").value');
+          const commonBody=await js('document.querySelector(`[aria-label="Texte du module à versionner"]`).value');
           await input('Texte du module à versionner','UNSAVED_CATALOG_NAV_05B3');
           await wait('!!document.querySelector(".contract-library-unsaved")');
           decision=0;
           await js('document.querySelector(".contract-associated-services button").click()');
           check('05B.3 stay intercepts external Catalog navigation',dialogs.length===7&&await js('window.__contract05b3Events')===0);
-          check('05B.3 stay retains module draft',await js('document.querySelector("[aria-label=\"Texte du module à versionner\"]").value')==='UNSAVED_CATALOG_NAV_05B3');
+          check('05B.3 stay retains module draft',await js('document.querySelector(`[aria-label="Texte du module à versionner"]`).value')==='UNSAVED_CATALOG_NAV_05B3');
           await input('Texte du module à versionner',commonBody);
           await wait('!document.querySelector(".contract-library-unsaved")');
           console.log('[05B UX-01 NATIVE] '+JSON.stringify({dialogs:dialogs.length,checks:checks.length,sqlite:'TEMP'}));
