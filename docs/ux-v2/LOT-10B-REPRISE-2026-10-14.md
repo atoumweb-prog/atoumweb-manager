@@ -20,3 +20,9 @@
 2. Test contrôlé d'inversion de réponses A/B, une requête rejetée hors sélection, démontage avant résolution, réponses rapides multiples, aucune fuite de message erroné.
 3. 10B est beaucoup plus large : barre de période unique entre vue simplifiée/analytique, fenêtres calendaires ISO/locales, fil d'Ariane, drilldowns fondés sur population réelle, comparatifs « Toutes les données » indisponibles, graphes accessibles et neuf combinaisons.
 4. Ne pas considérer une CI du parent #125 comme celle de 10B. Il n'y a pas de fusion autorisée, la revue et recette Windows restent nécessaires.
+
+## Complément sur périodes personnalisées (14/10/2026)
+- Une plage avec date impossible (dont 30 février) ou inversion début/fin est rejetée dès la vue, sans solliciter les IPC ni écraser le dernier résultat valide.
+- L'API côté main reste responsable de la validation serveur définitive.
+- Tests purs couvrent changements rapides de preset, plages modifiées/incomplètes/invalides.
+- Pour valider la CI du cumul 10A + 10B, la PR #126 est **temporairement ciblée sur main**, en draft et avec dépendance #125 inscrite en tête ; cela ne fusionne rien, et le diff contient les deux couches.
