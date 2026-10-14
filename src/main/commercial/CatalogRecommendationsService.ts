@@ -11,16 +11,31 @@ export interface CatalogRecommendationRow {
   id: string;
   sourceVersionId: string;
   targetVersionId: string;
+  targetName: string;
+  targetVersionNumber: number;
+  targetItemStatus: 'active' | 'inactive' | 'archived';
   sortOrder: number;
 }
 export class CatalogRecommendationsService {
   constructor(private readonly database: DatabaseAdapter) {}
 
   list(sourceVersionId: string): CatalogRecommendationRow[] {
-    return this.database.all<{id:string;source_version_id:string;target_version_id:string;sort_order:number}>(
-      'SELECT id,source_version_id,target_version_id,sort_order FROM catalog_version_recommendations WHERE source_version_id=? ORDER BY sort_order,id',
-      [sourceVersionId],
-    ).map(x=>({id:x.id,sourceVersionId:x.source_version_id,targetVersionId:x.target_version_id,sortOrder:x.sort_order}));
+    return this.database.all<{
+      id:string;source_version_id:string;target_version_id:string;sort_order:number;
+      target_name:string;target_version_number:number;target_item_status:CatalogRecommendationRow['targetItemStatus'];
+    }>(`SELECT r.id,r.source_version_id,r.target_version_id,r.sort_order,
+              i.name AS target_name,v.version_number AS target_version_number,
+              i.status AS target_item_status
+       FROM catalog_version_recommendations r
+       JOIN catalog_versions v ON v.id=r.target_version_id
+       JOIN catalog_items i ON i.id=v.item_id
+       WHERE r.source_version_id=?
+       ORDER BY r.sort_order,r.id`, [sourceVersionId],
+    ).map(x=>({
+      id:x.id,sourceVersionId:x.source_version_id,targetVersionId:x.target_version_id,
+      targetName:x.target_name,targetVersionNumber:Number(x.target_version_number),
+      targetItemStatus:x.target_item_status,sortOrder:x.sort_order,
+    }));
   }
 
   /** Atomic replace; references use immutable published targets. No quote is changed. */
