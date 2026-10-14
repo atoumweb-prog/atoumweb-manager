@@ -47,6 +47,39 @@ function createPublishedService(priceCents = 10000, name = 'Service test') {
   return catalog.getItem(item.id);
 }
 
+describe('04E — advice never mutates an accepted or historical quote snapshot', () => {
+  it('preserves authored version fields on the existing quote after catalogue republishing', () => {
+    const prospect=createProspect();
+    const item=catalog.create({type:'service',name:'Conseil SEO contextualisé'},{
+      priceMode:'fixed',priceCents:14900,commercialParameters:{
+        salesPitch:'Ancien argumentaire',qualificationQuestions:'Ancienne question',
+        relevantSituations:'Entreprises locales',commercialCautions:'Ne pas garantir le rang',
+      },
+    });
+    const previousId=item.versions[0].id;
+    catalog.publishVersion(previousId);
+    const quote=quotes.create({prospectId:prospect.id,subject:'Conseil versionné'});
+    const original=quotes.addCatalogLine(quote.id,previousId);
+    const originalSnapshot=original.lines.find(line=>line.catalogVersionId===previousId)?.snapshot;
+    expect(originalSnapshot?.commercialParameters).toMatchObject({
+      salesPitch:'Ancien argumentaire',qualificationQuestions:'Ancienne question',
+      relevantSituations:'Entreprises locales',commercialCautions:'Ne pas garantir le rang',
+    });
+    const newer=catalog.createVersion(item.id,{
+      priceMode:'fixed',priceCents:16900,commercialParameters:{
+        salesPitch:'Nouvel argumentaire',qualificationQuestions:'Nouvelle question',
+        relevantSituations:'Autre situation',commercialCautions:'Autre vigilance',
+      },
+    });
+    catalog.publishVersion(newer.id);
+    const historical=quotes.get(quote.id).lines.find(line=>line.catalogVersionId===previousId)!;
+    expect(historical.snapshot?.commercialParameters).toEqual(originalSnapshot?.commercialParameters);
+    expect(historical.catalogVersionId).toBe(previousId);
+    expect(historical.catalogUnitPriceCents).toBe(14900);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+});
+
 describe('QuoteService', () => {
   it('E73 : un accord de principe explicite est horodaté, idempotent et révocable sans signature ni conversion', () => {
     const prospect = createProspect();
