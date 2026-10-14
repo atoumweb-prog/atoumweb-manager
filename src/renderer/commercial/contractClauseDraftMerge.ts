@@ -15,6 +15,6 @@ export function mergeContractClauseDrafts(
     const old=previousById.get(clause.id);
     const remote={title:clause.title,body:clause.body};
     const baseline=submitted?.id===clause.id?submitted.draft:old?{title:old.title,body:old.body}:remote;
-    return [clause.id,mergeDraft(baseline,local[clause.id]??baseline,remote).value];
+    return [clause.id,{...mergeDraft(baseline,local[clause.id]??baseline,remote).value}];
   }));
 }
