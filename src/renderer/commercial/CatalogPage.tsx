@@ -173,7 +173,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   const [detailLoading,setDetailLoading]=useState(false);
   useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;detailEpoch.current++;listEpoch.current++;};},[]);
   useSearchTargetConfirmation('catalog',showForm?null:detail?.id,loading||detailLoading,onEntityReady);
-  const createGuard=useUnsavedDraft('Nouvelle prestation',draft,{group:'catalog:create',ready:showForm,pending:saving,discard:baseline=>{setDraft(baseline);setShowForm(false);}});
+  const createGuard=useUnsavedDraft('Nouvelle prestation',draft,{group:'catalog:create',ready:showForm,pending:saving,discard:baseline=>{setDraft(baseline);setCreateCategoryId('');setShowForm(false);}});
   const versionGuard=useUnsavedDraft('Version Catalogue',versionDraft,{group:'catalog:'+detail?.id,ready:versionMode,pending:saving,resetKey:detail?.id+':'+versionMode,discard:baseline=>{setVersionDraft(baseline);setVersionMode(false);}});
   const identityGuard=useUnsavedDraft('Code Catalogue',canonicalCodeDraft,{group:'catalog:'+detail?.id,ready:!!detail,pending:saving,resetKey:detail?.id,discard:setCanonicalCodeDraft});
 
@@ -537,6 +537,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 const selected = createCategoryChoices.find(category => category.id === id);
                 setCreateCategoryId(id);
                 if (selected) setDraft(current => ({ ...current, category: selected.name }));
+                else if (createCategoryId) setDraft(current => ({ ...current, category: '' }));
               }}>
                 <option value="">Choisir une catégorie existante (facultatif)</option>
                 {createCategoryChoices.filter(category => category.status === 'active').map(category => (
