@@ -6,7 +6,7 @@
 |---|---|---|
 | 04B / PR #104 | CI #1045 verte sur HEAD `57afcdae`. Classement, recherche, catégories administrées, historique, capture Electron | Ne prouve pas la convergence avec `main` actuel ni la validation visuelle humaine |
 | 04C / PR #108 | CI #1003 verte sur HEAD `2412513b`. Brouillons, CAS, création vN+1 idempotente, publications, 8 onglets, UX-01 | PR #108 cible la branche de #104 ; sa CI seule n'est pas une recette du candidat convergé |
-| 04D / PR #118 | CI #1171 verte : 1 111/1 111 Vitest et 14/14 scénarios du panneau React dans Electron avec IPC simulé. #1192 verte (règles 04D) | Le pilote React n'est pas le preload de production |
+| 04D / PR #118 | CI #1171 verte : 1 111/1 111 Vitest et 14/14 scénarios du panneau React dans Electron avec IPC simulé. #1192 verte (règles 04D) | La recette complémentaire avec le vrai preload de production a été validée par #1230 ; une assertion d'accessibilité du retrait a ensuite été ajoutée au pilote React |
 | 04D intégré / PR #118 | CI #1207 verte : fenêtre Electron, transport IPC réel, SQLite et service métier sur base TEMP, CAS testé. CI #1213 verte, restauration/fermeture ajoutée | Le script a depuis été étendu au **véritable preload de production** ; CI **#1230 verte** |
 | 04E / PR #118 | Champs humains versionnés et tests unitaires / SQLite ; aide commerciale distincte du contrat et sans publication automatique | Recette du **formulaire réel** ajoutée et validée par CI **#1236 verte** |
 | 04F non-régression | Workflow PR #118 : Windows TEMP Catalogue, native 04D, UX-01 navigation et restauration/fermeture, typecheck et Vitest complet | Régression après convergence des PR empilées et inspection visuelle humaine encore ouvertes |
