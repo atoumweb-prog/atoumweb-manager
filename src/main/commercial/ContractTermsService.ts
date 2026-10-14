@@ -544,8 +544,16 @@ export class ContractTermsService {
           :{status:'unclassified' as const,sectionKey:null,rankInSection:null},
       }));
       const assembly=assembleReviewedDraftContract(entries,{audience});
-      if(!assembly.ready)throw Error('Classement contractuel incomplet : faire approuver les rubriques et résoudre les doublons et clauses incomplètes avant finalisation.');
-      compiledText='CONDITIONS GÉNÉRALES DE VENTE – ATOUMWEB\\n\\n'+renderApprovedDraftContract(assembly);
+      // Legacy prepared quotes and intentional custom clauses have no approved 05C
+      // classification. Do not break their existing finalization path.
+      // Once a quote elects reviewed 05C classification, all selected clauses
+      // must pass the approved canonical assembly gate.
+      const hasApprovedClassification=entries.some(({clause,review})=>
+        clause.enabled&&!clause.isOrphaned&&review.status==='approved');
+      if(hasApprovedClassification){
+        if(!assembly.ready)throw Error('Classement contractuel incomplet : faire approuver les rubriques et résoudre les doublons et clauses incomplètes avant finalisation.');
+        compiledText='CONDITIONS GÉNÉRALES DE VENTE – ATOUMWEB\\n\\n'+renderApprovedDraftContract(assembly);
+      }
     }
     if(payload && !included.some(c=>c.sourceKind==='base'&&!c.isOrphaned)) throw Error('Préparation contractuelle incomplète : aucun socle publié disponible ; les brouillons ne sont pas consommés.');
 
