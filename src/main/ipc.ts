@@ -380,12 +380,14 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     });
     const document = imported.find((candidate) => !before.has(candidate.id));
     if (!document) throw new Error('La facture PDF n’a pas pu être identifiée après import.');
+    // Verify the imported bytes before changing the billing status to invoiced.
+    database.clientDocuments.fingerprint(document.id);
     return database.billingHandoff.attachInvoice(id, document.id, input);
   });
   ipcMain.handle('billing:open-invoice', async (_event, id: string) => {
     const item = database.billingHandoff.get(id);
     if (!item.invoiceDocumentId) throw new Error('Aucune facture PDF n’est rattachée à cet élément.');
-    const error = await shell.openPath(database.clientDocuments.absolutePath(item.invoiceDocumentId));
+    const error = await shell.openPath(database.clientDocuments.verifiedPath(item.invoiceDocumentId));
     if (error) throw new Error(error);
   });
 
