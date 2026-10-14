@@ -16,3 +16,26 @@ Branche indépendante `feature/ux-v2-lot09d-documents-20261014` basée sur la 09
 5. Conserver PR draft indépendante et reporter intégration 09A + 09B + 09D, validation humaine et main sans fusion anticipée.
 
 Ne pas inventer des obligations légales de rétention, un classement générique hors Client, des copies de contrats publiés ou un connecteur Abby.
+## Exécution du 14/10 — 09D en développement
+- PR #132 draft, isolée de 09B : quatre entrées visuelles sans duplicata métier ; les deux portes contractuelles réutilisent `ContractLibraryPage`, « Documents clients » utilise `DocumentsPage`, et « Autres documents » affiche honnêtement l'absence d'un dépôt transversal.
+- Garde UX-01 dans `DocumentsPage` : brouillons de nouveaux documents et métadonnées (titre, catégorie, conservation, notes) conservés / demandent confirmation lors du choix d'une autre pièce, fermeture, rafraîchissement, nouvelle création et navigation vers la bibliothèque.
+- Vérification SHA-256 rendue explicite : une pièce historique sans empreinte ne reçoit pas de certification implicite. Un fichier absent ou modifié déclenche une erreur visible dans Documents et dans la fiche Client.
+- `ClientDocumentService.update/archive` devient transactionnel avec le journal, idempotent pour un archivage identique. Test de retour arrière forcé et conservation de l'empreinte et des octets.
+- Recette Electron native `--lot09d` : deux clients homonymes, chemins distincts, vraie navigation Bibliothèque et Documents, garde de saisie, conservation à vérifier, altération SHA, archivage/restauration, édition des métadonnées et neuf combinaisons visuelles.
+- Le contrôle des anciennes factures Abby *remplacées* demeure dans 09B/#119 (non dupliqué sur cette branche). Vérifier la convergence 09A+09B+09D avant le merge.
+
+## Matrice R09D (état provisoire)
+| Cas | Moyen de vérification |
+| --- | --- |
+| 01–02 | Vraie Bibliothèque et éditeur contractuel via portes réelles (même composant) |
+| 03–05 | Filtrage client/catégorie et import même nom sur deux clients, pièces distinctes |
+| 06–08 | Fichier manquant, SHA altéré, SHA absent non certifié |
+| 09 | Archive/restauration idempotente avec conservation physique et contrôle FK |
+| 10–12 | Tests de refus des preuves Devis/Facture du service existants en 09A ; facture Abby remplacée dans 09B |
+| 13 | Suppression d'une pièce générique non liée vérifiée dans TEMP |
+| 14 | Conservation atteinte : « à vérifier », aucune suppression automatique |
+| 15–16 | Transaction métadonnées, fichier inchangé, confirmation native UX-01 |
+| 17 | Navigation Client/Bibliothèque/Documents avec IDs réels ; approfondir la navigation intermodules |
+| 18 | CI Windows native, 3 thèmes × 3 densités, FK/chemins TEMP, restauration ; dernière exécution à confirmer |
+
+**Clôture non prononcée** : attendre CI et recette native 09D entièrement vertes, puis examiner les éventuels écarts au référentiel.
