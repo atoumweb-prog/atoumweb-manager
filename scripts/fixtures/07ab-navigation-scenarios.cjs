@@ -8,6 +8,8 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
   const org=db.crm.createOrganization({name:'07AB ORGANISATION'}),client=db.crm.createClient({organizationId:org.id});
   const quote=db.quotes.create({clientAccountId:client.id,subject:'07AB DEVIS'});
   const project=db.projects.createInternal({name:'07AB PROJET'});
+  db.projectSites.create(project.id,{name:'07AB SITE A'});
+  db.projectSites.create(project.id,{name:'07AB SITE B'});
   // Isolated TEMP legacy fixture with an associated source quote.
   db.database.run('UPDATE projects SET source_quote_id=? WHERE id=?',[quote.id,project.id]);
   await navigate('Projets');await wait('document.querySelector(".projects-layout")','project list');
@@ -41,6 +43,18 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
   const returnedState=await get(`({tabs:[...document.querySelectorAll('.project-production-nav button')].map(b=>({label:b.textContent.trim(),active:b.classList.contains('active')})),visibleProject:!!document.querySelector('[data-search-entity-type="project"]'),heading:document.querySelector('.project-production-title')?.innerText?.slice(0,160)})`);
   console.log('NAVIGATION07B_RETURN_CONTEXT '+JSON.stringify(returnedState));
   test(await get(`[...document.querySelectorAll('.project-production-nav button.active')].some(b=>b.textContent.trim()==='Commercial')`),'Return restores commercial Project tab');
+  // The Site/Page workbench must also resume the same Site after a second real round-trip.
+  await js(`const b=[...document.querySelectorAll('.project-production-nav button')].find(x=>x.textContent.trim()==='Sites & pages');if(!b)throw Error('Missing Sites tab');b.click()`);
+  await wait('[...document.querySelectorAll(".project-site-tree-site")].some(b=>b.textContent.includes("07AB SITE B"))','sites tree loaded');
+  await js(`const b=[...document.querySelectorAll('.project-site-tree-site')].find(x=>x.textContent.includes('07AB SITE B'));if(!b)throw Error('Missing Site B');b.click()`);
+  await wait('[...document.querySelectorAll(".project-site-tree-site.active")].some(b=>b.textContent.includes("07AB SITE B"))','second site selected');
+  await js('const b=[...document.querySelectorAll(".project-production-title button")].find(b=>b.textContent.includes("Ouvrir le devis"));if(!b)throw Error("Missing Quote button");b.click()');
+  await wait(`document.querySelector('[data-search-entity-type="quote"][data-search-entity-id="${quote.id}"]')`,'Quote from Sites tab');
+  await click('.quote-detail-heading-actions button.secondary-button');
+  await wait(`document.querySelector('[data-search-entity-type="project"][data-search-entity-id="${project.id}"]')`,'return to Sites project');
+  test(await get(`[...document.querySelectorAll('.project-production-nav button.active')].some(b=>b.textContent.trim()==='Sites & pages')`),'Return restores Sites & pages tab');
+  await wait('[...document.querySelectorAll(".project-site-tree-site.active")].some(b=>b.textContent.includes("07AB SITE B"))','return to selected Site B');
+  test(await get('[...document.querySelectorAll(".project-site-tree-site.active")].some(b=>b.textContent.includes("07AB SITE B"))'),'Return preserves exact selected Site');
   await click('.project-production-back');
   await wait('!!document.querySelector(".projects-toolbar input.inline-search")','project list after return');
   test(await get('document.querySelector(".projects-toolbar input.inline-search")?.value==="07AB"'),'Return restores Project search text');
