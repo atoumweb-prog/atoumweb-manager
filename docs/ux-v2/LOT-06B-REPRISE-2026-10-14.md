@@ -47,3 +47,11 @@ Scénarios restant à exécuter : A→B avec A résolu après B, A en échec apr
 ## Renforcement changement de fiche
 
 Commit `77476dd` : lorsque l'ID change, vider le détail précédent avant de lancer le nouvel appel `quotes.get`, et éviter de redemander le même ID lorsqu'il est déjà sélectionné ou en cours de chargement. Les protections contre les réponses tardives et les brouillons restent en place. À tester particulièrement : A→B, B ouvert lentement, B introuvable, B demandé deux fois, A modifié non enregistré et refus de sortie. Tests TypeScript, Vitest et Electron toujours non vérifiés sur ce commit.
+
+## CI réelle vérifiée — 14/10/2026
+
+- GitHub Actions [CI #992](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38572684967), commit exact `5e12edc8c259e2aa8332e32dc8b33b5787d0d999`, état `completed`, conclusion `success`.
+- Job `quality` terminé en `success` (job `115881696685`). Le workflow déclaré exécute `npm ci`, `npm run typecheck`, puis `npm test -- --maxWorkers=2` sur Windows 2022.
+- Cette validation inclut le code 06B antérieur à ce paragraphe documentaire. Aucun nombre précis de tests individuel n'est affirmé sans logs.
+- **À ne pas confondre** avec une recette Electron native spécifique à 06B : le workflow ne lance pas ces parcours pour la PR #112. Les scénarios A→B→A asynchrones, fermeture sur brouillon et navigation au clavier restent à confirmer dans Electron.
+- La PR #112 reste en draft. Aucun merge, et la PR #110 (06A) demeure un chantier distinct.
