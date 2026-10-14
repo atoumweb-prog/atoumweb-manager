@@ -23,8 +23,17 @@ describe('05C — numbered draft contract from approved clauses',()=>{
  it('never inserts unapproved, orphaned or excluded clauses',()=>{
    const approved=entry('active','v1');
    const proposed=entry('pending','v2');proposed.review={status:'proposed',sectionKey:'finance',rankInSection:0,reason:'à examiner'};
-   const plan=assembleReviewedDraftContract([approved,proposed,entry('off','v3','finance',0)],{},[]);
+   const plan=assembleReviewedDraftContract([approved,proposed,{...entry('off','v3','finance',0),clause:clause('off','v3',{enabled:false})}],{},[]);
    expect(plan.ready).toBe(false);
+   expect(plan.sections.flatMap(s=>s.articles.map(a=>a.id))).toEqual(['active']);
+ });
+ it('blocks empty legal content or mixed quotes without modifying their data',()=>{
+   const original=entry('a','v1');original.clause.body=' ';
+   const foreign=entry('b','v2');foreign.clause.quoteId='OTHER';
+   const result=assembleReviewedDraftContract([original,foreign],{});
+   expect(result.ready).toBe(false);
+   expect(result.invalidText).toEqual(['a']);
+   expect(result.crossQuote).toBe(true);
  });
  it('blocks duplicate versions and missing classifications',()=>{
    const result=assembleReviewedDraftContract([entry('a','v'),entry('b','v')],{});
