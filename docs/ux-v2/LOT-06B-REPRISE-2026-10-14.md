@@ -31,3 +31,9 @@ Date : 14/10/2026. **Statut : préparation documentaire, aucun changement applic
 
 ## Prochaine implémentation
 Commencer par relever précisément `closeQuoteDetail`, `openQuote`, les événements clavier, `refresh`, `requestUnsavedExit` et le changement d'étapes. Corriger ensuite uniquement les défauts reproduits, tests au même SHA, PR draft distincte. Pas d'affirmation de réussite avant exécution réelle.
+
+## Premier correctif — garde assistant
+
+Commit `62a9b2823734dbe5440d1fb76558b2c49986a39b` : le bouton Fermer de l'assistant utilise maintenant `requestUnsavedExit` pour le groupe `quote:create` au lieu de masquer immédiatement l'assistant en remettant l'étape à 1. Ouverture sans réinitialisation forcée de l'étape. La garde native UX-01 conserve le choix de rester, et l'abandon confirmé utilise les entrées `discard` du registre.
+
+**Vérifications à exécuter :** fermeture avec/sans brouillon, confirmation refusée, saisie sur six étapes, clôture pendant enregistrement, nouveau devis après abandon, `npm run typecheck`, tests Vitest, Electron neuf variantes. Ces tests n'ont pas encore été exécutés sur ce commit ; aucune fusion permise. Le comportement de changement de devis et des réponses tardives reste à auditer avant toute autre correction.
