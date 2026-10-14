@@ -18,13 +18,30 @@ module.exports = async ({db,temp,evalUI:js,get,wait,navigate,test,sleep}) => {
     VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
     [id,client.id,'other','native-09b','other:native-09b','Prestation TEST 09B',14900,14900,'ready',now,now],
   );
+  db.database.run(
+    `INSERT INTO billing_items
+    (id,client_account_id,source_type,source_id,source_key,description,expected_amount_cents,theoretical_value_cents,status,created_at,updated_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+    ['native-09b-second',client.id,'other','native-09b-second','other:native-09b-second',
+      'Deuxième prestation TEST 09B',5500,5500,'ready','2026-10-13T10:00:00.000Z','2026-10-13T10:00:00.000Z'],
+  );
   const original = path.join(temp,'abby-original.pdf');
   const corrected = path.join(temp,'abby-corrected.pdf');
   fs.writeFileSync(original,'%PDF-1.4\n% TEST original - fixture only\n');
   fs.writeFileSync(corrected,'%PDF-1.4\n% TEST correction - fixture only\n');
   let chosen = original;
+  let cancelNext = true;
   const realDialog = dialog.showOpenDialog;
-  dialog.showOpenDialog = async () => ({canceled:false,filePaths:[chosen]});
+  const realConfirm = dialog.showMessageBoxSync;
+  const confirmations = [];
+  let approve = false;
+  dialog.showOpenDialog = async () => cancelNext
+    ? (cancelNext = false, {canceled:true,filePaths:[]})
+    : ({canceled:false,filePaths:[chosen]});
+  dialog.showMessageBoxSync = (...args) => {
+    confirmations.push(args.at(-1));
+    return approve ? 1 : 0;
+  };
   try {
     await navigate('Facturation');
     await wait('!!document.querySelector(".billing-table tbody tr")','billing first row');
@@ -38,6 +55,10 @@ module.exports = async ({db,temp,evalUI:js,get,wait,navigate,test,sleep}) => {
       '09B-UI-03: no PDF before import');
     test(await get('!document.querySelector(".billing-status-field select option[value=invoiced]")'),
       '09B-UI-04: cannot select invoiced without a PDF');
+    await js('document.querySelector(".billing-invoice-actions button.primary-button").click()');
+    await wait('!document.querySelector(".billing-invoice-actions button.primary-button")?.disabled','cancelled file picker settled');
+    test(db.billingHandoff.get(id).status==='ready'&&!db.billingHandoff.get(id).invoiceDocumentId,
+      '09B-UI-05a: cancelling native file selection leaves item ready');
     await js('document.querySelector(".billing-invoice-actions button.primary-button").click()');
     await wait('!!document.querySelector(".billing-invoice-state.attached")','Abby original imported');
     test(db.billingHandoff.get(id).status==='invoiced','09B-UI-05: genuine IPC import marks item invoiced');
@@ -79,5 +100,6 @@ module.exports = async ({db,temp,evalUI:js,get,wait,navigate,test,sleep}) => {
     console.log('[UXV2 09B] Real renderer, imported and replaced PDF with native picker fixture; original preserved.');
   } finally {
     dialog.showOpenDialog = realDialog;
+    dialog.showMessageBoxSync = realConfirm;
   }
 };
