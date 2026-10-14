@@ -126,7 +126,7 @@ describe('MaintenanceService', () => {
       coverageMode: 'maintenance', type: 'support', subject: 'Intervention mineure TEST',
     });
     database.run("UPDATE interventions SET maintenance_usage_kind='routine' WHERE id=?", [routine.id]);
-    time.addManual({ interventionId: routine.id, category: 'maintenance', startedAt: '2026-10-20T08:00:00Z', endedAt: '2026-10-20T08:30:00Z' });
+    time.addManual({ interventionId: routine.id, category: 'support', startedAt: '2026-10-20T08:00:00Z', endedAt: '2026-10-20T08:30:00Z' });
     time.addManual({ interventionId: minor.id, category: 'support', startedAt: '2026-10-20T09:00:00Z', endedAt: '2026-10-20T10:00:00Z' });
     const usage = maintenance.getPeriod(period.id).usage;
     expect(usage.interventionCount).toBe(1);
