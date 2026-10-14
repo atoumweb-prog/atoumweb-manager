@@ -1,3 +1,19 @@
+/** Decisions prises sur la période, suivant la date propre à chaque décision. */
+export function statisticsQuoteAcceptancePercent(accepted: number, refused: number, expired: number): number | null {
+  const decisions = accepted + refused + expired;
+  return decisions > 0 ? (accepted / decisions) * 100 : null;
+}
+
+/** Le stade « new » appartient à l'Annuaire, non au pipeline commercial engagé. */
+export function isStatisticsPipelineProspect(stage: string | null | undefined, archivedAt: string | null | undefined): boolean {
+  return !archivedAt && !!stage && !['new', 'won', 'lost'].includes(stage);
+}
+
+/** Priorité au montant réellement suivi en centimes ; temps uniquement comme départage. */
+export function sortStatisticsClientsByInvoiced<T extends { invoiced: number; seconds: number; label: string }>(rows: T[]): T[] {
+  return [...rows].sort((a, b) => b.invoiced - a.invoiced || b.seconds - a.seconds || a.label.localeCompare(b.label, 'fr'));
+}
+
 export const STATISTICS_PERIODS = ['month', 'quarter', 'year', 'all'] as const;
 
 export type StatisticsPeriod = (typeof STATISTICS_PERIODS)[number];
