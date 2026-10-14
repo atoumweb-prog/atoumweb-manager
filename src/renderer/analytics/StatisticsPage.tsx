@@ -8,6 +8,7 @@ import type {
   AnalyticsPeriodInput,
   AnalyticsPeriodPreset,
 } from '../../shared/analytics';
+import { analyticsSnapshotMatchesSelection } from '../../shared/analytics';
 
 const PRESETS: Array<{ value: AnalyticsPeriodPreset; short: string }> = [
   { value: 'today', short: 'Jour' },
@@ -190,8 +191,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
   const primaryMetrics = PRIMARY_METRICS.map((key) => metricMap.get(key)).filter(Boolean) as AnalyticsFinancialMetricValue[];
   const flowMetrics = FLOW_METRICS.map((key) => metricMap.get(key)).filter(Boolean) as AnalyticsFinancialMetricValue[];
   const availableCount = snapshot?.metrics.filter((metric) => metric.available).length ?? 0;
-  const showingPreviousPeriod = !!snapshot && (snapshot.period.preset !== effectivePeriod.preset ||
-    (effectivePeriod.preset === 'custom' && (snapshot.period.from !== effectivePeriod.from || snapshot.period.to !== effectivePeriod.to)));
+  const showingPreviousPeriod = !!snapshot && !analyticsSnapshotMatchesSelection(effectivePeriod, snapshot.period);
   const signed = metricMap.get('contract_signed');
   const delivered = metricMap.get('commercial_delivered');
   const gifted = metricMap.get('gifted_value');
