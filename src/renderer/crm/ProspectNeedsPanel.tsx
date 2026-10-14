@@ -54,6 +54,7 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
   const [otherText, setOtherText] = useState('');
   const [kind,setKind]=useState<'offers'|'services'>('offers');
   const [catalogQuery,setCatalogQuery]=useState('');
+  const [managedRecommendations,setManagedRecommendations]=useState<string[]>([]);
   const choiceGuard=useUnsavedDraft('Prestation à ajouter',{selectedId,otherText},{discard:s=>{setSelectedId(s.selectedId);setOtherText(s.otherText);}});
 
   const availableByKind=catalog.filter(item=>catalogueIsOffer(item)===(kind==='offers'));
@@ -76,9 +77,30 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
   }
 
   const selectedItems = value.map((need) => need.catalogItemId ? catalog.find((item) => item.id === need.catalogItemId) : null);
-  const suggestionIds = Array.from(new Set(selectedItems.flatMap((item) => item ? (SUGGESTIONS[item.id] ?? []) : [])))
+  const recommendationSourceIds = [...new Set(selectedItems.filter((item):item is CatalogItemSummary => Boolean(
+    item?.currentVersion?.status === 'published',
+  )).map(item=>item.currentVersion!.id))].sort().join('|');
+  // E106: prefer published, managed recommendations. Legacy suggestions remain a
+  // temporary fallback for historic fixtures that have no administered links.
+  useEffect(()=>{
+    let live=true;
+    setManagedRecommendations([]);
+    if(!recommendationSourceIds)return;
+    void Promise.all(recommendationSourceIds.split('|').map(id=>
+      window.atoumweb.catalog.listRecommendations(id),
+    )).then(groups=>{
+      if(live)setManagedRecommendations([...new Set(groups.flatMap(links=>links.map(link=>link.targetVersionId)))]);
+    }).catch(()=>{if(live)setManagedRecommendations([]);});
+    return()=>{live=false;};
+  },[recommendationSourceIds]);
+  const managedItems=managedRecommendations.map(id=>catalog.find(item=>
+    item.currentVersion?.id===id&&item.status==='active'&&item.currentVersion.status==='published',
+  )).filter((item):item is CatalogItemSummary=>Boolean(item));
+  const legacySuggestionIds = Array.from(new Set(selectedItems.flatMap((item) => item ? (SUGGESTIONS[item.id] ?? []) : [])))
     .filter((id) => !value.some((need) => need.catalogItemId === id));
-  const suggestions = suggestionIds.map((id) => catalog.find((item) => item.id === id)).filter(Boolean) as CatalogItemSummary[];
+  const legacyItems = legacySuggestionIds.map(id=>catalog.find(item=>item.id===id)).filter(Boolean) as CatalogItemSummary[];
+  const suggestions = (managedItems.length ? managedItems : legacyItems)
+    .filter(item=>!value.some(need=>need.catalogItemId===item.id));
 
   return <div className="need-selector-v2 form-span-3">
     <div className="need-selector-title"><strong>Besoins / Offres / Services</strong><small>Catégorie ou recherche par besoin, bénéfice ou mot-clé publié.</small></div>
