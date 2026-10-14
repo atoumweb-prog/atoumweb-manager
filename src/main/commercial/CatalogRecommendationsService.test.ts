@@ -42,6 +42,27 @@ describe('04D — versioned recommendation persistence',()=>{
       .toEqual([first.versions[0].id]);
     expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
   });
+  it('keeps historical links readable when the target item is deactivated',()=>{
+    const source=create('Source with history');
+    const target=create('Target later inactive');
+    catalog.publishVersion(target.versions[0].id);
+    recommendations.replace(source.versions[0].id,[target.versions[0].id],[]);
+    catalog.setStatus(target.id,'inactive');
+    expect(recommendations.list(source.versions[0].id).map(link=>link.targetVersionId))
+      .toEqual([target.versions[0].id]);
+    expect(()=>recommendations.replace(source.versions[0].id,[target.versions[0].id],[target.versions[0].id]))
+      .toThrow(/active/);
+    expect(recommendations.list(source.versions[0].id)).toHaveLength(1);
+  });
+  it('supports explicit removal while preserving unrelated catalogue versions',()=>{
+    const source=create('Source remove');
+    const target=create('Target remove');
+    catalog.publishVersion(target.versions[0].id);
+    recommendations.replace(source.versions[0].id,[target.versions[0].id],[]);
+    expect(recommendations.replace(source.versions[0].id,[],[target.versions[0].id])).toEqual([]);
+    expect(catalog.getItem(target.id).currentVersion?.id).toBe(target.versions[0].id);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
   it('rolls back on invalid input without losing an existing association',()=>{
     const source=create('Source');
     const target=create('Target');
