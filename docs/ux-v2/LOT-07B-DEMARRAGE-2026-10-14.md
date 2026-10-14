@@ -26,3 +26,11 @@ Référentiel : `docs/ux-v2/LOT-07B-FICHE-PROJET-PRODUCTION.md` au commit `0bb08
 - Présence d'une association au Devis source signalée à partir de `sourceQuoteId` ; ouverture/routage du devis encore à traiter en vérifiant le système de navigation existant. L'identifiant affiché est technique et ne vaut pas numéro commercial.
 - Le bandeau rappelle que le Projet prévisionnel est une préparation interne et non une commande acceptée.
 - Aucun service ni SQL modifié ; toujours pas de test fonctionnel exécuté pour cet incrément.
+
+## Troisième incrément — ouverture du devis source
+- Ajout d'un bouton `Ouvrir le devis` sur la fiche du Projet uniquement lorsque `sourceQuoteId` est renseigné.
+- Réutilisation de l'événement existant `atoumweb:navigate` avec la cible `quote`. Dans `App.tsx`, ce flux passe par `openSearchResult`, `readSearchTarget`, le registre UX-01 et `QuotesPage initialId` ; ne crée aucun routeur alternatif.
+- L'identifiant technique du devis n'est plus affiché comme si c'était un numéro de devis commercial. Aucun changement de statut, conversion, appel d'écriture ni modification du Devis.
+- Contrôle à exécuter : depuis un Projet provisoire et confirmé, vérifier ouverture du bon Devis ; tester une saisie sale puis choisir Rester, un Devis introuvable et un devis archivé ; vérifier le retour à la fiche et le focus.
+
+La CI du commit précédent `c3fc64b` était verte lors du contrôle GitHub. Le nouveau commit de routage exige une nouvelle validation sur son propre SHA ; aucune réussite de CI n'est anticipée.
