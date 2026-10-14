@@ -1,7 +1,7 @@
 import {mergeContractClauseDrafts} from './contractClauseDraftMerge';
 import {compareClauseField} from './contractClauseFieldDiff';
 import {compareDraftContractClauses} from './contractDraftImpact';
-import {assembleReviewedDraftContract, type NumberedContractSection} from '../../shared/reviewedDraftContract';
+import {assembleReviewedDraftContract, renderApprovedDraftContract, type NumberedContractSection} from '../../shared/reviewedDraftContract';
 import type {ContractSectionReview} from '../../shared/contractSectionPolicy';
 import {isCurrentContractRequest} from './contractRequestGuard';
 import {useUnsavedDraft} from '../unsaved/unsaved';
@@ -49,7 +49,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   const contractActionPending=useRef(false);
   const loadedQuoteId=useRef(quote.id);
   const [presentation,setPresentation]=useState<ContractPresentation|null>(null);
-  const [sectionReviewStatus,setSectionReviewStatus]=useState<{loading:boolean;approved:number;pending:number;unresolved:number;sections:NumberedContractSection[];ready:boolean;duplicates:number;invalidText:number;crossQuote:boolean;error:string}|null>(null);
+  const [sectionReviewStatus,setSectionReviewStatus]=useState<{loading:boolean;approved:number;pending:number;unresolved:number;sections:NumberedContractSection[];canonicalText:string;ready:boolean;duplicates:number;invalidText:number;crossQuote:boolean;error:string}|null>(null);
   const sectionRequest=useRef(0);
   const clauseEditorRef=useRef<HTMLDetailsElement|null>(null);
   const clauseDetailsRefs=useRef<Record<string,HTMLDetailsElement>>({});
@@ -174,7 +174,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     }
     const selected=build.clauses.filter(clause=>clause.enabled&&!clause.isOrphaned);
     const versioned=selected.filter(clause=>!!clause.sourceClauseVersionId);
-    setSectionReviewStatus({loading:true,approved:0,pending:0,unresolved:0,sections:[],ready:false,duplicates:0,invalidText:0,crossQuote:false,error:''});
+    setSectionReviewStatus({loading:true,approved:0,pending:0,unresolved:0,sections:[],canonicalText:'',ready:false,duplicates:0,invalidText:0,crossQuote:false,error:''});
     void Promise.all(versioned.map(async clause=>({
       clause,review:await window.atoumweb.contractTerms.sectionReviews.get(clause.sourceClauseVersionId!),
     }))).then(entries=>{
@@ -184,11 +184,12 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
         loading:false,approved:plan.included.length,
         pending:plan.unreviewed.length+selected.length-versioned.length,
         unresolved:plan.unresolved.length,sections:plan.sections,
+        canonicalText:plan.ready&&selected.length===versioned.length?renderApprovedDraftContract(plan):'',
         ready:plan.ready&&selected.length===versioned.length,duplicates:plan.duplicateIds.length,invalidText:plan.invalidText.length,crossQuote:plan.crossQuote,error:'',
       });
     }).catch(error=>{
       if(request===sectionRequest.current&&currentQuoteId.current===quote.id)
-        setSectionReviewStatus({loading:false,approved:0,pending:0,unresolved:0,sections:[],ready:false,duplicates:0,invalidText:0,crossQuote:false,error:errorMessage(error)});
+        setSectionReviewStatus({loading:false,approved:0,pending:0,unresolved:0,sections:[],canonicalText:'',ready:false,duplicates:0,invalidText:0,crossQuote:false,error:errorMessage(error)});
     });
     return ()=>{sectionRequest.current++;};
   },[quote.id,editable,build]);
@@ -450,6 +451,10 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
                <button type="button" className="secondary-button compact-button" onClick={()=>showClause(article.id)}>{article.number} — {article.title}</button>
              </li>)}</ol>
            </section>)}
+           {sectionReviewStatus.ready&&sectionReviewStatus.canonicalText&&<details>
+             <summary>Texte canonique calculé du brouillon (prévisualisation uniquement)</summary>
+             <pre className="contract-paragraph">{sectionReviewStatus.canonicalText}</pre>
+           </details>}
            <p className="muted">Numérotation fondée sur les classements approuvés. La compilation finale du devis reste inchangée tant que le raccordement métier n'est pas validé.</p>
          </details>}
       {build?.snapshotState === 'draft' && <p className="muted" role="status">Contrat en préparation : les clauses peuvent encore évoluer tant que le devis reste modifiable. La version contractuelle sera figée lors de la finalisation.</p>}
