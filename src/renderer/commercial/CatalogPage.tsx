@@ -490,7 +490,9 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
             <option value="all">Tous les statuts</option><option value="active">Actifs</option><option value="inactive">Inactifs</option><option value="archived">Archivés</option>
           </select>
           {hasFilters && <button className="secondary-button" type="button" onClick={resetFilters}>Réinitialiser les filtres</button>}
-          <button className="secondary-button" type="button" aria-expanded={showCategoryInventory} onClick={() => setShowCategoryInventory(value => !value)}>Catégories existantes</button>
+          <button className="secondary-button" type="button" aria-expanded={showCategoryInventory} onClick={() => showCategoryInventory
+              ? requestUnsavedExit(() => setShowCategoryInventory(false))
+              : setShowCategoryInventory(true)}>Catégories existantes</button>
           <div className="catalog-view-switch" role="group" aria-label="Présentation du catalogue">
             <button type="button" className="secondary-button" aria-pressed={catalogView === 'organized'} onClick={() => setCatalogView('organized')}>Vue organisée</button>
             <button type="button" className="secondary-button" aria-pressed={catalogView === 'table'} onClick={() => setCatalogView('table')}>Tableau d'administration</button>
@@ -500,7 +502,10 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
       </div>
 
       {showCategoryInventory && (
-        <CatalogCategoryInventory items={items} onClose={() => setShowCategoryInventory(false)} onFilter={category => {
+        <CatalogCategoryInventory items={items}
+          onChanged={refresh}
+          onClose={() => requestUnsavedExit(() => setShowCategoryInventory(false))}
+          onFilter={category => {
           setQuery(''); setTypeFilter('all'); setStatusFilter('all'); setCategoryFilter(category);
           setShowCategoryInventory(false);
         }} />
