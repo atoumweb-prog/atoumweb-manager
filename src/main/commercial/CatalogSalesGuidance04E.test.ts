@@ -34,6 +34,19 @@ describe('04E — objections humaines versionnées dans le Catalogue SQLite', ()
     expect(detail.currentVersion?.id).toBe(previousId);
     expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
   });
+  it('reprend les objections d’une version publiée si le nouveau brouillon ne les redéfinit pas', () => {
+    const item=catalog.create({type:'service',name:'SEO local'},{
+      priceMode:'fixed',priceCents:14900,
+      commercialParameters:{clientNeed:'Visibilité locale',objections:'Combien de temps ? : détailler les étapes'},
+    });
+    const prior=item.versions[0];
+    catalog.publishVersion(prior.id);
+    const next=catalog.createVersion(item.id,{priceMode:'fixed',priceCents:17900});
+    expect(salesGuidanceFromCatalogVersion(next).objections).toBe('Combien de temps ? : détailler les étapes');
+    expect(salesGuidanceFromCatalogVersion(catalog.getVersion(prior.id)).objections)
+      .toBe('Combien de temps ? : détailler les étapes');
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
   it('refuse un brouillon obsolète sans supprimer les objections plus récentes', () => {
     const item=catalog.create({type:'service',name:'Maintenance WP'},{
       priceMode:'monthly',priceCents:4900,commercialParameters:{objections:'Pourquoi un abonnement ?'},
