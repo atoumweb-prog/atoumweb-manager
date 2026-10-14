@@ -95,6 +95,33 @@ app.whenReady().then(async () => {
       const importedDetail=document.querySelector('.catalog-import-draft');
       assert('Paramètres, inclusions et provenance importés visibles',importedDetail.open&&importedDetail.textContent.includes(importedVersion.commercialParameters.reviewTerms)&&importedDetail.textContent.includes(importedVersion.provenance.recordKey)&&importedDetail.textContent.includes(importedVersion.inclusions[0]));
       assert('Consultation du brouillon sans publication ni mutation de la version précédente',calls.publish===0&&items[0].currentVersion.id==='old-v1'&&items[0].currentVersion.priceCents===69900);
+      // Lot 04B: the existing catalogue editor is still usable; exercise the new organized view
+      // with synthetic, non-persisted entries only after all the historical identity assertions.
+      document.querySelector('.catalog-detail-heading-actions .close-detail').click();await wait();
+      const addV2Fixture=(id,name,code,category,type,kind,inclusions=[])=>{
+        const v={...oldVersion,id:id+'-v1',itemId:id,status:'published',versionNumber:1,
+          description:'Description publiée '+name,inclusions,commercialKind:kind};
+        window.items.push({id,name,canonicalCode:code,category,type,status:'active',visiblePublic:false,
+          createdAt:'2026-10-14',updatedAt:'2026-10-14',currentVersion:v,versions:[v]});
+      };
+      addV2Fixture('test-vitrine','Site vitrine 5 pages','AW-WEB-VITRINE','WEB','offer','offer',['Hébergement compris']);
+      addV2Fixture('test-commerce','Boutique WooCommerce','AW-ECOM-BASE','ECOM','offer','offer');
+      addV2Fixture('test-mariage','Mariage Essentiel','AW-MARIAGE-ESS','MARIAGE','offer','offer');
+      addV2Fixture('test-maint','Maintenance WordPress mensuelle','AW-MAINT-WP-M','MAINT','service','subscription');
+      addV2Fixture('test-seo','Audit SEO','AW-SEO-AUDIT','SEO','service','service');
+      await click('↻ Actualiser');await click('Vue organisée');
+      const mainGroups=[...document.querySelectorAll('.catalog-overview-featured-group h4')].map(h=>h.textContent.trim());
+      assert('04B quatre rubriques prioritaires',JSON.stringify(mainGroups)===JSON.stringify(['Site vitrine','Site e-commerce','Site mariage','Maintenance WordPress']));
+      assert('04B maintenance conserve son item service',window.items.find(x=>x.id==='test-maint').type==='service');
+      assert('04B inclusions publiées visibles',document.querySelector('[data-catalog-item-id="test-vitrine"]').textContent.includes('Hébergement compris'));
+      assert('04B code secondaire masqué sur carte',!document.querySelector('[data-catalog-item-id="test-vitrine"]').textContent.includes('AW-WEB-VITRINE'));
+      assert('04B service complémentaire classé', [...document.querySelectorAll('.catalog-overview-category h4')].some(h=>h.textContent.includes('Référencement et visibilité')));
+      await fillField(document.querySelector('select[aria-label="Filtrer par catégorie"]'),'SEO');
+      assert('04B filtre catégorie explicite',document.querySelectorAll('.catalog-overview-card').length===1&&document.querySelector('.catalog-overview-card').textContent.includes('Audit SEO'));
+      await click('Réinitialiser les filtres');
+      assert('04B réinitialisation conserve toutes les prestations',document.querySelectorAll('.catalog-overview-card').length===window.items.length);
+      document.querySelector('[data-catalog-item-id="test-vitrine"]').click();await wait();
+      assert('04B carte ouvre le bon item via route existante',document.querySelector('[data-search-entity-id="test-vitrine"]')?.textContent.includes('Site vitrine'));
       return {passed:checks.length,failed:0,checks};
     })()`);
     console.log(JSON.stringify(result, null, 2));win.destroy();app.exit(0);
