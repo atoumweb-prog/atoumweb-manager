@@ -266,7 +266,10 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
   );
 
   async function openProject(id: string): Promise<void> {
-    if (detailRef.current?.id !== id && !requestUnsavedExit(() => { void openProjectAllowed(id); })) return;
+    if (detailRef.current?.id !== id) {
+      requestUnsavedExit(() => { void openProjectAllowed(id); });
+      return;
+    }
     await openProjectAllowed(id);
   }
 
