@@ -47,6 +47,27 @@ describe('04E — objections humaines versionnées dans le Catalogue SQLite', ()
       .toBe('Combien de temps ? : détailler les étapes');
     expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
   });
+  it('stocke questions de qualification et pitch dans la version et les conserve après publication', () => {
+    const item=catalog.create({type:'offer',name:'Pack présence web'},{
+      priceMode:'fixed',priceCents:64900,
+      commercialParameters:{
+        salesPitch:'Une présence web claire pour votre activité',
+        qualificationQuestions:'Quels contenus avez-vous ?',
+        objections:'Budget : clarifier les livrables',
+      },
+    });
+    const draft=catalog.getItem(item.id).versions[0];
+    expect(salesGuidanceFromCatalogVersion(draft)).toMatchObject({
+      salesPitch:'Une présence web claire pour votre activité',
+      qualificationQuestions:'Quels contenus avez-vous ?',
+      objections:'Budget : clarifier les livrables',
+    });
+    catalog.publishVersion(draft.id);
+    const published=catalog.getItem(item.id).versions.find(version=>version.id===draft.id)!;
+    expect(salesGuidanceFromCatalogVersion(published).salesPitch)
+      .toBe('Une présence web claire pour votre activité');
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
   it('refuse un brouillon obsolète sans supprimer les objections plus récentes', () => {
     const item=catalog.create({type:'service',name:'Maintenance WP'},{
       priceMode:'monthly',priceCents:4900,commercialParameters:{objections:'Pourquoi un abonnement ?'},
