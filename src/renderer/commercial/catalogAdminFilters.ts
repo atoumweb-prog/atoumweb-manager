@@ -3,7 +3,7 @@ import type {
   CatalogItemSummary,
   CatalogItemType,
 } from '../../shared/commercial';
-import { cataloguePrimaryCategoryLabel } from './catalogDisplay';
+import { catalogueCategoryName, cataloguePrimaryCategoryLabel } from './catalogDisplay';
 
 export interface CatalogAdminFilters {
   query: string;
@@ -48,7 +48,7 @@ export function catalogAdminFiltered(items: readonly CatalogItemSummary[], filte
 
 export function catalogAdminCategories(items: readonly CatalogItemSummary[]): string[] {
   return [...new Set(items.map((item) => item.category?.trim() || '').filter(Boolean))]
-    .sort((a, b) => cataloguePrimaryCategoryLabel({ category: a } as CatalogItemSummary)
-      .localeCompare(cataloguePrimaryCategoryLabel({ category: b } as CatalogItemSummary), 'fr-FR', { sensitivity: 'base' }) ||
+    .sort((a, b) => catalogueCategoryName(a)
+      .localeCompare(catalogueCategoryName(b), 'fr-FR', { sensitivity: 'base' }) ||
       a.localeCompare(b, 'fr-FR', { sensitivity: 'base' }));
 }
