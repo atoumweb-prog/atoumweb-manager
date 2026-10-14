@@ -452,7 +452,11 @@ export class ProjectCommercialService {
 
   assignTarget(projectId:string,input:ContributionTargetInput):ProjectCommercialScope {
     this.transaction(()=>{
-      this.assertCurrentProvisional(projectId);
+      // Accepted/frozen Projects may still choose their first operational
+      // destination (Lot 8A.1). Only provisional predecessors lose this right.
+      if (this.db.get<Row>('SELECT commercial_state FROM projects WHERE id=?',[projectId])?.commercial_state==='provisional') {
+        this.assertCurrentProvisional(projectId);
+      }
       new ProjectContributionTargetService(this.db).assign(projectId,input);
       if(this.db.get<Row>('SELECT commercial_state FROM projects WHERE id=?',[projectId])?.commercial_state==='provisional')this.sync(projectId);
     });
