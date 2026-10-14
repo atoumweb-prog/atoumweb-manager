@@ -83,14 +83,18 @@ describe('statistics helpers', () => {
       { preset: 'custom' as const, from: '2026-08-31', to: '2026-09-02' },
     ];
     const today = new Date('2026-09-23T12:00:00.000Z');
+    const localDate = (isoTimestamp: string): string => {
+      const date = new Date(isoTimestamp);
+      return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+    };
     for (const period of checked) {
       const resolved = statisticsSelectionRanges(period, today);
       const backend = resolveAnalyticsPeriod(period, today);
       expect(resolved).not.toBeNull();
-      expect(resolved!.current.from!.slice(0, 10)).toBe(backend.from);
-      expect(resolved!.current.to!.slice(0, 10)).toBe(backend.to);
-      expect(resolved!.previous!.from!.slice(0, 10)).toBe(backend.comparisonFrom);
-      expect(resolved!.previous!.to!.slice(0, 10)).toBe(backend.comparisonTo);
+      expect(localDate(resolved!.current.from!)).toBe(backend.from);
+      expect(localDate(resolved!.current.to!)).toBe(backend.to);
+      expect(localDate(resolved!.previous!.from!)).toBe(backend.comparisonFrom);
+      expect(localDate(resolved!.previous!.to!)).toBe(backend.comparisonTo);
     }
   });
 
