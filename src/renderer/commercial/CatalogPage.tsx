@@ -172,6 +172,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   const [versionFormError, setVersionFormError] = useState<string | null>(null);
   const [publicationCandidate, setPublicationCandidate] = useState<CatalogVersion | null>(null);
   const [activeTab,setActiveTab] = useState<CatalogEditorTab>('identity');
+  const [pendingItemStatus,setPendingItemStatus]=useState<CatalogItemStatus|null>(null);
   const [detailSplitPercent, setDetailSplitPercent] = useState(40);
   const [detailExpanded, setDetailExpanded] = useState(false);
   const [offerComponents, setOfferComponents] = useState<OfferComponent[]>([]);
@@ -261,6 +262,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     if(detailRef.current?.id===id){detailEpoch.current++;setSelectedId(id);setDetailLoading(false);return;}
     if(!requestUnsavedExit(()=>{}))return;
     setSelectedId(id);
+    setPendingItemStatus(null);
     setVersionMode(false);
     setActiveTab('identity');
     setPublicationCandidate(null);
@@ -275,6 +277,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     detailEpoch.current++;
     setSelectedId(null);
     setDetail(null);
+    setPendingItemStatus(null);
     setVersionMode(false);
     setActiveTab('identity');
     setPublicationCandidate(null);
@@ -353,7 +356,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
       createGuard.saved(EMPTY_DRAFT);
       setShowForm(false);
       await refresh();
-      setSelectedId(created.id);setVersionMode(false);setActiveTab('identity');await loadDetail(created.id);
+      setSelectedId(created.id);setPendingItemStatus(null);setVersionMode(false);setActiveTab('identity');await loadDetail(created.id);
       onMessage(`${created.type === 'offer' ? 'Offre' : 'Service'} créé en brouillon.`);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Création impossible.');
@@ -484,11 +487,17 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   }
 
   async function updateStatus(status: CatalogItemStatus): Promise<void> {
-    if (!detail) return;
-    await window.atoumweb.catalog.setStatus(detail.id, status);
-    await refresh();
-    await openItem(detail.id);
-    onMessage(`Statut : ${STATUS_LABELS[status]}.`);
+    if (!detail || saving || versionMode) return;
+    setSaving(true);
+    try {
+      await window.atoumweb.catalog.setStatus(detail.id, status);
+      setPendingItemStatus(null);
+      await refresh();
+      await openItem(detail.id);
+      onMessage(`Statut : ${STATUS_LABELS[status]}.`);
+    } catch(error) {
+      onMessage(error instanceof Error?error.message:'Changement de statut impossible.');
+    } finally {setSaving(false);}
   }
 
   async function toggleVisibility(): Promise<void> {
@@ -551,7 +560,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   const offerCompositionVersion = detail?.type === 'offer'
     ? detail.versions.find((version) => version.id === offerVersionId) ?? null
     : null;
-  const offerCompositionEditable = offerCompositionVersion?.status === 'draft';
+  const offerCompositionEditable = offerCompositionVersion?.status === 'draft' && !versionMode && !saving;
 
   return (
     <div className="catalog-stack">
@@ -772,8 +781,15 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 </div>
               ) : !detail.currentVersion ? <p className="muted">Aucune version.</p> : null}
 
-              {activeTab==='identity' && <div className="catalog-detail-actions"><button className="secondary-button" type="button" disabled={versionMode || saving} onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select value={detail.status} disabled={versionMode || saving} onChange={(e) => void updateStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion || versionMode || saving} onClick={prepareNewVersion}>{detail.versions.some(v => v.status === 'draft') ? 'Reprendre le brouillon' : 'Modifier via une nouvelle version'}</button></div>}
+              {activeTab==='identity' && <div className="catalog-detail-actions"><button className="secondary-button" type="button" disabled={versionMode || saving} onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select aria-label="Statut de la prestation" value={pendingItemStatus ?? detail.status} disabled={versionMode || saving} onChange={(e) => setPendingItemStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion || versionMode || saving} onClick={prepareNewVersion}>{detail.versions.some(v => v.status === 'draft') ? 'Reprendre le brouillon' : 'Modifier via une nouvelle version'}</button></div>}
 
+              {activeTab==='identity' && pendingItemStatus && pendingItemStatus!==detail.status && <div className="catalog-status-confirmation" role="group" aria-label="Confirmer le statut">
+                <p>Passer la prestation à « {STATUS_LABELS[pendingItemStatus]} » ? Cette modification ne supprime ni les versions ni les Devis historiques.</p>
+                <button type="button" className="secondary-button" onClick={()=>setPendingItemStatus(null)}>Annuler le changement</button>
+                <button type="button" className="primary-button" disabled={saving||versionMode} onClick={()=>void updateStatus(pendingItemStatus)}>
+                  Confirmer le statut
+                </button>
+              </div>}
               {activeTab==='contracts' && <CatalogContractPanel key={detail.id+detail.versions.length} item={detail}/> }
               {activeTab==='history' && publicationCandidate && publicationCandidate.itemId === detail.id &&
                 <CatalogPublicationReview
