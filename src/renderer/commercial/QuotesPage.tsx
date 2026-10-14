@@ -102,6 +102,12 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
       setClients(nextClients);
       setCatalog(nextCatalog.filter((item) => item.currentVersion?.status === 'published'));
       if(selectedAtStart&&nextQuotes.some(q=>q.id===selectedAtStart)){const next=await window.atoumweb.quotes.get(selectedAtStart);if(sequence===detailRequest.current&&selectedRef.current===selectedAtStart)applyDetail(next);}
+    } catch (error) {
+      // Un ancien rafraîchissement (notamment lors d'une navigation Recherche A → B)
+      // peut échouer après son démontage : ne pas laisser un rejet non géré
+      // détruire tout le renderer ni afficher une erreur sur le nouveau devis.
+      if(sequence===detailRequest.current&&selectedRef.current===selectedAtStart)
+        onMessage(error instanceof Error ? error.message : 'Actualisation des devis impossible.');
     } finally { loadedOnce.current=true;setLoading(false); }
   }
 
