@@ -26,7 +26,7 @@ describe('04D — états du conseil commercial dans une ligne de Devis',()=>{
     expect(quoteRecommendationState(offer,target(),[offer])).toBe('included');
   });
   it('distinguishes an available option from the option purchased with explicit origin',()=>{
-    const offer=quoteLine('offer',{snapshot:{offerComponents:[{
+    const offer=quoteLine('offer',{catalogVersionId:'offer-v1',snapshot:{offerComponents:[{
       serviceItemId:'service',componentId:'component-1',isOptional:true,
     }]}});
     expect(quoteRecommendationState(offer,target(),[offer])).toBe('option-available');
@@ -38,7 +38,7 @@ describe('04D — états du conseil commercial dans une ligne de Devis',()=>{
     expect(quoteRecommendationState(offer,target(),[offer,bought])).toBe('option-purchased');
   });
   it('does not offer to purchase an optional service already added elsewhere on the Quote',()=>{
-    const offer=quoteLine('offer',{snapshot:{offerComponents:[{
+    const offer=quoteLine('offer',{catalogVersionId:'offer-v1',snapshot:{offerComponents:[{
       serviceItemId:'service',componentId:'optional-1',isOptional:true,
     }]}});
     const independentlyAdded=quoteLine('service-line',{
