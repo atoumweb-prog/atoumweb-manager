@@ -453,3 +453,7 @@ button { color: inherit; }
 .settings-diagnostic-list dd { margin: 0; font-size: var(--aw-font-functional, 14px); overflow-wrap: anywhere; }
 .settings-documents .path-value,.settings-advanced .path-value { min-width: 0; word-break: break-word; }
 .settings-diagnostic-error { color: var(--text-muted); overflow-wrap: anywhere; }
+
+.statistics-decision-drilldown { display: flex; gap: 9px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 11px; border: 1px solid var(--border); border-radius: 10px; }
+.statistics-decision-drilldown span { flex: 1 1 280px; font-size: var(--aw-font-functional, 14px); overflow-wrap: anywhere; }
+.statistics-decision-drilldown button { white-space: normal; text-align: left; }
