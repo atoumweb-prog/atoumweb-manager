@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { basename, extname, join, relative, resolve, sep } from 'node:path';
 import type {
   ReuseCreateGlobalInput,
@@ -179,23 +179,41 @@ export class ReusePreparationService {
     const attachments = [manifestPath, adaptationNotesPath]
       .filter((path) => existsSync(path) && statSync(path).isFile());
 
-    const created = this.globalLibrary.create(
-      { ...input.item, originTechnicalItemId: item.id },
-      input.version,
-    );
-    const targetVersionId = created.currentVersion?.id;
-    if (!targetVersionId) throw new Error('La version initiale du composant AtoumWeb est introuvable.');
+    // A human-approved promotion must not create a global item with only some
+    // attachments when an IPC/database/file write fails midway. The global
+    // library's own SAVEPOINT nests inside this one; files need separate cleanup.
+    const createdFiles: string[] = [];
+    this.database.exec('SAVEPOINT reuse_global_promotion;');
+    try {
+      const created = this.globalLibrary.create(
+        { ...input.item, originTechnicalItemId: item.id },
+        input.version,
+      );
+      const targetVersionId = created.currentVersion?.id;
+      if (!targetVersionId) throw new Error('La version initiale du composant AtoumWeb est introuvable.');
 
-    if (sourcePaths.length) this.globalAssets.importFilePaths(targetVersionId, sourcePaths, 'source');
-    if (attachments.length) this.globalAssets.importFilePaths(targetVersionId, attachments, 'attachment');
+      if (sourcePaths.length) this.globalAssets.importFilePaths(targetVersionId, sourcePaths, 'source', createdFiles);
+      if (attachments.length) this.globalAssets.importFilePaths(targetVersionId, attachments, 'attachment', createdFiles);
 
-    this.writeActivity(
-      item.project_id,
-      'technical_reuse_promoted_to_global',
-      `Composant AtoumWeb créé volontairement depuis ${item.name} v${Number(version.version_number)} : ${created.name}`,
-      { sourceItemId: item.id, sourceVersionId: version.id, globalItemId: created.id },
-    );
-    return created;
+      this.writeActivity(
+        item.project_id,
+        'technical_reuse_promoted_to_global',
+        `Composant AtoumWeb créé volontairement depuis ${item.name} v${Number(version.version_number)} : ${created.name}`,
+        { sourceItemId: item.id, sourceVersionId: version.id, globalItemId: created.id },
+      );
+      this.database.exec('RELEASE SAVEPOINT reuse_global_promotion;');
+      return created;
+    } catch (error) {
+      try {
+        this.database.exec('ROLLBACK TO SAVEPOINT reuse_global_promotion; RELEASE SAVEPOINT reuse_global_promotion;');
+      } finally {
+        // Asset import tracks destinations before copying to include partial files.
+        for (const path of createdFiles) {
+          try { unlinkSync(path); } catch { /* preserve the initial failure */ }
+        }
+      }
+      throw error;
+    }
   }
 
   assertPackagePath(path: string): string {
