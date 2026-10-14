@@ -176,7 +176,7 @@ module.exports = async ({ win, db, evalUI: js, get, wait, navigate, test, sleep 
   const detailIds = () => get('[...document.querySelectorAll(".statistics-evidence-table td small[title]")].map(e=>e.title)');
   test(JSON.stringify(await detailIds().then(ids=>ids.sort()))===JSON.stringify(['lot10-billing-a','lot10-billing-b']),
     'Lot 10B: détails facture sur les vrais ID du compteur, sans faux routage');
-  test(await get('document.querySelector(".statistics-evidence-panel")?.textContent.includes("billing_items") && document.querySelector(".statistics-evidence-panel")?.textContent.includes("Facturé")'),
+  test(await get('document.querySelector(".statistics-evidence-panel")?.textContent.includes("billing_items") && document.querySelector(".statistics-evidence-panel")?.textContent.includes("Date facturée")'),
     'Lot 10B: source métier et unités explicites dans le détail');
   await js("const card=[...document.querySelectorAll('.statistics-kpi')].find(e=>e.textContent.includes('Temps travaillé'));card.querySelector('button.statistics-kpi-inspect').click()");
   await wait('document.querySelectorAll(".statistics-evidence-table tbody tr").length===2', 'sessions détaillées');
