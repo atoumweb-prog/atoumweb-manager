@@ -703,7 +703,12 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 {CATALOG_EDITOR_TABS.map(tab=><button type="button" key={tab.id} role="tab"
                   id={`catalog-tab-${tab.id}`} aria-selected={activeTab===tab.id}
                   aria-controls={`catalog-panel-${tab.id}`} title={tab.hint}
-                  onClick={()=>setActiveTab(tab.id)}>{tab.label}</button>)}
+                  onClick={()=>{
+                    if(tab.id===activeTab)return;
+                    if(activeTab==='contracts')
+                      requestUnsavedExit(()=>setActiveTab(tab.id),'catalog:contract:'+detail.id);
+                    else setActiveTab(tab.id);
+                  }}>{tab.label}</button>)}
               </div>
               <div role="tabpanel" id={`catalog-panel-${activeTab}`} aria-labelledby={`catalog-tab-${activeTab}`} className="catalog-editor-tab-panel">
               {activeTab==='identity' && <section className="catalog-detail-section catalog-identity-section">
