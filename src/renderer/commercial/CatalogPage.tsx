@@ -411,7 +411,15 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   async function createVersion(event: React.FormEvent): Promise<void> {
     event.preventDefault();
     if (!detail || saving) return;
-    const payload = buildVersion(versionDraft);
+    let payload: CatalogVersionInput;
+    try {
+      payload = buildVersion(versionDraft);
+    } catch(error) {
+      const message=error instanceof Error?error.message:'Données du brouillon invalides.';
+      setVersionFormError(message);
+      onMessage(message);
+      return;
+    }
     const payloadFingerprint = JSON.stringify(payload);
     const previousRequest = pendingVersionCreations.current.get(detail.id);
     if (!editingDraftVersion && previousRequest &&
