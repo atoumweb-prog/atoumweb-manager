@@ -1,6 +1,6 @@
 
 import { createHash, randomUUID } from 'node:crypto';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, chmodSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, chmodSync, rmSync } from 'node:fs';
 import { basename, extname, join, relative, resolve, sep } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
@@ -203,6 +203,7 @@ export class ExpenseService {
       chmodSync(copy, 0o444);
       return copy;
     } catch (error) {
+      rmSync(directory, { recursive: true, force: true });
       throw error;
     }
   }
