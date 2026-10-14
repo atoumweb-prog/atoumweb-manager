@@ -364,7 +364,7 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
       await js('const b=document.querySelector(".maintenance-overage-item button.secondary-button");if(!b)throw Error("E08C save missing");b.click();b.click();');
       for(let i=0;i<90&&overageWrites===0;i++)await sleep(25);
       test(overageWrites===1,'E08C double click starts one overage-decision IPC');
-      test(await get('document.querySelector(".maintenance-overage-item button.secondary-button")?.disabled')===true,
+      await wait('document.querySelector(".maintenance-overage-item button.secondary-button")?.disabled===true',
         'E08C saving disables decision button');
       const beforeOveragePendingExit=confirmations.length;
       answers.push(1);
