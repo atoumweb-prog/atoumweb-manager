@@ -245,7 +245,7 @@ if(!process.versions.electron){
       database.contractTypes.setStatus(type.id,'archived');check(theme+' archive preserves versions',database.contractTypes.list().every(t=>t.id!==type.id)&&database.contractTypes.list(true).some(t=>t.id===type.id));
     }
     if(args.includes('--ux05b')){
-      const densityScreens=fs.readdirSync(output).filter(name=>/^bibliotheque-(atoumweb|noir|blanc)-(compact|comfort|comfort_plus)\\.png$/.test(name)).sort();
+      const densityScreens=fs.readdirSync(output).filter(name=>/^bibliotheque-(atoumweb|noir|blanc)-(compact|comfort|comfort_plus)\.png$/.test(name)).sort();
       check('05B three themes times three densities produce nine independent captures',densityScreens.length===9);
       console.log('[05B 3x3 CAPTURES] '+JSON.stringify(densityScreens.map(name=>({name,sha256:sha(path.join(output,name))}))));
     }
