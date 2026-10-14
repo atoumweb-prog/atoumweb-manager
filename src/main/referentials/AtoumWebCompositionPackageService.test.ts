@@ -214,6 +214,35 @@ describe('AtoumWebCompositionPackageService', () => {
     expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
+  it('R07G-22 rollback sur échec du journal et sur BEGIN déjà occupé', () => {
+    const hero = reusable('Hero double panne', 'hero', 'r07g-logfailure');
+    const project = projectService.createInternal({name:'R07G journaux'});
+    const updated = projectService.addProjectNode(project.id,{type:'module',displaySubtype:'page',name:'Page journaux'});
+    const page = updated.nodes.find(node => node.displaySubtype==='page')!;
+    const site = projectSites.create(project.id,{name:'Site journaux'});
+    projectSites.linkPage(site.id,page.id,{role:'standard'});
+    let composition = compositions.ensureForProjectPage(page.id);
+    composition = compositions.addItem(composition.id,{libraryItemId:hero.id});
+    const directory = join(workspace.exportsDirectory,'compositions-atoumweb');
+    const before = existsSync(directory) ? readdirSync(directory).sort() : [];
+
+    database.exec("CREATE TRIGGER r07g_abort_export_log BEFORE INSERT ON activity_log " +
+      "WHEN NEW.action='atoumweb_composition_package_exported' " +
+      "BEGIN SELECT RAISE(ABORT,'R07G_LOG_FAILURE'); END;");
+    expect(() => projectPackages.exportPagePackage(page.id)).toThrow('R07G_LOG_FAILURE');
+    expect(existsSync(directory) ? readdirSync(directory).sort() : []).toEqual(before);
+    expect(database.all('SELECT id FROM project_page_exports WHERE project_node_id=?',[page.id])).toHaveLength(0);
+
+    database.exec('DROP TRIGGER r07g_abort_export_log');
+    database.exec('BEGIN IMMEDIATE;');
+    expect(() => projectPackages.exportPagePackage(page.id)).toThrow(/transaction/i);
+    // A failed nested BEGIN must leave the caller's transaction active.
+    database.exec('ROLLBACK;');
+    expect(existsSync(directory) ? readdirSync(directory).sort() : []).toEqual(before);
+    expect(database.get('PRAGMA integrity_check')).toEqual({integrity_check:'ok'});
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
   it('R07G-21 refuse aussi les Sites archivés et les compositions vides sans historique d export', () => {
     const source = reusable('Hero refus', 'hero', 'refusal');
     const project = projectService.createInternal({name:'R07G refus export'});
