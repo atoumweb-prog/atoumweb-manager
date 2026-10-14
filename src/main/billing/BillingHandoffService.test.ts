@@ -243,4 +243,38 @@ describe('BillingHandoffService', () => {
     expect(eventCount?.n).toBe(1);
   });
 
+
+  it('annule la modification des métadonnées si son historique ne peut pas être écrit', () => {
+    const now = '2026-10-14T14:00:00.000Z';
+    database.run(
+      `INSERT INTO billing_items
+       (id,client_account_id,source_type,source_id,source_key,description,expected_amount_cents,theoretical_value_cents,status,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+      ['billing-meta-atomic', clientId, 'other', 'source-meta-atomic', 'other:source-meta-atomic',
+        'Facture avec métadonnées', 7000, 7000, 'ready', now, now],
+    );
+    database.run(
+      `INSERT INTO client_documents
+       (id,client_account_id,category,title,original_name,relative_path,mime_type,size_bytes,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?)`,
+      ['invoice-meta-atomic', clientId, 'invoice', 'Facture', 'meta.pdf',
+        'Clients/test/Documents/03 Factures/meta.pdf', 'application/pdf', 100, now, now],
+    );
+    billing.attachInvoice('billing-meta-atomic', 'invoice-meta-atomic',
+      { reference: 'ABBY-ORIGINAL', invoicedAt: now });
+    const before = billing.get('billing-meta-atomic');
+    database.exec(`CREATE TRIGGER fail_metadata_audit BEFORE INSERT ON activity_log
+      WHEN NEW.action='billing_invoice_metadata_updated' AND NEW.entity_id='billing-meta-atomic'
+      BEGIN SELECT RAISE(ABORT, 'historique de métadonnées indisponible'); END;`);
+    expect(() => billing.updateInvoiceMetadata('billing-meta-atomic',
+      { reference: 'ABBY-CHANGED', invoicedAt: '2026-10-15T14:00:00.000Z' }))
+      .toThrow(/historique de métadonnées indisponible/);
+    expect(billing.get('billing-meta-atomic')).toEqual(before);
+    expect(database.get<{ n: number }>(
+      "SELECT COUNT(*) AS n FROM activity_log WHERE entity_id=? AND action='billing_invoice_metadata_updated'",
+      ['billing-meta-atomic'],
+    )?.n).toBe(0);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
 });
