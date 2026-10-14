@@ -82,6 +82,22 @@ describe('04D — versioned recommendation persistence',()=>{
     expect(recommendations.list(versionId)).toEqual(original);
     expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
   });
+  it('persists an explicit recommendation display priority on the same source draft',()=>{
+    const source=create('Ordered source');
+    const first=create('First target');
+    const second=create('Second target');
+    catalog.publishVersion(first.versions[0].id);
+    catalog.publishVersion(second.versions[0].id);
+    const sourceVersionId=source.versions[0].id;
+    const a=first.versions[0].id,b=second.versions[0].id;
+    const initial=recommendations.replace(sourceVersionId,[a,b],[]);
+    expect(initial.map(row=>[row.targetVersionId,row.sortOrder])).toEqual([[a,0],[b,1]]);
+    const reordered=recommendations.replace(sourceVersionId,[b,a],[a,b]);
+    expect(reordered.map(row=>[row.targetVersionId,row.sortOrder])).toEqual([[b,0],[a,1]]);
+    expect(recommendations.list(sourceVersionId).map(row=>row.targetVersionId)).toEqual([b,a]);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+    expect(db.get<{n:number}>('SELECT count(*) AS n FROM quote_lines')?.n??0).toBe(0);
+  });
   it('rejects malformed IPC payloads before any SQLite mutation',()=>{
     const source=create('Input guarded');
     const id=source.versions[0].id;
