@@ -4,6 +4,7 @@ import {
   HOUR_PACK_STATUSES,
   type HourPack,
   type HourPackFilters,
+  type HourPackDebitPreview,
   type HourPackInput,
   type HourPackMovement,
   type HourPackMovementInput,
@@ -98,6 +99,36 @@ export class HourPackService {
       this.database.exec('ROLLBACK TO hour_pack_manual_movement; RELEASE hour_pack_manual_movement;');
       throw error;
     }
+  }
+
+  /** Aucun mouvement ni journal écrit ici : la clôture recalcule au moment du débit. */
+  previewInterventionDebit(packId: string, interventionId: string): HourPackDebitPreview {
+    const pack = this.get(packId);
+    if (['archived', 'suspended', 'expired'].includes(pack.status)) {
+      throw new Error('Ce pack ne peut pas être débité dans son état actuel.');
+    }
+    const intervention = this.database.get<{
+      client_account_id: string; project_id: string | null; hour_pack_id: string | null;
+    }>('SELECT client_account_id,project_id,hour_pack_id FROM interventions WHERE id=?', [interventionId]);
+    if (!intervention) throw new Error('Intervention introuvable.');
+    if (intervention.client_account_id !== pack.clientAccountId) throw new Error('L’intervention appartient à un autre client.');
+    if (pack.projectId && intervention.project_id !== pack.projectId) throw new Error('L’intervention n’appartient pas au projet de ce pack.');
+    if (intervention.hour_pack_id && intervention.hour_pack_id !== packId) {
+      throw new Error('Cette intervention est déjà rattachée à un autre pack.');
+    }
+    const sourceKey = `intervention:${packId}:${interventionId}`;
+    const alreadyDebited = Boolean(this.database.get<{ id: string }>(
+      'SELECT id FROM hour_pack_movements WHERE source_key=?', [sourceKey],
+    ));
+    const secondsToDebit = alreadyDebited ? 0 : this.interventionSeconds(interventionId);
+    if (!alreadyDebited && secondsToDebit <= 0) {
+      throw new Error('Aucun temps terminé à débiter pour cette intervention.');
+    }
+    return {
+      packId, interventionId, packName: pack.name, packStatus: pack.status,
+      balanceBeforeSeconds: pack.balanceSeconds, secondsToDebit,
+      balanceAfterSeconds: pack.balanceSeconds - secondsToDebit, alreadyDebited,
+    };
   }
 
   debitIntervention(packId: string, interventionId: string): HourPack {
