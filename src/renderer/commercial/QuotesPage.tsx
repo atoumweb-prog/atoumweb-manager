@@ -1,3 +1,4 @@
+import {quoteWizardPriceCents} from './quoteWizardPrice';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import {UnsavedGroup,useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { QuoteFinalizationPanel } from './QuoteFinalizationPanel';
@@ -193,7 +194,7 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
         if(cents==null || !l.label.trim() || !Number.isFinite(quantity) || quantity<=0)throw new Error('Complète le libellé, le prix et la quantité de chaque ligne.');
         return {catalogVersionId:l.versionId||undefined,input:{label:l.label,quantityMilli:quantity,proposedUnitPriceCents:cents}};
       });
-      if(wizard.catalogVersionId){const item=catalog.find(i=>i.currentVersion?.id===wizard.catalogVersionId)!;const proposed=eurosToCents(catalogPrice)??item.currentVersion?.priceCents;if(proposed==null&&item.currentVersion?.priceMode!=='free')throw new Error('Renseigne le prix proposé pour cette prestation sur devis.');lines.unshift({catalogVersionId:wizard.catalogVersionId,input:{label:item.name,proposedUnitPriceCents:proposed??0}});}
+      if(wizard.catalogVersionId){const item=catalog.find(i=>i.currentVersion?.id===wizard.catalogVersionId)!;const proposed=quoteWizardPriceCents(catalogPrice,item.currentVersion?.priceCents);if(proposed==null&&item.currentVersion?.priceMode!=='free')throw new Error('Renseigne le prix proposé pour cette prestation sur devis.');lines.unshift({catalogVersionId:wizard.catalogVersionId,input:{label:item.name,proposedUnitPriceCents:proposed??0}});}
       const created = await window.atoumweb.quotes.createWithLines({
         prospectId: wizard.ownerKind === 'prospect' ? wizard.ownerId : null,
         clientAccountId: wizard.ownerKind === 'client' ? wizard.ownerId : null,
@@ -301,7 +302,7 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
               const item = catalog.find((entry) => entry.currentVersion?.id === wizard.catalogVersionId);
               return item ? <div className="quote-preview-line">
                 <div><strong>{item.name}</strong><small>Offre catalogue · 1 ×</small></div>
-                <span>{(eurosToCents(catalogPrice) ?? item.currentVersion?.priceCents) != null ? money((eurosToCents(catalogPrice) ?? item.currentVersion?.priceCents)!) : 'Prix à renseigner'}</span>
+                <span>{(() => { try { const price=quoteWizardPriceCents(catalogPrice,item.currentVersion?.priceCents); return price==null ? 'Prix à renseigner' : money(price); } catch { return 'Montant invalide'; } })()}</span>
               </div> : null;
             })()}
             {draftLines.map((line, index) => {
