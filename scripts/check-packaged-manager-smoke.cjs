@@ -8,7 +8,8 @@ fs.mkdirSync(profile);fs.mkdirSync(workspace);fs.writeFileSync(path.join(profile
 const env={...process.env};delete env.ELECTRON_RUN_AS_NODE;
 const processLog=fs.openSync(path.join(root,'process.log'),'w');
 const child=cp.spawn(exe,['--user-data-dir='+profile,'--remote-debugging-port=0'],{env,windowsHide:true,stdio:['ignore',processLog,processLog]});
-const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms)),errors=[],report={sha:cp.execFileSync('git',['rev-parse','HEAD'],{cwd:repo,encoding:'utf8'}).trim(),exe,onlyTemporaryProfile:true,workspace,checks:0,visits:0};
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms)),errors=[],report={runnerSha:cp.execFileSync('git',['rev-parse','HEAD'],{cwd:repo,encoding:'utf8'}).trim(),exe,onlyTemporaryProfile:true,workspace,checks:0,visits:0};
+const buildRoot=path.dirname(path.dirname(path.dirname(exe)));report.buildWorktreeSha=cp.execFileSync('git',['rev-parse','HEAD'],{cwd:buildRoot,encoding:'utf8'}).trim();report.binarySHA256=require('node:crypto').createHash('sha256').update(fs.readFileSync(exe)).digest('hex');report.asarSHA256=require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(path.dirname(exe),'resources','app.asar'))).digest('hex');
 const check=(ok,label)=>{assert(ok,label);report.checks++;};let socket,seq=0,pending=new Map(),closed=false;
 child.on('exit',()=>{closed=true;});
 async function until(fn,label){const start=Date.now();while(Date.now()-start<20000){if(await fn())return;await sleep(50);}throw Error('Packaged smoke: '+label);}
