@@ -66,3 +66,15 @@ Sources lues directement dans le référentiel PR82 : `LOT-07B-FICHE-PROJET-PROD
 4. R07A-03/05/07/14 : arborescence, cas vitrine conditionnel, ressources et preuve SQL/SHAs.
 
 **Statut réel : revue croisée documentaire achevée pour 07B/07C/07D, revue du code au HEAD et 14 tests toujours à faire.** Aucun résultat de CI/Vitest/Electron n'est revendiqué.
+
+
+## Troisième passe — vérifications directes sur main (14/10/2026)
+- `src/shared/projects.ts` a été lu directement sur `main` ; SHA du blob `015ae1f20897bc690ed23750f5662381cde72277`.
+- Contrat confirmé : `commercialState?: 'legacy' | 'provisional' | 'frozen'` et les méthodes `prepareQuote`, `previewQuote`, `syncCommercial` sont déclarés dans l'interface. **Déclaration de contrat ≠ test d'exécution du service.**
+- La liste des statuts opérationnels confirmée est `to_prepare/in_progress/waiting_client/blocked/to_validate/completed/archived`. Ne pas confondre avec état commercial.
+- Comparaison GitHub `main...audit/ux-v2-07a-projets-20261014` : branche en avance de **deux commits**, zéro commit de retard lors du contrôle ; **un seul fichier de documentation ajouté**. Aucune source métier changée.
+- Les chemins présumés `src/main/services/ProjectCommercialService.ts`, `src/renderer/components/ProjectSitesTab.tsx` et `src/renderer/pages/ProjectsPage.tsx` ont retourné 404. Cela indique des **chemins inexacts**, pas l'absence des modules. Leurs chemins effectifs doivent être déterminés avant audit de code.
+- Aucune suite de tests ni Electron Windows exécutés. R07A-01 à R07A-14 : toujours non démontrés.
+
+## Prochaine porte de travail
+Localiser les chemins exacts des services, composants et tests depuis l'arbre Git, vérifier les implémentations des contrats plutôt que déduire la conformité depuis les types, puis faire la recette sur fixture isolée. Ne pas démarrer 07B avec un faux vert de 07A.
