@@ -28,3 +28,8 @@ Référentiel de départ : `docs/ux-v2/LOT-09B-FACTURATION-ABBY.md` dans le comm
 - L'IPC d'ouverture passe par `ClientDocumentService.verifiedPath` au lieu d'un chemin non vérifié.
 - Régression sur fichier modifié ajoutée au banc `ClientDocumentService.test.ts`.
 - Limite explicite : ce contrôle IPC ne rend pas la lecture et l'ouverture atomiques, et `BillingHandoffService.attachInvoice` peut être appelé directement par des services internes sans cette vérification ; la certification complète de ces voies reste à auditer.
+
+## Vérification centralisée au service (14/10)
+- `DatabaseService` injecte `ClientDocumentService.fingerprint` dans `BillingHandoffService` ; toute utilisation du service de production vérifie l'intégrité physique avant de passer à `invoiced`.
+- Une instance de service créée directement en test peut conserver son fonctionnement sans vérificateur ; test explicite ajouté pour le refus par vérification.
+- À évaluer avant clôture : éviter le double contrôle d'empreinte côté IPC et couvrir la transition remplacement/échec par un test complet avec workspace temporaire.
