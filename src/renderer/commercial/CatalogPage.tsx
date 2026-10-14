@@ -484,7 +484,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
           </select>
           <select aria-label="Filtrer par catégorie" value={effectiveCategory} onChange={(e) => setCategoryFilter(e.target.value)}>
             <option value="all">Toutes les catégories</option>
-            {categories.map((category) => <option value={category} key={category}>{catalogueCategoryName(category)}</option>)}
+            {categories.map((category) => <option value={category} key={category}>{catalogueCategoryName(category) === category ? category : `${catalogueCategoryName(category)} · ${category}`}</option>)}
           </select>
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | CatalogItemStatus)}>
             <option value="all">Tous les statuts</option><option value="active">Actifs</option><option value="inactive">Inactifs</option><option value="archived">Archivés</option>
