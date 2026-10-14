@@ -217,6 +217,12 @@ app.whenReady().then(async () => {
       await fill('Description','Enregistré en place, sans v2');
       await click('Tarifs & Abby');
       assert('04C champs tarifs réellement accessibles',!!field('Mode tarifaire')&&!!field('Prix AtoumWeb'));
+      await fill('Acompte par défaut (%)','150');
+      await click('Enregistrer le brouillon');
+      assert('04C montant invalide préserve le brouillon et ne touche pas à SQLite',
+        document.querySelector('.catalog-version-editor .form-error').textContent.includes('Acompte invalide')&&
+        window.calls.saveDraft.length===0);
+      await fill('Acompte par défaut (%)','30');
       await click('Contenu & périmètre');
       assert('04C changement d’onglet ne perd pas la saisie',field('Description').value==='Enregistré en place, sans v2');
       await click('Enregistrer le brouillon');
