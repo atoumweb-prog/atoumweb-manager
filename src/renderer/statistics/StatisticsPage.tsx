@@ -307,7 +307,8 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         </article>
         <article className="panel statistics-card">
           <CardTitle eyebrow="Temps" title="Répartition facturable" action="Voir les temps →" onClick={() => openPage('Gestion des temps')} />
-          <div className="statistics-time">
+          <p className="statistics-note">Temps net regroupé par date de début de session : une session traversant deux périodes n’est pas divisée. Temps facturable ne signifie pas temps facturé.</p>
+           <div className="statistics-time">
             <div className={'statistics-donut' + (hasRecordedTime ? '' : ' no-data')} style={donutStyle}><span><strong>{hasRecordedTime ? pct(billableRatio) : '0 h'}</strong><small>{hasRecordedTime ? 'facturable' : 'aucun temps'}</small></span></div>
             <div className="statistics-legend">
               <div><i className="billable" /><span>Facturable</span><strong>{hours(billableSeconds)}</strong></div>
@@ -340,7 +341,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         </article>
         <article className="panel statistics-card">
           <CardTitle eyebrow="Origines" title="Contacts créés sur la période" />
-          {sources.length ? <div className="statistics-ranking">{sources.slice(0, 7).map((item, index) => <div key={item.label}><span className="rank">{index + 1}</span><span>{item.label}</span><strong>{item.count}</strong><i style={{ width: ratio(item.count, Math.max(1, newProspects.length)) + '%' }} /></div>)}</div> : <Empty label="Aucun nouveau prospect sur cette période." />}
+          {sources.length ? <div className="statistics-ranking">{sources.slice(0, 7).map((item, index) => <div key={item.label}><span className="rank">{index + 1}</span><span>{item.label}</span><strong>{item.count}</strong><i style={{ width: ratio(item.count, Math.max(1, newProspects.length)) + '%' }} /></div>)}</div> : <Empty label="Aucun nouveau contact créé sur cette période." />}
         </article>
       </div>
     </>}
@@ -369,7 +370,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
       <div className="statistics-kpis">
         <Kpi icon="user" label="Clients actifs" value={String(data.clients.filter((item) => item.status === 'active').length)} helper={countLabel(newClients.length, 'nouveau client', 'nouveaux clients') + ' sur la période'} />
         <Kpi icon="receipt" label="Facturé période" value={money(invoiced)} comparison={comparison(invoiced, previousInvoiced)} />
-        <Kpi icon="clock" label="Temps client" value={hours(sum(sessions.filter((item) => item.clientAccountId), (item) => item.durationSeconds))} helper="Sessions rattachées aux clients" />
+        <Kpi icon="clock" label="Temps client" value={hours(sum(sessions.filter((item) => item.clientAccountId), (item) => item.durationSeconds))} helper="Sessions rattachées aux clients, regroupées par date de début" />
         <Kpi icon="euro" label="À facturer" value={money(readyAmount)} helper={countLabel(readyBilling.length, 'élément', 'éléments') + ' actuellement'} />
       </div>
       <article className="panel statistics-card statistics-client-card">
