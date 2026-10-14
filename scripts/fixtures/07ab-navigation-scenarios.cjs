@@ -34,6 +34,10 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
   test(await get(`!!document.querySelector('[data-search-entity-type="project"][data-search-entity-id="${project.id}"]')`),'Confirm returns to original project ID');
   test(await get(`document.activeElement?.dataset?.searchEntityId===${JSON.stringify(project.id)}`),'Return restores targeted focus to Project');
   test(await get(`[...document.querySelectorAll('.project-production-nav button.active')].some(b=>b.textContent.trim()==='Commercial')`),'Return restores commercial Project tab');
+  await click('.project-production-back');
+  await wait('!!document.querySelector(".projects-toolbar input.inline-search")','project list after return');
+  test(await get('document.querySelector(".projects-toolbar input.inline-search")?.value==="07AB"'),'Return restores Project search text');
+  test(await get('document.querySelector("select[aria-label=\\"État commercial\\"]")?.value==="legacy"'),'Return restores Project commercial filter');
   test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','TEMP SQLite integrity');
   test(db.database.all('PRAGMA foreign_key_check').length===0,'TEMP SQLite foreign keys');
   console.log('NAVIGATION07AB_NATIVE_EVIDENCE '+JSON.stringify({checks:'passed',projectId:project.id,quoteId:quote.id,dialogs:dialogs.length,onlyTemp:true}));
