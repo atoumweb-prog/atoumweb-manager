@@ -229,6 +229,31 @@ describe('BridgeSnapshotService', () => {
     ]));
   });
 
+  it('R07G-25 distingue absence partielle et suppression attestée sans muter les pages importées', () => {
+    const before = service.importPackage(buildSnapshot(join(workspaceRoot,'r07g-before.zip'),'Page conservée', {
+      snapshotId:'awb-snap:r07g-before',pageSnapshotId:'awb-pagesnap:r07g-before',sourcePageKey:'wp-post:10',
+    })).snapshot;
+    const after = service.importPackage(buildSnapshot(join(workspaceRoot,'r07g-after-partial.zip'),'Page observée', {
+      snapshotId:'awb-snap:r07g-after-partial',pageSnapshotId:'awb-pagesnap:r07g-after-partial',
+      sourcePageKey:'wp-post:11',sourcePostId:11,
+      snapshotType:'partial',coverageMode:'partial',scanStatus:'partial_failure',
+    })).snapshot;
+    const originalPage = service.listPages(before.id)[0];
+    const currentPage = service.listPages(after.id)[0];
+    const countBefore = database.get<{total:number}>('SELECT COUNT(*) total FROM bridge_page_snapshots')?.total;
+    const diff = service.compareSnapshots(before.id,after.id);
+    expect(diff.warnings.join(' ')).toMatch(/snapshot complet|couverture pages|scan partial_failure/i);
+    expect(diff.pages).toEqual(expect.arrayContaining([
+      expect.objectContaining({sourcePageKey:'wp-post:10',status:'removed'}),
+      expect.objectContaining({sourcePageKey:'wp-post:11',status:'added'}),
+    ]));
+    // A partial scan is evidence for human review, never a deletion instruction.
+    expect(service.listPages(before.id)).toContainEqual(originalPage);
+    expect(service.listPages(after.id)).toContainEqual(currentPage);
+    expect(database.get<{total:number}>('SELECT COUNT(*) total FROM bridge_page_snapshots')?.total).toBe(countBefore);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
   it('classe les nouvelles extractions du scanner en écarts techniques si la source brute est identique', () => {
     const before = service.importPackage(buildSnapshot(join(workspaceRoot, 'scanner-a.zip'), 'Accueil')).snapshot;
     const after = service.importPackage(buildSnapshot(join(workspaceRoot, 'scanner-b.zip'), 'Accueil', {
