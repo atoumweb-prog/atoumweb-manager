@@ -30,11 +30,11 @@ export function QuoteContractDocumentPanel({
     await actionGate.current.run(async () => {
       setBusy(true);
       try {
-      const next = await window.atoumweb.quotes.updateAbbyReference(quote.id, abbyReference);
-      onSave(next);
-      onMessage('Référence Abby enregistrée.');
+        const next = await window.atoumweb.quotes.updateAbbyReference(quote.id, abbyReference);
+        onSave(next);
+        onMessage('Référence Abby enregistrée.');
       } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible d’enregistrer la référence Abby.');
+        onMessage(error instanceof Error ? error.message : 'Impossible d’enregistrer la référence Abby.');
       } finally {
         setBusy(false);
       }
@@ -45,13 +45,13 @@ export function QuoteContractDocumentPanel({
     await actionGate.current.run(async () => {
       setBusy(true);
       try {
-      const next = await window.atoumweb.quotes.importContractDocument(quote.id, abbyReference);
-      if (!next) return;
-      setAbbyReference(next.abbyReference ?? '');
+        const next = await window.atoumweb.quotes.importContractDocument(quote.id, abbyReference);
+        if (!next) return;
+        setAbbyReference(next.abbyReference ?? '');
       onSave(next);
-      onMessage('Devis contractuel Abby importé et rattaché au client.');
+        onMessage('Devis contractuel Abby importé et rattaché au client.');
       } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible d’importer le devis contractuel Abby.');
+        onMessage(error instanceof Error ? error.message : 'Impossible d’importer le devis contractuel Abby.');
       } finally {
         setBusy(false);
       }
