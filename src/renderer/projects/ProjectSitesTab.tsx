@@ -95,6 +95,11 @@ export function ProjectSitesTab({
   const [activeTime, setActiveTime] = useState<TimeSession | null>(null);
   const [timeSnapshotAt, setTimeSnapshotAt] = useState(Date.now());
   const [tick, setTick] = useState(Date.now());
+  // An older IPC response must never override newer Site/Page or timer data.
+  // Incrementing both epochs on unmount also discards late responses for closed Projects.
+  const siteRefreshEpoch = useRef(0);
+  const timeRefreshEpoch = useRef(0);
+
 
   useEffect(() => {
     onViewContextChange?.({ selectedSiteId, selectedPageId, splitPercent, treeCollapsed, detailCollapsed, introCollapsed, pageInfoOpen, inspectorCollapsed, inspectorPercent });
@@ -117,29 +122,32 @@ export function ProjectSitesTab({
   const archivedSites = sites.filter((site) => Boolean(site.archivedAt));
 
   async function reload(): Promise<void> {
+    const requestId = ++siteRefreshEpoch.current;
     const [nextSites, nextLinks] = await Promise.all([
       window.atoumweb.projects.sites.list(projectId, true),
       window.atoumweb.projects.sites.listPages(projectId),
     ]);
+    if (requestId !== siteRefreshEpoch.current) return;
     setSites(nextSites);
     setLinks(nextLinks);
-    // An old view may reference an archived/deleted Site or Page; never keep a phantom selection.
-    const siteStillExists = selectedSiteId ? nextSites.some(site => site.id === selectedSiteId) : false;
-    const pageStillExists = selectedPageId ? pages.some(page => page.id === selectedPageId) : false;
-    if (!siteStillExists) setSelectedSiteId(null);
-    if (!pageStillExists) setSelectedPageId(null);
-    if (!siteStillExists && !pageStillExists) {
-      const firstActive = nextSites.find(site => !site.archivedAt);
-      if (firstActive) setSelectedSiteId(firstActive.id);
-      else if (pages[0]) setSelectedPageId(pages[0].id);
-    }
+    // Read the current selection in functional updates, rather than the selection
+    // captured before an awaited IPC call; preserve a newly selected Site/Page.
+    const firstActiveId = nextSites.find(site => !site.archivedAt)?.id ?? null;
+    setSelectedSiteId(current =>
+      current && nextSites.some(site => site.id === current) ? current : firstActiveId
+    );
+    setSelectedPageId(current =>
+      current && pages.some(page => page.id === current) ? current : null
+    );
   }
 
   async function reloadTime(): Promise<void> {
+    const requestId = ++timeRefreshEpoch.current;
     const [sessions, current] = await Promise.all([
       window.atoumweb.time.list({ projectId }),
       window.atoumweb.time.active(),
     ]);
+    if (requestId !== timeRefreshEpoch.current) return;
     setTimeSessions(sessions);
     setActiveTime(current);
     setTimeSnapshotAt(Date.now());
@@ -153,7 +161,11 @@ export function ProjectSitesTab({
       onMessage(error instanceof Error ? error.message : 'Impossible d’actualiser le temps du projet.'),
     );
     window.addEventListener('atoumweb:time-changed', refreshTime);
-    return () => window.removeEventListener('atoumweb:time-changed', refreshTime);
+    return () => {
+      siteRefreshEpoch.current++;
+      timeRefreshEpoch.current++;
+      window.removeEventListener('atoumweb:time-changed', refreshTime);
+    };
   }, [projectId]);
 
   useEffect(() => {
