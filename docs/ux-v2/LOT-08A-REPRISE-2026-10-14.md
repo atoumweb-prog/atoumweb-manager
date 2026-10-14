@@ -137,3 +137,22 @@
 **Réserve métier E227** : `changeInterventionStatus` autorise techniquement certains retours de `completed` vers `in_progress`, sans procédure dédiée et sans mouvement de contrepassation. Les tests garantissent l'absence de double débit/de double handoff, **pas** la légitimité commerciale ou juridique de la réouverture. Une évolution de politique nécessite un arbitrage distinct avant tout nouveau bouton ou automatisme.
 
 **Aucune fusion dans `main`** ni intervention sur Validation-MSI, PR #104 / #106 ou autres lots.
+
+## E225 / E226 — derniers verrouillages UI et recette (14/10)
+
+- **Double clic de correction manuelle (E225)** : `HourPacksPanel.addMovement` utilise un verrou synchrone `movementPendingRef`, un état UI désactivant le bouton et une remise à zéro `finally`, car deux corrections manuelles **ne possèdent pas** d'identifiant métier idempotent partagé. Une réponse tardive de ce mouvement n'écrase plus la sélection d'un autre pack : `setSelectedId` est conditionnel à l'identité encore sélectionnée.
+- **Brouillons des formulaires (E226)** : les créations de plan et souscription dans `MaintenancePanel`, ainsi que la création de pack et les corrections manuelles dans `HourPacksPanel`, sont raccordées à la protection commune `useUnsavedDraft` : conservation sur « Rester », rejet de sortie pendant `pending`, « Quitter » avec suppression du seul brouillon concerné et remise à zéro des champs.
+- **Changement de pack A→B** : la navigation en liste et la fermeture de fiche passent par `requestUnsavedExit` ; le brouillon d'ajustement reste sur A si l'utilisateur refuse et ne se propage pas à B lorsqu'il accepte. Le rafraîchissement de liste applique sa vérification à la sélection courante.
+- **Recette Electron** : extension de `scripts/fixtures/lot08a-real-scenarios.cjs` : cas réel de double clic sous IPC volontairement retardé, vérification d'un seul mouvement et du solde SQLite ; cas création de pack et de plan avec Rester/Quitter ; changement de pack en présence d'une correction non enregistrée. Le script est exécuté dans le profil `%TEMP%` par la CI spécifique PR #109.
+- **Preuve précédemment validée** : CI #1242 (run 38596809279) verte avec recettes 35 assertions natives E224/E226 et 373 assertions shell ; création de routine, quota mineur et rapprochement des chiffres visibles dans Electron. Nouvelle extension E225/E226 **en attente de la CI sur son SHA final** ; ne pas la présenter comme déjà réussie.
+- **Recette métier existante** : `OperationsService.test.ts` couvre demande → Intervention unique, création directe et statuts ; `OperationalSalesService.test.ts` couvre paiement annuel/12 cycles mensuels, absence de report, échéances et dates anniversaires ; `TimeService.test.ts`, `TimeSwitchService.test.ts` et `TimeCorrectionService.test.ts` couvrent chrono unique, bascules, pauses, reprise et corrections. Nouveau test R08A-13 sur correction d'une session *après* débit pack : aucun second débit implicite, solde historique conservé.
+- **Réserve obligatoire** : ces contrôles ne doivent pas être interprétés comme une autorisation de réouvrir automatiquement une intervention ou de facturer/reverser du temps corrigé. L'ajustement financier nécessite une décision métier et une action tracée ; ne pas inventer de compensation automatique.
+
+### Critères de sortie 08A
+
+L'incrément 08A restera en **draft** tant que :
+1. La CI du HEAD documentaire/code exact n'a pas réussi **typecheck, suite Vitest complète, Electron E224/E225/E226** avec nettoyage TEMP et vérification FK ;
+2. Les contrôles de convergence contre le dernier `main` et les branches 04/05/08 parallèles n'ont pas été revalidés ;
+3. Les réserves de réouverture commerciale (E227) et l'absence de recette visuelle humaine ont été expressément signalées.
+
+La préparation de la PR ne vaut ni validation humaine ni accord de fusion.
