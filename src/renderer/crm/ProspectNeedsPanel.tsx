@@ -13,6 +13,7 @@ import {
 import {CommercialScope} from '../commercial/CommercialScope';
 import {catalogueFamilyLabel,catalogueIsOffer} from '../commercial/catalogDisplay';
 import { catalogMatchesQuery, catalogIsSelectable } from '../../shared/catalogDiscovery';
+import { resolveProspectCatalogRecommendations } from '../../shared/catalogProspectRecommendations';
 
 
 const BUDGET_PRESETS = [
@@ -93,15 +94,13 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
     }).catch(()=>{if(live)setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[]});});
     return()=>{live=false;};
   },[recommendationSourceIds]);
-  const managedItems=(managedRecommendations.sourceKey===recommendationSourceIds?managedRecommendations.versionIds:[])
-    .map(id=>catalog.find(item=>
-    item.currentVersion?.id===id&&item.status==='active'&&item.currentVersion.status==='published',
-  )).filter((item):item is CatalogItemSummary=>Boolean(item));
-  const legacySuggestionIds = Array.from(new Set(selectedItems.flatMap((item) => item ? (SUGGESTIONS[item.id] ?? []) : [])))
-    .filter((id) => !value.some((need) => need.catalogItemId === id));
-  const legacyItems = legacySuggestionIds.map(id=>catalog.find(item=>item.id===id)).filter(Boolean) as CatalogItemSummary[];
-  const suggestions = (managedItems.length ? managedItems : legacyItems)
-    .filter(item=>!value.some(need=>need.catalogItemId===item.id));
+  const legacySuggestionIds = Array.from(new Set(selectedItems.flatMap((item) => item ? (SUGGESTIONS[item.id] ?? []) : [])));
+  const suggestions=resolveProspectCatalogRecommendations(
+    catalog,
+    value.flatMap(need=>need.catalogItemId?[need.catalogItemId]:[]),
+    managedRecommendations.sourceKey===recommendationSourceIds?managedRecommendations.versionIds:[],
+    legacySuggestionIds,
+  );
 
   return <div className="need-selector-v2 form-span-3">
     <div className="need-selector-title"><strong>Besoins / Offres / Services</strong><small>Catégorie ou recherche par besoin, bénéfice ou mot-clé publié.</small></div>
