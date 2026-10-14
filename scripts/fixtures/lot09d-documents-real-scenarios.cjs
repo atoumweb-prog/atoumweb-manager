@@ -99,7 +99,9 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}
   try{documents.verifiedPath(docB.id);}catch(error){integrityRefused=/SHA-256 différente/.test(error.message);}
   test(integrityRefused,'09D-17: tampered document cannot be opened');
   const generic=documents.importPaths(clientA.id,[source],
-    {category:'technical',title:'Suppression générique autorisée'})[0];
+    {category:'technical',title:'Suppression générique autorisée'})
+    .find(item=>item.title==='Suppression générique autorisée');
+  test(!!generic,'09D-18a: generic document created with distinct ID');
   documents.archive(generic.id,true);
   documents.deletePermanently(generic.id);
   test(!db.database.get('SELECT id FROM client_documents WHERE id=?',[generic.id]),
