@@ -154,10 +154,11 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
   }
 
   async function openQuote(id: string): Promise<void> {
-    if(detail?.id===id)return;
+    if(selectedRef.current===id)return;
     if(!requestUnsavedExit(()=>{},quoteGroup))return;
     const sequence=++detailRequest.current;
     selectedRef.current=id;
+    applyDetail(null); // Ne pas afficher l'ancien devis pendant le chargement du suivant.
     setSelectedId(id); applyEditingLineId(null); setPreviewOpen(false); setDetailExpanded(false);
     try {
       const next=await window.atoumweb.quotes.get(id);
