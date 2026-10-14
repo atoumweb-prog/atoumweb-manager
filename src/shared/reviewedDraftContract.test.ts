@@ -23,7 +23,7 @@ describe('05C — numbered draft contract from approved clauses',()=>{
  it('never inserts unapproved, orphaned or excluded clauses',()=>{
    const approved=entry('active','v1');
    const proposed=entry('pending','v2');proposed.review={status:'proposed',sectionKey:'finance',rankInSection:0,reason:'à examiner'};
-   const plan=assembleReviewedDraftContract([approved,proposed,entry('off','v3','finance',0)],{},{});
+   const plan=assembleReviewedDraftContract([approved,proposed,entry('off','v3','finance',0)],{},[]);
    expect(plan.ready).toBe(false);
  });
  it('blocks duplicate versions and missing classifications',()=>{
