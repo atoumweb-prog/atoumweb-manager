@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ProjectNode } from '../../shared/projects';
 import type {
@@ -200,6 +200,7 @@ export function ProjectPageCompositionPanel({
   const [codePaneCollapsed, setCodePaneCollapsed] = useState(false);
   const [inspectExpanded, setInspectExpanded] = useState(false);
   const [inspectDevice, setInspectDevice] = useState<PreviewDevice>('desktop');
+  const inspectEpoch = useRef(0);
 
   async function reload(): Promise<void> {
     const [nextComposition, nextCompositions, nextLibrary] = await Promise.all([
@@ -213,6 +214,7 @@ export function ProjectPageCompositionPanel({
   }
 
   useEffect(() => {
+    ++inspectEpoch.current;
     setMode(null);
     setInspected(null);
     setSettingsItemId(null);
@@ -310,6 +312,7 @@ export function ProjectPageCompositionPanel({
   }
 
   async function inspectAllowed(item: AtoumWebCompositionItem): Promise<void> {
+    const epoch = ++inspectEpoch.current;
     if (inspected?.item.id === item.id) {
       setInspected(null);
       setCodePaneCollapsed(false);
@@ -322,6 +325,7 @@ export function ProjectPageCompositionPanel({
     }
     await withBusy(async () => {
       const detail = await window.atoumweb.referentials.library.get(item.sourceItemId);
+      if (epoch !== inspectEpoch.current) return;
       const version = detail.versions.find((candidate) => candidate.id === item.sourceVersionId) ?? null;
       const sourceParts = parseParts(version);
       setInspected({ item, detail, parts: effectiveParts(item, sourceParts) });
@@ -337,6 +341,7 @@ export function ProjectPageCompositionPanel({
   }
 
   function toggleSettingsAllowed(item: AtoumWebCompositionItem): void {
+    ++inspectEpoch.current;
     if (settingsItemId === item.id) {
       setSettingsItemId(null);
       setSettingsDraft(null);
