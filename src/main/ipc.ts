@@ -17,6 +17,7 @@ import type {
   QuoteContractClauseInput,
   QuoteContractClauseUpdate,
 } from '../shared/contractTerms';
+import type { CatalogCategoryAssignment, CatalogCategoryStatus } from '../shared/catalogCategoryAdministration';
 import type {
   CatalogFilters,
   CatalogItemInput,
@@ -416,6 +417,15 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('catalog:set-visible-public', (_event, itemId: string, visible: boolean) => database.catalog.setVisiblePublic(itemId, visible));
   ipcMain.handle('catalog:list-offer-components', (_event, offerVersionId: string) => database.catalog.listOfferComponents(offerVersionId));
   ipcMain.handle('catalog:set-offer-components', (_event, offerVersionId: string, components: OfferComponentInput[]) => database.catalog.setOfferComponents(offerVersionId, components));
+
+  // E95: never infer a category link from a similar display name.
+  ipcMain.handle('catalog-categories:list', () => database.catalogCategories.list());
+  ipcMain.handle('catalog-categories:list-legacy', () => database.catalogCategories.listLegacy());
+  ipcMain.handle('catalog-categories:create', (_event, name: string) => database.catalogCategories.create(name));
+  ipcMain.handle('catalog-categories:rename', (_event, id: string, name: string, revision: number) => database.catalogCategories.rename(id, name, revision));
+  ipcMain.handle('catalog-categories:set-status', (_event, id: string, status: CatalogCategoryStatus, revision: number) => database.catalogCategories.setStatus(id, status, revision));
+  ipcMain.handle('catalog-categories:assign', (_event, input: CatalogCategoryAssignment) => database.catalogCategories.assign(input));
+  ipcMain.handle('catalog-categories:reconcile-legacy', (_event, rawValue: string, categoryId: string, expectedItemIds: string[]) => database.catalogCategories.reconcileLegacy(rawValue, categoryId, expectedItemIds));
 
   ipcMain.handle('contract-types:list', (_event, archived?: boolean) => database.contractTypes.list(archived));
   ipcMain.handle('contract-types:get', (_event, id: string) => database.contractTypes.get(id));
