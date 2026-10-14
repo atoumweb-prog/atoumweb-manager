@@ -123,11 +123,16 @@ export function ProjectSitesTab({
 
   async function reload(preferred?: {siteId?: string; pageId?: string}): Promise<void> {
     const requestId = ++siteRefreshEpoch.current;
-    const [nextSites, nextLinks] = await Promise.all([
+    const response = await Promise.all([
       window.atoumweb.projects.sites.list(projectId, true),
       window.atoumweb.projects.sites.listPages(projectId),
-    ]);
-    if (requestId !== siteRefreshEpoch.current) return;
+    ]).catch((error: unknown) => {
+      // Superseded reads must not display an error from an obsolete request.
+      if (requestId === siteRefreshEpoch.current) throw error;
+      return null;
+    });
+    if (!response || requestId !== siteRefreshEpoch.current) return;
+    const [nextSites, nextLinks] = response;
     setSites(nextSites);
     setLinks(nextLinks);
     // A just-created Page may not yet be reflected in the nodes prop captured
@@ -149,11 +154,15 @@ export function ProjectSitesTab({
 
   async function reloadTime(): Promise<void> {
     const requestId = ++timeRefreshEpoch.current;
-    const [sessions, current] = await Promise.all([
+    const response = await Promise.all([
       window.atoumweb.time.list({ projectId }),
       window.atoumweb.time.active(),
-    ]);
-    if (requestId !== timeRefreshEpoch.current) return;
+    ]).catch((error: unknown) => {
+      if (requestId === timeRefreshEpoch.current) throw error;
+      return null;
+    });
+    if (!response || requestId !== timeRefreshEpoch.current) return;
+    const [sessions, current] = response;
     setTimeSessions(sessions);
     setActiveTime(current);
     setTimeSnapshotAt(Date.now());
