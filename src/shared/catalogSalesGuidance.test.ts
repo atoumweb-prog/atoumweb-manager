@@ -14,11 +14,11 @@ describe('04E — commercial guidance belongs to a version, not a contract', () 
   });
   it('reads actual persisted commercial fields without fabricating objections', () => {
     expect(salesGuidanceFromCatalogVersion({
-      id:'v3',commercialParameters:{clientNeed:'Site vitrine',benefits:'Présence locale',objections:'Délai trop long : présenter le planning',relevantSituations:'Activité locale',commercialCautions:'Ne pas garantir des ventes',salesPitch:'Site clair, prêt à présenter votre activité',qualificationQuestions:'Quels sont vos objectifs ?',relevantSituations:'Activité locale',commercialCautions:'Ne pas garantir des ventes'},
+      id:'v3',commercialParameters:{clientNeed:'Site vitrine',benefits:'Présence locale',objections:'Délai trop long : présenter le planning',relevantSituations:'Activité locale',commercialCautions:'Ne pas garantir des ventes',salesPitch:'Site clair, prêt à présenter votre activité',qualificationQuestions:'Quels sont vos objectifs ?'},
       internalAdvice:'Proposer un audit',
     })).toEqual({
       versionId:'v3',clientNeed:'Site vitrine',benefits:'Présence locale',
-      objections:'Délai trop long : présenter le planning',salesPitch:'Site clair, prêt à présenter votre activité',qualificationQuestions:'Quels sont vos objectifs ?',salesAdvice:'Proposer un audit',configured:true,
+      objections:'Délai trop long : présenter le planning',relevantSituations:'Activité locale',commercialCautions:'Ne pas garantir des ventes',salesPitch:'Site clair, prêt à présenter votre activité',qualificationQuestions:'Quels sont vos objectifs ?',salesAdvice:'Proposer un audit',configured:true,
     });
   });
   it('rejects an unbound version', () => {
