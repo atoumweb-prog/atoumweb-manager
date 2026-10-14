@@ -37,10 +37,16 @@ export function HourPackShortfallPanel({ pack, packs, onChanged, onMessage }: {
 }) {
   const [review, setReview] = useState<HourPackShortfallReview | null>(null);
   const loadGeneration = useRef(0);
+  const previousPackId = useRef(pack.id);
 
   useEffect(() => {
     const generation = ++loadGeneration.current;
-    setReview(null);
+    // Ne pas démonter l'éditeur pendant un simple rafraîchissement du même pack :
+    // un brouillon local non enregistré doit survivre à une nouvelle lecture.
+    if (previousPackId.current !== pack.id) {
+      previousPackId.current = pack.id;
+      setReview(null);
+    }
     void window.atoumweb.hourPackShortfalls.review(pack.id)
       .then(next => { if (generation === loadGeneration.current) setReview(next); })
       .catch(error => {
