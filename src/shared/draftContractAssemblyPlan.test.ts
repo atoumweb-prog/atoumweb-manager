@@ -34,6 +34,32 @@ describe('05C — future draft assembly preview (read-only)',()=>{
     expect(result.unresolved.map(c=>c.id)).toEqual(['missing']);
     expect(result.ready).toBe(false);
   });
+  it('preserves review boundaries when some versions are excluded or unresolved',()=>{
+    const clauses=[
+      clause('approved',approved('object',0)),
+      clause('excluded',{status:'unclassified',sectionKey:null,rankInSection:null},{requiredOptionCodes:['SEO']}),
+      clause('unresolved',approved('finance',0),{requiredOptionCodes:['MAINT']}),
+    ];
+    const result=planDraftContractAssembly(clauses,{optionCodes:undefined},[]);
+    expect(result.included.map(c=>c.id)).toEqual(['approved']);
+    expect(result.unresolved.map(c=>c.id)).toEqual(['excluded','unresolved']);
+    expect(result.unreviewed).toHaveLength(0);
+    expect(result.ready).toBe(false);
+    const resolved=planDraftContractAssembly(clauses,{optionCodes:['MAINT']},[]);
+    expect(resolved.excluded.map(c=>c.id)).toEqual(['excluded']);
+    expect(resolved.unreviewed).toHaveLength(0);
+    expect(resolved.ready).toBe(true);
+  });
+  it('never blocks on conflicts referencing excluded or pending clauses',()=>{
+    const rule={id:'c',clauseVersionIds:['a','b'],severity:'blocking' as const,reason:'Fixture',reviewed:true};
+    const a=clause('a',approved('object',0));
+    const b=clause('b',{status:'proposed',sectionKey:'finance',rankInSection:0,reason:'Pending'});
+    const result=planDraftContractAssembly([a,b],{},[rule]);
+    expect(result.warnings).toHaveLength(0);
+    expect(result.blocking).toHaveLength(0);
+    expect(result.unreviewed.map(c=>c.id)).toEqual(['b']);
+    expect(result.ready).toBe(false);
+  });
   it('only blocks a reviewed explicit conflict between included versions',()=>{
     const clauses=[clause('a',approved('object',0)),clause('b',approved('finance',0))];
     const conflict={id:'x',clauseVersionIds:['a','b'],severity:'blocking' as const,reason:'Contradiction vérifiée',reviewed:true};
