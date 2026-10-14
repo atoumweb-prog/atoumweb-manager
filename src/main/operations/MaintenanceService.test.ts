@@ -90,6 +90,20 @@ describe('MaintenanceService', () => {
     expect(maintenance.listPeriods(subscription.id)).toHaveLength(2);
   });
 
+  it('préserve les bornes anniversaire lors du passage de janvier à février', () => {
+    const subscription = maintenance.createSubscription({
+      clientAccountId: clientId,
+      planId: maintenance.listPlans()[0].id,
+      startDate: '2027-01-31',
+    });
+    const january = maintenance.ensurePeriod(subscription.id, '2027-01-31');
+    const february = maintenance.ensurePeriod(subscription.id, '2027-02-28');
+    const march = maintenance.ensurePeriod(subscription.id, '2027-03-31');
+    expect([january.periodStart, january.periodEnd]).toEqual(['2027-01-31', '2027-02-27']);
+    expect([february.periodStart, february.periodEnd]).toEqual(['2027-02-28', '2027-03-30']);
+    expect([march.periodStart, march.periodEnd]).toEqual(['2027-03-31', '2027-04-29']);
+  });
+
   it('préserve le découpage calendaire des souscriptions historiques', () => {
     const subscription = maintenance.createSubscription({
       clientAccountId: clientId,
