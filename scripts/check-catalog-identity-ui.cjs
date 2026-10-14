@@ -215,6 +215,19 @@ app.whenReady().then(async () => {
         window.items.find(i=>i.id==='test-seo').categoryId===window.categoryRecords[0].id);
       assert('E95 actions natives distinguées',
         ['create','rename','archived','active','assign'].every(action=>window.categoryCalls.includes(action)));
+      await click('Fermer les catégories');
+      await click('+ Service / Offre');
+      await fill('Nom','Nouvel article classé');
+      await fill('Catégorie métier administrée',window.categoryRecords[0].id);
+      assert('E95 catégorie stable choisie pour nouvelle fiche',
+        document.body.textContent.includes('Catégorie stable sélectionnée'));
+      await click('Créer le brouillon');
+      const newService=window.calls.create.at(-1);
+      assert('E95 création Service transmet ID de catégorie gouvernée',
+        newService.input.name==='Nouvel article classé'&&
+        newService.input.categoryId===window.categoryRecords[0].id&&
+        newService.input.category==='Contenu éditorial');
+      assert('E95 première version non publiée',newService.version.priceMode==='fixed'&&window.calls.publish===0);
       return {passed:checks.length,failed:0,checks};
     })()`);
     console.log(JSON.stringify(result, null, 2));win.destroy();app.exit(0);
