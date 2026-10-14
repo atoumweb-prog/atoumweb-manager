@@ -1,12 +1,14 @@
 import type { CatalogItemSummary } from '../../shared/commercial';
 import { buildCatalogCategoryInventory } from './catalogCategoryInventoryModel';
+import { CatalogCategoryManagement } from './CatalogCategoryManagement';
 
 export function CatalogCategoryInventory({
-  items, onFilter, onClose,
+  items, onFilter, onClose, onChanged,
 }: {
   items: readonly CatalogItemSummary[];
   onFilter: (category: string) => void;
   onClose: () => void;
+  onChanged: () => Promise<void>;
 }) {
   const report = buildCatalogCategoryInventory(items);
   const conflictCount = report.normalizedConflictGroups.length + report.displayAliasConflictGroups.length;
@@ -68,6 +70,7 @@ export function CatalogCategoryInventory({
       </div>
       {report.rows.length === 0 && report.unassignedCount === 0 &&
         <p className="muted">Aucune prestation n’est enregistrée dans ce catalogue.</p>}
+      <CatalogCategoryManagement items={items} onChanged={onChanged} />
     </section>
   );
 }
