@@ -70,6 +70,20 @@ describe('MaintenanceService', () => {
     expect(maintenance.listPeriods(subscription.id)).toHaveLength(1);
   });
 
+  it('aligne une nouvelle souscription manuelle mensuelle sur sa date de démarrage, sans modifier les historiques', () => {
+    const plan = maintenance.listPlans()[0];
+    const subscription = maintenance.createSubscription({ clientAccountId: clientId, planId: plan.id, startDate: '2026-10-15' });
+    expect(database.get<{ period_alignment: string }>('SELECT period_alignment FROM maintenance_subscriptions WHERE id=?', [subscription.id])?.period_alignment).toBe('anniversary');
+    const first = maintenance.ensurePeriod(subscription.id, '2026-10-20');
+    const second = maintenance.ensurePeriod(subscription.id, '2026-11-20');
+    expect([first.periodStart, first.periodEnd]).toEqual(['2026-10-15', '2026-11-14']);
+    expect([second.periodStart, second.periodEnd]).toEqual(['2026-11-15', '2026-12-14']);
+    // La logique calendar des abonnements déjà stockés demeure disponible.
+    database.run("UPDATE maintenance_subscriptions SET period_alignment='calendar' WHERE id=?", [subscription.id]);
+    const historical = maintenance.ensurePeriod(subscription.id, '2027-01-20');
+    expect([historical.periodStart, historical.periodEnd]).toEqual(['2027-01-01', '2027-01-31']);
+  });
+
   it('conserve la checklist de la période même si le modèle change ensuite', () => {
     const plan = maintenance.listPlans()[0];
     const subscription = maintenance.createSubscription({
