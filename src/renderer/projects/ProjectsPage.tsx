@@ -659,15 +659,17 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
       <div className={`project-production-page ${projectTopCollapsed ? 'project-top-collapsed' : ''}`}>
         {projectTopCollapsed ? <div className="project-production-header-compact">
           <button className="secondary-button project-production-back" type="button" onClick={closeProjectDetail}>← Projets</button>
-          <strong>{detail.number} · {detail.name}</strong>
+          <strong>{detail.number} · {detail.name} · {detail.commercialState === 'provisional' ? 'Devis non signé' : detail.commercialState === 'frozen' ? 'Devis accepté' : 'Historique'}</strong>
           <button className="secondary-button" type="button" onClick={() => setProjectTopCollapsed(false)}>↓ Afficher l’en-tête</button>
         </div> : <header className="project-production-header">
           <div className="project-production-title">
             <button className="secondary-button project-production-back" type="button" onClick={closeProjectDetail}>← Projets</button>
             <div>
-              <span className="eyebrow">{detail.number} · {detail.commercialState==='provisional'?'Projet prévisionnel':'Mode production'}</span>
+              <span className="eyebrow">{detail.number} · {detail.commercialState === 'provisional' ? 'Projet prévisionnel · devis non signé' : detail.commercialState === 'frozen' ? 'Projet confirmé · devis accepté' : 'Projet historique'}</span>
               <h2>{detail.name}</h2>
-              <p>{detail.clientLabel}</p>
+              <p>{detail.commercialState === 'provisional' && !detail.clientAccountId ? 'Prospect : ' : 'Client / contact : '}{detail.clientLabel}</p>
+              {detail.sourceQuoteId && <p className="muted">Devis source associé · référence {detail.sourceQuoteId}</p>}
+              {detail.commercialState === 'provisional' && <p className="muted">Préparation interne : ce dossier n’est pas une commande acceptée.</p>}
             </div>
           </div>
           <div className="project-production-actions">
