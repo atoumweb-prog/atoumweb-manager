@@ -390,7 +390,7 @@ const api: AtoumWebApi = {
     createCommercialRevision: (id: string) => ipcRenderer.invoke('quotes:commercial-revision', id),
     importContractDocument: (id: string, abbyReference?: string | null) => ipcRenderer.invoke('quotes:import-contract-document', id, abbyReference),
     openContractDocument: (id: string) => ipcRenderer.invoke('quotes:open-contract-document', id),
-    updateAbbyReference: (id: string, abbyReference?: string | null) => ipcRenderer.invoke('quotes:update-abby-reference', id),
+    updateAbbyReference: (id: string, abbyReference?: string | null) => ipcRenderer.invoke('quotes:update-abby-reference', id, abbyReference),
     generatePdf: (id: string) => ipcRenderer.invoke('quotes:generate-pdf', id),
   },
   projects: {
