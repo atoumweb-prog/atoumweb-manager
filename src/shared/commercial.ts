@@ -64,6 +64,8 @@ export interface CatalogItemInput {
   type: CatalogItemType;
   name: string;
   category?: string | null;
+  /** Optional stable category chosen explicitly, atomically attached during item creation. */
+  categoryId?: string | null;
   visiblePublic?: boolean;
 }
 
