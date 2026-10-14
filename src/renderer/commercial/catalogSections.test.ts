@@ -143,6 +143,16 @@ describe('Lot 04B — vue organisée du catalogue, projection sans écriture', (
     expect(a.canonicalCode).toBeNull();
   });
 
+  it('ne confond pas une offre thématique avec les quatre offres principales', () => {
+    const items = [
+      item('w', 'Optimisation WooCommerce', { type: 'offer', category: 'ECOM' }),
+      item('m', 'Album photo mariage', { type: 'offer', category: 'PHOTO' }),
+    ];
+    const out = buildCataloguePresentation(items);
+    expect(out.featured).toHaveLength(0);
+    expect(out.otherOffers.map((entry) => entry.id)).toEqual(['m', 'w']);
+  });
+
   it('préserve l’ordre et les contenus d’entrée sans modifier le tableau original', () => {
     const a = item('a', 'Zèbre', { category: 'CONTENU' });
     const b = item('b', 'Article', { category: 'CONTENU' });
