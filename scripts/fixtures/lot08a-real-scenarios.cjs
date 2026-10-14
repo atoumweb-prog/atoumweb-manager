@@ -241,6 +241,9 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
       clientAccountId: client.id, name: 'E226 Autre pack TEMP',
       purchasedSeconds: 7200, contractPriceCents: 20000,
     });
+    await js('document.querySelector(".hour-pack-toolbar-controls button").click()');
+    await wait('[...document.querySelectorAll(".hour-pack-compact-item, .hour-pack-list-panel .operations-table tbody tr")].some(e=>e.textContent.includes("E226 Autre pack TEMP"))',
+      'E226 second pack loaded after refresh');
     await setPackInput('.hour-pack-workbench input[placeholder^="Ex."]','-0.25');
     await setPackInput('.hour-pack-workbench input[placeholder="Motif obligatoire"]','BROUILLON E226 AJUSTEMENT');
     await wait('document.querySelector(".hour-pack-workbench input[placeholder=\"Motif obligatoire\"]")?.value==="BROUILLON E226 AJUSTEMENT"',
