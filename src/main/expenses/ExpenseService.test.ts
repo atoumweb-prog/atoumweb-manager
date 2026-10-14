@@ -251,4 +251,35 @@ describe('ExpenseService', () => {
     expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
+
+  it('valide le projet du bon client et refuse une dépense ou un transfert vers le client opposé', () => {
+    const crm = new CrmService(database);
+    const secondOrg = crm.createOrganization({ name: 'Autre client test 09C' });
+    const otherClientId = crm.createClient({ organizationId: secondOrg.id }).id;
+    const now = '2026-10-14T12:00:00.000Z';
+    database.run(
+      `INSERT INTO projects
+       (id,project_number,client_account_id,name,project_type,status,commercial_mode,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?)`,
+      ['project-09c-a','09C-2026-001',clientId,'Projet client A 09C','website','to_prepare','normal',now,now],
+    );
+    const input = {
+      category: 'software' as const, label: 'Frais projet client A',
+      amountCents: 12900, status: 'committed' as const, expenseDate: now,
+      clientAccountId: clientId, projectId: 'project-09c-a',
+    };
+    const created = expenses.create(input);
+    expect(created).toMatchObject({ clientAccountId: clientId, projectId: 'project-09c-a' });
+    expect(expenses.list({ clientAccountId: clientId }).some((item) => item.id === created.id)).toBe(true);
+    expect(() => expenses.create({ ...input, clientAccountId: otherClientId, label: 'Incohérent' }))
+      .toThrow(/projet ne correspond pas au client/);
+    const before = expenses.get(created.id);
+    expect(() => expenses.update(created.id, { ...input, clientAccountId: otherClientId }))
+      .toThrow(/projet ne correspond pas au client/);
+    expect(expenses.get(created.id)).toEqual(before);
+    const moved = expenses.update(created.id, { ...input, clientAccountId: otherClientId, projectId: null });
+    expect(moved).toMatchObject({ clientAccountId: otherClientId, projectId: null });
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
 });
