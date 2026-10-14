@@ -35,7 +35,7 @@ if(!process.versions.electron){
    await click('+ Nouveau devis');
    await wait('!!document.querySelector(".quote-wizard")');
    await js('document.querySelector(".quote-owner-toggle button:nth-child(2)").click()');
-   await wait('!!document.querySelector(".quote-step-content select option[value='+JSON.stringify(client.id)+']")');
+   await wait('[...document.querySelectorAll(".quote-step-content select option")].some(o=>o.value==='+JSON.stringify(client.id)+')');
    await js('const e=document.querySelector(".quote-step-content select");e.value='+JSON.stringify(client.id)+';e.dispatchEvent(new Event("change",{bubbles:true}))');
    await sleep(100);
    await click('Suivant →');
