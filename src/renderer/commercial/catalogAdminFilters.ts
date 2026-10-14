@@ -21,7 +21,7 @@ export function normalizeCatalogSearch(text: string): string {
 export function catalogAdminMatches(item: CatalogItemSummary, filters: CatalogAdminFilters): boolean {
   if (filters.type !== 'all' && item.type !== filters.type) return false;
   if (filters.status !== 'all' && item.status !== filters.status) return false;
-  if (filters.category !== 'all' && (item.category?.trim() || '') !== filters.category) return false;
+  if (filters.category !== 'all' && (item.category ?? '') !== filters.category) return false;
   const needle = normalizeCatalogSearch(filters.query);
   if (!needle) return true;
   const version = item.currentVersion;
