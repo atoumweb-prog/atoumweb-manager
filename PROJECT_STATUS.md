@@ -1684,3 +1684,11 @@ Clôture Lot 3 — 03/10/2026 : bilan réel validé par AtoumWeb ; commit local 
 - Ordre d'intégration à maintenir : `main` ← 04B ← 04C ← 04D/04E après validation de chaque convergence. Aucune fusion autorisée automatiquement.
 
 - **Complément 04E** : projection `salesGuidanceFromCatalogVersion` branchée sur les champs commerciaux déjà versionnés (`commercialParameters.clientNeed`, `benefits`, `internalAdvice`) ; test additionnel écrit. Aucun contrat modifié. Les objections structurées restent une extension non persistée ; UI/IPC non livrés. Les tests de ce nouvel HEAD restent à exécuter.
+
+
+### 04D — Persistance SQLite des recommandations (14/10/2026)
+
+- Migration additive **68** `catalog_version_recommendations_v1` créée sur la branche 04D/04E : liens source/target entre versions Catalogue, contraintes FK, unicité, index ; aucun devis historique modifié.
+- `CatalogRecommendationsService` : lecture et remplacement transactionnel sous `BEGIN IMMEDIATE`, source obligatoirement brouillon, cible publiée et active, rejet des autoréférences, doublons de prestation et services déjà inclus ; rollback complet en erreur.
+- `CatalogRecommendationsService.test.ts` : quatre scénarios ajoutés (persistance/FK, rollback, statut et doublons, non-duplication avec la composition de l'offre). **Tests écrits, pas encore certifiés par CI.**
+- **Réserves** : API IPC/preload, UI UX-01, conservation/copie des recommandations lors de la création vN+1, tests Electron Windows, vérification de collision éventuelle de l'identifiant de migration 68 avec les branches parallèles, convergence `main` ; aucune intégration dans `main`.
