@@ -57,6 +57,8 @@ module.exports = async ({ win, db, evalUI: js, get, wait, navigate, test, sleep 
     await sleep(140);
   }
   await navigate('Sauvegardes');
+  await wait('document.querySelectorAll(".business-backups-toolbar select").length===4', 'filtres du registre sauvegardes');
+  test(await get('!!document.querySelector(".business-backups-toolbar select[aria-label=\\"Filtrer par client\\"]") && !!document.querySelector(".business-backups-toolbar select[aria-label=\\"Filtrer par projet\\"]")'), 'Lot 10C: sélecteurs Client et Projet réels, sans création de sauvegarde');
   test(await get('document.querySelector(".business-backups-page .technical-safety-note")?.textContent.includes("ne crée pas de fichiers")'), 'Lot 10C: déclaration ne signifie pas sauvegarde réelle');
   await js(`const b=[...document.querySelectorAll('.business-backups-toolbar button')].find(b=>b.textContent.includes('Déclarer une sauvegarde'));if(!b)throw Error('Bouton déclaration absent');b.click();`);
   await wait('!!document.querySelector(".business-backups-create input[placeholder]")', 'formulaire de déclaration');

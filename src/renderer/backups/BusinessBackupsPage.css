@@ -1,6 +1,6 @@
 .business-backups-page { display: grid; gap: 16px; }
 .business-backups-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
-.business-backups-toolbar { display: grid; grid-template-columns: minmax(260px, 1fr) 180px 180px auto; gap: 10px; align-items: center; padding: 14px; }
+.business-backups-toolbar { display: grid; grid-template-columns: minmax(190px, 1.6fr) repeat(4, minmax(110px, 1fr)) minmax(155px, auto); gap: 10px; align-items: center; padding: 14px; }
 .business-backups-toolbar input,
 .business-backups-toolbar select,
 .business-backups-create input,
@@ -290,3 +290,6 @@ body.business-backups-resizing {
   align-items: center;
   gap: 6px;
 }
+
+/* 10C — filtres de contexte, sans débordement aux densités élevées. */
+.business-backups-toolbar > :is(input,select,button) { min-width: 0; }

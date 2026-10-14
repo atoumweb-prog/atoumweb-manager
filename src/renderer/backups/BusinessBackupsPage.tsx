@@ -49,6 +49,8 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<BusinessBackupType | ''>('');
   const [locationFilter, setLocationFilter] = useState<BusinessBackupLocationType | ''>('');
+  const [clientFilter, setClientFilter] = useState('');
+  const [projectFilter, setProjectFilter] = useState('');
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Le verrou ref protège dès le premier clic, avant toute mise à jour React.
@@ -100,12 +102,14 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
       const [nextRecords, nextProjects, nextClients, nextOverview] = await Promise.all([
         window.atoumweb.businessBackups.list({
           search: search || null,
+          clientAccountId: clientFilter || null,
+          projectId: projectFilter || null,
           backupType: typeFilter || null,
           locationType: locationFilter || null,
         }),
         window.atoumweb.projects.projects.list(),
         window.atoumweb.crm.clients.list({ includeArchived: true }),
-        window.atoumweb.businessBackups.overview(),
+        window.atoumweb.businessBackups.overview({ clientAccountId: clientFilter || null, projectId: projectFilter || null }),
       ]);
       if(epoch!==loadEpoch.current)return;
       setRecords(nextRecords);
@@ -132,7 +136,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
   useEffect(() => {
     void load(initialRecordId ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, typeFilter, locationFilter, initialRecordId,initialRequest]);
+  }, [search, typeFilter, locationFilter, clientFilter, projectFilter, initialRecordId,initialRequest]);
 
   useEffect(() => {
     if (!selected) return;
@@ -270,9 +274,11 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
       {error && <div className="notice business-backups-error" role="alert"><span>{error}</span><button type="button" onClick={() => setError(null)}>×</button></div>}
 
       <article className="panel business-backups-toolbar">
-        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher une sauvegarde ou un emplacement…" />
-        <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as BusinessBackupType | '')}><option value="">Tous les types</option>{BACKUP_TYPES.map((type) => <option key={type.id} value={type.id}>{type.label}</option>)}</select>
-        <select value={locationFilter} onChange={(event) => setLocationFilter(event.target.value as BusinessBackupLocationType | '')}><option value="">Tous les emplacements</option>{LOCATION_TYPES.map((type) => <option key={type.id} value={type.id}>{type.label}</option>)}</select>
+        <input aria-label="Rechercher des sauvegardes" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher une sauvegarde ou un emplacement…" />
+        <select aria-label="Filtrer par client" value={clientFilter} onChange={(event) => { setClientFilter(event.target.value); setProjectFilter(''); }}><option value="">Tous les clients</option>{clients.map((client) => <option value={client.id} key={client.id}>{client.displayName}</option>)}</select>
+        <select aria-label="Filtrer par projet" value={projectFilter} onChange={(event) => setProjectFilter(event.target.value)}><option value="">Tous les projets</option>{projects.filter((project) => !clientFilter || project.clientAccountId === clientFilter).map((project) => <option value={project.id} key={project.id}>{project.number} · {project.name}</option>)}</select>
+        <select aria-label="Filtrer par type" value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as BusinessBackupType | '')}><option value="">Tous les types</option>{BACKUP_TYPES.map((type) => <option key={type.id} value={type.id}>{type.label}</option>)}</select>
+        <select aria-label="Filtrer par emplacement" value={locationFilter} onChange={(event) => setLocationFilter(event.target.value as BusinessBackupLocationType | '')}><option value="">Tous les emplacements</option>{LOCATION_TYPES.map((type) => <option key={type.id} value={type.id}>{type.label}</option>)}</select>
         <button className="primary-button" type="button" disabled={mutationBusy} onClick={() => { if (creating) createDraft.request(() => setCreating(false)); else setCreating(true); }}>{creating ? <><OperationIcon name="close" size={16} /> Fermer</> : <><OperationIcon name="database" size={16} /> Déclarer une sauvegarde</>}</button>
       </article>
 
