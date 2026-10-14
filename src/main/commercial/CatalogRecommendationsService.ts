@@ -13,6 +13,7 @@ export interface CatalogRecommendationRow {
   targetVersionId: string;
   targetName: string;
   targetVersionNumber: number;
+  targetVersionStatus: 'draft' | 'published' | 'retired';
   targetItemStatus: 'active' | 'inactive' | 'archived';
   sortOrder: number;
 }
@@ -22,9 +23,9 @@ export class CatalogRecommendationsService {
   list(sourceVersionId: string): CatalogRecommendationRow[] {
     return this.database.all<{
       id:string;source_version_id:string;target_version_id:string;sort_order:number;
-      target_name:string;target_version_number:number;target_item_status:CatalogRecommendationRow['targetItemStatus'];
+      target_name:string;target_version_number:number;target_version_status:CatalogRecommendationRow['targetVersionStatus'];target_item_status:CatalogRecommendationRow['targetItemStatus'];
     }>(`SELECT r.id,r.source_version_id,r.target_version_id,r.sort_order,
-              i.name AS target_name,v.version_number AS target_version_number,
+              i.name AS target_name,v.version_number AS target_version_number,v.status AS target_version_status,
               i.status AS target_item_status
        FROM catalog_version_recommendations r
        JOIN catalog_versions v ON v.id=r.target_version_id
@@ -34,6 +35,7 @@ export class CatalogRecommendationsService {
     ).map(x=>({
       id:x.id,sourceVersionId:x.source_version_id,targetVersionId:x.target_version_id,
       targetName:x.target_name,targetVersionNumber:Number(x.target_version_number),
+      targetVersionStatus:x.target_version_status,
       targetItemStatus:x.target_item_status,sortOrder:x.sort_order,
     }));
   }
