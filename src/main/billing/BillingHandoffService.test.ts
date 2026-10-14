@@ -91,15 +91,17 @@ describe('BillingHandoffService', () => {
        VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
       ['billing-isolated', clientId, 'other', 'source-isolated', 'other:source-isolated', 'Prestation à facturer', 9900, 9900, 'ready', now, now],
     );
-    const insertDocument = (id: string, owner: string, archivedAt: string | null) => database.run(
+    const insertDocument = (id: string, owner: string, archivedAt: string | null, category: 'invoice' | 'contract' = 'invoice') => database.run(
       `INSERT INTO client_documents
        (id,client_account_id,category,title,original_name,relative_path,mime_type,size_bytes,archived_at,created_at,updated_at)
        VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
-      [id, owner, 'invoice', 'Facture', id + '.pdf', 'Clients/test/Documents/03 Factures/' + id + '.pdf', 'application/pdf', 1200, archivedAt, now, now],
+      [id, owner, category, 'Facture', id + '.pdf', 'Clients/test/Documents/03 Factures/' + id + '.pdf', 'application/pdf', 1200, archivedAt, now, now],
     );
     insertDocument('invoice-foreign', otherId, null);
     insertDocument('invoice-archived', clientId, now);
+    insertDocument('document-contract', clientId, null, 'contract');
     expect(() => billing.attachInvoice('billing-isolated', 'invoice-foreign')).toThrow(/autre client/);
+    expect(() => billing.attachInvoice('billing-isolated', 'document-contract')).toThrow(/catégorie Factures/);
     expect(() => billing.attachInvoice('billing-isolated', 'invoice-archived')).toThrow(/Restaure/);
     expect(billing.get('billing-isolated')).toMatchObject({
       status: 'ready', invoiceDocumentId: null, invoiceReference: null,
