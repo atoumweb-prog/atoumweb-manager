@@ -64,3 +64,14 @@ Deux assertions permanentes supplémentaires couvrent la ligne Annuaire reconstr
 
 
 Complément de focus : la ligne peut rester absente du filtre à la fermeture ; repli sur le champ de recherche, valeur inchangée. Deux assertions supplémentaires couvrent ce cas Client/Annuaire.693f6af était vert à282/81frames/UX-01183 ; dernier candidat à recetter avant publicationcorrective unique (284 contrôles avec captures attendus), sans nouveau changement métier.
+
+
+## Intégration effective dans main — 14/10/2026
+
+- Autorisation humaine reçue pour intégrer **03D + 03E uniquement**.
+- Ascendance Git vérifiée : `main@b2796812` est l'ancêtre de `03D@bd406e1c`, lui-même ancêtre de `03E@c9e822d` (comparaisons : 0 commit de retard). La PR #107 contient la totalité de #105.
+- **PR #107 fusionnée une seule fois par merge commit `575464258e3b8c88af843ea1cf34ad64ae50b7db`**. GitHub reconnaît également #105 comme intégrée par ascendance, sans deuxième merge.
+- 03A, 03B, 03C déjà dans main ; **03D et 03E désormais intégrés**. Lots 04 et 05 exclus ; PR #104 et #106 restées en draft, non fusionnées.
+- CI de candidature #855 : typecheck et 1029 tests OK ; #885 : typecheck et 1040 tests, 35 restaurations, 6 binaires OK. Recette Electron combinée et contrôles UX-01 attestés localement sur fixtures TEMP dans la documentation candidate, **non exécutés par la CI standard de #107**. Aucun test sur Validation-MSI ni données réelles revendiqué.
+- **Réserve maintenue : archivage d'identité Annuaire non exposé.** La conservation des identités, relations et historiques existants est préservée ; aucune nouvelle règle d'archivage/suppression n'est supposée ni validée.
+- Recette visuelle humaine toujours différée. La validation post-fusion sur `main` est à tracer séparément : ne pas assimiler les tests de la branche candidate à une exécution sur le commit fusionné.
