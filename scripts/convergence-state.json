@@ -216,6 +216,12 @@
       [
         "scripts/check-ux-v2-lot10-ui.cjs"
       ]
+    ],
+    [
+      "packaged-restore-relaunch",
+      [
+        "scripts/check-ux01-packaged-relaunch.cjs"
+      ]
     ]
   ]
 }
