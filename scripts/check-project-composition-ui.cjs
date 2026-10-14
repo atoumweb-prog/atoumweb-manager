@@ -374,9 +374,15 @@ app.whenReady().then(async () => {
     await input('.project-sites-create-panel input[placeholder="Ex. Site principal"]','SITE DOUBLE CLIC TEST');
     await js(`(()=>{
       window.__siteCreateCalls=0;
+      window.__siteList=[{id:'site1',name:'fleuriste.com'}];
+      window.atoumweb.projects.sites.list=async()=>window.__siteList;
       window.atoumweb.projects.sites.create=(_projectId,data)=>{
         window.__siteCreateCalls++;
-        return new Promise(resolve=>{window.__resolveSiteCreate=()=>resolve({id:'site-created',name:data.name});});
+        return new Promise(resolve=>{window.__resolveSiteCreate=()=>{
+          const created={id:'site-created',name:data.name,archivedAt:null};
+          window.__siteList.push(created);
+          resolve(created);
+        };});
       };
       const b=[...document.querySelectorAll('.project-sites-create-panel button')].find(button=>button.textContent.includes('Créer le Site'));
       if(!b||b.disabled)throw Error('Site create action absent or disabled');
@@ -387,6 +393,9 @@ app.whenReady().then(async () => {
     await check('Double clic Site : un seul appel IPC avant rerender', 'window.__siteCreateCalls===1');
     await js('(()=>{if(!window.__resolveSiteCreate)throw Error("Site creation not pending");window.__resolveSiteCreate();return true})()');
     await settle();
+    await check('Le Site créé reste sélectionné après rafraîchissement asynchrone',
+      `[...document.querySelectorAll('.project-site-tree-site.active')].some(e=>e.textContent.includes('SITE DOUBLE CLIC TEST'))`);
+
     win.destroy();
   } catch (error) {
     if (!checks.some((check) => check.error === String(error))) {
