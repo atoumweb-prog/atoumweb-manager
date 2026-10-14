@@ -1,5 +1,9 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 14/10/2026 — Lot 10D (isolé) : recherche et précautions de réglages
+
+- Début du lot 10D sur `feature/ux-v2-lot10d-settings-safe-v1` depuis main : recherche sans écriture, sections explicites, verrou synchrone et erreurs des préférences/workspace/backup, messages SQLite vs sauvegardes métier et aide au survol. [Exécution et réserves](docs/ux-v2/LOT-10D-REPRISE-2026-10-14.md). Tests purs ajoutés, mais aucune CI/recette Windows réalisée à ce stade ; données et moteurs inchangés, pas de fusion.
+
 ## 14/10/2026 — Dernier cas de focus : ligne toujours masquée
 
 - Le correctif693f6af a passé typecheck/282 natifs avec81 frames/UX-01183. Complément final : si le filtre masque encore la ligne à la fermeture, retour à la recherche et conservation de sa valeur. Deux assertions clavier supplémentaires, sans mutation métier. Nouveau candidat à recetter puis une seule actualisation corrective107/CIautomatique, aucun rerun manuel.
