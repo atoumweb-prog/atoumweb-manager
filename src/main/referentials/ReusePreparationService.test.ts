@@ -191,7 +191,7 @@ describe('ReusePreparationService', () => {
       { contentType: 'text', contentText: 'Source préservée' });
     const before = projectLibrary.get(item.id);
     const originalRun = database.run.bind(database);
-    database.run = ((sql: string, params?: unknown[]) => {
+    database.run = ((sql: string, params: Parameters<typeof database.run>[1] = []) => {
       if (sql.includes('INSERT INTO activity_log') && params?.[1] === 'technical_reuse_package_prepared') {
         throw new Error('PREPARATION_LOG_FAILURE');
       }
