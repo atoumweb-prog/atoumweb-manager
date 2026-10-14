@@ -42,7 +42,7 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[sourceId]);
   const editable=source?.status==='draft'&&!locked;
-  const available=items.filter(candidate=>candidate.id!==item.id&&candidate.status==='active'
+  const available=items.filter(candidate=>candidate.type==='service'&&candidate.id!==item.id&&candidate.status==='active'
     &&candidate.currentVersion?.status==='published'
     &&!targets.includes(candidate.currentVersion.id));
   async function save(){
