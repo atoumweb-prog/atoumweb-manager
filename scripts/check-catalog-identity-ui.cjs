@@ -218,6 +218,8 @@ app.whenReady().then(async () => {
       await fill('Argumentaire commercial','Présenter clairement le périmètre');
       await fill('Questions de qualification','Quels sont vos objectifs ?');
       await fill('Objections et réponses','Budget : décrire les livrables');
+      await fill('Situations pertinentes','Besoin de site vitrine');
+      await fill('Vigilances commerciales','Ne pas promettre un rang SEO');
       await click('Historique');
       assert('04C publication bloquée pendant édition', [...document.querySelectorAll('.catalog-version-row button')].filter(b=>b.textContent==='Préparer la publication').every(b=>b.disabled));
       await click('Contenu & périmètre');
@@ -237,7 +239,9 @@ app.whenReady().then(async () => {
       assert('04E argumentaire, qualification et objections sauvegardés via l’éditeur réel',
         calls.saveDraft[0].input.commercialParameters.salesPitch==='Présenter clairement le périmètre'&&
         calls.saveDraft[0].input.commercialParameters.qualificationQuestions==='Quels sont vos objectifs ?'&&
-        calls.saveDraft[0].input.commercialParameters.objections==='Budget : décrire les livrables');
+        calls.saveDraft[0].input.commercialParameters.objections==='Budget : décrire les livrables'&&
+        calls.saveDraft[0].input.commercialParameters.relevantSituations==='Besoin de site vitrine'&&
+        calls.saveDraft[0].input.commercialParameters.commercialCautions==='Ne pas promettre un rang SEO');
       assert('04C même ID de version conservé',calls.saveDraft[0].id===items[1].versions[0].id&&items[1].versions[0].description==='Enregistré en place, sans v2');
       await click('Identité');await click('Reprendre le brouillon');
       await click('Contenu & périmètre');
