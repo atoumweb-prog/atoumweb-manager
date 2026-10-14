@@ -52,6 +52,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node scripts/check-unsaved-inputs-ui.cjs --lot-pdf
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/check-unsaved-inputs-ui.cjs --lot-create
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Lot 06 — recette Electron transversale Windows TEMP (PR 124)
         if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 124 }}
