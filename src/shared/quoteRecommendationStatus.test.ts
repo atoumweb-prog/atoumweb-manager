@@ -69,6 +69,19 @@ describe('04D — états du conseil commercial dans une ligne de Devis',()=>{
     expect(quoteRecommendationState(source,target({targetVersionStatus:'draft'}),[source]))
       .toBe('unavailable');
   });
+  it('does not mistake a pending or unrelated service line for a purchased option',()=>{
+    const offer=quoteLine('offer',{snapshot:{offerComponents:[{
+      serviceItemId:'service',componentId:'component-1',isOptional:true,
+    }]}});
+    const origin={sourceOfferLineId:'offer',sourceOfferItemId:'offer-item',
+      sourceOfferVersionId:'offer-v1',sourceComponentId:'component-1',purchasedAt:'2026-10-14'};
+    const otherService=quoteLine('other-service',{catalogItemId:'another-service',
+      optionPurchase:{...origin,state:'purchased'}});
+    expect(quoteRecommendationState(offer,target(),[offer,otherService])).toBe('option-available');
+    const pending=quoteLine('pending',{catalogItemId:'service',
+      optionPurchase:{...origin,state:'available' as 'purchased'}});
+    expect(quoteRecommendationState(offer,target(),[offer,pending])).toBe('already-added');
+  });
   it('never treats an unrelated option purchase as buying this recommendation',()=>{
     const offer=quoteLine('offer',{snapshot:{offerComponents:[{
       serviceItemId:'service',componentId:'component-1',isOptional:true,
