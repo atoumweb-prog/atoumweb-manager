@@ -26,6 +26,11 @@ describe('04D — suggestions Prospect sans achat implicite',()=>{
     expect(resolveProspectCatalogRecommendations(catalogue,['a'],['missing'],['b']))
       .toEqual([]);
   });
+  it('does not resurrect legacy suggestions when all managed recommendations are paused',()=>{
+    const catalogue=[item('a'),item('b')];
+    expect(resolveProspectCatalogRecommendations(catalogue,['a'],[],['b'],true)).toEqual([]);
+    expect(resolveProspectCatalogRecommendations(catalogue,['a'],[],['b'],false).map(x=>x.id)).toEqual(['b']);
+  });
   it('never promotes an offer as a recommended complementary service',()=>{
     const offer={...item('bundle'),type:'offer' as const,name:'Main bundle'};
     const service=item('audit');
