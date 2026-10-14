@@ -42,6 +42,12 @@ export class CatalogRecommendationsService {
 
   /** Atomic replace; references use immutable published targets. No quote is changed. */
   replace(sourceVersionId: string, targetVersionIds: readonly string[], expectedTargetVersionIds?: readonly string[]): CatalogRecommendationRow[] {
+    if(typeof sourceVersionId!=='string'||!sourceVersionId.trim()||
+       !Array.isArray(targetVersionIds)||targetVersionIds.some(id=>typeof id!=='string'||!id.trim())||
+       (expectedTargetVersionIds!==undefined&&(!Array.isArray(expectedTargetVersionIds)||
+        expectedTargetVersionIds.some(id=>typeof id!=='string'||!id.trim())))) {
+      throw new Error('Identifiants de recommandation invalides.');
+    }
     this.database.exec('BEGIN IMMEDIATE;');
     try {
       const version = (id:string) => this.database.get<VersionRow>(
