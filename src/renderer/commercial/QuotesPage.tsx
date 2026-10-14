@@ -280,7 +280,10 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
   }
 
   async function validateQuoteFromList(quote: QuoteSummary): Promise<void> {
-    if (!['sent', 'viewed'].includes(quote.status) || !beginAcceptance(quote.id)) return;
+    if (!['sent', 'viewed'].includes(quote.status) || acceptanceInFlight.current.has(quote.id)) return;
+    // Une acceptation depuis la liste ne doit pas ignorer un brouillon de la même fiche.
+    if (!requestUnsavedExit(() => {}, 'quote:' + quote.id)) return;
+    if (!beginAcceptance(quote.id)) return;
     try {
       if (!window.confirm(`Confirmer que le devis ${quote.number} a été accepté / signé dans Abby ?\n\nVérifie le bon devis, sa révision et l’acceptation réelle dans Abby avant de confirmer. Cette opération entraîne le rattachement ou la conversion Client, le gel contractuel, la confirmation du Projet et peut déclencher des prestations opérationnelles.`)) return;
       await trackQuoteMutation(() => window.atoumweb.quotes.accept(quote.id));
