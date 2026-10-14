@@ -8,6 +8,7 @@ interface VersionRow extends Record<string, unknown> {
   status: 'draft' | 'published' | 'retired';
   item_status: 'active' | 'inactive' | 'archived';
 }
+export interface CatalogRecommendationDetails { targetVersionId: string; reason: string; status: 'active' | 'paused'; conditions: string; provenance: string; }
 export interface CatalogRecommendationRow {
   id: string;
   sourceVersionId: string;
@@ -18,6 +19,10 @@ export interface CatalogRecommendationRow {
   targetVersionStatus: 'draft' | 'published' | 'retired';
   targetItemStatus: 'active' | 'inactive' | 'archived';
   sortOrder: number;
+  reason: string;
+  status: 'active' | 'paused';
+  conditions: string;
+  provenance: string;
 }
 export class CatalogRecommendationsService {
   constructor(private readonly database: DatabaseAdapter) {}
@@ -25,8 +30,10 @@ export class CatalogRecommendationsService {
   list(sourceVersionId: string): CatalogRecommendationRow[] {
     return this.database.all<{
       id:string;source_version_id:string;target_version_id:string;sort_order:number;
+      reason:string;rule_status:'active'|'paused';conditions:string;provenance:string;
       target_item_id:string;target_name:string;target_version_number:number;target_version_status:CatalogRecommendationRow['targetVersionStatus'];target_item_status:CatalogRecommendationRow['targetItemStatus'];
     }>(`SELECT r.id,r.source_version_id,r.target_version_id,r.sort_order,
+              r.reason,r.rule_status,r.conditions,r.provenance,
               i.id AS target_item_id,i.name AS target_name,v.version_number AS target_version_number,v.status AS target_version_status,
               i.status AS target_item_status
        FROM catalog_version_recommendations r
@@ -39,17 +46,23 @@ export class CatalogRecommendationsService {
       targetItemId:x.target_item_id,targetName:x.target_name,targetVersionNumber:Number(x.target_version_number),
       targetVersionStatus:x.target_version_status,
       targetItemStatus:x.target_item_status,sortOrder:x.sort_order,
+      reason:x.reason,status:x.rule_status,conditions:x.conditions,provenance:x.provenance,
     }));
   }
 
   /** Atomic replace; references use immutable published targets. No quote is changed. */
-  replace(sourceVersionId: string, targetVersionIds: readonly string[], expectedTargetVersionIds?: readonly string[]): CatalogRecommendationRow[] {
+  replace(sourceVersionId: string, targetVersionIds: readonly string[], expectedTargetVersionIds?: readonly string[], details?: readonly CatalogRecommendationDetails[]): CatalogRecommendationRow[] {
     if(typeof sourceVersionId!=='string'||!sourceVersionId.trim()||
        !Array.isArray(targetVersionIds)||targetVersionIds.some(id=>typeof id!=='string'||!id.trim())||
        (expectedTargetVersionIds!==undefined&&(!Array.isArray(expectedTargetVersionIds)||
         expectedTargetVersionIds.some(id=>typeof id!=='string'||!id.trim())))) {
       throw new Error('Identifiants de recommandation invalides.');
     }
+    if(details!==undefined && (!Array.isArray(details) || details.length!==targetVersionIds.length ||
+      details.some((d,index)=>!d||d.targetVersionId!==targetVersionIds[index]||
+        typeof d.reason!=='string'||d.reason.length>1000||typeof d.conditions!=='string'||d.conditions.length>3000||
+        typeof d.provenance!=='string'||d.provenance.length>200|| !['active','paused'].includes(d.status))))
+      throw new Error('Motif, état ou conditions de recommandation invalides.');
     this.database.exec('BEGIN IMMEDIATE;');
     try {
       const version = (id:string) => this.database.get<VersionRow>(
@@ -78,16 +91,24 @@ export class CatalogRecommendationsService {
       }
       // Replaying the same intent must not rotate association IDs or reorder history.
       const existingLinks = this.list(sourceVersionId);
-      if (JSON.stringify(existingLinks.map(link => link.targetVersionId)) === JSON.stringify(targetVersionIds)) {
+      const sameTargets=JSON.stringify(existingLinks.map(link => link.targetVersionId)) === JSON.stringify(targetVersionIds);
+      const sameDetails=details===undefined || existingLinks.every((link,index)=>
+        link.reason===details[index].reason && link.status===details[index].status &&
+        link.conditions===details[index].conditions && link.provenance===details[index].provenance);
+      if (sameTargets && sameDetails) {
         this.database.exec('COMMIT;');
         return existingLinks;
       }
       this.database.run('DELETE FROM catalog_version_recommendations WHERE source_version_id=?',[sourceVersionId]);
       const createdAt=new Date().toISOString();
       for (const [sortOrder,targetVersionId] of targetVersionIds.entries()) {
+        const previous=existingLinks.find(link=>link.targetVersionId===targetVersionId);
+        const info=details?.[sortOrder]??previous??{reason:'',status:'active' as const,conditions:'',provenance:'manual'};
         this.database.run(`INSERT INTO catalog_version_recommendations
-          (id,source_version_id,target_version_id,sort_order,created_at) VALUES (?,?,?,?,?)`,
-          [randomUUID(),sourceVersionId,targetVersionId,sortOrder,createdAt]);
+          (id,source_version_id,target_version_id,sort_order,created_at,reason,rule_status,conditions,provenance)
+          VALUES (?,?,?,?,?,?,?,?,?)`,
+          [previous?.id??randomUUID(),sourceVersionId,targetVersionId,sortOrder,createdAt,
+            info.reason,info.status,info.conditions,info.provenance]);
       }
       this.database.exec('COMMIT;');
     } catch (error) {
