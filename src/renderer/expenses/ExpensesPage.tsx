@@ -305,7 +305,7 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
       const updated = await window.atoumweb.expenses.changeStatus(selected.id, 'paid');
       await refresh();
       setSelectedId(updated.id);
-      onMessage('Dépense marquée comme payée.');
+      onMessage('Dépense déclarée payée dans le Manager (paiement bancaire non vérifié).');
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de modifier le statut.');
     } finally {
@@ -371,8 +371,8 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
     <section className="expenses-kpi-grid" aria-label="Synthèse des dépenses">
       <article><span className="expenses-kpi-icon" aria-hidden="true"><OperationIcon name="euro" size={28} /></span><div><strong>Engagé ce mois</strong><span>{money(committedThisMonth)}</span><small>{monthItems.length} dépense(s)</small></div></article>
       <article><span className="expenses-kpi-icon" aria-hidden="true"><OperationIcon name="clock" size={27} /></span><div><strong>À payer</strong><span>{money(toPay)}</span><small>Dépenses engagées non réglées</small></div></article>
-      <article><span className="expenses-kpi-icon" aria-hidden="true"><OperationIcon name="check-circle" size={27} /></span><div><strong>Payé ce mois</strong><span>{money(paidThisMonth)}</span><small>Règlements enregistrés</small></div></article>
-      <article><span className="expenses-kpi-icon" aria-hidden="true"><OperationIcon name="repeat" size={27} /></span><div><strong>Récurrent mensuel</strong><span>{money(recurringMonthlyEquivalent)}</span><small>{recurring.length} dépense(s) récurrente(s)</small></div></article>
+      <article><span className="expenses-kpi-icon" aria-hidden="true"><OperationIcon name="check-circle" size={27} /></span><div><strong>Payé déclaré ce mois</strong><span>{money(paidThisMonth)}</span><small>Statuts déclarés, sans vérification bancaire</small></div></article>
+      <article><span className="expenses-kpi-icon" aria-hidden="true"><OperationIcon name="repeat" size={27} /></span><div><strong>Récurrent mensuel</strong><span>{money(recurringMonthlyEquivalent)}</span><small>{recurring.length} échéance(s) récurrente(s), sans génération automatique</small></div></article>
     </section>
 
     <div className="module-toolbar expenses-toolbar">
@@ -449,7 +449,7 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
             <label>Date de dépense<input type="date" value={form.expenseDate} onChange={(event) => updateForm('expenseDate', event.target.value)} /></label>
             <label>Échéance<input type="date" value={form.dueAt} onChange={(event) => updateForm('dueAt', event.target.value)} /></label>
             <label>Statut<select value={form.status} onChange={(event) => updateForm('status', event.target.value as ExpenseStatus)}>{EXPENSE_STATUSES.map((status) => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}</select></label>
-            {form.status === 'paid' && <label>Date de paiement<input type="date" value={form.paidAt} onChange={(event) => updateForm('paidAt', event.target.value)} /></label>}
+            {form.status === 'paid' && <label>Date du paiement déclaré<input type="date" value={form.paidAt} onChange={(event) => updateForm('paidAt', event.target.value)} /></label>}
           </div>
         </details>
 
@@ -516,7 +516,7 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
           {!createOpen && selected && selected.status !== 'paid' && selected.status !== 'cancelled' && <button className="secondary-button" type="button" disabled={busy} onClick={() => void markPaid()}>✓ Marquer payé</button>}
         </div>
 
-        {!createOpen && selected && <div className="expenses-meta"><span>Créée : {dateLabel(selected.createdAt)}</span><span>Mise à jour : {dateLabel(selected.updatedAt)}</span>{selected.paidAt && <span>Payée : {dateLabel(selected.paidAt)}</span>}</div>}
+        {!createOpen && selected && <div className="expenses-meta"><span>Créée : {dateLabel(selected.createdAt)}</span><span>Mise à jour : {dateLabel(selected.updatedAt)}</span>{selected.paidAt && <span>Payée (déclarée) : {dateLabel(selected.paidAt)}</span>}</div>}
       </aside>}
     </div>}
   </div>;
