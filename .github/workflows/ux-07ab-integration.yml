@@ -40,9 +40,9 @@ jobs:
         shell: pwsh
         timeout-minutes: 15
         run: |
-          node scripts/check-project-provisional-ui.cjs
+          node scripts/check-project-provisional-ui.cjs --output (Join-Path $env:RUNNER_TEMP 'check-project-provisional-ui')
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          node scripts/check-project-operational-ui.cjs
+          node scripts/check-project-operational-ui.cjs --output (Join-Path $env:RUNNER_TEMP 'check-project-operational-ui')
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node scripts/check-project-composition-ui.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -50,7 +50,7 @@ jobs:
         shell: pwsh
         timeout-minutes: 15
         run: |
-          node scripts/check-project-blueprint-origins-ui.cjs
+          node scripts/check-project-blueprint-origins-ui.cjs --output (Join-Path $env:RUNNER_TEMP 'check-project-blueprint-origins-ui')
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          node scripts/check-guided-reuse-ui.cjs
+          node scripts/check-guided-reuse-ui.cjs --output (Join-Path $env:RUNNER_TEMP 'check-guided-reuse-ui')
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
