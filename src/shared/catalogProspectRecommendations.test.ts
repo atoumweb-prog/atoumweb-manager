@@ -26,6 +26,13 @@ describe('04D — suggestions Prospect sans achat implicite',()=>{
     expect(resolveProspectCatalogRecommendations(catalogue,['a'],['missing'],['b']).map(x=>x.id))
       .toEqual(['b']);
   });
+  it('never promotes an offer as a recommended complementary service',()=>{
+    const offer={...item('bundle'),type:'offer' as const,name:'Main bundle'};
+    const service=item('audit');
+    expect(resolveProspectCatalogRecommendations([offer,service],[],
+      ['bundle-version','audit-version'],[]).map(x=>x.id)).toEqual(['audit']);
+    expect(resolveProspectCatalogRecommendations([offer],[],[],['bundle'])).toEqual([]);
+  });
   it('never suggests a draft, archived service or already selected item',()=>{
     const catalogue=[item('a'),item('b','archived'),item('c','active','draft')];
     expect(resolveProspectCatalogRecommendations(catalogue,['a'],
