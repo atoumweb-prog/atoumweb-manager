@@ -156,6 +156,8 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
   const [relationEditor,setRelationEditor]=useState<{value:string;expected:{status:ClientRelationshipStatus;note:string|null}}|null>(null);
   const relationGuard=useUnsavedDraft('Relation Client',relationEditor,{ready:!!relationEditor||relationshipSaving,pending:relationshipSaving,resetKey:relationEditor?.expected,discard:()=>setRelationEditor(null)});
   const [editingCoordinates, setEditingCoordinates] = useState(false);
+  const coordinateBaseline=useRef<{organization:Organization|null;contact:Contact|null}|null>(null);
+  const contactBaseline=useRef<Contact|null>(null);
   const [coordinateDraft, setCoordinateDraft] = useState({ firstName: '', lastName: '', website: '', addressLine1: '', addressLine2: '', postalCode: '', city: '' });
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -438,6 +440,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
 
   function beginCoordinateEdit(): void {
     if(editingCoordinates&&!coordinateGuard.request(()=>{}))return;
+    coordinateBaseline.current=identity?structuredClone(identity):null;
     setCoordinateDraft({
       firstName: identity?.contact?.firstName ?? '', lastName: identity?.contact?.lastName ?? '',
       website: displayWebUrl(identity?.organization?.website),
@@ -451,8 +454,11 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
     if (!selected || !identity) return;
     setCoordinatesSaving(true);
     try {
-      if (identity.contact) await window.atoumweb.crm.contacts.update(identity.contact.id, { ...identity.contact, firstName: coordinateDraft.firstName.trim(), lastName: coordinateDraft.lastName.trim() });
-      if (identity.organization) await window.atoumweb.crm.organizations.update(identity.organization.id, { ...identity.organization, website: coordinateDraft.website.trim() || null, addressLine1: coordinateDraft.addressLine1.trim() || null, addressLine2: coordinateDraft.addressLine2.trim() || null, postalCode: coordinateDraft.postalCode.trim() || null, city: coordinateDraft.city.trim() || null });
+      const baseline=coordinateBaseline.current;if(!baseline)throw Error('Relis les coordonnées avant de les modifier.');
+      await window.atoumweb.crm.directory.saveExisting({
+        contact:baseline.contact?{id:baseline.contact.id,expected:baseline.contact,input:{...baseline.contact,firstName:coordinateDraft.firstName.trim(),lastName:coordinateDraft.lastName.trim()}}:undefined,
+        organization:baseline.organization?{id:baseline.organization.id,expected:baseline.organization,input:{...baseline.organization,website:coordinateDraft.website.trim()||null,addressLine1:coordinateDraft.addressLine1.trim()||null,addressLine2:coordinateDraft.addressLine2.trim()||null,postalCode:coordinateDraft.postalCode.trim()||null,city:coordinateDraft.city.trim()||null}}:undefined,
+      });
       coordinateGuard.saved(coordinateDraft);setEditingCoordinates(false);
       await refreshSelectedClientData(selected.id); await refresh();
       onMessage('Coordonnées du client mises à jour.');
@@ -558,7 +564,8 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
       if (editingContactId) {
         const link = contacts.find((item) => item.contactId === editingContactId);
         if (!link) throw new Error('Contact introuvable.');
-        await window.atoumweb.crm.contacts.update(editingContactId, { ...link.contact, firstName: contactDraft.firstName.trim(), lastName: contactDraft.lastName.trim(), jobTitle: contactDraft.jobTitle.trim() || null });
+        const baseline=contactBaseline.current;if(!baseline)throw Error('Relis le contact avant de le modifier.');
+        const saved=await window.atoumweb.crm.directory.saveContact({...baseline,firstName:contactDraft.firstName.trim(),lastName:contactDraft.lastName.trim(),jobTitle:contactDraft.jobTitle.trim()||null},{id:editingContactId,expected:baseline});contactBaseline.current=saved;
         if (contactDraft.makePrimary && !link.isPrimary) await window.atoumweb.crm.clients.setPrimaryContact(selected.id, editingContactId);
       } else await window.atoumweb.crm.clients.addContact(
         selected.id,
@@ -672,7 +679,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
               {detailLoading&&<p role="status">Actualisation de la fiche…</p>}
               {Object.entries(sectionErrors).map(([zone,error])=><p role="alert" key={zone}>Chargement incomplet — {zone} : {error} <button type="button" onClick={()=>void refreshSelectedClientData(selected.id)}>Réessayer</button></p>)}
               <section hidden={activeTab!=='summary'} id="client-panel-summary" role="tabpanel" aria-labelledby="client-tab-summary">
-                <section className="client-primary-card"><CrmIdentityAssetEditor organizationId={identity?.organization?.id} contactId={identity?.contact?.id} onMessage={onMessage} /><div className="contact-tab-heading"><h3>Coordonnées</h3><button className="secondary-button" type="button" onClick={beginCoordinateEdit}>Modifier</button></div>
+                <section className="client-primary-card"><CrmIdentityAssetEditor organizationId={identity?.organization?.id} contactId={identity?.contact?.id} onMessage={onMessage} /><div className="contact-tab-heading"><h3>Coordonnées</h3>{identity?.organization&&<button className="secondary-button" type="button" onClick={()=>openEntity({entityType:'organization',entityId:identity.organization!.id,title:identity.organization!.name})}>Ouvrir l’organisation dans l’Annuaire</button>}<button className="secondary-button" type="button" onClick={beginCoordinateEdit}>Modifier</button></div>
                   {selected.contactName && <SummaryLine label="Contact principal" value={selected.contactName} />}
                   {selected.phone && <SummaryLine label="Téléphone" value={selected.phone} />}
                   {selected.email && <SummaryLine label="Email" value={selected.email} />}
@@ -757,7 +764,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
                           {link.contact.jobTitle && <small>{link.contact.jobTitle}</small>}
                           <small>{link.contact.email || 'Email non renseigné'}{link.contact.phone ? ` · ${link.contact.phone}` : ''}</small>
                         </div>
-                        <button className="link-button" type="button" onClick={() => { if(!requestUnsavedExit(()=>{}))return;setEditingContactId(link.contactId); setContactDraft({ firstName: link.contact.firstName, lastName: link.contact.lastName, jobTitle: link.contact.jobTitle ?? '', email: link.contact.email ?? '', phone: link.contact.phone ?? '', role: link.role, makePrimary: link.isPrimary }); setShowContactForm(true); }}>Modifier</button>
+                        <button className="link-button" type="button" onClick={()=>openEntity({entityType:'contact',entityId:link.contactId,title:link.contact.firstName+' '+link.contact.lastName})}>Ouvrir dans l’Annuaire</button><button className="link-button" type="button" onClick={() => { if(!requestUnsavedExit(()=>{}))return;contactBaseline.current=structuredClone(link.contact);setEditingContactId(link.contactId); setContactDraft({ firstName: link.contact.firstName, lastName: link.contact.lastName, jobTitle: link.contact.jobTitle ?? '', email: link.contact.email ?? '', phone: link.contact.phone ?? '', role: link.role, makePrimary: link.isPrimary }); setShowContactForm(true); }}>Modifier</button>
                         {!link.isPrimary && <button className="link-button" type="button" onClick={() => void makePrimary(link)}>Définir principal</button>}
                         <ContactMethodsPanel contactId={link.contactId} allowOrganization={false} summaryLabel="Téléphone et email" contactLabel={`${link.contact.firstName} ${link.contact.lastName}`} />
                       </div>

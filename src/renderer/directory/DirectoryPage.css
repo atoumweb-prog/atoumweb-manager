@@ -652,3 +652,14 @@ body.directory-resizing {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* 03E: keep fieldsets and their pending state usable in narrow windows. */
+.directory-editor{min-width:0;margin:0;border:0;}
+.directory-page-stack .directory-editor :is(input,select,textarea,label,button){font-size:var(--aw-font-functional,14px)!important;}
+.directory-verification{padding:12px;border:1px solid var(--border);border-radius:10px;overflow-wrap:anywhere;}
+.directory-page-stack tr:focus-visible{outline:2px solid var(--accent-strong);outline-offset:-2px;}
+.directory-page-stack .form-error{overflow-wrap:anywhere;}
+
+:root .directory-page-stack .primary-button{background:var(--accent-strong);color:#fff;-webkit-text-fill-color:currentColor;}
+:root[data-theme='atoumweb'] .directory-page-stack .primary-button{background:color-mix(in srgb,var(--accent-strong) 97%,#000);}
+:root[data-theme='noir'] .directory-page-stack .primary-button{color:#18212b;}

@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 14/10/2026 — 03D publiée ; candidat03E et recette globale03
+
+- #105 draft, HEAD `bd406e1c98cb2048dbc26b8f4ec612c91dd7d15e`, [CI855 SUCCESS](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38548252238) : typecheck/1029 Vitest ;35 restaurations/6 binaires/sansRPC. Au même SHA, local :1421 natifs historiques/216 captures +125 Client/72 captures, TEMP/FK/intégrité/migrations/nettoyage OK. main reste b2796812 ; aucune fusion105.
+- Branche03E `codex/ux-v2-03e-directory` dépend explicitement de105. RegistreUX-01 réutilisé, sauvegardes identité/coordonnées atomiques, jetons de création anti-rejeu, comparaison avant écritures, réponses tardives invalidées et historiques de vérification explicite dans activity_events. Les fiches Prospect/Client réemploient ce contrôle pour leurs identités communes ; contacts principaux/décisionnaires03C existants préservés.
+- Aucun nouveau schéma ni migration. Aucun Catalogue/CGV/contrat, règle de conversion ou dossier réel modifié. [Exécution03E](docs/ux-v2/LOT-03E-EXECUTION-2026-10-14.md) et [matrice03A–E](docs/ux-v2/LOT-03-CLOTURE-TECHNIQUE-2026-10-14.md). Recette finale du candidat propre à exécuter : ne pas convertir les résultats de mise au point en validation de son SHA.
+- 04 reste préparé dansPR82, non repris en code ici. Recette humaine globale différée. Publication03E draft autorisée après recette complète ; fusion ultérieure interdite sans nouvel accord.
+
 ## 14/10/2026 — PR102 intégrée ; reprise 03D puis 03E
 
 - PR102 fusionnée normalement à `b2796812ee24c9e9e824f3d66564f2c1a335bffe`, parents `278ff2da` et `9223f267` ; arbre `88834f9068a3f5a4bd3857cd89b2a6c23df348ce`, identique à la candidate CI780. CI post-fusion [781](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38521894631) SUCCESS : typecheck,1020 Vitest/107 fichiers,35 restaurations,6 binaires,sansRPC. Recette native locale sur **le merge exact** :1421 contrôles,216 captures,intégrité/FK/migrations1–66/nettoyages OK ; les étapes natives conditionnelles ne sont pas exécutées par le workflow push main.

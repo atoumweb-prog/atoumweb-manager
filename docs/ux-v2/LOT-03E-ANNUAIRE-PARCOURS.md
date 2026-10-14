@@ -73,3 +73,8 @@ La règle produit prévoit date/indication de **dernière vérification** dans l
 - **E87** : conflits d'identités/homonymes, règles de rapprochement et reprises sur création partielle.
 
 **Ce document n'autorise pas de nouveau schéma SQL ni une automatisation de conversion, de création ou d'archivage.**
+
+
+## Actualisation du 14/10/2026 — historique conservé
+
+Les constats initiaux décrivent eb252d5c, pas le candidat courant. Reprise depuis main b2796812 et03D bd406e1c ; [exécution03E](LOT-03E-EXECUTION-2026-10-14.md), [matrice de clôture](LOT-03-CLOTURE-TECHNIQUE-2026-10-14.md), [suivi courant](SUIVI-AVANCEMENT.md). E83 est traité par déclaration humaine dans activity_events, sans schéma nouveau. Archivage d’identités non exposé : ne pas inventer sa règle ou prétendre son action testée. Recette humaine globale différée selon décision utilisateur. Les documents liés non repris localement restent dans la [PR82 complète](https://github.com/atoumweb-prog/atoumweb-manager/tree/0bb0860ee7618af92a53d8711b4a06edbbadc4d6/docs/ux-v2).

@@ -204,6 +204,13 @@ const api: AtoumWebApi = {
     resetDemo: () => ipcRenderer.invoke('workflow:reset-demo'),
   },
   crm: {
+    directory: {
+      saveExisting:input=>ipcRenderer.invoke('crm:directory:save-existing',input),
+      saveOrganization:(input,context)=>ipcRenderer.invoke('crm:directory:save-organization',input,context),
+      saveContact:(input,context)=>ipcRenderer.invoke('crm:directory:save-contact',input,context),
+      verification:(type,id)=>ipcRenderer.invoke('crm:directory:verification',type,id),
+      verify:(type,id,expected)=>ipcRenderer.invoke('crm:directory:verify',type,id,expected),
+    },
     organizations: {
       list: (includeArchived?: boolean) => ipcRenderer.invoke('crm:organizations:list', includeArchived),
       get: (id: string) => ipcRenderer.invoke('crm:organizations:get', id),

@@ -235,6 +235,11 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     return { cancelled: false, path: selection.filePath };
   });
 
+  ipcMain.handle('crm:directory:save-existing',(_event,...args:Parameters<typeof database.crm.saveExistingDirectoryIdentities>)=>database.crm.saveExistingDirectoryIdentities(...args));
+  ipcMain.handle('crm:directory:save-organization',(_event,...args:Parameters<typeof database.crm.saveDirectoryOrganization>)=>database.crm.saveDirectoryOrganization(...args));
+  ipcMain.handle('crm:directory:save-contact',(_event,...args:Parameters<typeof database.crm.saveDirectoryContact>)=>database.crm.saveDirectoryContact(...args));
+  ipcMain.handle('crm:directory:verification',(_event,...args:Parameters<typeof database.crm.directoryVerification>)=>database.crm.directoryVerification(...args));
+  ipcMain.handle('crm:directory:verify',(_event,...args:Parameters<typeof database.crm.verifyDirectoryIdentity>)=>database.crm.verifyDirectoryIdentity(...args));
   ipcMain.handle('crm:organizations:list', (_event, includeArchived?: boolean) => database.crm.listDirectoryOrganizations(includeArchived));
   ipcMain.handle('crm:organizations:get', (_event, id: string) => database.crm.getDirectoryOrganization(id));
   ipcMain.handle('crm:organizations:create', (_event, input: OrganizationInput) => database.crm.createOrganization(input));

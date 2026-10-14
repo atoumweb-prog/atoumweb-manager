@@ -9,6 +9,6 @@ export interface ShellVisualPreferencesApi extends VisualPreferenceStore {
   subscribe(listener: (key: string) => void): () => void;
 }
 export function assertShellVisualKey(key: unknown): asserts key is string {
-  if (key !== HEADER_PREFERENCE_KEY && key !== NAVIGATION_PREFERENCE_KEY && key !== HOME_WIDGET_PREFERENCE_KEY && key !== layoutKey('clients','list'))
+  if (key !== HEADER_PREFERENCE_KEY && key !== NAVIGATION_PREFERENCE_KEY && key !== HOME_WIDGET_PREFERENCE_KEY && key !== layoutKey('clients','list') && key !== layoutKey('directory','list'))
     throw Error('Clé de présentation non autorisée.');
 }

@@ -60,7 +60,7 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
    test(await get("parseFloat(getComputedStyle(window.__clientInput).fontSize)>=14"),'Functional text >=14px '+theme+'/'+density);
    for(const tab of ['summary','contacts','commercial','contracts','projects','operations','documents','history']){
     await click('#client-tab-'+tab);test(await get(`document.querySelector('#client-panel-${tab}').hidden===false&&document.querySelector('#client-tab-${tab}').getAttribute('aria-selected')==='true'`),'Visible tab '+tab+'/'+theme+'/'+density);
-    if(captureDir){fs.mkdirSync(captureDir,{recursive:true});const file=path.join(captureDir,theme+'-'+density+'-'+tab+'.png');await js('new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');fs.writeFileSync(file,(await win.webContents.capturePage()).toPNG());captures.push(file);}
+    if(captureDir)captures.push(await require('./verified-crm-capture.cjs')({win,js,test,folder:captureDir,file:theme+'-'+density+'-'+tab+'.png',theme,density,scene:'client-'+tab}));
    }
   }
   win.setSize(900,720);win.webContents.setZoomFactor(1.25);await sleep(100);test(await get('document.querySelectorAll(".client-v2-tabs [role=tab]").length===8&&window.__clientInput.isConnected'),'Narrow window and zoom retain tabs/editor');
