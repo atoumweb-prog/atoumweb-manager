@@ -520,7 +520,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('quotes:mark-sent', (_event, id: string) => database.quotes.markSent(id));
   ipcMain.handle('quotes:principle-agreement:confirm', (_event, id: string) => database.quotes.confirmPrincipleAgreement(id));
   ipcMain.handle('quotes:principle-agreement:revoke', (_event, id: string) => database.quotes.revokePrincipleAgreement(id));
-  ipcMain.handle('quotes:finalize',(_event,id:string)=>database.quotes.finalize(id));
+  ipcMain.handle('quotes:finalize',(_event,id:string,canonicalReview?:boolean)=>database.quotes.finalize(id,canonicalReview===true));
   ipcMain.handle('quotes:extend-validity',(_event,id:string,validUntil:string)=>database.quotes.extendValidity(id,validUntil));
   ipcMain.handle('quotes:mark-viewed', (_event, id: string) => database.quotes.markViewed(id));
   ipcMain.handle('quotes:accept', (_event, id: string) => database.quotes.accept(id));
