@@ -160,7 +160,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
         notes: form.notes || null,
       });
       setCreating(false);
-      const cleared = { projectId: '', clientAccountId: '', backupType: 'complete', label: '', backupAt: '', notes: '' };
+      const cleared: typeof form = { projectId: '', clientAccountId: '', backupType: 'complete', label: '', backupAt: '', notes: '' };
       setForm(cleared);
       createDraft.saved(cleared);
       await load(created.id);
