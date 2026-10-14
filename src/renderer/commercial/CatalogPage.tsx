@@ -17,6 +17,7 @@ import {
   type PriceMode,
 } from '../../shared/commercial';
 import { FieldHelp } from '../ui/FieldHelp';
+import { CatalogOverview } from './CatalogOverview';
 
 const PRICE_LABELS: Record<PriceMode, string> = {
   fixed: 'Prix fixe',
@@ -141,6 +142,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | CatalogItemType>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | CatalogItemStatus>('all');
+  const [catalogView, setCatalogView] = useState<'organized' | 'table'>('organized');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<CatalogItemDetail | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -500,6 +502,10 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | CatalogItemStatus)}>
             <option value="all">Tous les statuts</option><option value="active">Actifs</option><option value="inactive">Inactifs</option><option value="archived">Archivés</option>
           </select>
+          <div className="catalog-view-switch" role="group" aria-label="Présentation du catalogue">
+            <button type="button" className="secondary-button" aria-pressed={catalogView === 'organized'} onClick={() => setCatalogView('organized')}>Vue organisée</button>
+            <button type="button" className="secondary-button" aria-pressed={catalogView === 'table'} onClick={() => setCatalogView('table')}>Tableau d'administration</button>
+          </div>
           <button className="primary-button" type="button" onClick={() => showForm?createGuard.request(()=>setShowForm(false)):setShowForm(true)}>{showForm ? 'Fermer' : '+ Service / Offre'}</button>
         </div>
       </div>
@@ -546,6 +552,8 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 ))}
                 {filtered.length === 0 && <div className="empty-table">Aucune offre ou service pour ces filtres.</div>}
               </div>
+            ) : catalogView === 'organized' ? (
+              <CatalogOverview items={filtered} formatPrice={formatPrice} onOpen={(id) => void openItem(id)} />
             ) : (
               <div className="catalog-table-wrap">
                 <table className="catalog-table">
