@@ -24,7 +24,7 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}
  try {
   await navigate('Documents & Contrats');
   await wait('!!document.querySelector(".documents-toolbar")','Documents page');
-  await js('const entry=[...document.querySelectorAll(".documents-page-stack button")].find(e=>e.textContent.trim()==="Bibliothèque contractuelle");if(!entry)throw Error("Canonical library entry missing");entry.click()');
+  await js('const entry=[...document.querySelectorAll(".documents-page-stack button")].find(e=>e.textContent.includes("Bibliothèque contractuelle"));if(!entry)throw Error("Canonical library entry missing");entry.click()');
   await wait('!!document.querySelector("select[aria-label=\\"Consulter un module\\"]")','canonical contract library');
   await js('const el=document.querySelector("select[aria-label=\\"Consulter un module\\"]");el.value='+JSON.stringify(clause.id)+';el.dispatchEvent(new Event("change",{bubbles:true}));');
   await wait('!!document.querySelector(".aw-word-draft-panel")','clause Word panel');
@@ -91,7 +91,7 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}
     await select(theme,title,density,label,font,height);
     await navigate('Documents & Contrats');
     await wait('!!document.querySelector(".documents-toolbar")','Docs '+theme+'/'+density);
-    test(await get('[...document.querySelectorAll(".documents-page-stack button")].some(e=>e.textContent.trim()==="Bibliothèque contractuelle")'),
+    test(await get('[...document.querySelectorAll(".documents-page-stack button")].some(e=>e.textContent.includes("Bibliothèque contractuelle"))'),
      '09E-3x3: canonical library entry remains accessible '+theme+'/'+density);
     const viewport=await get('({scroll:document.querySelector(".content-area")?.scrollWidth,width:document.querySelector(".content-area")?.clientWidth})');
     test(viewport.scroll<=viewport.width+20,'09E-3x3: no page overflow '+theme+'/'+density);

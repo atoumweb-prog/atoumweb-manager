@@ -13,8 +13,40 @@ export class ClientDocumentService {
   list(clientId:string,includeArchived=false):ClientDocument[]{this.requireClient(clientId);return this.db.all<Record<string,unknown>>(`SELECT * FROM client_documents WHERE client_account_id=? ${includeArchived?'':'AND archived_at IS NULL'} ORDER BY updated_at DESC`,[clientId]).map(row=>this.map(row));}
   get(id:string):ClientDocument{const row=this.db.get<Record<string,unknown>>('SELECT * FROM client_documents WHERE id=?',[id]);if(!row)throw Error('Document introuvable.');return this.map(row);}
   importPaths(clientId:string,paths:string[],input:ClientDocumentInput):ClientDocument[]{this.requireClient(clientId);this.validate(input);const dir=join(this.clientRoot(clientId),folders[input.category]);mkdirSync(dir,{recursive:true});for(const path of paths){const source=resolve(path);if(!existsSync(source)||!statSync(source).isFile())continue;const destination=this.unique(dir,basename(source));if(source!==resolve(destination))copyFileSync(source,destination);const now=new Date().toISOString(),stats=statSync(destination);this.db.run(`INSERT INTO client_documents (id,client_account_id,category,title,original_name,relative_path,mime_type,size_bytes,retention_code,retention_reason,retention_until,notes,created_at,updated_at,sha256,imported_from) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,[randomUUID(),clientId,input.category,clean(input.title)||basename(source),basename(source),relative(this.workspace.root,destination),this.mime(destination),Number(stats.size),clean(input.retentionCode),clean(input.retentionReason),clean(input.retentionUntil),clean(input.notes),now,now,createHash('sha256').update(readFileSync(destination)).digest('hex'),source]);this.log(clientId,'document_imported',`Document importé : ${basename(source)}`);}return this.list(clientId);}
-  update(id:string,input:ClientDocumentInput):ClientDocument{const current=this.get(id);this.validate(input);this.db.run('UPDATE client_documents SET category=?,title=?,retention_code=?,retention_reason=?,retention_until=?,notes=?,updated_at=? WHERE id=?',[input.category,clean(input.title),clean(input.retentionCode),clean(input.retentionReason),clean(input.retentionUntil),clean(input.notes),new Date().toISOString(),id]);this.log(current.clientAccountId,'document_updated',`Document mis à jour : ${input.title}`);return this.get(id);}
-  archive(id:string,archived=true):ClientDocument{const current=this.get(id),now=new Date().toISOString();this.db.run('UPDATE client_documents SET archived_at=?,updated_at=? WHERE id=?',[archived?now:null,now,id]);this.log(current.clientAccountId,archived?'document_archived':'document_restored',`${archived?'Document archivé':'Document restauré'} : ${current.title}`);return this.get(id);}
+  update(id:string,input:ClientDocumentInput):ClientDocument{
+    const current=this.get(id);
+    this.validate(input);
+    const now=new Date().toISOString();
+    this.db.exec('SAVEPOINT document_metadata_update');
+    try{
+      this.db.run('UPDATE client_documents SET category=?,title=?,retention_code=?,retention_reason=?,retention_until=?,notes=?,updated_at=? WHERE id=?',
+        [input.category,clean(input.title),clean(input.retentionCode),clean(input.retentionReason),clean(input.retentionUntil),clean(input.notes),now,id]);
+      this.log(current.clientAccountId,'document_updated',`Document mis à jour : ${input.title}`);
+      this.db.exec('RELEASE SAVEPOINT document_metadata_update');
+    }catch(error){
+      this.db.exec('ROLLBACK TO SAVEPOINT document_metadata_update');
+      this.db.exec('RELEASE SAVEPOINT document_metadata_update');
+      throw error;
+    }
+    return this.get(id);
+  }
+  archive(id:string,archived=true):ClientDocument{
+    const current=this.get(id);
+    if(Boolean(current.archivedAt)===archived)return current;
+    const now=new Date().toISOString();
+    this.db.exec('SAVEPOINT document_archive_update');
+    try{
+      this.db.run('UPDATE client_documents SET archived_at=?,updated_at=? WHERE id=?',[archived?now:null,now,id]);
+      this.log(current.clientAccountId,archived?'document_archived':'document_restored',
+        `${archived?'Document archivé':'Document restauré'} : ${current.title}`);
+      this.db.exec('RELEASE SAVEPOINT document_archive_update');
+    }catch(error){
+      this.db.exec('ROLLBACK TO SAVEPOINT document_archive_update');
+      this.db.exec('RELEASE SAVEPOINT document_archive_update');
+      throw error;
+    }
+    return this.get(id);
+  }
   deletePermanently(id:string):void{
     const current=this.get(id);
     const quote=this.db.get<{quote_number:string}>('SELECT quote_number FROM quotes WHERE contract_document_id=? LIMIT 1',[id]);
@@ -22,6 +54,11 @@ export class ClientDocumentService {
     if(quote||linked)throw Error(`Ce document constitue une preuve contractuelle rattachée au devis ${quote?.quote_number ?? 'référencé dans son historique'}. Sa suppression définitive est interdite ; l’archivage conserve le fichier et son rattachement.`);
     const invoiceLink=this.db.get<{id:string}>('SELECT id FROM billing_items WHERE invoice_document_id=? LIMIT 1',[id]);
     if(invoiceLink)throw Error('Cette facture PDF est rattachée à un élément de facturation. Sa suppression définitive est interdite ; utilise l’archivage.');
+    const invoiceHistory=this.db.get<{id:number}>(
+      "SELECT id FROM activity_log WHERE entity_type='billing_item' AND action IN ('billing_invoice_attached','billing_invoice_replaced') AND json_valid(metadata_json) AND (json_extract(metadata_json,'$.previousDocumentId')=? OR json_extract(metadata_json,'$.currentDocumentId')=?) LIMIT 1",
+      [id,id],
+    );
+    if(invoiceHistory)throw Error('Cette facture PDF figure dans l’historique de facturation Abby. Sa suppression définitive est interdite ; utilise l’archivage.');
     const path=this.absolutePath(current);
     if(existsSync(path))unlinkSync(path);
     this.db.run('DELETE FROM client_documents WHERE id=?',[id]);
