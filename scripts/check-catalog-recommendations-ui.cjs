@@ -40,12 +40,12 @@ if(!process.versions.electron){
     "window.fixture={current:first,store:{'offer-draft':[],'other-draft':[]},calls:[],allowExit:false,confirmation:[],delayed:false,release:null,failNext:false};",
     "window.atoumweb={unsaved:{confirmExit:(labels,pending)=>{window.fixture.confirmation.push({labels,pending});return window.fixture.allowExit;},publishState:()=>{}},catalog:{",
     "  listRecommendations:async id=>structuredClone(window.fixture.store[id]||[]),",
-    "  replaceRecommendations:async (id,ids,expected)=>{",
+    "  replaceRecommendations:async (id,ids,expected,details)=>{",
     "    const f=window.fixture;f.calls.push({id,ids:[...ids],expected:[...expected]});",
     "    if(f.failNext){f.failNext=false;throw Error('IPC volontairement refusé');}",
     "    if(JSON.stringify((f.store[id]||[]).map(x=>x.targetVersionId))!==JSON.stringify(expected))throw Error('Conflit de sauvegarde');",
     "    if(f.delayed)await new Promise(resolve=>{f.release=resolve;});",
-    "    const links=ids.map((targetVersionId,i)=>({id:'link-'+id+'-'+i,sourceVersionId:id,targetVersionId,sortOrder:i}));",
+    "    const links=ids.map((targetVersionId,i)=>({id:'link-'+id+'-'+i,sourceVersionId:id,targetVersionId,sortOrder:i,...details?.[i]}));",
     "    f.store[id]=links;return structuredClone(links);",
     "  }",
     "}};",
@@ -86,12 +86,24 @@ if(!process.versions.electron){
         await add('a-published');
         assert('04D edit flagged unsaved',window.unsavedEntries().some(x=>x.label==='Recommandations Catalogue'));
         assert('04D save enabled',!button('Enregistrer les recommandations').disabled);
+        const fillInput=(input,value)=>{
+          const proto=input.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:
+            input.tagName==='SELECT'?HTMLSelectElement.prototype:HTMLInputElement.prototype;
+          Object.getOwnPropertyDescriptor(proto,'value').set.call(input,value);
+          input.dispatchEvent(new Event(input.tagName==='SELECT'?'change':'input',{bubbles:true}));
+        };
+        fillInput(document.querySelector('input[maxlength="1000"]'),'Motif de test 04D');
+        fillInput(document.querySelector('select:not([aria-label])'),'paused');
+        fillInput(document.querySelector('textarea[maxlength="3000"]'),'Consentement requis');
+        await sleep();
+
         assert('04D Stay blocks leaving',window.tryLeave()===false&&window.fixture.left!==true);
         await until(()=>window.fixture.confirmation.length>0,'confirmation');
         assert('04D label in confirmation',window.fixture.confirmation[0].labels.includes('Recommandations Catalogue'));
         button('Enregistrer les recommandations').click();
         await until(()=>window.fixture.store['offer-draft'].length===1,'save');
         assert('04D persisted selected target',window.fixture.store['offer-draft'][0].targetVersionId==='a-published');
+        assert('04D metadata persisted as advisory-only',window.fixture.store['offer-draft'][0].reason==='Motif de test 04D'&&window.fixture.store['offer-draft'][0].status==='paused'&&window.fixture.store['offer-draft'][0].conditions==='Consentement requis');
         await until(()=>window.unsavedEntries().length===0,'clean after save');
         assert('04D accessible remove action names the target',button('Retirer')?.getAttribute('aria-label')?.includes('Audit'));
         button('Retirer').click();await sleep();
