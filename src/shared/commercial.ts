@@ -171,6 +171,9 @@ export interface CatalogRecommendationLink {
   id: string;
   sourceVersionId: string;
   targetVersionId: string;
+  targetName: string;
+  targetVersionNumber: number;
+  targetItemStatus: CatalogItemStatus;
   sortOrder: number;
 }
 
