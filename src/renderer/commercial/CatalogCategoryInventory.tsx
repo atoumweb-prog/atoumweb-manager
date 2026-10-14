@@ -17,7 +17,7 @@ export function CatalogCategoryInventory({
       <div className="catalog-category-inventory-header">
         <div>
           <h3>Catégories existantes</h3>
-          <p className="muted">Inventaire de lecture seule. Aucun renommage, aucune réaffectation et aucune modification des versions.</p>
+          <p className="muted">Inventaire historique consultable ci-dessous ; l'administration des catégories se fait séparément avec confirmations. Aucune modification des versions commerciales.</p>
         </div>
         <button type="button" className="secondary-button" onClick={onClose}>Fermer les catégories</button>
       </div>
