@@ -5,6 +5,7 @@ import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
 import { CatalogService } from './CatalogService';
 import { ContractTermsService } from './ContractTermsService';
+import {ContractSectionReviewService} from './ContractSectionReviewService';
 import { QuoteService } from './QuoteService';
 import { quoteContractText } from '../../shared/contractTerms';
 import { buildQuoteHtml } from './quotePdf';
@@ -52,6 +53,23 @@ function createConsumerProspect() {
 }
 
 describe('ContractTermsService', () => {
+  it('05C: finalise un devis classé et conserve ses conditions particulières personnalisées', () => {
+    const base=publishedClause('REVIEW-BASE','Clauses communes','base','CGV approuvées.');
+    const quote=quotes.create({prospectId:prospectId(),subject:'Contrat canonique'});
+    quotes.addCustomLine(quote.id,{label:'Site',proposedUnitPriceCents:69900});
+    contractTerms.syncQuote(quote.id);
+    contractTerms.addCustomQuoteClause(quote.id,{title:'Clause négociée',body:'Condition personnalisée conservée.'});
+    const review=new ContractSectionReviewService(database);
+    review.propose(base.currentVersionId!,'object',0,'Classement juridique à faire approuver');
+    review.approve(base.currentVersionId!,'Relecteur humain');
+    const frozen=finalizeForTest(database,quotes,quote.id);
+    expect(frozen.contractTextSnapshot).toContain('1.1 — Clauses communes');
+    expect(frozen.contractTextSnapshot).toContain('CGV approuvées.');
+    expect(frozen.contractTextSnapshot).toContain('CONDITIONS PARTICULIÈRES');
+    expect(frozen.contractTextSnapshot).toContain('Condition personnalisée conservée.');
+    expect(contractTerms.freezeQuote(quote.id).snapshotText).toBe(frozen.contractTextSnapshot);
+  });
+
   it('enregistre une clause en brouillon sans alimenter les devis ni publier', () => {
     const quote = quotes.create({ prospectId: prospectId(), subject: 'Brouillon uniquement' });
     const template = contractTerms.createTemplate({ code: 'TEST-DRAFT', title: 'Test', scope: 'base' }, { body: 'Texte non publié.' });
