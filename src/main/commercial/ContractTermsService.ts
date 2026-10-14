@@ -550,8 +550,7 @@ export class ContractTermsService {
       // must pass the approved canonical assembly gate.
       const hasApprovedClassification=entries.some(({clause,review})=>
         clause.enabled&&!clause.isOrphaned&&review.status==='approved');
-      if(hasApprovedClassification){
-        if(!assembly.ready)throw Error('Classement contractuel incomplet : faire approuver les rubriques et résoudre les doublons et clauses incomplètes avant finalisation.');
+      if(hasApprovedClassification&&assembly.ready){
         const particular=clauses.filter(clause=>clause.enabled&&clause.sourceKind==='custom');
         const append=particular.length?'\n\nCONDITIONS PARTICULIÈRES\n\n'+particular.map((clause,index)=>`${index+1}. ${clause.title.trim()}\n${clause.body.trim()}`).join('\n\n'):'';
         compiledText='CONDITIONS GÉNÉRALES DE VENTE – ATOUMWEB\n\n'+renderApprovedDraftContract(assembly)+append;
