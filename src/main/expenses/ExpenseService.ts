@@ -1,7 +1,7 @@
 
 import { randomUUID } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, statSync } from 'node:fs';
-import { basename, extname, join, relative, resolve } from 'node:path';
+import { basename, extname, join, relative, resolve, sep } from 'node:path';
 import {
   EXPENSE_CATEGORIES,
   EXPENSE_FREQUENCIES,
@@ -149,7 +149,7 @@ export class ExpenseService {
     const expense = this.get(id);
     if (!expense.receiptRelativePath) throw new Error('Aucun justificatif rattaché à cette dépense.');
     const absolute = resolve(this.workspace.root, expense.receiptRelativePath);
-    if (!absolute.startsWith(resolve(this.workspace.root) + '/')) throw new Error('Chemin de justificatif invalide.');
+    if (!absolute.startsWith(resolve(this.workspace.root) + sep)) throw new Error('Chemin de justificatif invalide.');
     if (!existsSync(absolute)) throw new Error('Le fichier justificatif est introuvable.');
     return absolute;
   }
