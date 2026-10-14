@@ -4,7 +4,9 @@ import { restoreQuitGate } from './restoreQuitGate';
 import type { ContractAdministration, QuoteContractParameters, ContractDocumentLinkInput, ContractDocumentRole } from '../shared/quoteContractPreparation';
 import { app, clipboard, dialog, ipcMain, safeStorage, shell } from 'electron';
 import type { BridgeNodeMatchDecisionInput } from '../shared/bridgeSnapshots';
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
+import {createWorkingContractDocx} from './commercial/workingContractDocx';
+import {extractWorkingDocxText} from './commercial/workingContractDocxImport';
 import { join } from 'node:path';
 import { quoteContractText } from '../shared/contractTerms';
 import type { BillingInvoiceInput, BillingItemFilters, BillingItemStatus } from '../shared/billing';
@@ -448,6 +450,9 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('contract-types:catalog', (_event, id: string) => database.contractTypes.catalog(id));
   ipcMain.handle('contract-types:set-catalog', (_event, id: string, ids: string[]) => database.contractTypes.setCatalog(id,ids));
   ipcMain.handle('contract-types:initialize', () => database.contractTypes.initialize());
+  ipcMain.handle('contract-terms:section:get', (_event, versionId:string) => database.contractSectionReviews.get(versionId));
+  ipcMain.handle('contract-terms:section:propose', (_event, versionId:string, sectionKey:import('../shared/contractSectionPolicy').ContractSectionKey, rankInSection:number, reason:string) => database.contractSectionReviews.propose(versionId,sectionKey,rankInSection,reason));
+  ipcMain.handle('contract-terms:section:approve', (_event, versionId:string, reviewer:string) => database.contractSectionReviews.approve(versionId,reviewer));
   ipcMain.handle('contract-terms:library:list', (_event, includeArchived?: boolean) => database.contractTerms.listTemplates(Boolean(includeArchived)));
   ipcMain.handle('contract-terms:library:get', (_event, id: string) => database.contractTerms.getTemplate(id));
   ipcMain.handle('contract-terms:library:create', (_event, input: ContractClauseTemplateInput, firstVersion: ContractClauseVersionInput) => database.contractTerms.createTemplate(input, firstVersion));
@@ -465,6 +470,31 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('contract-terms:quotes:remove-custom', (_event, id: string) => database.contractTerms.removeCustomQuoteClause(id));
   ipcMain.handle('contract-terms:quotes:reorder', (_event, quoteId: string, clauseIds: string[]) => database.contractTerms.reorderQuoteClauses(quoteId, clauseIds));
   ipcMain.handle('contract-terms:preview-reference', (_event,typeId:string,typeVersionId:string,versionId:string,audience:import('../shared/contractTerms').QuoteContractAudience) => database.contractTerms.previewReference(typeId,typeVersionId,versionId,audience));
+  ipcMain.handle('contract-terms:import-docx-text',async()=>{
+    const selection=await dialog.showOpenDialog({
+      title:'Importer un DOCX pour comparaison seulement',
+      properties:['openFile'],
+      filters:[{name:'Document Word DOCX',extensions:['docx']}],
+    });
+    if(selection.canceled||!selection.filePaths[0])return null;
+    const path=selection.filePaths[0];
+    const {size}=await import('node:fs').then(fs=>fs.promises.stat(path));
+    if(size>5_000_000)throw Error('DOCX trop volumineux.');
+    return extractWorkingDocxText(readFileSync(path));
+  });
+  ipcMain.handle('contract-terms:export-working-docx',async(_event,quoteId:string)=>{
+    const quote=database.quotes.get(quoteId);
+    const presentation=database.contractTerms.presentation(quoteId);
+    if(!presentation.text.trim()||presentation.state==='historical_missing')throw new Error('Aucun contrat enregistré disponible pour export.');
+    const selection=await dialog.showSaveDialog({
+      title:'Exporter une copie de travail DOCX (non signée)',
+      defaultPath:'contrat-'+quote.number.replace(/[^a-zA-Z0-9_-]/g,'-')+'-TRAVAIL.docx',
+      filters:[{name:'Document Word DOCX',extensions:['docx']}],
+    });
+    if(selection.canceled||!selection.filePath)return false;
+    writeFileSync(selection.filePath,createWorkingContractDocx(presentation.text),{flag:'wx'});
+    return true;
+  });
   ipcMain.handle('contract-terms:copy-text', async (_event, text: string) => {
     await clipboard.writeText(text);
   });
@@ -505,7 +535,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('quotes:mark-sent', (_event, id: string) => database.quotes.markSent(id));
   ipcMain.handle('quotes:principle-agreement:confirm', (_event, id: string) => database.quotes.confirmPrincipleAgreement(id));
   ipcMain.handle('quotes:principle-agreement:revoke', (_event, id: string) => database.quotes.revokePrincipleAgreement(id));
-  ipcMain.handle('quotes:finalize',(_event,id:string)=>database.quotes.finalize(id));
+  ipcMain.handle('quotes:finalize',(_event,id:string,canonicalReview?:boolean)=>database.quotes.finalize(id,canonicalReview===true));
   ipcMain.handle('quotes:extend-validity',(_event,id:string,validUntil:string)=>database.quotes.extendValidity(id,validUntil));
   ipcMain.handle('quotes:mark-viewed', (_event, id: string) => database.quotes.markViewed(id));
   ipcMain.handle('quotes:accept', (_event, id: string) => database.quotes.accept(id));

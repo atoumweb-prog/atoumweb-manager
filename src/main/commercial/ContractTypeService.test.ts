@@ -170,6 +170,8 @@ describe('Migration 66 additive conservation',()=>{
       t,db.all('SELECT '+previousColumns[t].map(c=>'"'+c+'"').join(',')+' FROM "'+t+'"'),
     ]));const before=snapshot();
     expect(applyPendingMigrations(db).map(m=>m.id)).toEqual(MIGRATIONS.filter(m=>m.id>=66).map(m=>m.id));expect(snapshot()).toEqual(before);
+    expect(db.get('SELECT count(*) AS n FROM contract_clause_section_reviews')?.n).toBe(0);
+    expect(db.get('SELECT name FROM schema_migrations WHERE id=69')).toEqual({name:'contract_clause_section_review_v1'});
     expect(db.get('SELECT COUNT(*) AS n FROM contract_clause_templates')?.n).toBe(118);expect(db.get('SELECT COUNT(*) AS n FROM catalog_contract_clause_links')?.n).toBe(409);
     expect(applyPendingMigrations(db)).toEqual([]);expect(snapshot()).toEqual(before);
     expect(db.get('PRAGMA integrity_check')?.integrity_check).toBe('ok');expect(db.all('PRAGMA foreign_key_check')).toEqual([]);expect(new ContractTypeService(db).list()).toEqual([]);

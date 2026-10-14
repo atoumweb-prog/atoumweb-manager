@@ -1,6 +1,9 @@
 import { CatalogService } from './CatalogService';
 import { CommercialRulesService } from './CommercialRulesService';
 import { ContractTypeService } from './ContractTypeService';
+import { ContractSectionReviewService } from './ContractSectionReviewService';
+import {decideCanonicalContractMode} from '../../shared/canonicalContractMode';
+import {assembleReviewedDraftContract,renderApprovedDraftContract} from '../../shared/reviewedDraftContract';
 import { formatContractPresentation, type ContractPresentation } from '../../shared/contractPresentation';
 import type { ContractAdministration, QuoteContractParameters } from '../../shared/quoteContractPreparation';
 import type { ContractTypeReference } from '../../shared/contractTypes';
@@ -518,19 +521,50 @@ export class ContractTermsService {
     return this.getQuoteBuild(quoteId);
   }
 
-  freezeQuote(quoteId: string): QuoteContractBuild {
+  freezeQuote(quoteId: string, explicitCanonicalReview=false): QuoteContractBuild {
     const state = this.quoteState(quoteId);
     // A timestamp/JSON (including an empty clause list) is evidence of freezing.
     // Locked legacy quotes must retain their historical absence, even with instances.
     if (this.hasSnapshot(state) || state.status !== 'draft' || state.finalized_at) return this.getQuoteBuild(quoteId);
     const payload=new QuoteContractPreparationService(this.database, this.documents).freezePayload(quoteId);
+    if(explicitCanonicalReview&&!payload)throw Error('Préparation du devis indispensable pour la validation canonique du contrat.');
     this.database.exec('SAVEPOINT quote_contract_freeze;');
     try {
     this.syncQuoteInternal(quoteId);
     const clauses = this.quoteClauses(quoteId);
     const audience = this.resolveQuoteAudience(state);
-    const compiledText = this.compile(clauses);
     const included = clauses.filter((clause) => clause.enabled);
+    // Quote finalization shares this same transaction: a failed legal review rolls back the entire freeze.
+    // Only a reviewed, complete contract may replace the legacy ordering for new prepared quotes.
+    let compiledText=this.compile(clauses);
+    let usedCanonical=false;
+    if(payload){
+      const reviewService=new ContractSectionReviewService(this.database);
+      const entries=clauses.filter(clause=>clause.sourceKind!=='custom').map(clause=>({
+        clause,
+        review:clause.sourceClauseVersionId
+          ?reviewService.get(clause.sourceClauseVersionId)
+          :{status:'unclassified' as const,sectionKey:null,rankInSection:null},
+      }));
+      const assembly=assembleReviewedDraftContract(entries,{audience});
+      // Legacy prepared quotes and intentional custom clauses have no approved 05C
+      // classification. Do not break their existing finalization path.
+      // Once a quote elects reviewed 05C classification, all selected clauses
+      // must pass the approved canonical assembly gate.
+      // A quote with a partially approved existing library remains on the
+      // historical compiler until a complete human-approved set is available.
+      // No incomplete canonical document may be emitted or labelled reviewed.
+      const hasApprovedClassification=entries.some(({clause,review})=>
+        clause.enabled&&!clause.isOrphaned&&review.status==='approved');
+      const mode=decideCanonicalContractMode({explicitOptIn:explicitCanonicalReview,hasApprovedClassification,assemblyReady:assembly.ready});
+      if(mode==='requires_review')throw Error('Classement juridique incomplet : approbation humaine requise.');
+      if(mode==='canonical'){
+        usedCanonical=true;
+        const particular=clauses.filter(clause=>clause.enabled&&clause.sourceKind==='custom');
+        const append=particular.length?'\n\nCONDITIONS PARTICULIÈRES\n\n'+particular.map((clause,index)=>`${index+1}. ${clause.title.trim()}\n${clause.body.trim()}`).join('\n\n'):'';
+        compiledText='CONDITIONS GÉNÉRALES DE VENTE – ATOUMWEB\n\n'+renderApprovedDraftContract(assembly)+append;
+      }
+    }
     if(payload && !included.some(c=>c.sourceKind==='base'&&!c.isOrphaned)) throw Error('Préparation contractuelle incomplète : aucun socle publié disponible ; les brouillons ne sont pas consommés.');
 
     if(payload && included.some(c=>!clean(c.body)||c.isOrphaned||/\[À RENSEIGNER/i.test(c.body))) throw Error('Clause incluse vide, orpheline ou incomplète : finalisation refusée.');
@@ -538,7 +572,18 @@ export class ContractTermsService {
     const types=new ContractTypeService(this.database).quoteReferences(quoteId);
     const orderConflicts=new ContractTypeService(this.database).orderWarnings(types,new Set(included.filter(c=>c.sourceClauseId).map(c=>c.sourceClauseId!)));
     if(orderConflicts.length&&!this.database.get("SELECT id FROM activity_log WHERE entity_type='quote' AND entity_id=? AND action='quote_contract_reordered'",[quoteId]))throw Error(orderConflicts.join(' '));
-    const presentation=payload ? {...this.presentation(quoteId),state:'frozen' as const,compiledAt:now} : null;
+    const currentPresentation=payload?this.presentation(quoteId):null;
+    const presentation= currentPresentation ? (() => {
+      if(!usedCanonical)return {...currentPresentation,state:'frozen' as const,compiledAt:now};
+      // Keep commercial/parameter sections, replace only the displayed clause
+      // sections with the exact canonical text stored in the frozen snapshot.
+      const sections=currentPresentation.sections.filter(section=>!['base','catalog','custom'].includes(section.id));
+      sections.push({id:'clauses',title:'Contrat contractuel approuvé',text:compiledText});
+      return {
+        ...currentPresentation,state:'frozen' as const,compiledAt:now,sections,
+        text:sections.map(section=>section.title.toUpperCase()+'\\n\\n'+section.text).join('\\n\\n'),
+      };
+    })():null;
     this.database.run(
       `UPDATE quotes
        SET contract_text_snapshot=?,contract_snapshot_json=?,contract_compiled_at=?,contract_audience=?,updated_at=?
