@@ -360,18 +360,15 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
       overageWrites++;
       return new Promise(resolve=>{releaseOverage=()=>resolve(originalOverage(...args));});
     });
+    const decisionSelector = '.maintenance-overage-box[data-period-id="' + period.id + '"] .maintenance-overage-item button.secondary-button';
     try {
-      await js('const b=document.querySelector(".maintenance-overage-item button.secondary-button");if(!b)throw Error("E08C save missing");b.click();b.click();');
+      await js('const b=document.querySelector('+JSON.stringify(decisionSelector)+');if(!b)throw Error("E08C period-specific decision missing");b.click();b.click();');
       for(let i=0;i<90&&overageWrites===0;i++)await sleep(25);
       test(overageWrites===1,'E08C double click starts one overage-decision IPC');
-      try {
-        await wait('document.querySelector(".maintenance-overage-item button.secondary-button")?.disabled===true',
-          'E08C saving disables decision button');
-      } catch (error) {
-        const buttons=await get('[...document.querySelectorAll(".maintenance-overage-item button.secondary-button")].map(b=>({text:b.textContent,disabled:b.disabled,html:b.outerHTML.slice(0,250)}))');
-        console.log('[UXV2 08C DEBUG] pending decision view',JSON.stringify({overageWrites,buttons,releaseHeld:!!releaseOverage}));
-        throw error;
-      }
+      await wait('document.querySelector('+JSON.stringify(decisionSelector)+')?.disabled===true',
+        'E08C saving disables exact decision button in period');
+      test(await get('[...document.querySelectorAll('+JSON.stringify(decisionSelector)+')].every(b=>b.disabled)'),
+        'E08C all decision buttons for the pending period are disabled');
       const beforeOveragePendingExit=confirmations.length;
       answers.push(1);
       await choosePeriod('2026-10');
