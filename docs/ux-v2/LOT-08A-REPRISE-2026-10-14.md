@@ -88,3 +88,20 @@
 - Ce test **ne valide pas une politique de réouverture** et ne déclenche aucune facture Abby. Il sert uniquement à empêcher le double enregistrement d'un handoff existant.
 - Contrôles à poursuivre : scénario Electron A→B→A, annulation/confirmation des brouillons pendant routage externe et gestion du `pending`, puis convergence de la branche avec `main`.
 - CI #1119 du correctif E226 : réussite typecheck/Vitest ; étapes natives réservées à d'autres PR ignorées. CI #1127 : résultat à confirmer séparément. Le dernier test E227 exige sa propre CI verte.
+
+## Recette Electron E226 — validation Windows TEMP
+
+- Candidat code : `230e618123d3e00d073b9855db1449e4673e8088`.
+- CI #1195 : [run 38594272280](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38594272280) — **SUCCESS** ; Typecheck SUCCESS ; suite Vitest **109 fichiers PASS**.
+- **28 assertions natives E226** réussies sur le véritable Manager Electron + React + preload + IPC et SQLite %TEMP% : A→B→A, confirmation « Rester » par défaut, « Quitter », isolement des brouillons et données, appel IPC d'enregistrement artificiellement retardé, sortie refusée pendant `pending`, reprise de l'écriture, absence de double navigation et absence de contamination B. Cinq confirmations réellement interceptées dans la fixture.
+- **373 assertions natives shell générales** réussies ; 17 destinations, 86 visites de contrôle, aucun débordement candidat ni erreur console ; deux fixtures TEMP nettoyées (`Fixture cleaned: true`).
+- `OperationsPage.refresh()` utilise désormais la **sélection courante** dans les mises à jour fonctionnelles React, plutôt qu'une sélection capturée avant l'attente d'IPC : une ancienne réponse de liste ne doit pas ressusciter une autre fiche. La recette native confirme le maintien de la sélection après sauvegarde ; un test distinct injectant un délai de *liste* reste pertinent avant intégration.
+- Les scénarios natifs se lancent par `node scripts/check-ux-v2-lot01a-real-ui.cjs --lot08a` et s'exécutent automatiquement dans la CI de la seule PR #109, avant le smoke Electron général. Le profil et la base sont créés hors Validation-MSI et détruits après recette.
+- La première version du scénario pending (#1193) échouait sur un mauvais sélecteur du fieldset **dans le test**, corrigé au commit ci-dessus ; le passage vert #1195 est la preuve de référence. Aucune modification des tests métiers pour masquer cet échec.
+
+### Réserves avant clôture / intégration
+
+1. E224 : expliciter auprès du métier la part des routines dans les quotas avant de modifier les compteurs.
+2. E227 : règles d'autorisation de réouverture, régularisation explicite de temps et handoff ; les régressions empêchent le double débit ou la double préparation, sans créer une nouvelle règle commerciale.
+3. Inspection visuelle humaine du Manager Electron différée ; les tests natifs ne prouvent pas l'aspect visuel subjectif.
+4. Actualiser la branche avec `main` récent puis refaire typecheck, suite complète, recettes natives et contrôler les migrations/fixtures avant toute proposition de fusion. Aucune fusion autorisée à ce stade.
