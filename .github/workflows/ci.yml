@@ -13,7 +13,6 @@ on:
       - fix/recette-commerciale-coherence
       - feature/prospect-workflow-v2
       - feature/ux-v2-lot08c-maintenance-refresh-guard-20261014
-      - feature/ux-v2-lot08f-timer-billing-cross-20261014
   pull_request:
     branches:
       - main
