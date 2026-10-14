@@ -164,6 +164,54 @@ describe('04F — traversée Catalogue recommandé → Devis réel SQLite', () =
 });
 
 describe('QuoteService', () => {
+
+  it('R06A-08 / R06E-05 : marquer vu ne signe pas le devis et ne convertit pas le prospect', () => {
+    const prospect = createProspect();
+    crm.changeProspectStage(prospect.id, 'qualifying');
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Consultation sans acceptation' });
+    quotes.addCustomLine(quote.id, { label: 'Site vitrine', proposedUnitPriceCents: 69900 });
+
+    expect(() => quotes.markViewed(quote.id)).toThrow(/envoyé/);
+    const finalized = finalizeForTest(database, quotes, quote.id);
+    expect(finalized.finalizedAt).toBeTruthy();
+    expect(finalized.status).toBe('draft');
+    const sent = quotes.markSent(quote.id);
+    expect(sent.status).toBe('sent');
+    expect(sent.sentAt).toBeTruthy();
+    expect(sent.acceptedAt).toBeNull();
+    const viewed = quotes.markViewed(quote.id);
+
+    expect(viewed.status).toBe('viewed');
+    expect(viewed.viewedAt).toBeTruthy();
+    expect(quotes.get(quote.id).status).toBe('viewed');
+    expect(quotes.get(quote.id).acceptedAt).toBeNull();
+    expect(crm.listProspects({ includeArchived: true }).find(item => item.id === prospect.id)?.clientAccountId).toBeFalsy();
+    expect(database.get<{ n: number }>("SELECT count(*) AS n FROM activity_events WHERE entity_id=? AND action='quote_accepted'", [quote.id])?.n).toBe(0);
+  });
+
+
+  it('R06A-15 / R06F-23 : la lecture historique ne reconstitue jamais les CGV absentes', () => {
+    const prospect = createProspect();
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Ancien devis sans archive CGV' });
+    quotes.addCustomLine(quote.id, { label: 'Prestation historique', proposedUnitPriceCents: 12000 });
+    finalizeForTest(database, quotes, quote.id);
+    // Simule uniquement une ancienne ligne persistée privée de snapshots, sans modifier le schéma.
+    database.run('UPDATE quotes SET contract_text_snapshot=NULL, contract_snapshot_json=NULL WHERE id=?', [quote.id]);
+    const before = database.get<{ contract_text_snapshot: string | null; contract_snapshot_json: string | null }>(
+      'SELECT contract_text_snapshot, contract_snapshot_json FROM quotes WHERE id=?', [quote.id],
+    );
+    const historical = quotes.get(quote.id);
+    expect(historical.finalizedAt).toBeTruthy();
+    expect(historical.contractTextSnapshot).toBeNull();
+    expect(historical.contractSnapshotJson).toBeNull();
+    expect(quotes.get(quote.id).contractTextSnapshot).toBeNull();
+    expect(quotes.get(quote.id).contractSnapshotJson).toBeNull();
+    const after = database.get<{ contract_text_snapshot: string | null; contract_snapshot_json: string | null }>(
+      'SELECT contract_text_snapshot, contract_snapshot_json FROM quotes WHERE id=?', [quote.id],
+    );
+    expect(after).toEqual(before);
+  });
+
   it('E73 : un accord de principe explicite est horodaté, idempotent et révocable sans signature ni conversion', () => {
     const prospect = createProspect();
     crm.changeProspectStage(prospect.id, 'qualifying');
@@ -404,4 +452,317 @@ describe('QuoteService', () => {
     expect(copy.lines).toHaveLength(1);
     expect(copy.contractValueCents).toBe(50000);
   });
+  it('06C : quantité, prix proposé et remise restent attachés à la version catalogue figée', () => {
+    const prospect = createProspect();
+    const service = createPublishedService(10000, 'Service 06C');
+    const originalVersionId = service.currentVersion!.id;
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Calcul et version immuable' });
+
+    const computed = quotes.addCatalogLine(quote.id, originalVersionId, {
+      quantityMilli: 1500,
+      proposedUnitPriceCents: 12000,
+      adjustmentMode: 'percent',
+      adjustmentValue: 1000,
+      discountReasonCode: 'commercial_gesture',
+    });
+
+    expect(computed.lines).toHaveLength(1);
+    expect(computed.lines[0].catalogVersionId).toBe(originalVersionId);
+    expect(computed.lines[0].quantityMilli).toBe(1500);
+    expect(computed.lines[0].catalogUnitPriceCents).toBe(10000);
+    expect(computed.lines[0].proposedUnitPriceCents).toBe(12000);
+    expect(computed.catalogValueCents).toBe(15000);
+    expect(computed.contractValueCents).toBe(16200);
+
+    const next = catalog.createVersion(service.id, { priceMode: 'fixed', priceCents: 20000 });
+    catalog.publishVersion(next.id);
+    const kept = quotes.get(quote.id);
+    expect(kept.lines[0].catalogVersionId).toBe(originalVersionId);
+    expect(kept.lines[0].snapshot?.versionNumber).toBe(1);
+    expect(kept.lines[0].catalogUnitPriceCents).toBe(10000);
+    expect(kept.lines[0].proposedUnitPriceCents).toBe(12000);
+    expect(kept.contractValueCents).toBe(16200);
+    expect(catalog.getItem(service.id).currentVersion?.priceCents).toBe(20000);
+  });
+
+  it('06C : achat d’option idempotent, provenance et retrait sans changer l’offre', () => {
+    const prospect = createProspect();
+    const option = createPublishedService(14900, 'Option SEO 06C');
+    const optionVersionId = option.currentVersion!.id;
+    const offer = catalog.create(
+      { type: 'offer', name: 'Pack 06C', category: 'Tests' },
+      { priceMode: 'fixed', priceCents: 69900, description: 'Pack de base' },
+    );
+    catalog.setOfferComponents(offer.versions[0].id, [
+      { serviceVersionId: optionVersionId, isOptional: true },
+    ]);
+    catalog.publishVersion(offer.versions[0].id);
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Option isolée' });
+    const initial = quotes.addCatalogLine(quote.id, offer.versions[0].id);
+    const offerLine = initial.lines[0];
+    const component = (offerLine.snapshot!.offerComponents as Array<{ componentId: string }>)[0];
+
+    expect(initial.lines).toHaveLength(1);
+    expect(initial.contractValueCents).toBe(69900);
+    const purchased = quotes.selectOfferOption(offerLine.id, component.componentId);
+    expect(purchased.lines).toHaveLength(2);
+    const purchasedLine = purchased.lines.find(line => line.id !== offerLine.id)!;
+    expect(purchasedLine.optionPurchase?.sourceOfferLineId).toBe(offerLine.id);
+    expect(purchasedLine.optionPurchase?.sourceComponentId).toBe(component.componentId);
+    expect(purchasedLine.catalogVersionId).toBe(optionVersionId);
+    expect(purchased.contractValueCents).toBe(84800);
+
+    const again = quotes.selectOfferOption(offerLine.id, component.componentId);
+    expect(again.lines).toHaveLength(2);
+    expect(again.lines.find(line => line.id !== offerLine.id)?.id).toBe(purchasedLine.id);
+
+    const next = catalog.createVersion(option.id, { priceMode: 'fixed', priceCents: 19900 });
+    catalog.publishVersion(next.id);
+    expect(quotes.get(quote.id).lines.find(line => line.id === purchasedLine.id)?.catalogVersionId).toBe(optionVersionId);
+
+    const removed = quotes.deselectOfferOption(offerLine.id, component.componentId);
+    expect(removed.lines).toHaveLength(1);
+    expect(removed.lines[0].id).toBe(offerLine.id);
+    expect(removed.contractValueCents).toBe(69900);
+    expect(quotes.deselectOfferOption(offerLine.id, component.componentId).lines).toHaveLength(1);
+  });
+
+  it('06C : option non achetée sans incidence et rejet d’une provenance inexistante', () => {
+    const prospect = createProspect();
+    const option = createPublishedService(9900, 'Option secondaire 06C');
+    const offer = catalog.create(
+      { type: 'offer', name: 'Offre isolée 06C', category: 'Tests' },
+      { priceMode: 'fixed', priceCents: 39900 },
+    );
+    catalog.setOfferComponents(offer.versions[0].id, [
+      { serviceVersionId: option.currentVersion!.id, isOptional: true },
+    ]);
+    catalog.publishVersion(offer.versions[0].id);
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Option non sélectionnée' });
+    const added = quotes.addCatalogLine(quote.id, offer.versions[0].id);
+    expect(added.lines).toHaveLength(1);
+    expect(added.contractValueCents).toBe(39900);
+    expect(() => quotes.selectOfferOption(added.lines[0].id, 'composant-inexistant'))
+      .toThrow(/Option absente/);
+    expect(quotes.get(quote.id).lines).toHaveLength(1);
+    expect(quotes.get(quote.id).contractValueCents).toBe(39900);
+  });
+
+  it('06D : refuser un devis envoyé ne convertit pas le prospect ni ne prépare un projet', () => {
+    const prospect = createProspect();
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Refus sans conversion' });
+    quotes.addCustomLine(quote.id, { label: 'Prestation refusée', proposedUnitPriceCents: 15000 });
+    finalizeForTest(database,quotes,quote.id);
+    quotes.markSent(quote.id);
+    const refused = quotes.refuse(quote.id);
+    expect(refused.status).toBe('refused');
+    expect(refused.acceptedClientAccountId).toBeFalsy();
+    expect(refused.projectReadyAt).toBeFalsy();
+    expect(crm.listClients()).toHaveLength(0);
+    expect(crm.listProspects().find(item => item.id === prospect.id)?.clientAccountId).toBeFalsy();
+    expect(() => quotes.addCustomLine(quote.id, { label: 'Modification interdite', proposedUnitPriceCents: 1000 }))
+      .toThrow(/figé|refusé|brouillon|copie du devis/i);
+  });
+
+  it('06D : un devis marqué envoyé reste sans acceptation et sans conversion', () => {
+    const prospect = createProspect();
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Envoi sans signature' });
+    quotes.addCustomLine(quote.id, { label: 'Prestation proposée', proposedUnitPriceCents: 20000 });
+    finalizeForTest(database,quotes,quote.id);
+    const sent = quotes.markSent(quote.id);
+    expect(sent.status).toBe('sent');
+    expect(sent.acceptedClientAccountId).toBeFalsy();
+    expect(sent.projectReadyAt).toBeFalsy();
+    expect(crm.listClients()).toHaveLength(0);
+    expect(crm.listProspects().find(item => item.id === prospect.id)?.clientAccountId).toBeFalsy();
+  });
+
+  it('R06D-07 : une clause orpheline activée ne figure pas dans le contrat compilé', () => {
+    const prospect = createProspect();
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Contrat sans clause orpheline' });
+    quotes.addCustomLine(quote.id, { label: 'Prestation active', proposedUnitPriceCents: 10000 });
+    const terms = new ContractTermsService(database, documents);
+    terms.addCustomQuoteClause(quote.id, { title: 'Clause valable', body: 'Texte valable uniquement' });
+    terms.addCustomQuoteClause(quote.id, { title: 'Clause devenue orpheline', body: 'Texte à exclure du contrat' });
+    database.run(
+      "UPDATE quote_contract_clauses SET is_orphaned=1 WHERE quote_id=? AND title='Clause devenue orpheline'",
+      [quote.id],
+    );
+    const build = terms.getQuoteBuild(quote.id);
+    expect(build.compiledText).toContain('Texte valable uniquement');
+    expect(build.compiledText).not.toContain('Texte à exclure du contrat');
+    const archived = database.get<{ enabled: number; is_orphaned: number; body: string }>(
+      "SELECT enabled,is_orphaned,body FROM quote_contract_clauses WHERE quote_id=? AND title='Clause devenue orpheline'",
+      [quote.id],
+    );
+    expect(archived).toEqual({ enabled: 1, is_orphaned: 1, body: 'Texte à exclure du contrat' });
+  });
+
+  it('R06C-15 : une clause de ligne personnalisée devenue orpheline conserve le choix humain', () => {
+    const prospect = createProspect();
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Clause orpheline personnalisée' });
+    const first = quotes.addCustomLine(quote.id, { label: 'Service supprimé', proposedUnitPriceCents: 20000 });
+    const lineId = first.lines[0].id;
+    quotes.addCustomLine(quote.id, { label: 'Service conservé', proposedUnitPriceCents: 10000 });
+    database.run(
+      `INSERT INTO quote_contract_clauses
+       (id,quote_id,source_key,source_kind,source_clause_id,source_clause_version_id,source_catalog_item_ids_json,
+        title,body,sort_order,enabled,is_customized,is_orphaned,created_at,updated_at)
+       VALUES (?,?,?,'catalog',NULL,NULL,'[]',?,?,1800,1,1,0,datetime('now'),datetime('now'))`,
+      ['customized-orphan-clause',quote.id,`particular-line:${lineId}`,'Titre ajusté humainement','Contenu contractuel personnalisé'],
+    );
+    const changed = quotes.removeLine(lineId);
+    const preserved = database.get<{ enabled: number; is_customized: number; is_orphaned: number; title: string; body: string }>(
+      'SELECT enabled,is_customized,is_orphaned,title,body FROM quote_contract_clauses WHERE id=?',
+      ['customized-orphan-clause'],
+    );
+    expect(changed.lines).toHaveLength(1);
+    expect(changed.contractValueCents).toBe(10000);
+    expect(preserved).toEqual({
+      enabled: 1, is_customized: 1, is_orphaned: 1,
+      title: 'Titre ajusté humainement', body: 'Contenu contractuel personnalisé',
+    });
+  });
+
+  it('R06C-15 : une clause liée à une ligne retirée devient orpheline et désactivée', () => {
+    const prospect = createProspect();
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Clause de prestation retirée' });
+    const first = quotes.addCustomLine(quote.id, { label: 'Service supprimé', proposedUnitPriceCents: 20000 });
+    const lineId = first.lines[0].id;
+    quotes.addCustomLine(quote.id, { label: 'Service conservé', proposedUnitPriceCents: 10000 });
+    // Représente une ancienne clause de provenance catalogue attachée à la ligne retirée.
+    database.run(
+      `INSERT INTO quote_contract_clauses
+       (id,quote_id,source_key,source_kind,source_clause_id,source_clause_version_id,source_catalog_item_ids_json,
+        title,body,sort_order,enabled,is_customized,is_orphaned,created_at,updated_at)
+       VALUES (?,?,?,'catalog',NULL,NULL,'[]',?,?,1800,1,0,0,datetime('now'),datetime('now'))`,
+      ['historical-line-clause',quote.id,`particular-line:${lineId}`,'Condition de prestation','Clause issue de la ligne retirée'],
+    );
+    const removed = quotes.removeLine(lineId);
+    const clause = database.get<{ enabled: number; is_orphaned: number; body: string }>(
+      'SELECT enabled,is_orphaned,body FROM quote_contract_clauses WHERE id=?', ['historical-line-clause'],
+    );
+    expect(removed.lines).toHaveLength(1);
+    expect(removed.contractValueCents).toBe(10000);
+    expect(clause).toEqual({ enabled: 0, is_orphaned: 1, body: 'Clause issue de la ligne retirée' });
+  });
+
+  it('R06C-15 : retirer une prestation préserve les clauses particulières du devis', () => {
+    const prospect = createProspect();
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Retrait sans perte contractuelle' });
+    const first = quotes.addCustomLine(quote.id, { label: 'Prestation à retirer', proposedUnitPriceCents: 20000 });
+    quotes.addCustomLine(quote.id, { label: 'Prestation conservée', proposedUnitPriceCents: 10000 });
+    const terms = new ContractTermsService(database, documents);
+    terms.addCustomQuoteClause(quote.id, { title: 'Clause personnalisée', body: 'Texte spécifique à préserver' });
+    const custom = () => database.get<{ id: string; title: string; body: string; enabled: number }>(
+      "SELECT id,title,body,enabled FROM quote_contract_clauses WHERE quote_id=? AND source_kind='custom'", [quote.id],
+    );
+    const before = custom();
+    expect(before?.body).toBe('Texte spécifique à préserver');
+
+    const changed = quotes.removeLine(first.lines[0].id);
+    expect(changed.lines).toHaveLength(1);
+    expect(changed.lines[0].label).toBe('Prestation conservée');
+    expect(changed.contractValueCents).toBe(10000);
+    expect(custom()).toEqual(before);
+  });
+
+  it('R06D-03 / R06C-15 : synchroniser les CGV ne remplace pas une clause particulière du devis', () => {
+    const prospect = createProspect();
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Synchronisation avec personnalisation' });
+    quotes.addCustomLine(quote.id, { label: 'Prestation initiale', proposedUnitPriceCents: 10000 });
+    const terms = new ContractTermsService(database, documents);
+    terms.addCustomQuoteClause(quote.id, { title: 'Modalité personnelle', body: 'Texte convenu uniquement pour ce devis' });
+    const read = () => database.get<{ id: string; title: string; body: string; enabled: number }>(
+      "SELECT id,title,body,enabled FROM quote_contract_clauses WHERE quote_id=? AND source_kind='custom'",
+      [quote.id],
+    );
+    const before = read();
+    expect(before?.body).toBe('Texte convenu uniquement pour ce devis');
+    quotes.addCustomLine(quote.id, { label: 'Prestation supplémentaire', proposedUnitPriceCents: 5000 });
+    terms.syncQuote(quote.id);
+    expect(read()).toEqual(before);
+    expect(quotes.get(quote.id).contractValueCents).toBe(15000);
+  });
+
+  it('R06F-10 : une copie conserve ses clauses particulières sans modifier celles du devis original', () => {
+    const prospect = createProspect();
+    const original = quotes.create({ prospectId: prospect.id, subject: 'Conditions personnalisées' });
+    quotes.addCustomLine(original.id, { label: 'Service personnalisé', proposedUnitPriceCents: 30000 });
+    const terms = new ContractTermsService(database, documents);
+    terms.addCustomQuoteClause(original.id, { title: 'Délai particulier', body: 'Délai contractuel initial' });
+
+    const copy = quotes.duplicate(original.id);
+    const rows = (quoteId: string) => database.all<{ id: string; title: string; body: string }>(
+      "SELECT id,title,body FROM quote_contract_clauses WHERE quote_id=? AND source_kind='custom' ORDER BY sort_order", [quoteId],
+    );
+    expect(rows(original.id)).toHaveLength(1);
+    expect(rows(copy.id)).toHaveLength(1);
+    expect(rows(copy.id)[0].id).not.toBe(rows(original.id)[0].id);
+    expect(rows(copy.id)[0].body).toBe('Délai contractuel initial');
+
+    terms.updateQuoteClause(rows(copy.id)[0].id, { body: 'Délai propre à la copie' });
+    expect(rows(original.id)[0].body).toBe('Délai contractuel initial');
+    expect(rows(copy.id)[0].body).toBe('Délai propre à la copie');
+    expect(quotes.get(original.id).contractValueCents).toBe(30000);
+    expect(quotes.get(copy.id).contractValueCents).toBe(30000);
+  });
+
+  it('R06E-13 / R06F-21 : une révision non raccordée au Projet échoue sans copie partielle', () => {
+    const prospect = createProspect();
+    const original = quotes.create({ prospectId: prospect.id, subject: 'Dossier sans cycle Projet' });
+    quotes.addCustomLine(original.id, { label: 'Service de référence', proposedUnitPriceCents: 24900 });
+    const before = quotes.list({ prospectId: prospect.id });
+    const originalBefore = quotes.get(original.id);
+
+    expect(() => quotes.duplicate(original.id, true)).toThrow(/Cycle Projet prévisionnel non raccordé/);
+
+    expect(quotes.list({ prospectId: prospect.id }).map(item => item.id)).toEqual(before.map(item => item.id));
+    const after = quotes.get(original.id);
+    expect(after.number).toBe(originalBefore.number);
+    expect(after.contractValueCents).toBe(originalBefore.contractValueCents);
+    expect(after.lines.map(line => line.id)).toEqual(originalBefore.lines.map(line => line.id));
+    expect(database.get<{ count: number }>('SELECT COUNT(*) AS count FROM quotes WHERE prospect_id=?', [prospect.id])?.count).toBe(1);
+  });
+
+  it('06E : la révision par duplication garde les lignes, mais possède son propre numéro et historique', () => {
+    const prospect = createProspect();
+    const original = quotes.create({ prospectId: prospect.id, subject: 'Proposition historique' });
+    const withLine = quotes.addCustomLine(original.id, { label: 'Prestation figée', quantityMilli: 1500, proposedUnitPriceCents: 20000 });
+    finalizeForTest(database,quotes,original.id);
+    quotes.markSent(original.id);
+    quotes.refuse(original.id);
+    const revision = quotes.duplicate(original.id);
+    expect(revision.id).not.toBe(original.id);
+    expect(revision.number).not.toBe(original.number);
+    expect(revision.status).toBe('draft');
+    expect(revision.lines).toHaveLength(1);
+    expect(revision.lines[0].id).not.toBe(withLine.lines[0].id);
+    expect(revision.lines[0].quantityMilli).toBe(1500);
+    expect(revision.contractValueCents).toBe(30000);
+    quotes.updateLine(revision.lines[0].id, { label: 'Prestation révisée', quantityMilli: 1500, proposedUnitPriceCents: 24000 });
+    expect(quotes.get(revision.id).contractValueCents).toBe(36000);
+    expect(quotes.get(original.id).contractValueCents).toBe(30000);
+    expect(quotes.get(original.id).status).toBe('refused');
+  });
+
+  it('06E : duplication après refus préserve la version historique et permet une nouvelle validation autonome', () => {
+    const prospect = createProspect();
+    const first = quotes.create({ prospectId: prospect.id, subject: 'Première proposition' });
+    quotes.addCustomLine(first.id, { label: 'Site historique', proposedUnitPriceCents: 69900 });
+    finalizeForTest(database,quotes,first.id);
+    quotes.markSent(first.id);
+    quotes.refuse(first.id);
+    const revised = quotes.duplicate(first.id);
+    quotes.updateLine(revised.lines[0].id, { label: 'Site revisité', quantityMilli: 1000, proposedUnitPriceCents: 79900 });
+    const finalized = finalizeForTest(database,quotes,revised.id);
+    expect(finalized.finalizedAt).toBeTruthy();
+    expect(finalized.contractValueCents).toBe(79900);
+    expect(quotes.get(first.id).status).toBe('refused');
+    expect(quotes.get(first.id).contractValueCents).toBe(69900);
+    expect(quotes.get(first.id).finalizedAt).toBeTruthy();
+    expect(() => quotes.addCustomLine(revised.id, { label: 'Ajout tardif', proposedUnitPriceCents: 1000 }))
+      .toThrow(/figé|finalisé|copie du devis|envoi/i);
+  });
+
 });

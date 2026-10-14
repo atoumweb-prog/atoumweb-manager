@@ -27,7 +27,185 @@ if(!process.versions.electron){
  const value=selector=>js('return document.querySelector('+JSON.stringify(selector)+')?.value');const context='.quote-contract-preparation input[data-contract-field=context]',admin='.quote-contract-preparation input[data-contract-field=admin-identity]';
  for(const theme of ['atoumweb','noir','blanc']){
  const quote=database.quotes.create({clientAccountId:client.id,subject:'TEST '+theme});database.quotes.addCustomLine(quote.id,{label:'Prestation fixture',proposedUnitPriceCents:10000});
+ if(process.argv.includes('--lot-pdf'))database.database.run("UPDATE quotes SET status='accepted' WHERE id=?",[quote.id]); // Fixture TEMP d'interface uniquement, sans simuler l'acceptation métier.
+ if(process.argv.includes('--lot-accept')){const now=new Date().toISOString();database.database.run("UPDATE quotes SET status='sent', finalized_at=?,sent_at=? WHERE id=?",[now,now,quote.id]);} // Uniquement pour tester la protection UI, sans simuler la preuve Abby.
  win=new BrowserWindow({show:false,width:1600,height:1100,webPreferences:{preload:path.join(temp,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:false}});S.bindUnsavedWindow(win);await win.loadFile(path.join(temp,'index.html'));await wait('!!document.querySelector(".aw-navigation-rail")');await js('document.documentElement.dataset.theme='+JSON.stringify(theme)+';window.dispatchEvent(new CustomEvent("atoumweb:navigate",{detail:{entityType:"quote",entityId:'+JSON.stringify(quote.id)+',title:"TEST"}}));');await wait('!!document.querySelector(".quote-contract-preparation input")');
+ if(process.argv.includes('--lot-accept')){
+   const initialStatus=database.quotes.get(quote.id).status;
+   check(theme+' accept fixture starts from sent state',initialStatus==='sent');
+   const originalAccept=database.quotes.accept.bind(database.quotes);
+   let calls=0,rejectPending;
+   database.quotes.accept=()=>{calls++;return new Promise((_resolve,reject)=>{rejectPending=()=>reject(new Error('TEMP ACCEPTANCE REJECTION'));});};
+   const rowSelector='.quote-decision-actions button.primary-button',detailSelector='.quote-status-actions button.primary-button';
+   await wait('!!document.querySelector('+JSON.stringify(rowSelector)+')&&!![...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()==="Confirmer accepté dans Abby")');
+   await js('window.confirm=()=>true');
+   // L'acceptation depuis la liste doit refuser de contourner la saisie contractuelle sale.
+   const originalAdministration=await value(admin),dirtyAdministration='UNSAVED BEFORE ABBY '+theme,previousDialogs=dialogs.length;
+   await input(admin,dirtyAdministration);
+   await js('document.querySelector('+JSON.stringify(rowSelector)+').click()');
+   await sleep(100);
+   check(theme+' list acceptance asks UX-01 before discarding dirty quote data',dialogs.length===previousDialogs+1&&dialogs.at(-1)?.title==='Modifications non enregistrées');
+   check(theme+' declining dirty-exit prompt sends no acceptance',calls===0);
+   check(theme+' declining acceptance preserves dirty administration draft',await value(admin)===dirtyAdministration);
+   await input(admin,originalAdministration??'');
+   await js('const row=document.querySelector('+JSON.stringify(rowSelector)+');const detail=[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()==="Confirmer accepté dans Abby");row.click();detail.click();row.click()');
+   for(let i=0;i<100&&!rejectPending;i++)await sleep(20);
+   check(theme+' first Abby approval reaches IPC once',typeof rejectPending==='function');
+   check(theme+' list and detail simultaneous approval result in one IPC',calls===1);
+   check(theme+' list and detail approval controls disabled while pending',await js('return document.querySelector('+JSON.stringify(rowSelector)+')?.disabled===true&&[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()==="Confirmer accepté dans Abby")?.disabled===true'));
+   rejectPending();
+   await wait('document.querySelector('+JSON.stringify(rowSelector)+')?.disabled===false&&[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()==="Confirmer accepté dans Abby")?.disabled===false');
+   check(theme+' rejected Abby approval keeps status unchanged',database.quotes.get(quote.id).status==='sent');
+   database.quotes.accept=()=>{calls++;return Promise.reject(new Error('TEMP ACCEPTANCE RETRY FAILURE'));};
+   await js('[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()==="Confirmer accepté dans Abby").click()');
+   for(let i=0;i<100&&calls<2;i++)await sleep(20);
+   check(theme+' detail action can retry after rejected list action',calls===2);
+   await wait('document.querySelector('+JSON.stringify(rowSelector)+')?.disabled===false');
+   database.quotes.accept=originalAccept;
+   check(theme+' failed approval has not converted or accepted quote',database.quotes.get(quote.id).status==='sent');
+   win.destroy();win=null;continue;
+ }
+ if(process.argv.includes('--lot-versions')){
+   const originalDuplicate=database.quotes.duplicate.bind(database.quotes);
+   let copyCalls=0,releaseCopy;
+   database.quotes.duplicate=(...args)=>{copyCalls++;return new Promise(resolve=>{releaseCopy=()=>resolve(originalDuplicate(...args));});};
+   const copySubject=database.quotes.get(quote.id).subject+' — copie';
+   await wait('[...document.querySelectorAll(".quote-status-actions button")].some(b=>b.textContent.trim()==="Dupliquer en nouveau devis")');
+   await js('const b=[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()==="Dupliquer en nouveau devis");b.click();b.click()');
+   for(let i=0;i<100&&!releaseCopy;i++)await sleep(20);
+   check(theme+' first duplicate request intercepted',typeof releaseCopy==='function');
+   check(theme+' rapid duplicate sends one request',copyCalls===1);
+   check(theme+' while duplicating both version actions disabled',await js('return ["Dupliquer en nouveau devis","Créer une révision du même dossier"].every(label=>[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()===label)?.disabled===true)'));
+   releaseCopy();
+   await wait('document.querySelector(".quote-table")?.textContent.includes('+JSON.stringify(copySubject)+')');
+   check(theme+' only one copy of source quote persisted',database.quotes.list().filter(q=>q.subject===copySubject).length===1);
+   database.quotes.duplicate=originalDuplicate;
+   let revisionCalls=0,rejectRevision;
+   database.quotes.duplicate=(id,isRevision)=>{if(!isRevision)return originalDuplicate(id);revisionCalls++;return new Promise((_resolve,reject)=>{rejectRevision=()=>reject(new Error('TEMP REVISION FAILURE'));});};
+   await wait('[...document.querySelectorAll(".quote-status-actions button")].some(b=>b.textContent.trim()==="Créer une révision du même dossier")');
+   await js('const b=[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()==="Créer une révision du même dossier");b.click();b.click()');
+   for(let i=0;i<100&&!rejectRevision;i++)await sleep(20);
+   check(theme+' commercial revision first request intercepted',typeof rejectRevision==='function');
+   check(theme+' rapid commercial revision sends one request',revisionCalls===1);
+   check(theme+' both version actions disabled while revision pending',await js('return ["Dupliquer en nouveau devis","Créer une révision du même dossier"].every(label=>[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()===label)?.disabled===true)'));
+   rejectRevision();
+   await wait('["Dupliquer en nouveau devis","Créer une révision du même dossier"].every(label=>[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()===label)?.disabled===false)');
+   check(theme+' revision failure releases version controls',revisionCalls===1);
+   database.quotes.duplicate=originalDuplicate;
+   check(theme+' revision failure did not produce a second copy',database.quotes.list().filter(q=>q.subject===copySubject).length===1);
+   win.destroy();win=null;continue;
+ }
+ if(process.argv.includes('--lot-refresh')){
+   const originalList=database.quotes.list.bind(database.quotes);
+   const staleSnapshot=originalList();
+   let releaseStale,rejectStale,invocations=0;
+   database.quotes.list=(...args)=>{invocations++;if(invocations===1)return new Promise((resolve,reject)=>{releaseStale=()=>resolve(staleSnapshot);rejectStale=reject;});return originalList(...args);};
+   await click('↻ Actualiser');
+   for(let i=0;i<100&&!releaseStale;i++)await sleep(20);
+   check(theme+' obsolete refresh request intercepted',typeof releaseStale==='function');
+   const latestSubject='UX06 REFRESH LATEST '+theme;
+   const newest=database.quotes.create({clientAccountId:client.id,subject:latestSubject});
+   await click('↻ Actualiser');
+   await wait('document.querySelector(".quote-table")?.textContent.includes('+JSON.stringify(latestSubject)+')');
+   check(theme+' newer refresh displays newest quote',await js('return document.querySelector(".quote-table").textContent.includes('+JSON.stringify(latestSubject)+')'));
+   releaseStale();await sleep(150);
+   check(theme+' old completed refresh cannot replace newer quote list',await js('return document.querySelector(".quote-table")?.textContent.includes('+JSON.stringify(latestSubject)+')'));
+   database.quotes.list=originalList;
+   let rejectOld;let secondCount=0;
+   database.quotes.list=(...args)=>{secondCount++;if(secondCount===1)return new Promise((_resolve,reject)=>{rejectOld=reject;});return originalList(...args);};
+   await click('↻ Actualiser');
+   for(let i=0;i<100&&!rejectOld;i++)await sleep(20);
+   check(theme+' stale failing refresh intercepted',typeof rejectOld==='function');
+   await click('↻ Actualiser');
+   await wait('document.querySelector(".quote-table")?.textContent.includes('+JSON.stringify(latestSubject)+')');
+   rejectOld(new Error('OBSOLETE QUOTE LIST FAILURE '+theme));await sleep(150);
+   check(theme+' stale refresh error not shown to operator',await js('return !document.body.textContent.includes('+JSON.stringify('OBSOLETE QUOTE LIST FAILURE '+theme)+')'));
+   check(theme+' latest quote remains after stale list failure',await js('return document.querySelector(".quote-table")?.textContent.includes('+JSON.stringify(latestSubject)+')'));
+   database.quotes.list=originalList;
+   check(theme+' refresh fixture contains newest quote in SQLite',database.quotes.get(newest.id).subject===latestSubject);
+   win.destroy();win=null;continue;
+ }
+ if(process.argv.includes('--lot-prerequisites')){
+   const originalUpdate=database.quotes.updateConditions.bind(database.quotes);
+   let updateCalls=0,releaseUpdate;
+   database.quotes.updateConditions=(...args)=>{updateCalls++;return new Promise(resolve=>{releaseUpdate=()=>resolve(originalUpdate(...args));});};
+   await wait('!!document.querySelector(".quote-prerequisites-form textarea")');
+   await input('.quote-prerequisites-form textarea','PRÉREQUIS UNIQUE '+theme);
+   await js('const b=document.querySelector(".quote-prerequisites-form button");b.click();b.click()');
+   for(let i=0;i<100&&!releaseUpdate;i++)await sleep(20);
+   check(theme+' prerequisites first save reached service',typeof releaseUpdate==='function');
+   check(theme+' rapid prerequisites double submit exactly once',updateCalls===1);
+   check(theme+' prerequisites save pending disables submit',await js('return document.querySelector(".quote-prerequisites-form button").disabled'));
+   releaseUpdate();
+   await wait('!document.querySelector(".quote-prerequisites-form button").disabled');
+   check(theme+' prerequisites persisted exactly once',database.quotes.get(quote.id).prerequisitesText==='PRÉREQUIS UNIQUE '+theme);
+   check(theme+' prerequisites textarea shows saved value',await value('.quote-prerequisites-form textarea')==='PRÉREQUIS UNIQUE '+theme);
+   database.quotes.updateConditions=originalUpdate;
+   win.destroy();win=null;continue;
+ }
+ if(process.argv.includes('--lot-create')){
+   const subject='UX06 UNIQUE CREATE '+theme;
+   const originalCreate=database.quotes.createWithLines.bind(database.quotes);
+   let createCalls=0,releaseCreate;
+   database.quotes.createWithLines=(...args)=>{createCalls++;return new Promise(resolve=>{releaseCreate=()=>resolve(originalCreate(...args));});};
+   await click('+ Nouveau devis');
+   await wait('!!document.querySelector(".quote-wizard")');
+   await js('document.querySelector(".quote-owner-toggle button:nth-child(2)").click()');
+   await wait('[...document.querySelectorAll(".quote-step-content select option")].some(o=>o.value==='+JSON.stringify(client.id)+')');
+   await js('const e=document.querySelector(".quote-step-content select");e.value='+JSON.stringify(client.id)+';e.dispatchEvent(new Event("change",{bubbles:true}))');
+   await sleep(100);
+   await click('Suivant →');
+   await wait('!!document.querySelector(".quote-step-content input[placeholder]")');
+   await input('.quote-step-content input[placeholder]',subject);
+   for(let step=2;step<=5;step++)await click('Suivant →');
+   await wait('[...document.querySelectorAll(".quote-wizard-actions button")].some(b=>b.textContent.trim()==="Créer le devis")');
+   await js('const button=[...document.querySelectorAll(".quote-wizard-actions button")].find(b=>b.textContent.trim()==="Créer le devis");button.click();button.click()');
+   for(let i=0;i<100&&!releaseCreate;i++)await sleep(20);
+   check(theme+' first wizard create reaches IPC',typeof releaseCreate==='function');
+   check(theme+' rapid wizard double click only creates once',createCalls===1);
+   check(theme+' pending wizard create disabled',await js('return [...document.querySelectorAll(".quote-wizard-actions button")].some(b=>b.textContent.trim()==="Création…"&&b.disabled)'));
+   releaseCreate();
+   await wait('!document.querySelector(".quote-wizard")');
+   check(theme+' precisely one new quote persisted',database.quotes.list().filter(q=>q.subject===subject).length===1);
+   database.quotes.createWithLines=originalCreate;
+   win.destroy();win=null;continue;
+ }
+ if(process.argv.includes('--lot-pdf')){
+   const selector='.quote-contract-document',saveSelector=selector+' .quote-contract-reference button',importSelector=selector+' .quote-contract-document-actions button.primary-button';
+   await wait('!!document.querySelector('+JSON.stringify(selector)+')');
+   check(theme+' accepted TEMP fixture shows Abby PDF panel',await js('return !!document.querySelector('+JSON.stringify(selector)+')'));
+   const originalReference=database.quotes.updateAbbyReference.bind(database.quotes);let referenceCalls=0,releaseReference,submittedReference;
+   database.quotes.updateAbbyReference=(...args)=>{referenceCalls++;submittedReference=args[1];return new Promise(resolve=>{releaseReference=()=>resolve(originalReference(...args));});};
+   await input('.quote-contract-reference input','ABBY UI '+theme);
+   await js('const b=document.querySelector('+JSON.stringify(saveSelector)+');b.click();b.click()');
+   for(let i=0;i<80&&!releaseReference;i++)await sleep(25);
+   check(theme+' reference first request intercepted',typeof releaseReference==='function');
+   check(theme+' rapid reference double click sends one IPC',referenceCalls===1);
+   check(theme+' reference pending disables button',await js('return document.querySelector('+JSON.stringify(saveSelector)+').disabled'));
+   releaseReference();await wait('!document.querySelector('+JSON.stringify(saveSelector)+').disabled');
+   const persistedReference=database.quotes.get(quote.id).abbyReference,renderedReference=await value('.quote-contract-reference input');
+   check(theme+' reference persisted exactly once: submitted='+JSON.stringify(submittedReference)+' stored='+JSON.stringify(persistedReference)+' shown='+JSON.stringify(renderedReference),persistedReference==='ABBY UI '+theme);
+   database.quotes.updateAbbyReference=originalReference;
+   const originalOpen=dialog.showOpenDialog;let pickerCalls=0,releasePicker;
+   dialog.showOpenDialog=()=>{pickerCalls++;return new Promise(resolve=>{releasePicker=()=>resolve({canceled:true,filePaths:[]});});};
+   await js('const b=document.querySelector('+JSON.stringify(importSelector)+');b.click();b.click()');
+   for(let i=0;i<80&&!releasePicker;i++)await sleep(25);
+   check(theme+' PDF picker first request intercepted',typeof releasePicker==='function');
+   check(theme+' rapid PDF double click opens only one picker',pickerCalls===1);
+   check(theme+' pending PDF import disables button',await js('return document.querySelector('+JSON.stringify(importSelector)+').disabled'));
+   releasePicker();await wait('!document.querySelector('+JSON.stringify(importSelector)+').disabled');
+   check(theme+' cancelled PDF picker leaves no document',!database.quotes.get(quote.id).contractDocumentId);
+   dialog.showOpenDialog=async()=>{pickerCalls++;throw new Error('Injected TEMP PDF picker failure');};
+   await js('document.querySelector('+JSON.stringify(importSelector)+').click()');
+   await sleep(120);await wait('!document.querySelector('+JSON.stringify(importSelector)+').disabled');
+   check(theme+' failed PDF picker permits retry',pickerCalls===2&&!database.quotes.get(quote.id).contractDocumentId);
+   dialog.showOpenDialog=async()=>{pickerCalls++;return {canceled:true,filePaths:[]};};
+   await js('document.querySelector('+JSON.stringify(importSelector)+').click()');
+   await sleep(120);await wait('!document.querySelector('+JSON.stringify(importSelector)+').disabled');
+   check(theme+' retry PDF picker invoked exactly once',pickerCalls===3);
+   dialog.showOpenDialog=originalOpen;
+   win.destroy();win=null;continue;
+ }
  if(process.argv.includes('--abby')){
  const abby='.quote-abby-panel > button';
  await wait('!!document.querySelector(".quote-abby-panel > button")');
@@ -71,8 +249,23 @@ if(!process.versions.electron){
  }
 
  if(process.argv.includes('--lot-b')){
+ const other=database.quotes.create({clientAccountId:client.id,subject:'TEST LENT '+theme});
  answers.length=0;await js('window.dispatchEvent(new CustomEvent("atoumweb:open-page",{detail:"Devis"}))');await sleep(120);await js('[...document.querySelectorAll("tbody tr")].find(r=>r.textContent.includes('+JSON.stringify(quote.number)+')).click()');await wait('!!document.querySelector(".quote-contract-preparation input")');
  await input(context,'BACKDROP '+theme);const prior=dialogs.length;await js('const e=document.querySelector(".quote-detail-backdrop");e.dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}));e.click()');check(theme+' backdrop one stay prompt',dialogs.length===prior+1);check(theme+' backdrop stay keeps data',await value(context)==='BACKDROP '+theme);answers.push(1);await js('document.querySelector(".quote-detail-backdrop").click()');await wait('!document.querySelector(".quote-detail-panel")');
+ // 06B : A -> B -> A, réponse B retardée au niveau du service utilisé par IPC.
+ const originalGet=database.quotes.get.bind(database.quotes);
+ let finishSlowGet;
+ database.quotes.get=(id,...args)=>id===other.id?new Promise(resolve=>{finishSlowGet=()=>resolve(originalGet(id,...args));}):originalGet(id,...args);
+ const selectRow=async number=>js('[...document.querySelectorAll("tbody tr")].find(r=>r.textContent.includes('+JSON.stringify(number)+'))?.click()');
+ await selectRow(quote.number);await wait('!!document.querySelector(".quote-detail-panel")');
+ await selectRow(other.number);await wait('!document.querySelector(".quote-detail-panel")');
+ await selectRow(quote.number);await wait('!!document.querySelector(".quote-detail-panel")');
+ check(theme+' A-B-A shows A before delayed B response',await js('return document.querySelector(".quote-detail-panel .eyebrow")?.textContent==='+JSON.stringify(quote.number)));
+ check(theme+' delayed B request intercepted',typeof finishSlowGet==='function');
+ finishSlowGet();await sleep(180);
+ check(theme+' delayed B cannot overwrite final A',await js('return document.querySelector(".quote-detail-panel .eyebrow")?.textContent==='+JSON.stringify(quote.number)));
+ database.quotes.get=originalGet;
+ await js('document.querySelector(".quote-detail-backdrop").click()');await wait('!document.querySelector(".quote-detail-panel")');
  const prospect=database.crm.createProspect({organizationId:org.id,stage:'qualifying'});
  await js('window.dispatchEvent(new CustomEvent("atoumweb:navigate",{detail:{entityType:"prospect",entityId:'+JSON.stringify(prospect.id)+',title:"TEST"}}))');await wait('!!document.querySelector(".open-desk-button")');await js('document.querySelector(".open-desk-button").click()');await wait('!!document.querySelector(".prospect-desk-overlay")');await sleep(250);const before=dialogs.length;
  await js('window.dispatchEvent(new CustomEvent("atoumweb:open-page",{detail:"Clients"}))');check(theme+' fresh prospect no false prompt',dialogs.length===before);await wait('!document.querySelector(".prospect-desk-overlay")');

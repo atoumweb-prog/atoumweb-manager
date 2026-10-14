@@ -234,6 +234,33 @@ jobs:
             Write-Output "LOT04B VERIFIED PNG $($file.Name) size=$($file.Length) sha256=$sha"
           }
           Write-Output "LOT04B RESULT 9/9 renderer frames captured in Windows TEMP; no database or live workspace touched"
+      - name: Electron UX-01 lot 06 — candidat integre PR 124
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 124 }}
+        shell: pwsh
+        timeout-minutes: 20
+        run: |
+          node scripts/check-unsaved-inputs-ui.cjs --lot-b --lot-c --review
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/check-unsaved-inputs-ui.cjs --lot-pdf
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/check-unsaved-inputs-ui.cjs --lot-create
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/check-unsaved-inputs-ui.cjs --lot-prerequisites
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/check-unsaved-inputs-ui.cjs --lot-refresh
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/check-unsaved-inputs-ui.cjs --lot-versions
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/check-unsaved-inputs-ui.cjs --lot-accept
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Lot 06 — recette Electron transversale Windows TEMP (PR 124)
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 124 }}
+        shell: pwsh
+        timeout-minutes: 40
+        run: |
+          node scripts/check-ux-v2-integration-validate.cjs --native-only
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       # PR98 standalone; the combined candidate runs this same recipe below.
       # La fixture crée exclusivement ses propres fichiers et profil dans %TEMP%.
