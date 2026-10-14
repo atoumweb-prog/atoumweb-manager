@@ -186,10 +186,10 @@ export interface CatalogRecommendationLink {
   targetVersionStatus: CatalogVersionStatus;
   targetItemStatus: CatalogItemStatus;
   sortOrder: number;
-  reason: string;
-  status: 'active' | 'paused';
-  conditions: string;
-  provenance: string;
+  reason?: string;
+  status?: 'active' | 'paused';
+  conditions?: string;
+  provenance?: string;
 }
 
 export interface CatalogApi {
