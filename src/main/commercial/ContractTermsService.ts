@@ -1,6 +1,8 @@
 import { CatalogService } from './CatalogService';
 import { CommercialRulesService } from './CommercialRulesService';
 import { ContractTypeService } from './ContractTypeService';
+import { ContractSectionReviewService } from './ContractSectionReviewService';
+import {assembleReviewedDraftContract,renderApprovedDraftContract} from '../../shared/reviewedDraftContract';
 import { formatContractPresentation, type ContractPresentation } from '../../shared/contractPresentation';
 import type { ContractAdministration, QuoteContractParameters } from '../../shared/quoteContractPreparation';
 import type { ContractTypeReference } from '../../shared/contractTypes';
@@ -529,8 +531,22 @@ export class ContractTermsService {
     this.syncQuoteInternal(quoteId);
     const clauses = this.quoteClauses(quoteId);
     const audience = this.resolveQuoteAudience(state);
-    const compiledText = this.compile(clauses);
     const included = clauses.filter((clause) => clause.enabled);
+    // Quote finalization shares this same transaction: a failed legal review rolls back the entire freeze.
+    // Only a reviewed, complete contract may replace the legacy ordering for new prepared quotes.
+    let compiledText=this.compile(clauses);
+    if(payload){
+      const reviewService=new ContractSectionReviewService(this.database);
+      const entries=clauses.map(clause=>({
+        clause,
+        review:clause.sourceClauseVersionId
+          ?reviewService.get(clause.sourceClauseVersionId)
+          :{status:'unclassified' as const,sectionKey:null,rankInSection:null},
+      }));
+      const assembly=assembleReviewedDraftContract(entries,{audience});
+      if(!assembly.ready)throw Error('Classement contractuel incomplet : faire approuver les rubriques et résoudre les doublons et clauses incomplètes avant finalisation.');
+      compiledText='CONDITIONS GÉNÉRALES DE VENTE – ATOUMWEB\\n\\n'+renderApprovedDraftContract(assembly);
+    }
     if(payload && !included.some(c=>c.sourceKind==='base'&&!c.isOrphaned)) throw Error('Préparation contractuelle incomplète : aucun socle publié disponible ; les brouillons ne sont pas consommés.');
 
     if(payload && included.some(c=>!clean(c.body)||c.isOrphaned||/\[À RENSEIGNER/i.test(c.body))) throw Error('Clause incluse vide, orpheline ou incomplète : finalisation refusée.');
