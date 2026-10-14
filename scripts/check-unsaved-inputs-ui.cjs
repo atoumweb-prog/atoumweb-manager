@@ -27,6 +27,36 @@ if(!process.versions.electron){
  const quote=database.quotes.create({clientAccountId:client.id,subject:'TEST '+theme});database.quotes.addCustomLine(quote.id,{label:'Prestation fixture',proposedUnitPriceCents:10000});
  if(process.argv.includes('--lot-pdf'))database.database.run("UPDATE quotes SET status='accepted' WHERE id=?",[quote.id]); // Fixture TEMP d'interface uniquement, sans simuler l'acceptation métier.
  win=new BrowserWindow({show:false,width:1600,height:1100,webPreferences:{preload:path.join(temp,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:false}});S.bindUnsavedWindow(win);await win.loadFile(path.join(temp,'index.html'));await wait('!!document.querySelector(".aw-navigation-rail")');await js('document.documentElement.dataset.theme='+JSON.stringify(theme)+';window.dispatchEvent(new CustomEvent("atoumweb:navigate",{detail:{entityType:"quote",entityId:'+JSON.stringify(quote.id)+',title:"TEST"}}));');await wait('!!document.querySelector(".quote-contract-preparation input")');
+ if(process.argv.includes('--lot-refresh')){
+   const originalList=database.quotes.list.bind(database.quotes);
+   const staleSnapshot=originalList();
+   let releaseStale,rejectStale,invocations=0;
+   database.quotes.list=(...args)=>{invocations++;if(invocations===1)return new Promise((resolve,reject)=>{releaseStale=()=>resolve(staleSnapshot);rejectStale=reject;});return originalList(...args);};
+   await click('↻ Actualiser');
+   for(let i=0;i<100&&!releaseStale;i++)await sleep(20);
+   check(theme+' obsolete refresh request intercepted',typeof releaseStale==='function');
+   const latestSubject='UX06 REFRESH LATEST '+theme;
+   const newest=database.quotes.create({clientAccountId:client.id,subject:latestSubject});
+   await click('↻ Actualiser');
+   await wait('document.querySelector(".quote-table")?.textContent.includes('+JSON.stringify(latestSubject)+')');
+   check(theme+' newer refresh displays newest quote',await js('return document.querySelector(".quote-table").textContent.includes('+JSON.stringify(latestSubject)+')'));
+   releaseStale();await sleep(150);
+   check(theme+' old completed refresh cannot replace newer quote list',await js('return document.querySelector(".quote-table")?.textContent.includes('+JSON.stringify(latestSubject)+')'));
+   database.quotes.list=originalList;
+   let rejectOld;let secondCount=0;
+   database.quotes.list=(...args)=>{secondCount++;if(secondCount===1)return new Promise((_resolve,reject)=>{rejectOld=reject;});return originalList(...args);};
+   await click('↻ Actualiser');
+   for(let i=0;i<100&&!rejectOld;i++)await sleep(20);
+   check(theme+' stale failing refresh intercepted',typeof rejectOld==='function');
+   await click('↻ Actualiser');
+   await wait('document.querySelector(".quote-table")?.textContent.includes('+JSON.stringify(latestSubject)+')');
+   rejectOld(new Error('OBSOLETE QUOTE LIST FAILURE '+theme));await sleep(150);
+   check(theme+' stale refresh error not shown to operator',await js('return !document.body.textContent.includes('+JSON.stringify('OBSOLETE QUOTE LIST FAILURE '+theme)+')'));
+   check(theme+' latest quote remains after stale list failure',await js('return document.querySelector(".quote-table")?.textContent.includes('+JSON.stringify(latestSubject)+')'));
+   database.quotes.list=originalList;
+   check(theme+' refresh fixture contains newest quote in SQLite',database.quotes.get(newest.id).subject===latestSubject);
+   win.destroy();win=null;continue;
+ }
  if(process.argv.includes('--lot-prerequisites')){
    const originalUpdate=database.quotes.updateConditions.bind(database.quotes);
    let updateCalls=0,releaseUpdate;
