@@ -70,6 +70,7 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
           ??items.find(candidate=>candidate.currentVersion?.id===id)?.name??id}
           {savedLinks.find(link=>link.targetVersionId===id)?.targetVersionNumber
             ? ' · v'+savedLinks.find(link=>link.targetVersionId===id)!.targetVersionNumber : ''}
+          {savedLinks.find(link=>link.targetVersionId===id)?.targetVersionStatus==='retired'?' · Version retirée':''}
           {savedLinks.find(link=>link.targetVersionId===id)?.targetItemStatus==='inactive'?' · Inactif':''}
           {savedLinks.find(link=>link.targetVersionId===id)?.targetItemStatus==='archived'?' · Archivé':''}
         </span>
