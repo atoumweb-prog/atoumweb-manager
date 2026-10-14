@@ -23,8 +23,8 @@ export function buildCatalogCategoryInventory(items: readonly CatalogItemSummary
   const counts = new Map<string, { count: number; active: number; archived: number }>();
   let unassignedCount = 0;
   for (const item of items) {
-    const rawValue = item.category?.trim() ?? '';
-    if (!rawValue) {
+    const rawValue = item.category ?? '';
+    if (!rawValue.trim()) {
       unassignedCount++;
       continue;
     }
