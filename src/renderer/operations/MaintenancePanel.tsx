@@ -1,5 +1,5 @@
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ClientSummary } from '../../shared/crm';
 import {
   MAINTENANCE_CHECK_STATUSES,
@@ -52,6 +52,7 @@ export function MaintenancePanel({ onEntityReady, initialRequest, clients, proje
   const [createSubscriptionOpen, setCreateSubscriptionOpen] = useState(false);
   const [createPlanOpen, setCreatePlanOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const creationPending = useRef(false);
 
   const [clientId, setClientId] = useState('');
   const [projectId, setProjectId] = useState('');
@@ -124,7 +125,8 @@ export function MaintenancePanel({ onEntityReady, initialRequest, clients, proje
   }, [selectedPlan?.id]);
 
   async function createSubscription(): Promise<void> {
-    if (!clientId || !planId) return;
+    if (!clientId || !planId || creationPending.current) return;
+    creationPending.current = true;
     setSaving(true);
     try {
       const created = await window.atoumweb.operations.maintenance.subscriptions.create({
@@ -140,10 +142,12 @@ export function MaintenancePanel({ onEntityReady, initialRequest, clients, proje
       onMessage(`Maintenance activée pour ${created.clientLabel}.`);
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de créer la souscription.');
-    } finally { setSaving(false); }
+    } finally { creationPending.current = false; setSaving(false); }
   }
 
   async function createPlan(): Promise<void> {
+    if (creationPending.current) return;
+    creationPending.current = true;
     setSaving(true);
     try {
       const created = await window.atoumweb.operations.maintenance.plans.create({
@@ -159,7 +163,7 @@ export function MaintenancePanel({ onEntityReady, initialRequest, clients, proje
       onMessage(`Plan « ${created.name} » créé.`);
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de créer le plan.');
-    } finally { setSaving(false); }
+    } finally { creationPending.current = false; setSaving(false); }
   }
 
   async function ensureCurrentPeriod(): Promise<void> {
