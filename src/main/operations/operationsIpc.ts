@@ -71,6 +71,7 @@ export function registerOperationsIpcHandlers(database: DatabaseService): void {
   });
   ipcMain.handle('operations:hour-packs:change-status', (_event, id: string, status: HourPackStatus) => database.hourPacks.changeStatus(id, status));
   ipcMain.handle('operations:hour-packs:add-movement', (_event, id: string, input: HourPackMovementInput) => database.hourPacks.addMovement(id, input));
+  ipcMain.handle('operations:hour-packs:preview-debit', (_event, packId: string, interventionId: string) => database.hourPacks.previewInterventionDebit(packId, interventionId));
   ipcMain.handle('operations:hour-packs:debit-intervention', (_event, packId: string, interventionId: string) => database.hourPacks.debitIntervention(packId, interventionId));
   ipcMain.handle('operations:hour-packs:reverse-movement', (_event, movementId: string, reason: string) => database.hourPacks.reverseMovement(movementId, reason));
 
