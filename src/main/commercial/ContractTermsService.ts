@@ -530,10 +530,11 @@ export class ContractTermsService {
     const clauses = this.quoteClauses(quoteId);
     const audience = this.resolveQuoteAudience(state);
     const compiledText = this.compile(clauses);
-    const included = clauses.filter((clause) => clause.enabled);
+    const included = clauses.filter((clause) => clause.enabled && !clause.isOrphaned);
+    const activeOrphans = clauses.filter((clause) => clause.enabled && clause.isOrphaned);
     if(payload && !included.some(c=>c.sourceKind==='base'&&!c.isOrphaned)) throw Error('Préparation contractuelle incomplète : aucun socle publié disponible ; les brouillons ne sont pas consommés.');
 
-    if(payload && included.some(c=>!clean(c.body)||c.isOrphaned||/\[À RENSEIGNER/i.test(c.body))) throw Error('Clause incluse vide, orpheline ou incomplète : finalisation refusée.');
+    if(payload && (activeOrphans.length > 0 || included.some(c=>!clean(c.body)||/\[À RENSEIGNER/i.test(c.body)))) throw Error('Clause incluse vide, orpheline ou incomplète : finalisation refusée.');
     const now = nowIso();
     const types=new ContractTypeService(this.database).quoteReferences(quoteId);
     const orderConflicts=new ContractTypeService(this.database).orderWarnings(types,new Set(included.filter(c=>c.sourceClauseId).map(c=>c.sourceClauseId!)));
