@@ -265,6 +265,15 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
     }
   }
 
+  async function openSelectedDocument(): Promise<void> {
+    if (!selected || selected.missing) return;
+    try {
+      await window.atoumweb.clientDocuments.openFile(selected.id);
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Impossible d’ouvrir le document. Vérifie sa présence et son empreinte.');
+    }
+  }
+
   async function toggleArchive(): Promise<void> {
     if (!selected) return;
     setBusy(true);
@@ -424,7 +433,7 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
         </div>
 
         <div className="documents-primary-actions">
-          <button className="primary-button" type="button" disabled={selected.missing} onClick={() => void window.atoumweb.clientDocuments.openFile(selected.id)}><OperationIcon name="external-link" size={16} /> Ouvrir le document</button>
+          <button className="primary-button" type="button" disabled={selected.missing} onClick={() => { void openSelectedDocument(); }}><OperationIcon name="external-link" size={16} /> Ouvrir le document</button>
           <button className="secondary-button" type="button" onClick={() => void window.atoumweb.clientDocuments.openFolder(selected.clientAccountId)}><OperationIcon name="folder" size={16} /> Ouvrir le dossier client</button>
           <button className="secondary-button" type="button" onClick={() => draft.request(() => setEditing((value) => !value))}>{editing ? 'Annuler' : 'Modifier'}</button>
         </div>
