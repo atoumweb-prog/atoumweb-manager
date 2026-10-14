@@ -153,6 +153,7 @@ export class ExpenseService {
     mkdirSync(directory, { recursive: true });
     const destination = this.uniqueDestination(directory, basename(source));
     const copied = source !== resolve(destination);
+    let committed = false;
     try {
       if (copied) copyFileSync(source, destination);
       const stats = statSync(destination);
@@ -173,6 +174,7 @@ export class ExpenseService {
         );
         this.log(id, 'expense_receipt_imported', 'Justificatif : ' + basename(source));
         this.database.exec('RELEASE SAVEPOINT expense_receipt_import');
+        committed = true;
       } catch (error) {
         this.database.exec('ROLLBACK TO SAVEPOINT expense_receipt_import');
         this.database.exec('RELEASE SAVEPOINT expense_receipt_import');
@@ -182,7 +184,7 @@ export class ExpenseService {
     } catch (error) {
       // A rejected update must not leave a new, unattached receipt copy behind.
       // Never delete the source or a pre-existing receipt version.
-      if (copied) rmSync(destination, { force: true });
+      if (copied && !committed) rmSync(destination, { force: true });
       throw error;
     }
   }
