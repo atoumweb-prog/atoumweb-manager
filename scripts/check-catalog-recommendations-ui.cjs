@@ -93,6 +93,7 @@ if(!process.versions.electron){
         await until(()=>window.fixture.store['offer-draft'].length===1,'save');
         assert('04D persisted selected target',window.fixture.store['offer-draft'][0].targetVersionId==='a-published');
         await until(()=>window.unsavedEntries().length===0,'clean after save');
+        assert('04D accessible remove action names the target',button('Retirer')?.getAttribute('aria-label')?.includes('Audit'));
         button('Retirer').click();await sleep();
         window.fixture.failNext=true;
         button('Enregistrer les recommandations').click();
