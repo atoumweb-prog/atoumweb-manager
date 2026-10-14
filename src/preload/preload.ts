@@ -514,6 +514,7 @@ const api: AtoumWebApi = {
       reactivate: (id: string) => ipcRenderer.invoke('referentials:compositions:reactivate', id),
       exportPackage: (id: string) => ipcRenderer.invoke('referentials:compositions:export-package', id),
       exportPagePackage: (projectNodeId: string) => ipcRenderer.invoke('referentials:compositions:export-page-package', projectNodeId),
+      listPageExports: (projectNodeId: string) => ipcRenderer.invoke('referentials:compositions:list-page-exports', projectNodeId),
       showPackage: (path: string) => ipcRenderer.invoke('referentials:compositions:show-package', path),
     },
     occurrenceReturns: {

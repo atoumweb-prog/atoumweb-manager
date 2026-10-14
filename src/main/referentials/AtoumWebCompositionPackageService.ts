@@ -53,6 +53,22 @@ export class AtoumWebCompositionPackageService {
     return this.buildPackage(compositionId, null);
   }
 
+  /** History of local exports only — no WordPress import acknowledgement. */
+  listPageExports(projectNodeId: string): import('../../shared/referentials').ProjectPagePackageHistoryEntry[] {
+    return this.database.all<{
+      id: string; composition_id: string; project_id: string; project_site_id: string;
+      project_node_id: string; package_fingerprint: string; component_count: number; created_at: string;
+    }>(`SELECT id,composition_id,project_id,project_site_id,project_node_id,
+        package_fingerprint,component_count,created_at
+        FROM project_page_exports WHERE project_node_id=? ORDER BY created_at DESC,id DESC LIMIT 20`,
+      [projectNodeId]).map(row=>({
+        exportId:row.id,compositionId:row.composition_id,projectId:row.project_id,
+        siteId:row.project_site_id,pageId:row.project_node_id,
+        fingerprint:row.package_fingerprint,componentCount:Number(row.component_count),
+        createdAt:row.created_at,
+      }));
+  }
+
   exportPagePackage(projectNodeId: string): AtoumWebCompositionPackageExportResult {
     const destination = this.database.get<{
       composition_id: string; project_id: string; project_site_id: string; project_node_id: string;

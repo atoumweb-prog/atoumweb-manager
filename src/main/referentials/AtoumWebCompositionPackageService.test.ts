@@ -142,6 +142,20 @@ describe('AtoumWebCompositionPackageService', () => {
     expect(preparedCss.data.toString('utf8')).toBe('.prepared-hero{color:#123456}');
     expect(manifest.components[0].files.javascript).toBeNull();
     expect(database.get<{ total: number }>('SELECT COUNT(*) total FROM project_page_exports WHERE id=?', [exported.exportId!])?.total).toBe(1);
+    const history = projectPackages.listPageExports(page.id);
+    expect(history).toHaveLength(1);
+    expect(history[0]).toMatchObject({
+      exportId: exported.exportId, projectId: project.id, siteId: site.id,
+      pageId: page.id, componentCount: 1,
+    });
+    expect(history[0].fingerprint).toMatch(/^[0-9a-f]{64}$/);
+    const nextExport = projectPackages.exportPagePackage(page.id);
+    expect(nextExport.exportId).not.toBe(exported.exportId);
+    expect(projectPackages.listPageExports(page.id).map(entry => entry.exportId).sort())
+      .toEqual([exported.exportId!, nextExport.exportId!].sort());
+    expect(projectPackages.listPageExports('page-inconnue')).toHaveLength(0);
+    // No history record claims WordPress import, Workbench creation or publication.
+    expect(Object.keys(history[0]).some(key => /published|imported|workbench/i.test(key))).toBe(false);
   });
 
   it('R07G-22 exporte trois occurrences ordonnées, destination exacte et nouveaux exportId sans écrasement', () => {

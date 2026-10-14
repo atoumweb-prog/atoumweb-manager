@@ -434,3 +434,8 @@
 .project-component-settings-toolbar {flex-wrap:wrap;}
 .project-component-settings-toolbar > div:first-child {flex:1 1 180px;min-width:min(180px,100%);}
 .project-component-settings-toolbar > div:last-child {flex:0 1 auto;max-width:100%;}
+
+/* UX-07F: status of a local package must not look like confirmed WP publication. */
+.project-page-package-status{display:grid;justify-items:start;gap:7px;min-width:0;padding:12px;border:1px solid var(--border);border-radius:11px;background:var(--surface-soft);overflow-wrap:anywhere}
+.project-page-package-status p{margin:0;color:var(--text-muted);max-width:100%}
+.project-page-package-status strong{color:var(--text)}
