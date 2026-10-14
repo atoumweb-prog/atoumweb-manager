@@ -2,6 +2,8 @@ import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { CatalogContractPanel } from './CatalogContractPanel';
 import { CatalogPublicationReview } from './CatalogPublicationReview';
+import { compareCatalogVersions } from '../../shared/catalogVersionReview';
+import { compareCatalogSalesAdvice } from '../../shared/catalogAdviceComparison';
 import { CatalogProductionPanel } from './CatalogProductionPanel';
 import { CatalogRecommendationsPanel } from './CatalogRecommendationsPanel';
 import {CATALOG_EDITOR_TABS,catalogTabHasVersionFields,type CatalogEditorTab} from './catalogEditorTabs';
@@ -172,6 +174,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   const [editingDraftVersion, setEditingDraftVersion] = useState<CatalogVersion | null>(null);
   const [versionFormError, setVersionFormError] = useState<string | null>(null);
   const [publicationCandidate, setPublicationCandidate] = useState<CatalogVersion | null>(null);
+  const [comparisonVersionId,setComparisonVersionId]=useState<string|null>(null);
   const [activeTab,setActiveTab] = useState<CatalogEditorTab>('identity');
   const [pendingItemStatus,setPendingItemStatus]=useState<CatalogItemStatus|null>(null);
   const [detailSplitPercent, setDetailSplitPercent] = useState(40);
@@ -366,12 +369,14 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     }
   }
 
-  function prepareNewVersion(): void {
+  function prepareNewVersion(restoreFrom?: CatalogVersion): void {
     if (!detail?.currentVersion || versionMode) return;
+    if(restoreFrom && (!detail.versions.some(version=>version.id===restoreFrom.id) ||
+      !window.confirm(`Préparer le contenu de la version v${restoreFrom.versionNumber} dans un brouillon ? Aucune version historique ne sera modifiée. L’enregistrement restera une action distincte.`)))return;
     // 04C/E99: reopen the existing draft instead of generating vN+1 on
     // every edit. A published version is only copied when no draft exists.
     const existingDraft = detail.versions.find(version => version.status === 'draft') ?? null;
-    const current = existingDraft ?? detail.currentVersion;
+    const current = restoreFrom ?? existingDraft ?? detail.currentVersion;
     setEditingDraftVersion(existingDraft);
     setPublicationCandidate(null);
     setVersionFormError(null);
@@ -758,7 +763,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
               {activeTab==='scope' && detail.currentVersion && (!detail.currentVersion.nature || !detail.currentVersion.description || (detail.currentVersion.inclusions?.length ?? 0) === 0) && (
                 <div className="catalog-completeness">
                   <div><strong>Fiche à compléter</strong><span>Nature, description et contenu inclus permettent de comprendre immédiatement ce qui est réellement vendu.</span></div>
-                  <button className="secondary-button" type="button" disabled={versionMode || saving} onClick={prepareNewVersion}>Compléter la fiche</button>
+                  <button className="secondary-button" type="button" disabled={versionMode || saving} onClick={()=>prepareNewVersion()}>Compléter la fiche</button>
                 </div>
               )}
 
@@ -857,7 +862,32 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
 
               {activeTab==='production' && <CatalogProductionPanel key={detail.id} item={detail} />}
               {activeTab==='associations' && <CatalogRecommendationsPanel key={detail.id} item={detail} items={items} locked={versionMode || saving} />}
-              {activeTab==='history' && <div className="catalog-versions"><strong>Historique des versions</strong>{detail.versions.map((version) => <div className="catalog-version-row" key={version.id}><div><strong>v{version.versionNumber}</strong><span>{VERSION_STATUS_LABELS[version.status]}</span><small>{PRICE_LABELS[version.priceMode]} · {version.priceCents != null ? `${(version.priceCents / 100).toLocaleString('fr-FR')} €` : '—'} · {version.publishedAt ? `publiée le ${formatCatalogDate(version.publishedAt)}` : `créée le ${formatCatalogDate(version.createdAt)}`}</small>{version.status === 'draft' && version.provenance && <details className="catalog-import-draft"><summary>Consulter le brouillon importé</summary><p>Cette version n’est pas publiée. Sa consultation ne change pas la version commerciale en cours.</p><p>{version.nature}</p><p>{version.description}</p><Summary label="Code canonique" value={detail.canonicalCode || 'Non attribué'} /><Summary label="Unité / périodicité" value={[version.unit, version.periodicity].filter(Boolean).join(' / ')} /><ListSummary label="Inclus" values={version.inclusions ?? []} /><ListSummary label="Exclusions" values={version.exclusions ?? []} /><ListSummary label="Prérequis" values={version.prerequisites ?? []} /><CommercialParametersSummary parameters={version.commercialParameters} /><Summary label="Source" value={[version.provenance.reference, version.provenance.recordKey, version.provenance.sha256].filter(Boolean).join(' · ')} /></details>}</div>{version.status === 'draft' && <button className="primary-button compact-button" type="button" disabled={versionMode || saving} title={versionMode ? 'Enregistrer ou annuler le brouillon avant publication.' : 'Préparer une confirmation distincte, sans publier le site WordPress.'} onClick={() => setPublicationCandidate(structuredClone(version))}>Préparer la publication</button>}</div>)}</div>}
+              {activeTab==='history' && comparisonVersionId && detail.versions.some(version=>version.id===comparisonVersionId) && (() => {
+                const chosen=detail.versions.find(version=>version.id===comparisonVersionId)!;
+                const reference=detail.currentVersion?.id===chosen.id
+                  ? detail.versions.find(version=>version.id!==chosen.id && version.status==='published') ?? null
+                  : detail.currentVersion;
+                const differences=compareCatalogVersions(reference,chosen);
+                const advice=compareCatalogSalesAdvice(reference,chosen);
+                return <section className="catalog-detail-section" aria-label="Comparer les versions du Catalogue">
+                  <strong>Comparaison enregistrée — v{chosen.versionNumber} / {reference?'v'+reference.versionNumber:'aucune référence'}</strong>
+                  <p className="muted">Lecture seule des versions stockées. Ne modifie ni Devis, ni CGV, ni publication.</p>
+                  <button type="button" className="secondary-button" onClick={()=>setComparisonVersionId(null)}>Fermer la comparaison</button>
+                  <table className="catalog-version-diff-table"><thead><tr><th>Champ</th><th>Référence</th><th>Version sélectionnée</th></tr></thead>
+                    <tbody>{differences.map(row=><tr key={row.field}><th scope="row">{row.label}</th><td>{row.previous}</td><td>{row.proposed}</td></tr>)}</tbody></table>
+                  {differences.length===0&&<p>Aucune différence commerciale constatée.</p>}
+                  <h4>Aides à la vente</h4>
+                  {advice.length===0?<p>Aucune différence des aides.</p>:
+                    <table className="catalog-version-diff-table"><thead><tr><th>Champ</th><th>Référence</th><th>Version sélectionnée</th></tr></thead>
+                      <tbody>{advice.map(row=><tr key={row.field}><th scope="row">{row.label}</th><td>{row.previous}</td><td>{row.proposed}</td></tr>)}</tbody></table>}
+                </section>;
+              })()}
+              {activeTab==='history' && <div className="catalog-versions"><strong>Historique des versions</strong>{detail.versions.map((version) => <div className="catalog-version-row" key={version.id}><div><strong>v{version.versionNumber}</strong><span>{VERSION_STATUS_LABELS[version.status]}</span><small>{PRICE_LABELS[version.priceMode]} · {version.priceCents != null ? `${(version.priceCents / 100).toLocaleString('fr-FR')} €` : '—'} · {version.publishedAt ? `publiée le ${formatCatalogDate(version.publishedAt)}` : `créée le ${formatCatalogDate(version.createdAt)}`}</small>{version.status === 'draft' && version.provenance && <details className="catalog-import-draft"><summary>Consulter le brouillon importé</summary><p>Cette version n’est pas publiée. Sa consultation ne change pas la version commerciale en cours.</p><p>{version.nature}</p><p>{version.description}</p><Summary label="Code canonique" value={detail.canonicalCode || 'Non attribué'} /><Summary label="Unité / périodicité" value={[version.unit, version.periodicity].filter(Boolean).join(' / ')} /><ListSummary label="Inclus" values={version.inclusions ?? []} /><ListSummary label="Exclusions" values={version.exclusions ?? []} /><ListSummary label="Prérequis" values={version.prerequisites ?? []} /><CommercialParametersSummary parameters={version.commercialParameters} /><Summary label="Source" value={[version.provenance.reference, version.provenance.recordKey, version.provenance.sha256].filter(Boolean).join(' · ')} /></details>}</div><div className="inline-editor-actions">
+                <button type="button" className="secondary-button compact-button" disabled={saving}
+                  onClick={()=>setComparisonVersionId(version.id)}>Comparer</button>
+                <button type="button" className="secondary-button compact-button" disabled={saving||versionMode}
+                  onClick={()=>{prepareNewVersion(version);setActiveTab('sales');}}>Reprendre dans un brouillon</button>
+                </div>{version.status === 'draft' && <button className="primary-button compact-button" type="button" disabled={versionMode || saving} title={versionMode ? 'Enregistrer ou annuler le brouillon avant publication.' : 'Préparer une confirmation distincte, sans publier le site WordPress.'} onClick={() => setPublicationCandidate(structuredClone(version))}>Préparer la publication</button>}</div>)}</div>}
               </div>
             </aside>
           )}
