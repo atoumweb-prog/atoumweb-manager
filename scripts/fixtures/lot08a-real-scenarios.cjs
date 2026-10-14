@@ -349,6 +349,8 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
     await choosePeriod('2026-09');
     await wait('!!document.querySelector(".maintenance-overage-item input[placeholder^=Ex]")',
       'E08C reopened period with unresolved overage');
+    const overageAncestors=await get('[...document.querySelectorAll(".maintenance-overage-box")].map(box=>({period:box.dataset.periodId,path:(()=>{const a=[];let el=box;for(let i=0;i<10&&el;i++,el=el.parentElement)a.push(el.tagName.toLowerCase()+"."+(el.className?.toString()||"").slice(0,100));return a})(),rect:(()=>{const r=box.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height}})()}))');
+    console.log('[UXV2 E08C COMPONENT ANCESTRY]',JSON.stringify(overageAncestors));
     await fillOverage('.maintenance-overage-item input[placeholder^=Ex]','E08C DECISION UNIQUE');
     await fillOverage('.maintenance-overage-item input[type=number]','49');
     // Avant un appel financier, prouver que la même fiche visible a réellement
