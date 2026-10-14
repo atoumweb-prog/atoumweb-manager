@@ -155,4 +155,32 @@ describe('ExpenseService', () => {
     expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
+
+  it('journalise la déclaration de paiement et annule un statut si son historique échoue', () => {
+    const expense = expenses.create({
+      category: 'office', label: 'Paiement à déclarer', amountCents: 3500,
+      expenseDate: '2026-10-14T12:00:00.000Z', status: 'committed',
+    });
+    const before = expenses.get(expense.id);
+    database.exec(`CREATE TRIGGER reject_paid_provenance BEFORE INSERT ON activity_log
+      WHEN NEW.entity_id='${expense.id}' AND NEW.action='expense_status_changed'
+      BEGIN SELECT RAISE(ABORT, 'historique paiement indisponible'); END;`);
+    expect(() => expenses.changeStatus(expense.id, 'paid')).toThrow(/historique paiement indisponible/);
+    expect(expenses.get(expense.id)).toEqual(before);
+    database.exec('DROP TRIGGER reject_paid_provenance');
+    const paid = expenses.changeStatus(expense.id, 'paid');
+    expect(paid.status).toBe('paid');
+    expect(paid.paidAt).toBeTruthy();
+    expect(expenses.changeStatus(expense.id, 'paid')).toEqual(paid);
+    const history = database.all<{ metadata_json: string }>(
+      "SELECT metadata_json FROM activity_log WHERE entity_id=? AND action='expense_status_changed'",
+      [expense.id],
+    );
+    expect(history).toHaveLength(1);
+    expect(JSON.parse(history[0].metadata_json)).toMatchObject({
+      previousStatus: 'committed', currentStatus: 'paid', paymentVerifiedByBank: false,
+    });
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
 });
