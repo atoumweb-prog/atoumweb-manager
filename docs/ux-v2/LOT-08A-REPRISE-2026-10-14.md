@@ -66,3 +66,10 @@
 
 - Première tentative : Typecheck SUCCESS, Vitest 1008 réussis ; 1 suite `src/main/restore.test.ts` échoue par timeout du `beforeAll` à 10 s, avec 35 tests de restauration ignorés dans cette tentative. Ce n'est **pas une preuve d'échec métier E225** ; la première exécution n'est néanmoins pas verte.
 - Relance des jobs en échec demandée via GitHub Actions le 14/10/2026 ; résultat à examiner sur la tentative suivante. Aucune augmentation arbitraire du timeout ni modification de la recette existante avant le diagnostic.
+
+## Incrément E226 — garde de routage externe
+
+- Sur `OperationsPage.tsx`, le changement de cible `initialTarget` effaçait directement les sélections, sans appel à `requestUnsavedExit` dans cet effet. Les clics dans les listes restaient gardés, mais pas cette entrée externe.
+- L'effet passe désormais la réinitialisation et les chargements par la même garde UX-01 ; une sortie refusée ou une écriture `pending` conserve la fiche et son brouillon. Les résolutions asynchrones vérifient toujours `live` avant d'appliquer une réponse.
+- **Limite** : le comportement doit être confirmé dans l'application Electron avec une cible externe et un brouillon A non sauvegardé, plus la séquence A→B→A, erreur IPC et clavier. Pas de revendication de test Electron pour ce commit ; la CI et la recette ciblée demeurent des gates.
+- Le chronomètre, les données réelles, les API métier et les autres lots ne sont pas modifiés.
