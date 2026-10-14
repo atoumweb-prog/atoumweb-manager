@@ -612,6 +612,17 @@ export class CatalogService {
       };
     });
 
+    // 04D: adding a composed service must not leave it recommended as an extra.
+    if (this.database.get("SELECT name FROM sqlite_master WHERE type='table' AND name='catalog_version_recommendations'")) {
+      for (const component of normalized) {
+        const collision = this.database.get<{id:string}>(`SELECT r.id FROM catalog_version_recommendations r
+          JOIN catalog_versions target ON target.id=r.target_version_id
+          JOIN catalog_versions selected ON selected.id=?
+          WHERE r.source_version_id=? AND target.item_id=selected.item_id LIMIT 1`,
+          [component.serviceVersionId,offerVersionId]);
+        if (collision) throw new Error('Ce Service est déjà recommandé en complément. Retire la recommandation avant de l’inclure.');
+      }
+    }
     const now = nowIso();
     this.database.exec('BEGIN IMMEDIATE;');
     try {
