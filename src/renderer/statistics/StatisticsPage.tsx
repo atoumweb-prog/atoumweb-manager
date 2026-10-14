@@ -9,7 +9,8 @@ import type { ProjectSummary } from '../../shared/projects';
 import {
   inStatisticsRange,
   isStatisticsPipelineProspect,
-  sortStatisticsClientsByInvoiced,
+  sortStatisticsClients,
+  type StatisticsClientSortColumn,
   statisticsQuoteAcceptancePercent,
   previousStatisticsPeriodRange,
   statisticsDelta,
@@ -125,6 +126,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<StatisticsPeriod>('month');
   const [tab, setTab] = useState<StatisticsTab>('overview');
+  const [clientSort, setClientSort] = useState<StatisticsClientSortColumn>('invoiced');
 
   async function load(): Promise<void> {
     const request = ++requestVersion.current;
@@ -214,7 +216,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
   const activeProjects = data.projects.filter((item) => ['to_prepare', 'in_progress', 'waiting_client', 'blocked', 'to_validate'].includes(item.status));
   const activeInterventions = data.interventions.filter((item) => ['planned', 'in_progress', 'waiting_client', 'blocked', 'to_validate'].includes(item.status));
   const acceptanceRate = statisticsQuoteAcceptancePercent(accepted.length, refused.length, expired.length);
-  const conversionRate = ratio(won.length, won.length + lost.length);
+  const conversionRate = won.length + lost.length ? ratio(won.length, won.length + lost.length) : null;
   const offeredValue = sum(accepted, (item) => Math.max(0, item.catalogValueCents - item.contractValueCents));
 
   const pipelineRows = PIPELINE.map((entry) => ({
@@ -253,7 +255,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
     projects: activeProjects.filter((item) => item.clientAccountId === client.id).length,
     interventions: data.interventions.filter((item) => item.clientAccountId === client.id && !['archived', 'cancelled'].includes(item.status)).length,
   })).filter((item) => item.seconds || item.invoiced || item.ready || item.projects || item.interventions);
-  const rankedClientRows = sortStatisticsClientsByInvoiced(clientRows).slice(0, 8);
+  const rankedClientRows = sortStatisticsClients(clientRows, clientSort).slice(0, 8);
 
   const financial = [
     { label: 'Contractuel signé', value: signed, display: money(signed), tone: 'blue' },
@@ -316,7 +318,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         </article>
       </div>
       <div className="statistics-snapshots">
-        <Snapshot icon="user" label="Prospects actifs" value={activeProspects.length} helper={countLabel(newProspects.length, 'nouveau prospect', 'nouveaux prospects') + ' sur la période'} onClick={() => openPage('Prospects')} />
+        <Snapshot icon="user" label="Prospects actifs" value={activeProspects.length} helper={countLabel(newProspects.length, 'contact créé', 'contacts créés') + ' sur la période'} onClick={() => openPage('Prospects')} />
         <Snapshot icon="folder" label="Projets actifs" value={activeProjects.length} helper={countLabel(projectsCompleted.length, 'projet terminé', 'projets terminés') + ' sur la période'} onClick={() => openPage('Projets')} />
         <Snapshot icon="wrench" label="Interventions actives" value={activeInterventions.length} helper={countLabel(interventionsCompleted.length, 'intervention terminée', 'interventions terminées') + ' sur la période'} onClick={() => openPage('Interventions & Maintenance')} />
         <Snapshot icon="euro" label="À facturer" value={readyBilling.length} helper={money(readyAmount) + ' à préparer'} onClick={() => openPage('Facturation')} />
@@ -371,8 +373,8 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         <Kpi icon="euro" label="À facturer" value={money(readyAmount)} helper={countLabel(readyBilling.length, 'élément', 'éléments') + ' actuellement'} />
       </div>
       <article className="panel statistics-card statistics-client-card">
-        <CardTitle eyebrow="Clients" title="Facturé suivi décroissant · temps en départage" />
-        {rankedClientRows.length ? <div className="statistics-table-wrap"><table className="statistics-table"><thead><tr><th>Client</th><th>Temps</th><th>Facturé</th><th>À facturer</th><th>Projets actifs</th><th>Interventions</th></tr></thead><tbody>{rankedClientRows.map((row) => <tr key={row.id} onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'client', entityId: row.id, title: row.label } }))}><td><strong>{row.label}</strong></td><td>{hours(row.seconds)}</td><td>{money(row.invoiced)}</td><td>{money(row.ready)}</td><td>{row.projects}</td><td>{row.interventions}</td></tr>)}</tbody></table></div> : <Empty label="Aucune activité client sur cette période." />}
+        <CardTitle eyebrow="Clients" title="Activité client · classement par unité" />
+        {rankedClientRows.length ? <div className="statistics-table-wrap"><table className="statistics-table"><thead><tr><th>Client</th><th aria-sort={clientSort === 'seconds' ? 'descending' : 'none'}><button type="button" className="link-button" onClick={() => setClientSort('seconds')}>Temps {clientSort === 'seconds' ? '↓' : '↕'}</button></th><th aria-sort={clientSort === 'invoiced' ? 'descending' : 'none'}><button type="button" className="link-button" onClick={() => setClientSort('invoiced')}>Facturé suivi {clientSort === 'invoiced' ? '↓' : '↕'}</button></th><th>À facturer</th><th>Projets actifs</th><th>Interventions</th></tr></thead><tbody>{rankedClientRows.map((row) => <tr key={row.id}><td><button className="link-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'client', entityId: row.id, title: row.label } }))}>{row.label}</button></td><td>{hours(row.seconds)}</td><td>{money(row.invoiced)}</td><td>{money(row.ready)}</td><td>{row.projects}</td><td>{row.interventions}</td></tr>)}</tbody></table></div> : <Empty label="Aucune activité client sur cette période." />}
       </article>
     </>}
   </section>;

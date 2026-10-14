@@ -9,9 +9,17 @@ export function isStatisticsPipelineProspect(stage: string | null | undefined, a
   return !archivedAt && !!stage && !['new', 'won', 'lost'].includes(stage);
 }
 
-/** Priorité au montant réellement suivi en centimes ; temps uniquement comme départage. */
+/** Une colonne à la fois : jamais de score hybride centimes + secondes. */
+export type StatisticsClientSortColumn = 'invoiced' | 'seconds';
+export function sortStatisticsClients<T extends { invoiced: number; seconds: number; label: string }>(
+  rows: T[], column: StatisticsClientSortColumn,
+): T[] {
+  const secondary = column === 'invoiced' ? 'seconds' : 'invoiced';
+  return [...rows].sort((a, b) => b[column] - a[column] || b[secondary] - a[secondary] || a.label.localeCompare(b.label, 'fr'));
+}
+/** Reprise compatible avec les appels déjà publiés en 10A. */
 export function sortStatisticsClientsByInvoiced<T extends { invoiced: number; seconds: number; label: string }>(rows: T[]): T[] {
-  return [...rows].sort((a, b) => b.invoiced - a.invoiced || b.seconds - a.seconds || a.label.localeCompare(b.label, 'fr'));
+  return sortStatisticsClients(rows, 'invoiced');
 }
 
 export const STATISTICS_PERIODS = ['month', 'quarter', 'year', 'all'] as const;
