@@ -96,4 +96,38 @@ describe('preuve contractuelle rattachée', () => {
     expect(existsSync(path)).toBe(false);
     expect(() => documents.get(doc.id)).toThrow(/introuvable/);
   });
+
+  it('conserve une ancienne facture Abby remplacée même si elle est archivée', () => {
+    const source = join(root, 'ancienne-facture.pdf');
+    writeFileSync(source, '%PDF-1.4\\nFacture historique fictive');
+    const doc = documents.importPaths(clientId, [source], { category: 'invoice', title: 'Ancienne facture' })[0];
+    const path = documents.absolutePath(doc);
+    const bytes = readFileSync(path);
+    const now = new Date().toISOString();
+    database.run(
+      "INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)",
+      ['billing_item', 'billing-history-test', 'billing_invoice_replaced', 'Remplacement Abby',
+        JSON.stringify({ previousDocumentId: doc.id, currentDocumentId: 'new-invoice-id' }), now],
+    );
+    documents.archive(doc.id);
+    expect(() => documents.deletePermanently(doc.id)).toThrow(/historique de facturation Abby/);
+    expect(readFileSync(path)).toEqual(bytes);
+    expect(documents.get(doc.id).archivedAt).toBeTruthy();
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+
+  it('détecte une facture modifiée après son empreinte et refuse son ouverture', () => {
+    const source = join(root, 'facture-integrite.pdf');
+    writeFileSync(source, '%PDF-1.4\\nFacture Abby de test');
+    const document = documents.importPaths(clientId, [source], { category: 'invoice', title: 'Facture à contrôler' })[0];
+    const original = documents.absolutePath(document);
+    expect(documents.fingerprint(document.id)).toMatch(/^[a-f0-9]{64}$/);
+    expect(documents.verifiedPath(document.id)).toBe(original);
+    writeFileSync(original, '%PDF-1.4\\nContenu modifié');
+    expect(() => documents.fingerprint(document.id)).toThrow(/empreinte SHA-256 différente/);
+    expect(() => documents.verifiedPath(document.id)).toThrow(/empreinte SHA-256 différente/);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
 });

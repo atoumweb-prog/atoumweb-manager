@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
+      - feature/ux-v2-lot09b-billing-20261014
       - main
       - foundation/electron-react-sqlite
       - feature/phase-1-crm
@@ -54,6 +55,30 @@ jobs:
 
       - name: Lot 09A — Restore and quit round-trip Windows TEMP
         if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 113 }}
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          node scripts/check-restore-quit-roundtrip.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Lot 09B — Real billing screen / Abby PDF / Electron TEMP
+        if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.number == 119) || (github.event_name == 'push' && github.ref == 'refs/heads/feature/ux-v2-lot09b-billing-20261014') }}
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          node scripts/check-ux-v2-lot01a-real-ui.cjs --lot09b
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Lot 09B — General Electron UX smoke Windows TEMP
+        if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.number == 119) || (github.event_name == 'push' && github.ref == 'refs/heads/feature/ux-v2-lot09b-billing-20261014') }}
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          node scripts/check-ux-v2-lot01a-real-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Lot 09B — Restore round-trip Windows TEMP
+        if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.number == 119) || (github.event_name == 'push' && github.ref == 'refs/heads/feature/ux-v2-lot09b-billing-20261014') }}
         shell: pwsh
         timeout-minutes: 15
         run: |

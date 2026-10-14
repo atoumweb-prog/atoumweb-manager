@@ -7,6 +7,7 @@ import {
   type BillingItemStatus,
 } from '../../shared/billing';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
+import { useUnsavedDraft } from '../unsaved/unsaved';
 
 const STATUS_LABELS: Record<BillingItemStatus, string> = {
   planned: 'Prévu',
@@ -64,6 +65,11 @@ export function BillingPage({ onMessage }: { onMessage: (message: string) => voi
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | BillingItemStatus>('all');
   const [sourceFilter, setSourceFilter] = useState<'all' | BillingItemSourceType>('all');
+  const [clientFilter, setClientFilter] = useState('all');
+  const [projectFilter, setProjectFilter] = useState('all');
+  const [pdfFilter, setPdfFilter] = useState<'all' | 'with' | 'without'>('all');
+  const [exactReference, setExactReference] = useState('');
+  const [dueBefore, setDueBefore] = useState('');
   const [splitPercent, setSplitPercent] = useState(38);
   const [expanded, setExpanded] = useState(false);
   const [invoiceReference, setInvoiceReference] = useState('');
@@ -89,17 +95,44 @@ export function BillingPage({ onMessage }: { onMessage: (message: string) => voi
   useEffect(() => { void refresh(); }, []);
 
   const selected = items.find((item) => item.id === selectedId) ?? null;
+  const invoiceDraft = useUnsavedDraft('Facturation Abby : référence et date', {
+    reference: invoiceReference,
+    date: invoiceDate,
+  }, {
+    group: 'Facturation',
+    ready: !!selected,
+    resetKey: selected?.id,
+    pending: busy,
+    dirty: !!selected && (invoiceReference !== (selected.invoiceReference ?? '') || invoiceDate !== dateInput(selected.invoicedAt)),
+    discard: () => {
+      setInvoiceReference(selected?.invoiceReference ?? '');
+      setInvoiceDate(dateInput(selected?.invoicedAt));
+    },
+  });
 
   useEffect(() => {
     setInvoiceReference(selected?.invoiceReference ?? '');
     setInvoiceDate(dateInput(selected?.invoicedAt));
   }, [selected?.id, selected?.invoiceReference, selected?.invoicedAt]);
 
+  const clientOptions = useMemo(() => [...new Map(items.map((item) =>
+    [item.clientAccountId, item.clientLabel] as const)).entries()]
+    .sort((a, b) => a[1].localeCompare(b[1], 'fr-FR')), [items]);
+  const projectOptions = useMemo(() => [...new Map(items.filter((item) => item.projectId)
+    .map((item) => [item.projectId as string, item.projectLabel ?? item.projectId as string] as const)).entries()]
+    .sort((a, b) => a[1].localeCompare(b[1], 'fr-FR')), [items]);
+
   const filtered = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase('fr-FR');
     return items.filter((item) => {
       if (statusFilter !== 'all' && item.status !== statusFilter) return false;
       if (sourceFilter !== 'all' && item.sourceType !== sourceFilter) return false;
+      if (clientFilter !== 'all' && item.clientAccountId !== clientFilter) return false;
+      if (projectFilter !== 'all' && item.projectId !== projectFilter) return false;
+      if (pdfFilter === 'with' && !item.invoiceDocumentId) return false;
+      if (pdfFilter === 'without' && item.invoiceDocumentId) return false;
+      if (exactReference.trim() && (item.invoiceReference ?? '').trim().toLocaleLowerCase('fr-FR') !== exactReference.trim().toLocaleLowerCase('fr-FR')) return false;
+      if (dueBefore && (!item.dueAt || item.dueAt.slice(0, 10) > dueBefore)) return false;
       if (!needle) return true;
       return [
         item.clientLabel,
@@ -111,12 +144,14 @@ export function BillingPage({ onMessage }: { onMessage: (message: string) => voi
         STATUS_LABELS[item.status],
       ].some((value) => value.toLocaleLowerCase('fr-FR').includes(needle));
     });
-  }, [items, query, sourceFilter, statusFilter]);
+  }, [items, query, sourceFilter, statusFilter, clientFilter, projectFilter, pdfFilter, exactReference, dueBefore]);
 
-  const readyItems = items.filter((item) => item.status === 'ready' || item.status === 'planned');
-  const invoicedItems = items.filter((item) => item.status === 'invoiced');
-  const offeredItems = items.filter((item) => item.status === 'offered');
-  const amountToPrepare = readyItems.reduce((sum, item) => sum + item.expectedAmountCents, 0);
+  const plannedItems = items.filter((item) => item.status === 'planned');
+  const readyItems = items.filter((item) => item.status === 'ready');
+  const invoicedItems = items.filter((item) => item.status === 'invoiced' && item.invoiceDocumentId);
+  const offeredOrCancelledItems = items.filter((item) => item.status === 'offered' || item.status === 'cancelled');
+  const amountReady = readyItems.reduce((sum, item) => sum + item.expectedAmountCents, 0);
+  const amountPlanned = plannedItems.reduce((sum, item) => sum + item.expectedAmountCents, 0);
 
   async function changeStatus(status: BillingItemStatus): Promise<void> {
     if (!selected || status === 'invoiced') return;
@@ -209,16 +244,16 @@ export function BillingPage({ onMessage }: { onMessage: (message: string) => voi
     </section>
 
     <section className="billing-kpi-grid" aria-label="Synthèse facturation">
-      <article><span className="billing-kpi-icon" aria-hidden="true"><OperationIcon name="receipt" size={27} /></span><div><strong>À facturer</strong><span>{readyItems.length}</span><small>{money(amountToPrepare)} à préparer</small></div></article>
-      <article><span className="billing-kpi-icon" aria-hidden="true"><OperationIcon name="check-circle" size={27} /></span><div><strong>Facturé</strong><span>{invoicedItems.length}</span><small>PDF rattaché et archivé</small></div></article>
-      <article><span className="billing-kpi-icon" aria-hidden="true"><OperationIcon name="gift" size={27} /></span><div><strong>Offert</strong><span>{offeredItems.length}</span><small>Gestes commerciaux / valeur offerte</small></div></article>
-      <article><span className="billing-kpi-icon" aria-hidden="true"><OperationIcon name="euro" size={28} /></span><div><strong>Montant à préparer</strong><span>{money(amountToPrepare)}</span><small>Éléments prévus ou prêts</small></div></article>
+      <article><span className="billing-kpi-icon" aria-hidden="true"><OperationIcon name="clock" size={27} /></span><div><strong>À préparer</strong><span>{plannedItems.length}</span><small>{money(amountPlanned)} prévus</small></div></article>
+      <article><span className="billing-kpi-icon" aria-hidden="true"><OperationIcon name="receipt" size={27} /></span><div><strong>À facturer</strong><span>{readyItems.length}</span><small>{money(amountReady)} prêts</small></div></article>
+      <article><span className="billing-kpi-icon" aria-hidden="true"><OperationIcon name="check-circle" size={27} /></span><div><strong>Facturés avec PDF</strong><span>{invoicedItems.length}</span><small>Facture Abby conservée, paiement non déduit</small></div></article>
+      <article><span className="billing-kpi-icon" aria-hidden="true"><OperationIcon name="gift" size={27} /></span><div><strong>Offerts / annulés</strong><span>{offeredOrCancelledItems.length}</span><small>Exclus du montant à facturer</small></div></article>
     </section>
 
     <div className="module-toolbar billing-toolbar">
       <div><strong>{filtered.length}</strong><span> élément(s)</span></div>
       <div className="toolbar-controls">
-        <button className="secondary-button" type="button" onClick={() => void refresh()}><OperationIcon name="refresh" size={16} /> Actualiser</button>
+        <button className="secondary-button" type="button" onClick={() => invoiceDraft.request(() => { void refresh(); })}><OperationIcon name="refresh" size={16} /> Actualiser</button>
         <input className="inline-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher client, projet, facture…" />
         <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value as typeof sourceFilter)}>
           <option value="all">Toutes les origines</option>
@@ -230,6 +265,27 @@ export function BillingPage({ onMessage }: { onMessage: (message: string) => voi
         </select>
       </div>
     </div>
+    <details className="billing-advanced-filters">
+      <summary>Filtres complémentaires — client, projet, PDF, référence et échéance</summary>
+      <div className="billing-advanced-fields">
+        <label>Client<select aria-label="Filtrer les factures par client" value={clientFilter} onChange={(event) => setClientFilter(event.target.value)}>
+          <option value="all">Tous les clients</option>
+          {clientOptions.map(([id, label]) => <option value={id} key={id}>{label}</option>)}
+        </select></label>
+        <label>Projet<select aria-label="Filtrer les factures par projet" value={projectFilter} onChange={(event) => setProjectFilter(event.target.value)}>
+          <option value="all">Tous les projets</option>
+          {projectOptions.map(([id, label]) => <option value={id} key={id}>{label}</option>)}
+        </select></label>
+        <label>PDF<select aria-label="Filtrer les factures selon la présence de PDF" value={pdfFilter} onChange={(event) => setPdfFilter(event.target.value as typeof pdfFilter)}>
+          <option value="all">Tous</option><option value="with">Avec PDF</option><option value="without">Sans PDF</option>
+        </select></label>
+        <label>Référence exacte<input aria-label="Filtrer par référence de facture exacte" value={exactReference} onChange={(event) => setExactReference(event.target.value)} placeholder="N° Abby exact" /></label>
+        <label>Échéance au plus tard<input aria-label="Filtrer par échéance maximale" type="date" value={dueBefore} onChange={(event) => setDueBefore(event.target.value)} /></label>
+        <button className="secondary-button" type="button" onClick={() => {
+          setClientFilter('all'); setProjectFilter('all'); setPdfFilter('all'); setExactReference(''); setDueBefore('');
+        }}>Réinitialiser ces filtres</button>
+      </div>
+    </details>
 
     {loading ? <section className="panel"><p className="muted">Chargement de la facturation…</p></section> : <div
       className={selected ? `billing-workspace with-detail ${expanded ? 'detail-expanded' : ''}` : 'billing-workspace'}
@@ -237,14 +293,14 @@ export function BillingPage({ onMessage }: { onMessage: (message: string) => voi
     >
       {!expanded && <section className="panel billing-list-panel">
         {selected ? <div className="billing-compact-list" role="list" aria-label="Éléments de facturation">
-          {filtered.map((item) => <button key={item.id} type="button" role="listitem" className={`billing-compact-item ${item.id === selected.id ? 'selected' : ''}`} onClick={() => setSelectedId(item.id)}>
+          {filtered.map((item) => <button key={item.id} type="button" role="listitem" className={`billing-compact-item ${item.id === selected.id ? 'selected' : ''}`} onClick={() => invoiceDraft.request(() => setSelectedId(item.id))}>
             <span className="billing-compact-heading"><strong>{item.clientLabel}</strong><span className={`billing-status status-${item.status}`}>{STATUS_LABELS[item.status]}</span></span>
             <span className="billing-compact-description">{item.description}</span>
             <span className="billing-compact-meta"><span><OperationIcon name={SOURCE_ICONS[item.sourceType]} size={15} /> {SOURCE_LABELS[item.sourceType]}</span><span>{money(item.expectedAmountCents)}</span></span>
             <span className="billing-compact-project">{item.projectLabel || 'Sans projet dédié'}</span>
           </button>)}
           {filtered.length === 0 && <div className="empty-table">Aucun élément de facturation.</div>}
-        </div> : <div className="billing-table-wrap"><table className="billing-table"><thead><tr><th>Client</th><th>Origine</th><th>Description</th><th>Projet</th><th>Montant</th><th>Statut</th><th>Facture</th></tr></thead><tbody>{filtered.map((item) => <tr key={item.id} onClick={() => { setSelectedId(item.id); setExpanded(false); }}><td><strong>{item.clientLabel}</strong></td><td><span className="billing-source-pill"><OperationIcon name={SOURCE_ICONS[item.sourceType]} size={15} />{SOURCE_LABELS[item.sourceType]}</span></td><td>{item.description}</td><td>{item.projectLabel || '—'}</td><td>{money(item.expectedAmountCents)}</td><td><span className={`billing-status status-${item.status}`}>{STATUS_LABELS[item.status]}</span></td><td>{item.invoiceFileName ? <span className="billing-pdf-present"><OperationIcon name="file-text" size={14} /> PDF</span> : <span className="muted">—</span>}</td></tr>)}{filtered.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucun élément de facturation.</div></td></tr>}</tbody></table></div>}
+        </div> : <div className="billing-table-wrap"><table className="billing-table"><thead><tr><th>Client</th><th>Origine</th><th>Description</th><th>Projet</th><th>Montant</th><th>Statut</th><th>Facture</th></tr></thead><tbody>{filtered.map((item) => <tr key={item.id} onClick={() => invoiceDraft.request(() => { setSelectedId(item.id); setExpanded(false); })}><td><button className="billing-row-open" type="button" aria-label={`Ouvrir la facture de ${item.clientLabel} : ${item.description}`} onClick={(event) => { event.stopPropagation(); invoiceDraft.request(() => { setSelectedId(item.id); setExpanded(false); }); }}>{item.clientLabel}</button></td><td><span className="billing-source-pill"><OperationIcon name={SOURCE_ICONS[item.sourceType]} size={15} />{SOURCE_LABELS[item.sourceType]}</span></td><td>{item.description}</td><td>{item.projectLabel || '—'}</td><td>{money(item.expectedAmountCents)}</td><td><span className={`billing-status status-${item.status}`}>{STATUS_LABELS[item.status]}</span></td><td>{item.invoiceFileName ? <span className="billing-pdf-present"><OperationIcon name="file-text" size={14} /> {item.invoiceReference || 'Référence à vérifier'} · {dateLabel(item.invoicedAt)}</span> : <span className="muted">—</span>}</td></tr>)}{filtered.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucun élément de facturation.</div></td></tr>}</tbody></table></div>}
       </section>}
 
       {selected && !expanded && <div className="billing-splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner la liste et la fiche" tabIndex={0} onPointerDown={beginResize} onDoubleClick={() => setSplitPercent(38)} onKeyDown={(event) => {
@@ -255,7 +311,7 @@ export function BillingPage({ onMessage }: { onMessage: (message: string) => voi
       {selected && <aside className={`panel billing-detail-panel ${expanded ? 'expanded' : ''}`}>
         <div className="detail-panel-heading billing-detail-heading">
           <div><span className="eyebrow">Facturation</span><h2>{selected.description}</h2><p className="muted">{selected.clientLabel}{selected.projectLabel ? ` · ${selected.projectLabel}` : ''}</p></div>
-          <div className="billing-detail-heading-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setExpanded((value) => !value)}><OperationIcon name={expanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={() => { setSelectedId(''); setExpanded(false); }}><OperationIcon name="close" size={18} /></button></div>
+          <div className="billing-detail-heading-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setExpanded((value) => !value)}><OperationIcon name={expanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={() => invoiceDraft.request(() => { setSelectedId(''); setExpanded(false); })}><OperationIcon name="close" size={18} /></button></div>
         </div>
 
         <div className="billing-detail-badges">
@@ -275,7 +331,7 @@ export function BillingPage({ onMessage }: { onMessage: (message: string) => voi
           <div className="billing-section-body">
             <div className={`billing-invoice-state ${selected.invoiceDocumentId ? 'attached' : ''}`}>
               <span className="billing-invoice-icon" aria-hidden="true"><OperationIcon name="file-text" size={25} /></span>
-              <div><strong>{selected.invoiceFileName || 'Aucune facture PDF rattachée'}</strong><small>{selected.invoiceDocumentId ? `Importée le ${dateLabel(selected.invoicedAt)} · classée dans Documents client / Factures` : 'Crée d’abord la facture dans Abby, puis importe le PDF téléchargé.'}</small></div>
+              <div><strong>{selected.invoiceFileName || 'Aucune facture PDF rattachée'}</strong><small>{selected.invoiceDocumentId ? `Date déclarée : ${dateLabel(selected.invoicedAt)} · Documents client / Factures` : 'Crée d’abord la facture dans Abby, puis importe le PDF téléchargé.'}</small>{selected.invoiceDocumentId && !selected.invoiceReference && <small className="billing-pdf-reference-warning">Référence Abby à vérifier : ce PDF reste rattaché, mais son numéro doit être confirmé.</small>}</div>
             </div>
 
             <div className="billing-invoice-fields">

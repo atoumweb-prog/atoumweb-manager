@@ -1,5 +1,15 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 14/10/2026 — Lot 09B : clôture technique facturation Abby (validé techniquement)
+
+- Branche `feature/ux-v2-lot09b-billing-20261014`, [PR #119](https://github.com/atoumweb-prog/atoumweb-manager/pull/119) **draft**, base PR #113/09A, sans fusion dans `main`.
+- Garanties implémentées : Client et catégorie facture contrôlés ; rejet des PDF archivés, mal typés, altérés ou sans signature PDF ; empreinte SHA-256 au niveau du service métier ; pièces anciennes conservées et protégées même après remplacement ; journal de provenance avec ancien/nouveau document et références/dates.
+- Cohérence : rattachement et journal, ainsi que modifications de métadonnées et journal, sont atomiques (SAVEPOINT SQLite) ; refus de déclasser un dépassement maintenance facturé ; idempotence même document ; prévention de l'association implicite d'un même document ou d'un même SHA à plusieurs éléments facturables.
+- UX : confirmation native « Rester / Quitter sans enregistrer » pour référence/date lors du changement de fiche, fermeture de fiche ou navigation, sans confondre `invoiced` et `paid`.
+- Recette : nouvelle fixture sur **vraie interface Facturation React + preload + IPC + SQLite et fichiers PDF TEMP**, tests d'import, remplacement, annulation du sélecteur, refus d'ouverture altérée et protections UX-01 ; smoke Electron global et restauration distincts.
+- CI Windows [38598204165](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38598204165) **SUCCESS** sur `20e0557d` : TypeScript, 111 fichiers Vitest, 85 assertions Electron dédiées Abby, 373 assertions UX globales, 3 thèmes × 3 densités et restauration Windows. **09B validé techniquement**, sans validation humaine ni fusion.
+- Matrice R09B-01 à R09B-17 : `docs/ux-v2/LOT-09B-PLAN-EXECUTION-2026-10-14.md`. Regroupement multi-sources jamais inféré automatiquement, suite métier explicite à concevoir si requis. Il ne reste pour 09B que l'inspection humaine et les vérifications d'intégration dans `main` après les autres lots.
+
 ## 14/10/2026 — Lot 09A : clôture technique et préparation 09B
 
 - Branche isolée `audit/ux-v2-lot09-20261014`, PR #113 **draft**, sans merge. CI #1042 (run 38579044064) **SUCCESS** sur `8b57e3e` : typecheck, suite Vitest, Electron UI/SQLite TEMP et restauration/redémarrage TEMP. Contrôles 09A exécutés, sans validation humaine anticipée.
