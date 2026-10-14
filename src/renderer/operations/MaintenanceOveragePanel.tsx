@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useUnsavedDraft } from '../unsaved/unsaved';
 import {
   MAINTENANCE_OVERAGE_DECISIONS,
   type MaintenanceOverageCandidate,
@@ -40,24 +41,42 @@ export function MaintenanceOveragePanel({ period, onMessage }: { period: Mainten
   const [review, setReview] = useState<MaintenanceOverageReview | null>(null);
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
+  const savingRef = useRef(false);
+  const loadGeneration = useRef(0);
+  const dirty = !!review && review.candidates.some(candidate => {
+    const saved = defaultDraft(candidate);
+    const draft = drafts[candidate.interventionId] ?? saved;
+    return draft.decision !== saved.decision || draft.reason !== saved.reason || draft.amount !== saved.amount;
+  });
+  useUnsavedDraft('Décisions de dépassement maintenance', drafts, {
+    group: `maintenance-overage:${period.id}`,
+    dirty, pending: savingId !== null,
+    discard: () => setDrafts(Object.fromEntries(
+      (review?.candidates ?? []).map(candidate => [candidate.interventionId, defaultDraft(candidate)]),
+    )),
+  });
 
-  async function load(): Promise<void> {
-    try {
-      const next = await window.atoumweb.maintenanceOverages.review(period.id);
-      setReview(next);
-      setDrafts((current) => {
-        const merged = { ...current };
-        for (const candidate of next.candidates) {
-          if (!merged[candidate.interventionId] || candidate.decision) merged[candidate.interventionId] = defaultDraft(candidate);
+  useEffect(() => {
+    const generation = ++loadGeneration.current;
+    void window.atoumweb.maintenanceOverages.review(period.id)
+      .then(next => {
+        if (generation !== loadGeneration.current) return;
+        setReview(next);
+        setDrafts(current => {
+          const merged = { ...current };
+          for (const candidate of next.candidates) {
+            if (!merged[candidate.interventionId]) merged[candidate.interventionId] = defaultDraft(candidate);
+          }
+          return merged;
+        });
+      })
+      .catch(error => {
+        if (generation === loadGeneration.current) {
+          onMessage(error instanceof Error ? error.message : 'Impossible de charger les dépassements de maintenance.');
         }
-        return merged;
       });
-    } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible de charger les dépassements de maintenance.');
-    }
-  }
-
-  useEffect(() => { void load(); }, [period.id, period.usage.interventionCount]);
+    return () => { loadGeneration.current += 1; };
+  }, [period.id, period.usage.interventionCount]);
 
   const unresolved = review?.unresolvedCount ?? 0;
   const candidates = useMemo(() => review?.candidates ?? [], [review]);
@@ -70,7 +89,10 @@ export function MaintenanceOveragePanel({ period, onMessage }: { period: Mainten
   }
 
   async function save(candidate: MaintenanceOverageCandidate): Promise<void> {
+    if (savingRef.current) return;
     const draft = drafts[candidate.interventionId] ?? defaultDraft(candidate);
+    if (!draft.reason.trim()) return;
+    savingRef.current = true;
     setSavingId(candidate.interventionId);
     try {
       const amount = draft.decision === 'bill_out_of_scope'
@@ -83,15 +105,19 @@ export function MaintenanceOveragePanel({ period, onMessage }: { period: Mainten
         expectedAmountCents: Number.isFinite(amount) ? amount : 0,
       });
       setReview(next);
-      setDrafts((current) => {
-        const merged = { ...current };
-        for (const item of next.candidates) merged[item.interventionId] = defaultDraft(item);
-        return merged;
+      setDrafts(current => {
+        const latest = current[candidate.interventionId] ?? draft;
+        const editedAfterSubmit = latest.decision !== draft.decision
+          || latest.reason !== draft.reason || latest.amount !== draft.amount;
+        const confirmed = next.candidates.find(item => item.interventionId === candidate.interventionId);
+        return { ...current, [candidate.interventionId]:
+          editedAfterSubmit || !confirmed ? latest : defaultDraft(confirmed) };
       });
       onMessage(`Décision enregistrée pour ${candidate.interventionNumber}.`);
     } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible d’enregistrer la décision de dépassement.');
+      onMessage(error instanceof Error ? `Enregistrement non confirmé : ${error.message}` : 'Enregistrement non confirmé.');
     } finally {
+      savingRef.current = false;
       setSavingId(null);
     }
   }
@@ -114,7 +140,7 @@ export function MaintenanceOveragePanel({ period, onMessage }: { period: Mainten
           <label>Décision<select value={draft.decision} disabled={period.status === 'closed'} onChange={(event) => updateDraft(candidate.interventionId, { decision: event.target.value as MaintenanceOverageDecisionType })}>{MAINTENANCE_OVERAGE_DECISIONS.map((decision) => <option key={decision} value={decision} disabled={decision === 'carry_forward' && !review.carryoverAllowed}>{DECISION_LABELS[decision]}{decision === 'carry_forward' && !review.carryoverAllowed ? ' — non prévu au contrat' : ''}</option>)}</select></label>
           {draft.decision === 'bill_out_of_scope' && <label>Montant à facturer (€)<input type="number" min="0" step="0.01" value={draft.amount} disabled={period.status === 'closed'} onChange={(event) => updateDraft(candidate.interventionId, { amount: event.target.value })} /></label>}
           <label>Motif / décision<input value={draft.reason} disabled={period.status === 'closed'} onChange={(event) => updateDraft(candidate.interventionId, { reason: event.target.value })} placeholder="Ex. 3e intervention du mois, facturation validée avec le client" /></label>
-          <button className="secondary-button" type="button" disabled={period.status === 'closed' || savingId === candidate.interventionId || !draft.reason.trim() || (draft.decision === 'bill_out_of_scope' && !(Number(draft.amount.replace(',', '.')) > 0))} onClick={() => void save(candidate)}>{savingId === candidate.interventionId ? 'Enregistrement…' : candidate.decision ? 'Mettre à jour la décision' : 'Enregistrer la décision'}</button>
+          <button className="secondary-button" type="button" disabled={period.status === 'closed' || savingId !== null || !draft.reason.trim() || (draft.decision === 'bill_out_of_scope' && !(Number(draft.amount.replace(',', '.')) > 0))} onClick={() => void save(candidate)}>{savingId === candidate.interventionId ? 'Enregistrement…' : candidate.decision ? 'Mettre à jour la décision' : 'Enregistrer la décision'}</button>
         </div>;
       })}
     </div>
