@@ -54,3 +54,14 @@ export function assembleReviewedDraftContract(
    ready:plan.ready&&missing.length===0&&duplicateIds.length===0&&invalidText.length===0&&quoteIds.size<=1,
  };
 }
+
+/** Assemble the canonical draft text only after every mandatory review succeeds.
+ * This never writes to the quote and cannot recompile a frozen snapshot.
+ */
+export function renderApprovedDraftContract(result:ReturnType<typeof assembleReviewedDraftContract>):string {
+ if(!result.ready)throw new Error('Contrat incomplet : compilation canonique interdite.');
+ return result.sections.map(section=>[
+   section.title,
+   ...section.articles.map(article=>article.number+' — '+article.title+'\n'+article.body),
+ ].join('\n\n')).join('\n\n');
+}
