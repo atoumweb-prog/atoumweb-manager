@@ -23,7 +23,7 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
   });
   useEffect(()=>{
     let cancelled=false;
-    setLoading(true);setError('');setTargets([]);setSavedLinks([]);
+    setLoading(true);setSaving(false);setError('');setTargets([]);setSavedLinks([]);
     if (!sourceId){setLoading(false);return;}
     void window.atoumweb.catalog.listRecommendations(sourceId).then(links=>{
       if(cancelled)return;
