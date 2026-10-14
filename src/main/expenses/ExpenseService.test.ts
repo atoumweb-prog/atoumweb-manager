@@ -183,4 +183,35 @@ describe('ExpenseService', () => {
     expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
+
+  it('ne réécrit pas une dépense payée si la trace de correction échoue', () => {
+    const input = {
+      category: 'software' as const, label: 'Licence à corriger', amountCents: 10000,
+      status: 'paid' as const, expenseDate: '2026-10-14T12:00:00.000Z',
+      paidAt: '2026-10-14T12:00:00.000Z',
+    };
+    const created = expenses.create(input);
+    const before = expenses.get(created.id);
+    database.exec(`CREATE TRIGGER reject_expense_update BEFORE INSERT ON activity_log
+      WHEN NEW.entity_id='${created.id}' AND NEW.action='expense_updated'
+      BEGIN SELECT RAISE(ABORT, 'journal correction indisponible'); END;`);
+    expect(() => expenses.update(created.id, { ...input, amountCents: 12000 }))
+      .toThrow(/journal correction indisponible/);
+    expect(expenses.get(created.id)).toEqual(before);
+    database.exec('DROP TRIGGER reject_expense_update');
+    const updated = expenses.update(created.id, { ...input, amountCents: 12000 });
+    expect(updated.amountCents).toBe(12000);
+    expect(updated.paidAt).toBe(before.paidAt);
+    const trace = database.get<{ metadata_json: string }>(
+      "SELECT metadata_json FROM activity_log WHERE entity_id=? AND action='expense_updated' ORDER BY id DESC LIMIT 1",
+      [created.id],
+    );
+    expect(JSON.parse(trace!.metadata_json)).toMatchObject({
+      previousStatus: 'paid', currentStatus: 'paid',
+      previousAmountCents: 10000, currentAmountCents: 12000,
+      paymentVerifiedByBank: false,
+    });
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
 });
