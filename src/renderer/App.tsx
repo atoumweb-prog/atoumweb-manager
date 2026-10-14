@@ -262,6 +262,8 @@ function App() {
   }
 
   function navigateDirect(page: PageName): void {
+    // Navigation par le rail : aucun contexte de retour Projet ne doit survivre à une ouverture directe de Devis.
+    setQuoteReturnProjectId(null);
     if (page === 'Interventions & Maintenance') setOperationsSearchTarget(null);
     if (page === 'Projets') setProjectSearchTarget(null);
     if (page === 'Bibliothèque AtoumWeb') setLibrarySearchTarget(null);
