@@ -45,6 +45,15 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
   const available=items.filter(candidate=>candidate.type==='service'&&candidate.id!==item.id&&candidate.status==='active'
     &&candidate.currentVersion?.status==='published'
     &&!targets.includes(candidate.currentVersion.id));
+  function moveTarget(id:string,direction:-1|1){
+    setTargets(current=>{
+      const from=current.indexOf(id),to=from+direction;
+      if(from<0||to<0||to>=current.length)return current;
+      const next=[...current];
+      [next[from],next[to]]=[next[to],next[from]];
+      return next;
+    });
+  }
   async function save(){
     if(!sourceId||!editable||saving||saveInFlight.current===sourceId)return;
     const savingSourceId=sourceId;
@@ -65,7 +74,7 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
     {loading&&<p role="status">Chargement des associations…</p>}
     {error&&<p className="form-error" role="alert">{error}</p>}
     {!loading&&<div>
-      {targets.map(id=><div className="offer-component-row" key={id}>
+      {targets.map((id,index)=><div className="offer-component-row" key={id}>
         <span>{savedLinks.find(link=>link.targetVersionId===id)?.targetName
           ??items.find(candidate=>candidate.currentVersion?.id===id)?.name??id}
           {savedLinks.find(link=>link.targetVersionId===id)?.targetVersionNumber
@@ -74,6 +83,15 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
           {savedLinks.find(link=>link.targetVersionId===id)?.targetItemStatus==='inactive'?' · Inactif':''}
           {savedLinks.find(link=>link.targetVersionId===id)?.targetItemStatus==='archived'?' · Archivé':''}
         </span>
+        {editable&&<div className="inline-editor-actions" aria-label="Ordre de recommandation">
+          <button type="button" className="secondary-button compact-button"
+            disabled={saving||index===0} aria-label={`Monter la recommandation ${index+1}`}
+            onClick={()=>moveTarget(id,-1)}>↑</button>
+          <button type="button" className="secondary-button compact-button"
+            disabled={saving||index===targets.length-1} aria-label={`Descendre la recommandation ${index+1}`}
+            onClick={()=>moveTarget(id,1)}>↓</button>
+          <span className="muted">Priorité d’affichage {index+1}</span>
+        </div>}
         {editable&&<button type="button" className="secondary-button" aria-label={`Retirer la recommandation ${savedLinks.find(link=>link.targetVersionId===id)?.targetName ?? items.find(candidate=>candidate.currentVersion?.id===id)?.name ?? id}`} disabled={saving} onClick={()=>setTargets(values=>values.filter(value=>value!==id))}>Retirer</button>}
       </div>)}
       {!targets.length&&<p className="muted">Aucune recommandation.</p>}
