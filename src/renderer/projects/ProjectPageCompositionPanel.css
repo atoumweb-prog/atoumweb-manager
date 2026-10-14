@@ -388,3 +388,38 @@
     max-height:50vh;
   }
 }
+
+/* UX-07C: le grand atelier avec deux panneaux actifs évite de comprimer
+   chaque aperçu dans une demi-fenêtre. La zone outils conserve son scroll. */
+@media (min-width:1100px) {
+  .project-page-inspector-workbench.expanded.both-open:not(.settings-collapsed):not(.code-collapsed) {
+    grid-template-columns:minmax(0,1fr);
+    overflow-y:auto;
+  }
+  .project-page-inspector-workbench.expanded.both-open:not(.settings-collapsed):not(.code-collapsed) .project-page-inspector-pane {
+    min-width:0;
+    min-height:580px;
+  }
+  .project-page-inspector-workbench.expanded.both-open .code-pane .project-page-inspector-dock {
+    grid-template-columns:minmax(0,3fr) minmax(260px,1fr);
+    grid-template-rows:auto auto minmax(0,1fr);
+    grid-template-areas:'header header' 'devices code' 'preview code';
+  }
+  .project-page-inspector-workbench.expanded.both-open .code-pane .project-page-inspector-dock>header {grid-area:header;}
+  .project-page-inspector-workbench.expanded.both-open .code-pane .project-page-inspector-device-controls {grid-area:devices;}
+  .project-page-inspector-workbench.expanded.both-open .code-pane .project-page-inspector-dock-preview {grid-area:preview;min-width:0;}
+  .project-page-inspector-workbench.expanded.both-open .code-pane .project-page-inspector-dock-code {grid-area:code;min-width:0;overflow-y:auto;}
+  .project-page-inspector-workbench.expanded.both-open .settings-pane .project-component-settings-grid {
+    grid-template-columns:minmax(0,3fr) minmax(260px,1fr);
+    min-width:0;
+  }
+  .project-page-inspector-workbench.expanded.both-open .settings-pane .project-component-settings-preview {min-width:0;}
+  .project-page-inspector-workbench.expanded.both-open .settings-pane .project-component-settings-controls {min-width:0;overflow-y:auto;overflow-x:auto;}
+}
+/* Long labels keep their own width instead of being clipped by a tiny cell. */
+.project-component-settings-panel label,
+.project-component-settings-panel button,
+.project-component-settings-panel .project-component-settings-controls > * {
+  min-width:0;
+  overflow-wrap:anywhere;
+}
