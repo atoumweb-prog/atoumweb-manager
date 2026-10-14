@@ -304,4 +304,17 @@ describe('QuoteService', () => {
       .toThrow(/figé|refusé|brouillon/i);
   });
 
+  it('06D : un devis marqué envoyé reste sans acceptation et sans conversion', () => {
+    const prospect = createProspect();
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Envoi sans signature' });
+    quotes.addCustomLine(quote.id, { label: 'Prestation proposée', proposedUnitPriceCents: 20000 });
+    finalizeForTest(database,quotes,quote.id);
+    const sent = quotes.markSent(quote.id);
+    expect(sent.status).toBe('sent');
+    expect(sent.acceptedClientAccountId).toBeFalsy();
+    expect(sent.projectReadyAt).toBeFalsy();
+    expect(crm.listClients()).toHaveLength(0);
+    expect(crm.listProspects().find(item => item.id === prospect.id)?.clientAccountId).toBeFalsy();
+  });
+
 });
