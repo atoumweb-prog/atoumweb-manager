@@ -1,3 +1,5 @@
+import { CATALOG_CATEGORY_ADMIN_MIGRATION } from './catalogCategoryAdminMigration';
+import { CATALOG_RECOMMENDATIONS_MIGRATION } from './catalogRecommendationsMigration';
 import { CONTRACT_SECTION_REVIEW_MIGRATION } from './contractSectionReviewMigration';
 import { CONTRACT_TYPES_MIGRATION } from './contractTypesMigration';
 import { OPERATIONAL_SALES_ADDON_MIGRATION } from './operationalSalesAddonMigration';
@@ -248,6 +250,8 @@ export const MIGRATIONS: Migration[] = [
   OPERATIONAL_SALES_MIGRATION,
   OPERATIONAL_SALES_ADDON_MIGRATION,
   CONTRACT_TYPES_MIGRATION,
+  CATALOG_CATEGORY_ADMIN_MIGRATION,
+  CATALOG_RECOMMENDATIONS_MIGRATION,
   CONTRACT_SECTION_REVIEW_MIGRATION,
 ];
 
