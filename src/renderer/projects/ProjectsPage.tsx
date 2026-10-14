@@ -152,6 +152,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
   const [acceptedQuotes, setAcceptedQuotes] = useState<QuoteSummary[]>([]);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | ProjectStatus>('all');
+  const [commercialFilter, setCommercialFilter] = useState<'all' | 'provisional' | 'frozen' | 'legacy'>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<ProjectDetail | null>(null);
   useSearchTargetConfirmation('project',view==='projects'?detail?.id:null,false,onEntityReady);
@@ -254,10 +255,11 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
     const needle = query.trim().toLocaleLowerCase('fr-FR');
     return projects.filter((project) => {
       if (statusFilter !== 'all' && project.status !== statusFilter) return false;
+      if (commercialFilter !== 'all' && (project.commercialState ?? 'legacy') !== commercialFilter) return false;
       if (!needle) return true;
       return [project.number, project.name, project.clientLabel, project.projectType].some((value) => value.toLocaleLowerCase('fr-FR').includes(needle));
     });
-  }, [projects, query, statusFilter]);
+  }, [projects, query, statusFilter, commercialFilter]);
 
   const publishedTemplates = useMemo(
     () => templates.filter((template) => template.currentVersion?.status === 'published'),
@@ -861,6 +863,12 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
         <div className="toolbar-controls project-toolbar-controls">
           <button className="secondary-button" type="button" onClick={() => void refresh()}>↻ Actualiser</button>
           <button className="secondary-button" type="button" onClick={() => setView('templates')}>Modèles de projets</button>
+          <select aria-label="État commercial" value={commercialFilter} onChange={(event) => setCommercialFilter(event.target.value as typeof commercialFilter)}>
+            <option value="all">Tous les états commerciaux</option>
+            <option value="provisional">Projets prévisionnels — non signés</option>
+            <option value="frozen">Projets confirmés</option>
+            <option value="legacy">Projets historiques</option>
+          </select>
           <input className="inline-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher projet, client, numéro…" />
           <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as 'all' | ProjectStatus)}>
             <option value="all">Tous les statuts</option>
@@ -907,14 +915,14 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
         <div className="projects-layout">
           <section className="panel project-list-panel">
             <table className="project-table">
-              <thead><tr><th>Numéro</th><th>Client</th><th>Projet</th><th>Statut</th><th>Progression</th><th>Temps estimé</th><th>Cible</th></tr></thead>
+              <thead><tr><th>Numéro</th><th>Client / prospect</th><th>Projet</th><th>État commercial</th><th>Statut</th><th>Progression</th><th>Temps estimé</th><th>Cible</th></tr></thead>
               <tbody>
                 {filtered.map((project) => (
                   <tr key={project.id} className={selectedId === project.id ? 'selected-row' : ''} onClick={() => void openProject(project.id)}>
-                    <td><strong>{project.number}</strong></td><td>{project.clientLabel}</td><td><strong>{project.name}</strong><small>{project.commercialState==='provisional'?'Prévisionnel · ':''}{project.projectType}</small></td><td><span className={`project-status status-${project.status}`}>{PROJECT_STATUS_LABELS[project.status]}</span></td><td><div className="project-progress-cell"><span>{project.progressPercent} %</span><i><b style={{ width: `${project.progressPercent}%` }} /></i></div></td><td>{duration(project.estimatedMinutes)}</td><td>{dateLabel(project.targetDate)}</td>
+                    <td><strong>{project.number}</strong></td><td>{project.clientLabel}</td><td><strong>{project.name}</strong><small>{project.projectType}</small></td><td><span>{project.commercialState === 'provisional' ? 'Prévisionnel · devis non signé' : project.commercialState === 'frozen' ? 'Confirmé · devis accepté' : 'Historique'}</span></td><td><span className={`project-status status-${project.status}`}>{PROJECT_STATUS_LABELS[project.status]}</span></td><td><div className="project-progress-cell"><span>{project.progressPercent} %</span><i><b style={{ width: `${project.progressPercent}%` }} /></i></div></td><td>{duration(project.estimatedMinutes)}</td><td>{dateLabel(project.targetDate)}</td>
                   </tr>
                 ))}
-                {filtered.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucun projet dans cette vue.</div></td></tr>}
+                {filtered.length === 0 && <tr><td colSpan={8}><div className="empty-table">Aucun projet dans cette vue.</div></td></tr>}
               </tbody>
             </table>
           </section>
