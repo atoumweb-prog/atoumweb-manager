@@ -52,6 +52,9 @@ describe('04C / E99-E102 — sauvegarde contrôlée des versions brouillon', () 
     // exactly the same request UUID is sent a second time.
     const second=catalog.createVersion(offer.id,input,requestId);
     expect(first).toEqual(second);
+    expect(()=>catalog.createVersion(offer.id,{
+      ...input,priceCents:99900,
+    },requestId)).toThrow(/contenu différent/);
     expect(first).toMatchObject({id:requestId,versionNumber:2,status:'draft'});
     expect(catalog.getItem(offer.id).versions).toHaveLength(2);
     expect(catalog.listOfferComponents(first.id)).toHaveLength(1);
