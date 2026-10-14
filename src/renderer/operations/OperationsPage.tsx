@@ -426,7 +426,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
       <article><span className="operations-kpi-icon"><OperationIcon name="wrench" /></span><div><strong>Interventions actives</strong><span>{activeInterventions.length}</span><small>Planifiées, en cours ou à valider</small></div></article>
       <article><span className="operations-kpi-icon"><OperationIcon name="clock" /></span><div><strong>En attente client</strong><span>{waitingClientCount}</span><small>Demandes + interventions</small></div></article>
     </section>
-    <OperationsAlertsPanel refreshKey={alertRefreshKey} onNavigate={(target) => setView(target)} onMessage={onMessage} />
+    <OperationsAlertsPanel refreshKey={alertRefreshKey} onNavigate={(target) => requestUnsavedExit(() => setView(target))} onMessage={onMessage} />
     <div className="operations-view-tabs">
       <button type="button" className={view === 'requests' ? 'active' : ''} onClick={() => {if(view!=='requests')requestUnsavedExit(()=>setView('requests'));}}>Demandes <span>{requests.filter((item) => !['closed', 'converted', 'archived'].includes(item.status)).length}</span></button>
       <button type="button" className={view === 'interventions' ? 'active' : ''} onClick={() => {if(view!=='interventions')requestUnsavedExit(()=>setView('interventions'));}}>Interventions <span>{interventions.filter((item) => !['completed', 'cancelled', 'archived'].includes(item.status)).length}</span></button>
