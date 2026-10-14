@@ -51,7 +51,8 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   const [versionEditors, setVersionEditors] = useState<Record<string, string | undefined>>({});
 
   const editable = quote.status === 'draft' && !quote.finalizedAt && !quote.contractCompiledAt && quote.contractTextSnapshot == null && quote.contractSnapshotJson == null;
-  const unsaved=build?.clauses.some(c=>drafts[c.id]&&(drafts[c.id].title!==c.title||drafts[c.id].body!==c.body))??false;
+  const changedClauseIds=build?.clauses.filter(c=>drafts[c.id]&&(drafts[c.id].title!==c.title||drafts[c.id].body!==c.body)).map(c=>c.id)??[];
+  const unsaved=changedClauseIds.length>0;
 
   useUnsavedDraft('Clauses du contrat',drafts,{ready:!!build,dirty:unsaved,pending:busy,discard:()=>setDrafts(Object.fromEntries((build?.clauses??[]).map(c=>[c.id,{title:c.title,body:c.body}])))});
   const customGuard=useUnsavedDraft('Nouvelle clause',{customTitle,customBody},{pending:busy,discard:s=>{setCustomTitle(s.customTitle);setCustomBody(s.customBody);}});
@@ -311,7 +312,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
       {presentation&&<ContractReadPanel presentation={presentation} commercial={commercialAbbyBlock(quote)} unsaved={unsaved}/>}
       <details className="cgv-editing"><summary>Adapter les clauses de ce devis ({build?.clauses.length ?? 0})</summary>
       <p className="muted">Les clauses sont présentées dans l’ordre contractuel du devis. Socle : commun et non modifiable ici ; prestation : déclenchée par une prestation ; particulière : propre à ce devis. Les clauses exclues et orphelines restent visibles pour contrôle.</p>
-      {unsaved && <p role="status" className="cgv-warning">Modifications de texte non enregistrées : enregistre chaque clause concernée avant la finalisation ou la sortie.</p>}
+      {unsaved && <p role="status" className="cgv-warning">{changedClauseIds.length} clause(s) modifiée(s) non enregistrée(s) : enregistre chaque clause concernée avant la finalisation ou la sortie.</p>}
       <div className="cgv-clause-list">
         {build?.clauses.map((clause, index) => {
           const draft = drafts[clause.id] ?? { title: clause.title, body: clause.body };
@@ -323,6 +324,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
                   <span className={'cgv-source source-' + clause.sourceKind}>{sourceLabel(clause)}</span>
                   <strong>{clause.title}</strong>
                   {clause.isCustomized && <small>Modifiée pour ce devis</small>}
+                  {changedClauseIds.includes(clause.id) && <small>Modifications non enregistrées</small>}
                   {clause.isOrphaned && <small>Prestation retirée · clause désactivée automatiquement</small>}
                 </div>
                 <div className="cgv-clause-summary-actions">
