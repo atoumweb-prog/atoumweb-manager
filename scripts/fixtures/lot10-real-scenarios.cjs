@@ -1,6 +1,6 @@
 'use strict';
 // Vrai App/IPC Electron, base SQLite créée exclusivement sous TEMP par le banc hôte.
-module.exports = async ({ db, evalUI: js, get, wait, navigate, test, sleep }) => {
+module.exports = async ({ win, db, evalUI: js, get, wait, navigate, test, sleep }) => {
   const { dialog } = require('electron');
   const initialBackups = db.database.get('SELECT COUNT(*) AS total FROM backup_records').total;
   const nativeInput = async (selector, value) => {
@@ -23,6 +23,25 @@ module.exports = async ({ db, evalUI: js, get, wait, navigate, test, sleep }) =>
   await wait('document.querySelectorAll(".theme-card").length===3 && document.querySelectorAll(".density-card").length===3', 'tous les réglages restaurés');
   test(await get('!!document.querySelector(".settings-grid .path-value")'), 'Lot 10D: la recherche n’efface pas le workspace courant');
 
+  // R10D-18 : débordement horizontal réel signalé à 44px sur CI précédente.
+  const originalTheme = await get('document.documentElement.dataset.theme');
+  const originalDensity = await get('document.documentElement.dataset.density');
+  const oldSize = win.getSize();
+  try {
+    await js("document.documentElement.dataset.theme='blanc';document.documentElement.dataset.density='comfort_plus';");
+    await sleep(150);
+    for (const width of [1510, 920]) {
+      win.setSize(width, width === 920 ? 720 : 1030);
+      await sleep(190);
+      const result = await get('(()=>{const c=document.querySelector(".content-area");if(!c)throw Error("Missing content area");const b=c.getBoundingClientRect();return {pixels:c.scrollWidth-c.clientWidth,sections:document.querySelectorAll(".settings-grid > .panel").length,right:b.right,items:[...document.querySelectorAll(".settings-grid input,.settings-grid button")].filter(e=>e.getBoundingClientRect().right>b.right+3).map(e=>e.textContent.trim()||e.getAttribute("placeholder")).slice(0,8)}})()');
+      test(result.pixels <= 2 && result.items.length===0,
+        'Lot 10D: Blanc/Confort+ sans débordement ni commande hors cadre '+width+'px '+JSON.stringify(result));
+    }
+  } finally {
+    win.setSize(...oldSize);
+    await js(`document.documentElement.dataset.theme=${JSON.stringify(originalTheme)};document.documentElement.dataset.density=${JSON.stringify(originalDensity)};`);
+    await sleep(140);
+  }
   await navigate('Sauvegardes');
   test(await get('document.querySelector(".business-backups-page .technical-safety-note")?.textContent.includes("ne crée pas de fichiers")'), 'Lot 10C: déclaration ne signifie pas sauvegarde réelle');
   await js(`const b=[...document.querySelectorAll('.business-backups-toolbar button')].find(b=>b.textContent.includes('Déclarer une sauvegarde'));if(!b)throw Error('Bouton déclaration absent');b.click();`);
