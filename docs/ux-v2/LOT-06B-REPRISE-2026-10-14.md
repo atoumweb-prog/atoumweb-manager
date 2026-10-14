@@ -43,3 +43,7 @@ Commit `62a9b2823734dbe5440d1fb76558b2c49986a39b` : le bouton Fermer de l'assist
 Commits applicatifs `f2584a4` et `5d46a15` : séquence `detailRequest` et référence `selectedRef` synchronisées lors du changement et de la fermeture. Une réponse de `quotes.get(id)` périmée ne doit pas écraser le devis devenu actif. En cas d'échec du chargement courant seulement, remise à zéro de la sélection ; les erreurs obsolètes ne doivent pas effacer une sélection récente. Le contrôle UX-01 existant demeure avant tout changement.
 
 Scénarios restant à exécuter : A→B avec A résolu après B, A en échec après B réussi, fermeture pendant chargement, refus de quitter un brouillon, ouverture par navigation externe, typecheck et Vitest, vraie fenêtre Electron, thèmes/densités, vérification des effets de `refresh`. **Tests non exécutés ; ne pas déclarer ce lot validé ni fusionner.**
+
+## Renforcement changement de fiche
+
+Commit `77476dd` : lorsque l'ID change, vider le détail précédent avant de lancer le nouvel appel `quotes.get`, et éviter de redemander le même ID lorsqu'il est déjà sélectionné ou en cours de chargement. Les protections contre les réponses tardives et les brouillons restent en place. À tester particulièrement : A→B, B ouvert lentement, B introuvable, B demandé deux fois, A modifié non enregistré et refus de sortie. Tests TypeScript, Vitest et Electron toujours non vérifiés sur ce commit.
