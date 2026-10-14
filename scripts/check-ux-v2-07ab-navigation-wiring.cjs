@@ -8,7 +8,7 @@ const cases=[
  ['Project to quote preserves parent project ID',project.includes('parentEntityId: detail.id')],
  ['Shared navigation reads target before guard',app.includes('await readSearchTarget(window.atoumweb,result')],
  ['Shared navigation protects dirty draft',app.includes('const allowed=requestUnsavedExit(()=>')],
- ['Return project context set only after allowed navigation',app.includes("setQuoteReturnProjectId(result.entityType === 'quote' && activePageRef.current === 'Projets'")],
+ ['Return Project link is set inside allowed navigation callback',app.includes('const allowed=requestUnsavedExit(()=>') && app.includes('setQuoteReturnProjectId(fromProjectQuote ? result.parentEntityId ?? null : null)')],
  ['Quote uses context passed by shell',app.includes('returnProjectId={quoteReturnProjectId}')],
  ['Direct rail navigation clears stale source Project context',/function navigateDirect\(page: PageName\): void\s*\{\s*\/\/[^\n]*\n\s*setQuoteReturnProjectId\(null\);/.test(app)],
  ['Project context travels from source button',project.includes('projectContext: { projectId: detail.id, detailTab, selectedNodeId')],
