@@ -65,7 +65,7 @@ export function reviewCatalogPrepublication(
   if (version.priceBasis==='actual_cost' && (version.priceMode!=='quote_only'||version.priceCents!=null))
     blocking.push('Un coût tiers réel doit rester sur devis sans prix fixe.');
   if (!['quote_only','free'].includes(version.priceMode) &&
-    (!Number.isSafeInteger(version.priceCents)||version.priceCents==null||version.priceCents<0))
+    (version.priceCents==null||!Number.isSafeInteger(version.priceCents)||version.priceCents<0))
     blocking.push('Le montant de la prestation doit être un nombre entier de centimes valide.');
   if (version.priceMode==='free' && version.priceCents!==0 && version.priceCents!=null)
     blocking.push('Une prestation gratuite ne doit pas comporter de montant payant.');
