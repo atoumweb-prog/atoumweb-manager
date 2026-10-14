@@ -354,6 +354,7 @@ const api: AtoumWebApi = {
     },
     previewReference: (typeId,typeVersionId,versionId,audience) => ipcRenderer.invoke('contract-terms:preview-reference',typeId,typeVersionId,versionId,audience),
     copyText: (text: string) => ipcRenderer.invoke('contract-terms:copy-text', text),
+    exportWorkingDocx: (quoteId:string) => ipcRenderer.invoke('contract-terms:export-working-docx',quoteId),
   },
   quotePreparation: {
     get: id => ipcRenderer.invoke('quote-preparation:get',id),
