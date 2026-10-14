@@ -353,6 +353,7 @@ export interface CrmApi {
     list(filters?: ClientFilters): Promise<ClientSummary[]>;
     create(input: ClientInput): Promise<ClientSummary>;
     update(id: string, input: ClientInput): Promise<ClientSummary>;
+    updateRelationshipIfUnchanged(id:string,expected:{status:ClientRelationshipStatus;note:string|null},next:{status:ClientRelationshipStatus;note:string|null}):Promise<ClientSummary>;
     archive(id: string): Promise<ClientSummary>;
     reactivate(id: string, status: Exclude<ClientStatus, 'archived'>): Promise<ClientSummary>;
     listContacts(id: string): Promise<ClientContactLink[]>;

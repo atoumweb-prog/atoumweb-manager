@@ -248,6 +248,7 @@ const api: AtoumWebApi = {
     clients: {
       list: (filters?: ClientFilters) => ipcRenderer.invoke('crm:clients:list', filters),
       create: (input: ClientInput) => ipcRenderer.invoke('crm:clients:create', input),
+      updateRelationshipIfUnchanged: (id,expected,next)=>ipcRenderer.invoke('crm:clients:update-relationship-if-unchanged',id,expected,next),
       update: (id: string, input: ClientInput) => ipcRenderer.invoke('crm:clients:update', id, input),
       archive: (id: string) => ipcRenderer.invoke('crm:clients:archive', id),
       reactivate: (id: string, status: Exclude<ClientStatus, 'archived'>) => ipcRenderer.invoke('crm:clients:reactivate', id, status),

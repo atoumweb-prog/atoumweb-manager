@@ -280,6 +280,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('crm:prospects:research:save', (_event, id: string, input: ProspectResearchSnapshotInput) => database.crm.saveProspectResearchSnapshot(id, input));
   ipcMain.handle('crm:clients:list', (_event, filters?: ClientFilters) => database.crm.listClients(filters));
   ipcMain.handle('crm:clients:create', (_event, input: ClientInput) => database.crm.createClient(input));
+  ipcMain.handle('crm:clients:update-relationship-if-unchanged', (_event,id:string,expected:Parameters<typeof database.crm.updateClientRelationshipIfUnchanged>[1],next:Parameters<typeof database.crm.updateClientRelationshipIfUnchanged>[2])=>database.crm.updateClientRelationshipIfUnchanged(id,expected,next));
   ipcMain.handle('crm:clients:update', (_event, id: string, input: ClientInput) => database.crm.updateClient(id, input));
   ipcMain.handle('crm:clients:archive', (_event, id: string) => database.crm.archiveClient(id));
   ipcMain.handle('crm:clients:reactivate', (_event, id: string, status: Exclude<ClientStatus, 'archived'>) => database.crm.reactivateClient(id, status));

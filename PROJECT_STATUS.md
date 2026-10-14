@@ -1,5 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 14/10/2026 — PR102 intégrée ; reprise 03D puis 03E
+
+- PR102 fusionnée normalement à `b2796812ee24c9e9e824f3d66564f2c1a335bffe`, parents `278ff2da` et `9223f267` ; arbre `88834f9068a3f5a4bd3857cd89b2a6c23df348ce`, identique à la candidate CI780. CI post-fusion [781](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38521894631) SUCCESS : typecheck,1020 Vitest/107 fichiers,35 restaurations,6 binaires,sansRPC. Recette native locale sur **le merge exact** :1421 contrôles,216 captures,intégrité/FK/migrations1–66/nettoyages OK ; les étapes natives conditionnelles ne sont pas exécutées par le workflow push main.
+- Développements 02C–02E et03A–03C intégrés ; sources98–101 incluses par ascendance, ni refusionnées ni fermées. Clôture comme remplacées à proposer après contrôle des HEAD. Aucun historique/branche supprimé.
+- Branche03D depuis ce main : huit onglets Client, état des sections indépendant, panneaux montés, garde UX-01 et préférences de largeur par workspace ; relation/note avec comparaison sous verrou SQLite et journal atomique. Aucun nouveau schéma ni règle de conversion/vente. Les résultats finaux du candidat sont à relever au SHA testé, pas à déduire de ces changements.
+- Référentiel03D/03E récupéré depuis PR82 à `0bb0860e`, contenu historique conservé. [Suivi complet](docs/ux-v2/SUIVI-AVANCEMENT.md), [exécution03D](docs/ux-v2/LOT-03D-EXECUTION-2026-10-14.md). **Lot03 non clos :03D en validation,03E à réaliser.** Recette humaine globale différée à la fin de la refonte, décision utilisateur prioritaire sur les anciennes gates demandant une recette humaine par lot.
+- Lot04 préparé dansPR82 conservé ; aucune nouvelle conception, implémentation Catalogue ou migration. Suite autorisée : stabiliser03D, développer03E sur branche dédiée, recette combinée03A–E, puis reprise04A–F. Aucune autre fusion autorisée.
+
 ## 14/10/2026 — Recette finale de PR102, sans fusion
 
 - Départ8d8b359a/CI779 verte, base278ff2da, worktree propre ; sources98–101 intactes. Inspection agent effective des81 PNG de référence, distincte de toute acceptation humaine métier.

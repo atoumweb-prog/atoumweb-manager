@@ -14,6 +14,7 @@ import {
   type ClientInput,
   type ClientStatus,
   type ClientSummary,
+  type ClientRelationshipStatus,
   type Contact,
   type DirectoryContact,
   type DirectoryOrganization,
@@ -1098,6 +1099,21 @@ export class CrmService {
     this.activity({ entityType: 'client', entityId: id, action: 'created', summary: 'Client créé', clientId: id, organizationId: clean(input.organizationId), contactId: clean(input.primaryContactId) });
     this.indexClient(id);
     return this.getClient(id);
+  }
+
+  /** Relation only: compare under the write lock, preserve unrelated Client fields. */
+  updateClientRelationshipIfUnchanged(id:string,expected:{status:ClientRelationshipStatus;note:string|null},next:{status:ClientRelationshipStatus;note:string|null}):ClientSummary {
+    this.database.exec('SAVEPOINT client_relationship_edit;');
+    try {
+      // Acquire the SQLite write lock before reading the comparison baseline.
+      this.database.run('UPDATE client_accounts SET id=id WHERE id=?',[id]);
+      const current=this.getClient(id);
+      if(!expected||!next||(current.relationshipStatus??'neutral')!==expected.status||(current.relationshipNote??null)!==expected.note)
+        throw Error('Conflit : la relation Client a changé dans une autre fenêtre. La saisie est conservée ; relis la relation avant de réessayer.');
+      const saved=this.updateClient(id,{...current,relationshipStatus:next.status,relationshipNote:next.note??''});
+      if((current.relationshipNote??null)!==(saved.relationshipNote??null))this.activity({entityType:'client',entityId:id,action:'relationship_note_changed',summary:'Note de relation Client modifiée',metadata:{from:current.relationshipNote??null,to:saved.relationshipNote??null},clientId:id});
+      this.database.exec('RELEASE client_relationship_edit;');return saved;
+    }catch(error){this.database.exec('ROLLBACK TO client_relationship_edit; RELEASE client_relationship_edit;');throw error;}
   }
 
   updateClient(id: string, input: ClientInput): ClientSummary {
