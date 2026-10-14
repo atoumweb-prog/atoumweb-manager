@@ -137,19 +137,39 @@ export class ExpenseService {
     const directory = this.receiptDirectory(expense);
     mkdirSync(directory, { recursive: true });
     const destination = this.uniqueDestination(directory, basename(source));
-    if (resolve(source) !== resolve(destination)) copyFileSync(source, destination);
-    const stats = statSync(destination);
-    this.database.run(
-      'UPDATE expenses SET receipt_relative_path=?,receipt_original_name=?,receipt_mime_type=?,receipt_size_bytes=?,updated_at=? WHERE id=?',
-      [relative(this.workspace.root, destination), basename(source), this.mime(destination), Number(stats.size), nowIso(), id],
-    );
-    this.database.run(
-      'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
-      ['expense', id, 'expense_receipt_version', 'Historique justificatif : ' + basename(source),
-        JSON.stringify({ previousRelativePath: expense.receiptRelativePath ?? null, previousFileName: expense.receiptFileName ?? null, currentRelativePath: relative(this.workspace.root, destination), currentFileName: basename(source), currentSha256: createHash('sha256').update(readFileSync(destination)).digest('hex') }), nowIso()],
-    );
-    this.log(id, 'expense_receipt_imported', 'Justificatif : ' + basename(source));
-    return this.get(id);
+    const copied = source !== resolve(destination);
+    try {
+      if (copied) copyFileSync(source, destination);
+      const stats = statSync(destination);
+      const now = nowIso();
+      const storedPath = relative(this.workspace.root, destination);
+      const sha256 = createHash('sha256').update(readFileSync(destination)).digest('hex');
+      this.database.exec('SAVEPOINT expense_receipt_import');
+      try {
+        this.database.run(
+          'UPDATE expenses SET receipt_relative_path=?,receipt_original_name=?,receipt_mime_type=?,receipt_size_bytes=?,updated_at=? WHERE id=?',
+          [storedPath, basename(source), this.mime(destination), Number(stats.size), now, id],
+        );
+        this.database.run(
+          'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
+          ['expense', id, 'expense_receipt_version', 'Historique justificatif : ' + basename(source),
+            JSON.stringify({ previousRelativePath: expense.receiptRelativePath ?? null, previousFileName: expense.receiptFileName ?? null,
+              currentRelativePath: storedPath, currentFileName: basename(source), currentSha256: sha256 }), now],
+        );
+        this.log(id, 'expense_receipt_imported', 'Justificatif : ' + basename(source));
+        this.database.exec('RELEASE SAVEPOINT expense_receipt_import');
+      } catch (error) {
+        this.database.exec('ROLLBACK TO SAVEPOINT expense_receipt_import');
+        this.database.exec('RELEASE SAVEPOINT expense_receipt_import');
+        throw error;
+      }
+      return this.get(id);
+    } catch (error) {
+      // A rejected update must not leave a new, unattached receipt copy behind.
+      // Never delete the source or a pre-existing receipt version.
+      if (copied) rmSync(destination, { force: true });
+      throw error;
+    }
   }
 
   absoluteReceiptPath(id: string): string {
