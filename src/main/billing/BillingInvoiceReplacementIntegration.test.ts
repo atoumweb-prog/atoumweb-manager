@@ -48,6 +48,12 @@ describe('09B — remplacement de facture Abby sur vrai workspace temporaire', (
       expect(billing.get('item-09b')).toMatchObject({ status: 'invoiced', invoiceDocumentId: revised.id });
       expect(readFileSync(docs.absolutePath(original.id))).toEqual(originalBytes);
       expect(() => docs.deletePermanently(original.id)).toThrow(/historique de facturation Abby/);
+      expect(() => docs.update(original.id, { category: 'other', title: 'Reclassement interdit' }))
+        .toThrow(/doit rester classée dans Factures/);
+      expect(() => docs.update(revised.id, { category: 'other', title: 'Reclassement interdit' }))
+        .toThrow(/doit rester classée dans Factures/);
+      expect(docs.get(original.id).category).toBe('invoice');
+      expect(docs.get(revised.id).category).toBe('invoice');
       const history = db.all<{ action: string; metadata_json: string }>(
         "SELECT action,metadata_json FROM activity_log WHERE entity_type='billing_item' AND entity_id=? AND action='billing_invoice_replaced'",
         ['item-09b'],
