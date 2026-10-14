@@ -34,7 +34,7 @@ import {CatalogPage} from '${repo.replaceAll('\\', '/')}/src/renderer/commercial
 import commercialSource from '${repo.replaceAll('\\', '/')}/data/catalogue/atoumweb-catalogue-v1.json';
 const oldVersion={id:'old-v1',itemId:'legacy-id',versionNumber:1,status:'published',priceMode:'fixed',priceCents:69900,description:'Ancienne offre',inclusions:[],exclusions:[],prerequisites:[],createdAt:'2026-09-14',publishedAt:'2026-09-14'};
 const items=[{id:'legacy-id',type:'service',name:'Ancien élément témoin',category:'Web',status:'active',visiblePublic:false,canonicalCode:null,currentVersion:oldVersion,versions:[oldVersion],createdAt:'2026-09-14'}];
-window.calls={create:[],version:[],assign:[],publish:0};window.items=items;window.messages=[];
+window.calls={create:[],version:[],saveDraft:[],assign:[],publish:0};window.items=items;window.messages=[];
 window.fixtureErrors=[];window.addEventListener('error',event=>window.fixtureErrors.push(String(event.error?.stack||event.message)));window.addEventListener('unhandledrejection',event=>window.fixtureErrors.push(String(event.reason?.stack||event.reason)));
 window.importedVersion={...commercialSource.records.find(r=>r.canonicalCode==='AW-WEB-VITRINE').version,id:'legacy-import-v2',itemId:'legacy-id',versionNumber:2,status:'draft',createdAt:'2026-10-03'};
 window.categoryRecords=[];window.categoryCalls=[];window.categorySequence=0;
@@ -87,6 +87,16 @@ window.atoumweb={catalogCategories:categoryApi,catalog:{
   list:async()=>structuredClone(items),getItem:async(id)=>structuredClone(items.find(i=>i.id===id)),
   create:async(input,version)=>{calls.create.push({input,version});const id='new-'+calls.create.length;const v={...version,id:id+'-v1',itemId:id,versionNumber:1,status:'draft',createdAt:'2026-10-03'};const item={...input,id,status:'active',canonicalCode:input.canonicalCode?.toUpperCase()||null,currentVersion:v,versions:[v]};items.push(item);return structuredClone(item)},
   createVersion:async(id,input)=>{calls.version.push({id,input});const item=items.find(i=>i.id===id);const v={...input,id:id+'-v2',itemId:id,versionNumber:2,status:'draft',createdAt:'2026-10-03'};item.versions.unshift(v);return structuredClone(v)},
+  saveDraftVersion:async(id,expected,input)=>{
+    const item=items.find(i=>i.versions.some(v=>v.id===id));
+    const v=item?.versions.find(v=>v.id===id);
+    if(!v||v.status!=='draft')throw Error('Version publiée ou retirée : crée un nouveau brouillon.');
+    if(JSON.stringify(v)!==JSON.stringify(expected))throw Error('Conflit : le brouillon a été modifié dans une autre fenêtre.');
+    calls.saveDraft.push({id,expected,input});
+    Object.assign(v,input);
+    if(item.currentVersion.id===id)item.currentVersion=v;
+    return structuredClone(v);
+  },
   assignCanonicalCode:async(id,code)=>{calls.assign.push({id,code});if(!/^AW-[A-Z0-9-]+$/.test(code))throw Error('Code canonique invalide');const item=items.find(i=>i.id===id);item.canonicalCode=code;item.identityProvenance={reference:'manual'};return structuredClone(item)},
   publishVersion:async()=>{calls.publish++},listOfferComponents:async()=>[],
 },contractTypes:{
@@ -157,10 +167,21 @@ app.whenReady().then(async () => {
       assert('Unité, périodicité et provenance transmises',created.version.unit==='licence'&&created.version.periodicity==='annuelle'&&created.version.provenance.recordKey==='AW-TEST-LICENCE');
       assert('Pas de faux prix nul',created.version.priceCents===null&&created.version.priceBasis==='actual_cost');
       assert('Coût réel et nature visibles',document.body.textContent.includes('Coût tiers réel')&&document.body.textContent.includes('Abonnement'));
-      await click('Modifier via une nouvelle version');
-      assert('Métadonnées reprises dans une nouvelle version',field('Unité').value==='licence'&&field('Périodicité').value==='annuelle'&&field('Base de prix').value==='actual_cost'&&field('Référence de source').value==='Catalogue V1 témoin');
-      await click('Créer v2');
-      assert('Nouvelle version en brouillon sans publication',calls.version.length===1&&calls.publish===0&&items[1].versions[0].status==='draft');
+      await click('Reprendre le brouillon');
+      assert('04C brouillon original rouvert',field('Unité').value==='licence'&&field('Périodicité').value==='annuelle'&&field('Base de prix').value==='actual_cost'&&field('Référence de source').value==='Catalogue V1 témoin');
+      await fill('Description','Enregistré en place, sans v2');
+      await click('Enregistrer le brouillon');
+      assert('04C enregistrement sans nouvelle version',calls.saveDraft.length===1&&calls.version.length===0&&calls.publish===0&&items[1].versions.length===1);
+      assert('04C même ID de version conservé',calls.saveDraft[0].id===items[1].versions[0].id&&items[1].versions[0].description==='Enregistré en place, sans v2');
+      await click('Reprendre le brouillon');
+      await fill('Description','Brouillon local à conserver');
+      items[1].versions[0].description='Changement fenêtre concurrente';
+      await click('Enregistrer le brouillon');
+      assert('04C conflit visible et éditeur conservé',!!document.querySelector('.catalog-version-editor .form-error')&&
+        [...document.querySelectorAll('.catalog-version-editor textarea')].some(t=>t.value==='Brouillon local à conserver'));
+      assert('04C aucune écriture concurrente ni duplication',calls.saveDraft.length===1&&items[1].versions.length===1&&
+        items[1].versions[0].description==='Changement fenêtre concurrente');
+      await click('Annuler');
       const search=document.querySelector('.inline-search');await fillField(search,'AW-TEST-LICENCE');
       assert('Recherche par code canonique',document.querySelectorAll('.catalog-compact-item').length===1&&document.querySelector('.catalog-compact-item').textContent.includes('Licence de recette'));
       await fillField(search,'Licence fournisseur de recette');
