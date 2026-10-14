@@ -15,5 +15,7 @@ export function resolveProspectCatalogRecommendations(
   const legacy=[...new Set(legacyItemIds)].map(id=>catalog.find(item=>item.id===id))
     .filter((item):item is CatalogItemSummary=>Boolean(item&&allowed(item)));
   // Backwards compatibility while old seeded catalogues lack managed relations.
-  return managed.length ? managed : legacy;
+  // A configured relation that became inadmissible must not resurrect unrelated
+  // historical hard-coded suggestions. The fallback applies only to no managed links.
+  return managedVersionIds.length ? managed : legacy;
 }
