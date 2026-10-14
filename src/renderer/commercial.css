@@ -1336,7 +1336,7 @@ body.catalog-resizing * {
 }
 .catalog-editor-tabs [role="tab"] {
   border: 1px solid var(--border); border-radius: 8px; background: var(--surface-soft);
-  color: var(--text); min-height: 36px; padding: 7px 10px; font: inherit; font-size: 0.875rem;
+  color: var(--text); min-height: 36px; padding: 7px 10px; font: inherit; font-size: max(14px, 0.875rem);
   cursor: pointer; max-width: 100%;
 }
 .catalog-editor-tabs [role="tab"][aria-selected="true"] {
