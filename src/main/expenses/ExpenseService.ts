@@ -124,9 +124,24 @@ export class ExpenseService {
   changeStatus(id: string, status: ExpenseStatus): Expense {
     if (!EXPENSE_STATUSES.includes(status)) throw new Error('Statut de dépense invalide.');
     const current = this.get(id);
-    const paidAt = status === 'paid' ? current.paidAt ?? nowIso() : null;
-    this.database.run('UPDATE expenses SET status=?,paid_at=?,updated_at=? WHERE id=?', [status, paidAt, nowIso(), id]);
-    this.log(id, 'expense_status_changed', current.label + ' · ' + status);
+    if (current.status === status) return current;
+    const now = nowIso();
+    const paidAt = status === 'paid' ? current.paidAt ?? now : null;
+    this.database.exec('SAVEPOINT expense_status_update');
+    try {
+      this.database.run('UPDATE expenses SET status=?,paid_at=?,updated_at=? WHERE id=?', [status, paidAt, now, id]);
+      this.database.run(
+        'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
+        ['expense', id, 'expense_status_changed', current.label + ' · ' + status,
+          JSON.stringify({ previousStatus: current.status, currentStatus: status,
+            previousPaidAt: current.paidAt, currentPaidAt: paidAt, paymentVerifiedByBank: false }), now],
+      );
+      this.database.exec('RELEASE SAVEPOINT expense_status_update');
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT expense_status_update');
+      this.database.exec('RELEASE SAVEPOINT expense_status_update');
+      throw error;
+    }
     return this.get(id);
   }
 
