@@ -102,7 +102,8 @@ describe('04B E95 — administration transactionnelle et catégories historiques
 
   it('n’assimile pas deux valeurs brutes proches lors de la réconciliation', () => {
     const a=create('A','SEO');
-    const b=create('B','SEO ');
+    const b=create('B','SEO');
+    db.run('UPDATE catalog_items SET category=? WHERE id=?',['SEO ',b.id]);
     const cat=categories.create('Référencement');
     categories.reconcileLegacy('SEO',cat.id,[a.id]);
     expect(catalog.getItem(a.id).category).toBe('Référencement');
