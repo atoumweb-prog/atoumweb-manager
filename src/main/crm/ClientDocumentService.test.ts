@@ -70,6 +70,25 @@ describe('preuve contractuelle rattachée', () => {
     expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
+  it('interdit de supprimer une facture rattachée à la facturation, même archivée', () => {
+    const source = join(root, 'facture.pdf');
+    writeFileSync(source, '%PDF-1.4\\nFacture fictive de recette');
+    const doc = documents.importPaths(clientId, [source], { category: 'invoice', title: 'Facture test' })[0];
+    const path = documents.absolutePath(doc);
+    const bytes = readFileSync(path);
+    const now = new Date().toISOString();
+    database.run(
+      "INSERT INTO billing_items (id,client_account_id,source_type,source_id,source_key,description,expected_amount_cents,theoretical_value_cents,status,invoice_document_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+      ['lot09-linked-bill', clientId, 'other', 'lot09-test', 'lot09-test-invoice', 'Facture fictive', 10000, 10000, 'invoiced', doc.id, now, now],
+    );
+    expect(() => documents.deletePermanently(doc.id)).toThrow(/facture PDF.*rattachée/);
+    documents.archive(doc.id);
+    expect(() => documents.deletePermanently(doc.id)).toThrow(/facture PDF.*rattachée/);
+    expect(readFileSync(path)).toEqual(bytes);
+    expect(documents.get(doc.id).missing).toBe(false);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
   it('conserve la suppression explicite d’un document sans rattachement contractuel', () => {
     const doc = importPdf();
     const path = documents.absolutePath(doc);
