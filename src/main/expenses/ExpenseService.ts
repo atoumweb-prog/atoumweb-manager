@@ -167,7 +167,7 @@ export class ExpenseService {
       "SELECT metadata_json FROM activity_log WHERE entity_type='expense' AND entity_id=? AND action='expense_receipt_version' ORDER BY id DESC",
       [id],
     );
-    return rows.flatMap((row) => {
+    return rows.flatMap<{ relativePath: string; fileName: string; sha256: string | null; integrity: 'verified' | 'unknown' | 'missing' | 'modified' }>((row) => {
       if (!row.metadata_json) return [];
       let value: { currentRelativePath?: string; currentFileName?: string; currentSha256?: string };
       try { value = JSON.parse(row.metadata_json); } catch { return []; }
