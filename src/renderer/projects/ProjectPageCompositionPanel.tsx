@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import type { ProjectNode } from '../../shared/projects';
 import type {
   AtoumWebCompositionDetail,
+  AtoumWebCompositionPackageExportResult,
+  ProjectPagePackageHistoryEntry,
   AtoumWebCompositionItem,
   AtoumWebCompositionSummary,
   AtoumWebLibraryCategory,
@@ -19,6 +21,7 @@ type PanelMode = null | 'library' | 'create' | 'attach' | 'inspect' | 'preview';
 type CreateMode = 'new' | 'variant';
 type CodeInputMode = 'complete' | 'separated';
 type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
+interface CompositionOrderStep { before: string[]; after: string[]; }
 
 const VISUAL_CATEGORIES: Array<{ id: AtoumWebLibraryCategory; label: string }> = [
   { id: 'hero', label: 'Hero' },
@@ -181,6 +184,11 @@ export function ProjectPageCompositionPanel({
   onInspectorOpenChange?: (open: boolean, dual: boolean, expandedCount: number) => void;
 }) {
   const [composition, setComposition] = useState<AtoumWebCompositionDetail | null>(null);
+  const [preparedPackage, setPreparedPackage] = useState<(AtoumWebCompositionPackageExportResult & { sourceUpdatedAt: string }) | null>(null);
+  const [exportHistory, setExportHistory] = useState<ProjectPagePackageHistoryEntry[]>([]);
+  const [orderUndo, setOrderUndo] = useState<CompositionOrderStep[]>([]);
+  const [orderRedo, setOrderRedo] = useState<CompositionOrderStep[]>([]);
+  function clearOrderHistory(): void { setOrderUndo([]); setOrderRedo([]); }
   const [allCompositions, setAllCompositions] = useState<AtoumWebCompositionSummary[]>([]);
   const [library, setLibrary] = useState<AtoumWebTechnicalItemSummary[]>([]);
   const [mode, setMode] = useState<PanelMode>(null);
@@ -216,21 +224,26 @@ export function ProjectPageCompositionPanel({
 
   async function reload(): Promise<void> {
     const epoch = pageEpoch.current;
-    const [nextComposition, nextCompositions, nextLibrary] = await Promise.all([
+    const [nextComposition, nextCompositions, nextLibrary, nextHistory] = await Promise.all([
       window.atoumweb.referentials.compositions.getForProjectPage(page.id),
       window.atoumweb.referentials.compositions.list(false),
       window.atoumweb.referentials.library.list({ includeArchived: false }),
+      window.atoumweb.referentials.compositions.listPageExports(page.id),
     ]);
     if (epoch !== pageEpoch.current) return;
     setComposition(nextComposition);
     setAllCompositions(nextCompositions);
     setLibrary(nextLibrary);
+    setExportHistory(nextHistory);
   }
 
   useEffect(() => {
     ++inspectEpoch.current;
     ++pageEpoch.current;
     setComposition(null);
+    clearOrderHistory();
+    setPreparedPackage(null);
+    setExportHistory([]);
     setMode(null);
     setInspected(null);
     setSettingsItemId(null);
@@ -303,6 +316,7 @@ export function ProjectPageCompositionPanel({
       const target = await ensureComposition();
       const next = await window.atoumweb.referentials.compositions.addItem(target.id, { libraryItemId: itemId });
       setComposition(next);
+      clearOrderHistory();
       setMode(null);
       onMessage('Composant ajouté à la Page.');
       await reload();
@@ -315,8 +329,35 @@ export function ProjectPageCompositionPanel({
     const nextIndex = Math.max(0, Math.min(composition.items.length - 1, item.sortOrder + delta));
     if (nextIndex === item.sortOrder) return;
     await withBusy(async () => {
+      const before = composition.items.map(entry => entry.id);
       const next = await window.atoumweb.referentials.compositions.moveItem(composition.id, item.id, { targetIndex: nextIndex });
       setComposition(next);
+      setOrderUndo(history => [...history, { before, after: next.items.map(entry=>entry.id) }].slice(-40));
+      setOrderRedo([]);
+    });
+  }
+
+  function restoreLastOrder(direction: 'undo' | 'redo'): void {
+    if(busy || !composition)return;
+    requestUnsavedExit(() => { void restoreLastOrderAllowed(direction); }, 'project-composition');
+  }
+
+  async function restoreLastOrderAllowed(direction: 'undo' | 'redo'): Promise<void> {
+    const step = (direction === 'undo' ? orderUndo : orderRedo).at(-1);
+    if (!composition || !step) return;
+    const expected = direction === 'undo' ? step.after : step.before;
+    const target = direction === 'undo' ? step.before : step.after;
+    await withBusy(async () => {
+      const next = await window.atoumweb.referentials.compositions.restoreOrder(composition.id, expected, target);
+      setComposition(next);
+      if (direction === 'undo') {
+        setOrderUndo(h => h.slice(0,-1));
+        setOrderRedo(h => [...h,step]);
+      } else {
+        setOrderRedo(h => h.slice(0,-1));
+        setOrderUndo(h => [...h,step].slice(-40));
+      }
+      onMessage(direction === 'undo' ? 'Dernier déplacement annulé.' : 'Déplacement rétabli.');
     });
   }
 
@@ -328,6 +369,7 @@ export function ProjectPageCompositionPanel({
     await withBusy(async () => {
       const next = await window.atoumweb.referentials.compositions.removeItem(composition.id, item.id);
       setComposition(next);
+      clearOrderHistory();
       onMessage('Composant retiré de la Page. La Bibliothèque source reste intacte.');
     });
   }
@@ -390,6 +432,7 @@ export function ProjectPageCompositionPanel({
     await withBusy(async () => {
       const next = await window.atoumweb.referentials.compositions.attachToProjectPage(page.id, attachId);
       setComposition(next);
+      clearOrderHistory();
       setMode(null);
       setAttachId('');
       onMessage('Composition existante rattachée à la Page.');
@@ -443,6 +486,7 @@ export function ProjectPageCompositionPanel({
       const target = await ensureComposition();
       const next = await window.atoumweb.referentials.compositions.addItem(target.id, { libraryItemId: created.id });
       setComposition(next);
+      clearOrderHistory();
       setCreateForm(EMPTY_FORM);
       setFullCode('');
       setCodeInputMode('complete');
@@ -477,8 +521,12 @@ export function ProjectPageCompositionPanel({
     setBusy(true);
     try {
       const exported = await window.atoumweb.referentials.compositions.exportPagePackage(page.id);
+      // The Manager can only prove its local ZIP; a WordPress import has not
+      // been acknowledged and must never be represented as a published Page.
+      setPreparedPackage({ ...exported, sourceUpdatedAt: composition.updatedAt });
+      setExportHistory(await window.atoumweb.referentials.compositions.listPageExports(page.id));
       onMessage(
-        `Package Page prêt : ${exported.fileName}`,
+        `Package Page préparé localement (import Bridge non confirmé) : ${exported.fileName}`,
         () => void window.atoumweb.referentials.compositions.showPackage(exported.path),
       );
     } catch (error) {
@@ -517,12 +565,34 @@ export function ProjectPageCompositionPanel({
         <p>Ajoute uniquement ce que tu veux préparer depuis Manager. Le reste de la Page pourra être construit librement dans Divi.</p>
       </div>
       <div className="project-page-composition-actions">
+        {composition&&<button className="secondary-button" type="button" disabled={busy||!orderUndo.length} onClick={()=>restoreLastOrder('undo')}>Annuler déplacement</button>}
+        {composition&&<button className="secondary-button" type="button" disabled={busy||!orderRedo.length} onClick={()=>restoreLastOrder('redo')}>Rétablir déplacement</button>}
         {composition?.items.length ? <button className="primary-button" type="button" disabled={busy} onClick={() => void exportPagePackage()}>Préparer pour Bridge</button> : null}
         {composition?.items.length ? <button className="secondary-button" type="button" onClick={() => void buildPagePreview()}>Aperçu de la Page</button> : null}
         <button className="secondary-button" type="button" onClick={() => changeMode(mode === 'library' ? null : 'library')}>+ Bibliothèque</button>
         <button className="primary-button" type="button" onClick={() => changeMode(mode === 'create' ? null : 'create')}>+ Créer un composant</button>
       </div>
     </header>
+
+    {preparedPackage&&<div className="project-page-package-status" role="status">
+      <strong>{composition?.updatedAt===preparedPackage.sourceUpdatedAt
+        ? 'Package local préparé · Import Bridge non confirmé'
+        : 'Package local antérieur · Composition modifiée depuis cet export'}</strong>
+      <p>Fichier : {preparedPackage.fileName}. Export ID : {preparedPackage.exportId??'non fourni'}.</p>
+      <p>Destination Manager : Projet {preparedPackage.projectId??'—'} · Site {preparedPackage.siteId??'—'} · Page {preparedPackage.pageId??'—'}.</p>
+      <p>Ce statut confirme seulement la création du fichier ZIP local. Aucun Workbench WordPress, import Divi, publication ou synchronisation de retour n’a été confirmé.</p>
+      <button type="button" className="secondary-button" onClick={()=>void window.atoumweb.referentials.compositions.showPackage(preparedPackage.path)}>
+        Ouvrir le package local
+      </button>
+    </div>}
+
+    {exportHistory.length>0&&<details className="project-page-package-status">
+      <summary>Historique local des exports Page ({exportHistory.length}) — aucune importation WordPress confirmée</summary>
+      {exportHistory.map(entry=><p key={entry.exportId}>
+        {new Date(entry.createdAt).toLocaleString('fr-FR')} · {entry.exportId} · {entry.componentCount} composant(s) · empreinte {entry.fingerprint.slice(0,12)}
+      </p>)}
+      <p>Ces enregistrements prouvent la préparation de fichiers locaux, pas leur import dans un Workbench ni leur publication.</p>
+    </details>}
 
     <div className="project-page-composition-workspace">
       <div className="project-page-composition-primary">
