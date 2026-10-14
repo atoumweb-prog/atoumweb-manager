@@ -1,6 +1,6 @@
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, relative } from 'node:path';
+import { basename, join, relative } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations, MIGRATIONS } from '../database/migrations';
@@ -274,6 +274,48 @@ describe('ReusePreparationService', () => {
       : '')).toBe(true);
     expect(database.all('PRAGMA foreign_key_check')).toHaveLength(0);
     expect(database.get<{ integrity_check: string }>('PRAGMA integrity_check')?.integrity_check).toBe('ok');
+  });
+
+  it('R07E-15 / R07G-20 : refuse un dossier sources substitué par un lien vers des fichiers privés', () => {
+    const project = projects.createInternal({ name: 'Projet réutilisation isolée' });
+    const item = projectLibrary.create(
+      project.id,
+      { category: 'note', name: 'Source avec pièce jointe' },
+      { contentType: 'text', contentText: 'Source légitime' },
+    );
+    const sourceFile = join(workspaceRoot, 'piece-publiable.txt');
+    writeFileSync(sourceFile, 'PIECE LEGITIME', 'utf8');
+    const asset = resources.importFilePaths(project.id, [sourceFile], 'technical')[0];
+    projectLibrary.linkResource(item.currentVersion!.id, asset.id);
+    const before = projectLibrary.get(item.id);
+    const preparation = reuse.prepareProjectItem({ itemId: item.id });
+    expect(preparation.copiedFiles).toHaveLength(1);
+    expect(preparation.copiedFiles[0].copied).toBe(true);
+
+    const sourcesDirectory = join(preparation.packageDirectory, 'sources');
+    const outside = mkdtempSync(join(tmpdir(), 'atoumweb-private-reuse-'));
+    try {
+      // Junctions work on Windows runners without requesting symlink privileges.
+      // The declared copiedFiles path remains unchanged and lexically valid.
+      writeFileSync(join(outside, basename(preparation.copiedFiles[0].packageRelativePath!)),
+        'SECRET CLIENT A NE PAS COPIER', 'utf8');
+      rmSync(sourcesDirectory, { recursive: true, force: true });
+      symlinkSync(outside, sourcesDirectory, 'junction');
+
+      expect(() => reuse.createGlobal({
+        preparation,
+        item: { category: 'note', name: 'Note généralisée', reuseStatus: 'adapt' },
+        version: { contentType: 'text', contentText: 'Texte adapté sans client' },
+      })).toThrow(/en dehors du dossier de réutilisation autorisé/);
+      expect(globalLibrary.list()).toHaveLength(0);
+      expect(database.all('SELECT id FROM atoumweb_technical_assets')).toHaveLength(0);
+      expect(projectLibrary.get(item.id)).toEqual(before);
+      expect(database.get('PRAGMA integrity_check')?.integrity_check).toBe('ok');
+      expect(database.all('PRAGMA foreign_key_check')).toHaveLength(0);
+    } finally {
+      rmSync(sourcesDirectory, { recursive: true, force: true });
+      rmSync(outside, { recursive: true, force: true });
+    }
   });
 
   it('refuse les chemins de paquet ou fichiers préparés hors exports/reutilisation', () => {
