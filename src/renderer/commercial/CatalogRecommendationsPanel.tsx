@@ -17,11 +17,15 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
   const [error,setError] = useState('');
   const sourceRef=useRef(sourceId);
   sourceRef.current=sourceId;
+  const requestEpoch=useRef(0);
+  const saveInFlight=useRef<string|null>(null);
   const guard=useUnsavedDraft('Recommandations Catalogue',targets,{
     group:'catalog:'+item.id,resetKey:sourceId,ready:!!sourceId&&!loading,
     pending:saving,discard:setTargets,
   });
   useEffect(()=>{
+    ++requestEpoch.current;
+    saveInFlight.current=null;
     let cancelled=false;
     setLoading(true);setSaving(false);setError('');setTargets([]);setSavedLinks([]);
     if (!sourceId){setLoading(false);return;}
@@ -42,16 +46,18 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
     &&candidate.currentVersion?.status==='published'
     &&!targets.includes(candidate.currentVersion.id));
   async function save(){
-    if(!sourceId||!editable||saving)return;
+    if(!sourceId||!editable||saving||saveInFlight.current===sourceId)return;
     const savingSourceId=sourceId;
+    const saveEpoch=requestEpoch.current;
+    saveInFlight.current=sourceId;
     setSaving(true);setError('');
     try{
       const links=await window.atoumweb.catalog.replaceRecommendations(sourceId,targets,savedLinks.map(link=>link.targetVersionId));
-      if(sourceRef.current!==savingSourceId)return;
+      if(sourceRef.current!==savingSourceId||requestEpoch.current!==saveEpoch)return;
       setSavedLinks(links);const saved=links.map(link=>link.targetVersionId);
       setTargets(saved);guard.saved(saved);
-    }catch(err){if(sourceRef.current===savingSourceId)setError(err instanceof Error?err.message:'Enregistrement impossible : saisie conservée.');}
-    finally{if(sourceRef.current===savingSourceId)setSaving(false);}
+    }catch(err){if(sourceRef.current===savingSourceId&&requestEpoch.current===saveEpoch)setError(err instanceof Error?err.message:'Enregistrement impossible : saisie conservée.');}
+    finally{if(sourceRef.current===savingSourceId&&requestEpoch.current===saveEpoch){saveInFlight.current=null;setSaving(false);}}
   }
   return <section className="catalog-detail-section" aria-label="Recommandations commerciales">
     <strong>Recommandations complémentaires · {source?'v'+source.versionNumber:'Aucune version'}</strong>
