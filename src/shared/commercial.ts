@@ -156,7 +156,8 @@ export interface CatalogApi {
   list(filters?: CatalogFilters): Promise<CatalogItemSummary[]>;
   getItem(id: string): Promise<CatalogItemDetail>;
   create(input: CatalogItemInput, firstVersion: CatalogVersionInput): Promise<CatalogItemDetail>;
-  createVersion(itemId: string, input: CatalogVersionInput): Promise<CatalogVersion>;
+  /** An optional stable request UUID makes network retries idempotent. */
+  createVersion(itemId: string, input: CatalogVersionInput, requestId?: string): Promise<CatalogVersion>;
   /** Update only an existing draft; expected is the last loaded version for optimistic concurrency. */
   saveDraftVersion(versionId: string, expected: CatalogVersion, input: CatalogVersionInput): Promise<CatalogVersion>;
   publishVersion(versionId: string): Promise<CatalogVersion>;
