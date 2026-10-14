@@ -353,7 +353,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
       createGuard.saved(EMPTY_DRAFT);
       setShowForm(false);
       await refresh();
-      setSelectedId(created.id);setVersionMode(false);await loadDetail(created.id);
+      setSelectedId(created.id);setVersionMode(false);setActiveTab('identity');await loadDetail(created.id);
       onMessage(`${created.type === 'offer' ? 'Offre' : 'Service'} créé en brouillon.`);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Création impossible.');
@@ -369,7 +369,6 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     const existingDraft = detail.versions.find(version => version.status === 'draft') ?? null;
     const current = existingDraft ?? detail.currentVersion;
     setEditingDraftVersion(existingDraft);
-    setActiveTab('identity');
     setPublicationCandidate(null);
     setVersionFormError(null);
     setVersionDraft({
