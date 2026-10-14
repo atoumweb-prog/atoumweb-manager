@@ -60,8 +60,10 @@ describe('04D — versioned recommendation persistence',()=>{
     catalog.publishVersion(target.versions[0].id);
     recommendations.replace(source.versions[0].id,[target.versions[0].id],[]);
     catalog.setStatus(target.id,'inactive');
-    expect(recommendations.list(source.versions[0].id).map(link=>link.targetVersionId))
-      .toEqual([target.versions[0].id]);
+    expect(recommendations.list(source.versions[0].id)).toMatchObject([{
+      targetVersionId:target.versions[0].id,
+      targetName:'Target later inactive',targetVersionNumber:1,targetItemStatus:'inactive',
+    }]);
     expect(()=>recommendations.replace(source.versions[0].id,[target.versions[0].id],[target.versions[0].id]))
       .toThrow(/active/);
     expect(recommendations.list(source.versions[0].id)).toHaveLength(1);
