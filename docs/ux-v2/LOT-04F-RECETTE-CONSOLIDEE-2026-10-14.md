@@ -50,3 +50,16 @@ Aucun pourcentage de clôture technique certifié tant que les critères ouverts
 **Portes restantes avant clôture 04F** : (1) arbitrage du conflit de migration 67 entre lots 04 et 05, sans renumérotation spéculative ; (2) réconciliation des branches empilées 04B→04C→04D/04E avec le `main` récent ; (3) rejouer TypeScript, Vitest, Electron Windows, UX-01 et migrations/FK sur **le SHA convergé** ; (4) inspection visuelle humaine des captures et parcours sensibles, ou réserve approuvée ; (5) dossier et autorisation explicite de fusion. Ne jamais modifier `Validation-MSI` ni une base utilisateur pour cette recette.
 
 **Décision** : développement 04D/04E validé sur son dernier HEAD par CI #1619, **lot 04F non clôturé**, aucune fusion vers `main`.
+
+
+## Actualisation finale 04F (après 04D) — 14 octobre 2026
+
+**Le dernier SHA de code testé est `df1ef30d5b44a68c22d68f2e69cf92440bbed97d`, CI [#1781 SUCCESS](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38643709796).** Electron Windows Catalogue/Prospect/Devis/recommandations/aides, neuf captures automatiques, IPC/SQLite TEMP, UX-01, typecheck et Vitest ont réussi.
+
+Les mentions antérieures de CI #1619, #1648 et du conflit de migration 67 du lot05 sont **historiques**, non le dernier état. La PR #121 du lot05 porte maintenant sa migration `contract_clause_section_review_v1` en **69**. La migration additive lot04D `catalog_recommendation_details_v1` est **70 provisoire** ; précédentes 67 et 68 inchangées.
+
+La branche #118 n'a pas été réconciliée avec le main actuel (402 commits devant, 10 derrière au dernier contrôle). Les deux commits tardifs 04B non présents sur 04C concernent `PROJECT_STATUS.md`, non le code. Les régressions 04D sur motifs, états, conditions, provenance, priorité et CAS font partie de la suite validée.
+
+**Portes restantes inchangées :** inspection et préservation des bases SQLite persistantes MSI, validation globale des IDs/noms de migrations des lots 04/05/06/09, convergence Git contrôlée, test complet du SHA convergé, recette visuelle humaine, approbation explicite avant toute fusion dans `main`.
+
+Voir `docs/ux-v2/LOT-04-PASSATION-CODEX-CONVERGENCE-2026-10-14.md` pour l'ordre exact des opérations. Aucun test de base persistante Windows ni test de code convergé n'a été prétendu.
