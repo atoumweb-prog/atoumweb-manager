@@ -233,7 +233,7 @@ export function StatisticsPage({ onMessage, externalPeriod, hidePeriodControls =
           className={period.preset === item.value ? 'active' : ''}
           onClick={() => setPeriod({ preset: item.value })}
         >{item.short}</button>)}
-      </div>
+      </div>}
 
       {!hidePeriodControls && period.preset === 'custom' && <div className="phase7-statistics-custom-dates">
         <label>Du<input type="date" value={period.from ?? ''} onChange={(event) => setPeriod((current) => ({ ...current, from: event.target.value }))} /></label>
