@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, unlinkSync } from 'node:fs';
 import { basename, join, resolve, sep } from 'node:path';
 import type { AtoumWebCompositionPackageExportResult } from '../../shared/referentials';
 import { buildComponentIdentityV1 } from '../../shared/componentIdentity';
@@ -74,18 +74,35 @@ export class AtoumWebCompositionPackageService {
       siteId: destination.project_site_id,
       pageId: destination.project_node_id,
     };
-    const exported = this.buildPackage(destination.composition_id, context);
-    const fingerprint = this.sha256(readFileSync(exported.path));
-    this.database.run(
-      `INSERT INTO project_page_exports
-       (id,composition_id,project_id,project_site_id,project_node_id,package_fingerprint,package_path,component_count,created_at)
-       VALUES (?,?,?,?,?,?,?,?,?)`,
-      [
-        context.exportId, destination.composition_id, context.projectId, context.siteId, context.pageId,
-        fingerprint, exported.path, exported.componentCount, exported.createdAt,
-      ],
-    );
-    return { ...exported, exportId: context.exportId, projectId: context.projectId, siteId: context.siteId, pageId: context.pageId };
+    let transactionStarted = false;
+    let exported: AtoumWebCompositionPackageExportResult | null = null;
+    try {
+      // Log, fingerprint and Page export record must commit together.
+      this.database.exec('BEGIN IMMEDIATE;');
+      transactionStarted = true;
+      exported = this.buildPackage(destination.composition_id, context);
+      const fingerprint = this.sha256(readFileSync(exported.path));
+      this.database.run(
+        `INSERT INTO project_page_exports
+         (id,composition_id,project_id,project_site_id,project_node_id,package_fingerprint,package_path,component_count,created_at)
+         VALUES (?,?,?,?,?,?,?,?,?)`,
+        [
+          context.exportId, destination.composition_id, context.projectId, context.siteId, context.pageId,
+          fingerprint, exported.path, exported.componentCount, exported.createdAt,
+        ],
+      );
+      this.database.exec('COMMIT;');
+      transactionStarted = false;
+      return { ...exported, exportId: context.exportId, projectId: context.projectId, siteId: context.siteId, pageId: context.pageId };
+    } catch (error) {
+      if (transactionStarted) {
+        try { this.database.exec('ROLLBACK;'); } catch { /* preserve original error */ }
+      }
+      if (exported) {
+        try { unlinkSync(exported.path); } catch { /* preserve original error */ }
+      }
+      throw error;
+    }
   }
 
   private buildPackage(compositionId: string, page: PageExportContext | null): AtoumWebCompositionPackageExportResult {
@@ -320,26 +337,31 @@ export class AtoumWebCompositionPackageService {
 
     const directory = join(this.workspace.exportsDirectory, 'compositions-atoumweb');
     mkdirSync(directory, { recursive: true });
-    const fileName = `${this.safeSegment(composition.name)} - ${createdAt.replace(/[:.]/g, '-')}.zip`;
+    const fileName = `${this.safeSegment(composition.name)} - ${createdAt.replace(/[:.]/g, '-')} - ${page ? page.exportId.slice('awexp:'.length) : randomUUID()}.zip`;
     const destination = join(directory, fileName);
-    writeZipArchive(destination, this.deduplicateEntries(entries));
-
-    this.database.run(
-      `INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at)
-       VALUES (?,?,?,?,?,?)`,
-      [
-        'atoumweb_composition',
-        composition.id,
-        'atoumweb_composition_package_exported',
-        `Package projet préparé : ${composition.name}`,
-        JSON.stringify({
-          path: destination,
-          componentCount: composition.items.length,
-          ...(page ? { exportId: page.exportId, projectId: page.projectId, siteId: page.siteId, pageId: page.pageId } : {}),
-        }),
-        createdAt,
-      ],
-    );
+    try {
+      writeZipArchive(destination, this.deduplicateEntries(entries));
+      this.database.run(
+        `INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at)
+         VALUES (?,?,?,?,?,?)`,
+        [
+          'atoumweb_composition',
+          composition.id,
+          'atoumweb_composition_package_exported',
+          `Package projet préparé : ${composition.name}`,
+          JSON.stringify({
+            path: destination,
+            componentCount: composition.items.length,
+            ...(page ? { exportId: page.exportId, projectId: page.projectId, siteId: page.siteId, pageId: page.pageId } : {}),
+          }),
+          createdAt,
+        ],
+      );
+    } catch (error) {
+      // The path contains a fresh exportId/UUID, so this removes only our own archive.
+      try { unlinkSync(destination); } catch { /* preserve original failure */ }
+      throw error;
+    }
 
     return {
       compositionId: composition.id,
