@@ -9,6 +9,7 @@ import {
   type ClientDocumentInput,
 } from '../../shared/clientDocuments';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
+import { useUnsavedDraft } from '../unsaved/unsaved';
 import './DocumentsPage.css';
 
 const CATEGORY_LABELS: Record<ClientDocumentCategory, string> = {
@@ -148,6 +149,19 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
   useEffect(() => { if(initialDocumentId){setLibraryOpen(false);setCreateOpen(false);} void refresh(initialDocumentId ?? undefined); }, [initialDocumentId,initialRequest]);
 
   const selected = items.find((item) => item.id === selectedId) ?? null;
+  const draft = useUnsavedDraft('Documents : métadonnées non enregistrées', createOpen ? createForm : editForm, {
+    group: 'Documents',
+    ready: createOpen || (!!selected && editing),
+    resetKey: createOpen ? 'new-document' : selected?.id ?? null,
+    pending: busy,
+    dirty: createOpen
+      ? JSON.stringify(createForm) !== JSON.stringify(emptyForm())
+      : !!selected && editing && JSON.stringify(editForm) !== JSON.stringify(formFromDocument(selected)),
+    discard: (baseline) => {
+      if (createOpen) setCreateForm(baseline);
+      else setEditForm(baseline);
+    },
+  });
   useSearchTargetConfirmation('client_document',libraryOpen||createOpen?null:selected?.id,loading,onEntityReady);
 
 
@@ -285,9 +299,9 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
 
   const showDetail = Boolean(selected || createOpen);
 
-  if(libraryOpen)return <ContractLibraryPage onClose={()=>setLibraryOpen(false)} initialTypeId={initialContractTypeId==='all'?null:initialContractTypeId} onMessage={onMessage}/>;
+  if(libraryOpen)return <ContractLibraryPage onClose={()=>draft.request(() => setLibraryOpen(false))} initialTypeId={initialContractTypeId==='all'?null:initialContractTypeId} onMessage={onMessage}/>;
   return <div className="documents-page-stack">
-    <button type="button" className="primary-button" onClick={()=>setLibraryOpen(true)}>Bibliothèque contractuelle</button>
+    <button type="button" className="primary-button" onClick={()=>draft.request(() => setLibraryOpen(true))}>Bibliothèque contractuelle</button>
     <div className="documents-kpi-grid">
       <DocumentKpi icon="folder" label="Documents actifs" value={activeItems.length} helper="Tous les fichiers clients" />
       <DocumentKpi icon="file-text" label="Contrats" value={contractCount} helper="Documents contractuels" />
@@ -298,7 +312,7 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
     <div className="documents-toolbar">
       <div><strong>{filtered.length}</strong><span> document{filtered.length > 1 ? 's' : ''}</span></div>
       <div className="toolbar-controls">
-        <button className="secondary-button" type="button" onClick={() => void refresh()}><OperationIcon name="refresh" size={16} /> Actualiser</button>
+        <button className="secondary-button" type="button" onClick={() => draft.request(() => { void refresh(); })}><OperationIcon name="refresh" size={16} /> Actualiser</button>
         <input className="inline-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher document, client, fichier…" />
         <select value={clientFilter} onChange={(event) => setClientFilter(event.target.value)}>
           <option value="all">Tous les clients</option>
@@ -313,7 +327,7 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
           <option value="archived">Archivés</option>
           <option value="all">Tous les statuts</option>
         </select>
-        <button className="primary-button" type="button" onClick={() => { setCreateOpen(true); setSelectedId(''); setExpanded(false); setEditing(false); }}><OperationIcon name="upload" size={16} /> + Document</button>
+        <button className="primary-button" type="button" onClick={() => draft.request(() => { setCreateOpen(true); setSelectedId(''); setExpanded(false); setEditing(false); })}><OperationIcon name="upload" size={16} /> + Document</button>
       </div>
     </div>
 
@@ -323,7 +337,7 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
     >
       {!expanded && <article className="panel documents-list-panel">
         {loading ? <p className="muted documents-loading">Chargement des documents…</p> : showDetail ? <div className="documents-compact-list">
-          {filtered.map((item) => <button key={item.id} type="button" className={`documents-compact-item ${selectedId === item.id ? 'selected' : ''}`} onClick={() => { setCreateOpen(false); setSelectedId(item.id); }}>
+          {filtered.map((item) => <button key={item.id} type="button" className={`documents-compact-item ${selectedId === item.id ? 'selected' : ''}`} onClick={() => draft.request(() => { setCreateOpen(false); setSelectedId(item.id); })}>
             <div className="documents-compact-heading"><span className="documents-type-icon"><OperationIcon name={CATEGORY_ICONS[item.category]} size={15} /></span><strong>{item.title}</strong>{item.archivedAt && <span className="status-pill">Archivé</span>}</div>
             <span>{item.clientLabel}</span>
             <small>{CATEGORY_LABELS[item.category]} · {sizeLabel(item.sizeBytes)}{item.missing ? ' · Fichier introuvable' : ''}</small>
@@ -333,7 +347,7 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
           <table className="documents-table">
             <thead><tr><th>Document</th><th>Client</th><th>Type</th><th>Fichier</th><th>Mise à jour</th><th>État</th></tr></thead>
             <tbody>
-              {filtered.map((item) => <tr key={item.id} onClick={() => setSelectedId(item.id)}>
+              {filtered.map((item) => <tr key={item.id} onClick={() => draft.request(() => setSelectedId(item.id))}>
                 <td><div className="documents-table-title"><span className="documents-type-icon"><OperationIcon name={CATEGORY_ICONS[item.category]} size={16} /></span><strong>{item.title}</strong></div></td>
                 <td>{item.clientLabel}</td>
                 <td>{CATEGORY_LABELS[item.category]}</td>
@@ -355,7 +369,7 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
       {createOpen && <article className="panel documents-detail-panel">
         <div className="documents-detail-header">
           <div><span className="eyebrow">Nouveau document</span><h2>Importer et classer</h2><p>Le fichier sera copié dans le dossier Documents du client.</p></div>
-          <div className="documents-detail-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire' : 'Agrandir'} onClick={() => setExpanded((value) => !value)}><OperationIcon name={expanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" onClick={() => { setCreateOpen(false); setExpanded(false); }}><OperationIcon name="close" size={18} /></button></div>
+          <div className="documents-detail-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire' : 'Agrandir'} onClick={() => setExpanded((value) => !value)}><OperationIcon name={expanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" onClick={() => draft.request(() => { setCreateOpen(false); setExpanded(false); })}><OperationIcon name="close" size={18} /></button></div>
         </div>
         <div className="documents-form">
           <label>Client<select value={createClientId} onChange={(event) => setCreateClientId(event.target.value)}>{clients.map((client) => <option key={client.id} value={client.id}>{client.displayName}</option>)}</select></label>
@@ -372,7 +386,7 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
       {selected && !createOpen && <article className={`panel documents-detail-panel ${expanded ? 'expanded' : ''}`}>
         <div className="documents-detail-header">
           <div><span className="eyebrow">{CATEGORY_LABELS[selected.category]}</span><h2>{selected.title}</h2><p>{selected.clientLabel}</p></div>
-          <div className="documents-detail-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire' : 'Agrandir'} onClick={() => setExpanded((value) => !value)}><OperationIcon name={expanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" onClick={() => { setSelectedId(''); setExpanded(false); setEditing(false); }}><OperationIcon name="close" size={18} /></button></div>
+          <div className="documents-detail-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire' : 'Agrandir'} onClick={() => setExpanded((value) => !value)}><OperationIcon name={expanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" onClick={() => draft.request(() => { setSelectedId(''); setExpanded(false); setEditing(false); })}><OperationIcon name="close" size={18} /></button></div>
         </div>
 
         <div className="documents-status-row">
@@ -391,7 +405,7 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
         <div className="documents-primary-actions">
           <button className="primary-button" type="button" disabled={selected.missing} onClick={() => void window.atoumweb.clientDocuments.openFile(selected.id)}><OperationIcon name="external-link" size={16} /> Ouvrir le document</button>
           <button className="secondary-button" type="button" onClick={() => void window.atoumweb.clientDocuments.openFolder(selected.clientAccountId)}><OperationIcon name="folder" size={16} /> Ouvrir le dossier client</button>
-          <button className="secondary-button" type="button" onClick={() => setEditing((value) => !value)}>{editing ? 'Annuler' : 'Modifier'}</button>
+          <button className="secondary-button" type="button" onClick={() => draft.request(() => setEditing((value) => !value))}>{editing ? 'Annuler' : 'Modifier'}</button>
         </div>
 
         {editing ? <div className="documents-form documents-edit-form">
@@ -409,8 +423,8 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
         </div>}
 
         <div className="documents-danger-zone">
-          <button className="secondary-button" type="button" disabled={busy} onClick={() => void toggleArchive()}><OperationIcon name="archive" size={16} /> {selected.archivedAt ? 'Restaurer' : 'Archiver'}</button>
-          {selected.archivedAt && <button className="secondary-button danger-outline" type="button" disabled={busy} onClick={() => void deletePermanently()}>Supprimer définitivement</button>}
+          <button className="secondary-button" type="button" disabled={busy} onClick={() => draft.request(() => { void toggleArchive(); })}><OperationIcon name="archive" size={16} /> {selected.archivedAt ? 'Restaurer' : 'Archiver'}</button>
+          {selected.archivedAt && <button className="secondary-button danger-outline" type="button" disabled={busy} onClick={() => draft.request(() => { void deletePermanently(); })}>Supprimer définitivement</button>}
         </div>
       </article>}
     </div>
