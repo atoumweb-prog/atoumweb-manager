@@ -132,6 +132,39 @@ describe('04D — recommendations across Catalogue and Quote, no implicit purcha
   });
 });
 
+describe('04F — traversée Catalogue recommandé → Devis réel SQLite', () => {
+  it('n’ajoute aucune ligne sans choix puis conserve la provenance de la version choisie',()=>{
+    const prospect=createProspect();
+    const extra=createPublishedService(14900,'Audit additionnel');
+    const offer=catalog.create({type:'offer',name:'Offre vitrine publiée'},{
+      priceMode:'fixed',priceCents:69900,description:'Offre principale',
+    });
+    const offerId=offer.versions[0].id;
+    const {CatalogRecommendationsService}=require('./CatalogRecommendationsService') as typeof import('./CatalogRecommendationsService');
+    const advice=new CatalogRecommendationsService(database);
+    advice.replace(offerId,[extra.currentVersion!.id],[]);
+    catalog.publishVersion(offerId);
+    const quote=quotes.create({prospectId:prospect.id,subject:'Vitrine + audit conseillé'});
+    const withOffer=quotes.addCatalogLine(quote.id,offerId);
+    expect(withOffer.lines).toHaveLength(1);
+    const source=withOffer.lines[0];
+    expect(advice.list(offerId).map(row=>row.targetVersionId)).toEqual([extra.currentVersion!.id]);
+    const {quoteRecommendationState}=require('../../shared/quoteRecommendationStatus') as typeof import('../../shared/quoteRecommendationStatus');
+    expect(quoteRecommendationState(source,advice.list(offerId)[0],withOffer.lines)).toBe('recommended');
+    const chosen=quotes.addCatalogLine(quote.id,extra.currentVersion!.id);
+    expect(chosen.lines).toHaveLength(2);
+    expect(quoteRecommendationState(source,advice.list(offerId)[0],chosen.lines)).toBe('already-added');
+    const purchased=chosen.lines.find(line=>line.catalogVersionId===extra.currentVersion!.id)!;
+    expect(purchased.catalogUnitPriceCents).toBe(14900);
+    const newer=catalog.createVersion(extra.id,{priceMode:'fixed',priceCents:19900});
+    catalog.publishVersion(newer.id);
+    const historical=quotes.get(quote.id).lines.find(line=>line.id===purchased.id)!;
+    expect(historical.catalogVersionId).toBe(extra.currentVersion!.id);
+    expect(historical.catalogUnitPriceCents).toBe(14900);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+});
+
 describe('QuoteService', () => {
   it('E73 : un accord de principe explicite est horodaté, idempotent et révocable sans signature ni conversion', () => {
     const prospect = createProspect();
