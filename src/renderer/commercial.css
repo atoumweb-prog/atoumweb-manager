@@ -1207,3 +1207,41 @@ body.catalog-resizing * {
   line-height: 1.45;
 }
 .catalog-overview-card-inclusions > span { overflow-wrap: anywhere; }
+
+
+/* Lot 04B — inventaire non destructif des catégories stockées. */
+.catalog-category-inventory { display: grid; gap: 12px; min-width: 0; }
+.catalog-category-inventory-header { display: flex; align-items: start; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.catalog-category-inventory-header h3 { font-size: 17px; line-height: 1.35; margin: 0 0 5px; color: var(--text); }
+.catalog-category-inventory-header p,
+.catalog-category-inventory-summary { font-size: 14px; line-height: 1.5; margin: 0; }
+.catalog-category-inventory-warning {
+  display: grid; gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface-soft);
+}
+.catalog-category-inventory-warning strong,
+.catalog-category-inventory-warning p { font-size: 14px; line-height: 1.5; margin: 0; color: var(--text); }
+.catalog-category-inventory-scroll { min-width: 0; overflow-x: auto; }
+.catalog-category-inventory-table { width: 100%; min-width: 790px; border-collapse: collapse; }
+.catalog-category-inventory-table td,
+.catalog-category-inventory-table th {
+  font-size: 14px;
+  line-height: 1.45;
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  text-align: left;
+  vertical-align: middle;
+}
+.catalog-category-inventory-table th { font-weight: 700; background: var(--surface-soft); }
+.catalog-category-inventory-table code { font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+.catalog-category-inventory-table .secondary-button { font-size: 14px; min-height: 36px; }
+.catalog-category-inventory-table button:focus-visible,
+.catalog-category-inventory-header button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
