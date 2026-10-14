@@ -1,0 +1,32 @@
+name: UX 07A+07B Integration Windows
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  ux07ab:
+    if: ${{ github.head_ref == 'integration/ux-v2-07a-07b-navigation-validation' || github.ref_name == 'integration/ux-v2-07a-07b-navigation-validation' }}
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Vitest
+        run: npm test -- --maxWorkers=2
+      - name: Native Electron UX-01 and composition 07A on combined tree
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          node scripts/check-ux-v2-07a-composition.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Navigation wiring assertions 07B
+        shell: pwsh
+        run: |
+          node scripts/check-ux-v2-07ab-navigation-wiring.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
