@@ -159,6 +159,31 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
     test(values['Solde quota mineur']==='0,3 h','E224 UI displays remaining 15-min minor quota');
     test(db.maintenance.getPeriod(period.id).usage.interventionCount===1,'E224 routine does not consume intervention quota');
     test(db.maintenance.getPeriod(period.id).usage.secondsOverQuota===0,'E224 routine does not create overage');
+    // E226 — créer un plan expose désormais la garde UX-01 commune.
+    await js('document.querySelector(".maintenance-panel-stack .toolbar-controls button:nth-child(2)").click()');
+    await wait('!!document.querySelector(".operation-create-panel input[placeholder]")','maintenance plan form opened');
+    await js('const el=document.querySelector(".operation-create-panel input[placeholder]");'+
+      'Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(el,"BROUILLON PLAN E226");'+
+      'el.dispatchEvent(new Event("input",{bubbles:true}));');
+    await wait('document.querySelector(".operation-create-panel input[placeholder]")?.value==="BROUILLON PLAN E226"',
+      'maintenance plan draft entered');
+    const beforePlanConfirm=confirmations.length;
+    await js('document.querySelector(".operation-create-panel .button-row button.secondary-button").click()');
+    test(confirmations.length===beforePlanConfirm+1,'E226 plan creation cancel prompts once');
+    test(await get('document.querySelector(".operation-create-panel input[placeholder]")?.value')==='BROUILLON PLAN E226',
+      'E226 Stay preserves plan draft');
+    answers.push(1);
+    await js('document.querySelector(".operation-create-panel .button-row button.secondary-button").click()');
+    await wait('!document.querySelector(".operation-create-panel")','E226 plan draft discarded');
+    test(!db.maintenance.listPlans().some(p=>p.name==='BROUILLON PLAN E226'),
+      'E226 cancel does not create commercial plan');
+    await js('document.querySelector(".maintenance-panel-stack .toolbar-controls button:nth-child(2)").click()');
+    await wait('!!document.querySelector(".operation-create-panel input[placeholder]")','new clean maintenance plan form');
+    test(await get('document.querySelector(".operation-create-panel input[placeholder]")?.value')==='',
+      'E226 new plan starts empty after confirmed discard');
+    await js('document.querySelector(".operation-create-panel .button-row button.secondary-button").click()');
+    test(!await get('!!document.querySelector(".operation-create-panel")'),'E226 pristine plan cancels without draft loss');
+
     test(db.database.all('PRAGMA foreign_key_check').length===0,'E224 native SQLite foreign keys');
     console.log('[UXV2 08A E224] Native quota display: '+JSON.stringify(values));
 
