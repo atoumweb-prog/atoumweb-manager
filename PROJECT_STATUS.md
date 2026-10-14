@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 14/10/2026 — 09D Documents : validé techniquement (périmètre isolé)
+
+- PR [#132](https://github.com/atoumweb-prog/atoumweb-manager/pull/132) draft sur 09A, sans merge. CI [#38602868964](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38602868964) **SUCCESS** sur `d708297` : typecheck, 110 fichiers de tests, 73 assertions natives Electron Documents, 373 UX générales, restauration Windows.
+- Quatre entrées documentaires avec vrais services (et dépôt hors Client honnêtement indiqué non disponible), garde UX-01 sur métadonnées, SHA et provenance visibles, fichiers manquants et modifiés refusés, archivage et correction de métadonnées atomiques.
+- Dépendance à 09B/#119 pour les anciennes factures Abby remplacées : convergence à vérifier avant `main`. Pas de validation humaine ni fusion.
+- Détails : `docs/ux-v2/LOT-09D-PLAN-EXECUTION-2026-10-14.md`.
+
 ## 14/10/2026 — Lot 09A : clôture technique et préparation 09B
 
 - Branche isolée `audit/ux-v2-lot09-20261014`, PR #113 **draft**, sans merge. CI #1042 (run 38579044064) **SUCCESS** sur `8b57e3e` : typecheck, suite Vitest, Electron UI/SQLite TEMP et restauration/redémarrage TEMP. Contrôles 09A exécutés, sans validation humaine anticipée.

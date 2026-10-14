@@ -96,4 +96,33 @@ describe('preuve contractuelle rattachée', () => {
     expect(existsSync(path)).toBe(false);
     expect(() => documents.get(doc.id)).toThrow(/introuvable/);
   });
+
+  it('annule les métadonnées et l’archivage si le journal client refuse l’écriture', () => {
+    const doc = importPdf();
+    const before = documents.get(doc.id);
+    const source = documents.absolutePath(doc.id);
+    const bytes = readFileSync(source);
+    database.exec(`CREATE TRIGGER reject_document_metadata BEFORE INSERT ON activity_events
+      WHEN NEW.entity_id='${clientId}' AND NEW.action='document_updated'
+      BEGIN SELECT RAISE(ABORT, 'historique des métadonnées indisponible'); END;`);
+    expect(() => documents.update(doc.id,{
+      category:'legal', title:'Titre sans journal', retentionUntil:'2027-01-01',
+    })).toThrow(/historique des métadonnées indisponible/);
+    expect(documents.get(doc.id)).toEqual(before);
+    database.exec('DROP TRIGGER reject_document_metadata');
+    database.exec(`CREATE TRIGGER reject_document_archive BEFORE INSERT ON activity_events
+      WHEN NEW.entity_id='${clientId}' AND NEW.action='document_archived'
+      BEGIN SELECT RAISE(ABORT, 'historique archivage indisponible'); END;`);
+    expect(() => documents.archive(doc.id,true)).toThrow(/historique archivage indisponible/);
+    expect(documents.get(doc.id)).toEqual(before);
+    database.exec('DROP TRIGGER reject_document_archive');
+    const archived=documents.archive(doc.id,true);
+    expect(archived.archivedAt).toBeTruthy();
+    expect(documents.archive(doc.id,true)).toEqual(archived);
+    expect(readFileSync(source)).toEqual(bytes);
+    documents.archive(doc.id,false);
+    expect(documents.get(doc.id).sha256).toBe(before.sha256);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
 });
