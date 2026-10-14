@@ -442,10 +442,15 @@ export class CatalogService {
   }
 
   publishVersion(versionId: string): CatalogVersion {
-    const target = this.getVersion(versionId);
-    const now = nowIso();
+    // Publishing is a separate, deliberate transition. Check the persisted
+    // state *under the write lock*; never republish a retired/published version
+    // or silently rewrite its original publication timestamp.
     this.database.exec('BEGIN IMMEDIATE;');
     try {
+      const target = this.getVersion(versionId);
+      if (target.status !== 'draft')
+        throw new Error('Seule une version brouillon peut être publiée. Une version publiée ou retirée est figée.');
+      const now = nowIso();
       this.database.run(
         `UPDATE catalog_versions
          SET status='retired'
