@@ -34,3 +34,11 @@ Référentiel : `docs/ux-v2/LOT-07B-FICHE-PROJET-PRODUCTION.md` au commit `0bb08
 - Contrôle à exécuter : depuis un Projet provisoire et confirmé, vérifier ouverture du bon Devis ; tester une saisie sale puis choisir Rester, un Devis introuvable et un devis archivé ; vérifier le retour à la fiche et le focus.
 
 La CI du commit précédent `c3fc64b` était verte lors du contrôle GitHub. Le nouveau commit de routage exige une nouvelle validation sur son propre SHA ; aucune réussite de CI n'est anticipée.
+
+## Quatrième incrément — retour Devis → Projet
+- Le clic depuis le Projet transmet son `projectId` dans `parentEntityId` du message de navigation vers le Devis.
+- `App.tsx` retient la cible de retour uniquement après acceptation de la garde UX-01 et uniquement pour une ouverture de Devis depuis Projets ; la donnée reste dans le shell, sans stockage permanent.
+- `QuotesPage` propose alors `← Retour au Projet` dans la fiche du Devis. Ce bouton utilise le routage central `atoumweb:navigate`, incluant lecture de la cible puis garde UX-01 avant changement de module. Refuser la sortie conserve la fiche Devis et son brouillon.
+- L'identité de Projet est transportée par son UUID de service, jamais recréée. Aucune mutation de données ni changement de contrat.
+- Validation demandée sur ce HEAD : parcours Projet → Devis → Projet, confirmations Rester/Confirmer, Devis manquant, absence de bouton pour une ouverture Devis directe, focus de retour, puis tests Windows natifs.
+- Le job précédent `38573695934` a terminé avec succès. Ce nouveau code nécessite son propre run.
