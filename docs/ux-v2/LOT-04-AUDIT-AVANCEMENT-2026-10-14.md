@@ -28,6 +28,23 @@ Pourcentage **indicatif de couverture fonctionnelle**, calculé à partir de rub
 
 > Le score 04E ci-dessus inclut du **code récent non encore certifié** ; le score de validation 04E exclut la CI en attente. Les calculs globaux ne doivent pas être confondus avec des « 100 % » par sous-lot.
 
+## Contrôles exécutés — résultat strict sur SHA observé
+
+| Contrôle | État prouvé | Nombre/portée | SHA de référence | Preuve et réserve |
+|---|---|---|---|---|
+| TypeScript / typecheck | **PASS** | `npm run typecheck` | `b56c1f6d`, puis `df37e55c` | [CI #1275](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38597862198), [#1308](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38599110190). **Nouveaux HEAD non inclus** |
+| Vitest complet | **PASS** | **1 113 / 1 113** tests, 122/122 fichiers | `b56c1f6d` et `df37e55c` | Mêmes liens. Élargissements 04D/04E/04A ultérieurs non couverts |
+| Métier Catalogue/SQLite | **PASS** | Inclus dans 1 113 tests ; nombre ciblé exact non isolé | `b56c1f6d` | SQLite réelle sur `:memory:`, cas de recommandations versionnées, CAS, FK ; pas de preuve exhaustive intermodules |
+| Migrations / FK / restauration | **PASS** | Migration 68, backup/restore 04D, FK=0 | `b56c1f6d` | [CI #1245](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38596928409) et #1275. Convergence de migration future NON EXÉCUTÉE |
+| Electron Windows réel | **PASS** | **15/15** tests React/IPC simulé ; **7/7** natifs Electron/production preload/SQLite TEMP | `b56c1f6d` | [CI #1275](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38597862198), pas d'environnement utilisateur |
+| UX-01 / brouillons | **PASS** | Recettes catalogue, sortie et fermeture Windows TEMP | `b56c1f6d` | [CI #1275](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38597862198). Changement dans Prospect postérieur non couvert |
+| Double clics / CAS / IPC en retard | **PASS** | Scénarios du panneau 04D + SQLite | `b56c1f6d` | 15/15 et 7/7 ci-dessus ; pas de garantie de parcours 06 |
+| Captures visuelles | **PASS technique**, **revue humaine NON EXÉCUTÉE** | **9/9 images** 3 thèmes × 3 densités, SHA-256 journaux | `b56c1f6d` | #1275 ; preuve d'images non preuve d'acceptation visuelle |
+| Parcours métier Prospect → Devis → Projet et contrats | **NON EXÉCUTÉ** | Aucun run certifiant ce chaînage 04D | Aucun | Fonctions existantes utilisées séparément ; nouveau sélecteur Prospect récemment codé |
+| CI sur **dernier HEAD** | **NON ENCORE VALIDÉ** | Nouveau code 04E/04D/04A post #1308 | À vérifier | GitHub Actions lancé ; ne pas copier l'état vert d'un ancien commit |
+
+**CI en échec traitée :** [#1300](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38598595582) et [#1306](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38598928027) échouaient sur `TS1117` (deux champs dupliqués dans la fixture du test `catalogSalesGuidance`) ; correction `df37e55c`, **#1308 verte**. Cette défaillance du test était démontrée ; aucune assertion n'a été supprimée.
+
 ## Périmètre Git et preuves
 
 | Périmètre | PR / branche | SHA contrôlé | CI ou statut |
