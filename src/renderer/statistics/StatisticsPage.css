@@ -746,3 +746,19 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* 10B — détails directement fondés sur les cohortes des KPI, sans navigation trompeuse. */
+.statistics-kpi-inspect { justify-self: start; margin-top: 3px; font-size: var(--aw-font-functional, 14px); text-align: left; }
+.statistics-evidence-panel { display: grid; gap: 9px; padding: 14px; min-width: 0; }
+.statistics-evidence-heading { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 9px; }
+.statistics-evidence-heading h3 { margin: 3px 0 0; font-size: 17px; }
+.statistics-evidence-heading > strong { font-size: var(--aw-font-functional, 14px); }
+.statistics-evidence-source { color: var(--text-muted); font-size: 12px; line-height: 1.5; margin: 0; }
+.statistics-evidence-table { width: 100%; border-collapse: collapse; }
+.statistics-evidence-table th,
+.statistics-evidence-table td { padding: 9px 11px; text-align: left; border-bottom: 1px solid var(--border); }
+.statistics-evidence-table th { color: var(--text-muted); font-size: 12px; }
+.statistics-evidence-table td { font-size: var(--aw-font-functional, 14px); }
+.statistics-evidence-table td:first-child { min-width: 180px; max-width: 420px; overflow-wrap: anywhere; }
+.statistics-evidence-table td:first-child small { display: block; color: var(--text-muted); font-size: 12px; }
+.statistics-evidence-table td:last-child { white-space: nowrap; font-variant-numeric: tabular-nums; }
