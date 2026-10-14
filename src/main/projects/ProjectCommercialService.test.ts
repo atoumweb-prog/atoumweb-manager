@@ -27,6 +27,20 @@ describe('Lot 7B — même Projet prévisionnel et révisions commerciales',()=>
   expect(f.sites.list(p.id)).toHaveLength(1);expect(pages(p.id)).toHaveLength(5);expect(db.all('SELECT * FROM project_blueprint_plans')).toHaveLength(0);
   const before=state();expect(prepare(q.id).id).toBe(p.id);sync(p.id);expect(state()).toEqual(before);
  });
+ it('R07G-05 refuse la préparation depuis une prévisualisation obsolète sans écriture',()=>{
+  const q=f.createQuote();
+  const initialPreview=f.projects.commercial.preview({quoteId:q.id});
+  pageLine(q.id,1000);
+  const currentPreview=f.projects.commercial.preview({quoteId:q.id});
+  expect(currentPreview.sha256).not.toBe(initialPreview.sha256);
+  const before=state();
+  expect(()=>f.projects.commercial.prepare({quoteId:q.id,previewSHA256:initialPreview.sha256})).toThrow(/prévisualisation périmée/i);
+  expect(state()).toEqual(before);
+  expect(db.all('SELECT id FROM projects')).toHaveLength(0);
+  const prepared=f.projects.commercial.prepare({quoteId:q.id,previewSHA256:currentPreview.sha256});
+  expect(prepared.commercialState).toBe('provisional');
+  expect(db.all('SELECT id FROM projects')).toHaveLength(1);
+ });
  it('une base absente ou des bases concurrentes ne créent aucun dossier ni Projet',()=>{
   const q=f.createQuote();f.quotes.removeLine(q.lines[0].id);const before=state();expect(()=>prepare(q.id)).toThrow(/base/);expect(state()).toEqual(before);
   f.quotes.addCatalogLine(q.id,f.offer.currentVersion!.id);f.quotes.addCatalogLine(q.id,f.offer.currentVersion!.id);const second=state();expect(()=>prepare(q.id)).toThrow(/concurrents/);expect(state()).toEqual(second);
