@@ -17,10 +17,12 @@ import type {
   QuoteContractClauseInput,
   QuoteContractClauseUpdate,
 } from '../shared/contractTerms';
+import type { CatalogCategoryAssignment, CatalogCategoryStatus } from '../shared/catalogCategoryAdministration';
 import type {
   CatalogFilters,
   CatalogItemInput,
   CatalogItemStatus,
+  CatalogVersion,
   CatalogVersionInput,
   OfferComponentInput,
   QuoteFilters,
@@ -416,12 +418,25 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('catalog:get-item', (_event, id: string) => database.catalog.getItem(id));
   ipcMain.handle('catalog:assign-canonical-code', (_event, id: string, code: string) => database.catalog.assignCanonicalCode(id, code));
   ipcMain.handle('catalog:create', (_event, input: CatalogItemInput, firstVersion: CatalogVersionInput) => database.catalog.create(input, firstVersion));
-  ipcMain.handle('catalog:create-version', (_event, itemId: string, input: CatalogVersionInput) => database.catalog.createVersion(itemId, input));
-  ipcMain.handle('catalog:publish-version', (_event, versionId: string) => database.catalog.publishVersion(versionId));
+  ipcMain.handle('catalog:create-version', (_event, itemId: string, input: CatalogVersionInput, requestId?: string) => database.catalog.createVersion(itemId, input, requestId));
+  ipcMain.handle('catalog:save-draft-version', (_event, versionId: string, expected: CatalogVersion, input: CatalogVersionInput) => database.catalog.saveDraftVersion(versionId, expected, input));
+  ipcMain.handle('catalog:publish-version', (_event, versionId: string, expected?: CatalogVersion) => database.catalog.publishVersion(versionId, expected));
   ipcMain.handle('catalog:set-status', (_event, itemId: string, status: CatalogItemStatus) => database.catalog.setStatus(itemId, status));
   ipcMain.handle('catalog:set-visible-public', (_event, itemId: string, visible: boolean) => database.catalog.setVisiblePublic(itemId, visible));
+  ipcMain.handle('catalog:list-recommendations', (_event, versionId: string) => database.catalogRecommendations.list(versionId));
+  ipcMain.handle('catalog:replace-recommendations', (_event, versionId: string, targetVersionIds: string[], expectedTargetVersionIds?: string[], details?: import('../shared/commercial').CatalogRecommendationDetails[], expectedDetails?: import('../shared/commercial').CatalogRecommendationDetails[]) => database.catalogRecommendations.replace(versionId, targetVersionIds, expectedTargetVersionIds, details, expectedDetails));
   ipcMain.handle('catalog:list-offer-components', (_event, offerVersionId: string) => database.catalog.listOfferComponents(offerVersionId));
+  ipcMain.handle('catalog:production-blueprints', (_event, versionId: string) => database.catalog.listProductionBlueprints(versionId));
   ipcMain.handle('catalog:set-offer-components', (_event, offerVersionId: string, components: OfferComponentInput[]) => database.catalog.setOfferComponents(offerVersionId, components));
+
+  // E95: never infer a category link from a similar display name.
+  ipcMain.handle('catalog-categories:list', () => database.catalogCategories.list());
+  ipcMain.handle('catalog-categories:list-legacy', () => database.catalogCategories.listLegacy());
+  ipcMain.handle('catalog-categories:create', (_event, name: string) => database.catalogCategories.create(name));
+  ipcMain.handle('catalog-categories:rename', (_event, id: string, name: string, revision: number, expectedItemIds: string[]) => database.catalogCategories.rename(id, name, revision, expectedItemIds));
+  ipcMain.handle('catalog-categories:set-status', (_event, id: string, status: CatalogCategoryStatus, revision: number) => database.catalogCategories.setStatus(id, status, revision));
+  ipcMain.handle('catalog-categories:assign', (_event, input: CatalogCategoryAssignment) => database.catalogCategories.assign(input));
+  ipcMain.handle('catalog-categories:reconcile-legacy', (_event, rawValue: string, categoryId: string, expectedItemIds: string[]) => database.catalogCategories.reconcileLegacy(rawValue, categoryId, expectedItemIds));
 
   ipcMain.handle('contract-types:list', (_event, archived?: boolean) => database.contractTypes.list(archived));
   ipcMain.handle('contract-types:get', (_event, id: string) => database.contractTypes.get(id));

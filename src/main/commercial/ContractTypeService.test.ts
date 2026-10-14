@@ -161,8 +161,15 @@ describe('Migration 66 additive conservation',()=>{
     let n=0;for(const i of items)for(const m of modules)if(n++<409)db.run('INSERT INTO catalog_contract_clause_links VALUES (?,?,?,?)',[i.id,m.id,n,'fixture']);
     const q=quotes.create({prospectId:prospect().id,subject:'Historique'});quotes.addCustomLine(q.id,{label:'Historique',proposedUnitPriceCents:10000});db.run("UPDATE quotes SET status='accepted',contract_text_snapshot='Texte historique exact',contract_snapshot_json=?,contract_compiled_at='fixture' WHERE id=?",['{"clauses":[],"preuve":"historique"}',q.id]);
     const tables=db.all<{name:string}>("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name<>'schema_migrations'").map(r=>r.name);
-    const snapshot=()=>Object.fromEntries(tables.map(t=>[t,db.all('SELECT * FROM "'+t+'"')]));const before=snapshot();
-    expect(applyPendingMigrations(db).map(m=>m.id)).toEqual([66]);expect(snapshot()).toEqual(before);
+    // Compare every column that existed before migrations 66–67. New additive
+    // fields (e.g. catalog_items.category_id) must not invalidate historical bytes.
+    const previousColumns=Object.fromEntries(tables.map(t=>[
+      t,db.all<{name:string}>('PRAGMA table_info("'+t+'")').map(c=>c.name),
+    ]));
+    const snapshot=()=>Object.fromEntries(tables.map(t=>[
+      t,db.all('SELECT '+previousColumns[t].map(c=>'"'+c+'"').join(',')+' FROM "'+t+'"'),
+    ]));const before=snapshot();
+    expect(applyPendingMigrations(db).map(m=>m.id)).toEqual(MIGRATIONS.filter(m=>m.id>=66).map(m=>m.id));expect(snapshot()).toEqual(before);
     expect(db.get('SELECT COUNT(*) AS n FROM contract_clause_templates')?.n).toBe(118);expect(db.get('SELECT COUNT(*) AS n FROM catalog_contract_clause_links')?.n).toBe(409);
     expect(applyPendingMigrations(db)).toEqual([]);expect(snapshot()).toEqual(before);
     expect(db.get('PRAGMA integrity_check')?.integrity_check).toBe('ok');expect(db.all('PRAGMA foreign_key_check')).toEqual([]);expect(new ContractTypeService(db).list()).toEqual([]);

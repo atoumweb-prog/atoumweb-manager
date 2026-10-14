@@ -11,6 +11,8 @@ import { CrmService } from '../crm/CrmService';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
 import { CatalogService } from './CatalogService';
+import { CatalogRecommendationsService } from './CatalogRecommendationsService';
+import { quoteRecommendationState } from '../../shared/quoteRecommendationStatus';
 import { QuoteService } from './QuoteService';
 
 let database: NodeSqliteAdapter;
@@ -46,6 +48,120 @@ function createPublishedService(priceCents = 10000, name = 'Service test') {
   catalog.publishVersion(item.versions[0].id);
   return catalog.getItem(item.id);
 }
+
+describe('04E — advice never mutates an accepted or historical quote snapshot', () => {
+  it('preserves authored version fields on the existing quote after catalogue republishing', () => {
+    const prospect=createProspect();
+    const item=catalog.create({type:'service',name:'Conseil SEO contextualisé'},{
+      priceMode:'fixed',priceCents:14900,commercialParameters:{
+        salesPitch:'Ancien argumentaire',qualificationQuestions:'Ancienne question',
+        relevantSituations:'Entreprises locales',commercialCautions:'Ne pas garantir le rang',
+      },
+    });
+    const previousId=item.versions[0].id;
+    catalog.publishVersion(previousId);
+    const quote=quotes.create({prospectId:prospect.id,subject:'Conseil versionné'});
+    const original=quotes.addCatalogLine(quote.id,previousId);
+    const originalSnapshot=original.lines.find(line=>line.catalogVersionId===previousId)?.snapshot;
+    expect(originalSnapshot?.commercialParameters).toMatchObject({
+      salesPitch:'Ancien argumentaire',qualificationQuestions:'Ancienne question',
+      relevantSituations:'Entreprises locales',commercialCautions:'Ne pas garantir le rang',
+    });
+    const newer=catalog.createVersion(item.id,{
+      priceMode:'fixed',priceCents:16900,commercialParameters:{
+        salesPitch:'Nouvel argumentaire',qualificationQuestions:'Nouvelle question',
+        relevantSituations:'Autre situation',commercialCautions:'Autre vigilance',
+      },
+    });
+    catalog.publishVersion(newer.id);
+    const historical=quotes.get(quote.id).lines.find(line=>line.catalogVersionId===previousId)!;
+    expect(historical.snapshot?.commercialParameters).toEqual(originalSnapshot?.commercialParameters);
+    expect(historical.catalogVersionId).toBe(previousId);
+    expect(historical.catalogUnitPriceCents).toBe(14900);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+});
+
+describe('04D — recommendations across Catalogue and Quote, no implicit purchase',()=>{
+  it('keeps recommendations advisory until a deliberate separate quote-line insertion',()=>{
+    const prospect=createProspect();
+    const rec=new CatalogRecommendationsService(database);
+    const offer=catalog.create({type:'offer',name:'Offre de départ'},{
+      priceMode:'fixed',priceCents:69900,
+    });
+    const target=createPublishedService(14900,'SEO local recommandé');
+    rec.replace(offer.versions[0].id,[target.currentVersion!.id],[]);
+    catalog.publishVersion(offer.versions[0].id);
+    const quote=quotes.create({prospectId:prospect.id,subject:'Devis avec conseil'});
+    const selected=quotes.addCatalogLine(quote.id,offer.versions[0].id);
+    expect(selected.lines).toHaveLength(1);
+    expect(selected.lines[0].catalogVersionId).toBe(offer.versions[0].id);
+    expect(selected.contractValueCents).toBe(69900);
+    expect(rec.list(offer.versions[0].id)).toMatchObject([{
+      targetItemId:target.id,targetVersionId:target.currentVersion!.id,
+      targetName:'SEO local recommandé',targetVersionStatus:'published',
+    }]);
+    const state=quoteRecommendationState(selected.lines[0],rec.list(offer.versions[0].id)[0],selected.lines);
+    expect(state).toBe('recommended');
+    const added=quotes.addCatalogLine(quote.id,target.currentVersion!.id);
+    expect(added.lines).toHaveLength(2);
+    expect(added.contractValueCents).toBe(84800);
+    expect(quoteRecommendationState(added.lines[0],rec.list(offer.versions[0].id)[0],added.lines)).toBe('already-added');
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+  it('does not silently requalify a retired recommendation in an old Quote',()=>{
+    const prospect=createProspect();
+    const rec=new CatalogRecommendationsService(database);
+    const offer=catalog.create({type:'offer',name:'Offre historique'},{
+      priceMode:'fixed',priceCents:45000,
+    });
+    const service=createPublishedService(9900,'Service original');
+    rec.replace(offer.versions[0].id,[service.currentVersion!.id],[]);
+    catalog.publishVersion(offer.versions[0].id);
+    const quote=quotes.create({prospectId:prospect.id,subject:'Devis historique'});
+    const before=quotes.addCatalogLine(quote.id,offer.versions[0].id);
+    const newer=catalog.createVersion(service.id,{priceMode:'fixed',priceCents:12900});
+    catalog.publishVersion(newer.id);
+    const links=rec.list(offer.versions[0].id);
+    expect(links[0].targetVersionId).toBe(service.currentVersion!.id);
+    expect(links[0].targetVersionStatus).toBe('retired');
+    expect(quoteRecommendationState(before.lines[0],links[0],before.lines)).toBe('unavailable');
+    expect(quotes.get(quote.id).lines).toEqual(before.lines);
+    expect(()=>quotes.addCatalogLine(quote.id,service.currentVersion!.id)).toThrow(/publiée/);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+});
+
+describe('04F — traversée Catalogue recommandé → Devis réel SQLite', () => {
+  it('n’ajoute aucune ligne sans choix puis conserve la provenance de la version choisie',()=>{
+    const prospect=createProspect();
+    const extra=createPublishedService(14900,'Audit additionnel');
+    const offer=catalog.create({type:'offer',name:'Offre vitrine publiée'},{
+      priceMode:'fixed',priceCents:69900,description:'Offre principale',
+    });
+    const offerId=offer.versions[0].id;
+    const advice=new CatalogRecommendationsService(database);
+    advice.replace(offerId,[extra.currentVersion!.id],[]);
+    catalog.publishVersion(offerId);
+    const quote=quotes.create({prospectId:prospect.id,subject:'Vitrine + audit conseillé'});
+    const withOffer=quotes.addCatalogLine(quote.id,offerId);
+    expect(withOffer.lines).toHaveLength(1);
+    const source=withOffer.lines[0];
+    expect(advice.list(offerId).map(row=>row.targetVersionId)).toEqual([extra.currentVersion!.id]);
+    expect(quoteRecommendationState(source,advice.list(offerId)[0],withOffer.lines)).toBe('recommended');
+    const chosen=quotes.addCatalogLine(quote.id,extra.currentVersion!.id);
+    expect(chosen.lines).toHaveLength(2);
+    expect(quoteRecommendationState(source,advice.list(offerId)[0],chosen.lines)).toBe('already-added');
+    const purchased=chosen.lines.find(line=>line.catalogVersionId===extra.currentVersion!.id)!;
+    expect(purchased.catalogUnitPriceCents).toBe(14900);
+    const newer=catalog.createVersion(extra.id,{priceMode:'fixed',priceCents:19900});
+    catalog.publishVersion(newer.id);
+    const historical=quotes.get(quote.id).lines.find(line=>line.id===purchased.id)!;
+    expect(historical.catalogVersionId).toBe(extra.currentVersion!.id);
+    expect(historical.catalogUnitPriceCents).toBe(14900);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+});
 
 describe('QuoteService', () => {
   it('E73 : un accord de principe explicite est horodaté, idempotent et révocable sans signature ni conversion', () => {

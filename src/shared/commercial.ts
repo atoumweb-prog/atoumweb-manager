@@ -38,6 +38,20 @@ export interface CatalogCommercialIdentity {
 // Descriptive commercial data, never injected as contract clauses by this field.
 export interface CatalogCommercialParameters {
   clientNeed?: string | null;
+  /** Versioned commercial benefits, descriptive only and never contract clauses. */
+  benefits?: string | null;
+  /** Human-authored customer-facing pitch, for internal preparation only. */
+  salesPitch?: string | null;
+  /** Questions to qualify the client's request before proposing the service. */
+  qualificationQuestions?: string | null;
+  /** Situations where proposing the offer can be appropriate, authored by a person. */
+  relevantSituations?: string | null;
+  /** Internal warnings, limits and promises to avoid; never copied into CGV. */
+  commercialCautions?: string | null;
+  /** Human-authored objection handling, never contractual. */
+  objections?: string | null;
+  /** Admin-managed search keywords/synonyms, separated by commas, semicolons or line breaks. */
+  keywords?: string | null;
   work?: string | null;
   options?: string | null;
   quoteRequiredWhen?: string | null;
@@ -64,6 +78,8 @@ export interface CatalogItemInput {
   type: CatalogItemType;
   name: string;
   category?: string | null;
+  /** Optional stable category chosen explicitly, atomically attached during item creation. */
+  categoryId?: string | null;
   visiblePublic?: boolean;
 }
 
@@ -122,6 +138,8 @@ export interface CatalogItemSummary {
   type: CatalogItemType;
   name: string;
   category?: string | null;
+  /** E95: stable admin category relation, independent of the legacy label and commercial family. */
+  categoryId?: string | null;
   status: CatalogItemStatus;
   visiblePublic: boolean;
   currentVersion?: CatalogVersion | null;
@@ -143,16 +161,55 @@ export interface CatalogFilters {
   priceMode?: PriceMode | null;
 }
 
+/** Existing project production blueprints attached to one immutable catalogue version. */
+export interface CatalogProductionBlueprintLink {
+  id: string;
+  catalogVersionId: string;
+  templateVersionId: string;
+  templateName: string;
+  versionNumber: number;
+  templateStatus: 'draft' | 'published' | 'retired';
+  role: 'base' | 'addon';
+  sortOrder: number;
+  quantityMode: string;
+  siteMode: string;
+}
+
+export interface CatalogRecommendationDetails { targetVersionId: string; reason: string; status: 'active' | 'paused'; conditions: string; provenance: string; }
+export interface CatalogRecommendationLink {
+  id: string;
+  sourceVersionId: string;
+  targetVersionId: string;
+  targetItemId: string;
+  targetName: string;
+  targetVersionNumber: number;
+  targetVersionStatus: CatalogVersionStatus;
+  targetItemStatus: CatalogItemStatus;
+  sortOrder: number;
+  reason?: string;
+  status?: 'active' | 'paused';
+  conditions?: string;
+  provenance?: string;
+}
+
 export interface CatalogApi {
   assignCanonicalCode(itemId: string, canonicalCode: string): Promise<CatalogItemDetail>;
   list(filters?: CatalogFilters): Promise<CatalogItemSummary[]>;
   getItem(id: string): Promise<CatalogItemDetail>;
   create(input: CatalogItemInput, firstVersion: CatalogVersionInput): Promise<CatalogItemDetail>;
-  createVersion(itemId: string, input: CatalogVersionInput): Promise<CatalogVersion>;
-  publishVersion(versionId: string): Promise<CatalogVersion>;
+  /** An optional stable request UUID makes network retries idempotent. */
+  createVersion(itemId: string, input: CatalogVersionInput, requestId?: string): Promise<CatalogVersion>;
+  /** Update only an existing draft; expected is the last loaded version for optimistic concurrency. */
+  saveDraftVersion(versionId: string, expected: CatalogVersion, input: CatalogVersionInput): Promise<CatalogVersion>;
+  /** Optional snapshot check prevents publication of a concurrently edited draft. */
+  publishVersion(versionId: string, expected?: CatalogVersion): Promise<CatalogVersion>;
   setStatus(itemId: string, status: CatalogItemStatus): Promise<CatalogItemSummary>;
   setVisiblePublic(itemId: string, visible: boolean): Promise<CatalogItemSummary>;
   listOfferComponents(offerVersionId: string): Promise<OfferComponent[]>;
+  listRecommendations(sourceVersionId: string): Promise<CatalogRecommendationLink[]>;
+  replaceRecommendations(sourceVersionId: string, targetVersionIds: string[], expectedTargetVersionIds?: string[], details?: CatalogRecommendationDetails[], expectedDetails?: CatalogRecommendationDetails[]): Promise<CatalogRecommendationLink[]>;
+  /** Read the real blueprint references; never create a Project on inspection. */
+  listProductionBlueprints(versionId: string): Promise<CatalogProductionBlueprintLink[]>;
   setOfferComponents(offerVersionId: string, components: OfferComponentInput[]): Promise<OfferComponent[]>;
 }
 

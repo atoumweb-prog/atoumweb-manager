@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { catalogMatchesQuery } from '../../shared/catalogDiscovery';
+import { reviewCatalogPrepublication } from '../../shared/catalogVersionReview';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import {
   CATALOG_ITEM_STATUSES,
@@ -17,6 +19,7 @@ import {
   type CatalogVersionInput,
   type OfferComponent,
   type OfferComponentInput,
+  type CatalogProductionBlueprintLink,
 } from '../../shared/commercial';
 
 const nowIso = (): string => new Date().toISOString();
@@ -40,6 +43,7 @@ interface CatalogRow extends Record<string, unknown> {
   item_type: CatalogItemSummary['type'];
   name: string;
   category: string | null;
+  category_id: string | null;
   status: CatalogItemSummary['status'];
   visible_public: number;
   created_at: string;
@@ -123,6 +127,22 @@ interface VersionIdentityRow extends Record<string, unknown> {
   status: CatalogVersion['status'];
 }
 
+const VERSION_EDITABLE_KEYS = [
+  'commercialKind', 'familyCode', 'abbyLabel', 'unit', 'periodicity',
+  'priceBasis', 'provenance', 'commercialParameters',
+  'nature', 'description', 'inclusions', 'exclusions', 'prerequisites',
+  'priceMode', 'priceCents', 'recommendedPriceCents',
+  'estimatedMinutes', 'recommendedDelayDays', 'defaultDepositPercent',
+  'contractType', 'internalAdvice', 'specialTerms',
+] as const satisfies readonly (keyof CatalogVersionInput)[];
+
+function sameVersionSnapshot(actual: CatalogVersion, expected: CatalogVersion): boolean {
+  return expected.id === actual.id && expected.itemId === actual.itemId &&
+    expected.versionNumber === actual.versionNumber && expected.status === actual.status &&
+    VERSION_EDITABLE_KEYS.every(key =>
+      JSON.stringify(actual[key] ?? null) === JSON.stringify(expected[key] ?? null));
+}
+
 export class CatalogService {
   constructor(private readonly database: DatabaseAdapter) {}
 
@@ -150,11 +170,8 @@ export class CatalogService {
       where.push('v.price_mode=?');
       params.push(filters.priceMode);
     }
-    if (clean(filters.search)) {
-      where.push('(i.name LIKE ? COLLATE NOCASE OR COALESCE(i.category, \'\') LIKE ? COLLATE NOCASE OR COALESCE(v.nature, \'\') LIKE ? COLLATE NOCASE OR COALESCE(v.description, \'\') LIKE ? COLLATE NOCASE OR i.canonical_code LIKE ? COLLATE NOCASE OR v.abby_label LIKE ? COLLATE NOCASE OR v.family_code LIKE ? COLLATE NOCASE)');
-      const query = `%${clean(filters.search)}%`;
-      params.push(query, query, query, query, query, query, query);
-    }
+    // Search on the selected version's actual data, including E96 fields.
+    // French accent normalization is handled by a shared pure matcher below.
 
     const rows = this.database.all<CatalogRow>(
       `SELECT
@@ -194,7 +211,8 @@ export class CatalogService {
       params,
     );
 
-    return rows.map((row) => this.mapSummary(row));
+    const mapped = rows.map((row) => this.mapSummary(row));
+    return clean(filters.search) ? mapped.filter(item => catalogMatchesQuery(item, filters.search!, 'admin')) : mapped;
   }
 
   getItem(id: string): CatalogItemDetail {
@@ -219,13 +237,47 @@ export class CatalogService {
     const now = nowIso();
     this.database.exec('SAVEPOINT catalog_service;');
     try {
-      this.database.run(
+      // E95: the stable registry link, legacy label, first draft and audit must
+      // commit together. No automatic mapping from an approximate category name.
+      const categoryId = clean(input.categoryId);
+      let categoryLabel = clean(input.category);
+      if (categoryId) {
+        const category = this.database.get<{ name: string; status: string }>(
+          'SELECT name,status FROM catalog_categories WHERE id=?', [categoryId],
+        );
+        if (!category) throw new Error('Catégorie administrée introuvable : recharge le catalogue.');
+        if (category.status !== 'active') throw new Error('Cette catégorie est archivée : rattachement interdit.');
+        if (categoryLabel && categoryLabel !== category.name)
+          throw new Error('Le nom de catégorie a changé : vérifie le rattachement avant de créer.');
+        categoryLabel = category.name;
+      }
+      // Some migration replay fixtures intentionally exercise CatalogService on a
+      // schema predating E95. Keep legacy creation working, but never accept a
+      // stable category ID without the registry column.
+      const hasCategoryRegistry = Boolean(this.database.get<{ name: string }>(
+        "SELECT name FROM pragma_table_info('catalog_items') WHERE name='category_id'",
+      ));
+      if (!hasCategoryRegistry && categoryId)
+        throw new Error('Référentiel de catégories indisponible : migration nécessaire.');
+      if (hasCategoryRegistry) this.database.run(
+        `INSERT INTO catalog_items (
+          id, item_type, name, category, category_id, status, visible_public, created_at, updated_at, archived_at, canonical_code, identity_provenance_json
+        ) VALUES (?, ?, ?, ?, ?, 'active', ?, ?, ?, NULL, ?, ?)`,
+        [id, input.type, name, categoryLabel, categoryId, input.visiblePublic ? 1 : 0, now, now, canonicalCode, identityProvenance ? JSON.stringify(identityProvenance) : null],
+      );
+      else this.database.run(
         `INSERT INTO catalog_items (
           id, item_type, name, category, status, visible_public, created_at, updated_at, archived_at, canonical_code, identity_provenance_json
         ) VALUES (?, ?, ?, ?, 'active', ?, ?, ?, NULL, ?, ?)`,
-        [id, input.type, name, clean(input.category), input.visiblePublic ? 1 : 0, now, now, canonicalCode, identityProvenance ? JSON.stringify(identityProvenance) : null],
+        [id,input.type,name,categoryLabel,input.visiblePublic ? 1 : 0,now,now,canonicalCode,identityProvenance ? JSON.stringify(identityProvenance) : null],
       );
       this.insertVersion(id, 1, firstVersion, now);
+      if (categoryId) this.database.run(
+        `INSERT INTO catalog_category_audit
+         (id,action,category_id,item_id,previous_name,new_name,previous_category,new_category,previous_category_id,new_category_id,created_at)
+         VALUES(?, 'assign', ?, ?, NULL, NULL, NULL, ?, NULL, ?, ?)`,
+        [randomUUID(),categoryId,id,categoryLabel,categoryId,now],
+      );
       this.writeActivity(id, 'catalog_created', `${input.type === 'offer' ? 'Offre' : 'Service'} créé : ${name}`);
       this.database.exec('RELEASE SAVEPOINT catalog_service;');
     } catch (error) {
@@ -235,24 +287,57 @@ export class CatalogService {
     return this.getItem(id);
   }
 
-  createVersion(itemId: string, input: CatalogVersionInput): CatalogVersion {
-    const item = this.assertItem(itemId);
-    const previous = this.database.get<{ id: string; version_number: number }>(
-      'SELECT id, version_number FROM catalog_versions WHERE item_id=? ORDER BY version_number DESC LIMIT 1',
-      [itemId],
-    );
-    const nextVersion = Number(previous?.version_number ?? 0) + 1;
-    const previousVersion = previous ? this.getVersion(previous.id) : null;
-    const nextInput: CatalogVersionInput = { ...input };
-    for (const key of ['commercialKind', 'familyCode', 'abbyLabel', 'unit', 'periodicity', 'priceBasis', 'provenance', 'commercialParameters'] as const) {
-      if (input[key] === undefined && previousVersion) Object.assign(nextInput, { [key]: previousVersion[key] });
-    }
-    this.validateVersion(nextInput);
-    const now = nowIso();
-
+  createVersion(itemId: string, input: CatalogVersionInput, requestId?: string): CatalogVersion {
+    // The caller may supply a stable UUID per user gesture. If its response is
+    // lost, retrying the SAME request returns the original row, not vN+1.
+    if (requestId !== undefined && !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(requestId))
+      throw new Error('Identifiant de création de version invalide.');
+    this.validateVersion(input);
     this.database.exec('SAVEPOINT catalog_service;');
     try {
-      const version = this.insertVersion(itemId, nextVersion, nextInput, now);
+      if (requestId) {
+        const existing = this.database.get<{item_id:string}>('SELECT item_id FROM catalog_versions WHERE id=?',[requestId]);
+        if (existing) {
+          if (existing.item_id !== itemId)
+            throw new Error('Conflit : cet identifiant de requête appartient à une autre prestation.');
+          const saved = this.getVersion(requestId);
+          if (saved.status !== 'draft')
+            throw new Error('Requête déjà traitée : cette version n’est plus un brouillon. Recharge le Catalogue.');
+          // A request ID is one immutable *intent*, not a permission to reuse
+          // the ID for a different price, scope or contract. Only accept retries
+          // whose explicitly supplied fields match the stored draft.
+          const actualFields = saved as unknown as Record<string, unknown>;
+          const submittedFields = input as unknown as Record<string, unknown>;
+          for (const [key, value] of Object.entries(submittedFields)) {
+            if (value === undefined) continue;
+            let normalized: unknown = value;
+            if (key === 'priceCents' && input.priceMode === 'free') normalized = 0;
+            else if (key === 'familyCode') normalized = clean(value as string)?.toUpperCase() ?? null;
+            else if (key === 'priceBasis') normalized = value ?? 'listed';
+            else if (key === 'provenance') normalized = value ? this.normalizeProvenance(value as CatalogProvenance) : null;
+            else if (['nature','description','contractType','internalAdvice','specialTerms','abbyLabel','unit','periodicity'].includes(key))
+              normalized = clean(value as string);
+            if (JSON.stringify(normalized ?? null) !== JSON.stringify(actualFields[key] ?? null))
+              throw new Error('Conflit : cet identifiant de création a déjà été utilisé avec un contenu différent. Recharge le Catalogue.');
+          }
+          this.database.exec('RELEASE SAVEPOINT catalog_service;');
+          return saved;
+        }
+      }
+      const item = this.assertItem(itemId);
+      const previous = this.database.get<{ id: string; version_number: number }>(
+        'SELECT id, version_number FROM catalog_versions WHERE item_id=? ORDER BY version_number DESC LIMIT 1',
+        [itemId],
+      );
+      const nextVersion = Number(previous?.version_number ?? 0) + 1;
+      const previousVersion = previous ? this.getVersion(previous.id) : null;
+      const nextInput: CatalogVersionInput = { ...input };
+      for (const key of ['commercialKind', 'familyCode', 'abbyLabel', 'unit', 'periodicity', 'priceBasis', 'provenance', 'commercialParameters'] as const) {
+        if (input[key] === undefined && previousVersion) Object.assign(nextInput, { [key]: previousVersion[key] });
+      }
+      this.validateVersion(nextInput);
+      const now = nowIso();
+      const version = this.insertVersion(itemId, nextVersion, nextInput, now, requestId);
       if(previous && this.database.get("SELECT name FROM sqlite_master WHERE type='table' AND name='catalog_contract_type_links'"))
         this.database.run('INSERT INTO catalog_contract_type_links(catalog_version_id,contract_type_id,created_at) SELECT ?,contract_type_id,? FROM catalog_contract_type_links WHERE catalog_version_id=?',[version.id,now,previous.id]);
       if(previous && this.database.get("SELECT name FROM sqlite_master WHERE type='table' AND name='catalog_commercial_rules'"))this.database.run(`INSERT INTO catalog_commercial_rules(catalog_version_id,rules_json,provenance_json,updated_at)
@@ -265,6 +350,20 @@ export class CatalogService {
               id, offer_version_id, service_version_id, is_optional, quantity_milli, sort_order, created_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [randomUUID(), version.id, component.serviceVersionId, component.isOptional ? 1 : 0, component.quantityMilli, component.sortOrder, now],
+          );
+        }
+      }
+      // 04D: Copy immutable version-scoped references into the new draft.
+      if (previous && this.database.get("SELECT name FROM sqlite_master WHERE type='table' AND name='catalog_version_recommendations'")) {
+        const recommendations = this.database.all<{target_version_id:string;sort_order:number;reason:string;rule_status:string;conditions:string;provenance:string}>(
+          'SELECT target_version_id,sort_order,reason,rule_status,conditions,provenance FROM catalog_version_recommendations WHERE source_version_id=? ORDER BY sort_order,id',
+          [previous.id],
+        );
+        for (const recommendation of recommendations) {
+          this.database.run(
+            'INSERT INTO catalog_version_recommendations (id,source_version_id,target_version_id,sort_order,created_at,reason,rule_status,conditions,provenance) VALUES (?,?,?,?,?,?,?,?,?)',
+            [randomUUID(),version.id,recommendation.target_version_id,recommendation.sort_order,now,
+              recommendation.reason,recommendation.rule_status,recommendation.conditions,recommendation.provenance],
           );
         }
       }
@@ -342,11 +441,72 @@ export class CatalogService {
     return json ? JSON.parse(json) as CatalogProvenance : null;
   }
 
-  publishVersion(versionId: string): CatalogVersion {
-    const target = this.getVersion(versionId);
-    const now = nowIso();
+  /**
+   * E99/E102 — Save the SAME draft ID, never increment a version number.
+   * The persisted snapshot must match the editor's last loaded state, including
+   * all versioned commercial fields. BEGIN IMMEDIATE serializes concurrent writers.
+   * Published/retired versions and their accepted quote snapshots are immutable.
+   */
+  saveDraftVersion(versionId: string, expected: CatalogVersion, input: CatalogVersionInput): CatalogVersion {
+    this.validateVersion(input);
     this.database.exec('BEGIN IMMEDIATE;');
     try {
+      const actual = this.getVersion(versionId);
+      if (actual.status !== 'draft' || expected.status !== 'draft')
+        throw new Error('Version publiée ou retirée : crée un nouveau brouillon pour la modifier.');
+      if (!sameVersionSnapshot(actual, expected))
+        throw new Error('Conflit : le brouillon a été modifié dans une autre fenêtre. Recharge-le avant de sauvegarder.');
+      this.database.run(
+        `UPDATE catalog_versions SET
+          nature=?, description=?, inclusions_json=?, exclusions_json=?, prerequisites_json=?,
+          price_mode=?, price_cents=?, recommended_price_cents=?, estimated_minutes=?,
+          recommended_delay_days=?, default_deposit_percent=?, contract_type=?, internal_advice=?,
+          special_terms=?, commercial_kind=?, family_code=?, abby_label=?, unit=?,
+          periodicity=?, price_basis=?, provenance_json=?, commercial_parameters_json=?
+         WHERE id=? AND status='draft'`,
+        [
+          clean(input.nature),clean(input.description),
+          JSON.stringify(input.inclusions ?? []),JSON.stringify(input.exclusions ?? []),
+          JSON.stringify(input.prerequisites ?? []),input.priceMode,
+          input.priceMode === 'free' ? 0 : input.priceCents ?? null,
+          input.recommendedPriceCents ?? null,input.estimatedMinutes ?? null,
+          input.recommendedDelayDays ?? null,input.defaultDepositPercent ?? null,
+          clean(input.contractType),clean(input.internalAdvice),clean(input.specialTerms),
+          input.commercialKind ?? null,clean(input.familyCode)?.toUpperCase() ?? null,
+          clean(input.abbyLabel),clean(input.unit),clean(input.periodicity),
+          input.priceBasis ?? 'listed',
+          input.provenance ? JSON.stringify(this.normalizeProvenance(input.provenance)) : null,
+          input.commercialParameters ? JSON.stringify(input.commercialParameters) : null,
+          versionId,
+        ],
+      );
+      this.database.run('UPDATE catalog_items SET updated_at=? WHERE id=?',[nowIso(), actual.itemId]);
+      this.writeActivity(actual.itemId,'catalog_draft_saved',`Brouillon v${actual.versionNumber} enregistré sans création d'une nouvelle version`);
+      this.database.exec('COMMIT;');
+    } catch(error) {
+      this.database.exec('ROLLBACK;');
+      throw error;
+    }
+    return this.getVersion(versionId);
+  }
+
+  publishVersion(versionId: string, expected?: CatalogVersion): CatalogVersion {
+    // Publishing is a separate, deliberate transition. Check the persisted
+    // state *under the write lock*; never republish a retired/published version
+    // or silently rewrite its original publication timestamp.
+    this.database.exec('BEGIN IMMEDIATE;');
+    try {
+      const target = this.getVersion(versionId);
+      if (target.status !== 'draft')
+        throw new Error('Seule une version brouillon peut être publiée. Une version publiée ou retirée est figée.');
+      if (expected && !sameVersionSnapshot(target, expected))
+        throw new Error('Conflit : le brouillon a changé depuis la préparation de la publication. Actualise la fiche.');
+      // Only hard technical contradictions are blocked. Legal, CGV and blueprint
+      // checks remain informational until their type-specific rules are defined.
+      const publicationReview = reviewCatalogPrepublication(this.getItem(target.itemId), target);
+      if (publicationReview.blocking.length)
+        throw new Error('Publication refusée : '+publicationReview.blocking.join(' '));
+      const now = nowIso();
       this.database.run(
         `UPDATE catalog_versions
          SET status='retired'
@@ -453,6 +613,17 @@ export class CatalogService {
       };
     });
 
+    // 04D: adding a composed service must not leave it recommended as an extra.
+    if (this.database.get("SELECT name FROM sqlite_master WHERE type='table' AND name='catalog_version_recommendations'")) {
+      for (const component of normalized) {
+        const collision = this.database.get<{id:string}>(`SELECT r.id FROM catalog_version_recommendations r
+          JOIN catalog_versions target ON target.id=r.target_version_id
+          JOIN catalog_versions selected ON selected.id=?
+          WHERE r.source_version_id=? AND target.item_id=selected.item_id LIMIT 1`,
+          [component.serviceVersionId,offerVersionId]);
+        if (collision) throw new Error('Ce Service est déjà recommandé en complément. Retire la recommandation avant de l’inclure.');
+      }
+    }
     const now = nowIso();
     this.database.exec('BEGIN IMMEDIATE;');
     try {
@@ -476,8 +647,32 @@ export class CatalogService {
     return this.listOfferComponents(offerVersionId);
   }
 
-  private insertVersion(itemId: string, versionNumber: number, input: CatalogVersionInput, createdAt: string): CatalogVersion {
-    const id = randomUUID();
+  /** Existing production references only; inspecting a Catalogue version cannot create a Project. */
+  listProductionBlueprints(versionId: string): CatalogProductionBlueprintLink[] {
+    this.getVersion(versionId);
+    return this.database.all<{
+      id:string;catalog_version_id:string;template_version_id:string;
+      template_name:string;version_number:number;template_status:CatalogProductionBlueprintLink['templateStatus'];
+      role:CatalogProductionBlueprintLink['role'];sort_order:number;
+      quantity_mode:string;site_mode:string;
+    }>(`SELECT b.id,b.catalog_version_id,b.template_version_id,
+         t.name AS template_name,tv.version_number,tv.status AS template_status,
+         b.role,b.sort_order,b.quantity_mode,b.site_mode
+       FROM catalog_project_blueprints b
+       JOIN project_template_versions tv ON tv.id=b.template_version_id
+       JOIN project_templates t ON t.id=tv.template_id
+       WHERE b.catalog_version_id=?
+       ORDER BY b.sort_order,b.id`,[versionId]).map(row=>({
+      id:row.id,catalogVersionId:row.catalog_version_id,
+      templateVersionId:row.template_version_id,templateName:row.template_name,
+      versionNumber:row.version_number,templateStatus:row.template_status,
+      role:row.role,sortOrder:row.sort_order,
+      quantityMode:row.quantity_mode,siteMode:row.site_mode,
+    }));
+  }
+
+  private insertVersion(itemId: string, versionNumber: number, input: CatalogVersionInput, createdAt: string, explicitId?: string): CatalogVersion {
+    const id = explicitId ?? randomUUID();
     this.database.run(
       `INSERT INTO catalog_versions (
         id, item_id, version_number, status, nature, description, inclusions_json, exclusions_json,
@@ -574,6 +769,7 @@ export class CatalogService {
       type: row.item_type,
       name: row.name,
       category: row.category,
+      categoryId: row.category_id,
       status: row.status,
       visiblePublic: Boolean(row.visible_public),
       currentVersion: row.version_id ? this.mapVersion({

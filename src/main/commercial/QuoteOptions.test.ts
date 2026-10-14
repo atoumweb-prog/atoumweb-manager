@@ -182,7 +182,8 @@ describe('Lot 6 — achats optionnels explicites', () => {
   });
 
   it('rejeu migration idempotent, anciennes lignes non requalifiées', () => {
-    expect(applyPendingMigrations(db)).toEqual([]); expect(MIGRATIONS.at(-1)?.id).toBe(MIGRATIONS.length);
+    expect(applyPendingMigrations(db)).toEqual([]); expect(MIGRATIONS.at(-1)).toMatchObject({id:70,name:'catalog_recommendation_details_v1'});
+    expect(MIGRATIONS.map(m=>m.id)).toEqual([...new Set(MIGRATIONS.map(m=>m.id))]);
     const q = f.createQuote();
     expect(q.lines.every((line) => line.optionPurchase === null)).toBe(true);
     expect(db.all('PRAGMA integrity_check')).toEqual([{ integrity_check: 'ok' }]);

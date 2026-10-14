@@ -1,0 +1,248 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
+import { applyPendingMigrations } from '../database/migrations';
+import { CatalogService } from './CatalogService';
+import { CatalogRecommendationsService } from './CatalogRecommendationsService';
+import { resolveProspectCatalogRecommendations } from '../../shared/catalogProspectRecommendations';
+
+let db:NodeSqliteAdapter;
+let catalog:CatalogService;
+let recommendations:CatalogRecommendationsService;
+beforeEach(()=>{
+  db=new NodeSqliteAdapter(':memory:');
+  db.exec('PRAGMA foreign_keys = ON;');
+  applyPendingMigrations(db);
+  catalog=new CatalogService(db);
+  recommendations=new CatalogRecommendationsService(db);
+});
+afterEach(()=>db.close());
+
+describe('04D — versioned recommendation persistence',()=>{
+  const create = (name:string) => catalog.create({type:'service',name},{
+    priceMode:'fixed',priceCents:9900,
+  });
+  it('restores a SQLite backup with versioned recommendations and unchanged foreign keys',async()=>{
+    const dir=mkdtempSync(join(tmpdir(),'atoumweb-04d-backup-'));
+    let restored:NodeSqliteAdapter|undefined;
+    try{
+      const source=create('Backup source');
+      const target=create('Backup target');
+      catalog.publishVersion(target.versions[0].id);
+      const saved=recommendations.replace(source.versions[0].id,[target.versions[0].id],[]);
+      const archive=join(dir,'catalogue.sqlite');
+      await db.backupTo(archive);
+      restored=new NodeSqliteAdapter(archive);
+      restored.exec('PRAGMA foreign_keys=ON;');
+      const service=new CatalogRecommendationsService(restored);
+      expect(service.list(source.versions[0].id)).toEqual(saved);
+      expect(restored.all('PRAGMA foreign_key_check')).toEqual([]);
+      expect(restored.get<{n:number}>('SELECT count(*) AS n FROM schema_migrations WHERE id=68')?.n).toBe(1);
+    }finally{
+      restored?.close();
+      rmSync(dir,{recursive:true,force:true});
+    }
+  });
+  it('offers a published service to Prospect needs without creating a Devis or Project',()=>{
+    const source=catalog.create({type:'offer',name:'Pack principal'},{
+      priceMode:'fixed',priceCents:69900,
+    });
+    const target=create('SEO additionnel');
+    catalog.publishVersion(target.versions[0].id);
+    recommendations.replace(source.versions[0].id,[target.versions[0].id],[]);
+    catalog.publishVersion(source.versions[0].id);
+    const managedLinks=recommendations.list(source.versions[0].id);
+    const suggested=resolveProspectCatalogRecommendations(
+      catalog.list({status:'active'}),[source.id],
+      managedLinks.map(link=>link.targetVersionId),[],
+    );
+    expect(suggested.map(item=>item.id)).toEqual([target.id]);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+    expect(db.get<{n:number}>('SELECT count(*) AS n FROM quotes')?.n).toBe(0);
+  });
+  it('saves recommendations in the source draft only, referencing published versions',()=>{
+    const source=create('Source');
+    const target=create('Target');
+    catalog.publishVersion(target.versions[0].id);
+    expect(recommendations.replace(source.versions[0].id,[target.versions[0].id]))
+      .toMatchObject([{sourceVersionId:source.versions[0].id,targetVersionId:target.versions[0].id}]);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+  it('replays an identical save without regenerating association IDs',()=>{
+    const source=create('Stable source');
+    const target=create('Stable target');
+    catalog.publishVersion(target.versions[0].id);
+    const versionId=source.versions[0].id;
+    const targetId=target.versions[0].id;
+    const original=recommendations.replace(versionId,[targetId],[]);
+    const retry=recommendations.replace(versionId,[targetId],[targetId]);
+    expect(retry).toEqual(original);
+    expect(recommendations.list(versionId)).toEqual(original);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+  it('persists an explicit recommendation display priority on the same source draft',()=>{
+    const source=create('Ordered source');
+    const first=create('First target');
+    const second=create('Second target');
+    catalog.publishVersion(first.versions[0].id);
+    catalog.publishVersion(second.versions[0].id);
+    const sourceVersionId=source.versions[0].id;
+    const a=first.versions[0].id,b=second.versions[0].id;
+    const initial=recommendations.replace(sourceVersionId,[a,b],[]);
+    expect(initial.map(row=>[row.targetVersionId,row.sortOrder])).toEqual([[a,0],[b,1]]);
+    const reordered=recommendations.replace(sourceVersionId,[b,a],[a,b]);
+    expect(reordered.map(row=>[row.targetVersionId,row.sortOrder])).toEqual([[b,0],[a,1]]);
+    expect(recommendations.list(sourceVersionId).map(row=>row.targetVersionId)).toEqual([b,a]);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+    expect(db.get<{n:number}>('SELECT count(*) AS n FROM quote_lines')?.n??0).toBe(0);
+  });
+  it('stores reasons and paused conditions without changing any quote or past version',()=>{
+    const source=create('Offer to advise');
+    const service=create('Conditional SEO');
+    catalog.publishVersion(service.versions[0].id);
+    const sourceId=source.versions[0].id,targetId=service.versions[0].id;
+    const details=[{targetVersionId:targetId,reason:'Pertinent pour présence locale',
+      status:'paused' as const,conditions:'Seulement si le client possède les droits du domaine',provenance:'manual'}];
+    const rows=recommendations.replace(sourceId,[targetId],[],details);
+    expect(rows).toMatchObject([{reason:details[0].reason,status:'paused',conditions:details[0].conditions,provenance:'manual'}]);
+    expect(recommendations.replace(sourceId,[targetId],[targetId],details)).toEqual(rows);
+    expect(()=>recommendations.replace(sourceId,[targetId],[targetId],
+      [{...details[0],reason:'Intervenant concurrent'}],
+      [{...details[0],reason:'Ancienne valeur de motif'}]))
+      .toThrow(/Conflit/);
+    expect(recommendations.list(sourceId)[0].reason).toBe(details[0].reason);
+    expect(db.get<{n:number}>('SELECT count(*) AS n FROM quotes')?.n).toBe(0);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+    const next=catalog.createVersion(source.id,{priceMode:'fixed',priceCents:9900});
+    expect(recommendations.list(next.id)).toMatchObject([{reason:details[0].reason,status:'paused',conditions:details[0].conditions}]);
+    expect(recommendations.list(sourceId)[0].reason).toBe(details[0].reason);
+    expect(()=>recommendations.replace(next.id,[targetId],[targetId],[{...details[0],status:'invalid' as 'active'}]))
+      .toThrow(/invalides/);
+  });
+  it('rejects malformed IPC payloads before any SQLite mutation',()=>{
+    const source=create('Input guarded');
+    const id=source.versions[0].id;
+    expect(()=>recommendations.replace(id,[''])).toThrow(/invalides/);
+    expect(()=>recommendations.replace(id,42 as unknown as string[])).toThrow(/invalides/);
+    expect(()=>recommendations.replace(id,[],42 as unknown as string[])).toThrow(/invalides/);
+    expect(recommendations.list(id)).toEqual([]);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+  it('rejects stale edits from another window and preserves committed links',()=>{
+    const source=create('Source');
+    const first=create('First');
+    const second=create('Second');
+    catalog.publishVersion(first.versions[0].id);
+    catalog.publishVersion(second.versions[0].id);
+    const oldSnapshot:string[]=[];
+    recommendations.replace(source.versions[0].id,[first.versions[0].id],oldSnapshot);
+    expect(()=>recommendations.replace(source.versions[0].id,[second.versions[0].id],oldSnapshot))
+      .toThrow(/Conflit/);
+    expect(recommendations.list(source.versions[0].id).map(link=>link.targetVersionId))
+      .toEqual([first.versions[0].id]);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+  it('keeps a retired target snapshot legible without updating the recommendation',()=>{
+    const source=create('Historical source');
+    const target=create('Historical target');
+    catalog.publishVersion(target.versions[0].id);
+    recommendations.replace(source.versions[0].id,[target.versions[0].id],[]);
+    const newer=catalog.createVersion(target.id,{priceMode:'fixed',priceCents:18900});
+    catalog.publishVersion(newer.id);
+    expect(recommendations.list(source.versions[0].id)).toMatchObject([{
+      targetVersionId:target.versions[0].id,targetVersionNumber:1,
+      targetVersionStatus:'retired',targetName:'Historical target',
+    }]);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+  it('keeps historical links readable when the target item is deactivated',()=>{
+    const source=create('Source with history');
+    const target=create('Target later inactive');
+    catalog.publishVersion(target.versions[0].id);
+    recommendations.replace(source.versions[0].id,[target.versions[0].id],[]);
+    catalog.setStatus(target.id,'inactive');
+    expect(recommendations.list(source.versions[0].id)).toMatchObject([{
+      targetVersionId:target.versions[0].id,
+      targetName:'Target later inactive',targetVersionNumber:1,targetItemStatus:'inactive',
+    }]);
+    expect(()=>recommendations.replace(source.versions[0].id,[target.versions[0].id],[target.versions[0].id]))
+      .toThrow(/Service actif avec une version publiée/);
+    expect(recommendations.list(source.versions[0].id)).toHaveLength(1);
+  });
+  it('supports explicit removal while preserving unrelated catalogue versions',()=>{
+    const source=create('Source remove');
+    const target=create('Target remove');
+    catalog.publishVersion(target.versions[0].id);
+    recommendations.replace(source.versions[0].id,[target.versions[0].id],[]);
+    expect(recommendations.replace(source.versions[0].id,[],[target.versions[0].id])).toEqual([]);
+    expect(catalog.getItem(target.id).currentVersion?.id).toBe(target.versions[0].id);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+  it('refuses a published Offer as a recommendation target, without changing stored links',()=>{
+    const source=create('Source service');
+    const existing=create('Already recommended service');
+    catalog.publishVersion(existing.versions[0].id);
+    const previously=recommendations.replace(source.versions[0].id,[existing.versions[0].id],[]);
+    const offer=catalog.create({type:'offer',name:'Ineligible target offer'},{
+      priceMode:'fixed',priceCents:69900,
+    });
+    catalog.publishVersion(offer.versions[0].id);
+    expect(()=>recommendations.replace(source.versions[0].id,[offer.versions[0].id],
+      [existing.versions[0].id])).toThrow(/publiée|active|service/i);
+    expect(recommendations.list(source.versions[0].id)).toEqual(previously);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+  it('rolls back on invalid input without losing an existing association',()=>{
+    const source=create('Source');
+    const target=create('Target');
+    const invalid=create('Not published');
+    catalog.publishVersion(target.versions[0].id);
+    recommendations.replace(source.versions[0].id,[target.versions[0].id]);
+    expect(()=>recommendations.replace(source.versions[0].id,[invalid.versions[0].id]))
+      .toThrow(/version publiée/);
+    expect(recommendations.list(source.versions[0].id)).toHaveLength(1);
+  });
+  it('rejects self references, duplicate items, and edits on published sources',()=>{
+    const source=create('Source');
+    const target=create('Target');
+    catalog.publishVersion(target.versions[0].id);
+    expect(()=>recommendations.replace(source.versions[0].id,[source.versions[0].id])).toThrow();
+    expect(()=>recommendations.replace(source.versions[0].id,[target.versions[0].id,target.versions[0].id])).toThrow(/deux fois/);
+    catalog.publishVersion(source.versions[0].id);
+    expect(()=>recommendations.replace(source.versions[0].id,[target.versions[0].id])).toThrow(/brouillon/);
+  });
+  it('copies associations to vN+1 without changing the previous version',()=>{
+    const source=create('Source v1');
+    const target=create('Published target');
+    catalog.publishVersion(target.versions[0].id);
+    recommendations.replace(source.versions[0].id,[target.versions[0].id]);
+    catalog.publishVersion(source.versions[0].id);
+    const copy=catalog.createVersion(source.id,{priceMode:'fixed',priceCents:11900});
+    expect(recommendations.list(copy.id).map(x=>x.targetVersionId))
+      .toEqual([target.versions[0].id]);
+    expect(recommendations.list(source.versions[0].id)).toHaveLength(1);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+  it('also refuses adding an already recommended service to an offer composition',()=>{
+    const target=create('Recommended service');
+    catalog.publishVersion(target.versions[0].id);
+    const offer=catalog.create({type:'offer',name:'Offer with recommendations'},{
+      priceMode:'fixed',priceCents:20000,
+    });
+    recommendations.replace(offer.versions[0].id,[target.versions[0].id]);
+    expect(()=>catalog.setOfferComponents(offer.versions[0].id,[
+      {serviceVersionId:target.versions[0].id},
+    ])).toThrow(/déjà recommandé/);
+    expect(catalog.listOfferComponents(offer.versions[0].id)).toEqual([]);
+    expect(recommendations.list(offer.versions[0].id)).toHaveLength(1);
+  });
+  it('does not duplicate a service already included in an offer',()=>{
+    const target=create('Service included');
+    catalog.publishVersion(target.versions[0].id);
+    const offer=catalog.create({type:'offer',name:'Offer'},{priceMode:'fixed',priceCents:20000});
+    catalog.setOfferComponents(offer.versions[0].id,[{serviceVersionId:target.versions[0].id}]);
+    expect(()=>recommendations.replace(offer.versions[0].id,[target.versions[0].id])).toThrow(/déjà inclus/);
+  });
+});
