@@ -326,4 +326,30 @@ describe('BillingHandoffService', () => {
     expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
+  it('annule tout changement de statut avant facture si son journal est indisponible', () => {
+    const now = '2026-10-14T16:00:00.000Z';
+    database.run(
+      `INSERT INTO billing_items
+       (id,client_account_id,source_type,source_id,source_key,description,expected_amount_cents,theoretical_value_cents,status,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+      ['billing-status-atomic',clientId,'other','source-status-atomic','other:source-status-atomic',
+        'Statut atomique',1500,1500,'ready',now,now],
+    );
+    const before = billing.get('billing-status-atomic');
+    database.exec(`CREATE TRIGGER reject_status_log BEFORE INSERT ON activity_log
+      WHEN NEW.entity_id='billing-status-atomic' AND NEW.action='billing_item_status_changed'
+      BEGIN SELECT RAISE(ABORT, 'journal statuts non disponible'); END;`);
+    expect(() => billing.changeStatus('billing-status-atomic','offered')).toThrow(/journal statuts non disponible/);
+    expect(billing.get('billing-status-atomic')).toEqual(before);
+    database.exec('DROP TRIGGER reject_status_log');
+    const updated = billing.changeStatus('billing-status-atomic','offered');
+    expect(updated.status).toBe('offered');
+    expect(billing.changeStatus('billing-status-atomic','offered')).toEqual(updated);
+    expect(database.get<{ n:number }>(
+      "SELECT COUNT(*) AS n FROM activity_log WHERE entity_id=? AND action='billing_item_status_changed'",
+      ['billing-status-atomic'],
+    )?.n).toBe(1);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
 });
