@@ -4,7 +4,7 @@
  * No production profile or files are touched. Only the native file-picker
  * response is redirected to files created by this isolated test.
  */
-module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,test,sleep}) => {
+module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}) => {
   const fs = require('node:fs');
   const path = require('node:path');
   const { dialog } = require('electron');
@@ -134,6 +134,25 @@ module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,test,sleep}) =>
     await wait('document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("aria-label")==="Accueil"',
       'confirmed navigation away from dirty invoice');
     test(confirmations.length>=3,'09B-UI-22: both record change and module exit are guarded');
+    // Unlike the general UX smoke, this verifies the actual billing screen at all nine combinations.
+    for (const [theme, themeLabel] of [['atoumweb','AtoumWeb'],['noir','Noir'],['blanc','Blanc']]) {
+      for (const [density, densityLabel, font, height] of [
+        ['compact','Compact',14,36],['comfort','Confort',16,42],['comfort_plus','Confort +',18,48],
+      ]) {
+        await select(theme,themeLabel,density,densityLabel,font,height);
+        await navigate('Facturation');
+        await wait('!!document.querySelector(".billing-table tbody tr")','billing '+theme+'/'+density);
+        const state = await get('({ theme:document.documentElement.dataset.theme, density:document.documentElement.dataset.density,'+
+          ' guidance:!!document.querySelector(".billing-guidance-strip"), kpis:document.querySelectorAll(".billing-kpi-grid article").length,'+
+          ' invoiceRows:document.querySelectorAll(".billing-table tbody tr").length,'+
+          ' viewport:document.querySelector(".content-area")?.clientWidth, content:document.querySelector(".content-area")?.scrollWidth })');
+        test(state.theme===theme&&state.density===density&&state.guidance&&state.kpis===4&&state.invoiceRows===2,
+          '09B-3X3: billing React UI, data and style '+theme+'/'+density);
+        test(state.content<=state.viewport+20,
+          '09B-3X3: no horizontal overflow at '+theme+'/'+density);
+      }
+    }
+    console.log('[UXV2 09B] Billing 3 themes x 3 densities passed in native Chromium.');
     await sleep(70);
     console.log('[UXV2 09B] Real renderer, imported and replaced PDF with native picker fixture; original preserved.');
   } finally {
