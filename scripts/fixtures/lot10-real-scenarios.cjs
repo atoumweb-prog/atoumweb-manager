@@ -80,6 +80,38 @@ module.exports = async ({ win, db, evalUI: js, get, wait, navigate, test, sleep 
     dialog.showMessageBoxSync = originalDialog;
   }
   test(db.database.get('SELECT COUNT(*) AS total FROM backup_records').total === initialBackups, 'Lot 10C/10D: aucune déclaration ou action de réglage ne crée une sauvegarde');
+  // R10B-13/R10E-15 — vrais Clients + temps + facturation fictifs en base TEMP.
+  const firstClient = db.crm.createClient({ organizationId: db.crm.createOrganization({ name: 'LOT10 TEST CLIENT A' }).id });
+  const secondClient = db.crm.createClient({ organizationId: db.crm.createOrganization({ name: 'LOT10 TEST CLIENT B' }).id });
+  const reference = new Date();
+  const started = new Date(reference.getFullYear(), reference.getMonth(), 10, 10).toISOString();
+  const firstEnd = new Date(new Date(started).getTime() + 3600000).toISOString();
+  const secondEnd = new Date(new Date(started).getTime() + 10800000).toISOString();
+  for (const [id,clientId,end] of [
+    ['lot10-time-a',firstClient.id,firstEnd], ['lot10-time-b',secondClient.id,secondEnd],
+  ]) db.database.run(
+    'INSERT INTO time_sessions(id,client_account_id,category,activity_label,started_at,ended_at,billable,source,created_at,updated_at) VALUES (?,?,?,?,?,?,1,?,?,?)',
+    [id,clientId,'development','LOT10 parcours temps',started,end,'manual',started,started],
+  );
+  for (const [id,clientId,amount] of [
+    ['lot10-billing-a',firstClient.id,90000], ['lot10-billing-b',secondClient.id,10000],
+  ]) db.database.run(
+    "INSERT INTO billing_items(id,client_account_id,source_type,source_id,source_key,description,expected_amount_cents,status,invoiced_at,created_at,updated_at) VALUES (?,?,'other',?,?,?,?,'invoiced',?,?,?)",
+    [id,clientId,id,'other:'+id,'LOT10 facture fictive suivie',amount,started,started,started],
+  );
+  await navigate('Statistiques');
+  await js("window.dispatchEvent(new Event('atoumweb:changed'))");
+  await js("const b=[...document.querySelectorAll('.statistics-tabs button')].find(e=>e.textContent==='Clients');if(!b)throw Error('Onglet Clients absent');b.click()");
+  await wait('document.querySelectorAll(".statistics-client-card tbody tr").length===2', 'deux Clients fictifs affichés');
+  const order = () => get('[...document.querySelectorAll(".statistics-client-card tbody tr td:first-child button")].map(e=>e.textContent.trim())');
+  test(JSON.stringify(await order()) === JSON.stringify(['LOT10 TEST CLIENT A','LOT10 TEST CLIENT B']),
+    'Lot 10B: classement montant facturé décroissant, source en centimes');
+  await js("const b=[...document.querySelectorAll('.statistics-client-card th button')].find(e=>e.textContent.includes('Temps'));if(!b)throw Error('Tri Temps absent');b.click()");
+  test(JSON.stringify(await order()) === JSON.stringify(['LOT10 TEST CLIENT B','LOT10 TEST CLIENT A']),
+    'Lot 10B: clic Temps inverse classement selon secondes, pas score hybride');
+  test(await get('document.querySelector(".statistics-client-card th[aria-sort=descending]")?.textContent.includes("Temps")'),
+    'Lot 10B: état aria-sort clavier exposé sur la bonne colonne');
+
   test(db.database.get('PRAGMA integrity_check').integrity_check === 'ok', 'Lot 10: intégrité SQLite du fixture');
   test(db.database.all('PRAGMA foreign_key_check').length === 0, 'Lot 10: clés étrangères du fixture');
 };
