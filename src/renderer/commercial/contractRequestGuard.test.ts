@@ -29,5 +29,25 @@ describe('05D request isolation',()=>{
     active='B';latest=2;reject(new Error('A late failure'));
     await task;expect(error).toBe('B current error');
   });
+  it('prevents an old library refresh from replacing the new quote library',async()=>{
+    let release!: (items:string[])=>void;
+    const oldLibrary=new Promise<string[]>(resolve=>{release=resolve;});
+    let active='A',sequence=1,visible=['B fresh'];
+    const delayed=oldLibrary.then(items=>{
+      if(isCurrentContractRequest('A',active,1,sequence))visible=items;
+    });
+    active='B';sequence+=1;release(['A obsolete']);await delayed;
+    expect(visible).toEqual(['B fresh']);
+  });
+  it('rejects older overlapping refreshes even while quote id remains constant',async()=>{
+    let release!: (items:string[])=>void;
+    const oldLibrary=new Promise<string[]>(resolve=>{release=resolve;});
+    let sequence=1,visible=['newer'];
+    const delayed=oldLibrary.then(items=>{
+      if(isCurrentContractRequest('A','A',1,sequence))visible=items;
+    });
+    sequence=2;release(['older']);await delayed;
+    expect(visible).toEqual(['newer']);
+  });
   it('rejects the result after a request is invalidated by cleanup',()=>expect(isCurrentContractRequest('A','A',4,5)).toBe(false));
 });
