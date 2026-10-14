@@ -1,6 +1,6 @@
 
 import { createHash, randomUUID } from 'node:crypto';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, chmodSync, rmSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, chmodSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, extname, join, relative, resolve, sep } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
@@ -197,6 +197,7 @@ export class ExpenseService {
     cleanupExpiredReceiptPreviews();
     const directory = mkdtempSync(join(tmpdir(), 'atoumweb-receipt-preview-'));
     try {
+      writeFileSync(join(directory, '.atoumweb-receipt-preview'), 'atoumweb-receipt-preview-v1');
       const copy = join(directory, randomUUID() + extname(original));
       copyFileSync(original, copy);
       if (createHash('sha256').update(readFileSync(copy)).digest('hex') !== version.sha256) {
