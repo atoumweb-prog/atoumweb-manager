@@ -41,6 +41,7 @@ export function salesGuidanceFromCatalogVersion(
     versionId: version.id,
     clientNeed: version.commercialParameters?.clientNeed,
     benefits: version.commercialParameters?.benefits,
+    objections: version.commercialParameters?.objections,
     salesAdvice: version.internalAdvice,
   });
 }
