@@ -1071,3 +1071,295 @@ body.catalog-resizing * {
     flex-direction: column;
   }
 }
+
+
+/* UX V2 Lot 04B — Catalogue presentation pilot. Admin table and editors are unchanged. */
+.catalog-view-switch {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-soft);
+}
+.catalog-view-switch .secondary-button {
+  min-height: 36px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.catalog-view-switch .secondary-button[aria-pressed="true"] {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.catalog-overview { display: grid; gap: 24px; min-width: 0; }
+.catalog-overview-section { display: grid; gap: 12px; min-width: 0; }
+.catalog-overview-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.catalog-overview-section-header h3 {
+  margin: 0;
+  font-size: 17px;
+  color: var(--text);
+  line-height: 1.35;
+}
+.catalog-overview-section-header > span {
+  font-size: 14px;
+  color: var(--muted);
+}
+.catalog-overview-featured-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+  gap: 12px;
+  min-width: 0;
+}
+.catalog-overview-featured-group,
+.catalog-overview-category { display: grid; align-content: start; gap: 9px; min-width: 0; }
+.catalog-overview-featured-group > h4,
+.catalog-overview-category > h4 {
+  margin: 0;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.35;
+}
+.catalog-overview-category > h4 span { color: var(--muted); font-weight: 500; }
+.catalog-overview-card-list { display: grid; gap: 8px; min-width: 0; }
+.catalog-overview-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 218px), 1fr));
+  gap: 9px;
+  min-width: 0;
+}
+.catalog-overview-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 7px;
+  width: 100%;
+  min-width: 0;
+  min-height: 116px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-soft);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+.catalog-overview-card:hover { border-color: var(--accent); background: var(--surface); }
+.catalog-overview-card:focus-visible,
+.catalog-view-switch .secondary-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.catalog-overview-card-title {
+  font-size: 15px;
+  font-weight: 750;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.catalog-overview-card-price { font-size: 14px; font-weight: 650; }
+.catalog-overview-card-meta {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 14px;
+  color: var(--muted);
+}
+.catalog-overview-card-meta .catalog-status { font-size: 14px; }
+.catalog-overview-card .catalog-canonical-code {
+  font-size: 14px;
+  margin-top: auto;
+}
+@media (max-width: 780px) {
+  .catalog-overview-featured-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); }
+  .catalog-view-switch { width: 100%; }
+  .catalog-view-switch .secondary-button { flex: 1 1 190px; }
+}
+
+/* Published offer descriptions and inclusions: never derived from unpublished versions. */
+.catalog-overview-card-description {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+.catalog-overview-card-inclusions {
+  display: grid;
+  gap: 4px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.catalog-overview-card-inclusions > span { overflow-wrap: anywhere; }
+
+
+/* Lot 04B — inventaire non destructif des catégories stockées. */
+.catalog-category-inventory { display: grid; gap: 12px; min-width: 0; }
+.catalog-category-inventory-header { display: flex; align-items: start; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.catalog-category-inventory-header h3 { font-size: 17px; line-height: 1.35; margin: 0 0 5px; color: var(--text); }
+.catalog-category-inventory-header p,
+.catalog-category-inventory-summary { font-size: 14px; line-height: 1.5; margin: 0; }
+.catalog-category-inventory-warning {
+  display: grid; gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface-soft);
+}
+.catalog-category-inventory-warning strong,
+.catalog-category-inventory-warning p { font-size: 14px; line-height: 1.5; margin: 0; color: var(--text); }
+.catalog-category-inventory-scroll { min-width: 0; overflow-x: auto; }
+.catalog-category-inventory-table { width: 100%; min-width: 790px; border-collapse: collapse; }
+.catalog-category-inventory-table td,
+.catalog-category-inventory-table th {
+  font-size: 14px;
+  line-height: 1.45;
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  text-align: left;
+  vertical-align: middle;
+}
+.catalog-category-inventory-table th { font-weight: 700; background: var(--surface-soft); }
+.catalog-category-inventory-table code { font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+.catalog-category-inventory-table .secondary-button { font-size: 14px; min-height: 36px; }
+.catalog-category-inventory-table button:focus-visible,
+.catalog-category-inventory-header button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+
+/* Lot 04B / E95 — governed category administration, visual-only styles. */
+.catalog-category-management {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+.catalog-category-edit-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+}
+.catalog-category-edit-row label {
+  display: grid;
+  gap: 6px;
+  flex: 1 1 235px;
+  min-width: 0;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+}
+.catalog-category-edit-row input,
+.catalog-category-edit-row select {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--surface);
+}
+.catalog-category-edit-row input:focus-visible,
+.catalog-category-edit-row select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.catalog-category-edit-row button,
+.catalog-category-admin-actions button {
+  min-height: 38px;
+  font-size: 14px;
+}
+.catalog-category-admin-list { display: grid; gap: 10px; }
+.catalog-category-admin-item {
+  display: grid;
+  gap: 9px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-soft);
+  padding: 12px;
+}
+.catalog-category-admin-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.catalog-category-admin-title strong { color: var(--text); font-size: 15px; }
+.catalog-category-admin-title span { color: var(--muted); font-size: 14px; }
+.catalog-category-admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 14px;
+}
+.catalog-category-operation {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+.catalog-category-operation h4 { margin: 0; font-size: 16px; }
+.catalog-category-operation p { margin: 0; font-size: 14px; }
+
+
+/* UX V2 / Lot 04C — navigation fonctionnelle de la fiche Catalogue. */
+.catalog-editor-tabs {
+  display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; margin-top: 12px;
+  border-bottom: 1px solid var(--border); padding-bottom: 8px;
+}
+.catalog-editor-tabs [role="tab"] {
+  border: 1px solid var(--border); border-radius: 8px; background: var(--surface-soft);
+  color: var(--text); min-height: 36px; padding: 7px 10px; font: inherit; font-size: max(14px, 0.875rem);
+  cursor: pointer; max-width: 100%;
+}
+.catalog-editor-tabs [role="tab"][aria-selected="true"] {
+  border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  font-weight: 700;
+}
+.catalog-editor-tabs [role="tab"]:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+.catalog-editor-tab-panel { min-width: 0; }
+.catalog-editor-tab-panel .catalog-version-diff-table { width: 100%; min-width: 520px; border-collapse: collapse; }
+.catalog-prepublication-review details { overflow-x: auto; }
+.catalog-editor-tab-panel .catalog-production-panel select { width: 100%; max-width: 100%; }
+.catalog-editor-tab-panel .catalog-production-panel li { overflow-wrap: anywhere; }
+@media (max-width: 720px) {
+  .catalog-editor-tabs [role="tab"] { flex: 1 1 auto; min-height: 38px; }
+}
+
+
+.catalog-status-confirmation {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  margin: 10px 0; padding: 12px; border: 1px solid var(--border);
+  border-radius: 10px; background: var(--surface-soft);
+}
+.catalog-status-confirmation p { flex: 1 1 100%; margin: 0; }
+.catalog-status-confirmation button { min-height: 36px; }

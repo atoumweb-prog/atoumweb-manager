@@ -1,4 +1,8 @@
+import { CONTRACT_SECTION_REVIEW_MIGRATION } from './contractSectionReviewMigration';
 import { CONTRACT_TYPES_MIGRATION } from './contractTypesMigration';
+import { CATALOG_CATEGORY_ADMIN_MIGRATION } from './catalogCategoryAdminMigration';
+import { CATALOG_RECOMMENDATIONS_MIGRATION } from './catalogRecommendationsMigration';
+import { CATALOG_RECOMMENDATION_DETAILS_MIGRATION } from './catalogRecommendationDetailsMigration';
 import { OPERATIONAL_SALES_ADDON_MIGRATION } from './operationalSalesAddonMigration';
 import { OPERATIONAL_SALES_MIGRATION } from './operationalSalesMigration';
 import { COMMERCIAL_RULES_MIGRATION } from './commercialRulesMigration';
@@ -247,6 +251,10 @@ export const MIGRATIONS: Migration[] = [
   OPERATIONAL_SALES_MIGRATION,
   OPERATIONAL_SALES_ADDON_MIGRATION,
   CONTRACT_TYPES_MIGRATION,
+  CATALOG_CATEGORY_ADMIN_MIGRATION,
+  CATALOG_RECOMMENDATIONS_MIGRATION,
+  CONTRACT_SECTION_REVIEW_MIGRATION,
+  CATALOG_RECOMMENDATION_DETAILS_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {
@@ -255,7 +263,23 @@ export function ensureMigrationTable(database: DatabaseAdapter): void {
 
 export function getPendingMigrations(database: DatabaseAdapter): Migration[] {
   ensureMigrationTable(database);
-  const rows = database.all<{ id: number }>('SELECT id FROM schema_migrations ORDER BY id');
+  const byId = new Map<number, Migration>();
+  const byName = new Map<string, Migration>();
+  for (const migration of MIGRATIONS) {
+    const existingId = byId.get(migration.id);
+    if (existingId) throw new Error(`Collision migration id ${migration.id}: ${existingId.name} / ${migration.name}`);
+    const existingName = byName.get(migration.name);
+    if (existingName) throw new Error(`Collision migration name ${migration.name}: ${existingName.id} / ${migration.id}`);
+    byId.set(migration.id, migration);
+    byName.set(migration.name, migration);
+  }
+  const rows = database.all<{ id: number; name: string }>('SELECT id, name FROM schema_migrations ORDER BY id');
+  for (const row of rows) {
+    const expected = byId.get(Number(row.id));
+    if (!expected || expected.name !== row.name) {
+      throw new Error(`Historique SQLite incompatible pour migration ${row.id}: ${row.name} (attendu: ${expected?.name ?? 'migration inconnue'})`);
+    }
+  }
   const applied = new Set(rows.map((row) => Number(row.id)));
   return MIGRATIONS.filter((migration) => !applied.has(migration.id));
 }

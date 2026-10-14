@@ -15,6 +15,7 @@ import type {
   CatalogFilters,
   CatalogItemInput,
   CatalogItemStatus,
+  CatalogVersion,
   CatalogVersionInput,
   OfferComponentInput,
   QuoteFilters,
@@ -306,12 +307,26 @@ const api: AtoumWebApi = {
     list: (filters?: CatalogFilters) => ipcRenderer.invoke('catalog:list', filters),
     getItem: (id: string) => ipcRenderer.invoke('catalog:get-item', id),
     create: (input: CatalogItemInput, firstVersion: CatalogVersionInput) => ipcRenderer.invoke('catalog:create', input, firstVersion),
-    createVersion: (itemId: string, input: CatalogVersionInput) => ipcRenderer.invoke('catalog:create-version', itemId, input),
-    publishVersion: (versionId: string) => ipcRenderer.invoke('catalog:publish-version', versionId),
+    createVersion: (itemId: string, input: CatalogVersionInput, requestId?: string) => ipcRenderer.invoke('catalog:create-version', itemId, input, requestId),
+    saveDraftVersion: (versionId: string, expected: CatalogVersion, input: CatalogVersionInput) => ipcRenderer.invoke('catalog:save-draft-version', versionId, expected, input),
+    publishVersion: (versionId: string, expected?: CatalogVersion) => ipcRenderer.invoke('catalog:publish-version', versionId, expected),
     setStatus: (itemId: string, status: CatalogItemStatus) => ipcRenderer.invoke('catalog:set-status', itemId, status),
     setVisiblePublic: (itemId: string, visible: boolean) => ipcRenderer.invoke('catalog:set-visible-public', itemId, visible),
+    listRecommendations: (versionId: string) => ipcRenderer.invoke('catalog:list-recommendations', versionId),
+    replaceRecommendations: (versionId: string, targetVersionIds: string[], expectedTargetVersionIds?: string[], details?: import('../shared/commercial').CatalogRecommendationDetails[], expectedDetails?: import('../shared/commercial').CatalogRecommendationDetails[]) => ipcRenderer.invoke('catalog:replace-recommendations', versionId, targetVersionIds, expectedTargetVersionIds, details, expectedDetails),
     listOfferComponents: (offerVersionId: string) => ipcRenderer.invoke('catalog:list-offer-components', offerVersionId),
+    listProductionBlueprints: (versionId: string) => ipcRenderer.invoke('catalog:production-blueprints', versionId),
     setOfferComponents: (offerVersionId: string, components: OfferComponentInput[]) => ipcRenderer.invoke('catalog:set-offer-components', offerVersionId, components),
+  },
+
+  catalogCategories: {
+    list: () => ipcRenderer.invoke('catalog-categories:list'),
+    listLegacy: () => ipcRenderer.invoke('catalog-categories:list-legacy'),
+    create: (name: string) => ipcRenderer.invoke('catalog-categories:create', name),
+    rename: (id: string, name: string, revision: number, expectedItemIds: string[]) => ipcRenderer.invoke('catalog-categories:rename', id, name, revision, expectedItemIds),
+    setStatus: (id: string, status: import('../shared/catalogCategoryAdministration').CatalogCategoryStatus, revision: number) => ipcRenderer.invoke('catalog-categories:set-status', id, status, revision),
+    assign: (input: import('../shared/catalogCategoryAdministration').CatalogCategoryAssignment) => ipcRenderer.invoke('catalog-categories:assign', input),
+    reconcileLegacy: (rawValue: string, categoryId: string, expectedItemIds: string[]) => ipcRenderer.invoke('catalog-categories:reconcile-legacy', rawValue, categoryId, expectedItemIds),
   },
 
   contractTypes: {
@@ -327,6 +342,11 @@ const api: AtoumWebApi = {
     initialize: () => ipcRenderer.invoke('contract-types:initialize'),
   },
   contractTerms: {
+    sectionReviews: {
+      get: (versionId:string) => ipcRenderer.invoke('contract-terms:section:get',versionId),
+      propose: (versionId,sectionKey,rankInSection,reason) => ipcRenderer.invoke('contract-terms:section:propose',versionId,sectionKey,rankInSection,reason),
+      approve: (versionId,reviewer) => ipcRenderer.invoke('contract-terms:section:approve',versionId,reviewer),
+    },
     library: {
       list: (includeArchived?: boolean) => ipcRenderer.invoke('contract-terms:library:list', includeArchived),
       get: (id: string) => ipcRenderer.invoke('contract-terms:library:get', id),
@@ -349,6 +369,8 @@ const api: AtoumWebApi = {
     },
     previewReference: (typeId,typeVersionId,versionId,audience) => ipcRenderer.invoke('contract-terms:preview-reference',typeId,typeVersionId,versionId,audience),
     copyText: (text: string) => ipcRenderer.invoke('contract-terms:copy-text', text),
+    exportWorkingDocx: (quoteId:string) => ipcRenderer.invoke('contract-terms:export-working-docx',quoteId),
+    importDocxText: () => ipcRenderer.invoke('contract-terms:import-docx-text'),
   },
   quotePreparation: {
     get: id => ipcRenderer.invoke('quote-preparation:get',id),
@@ -380,7 +402,7 @@ const api: AtoumWebApi = {
     markSent: (id: string) => ipcRenderer.invoke('quotes:mark-sent', id),
     confirmPrincipleAgreement: (id: string) => ipcRenderer.invoke('quotes:principle-agreement:confirm', id),
     revokePrincipleAgreement: (id: string) => ipcRenderer.invoke('quotes:principle-agreement:revoke', id),
-    finalize:(id:string)=>ipcRenderer.invoke('quotes:finalize',id),
+    finalize:(id:string,canonicalReview?:boolean)=>ipcRenderer.invoke('quotes:finalize',id,canonicalReview===true),
     extendValidity:(id:string,validUntil:string)=>ipcRenderer.invoke('quotes:extend-validity',id,validUntil),
     markViewed: (id: string) => ipcRenderer.invoke('quotes:mark-viewed', id),
     accept: (id: string) => ipcRenderer.invoke('quotes:accept', id),

@@ -1,6 +1,8 @@
 // Opt-in native regression tests. Only profiles/workspaces created by this harness.
 const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),{spawnSync}=require('node:child_process');
 const repo=path.resolve(__dirname,'..');
+// Keep the expected migration ledger aligned with the actual versioned schema.
+
 if(!process.versions.electron){
  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'atoumweb-unsaved-ui-')),env={...process.env,ATOUMWEB_UNSAVED_TEMP:temp};delete env.ELECTRON_RUN_AS_NODE;
  try{const r=spawnSync(require('electron'),[__filename,...process.argv.slice(2)],{cwd:repo,env,windowsHide:true,encoding:'utf8',timeout:180000});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.error)throw r.error;process.exitCode=r.status??1;}
@@ -10,7 +12,7 @@ if(!process.versions.electron){
  app.disableHardwareAcceleration();app.setPath('userData',path.join(temp,'profile'));app.on('window-all-closed',()=>{});
  const answers=[],dialogs=[];dialog.showMessageBoxSync=(...args)=>{const options=args.at(-1);dialogs.push(options);return answers.shift()??0;};
  const base=repo.replaceAll('\\','/'),esbuild=require('esbuild'),checks=[];let database,win;
- esbuild.buildSync({stdin:{contents:['database/DatabaseService','workspace','ipc','unsaved','restoreQuitGate','operations/operationsIpc','referentials/referentialsIpc','backups/businessBackupsIpc','time/timeIpc'].map(p=>`export * from '${base}/src/main/${p}';`).join('\n'),resolveDir:repo,loader:'ts'},bundle:true,platform:'node',format:'cjs',outfile:path.join(temp,'services.cjs'),external:['electron'],logLevel:'silent'});
+ esbuild.buildSync({stdin:{contents:['database/DatabaseService','workspace','ipc','unsaved','restoreQuitGate','operations/operationsIpc','referentials/referentialsIpc','backups/businessBackupsIpc','time/timeIpc'].map(p=>`export * from '${base}/src/main/${p}';`).join('\n')+`\nexport { MIGRATIONS as EXPECTED_MIGRATIONS } from '${base}/src/main/database/migrations';`,resolveDir:repo,loader:'ts'},bundle:true,platform:'node',format:'cjs',outfile:path.join(temp,'services.cjs'),external:['electron'],logLevel:'silent'});
  for(const [entry,file,platform]of[['src/preload/preload.ts','preload.js','node'],['src/renderer/main.tsx','ui.js','browser']])esbuild.buildSync({entryPoints:[path.join(repo,entry)],bundle:true,platform,format:platform==='node'?'cjs':undefined,outfile:path.join(temp,file),external:platform==='node'?['electron']:[],logLevel:'silent'});
  fs.writeFileSync(path.join(temp,'index.html'),'<html><head><meta charset="utf-8"><link rel="stylesheet" href="ui.css"></head><body><div id="root"></div><script src="ui.js"></script></body></html>');const S=require(path.join(temp,'services.cjs'));
  const check=(name,ok)=>{checks.push({name,passed:!!ok});if(!ok)throw Error(name);};const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -113,7 +115,7 @@ if(!process.versions.electron){
  }
  if(win){win.destroy();win=null;}await sleep(180);
  }
- const db=database.database;check('migrations exactly 1–66',db.all('SELECT id FROM schema_migrations ORDER BY id').map(r=>r.id).join(',')===Array.from({length:66},(_,i)=>i+1).join(','));check('integrity',db.get('PRAGMA integrity_check').integrity_check==='ok');check('FK',db.all('PRAGMA foreign_key_check').length===0);console.log(JSON.stringify({checks:checks.length,failed:checks.filter(c=>!c.passed),details:checks}));
+ const db=database.database;check('migrations exactly match the declared ledger',JSON.stringify(db.all('SELECT id FROM schema_migrations ORDER BY id').map(r=>r.id))===JSON.stringify(S.EXPECTED_MIGRATIONS.map(m=>m.id)));check('integrity',db.get('PRAGMA integrity_check').integrity_check==='ok');check('FK',db.all('PRAGMA foreign_key_check').length===0);console.log(JSON.stringify({checks:checks.length,failed:checks.filter(c=>!c.passed),details:checks}));
  }).then(()=>{win?.destroy();database?.close();app.exit(0);}).catch(e=>{console.error(e.stack);try{win?.destroy();database?.close();}finally{app.exit(1)}});
 }
 

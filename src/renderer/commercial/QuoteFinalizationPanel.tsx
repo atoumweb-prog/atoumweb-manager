@@ -3,7 +3,7 @@ import type {QuoteDetail} from '../../shared/commercial';
 import type {QuoteContractPreparation} from '../../shared/quoteContractPreparation';
 import {focusContractField} from './contractFieldNavigation';
 
-export function QuoteFinalizationPanel({quote,onFinalize}:{quote:QuoteDetail;onFinalize:()=>void}){
+export function QuoteFinalizationPanel({quote,onFinalize}:{quote:QuoteDetail;onFinalize:(canonicalReview?:boolean)=>void}){
   const [review,setReview]=useState<QuoteContractPreparation|null>(null),[error,setError]=useState('');
   useEffect(()=>{let active=true,revision=0;setReview(null);setError('');const refresh=()=>{const current=++revision;void window.atoumweb.quotePreparation.get(quote.id).then(r=>{if(active&&current===revision){setReview(r);setError('');}}).catch(e=>{if(active&&current===revision)setError(String(e));});};refresh();window.addEventListener('atoumweb:changed',refresh);return()=>{active=false;window.removeEventListener('atoumweb:changed',refresh);};},[quote.id,quote.updatedAt]);
   const blocking=review?.issues.filter(i=>i.severity==='blocking')??[];
@@ -12,6 +12,8 @@ export function QuoteFinalizationPanel({quote,onFinalize}:{quote:QuoteDetail;onF
     <p>Les contrôles portent sur les valeurs enregistrées. Enregistre ta préparation pour actualiser cette liste.</p>
     {error&&<p role="alert">{error}</p>}
     {blocking.length>0&&<ul>{blocking.map((i,index)=><li key={i.code+index}><button type="button" className="contract-issue-link" data-issue-code={i.code} onClick={()=>focusContractField(quote.id,i.code)}>{i.message} →</button></li>)}</ul>}
-    <button type="button" className="primary-button" disabled={!review||!!error||blocking.length>0} onClick={onFinalize}>Finaliser le devis</button>
+    <button type="button" className="primary-button" disabled={!review||!!error||blocking.length>0} onClick={()=>onFinalize(false)}>Finaliser le devis</button>
+    <button type="button" className="secondary-button" disabled={!review||!!error||blocking.length>0} onClick={()=>onFinalize(true)}>Finaliser avec contrôle juridique 05C</button>
+    <p className="muted">Le contrôle 05C exige le classement humain approuvé de toutes les rubriques concernées. Il ne remplace pas une validation juridique.</p>
   </section>;
 }

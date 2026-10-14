@@ -15,6 +15,8 @@ on:
   pull_request:
     branches:
       - main
+      - feature/ux-v2-lot04c-editor-drafts-v1
+      - feature/ux-v2-lot04b-catalogue-navigation-v1
       - foundation/electron-react-sqlite
       - feature/phase-1-crm
       - feature/phase-2-commercial
@@ -37,11 +39,201 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Lot 04C: functional Electron editor checks, without visual-human signoff.
+      - name: Electron Catalogue 04C — brouillons et conflits Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 108 }}
+        shell: pwsh
+        timeout-minutes: 6
+        run: |
+          node scripts/check-catalog-identity-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      # Lot 04D/04E: cross-cutting Catalogue UI and UX-01 checks on Windows TEMP.
+      - name: Electron Catalogue 04D-04E — Windows TEMP et 9 captures contrôlées
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
+        shell: pwsh
+        timeout-minutes: 10
+        run: |
+          $captures = Join-Path $env:RUNNER_TEMP 'lot04-consolide-native-captures'
+          if (Test-Path $captures) { throw "Capture directory already exists" }
+          node scripts/check-catalog-identity-ui.cjs --captures $captures
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $images = @(Get-ChildItem -LiteralPath $captures -Filter '*.png' -File)
+          if ($images.Count -ne 9) { throw "Expected 9 verified visual states, got $($images.Count)" }
+          foreach ($file in $images) {
+            $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            Write-Output "LOT04 VERIFIED FRAME $($file.Name) sha256=$hash bytes=$($file.Length)"
+          }
+
+      - name: Electron Recommandations 04D — interactions et UX-01 Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
+        shell: pwsh
+        timeout-minutes: 6
+        run: |
+          node scripts/check-catalog-recommendations-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Electron Aide commerciale 04E — clavier, Escape, focus Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
+        shell: pwsh
+        timeout-minutes: 6
+        run: |
+          node scripts/check-catalog-guidance-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Electron Prospect 04D — erreurs, reprise et suggestion volontaire
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          node scripts/check-prospect-catalog-recommendations-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Electron Devis 04D — conseil et achat explicite Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          node scripts/check-quote-catalog-recommendations-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Native 04D — Electron IPC et SQLite TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          node scripts/check-catalog-recommendations-native.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: UX-01 Catalogue 04D-04E — Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          node scripts/check-unsaved-inputs-ui.cjs --lot-b --lot-c --review
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: UX-01 Restauration et fermeture Electron 04D-04E — Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          node scripts/check-restore-quit-roundtrip.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: UX 05 integration ancestry gate
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'integration/ux05-candidate-20261014' }}
+        shell: pwsh
+        run: |
+          if (Test-Path (git rev-parse --git-path shallow)) { git fetch --unshallow origin }
+          git fetch origin main:refs/remotes/origin/main
+          git merge-base --is-ancestor origin/main HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Integration candidate is behind or diverged from main; rebuild and retest.' }
+          Write-Output 'UX 05 candidate contains current origin/main.'
+          
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Electron 05B Library UX-01 — Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && (github.event.pull_request.number == 106 || github.head_ref == 'integration/ux05-candidate-20261014') }}
+        shell: pwsh
+        timeout-minutes: 12
+        run: |
+          $captures = Join-Path $env:RUNNER_TEMP 'lot05b-native'
+          New-Item -ItemType Directory -Force -Path $captures | Out-Null
+          node scripts/check-contract-library-ui.cjs --output $captures --ux05b
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $report = Get-Content -LiteralPath (Join-Path $captures 'controle-ui.json') -Raw | ConvertFrom-Json
+          if ($report.errors.Count -ne 0 -or @($report.checks | Where-Object { -not $_.passed }).Count -ne 0) { throw '05B native recipe recorded an error' }
+          "05B Electron native: $($report.checks.Count) checks, SQLite TEMP." | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+
+      - name: UX-01 restore and quit roundtrip — Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'integration/ux05-candidate-20261014' }}
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          node scripts/check-restore-quit-roundtrip.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: UX-01 unsaved input protection — Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'integration/ux05-candidate-20261014' }}
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          node scripts/check-unsaved-inputs-ui.cjs --lot-b --lot-c --review
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: UX 02E shell journeys coexistence — Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'integration/ux05-candidate-20261014' }}
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          node scripts/check-ux-v2-02e-journeys.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: CRM 03B interaction coexistence — Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'integration/ux05-candidate-20261014' }}
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          $captures = Join-Path $env:RUNNER_TEMP 'ux05-crm03b'
+          node scripts/check-ux-v2-lot01a-real-ui.cjs --lot03b --captures $captures
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: CRM 03D client coexistence — Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'integration/ux05-candidate-20261014' }}
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          node scripts/check-ux-v2-03d-client.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: CRM 03E directory coexistence — Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'integration/ux05-candidate-20261014' }}
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          node scripts/check-ux-v2-03e-directory.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Tests
         run: npm test -- --maxWorkers=2
+
+      - name: UX-01 — brouillons, confirmations et navigation (Windows TEMP)
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 108 }}
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          node scripts/check-unsaved-inputs-ui.cjs --lot-b --lot-c --review
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: UX-01 — restauration et fermeture Electron (Windows TEMP)
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 108 }}
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          node scripts/check-restore-quit-roundtrip.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+
+      # Lot 04B: real Electron renderer + mocked IPC, isolated under Windows TEMP.
+      # This is deliberately scoped to the Catalogue pilot PR; no live workspace is opened.
+      - name: Electron Catalogue 04B — Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 104 }}
+        shell: pwsh
+        timeout-minutes: 6
+        run: |
+          $captures = Join-Path $env:RUNNER_TEMP 'lot04b-electron-nine-modes'
+          if (Test-Path $captures) { throw "Refusing to overwrite existing capture directory" }
+          node scripts/check-catalog-identity-ui.cjs --captures $captures
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $images = @(Get-ChildItem -LiteralPath $captures -Filter '*.png' -File)
+          if ($images.Count -ne 9) { throw "Expected exactly 9 PNG, found $($images.Count)" }
+          foreach ($file in $images) {
+            $sha = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
+            Write-Output "LOT04B VERIFIED PNG $($file.Name) size=$($file.Length) sha256=$sha"
+          }
+          Write-Output "LOT04B RESULT 9/9 renderer frames captured in Windows TEMP; no database or live workspace touched"
 
       # PR98 standalone; the combined candidate runs this same recipe below.
       # La fixture crée exclusivement ses propres fichiers et profil dans %TEMP%.
@@ -97,4 +289,11 @@ jobs:
         shell: pwsh
         run: |
           node scripts/check-ux-v2-integration-validate.cjs --native-only
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Windows convergence native validation — current assembled SHA
+        if: ${{ startsWith(github.head_ref, 'codex/convergence-') || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' }}
+        shell: pwsh
+        run: |
+          node scripts/check-convergence-native.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

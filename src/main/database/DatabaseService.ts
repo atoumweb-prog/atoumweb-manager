@@ -1,3 +1,4 @@
+import { ContractSectionReviewService } from '../commercial/ContractSectionReviewService';
 import { ContractTypeService } from '../commercial/ContractTypeService';
 import { QuoteContractPreparationService } from '../commercial/QuoteContractPreparationService';
 import { WorkflowService } from '../workflow/WorkflowService';
@@ -13,6 +14,8 @@ import { CrmIdentityAssetService } from '../crm/CrmIdentityAssetService';
 import { BusinessBackupAlertService } from '../backups/BusinessBackupAlertService';
 import { BusinessBackupService } from '../backups/BusinessBackupService';
 import { CatalogService } from '../commercial/CatalogService';
+import { CatalogRecommendationsService } from '../commercial/CatalogRecommendationsService';
+import { CatalogCategoryService } from '../commercial/CatalogCategoryService';
 import { ContractTermsService } from '../commercial/ContractTermsService';
 import { QuoteService } from '../commercial/QuoteService';
 import { ActionService } from '../crm/ActionService';
@@ -64,7 +67,10 @@ export class DatabaseService {
   readonly clientDocuments: ClientDocumentService;
   readonly actions: ActionService;
   readonly catalog: CatalogService;
+  readonly catalogRecommendations: CatalogRecommendationsService;
+  readonly catalogCategories: CatalogCategoryService;
   readonly contractTerms: ContractTermsService;
+  readonly contractSectionReviews: ContractSectionReviewService;
   readonly contractTypes: ContractTypeService;
   readonly quotes: QuoteService;
   readonly quotePreparation: QuoteContractPreparationService;
@@ -109,7 +115,10 @@ export class DatabaseService {
     this.clientDocuments = new ClientDocumentService(this.database, this.workspace);
     this.actions = new ActionService(this.database);
     this.catalog = new CatalogService(this.database);
+    this.catalogRecommendations = new CatalogRecommendationsService(this.database);
+    this.catalogCategories = new CatalogCategoryService(this.database);
     this.contractTerms = new ContractTermsService(this.database, this.clientDocuments);
+    this.contractSectionReviews = new ContractSectionReviewService(this.database);
     this.contractTypes = new ContractTypeService(this.database);
     this.quotePreparation = new QuoteContractPreparationService(this.database, this.clientDocuments);
     this.quotes = new QuoteService(this.database, this.crm, this.contractTerms, this.quotePreparation);
