@@ -348,6 +348,11 @@ export class ProjectCommercialService {
       else {
         if (decision==='archive') {
           if (kind==='node') required(!this.db.get('SELECT id FROM project_nodes WHERE parent_id=? AND archived_at IS NULL',[id]),'Résoudre d’abord les descendants avant archivage de cette étape.');
+          if (kind==='site') required(!this.db.get(
+            `SELECT psp.project_node_id FROM project_site_pages psp
+             JOIN project_nodes pn ON pn.id=psp.project_node_id
+             WHERE psp.project_site_id=? AND pn.archived_at IS NULL LIMIT 1`, [id],
+          ), 'Archiver ce Site est refusé : résoudre d’abord ses Pages actives.');
           this.db.run(`UPDATE ${tables[kind]} SET archived_at=?,updated_at=? WHERE id=?`,[new Date().toISOString(),new Date().toISOString(),id]);
         }
         if (decision==='detach' || decision==='archive') this.removeBindings(projectId,kind,id);
