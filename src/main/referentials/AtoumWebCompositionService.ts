@@ -391,6 +391,47 @@ export class AtoumWebCompositionService {
     return this.get(id);
   }
 
+  /**
+   * Undo/redo of a component reordering, without deleting or recreating any
+   * occurrence. An optimistic expected order prevents overwriting concurrent
+   * edits, other windows or a newer Page state.
+   */
+  restoreOrder(id: string, expectedIds: string[], targetIds: string[]): AtoumWebCompositionDetail {
+    const composition=this.get(id);
+    if (composition.status!=='draft') throw new Error('Seule une composition en brouillon peut être réorganisée.');
+    const current=composition.items.map(item=>item.id);
+    if (!Array.isArray(expectedIds) || !Array.isArray(targetIds)
+      || JSON.stringify(current)!==JSON.stringify(expectedIds)) {
+      throw new Error('Composition modifiée depuis la dernière opération : actualise la Page avant d’annuler.');
+    }
+    const target=new Set(targetIds);
+    if (targetIds.length!==current.length || target.size!==current.length
+      || current.some(itemId=>!target.has(itemId))) {
+      throw new Error('Historique de composition invalide : aucun composant ne doit être créé ni supprimé.');
+    }
+    if (JSON.stringify(current)===JSON.stringify(targetIds)) return composition;
+    this.database.exec('SAVEPOINT composition_restore_order;');
+    try {
+      // Two-phase positions avoid UNIQUE(composition_id,sort_order) collisions.
+      targetIds.forEach((itemId,index)=>{
+        this.database.run('UPDATE atoumweb_composition_items SET sort_order=? WHERE id=? AND composition_id=?',
+          [100000+index,itemId,id]);
+      });
+      targetIds.forEach((itemId,index)=>{
+        this.database.run('UPDATE atoumweb_composition_items SET sort_order=? WHERE id=? AND composition_id=?',
+          [index,itemId,id]);
+      });
+      this.touch(id);
+      this.log(id,'atoumweb_composition_order_restored','Ordre de composition restauré sans recréer de composant',
+        {expectedIds,targetIds});
+      this.database.exec('RELEASE SAVEPOINT composition_restore_order;');
+    } catch(error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT composition_restore_order; RELEASE SAVEPOINT composition_restore_order;');
+      throw error;
+    }
+    return this.get(id);
+  }
+
   archive(id: string): AtoumWebCompositionDetail {
     this.get(id);
     const now = new Date().toISOString();
