@@ -369,10 +369,10 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     }
   }
 
-  function prepareNewVersion(restoreFrom?: CatalogVersion): void {
-    if (!detail?.currentVersion || versionMode) return;
+  function prepareNewVersion(restoreFrom?: CatalogVersion): boolean {
+    if (!detail?.currentVersion || versionMode) return false;
     if(restoreFrom && (!detail.versions.some(version=>version.id===restoreFrom.id) ||
-      !window.confirm(`Préparer le contenu de la version v${restoreFrom.versionNumber} dans un brouillon ? Aucune version historique ne sera modifiée. L’enregistrement restera une action distincte.`)))return;
+      !window.confirm(`Préparer le contenu de la version v${restoreFrom.versionNumber} dans un brouillon ? Aucune version historique ne sera modifiée. L’enregistrement restera une action distincte.`)))return false;
     // 04C/E99: reopen the existing draft instead of generating vN+1 on
     // every edit. A published version is only copied when no draft exists.
     const existingDraft = detail.versions.find(version => version.status === 'draft') ?? null;
@@ -412,6 +412,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
       visiblePublic: detail.visiblePublic,
     });
     setVersionMode(true);
+    return true;
   }
 
   async function createVersion(event: React.FormEvent): Promise<void> {
@@ -886,7 +887,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 <button type="button" className="secondary-button compact-button" disabled={saving}
                   onClick={()=>setComparisonVersionId(version.id)}>Comparer</button>
                 <button type="button" className="secondary-button compact-button" disabled={saving||versionMode}
-                  onClick={()=>{prepareNewVersion(version);setActiveTab('sales');}}>Reprendre dans un brouillon</button>
+                  onClick={()=>{if(prepareNewVersion(version))setActiveTab('sales');}}>Reprendre dans un brouillon</button>
                 </div>{version.status === 'draft' && <button className="primary-button compact-button" type="button" disabled={versionMode || saving} title={versionMode ? 'Enregistrer ou annuler le brouillon avant publication.' : 'Préparer une confirmation distincte, sans publier le site WordPress.'} onClick={() => setPublicationCandidate(structuredClone(version))}>Préparer la publication</button>}</div>)}</div>}
               </div>
             </aside>
