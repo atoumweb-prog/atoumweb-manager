@@ -70,6 +70,15 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   const templateGuard=useUnsavedDraft('Modèle ou version de clause',{templateCode,templateTitle,templateScope,templateAudience,templateBody},{pending:busy,discard:s=>{setTemplateCode(s.templateCode);setTemplateTitle(s.templateTitle);setTemplateScope(s.templateScope);setTemplateAudience(s.templateAudience);setTemplateBody(s.templateBody);}});
   const changedVersionEditors=Object.fromEntries(Object.entries(versionEditors).filter(([id,body])=>body!==undefined&&body!==templates.flatMap(t=>t.versions).find(v=>v.id===id)?.body));
   useUnsavedDraft('Version de clause',changedVersionEditors,{pending:busy,discard:()=>setVersionEditors(Object.fromEntries(Object.keys(versionEditors).map(id=>[id,templates.flatMap(t=>t.versions).find(v=>v.id===id)?.body])))});
+  const clauseOverview = useMemo(() => {
+    const clauses=build?.clauses??[];
+    return {
+      included:clauses.filter(c=>c.enabled&&!c.isOrphaned),
+      excluded:clauses.filter(c=>!c.enabled&&!c.isOrphaned),
+      orphaned:clauses.filter(c=>c.isOrphaned),
+    };
+  },[build]);
+
   const counts = useMemo(() => {
     const clauses = build?.clauses ?? [];
     return {
@@ -406,6 +415,16 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
       {build?.warnings.map((warning) => <div className="cgv-warning" key={warning}>{warning}</div>)}
       {error && <p className="form-error" role="alert">{error}</p>}
 
+      {build?.snapshotState==='draft' && <details className="cgv-editing">
+        <summary>Sommaire et points de vigilance du brouillon ({clauseOverview.included.length} incluse(s))</summary>
+        <p className="muted">Vue informative basée sur les clauses actuellement enregistrées. Le classement canonique 05C reste en préparation ; aucun nouvel ordre n’est appliqué au contrat.</p>
+        <ol>
+          {clauseOverview.included.map(clause=><li key={clause.id}>{clause.title}{clause.isCustomized?' · adaptée pour ce devis':''}</li>)}
+        </ol>
+        {clauseOverview.excluded.length>0 && <p role="status" className="cgv-warning">{clauseOverview.excluded.length} clause(s) exclue(s) du devis — contrôler leur pertinence.</p>}
+        {clauseOverview.orphaned.length>0 && <p role="status" className="cgv-warning">{clauseOverview.orphaned.length} clause(s) orpheline(s) : prestation retirée — contrôler avant finalisation.</p>}
+        {unsaved && <p role="status" className="cgv-warning">{changedClauseIds.length} clause(s) modifiée(s) non enregistrée(s) : ce sommaire n’intègre pas ces brouillons locaux.</p>}
+      </details>}
       {presentation&&<ContractReadPanel presentation={presentation} commercial={commercialAbbyBlock(quote)} unsaved={unsaved}/>}
       <details className="cgv-editing"><summary>Adapter les clauses de ce devis ({build?.clauses.length ?? 0})</summary>
       <p className="muted">Les clauses sont présentées dans l’ordre contractuel du devis. Socle : commun et non modifiable ici ; prestation : déclenchée par une prestation ; particulière : propre à ce devis. Les clauses exclues et orphelines restent visibles pour contrôle.</p>
