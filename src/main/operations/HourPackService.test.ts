@@ -64,6 +64,34 @@ describe('HourPackService', () => {
     expect(() => packs.debitIntervention(pack.id, intervention.id)).toThrow(/Journal indisponible/);
     expect(Object.fromEntries(['hour_packs', 'hour_pack_movements', 'interventions', 'activity_log'].map(table => [table, database.all(`SELECT * FROM ${table} ORDER BY rowid`)]))).toEqual(before);
   });
+  it.each(['hour_pack_movement_added', 'hour_pack_movement_reversed'] as const)('annule intégralement une erreur de journal %s', action => {
+    const pack = createPack(1);
+    const correction = action === 'hour_pack_movement_reversed'
+      ? packs.addMovement(pack.id, { secondsDelta: -600, reason: 'Correction préalable' }).movements.find(m => m.type === 'manual_correction')!
+      : null;
+    const tables = ['hour_packs', 'hour_pack_movements', 'activity_log'];
+    const snapshot = () => Object.fromEntries(tables.map(table => [table, database.all(`SELECT * FROM ${table} ORDER BY rowid`)]));
+    const before = snapshot();
+    database.exec(`CREATE TEMP TRIGGER movement_failure BEFORE INSERT ON activity_log WHEN NEW.action='${action}' BEGIN SELECT RAISE(ABORT,'Journal pack indisponible'); END;`);
+    expect(() => {
+      if (correction) packs.reverseMovement(correction.id, 'Annulation contrôlée');
+      else packs.addMovement(pack.id, { secondsDelta: -1800, reason: 'Correction contrôlée' });
+    }).toThrow(/Journal pack indisponible/);
+    expect(snapshot()).toEqual(before);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+    database.exec('DROP TRIGGER movement_failure;');
+    if (correction) {
+      const first = packs.reverseMovement(correction.id, 'Annulation contrôlée');
+      const after = snapshot();
+      expect(packs.reverseMovement(correction.id, 'Seconde tentative').balanceSeconds).toBe(first.balanceSeconds);
+      expect(snapshot()).toEqual(after);
+      expect(first.movements.filter(m => m.reversalOfMovementId === correction.id)).toHaveLength(1);
+    } else {
+      expect(packs.addMovement(pack.id, { secondsDelta: -1800, reason: 'Correction contrôlée' }).balanceSeconds).toBe(1800);
+    }
+    expect(database.get('PRAGMA integrity_check')).toEqual({ integrity_check: 'ok' });
+  });
+
   it('calcule l’expiration à la lecture et refuse de consommer un crédit expiré sans mutation silencieuse',()=>{
     const pack=packs.create({clientAccountId:clientId,name:'TEST expiré',purchasedSeconds:18000,contractPriceCents:29900,purchasedAt:'2020-01-01T12:00:00Z',expiresAt:'2021-01-01T12:00:00Z'});
     database.run("UPDATE hour_packs SET status='active' WHERE id=?",[pack.id]);

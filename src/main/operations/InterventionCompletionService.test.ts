@@ -3,6 +3,7 @@ import { BillingHandoffService } from '../billing/BillingHandoffService';
 import { CrmService } from '../crm/CrmService';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
+import { TimeCorrectionService } from '../time/TimeCorrectionService';
 import { TimeService } from '../time/TimeService';
 import { HourPackService } from './HourPackService';
 import { InterventionCompletionService } from './InterventionCompletionService';
@@ -48,6 +49,34 @@ function packIntervention(withTime = true) {
 }
 
 describe('InterventionCompletionService', () => {
+  it('08B projette en lecture seule le débit pack exact, puis retrouve le solde effectif', () => {
+    const { intervention, pack } = packIntervention();
+    const before = snapshot();
+    const preview = packs.previewInterventionDebit(pack.id, intervention.id);
+    expect(preview).toMatchObject({
+      packId: pack.id, interventionId: intervention.id, packName: pack.name,
+      packStatus: 'active', balanceBeforeSeconds: 3600,
+      secondsToDebit: 1800, balanceAfterSeconds: 1800, alreadyDebited: false,
+    });
+    expect(snapshot()).toEqual(before);
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    expect(packs.get(pack.id).balanceSeconds).toBe(preview.balanceAfterSeconds);
+    const after = snapshot();
+    expect(packs.previewInterventionDebit(pack.id, intervention.id)).toMatchObject({
+      alreadyDebited: true, secondsToDebit: 0,
+      balanceBeforeSeconds: 1800, balanceAfterSeconds: 1800,
+    });
+    expect(snapshot()).toEqual(after);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('08B refuse une projection trompeuse sans temps terminé et ne modifie aucune table', () => {
+    const { intervention, pack } = packIntervention(false);
+    const before = snapshot();
+    expect(() => packs.previewInterventionDebit(pack.id, intervention.id)).toThrow(/Aucun temps terminé/i);
+    expect(snapshot()).toEqual(before);
+  });
+
   it('conserve toutes les cellules et activités si aucun temps terminé ne peut être débité', () => {
     const { intervention } = packIntervention(false);
     const before = snapshot();
@@ -139,6 +168,88 @@ describe('InterventionCompletionService', () => {
     localCompletion.complete(intervention.id);
     expect(snapshot()).toEqual(after);
   });
+  it('documente E227 : une transition après clôture conserve le débit historique sans le doubler', () => {
+    const { intervention, pack } = packIntervention();
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    const firstDebit = packs.get(pack.id).movements.filter(m => m.type === 'intervention_debit');
+    expect(firstDebit).toHaveLength(1);
+    expect(packs.get(pack.id).balanceSeconds).toBe(1800);
+
+    // Observation de l'API actuelle, pas validation métier d'une réouverture.
+    const reopened = operations.changeInterventionStatus(intervention.id, 'in_progress');
+    expect(reopened.status).toBe('in_progress');
+    expect(packs.get(pack.id).balanceSeconds).toBe(1800);
+    expect(packs.get(pack.id).movements.filter(m => m.type === 'intervention_debit')).toHaveLength(1);
+
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    expect(packs.get(pack.id).balanceSeconds).toBe(1800);
+    expect(packs.get(pack.id).movements.filter(m => m.type === 'intervention_debit')).toHaveLength(1);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('E227 ne débite pas implicitement le temps ajouté après une réouverture de pack', () => {
+    const { intervention, pack } = packIntervention();
+    completion.complete(intervention.id);
+    operations.changeInterventionStatus(intervention.id, 'in_progress');
+    time.addManual({
+      interventionId: intervention.id,
+      category: 'support',
+      startedAt: '2026-09-14T09:00:00Z',
+      endedAt: '2026-09-14T09:15:00Z',
+    });
+    expect(operations.getIntervention(intervention.id).totalTimeSeconds).toBeGreaterThan(1800);
+    completion.complete(intervention.id);
+    const movements = packs.get(pack.id).movements.filter(m => m.type === 'intervention_debit');
+    expect(movements).toHaveLength(1);
+    expect(movements[0].secondsDelta).toBe(-1800);
+    expect(packs.get(pack.id).balanceSeconds).toBe(1800);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('R08A-13 garde le débit historique unique après correction explicite du temps terminé', () => {
+    const { pack, intervention } = packIntervention();
+    completion.complete(intervention.id);
+    const session = database.get<{ id: string }>('SELECT id FROM time_sessions WHERE intervention_id=?', [intervention.id]);
+    expect(session?.id).toBeTruthy();
+    const corrections = new TimeCorrectionService(database, time);
+    corrections.update(session!.id, {
+      interventionId: intervention.id,
+      category: 'support',
+      startedAt: '2026-09-14T08:00:00Z',
+      endedAt: '2026-09-14T09:00:00Z',
+    });
+    expect(operations.getIntervention(intervention.id).totalTimeSeconds).toBe(3600);
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    const movements = packs.get(pack.id).movements.filter(m => m.type === 'intervention_debit');
+    expect(movements).toHaveLength(1);
+    expect(movements[0].secondsDelta).toBe(-1800);
+    expect(packs.get(pack.id).balanceSeconds).toBe(1800);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('E227 conserve une unique préparation de facturation hors forfait après réouverture et nouvelle clôture', () => {
+    const intervention = operations.createIntervention({
+      clientAccountId: clientId,
+      type: 'correction',
+      coverageMode: 'out_of_scope',
+      subject: 'Réouverture hors forfait',
+      theoreticalValueCents: 9900,
+      billableAmountCents: 7900,
+    });
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    const before = billing.list({ sourceType: 'intervention' });
+    expect(before).toHaveLength(1);
+    expect(before[0].status).toBe('ready');
+    expect(before[0].expectedAmountCents).toBe(7900);
+
+    // Reproduit une transition permise aujourd'hui, sans en faire une règle métier approuvée.
+    expect(operations.changeInterventionStatus(intervention.id, 'in_progress').status).toBe('in_progress');
+    expect(billing.list({ sourceType: 'intervention' })).toEqual(before);
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    expect(billing.list({ sourceType: 'intervention' })).toEqual(before);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
   it('prépare une seule fois la facturation d’une intervention hors forfait', () => {
     const intervention = operations.createIntervention({
       clientAccountId: clientId,

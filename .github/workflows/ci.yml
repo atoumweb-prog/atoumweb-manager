@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
+      - integration/ux-v2-lot09-08-compat-test-20261014
       - feature/ux-v2-lot09f-convergence-20261014
       - feature/ux-v2-lot09e-word-drafts-20261014
       - main
@@ -45,8 +46,15 @@ jobs:
       - name: Tests
         run: npm test -- --maxWorkers=2
 
+      - name: Lot 08/09 — 08A native Operations coexistence Windows TEMP
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/integration/ux-v2-lot09-08-compat-test-20261014' }}
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          node scripts/check-ux-v2-lot01a-real-ui.cjs --lot08a
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Lot 09F — Abby billing
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' }}
+        if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' || github.ref == 'refs/heads/integration/ux-v2-lot09-08-compat-test-20261014') }}
         shell: pwsh
         timeout-minutes: 15
         run: |
@@ -54,7 +62,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Lot 09F — Expenses and receipts
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' }}
+        if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' || github.ref == 'refs/heads/integration/ux-v2-lot09-08-compat-test-20261014') }}
         shell: pwsh
         timeout-minutes: 15
         run: |
@@ -62,7 +70,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Lot 09F — Documents and archive
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' }}
+        if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' || github.ref == 'refs/heads/integration/ux-v2-lot09-08-compat-test-20261014') }}
         shell: pwsh
         timeout-minutes: 15
         run: |
@@ -70,7 +78,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Lot 09F — Word DOCX and PDF work
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' }}
+        if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' || github.ref == 'refs/heads/integration/ux-v2-lot09-08-compat-test-20261014') }}
         shell: pwsh
         timeout-minutes: 15
         run: |
@@ -78,7 +86,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Lot 09F — Global UX 3x3
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' }}
+        if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' || github.ref == 'refs/heads/integration/ux-v2-lot09-08-compat-test-20261014') }}
         shell: pwsh
         timeout-minutes: 15
         run: |
@@ -86,7 +94,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Lot 09F — Restore and quit
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' }}
+        if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' || github.ref == 'refs/heads/integration/ux-v2-lot09-08-compat-test-20261014') }}
         shell: pwsh
         timeout-minutes: 15
         run: |
