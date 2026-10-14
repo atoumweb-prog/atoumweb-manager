@@ -39,6 +39,8 @@ describe('05C — versioned section review in SQLite',()=>{
    expect(service.get(a)).toMatchObject({sectionKey:'finance'});
    expect(service.get(b)).toMatchObject({sectionKey:'recurring'});
    expect(()=>service.propose('missing','finance',0,'texte')).toThrow(/introuvable/);
+   expect(()=>service.get('missing')).toThrow(/Version de clause introuvable/);
+   expect(()=>service.approve('missing','Relecteur')).toThrow(/Version de clause introuvable/);
    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
  });
  it('rejects invalid rank and preserves existing clause body',()=>{
