@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { CatalogItemDetail, CatalogItemSummary, CatalogRecommendationLink } from '../../shared/commercial';
+import type { CatalogItemDetail, CatalogItemSummary, CatalogRecommendationLink, CatalogRecommendationDetails } from '../../shared/commercial';
 import { useUnsavedDraft } from '../unsaved/unsaved';
 
 /** 04D: edits recommendations independently of an offer composition or contract. */
@@ -12,6 +12,7 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
   const sourceId = source?.id ?? '';
   const [savedLinks,setSavedLinks] = useState<CatalogRecommendationLink[]>([]);
   const [targets,setTargets] = useState<string[]>([]);
+  const [metadata,setMetadata] = useState<Record<string,CatalogRecommendationDetails>>({});
   const [loading,setLoading] = useState(true);
   const [saving,setSaving] = useState(false);
   const [error,setError] = useState('');
@@ -19,21 +20,25 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
   sourceRef.current=sourceId;
   const requestEpoch=useRef(0);
   const saveInFlight=useRef<string|null>(null);
-  const guard=useUnsavedDraft('Recommandations Catalogue',targets,{
+  const guard=useUnsavedDraft('Recommandations Catalogue',{targets,metadata},{
     group:'catalog:'+item.id,resetKey:sourceId,ready:!!sourceId&&!loading,
-    pending:saving,discard:setTargets,
+    pending:saving,discard:baseline=>{setTargets(baseline.targets);setMetadata(baseline.metadata);},
   });
   useEffect(()=>{
     ++requestEpoch.current;
     saveInFlight.current=null;
     let cancelled=false;
-    setLoading(true);setSaving(false);setError('');setTargets([]);setSavedLinks([]);
+    setLoading(true);setSaving(false);setError('');setTargets([]);setMetadata({});setSavedLinks([]);
     if (!sourceId){setLoading(false);return;}
     void window.atoumweb.catalog.listRecommendations(sourceId).then(links=>{
       if(cancelled)return;
       setSavedLinks(links);
       const next=links.map(link=>link.targetVersionId);
-      setTargets(next);guard.initial(next);setLoading(false);
+      const info=Object.fromEntries(links.map(link=>[link.targetVersionId,{
+        targetVersionId:link.targetVersionId,reason:link.reason??'',status:link.status??'active',
+        conditions:link.conditions??'',provenance:link.provenance??'manual',
+      }]));
+      setTargets(next);setMetadata(info);guard.initial({targets:next,metadata:info});setLoading(false);
     }).catch(err=>{
       if(!cancelled){setError(err instanceof Error?err.message:'Lecture des recommandations impossible.');setLoading(false);}
     });
@@ -54,6 +59,9 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
       return next;
     });
   }
+  function patch(id:string,fields:Partial<CatalogRecommendationDetails>){
+    setMetadata(current=>({...current,[id]:{targetVersionId:id,reason:'',status:'active',conditions:'',provenance:'manual',...current[id],...fields}}));
+  }
   async function save(){
     if(!sourceId||!editable||saving||saveInFlight.current===sourceId)return;
     const savingSourceId=sourceId;
@@ -61,10 +69,12 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
     saveInFlight.current=sourceId;
     setSaving(true);setError('');
     try{
-      const links=await window.atoumweb.catalog.replaceRecommendations(sourceId,targets,savedLinks.map(link=>link.targetVersionId));
+      const links=await window.atoumweb.catalog.replaceRecommendations(sourceId,targets,savedLinks.map(link=>link.targetVersionId),targets.map(id=>({targetVersionId:id,reason:'',status:'active',conditions:'',provenance:'manual',...metadata[id]})));
       if(sourceRef.current!==savingSourceId||requestEpoch.current!==saveEpoch)return;
       setSavedLinks(links);const saved=links.map(link=>link.targetVersionId);
-      setTargets(saved);guard.saved(saved);
+      const info=Object.fromEntries(links.map(link=>[link.targetVersionId,{targetVersionId:link.targetVersionId,
+        reason:link.reason??'',status:link.status??'active',conditions:link.conditions??'',provenance:link.provenance??'manual'}]));
+      setTargets(saved);setMetadata(info);guard.saved({targets:saved,metadata:info});
     }catch(err){if(sourceRef.current===savingSourceId&&requestEpoch.current===saveEpoch)setError(err instanceof Error?err.message:'Enregistrement impossible : saisie conservée.');}
     finally{if(sourceRef.current===savingSourceId&&requestEpoch.current===saveEpoch){saveInFlight.current=null;setSaving(false);}}
   }
@@ -83,6 +93,17 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
           {savedLinks.find(link=>link.targetVersionId===id)?.targetItemStatus==='inactive'?' · Inactif':''}
           {savedLinks.find(link=>link.targetVersionId===id)?.targetItemStatus==='archived'?' · Archivé':''}
         </span>
+        <div className="catalog-recommendation-metadata">
+          <label>Motif interne<input value={metadata[id]?.reason??''} maxLength={1000}
+            disabled={!editable||saving} onChange={event=>patch(id,{reason:event.target.value})}/></label>
+          <label>État<select value={metadata[id]?.status??'active'} disabled={!editable||saving}
+            onChange={event=>patch(id,{status:event.target.value as 'active'|'paused'})}>
+            <option value="active">Active</option><option value="paused">En pause</option>
+          </select></label>
+          <label>Conditions d'application<textarea value={metadata[id]?.conditions??''} maxLength={3000}
+            disabled={!editable||saving} onChange={event=>patch(id,{conditions:event.target.value})}/></label>
+          <span className="muted">Provenance : {metadata[id]?.provenance??'manual'}</span>
+        </div>
         {editable&&<div className="inline-editor-actions" aria-label="Ordre de recommandation">
           <button type="button" className="secondary-button compact-button"
             disabled={saving||index===0} aria-label={`Monter la recommandation ${index+1}`}
@@ -92,12 +113,12 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
             onClick={()=>moveTarget(id,1)}>↓</button>
           <span className="muted">Priorité d’affichage {index+1}</span>
         </div>}
-        {editable&&<button type="button" className="secondary-button" aria-label={`Retirer la recommandation ${savedLinks.find(link=>link.targetVersionId===id)?.targetName ?? items.find(candidate=>candidate.currentVersion?.id===id)?.name ?? id}`} disabled={saving} onClick={()=>setTargets(values=>values.filter(value=>value!==id))}>Retirer</button>}
+        {editable&&<button type="button" className="secondary-button" aria-label={`Retirer la recommandation ${savedLinks.find(link=>link.targetVersionId===id)?.targetName ?? items.find(candidate=>candidate.currentVersion?.id===id)?.name ?? id}`} disabled={saving} onClick={()=>{setTargets(values=>values.filter(value=>value!==id));setMetadata(current=>{const next={...current};delete next[id];return next;});}}>Retirer</button>}
       </div>)}
       {!targets.length&&<p className="muted">Aucune recommandation.</p>}
       {editable&&<div className="offer-component-editor">
         <select aria-label="Ajouter une recommandation" value="" disabled={saving} onChange={event=>{
-          const id=event.target.value;if(id)setTargets(values=>values.includes(id)?values:[...values,id]);
+          const id=event.target.value;if(id){setTargets(values=>values.includes(id)?values:[...values,id]);patch(id,{});}
         }}>
           <option value="">Choisir une prestation publiée…</option>
           {available.map(candidate=><option key={candidate.id} value={candidate.currentVersion!.id}>{candidate.name}</option>)}
