@@ -83,8 +83,17 @@ module.exports = async ({ win, db, evalUI: js, get, wait, navigate, test, sleep 
     await js(`document.documentElement.dataset.theme=${JSON.stringify(originalTheme)};document.documentElement.dataset.density=${JSON.stringify(originalDensity)};`);
     await sleep(140);
   }
+  // Projets internes fictifs créés seulement dans la base et le workspace TEMP Electron.
+  const alertProjectA = db.projects.createInternal({ name: 'LOT10 ALERTE SAUVEGARDE A' });
+  const alertProjectB = db.projects.createInternal({ name: 'LOT10 ALERTE SAUVEGARDE B' });
   await navigate('Sauvegardes');
   await wait('document.querySelectorAll(".business-backups-toolbar select").length===4', 'filtres du registre sauvegardes');
+  await wait('document.querySelector(".business-backups-alerts")?.textContent.includes("LOT10 ALERTE SAUVEGARDE A")', 'alertes projet sur SQLite TEMP');
+  test(await get('document.querySelector(".business-backups-alerts")?.textContent.includes("LOT10 ALERTE SAUVEGARDE B")'), 'Lot 10C: alertes calculées sur les projets actifs réels du fixture TEMP');
+  await js(`const e=document.querySelector('.business-backups-toolbar select[aria-label="Filtrer par projet"]');Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(e,${JSON.stringify(alertProjectA.id)});e.dispatchEvent(new Event('change',{bubbles:true}));`);
+  await wait('document.querySelector(".business-backups-alerts")?.textContent.includes("LOT10 ALERTE SAUVEGARDE A") && !document.querySelector(".business-backups-alerts")?.textContent.includes("LOT10 ALERTE SAUVEGARDE B")', 'alerte filtrée par Projet');
+  test(await get('document.querySelectorAll(".business-backups-alert").length===1'), 'Lot 10C: alerte du projet B absente du contexte Projet A');
+  await js("const e=document.querySelector('.business-backups-toolbar select[aria-label=\"Filtrer par projet\"]');Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(e,'');e.dispatchEvent(new Event('change',{bubbles:true}));");
   test(await get('!!document.querySelector(".business-backups-toolbar select[aria-label=\\"Filtrer par client\\"]") && !!document.querySelector(".business-backups-toolbar select[aria-label=\\"Filtrer par projet\\"]")'), 'Lot 10C: sélecteurs Client et Projet réels, sans création de sauvegarde');
   test(await get('document.querySelector(".business-backups-page .technical-safety-note")?.textContent.includes("ne crée pas de fichiers")'), 'Lot 10C: déclaration ne signifie pas sauvegarde réelle');
   await js(`const b=[...document.querySelectorAll('.business-backups-toolbar button')].find(b=>b.textContent.includes('Déclarer une sauvegarde'));if(!b)throw Error('Bouton déclaration absent');b.click();`);
