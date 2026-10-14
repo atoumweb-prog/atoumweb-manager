@@ -1,6 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
 
+## 15/10/2026 — Préparation isolée07 après rapprochement04–06
+
+Sources07 incorporées une seule fois :116d05ab7d7 →1454c82c077 →146fda0e6ae. Brouillons et retourProjet/Devis, Projet prévisionnel, garde remplacement/archives, ordre/undo de compositions, réutilisation et preuve de package local conservés. Les workflows07 sources restent conditionnés à leurs branches ; le nouveau candidat exécute leurs recettes dans la gate native de convergence sur son propreSHA, sans assimiler les jobs ignorés à des réussites.
+
+Registre final1–70 conservé ; fixture07A actualisée vers ce registre complet, assertions intactes. Tests métier complets et recettes réelles à exécuter sur candidat propre. Aucune intervention Bridge/WordPress, publication distante ou données réelles. Réserves WordPress/Divi4/5, MSI et recette humaine toujours explicites ; aucun moteur de publication production inventé.
+
+
 ## 15/10/2026 — Préparation de convergence06, dépendance04+05 en CI
 
 06#1248cf467c3 rapproché du candidat04+05 via merge normal ; conservation conjointe des filtres Catalogue, gardes de rafraîchissement/versions/acceptation Abby et option canonique05C. Les clauses orphelines restent en historique mais sont exclues du texte, y compris des conditions particulières ; aucune modification du contenu publié. CI148 du socle04+05 attendue avant toute intégration06 dansmain. Référentiel#82 manquant importé comme documentation historique, sans écraser les rapports existants ni fusionner son ancien code.

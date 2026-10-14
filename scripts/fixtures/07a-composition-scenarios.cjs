@@ -107,6 +107,6 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
   answers.push(1);await click('.project-production-back');await wait('!document.querySelector(".project-component-note textarea")','back to projects');
   test(await get('!!document.querySelector(".projects-layout table")'),'Confirmed back returns to project list');
   console.log('COMPOSITION07A_EVIDENCE '+JSON.stringify({captures,dialogs:dialogs.length,projectId:p.id,pageIds:pages.map(x=>x.id),onlyTemp:true}));
-  const integrity=db.database.get('PRAGMA integrity_check');test(integrity.integrity_check==='ok','SQLite integrity');test(db.database.all('PRAGMA foreign_key_check').length===0,'SQLite FK');test(db.database.all('SELECT id FROM schema_migrations ORDER BY id').map(x=>x.id).join(',')===Array.from({length:66},(_,i)=>i+1).join(','),'Migrations exactly 1-66');
+  const integrity=db.database.get('PRAGMA integrity_check');test(integrity.integrity_check==='ok','SQLite integrity');test(db.database.all('PRAGMA foreign_key_check').length===0,'SQLite FK');test(db.database.all('SELECT id FROM schema_migrations ORDER BY id').map(x=>x.id).join(',')===Array.from({length:70},(_,i)=>i+1).join(','),'Migrations exactly 1-70');
  }finally{dialog.showMessageBoxSync=original;db.atoumWebCompositions.updateItemLocalCode=originalSave;}
 };
