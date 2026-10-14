@@ -277,4 +277,23 @@ describe('BillingHandoffService', () => {
     expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
+
+  it('refuse une pièce image classée à tort comme facture Abby', () => {
+    const now='2026-10-14T14:00:00.000Z';
+    database.run(
+      `INSERT INTO billing_items
+       (id,client_account_id,source_type,source_id,source_key,description,expected_amount_cents,theoretical_value_cents,status,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+      ['billing-wrongmime',clientId,'other','source-wrongmime','other:source-wrongmime','Facture invalide',3300,3300,'ready',now,now],
+    );
+    database.run(
+      `INSERT INTO client_documents
+       (id,client_account_id,category,title,original_name,relative_path,mime_type,size_bytes,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?)`,
+      ['invoice-wrongmime',clientId,'invoice','Fausse facture','facture.png','Clients/test/Documents/03 Factures/facture.png','image/png',100,now,now],
+    );
+    expect(() => billing.attachInvoice('billing-wrongmime','invoice-wrongmime')).toThrow(/Seuls les fichiers PDF/);
+    expect(billing.get('billing-wrongmime')).toMatchObject({status:'ready',invoiceDocumentId:null});
+  });
+
 });
