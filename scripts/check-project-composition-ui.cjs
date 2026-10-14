@@ -395,6 +395,29 @@ app.whenReady().then(async () => {
     await settle();
     await check('Le Site créé reste sélectionné après rafraîchissement asynchrone',
       `[...document.querySelectorAll('.project-site-tree-site.active')].some(e=>e.textContent.includes('SITE DOUBLE CLIC TEST'))`);
+    // Two asynchronous timer refreshes may finish out of order. Only the latest
+    // response is allowed to update the real-time summary of the selected Page.
+    await js(`(()=>{const b=document.querySelector('.project-site-tree-pages button');if(!b)throw Error('Page absente');b.click();return true})()`);
+    await settle();
+    await js(`(()=>{
+      window.__timerResolvers=[];
+      window.atoumweb.time.list=()=>new Promise(resolve=>window.__timerResolvers.push(resolve));
+      window.atoumweb.time.active=async()=>null;
+      window.dispatchEvent(new Event('atoumweb:time-changed'));
+      window.dispatchEvent(new Event('atoumweb:time-changed'));
+      return true;
+    })()`);
+    await check('Deux actualisations chrono concurrentes enregistrées', 'window.__timerResolvers.length===2');
+    await js(`(()=>{
+      const fresh={id:'fresh',projectNodeId:'p1',durationSeconds:7200,paused:false,endedAt:'2026-10-14T11:00:00Z'};
+      const stale={id:'stale',projectNodeId:'p1',durationSeconds:60,paused:false,endedAt:'2026-10-14T10:00:00Z'};
+      window.__timerResolvers[1]([fresh]);
+      window.__timerResolvers[0]([stale]);
+      return true;
+    })()`);
+    await settle();
+    await check('Chrono : réponse obsolète ne remplace pas les données récentes',
+      `document.querySelector('.project-sites-time-summary strong')?.textContent.trim()==='2 h'`);
 
     win.destroy();
   } catch (error) {
