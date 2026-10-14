@@ -53,6 +53,18 @@ describe('05C — numbered draft contract from approved clauses',()=>{
    expect(result.ready).toBe(false);
    expect(result.sections).toEqual([]);
  });
+ it('blocks only explicitly reviewed blocking contradictions',()=>{
+   const clauses=[entry('a','v1'),entry('b','v2')];
+   const conflict={id:'conflict-1',clauseVersionIds:['v1','v2'],severity:'blocking' as const,reviewed:true,reason:'Clauses contradictoires'};
+   const blocked=assembleReviewedDraftContract(clauses,{},[conflict]);
+   expect(blocked.ready).toBe(false);
+   expect(blocked.blocking).toHaveLength(1);
+   expect(()=>renderApprovedDraftContract(blocked)).toThrow(/incomplet/);
+   const unreviewed=assembleReviewedDraftContract(clauses,{},[{...conflict,reviewed:false}]);
+   expect(unreviewed.blocking).toHaveLength(0);
+   expect(unreviewed.warnings).toHaveLength(1);
+   expect(unreviewed.ready).toBe(true);
+ });
  it('blocks duplicate versions and missing classifications',()=>{
    const result=assembleReviewedDraftContract([entry('a','v'),entry('b','v')],{});
    expect(result.ready).toBe(false);
