@@ -133,10 +133,10 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
     return () => document.removeEventListener('pointerdown', closeOnOutside);
   }, [detail?.id, previewOpen]);
 
-  const drilldown = statisticsDrilldown?.kind === 'signed' ? statisticsDrilldown : null;
-  const drilldownMatch = drilldown ? matchStatisticsDrilldown(quotes, drilldown, quote => quote.status === 'accepted') : null;
+  const drilldown = statisticsDrilldown?.kind === 'signed' || statisticsDrilldown?.kind === 'decisions' ? statisticsDrilldown : null;
+  const drilldownMatch = drilldown ? matchStatisticsDrilldown(quotes, drilldown, quote => drilldown.kind === 'decisions' ? ['accepted', 'refused', 'expired'].includes(quote.status) : quote.status === 'accepted') : null;
   const filtered = useMemo(() => {
-    if (drilldown) return matchStatisticsDrilldown(quotes, drilldown, quote => quote.status === 'accepted').rows;
+    if (drilldown) return matchStatisticsDrilldown(quotes, drilldown, quote => drilldown.kind === 'decisions' ? ['accepted', 'refused', 'expired'].includes(quote.status) : quote.status === 'accepted').rows;
     const needle = query.trim().toLocaleLowerCase('fr-FR');
     return quotes.filter((quote) => {
       if (statusFilter !== 'all' && quote.status !== statusFilter) return false;
@@ -327,9 +327,9 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
       </div>{wizardError && <p className="form-error">{wizardError}</p>}<div className="quote-wizard-actions"><button className="secondary-button" type="button" disabled={wizardStep === 1} onClick={() => setWizardStep((step) => Math.max(1, step - 1))}>← Précédent</button>{wizardStep < 6 ? <button className="primary-button" type="button" onClick={nextWizard}>Suivant →</button> : <button className="primary-button" disabled={saving} type="button" onClick={() => void createQuote()}>{saving ? 'Création…' : 'Créer le devis'}</button>}</div></section>}
 
       {drilldown && <section className="panel statistics-route-banner" aria-label="Filtre exact Statistiques">
-        <strong>Devis acceptés · {drilldown.periodLabel}</strong>
-        <p>Liste restreinte aux {drilldown.ids.length} devis acceptés retenus dans « Contractuel signé ». Ce n’est ni la liste générale des devis, ni un chiffre encaissé.</p>
-        {drilldownMatch && drilldownMatch.unavailable > 0 && <p role="alert">{drilldownMatch.unavailable} devis de la cohorte sont devenus indisponibles ou ne sont plus acceptés. Aucun autre devis n’est ajouté.</p>}
+        <strong>{drilldown.kind === 'decisions' ? 'Décisions des devis' : 'Devis acceptés'} · {drilldown.periodLabel}</strong>
+        <p>Liste restreinte aux {drilldown.ids.length} devis de la population calculée dans Statistiques. Les statuts et identifiants retenus sont vérifiés à l’ouverture, pas remplacés par des devis extérieurs à la cohorte.</p>
+        {drilldownMatch && drilldownMatch.unavailable > 0 && <p role="alert">{drilldownMatch.unavailable} devis de la cohorte sont devenus indisponibles ou n’ont plus le statut attendu. Aucun autre devis n’est ajouté.</p>}
         <button className="secondary-button" type="button" onClick={onClearStatisticsDrilldown}>Quitter ce filtre et voir tous les devis</button>
       </section>}
       {loading ? <div className="panel"><p className="muted">Chargement des devis…</p></div> : <div className={detail ? 'quotes-layout with-detail' : 'quotes-layout'}><div className="panel quote-list-panel"><table className="quote-table"><thead><tr><th>Numéro</th><th>Destinataire</th><th>Objet</th><th>Statut</th><th>Valeur</th><th>Décision</th><th>Créé le</th></tr></thead><tbody>{filtered.map((quote) => {
