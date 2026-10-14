@@ -129,7 +129,7 @@ describe('04D — versioned recommendation persistence',()=>{
       targetName:'Target later inactive',targetVersionNumber:1,targetItemStatus:'inactive',
     }]);
     expect(()=>recommendations.replace(source.versions[0].id,[target.versions[0].id],[target.versions[0].id]))
-      .toThrow(/active/);
+      .toThrow(/Service actif avec une version publiée/);
     expect(recommendations.list(source.versions[0].id)).toHaveLength(1);
   });
   it('supports explicit removal while preserving unrelated catalogue versions',()=>{
