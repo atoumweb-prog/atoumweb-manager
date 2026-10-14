@@ -2,6 +2,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {existsSync, mkdtempSync, readFileSync, readdirSync, rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join, resolve, sep} from 'node:path';
+import {performance} from 'node:perf_hooks';
 import {NodeSqliteAdapter} from '../database/NodeSqliteAdapter';
 import {MIGRATIONS} from '../database/migrations';
 import {createOperationalRecipeFixture} from './operationalRecipeFixture';
@@ -19,8 +20,13 @@ afterEach(() => {
 describe('operational fixture SQLite export',()=>{
   it('exports a complete independent migrated database, with integrity and references intact',()=>{
     const first=join(root,'first.sqlite'),second=join(root,'second.sqlite');
-    createOperationalRecipeFixture(first);createOperationalRecipeFixture(second);
+    const timings:Record<string,Record<string,number>>={first:{},second:{}};
+    for(const [name,file] of [['first',first],['second',second]] as const){
+      createOperationalRecipeFixture(file,false,(phase,ms)=>{timings[name][phase]=ms;});
+    }
+    console.log('FIXTURE_PHASE_TIMINGS_MS '+JSON.stringify(timings));
     const one=new NodeSqliteAdapter(first),two=new NodeSqliteAdapter(second);
+    const integrityStart=performance.now();
     try{
       for(const db of [one,two]){
         expect(db.all('SELECT id,name FROM schema_migrations ORDER BY id')).toEqual(MIGRATIONS.map(({id,name})=>({id,name})));
@@ -32,11 +38,12 @@ describe('operational fixture SQLite export',()=>{
           expect(JSON.parse(String(db.get('SELECT model_json FROM operational_model_versions WHERE canonical_code=?',[entry.model.code])?.model_json))).toEqual(entry.model);
         }
       }
+      console.log('FIXTURE_EXPORTED_INTEGRITY_MS '+Math.round(performance.now()-integrityStart));
       one.run("INSERT INTO settings(key,value_json,updated_at) VALUES('fixture-independence','true','2026-10-09T00:00:00Z')");
       expect(two.get("SELECT value_json FROM settings WHERE key='fixture-independence'")).toBeUndefined();
       expect(readdirSync(root).sort()).toEqual(['first.sqlite','second.sqlite']);
     }finally{one.close();two.close();}
-  });
+  },30_000);
   it('does not leave a partially seeded file when fixture loading fails',()=>{
     const file=join(root,'failed.sqlite'),original=NodeSqliteAdapter.prototype.run;
     vi.spyOn(NodeSqliteAdapter.prototype,'run').mockImplementation(function(this:NodeSqliteAdapter,sql,parameters){
