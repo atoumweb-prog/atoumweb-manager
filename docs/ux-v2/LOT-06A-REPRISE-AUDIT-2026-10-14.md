@@ -5,14 +5,14 @@
 ## Périmètre et sources
 - Référentiel historique dans PR #82 : `docs/ux-v2/LOT-06A-MATRICE-DEVIS-ET-ETATS.md` (audit initial établi sur `main@eb252d5c` le 09/10).
 - Sources de `main` relues via GitHub : `src/shared/commercial.ts` (blob `d5daf0e38005193598307608509626846e953365`) et `src/renderer/commercial/QuotesPage.tsx` (blob `984adbd664cd899538bd43bc8287ad8f70c6ac10`).
-- Le chemin supposé `src/main/services/QuoteService.ts` n'existe pas sur `main`; retrouver le service réel avant de conclure sur le comportement serveur E153.
+- Service réel retrouvé : `src/main/commercial/QuoteService.ts` (blob `59ad029cc295cb93197250d2586fca550bfcf043`). Son test associé `src/main/commercial/QuoteService.test.ts` (blob `7f4fecf7c86e05cc5b522dcbe14b49a67a2cb2a3`).
 
 ## Écarts encore observables dans le code actuel
 | Code | Constat statique | Source | Attendu / suite |
 |---|---|---|---|
 | E151 | À l'étape 6, rendu via `item.currentVersion?.priceCents` ; à l'enregistrement le prix choisi provient de `eurosToCents(catalogPrice) ?? item.currentVersion?.priceCents`. | `QuotesPage.tsx` lignes 196 et 304 | Unifier le calcul de montant de l'aperçu et de la ligne persistée ; tests prix « sur devis », gratuit, centimes, absence de prix, quantités. |
 | E152 | Actions `Valider` visibles dans liste et détail ; les handlers exécutent `window.atoumweb.quotes.accept`. | `QuotesPage.tsx` lignes 238–240, 261–281, 334, 351 | Renommer « Confirmer accepté dans Abby » et expliciter bon devis/révision, preuve et conséquences ; ne pas prétendre à un envoi automatique. |
-| E153 | L'audit de PR #82 constate un déplacement involontaire de `new` au moment de créer un devis. | Référentiel 06A ancien | **À revalider** sur le service métier actuel et les évolutions CRM 03A–03E avant correction. Un `new` doit rester dans l'Annuaire sans clic « Démarrer la prospection ». |
+| E153 | **Corrigé dans le code actuel** : `QuoteService.create` n'actualise le stade vers `quote_to_prepare` que si `stage NOT IN ('new','won','lost')`. La méthode `createWithLines` appelle `create`. | `QuoteService.ts` ; `QuoteService.test.ts` (tests E72 avant et après démarrage volontaire) | Préserver cette règle et rejouer les tests lors d'une future convergence 03/06. Les tests ont été lus, **pas exécutés** dans cette reprise. |
 | Protection | `useUnsavedDraft` est déjà présent pour l'assistant et les ajouts catalogue. | `QuotesPage.tsx` lignes 83–86 | Rejouer toutes les fermetures, changements de sélection, rejets d'écriture et retours tardifs ; pas de garde concurrente inventée. |
 
 ## Invariants de coordination
@@ -25,11 +25,19 @@
 - Aucun accès à Validation-MSI ; utiliser uniquement des fixtures SQLite temporaires pour les futurs tests.
 
 ## Prochaines vérifications techniques
-1. Relever le commit complet de la tête de `main`, le chemin réel de `QuoteService`, les handlers IPC et les tests du domaine.
-2. Confronter E153 aux dernières règles de CRM 03A–03E et vérifier les chemins `create` et `createWithLines`.
+1. Relever le commit complet de la tête de `main` et les handlers IPC ; le chemin réel de `QuoteService` et ses tests sont maintenant identifiés.
+2. Conserver la correction E153 déjà présente dans le service (`new` exclu de l'UPDATE) ; tester sa non-régression après intégration de 03D/03E.
 3. Tracer les calculs monétaires entre assistant, lignes, snapshots, aperçu, export et PDF (E151).
 4. Recenser les autres appels à `quotes.accept` et les impacts Client/Projet/opérations (E152).
 5. Préparer des tests de non-régression, exécuter typecheck/Vitest/SQLite/Electron sur une copie de travail compatible avant toute PR de code.
 6. Garder la PR éventuelle en **draft**, sans fusion, et documenter précisément le SHA effectivement testé.
 
 **Tests exécutés pendant cette reprise : aucun.** Les constats ci-dessus proviennent uniquement de la lecture des sources GitHub et du référentiel 06A existant.
+
+## Complément de vérification — 14/10/2026
+
+- **E153 résolu au niveau des sources actuellement visibles sur `main`** : clause SQL `AND stage NOT IN ('new','won','lost')` dans `QuoteService.create`, héritée par `createWithLines`.
+- Tests existants E72 : « créer un devis ne démarre pas la prospection d’un nouveau contact » (création simple et avec lignes), « après démarrage volontaire, le workflow devis existant reste actif » (passage `qualifying` vers `quote_to_prepare`). Ces tests sont présents, mais leur succès n'a pas été mesuré ici.
+- Contrat de `QuoteService` : `finalize` distinct de `accept`, snapshots Catalogue et lignes versionnées ; tests historiques sur non-rétroactivité du snapshot, idempotence de finalisation et de l'acceptation, pièce Abby après acceptation.
+- Statuts : sept valeurs officielles `draft/sent/viewed/accepted/refused/expired/cancelled` dans `src/shared/commercial.ts` ; `finalizedAt` séparé.
+- **Priorités actualisées** : E151 et E152 à corriger ; E153 à préserver/tester (ne pas réintroduire l'ancien défaut).
