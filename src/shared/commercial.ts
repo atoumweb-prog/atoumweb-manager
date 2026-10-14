@@ -122,6 +122,8 @@ export interface CatalogItemSummary {
   type: CatalogItemType;
   name: string;
   category?: string | null;
+  /** E95: stable admin category relation, independent of the legacy label and commercial family. */
+  categoryId?: string | null;
   status: CatalogItemStatus;
   visiblePublic: boolean;
   currentVersion?: CatalogVersion | null;
