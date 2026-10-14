@@ -22,8 +22,8 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}
  const button=label=>js('const button=[...document.querySelectorAll(".aw-word-draft-panel button")].find(e=>e.textContent.includes('+JSON.stringify(label)+'));if(!button)throw Error("Word action missing");button.click()');
  try {
   await navigate('Documents & Contrats');
-  await wait('!!document.querySelector(".documents-entry-grid")','Documents page');
-  await js('document.querySelector(".documents-entry-grid button").click()');
+  await wait('!!document.querySelector(".documents-toolbar")','Documents page');
+  await js('const entry=[...document.querySelectorAll(".documents-page-stack button")].find(e=>e.textContent.trim()==="Bibliothèque contractuelle");if(!entry)throw Error("Canonical library entry missing");entry.click()');
   await wait('!!document.querySelector("select[aria-label=\\"Consulter un module\\"]")','canonical contract library');
   await js('const el=document.querySelector("select[aria-label=\\"Consulter un module\\"]");el.value='+JSON.stringify(clause.id)+';el.dispatchEvent(new Event("change",{bubbles:true}));');
   await wait('!!document.querySelector(".aw-word-draft-panel")','clause Word panel');
@@ -85,9 +85,9 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}
    for(const [density,label,font,height] of [['compact','Compact',14,36],['comfort','Confort',16,42],['comfort_plus','Confort +',18,48]]){
     await select(theme,title,density,label,font,height);
     await navigate('Documents & Contrats');
-    await wait('!!document.querySelector(".documents-entry-grid")','Docs '+theme+'/'+density);
-    test(await get('document.querySelectorAll(".documents-entry-grid .documents-entry").length===4'),
-     '09E-3x3: reachable document entry points '+theme+'/'+density);
+    await wait('!!document.querySelector(".documents-toolbar")','Docs '+theme+'/'+density);
+    test(await get('[...document.querySelectorAll(".documents-page-stack button")].some(e=>e.textContent.trim()==="Bibliothèque contractuelle")'),
+     '09E-3x3: canonical library entry remains accessible '+theme+'/'+density);
     const viewport=await get('({scroll:document.querySelector(".content-area")?.scrollWidth,width:document.querySelector(".content-area")?.clientWidth})');
     test(viewport.scroll<=viewport.width+20,'09E-3x3: no page overflow '+theme+'/'+density);
    }
