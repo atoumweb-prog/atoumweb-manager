@@ -212,6 +212,43 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
       ipcMain.handle(periodChannel,originalPeriods);
     }
 
+    // 08C: une liste de souscriptions périmée ne peut réécrire l'affichage.
+    const subsChannel='operations:maintenance:subscriptions:list';
+    const realSubs=registered.get(subsChannel);
+    if(typeof realSubs!=='function')throw Error('08C subscription list IPC missing');
+    let oldReadRelease=null, oldReadStarted=false, readCount=0;
+    ipcMain.removeHandler(subsChannel);
+    ipcMain.handle(subsChannel,(...args)=>{
+      readCount++;
+      if(readCount===1){
+        oldReadStarted=true;
+        return new Promise(resolve=>{
+          oldReadRelease=()=>resolve(originalOldSubscriptions);
+        });
+      }
+      return realSubs(...args);
+    });
+    const originalOldSubscriptions=db.maintenance.listSubscriptions().filter(entry=>entry.id!==subscriptionB.id);
+    try{
+      await js('document.querySelector(".maintenance-panel-stack .toolbar-controls button").click()');
+      for(let i=0;i<80&&!oldReadStarted;i++)await sleep(25);
+      test(oldReadStarted,'08C delayed subscription refresh started');
+      await js('document.querySelector(".maintenance-panel-stack .toolbar-controls button").click()');
+      for(let i=0;i<80&&readCount<2;i++)await sleep(25);
+      test(readCount>=2,'08C later subscription refresh started');
+      await sleep(130);
+      oldReadRelease();
+      await sleep(160);
+      test(await get('[...document.querySelectorAll(".maintenance-compact-item, .maintenance-list-panel .operations-table tbody tr")].some(e=>e.textContent.includes("E08C B TEMP"))')===true,
+        '08C obsolete subscription response cannot erase B');
+      test(await get('document.querySelector(".maintenance-compact-item.selected")?.textContent.includes("E08C B TEMP")')===true,
+        '08C obsolete subscription response cannot change selection');
+    } finally {
+      if(oldReadRelease)oldReadRelease();
+      ipcMain.removeHandler(subsChannel);
+      ipcMain.handle(subsChannel,realSubs);
+    }
+
     await js('document.querySelector(".maintenance-report-toggle").click()');
     await wait('!!document.querySelector(".maintenance-report-fields textarea")',
       'E08E report B loaded from real service');

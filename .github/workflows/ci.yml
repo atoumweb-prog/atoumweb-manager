@@ -12,6 +12,7 @@ on:
       - feature/phase-4-operations
       - fix/recette-commerciale-coherence
       - feature/prospect-workflow-v2
+      - feature/ux-v2-lot08c-maintenance-refresh-guard-20261014
   pull_request:
     branches:
       - main
@@ -46,7 +47,7 @@ jobs:
       # PR109: native Windows smoke recipe on isolated TEMP profile and SQLite.
       # This is a real Electron shell run, not the full E226 unsaved-draft interaction recipe.
       - name: Electron 08A — real shell and operations navigation (TEMP)
-        if: ${{ github.event_name == 'pull_request' && (github.event.pull_request.number == 109 || github.head_ref == 'integration/ux-v2-lot08-109-115-convergence-20261014') }}
+        if: ${{ (github.event_name == 'pull_request' || github.event_name == 'push') && (github.event.pull_request.number == 109 || github.head_ref == 'integration/ux-v2-lot08-109-115-convergence-20261014' || github.ref_name == 'feature/ux-v2-lot08c-maintenance-refresh-guard-20261014') }}
         shell: pwsh
         timeout-minutes: 15
         run: |
@@ -58,7 +59,7 @@ jobs:
       # Lot 08 draft PR: native shell with real Electron/IPC and UX-01 regression.
       # Temporary fixtures only; no user profile, no Validation-MSI.
       - name: Electron Lot 08 — Shell and UX-01 Windows TEMP
-        if: ${{ github.event_name == 'pull_request' && (github.head_ref == 'feature/ux-v2-lot08a-audit-v1' || github.head_ref == 'integration/ux-v2-lot08-109-115-convergence-20261014') }}
+        if: ${{ (github.event_name == 'pull_request' || github.event_name == 'push') && (github.head_ref == 'feature/ux-v2-lot08a-audit-v1' || github.head_ref == 'integration/ux-v2-lot08-109-115-convergence-20261014' || github.ref_name == 'feature/ux-v2-lot08c-maintenance-refresh-guard-20261014') }}
         shell: pwsh
         timeout-minutes: 20
         run: |
