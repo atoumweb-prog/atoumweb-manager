@@ -161,9 +161,12 @@ describe('Migration 66 additive conservation',()=>{
     let n=0;for(const i of items)for(const m of modules)if(n++<409)db.run('INSERT INTO catalog_contract_clause_links VALUES (?,?,?,?)',[i.id,m.id,n,'fixture']);
     const q=quotes.create({prospectId:prospect().id,subject:'Historique'});quotes.addCustomLine(q.id,{label:'Historique',proposedUnitPriceCents:10000});db.run("UPDATE quotes SET status='accepted',contract_text_snapshot='Texte historique exact',contract_snapshot_json=?,contract_compiled_at='fixture' WHERE id=?",['{"clauses":[],"preuve":"historique"}',q.id]);
     const tables=db.all<{name:string}>("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name<>'schema_migrations'").map(r=>r.name);
-    const snapshot=()=>Object.fromEntries(tables.map(t=>[t,db.all('SELECT * FROM "'+t+'"')]));const before=snapshot();
-    expect(applyPendingMigrations(db).map(m=>m.id)).toEqual([66,67]);expect(snapshot()).toEqual(before);
+    const originalColumns=Object.fromEntries(tables.map(t=>[t,db.all<{name:string}>('PRAGMA table_info("'+t+'")').map(c=>c.name)]));
+    const snapshot=()=>Object.fromEntries(tables.map(t=>[t,db.all('SELECT '+originalColumns[t].map(c=>'"'+c+'"').join(',')+' FROM "'+t+'"')]));const before=snapshot();
+    expect(applyPendingMigrations(db).map(m=>({id:m.id,name:m.name}))).toEqual([{id:66,name:MIGRATIONS.find(m=>m.id===66)!.name},{id:69,name:'contract_clause_section_review_v1'}]);expect(snapshot()).toEqual(before);
     expect(db.get('SELECT count(*) AS n FROM contract_clause_section_reviews')?.n).toBe(0);
+    expect(new Set(MIGRATIONS.map(m=>m.id)).size).toBe(MIGRATIONS.length);
+    expect(db.get('SELECT name FROM schema_migrations WHERE id=69')).toEqual({name:'contract_clause_section_review_v1'});
     expect(db.get('SELECT COUNT(*) AS n FROM contract_clause_templates')?.n).toBe(118);expect(db.get('SELECT COUNT(*) AS n FROM catalog_contract_clause_links')?.n).toBe(409);
     expect(applyPendingMigrations(db)).toEqual([]);expect(snapshot()).toEqual(before);
     expect(db.get('PRAGMA integrity_check')?.integrity_check).toBe('ok');expect(db.all('PRAGMA foreign_key_check')).toEqual([]);expect(new ContractTypeService(db).list()).toEqual([]);
