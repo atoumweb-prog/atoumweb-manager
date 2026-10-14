@@ -98,6 +98,24 @@ describe('04D — versioned recommendation persistence',()=>{
     expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
     expect(db.get<{n:number}>('SELECT count(*) AS n FROM quote_lines')?.n??0).toBe(0);
   });
+  it('stores reasons and paused conditions without changing any quote or past version',()=>{
+    const source=create('Offer to advise');
+    const service=create('Conditional SEO');
+    catalog.publishVersion(service.versions[0].id);
+    const sourceId=source.versions[0].id,targetId=service.versions[0].id;
+    const details=[{targetVersionId:targetId,reason:'Pertinent pour présence locale',
+      status:'paused' as const,conditions:'Seulement si le client possède les droits du domaine',provenance:'manual'}];
+    const rows=recommendations.replace(sourceId,[targetId],[],details);
+    expect(rows).toMatchObject([{reason:details[0].reason,status:'paused',conditions:details[0].conditions,provenance:'manual'}]);
+    expect(recommendations.replace(sourceId,[targetId],[targetId],details)).toEqual(rows);
+    expect(db.get<{n:number}>('SELECT count(*) AS n FROM quotes')?.n).toBe(0);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+    const next=catalog.createVersion(source.id,{priceMode:'fixed',priceCents:9900});
+    expect(recommendations.list(next.id)).toMatchObject([{reason:details[0].reason,status:'paused',conditions:details[0].conditions}]);
+    expect(recommendations.list(sourceId)[0].reason).toBe(details[0].reason);
+    expect(()=>recommendations.replace(next.id,[targetId],[targetId],[{...details[0],status:'invalid' as 'active'}]))
+      .toThrow(/invalides/);
+  });
   it('rejects malformed IPC payloads before any SQLite mutation',()=>{
     const source=create('Input guarded');
     const id=source.versions[0].id;
