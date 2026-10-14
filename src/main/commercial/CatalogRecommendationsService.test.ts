@@ -82,6 +82,15 @@ describe('04D — versioned recommendation persistence',()=>{
     expect(recommendations.list(versionId)).toEqual(original);
     expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
   });
+  it('rejects malformed IPC payloads before any SQLite mutation',()=>{
+    const source=create('Input guarded');
+    const id=source.versions[0].id;
+    expect(()=>recommendations.replace(id,[''])).toThrow(/invalides/);
+    expect(()=>recommendations.replace(id,42 as unknown as string[])).toThrow(/invalides/);
+    expect(()=>recommendations.replace(id,[],42 as unknown as string[])).toThrow(/invalides/);
+    expect(recommendations.list(id)).toEqual([]);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
   it('rejects stale edits from another window and preserves committed links',()=>{
     const source=create('Source');
     const first=create('First');
