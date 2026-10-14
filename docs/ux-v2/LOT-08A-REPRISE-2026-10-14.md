@@ -156,3 +156,19 @@ L'incrément 08A restera en **draft** tant que :
 3. Les réserves de réouverture commerciale (E227) et l'absence de recette visuelle humaine ont été expressément signalées.
 
 La préparation de la PR ne vaut ni validation humaine ni accord de fusion.
+
+## Convergence transverse identifiée : PR #115 (lot 08 parallèle)
+
+La PR [#115](https://github.com/atoumweb-prog/atoumweb-manager/pull/115), tête relevée `d92d7029d0d4b671c774ec656276119e795fa7f8`, est une autre branche **draft** du lot 08. Elle est indépendante de la PR #109 et porte déjà des corrections métier E223 et des gardes de clôture 08B. Aucune branche ne doit écraser l'autre.
+
+**Fichiers modifiés dans les deux PR** : `.github/workflows/ci.yml`, `src/main/operations/MaintenanceService.ts`, `src/main/operations/MaintenanceService.test.ts`, `src/renderer/operations/OperationsPage.tsx`, `src/renderer/operations/MaintenancePanel.tsx`, `src/renderer/operations/HourPacksPanel.tsx`.
+
+Règles de rapprochement et de contrôle :
+1. **Maintenance** : même valeur de création manuelle `period_alignment='anniversary'` — ne pas insérer deux fois la colonne. Conserver la précision `ROUND` des durées et les cas calendaires/anniversaires testés sur #115, ainsi que l'affichage explicite du quota mineur et le test E224 de #109.
+2. **Opérations** : conserver la génération de rafraîchissement, le verrou de clôture et la relecture d'IPC incertain de #115 **et** les gardes de routage externe/alertes, brouillons et recette Electron A→B→A de #109. Éviter toute double confirmation ou perte de sélection après chargement asynchrone.
+3. **Packs** : conserver le verrou d'IPC de débit d'Intervention de #115 et celui de **correction manuelle** de #109 (opérations distinctes), ainsi que les protections de brouillon et la non-réapparition de fiches après réponse tardive.
+4. **Formulaires maintenance** : conserver le verrou de création `creationPending` de #115 et l'enregistrement UX-01 des deux brouillons de #109. Les contrôles d'enregistrement doivent libérer l'état pending même sur erreur.
+5. **CI** : préserver le banc Windows de #115 et la recette native dédiée `--lot08a` de #109. Sur **une future branche de convergence distincte**, refaire le typecheck, toute la suite Vitest, les recettes Electron/UX-01 et les migrations/intégrité TEMP sur le SHA convergé ; contrôler les tests en doublon.
+6. **Pas d'intégration isolée de #109 ou #115 dans main** tant que leur compatibilité n'est pas démontrée. Garder les deux PR en draft et demander l'accord explicite de l'utilisateur avant toute fusion finale.
+
+Ce relevé de dépendance n'est **pas** une fusion, ni un diagnostic de conflit Git automatiquement résolu.
