@@ -302,6 +302,9 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
         {build?.snapshotState === 'historical_missing' && <span className="status-pill">Absence historique de snapshot</span>}
       </div>
 
+      {build?.snapshotState === 'draft' && <p className="muted" role="status">Contrat en préparation : les clauses peuvent encore évoluer tant que le devis reste modifiable. La version contractuelle sera figée lors de la finalisation.</p>}
+      {build?.snapshotState === 'frozen' && <p className="muted" role="status">Contrat figé : le contenu conservé avec ce devis fait foi dans le Manager. Les changements ultérieurs de la bibliothèque ne modifient pas cette version{build.snapshotText === '' ? ', même lorsque son texte est vide' : ''}.</p>}
+      {build?.snapshotState === 'historical_missing' && <p className="cgv-warning" role="status">Devis historique sans snapshot contractuel conservé : aucune reconstitution automatique à partir des CGV actuelles. Vérifier les pièces contractuelles originales avant toute utilisation.</p>}
       {build?.warnings.map((warning) => <div className="cgv-warning" key={warning}>{warning}</div>)}
       {error && <p className="form-error" role="alert">{error}</p>}
 
