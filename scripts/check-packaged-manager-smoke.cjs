@@ -32,6 +32,7 @@ async function navigate(page){await evaluate('window.dispatchEvent(new CustomEve
   await navigate('Réglages');
   await until(()=>evaluate('!!document.querySelector(".theme-card")'),'theme controls');
   await evaluate('[...document.querySelectorAll(".theme-card")].find(e=>e.querySelector("strong")?.textContent==='+JSON.stringify(themeTitle)+').click()');
+  await until(()=>evaluate('document.documentElement.dataset.theme==='+JSON.stringify(theme)+'&&[...document.querySelectorAll(".density-card")].every(e=>!e.disabled)'),'theme save confirmed before density');
   await evaluate('[...document.querySelectorAll(".density-card")].find(e=>e.querySelector("strong")?.textContent==='+JSON.stringify(title)+').click()');
   await until(()=>evaluate('document.documentElement.dataset.theme==='+JSON.stringify(theme)+'&&document.documentElement.dataset.density==='+JSON.stringify(density)),'theme/density persisted');
   for(const page of pages)await navigate(page);
