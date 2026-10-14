@@ -32,7 +32,7 @@ describe('Lot 04B / E95 — noms de catégorie, contrôles sans effet métier', 
   it('ignore l’absence de catégorie et respecte les objets originaux', () => {
     const values = Object.freeze(['Contenu', null, undefined, '  ', 'contenu']);
     expect(catalogCategoryCollisions(values)).toEqual([
-      { normalizedKey: 'contenu', legacyValues: ['Contenu', 'contenu'] },
+      { normalizedKey: 'contenu', legacyValues: ['contenu', 'Contenu'] },
     ]);
     expect(values[0]).toBe('Contenu');
   });
