@@ -292,7 +292,7 @@ export interface QuoteApi {
   markSent(id: string): Promise<QuoteDetail>;
   confirmPrincipleAgreement(id: string): Promise<QuoteDetail>;
   revokePrincipleAgreement(id: string): Promise<QuoteDetail>;
-  finalize(id: string): Promise<QuoteDetail>;
+  finalize(id: string, canonicalReview?: boolean): Promise<QuoteDetail>;
   extendValidity(id: string, validUntil: string): Promise<QuoteDetail>;
   markViewed(id: string): Promise<QuoteDetail>;
   accept(id: string): Promise<QuoteDetail>;
