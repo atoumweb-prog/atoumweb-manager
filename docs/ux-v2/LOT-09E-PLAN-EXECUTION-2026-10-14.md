@@ -20,3 +20,10 @@ Branche indépendante `feature/ux-v2-lot09e-word-drafts-20261014`, basée sur 09
 ## Risques et contraintes
 - Le module d'empreinte/diff pur ne constitue pas une fonctionnalité Word utilisable. La clôture 09E sera refusée tant qu'export, import, analyse des pertes, conflit de version et validation humaine ne sont pas réellement testés.
 - Le module propriétaire doit garder les clauses publiées et Devis gelés immuables ; aucune modification directe d'une preuve et aucune vérification juridique inventée.
+
+## Implémentation 09E — jalon réel à valider
+- Codec ZIP/OOXML `wordDocxCodec.ts` sans dépendance réseau ou ZIP externe : génération de **vrais DOCX** avec paragraphes modifiables et manifeste intégré `customXml/item1.xml` ; réimport offline strictement borné. Les macros, objets actifs, liens OOXML externes, ZIP corrompus, XML entités/DOCTYPE, images/tableaux/suivi des modifications non représentables sont refusés.
+- IPC Electron sélectionne les fichiers par boîtes natives ; aucune lecture de chemin arbitraire transmis par le renderer. Session de prévisualisation en mémoire valable 20 min ; diff avant/après sans écriture.
+- `ContractLibraryPage` : boutons exporter/réimporter sur **dernière version brouillon** seulement ; diff des paragraphes, avertissements de mise en forme et approbation explicite via case à cocher. Annuler ne modifie rien.
+- `ContractTermsService.createReviewedWordDraft` crée une **nouvelle** version brouillon avec historique provenance, jamais une mutation de la version d'origine ni une publication, revalide ID/empreinte/source courante et fait rollback si le journal échoue.
+- Limites honnêtes : Word riche (tableaux, images, changements suivis) non supporté ; si manifeste custom XML retiré par Word, import **refusé** (réexport). Styles simples visibles avec avertissement, non importés. PDF de travail distinct des preuves Abby à cadrer. Ne pas déclarer R09E-01..17 entièrement clos tant que la recette native et les tests de convergence ne sont pas verts.
