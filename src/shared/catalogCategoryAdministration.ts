@@ -31,7 +31,7 @@ export interface CatalogCategoryApi {
   list(): Promise<CatalogCategoryRecord[]>;
   listLegacy(): Promise<CatalogLegacyCategory[]>;
   create(name: string): Promise<CatalogCategoryRecord>;
-  rename(id: string, name: string, expectedRevision: number): Promise<CatalogCategoryRecord>;
+  rename(id: string, name: string, expectedRevision: number, expectedItemIds: string[]): Promise<CatalogCategoryRecord>;
   setStatus(id: string, status: CatalogCategoryStatus, expectedRevision: number): Promise<CatalogCategoryRecord>;
   assign(input: CatalogCategoryAssignment): Promise<void>;
   /** Explicitly confirm the full list of currently unlinked legacy item IDs. */
