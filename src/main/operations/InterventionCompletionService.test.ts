@@ -158,6 +158,25 @@ describe('InterventionCompletionService', () => {
     expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
+  it('E227 ne débite pas implicitement le temps ajouté après une réouverture de pack', () => {
+    const { intervention, pack } = packIntervention();
+    completion.complete(intervention.id);
+    operations.changeInterventionStatus(intervention.id, 'in_progress');
+    time.addManual({
+      interventionId: intervention.id,
+      category: 'support',
+      startedAt: '2026-09-14T09:00:00Z',
+      endedAt: '2026-09-14T09:15:00Z',
+    });
+    expect(operations.getIntervention(intervention.id).totalTimeSeconds).toBeGreaterThan(1800);
+    completion.complete(intervention.id);
+    const movements = packs.get(pack.id).movements.filter(m => m.type === 'intervention_debit');
+    expect(movements).toHaveLength(1);
+    expect(movements[0].secondsDelta).toBe(-1800);
+    expect(packs.get(pack.id).balanceSeconds).toBe(1800);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
   it('E227 conserve une unique préparation de facturation hors forfait après réouverture et nouvelle clôture', () => {
     const intervention = operations.createIntervention({
       clientAccountId: clientId,
