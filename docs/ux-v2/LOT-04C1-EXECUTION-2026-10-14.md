@@ -33,3 +33,19 @@ La validation `Enregistrer le brouillon` utilise la nouvelle commande IPC atomiq
 - Lot 05 sur PR #106 est **indépendant** et ne doit pas être écrasé pour réaliser 04C.
 
 **Aucune fusion autorisée** et aucune intervention sur Validation-MSI.
+
+
+## Incrément 04C.2 — retry de création sans duplication (E102)
+
+La reprise du brouillon existant de 04C.1 ne suffit pas lorsqu'un **IPC de création** retourne une erreur après un COMMIT réel. E102 met désormais à disposition un `requestId` UUID facultatif dans `CatalogApi.createVersion` (backend/preload/renderer), qui sert également d'identifiant de la nouvelle version SQL :
+
+- Première requête : `CatalogService.createVersion(itemId,input,requestId)` enregistre le brouillon dans la transaction, ainsi que la copie existante des composants/CGV/blueprints.
+- Nouvelle requête avec le **même UUID** : le service retourne la version existante appartenant à la même prestation. Il ne génère aucune nouvelle version ni aucun lien. Si l'UUID appartient à un autre item ou à une version déjà publiée/retirée, l'opération est refusée.
+- Rejeu sous un UUID identique avec un **contenu descriptif, un prix, un périmètre ou des paramètres commerciaux différents** : conflit explicite ; l'ancienne version n'est pas réécrite.
+- Dans `CatalogPage`, le UUID et l'empreinte du payload restent en mémoire après une erreur IPC. Un nouveau clic avec la saisie identique adresse le même brouillon. Le formulaire conserve son erreur et les champs jusqu'à retour positif ; changer la saisie après une réponse incertaine est refusé pour éviter toute fausse confirmation. Cette situation appelle une relecture de la prestation avant modification.
+- Protection supplémentaire : un éditeur déjà ouvert ne peut plus être réinitialisé par un second clic sur « Compléter la fiche » ou « Reprendre le brouillon ».
+- Pas de migration supplémentaire : l'ID UUID de `catalog_versions` fournit la clé durable ; les appels historiques sans `requestId` restent compatibles.
+
+Tests ajoutés dans `CatalogDraftEditing04C.test.ts` : rejeu même UUID, conservation des associations, conservation du nombre de versions, UUID attribué à un autre item, replay après publication, collision d'un même UUID avec tarif divergent. Recette Electron fonctionnelle : création v2 sur fiche publiée, réponse perdue simulée **après création**, second clic utilisant le même UUID sans v3.
+
+**Réserve technique :** les mises à jour de données d'un brouillon et la publication restent des actes séparés. Un processus réellement interrompu pendant que l'utilisateur quitte la fiche nécessite une relecture des données ; le protocole ne prétend pas garantir à lui seul toutes les phases de panne/crash. Aucune recette visuelle humaine réalisée à la demande de l'utilisateur. La CI sur le SHA de 04C.2 doit réussir avant validation de cet incrément.
