@@ -296,6 +296,11 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
     setBusy(true);
     try {
       const input = buildInput();
+      if (!createOpen && selected?.status === 'paid'
+          && JSON.stringify(form) !== JSON.stringify(formFromExpense(selected))
+          && !window.confirm('Cette dépense est déclarée payée. Confirmer la correction de ses informations ? Le paiement bancaire ne sera pas vérifié.')) {
+        return;
+      }
       const saved = createOpen
         ? await window.atoumweb.expenses.create(input)
         : selected
