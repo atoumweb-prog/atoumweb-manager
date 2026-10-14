@@ -42,6 +42,7 @@ export function ProjectCommercialScopePanel({projectId,onChanged}:{projectId:str
   // The archived predecessor keeps its own commercial history but no longer
   // owns the dossier. Never expose actions belonging to the replacement.
   const isCurrentProvisional = scope.state==='provisional' && Boolean(scope.dossierId && scope.currentQuoteId);
+  const canAssignTargets = isCurrentProvisional || scope.state==='frozen';
   return <section className="project-commercial-scope" aria-label="Périmètre commercial du Projet">
     <strong>{scope.state==='provisional'
       ? isCurrentProvisional?'Projet prévisionnel — devis non accepté':'Ancien Projet prévisionnel — archive conservée, lecture seule'
@@ -72,7 +73,7 @@ export function ProjectCommercialScopePanel({projectId,onChanged}:{projectId:str
       {([['keep','Conserver'],['archive','Archiver'],['detach','Détacher de la provenance'],['delete','Supprimer si vierge']] as [ProjectConflictDecision,string][])
         .map(([d,label])=><button key={d} className="secondary-button" disabled={busy||!isCurrentProvisional} onClick={()=>void run(c.id,d)}>{label}</button>)}
     </div>)}
-    {isCurrentProvisional&&<details open={scope.targets?.some(t=>t.state==='pending')}><summary>Affectation des prestations — {scope.targets?.filter(t=>t.state==='pending').length||0} destination(s) à choisir</summary>
+    {canAssignTargets&&<details open={scope.targets?.some(t=>t.state==='pending')}><summary>Affectation des prestations — {scope.targets?.filter(t=>t.state==='pending').length||0} destination(s) à choisir</summary>
     {scope.targets?.map(t=><ContributionTargetChoices key={JSON.stringify([t.lineOrigin,t.slot,t.unitIndex])} target={t} choices={scope.targetChoices??{sites:[],pages:[],contexts:[]}} busy={busy} onAssign={async input=>{
       setBusy(true);setError('');try{setScope(await api.assignTarget(projectId,input));onChanged?.(await api.get(projectId));}catch(e){setError(e instanceof Error?e.message:String(e));}finally{setBusy(false);}
     }} />)}
