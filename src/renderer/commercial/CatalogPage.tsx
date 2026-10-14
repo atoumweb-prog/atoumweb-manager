@@ -869,7 +869,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                   ? detail.versions.find(version=>version.id!==chosen.id && version.status==='published') ?? null
                   : detail.currentVersion;
                 const differences=compareCatalogVersions(reference,chosen);
-                const advice=compareCatalogSalesAdvice(reference,chosen);
+                const advice=compareCatalogSalesAdvice(reference ?? null,chosen);
                 return <section className="catalog-detail-section" aria-label="Comparer les versions du Catalogue">
                   <strong>Comparaison enregistrée — v{chosen.versionNumber} / {reference?'v'+reference.versionNumber:'aucune référence'}</strong>
                   <p className="muted">Lecture seule des versions stockées. Ne modifie ni Devis, ni CGV, ni publication.</p>
