@@ -153,6 +153,55 @@ module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,select,test,sle
       }
     }
     console.log('[UXV2 09B] Billing 3 themes x 3 densities passed in native Chromium.');
+    // Real-client filters: each query must be applied by the mounted React page.
+    const otherOrg = db.crm.createOrganization({name:'09B SECOND CLIENT TEMP'});
+    const otherClient = db.crm.createClient({organizationId:otherOrg.id});
+    db.database.run(
+      `INSERT INTO billing_items
+      (id,client_account_id,source_type,source_id,source_key,description,expected_amount_cents,theoretical_value_cents,status,due_at,created_at,updated_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+      ['native-09b-other',otherClient.id,'other','native-09b-other','other:native-09b-other',
+        'Facturation autre client TEMP',2500,2500,'ready','2026-10-20T12:00:00.000Z',now,now],
+    );
+    db.database.run('UPDATE billing_items SET due_at=? WHERE id=?',
+      ['2026-10-15T12:00:00.000Z','native-09b-second']);
+    db.billingHandoff.updateInvoiceMetadata(id,{reference:'ABBY-NATIVE-09B'});
+    await js('document.querySelector(".billing-toolbar button.secondary-button").click()');
+    await wait('document.querySelectorAll(".billing-table tbody tr").length===3','billing list refreshed for advanced filters');
+    test(await get('document.querySelector(".billing-advanced-filters")!==null'),
+      '09B-FILTER-01: advanced billing filter controls rendered');
+    const changeSelect = async (label,value) => js('const el=document.querySelector("select[aria-label="+JSON.stringify('+JSON.stringify(label)+')+"]");'
+      +'if(!el)throw Error("Missing filter");el.value='+JSON.stringify(value)+';el.dispatchEvent(new Event("change",{bubbles:true}));');
+    const changeInput = async (label,value) => js('const el=document.querySelector("input[aria-label="+JSON.stringify('+JSON.stringify(label)+')+"]");'
+      +'if(!el)throw Error("Missing filter");const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set;'
+      +'setter.call(el,'+JSON.stringify(value)+');el.dispatchEvent(new Event("input",{bubbles:true}));');
+    await changeSelect('Filtrer les factures selon la présence de PDF','with');
+    await wait('document.querySelectorAll(".billing-table tbody tr").length===1','with invoice PDF');
+    test(await get('document.querySelector(".billing-table tbody")?.textContent.includes("Prestation TEST 09B")'),
+      '09B-FILTER-02: only items with PDF');
+    await changeSelect('Filtrer les factures selon la présence de PDF','without');
+    await wait('document.querySelectorAll(".billing-table tbody tr").length===2','without invoice PDF');
+    test(await get('!document.querySelector(".billing-table tbody")?.textContent.includes("Prestation TEST 09B")'),
+      '09B-FILTER-03: items without PDF');
+    await changeSelect('Filtrer les factures selon la présence de PDF','all');
+    await changeSelect('Filtrer les factures par client',otherClient.id);
+    await wait('document.querySelectorAll(".billing-table tbody tr").length===1','other client');
+    test(await get('document.querySelector(".billing-table tbody")?.textContent.includes("Facturation autre client TEMP")'),
+      '09B-FILTER-04: client isolation');
+    await changeSelect('Filtrer les factures par client','all');
+    await changeInput('Filtrer par référence de facture exacte','ABBY-NATIVE-09B');
+    await wait('document.querySelectorAll(".billing-table tbody tr").length===1','exact Abby reference');
+    test(await get('document.querySelector(".billing-table tbody")?.textContent.includes("Prestation TEST 09B")'),
+      '09B-FILTER-05: exact Abby invoice reference');
+    await changeInput('Filtrer par référence de facture exacte','');
+    await changeInput('Filtrer par échéance maximale','2026-10-15');
+    await wait('document.querySelectorAll(".billing-table tbody tr").length===1','due before Oct 15');
+    test(await get('document.querySelector(".billing-table tbody")?.textContent.includes("Deuxième prestation TEST 09B")'),
+      '09B-FILTER-06: date threshold excludes later due dates and missing dates');
+    await js('document.querySelector(".billing-advanced-fields button.secondary-button").click()');
+    await wait('document.querySelectorAll(".billing-table tbody tr").length===3','filters reset');
+    test(await get('document.querySelectorAll(".billing-table tbody tr").length===3'),
+      '09B-FILTER-07: clearing advanced filters restores list');
     await sleep(70);
     console.log('[UXV2 09B] Real renderer, imported and replaced PDF with native picker fixture; original preserved.');
   } finally {
