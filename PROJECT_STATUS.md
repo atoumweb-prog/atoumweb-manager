@@ -1,5 +1,11 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 14/10/2026 — Validation combinée03A–03E et préparation de publication
+
+- Code79197709 propre : typecheck,1040/1040 Vitest/109 fichiers,35 restaurations/6 binaires/sansRPC ;1421 natifs historiques +280 banc combiné (avec recouvrements),297 captures compositées. Manifeste `outputs/lot03-79197709-1791974377401/manifest.json`, toutes étapes exécutées, TEMP/intégrité/FK/migrations1–66/nettoyages OK.
+- Documentation mise à jour et revue finale : clarification du libellé Projet legacy et cadrage des images sur l’éditeur Annuaire ; recette ciblée au commit de publication à relever dansPR,CIcandidate non présumée avant résultat.105 reste draft/CI855 verte ;03E dépend de105 et son diff inclut03D tant qu’il n’est pas fusionné.
+- [Bilan de clôture03](docs/ux-v2/LOT-03-CLOTURE-TECHNIQUE-2026-10-14.md). Périmètre fonctionnel livré techniquement recevable ; réserve explicite sur l’archivage d’identité Annuaire, aucune nouvelle règle d’archivage inventée. Recette humaine globale différée. mainb2796812 seul intégré ; aucune fusion105/03E autorisée.
+
 ## 14/10/2026 — 03D publiée ; candidat03E et recette globale03
 
 - #105 draft, HEAD `bd406e1c98cb2048dbc26b8f4ec612c91dd7d15e`, [CI855 SUCCESS](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38548252238) : typecheck/1029 Vitest ;35 restaurations/6 binaires/sansRPC. Au même SHA, local :1421 natifs historiques/216 captures +125 Client/72 captures, TEMP/FK/intégrité/migrations/nettoyage OK. main reste b2796812 ; aucune fusion105.

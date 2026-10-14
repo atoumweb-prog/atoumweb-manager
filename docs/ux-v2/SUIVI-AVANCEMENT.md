@@ -34,7 +34,7 @@ Le statut d'intégration n'est pas une validation humaine. Tous les sous-lots ci
 | 03B | [Lot 03B — Annuaire Prospects, pipeline, Finalisation, Conversion et Projet prévisionnel](https://github.com/atoumweb-prog/atoumweb-manager/blob/0bb0860ee7618af92a53d8711b4a06edbbadc4d6/docs/ux-v2/LOT-03B-PROSPECTION-PIPELINE.md) | Intégré à main | #102 / b2796812 / CI781 ; native post-merge locale1421. Couverture exacte dans rapport102. |
 | 03C | [Lot 03C — Fiche Prospect, besoins, pré-devis et entrée vers Projet prévisionnel](https://github.com/atoumweb-prog/atoumweb-manager/blob/0bb0860ee7618af92a53d8711b4a06edbbadc4d6/docs/ux-v2/LOT-03C-FICHE-PROSPECT-BESOINS.md) | Intégré à main | #102 / b2796812 / CI781 ; native post-merge locale1421. Couverture exacte dans rapport102. |
 | 03D | [Lot 03D — Fiche Client et relation AtoumWeb](https://github.com/atoumweb-prog/atoumweb-manager/blob/0bb0860ee7618af92a53d8711b4a06edbbadc4d6/docs/ux-v2/LOT-03D-FICHE-CLIENT.md) | Validé techniquement | #105 draft / bd406e1c / CI855 verte ;1029 Vitest,1421 natifs +125 Client,216+72 captures locales. Non fusionné. |
-| 03E | [Lot 03E — Annuaire central, contacts et parcours croisés Prospect/Client](https://github.com/atoumweb-prog/atoumweb-manager/blob/0bb0860ee7618af92a53d8711b4a06edbbadc4d6/docs/ux-v2/LOT-03E-ANNUAIRE-PARCOURS.md) | En développement | Branche03E depuis#105 : gardes, créations atomiques/rejeu, concurrence et vérification humaine ; validation complète finale à exécuter. |
+| 03E | [Lot 03E — Annuaire central, contacts et parcours croisés Prospect/Client](https://github.com/atoumweb-prog/atoumweb-manager/blob/0bb0860ee7618af92a53d8711b4a06edbbadc4d6/docs/ux-v2/LOT-03E-ANNUAIRE-PARCOURS.md) | Validé techniquement | Candidat79197709 :1040 Vitest,1421 natifs historiques +280 banc03A–E,297 captures ; dépend de105, non fusionné. Réserve archivage d’identité non exposé. |
 | 04A | [Lot 04A — Inventaire du catalogue réel et contrat de cohérence V2](https://github.com/atoumweb-prog/atoumweb-manager/blob/0bb0860ee7618af92a53d8711b4a06edbbadc4d6/docs/ux-v2/LOT-04A-MATRICE-CATALOGUE.md) | À auditer | Référentiel existant ; actualisation des seuls écarts au démarrage autorisé. Code V1 existant ne prouve pas cette V2. |
 | 04B | [Lot 04B — Architecture du catalogue, navigation, catégories et recherche](https://github.com/atoumweb-prog/atoumweb-manager/blob/0bb0860ee7618af92a53d8711b4a06edbbadc4d6/docs/ux-v2/LOT-04B-NAVIGATION-CATEGORIES.md) | Cadré | Spécification préparée dans #82 ; aucune livraison complète de ce sous-lot V2 démontrée. |
 | 04C | [Lot 04C — Éditeur intégral d'offre/service, versions, tarifs et publication](https://github.com/atoumweb-prog/atoumweb-manager/blob/0bb0860ee7618af92a53d8711b4a06edbbadc4d6/docs/ux-v2/LOT-04C-EDITEUR-VERSIONS.md) | Cadré | Spécification préparée dans #82 ; aucune livraison complète de ce sous-lot V2 démontrée. |
@@ -86,7 +86,7 @@ Spécification complémentaire Cadrée, capacités métier partiellement existan
 
 03D **partiellement couvert** : six onglets dans main, identité et contacts partagés, devis/contrats/projets/opérations chargés, conversion idempotente et Projet courant déjà testés dans102. Manquaient l'architecture huit onglets et sa recette propre. Le candidat03D les apporte ;#105 validée techniquement/CI855, non fusionnée.
 
-03E **partiellement couvert** : deux vues organisations/personnes, relations client/prospect/client_prospect/external, navigation par IDs et génération des lectures protégée par02C. Les éditeurs Annuaire ne sont pas reliés àUX-01 ; création d'identité puis moyens de contact multi-appels ; absence de contrôle de concurrence propre et de dernière vérification humaine prouvée. Les contacts atomiques03C ne sécurisent pas automatiquement ces autres parcours.
+03E **état historique avant reprise** : deux vues organisations/personnes, relations client/prospect/client_prospect/external, navigation par IDs et génération des lectures protégée par02C. Les éditeurs Annuaire ne sont pas reliés àUX-01 ; création d'identité puis moyens de contact multi-appels ; absence de contrôle de concurrence propre et de dernière vérification humaine prouvée. Les contacts atomiques03C ne sécurisent pas automatiquement ces autres parcours.
 
 ## Réserves et ordre autorisé
 
@@ -95,3 +95,11 @@ Spécification complémentaire Cadrée, capacités métier partiellement existan
 3. Clôture03 après preuve combinée Prospect→Qualification→Besoins→Devis→Projet prévisionnel→Client→Annuaire, chrono unique et gardeUX-01.
 4. Lot04A–F déjà conçu dansPR82 ; le reprendre ensuite, sans nouveau moteur ni reprise des112 identités. Les lots05–10 ont des fonctionnalités V1 mais leurs cibles UX V2 complètes ne sont pas certifiées.
 5. Aucun accès Validation-MSI, donnée réelle, déploiement, nouveau schéma ou CI documentaire.
+
+## Résultat de la reprise03D/03E
+
+Candidat de code `7919770986d39bd8a0823d0bd89dfeb738bf3e79` validé :1040 Vitest/109 fichiers,35 restaurations,6 binaires,1421 contrôles natifs historiques plus280 du banc combiné03A–E,297 captures vérifiées,intégrité/FK/migrations/nettoyagesOK,sansRPC. Le banc280 reprend des scénarios déjà exécutés :1621 exécutions d’assertions, pas1621 scénarios uniques.
+
+Le commit de publication complète ce bilan ; une dernière clarification de libellé Projet legacy (« Projet existant », sans nouvelle déduction de statut) et le recentrage des captures sur l’éditeur Annuaire doivent être rejoués par le banc ciblé au SHA publié. LaCIcandidate doit être relevée sur ce mêmeSHA, sans run documentaire supplémentaire.
+
+**Clôture technique proposée pour le périmètre livré03A–E, sous réserve fonctionnelle explicite : archivage d’identité non exposé et non ajouté sans règle métier.**03A–C intégrés ;03D/03E techniquement validés enPRdraft, pas intégrés àmain. Recette humaine définitive différée. Aucun démarrageCatalogue ; référentiel préparé dans82 conservé.

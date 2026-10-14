@@ -85,6 +85,7 @@ module.exports=async context=>{
 
    test(await get('window.__directoryInput.value==="TEST03E UNSAVED"&&window.__directoryInput.isConnected&&parseFloat(getComputedStyle(window.__directoryInput).fontSize)>=14'),'Annuaire theme/density '+theme+'/'+density);
 
+   await js('document.querySelector(".directory-editor").scrollIntoView({block:"center"})');
    if(captureDir)captures.push(await require('./verified-crm-capture.cjs')({win,js,test,folder:captureDir,file:theme+'-'+density+'.png',theme,density,scene:'directory-organization-dirty'}));
 
   }

@@ -38,3 +38,12 @@ Points vérifiés : conversions rejouées sans doublon ; contacts et coordonnée
 4. Après accord et intégration du lot03, reprendre les spécifications04A–F déjà préparées dansPR82, sans nouveau travail de conception générale. Catalogue112, familles/tarifs/versions/associations conservés.
 
 Recette humaine globale reportée à la fin de la refonte. Aucun accèsValidation-MSI, données réelles, nouveau schéma, règle commerciale, signature, budget ou publicationWordPress.
+
+
+## Résultats effectifs du candidat figé79197709
+
+Toutes les étapes du banc complet ont réussi :typecheck,1040 Vitest/109 fichiers,35 restaurations,6 binaires,sansRPC ;1421 assertions natives historiques +280 du banc combiné03A–E ;297 captures (216+72+9), frames vérifiés, intégrité/FK/migrations1–66 et nettoyageTEMP. Les280 reprennent convergence etClient : ne pas les compter comme280 scénarios inédits.
+
+Le commit de publication apporte la mise à jour documentaire, le libellé conservateur « Projet existant » pour legacy et le recentrage des captures sur l’éditeur Annuaire. Nouveau passage ciblé280 et typecheck requis sur ce SHA ; résultats etCIcandidate exacts dans le corps dePR sans autrepush documentaire. Aucune règle de statut Projet modifiée.
+
+État : techniquement recevable pour revue/intégration du périmètre livré, **pas fusionné**, recette humaine différée et archivage d’identité hors fonction exposée. Aucune preuve de cette commande absente n’est revendiquée.
