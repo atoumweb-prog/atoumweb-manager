@@ -38,3 +38,12 @@ export function matchingContractClauses<T extends {
     clause.audience,clause.audience==='consumer'?'consommateur particulier':'professionnel tous publics'
   ].join(' ')).includes(term));
 }
+
+/** 05C: filtres de consultation uniquement, sans modifier les clauses ni leurs versions. */
+export function filterContractClauses<T extends {scope:'base'|'catalog';audience:string;status:string}>(
+  clauses:readonly T[], filters:{scope?:'all'|'base'|'catalog';audience?:'all'|'professional'|'consumer';includeArchived?:boolean}
+):T[]{
+  return clauses.filter(c=>(!filters.scope||filters.scope==='all'||c.scope===filters.scope)
+    &&(!filters.audience||filters.audience==='all'||c.audience==='all'||c.audience===filters.audience)
+    &&(filters.includeArchived||c.status!=='archived'));
+}
