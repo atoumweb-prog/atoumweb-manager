@@ -19,3 +19,10 @@ Référentiel : `docs/ux-v2/LOT-07B-FICHE-PROJET-PRODUCTION.md` au commit `0bb08
 5. Ne pas fusionner, ne pas publier WordPress, ne pas toucher les autres branches ni Validation-MSI.
 
 **Ce premier incrément n'est pas encore validé par une exécution des tests.**
+
+## Deuxième incrément — Fiche Projet
+- Le bandeau complet et compact distinguent Projet prévisionnel non signé / Projet confirmé accepté / Projet historique.
+- Pour un Projet provisoire sans `clientAccountId`, l'identité est libellée comme Prospect, et non Client ; aucune création d'entité.
+- Présence d'une association au Devis source signalée à partir de `sourceQuoteId` ; ouverture/routage du devis encore à traiter en vérifiant le système de navigation existant. L'identifiant affiché est technique et ne vaut pas numéro commercial.
+- Le bandeau rappelle que le Projet prévisionnel est une préparation interne et non une commande acceptée.
+- Aucun service ni SQL modifié ; toujours pas de test fonctionnel exécuté pour cet incrément.
