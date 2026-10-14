@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
+      - feature/ux-v2-lot09e-word-drafts-20261014
       - main
       - foundation/electron-react-sqlite
       - feature/phase-1-crm
