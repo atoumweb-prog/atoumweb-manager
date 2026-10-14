@@ -100,6 +100,35 @@ describe('ProjectReuseExportService', () => {
     expect(database.all('PRAGMA foreign_key_check')).toHaveLength(0);
   });
 
+  it('échec du journal après création de ressource : rollback atomique et aucun ZIP/JSON orphelin', () => {
+    const project = projects.createInternal({ name: 'Projet activité refusée' });
+    const item = technical.create(
+      project.id,
+      { category: 'php', name: 'Composant activité' },
+      { contentType: 'code', language: 'php', contentText: '<?php echo "stable";' },
+    );
+    const row = database.get<{ resource_root_path: string | null }>(
+      'SELECT resource_root_path FROM projects WHERE id=?', [project.id],
+    );
+    const directory = join(row!.resource_root_path!, '05 Technique - Sources - Exports');
+    const before = existsSync(directory) ? readdirSync(directory) : [];
+    const assetsBefore = Number(database.get<{ total: number }>(
+      'SELECT COUNT(*) AS total FROM file_assets WHERE project_id=?', [project.id],
+    )?.total ?? 0);
+    database.exec(
+      "CREATE TRIGGER ux07e_abort_activity BEFORE INSERT ON activity_log " +
+      "WHEN NEW.action='technical_reuse_exported' " +
+      "BEGIN SELECT RAISE(ABORT, 'UX07E_ACTIVITY_FAILURE'); END;",
+    );
+    expect(() => reuse.prepare(item.id)).toThrow('UX07E_ACTIVITY_FAILURE');
+    expect(readdirSync(directory)).toEqual(before);
+    expect(Number(database.get<{ total: number }>(
+      'SELECT COUNT(*) AS total FROM file_assets WHERE project_id=?', [project.id],
+    )?.total ?? 0)).toBe(assetsBefore);
+    expect(database.all('PRAGMA foreign_key_check')).toHaveLength(0);
+    expect(database.get<{ integrity_check: string }>('PRAGMA integrity_check')?.integrity_check).toBe('ok');
+  });
+
   it('un échec BEGIN conserve la transaction du demandeur et ne laisse aucun fichier', () => {
     const project = projects.createInternal({ name: 'Projet transaction déjà ouverte' });
     const item = technical.create(
