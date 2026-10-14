@@ -461,6 +461,26 @@ describe('QuoteService', () => {
     expect(crm.listProspects().find(item => item.id === prospect.id)?.clientAccountId).toBeFalsy();
   });
 
+  it('R06C-15 : retirer une prestation préserve les clauses particulières du devis', () => {
+    const prospect = createProspect();
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Retrait sans perte contractuelle' });
+    const first = quotes.addCustomLine(quote.id, { label: 'Prestation à retirer', proposedUnitPriceCents: 20000 });
+    quotes.addCustomLine(quote.id, { label: 'Prestation conservée', proposedUnitPriceCents: 10000 });
+    const terms = new ContractTermsService(database, documents);
+    terms.addCustomQuoteClause(quote.id, { title: 'Clause personnalisée', body: 'Texte spécifique à préserver' });
+    const custom = () => database.get<{ id: string; title: string; body: string; enabled: number }>(
+      "SELECT id,title,body,enabled FROM quote_contract_clauses WHERE quote_id=? AND source_kind='custom'", [quote.id],
+    );
+    const before = custom();
+    expect(before?.body).toBe('Texte spécifique à préserver');
+
+    const changed = quotes.removeLine(first.lines[0].id);
+    expect(changed.lines).toHaveLength(1);
+    expect(changed.lines[0].label).toBe('Prestation conservée');
+    expect(changed.contractValueCents).toBe(10000);
+    expect(custom()).toEqual(before);
+  });
+
   it('R06D-03 / R06C-15 : synchroniser les CGV ne remplace pas une clause particulière du devis', () => {
     const prospect = createProspect();
     const quote = quotes.create({ prospectId: prospect.id, subject: 'Synchronisation avec personnalisation' });
