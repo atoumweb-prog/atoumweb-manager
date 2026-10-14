@@ -15,6 +15,7 @@ on:
   pull_request:
     branches:
       - main
+      - feature/ux-v2-lot04c-editor-drafts-v1
       - feature/ux-v2-lot04b-catalogue-navigation-v1
       - foundation/electron-react-sqlite
       - feature/phase-1-crm
@@ -45,6 +46,79 @@ jobs:
         timeout-minutes: 6
         run: |
           node scripts/check-catalog-identity-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      # Lot 04D/04E: cross-cutting Catalogue UI and UX-01 checks on Windows TEMP.
+      - name: Electron Catalogue 04D-04E — Windows TEMP et 9 captures contrôlées
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
+        shell: pwsh
+        timeout-minutes: 10
+        run: |
+          $captures = Join-Path $env:RUNNER_TEMP 'lot04-consolide-native-captures'
+          if (Test-Path $captures) { throw "Capture directory already exists" }
+          node scripts/check-catalog-identity-ui.cjs --captures $captures
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $images = @(Get-ChildItem -LiteralPath $captures -Filter '*.png' -File)
+          if ($images.Count -ne 9) { throw "Expected 9 verified visual states, got $($images.Count)" }
+          foreach ($file in $images) {
+            $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            Write-Output "LOT04 VERIFIED FRAME $($file.Name) sha256=$hash bytes=$($file.Length)"
+          }
+
+      - name: Electron Recommandations 04D — interactions et UX-01 Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
+        shell: pwsh
+        timeout-minutes: 6
+        run: |
+          node scripts/check-catalog-recommendations-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Electron Aide commerciale 04E — clavier, Escape, focus Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
+        shell: pwsh
+        timeout-minutes: 6
+        run: |
+          node scripts/check-catalog-guidance-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Electron Prospect 04D — erreurs, reprise et suggestion volontaire
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          node scripts/check-prospect-catalog-recommendations-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Electron Devis 04D — conseil et achat explicite Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          node scripts/check-quote-catalog-recommendations-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Native 04D — Electron IPC et SQLite TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          node scripts/check-catalog-recommendations-native.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: UX-01 Catalogue 04D-04E — Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          node scripts/check-unsaved-inputs-ui.cjs --lot-b --lot-c --review
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: UX-01 Restauration et fermeture Electron 04D-04E — Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
+        shell: pwsh
+        timeout-minutes: 8
+        run: |
+          node scripts/check-restore-quit-roundtrip.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Typecheck

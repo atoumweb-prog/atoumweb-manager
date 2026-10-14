@@ -13,6 +13,7 @@ import {
 import {CommercialScope} from '../commercial/CommercialScope';
 import {catalogueFamilyLabel,catalogueIsOffer} from '../commercial/catalogDisplay';
 import { catalogMatchesQuery, catalogIsSelectable } from '../../shared/catalogDiscovery';
+import { resolveProspectCatalogRecommendations } from '../../shared/catalogProspectRecommendations';
 
 
 const BUDGET_PRESETS = [
@@ -49,11 +50,15 @@ function KindTabs({kind,onChange}:{kind:'offers'|'services';onChange:(kind:'offe
 
 export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onChange: (next: NeedInput[]) => void }) {
   const [catalog, setCatalog] = useState<CatalogItemSummary[]>([]);
+  const [catalogLoadError,setCatalogLoadError]=useState('');
+  const [catalogLoading,setCatalogLoading]=useState(true);
+  const [catalogReloadKey,setCatalogReloadKey]=useState(0);
   const [category, setCategory] = useState('Web');
   const [selectedId, setSelectedId] = useState('');
   const [otherText, setOtherText] = useState('');
   const [kind,setKind]=useState<'offers'|'services'>('offers');
   const [catalogQuery,setCatalogQuery]=useState('');
+  const [managedRecommendations,setManagedRecommendations]=useState<{sourceKey:string;versionIds:string[];configured:boolean;status:'loading'|'ready'|'error'}>({sourceKey:'',versionIds:[],configured:false,status:'ready'});
   const choiceGuard=useUnsavedDraft('Prestation à ajouter',{selectedId,otherText},{discard:s=>{setSelectedId(s.selectedId);setOtherText(s.otherText);}});
 
   const availableByKind=catalog.filter(item=>catalogueIsOffer(item)===(kind==='offers'));
@@ -61,7 +66,20 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
   const selectedCategory=categories.includes(category)?category:categories[0]??'';
   const choices=availableByKind.filter(item=>(catalogQuery.trim() ? catalogMatchesQuery(item,catalogQuery) : catalogueFamilyLabel(item)===selectedCategory)).sort((a,b)=>a.name.localeCompare(b.name,'fr'));
 
-  useEffect(() => { void window.atoumweb.catalog.list({ status: 'active' }).then((items) => setCatalog(items.filter(catalogIsSelectable))); }, []);
+  useEffect(()=>{
+    let active=true;
+    setCatalogLoading(true);setCatalogLoadError('');setCatalog([]);
+    void window.atoumweb.catalog.list({status:'active'}).then(items=>{
+      if(!active)return;
+      setCatalog(items.filter(catalogIsSelectable));
+      setCatalogLoading(false);
+    }).catch(err=>{
+      if(!active)return;
+      setCatalogLoadError(err instanceof Error?err.message:'Catalogue indisponible.');
+      setCatalogLoading(false);
+    });
+    return()=>{active=false;};
+  },[catalogReloadKey]);
 
   function add() {
     if (selectedId === 'other') {
@@ -76,12 +94,39 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
   }
 
   const selectedItems = value.map((need) => need.catalogItemId ? catalog.find((item) => item.id === need.catalogItemId) : null);
-  const suggestionIds = Array.from(new Set(selectedItems.flatMap((item) => item ? (SUGGESTIONS[item.id] ?? []) : [])))
-    .filter((id) => !value.some((need) => need.catalogItemId === id));
-  const suggestions = suggestionIds.map((id) => catalog.find((item) => item.id === id)).filter(Boolean) as CatalogItemSummary[];
+  const recommendationSourceIds = [...new Set(selectedItems.filter((item):item is CatalogItemSummary => Boolean(
+    item?.currentVersion?.status === 'published',
+  )).map(item=>item.currentVersion!.id))].sort().join('|');
+  // E106: prefer published, managed recommendations. Legacy suggestions remain a
+  // temporary fallback for historic fixtures that have no administered links.
+  useEffect(()=>{
+    let live=true;
+    setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[],configured:false,status:recommendationSourceIds?'loading':'ready'});
+    if(!recommendationSourceIds)return;
+    void Promise.all(recommendationSourceIds.split('|').map(id=>
+      window.atoumweb.catalog.listRecommendations(id),
+    )).then(groups=>{
+      if(live)setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[...new Set(groups.flatMap(links=>links.filter(link=>link.status!=='paused').map(link=>link.targetVersionId)))],configured:groups.some(links=>links.length>0),status:'ready'});
+    }).catch(()=>{if(live)setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[],configured:false,status:'error'});});
+    return()=>{live=false;};
+  },[recommendationSourceIds]);
+  const legacySuggestionIds = Array.from(new Set(selectedItems.flatMap((item) => item ? (SUGGESTIONS[item.id] ?? []) : [])));
+  const recommendationsReady=managedRecommendations.sourceKey===recommendationSourceIds&&managedRecommendations.status==='ready';
+  const recommendationsFailed=managedRecommendations.sourceKey===recommendationSourceIds&&managedRecommendations.status==='error';
+  const administeredIds=recommendationsReady?managedRecommendations.versionIds:[];
+  const suggestions=recommendationsReady?resolveProspectCatalogRecommendations(
+    catalog,
+    value.flatMap(need=>need.catalogItemId?[need.catalogItemId]:[]),
+    administeredIds,
+    legacySuggestionIds,
+    managedRecommendations.configured,
+  ):[];
+  const legacyFallback=!managedRecommendations.configured && suggestions.length>0;
 
   return <div className="need-selector-v2 form-span-3">
     <div className="need-selector-title"><strong>Besoins / Offres / Services</strong><small>Catégorie ou recherche par besoin, bénéfice ou mot-clé publié.</small></div>
+    {catalogLoading&&<p role="status">Chargement des prestations publiées…</p>}
+    {catalogLoadError&&<div role="alert"><span>Catalogue indisponible : {catalogLoadError}. Aucun service n'est proposé tant que la lecture n'a pas réussi.</span><button type="button" onClick={()=>setCatalogReloadKey(key=>key+1)}>Réessayer</button></div>}
     <label>Rechercher une prestation par besoin<input aria-label="Rechercher une prestation par besoin" value={catalogQuery} onChange={e=>setCatalogQuery(e.target.value)} placeholder="visibilité Google, SEO local…" /></label>
     {value.length > 0 && <div className="need-chip-list">{value.map((need, index) => {
       const item = need.catalogItemId ? catalog.find((candidate) => candidate.id === need.catalogItemId) : null;
@@ -93,7 +138,9 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
       {selectedId === 'other' && <label>Préciser<input value={otherText} onChange={(e) => setOtherText(e.target.value)} /></label>}
       <button type="button" className="secondary-button" onClick={add} disabled={!selectedId || (selectedId === 'other' && !otherText.trim())}>Ajouter</button>
     </div>
-    {suggestions.length > 0 && <div className="need-suggestions"><span>Services complémentaires suggérés :</span>{suggestions.map((item) => <button type="button" key={item.id} onClick={() => onChange([...value, { catalogItemId: item.id, otherText: '' }])}>+ {item.name}</button>)}</div>}
+    {recommendationsFailed&&<p role="alert">Impossible de charger les recommandations administrées. Aucune suggestion n'est proposée tant que leur disponibilité n'est pas confirmée.</p>}
+    {recommendationSourceIds&&!recommendationsReady&&!recommendationsFailed&&<p role="status">Chargement des recommandations…</p>}
+    {suggestions.length > 0 && <div className="need-suggestions"><span>{legacyFallback?'Suggestions historiques à vérifier :':'Services complémentaires suggérés :'}</span>{suggestions.map((item) => <button type="button" key={item.id} onClick={() => onChange([...value, { catalogItemId: item.id, otherText: '' }])}>+ {item.name}</button>)}</div>}
   </div>;
 }
 

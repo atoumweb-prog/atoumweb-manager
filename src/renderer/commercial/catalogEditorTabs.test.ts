@@ -16,9 +16,9 @@ describe('04C — huit onglets métier',()=>{
       .toEqual(CATALOG_INPUT_TABS);
     expect(catalogTabHasVersionFields('production')).toBe(false);
   });
-  it('les associations de composants concernent les Offres, sans fabriquer de fonction Service',()=>{
+  it('les compositions concernent les Offres, mais les recommandations 04D aussi les Services',()=>{
     expect(catalogTabAppliesToType('associations','offer')).toBe(true);
-    expect(catalogTabAppliesToType('associations','service')).toBe(false);
+    expect(catalogTabAppliesToType('associations','service')).toBe(true);
     expect(catalogTabAppliesToType('production','service')).toBe(true);
   });
 });

@@ -353,6 +353,20 @@ export class CatalogService {
           );
         }
       }
+      // 04D: Copy immutable version-scoped references into the new draft.
+      if (previous && this.database.get("SELECT name FROM sqlite_master WHERE type='table' AND name='catalog_version_recommendations'")) {
+        const recommendations = this.database.all<{target_version_id:string;sort_order:number;reason:string;rule_status:string;conditions:string;provenance:string}>(
+          'SELECT target_version_id,sort_order,reason,rule_status,conditions,provenance FROM catalog_version_recommendations WHERE source_version_id=? ORDER BY sort_order,id',
+          [previous.id],
+        );
+        for (const recommendation of recommendations) {
+          this.database.run(
+            'INSERT INTO catalog_version_recommendations (id,source_version_id,target_version_id,sort_order,created_at,reason,rule_status,conditions,provenance) VALUES (?,?,?,?,?,?,?,?,?)',
+            [randomUUID(),version.id,recommendation.target_version_id,recommendation.sort_order,now,
+              recommendation.reason,recommendation.rule_status,recommendation.conditions,recommendation.provenance],
+          );
+        }
+      }
       if (previous) {
         const links = this.database.all<{ template_version_id: string; role: string; sort_order: number; quantity_mode: string; site_mode: string }>(
           'SELECT template_version_id,role,sort_order,quantity_mode,site_mode FROM catalog_project_blueprints WHERE catalog_version_id=? ORDER BY sort_order,id', [previous.id]);
@@ -599,6 +613,17 @@ export class CatalogService {
       };
     });
 
+    // 04D: adding a composed service must not leave it recommended as an extra.
+    if (this.database.get("SELECT name FROM sqlite_master WHERE type='table' AND name='catalog_version_recommendations'")) {
+      for (const component of normalized) {
+        const collision = this.database.get<{id:string}>(`SELECT r.id FROM catalog_version_recommendations r
+          JOIN catalog_versions target ON target.id=r.target_version_id
+          JOIN catalog_versions selected ON selected.id=?
+          WHERE r.source_version_id=? AND target.item_id=selected.item_id LIMIT 1`,
+          [component.serviceVersionId,offerVersionId]);
+        if (collision) throw new Error('Ce Service est déjà recommandé en complément. Retire la recommandation avant de l’inclure.');
+      }
+    }
     const now = nowIso();
     this.database.exec('BEGIN IMMEDIATE;');
     try {

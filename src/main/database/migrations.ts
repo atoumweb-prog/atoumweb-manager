@@ -1,5 +1,7 @@
 import { CONTRACT_TYPES_MIGRATION } from './contractTypesMigration';
 import { CATALOG_CATEGORY_ADMIN_MIGRATION } from './catalogCategoryAdminMigration';
+import { CATALOG_RECOMMENDATIONS_MIGRATION } from './catalogRecommendationsMigration';
+import { CATALOG_RECOMMENDATION_DETAILS_MIGRATION } from './catalogRecommendationDetailsMigration';
 import { OPERATIONAL_SALES_ADDON_MIGRATION } from './operationalSalesAddonMigration';
 import { OPERATIONAL_SALES_MIGRATION } from './operationalSalesMigration';
 import { COMMERCIAL_RULES_MIGRATION } from './commercialRulesMigration';
@@ -249,6 +251,8 @@ export const MIGRATIONS: Migration[] = [
   OPERATIONAL_SALES_ADDON_MIGRATION,
   CONTRACT_TYPES_MIGRATION,
   CATALOG_CATEGORY_ADMIN_MIGRATION,
+  CATALOG_RECOMMENDATIONS_MIGRATION,
+  CATALOG_RECOMMENDATION_DETAILS_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {

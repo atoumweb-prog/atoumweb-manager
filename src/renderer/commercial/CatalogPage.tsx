@@ -2,7 +2,10 @@ import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { CatalogContractPanel } from './CatalogContractPanel';
 import { CatalogPublicationReview } from './CatalogPublicationReview';
+import { compareCatalogVersions } from '../../shared/catalogVersionReview';
+import { compareCatalogSalesAdvice } from '../../shared/catalogAdviceComparison';
 import { CatalogProductionPanel } from './CatalogProductionPanel';
+import { CatalogRecommendationsPanel } from './CatalogRecommendationsPanel';
 import {CATALOG_EDITOR_TABS,catalogTabHasVersionFields,type CatalogEditorTab} from './catalogEditorTabs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -171,6 +174,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   const [editingDraftVersion, setEditingDraftVersion] = useState<CatalogVersion | null>(null);
   const [versionFormError, setVersionFormError] = useState<string | null>(null);
   const [publicationCandidate, setPublicationCandidate] = useState<CatalogVersion | null>(null);
+  const [comparisonVersionId,setComparisonVersionId]=useState<string|null>(null);
   const [activeTab,setActiveTab] = useState<CatalogEditorTab>('identity');
   const [pendingItemStatus,setPendingItemStatus]=useState<CatalogItemStatus|null>(null);
   const [detailSplitPercent, setDetailSplitPercent] = useState(40);
@@ -365,12 +369,14 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     }
   }
 
-  function prepareNewVersion(): void {
-    if (!detail?.currentVersion || versionMode) return;
+  function prepareNewVersion(restoreFrom?: CatalogVersion): boolean {
+    if (!detail?.currentVersion || versionMode) return false;
+    if(restoreFrom && (!detail.versions.some(version=>version.id===restoreFrom.id) ||
+      !window.confirm(`Préparer le contenu de la version v${restoreFrom.versionNumber} dans un brouillon ? Aucune version historique ne sera modifiée. L’enregistrement restera une action distincte.`)))return false;
     // 04C/E99: reopen the existing draft instead of generating vN+1 on
     // every edit. A published version is only copied when no draft exists.
     const existingDraft = detail.versions.find(version => version.status === 'draft') ?? null;
-    const current = existingDraft ?? detail.currentVersion;
+    const current = restoreFrom ?? existingDraft ?? detail.currentVersion;
     setEditingDraftVersion(existingDraft);
     setPublicationCandidate(null);
     setVersionFormError(null);
@@ -406,6 +412,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
       visiblePublic: detail.visiblePublic,
     });
     setVersionMode(true);
+    return true;
   }
 
   async function createVersion(event: React.FormEvent): Promise<void> {
@@ -575,6 +582,8 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     // contract links require their own unsaved-exit confirmation.
     if (activeTab === 'contracts' && detail)
       requestUnsavedExit(change, 'catalog:contract:' + detail.id);
+    else if (activeTab === 'associations' && detail)
+      requestUnsavedExit(change, 'catalog:' + detail.id);
     else change();
   }
 
@@ -755,7 +764,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
               {activeTab==='scope' && detail.currentVersion && (!detail.currentVersion.nature || !detail.currentVersion.description || (detail.currentVersion.inclusions?.length ?? 0) === 0) && (
                 <div className="catalog-completeness">
                   <div><strong>Fiche à compléter</strong><span>Nature, description et contenu inclus permettent de comprendre immédiatement ce qui est réellement vendu.</span></div>
-                  <button className="secondary-button" type="button" disabled={versionMode || saving} onClick={prepareNewVersion}>Compléter la fiche</button>
+                  <button className="secondary-button" type="button" disabled={versionMode || saving} onClick={()=>prepareNewVersion()}>Compléter la fiche</button>
                 </div>
               )}
 
@@ -806,7 +815,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 </div>
               ) : !detail.currentVersion ? <p className="muted">Aucune version.</p> : null}
 
-              {activeTab==='identity' && <div className="catalog-detail-actions"><button className="secondary-button" type="button" disabled={versionMode || saving} onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select aria-label="Statut de la prestation" value={pendingItemStatus ?? detail.status} disabled={versionMode || saving} onChange={(e) => setPendingItemStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion || versionMode || saving} onClick={prepareNewVersion}>{detail.versions.some(v => v.status === 'draft') ? 'Reprendre le brouillon' : 'Modifier via une nouvelle version'}</button></div>}
+              {activeTab==='identity' && <div className="catalog-detail-actions"><button className="secondary-button" type="button" disabled={versionMode || saving} onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select aria-label="Statut de la prestation" value={pendingItemStatus ?? detail.status} disabled={versionMode || saving} onChange={(e) => setPendingItemStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion || versionMode || saving} onClick={()=>prepareNewVersion()}>{detail.versions.some(v => v.status === 'draft') ? 'Reprendre le brouillon' : 'Modifier via une nouvelle version'}</button></div>}
 
               {activeTab==='identity' && pendingItemStatus && pendingItemStatus!==detail.status && <div className="catalog-status-confirmation" role="group" aria-label="Confirmer le statut">
                 <p>Passer la prestation à « {STATUS_LABELS[pendingItemStatus]} » ? Cette modification ne supprime ni les versions ni les Devis historiques.</p>
@@ -853,8 +862,33 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
               )}
 
               {activeTab==='production' && <CatalogProductionPanel key={detail.id} item={detail} />}
-              {activeTab==='associations' && detail.type==='service' && <p className="muted">Les associations de services concernent les Offres. Les recommandations complémentaires seront administrées dans le lot 04D.</p>}
-              {activeTab==='history' && <div className="catalog-versions"><strong>Historique des versions</strong>{detail.versions.map((version) => <div className="catalog-version-row" key={version.id}><div><strong>v{version.versionNumber}</strong><span>{VERSION_STATUS_LABELS[version.status]}</span><small>{PRICE_LABELS[version.priceMode]} · {version.priceCents != null ? `${(version.priceCents / 100).toLocaleString('fr-FR')} €` : '—'} · {version.publishedAt ? `publiée le ${formatCatalogDate(version.publishedAt)}` : `créée le ${formatCatalogDate(version.createdAt)}`}</small>{version.status === 'draft' && version.provenance && <details className="catalog-import-draft"><summary>Consulter le brouillon importé</summary><p>Cette version n’est pas publiée. Sa consultation ne change pas la version commerciale en cours.</p><p>{version.nature}</p><p>{version.description}</p><Summary label="Code canonique" value={detail.canonicalCode || 'Non attribué'} /><Summary label="Unité / périodicité" value={[version.unit, version.periodicity].filter(Boolean).join(' / ')} /><ListSummary label="Inclus" values={version.inclusions ?? []} /><ListSummary label="Exclusions" values={version.exclusions ?? []} /><ListSummary label="Prérequis" values={version.prerequisites ?? []} /><CommercialParametersSummary parameters={version.commercialParameters} /><Summary label="Source" value={[version.provenance.reference, version.provenance.recordKey, version.provenance.sha256].filter(Boolean).join(' · ')} /></details>}</div>{version.status === 'draft' && <button className="primary-button compact-button" type="button" disabled={versionMode || saving} title={versionMode ? 'Enregistrer ou annuler le brouillon avant publication.' : 'Préparer une confirmation distincte, sans publier le site WordPress.'} onClick={() => setPublicationCandidate(structuredClone(version))}>Préparer la publication</button>}</div>)}</div>}
+              {activeTab==='associations' && <CatalogRecommendationsPanel key={detail.id} item={detail} items={items} locked={versionMode || saving} />}
+              {activeTab==='history' && comparisonVersionId && detail.versions.some(version=>version.id===comparisonVersionId) && (() => {
+                const chosen=detail.versions.find(version=>version.id===comparisonVersionId)!;
+                const reference=detail.currentVersion?.id===chosen.id
+                  ? detail.versions.find(version=>version.id!==chosen.id && version.status==='published') ?? null
+                  : detail.currentVersion;
+                const differences=compareCatalogVersions(reference,chosen);
+                const advice=compareCatalogSalesAdvice(reference ?? null,chosen);
+                return <section className="catalog-detail-section" aria-label="Comparer les versions du Catalogue">
+                  <strong>Comparaison enregistrée — v{chosen.versionNumber} / {reference?'v'+reference.versionNumber:'aucune référence'}</strong>
+                  <p className="muted">Lecture seule des versions stockées. Ne modifie ni Devis, ni CGV, ni publication.</p>
+                  <button type="button" className="secondary-button" onClick={()=>setComparisonVersionId(null)}>Fermer la comparaison</button>
+                  <table className="catalog-version-diff-table"><thead><tr><th>Champ</th><th>Référence</th><th>Version sélectionnée</th></tr></thead>
+                    <tbody>{differences.map(row=><tr key={row.field}><th scope="row">{row.label}</th><td>{row.previous}</td><td>{row.proposed}</td></tr>)}</tbody></table>
+                  {differences.length===0&&<p>Aucune différence commerciale constatée.</p>}
+                  <h4>Aides à la vente</h4>
+                  {advice.length===0?<p>Aucune différence des aides.</p>:
+                    <table className="catalog-version-diff-table"><thead><tr><th>Champ</th><th>Référence</th><th>Version sélectionnée</th></tr></thead>
+                      <tbody>{advice.map(row=><tr key={row.field}><th scope="row">{row.label}</th><td>{row.previous}</td><td>{row.proposed}</td></tr>)}</tbody></table>}
+                </section>;
+              })()}
+              {activeTab==='history' && <div className="catalog-versions"><strong>Historique des versions</strong>{detail.versions.map((version) => <div className="catalog-version-row" key={version.id}><div><strong>v{version.versionNumber}</strong><span>{VERSION_STATUS_LABELS[version.status]}</span><small>{PRICE_LABELS[version.priceMode]} · {version.priceCents != null ? `${(version.priceCents / 100).toLocaleString('fr-FR')} €` : '—'} · {version.publishedAt ? `publiée le ${formatCatalogDate(version.publishedAt)}` : `créée le ${formatCatalogDate(version.createdAt)}`}</small>{version.status === 'draft' && version.provenance && <details className="catalog-import-draft"><summary>Consulter le brouillon importé</summary><p>Cette version n’est pas publiée. Sa consultation ne change pas la version commerciale en cours.</p><p>{version.nature}</p><p>{version.description}</p><Summary label="Code canonique" value={detail.canonicalCode || 'Non attribué'} /><Summary label="Unité / périodicité" value={[version.unit, version.periodicity].filter(Boolean).join(' / ')} /><ListSummary label="Inclus" values={version.inclusions ?? []} /><ListSummary label="Exclusions" values={version.exclusions ?? []} /><ListSummary label="Prérequis" values={version.prerequisites ?? []} /><CommercialParametersSummary parameters={version.commercialParameters} /><Summary label="Source" value={[version.provenance.reference, version.provenance.recordKey, version.provenance.sha256].filter(Boolean).join(' · ')} /></details>}</div><div className="inline-editor-actions">
+                <button type="button" className="secondary-button compact-button" disabled={saving}
+                  onClick={()=>setComparisonVersionId(version.id)}>Comparer</button>
+                <button type="button" className="secondary-button compact-button" disabled={saving||versionMode}
+                  onClick={()=>{if(prepareNewVersion(version))setActiveTab('sales');}}>Reprendre dans un brouillon</button>
+                </div>{version.status === 'draft' && <button className="primary-button compact-button" type="button" disabled={versionMode || saving} title={versionMode ? 'Enregistrer ou annuler le brouillon avant publication.' : 'Préparer une confirmation distincte, sans publier le site WordPress.'} onClick={() => setPublicationCandidate(structuredClone(version))}>Préparer la publication</button>}</div>)}</div>}
               </div>
             </aside>
           )}
@@ -867,7 +901,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
 function CommercialParametersSummary({ parameters }: { parameters?: CatalogCommercialParameters | null }) {
   if (!parameters) return null;
   const labels: Record<keyof CatalogCommercialParameters, string> = {
-    clientNeed: 'Besoin client', benefits: 'Bénéfices client', keywords: 'Mots-clés métier', work: 'Travail prévu', options: 'Options / compléments',
+    clientNeed: 'Besoin client', benefits: 'Bénéfices client', salesPitch: 'Argumentaire commercial', qualificationQuestions: 'Questions de qualification', objections: 'Objections et réponses', relevantSituations: 'Situations pertinentes', commercialCautions: 'Vigilances commerciales', keywords: 'Mots-clés métier', work: 'Travail prévu', options: 'Options / compléments',
     quoteRequiredWhen: 'Cas nécessitant un devis', deliverables: 'Livrables', deliveryTerms: 'Modalités / délai',
     reviewTerms: 'Corrections / recette', correctiveWarranty: 'Garantie corrective prévue',
     thirdPartyCosts: 'Coûts tiers', sourcePriceLabel: 'Règle tarifaire de source',
@@ -990,6 +1024,36 @@ function CatalogFields({ draft, onChange, showIdentity = false, activeTab }: { d
             <textarea value={draft.commercialParameters.benefits ?? ''} onChange={e => onChange({
               ...draft, commercialParameters: { ...draft.commercialParameters, benefits: e.target.value },
             })} placeholder="Ex. pages plus faciles à retrouver, présentation claire de l'activité" />
+          </label>
+          <label className="catalog-wide">
+            <span className="field-label-with-help">Argumentaire commercial <FieldHelp text="Présentation commerciale proposée, préparée en interne. Jamais insérée automatiquement dans un devis ni dans les CGV." /></span>
+            <textarea value={draft.commercialParameters.salesPitch ?? ''} onChange={e => onChange({
+              ...draft, commercialParameters: { ...draft.commercialParameters, salesPitch: e.target.value },
+            })} placeholder="Ex. partir du besoin et expliquer le bénéfice concret de la prestation." />
+          </label>
+          <label className="catalog-wide">
+            <span className="field-label-with-help">Questions de qualification <FieldHelp text="Questions à poser au prospect avant de recommander la prestation." /></span>
+            <textarea value={draft.commercialParameters.qualificationQuestions ?? ''} onChange={e => onChange({
+              ...draft, commercialParameters: { ...draft.commercialParameters, qualificationQuestions: e.target.value },
+            })} placeholder={"Quel est votre objectif ?\nQuel contenu possédez-vous déjà ?"} />
+          </label>
+          <label className="catalog-wide">
+            <span className="field-label-with-help">Situations pertinentes <FieldHelp text="Quand proposer cette prestation, et dans quelles conditions elle n'est pas adaptée. Notes humaines internes." /></span>
+            <textarea value={draft.commercialParameters.relevantSituations ?? ''} onChange={e => onChange({
+              ...draft, commercialParameters: { ...draft.commercialParameters, relevantSituations: e.target.value },
+            })} placeholder="Ex. l'entreprise souhaite présenter ses activités avec des contenus déjà disponibles." />
+          </label>
+          <label className="catalog-wide">
+            <span className="field-label-with-help">Vigilances commerciales <FieldHelp text="Limites, dépendances ou promesses à éviter ; ces notes ne deviennent jamais des clauses CGV automatiquement." /></span>
+            <textarea value={draft.commercialParameters.commercialCautions ?? ''} onChange={e => onChange({
+              ...draft, commercialParameters: { ...draft.commercialParameters, commercialCautions: e.target.value },
+            })} placeholder="Ex. ne pas promettre une première position sur Google." />
+          </label>
+          <label className="catalog-wide">
+            <span className="field-label-with-help">Objections et réponses <FieldHelp text="Réponses préparées aux objections fréquentes, à valider humainement. Sans modifier automatiquement les clauses CGV." /></span>
+            <textarea value={draft.commercialParameters.objections ?? ''} onChange={e => onChange({
+              ...draft, commercialParameters: { ...draft.commercialParameters, objections: e.target.value },
+            })} placeholder="Ex. Budget : expliquer le périmètre, puis proposer un devis adapté." />
           </label>
           <label className="catalog-wide">
             <span className="field-label-with-help">Mots-clés et synonymes métier <FieldHelp text="Termes réellement édités et stockés dans cette version. Sépare-les par une virgule ou une ligne. La recherche ne devine pas de synonymes absents." /></span>

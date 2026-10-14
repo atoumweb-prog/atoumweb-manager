@@ -3,6 +3,7 @@ import type { CatalogVersion,QuoteDetail, QuoteLine, QuoteLineInput } from '../.
 import { QuoteLineEditor } from './QuoteLineEditor';
 import './QuoteOfferOptionsPanel.css';
 import {CommercialScope} from './CommercialScope';
+import {QuoteCatalogRecommendationsPanel} from './QuoteCatalogRecommendationsPanel';
 import {useUnsavedDraft} from '../unsaved/unsaved';
 
 function components(line: QuoteLine): Array<Record<string, unknown>> {
@@ -29,15 +30,16 @@ export function QuoteOfferOptionsPanel({ quote, onSave }: {
   const editable = quote.status === 'draft' && !quote.finalizedAt && !quote.contractCompiledAt
     && !quote.snapshotLockedAt && quote.contractSnapshotJson == null;
   const offers = quote.lines.filter((line) => line.snapshot?.itemType === 'offer');
+  const catalogSources=quote.lines.filter(line=>line.source==='catalog'&&Boolean(line.catalogVersionId||line.snapshot?.versionId));
   async function run(action: () => Promise<QuoteDetail>) {
     setBusy(true); setError('');
     try { onSave(await action()); setEditing(null); }
     catch (caught) { setError(caught instanceof Error ? caught.message : 'Option non enregistrée.'); }
     finally { setBusy(false); }
   }
-  if (!offers.length) return null;
+  if (!offers.length&&!catalogSources.length) return null;
   return <section className="quote-offer-options" aria-label="Composition et options des offres">
-    <h3>Services inclus et options</h3>
+    <h3>Composition, options et recommandations</h3>
     <p>Une option est achetée uniquement lorsqu’elle possède sa propre ligne de devis. Les options disponibles n’ajoutent aucun montant ni aucune clause.</p>
     {error && <p role="alert">{error}</p>}
     {offers.map((offer) => <div key={offer.id} className="quote-offer-composition">
@@ -81,5 +83,7 @@ export function QuoteOfferOptionsPanel({ quote, onSave }: {
         </div>;
       })}
     </div>)}
+    {catalogSources.map(line=><QuoteCatalogRecommendationsPanel key={line.id+'-recommendations'}
+      quote={quote} source={line} onSave={onSave}/>)}
   </section>;
 }

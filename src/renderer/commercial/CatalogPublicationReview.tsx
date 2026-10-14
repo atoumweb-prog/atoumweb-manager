@@ -1,5 +1,6 @@
 import type { CatalogItemDetail, CatalogVersion, OfferComponent } from '../../shared/commercial';
 import { compareCatalogVersions, reviewCatalogPrepublication } from '../../shared/catalogVersionReview';
+import { compareCatalogSalesAdvice } from '../../shared/catalogAdviceComparison';
 
 export function CatalogPublicationReview({
   item, draft, components, busy, onConfirm, onCancel,
@@ -14,6 +15,7 @@ export function CatalogPublicationReview({
   const prior = item.versions.find(v=>v.status==='published') ??
     item.versions.find(v=>v.status==='retired') ?? null;
   const differences = compareCatalogVersions(prior,draft);
+  const adviceDifferences = compareCatalogSalesAdvice(prior,draft);
   const review = reviewCatalogPrepublication(item,draft,components);
 
   return <section className="catalog-detail-section catalog-prepublication-review"
@@ -26,6 +28,13 @@ export function CatalogPublicationReview({
         <table className="catalog-version-diff-table"><thead><tr><th>Champ</th><th>Version précédente</th><th>Brouillon</th></tr></thead>
           <tbody>{differences.map(row=><tr key={row.field}><th scope="row">{row.label}</th><td>{row.previous}</td><td>{row.proposed}</td></tr>)}</tbody>
         </table>}
+      {adviceDifferences.length>0 && <section aria-label="Différences des aides à la vente">
+        <h4>Aides commerciales versionnées — comparaison détaillée</h4>
+        <table className="catalog-version-diff-table"><thead><tr><th>Champ d'aide</th><th>Version précédente</th><th>Brouillon</th></tr></thead>
+          <tbody>{adviceDifferences.map(row=><tr key={row.field}><th scope="row">{row.label}</th><td>{row.previous}</td><td>{row.proposed}</td></tr>)}</tbody>
+        </table>
+        <p className="muted">Ces conseils restent internes et ne constituent ni un contrat ni une promesse automatiquement approuvée.</p>
+      </section>}
       <p className="muted">Les associations CGV, composants et blueprints doivent être vérifiés dans leurs panneaux dédiés : ce comparateur ne les certifie pas.</p>
     </details>
     <div className="catalog-prepublication-checks">

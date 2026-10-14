@@ -113,6 +113,7 @@ window.atoumweb={catalogCategories:categoryApi,catalog:{
   },
   assignCanonicalCode:async(id,code)=>{calls.assign.push({id,code});if(!/^AW-[A-Z0-9-]+$/.test(code))throw Error('Code canonique invalide');const item=items.find(i=>i.id===id);item.canonicalCode=code;item.identityProvenance={reference:'manual'};return structuredClone(item)},
   publishVersion:async()=>{calls.publish++},listOfferComponents:async()=>[],
+  listRecommendations:async()=>[],replaceRecommendations:async()=>[],
   listProductionBlueprints:async()=>[],
   setStatus:async(id,status)=>{const item=items.find(x=>x.id===id);calls.statuses.push({id,status});item.status=status;return structuredClone(item)},
   setVisiblePublic:async(id,visible)=>{const item=items.find(x=>x.id===id);item.visiblePublic=visible;return structuredClone(item)}, 
@@ -156,7 +157,7 @@ app.whenReady().then(async () => {
       const click=async(text)=>{const b=[...document.querySelectorAll('button')].find(b=>b.textContent===text);if(!b)throw Error('Bouton absent : '+text);b.click();await wait()};
       const fillField=async(field,value)=>{if(!field)throw Error('Champ absent');const proto=field.tagName==='SELECT'?HTMLSelectElement.prototype:field.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;Object.getOwnPropertyDescriptor(proto,'value').set.call(field,value);field.dispatchEvent(new Event(field.tagName==='SELECT'?'change':'input',{bubbles:true}));await wait()};
       const field=(label)=>[...document.querySelectorAll('label')].find(l=>l.textContent.trim().startsWith(label))?.querySelector('input,select,textarea');
-      const fill=async(label,value)=>fillField(field(label),value);
+      const fill=async(label,value)=>{for(let attempt=0;attempt<25;attempt++){const input=field(label);if(input)return fillField(input,value);await wait();}throw Error('Champ absent : '+label+' ; labels='+[...document.querySelectorAll('label')].map(l=>l.textContent.trim().slice(0,65)).join(' | ')+' ; rendererErrors='+JSON.stringify(window.fixtureErrors)+' ; page='+document.body.textContent.slice(0,1100)+' ; messages='+JSON.stringify(window.messages));};
       await wait();
       assert('Vue organisée Catalogue visible par défaut',!!document.querySelector('.catalog-overview')&&document.body.textContent.includes('Services complémentaires'));
       await click("Tableau d'administration");
@@ -211,6 +212,14 @@ app.whenReady().then(async () => {
       assert('Coût réel et nature visibles',document.body.textContent.includes('Coût tiers réel')&&document.body.textContent.includes('Abonnement'));
       await click('Reprendre le brouillon');
       assert('04C brouillon original rouvert',field('Unité').value==='licence'&&field('Périodicité').value==='annuelle'&&field('Base de prix').value==='actual_cost'&&field('Référence de source').value==='Catalogue V1 témoin');
+      await click('Aide à la vente');
+      assert('04E trois champs nouveaux éditables',
+        !!field('Argumentaire commercial')&&!!field('Questions de qualification')&&!!field('Objections et réponses'));
+      await fill('Argumentaire commercial','Présenter clairement le périmètre');
+      await fill('Questions de qualification','Quels sont vos objectifs ?');
+      await fill('Objections et réponses','Budget : décrire les livrables');
+      await fill('Situations pertinentes','Besoin de site vitrine');
+      await fill('Vigilances commerciales','Ne pas promettre un rang SEO');
       await click('Historique');
       assert('04C publication bloquée pendant édition', [...document.querySelectorAll('.catalog-version-row button')].filter(b=>b.textContent==='Préparer la publication').every(b=>b.disabled));
       await click('Contenu & périmètre');
@@ -227,6 +236,12 @@ app.whenReady().then(async () => {
       assert('04C changement d’onglet ne perd pas la saisie',field('Description').value==='Enregistré en place, sans v2');
       await click('Enregistrer le brouillon');
       assert('04C enregistrement sans nouvelle version',calls.saveDraft.length===1&&calls.version.length===1&&calls.publish===0&&items[1].versions.length===1);
+      assert('04E argumentaire, qualification et objections sauvegardés via l’éditeur réel',
+        calls.saveDraft[0].input.commercialParameters.salesPitch==='Présenter clairement le périmètre'&&
+        calls.saveDraft[0].input.commercialParameters.qualificationQuestions==='Quels sont vos objectifs ?'&&
+        calls.saveDraft[0].input.commercialParameters.objections==='Budget : décrire les livrables'&&
+        calls.saveDraft[0].input.commercialParameters.relevantSituations==='Besoin de site vitrine'&&
+        calls.saveDraft[0].input.commercialParameters.commercialCautions==='Ne pas promettre un rang SEO');
       assert('04C même ID de version conservé',calls.saveDraft[0].id===items[1].versions[0].id&&items[1].versions[0].description==='Enregistré en place, sans v2');
       await click('Identité');await click('Reprendre le brouillon');
       await click('Contenu & périmètre');
@@ -250,6 +265,28 @@ app.whenReady().then(async () => {
       const importedDetail=document.querySelector('.catalog-import-draft');
       assert('Paramètres, inclusions et provenance importés visibles',importedDetail.open&&importedDetail.textContent.includes(importedVersion.commercialParameters.reviewTerms)&&importedDetail.textContent.includes(importedVersion.provenance.recordKey)&&importedDetail.textContent.includes(importedVersion.inclusions[0]));
       assert('Consultation du brouillon sans publication ni mutation de la version précédente',calls.publish===0&&items[0].currentVersion.id==='old-v1'&&items[0].currentVersion.priceCents===69900);
+      // 04C/04E: history comparison and explicit restoration remain non-mutating until Save.
+      const historyV1=[...document.querySelectorAll('.catalog-version-row')]
+        .find(row=>row.textContent.includes('v1'));
+      assert('04C historique version v1 disponible pour comparer',!!historyV1);
+      historyV1.querySelector('button').click();await wait();
+      assert('04C/04E comparateur historique commercial et aide visible',
+        !!document.querySelector('[aria-label="Comparer les versions du Catalogue"]')&&
+        document.body.textContent.includes('Aides à la vente'));
+      await click('Fermer la comparaison');
+      const oldConfirm=window.confirm;window.confirm=()=>true;
+      const restoreButton=[...historyV1.querySelectorAll('button')]
+        .find(button=>button.textContent==='Reprendre dans un brouillon');
+      restoreButton.click();await wait();window.confirm=oldConfirm;
+      assert('04C restauration historique prépare un brouillon sans publication',
+        !!document.querySelector('.catalog-version-editor')&&
+        calls.publish===0&&items[0].currentVersion.id==='old-v1'&&
+        items[0].currentVersion.description==='Ancienne offre');
+      await click('Contenu & périmètre');
+      assert('04C contenu ancien repris localement',field('Description').value==='Ancienne offre');
+      await click('Annuler');await click('Historique');
+      assert('04E aucune écriture lors de la comparaison et restauration non sauvée',
+        items[0].versions.find(version=>version.id==='old-v1').description==='Ancienne offre');
       // Lot 04B: the existing catalogue editor is still usable; exercise the new organized view
       // with synthetic, non-persisted entries only after all the historical identity assertions.
       document.querySelector('.catalog-detail-heading-actions .close-detail').click();await wait();
