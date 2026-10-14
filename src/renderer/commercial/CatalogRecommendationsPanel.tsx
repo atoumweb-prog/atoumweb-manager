@@ -73,7 +73,7 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
           {savedLinks.find(link=>link.targetVersionId===id)?.targetItemStatus==='inactive'?' · Inactif':''}
           {savedLinks.find(link=>link.targetVersionId===id)?.targetItemStatus==='archived'?' · Archivé':''}
         </span>
-        {editable&&<button type="button" className="secondary-button" disabled={saving} onClick={()=>setTargets(values=>values.filter(value=>value!==id))}>Retirer</button>}
+        {editable&&<button type="button" className="secondary-button" aria-label={`Retirer la recommandation ${savedLinks.find(link=>link.targetVersionId===id)?.targetName ?? items.find(candidate=>candidate.currentVersion?.id===id)?.name ?? id}`} disabled={saving} onClick={()=>setTargets(values=>values.filter(value=>value!==id))}>Retirer</button>}
       </div>)}
       {!targets.length&&<p className="muted">Aucune recommandation.</p>}
       {editable&&<div className="offer-component-editor">
