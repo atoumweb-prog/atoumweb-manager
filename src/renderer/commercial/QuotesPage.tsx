@@ -165,7 +165,8 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
       const next=await window.atoumweb.quotes.get(id);
       if(sequence===detailRequest.current&&selectedRef.current===id)applyDetail(next);
     } catch (error) {
-      if(sequence===detailRequest.current&&selectedRef.current===id){selectedRef.current=null;setSelectedId(null);applyDetail(null);}
+      if(sequence!==detailRequest.current||selectedRef.current!==id)return; // Une erreur obsolète ne doit pas invalider le devis courant.
+      selectedRef.current=null;setSelectedId(null);applyDetail(null);
       throw error;
     }
   }
