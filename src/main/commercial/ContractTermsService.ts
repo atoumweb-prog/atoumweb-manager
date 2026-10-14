@@ -867,7 +867,7 @@ export class ContractTermsService {
   }
 
   private compile(clauses: QuoteContractClause[]): string {
-    const included = clauses.filter((clause) => clause.enabled);
+    const included = clauses.filter((clause) => clause.enabled && !clause.isOrphaned);
 
     if (included.length === 0) return '';
     const body = included.map((clause, index) => {
