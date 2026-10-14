@@ -392,6 +392,10 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('expenses:list', (_event, filters?: ExpenseFilters) => database.expenses.list(filters));
   ipcMain.handle('expenses:get', (_event, id: string) => database.expenses.get(id));
   ipcMain.handle('expenses:list-receipt-versions', (_event, id: string) => database.expenses.listReceiptVersions(id));
+  ipcMain.handle('expenses:open-receipt-version', async (_event, id: string, relativePath: string) => {
+    const error = await shell.openPath(database.expenses.verifiedReceiptVersionPath(id, relativePath));
+    if (error) throw new Error(error);
+  });
   ipcMain.handle('expenses:create', (_event, input: ExpenseInput) => database.expenses.create(input));
   ipcMain.handle('expenses:update', (_event, id: string, input: ExpenseInput) => database.expenses.update(id, input));
   ipcMain.handle('expenses:change-status', (_event, id: string, status: ExpenseStatus) => database.expenses.changeStatus(id, status));
