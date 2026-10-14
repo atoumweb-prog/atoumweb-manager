@@ -51,6 +51,47 @@ if(!process.versions.electron){
       await go('Réglages');await wait('!!document.querySelector(".theme-card")');await js(`[...document.querySelectorAll('.theme-card')].find(b=>b.querySelector('strong').textContent===${JSON.stringify({atoumweb:'AtoumWeb',noir:'Noir',blanc:'Blanc'}[theme])}).click()`);await wait(`document.documentElement.dataset.theme===${JSON.stringify(theme)}`);
       await go('Documents & Contrats');if(await js('!!document.querySelector(".contract-library")'))await click('Retour aux documents');await click('Bibliothèque contractuelle');check(theme+' library entry',await js('!!document.querySelector(".contract-library")'));
       if(theme==='atoumweb')await click('Initialiser depuis le Catalogue');await wait('document.querySelectorAll(".contract-type-list button").length>=5');
+      if(theme==='atoumweb'&&args.includes('--ux05b')){
+        // BrowserWindow, vrai IPC UX-01, SQLite et profil TEMP. Dialogues automatises sans mutation de base client.
+        const originalDialog=dialog.showMessageBoxSync,dialogs=[];
+        let decision=0;
+        dialog.showMessageBoxSync=(...params)=>{const options=params.at(-1);if(options?.title==='Modifications non enregistrées'){dialogs.push({labels:options.detail,buttons:options.buttons});return decision;}return originalDialog(...params);};
+        try{
+          const first=await js('document.querySelector(".contract-type-list button strong")?.textContent');
+          const next=await js('document.querySelectorAll(".contract-type-list button strong")[1]?.textContent');
+          check('05B distinct contract types',!!first&&!!next&&first!==next);
+          await js('document.querySelector(".contract-type-list button").click()');
+          await wait(`document.querySelector('[aria-label="Nom du type"]')?.value===${JSON.stringify(first)}`);
+          const selected=await js('document.querySelector(".contract-type-list button.active")?.textContent');
+          const before=db.get('SELECT COUNT(*) AS n FROM contract_type_versions').n;
+          await input('Description du type','DESCRIPTION_NON_ENREGISTREE_05B');
+          await wait('!!document.querySelector(".contract-library-unsaved")');
+          decision=0;await js('document.querySelectorAll(".contract-type-list button")[1].click()');
+          check('05B stay triggers one confirmation',dialogs.length===1&&dialogs[0].buttons.join('|')==='Rester|Quitter sans enregistrer');
+          check('05B stay preserves draft',await js('document.querySelector("[aria-label=\"Description du type\"]")?.value')==='DESCRIPTION_NON_ENREGISTREE_05B');
+          check('05B stay preserves selection',await js('document.querySelector(".contract-type-list button.active")?.textContent')===selected);
+          decision=1;await js('document.querySelectorAll(".contract-type-list button")[1].click()');
+          await wait(`document.querySelector('[aria-label="Nom du type"]')?.value===${JSON.stringify(next)}`);
+          check('05B quit drops unsaved type only',dialogs.length===2&&db.get('SELECT COUNT(*) AS n FROM contract_type_versions').n===before);
+          const clausesBefore=db.get('SELECT COUNT(*) AS n FROM contract_clause_templates').n;
+          await click('Nouveau module');await input('Code du module','UNSAVED-05B');
+          await wait('!!document.querySelector(".contract-library-unsaved")');
+          decision=0;await click('Nouveau module');
+          check('05B stay preserves new module',dialogs.length===3&&await js('!!document.querySelector("[aria-label=\"Code du module\"]")'));
+          decision=1;await click('Nouveau module');
+          check('05B quit discards new module only',dialogs.length===4&&!await js('!!document.querySelector("[aria-label=\"Code du module\"]")')&&db.get('SELECT COUNT(*) AS n FROM contract_clause_templates').n===clausesBefore);
+          await input('Consulter un module',m.id);await wait('!!document.querySelector("[aria-label=\"Texte du module à versionner\"]")');
+          const oldBody=await js('document.querySelector("[aria-label=\"Texte du module à versionner\"]").value');
+          await input('Texte du module à versionner','UNSAVED_BODY_05B');
+          await wait('!!document.querySelector(".contract-library-unsaved")');
+          decision=0;await input('Consulter un module',common.id);
+          check('05B stay preserves clause text',dialogs.length===5&&await js('document.querySelector("[aria-label=\"Texte du module à versionner\"]")?.value')==='UNSAVED_BODY_05B');
+          decision=1;await input('Consulter un module',common.id);
+          await wait(`document.querySelector('[aria-label="Consulter un module"]')?.value===${JSON.stringify(common.id)}`);
+          check('05B quit cannot rewrite clause version',dialogs.length===6&&database.contractTerms.getTemplate(m.id).currentVersion.body===oldBody);
+          console.log('[05B UX-01 NATIVE] '+JSON.stringify({dialogs:dialogs.length,checks:checks.length,sqlite:'TEMP'}));
+        }finally{dialog.showMessageBoxSync=originalDialog;}
+      }
       const names=await js('[...document.querySelectorAll(".contract-type-list button strong")].map(e=>e.textContent)');check(theme+' types alphabetical',JSON.stringify(names)===JSON.stringify([...names].sort((a,b)=>a.localeCompare(b,'fr'))));
       const initialTypes=database.contractTypes.list();
       for(const t of initialTypes){

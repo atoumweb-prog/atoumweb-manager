@@ -23,3 +23,9 @@ Ce correctif est une première passe ; avant toute fusion, **exécuter réelleme
 - vérifier les cas d'annulation avec **plusieurs brouillons actifs** simultanément.
 
 L'audit 05A ne constitue pas à lui seul une validation dynamique. Aucun « PASS Electron » ne sera annoncé sans exécution.
+
+## Recette native Windows en préparation
+
+- Réutilisation du banc réel `scripts/check-contract-library-ui.cjs`, avec mode additionnel `--ux05b` et SQLite/profile `TEMP`.
+- Tests de sortie de l'éditeur Type/Module/Clause : rester conserve texte et sélection ; quitter abandonne uniquement les champs non enregistrés et ne crée aucune version.
+- Workflow Windows conditionné à la PR #106, sans artefacts PNG uploadés ; aucun résultat natif revendiqué avant passage CI.
