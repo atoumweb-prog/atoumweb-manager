@@ -84,6 +84,20 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
   const [movementMode, setMovementMode] = useState<'manual_correction' | 'commercial_credit'>('manual_correction');
   const [interventionId, setInterventionId] = useState('');
   const [reversalReason, setReversalReason] = useState('Correction du mouvement');
+  useUnsavedDraft('Ajustement manuel de pack',
+    { movementHours, movementReason, movementMode },
+    {
+      group: 'hour_pack:' + selectedId + ':adjustment',
+      ready: !!selectedId,
+      resetKey: selectedId,
+      dirty: !!(movementHours.trim() || movementReason.trim() || movementMode !== 'manual_correction'),
+      pending: movementPending,
+      discard: () => {
+        setMovementHours(''); setMovementReason('');
+        setMovementMode('manual_correction');
+      },
+    });
+
 
   useUnsavedDraft('Nouveau pack d’heures',
     { catalogPackId, clientId, projectId, name, hoursPurchased, price, expiresAt },
@@ -107,10 +121,8 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
           .filter((item) => item.type === 'offer' && Boolean(item.currentVersion) && inferCatalogPackHours(item) != null)
           .sort((a, b) => (inferCatalogPackHours(a) ?? 0) - (inferCatalogPackHours(b) ?? 0) || a.name.localeCompare(b.name, 'fr-FR')),
       );
-      if (selectedId && !next.some((pack) => pack.id === selectedId)) {
-        setSelectedId('');
-        setDetailExpanded(false);
-      }
+      // Protéger B d'un ancien rafraîchissement déclenché lorsque A était sélectionné.
+      setSelectedId((current) => current && !next.some((pack) => pack.id === current) ? '' : current);
     } catch (error) {
       if(initialPackId)onEntityReady?.('hour_pack',initialPackId,error instanceof Error?error.message:'Impossible de charger les packs d’heures.');
       onMessage(error instanceof Error ? error.message : 'Impossible de charger les packs d’heures.');
@@ -225,7 +237,7 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
         secondsDelta: movementMode === 'commercial_credit' ? Math.abs(seconds) : seconds,
         reason: movementReason,
       });
-      setMovementHours(''); setMovementReason('');
+      setMovementHours(''); setMovementReason(''); setMovementMode('manual_correction');
       await refresh();
       setSelectedId((current) => current === sourcePackId ? updated.id : current);
       onMessage('Mouvement ajouté au pack.');
@@ -339,14 +351,14 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
     >
       {!detailExpanded && <section className="panel operation-list-panel hour-pack-list-panel">
         {selected ? <div className="hour-pack-compact-list" role="list" aria-label="Packs d’heures">
-          {filteredPacks.map((pack) => <button key={pack.id} type="button" role="listitem" className={`hour-pack-compact-item ${selected.id === pack.id ? 'selected' : ''}`} onClick={() => setSelectedId(pack.id)}>
+          {filteredPacks.map((pack) => <button key={pack.id} type="button" role="listitem" className={`hour-pack-compact-item ${selected.id === pack.id ? 'selected' : ''}`} onClick={() => { if (pack.id !== selectedId) requestUnsavedExit(() => { setSelectedId(pack.id); setMovementHours(''); setMovementReason(''); setMovementMode('manual_correction'); }); }}>
             <span className="hour-pack-compact-heading"><strong>{pack.name}</strong><span className={`hour-pack-status status-${pack.status}`}>{STATUS_LABELS[pack.status]}</span></span>
             <span className="hour-pack-compact-client">{pack.clientLabel}</span>
             <span className="hour-pack-compact-meta"><span>{hours(pack.balanceSeconds)} restant</span><span>{money(pack.contractPriceCents)}</span></span>
             <span className="hour-pack-compact-project">{pack.projectLabel || 'Sans projet dédié'}</span>
           </button>)}
           {filteredPacks.length === 0 && <div className="empty-table">Aucun pack d’heures.</div>}
-        </div> : <table className="operations-table"><thead><tr><th>Client</th><th>Pack</th><th>Acheté</th><th>Restant</th><th>Statut</th></tr></thead><tbody>{filteredPacks.map((pack) => <tr key={pack.id} onClick={() => { setSelectedId(pack.id); setDetailExpanded(false); }}><td><strong>{pack.clientLabel}</strong><small>{pack.projectLabel || 'Sans projet dédié'}</small></td><td><strong>{pack.name}</strong><small>{money(pack.contractPriceCents)}</small></td><td>{hours(pack.purchasedSeconds)}</td><td><span className={pack.balanceSeconds < 0 ? 'negative-balance' : ''}>{hours(pack.balanceSeconds)}</span></td><td><span className={`hour-pack-status status-${pack.status}`}>{STATUS_LABELS[pack.status]}</span></td></tr>)}{filteredPacks.length === 0 && <tr><td colSpan={5}><div className="empty-table">Aucun pack d’heures.</div></td></tr>}</tbody></table>}
+        </div> : <table className="operations-table"><thead><tr><th>Client</th><th>Pack</th><th>Acheté</th><th>Restant</th><th>Statut</th></tr></thead><tbody>{filteredPacks.map((pack) => <tr key={pack.id} onClick={() => { if (pack.id !== selectedId) requestUnsavedExit(() => { setSelectedId(pack.id); setDetailExpanded(false); setMovementHours(''); setMovementReason(''); setMovementMode('manual_correction'); }); }}><td><strong>{pack.clientLabel}</strong><small>{pack.projectLabel || 'Sans projet dédié'}</small></td><td><strong>{pack.name}</strong><small>{money(pack.contractPriceCents)}</small></td><td>{hours(pack.purchasedSeconds)}</td><td><span className={pack.balanceSeconds < 0 ? 'negative-balance' : ''}>{hours(pack.balanceSeconds)}</span></td><td><span className={`hour-pack-status status-${pack.status}`}>{STATUS_LABELS[pack.status]}</span></td></tr>)}{filteredPacks.length === 0 && <tr><td colSpan={5}><div className="empty-table">Aucun pack d’heures.</div></td></tr>}</tbody></table>}
       </section>}
 
       {selected && !detailExpanded && <div
@@ -368,7 +380,7 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
           <div><span className="eyebrow">Pack d’heures</span><h2>{selected.name}</h2><p className="muted">{selected.clientLabel}{selected.projectLabel ? ` · ${selected.projectLabel}` : ''}</p></div>
           <div className="intervention-workbench-heading-actions">
             <button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire l’atelier' : 'Agrandir l’atelier'} aria-label={detailExpanded ? 'Réduire l’atelier' : 'Agrandir l’atelier'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'collapse' : 'expand'} size={18} /></button>
-            <button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={() => { setSelectedId(''); setDetailExpanded(false); }}><OperationIcon name="close" size={18} /></button>
+            <button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={() => requestUnsavedExit(() => { setSelectedId(''); setDetailExpanded(false); setMovementHours(''); setMovementReason(''); setMovementMode('manual_correction'); })}><OperationIcon name="close" size={18} /></button>
           </div>
         </div>
 
