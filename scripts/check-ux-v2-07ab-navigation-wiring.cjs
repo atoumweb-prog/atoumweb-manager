@@ -2,7 +2,7 @@
 // Combined candidate wiring checks: these are STATIC, not a substitute for native return-navigation tests.
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');const read=p=>fs.readFileSync(path.join(root,p),'utf8');
-const app=read('src/renderer/App.tsx'),project=read('src/renderer/projects/ProjectsPage.tsx'),quote=read('src/renderer/commercial/QuotesPage.tsx');
+const app=read('src/renderer/App.tsx'),project=read('src/renderer/projects/ProjectsPage.tsx'),quote=read('src/renderer/commercial/QuotesPage.tsx'),confirm=read('src/renderer/ui/useSearchTargetConfirmation.ts');
 const cases=[
  ['Project to quote sends exact source ID',project.includes("entityId: detail.sourceQuoteId")],
  ['Project to quote preserves parent project ID',project.includes('parentEntityId: detail.id')],
@@ -14,6 +14,7 @@ const cases=[
  ['Project context travels from source button',project.includes('projectContext: { projectId: detail.id, detailTab, selectedNodeId')],
  ['Project context stores only after approved navigation',app.includes("setProjectReturnContext(previous => {") && app.includes("sourceContext?.projectId === result.parentEntityId") && app.includes("const fromProjectQuote = result.entityType === 'quote' && activePageRef.current === 'Projets'")],
  ['Project return restores matching source Project only',app.includes("projectReturnContext?.projectId === projectSearchTarget") && project.includes("returnContext?.projectId === id ? returnContext.detailTab : 'plan'")],
+ ['Project navigation confirmation works outside Production tab',confirm.includes("project:'.project-production-page'") && project.includes('className={`project-production-page')],
  ['Project return only restores existing nodes',project.includes('const availableNodes = new Set(next.nodes.map(node => node.id))') && project.includes('availableNodes.has(returnContext.selectedNodeId)')],
  ['Project return retains production tree state',project.includes('returnContext?.projectId === id ? returnContext.productionTreeCollapsed : false')],
  ['Independent page events clear stale return context',app.includes('visibleEntity.current=null;setQuoteReturnProjectId(null);setProjectReturnContext(null);')],
