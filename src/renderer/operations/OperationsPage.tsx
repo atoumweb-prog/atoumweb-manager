@@ -334,6 +334,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
     const releaseLock = status === 'completed' ? acquireCompletionLock(completionInFlight.current, interventionId) : undefined;
     if (status === 'completed' && !releaseLock) return false;
     try {
+    if (status === 'completed' && !requestUnsavedExit(() => {})) return false;
     if (status === 'completed' && !window.confirm(interventionCompletionReview(selectedIntervention))) return false;
     let updated: Intervention;
     if (status === 'completed') {
