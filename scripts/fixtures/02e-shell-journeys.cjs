@@ -24,6 +24,8 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,test,sleep})=>{
  test(await get('document.activeElement.matches(".global-search input")'),'Real search trigger focuses combobox immediately');
  win.focus();win.webContents.focus();
  win.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});await sleep(70);
+ await wait('!document.querySelector(".aw-header-search.is-open")&&document.activeElement.id==="header-search-trigger"','native Escape completed before the next typing/resize gesture');
+ test(await get('!document.querySelector(".aw-header-search.is-open")&&document.activeElement.id==="header-search-trigger"'),'Native Escape acknowledged before a separate typing gesture, no fixed-delay assumption');
  await js("const e=document.querySelector('.global-search input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,'RESIZE SEARCH TEMP');e.dispatchEvent(new Event('input',{bubbles:true}));e.focus()");await sleep(70);
  win.setSize(850,720);await sleep(100);
  test(await get('document.activeElement.matches(".global-search input")&&document.activeElement.getBoundingClientRect().width>0&&document.activeElement.value==="RESIZE SEARCH TEMP"'),'Narrow resize preserves visible focused search and text '+JSON.stringify(await get('({active:document.activeElement.tagName,search:document.activeElement.matches(".global-search input"),display:getComputedStyle(document.querySelector(".aw-header-search")).display})')));

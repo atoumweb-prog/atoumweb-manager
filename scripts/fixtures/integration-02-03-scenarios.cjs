@@ -116,12 +116,14 @@ module.exports=async context=>{
    rejectList(Error('OBSOLETE COMBINED PROSPECT FAILURE'));await sleep(100);
    test(await get('window.__combinedUnhandled===0&&!document.body.textContent.includes("OBSOLETE COMBINED PROSPECT FAILURE")&&document.querySelector(".prospect-detail-panel").textContent.includes("CONVERGENCE NEWEST")'),'C03 obsolete list failure cannot become unhandled or replace current success');
   }finally{ipcMain.removeHandler('crm:prospects:list');ipcMain.handle('crm:prospects:list',handler);}
+  db.workflow.archiveProspect(p.id,true);
+  test(db.crm.listProspects({includeArchived:true}).find(item=>item.id===p.id).clientAccountId===accepted.acceptedClientAccountId,'C06 historical conversion preserves its Client link after archival');
   const activeOrg=db.crm.createOrganization({name:'CONVERGENCE E73'}),active=db.crm.createProspect({organizationId:activeOrg.id});
   db.crm.changeProspectStage(active.id,'qualifying');db.workflow.saveNeed('prospect',active.id,{otherText:'TEMP'});
   const agreed=db.quotes.create({prospectId:active.id,subject:'CONVERGENCE AGREED'});db.quotes.addCustomLine(agreed.id,{label:'TEMP',proposedUnitPriceCents:100});
   require(fixture).finalizeForTest(db.database,db.quotes,agreed.id);db.quotes.markSent(agreed.id);db.quotes.confirmPrincipleAgreement(agreed.id);
   await navigate('Accueil');await wait('document.querySelectorAll("[data-home-source][data-source-status=ready]").length===9','combined Home sources');
-  test(await get('document.querySelectorAll("[data-home-pipeline]").length===7&&document.querySelector("[data-home-pipeline=finalization] strong").textContent==="1"&&document.querySelector("[data-home-pipeline=conversions] strong").textContent==="1"'),'C06/C09 Home reuses real six+one projection including current E73 and historical Conversion');
+  test(await get('document.querySelectorAll("[data-home-pipeline]").length===7&&document.querySelector("[data-home-pipeline=finalization] strong").textContent==="1"&&document.querySelector("[data-home-pipeline=conversions] strong").textContent==="1"'),'C06/C09 Home reuses real six+one projection including current E73 and archived historical Conversion');
   await click('[data-home-pipeline=conversions]');await wait('!!document.querySelector(".history-prospect-row")','Home Conversion navigation');
   test(await get('document.querySelector(".prospect-toolbar").textContent.includes("Conversions réelles")'),'C08 Home Conversion opens existing historical view');
   const qa=db.quotes.create({prospectId:active.id,subject:'CONVERGENCE LATE A'}),qb=db.quotes.create({prospectId:active.id,subject:'CONVERGENCE LATE B'});

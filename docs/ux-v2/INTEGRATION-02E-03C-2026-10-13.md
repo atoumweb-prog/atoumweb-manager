@@ -52,6 +52,10 @@ Le complément final ajoute le clic réel de démarrage et l'erreur de liste obs
 
 La recette complète au candidat `476945fc` a confirmé 1 020 Vitest, 36 convergence et les autres résultats ci-dessus. C01 a également été exécuté sans captures : shell défaut373 et CRM76, au même SHA. La revue visuelle des PNG a révélé le libellé Home « Huit sources chargées » devenu obsolète après raccordement : le nombre est désormais dérivé des sources réelles, avec une assertion native supplémentaire (**Home55**). Ce correctif visuel impose une candidate automatique sur son nouveau HEAD ; ce n'est pas un rerun de la première CI778. Les preuves au nouveau SHA figurent dans le manifeste final et la PR.
 
+La CI778 échoue sur le focus de la recherche après redimensionnement dans 02E, après installation/typecheck/1 020 Vitest, convergence36, CRM77, Recherche92 et Home54 réussis. Le log montre un bouton actif et la recherche masquée. Le scénario commençait une nouvelle saisie seulement70ms après l'envoi natif d'Échap, sans attendre sa réception et le retour de focus. Ce chevauchement est une cause probable, pas une panne reproduite systématiquement en local : l'injection diagnostique d'un événement retardé160ms reste verte localement. La recette attend maintenant explicitement la fermeture et le focus rendu au bouton avant la nouvelle saisie. Une assertion supplémentaire vérifie cet acquittement (**parcours02E62**), puis l'assertion initiale du focus/texte après resize reste intégrale. Aucun timeout augmenté, aucune assertion retirée et aucun changement du header métier. La nouvelle CI doit confirmer cette synchronisation Windows.
+
+L'Accueil lit également les Prospects archivés pour que l'historique Conversion corresponde au CRM ; ses filtres actifs excluent toujours les archivés. Une assertion supplémentaire conserve le lien Client après archivage et vérifie sa présence dans le compte Home (**convergence37**). Aucun nouvel archivage automatique, statut ou règle de conversion.
+
 ```text
 node scripts/check-ux-v2-integration-validate.cjs
 ```

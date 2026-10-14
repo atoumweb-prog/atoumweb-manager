@@ -97,7 +97,7 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
     const now = new Date();
     const from = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0).toISOString();
     const to = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).toISOString();
-    await loader.load({entries:()=>window.atoumweb.workflow.dashboard(),prospects:()=>window.atoumweb.crm.prospects.list(),quotes:()=>window.atoumweb.quotes.list(),actions:()=>window.atoumweb.crm.actions.list({ownerType:'prospect'}),projects:()=>window.atoumweb.projects.projects.list(),interventions:()=>window.atoumweb.operations.interventions.list(),time:()=>window.atoumweb.time.summary({from,to}),billing:()=>window.atoumweb.billing.list(),alerts:()=>window.atoumweb.operationsAlerts.get()},setResources);
+    await loader.load({entries:()=>window.atoumweb.workflow.dashboard(),prospects:()=>window.atoumweb.crm.prospects.list({includeArchived:true}),quotes:()=>window.atoumweb.quotes.list(),actions:()=>window.atoumweb.crm.actions.list({ownerType:'prospect'}),projects:()=>window.atoumweb.projects.projects.list(),interventions:()=>window.atoumweb.operations.interventions.list(),time:()=>window.atoumweb.time.summary({from,to}),billing:()=>window.atoumweb.billing.list(),alerts:()=>window.atoumweb.operationsAlerts.get()},setResources);
   }
 
   useEffect(() => {
