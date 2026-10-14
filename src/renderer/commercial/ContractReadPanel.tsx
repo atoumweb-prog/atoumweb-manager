@@ -4,7 +4,7 @@ import { contractCopy } from '../../shared/contractPresentation';
 import { reviewContractTextImport } from '../../shared/contractImportReview';
 import './contract-library.css';
 
-export function ContractReadPanel({presentation,commercial='',unsaved=false,copy=true}:{presentation:ContractPresentation;commercial?:string;unsaved?:boolean;copy?:boolean}) {
+export function ContractReadPanel({presentation,commercial='',unsaved=false,copy=true,quoteId}:{presentation:ContractPresentation;commercial?:string;unsaved?:boolean;copy?:boolean;quoteId?:string}) {
   const [message,setMessage]=useState('');
   const [proposedText,setProposedText]=useState('');
   const fileReadRequest=useRef(0);
@@ -35,6 +35,7 @@ export function ContractReadPanel({presentation,commercial='',unsaved=false,copy
     <p className="muted">Lecture et copies depuis les valeurs enregistrées. Le contrat fait partie du devis. Aucune validation juridique globale des clauses n’est supposée.</p>
     {unsaved&&<p role="status" className="cgv-warning">Des modifications ne sont pas enregistrées. La lecture et les copies portent sur la dernière version enregistrée.</p>}
     {copy&&<div className="contract-toolbar">
+      {quoteId&&<button type="button" className="secondary-button" disabled={unsaved||!presentation.text} onClick={()=>void window.atoumweb.contractTerms.exportWorkingDocx(quoteId).then(saved=>setMessage(saved?'Copie DOCX de travail exportée. Aucun document accepté créé.':'Export annulé.')).catch(error=>setMessage(error instanceof Error?error.message:'Export DOCX impossible.'))}>Exporter DOCX de travail</button>}
       <button type="button" className="primary-button" disabled={unsaved||!presentation.text} onClick={()=>void copyText(contractCopy('abby',presentation,commercial),'Contenu pour Abby')}>Copier pour Abby</button>
       <button type="button" className="secondary-button" disabled={unsaved||!presentation.text} onClick={()=>void copyText(contractCopy('contract',presentation,commercial),'Contrat')}>Copier le contrat</button>
       <button type="button" className="secondary-button" disabled={unsaved||!presentation.text||!commercial} onClick={()=>void copyText(contractCopy('all',presentation,commercial),'Bloc commercial et contrat')}>Copier tout</button>
