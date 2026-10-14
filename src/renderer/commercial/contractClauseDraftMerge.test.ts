@@ -39,6 +39,20 @@ describe('05D.4 — brouillons indépendants lors de la synchronisation',()=>{
     expect(merged.a.body).toBe('Correction après envoi');
     expect(merged.b.body).toBe('B local');
   });
+  it('ne mélange pas les brouillons de deux devis lorsque la liste locale est réinitialisée',()=>{
+    const quoteA={a:{title:'Clause A',body:'Brouillon propre au devis A'}};
+    const quoteB=[{id:'a',title:'Clause A',body:'Texte du devis B'}];
+    const result=mergeContractClauseDrafts([],{},quoteB);
+    expect(result.a.body).toBe('Texte du devis B');
+    expect(result.a.body).not.toBe(quoteA.a.body);
+  });
+  it('ne modifie ni les entrées distantes ni les brouillons locaux',()=>{
+    const local={a:{title:'Clause A',body:'Local A'},b:{title:'Clause B',body:'Local B'}};
+    const snapshot=JSON.stringify({previous,local});
+    const result=mergeContractClauseDrafts(previous,local,previous);
+    result.a.body='Changement uniquement dans le résultat';
+    expect(JSON.stringify({previous,local})).toBe(snapshot);
+  });
   it('retire les clauses absentes du résultat canonique sans les recréer',()=>{
     expect(Object.keys(mergeContractClauseDrafts(previous,{a:{title:'X',body:'Y'}},[previous[1]]))).toEqual(['b']);
   });
