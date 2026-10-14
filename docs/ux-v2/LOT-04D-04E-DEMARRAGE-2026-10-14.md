@@ -23,9 +23,9 @@ Implémenté sur la branche :
 ## 04E — aide à la vente
 
 - Réutilise `CatalogCommercialParameters` et `CatalogVersion.internalAdvice`, champs déjà versionnés ; pas de modèle CGV concurrent.
-- Besoins client, bénéfices, objections/réponses, conseils internes et mots-clés éditables dans la fiche.
+- Besoins client, bénéfices, **argumentaire commercial**, **questions de qualification**, **objections/réponses**, conseils internes et mots-clés éditables dans le brouillon de fiche. Une omission de formulaire 04E a été détectée puis corrigée : le seul affichage récapitulatif ne rendait pas le champ objections éditable.
 - `catalogSalesGuidance.ts` projette ces champs, signale le non-configuré et ne génère aucun texte contractuel.
-- Tests unitaires de projection et tests SQLite d'historique, héritage vN+1 et refus de sauvegarde obsolète.
+- Tests unitaires de projection et tests SQLite d'historique, héritage vN+1, refus de sauvegarde obsolète et conservation d'un pitch/questions après publication.
 
 ## Résultats vérifiés et limites
 
