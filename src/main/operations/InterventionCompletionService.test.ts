@@ -93,6 +93,85 @@ describe('InterventionCompletionService', () => {
     },
   );
 
+  it('08E/08D/08F conserve les pauses du vrai chrono avant le débit unique de pack', () => {
+    const { intervention, pack } = packIntervention(false);
+    let clock = new Date('2026-09-14T08:00:00.000Z');
+    const timer = new TimeService(database, () => new Date(clock));
+    const session = timer.start({
+      interventionId: intervention.id, category: 'support',
+      activityLabel: 'Support suivi au chrono', billable: true,
+    });
+    expect(timer.active()?.id).toBe(session.id);
+    expect(() => timer.start({ interventionId: intervention.id, category: 'support' }))
+      .toThrow(/déjà active/i);
+
+    clock = new Date('2026-09-14T08:20:00.000Z');
+    expect(timer.pause(session.id, 'need_information', 'Attente client').paused).toBe(true);
+    clock = new Date('2026-09-14T08:35:00.000Z');
+    expect(timer.resume(session.id).paused).toBe(false);
+    clock = new Date('2026-09-14T08:55:00.000Z');
+    const stopped = timer.stop(session.id);
+    expect(stopped.durationSeconds).toBe(2400);
+    expect(stopped.pauses).toHaveLength(1);
+    expect(stopped.pauses[0].reason).toBe('need_information');
+    expect(timer.active()).toBeNull();
+    expect(operations.getIntervention(intervention.id).totalTimeSeconds).toBe(2400);
+
+    const preview = packs.previewInterventionDebit(pack.id, intervention.id);
+    expect(preview).toMatchObject({
+      secondsToDebit: 2400, balanceBeforeSeconds: 3600,
+      balanceAfterSeconds: 1200, alreadyDebited: false,
+    });
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    const after = snapshot();
+    expect(packs.get(pack.id).balanceSeconds).toBe(1200);
+    expect(packs.get(pack.id).movements.filter(m => m.type === 'intervention_debit'))
+      .toMatchObject([{ secondsDelta: -2400 }]);
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    expect(snapshot()).toEqual(after);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('08F/09 préserve la facture PDF rattachée après une clôture répétée', () => {
+    const intervention = operations.createIntervention({
+      clientAccountId: clientId, type: 'support',
+      coverageMode: 'out_of_scope', subject: 'Support déjà facturé',
+      theoreticalValueCents: 9900, billableAmountCents: 7900,
+    });
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    const prepared = billing.list({ sourceType: 'intervention' });
+    expect(prepared).toHaveLength(1);
+    expect(prepared[0]).toMatchObject({
+      sourceId: intervention.id, status: 'ready', expectedAmountCents: 7900,
+    });
+
+    const invoicedAt = '2026-09-23T12:00:00.000Z';
+    const docId = 'invoice-08f-09';
+    database.run(
+      `INSERT INTO client_documents
+       (id,client_account_id,category,title,original_name,relative_path,mime_type,size_bytes,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?)`,
+      [docId, clientId, 'invoice', 'Facture FA-08F-001', 'FA-08F-001.pdf',
+        'Clients/test/Documents/03 Factures/FA-08F-001.pdf', 'application/pdf', 1200, invoicedAt, invoicedAt],
+    );
+    const invoiced = billing.attachInvoice(prepared[0].id, docId, {
+      reference: 'FA-08F-001', invoicedAt,
+    });
+    expect(invoiced).toMatchObject({
+      status: 'invoiced', invoiceDocumentId: docId,
+      invoiceReference: 'FA-08F-001', expectedAmountCents: 7900,
+    });
+    const after = snapshot();
+    expect(completion.complete(intervention.id).status).toBe('completed');
+    expect(snapshot()).toEqual(after);
+    expect(billing.list({ sourceType: 'intervention' })).toHaveLength(1);
+    expect(billing.get(prepared[0].id)).toMatchObject({
+      status: 'invoiced', invoiceDocumentId: docId,
+      invoiceReference: 'FA-08F-001',
+    });
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
   it('08F refuse un pack expiré sans transition, débit ou handoff', () => {
     const pack = packs.create({
       clientAccountId: clientId, name: 'Pack expiré fixture',
