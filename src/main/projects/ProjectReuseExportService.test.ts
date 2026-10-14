@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -71,4 +71,50 @@ describe('ProjectReuseExportService', () => {
     expect(exportedResource.folder).toBe('technical');
     expect(exportedResource.fileName.endsWith('.json')).toBe(true);
   });
+  it('ne laisse aucun fichier orphelin si SQLite rejette l export', () => {
+    const project = projects.createInternal({ name: 'Projet export transactionnel' });
+    const item = technical.create(
+      project.id,
+      { category: 'php', name: 'Snippet panne simulée' },
+      { contentType: 'code', language: 'php', contentText: '<?php echo "test";' },
+    );
+    const row = database.get<{ resource_root_path: string | null }>(
+      'SELECT resource_root_path FROM projects WHERE id=?', [project.id],
+    );
+    const directory = join(row!.resource_root_path!, '05 Technique - Sources - Exports');
+    const previousFiles = existsSync(directory) ? readdirSync(directory) : [];
+    const assetsBefore = Number(database.get<{ total: number }>(
+      'SELECT COUNT(*) AS total FROM file_assets WHERE project_id=?', [project.id],
+    )?.total ?? 0);
+    database.exec(
+      "CREATE TRIGGER ux07e_abort_export BEFORE INSERT ON file_assets " +
+      "BEGIN SELECT RAISE(ABORT, 'UX07E_SIMULATED_SQLITE_FAILURE'); END;",
+    );
+
+    expect(() => reuse.prepare(item.id)).toThrow('UX07E_SIMULATED_SQLITE_FAILURE');
+    expect(readdirSync(directory)).toEqual(previousFiles);
+    expect(Number(database.get<{ total: number }>(
+      'SELECT COUNT(*) AS total FROM file_assets WHERE project_id=?', [project.id],
+    )?.total ?? 0)).toBe(assetsBefore);
+    expect(database.get<{ integrity_check: string }>('PRAGMA integrity_check')?.integrity_check).toBe('ok');
+    expect(database.all('PRAGMA foreign_key_check')).toHaveLength(0);
+  });
+
+  it('deux exports rapides ne réécrivent pas le même fichier', () => {
+    const project = projects.createInternal({ name: 'Projet export simultané' });
+    const item = technical.create(
+      project.id,
+      { category: 'php', name: 'Version conservée' },
+      { contentType: 'code', language: 'php', contentText: '<?php echo "v1";' },
+    );
+    const first = reuse.prepare(item.id);
+    const firstBytes = readFileSync(first.path, 'utf8');
+    const second = reuse.prepare(item.id);
+    expect(second.path).not.toBe(first.path);
+    expect(existsSync(first.path)).toBe(true);
+    expect(existsSync(second.path)).toBe(true);
+    expect(readFileSync(first.path, 'utf8')).toBe(firstBytes);
+    expect(second.versionId).toBe(first.versionId);
+  });
+
 });
