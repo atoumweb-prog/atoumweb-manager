@@ -1,4 +1,5 @@
 import {mergeContractClauseDrafts} from './contractClauseDraftMerge';
+import {compareClauseField} from './contractClauseFieldDiff';
 import {planDraftContractAssembly} from '../../shared/draftContractAssemblyPlan';
 import type {ContractSectionReview} from '../../shared/contractSectionPolicy';
 import {isCurrentContractRequest} from './contractRequestGuard';
@@ -95,7 +96,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     if(!draft)return [];
     const titleChanged=draft.title!==clause.title;
     const bodyChanged=draft.body!==clause.body;
-    return titleChanged||bodyChanged?[{id:clause.id,title:clause.title,titleChanged,bodyChanged}]:[];
+    return titleChanged||bodyChanged?[{id:clause.id,title:clause.title,titleChanged,bodyChanged,titleDiff:compareClauseField(clause.title,draft.title),bodyDiff:compareClauseField(clause.body,draft.body)}]:[];
   }),[build,drafts]);
 
   const counts = useMemo(() => {
@@ -447,6 +448,10 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
           <p>Comparaison indicative avec la dernière version enregistrée (sans diffusion ni sauvegarde automatique).</p>
           <ul>{clauseChanges.map(change=><li key={change.id}>
             <button type="button" className="secondary-button compact-button" onClick={()=>showClause(change.id)}>Examiner : {change.title}</button> : {change.titleChanged?'titre modifié':''}{change.titleChanged&&change.bodyChanged?' et ':''}{change.bodyChanged?'texte modifié':''}
+            <div className="muted">
+              {change.titleChanged&&<p>Titre : retrait «{change.titleDiff.removedExcerpt}», ajout «{change.titleDiff.addedExcerpt}»{change.titleDiff.truncated?' (extrait limité)':''}</p>}
+              {change.bodyChanged&&<p>Texte : retrait «{change.bodyDiff.removedExcerpt}», ajout «{change.bodyDiff.addedExcerpt}»{change.bodyDiff.truncated?' (extrait limité)':''}</p>}
+            </div>
           </li>)}</ul>
         </div>}
       </details>}
