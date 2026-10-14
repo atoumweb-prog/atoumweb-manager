@@ -2,7 +2,7 @@ import { ContractReadPanel } from './ContractReadPanel';
 import type { ContractPresentation } from '../../shared/contractPresentation';
 import { useEffect, useId, useState } from 'react';
 import { requestUnsavedExit, useUnsavedDraft } from '../unsaved/unsaved';
-import { matchingContractClauses, newModuleDraftChanged, typeDraftChanged } from './contractLibraryDrafts';
+import { filterContractClauses, matchingContractClauses, newModuleDraftChanged, typeDraftChanged } from './contractLibraryDrafts';
 import type { ContractType, ContractTypeVersionInput } from '../../shared/contractTypes';
 import type { ContractClauseTemplate, ContractClauseScope, ContractClauseAudience } from '../../shared/contractTerms';
 import type { CatalogItemSummary } from '../../shared/commercial';
@@ -14,7 +14,7 @@ const label=(t:ContractType)=>(t.currentVersion??t.versions[0])?.name??t.code;
 
 export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:()=>void;initialTypeId?:string|null;onMessage:(s:string)=>void}) {
   const [types,setTypes]=useState<ContractType[]>([]),[clauses,setClauses]=useState<ContractClauseTemplate[]>([]),[catalog,setCatalog]=useState<CatalogItemSummary[]>([]);
-  const [query,setQuery]=useState(''),[clauseQuery,setClauseQuery]=useState(''),[archived,setArchived]=useState(false),[id,setId]=useState(initialTypeId??''),[versionId,setVersionId]=useState('');
+  const [query,setQuery]=useState(''),[clauseQuery,setClauseQuery]=useState(''),[clauseScope,setClauseScope]=useState<'all'|'base'|'catalog'>('all'),[clauseAudience,setClauseAudience]=useState<'all'|'professional'|'consumer'>('all'),[includeArchivedClauses,setIncludeArchivedClauses]=useState(false),[archived,setArchived]=useState(false),[id,setId]=useState(initialTypeId??''),[versionId,setVersionId]=useState('');
   const [input,setInput]=useState<ContractTypeVersionInput>(empty),[creating,setCreating]=useState(false),[code,setCode]=useState('');
   const [moduleId,setModuleId]=useState(''),[moduleVersionId,setModuleVersionId]=useState(''),[body,setBody]=useState('');
   const [showNewModule,setShowNewModule]=useState(false),[newCode,setNewCode]=useState(''),[newTitle,setNewTitle]=useState(''),[newBody,setNewBody]=useState('');
@@ -25,7 +25,7 @@ export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:(
   const type=types.find(t=>t.id===id),version=type?.versions.find(v=>v.id===versionId)??type?.currentVersion??type?.versions[0];
   const editable=creating||!!(version?.status==='draft'&&type?.status!=='archived');
   const module=clauses.find(c=>c.id===moduleId),moduleVersion=module?.versions.find(v=>v.id===moduleVersionId)??module?.currentVersion??module?.versions[0];
-  const shownClauses=matchingContractClauses(clauses,clauseQuery);
+  const shownClauses=filterContractClauses(matchingContractClauses(clauses,clauseQuery),{scope:clauseScope,audience:clauseAudience,includeArchived:includeArchivedClauses});
   // Le périmètre est propre à cette instance : aucun abandon d'un brouillon d'un autre écran.
   const unsavedScope='contract-library/'+useId();
   const typeGuard=useUnsavedDraft('Type de contrat',{code,input},{
@@ -109,6 +109,7 @@ export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:(
       <section className="contract-clause-navigation" aria-label="Accès direct aux clauses contractuelles">
         <h3>Clauses de la bibliothèque</h3>
         <label>Rechercher une clause<input aria-label="Rechercher une clause" value={clauseQuery} onChange={e=>setClauseQuery(e.target.value)} placeholder="Titre, code ou public…" /></label>
+        <div className="contract-toolbar"><label>Famille de clauses<select aria-label="Filtrer famille de clauses" value={clauseScope} onChange={e=>setClauseScope(e.target.value as typeof clauseScope)}><option value="all">Toutes</option><option value="base">CGV communes</option><option value="catalog">Clauses spécifiques</option></select></label><label>Public applicable<select aria-label="Filtrer public de clauses" value={clauseAudience} onChange={e=>setClauseAudience(e.target.value as typeof clauseAudience)}><option value="all">Tous les publics</option><option value="professional">Professionnels</option><option value="consumer">Consommateurs</option></select></label><label><input type="checkbox" checked={includeArchivedClauses} onChange={e=>setIncludeArchivedClauses(e.target.checked)}/> Inclure les clauses archivées</label></div>
         {([
           {scope:'base',title:'CGV communes'},
           {scope:'catalog',title:'Clauses spécifiques aux prestations'}
