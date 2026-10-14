@@ -123,6 +123,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
       loadedQuoteId.current=quote.id;
       setBuild(null);
       setPresentation(null);
+      setBusy(false);
       setDrafts({});
       setTemplates([]);
       setCatalog([]);
