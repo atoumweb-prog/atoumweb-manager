@@ -27,6 +27,24 @@ if(!process.versions.electron){
  const quote=database.quotes.create({clientAccountId:client.id,subject:'TEST '+theme});database.quotes.addCustomLine(quote.id,{label:'Prestation fixture',proposedUnitPriceCents:10000});
  if(process.argv.includes('--lot-pdf'))database.database.run("UPDATE quotes SET status='accepted' WHERE id=?",[quote.id]); // Fixture TEMP d'interface uniquement, sans simuler l'acceptation métier.
  win=new BrowserWindow({show:false,width:1600,height:1100,webPreferences:{preload:path.join(temp,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:false}});S.bindUnsavedWindow(win);await win.loadFile(path.join(temp,'index.html'));await wait('!!document.querySelector(".aw-navigation-rail")');await js('document.documentElement.dataset.theme='+JSON.stringify(theme)+';window.dispatchEvent(new CustomEvent("atoumweb:navigate",{detail:{entityType:"quote",entityId:'+JSON.stringify(quote.id)+',title:"TEST"}}));');await wait('!!document.querySelector(".quote-contract-preparation input")');
+ if(process.argv.includes('--lot-prerequisites')){
+   const originalUpdate=database.quotes.updateConditions.bind(database.quotes);
+   let updateCalls=0,releaseUpdate;
+   database.quotes.updateConditions=(...args)=>{updateCalls++;return new Promise(resolve=>{releaseUpdate=()=>resolve(originalUpdate(...args));});};
+   await wait('!!document.querySelector(".quote-prerequisites-form textarea")');
+   await input('.quote-prerequisites-form textarea','PRÉREQUIS UNIQUE '+theme);
+   await js('const b=document.querySelector(".quote-prerequisites-form button");b.click();b.click()');
+   for(let i=0;i<100&&!releaseUpdate;i++)await sleep(20);
+   check(theme+' prerequisites first save reached service',typeof releaseUpdate==='function');
+   check(theme+' rapid prerequisites double submit exactly once',updateCalls===1);
+   check(theme+' prerequisites save pending disables submit',await js('return document.querySelector(".quote-prerequisites-form button").disabled'));
+   releaseUpdate();
+   await wait('!document.querySelector(".quote-prerequisites-form button").disabled');
+   check(theme+' prerequisites persisted exactly once',database.quotes.get(quote.id).prerequisitesText==='PRÉREQUIS UNIQUE '+theme);
+   check(theme+' prerequisites textarea shows saved value',await value('.quote-prerequisites-form textarea')==='PRÉREQUIS UNIQUE '+theme);
+   database.quotes.updateConditions=originalUpdate;
+   win.destroy();win=null;continue;
+ }
  if(process.argv.includes('--lot-create')){
    const subject='UX06 UNIQUE CREATE '+theme;
    const originalCreate=database.quotes.createWithLines.bind(database.quotes);
