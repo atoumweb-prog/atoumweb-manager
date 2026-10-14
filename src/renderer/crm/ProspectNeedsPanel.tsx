@@ -58,7 +58,7 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
   const [otherText, setOtherText] = useState('');
   const [kind,setKind]=useState<'offers'|'services'>('offers');
   const [catalogQuery,setCatalogQuery]=useState('');
-  const [managedRecommendations,setManagedRecommendations]=useState<{sourceKey:string;versionIds:string[];status:'loading'|'ready'|'error'}>({sourceKey:'',versionIds:[],status:'ready'});
+  const [managedRecommendations,setManagedRecommendations]=useState<{sourceKey:string;versionIds:string[];configured:boolean;status:'loading'|'ready'|'error'}>({sourceKey:'',versionIds:[],configured:false,status:'ready'});
   const choiceGuard=useUnsavedDraft('Prestation à ajouter',{selectedId,otherText},{discard:s=>{setSelectedId(s.selectedId);setOtherText(s.otherText);}});
 
   const availableByKind=catalog.filter(item=>catalogueIsOffer(item)===(kind==='offers'));
@@ -101,13 +101,13 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
   // temporary fallback for historic fixtures that have no administered links.
   useEffect(()=>{
     let live=true;
-    setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[],status:recommendationSourceIds?'loading':'ready'});
+    setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[],configured:false,status:recommendationSourceIds?'loading':'ready'});
     if(!recommendationSourceIds)return;
     void Promise.all(recommendationSourceIds.split('|').map(id=>
       window.atoumweb.catalog.listRecommendations(id),
     )).then(groups=>{
-      if(live)setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[...new Set(groups.flatMap(links=>links.filter(link=>link.status!=='paused').map(link=>link.targetVersionId)))],status:'ready'});
-    }).catch(()=>{if(live)setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[],status:'error'});});
+      if(live)setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[...new Set(groups.flatMap(links=>links.filter(link=>link.status!=='paused').map(link=>link.targetVersionId)))],configured:groups.some(links=>links.length>0),status:'ready'});
+    }).catch(()=>{if(live)setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[],configured:false,status:'error'});});
     return()=>{live=false;};
   },[recommendationSourceIds]);
   const legacySuggestionIds = Array.from(new Set(selectedItems.flatMap((item) => item ? (SUGGESTIONS[item.id] ?? []) : [])));
@@ -119,8 +119,9 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
     value.flatMap(need=>need.catalogItemId?[need.catalogItemId]:[]),
     administeredIds,
     legacySuggestionIds,
+    managedRecommendations.configured,
   ):[];
-  const legacyFallback=administeredIds.length===0 && suggestions.length>0;
+  const legacyFallback=!managedRecommendations.configured && suggestions.length>0;
 
   return <div className="need-selector-v2 form-span-3">
     <div className="need-selector-title"><strong>Besoins / Offres / Services</strong><small>Catégorie ou recherche par besoin, bénéfice ou mot-clé publié.</small></div>
