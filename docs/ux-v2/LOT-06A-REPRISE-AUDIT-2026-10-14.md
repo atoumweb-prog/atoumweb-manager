@@ -41,3 +41,13 @@
 - Contrat de `QuoteService` : `finalize` distinct de `accept`, snapshots Catalogue et lignes versionnées ; tests historiques sur non-rétroactivité du snapshot, idempotence de finalisation et de l'acceptation, pièce Abby après acceptation.
 - Statuts : sept valeurs officielles `draft/sent/viewed/accepted/refused/expired/cancelled` dans `src/shared/commercial.ts` ; `finalizedAt` séparé.
 - **Priorités actualisées** : E151 et E152 à corriger ; E153 à préserver/tester (ne pas réintroduire l'ancien défaut).
+
+## Premier incrément correctif — interface Devis
+
+Commit applicatif : `3983b1ca0f11f4db6feb809f3050fafa76c5470d` sur la seule branche 06A.
+
+- E151 : l'offre de départ de l'aperçu à l'étape 6 lit désormais le prix proposé `eurosToCents(catalogPrice) ?? currentVersion.priceCents`, exactement comme l'assemblage de cette ligne lors de `createWithLines`. Si aucun prix n'est défini, l'aperçu indique « Prix à renseigner » ; le service continue de valider les valeurs réellement enregistrées.
+- E152 : boutons d'acceptation sur liste et détail renommés « Confirmer accepté dans Abby » ; confirmation enrichie sur le bon devis/révision, l'acceptation extérieure et ses conséquences contractuelles/opérationnelles. Messages de succès et d'erreur clarifiés. Aucun changement au service `quotes.accept`.
+- E153 : aucun changement, correction du service métier conservée.
+- **Réserves : aucun typecheck, Vitest, contrôle Electron ou CI n'a été exécuté dans cette session.** Le comportement d'ensemble et les protections UX-01 doivent être validés sur le SHA exact avant PR/fusion. Notamment tester prix nul, zéro, arrondis, prix négatifs, saisie invalide, sortie avec brouillon et acceptation par liste/détail sur fixtures isolées.
+- Ne pas fusionner cet incrément avant validation. `main` et les chantiers 03/04/05 sont inchangés.
