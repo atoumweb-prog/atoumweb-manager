@@ -236,6 +236,32 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
       ipcMain.removeHandler(moveChannel);
       ipcMain.handle(moveChannel,originalMove);
     }
+    // E226 — un ajustement non enregistré suit l'identité du pack sélectionné.
+    const otherPack = db.hourPacks.create({
+      clientAccountId: client.id, name: 'E226 Autre pack TEMP',
+      purchasedSeconds: 7200, contractPriceCents: 20000,
+    });
+    await setPackInput('.hour-pack-workbench input[placeholder^="Ex."]','-0.25');
+    await setPackInput('.hour-pack-workbench input[placeholder="Motif obligatoire"]','BROUILLON E226 AJUSTEMENT');
+    await wait('document.querySelector(".hour-pack-workbench input[placeholder=\"Motif obligatoire\"]")?.value==="BROUILLON E226 AJUSTEMENT"',
+      'E226 adjustment draft typed');
+    const beforeAdjustmentConfirm=confirmations.length;
+    const clickOtherPack=()=>js('const row=[...document.querySelectorAll(".hour-pack-compact-item, .hour-pack-list-panel .operations-table tbody tr")].find(e=>e.textContent.includes("E226 Autre pack TEMP"));if(!row)throw Error("E226 second pack missing");row.click()');
+    await clickOtherPack();
+    test(confirmations.length===beforeAdjustmentConfirm+1,'E226 adjustment navigation confirms once');
+    test(await get('document.querySelector(".hour-pack-workbench h2")?.textContent')==='E225 Pack TEMP',
+      'E226 Stay retains original pack');
+    test(await get('document.querySelector(".hour-pack-workbench input[placeholder=\"Motif obligatoire\"]")?.value')==='BROUILLON E226 AJUSTEMENT',
+      'E226 Stay retains adjustment input');
+    answers.push(1);
+    await clickOtherPack();
+    await wait('document.querySelector(".hour-pack-workbench h2")?.textContent==="E226 Autre pack TEMP"',
+      'E226 confirmed pack switch');
+    test(await get('document.querySelector(".hour-pack-workbench input[placeholder=\"Motif obligatoire\"]")?.value')==='',
+      'E226 adjustment does not leak into other pack');
+    test(db.hourPacks.get(otherPack.id).movements.filter(m=>m.type==='manual_correction').length===0,
+      'E226 navigation does not create unrequested adjustment');
+
     // E226 : quitter le formulaire de création d'un pack doit confirmer
     // avant de supprimer le brouillon, sans créer de crédit fictif.
     await js('const b=[...document.querySelectorAll("button")].find(e=>e.textContent.trim()==="+ Pack");if(!b)throw Error("E226 new pack command missing");b.click();');
