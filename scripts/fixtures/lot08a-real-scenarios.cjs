@@ -2,8 +2,8 @@
 
 // E226 — real Electron/React/preload/IPC recipe, isolated SQLite + profile in %TEMP%.
 // Native confirmation is driven deterministically; business services are real.
-module.exports = async ({db, evalUI: js, get, wait, navigate, test, sleep}) => {
-  const {dialog} = require('electron');
+module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, sleep}) => {
+  const {dialog,ipcMain} = require('electron');
   const originalDialog = dialog.showMessageBoxSync;
   const confirmations = [];
   const answers = [];
@@ -77,6 +77,53 @@ module.exports = async ({db, evalUI: js, get, wait, navigate, test, sleep}) => {
     await openConclusion();
     test(await value()==='','E226 returning A sees baseline, not old B or discarded A');
     test(db.operations.getIntervention(b.id).incidentSolution===null,'E226 discarded B not saved');
+
+    // Le véritable IPC d'enregistrement est retardé volontairement pour
+    // reproduire une écriture en cours, sans modifier le service ni les données.
+    const channel='operations:interventions:update';
+    const originalHandler=registered.get(channel);
+    if(typeof originalHandler!=='function')throw Error('Missing real intervention update handler');
+    let releaseUpdate=null;
+    let updateStarted=false;
+    ipcMain.removeHandler(channel);
+    ipcMain.handle(channel, async (...args)=>{
+      updateStarted=true;
+      await new Promise(resolve=>{releaseUpdate=resolve;});
+      return originalHandler(...args);
+    });
+    try {
+      await input(solutionSelector,'PENDING E226 A');
+      await js('document.querySelector(".intervention-conclusion-content .button-row button.secondary-button").click()');
+      for(let i=0;i<80&&!updateStarted;i++)await sleep(30);
+      test(updateStarted&&!!releaseUpdate,'E226 actual IPC save deliberately pending');
+      test(await get('!!document.querySelector(".intervention-conclusion-grid fieldset")?.disabled'),
+        'E226 pending locks the real conclusion form');
+      const pendingConfirmations=confirmations.length;
+      answers.push(1); // Même Quitter confirmé doit être refusé tant que pending.
+      await selectSubjectAttempt('E226 Fiche B TEMP');
+      test(confirmations.length===pendingConfirmations+1,'E226 pending prompts once');
+      test(await get('document.querySelector(".intervention-workbench-heading h2")?.textContent')==='E226 Fiche A TEMP',
+        'E226 pending never navigates away from A');
+      test(await value()==='PENDING E226 A','E226 pending preserves draft content');
+      test(db.operations.getIntervention(a.id).incidentSolution===null,'E226 pending has not committed');
+      releaseUpdate();
+      await wait('!document.querySelector(".intervention-conclusion-grid fieldset")?.disabled',
+        'E226 save resumed and form unlocked');
+      test(db.operations.getIntervention(a.id).incidentSolution==='PENDING E226 A',
+        'E226 completed IPC persists A only');
+      const confirmedCount=confirmations.length;
+      await selectSubject('E226 Fiche B TEMP');
+      test(confirmations.length===confirmedCount,'E226 saved draft needs no discard prompt');
+      await sleep(250);
+      test(await get('document.querySelector(".intervention-workbench-heading h2")?.textContent')==='E226 Fiche B TEMP',
+        'E226 refresh after save never resurrects A');
+      test(db.operations.getIntervention(b.id).incidentSolution===null,'E226 late response cannot mutate B');
+    } finally {
+      if(releaseUpdate)releaseUpdate();
+      ipcMain.removeHandler(channel);
+      ipcMain.handle(channel,originalHandler);
+    }
+
     test(db.database.all('PRAGMA foreign_key_check').length===0,'E226 SQLite foreign keys');
     console.log('[UXV2 08A E226] Native A→B→A Stay/Quit PASS; confirmations='+confirmations.length);
   } finally {
