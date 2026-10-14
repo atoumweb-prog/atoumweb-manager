@@ -204,6 +204,7 @@ if(!process.versions.electron){
       for(const issue of blocking){
         if(issue.code==='PUBLISHED_BASE_MISSING')continue;
         await js(`(()=>{document.querySelectorAll('.quote-contract-preparation details').forEach(d=>d.open=false);document.querySelector('.quote-finalization-check [data-issue-code="${issue.code}"]').click()})()`);
+        await js('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
         check(theme+' issue shortcut '+issue.code,await js('(()=>{const e=document.activeElement;return !!e.dataset.contractField&&!e.disabled&&[...e.closest(".quote-contract-preparation").querySelectorAll("details")].filter(d=>d.contains(e)).every(d=>d.open)})()'));
       }
       check(theme+' shortcuts do not change quote data',JSON.stringify(db.get('SELECT contract_parameters_json FROM quotes WHERE id=?',[q.id]))===JSON.stringify(rawBefore));
