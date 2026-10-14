@@ -105,6 +105,7 @@ module.exports=async context=>{
   test(db.crm.getOrganization(org.id).name==='TEST03E EXTERNAL'&&await get('window.__directoryInput.value==="TEST03E UNSAVED"'),'Conflict refuses overwrite, preserves both writers');
 
   answers.push(1);await click('.directory-detail-panel .close-detail');await wait('!document.querySelector(".directory-detail-panel")','explicit discard');test(dialogs.length===n+4,'Explicit discard has exactly one confirmation');
+  test(await get('document.activeElement.dataset.directoryId')===org.id,'Closing Directory returns keyboard focus to same identity row');
 
   // Lost reply after atomic creation: same operation token must not create a second identity.
 

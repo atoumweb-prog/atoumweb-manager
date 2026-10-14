@@ -390,7 +390,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
   function openClient(id: string, saved=false): void {
     if(id===selectedId)return;
     if(!saved&&!requestUnsavedExit(()=>{}))return;
-    opener.current=document.activeElement instanceof HTMLElement?document.activeElement:null;
+    opener.current=document.querySelector<HTMLElement>('[data-client-id="'+CSS.escape(id)+'"] button');
     setSelectedId(id);
     setActiveTab('summary');
     setLargeView(false);
@@ -401,7 +401,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
     setArchiveCandidateId(null);
   }
 
-  function closeClient():void{requestUnsavedExit(()=>{setRelationshipMenuOpen(false);setLargeView(false);setSelectedId(null);setActionEditor(null);setArchiveCandidateId(null);queueMicrotask(()=>{if(opener.current?.isConnected)opener.current.focus();});});}
+  function closeClient():void{requestUnsavedExit(()=>{setRelationshipMenuOpen(false);setLargeView(false);setSelectedId(null);setActionEditor(null);setArchiveCandidateId(null);requestAnimationFrame(()=>{if(clientSelection.current)return;const button=selectedId?document.querySelector<HTMLElement>('[data-client-id="'+CSS.escape(selectedId)+'"] button'):null;if(button)button.focus();else if(opener.current?.isConnected)opener.current.focus();});});}
 
   function beginClientResize(splitter: HTMLElement): void {
     const workspace = splitter.parentElement;
@@ -647,7 +647,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
                 <thead><tr><th>Client</th><th>Statut</th><th>Contact principal</th><th>Coordonnées</th><th>Prochaine action</th><th /></tr></thead>
                 <tbody>
                   {filtered.map((client) => (
-                    <tr key={client.id} className={`client-relationship-${client.relationshipStatus ?? 'neutral'} ${selectedId === client.id ? 'selected-row' : ''}`} onClick={() => openClient(client.id)}>
+                    <tr key={client.id} data-client-id={client.id} className={`client-relationship-${client.relationshipStatus ?? 'neutral'} ${selectedId === client.id ? 'selected-row' : ''}`} onClick={() => openClient(client.id)}>
                       <td><div className="client-name-cell"><CrmIdentityAvatar organizationId={client.organizationId} contactId={client.primaryContactId} name={client.displayName} /><div><strong>{client.displayName}</strong><small>Client depuis {new Date(client.becameClientAt).toLocaleDateString('fr-FR')}</small></div></div></td>
                       <td><span className={`client-status status-${client.status}`}>{STATUS_LABELS[client.status ?? 'active']}</span></td>
                       <td>{client.contactName || '—'}</td>

@@ -67,6 +67,7 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
   win.webContents.setZoomFactor(1);win.setSize(1510,1030);
   test(snapshot()===baseline,'Selection/filter/tabs/theme/zoom produce no business writes');
   answers.push(1);await click('.client-summary-panel .close-detail');test(dialogs.length===n+3&&await get('!document.querySelector(".client-summary-panel")'),'Explicit discard closes Client exactly once');
+  test(await get('document.activeElement.closest("[data-client-id]")?.dataset.clientId')===client.id,'Closing Client restores exact row action after filter reconstructed it');
   failQuotes=true;await textClick('.clients-table tr',client.displayName);await wait('document.querySelector(".client-summary-panel [role=alert]")','partial quote failure');
   test(await get('document.querySelector(".client-summary-panel").textContent.includes("TEST03D quotes unavailable")'),'Partial service failure is explicit');
   await click('#client-tab-contacts');await wait('document.querySelector("#client-panel-contacts .contact-card")','independent Contacts');test(await get('document.querySelector("#client-panel-contacts").textContent.includes("TEST03D CONTACT")'),'Successful contacts survive Quote service failure');

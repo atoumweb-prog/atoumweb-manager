@@ -109,3 +109,10 @@ Le commit de publication complète ce bilan ; une dernière clarification de lib
 Recette ciblée au code de publication `6e7aa15ec4a59f55d6b4c0c332b828116629a84f` :typecheckOK,280 contrôles combinés03A–E,81 capturesClient/Annuaire vérifiées par le compositeur,intégrité/FK/migrations/nettoyageOK. Cette publication documentaire finale ne change aucun fichier de code ni de test par rapport à6e7aa15 ; les preuves du banc complet79197709 et du banc ciblé6e7aa15 sont distinguées. LaCIcandidate s’exécutera sur leHEAD publié exact.
 
 GitHub marque désormais98–101 MERGED par ascendance après102 (mêmesHEAD, pas de fusion supplémentaire dansmain). Le first-parentmain reste b2796812→278ff2da ; aucune branche supprimée. Les chantiers parallèles103/104/106 sont signalés sans être réimplémentés, modifiés ou présentés comme validés ici.
+
+
+## Contrôle clavier complémentaire aprèsCI873
+
+CI873 SUCCESS sur7c770efd :1040 Vitest ettypecheck, mais une nouvelle assertion native a reproduit le retour de focus perdu après fermeture Annuaire, car la ligne déclenchante avait été reconstruite. Ce contrôle n'était pas couvert par le premier banc. Correction ciblée Client/Annuaire : retrouver l'action de la même identité après le rendu, ne pas reprendre le focus si une autre fiche a déjà été ouverte. Aucun changement métier ni nouvelle garde.
+
+Deux assertions permanentes supplémentaires couvrent la ligne Annuaire reconstruite et l'action Client recréée après filtrage. Mise au point201 assertions sans captures verte. Le commit correctif doit être rejoué proprement avec81 frames (282 assertions attendues),typecheck etUX-01 ; seule ensuite une publication corrective avecCI de synchronisation au nouveauSHA. Ce contrôle supplémentaire justifie cette actualisation, sans rerun manuel ni ajustement de délais. Les résultats effectifs seront consignés dans laPR, aucune étape n'est annoncée réussie avant exécution.

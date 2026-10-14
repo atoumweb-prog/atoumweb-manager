@@ -91,6 +91,7 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
   const [view, setView] = useState<DirectoryView>(initialTarget?.entityType === 'contact' ? 'contacts' : 'organizations');
   const [selectedType, setSelectedType] = useState<'organization' | 'contact' | null>(initialTarget?.entityType ?? null);
   const [selectedId, setSelectedId] = useState(initialTarget?.entityId ?? '');
+  const selectedIdentityRef=useRef(selectedId);selectedIdentityRef.current=selectedId;
   const [createMode, setCreateMode] = useState<CreateMode>(null);
   const [expanded, setExpanded] = useState(false);
   const [splitPercent, setSplitPercent] = useState(38);
@@ -209,7 +210,7 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
   const showDetail = Boolean(selectedOrganization || selectedContact || createMode);
 
   function closeDirectory():void {
-    requestUnsavedExit(()=>{refreshEpoch.current++;setLoading(false);setCreateMode(null);setSelectedType(null);setSelectedId('');setExpanded(false);setEditing(false);queueMicrotask(()=>{if(directoryOpener.current?.isConnected)directoryOpener.current.focus();});});
+    requestUnsavedExit(()=>{refreshEpoch.current++;setLoading(false);setCreateMode(null);setSelectedType(null);setSelectedId('');setExpanded(false);setEditing(false);requestAnimationFrame(()=>{if(selectedIdentityRef.current)return;const row=selectedId?document.querySelector<HTMLElement>('[data-directory-id="'+CSS.escape(selectedId)+'"]'):null;if(row)row.focus();else if(directoryOpener.current?.isConnected)directoryOpener.current.focus();});});
   }
   function toggleEdit():void {
     if(editing){editorGuard.request(()=>setEditing(false));return;}

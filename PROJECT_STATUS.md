@@ -1,5 +1,11 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 14/10/2026 — PR107 et contrôle de focus complémentaire
+
+- #107 draft publiée à7c770efd, dépendante105 ;CI873 SUCCESS/typecheck/1040 Vitest. Une assertion clavier ajoutée après publication a néanmoins reproduit le retour de focus perdu sur la liste Annuaire reconstruite.
+- Correction Client/Annuaire ciblée, sans service/IPC/migration : restauration sur l'identité courante après rendu, abandonnée si une autre fiche est déjà ouverte. Deux régressions permanentes,201 contrôles natifs de mise au point verts. Validation propre du nouveaucommit :typecheck/282 avec81 frames/UX-01 avant push correctif unique etCI synchronize ; résultat exact dansPR.
+- Aucune fusion105/107, mainb2796812 et branches de référence préservés. Recette humaine différée et réserve d'archivage d'identité maintenue.
+
 ## 14/10/2026 — Livraison documentaire finale du lot03
 
 - Code publié préparé6e7aa15 :typecheck/280 contrôles03A–E/81 capturesCRM frame-vérifié, intégrité/FK/migrations/nettoyagesOK. Suite complète1040 et1421 natifs historiques à79197709. Dernière miseàjour documentaire seule ; aucune validation humaine anticipée. #105 draft/CI855 verte ; prochainePR03E draft dépendante, uniqueCIcandidate automatique.

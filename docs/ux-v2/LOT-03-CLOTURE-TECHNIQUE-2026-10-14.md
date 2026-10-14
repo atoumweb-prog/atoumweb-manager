@@ -54,3 +54,10 @@ Le commit de publication apporte la mise à jour documentaire, le libellé conse
 À6e7aa15ec4a59f55d6b4c0c332b828116629a84f :typecheckOK et280/280 contrôles du banc03A–E,81 capturesClient/Annuaire auframe vérifié, zéro erreurconsole inattendue, SQLite/intégrité/FK/migrations1–66/nettoyageOK. Les capturesAnnuaire sont centrées sur les vrais champs de l’éditeur. Le dernier commit documentaire ne modifie plus aucun code/test ; laCIcandidate et son SHA exact seront consignés dans laPR. La suite complète1040 et les1421 contrôles historiques ont réellement été exécutés à79197709, pas inventés sur unautreSHA.
 
 Statut des autres chantiers :103/104/106 enparallèle, non modifiés. Leurs validations ne sont pas couvertes par ce rapport. Toute fusion de105/03E reste soumise à autorisation.
+
+
+## Contrôle clavier complémentaire aprèsCI873
+
+CI873 SUCCESS sur7c770efd :1040 Vitest ettypecheck, mais une nouvelle assertion native a reproduit le retour de focus perdu après fermeture Annuaire, car la ligne déclenchante avait été reconstruite. Ce contrôle n'était pas couvert par le premier banc. Correction ciblée Client/Annuaire : retrouver l'action de la même identité après le rendu, ne pas reprendre le focus si une autre fiche a déjà été ouverte. Aucun changement métier ni nouvelle garde.
+
+Deux assertions permanentes supplémentaires couvrent la ligne Annuaire reconstruite et l'action Client recréée après filtrage. Mise au point201 assertions sans captures verte. Le commit correctif doit être rejoué proprement avec81 frames (282 assertions attendues),typecheck etUX-01 ; seule ensuite une publication corrective avecCI de synchronisation au nouveauSHA. Ce contrôle supplémentaire justifie cette actualisation, sans rerun manuel ni ajustement de délais. Les résultats effectifs seront consignés dans laPR, aucune étape n'est annoncée réussie avant exécution.
