@@ -5,7 +5,8 @@ module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,select,test,sle
   const path = require('node:path');
   const {dialog} = require('electron');
   const fixture = date => ({category:'software',label:'Frais TEST 09C '+date,
-    amountCents:date===1?14900:3500,status:'committed',expenseDate:'2026-10-14T12:00:00.000Z'});
+    amountCents:date===1?14900:3500,status:'committed',expenseDate:'2026-10-14T12:00:00.000Z',
+    dueAt:date===1?'2020-01-01T12:00:00.000Z':null});
   const first = db.expenses.create(fixture(1));
   const second = db.expenses.create(fixture(2));
   const sourceA = path.join(temp,'09c-original.pdf');
@@ -28,6 +29,8 @@ module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,select,test,sle
     await wait('document.querySelector(".expenses-form-grid input[placeholder]")?.value==="Frais TEST 09C 1"','selected expense form loaded');
     test(await get('document.querySelector(".expenses-detail-panel h2")?.textContent.includes("Frais TEST 09C 1")'),
       '09C-UI-03: real detail displays expense 1');
+    test(await get('document.querySelector(".expense-overdue-warning")?.textContent.includes("Aucune nouvelle occurrence")'),
+      '09C-UI-03a: overdue expense warns without claiming auto-created occurrences');
     await js('const el=document.querySelector(".expenses-form-grid input[placeholder]");el.focus();el.select();');
     await win.webContents.insertText('Brouillon 09C non enregistré');
     await wait('document.querySelector(".expenses-form-grid input[placeholder]")?.value==="Brouillon 09C non enregistré"',
