@@ -18,7 +18,7 @@ describe('Lot 04B / E95 — noms de catégorie, contrôles sans effet métier', 
 
   it('signale doublons casse/accents/espaces au lieu de les réunir automatiquement', () => {
     expect(catalogCategoryCollisions(['SEO', ' Seo  ', 'SÉO', 'CONTENU'])).toEqual([
-      { normalizedKey: 'seo', legacyValues: [' Seo  ', 'SÉO', 'SEO'] },
+      { normalizedKey: 'seo', legacyValues: [' Seo  ', 'SEO', 'SÉO'] },
     ]);
   });
 
