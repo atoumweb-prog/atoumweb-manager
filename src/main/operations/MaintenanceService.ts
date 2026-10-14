@@ -139,8 +139,8 @@ export class MaintenanceService {
     this.database.run(
       `INSERT INTO maintenance_subscriptions
        (id,client_account_id,project_id,plan_id,plan_name_snapshot,frequency_snapshot,included_interventions_snapshot,included_minutes_snapshot,
-        catalog_price_cents_snapshot,contract_price_cents,start_date,end_date,status,notes,created_at,updated_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'active',?,?,?)`,
+        catalog_price_cents_snapshot,contract_price_cents,start_date,end_date,period_alignment,status,notes,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'anniversary','active',?,?,?)`,
       [id, clientId, projectId, plan.id, plan.name, plan.frequency, plan.includedInterventions, plan.includedMinutes ?? null,
         plan.periodicPriceCents, contractPrice, startDate, endDate, clean(input.notes), now, now],
     );
