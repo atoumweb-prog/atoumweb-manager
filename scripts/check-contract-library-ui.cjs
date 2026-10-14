@@ -63,6 +63,14 @@ if(!process.versions.electron){
           await click('Bibliothèque contractuelle');await wait('!!document.querySelector(".contract-library")');
           check(theme+' '+density+' contract library rendered',await js('!!document.querySelector(".contract-type-list")'));
           await shot('bibliotheque-'+theme+'-'+density);
+          if(theme==='blanc'&&density==='comfort_plus'){
+            await js('document.querySelector(".contract-type-list button").focus()');
+            check('05D keyboard target receives focus',await js('document.activeElement?.matches(".contract-type-list button")'));
+            win.webContents.sendInputEvent({type:'keyDown',keyCode:'Return'});
+            win.webContents.sendInputEvent({type:'keyUp',keyCode:'Return'});
+            await wait('!!document.querySelector(".contract-type-list button.active")');
+            check('05D keyboard Enter activates focused contract type',await js('!!document.querySelector(".contract-type-list button.active")'));
+          }
         }
       }
       if(theme==='atoumweb'&&args.includes('--ux05b')){
@@ -235,6 +243,11 @@ if(!process.versions.electron){
       const pdf=await js(`window.atoumweb.quotes.generatePdf(${JSON.stringify(q.id)})`);dialog.showOpenDialog=async()=>({canceled:false,filePaths:[pdf.path]});
       await js(`window.atoumweb.quotes.importContractDocument(${JSON.stringify(q.id)},'TEST')`);await js(`window.atoumweb.quotes.openContractDocument(${JSON.stringify(q.id)})`);check(theme+' PDF system reader endpoint exercised',opened.length>0);
       database.contractTypes.setStatus(type.id,'archived');check(theme+' archive preserves versions',database.contractTypes.list().every(t=>t.id!==type.id)&&database.contractTypes.list(true).some(t=>t.id===type.id));
+    }
+    if(args.includes('--ux05b')){
+      const densityScreens=fs.readdirSync(output).filter(name=>/^bibliotheque-(atoumweb|noir|blanc)-(compact|comfort|comfort_plus)\\.png$/.test(name)).sort();
+      check('05B three themes times three densities produce nine independent captures',densityScreens.length===9);
+      console.log('[05B 3x3 CAPTURES] '+JSON.stringify(densityScreens.map(name=>({name,sha256:sha(path.join(output,name))}))));
     }
     check('Fixture migrations 1–66',db.all('SELECT id FROM schema_migrations ORDER BY id').map(r=>r.id).join(',')===Array.from({length:66},(_,i)=>i+1).join(','));check('Fixture integrity',db.get('PRAGMA integrity_check').integrity_check==='ok');check('Fixture FK',db.all('PRAGMA foreign_key_check').length===0);check('No renderer errors',errors.length===0);
     process.stdout.write(JSON.stringify({checks:checks.length,errors})+'\n');
