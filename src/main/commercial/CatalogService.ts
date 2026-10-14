@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { catalogMatchesQuery } from '../../shared/catalogDiscovery';
+import { reviewCatalogPrepublication } from '../../shared/catalogVersionReview';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import {
   CATALOG_ITEM_STATUSES,
@@ -474,7 +475,7 @@ export class CatalogService {
     return this.getVersion(versionId);
   }
 
-  publishVersion(versionId: string): CatalogVersion {
+  publishVersion(versionId: string, expected?: CatalogVersion): CatalogVersion {
     // Publishing is a separate, deliberate transition. Check the persisted
     // state *under the write lock*; never republish a retired/published version
     // or silently rewrite its original publication timestamp.
@@ -483,6 +484,13 @@ export class CatalogService {
       const target = this.getVersion(versionId);
       if (target.status !== 'draft')
         throw new Error('Seule une version brouillon peut être publiée. Une version publiée ou retirée est figée.');
+      if (expected && !sameVersionSnapshot(target, expected))
+        throw new Error('Conflit : le brouillon a changé depuis la préparation de la publication. Actualise la fiche.');
+      // Only hard technical contradictions are blocked. Legal, CGV and blueprint
+      // checks remain informational until their type-specific rules are defined.
+      const publicationReview = reviewCatalogPrepublication(this.getItem(target.itemId), target);
+      if (publicationReview.blocking.length)
+        throw new Error('Publication refusée : '+publicationReview.blocking.join(' '));
       const now = nowIso();
       this.database.run(
         `UPDATE catalog_versions
