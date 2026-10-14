@@ -34,6 +34,51 @@ describe('04C / E99-E102 — sauvegarde contrôlée des versions brouillon', () 
     expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
+  it('E102 rejouer une création après réponse IPC perdue ne crée ni vN+1 ni deuxième lien', () => {
+    const service=catalog.create({type:'service',name:'Page de rédaction'},{
+      priceMode:'fixed',priceCents:9900,
+    });
+    catalog.publishVersion(service.versions[0].id);
+    const offer=catalog.create({type:'offer',name:'Offre vitrine'},{
+      priceMode:'starting_from',priceCents:69900,
+    });
+    const old=offer.versions[0];
+    catalog.setOfferComponents(old.id,[{serviceVersionId:service.versions[0].id}]);
+    catalog.publishVersion(old.id);
+    const requestId='ecfb6e83-a7c5-4d15-a86f-3eebd19feabc';
+    const input={priceMode:'starting_from' as const,priceCents:74900,description:'Nouveaux livrables'};
+    const first=catalog.createVersion(offer.id,input,requestId);
+    // Simulate the service succeeding, but its reply never arriving in Electron:
+    // exactly the same request UUID is sent a second time.
+    const second=catalog.createVersion(offer.id,input,requestId);
+    expect(first).toEqual(second);
+    expect(first).toMatchObject({id:requestId,versionNumber:2,status:'draft'});
+    expect(catalog.getItem(offer.id).versions).toHaveLength(2);
+    expect(catalog.listOfferComponents(first.id)).toHaveLength(1);
+    expect(db.get<{n:number}>('SELECT COUNT(*) AS n FROM offer_components WHERE offer_version_id=?',[first.id])?.n).toBe(1);
+    expect(db.get<{n:number}>('SELECT COUNT(*) AS n FROM catalog_versions WHERE item_id=?',[offer.id])?.n).toBe(2);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('E102 la même requête ne peut pas viser une autre prestation, ni republier une version déjà figée', () => {
+    const original=catalog.create({type:'service',name:'Ancien SEO'},{
+      priceMode:'fixed',priceCents:14900,
+    });
+    const other=catalog.create({type:'service',name:'Nouveau SEO'},{
+      priceMode:'fixed',priceCents:15900,
+    });
+    const requestId='d6cf5556-3fc6-4b75-86ec-03a40d59ba04';
+    const input={priceMode:'fixed' as const,priceCents:19900};
+    const v=catalog.createVersion(original.id,input,requestId);
+    expect(()=>catalog.createVersion(other.id,input,requestId)).toThrow(/autre prestation/);
+    expect(()=>catalog.createVersion(original.id,input,'pas-un-uuid')).toThrow(/invalide/);
+    catalog.publishVersion(v.id);
+    expect(()=>catalog.createVersion(original.id,input,requestId)).toThrow(/déjà traitée/);
+    expect(catalog.getItem(original.id).versions).toHaveLength(2);
+    expect(catalog.getItem(other.id).versions).toHaveLength(1);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
   it('refuse une sauvegarde obsolète sans écraser les saisies d’une autre fenêtre', () => {
     const created=catalog.create({type:'service',name:'Maintenance WP'},{
       priceMode:'monthly',priceCents:4900,description:'A',
