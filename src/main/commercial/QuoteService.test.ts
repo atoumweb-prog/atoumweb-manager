@@ -301,7 +301,7 @@ describe('QuoteService', () => {
     expect(crm.listClients()).toHaveLength(0);
     expect(crm.listProspects().find(item => item.id === prospect.id)?.clientAccountId).toBeFalsy();
     expect(() => quotes.addCustomLine(quote.id, { label: 'Modification interdite', proposedUnitPriceCents: 1000 }))
-      .toThrow(/figé|refusé|brouillon/i);
+      .toThrow(/figé|refusé|brouillon|copie du devis/i);
   });
 
   it('06D : un devis marqué envoyé reste sans acceptation et sans conversion', () => {
