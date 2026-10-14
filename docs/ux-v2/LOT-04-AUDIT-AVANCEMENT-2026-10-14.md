@@ -44,6 +44,13 @@ Pourcentage **indicatif de couverture fonctionnelle**, calculé à partir de rub
 
 **Écart avec `main` constaté sur SHA `261a12b3`** : `main@cc0bc679400321f5afacdbee3317ea8acc451518`, branche 04D/04E **296 commits devant / 10 derrière**, ancêtre commun `b2796812ee24c9e9e824f3d66564f2c1a335bffe`, 69 fichiers différents. La PR #108 est également divergente de la tête mise à jour de la branche #104 (**77 devant / 2 derrière**). Le candidat n'est **pas convergé**. Fichiers transverses sensibles : `CatalogService.ts`, `ipc.ts`, `preload.ts`, `CatalogPage.tsx`, workflows CI, migrations.
 
+### Incréments correctifs réalisés pendant l'audit
+
+- **04E** : `commercialParameters.relevantSituations` et `commercialCautions` ajoutés au modèle versionné et au formulaire ; contrôles de projection unitaire, SQLite et Electron ajoutés. `CommercialScope`, déjà consommé dans Prospect et Devis, affiche désormais une aide contextuelle `?` consultative sur la **version reçue** (donc snapshots de lignes préservés), sans aucune action d'achat. Test SSR ajouté. CI #1300 avait échoué sur des clés dupliquées dans une fixture, corrigées au commit `df37e55c`; **CI #1308 verte** sur ce correctif.
+- **04D — amélioration complémentaire** : le sélecteur des besoins Prospect préfère désormais les recommandations administrées de versions publiées avec sélection par identifiant de version, filtrage actif/publié, déduplication, garde de réponses IPC tardives ; la table historique `SUGGESTIONS` demeure **repli de compatibilité** uniquement lorsqu'aucun résultat administré admissible n'est trouvé. Cela n'est **pas encore** une clôture d'E106 ni un remplacement définitif. Tests purs et test SQLite de liaison ajouté, CI des derniers commits en attente.
+- Le pourcentage 04D reste inchangé dans la grille de tête tant que le parcours Prospect n'est pas certifié de bout en bout et que le motif n'est pas expliqué.
+- **Aucune extension du moteur d'achat ni de la provenance d'option de Devis** réalisée durant cet audit.
+
 ## Tâches restantes — attribution et priorité
 
 | Priorité | Cat. | Responsable | Tâche précise et preuve de sortie |
