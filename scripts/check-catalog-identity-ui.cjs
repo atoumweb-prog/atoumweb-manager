@@ -166,6 +166,13 @@ app.whenReady().then(async () => {
       assert('04C huit onglets accessibles',document.querySelectorAll('.catalog-editor-tabs [role=tab]').length===8);
       assert('04C panneau ARIA connecté',document.querySelector('[role=tab][aria-selected=true]').getAttribute('aria-controls')===
         document.querySelector('[role=tabpanel]').id);
+      document.querySelector('[role=tab][aria-selected=true]').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
+      await wait();
+      assert('04C navigation clavier flèche droite',document.querySelector('[role=tab][aria-selected=true]').textContent==='Tarifs & Abby'&&
+        document.activeElement===document.querySelector('[role=tab][aria-selected=true]'));
+      document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Home',bubbles:true}));
+      await wait();
+      assert('04C clavier Home revient à identité',document.querySelector('[role=tab][aria-selected=true]').textContent==='Identité');
       assert('Ancien élément sans identité inventée',identitySection.textContent.includes('Non attribué'));
       assert('Attribution désactivée sans code', [...document.querySelectorAll('button')].find(b=>b.textContent==='Attribuer ce code').disabled);
       await fill('Code AW à attribuer','invalide');await click('Attribuer ce code');
