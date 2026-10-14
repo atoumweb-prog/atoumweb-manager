@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type {
   HourPack,
   Intervention,
@@ -6,6 +6,7 @@ import type {
   ServiceRequest,
 } from '../../shared/operations';
 import './ClientOperationsTab.css';
+import { openEntity } from '../workflow/DossierPanel';
 
 function duration(seconds: number): string {
   const minutes = Math.max(0, Math.round(seconds / 60));
@@ -20,9 +21,13 @@ export function ClientOperationsTab({ clientId, onMessage }: { clientId: string;
   const [maintenance, setMaintenance] = useState<MaintenanceSubscription[]>([]);
   const [packs, setPacks] = useState<HourPack[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const generation = useRef(0);
 
   async function load(): Promise<void> {
+    const current = ++generation.current;
     setLoading(true);
+    setError('');
     try {
       const [nextRequests, nextInterventions, nextMaintenance, nextPacks] = await Promise.all([
         window.atoumweb.operations.requests.list({ clientAccountId: clientId, includeArchived: true }),
@@ -30,20 +35,24 @@ export function ClientOperationsTab({ clientId, onMessage }: { clientId: string;
         window.atoumweb.operations.maintenance.subscriptions.list({ clientAccountId: clientId, includeArchived: true }),
         window.atoumweb.operations.hourPacks.list({ clientAccountId: clientId, includeArchived: true }),
       ]);
+      if (current !== generation.current) return;
       setRequests(nextRequests);
       setInterventions(nextInterventions);
       setMaintenance(nextMaintenance);
       setPacks(nextPacks);
     } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible de charger les opérations de ce client.');
+      if (current !== generation.current) return;
+      const message = error instanceof Error ? error.message : 'Impossible de charger les opérations de ce client.';
+      setError(message); onMessage(message);
     } finally {
-      setLoading(false);
+      if (current === generation.current) setLoading(false);
     }
   }
 
-  useEffect(() => { void load(); }, [clientId]);
+  useEffect(() => { void load(); return () => { generation.current++; }; }, [clientId]);
 
   if (loading) return <p className="muted">Chargement des interventions du client…</p>;
+  if (error) return <div role="alert"><p>Opérations indisponibles : {error}</p><button type="button" onClick={() => void load()}>Réessayer</button></div>;
 
   const openRequests = requests.filter((item) => !['closed', 'converted', 'archived'].includes(item.status));
   const openInterventions = interventions.filter((item) => !['completed', 'cancelled', 'archived'].includes(item.status));
@@ -59,19 +68,19 @@ export function ClientOperationsTab({ clientId, onMessage }: { clientId: string;
     </div>
 
     <OperationSection title="Demandes" empty="Aucune demande enregistrée.">
-      {requests.slice(0, 5).map((request) => <div className="client-operation-row" key={request.id}><div><strong>{request.subject}</strong><small>{request.projectLabel || 'Sans projet'} · {request.source}</small></div><span>{request.status}</span></div>)}
+      {requests.map((request) => <div className="client-operation-row" key={request.id}><div><strong>{request.subject}</strong><small>{request.projectLabel || 'Sans projet'} · {request.source}</small></div><span>{request.status}</span><button className="secondary-button" type="button" onClick={()=>openEntity({entityType:"service_request",entityId:request.id,title:request.subject})}>Ouvrir</button></div>)}
     </OperationSection>
 
     <OperationSection title="Interventions" empty="Aucune intervention enregistrée.">
-      {interventions.slice(0, 5).map((intervention) => <div className="client-operation-row" key={intervention.id}><div><strong>{intervention.number} · {intervention.subject}</strong><small>{intervention.projectLabel || 'Sans projet'} · {duration(intervention.totalTimeSeconds)}</small></div><span>{intervention.status}</span></div>)}
+      {interventions.map((intervention) => <div className="client-operation-row" key={intervention.id}><div><strong>{intervention.number} · {intervention.subject}</strong><small>{intervention.projectLabel || 'Sans projet'} · {duration(intervention.totalTimeSeconds)}</small></div><span>{intervention.status}</span><button className="secondary-button" type="button" onClick={()=>openEntity({entityType:"intervention",entityId:intervention.id,title:intervention.subject})}>Ouvrir</button></div>)}
     </OperationSection>
 
     <OperationSection title="Maintenance" empty="Aucune souscription de maintenance.">
-      {maintenance.map((subscription) => <div className="client-operation-row" key={subscription.id}><div><strong>{subscription.planName}</strong><small>{subscription.projectLabel || 'Tous / sans projet dédié'} · {subscription.includedInterventions} intervention(s) / période</small></div><span>{subscription.status}</span></div>)}
+      {maintenance.map((subscription) => <div className="client-operation-row" key={subscription.id}><div><strong>{subscription.planName}</strong><small>{subscription.projectLabel || 'Tous / sans projet dédié'} · {subscription.includedInterventions} intervention(s) / période</small></div><span>{subscription.status}</span><button className="secondary-button" type="button" onClick={()=>openEntity({entityType:"maintenance",entityId:subscription.id,title:subscription.planName})}>Ouvrir</button></div>)}
     </OperationSection>
 
     <OperationSection title="Packs d’heures" empty="Aucun pack d’heures.">
-      {packs.map((pack) => <div className="client-operation-row" key={pack.id}><div><strong>{pack.name}</strong><small>{pack.projectLabel || 'Sans projet dédié'} · {duration(pack.balanceSeconds)} restant</small></div><span>{pack.status}</span></div>)}
+      {packs.map((pack) => <div className="client-operation-row" key={pack.id}><div><strong>{pack.name}</strong><small>{pack.projectLabel || 'Sans projet dédié'} · {duration(pack.balanceSeconds)} restant</small></div><span>{pack.status}</span><button className="secondary-button" type="button" onClick={()=>openEntity({entityType:"hour_pack",entityId:pack.id,title:pack.name})}>Ouvrir</button></div>)}
     </OperationSection>
 
     <button className="secondary-button client-operations-refresh" type="button" onClick={() => void load()}>↻ Actualiser</button>

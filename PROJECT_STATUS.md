@@ -1,5 +1,42 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 14/10/2026 — Dernier cas de focus : ligne toujours masquée
+
+- Le correctif693f6af a passé typecheck/282 natifs avec81 frames/UX-01183. Complément final : si le filtre masque encore la ligne à la fermeture, retour à la recherche et conservation de sa valeur. Deux assertions clavier supplémentaires, sans mutation métier. Nouveau candidat à recetter puis une seule actualisation corrective107/CIautomatique, aucun rerun manuel.
+
+## 14/10/2026 — PR107 et contrôle de focus complémentaire
+
+- #107 draft publiée à7c770efd, dépendante105 ;CI873 SUCCESS/typecheck/1040 Vitest. Une assertion clavier ajoutée après publication a néanmoins reproduit le retour de focus perdu sur la liste Annuaire reconstruite.
+- Correction Client/Annuaire ciblée, sans service/IPC/migration : restauration sur l'identité courante après rendu, abandonnée si une autre fiche est déjà ouverte. Deux régressions permanentes,201 contrôles natifs de mise au point verts. Validation propre du nouveaucommit :typecheck/282 avec81 frames/UX-01 avant push correctif unique etCI synchronize ; résultat exact dansPR.
+- Aucune fusion105/107, mainb2796812 et branches de référence préservés. Recette humaine différée et réserve d'archivage d'identité maintenue.
+
+## 14/10/2026 — Livraison documentaire finale du lot03
+
+- Code publié préparé6e7aa15 :typecheck/280 contrôles03A–E/81 capturesCRM frame-vérifié, intégrité/FK/migrations/nettoyagesOK. Suite complète1040 et1421 natifs historiques à79197709. Dernière miseàjour documentaire seule ; aucune validation humaine anticipée. #105 draft/CI855 verte ; prochainePR03E draft dépendante, uniqueCIcandidate automatique.
+- Suivi58 sous-lots01–10 actualisé ; travaux parallèles#103/#104/#106 signalés sans modification ni réaudit. GitHub a reconnu98–101 fusionnées par ascendance de102, mêmesHEAD, aucun merge supplémentaire dansmain, branches conservées.
+- Clôture technique du périmètre03A–E proposée avec réserve d’archivage d’identité non exposé ;03D/E restent horsmain. Aucun démarrageCatalogue ni migration.
+
+## 14/10/2026 — Validation combinée03A–03E et préparation de publication
+
+- Code79197709 propre : typecheck,1040/1040 Vitest/109 fichiers,35 restaurations/6 binaires/sansRPC ;1421 natifs historiques +280 banc combiné (avec recouvrements),297 captures compositées. Manifeste `outputs/lot03-79197709-1791974377401/manifest.json`, toutes étapes exécutées, TEMP/intégrité/FK/migrations1–66/nettoyages OK.
+- Documentation mise à jour et revue finale : clarification du libellé Projet legacy et cadrage des images sur l’éditeur Annuaire ; recette ciblée au commit de publication à relever dansPR,CIcandidate non présumée avant résultat.105 reste draft/CI855 verte ;03E dépend de105 et son diff inclut03D tant qu’il n’est pas fusionné.
+- [Bilan de clôture03](docs/ux-v2/LOT-03-CLOTURE-TECHNIQUE-2026-10-14.md). Périmètre fonctionnel livré techniquement recevable ; réserve explicite sur l’archivage d’identité Annuaire, aucune nouvelle règle d’archivage inventée. Recette humaine globale différée. mainb2796812 seul intégré ; aucune fusion105/03E autorisée.
+
+## 14/10/2026 — 03D publiée ; candidat03E et recette globale03
+
+- #105 draft, HEAD `bd406e1c98cb2048dbc26b8f4ec612c91dd7d15e`, [CI855 SUCCESS](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38548252238) : typecheck/1029 Vitest ;35 restaurations/6 binaires/sansRPC. Au même SHA, local :1421 natifs historiques/216 captures +125 Client/72 captures, TEMP/FK/intégrité/migrations/nettoyage OK. main reste b2796812 ; aucune fusion105.
+- Branche03E `codex/ux-v2-03e-directory` dépend explicitement de105. RegistreUX-01 réutilisé, sauvegardes identité/coordonnées atomiques, jetons de création anti-rejeu, comparaison avant écritures, réponses tardives invalidées et historiques de vérification explicite dans activity_events. Les fiches Prospect/Client réemploient ce contrôle pour leurs identités communes ; contacts principaux/décisionnaires03C existants préservés.
+- Aucun nouveau schéma ni migration. Aucun Catalogue/CGV/contrat, règle de conversion ou dossier réel modifié. [Exécution03E](docs/ux-v2/LOT-03E-EXECUTION-2026-10-14.md) et [matrice03A–E](docs/ux-v2/LOT-03-CLOTURE-TECHNIQUE-2026-10-14.md). Recette finale du candidat propre à exécuter : ne pas convertir les résultats de mise au point en validation de son SHA.
+- 04 reste préparé dansPR82, non repris en code ici. Recette humaine globale différée. Publication03E draft autorisée après recette complète ; fusion ultérieure interdite sans nouvel accord.
+
+## 14/10/2026 — PR102 intégrée ; reprise 03D puis 03E
+
+- PR102 fusionnée normalement à `b2796812ee24c9e9e824f3d66564f2c1a335bffe`, parents `278ff2da` et `9223f267` ; arbre `88834f9068a3f5a4bd3857cd89b2a6c23df348ce`, identique à la candidate CI780. CI post-fusion [781](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38521894631) SUCCESS : typecheck,1020 Vitest/107 fichiers,35 restaurations,6 binaires,sansRPC. Recette native locale sur **le merge exact** :1421 contrôles,216 captures,intégrité/FK/migrations1–66/nettoyages OK ; les étapes natives conditionnelles ne sont pas exécutées par le workflow push main.
+- Développements 02C–02E et03A–03C intégrés ; sources98–101 incluses par ascendance, ni refusionnées ni fermées. Clôture comme remplacées à proposer après contrôle des HEAD. Aucun historique/branche supprimé.
+- Branche03D depuis ce main : huit onglets Client, état des sections indépendant, panneaux montés, garde UX-01 et préférences de largeur par workspace ; relation/note avec comparaison sous verrou SQLite et journal atomique. Aucun nouveau schéma ni règle de conversion/vente. Les résultats finaux du candidat sont à relever au SHA testé, pas à déduire de ces changements.
+- Référentiel03D/03E récupéré depuis PR82 à `0bb0860e`, contenu historique conservé. [Suivi complet](docs/ux-v2/SUIVI-AVANCEMENT.md), [exécution03D](docs/ux-v2/LOT-03D-EXECUTION-2026-10-14.md). **Lot03 non clos :03D en validation,03E à réaliser.** Recette humaine globale différée à la fin de la refonte, décision utilisateur prioritaire sur les anciennes gates demandant une recette humaine par lot.
+- Lot04 préparé dansPR82 conservé ; aucune nouvelle conception, implémentation Catalogue ou migration. Suite autorisée : stabiliser03D, développer03E sur branche dédiée, recette combinée03A–E, puis reprise04A–F. Aucune autre fusion autorisée.
+
 ## 14/10/2026 — Recette finale de PR102, sans fusion
 
 - Départ8d8b359a/CI779 verte, base278ff2da, worktree propre ; sources98–101 intactes. Inspection agent effective des81 PNG de référence, distincte de toute acceptation humaine métier.

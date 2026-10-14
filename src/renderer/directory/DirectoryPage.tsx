@@ -1,6 +1,10 @@
+import { layoutKey, readLayout, writeLayout } from '../../shared/panelLayout';
+import { useUnsavedDraft, requestUnsavedExit, UnsavedGroup, unsavedRegistry } from '../unsaved/unsaved';
+import type { DirectoryVerification } from '../../shared/directoryIdentity';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
+  ActivityEvent,
   ContactInput,
   DirectoryContact,
   DirectoryOrganization,
@@ -44,7 +48,7 @@ function organizationForm(item?: DirectoryOrganization | null): OrganizationInpu
     addressLine2: item?.addressLine2 ?? '',
     postalCode: item?.postalCode ?? '',
     city: item?.city ?? '',
-    country: item?.country ?? 'France',
+    country: item ? (item.country ?? '') : 'France',
     industry: item?.industry ?? '',
     notes: item?.notes ?? '',
   };
@@ -78,16 +82,24 @@ function dateLabel(value?: string | null): string {
   return value ? new Date(value).toLocaleDateString('fr-FR') : '—';
 }
 
-export function DirectoryPage({ onEntityReady, onMessage, initialTarget, initialRequest }: { onMessage: (message: string) => void; initialTarget?: DirectorySearchTarget | null;initialRequest?:number;onEntityReady?:EntityReady }) {
+type DirectoryPageProps={onMessage:(message:string)=>void;initialTarget?:DirectorySearchTarget|null;initialRequest?:number;onEntityReady?:EntityReady};
+export function DirectoryPage(props:DirectoryPageProps){return <UnsavedGroup name="directory"><DirectoryPageContent {...props}/></UnsavedGroup>;}
+function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequest}:DirectoryPageProps) {
   const [organizations, setOrganizations] = useState<DirectoryOrganization[]>([]);
   const [contacts, setContacts] = useState<DirectoryContact[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<DirectoryView>(initialTarget?.entityType === 'contact' ? 'contacts' : 'organizations');
   const [selectedType, setSelectedType] = useState<'organization' | 'contact' | null>(initialTarget?.entityType ?? null);
   const [selectedId, setSelectedId] = useState(initialTarget?.entityId ?? '');
+  const selectedIdentityRef=useRef(selectedId);selectedIdentityRef.current=selectedId;
   const [createMode, setCreateMode] = useState<CreateMode>(null);
   const [expanded, setExpanded] = useState(false);
   const [splitPercent, setSplitPercent] = useState(38);
+  const splitRef=useRef(splitPercent);splitRef.current=splitPercent;
+  const splitCleanup=useRef<(()=>void)|null>(null);
+  useEffect(()=>{try{setSplitPercent(Math.min(58,readLayout(window.atoumweb.visualPreferences,layoutKey('directory','list'),38)));}catch{onMessage('Disposition Annuaire indisponible ; largeur par défaut conservée.');}return()=>splitCleanup.current?.();},[]);
+  function persistSplit(value:number){try{writeLayout(window.atoumweb.visualPreferences,layoutKey('directory','list'),value);}catch{onMessage('Largeur Annuaire non mémorisée.');}}
+
   const [query, setQuery] = useState('');
   const [relationFilter, setRelationFilter] = useState<'all' | DirectoryRelation>('all');
   const [secondaryFilter, setSecondaryFilter] = useState('all');
@@ -95,6 +107,16 @@ export function DirectoryPage({ onEntityReady, onMessage, initialTarget, initial
   const [organizationDraft, setOrganizationDraft] = useState<OrganizationInput>(() => organizationForm());
   const [contactDraft, setContactDraft] = useState<ContactInput>(() => contactForm());
   const [busy, setBusy] = useState(false);
+  const [saveError,setSaveError]=useState('');
+  const [identityHistory,setIdentityHistory]=useState<ActivityEvent[]>([]);
+  const directoryOpener=useRef<HTMLElement|null>(null);
+  const busyRef=useRef(busy);busyRef.current=busy;
+  const operationId=useRef(crypto.randomUUID());
+  const expectedOrganization=useRef<OrganizationInput|null>(null),expectedContact=useRef<ContactInput|null>(null);
+  const [verification,setVerification]=useState<DirectoryVerification|null>(null),[verificationError,setVerificationError]=useState('');
+  const verificationEpoch=useRef(0);
+  const editorGuard=useUnsavedDraft('Identité Annuaire',createMode==='organization'||selectedType==='organization'?organizationDraft:contactDraft,{ready:!!createMode||editing||busy,pending:busy,resetKey:selectedType+':'+selectedId+':'+createMode+':'+editing,discard:()=>{setEditing(false);setCreateMode(null);}});
+
   useSearchTargetConfirmation(selectedType==='contact'?'contact':'organization',selectedType==='contact'?contacts.find(item=>item.id===selectedId)?.id:organizations.find(item=>item.id===selectedId)?.id,loading,onEntityReady);
 
 
@@ -108,8 +130,9 @@ export function DirectoryPage({ onEntityReady, onMessage, initialTarget, initial
         window.atoumweb.crm.contacts.list(false),
       ]);
       if(epoch!==refreshEpoch.current)return;
-      setOrganizations(nextOrganizations);
-      setContacts(nextContacts);
+      const preserveDraft=editorGuard.dirty||busyRef.current;
+      setOrganizations(previous=>preserveDraft&&selectedType==='organization'&&selectedId&&!nextOrganizations.some(item=>item.id===selectedId)?[...nextOrganizations,...previous.filter(item=>item.id===selectedId)]:nextOrganizations);
+      setContacts(previous=>preserveDraft&&selectedType==='contact'&&selectedId&&!nextContacts.some(item=>item.id===selectedId)?[...nextContacts,...previous.filter(item=>item.id===selectedId)]:nextContacts);
       const target = preferred ?? (selectedType && selectedId ? { entityType: selectedType, entityId: selectedId } : null);
       if (target?.entityType === 'organization' && nextOrganizations.some((item) => item.id === target.entityId)) {
         setView('organizations');
@@ -119,6 +142,8 @@ export function DirectoryPage({ onEntityReady, onMessage, initialTarget, initial
         setView('contacts');
         setSelectedType('contact');
         setSelectedId(target.entityId);
+      } else if (target && preserveDraft) {
+        setSaveError('Cette identité n’est plus disponible ; la saisie locale est conservée.');
       } else if (target) {
         onEntityReady?.(target.entityType,target.entityId,'Entrée introuvable.');
         setSelectedType(null);
@@ -145,6 +170,7 @@ export function DirectoryPage({ onEntityReady, onMessage, initialTarget, initial
   const selectedContact = selectedType === 'contact' ? contacts.find((item) => item.id === selectedId) ?? null : null;
 
   useEffect(() => {
+    setSaveError('');
     if (selectedOrganization) setOrganizationDraft(organizationForm(selectedOrganization));
     if (selectedContact) setContactDraft(contactForm(selectedContact));
     setEditing(false);
@@ -183,28 +209,26 @@ export function DirectoryPage({ onEntityReady, onMessage, initialTarget, initial
   const selectedOrganizationContacts = selectedOrganization ? contacts.filter((item) => item.organizationId === selectedOrganization.id) : [];
   const showDetail = Boolean(selectedOrganization || selectedContact || createMode);
 
-  function chooseView(next: DirectoryView): void {
-    setView(next);
-    setSelectedType(null);
-    setSelectedId('');
-    setCreateMode(null);
-    setExpanded(false);
-    setEditing(false);
-    setSecondaryFilter('all');
+  function closeDirectory():void {
+    requestUnsavedExit(()=>{refreshEpoch.current++;setLoading(false);setCreateMode(null);setSelectedType(null);setSelectedId('');setExpanded(false);setEditing(false);requestAnimationFrame(()=>{if(selectedIdentityRef.current)return;const row=selectedId?document.querySelector<HTMLElement>('[data-directory-id="'+CSS.escape(selectedId)+'"]'):null;if(row)row.focus();else if(directoryOpener.current?.isConnected)directoryOpener.current.focus();else document.querySelector<HTMLInputElement>('.directory-toolbar .inline-search')?.focus();});});
   }
-
-  function selectOrganization(id: string): void {
-    setCreateMode(null);
-    setSelectedType('organization');
-    setSelectedId(id);
-    setExpanded(false);
+  function toggleEdit():void {
+    if(editing){editorGuard.request(()=>setEditing(false));return;}
+    if(selectedOrganization){expectedOrganization.current=selectedOrganization;setOrganizationDraft(organizationForm(selectedOrganization));}
+    if(selectedContact){expectedContact.current=selectedContact;setContactDraft(contactForm(selectedContact));}
+    setSaveError('');setEditing(true);
   }
-
-  function selectContact(id: string): void {
-    setCreateMode(null);
-    setSelectedType('contact');
-    setSelectedId(id);
-    setExpanded(false);
+  function chooseView(next:DirectoryView):void {
+    if(next===view)return;
+    requestUnsavedExit(()=>{refreshEpoch.current++;setLoading(false);setView(next);setSelectedType(null);setSelectedId('');setCreateMode(null);setExpanded(false);setEditing(false);setSecondaryFilter('all');});
+  }
+  function selectOrganization(id:string):void {
+    if(selectedType==='organization'&&selectedId===id&&!createMode)return;
+    requestUnsavedExit(()=>{directoryOpener.current=document.activeElement instanceof HTMLElement?document.activeElement:null;refreshEpoch.current++;setLoading(false);setCreateMode(null);setEditing(false);setSelectedType('organization');setSelectedId(id);setExpanded(false);});
+  }
+  function selectContact(id:string):void {
+    if(selectedType==='contact'&&selectedId===id&&!createMode)return;
+    requestUnsavedExit(()=>{directoryOpener.current=document.activeElement instanceof HTMLElement?document.activeElement:null;refreshEpoch.current++;setLoading(false);setCreateMode(null);setEditing(false);setSelectedType('contact');setSelectedId(id);setExpanded(false);});
   }
 
   function beginResize(): void {
@@ -215,18 +239,22 @@ export function DirectoryPage({ onEntityReady, onMessage, initialTarget, initial
       const rect = workspace.getBoundingClientRect();
       if (!rect.width) return;
       const ratio = ((event.clientX - rect.left) / rect.width) * 100;
-      setSplitPercent(Math.max(20, Math.min(58, ratio)));
+      splitRef.current=Math.max(20,Math.min(58,ratio));setSplitPercent(splitRef.current);
     };
-    const onUp = () => {
+    const cleanup = () => {
       document.body.classList.remove('directory-resizing');
       window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointerup', onUp);window.removeEventListener('pointercancel',onUp);splitCleanup.current=null;
     };
+    const onUp=()=>{cleanup();persistSplit(splitRef.current);};splitCleanup.current?.();splitCleanup.current=cleanup;
     window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp, { once: true });
+    window.addEventListener('pointerup', onUp, { once: true });window.addEventListener('pointercancel',onUp,{once:true});
   }
 
   function openCreate(mode: Exclude<CreateMode, null>): void {
+    if(!requestUnsavedExit(()=>{}))return;
+    directoryOpener.current=document.activeElement instanceof HTMLElement?document.activeElement:null;
+    operationId.current=crypto.randomUUID();setSaveError('');
     setCreateMode(mode);
     setSelectedType(null);
     setSelectedId('');
@@ -236,62 +264,44 @@ export function DirectoryPage({ onEntityReady, onMessage, initialTarget, initial
     else setContactDraft(contactForm());
   }
 
-  async function saveOrganization(create = false): Promise<void> {
-    if (!organizationDraft.name.trim()) {
-      onMessage('Le nom de l’organisation est requis.');
-      return;
-    }
-    setBusy(true);
-    try {
-      if (create) {
-        const created = await window.atoumweb.crm.organizations.create(organizationDraft);
-        if (organizationDraft.email?.trim()) await window.atoumweb.crm.contactMethods.save({ organizationId: created.id, type: 'email', value: organizationDraft.email.trim(), label: 'Principal', isPrimary: true });
-        if (organizationDraft.phone?.trim()) await window.atoumweb.crm.contactMethods.save({ organizationId: created.id, type: 'phone', value: organizationDraft.phone.trim(), label: 'Principal', isPrimary: true });
-        setCreateMode(null);
-        await refresh({ entityType: 'organization', entityId: created.id });
-        onMessage('Organisation ajoutée à l’annuaire.');
-      } else if (selectedOrganization) {
-        await window.atoumweb.crm.organizations.update(selectedOrganization.id, organizationDraft);
-        await refresh({ entityType: 'organization', entityId: selectedOrganization.id });
-        setEditing(false);
-        onMessage('Organisation mise à jour.');
-      }
-      window.dispatchEvent(new Event('atoumweb:changed'));
-    } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible d’enregistrer l’organisation.');
-    } finally {
-      setBusy(false);
-    }
+  async function saveOrganization(create=false):Promise<void>{
+    if(busyRef.current)return;
+    busyRef.current=true;setBusy(true);setSaveError('');
+    try{
+      if(!create&&!selectedOrganization)throw Error('Organisation introuvable.');
+      const saved=await window.atoumweb.crm.directory.saveOrganization(organizationDraft,create?{operationId:operationId.current}:{id:selectedOrganization!.id,expected:expectedOrganization.current??undefined});
+      editorGuard.saved(organizationDraft);setCreateMode(null);setEditing(false);
+      await refresh({entityType:'organization',entityId:saved.id});window.dispatchEvent(new Event('atoumweb:changed'));onMessage('Organisation enregistrée dans l’Annuaire.');
+    }catch(error){setSaveError(error instanceof Error?error.message:'Organisation non enregistrée.');}
+    finally{busyRef.current=false;setBusy(false);}
   }
-
-  async function saveContact(create = false): Promise<void> {
-    if (!contactDraft.firstName.trim() || !contactDraft.lastName.trim()) {
-      onMessage('Le prénom et le nom sont requis.');
-      return;
-    }
-    setBusy(true);
-    try {
-      const input = { ...contactDraft, organizationId: contactDraft.organizationId || null };
-      if (create) {
-        const created = await window.atoumweb.crm.contacts.create(input);
-        if (contactDraft.email?.trim()) await window.atoumweb.crm.contactMethods.save({ contactId: created.id, type: 'email', value: contactDraft.email.trim(), label: 'Professionnel', isPrimary: true });
-        if (contactDraft.phone?.trim()) await window.atoumweb.crm.contactMethods.save({ contactId: created.id, type: 'phone', value: contactDraft.phone.trim(), label: 'Portable', isPrimary: true });
-        setCreateMode(null);
-        await refresh({ entityType: 'contact', entityId: created.id });
-        onMessage('Contact ajouté à l’annuaire.');
-      } else if (selectedContact) {
-        await window.atoumweb.crm.contacts.update(selectedContact.id, input);
-        await refresh({ entityType: 'contact', entityId: selectedContact.id });
-        setEditing(false);
-        onMessage('Contact mis à jour.');
-      }
-      window.dispatchEvent(new Event('atoumweb:changed'));
-    } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible d’enregistrer le contact.');
-    } finally {
-      setBusy(false);
-    }
+  async function saveContact(create=false):Promise<void>{
+    if(busyRef.current)return;
+    busyRef.current=true;setBusy(true);setSaveError('');
+    try{
+      if(!create&&!selectedContact)throw Error('Contact introuvable.');
+      const saved=await window.atoumweb.crm.directory.saveContact({...contactDraft,organizationId:contactDraft.organizationId||null},create?{operationId:operationId.current}:{id:selectedContact!.id,expected:expectedContact.current??undefined});
+      editorGuard.saved(contactDraft);setCreateMode(null);setEditing(false);
+      await refresh({entityType:'contact',entityId:saved.id});window.dispatchEvent(new Event('atoumweb:changed'));onMessage('Contact enregistré dans l’Annuaire.');
+    }catch(error){setSaveError(error instanceof Error?error.message:'Contact non enregistré.');}
+    finally{busyRef.current=false;setBusy(false);}
   }
+  async function loadVerification():Promise<void>{
+    const epoch=++verificationEpoch.current;setVerification(null);setIdentityHistory([]);setVerificationError('');
+    if(!selectedType||!selectedId)return;
+    try{const value=await window.atoumweb.crm.directory.verification(selectedType,selectedId);if(epoch===verificationEpoch.current)setVerification(value);const history=await window.atoumweb.crm.activity.list(selectedType,selectedId);if(epoch===verificationEpoch.current)setIdentityHistory(history);}
+    catch(error){if(epoch===verificationEpoch.current)setVerificationError(error instanceof Error?error.message:'Vérification indisponible.');}
+  }
+  useEffect(()=>{void loadVerification();return()=>{verificationEpoch.current++;};},[selectedOrganization,selectedContact]);
+  async function verifyIdentity():Promise<void>{
+    if(!selectedType||!selectedId||!verification||busyRef.current||editing)return;
+    if(unsavedRegistry.active('directory').length){setVerificationError('Enregistre ou annule les saisies de cette identité avant de déclarer sa vérification.');return;}
+    busyRef.current=true;setBusy(true);setVerificationError('');
+    try{setVerification(await window.atoumweb.crm.directory.verify(selectedType,selectedId,verification.currentFingerprint));setIdentityHistory(await window.atoumweb.crm.activity.list(selectedType,selectedId));}
+    catch(error){setVerificationError(error instanceof Error?error.message:'Vérification non enregistrée.');}
+    finally{busyRef.current=false;setBusy(false);}
+  }
+  const verificationPanel=selectedId&&!createMode?<section className="directory-verification"><strong>Dernière vérification humaine</strong>{verification?<><p>{verification.verifiedAt?'Déclarée le '+dateLabel(verification.verifiedAt)+' · déclaration manuelle dans le Manager':'Aucune vérification déclarée.'}</p>{verification.verifiedAt&&verification.verifiedFingerprint!==verification.currentFingerprint&&<p role="status">Les informations ont changé depuis cette vérification.</p>}<button className="secondary-button" type="button" disabled={busy||editing} onClick={()=>void verifyIdentity()}>Déclarer les coordonnées vérifiées</button></>:<p>Vérification en cours de lecture…</p>}{verificationError&&<p role="alert">{verificationError}<button type="button" onClick={()=>void loadVerification()}>Relire</button></p>}<details><summary>Historique de l’identité et provenance</summary>{identityHistory.map(event=><p key={event.id}>{dateLabel(event.createdAt)} · {event.summary}</p>)}{!identityHistory.length&&<p>Aucun événement chargé.</p>}</details></section>:null;
 
   function navigateRelation(clientId?: string | null, prospectId?: string | null): void {
     if (clientId) {
@@ -301,7 +311,7 @@ export function DirectoryPage({ onEntityReady, onMessage, initialTarget, initial
     if (prospectId) openEntity({ entityType: 'prospect', entityId: prospectId, title: 'Prospect' });
   }
 
-  return <div className="directory-page-stack">
+  return <div className="directory-page-stack">{saveError&&<p role="alert" className="form-error">{saveError}</p>}
     <div className="directory-kpi-grid">
       <DirectoryKpi icon="folder" label="Organisations" value={organizations.length} helper="Entreprises et structures" />
       <DirectoryKpi icon="user" label="Contacts" value={contacts.length} helper="Interlocuteurs enregistrés" />
@@ -336,12 +346,12 @@ export function DirectoryPage({ onEntityReady, onMessage, initialTarget, initial
       style={showDetail && !expanded ? { gridTemplateColumns: `${splitPercent}% 8px minmax(0, 1fr)` } : undefined}
     >
       {!expanded && <article className="panel directory-list-panel">
-        {loading ? <p className="muted directory-empty">Chargement de l’annuaire…</p> : showDetail ? <div className="directory-compact-list">
-          {view === 'organizations' ? filteredOrganizations.map((item) => <button key={item.id} type="button" className={`directory-compact-item ${selectedType === 'organization' && selectedId === item.id ? 'selected' : ''}`} onClick={() => selectOrganization(item.id)}>
+        {loading && organizations.length===0 && contacts.length===0 ? <p className="muted directory-empty">Chargement de l’annuaire…</p> : showDetail ? <div className="directory-compact-list">
+          {view === 'organizations' ? filteredOrganizations.map((item) => <button key={item.id} type="button" className={`directory-compact-item ${selectedType === 'organization' && selectedId === item.id ? 'selected' : ''}`} tabIndex={0} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();selectOrganization(item.id);}}} data-directory-id={item.id} onClick={() => selectOrganization(item.id)}>
             <CrmIdentityAvatar organizationId={item.id} name={item.name} />
             <span className="directory-compact-copy"><strong>{item.name}</strong><span>{[item.industry, item.city].filter(Boolean).join(' · ') || 'Organisation'}</span><small>{item.contactCount} contact{item.contactCount > 1 ? 's' : ''}</small></span>
             <span className={`directory-relation-pill ${relationClass(item.relation)}`}>{RELATION_LABELS[item.relation]}</span>
-          </button>) : filteredContacts.map((item) => <button key={item.id} type="button" className={`directory-compact-item ${selectedType === 'contact' && selectedId === item.id ? 'selected' : ''}`} onClick={() => selectContact(item.id)}>
+          </button>) : filteredContacts.map((item) => <button key={item.id} type="button" className={`directory-compact-item ${selectedType === 'contact' && selectedId === item.id ? 'selected' : ''}`} tabIndex={0} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();selectContact(item.id);}}} data-directory-id={item.id} onClick={() => selectContact(item.id)}>
             <CrmIdentityAvatar organizationId={item.organizationId} contactId={item.id} name={`${item.firstName} ${item.lastName}`} />
             <span className="directory-compact-copy"><strong>{item.firstName} {item.lastName}</strong><span>{item.organizationName || 'Sans entreprise'}</span><small>{item.jobTitle || 'Fonction non renseignée'}</small></span>
             <span className={`directory-relation-pill ${relationClass(item.relation)}`}>{RELATION_LABELS[item.relation]}</span>
@@ -350,7 +360,7 @@ export function DirectoryPage({ onEntityReady, onMessage, initialTarget, initial
         </div> : view === 'organizations' ? <div className="directory-table-wrap">
           <table className="directory-table">
             <thead><tr><th>Organisation</th><th>Activité</th><th>Ville</th><th>Coordonnées</th><th>Contacts</th><th>Relation</th></tr></thead>
-            <tbody>{filteredOrganizations.map((item) => <tr key={item.id} onClick={() => selectOrganization(item.id)}>
+            <tbody>{filteredOrganizations.map((item) => <tr key={item.id} tabIndex={0} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();selectOrganization(item.id);}}} data-directory-id={item.id} onClick={() => selectOrganization(item.id)}>
               <td><div className="directory-name-cell"><CrmIdentityAvatar organizationId={item.id} name={item.name} /><div><strong>{item.name}</strong><small>{item.legalName || item.website || 'Organisation professionnelle'}</small></div></div></td>
               <td>{item.industry || '—'}</td>
               <td>{item.city || '—'}</td>
@@ -363,7 +373,7 @@ export function DirectoryPage({ onEntityReady, onMessage, initialTarget, initial
         </div> : <div className="directory-table-wrap">
           <table className="directory-table">
             <thead><tr><th>Contact</th><th>Entreprise</th><th>Fonction</th><th>Coordonnées</th><th>Relation</th></tr></thead>
-            <tbody>{filteredContacts.map((item) => <tr key={item.id} onClick={() => selectContact(item.id)}>
+            <tbody>{filteredContacts.map((item) => <tr key={item.id} tabIndex={0} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();selectContact(item.id);}}} data-directory-id={item.id} onClick={() => selectContact(item.id)}>
               <td><div className="directory-name-cell"><CrmIdentityAvatar organizationId={item.organizationId} contactId={item.id} name={`${item.firstName} ${item.lastName}`} /><div><strong>{item.firstName} {item.lastName}</strong><small>{item.preferredChannel || 'Contact professionnel'}</small></div></div></td>
               <td>{item.organizationName || '—'}</td>
               <td>{item.jobTitle || '—'}</td>
@@ -375,21 +385,20 @@ export function DirectoryPage({ onEntityReady, onMessage, initialTarget, initial
         </div>}
       </article>}
 
-      {showDetail && !expanded && <div className="directory-splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner la liste et la fiche annuaire" tabIndex={0} onPointerDown={beginResize} onDoubleClick={() => setSplitPercent(38)} onKeyDown={(event) => {
-        if (event.key === 'ArrowLeft') setSplitPercent((value) => Math.max(20, value - 3));
-        if (event.key === 'ArrowRight') setSplitPercent((value) => Math.min(58, value + 3));
+      {showDetail && !expanded && <div className="directory-splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner la liste et la fiche annuaire" tabIndex={0} onPointerDown={beginResize} onDoubleClick={() => {setSplitPercent(38);persistSplit(38);}} onKeyDown={(event) => {
+        if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();const value=Math.max(20,Math.min(58,splitRef.current+(event.key==='ArrowLeft'?-3:3)));setSplitPercent(value);persistSplit(value);}
       }}><span /></div>}
 
       {createMode && <article className={`panel directory-detail-panel ${expanded ? 'expanded' : ''}`}>
-        <DirectoryDetailActions expanded={expanded} onExpand={() => setExpanded((value) => !value)} onClose={() => { setCreateMode(null); setExpanded(false); }} />
+        <DirectoryDetailActions expanded={expanded} onExpand={() => setExpanded((value) => !value)} onClose={closeDirectory} />
         <div className="directory-detail-heading"><span className="eyebrow">Nouvelle entrée</span><h2>{createMode === 'organization' ? 'Ajouter une organisation' : 'Ajouter un contact'}</h2><p>Une seule identité, réutilisable ensuite dans le CRM.</p></div>
         {createMode === 'organization'
           ? <OrganizationEditor value={organizationDraft} onChange={setOrganizationDraft} onSave={() => void saveOrganization(true)} busy={busy} includeCoordinates />
           : <ContactEditor value={contactDraft} organizations={organizations} onChange={setContactDraft} onSave={() => void saveContact(true)} busy={busy} includeCoordinates />}
       </article>}
 
-      {selectedOrganization && !createMode && <article className={`panel directory-detail-panel ${expanded ? 'expanded' : ''}`}>
-        <DirectoryDetailActions expanded={expanded} onExpand={() => setExpanded((value) => !value)} onClose={() => { setSelectedType(null); setSelectedId(''); setExpanded(false); setEditing(false); }} />
+      {selectedOrganization && !createMode && <article data-search-entity-type="organization" data-search-entity-id={selectedOrganization.id} key={selectedOrganization.id} className={`panel directory-detail-panel ${expanded ? 'expanded' : ''}`}>
+        <DirectoryDetailActions expanded={expanded} onExpand={() => setExpanded((value) => !value)} onClose={closeDirectory} />
         <div className="directory-identity-heading">
           <CrmIdentityAvatar organizationId={selectedOrganization.id} name={selectedOrganization.name} size="large" />
           <div><span className="eyebrow">Organisation</span><h2>{selectedOrganization.name}</h2><p>{[selectedOrganization.industry, selectedOrganization.city].filter(Boolean).join(' · ') || 'Organisation professionnelle'}</p></div>
@@ -398,10 +407,10 @@ export function DirectoryPage({ onEntityReady, onMessage, initialTarget, initial
           <span className={`directory-relation-pill ${relationClass(selectedOrganization.relation)}`}>{RELATION_LABELS[selectedOrganization.relation]}</span>
           {selectedOrganization.clientId && <button className="secondary-button" type="button" onClick={() => navigateRelation(selectedOrganization.clientId, null)}>Ouvrir le client</button>}
           {selectedOrganization.prospectId && <button className="secondary-button" type="button" onClick={() => navigateRelation(null, selectedOrganization.prospectId)}>Ouvrir le prospect</button>}
-          <button className="secondary-button" type="button" onClick={() => setEditing((value) => !value)}>{editing ? 'Annuler' : 'Modifier'}</button>
+          <button className="secondary-button" type="button" onClick={toggleEdit}>{editing ? 'Annuler' : 'Modifier'}</button>
         </div>
 
-        {editing ? <OrganizationEditor value={organizationDraft} onChange={setOrganizationDraft} onSave={() => void saveOrganization(false)} busy={busy} /> : <>
+        {verificationPanel}{editing ? <OrganizationEditor value={organizationDraft} onChange={setOrganizationDraft} onSave={() => void saveOrganization(false)} busy={busy} /> : <>
           <div className="directory-meta-grid">
             <div><span>Activité</span><strong>{selectedOrganization.industry || 'Non renseignée'}</strong></div>
             <div><span>Ville</span><strong>{selectedOrganization.city || 'Non renseignée'}</strong></div>
@@ -419,8 +428,8 @@ export function DirectoryPage({ onEntityReady, onMessage, initialTarget, initial
         </>}
       </article>}
 
-      {selectedContact && !createMode && <article className={`panel directory-detail-panel ${expanded ? 'expanded' : ''}`}>
-        <DirectoryDetailActions expanded={expanded} onExpand={() => setExpanded((value) => !value)} onClose={() => { setSelectedType(null); setSelectedId(''); setExpanded(false); setEditing(false); }} />
+      {selectedContact && !createMode && <article data-search-entity-type="contact" data-search-entity-id={selectedContact.id} key={selectedContact.id} className={`panel directory-detail-panel ${expanded ? 'expanded' : ''}`}>
+        <DirectoryDetailActions expanded={expanded} onExpand={() => setExpanded((value) => !value)} onClose={closeDirectory} />
         <div className="directory-identity-heading">
           <CrmIdentityAvatar organizationId={selectedContact.organizationId} contactId={selectedContact.id} name={`${selectedContact.firstName} ${selectedContact.lastName}`} size="large" />
           <div><span className="eyebrow">Contact</span><h2>{selectedContact.firstName} {selectedContact.lastName}</h2><p>{[selectedContact.jobTitle, selectedContact.organizationName].filter(Boolean).join(' · ') || 'Contact professionnel'}</p></div>
@@ -429,10 +438,10 @@ export function DirectoryPage({ onEntityReady, onMessage, initialTarget, initial
           <span className={`directory-relation-pill ${relationClass(selectedContact.relation)}`}>{RELATION_LABELS[selectedContact.relation]}</span>
           {selectedContact.clientId && <button className="secondary-button" type="button" onClick={() => navigateRelation(selectedContact.clientId, null)}>Ouvrir le client</button>}
           {selectedContact.prospectId && <button className="secondary-button" type="button" onClick={() => navigateRelation(null, selectedContact.prospectId)}>Ouvrir le prospect</button>}
-          <button className="secondary-button" type="button" onClick={() => setEditing((value) => !value)}>{editing ? 'Annuler' : 'Modifier'}</button>
+          <button className="secondary-button" type="button" onClick={toggleEdit}>{editing ? 'Annuler' : 'Modifier'}</button>
         </div>
 
-        {editing ? <ContactEditor value={contactDraft} organizations={organizations} onChange={setContactDraft} onSave={() => void saveContact(false)} busy={busy} /> : <>
+        {verificationPanel}{editing ? <ContactEditor value={contactDraft} organizations={organizations} onChange={setContactDraft} onSave={() => void saveContact(false)} busy={busy} /> : <>
           <div className="directory-meta-grid">
             <div><span>Entreprise</span><strong>{selectedContact.organizationName || 'Aucune'}</strong></div>
             <div><span>Fonction</span><strong>{selectedContact.jobTitle || 'Non renseignée'}</strong></div>
@@ -457,7 +466,7 @@ function DirectoryDetailActions({ expanded, onExpand, onClose }: { expanded: boo
 }
 
 function OrganizationEditor({ value, onChange, onSave, busy, includeCoordinates = false }: { value: OrganizationInput; onChange: (value: OrganizationInput) => void; onSave: () => void; busy: boolean; includeCoordinates?: boolean }) {
-  return <div className="directory-editor">
+  return <fieldset disabled={busy} className="directory-editor">
     <label className="wide">Nom de l’organisation<input value={value.name} onChange={(event) => onChange({ ...value, name: event.target.value })} /></label>
     <label>Raison sociale<input value={value.legalName ?? ''} onChange={(event) => onChange({ ...value, legalName: event.target.value })} /></label>
     <label>Activité<input value={value.industry ?? ''} onChange={(event) => onChange({ ...value, industry: event.target.value })} /></label>
@@ -472,11 +481,11 @@ function OrganizationEditor({ value, onChange, onSave, busy, includeCoordinates 
     <label className="wide">Complément d’adresse<input value={value.addressLine2 ?? ''} onChange={(event) => onChange({ ...value, addressLine2: event.target.value })} /></label>
     <label className="wide">Notes<textarea value={value.notes ?? ''} onChange={(event) => onChange({ ...value, notes: event.target.value })} /></label>
     <div className="wide directory-editor-footer"><span /><button className="primary-button" type="button" disabled={busy || !value.name.trim()} onClick={onSave}>{busy ? 'Enregistrement…' : 'Enregistrer'}</button></div>
-  </div>;
+  </fieldset>;
 }
 
 function ContactEditor({ value, organizations, onChange, onSave, busy, includeCoordinates = false }: { value: ContactInput; organizations: DirectoryOrganization[]; onChange: (value: ContactInput) => void; onSave: () => void; busy: boolean; includeCoordinates?: boolean }) {
-  return <div className="directory-editor">
+  return <fieldset disabled={busy} className="directory-editor">
     <label>Prénom<input value={value.firstName} onChange={(event) => onChange({ ...value, firstName: event.target.value })} /></label>
     <label>Nom<input value={value.lastName} onChange={(event) => onChange({ ...value, lastName: event.target.value })} /></label>
     <label className="wide">Entreprise<select value={value.organizationId ?? ''} onChange={(event) => onChange({ ...value, organizationId: event.target.value || null })}><option value="">Sans entreprise</option>{organizations.map((organization) => <option key={organization.id} value={organization.id}>{organization.name}</option>)}</select></label>
@@ -486,5 +495,5 @@ function ContactEditor({ value, organizations, onChange, onSave, busy, includeCo
     <label>Téléphone<input inputMode="tel" value={value.phone ?? ''} onChange={(event) => onChange({ ...value, phone: event.target.value })} /></label></>}
     <label className="wide">Notes<textarea value={value.notes ?? ''} onChange={(event) => onChange({ ...value, notes: event.target.value })} /></label>
     <div className="wide directory-editor-footer"><span /><button className="primary-button" type="button" disabled={busy || !value.firstName.trim() || !value.lastName.trim()} onClick={onSave}>{busy ? 'Enregistrement…' : 'Enregistrer'}</button></div>
-  </div>;
+  </fieldset>;
 }

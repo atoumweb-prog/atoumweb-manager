@@ -13,6 +13,8 @@ export interface SettingsOwner { getSetting<T>(key: string, fallback: T): T; set
 const modules = ['dossiers', 'autre-vue'];
 export function normalizeVisualValue(key: string, raw: string): string {
   if (raw.length > 100_000) throw Error('Préférence trop volumineuse.');
+  if(key===layoutKey('directory','list'))return JSON.stringify({version:1,listPercent:readLayout({getItem:()=>raw,setItem(){},removeItem(){}},key,38)});
+  if(key===layoutKey('clients','list'))return JSON.stringify({version:1,listPercent:readLayout({getItem:()=>raw,setItem(){},removeItem(){}},key,68)});
   if(key===HOME_WIDGET_PREFERENCE_KEY)return JSON.stringify(normalizeHomeWidgets(JSON.parse(raw)));
   if(key===HEADER_PREFERENCE_KEY)return JSON.stringify(normalizeHeaderPreference(JSON.parse(raw)));
   if (key === NAVIGATION_PREFERENCE_KEY) return JSON.stringify(normalizeNavigationPreference(JSON.parse(raw)));

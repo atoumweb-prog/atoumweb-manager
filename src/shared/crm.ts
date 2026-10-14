@@ -1,3 +1,4 @@
+import type { DirectoryWrite, DirectoryVerification, DirectoryIdentityType, ExistingIdentityWrite } from './directoryIdentity';
 export const PROSPECT_STAGES = [
   'new', 'qualifying', 'need_identified', 'quote_to_prepare', 'quote_to_send', 'quote_sent', 'follow_up', 'negotiation', 'waiting', 'won', 'lost',
 ] as const;
@@ -303,6 +304,13 @@ export interface SearchResult {
 export interface ConvertProspectResult { prospectId: string; clientId: string; createdClient: boolean; }
 
 export interface CrmApi {
+  directory: {
+    saveExisting(input:ExistingIdentityWrite):Promise<{organization?:DirectoryOrganization;contact?:DirectoryContact}>;
+    saveOrganization(input:OrganizationInput,context:DirectoryWrite<OrganizationInput>):Promise<DirectoryOrganization>;
+    saveContact(input:ContactInput,context:DirectoryWrite<ContactInput>):Promise<DirectoryContact>;
+    verification(type:DirectoryIdentityType,id:string):Promise<DirectoryVerification>;
+    verify(type:DirectoryIdentityType,id:string,expectedFingerprint:string):Promise<DirectoryVerification>;
+  };
   organizations: {
     list(includeArchived?: boolean): Promise<DirectoryOrganization[]>;
     get(id: string): Promise<DirectoryOrganization>;
@@ -353,6 +361,7 @@ export interface CrmApi {
     list(filters?: ClientFilters): Promise<ClientSummary[]>;
     create(input: ClientInput): Promise<ClientSummary>;
     update(id: string, input: ClientInput): Promise<ClientSummary>;
+    updateRelationshipIfUnchanged(id:string,expected:{status:ClientRelationshipStatus;note:string|null},next:{status:ClientRelationshipStatus;note:string|null}):Promise<ClientSummary>;
     archive(id: string): Promise<ClientSummary>;
     reactivate(id: string, status: Exclude<ClientStatus, 'archived'>): Promise<ClientSummary>;
     listContacts(id: string): Promise<ClientContactLink[]>;

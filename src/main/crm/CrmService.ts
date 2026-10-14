@@ -1,3 +1,6 @@
+import { createHash } from 'node:crypto';
+import { directoryIdentitySnapshot, sameDirectoryIdentity, type DirectoryWrite, type DirectoryVerification, type DirectoryIdentityType, type ExistingIdentityWrite } from '../../shared/directoryIdentity';
+import { draftFingerprint } from '../../shared/draftSection';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import { normalizeEmail, normalizePhone } from '../../shared/contactValidation';
@@ -14,6 +17,7 @@ import {
   type ClientInput,
   type ClientStatus,
   type ClientSummary,
+  type ClientRelationshipStatus,
   type Contact,
   type DirectoryContact,
   type DirectoryOrganization,
@@ -228,6 +232,81 @@ export class CrmService {
         input.contactId ?? null, nowIso(),
       ],
     );
+  }
+
+  saveExistingDirectoryIdentities(input:ExistingIdentityWrite):{organization?:DirectoryOrganization;contact?:DirectoryContact}{
+    return this.transaction(()=>{
+      const organization=input.organization?this.saveDirectoryOrganization(input.organization.input,{id:input.organization.id,expected:input.organization.expected}):undefined;
+      const contact=input.contact?this.saveDirectoryContact(input.contact.input,{id:input.contact.id,expected:input.contact.expected}):undefined;
+      return {organization,contact};
+    });
+  }
+
+  private directoryCreationReplay(type:DirectoryIdentityType,input:OrganizationInput|ContactInput,operationId?:string):string|null {
+    if(!operationId||!/^[0-9a-f-]{36}$/i.test(operationId))throw Error('Identifiant de création Annuaire requis.');
+    const previous=this.database.get<{entity_id:string;metadata_json:string}>("SELECT entity_id,metadata_json FROM activity_events WHERE entity_type=? AND action='directory_created' AND json_extract(metadata_json,'$.operationId')=? ORDER BY rowid DESC LIMIT 1",[type,operationId]);
+    if(!previous)return null;
+    if(JSON.parse(previous.metadata_json).inputFingerprint!==draftFingerprint(directoryIdentitySnapshot(type,input,true)))throw Error('Cette création est déjà enregistrée sous '+previous.entity_id+'. Ouvre cette identité avant de modifier sa saisie.');
+    return previous.entity_id;
+  }
+
+  saveDirectoryOrganization(input:OrganizationInput,context:DirectoryWrite<OrganizationInput>):DirectoryOrganization {
+    return this.transaction(()=>{
+      // Lock before comparison/replay so two windows cannot both pass the same baseline.
+      this.database.run('UPDATE organizations SET id=id WHERE id=?',[context.id??'']);
+      const replay=context.id?null:this.directoryCreationReplay('organization',input,context.operationId);
+      if(replay)return this.getDirectoryOrganization(replay);
+      if(context.id&&(!context.expected||!sameDirectoryIdentity('organization',this.getOrganization(context.id),context.expected)))throw Error('Conflit Annuaire : organisation modifiée dans une autre fenêtre. Saisie conservée.');
+      const current=context.id?this.getOrganization(context.id):null;
+      const saved=current?this.updateOrganization(current.id,{...input,email:current.email,phone:current.phone}):this.createOrganization(input);
+      if(!context.id){
+        if(input.email?.trim())this.saveContactMethod({organizationId:saved.id,type:'email',value:input.email,label:'Principal',isPrimary:true});
+        if(input.phone?.trim())this.saveContactMethod({organizationId:saved.id,type:'phone',value:input.phone,label:'Principal',isPrimary:true});
+        this.activity({entityType:'organization',entityId:saved.id,action:'directory_created',summary:'Création Annuaire confirmée',organizationId:saved.id,metadata:{operationId:context.operationId,inputFingerprint:draftFingerprint(directoryIdentitySnapshot('organization',input,true))}});
+      }
+      return this.getDirectoryOrganization(saved.id);
+    });
+  }
+
+  saveDirectoryContact(input:ContactInput,context:DirectoryWrite<ContactInput>):DirectoryContact {
+    return this.transaction(()=>{
+      this.database.run('UPDATE contacts SET id=id WHERE id=?',[context.id??'']);
+      const replay=context.id?null:this.directoryCreationReplay('contact',input,context.operationId);
+      if(replay)return this.getDirectoryContact(replay);
+      if(context.id&&(!context.expected||!sameDirectoryIdentity('contact',this.getContact(context.id),context.expected)))throw Error('Conflit Annuaire : contact modifié dans une autre fenêtre. Saisie conservée.');
+      const current=context.id?this.getContact(context.id):null;
+      const saved=current?this.updateContact(current.id,{...input,email:current.email,phone:current.phone}):this.createContact(input);
+      if(!context.id){
+        if(input.email?.trim())this.saveContactMethod({contactId:saved.id,type:'email',value:input.email,label:'Principal',isPrimary:true});
+        if(input.phone?.trim())this.saveContactMethod({contactId:saved.id,type:'phone',value:input.phone,label:'Principal',isPrimary:true});
+        this.activity({entityType:'contact',entityId:saved.id,action:'directory_created',summary:'Création Annuaire confirmée',contactId:saved.id,organizationId:saved.organizationId,metadata:{operationId:context.operationId,inputFingerprint:draftFingerprint(directoryIdentitySnapshot('contact',input,true))}});
+      }
+      return this.getDirectoryContact(saved.id);
+    });
+  }
+
+  private directoryFingerprint(type:DirectoryIdentityType,id:string):string {
+    if(!['organization','contact'].includes(type))throw Error('Type d’identité invalide.');
+    const identity=type==='organization'?this.getDirectoryOrganization(id):this.getDirectoryContact(id);
+    const methods=this.listContactMethods(type,id,true).map(method=>({id:method.id,type:method.type,value:method.value,label:method.label??null,isPrimary:method.isPrimary,archivedAt:method.archivedAt??null})).sort((a,b)=>a.id.localeCompare(b.id));
+    return createHash('sha256').update(draftFingerprint({identity:directoryIdentitySnapshot(type,identity,true),methods})).digest('hex');
+  }
+
+  directoryVerification(type:DirectoryIdentityType,id:string):DirectoryVerification {
+    const currentFingerprint=this.directoryFingerprint(type,id);
+    const last=this.database.get<{created_at:string;metadata_json:string}>("SELECT created_at,metadata_json FROM activity_events WHERE entity_type=? AND entity_id=? AND action='identity_verified' ORDER BY created_at DESC,rowid DESC LIMIT 1",[type,id]);
+    return {verifiedAt:last?.created_at??null,verifiedFingerprint:last?JSON.parse(last.metadata_json).fingerprint:null,currentFingerprint,source:last?'manual-manager':null};
+  }
+
+  verifyDirectoryIdentity(type:DirectoryIdentityType,id:string,expectedFingerprint:string):DirectoryVerification {
+    if(!['organization','contact'].includes(type))throw Error('Type d’identité invalide.');
+    return this.transaction(()=>{
+      this.database.run(`UPDATE ${type==='organization'?'organizations':'contacts'} SET id=id WHERE id=?`,[id]);
+      const current=this.directoryVerification(type,id);
+      if(current.currentFingerprint!==expectedFingerprint)throw Error('Les informations ont changé. Relis la fiche avant de déclarer la vérification.');
+      this.activity({entityType:type,entityId:id,action:'identity_verified',summary:'Vérification des coordonnées déclarée manuellement',organizationId:type==='organization'?id:null,contactId:type==='contact'?id:null,metadata:{source:'manual-manager',fingerprint:current.currentFingerprint}});
+      return this.directoryVerification(type,id);
+    });
   }
 
   createOrganization(input: OrganizationInput): Organization {
@@ -1098,6 +1177,21 @@ export class CrmService {
     this.activity({ entityType: 'client', entityId: id, action: 'created', summary: 'Client créé', clientId: id, organizationId: clean(input.organizationId), contactId: clean(input.primaryContactId) });
     this.indexClient(id);
     return this.getClient(id);
+  }
+
+  /** Relation only: compare under the write lock, preserve unrelated Client fields. */
+  updateClientRelationshipIfUnchanged(id:string,expected:{status:ClientRelationshipStatus;note:string|null},next:{status:ClientRelationshipStatus;note:string|null}):ClientSummary {
+    this.database.exec('SAVEPOINT client_relationship_edit;');
+    try {
+      // Acquire the SQLite write lock before reading the comparison baseline.
+      this.database.run('UPDATE client_accounts SET id=id WHERE id=?',[id]);
+      const current=this.getClient(id);
+      if(!expected||!next||(current.relationshipStatus??'neutral')!==expected.status||(current.relationshipNote??null)!==expected.note)
+        throw Error('Conflit : la relation Client a changé dans une autre fenêtre. La saisie est conservée ; relis la relation avant de réessayer.');
+      const saved=this.updateClient(id,{...current,relationshipStatus:next.status,relationshipNote:next.note??''});
+      if((current.relationshipNote??null)!==(saved.relationshipNote??null))this.activity({entityType:'client',entityId:id,action:'relationship_note_changed',summary:'Note de relation Client modifiée',metadata:{from:current.relationshipNote??null,to:saved.relationshipNote??null},clientId:id});
+      this.database.exec('RELEASE client_relationship_edit;');return saved;
+    }catch(error){this.database.exec('ROLLBACK TO client_relationship_edit; RELEASE client_relationship_edit;');throw error;}
   }
 
   updateClient(id: string, input: ClientInput): ClientSummary {

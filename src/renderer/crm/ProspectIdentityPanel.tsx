@@ -1,3 +1,4 @@
+import { openEntity } from '../workflow/DossierPanel';
 import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { useEffect, useRef, useState } from 'react';
 import type { ContactMethodType, ProspectInput, ProspectSummary } from '../../shared/crm';
@@ -51,6 +52,7 @@ function cleanError(error: unknown): string {
 }
 
 export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { prospect: ProspectSummary; onSaved: () => void; focusRequest?: { target: 'decision' | 'contact'; sequence: number } | null }) {
+  const identityBaseline=useRef<WorkflowIdentity|null>(null);
   const [identity, setIdentity] = useState<WorkflowIdentity | null>(null);
   const [decision, setDecision] = useState<DecisionDraft>(() => decisionFromIdentity(prospect));
   const [decisionContactId, setDecisionContactId] = useState('');
@@ -93,7 +95,7 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
     };
   }
 
-  async function load(){const sequence=++loadSequence.current;try{const next=await window.atoumweb.workflow.identity('prospect',prospect.id);const separate=next.decisionMaker&&next.decisionMaker.id!==next.contact?.id?next.decisionMaker:null;const contact=prospect.decisionStatus==='no'?separate?.id??'':'';const base=decisionFromIdentity(prospect,next);const nextDecision=contact?await draftFromContact(contact,base,next):base;const primary=next.contact?{firstName:next.contact.firstName,lastName:next.contact.lastName,role:next.contact.jobTitle??''}:{firstName:'',lastName:'',role:''};if(sequence!==loadSequence.current)return;if(!guard.dirty){guard.initial({organization:next.organization,contact:next.contact,decision:nextDecision,decisionContactId:contact,primaryDraft:primary});setIdentity(next);setPrimaryDraft(primary);setDecisionContactId(contact);setDecision(nextDecision);}}catch(e){if(sequence===loadSequence.current)setError(cleanError(e));}}
+  async function load(){const sequence=++loadSequence.current;try{const next=await window.atoumweb.workflow.identity('prospect',prospect.id);const separate=next.decisionMaker&&next.decisionMaker.id!==next.contact?.id?next.decisionMaker:null;const contact=prospect.decisionStatus==='no'?separate?.id??'':'';const base=decisionFromIdentity(prospect,next);const nextDecision=contact?await draftFromContact(contact,base,next):base;const primary=next.contact?{firstName:next.contact.firstName,lastName:next.contact.lastName,role:next.contact.jobTitle??''}:{firstName:'',lastName:'',role:''};if(sequence!==loadSequence.current)return;if(!guard.dirty){identityBaseline.current=structuredClone(next);guard.initial({organization:next.organization,contact:next.contact,decision:nextDecision,decisionContactId:contact,primaryDraft:primary});setIdentity(next);setPrimaryDraft(primary);setDecisionContactId(contact);setDecision(nextDecision);}}catch(e){if(sequence===loadSequence.current)setError(cleanError(e));}}
 
   useEffect(() => { setEditing(false);void load();return()=>{loadSequence.current++;}; }, [prospect.id]);
   useEffect(() => { if (identity) void load(); }, [prospect.updatedAt]);
@@ -152,16 +154,16 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
     saving.current = true;
     setBusy(true); setError('');
     try {
-      if (identity.organization) await window.atoumweb.crm.organizations.update(identity.organization.id, identity.organization);
+      const baseline=identityBaseline.current;if(!baseline)throw Error('Relis la fiche avant de modifier son identité.');
+      const savedIdentity=await window.atoumweb.crm.directory.saveExisting({
+        organization:identity.organization&&baseline.organization?{id:identity.organization.id,input:identity.organization,expected:baseline.organization}:undefined,
+        contact:identity.contact&&baseline.contact?{id:identity.contact.id,input:{...identity.contact,firstName:primaryDraft.firstName.trim(),lastName:primaryDraft.lastName.trim(),jobTitle:primaryDraft.role.trim()||null},expected:baseline.contact}:undefined,
+      });
+      identityBaseline.current={...baseline,organization:savedIdentity.organization??baseline.organization,contact:savedIdentity.contact??baseline.contact};
 
       let primaryContact = identity.contact;
       if (primaryContact) {
-        primaryContact = await window.atoumweb.crm.contacts.update(primaryContact.id, {
-          ...primaryContact,
-          firstName: primaryDraft.firstName.trim(),
-          lastName: primaryDraft.lastName.trim(),
-          jobTitle: primaryDraft.role.trim() || null,
-        });
+        primaryContact=savedIdentity.contact??primaryContact;
       } else if (primaryDraft.firstName.trim() && primaryDraft.lastName.trim()) {
         // Transaction atomique côté main : si Electron se ferme après la
         // création mais avant la réponse IPC, le retry retourne le Contact
@@ -212,6 +214,7 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
       // actualisée, sans effacer les champs dirty ni prétendre que tout est enregistré.
       try {
         const latest = await window.atoumweb.workflow.identity('prospect', prospect.id);
+        if(identityBaseline.current&&!identityBaseline.current.contact&&latest.contact)identityBaseline.current={...identityBaseline.current,contact:latest.contact};
         setIdentity(current => current ? {
           ...current, contact: latest.contact, decisionMaker: latest.decisionMaker,
           contacts: latest.contacts,
@@ -244,6 +247,7 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
   }));
 
   return <section className="prospect-work-section identity-panel-v2">
+    <div className="identity-directory-links">{identity.organization&&<button className="secondary-button" type="button" onClick={()=>openEntity({entityType:'organization',entityId:identity.organization!.id,title:identity.organization!.name})}>Ouvrir l’organisation dans l’Annuaire</button>}{identity.contact&&<button className="secondary-button" type="button" onClick={()=>openEntity({entityType:'contact',entityId:identity.contact!.id,title:identity.contact!.firstName+' '+identity.contact!.lastName})}>Ouvrir le contact dans l’Annuaire</button>}</div>
     <div className="work-section-heading"><div><span className="eyebrow">Entreprise & interlocuteur</span><strong>{identity.organization?.industry || identity.contact?.jobTitle || 'Informations principales'}</strong></div><button className="secondary-button compact-button" type="button" onClick={() => setEditing((value) => !value)}>{editing ? 'Fermer' : 'Modifier'}</button></div>
     {!editing && <div className="identity-summary-grid">
       {identity.organization && <><div><span>Société</span><strong>{identity.organization.name}</strong></div><div><span>Activité</span><strong>{identity.organization.industry || 'À préciser'}</strong></div>{identity.organization.website && <div><span>Site web</span><strong>{displayWebUrl(identity.organization.website)}</strong></div>}{address && <div className="identity-wide"><span>Adresse</span><strong>{address}</strong></div>}{identity.organization.notes && <div className="identity-wide"><span>Description</span><strong>{identity.organization.notes}</strong></div>}</>}

@@ -1,5 +1,5 @@
 import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import type { Contact } from '../../shared/crm';
 import { validateEmail, validatePhone } from '../../shared/contactValidation';
 
@@ -41,22 +41,15 @@ export function ProspectLinkedContactsPanel({
     contact.id !== primaryContactId && contact.id !== decisionMakerContactId,
   ), [contacts, primaryContactId, decisionMakerContactId]);
 
+  const creationOperation=useRef(crypto.randomUUID());
   async function createContact() {
     if (!organizationId) { setError('Une entreprise est nécessaire pour rattacher un autre contact.'); return; }
     if (!firstName.trim() || !lastName.trim()) { setError('Renseigne le prénom et le nom du contact.'); return; }
     if (!emailValidation.valid || !phoneValidation.valid) return;
     setBusy(true); setError('');
     try {
-      const created = await window.atoumweb.crm.contacts.create({
-        organizationId,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        jobTitle: role.trim() || null,
-        email: null,
-        phone: null,
-      });
-      if (email.trim()) await window.atoumweb.crm.contactMethods.save({ contactId: created.id, type: 'email', value: email.trim(), label: 'Professionnel', isPrimary: true });
-      if (phone.trim()) await window.atoumweb.crm.contactMethods.save({ contactId: created.id, type: 'phone', value: phone.trim(), label: 'Portable', isPrimary: true });
+      await window.atoumweb.crm.directory.saveContact({organizationId,firstName:firstName.trim(),lastName:lastName.trim(),jobTitle:role.trim()||null,email:email.trim()||null,phone:phone.trim()||null},{operationId:creationOperation.current});
+      creationOperation.current=crypto.randomUUID();
       setFirstName(''); setLastName(''); setRole(''); setEmail(''); setPhone(''); setOpen(false);
       onChanged();
       window.dispatchEvent(new Event('atoumweb:changed'));

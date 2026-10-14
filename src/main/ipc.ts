@@ -235,6 +235,11 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     return { cancelled: false, path: selection.filePath };
   });
 
+  ipcMain.handle('crm:directory:save-existing',(_event,...args:Parameters<typeof database.crm.saveExistingDirectoryIdentities>)=>database.crm.saveExistingDirectoryIdentities(...args));
+  ipcMain.handle('crm:directory:save-organization',(_event,...args:Parameters<typeof database.crm.saveDirectoryOrganization>)=>database.crm.saveDirectoryOrganization(...args));
+  ipcMain.handle('crm:directory:save-contact',(_event,...args:Parameters<typeof database.crm.saveDirectoryContact>)=>database.crm.saveDirectoryContact(...args));
+  ipcMain.handle('crm:directory:verification',(_event,...args:Parameters<typeof database.crm.directoryVerification>)=>database.crm.directoryVerification(...args));
+  ipcMain.handle('crm:directory:verify',(_event,...args:Parameters<typeof database.crm.verifyDirectoryIdentity>)=>database.crm.verifyDirectoryIdentity(...args));
   ipcMain.handle('crm:organizations:list', (_event, includeArchived?: boolean) => database.crm.listDirectoryOrganizations(includeArchived));
   ipcMain.handle('crm:organizations:get', (_event, id: string) => database.crm.getDirectoryOrganization(id));
   ipcMain.handle('crm:organizations:create', (_event, input: OrganizationInput) => database.crm.createOrganization(input));
@@ -280,6 +285,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('crm:prospects:research:save', (_event, id: string, input: ProspectResearchSnapshotInput) => database.crm.saveProspectResearchSnapshot(id, input));
   ipcMain.handle('crm:clients:list', (_event, filters?: ClientFilters) => database.crm.listClients(filters));
   ipcMain.handle('crm:clients:create', (_event, input: ClientInput) => database.crm.createClient(input));
+  ipcMain.handle('crm:clients:update-relationship-if-unchanged', (_event,id:string,expected:Parameters<typeof database.crm.updateClientRelationshipIfUnchanged>[1],next:Parameters<typeof database.crm.updateClientRelationshipIfUnchanged>[2])=>database.crm.updateClientRelationshipIfUnchanged(id,expected,next));
   ipcMain.handle('crm:clients:update', (_event, id: string, input: ClientInput) => database.crm.updateClient(id, input));
   ipcMain.handle('crm:clients:archive', (_event, id: string) => database.crm.archiveClient(id));
   ipcMain.handle('crm:clients:reactivate', (_event, id: string, status: Exclude<ClientStatus, 'archived'>) => database.crm.reactivateClient(id, status));
