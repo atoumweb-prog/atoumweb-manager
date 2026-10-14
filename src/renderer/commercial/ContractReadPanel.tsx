@@ -25,6 +25,17 @@ export function ContractReadPanel({presentation,commercial='',unsaved=false,copy
       setMessage('Texte chargé pour comparaison uniquement, sans enregistrement.');
     } catch {if(request===fileReadRequest.current)setMessage('Lecture du fichier impossible.');}
   }
+  async function loadDocxForComparison(){
+    const request=++fileReadRequest.current;
+    try {
+      const text=await window.atoumweb.contractTerms.importDocxText();
+      if(request!==fileReadRequest.current||text===null)return;
+      setProposedText(text);
+      setMessage('DOCX lu pour comparaison uniquement. Aucun document ni contrat modifié.');
+    } catch(error){
+      if(request===fileReadRequest.current)setMessage(error instanceof Error?error.message:'Lecture DOCX impossible.');
+    }
+  }
   const review=proposedText?reviewContractTextImport({originalText:presentation.text,importedText:proposedText,quoteState:presentation.state}):null;
   async function copyText(text:string,label:string) {
     try { await window.atoumweb.contractTerms.copyText(text);setMessage(`${label} copié.`); }
@@ -52,6 +63,7 @@ export function ContractReadPanel({presentation,commercial='',unsaved=false,copy
     {!presentation.template&&<details className="contract-module-inventory">
       <summary>Comparer un texte externe au contrat enregistré (lecture seule)</summary>
       <p className="muted">Coller uniquement du texte extrait d’un document. Ce contrôle n’importe pas un fichier DOCX et ne remplace jamais un contrat enregistré ou signé.</p>
+      <button type="button" className="secondary-button" onClick={()=>void loadDocxForComparison()}>Ouvrir un DOCX pour comparaison</button>
       <label>Charger un fichier texte (.txt, 1 Mo maximum) pour comparaison
         <input type="file" accept=".txt,text/plain" onChange={event=>{const file=event.currentTarget.files?.[0];event.currentTarget.value='';void loadPlainTextFile(file);}} />
       </label>
