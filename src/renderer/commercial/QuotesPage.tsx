@@ -62,6 +62,7 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
   const [wizard, setWizard] = useState<WizardDraft>(EMPTY_WIZARD);
   const [wizardError, setWizardError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const quoteCreateInFlight = useRef(false); // verrou immédiat, avant le prochain rendu React.
   const [pendingQuoteMutations, setPendingQuoteMutations] = useState(0);
   async function trackQuoteMutation<T>(action: () => Promise<T>): Promise<T> {
     setPendingQuoteMutations(count => count + 1);
@@ -203,7 +204,9 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
   function nextWizard(): void { if (validateStep(wizardStep)) setWizardStep((step) => Math.min(6, step + 1)); }
 
   async function createQuote(): Promise<void> {
+    if (quoteCreateInFlight.current) return;
     if (!validateStep(5) || !wizard.ownerId || !wizard.subject.trim()) return;
+    quoteCreateInFlight.current = true;
     setSaving(true); setWizardError(null);
     let demoBatch: string | null = null;
     try {
@@ -223,7 +226,8 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
       setDraftLines([]);setWizardTerms('');setDemoMode(false);
       setWizard(EMPTY_WIZARD); setWizardStep(1); setShowWizard(false); await refresh(); await openQuote(created.id); onMessage(`Devis ${created.number} créé.`);
     } catch (error) { setWizardError(error instanceof Error ? error.message : 'Impossible de créer le devis.'); }
-    finally { if (demoBatch) await window.atoumweb.workflow.endDemoCapture(demoBatch); setSaving(false); }
+    finally { try { if (demoBatch) await window.atoumweb.workflow.endDemoCapture(demoBatch); }
+      finally { quoteCreateInFlight.current = false; setSaving(false); } }
   }
 
   async function addCatalogLine(): Promise<void> {
