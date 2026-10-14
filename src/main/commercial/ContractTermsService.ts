@@ -535,6 +535,7 @@ export class ContractTermsService {
     // Quote finalization shares this same transaction: a failed legal review rolls back the entire freeze.
     // Only a reviewed, complete contract may replace the legacy ordering for new prepared quotes.
     let compiledText=this.compile(clauses);
+    let usedCanonical=false;
     if(payload){
       const reviewService=new ContractSectionReviewService(this.database);
       const entries=clauses.filter(clause=>clause.sourceKind!=='custom').map(clause=>({
@@ -554,6 +555,7 @@ export class ContractTermsService {
       const hasApprovedClassification=entries.some(({clause,review})=>
         clause.enabled&&!clause.isOrphaned&&review.status==='approved');
       if(hasApprovedClassification&&assembly.ready){
+        usedCanonical=true;
         const particular=clauses.filter(clause=>clause.enabled&&clause.sourceKind==='custom');
         const append=particular.length?'\n\nCONDITIONS PARTICULIÈRES\n\n'+particular.map((clause,index)=>`${index+1}. ${clause.title.trim()}\n${clause.body.trim()}`).join('\n\n'):'';
         compiledText='CONDITIONS GÉNÉRALES DE VENTE – ATOUMWEB\n\n'+renderApprovedDraftContract(assembly)+append;
@@ -566,7 +568,18 @@ export class ContractTermsService {
     const types=new ContractTypeService(this.database).quoteReferences(quoteId);
     const orderConflicts=new ContractTypeService(this.database).orderWarnings(types,new Set(included.filter(c=>c.sourceClauseId).map(c=>c.sourceClauseId!)));
     if(orderConflicts.length&&!this.database.get("SELECT id FROM activity_log WHERE entity_type='quote' AND entity_id=? AND action='quote_contract_reordered'",[quoteId]))throw Error(orderConflicts.join(' '));
-    const presentation=payload ? {...this.presentation(quoteId),state:'frozen' as const,compiledAt:now} : null;
+    const currentPresentation=payload?this.presentation(quoteId):null;
+    const presentation= currentPresentation ? (() => {
+      if(!usedCanonical)return {...currentPresentation,state:'frozen' as const,compiledAt:now};
+      // Keep commercial/parameter sections, replace only the displayed clause
+      // sections with the exact canonical text stored in the frozen snapshot.
+      const sections=currentPresentation.sections.filter(section=>!['base','catalog','custom'].includes(section.id));
+      sections.push({id:'clauses',title:'Contrat contractuel approuvé',text:compiledText});
+      return {
+        ...currentPresentation,state:'frozen' as const,compiledAt:now,sections,
+        text:sections.map(section=>section.title.toUpperCase()+'\\n\\n'+section.text).join('\\n\\n'),
+      };
+    })():null;
     this.database.run(
       `UPDATE quotes
        SET contract_text_snapshot=?,contract_snapshot_json=?,contract_compiled_at=?,contract_audience=?,updated_at=?
