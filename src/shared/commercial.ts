@@ -160,7 +160,8 @@ export interface CatalogApi {
   createVersion(itemId: string, input: CatalogVersionInput, requestId?: string): Promise<CatalogVersion>;
   /** Update only an existing draft; expected is the last loaded version for optimistic concurrency. */
   saveDraftVersion(versionId: string, expected: CatalogVersion, input: CatalogVersionInput): Promise<CatalogVersion>;
-  publishVersion(versionId: string): Promise<CatalogVersion>;
+  /** Optional snapshot check prevents publication of a concurrently edited draft. */
+  publishVersion(versionId: string, expected?: CatalogVersion): Promise<CatalogVersion>;
   setStatus(itemId: string, status: CatalogItemStatus): Promise<CatalogItemSummary>;
   setVisiblePublic(itemId: string, visible: boolean): Promise<CatalogItemSummary>;
   listOfferComponents(offerVersionId: string): Promise<OfferComponent[]>;
