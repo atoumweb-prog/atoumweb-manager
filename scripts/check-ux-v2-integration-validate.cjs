@@ -22,7 +22,7 @@ for(const [name,args] of steps){
  console.log('INTEGRATION START '+name);
  const run=cp.spawnSync(process.execPath,args,{cwd:repo,env,encoding:'utf8',windowsHide:true,maxBuffer:32*1024*1024});
  const log=(run.stdout||'')+(run.stderr||'');fs.writeFileSync(path.join(out,name+'.log'),log);
- const summaries=log.split(/\r?\n/).filter(line=>/RESULT|PASSED|Fixture cleaned|Tests\s+\d+ passed|Duration/.test(line));
+ const summaries=log.split(/\r?\n/).filter(line=>/RESULT|RESIZE_BASELINE|PASSED|Fixture cleaned|Tests\s+\d+ passed|Duration/.test(line));
  const ux=log.split(/\r?\n/).find(line=>line.startsWith('{"checks":'));if(ux){const result=JSON.parse(ux);summaries.push(JSON.stringify({checks:result.checks,failed:result.failed}));}
  manifest.steps.push({name,exitCode:run.status,elapsedMs:Date.now()-start,error:run.error?.message,summaries});
  fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify(manifest,null,2));

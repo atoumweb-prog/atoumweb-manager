@@ -20,16 +20,24 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,test,sleep})=>{
  const loaded=(type,id)=>wait(`!!document.querySelector('[data-search-entity-type="${type}"][data-search-entity-id="${id}"]')`,'loaded exact '+type);
  try{
  await navigate('Accueil');
+ for(const startWidth of [1510,1050]){
+ win.setSize(startWidth,1030);await sleep(100);
  await click('#header-search-trigger');
+ await input('.global-search input','');
  test(await get('document.activeElement.matches(".global-search input")'),'Real search trigger focuses combobox immediately');
  win.focus();win.webContents.focus();
  win.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});await sleep(70);
  await wait('!document.querySelector(".aw-header-search.is-open")&&document.activeElement.id==="header-search-trigger"','native Escape completed before the next typing/resize gesture');
  test(await get('!document.querySelector(".aw-header-search.is-open")&&document.activeElement.id==="header-search-trigger"'),'Native Escape acknowledged before a separate typing gesture, no fixed-delay assumption');
+ const inlineVisible=await get('document.querySelector(".global-search input").getClientRects().length>0');
+ if(!inlineVisible)await click('#header-search-trigger');
  await js("const e=document.querySelector('.global-search input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,'RESIZE SEARCH TEMP');e.dispatchEvent(new Event('input',{bubbles:true}));e.focus()");await sleep(70);
+ test(await get('document.activeElement.matches(".global-search input")&&document.activeElement.getClientRects().length>0'),'Typing starts in a genuinely visible and focused input '+startWidth);
+ console.log('02E_RESIZE_BASELINE '+JSON.stringify({requestedWidth:startWidth,inlineVisible,...await get('({actualWidth:innerWidth,focused:document.activeElement.matches(".global-search input")})')}));
  win.setSize(850,720);await sleep(100);
  test(await get('document.activeElement.matches(".global-search input")&&document.activeElement.getBoundingClientRect().width>0&&document.activeElement.value==="RESIZE SEARCH TEMP"'),'Narrow resize preserves visible focused search and text '+JSON.stringify(await get('({active:document.activeElement.tagName,search:document.activeElement.matches(".global-search input"),display:getComputedStyle(document.querySelector(".aw-header-search")).display})')));
  await closeSearch();win.setSize(1510,1030);await sleep(70);
+ }
  const org=db.crm.createOrganization({name:'JOURNEY TEMP'}),client=db.crm.createClient({organizationId:org.id});
  const archived=db.crm.createProspect({organizationId:org.id});db.workflow.archiveProspect(archived.id,true);
  const catalog=db.catalog.create({type:'service',name:'JOURNEY CATALOG',canonicalCode:'AW-JOURNEY'},{priceMode:'fixed',priceCents:1000});

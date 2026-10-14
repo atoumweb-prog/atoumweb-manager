@@ -1,5 +1,11 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 14/10/2026 — Finalisation de l'intégration 02E / 03C
+
+- PR102 reste draft ; main278ff2da, sources98–101 et références inchangés. Checkpoint74782268 local complet vert :1020tests/35restaurations/6binaires/sansRPC ; convergence37/CRM77/Recherche92/Home55/parcours62/shell374/UX01183 et81captures, TEMP/intégrité/FK/migrations/nettoyages OK.
+- Échec natif778 précisé : reproduction locale avec fenêtre initiale1050px, saisie forcée sur recherche masquée ; synchroniser Échap seul ne suffisait pas. Banc permanent aux départs1510/1050, ouverture par vrai bouton si masqué, focus/visibilité préalables vérifiés, assertion finale conservée ; parcours67 verts, délais inchangés. Aucun correctif métier/header inventé pour masquer le défaut du banc.
+- Dernier commit limité aux fixtures/preuves/docs, sourcesTS/TSX identiques à74782268. Recettes natives rejouées sur ce HEAD, puis pushFF dans102 et candidate synchronize ; résultats exacts dans le corps de PR, pas de nouvelle PR ni CI documentaire/dispatch/rerun. Aucun merge main, donnée réelle ou Validation-MSI.
+
 ## 13/10/2026 — Rapprochement autorisé 02C–02E / 03A–03C
 
 - Nouveau worktree isolé et branche `integration/ux-v2-02e-03c-v1`, depuis #101 bd1985b ; merge normal #98 10933ae à40e12e6. main278ff2da et quatre branches sources préservés. Dernières CI contrôlées : #98/#777, #99/#737, #100/#741, #101/#760 SUCCESS.

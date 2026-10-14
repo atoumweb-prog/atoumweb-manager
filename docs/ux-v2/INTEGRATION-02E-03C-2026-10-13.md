@@ -56,6 +56,14 @@ La CI778 échoue sur le focus de la recherche après redimensionnement dans 02E,
 
 L'Accueil lit également les Prospects archivés pour que l'historique Conversion corresponde au CRM ; ses filtres actifs excluent toujours les archivés. Une assertion supplémentaire conserve le lien Client après archivage et vérifie sa présence dans le compte Home (**convergence37**). Aucun nouvel archivage automatique, statut ou règle de conversion.
 
+### Complément du 14 octobre — diagnostic du banc Windows
+
+L'acquittement d'Échap ne suffit pas lorsque le banc démarre déjà étroit. Reproduction locale déterministe à1050px : même signature que CI778 (`active: BUTTON`, `search:false`, `display:none`). Le scénario essayait de forcer la saisie après fermeture d'une recherche en ligne déjà masquée ; ce n'était pas une interaction utilisateur réalisable. Le correctif impose deux départs natifs (1510 et1050), vérifie l'acquittement d'Échap, utilise le vrai bouton Rechercher si le champ est masqué et affirme son focus/visibilité **avant** la frappe. L'assertion initiale après resize reste identique. Aucun style forcé ni timeout ajouté. Le header de production est inchangé.
+
+Les67 assertions du parcours passent localement ; le log relève1496px/inline visible et1036px/palette nécessaire, champ réellement focalisé dans les deux cas. Ces mesures sont désormais reprises dans le manifeste et les logs CI. La largeur initiale du run778 n'était pas journalisée : la reproduction établit le défaut du banc, sans attribuer au runner une largeur non mesurée.
+
+Le checkpoint complet74782268 est vert :1020Vitest/35restaurations/6binaires, convergence37, CRM77, Recherche92, Home55, parcours62 avant extension du banc, shell374 et UX01183/81captures. Le commit suivant ne change aucun TS/TSX, package ou configuration de tests : uniquement le banc 02E, sa collecte de preuves et la documentation. Ses contrôles natifs sont rejoués au HEAD publié (**parcours67**), et la CI candidate exécute de nouveau typecheck et Vitest sur ce même HEAD. Les résultats et le SHA exact définitifs sont consignés dans la PR.
+
 ```text
 node scripts/check-ux-v2-integration-validate.cjs
 ```
