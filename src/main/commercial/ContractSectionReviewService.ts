@@ -10,7 +10,10 @@ export class ContractSectionReviewService {
   constructor(private readonly db:DatabaseAdapter){}
   get(versionId:string):ContractSectionReview {
     const row=this.db.get<Row>('SELECT * FROM contract_clause_section_reviews WHERE clause_version_id=?',[versionId]);
-    if(!row)return {...empty};
+    if(!row){
+      this.assertVersion(versionId);
+      return {...empty};
+    }
     if(row.status==='unclassified')return {...empty};
     if(row.status==='proposed')return {status:'proposed',sectionKey:row.section_key as ContractSectionKey,rankInSection:Number(row.rank_in_section),reason:String(row.reason)};
     return {status:'approved',sectionKey:row.section_key as ContractSectionKey,rankInSection:Number(row.rank_in_section),reviewer:String(row.reviewer),reviewedAt:String(row.reviewed_at)};
