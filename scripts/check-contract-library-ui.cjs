@@ -113,6 +113,21 @@ if(!process.versions.electron){
         await wait('!!document.querySelector(".contract-module-editor")');
         check('05B.2 direct clause navigation preserves identity',await js('document.querySelector(".contract-module-editor h3")?.textContent')==='Module Vitrine fixture');
         await input('Rechercher une clause','');
+        // 05C : filtres de lecture, sans changement des clauses en base ni navigation implicite.
+        const canonicalBefore=JSON.stringify(database.contractTerms.listTemplates(true));
+        await input('Filtrer famille de clauses','base');
+        check('05C common clauses only',await js('[...document.querySelectorAll(".contract-clause-navigation-entry")].every(e=>e.textContent.includes("UI-BASE"))'));
+        check('05C common clause visible',await js('document.querySelectorAll(".contract-clause-navigation-entry").length')===1);
+        await input('Filtrer famille de clauses','catalog');
+        check('05C service clause visible',await js('document.querySelectorAll(".contract-clause-navigation-entry").length')===1);
+        await input('Filtrer public de clauses','professional');
+        check('05C all-audience clauses remain visible for professionals',await js('document.querySelectorAll(".contract-clause-navigation-entry").length')===1);
+        await input('Filtrer public de clauses','consumer');
+        check('05C all-audience clauses remain visible for consumers',await js('document.querySelectorAll(".contract-clause-navigation-entry").length')===1);
+        await input('Filtrer famille de clauses','all');await input('Filtrer public de clauses','all');
+        check('05C all clauses restored after clearing filters',await js('document.querySelectorAll(".contract-clause-navigation-entry").length')===2);
+        check('05C no canonical clause mutation',JSON.stringify(database.contractTerms.listTemplates(true))===canonicalBefore);
+
       }
       const names=await js('[...document.querySelectorAll(".contract-type-list button strong")].map(e=>e.textContent)');check(theme+' types alphabetical',JSON.stringify(names)===JSON.stringify([...names].sort((a,b)=>a.localeCompare(b,'fr'))));
       const initialTypes=database.contractTypes.list();
