@@ -1,9 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
-## 14/10/2026 — Lot 09F : convergence technique sans modification de main
+## 14/10/2026 — Lot 09F : clôture technique du candidat complet 09A–09E, sans fusion dans main
 
-- Candidat combiné des 09B/09C/09D/09E sur la base 09A. Tests natifs Windows et intégrité transversale à confirmer sur le SHA de la branche 09F.
-- Protections historiques Abby, archives, dépenses, Word brouillons et PDF de travail assemblées sans écraser les PR sources. Aucun merge dans main.
+- **VALIDÉ TECHNIQUEMENT** dans [PR #134](https://github.com/atoumweb-prog/atoumweb-manager/pull/134) draft. [CI Windows #38618468110](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38618468110) **SUCCESS** sur le SHA du code `8bf6d8e6f05bc1ad32d93853e2e652fb8495cf54`.
+- Un seul arbre Windows TEMP : TypeScript OK, **114 fichiers Vitest**, **85 assertions Electron Abby**, **67 Dépenses**, **73 Documents**, **65 Word/DOCX-PDF**, **373 UX générales** (soit **663 assertions Electron/UX**) et restauration/fermeture Windows OK. Contrôles d'intégrité SQLite et 3 thèmes × 3 densités inclus.
+- Conflit résolu : `ClientDocumentService` conserve la vérification de signature PDF et SHA du 09B **avec** les garde-fous historiques Abby, les transactions documentaires et l'archivage du 09D. Les tests de PDF frauduleux désormais passent sur le candidat combiné.
+- Les sous-lots 09A, 09B, 09C, 09D, 09E et 09F sont **validés techniquement sur leur périmètre livré** ; 09E ne prétend pas convertir fidèlement les tableaux, images, macros et éléments riches Word.
+- Seuls restent les contrôles liés au `main` de destination (réconciliation des lots parallèles, recette CI/Windows post-inclusion), et la recette humaine de présentation/Word/juridique. Ordre proposé : #113 (base 09A) puis #134 (candidat intégré), **pas** de fusion supplémentaire de #119/#129/#132/#133 ; aucune fusion effectuée.
+- Détails, limites et gates : `docs/ux-v2/LOT-09F-CONVERGENCE-2026-10-14.md`.
 
 ## 14/10/2026 — 09D Documents : validé techniquement (périmètre isolé)
 
