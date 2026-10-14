@@ -46,13 +46,26 @@ jobs:
       # PR109: native Windows smoke recipe on isolated TEMP profile and SQLite.
       # This is a real Electron shell run, not the full E226 unsaved-draft interaction recipe.
       - name: Electron 08A — real shell and operations navigation (TEMP)
-        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 109 }}
+        if: ${{ github.event_name == 'pull_request' && (github.event.pull_request.number == 109 || github.head_ref == 'integration/ux-v2-lot08-109-115-convergence-20261014') }}
         shell: pwsh
         timeout-minutes: 15
         run: |
           node scripts/check-ux-v2-lot01a-real-ui.cjs --lot08a
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node scripts/check-ux-v2-lot01a-real-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      # Lot 08 draft PR: native shell with real Electron/IPC and UX-01 regression.
+      # Temporary fixtures only; no user profile, no Validation-MSI.
+      - name: Electron Lot 08 — Shell and UX-01 Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && (github.head_ref == 'feature/ux-v2-lot08a-audit-v1' || github.head_ref == 'integration/ux-v2-lot08-109-115-convergence-20261014') }}
+        shell: pwsh
+        timeout-minutes: 20
+        run: |
+          $captures = Join-Path $env:RUNNER_TEMP 'lot08-shell-captures'
+          node scripts/check-ux-v2-lot01a-real-ui.cjs --captures $captures
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/check-unsaved-inputs-ui.cjs --lot-b --lot-c --review
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       # PR98 standalone; the combined candidate runs this same recipe below.
