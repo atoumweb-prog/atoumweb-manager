@@ -106,18 +106,38 @@ export class ExpenseService {
   }
 
   update(id: string, input: ExpenseInput): Expense {
-    this.get(id);
+    const before = this.get(id);
     const normalized = this.normalize(input);
-    this.database.run(
-      'UPDATE expenses SET client_account_id=?,project_id=?,category=?,supplier=?,label=?,amount_cents=?,vat_cents=?,status=?,expense_date=?,due_at=?,paid_at=?,frequency=?,next_due_at=?,notes=?,updated_at=? WHERE id=?',
-      [
-        normalized.clientAccountId, normalized.projectId, normalized.category, normalized.supplier,
-        normalized.label, normalized.amountCents, normalized.vatCents, normalized.status,
-        normalized.expenseDate, normalized.dueAt, normalized.paidAt, normalized.frequency,
-        normalized.nextDueAt, normalized.notes, nowIso(), id,
-      ],
-    );
-    this.log(id, 'expense_updated', normalized.label);
+    const now = nowIso();
+    this.database.exec('SAVEPOINT expense_update');
+    try {
+      this.database.run(
+        'UPDATE expenses SET client_account_id=?,project_id=?,category=?,supplier=?,label=?,amount_cents=?,vat_cents=?,status=?,expense_date=?,due_at=?,paid_at=?,frequency=?,next_due_at=?,notes=?,updated_at=? WHERE id=?',
+        [
+          normalized.clientAccountId, normalized.projectId, normalized.category, normalized.supplier,
+          normalized.label, normalized.amountCents, normalized.vatCents, normalized.status,
+          normalized.expenseDate, normalized.dueAt, normalized.paidAt, normalized.frequency,
+          normalized.nextDueAt, normalized.notes, now, id,
+        ],
+      );
+      this.database.run(
+        'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
+        ['expense', id, 'expense_updated', normalized.label,
+          JSON.stringify({
+            previousStatus: before.status, currentStatus: normalized.status,
+            previousAmountCents: before.amountCents, currentAmountCents: normalized.amountCents,
+            previousPaidAt: before.paidAt, currentPaidAt: normalized.paidAt,
+            previousClientAccountId: before.clientAccountId, currentClientAccountId: normalized.clientAccountId,
+            previousProjectId: before.projectId, currentProjectId: normalized.projectId,
+            paymentVerifiedByBank: false,
+          }), now],
+      );
+      this.database.exec('RELEASE SAVEPOINT expense_update');
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT expense_update');
+      this.database.exec('RELEASE SAVEPOINT expense_update');
+      throw error;
+    }
     return this.get(id);
   }
 
