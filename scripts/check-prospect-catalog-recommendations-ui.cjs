@@ -65,9 +65,9 @@ if(!process.versions.electron){
           document.querySelector('[role="alert"]').textContent.includes('Catalogue temporairement indisponible'));
         check('04D no implicit Prospect selection or quote',window.fixture.needs.length===1&&window.fixture.quotesCalls===0);
         window.fixture.catalogFail=false;btn('Réessayer').click();
-        await until(()=>document.body.textContent.includes('Service indisponible'),'recommendations failure');
+        await until(()=>document.body.textContent.includes('Impossible de charger les recommandations administrées'),'recommendations failure');
         check('04D recommendations IPC failure clearly reported',
-          document.querySelector('[role="alert"]').textContent.includes('Service indisponible'));
+          document.querySelector('[role="alert"]').textContent.includes('Impossible de charger les recommandations administrées'));
         check('04D IPC error does not invent suggestions',
           !document.body.textContent.includes('Services complémentaires suggérés'));
         window.fixture.recFail=false;window.fixture.key++;window.mount();
