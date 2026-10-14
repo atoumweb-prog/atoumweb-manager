@@ -44,6 +44,30 @@ jobs:
       - name: Tests
         run: npm test -- --maxWorkers=2
 
+      - name: Lot 09E — True Word DOCX and contract drafts Windows TEMP
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/feature/ux-v2-lot09e-word-drafts-20261014' }}
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          node scripts/check-ux-v2-lot01a-real-ui.cjs --lot09e
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Lot 09E — General UX Windows TEMP
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/feature/ux-v2-lot09e-word-drafts-20261014' }}
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          node scripts/check-ux-v2-lot01a-real-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Lot 09E — Restore and quit Windows TEMP
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/feature/ux-v2-lot09e-word-drafts-20261014' }}
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          node scripts/check-restore-quit-roundtrip.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       # Lot 09A draft PR: native Electron in isolated TEMP fixtures only.
       - name: Lot 09A — Electron UI and SQLite Windows TEMP
         if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 113 }}
