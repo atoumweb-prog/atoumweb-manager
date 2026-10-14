@@ -349,10 +349,8 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
     await choosePeriod('2026-09');
     await wait('!!document.querySelector(".maintenance-overage-item input[placeholder^=Ex]")',
       'E08C reopened period with unresolved overage');
-    const overageAncestors=await get('[...document.querySelectorAll(".maintenance-overage-box")].map(box=>({period:box.dataset.periodId,path:(()=>{const a=[];let el=box;for(let i=0;i<10&&el;i++,el=el.parentElement)a.push(el.tagName.toLowerCase()+"."+(el.className?.toString()||"").slice(0,100));return a})(),rect:(()=>{const r=box.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height}})()}))');
-    console.log('[UXV2 E08C COMPONENT ANCESTRY]',JSON.stringify(overageAncestors));
-    const mounting=await get('(()=>{const boxes=[...document.querySelectorAll(".maintenance-overage-box")];return {roots:document.querySelectorAll("#root").length,appShells:document.querySelectorAll(".app-shell").length,operationsStacks:document.querySelectorAll(".operations-stack").length,maintenancePanels:document.querySelectorAll(".maintenance-panel-stack").length,periodDetails:document.querySelectorAll(".maintenance-period-detail").length,sameAside:boxes.length>1&&boxes[0].closest("aside")===boxes[1].closest("aside"),sameApp:boxes.length>1&&boxes[0].closest(".app-shell")===boxes[1].closest(".app-shell"),samePeriodDetail:boxes.length>1&&boxes[0].closest(".maintenance-period-detail")===boxes[1].closest(".maintenance-period-detail"),rootChildren:[...document.querySelector("#root").children].map(e=>e.className)}})()');
-    console.log('[UXV2 E08C MOUNT DIAG]',JSON.stringify(mounting));
+    test(await get('document.querySelectorAll('+JSON.stringify('.maintenance-overage-box[data-period-id="'+period.id+'"]')+').length')===1,
+      'E08C renders exactly one overage panel for the selected period');
     await fillOverage('.maintenance-overage-item input[placeholder^=Ex]','E08C DECISION UNIQUE');
     await fillOverage('.maintenance-overage-item input[type=number]','49');
     // Avant un appel financier, prouver que la même fiche visible a réellement
