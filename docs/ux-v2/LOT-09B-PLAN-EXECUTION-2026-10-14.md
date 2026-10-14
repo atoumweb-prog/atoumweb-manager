@@ -3,7 +3,7 @@
 ## Référentiel et statut
 Référentiel de départ : `docs/ux-v2/LOT-09B-FACTURATION-ABBY.md` dans le commit historique `0bb0860ee7618af92a53d8711b4a06edbbadc4d6` (PR #82). Ce référentiel **n'est pas encore copié sur la branche de travail** ; sa lecture ne signifie pas une validation de sa totalité.
 
-09A : PR #113 draft, CI #1042 verte, sans fusion. 09B : **cadré / en préparation**, zéro nouvelle fonctionnalité 09B livrée.
+09A : PR #113 draft, CI #1042 verte, sans fusion. 09B : **en développement**, PR #119 draft vers la branche 09A (pas vers main). CI #38593735979 verte sur d6f8c3c pour TypeScript, Vitest, interface Electron réelle Abby, UX générale et restauration Windows ; les derniers changements ont une CI distincte encore à confirmer.
 
 ## Ordre de travail
 1. Vérifier l'état actuel des modèles `BillingItem`, `BillingHandoffService`, `BillingPage` et les canaux IPC en contrôlant l'existence réelle des sources facturables (acomptes, solde, intervention, dépassement maintenance, pack, abonnement, autre).
@@ -38,3 +38,33 @@ Référentiel de départ : `docs/ux-v2/LOT-09B-FACTURATION-ABBY.md` dans le comm
 - `attachInvoice` effectue la mise à jour du statut et l'écriture du journal au sein d'un SAVEPOINT SQLite. Toute erreur de journalisation annule le rattachement et conserve le statut précédent.
 - Régression : trigger SQLite volontairement en échec, vérification du rollback et des clés étrangères.
 - Gate : confirmer les résultats de typecheck/Vitest, Electron et restauration sur CI Windows.
+
+
+## Matrice de recette 09B — 17 cas (référentiel #82)
+Les cas ci-dessous désignent **les tests automatisés présents** ; leur nouvelle exécution doit réussir sur le dernier commit avant la validation technique finale. La recette visuelle humaine demeure séparée.
+
+| Cas | Couverture dans la branche 09B |
+| --- | --- |
+| R09B-01 Intervention facturable unique | `BillingHandoffService.ensureForIntervention`, suites Operations/InterventionCompletion existantes, retour immédiat si source déjà créée |
+| R09B-02 Achat pack sans doublon | `BillingHandoffService.test.ts` et garde `source_key` dans `ensureForHourPack` |
+| R09B-03 Décision de dépassement maintenance | `MaintenanceOverageService.test.ts` et protection `syncMaintenanceOverage` contre déclassement après facture |
+| R09B-04 PDF Abby importé | `lot09b-billing-real-scenarios.cjs` via vraie UI/preload/IPC/SQLite TEMP |
+| R09B-05 Sélecteur annulé | Recette native 09B, état `ready` inchangé |
+| R09B-06 Document d'un autre client | `BillingHandoffService.test.ts`, rejet sans écriture |
+| R09B-07 Document catégorie contrat | `BillingHandoffService.test.ts`, rejet |
+| R09B-08 Facture archivée | `BillingHandoffService.test.ts`, rejet |
+| R09B-09 Facturé sans PDF | `changeStatus('invoiced')` refusé, tests existants |
+| R09B-10 PDF altéré | `ClientDocumentService.test.ts`, `BillingInvoiceReplacementIntegration.test.ts`, recette Electron d'ouverture refusée |
+| R09B-11 Pièce liée supprimée | `ClientDocumentService.test.ts` ; facture courante et facture remplacée protégées |
+| R09B-12 Référence/date modifiées | `BillingHandoffService.test.ts`, journal traçable, transaction SQLite et rollback en cas d'échec |
+| R09B-13 Aucune trésorerie fictive | Type `BillingItemStatus` sans `paid`, libellé UI « Abby crée la facture » |
+| R09B-14 PDF partagé entre plusieurs sources | Même ID ou SHA-256 déjà attaché : rejet explicite ; regroupement métier multi-sources à concevoir séparément, jamais inféré |
+| R09B-15 Source déjà facturée | `MaintenanceOverageService.decide` et `BillingHandoffService.syncMaintenanceOverage` refusent de déclassement |
+| R09B-16 Saisie référence/date non enregistrée | `BillingPage.tsx` / `useUnsavedDraft`, recette Electron « Rester / Quitter » entre fiches et modules |
+| R09B-17 Windows TEMP et 3 thèmes × 3 densités | CI TypeScript, Vitest, recette Electron facturation + smoke global multi-thèmes, restauration ; captures humaines encore à inspecter |
+
+## Réserves de clôture
+- Contrôler la CI du **dernier** commit après les nouveaux tests de brouillon, de faux PDF et de rapprochement multi-sources.
+- Vérifier le comportement de l'interface Electron avec sélection, annulation native et double confirmation UX-01.
+- Tester et documenter les éventuelles limites métier de regroupement plusieurs sources / une facture avant une évolution dédiée ; aucune API Abby ou statut « payé » inventé.
+- Distinguer recette automatisée Windows et inspection visuelle humaine. Pas de fusion vers `main` sans autorisation.
