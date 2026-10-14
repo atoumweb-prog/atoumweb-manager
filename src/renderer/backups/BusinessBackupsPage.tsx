@@ -7,11 +7,12 @@ import type {
   BusinessBackupRecord,
   BusinessBackupType,
 } from '../../shared/businessBackups';
-import type { BusinessBackupAlert } from '../../shared/businessBackupAlerts';
+import type { BusinessBackupAlert, InterventionBackupReview } from '../../shared/businessBackupAlerts';
 import type { ClientSummary } from '../../shared/crm';
 import type { ProjectSummary } from '../../shared/projects';
+import type { Intervention } from '../../shared/operations';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
-import { businessBackupLocationActionLabel, businessBackupLocationStatus, filterBusinessBackupAlerts } from '../../shared/businessBackupPresentation';
+import { businessBackupInterventionLinkIssue, businessBackupLocationActionLabel, businessBackupLocationStatus, filterBusinessBackupAlerts } from '../../shared/businessBackupPresentation';
 import { useUnsavedDraft } from '../unsaved/unsaved';
 import './BusinessBackupsPage.css';
 
@@ -46,6 +47,14 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
   const [overview, setOverview] = useState<BusinessBackupOverview | null>(null);
   const [alerts, setAlerts] = useState<BusinessBackupAlert[]>([]);
   const [alertsError, setAlertsError] = useState<string | null>(null);
+  const [interventions, setInterventions] = useState<Intervention[]>([]);
+  const [interventionsError, setInterventionsError] = useState<string | null>(null);
+  const [interventionId, setInterventionId] = useState('');
+  const [interventionReview, setInterventionReview] = useState<InterventionBackupReview | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [linkIntent, setLinkIntent] = useState<'pre_intervention' | 'post_intervention' | null>(null);
+  const reviewEpoch = useRef(0);
   const [selected, setSelected] = useState<BusinessBackupRecord | null>(null);
   const [detailExpanded, setDetailExpanded] = useState(false);
   const [splitPercent, setSplitPercent] = useState(38);
@@ -102,7 +111,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
     const epoch=++loadEpoch.current;
     try {
       setError(null);
-      const [nextRecords, nextProjects, nextClients, nextOverview, alertResult] = await Promise.all([
+      const [nextRecords, nextProjects, nextClients, nextOverview, alertResult, interventionResult] = await Promise.all([
         window.atoumweb.businessBackups.list({
           search: search || null,
           clientAccountId: clientFilter || null,
@@ -119,6 +128,12 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
             items: [] as BusinessBackupAlert[],
             error: cause instanceof Error ? cause.message : 'Le service d’alertes est indisponible.',
           })),
+        window.atoumweb.operations.interventions.list({ includeArchived: false })
+          .then((items) => ({ items, error: null as string | null }))
+          .catch((cause: unknown) => ({
+            items: [] as Intervention[],
+            error: cause instanceof Error ? cause.message : 'Les interventions sont indisponibles.',
+          })),
       ]);
       if(epoch!==loadEpoch.current)return;
       setRecords(nextRecords);
@@ -127,6 +142,8 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
       setOverview(nextOverview);
       setAlerts(alertResult.items);
       setAlertsError(alertResult.error);
+      setInterventions(interventionResult.items);
+      setInterventionsError(interventionResult.error);
       const targetId = preferredId ?? initialRecordId ?? selected?.id;
       if (targetId) {
         const found = nextRecords.find((record) => record.id === targetId)
@@ -166,6 +183,53 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
     clientAccountId: clientFilter || null,
     projectId: projectFilter || null,
   }), [alerts, clientFilter, projectFilter]);
+  const visibleInterventions = useMemo(() => interventions.filter((item) =>
+    (!clientFilter || item.clientAccountId === clientFilter) &&
+    (!projectFilter || item.projectId === projectFilter) &&
+    !['archived', 'cancelled'].includes(item.status)
+  ), [interventions, clientFilter, projectFilter]);
+  const activeInterventionId = visibleInterventions.some((item) => item.id === interventionId) ? interventionId : '';
+  const activeIntervention = visibleInterventions.find((item) => item.id === activeInterventionId) ?? null;
+  const selectedPreIssue = selected && activeIntervention
+    ? businessBackupInterventionLinkIssue(selected, activeIntervention, 'pre_intervention') : null;
+  const selectedPostIssue = selected && activeIntervention
+    ? businessBackupInterventionLinkIssue(selected, activeIntervention, 'post_intervention') : null;
+  const preApplicable = activeIntervention && ['correction', 'modification', 'addition', 'maintenance', 'incident'].includes(activeIntervention.type);
+  const postApplicable = activeIntervention?.status === 'completed' && ['modification', 'addition', 'incident'].includes(activeIntervention.type);
+
+  useEffect(() => {
+    setLinkIntent(null);
+  }, [activeInterventionId, selected?.id]);
+
+  useEffect(() => {
+    const epoch = ++reviewEpoch.current;
+    setInterventionReview(null);
+    setReviewError(null);
+    if (!activeInterventionId) {
+      setReviewLoading(false);
+      return;
+    }
+    setReviewLoading(true);
+    void window.atoumweb.businessBackupAlerts.reviewIntervention(activeInterventionId)
+      .then((result) => {
+        if (epoch === reviewEpoch.current) setInterventionReview(result);
+      })
+      .catch((reason: unknown) => {
+        if (epoch === reviewEpoch.current) setReviewError(reason instanceof Error ? reason.message : 'Contrôle indisponible.');
+      })
+      .finally(() => { if (epoch === reviewEpoch.current) setReviewLoading(false); });
+    return () => { reviewEpoch.current += 1; };
+  }, [activeInterventionId]);
+
+  async function linkSelectedToIntervention(): Promise<void> {
+    if (!linkIntent || !activeIntervention || !selected) return;
+    const issue = businessBackupInterventionLinkIssue(selected, activeIntervention, linkIntent);
+    if (issue) throw new Error(issue);
+    const updated = await window.atoumweb.businessBackupAlerts.linkExisting(activeIntervention.id, selected.id, linkIntent);
+    setInterventionReview(updated);
+    setLinkIntent(null);
+    onMessage('Association enregistrée dans le registre. La présence et la restaurabilité de la sauvegarde restent à vérifier.');
+  }
 
   async function createRecord(): Promise<void> {
     try {
@@ -285,6 +349,55 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
       </div>
 
       <p className="technical-safety-note" role="note">Ce registre recense des sauvegardes déclarées. Il ne crée pas de fichiers, ne restaure pas WordPress et ne certifie ni intégrité ni restauration testée. La sauvegarde SQLite du Manager est une opération distincte dans Réglages.</p>
+
+      <section className="panel business-backups-interventions" aria-label="Sauvegardes avant et après intervention">
+        <div className="panel-title">
+          <div><span className="eyebrow">Prévention opérationnelle</span><h2>Avant / après intervention</h2></div>
+        </div>
+        <p className="muted">Contrôle des déclarations liées à une intervention, sans effectuer de sauvegarde ni certifier un test de restauration.</p>
+        <label>Intervention à contrôler
+          <select aria-label="Intervention à contrôler" value={activeInterventionId} onChange={(event) => setInterventionId(event.target.value)}>
+            <option value="">Choisir une intervention</option>
+            {visibleInterventions.map((intervention) => <option value={intervention.id} key={intervention.id}>
+              {intervention.number} · {intervention.subject} ({intervention.status})
+            </option>)}
+          </select>
+        </label>
+        {interventionsError && <p role="status" className="business-backups-intervention-error">Impossible de charger les interventions : {interventionsError}. Aucun résultat de contrôle ne peut être conclu.</p>}
+        {!interventionsError && activeInterventionId && reviewLoading && <p role="status">Contrôle de l’intervention en cours…</p>}
+        {reviewError && <p role="alert" className="business-backups-intervention-error">{reviewError}</p>}
+        {activeIntervention && interventionReview && !reviewLoading && <div className="business-backups-intervention-review">
+          <div className="business-backups-intervention-evidence">
+            <div>
+              <strong>Avant intervention</strong>
+              <span>{interventionReview.preInterventionBackup ? `Référence déclarée : ${interventionReview.preInterventionBackup.label}` : 'Aucune référence associée'}</span>
+            </div>
+            <div>
+              <strong>Après intervention</strong>
+              <span>{interventionReview.postInterventionBackup ? `Référence déclarée : ${interventionReview.postInterventionBackup.label}` : 'Aucune référence associée'}</span>
+            </div>
+          </div>
+          {interventionReview.alerts.length > 0
+            ? <div className="business-backups-intervention-alerts">{interventionReview.alerts.map((alert) => <p role="status" key={alert.id}><strong>{alert.title} :</strong> {alert.detail}</p>)}</div>
+            : <p className="muted">Aucune alerte métier relevée pour cette intervention ; cela ne garantit pas la présence d’une copie exploitable.</p>}
+          {selected && (preApplicable || postApplicable) && <div className="business-backups-intervention-link">
+            <p>Fiche sélectionnée : <strong>{selected.label}</strong> — association d’une référence préexistante uniquement.</p>
+            <div className="button-row">
+              {preApplicable && <button type="button" className="secondary-button" disabled={mutationBusy || !!selectedPreIssue || !!interventionReview.preInterventionBackup}
+                title={selectedPreIssue ?? undefined} onClick={() => setLinkIntent('pre_intervention')}>Associer avant</button>}
+              {postApplicable && <button type="button" className="secondary-button" disabled={mutationBusy || !!selectedPostIssue || !!interventionReview.postInterventionBackup}
+                title={selectedPostIssue ?? undefined} onClick={() => setLinkIntent('post_intervention')}>Associer après</button>}
+            </div>
+            {(selectedPreIssue || selectedPostIssue) && <small>{selectedPreIssue ?? selectedPostIssue}</small>}
+            {linkIntent && <div className="business-backups-link-confirmation" role="group" aria-label="Confirmation association sauvegarde intervention">
+              <p>Confirmer le lien <strong>{linkIntent === 'pre_intervention' ? 'avant' : 'après'}</strong> entre « {selected.label} » et « {activeIntervention.number} » ? Cette action ne crée ni ne vérifie l’archive.</p>
+              <button type="button" className="primary-button" disabled={mutationBusy} onClick={() => void runMutation(linkSelectedToIntervention)}>Confirmer l’association</button>
+              <button type="button" className="secondary-button" disabled={mutationBusy} onClick={() => setLinkIntent(null)}>Annuler</button>
+            </div>}
+          </div>}
+          {!selected && <p className="muted">Pour associer une fiche préexistante, sélectionne-la dans le registre ci-dessous, puis confirme le lien.</p>}
+        </div>}
+      </section>
 
       <section className="panel business-backups-alerts" aria-label="Alertes de sauvegarde des projets">
         <div className="panel-title">
