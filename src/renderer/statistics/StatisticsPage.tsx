@@ -1,5 +1,5 @@
 
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { BillingItem } from '../../shared/billing';
 import type { QuoteSummary } from '../../shared/commercial';
 import type { ClientSummary, ProspectSummary } from '../../shared/crm';
@@ -121,11 +121,13 @@ function openPage(page: string): void {
 
 export function StatisticsPage({ onMessage }: { onMessage: (message: string) => void }) {
   const [data, setData] = useState<StatisticsData | null>(null);
+  const requestVersion = useRef(0);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<StatisticsPeriod>('month');
   const [tab, setTab] = useState<StatisticsTab>('overview');
 
   async function load(): Promise<void> {
+    const request = ++requestVersion.current;
     setLoading(true);
     try {
       const [prospects, clients, quotes, projects, sessions, billing, expenses, interventions] = await Promise.all([
@@ -138,11 +140,12 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         window.atoumweb.expenses.list(),
         window.atoumweb.operations.interventions.list({ includeArchived: true }),
       ]);
+      if (request !== requestVersion.current) return;
       setData({ prospects, clients, quotes, projects, sessions, billing, expenses, interventions });
     } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible de charger les statistiques.');
+      if (request === requestVersion.current) onMessage(error instanceof Error ? error.message : 'Impossible de charger les statistiques.');
     } finally {
-      setLoading(false);
+      if (request === requestVersion.current) setLoading(false);
     }
   }
 
@@ -153,6 +156,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
     window.addEventListener('atoumweb:time-changed', refresh);
     window.addEventListener('atoumweb:intervention-updated', refresh);
     return () => {
+      requestVersion.current += 1;
       window.removeEventListener('atoumweb:changed', refresh);
       window.removeEventListener('atoumweb:time-changed', refresh);
       window.removeEventListener('atoumweb:intervention-updated', refresh);
