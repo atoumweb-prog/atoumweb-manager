@@ -79,7 +79,7 @@ describe('09E — vrai DOCX OpenXML hors réseau',()=>{
  });
  it('déclare la perte de mise en forme Word au lieu de la masquer',()=>{
   const {docx}=exported();
-  const imported=parseWordDraftDocx(repack(docx,'Ligne finale','<w:b/>Ligne finale'));
+  const imported=parseWordDraftDocx(repack(docx,'<w:r><w:t xml:space="preserve">Ligne finale','<w:r><w:rPr><w:b/></w:rPr><w:t xml:space="preserve">Ligne finale'));
   expect(imported.text).toBe(source.body);
   expect(imported.unsupported).toBe(true);
   expect(imported.warnings.join(' ')).toMatch(/Styles ou fonctions Word/);
