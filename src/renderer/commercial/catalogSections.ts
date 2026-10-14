@@ -72,7 +72,7 @@ export function buildCataloguePresentation(items: readonly CatalogItemSummary[])
     } else {
       // Do not merge two distinct persisted categories just because their aliases
       // happen to have the same display label (E94/E95: requires explicit reconciliation).
-      const categoryKey = item.category?.trim() || '';
+      const categoryKey = item.category?.trim() ? item.category : '';
       const group = serviceGroups.get(categoryKey) ?? [];
       group.push(item);
       serviceGroups.set(categoryKey, group);
