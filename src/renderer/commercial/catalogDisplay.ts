@@ -8,3 +8,10 @@ export function catalogueFamilyLabel(item:CatalogItemSummary):string {
   return families[legacy[code]??code]??code;
 }
 export function catalogueIsOffer(item:CatalogItemSummary):boolean {return item.type==='offer';}
+
+/** Main category label for the administration view; familyCode stays independent. */
+export function cataloguePrimaryCategoryLabel(item:CatalogItemSummary):string {
+  const category=item.category?.trim();
+  if (!category) return 'Sans catégorie';
+  return families[legacy[category]??category]??category;
+}
