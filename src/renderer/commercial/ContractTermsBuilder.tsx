@@ -49,6 +49,8 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   const [presentation,setPresentation]=useState<ContractPresentation|null>(null);
   const [sectionReviewStatus,setSectionReviewStatus]=useState<{loading:boolean;approved:number;pending:number;unresolved:number;error:string}|null>(null);
   const sectionRequest=useRef(0);
+  const clauseEditorRef=useRef<HTMLDetailsElement|null>(null);
+  const clauseDetailsRefs=useRef<Record<string,HTMLDetailsElement>>({});
   const [showLibrary, setShowLibrary] = useState(false);
   const [showCustom, setShowCustom] = useState(false);
   const [customTitle, setCustomTitle] = useState('');
@@ -78,6 +80,15 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
       orphaned:clauses.filter(c=>c.isOrphaned),
     };
   },[build]);
+
+  function showClause(clauseId:string):void {
+    const clause=clauseDetailsRefs.current[clauseId];
+    if(!clause)return;
+    if(clauseEditorRef.current)clauseEditorRef.current.open=true;
+    clause.open=true;
+    clause.scrollIntoView({behavior:'smooth',block:'center'});
+    clause.querySelector('summary')?.focus();
+  }
 
   const clauseChanges=useMemo(()=> (build?.clauses??[]).flatMap(clause=>{
     const draft=drafts[clause.id];
@@ -427,20 +438,20 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
         <summary>Sommaire et points de vigilance du brouillon ({clauseOverview.included.length} incluse(s))</summary>
         <p className="muted">Vue informative basée sur les clauses actuellement enregistrées. Le classement canonique 05C reste en préparation ; aucun nouvel ordre n’est appliqué au contrat.</p>
         <ol>
-          {clauseOverview.included.map(clause=><li key={clause.id}>{clause.title}{clause.isCustomized?' · adaptée pour ce devis':''}</li>)}
+          {clauseOverview.included.map(clause=><li key={clause.id}><button type="button" className="secondary-button compact-button" onClick={()=>showClause(clause.id)}>Voir : {clause.title}</button>{clause.isCustomized?' · adaptée pour ce devis':''}</li>)}
         </ol>
-        {clauseOverview.excluded.length>0 && <p role="status" className="cgv-warning">{clauseOverview.excluded.length} clause(s) exclue(s) du devis — contrôler leur pertinence.</p>}
-        {clauseOverview.orphaned.length>0 && <p role="status" className="cgv-warning">{clauseOverview.orphaned.length} clause(s) orpheline(s) : prestation retirée — contrôler avant finalisation.</p>}
+        {clauseOverview.excluded.length>0 && <div className="cgv-warning"><p>{clauseOverview.excluded.length} clause(s) exclue(s) du devis — contrôler leur pertinence.</p><ul>{clauseOverview.excluded.map(clause=><li key={clause.id}><button type="button" className="secondary-button compact-button" onClick={()=>showClause(clause.id)}>Examiner : {clause.title}</button></li>)}</ul></div>}
+        {clauseOverview.orphaned.length>0 && <div className="cgv-warning"><p>{clauseOverview.orphaned.length} clause(s) orpheline(s) : prestation retirée — contrôler avant finalisation.</p><ul>{clauseOverview.orphaned.map(clause=><li key={clause.id}><button type="button" className="secondary-button compact-button" onClick={()=>showClause(clause.id)}>Examiner : {clause.title}</button></li>)}</ul></div>}
         {unsaved && <div role="status" className="cgv-warning">
           <strong>{clauseChanges.length} clause(s) modifiée(s) non enregistrée(s).</strong>
           <p>Comparaison indicative avec la dernière version enregistrée (sans diffusion ni sauvegarde automatique).</p>
           <ul>{clauseChanges.map(change=><li key={change.id}>
-            {change.title} : {change.titleChanged?'titre modifié':''}{change.titleChanged&&change.bodyChanged?' et ':''}{change.bodyChanged?'texte modifié':''}
+            <button type="button" className="secondary-button compact-button" onClick={()=>showClause(change.id)}>Examiner : {change.title}</button> : {change.titleChanged?'titre modifié':''}{change.titleChanged&&change.bodyChanged?' et ':''}{change.bodyChanged?'texte modifié':''}
           </li>)}</ul>
         </div>}
       </details>}
       {presentation&&<ContractReadPanel presentation={presentation} commercial={commercialAbbyBlock(quote)} unsaved={unsaved}/>}
-      <details className="cgv-editing"><summary>Adapter les clauses de ce devis ({build?.clauses.length ?? 0})</summary>
+      <details className="cgv-editing" ref={clauseEditorRef}><summary>Adapter les clauses de ce devis ({build?.clauses.length ?? 0})</summary>
       <p className="muted">Les clauses sont présentées dans l’ordre contractuel du devis. Socle : commun et non modifiable ici ; prestation : déclenchée par une prestation ; particulière : propre à ce devis. Les clauses exclues et orphelines restent visibles pour contrôle.</p>
       {unsaved && <p role="status" className="cgv-warning">{changedClauseIds.length} clause(s) modifiée(s) non enregistrée(s) : enregistre chaque clause concernée avant la finalisation ou la sortie.</p>}
       <div className="cgv-clause-list">
@@ -448,7 +459,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
           const draft = drafts[clause.id] ?? { title: clause.title, body: clause.body };
           const clauseClass = 'cgv-clause' + (clause.enabled ? '' : ' disabled') + (clause.isOrphaned ? ' orphaned' : '');
           return (
-            <details className={clauseClass} key={clause.id}>
+            <details className={clauseClass} key={clause.id} ref={node=>{if(node)clauseDetailsRefs.current[clause.id]=node;else delete clauseDetailsRefs.current[clause.id];}}>
               <summary>
                 <div>
                   <span className={'cgv-source source-' + clause.sourceKind}>{sourceLabel(clause)}</span>
