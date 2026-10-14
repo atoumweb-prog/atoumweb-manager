@@ -114,6 +114,77 @@ export class ProjectCommercialService {
     return this.projects.getProject(projectId);
   }
 
+  /**
+   * Non-mutating inventory of a provisional Project before an explicit restart.
+   * Historical references remain in the old Project; nothing is deleted.
+   * The fingerprint includes dependent rows (time, files, Bridge, secrets...)
+   * so a change after the human review invalidates the confirmation.
+   */
+  restartPreview(projectId: string): import('../../shared/projects').ProjectCommercialRestartPreview {
+    const project=this.db.get<Row>('SELECT * FROM projects WHERE id=?',[projectId]);
+    required(project?.commercial_state==='provisional' && project.status==='to_prepare',
+      'Seul un Projet prévisionnel actif peut être régénéré.');
+    const dossier=this.db.get<Row>('SELECT * FROM commercial_project_dossiers WHERE id=?',[String(project!.commercial_dossier_id)]);
+    required(dossier?.project_id===projectId && !dossier.accepted_quote_id,
+      'Ce Projet n’est plus le Projet courant du dossier commercial.');
+    const quoteId=String(dossier!.current_quote_id);
+    const current=this.preview({quoteId});
+    const dependentRows=this.db.all<Row>("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
+      .map(entry=>String(entry.name)).filter(name=>name!=='projects')
+      .filter(name=>this.db.all<Row>(`PRAGMA table_info("${name.replaceAll('"','""')}")`).some(col=>col.name==='project_id'))
+      .map(name=>{
+        const rows=this.db.all<Row>(`SELECT * FROM "${name.replaceAll('"','""')}" WHERE project_id=?`,[projectId])
+          .map(row=>JSON.stringify(row)).sort();
+        return {name,rows};
+      });
+    const counts=Object.fromEntries(dependentRows.filter(entry=>entry.rows.length)
+      .map(entry=>[entry.name,entry.rows.length]));
+    return {projectId,quoteId,counts,sha256:digest({project,dossier,quotePreview:current.sha256,dependentRows})};
+  }
+
+  /**
+   * Explicit restart only: archive (never physically delete) the old Project,
+   * release the dossier's unique pointer and create one new provisional Project.
+   * All SQLite changes, including blueprint generation and provenance, roll back
+   * together. No old resource directory, node or time session is touched.
+   */
+  restart(projectId: string, reviewedSHA256: string): ProjectDetail {
+    let replacementId: string;
+    replacementId=this.transaction(()=>{
+      const preview=this.restartPreview(projectId);
+      required(typeof reviewedSHA256==='string' && reviewedSHA256===preview.sha256,
+        'Prévisualisation périmée : recontrôler le Projet, le Devis et les ressources avant régénération.');
+      const previous=this.db.get<Row>('SELECT * FROM projects WHERE id=?',[projectId])!;
+      const dossierId=String(previous.commercial_dossier_id);
+      const dossier=this.db.get<Row>('SELECT * FROM commercial_project_dossiers WHERE id=?',[dossierId])!;
+      const quoteId=String(dossier.current_quote_id),now=new Date().toISOString();
+      const selected=dossier.explicit_template_version_id as string|null;
+      const plan=this.resolve(quoteId,selected,this.origins(quoteId,dossierId),null);
+      const sourceQuoteId=previous.source_quote_id as string|null;
+
+      this.db.run(`UPDATE projects SET status='archived',archived_at=?,updated_at=?,
+        commercial_dossier_id=NULL,
+        source_quote_id=CASE WHEN source_quote_id=? THEN NULL ELSE source_quote_id END
+        WHERE id=? AND commercial_state='provisional' AND status='to_prepare'`,
+        [now,now,quoteId,projectId]);
+      this.db.run('UPDATE commercial_project_dossiers SET project_id=NULL WHERE id=? AND project_id=?',[dossierId,projectId]);
+      const newId=this.projects.createProvisionalShell({quoteId},dossierId,
+        plan?.schemaVersion===2&&plan.bases?.length!==1 ? null : plan?.base?.templateVersionId??null,true);
+      this.db.run('UPDATE commercial_project_dossiers SET project_id=? WHERE id=? AND project_id IS NULL',[newId,dossierId]);
+      this.synchronize(newId,quoteId,plan);
+      this.activity(projectId,'commercial_project_replaced',
+        'Projet prévisionnel archivé et remplacé sans suppression de ses données',
+        {replacementProjectId:newId,dossierId,quoteId,sourceQuoteId,previousResourceRoot:previous.resource_root_path});
+      this.activity(newId,'commercial_project_restart',
+        'Nouveau Projet préparé depuis la révision commerciale courante',
+        {previousProjectId:projectId,dossierId,quoteId});
+      return newId;
+    });
+    // Filesystem creation is only attempted after a successful SQL commit.
+    this.projects.ensureProvisionalFolders(replacementId);
+    return this.projects.getProject(replacementId);
+  }
+
   /** Called only by an explicit quote revision, inside quote duplication's savepoint. */
   linkRevision(sourceId: string, targetId: string, lineIds: Map<string,string>): void {
     const dossier = this.ensureDossier(sourceId);

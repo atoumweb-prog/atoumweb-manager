@@ -120,6 +120,44 @@ describe('AtoumWebCompositionService', () => {
     expect(library.get(header.id).currentVersion?.versionNumber).toBe(2);
   });
 
+  it('R07D-07/12 : annule et rétablit un réordonnancement en préservant chaque occurrence', () => {
+    const sources=['Header','Hero','Footer'].map((name,i)=>library.createReusableCode({
+      category:i===0?'header':i===1?'hero':'footer',
+      name,
+      html:`<section class="part-${i}">${name}</section>`,
+      css:`.part-${i}{display:block}`,
+    }));
+    const initial=compositions.create({name:'Page trois composants'});
+    for(const source of sources)compositions.addItem(initial.id,{libraryItemId:source.id});
+    const baseline=compositions.get(initial.id);
+    const original=baseline.items.map(item=>item.id);
+    const moved=compositions.moveItem(initial.id,original[0],{targetIndex:2});
+    const reordered=moved.items.map(item=>item.id);
+    expect(reordered).toEqual([original[1],original[2],original[0]]);
+    const undone=compositions.restoreOrder(initial.id,reordered,original);
+    expect(undone.items.map(item=>item.id)).toEqual(original);
+    expect(undone.items.map(item=>item.sourceVersionId)).toEqual(baseline.items.map(item=>item.sourceVersionId));
+    const redone=compositions.restoreOrder(initial.id,original,reordered);
+    expect(redone.items.map(item=>item.id)).toEqual(reordered);
+    expect(database.all('PRAGMA foreign_key_check')).toHaveLength(0);
+    expect(database.get('PRAGMA integrity_check')?.integrity_check).toBe('ok');
+  });
+
+  it('R07D-12 : refuse un undo périmé ou qui ferait disparaître des occurrences', () => {
+    const one=library.createReusableCode({category:'section',name:'A',html:'<section>A</section>'});
+    const two=library.createReusableCode({category:'section',name:'B',html:'<section>B</section>'});
+    const created=compositions.create({name:'Course'});
+    compositions.addItem(created.id,{libraryItemId:one.id});
+    compositions.addItem(created.id,{libraryItemId:two.id});
+    const original=compositions.get(created.id).items.map(x=>x.id);
+    const moved=compositions.moveItem(created.id,original[0],{targetIndex:1});
+    const newOrder=moved.items.map(x=>x.id);
+    expect(()=>compositions.restoreOrder(created.id,original,newOrder)).toThrow(/modifiée/);
+    expect(()=>compositions.restoreOrder(created.id,newOrder,[original[0],original[0]])).toThrow(/invalide/);
+    expect(compositions.get(created.id).items.map(x=>x.id)).toEqual(newOrder);
+    expect(database.all('PRAGMA foreign_key_check')).toHaveLength(0);
+  });
+
   it('conserve les réglages locaux sur une occurrence sans modifier la source Bibliothèque', () => {
     const source = library.createReusableCode({
       category: 'section',
