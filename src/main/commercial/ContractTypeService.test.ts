@@ -162,7 +162,7 @@ describe('Migration 66 additive conservation',()=>{
     const q=quotes.create({prospectId:prospect().id,subject:'Historique'});quotes.addCustomLine(q.id,{label:'Historique',proposedUnitPriceCents:10000});db.run("UPDATE quotes SET status='accepted',contract_text_snapshot='Texte historique exact',contract_snapshot_json=?,contract_compiled_at='fixture' WHERE id=?",['{"clauses":[],"preuve":"historique"}',q.id]);
     const tables=db.all<{name:string}>("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name<>'schema_migrations'").map(r=>r.name);
     const snapshot=()=>Object.fromEntries(tables.map(t=>[t,db.all('SELECT * FROM "'+t+'"')]));const before=snapshot();
-    expect(applyPendingMigrations(db).map(m=>m.id)).toEqual([66]);expect(snapshot()).toEqual(before);
+    expect(applyPendingMigrations(db).map(m=>m.id)).toEqual([66,67]);expect(snapshot()).toEqual(before);
     expect(db.get('SELECT COUNT(*) AS n FROM contract_clause_templates')?.n).toBe(118);expect(db.get('SELECT COUNT(*) AS n FROM catalog_contract_clause_links')?.n).toBe(409);
     expect(applyPendingMigrations(db)).toEqual([]);expect(snapshot()).toEqual(before);
     expect(db.get('PRAGMA integrity_check')?.integrity_check).toBe('ok');expect(db.all('PRAGMA foreign_key_check')).toEqual([]);expect(new ContractTypeService(db).list()).toEqual([]);
