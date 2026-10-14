@@ -37,3 +37,32 @@ Statut : **audit documentaire en cours**, aucune recette native exécutée, aucu
 Comparer au HEAD réellement en vigueur les fichiers et contrats cités dans le référentiel. Puis établir la matrice présent / écart / test / dépendance avant tout correctif 07B–07G. Exécuter TypeScript, Vitest, restaurations et tests Electron Windows en environnement TEMP sur la branche de développement dédiée. **Ne pas déclarer la recette réussie à ce stade.**
 
 Interdits dans cette reprise : fusion dans main, migration, accès Validation-MSI, mutation du dépôt Bridge et publication WordPress.
+
+
+## Deuxième passe — concordance des spécifications vérifiée (14/10/2026)
+Sources lues directement dans le référentiel PR82 : `LOT-07B-FICHE-PROJET-PRODUCTION.md`, `LOT-07C-BLUEPRINTS-DOSSIER-COMMERCIAL.md`, `LOT-07D-SITES-PAGES-COMPOSITION.md` et `LOT-07-PROJETS-BRIDGE.md`. Les chemins de composants sont cités par ces audits du 09/10 ; leurs fichiers de production n'ont **pas** été vérifiés individuellement au nouveau HEAD dans cette passe.
+
+| Porte | Fonction préexistante selon audit source | Écart à vérifier par code et test actuel | Priorité |
+| --- | --- | --- | --- |
+| 07B-Identité | Un Projet et un dossier commercial, `commercialState` distinct du statut opérationnel | Badge devis non signé, routage Devis exact, bon projet après navigation et repli | P0 |
+| 07B-Temps | Chrono global partagé, sessions par page | Un seul chrono actif, basculement A→B confirmé, pas de session mal rattachée | P0 |
+| 07B-UX01 | Onglets, tâches, panels et historique des nœuds | Guard pour éditions dirty à chaque démontage, refresh tardif non destructeur | P0 |
+| 07C-Préparation | `previewQuote/prepareQuote/syncCommercial/accept` et contrôle hash | Projet provisoire réellement distinct d'une vente, acceptation bonne révision, idempotence | P0 |
+| 07C-Remplacement | Sync conservant même `projectId`; « supprimer si vierge » limité aux éléments | Remplacement de **Projet entier** absent du contrat attesté ; transaction et récupération à concevoir, aucun bouton prématuré | P0 bloquant |
+| 07D-Composition | Collage complet, édition locale, Undo/Redo de réglages, aperçu protégé | Undo/Redo **global** absent du périmètre local : ne pas le présenter comme livré ; protège brouillons et version source | P1 |
+| 07D-Export | Page V2 `exportId`, Site actif et composants exigés | Contrôle des refus et de l'idempotence ; export ≠ publication WP | P0 |
+| 07F-Bridge | Workbench Divi et observation | Publication finale/rollback WP non activés selon référence ; détection par capacité exigée | P0 |
+
+### Risques de rapprochement inter-lots
+- 03D/03E : liens Client/Prospect/Annuaire ; ne pas changer l'identité ni le focus.
+- 04/05/06 : Catalogue, conditions contractuelles, Devis et révisions ; 07C ne doit pas précéder le contrat de révision/acceptation réellement intégré.
+- 01/02/UX-01 : garder le shell, le chrono global et les gardes existantes ; pas de mécanisme concurrent.
+- Bridge : observation/exploration autorisées sur fixtures, aucune mutation WordPress réelle.
+
+### Ordre de vérification technique
+1. R07A-01/02/13 : navigation, bon Devis courant, état provisoire et aucune activation.
+2. R07A-04/06/08/09 : blueprint idempotent, source locale intacte, exports invalides refusés.
+3. R07A-10/11/12 : Bridge en banc isolé uniquement, import sans doublon et snapshot partiel.
+4. R07A-03/05/07/14 : arborescence, cas vitrine conditionnel, ressources et preuve SQL/SHAs.
+
+**Statut réel : revue croisée documentaire achevée pour 07B/07C/07D, revue du code au HEAD et 14 tests toujours à faire.** Aucun résultat de CI/Vitest/Electron n'est revendiqué.
