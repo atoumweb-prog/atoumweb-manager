@@ -113,10 +113,12 @@ describe('ExpenseService', () => {
     expect(versions[0].currentRelativePath).toBe(first.receiptRelativePath);
     expect(versions[1].previousRelativePath).toBe(first.receiptRelativePath);
     expect(versions[1].currentRelativePath).toBe(second.receiptRelativePath);
+    expect(expenses.verifiedReceiptVersionPath(item.id, first.receiptRelativePath!)).toBe(original);
     const history = expenses.listReceiptVersions(item.id);
     expect(history).toHaveLength(2);
     expect(history.map((version) => version.integrity)).toEqual(['verified', 'verified']);
     writeFileSync(original, 'fichier modifié après import');
+    expect(() => expenses.verifiedReceiptVersionPath(item.id, first.receiptRelativePath!)).toThrow(/intégrité/);
     expect(expenses.listReceiptVersions(item.id).map((version) => version.integrity)).toEqual(['verified', 'modified']);
   });
 
