@@ -3,6 +3,7 @@ import {
   inStatisticsRange,
   isStatisticsPipelineProspect,
   sortStatisticsClientsByInvoiced,
+  sortStatisticsClients,
   statisticsQuoteAcceptancePercent,
   previousStatisticsPeriodRange,
   statisticsDelta,
@@ -55,6 +56,8 @@ describe('statistics helpers', () => {
       { label: 'Client C', invoiced: 30000, seconds: 900 },
     ];
     expect(sortStatisticsClientsByInvoiced(input).map((row) => row.label)).toEqual(['Client C', 'Client A', 'Client B']);
+    expect(input[0].label).toBe('Client B');
+    expect(sortStatisticsClients(input, 'seconds').map((row) => row.label)).toEqual(['Client B', 'Client C', 'Client A']);
     expect(input[0].label).toBe('Client B');
   });
 
