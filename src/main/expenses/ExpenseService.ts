@@ -14,6 +14,7 @@ import {
 } from '../../shared/expenses';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import type { WorkspacePaths } from '../workspace';
+import { cleanupExpiredReceiptPreviews } from './receiptPreviewCleanup';
 
 const nowIso = (): string => new Date().toISOString();
 const clean = (value?: string | null): string | null => value?.trim() || null;
@@ -193,6 +194,7 @@ export class ExpenseService {
     const original = this.verifiedReceiptVersionPath(id, relativePath);
     const version = this.listReceiptVersions(id).find((item) => item.relativePath === relativePath);
     if (!version?.sha256) throw new Error('Version sans empreinte vérifiée.');
+    cleanupExpiredReceiptPreviews();
     const directory = mkdtempSync(join(tmpdir(), 'atoumweb-receipt-preview-'));
     try {
       const copy = join(directory, randomUUID() + extname(original));
