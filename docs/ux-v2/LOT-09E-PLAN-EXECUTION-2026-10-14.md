@@ -36,3 +36,11 @@ Branche indépendante `feature/ux-v2-lot09e-word-drafts-20261014`, basée sur 09
 - Export distinct **PDF de travail** via `printToPDF` Electron avec bannière « DOCUMENT DE TRAVAIL — NON SIGNÉ, NON PUBLIÉ, NON FACTURE ABBY », sans lien à la facturation ni au Devis signé.
 - Nouvelle recette Electron `--lot09e` en TEMP : vraie navigation bibliothèque de 09A, export Word, PDF, annulation, diff vide, modification réelle d'un ZIP DOCX, approbation, test de version périmée et 3 thèmes × 3 densités.
 - Première CI complète TypeScript/Vitest `#38605290730` verte avec 112 fichiers. Première recette Electron `#38605904519` a détecté une dépendance incorrecte aux tuiles 09D dans la fixture ; correction appliquée sur 09A. Réexécution complète du dernier code nécessaire avant validation technique. Aucun merge.
+
+## Clôture technique bornée — 09E
+- **09E validé techniquement** pour les textes de clause *brouillon* et les paragraphes simples pris en charge : [CI Windows #38608293004](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38608293004), **SUCCESS** au commit `11fe2f5`.
+- TypeScript OK ; **113 fichiers Vitest** ; **65 assertions natives Electron** sur Word/PDF (export réel, PDF travail, import annulé, diff vide, DOCX modifié, validation humaine, nouvelle version, refus du manifest périmé), **373 assertions UX générales**, restauration/fermeture Windows TEMP.
+- Le moteur OOXML utilise des limites strictes ; tableaux, dessins, macros, liens externes et révisions Word ne sont pas acceptés silencieusement. Styles simples signalés, approbation explicite. Un DOCX dont Word supprime le manifest customXML est refusé.
+- Les pièces Abby, Devis gelés et clauses publiées ne sont pas modifiées ; PDF de travail non signé et non officiel.
+- **Différé à la recette humaine/évolutions distinctes** : validation de la fidélité visuelle avec Microsoft Word, mise en forme riche (listes automatiques complexes, tableaux, champs, commentaires et suivi de modifications), conseil juridique sur clauses. Le périmètre technique livré est limité et transparent.
+- PR #133 reste draft, aucune fusion dans `main`. La convergence globale se teste séparément dans PR #134/09F.
