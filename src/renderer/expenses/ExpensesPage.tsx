@@ -6,6 +6,7 @@ import {
   EXPENSE_FREQUENCIES,
   EXPENSE_STATUSES,
   type Expense,
+  type ExpenseReceiptVersion,
   type ExpenseCategory,
   type ExpenseFrequency,
   type ExpenseInput,
@@ -153,6 +154,7 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
   const [scopeFilter, setScopeFilter] = useState<'all' | 'project' | 'client' | 'internal'>('all');
   const [form, setForm] = useState<ExpenseFormState>(() => emptyForm());
   const [busy, setBusy] = useState(false);
+  const [receiptVersions, setReceiptVersions] = useState<ExpenseReceiptVersion[]>([]);
 
   async function refresh(): Promise<void> {
     setLoading(true);
@@ -179,6 +181,16 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
   useEffect(() => { void refresh(); }, []);
 
   const selected = items.find((item) => item.id === selectedId) ?? null;
+  useEffect(() => {
+    let active = true;
+    setReceiptVersions([]);
+    if (!selectedId) return () => { active = false; };
+    void window.atoumweb.expenses.listReceiptVersions(selectedId)
+      .then((versions) => { if (active) setReceiptVersions(versions); })
+      .catch((error) => { if (active) onMessage(error instanceof Error ? error.message : 'Historique indisponible.'); });
+    return () => { active = false; };
+  }, [selectedId, items.find((item) => item.id === selectedId)?.updatedAt]);
+
 
   useEffect(() => {
     if (selected && !createOpen) setForm(formFromExpense(selected));
@@ -309,6 +321,7 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
       if (!updated) return;
       await refresh();
       setSelectedId(updated.id);
+      setReceiptVersions(await window.atoumweb.expenses.listReceiptVersions(updated.id));
       onMessage('Justificatif importé.');
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible d’importer le justificatif.');
@@ -472,6 +485,23 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
               <button className="primary-button" type="button" disabled={busy} onClick={() => void importReceipt()}>{selected.receiptFileName ? '▤ Remplacer le justificatif' : '▤ Importer un justificatif'}</button>
               {selected.receiptFileName && !selected.receiptMissing && <button className="secondary-button" type="button" onClick={() => void openReceipt()}>↗ Ouvrir</button>}
             </div>
+            {receiptVersions.length > 0 && (
+              <section aria-label="Historique des justificatifs">
+                <strong>Versions enregistrées ({receiptVersions.length})</strong>
+                <ul>
+                  {receiptVersions.map((version, index) => (
+                    <li key={version.relativePath + index}>
+                      {version.fileName} — {({
+                        verified: 'Intégrité vérifiée',
+                        unknown: 'Intégrité non certifiée',
+                        missing: 'Fichier manquant',
+                        modified: 'Fichier modifié',
+                      } as const)[version.integrity]}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
           </div>
         </details>}
 
