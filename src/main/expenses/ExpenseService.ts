@@ -1,7 +1,8 @@
 
 import { createHash, randomUUID } from 'node:crypto';
-import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, chmodSync } from 'node:fs';
 import { basename, extname, join, relative, resolve, sep } from 'node:path';
+import { tmpdir } from 'node:os';
 import {
   EXPENSE_CATEGORIES,
   EXPENSE_FREQUENCIES,
@@ -186,6 +187,24 @@ export class ExpenseService {
     const absolute = resolve(this.workspace.root, relativePath);
     if (!absolute.startsWith(resolve(this.workspace.root) + sep)) throw new Error('Chemin de justificatif invalide.');
     return absolute;
+  }
+
+  prepareReceiptVersionPreview(id: string, relativePath: string): string {
+    const original = this.verifiedReceiptVersionPath(id, relativePath);
+    const version = this.listReceiptVersions(id).find((item) => item.relativePath === relativePath);
+    if (!version?.sha256) throw new Error('Version sans empreinte vérifiée.');
+    const directory = mkdtempSync(join(tmpdir(), 'atoumweb-receipt-preview-'));
+    try {
+      const copy = join(directory, randomUUID() + extname(original));
+      copyFileSync(original, copy);
+      if (createHash('sha256').update(readFileSync(copy)).digest('hex') !== version.sha256) {
+        throw new Error('Copie du justificatif altérée pendant la préparation.');
+      }
+      chmodSync(copy, 0o444);
+      return copy;
+    } catch (error) {
+      throw error;
+    }
   }
 
   private normalize(input: ExpenseInput): NormalizedExpenseInput {
