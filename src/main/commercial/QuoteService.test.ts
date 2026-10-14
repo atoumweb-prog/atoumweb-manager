@@ -56,7 +56,13 @@ describe('QuoteService', () => {
     quotes.addCustomLine(quote.id, { label: 'Site vitrine', proposedUnitPriceCents: 69900 });
 
     expect(() => quotes.markViewed(quote.id)).toThrow(/envoyé/);
-    database.run("UPDATE quotes SET status='sent' WHERE id=?", [quote.id]);
+    const finalized = finalizeForTest(database, quotes, quote.id);
+    expect(finalized.finalizedAt).toBeTruthy();
+    expect(finalized.status).toBe('draft');
+    const sent = quotes.markSent(quote.id);
+    expect(sent.status).toBe('sent');
+    expect(sent.sentAt).toBeTruthy();
+    expect(sent.acceptedAt).toBeNull();
     const viewed = quotes.markViewed(quote.id);
 
     expect(viewed.status).toBe('viewed');
