@@ -183,45 +183,58 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
 
   useEffect(() => {
     if (!initialTarget) return;
-    let live=true;
-    if(initialTarget.entityType==='intervention'&&selectedIntervention?.id===initialTarget.entityId){
-      if(initialTarget.focus==='conclusion'){setConclusionInterventionId(selectedIntervention.id);setInterventionExpanded(true);}
-      return()=>{live=false;};
+    let live = true;
+    if (initialTarget.entityType === 'intervention' && selectedIntervention?.id === initialTarget.entityId) {
+      if (initialTarget.focus === 'conclusion') {
+        setConclusionInterventionId(selectedIntervention.id);
+        setInterventionExpanded(true);
+      }
+      return () => { live = false; };
     }
-    setQuery('');
-    setSelectedRequest(null);
-    setSelectedIntervention(null);
-
-    if (initialTarget.entityType === 'service_request') {
-      setView('requests');
-      setRequestStatus('all');
-      void window.atoumweb.operations.requests.get(initialTarget.entityId)
-        .then((request) => {if(live)setSelectedRequest(request);})
-        .catch((error: unknown) => {if(!live)return;const message=error instanceof Error?error.message:'Demande introuvable.';onEntityReady?.('service_request',initialTarget.entityId,message);onMessage(message);});
-      return()=>{live=false;};
-    }
-    if (initialTarget.entityType === 'intervention') {
-      setView('interventions');
-      setInterventionStatus('all');
-      void window.atoumweb.operations.interventions.get(initialTarget.entityId)
-        .then((intervention) => {
-          if(!live)return;
-          setSelectedIntervention(intervention);
-          if (initialTarget.focus === 'conclusion') {
-            setConclusionInterventionId(intervention.id);
-            setInterventionExpanded(true);
-          }
-        })
-        .catch((error: unknown) => {if(!live)return;const message=error instanceof Error?error.message:'Intervention introuvable.';onEntityReady?.('intervention',initialTarget.entityId,message);onMessage(message);});
-      return()=>{live=false;};
-    }
-    if (initialTarget.entityType === 'maintenance') {
-      setView('maintenance');
-      return()=>{live=false;};
-    }
-    setView('packs');
-    return()=>{live=false;};
-  }, [initialTarget?.entityType, initialTarget?.entityId, initialTarget?.focus,initialRequest]);
+    // A change initiated by external routing must use the same UX-01 guard as a click.
+    // A refused exit leaves the current selection and its draft intact.
+    requestUnsavedExit(() => {
+      if (!live) return;
+      setQuery('');
+      setSelectedRequest(null);
+      setSelectedIntervention(null);
+      if (initialTarget.entityType === 'service_request') {
+        setView('requests');
+        setRequestStatus('all');
+        void window.atoumweb.operations.requests.get(initialTarget.entityId)
+          .then(request => { if (live) setSelectedRequest(request); })
+          .catch((error: unknown) => {
+            if (!live) return;
+            const message = error instanceof Error ? error.message : 'Demande introuvable.';
+            onEntityReady?.('service_request', initialTarget.entityId, message);
+            onMessage(message);
+          });
+      } else if (initialTarget.entityType === 'intervention') {
+        setView('interventions');
+        setInterventionStatus('all');
+        void window.atoumweb.operations.interventions.get(initialTarget.entityId)
+          .then(intervention => {
+            if (!live) return;
+            setSelectedIntervention(intervention);
+            if (initialTarget.focus === 'conclusion') {
+              setConclusionInterventionId(intervention.id);
+              setInterventionExpanded(true);
+            }
+          })
+          .catch((error: unknown) => {
+            if (!live) return;
+            const message = error instanceof Error ? error.message : 'Intervention introuvable.';
+            onEntityReady?.('intervention', initialTarget.entityId, message);
+            onMessage(message);
+          });
+      } else if (initialTarget.entityType === 'maintenance') {
+        setView('maintenance');
+      } else {
+        setView('packs');
+      }
+    });
+    return () => { live = false; };
+  }, [initialTarget?.entityType, initialTarget?.entityId, initialTarget?.focus, initialRequest]);
 
   useEffect(() => {
     if (!interventionProjectId) {
